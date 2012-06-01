@@ -1346,6 +1346,7 @@ static ib_status_t action_printvar_execute(void *data,
  */
 static ib_status_t op_print_create(ib_engine_t *ib,
                                    ib_context_t *ctx,
+                                   const ib_rule_t *rule,
                                    ib_mpool_t *mp,
                                    const char *params,
                                    ib_operator_inst_t *op_inst)
@@ -1434,6 +1435,7 @@ static ib_status_t op_print_create(ib_engine_t *ib,
  */
 static ib_status_t op_print_execute(ib_engine_t *ib,
                                     ib_tx_t *tx,
+                                    const ib_rule_t *rule,
                                     void *data,
                                     ib_flags_t flags,
                                     ib_field_t *field,

@@ -470,7 +470,7 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
     else {
         /* Execute the operator */
         ib_num_t result = 0;
-        rc = ib_operator_execute(ib, tx, opinst, value, &result);
+        rc = ib_operator_execute(ib, tx, rule, opinst, value, &result);
         if (rc != IB_OK) {
             ib_rule_log_full(tx, rule, target, NULL,
                              "Operator returned an error: %s",
@@ -596,7 +596,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
 
         /* Execute the operator */
         ib_rule_log_full(tx, rule, NULL, NULL, "Executing external rule");
-        rc = ib_operator_execute(ib, tx, opinst, NULL, rule_result);
+        rc = ib_operator_execute(ib, tx, rule, opinst, NULL, rule_result);
         if (rc != IB_OK) {
             ib_rule_log_error(tx, rule, NULL, NULL,
                               "External operator returned an error: %s",
@@ -1131,7 +1131,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     }
 
     /* Execute the rule operator */
-    rc = ib_operator_execute(ib, tx, opinst, value, result);
+    rc = ib_operator_execute(ib, tx, rule, opinst, value, result);
     if (rc != IB_OK) {
         ib_rule_log_error(tx, rule, NULL, NULL,
                           "Operator returned an error: %s",
@@ -1205,7 +1205,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
         }
 
         /* Execute the rule operator */
-        rc = ib_operator_execute(ib, tx, opinst, value, &result);
+        rc = ib_operator_execute(ib, tx, rule, opinst, value, &result);
         if (rc != IB_OK) {
             ib_rule_log_error(tx, rule, NULL, NULL,
                               "Operator returned an error: %s",

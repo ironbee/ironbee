@@ -26,6 +26,7 @@
 #include <ironbee/operator.h>
 #include <ironbee/server.h>
 #include <ironbee/engine.h>
+#include <ironbee/rule_engine.h>
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>
 
@@ -37,6 +38,7 @@
 
 ib_status_t test_create_fn(ib_engine_t *ib,
                            ib_context_t *ctx,
+                           const ib_rule_t *rule,
                            ib_mpool_t *pool,
                            const char *data,
                            ib_operator_inst_t *op_inst)
@@ -59,9 +61,13 @@ ib_status_t test_destroy_fn(ib_operator_inst_t *op_inst)
     return IB_OK;
 }
 
-ib_status_t test_execute_fn(ib_engine_t *ib, ib_tx_t *tx,
-                            void *data, ib_flags_t flags,
-                            ib_field_t *field, ib_num_t *result)
+ib_status_t test_execute_fn(ib_engine_t *ib,
+                            ib_tx_t *tx,
+                            const ib_rule_t *rule,
+                            void *data,
+                            ib_flags_t flags,
+                            ib_field_t *field,
+                            ib_num_t *result)
 {
     char *searchstr = (char *)data;
     const char* s;
@@ -93,6 +99,7 @@ TEST_F(OperatorTest, OperatorCallTest)
 {
     ib_status_t status;
     ib_num_t call_result;
+    ib_rule_t *rule = NULL; /* Unused by this operator. */
     status = ib_operator_register(ib_engine,
                                   "test_op",
                                   IB_OP_FLAG_PHASE,
@@ -105,6 +112,7 @@ TEST_F(OperatorTest, OperatorCallTest)
     ib_operator_inst_t *op;
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
+                                     rule,
                                      IB_OP_FLAG_PHASE,
                                      "test_op",
                                      "data",
@@ -124,12 +132,14 @@ TEST_F(OperatorTest, OperatorCallTest)
     );
 
     ib_field_setv(field, ib_ftype_nulstr_in(matching));
-    status = ib_operator_execute(ib_engine, NULL, op, field, &call_result);
+    status = ib_operator_execute(
+        ib_engine, NULL, rule, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_nulstr_in(nonmatching));
-    status = ib_operator_execute(ib_engine, NULL, op, field, &call_result);
+    status = ib_operator_execute(
+        ib_engine, NULL, rule, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 
@@ -146,9 +156,11 @@ TEST_F(CoreOperatorsTest, ContainsTest)
     ib_status_t status;
     ib_num_t call_result;
     ib_operator_inst_t *op;
+    ib_rule_t *rule = NULL; /* Not used by this operator. */
 
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
+                                     rule,
                                      IB_OP_FLAG_PHASE,
                                      "contains",
                                      "needle",
@@ -169,12 +181,14 @@ TEST_F(CoreOperatorsTest, ContainsTest)
     );
 
     ib_field_setv(field, ib_ftype_nulstr_in(matching));
-    status = ib_operator_execute(ib_engine, NULL, op, field, &call_result);
+    status = ib_operator_execute(
+        ib_engine, NULL, rule, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_nulstr_in(nonmatching));
-    status = ib_operator_execute(ib_engine, NULL, op, field, &call_result);
+    status = ib_operator_execute(
+        ib_engine, NULL, rule, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }

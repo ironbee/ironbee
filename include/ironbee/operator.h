@@ -44,12 +44,14 @@ extern "C" {
 
 /** Operator Instance Structure */
 typedef struct ib_operator_inst_t ib_operator_inst_t;
+typedef struct ib_rule_t ib_rule_t;
 
 /**
  * Operator instance creation callback type.
  *
  * @param[in] ib IronBee engine.
  * @param[in] ctx Current context.
+ * @param[in] rule The rule that owns the operator instance being executed.
  * @param[in] pool Memory pool to be used for allocating needed memory.
  * @param[in] parameters Unparsed string with the parameters to
  *                       initialize the operator instance.
@@ -59,6 +61,7 @@ typedef struct ib_operator_inst_t ib_operator_inst_t;
  */
 typedef ib_status_t (* ib_operator_create_fn_t)(ib_engine_t *ib,
                                                 ib_context_t *ctx,
+                                                const ib_rule_t *rule,
                                                 ib_mpool_t *pool,
                                                 const char *parameters,
                                                 ib_operator_inst_t *op_inst);
@@ -80,6 +83,7 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(ib_operator_inst_t *op_inst);
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
+ * @param[in] rule The rule that owns the operator instance being executed.
  * @param[in] data Instance data needed for execution.
  * @param[in] flags Operator instance flags.
  * @param[in] field The field to operate on.
@@ -89,6 +93,7 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(ib_operator_inst_t *op_inst);
  */
 typedef ib_status_t (* ib_operator_execute_fn_t)(ib_engine_t *ib,
                                                  ib_tx_t *tx,
+                                                 const ib_rule_t *rule,
                                                  void *data,
                                                  ib_flags_t flags,
                                                  ib_field_t *field,
@@ -163,6 +168,7 @@ ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine
  * @param[in] ctx Current IronBee context
+ * @param[in] rule The rule that owns the operator instance being executed.
  * @param[in] required_op_flags Required operator flags
  *            (IB_OP_FLAG_{PHASE,STREAM})
  * @param[in] name The name of the operator to create.
@@ -176,6 +182,7 @@ ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
  */
 ib_status_t DLL_PUBLIC ib_operator_inst_create(ib_engine_t *ib,
                                                ib_context_t *ctx,
+                                               const ib_rule_t *rule,
                                                ib_flags_t required_op_flags,
                                                const char *name,
                                                const char *parameters,
@@ -198,6 +205,7 @@ ib_status_t DLL_PUBLIC ib_operator_inst_destroy(ib_operator_inst_t *op_inst);
  *
  * @param[in] ib Ironbee engine
  * @param[in] tx The transaction for this action.
+ * @param[in] rule The rule that owns the operator instance being executed.
  * @param[in] op_inst Operator instance to use.
  * @param[in] field Field to operate on.
  * @param[out] result The result of the operator
@@ -206,6 +214,7 @@ ib_status_t DLL_PUBLIC ib_operator_inst_destroy(ib_operator_inst_t *op_inst);
  */
 ib_status_t DLL_PUBLIC ib_operator_execute(ib_engine_t *ib,
                                            ib_tx_t *tx,
+                                           const ib_rule_t *rule,
                                            const ib_operator_inst_t *op_inst,
                                            ib_field_t *field,
                                            ib_num_t *result);

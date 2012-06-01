@@ -26,6 +26,7 @@
 #include "gtest/gtest-spi.h"
 
 #include "base_fixture.h"
+#include <ironbee/rule_engine.h>
 #include <ironbee/operator.h>
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
@@ -75,6 +76,7 @@ TEST_F(PcreModuleTest, test_load_module)
     ib_operator_t op;
     ib_operator_inst_t *op_inst=NULL;
     ib_num_t result;
+    ib_rule_t *rule;
 
     ib_field_t* field1;
     ib_field_t* field2;
@@ -106,6 +108,13 @@ TEST_F(PcreModuleTest, test_load_module)
         )
     );
 
+    ASSERT_IB_OK(ib_rule_create(ib_engine,
+                                ib_engine->ectx,
+                                __FILE__,
+                                __LINE__,
+                                IB_TRUE,
+                                &rule));
+
     // Ensure that the operator exists.
     ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, (void**)&op, "pcre"));
 
@@ -113,6 +122,7 @@ TEST_F(PcreModuleTest, test_load_module)
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
                                       NULL,
+                                      rule,
                                       IB_OP_FLAG_PHASE,
                                       "pcre",
                                       "string\\s2",
@@ -122,6 +132,7 @@ TEST_F(PcreModuleTest, test_load_module)
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
                                              ib_conn->tx,
+                                             rule,
                                              op_inst->data,
                                              op_inst->flags,
                                              field1,
@@ -133,6 +144,7 @@ TEST_F(PcreModuleTest, test_load_module)
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
                                              ib_conn->tx,
+                                             rule,
                                              op_inst->data,
                                              op_inst->flags,
                                              field2,

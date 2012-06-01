@@ -80,6 +80,7 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
 
 ib_status_t ib_operator_inst_create(ib_engine_t *ib,
                                     ib_context_t *ctx,
+                                    const ib_rule_t *rule,
                                     ib_flags_t required_op_flags,
                                     const char *name,
                                     const char *parameters,
@@ -112,7 +113,7 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
     (*op_inst)->flags = flags;
 
     if (op->fn_create != NULL) {
-        rc = op->fn_create(ib, ctx, pool, parameters, *op_inst);
+        rc = op->fn_create(ib, ctx, rule, pool, parameters, *op_inst);
     }
     else {
         rc = IB_OK;
@@ -139,6 +140,7 @@ ib_status_t ib_operator_inst_destroy(ib_operator_inst_t *op_inst)
 
 ib_status_t ib_operator_execute(ib_engine_t *ib,
                                 ib_tx_t *tx,
+                                const ib_rule_t *rule,
                                 const ib_operator_inst_t *op_inst,
                                 ib_field_t *field,
                                 ib_num_t *result)
@@ -150,7 +152,7 @@ ib_status_t ib_operator_execute(ib_engine_t *ib,
         && (op_inst->op->fn_execute != NULL))
     {
         rc = op_inst->op->fn_execute(
-            ib, tx, op_inst->data, op_inst->flags, field, result);
+            ib, tx, rule, op_inst->data, op_inst->flags, field, result);
     }
     else {
         *result = 1;

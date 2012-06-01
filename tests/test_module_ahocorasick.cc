@@ -26,6 +26,7 @@
 #include "gtest/gtest-spi.h"
 
 #include "base_fixture.h"
+#include <ironbee/rule_engine.h>
 #include <ironbee/operator.h>
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
@@ -52,6 +53,7 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
 {
     ib_tx_t tx; /**< We do need a transaction for the memory pool. */
 
+    ib_rule_t *rule;
     ib_operator_t op;
     ib_operator_inst_t *op_inst = NULL;
     ib_num_t result;
@@ -91,10 +93,17 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
     // Ensure that the operator exists.
     ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, &op, "pm"));
 
+    ASSERT_IB_OK(ib_rule_create(ib_engine,
+                                ib_engine->ectx,
+                                __FILE__,
+                                __LINE__,
+                                IB_TRUE,
+                                &rule));
     // Get the operator.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
                                       NULL,
+                                      rule,
                                       IB_OP_FLAG_PHASE,
                                       "pm",
                                       "string2",
@@ -103,14 +112,14 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, op_inst->data, op_inst->flags, field1, &result));
+        ib_engine, &tx, rule, op_inst->data, op_inst->flags, field1, &result));
 
     // We should fail.
     ASSERT_FALSE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, op_inst->data, op_inst->flags, field2, &result));
+        ib_engine, &tx, rule, op_inst->data, op_inst->flags, field2, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);
@@ -123,6 +132,7 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     ib_operator_t op;
     ib_operator_inst_t *op_inst = NULL;
     ib_num_t result;
+    ib_rule_t *rule;
 
     ib_field_t* field1;
     ib_field_t* field2;
@@ -159,10 +169,17 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     // Ensure that the operator exists.
     ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, &op, "pmf"));
 
+    ASSERT_IB_OK(ib_rule_create(ib_engine,
+                                ib_engine->ectx,
+                                __FILE__,
+                                __LINE__,
+                                IB_TRUE,
+                                &rule));
     // Get the operator.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
                                       NULL,
+                                      rule,
                                       IB_OP_FLAG_PHASE,
                                       "pmf",
                                       "ahocorasick.patterns",
@@ -171,14 +188,14 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, op_inst->data, op_inst->flags, field1, &result));
+        ib_engine, &tx, rule, op_inst->data, op_inst->flags, field1, &result));
 
     // We should fail.
     ASSERT_TRUE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, op_inst->data, op_inst->flags, field2, &result));
+        ib_engine, &tx, rule, op_inst->data, op_inst->flags, field2, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);

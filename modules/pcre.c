@@ -551,6 +551,7 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modpcre_matcher_iface = {
  */
 static ib_status_t pcre_operator_create(ib_engine_t *ib,
                                         ib_context_t *ctx,
+                                        const ib_rule_t *rule,
                                         ib_mpool_t *pool,
                                         const char *pattern,
                                         ib_operator_inst_t *op_inst)
@@ -771,6 +772,7 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
  */
 static ib_status_t pcre_operator_execute(ib_engine_t *ib,
                                          ib_tx_t *tx,
+                                         const ib_rule_t *rule,
                                          void *data,
                                          ib_flags_t flags,
                                          ib_field_t *field,
@@ -975,6 +977,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
  */
 static ib_status_t dfa_operator_create(ib_engine_t *ib,
                                         ib_context_t *ctx,
+                                        const ib_rule_t *rule,
                                         ib_mpool_t *pool,
                                         const char *pattern,
                                         ib_operator_inst_t *op_inst)
@@ -1185,6 +1188,7 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
  */
 static ib_status_t dfa_operator_execute(ib_engine_t *ib,
                                         ib_tx_t *tx,
+                                        const ib_rule_t *rule,
                                         void *data,
                                         ib_flags_t flags,
                                         ib_field_t *field,

@@ -47,6 +47,9 @@ class TestIronBeeModuleRulesLua : public BaseFixture {
 
     ib_module_t *m_module;
 
+    protected:
+    ib_rule_t *rule;
+
     public:
 
     TestIronBeeModuleRulesLua() : BaseFixture() {
@@ -55,6 +58,12 @@ class TestIronBeeModuleRulesLua : public BaseFixture {
     virtual void SetUp(){
         BaseFixture::SetUp();
         loadModule(&m_module, "ibmod_rules.so");
+        ASSERT_IB_OK(ib_rule_create(ib_engine,
+                                    ib_engine->ectx,
+                                    __FILE__,
+                                    __LINE__,
+                                    IB_TRUE,
+                                    &rule));
     }
 
     void setSearchPath(lua_State *L)
@@ -166,6 +175,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
 
     ASSERT_EQ(IB_OK, ib_operator_inst_create(ib_engine,
                                              NULL,
+                                             rule,
                                              IB_OP_FLAG_PHASE,
                                              op_name,
                                              "unused parameter.",
@@ -176,7 +186,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
 
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, op_inst->data, op_inst->flags, field1, &result));
+        ib_engine, &tx, rule, op_inst->data, op_inst->flags, field1, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);
