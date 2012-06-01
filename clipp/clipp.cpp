@@ -79,6 +79,7 @@
 // Generator and modifier
 #include "ironbee.hpp"
 #include "pb_consumer.hpp"
+#include "htp_consumer.hpp"
 #include "null_consumer.hpp"
 
 #include "connection_modifiers.hpp"
@@ -325,12 +326,14 @@ void help()
 #endif
     "\n"
     "Consumers:\n"
-    "  ironbee:<path> -- Internal IronBee using <path> as configuration.\n"
-    "  writepb:<path> -- Output to protobuf file at <path>.\n"
-    "  view           -- Output to stdout for human consumption.\n"
-    "  view:id        -- Output IDs to stdout for human consumption.\n"
-    "  view:summary   -- Output summary to stdout for human consumption.\n"
-    "  null           -- Discard.\n"
+    "  ironbee:<path>  -- Internal IronBee using <path> as configuration.\n"
+    "  writepb:<path>  -- Output to protobuf file at <path>.\n"
+    "  writehtp:<path> -- Output in HTP test format at <path>.\n"
+    "                     Best with unparsed format and only 1 connection.\n"
+    "  view            -- Output to stdout for human consumption.\n"
+    "  view:id         -- Output IDs to stdout for human consumption.\n"
+    "  view:summary    -- Output summary to stdout for human consumption.\n"
+    "  null            -- Discard.\n"
     "\n"
     "Modifiers:\n"
     "  @view                   -- Output to stdout for human consumption.\n"
@@ -525,10 +528,11 @@ int main(int argc, char** argv)
 
     // Declare consumers.
     consumer_factory_map_t consumer_factory_map;
-    consumer_factory_map["ironbee"] = construct_consumer<IronBeeConsumer>;
-    consumer_factory_map["writepb"] = construct_consumer<PBConsumer>;
-    consumer_factory_map["view"]    = construct_consumer<ViewConsumer>;
-    consumer_factory_map["null"]    =
+    consumer_factory_map["ironbee"]  = construct_consumer<IronBeeConsumer>;
+    consumer_factory_map["writepb"]  = construct_consumer<PBConsumer>;
+    consumer_factory_map["writehtp"] = construct_consumer<HTPConsumer>;
+    consumer_factory_map["view"]     = construct_consumer<ViewConsumer>;
+    consumer_factory_map["null"]     =
         construct_argless_consumer<NullConsumer>;
 
     // Declare modifiers.

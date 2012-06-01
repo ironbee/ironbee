@@ -459,8 +459,14 @@ are interpreted.</p>
 
 <p><strong>writepb</strong>:<em>path</em> </p>
 
-<p>This consumer the Inputs to <em>path</em> in the CLIPP protobuf format. This format
-perfectly captures the Inputs.</p>
+<p>This consumer writes the Inputs to <em>path</em> in the CLIPP protobuf format. This
+format perfectly captures the Inputs.</p>
+
+<p><strong>writehtp</strong>:<em>path</em></p>
+
+<p>This consumer writes all connection data in and out events to <em>path</em> in the
+HTP test format. This consumer is really only useful when there is a
+single input in unparsed format.</p>
 
 <h2 id="extendingclipp">Extending CLIPP</h2>
 

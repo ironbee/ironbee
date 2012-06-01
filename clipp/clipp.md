@@ -446,8 +446,14 @@ These consumer are identical to the modifiers of the same name except that they 
 
 **writepb**:*path* 
 
-This consumer the Inputs to *path* in the CLIPP protobuf format.  This format
-perfectly captures the Inputs.
+This consumer writes the Inputs to *path* in the CLIPP protobuf format.  This 
+format perfectly captures the Inputs.
+
+**writehtp**:*path*
+
+This consumer writes all connection data in and out events to *path* in the
+HTP test format.  This consumer is really only useful when there is a 
+single input in unparsed format.
 
 Extending CLIPP
 ---------------
