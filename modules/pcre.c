@@ -1126,7 +1126,7 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
 
     (*workspace)->wscount = WORKSPACE_SIZE_DEFAULT;
     (*workspace)->workspace =
-        (int*)ib_mpool_alloc(tx->mp,
+        (int *)ib_mpool_alloc(tx->mp,
                              sizeof(*((*workspace)->workspace)) *
                                 (*workspace)->wscount);
     if ((*workspace)->workspace == NULL) {
