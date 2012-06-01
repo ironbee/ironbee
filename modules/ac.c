@@ -193,7 +193,7 @@ static ib_status_t alloc_ac_tx_data(ib_tx_t *tx,
     }
 
     (*workspace)->ctx =
-        (ib_ac_context_t*)ib_mpool_alloc(tx->mp, sizeof(*(*workspace)->ctx));
+        (ib_ac_context_t *)ib_mpool_alloc(tx->mp, sizeof(*(*workspace)->ctx));
     if ((*workspace)->ctx == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -716,7 +716,7 @@ static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
 
     /* Create a new context for every operator call. */
     else {
-        *ac_ctx = (ib_ac_context_t*)ib_mpool_alloc(tx->mp, sizeof(**ac_ctx));
+        *ac_ctx = (ib_ac_context_t *)ib_mpool_alloc(tx->mp, sizeof(**ac_ctx));
         if (*ac_ctx == NULL) {
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
