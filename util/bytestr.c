@@ -163,7 +163,7 @@ ib_status_t ib_bytestr_dup_mem(
     assert(pdst != NULL);
     assert(pool != NULL);
 
-    if (data == NULL && data_length == 0) {
+    if (data == NULL && data_length != 0) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
