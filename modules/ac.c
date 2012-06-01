@@ -688,7 +688,7 @@ static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
 
     ib_status_t rc;
 
-    /* Stream rules maintain state across calls. 
+    /* Stream rules maintain state across calls.
      * If a rule is a stream rule, try to fetch the rule context data. */
     if (ib_rule_is_stream(rule)) {
         modac_workspace_t *workspace;

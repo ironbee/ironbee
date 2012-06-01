@@ -139,7 +139,7 @@ struct ib_operator_inst_t {
  * @param[in] ib Ironbee engine
  * @param[in] name The name of the operator.
  * @param[in] flags Operator flags.
- * @param[in] op_data Operator data. This is stored in 
+ * @param[in] op_data Operator data. This is stored in
  *            ib_operator_t.data. Calls to ib_operator_create_fn_t,
  *            ib_operator_destroy_fn_t, and ib_operator_execute_fn_t
  *            can access this data by fetching

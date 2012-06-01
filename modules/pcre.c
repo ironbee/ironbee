@@ -1076,7 +1076,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
     }
 
     ib_log_debug2_tx(tx,
-                     "Returning rule hash " MODULE_DATA_STR " at %p.", 
+                     "Returning rule hash " MODULE_DATA_STR " at %p.",
                      *rule_data);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -1096,7 +1096,7 @@ typedef struct dfa_workspace_t dfa_workspace_t;
  * @param[in] id The operator identifier used to get it's workspace.
  * @param[out] workspace Created.
  *
- * @returns 
+ * @returns
  *   - IB_OK on success.
  *   - IB_EALLOC on an allocation error.
  */
@@ -1125,7 +1125,7 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
     }
 
     (*workspace)->wscount = WORKSPACE_SIZE_DEFAULT;
-    (*workspace)->workspace = 
+    (*workspace)->workspace =
         (int*)ib_mpool_alloc(tx->mp,
                              sizeof(*((*workspace)->workspace)) *
                                 (*workspace)->wscount);
@@ -1148,7 +1148,7 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
  * @param[in] id The operator identifier used to get it's workspace.
  * @param[out] workspace Retrieved.
  *
- * @returns 
+ * @returns
  *   - IB_OK on success.
  *   - IB_ENOENT if the structure does not exist. Call alloc_dfa_tx_data then.
  *   - IB_EALLOC on an allocation error.
@@ -1214,7 +1214,7 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
     const ib_bytestr_t* bytestr;
     dfa_workspace_t *dfa_workspace;
     int options; /* dfa exec options. */
- 
+
     ovector = (int *)malloc(ovecsize*sizeof(*ovector));
     if (ovector==NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -1284,7 +1284,7 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
     else if (ib_rc == IB_OK) {
         options = PCRE_PARTIAL_SOFT | PCRE_DFA_RESTART;
         ib_log_debug_tx(tx,
-                        "Reusing existing DFA workspace %p for id %s.", 
+                        "Reusing existing DFA workspace %p for id %s.",
                         dfa_workspace,
                         rule_data->id);
     }
