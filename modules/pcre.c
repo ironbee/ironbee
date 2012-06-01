@@ -67,6 +67,11 @@
 #define PCRE_JIT_MAX_STACK_SZ 512*1024
 #endif
 
+/* Port forward the pcre constant PCRE_PARTIAL as PCRE_PARTIAL_SOFT. */
+#ifndef PCRE_PARTIAL_SOFT
+#define PCRE_PARTIAL_SOFT PCRE_PARTIAL
+#endif
+
 /**
  * From pcreapi man page.
  */
