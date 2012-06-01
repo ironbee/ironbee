@@ -1897,7 +1897,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 
         /* Verify size. */
         if (rlen >= CORE_JSON_MAX_FIELD_LEN) {
-            ib_log_error(ib, "Item too large to log in part %s: %" PRIuMAX,
+            ib_log_notice(ib, "Item too large to log in part %s: %" PRIuMAX,
                          part->name, rlen);
             *chunk = (const uint8_t *)"\r\n";
             part->gen_data = (void *)-1;
@@ -1968,7 +1968,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
             /* Verify size. */
             if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
-                ib_log_error(ib, "Item too large to log in part %s: %" PRIuMAX,
+                ib_log_notice(ib, "Item too large to log in part %s: %" PRIuMAX,
                              part->name, rlen);
                 *chunk = (const uint8_t *)"\r\n";
                 part->gen_data = (void *)-1;
