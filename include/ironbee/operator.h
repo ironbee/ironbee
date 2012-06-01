@@ -37,6 +37,7 @@
 #include <ironbee/build.h>
 #include <ironbee/types.h>
 #include <ironbee/engine.h>
+#include <ironbee/rule_defs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,7 +45,6 @@ extern "C" {
 
 /** Operator Instance Structure */
 typedef struct ib_operator_inst_t ib_operator_inst_t;
-typedef struct ib_rule_t ib_rule_t;
 
 /**
  * Operator instance creation callback type.
