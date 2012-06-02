@@ -26,7 +26,7 @@
     <xi:include href="ch01-introduction.xml"/>
     <xi:include href="chXX-installation.xml"/>    
     <xi:include href="ch02-directives.xml"/>
-    <xi:include href="ch03-variables.xml"/>
+    <xi:include href="ch03-fields.xml"/>
     <xi:include href="ch04-operators.xml"/>     
     <xi:include href="ch05-modifiers.xml"/>
     <xi:include href="ch06-transformation-functions.xml"/>
