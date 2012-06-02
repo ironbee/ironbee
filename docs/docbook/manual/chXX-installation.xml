@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
-    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
-    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
-    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="installation">
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:html="http://www.w3.org/1999/xhtml" xml:id="installation">
     <title>Installation</title>
     <para>...</para>
     <section>
@@ -12,7 +9,7 @@
             functionality, and regression testing on. This is not to say that IronBee will not work
             for you if your OS is not listed on this table, it probably will as long as you can meet
             the general dependencies outlined in the section "General Dependencies".</para>
-        <table border="1">
+        <table border="1" width="100%">
             <caption>Tested Operating Systems</caption>
             <tr>
                 <th>Operating System</th>
@@ -54,7 +51,7 @@
     <section>
         <title>General Dependencies</title>
         <para>...</para>
-        <table border="1">
+        <table border="1" width="100%">
             <caption>Build Tool Dependencies</caption>
             <tr>
                 <th>Dependency</th>
@@ -71,7 +68,7 @@
             <tr>
                 <td>GNU Build System</td>
                 <td>autoconf 2.9+</td>
-                <td>Autotools(Automake,Autoconf,Libtool)</td>
+                <td>Autotools(Automake, Autoconf, Libtool)</td>
                 <td>http://www.gnu.org/software/hello/manual/autoconf/The-GNU-Build-System.html</td>
             </tr>
             <tr>
@@ -81,19 +78,23 @@
                 <td>http://pkg-config.freedesktop.org/wiki/</td>
             </tr>
         </table>
-        <table border="1">
+        <table border="1" width="100%">
             <caption>Software Version Control</caption>
             <tr>
                 <th>Dependency</th>
+                <th>Version</th>
                 <th>Description</th>
+                <th>Website</th>
             </tr>
             <tr>
                 <td>Git</td>
-                <td>Git is needed to access the IronBee source repository. http://git-scm.com/</td>
+                <td>latest</td>
+                <td>Git is needed to access the IronBee source repository.</td>
+                <td>http://git-scm.com/</td>
             </tr>
         </table>
         
-        <table border="1">
+        <table border="1" width="100%">
             <caption>Libraries for IronBee</caption>
             <tr>
                 <th>Dependency</th>
@@ -118,7 +119,6 @@
                 <td>NA</td>
                 <td>POSIX threads</td>
                 <td>NA</td>
-                <td/>
             </tr>
             <tr>
                 <td>ossp-uuid</td>
@@ -127,7 +127,7 @@
                 <td>http://www.ossp.org/pkg/lib/uuid/</td>
             </tr>
         </table>
-        <table border="1">
+        <table border="1" width="100%">
             <caption>Libraries for IronBee C++ Wrapper and Utilities</caption>
             <tr>
                 <th>Dependency</th>
@@ -148,7 +148,7 @@
                 <td>http://www.boost.org/</td>
             </tr>
         </table>
-        <table border="1">
+        <table border="1" width="100%">
             <caption>Libraries for IronBee C++ CLI (clipp)</caption>
             <tr>
                 <th>Dependency</th>
@@ -188,15 +188,19 @@
             </tr>
         </table>
         
-        <table border="1">
+        <table border="1" width="100%">
             <caption>Server</caption>
             <tr>
                 <th>Dependency</th>
+                <th>Version</th>
                 <th>Description</th>
+                <th>Website</th>
             </tr>
             <tr>
                 <td>Apache Traffic Server</td>
-                <td>Apache foundation's Traffic Server. http://trafficserver.apache.org/</td>
+                <td>3.1</td>
+                <td>Apache foundation's Traffic Server.</td>
+                <td>http://trafficserver.apache.org/</td>
             </tr>
         </table>       
     </section>
@@ -206,15 +210,22 @@
             <para>In the future LibHTP will be integrated into the ironbee build process but until
                 that time you will have to download, build and install LibHTP from it's public git
                 repository.</para>
-            <programlisting>git clone git://github.com/ironbee/libhtp.git
+            <programlisting># Clone the repository
+git clone git://github.com/ironbee/libhtp.git
 cd libhtp
-autoreconf -f --install
+
+# Generate the autotools utilities
+./autogen.sh
+
+# Configure the build for the current platform
 ./configure
+
+# Build and Install
 make
 sudo make install</programlisting></section>
     </section>
     <section>
-        <title>Installing IronBee</title>
+        <title>Building, Testing and Installing IronBee</title>
         <para>...</para>
         <section>
             <title>Initial Setup</title>
@@ -227,14 +238,20 @@ cd ironbee
         </section>
         <section>
             <title>Build and Install IronBee</title>
-        <programlisting>./configure 
+        <programlisting># Configure the build for the current platform
+./configure 
+
+# Build and Install
 make
 sudo make install</programlisting>
             </section>
         <section>
             <title>Build C++ Wrapper and Utilities (Optional)</title>
             <para>...</para>
-            <programlisting>./configure --enable-cpp
+            <programlisting># Configure the build for the current platform, enabling C++
+./configure --enable-cpp
+
+# Build and Install
 make
 sudo make install</programlisting>
         </section>

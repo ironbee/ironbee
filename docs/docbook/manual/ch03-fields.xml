@@ -1,0 +1,417 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
+    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="variables">
+    <title>Variables</title>
+    <para>...</para>
+    <section>
+        <title>ARGS</title>
+        <para><emphasis role="bold">Description:</emphasis> All request parameters combined.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>, <literal>REQUEST_BODY</literal>)</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+        <para>
+            <note>
+                <para>Only request header parameters are implemented as of version 0.2.</para>
+            </note>
+        </para>
+    </section>
+    <section>
+        <title>ARGS_GET</title>
+        <para><emphasis role="bold">Description:</emphasis> Request parameters transported in query string.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>ARGS_POST</title>
+        <para><emphasis role="bold">Description:</emphasis> Request parameters transported in request body.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>AUTH_PASSWORD</title>
+        <para><emphasis role="bold">Description:</emphasis> Basic authentication password.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>AUTH_USERNAME</title>
+        <para><emphasis role="bold">Description:</emphasis> Basic or Digest authentication
+            username.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>AUTH_TYPE</title>
+        <para><emphasis role="bold">Description:</emphasis> Indicator of the authentication method
+            used.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>This field contains the first token extracted from the <literal>Authorization</literal>
+            request header. Typical values are: <literal>Basic</literal>, <literal>Digest</literal>,
+            and <literal>NTLM</literal>. </para>
+    </section>
+    <section>
+        <title>GEOIP</title>
+        <para><emphasis role="bold">Description:</emphasis> If the <emphasis>geoip</emphasis> module
+            is loaded, then a lookup will be performed on the remote (client) address and the
+            results placed in this collection.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> geoip</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <note><para>The address used during lookup is the same as that stored in the <literal>REMOTE_ADDR</literal> field.</para></note>
+        <para>Sub-Fields (not all are available prior to GeoIP v1.4.6):
+        <itemizedlist>
+            <listitem>
+                <para><emphasis role="bold">latitude:</emphasis> Numeric latitude rounded to nearest integral value (no floats yet).</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">longitude:</emphasis> Numeric longitude rounded to
+                        nearest integral value (no floats yet).</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">area_code:</emphasis> Numeric area code (US
+                        only).</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">charset:</emphasis> Numeric character set code.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">country_code:</emphasis> Two character country
+                        code.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">country_code3:</emphasis> Three character country
+                        code.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">country_name:</emphasis> String country name.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">region:</emphasis> String region name.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">city:</emphasis> String city name.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">postal_code:</emphasis> String postal code.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">continent_code:</emphasis> String continent code.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">accuracy_radius:</emphasis> Numeric accuracy radius
+                        (v1.4.6+).</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">metro_code:</emphasis> Numeric metro code
+                        (v1.4.6+).</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">country_conf:</emphasis> String country confidence
+                        (v1.4.6+).</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">region_conf:</emphasis> String region confidence
+                        (v1.4.6+).</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">city_conf:</emphasis> String city confidence
+                        (v1.4.6+).</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">postal_conf:</emphasis> String postal code confidence
+                        (v1.4.6+).</para>
+            </listitem>
+        </itemizedlist>
+        </para>    
+    </section>
+    <section>
+        <title>LAST_MATCHED</title>
+        <para><emphasis role="bold">Description:</emphasis> An alias to the last matching
+            field.</para>
+        <para><emphasis role="bold">Type:</emphasis> Variable (same type as the aliased
+            field)</para>
+        <para><emphasis role="bold">Scope:</emphasis> Rule</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>This field is useful in a rule that is inspecting several fields, and you need to
+            which of the fields matched. For example:</para>
+        <programlisting># Further inspect a matching field
+Rule ARGS "@contains attach_string" chain
+    Rule LAST_MATCHED "@rx some.*complex.*patt.*that.*may.*be.*expensive" block
+
+# Log the value of the field that matched
+Rule ARGS "@rx test" \
+    "msg:'Test matched',logdata:%{LAST_MATCHED}"</programlisting>
+    </section>
+    <section>
+        <title>REMOTE_ADDR</title>
+        <para><emphasis role="bold">Description:</emphasis> Remote (client) IP address, extracted from the TCP connection. Can be in IPv4 or IPv6 format.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Connection</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+        <note><para>If the <literal>remote_address</literal> module is also loaded, then the client address will
+                be corrected using any available proxy headers (currently
+                    <literal>X-Forwarded-For</literal>).</para></note>
+    </section>
+    <section>
+        <title>REMOTE_PORT</title>
+        <para><emphasis role="bold">Description:</emphasis> Remote (client) port, extracted from the TCP connection.</para>
+        <para><emphasis role="bold">Type:</emphasis> Numeric</para>
+        <para><emphasis role="bold">Scope:</emphasis> Connection</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>REQUEST_BODY</title>
+        <para><emphasis role="bold">Description:</emphasis> Request body data.</para>
+        <para><emphasis role="bold">Type:</emphasis> Byte string</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <note>
+            <para>This field may not be supported by all operators (noteably <literal>@rx</literal>)
+                as it may not be a contiguous buffer, but rather spread across multiple buffers. In
+                most cases, you will want to use the <literal>StreamInspect</literal> directive with
+                the <literal>@pm</literal>, <literal>@pmf</literal> or <literal>@dfa</literal>
+                operator.</para>
+        </note>
+    </section>
+    <section>
+        <title>REQUEST_CONTENT_TYPE</title>
+        <para><emphasis role="bold">Description:</emphasis> Contains request content type.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>Request content type is constructed from the request <literal>Content-Type</literal>
+            header. The value is first converted to contain only the content type (and exclude any
+            character encoding information), then converted to lowercase.</para>
+    </section>
+    <section>
+        <title>REQUEST_HEADERS</title>
+        <para><emphasis role="bold">Description:</emphasis> Collection of request headers
+            (name/value pairs).</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>REQUEST_HOST</title>
+        <para><emphasis role="bold">Description:</emphasis> Request hostname information, extracted from the request and normalized.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+        <para>The following rules apply:</para>
+        <orderedlist>
+            <listitem>
+                <para>Use the hostname information if provided on the request line</para>
+            </listitem>
+            <listitem>
+                <para>Alternatively, look up the <literal>Host</literal> request header</para>
+            </listitem>
+            <listitem>
+                <para>If the hostname information is provided in both locations, the information in
+                    the <literal>Host</literal> header is ignored</para>
+            </listitem>
+        </orderedlist>
+        <para>Normalization [TODO What RFC should we refer to?]:</para>
+        <orderedlist>
+            <listitem>
+                <para>Lowercase</para>
+            </listitem>
+            <listitem>
+                <para>Remove trailing dot [TODO What dot?]</para>
+            </listitem>
+        <listitem>
+            <para>[TODO Remove port?]</para>
+        </listitem>
+        </orderedlist>
+    </section>
+    <section>
+        <title>REQUEST_FILENAME</title>
+        <para><emphasis role="bold">Description:</emphasis> Request filename, extracted from request URI and normalized according to the current personality.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>Normalization algorithm, with all "features" enabled, is as follows:</para>
+        <orderedlist>
+            <listitem>
+                <para>Decode URL-encoded characters (both <literal>%HH</literal> and
+                        <literal>%uHHHH</literal> formats), convert to lowercase, compress
+                    separators, convert backslashes, and terminate NUL.</para>
+            </listitem>
+            <listitem>
+                <para>Convert UTF-8 to single-byte stream using best-fit mapping</para>
+            </listitem>
+            <listitem>
+                <para>Perform RFC 3986 normalization</para>
+            </listitem>
+        </orderedlist>
+    </section>
+    <section>
+        <title>REQUEST_PROTOCOL</title>
+        <para><emphasis role="bold">Description:</emphasis> Request protocol name and
+            version.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>This field contains the protocol name and version, as specified on the request line.
+            Transactions that do not specify the protocol (e.g., HTTP prior to 1.0) will have an
+            empty string value.</para>
+    </section>
+    <section>
+        <title>REQUEST_URI</title>
+        <para><emphasis role="bold">Description:</emphasis> Request URI, extracted from request and normalized according to the current personality (see <literal>REQUEST_FILENAME</literal> for more details).</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+        <para>Default normalization:</para>
+        <orderedlist>
+            <listitem>
+                <para>RFC normalization</para>
+            </listitem>
+            <listitem>
+                <para>Convert to lowercase</para>
+            </listitem>
+            <listitem>
+                <para>Reduce consecutive forward slashes to a single character</para>
+            </listitem>
+        </orderedlist>
+        <para>All normalization options:</para>
+        <itemizedlist>
+            <listitem>
+                <para>RFC normalization</para>
+            </listitem>
+            <listitem>
+                <para>Convert to lowercase</para>
+            </listitem>
+            <listitem>
+                <para>Convert \ characters to /</para>
+            </listitem>
+            <listitem>
+                <para>Reduce consecutive forward slashes to a single character</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+    <section>
+        <title>RESPONSE_BODY</title>
+        <para><emphasis role="bold">Description:</emphasis> Response body data up to any imposed
+            limits.</para>
+        <para><emphasis role="bold">Type:</emphasis> Scalar</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <note>
+            <para>This field may not be supported by all operators (noteably <literal>@rx</literal>)
+                as it may not be a contiguous buffer, but rather spread across multiple buffers. In
+                most cases, you will want to use the <literal>StreamInspect</literal> directive with
+                the <literal>@pm</literal>, <literal>@pmf</literal> or <literal>@dfa</literal>
+                operator.</para>
+        </note>
+    </section>
+    <section>
+        <title>RESPONSE_CONTENT_TYPE</title>
+        <para><emphasis role="bold">Description:</emphasis> Contains response content type.</para>
+        <para><emphasis role="bold">Type:</emphasis> Scalar</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction
+                (<literal>RESPONSE_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>Response content type is constructed from the response <literal>Content-Type</literal>
+            header. The value is first converted to keep only the content type part (and exclude
+            character encoding information, if any), then converted to lowercase.</para>
+    </section>
+    <section>
+        <title>RESPONSE_HEADERS</title>
+        <para><emphasis role="bold">Description:</emphasis> Response headers.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>SERVER_ADDR</title>
+        <para><emphasis role="bold">Description:</emphasis> Server IP address, extracted from the TCP connection. Can be in IPv4 or IPv6 format.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Connection</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>SERVER_PORT</title>
+        <para><emphasis role="bold">Description:</emphasis> Server port, extracted from the TCP connection.</para>
+        <para><emphasis role="bold">Type:</emphasis> Numeric</para>
+        <para><emphasis role="bold">Scope:</emphasis> Connection</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>SITE_NAME</title>
+        <para><emphasis role="bold">Description:</emphasis> The name of the site to which the current transaction was assigned.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
+        <title>UA</title>
+        <para><emphasis role="bold">Description:</emphasis> User agent information extracted if the
+                <literal>user_agent</literal> module is loaded.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> user_agent</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <note><para>While the <literal>User-Agent</literal> HTTP request header may be used in generating these
+                fields, the term "user agent" here refers to the client as a whole.</para></note>
+        <para>Sub-Fields:
+            <itemizedlist>
+                <listitem>
+                    <para><emphasis role="bold">agent:</emphasis> String name of the user
+                        agent.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">product:</emphasis> String product deduced from the
+                        user agent data.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">os:</emphasis> String operating system deduced from
+                        user agent data.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">extra:</emphasis> Any extra string available after
+                        parsing the <literal>User-Agent</literal> HTTP request header.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">category:</emphasis> String category deduced from
+                        user agent data.</para>
+                </listitem>
+            </itemizedlist>
+        </para>    
+    </section>
+</chapter>

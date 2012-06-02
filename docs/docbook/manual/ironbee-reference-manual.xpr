@@ -51,7 +51,7 @@
                                     <null/>
                                 </field>
                                 <field name="name">
-                                    <String>ironbee-reference-manual</String>
+                                    <String>Execute SQL</String>
                                 </field>
                                 <field name="baseURL">
                                     <String></String>
@@ -60,43 +60,43 @@
                                     <String></String>
                                 </field>
                                 <field name="fOPMethod">
-                                    <String>pdf</String>
+                                    <null/>
                                 </field>
                                 <field name="fOProcessorName">
-                                    <String>Apache FOP</String>
+                                    <null/>
                                 </field>
                                 <field name="headerURL">
                                     <String></String>
                                 </field>
                                 <field name="inputXSLURL">
-                                    <String>${pdu}/pdf.xsl</String>
+                                    <String>${currentFileURL}</String>
                                 </field>
                                 <field name="inputXMLURL">
-                                    <String>${currentFileURL}</String>
+                                    <String></String>
                                 </field>
                                 <field name="defaultScenario">
                                     <Boolean>false</Boolean>
                                 </field>
                                 <field name="isFOPPerforming">
-                                    <Boolean>true</Boolean>
+                                    <Boolean>false</Boolean>
                                 </field>
                                 <field name="type">
-                                    <String>XSL</String>
+                                    <String>SQL</String>
                                 </field>
                                 <field name="saveAs">
                                     <Boolean>true</Boolean>
                                 </field>
                                 <field name="openInBrowser">
-                                    <Boolean>true</Boolean>
+                                    <Boolean>false</Boolean>
                                 </field>
                                 <field name="outputFile">
-                                    <File>${cfn}.pdf</File>
+                                    <null/>
                                 </field>
                                 <field name="openOtherLocationInBrowser">
                                     <Boolean>false</Boolean>
                                 </field>
                                 <field name="locationToOpenInBrowserURL">
-                                    <null/>
+                                    <String></String>
                                 </field>
                                 <field name="openInEditor">
                                     <Boolean>false</Boolean>
@@ -105,7 +105,7 @@
                                     <Boolean>false</Boolean>
                                 </field>
                                 <field name="showInXMLPane">
-                                    <Boolean>true</Boolean>
+                                    <Boolean>false</Boolean>
                                 </field>
                                 <field name="showInSVGPane">
                                     <Boolean>false</Boolean>
@@ -123,7 +123,7 @@
                                     <String-array/>
                                 </field>
                                 <field name="xslTransformer">
-                                    <String>Saxon6.5.5</String>
+                                    <String>JDBC</String>
                                 </field>
                                 <field name="extensionURLs">
                                     <String-array/>
@@ -383,7 +383,7 @@
                                     <null/>
                                 </field>
                                 <field name="name">
-                                    <String>Execute SQL</String>
+                                    <String>ironbee-reference-manual</String>
                                 </field>
                                 <field name="baseURL">
                                     <String></String>
@@ -392,43 +392,43 @@
                                     <String></String>
                                 </field>
                                 <field name="fOPMethod">
-                                    <null/>
+                                    <String>pdf</String>
                                 </field>
                                 <field name="fOProcessorName">
-                                    <null/>
+                                    <String>Apache FOP</String>
                                 </field>
                                 <field name="headerURL">
                                     <String></String>
                                 </field>
                                 <field name="inputXSLURL">
-                                    <String>${currentFileURL}</String>
+                                    <String>${pdu}/pdf.xsl</String>
                                 </field>
                                 <field name="inputXMLURL">
-                                    <String></String>
+                                    <String>${currentFileURL}</String>
                                 </field>
                                 <field name="defaultScenario">
                                     <Boolean>false</Boolean>
                                 </field>
                                 <field name="isFOPPerforming">
-                                    <Boolean>false</Boolean>
+                                    <Boolean>true</Boolean>
                                 </field>
                                 <field name="type">
-                                    <String>SQL</String>
+                                    <String>XSL</String>
                                 </field>
                                 <field name="saveAs">
                                     <Boolean>true</Boolean>
                                 </field>
                                 <field name="openInBrowser">
-                                    <Boolean>false</Boolean>
+                                    <Boolean>true</Boolean>
                                 </field>
                                 <field name="outputFile">
-                                    <null/>
+                                    <File>${cfn}.pdf</File>
                                 </field>
                                 <field name="openOtherLocationInBrowser">
                                     <Boolean>false</Boolean>
                                 </field>
                                 <field name="locationToOpenInBrowserURL">
-                                    <String></String>
+                                    <null/>
                                 </field>
                                 <field name="openInEditor">
                                     <Boolean>false</Boolean>
@@ -437,7 +437,7 @@
                                     <Boolean>false</Boolean>
                                 </field>
                                 <field name="showInXMLPane">
-                                    <Boolean>false</Boolean>
+                                    <Boolean>true</Boolean>
                                 </field>
                                 <field name="showInSVGPane">
                                     <Boolean>false</Boolean>
@@ -455,7 +455,7 @@
                                     <String-array/>
                                 </field>
                                 <field name="xslTransformer">
-                                    <String>JDBC</String>
+                                    <String>Saxon6.5.5</String>
                                 </field>
                                 <field name="extensionURLs">
                                     <String-array/>
@@ -475,7 +475,7 @@
         <file name="ch00-preface.xml"/>
         <file name="ch01-introduction.xml"/>
         <file name="ch02-directives.xml"/>
-        <file name="ch03-variables.xml"/>
+        <file name="ch03-fields.xml"/>
         <file name="ch04-operators.xml"/>
         <file name="ch05-modifiers.xml"/>
         <file name="ch06-transformation-functions.xml"/>

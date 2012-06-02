@@ -118,4 +118,21 @@
         <para>Applied to a collection, the length operator will return the lengths of all variables
             in it.</para>
     </section>
+    <section>
+        <title>Special single-variable syntax</title>
+        <para>In addition to the colon operator described in the previous section, collections
+            support the comma operator, which returns exactly one variable or no variables at all.
+            This is an advanced operator with dynamic behavior.</para>
+        <programlisting>ARGS.name</programlisting>
+        <para>In most cases, the comma operator will simply return the first matching variable in a
+            collection (or nothing, if no matching variable can be found). However, when applied to
+                <literal>ARGS</literal>, this operator may return a value that depends on the
+            underlying platform that's being protected. More accurately, the functioning of the
+            operator depends on the current <firstterm>parsing personality</firstterm>. Parsing
+            personalities are designed to mimic the parsing implementation of backend systems in
+            order to minimize a problem known as <firstterm>impedance mismatch</firstterm>. The
+            issue is that, when faced with multiple parameters with the same name, some platforms
+            return the first parameter, some platforms return the last parameter, and some platforms
+            even return a combined value of all parameters with the same name. </para>
+    </section>
 </appendix>

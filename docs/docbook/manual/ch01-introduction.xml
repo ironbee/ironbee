@@ -12,104 +12,88 @@
         <para>
             <itemizedlist>
                 <listitem>
-                    <para>Configuration files are in Unicode and stored as UTF-8</para>
-                </listitem>
-                <listitem>
-                    <para>Escape sequences as in JavaScript (section 7.8.4 in ECMA-262), except
+                    <para>Escape sequences are as in JavaScript (section 7.8.4 in ECMA-262), except
                         within PCRE regular expression patterns, where PCRE escaping is used</para>
                 </listitem>
                 <listitem>
                     <para>Lines that begin with <literal>#</literal> are comments</para>
                 </listitem>
                 <listitem>
-                    <para>Line continuation when <literal>\</literal> is the last character on a
-                        line</para>
+                    <para>Lines are continued on the next line when <literal>\</literal> is the last
+                        character on a line</para>
                 </listitem>
             </itemizedlist>
         </para>
     </section>
     <section>
-        <title>Variables</title>
-        <para>IronBee supports two types of variables:</para>
+        <title>Data Fields</title>
+        <para>IronBee supports two types of data fields:</para>
         <itemizedlist>
             <listitem>
-                <para><emphasis>Scalar variables</emphasis>, which can contain data of any type
-                    (effectively binary strings)</para>
+                <para><emphasis>Scalars</emphasis>, which can contain data of various types (strings
+                    or numbers)</para>
             </listitem>
             <listitem>
-                <para><emphasis>Collections</emphasis>, which contain zero or more scalar
-                    variables</para>
+                <para><emphasis>Collections</emphasis>, which contain zero or more scalars</para>
             </listitem>
         </itemizedlist>
-        <para>Variables that are created using external data (e.g., request parameters) can have any
+        <para>Fields that are created using external data (e.g., request parameters) can have any
             byte value used in their names, which are essentially binary strings. This is because we
             have to use whatever input data is provided to us.</para>
-        <para>Variables that are created by configuration must use names that begin with an
-            underscore or a letter, and are followed by zero or more letter, digit, underscore, and
-            dash characters. The only allowed letters are from the A-Z range (irrespective of the
-            case, because variable names are case-insensitive).</para>
-        <para>The names of built-in variables and collections are written using all uppercase
-            letters by convention.</para>
+        <para>Fields that are created by configuration must use names that begin with an underscore
+            or a letter, and are followed by zero or more letter, digit, underscore, and dash
+            characters. The only allowed letters are from the A-Z range (irrespective of the case,
+            as these names are case-insensitive).</para>
+        <para>The names of built-in fields are written using all uppercase letters by
+            convention.</para>
         <section>
-            <title>Addressing variables</title>
-            <para>How you're using variables depends on the context. The rules, for example,
-                typically accept one or more variables, which means that you can give a rule a
-                single variable (e.g., <emphasis>REQUEST_URI</emphasis>) or a collection (e.g.,
+            <title>Addressing Fields</title>
+            <para>How you're using fields depends on the context. The rules, for example, typically
+                accept one or more target fields, which means that you can give a rule a scalar
+                field (e.g., <emphasis>REQUEST_URI</emphasis>) or a collection field (e.g.,
                     <emphasis>ARGS</emphasis>). When you give a rule a collection, it will extract
-                all scalar variables out of it.</para>
+                all scalar fields out of it.</para>
             <para>You can also choose to be more specific, either because the logic of the rule
-                requires it, or because you are using a variable in a context that does not accept
+                requires it, or because you are using a field in a context that does not accept
                 collections.</para>
-            <para>To select the second variable in a collection:</para>
+            <para>To select the second field in a collection:</para>
             <programlisting>ARGS[2]</programlisting>
-            <para>To select the last variable in a collection:</para>
+            <para>To select the last field in a collection:</para>
             <programlisting>ARGS[-1]</programlisting>
-            <para>A collection can contain multiple scalar variables with the same name. You can use
-                the colon operator to filter out only the named variables:</para>
+            <para>A collection can contain multiple scalar fields with the same name. You can use
+                the colon operator to filter out only the named fields:</para>
             <programlisting>ARGS:username</programlisting>
-            <para>If you wish you can also select only a specific occurrence of the variable. The
+            <para>If you wish you can also select only a specific occurrence of the field. The
                 following returns the first <literal>username</literal> parameter from request
                 parameters:</para>
             <programlisting>ARGS:username[1]</programlisting>
             <para>Sometimes you will need to deal with parameters whose full names you don't know in
                 advance. For such cases we support selection using regular expression patterns. The
-                following selects all variables whose names begin with "user".</para>
+                following selects all fields whose names begin with "user".</para>
             <programlisting>ARGS:/^user/</programlisting>
-            <para>If, on the other hand, you know the variable name but it contains unusual
-                characters (e.g., a colon, or a bracket), you can quote the entire name using single
-                quotes and then use most characters without fear of breaking anything:</para>
+            <para>If, on the other hand, you know the field name but it contains unusual characters
+                (e.g., a colon, or a bracket), you can quote the entire name using single quotes and
+                then use most characters without fear of breaking anything:</para>
             <programlisting>ARGS:'name[]'</programlisting>
             <para>Alternatively, you can use the escape syntax to "deactivate" unusual
                 characters:</para>
             <programlisting>ARGS:name\x5b\x5d</programlisting>
+            <note>
+                <para>As of version 0.4.0, the <literal>[n]</literal> syntax described above is not
+                    implemented.</para>
+            </note>
         </section>
         <section>
-            <title>Special single-variable syntax</title>
-            <para>In addition to the colon operator described in the previous section, collections
-                support the comma operator, which returns exactly one variable or no variables at
-                all. This is an advanced operator with dynamic behavior.</para>
-            <programlisting>ARGS.name</programlisting>
-            <para>In most cases, the comma operator will simply return the first matching variable
-                in a collection (or nothing, if no matching variable can be found). However, when
-                applied to <literal>ARGS</literal>, this operator may return a value that depends on
-                the underlying platform that's being protected. More accurately, the functioning of
-                the operator depends on the current <firstterm>parsing personality</firstterm>.
-                Parsing personalities are designed to mimic the parsing implementation of backend
-                systems in order to minimize a problem known as <firstterm>impedance
-                    mismatch</firstterm>. The issue is that, when faced with multiple parameters
-                with the same name, some platforms return the first parameter, some platforms return
-                the last parameter, and some platforms even return a combined value of all
-                parameters with the same name. </para>
-        </section>
-        <section>
-            <title>Variable expression expansion</title>
+            <title>Field Expansion</title>
             <para>Sometimes there's a need to use a variable, or some value derived from a variable,
-                in text strings. This can be achieved using variable expression expansion. For
-                example:</para>
-            <programlisting>%{VARNAME}</programlisting>
-            <para>If the expression resolves to only one variable, the <literal>VARNAME</literal>
-                part will be replaced with the variable value. If the expression resolves to more
-                than one variable, the resulting string will be in JSON format.</para>
+                in text strings. This can be achieved using field expansion. For example:</para>
+            <programlisting>%{NAME}</programlisting>
+            <para>If the expression resolves to only one variable, the entire
+                    <literal>%{NAME}</literal> expression will be replaced with the field value. </para>
+            <caution>
+                <para>What if the field is not a scalar?  Perhaps the value could be JSON or similar
+                    format?</para>
+            </caution>
         </section>
         <section>
             <title>Collection size</title>

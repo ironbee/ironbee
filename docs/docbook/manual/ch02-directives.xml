@@ -13,7 +13,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>Off</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
         <para>Note: Setting <literal>AuditEngine</literal> to <literal>On</literal> activates audit
             logging, but does not log any transactions in itself. Further activity (e.g., a rule
             match) is required for a transaction to be recorded.</para>
@@ -28,7 +28,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>"/var/log/ironbee"</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
     </section>
     <section>
         <title>AuditLogDirMode</title>
