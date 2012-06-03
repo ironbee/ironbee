@@ -137,71 +137,71 @@
             flags for request parsing. The following flags may be set:</para>
         <itemizedlist>
             <listitem>
-                <para><emphasis role="bold">HTP_AMBIGUOUS_HOST:</emphasis> The host was specified in
+                <para><emphasis role="bold">AMBIGUOUS_HOST:</emphasis> The host was specified in
                     both the URI and in the Host header, but they do not match.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_FIELD_INVALID:</emphasis> An invalid field was
+                <para><emphasis role="bold">FIELD_INVALID:</emphasis> An invalid field was
                     sent.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_FIELD_LONG:</emphasis> A field length was longer
+                <para><emphasis role="bold">FIELD_LONG:</emphasis> A field length was longer
                     than allowed.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_FIELD_UNPARSEABLE:</emphasis> An unparseable field
+                <para><emphasis role="bold">FIELD_UNPARSEABLE:</emphasis> An unparseable field
                     was given.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_HOST_MISSING:</emphasis> The host was missing from a
+                <para><emphasis role="bold">HOST_MISSING:</emphasis> The host was missing from a
                     request in which it is normally sent.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_INVALID_CHUNKING:</emphasis> Invalid chunking was
+                <para><emphasis role="bold">INVALID_CHUNKING:</emphasis> Invalid chunking was
                     used.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_INVALID_FOLDING:</emphasis> Invalid header folding
+                <para><emphasis role="bold">INVALID_FOLDING:</emphasis> Invalid header folding
                     was used.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_MULTI_PACKET_HEAD:</emphasis> The header was sent in
+                <para><emphasis role="bold">MULTI_PACKET_HEAD:</emphasis> The header was sent in
                     more than one packet (buffer).</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_PATH_ENCODED_NUL:</emphasis> A NUL (zero) byte was
+                <para><emphasis role="bold">PATH_ENCODED_NUL:</emphasis> A NUL (zero) byte was
                     sent, encoded, in the path.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_PATH_ENCODED_SEPARATOR:</emphasis> An encoded path
+                <para><emphasis role="bold">PATH_ENCODED_SEPARATOR:</emphasis> An encoded path
                     separator was sent in the path.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_PATH_FULLWIDTH_EVASION:</emphasis> A full width
+                <para><emphasis role="bold">PATH_FULLWIDTH_EVASION:</emphasis> A full width
                     character was used in the path.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_PATH_INVALID_ENCODING:</emphasis> Invalid encoding
+                <para><emphasis role="bold">PATH_INVALID_ENCODING:</emphasis> Invalid encoding
                     was used in the path.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_PATH_OVERLONG_U:</emphasis> An overlong unicode
+                <para><emphasis role="bold">PATH_OVERLONG_U:</emphasis> An overlong unicode
                     encoding was used in the path.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_PATH_UTF8_INVALID:</emphasis> An invalid UTF-8
+                <para><emphasis role="bold">PATH_UTF8_INVALID:</emphasis> An invalid UTF-8
                     encoding was used in the path.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_PATH_UTF8_OVERLONG:</emphasis> An overlong UTF-8
+                <para><emphasis role="bold">PATH_UTF8_OVERLONG:</emphasis> An overlong UTF-8
                     encoding was used in the path.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_PATH_UTF8_VALID:</emphasis> A UTF-8 character was
+                <para><emphasis role="bold">PATH_UTF8_VALID:</emphasis> A UTF-8 character was
                     used in the path.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_REQUEST_SMUGGLING:</emphasis> A HTTP smuggling
+                <para><emphasis role="bold">REQUEST_SMUGGLING:</emphasis> A HTTP smuggling
                     attack was detected.</para>
             </listitem>
         </itemizedlist>
@@ -219,31 +219,31 @@
         
         <itemizedlist>
             <listitem>
-                <para><emphasis role="bold">HTP_FIELD_INVALID:</emphasis> An invalid field was
+                <para><emphasis role="bold">FIELD_INVALID:</emphasis> An invalid field was
                     sent.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_FIELD_LONG:</emphasis> A field length was longer
+                <para><emphasis role="bold">FIELD_LONG:</emphasis> A field length was longer
                     than allowed.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_FIELD_UNPARSEABLE:</emphasis> An unparseable field
+                <para><emphasis role="bold">FIELD_UNPARSEABLE:</emphasis> An unparseable field
                     was given.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_INVALID_CHUNKING:</emphasis> Invalid chunking was
+                <para><emphasis role="bold">INVALID_CHUNKING:</emphasis> Invalid chunking was
                     used.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_INVALID_FOLDING:</emphasis> Invalid header folding
+                <para><emphasis role="bold">INVALID_FOLDING:</emphasis> Invalid header folding
                     was used.</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_MULTI_PACKET_HEAD:</emphasis> The header was sent in
+                <para><emphasis role="bold">MULTI_PACKET_HEAD:</emphasis> The header was sent in
                     more than one packet (buffer).</para>
             </listitem>
             <listitem>
-                <para><emphasis role="bold">HTP_STATUS_LINE_INVALID:</emphasis> An invalid HTTP
+                <para><emphasis role="bold">STATUS_LINE_INVALID:</emphasis> An invalid HTTP
                     status code was sent.</para>
             </listitem>
         </itemizedlist>
