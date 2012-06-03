@@ -3,7 +3,7 @@
     xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
     xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
     xmlns:html="http://www.w3.org/1999/xhtml" xml:id="variables">
-    <title>Variables</title>
+    <title>Data Fields</title>
     <para>...</para>
     <section>
         <title>ARGS</title>
@@ -20,34 +20,8 @@
         </para>
     </section>
     <section>
-        <title>ARGS_GET</title>
-        <para><emphasis role="bold">Description:</emphasis> Request parameters transported in query string.</para>
-        <para><emphasis role="bold">Type:</emphasis> Collection</para>
-        <para><emphasis role="bold">Scope:</emphasis> Transaction
-                (<literal>REQUEST_HEADERS</literal>)</para>
-        <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
-    </section>
-    <section>
-        <title>ARGS_POST</title>
-        <para><emphasis role="bold">Description:</emphasis> Request parameters transported in request body.</para>
-        <para><emphasis role="bold">Type:</emphasis> String</para>
-        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
-        <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
-    </section>
-    <section>
         <title>AUTH_PASSWORD</title>
         <para><emphasis role="bold">Description:</emphasis> Basic authentication password.</para>
-        <para><emphasis role="bold">Type:</emphasis> String</para>
-        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
-        <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
-    </section>
-    <section>
-        <title>AUTH_USERNAME</title>
-        <para><emphasis role="bold">Description:</emphasis> Basic or Digest authentication
-            username.</para>
         <para><emphasis role="bold">Type:</emphasis> String</para>
         <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
@@ -61,9 +35,19 @@
         <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
-        <para>This field contains the first token extracted from the <literal>Authorization</literal>
-            request header. Typical values are: <literal>Basic</literal>, <literal>Digest</literal>,
-            and <literal>NTLM</literal>. </para>
+        <para>This field contains the first token extracted from the
+                <literal>Authorization</literal> request header. Typical values are:
+                <literal>Basic</literal>, <literal>Digest</literal>, and <literal>NTLM</literal>.
+        </para>
+    </section>
+    <section>
+        <title>AUTH_USERNAME</title>
+        <para><emphasis role="bold">Description:</emphasis> Basic or Digest authentication
+            username.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
     </section>
     <section>
         <title>GEOIP</title>
@@ -142,6 +126,129 @@
         </para>    
     </section>
     <section>
+        <title>HTP_REQUEST_FLAG</title>
+        <para><emphasis role="bold">Description:</emphasis> Collection of LibHTP request parsing
+            flags.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> htp</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para>The LibHTP parser will set various flags while parsing. This is a collection of those
+            flags for request parsing. The following flags may be set:</para>
+        <itemizedlist>
+            <listitem>
+                <para><emphasis role="bold">HTP_AMBIGUOUS_HOST:</emphasis> The host was specified in
+                    both the URI and in the Host header, but they do not match.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_FIELD_INVALID:</emphasis> An invalid field was
+                    sent.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_FIELD_LONG:</emphasis> A field length was longer
+                    than allowed.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_FIELD_UNPARSEABLE:</emphasis> An unparseable field
+                    was given.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_HOST_MISSING:</emphasis> The host was missing from a
+                    request in which it is normally sent.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_INVALID_CHUNKING:</emphasis> Invalid chunking was
+                    used.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_INVALID_FOLDING:</emphasis> Invalid header folding
+                    was used.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_MULTI_PACKET_HEAD:</emphasis> The header was sent in
+                    more than one packet (buffer).</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_PATH_ENCODED_NUL:</emphasis> A NUL (zero) byte was
+                    sent, encoded, in the path.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_PATH_ENCODED_SEPARATOR:</emphasis> An encoded path
+                    separator was sent in the path.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_PATH_FULLWIDTH_EVASION:</emphasis> A full width
+                    character was used in the path.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_PATH_INVALID_ENCODING:</emphasis> Invalid encoding
+                    was used in the path.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_PATH_OVERLONG_U:</emphasis> An overlong unicode
+                    encoding was used in the path.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_PATH_UTF8_INVALID:</emphasis> An invalid UTF-8
+                    encoding was used in the path.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_PATH_UTF8_OVERLONG:</emphasis> An overlong UTF-8
+                    encoding was used in the path.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_PATH_UTF8_VALID:</emphasis> A UTF-8 character was
+                    used in the path.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_REQUEST_SMUGGLING:</emphasis> A HTTP smuggling
+                    attack was detected.</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+    <section>
+        <title>HTP_RESPONSE_FLAG</title>
+        <para><emphasis role="bold">Description:</emphasis> Collection of LibHTP response parsing
+            flags.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> htp</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para>The LibHTP parser will set various flags while parsing. This is a collection of those
+            flags for response parsing. The following flags may be set:</para>
+        
+        <itemizedlist>
+            <listitem>
+                <para><emphasis role="bold">HTP_FIELD_INVALID:</emphasis> An invalid field was
+                    sent.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_FIELD_LONG:</emphasis> A field length was longer
+                    than allowed.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_FIELD_UNPARSEABLE:</emphasis> An unparseable field
+                    was given.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_INVALID_CHUNKING:</emphasis> Invalid chunking was
+                    used.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_INVALID_FOLDING:</emphasis> Invalid header folding
+                    was used.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_MULTI_PACKET_HEAD:</emphasis> The header was sent in
+                    more than one packet (buffer).</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">HTP_STATUS_LINE_INVALID:</emphasis> An invalid HTTP
+                    status code was sent.</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+    <section>
         <title>LAST_MATCHED</title>
         <para><emphasis role="bold">Description:</emphasis> An alias to the last matching
             field.</para>
@@ -195,8 +302,18 @@ Rule ARGS "@rx test" \
         </note>
     </section>
     <section>
+        <title>REQUEST_BODY_PARAMS</title>
+        <para><emphasis role="bold">Description:</emphasis> Request parameters transported in
+            request body.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
         <title>REQUEST_CONTENT_TYPE</title>
-        <para><emphasis role="bold">Description:</emphasis> Contains request content type.</para>
+        <para><emphasis role="bold">Description:</emphasis> Contains the normalized request content
+            type.</para>
         <para><emphasis role="bold">Type:</emphasis> String</para>
         <para><emphasis role="bold">Scope:</emphasis> Transaction
                 (<literal>REQUEST_HEADERS</literal>)</para>
@@ -205,6 +322,39 @@ Rule ARGS "@rx test" \
         <para>Request content type is constructed from the request <literal>Content-Type</literal>
             header. The value is first converted to contain only the content type (and exclude any
             character encoding information), then converted to lowercase.</para>
+    </section>
+    <section>
+        <title>REQUEST_COOKIES</title>
+        <para><emphasis role="bold">Description:</emphasis> Collection of request cookies
+            (name/value pairs).</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>REQUEST_FILENAME</title>
+        <para><emphasis role="bold">Description:</emphasis> Request filename, extracted from request
+            URI and normalized according to the current personality.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>Normalization algorithm, with all "features" enabled, is as follows:</para>
+        <orderedlist>
+            <listitem>
+                <para>Decode URL-encoded characters (both <literal>%HH</literal> and
+                        <literal>%uHHHH</literal> formats), convert to lowercase, compress
+                    separators, convert backslashes, and terminate NUL.</para>
+            </listitem>
+            <listitem>
+                <para>Convert UTF-8 to single-byte stream using best-fit mapping</para>
+            </listitem>
+            <listitem>
+                <para>Perform RFC 3986 normalization</para>
+            </listitem>
+        </orderedlist>
     </section>
     <section>
         <title>REQUEST_HEADERS</title>
@@ -251,26 +401,25 @@ Rule ARGS "@rx test" \
         </orderedlist>
     </section>
     <section>
-        <title>REQUEST_FILENAME</title>
-        <para><emphasis role="bold">Description:</emphasis> Request filename, extracted from request URI and normalized according to the current personality.</para>
+        <title>REQUEST_LINE</title>
+        <para><emphasis role="bold">Description:</emphasis> Full request line.</para>
         <para><emphasis role="bold">Type:</emphasis> String</para>
         <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
-        <para>Normalization algorithm, with all "features" enabled, is as follows:</para>
-        <orderedlist>
-            <listitem>
-                <para>Decode URL-encoded characters (both <literal>%HH</literal> and
-                        <literal>%uHHHH</literal> formats), convert to lowercase, compress
-                    separators, convert backslashes, and terminate NUL.</para>
-            </listitem>
-            <listitem>
-                <para>Convert UTF-8 to single-byte stream using best-fit mapping</para>
-            </listitem>
-            <listitem>
-                <para>Perform RFC 3986 normalization</para>
-            </listitem>
-        </orderedlist>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para>Example:
+            <programlisting>GET /path/to/page?a=5&amp;q=This+is+a+test. HTTP/1.1</programlisting>
+        </para>
+    </section>
+    <section>
+        <title>REQUEST_METHOD</title>
+        <para><emphasis role="bold">Description:</emphasis> Request method.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para>This field contains the HTTP method used for the request.</para>
+        <para>Example: <literal>GET</literal></para>
     </section>
     <section>
         <title>REQUEST_PROTOCOL</title>
@@ -279,7 +428,7 @@ Rule ARGS "@rx test" \
         <para><emphasis role="bold">Type:</emphasis> String</para>
         <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para><emphasis role="bold">Version:</emphasis> o.3</para>
         <para>This field contains the protocol name and version, as specified on the request line.
             Transactions that do not specify the protocol (e.g., HTTP prior to 1.0) will have an
             empty string value.</para>
@@ -320,6 +469,98 @@ Rule ARGS "@rx test" \
         </itemizedlist>
     </section>
     <section>
+        <title>REQUEST_URI_FRAGMENT</title>
+        <para><emphasis role="bold">Description:</emphasis> Parsed fragment portion of the URI
+            within the request line.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+    </section>
+    <section>
+        <title>REQUEST_URI_HOST</title>
+        <para><emphasis role="bold">Description:</emphasis> Parsed host portion of the URI within
+            the request line.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para>This is the hostname specified in the URI. Note that this may be different from the
+            normalized host, which is in <literal>REQUEST_HOST</literal>.</para>
+    </section>
+    <section>
+        <title>REQUEST_URI_PARAMS</title>
+        <para><emphasis role="bold">Description:</emphasis> Request parameters transported in query
+            string.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction
+                (<literal>REQUEST_HEADERS</literal>)</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>REQUEST_URI_PASSWORD</title>
+        <para><emphasis role="bold">Description:</emphasis> Parsed password portion of the URI
+            within the request line.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+    </section>
+    <section>
+        <title>REQUEST_URI_PATH</title>
+        <para><emphasis role="bold">Description:</emphasis> Parsed path portion of the URI within
+            the request line.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+    </section>
+    <section>
+        <title>REQUEST_URI_PORT</title>
+        <para><emphasis role="bold">Description:</emphasis> Parsed port portion of the URI within
+            the request line.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+    </section>
+    <section>
+        <title>REQUEST_URI_RAW</title>
+        <para><emphasis role="bold">Description:</emphasis> Raw, unnormalized, request URI.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>REQUEST_URI_SCHEME</title>
+        <para><emphasis role="bold">Description:</emphasis> Parsed scheme portion of the URI within
+            the request line.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+    </section>
+    <section>
+        <title>REQUEST_URI_QUERY</title>
+        <para><emphasis role="bold">Description:</emphasis> Parsed query portion of the URI within
+            the request line.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+    </section>
+    <section>
+        <title>REQUEST_URI_USERNAME</title>
+        <para><emphasis role="bold">Description:</emphasis> Parsed username portion of the URI
+            within the request line.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+    </section>
+    <section>
         <title>RESPONSE_BODY</title>
         <para><emphasis role="bold">Description:</emphasis> Response body data up to any imposed
             limits.</para>
@@ -337,7 +578,8 @@ Rule ARGS "@rx test" \
     </section>
     <section>
         <title>RESPONSE_CONTENT_TYPE</title>
-        <para><emphasis role="bold">Description:</emphasis> Contains response content type.</para>
+        <para><emphasis role="bold">Description:</emphasis> Contains the normalized response content
+            type.</para>
         <para><emphasis role="bold">Type:</emphasis> Scalar</para>
         <para><emphasis role="bold">Scope:</emphasis> Transaction
                 (<literal>RESPONSE_HEADERS</literal>)</para>
@@ -348,12 +590,68 @@ Rule ARGS "@rx test" \
             character encoding information, if any), then converted to lowercase.</para>
     </section>
     <section>
+        <title>RESPONSE_COOKIES</title>
+        <para><emphasis role="bold">Description:</emphasis> Collection of response cookies
+            (name/value pairs).</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+    </section>
+    <section>
         <title>RESPONSE_HEADERS</title>
-        <para><emphasis role="bold">Description:</emphasis> Response headers.</para>
+        <para><emphasis role="bold">Description:</emphasis> Collection of response headers
+            (name/value pairs).</para>
         <para><emphasis role="bold">Type:</emphasis> Collection</para>
         <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>RESPONSE_LINE</title>
+        <para><emphasis role="bold">Description:</emphasis> Full response line.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para>Transactions that do not specify a response line (e.g., HTTP prior to 1.0) will have
+            an empty string value.</para>
+        <para>Example: <programlisting>HTTP/1.1 200 OK</programlisting>
+        </para>
+    </section>
+    <section>
+        <title>RESPONSE_MESSAGE</title>
+        <para><emphasis role="bold">Description:</emphasis> Response status message.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para>This field contains the status message (text following the status code), as specified
+            on the response line. Transactions that do not specify a response line (e.g., HTTP prior
+            to 1.0) will have an empty string value.</para>
+    </section>
+    <section>
+        <title>RESPONSE_PROTOCOL</title>
+        <para><emphasis role="bold">Description:</emphasis> Response protocol name and
+            version.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para>This field contains the protocol name and version, as specified on the response line.
+            Transactions that do not specify a response line (e.g., HTTP prior to 1.0) will have an
+            empty string value.</para>
+    </section>
+    <section>
+        <title>RESPONSE_STATUS</title>
+        <para><emphasis role="bold">Description:</emphasis> Response status code.</para>
+        <para><emphasis role="bold">Type:</emphasis> String</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para>This field contains the status code, as specified on the response line. Transactions
+            that do not specify a response line (e.g., HTTP prior to 1.0) will have an empty string
+            value.</para>
     </section>
     <section>
         <title>SERVER_ADDR</title>
