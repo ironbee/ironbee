@@ -284,6 +284,31 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_content_type");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "request_filename");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "auth_type");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "auth_username");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = core_field_placeholder_bytestr(tx->dpi, "auth_password");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Core Request Collections */
     rc = ib_data_add_list(tx->dpi, "request_headers", NULL);
     if (rc != IB_OK) {
@@ -326,8 +351,18 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    rc = core_field_placeholder_bytestr(tx->dpi, "response_content_type");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Core Response Collections */
     rc = ib_data_add_list(tx->dpi, "response_headers", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_add_list(tx->dpi, "response_cookies", NULL);
 
     IB_FTRACE_RET_STATUS(rc);
 }
