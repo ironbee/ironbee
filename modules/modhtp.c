@@ -272,92 +272,92 @@ static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
     if (flags & HTP_AMBIGUOUS_HOST) {
         flags ^= HTP_AMBIGUOUS_HOST;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                           "HTP_AMBIGUOUS_HOST");
+                                           "AMBIGUOUS_HOST");
     }
     if (flags & HTP_FIELD_INVALID) {
         flags ^= HTP_FIELD_INVALID;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                           "HTP_FIELD_INVALID");
+                                           "FIELD_INVALID");
     }
     if (flags & HTP_FIELD_LONG) {
         flags ^= HTP_FIELD_LONG;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                           "HTP_FIELD_LONG");
+                                           "FIELD_LONG");
     }
     if (flags & HTP_FIELD_UNPARSEABLE) {
         flags ^= HTP_FIELD_UNPARSEABLE;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                           "HTP_FIELD_UNPARSEABLE");
+                                           "FIELD_UNPARSEABLE");
     }
     if (flags & HTP_HOST_MISSING) {
         flags ^= HTP_HOST_MISSING;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                           "HTP_HOST_MISSING");
+                                           "HOST_MISSING");
     }
     if (flags & HTP_INVALID_CHUNKING) {
         flags ^= HTP_INVALID_CHUNKING;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_INVALID_CHUNKING");
+                                    "INVALID_CHUNKING");
     }
     if (flags & HTP_INVALID_FOLDING) {
         flags ^= HTP_INVALID_FOLDING;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_INVALID_FOLDING");
+                                    "INVALID_FOLDING");
     }
     if (flags & HTP_MULTI_PACKET_HEAD) {
         flags ^= HTP_MULTI_PACKET_HEAD;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_MULTI_PACKET_HEAD");
+                                    "MULTI_PACKET_HEAD");
     }
     if (flags & HTP_PATH_ENCODED_NUL) {
         flags ^= HTP_PATH_ENCODED_NUL;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_PATH_ENCODED_NUL");
+                                    "PATH_ENCODED_NUL");
     }
     if (flags & HTP_PATH_ENCODED_SEPARATOR) {
         flags ^= HTP_PATH_ENCODED_SEPARATOR;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_PATH_ENCODED_SEPARATOR");
+                                    "PATH_ENCODED_SEPARATOR");
     }
     if (flags & HTP_PATH_FULLWIDTH_EVASION) {
         flags ^= HTP_PATH_FULLWIDTH_EVASION;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_PATH_FULLWIDTH_EVASION");
+                                    "PATH_FULLWIDTH_EVASION");
     }
     if (flags & HTP_PATH_INVALID_ENCODING) {
         flags ^= HTP_PATH_INVALID_ENCODING;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_PATH_INVALID_ENCODING");
+                                    "PATH_INVALID_ENCODING");
     }
     if (flags & HTP_PATH_OVERLONG_U) {
         flags ^= HTP_PATH_OVERLONG_U;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_PATH_OVERLONG_U");
+                                    "PATH_OVERLONG_U");
     }
     if (flags & HTP_PATH_UTF8_INVALID) {
         flags ^= HTP_PATH_UTF8_INVALID;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_PATH_UTF8_INVALID");
+                                    "PATH_UTF8_INVALID");
     }
     if (flags & HTP_PATH_UTF8_OVERLONG) {
         flags ^= HTP_PATH_UTF8_OVERLONG;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_PATH_UTF8_OVERLONG");
+                                    "PATH_UTF8_OVERLONG");
     }
     if (flags & HTP_PATH_UTF8_VALID) {
         flags ^= HTP_PATH_UTF8_VALID;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_PATH_UTF8_VALID");
+                                    "PATH_UTF8_VALID");
     }
     if (flags & HTP_REQUEST_SMUGGLING) {
         flags ^= HTP_REQUEST_SMUGGLING;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_REQUEST_SMUGGLING");
+                                    "REQUEST_SMUGGLING");
     }
     if (flags & HTP_STATUS_LINE_INVALID) {
         flags ^= HTP_STATUS_LINE_INVALID;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "HTP_STATUS_LINE_INVALID");
+                                    "STATUS_LINE_INVALID");
     }
 
     /* If flags is not 0 we did not handle one of the bits. */
