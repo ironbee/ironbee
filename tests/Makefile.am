@@ -75,7 +75,7 @@ check_PROGRAMS = test_gtest \
                  test_action \
                  test_config
 if ENABLE_LUA
-check_PROGRAMS += test_module_rules_lua \                 
+check_PROGRAMS += test_module_rules_lua \
                   test_luajit
 endif
 
