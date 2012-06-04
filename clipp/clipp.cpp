@@ -583,7 +583,6 @@ int main(int argc, char** argv)
     }
 
     // Convert argv to configuration.
-    // In the future, configuration can also be loaded from files.
     string configuration = boost::algorithm::join(args, " ");
 
     try {
