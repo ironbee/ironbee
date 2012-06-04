@@ -7,7 +7,10 @@
     <para>...</para>
     <section>
         <title>logdata</title>
+        <para><emphasis role="bold">Description:</emphasis> Add data to be logged with the event.</para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
         <para>Log a data fragment as part of the error message.</para>
         <programlisting>Rule ARGS "@rx test" \
     "msg:'Test matched',logdata:%{MATCHED_VAR}"</programlisting>
@@ -15,23 +18,20 @@
     </section>
     <section>
         <title>setvar</title>
+        <para><emphasis role="bold">Description:</emphasis> Set a variable data field.</para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
-        <para>The <literal>setvar</literal> modifier is used for variable manipulation. To create a
-            variable or change its value:</para>
-        <programlisting>setvar:tx.score=1</programlisting>
-        <para>To remove all instances of a named variable:</para>
-        <programlisting>setvar:!tx.score</programlisting>
-        <para>To increment or decrement variable value:</para>
-        <programlisting>setvar:tx.score=+5
-setvar:tx.score=-5</programlisting>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+        <para>The <literal>setvar</literal> modifier is used for data field manipulation. To create
+            a variable data field or change its value:</para>
+        <programlisting>setvar:tx:score=1</programlisting>
+        <para>To remove all instances of a named variable data field:</para>
+        <programlisting>setvar:!tx:score</programlisting>
+        <para>To increment or decrement a variable data field value:</para>
+        <programlisting>setvar:tx:score=+5
+setvar:tx:score=-5</programlisting>
         <para>An attempt to modify a value of a non-numerical variable will assume the old value was
-            zero.</para>
-    </section>
-    <section>
-        <title>standalone</title>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
-        <para>Marks rule as standalone, which means that the engine is allowed to move it anywhere
-            within the phase if it wishes to optimize execution.</para>
-        <programlisting>Rule ARGS "@rx TEST" phase:REQUEST,standalone</programlisting>
+            zero (NOTE: Probably should just fail, logging an attempt was made to modify a
+            non-numerical value).</para>
     </section>
 </chapter>

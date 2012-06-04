@@ -135,4 +135,63 @@
             return the first parameter, some platforms return the last parameter, and some platforms
             even return a combined value of all parameters with the same name. </para>
     </section>
+    <section>
+        <title>Consolidation of @pm rules</title>
+        <para>With the <literal>pm</literal> operator, not only can you manually parallelize the
+            matching of a large number of patterns, but the engine itself will seamlessly
+            consolidate multiple parallel matching rules when they use identical inputs. The goal is
+            to minimize the number of separate matching operations and thus increase
+            performance.</para>
+        <para>This feature is very useful for rule qualification. Rule sets will often contain many
+            rules with complex PCRE regular expressions, and running all of them often requires
+            substantial effort. However, it is often possible to identify simpler patterns that are
+            more efficient and which can be used to quickly determine if the complex PCRE pattern
+            has a chance of matching. With seamless parallelization of <literal>@pm</literal> rules,
+            rule qualification is even more efficient.</para>
+        <para>For example, let's start with two complex regular expression patterns that we want to
+            speed up:</para>
+        <programlisting>Rule ARGS "@rx complexPattern1" id:1
+Rule ARGS "@rx complexPattern2" id:"</programlisting>
+        <para>To add rule qualification, for each complex pattern we determine a simple pattern that
+            can be fed to the pm operator. We then convert the standalone rules into chained rules,
+            using the <literal>@pm</literal> operator with the simple pattern first, followed by the
+            original rules:</para>
+        <programlisting>Rule ARGS "@pm simplePattern1" chain,id:1
+Rule ARGS "@rx complexPattern1"
+
+Rule ARGS "@pm simplePattern2" chain,id:2
+Rule ARGS "@rx complexPattern2"</programlisting>
+        <para>In the above case, the engine will detect two <literal>@pm</literal> rules that apply
+            to the same input (<literal>ARGS</literal>), and consolidate them into a single internal
+                <literal>@pm</literal> rule. When this internal rule is run, its results will be
+            saved and reused as needed. As a result, the complex patterns will be attempted only
+            when there is a reason to believe they will match. If the simple patterns are well
+            selected, that will happen only on a fraction of all transactions.</para>
+        <para>Notes:</para>
+        <itemizedlist>
+            <listitem>
+                <para>Consolidation operates on identical inputs, which means the same variables
+                    with the same transformation pipeline.</para>
+            </listitem>
+            <listitem>
+                <para>The <literal>MATCHED_VARS</literal> collection can be used to continue
+                    inspection only on the inputs where the initial patterns matched.</para>
+            </listitem>
+        </itemizedlist>
+        <warning>
+            <para>This is an experimental feature, which we may need to tweak as we gain better
+                understanding of its advantages and disadvantages.</para>
+        </warning>
+    </section>
+    <section>
+        <title>standalone</title>
+        <para><emphasis role="bold">Description:</emphasis> Parallel matching with patterns from
+            file.</para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+        <para>Marks rule as standalone, which means that the engine is allowed to move it anywhere
+            within the phase if it wishes to optimize execution.</para>
+        <programlisting>Rule ARGS "@rx TEST" phase:REQUEST,standalone</programlisting>
+    </section>
 </appendix>
