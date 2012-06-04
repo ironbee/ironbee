@@ -35,6 +35,8 @@
 #include <stdexcept>
 #include <string>
 
+#include <boost/lexical_cast.hpp>
+
 #define ASSERT_IB_OK(x) ASSERT_EQ(IB_OK, (x))
 
 class BaseFixture : public ::testing::Test {
@@ -103,7 +105,9 @@ public:
 
         if (rc != IB_OK) {
             throw std::runtime_error(
-                std::string("Failed to create parser: "+rc));
+                std::string("Failed to create parser: ") +
+                    boost::lexical_cast<std::string>(rc)
+            );
         }
 
         rc = ib_cfgparser_parse(p, configFile.c_str());
