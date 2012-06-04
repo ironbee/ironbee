@@ -99,7 +99,7 @@ bool ModSecAuditLogGenerator::operator()(Input::input_p& out_input)
     out_input->source = e;
 
     bool have_entry = false;
-    bool result;
+    bool result = false;
     while (! have_entry) {
         try {
             result = (*m_state->parser)(*e);
@@ -110,6 +110,7 @@ bool ModSecAuditLogGenerator::operator()(Input::input_p& out_input)
             }
             if (m_state->on_error(err.what())) {
                 m_state->parser->recover();
+                continue;
             }
         }
         if (! result) {
