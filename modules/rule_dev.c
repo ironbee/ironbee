@@ -57,6 +57,7 @@ IB_MODULE_DECLARE();
  *
  * @param[in] ib Ironbee engine (unused)
  * @param[in] tx The transaction for this operator (unused)
+ * @param[in] rule Parent rule to the operator
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
@@ -68,6 +69,7 @@ IB_MODULE_DECLARE();
  */
 static ib_status_t op_true_execute(ib_engine_t *ib,
                                    ib_tx_t *tx,
+                                   const ib_rule_t *rule,
                                    void *data,
                                    ib_flags_t flags,
                                    ib_field_t *field,
@@ -87,6 +89,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine (unused)
  * @param[in] tx The transaction for this operator (unused)
+ * @param[in] rule Parent rule to the operator
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
@@ -96,6 +99,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
  */
 static ib_status_t op_false_execute(ib_engine_t *ib,
                                     ib_tx_t *tx,
+                                    const ib_rule_t *rule,
                                     void *data,
                                     ib_flags_t flags,
                                     ib_field_t *field,
@@ -217,10 +221,9 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     rc = ib_operator_register(ib,
                               "true",
                               IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
-                              NULL,
-                              NULL, /* No create function */
-                              NULL, /* no destroy function */
-                              op_true_execute);
+                              NULL, NULL, /* No create function */
+                              NULL, NULL, /* no destroy function */
+                              op_true_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -229,10 +232,9 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     rc = ib_operator_register(ib,
                               "false",
                               IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
-                              NULL,
-                              NULL, /* No create function */
-                              NULL, /* no destroy function */
-                              op_false_execute);
+                              NULL, NULL, /* No create function */
+                              NULL, NULL, /* no destroy function */
+                              op_false_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
