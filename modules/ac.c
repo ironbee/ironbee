@@ -743,7 +743,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
     assert(data);
 
     ib_ac_t *ac = (ib_ac_t *)data;
-    ib_ac_context_t *ac_ctx;
+    ib_ac_context_t *ac_ctx = NULL;
     ib_status_t rc;
 
     const char* subject;
