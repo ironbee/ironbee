@@ -35,6 +35,8 @@
 #include <ironbee/string.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/field.h>
+#include <ironbee/rule_defs.h>
+#include <ironbee/rule_engine.h>
 #include <ironbee_private.h>
 
 #include <errno.h>
@@ -4362,10 +4364,9 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_string(ctx, "logger.log_handler", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (strcasecmp("RuleEngineLogData", name) == 0) {
+    else if (strcasecmp("RuleEngineLogLevel", name) == 0) {
         ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-        ib_rule_log_level_t  level = IB_RULE_LOG_OFF;
-        ib_rule_log_exec_t   exec = IB_RULE_LOG_EXEC_OFF;
+        ib_rule_log_level_t  level = IB_RULE_LOG_LEVEL_ERROR;
         char                *p1_copy = ib_mpool_strdup(cp->mp, p1_unescaped);
         char                *cur;
 
@@ -4378,24 +4379,20 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         cur = strtok(p1_copy, ",");
         do {
             if (strcasecmp("Off", cur) == 0) {
-                level = IB_RULE_LOG_ERROR;
-                exec  = IB_RULE_LOG_EXEC_OFF;
+                level = IB_RULE_LOG_LEVEL_ERROR;
                 break;
             }
-            else if (strcasecmp("Fast", cur) == 0) {
-                exec = IB_RULE_LOG_EXEC_FAST;
+            else if (strcasecmp("Error", cur) == 0) {
+                level = IB_RULE_LOG_LEVEL_ERROR;
             }
-            else if (strcasecmp("RuleExec", cur) == 0) {
-                exec = IB_RULE_LOG_EXEC_FULL;
-            }
-            else if (strcasecmp("Full", cur) == 0) {
-                level = IB_RULE_LOG_FULL;
+            else if (strcasecmp("Warning", cur) == 0) {
+                level = IB_RULE_LOG_LEVEL_WARNING;
             }
             else if (strcasecmp("Debug", cur) == 0) {
-                level = IB_RULE_LOG_DEBUG;
+                level = IB_RULE_LOG_LEVEL_DEBUG;
             }
             else if (strcasecmp("Trace", cur) == 0) {
-                level = IB_RULE_LOG_TRACE;
+                level = IB_RULE_LOG_LEVEL_TRACE;
             }
             else {
                 ib_log_error(ib,
@@ -4407,10 +4404,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         } while (cur != NULL);
         ib_log_debug2(ib, "%s: %d", name, level);
         rc = ib_context_set_num(ctx, "rule_log_level", level);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        rc = ib_context_set_num(ctx, "rule_log_exec", exec);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("LoadModule", name) == 0) {
@@ -4612,6 +4605,127 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
 
     rc = ib_context_set_num(ctx, "auditlog_parts", parts);
     IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Handle rule log data directive.
+ *
+ * @param cp Config parser
+ * @param name Directive name
+ * @param flags Flags
+ * @param fmask Flags mask (which bits were actually set)
+ * @param cbdata Callback data (from directive registration)
+ *
+ * @returns Status code
+ */
+static ib_status_t core_dir_rulelogdata(ib_cfgparser_t *cp,
+                                        const char *name,
+                                        const ib_list_t *vars,
+                                        void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_engine_t *ib = cp->ib;
+    ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+    const ib_list_node_t *node;
+    ib_rule_log_mode_t log_mode;
+    ib_flags_t log_flags;
+    const char *modestr;
+    ib_status_t rc = IB_OK;
+    ib_num_t tmp;
+    ib_bool_t first = IB_TRUE;
+
+    if (cbdata != NULL) {
+        IB_FTRACE_MSG("Callback data is not null.");
+    }
+
+    /* Get current rule logging type */
+    rc = ib_context_get(ctx, "rule_log_mode", ib_ftype_num_out(&tmp), NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    log_mode = (ib_rule_log_mode_t)tmp;
+
+    /* Get current rule logging flags */
+    rc = ib_context_get(ctx, "rule_log_flags", ib_ftype_num_out(&tmp), NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    log_flags = (ib_flags_t)tmp;
+
+    /* Loop through all of the parameters in the list */
+    IB_LIST_LOOP_CONST(vars, node) {
+        const char *param = (const char *)node->data;
+        char modifier = '\0';
+        const char *pname = param;
+
+        if ( (*param == '+') || (modifier == '-') ) {
+            modifier = *param;
+            ++pname;
+        }
+
+        if ((first == IB_TRUE) && (strcasecmp(param, "None") == 0)) {
+            log_mode = IB_RULE_LOG_MODE_OFF;
+        }
+        else if ((first == IB_TRUE) && (strcasecmp(param, "Fast") == 0)) {
+            log_mode = IB_RULE_LOG_MODE_FAST;
+        }
+        else if ((first == IB_TRUE) && (strcasecmp(param, "RuleExec") == 0)) {
+            log_mode = IB_RULE_LOG_MODE_EXEC;
+        }
+        else if (strcasecmp(pname, "Full") == 0) {
+            if (modifier == '-') {
+                ib_flags_clear(log_flags, IB_RULE_LOG_FLAG_FULL);
+            }
+            else {
+                ib_flags_set(log_flags, IB_RULE_LOG_FLAG_FULL);
+            }
+        }
+        else if (strcasecmp(pname, "Debug") == 0) {
+            if (modifier == '-') {
+                ib_flags_clear(log_flags, IB_RULE_LOG_FLAG_DEBUG);
+            }
+            else {
+                ib_flags_set(log_flags, IB_RULE_LOG_FLAG_DEBUG);
+            }
+        }
+        else if (strcasecmp(pname, "Trace") == 0) {
+            if (modifier == '-') {
+                ib_flags_clear(log_flags, IB_RULE_LOG_FLAG_TRACE);
+            }
+            else {
+                ib_flags_set(log_flags, IB_RULE_LOG_FLAG_TRACE);
+            }
+        }
+        else {
+            ib_cfg_log_error(cp, "Invalid %s parameter \"%s\"", name, param);
+            rc = IB_EINVAL;
+            continue;
+        }
+        first = IB_FALSE;
+    }
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Get mode as a string */
+    modestr = ib_rule_log_mode_str(log_mode);
+    ib_log_debug2(ib, "Rule Log Mode: %s", modestr);
+    ib_log_debug2(ib, "Rule Log flags: %02x", log_flags);
+
+    rc = ib_context_set_num(ctx, "rule_log_mode", log_mode);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error setting log mode to %s: %s",
+                         modestr, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_context_set_num(ctx, "rule_log_flags", log_flags);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error setting log flags to %02x: %s",
+                         log_flags, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -4967,8 +5081,13 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     ),
 
     /* Rule logging level */
-    IB_DIRMAP_INIT_PARAM1(
+    IB_DIRMAP_INIT_LIST(
         "RuleEngineLogData",
+        core_dir_rulelogdata,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "RuleEngineLogLevel",
         core_dir_param1,
         NULL
     ),
@@ -5046,8 +5165,9 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->data               = MODULE_NAME_STR;
     corecfg->module_base_path   = X_MODULE_BASE_PATH;
     corecfg->rule_base_path     = X_RULE_BASE_PATH;
-    corecfg->rule_log_level     = IB_RULE_LOG_OFF;
-    corecfg->rule_log_exec      = IB_RULE_LOG_EXEC_OFF;
+    corecfg->rule_log_mode      = IB_RULE_LOG_MODE_OFF;
+    corecfg->rule_log_flags     = IB_RULE_LOG_FLAG_NONE;
+    corecfg->rule_log_level     = IB_RULE_LOG_LEVEL_ERROR;
     corecfg->block_status       = 500;
 
     /* Define the logger provider API. */
@@ -5305,16 +5425,22 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
 
     /* Rule logging */
     IB_CFGMAP_INIT_ENTRY(
+        "rule_log_mode",
+        IB_FTYPE_NUM,
+        ib_core_cfg_t,
+        rule_log_mode
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "rule_log_flags",
+        IB_FTYPE_NUM,
+        ib_core_cfg_t,
+        rule_log_flags
+    ),
+    IB_CFGMAP_INIT_ENTRY(
         "rule_log_level",
         IB_FTYPE_NUM,
         ib_core_cfg_t,
         rule_log_level
-    ),
-    IB_CFGMAP_INIT_ENTRY(
-        "rule_log_exec",
-        IB_FTYPE_NUM,
-        ib_core_cfg_t,
-        rule_log_exec
     ),
 
     /* Parser */

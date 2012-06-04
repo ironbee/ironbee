@@ -186,6 +186,41 @@ struct ib_rule_engine_t {
 };
 
 /**
+ * Rule execution results for logging.
+ */
+struct ib_rule_tgt_result_t {
+    const ib_rule_target_t *target;      /**< Target of rule */
+    const ib_field_t       *original;    /**< Original value */
+    const ib_field_t       *transformed; /**< Transformed value */
+    ib_num_t                result;      /**< Result of target operation. */
+};
+typedef struct ib_rule_tgt_result_t ib_rule_tgt_result_t;
+
+/**
+ * Rule transformation results for logging.
+ */
+struct ib_rule_tfn_result_t {
+    const ib_rule_target_t *target;      /**< Target of rule */
+    const ib_tfn_t         *tfn;         /**< Transformation */
+    const ib_field_t       *in;          /**< Value before transformation */
+    const ib_field_t       *out;         /**< Value after transformation */
+};
+typedef struct ib_rule_tfn_result_t ib_rule_tfn_result_t;
+
+/**
+ * Rule execution logging data
+ */
+struct ib_rule_log_exec_t {
+    ib_tx_t           *tx;              /**< Transformation */
+    const ib_rule_t   *rule;            /**< Rule being executed */
+    const ib_list_t   *actions;         /**< Actions list */
+    ib_bool_t          result_type;     /**< True / False results*/
+    ib_list_t         *tgt_list;        /**< List of ib_rule_tgt_result_t */
+    ib_list_t         *tfn_list;        /**< List of ib_rule_tfn_result_t */
+};
+typedef struct ib_rule_log_exec_t ib_rule_log_exec_t;
+
+/**
  * Create a rule.
  *
  * Allocates a rule for the rule engine, initializes it.
@@ -574,6 +609,33 @@ ib_mpool_t DLL_PUBLIC *ib_rule_mpool(ib_engine_t *ib);
 
 
 /**
+ * Return rule execution logging mode string
+ *
+ * @param[in] mode The mode to convert to string
+ *
+ * @return The string form of @a mode
+ */
+const char *ib_rule_log_mode_str(ib_rule_log_mode_t mode);
+
+/**
+ * Return rule execution logging mode
+ *
+ * @param[in] ib The IronBee engine that would be used in a call to ib_log_ex.
+ *
+ * @return The configured rule log mode
+ */
+ib_rule_log_mode_t ib_rule_log_mode(const ib_engine_t *ib);
+
+/**
+ * Return rule execution logging flags
+ *
+ * @param[in] ib The IronBee engine that would be used in a call to ib_log_ex.
+ *
+ * @return The configured rule log execution flags.
+ */
+ib_flags_t ib_rule_log_flags(const ib_engine_t *ib);
+
+/**
  * Return the configured rule logging level.
  *
  * This is used to determine if optional complex processing should be
@@ -586,13 +648,66 @@ ib_mpool_t DLL_PUBLIC *ib_rule_mpool(ib_engine_t *ib);
 ib_rule_log_level_t ib_rule_log_level(const ib_engine_t *ib);
 
 /**
- * Return level of rule execution logging is enabled.
+ * Create a rule execution logging object
  *
- * @param[in] ib The IronBee engine that would be used in a call to ib_log_ex.
+ * @param[in] tx The IronBee transaction
+ * @param[in] rule Rule being executed
+ * @param[out] log_exec The new execution logging object
  *
- * @return The log level configured.
+ * @returns IB_OK on success,
+ *          IB_EALLOC if the allocation failed,
+ *          Error status returned by ib_list_create()
  */
-ib_rule_log_exec_t ib_rule_log_exec_level(const ib_engine_t *ib);
+ib_status_t ib_rule_log_exec_create(ib_tx_t *tx,
+                                    const ib_rule_t *rule,
+                                    ib_rule_log_exec_t **log_exec);
+
+/**
+ * Set the result in a rule execution logging object
+ *
+ * @param[in,out] log_exec The new execution logging object
+ * @param[in] result_type Execution results type 
+ * @param[in] actions Actions list
+ *
+ * @returns IB_OK on success
+ */
+ib_status_t ib_rule_log_exec_set_result(ib_rule_log_exec_t *log_exec,
+                                        ib_bool_t result_type,
+                                        const ib_list_t *actions);
+
+/**
+ * Add a target result to a rule execution log
+ *
+ * @param[in,out] log_exec The execution logging object
+ * @param[in] target Rule target
+ * @param[in] original Target before transformations
+ * @param[in] transformed Target after transformations
+ * @param[in] result Result of operation
+ *
+ * @returns IB_OK on success
+ */
+ib_status_t ib_rule_log_exec_add_tgt(ib_rule_log_exec_t *log_exec,
+                                     const ib_rule_target_t *target,
+                                     const ib_field_t *original,
+                                     const ib_field_t *transformed,
+                                     ib_num_t result);
+
+/**
+ * Add a transformation to a rule execution log
+ *
+ * @param[in,out] log_exec The execution logging object
+ * @param[in] target Rule target
+ * @param[in] tfn The transformation to add
+ * @param[in] in Value before transformation
+ * @param[in] out Value after transformation
+ *
+ * @returns IB_OK on success
+ */
+ib_status_t ib_rule_log_exec_add_tfn(ib_rule_log_exec_t *log_exec,
+                                     const ib_rule_target_t *target,
+                                     const ib_tfn_t *tfn,
+                                     const ib_field_t *in,
+                                     const ib_field_t *out);
 
 /**
  * Generic Logger for rules.
@@ -652,19 +767,11 @@ void ib_rule_log(ib_rule_log_level_t level,
 /**
  * Rule execution logging
  *
- * @param[in] tx Transaction information
- * @param[in] rule Rule to log
- * @param[in] result_type Log true or false results?
- * @param[in] results List of target results
- * @param[in] actions List of actions executed
+ * @param[in] log_exec Rule loggging execution object
  * @param[in] file Source file name
  * @param[in] line Source line number
  */
-void ib_rule_log_exec_ex(const ib_tx_t *tx,
-                         const ib_rule_t *rule,
-                         ib_bool_t result_type,
-                         const ib_list_t *results,
-                         const ib_list_t *actions,
+void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
                          const char *file,
                          int line);
 
@@ -686,28 +793,27 @@ void ib_rule_log_field(const ib_tx_t *tx,
                        const ib_field_t *f);
 
 /** Rule execution logging */
-#define ib_rule_log_exec(tx, rule, result_type, results, actions) \
-    ib_rule_log_exec_ex(tx, rule, result_type, results, actions, \
-                        __FILE__, __LINE__)
+#define ib_rule_log_exec(log_exec) \
+    ib_rule_log_exec_ex(log_exec, __FILE__, __LINE__)
 
 /** Rule error logging */
 #define ib_rule_log_error(tx, rule, target, tfn, ...) \
-    ib_rule_log(IB_RULE_LOG_ERROR, tx, rule, target, tfn, \
+    ib_rule_log(IB_RULE_LOG_LEVEL_ERROR, tx, rule, target, tfn, \
                 "ERROR", __FILE__, __LINE__, __VA_ARGS__)
 
 /** Rule full logging */
-#define ib_rule_log_full(tx, rule, target, tfn, ...) \
-    ib_rule_log(IB_RULE_LOG_FULL, tx, rule, target, tfn, \
-                "FULL", __FILE__, __LINE__, __VA_ARGS__)
+#define ib_rule_log_warn(tx, rule, target, tfn, ...) \
+    ib_rule_log(IB_RULE_LOG_LEVEL_WARNING, tx, rule, target, tfn, \
+                "WARNING", __FILE__, __LINE__, __VA_ARGS__)
 
 /** Rule debug logging */
 #define ib_rule_log_debug(tx, rule, target, tfn, ...) \
-    ib_rule_log(IB_RULE_LOG_DEBUG, tx, rule, target, tfn, \
+    ib_rule_log(IB_RULE_LOG_LEVEL_DEBUG, tx, rule, target, tfn, \
                 "DEBUG", __FILE__, __LINE__, __VA_ARGS__)
 
 /** Rule trace logging */
 #define ib_rule_log_trace(tx, rule, target, tfn, ...) \
-    ib_rule_log(IB_RULE_LOG_TRACE, tx, rule, target, tfn, \
+    ib_rule_log(IB_RULE_LOG_LEVEL_TRACE, tx, rule, target, tfn, \
                 "TRACE", __FILE__, __LINE__, __VA_ARGS__)
 
 

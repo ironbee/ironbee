@@ -35,26 +35,6 @@ extern "C" {
  */
 
 /**
- * Rule log level.
- **/
-typedef enum {
-    IB_RULE_LOG_OFF,          /**< Rule logging off */
-    IB_RULE_LOG_ERROR,        /**< Error in rule execution */
-    IB_RULE_LOG_FULL,         /**< Normal rule execution */
-    IB_RULE_LOG_DEBUG,        /**< Developer oriented information */
-    IB_RULE_LOG_TRACE,        /**< Reserved for future use */
-} ib_rule_log_level_t;
-
-/**
- * Rule execution log level.
- **/
-typedef enum {
-    IB_RULE_LOG_EXEC_OFF,     /**< Rule execution logging off */
-    IB_RULE_LOG_EXEC_FAST,    /**< Fast logging */
-    IB_RULE_LOG_EXEC_FULL,    /**< Full execution logging */
-} ib_rule_log_exec_t;
-
-/**
  * Rule phase number.
  */
 typedef enum {
@@ -87,6 +67,7 @@ typedef enum {
 #define IB_RULE_FLAG_MAIN_CTX (1 << 4)  /**< Rule owned by main context */
 #define IB_RULE_FLAG_MARK     (1 << 5)  /**< Mark used in list building */
 #define IB_RULE_FLAG_CHAIN    (IB_RULE_FLAG_CHPARENT|IB_RULE_FLAG_CHCHILD)
+
 /**
  * Rule meta-data flags
  */
@@ -99,6 +80,33 @@ typedef enum {
  */
 #define IB_RULECTX_FLAG_NONE          (0x0)  /**< No flags */
 #define IB_RULECTX_FLAG_ENABLED    (1 << 0)  /**< Rule is enabled */
+
+/**
+ * Rule execution logging type.
+ **/
+typedef enum {
+    IB_RULE_LOG_MODE_OFF,            /**< Logging off */
+    IB_RULE_LOG_MODE_FAST,           /**< Fast logging */
+    IB_RULE_LOG_MODE_EXEC,           /**< Rule execution logging */
+} ib_rule_log_mode_t;
+
+/**
+ * Rule execution logging flags.
+ **/
+#define IB_RULE_LOG_FLAG_NONE      (0x0)  /**< No flags */
+#define IB_RULE_LOG_FLAG_FULL   (1 << 0)  /**< +Full execution logging */
+#define IB_RULE_LOG_FLAG_DEBUG  (1 << 1)  /**< +Values */
+#define IB_RULE_LOG_FLAG_TRACE  (1 << 2)  /**< +Developer oriented */
+
+/**
+ * Rule log level.
+ **/
+typedef enum {
+    IB_RULE_LOG_LEVEL_ERROR,        /**< Error in rule execution */
+    IB_RULE_LOG_LEVEL_WARNING,      /**< Warning in rule execution */
+    IB_RULE_LOG_LEVEL_DEBUG,        /**< Developer oriented information */
+    IB_RULE_LOG_LEVEL_TRACE,        /**< Reserved for future use */
+} ib_rule_log_level_t;
 
 /**
  * Rule engine: Basic rule type

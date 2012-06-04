@@ -178,17 +178,6 @@ struct ib_matcher_t {
 };
 
 /**
- * Rule execution results for logging.
- */
-struct ib_rule_target_result_t {
-    ib_rule_target_t  *target;      /**< Target of rule */
-    ib_field_t        *original;    /**< Original value */
-    ib_field_t        *transformed; /**< Transformed value */
-    ib_num_t           result;      /**< Result of target operation. */
-};
-typedef struct ib_rule_target_result_t ib_rule_target_result_t;
-
-/**
  * Parameters used for variable expansion in rules.
  */
 #define IB_VARIABLE_EXPANSION_PREFIX  "%{"  /**< Variable prefix */
