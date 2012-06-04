@@ -68,8 +68,7 @@ ibmod_rules_la_CPPFLAGS = $(CPPFLAGS) \
                         -I$(top_srcdir) \
                         -D_XOPEN_SOURCE=1
 
-ibmod_rules_la_LIBADD = -lm \
-                        $(top_builddir)/lua/libironbee-lua.la
+ibmod_rules_la_LIBADD = -lm
 
 if ENABLE_LUA
 ibmod_rules_la_SOURCES += \
@@ -80,7 +79,8 @@ ibmod_rules_la_CPPFLAGS += \
     $(top_builddir)/lua/libironbee-lua.la \
     -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
     -I$(top_srcdir)/libs/luajit-2.0-ironbee/src
-ibmod_rules_la_LIBADD += -lluajit-ironbee
+ibmod_rules_la_LIBADD += -lluajit-ironbee \
+                         $(top_builddir)/lua/libironbee-lua.la
 endif
 
 if BUILD_DEV_MODULES
