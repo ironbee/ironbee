@@ -566,7 +566,7 @@ int main(int argc, char** argv)
 
     list<chain_t> chains;
     // Parse flags.
-    while (args.front() == "-c") {
+    while (! args.empty() && args.front() == "-c") {
         args.pop_front();
         if (args.empty()) {
             cerr << "-c requires an argument." << endl;
