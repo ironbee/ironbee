@@ -68,7 +68,8 @@ ibmod_rules_la_CPPFLAGS = $(CPPFLAGS) \
                         -I$(top_srcdir) \
                         -D_XOPEN_SOURCE=1
 
-ibmod_rules_la_LIBADD = -lm
+ibmod_rules_la_LIBADD = -lm \
+                        $(top_builddir)/lua/libironbee-lua.la
 
 if ENABLE_LUA
 ibmod_rules_la_SOURCES += \
