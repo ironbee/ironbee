@@ -1297,6 +1297,7 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     const char *uri = NULL;
     FILE *fp = NULL;            /* The file pointer to write to. */
     char *prefix_with_pid = NULL;
+    size_t prefix_with_pid_sz;
     size_t prefix_length = 0;
 
     /* Get the module context core configuration. */
@@ -1320,15 +1321,16 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     else {
         prefix_length = 0;
     }
-    prefix_with_pid = (char *)malloc(50+prefix_length);
+    prefix_with_pid_sz = 50+prefix_length;
+    prefix_with_pid = (char *)malloc(prefix_with_pid_sz);
     if (prefix_with_pid == NULL) {
         return;
     }
     if (prefix != NULL) {
-      snprintf(prefix_with_pid, 1024, "[%d] %s", getpid(), prefix);
+      snprintf(prefix_with_pid, prefix_with_pid_sz, "[%d] %s", getpid(), prefix);
     }
     else {
-      snprintf(prefix_with_pid, 1024, "[%d] ", getpid());
+      snprintf(prefix_with_pid, prefix_with_pid_sz, "[%d] ", getpid());
     }
 
     /* Get the current 'logger' provider interface. */
