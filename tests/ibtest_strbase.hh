@@ -161,7 +161,7 @@ public:
     }
     ib_flags_t ExpectedResult(ib_strop_t op, bool mod) const
     {
-        ib_flags_t result;
+        ib_flags_t result = 0;
 
         switch (op) {
         case IB_STROP_INPLACE:
