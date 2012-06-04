@@ -4,7 +4,9 @@ include $(top_srcdir)/build/common.mk
 
 SUBDIRS = @LIBS_SUBDIRS@
 
+if ENABLE_LUA
 BUILT_SOURCES = .build-luajit
+endif
 
 clean-local:
 if FREEBSD

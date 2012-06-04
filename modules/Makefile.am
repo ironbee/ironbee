@@ -15,9 +15,12 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_ac.la \
                      ibmod_radix.la \
                      ibmod_binradix.la \
-                     ibmod_lua.la \
                      ibmod_rules.la \
                      ibmod_user_agent.la
+
+if ENABLE_LUA
+pkglib_LTLIBRARIES += ibmod_lua.la
+endif
 
 if BUILD_GEOIP
 pkglib_LTLIBRARIES += ibmod_geoip.la 
@@ -60,17 +63,24 @@ ibmod_lua_la_LIBADD = $(top_builddir)/lua/libironbee-lua.la \
                       -lluajit-ironbee \
                       -lm
 
-ibmod_rules_la_SOURCES = rules.c \
-                         rules_lua.c \
-                         rules_lua.h
+ibmod_rules_la_SOURCES = rules.c 
 ibmod_rules_la_CPPFLAGS = $(CPPFLAGS) \
-                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                         -I$(top_srcdir) \
                         -D_XOPEN_SOURCE=1
-ibmod_rules_la_LIBADD = $(top_builddir)/lua/libironbee-lua.la \
-                      -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
-                      -lluajit-ironbee \
-                      -lm
+
+ibmod_rules_la_LIBADD = -lm
+
+if ENABLE_LUA
+ibmod_rules_la_SOURCES += \
+    rules_lua.c \
+    rules_lua.h
+
+ibmod_rules_la_CPPFLAGS += \
+    $(top_builddir)/lua/libironbee-lua.la \
+    -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
+    -I$(top_srcdir)/libs/luajit-2.0-ironbee/src
+ibmod_rules_la_LIBADD += -lluajit-ironbee
+endif
 
 if BUILD_DEV_MODULES
 pkglib_LTLIBRARIES += ibmod_fields.la 

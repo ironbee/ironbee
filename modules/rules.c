@@ -15,6 +15,8 @@
  * limitations under the License.
  *****************************************************************************/
 
+#include "ironbee_config_auto.h"
+
 #include <ironbee/core.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/debug.h>
@@ -30,8 +32,12 @@
 #include <ironbee/operator.h>
 #include <ironbee/action.h>
 
+#ifdef ENABLE_LUA
 #include "rules_lua.h"
 #include "lua/ironbee.h"
+
+#include <lua.h>
+#endif
 
 #include <assert.h>
 #include <errno.h>
@@ -44,8 +50,6 @@
 #include <sys/sem.h>
 #include <sys/stat.h>
 #include <ctype.h>
-
-#include <lua.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        rules
@@ -79,6 +83,7 @@ static phase_lookup_t phase_lookup_table[] =
     { NULL,                      IB_FALSE, PHASE_INVALID },
 };
 
+#ifdef ENABLE_LUA
 /**
  * Ironbee's root rule state.
  */
@@ -88,7 +93,7 @@ static lua_State *g_ironbee_rules_lua;
  * @brief Semaphore ID used to protect Lua thread creation and destruction.
  */
 static ib_lock_t g_lua_lock;
-
+#endif
 
 /**
  * Lookup a phase name in the phase name table.
@@ -115,6 +120,7 @@ static ib_status_t lookup_phase(const char *str,
     IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
+#ifdef ENABLE_LUA
 /**
  * @brief Callback type for functions executed protected by g_lua_lock.
  * @details This callback should take a @c ib_engine_t* which is used
@@ -125,7 +131,7 @@ static ib_status_t lookup_phase(const char *str,
 typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*,
                                             lua_State*,
                                             lua_State**);
-
+#endif
 
 /**
  * Parse rule's operator.
@@ -834,6 +840,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+#ifdef ENABLE_LUA
 /**
  * @brief This will use @c g_lua_lock to atomically call @a fn.
  * @details The argument @a fn will be either
@@ -969,7 +976,7 @@ static ib_status_t lua_operator_destroy(ib_operator_inst_t *op_inst)
     IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-
+#endif
 
 /**
  * @brief Parse a RuleExt directive.
@@ -991,14 +998,17 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     const ib_list_node_t *targets;
     const ib_list_node_t *mod;
     ib_rule_t *rule;
-    ib_operator_inst_t *op_inst;
     const char *file_name;
+
+#ifdef ENABLE_LUA
+    ib_operator_inst_t *op_inst;
 
     /* Check if lua is available. */
     if (g_ironbee_rules_lua == NULL) {
         ib_cfg_log_error(cp, "Lua is not available");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+#endif
 
     /* Get the targets string */
     targets = ib_list_first_const(vars);
@@ -1038,6 +1048,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
 
     /* Using the rule->meta and file_name, load and stage the ext rule. */
     if (strncasecmp(file_name, "lua:", 4) == 0) {
+#ifdef ENABLE_LUA
         rc = ib_lua_load_func(cp->ib,
                              g_ironbee_rules_lua,
                              file_name+4,
@@ -1098,7 +1109,9 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
         ib_cfg_log_debug3(cp, "Set operator %s for rule %s",
                           file_name,
                           ib_rule_id(rule));
-
+#else
+        ib_cfg_log_error(cp, "IronBee built without Lua support.");
+#endif
     }
     else {
         ib_cfg_log_error(cp, "RuleExt does not support rule type %s.",
@@ -1498,15 +1511,18 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
     IB_DIRMAP_INIT_LAST
 };
 
+#if ENABLE_LUA
 static void clean_up_ipc_mem(void)
 {
     ib_lock_destroy(&g_lua_lock);
 }
+#endif
 
 static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     IB_FTRACE_INIT();
 
+#if ENABLE_LUA
     /* Error code from Iron Bee calls. */
     ib_status_t ib_rc;
     ib_core_cfg_t *corecfg = NULL;
@@ -1612,6 +1628,8 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         }
     }
 
+#endif
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1619,12 +1637,14 @@ static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     IB_FTRACE_INIT();
 
+#ifdef ENABLE_LUA
     ib_lock_destroy(&g_lua_lock);
 
     if (g_ironbee_rules_lua != NULL) {
         lua_close(g_ironbee_rules_lua);
         g_ironbee_rules_lua = NULL;
     }
+#endif
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

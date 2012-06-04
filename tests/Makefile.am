@@ -29,8 +29,10 @@ LDFLAGS+=-fstack-protector
 endif
 
 if DARWIN
+if ENABLE_LUA
 # On Darwin (OSX) this is necessary for LuaJIT to run properly.
 LDFLAGS += -pagezero_size 10000 -image_base 100000000
+endif
 endif
 
 if LINUX
@@ -69,11 +71,13 @@ check_PROGRAMS = test_gtest \
                  test_engine \
                  test_module_ahocorasick \
                  test_module_pcre \
-                 test_module_rules_lua \
                  test_operator \
                  test_action \
-                 test_luajit \
                  test_config
+if ENABLE_LUA
+check_PROGRAMS += test_module_rules_lua \                 
+                  test_luajit
+endif
 
 
 TESTS=$(check_PROGRAMS)
@@ -196,4 +200,3 @@ test_luajit_LDADD = $(LDADD) \
                     -lm
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml
-

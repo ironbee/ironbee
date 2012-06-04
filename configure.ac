@@ -246,6 +246,17 @@ AC_ARG_ENABLE(clipp,
   enable_clipp="${enable_cpp}"
 ])
 
+### Disable Lua
+AC_ARG_ENABLE(lua,
+    AC_HELP_STRING([--disable-lua],
+                   [Disable Lua support.]),
+    [enable_lua="$enableval"], [enable_lua=yes]
+)
+AM_CONDITIONAL([ENABLE_LUA], [test "$enable_lua" = "yes"])
+if test "$enable_lua" != "no" ; then
+    AC_DEFINE([ENABLE_LUA], [1], [Lua rules enabled.])
+fi
+
 ### Ragel
 AC_ARG_WITH([ragel],
             [  --with-ragel=PROG ragel executable],
