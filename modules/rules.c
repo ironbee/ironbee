@@ -1511,7 +1511,7 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
     IB_DIRMAP_INIT_LAST
 };
 
-#if ENABLE_LUA
+#ifdef ENABLE_LUA
 static void clean_up_ipc_mem(void)
 {
     ib_lock_destroy(&g_lua_lock);
@@ -1522,7 +1522,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     IB_FTRACE_INIT();
 
-#if ENABLE_LUA
+#ifdef ENABLE_LUA
     /* Error code from Iron Bee calls. */
     ib_status_t ib_rc;
     ib_core_cfg_t *corecfg = NULL;
