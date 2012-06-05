@@ -1,3 +1,5 @@
+LogLevel notice
+
 SensorId 215e7620-7783-012f-86c5-001f5b320164
 SensorName ClippTests
 SensorHostname clipp.tests
