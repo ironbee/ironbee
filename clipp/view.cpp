@@ -275,7 +275,7 @@ void view_summary(const input_p& input)
         dynamic_cast<ConnectionEvent&>(
             *input->connection.pre_transaction_events.front()
         );
-    cout << boost::format("%-40s %20s <-> %-20s %5d txs") % id %
+    cout << boost::format("%-40s %22s <-> %-22s %5d txs") % id %
         (boost::format("%s:%d") %
             connection_event.local_ip % connection_event.local_port
         ) %
