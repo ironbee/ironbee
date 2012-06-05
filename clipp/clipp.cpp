@@ -680,7 +680,7 @@ int main(int argc, char** argv)
                 }
                 CLIPP_CATCH(
                     cerr << "Error applying modifier "
-                         << modifier_info.first,
+                         << modifier_info.first << ": ",
                     {modifier_success = false; break;}
                 );
 
