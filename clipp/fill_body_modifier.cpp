@@ -157,7 +157,7 @@ private:
 
     void handle_data(Input::DataEvent& event)
     {
-        if (m_most_recent_length < m_data.size()) {
+        if (m_most_recent_length > m_data.size()) {
             throw logic_error(
                 "Insanity error.  Found larger content length than expected."
                 "  Please report as bug."
