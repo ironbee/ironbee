@@ -1088,10 +1088,10 @@ static int modhtp_htp_response(htp_connp_t *connp)
     ib_state_notify_response_finished(ib, itx);
 
     /* Destroy the transaction. */
-    /// @todo Perhaps the engine should do this instead via an event???
     ib_log_debug3_tx(itx, "Destroying transaction structure");
     ib_tx_destroy(itx);
-    htp_tx_destroy(tx);
+
+    /* NOTE: The htp transaction is destroyed in modhtp_tx_finished() */
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -1296,6 +1296,8 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;
+    htp_tx_t *tx;
+    ib_tx_t *itx = NULL;
     struct timeval tv;
     int ec;
 
@@ -1307,11 +1309,21 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
 
     ib_log_debug3(ib, "LibHTP incoming data status=%d", htp->in_status);
     ib_log_debug3(ib,
-                 "DATA: %s:%d -> %s:%d len=%d %" IB_BYTESTR_FMT,
-                 iconn->remote_ipstr, iconn->remote_port,
-                 iconn->local_ipstr, iconn->local_port,
-                 (int)qcdata->dlen,
-                 IB_BYTESTRSL_FMT_PARAM(qcdata->data, qcdata->dlen));
+                  "DATA: %s:%d -> %s:%d len=%d %" IB_BYTESTR_FMT,
+                  iconn->remote_ipstr, iconn->remote_port,
+                  iconn->local_ipstr, iconn->local_port,
+                  (int)qcdata->dlen,
+                  IB_BYTESTRSL_FMT_PARAM(qcdata->data, qcdata->dlen));
+
+    /* Lookup the current htp and ironbee transactions */
+    tx = htp->in_tx;
+    if (tx != NULL) {
+        itx = htp_tx_get_user_data(tx);
+    }
+
+    if (itx == NULL) {
+        ib_log_debug3(ib, "No IronBee transaction available.");
+    }
 
     switch(htp->in_status) {
         case STREAM_STATE_NEW:
@@ -1349,6 +1361,8 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
     htp_connp_t *htp;
+    htp_tx_t *tx;
+    ib_tx_t *itx = NULL;
     struct timeval tv;
     int ec;
 
@@ -1365,6 +1379,16 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
                  iconn->remote_ipstr, iconn->remote_port,
                  (int)qcdata->dlen,
                  IB_BYTESTRSL_FMT_PARAM(qcdata->data, qcdata->dlen));
+
+    /* Lookup the current htp and ironbee transactions */
+    tx = htp->out_tx;
+    if (tx != NULL) {
+        itx = htp_tx_get_user_data(tx);
+    }
+
+    if (itx == NULL) {
+        ib_log_debug3(ib, "No IronBee transaction available.");
+    }
 
     switch(htp->out_status) {
         case STREAM_STATE_NEW:
@@ -1937,6 +1961,64 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
 };
 
 
+/* -- Hook Handlers -- */
+
+static ib_status_t modhtp_tx_finished(ib_engine_t *ib,
+                                      ib_tx_t *itx,
+                                      ib_state_event_type_t event,
+                                      void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_conn_t *iconn = itx->conn;
+    modhtp_context_t *modctx;
+    htp_tx_t *in_tx;
+    htp_tx_t *out_tx;
+
+    assert(itx != NULL);
+    assert(itx->conn != NULL);
+
+    /* Fetch context from the connection. */
+    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
+
+    /* Use the current parser transaction to generate fields. */
+    out_tx = modctx->htp->out_tx;
+
+    /* Reset libhtp connection parser. */
+    if (out_tx != NULL) {
+        ib_tx_t *tx_itx = htp_tx_get_user_data(out_tx);
+        if (tx_itx == itx) {
+            ib_log_debug_tx(itx, "Destroying LibHTP outbound transaction=%p id=%s", out_tx, itx->id);
+            modctx->htp->out_status = STREAM_STATE_OPEN;
+            modctx->htp->out_state = htp_connp_RES_IDLE;
+            htp_tx_destroy(out_tx);
+            modctx->htp->out_tx = NULL;
+            if (out_tx == modctx->htp->in_tx) {
+                modctx->htp->in_tx = NULL;
+            }
+        }
+    }
+
+    in_tx = modctx->htp->in_tx;
+    if (in_tx != NULL) {
+        ib_tx_t *tx_itx = htp_tx_get_user_data(in_tx);
+        if (tx_itx == itx) {
+            ib_log_debug_tx(itx, "Destroying LibHTP inbound transaction=%p id=%s", in_tx, itx->id);
+            modctx->htp->in_status = STREAM_STATE_OPEN;
+            htp_tx_destroy(in_tx);
+            modctx->htp->in_tx = NULL;
+            modctx->htp->in_state = htp_connp_REQ_IDLE;
+            if (in_tx == modctx->htp->out_tx) {
+                modctx->htp->out_tx = NULL;
+            }
+        }
+    }
+
+    htp_connp_clear_error(modctx->htp);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+
 /* -- Module Routines -- */
 
 static ib_status_t modhtp_init(ib_engine_t *ib,
@@ -1957,6 +2039,9 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
                      "%s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
+
+    ib_hook_tx_register(ib, tx_finished_event,
+                        modhtp_tx_finished, NULL);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
