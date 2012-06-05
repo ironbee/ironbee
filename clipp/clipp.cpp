@@ -112,69 +112,63 @@ using namespace IronBee::CLIPP;
 using boost::bind;
 
 using Input::input_p;
-using ConfigurationParser::component_t;
-using ConfigurationParser::component_vec_t;
-using ConfigurationParser::chain_t;
-using ConfigurationParser::chain_vec_t;
 
 /**
- * A generator of inputs.
+ * A component.
  *
- * Should be a function that takes an input_p as an output argument.  If
- * input is available it should fill its argument and return true.  If no
- * more input is available, it should return false.
+ * All components are functionals that share this signature.  There are three
+ * types of components that are each interpreted differently:
  *
- * The input_p can be changed but it is guaranteed to be an already allocated
- * input_t which can be reused.
+ * - Generators produce inputs.  They treat their argument as an out argument
+ *   and return true iff they are able to produce an input.
+ * - Modifiers modify inputs.  They treat their argument as an in/out
+ *   argument and return true iff the input should continue to the next
+ *   component in the chain.
+ * - Consumers consume inputs.  They treat their argument as an in argument
+ *   (although they may modify it) and return true iff they are able to
+ *   continue consuming inputs.
  *
- * Errors should be reported via exceptions.  Exceptions will not halt
- * processing, so generators should arrange to do nothing and return false if
- * they are also unable to continue.
+ * All components should report errors by throwing exceptions.  With a few
+ * exceptions (see below), doing so results in the current input being
+ * discarded but does not abort the chain.
+ *
+ * There are a few important caveats:
+ *
+ * - When a generator returns false, the chain does not stop.  Instead,
+ *   singular (NULL) inputs are generated instead.  The chain stops when a
+ *   singular input reaches the consumer.  This allows modifiers to
+ *   manipulate the input stream across inputs, e.g., aggregation.  It does
+ *   mean that all modifiers must gracefully handle singular inputs.  This is
+ *   typically done with:
+ *
+ * @code
+ * if (! input) {
+ *     return true;
+ * }
+ * @endcode
+ *
+ * - A generator returning true but producing a singular input is an error.
+ *   So is, a modifier returning true, but changing a non-singular input
+ *   to singular.
+ *
+ * - Generators are passed non-singular inputs that point to a default
+ *   consturcted Input.  Thus generators need not be concerned with allocating
+ *   an Input.  They are, however, free to change their argument to point to a
+ *   different Input.
+ *
+ * - The input passed to a consumer is not used later.  Thus a consumer is
+ *   free to do whatever they want with the argument.
+ *
+ * - Modifiers may do further control of the chain by throwing a clipp
+ *   control exception.  See control.hpp.
  **/
-typedef boost::function<bool(input_p&)> input_generator_t;
+typedef boost::function<bool(input_p&)> component_t;
 
-/**
- * A consumer of inputs.
- *
- * Should take a const input_p as an input argument.  Should return true if
- * the input was accepted and false if it can not accept additional inputs.
- *
- * Exceptions are as per generators, i.e., use to report errors; does not
- * halt processing.
- **/
-typedef boost::function<bool(const input_p&)> input_consumer_t;
-
-/**
- * A modiifier of inputs.
- *
- * Should take a input_p as an in/out parameter.  The parameter is guaranteed
- * to point to an already allocated input_t.  That input_t can be modified or
- * the pointer can be changed to point to a new input_t.
- *
- * The return value should be true if the result is to be used and false if
- * the result is to be discard.
- *
- * Exception semantics is the same as generators and consumers.
- **/
-typedef boost::function<bool(input_p&)> input_modifier_t;
-
-//! A producer of input generators.
-typedef boost::function<input_generator_t(const string&)> generator_factory_t;
-
-//! A producer of input consumers.
-typedef boost::function<input_consumer_t(const string&)> consumer_factory_t;
-
-//! A producer of input modifiers.
-typedef boost::function<input_modifier_t(const string&)> modifier_factory_t;
+//! A producer of components.
+typedef boost::function<component_t(const string&)> component_factory_t;
 
 //! A map of command line argument to factory.
-typedef map<string,generator_factory_t> generator_factory_map_t;
-
-//! A map of command line argument to factory.
-typedef map<string,consumer_factory_t> consumer_factory_map_t;
-
-//! A map of command line argument to factory.
-typedef map<string,modifier_factory_t> modifier_factory_map_t;
+typedef map<string, component_factory_t> component_factory_map_t;
 
 /**
  * @name Constructor Helpers
@@ -183,46 +177,25 @@ typedef map<string,modifier_factory_t> modifier_factory_map_t;
  **/
 ///@{
 
-//! Generic generator constructor.
+//! Generic component constructor.
 template <typename T>
-input_generator_t construct_generator(const string& arg)
+component_t construct_component(const string& arg)
 {
     return T(arg);
 }
 
-//! Generic consumer constructor.
+//! Generic component constructor for no-args.  Ignores @a arg.
 template <typename T>
-input_consumer_t construct_consumer(const string& arg)
-{
-    return T(arg);
-}
-
-//! Generic consumer constructor for no-args.  Ignores @a arg.
-template <typename T>
-input_consumer_t construct_argless_consumer(const string& arg)
+component_t construct_argless_component(const string& arg)
 {
     return T();
 }
 
-//! Generic modifier constructor.  Converts @a arg to @a ArgType.
+//! Generic component constructor.  Converts @a arg to @a ArgType.
 template <typename T, typename ArgType>
-input_modifier_t construct_modifier(const string& arg)
+component_t construct_component(const string& arg)
 {
     return T(boost::lexical_cast<ArgType>(arg));
-}
-
-//! Generic modifier constructor.
-template <typename T>
-input_modifier_t construct_modifier(const string& arg)
-{
-    return T(arg);
-}
-
-//! Generic modifier constructor for no-args.  Ignores @a arg.
-template <typename T>
-input_modifier_t construct_argless_modifier(const string& arg)
-{
-    return T();
 }
 
 ///@}
@@ -236,18 +209,18 @@ input_modifier_t construct_argless_modifier(const string& arg)
  **/
 
 //! Construct raw generator, interpreting @a arg as @e request,response.
-input_generator_t init_raw_generator(const string& arg);
+component_t init_raw_generator(const string& arg);
 
 #ifdef HAVE_NIDS
 //! Construct pcap generator, interpreting @a arg as @e <path>:<filter>
-input_generator_t init_pcap_generator(const string& arg);
+component_t init_pcap_generator(const string& arg);
 #endif
 
 //! Construct aggregate modifier.  An empty @a arg is 0, otherwise integer.
-input_modifier_t init_aggregate_modifier(const string& arg);
+component_t init_aggregate_modifier(const string& arg);
 
 //! Construct ironbee modifiers.  @a arg is <config path>:<default behavior>.
-input_modifier_t init_ironbee_modifier(const string& arg);
+component_t init_ironbee_modifier(const string& arg);
 
 /**
  * Construct select modifier.
@@ -255,14 +228,14 @@ input_modifier_t init_ironbee_modifier(const string& arg);
  * @param[in] arg @a arg is a comma separated list of either single indices
  *                are ranges: @a i-j.
  **/
-input_modifier_t init_select_modifier(const string& arg);
+component_t init_select_modifier(const string& arg);
 
 /**
  * Construct set modifier.
  *
  * @param[in] arg @a arg is either >key:value, <key:value, or key:value.
  **/
-input_modifier_t init_set_modifier(const string& arg);
+component_t init_set_modifier(const string& arg);
 
 ///@}
 
@@ -402,19 +375,18 @@ void help()
 /**
  * Constructs a component from a parsed representation.
  *
- * @tparam ResultType Type of component to construct.
- * @tparam MapType Type of @a map.
  * @param[in] component Parsed representation of component.
  * @param[in] map       Generator map for this type of component.
  * @returns Component.
  * @throw runtime_error if invalid component.
  **/
-template <typename ResultType, typename MapType>
-ResultType
-construct_component(const component_t& component, const MapType& map);
+component_t build_component(
+    const ConfigurationParser::component_t& component,
+    const component_factory_map_t&          map
+);
 
 //! List of chains.
-typedef list<chain_t> chain_list_t;
+typedef list<ConfigurationParser::chain_t> chain_list_t;
 
 /**
  * Load a configuration file.
@@ -441,7 +413,7 @@ void load_configuration_text(
 );
 
 //! Modifier with name.
-typedef pair<string, input_modifier_t> modifier_info_t;
+typedef pair<string, component_t> modifier_info_t;
 //! List of modifier infos.
 typedef list<modifier_info_t> modifier_info_list_t;
 
@@ -454,10 +426,10 @@ typedef list<modifier_info_t> modifier_info_list_t;
  * @param[in]  modifier_components  Modifiers to build.
  * @param[in]  modifier_factory_map Modifier factory map.
  **/
-void construct_modifiers(
-     modifier_info_list_t&         modifier_infos,
-     const component_vec_t&        modifier_components,
-     const modifier_factory_map_t& modifier_factory_map
+void build_modifiers(
+     modifier_info_list_t&                       modifier_infos,
+     const ConfigurationParser::component_vec_t& modifier_components,
+     const component_factory_map_t&              modifier_factory_map
 );
 
 ///@}
@@ -512,51 +484,52 @@ int main(int argc, char** argv)
     list<string> args;
 
     // Declare generators.
-    generator_factory_map_t generator_factory_map;
+    component_factory_map_t generator_factory_map;
     generator_factory_map["modsec"]   =
-        construct_generator<ModSecAuditLogGenerator>;
+        construct_component<ModSecAuditLogGenerator>;
     generator_factory_map["raw"]      = init_raw_generator;
-    generator_factory_map["pb"]       = construct_generator<PBGenerator>;
-    generator_factory_map["apache"]   = construct_generator<ApacheGenerator>;
+    generator_factory_map["pb"]       = construct_component<PBGenerator>;
+    generator_factory_map["apache"]   = construct_component<ApacheGenerator>;
     generator_factory_map["suricata"] =
-        construct_generator<SuricataGenerator>;
-    generator_factory_map["htp"]      = construct_generator<HTPGenerator>;
-    generator_factory_map["echo"]     = construct_generator<EchoGenerator>;
+        construct_component<SuricataGenerator>;
+    generator_factory_map["htp"]      = construct_component<HTPGenerator>;
+    generator_factory_map["echo"]     = construct_component<EchoGenerator>;
 #ifdef HAVE_NIDS
     generator_factory_map["pcap"]     = init_pcap_generator;
 #endif
 
     // Declare consumers.
-    consumer_factory_map_t consumer_factory_map;
-    consumer_factory_map["ironbee"]  = construct_consumer<IronBeeConsumer>;
-    consumer_factory_map["writepb"]  = construct_consumer<PBConsumer>;
-    consumer_factory_map["writehtp"] = construct_consumer<HTPConsumer>;
-    consumer_factory_map["view"]     = construct_consumer<ViewConsumer>;
+    component_factory_map_t consumer_factory_map;
+    consumer_factory_map["ironbee"]  = construct_component<IronBeeConsumer>;
+    consumer_factory_map["writepb"]  = construct_component<PBConsumer>;
+    consumer_factory_map["writehtp"] = construct_component<HTPConsumer>;
+    consumer_factory_map["view"]     = construct_component<ViewConsumer>;
     consumer_factory_map["null"]     =
-        construct_argless_consumer<NullConsumer>;
+        construct_argless_component<NullConsumer>;
 
     // Declare modifiers.
-    modifier_factory_map_t modifier_factory_map;
-    modifier_factory_map["view"] = construct_modifier<ViewModifier>;
+    component_factory_map_t modifier_factory_map;
+    modifier_factory_map["view"] = construct_component<ViewModifier>;
     modifier_factory_map["set_local_ip"] =
-        construct_modifier<SetLocalIPModifier>;
+        construct_component<SetLocalIPModifier>;
     modifier_factory_map["set_local_port"] =
-        construct_modifier<SetLocalPortModifier, uint32_t>;
+        construct_component<SetLocalPortModifier, uint32_t>;
     modifier_factory_map["set_remote_ip"] =
-        construct_modifier<SetRemoteIPModifier>;
+        construct_component<SetRemoteIPModifier>;
     modifier_factory_map["set_remote_port"] =
-        construct_modifier<SetRemotePortModifier, uint32_t>;
-    modifier_factory_map["parse"] = construct_argless_modifier<ParseModifier>;
+        construct_component<SetRemotePortModifier, uint32_t>;
+    modifier_factory_map["parse"] =
+        construct_argless_component<ParseModifier>;
     modifier_factory_map["unparse"] =
-        construct_argless_modifier<UnparseModifier>;
+        construct_argless_component<UnparseModifier>;
     modifier_factory_map["aggregate"] = init_aggregate_modifier;
-    modifier_factory_map["edit"] = construct_modifier<EditModifier>;
+    modifier_factory_map["edit"] = construct_component<EditModifier>;
     modifier_factory_map["limit"] =
-        construct_modifier<LimitModifier, size_t>;
+        construct_component<LimitModifier, size_t>;
     modifier_factory_map["select"] = init_select_modifier;
     modifier_factory_map["set"] = init_set_modifier;
     modifier_factory_map["fillbody"] =
-         construct_argless_modifier<FillBodyModifier>;
+         construct_argless_component<FillBodyModifier>;
     modifier_factory_map["ironbee"] = init_ironbee_modifier;
 
     // Convert argv to args.
@@ -564,7 +537,7 @@ int main(int argc, char** argv)
         args.push_back(argv[i]);
     }
 
-    list<chain_t> chains;
+    list<ConfigurationParser::chain_t> chains;
     // Parse flags.
     while (! args.empty() && args.front() == "-c") {
         args.pop_front();
@@ -597,11 +570,11 @@ int main(int argc, char** argv)
         return 1;
     }
     // Last component must be consumer.
-    input_consumer_t consumer;
-    chain_t consumer_chain = chains.back();
+    component_t consumer;
+    ConfigurationParser::chain_t consumer_chain = chains.back();
     chains.pop_back();
     try {
-        consumer = construct_component<input_consumer_t>(
+        consumer = build_component(
             consumer_chain.base,
             consumer_factory_map
         );
@@ -611,14 +584,14 @@ int main(int argc, char** argv)
     // Construct consumer modifiers.
     modifier_info_list_t consumer_modifiers;
     try {
-        construct_modifiers(
+        build_modifiers(
             consumer_modifiers,
             consumer_chain.modifiers,
             modifier_factory_map
         );
     }
     catch (...) {
-        // construct_modifiers() will output error message.
+        // build_modifiers() will output error message.
         return 1;
     }
 
@@ -626,10 +599,10 @@ int main(int argc, char** argv)
     // as needed to limit the scope of each input generator.  As input
     // generators can make use of significant memory, it is good to only have
     // one around at a time.
-    BOOST_FOREACH(chain_t& chain, chains) {
-        input_generator_t generator;
+    BOOST_FOREACH(const ConfigurationParser::chain_t& chain, chains) {
+        component_t generator;
         try {
-            generator = construct_component<input_generator_t>(
+            generator = build_component(
                 chain.base,
                 generator_factory_map
             );
@@ -642,14 +615,14 @@ int main(int argc, char** argv)
         // Generate modifiers.
         modifier_info_list_t modifiers;
         try {
-            construct_modifiers(
+            build_modifiers(
                 modifiers,
                 chain.modifiers,
                 modifier_factory_map
             );
         }
         catch (...) {
-            // construct_modifiers() will output error message.
+            // build_modifiers() will output error message.
             return 1;
         }
 
@@ -712,7 +685,7 @@ int main(int argc, char** argv)
                 );
 
                 // If pushing through a singular input, apply to all
-                // modifier.
+                // modifiers.
                 if (input && ! modifier_success) {
                     break;
                 }
@@ -773,7 +746,7 @@ vector<string> split_on_char(const string& src, char c)
     return r;
 }
 
-input_generator_t init_raw_generator(const string& arg)
+component_t init_raw_generator(const string& arg)
 {
     vector<string> subargs = split_on_char(arg, ',');
     if (subargs.size() != 2) {
@@ -787,7 +760,7 @@ input_generator_t init_raw_generator(const string& arg)
 }
 
 #ifdef HAVE_NIDS
-input_generator_t init_pcap_generator(const string& arg)
+component_t init_pcap_generator(const string& arg)
 {
     vector<string> subargs = split_on_char(arg, ':');
     if (subargs.size() == 1) {
@@ -801,7 +774,7 @@ input_generator_t init_pcap_generator(const string& arg)
 }
 #endif
 
-input_modifier_t init_aggregate_modifier(const string& arg)
+component_t init_aggregate_modifier(const string& arg)
 {
     if (arg.empty()) {
         return AggregateModifier();
@@ -809,7 +782,7 @@ input_modifier_t init_aggregate_modifier(const string& arg)
     else {
         vector<string> subargs = split_on_char(arg, ':');
         if (subargs.size() == 1) {
-            return construct_modifier<AggregateModifier, size_t>(subargs[0]);
+            return construct_component<AggregateModifier, size_t>(subargs[0]);
         }
         else if (subargs.size() == 2) {
             vector<string> subsubargs = split_on_char(subargs[1], ',');
@@ -868,7 +841,7 @@ input_modifier_t init_aggregate_modifier(const string& arg)
     }
 }
 
-input_modifier_t init_select_modifier(const string& arg)
+component_t init_select_modifier(const string& arg)
 {
     if (arg.empty()) {
         throw runtime_error("@select requires an argument.");
@@ -909,7 +882,7 @@ input_modifier_t init_select_modifier(const string& arg)
     return SelectModifier(select);
 }
 
-input_modifier_t init_set_modifier(const string& arg)
+component_t init_set_modifier(const string& arg)
 {
     SetModifier::which_e which = SetModifier::BOTH;
 
@@ -938,7 +911,7 @@ input_modifier_t init_set_modifier(const string& arg)
     return SetModifier(which, key, value);
 }
 
-input_modifier_t init_ironbee_modifier(const string& arg)
+component_t init_ironbee_modifier(const string& arg)
 {
     IronBeeModifier::behavior_e behavior = IronBeeModifier::ALLOW;
     string config_path;
@@ -966,11 +939,12 @@ input_modifier_t init_ironbee_modifier(const string& arg)
     return IronBeeModifier(config_path, behavior);
 }
 
-template <typename ResultType, typename MapType>
-ResultType
-construct_component(const component_t& component, const MapType& map)
+component_t build_component(
+    const ConfigurationParser::component_t& component,
+    const component_factory_map_t&          map
+)
 {
-    typename MapType::const_iterator i = map.find(component.name);
+    component_factory_map_t::const_iterator i = map.find(component.name);
     if (i == map.end()) {
         throw runtime_error("Unknown component: " + component.name);
     }
@@ -983,7 +957,7 @@ void load_configuration_file(
     const string& path
 )
 {
-    chain_vec_t file_chains;
+    ConfigurationParser::chain_vec_t file_chains;
     file_chains = ConfigurationParser::parse_file(path);
     copy(
         file_chains.begin(), file_chains.end(),
@@ -996,7 +970,7 @@ void load_configuration_text(
     const string& config
 )
 {
-    chain_vec_t text_chains;
+    ConfigurationParser::chain_vec_t text_chains;
     text_chains = ConfigurationParser::parse_string(config);
     copy(
         text_chains.begin(), text_chains.end(),
@@ -1004,23 +978,23 @@ void load_configuration_text(
     );
 }
 
-void construct_modifiers(
-    modifier_info_list_t&         modifier_infos,
-    const component_vec_t&        modifier_components,
-    const modifier_factory_map_t& modifier_factory_map
+void build_modifiers(
+    modifier_info_list_t&                       modifier_infos,
+    const ConfigurationParser::component_vec_t& modifier_components,
+    const component_factory_map_t&              modifier_factory_map
 )
 {
     BOOST_FOREACH(
-        const component_t& modifier_component,
+        const ConfigurationParser::component_t& modifier_component,
         modifier_components
     ) {
         modifier_infos.push_back(modifier_info_t(
             modifier_component.name,
-            input_modifier_t()
+            component_t()
         ));
         modifier_info_t& modifier_info = modifier_infos.back();
         try {
-            modifier_info.second = construct_component<input_modifier_t>(
+            modifier_info.second = build_component(
                 modifier_component,
                 modifier_factory_map
             );
