@@ -202,6 +202,7 @@ bool FillBodyModifier::operator()(Input::input_p& input)
     // Allocate a single big block of data to use for all bodies.
     boost::shared_ptr<data_t> data = make_shared<data_t>();
     data->original_source = input->source;
+    input->source = data;
     data->data.assign(max_body_length, '@');
 
     // Pass 2: Add missing data events.
