@@ -1310,7 +1310,7 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
                             dfa_workspace->workspace,
                             dfa_workspace->wscount);
 
-    if (matches > 0) {
+    if (matches >= 0) {
         ib_rc = IB_OK;
         *result = 1;
     }
