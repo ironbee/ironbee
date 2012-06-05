@@ -636,34 +636,40 @@ int main(int argc, char** argv)
         input_p input;
         bool generator_continue = true;
         bool consumer_continue  = true;
+        bool end_of_generator   = false;
         while (generator_continue && consumer_continue) {
-            // Make new input for each run.  Extra allocations but avoids
-            // some pitfalls.
-            input = boost::make_shared<Input::Input>();
+            input.reset();
 
-            try {
-                generator_continue = generator(input);
-            }
-            catch (clipp_break) {
-                break;
-            }
-            catch (clipp_continue) {
-                continue;
-            }
-            CLIPP_CATCH("Error generating input", {continue;});
+            if (! end_of_generator) {
+                // Make new input for each run.  Extra allocations but avoids
+                // some pitfalls.
+                input = boost::make_shared<Input::Input>();
 
-            if (generator_continue && ! input) {
-                cerr << "Generator said it provided input, but didn't."
-                     << endl;
-                continue;
+                try {
+                    generator_continue = generator(input);
+                }
+                catch (clipp_break) {
+                    break;
+                }
+                catch (clipp_continue) {
+                    continue;
+                }
+                CLIPP_CATCH("Error generating input", {continue;});
+
+                if (generator_continue && ! input) {
+                    cerr << "Generator said it provided input, but didn't."
+                         << endl;
+                    continue;
+                }
+
+                if (! generator_continue) {
+                    // Only stop if the singular input reaches the consumer.
+                    input.reset();
+                    end_of_generator = true;
+                }
             }
 
-            if (! generator_continue) {
-                // Only stop if the singular input reaches the consumer.
-                input.reset();
-            }
-
-            bool modifier_success = true;
+            bool modifier_success  = true;
             bool modifier_break    = false;
             bool modifier_continue = false;
             BOOST_FOREACH(const modifier_info_t& modifier_info, modifiers) {
@@ -691,13 +697,14 @@ int main(int argc, char** argv)
                 }
             }
             if (modifier_break) {
-                break;
+                end_of_generator = true;
+                continue;
             }
             if (! modifier_success || modifier_continue) {
                 continue;
             }
 
-            if (! input && ! generator_continue) {
+            if (! input && end_of_generator) {
                 // Chain complete; leave loop.
                 break;
             }
@@ -711,7 +718,8 @@ int main(int argc, char** argv)
                 consumer_continue = consumer(input);
             }
             catch (clipp_break) {
-                break;
+                end_of_generator = true;
+                continue;
             }
             catch (clipp_continue) {
                 continue;
