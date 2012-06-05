@@ -111,6 +111,33 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
 }
 
 /**
+ * Execute function for the "exists" operator
+ *
+ * @param[in] ib Ironbee engine (unused).
+ * @param[in] tx The transaction for this operator (unused).
+ * @param[in] data Operator data (unused)
+ * @param[in] flags Operator instance flags
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_exists_execute(ib_engine_t *ib,
+                                     ib_tx_t *tx,
+                                     const ib_rule_t *rule,
+                                     void *data,
+                                     ib_flags_t flags,
+                                     ib_field_t *field,
+                                     ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+
+    /* Return true of field is not NULL */
+    *result = (field != NULL);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Create function for the log action.
  *
  * @param[in] ib IronBee engine (unused)
@@ -235,6 +262,20 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               NULL, NULL, /* No create function */
                               NULL, NULL, /* no destroy function */
                               op_false_execute, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the field exists operator */
+    rc = ib_operator_register(ib,
+                              "exists",
+                              IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
+                              NULL, /* No create function */
+                              NULL,
+                              NULL, /* no destroy function */
+                              NULL,
+                              op_exists_execute,
+                              NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
