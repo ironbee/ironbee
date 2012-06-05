@@ -5,7 +5,7 @@ SUBDIRS = tests
 lib_LTLIBRARIES = libibpp.la
 libibpp_la_CFLAGS = $(PROTOBUF_CFLAGS)
 libibpp_la_CPPFLAGS = $(BOOST_CPPFLAGS) $(PROTOBUF_CPPFLAGS)
-libibpp_la_LDFLAGS = $(BOOST_LDFLAGS) $(PROTOBUF_LDFLAGS)
+libibpp_la_LDFLAGS = $(LDFLAGS) $(BOOST_LDFLAGS) $(PROTOBUF_LDFLAGS)
 libibpp_la_LIBADD = $(PROTOBUF_LDADD)
 libibpp_la_SOURCES = \
     catch.cpp \

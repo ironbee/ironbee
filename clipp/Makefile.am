@@ -45,14 +45,15 @@ if HAVE_NIDS
 clipp_SOURCES += pcap_generator.cpp
 endif
 
-clipp_CFLAGS = $(PROTOBUF_CFLAGS) $(NIDS_CFLAGS) $(NET_CFLAGS)
-clipp_CPPFLAGS = $(AM_CPPFLAGS) \
+clipp_CFLAGS = @PCRE_CFLAGS@ $(PROTOBUF_CFLAGS) $(NIDS_CFLAGS) $(NET_CFLAGS)
+clipp_CPPFLAGS = @PCRE_CPPFLAGS@ $(AM_CPPFLAGS) \
     ${PROTOBUF_CPPFLAGS} \
     $(NIDS_CPPFLAGS) \
     $(NET_CPPFLAGS) \
     $(MODP_CPPFLAGS) \
     $(BOOST_CPPFLAGS)
 clipp_LDFLAGS = \
+    $(LDFLAGS) \
     $(AM_LDFLAGS) \
     $(PROTOBUF_LDFLAGS) \
     $(BOOST_LDFLAGS) \
@@ -71,5 +72,6 @@ clipp_LDFLAGS += $(NIDS_LDFLAGS) $(NET_LDFLAGS) -lnids -lnet -lpcap
 endif
 
 clipp_LDADD = \
+    @PCRE_LDADD@ \
     $(top_builddir)/ironbeepp/libibpp.la \
     $(top_builddir)/engine/libironbee.la
