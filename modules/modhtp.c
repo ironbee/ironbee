@@ -536,9 +536,11 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
         ib_log_error_tx(itx,
                      "Error notifying request started: %s",
                      ib_status_to_string(rc));
+        IB_FTRACE_RET_INT(HTP_ERROR);
     }
     else if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+        // TODO: Check flags for those that make further parsing impossible?
     }
 
     IB_FTRACE_RET_INT(HTP_OK);
@@ -864,9 +866,21 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     /* Tell the engine that the response started. */
     ib_log_debug2_tx(itx, "Notify response started");
     rc = ib_state_notify_response_started(ib, itx, resp_line);
-    if (rc != IB_OK) {
-        ib_log_error_tx(itx, "Error from notice_response_started(): %s",
+    ib_log_debug2_tx(itx, "Notify response started done: %s",
                      ib_status_to_string(rc));
+    if (rc != IB_OK) {
+        ib_log_error_tx(itx,
+                        "Error notifying response started: %s",
+                        ib_status_to_string(rc));
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
+    else if (tx->flags) {
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+        if (tx->flags & HTP_STATUS_LINE_INVALID) {
+            // FIXME: Why is this not an error???
+            ib_log_error_tx(itx, "Error parsing response line.");
+            IB_FTRACE_RET_INT(HTP_ERROR);
+        }
     }
 
     IB_FTRACE_RET_INT(HTP_OK);
@@ -986,6 +1000,10 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
+    if (itx == NULL) {
+        ib_log_error(ib, "No ironbee transaction available.");
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
 
     if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
@@ -997,6 +1015,17 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
      */
     if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
         IB_FTRACE_RET_INT(HTP_OK);
+    }
+
+    /* If this is connection data and the response has not yet
+     * started, then LibHTP has interpreted this as the response
+     * body. Instead, return an error.
+     */
+    else if (!ib_tx_flags_isset(itx, IB_TX_FRES_STARTED)) {
+        ib_log_error_tx(itx,
+                        "LibHTP parsing error: "
+                        "found response data instead of a response line");
+        IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
     /* Notify the engine of any response body data. */
