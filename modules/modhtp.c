@@ -1022,7 +1022,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
      * body. Instead, return an error.
      */
     else if (!ib_tx_flags_isset(itx, IB_TX_FRES_STARTED)) {
-        ib_log_error_tx(itx,
+        ib_log_notice_tx(itx,
                         "LibHTP parsing error: "
                         "found response data instead of a response line");
         IB_FTRACE_RET_INT(HTP_ERROR);
