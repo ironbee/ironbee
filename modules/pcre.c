@@ -1122,7 +1122,7 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
     }
 
     *workspace = (dfa_workspace_t *)ib_mpool_alloc(tx->mp, sizeof(**workspace));
-    if ((*workspace)->workspace == NULL) {
+    if (*workspace == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
