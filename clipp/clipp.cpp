@@ -104,6 +104,7 @@
 #include <boost/call_traits.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/exception/all.hpp>
+#include <boost/assign/list_of.hpp>
 
 #include <string>
 
@@ -484,53 +485,45 @@ int main(int argc, char** argv)
     list<string> args;
 
     // Declare generators.
-    component_factory_map_t generator_factory_map;
-    generator_factory_map["modsec"]   =
-        construct_component<ModSecAuditLogGenerator>;
-    generator_factory_map["raw"]      = init_raw_generator;
-    generator_factory_map["pb"]       = construct_component<PBGenerator>;
-    generator_factory_map["apache"]   = construct_component<ApacheGenerator>;
-    generator_factory_map["suricata"] =
-        construct_component<SuricataGenerator>;
-    generator_factory_map["htp"]      = construct_component<HTPGenerator>;
-    generator_factory_map["echo"]     = construct_component<EchoGenerator>;
+    component_factory_map_t generator_factory_map = boost::assign::map_list_of
+        ("modsec",   construct_component<ModSecAuditLogGenerator>)
+        ("raw",      init_raw_generator)
+        ("pb",       construct_component<PBGenerator>)
+        ("apache",   construct_component<ApacheGenerator>)
+        ("suricata", construct_component<SuricataGenerator>)
+        ("htp",      construct_component<HTPGenerator>)
+        ("echo",     construct_component<EchoGenerator>)
 #ifdef HAVE_NIDS
-    generator_factory_map["pcap"]     = init_pcap_generator;
+        ("pcap",     init_pcap_generator)
 #endif
+        ;
 
     // Declare consumers.
-    component_factory_map_t consumer_factory_map;
-    consumer_factory_map["ironbee"]  = construct_component<IronBeeConsumer>;
-    consumer_factory_map["writepb"]  = construct_component<PBConsumer>;
-    consumer_factory_map["writehtp"] = construct_component<HTPConsumer>;
-    consumer_factory_map["view"]     = construct_component<ViewConsumer>;
-    consumer_factory_map["null"]     =
-        construct_argless_component<NullConsumer>;
+    component_factory_map_t consumer_factory_map = boost::assign::map_list_of
+        ("ironbee",  construct_component<IronBeeConsumer>)
+        ("writepb",  construct_component<PBConsumer>)
+        ("writehtp", construct_component<HTPConsumer>)
+        ("view",     construct_component<ViewConsumer>)
+        ("null",     construct_argless_component<NullConsumer>)
+        ;
 
     // Declare modifiers.
-    component_factory_map_t modifier_factory_map;
-    modifier_factory_map["view"] = construct_component<ViewModifier>;
-    modifier_factory_map["set_local_ip"] =
-        construct_component<SetLocalIPModifier>;
-    modifier_factory_map["set_local_port"] =
-        construct_component<SetLocalPortModifier, uint32_t>;
-    modifier_factory_map["set_remote_ip"] =
-        construct_component<SetRemoteIPModifier>;
-    modifier_factory_map["set_remote_port"] =
-        construct_component<SetRemotePortModifier, uint32_t>;
-    modifier_factory_map["parse"] =
-        construct_argless_component<ParseModifier>;
-    modifier_factory_map["unparse"] =
-        construct_argless_component<UnparseModifier>;
-    modifier_factory_map["aggregate"] = init_aggregate_modifier;
-    modifier_factory_map["edit"] = construct_component<EditModifier>;
-    modifier_factory_map["limit"] =
-        construct_component<LimitModifier, size_t>;
-    modifier_factory_map["select"] = init_select_modifier;
-    modifier_factory_map["set"] = init_set_modifier;
-    modifier_factory_map["fillbody"] =
-         construct_argless_component<FillBodyModifier>;
-    modifier_factory_map["ironbee"] = init_ironbee_modifier;
+    component_factory_map_t modifier_factory_map = boost::assign::map_list_of
+        ("view",            construct_component<ViewModifier>)
+        ("set_local_ip",    construct_component<SetLocalIPModifier>)
+        ("set_local_port",  construct_component<SetLocalPortModifier, uint32_t>)
+        ("set_remote_ip",   construct_component<SetRemoteIPModifier>)
+        ("set_remote_port", construct_component<SetRemotePortModifier, uint32_t>)
+        ("parse",           construct_argless_component<ParseModifier>)
+        ("unparse",         construct_argless_component<UnparseModifier>)
+        ("aggregate",       init_aggregate_modifier)
+        ("edit",            construct_component<EditModifier>)
+        ("limit",           construct_component<LimitModifier, size_t>)
+        ("select",          init_select_modifier)
+        ("set",             init_set_modifier)
+        ("fillbody",        construct_argless_component<FillBodyModifier>)
+        ("ironbee",         init_ironbee_modifier)
+        ;
 
     // Convert argv to args.
     for (int i = 1; i < argc; ++i) {
