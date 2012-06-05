@@ -589,15 +589,19 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
     if (conn->tx != NULL) {
         ib_tx_t *tx = conn->tx;
 
-        if (!ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED)) {
-            ib_log_debug3(ib, "Automatically triggering %s",
-                         ib_state_event_name(request_finished_event));
+        if (    ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)
+            && !ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED))
+        {
+            ib_log_debug_tx(tx, "Automatically triggering %s",
+                            ib_state_event_name(request_finished_event));
             ib_state_notify_request_finished(ib, tx);
         }
 
-        if (!ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED)) {
-            ib_log_debug3(ib, "Automatically triggering %s",
-                         ib_state_event_name(response_finished_event));
+        if (    ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)
+            && !ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED))
+        {
+            ib_log_debug_tx(tx, "Automatically triggering %s",
+                            ib_state_event_name(response_finished_event));
             ib_state_notify_response_finished(ib, tx);
         }
     }
@@ -781,8 +785,14 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     }
 
     if (!ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
-        ib_log_debug3_tx(tx, "Automatically triggering optional %s",
-                     ib_state_event_name(request_started_event));
+        if (tx->request_line == NULL) {
+            ib_log_debug3_tx(tx,
+                             "Attempted to notify request header finished"
+                             " before request started.");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        ib_log_debug_tx(tx, "Automatically triggering %s",
+                        ib_state_event_name(request_started_event));
         ib_state_notify_request_started(ib, tx, tx->request_line);
     }
 
@@ -851,8 +861,8 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
 
     /* Validate. */
     if (!ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
-        ib_log_debug3_tx(tx, "Automatically triggering %s",
-                         ib_state_event_name(request_header_finished_event));
+        ib_log_debug_tx(tx, "Automatically triggering %s",
+                        ib_state_event_name(request_header_finished_event));
         ib_state_notify_request_header_finished(ib, tx);
     }
 
@@ -902,8 +912,8 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     }
 
     if (!ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
-        ib_log_debug3_tx(tx, "Automatically triggering %s",
-                     ib_state_event_name(request_header_finished_event));
+        ib_log_debug_tx(tx, "Automatically triggering %s",
+                        ib_state_event_name(request_header_finished_event));
         ib_state_notify_request_header_finished(ib, tx);
     }
 
@@ -1043,8 +1053,14 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     }
 
     if (!ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)) {
-        ib_log_debug3_tx(tx, "Automatically triggering optional %s",
-                     ib_state_event_name(response_started_event));
+        if (tx->response_line == NULL) {
+            ib_log_debug3_tx(tx,
+                             "Attempted to notify response header finished"
+                             " before response started.");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        ib_log_debug_tx(tx, "Automatically triggering %s",
+                        ib_state_event_name(response_started_event));
         ib_state_notify_response_started(ib, tx, tx->response_line);
     }
 
@@ -1094,20 +1110,24 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
-    /* Validate. */
-    if (!ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
-        /* For HTTP/0.9 there are no headers, but the even still
-         * needs to be notified.
+    /* Validate the header has already been seen. */
+    if (! ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
+        /* For HTTP/0.9 there are no headers, so this is normal, but
+         * for others this is not normal and should be logged.
          */
-        if (ib_tx_flags_isset(tx, IB_TX_FHTTP09)) {
-            rc = ib_state_notify_response_header_finished(ib, tx);
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
+        if (!ib_tx_flags_isset(tx, IB_TX_FHTTP09)) {
+            ib_log_debug_tx(tx, "Automatically triggering %s",
+                            ib_state_event_name(response_header_finished_event));
         }
-        else {
-            ib_log_error_tx(tx, "Received response body data event before response header finished event: tx=%p", tx);
+        else if (tx->response_line == NULL) {
+            ib_log_debug3_tx(tx,
+                             "Attempted to notify response body data"
+                             " before response started.");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        rc = ib_state_notify_response_header_finished(ib, tx);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
         }
     }
 
@@ -1152,7 +1172,7 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     }
 
     if (!ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
-        ib_log_debug3_tx(tx, "Automatically triggering %s",
+        ib_log_debug_tx(tx, "Automatically triggering %s",
                      ib_state_event_name(response_header_finished_event));
         ib_state_notify_response_header_finished(ib, tx);
     }
