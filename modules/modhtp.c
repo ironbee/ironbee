@@ -311,8 +311,16 @@ static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
     }
     if (flags & HTP_MULTI_PACKET_HEAD) {
         flags ^= HTP_MULTI_PACKET_HEAD;
-        rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "MULTI_PACKET_HEAD");
+        /* This will trigger for parsed data until LibHTP has a
+         * proper parsed data API, so ignore it for parsed data
+         * for now.
+         *
+         * FIXME: Remove when LibHTP has a proper API.
+         */
+        if (! ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
+            rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                        "MULTI_PACKET_HEAD");
+        }
     }
     if (flags & HTP_PATH_ENCODED_NUL) {
         flags ^= HTP_PATH_ENCODED_NUL;
