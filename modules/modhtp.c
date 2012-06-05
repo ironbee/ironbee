@@ -391,6 +391,10 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
      */
     if (modctx->parsed_data != 0) {
         itx = iconn->tx;
+        if (itx == NULL) {
+            ib_log_error(ib, "No ironbee transaction available.");
+            IB_FTRACE_RET_INT(HTP_ERROR);
+        }
         ib_log_debug3(ib, "PARSED TX p=%p id=%s", itx, itx->id);
     }
     else {
@@ -453,6 +457,10 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
+    if (itx == NULL) {
+        ib_log_error(ib, "No ironbee transaction available.");
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
 
     /* Store the transaction URI path. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->path != NULL)) {
@@ -553,6 +561,10 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
      * that the request header is now available.
      */
     itx = htp_tx_get_user_data(tx);
+    if (itx == NULL) {
+        ib_log_error(ib, "No ironbee transaction available.");
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
 
     if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
@@ -651,6 +663,10 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
+    if (itx == NULL) {
+        ib_log_error(ib, "No ironbee transaction available.");
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
 
     if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
@@ -703,6 +719,10 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
+    if (itx == NULL) {
+        ib_log_error(ib, "No ironbee transaction available.");
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
 
     if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
@@ -747,6 +767,10 @@ static int modhtp_htp_request(htp_connp_t *connp)
      * and is now finished.
      */
     itx = htp_tx_get_user_data(tx);
+    if (itx == NULL) {
+        ib_log_error(ib, "No ironbee transaction available.");
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
 
     if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
@@ -790,6 +814,10 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
+    if (itx == NULL) {
+        ib_log_error(ib, "No ironbee transaction available.");
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
 
     if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
@@ -861,6 +889,10 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
      * that the response header is now available.
      */
     itx = htp_tx_get_user_data(tx);
+    if (itx == NULL) {
+        ib_log_error(ib, "No ironbee transaction available.");
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
 
     if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
@@ -999,6 +1031,10 @@ static int modhtp_htp_response(htp_connp_t *connp)
      * is finished and logging has begun.
      */
     itx = htp_tx_get_user_data(tx);
+    if (itx == NULL) {
+        ib_log_error(ib, "No ironbee transaction available.");
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
 
     if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
@@ -1047,6 +1083,10 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
      * that more transaction data has arrived.
      */
     itx = htp_tx_get_user_data(tx);
+    if (itx == NULL) {
+        ib_log_error(ib, "No ironbee transaction available.");
+        IB_FTRACE_RET_INT(HTP_ERROR);
+    }
 
     if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
