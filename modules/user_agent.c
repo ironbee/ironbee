@@ -31,6 +31,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 #include <ironbee/types.h>
 #include <ironbee/engine.h>
@@ -398,7 +399,8 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
     if (buf == NULL) {
         ib_log_error_tx(tx,
-                      "Failed to allocate %d bytes for agent string",
+                      "Failed to allocate %" PRIuMAX
+                      " bytes for agent string",
                       len+1);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }

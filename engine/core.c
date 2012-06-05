@@ -330,7 +330,7 @@ static IB_PROVIDER_IFACE_TYPE(logger) core_logger_iface = {
 
 static ib_status_t core_logevent_write(ib_provider_inst_t *epi, ib_logevent_t *e)
 {
-    ib_log_notice(epi->pr->ib, "Event [id %016" PRIxMAX "][type %d]: %s",
+    ib_log_notice(epi->pr->ib, "Event [id %016" PRIx32 "][type %d]: %s",
                  e->event_id, e->type, e->msg);
     return IB_OK;
 }
@@ -449,9 +449,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     if (sys_rc >= dn_sz) {
         /// @todo Better error.
         ib_log_error(log->ib,
-                     "Could not create audit log directory: too long",
-                     corecfg->auditlog_dir,
-                     log->ctx->auditlog->index);
+                     "Could not create audit log directory: too long");
         free(dtmp);
         free(dn);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -3525,7 +3523,8 @@ static ib_status_t matcher_api_add_pattern_ex(ib_provider_inst_t *mpi,
     if (rc != IB_OK) {
         ib_log_error(mpi->pr->ib,
                      "Failed to add pattern %s patt: (%s) %s at"
-                     " offset %d", patt, ib_status_to_string(rc), errptr, erroffset);
+                     " offset %d", patt, ib_status_to_string(rc), *errptr,
+                     *erroffset);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -3771,7 +3770,9 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     rc = ib_context_module_config(tx->ctx, ib_core_module(),
                                   (void *)&corecfg);
     if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Failure accessing core module: %s", ib_status_to_string(rc));
+        ib_log_alert_tx(tx,
+                        "Failure accessing core module: %s",
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -3779,8 +3780,9 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &tx->dpi,
                                         tx->mp, NULL);
     if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Failed to create tx data provider instance: %s",
-                     rc);
+        ib_log_alert_tx(tx,
+                        "Failed to create tx data provider instance: %s",
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -3881,7 +3883,8 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     ib_log_debug2(ib, "Creating site \"%s\"", p1_unescaped);
     rc = ib_site_create(&site, ib, p1_unescaped);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to create site \"%s\": %s", ib_status_to_string(rc));
+        ib_log_error(ib, "Failed to create site \"%s\": %s", p1_unescaped,
+                     ib_status_to_string(rc));
     }
 
     ib_log_debug2(ib,
@@ -3891,7 +3894,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
         ib_log_error(ib,
                      "Failed to create default location for site \"%s\": %s",
                      p1_unescaped,
-                     rc);
+                     ib_status_to_string(rc));
     }
 
     ib_log_debug2(ib,
@@ -3906,7 +3909,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
                      "Failed to create context for \"%s:%s\": %s",
                      p1_unescaped,
                      loc->path,
-                     rc);
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     ib_cfgparser_context_push(cp, ctx);
@@ -4018,7 +4021,7 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
                      "Failed to create location \"%s:%s\": %s",
                      site->name,
                      p1_unescaped,
-                     rc);
+                     ib_status_to_string(rc));
     }
 
     ib_log_debug2(ib,
@@ -4035,7 +4038,7 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
                      "Failed to create context for \"%s:%s\": %s",
                      site->name,
                      loc->path,
-                     rc);
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     ib_cfgparser_context_push(cp, ctx);
@@ -4043,7 +4046,10 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     ib_log_debug2(ib, "Opening context %p for \"%s\"", ctx, name);
     rc = ib_context_open(ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Error opening context for \"%s\": %s", name, ib_status_to_string(rc));
+        ib_log_error(ib,
+                     "Error opening context for \"%s\": %s",
+                     name,
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -4292,7 +4298,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
                 IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
             }
         }
-        ib_log_debug2(ib, "%s: %d", name, level);
+        ib_log_debug2(ib, "%s: %" PRIuMAX, name, level);
         rc = ib_context_set_num(ctx, "logger.log_level", level);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4601,7 +4607,7 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
     /* Merge the set flags with the previous value. */
     parts = (flags & fmask) | (parts & ~fmask);
 
-    ib_log_debug2(ib, "AUDITLOG PARTS: 0x%08x", (unsigned long)parts);
+    ib_log_debug2(ib, "AUDITLOG PARTS: 0x%08" PRIuMAX, (unsigned long)parts);
 
     rc = ib_context_set_num(ctx, "auditlog_parts", parts);
     IB_FTRACE_RET_STATUS(rc);

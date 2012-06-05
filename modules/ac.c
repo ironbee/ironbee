@@ -289,11 +289,11 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
     rc = ib_ac_add_pattern(ac_tree, patt, (ib_ac_callback_t)callback, arg, 0);
 
     if (rc == IB_OK) {
-        ib_log_debug(mpi->pr->ib, "pattern %s added to the AC tree %x", patt,
+        ib_log_debug(mpi->pr->ib, "pattern %s added to the AC tree %p", patt,
                      ac_tree);
     }
     else {
-        ib_log_error(mpi->pr->ib,  "Failed to load pattern %s to the AC tree %x",
+        ib_log_error(mpi->pr->ib,  "Failed to load pattern %s to the AC tree %p",
                      patt, ac_tree);
     }
 
@@ -353,7 +353,7 @@ static ib_status_t modac_match(ib_provider_inst_t *mpi,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(mpi->pr->ib, "Matching AGAINST AC tree %x",
+    ib_log_debug(mpi->pr->ib, "Matching AGAINST AC tree %p",
                      dt->ac_tree);
 
 

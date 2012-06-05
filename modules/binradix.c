@@ -115,7 +115,7 @@ static ib_status_t modbinradix_add_prefix_ex(ib_provider_inst_t *mpi,
                                                sizeof(modbinradix_content_t));
     if (mrc == NULL) {
         ib_log_error(mpi->pr->ib,  "Failed to allocate modbinradix_content_t"
-                                 " for %s to the BinRadix tree %x", prefix,
+                                 " for %s to the BinRadix tree %p", prefix,
                                  binradix_tree);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -128,7 +128,7 @@ static ib_status_t modbinradix_add_prefix_ex(ib_provider_inst_t *mpi,
     rc = ib_radix_ip_to_prefix(prefix, &pre, mpi->mp);
     if (rc != IB_OK) {
         ib_log_error(mpi->pr->ib,  "Failed to create a binradix prefix for %s"
-                                 " to the BinRadix tree %x", prefix,
+                                 " to the BinRadix tree %p", prefix,
                                  binradix_tree);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -136,12 +136,12 @@ static ib_status_t modbinradix_add_prefix_ex(ib_provider_inst_t *mpi,
     rc = ib_radix_insert_data(binradix_tree, pre, (void *) mrc);
 
     if (rc == IB_OK) {
-        ib_log_debug(mpi->pr->ib, "prefix %s added to the BinRadix tree %x",
+        ib_log_debug(mpi->pr->ib, "prefix %s added to the BinRadix tree %p",
                      prefix, binradix_tree);
     }
     else {
         ib_log_error(mpi->pr->ib,  "Failed to load prefix %s to the BinRadix "
-                                 "tree %x", prefix, binradix_tree);
+                                 "tree %p", prefix, binradix_tree);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -206,7 +206,7 @@ static ib_status_t modbinradix_match(ib_provider_inst_t *mpi,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(mpi->pr->ib, "Matching AGAINST BinRadix tree %x",
+    ib_log_debug(mpi->pr->ib, "Matching AGAINST BinRadix tree %p",
                      dt->binradix_tree);
 
     ib_radix_t *binradix_tree = dt->binradix_tree;

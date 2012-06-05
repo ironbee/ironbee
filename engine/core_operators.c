@@ -487,7 +487,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
                      "Error created radix prefix for %.*s: %s",
-                     iplen, ipstr, ib_status_to_string(rc));
+                     (int)iplen, ipstr, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -502,7 +502,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     else {
         ib_log_error_tx(tx,
                      "Radix matcher failed matching for %.*s: %s",
-                     iplen, ipstr, ib_status_to_string(rc));
+                     (int)iplen, ipstr, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     IB_FTRACE_RET_STATUS(IB_OK);

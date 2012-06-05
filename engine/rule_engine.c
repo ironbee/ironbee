@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <assert.h>
+#include <inttypes.h>
 
 #include <ironbee/bytestr.h>
 #include <ironbee/rule_engine.h>
@@ -385,7 +386,7 @@ static ib_status_t report_block_to_server(ib_engine_t *ib, ib_tx_t *tx)
     assert(tx);
     assert(tx->ctx);
 
-    ib_log_debug_tx(tx, "Setting HTTP error response: status=%d",
+    ib_log_debug_tx(tx, "Setting HTTP error response: status=%" PRId64,
                     tx->block_status);
     rc = ib_server_error_response(ib->server, tx, tx->block_status);
     if (rc == IB_DECLINED) {
@@ -1205,7 +1206,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
             *rule_result = result;
         }
     }
-    ib_log_debug3_tx(tx, "Operator \"%s\" => %d",
+    ib_log_debug3_tx(tx, "Operator \"%s\" => %" PRId64,
                      opinst->op->name, *rule_result);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -1667,7 +1668,7 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
             default:
                 ib_log_error(ib,
                              "Unknown hook registration type %d for "
-                             "phase %d/%d/\"%s\"",
+                             "phase %d/\"%s\"",
                              meta->phase_num, meta->event, meta->name);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
@@ -1926,12 +1927,12 @@ static ib_status_t enable_rules(ib_engine_t *ib,
         if (matches == 0) {
             ib_cfg_log_warning_ex(ib, match->file, match->lineno,
                                   "No rules by ALL to %s",
-                                  match->enable_str, lcname);
+                                  match->enable_str);
         }
         else {
             ib_cfg_log_debug_ex(ib, match->file, match->lineno,
                                 "%sd %u rules by ALL",
-                                name, matches, match->enable_str);
+                                name, matches);
         }
         IB_FTRACE_RET_STATUS(IB_OK);
         break;
@@ -2222,7 +2223,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
                          "Failed to add rule type=\"%s\" phase=%d "
                          "context=\"%s\": %s",
                          rule->phase_meta->is_stream ? "Stream" : "Normal",
-                         ruleset_phase,
+                         ruleset_phase->phase_num,
                          ib_context_full_get(ctx),
                          ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -2789,7 +2790,7 @@ ib_status_t ib_rule_enable(const ib_engine_t *ib,
         assert(str != NULL);
         if (*str == '\0') {
             ib_log_error(ib, "Invalid %s \"\" @ \"%s\":%u: %s",
-                         name, file, lineno);
+                         name, file, lineno, str);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
@@ -3151,7 +3152,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_tfn(ib_engine_t *ib,
         if (rc != IB_OK) {
             ib_log_error(ib,
                          "Error adding tfn \"%s\" to target \"%s\" "
-                         "rule \"%s\":%d",
+                         "rule \"%s\"",
                          name, target->field_name, rule->meta.id);
         }
     }

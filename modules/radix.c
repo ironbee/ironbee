@@ -115,7 +115,7 @@ static ib_status_t modradix_add_prefix_ex(ib_provider_inst_t *mpi,
                                                sizeof(modradix_content_t));
     if (mrc == NULL) {
         ib_log_error(mpi->pr->ib,  "Failed to allocate modradix_content_t"
-                                 " for %s to the Radix tree %x", prefix,
+                                 " for %s to the Radix tree %p", prefix,
                                  radix_tree);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -128,7 +128,7 @@ static ib_status_t modradix_add_prefix_ex(ib_provider_inst_t *mpi,
     rc = ib_radix_ip_to_prefix(prefix, &pre, mpi->pr->mp);
     if (rc != IB_OK) {
         ib_log_error(mpi->pr->ib,  "Failed to create a radix prefix for %s"
-                                 " to the Radix tree %x", prefix,
+                                 " to the Radix tree %p", prefix,
                                  radix_tree);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -136,12 +136,12 @@ static ib_status_t modradix_add_prefix_ex(ib_provider_inst_t *mpi,
     rc = ib_radix_insert_data(radix_tree, pre, (void *) mrc);
 
     if (rc == IB_OK) {
-        ib_log_debug(mpi->pr->ib, "prefix %s added to the Radix tree %x",
+        ib_log_debug(mpi->pr->ib, "prefix %s added to the Radix tree %p",
                      prefix, radix_tree);
     }
     else {
         ib_log_error(mpi->pr->ib,  "Failed to load prefix %s to the Radix "
-                                 "tree %x", prefix, radix_tree);
+                                 "tree %p", prefix, radix_tree);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -207,7 +207,7 @@ static ib_status_t modradix_match(ib_provider_inst_t *mpi,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    ib_log_debug(mpi->pr->ib, "Matching AGAINST Radix tree %x",
+    ib_log_debug(mpi->pr->ib, "Matching AGAINST Radix tree %p",
                      dt->radix_tree);
 
     ib_radix_t *radix_tree = dt->radix_tree;

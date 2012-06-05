@@ -29,6 +29,8 @@
 #include <ironbee/mpool.h>
 #include <ironbee/dso.h>
 
+#include <inttypes.h>
+
 #include "ironbee_private.h"
 
 /// @todo Probably need to load into a given context???
@@ -41,7 +43,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
     m->idx = ib_array_elements(ib->modules);
     m->ib = ib;
 
-    ib_log_debug2(ib, "Initializing module %s (%d): %s",
+    ib_log_debug2(ib, "Initializing module %s (%" PRIuMAX "): %s",
                  m->name, m->idx, m->filename);
 
     /* Register directives */
@@ -154,7 +156,8 @@ ib_status_t ib_module_load(ib_module_t **pm,
 
     ib_log_debug3(ib,
                  "Loaded module %s: "
-                 "vernum=%d abinum=%d version=%s index=%d filename=%s",
+                 "vernum=%d abinum=%d version=%s index=%" PRIuMAX
+                 " filename=%s",
                  (*pm)->name,
                  (*pm)->vernum, (*pm)->abinum, (*pm)->version,
                  (*pm)->idx, (*pm)->filename);
@@ -177,7 +180,8 @@ ib_status_t ib_module_unload(ib_module_t *m)
 
     ib_log_debug3(ib,
                  "Unloading module %s: "
-                 "vernum=%d abinum=%d version=%s index=%d filename=%s",
+                 "vernum=%d abinum=%d version=%s index=%" PRIuMAX
+                 " filename=%s",
                  m->name,
                  m->vernum, m->abinum, m->version,
                  m->idx, m->filename);

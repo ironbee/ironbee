@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <string.h>
+#include <inttypes.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
@@ -138,7 +139,8 @@ ib_status_t ib_fctl_process(ib_fctl_t *fc)
             if (rc != IB_OK) {
                 /// @todo Handle errors
                 ib_log_error(ib,
-                             "Error processing filter idx=%d \"%s\": %s",
+                             "Error processing filter idx=%" PRIuMAX
+                             " \"%s\": %s",
                              f->idx, f->name, ib_status_to_string(rc));
             }
         }

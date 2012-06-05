@@ -551,7 +551,8 @@ static ib_status_t parse_targets(ib_cfgparser_t *cp,
         }
         else if (not_found != 0) {
             ib_cfg_log_error(cp,
-                         "Rule target \"%s\": %d transformations not found",
+                         "Rule target \"%s\": %" PRId64
+                         " transformations not found",
                          final_target_str, not_found);
         }
 

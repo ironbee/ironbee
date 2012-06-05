@@ -32,8 +32,9 @@
 #include <ironbee/provider.h>
 #include <ironbee/field.h>
 
-#include "ironbee_private.h"
+#include <inttypes.h>
 
+#include "ironbee_private.h"
 
 ib_status_t ib_matcher_create(ib_engine_t *ib,
                               ib_mpool_t *pool,
@@ -114,8 +115,9 @@ void *ib_matcher_compile(ib_matcher_t *m,
     rc = mapi->compile_pattern(m->mpr, m->mp, &cpatt, patt,
                                errptr, erroffset);
     if (rc != IB_OK) {
-        ib_log_debug(m->ib, "Failed to compile %s patt: (%d) %s at "
-                     "offset %s", ib_status_to_string(rc), errptr, erroffset);
+        ib_log_debug(m->ib, "Failed to compile %s patt: (%s) "
+                     "%s at offset %d",
+                     patt, ib_status_to_string(rc), *errptr, *erroffset);
         IB_FTRACE_RET_PTR(void, NULL);
     }
 
@@ -208,8 +210,10 @@ ib_status_t ib_matcher_add_pattern_ex(ib_matcher_t *m,
     rc = mapi->add_pattern_ex(m->mpi, &m->mpr->data, patt, callback, arg,
                                errptr, erroffset);
     if (rc != IB_OK) {
-        ib_log_debug(m->mpr->ib, "Failed to add pattern %s patt: (%s) %s at "
-                               "offset %d", patt, ib_status_to_string(rc), errptr, erroffset);
+        ib_log_debug(m->mpr->ib,
+                     "Failed to add pattern %s patt: (%s) %s at "
+                     "offset %d",
+                     patt, ib_status_to_string(rc), *errptr, *erroffset);
     }
     IB_FTRACE_RET_STATUS(rc);
 

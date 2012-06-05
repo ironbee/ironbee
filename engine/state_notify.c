@@ -294,7 +294,7 @@ ib_status_t ib_state_notify_request_started(
     assert(tx != NULL);
     assert(line != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_request_started(%p,%d,%p)", ib, tx, line);
+    ib_log_debug3_tx(tx, "ib_state_notify_request_started(%p,%p,%p)", ib, tx, line);
 
     ib_status_t rc;
 

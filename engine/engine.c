@@ -31,6 +31,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #include <sys/types.h> /* getpid */
 #include <arpa/inet.h> /* htonl */
@@ -167,7 +168,7 @@ static ib_status_t ib_register_hook(
     last->next = hook;
 
     ib_log_debug3(ib, "Registering %s hook after %p: %p",
-           ib_state_event_name(event), last->callback,
+           ib_state_event_name(event), last->callback.as_void,
            hook->callback.as_void);
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1484,8 +1485,8 @@ ib_status_t ib_context_create(ib_context_t **pctx,
         size_t n;
         size_t i;
         IB_ARRAY_LOOP(ib->modules, n, i, m) {
-            ib_log_debug3(ib, "Registering module=\"%s\" idx=%d",
-                         m->name, m->idx);
+            ib_log_debug3(ib, "Registering module=\"%s\" idx=%" PRIuMAX,
+                          m->name, m->idx);
             rc = ib_module_register_context(m, ctx);
             if (rc != IB_OK) {
                 goto failed;

@@ -35,6 +35,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <assert.h>
+#include <inttypes.h>
 
 /* -- Internal -- */
 
@@ -171,7 +172,8 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
     do {
         nbytes = read(fd, buf+buflen, bufsz-buflen);
         buflen += nbytes;
-        ib_log_debug3(cp->ib, "Read a %d byte chunk. Total len=%d",
+        ib_log_debug3(cp->ib,
+                      "Read a %" PRIuMAX " byte chunk. Total len=%" PRIuMAX,
                       nbytes, buflen);
 
         if ( nbytes == 0 ) { /* EOF */
@@ -204,7 +206,8 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                      * space in the buffer. This is an error. */
                     ib_log_error(cp->ib,
                                  "Unable to read a configuration line "
-                                 "larger than %d bytes from file %s. "
+                                 "larger than %" PRIuMAX " bytes from "
+                                 "file %s. "
                                  "Parsing has failed.",
                                  buflen, file);
                     free(buf);
@@ -231,14 +234,17 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                 /* There are no more end-of-line opportunities.
                  * Now move the last end-of-line to the beginning. */
                 ib_log_debug2(cp->ib,
-                             "Buffer of length %d must be shrunk.", buflen);
+                              "Buffer of length %" PRIuMAX " must be shrunk.",
+                              buflen);
                 ib_log_debug2(cp->ib,
-                             "Beginning of last line is at index %d.", bol-buf);
+                              "Beginning of last line is at index %" PRIuMAX
+                              ".",
+                              bol-buf);
                 buflen = buf + buflen - bol;
                 if (buflen > 0) {
                     ib_log_debug2(cp->ib,
                                  "Discarding parsed lines."
-                                 " Moving %p to %p with length %d.",
+                                 " Moving %p to %p with length %" PRIuMAX ".",
                                  bol, buf, buflen);
                     memmove(buf, bol, buflen);
                 }
@@ -497,7 +503,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             if (nargs != 1) {
                 ib_cfg_log_error(cp,
                                  "OnOff directive \"%s\" "
-                                 "takes one parameter, not %d",
+                                 "takes one parameter, not %" PRIuMAX,
                                  name, nargs);
                 rc = IB_EINVAL;
                 break;
@@ -517,7 +523,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             if (nargs != 1) {
                 ib_cfg_log_error(cp,
                                  "Param1 directive \"%s\" "
-                                 "takes one parameter, not %d",
+                                 "takes one parameter, not %" PRIuMAX,
                                  name, nargs);
                 rc = IB_EINVAL;
                 break;
@@ -529,7 +535,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             if (nargs != 2) {
                 ib_cfg_log_error(cp,
                                  "Param2 directive \"%s\" "
-                                 "takes two parameters, not %d",
+                                 "takes two parameters, not %" PRIuMAX,
                                  name, nargs);
                 rc = IB_EINVAL;
                 break;
@@ -594,7 +600,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             if (nargs != 1) {
                 ib_cfg_log_error(cp,
                                  "SBlk1 directive \"%s\" "
-                                 "takes one parameter, not %d",
+                                 "takes one parameter, not %" PRIuMAX,
                              name, nargs);
                 rc = IB_EINVAL;
                 break;
