@@ -249,8 +249,8 @@ bool FillBodyModifier::operator()(Input::input_p& input)
                     );
                 }
                 break;
-            case Input::REQUEST_HEADER:
-            case Input::RESPONSE_HEADER:
+            case Input::REQUEST_HEADER_FINISHED:
+            case Input::RESPONSE_HEADER_FINISHED:
                 last_header_i = i;
                 // fall through
             default:
