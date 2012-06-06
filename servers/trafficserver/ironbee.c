@@ -817,7 +817,6 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
     char *head_buf;
     unsigned char *dptr, *icdatabuf;
-    size_t icdatalen;
 
     ib_parsed_header_wrapper_t *ibhdrs;
     size_t n_len, v_len;
@@ -951,7 +950,6 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                  //"ts/ironbee/process_header: len=%ld", len );
 
     /* if we're going to enable manipulation of headers, we need a copy */
-    icdatalen = len;
     icdatabuf = dptr = TSmalloc(len);
 
     for (head_buf = (void *)TSIOBufferBlockReadStart(blockp, readerp, &len);
