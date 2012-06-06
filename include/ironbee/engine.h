@@ -565,6 +565,21 @@ ib_status_t DLL_PUBLIC ib_conn_data_create(ib_conn_t *conn,
 void DLL_PUBLIC ib_conn_destroy(ib_conn_t *conn);
 
 /**
+ * Merge the base_uuid with tx data and generate the tx id string.
+ *
+ * This function is normally executed by ib_tx_create(), but if the tx is
+ * being created in other ways (e.g. in the tests), use this to generate the
+ * TX's ID.
+ *
+ * @param[in,out] tx Transaction to populate
+ * @param[in] mp Memory pool to use.
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_tx_generate_id(ib_tx_t *tx,
+                                         ib_mpool_t *mp);
+
+/**
  * Create a transaction structure.
  *
  * @param ptx Address which new transaction is written

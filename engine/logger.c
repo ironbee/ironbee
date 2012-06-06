@@ -393,14 +393,14 @@ void DLL_PUBLIC ib_vlog_tx_ex(
 {
     IB_FTRACE_INIT();
 
-    char *new_fmt = malloc(strlen(fmt) + 12);
+    char *new_fmt = malloc(strlen(fmt) + 45);
     const char *which_fmt = new_fmt;
     if (! new_fmt) {
         /* Do our best */
         which_fmt = fmt;
     }
     else {
-        sprintf(new_fmt, "[tx:%s] ", tx->id+31);
+        sprintf(new_fmt, "[tx:%.36s] ", tx->id);
         strcat(new_fmt, fmt);
     }
 

@@ -605,10 +605,8 @@ void ib_conn_destroy(ib_conn_t *conn)
     }
 }
 
-/**
- * Merge the base_uuid with tx data and generate the tx id string.
- */
-static ib_status_t ib_tx_generate_id(ib_tx_t *tx)
+ib_status_t ib_tx_generate_id(ib_tx_t *tx,
+                              ib_mpool_t *mp)
 {
     IB_FTRACE_INIT();
 
@@ -622,7 +620,7 @@ static ib_status_t ib_tx_generate_id(ib_tx_t *tx)
     }
 
     /* Convert to a hex-string representation */
-    str = (char *)ib_mpool_alloc(tx->mp, IB_UUID_HEX_SIZE);
+    str = (char *)ib_mpool_alloc(mp, IB_UUID_HEX_SIZE);
     if (str == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -692,7 +690,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     tx->block_status = corecfg->block_status;
 
     conn->tx_count++;
-    ib_tx_generate_id(tx);
+    ib_tx_generate_id(tx, tx->mp);
 
     /* Create the generic data store. */
     rc = ib_hash_create_nocase(&(tx->data), tx->mp);

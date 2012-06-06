@@ -118,7 +118,8 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
     int res = 0;
     ib_tx_t tx;
     tx.ib = ib_engine;
-    tx.id = "tx_id.TestIronBeeModuleRulesLua.new_state";
+
+    ib_tx_generate_id(&tx, ib_engine->mp);
     lua_State *L = luaL_newstate();
     luaL_openlibs(L);
     setSearchPath(L);
@@ -154,7 +155,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     char* str1 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string 1")+1));
     strcpy(str1, "string 1");
 
-    tx.id = "tx_id.TestIronBeeModuleRulesLua.load_func_eval";
+    ib_tx_generate_id(&tx, ib_engine->mp);
     
     // Create field 1.
     ASSERT_EQ(IB_OK,

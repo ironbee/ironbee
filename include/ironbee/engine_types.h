@@ -190,7 +190,7 @@ struct ib_conn_t {
 struct ib_tx_t {
     ib_engine_t        *ib;              /**< Engine handle */
     ib_mpool_t         *mp;              /**< Transaction memory pool */
-    const char         *id;              /**< Transaction ID */
+    const char         *id;              /**< ID: @sa ib_tx_generate_id() */
     ib_conn_t          *conn;            /**< Connection */
     ib_context_t       *ctx;             /**< Config context */
     void               *sctx;            /**< Server context */
