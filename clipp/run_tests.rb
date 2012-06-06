@@ -74,13 +74,15 @@ end
 
 failure = false
 
+counter = 0
 Dir.chdir(TESTDIR)
 Dir.glob('*.erb').each do |test|
     base = File.basename(test,'.erb')
     puts "Running #{base}"
     
     erb = ERB.new(IO.read(test))
-    tmppath = File.join(Dir::tmpdir, 'clipp_tests.conf')
+    counter += 1
+    tmppath = File.join(Dir::tmpdir, "clipp_tests_#{counter}.conf")
     File.open(tmppath, 'w') do |clipp_config|
         clipp_config.write(erb.result(binding))
     end
