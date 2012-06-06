@@ -161,15 +161,15 @@ static int modhtp_callback_log(htp_log_t *log)
     }
 
     if (log->code != 0) {
-        ib_log_ex(modctx->ib, level, NULL, "LibHTP",
+        ib_log_ex(modctx->ib, level,
                   log->file, log->line,
-                  "[error %d] %s",
+                  "LibHTP [error %d] %s",
                   log->code, log->msg);
     }
     else {
-        ib_log_ex(modctx->ib, level, NULL, "LibHTP",
+        ib_log_ex(modctx->ib, level,
                   log->file, log->line,
-                  "%s",
+                  "LibHTP %s",
                   log->msg);
     }
 

@@ -49,49 +49,35 @@
  * This is the default logger that executes when no other logger has
  * been configured.
  *
- * @param fp File pointer
- * @param level Log level
- * @param tx Transaction information (or NULL)
- * @param prefix Optional prefix to the log
- * @param file Optional source filename (or NULL)
- * @param line Optional source line number (or 0)
- * @param fmt Formatting string
- * @param ap Variable argument list
+ * @param fp File pointer.
+ * @param level Log level.
+ * @param file Source filename.
+ * @param line Source line number.
+ * @param fmt Formatting string.
+ * @param ap Variable argument list.
  */
 static void default_logger(FILE *fp, int level,
                            const ib_engine_t *ib,
-                           const ib_tx_t *tx,
-                           const char *prefix, const char *file, int line,
+                           const char *file, int line,
                            const char *fmt, va_list ap)
 {
     IB_FTRACE_INIT();
-    char fmt2[1024 + 1];
-    char tx_info[1024 + 1];
+    char *new_fmt;
     char time_info[32 + 1];
     struct tm *tminfo;
     time_t timet;
-    int ec = 0;
-    ib_bool_t log_lineinfo = IB_FALSE;
 
     if (level > 4) {
         IB_FTRACE_RET_VOID();
     }
 
-    if (tx != NULL) {
-        ec = snprintf(tx_info, 1024,
-                      "[tx:%s] ",
-                      tx->id+31);
-    }
-    else {
-        tx_info[0] = '\0';
-    }
-
-    /* It is a coding error if this format string is too big. */
-    assert(ec <= 1024);
-
     timet = time(NULL);
     tminfo = localtime(&timet);
     strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
+
+    /* 100 is more than sufficient. */
+    new_fmt = (char *)malloc(strlen(time_info) + strlen(fmt) + 100);
+    sprintf(new_fmt, "%s %-10s- ", time_info, ib_log_level_to_string(level));
 
     if ( (file != NULL) && (line > 0) ) {
         ib_core_cfg_t *corecfg = NULL;
@@ -99,32 +85,31 @@ static void default_logger(FILE *fp, int level,
                                                   ib_core_module(),
                                                   (void *)&corecfg);
         if ( (rc == IB_OK) && ((int)corecfg->log_level >= IB_LOG_DEBUG) ) {
-            log_lineinfo = IB_TRUE;
+            while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
+                file += 3;
+            }
+
+            static const size_t c_line_info_length = 35;
+            char line_info[c_line_info_length];
+            snprintf(
+                line_info,
+                c_line_info_length,
+                "(%23s:%-5d) ",
+                file,
+                line
+            );
+            strcat(new_fmt, line_info);
         }
     }
 
-    while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
-        file += 3;
-    }
+    strcat(new_fmt, fmt);
+    strcat(new_fmt, "\n");
 
-    if (log_lineinfo == IB_TRUE) {
-        ec = snprintf(fmt2, 1024,
-                      "%s %-23s- [%d] (%23s:%-5d) %s%s\n",
-                      time_info,
-                      (prefix?prefix:""), level, file, line, tx_info, fmt);
-    }
-    else {
-        ec = snprintf(fmt2, 1024,
-                      "%s %-23s- [%d] %s%s\n",
-                      time_info,
-                      (prefix?prefix:""), level, tx_info, fmt);
-    }
-
-    /* It is a coding error if this format string is too big. */
-    assert(ec <= 1024);
-
-    vfprintf(fp, fmt2, ap);
+    vfprintf(fp, new_fmt, ap);
     fflush(fp);
+
+    free(new_fmt);
+
     IB_FTRACE_RET_VOID();
 }
 
@@ -355,27 +340,85 @@ void ib_log_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
     IB_FTRACE_RET_VOID();
 }
 
-void DLL_PUBLIC ib_log_ex(const ib_engine_t *ib, int level,
-                          const ib_tx_t *tx,
-                          const char *prefix, const char *file, int line,
-                          const char *fmt, ...)
+void DLL_PUBLIC ib_log_ex(
+    const ib_engine_t *ib,
+    ib_log_level_t     level,
+    const char        *file,
+    int                line,
+    const char        *fmt,
+    ...
+)
 {
     IB_FTRACE_INIT();
 
     va_list ap;
     va_start(ap, fmt);
 
-    ib_vlog_ex(ib, level, tx, prefix, file, line, fmt, ap);
+    ib_vlog_ex(ib, level, file, line, fmt, ap);
 
     va_end(ap);
 
     IB_FTRACE_RET_VOID();
 }
 
-void DLL_PUBLIC ib_vlog_ex(const ib_engine_t *ib, int level,
-                           const ib_tx_t *tx,
-                           const char *prefix, const char *file, int line,
-                           const char *fmt, va_list ap)
+void DLL_PUBLIC ib_log_tx_ex(
+     const ib_tx_t  *tx,
+     ib_log_level_t  level,
+     const char     *file,
+     int             line,
+     const char     *fmt,
+     ...
+)
+{
+    IB_FTRACE_INIT();
+
+    va_list ap;
+    va_start(ap, fmt);
+
+    ib_vlog_tx_ex(tx, level, file, line, fmt, ap);
+
+    va_end(ap);
+
+    IB_FTRACE_RET_VOID();
+}
+
+void DLL_PUBLIC ib_vlog_tx_ex(
+     const ib_tx_t  *tx,
+     ib_log_level_t  level,
+     const char     *file,
+     int             line,
+     const char     *fmt,
+     va_list         ap
+)
+{
+    IB_FTRACE_INIT();
+
+    char *new_fmt = malloc(strlen(fmt) + 12);
+    const char *which_fmt = new_fmt;
+    if (! new_fmt) {
+        /* Do our best */
+        which_fmt = fmt;
+    }
+    else {
+        sprintf(new_fmt, "[tx:%s] ", tx->id+31);
+        strcat(new_fmt, fmt);
+    }
+
+    ib_vlog_ex(tx->ib, level, file, line, which_fmt, ap);
+
+    free(new_fmt);
+
+    IB_FTRACE_RET_VOID();
+}
+
+void DLL_PUBLIC ib_vlog_ex(
+    const ib_engine_t *ib,
+    ib_log_level_t     level,
+    const char        *file,
+    int                line,
+    const char        *fmt,
+    va_list            ap
+)
 {
     IB_FTRACE_INIT();
 
@@ -397,18 +440,18 @@ void DLL_PUBLIC ib_vlog_ex(const ib_engine_t *ib, int level,
         if (pi != NULL) {
             api = (IB_PROVIDER_API_TYPE(logger) *)pi->pr->api;
 
-            api->vlogmsg(pi, ctx, level, ib, tx, prefix, file, line, fmt, ap);
+            api->vlogmsg(pi, level, ib, file, line, fmt, ap);
 
             IB_FTRACE_RET_VOID();
         }
     }
 
-    default_logger(stderr, level, ib, tx, prefix, file, line, fmt, ap);
+    default_logger(stderr, level, ib, file, line, fmt, ap);
 
     IB_FTRACE_RET_VOID();
 }
 
-int DLL_PUBLIC ib_log_get_level(ib_engine_t *ib)
+ib_log_level_t DLL_PUBLIC ib_log_get_level(ib_engine_t *ib)
 {
     IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg = NULL;
@@ -418,7 +461,7 @@ int DLL_PUBLIC ib_log_get_level(ib_engine_t *ib)
     IB_FTRACE_RET_INT(corecfg->log_level);
 }
 
-void DLL_PUBLIC ib_log_set_level(ib_engine_t *ib, int level)
+void DLL_PUBLIC ib_log_set_level(ib_engine_t *ib, ib_log_level_t level)
 {
     IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg = NULL;

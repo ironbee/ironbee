@@ -317,7 +317,8 @@ static ib_status_t execute_target_tfns(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_rule_log_debug(tx, rule, target, NULL, "Executing %d transformations",
+    ib_rule_log_debug(tx, rule, target, NULL,
+                      "Executing %" PRIdMAX " transformations",
                       IB_LIST_ELEMENTS(target->tfn_list));
 
     /*
@@ -331,7 +332,7 @@ static ib_status_t execute_target_tfns(ib_engine_t *ib,
         /* Run it */
         ++n;
         ib_rule_log_debug(tx, rule, target, tfn,
-                          "Executing field transformation #%d", n);
+                          "Executing field transformation #%" PRId64, n);
         ib_rule_log_field(tx, rule, target, tfn, "before tfn", in_field);
         rc = ib_tfn_transform(ib, tx->mp, tfn, in_field, &out, &flags);
         if (rc != IB_OK) {
@@ -346,7 +347,9 @@ static ib_status_t execute_target_tfns(ib_engine_t *ib,
         /* Verify that out isn't NULL */
         if (out == NULL) {
             ib_rule_log_error(tx, rule, target, tfn,
-                              "Target transformation #%d returned NULL", n);
+                              "Target transformation #%" PRId64
+                              " returned NULL",
+                              n);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
@@ -462,12 +465,13 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
                                        nvalue, recursion, rule_result);
             if (rc != IB_OK) {
                 ib_rule_log_warn(tx, rule, target, NULL,
-                                 "Error executing list element #%d: %s",
+                                 "Error executing list element #%" PRId64
+                                 ": %s",
                                  n, ib_status_to_string(rc));
             }
         }
         ib_rule_log_debug(tx, NULL, target, NULL,
-                          "Operator (list %zd) => %d",
+                          "Operator (list %zd) => %" PRId64,
                           vlist->nelts, *rule_result);
     }
     else {
@@ -546,7 +550,8 @@ static ib_status_t execute_phase_rule_targets_operators(
                           ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_rule_log_debug(tx, rule, target, NULL, "Operator result => %d", result);
+    ib_rule_log_debug(tx, rule, target, NULL, "Operator result => %" PRId64,
+                      result);
 
     /* Store the result */
     if (result != 0) {
@@ -690,7 +695,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     }
 
     ib_rule_log_debug(tx, rule, NULL, NULL,
-                      "Rule operator => %d", *rule_result);
+                      "Rule operator => %" PRId64, *rule_result);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -851,6 +856,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
     if (trc != IB_OK) {
         ib_rule_log_error(tx, rule, NULL, NULL,
                           "Error executing rule \"%s\": %s",
+                          rule->meta.id,
                           ib_status_to_string(trc));
         rc = trc;
     }
@@ -991,7 +997,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_rule_log_debug(tx, NULL, NULL, NULL,
-                      "Executing %d rules for phase %d/\"%s\" "
+                      "Executing %" PRIdMAX " rules for phase %d/\"%s\" "
                       "in context \"%s\"",
                       IB_LIST_ELEMENTS(rules),
                       meta->phase_num, meta->name, ib_context_full_get(ctx));
@@ -1126,7 +1132,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
                           ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    ib_rule_log_debug(tx, rule, NULL, NULL, "Operator => %d", *result);
+    ib_rule_log_debug(tx, rule, NULL, NULL, "Operator => %" PRId64, *result);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1267,7 +1273,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_rule_log_debug(tx, NULL, NULL, NULL,
-                      "Executing %d rules for stream %d/\"%s\" "
+                      "Executing %" PRIdMAX " rules for stream %d/\"%s\" "
                       "in context \"%s\"",
                       IB_LIST_ELEMENTS(rules),
                       meta->phase_num, meta->name, ib_context_full_get(ctx));

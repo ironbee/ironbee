@@ -659,9 +659,9 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-void ib_cfg_log(ib_cfgparser_t *cp, int level,
-                const char *prefix, const char *file, int line,
-                const char *fmt, ...)
+void ib_cfg_log_f(ib_cfgparser_t *cp, ib_log_level_t level,
+                 const char *file, int line,
+                 const char *fmt, ...)
 {
     IB_FTRACE_INIT();
     assert(cp != NULL);
@@ -669,19 +669,18 @@ void ib_cfg_log(ib_cfgparser_t *cp, int level,
     va_list ap;
     va_start(ap, fmt);
 
-    ib_cfg_vlog(cp, level, prefix, file, line, fmt, ap);
+    ib_cfg_vlog(cp, level, file, line, fmt, ap);
 
     va_end(ap);
 
     IB_FTRACE_RET_VOID();
 }
 
-void ib_cfg_log_ex(const ib_engine_t *ib,
-                   const char *cfgfile, unsigned int cfgline,
-                   int level,
-                   const char *prefix,
-                   const char *file, int line,
-                   const char *fmt, ...)
+void ib_cfg_log_ex_f(const ib_engine_t *ib,
+                     const char *cfgfile, unsigned int cfgline,
+                     ib_log_level_t level,
+                     const char *file, int line,
+                     const char *fmt, ...)
 {
     IB_FTRACE_INIT();
     assert(ib != NULL);
@@ -689,7 +688,7 @@ void ib_cfg_log_ex(const ib_engine_t *ib,
     va_list ap;
     va_start(ap, fmt);
 
-    ib_cfg_vlog_ex(ib, cfgfile, cfgline, level, prefix, file, line, fmt, ap);
+    ib_cfg_vlog_ex(ib, cfgfile, cfgline, level, file, line, fmt, ap);
 
     va_end(ap);
 
@@ -698,8 +697,7 @@ void ib_cfg_log_ex(const ib_engine_t *ib,
 
 void ib_cfg_vlog_ex(const ib_engine_t *ib,
                     const char *cfgfile, unsigned int cfgline,
-                    int level,
-                    const char *prefix,
+                    ib_log_level_t level,
                     const char *file, int line,
                     const char *fmt, va_list ap)
 {
@@ -707,51 +705,53 @@ void ib_cfg_vlog_ex(const ib_engine_t *ib,
     assert(ib != NULL);
     assert(fmt != NULL);
 
-    const size_t MAX_PREBUF = 32;
-    const size_t MAX_LNOBUF = 16;
-    char prebuf[MAX_PREBUF+1];
+    static const size_t MAX_LNOBUF = 16;
     char lnobuf[MAX_LNOBUF+1];
-    size_t fmtlen;
-    char *fmtbuf = NULL;
+    const char *which_fmt = NULL;
 
-    snprintf(prebuf, MAX_PREBUF, "CONFIG/%s", prefix == NULL ? "" : prefix);
+    static const char *c_prefix = "CONFIG";
 
-    if (cfgfile != NULL) {
-        snprintf(lnobuf, MAX_LNOBUF, "%u", cfgline);
-        fmtlen = strlen(fmt) + strlen(cfgfile) + strlen(lnobuf) + 8;
-        fmtbuf = (char *)malloc(fmtlen);
+    const size_t new_fmt_len =
+        strlen(c_prefix) +
+        strlen(fmt) +
+        (cfgfile != NULL ? strlen(cfgfile) : 0) +
+        30;
+    char *new_fmt = (char *)malloc(new_fmt_len);
+
+    if (new_fmt != NULL) {
+        snprintf(new_fmt, new_fmt_len, "%s %s", c_prefix, fmt);
+
+        if (cfgfile != NULL) {
+            strcat(new_fmt, " @ ");
+            strcat(new_fmt, cfgfile);
+            strcat(new_fmt, ":");
+            snprintf(lnobuf, MAX_LNOBUF, "%u", cfgline);
+            strcat(new_fmt, lnobuf);
+        }
+
+        which_fmt = new_fmt;
     }
     else {
-        lnobuf[0] = '\0';
+        which_fmt = fmt;
     }
 
-    /* Gracefully handle allocation failures */
-    if (fmtbuf != NULL) {
-        strcpy(fmtbuf, fmt);
-        strcat(fmtbuf, " @ ");
-        strcat(fmtbuf, cfgfile);
-        strcat(fmtbuf, ":");
-        strcat(fmtbuf, lnobuf);
-        fmt = fmtbuf;
-    }
+    ib_vlog_ex(ib, level, file, line, which_fmt, ap);
 
-    ib_vlog_ex(ib, level, NULL, prebuf, file, line, fmt, ap);
-
-    if (fmtbuf != NULL) {
-        free(fmtbuf);
+    if (new_fmt != NULL) {
+        free(new_fmt);
     }
 
     IB_FTRACE_RET_VOID();
 }
 
-void ib_cfg_vlog(ib_cfgparser_t *cp, int level,
-                 const char *prefix, const char *file, int line,
+void ib_cfg_vlog(ib_cfgparser_t *cp, ib_log_level_t level,
+                 const char *file, int line,
                  const char *fmt, va_list ap)
 {
     IB_FTRACE_INIT();
 
     ib_cfg_vlog_ex(cp->ib, cp->cur_file, cp->cur_lineno,
-                   level, prefix, file, line, fmt, ap);
+                   level, file, line, fmt, ap);
 
     IB_FTRACE_RET_VOID();
 }

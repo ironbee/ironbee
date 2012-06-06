@@ -52,7 +52,6 @@ extern "C" {
  *
  * @param cbdata Callback data
  * @param level Log level
- * @param prefix Optional prefix to the log
  * @param file Optional source filename (or NULL)
  * @param line Optional source line number (or 0)
  * @param fmt Formatting string

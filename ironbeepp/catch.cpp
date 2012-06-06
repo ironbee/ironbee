@@ -58,7 +58,8 @@ ib_status_t ibpp_caught_ib_exception(
     }
 
     if (engine) {
-        ib_log(engine, level, "%s", message.c_str());
+        ib_log_level_t ib_level = static_cast<ib_log_level_t>(level);
+        ib_log(engine, ib_level, "%s", message.c_str());
         ib_log_debug(engine, "%s", diagnostic_information(e).c_str() );
     } else {
         ib_util_log_error("%s", message.c_str());
@@ -89,7 +90,8 @@ ib_status_t ibpp_caught_boost_exception(
     }
 
     if (engine) {
-        ib_log(engine, level, "%s", message.c_str());
+        ib_log_level_t ib_level = static_cast<ib_log_level_t>(level);
+        ib_log(engine, ib_level, "%s", message.c_str());
         ib_log_debug(engine, "%s",
             diagnostic_information(e).c_str()
         );

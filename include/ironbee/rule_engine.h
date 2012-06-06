@@ -737,7 +737,8 @@ void ib_rule_vlog(ib_rule_log_level_t level,
                   const char *file,
                   int line,
                   const char *fmt,
-                  va_list ap);
+                  va_list ap)
+                  VPRINTF_ATTRIBUTE(9);
 
 /**
  * Generic Logger for rules.
@@ -764,7 +765,7 @@ void ib_rule_log(ib_rule_log_level_t level,
                  const char *file,
                  int line,
                  const char *fmt, ...)
-    PRINTF_ATTRIBUTE(9, 0);
+                 PRINTF_ATTRIBUTE(9, 10);
 
 /**
  * Rule execution logging

@@ -1037,12 +1037,13 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     /* Parse all of the modifiers */
     mod = targets;
     while( (mod = ib_list_node_next_const(mod)) != NULL) {
-        ib_cfg_log_debug3(cp, "Parsing modifier %s", mod->data);
+        ib_cfg_log_debug3(cp, "Parsing modifier %s", (const char *)mod->data);
         rc = parse_modifier(cp, rule, mod->data);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
                              "Error parsing external rule modifier \"%s\": %s",
-                             mod->data, ib_status_to_string(rc));
+                             (const char *)mod->data,
+                             ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -1225,7 +1226,8 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
                              "Error parsing rule modifier \"%s\": %s",
-                             mod->data, ib_status_to_string(rc));
+                             (const char *)mod->data,
+                             ib_status_to_string(rc));
             goto cleanup;
         }
     }
@@ -1345,7 +1347,8 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
                              "Error parsing stream rule modifier \"%s\": %s",
-                             node->data, ib_status_to_string(rc));
+                             (const char *)node->data,
+                             ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }

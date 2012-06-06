@@ -231,53 +231,32 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
  *
  * @param fh File handle
  * @param level Log level
- * @param tx Transaction info or NULL.
- * @param prefix String prefix to prefix to the message or NULL
  * @param file Source code filename (typically __FILE__) or NULL
  * @param line Source code line number (typically __LINE__) or NULL
  * @param fmt Printf like format string
  * @param ap Variable length parameter list
  */
-static void core_logger(FILE *fh, int level,
+static void core_logger(void *fh, ib_log_level_t level,
                         const ib_engine_t *ib,
-                        const ib_tx_t *tx,
-                        const char *prefix, const char *file, int line,
+                        const char *file, int line,
                         const char *fmt, va_list ap)
 {
-    int fmt2_sz = 1024;
-    char *fmt2 = (char *)malloc(fmt2_sz+1);
-    char *tx_info = (char *)malloc(fmt2_sz+1);
+    IB_FTRACE_INIT();
+
+    char *new_fmt;
     char time_info[32 + 1];
     struct tm *tminfo;
     time_t timet;
-    int ec = 0;
-    ib_bool_t log_lineinfo = IB_FALSE;
 
-    if (fmt2 == NULL || tx_info == NULL) {
-        fprintf(fh, "Cannot allocate memory to log.");
-        fflush(fh);
-        abort();
-    }
-
-    if (tx != NULL) {
-        ec = snprintf(tx_info, 1024,
-                      "[tx:%s] ",
-                      tx->id+31);
-    }
-    else {
-        tx_info[0] = '\0';
-    }
-    if (ec > 1024) {
-        abort();
-    }
+    FILE *fp = (FILE *)fh;
 
     timet = time(NULL);
     tminfo = localtime(&timet);
     strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
 
-    while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
-        file += 3;
-    }
+    /* 100 is more than sufficient. */
+    new_fmt = (char *)malloc(strlen(time_info) + strlen(fmt) + 100);
+    sprintf(new_fmt, "%s %-10s- ", time_info, ib_log_level_to_string(level));
 
     if ( (file != NULL) && (line > 0) ) {
         ib_core_cfg_t *corecfg = NULL;
@@ -285,44 +264,40 @@ static void core_logger(FILE *fh, int level,
                                                   ib_core_module(),
                                                   (void *)&corecfg);
         if ( (rc == IB_OK) && ((int)corecfg->log_level >= IB_LOG_DEBUG) ) {
-            log_lineinfo = IB_TRUE;
+            while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
+                file += 3;
+            }
+
+            static const size_t c_line_info_length = 35;
+            char line_info[c_line_info_length];
+            snprintf(
+                line_info,
+                c_line_info_length,
+                "(%23s:%-5d) ",
+                file,
+                line
+            );
+            strcat(new_fmt, line_info);
         }
     }
 
-    if (log_lineinfo == IB_TRUE) {
-        ec = snprintf(fmt2, fmt2_sz,
-                      "%s %-23s- (%23s:%-5d) %s%s\n",
-                      time_info,
-                      (prefix?prefix:""), file, line, tx_info, fmt);
-    }
-    else {
-        ec = snprintf(fmt2, fmt2_sz,
-                      "%s %-23s- %s%s\n",
-                      time_info,
-                      (prefix?prefix:""), tx_info, fmt);
-    }
-    if (ec > 1024) {
-        /// @todo Do something better
-        fprintf(fh, "Formatter too long (>%d): %d\n", fmt2_sz, (int)ec);
-        fflush(fh);
-        free(fmt2);
-        free(tx_info);
-        abort();
-    }
+    strcat(new_fmt, fmt);
+    strcat(new_fmt, "\n");
 
-    vfprintf(fh, fmt2, ap);
-    free(fmt2);
-    free(tx_info);
-    fflush(fh);
+    vfprintf(fp, new_fmt, ap);
+    fflush(fp);
+
+    free(new_fmt);
+
+    IB_FTRACE_RET_VOID();
 }
-
 
 /**
  * Logger provider interface mapping for the core module.
  */
 static IB_PROVIDER_IFACE_TYPE(logger) core_logger_iface = {
     IB_PROVIDER_IFACE_HEADER_DEFAULTS,
-    (ib_log_logger_fn_t)core_logger
+    core_logger
 };
 
 
@@ -1269,68 +1244,61 @@ static IB_PROVIDER_IFACE_TYPE(data) core_data_iface = {
  * Core data provider API implementation to log data via va_list args.
  *
  * @param lpi Logger provider instance
- * @param ctx Config context
  * @param level Log level
  * @param tx Transaction info (or NULL)
- * @param prefix String to prefix to the message or NULL
- * @param file Source code filename (typically __FILE__) or NULL
- * @param line Source code line number (typically __LINE__) or NULL
+ * @param file Source code filename (typically __FILE__)
+ * @param line Source code line number (typically __LINE__)
  * @param fmt Printf like format string
  * @param ap Variable length parameter list
  *
  * @returns Status code
  */
-static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
+static void logger_api_vlogmsg(ib_provider_inst_t *lpi,
                                int level,
                                const ib_engine_t *ib,
-                               const ib_tx_t *tx,
-                               const char *prefix,
                                const char *file, int line,
                                const char *fmt, va_list ap)
 {
     IB_PROVIDER_IFACE_TYPE(logger) *iface;
     ib_core_cfg_t *main_core_config = NULL;
-    ib_context_t  *main_ctx;
+    ib_context_t  *main_ctx = ib_context_main(ib);;
     ib_provider_t *main_lp;
-    ib_core_cfg_t *corecfg = NULL;
     ib_status_t rc;
     const char *uri = NULL;
     FILE *fp = NULL;            /* The file pointer to write to. */
-    char *prefix_with_pid = NULL;
-    size_t prefix_with_pid_sz;
-    size_t prefix_length = 0;
+    size_t new_fmt_length = 0;
+    char *new_fmt = NULL;
+    const char *which_fmt = NULL;
 
-    /* Get the module context core configuration. */
-    rc = ib_context_module_config(ctx, ib_core_module(),
-                                  (void *)&corecfg);
+    /* Get the core context core configuration. */
+    rc = ib_context_module_config(
+        main_ctx,
+        ib_core_module(),
+        (void *)&main_core_config
+    );
 
     /* If not available, fall back to the core global configuration. */
     if (rc != IB_OK) {
-        corecfg = &core_global_cfg;
+        main_core_config = &core_global_cfg;
     }
 
     /* Check the log level, return if we're not interested. */
-    if (level > (int)corecfg->log_level) {
+    if (level > (int)main_core_config->log_level) {
         return;
     }
 
-    /* Add pid and level to prefix. */
-    if (prefix != NULL) {
-        prefix_length = strlen(prefix);
+    /* Prefix pid.*/
+    new_fmt_length = strlen(fmt) + 10;
+    new_fmt = NULL;
+    which_fmt = NULL;
+
+    new_fmt = (char *)malloc(new_fmt_length);
+    if (new_fmt == NULL) {
+        which_fmt = fmt;
     }
     else {
-        prefix_length = 0;
-    }
-    prefix_with_pid_sz = 50+prefix_length;
-    prefix_with_pid = (char *)malloc(prefix_with_pid_sz);
-    if (prefix_with_pid == NULL) {
-        return;
-    }
-    if (prefix != NULL) {
-      snprintf(prefix_with_pid, prefix_with_pid_sz, "[%d] %s", getpid(), prefix);
-    }
-    else {
-      snprintf(prefix_with_pid, prefix_with_pid_sz, "[%d] ", getpid());
+        which_fmt = new_fmt;
+        snprintf(new_fmt, new_fmt_length, "[%d] %s", getpid(), fmt);
     }
 
     /* Get the current 'logger' provider interface. */
@@ -1338,20 +1306,17 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
 
     /* If it's not the core log provider, we're done: we know nothing.
      * about it's data, so don't try to treat it as a file handle! */
-    main_ctx = ib_context_main(ib);
-    ib_context_module_config(
-        main_ctx, ib_core_module(), (void *)&main_core_config);
     main_lp = main_core_config->pi.logger->pr;
     if ( (main_lp != lpi->pr)
-         || (iface->logger != (ib_log_logger_fn_t)core_logger) ) {
-        iface->logger(lpi->data, level, ib, tx, prefix_with_pid, file, line, fmt, ap);
+         || (iface->logger != core_logger) ) {
+        iface->logger(lpi->data, level, ib, file, line, which_fmt, ap);
         goto done;
     }
 
     /* If no interface, do *something*.
      *  Note that this should be the same as the default case. */
     if (iface == NULL) {
-        core_logger(stderr, level, ib, tx, prefix_with_pid, file, line, fmt, ap);
+        core_logger(stderr, level, ib, file, line, which_fmt, ap);
         goto done;
     }
 
@@ -1360,9 +1325,7 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
 
     /* Pull the log URI from the core config. */
     if (fp == NULL) {
-        if (corecfg != NULL) {
-            uri = corecfg->log_uri;
-        }
+        uri = main_core_config->log_uri;
 
         /* If the URI looks like a file, try to open it. */
         if ((uri != NULL) && (strncmp(uri, "file://", 7) == 0)) {
@@ -1390,31 +1353,36 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
      * the first parameter (if the interface is implemented and not
      * just abstract).
      */
-    iface->logger(fp, level, ib, tx, prefix_with_pid, file, line, fmt, ap);
+    iface->logger(
+         fp,
+         level,
+         ib,
+         file,
+         line,
+         which_fmt,
+         ap
+     );
 
 done:
-    free(prefix_with_pid);
+    if (new_fmt) {
+        free(new_fmt);
+    }
 }
 
 /**
  * Core data provider API implementation to log data via variable args.
  *
  * @param lpi Logger provider instance
- * @param ctx Config context
  * @param level Log level
- * @param tx Transaction info (or NULL)
- * @param prefix String to prefix to the message or NULL
- * @param file Source code filename (typically __FILE__) or NULL
- * @param line Source code line number (typically __LINE__) or NULL
+ * @param file Source code filename (typically __FILE__)
+ * @param line Source code line number (typically __LINE__)
  * @param fmt Printf like format string
  *
  * @returns Status code
  */
-static void logger_api_logmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
+static void logger_api_logmsg(ib_provider_inst_t *lpi,
                               int level,
                               const ib_engine_t *ib,
-                              const ib_tx_t *tx,
-                              const char *prefix,
                               const char *file, int line,
                               const char *fmt, ...)
 {
@@ -1423,8 +1391,11 @@ static void logger_api_logmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     ib_status_t rc;
     va_list ap;
 
-    rc = ib_context_module_config(ctx, ib_core_module(),
-                                  (void *)&corecfg);
+    rc = ib_context_module_config(
+        ib_context_main(lpi->pr->ib),
+        ib_core_module(),
+        (void *)&corecfg
+    );
     if (rc != IB_OK) {
         corecfg = &core_global_cfg;
     }
@@ -1432,7 +1403,6 @@ static void logger_api_logmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     if (level > (int)corecfg->log_level) {
         return;
     }
-
 
     iface = (IB_PROVIDER_IFACE_TYPE(logger) *)lpi->pr->iface;
 
@@ -1445,7 +1415,7 @@ static void logger_api_logmsg(ib_provider_inst_t *lpi, ib_context_t *ctx,
     /// @todo Probably should not need this check
     if (iface != NULL) {
         iface->logger((lpi->pr->data?lpi->pr->data:lpi->data),
-                      level, ib, tx, prefix, file, line, fmt, ap);
+                      level, ib, file, line, fmt, ap);
     }
 
     va_end(ap);
@@ -5111,13 +5081,28 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
  **/
 static void core_util_logger(
     void *ib, int level,
-    const char *prefix, const char *file, int line,
+    const char *prefix,
+    const char *file, int line,
     const char *fmt, va_list ap
 )
 {
     IB_FTRACE_INIT();
 
-    ib_vlog_ex((ib_engine_t *)ib, level, NULL, prefix, file, line, fmt, ap);
+    char *new_fmt = NULL;
+    const char *which_new_fmt = NULL;
+    const size_t new_fmt_length = strlen(prefix) + 2;
+    new_fmt = (char *)malloc(new_fmt_length);
+    if (new_fmt == NULL) {
+        which_new_fmt = fmt;
+    }
+    else {
+        which_new_fmt = new_fmt;
+        snprintf(new_fmt, new_fmt_length, "%s %s", prefix, fmt);
+    }
+
+    ib_vlog_ex((ib_engine_t *)ib, level, file, line, which_new_fmt, ap);
+
+    free(new_fmt);
 
     IB_FTRACE_RET_VOID();
 }

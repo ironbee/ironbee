@@ -246,21 +246,21 @@ IB_PROVIDER_DECLARE_API(logger) {
     IB_PROVIDER_FUNC(
         void,
         vlogmsg,
-        (ib_provider_inst_t *pi, ib_context_t *ctx, int level,
-         const ib_engine_t *ib, const ib_tx_t* tx,
-         const char *prefix, const char *file, int line,
+        (ib_provider_inst_t *pi, int level,
+         const ib_engine_t *ib,
+         const char *file, int line,
          const char *fmt, va_list ap)
-         VPRINTF_ATTRIBUTE(9)
+         VPRINTF_ATTRIBUTE(6)
     );
     /* void logmsg(pi, ctx, level, ib, tx, prefix, file, line, fmt, ...) */
     IB_PROVIDER_FUNC(
         void,
         logmsg,
-        (ib_provider_inst_t *pi, ib_context_t *ctx, int level,
-         const ib_engine_t *ib, const ib_tx_t *tx,
-         const char *prefix, const char *file, int line,
+        (ib_provider_inst_t *pi, int level,
+         const ib_engine_t *ib,
+         const char *file, int line,
          const char *fmt, ...)
-         VPRINTF_ATTRIBUTE(9)
+         PRINTF_ATTRIBUTE(6, 7)
     );
 };
 
