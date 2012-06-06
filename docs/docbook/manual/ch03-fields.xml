@@ -126,7 +126,7 @@
         </para>    
     </section>
     <section>
-        <title>HTP_REQUEST_FLAG</title>
+        <title>HTP_REQUEST_FLAGS</title>
         <para><emphasis role="bold">Description:</emphasis> Collection of LibHTP request parsing
             flags.</para>
         <para><emphasis role="bold">Type:</emphasis> Collection</para>
@@ -207,7 +207,7 @@
         </itemizedlist>
     </section>
     <section>
-        <title>HTP_RESPONSE_FLAG</title>
+        <title>HTP_RESPONSE_FLAGS</title>
         <para><emphasis role="bold">Description:</emphasis> Collection of LibHTP response parsing
             flags.</para>
         <para><emphasis role="bold">Type:</emphasis> Collection</para>
