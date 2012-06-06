@@ -825,12 +825,18 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(ib_rc);
         }
 
-        subject_len = ib_bytestr_length(bytestr);
-        subject = (const char *) ib_bytestr_const_ptr(bytestr);
+        if (bytestr != NULL) {
+            subject_len = ib_bytestr_length(bytestr);
+            subject = (const char *) ib_bytestr_const_ptr(bytestr);
+        }
     }
     else {
         free(ovector);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    if (subject == NULL) {
+        subject = "";
     }
 
     /* Debug block. Escapes a string and prints it to the log.
