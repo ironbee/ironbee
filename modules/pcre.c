@@ -796,8 +796,8 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     ib_status_t ib_rc;
     const int ovecsize = 3 * MATCH_MAX;
     int *ovector = (int *)malloc(ovecsize*sizeof(*ovector));
-    const char* subject;
-    size_t subject_len;
+    const char* subject = NULL;
+    size_t subject_len = 0;
     const ib_bytestr_t* bytestr;
     pcre_rule_data_t *rule_data = (pcre_rule_data_t *)data;
     pcre *regex;
@@ -817,7 +817,9 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(ib_rc);
         }
 
-        subject_len = strlen(subject);
+        if (subject != NULL) {
+            subject_len = strlen(subject);
+        }
     }
     else if (field->type == IB_FTYPE_BYTESTR) {
         ib_rc = ib_field_value(field, ib_ftype_bytestr_out(&bytestr));
@@ -836,7 +838,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     }
 
     if (subject == NULL) {
-        subject = "";
+        subject     = "";
     }
 
     /* Debug block. Escapes a string and prints it to the log.
