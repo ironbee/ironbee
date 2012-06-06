@@ -345,10 +345,7 @@ CHECK_HTP()
 CHECK_PCRE()
 AX_BOOST_BASE(1.46,
               [], 
-              [if test "$enable_cpp" = "yes" ; then
-	         AC_MSG_ERROR([Boost is required for C++ tools])
-               fi
-              ])
+              [AC_MSG_ERROR([Boost is required for C++ tools])])
 
 # Clang does not support -pthread or variants.
 if test "$cc_is_clang" = "yes"; then
