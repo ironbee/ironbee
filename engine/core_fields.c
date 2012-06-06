@@ -499,7 +499,7 @@ static ib_status_t create_header_alias_list(
         );
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                            "Error creating fieldof '%.*s' for %s: %s",
+                            "Error creating field of '%.*s' for %s: %s",
                             (int)ib_bytestr_length(nvpair->name),
                             (const char *)ib_bytestr_ptr(nvpair->name),
                             name,

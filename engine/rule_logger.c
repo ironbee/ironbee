@@ -226,7 +226,7 @@ ib_status_t ib_rule_log_exec_create(ib_tx_t *tx,
     rc = ib_list_create(&(new->tgt_list), tx->mp);
     if (rc != IB_OK) {
         ib_rule_log_error(tx, NULL, NULL, NULL,
-                          "Rule engine: Failed to create tgt results list: %s",
+                          "Rule engine: Failed to create target results list: %s",
                           ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }

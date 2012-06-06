@@ -522,7 +522,7 @@ void DLL_PUBLIC ib_cfg_vlog_ex(const ib_engine_t *ib,
                                VPRINTF_ATTRIBUTE(7);
 
 
-/** Log (Configuraiton form) */
+/** Log (Configuration form) */
 #define ib_cfg_log(cp, level, ...) ib_cfg_log_f((cp), (level), __FILE__, __LINE__, __VA_ARGS__)
 /** Log Emergency (Configuration form) */
 #define ib_cfg_log_emergency(cp,...) \

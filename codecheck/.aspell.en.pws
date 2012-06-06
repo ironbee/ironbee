@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1409 
+personal_ws-1.1 en 1411 
 refactor
 cfg
 api
@@ -155,8 +155,8 @@ inflags
 SetUp
 patt
 YYYYMMDDn
-fffffff
 Chroot
+fffffff
 debugFields
 debugfields
 Myformat
@@ -320,7 +320,7 @@ reimplement
 newsgator
 NewsGator
 cpatt
-AUTH
+auth
 mpi
 Lst
 PycURL
@@ -472,6 +472,7 @@ logdata
 PersonalityClearAll
 GeoIPRecord
 xxxxxxxxxxxx
+tgt
 copyable
 fdopen
 nused
@@ -1070,6 +1071,7 @@ ETIMEDOUT
 ResponseLine
 GoBrowser
 sdata
+RuleEngineLogLevel
 HandleContextConn
 onEventHandleResponse
 superset

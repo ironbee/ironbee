@@ -770,7 +770,7 @@ void ib_rule_log(ib_rule_log_level_t level,
 /**
  * Rule execution logging
  *
- * @param[in] log_exec Rule loggging execution object
+ * @param[in] log_exec Rule logging execution object
  * @param[in] file Source file name
  * @param[in] line Source line number
  */
