@@ -1637,7 +1637,6 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
                 run_phase_rules,
                 (void *)meta);
             hook_type = "tx";
-            break;
         }
         else {
             switch (meta->hook_type) {
