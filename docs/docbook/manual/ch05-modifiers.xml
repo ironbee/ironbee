@@ -13,7 +13,7 @@
         <para><emphasis role="bold">Version:</emphasis> 0.2</para>
         <para>Log a data fragment as part of the error message.</para>
         <programlisting>Rule ARGS "@rx test" \
-    "msg:'Test matched',logdata:%{MATCHED_VAR}"</programlisting>
+    "msg:Test matched" logdata:%{MATCHED_VAR}</programlisting>
         <para>Note: Up to 128 bytes of data will be recorded.</para>
     </section>
     <section>
