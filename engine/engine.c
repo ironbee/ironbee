@@ -1930,7 +1930,7 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
             while (numhosts--) {
                 size_t hostlen = host?strlen(host):0;
                 off_t cmpoffset = txhostlen - hostlen;
-                const char *cmphost = (cmpoffset > 0)?txhost + cmpoffset:NULL;
+                const char *cmphost = (cmpoffset >= 0)?txhost + cmpoffset:NULL;
                 if (cmphost != NULL) {
                     ib_log_debug2_tx(tx, "Checking Host \"%s\" (effective=\"%s\") against context %s",
                                  txhost, cmphost, (host&&*host)?host:"ANY");
