@@ -136,6 +136,7 @@ typedef struct {
     TSReturnCode (*hdr_get)(TSHttpTxn, TSMBuffer *, TSMLoc *);
     ib_status_t (*ib_notify_header)(ib_engine_t*, ib_tx_t*,
                  ib_parsed_header_wrapper_t*);
+    ib_status_t (*ib_notify_header_finished)(ib_engine_t*, ib_tx_t*);
     ib_status_t (*ib_notify_body)(ib_engine_t*, ib_tx_t*, ib_txdata_t*);
     ib_status_t (*ib_notify_end)(ib_engine_t*, ib_tx_t*);
 } ironbee_direction_t;
@@ -146,6 +147,7 @@ static ironbee_direction_t ironbee_direction_req = {
     TSHttpTxnClientReqGet,
     //ib_state_notify_conn_data_in
     ib_state_notify_request_header_data,
+    ib_state_notify_request_header_finished,
     ib_state_notify_request_body_data,
     ib_state_notify_request_finished
 };
@@ -156,6 +158,7 @@ static ironbee_direction_t ironbee_direction_resp = {
     TSHttpTxnServerRespGet,
     //ib_state_notify_conn_data_out
     ib_state_notify_response_header_data,
+    ib_state_notify_response_header_finished,
     ib_state_notify_response_body_data,
     ib_state_notify_response_finished
 };
@@ -711,23 +714,49 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
 /**
  * Parse lines in an HTTP header buffer
  *
- * Given a line terminated by "\r\n", this finds the end-of-line.
- * Where a line is wrapped, continuation lines are included in
+ * Given a buffer including "\r\n" linends, this finds the next line and its
+ * length.  Where a line is wrapped, continuation lines are included in
  * in the (multi-)line parsed.
+ *
+ * Can now also error-correct for "\r" or "\n" line ends.
  *
  * @param[in] line Buffer to parse
  * @param[out] lenp Line length (excluding line end)
- * @return 1 if a line was parsed, 0 for a blank line (no more headers),
- *         -1 for a parse error
+ * @return 1 if a line was parsed, 2 if parsed but with error correction,
+ *         0 for a blank line (no more headers), -1 for irrecoverable error
  */
-static int get_line(char * const line, size_t *lenp)
+static int next_line(const char **linep, size_t *lenp)
 {
+    int rv = 1;
+    size_t lelen = 2;
     size_t len = 0;
-    char *end;
+    const char *end;
+    const char *line = *linep;
     if (line[0] == '\r' && line[1] == '\n') {
         return 0; /* blank line = no more hdr lines */
     }
+    else if (line[0] == '\r' || line[0] == '\n') {
+        return 0; /* blank line which is also malformed HTTP */
+    }
     else {
+        /* skip to next start-of-line from where we are */
+        line += strcspn(line, "\r\n");
+        if (line[0] == '\r' && line[1] == '\n') {
+            /* valid line end.  Set pointer to start of next line */
+            line += 2;
+        }
+        else {   /* bogus lineend!
+                  * Treat a single '\r' or '\n' as a lineend
+                  */
+            line += 1;
+            rv = 2; /* bogus linend */
+        }
+        if (line[0] == '\r' && line[1] == '\n') {
+            return 0; /* blank line = no more hdr lines */
+        }
+        else if (line[0] == '\r' || line[0] == '\n') {
+            return 0; /* blank line which is also malformed HTTP */
+        }
         /* Use a loop here to catch theoretically-unlimited numbers
          * of continuation lines in a folded header.  The isspace
          * tests for a continuation line
@@ -735,17 +764,29 @@ static int get_line(char * const line, size_t *lenp)
         do {
             if (len > 0) {
                 /* we have a continuation line.  Add the lineend. */
-                len += 2;
+                len += lelen;
             }
             end = strstr(line + len, "\r\n");
-            if (!end) {
-                return -1;
+            if (end) {  /* All's well, this is a good line */
+                lelen = 2;
+            }
+            else {
+                /* Malformed header.  Check for a bogus single-char lineend */
+                end = line + strcspn(line + len, "\r\n");
+                if (end > line) {
+                    lelen = 1;
+                    rv = 2;
+                }
+                else { /* nothing at all we can interpret as lineend */
+                    return -1;
+                }
             }
             len = end - line;
-        } while (isspace(end[2]) && end[2] != '\r');
+        } while (isspace(end[lelen]) && end[lelen] != '\r' && end[lelen] != '\n');
 
         *lenp = len;
-        return 1;
+        *linep = line;
+        return rv;
     }
 }
 
@@ -771,16 +812,15 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     TSIOBufferBlock blockp;
     int64_t len;
     hdr_do *hdr;
-    char *line, *lptr;
+    const char *line, *lptr;
     size_t line_len = 0;
-    int offset = 0;
 
     char *head_buf;
-    char *head_ptr;
-    void *head_start;
-    int first_time = 1;
     unsigned char *dptr, *icdatabuf;
     size_t icdatalen;
+
+    ib_parsed_header_wrapper_t *ibhdrs;
+    size_t n_len, v_len;
 
     TSDebug("ironbee", "process %s headers\n", ibd->word);
 
@@ -796,6 +836,106 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     if (rv) {
         TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
         return HDR_ERROR;
+    }
+    if (ibd->dir == IBD_REQ) {
+        ib_parsed_req_line_t *rline;
+        int m_len;
+        int64_t u_len;
+        const char *ubuf;
+        TSMLoc url_loc;
+        char cversion[9];
+        const char *method = TSHttpHdrMethodGet(bufp, hdr_loc, &m_len);
+        int version = TSHttpHdrVersionGet(bufp, hdr_loc);
+        /* sanity-check against buffer overflow */
+        int major = TS_HTTP_MAJOR(version);
+        int minor = TS_HTTP_MINOR(version);
+        if (major < 0 || major > 9 || minor < 0 || minor > 9) {
+           TSError("Bogus HTTP version: %d.%d", major, minor);
+           major = minor = 0;
+        }
+        sprintf(cversion, "HTTP/%d.%d", major, minor);
+        rv = TSHttpHdrUrlGet(bufp, hdr_loc, &url_loc);
+        iobufp = TSIOBufferCreate();
+        TSUrlPrint(bufp, url_loc, iobufp);
+
+        readerp = TSIOBufferReaderAlloc(iobufp);
+        blockp = TSIOBufferReaderStart(readerp);
+
+        TSIOBufferBlockReadAvail(blockp, readerp);
+        ubuf = TSIOBufferBlockReadStart(blockp, readerp, &u_len);
+
+
+        /* Drop crap from the front of the buf.
+         * We can't consume it, because we don't have the length of the
+         * rest of the request line, so leave that for when we consume
+         * the headers below.
+         */
+        while (isspace(*ubuf)) {
+            ++ubuf;
+            --u_len;
+        }
+        if (u_len >= 8 && ubuf[0] == 'h' && ubuf[1] == 't'
+            && ubuf[2] == 't' && ubuf[3] == 'p') {
+            if (ubuf[4] == ':' && ubuf[5] == '/' && ubuf[6] == '/') {
+                ubuf += 7;
+                u_len -= 7;
+            }
+            else if (ubuf[4] &&
+                     ubuf[5] == ':' && ubuf[6] == '/' && ubuf[7] == '/') {
+                ubuf += 8;
+                u_len -= 8;
+            }
+        }
+        
+        rv = ib_parsed_req_line_create(data->tx, &rline,
+                                       NULL, 0,
+                                       method, m_len,
+                                       ubuf, u_len,
+                                       cversion, strlen(cversion));
+        TSDebug("ironbee", "process_hdr: calling ib_state_notify_request_started()");
+        ib_state_notify_request_started(ironbee, data->tx, rline);
+
+        TSIOBufferReaderFree(readerp);
+        TSIOBufferDestroy(iobufp);
+    }
+    else {
+        ib_parsed_resp_line_t *rline;
+        char cversion[9], cstatus[4];
+        const char *reason;
+        TSHttpStatus status;
+        int r_len;
+        int version = TSHttpHdrVersionGet(bufp, hdr_loc);
+        /* sanity-check against buffer overflow */
+        int major = TS_HTTP_MAJOR(version);
+        int minor = TS_HTTP_MINOR(version);
+        if (major < 0 || major > 9 || minor < 0 || minor > 9) {
+           TSError("Bogus HTTP version: %d.%d", major, minor);
+           major = minor = 0;
+        }
+        sprintf(cversion, "HTTP/%d.%d", major, minor);
+
+        status = TSHttpHdrStatusGet(bufp, hdr_loc);
+        /* status is an enum.  Do a very minimal sanity check */
+        if ((int)status < 0 || status >= 600) {
+           TSError("Bogus HTTP status: %d", status);
+           status = 0;
+        }
+        sprintf(cstatus, "%d", status);
+
+        reason = TSHttpHdrReasonGet(bufp, hdr_loc, &r_len);
+
+        ib_log_debug_tx(data->tx, "RESP_LINE: %s %d %s",
+                        cversion, status, reason);
+
+        rv = ib_parsed_resp_line_create(data->tx, &rline,
+                                        NULL, 0,
+                                        cversion, strlen(cversion),
+                                        cstatus, strlen(cstatus),
+                                        reason, r_len);
+        TSDebug("ironbee", "process_hdr: calling ib_state_notify_response_started()");
+        ib_log_debug_tx(data->tx, "ib_state_notify_response_started rline=%p", rline);
+        rv = ib_state_notify_response_started(ironbee, data->tx, rline);
+
     }
 
     /* Get the data into an IOBuffer so we can access them! */
@@ -819,166 +959,45 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
          head_buf = (void *)TSIOBufferBlockReadStart(
                         TSIOBufferReaderStart(readerp), readerp, &len)) {
 
-        if (first_time && (ibd->dir == IBD_REQ)) {
-            /* Workaround:
-             * Search for and remove the extra "http://" in the path by
-             * advancing the bytes preceding the extra string forward.
-             *
-             * EX: Here 1 would become 2 (x are removed bytes)
-             *  1) "GET http:///foo HTTP/1.0"
-             *  2) "xxxxxxxGET /foo HTTP/1.0"
-             */
-            head_ptr = (char *)memchr(head_buf, ' ', len);
-            if ((head_ptr != NULL) &&
-                (len - (head_ptr - head_buf) >= 9) &&
-                (head_ptr[1] == 'h') && (head_ptr[2] == 't') &&
-                (head_ptr[3] == 't') && (head_ptr[4] == 'p')) {
-                if ((head_ptr[5] == ':') && (head_ptr[6] == '/') &&
-                    (head_ptr[7] == '/') && (head_ptr[8] == '/')) {
-                    offset = 7;
-                }
-                else if ((head_ptr[5] == 's') &&
-                         (head_ptr[6] == ':') && (head_ptr[7] == '/') &&
-                         (head_ptr[8] == '/') && (head_ptr[9] == '/')) {
-                    offset = 8;
-                }
-            }
-            if (offset > 0) {
-                TSError("ATS Workaround - Removing extra http:// from request line: %.*s\n", 50, (char *)head_buf);
-                while (head_ptr >= head_buf) {
-                    *(head_ptr + offset) = *head_ptr;
-                    --head_ptr;
-                }
-                head_start = head_buf + offset;
-                icdatalen -= offset;
-                memcpy(dptr, head_start, len - offset);
-                dptr += len - offset;
-                TSError("ATS Workaround - DATA[%d]: %.*s ...\n", (int)len, 25, (char *)head_start);
-            }
-            else {
-                head_start = head_buf;
-                memcpy(dptr, head_start, len);
-                dptr += len;
-            }
-        }
-        else {
-            memcpy(dptr, head_buf, len);
-            dptr += len;
-        }
-        first_time = 0;
-
+        memcpy(dptr, head_buf, len);
+        dptr += len;
 
         /* if there's more to come, go round again ... */
         TSIOBufferReaderConsume(readerp, len);
     }
 
     /* parse into lines and feed to ironbee as parsed data */
-    if (ibd->dir == IBD_REQ) {
-        // FIXME: We should not need to parse.
-        //        Use:
-        //          TSHttpHdrMethodGet()
-        //          TSHttpHdrUriGet() (or version from workarond above)
-        //          TSHttpHdrVersionGet()
-        ib_parsed_header_wrapper_t *ibhdrs;
-        ib_parsed_req_line_t *rline;
-        size_t n_len;
-        size_t v_len;
 
-        line = (char*)icdatabuf;
-        if (get_line(line, &line_len) != 1) {
-            TSError("Malformed Request line");
-            goto process_hdr_cleanup;
-        }
-
-        // FIXME: This does not need the raw line as it will be built by
-        //        ironbee if left NULL, so just pass in what parsed values
-        //        that TS has access to.
-        rv = ib_parsed_req_line_create(data->tx, &rline,
-                                       line, line_len,
-                                       NULL, 0,
-                                       NULL, 0,
-                                       NULL, 0);
-        TSDebug("ironbee", "process_hdr: calling ib_state_notify_request_started()");
-        ib_state_notify_request_started(ironbee, data->tx, rline);
-
-        /* now loop over req header lines */
-        rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx);
-        // get_line ensures CRLF (line_len + 2)?
-        for (line += line_len + 2;
-             get_line(line, &line_len) == 1;
-             line += line_len + 2) {
-            n_len = strcspn(line, ":");
-            lptr = line + n_len + 1;
-            while (isspace(*lptr) && lptr < line + line_len)
-                ++lptr;
-            v_len = line_len - (lptr - line);
-            /* Ironbee presumably wants to know of anything zero-length
-             * so don't reject on those grounds!
-             */
-            rv = ib_parsed_name_value_pair_list_add(ibhdrs,
-                                                    line, n_len,
-                                                    lptr, v_len);
-        }
-        TSDebug("ironbee", "process_hdr: calling ib_state_notify_request_header_data()");
-        rv = ib_state_notify_request_header_data(ironbee, data->tx, ibhdrs);
-        TSDebug("ironbee", "process_hdr: calling ib_state_notify_request_header_finished()");
-        rv = ib_state_notify_request_header_finished(ironbee, data->tx);
+    /* now loop over header lines */
+    /* The buffer contains the Request line / Status line, together with
+     * the actual headers.  So we'll skip the first line, which we already
+     * dealt with.
+     *
+     */
+    rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx);
+    // get_line ensures CRLF (line_len + 2)?
+    line = (const char*) icdatabuf;
+    while (next_line(&line, &line_len) > 0) {
+        n_len = strcspn(line, ":");
+        lptr = line + n_len + 1;
+        while (isspace(*lptr) && lptr < line + line_len)
+            ++lptr;
+        v_len = line_len - (lptr - line);
+        /* Ironbee presumably wants to know of anything zero-length
+         * so don't reject on those grounds!
+         */
+        rv = ib_parsed_name_value_pair_list_add(ibhdrs,
+                                                line, n_len,
+                                                lptr, v_len);
     }
-    else {
-        // FIXME: We should not need to parse.
-        //        Use:
-        //          TSHttpHdrVersionGet()
-        //          TSHttpHdrStatusGet()
-        //          TSHttpHdrReasonGet()
-        //ib_parsed_header_t *ibhdr = NULL, *newhdr;
-        ib_parsed_header_wrapper_t *ibhdrs;
-        ib_parsed_resp_line_t *rline;
-        size_t n_len;
-        size_t v_len;
 
-        line = (char*)icdatabuf;
-        if (get_line(line, &line_len) != 1) {
-            TSError("Malformed Response line");
-            goto process_hdr_cleanup;
-        }
-        ib_log_debug_tx(data->tx, "RESP_LINE: %.*s", (int)line_len, line);
+    TSDebug("ironbee", "process_hdr: notifying header data");
+    rv = ib_state_notify_request_header_data(ironbee, data->tx, ibhdrs);
+    rv = (*ibd->ib_notify_header)(ironbee, data->tx, ibhdrs);
+    TSDebug("ironbee", "process_hdr: notifying header finished");
+    rv = (*ibd->ib_notify_header_finished)(ironbee, data->tx);
+    rv = ib_state_notify_request_header_finished(ironbee, data->tx);
 
-        // FIXME: This does not need the raw line as it will be built by
-        //        ironbee if left NULL, so just pass in what parsed values
-        //        that TS has access to.
-        rv = ib_parsed_resp_line_create(data->tx, &rline,
-                                        line, line_len,
-                                        NULL, 0,
-                                        NULL, 0,
-                                        NULL, 0);
-        TSDebug("ironbee", "process_hdr: calling ib_state_notify_response_started()");
-        ib_log_debug_tx(data->tx, "ib_state_notify_response_started rline=%p", rline);
-        rv = ib_state_notify_response_started(ironbee, data->tx, rline);
-
-        /* now loop over resp header lines */
-        rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx);
-        if (rv != IB_OK) {
-            TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
-        }
-        // get_line ensures CRLF (line_len + 2)?
-        for (line += line_len + 2;
-             get_line(line, &line_len) == 1;
-             line += line_len + 2) {
-            n_len = strcspn(line, ":");
-            lptr = line + n_len + 1;
-            // FIXME: What about "Foo: \r"
-            while (isspace(*lptr))
-                ++lptr;
-            v_len = line_len - (lptr - line);
-            rv = ib_parsed_name_value_pair_list_add(ibhdrs,
-                                                    line, n_len,
-                                                    lptr, v_len);
-        }
-        TSDebug("ironbee", "process_hdr: calling ib_state_notify_response_header_data()");
-        rv = ib_state_notify_response_header_data(ironbee, data->tx, ibhdrs);
-        TSDebug("ironbee", "process_hdr: calling ib_state_notify_response_header_finished()");
-        rv = ib_state_notify_response_header_finished(ironbee, data->tx);
-    }
 
     /* Now manipulate header as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
@@ -1038,7 +1057,7 @@ add_hdr:
                 break;
         }
     }
-process_hdr_cleanup:
+
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     TSIOBufferReaderFree(readerp);
     TSIOBufferDestroy(iobufp);
