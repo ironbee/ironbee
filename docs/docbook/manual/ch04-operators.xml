@@ -6,10 +6,20 @@
     <title>Operators</title>
     <para>...</para>
     <section>
+        <title>contains</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns true if the target contains the
+            given sub-string.</para>
+        <para><emphasis role="bold">Types:</emphasis> String</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para/>
+    </section>
+    <section>
         <title>dfa</title>
         <para><emphasis role="bold">Description:</emphasis> Deterministic finite atomation matching
             algorithm (PCRE's alternative matching algorithm).</para>
-        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Types:</emphasis> String</para>
+        <para><emphasis role="bold">Module:</emphasis> pcre</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>The <literal>dfa</literal> operator implements the alternative matching algorithm in
             the <link xlink:href="http://www.pcre.org/">PCRE</link> regular expressions library. The
@@ -21,10 +31,74 @@
             syntax.</para>
     </section>
     <section>
+        <title>eq</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
+            numerically equal to the given value.</para>
+        <para><emphasis role="bold">Types:</emphasis> Numeric</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para/>
+    </section>
+    <section>
+        <title>ge</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
+            numerically greater than or equal to the given value.</para>
+        <para><emphasis role="bold">Types:</emphasis> Numeric</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para/>
+    </section>
+    <section>
+        <title>gt</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
+            numerically greater than the given value.</para>
+        <para><emphasis role="bold">Types:</emphasis> Numeric</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para/>
+    </section>
+    <section>
+        <title>ipmatch</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns true if a target IP address
+            matches any given whitespace separated address in CIDR format.</para>
+        <para><emphasis role="bold">Types:</emphasis> String</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para/>
+    </section>
+    <section>
+        <title>le</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
+            numerically less than or equal to the given value.</para>
+        <para><emphasis role="bold">Types:</emphasis> Numeric</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para/>
+    </section>
+    <section>
+        <title>lt</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
+            numerically less than the given value.</para>
+        <para><emphasis role="bold">Types:</emphasis> Numeric</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para/>
+    </section>
+    <section>
+        <title>ne</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns true if the target is not
+            numerically equal to the given value.</para>
+        <para><emphasis role="bold">Types:</emphasis> Numeric</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para/>
+    </section>
+    <section>
         <title>pm</title>
         <para><emphasis role="bold">Description:</emphasis> Parallel matching using the
                 <literal>Aho-Corasick</literal> algorithm.</para>
-        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Types:</emphasis> String</para>
+        <para><emphasis role="bold">Module:</emphasis> ac</para>
         <para><emphasis role="bold">Version:</emphasis> 0.2</para>
         <para>Implements a set-based (or parallel) matching function using the Aho-Corasick
             algorithm. The parameter of the operator contains one or more matching patterns,
@@ -43,7 +117,8 @@
         <title>pmf</title>
         <para><emphasis role="bold">Description:</emphasis> Parallel matching with patterns from
             file.</para>
-        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Types:</emphasis> String</para>
+        <para><emphasis role="bold">Module:</emphasis> ac</para>
         <para><emphasis role="bold">Version:</emphasis> 0.2</para>
         <para>Same as <literal>pm</literal>, but instead of accepting parameters directly, it loads
             them from the file whose filename was supplied. The file is expected to contain one
@@ -57,7 +132,8 @@
         <title>rx</title>
         <para><emphasis role="bold">Description:</emphasis> Regular expression (perl compatible
             regular expression) matching.</para>
-        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Types:</emphasis> String</para>
+        <para><emphasis role="bold">Module:</emphasis> pcre</para>
         <para><emphasis role="bold">Version:</emphasis> 0.2</para>
         <para>The <literal>rx</literal> operator implements <link xlink:href="http://www.pcre.org/"
                 >PCRE</link> regular expressions. The parameter of the operator is a regular
@@ -91,5 +167,14 @@
                     <literal>TX</literal> variables will remain available until the next capture
                 rule is run, when they will all be deleted.</para>
         </section>
+    </section>
+    <section>
+        <title>streq</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns true if target exactly matches
+            the given string.</para>
+        <para><emphasis role="bold">Types:</emphasis> String</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para></para>
     </section>
 </chapter>
