@@ -534,7 +534,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
     else if (tx->flags) {
-        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAGS", tx->flags);
         // TODO: Check flags for those that make further parsing impossible?
     }
 
@@ -572,7 +572,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     }
 
     if (tx->flags) {
-        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAGS", tx->flags);
     }
 
     /* Update the hostname that may have changed with headers. */
@@ -677,7 +677,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     }
 
     if (tx->flags) {
-        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAGS", tx->flags);
     }
 
     /* The engine may have already been notified if the parser is
@@ -733,7 +733,7 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
     }
 
     if (tx->flags) {
-        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAGS", tx->flags);
     }
 
     /* The engine may have already been notified if the parser is
@@ -781,7 +781,7 @@ static int modhtp_htp_request(htp_connp_t *connp)
     }
 
     if (tx->flags) {
-        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAG", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAGS", tx->flags);
     }
 
     /* The engine may have already been notified if the parser is
@@ -828,7 +828,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     }
 
     if (tx->flags) {
-        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAGS", tx->flags);
     }
 
     /* The engine may have already been notified if the parser is
@@ -873,7 +873,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
     else if (tx->flags) {
-        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAGS", tx->flags);
         if (tx->flags & HTP_STATUS_LINE_INVALID) {
             // FIXME: Why is this not an error???
             ib_log_error_tx(itx, "Error parsing response line.");
@@ -915,7 +915,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     }
 
     if (tx->flags) {
-        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAGS", tx->flags);
     }
 
     /* The engine may have already been notified if the parser is
@@ -1004,7 +1004,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     }
 
     if (tx->flags) {
-        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAGS", tx->flags);
     }
 
     /* The engine may have already been notified if the parser is
@@ -1072,7 +1072,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
     }
 
     if (tx->flags) {
-        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAGS", tx->flags);
     }
 
     /* The engine may have already been notified if the parser is
@@ -1124,7 +1124,7 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
     }
 
     if (tx->flags) {
-        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAG", tx->flags);
+        modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAGS", tx->flags);
     }
 
     /// @todo Notify tx_dataout_event w/response trailer
