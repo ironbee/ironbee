@@ -1342,8 +1342,7 @@ static ib_status_t modlua_handle_conndata_event(ib_engine_t *ib,
 
     /* Verify event is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error(ib, "Lua event was out of range: %" PRIxMAX,
-                     event);
+        ib_log_error(ib, "Lua event was out of range: %u", event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -1418,8 +1417,7 @@ static ib_status_t modlua_handle_txdata_event(ib_engine_t *ib,
 
     /* Verify cbdata is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error_tx(tx, "Lua event was out of range: %" PRIxMAX,
-                     event);
+        ib_log_error_tx(tx, "Lua event was out of range: %u", event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -1493,8 +1491,7 @@ static ib_status_t modlua_handle_conn_event(ib_engine_t *ib,
 
     /* Verify cbdata is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error(ib, "Lua event was out of range: %" PRIxMAX,
-                     event);
+        ib_log_error(ib, "Lua event was out of range: %u", event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -1567,8 +1564,7 @@ static ib_status_t modlua_handle_tx_event(ib_engine_t *ib,
 
     /* Verify cbdata is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error_tx(tx, "Lua event was out of range: %" PRIxMAX,
-                     event);
+        ib_log_error_tx(tx, "Lua event was out of range: %u", event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -1642,8 +1638,7 @@ static ib_status_t modlua_handle_reqline_event(ib_engine_t *ib,
 
     /* Verify cbdata is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error_tx(tx, "Lua event was out of range: %" PRIxMAX,
-                     event);
+        ib_log_error_tx(tx, "Lua event was out of range: %u", event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -1719,8 +1714,7 @@ static ib_status_t modlua_handle_respline_event(ib_engine_t *ib,
 
     /* Verify cbdata is in range for an event. */
     if (event >= IB_STATE_EVENT_NUM) {
-        ib_log_error_tx(tx, "Lua event was out of range: %" PRIxMAX,
-                     event);
+        ib_log_error_tx(tx, "Lua event was out of range: %u", event);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 

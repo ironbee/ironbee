@@ -37,6 +37,7 @@
 
 #include <stdint.h>
 #include <time.h>
+#include <inttypes.h>
 #include <sys/types.h>
 #include <sys/time.h>
 #include <string.h>
@@ -234,7 +235,7 @@ static void mod_perf_stats_event_start(
         /* Increment the call counter */
         perfp->call_cnt++;
 
-        ib_log_debug(ib, "Start Callback: %s (%llu) (%llu) ",
+        ib_log_debug(ib, "Start Callback: %s (%"PRIu64") (%"PRIu64") ",
                      perfp->name, perfp->call_cnt, perfp->start_usec);
     }
     else {
@@ -284,8 +285,9 @@ static ib_status_t mod_perf_stats_event_stop(
             perfp->max_usec = time_taken;
         }
 
-        ib_log_debug(ib, "Stop Callback: %s call_cnt:(%llu) start:(%llu) "
-                     "stop:(%llu) took:(%llu) conn total:(%llu) max:(%llu)",
+        ib_log_debug(ib, "Stop Callback: %s call_cnt:(%"PRIu64") "
+                     "start:(%"PRIu64") stop:(%"PRIu64") "
+                     "took:(%"PRIu64") conn total:(%"PRIu64") max:(%"PRIu64")",
                      perfp->name, perfp->call_cnt, perfp->start_usec,
                      perfp->stop_usec, time_taken, perfp->total_usec,
                      perfp->max_usec);

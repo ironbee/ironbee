@@ -1485,7 +1485,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
         size_t n;
         size_t i;
         IB_ARRAY_LOOP(ib->modules, n, i, m) {
-            ib_log_debug3(ib, "Registering module=\"%s\" idx=%" PRIuMAX,
+            ib_log_debug3(ib, "Registering module=\"%s\" idx=%zd",
                           m->name, m->idx);
             rc = ib_module_register_context(m, ctx);
             if (rc != IB_OK) {

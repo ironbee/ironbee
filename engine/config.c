@@ -173,7 +173,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
         nbytes = read(fd, buf+buflen, bufsz-buflen);
         buflen += nbytes;
         ib_log_debug3(cp->ib,
-                      "Read a %" PRIuMAX " byte chunk. Total len=%" PRIuMAX,
+                      "Read a %zd byte chunk. Total len=%zd",
                       nbytes, buflen);
 
         if ( nbytes == 0 ) { /* EOF */
@@ -206,8 +206,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                      * space in the buffer. This is an error. */
                     ib_log_error(cp->ib,
                                  "Unable to read a configuration line "
-                                 "larger than %" PRIuMAX " bytes from "
-                                 "file %s. "
+                                 "larger than %zd bytes from file %s. "
                                  "Parsing has failed.",
                                  buflen, file);
                     free(buf);
@@ -234,17 +233,16 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                 /* There are no more end-of-line opportunities.
                  * Now move the last end-of-line to the beginning. */
                 ib_log_debug2(cp->ib,
-                              "Buffer of length %" PRIuMAX " must be shrunk.",
+                              "Buffer of length %zd must be shrunk.",
                               buflen);
                 ib_log_debug2(cp->ib,
-                              "Beginning of last line is at index %" PRIuMAX
-                              ".",
+                              "Beginning of last line is at index %zd.",
                               bol-buf);
                 buflen = buf + buflen - bol;
                 if (buflen > 0) {
                     ib_log_debug2(cp->ib,
                                  "Discarding parsed lines."
-                                 " Moving %p to %p with length %" PRIuMAX ".",
+                                 " Moving %p to %p with length %zd.",
                                  bol, buf, buflen);
                     memmove(buf, bol, buflen);
                 }
@@ -503,7 +501,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             if (nargs != 1) {
                 ib_cfg_log_error(cp,
                                  "OnOff directive \"%s\" "
-                                 "takes one parameter, not %" PRIuMAX,
+                                 "takes one parameter, not %zd",
                                  name, nargs);
                 rc = IB_EINVAL;
                 break;
@@ -523,7 +521,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             if (nargs != 1) {
                 ib_cfg_log_error(cp,
                                  "Param1 directive \"%s\" "
-                                 "takes one parameter, not %" PRIuMAX,
+                                 "takes one parameter, not %zd",
                                  name, nargs);
                 rc = IB_EINVAL;
                 break;
@@ -535,7 +533,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             if (nargs != 2) {
                 ib_cfg_log_error(cp,
                                  "Param2 directive \"%s\" "
-                                 "takes two parameters, not %" PRIuMAX,
+                                 "takes two parameters, not %zd",
                                  name, nargs);
                 rc = IB_EINVAL;
                 break;
@@ -600,8 +598,8 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             if (nargs != 1) {
                 ib_cfg_log_error(cp,
                                  "SBlk1 directive \"%s\" "
-                                 "takes one parameter, not %" PRIuMAX,
-                             name, nargs);
+                                 "takes one parameter, not %zd",
+                                 name, nargs);
                 rc = IB_EINVAL;
                 break;
             }

@@ -318,7 +318,7 @@ static ib_status_t execute_target_tfns(ib_engine_t *ib,
     }
 
     ib_rule_log_debug(tx, rule, target, NULL,
-                      "Executing %" PRIdMAX " transformations",
+                      "Executing %zd transformations",
                       IB_LIST_ELEMENTS(target->tfn_list));
 
     /*
@@ -997,7 +997,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_rule_log_debug(tx, NULL, NULL, NULL,
-                      "Executing %" PRIdMAX " rules for phase %d/\"%s\" "
+                      "Executing %zd rules for phase %d/\"%s\" "
                       "in context \"%s\"",
                       IB_LIST_ELEMENTS(rules),
                       meta->phase_num, meta->name, ib_context_full_get(ctx));
@@ -1273,7 +1273,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     ib_rule_log_debug(tx, NULL, NULL, NULL,
-                      "Executing %" PRIdMAX " rules for stream %d/\"%s\" "
+                      "Executing %zd rules for stream %d/\"%s\" "
                       "in context \"%s\"",
                       IB_LIST_ELEMENTS(rules),
                       meta->phase_num, meta->name, ib_context_full_get(ctx));

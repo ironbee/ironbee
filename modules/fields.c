@@ -323,8 +323,9 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
             rc = parse_value(cp, mp, value_node->data,
                              element_type, buf, &vfield);
             if (rc != IB_OK) {
-                ib_cfg_log_error(cp, "Error parse value '%s' type %s: %d",
-                                 value_node->data, g_type_names[element_type],
+                ib_cfg_log_error(cp, "Error parsing value \"%s\" type %s: %d",
+                                 (char *)value_node->data,
+                                 g_type_names[element_type],
                                  rc);
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -344,12 +345,13 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
         /* Parse the value and create a field to contain it */
         rc = parse_value(cp, mp, value_node->data, type_num, name_str, &field);
         if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Error parse value '%s': %d", rc);
+            ib_cfg_log_error(cp, "Error parsing value \"%s\": %d",
+                             (char *)value_node->data, rc);
             IB_FTRACE_RET_STATUS(rc);
         }
     }
     else {
-        ib_cfg_log_error(cp, "No value specified for field %s", name_str);
+        ib_cfg_log_error(cp, "No value specified for field \"%s\"", name_str);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -360,7 +362,7 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_cfg_log_debug(cp,
-                     "Created field %p '%s' of type %d '%s'",
+                     "Created field %p \"%s\" of type %d \"%s\"",
                      (void *)field, name_str, (int)type_num, type_str);
 
     /* Done */
@@ -416,11 +418,12 @@ static ib_status_t fields_tx_header_finished(ib_engine_t *ib,
         }
         rc = ib_data_add(tx->dpi, newf);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to add field %.*s to TX DPI",
-                            field->nlen, field->name);
+            ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI",
+                            (int)field->nlen, field->name);
         }
-        ib_log_debug_tx(tx, "Added field %.*s (type %s)",
-                        field->nlen, field->name, g_type_names[field->type]);
+        ib_log_debug_tx(tx, "Added field \"%.*s\" (type %s)",
+                        (int)field->nlen, field->name,
+                        g_type_names[field->type]);
     }
 
     IB_FTRACE_RET_STATUS(rc);

@@ -43,7 +43,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
     m->idx = ib_array_elements(ib->modules);
     m->ib = ib;
 
-    ib_log_debug2(ib, "Initializing module %s (%" PRIuMAX "): %s",
+    ib_log_debug2(ib, "Initializing module %s (%zd): %s",
                  m->name, m->idx, m->filename);
 
     /* Register directives */
@@ -150,14 +150,14 @@ ib_status_t ib_module_load(ib_module_t **pm,
                      "Module %s (built against engine version %s) is not "
                      "compatible with this engine (version %s): "
                      "ABI %d > %d",
-                     file, (*pm)->version, IB_VERSION, (*pm)->abinum, IB_ABINUM);
+                     file, (*pm)->version, IB_VERSION, (*pm)->abinum,
+                     IB_ABINUM);
         IB_FTRACE_RET_STATUS(IB_EINCOMPAT);
     }
 
     ib_log_debug3(ib,
                  "Loaded module %s: "
-                 "vernum=%d abinum=%d version=%s index=%" PRIuMAX
-                 " filename=%s",
+                 "vernum=%d abinum=%d version=%s index=%zd filename=%s",
                  (*pm)->name,
                  (*pm)->vernum, (*pm)->abinum, (*pm)->version,
                  (*pm)->idx, (*pm)->filename);
@@ -180,7 +180,7 @@ ib_status_t ib_module_unload(ib_module_t *m)
 
     ib_log_debug3(ib,
                  "Unloading module %s: "
-                 "vernum=%d abinum=%d version=%s index=%" PRIuMAX
+                 "vernum=%d abinum=%d version=%s index=%zd"
                  " filename=%s",
                  m->name,
                  m->vernum, m->abinum, m->version,

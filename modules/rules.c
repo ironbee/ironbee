@@ -967,7 +967,7 @@ static ib_status_t lua_operator_execute(ib_engine_t *ib,
 
     ib_rc = ib_lua_func_eval_r(ib, tx, func_name, result);
 
-    ib_log_debug3_tx(tx, "Lua function %s=%d.", func_name, *result);
+    ib_log_debug3_tx(tx, "Lua function %s=%"PRIu64".", func_name, *result);
 
     IB_FTRACE_RET_STATUS(ib_rc);
 }

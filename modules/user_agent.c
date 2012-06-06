@@ -399,8 +399,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
     if (buf == NULL) {
         ib_log_error_tx(tx,
-                      "Failed to allocate %" PRIuMAX
-                      " bytes for agent string",
+                      "Failed to allocate %zd bytes for agent string",
                       len+1);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }

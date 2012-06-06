@@ -121,8 +121,8 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
     lua_getglobal(L, func_name);
 
     if (!lua_isfunction(L, -1)) {
-        ib_log_error_tx(tx, "Variable \"%s\" is not a LUA function - %s",
-                     func_name);
+        ib_log_error_tx(tx, "Variable \"%s\" is not a LUA function",
+                        func_name);
 
         /* Remove wrong parameter from stack. */
         lua_pop(L, 1);

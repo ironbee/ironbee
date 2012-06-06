@@ -1869,7 +1869,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 
         /* Verify size. */
         if (rlen >= CORE_JSON_MAX_FIELD_LEN) {
-            ib_log_notice(ib, "Item too large to log in part %s: %" PRIuMAX,
+            ib_log_notice(ib, "Item too large to log in part %s: %zd",
                          part->name, rlen);
             *chunk = (const uint8_t *)"\r\n";
             part->gen_data = (void *)-1;
@@ -1940,7 +1940,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
             /* Verify size. */
             if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
-                ib_log_notice(ib, "Item too large to log in part %s: %" PRIuMAX,
+                ib_log_notice(ib, "Item too large to log in part %s: %zd",
                              part->name, rlen);
                 *chunk = (const uint8_t *)"\r\n";
                 part->gen_data = (void *)-1;
@@ -2018,7 +2018,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
     /* Verify size. */
     if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
-        ib_log_error(ib, "Item too large to log in part %s: %" PRIuMAX,
+        ib_log_error(ib, "Item too large to log in part %s: %zd",
                      part->name, rlen);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = (void *)-1;
@@ -2171,7 +2171,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
         /* Verify size. */
         if (rlen >= CORE_JSON_MAX_REC_LEN) {
-            ib_log_error(ib, "Event too large to log: %" PRIuMAX, rlen);
+            ib_log_error(ib, "Event too large to log: %zd", rlen);
             *chunk = (const uint8_t *)"    {}";
             part->gen_data = (void *)-1;
             return strlen(*(const char **)chunk);
@@ -4268,7 +4268,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
                 IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
             }
         }
-        ib_log_debug2(ib, "%s: %" PRIuMAX, name, level);
+        ib_log_debug2(ib, "%s: %ld", name, level);
         rc = ib_context_set_num(ctx, "logger.log_level", level);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -4577,7 +4577,7 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
     /* Merge the set flags with the previous value. */
     parts = (flags & fmask) | (parts & ~fmask);
 
-    ib_log_debug2(ib, "AUDITLOG PARTS: 0x%08" PRIuMAX, (unsigned long)parts);
+    ib_log_debug2(ib, "AUDITLOG PARTS: 0x%08lu", (unsigned long)parts);
 
     rc = ib_context_set_num(ctx, "auditlog_parts", parts);
     IB_FTRACE_RET_STATUS(rc);
