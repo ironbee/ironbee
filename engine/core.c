@@ -4608,7 +4608,7 @@ static ib_status_t core_dir_rulelogdata(ib_cfgparser_t *cp,
     const char *modestr;
     ib_status_t rc = IB_OK;
     ib_num_t tmp;
-    ib_bool_t first = IB_TRUE;
+    bool first = true;
 
     if (cbdata != NULL) {
         IB_FTRACE_MSG("Callback data is not null.");
@@ -4639,13 +4639,13 @@ static ib_status_t core_dir_rulelogdata(ib_cfgparser_t *cp,
             ++pname;
         }
 
-        if ((first == IB_TRUE) && (strcasecmp(param, "None") == 0)) {
+        if ((first == true) && (strcasecmp(param, "None") == 0)) {
             log_mode = IB_RULE_LOG_MODE_OFF;
         }
-        else if ((first == IB_TRUE) && (strcasecmp(param, "Fast") == 0)) {
+        else if ((first == true) && (strcasecmp(param, "Fast") == 0)) {
             log_mode = IB_RULE_LOG_MODE_FAST;
         }
-        else if ((first == IB_TRUE) && (strcasecmp(param, "RuleExec") == 0)) {
+        else if ((first == true) && (strcasecmp(param, "RuleExec") == 0)) {
             log_mode = IB_RULE_LOG_MODE_EXEC;
             ib_flags_set(log_flags, IB_RULE_LOG_FLAG_FULL);
         }
@@ -4678,7 +4678,7 @@ static ib_status_t core_dir_rulelogdata(ib_cfgparser_t *cp,
             rc = IB_EINVAL;
             continue;
         }
-        first = IB_FALSE;
+        first = false;
     }
 
     if (rc != IB_OK) {

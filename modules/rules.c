@@ -63,24 +63,24 @@ IB_MODULE_DECLARE();
  */
 typedef struct {
     const char       *str;
-    ib_bool_t         is_stream;
+    bool         is_stream;
     ib_rule_phase_t   phase;
 } phase_lookup_t;
 static phase_lookup_t phase_lookup_table[] =
 {
     /* Standard phases */
-    { "REQUEST_HEADER",          IB_FALSE, PHASE_REQUEST_HEADER },
-    { "REQUEST",                 IB_FALSE, PHASE_REQUEST_BODY },
-    { "RESPONSE_HEADER",         IB_FALSE, PHASE_RESPONSE_HEADER },
-    { "RESPONSE",                IB_FALSE, PHASE_RESPONSE_BODY },
-    { "POSTPROCESS",             IB_FALSE, PHASE_POSTPROCESS },
+    { "REQUEST_HEADER",          false, PHASE_REQUEST_HEADER },
+    { "REQUEST",                 false, PHASE_REQUEST_BODY },
+    { "RESPONSE_HEADER",         false, PHASE_RESPONSE_HEADER },
+    { "RESPONSE",                false, PHASE_RESPONSE_BODY },
+    { "POSTPROCESS",             false, PHASE_POSTPROCESS },
     /* Stream inspection phases */
-    { "REQUEST_HEADER_STREAM",   IB_TRUE,  PHASE_STR_REQUEST_HEADER },
-    { "REQUEST_BODY_STREAM",     IB_TRUE,  PHASE_STR_REQUEST_BODY },
-    { "RESPONSE_HEADER_STREAM",  IB_TRUE,  PHASE_STR_RESPONSE_HEADER },
-    { "RESPONSE_BODY_STREAM",    IB_TRUE,  PHASE_STR_RESPONSE_BODY },
+    { "REQUEST_HEADER_STREAM",   true,  PHASE_STR_REQUEST_HEADER },
+    { "REQUEST_BODY_STREAM",     true,  PHASE_STR_REQUEST_BODY },
+    { "RESPONSE_HEADER_STREAM",  true,  PHASE_STR_RESPONSE_HEADER },
+    { "RESPONSE_BODY_STREAM",    true,  PHASE_STR_RESPONSE_BODY },
     /* List terminator */
-    { NULL,                      IB_FALSE, PHASE_INVALID },
+    { NULL,                      false, PHASE_INVALID },
 };
 
 #ifdef ENABLE_LUA
@@ -99,13 +99,13 @@ static ib_lock_t g_lua_lock;
  * Lookup a phase name in the phase name table.
  *
  * @param[in] str Phase name string to lookup
- * @param[in] is_stream IB_TRUE if this is a stream phase
+ * @param[in] is_stream true if this is a stream phase
  * @param[out] phase Phase number
  *
  * @returns Status code
  */
 static ib_status_t lookup_phase(const char *str,
-                                ib_bool_t is_stream,
+                                bool is_stream,
                                 ib_rule_phase_t *phase)
 {
     IB_FTRACE_INIT();
@@ -196,7 +196,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     space = strchr(copy, ' ');
     if (space != NULL) {
         size_t  alen;
-        ib_bool_t empty = IB_FALSE;
+        bool empty = false;
 
         /* Find the first non-whitespace */
         args = space;
@@ -220,7 +220,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
             if ( (*args == '\'') && (*end == '\'') ) {
                 if (end == args+1) {
                     *args = '\0';
-                    empty = IB_TRUE;
+                    empty = true;
                 }
                 else if (args != end) {
                     ++args;
@@ -232,7 +232,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
         }
 
         /* Is args an empty string? */
-        if ( (*args == '\0') && (empty == IB_FALSE) ) {
+        if ( (*args == '\0') && (empty == false) ) {
             args = NULL;
         }
     }
@@ -695,14 +695,14 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
     /* Message modifier */
     if (strcasecmp(name, "msg") == 0) {
-        ib_bool_t expand = IB_FALSE;
+        bool expand = false;
         rule->meta.msg = value;
         rc = ib_data_expand_test_str(value, &expand);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Expansion test failed: %d", rc);
             IB_FTRACE_RET_STATUS(rc);
         }
-        if (expand == IB_TRUE) {
+        if (expand == true) {
             rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_MSG;
         }
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -710,14 +710,14 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
     /* LogData modifier */
     if (strcasecmp(name, "logdata") == 0) {
-        ib_bool_t expand = IB_FALSE;
+        bool expand = false;
         rule->meta.data = value;
         rc = ib_data_expand_test_str(value, &expand);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Expansion test failed: %d", rc);
             IB_FTRACE_RET_STATUS(rc);
         }
-        if (expand == IB_TRUE) {
+        if (expand == true) {
             rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_DATA;
         }
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -766,14 +766,14 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     }
 
     /* Phase modifiers (Not valid for stream rules) */
-    if (ib_rule_is_stream(rule) == IB_FALSE) {
+    if (ib_rule_is_stream(rule) == false) {
         ib_rule_phase_t phase = PHASE_NONE;
         if (strcasecmp(name, "phase") == 0) {
             if (value == NULL) {
                 ib_cfg_log_error(cp, "Modifier PHASE with no value");
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
-            rc = lookup_phase(value, IB_FALSE, &phase);
+            rc = lookup_phase(value, false, &phase);
             if (rc != IB_OK) {
                 ib_cfg_log_error(cp, "Invalid phase: %s", value);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -781,7 +781,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         }
         else {
             ib_rule_phase_t tphase;
-            rc = lookup_phase(name, IB_FALSE, &tphase);
+            rc = lookup_phase(name, false, &tphase);
             if (rc == IB_OK) {
                 phase = tphase;
             }
@@ -802,7 +802,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     }
 
     /* Chain modifier */
-    if ( (ib_rule_allow_chain(rule) == IB_TRUE) &&
+    if ( (ib_rule_allow_chain(rule) == true) &&
          (strcasecmp(name, "chain") == 0) )
     {
         rc = ib_rule_set_chain(cp->ib, rule);
@@ -810,7 +810,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     }
 
     /* Transformation modifiers */
-    if ( (ib_rule_allow_tfns(rule) == IB_TRUE) &&
+    if ( (ib_rule_allow_tfns(rule) == true) &&
          (strcasecmp(name, "t") == 0) )
     {
         if (value == NULL) {
@@ -1026,7 +1026,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
                         cp->cur_file, cp->cur_lineno,
-                        IB_FALSE, &rule);
+                        false, &rule);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to create rule: %s",
                          ib_status_to_string(rc));
@@ -1194,7 +1194,7 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
                         cp->cur_file, cp->cur_lineno,
-                        IB_FALSE, &rule);
+                        false, &rule);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to allocate rule: %s",
                          ib_status_to_string(rc));
@@ -1301,7 +1301,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     str = node->data;
 
     /* Lookup the phase name */
-    rc = lookup_phase(str, IB_TRUE, &phase);
+    rc = lookup_phase(str, true, &phase);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Invalid phase: %s", str);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1317,7 +1317,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
                         cp->cur_file, cp->cur_lineno,
-                        IB_TRUE, &rule);
+                        true, &rule);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to create rule: %s",
                          ib_status_to_string(rc));

@@ -157,7 +157,7 @@ static ib_status_t act_log_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    ib_bool_t expand;
+    bool expand;
     char *str;
 
     if (parameters == NULL) {
@@ -174,7 +174,7 @@ static ib_status_t act_log_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (expand == IB_TRUE) {
+    else if (expand == true) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 

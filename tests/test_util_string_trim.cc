@@ -122,7 +122,7 @@ public:
           m_exvalid(false),
           m_exconst(true),
           m_exout(lno, exout),
-          m_exmod(strcmp(in,exout) == 0 ? IB_FALSE : IB_TRUE)
+          m_exmod(strcmp(in,exout) == 0 ? false : true)
     { };
 
     TestDatum(size_t lno, const char *in, size_t skip, size_t cut)
@@ -153,17 +153,17 @@ public:
         assert (m_exvalid == true);
         return m_exout;
     };
-    ib_bool_t ExpectedMod(void) const {
+    bool ExpectedMod(void) const {
         assert (m_exvalid == true);
         return m_exmod;
     }
-    ib_bool_t BuildChopBuf(bool skip, bool cut) const {
+    bool BuildChopBuf(bool skip, bool cut) const {
         if (m_exconst) {
             m_exvalid = true;
         }
         if (m_exvalid != true) {
             bool mod = m_exout.BuildChopBuf(skip, cut);
-            m_exmod = (mod == true) ? IB_TRUE : IB_FALSE;
+            m_exmod = (mod == true) ? true : false;
             m_exvalid = true;
         }
         return m_exmod;
@@ -173,7 +173,7 @@ private:
     mutable bool       m_exvalid;     // Expected output valid?
     mutable bool       m_exconst;     // Expected output constant?
     mutable ExTextBuf  m_exout;       // Expected output text
-    mutable ib_bool_t  m_exmod;       // Expected output modified?
+    mutable bool  m_exmod;       // Expected output modified?
 };
 
 
@@ -239,7 +239,7 @@ public:
     {
         bool left = ChopLeft();
         bool right = ChopRight();
-        ib_bool_t mod = test.BuildChopBuf(left, right);
+        bool mod = test.BuildChopBuf(left, right);
         return ExpectedResult(op, mod);
     }
 

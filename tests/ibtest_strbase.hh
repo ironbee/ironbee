@@ -129,14 +129,11 @@ public:
     virtual const char *FnName(void) const = 0;
     ib_mpool_t *MemPool( void ) { return m_mpool; };
 
-    const char *BoolStr(ib_bool_t v) const
-    {
-        return (v == IB_TRUE ? "IB_TRUE" : "IB_FALSE");
-    }
     const char *BoolStr(bool v) const
     {
         return (v == true ? "true" : "false");
     }
+
     const char *TriStr(ib_tristate_t v) const
     {
         switch (v) {
@@ -155,10 +152,6 @@ public:
         return (mod == false) ? true : false;
     }
 
-    ib_flags_t ExpectedResult(ib_strop_t op, ib_bool_t mod) const
-    {
-        return ExpectedResult(op, (mod == IB_TRUE) ? true : false);
-    }
     ib_flags_t ExpectedResult(ib_strop_t op, bool mod) const
     {
         ib_flags_t result = 0;
@@ -239,19 +232,19 @@ public:
             return s;
         }
         s = "<";
-        if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == IB_TRUE) {
+        if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == true) {
             if (n++ > 0) {
                 s += ",";
             }
             s += "MODIFIED";
         }
-        if (ib_flags_all(result, IB_STRFLAG_NEWBUF) == IB_TRUE) {
+        if (ib_flags_all(result, IB_STRFLAG_NEWBUF) == true) {
             if (n++ > 0) {
                 s += ",";
             }
             s += "NEWBUF";
         }
-        if (ib_flags_all(result, IB_STRFLAG_ALIAS) == IB_TRUE) {
+        if (ib_flags_all(result, IB_STRFLAG_ALIAS) == true) {
             if (n++ > 0) {
                 s += ",";
             }
@@ -325,9 +318,9 @@ public:
         }
 
         // NEWBUF and ALIAS result flags should never both be set
-        ib_bool_t both = 
+        bool both = 
             ib_flags_all(result, IB_STRFLAG_NEWBUF|IB_STRFLAG_ALIAS);
-        ASSERT_EQ(IB_FALSE, both)
+        ASSERT_FALSE(both)
             << "Line " << lineno << ": " << Stringize(test)
             << " both NEWBUF and ALIAS result flags are set!"
             << ResultStr(result, s1);

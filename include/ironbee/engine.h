@@ -37,6 +37,7 @@
 #include <ironbee/server.h>
 
 #include <stdarg.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -1686,7 +1687,7 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
 ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
                                   const char *str,
                                   size_t slen,
-                                  ib_bool_t nul,
+                                  bool nul,
                                   char **result,
                                   size_t *result_len);
 
@@ -1696,12 +1697,12 @@ ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
  * This function looks through @a str for instances of "%{.+}".
  *
  * @param[in] str String to check for expansion
- * @param[out] result IB_TRUE if @a str would be expanded by expand_str().
+ * @param[out] result true if @a str would be expanded by expand_str().
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_data_expand_test_str(const char *str,
-                                               ib_bool_t *result);
+                                               bool *result);
 
 /**
  * Determine if a string would be expanded by ib_data_expand_str_ex().
@@ -1710,13 +1711,13 @@ ib_status_t DLL_PUBLIC ib_data_expand_test_str(const char *str,
  *
  * @param[in] str String to check for expansion
  * @param[in] slen Length of string @a str to expand
- * @param[out] result IB_TRUE if @a str would be expanded by expand_str().
+ * @param[out] result true if @a str would be expanded by expand_str().
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_data_expand_test_str_ex(const char *str,
                                                   size_t slen,
-                                                  ib_bool_t *result);
+                                                  bool *result);
 
 /**
  * Remove a data field.

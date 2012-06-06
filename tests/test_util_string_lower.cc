@@ -126,8 +126,8 @@ public:
         }
     }
 
-    const char *BoolStr(ib_bool_t v) {
-        return (v == IB_TRUE ? "IB_TRUE" : "IB_FALSE");
+    const char *BoolStr(bool v) {
+        return (v == true ? "true" : "false");
     }
     const char *Stringize(const TestDatum &test) {
         return m_callbuf.Stringize(test);
@@ -140,7 +140,7 @@ public:
         const TestDatum *test;
         ib_status_t rc;
         for (test = test_data;  test->IsEnd() == false;  ++test) {
-            ib_bool_t modified;
+            bool modified;
             rc = RunTest(*test, modified);
             CheckResults(*test, rc, modified);
         }
@@ -148,10 +148,10 @@ public:
 
     // Specify these for str/ex versions
     virtual ib_status_t RunTest(const TestDatum &test,
-                                ib_bool_t &modified) = 0;
+                                bool &modified) = 0;
     virtual void CheckResults(const TestDatum &test,
                               ib_status_t rc,
-                              ib_bool_t modified) = 0;
+                              bool modified) = 0;
 
 protected:
     CallTextBuf    m_callbuf;       // Call string buffer
@@ -194,12 +194,12 @@ public:
 
     virtual void CheckResults(const TestDatum &test,
                               ib_status_t rc,
-                              ib_bool_t modified)
+                              bool modified)
     {
         size_t lno = test.LineNo();
         const char *out = m_outbuf.GetBuf();
         const TextBuf &exout = ExpectedOut(test);
-        ib_bool_t exmod;
+        bool exmod;
 
         EXPECT_EQ(IB_OK, rc)
             << "Line " << lno << ": " << Stringize(test) << " returned " << rc;
@@ -208,7 +208,7 @@ public:
         }
 
         // Expect change?
-        exmod = (test.InBuf() == exout) ? IB_FALSE : IB_TRUE;
+        exmod = (test.InBuf() == exout) ? false : true;
         EXPECT_EQ(exmod, modified)
             << "Line " << lno << ": " << Stringize(test)
             << " expected modified=" << BoolStr(exmod)
@@ -249,9 +249,9 @@ public:
                                   size_t inlen,
                                   uint8_t **out,
                                   size_t *outlen,
-                                  ib_bool_t *modified) = 0;
+                                  bool *modified) = 0;
 
-    ib_status_t RunTest(const TestDatum &test, ib_bool_t &modified)
+    ib_status_t RunTest(const TestDatum &test, bool &modified)
     {
         uint8_t *out;
         size_t outlen;
@@ -269,13 +269,13 @@ public:
 
     void CheckResults(const TestDatum &test,
                       ib_status_t rc,
-                      ib_bool_t modified)
+                      bool modified)
     {
         size_t lno = test.LineNo();
         const TextBuf &exout = ExpectedOut(test);
         const char *out = m_outbuf.GetBuf();
         size_t outlen = m_outbuf.GetLen();
-        ib_bool_t exmod = (exout == test.InBuf()) ? IB_FALSE : IB_TRUE;
+        bool exmod = (exout == test.InBuf()) ? false : true;
 
         EXPECT_EQ(IB_OK, rc)
             << "Line " << lno << ": " << Stringize(test) << " returned " << rc;
@@ -325,7 +325,7 @@ public:
     };
     ib_status_t RunTestFn(uint8_t *in, size_t inlen,
                           uint8_t **out, size_t *outlen,
-                          ib_bool_t *modified) {
+                          bool *modified) {
         return ::ib_str_wspc_remove_ex(m_mpool,
                                        in, inlen,
                                        out, outlen,
@@ -347,7 +347,7 @@ public:
     };
     ib_status_t RunTestFn(uint8_t *in, size_t inlen,
                           uint8_t **out, size_t *outlen,
-                          ib_bool_t *modified) {
+                          bool *modified) {
         return ::ib_str_wspc_compress_ex(m_mpool,
                                          in, inlen,
                                          out, outlen,

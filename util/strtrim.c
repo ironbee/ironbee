@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #include <ironbee/types.h>
 #include <ironbee/debug.h>
@@ -88,7 +89,7 @@ static size_t find_nonws_left(const uint8_t *str,
  */
 static ib_status_t zero_len_ex(ib_strop_t op,
                                ib_mpool_t *mp,
-                               ib_bool_t copy_on_cow,
+                               bool copy_on_cow,
                                ib_flags_t flags,
                                uint8_t *data_in,
                                uint8_t **data_out,
@@ -97,7 +98,7 @@ static ib_status_t zero_len_ex(ib_strop_t op,
 {
     IB_FTRACE_INIT();
 
-    if ( (copy_on_cow == IB_TRUE) && (op == IB_STROP_COW) ) {
+    if ( (copy_on_cow == true) && (op == IB_STROP_COW) ) {
         op = IB_STROP_COPY;
     }
 
@@ -139,7 +140,7 @@ static ib_status_t zero_len_ex(ib_strop_t op,
  */
 static ib_status_t zero_len(ib_strop_t op,
                             ib_mpool_t *mp,
-                            ib_bool_t copy_on_cow,
+                            bool copy_on_cow,
                             ib_flags_t flags,
                             char *str_in,
                             size_t offset,
@@ -148,7 +149,7 @@ static ib_status_t zero_len(ib_strop_t op,
 {
     IB_FTRACE_INIT();
 
-    if ( (copy_on_cow == IB_TRUE) && (op == IB_STROP_COW) ) {
+    if ( (copy_on_cow == true) && (op == IB_STROP_COW) ) {
         op = IB_STROP_COPY;
     }
 
@@ -403,7 +404,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
     if (dlen_in == 0) {
         ib_status_t rc =
             zero_len_ex(op, mp,
-                        IB_FALSE, IB_STRFLAG_NONE,
+                        false, IB_STRFLAG_NONE,
                         data_in, data_out, dlen_out, result);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -415,7 +416,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
     if (offset == ALL_WHITESPACE) {
         ib_status_t rc =
             zero_len_ex(op, mp,
-                        IB_FALSE, IB_STRFLAG_MODIFIED,
+                        false, IB_STRFLAG_MODIFIED,
                         data_in, data_out, dlen_out, result);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -476,7 +477,7 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
     len = strlen(str_in);
     if (len == 0) {
         rc = zero_len(op, mp,
-                      IB_FALSE, IB_STRFLAG_NONE,
+                      false, IB_STRFLAG_NONE,
                       str_in, len,
                       str_out, result);
         IB_FTRACE_RET_STATUS(rc);
@@ -488,7 +489,7 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
     /* Handle no match separately */
     if (offset == ALL_WHITESPACE) {
         rc = zero_len(op, mp,
-                      IB_FALSE, IB_STRFLAG_MODIFIED,
+                      false, IB_STRFLAG_MODIFIED,
                       str_in, len,
                       str_out, result);
         IB_FTRACE_RET_STATUS(rc);
@@ -519,7 +520,7 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
     assert(result != NULL);
 
     if (dlen_in == 0) {
-        rc = zero_len_ex(op, mp, IB_FALSE, IB_STRFLAG_NONE,
+        rc = zero_len_ex(op, mp, false, IB_STRFLAG_NONE,
                          data_in, data_out, dlen_out, result);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -529,7 +530,7 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
 
     /* Handle all whitespace */
     if (offset == ALL_WHITESPACE) {
-        rc = zero_len_ex(op, mp, IB_FALSE, IB_STRFLAG_MODIFIED,
+        rc = zero_len_ex(op, mp, false, IB_STRFLAG_MODIFIED,
                          data_in, data_out, dlen_out, result);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -563,7 +564,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
     len = strlen(str_in);
     if (len == 0) {
         rc = zero_len(op, mp,
-                      IB_FALSE, IB_STRFLAG_NONE,
+                      false, IB_STRFLAG_NONE,
                       str_in, len,
                       str_out, result);
         IB_FTRACE_RET_STATUS(rc);
@@ -573,7 +574,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
     /* Handle all whitespace */
     if (offset == ALL_WHITESPACE) {
         rc = zero_len(op, mp,
-                      IB_FALSE, IB_STRFLAG_MODIFIED,
+                      false, IB_STRFLAG_MODIFIED,
                       str_in, len,
                       str_out, result);
         IB_FTRACE_RET_STATUS(rc);
@@ -610,7 +611,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
 
     if (dlen_in == 0) {
         rc = zero_len_ex(op, mp,
-                         IB_FALSE, IB_STRFLAG_NONE,
+                         false, IB_STRFLAG_NONE,
                          data_in, data_out, dlen_out, result);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -621,7 +622,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
     /* Handle all whitespace separately */
     if (loffset == ALL_WHITESPACE) {
         rc = zero_len_ex(op, mp,
-                         IB_FALSE, IB_STRFLAG_MODIFIED,
+                         false, IB_STRFLAG_MODIFIED,
                          data_in, data_out, dlen_out, result);
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -666,7 +667,7 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
     len = strlen(str_in);
     if (len == 0) {
         rc = zero_len(op, mp,
-                      IB_FALSE, IB_STRFLAG_NONE,
+                      false, IB_STRFLAG_NONE,
                       str_in, len,
                       str_out, result);
         IB_FTRACE_RET_STATUS(rc);
@@ -678,7 +679,7 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
     /* Handle no match separately */
     if (loffset == ALL_WHITESPACE) {
         rc = zero_len(op, mp,
-                      IB_FALSE, IB_STRFLAG_MODIFIED,
+                      false, IB_STRFLAG_MODIFIED,
                       str_in, len,
                       str_out, result);
         IB_FTRACE_RET_STATUS(rc);

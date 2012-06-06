@@ -895,7 +895,7 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
 ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
                                   const char *str,
                                   size_t slen,
-                                  ib_bool_t nul,
+                                  bool nul,
                                   char **result,
                                   size_t *result_len)
 {
@@ -920,7 +920,7 @@ ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
 }
 
 ib_status_t DLL_PUBLIC ib_data_expand_test_str(const char *str,
-                                               ib_bool_t *result)
+                                               bool *result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -935,7 +935,7 @@ ib_status_t DLL_PUBLIC ib_data_expand_test_str(const char *str,
 
 ib_status_t DLL_PUBLIC ib_data_expand_test_str_ex(const char *str,
                                                   size_t slen,
-                                                  ib_bool_t *result)
+                                                  bool *result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc = ib_expand_test_str_ex(

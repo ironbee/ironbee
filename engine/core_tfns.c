@@ -139,7 +139,7 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
     } /* switch(fin->type) */
 
     /* Check the flags */
-    if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == IB_TRUE) {
+    if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == true) {
         *pflags = IB_TFN_FMODIFIED;
     }
     else {
@@ -490,14 +490,14 @@ static ib_status_t tfn_count(ib_engine_t *ib,
 /**
  * Get maximum / minimum of a list of values
  *
- * @param[in] is_max IB_TRUE for max, IB_FALSE for min
+ * @param[in] is_max true for max, false for min
  * @param[in] mp Memory pool to use for allocations.
  * @param[in] fin Input field.
  * @param[out] fout Output field.
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t list_minmax(ib_bool_t is_max,
+static ib_status_t list_minmax(bool is_max,
                                ib_mpool_t *mp,
                                const ib_field_t *fin,
                                ib_field_t **fout)
@@ -506,7 +506,7 @@ static ib_status_t list_minmax(ib_bool_t is_max,
     ib_status_t           rc = IB_OK;
     const ib_list_t      *lst;
     const ib_list_node_t *node = NULL;
-    ib_bool_t             first = IB_TRUE;
+    bool             first = true;
     ib_num_t              mmvalue = 0;     /* Current Min / max value */
 
     assert(mp != NULL);
@@ -602,11 +602,11 @@ static ib_status_t list_minmax(ib_bool_t is_max,
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
-        if ( (first == IB_TRUE) ||
-             ( ((is_max == IB_TRUE) && (value > mmvalue)) ||
-               ((is_max == IB_FALSE) && (value < mmvalue)) ) )
+        if ( (first == true) ||
+             ( ((is_max == true) && (value > mmvalue)) ||
+               ((is_max == false) && (value < mmvalue)) ) )
         {
-            first = IB_FALSE;
+            first = false;
             mmvalue = value;
         }
     }
@@ -653,7 +653,7 @@ static ib_status_t tfn_max(ib_engine_t *ib,
             break;
 
         case IB_FTYPE_LIST:
-            rc = list_minmax(IB_TRUE, mp, fin, fout);
+            rc = list_minmax(true, mp, fin, fout);
             (*pflags) |= IB_TFN_FMODIFIED;
             break;
 
@@ -699,7 +699,7 @@ static ib_status_t tfn_min(ib_engine_t *ib,
             break;
 
         case IB_FTYPE_LIST:
-            rc = list_minmax(IB_TRUE, mp, fin, fout);
+            rc = list_minmax(true, mp, fin, fout);
             (*pflags) |= IB_TFN_FMODIFIED;
             break;
 

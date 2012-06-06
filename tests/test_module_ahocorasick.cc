@@ -100,7 +100,7 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
                                 ib_engine->ectx,
                                 __FILE__,
                                 __LINE__,
-                                IB_TRUE,
+                                true,
                                 &rule));
     rule->meta.id = "fake-id";
 
@@ -180,7 +180,7 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
                                 ib_engine->ectx,
                                 __FILE__,
                                 __LINE__,
-                                IB_TRUE,
+                                true,
                                 &rule));
     rule->meta.id = "fake-id";
 

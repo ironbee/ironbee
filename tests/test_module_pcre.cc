@@ -112,7 +112,7 @@ TEST_F(PcreModuleTest, test_load_module)
                                 ib_engine->ectx,
                                 __FILE__,
                                 __LINE__,
-                                IB_TRUE,
+                                true,
                                 &rule));
 
     // Ensure that the operator exists.

@@ -249,9 +249,9 @@ void DLL_PUBLIC ib_trace_str(const char *file,
  */
 #define IB_FTRACE_RET_BOOL(rv) \
     do { \
-        ib_bool_t __ib_ft_rv = rv; \
+        bool __ib_ft_rv = rv; \
         ib_trace_str(__FILE__, __LINE__, __ib_fname__, "returned", \
-                     ((__ib_ft_rv == IB_TRUE) ? "TRUE" : "FALSE")); \
+                     ((__ib_ft_rv == true) ? "TRUE" : "FALSE")); \
         return __ib_ft_rv; \
     } while(0)
 

@@ -38,9 +38,9 @@ class TestIBUtilStringToNum : public ::testing::Test
 {
 public:
 
-    const char *BoolStr(ib_bool_t b)
+    const char *BoolStr(bool b)
     {
-        return (b == IB_TRUE) ? "True" : "False";
+        return (b == true) ? "True" : "False";
     }
 
     void RunTest(int line,

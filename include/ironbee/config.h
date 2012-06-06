@@ -300,7 +300,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                                  const char     *file,
                                                  unsigned        lineno,
 
-                                                 ib_bool_t       more);
+                                                 bool       more);
 
 /**
  * Push a new context onto the stack and make it the current.

@@ -178,7 +178,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
 
         if ( nbytes == 0 ) { /* EOF */
             rc = ib_cfgparser_parse_buffer(
-                cp, buf, nbytes, file, lineno, IB_TRUE);
+                cp, buf, nbytes, file, lineno, true);
             ++lineno;
             if (rc != IB_OK) {
                 ++error_count;
@@ -221,7 +221,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                  * ib_cfgparser_parse_buffer */
                 do {
                     rc = ib_cfgparser_parse_buffer(
-                        cp, bol, eol-bol+1, file, lineno, IB_FALSE);
+                        cp, bol, eol-bol+1, file, lineno, false);
                     ++lineno;
                     if (rc != IB_OK) {
                         ++error_count;
@@ -282,7 +282,7 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                       size_t          length,
                                       const char     *file,
                                       unsigned        lineno,
-                                      ib_bool_t       more)
+                                      bool       more)
 {
     IB_FTRACE_INIT();
 
@@ -295,7 +295,7 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
             length,
             file,
             lineno,
-            (more == IB_TRUE ? 1 : 0)
+            (more == true ? 1 : 0)
         )
     );
 }

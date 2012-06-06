@@ -62,7 +62,7 @@ class TestIronBeeModuleRulesLua : public BaseFixture {
                                     ib_engine->ectx,
                                     __FILE__,
                                     __LINE__,
-                                    IB_TRUE,
+                                    true,
                                     &rule));
     }
 

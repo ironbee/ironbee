@@ -30,6 +30,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <sys/types.h>
 
 #ifdef __cplusplus
@@ -243,28 +244,28 @@ ib_status_t DLL_PUBLIC ib_initialize(void);
 void DLL_PUBLIC ib_shutdown(void);
 
 /**
- * Convert a ib_bool_t to ib_tristate_t
+ * Convert a bool to ib_tristate_t
  *
  * @param[in] boolean Boolean value to convert
  *
  * @returns tri-state value
  */
-ib_bool_t ib_bool_to_tristate(ib_bool_t boolean);
-#define ib_bool_to_tristate(boolean) \
-    (((boolean) == IB_TRUE) ? IB_TRI_TRUE : IB_TRI_FALSE)
+bool boolo_tristate(bool boolean);
+#define boolo_tristate(boolean) \
+    (((boolean) == true) ? IB_TRI_TRUE : IB_TRI_FALSE)
 
 /**
- * Convert a ib_tristate_t to a ib_bool_t
+ * Convert a ib_tristate_t to a bool
  *
  * @param[in] tristate Tristate value to convert
  * @param[in] defbool Boolean value to return if @a tristate is UNSET
  *
  * @returns boolean value
  */
-ib_bool_t ib_tristate_to_bool(ib_tristate_t tristate, ib_bool_t defbool);
+bool ib_tristate_to_bool(ib_tristate_t tristate, bool defbool);
 #define ib_tristate_to_bool(tristate,defbool) \
-    ( (tristate) == IB_TRI_TRUE ? IB_TRUE : \
-      (tristate) == IB_TRI_FALSE ? IB_FALSE : (defbool) )
+    ( (tristate) == IB_TRI_TRUE ? true : \
+      (tristate) == IB_TRI_FALSE ? false : (defbool) )
 
 /**
  * Test if any of a set of flags is set
@@ -274,9 +275,9 @@ ib_bool_t ib_tristate_to_bool(ib_tristate_t tristate, ib_bool_t defbool);
  *
  * @returns boolean value
  */
-ib_bool_t ib_flags_any(ib_flags_t flags, ib_flags_t check);
+bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_any(flags,check) \
-    ( ( ((flags) & (check)) != 0) ? IB_TRUE : IB_FALSE)
+    ( ( ((flags) & (check)) != 0) ? true : false)
 
 /**
  * Test if all of a set of flags is set
@@ -286,9 +287,9 @@ ib_bool_t ib_flags_any(ib_flags_t flags, ib_flags_t check);
  *
  * @returns boolean value
  */
-ib_bool_t ib_flags_all(ib_flags_t flags, ib_flags_t check);
+bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_all(flags,check) \
-    ( ( ((flags) & (check)) == (check)) ? IB_TRUE : IB_FALSE)
+    ( ( ((flags) & (check)) == (check)) ? true : false)
 
 /**
  * Set flag bits
@@ -298,7 +299,7 @@ ib_bool_t ib_flags_all(ib_flags_t flags, ib_flags_t check);
  *
  * @returns updated flags
  */
-ib_bool_t ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
+bool ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
 #define ib_flags_set(flags,flags_set) \
     ( (flags) |= (flags_set) )
 
@@ -310,7 +311,7 @@ ib_bool_t ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
  *
  * @returns updated flags
  */
-ib_bool_t ib_flags_clear(ib_flags_t flags, ib_flags_t flags_clear);
+bool ib_flags_clear(ib_flags_t flags, ib_flags_t flags_clear);
 #define ib_flags_clear(flags,flags_clear) \
     ( (flags) &= (~(flags_clear)) )
 

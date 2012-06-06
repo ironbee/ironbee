@@ -231,7 +231,7 @@ typedef struct ib_rule_log_exec_t ib_rule_log_exec_t;
  * @param[in] ctx Current IronBee context
  * @param[in] file Name of configuration file being parsed
  * @param[in] lineno Line number in configuration file
- * @param[in] is_stream IB_TRUE if this is an inspection rule else IB_FALSE
+ * @param[in] is_stream true if this is an inspection rule else false
  * @param[out] prule Address which new rule is written
  *
  * @returns Status code
@@ -240,7 +240,7 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
                                       ib_context_t *ctx,
                                       const char *file,
                                       unsigned int lineno,
-                                      ib_bool_t is_stream,
+                                      bool is_stream,
                                       ib_rule_t **prule);
 
 /**
@@ -280,7 +280,7 @@ ib_status_t ib_rule_match(ib_engine_t *ib,
  * @param[in] ctx IronBee context
  * @param[in] etype Enable type (ID/Tag)
  * @param[in] name String description of @a etype
- * @param[in] enable IB_TRUE:Enable, IB_FALSE:Disable
+ * @param[in] enable true:Enable, false:Disable
  * @param[in] file Configuration file name
  * @param[in] lineno Line number in @a file
  * @param[in] str String of the id/tag
@@ -291,7 +291,7 @@ ib_status_t ib_rule_enable(const ib_engine_t *ib,
                            ib_context_t *ctx,
                            ib_rule_enable_type_t etype,
                            const char *name,
-                           ib_bool_t enable,
+                           bool enable,
                            const char *file,
                            unsigned int lineno,
                            const char *str);
@@ -412,27 +412,27 @@ ib_status_t ib_rule_set_phase(ib_engine_t *ib,
  *
  * @param[in,out] rule Rule to query
  *
- * @returns IB_TRUE or IB_FALSE
+ * @returns true or false
  */
-ib_bool_t ib_rule_allow_tfns(const ib_rule_t *rule);
+bool ib_rule_allow_tfns(const ib_rule_t *rule);
 
 /**
  * Query as to whether a rule allow chains
  *
  * @param[in,out] rule Rule to query
  *
- * @returns IB_TRUE or IB_FALSE
+ * @returns true or false
  */
-ib_bool_t ib_rule_allow_chain(const ib_rule_t *rule);
+bool ib_rule_allow_chain(const ib_rule_t *rule);
 
 /**
  * Query as to whether is a stream inspection rule
  *
  * @param[in,out] rule Rule to query
  *
- * @returns IB_TRUE or IB_FALSE
+ * @returns true or false
  */
-ib_bool_t ib_rule_is_stream(const ib_rule_t *rule);
+bool ib_rule_is_stream(const ib_rule_t *rule);
 
 /**
  * Get the operator flags required for this rule.

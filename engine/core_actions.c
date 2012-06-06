@@ -296,13 +296,13 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
         }
     }
     else {
-        ib_bool_t expand = IB_FALSE;
+        bool expand = false;
 
         rc = ib_data_expand_test_str_ex(value, vlen, &expand);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-        else if (expand == IB_TRUE) {
+        else if (expand == true) {
             inst->flags |= IB_ACTINST_FLAG_EXPAND;
         }
 
@@ -361,7 +361,7 @@ static ib_status_t act_setvar_execute(void *data,
         assert(svdata->type == IB_FTYPE_BYTESTR);
 
         rc = ib_data_expand_str_ex(
-            tx->dpi, bsdata, bslen, IB_FALSE, &expanded, &exlen);
+            tx->dpi, bsdata, bslen, false, &expanded, &exlen);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
                          "setvar: Failed to expand string '%.*s': %s",

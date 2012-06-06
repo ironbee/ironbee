@@ -232,7 +232,7 @@ ib_status_t ib_rule_log_exec_create(ib_tx_t *tx,
     }
 
     /* Create the tfn list */
-    if (ib_flags_all(flags, IB_RULE_LOG_FLAG_DEBUG) == IB_TRUE) {
+    if (ib_flags_all(flags, IB_RULE_LOG_FLAG_DEBUG) == true) {
         rc = ib_list_create(&(new->tfn_list), tx->mp);
         if (rc != IB_OK) {
             ib_rule_log_error(tx, NULL, NULL, NULL,
@@ -386,7 +386,7 @@ void ib_rule_vlog(ib_rule_log_level_t level,
     char *fmtbuf = NULL;
     size_t fmtlen = prebuf_size + 1;
     void *freeptr = NULL;
-    ib_bool_t log_opinst = IB_FALSE;
+    bool log_opinst = false;
 
     /* Ignore this message? */
     if (level > ib_rule_log_level(tx->ib)) {
@@ -399,7 +399,7 @@ void ib_rule_vlog(ib_rule_log_level_t level,
     if (rule != NULL) {
         fmtlen += strlen(rule->meta.id) + 10;
         if (level >= IB_RULE_LOG_LEVEL_DEBUG) {
-            log_opinst = IB_TRUE;
+            log_opinst = true;
             fmtlen += strlen(rule->opinst->op->name) + 12;
         }
     }
@@ -417,7 +417,7 @@ void ib_rule_vlog(ib_rule_log_level_t level,
     snprintf(fmtbuf, fmtlen, "%s/%s", LOG_PREFIX, prefix);
 
     if (fmtbuf != NULL) {
-        ib_bool_t first = IB_TRUE;
+        bool first = true;
 
         strcpy(fmtbuf, "[");
 
@@ -426,21 +426,21 @@ void ib_rule_vlog(ib_rule_log_level_t level,
             strcat(fmtbuf, "rule:\"");
             strcat(fmtbuf, rule->meta.id);
             strcat(fmtbuf, "\"");
-            if (log_opinst == IB_TRUE) {
+            if (log_opinst == true) {
                 strcat(fmtbuf, " operator:\"");
                 strcat(fmtbuf, rule->opinst->op->name);
                 strcat(fmtbuf, "\"");
             }
-            first = IB_FALSE;
+            first = false;
         }
 
         /* Add the target field name */
         if (target != NULL) {
-            if (first != IB_TRUE) {
+            if (first != true) {
                 strcat(fmtbuf, " ");
             }
             else {
-                first = IB_FALSE;
+                first = false;
             }
             strcat(fmtbuf, "target:\"");
             strcat(fmtbuf, target->field_name);
@@ -449,7 +449,7 @@ void ib_rule_vlog(ib_rule_log_level_t level,
 
         /* Add the transformation name */
         if (tfn != NULL) {
-            if (first != IB_TRUE) {
+            if (first != true) {
                 strcat(fmtbuf, " ");
             }
             strcat(fmtbuf, "tfn:\"");
@@ -498,9 +498,9 @@ void ib_rule_log(ib_rule_log_level_t level,
  *
  * @param[in] log_exec Execution logging data
  *
- * @returns IB_TRUE / IB_FALSE
+ * @returns true / false
  */
-static ib_bool_t log_exec_flag_full(const ib_rule_log_exec_t *log_exec)
+static bool log_exec_flag_full(const ib_rule_log_exec_t *log_exec)
 {
     return ib_flags_all(log_exec->flags, IB_RULE_LOG_FLAG_FULL);
 }
@@ -510,9 +510,9 @@ static ib_bool_t log_exec_flag_full(const ib_rule_log_exec_t *log_exec)
  *
  * @param[in] log_exec Execution logging data
  *
- * @returns IB_TRUE / IB_FALSE
+ * @returns true / false
  */
-static ib_bool_t log_exec_flag_debug(const ib_rule_log_exec_t *log_exec)
+static bool log_exec_flag_debug(const ib_rule_log_exec_t *log_exec)
 {
     return ib_flags_all(log_exec->flags, IB_RULE_LOG_FLAG_DEBUG);
 }
@@ -522,9 +522,9 @@ static ib_bool_t log_exec_flag_debug(const ib_rule_log_exec_t *log_exec)
  *
  * @param[in] log_exec Execution logging data
  *
- * @returns IB_TRUE / IB_FALSE
+ * @returns true / false
  */
-static ib_bool_t log_exec_flag_trace(const ib_rule_log_exec_t *log_exec)
+static bool log_exec_flag_trace(const ib_rule_log_exec_t *log_exec)
 {
     return ib_flags_all(log_exec->flags, IB_RULE_LOG_FLAG_TRACE);
 }
@@ -548,7 +548,7 @@ static void build_act_buf(const ib_rule_log_exec_t *log_exec,
     const ib_list_node_t *node;
     char *cur = buf;
     size_t remain = bufsize;
-    ib_bool_t first = IB_TRUE;
+    bool first = true;
 
     /*
      * Make a string out of the action list (think Perl's "join").
@@ -559,13 +559,13 @@ static void build_act_buf(const ib_rule_log_exec_t *log_exec,
             (const ib_action_inst_t *)ib_list_node_data_const(node);
 
         /* For the second and following actions, add a comma to the string */
-        if (first == IB_FALSE) {
+        if (first == false) {
             strncpy(cur, ",", remain);
             ++cur;
             --remain;
         }
         else {
-            first = IB_FALSE;
+            first = false;
         }
 
         /* Add the name of the action, with an optional "!" prefix */
@@ -720,7 +720,7 @@ static void log_exec_normal_full(const ib_rule_log_exec_t *log_exec,
         const ib_list_node_t *actnode;
 
         /* If the debug flag is set, log all of the transformations */
-        if (log_exec_flag_debug(log_exec) == IB_TRUE) {
+        if (log_exec_flag_debug(log_exec) == true) {
             const ib_list_node_t *tfnnode;
             IB_LIST_LOOP_CONST(log_exec->tfn_list, tfnnode) {
                 const ib_rule_tfn_result_t *tfn =
@@ -834,7 +834,7 @@ void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
     }
 
     /* Remove source file info if Trace isn't enabled */
-    if (log_exec_flag_trace(log_exec) == IB_FALSE) {
+    if (log_exec_flag_trace(log_exec) == false) {
         file = NULL;
         line = 0;
     }
@@ -844,7 +844,7 @@ void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
         IB_FTRACE_RET_VOID();
 
     case IB_RULE_LOG_MODE_FAST:
-        if (log_exec_flag_full(log_exec) == IB_TRUE) {
+        if (log_exec_flag_full(log_exec) == true) {
             log_exec_fast_full(log_exec, file, line);
         }
         else {
@@ -853,7 +853,7 @@ void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
         IB_FTRACE_RET_VOID();
 
     case IB_RULE_LOG_MODE_EXEC:
-        if (log_exec_flag_full(log_exec) == IB_TRUE) {
+        if (log_exec_flag_full(log_exec) == true) {
             log_exec_normal_full(log_exec, file, line);
         }
         else {

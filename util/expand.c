@@ -48,7 +48,7 @@
  * @param[in] l1 Length of block 1
  * @param[in] p2 Pointer to block 2
  * @param[in] l2 Length of block 2
- * @param[in] nul IB_TRUE if NUL byte should be tacked on, IB_FALSE if not
+ * @param[in] nul true if NUL byte should be tacked on, false if not
  * @param[out] out Pointer to output block
  * @param[out] olen Length of the output block
  *
@@ -59,12 +59,12 @@ static ib_status_t join2(ib_mpool_t *mp,
                          size_t l1,
                          const char *p2,
                          size_t l2,
-                         ib_bool_t nul,
+                         bool nul,
                          char **out,
                          size_t *olen)
 {
     IB_FTRACE_INIT();
-    size_t buflen = l1 + l2 + (nul == IB_TRUE ? 1 : 0);
+    size_t buflen = l1 + l2 + (nul == true ? 1 : 0);
     char *buf;
     char *p;
 
@@ -80,7 +80,7 @@ static ib_status_t join2(ib_mpool_t *mp,
     p += l1;
     memcpy(p, p2, l2);
     p += l2;
-    if (nul == IB_TRUE) {
+    if (nul == true) {
         *p = '\0';
     }
 
@@ -100,7 +100,7 @@ static ib_status_t join2(ib_mpool_t *mp,
  * @param[in] l2 Length of block 2
  * @param[in] p3 Pointer to block 3
  * @param[in] l3 Length of block 3
- * @param[in] nul IB_TRUE if NUL byte should be tacked on, IB_FALSE if not
+ * @param[in] nul true if NUL byte should be tacked on, false if not
  * @param[out] out Pointer to output block
  * @param[out] olen Length of the output block
  *
@@ -113,12 +113,12 @@ static ib_status_t join3(ib_mpool_t *mp,
                          size_t l2,
                          const char *p3,
                          size_t l3,
-                         ib_bool_t nul,
+                         bool nul,
                          char **out,
                          size_t *olen)
 {
     IB_FTRACE_INIT();
-    size_t buflen = l1 + l2 + l3 + (nul == IB_TRUE ? 1 : 0);
+    size_t buflen = l1 + l2 + l3 + (nul == true ? 1 : 0);
     char *buf;
     char *p;
 
@@ -136,7 +136,7 @@ static ib_status_t join3(ib_mpool_t *mp,
     p += l2;
     memcpy(p, p3, l3);
     p += l3;
-    if (nul == IB_TRUE) {
+    if (nul == true) {
         *p = '\0';
     }
 
@@ -155,7 +155,7 @@ static ib_status_t join3(ib_mpool_t *mp,
  * @param[in] ilen Length of @a iptr
  * @param[in] fptr Pointer to final string
  * @param[in] flen Length of @a fptr
- * @param[in] nul IB_TRUE if NUL byte should be tacked on, IB_FALSE if not
+ * @param[in] nul true if NUL byte should be tacked on, false if not
  * @param[out] out Pointer to output block
  * @param[out] olen Length of the output block
  *
@@ -167,7 +167,7 @@ static ib_status_t join_parts(ib_mpool_t *mp,
                               size_t ilen,
                               const char *fptr,
                               size_t flen,
-                              ib_bool_t nul,
+                              bool nul,
                               char **out,
                               size_t *olen)
 {
@@ -270,7 +270,7 @@ ib_status_t ib_expand_str(ib_mpool_t *mp,
 
     /* Let ib_expand_str_ex() do the heavy lifting */
     rc = ib_expand_str_ex(
-        mp, str, strlen(str), prefix, suffix, IB_TRUE, hash, result, &len);
+        mp, str, strlen(str), prefix, suffix, true, hash, result, &len);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -283,7 +283,7 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
                              size_t str_len,
                              const char *prefix,
                              const char *suffix,
-                             ib_bool_t nul,
+                             bool nul,
                              ib_hash_t *hash,
                              char **result,
                              size_t *result_len)
@@ -378,7 +378,7 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
             rc = join2(mp,
                        iptr, ilen,
                        fptr, flen,
-                       IB_TRUE,
+                       true,
                        &new, &newlen);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
@@ -394,7 +394,7 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
             rc = join2(mp,
                        iptr, ilen,
                        fptr, flen,
-                       IB_TRUE,
+                       true,
                        &new, &newlen);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
@@ -428,7 +428,7 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
 ib_status_t ib_expand_test_str(const char *str,
                                const char *prefix,
                                const char *suffix,
-                               ib_bool_t *result)
+                               bool *result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -445,7 +445,7 @@ ib_status_t ib_expand_test_str_ex(const char *str,
                                   size_t str_len,
                                   const char *prefix,
                                   const char *suffix,
-                                  ib_bool_t *result)
+                                  bool *result)
 {
     IB_FTRACE_INIT();
     const char *pre;      /* Pointer to found prefix pattern */
@@ -460,7 +460,7 @@ ib_status_t ib_expand_test_str_ex(const char *str,
     assert(result != NULL);
 
     /* Initialize the result to no */
-    *result = IB_FALSE;
+    *result = false;
 
     /* Validate prefix and suffix */
     if ( (*prefix == '\0') || (*suffix == '\0') ) {
@@ -485,6 +485,6 @@ ib_status_t ib_expand_test_str_ex(const char *str,
     }
 
     /* Yes, it looks expandable.  Done */
-    *result = IB_TRUE;
+    *result = true;
     IB_FTRACE_RET_STATUS(IB_OK);
 }

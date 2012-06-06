@@ -57,12 +57,6 @@ typedef struct ib_bytestr_t ib_bytestr_t;
 typedef struct ib_stream_t ib_stream_t;
 typedef struct ib_sdata_t ib_sdata_t;
 
-/** Boolean type */
-typedef enum ib_bool_t {
-    IB_FALSE,                  /**< 0: False value */
-    IB_TRUE,                   /**< 1: True value */
-} ib_bool_t;
-
 /**
  * Tri-state enumerated type
  */

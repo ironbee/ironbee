@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #include <ironbee/types.h>
 #include <ironbee/debug.h>
@@ -127,16 +128,16 @@ const char *ib_strstr_ex(const char *haystack,
     imax = haystack_len - (needle_len-1);
     for (i = 0; i < imax; ++i) {
         const char *hp = haystack + i;
-        ib_bool_t found = IB_TRUE;
+        bool found = true;
         size_t j = 0;
 
         for (j = 0; j < needle_len; ++j) {
             if ( *(hp + j) != *(needle + j) ) {
-                found = IB_FALSE;
+                found = false;
                 break;
             }
         }
-        if (found == IB_TRUE) {
+        if (found == true) {
             IB_FTRACE_RET_CONSTSTR(hp);
         }
     }

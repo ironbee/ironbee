@@ -25,6 +25,8 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
+#include <stdbool.h>
+
 #include <ironbee/build.h>
 #include <ironbee/types.h>
 #include <ironbee/mpool.h>
@@ -102,7 +104,7 @@ ib_status_t DLL_PUBLIC ib_expand_str_ex(ib_mpool_t *mp,
                                         size_t str_len,
                                         const char *prefix,
                                         const char *suffix,
-                                        ib_bool_t nul,
+                                        bool nul,
                                         ib_hash_t *hash,
                                         char **result,
                                         size_t *result_len);
@@ -116,14 +118,14 @@ ib_status_t DLL_PUBLIC ib_expand_str_ex(ib_mpool_t *mp,
  * @param[in] str String to check for expansion
  * @param[in] prefix Prefix string (e.g. "%{")
  * @param[in] suffix Suffix string (e.g. "}")
- * @param[out] result IB_TRUE if @a str would be expanded by expand_str().
+ * @param[out] result true if @a str would be expanded by expand_str().
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_expand_test_str(const char *str,
                                           const char *prefix,
                                           const char *suffix,
-                                          ib_bool_t *result);
+                                          bool *result);
 
 /**
  * Determine if a string would be expanded by expand_str(), ex version.
@@ -136,7 +138,7 @@ ib_status_t DLL_PUBLIC ib_expand_test_str(const char *str,
  * @param[in] str_len Length of @a str
  * @param[in] prefix Prefix string (e.g. "%{")
  * @param[in] suffix Suffix string (e.g. "}")
- * @param[out] result IB_TRUE if @a str would be expanded by expand_str().
+ * @param[out] result true if @a str would be expanded by expand_str().
  *
  * @returns Status code
  */
@@ -144,7 +146,7 @@ ib_status_t DLL_PUBLIC ib_expand_test_str_ex(const char *str,
                                              size_t str_len,
                                              const char *prefix,
                                              const char *suffix,
-                                             ib_bool_t *result);
+                                             bool *result);
 
 
 /** @} IronBeeUtilExpand */

@@ -815,10 +815,10 @@ static void print_field(const char *label,
         }
         else {
             const uint8_t *s = ib_bytestr_const_ptr(bs);
-            ib_bool_t cropped = IB_FALSE;
+            bool cropped = false;
             if ( (maxlen > 0) && (len > maxlen) ) {
                 len = maxlen;
-                cropped = IB_TRUE;
+                cropped = true;
             }
             while (len > 0) {
                 uint8_t c = *(s+len-1);
@@ -1200,7 +1200,7 @@ static ib_status_t action_print_create(ib_engine_t *ib,
     IB_FTRACE_INIT();
     char *str;
     ib_status_t rc;
-    ib_bool_t expand;
+    bool expand;
 
     if (parameters == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1216,7 +1216,7 @@ static ib_status_t action_print_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (expand == IB_TRUE) {
+    else if (expand == true) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
@@ -1395,13 +1395,13 @@ static ib_status_t op_print_create(ib_engine_t *ib,
 
     /* Do we need expansion? */
     if (text != NULL) {
-        ib_bool_t expand;
+        bool expand;
         ib_status_t rc;
         rc = ib_data_expand_test_str(text, &expand);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-        else if (expand == IB_TRUE) {
+        else if (expand == true) {
             op_inst->flags |= IB_OPINST_FLAG_EXPAND;
         }
     }

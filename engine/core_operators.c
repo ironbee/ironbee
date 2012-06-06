@@ -129,7 +129,7 @@ static ib_status_t strop_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    ib_bool_t expand;
+    bool expand;
     char *str;
     size_t str_len;
 
@@ -529,7 +529,7 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
     IB_FTRACE_INIT();
     numop_params_t *vptr;
     ib_status_t rc;
-    ib_bool_t expandable;
+    bool expandable;
     ib_num_t value;
 
     char *params_unesc;

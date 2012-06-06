@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #include <ironbee/types.h>
 #include <ironbee/debug.h>
@@ -91,7 +92,7 @@ typedef ib_status_t (* outplace_fn_t)(const uint8_t *data_in,
  * @param[out] count Number of whitespace characters of runs > whitespace
  * @param[out] other Number of whitespace characters that are not ' '.
  */
-static void ws_count(ib_bool_t force_other_zero,
+static void ws_count(bool force_other_zero,
                      size_t minlen,
                      const uint8_t *data,
                      size_t dlen,
@@ -124,7 +125,7 @@ static void ws_count(ib_bool_t force_other_zero,
     }
 
     *count = icount;
-    *other = (force_other_zero == IB_TRUE) ? 0 : iother;
+    *other = (force_other_zero == true) ? 0 : iother;
     IB_FTRACE_RET_VOID();
 }
 
@@ -144,7 +145,7 @@ static void ws_remove_count(size_t minlen,
                             size_t *other)
 {
     IB_FTRACE_INIT();
-    ws_count(IB_TRUE, minlen, data, dlen, count, other);
+    ws_count(true, minlen, data, dlen, count, other);
     IB_FTRACE_RET_VOID();
 }
 
@@ -263,7 +264,7 @@ static void ws_compress_count(size_t minlen,
                               size_t *other)
 {
     IB_FTRACE_INIT();
-    ws_count(IB_FALSE, minlen, data, dlen, count, other);
+    ws_count(false, minlen, data, dlen, count, other);
     IB_FTRACE_RET_VOID();
 }
 
@@ -286,8 +287,8 @@ static ib_status_t ws_compress_inplace(uint8_t *buf,
     const uint8_t *iend;
     const uint8_t *iptr;
     uint8_t *optr;
-    ib_bool_t in_wspc = IB_FALSE;
-    ib_bool_t modified = IB_FALSE;
+    bool in_wspc = false;
+    bool modified = false;
 
     assert(buf != NULL);
     assert(dlen_out != NULL);
@@ -310,17 +311,17 @@ static ib_status_t ws_compress_inplace(uint8_t *buf,
         if (isspace(c) == 0) {
             *optr = c;
             ++optr;
-            in_wspc = IB_FALSE;
+            in_wspc = false;
         }
-        else if (in_wspc == IB_TRUE) {
-            modified = IB_TRUE;
+        else if (in_wspc == true) {
+            modified = true;
         }
-        else if (in_wspc == IB_FALSE) {
+        else if (in_wspc == false) {
             *optr = ' ';
             ++optr;
-            in_wspc = IB_TRUE;
+            in_wspc = true;
             if (c != ' ') {
-                modified = IB_TRUE;
+                modified = true;
             }
         }
         ++iptr;
@@ -353,7 +354,7 @@ static ib_status_t ws_compress(const uint8_t *data_in,
     const uint8_t *iend;
     const uint8_t *oend;
     uint8_t *optr;
-    ib_bool_t in_wspc = IB_FALSE;
+    bool in_wspc = false;
 
     assert(data_in != NULL);
     assert(data_out != NULL);
@@ -374,13 +375,13 @@ static ib_status_t ws_compress(const uint8_t *data_in,
             assert (optr < oend);
             *optr = c;
             ++optr;
-            in_wspc = IB_FALSE;
+            in_wspc = false;
         }
-        else if (in_wspc == IB_FALSE) {
+        else if (in_wspc == false) {
             assert (optr < oend);
             *optr = ' ';
             ++optr;
-            in_wspc = IB_TRUE;
+            in_wspc = true;
         }
         ++data_in;
     }
