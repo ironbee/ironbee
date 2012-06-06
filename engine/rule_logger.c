@@ -758,7 +758,7 @@ static void log_exec_normal_full(const ib_rule_log_exec_t *log_exec,
             IB_LIST_LOOP_CONST(log_exec->actions, actnode) {
                 const ib_action_inst_t *action =
                     (const ib_action_inst_t *)ib_list_node_data_const(actnode);
-                
+
                 ib_log_ex(tx->ib, IB_LOG_ALWAYS, tx, LOG_PREFIX, file, line,
                           "%s:%d \"%s\" target \"%s\" op=\"%s\" result %u; "
                           "action \"%s%s\" executed",
@@ -796,7 +796,7 @@ static void log_exec_normal(const ib_rule_log_exec_t *log_exec,
     IB_LIST_LOOP_CONST(log_exec->actions, actnode) {
         const ib_action_inst_t *action =
             (const ib_action_inst_t *)ib_list_node_data_const(actnode);
-                
+
         ib_log_ex(tx->ib, IB_LOG_ALWAYS, tx, LOG_PREFIX, file, line,
                   "%s:%d \"%s\" result %u; action \"%s%s\" executed",
                   tx->er_ipstr,
