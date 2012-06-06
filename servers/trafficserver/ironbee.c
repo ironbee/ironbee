@@ -886,7 +886,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
                 u_len -= 8;
             }
         }
-        
+
         rv = ib_parsed_req_line_create(data->tx, &rline,
                                        NULL, 0,
                                        method, m_len,
