@@ -244,30 +244,6 @@ ib_status_t DLL_PUBLIC ib_initialize(void);
 void DLL_PUBLIC ib_shutdown(void);
 
 /**
- * Convert a bool to ib_tristate_t
- *
- * @param[in] boolean Boolean value to convert
- *
- * @returns tri-state value
- */
-bool boolo_tristate(bool boolean);
-#define boolo_tristate(boolean) \
-    (((boolean) == true) ? IB_TRI_TRUE : IB_TRI_FALSE)
-
-/**
- * Convert a ib_tristate_t to a bool
- *
- * @param[in] tristate Tristate value to convert
- * @param[in] defbool Boolean value to return if @a tristate is UNSET
- *
- * @returns boolean value
- */
-bool ib_tristate_to_bool(ib_tristate_t tristate, bool defbool);
-#define ib_tristate_to_bool(tristate,defbool) \
-    ( (tristate) == IB_TRI_TRUE ? true : \
-      (tristate) == IB_TRI_FALSE ? false : (defbool) )
-
-/**
  * Test if any of a set of flags is set
  *
  * @param[in] flags Flags to test

@@ -57,15 +57,6 @@ typedef struct ib_bytestr_t ib_bytestr_t;
 typedef struct ib_stream_t ib_stream_t;
 typedef struct ib_sdata_t ib_sdata_t;
 
-/**
- * Tri-state enumerated type
- */
-typedef enum {
-    IB_TRI_FALSE,
-    IB_TRI_TRUE,
-    IB_TRI_UNSET
-} ib_tristate_t;
-
 /** Generic function pointer type. */
 typedef void (*ib_void_fn_t)(void);
 

@@ -117,7 +117,6 @@ public:
             CheckResults(*test, rc, result);
         }
     }
-    virtual ib_tristate_t IsAlias( void ) const = 0;
 };
 
 // Base string version of trim tests
@@ -168,7 +167,6 @@ public:
     const TextBuf &ExpectedOut(const TestDatum &test) const {
         return test.ExpectedOutRemove();
     };
-    ib_tristate_t IsAlias( void ) const { return IB_TRI_FALSE; };
 };
 
 // Right trim tests
@@ -183,7 +181,6 @@ public:
     const TextBuf &ExpectedOut(const TestDatum &test) const {
         return test.ExpectedOutCompress();
     };
-    ib_tristate_t IsAlias( void ) const { return IB_TRI_FALSE; };
 };
 
 // Base "ex" version of trim tests
@@ -234,7 +231,6 @@ public:
     const TextBuf &ExpectedOut(const TestDatum &test) const {
         return test.ExpectedOutRemove();
     };
-    ib_tristate_t IsAlias( void ) const { return IB_TRI_TRUE; };
 };
 
 // Compress (_ex version) whitespace tests
@@ -249,7 +245,6 @@ public:
     const TextBuf &ExpectedOut(const TestDatum &test) const {
         return test.ExpectedOutCompress();
     };
-    ib_tristate_t IsAlias( void ) const { return IB_TRI_FALSE; };
 };
 
 static TestDatum str_test_data [ ] =

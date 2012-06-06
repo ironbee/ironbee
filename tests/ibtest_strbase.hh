@@ -134,19 +134,6 @@ public:
         return (v == true ? "true" : "false");
     }
 
-    const char *TriStr(ib_tristate_t v) const
-    {
-        switch (v) {
-        case IB_TRI_FALSE:
-            return "TRI/FALSE";
-        case IB_TRI_TRUE:
-            return "TRI/TRUE";
-        case IB_TRI_UNSET:
-            return "TRI/UNSET";
-        }
-        assert(0);
-    }
-
     virtual bool ExpectCowAlias(bool mod) const
     {
         return (mod == false) ? true : false;
