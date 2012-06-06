@@ -200,6 +200,7 @@ ib_status_t ib_rule_log_exec_create(ib_tx_t *tx,
     IB_FTRACE_INIT();
     ib_status_t rc;
     ib_rule_log_mode_t mode;
+    ib_flags_t flags;
     ib_rule_log_exec_t *new;
 
     assert(tx != NULL);
@@ -208,16 +209,20 @@ ib_status_t ib_rule_log_exec_create(ib_tx_t *tx,
 
     *log_exec = NULL;
 
+    /* Get the mode & flags */
     mode = (ib_rule_log_mode_t)ib_rule_log_mode(tx->ib);
     if (mode == IB_RULE_LOG_MODE_OFF) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
+    flags = (ib_flags_t)ib_rule_log_flags(tx->ib);
 
+    /* Allocate the object */
     new = ib_mpool_alloc(tx->mp, sizeof(*new));
     if (new == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
+    /* Create the target list */
     rc = ib_list_create(&(new->tgt_list), tx->mp);
     if (rc != IB_OK) {
         ib_rule_log_error(tx, NULL, NULL, NULL,
@@ -226,14 +231,24 @@ ib_status_t ib_rule_log_exec_create(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_list_create(&(new->tfn_list), tx->mp);
-    if (rc != IB_OK) {
-        ib_rule_log_error(tx, NULL, NULL, NULL,
-                          "Rule engine: Failed to create tfn results list: %s",
-                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+    /* Create the tfn list */
+    if (ib_flags_all(flags, IB_RULE_LOG_FLAG_DEBUG) == IB_TRUE) {
+        rc = ib_list_create(&(new->tfn_list), tx->mp);
+        if (rc != IB_OK) {
+            ib_rule_log_error(tx, NULL, NULL, NULL,
+                              "Rule engine: "
+                              "Failed to create tfn results list: %s",
+                              ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else {
+        new->tfn_list = NULL;
     }
 
+    /* Complete the new object, store pointer to it */
+    new->flags = flags;
+    new->mode = mode;
     new->tx = tx;
     new->rule = rule;
     *log_exec = new;
@@ -242,7 +257,7 @@ ib_status_t ib_rule_log_exec_create(ib_tx_t *tx,
 }
 
 ib_status_t ib_rule_log_exec_set_result(ib_rule_log_exec_t *log_exec,
-                                        ib_bool_t result_type,
+                                        ib_num_t result,
                                         const ib_list_t *actions)
 {
     IB_FTRACE_INIT();
@@ -250,7 +265,7 @@ ib_status_t ib_rule_log_exec_set_result(ib_rule_log_exec_t *log_exec,
     assert(actions != NULL);
 
     if (log_exec != NULL) {
-        log_exec->result_type = result_type;
+        log_exec->result = result;
         log_exec->actions = actions;
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -266,7 +281,7 @@ ib_status_t ib_rule_log_exec_add_tgt(ib_rule_log_exec_t *log_exec,
     ib_status_t rc = IB_OK;
     ib_rule_tgt_result_t *tgt_result;
 
-    if (log_exec == NULL) {
+    if ( (log_exec == NULL) || (log_exec->tgt_list == NULL) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -294,7 +309,7 @@ ib_status_t ib_rule_log_exec_add_tfn(ib_rule_log_exec_t *log_exec,
     ib_status_t rc = IB_OK;
     ib_rule_tfn_result_t *tfn_result;
 
-    if (log_exec == NULL) {
+    if ( (log_exec == NULL) || (log_exec->tfn_list == NULL) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -481,29 +496,61 @@ void ib_rule_log(ib_rule_log_level_t level,
     IB_FTRACE_RET_VOID();
 }
 
-/* Log rule execution: fast mode. */
-/* Format: site-id rIP:rPort tx-time-delta ruleid: op=op-name target="target-name" actions=actionname1,action-name2,... */
-static void log_exec_fast(const ib_rule_log_exec_t *log_exec,
-                          ib_rule_log_mode_t mode,
-                          ib_flags_t flags,
-                          const char *file,
-                          int line)
+/**
+ * Log rule execution: Full flag check
+ *
+ * @param[in] log_exec Execution logging data
+ *
+ * @returns IB_TRUE / IB_FALSE
+ */
+static ib_bool_t log_exec_flag_full(const ib_rule_log_exec_t *log_exec)
+{
+    return ib_flags_all(log_exec->flags, IB_RULE_LOG_FLAG_FULL);
+}
+
+/**
+ * Log rule execution: Debug flag check
+ *
+ * @param[in] log_exec Execution logging data
+ *
+ * @returns IB_TRUE / IB_FALSE
+ */
+static ib_bool_t log_exec_flag_debug(const ib_rule_log_exec_t *log_exec)
+{
+    return ib_flags_all(log_exec->flags, IB_RULE_LOG_FLAG_DEBUG);
+}
+
+/**
+ * Log rule execution: Trace flag check
+ *
+ * @param[in] log_exec Execution logging data
+ *
+ * @returns IB_TRUE / IB_FALSE
+ */
+static ib_bool_t log_exec_flag_trace(const ib_rule_log_exec_t *log_exec)
+{
+    return ib_flags_all(log_exec->flags, IB_RULE_LOG_FLAG_TRACE);
+}
+
+/**
+ * Build action buffer
+ *
+ * @param[in] log_exec Execution logging data
+ * @param[out] buf Buffer to fill
+ * @param[in] size of @a buf
+ */
+static void build_act_buf(const ib_rule_log_exec_t *log_exec,
+                          char *buf,
+                          size_t bufsize)
 {
     IB_FTRACE_INIT();
 
     assert(log_exec != NULL);
-    assert(ib_rule_log_mode(log_exec->tx->ib) == IB_RULE_LOG_MODE_FAST);
     assert(log_exec->actions != NULL);
-    assert(log_exec->tgt_list != NULL);
 
-    const size_t MAX_ACTBUF = 128;
     const ib_list_node_t *node;
-    ib_tx_t *tx = log_exec->tx;
-    const ib_rule_t *rule = log_exec->rule;
-    ib_time_t now = ib_clock_get_time();
-    char actbuf[MAX_ACTBUF + 1];
-    char *cur = actbuf;
-    size_t remain = MAX_ACTBUF;
+    char *cur = buf;
+    size_t remain = bufsize;
     ib_bool_t first = IB_TRUE;
 
     /*
@@ -527,7 +574,7 @@ static void log_exec_fast(const ib_rule_log_exec_t *log_exec,
         /* Add the name of the action, with an optional "!" prefix */
         if (remain >= 2) {
             size_t len = strlen(action->action->name);
-            if (log_exec->result_type == IB_FALSE) {
+            if (log_exec->result == 0) {
                 strncpy(cur, "!", remain);
                 ++cur;
                 --remain;
@@ -542,9 +589,46 @@ static void log_exec_fast(const ib_rule_log_exec_t *log_exec,
             break;
         }
     }
-    if (*actbuf == '\0') {
-        strcpy(actbuf, "<NONE>");
+    if (*buf == '\0') {
+        strcpy(buf, "<NONE>");
     }
+
+    IB_FTRACE_RET_VOID();
+}
+
+/**
+ * Max action buffer
+ */
+const size_t MAX_ACTBUF = 128;
+
+/**
+ * Log rule execution: fast mode + full.
+ *
+ * @param[in] log_exec Execution logging data
+ * @param[in] file Source file name (or NULL)
+ * @param[in] line Source file line number (or 0)
+ *
+ * @note: Format: site-id rIP:rPort tx-time-delta ruleid: target="target-name"
+ *                op="op-name" actions=actionname1,action-name2,...
+ */
+static void log_exec_fast_full(const ib_rule_log_exec_t *log_exec,
+                               const char *file,
+                               int line)
+{
+    IB_FTRACE_INIT();
+
+    assert(log_exec != NULL);
+    assert(log_exec->mode == IB_RULE_LOG_MODE_FAST);
+    assert(log_exec->actions != NULL);
+    assert(log_exec->tgt_list != NULL);
+
+    const ib_list_node_t *node;
+    ib_tx_t *tx = log_exec->tx;
+    const ib_rule_t *rule = log_exec->rule;
+    ib_time_t now = ib_clock_get_time();
+    char actbuf[MAX_ACTBUF + 1];
+
+    build_act_buf(log_exec, actbuf, MAX_ACTBUF);
 
     /*
      * Log all of the targets whose result that matched the result type.
@@ -554,58 +638,78 @@ static void log_exec_fast(const ib_rule_log_exec_t *log_exec,
             (const ib_rule_tgt_result_t *)node->data;
 
         /* Only add rule targets that match the result type */
-        if ( ((log_exec->result_type == IB_TRUE) && (result->result != 0)) ||
-             ((log_exec->result_type == IB_FALSE) && (result->result == 0)) )
+        if ( ((log_exec->result != 0) && (result->result == 0)) ||
+             ((log_exec->result == 0) && (result->result != 0)) )
         {
-            if (ib_flags_all(flags, IB_RULE_LOG_FLAG_DEBUG) == IB_TRUE) {
-                char inbuf[MAX_FIELD_BUF];
-                char outbuf[MAX_FIELD_BUF];
-                ib_log_ex(tx->ib, IB_LOG_ALWAYS, tx, LOG_PREFIX, file, line,
-                          "%s:%d %"PRIu64"us %s op=%s target=\"%s\" "
-                          "actions=%s value=\"%s\"->\"%s\"",
-                          tx->er_ipstr, tx->conn->remote_port,
-                          now - tx->t.started,
-                          rule->meta.id, rule->opinst->op->name,
-                          result->target->field_name, actbuf,
-                          format_field(result->original,
-                                       inbuf,
-                                       MAX_FIELD_BUF),
-                          format_field(result->transformed,
-                                       outbuf,
-                                       MAX_FIELD_BUF));
-            }
-            else {
-                ib_log_ex(tx->ib, IB_LOG_ALWAYS, tx, LOG_PREFIX, file, line,
-                          "%s:%d %"PRIu64"us %s op=%s target=\"%s\" actions=%s",
-                          tx->er_ipstr, tx->conn->remote_port,
-                          now - tx->t.started,
-                          rule->meta.id, rule->opinst->op->name,
-                          result->target->field_name, actbuf);
-            }
+            continue;
         }
+
+        ib_log_ex(tx->ib, IB_LOG_ALWAYS, tx, LOG_PREFIX, file, line,
+                  "%s:%d %"PRIu64"us %s target=\"%s\" op=\"%s\" actions=%s",
+                  tx->er_ipstr, tx->conn->remote_port,
+                  now - tx->t.started,
+                  rule->meta.id,
+                  result->target->field_name,
+                  rule->opinst->op->name,
+                  actbuf);
     }
 
     IB_FTRACE_RET_VOID();
 }
 
-/* Log rule execution: Normal mode. */
-static void log_exec_normal(const ib_rule_log_exec_t *log_exec,
-                            ib_rule_log_mode_t mode,
-                            ib_flags_t flags,
-                            const char *file,
-                            int line)
+/**
+ * Log rule execution: fast mode.
+ *
+ * @param[in] log_exec Execution logging data
+ * @param[in] file Source file name (or NULL)
+ * @param[in] line Source file line number (or 0)
+ *
+ * @note: Format: site-id rIP:rPort tx-time-delta ruleid:
+ *                actions=actionname1,action-name2,...
+ */
+static void log_exec_fast(const ib_rule_log_exec_t *log_exec,
+                          const char *file,
+                          int line)
 {
     IB_FTRACE_INIT();
 
     assert(log_exec != NULL);
-    assert(ib_rule_log_mode(log_exec->tx->ib) == IB_RULE_LOG_MODE_EXEC);
+    assert(log_exec->mode == IB_RULE_LOG_MODE_FAST);
+    assert(log_exec->actions != NULL);
+    assert(log_exec->tgt_list != NULL);
+
+    ib_tx_t *tx = log_exec->tx;
+    const ib_rule_t *rule = log_exec->rule;
+    ib_time_t now = ib_clock_get_time();
+    char actbuf[MAX_ACTBUF + 1];
+
+    build_act_buf(log_exec, actbuf, MAX_ACTBUF);
+
+    ib_log_ex(tx->ib, IB_LOG_ALWAYS, tx, LOG_PREFIX, file, line,
+              "%s:%d %"PRIu64"us %s actions=%s",
+              tx->er_ipstr, tx->conn->remote_port,
+              now - tx->t.started,
+              rule->meta.id,
+              actbuf);
+
+    IB_FTRACE_RET_VOID();
+}
+
+/* Log rule execution: Normal mode +full. */
+static void log_exec_normal_full(const ib_rule_log_exec_t *log_exec,
+                                 const char *file,
+                                 int line)
+{
+    IB_FTRACE_INIT();
+
+    assert(log_exec != NULL);
+    assert(log_exec->mode == IB_RULE_LOG_MODE_EXEC);
     assert(log_exec->actions != NULL);
     assert(log_exec->tgt_list != NULL);
 
     const ib_list_node_t *resnode;
     ib_tx_t *tx = log_exec->tx;
     const ib_rule_t *rule = log_exec->rule;
-
 
     /*
      * Log all of the targets whose result that matched the result type.
@@ -615,7 +719,8 @@ static void log_exec_normal(const ib_rule_log_exec_t *log_exec,
             (const ib_rule_tgt_result_t *)ib_list_node_data_const(resnode);
         const ib_list_node_t *actnode;
 
-        if (ib_flags_all(flags, IB_RULE_LOG_FLAG_DEBUG) == IB_TRUE) {
+        /* If the debug flag is set, log all of the transformations */
+        if (log_exec_flag_debug(log_exec) == IB_TRUE) {
             const ib_list_node_t *tfnnode;
             IB_LIST_LOOP_CONST(log_exec->tfn_list, tfnnode) {
                 const ib_rule_tfn_result_t *tfn =
@@ -639,79 +744,116 @@ static void log_exec_normal(const ib_rule_log_exec_t *log_exec,
 
         if (IB_LIST_ELEMENTS(log_exec->actions) == 0) {
             ib_log_ex(tx->ib, IB_LOG_ALWAYS, tx, LOG_PREFIX, file, line,
-                      "%s:%d \"%s\" operator \"%s\" target \"%s\" result %u; "
+                      "%s:%d \"%s\" target=\"%s\" op=\"%s\" result %u; "
                       "no actions executed",
                       tx->er_ipstr,
                       tx->conn->remote_port,
                       rule->meta.id,
-                      rule->opinst->op->name,
                       result->target->field_name,
+                      rule->opinst->op->name,
                       result->result,
-                      log_exec->result_type == IB_FALSE ? "!" : "");
-            IB_FTRACE_RET_VOID();
+                      log_exec->result == 0 ? "!" : "");
         }
-
-        IB_LIST_LOOP_CONST(log_exec->actions, actnode) {
-            const ib_action_inst_t *action =
-                (const ib_action_inst_t *)ib_list_node_data_const(actnode);
-
-            ib_log_ex(tx->ib, IB_LOG_ALWAYS, tx, LOG_PREFIX, file, line,
-                      "%s:%d \"%s\" operator \"%s\" target \"%s\" result %u; "
-                      "action \"%s%s\" executed",
-                      tx->er_ipstr,
-                      tx->conn->remote_port,
-                      rule->meta.id,
-                      rule->opinst->op->name,
-                      result->target->field_name,
-                      result->result,
-                      log_exec->result_type == IB_FALSE ? "!" : "",
-                      action->action->name);
+        else {
+            IB_LIST_LOOP_CONST(log_exec->actions, actnode) {
+                const ib_action_inst_t *action =
+                    (const ib_action_inst_t *)ib_list_node_data_const(actnode);
+                
+                ib_log_ex(tx->ib, IB_LOG_ALWAYS, tx, LOG_PREFIX, file, line,
+                          "%s:%d \"%s\" target \"%s\" op=\"%s\" result %u; "
+                          "action \"%s%s\" executed",
+                          tx->er_ipstr,
+                          tx->conn->remote_port,
+                          rule->meta.id,
+                          result->target->field_name,
+                          rule->opinst->op->name,
+                          result->result,
+                          log_exec->result == 0 ? "!" : "",
+                          action->action->name);
+            }
         }
     }
 
     IB_FTRACE_RET_VOID();
 }
 
+/* Log rule execution: Normal mode. */
+static void log_exec_normal(const ib_rule_log_exec_t *log_exec,
+                            const char *file,
+                            int line)
+{
+    IB_FTRACE_INIT();
+
+    assert(log_exec != NULL);
+    assert(log_exec->mode == IB_RULE_LOG_MODE_EXEC);
+    assert(log_exec->actions != NULL);
+    assert(log_exec->tgt_list != NULL);
+
+    ib_tx_t *tx = log_exec->tx;
+    const ib_rule_t *rule = log_exec->rule;
+    const ib_list_node_t *actnode;
+
+    IB_LIST_LOOP_CONST(log_exec->actions, actnode) {
+        const ib_action_inst_t *action =
+            (const ib_action_inst_t *)ib_list_node_data_const(actnode);
+                
+        ib_log_ex(tx->ib, IB_LOG_ALWAYS, tx, LOG_PREFIX, file, line,
+                  "%s:%d \"%s\" result %u; action \"%s%s\" executed",
+                  tx->er_ipstr,
+                  tx->conn->remote_port,
+                  rule->meta.id,
+                  log_exec->result,
+                  log_exec->result == 0 ? "!" : "",
+                  action->action->name);
+    }
+
+    IB_FTRACE_RET_VOID();
+}
+
 /* Log rule execution: exec. */
-/* Format: site-id rIP:rPort tx-time-delta ruleid: op=op-name target="target-name" actions=actionname1,action-name2,... */
 void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
                          const char *file,
                          int line)
 {
     IB_FTRACE_INIT();
-    ib_rule_log_mode_t mode;
-    ib_flags_t flags;
 
     if (log_exec == NULL) {
         IB_FTRACE_RET_VOID();
     }
 
-    mode = ib_rule_log_mode(log_exec->tx->ib);
-    flags = ib_rule_log_flags(log_exec->tx->ib);
-
     /* If no actions & no options enabled, do nothing */
-    if ( (flags == IB_RULE_FLAG_NONE) &&
+    if ( (log_exec->flags == IB_RULE_FLAG_NONE) &&
          (IB_LIST_ELEMENTS(log_exec->actions) == 0) )
     {
         IB_FTRACE_RET_VOID();
     }
 
     /* Remove source file info if Trace isn't enabled */
-    if (ib_flags_all(flags, IB_RULE_LOG_FLAG_TRACE) == IB_FALSE) {
+    if (log_exec_flag_trace(log_exec) == IB_FALSE) {
         file = NULL;
         line = 0;
     }
 
-    switch (mode) {
+    switch (log_exec->mode) {
     case IB_RULE_LOG_MODE_OFF:
         IB_FTRACE_RET_VOID();
 
     case IB_RULE_LOG_MODE_FAST:
-        log_exec_fast(log_exec, mode, flags, file, line);
+        if (log_exec_flag_full(log_exec) == IB_TRUE) {
+            log_exec_fast_full(log_exec, file, line);
+        }
+        else {
+            log_exec_fast(log_exec, file, line);
+        }
         IB_FTRACE_RET_VOID();
 
     case IB_RULE_LOG_MODE_EXEC:
-        log_exec_normal(log_exec, mode, flags, file, line);
+        if (log_exec_flag_full(log_exec) == IB_TRUE) {
+            log_exec_normal_full(log_exec, file, line);
+        }
+        else {
+            log_exec_normal(log_exec, file, line);
+        }
         IB_FTRACE_RET_VOID();
 
     default:

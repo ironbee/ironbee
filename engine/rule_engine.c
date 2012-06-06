@@ -863,12 +863,11 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
      */
     if (*rule_result != 0) {
         actions = rule->true_actions;
-        ib_rule_log_exec_set_result(log_exec, IB_TRUE, rule->true_actions);
     }
     else {
         actions = rule->false_actions;
-        ib_rule_log_exec_set_result(log_exec, IB_FALSE, rule->false_actions);
     }
+    ib_rule_log_exec_set_result(log_exec, *rule_result, actions);
     trc = execute_actions(ib, rule, tx, *rule_result, actions);
     if ( trc == IB_DECLINED ) {
         if ( tx->flags & IB_TX_BLOCK_IMMEDIATE ) {

@@ -211,12 +211,14 @@ typedef struct ib_rule_tfn_result_t ib_rule_tfn_result_t;
  * Rule execution logging data
  */
 struct ib_rule_log_exec_t {
-    ib_tx_t           *tx;              /**< Transformation */
-    const ib_rule_t   *rule;            /**< Rule being executed */
-    const ib_list_t   *actions;         /**< Actions list */
-    ib_bool_t          result_type;     /**< True / False results*/
-    ib_list_t         *tgt_list;        /**< List of ib_rule_tgt_result_t */
-    ib_list_t         *tfn_list;        /**< List of ib_rule_tfn_result_t */
+    ib_rule_log_mode_t  mode;          /**< Logging mode */
+    ib_flags_t          flags;         /**< Logging flags */
+    ib_tx_t            *tx;            /**< Transformation */
+    const ib_rule_t    *rule;          /**< Rule being executed */
+    const ib_list_t    *actions;       /**< Actions list */
+    ib_num_t            result;        /**< Final result */
+    ib_list_t          *tgt_list;      /**< List of ib_rule_tgt_result_t */
+    ib_list_t          *tfn_list;      /**< List of ib_rule_tfn_result_t */
 };
 typedef struct ib_rule_log_exec_t ib_rule_log_exec_t;
 
@@ -666,13 +668,13 @@ ib_status_t ib_rule_log_exec_create(ib_tx_t *tx,
  * Set the result in a rule execution logging object
  *
  * @param[in,out] log_exec The new execution logging object
- * @param[in] result_type Execution results type 
+ * @param[in] result Execution result
  * @param[in] actions Actions list
  *
  * @returns IB_OK on success
  */
 ib_status_t ib_rule_log_exec_set_result(ib_rule_log_exec_t *log_exec,
-                                        ib_bool_t result_type,
+                                        ib_num_t result,
                                         const ib_list_t *actions);
 
 /**

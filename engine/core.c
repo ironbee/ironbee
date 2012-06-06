@@ -4658,8 +4658,8 @@ static ib_status_t core_dir_rulelogdata(ib_cfgparser_t *cp,
         char modifier = '\0';
         const char *pname = param;
 
-        if ( (*param == '+') || (modifier == '-') ) {
-            modifier = *param;
+        if ( (*pname == '+') || (*pname == '-') ) {
+            modifier = *pname;
             ++pname;
         }
 
@@ -4671,6 +4671,7 @@ static ib_status_t core_dir_rulelogdata(ib_cfgparser_t *cp,
         }
         else if ((first == IB_TRUE) && (strcasecmp(param, "RuleExec") == 0)) {
             log_mode = IB_RULE_LOG_MODE_EXEC;
+            ib_flags_set(log_flags, IB_RULE_LOG_FLAG_FULL);
         }
         else if (strcasecmp(pname, "Full") == 0) {
             if (modifier == '-') {
