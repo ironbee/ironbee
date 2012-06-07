@@ -49,19 +49,20 @@ typedef struct ib_strval_t ib_strval_t;
 
 /// @todo Should probably be private structure
 struct ib_cfgparser_t {
-    ib_engine_t            *ib;          /**< Engine */
-    ib_mpool_t             *mp;          /**< Memory pool */
-    ib_list_t              *stack;       /**< Stack tracking contexts */
-    ib_list_t              *block;       /**< Stack tracking blocks */
-    ib_hash_t              *includes;    /**< Include tracking hash */
+    ib_engine_t    *ib;          /**< Engine */
+    ib_mpool_t     *mp;          /**< Memory pool */
+    ib_list_t      *stack;       /**< Stack tracking contexts */
+    ib_list_t      *block;       /**< Stack tracking blocks */
+    ib_hash_t      *includes;    /**< Include tracking hash */
+    const char     *linebuf;     /**< Line buffer, used for continuation */
 
     /* Parsing states */
-    ib_context_t           *cur_ctx;     /**< Current context */
-    ib_site_t              *cur_site;    /**< Current site */
-    ib_loc_t               *cur_loc;     /**< Current location */
-    const char             *cur_blkname; /**< Current block name */
-    const char             *cur_file;    /**< Current file name */
-    unsigned int            cur_lineno;  /**< Current line number */
+    ib_context_t   *cur_ctx;     /**< Current context */
+    ib_site_t      *cur_site;    /**< Current site */
+    ib_loc_t       *cur_loc;     /**< Current location */
+    const char     *cur_blkname; /**< Current block name */
+    const char     *cur_file;    /**< Current file name */
+    unsigned int    cur_lineno;  /**< Current line number */
 };
 
 /**
@@ -301,8 +302,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                                  size_t          length,
                                                  const char     *file,
                                                  unsigned        lineno,
-
-                                                 bool       more);
+                                                 bool            more);
 
 /**
  * Push a new context onto the stack and make it the current.

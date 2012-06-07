@@ -202,230 +202,253 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 }
 
 
-#line 335 "config-parser.rl"
+#line 344 "config-parser.rl"
 
 
 
 #line 210 "config-parser.c"
 static const char _ironbee_config_actions[] = {
-	0, 1, 0, 1, 1, 1, 8, 1,
-	10, 1, 12, 1, 21, 1, 23, 1,
-	27, 1, 31, 1, 35, 1, 36, 1,
-	37, 1, 39, 1, 40, 1, 41, 2,
-	1, 25, 2, 1, 28, 2, 1, 30,
-	2, 2, 5, 2, 2, 16, 2, 3,
-	20, 2, 4, 36, 2, 4, 38, 2,
-	4, 41, 2, 5, 15, 2, 6, 23,
-	2, 6, 24, 2, 7, 19, 2, 8,
-	29, 2, 9, 0, 2, 10, 11, 2,
-	13, 14, 2, 13, 18, 2, 13, 22,
-	2, 13, 26, 2, 13, 32, 2, 13,
-	33, 2, 13, 34, 3, 2, 5, 15,
+	0, 1, 0, 1, 1, 1, 4, 1,
+	8, 1, 10, 1, 11, 1, 13, 1,
+	22, 1, 24, 1, 28, 1, 32, 1,
+	37, 1, 38, 1, 39, 1, 42, 1,
+	43, 1, 44, 1, 45, 2, 1, 26,
+	2, 1, 29, 2, 1, 31, 2, 2,
+	5, 2, 2, 17, 2, 3, 21, 2,
+	4, 38, 2, 4, 41, 2, 4, 45,
+	2, 5, 16, 2, 6, 24, 2, 6,
+	25, 2, 7, 20, 2, 8, 30, 2,
+	9, 0, 2, 10, 40, 2, 11, 12,
+	2, 14, 15, 2, 14, 19, 2, 14,
+	23, 2, 14, 27, 2, 14, 33, 2,
+	14, 34, 2, 14, 35, 2, 14, 36,
 	3, 2, 5, 16, 3, 2, 5, 17,
-	3, 9, 0, 31, 3, 13, 0, 14,
-	3, 13, 0, 18, 3, 13, 0, 22,
-	3, 13, 0, 26, 3, 13, 0, 33
-
+	3, 2, 5, 18, 3, 9, 0, 32,
+	3, 10, 4, 40, 3, 14, 0, 15,
+	3, 14, 0, 19, 3, 14, 0, 23,
+	3, 14, 0, 27, 3, 14, 0, 35,
+	3, 14, 10, 35
 };
 
-static const unsigned char _ironbee_config_key_offsets[] = {
-	0, 0, 0, 0, 9, 11, 11, 11,
-	19, 21, 21, 21, 30, 30, 39, 43,
-	44, 48, 52, 53, 57, 62, 67, 69,
-	73, 75, 86, 93, 104, 111, 112, 121,
-	130, 139, 148, 157, 166, 167, 176, 183,
-	190, 190, 198, 205, 205, 214, 221, 228,
-	237, 244, 244, 251
+static const short _ironbee_config_key_offsets[] = {
+	0, 0, 0, 4, 8, 9, 9, 18,
+	20, 20, 20, 28, 30, 30, 30, 39,
+	39, 48, 52, 53, 57, 61, 62, 66,
+	71, 76, 78, 82, 84, 95, 102, 113,
+	120, 121, 130, 139, 148, 157, 166, 175,
+	183, 183, 190, 197, 198, 207, 214, 221,
+	221, 229, 236, 236, 245, 252, 259, 268,
+	275, 275, 282
 };
 
 static const char _ironbee_config_trans_keys[] = {
-	9, 10, 13, 32, 34, 35, 60, 62,
-	92, 34, 92, 9, 10, 32, 34, 35,
-	60, 62, 92, 34, 92, 9, 10, 13,
-	32, 60, 62, 92, 34, 35, 9, 10,
+	9, 10, 13, 32, 9, 10, 13, 32,
+	10, 9, 10, 13, 32, 34, 35, 60,
+	62, 92, 34, 92, 9, 10, 32, 34,
+	35, 60, 62, 92, 34, 92, 9, 10,
 	13, 32, 60, 62, 92, 34, 35, 9,
-	10, 13, 32, 10, 9, 10, 13, 32,
-	9, 10, 13, 32, 10, 9, 10, 32,
-	34, 9, 10, 13, 32, 34, 9, 10,
-	13, 32, 34, 10, 34, 9, 10, 13,
-	32, 10, 34, 9, 10, 13, 32, 34,
-	35, 60, 62, 73, 92, 105, 32, 34,
-	60, 62, 92, 9, 10, 9, 10, 13,
-	32, 34, 35, 60, 62, 73, 92, 105,
-	9, 10, 32, 34, 60, 62, 92, 10,
-	32, 34, 60, 62, 78, 92, 110, 9,
-	10, 32, 34, 60, 62, 67, 92, 99,
-	9, 10, 32, 34, 60, 62, 76, 92,
-	108, 9, 10, 32, 34, 60, 62, 85,
-	92, 117, 9, 10, 32, 34, 60, 62,
-	68, 92, 100, 9, 10, 32, 34, 60,
-	62, 69, 92, 101, 9, 10, 47, 9,
-	10, 13, 32, 34, 35, 60, 62, 92,
-	32, 34, 60, 62, 92, 9, 10, 9,
-	10, 32, 34, 60, 62, 92, 9, 10,
-	32, 34, 35, 60, 62, 92, 32, 34,
-	60, 62, 92, 9, 10, 9, 10, 13,
-	32, 60, 62, 92, 34, 35, 32, 34,
-	60, 62, 92, 9, 10, 9, 10, 32,
-	34, 60, 62, 92, 9, 10, 13, 32,
+	10, 13, 32, 60, 62, 92, 34, 35,
+	9, 10, 13, 32, 10, 9, 10, 13,
+	32, 9, 10, 13, 32, 10, 9, 10,
+	32, 34, 9, 10, 13, 32, 34, 9,
+	10, 13, 32, 34, 10, 34, 9, 10,
+	13, 32, 10, 34, 9, 10, 13, 32,
+	34, 35, 60, 62, 73, 92, 105, 32,
+	34, 60, 62, 92, 9, 10, 9, 10,
+	13, 32, 34, 35, 60, 62, 73, 92,
+	105, 9, 10, 32, 34, 60, 62, 92,
+	10, 32, 34, 60, 62, 78, 92, 110,
+	9, 10, 32, 34, 60, 62, 67, 92,
+	99, 9, 10, 32, 34, 60, 62, 76,
+	92, 108, 9, 10, 32, 34, 60, 62,
+	85, 92, 117, 9, 10, 32, 34, 60,
+	62, 68, 92, 100, 9, 10, 32, 34,
+	60, 62, 69, 92, 101, 9, 10, 9,
+	10, 13, 32, 34, 60, 62, 92, 9,
+	10, 32, 34, 60, 62, 92, 32, 34,
+	60, 62, 92, 9, 10, 47, 9, 10,
+	13, 32, 34, 35, 60, 62, 92, 32,
+	34, 60, 62, 92, 9, 10, 9, 10,
+	32, 34, 60, 62, 92, 9, 10, 32,
+	34, 35, 60, 62, 92, 32, 34, 60,
+	62, 92, 9, 10, 9, 10, 13, 32,
 	60, 62, 92, 34, 35, 32, 34, 60,
 	62, 92, 9, 10, 9, 10, 32, 34,
-	60, 62, 92, 9, 10, 32, 34, 0
+	60, 62, 92, 9, 10, 13, 32, 60,
+	62, 92, 34, 35, 32, 34, 60, 62,
+	92, 9, 10, 9, 10, 32, 34, 60,
+	62, 92, 9, 10, 32, 34, 0
 };
 
 static const char _ironbee_config_single_lengths[] = {
-	0, 0, 0, 9, 2, 0, 0, 8,
-	2, 0, 0, 7, 0, 7, 4, 1,
-	4, 4, 1, 4, 5, 5, 2, 4,
-	2, 11, 5, 11, 7, 1, 7, 7,
-	7, 7, 7, 7, 1, 9, 5, 7,
-	0, 8, 5, 0, 7, 5, 7, 7,
-	5, 0, 7, 4
+	0, 0, 4, 4, 1, 0, 9, 2,
+	0, 0, 8, 2, 0, 0, 7, 0,
+	7, 4, 1, 4, 4, 1, 4, 5,
+	5, 2, 4, 2, 11, 5, 11, 7,
+	1, 7, 7, 7, 7, 7, 7, 8,
+	0, 7, 5, 1, 9, 5, 7, 0,
+	8, 5, 0, 7, 5, 7, 7, 5,
+	0, 7, 4
 };
 
 static const char _ironbee_config_range_lengths[] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 1, 0, 1, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 1, 0, 0, 0, 1, 1,
-	1, 1, 1, 1, 0, 0, 1, 0,
-	0, 0, 1, 0, 1, 1, 0, 1,
-	1, 0, 0, 0
+	0, 0, 0, 0, 0, 0, 1, 0,
+	1, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 0, 1, 0, 0,
+	0, 1, 1, 1, 1, 1, 1, 0,
+	0, 0, 1, 0, 0, 1, 0, 0,
+	0, 1, 0, 1, 1, 0, 1, 1,
+	0, 0, 0
 };
 
 static const short _ironbee_config_index_offsets[] = {
-	0, 0, 1, 2, 12, 15, 16, 17,
-	26, 29, 30, 31, 40, 41, 50, 55,
-	57, 62, 67, 69, 74, 80, 86, 89,
-	94, 97, 109, 116, 128, 136, 138, 147,
-	156, 165, 174, 183, 192, 194, 204, 211,
-	219, 220, 229, 236, 237, 246, 253, 261,
-	270, 277, 278, 286
+	0, 0, 1, 6, 11, 13, 14, 24,
+	27, 28, 29, 38, 41, 42, 43, 52,
+	53, 62, 67, 69, 74, 79, 81, 86,
+	92, 98, 101, 106, 109, 121, 128, 140,
+	148, 150, 159, 168, 177, 186, 195, 204,
+	213, 214, 222, 229, 231, 241, 248, 256,
+	257, 266, 273, 274, 283, 290, 298, 307,
+	314, 315, 323
 };
 
 static const char _ironbee_config_indicies[] = {
-	1, 3, 5, 6, 7, 5, 8, 9,
-	9, 9, 10, 4, 12, 13, 11, 11,
-	15, 17, 9, 17, 18, 9, 9, 19,
-	20, 16, 22, 23, 21, 21, 25, 27,
-	28, 29, 27, 30, 30, 31, 30, 26,
-	33, 35, 36, 37, 35, 30, 38, 39,
-	30, 34, 38, 40, 41, 38, 30, 40,
-	30, 43, 44, 45, 43, 42, 46, 47,
-	48, 46, 30, 47, 30, 50, 30, 50,
-	51, 49, 53, 44, 54, 53, 42, 52,
-	56, 47, 57, 56, 58, 55, 30, 58,
-	55, 43, 44, 59, 43, 30, 47, 58,
-	55, 61, 62, 63, 61, 9, 64, 65,
-	9, 66, 67, 66, 60, 68, 68, 68,
-	68, 69, 68, 1, 61, 62, 63, 61,
-	70, 64, 70, 70, 66, 67, 66, 60,
-	71, 72, 71, 71, 71, 71, 69, 1,
-	73, 64, 71, 71, 71, 71, 74, 69,
-	74, 71, 1, 71, 71, 71, 71, 75,
-	69, 75, 71, 1, 71, 71, 71, 71,
-	76, 69, 76, 71, 1, 71, 71, 71,
-	71, 77, 69, 77, 71, 1, 71, 71,
-	71, 71, 78, 69, 78, 71, 1, 71,
-	71, 71, 71, 79, 69, 79, 71, 1,
-	81, 80, 5, 6, 7, 5, 8, 9,
-	9, 9, 10, 4, 83, 83, 83, 83,
-	84, 83, 3, 83, 85, 83, 83, 83,
-	83, 84, 3, 83, 17, 9, 17, 18,
-	9, 9, 19, 20, 16, 86, 86, 86,
-	86, 87, 86, 15, 86, 27, 28, 29,
-	27, 30, 30, 31, 30, 26, 88, 88,
-	88, 88, 89, 88, 25, 88, 90, 88,
-	88, 88, 88, 89, 25, 35, 36, 37,
-	35, 30, 38, 39, 30, 34, 91, 91,
-	91, 91, 92, 91, 33, 93, 91, 94,
-	91, 91, 91, 91, 92, 33, 50, 30,
-	50, 51, 49, 0
+	1, 2, 3, 4, 2, 1, 6, 7,
+	8, 6, 5, 7, 5, 10, 12, 13,
+	14, 12, 15, 16, 16, 16, 17, 11,
+	19, 20, 18, 18, 22, 24, 16, 24,
+	25, 16, 16, 26, 27, 23, 29, 30,
+	28, 28, 32, 34, 35, 36, 34, 37,
+	37, 38, 37, 33, 40, 42, 43, 44,
+	42, 37, 45, 46, 37, 41, 45, 47,
+	48, 45, 37, 47, 37, 50, 51, 52,
+	50, 49, 53, 54, 55, 53, 37, 54,
+	37, 57, 37, 57, 58, 56, 60, 51,
+	61, 60, 49, 59, 63, 54, 64, 63,
+	65, 62, 37, 65, 62, 50, 51, 66,
+	50, 37, 54, 65, 62, 68, 69, 70,
+	68, 16, 71, 72, 16, 73, 74, 73,
+	67, 75, 75, 75, 75, 76, 75, 1,
+	68, 69, 70, 68, 77, 71, 77, 77,
+	73, 74, 73, 67, 78, 79, 78, 78,
+	78, 78, 76, 1, 80, 71, 78, 78,
+	78, 78, 81, 76, 81, 78, 1, 78,
+	78, 78, 78, 82, 76, 82, 78, 1,
+	78, 78, 78, 78, 83, 76, 83, 78,
+	1, 78, 78, 78, 78, 84, 76, 84,
+	78, 1, 78, 78, 78, 78, 85, 76,
+	85, 78, 1, 78, 78, 78, 78, 86,
+	76, 86, 78, 1, 87, 88, 4, 87,
+	78, 78, 78, 76, 1, 89, 78, 88,
+	78, 78, 78, 78, 76, 1, 90, 90,
+	90, 90, 92, 90, 91, 94, 93, 12,
+	13, 14, 12, 15, 16, 16, 16, 17,
+	11, 96, 96, 96, 96, 97, 96, 10,
+	96, 98, 96, 96, 96, 96, 97, 10,
+	96, 24, 16, 24, 25, 16, 16, 26,
+	27, 23, 99, 99, 99, 99, 100, 99,
+	22, 99, 34, 35, 36, 34, 37, 37,
+	38, 37, 33, 101, 101, 101, 101, 102,
+	101, 32, 101, 103, 101, 101, 101, 101,
+	102, 32, 42, 43, 44, 42, 37, 45,
+	46, 37, 41, 104, 104, 104, 104, 105,
+	104, 40, 106, 104, 107, 104, 104, 104,
+	104, 105, 40, 57, 37, 57, 58, 56,
+	0
 };
 
 static const char _ironbee_config_trans_targs[] = {
-	25, 26, 37, 38, 38, 3, 37, 39,
-	4, 0, 2, 4, 40, 5, 41, 42,
-	42, 7, 8, 41, 6, 8, 43, 9,
-	44, 45, 45, 11, 44, 46, 0, 10,
-	47, 48, 48, 13, 49, 50, 14, 12,
-	47, 15, 16, 17, 51, 16, 17, 51,
-	18, 16, 19, 20, 20, 21, 20, 22,
-	21, 24, 23, 18, 26, 27, 25, 28,
-	29, 36, 30, 1, 25, 1, 25, 25,
-	25, 25, 31, 32, 33, 34, 35, 26,
-	25, 25, 37, 37, 2, 37, 41, 6,
-	44, 10, 44, 47, 12, 47, 49
+	28, 29, 39, 42, 41, 28, 3, 40,
+	4, 44, 45, 45, 6, 44, 46, 7,
+	0, 5, 7, 47, 8, 48, 49, 49,
+	10, 11, 48, 9, 11, 50, 12, 51,
+	52, 52, 14, 51, 53, 0, 13, 54,
+	55, 55, 16, 56, 57, 17, 15, 54,
+	18, 19, 20, 58, 19, 20, 58, 21,
+	19, 22, 23, 23, 24, 23, 25, 24,
+	27, 26, 21, 29, 30, 28, 31, 32,
+	43, 33, 2, 28, 1, 28, 28, 28,
+	28, 34, 35, 36, 37, 38, 29, 3,
+	40, 28, 28, 29, 1, 28, 28, 44,
+	44, 5, 44, 48, 9, 51, 13, 51,
+	54, 15, 54, 56
 };
 
 static const unsigned char _ironbee_config_trans_actions[] = {
-	29, 94, 108, 79, 116, 0, 58, 116,
-	1, 0, 1, 0, 0, 0, 11, 82,
-	120, 0, 1, 67, 1, 0, 0, 0,
-	31, 85, 124, 0, 13, 124, 3, 1,
-	37, 88, 128, 0, 0, 128, 0, 1,
-	15, 0, 0, 73, 112, 73, 0, 17,
-	0, 1, 0, 1, 0, 73, 73, 0,
-	0, 0, 0, 73, 132, 97, 21, 132,
-	0, 0, 132, 1, 55, 0, 27, 52,
-	49, 23, 94, 94, 94, 94, 94, 91,
-	25, 19, 104, 43, 0, 100, 46, 0,
-	64, 0, 61, 70, 0, 34, 5
+	35, 106, 106, 100, 106, 33, 0, 0,
+	0, 120, 88, 132, 0, 64, 132, 1,
+	0, 1, 0, 0, 0, 15, 91, 136,
+	0, 1, 73, 1, 0, 0, 0, 37,
+	94, 140, 0, 17, 140, 3, 1, 43,
+	97, 144, 0, 0, 144, 0, 1, 19,
+	0, 0, 79, 124, 79, 0, 21, 0,
+	1, 0, 1, 0, 79, 79, 0, 0,
+	0, 0, 79, 148, 109, 25, 148, 0,
+	0, 148, 1, 61, 0, 31, 58, 55,
+	27, 106, 106, 106, 106, 106, 103, 5,
+	5, 82, 128, 152, 9, 29, 23, 116,
+	49, 0, 112, 52, 0, 70, 0, 67,
+	76, 0, 40, 7
 };
 
 static const unsigned char _ironbee_config_to_state_actions[] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 76, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 76, 0, 0,
-	0, 76, 0, 0, 76, 0, 0, 76,
-	0, 0, 0, 7
+	0, 0, 0, 0, 85, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 85, 0, 0, 0,
+	85, 0, 0, 85, 0, 0, 85, 0,
+	0, 0, 11
 };
 
 static const unsigned char _ironbee_config_from_state_actions[] = {
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 9, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 9, 0, 0,
-	0, 9, 0, 0, 9, 0, 0, 9,
-	0, 0, 0, 9
+	0, 0, 0, 0, 13, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0, 0, 13, 0, 0, 0,
+	13, 0, 0, 13, 0, 0, 13, 0,
+	0, 0, 13
 };
 
 static const unsigned char _ironbee_config_eof_actions[] = {
-	0, 0, 0, 40, 40, 40, 0, 0,
-	0, 0, 0, 3, 0, 3, 3, 3,
+	0, 0, 0, 0, 0, 0, 46, 46,
+	46, 0, 0, 0, 0, 0, 3, 0,
 	3, 3, 3, 3, 3, 3, 3, 3,
-	3, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 40, 0, 0,
+	3, 3, 3, 3, 0, 0, 0, 0,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0
+	0, 0, 0, 0, 46, 0, 0, 0,
+	0, 0, 0, 0, 0, 0, 0, 0,
+	0, 0, 0
 };
 
 static const short _ironbee_config_eof_trans[] = {
-	0, 1, 3, 0, 0, 0, 15, 0,
-	0, 0, 25, 0, 33, 0, 0, 0,
+	0, 1, 1, 6, 6, 10, 0, 0,
+	0, 22, 0, 0, 0, 32, 0, 40,
 	0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 69, 71, 72, 74, 72, 72,
-	72, 72, 72, 72, 81, 0, 83, 83,
-	83, 0, 87, 87, 0, 89, 89, 0,
-	92, 94, 92, 0
+	0, 0, 0, 0, 0, 76, 78, 79,
+	81, 79, 79, 79, 79, 79, 79, 79,
+	90, 79, 91, 94, 0, 96, 96, 96,
+	0, 100, 100, 0, 102, 102, 0, 105,
+	107, 105, 0
 };
 
-static const int ironbee_config_start = 25;
-static const int ironbee_config_first_final = 25;
+static const int ironbee_config_start = 28;
+static const int ironbee_config_first_final = 28;
 static const int ironbee_config_error = 0;
 
-static const int ironbee_config_en_parameters = 37;
-static const int ironbee_config_en_block_parameters = 41;
-static const int ironbee_config_en_newblock = 44;
-static const int ironbee_config_en_endblock = 47;
-static const int ironbee_config_en_finclude = 51;
-static const int ironbee_config_en_main = 25;
+static const int ironbee_config_en_parameters = 44;
+static const int ironbee_config_en_block_parameters = 48;
+static const int ironbee_config_en_newblock = 51;
+static const int ironbee_config_en_endblock = 54;
+static const int ironbee_config_en_finclude = 58;
+static const int ironbee_config_en_main = 28;
 
 
-#line 338 "config-parser.rl"
+#line 347 "config-parser.rl"
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
@@ -479,16 +502,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     /* Access all ragel state variables via structure. */
 
-#line 391 "config-parser.rl"
+#line 400 "config-parser.rl"
 
-#line 392 "config-parser.rl"
+#line 401 "config-parser.rl"
 
-#line 393 "config-parser.rl"
+#line 402 "config-parser.rl"
 
-#line 394 "config-parser.rl"
+#line 403 "config-parser.rl"
 
 
-#line 492 "config-parser.c"
+#line 515 "config-parser.c"
 	{
 	 fsm.cs = ironbee_config_start;
 	 fsm.top = 0;
@@ -497,9 +520,9 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	 fsm.act = 0;
 	}
 
-#line 396 "config-parser.rl"
+#line 405 "config-parser.rl"
 
-#line 503 "config-parser.c"
+#line 526 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -516,11 +539,11 @@ _resume:
 	_nacts = (unsigned int) *_acts++;
 	while ( _nacts-- > 0 ) {
 		switch ( *_acts++ ) {
-	case 12:
+	case 13:
 #line 1 "NONE"
 	{ fsm.ts = ( fsm.p);}
 	break;
-#line 524 "config-parser.c"
+#line 547 "config-parser.c"
 		}
 	}
 
@@ -687,47 +710,32 @@ _eof_trans:
         }
     }
 	break;
-	case 13:
+	case 10:
+#line 287 "config-parser.rl"
+	{
+        size_t len = (size_t)(( fsm.p) - mark);
+        ib_cfg_log_debug(cp, "contination: \"%.*s\"", (int)len, mark);
+        /* blkname = (char *)calloc(namelen + 1, sizeof(*blkname));
+           memcpy(blkname, mark, namelen); */
+    }
+	break;
+	case 14:
 #line 1 "NONE"
 	{ fsm.te = ( fsm.p)+1;}
 	break;
-	case 14:
-#line 302 "config-parser.rl"
+	case 15:
+#line 310 "config-parser.rl"
 	{ fsm.act = 1;}
 	break;
-	case 15:
-#line 303 "config-parser.rl"
-	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
-	break;
 	case 16:
-#line 302 "config-parser.rl"
-	{ fsm.te = ( fsm.p);( fsm.p)--;}
+#line 311 "config-parser.rl"
+	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 17:
-#line 1 "NONE"
-	{	switch(  fsm.act ) {
-	case 0:
-	{{ fsm.cs = 0; goto _again;}}
-	break;
-	default:
-	{{( fsm.p) = (( fsm.te))-1;}}
-	break;
-	}
-	}
-	break;
-	case 18:
-#line 307 "config-parser.rl"
-	{ fsm.act = 3;}
-	break;
-	case 19:
-#line 308 "config-parser.rl"
-	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
-	break;
-	case 20:
-#line 307 "config-parser.rl"
+#line 310 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
-	case 21:
+	case 18:
 #line 1 "NONE"
 	{	switch(  fsm.act ) {
 	case 0:
@@ -739,47 +747,71 @@ _eof_trans:
 	}
 	}
 	break;
-	case 22:
-#line 312 "config-parser.rl"
-	{ fsm.act = 5;}
+	case 19:
+#line 315 "config-parser.rl"
+	{ fsm.act = 3;}
 	break;
-	case 23:
-#line 313 "config-parser.rl"
+	case 20:
+#line 316 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
+	case 21:
+#line 315 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;}
+	break;
+	case 22:
+#line 1 "NONE"
+	{	switch(  fsm.act ) {
+	case 0:
+	{{ fsm.cs = 0; goto _again;}}
+	break;
+	default:
+	{{( fsm.p) = (( fsm.te))-1;}}
+	break;
+	}
+	}
+	break;
+	case 23:
+#line 320 "config-parser.rl"
+	{ fsm.act = 5;}
+	break;
 	case 24:
-#line 312 "config-parser.rl"
-	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 41; goto _again;} }}
+#line 321 "config-parser.rl"
+	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 25:
+#line 320 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 48; goto _again;} }}
+	break;
+	case 26:
 #line 1 "NONE"
 	{	switch(  fsm.act ) {
 	case 0:
 	{{ fsm.cs = 0; goto _again;}}
 	break;
 	case 5:
-	{{( fsm.p) = (( fsm.te))-1;} { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 41; goto _again;} }
+	{{( fsm.p) = (( fsm.te))-1;} { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 48; goto _again;} }
 	break;
 	}
 	}
-	break;
-	case 26:
-#line 318 "config-parser.rl"
-	{ fsm.act = 8;}
 	break;
 	case 27:
-#line 319 "config-parser.rl"
-	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
+#line 326 "config-parser.rl"
+	{ fsm.act = 8;}
 	break;
 	case 28:
-#line 317 "config-parser.rl"
-	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
+#line 327 "config-parser.rl"
+	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 29:
-#line 318 "config-parser.rl"
-	{ fsm.te = ( fsm.p);( fsm.p)--;}
+#line 325 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 30:
+#line 326 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;}
+	break;
+	case 31:
 #line 1 "NONE"
 	{	switch(  fsm.act ) {
 	case 0:
@@ -791,57 +823,69 @@ _eof_trans:
 	}
 	}
 	break;
-	case 31:
-#line 323 "config-parser.rl"
+	case 32:
+#line 331 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
-	case 32:
-#line 328 "config-parser.rl"
+	case 33:
+#line 336 "config-parser.rl"
 	{ fsm.act = 12;}
 	break;
-	case 33:
-#line 329 "config-parser.rl"
+	case 34:
+#line 337 "config-parser.rl"
 	{ fsm.act = 13;}
 	break;
-	case 34:
-#line 332 "config-parser.rl"
-	{ fsm.act = 16;}
-	break;
 	case 35:
-#line 331 "config-parser.rl"
-	{ fsm.te = ( fsm.p)+1;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 47; goto _again;} }}
+#line 338 "config-parser.rl"
+	{ fsm.act = 14;}
 	break;
 	case 36:
-#line 333 "config-parser.rl"
-	{ fsm.te = ( fsm.p)+1;}
+#line 341 "config-parser.rl"
+	{ fsm.act = 17;}
 	break;
 	case 37:
-#line 327 "config-parser.rl"
-	{ fsm.te = ( fsm.p);( fsm.p)--;}
+#line 340 "config-parser.rl"
+	{ fsm.te = ( fsm.p)+1;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 54; goto _again;} }}
 	break;
 	case 38:
-#line 329 "config-parser.rl"
-	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 37; goto _again;} }}
+#line 342 "config-parser.rl"
+	{ fsm.te = ( fsm.p)+1;}
 	break;
 	case 39:
-#line 330 "config-parser.rl"
-	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 44; goto _again;} }}
+#line 335 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 40:
-#line 332 "config-parser.rl"
+#line 336 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 41:
+#line 338 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 44; goto _again;} }}
+	break;
+	case 42:
+#line 339 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 51; goto _again;} }}
+	break;
+	case 43:
+#line 341 "config-parser.rl"
+	{ fsm.te = ( fsm.p);( fsm.p)--;}
+	break;
+	case 44:
+#line 338 "config-parser.rl"
+	{{( fsm.p) = (( fsm.te))-1;}{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 44; goto _again;} }}
+	break;
+	case 45:
 #line 1 "NONE"
 	{	switch(  fsm.act ) {
 	case 0:
 	{{ fsm.cs = 0; goto _again;}}
 	break;
-	case 12:
-	{{( fsm.p) = (( fsm.te))-1;} { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 51; goto _again;} }
-	break;
 	case 13:
-	{{( fsm.p) = (( fsm.te))-1;} { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 37; goto _again;} }
+	{{( fsm.p) = (( fsm.te))-1;} { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 58; goto _again;} }
+	break;
+	case 14:
+	{{( fsm.p) = (( fsm.te))-1;} { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 44; goto _again;} }
 	break;
 	default:
 	{{( fsm.p) = (( fsm.te))-1;}}
@@ -849,7 +893,7 @@ _eof_trans:
 	}
 	}
 	break;
-#line 853 "config-parser.c"
+#line 897 "config-parser.c"
 		}
 	}
 
@@ -858,15 +902,15 @@ _again:
 	_nacts = (unsigned int) *_acts++;
 	while ( _nacts-- > 0 ) {
 		switch ( *_acts++ ) {
-	case 10:
+	case 11:
 #line 1 "NONE"
 	{ fsm.ts = 0;}
 	break;
-	case 11:
+	case 12:
 #line 1 "NONE"
 	{ fsm.act = 0;}
 	break;
-#line 870 "config-parser.c"
+#line 914 "config-parser.c"
 		}
 	}
 
@@ -916,7 +960,7 @@ _again:
         }
     }
 	break;
-#line 920 "config-parser.c"
+#line 964 "config-parser.c"
 		}
 	}
 	}
@@ -924,7 +968,7 @@ _again:
 	_out: {}
 	}
 
-#line 397 "config-parser.rl"
+#line 406 "config-parser.rl"
 
     /* Ensure that our block is always empty on last chunk. */
     if ( is_last_chunk && blkname != NULL ) {

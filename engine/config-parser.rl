@@ -283,6 +283,14 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         }
     }
 
+    # Line continuation logic
+    action handle_continuation {
+        size_t len = (size_t)(fpc - mark);
+        ib_cfg_log_debug(cp, "contination: \"%.*s\"", (int)len, mark);
+        /* blkname = (char *)calloc(namelen + 1, sizeof(*blkname));
+           memcpy(blkname, mark, namelen); */
+    }
+
     WS = [ \t];
     EOLSEQ = '\r'? '\n';
     EOL = WS* EOLSEQ;
@@ -325,6 +333,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 
     main := |*
         WS* comment;
+        WS* CONT %handle_continuation;
 	WS* [Ii] [Nn] [Cc] [Ll] [Uu] [Dd] [Ee] { fcall finclude; };
         WS* token >mark %start_dir { fcall parameters; };
         "<" { fcall newblock; };

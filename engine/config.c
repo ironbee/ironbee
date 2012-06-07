@@ -36,6 +36,7 @@
 #include <errno.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <ctype.h>
 
 /* -- Internal -- */
 
@@ -122,9 +123,12 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
     /* Other fields are NULLed via calloc */
 
     ib_log_debug3(ib, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
-                  (*pcp)->cur_ctx, ib_context_full_get((*pcp)->cur_ctx),
-                  (*pcp)->cur_site, (*pcp)->cur_site?(*pcp)->cur_site->name:"NONE",
-                  (*pcp)->cur_loc, (*pcp)->cur_loc?(*pcp)->cur_loc->path:"/");
+                  (*pcp)->cur_ctx,
+                  ib_context_full_get((*pcp)->cur_ctx),
+                  (*pcp)->cur_site,
+                  (*pcp)->cur_site ? (*pcp)->cur_site->name : "NONE",
+                  (*pcp)->cur_loc,
+                  (*pcp)->cur_loc ? (*pcp)->cur_loc->path : "/");
 
     IB_FTRACE_RET_STATUS(rc);
 
@@ -158,16 +162,16 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
 
     if (fd == -1) {
         ec = errno;
-        ib_log_error(cp->ib,  "Could not open config file \"%s\": (%d) %s",
-                     file, ec, strerror(ec));
+        ib_cfg_log_error(cp, "Could not open config file \"%s\": (%d) %s",
+                         file, ec, strerror(ec));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     buf = (char *)malloc(sizeof(*buf)*bufsz);
 
     if (buf==NULL) {
-        ib_log_error(cp->ib,
-            "Unable to allocate buffer for configuration file.");
+        ib_cfg_log_error(cp,
+                         "Unable to allocate buffer for configuration file.");
         close(fd);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -176,13 +180,12 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
     do {
         nbytes = read(fd, buf+buflen, bufsz-buflen);
         buflen += nbytes;
-        ib_log_debug3(cp->ib,
-                      "Read a %zd byte chunk. Total len=%zd",
-                      nbytes, buflen);
+        ib_cfg_log_debug3(cp,
+                          "Read a %zd byte chunk. Total len=%zd",
+                          nbytes, buflen);
 
         if ( nbytes == 0 ) { /* EOF */
-            rc = ib_cfgparser_parse_buffer(
-                cp, buf, nbytes, file, lineno, true);
+            rc = ib_cfgparser_parse_buffer(cp, buf, nbytes, file, lineno, true);
             ++lineno;
             if (rc != IB_OK) {
                 ++error_count;
@@ -221,10 +224,10 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
             else {
                 /* We have found at least one end-of-line character.
                  * Iterate through it and all others, passing each line to
-                 * ib_cfgparser_parse_buffer */
+                 * ib_cfgparser_parse_buffer() */
                 do {
-                    rc = ib_cfgparser_parse_buffer(
-                        cp, bol, eol-bol+1, file, lineno, false);
+                    rc = ib_cfgparser_parse_buffer(cp, bol, eol-bol+1,
+                                                   file, lineno, false);
                     ++lineno;
                     if (rc != IB_OK) {
                         ++error_count;
@@ -236,26 +239,27 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
 
                 /* There are no more end-of-line opportunities.
                  * Now move the last end-of-line to the beginning. */
-                ib_log_debug2(cp->ib,
-                              "Buffer of length %zd must be shrunk.",
-                              buflen);
-                ib_log_debug2(cp->ib,
-                              "Beginning of last line is at index %zd.",
-                              bol-buf);
+                ib_cfg_log_debug2(cp,
+                                  "Buffer of length %zd must be shrunk.",
+                                  buflen);
+                ib_cfg_log_debug2(cp,
+                                  "Beginning of last line is at index %zd.",
+                                  bol-buf);
                 buflen = buf + buflen - bol;
                 if (buflen > 0) {
-                    ib_log_debug2(cp->ib,
-                                 "Discarding parsed lines."
-                                 " Moving %p to %p with length %zd.",
-                                 bol, buf, buflen);
+                    ib_cfg_log_debug2(cp,
+                                      "Discarding parsed lines."
+                                      " Moving %p to %p with length %zd.",
+                                      bol, buf, buflen);
                     memmove(buf, bol, buflen);
                 }
             }
         }
         else {
             /* nbytes < 0. This is an error. */
-            ib_log_error(cp->ib,
-                "Error reading log file %s - %s.", file, strerror(errno));
+            ib_cfg_log_error(cp,
+                             "Error reading log file %s - %s.",
+                             file, strerror(errno));
             free(buf);
             close(fd);
             IB_FTRACE_RET_STATUS(IB_ETRUNC);
@@ -264,18 +268,17 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
 
     free(buf);
     close(fd);
-    ib_log_debug3(cp->ib,
-                  "Done reading config \"%s\" via fd=%d errno=%d",
-                  file, fd, errno);
+    ib_cfg_log_debug3(cp,
+                      "Done reading config \"%s\" via fd=%d errno=%d",
+                      file, fd, errno);
     if ( (error_count == 0) && (rc == IB_OK) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (rc == IB_OK) {
         rc = error_rc;
     }
-    ib_log_error(cp->ib,
-                 "%u Error(s) parsing config file: %s",
-                 error_count, ib_status_to_string(rc));
+    ib_cfg_log_error(cp, "%u Error(s) parsing config file: %s",
+                     error_count, ib_status_to_string(rc));
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -284,22 +287,69 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                       size_t          length,
                                       const char     *file,
                                       unsigned        lineno,
-                                      bool       more)
+                                      bool            more)
 {
     IB_FTRACE_INIT();
+    ib_status_t rc;
+    size_t len;
+
+    assert(cp != NULL);
+    assert(buffer != NULL);
 
     cp->cur_file = file;
     cp->cur_lineno = lineno;
-    IB_FTRACE_RET_STATUS(
-        ib_cfgparser_ragel_parse_chunk(
-            cp,
-            buffer,
-            length,
-            file,
-            lineno,
-            (more == true ? 1 : 0)
-        )
-    );
+
+    /* If the previous line ended with a continuation character,
+     * join it with this line. */
+    if (cp->linebuf != NULL) {
+        char *newbuf;
+        size_t newlen = strlen(cp->linebuf);
+
+        /* Skip leading whitespace */
+        while ( (length > 0) && (isspace(*buffer) != 0) ) {
+            ++buffer;
+            --length;
+        }
+        newlen += (length + 2);
+        newbuf = (char *)ib_mpool_alloc(cp->mp, newlen);
+        if (newbuf == NULL) {
+            ib_cfg_log_error(cp, "Unable to allocate line continuation buffer");
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        strcpy(newbuf, cp->linebuf);
+        strcat(newbuf, " ");
+        strncat(newbuf, buffer, length);
+        length = newlen - 1;
+        *(newbuf+length) = '\0';
+        buffer = newbuf;
+        cp->linebuf = NULL;
+    }
+
+    /* Handle lines that end with a backslash */
+    len = length - 1;
+    if (*(buffer+len) == '\n') {
+        --len;
+    }
+    if (*(buffer+len) == '\\') {
+        --len;
+        char *newbuf = (char *)ib_mpool_alloc(cp->mp, len+1);
+        if (newbuf == NULL) {
+            ib_cfg_log_error(cp, "Unable to allocate line continuation buffer");
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        strncpy(newbuf, buffer, len);
+        *(newbuf+len) = '\0';
+        cp->linebuf = newbuf;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    rc = ib_cfgparser_ragel_parse_chunk(cp,
+                                        buffer,
+                                        length,
+                                        file,
+                                        lineno,
+                                        (more == true ? 1 : 0) );
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
@@ -327,9 +377,12 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
     cfgp_set_current(cp, ctx);
 
     ib_log_debug3(ib, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
-                  cp->cur_ctx, ib_context_full_get(cp->cur_ctx),
-                  cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
-                  cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
+                  cp->cur_ctx,
+                  ib_context_full_get(cp->cur_ctx),
+                  cp->cur_site,
+                  cp->cur_site ? cp->cur_site->name : "NONE",
+                  cp->cur_loc,
+                  cp->cur_loc ? cp->cur_loc->path : "/");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
