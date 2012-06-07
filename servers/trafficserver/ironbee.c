@@ -1316,10 +1316,13 @@ static int check_ts_version(void)
  * @param[in] fmt Format string
  * @param[in] ap Var args list to match the format
  */
-static void ironbee_logger(void *dummy, int level,
+static void ironbee_logger(void *dummy,
+                           ib_log_level_t level,
                            const ib_engine_t *ib,
-                           const char *file, int line,
-                           const char *fmt, va_list ap)
+                           const char *file,
+                           int line,
+                           const char *fmt,
+                           va_list ap)
 {
     char buf[8192 + 1];
     int limit = 7000;

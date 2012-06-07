@@ -228,9 +228,10 @@ ib_engine_t DLL_LOCAL *ironbee = NULL;
 /// @todo Change to use ib_provider_inst_t
 static void ironbee_logger(void *data, ib_log_level_t level,
                            const ib_engine_t *ib,
-                           const ib_tx_t *tx,
-                           const char *prefix, const char *file, int line,
-                           const char *fmt, va_list ap)
+                           const char *file,
+                           int line,
+                           const char *fmt,
+                           va_list ap)
 {
     server_rec *s = (server_rec *)data;
     char buf[8192 + 1];
@@ -280,8 +281,7 @@ static void ironbee_logger(void *data, ib_log_level_t level,
     }
 
     /* Write it to the error log. */
-    ap_log_error(APLOG_MARK, ap_level, 0, s,
-                 IB_PRODUCT_NAME ": %s%s", prefix?prefix:"", buf);
+    ap_log_error(APLOG_MARK, ap_level, 0, s, IB_PRODUCT_NAME ": %s", buf);
 }
 
 static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
