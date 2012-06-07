@@ -1310,6 +1310,7 @@ static int check_ts_version(void)
  *
  * @param[in] dummy Dummy pointer
  * @param[in] level Debug level
+ * @param[in] ib IronBee engine
  * @param[in] file File name
  * @param[in] line Line number
  * @param[in] fmt Format string
@@ -1317,8 +1318,7 @@ static int check_ts_version(void)
  */
 static void ironbee_logger(void *dummy, int level,
                            const ib_engine_t *ib,
-                           const ib_tx_t *tx,
-                           const char *prefix, const char *file, int line,
+                           const char *file, int line,
                            const char *fmt, va_list ap)
 {
     char buf[8192 + 1];
@@ -1339,15 +1339,13 @@ static void ironbee_logger(void *dummy, int level,
     /* FIXME: why is the format arg's prototype not const char* ? */
     if ((file != NULL) && (line > 0)) {
         rc = TSTextLogObjectWrite(ironbee_log,
-                                  (char *)"%s(%s:%d) %s",
-                                  (prefix ? prefix : ""),
+                                  (char *)"(%s:%d) %s",
                                   file, line,
                                   buf);
     }
     else {
         rc = TSTextLogObjectWrite(ironbee_log,
-                                  (char *)"%s%s",
-                                  (prefix ? prefix : ""),
+                                  (char *)"%s",
                                   buf);
     }
 
@@ -1451,7 +1449,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
 
 static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
     IB_PROVIDER_IFACE_HEADER_DEFAULTS,
-    (ib_log_logger_fn_t)ironbee_logger
+    ironbee_logger
 };
 
 

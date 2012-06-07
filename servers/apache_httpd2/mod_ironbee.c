@@ -226,12 +226,13 @@ ib_engine_t DLL_LOCAL *ironbee = NULL;
 /* -- Logging -- */
 
 /// @todo Change to use ib_provider_inst_t
-static void ironbee_logger(server_rec *s, int level,
+static void ironbee_logger(void *data, ib_log_level_t level,
                            const ib_engine_t *ib,
                            const ib_tx_t *tx,
                            const char *prefix, const char *file, int line,
                            const char *fmt, va_list ap)
 {
+    server_rec *s = (server_rec *)data;
     char buf[8192 + 1];
     int limit = 7000;
     int ap_level;
@@ -285,7 +286,7 @@ static void ironbee_logger(server_rec *s, int level,
 
 static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
     IB_PROVIDER_IFACE_HEADER_DEFAULTS,
-    (ib_log_logger_fn_t)ironbee_logger
+    ironbee_logger
 };
 
 
