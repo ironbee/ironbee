@@ -483,9 +483,16 @@ ib_status_t DLL_PUBLIC ib_rule_set_chain(ib_engine_t *ib,
 /**
  * Get a rule's ID string.
  *
+ * If @a rule is a chain rule, then the @c chain_id is returned.
+ *
+ * If @a rule has neither an id nor a @c chain_id NULL is returned
+ * to allow the calling program to report the error or assign an id to
+ * @a rule.
+ *
  * @param[in] rule Rule to operate on
  *
- * @returns Status code
+ * @returns The rule's @c id, @c chain_id if @c id is not set, or NULL
+ *          if neither is set.
  */
 const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule);
 

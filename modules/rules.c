@@ -635,6 +635,29 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
 }
 
 /**
+ * Check that a rule has all the proper modifiers.
+ *
+ * @returns IB_EINVAL.
+ */
+static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp, ib_rule_t *rule) {
+    IB_FTRACE_INIT();
+
+    if ( ib_rule_id(rule) == NULL ) {
+        ib_cfg_log_error(cp, "No rule id when one is required.");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    if ( rule->meta.phase == PHASE_INVALID || rule->meta.phase == PHASE_NONE )
+    {
+        ib_cfg_log_error(cp,
+                         "Phase invalid or not specified "
+                         "when on is required.");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
  * Parse a rule's modifier string.
  *
  * Parses the rule's modifier string @a modifier_str, and stores the results
@@ -1048,6 +1071,12 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
         }
     }
 
+    /* Check the rule modifiers. */
+    rc = check_rule_modifiers(cp, rule);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Using the rule->meta and file_name, load and stage the ext rule. */
     if (strncasecmp(file_name, "lua:", 4) == 0) {
 #ifdef ENABLE_LUA
@@ -1230,6 +1259,12 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
                              ib_status_to_string(rc));
             goto cleanup;
         }
+    }
+
+    /* Check the rule modifiers. */
+    rc = check_rule_modifiers(cp, rule);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Finally, register the rule */

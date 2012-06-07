@@ -2986,7 +2986,16 @@ const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
     assert(rule != NULL);
-    IB_FTRACE_RET_CONSTSTR(rule->meta.id);
+
+    if (rule->meta.id != NULL) {
+        IB_FTRACE_RET_CONSTSTR(rule->meta.id);
+    }
+
+    if (rule->meta.chain_id != NULL) {
+        IB_FTRACE_RET_CONSTSTR(rule->meta.chain_id);
+    }
+
+    return NULL;
 }
 
 ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
