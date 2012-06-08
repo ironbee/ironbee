@@ -434,12 +434,6 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     IB_FTRACE_RET_INT(HTP_OK);
 }
 
-static ib_status_t modhtp_free(void *p)
-{
-    free(p);
-    return IB_OK;
-}
-
 static int modhtp_htp_request_line(htp_connp_t *connp)
 {
     IB_FTRACE_INIT();
@@ -472,14 +466,12 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
 
     /* Store the transaction URI path. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->path != NULL)) {
-        itx->path = bstr_util_strdup_to_c(tx->parsed_uri->path);
-        /* Work around libhtp bug. */
-        if (itx->path != NULL && itx->path[0] == '\0') {
-            free((void *)itx->path);
-            itx->path = strdup(IB_DSTR_URI_ROOT_PATH);
-        }
-        ib_mpool_cleanup_register(itx->mp, modhtp_free, (void *)itx->path);
+        itx->path = ib_mpool_memdup_to_str(itx->mp, bstr_ptr(tx->parsed_uri->path), bstr_len(tx->parsed_uri->path));
     }
+    else {
+        ib_log_debug_tx(itx, "No uri path in the request line.");
+    }
+
     if (itx->path == NULL) {
         ib_log_debug_tx(itx, "Unknown URI path - using /");
         /// @todo Probably should set a flag here
@@ -488,9 +480,12 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
 
     /* Store the hostname if it was parsed with the URI. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->hostname != NULL)) {
-        itx->hostname = bstr_util_strdup_to_c(tx->parsed_uri->hostname);
-        ib_mpool_cleanup_register(itx->mp, modhtp_free, (void *)itx->hostname);
+        itx->hostname = ib_mpool_memdup_to_str(itx->mp, bstr_ptr(tx->parsed_uri->hostname), bstr_len(tx->parsed_uri->hostname));
     }
+    else {
+        ib_log_debug_tx(itx, "No hostname in the request line.");
+    }
+
     if (itx->hostname == NULL) {
         ib_log_debug_tx(itx,
                         "Unknown hostname - using ip: %s",
@@ -582,9 +577,12 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
 
     /* Update the hostname that may have changed with headers. */
     if ((tx->parsed_uri != NULL) && (tx->parsed_uri->hostname != NULL)) {
-        itx->hostname = bstr_util_strdup_to_c(tx->parsed_uri->hostname);
-        ib_mpool_cleanup_register(itx->mp, modhtp_free, (void *)itx->hostname);
+        itx->hostname = ib_mpool_memdup_to_str(itx->mp, bstr_ptr(tx->parsed_uri->hostname), bstr_len(tx->parsed_uri->hostname));
     }
+    else {
+        ib_log_debug_tx(itx, "No hostname in the request header.");
+    }
+
     if (itx->hostname == NULL) {
         ib_log_debug_tx(itx,
 
