@@ -229,14 +229,14 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
  * a plugin will register a more elaborate logger and this will not be used,
  * except during startup prior to the registration of another logger.
  *
- * @param fh File handle
+ * @param data Logger data (FILE *)
  * @param level Log level
  * @param file Source code filename (typically __FILE__) or NULL
  * @param line Source code line number (typically __LINE__) or NULL
  * @param fmt Printf like format string
  * @param ap Variable length parameter list
  */
-static void core_logger(void *fh, ib_log_level_t level,
+static void core_logger(void *data, ib_log_level_t level,
                         const ib_engine_t *ib,
                         const char *file, int line,
                         const char *fmt, va_list ap)
@@ -248,7 +248,7 @@ static void core_logger(void *fh, ib_log_level_t level,
     struct tm *tminfo;
     time_t timet;
 
-    FILE *fp = (FILE *)fh;
+    FILE *fp = (FILE *)data;
 
     timet = time(NULL);
     tminfo = localtime(&timet);

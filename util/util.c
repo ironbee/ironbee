@@ -47,11 +47,15 @@ static struct _ibutil_logger_t {
 /**
  * Builtin Logger.
  */
-static void _builtin_logger(FILE *fh, int level,
+static void _builtin_logger(void *cbdata, int level,
                             const char *prefix, const char *file, int line,
                             const char *fmt, va_list ap)
 {
+    FILE *fp = (FILE *)cbdata;
     char fmt2[1024 + 1];
+
+    assert(fp != NULL);
+    assert(fmt != NULL);
 
     if ((file != NULL) && (line > 0)) {
         int ec = snprintf(fmt2, 1024,
@@ -68,8 +72,8 @@ static void _builtin_logger(FILE *fh, int level,
         assert(ec <= 1024);
     }
 
-    vfprintf(fh, fmt2, ap);
-    fflush(fh);
+    vfprintf(fp, fmt2, ap);
+    fflush(fp);
 }
 
 ib_status_t ib_util_log_level(int level)
@@ -438,7 +442,7 @@ ib_status_t ib_initialize(void)
 {
     ib_status_t rc;
 
-    rc = ib_util_log_logger((ib_util_fn_logger_t)_builtin_logger, stderr);
+    rc = ib_util_log_logger(_builtin_logger, stderr);
     if (rc != IB_OK) {
         rc = ib_util_log_logger(NULL, NULL);
         return rc;
