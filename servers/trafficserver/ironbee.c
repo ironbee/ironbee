@@ -990,11 +990,9 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     }
 
     TSDebug("ironbee", "process_hdr: notifying header data");
-    rv = ib_state_notify_request_header_data(ironbee, data->tx, ibhdrs);
     rv = (*ibd->ib_notify_header)(ironbee, data->tx, ibhdrs);
     TSDebug("ironbee", "process_hdr: notifying header finished");
     rv = (*ibd->ib_notify_header_finished)(ironbee, data->tx);
-    rv = ib_state_notify_request_header_finished(ironbee, data->tx);
 
 
     /* Now manipulate header as requested by ironbee */
