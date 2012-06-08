@@ -1822,18 +1822,20 @@ ib_status_t DLL_PUBLIC ib_matcher_exec_field(ib_matcher_t *m,
  * Logger log level.
  **/
 typedef enum {
-    IB_LOG_EMERGENCY = 0, /**< System unusable. */
-    IB_LOG_ALWAYS    = 0, /**< Always log. */
-    IB_LOG_ALERT     = 1, /**< Crisis happened; immediate attention */
-    IB_LOG_CRITICAL  = 2, /**< Crisis coming; immediate attention */
-    IB_LOG_ERROR     = 3, /**< Error occurred; needs attention */
-    IB_LOG_WARNING   = 4, /**< Error likely to occur; needs attention */
-    IB_LOG_NOTICE    = 5, /**< Something unusual happened */
-    IB_LOG_INFO      = 6, /**< Something usual happened */
-    IB_LOG_DEBUG     = 7, /**< Developer oriented information */
-    IB_LOG_DEBUG2    = 8, /**< As above, lower priority */
-    IB_LOG_DEBUG3    = 9, /**< As above, lowest priority */
-    IB_LOG_TRACE     = 10 /**< Reserved for future use */
+    IB_LOG_EMERGENCY, /**< System unusable. */
+    IB_LOG_ALERT,     /**< Crisis happened; immediate attention */
+    IB_LOG_CRITICAL,  /**< Crisis coming; immediate attention */
+    IB_LOG_ERROR,     /**< Error occurred; needs attention */
+    IB_LOG_WARNING,   /**< Error likely to occur; needs attention */
+    IB_LOG_NOTICE,    /**< Something unusual happened */
+    IB_LOG_INFO,      /**< Something usual happened */
+    IB_LOG_DEBUG,     /**< Developer oriented information */
+    IB_LOG_DEBUG2,    /**< As above, lower priority */
+    IB_LOG_DEBUG3,    /**< As above, lowest priority */
+    IB_LOG_TRACE,     /**< Reserved for future use */
+
+    /* Not a log level, but keeps track of the number of levels. */
+    IB_LOG_LEVEL_NUM  /**< Number of levels */
 } ib_log_level_t;
 
 /**
