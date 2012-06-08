@@ -812,6 +812,12 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Call the parser with the data. */
+    rc = iface->request_header_finished(pi, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Select the transaction context to use. */
     rc = ib_context_get_ex(ib, IB_CTYPE_TX, tx, &tx->ctx);
     if (rc != IB_OK) {
@@ -824,10 +830,6 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     }
 
     /* Call the parser with the data. */
-    rc = iface->request_header_finished(pi, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
     rc = iface->gen_request_header_fields(pi, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
