@@ -612,7 +612,7 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
                                IB_ACTINST_FLAG_NONE,
                                &action);
     if (rc == IB_ENOENT) {
-        ib_cfg_log_error(cp, "Ignoring unknown modifier \"%s\"", name);
+        ib_cfg_log_notice(cp, "Ignoring unknown modifier \"%s\"", name);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (rc != IB_OK) {
