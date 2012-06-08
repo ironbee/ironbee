@@ -64,12 +64,12 @@
  */
 struct ib_rule_phase_meta_t {
     bool                   is_stream;
-    ib_rule_phase_t             phase_num;
-    ib_state_hook_type_t        hook_type;
-    ib_flags_t                  flags;
-    const char                 *name;
-    ib_flags_t                  required_op_flags;
-    ib_state_event_type_t       event;
+    ib_rule_phase_t        phase_num;
+    ib_state_hook_type_t   hook_type;
+    ib_flags_t             flags;
+    const char            *name;
+    ib_flags_t             required_op_flags;
+    ib_state_event_type_t  event;
 };
 
 /* Rule definition data */
@@ -691,7 +691,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
 
     /* Invert? */
     if ( (opinst->flags & IB_OPINST_FLAG_INVERT) != 0) {
-        *rule_result = ( (*rule_result) == 0);
+        *rule_result = (*rule_result == 0);
     }
 
     ib_rule_log_debug(tx, rule, NULL, NULL,
@@ -2692,7 +2692,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Now, if replace the existing rule if required */
+    /* Now, replace the existing rule if required */
     if ( (lookup != NULL) &&
          (rule->meta.revision <= lookup->meta.revision) )
     {
@@ -2708,6 +2708,21 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EEXIST);
     }
     else {
+        ib_list_node_t    *node;
+        ib_list_node_t    *next_node;
+
+        /* Walk through the rule list, remove the old version */
+        IB_LIST_LOOP_SAFE(context_rules->rule_list, node, next_node) {
+            ib_rule_t *r = (ib_rule_t *)ib_list_node_data(node);
+            if (strcmp(r->meta.id, rule->meta.id) == 0) {
+                ib_list_node_remove(context_rules->rule_list, node);
+            }
+        }
+
+        /* Remove the old version from the hash */
+        ib_hash_remove(context_rules->rule_hash, NULL, rule->meta.id);
+
+        /* Add the new version to the hash */
         rc = ib_hash_set(context_rules->rule_hash, rule->meta.id, rule);
         if (rc != IB_OK) {
             ib_cfg_log_error_ex(ib,
@@ -2743,8 +2758,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         }
     }
 
-    /* Mark the rule as valid */
-    rule->flags |= IB_RULE_FLAG_VALID;
+    /* Add the rule to the list */
     rc = ib_list_push(context_rules->rule_list, rule);
     if (rc != IB_OK) {
         ib_cfg_log_error_ex(ib,
@@ -2758,6 +2772,8 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Mark the rule as valid */
+    rule->flags |= IB_RULE_FLAG_VALID;
 
     /* Store off this rule for chaining */
     context_rules->parser_data.previous = rule;
