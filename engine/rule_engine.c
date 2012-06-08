@@ -558,7 +558,7 @@ static ib_status_t execute_phase_rule_targets_operators(
         *rule_result = result;
     }
 
-    /* Create a rule target execution result object */
+    /* Add a target execution result to the log object */
     ib_rule_log_exec_add_tgt(log_exec, target, operand, tfnvalue, result);
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -841,7 +841,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
     trc = ib_rule_log_exec_create(tx, rule, &log_exec);
     if (trc != IB_OK) {
         ib_rule_log_error(tx, rule, NULL, NULL,
-                          "Rule engine: Failed to create results list: %s",
+                          "Rule engine: Failed to create log object: %s",
                           ib_status_to_string(trc));
     }
 
@@ -1089,7 +1089,8 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
                                               ib_rule_t *rule,
                                               ib_tx_t *tx,
                                               ib_txdata_t *txdata,
-                                              ib_num_t *result)
+                                              ib_num_t *result,
+                                              ib_rule_log_exec_t *log_exec)
 {
     IB_FTRACE_INIT();
     ib_status_t          rc = IB_OK;
@@ -1114,7 +1115,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     /* Create a field to hold the data */
     rc = ib_field_create_bytestr_alias(&value,
                                        tx->mp,
-                                       "tmp", 3,
+                                       "txdata", 3,
                                        txdata->data, txdata->dlen);
     if (rc != IB_OK) {
         ib_rule_log_error(tx, rule, NULL, NULL,
@@ -1134,6 +1135,9 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     }
     ib_rule_log_debug(tx, rule, NULL, NULL, "Operator => %" PRId64, *result);
 
+    /* Add a target execution result to the log object */
+    ib_rule_log_exec_add_stream_tgt(log_exec, value, *result);
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1152,7 +1156,8 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
                                               ib_rule_t *rule,
                                               ib_tx_t *tx,
                                               ib_parsed_header_t *header,
-                                              ib_num_t *rule_result)
+                                              ib_num_t *rule_result,
+                                              ib_rule_log_exec_t *log_exec)
 {
     IB_FTRACE_INIT();
     ib_status_t          rc = IB_OK;
@@ -1179,7 +1184,8 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
         ib_num_t result = 0;
 
         /* Create a field to hold the data */
-        ib_rule_log_debug(tx, rule, NULL, NULL, "nvpair: \"%.*s\"=\"%.*s\"\n",
+        ib_rule_log_debug(tx, rule, NULL, NULL,
+                          "nvpair: \"%.*s\"=\"%.*s\"\n",
                           (int)ib_bytestr_length(nvpair->name),
                           (const char *)ib_bytestr_const_ptr(nvpair->name),
                           (int)ib_bytestr_length(nvpair->value),
@@ -1206,6 +1212,9 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
                               ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
+
+        /* Add a target execution result to the log object */
+        ib_rule_log_exec_add_stream_tgt(log_exec, value, result);
 
         /* Store the result */
         if (result != 0) {
@@ -1291,6 +1300,8 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         ib_list_t          *actions;
         ib_num_t            result = 0;
         ib_status_t         rc = IB_OK;
+        ib_status_t         trc;
+        ib_rule_log_exec_t *log_exec = NULL;
 
         /* Skip invalid / disabled rules */
         rule = ctx_rule->rule;
@@ -1298,6 +1309,14 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
             ib_rule_log_debug(tx, rule, NULL, NULL,
                               "Not executing invalid/disabled stream rule");
             continue;
+        }
+
+        /* Create the execution logging object */
+        trc = ib_rule_log_exec_create(tx, rule, &log_exec);
+        if (trc != IB_OK) {
+            ib_rule_log_error(tx, rule, NULL, NULL,
+                              "Rule engine: Failed to create log object: %s",
+                              ib_status_to_string(trc));
         }
 
         /*
@@ -1308,10 +1327,12 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
          * determine what the correct behavior should be.
          */
         if (txdata != NULL) {
-            rc = execute_stream_txdata_rule(ib, rule, tx, txdata, &result);
+            rc = execute_stream_txdata_rule(ib, rule, tx,
+                                            txdata, &result, log_exec);
         }
         else if (header != NULL) {
-            rc = execute_stream_header_rule(ib, rule, tx, header, &result);
+            rc = execute_stream_header_rule(ib, rule, tx,
+                                            header, &result, log_exec);
         }
         if (rc != IB_OK) {
             ib_rule_log_error(tx, rule, NULL, NULL,
@@ -1331,7 +1352,8 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
          * returns an error.  This needs further discussion to determine what
          * the correct behavior should be.
          */
-        actions = (result)?  rule->true_actions: rule->false_actions;
+        actions = (result != 0) ? rule->true_actions : rule->false_actions;
+        ib_rule_log_exec_set_result(log_exec, result, actions);
 
         rc = execute_actions(ib, rule, tx, result, actions);
 
@@ -1364,6 +1386,8 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
                               "Error executing action for rule: %s",
                               ib_status_to_string(rc));
         }
+
+        ib_rule_log_exec(log_exec);
     }
 
     if ( block_phase != 0 ) {

@@ -702,6 +702,19 @@ ib_status_t ib_rule_log_exec_add_tgt(ib_rule_log_exec_t *log_exec,
                                      ib_num_t result);
 
 /**
+ * Add a stream target result to a rule execution log
+ *
+ * @param[in,out] log_exec The execution logging object
+ * @param[in] field Field data
+ * @param[in] result Result of operation
+ *
+ * @returns IB_OK on success
+ */
+ib_status_t ib_rule_log_exec_add_stream_tgt(ib_rule_log_exec_t *log_exec,
+                                            const ib_field_t *field,
+                                            ib_num_t result);
+
+/**
  * Add a transformation to a rule execution log
  *
  * @param[in,out] log_exec The execution logging object

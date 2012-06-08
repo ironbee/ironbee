@@ -299,6 +299,41 @@ ib_status_t ib_rule_log_exec_add_tgt(ib_rule_log_exec_t *log_exec,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+ib_status_t ib_rule_log_exec_add_stream_tgt(ib_rule_log_exec_t *log_exec,
+                                            const ib_field_t *field,
+                                            ib_num_t result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc = IB_OK;
+    ib_rule_target_t *target;
+    char *fname;
+
+    if ( (log_exec == NULL) || (log_exec->tgt_list == NULL) ) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    target = ib_mpool_alloc(log_exec->tx->mp, sizeof(*target));
+    if (target == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    target = ib_mpool_alloc(log_exec->tx->mp, sizeof(*target));
+    if (target == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    fname = ib_mpool_alloc(log_exec->tx->mp, field->nlen+1);
+    if (fname == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    strncpy(fname, field->name, field->nlen);
+    *(fname + field->nlen) = '\0';
+    target->field_name = fname;
+    target->tfn_list = NULL;
+
+    rc = ib_rule_log_exec_add_tgt(log_exec, target, field, field, result);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 ib_status_t ib_rule_log_exec_add_tfn(ib_rule_log_exec_t *log_exec,
                                      const ib_rule_target_t *target,
                                      const ib_tfn_t *tfn,
@@ -846,7 +881,7 @@ void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
 
     switch (log_exec->mode) {
     case IB_RULE_LOG_MODE_OFF:
-        IB_FTRACE_RET_VOID();
+        break;
 
     case IB_RULE_LOG_MODE_FAST:
         if (log_exec_flag_full(log_exec) == true) {
@@ -855,7 +890,7 @@ void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
         else {
             log_exec_fast(log_exec, file, line);
         }
-        IB_FTRACE_RET_VOID();
+        break;
 
     case IB_RULE_LOG_MODE_EXEC:
         if (log_exec_flag_full(log_exec) == true) {
@@ -864,10 +899,12 @@ void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
         else {
             log_exec_normal(log_exec, file, line);
         }
-        IB_FTRACE_RET_VOID();
+        break;
 
     default:
         assert(0 && "Invalid rule log level");
-        IB_FTRACE_RET_VOID();
+        break;
     }
+
+    IB_FTRACE_RET_VOID();
 }
