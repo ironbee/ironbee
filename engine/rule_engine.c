@@ -2707,69 +2707,68 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                               rule->meta.revision);
         IB_FTRACE_RET_STATUS(IB_EEXIST);
     }
-    else {
-        ib_list_node_t    *node;
-        ib_list_node_t    *next_node;
 
-        /* Walk through the rule list, remove the old version */
-        IB_LIST_LOOP_SAFE(context_rules->rule_list, node, next_node) {
-            ib_rule_t *r = (ib_rule_t *)ib_list_node_data(node);
-            if (strcmp(r->meta.id, rule->meta.id) == 0) {
-                ib_list_node_remove(context_rules->rule_list, node);
-            }
-        }
-
-        /* Remove the old version from the hash */
+    /* Remove the old version from the hash */
+    if (lookup != NULL) {
         ib_hash_remove(context_rules->rule_hash, NULL, rule->meta.id);
-
-        /* Add the new version to the hash */
-        rc = ib_hash_set(context_rules->rule_hash, rule->meta.id, rule);
-        if (rc != IB_OK) {
-            ib_cfg_log_error_ex(ib,
-                                rule->meta.config_file,
-                                rule->meta.config_line,
-                                "Error adding rule \"%s\" "
-                                "to context=\"%s\" hash: %s",
-                                rule->meta.id,
-                                ib_context_full_get(ctx),
-                                ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        else if (lookup == NULL) {
-            ib_cfg_log_debug_ex(ib,
-                                rule->meta.config_file,
-                                rule->meta.config_line,
-                                "Added rule \"%s\" rev=%u "
-                                "to context=\"%s\"",
-                                rule->meta.id,
-                                rule->meta.revision,
-                                ib_context_full_get(ctx));
-        }
-        else {
-            ib_cfg_log_notice_ex(ib,
-                                 rule->meta.config_file,
-                                 rule->meta.config_line,
-                                 "Replaced rule \"%s\" of context=\"%s\" "
-                                 "rev=%u with rev=%u",
-                                 rule->meta.id,
-                                 ib_context_full_get(ctx),
-                                 lookup->meta.revision,
-                                 rule->meta.revision);
-        }
     }
 
-    /* Add the rule to the list */
-    rc = ib_list_push(context_rules->rule_list, rule);
+    /* Add the new version to the hash */
+    rc = ib_hash_set(context_rules->rule_hash, rule->meta.id, rule);
     if (rc != IB_OK) {
         ib_cfg_log_error_ex(ib,
                             rule->meta.config_file,
                             rule->meta.config_line,
                             "Error adding rule \"%s\" "
-                            "to context=\"%s\" list: %s",
+                            "to context=\"%s\" hash: %s",
                             rule->meta.id,
                             ib_context_full_get(ctx),
                             ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* If no previous rule in the list, add the new rule */
+    if (lookup == NULL) {
+        /* Add the rule to the list */
+        rc = ib_list_push(context_rules->rule_list, rule);
+        if (rc != IB_OK) {
+            ib_cfg_log_error_ex(ib,
+                                rule->meta.config_file,
+                                rule->meta.config_line,
+                                "Error adding rule \"%s\" "
+                                "to context=\"%s\" list: %s",
+                                rule->meta.id,
+                                ib_context_full_get(ctx),
+                                ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        ib_cfg_log_debug_ex(ib,
+                            rule->meta.config_file,
+                            rule->meta.config_line,
+                            "Added rule \"%s\" rev=%u to context=\"%s\"",
+                            rule->meta.id,
+                            rule->meta.revision,
+                            ib_context_full_get(ctx));
+    }
+    else {
+        /* Walk through the rule list, point at the new rule */
+        ib_list_node_t    *node;
+        IB_LIST_LOOP(context_rules->rule_list, node) {
+            ib_rule_t *r = (ib_rule_t *)ib_list_node_data(node);
+            if (strcmp(r->meta.id, rule->meta.id) == 0) {
+                node->data = rule;
+            }
+        }
+
+        ib_cfg_log_notice_ex(ib,
+                             rule->meta.config_file,
+                             rule->meta.config_line,
+                             "Replaced rule \"%s\" of context=\"%s\" "
+                             "rev=%u with rev=%u",
+                             rule->meta.id,
+                             ib_context_full_get(ctx),
+                             lookup->meta.revision,
+                             rule->meta.revision);
     }
 
     /* Mark the rule as valid */
