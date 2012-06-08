@@ -677,13 +677,18 @@ static void log_exec_fast(const ib_rule_log_exec_t *log_exec,
     assert(log_exec->actions != NULL);
     assert(log_exec->tgt_list != NULL);
 
+    /* If no actions, just return */
+    if (IB_LIST_ELEMENTS(log_exec->actions) == 0) {
+        IB_FTRACE_RET_VOID();
+    }
+
     ib_tx_t *tx = log_exec->tx;
     const ib_rule_t *rule = log_exec->rule;
     ib_time_t now = ib_clock_get_time();
     char actbuf[MAX_ACTBUF + 1];
 
     build_act_buf(log_exec, actbuf, MAX_ACTBUF);
-
+    
     ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
                    "%s %s:%d %"PRIu64"us %s actions=%s",
                    LOG_PREFIX,
