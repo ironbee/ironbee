@@ -160,7 +160,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
             local t = {}
             local value = ffi.new("ib_list_t*[1]")
             
-            ffi.C.ib_field_mutable_value(field, value)
+            ffi.C.ib_field_value(field, value)
             ibapi.each_list_node(
                 value[0],
                 function(data)
@@ -199,7 +199,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
         if ... ~= nil then msg = string.format(msg, ...) end
 
         -- Log the string.
-        ffi.C.ib_log_ex(self.ib_engine, level, nil, prefix, file, line, msg)
+        ffi.C.ib_log_tx_ex(self.ib_tx, level, file, line, msg)
     end
 
     -- Log an error.
@@ -378,7 +378,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
         if ib_field.type == ffi.C.IB_FTYPE_LIST then
             local t = {}
             local value = ffi.new("ib_list_t*[1]")
-            ffi.C.ib_field_mutable_value(ib_field, value)
+            ffi.C.ib_field_value(ib_field, value)
             local ib_list = value[0]
 
             ibapi.each_list_node(ib_list, function(data)
@@ -401,7 +401,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
         if ib_field.type == ffi.C.IB_FTYPE_LIST then
             local t = {}
             local value =  ffi.new("ib_list_t*[1]")
-            ffi.C.ib_field_mutable_value(ib_field, value)
+            ffi.C.ib_field_value(ib_field, value)
             local ib_list = value[0]
 
             ibapi.each_list_node(ib_list, function(data)

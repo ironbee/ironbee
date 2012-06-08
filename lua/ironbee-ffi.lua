@@ -131,6 +131,20 @@ ffi.cdef [[
         IB_LEVENT_ACTION_IGNORE,
         IB_LEVENT_ACTION_ALLOW
     } ib_logevent_action_t;
+    typedef enum {
+        IB_LOG_EMERGENCY,
+        IB_LOG_ALERT,
+        IB_LOG_CRITICAL,
+        IB_LOG_ERROR,
+        IB_LOG_WARNING,
+        IB_LOG_NOTICE,
+        IB_LOG_INFO,
+        IB_LOG_DEBUG,
+        IB_LOG_DEBUG2,
+        IB_LOG_DEBUG3,
+        IB_LOG_TRACE,
+        IB_LOG_LEVEL_NUM
+    } ib_log_level_t;
 
     /* Engine Types */
     typedef struct ib_engine_t ib_engine_t;
@@ -581,13 +595,17 @@ ffi.cdef [[
 
     /* Logging */
     void ib_log_ex(ib_engine_t *ib,
-                   int level,
-                   const ib_tx_t *tx,
-                   const char *prefix,
+                   ib_log_level_t level,
                    const char *file,
                    int line,
                    const char *fmt,
                    ...);
+    void ib_log_tx_ex(const ib_tx_t *tx,
+                      ib_log_level_t level,
+                      const char* file,
+                      int line,
+                      const char* fmt,
+                      ...);
     void ib_util_log_ex(int level, const char *prefix,
                         const char *file, int line,
                         const char *fmt, ...);
