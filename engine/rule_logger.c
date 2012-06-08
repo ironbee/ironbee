@@ -641,16 +641,16 @@ static void log_exec_fast_full(const ib_rule_log_exec_t *log_exec,
             continue;
         }
 
-        ib_log_info_tx(tx, file, line,
-                       "%s %s:%d %"PRIu64"us %s target=\"%s\" op=\"%s\""
-                       " actions=%s",
-                       LOG_PREFIX,
-                       tx->er_ipstr, tx->conn->remote_port,
-                       now - tx->t.started,
-                       rule->meta.id,
-                       result->target->field_name,
-                       rule->opinst->op->name,
-                       actbuf);
+        ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
+                     "%s %s:%d %"PRIu64"us %s target=\"%s\" op=\"%s\""
+                     " actions=%s",
+                     LOG_PREFIX,
+                     tx->er_ipstr, tx->conn->remote_port,
+                     now - tx->t.started,
+                     rule->meta.id,
+                     result->target->field_name,
+                     rule->opinst->op->name,
+                     actbuf);
     }
 
     IB_FTRACE_RET_VOID();
@@ -684,7 +684,7 @@ static void log_exec_fast(const ib_rule_log_exec_t *log_exec,
 
     build_act_buf(log_exec, actbuf, MAX_ACTBUF);
 
-    ib_log_info_tx(tx, file, line,
+    ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
                    "%s %s:%d %"PRIu64"us %s actions=%s",
                    LOG_PREFIX,
                    tx->er_ipstr, tx->conn->remote_port,
@@ -729,50 +729,50 @@ static void log_exec_normal_full(const ib_rule_log_exec_t *log_exec,
                 char inbuf[MAX_FIELD_BUF];
                 char outbuf[MAX_FIELD_BUF];
 
-                ib_log_info_tx(tx, file, line,
-                               "%s %s:%d \"%s\" target \"%s\" tfn \"%s\" "
-                               "\"%s\" -> \"%s\"",
-                               LOG_PREFIX,
-                               tx->er_ipstr,
-                               tx->conn->remote_port,
-                               rule->meta.id,
-                               result->target->field_name,
-                               tfn->tfn->name,
-                               format_field(tfn->in, inbuf, MAX_FIELD_BUF),
-                               format_field(tfn->out, outbuf, MAX_FIELD_BUF));
+                ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
+                             "%s %s:%d \"%s\" target \"%s\" tfn \"%s\" "
+                             "\"%s\" -> \"%s\"",
+                             LOG_PREFIX,
+                             tx->er_ipstr,
+                             tx->conn->remote_port,
+                             rule->meta.id,
+                             result->target->field_name,
+                             tfn->tfn->name,
+                             format_field(tfn->in, inbuf, MAX_FIELD_BUF),
+                             format_field(tfn->out, outbuf, MAX_FIELD_BUF));
             }
         }
 
         if (IB_LIST_ELEMENTS(log_exec->actions) == 0) {
-            ib_log_info_tx(tx, file, line,
-                           "%s %s:%d \"%s\" target=\"%s\" op=\"%s\" "
-                           "result %" PRIu64 "; "
-                           "no actions executed",
-                           LOG_PREFIX,
-                           tx->er_ipstr,
-                           tx->conn->remote_port,
-                           rule->meta.id,
-                           result->target->field_name,
-                           rule->opinst->op->name,
-                           result->result);
+            ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
+                         "%s %s:%d \"%s\" target=\"%s\" op=\"%s\" "
+                         "result %" PRIu64 "; "
+                         "no actions executed",
+                         LOG_PREFIX,
+                         tx->er_ipstr,
+                         tx->conn->remote_port,
+                         rule->meta.id,
+                         result->target->field_name,
+                         rule->opinst->op->name,
+                         result->result);
         }
         else {
             IB_LIST_LOOP_CONST(log_exec->actions, actnode) {
                 const ib_action_inst_t *action =
                     (const ib_action_inst_t *)ib_list_node_data_const(actnode);
 
-                ib_log_info_tx(tx, file, line,
-                            "%s %s:%d \"%s\" target \"%s\" op=\"%s\" "
-                            "result %" PRIu64 "; action \"%s%s\" executed",
-                            LOG_PREFIX,
-                            tx->er_ipstr,
-                            tx->conn->remote_port,
-                            rule->meta.id,
-                            result->target->field_name,
-                            rule->opinst->op->name,
-                            result->result,
-                            log_exec->result == 0 ? "!" : "",
-                            action->action->name);
+                ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
+                             "%s %s:%d \"%s\" target \"%s\" op=\"%s\" "
+                             "result %" PRIu64 "; action \"%s%s\" executed",
+                             LOG_PREFIX,
+                             tx->er_ipstr,
+                             tx->conn->remote_port,
+                             rule->meta.id,
+                             result->target->field_name,
+                             rule->opinst->op->name,
+                             result->result,
+                             log_exec->result == 0 ? "!" : "",
+                             action->action->name);
             }
         }
     }
