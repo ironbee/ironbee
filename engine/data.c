@@ -604,7 +604,6 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
     assert(dpi->pr->api != NULL);
 
     ib_status_t rc;
-    const char *error_msg;
     char *name_str = NULL;
     IB_PROVIDER_API_TYPE(data) *api =
         (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
@@ -650,22 +649,18 @@ ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
             /* Bad filter: FOO/: */
             if (filter_marker != filter_start-1) {
                 rc = IB_EINVAL;
-                error_msg = "Filter start '/' does not immediately "
-                            "follow ':' in: %s";
                 goto error_handler;
             }
 
             /* Bad filter: FOO:/ */
             if (filter_start == filter_end) {
                 rc = IB_EINVAL;
-                error_msg = "Filter is not closed: %s";
                 goto error_handler;
             }
 
             /* Bad filter: FOO:// */
             if (filter_start == filter_end-1) {
                 rc = IB_EINVAL;
-                error_msg = "Filter is empty: %s";
                 goto error_handler;
             }
 
