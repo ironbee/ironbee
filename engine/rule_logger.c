@@ -800,16 +800,16 @@ static void log_exec_normal(const ib_rule_log_exec_t *log_exec,
         const ib_action_inst_t *action =
             (const ib_action_inst_t *)ib_list_node_data_const(actnode);
 
-        ib_log_info_tx(tx, file, line,
-                       "%s %s:%d \"%s\" result %" PRIu64 "; "
-                       "action \"%s%s\" executed",
-                       LOG_PREFIX,
-                       tx->er_ipstr,
-                       tx->conn->remote_port,
-                       rule->meta.id,
-                       log_exec->result,
-                       log_exec->result == 0 ? "!" : "",
-                       action->action->name);
+        ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
+                     "%s %s:%d \"%s\" result %" PRIu64 "; "
+                     "action \"%s%s\" executed",
+                     LOG_PREFIX,
+                     tx->er_ipstr,
+                     tx->conn->remote_port,
+                     rule->meta.id,
+                     log_exec->result,
+                     log_exec->result == 0 ? "!" : "",
+                     action->action->name);
     }
 
     IB_FTRACE_RET_VOID();
