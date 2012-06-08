@@ -246,8 +246,6 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
             }
         }
         else {
-            uint8_t *ptr;
-
             /* Create a correctly sized bytestr and manually copy
              * the data into it.
              */
@@ -259,17 +257,22 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                 IB_FTRACE_RET_STATUS(rc);
             }
 
-            ptr = ib_bytestr_ptr(line_tmp->raw);
-            memcpy(ptr, protocol, protocol_len);
-            ptr += protocol_len;
-            *ptr = ' ';
-            ptr += 1;
-            memcpy(ptr, status, status_len);
-            ptr += status_len;
+            ib_bytestr_append_mem(line_tmp->raw,
+                                  (const uint8_t *)protocol,
+                                  protocol_len);
+            ib_bytestr_append_mem(line_tmp->raw,
+                                  (const uint8_t *)" ",
+                                  1);
+            ib_bytestr_append_mem(line_tmp->raw,
+                                  (const uint8_t *)status,
+                                  status_len);
             if (msg != NULL) {
-                *ptr = ' ';
-                ptr += 1;
-                memcpy(ptr, msg, msg_len);
+                ib_bytestr_append_mem(line_tmp->raw,
+                                      (const uint8_t *)" ",
+                                      1);
+                ib_bytestr_append_mem(line_tmp->raw,
+                                      (const uint8_t *)msg,
+                                      msg_len);
             }
         }
     }
@@ -448,6 +451,10 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
     /* If no raw line is available, then create one. */
     if (raw == NULL) {
         if (method_len + uri_len + protocol_len == 0) {
+            ib_log_notice_tx(tx,
+                             "Unable to generate raw request line without line "
+                             "components - using zero length request line.");
+                             
             rc = ib_bytestr_dup_mem(&line_tmp->raw,
                                     tx->mp,
                                     (const uint8_t *)"",
@@ -457,7 +464,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
             }
         }
         else {
-            uint8_t *ptr;
+            size_t raw_line_len;
 
             assert(method != NULL);
             assert(uri != NULL);
@@ -465,25 +472,33 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
             /* Create a correctly sized bytestr and manually copy
              * the data into it.
              */
-            rc = ib_bytestr_create(&line_tmp->raw,
-                                   tx->mp,
-                                   method_len + 1 + uri_len +
-                                   (protocol == NULL ? 0 : 1 + protocol_len));
+            raw_line_len = method_len + 1 + uri_len +
+                           (protocol == NULL ? 0 : 1 + protocol_len);
+            rc = ib_bytestr_create(&line_tmp->raw, tx->mp, raw_line_len);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
 
-            ptr = ib_bytestr_ptr(line_tmp->raw);
-            memcpy(ptr, method, method_len);
-            ptr += method_len;
-            *ptr = ' ';
-            ptr += 1;
-            memcpy(ptr, uri, uri_len);
-            ptr += uri_len;
+            ib_log_debug_tx(tx,
+                            "Generating raw request line from components "
+                            "(length %zd).", raw_line_len);
+
+            ib_bytestr_append_mem(line_tmp->raw,
+                                  (const uint8_t *)method,
+                                  method_len);
+            ib_bytestr_append_mem(line_tmp->raw,
+                                  (const uint8_t *)" ",
+                                  1);
+            ib_bytestr_append_mem(line_tmp->raw,
+                                  (const uint8_t *)uri,
+                                  uri_len);
             if (protocol != NULL) {
-                *ptr = ' ';
-                ptr += 1;
-                memcpy(ptr, protocol, protocol_len);
+                ib_bytestr_append_mem(line_tmp->raw,
+                                      (const uint8_t *)" ",
+                                      1);
+                ib_bytestr_append_mem(line_tmp->raw,
+                                      (const uint8_t *)protocol,
+                                      protocol_len);
             }
         }
     }
