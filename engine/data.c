@@ -707,7 +707,6 @@ error_handler:
 
     memcpy(name_str, name, name_len);
     name_str[name_len] = '\0';
-    ib_util_log_error(error_msg, name_str);
     free(name_str);
 
     IB_FTRACE_RET_STATUS(rc);
