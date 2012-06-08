@@ -306,6 +306,21 @@ char *ib_mpool_strdup(ib_mpool_t *mp, const char *src)
     IB_FTRACE_RET_PTR(char, ptr);
 }
 
+char DLL_PUBLIC *ib_mpool_memdup_to_str(ib_mpool_t *mp,
+                                        const void *src,
+                                        size_t size)
+{
+    IB_FTRACE_INIT();
+    char *str = (char *)ib_mpool_alloc(mp, size + 1);
+
+    if (str != NULL) {
+        memcpy(str, src, size);
+        *(str + size) = '\0';
+    }
+
+    IB_FTRACE_RET_PTR(char, str);
+}
+
 void *ib_mpool_memdup(ib_mpool_t *mp, const void *src, size_t size)
 {
     IB_FTRACE_INIT();
