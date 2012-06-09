@@ -865,6 +865,24 @@ ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+static ib_status_t expand_lookup_fn(const void *data,
+                                    const char *name,
+                                    size_t nlen,
+                                    ib_field_t **pf)
+{
+    IB_FTRACE_INIT();
+
+    assert(data != NULL);
+    assert(name != NULL);
+    assert(pf != NULL);
+
+    ib_status_t rc;
+    ib_provider_inst_t *dpi = (ib_provider_inst_t *)data;
+
+    rc = ib_data_get_ex(dpi, name, nlen, pf);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
                                const char *str,
                                char **result)
@@ -876,12 +894,13 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
     assert(dpi->pr->api != NULL);
 
     ib_status_t rc;
-    rc = ib_expand_str(dpi->mp,
-                       str,
-                       IB_VARIABLE_EXPANSION_PREFIX,
-                       IB_VARIABLE_EXPANSION_POSTFIX,
-                       (ib_hash_t *)(dpi->data),
-                       result);
+    rc = ib_expand_str_gen(dpi->mp,
+                           str,
+                           IB_VARIABLE_EXPANSION_PREFIX,
+                           IB_VARIABLE_EXPANSION_POSTFIX,
+                           expand_lookup_fn,
+                           dpi,
+                           result);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -900,15 +919,16 @@ ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
     assert(dpi->pr->api != NULL);
 
     ib_status_t rc;
-    rc = ib_expand_str_ex(dpi->mp,
-                          str,
-                          slen,
-                          IB_VARIABLE_EXPANSION_PREFIX,
-                          IB_VARIABLE_EXPANSION_POSTFIX,
-                          nul,
-                          (ib_hash_t *)dpi->data,
-                          result,
-                          result_len);
+    rc = ib_expand_str_gen_ex(dpi->mp,
+                              str,
+                              slen,
+                              IB_VARIABLE_EXPANSION_PREFIX,
+                              IB_VARIABLE_EXPANSION_POSTFIX,
+                              nul,
+                              expand_lookup_fn,
+                              dpi,
+                              result,
+                              result_len);
 
     IB_FTRACE_RET_STATUS(rc);
 }
