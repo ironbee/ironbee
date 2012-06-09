@@ -47,6 +47,22 @@ extern "C" {
 
 
 /**
+ * Function to lookup a key for expansion
+ *
+ * @param[in] data Ojbect to look up data in
+ * @param[in] name Key name
+ * @param[in] nlen Length of @a name
+ * @param[out] pf Pointer to field from hash or NULL
+ *
+ * @returns IB_OK if successful; IB_ENOENT if not found
+ */
+
+typedef ib_status_t (* ib_expand_lookup_fn_t)(const void *data,
+                                              const char *name,
+                                              size_t nlen,
+                                              ib_field_t **pf);
+
+/**
  * Expand a NUL-terminated string using the given hash.
  *
  * This function looks through @a str for instances of
@@ -72,6 +88,35 @@ ib_status_t DLL_PUBLIC ib_expand_str(ib_mpool_t *mp,
                                      const char *suffix,
                                      ib_hash_t *hash,
                                      char **result);
+
+/**
+ * Expand a NUL-terminated string using the given hash.
+ *
+ * This function looks through @a str for instances of @a prefix + _name_ + @a
+ * suffix (e.g. "%{FOO}"), then attempts to look up each of such name found in
+ * @a lookup_data using @a lookup_fn.  If the name is not found, the
+ * "%{_name_}" sub-string is replaced with an empty string.  If the name is
+ * found, the associated field value is used to replace "%{_name_}" sub-string
+ * for string and numeric types (numbers are converted to strings); for
+ * others, the replacement is an empty string.
+ *
+ * @param[in] mp Memory pool
+ * @param[in] str String to expand
+ * @param[in] prefix Prefix string (e.g. "%{")
+ * @param[in] suffix Suffix string (e.g. "}")
+ * @param[in] lookup_fn Function to lookup a key in @a lookup_data
+ * @param[in] lookup_data Hash-like object in which to expand names in @a str
+ * @param[out] result Resulting string
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_expand_str_gen(ib_mpool_t *mp,
+                                         const char *str,
+                                         const char *prefix,
+                                         const char *suffix,
+                                         ib_expand_lookup_fn_t lookup_fn,
+                                         const void *lookup_data,
+                                         char **result);
 
 /**
  * Expand a NUL-terminated string using the given hash, ex version.
@@ -105,9 +150,47 @@ ib_status_t DLL_PUBLIC ib_expand_str_ex(ib_mpool_t *mp,
                                         const char *prefix,
                                         const char *suffix,
                                         bool nul,
-                                        ib_hash_t *hash,
+                                        const ib_hash_t *hash,
                                         char **result,
                                         size_t *result_len);
+
+/**
+ * Expand a NUL-terminated string using the given hash, generic/ex version.
+ *
+ * This function looks through @a str for instances of @a prefix + _name_ + @a
+ * suffix (e.g. "%{FOO}"), then attempts to look up each of such name found in
+ * @a lookup_data using @a lookup_fn.  If the name is not found, the
+ * "%{_name_}" sub-string is replaced with an empty string.  If the name is
+ * found, the associated field value is used to replace "%{_name_}" sub-string
+ * for string and numeric types (numbers are converted to strings); for
+ * others, the replacement is an empty string.
+ *
+ * @param[in] mp Memory pool
+ * @param[in] str String to expand
+ * @param[in] str_len Length of @a str
+ * @param[in] prefix Prefix string (e.g. "%{")
+ * @param[in] suffix Suffix string (e.g. "}")
+ * @param[in] nul Append a NUL byte to the end of @a result?
+ * @param[in] lookup_fn Function to lookup a key in @a lookup_data
+ * @param[in] lookup_data Hash-like object in which to expand names in @a str
+ * @param[out] result Resulting string
+ * @param[out] result_len Length of @a result
+ *
+ * @returns
+ *   - IB_OK on success or if the string is not expandable.
+ *   - IB_EINVAL if prefix or suffix is zero length.
+ *   - IB_EALLOC if a memory allocation failed.
+ */
+ib_status_t DLL_PUBLIC ib_expand_str_gen_ex(ib_mpool_t *mp,
+                                            const char *str,
+                                            size_t str_len,
+                                            const char *prefix,
+                                            const char *suffix,
+                                            bool nul,
+                                            ib_expand_lookup_fn_t fn,
+                                            const void *lookup_data,
+                                            char **result,
+                                            size_t *result_len);
 
 /**
  * Determine if a string would be expanded by expand_str().

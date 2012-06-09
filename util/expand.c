@@ -276,7 +276,63 @@ ib_status_t ib_expand_str(ib_mpool_t *mp,
 }
 
 /*
- * Expand a string from the given hash, ex version.  See expand.h.
+ * Expand a string from the given hash.  See expand.h.
+ */
+ib_status_t ib_expand_str_gen(ib_mpool_t *mp,
+                              const char *str,
+                              const char *prefix,
+                              const char *suffix,
+                              ib_expand_lookup_fn_t lookup_fn,
+                              const void *lookup_data,
+                              char **result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    size_t len;
+
+    assert(mp != NULL);
+    assert(str != NULL);
+    assert(prefix != NULL);
+    assert(suffix != NULL);
+    assert(lookup_fn != NULL);
+    assert(result != NULL);
+
+    /* Let ib_expand_str_gen_ex() do the heavy lifting */
+    rc = ib_expand_str_gen_ex(mp, str, strlen(str), prefix, suffix, true,
+                              lookup_fn, lookup_data, result, &len);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Lookup a value in a hash.
+ *
+ * @param[in] data Hash to lookup in
+ * @param[in] key Key to lookup
+ * @param[in] keylen Length of @a key
+ * @param[out] pf Pointer to output field.
+ *
+ * @returns Return values from ib_hash_get_ex()
+ */
+static ib_status_t hash_lookup(const void *data,
+                               const char *key,
+                               size_t keylen,
+                               ib_field_t **pf)
+{
+    IB_FTRACE_INIT();
+    assert(data != NULL);
+    assert(key != NULL);
+    assert(pf != NULL);
+
+    ib_status_t rc;
+    ib_hash_t *hash = (ib_hash_t *)data;
+
+    rc = ib_hash_get_ex(hash, pf, key, keylen);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/*
+ * Expand a string from the given a hash, ex version.  See expand.h.
  */
 ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
                              const char *str,
@@ -284,9 +340,33 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
                              const char *prefix,
                              const char *suffix,
                              bool nul,
-                             ib_hash_t *hash,
+                             const ib_hash_t *hash,
                              char **result,
                              size_t *result_len)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    rc = ib_expand_str_gen_ex(mp, str, str_len,
+                              prefix, suffix, nul,
+                              hash_lookup, hash,
+                              result, result_len);
+    IB_FTRACE_RET_STATUS(rc);
+};
+
+/*
+ * Expand a string from the given hash-like object, ex version.  See expand.h.
+ */
+ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
+                                 const char *str,
+                                 size_t str_len,
+                                 const char *prefix,
+                                 const char *suffix,
+                                 bool nul,
+                                 ib_expand_lookup_fn_t lookup_fn,
+                                 const void *lookup_data,
+                                 char **result,
+                                 size_t *result_len)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -300,7 +380,7 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
     assert(str != NULL);
     assert(prefix != NULL);
     assert(suffix != NULL);
-    assert(hash != NULL);
+    assert(lookup_fn != NULL);
     assert(result != NULL);
     assert(result_len != NULL);
 
@@ -388,7 +468,7 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
         }
 
         /* Search the hash */
-        rc = ib_hash_get_ex(hash, &f, (void *)name, namelen);
+        rc = lookup_fn(lookup_data, name, namelen, &f);
         if (rc == IB_ENOENT) {
             /* Not in the hash; replace with "" */
             rc = join2(mp,
