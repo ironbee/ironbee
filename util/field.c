@@ -33,6 +33,7 @@
 
 #include "ironbee_util_private.h"
 
+#include <inttypes.h>
 #include <assert.h>
 
 #if ((__GNUC__==4) && (__GNUC_MINOR__==4))
@@ -59,9 +60,8 @@ void ib_field_util_log_debug(
         );
     }
 
-    ib_util_log_debug(
-        "%s name=%.*s type=%d",
-        prefix, f->nlen, f->name, f->type
+    ib_util_log_debug("%s name=%.*s type=%d",
+                      prefix, (int)f->nlen, f->name, f->type
     );
 
     if (ib_field_is_dynamic(f)) {
@@ -92,20 +92,14 @@ void ib_field_util_log_debug(
         {
             ib_num_t v;
             ib_field_value(f, ib_ftype_num_out(&v));
-            ib_util_log_debug(
-                "%s value=%lld",
-                prefix, v
-            );
+            ib_util_log_debug("%s value=%"PRId64, prefix, v);
             break;
         }
         case IB_FTYPE_UNUM:
         {
             ib_unum_t v;
             ib_field_value(f, ib_ftype_unum_out(&v));
-            ib_util_log_debug(
-                "%s value=%llu",
-                prefix, v
-            );
+            ib_util_log_debug("%s value=%"PRIu64, prefix, v);
             break;
         }
         case IB_FTYPE_NULSTR:
@@ -150,9 +144,8 @@ void ib_field_util_log_debug(
             break;
         }
         default:
-            ib_util_log_debug(
-                "%s Unknown field type: %d",
-                prefix, f->nlen, f->name, f->type
+            ib_util_log_debug("%s Unknown field type: %u",
+                              prefix, f->type
             );
         }
     }
