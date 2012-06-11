@@ -162,7 +162,7 @@ static ib_status_t join3(ib_mpool_t *mp,
  * @returns status code
  */
 static ib_status_t join_parts(ib_mpool_t *mp,
-                              ib_field_t *f,
+                              const ib_field_t *f,
                               const char *iptr,
                               size_t ilen,
                               const char *fptr,
@@ -176,7 +176,9 @@ static ib_status_t join_parts(ib_mpool_t *mp,
     char numbuf[NUM_BUF_LEN+1]; /* Buffer used to convert number to str */
     assert(NUM_BUF_LEN <= 256);
 
-    if (f->type == IB_FTYPE_NULSTR) {
+    switch(f->type) {
+    case IB_FTYPE_NULSTR:
+    {
         /* Field is a NUL-terminated string */
         const char *s;
         rc = ib_field_value(f, ib_ftype_nulstr_out(&s));
@@ -190,8 +192,11 @@ static ib_status_t join_parts(ib_mpool_t *mp,
                    fptr, flen,
                    nul,
                    out, olen);
+        break;
     }
-    else if (f->type == IB_FTYPE_BYTESTR) {
+
+    case IB_FTYPE_BYTESTR:
+    {
         /* Field is a byte string */
         const ib_bytestr_t *bs;
         rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
@@ -205,8 +210,11 @@ static ib_status_t join_parts(ib_mpool_t *mp,
                    fptr, flen,
                    nul,
                    out, olen);
+        break;
     }
-    else if (f->type == IB_FTYPE_NUM) {
+
+    case IB_FTYPE_NUM:
+    {
         /* Field is a number; convert it to a string */
         ib_num_t n;
         rc = ib_field_value(f, ib_ftype_num_out(&n));
@@ -220,8 +228,11 @@ static ib_status_t join_parts(ib_mpool_t *mp,
                    fptr, flen,
                    nul,
                    out, olen);
+        break;
     }
-    else if (f->type == IB_FTYPE_UNUM) {
+
+    case IB_FTYPE_UNUM:
+    {
         /* Field is an unsigned number; convert it to a string */
         ib_unum_t n;
         rc = ib_field_value(f, ib_ftype_unum_out(&n));
@@ -235,15 +246,38 @@ static ib_status_t join_parts(ib_mpool_t *mp,
                    fptr, flen,
                    nul,
                    out, olen);
+        break;
     }
-    else {
+
+    case IB_FTYPE_LIST:
+    {
+        /* Field is a list: use the first element in the list */
+        const ib_list_t *list;
+        const ib_list_node_t *node;
+        const ib_field_t *element;
+
+        rc = ib_field_value(f, ib_ftype_list_out(&list));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        node = ib_list_first_const(list);
+        if (node == NULL) {
+            rc = join2(mp, iptr, ilen, fptr, flen, nul, out, olen);
+            break;
+        }
+
+        element = (const ib_field_t *)ib_list_node_data_const(node);
+        rc = join_parts(mp, element, iptr, ilen, fptr, flen, nul, out, olen);
+        break;
+    }
+
+    default:
         /* Something else: replace with "" */
-        rc = join2(mp,
-                   iptr, ilen,
-                   fptr, flen,
-                   nul,
-                   out, olen);
+        rc = join2(mp, iptr, ilen, fptr, flen, nul, out, olen);
+        break;
     }
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
