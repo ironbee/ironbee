@@ -797,10 +797,10 @@ static void print_field(const char *label,
         const char *s;
         ib_field_value(field, ib_ftype_nulstr_out(&s));
         if (maxlen > 0) {
-            printf("  %s = '%.*s'\n", label, (int)maxlen, s);
+            printf("  %s = \"%.*s\"\n", label, (int)maxlen, s);
         }
         else {
-            printf("  %s = '%s'\n", label, s);
+            printf("  %s = \"%s\"\n", label, s);
         }
         break;
     }
@@ -811,7 +811,7 @@ static void print_field(const char *label,
         ib_field_value(field, ib_ftype_bytestr_out(&bs));
         size_t len = ib_bytestr_length(bs);
         if (len == 0) {
-            printf("  %s = ''\n", label);
+            printf("  %s = \"\"\n", label);
         }
         else {
             const uint8_t *s = ib_bytestr_const_ptr(bs);
@@ -830,11 +830,11 @@ static void print_field(const char *label,
                 }
             }
             if (cropped) {
-                printf( "  %s = '%.*s...'\n",
+                printf( "  %s = \"%.*s...\"\n",
                         label, (int)len, ib_bytestr_const_ptr(bs) );
             }
             else {
-                printf( "  %s = '%.*s'\n",
+                printf( "  %s = \"%.*s\"\n",
                         label, (int)len, ib_bytestr_const_ptr(bs) );
             }
         }
@@ -896,15 +896,17 @@ static const char *build_path( const char *path, ib_field_t *field )
 
     /* Allocate a path buffer */
     pathlen = strlen(path);
-    fullpath_len = pathlen + 2 + nlen;
+    fullpath_len = pathlen + (pathlen > 0 ? 2 : 1) + nlen;
     fullpath = (char *)malloc(fullpath_len);
 
     /* Copy in the base path */
     strcpy(fullpath, path);
-    strcat(fullpath, ":");
+    if (pathlen > 0) {
+        strcat(fullpath, ":");
+    }
 
     /* Append the field's name */
-    memcpy(fullpath+pathlen+1, field->name, nlen);
+    memcpy(fullpath+pathlen+(pathlen > 0 ? 1 : 0), field->name, nlen);
     fullpath[fullpath_len-1] = '\0';
     return fullpath;
 }
@@ -989,15 +991,11 @@ static ib_status_t print_tx( ib_engine_t *ib,
 
     ib_log_debug3_tx(tx, "print_tx");
     printf("TX:\n");
-    printf("  tx/remote: %s:%d\n",
-            tx->er_ipstr, tx->conn->remote_port);
-    printf("  tx/local: %s:%d\n",
-           tx->conn->local_ipstr, tx->conn->local_port);
 
     /* ARGS */
     rc = ib_data_get(tx->dpi, "ARGS", &field);
     if (rc == IB_OK) {
-        print_field("tx:ARGS", field, 0);
+        print_field("ARGS", field, 0);
 
         // @todo Remove mutable once list is const correct.
         rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&lst));
@@ -1010,7 +1008,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
             ib_log_debug(ib, "print_tx: ARGS is not a list");
             IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
         }
-        print_list("tx:ARGS", lst);
+        print_list("ARGS", lst);
     }
     else {
         printf("print_tx: Failed to get ARGS: %d\n", rc);
@@ -1040,7 +1038,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
     }
 
     /* Print it all */
-    rc = print_list("tx", lst);
+    rc = print_list("", lst);
     if (rc != IB_OK) {
         ib_log_debug_tx(tx, "print_tx: Failed printing headers: %s",
                      ib_status_to_string(rc));
@@ -1104,7 +1102,7 @@ static ib_status_t print_user_agent(
     /* Loop through the list & print everything */
     IB_LIST_LOOP(lst, node) {
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
-        const char *path = build_path("tx/User-Agent", field);
+        const char *path = build_path("User-Agent", field);
         print_field(path, field, 0);
         free((char *)path);
     }
