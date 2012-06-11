@@ -402,6 +402,11 @@ IB_PROVIDER_DECLARE_IFACE(parser) {
         request_body_data,
         (ib_provider_inst_t *pi, ib_tx_t *tx, ib_txdata_t *txdata)
     );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        request_finished,
+        (ib_provider_inst_t *pi, ib_tx_t *tx)
+    );
 
     /* Preparsed Response Data Functions */
     IB_PROVIDER_FUNC(
@@ -424,18 +429,12 @@ IB_PROVIDER_DECLARE_IFACE(parser) {
         response_body_data,
         (ib_provider_inst_t *pi, ib_tx_t *tx, ib_txdata_t *txdata)
     );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        response_finished,
+        (ib_provider_inst_t *pi, ib_tx_t *tx)
+    );
 
-    /* Field Generation Functions */
-    IB_PROVIDER_FUNC(
-        ib_status_t,
-        gen_request_header_fields,
-        (ib_provider_inst_t *pi, ib_tx_t *tx)
-    );
-    IB_PROVIDER_FUNC(
-        ib_status_t,
-        gen_response_header_fields,
-        (ib_provider_inst_t *pi, ib_tx_t *tx)
-    );
     /// @todo Need to be able to hook into parser events
     /// @todo Need to handle delayed (on demand) field generation
 };

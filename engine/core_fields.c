@@ -325,6 +325,16 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    rc = ib_data_add_list(tx->dpi, "request_body_params", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_data_add_list(tx->dpi, "args", NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Core Response Fields */
     rc = ib_data_add_stream(tx->dpi, "response_body", NULL);
     if (rc != IB_OK) {
@@ -595,19 +605,57 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
     core_gen_tx_bytestr_alias_field(tx, "request_protocol",
                                     tx->request_line->protocol);
 
-    /* Alias ARGS fields */
-    // FIXME: This needs to include request_body_params as well, so
-    //        it should probably be a new collection with aliases to
-    //        each param.
-    rc = ib_data_get(tx->dpi, "request_uri_params", &f);
+    /* Populate the ARGS collection. */
+    rc = ib_data_get(tx->dpi, "args", &f);
     if (rc == IB_OK) {
-        rc = ib_data_add_named(tx->dpi, f, "args", 4);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to alias ARGS: %s", ib_status_to_string(rc));
+        ib_field_t *param_list;
+
+        /* Add request URI parameters to ARGS collection. */
+        rc = ib_data_get(tx->dpi, "request_uri_params", &param_list);
+        if (rc == IB_OK) {
+            ib_list_t *field_list;
+            ib_list_node_t *node = NULL;
+
+            rc = ib_field_mutable_value(param_list, ib_ftype_list_mutable_out(&field_list));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            IB_LIST_LOOP(field_list, node) {
+                ib_field_t *param = (ib_field_t *)ib_list_node_data(node);
+
+                /* Add the field to the ARGS collection. */
+                rc = ib_field_list_add(f, param);
+                if (rc != IB_OK) {
+                    ib_log_debug3_tx(tx,
+                                     "Failed to add parameter to args collection: %s",
+                                     ib_status_to_string(rc));
+                }
+            }
         }
-        rc = ib_data_add_named(tx->dpi, f, "args_get", 8);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to alias ARGS_GET: %s", ib_status_to_string(rc));
+
+        /* Add request body parameters to ARGS collection. */
+        rc = ib_data_get(tx->dpi, "request_body_params", &param_list);
+        if (rc == IB_OK) {
+            ib_list_t *field_list;
+            ib_list_node_t *node = NULL;
+
+            rc = ib_field_mutable_value(param_list, ib_ftype_list_mutable_out(&field_list));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            IB_LIST_LOOP(field_list, node) {
+                ib_field_t *param = (ib_field_t *)ib_list_node_data(node);
+
+                /* Add the field to the ARGS collection. */
+                rc = ib_field_list_add(f, param);
+                if (rc != IB_OK) {
+                    ib_log_debug3_tx(tx,
+                                     "Failed to add parameter to args collection: %s",
+                                     ib_status_to_string(rc));
+                }
+            }
         }
     }
 

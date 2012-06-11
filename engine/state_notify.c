@@ -829,12 +829,6 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Call the parser with the data. */
-    rc = iface->gen_request_header_fields(pi, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_tx(ib, handle_request_header_event, tx);
     IB_FTRACE_RET_STATUS(rc);
@@ -904,6 +898,8 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
 
     ib_log_debug3_tx(tx, "ib_state_notify_request_finished(%p,%p)", ib, tx);
 
+    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
+    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
     /* Validate. */
@@ -937,6 +933,12 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     }
 
     ib_tx_flags_set(tx, IB_TX_FREQ_FINISHED);
+
+    /* Call the parser with the data. */
+    rc = iface->request_finished(pi, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     rc = ib_state_notify_tx(ib, request_finished_event, tx);
     if (rc != IB_OK) {
@@ -1081,10 +1083,6 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    rc = iface->gen_response_header_fields(pi, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
 
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_tx(ib, handle_response_header_event, tx);
@@ -1165,6 +1163,8 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
 
     ib_log_debug3_tx(tx, "ib_state_notify_response_finished(%p,%p)", ib, tx);
 
+    ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
+    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED)) {
@@ -1183,6 +1183,12 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     tx->t.response_finished = ib_clock_get_time();
 
     ib_tx_flags_set(tx, IB_TX_FRES_FINISHED);
+
+    /* Call the parser with the data. */
+    rc = iface->response_finished(pi, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     rc = ib_state_notify_tx(ib, response_finished_event, tx);
     if (rc != IB_OK) {

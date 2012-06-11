@@ -1135,6 +1135,279 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
     IB_FTRACE_RET_INT(HTP_OK);
 }
 
+
+static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
+                                                    ib_tx_t *itx)
+{
+    IB_FTRACE_INIT();
+    ib_context_t *ctx = itx->ctx;
+    ib_conn_t *iconn = itx->conn;
+    ib_field_t *f;
+    modhtp_cfg_t *modcfg;
+    modhtp_context_t *modctx;
+    htp_tx_t *tx;
+    ib_status_t rc;
+
+    /* Get the module config. */
+    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(itx, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Fetch context from the connection. */
+    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
+
+    /* Use the current parser transaction to generate fields. */
+    /// @todo Check htp state, etc.
+    tx = modctx->htp->in_tx;
+    if (tx != NULL) {
+        ib_log_debug3_tx(itx, "LibHTP: associating itx=%p with tx=%p", itx, tx);
+        htp_tx_set_user_data(tx, itx);
+
+        modhtp_field_gen_bytestr(itx->dpi,
+                                 "request_uri_scheme",
+                                 tx->parsed_uri->scheme,
+                                 NULL);
+
+        modhtp_field_gen_bytestr(itx->dpi,
+                                 "request_uri_username",
+                                 tx->parsed_uri->username,
+                                 NULL);
+
+        modhtp_field_gen_bytestr(itx->dpi,
+                                 "request_uri_password",
+                                 tx->parsed_uri->password,
+                                 NULL);
+
+        modhtp_field_gen_bytestr(itx->dpi,
+                                 "request_uri_host",
+                                 tx->parsed_uri->hostname,
+                                 NULL);
+
+        modhtp_field_gen_bytestr(itx->dpi,
+                                 "request_host",
+                                 tx->parsed_uri->hostname,
+                                 NULL);
+
+        modhtp_field_gen_bytestr(itx->dpi,
+                                 "request_uri_port",
+                                 tx->parsed_uri->port,
+                                 NULL);
+
+        modhtp_field_gen_bytestr(itx->dpi,
+                                 "request_uri_path",
+                                 tx->parsed_uri->path,
+                                 NULL);
+
+        modhtp_field_gen_bytestr(itx->dpi,
+                                 "request_uri_query",
+                                 tx->parsed_uri->query,
+                                 NULL);
+
+        modhtp_field_gen_bytestr(itx->dpi,
+                                 "request_uri_fragment",
+                                 tx->parsed_uri->fragment,
+                                 NULL);
+
+        rc = ib_data_add_list(itx->dpi, "request_cookies", &f);
+        if (   (tx->request_cookies != NULL)
+            && table_size(tx->request_cookies)
+            && (rc == IB_OK))
+        {
+            bstr *key = NULL;
+            bstr *value = NULL;
+
+            /// @todo Make this a function
+            table_iterator_reset(tx->request_cookies);
+            ib_log_debug3_tx(itx, "Adding request_cookies fields");
+            while ((key = table_iterator_next(tx->request_cookies,
+                                              (void *)&value)) != NULL)
+            {
+                ib_field_t *lf;
+
+                /* Create a list field as an alias into htp memory. */
+                rc = ib_field_create_bytestr_alias(&lf,
+                                           itx->mp,
+                                           bstr_ptr(key),
+                                           bstr_len(key),
+                                           (uint8_t *)bstr_ptr(value),
+                                           bstr_len(value));
+                if (rc != IB_OK) {
+                    ib_log_debug3_tx(itx,
+                                     "Failed to create field: %s",
+                                     ib_status_to_string(rc));
+                }
+
+                /* Add the field to the field list. */
+                rc = ib_field_list_add(f, lf);
+                if (rc != IB_OK) {
+                    ib_log_debug3_tx(itx,
+                                     "Failed to add field: %s",
+                                     ib_status_to_string(rc));
+                }
+            }
+        }
+        else if (rc == IB_OK) {
+            ib_log_debug3_tx(itx, "No request cookies");
+        }
+        else {
+            ib_log_error_tx(itx,
+                            "Failed to create request cookies list: %s",
+                            ib_status_to_string(rc));
+        }
+
+        rc = ib_data_add_list(itx->dpi, "request_uri_params", &f);
+        if (   (tx->request_params_query != NULL)
+            && table_size(tx->request_params_query)
+            && (rc == IB_OK))
+        {
+            bstr *key = NULL;
+            bstr *value = NULL;
+
+            /// @todo Make this a function
+            table_iterator_reset(tx->request_params_query);
+            ib_log_debug3_tx(itx, "Adding request_params_query fields");
+            while ((key = table_iterator_next(tx->request_params_query,
+                                              (void *)&value)) != NULL)
+            {
+                ib_field_t *lf;
+
+                /* Create a list field as an alias into htp memory. */
+                rc = ib_field_create_bytestr_alias(&lf,
+                                           itx->mp,
+                                           bstr_ptr(key),
+                                           bstr_len(key),
+                                           (uint8_t *)bstr_ptr(value),
+                                           bstr_len(value));
+                if (rc != IB_OK) {
+                    ib_log_debug3_tx(itx,
+                                     "Failed to create field: %s",
+                                     ib_status_to_string(rc));
+                }
+
+                /* Add the field to the field list. */
+                rc = ib_field_list_add(f, lf);
+                if (rc != IB_OK) {
+                    ib_log_debug3_tx(itx,
+                                     "Failed to add field: %s",
+                                     ib_status_to_string(rc));
+                }
+            }
+        }
+        else if (rc == IB_OK) {
+            ib_log_debug3_tx(itx, "No request URI parameters");
+        }
+        else {
+            ib_log_error_tx(itx,
+                            "Failed to create request URI parameters: %s",
+                            ib_status_to_string(rc));
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t modhtp_gen_request_fields(ib_provider_inst_t *pi,
+                                             ib_tx_t *itx)
+{
+    IB_FTRACE_INIT();
+    ib_context_t *ctx = itx->ctx;
+    ib_conn_t *iconn = itx->conn;
+    ib_field_t *f;
+    modhtp_cfg_t *modcfg;
+    modhtp_context_t *modctx;
+    htp_tx_t *tx;
+    ib_status_t rc;
+
+    ib_log_debug3_tx(itx, "LibHTP: modhtp_gen_request_fields");
+
+    /* Get the module config. */
+    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(itx, "Failed to fetch module %s config: %s",
+                     MODULE_NAME_STR, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Fetch context from the connection. */
+    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
+
+    /* Use the current parser transaction to generate fields. */
+    /// @todo Check htp state, etc.
+    tx = modctx->htp->in_tx;
+    if (tx != NULL) {
+        ib_log_debug3_tx(itx, "LibHTP: associating itx=%p with tx=%p", itx, tx);
+        htp_tx_set_user_data(tx, itx);
+
+        rc = ib_data_add_list(itx->dpi, "request_body_params", &f);
+        if (   (tx->request_params_body != NULL)
+            && table_size(tx->request_params_body)
+            && (rc == IB_OK))
+        {
+            bstr *key = NULL;
+            bstr *value = NULL;
+
+            /// @todo Make this a function
+            table_iterator_reset(tx->request_params_body);
+            ib_log_debug3_tx(itx, "Adding request_params_body fields");
+            while ((key = table_iterator_next(tx->request_params_body,
+                                              (void *)&value)) != NULL)
+            {
+                ib_field_t *lf;
+
+                /* Create a list field as an alias into htp memory. */
+                rc = ib_field_create_bytestr_alias(&lf,
+                                           itx->mp,
+                                           bstr_ptr(key),
+                                           bstr_len(key),
+                                           (uint8_t *)bstr_ptr(value),
+                                           bstr_len(value));
+                if (rc != IB_OK) {
+                    ib_log_debug3_tx(itx,
+                                     "Failed to create field: %s",
+                                     ib_status_to_string(rc));
+                }
+
+                /* Add the field to the field list. */
+                rc = ib_field_list_add(f, lf);
+                if (rc != IB_OK) {
+                    ib_log_debug3_tx(itx,
+                                     "Failed to add field: %s",
+                                     ib_status_to_string(rc));
+                }
+            }
+        }
+        else if (rc == IB_OK) {
+            ib_log_debug3_tx(itx, "No request body parameters");
+        }
+        else {
+            ib_log_error_tx(itx,
+                            "Failed to create request body parameters: %s",
+                            ib_status_to_string(rc));
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t modhtp_gen_response_header_fields(ib_provider_inst_t *pi,
+                                                     ib_tx_t *itx)
+{
+    IB_FTRACE_INIT();
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t modhtp_gen_response_fields(ib_provider_inst_t *pi,
+                                              ib_tx_t *itx)
+{
+    IB_FTRACE_INIT();
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 /* -- Parser Provider Interface Implementation -- */
 
 /*****************************************************************************
@@ -1520,13 +1793,13 @@ static ib_status_t modhtp_send_header_data(const char *name,
 
 
 static ib_status_t modhtp_iface_request_header_data(ib_provider_inst_t *pi,
-                                                    ib_tx_t *tx,
+                                                    ib_tx_t *itx,
                                                     ib_parsed_header_wrapper_t *header)
 {
     IB_FTRACE_INIT();
 
     assert(pi != NULL);
-    assert(tx != NULL);
+    assert(itx != NULL);
     assert(header != NULL);
 
     ib_conndata_t conndata = {0};
@@ -1534,13 +1807,13 @@ static ib_status_t modhtp_iface_request_header_data(ib_provider_inst_t *pi,
     ib_status_t rc;
 
     /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug_tx(tx, "SEND REQUEST HEADER DATA TO LIBHTP: modhtp_iface_request_header_data");
+    ib_log_debug_tx(itx, "SEND REQUEST HEADER DATA TO LIBHTP: modhtp_iface_request_header_data");
 
-    conndata.conn = tx->conn;
+    conndata.conn = itx->conn;
     cbdata.pi = pi;
     cbdata.conndata = &conndata;
     cbdata.write_fn = modhtp_iface_data_in;
@@ -1553,24 +1826,30 @@ static ib_status_t modhtp_iface_request_header_data(ib_provider_inst_t *pi,
 }
 
 static ib_status_t modhtp_iface_request_header_finished(ib_provider_inst_t *pi,
-                                                        ib_tx_t *tx)
+                                                        ib_tx_t *itx)
 {
     IB_FTRACE_INIT();
 
     assert(pi != NULL);
-    assert(tx != NULL);
+    assert(itx != NULL);
 
     ib_conndata_t conndata = {0};
     ib_status_t rc;
 
+    /* Generate header fields. */
+    rc = modhtp_gen_request_header_fields(pi, itx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug_tx(tx, "SEND REQUEST HEADER FINISHED TO LIBHTP: modhtp_iface_request_header_finished");
+    ib_log_debug_tx(itx, "SEND REQUEST HEADER FINISHED TO LIBHTP: modhtp_iface_request_header_finished");
 
-    conndata.conn = tx->conn;
+    conndata.conn = itx->conn;
 
     /* Write request header separator to libhtp. */
     conndata.dlen = 2;
@@ -1581,31 +1860,47 @@ static ib_status_t modhtp_iface_request_header_finished(ib_provider_inst_t *pi,
 }
 
 static ib_status_t modhtp_iface_request_body_data(ib_provider_inst_t *pi,
-                                                  ib_tx_t *tx,
+                                                  ib_tx_t *itx,
                                                   ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT();
 
     assert(pi != NULL);
-    assert(tx != NULL);
+    assert(itx != NULL);
     assert(txdata != NULL);
 
     ib_conndata_t conndata = {0};
     ib_status_t rc;
 
     /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug_tx(tx, "SEND REQUEST BODY DATA TO LIBHTP: modhtp_iface_request_body_data");
+    ib_log_debug_tx(itx, "SEND REQUEST BODY DATA TO LIBHTP: modhtp_iface_request_body_data");
 
-    conndata.conn = tx->conn;
+    conndata.conn = itx->conn;
 
     /* Write request body data to libhtp. */
     conndata.dlen = txdata->dlen;
     conndata.data = txdata->data;
     rc = modhtp_iface_data_in(pi, &conndata);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t modhtp_iface_request_finished(ib_provider_inst_t *pi,
+                                                 ib_tx_t *itx)
+{
+    IB_FTRACE_INIT();
+
+    assert(pi != NULL);
+    assert(itx != NULL);
+
+    ib_status_t rc;
+
+    /* Generate fields. */
+    rc = modhtp_gen_request_fields(pi, itx);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1659,13 +1954,13 @@ static ib_status_t modhtp_iface_response_line(ib_provider_inst_t *pi,
 }
 
 static ib_status_t modhtp_iface_response_header_data(ib_provider_inst_t *pi,
-                                                     ib_tx_t *tx,
+                                                     ib_tx_t *itx,
                                                      ib_parsed_header_wrapper_t *header)
 {
     IB_FTRACE_INIT();
 
     assert(pi != NULL);
-    assert(tx != NULL);
+    assert(itx != NULL);
     assert(header != NULL);
 
     ib_conndata_t conndata = {0};
@@ -1673,13 +1968,13 @@ static ib_status_t modhtp_iface_response_header_data(ib_provider_inst_t *pi,
     ib_status_t rc;
 
     /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug_tx(tx, "SEND RESPONSE HEADER DATA TO LIBHTP: modhtp_iface_response_header_data");
+    ib_log_debug_tx(itx, "SEND RESPONSE HEADER DATA TO LIBHTP: modhtp_iface_response_header_data");
 
-    conndata.conn = tx->conn;
+    conndata.conn = itx->conn;
     cbdata.pi = pi;
     cbdata.conndata = &conndata;
     cbdata.write_fn = modhtp_iface_data_out;
@@ -1692,54 +1987,60 @@ static ib_status_t modhtp_iface_response_header_data(ib_provider_inst_t *pi,
 }
 
 static ib_status_t modhtp_iface_response_header_finished(ib_provider_inst_t *pi,
-                                                          ib_tx_t *tx)
+                                                          ib_tx_t *itx)
 {
     IB_FTRACE_INIT();
 
     assert(pi != NULL);
-    assert(tx != NULL);
+    assert(itx != NULL);
 
     ib_conndata_t conndata = {0};
     ib_status_t rc;
 
     /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug_tx(tx, "SEND RESPONSE HEADER FINISHED TO LIBHTP: modhtp_iface_response_header_finished");
+    ib_log_debug_tx(itx, "SEND RESPONSE HEADER FINISHED TO LIBHTP: modhtp_iface_response_header_finished");
 
-    conndata.conn = tx->conn;
+    conndata.conn = itx->conn;
 
     /* Write response header separator to libhtp. */
     conndata.dlen = 2;
     conndata.data = (uint8_t *)"\r\n";
     rc = modhtp_iface_data_out(pi, &conndata);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Generate header fields. */
+    rc = modhtp_gen_response_header_fields(pi, itx);
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
 static ib_status_t modhtp_iface_response_body_data(ib_provider_inst_t *pi,
-                                                   ib_tx_t *tx,
+                                                   ib_tx_t *itx,
                                                    ib_txdata_t *txdata)
 {
     IB_FTRACE_INIT();
 
     assert(pi != NULL);
-    assert(tx != NULL);
+    assert(itx != NULL);
     assert(txdata != NULL);
 
     ib_conndata_t conndata = {0};
     ib_status_t rc;
 
     /* This is required for parsed data only. */
-    if (ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
+    if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug_tx(tx, "SEND RESPONSE BODY DATA TO LIBHTP: modhtp_iface_response_body_data");
+    ib_log_debug_tx(itx, "SEND RESPONSE BODY DATA TO LIBHTP: modhtp_iface_response_body_data");
 
-    conndata.conn = tx->conn;
+    conndata.conn = itx->conn;
 
     /* Write request body data to libhtp. */
     conndata.dlen = txdata->dlen;
@@ -1749,187 +2050,20 @@ static ib_status_t modhtp_iface_response_body_data(ib_provider_inst_t *pi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static ib_status_t modhtp_iface_gen_request_header_fields(
-    ib_provider_inst_t *pi,
-    ib_tx_t *itx)
+static ib_status_t modhtp_iface_response_finished(ib_provider_inst_t *pi,
+                                                  ib_tx_t *itx)
 {
     IB_FTRACE_INIT();
-    ib_context_t *ctx = itx->ctx;
-    ib_conn_t *iconn = itx->conn;
-    ib_field_t *f;
-    modhtp_cfg_t *modcfg;
-    modhtp_context_t *modctx;
-    htp_tx_t *tx;
+
+    assert(pi != NULL);
+    assert(itx != NULL);
+
     ib_status_t rc;
 
-    /* Get the module config. */
-    rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(itx, "Failed to fetch module %s config: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    /* Generate fields. */
+    rc = modhtp_gen_response_fields(pi, itx);
 
-    /* Fetch context from the connection. */
-    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
-
-    /* Use the current parser transaction to generate fields. */
-    /// @todo Check htp state, etc.
-    tx = modctx->htp->in_tx;
-    if (tx != NULL) {
-        ib_log_debug3_tx(itx, "LibHTP: associating itx=%p with tx=%p", itx, tx);
-        htp_tx_set_user_data(tx, itx);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri_scheme",
-                                 tx->parsed_uri->scheme,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri_username",
-                                 tx->parsed_uri->username,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri_password",
-                                 tx->parsed_uri->password,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri_host",
-                                 tx->parsed_uri->hostname,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_host",
-                                 tx->parsed_uri->hostname,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri_port",
-                                 tx->parsed_uri->port,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri_path",
-                                 tx->parsed_uri->path,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri_query",
-                                 tx->parsed_uri->query,
-                                 NULL);
-
-        modhtp_field_gen_bytestr(itx->dpi,
-                                 "request_uri_fragment",
-                                 tx->parsed_uri->fragment,
-                                 NULL);
-
-        rc = ib_data_add_list(itx->dpi, "request_cookies", &f);
-        if (   (tx->request_cookies != NULL)
-            && table_size(tx->request_cookies)
-            && (rc == IB_OK))
-        {
-            bstr *key = NULL;
-            bstr *value = NULL;
-
-            /// @todo Make this a function
-            table_iterator_reset(tx->request_cookies);
-            ib_log_debug3_tx(itx, "Adding request_cookies fields");
-            while ((key = table_iterator_next(tx->request_cookies,
-                                              (void *)&value)) != NULL)
-            {
-                ib_field_t *lf;
-
-                /* Create a list field as an alias into htp memory. */
-                rc = ib_field_create_bytestr_alias(&lf,
-                                           itx->mp,
-                                           bstr_ptr(key),
-                                           bstr_len(key),
-                                           (uint8_t *)bstr_ptr(value),
-                                           bstr_len(value));
-                if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx,
-                                     "Failed to create field: %s",
-                                     ib_status_to_string(rc));
-                }
-
-                /* Add the field to the field list. */
-                rc = ib_field_list_add(f, lf);
-                if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx,
-                                     "Failed to add field: %s",
-                                     ib_status_to_string(rc));
-                }
-            }
-        }
-        else if (rc == IB_OK) {
-            ib_log_debug3_tx(itx, "No request cookies");
-        }
-        else {
-            ib_log_error_tx(itx,
-                            "Failed to create request cookies list: %s",
-                            ib_status_to_string(rc));
-        }
-
-        rc = ib_data_add_list(itx->dpi, "request_uri_params", &f);
-        if (   (tx->request_params_query != NULL)
-            && table_size(tx->request_params_query)
-            && (rc == IB_OK))
-        {
-            bstr *key = NULL;
-            bstr *value = NULL;
-
-            /// @todo Make this a function
-            table_iterator_reset(tx->request_params_query);
-            ib_log_debug3_tx(itx, "Adding request_params_query fields");
-            while ((key = table_iterator_next(tx->request_params_query,
-                                              (void *)&value)) != NULL)
-            {
-                ib_field_t *lf;
-
-                /* Create a list field as an alias into htp memory. */
-                rc = ib_field_create_bytestr_alias(&lf,
-                                           itx->mp,
-                                           bstr_ptr(key),
-                                           bstr_len(key),
-                                           (uint8_t *)bstr_ptr(value),
-                                           bstr_len(value));
-                if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx,
-                                     "Failed to create field: %s",
-                                     ib_status_to_string(rc));
-                }
-
-                /* Add the field to the field list. */
-                rc = ib_field_list_add(f, lf);
-                if (rc != IB_OK) {
-                    ib_log_debug3_tx(itx,
-                                     "Failed to add field: %s",
-                                     ib_status_to_string(rc));
-                }
-            }
-        }
-        else if (rc == IB_OK) {
-            ib_log_debug3_tx(itx, "No request URI parameters");
-        }
-        else {
-            ib_log_error_tx(itx,
-                            "Failed to create request URI parameters: %s",
-                            ib_status_to_string(rc));
-        }
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-static ib_status_t modhtp_iface_gen_response_header_fields(
-    ib_provider_inst_t *pi,
-    ib_tx_t *itx)
-{
-    IB_FTRACE_INIT();
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
@@ -1948,14 +2082,13 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
     modhtp_iface_request_header_data,
     modhtp_iface_request_header_finished,
     modhtp_iface_request_body_data,
+    modhtp_iface_request_finished,
 
     modhtp_iface_response_line,
     modhtp_iface_response_header_data,
     modhtp_iface_response_header_finished,
     modhtp_iface_response_body_data,
-
-    modhtp_iface_gen_request_header_fields,
-    modhtp_iface_gen_response_header_fields
+    modhtp_iface_response_finished,
 };
 
 
