@@ -2997,7 +2997,7 @@ const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule)
         IB_FTRACE_RET_CONSTSTR(rule->meta.chain_id);
     }
 
-    return NULL;
+    IB_FTRACE_RET_CONSTSTR(NULL);
 }
 
 ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
