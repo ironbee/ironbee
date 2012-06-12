@@ -723,7 +723,7 @@ static void log_exec_fast(const ib_rule_log_exec_t *log_exec,
     char actbuf[MAX_ACTBUF + 1];
 
     build_act_buf(log_exec, actbuf, MAX_ACTBUF);
-    
+
     ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
                    "%s %s:%d %"PRIu64"us %s actions=%s",
                    LOG_PREFIX,

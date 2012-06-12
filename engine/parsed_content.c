@@ -454,7 +454,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
             ib_log_notice_tx(tx,
                              "Unable to generate raw request line without line "
                              "components - using zero length request line.");
-                             
+
             rc = ib_bytestr_dup_mem(&line_tmp->raw,
                                     tx->mp,
                                     (const uint8_t *)"",
