@@ -495,76 +495,6 @@ static ib_status_t execute_rule_operator(ib_engine_t *ib,
 }
 
 /**
- * Execute all operators on a single target.
- * @param[in] ib The IronBee engine.
- * @param[in] tx The transaction. Passed to execute_rule_operator.
- * @param[in] rule The rule being executed.
- * @param[in] target Assigned to the target_result.
- * @param[in] opinst The operator instance.
- * @param[in] operand The field to operate on.
- * @param[in,out] rule_result The return code from the operator execution.
- * @param[out] target_results The results of the execution.
- * @returns IB_OK if the execution completed without error.
- *          If execute_target_tfns or execute_rule_operator fails
- *          then the return code from the failing call is returned
- *          immediately.
- */
-static ib_status_t execute_phase_rule_targets_operators(
-    ib_engine_t *ib,
-    ib_tx_t *tx,
-    ib_rule_t *rule,
-    ib_rule_target_t *target,
-    ib_operator_inst_t  *opinst,
-    ib_field_t *operand,
-    ib_num_t *rule_result,
-    ib_rule_log_exec_t *log_exec)
-{
-    IB_FTRACE_INIT();
-
-    ib_status_t rc;
-    ib_num_t result = 0;
-    ib_field_t *tfnvalue = NULL;  /* Value after transformations */
-
-    /* Execute the field operators */
-    rc = execute_target_tfns(ib, tx, rule, target,
-                             operand, &tfnvalue, log_exec);
-    if (rc != IB_OK) {
-        ib_rule_log_error(tx, rule, target, NULL,
-                          "Error executing transformations : %s",
-                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Execute the rule operator */
-    rc = execute_rule_operator(ib,
-                               tx,
-                               rule,
-                               target,
-                               opinst,
-                               tfnvalue,
-                               MAX_LIST_RECURSION,
-                               &result);
-    if (rc != IB_OK) {
-        ib_rule_log_error(tx, rule, target, NULL,
-                          "Operator returned an error: %s",
-                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    ib_rule_log_debug(tx, rule, target, NULL, "Operator result => %" PRId64,
-                      result);
-
-    /* Store the result */
-    if (result != 0) {
-        *rule_result = result;
-    }
-
-    /* Add a target execution result to the log object */
-    ib_rule_log_exec_add_tgt(log_exec, target, operand, tfnvalue, result);
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
  * Execute a single rule's operator on all target fields.
  *
  * @param[in] ib Engine
@@ -586,9 +516,9 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     assert(rule);
     assert(tx);
     assert(rule_result);
-    ib_list_node_t      *node = NULL;
-    ib_operator_inst_t  *opinst = rule->opinst;
-    ib_status_t          rc = IB_OK;
+    ib_list_node_t       *node = NULL;
+    ib_operator_inst_t   *opinst = rule->opinst;
+    ib_status_t           rc = IB_OK;
 
     /* Special case: External rules */
     if (ib_flags_all(rule->flags, IB_RULE_FLAG_EXTERNAL) == true) {
@@ -619,8 +549,10 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         assert(target != NULL);
         const char       *fname = target->field_name;
         assert(fname != NULL);
-        ib_field_t       *value = NULL;     /* Value from the DPI */
-        ib_status_t       getrc;            /* Status from ib_data_get() */
+        ib_field_t       *value = NULL;      /* Value from the DPI */
+        ib_field_t       *tfnvalue = NULL;   /* Value after transformations */
+        ib_status_t       getrc;             /* Status from ib_data_get() */
+        ib_num_t          target_result = 0; /* Result of this target */
 
         /* Get the field value */
         getrc = ib_data_get(tx->dpi, fname, &value);
@@ -638,6 +570,19 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
             continue;
         }
 
+        /* Execute the target transformations */
+        if (value != NULL) {
+            rc = execute_target_tfns(ib, tx, rule, target,
+                                     value, &tfnvalue, log_exec);
+            if (rc != IB_OK) {
+                ib_rule_log_error(tx, rule, target, NULL,
+                                  "Error executing transformations : %s",
+                                  ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+
+        /* Execute the rule operator on the value */
         if ( (value != NULL) && (value->type == IB_FTYPE_LIST) ) {
             ib_list_t *value_list;
             ib_list_node_t *value_node;
@@ -652,40 +597,58 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
 
             /* Run operations on each list element. */
             IB_LIST_LOOP(value_list, value_node) {
-                ib_status_t tmp_rc =
-                    execute_phase_rule_targets_operators(
-                        ib,
-                        tx,
-                        rule,
-                        target,
-                        opinst,
-                        (ib_field_t *) value_node->data,
-                        rule_result,
-                        log_exec);
-
-                /* Capture failure to report back to the caller. */
-                if (tmp_rc != IB_OK) {
+                ib_num_t result = 0;
+                rc = execute_rule_operator(ib,
+                                           tx,
+                                           rule,
+                                           target,
+                                           opinst,
+                                           tfnvalue,
+                                           MAX_LIST_RECURSION,
+                                           &result);
+                if (rc != IB_OK) {
                     ib_rule_log_error(tx, rule, target, NULL,
-                                      "Error running operator: %s",
+                                      "Operator returned an error: %s",
                                       ib_status_to_string(rc));
-                    rc = tmp_rc;
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+                ib_rule_log_debug(tx, rule, target, NULL,
+                                  "Operator result => %" PRId64,
+                                  result);
+
+                /* Store the result */
+                if (result != 0) {
+                    target_result = result;
                 }
             }
         }
         else {
-            rc = execute_phase_rule_targets_operators(ib,
-                                                      tx,
-                                                      rule,
-                                                      target,
-                                                      opinst,
-                                                      value,
-                                                      rule_result,
-                                                      log_exec);
+            rc = execute_rule_operator(ib,
+                                       tx,
+                                       rule,
+                                       target,
+                                       opinst,
+                                       tfnvalue,
+                                       MAX_LIST_RECURSION,
+                                       &target_result);
             if (rc != IB_OK) {
                 ib_rule_log_error(tx, rule, target, NULL,
-                                  "Error running operator: %s",
+                                  "Operator returned an error: %s",
                                   ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
             }
+            ib_rule_log_debug(tx, rule, target, NULL,
+                              "Operator result => %" PRId64,
+                              target_result);
+        }
+
+        /* Add a target execution result to the log object */
+        ib_rule_log_exec_add_tgt(log_exec, target, value,
+                                 tfnvalue, target_result);
+
+        /* Store the result */
+        if (target_result != 0) {
+            *rule_result = target_result;
         }
     }
 
