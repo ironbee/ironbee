@@ -49,7 +49,7 @@ extern "C" {
 /**
  * Function to lookup a key for expansion
  *
- * @param[in] data Ojbect to look up data in
+ * @param[in] data Object to look up data in
  * @param[in] name Key name
  * @param[in] nlen Length of @a name
  * @param[out] pf Pointer to field from hash or NULL
