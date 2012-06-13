@@ -164,8 +164,8 @@ TEST_F(PcreModuleTest, matches)
     size_t s_sz;
     ib_status_t rc;
 
-    /* Check TX:0 */
-    ib_data_get(ib_tx->dpi, "TX:0", &ib_field);
+    /* Check :0 */
+    ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":0", &ib_field);
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
@@ -174,8 +174,8 @@ TEST_F(PcreModuleTest, matches)
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
-    /* Check TX:1 */
-    ib_data_get(ib_tx->dpi, "TX:1", &ib_field);
+    /* Check :1 */
+    ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":1", &ib_field);
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
@@ -184,8 +184,8 @@ TEST_F(PcreModuleTest, matches)
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
-    /* Check TX:2 */
-    ib_data_get(ib_tx->dpi, "TX:2", &ib_field);
+    /* Check :2 */
+    ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":2", &ib_field);
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
@@ -204,7 +204,7 @@ TEST_F(PcreModuleTest, matches)
     s[s_sz] = '\0';
     ASSERT_STREQ("header4", s);
 
-    ib_data_get(ib_tx->dpi, "TX:3", &ib_field);
+    ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":3", &ib_field);
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));

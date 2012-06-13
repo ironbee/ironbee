@@ -130,6 +130,9 @@ typedef enum {
 #define IB_TX_BLOCK_PHASE       (1 << 19) /**< Block tx after this phase */
 #define IB_TX_BLOCK_IMMEDIATE   (1 << 20) /**< Block tx ASAP */
 
+/** Capture collection name */
+#define IB_TX_CAPTURE           "CAPTURE" /**< Name of the capture collection */
+
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???
 typedef enum {

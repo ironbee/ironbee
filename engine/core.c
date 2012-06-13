@@ -3698,10 +3698,10 @@ static ib_status_t dpi_default_init(ib_engine_t *ib, ib_tx_t *tx)
     assert(tx!=NULL);
     assert(tx->dpi!=NULL);
 
-    rc = ib_data_add_list_ex(tx->dpi, "TX", 2, NULL);
+    rc = ib_data_add_list_ex(tx->dpi, IB_TX_CAPTURE, 2, NULL);
 
     if (rc!=IB_OK) {
-        ib_log_debug2_tx(tx, "Unable to add list \"TX\".");
+        ib_log_debug2_tx(tx, "Unable to add list \""IB_TX_CAPTURE"\".");
         IB_FTRACE_RET_STATUS(rc);
     }
 

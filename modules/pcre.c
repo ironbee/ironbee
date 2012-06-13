@@ -939,7 +939,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 #endif
 
     if (matches > 0) {
-        pcre_set_matches(ib, tx, "TX", ovector, matches, subject);
+        pcre_set_matches(ib, tx, IB_TX_CAPTURE, ovector, matches, subject);
         ib_rc = IB_OK;
         *result = 1;
     }
