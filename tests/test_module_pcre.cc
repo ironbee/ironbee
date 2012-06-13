@@ -38,13 +38,21 @@ public:
 
     ib_conn_t *ib_conn;
     ib_tx_t *ib_tx;
+    ib_rule_t *rule1;
+    ib_rule_t *rule2;
+    ib_field_t* field1;
+    ib_field_t* field2;
 
     PcreModuleTest() : BaseModuleFixture("ibmod_pcre.so") 
     {
     }
 
-    virtual void SetUp() {
+    virtual void SetUp()
+    {
+        ib_status_t rc;
         BaseModuleFixture::SetUp();
+        const char *s1 = "string 1";
+        const char *s2 = "string 2";
 
         configureIronBee();
 
@@ -68,61 +76,77 @@ public:
         assert(ib_conn->tx!=NULL);
         ib_tx = ib_conn->tx;
 
+        char* str1 = (char *)ib_mpool_alloc(ib_engine->mp, (strlen(s1)+1));
+        if (str1 == NULL) {
+            throw std::runtime_error("Could not allocate string 1.");
+        }
+        strcpy(str1, s1);
+        char* str2 = (char *)ib_mpool_alloc(ib_engine->mp, (strlen(s2)+1));
+        if (str1 == NULL) {
+            throw std::runtime_error("Could not allocate string 2.");
+        }
+        strcpy(str2, s2);
+    
+        // Create field 1.
+        rc = ib_field_create(&field1,
+                             ib_engine->mp,
+                             IB_FIELD_NAME("field1"),
+                             IB_FTYPE_NULSTR,
+                             ib_ftype_nulstr_in(str1));
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not initialize field1.");
+        }
+
+        // Create field 2.
+        rc = ib_field_create(&field2,
+                             ib_engine->mp,
+                             IB_FIELD_NAME("field2"),
+                             IB_FTYPE_NULSTR,
+                             ib_ftype_nulstr_in(str2));
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not initialize field2.");
+        }
+
+        /* Create rule 1 */
+        rc = (ib_rule_create(ib_engine,
+                             ib_engine->ectx,
+                             __FILE__,
+                             __LINE__,
+                             true,
+                             &rule1));
+
+        /* Create rule 2 */
+        rc = (ib_rule_create(ib_engine,
+                             ib_engine->ectx,
+                             __FILE__,
+                             __LINE__,
+                             true,
+                             &rule2));
+        rule2->flags |= IB_RULE_FLAG_CAPTURE;
     }
+
 };
 
 TEST_F(PcreModuleTest, test_load_module)
 {
     ib_operator_t op;
-    ib_operator_inst_t *op_inst=NULL;
-    ib_num_t result;
-    ib_rule_t *rule;
-
-    ib_field_t* field1;
-    ib_field_t* field2;
-
-    char* str1 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string 1")+1));
-    char* str2 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string 2")+1));
-    strcpy(str1, "string 1");
-    strcpy(str2, "string 2");
-    
-    // Create field 1.
-    ASSERT_EQ(IB_OK,
-        ib_field_create(
-            &field1,
-            ib_engine->mp,
-            IB_FIELD_NAME("field1"),
-            IB_FTYPE_NULSTR,
-            ib_ftype_nulstr_in(str1)
-        )
-    );
-
-    // Create field 2.
-    ASSERT_EQ(IB_OK,
-        ib_field_create(
-            &field2,
-            ib_engine->mp,
-            IB_FIELD_NAME("field2"),
-            IB_FTYPE_NULSTR,
-            ib_ftype_nulstr_in(str2)
-        )
-    );
-
-    ASSERT_IB_OK(ib_rule_create(ib_engine,
-                                ib_engine->ectx,
-                                __FILE__,
-                                __LINE__,
-                                true,
-                                &rule));
 
     // Ensure that the operator exists.
     ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, (void**)&op, "pcre"));
+}
 
-    // Get the operator.
+TEST_F(PcreModuleTest, test_pcre_operator)
+{
+    ib_operator_inst_t *op_inst = NULL;
+    ib_field_t *outfield;
+    const ib_list_t *outlist;
+    ib_num_t result;
+
+    // Create the operator instance.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
                                       NULL,
-                                      rule,
+                                      rule1,
                                       IB_OP_FLAG_PHASE,
                                       "pcre",
                                       "string\\s2",
@@ -132,7 +156,7 @@ TEST_F(PcreModuleTest, test_load_module)
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
                                              ib_conn->tx,
-                                             rule,
+                                             rule1,
                                              op_inst->data,
                                              op_inst->flags,
                                              field1,
@@ -144,7 +168,7 @@ TEST_F(PcreModuleTest, test_load_module)
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
                                              ib_conn->tx,
-                                             rule,
+                                             rule1,
                                              op_inst->data,
                                              op_inst->flags,
                                              field2,
@@ -152,9 +176,106 @@ TEST_F(PcreModuleTest, test_load_module)
 
     // This time we should succeed.
     ASSERT_TRUE(result);
+
+    // Should be no capture set */
+    ASSERT_EQ(IB_OK,
+              ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":0", &outfield));
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), outfield);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), outfield->type);
+    ib_field_value(outfield, ib_ftype_list_out(&outlist));
+    ASSERT_EQ(0U, IB_LIST_ELEMENTS(outlist));
+
+    // Create the operator instance.
+    ASSERT_EQ(IB_OK,
+              ib_operator_inst_create(ib_engine,
+                                      NULL,
+                                      rule1,
+                                      IB_OP_FLAG_PHASE,
+                                      "pcre",
+                                      "(string 2)",
+                                      IB_OPINST_FLAG_NONE,
+                                      &op_inst));
+
+    // Attempt to match.
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
+                                             ib_conn->tx,
+                                             rule1,
+                                             op_inst->data,
+                                             op_inst->flags,
+                                             field1,
+                                             &result));
+
+    // We should fail.
+    ASSERT_FALSE(result);
+
+    // Attempt to match again.
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
+                                             ib_conn->tx,
+                                             rule1,
+                                             op_inst->data,
+                                             op_inst->flags,
+                                             field2,
+                                             &result));
+
+    // This time we should succeed.
+    ASSERT_TRUE(result);
+
+    // Should be no capture (CAPTURE flag not set for rule 1)
+    ASSERT_EQ(IB_OK,
+              ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":0", &outfield));
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), outfield);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), outfield->type);
+    ib_field_value(outfield, ib_ftype_list_out(&outlist));
+    ASSERT_EQ(0U, IB_LIST_ELEMENTS(outlist));
+
+    // Create the operator instance.
+    ASSERT_EQ(IB_OK,
+              ib_operator_inst_create(ib_engine,
+                                      NULL,
+                                      rule2,
+                                      IB_OP_FLAG_PHASE,
+                                      "pcre",
+                                      "(string 2)",
+                                      IB_OPINST_FLAG_NONE,
+                                      &op_inst));
+
+    // Attempt to match again.
+    ASSERT_EQ(IB_OK,
+              op_inst->op->fn_execute(ib_engine,
+                                      ib_conn->tx,
+                                      rule2,
+                                      op_inst->data,
+                                      op_inst->flags,
+                                      field2,
+                                      &result));
+
+    // This time we should succeed.
+    ASSERT_TRUE(result);
+
+    // Should be a capture (CAPTURE flag is set for rule 2)
+    ASSERT_EQ(IB_OK,
+              ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":0", &outfield));
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), outfield);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), outfield->type);
+    ib_field_value(outfield, ib_ftype_list_out(&outlist));
+    ASSERT_EQ(1U, IB_LIST_ELEMENTS(outlist));
 }
 
-TEST_F(PcreModuleTest, matches)
+TEST_F(PcreModuleTest, test_match_basic)
+{
+    ib_field_t *outfield;
+    const ib_list_t *outlist;
+
+    // Should be no capture set */
+    ASSERT_EQ(IB_OK,
+              ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":0", &outfield));
+    ASSERT_NE(static_cast<ib_field_t*>(NULL), outfield);
+    ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), outfield->type);
+    ib_field_value(outfield, ib_ftype_list_out(&outlist));
+    ASSERT_EQ(0U, IB_LIST_ELEMENTS(outlist));
+}
+
+TEST_F(PcreModuleTest, test_match_capture)
 {
     ib_field_t *ib_field;
     const ib_list_t *ib_list;
@@ -165,7 +286,7 @@ TEST_F(PcreModuleTest, matches)
     ib_status_t rc;
 
     /* Check :0 */
-    ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":0", &ib_field);
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":0", &ib_field));
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
@@ -175,7 +296,7 @@ TEST_F(PcreModuleTest, matches)
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
     /* Check :1 */
-    ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":1", &ib_field);
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":1", &ib_field));
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
@@ -185,7 +306,7 @@ TEST_F(PcreModuleTest, matches)
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
 
     /* Check :2 */
-    ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":2", &ib_field);
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":2", &ib_field));
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
@@ -204,7 +325,8 @@ TEST_F(PcreModuleTest, matches)
     s[s_sz] = '\0';
     ASSERT_STREQ("header4", s);
 
-    ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":3", &ib_field);
+    ASSERT_EQ(IB_OK,
+              ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":3", &ib_field));
     ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));

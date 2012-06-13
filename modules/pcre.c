@@ -39,6 +39,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
+#include <ironbee/rule_engine.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
@@ -454,7 +455,7 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
 }
 
 /**
- * Match using pcre_exec.
+ * Provider instance match using pcre_exec.
  *
  * @param[in] mpr Provider instance.
  * @param[in] cpatt Callback data of type modpcre_cpatt_t *.
@@ -686,6 +687,7 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
     }
 
     /* We have a match! Now populate TX:0-9 in tx->dpi. */
+    ib_log_debug2_tx(tx, "REGEX populating %d matches", matches);
     for (i=0; i<matches; i++)
     {
         /* Build the field name. Typically TX:0, TX:1 ... TX:9 */
@@ -939,7 +941,9 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 #endif
 
     if (matches > 0) {
-        pcre_set_matches(ib, tx, IB_TX_CAPTURE, ovector, matches, subject);
+        if (ib_flags_all(rule->flags, IB_RULE_FLAG_CAPTURE) == true) {
+            pcre_set_matches(ib, tx, IB_TX_CAPTURE, ovector, matches, subject);
+        }
         ib_rc = IB_OK;
         *result = 1;
     }
