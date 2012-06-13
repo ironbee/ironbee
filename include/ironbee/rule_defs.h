@@ -66,6 +66,7 @@ typedef enum {
 #define IB_RULE_FLAG_CHCHILD  (1 << 3)  /**< Rule is child in a chain */
 #define IB_RULE_FLAG_MAIN_CTX (1 << 4)  /**< Rule owned by main context */
 #define IB_RULE_FLAG_MARK     (1 << 5)  /**< Mark used in list building */
+#define IB_RULE_FLAG_CAPTURE  (1 << 6)  /**< Enable result capture */
 #define IB_RULE_FLAG_CHAIN    (IB_RULE_FLAG_CHPARENT|IB_RULE_FLAG_CHCHILD)
 
 /**

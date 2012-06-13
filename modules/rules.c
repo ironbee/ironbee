@@ -832,6 +832,12 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Capture modifier */
+    if (strcasecmp(name, "capture") == 0) {
+        rule->flags |= IB_RULE_FLAG_CAPTURE;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
     /* Transformation modifiers */
     if ( (ib_rule_allow_tfns(rule) == true) &&
          (strcasecmp(name, "t") == 0) )
