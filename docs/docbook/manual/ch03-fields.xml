@@ -50,6 +50,20 @@
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
     </section>
     <section>
+        <title>CAPTURE</title>
+        <para><emphasis role="bold">Description:</emphasis> Transaction collection.</para>
+        <para><emphasis role="bold">Type:</emphasis> Collection</para>
+        <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para>This collection contains information for the transaction. Currently captured data from
+            operators is stored here in keys "0"-"9".<note>
+                <para>This collection has the potential to be abused. Captures and any other core
+                    functionality should have their own dedicated collection and reserve this for
+                    generic user use.</para>
+            </note></para>
+    </section>
+    <section>
         <title>GEOIP</title>
         <para><emphasis role="bold">Description:</emphasis> If the <emphasis>geoip</emphasis> module
             is loaded, then a lookup will be performed on the remote (client) address and the
@@ -684,12 +698,8 @@ Rule ARGS "@rx test" \
         <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.3</para>
-        <para>This collection contains information for the transaction. Currently captured data from
-            operators is stored here in keys "0"-"9".<note>
-                <para>This collection has the potential to be abused. Captures and any other core
-                    functionality should have their own dedicated collection and reserve this for
-                    generic user use.</para>
-            </note></para>
+        <para>This collection contains arbitrary information for the transaction. It is a generic place
+              for rules to store transaction data in which other rules can monitor.</para>
     </section>
     <section>
         <title>UA</title>
