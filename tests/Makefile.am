@@ -72,18 +72,25 @@ endif
 
 TESTS=$(check_PROGRAMS)
 
-BUILT_SOURCES = \
-    $(abs_builddir)/AhoCorasickModuleTest.config \
-    $(abs_builddir)/ahocorasick.patterns \
-    $(abs_builddir)/DfaModuleTest.matches.config \
-    $(abs_builddir)/gtest_executor.sh \
-    $(abs_builddir)/PcreModuleTest.test_match_basic.config \
-    $(abs_builddir)/PcreModuleTest.test_match_capture.config \
-    $(abs_builddir)/PcreModuleTest.test_pcre_operator.config \
-    $(abs_builddir)/PcreModuleTest.test_load_module.config \
-    $(abs_builddir)/test_ironbee_lua_api.conf \
-    $(abs_builddir)/TestIronBeeModuleRulesLua.operator_test.config \
-    $(abs_builddir)/test_module_rules_lua.lua
+TEST_EXTRAS = \
+       AhoCorasickModuleTest.config \
+       ahocorasick.patterns \
+       DfaModuleTest.matches.config \
+       gtest_executor.sh \
+       PcreModuleTest.test_load_module.config \
+       PcreModuleTest.test_pcre_operator.config \
+       PcreModuleTest.test_match_basic.config \
+       PcreModuleTest.test_match_capture.config \
+       test_ironbee_lua_api.conf \
+       TestIronBeeModuleRulesLua.operator_test.config \
+       test_module_rules_lua.lua
+
+EXTRA_DIST = \
+       gtest \
+       base_fixture.h \
+       $(TEST_EXTRAS)
+
+BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
 
 $(abs_builddir)/%: $(srcdir)/%
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
