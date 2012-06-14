@@ -1,17 +1,4 @@
 ACLOCAL_AMFLAGS = -I../acinclude
-EXTRA_DIST = gtest \
-       AhoCorasickModuleTest.config \
-       ahocorasick.patterns \
-       base_fixture.h \
-       DfaModuleTest.matches.config \
-       gtest_executor.sh \
-       PcreModuleTest.test_match_basic.config \
-       PcreModuleTest.test_match_capture.config \
-       PcreModuleTest.test_pcre_operator.config \
-       PcreModuleTest.test_load_module.config \
-       test_ironbee_lua_api.conf \
-       TestIronBeeModuleRulesLua.operator_test.config \
-       test_module_rules_lua.lua
 
 include $(top_srcdir)/build/tests.mk
 
