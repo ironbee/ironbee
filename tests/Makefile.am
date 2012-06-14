@@ -5,7 +5,9 @@ EXTRA_DIST = gtest \
        base_fixture.h \
        DfaModuleTest.matches.config \
        gtest_executor.sh \
-       PcreModuleTest.matches.config \
+       PcreModuleTest.test_match_basic.config \
+       PcreModuleTest.test_match_capture.config \
+       PcreModuleTest.test_pcre_operator.config \
        PcreModuleTest.test_load_module.config \
        test_ironbee_lua_api.conf \
        TestIronBeeModuleRulesLua.operator_test.config \
@@ -88,7 +90,9 @@ BUILT_SOURCES = \
     $(abs_builddir)/ahocorasick.patterns \
     $(abs_builddir)/DfaModuleTest.matches.config \
     $(abs_builddir)/gtest_executor.sh \
-    $(abs_builddir)/PcreModuleTest.matches.config \
+    $(abs_builddir)/PcreModuleTest.test_match_basic.config \
+    $(abs_builddir)/PcreModuleTest.test_match_capture.config \
+    $(abs_builddir)/PcreModuleTest.test_pcre_operator.config \
     $(abs_builddir)/PcreModuleTest.test_load_module.config \
     $(abs_builddir)/test_ironbee_lua_api.conf \
     $(abs_builddir)/TestIronBeeModuleRulesLua.operator_test.config \
