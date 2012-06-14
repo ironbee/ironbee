@@ -1089,7 +1089,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
     ib_log_debug3_tx(itx, "Destroying transaction structure");
     ib_tx_destroy(itx);
 
-    /* NOTE: The htp transaction is destroyed in modhtp_tx_finished() */
+    /* NOTE: The htp transaction is destroyed in modhtp_tx_cleanup() */
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -1689,6 +1689,65 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+static ib_status_t modhtp_iface_tx_init(ib_provider_inst_t *pi,
+                                        ib_tx_t *itx)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t modhtp_iface_tx_cleanup(ib_provider_inst_t *pi,
+                                           ib_tx_t *itx)
+{
+    IB_FTRACE_INIT();
+    ib_conn_t *iconn = itx->conn;
+    modhtp_context_t *modctx;
+    htp_tx_t *in_tx;
+    htp_tx_t *out_tx;
+
+    assert(itx != NULL);
+    assert(itx->conn != NULL);
+
+    /* Fetch context from the connection. */
+    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
+
+    /* Use the current parser transaction to generate fields. */
+    out_tx = modctx->htp->out_tx;
+
+    /* Reset libhtp connection parser. */
+    if (out_tx != NULL) {
+        ib_tx_t *tx_itx = htp_tx_get_user_data(out_tx);
+        if (tx_itx == itx) {
+            ib_log_debug_tx(itx, "Destroying LibHTP outbound transaction=%p id=%s", out_tx, itx->id);
+            modctx->htp->out_status = STREAM_STATE_OPEN;
+            modctx->htp->out_state = htp_connp_RES_IDLE;
+            htp_tx_destroy(out_tx);
+            modctx->htp->out_tx = NULL;
+            if (out_tx == modctx->htp->in_tx) {
+                modctx->htp->in_tx = NULL;
+            }
+        }
+    }
+
+    in_tx = modctx->htp->in_tx;
+    if (in_tx != NULL) {
+        ib_tx_t *tx_itx = htp_tx_get_user_data(in_tx);
+        if (tx_itx == itx) {
+            ib_log_debug_tx(itx, "Destroying LibHTP inbound transaction=%p id=%s", in_tx, itx->id);
+            modctx->htp->in_status = STREAM_STATE_OPEN;
+            htp_tx_destroy(in_tx);
+            modctx->htp->in_tx = NULL;
+            modctx->htp->in_state = htp_connp_REQ_IDLE;
+            if (in_tx == modctx->htp->out_tx) {
+                modctx->htp->out_tx = NULL;
+            }
+        }
+    }
+
+    htp_connp_clear_error(modctx->htp);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 static ib_status_t modhtp_iface_request_line(ib_provider_inst_t *pi,
                                              ib_tx_t *itx,
                                              ib_parsed_req_line_t *line)
@@ -2069,8 +2128,11 @@ static ib_status_t modhtp_iface_response_finished(ib_provider_inst_t *pi,
 static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
     IB_PROVIDER_IFACE_HEADER_DEFAULTS,
 
-    /* Optional Parser Functions */
+    /* Connection Init/Cleanup */
     modhtp_iface_init,
+    NULL,
+
+    /* Connect/Disconnect */
     NULL,
     modhtp_iface_disconnect,
 
@@ -2078,76 +2140,24 @@ static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
     modhtp_iface_data_in,
     modhtp_iface_data_out,
 
+    /* Transaction Init/Cleanup */
+    modhtp_iface_tx_init,
+    modhtp_iface_tx_cleanup,
+
+    /* Request */
     modhtp_iface_request_line,
     modhtp_iface_request_header_data,
     modhtp_iface_request_header_finished,
     modhtp_iface_request_body_data,
     modhtp_iface_request_finished,
 
+    /* Response */
     modhtp_iface_response_line,
     modhtp_iface_response_header_data,
     modhtp_iface_response_header_finished,
     modhtp_iface_response_body_data,
     modhtp_iface_response_finished,
 };
-
-
-/* -- Hook Handlers -- */
-
-static ib_status_t modhtp_tx_finished(ib_engine_t *ib,
-                                      ib_tx_t *itx,
-                                      ib_state_event_type_t event,
-                                      void *cbdata)
-{
-    IB_FTRACE_INIT();
-    ib_conn_t *iconn = itx->conn;
-    modhtp_context_t *modctx;
-    htp_tx_t *in_tx;
-    htp_tx_t *out_tx;
-
-    assert(itx != NULL);
-    assert(itx->conn != NULL);
-
-    /* Fetch context from the connection. */
-    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
-
-    /* Use the current parser transaction to generate fields. */
-    out_tx = modctx->htp->out_tx;
-
-    /* Reset libhtp connection parser. */
-    if (out_tx != NULL) {
-        ib_tx_t *tx_itx = htp_tx_get_user_data(out_tx);
-        if (tx_itx == itx) {
-            ib_log_debug_tx(itx, "Destroying LibHTP outbound transaction=%p id=%s", out_tx, itx->id);
-            modctx->htp->out_status = STREAM_STATE_OPEN;
-            modctx->htp->out_state = htp_connp_RES_IDLE;
-            htp_tx_destroy(out_tx);
-            modctx->htp->out_tx = NULL;
-            if (out_tx == modctx->htp->in_tx) {
-                modctx->htp->in_tx = NULL;
-            }
-        }
-    }
-
-    in_tx = modctx->htp->in_tx;
-    if (in_tx != NULL) {
-        ib_tx_t *tx_itx = htp_tx_get_user_data(in_tx);
-        if (tx_itx == itx) {
-            ib_log_debug_tx(itx, "Destroying LibHTP inbound transaction=%p id=%s", in_tx, itx->id);
-            modctx->htp->in_status = STREAM_STATE_OPEN;
-            htp_tx_destroy(in_tx);
-            modctx->htp->in_tx = NULL;
-            modctx->htp->in_state = htp_connp_REQ_IDLE;
-            if (in_tx == modctx->htp->out_tx) {
-                modctx->htp->out_tx = NULL;
-            }
-        }
-    }
-
-    htp_connp_clear_error(modctx->htp);
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
 
 
 /* -- Module Routines -- */
@@ -2170,9 +2180,6 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
                      "%s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
-
-    ib_hook_tx_register(ib, tx_finished_event,
-                        modhtp_tx_finished, NULL);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

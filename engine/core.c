@@ -3064,8 +3064,7 @@ static ib_status_t parser_register(ib_engine_t *ib,
     }
 
     /* Verify that required interface functions are implemented. */
-    /// @todo Update which are required
-    if ((iface->data_in == NULL) || (iface->data_out == NULL)) {
+    if ((iface->conn_data_in == NULL) || (iface->conn_data_out == NULL)) {
         ib_log_alert(ib, "The data in/out and generate interface functions "
                             "MUST be implemented by a parser provider");
         IB_FTRACE_RET_STATUS(IB_EINVAL);

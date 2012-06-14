@@ -353,11 +353,20 @@ void DLL_PUBLIC ib_audit_provider_set_instance(ib_context_t *ctx,
 /** Parser Interface Definition. */
 IB_PROVIDER_DECLARE_IFACE(parser) {
     IB_PROVIDER_IFACE_HEADER;
+
+    /* Connection Initialization/Cleanup Functions */
     IB_PROVIDER_FUNC(
         ib_status_t,
-        init,
+        conn_init,
         (ib_provider_inst_t *pi, ib_conn_t *conn)
     );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        conn_cleanup,
+        (ib_provider_inst_t *pi, ib_conn_t *conn)
+    );
+
+    /* Connect/Disconnect Functions */
     IB_PROVIDER_FUNC(
         ib_status_t,
         connect,
@@ -372,13 +381,25 @@ IB_PROVIDER_DECLARE_IFACE(parser) {
     /* Raw Connection Data Functions */
     IB_PROVIDER_FUNC(
         ib_status_t,
-        data_in,
+        conn_data_in,
         (ib_provider_inst_t *pi, ib_conndata_t *cdata)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
-        data_out,
+        conn_data_out,
         (ib_provider_inst_t *pi, ib_conndata_t *cdata)
+    );
+
+    /* Transaction Initialization/Cleanup Function */
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        tx_init,
+        (ib_provider_inst_t *pi, ib_tx_t *tx)
+    );
+    IB_PROVIDER_FUNC(
+        ib_status_t,
+        tx_cleanup,
+        (ib_provider_inst_t *pi, ib_tx_t *tx)
     );
 
     /* Preparsed Request Data Functions */
@@ -435,8 +456,8 @@ IB_PROVIDER_DECLARE_IFACE(parser) {
         (ib_provider_inst_t *pi, ib_tx_t *tx)
     );
 
-    /// @todo Need to be able to hook into parser events
-    /// @todo Need to handle delayed (on demand) field generation
+    // TODO: Need to be able to hook into parser events
+    // TODO: Need to handle delayed (on demand) field generation
 };
 
 /**
