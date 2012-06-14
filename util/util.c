@@ -48,7 +48,7 @@ static struct _ibutil_logger_t {
  * Builtin Logger.
  */
 static void _builtin_logger(void *cbdata, int level,
-                            const char *prefix, const char *file, int line,
+                            const char *file, int line,
                             const char *fmt, va_list ap)
 {
     FILE *fp = (FILE *)cbdata;
@@ -59,15 +59,15 @@ static void _builtin_logger(void *cbdata, int level,
 
     if ((file != NULL) && (line > 0)) {
         int ec = snprintf(fmt2, 1024,
-                          "%s[%d] (%s:%d) %s\n",
-                          (prefix?prefix:""), level, file, line, fmt);
+                          "[%d] (%s:%d) %s\n",
+                          level, file, line, fmt);
         /* It is a coding error if this format string is too big. */
         assert(ec <= 1024);
     }
     else {
         int ec = snprintf(fmt2, 1024,
-                          "%s[%d] %s\n",
-                          (prefix?prefix:""), level, fmt);
+                          "[%d] %s\n",
+                          level, fmt);
         /* It is a coding error if this format string is too big. */
         assert(ec <= 1024);
     }
@@ -93,7 +93,7 @@ ib_status_t ib_util_log_logger(ib_util_fn_logger_t callback,
 }
 
 void ib_util_log_ex(int level,
-                    const char *prefix, const char *file, int line,
+                    const char *file, int line,
                     const char *fmt, ...)
 {
     va_list ap;
@@ -103,8 +103,16 @@ void ib_util_log_ex(int level,
     }
 
     va_start(ap, fmt);
-    _ibutil_logger.callback(_ibutil_logger.cbdata, level,
-                            prefix, file, line, fmt, ap);
+    /* Only pass on the file/line data if we are in DEBUG level or higher. */
+    if (_ibutil_logger.level >= 7) {
+        _ibutil_logger.callback(_ibutil_logger.cbdata,
+                                level, file, line, fmt, ap);
+    }
+    else {
+        _ibutil_logger.callback(_ibutil_logger.cbdata,
+                                level, NULL, 0, fmt, ap);
+    }
+
     va_end(ap);
 }
 

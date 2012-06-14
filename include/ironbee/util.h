@@ -58,22 +58,21 @@ extern "C" {
  * @param fmt Formatting string
  */
 typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
-                                    const char *prefix,
                                     const char *file, int line,
                                     const char *fmt, va_list ap)
-                                    VPRINTF_ATTRIBUTE(6);
+                                    VPRINTF_ATTRIBUTE(5);
 
 /** Normal Logger. */
 #define ib_util_log(lvl,...) \
-  ib_util_log_ex((lvl),"IronBee: ",NULL,0,__VA_ARGS__)
+  ib_util_log_ex((lvl),__FILE__,__LINE__,__VA_ARGS__)
 
 /** Error Logger. */
 #define ib_util_log_error(...) \
-  ib_util_log_ex(3,"IronBeeUtil ERROR: ",NULL,0,__VA_ARGS__)
+  ib_util_log_ex(3,__FILE__,__LINE__,__VA_ARGS__)
 
 /** Debug Logger. */
 #define ib_util_log_debug(...) \
-  ib_util_log_ex(7,"IronBeeUtil DEBUG: ",__FILE__,__LINE__,__VA_ARGS__)
+  ib_util_log_ex(7,__FILE__,__LINE__,__VA_ARGS__)
 
 
 /**
@@ -110,15 +109,14 @@ ib_status_t DLL_PUBLIC ib_util_log_logger(ib_util_fn_logger_t callback,
  * Write a log entry via the logger callback.
  *
  * @param level Log level (0-9)
- * @param prefix String to prefix log header data (or NULL)
  * @param file Filename (or NULL)
  * @param line Line number (or 0)
  * @param fmt Printf-like format string
  */
-void DLL_PUBLIC ib_util_log_ex(int level, const char *prefix,
+void DLL_PUBLIC ib_util_log_ex(int level,
                                const char *file, int line,
                                const char *fmt, ...)
-                               PRINTF_ATTRIBUTE(5, 6);
+                               PRINTF_ATTRIBUTE(4, 5);
 
 /**
  * Create a directory path recursively.

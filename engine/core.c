@@ -5077,28 +5077,13 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
  **/
 static void core_util_logger(
     void *ib, int level,
-    const char *prefix,
     const char *file, int line,
     const char *fmt, va_list ap
 )
 {
     IB_FTRACE_INIT();
 
-    char *new_fmt = NULL;
-    const char *which_new_fmt = NULL;
-    const size_t new_fmt_length = strlen(prefix) + 2;
-    new_fmt = (char *)malloc(new_fmt_length);
-    if (new_fmt == NULL) {
-        which_new_fmt = fmt;
-    }
-    else {
-        which_new_fmt = new_fmt;
-        snprintf(new_fmt, new_fmt_length, "%s %s", prefix, fmt);
-    }
-
-    ib_vlog_ex((ib_engine_t *)ib, level, file, line, which_new_fmt, ap);
-
-    free(new_fmt);
+    ib_vlog_ex((ib_engine_t *)ib, level, file, line, fmt, ap);
 
     IB_FTRACE_RET_VOID();
 }
