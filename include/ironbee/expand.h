@@ -187,7 +187,7 @@ ib_status_t DLL_PUBLIC ib_expand_str_gen_ex(ib_mpool_t *mp,
                                             const char *prefix,
                                             const char *suffix,
                                             bool nul,
-                                            ib_expand_lookup_fn_t fn,
+                                            ib_expand_lookup_fn_t lookup_fn,
                                             const void *lookup_data,
                                             char **result,
                                             size_t *result_len);
