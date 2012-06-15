@@ -71,10 +71,8 @@ bool EchoGenerator::operator()(Input::input_p& out_input)
         Input::Buffer(remote_ip), remote_port
     );
     out_input->connection.connection_closed();
-    out_input->connection.add_transaction(
-        Input::Buffer(m_state->request),
-        Input::Buffer()
-    );
+    out_input->connection.add_transaction()
+        .connection_data_in(Input::Buffer(m_state->request));
 
     m_state->produced_input = true;
 
