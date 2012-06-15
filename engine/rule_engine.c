@@ -53,6 +53,9 @@
 #define PHASE_FLAG_IS_STREAM     (1 << 1)  /**< Phase is steam inspection */
 #define PHASE_FLAG_ALLOW_CHAIN   (1 << 2)  /**< Rule allows chaining */
 #define PHASE_FLAG_ALLOW_TFNS    (1 << 3)  /**< Rule allows transformations */
+#define PHASE_FLAG_REQUEST       (1 << 4)  /**< One of the request phases */
+#define PHASE_FLAG_RESPONSE      (1 << 5)  /**< One of the response phases */
+#define PHASE_FLAG_POSTPROCESS   (1 << 6)  /**< Post process phase */
 
 /**
  * Max # of data types (IB_DTYPE_*) per rule phase
@@ -79,7 +82,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         false,
         PHASE_NONE,
         (ib_state_hook_type_t) -1,
-        (PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
+        ( PHASE_FLAG_ALLOW_CHAIN |
+          PHASE_FLAG_ALLOW_TFNS ),
         "Generic 'Phase' Rule",
         IB_OP_FLAG_PHASE,
         (ib_state_event_type_t) -1
@@ -88,7 +92,10 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         false,
         PHASE_REQUEST_HEADER,
         IB_STATE_HOOK_TX,
-        (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_ALLOW_CHAIN |
+          PHASE_FLAG_ALLOW_TFNS |
+          PHASE_FLAG_REQUEST ),
         "Request Header",
         IB_OP_FLAG_PHASE,
         handle_request_header_event
@@ -97,7 +104,10 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         false,
         PHASE_REQUEST_BODY,
         IB_STATE_HOOK_TX,
-        (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_ALLOW_CHAIN |
+          PHASE_FLAG_ALLOW_TFNS |
+          PHASE_FLAG_REQUEST ),
         "Request Body",
         IB_OP_FLAG_PHASE,
         handle_request_event
@@ -106,7 +116,10 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         false,
         PHASE_RESPONSE_HEADER,
         IB_STATE_HOOK_TX,
-        (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_ALLOW_CHAIN |
+          PHASE_FLAG_ALLOW_TFNS |
+          PHASE_FLAG_RESPONSE ),
         "Response Header",
         IB_OP_FLAG_PHASE,
         handle_response_header_event
@@ -115,7 +128,10 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         false,
         PHASE_RESPONSE_BODY,
         IB_STATE_HOOK_TX,
-        (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_ALLOW_CHAIN |
+          PHASE_FLAG_ALLOW_TFNS |
+          PHASE_FLAG_RESPONSE ),
         "Response Body",
         IB_OP_FLAG_PHASE,
         handle_response_event
@@ -124,7 +140,10 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         false,
         PHASE_POSTPROCESS,
         IB_STATE_HOOK_TX,
-        (PHASE_FLAG_IS_VALID | PHASE_FLAG_ALLOW_CHAIN | PHASE_FLAG_ALLOW_TFNS),
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_ALLOW_CHAIN |
+          PHASE_FLAG_ALLOW_TFNS |
+          PHASE_FLAG_POSTPROCESS ),
         "Post Process",
         IB_OP_FLAG_PHASE,
         handle_postprocess_event
@@ -144,7 +163,9 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         true,
         PHASE_STR_REQUEST_HEADER,
         IB_STATE_HOOK_TX,
-        (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_IS_STREAM |
+          PHASE_FLAG_REQUEST ),
         "Request Header Stream",
         IB_OP_FLAG_STREAM,
         handle_context_tx_event
@@ -153,7 +174,9 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         true,
         PHASE_STR_REQUEST_BODY,
         IB_STATE_HOOK_TXDATA,
-        (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_IS_STREAM |
+          PHASE_FLAG_REQUEST ),
         "Request Body Stream",
         IB_OP_FLAG_STREAM,
         request_body_data_event
@@ -162,7 +185,9 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         true,
         PHASE_STR_RESPONSE_HEADER,
         IB_STATE_HOOK_HEADER,
-        (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_IS_STREAM |
+          PHASE_FLAG_RESPONSE ),
         "Response Header Stream",
         IB_OP_FLAG_STREAM,
         response_header_data_event
@@ -171,7 +196,9 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         true,
         PHASE_STR_RESPONSE_BODY,
         IB_STATE_HOOK_TXDATA,
-        (PHASE_FLAG_IS_VALID | PHASE_FLAG_IS_STREAM),
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_IS_STREAM |
+          PHASE_FLAG_RESPONSE ),
         "Response Body Stream",
         IB_OP_FLAG_STREAM,
         response_body_data_event
@@ -890,8 +917,16 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static inline bool rule_is_runnable(const ib_rule_ctx_data_t *ctx_rule,
-                                         const ib_rule_t *rule)
+/**
+ * Check if the current rule is runnable
+ *
+ * @param[in] ctx_rule Context rule data
+ * @param[in] rule Rule to check
+ *
+ * @returns true if the rule is runnable, otherwise false
+ */
+static bool rule_is_runnable(const ib_rule_ctx_data_t *ctx_rule,
+                             const ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
 
@@ -904,6 +939,61 @@ static inline bool rule_is_runnable(const ib_rule_ctx_data_t *ctx_rule,
     }
 
     IB_FTRACE_RET_UINT(true);
+}
+
+/**
+ * Check if allow affects the current rule
+ *
+ * @param[in] tx Transaction
+ * @param[in] Meta Rule's phase meta-data
+ * @param[in] rule Rule to check (or NULL)
+ * @param[in] check_phase Check if ALLOW_PHASE is set
+ *
+ * @returns true if the rule is affected, otherwise false
+ */
+static bool rule_allow(const ib_tx_t *tx,
+                       const ib_rule_phase_meta_t *meta,
+                       const ib_rule_t *rule,
+                       bool check_phase)
+{
+    /* Check the ALLOW_ALL flag */
+    if ( (meta->phase_num != PHASE_POSTPROCESS) &&
+         (ib_tx_flags_isset(tx, IB_TX_ALLOW_ALL) == 1) )
+    {
+        ib_rule_log_debug(tx, rule, NULL, NULL,
+                          "Skipping phase %d/\"%s\" in context \"%s\": "
+                          "ALLOW set",
+                          meta->phase_num, meta->name,
+                          ib_context_full_get(tx->ctx));
+        IB_FTRACE_RET_UINT(true);
+    }
+
+    /* If this is a request phase rule, Check the ALLOW_REQUEST flag */
+    if ( (ib_flags_all(meta->flags, PHASE_FLAG_REQUEST) == true) &&
+         (ib_tx_flags_isset(tx, IB_TX_ALLOW_REQUEST) == 1) )
+    {
+        ib_rule_log_debug(tx, rule, NULL, NULL,
+                          "Skipping phase %d/\"%s\" in context \"%s\": "
+                          "ALLOW_REQUEST set",
+                          meta->phase_num, meta->name,
+                          ib_context_full_get(tx->ctx));
+        IB_FTRACE_RET_UINT(true);
+    }
+
+    /* If check_phase is true, check the ALLOW_PHASE flag */
+    if ( (check_phase == true) &&
+         (tx->allow_phase == meta->phase_num) &&
+         (ib_tx_flags_isset(tx, IB_TX_ALLOW_PHASE) == 1) )
+    {
+        ib_rule_log_debug(tx, rule, NULL, NULL,
+                          "Skipping remaining rules phase %d/\"%s\" "
+                          "in context \"%s\": ALLOW_PHASE set",
+                          meta->phase_num, meta->name,
+                          ib_context_full_get(tx->ctx));
+        IB_FTRACE_RET_UINT(true);
+    }
+
+    IB_FTRACE_RET_UINT(false);
 }
 
 /**
@@ -930,7 +1020,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
 
     const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
     ib_context_t               *ctx = tx->ctx;
-    ib_ruleset_phase_t         *ruleset_phase;
+    const ib_ruleset_phase_t   *ruleset_phase;
     ib_list_t                  *rules;
     ib_list_node_t             *node = NULL;
 
@@ -941,6 +1031,16 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     assert(ruleset_phase != NULL);
     rules = ruleset_phase->rule_list;
     assert(rules != NULL);
+
+    /* Allow (skip) this phase? */
+    if (rule_allow(tx, meta, NULL, false) == true) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Clear the phase allow flag */
+    ib_rule_log_debug(tx, NULL, NULL, NULL, "Clearing ALLOW_PHASE");
+    ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
+    tx->allow_phase = PHASE_NONE;
 
     /* Sanity check */
     if (ruleset_phase->phase_num != meta->phase_num) {
@@ -984,6 +1084,11 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
             ib_rule_log_debug(tx, rule, NULL, NULL,
                               "Not executing invalid/disabled phase rule");
             continue;
+        }
+
+        /* Allow (skip) this phase? */
+        if (rule_allow(tx, meta, rule, true) == true) {
+            break;
         }
 
         /* Execute the rule, it's actions and chains */
@@ -1218,14 +1323,27 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     assert( (meta->hook_type != IB_STATE_HOOK_TXDATA) || (txdata != NULL) );
     assert( (meta->hook_type != IB_STATE_HOOK_HEADER) || (header != NULL) );
 
-    ib_context_t            *ctx = tx->ctx;
-    ib_ruleset_phase_t      *ruleset_phase =
+    ib_context_t             *ctx = tx->ctx;
+    const ib_ruleset_phase_t *ruleset_phase =
         &(ctx->rules->ruleset.phases[meta->phase_num]);
-    ib_list_t               *rules = ruleset_phase->rule_list;
-    ib_list_node_t          *node = NULL;
+    ib_list_t                *rules = ruleset_phase->rule_list;
+    ib_list_node_t           *node = NULL;
 
     /* Boolean indicating a block at the end of this phase. */
-    int                         block_phase = 0;
+    int                      block_phase = 0;
+
+    /* Allow (skip) this phase? */
+    if (rule_allow(tx, meta, NULL, false) == true) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Clear the phase allow flag if we're in a new phase */
+    if ( (ib_tx_flags_isset(tx, IB_TX_ALLOW_PHASE) == 1) &&
+         (tx->allow_phase != meta->phase_num) ) {
+        ib_rule_log_debug(tx, NULL, NULL, NULL, "Clearing ALLOW_PHASE");
+        ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
+        tx->allow_phase = PHASE_NONE;
+    }
 
     /* Sanity check */
     if (ruleset_phase->phase_num != meta->phase_num) {
@@ -1272,6 +1390,11 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
             ib_rule_log_debug(tx, rule, NULL, NULL,
                               "Not executing invalid/disabled stream rule");
             continue;
+        }
+
+        /* Allow (skip) this phase? */
+        if (rule_allow(tx, meta, rule, true) == true) {
+            break;
         }
 
         /* Create the execution logging object */

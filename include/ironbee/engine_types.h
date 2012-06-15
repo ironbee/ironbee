@@ -31,6 +31,7 @@
 #include <ironbee/clock.h>
 #include <ironbee/uuid.h>
 #include <ironbee/parsed_content.h>
+#include <ironbee/rule_defs.h>
 
 #include <stdint.h>
 
@@ -129,6 +130,9 @@ typedef enum {
 #define IB_TX_BLOCK_ADVISORY    (1 << 18) /**< Blocking this tx is advised */
 #define IB_TX_BLOCK_PHASE       (1 << 19) /**< Block tx after this phase */
 #define IB_TX_BLOCK_IMMEDIATE   (1 << 20) /**< Block tx ASAP */
+#define IB_TX_ALLOW_PHASE       (1 << 21) /**< Allow current phase */
+#define IB_TX_ALLOW_REQUEST     (1 << 22) /**< Allow all request phases */
+#define IB_TX_ALLOW_ALL         (1 << 23) /**< Allow transaction */
 
 /** Capture collection name */
 #define IB_TX_CAPTURE           "CAPTURE" /**< Name of the capture collection */
@@ -223,6 +227,7 @@ struct ib_tx_t {
     ib_flags_t          flags;           /**< Transaction flags */
     // FIXME: block_status could be an int?
     ib_num_t            block_status;    /**< TX specific block status to use.*/
+    ib_rule_phase_t     allow_phase;     /**< Phase to allow (skip) */
 
     /* Request */
     ib_parsed_req_line_t *request_line;  /**< Request line */

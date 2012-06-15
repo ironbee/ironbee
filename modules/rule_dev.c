@@ -247,7 +247,9 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Register the true operator */
     rc = ib_operator_register(ib,
                               "true",
-                              IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
+                              ( IB_OP_FLAG_ALLOW_NULL |
+                                IB_OP_FLAG_PHASE |
+                                IB_OP_FLAG_STREAM ),
                               NULL, NULL, /* No create function */
                               NULL, NULL, /* no destroy function */
                               op_true_execute, NULL);
@@ -258,7 +260,9 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Register the false operator */
     rc = ib_operator_register(ib,
                               "false",
-                              IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
+                              ( IB_OP_FLAG_ALLOW_NULL |
+                                IB_OP_FLAG_PHASE |
+                                IB_OP_FLAG_STREAM ),
                               NULL, NULL, /* No create function */
                               NULL, NULL, /* no destroy function */
                               op_false_execute, NULL);
@@ -269,7 +273,8 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Register the field exists operator */
     rc = ib_operator_register(ib,
                               "exists",
-                              IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
+                              ( IB_OP_FLAG_ALLOW_NULL |
+                                IB_OP_FLAG_PHASE ),
                               NULL, /* No create function */
                               NULL,
                               NULL, /* no destroy function */

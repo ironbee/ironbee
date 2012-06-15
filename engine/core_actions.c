@@ -1060,6 +1060,95 @@ static ib_status_t act_del_response_header_execute(void* data,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Create function for the allow action.
+ *
+ * @param[in] ib IronBee engine (unused)
+ * @param[in] ctx Current context.
+ * @param[in] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters from the rule definition
+ * @param[in,out] inst Action instance
+ * @param[in] cbdata Unused.
+ *
+ * @returns Status code
+ */
+static ib_status_t act_allow_create(ib_engine_t *ib,
+                                    ib_context_t *ctx,
+                                    ib_mpool_t *mp,
+                                    const char *parameters,
+                                    ib_action_inst_t *inst,
+                                    void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_flags_t flags = IB_TX_FNONE;
+    ib_flags_t *idata;
+
+    if (parameters == NULL) {
+        flags |= IB_TX_ALLOW_ALL;
+    }
+    else if (strcasecmp(parameters, "phase") == 0) {
+        flags |= IB_TX_ALLOW_PHASE;
+    }
+    else if (strcasecmp(parameters, "request") == 0) {
+        flags |= IB_TX_ALLOW_REQUEST;
+    }
+    else {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    idata = ib_mpool_alloc(mp, sizeof(*idata));
+    if (idata == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    *idata = flags;
+    inst->data = idata;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Allow action.
+ *
+ * @param[in] data Not used.
+ * @param[in] rule The rule structure.
+ * @param[in,out] tx The transaction we are going to modify.
+ * @param[in] flags Flags. Unused.
+ * @param[in] cbdata Unused.
+ */
+static ib_status_t act_allow_execute(void *data,
+                                     ib_rule_t *rule,
+                                     ib_tx_t *tx,
+                                     ib_flags_t flags,
+                                     void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(data != NULL);
+    assert(rule != NULL);
+    assert(tx != NULL);
+
+    const ib_flags_t *pflags = (const ib_flags_t *)data;
+    ib_flags_t set_flags = *pflags;
+
+    /* For post process, treat ALLOW_ALL like ALLOW_PHASE */
+    if ( (rule->meta.phase == PHASE_POSTPROCESS) &&
+         (ib_flags_all(set_flags, IB_TX_ALLOW_ALL) == true) )
+    {
+        set_flags |= IB_TX_ALLOW_PHASE;
+    }
+
+    /* Set the flags in the TX */
+    ib_tx_flags_set(tx, set_flags);
+
+    /* For ALLOW_PHASE, store the current phase */
+    if (ib_flags_all(set_flags, IB_TX_ALLOW_PHASE) == true) {
+        tx->allow_phase = rule->meta.phase;
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
 {
     IB_FTRACE_INIT();
@@ -1105,6 +1194,17 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             act_block_create, NULL,
                             NULL, NULL,
                             act_block_execute, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the allow actions. */
+    rc = ib_action_register(ib,
+                            "allow",
+                            IB_ACT_FLAG_NONE,
+                            act_allow_create, NULL,
+                            NULL, NULL,
+                            act_allow_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
