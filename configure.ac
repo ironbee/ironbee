@@ -490,7 +490,6 @@ fi
 
 if test "$cpp_code" != 0; then
 AC_CONFIG_FILES([clipp/Makefile])
-AC_CONFIG_FILES([clipp/tests/ironbee.conf])
 AC_CONFIG_FILES([ironbeepp/Makefile])
 AC_CONFIG_FILES([ironbeepp/tests/Makefile])
 fi
