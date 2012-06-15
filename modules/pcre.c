@@ -811,8 +811,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     size_t subject_len = 0;
     const ib_bytestr_t* bytestr;
     pcre_rule_data_t *rule_data = (pcre_rule_data_t *)data;
-    pcre *regex;
-    pcre_extra *regex_extra = NULL;
+    pcre_extra *edata = NULL;
 #ifdef PCRE_JIT_STACK
     pcre_jit_stack *jit_stack = pcre_jit_stack_alloc(PCRE_JIT_MIN_STACK_SZ,
                                                      PCRE_JIT_MAX_STACK_SZ);
@@ -868,76 +867,30 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         }
     }
 
-    /* Alloc space to copy regex. */
-    regex = (pcre *)malloc(rule_data->cpatt_sz);
-
-    if (regex == NULL ) {
-        free(ovector);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    memcpy(regex, rule_data->cpatt, rule_data->cpatt_sz);
-
-    if (rule_data->study_data_sz == 0 ) {
-        regex_extra = NULL;
-    }
-    else {
-        regex_extra = (pcre_extra *) malloc(sizeof(*regex_extra));
-
-        if (regex_extra == NULL ) {
-            free(ovector);
-            free(regex);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-        *regex_extra = *rule_data->edata;
-
-        if ( rule_data->study_data_sz == 0 ) {
-            regex_extra->study_data = NULL;
-        }
-        else {
-            regex_extra->study_data = malloc(rule_data->study_data_sz);
-
-            if (regex_extra->study_data == NULL ) {
-                free(ovector);
-                if (regex_extra != NULL) {
-                    free(regex_extra);
-                }
-                free(regex);
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
-            }
-
-            memcpy(regex_extra->study_data,
-                   rule_data->edata->study_data,
-                   rule_data->study_data_sz);
-        }
-
-        /* Put some modest limits on our regex. */
-        regex_extra->match_limit = 1000;
-        regex_extra->match_limit_recursion = 1000;
-        regex_extra->flags = regex_extra->flags |
-                            PCRE_EXTRA_MATCH_LIMIT |
-                            PCRE_EXTRA_MATCH_LIMIT_RECURSION;
-    }
-
 #ifdef PCRE_JIT_STACK
-    if (jit_stack == NULL) {
-        if ( regex_extra != NULL ) {
-            if ( regex_extra->study_data != NULL ) {
-                free(regex_extra->study_data);
-            }
-
-            free(regex_extra);
-        }
-        free(ovector);
-        free(regex);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    /* Log if we expected jit, but did not get it. */
+    if (rule_data->is_jit && jit_stack == NULL) {
+        ib_log_debug(ib,
+                     "Failed to allocate a jit stack for a jit-compiled rule. "
+                     "Not using jit for this call.");
+        edata = NULL;
+    } 
+    
+    /* If the study data is NULL or size zero, don't use it. */
+    else if (rule_data->edata == NULL || rule_data->study_data_sz <= 0) {
+        edata = NULL;
     }
 
-    pcre_assign_jit_stack(regex_extra, NULL, jit_stack);
+    /* Only if we get here do we use the study data (edata) in the rule_data. */
+    else {
+        edata = rule_data->edata;
+        pcre_assign_jit_stack(rule_data->edata, NULL, jit_stack);
+    }
+
 #endif
 
-    matches = pcre_exec(regex,
-                        regex_extra,
+    matches = pcre_exec(rule_data->cpatt,
+                        edata,
                         subject,
                         subject_len,
                         0, /* Starting offset. */
@@ -946,7 +899,9 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
                         ovecsize);
 
 #ifdef PCRE_JIT_STACK
-    pcre_jit_stack_free(jit_stack);
+    if (jit_stack != NULL) {
+        pcre_jit_stack_free(jit_stack);
+    }
 #endif
 
     if (matches > 0) {
@@ -980,15 +935,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
         *result = 0;
     }
 
-    if ( regex_extra != NULL ) {
-        if ( regex_extra->study_data != NULL ) {
-            free(regex_extra->study_data);
-        }
-
-        free(regex_extra);
-    }
     free(ovector);
-    free(regex);
     IB_FTRACE_RET_STATUS(ib_rc);
 }
 
