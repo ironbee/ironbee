@@ -60,6 +60,11 @@ AC_PROG_LIBTOOL
 AC_PROG_CXX
 AC_PROG_CXXCPP
 
+AC_CHECK_PROG(ruby, 'ruby', 'ruby', '')
+if test "$ruby" = ""; then
+    AC_MSG_WARN("Ruby required for codecheck.")
+fi
+
 dnl if we have clang use the CFLAGS set by autoconf macros.
 dnl if not clang assume gcc and use the CFLAGS set by our macro.
 if test "$GCC" = "yes"; then
@@ -245,6 +250,10 @@ AC_ARG_ENABLE(clipp,
 [
   enable_clipp="${enable_cpp}"
 ])
+AC_CHECK_PROG(ruby19, 'ruby19', 'ruby19', '')
+if test "$ruby19" = "" -a "$enable_clipp" = "yes"; then
+    AC_MSG_WARN("Ruby required for testing clipp.")
+fi
 
 ### Disable Lua
 AC_ARG_ENABLE(lua,
