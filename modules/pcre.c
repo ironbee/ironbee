@@ -260,6 +260,7 @@ static ib_status_t dfa_compile_internal(ib_mpool_t *pool,
 /**
  * Internal compilation of the modpcre pattern.
  *
+ * @param[in] ib IronBee engine for logging.
  * @param[in] pool The memory pool to allocate memory out of.
  * @param[out] pcre_cpatt Struct containing the compilation.
  * @param[in] patt The uncompiled pattern to match.
@@ -268,7 +269,8 @@ static ib_status_t dfa_compile_internal(ib_mpool_t *pool,
  * @returns IronBee status. IB_EINVAL if the pattern is invalid,
  *          IB_EALLOC if memory allocation fails or IB_OK.
  */
-static ib_status_t pcre_compile_internal(ib_mpool_t *pool,
+static ib_status_t pcre_compile_internal(ib_engine_t *ib,
+                                         ib_mpool_t *pool,
                                          modpcre_cpatt_t **pcre_cpatt,
                                          const char *patt,
                                          const char **errptr,
@@ -329,23 +331,21 @@ static ib_status_t pcre_compile_internal(ib_mpool_t *pool,
        now uses pcre_fullinfo see doc/pcrejit.3 */
     rc = pcre_fullinfo(cpatt, edata, PCRE_INFO_JIT, &pcre_jit_ret);
     if (rc != 0) {
-        ib_util_log_error("PCRE-JIT failed to get pcre_fullinfo");
+        ib_log_error(ib, "PCRE-JIT failed to get pcre_fullinfo");
         is_jit = 0;
     }
     else if (pcre_jit_ret != 1) {
-        ib_util_log_error(
-                          "PCRE-JIT compiler does not support: %s. "
-                          "It will fallback to the normal PCRE",
-                          patt);
+        ib_log_info(ib, "PCRE-JIT compiler does not support: %s", patt);
+        ib_log_info(ib, "It will fallback to the normal PCRE");
         is_jit = 0;
     }
-    else { /* Assume pcre_jit_ret == 0. */
+    else { /* Assume pcre_jit_ret == 1. */
         is_jit = 1;
     }
 #else
     if(*errptr != NULL)  {
         pcre_free(cpatt);
-        ib_util_log_error("PCRE study failed: %s", *errptr);
+        ib_log_info(ib, "PCRE study failed: %s", *errptr);
     }
     is_jit = 0;
 #endif /*PCRE_HAVE_JIT*/
@@ -369,6 +369,9 @@ static ib_status_t pcre_compile_internal(ib_mpool_t *pool,
     if (*pcre_cpatt == NULL) {
         pcre_free(cpatt);
         pcre_free(edata);
+        ib_log_error(ib,
+                     "Failed to allocate pcre_cpatt of size: %zd",
+                     sizeof(**pcre_cpatt));
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -381,6 +384,7 @@ static ib_status_t pcre_compile_internal(ib_mpool_t *pool,
     if ((*pcre_cpatt)->patt == NULL) {
         pcre_free(cpatt);
         pcre_free(edata);
+        ib_log_error(ib, "Failed to duplicate pattern string: %s", patt);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -389,6 +393,7 @@ static ib_status_t pcre_compile_internal(ib_mpool_t *pool,
     pcre_free(cpatt);
     if ((*pcre_cpatt)->cpatt == NULL) {
         pcre_free(edata);
+        ib_log_error(ib, "Failed to duplicate pattern of size: %zd", cpatt_sz);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -400,6 +405,7 @@ static ib_status_t pcre_compile_internal(ib_mpool_t *pool,
 
         if ((*pcre_cpatt)->edata == NULL) {
             pcre_free(edata);
+            ib_log_error(ib, "Failed to duplicate edata.");
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
 
@@ -409,6 +415,7 @@ static ib_status_t pcre_compile_internal(ib_mpool_t *pool,
                                                            study_data_sz);
         pcre_free(edata);
         if ((*pcre_cpatt)->edata->study_data == NULL) {
+            ib_log_error(ib, "Failed to study data of size: %zd", study_data_sz);
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
     }
@@ -444,7 +451,8 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
 
     ib_status_t rc;
 
-    rc = pcre_compile_internal(pool,
+    rc = pcre_compile_internal(mpr->ib,
+                               pool,
                                (modpcre_cpatt_t **)pcpatt,
                                patt,
                                errptr,
@@ -572,7 +580,8 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
         ib_log_error(ib, "No pattern for %s operator", op_inst->op->name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    rc = pcre_compile_internal(pool,
+    rc = pcre_compile_internal(ib,
+                               pool,
                                &rule_data,
                                pattern,
                                &errptr,
