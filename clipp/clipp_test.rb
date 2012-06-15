@@ -71,7 +71,9 @@ class CLIPPTestCase < Test::Unit::TestCase
   def run_clipp(config_path)
     stdout, stderr, status = Open3.capture3(CLIPP, '-c', config_path)
 
-    puts "Command: #{CLIPP} -c #{config_path}"
+    puts "#{CLIPP} -c #{config_path}"
+    puts "== CLIPP Configuration =="
+    puts IO.read(config_path)
     puts "== STDOUT =="
     puts stdout
     puts "== STDERR =="
