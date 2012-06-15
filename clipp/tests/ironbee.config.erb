@@ -1,0 +1,25 @@
+LogLevel notice
+
+SensorId 215e7620-7783-012f-86c5-001f5b320164
+SensorName ClippTests
+SensorHostname clipp.tests
+
+ModuleBasePath "<%= BUILDDIR %>/../../modules/.libs"
+LoadModule "ibmod_htp.so"
+LoadModule "ibmod_pcre.so"
+LoadModule "ibmod_radix.so"
+LoadModule "ibmod_ac.so"
+LoadModule "ibmod_rules.so"
+LoadModule "ibmod_user_agent.so"
+
+Set parser "htp"
+
+<%= config[:config] || "" %>
+
+<Site default>
+    SiteId 57f2b6d0-7783-012f-86c6-001f5b320164
+    Hostname *
+    <%= config[:default_site_config] || "" %>
+</Site>
+
+<%= config[:config_trailer] || "" %>
