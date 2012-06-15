@@ -874,8 +874,8 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
                      "Failed to allocate a jit stack for a jit-compiled rule. "
                      "Not using jit for this call.");
         edata = NULL;
-    } 
-    
+    }
+
     /* If the study data is NULL or size zero, don't use it. */
     else if (rule_data->edata == NULL || rule_data->study_data_sz <= 0) {
         edata = NULL;
