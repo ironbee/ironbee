@@ -47,7 +47,7 @@ module CodeFix
     # A perfect match? STOP!
     return 1 if verbatim_license
 
-    heuristic_license = 
+    heuristic_license =
       ! ( str.index('http://www.apache.org/licenses/LICENSE-2.0') &&
           str.index('Licensed to Qualys') ).nil?
 
@@ -111,10 +111,10 @@ module CodeFix
       end
     end.each { |f| yield f }
   end
-        
+
 end
 
-# This class will use the utility functions in CodeFix to 
+# This class will use the utility functions in CodeFix to
 # fix or detect code problems. Those problems are reported and tracked.
 class CodeMangler
 
@@ -139,7 +139,7 @@ class CodeMangler
 
     @indent_opts = [
       # Options used in the below call to indent.
-      #   This is the apache indent line: 
+      #   This is the apache indent line:
       #     http://httpd.apache.org/dev/styleguide.html
       '-i4',   # - Indent 4
       '-npsl', # - No proc names starting lines
@@ -169,7 +169,7 @@ class CodeMangler
     print "[%s] %s %s\n"%[ level, loc, msg ]
   end
 
-      
+
 
   # Report a warning and increment @warnings. Line is an optional parameter.
   def report_warning(file, line, msg=nil)
@@ -196,7 +196,7 @@ class CodeMangler
       indent(f) unless @check_only || @no_indent
 
       # Read in text.
-      txt = File.open(f) { |io| io.read } 
+      txt = File.open(f) { |io| io.read }
 
       CodeFix::remove_trailing_ws!(txt, :python => (f=~/.py$/)
         ) unless @no_trimws
@@ -232,11 +232,11 @@ end.parse!
 
 cm.call
 
-if cm.warnings > 0 
-  print "#{cm.warnings} warnings.\n" 
+if cm.warnings > 0
+  print "#{cm.warnings} warnings.\n"
 end
 
-if cm.errors > 0 
+if cm.errors > 0
   print "#{cm.errors} errors.\n"
   exit 1
 end

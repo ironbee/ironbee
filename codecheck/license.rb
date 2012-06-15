@@ -20,6 +20,6 @@ all_ironbee_code do |path|
             break
         end
     end
-    
+
     puts path if ! have_license
 end

@@ -13,19 +13,19 @@ Dir.glob( '**/*.[ch]' ).each do |path|
     error = lambda do |msg|
       puts "#{path}:#{$.}: #{msg}"
     end
-    
+
     line.chomp!
     next if line =~ %r{^\s*$} || line =~ %r{^\s*/?\*\s} || line =~ %r{^\s*//}
     line.gsub!(%r{/\* .+ \*/},'')
-    
+
     if line =~ /^\w/
       last_function_line = line
     end
-    
+
     if line[0..0] == '{'
       if prev_line =~ /\)/
         current_function = last_function_line
-      else 
+      else
         current_function = nil
       end
       in_ftrace_function = false
@@ -38,7 +38,7 @@ Dir.glob( '**/*.[ch]' ).each do |path|
           error["MISSING FTRACE_RET: #{current_function}"]
       end
     end
-    
+
     prev_line = line
   end
 end

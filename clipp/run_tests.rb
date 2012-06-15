@@ -11,7 +11,7 @@ def color_puts(code, s)
         puts s
     end
 end
-   
+
 def green(s)
     color_puts(32, s)
 end
@@ -23,7 +23,7 @@ end
 def red(s)
     color_puts(31, s)
 end
-     
+
 TESTDIR = File.join(File.dirname(__FILE__), 'tests')
 FAIL_MESSAGES = [
     / (CONFIG_)?(ERROR|CRITICAL|ALERT|EMERGENCY)\s+-/
@@ -42,16 +42,16 @@ config = ARGV[1]
 
 def run_clipp(config_path)
     r, w = IO.pipe
-    
+
     Process.fork do
         r.close
         STDOUT.reopen(w)
         STDERR.reopen(w)
         exec($clipp, '-c', config_path)
     end
-    
+
     w.close
-    
+
     result = nil
     r.each do |line|
         print line
@@ -60,7 +60,7 @@ def run_clipp(config_path)
             is_white = ! WHITELIST_MESSAGES.find {|x| x=~ line}.nil?
             if is_fail && ! is_white
                 result = "Failure message: #{line}"
-            end 
+            end
         end
     end
     Process.wait
@@ -79,20 +79,20 @@ Dir.chdir(TESTDIR)
 Dir.glob('*.erb').each do |test|
     base = File.basename(test,'.erb')
     puts "Running #{base}"
-    
+
     erb = ERB.new(IO.read(test))
     counter += 1
     tmppath = File.join(Dir::tmpdir, "clipp_tests_#{counter}.conf")
     File.open(tmppath, 'w') do |clipp_config|
         clipp_config.write(erb.result(binding))
     end
-        
+
     failure = false
     result = run_clipp(tmppath)
     if result
         red "#{base} FAIL #{result}"
         failure = true
-    else 
+    else
         green "#{base} PASS"
     end
     if failure

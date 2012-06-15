@@ -2,15 +2,15 @@
 
 # Exclude paths that match any of these regexs.
 EXCLUDE = [
-    %r{/config-parser\.[ch]$}   
+    %r{/config-parser\.[ch]$}
 ]
 
 def all_ironbee_code
   ironbee_dir = File.dirname(File.expand_path(File.dirname(__FILE__)))
   extensions  = ['.h','.c','.hh','.cc','.hpp','.cpp']
-  
+
   raise "Missing block." if ! block_given?
-  
+
   globs = []
 
   [
@@ -29,7 +29,7 @@ def all_ironbee_code
   extensions.each do |e|
     globs << "tests/*#{e}"
   end
-  
+
   current_dir = Dir.pwd
   Dir.chdir(ironbee_dir)
   globs.each do |glob|
