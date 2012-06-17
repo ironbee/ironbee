@@ -533,7 +533,7 @@ static ib_status_t create_header_alias_list(
 }
 
 /*
- * Callback used to generate request fields.
+ * Callback used to generate request header fields.
  */
 static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                                                   ib_tx_t *tx,
@@ -633,6 +633,42 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                 }
             }
         }
+    }
+
+    /* Create the aliased request header list */
+    if (tx->request_header != NULL) {
+        rc = create_header_alias_list(ib,
+                                      tx,
+                                      "request_headers",
+                                      tx->request_header);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/*
+ * Callback used to generate request body fields.
+ */
+static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
+                                                ib_tx_t *tx,
+                                                ib_state_event_type_t event,
+                                                void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_field_t *f;
+    ib_status_t rc;
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(event == request_finished_event);
+
+    /* Populate the ARGS collection. */
+    rc = ib_data_get(tx->dpi, "args", &f);
+    if (rc == IB_OK) {
+        ib_field_t *param_list;
 
         /* Add request body parameters to ARGS collection. */
         rc = ib_data_get(tx->dpi, "request_body_params", &param_list);
@@ -659,22 +695,11 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
         }
     }
 
-    /* Create the aliased request header list */
-    if (tx->request_header != NULL) {
-        rc = create_header_alias_list(ib,
-                                      tx,
-                                      "request_headers",
-                                      tx->request_header);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /*
- * Callback used to generate response fields.
+ * Callback used to generate response header fields.
  */
 static ib_status_t core_gen_response_header_fields(ib_engine_t *ib,
                                                    ib_tx_t *tx,
@@ -714,6 +739,23 @@ static ib_status_t core_gen_response_header_fields(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
     }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/*
+ * Callback used to generate response body fields.
+ */
+static ib_status_t core_gen_response_body_fields(ib_engine_t *ib,
+                                                 ib_tx_t *tx,
+                                                 ib_state_event_type_t event,
+                                                 void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(event == response_finished_event);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -765,8 +807,14 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
     ib_hook_tx_register(ib, handle_context_tx_event,
                         core_gen_request_header_fields, NULL);
 
+    ib_hook_tx_register(ib, request_finished_event,
+                        core_gen_request_body_fields, NULL);
+
     ib_hook_tx_register(ib, response_header_finished_event,
                         core_gen_response_header_fields, NULL);
+
+    ib_hook_tx_register(ib, response_finished_event,
+                        core_gen_response_body_fields, NULL);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
