@@ -81,11 +81,6 @@ static void core_gen_tx_bytestr_alias_field(ib_tx_t *tx,
         return;
     }
 
-    ib_log_debug(tx->ib, "TX FIELD: \"%s\"=\"%.*s\"",
-                 name,
-                 (int)ib_bytestr_length(val),
-                 (char *)ib_bytestr_const_ptr(val));
-
     rc = ib_data_add(tx->dpi, f);
     if (rc != IB_OK) {
         ib_log_warning(tx->ib, "Failed add \"%s\" field to transaction data store: %s",
@@ -112,10 +107,6 @@ static void core_gen_tx_numeric_field(ib_tx_t *tx,
                      name, ib_status_to_string(rc));
         return;
     }
-
-    ib_log_debug(tx->ib, "TX FIELD: \"%s\"=%d",
-                 name,
-                 (int)num);
 
     rc = ib_data_add(tx->dpi, f);
     if (rc != IB_OK) {
@@ -146,11 +137,6 @@ static void core_gen_conn_bytestr_alias_field(ib_conn_t *conn,
         return;
     }
 
-    ib_log_debug(conn->ib, "CONN FIELD: \"%s\"=\"%.*s\"",
-                 name,
-                 (int)ib_bytestr_length(val),
-                 (char *)ib_bytestr_const_ptr(val));
-
     rc = ib_data_add(conn->dpi, f);
     if (rc != IB_OK) {
         ib_log_warning(conn->ib, "Failed add \"%s\" field to connection data store: %s",
@@ -177,10 +163,6 @@ static void core_gen_conn_numeric_field(ib_conn_t *conn,
                      name, ib_status_to_string(rc));
         return;
     }
-
-    ib_log_debug(conn->ib, "CONN FIELD: \"%s\"=%d",
-                 name,
-                 (int)num);
 
     rc = ib_data_add(conn->dpi, f);
     if (rc != IB_OK) {
@@ -388,8 +370,6 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    ib_log_debug3(ib, "core_gen_connect_fields");
-
     assert(ib != NULL);
     assert(conn != NULL);
     assert(event == handle_connect_event);
@@ -544,8 +524,6 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
     ib_field_t *f;
     ib_status_t rc;
 
-    ib_log_debug3_tx(tx, "core_gen_request_header_fields");
-
     assert(ib != NULL);
     assert(tx != NULL);
     assert(event == handle_context_tx_event);
@@ -627,7 +605,7 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                 /* Add the field to the ARGS collection. */
                 rc = ib_field_list_add(f, param);
                 if (rc != IB_OK) {
-                    ib_log_debug3_tx(tx,
+                    ib_log_notice_tx(tx,
                                      "Failed to add parameter to args collection: %s",
                                      ib_status_to_string(rc));
                 }
@@ -687,7 +665,7 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
                 /* Add the field to the ARGS collection. */
                 rc = ib_field_list_add(f, param);
                 if (rc != IB_OK) {
-                    ib_log_debug3_tx(tx,
+                    ib_log_notice_tx(tx,
                                      "Failed to add parameter to args collection: %s",
                                      ib_status_to_string(rc));
                 }
@@ -708,8 +686,6 @@ static ib_status_t core_gen_response_header_fields(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-
-    ib_log_debug3_tx(tx, "core_gen_response_header_fields");
 
     assert(ib != NULL);
     assert(tx != NULL);

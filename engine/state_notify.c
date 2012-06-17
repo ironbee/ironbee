@@ -92,8 +92,6 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
     assert(ib != NULL);
     assert(conn != NULL);
 
-    ib_log_debug3(ib, "ib_state_notify_conn(%p,%d,%p)", ib, event, conn);
-
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -118,8 +116,6 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(conndata != NULL);
-
-    ib_log_debug3(ib, "ib_state_notify_conn_data(%p,%d,%p)", ib, event, conndata);
 
     ib_conn_t *conn = conndata->conn;
 
@@ -153,8 +149,6 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
     assert(line->method != NULL);
     assert(line->uri != NULL);
     assert(line->protocol != NULL);
-
-    ib_log_debug3_tx(tx, "ib_state_notify_req_line(%p,%p,%d,%p)", ib, tx, event, line);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -210,8 +204,6 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     assert((line == NULL) || (line->status != NULL));
     assert((line == NULL) || (line->msg != NULL));
 
-    ib_log_debug3_tx(tx, "ib_state_notify_resp_line(%p,%p,%d,%p)", ib, tx, event, line);
-
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -266,8 +258,6 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_tx(%p,%d,%p)", ib, event, tx);
-
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -297,8 +287,6 @@ ib_status_t ib_state_notify_request_started(
     assert(ib != NULL);
     assert(tx != NULL);
     assert(line != NULL);
-
-    ib_log_debug3_tx(tx, "ib_state_notify_request_started(%p,%p,%p)", ib, tx, line);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -348,8 +336,6 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
 
     assert(ib != NULL);
 
-    ib_log_debug3(ib, "ib_state_notify_cfg_started(%p)", ib);
-
     ib_status_t rc;
 
     /* Create and configure the main configuration context. */
@@ -371,8 +357,6 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
-
-    ib_log_debug3(ib, "ib_state_notify_cfg_finished(%p)", ib);
 
     ib_status_t rc;
 
@@ -406,7 +390,7 @@ static ib_status_t ib_context_get_ex(
 
     /* Run through the config context functions to select the context. */
     IB_ARRAY_LOOP(ib->contexts, nctx, i, ctx) {
-        ib_log_debug3(ib, "Processing context %d=%p '%s'",
+        ib_log_debug3(ib, "Checking context %d=%p '%s'",
                       (int)i, ctx, ib_context_full_get(ctx));
         /* A NULL function is a null context, so skip it */
         if ((ctx == NULL) || (ctx->fn_ctx == NULL)) {
@@ -442,8 +426,6 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(conn != NULL);
-
-    ib_log_debug3(ib, "ib_state_notify_conn_opened(%p,%p)", ib, conn);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -511,8 +493,6 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
     assert(ib != NULL);
     assert(conndata != NULL);
 
-    ib_log_debug3(ib, "ib_state_notify_conn_data_in(%p,%p)", ib, conndata);
-
     ib_conn_t *conn = conndata->conn;
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -547,8 +527,6 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
     assert(ib != NULL);
     assert(conndata != NULL);
 
-    ib_log_debug3(ib, "ib_state_notify_conn_data_out(%p,%p)", ib, conndata);
-
     ib_conn_t *conn = conndata->conn;
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -582,8 +560,6 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(conn != NULL);
-
-    ib_log_debug3(ib, "ib_state_notify_conn_closed(%p,%p)", ib, conn);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -664,8 +640,6 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
     assert(tx != NULL);
     assert(header != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_header_data(%p,%p,%d,%p)",ib, tx, event, header);
-
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "ib_check_hook() failed: %s",
@@ -701,8 +675,6 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     assert(tx != NULL);
     assert(txdata != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_txdata(%p,%p,%d,%p)", ib, tx, event, txdata);
-
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -733,8 +705,6 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
     assert(header != NULL);
-
-    ib_log_debug3_tx(tx, "ib_state_notify_request_header_data(%p,%p,%p)", ib, tx, header);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -783,8 +753,6 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
-
-    ib_log_debug3_tx(tx, "ib_state_notify_request_header_finished(%p,%p)", ib, tx);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -862,8 +830,6 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     assert(tx != NULL);
     assert(txdata != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_request_body_data(%p,%p,%p)", ib, tx, txdata);
-
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -915,8 +881,6 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
-
-    ib_log_debug3_tx(tx, "ib_state_notify_request_finished(%p,%p)", ib, tx);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -980,8 +944,6 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_response_started(%p,%p,%p)", ib, tx, line);
-
     ib_status_t rc;
 
     tx->t.response_started = ib_clock_get_time();
@@ -1012,8 +974,6 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
     assert(header != NULL);
-
-    ib_log_debug3_tx(tx, "ib_state_notify_response_header_data(%p,%p,%p)", ib, tx, header);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -1061,8 +1021,6 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
-
-    ib_log_debug3_tx(tx, "ib_state_notify_response_header_finished(%p,%p)", ib, tx);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
@@ -1125,8 +1083,6 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     assert(tx != NULL);
     assert(txdata != NULL);
 
-    ib_log_debug3_tx(tx, "ib_state_notify_response_body_data(%p,%p,%p)", ib, tx, txdata);
-
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
     ib_status_t rc;
@@ -1188,8 +1144,6 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
-
-    ib_log_debug3_tx(tx, "ib_state_notify_response_finished(%p,%p)", ib, tx);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
     IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;

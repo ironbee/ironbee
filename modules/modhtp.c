@@ -201,9 +201,6 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
      */
     rc = ib_data_get(dpi, name, &f);
     if (rc == IB_OK) {
-        ib_log_debug3(dpi->pr->ib,
-                     "Setting bytestr value for \"%s\" field", name);
-
         rc = ib_field_mutable_value(f, ib_ftype_bytestr_mutable_out(&ibs));
         if (rc != IB_OK) {
             return rc;
@@ -417,7 +414,6 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
 
     /* Store this as the current transaction. */
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug3_tx(itx, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error_tx(itx, "HTP Parser Error");
     }
@@ -428,7 +424,6 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     }
 
     /* Associate the ironbee transaction with the libhtp transaction. */
-    ib_log_debug3_tx(itx, "Storing itx=%p with tx=%p", itx, tx);
     htp_tx_set_user_data(tx, itx);
 
     IB_FTRACE_RET_INT(HTP_OK);
@@ -446,7 +441,6 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     ib_status_t rc;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug3(ib, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, "HTP Parser Error");
     }
@@ -525,7 +519,6 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     }
 
     /* Tell the engine that the request started. */
-    ib_log_debug2_tx(itx, "Notify request started");
     rc = ib_state_notify_request_started(ib, itx, req_line);
     if (rc != IB_OK) {
         ib_log_error_tx(itx,
@@ -553,7 +546,6 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     ib_parsed_header_wrapper_t *ibhdrs;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug3(ib, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, "HTP Parser Error");
     }
@@ -622,12 +614,6 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
                                 ib_status_to_string(rc));
                 continue;
             }
-            ib_log_debug3_tx(itx,
-                             "Added request header field %.*s='%.*s'",
-                             (int)bstr_len(hdr->name),
-                             (char *)bstr_ptr(hdr->name),
-                             (int)bstr_len(hdr->value),
-                             (char *)bstr_ptr(hdr->value));
         }
     }
 
@@ -658,7 +644,6 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug3(ib, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, "HTP Parser Error");
     }
@@ -714,7 +699,6 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug3(ib, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, "HTP Parser Error");
     }
@@ -761,7 +745,6 @@ static int modhtp_htp_request(htp_connp_t *connp)
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug3(ib, "LIBHTP: state=%d", connp->in_status);
     if (connp->in_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, "HTP Parser Error");
     }
@@ -809,7 +792,6 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug3(ib, "LIBHTP: state=%d", connp->out_status);
     if (connp->out_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, "HTP Parser Error");
     }
@@ -862,10 +844,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     }
 
     /* Tell the engine that the response started. */
-    ib_log_debug2_tx(itx, "Notify response started");
     rc = ib_state_notify_response_started(ib, itx, resp_line);
-    ib_log_debug2_tx(itx, "Notify response started done: %s",
-                     ib_status_to_string(rc));
     if (rc != IB_OK) {
         ib_log_error_tx(itx,
                         "Error notifying response started: %s",
@@ -896,7 +875,6 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     ib_parsed_header_wrapper_t *ibhdrs;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug3(ib, "LIBHTP: state=%d", connp->out_status);
     if (connp->out_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, "HTP Parser Error");
     }
@@ -949,12 +927,6 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
                              ib_status_to_string(rc));
                 continue;
             }
-            ib_log_debug_tx(itx, "Added response header field %.*s='%.*s'",
-                         (int)bstr_len(hdr->name),
-                         (char *)bstr_ptr(hdr->name),
-                         (int)bstr_len(hdr->value),
-                         (char *)bstr_ptr(hdr->value));
-
         }
     }
 
@@ -985,7 +957,6 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug3(ib, "LIBHTP: state=%d", connp->out_status);
     if (connp->out_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, "HTP Parser Error");
     }
@@ -1052,7 +1023,6 @@ static int modhtp_htp_response(htp_connp_t *connp)
     ib_tx_t *itx;
 
     /* Use the current parser transaction to generate fields. */
-    ib_log_debug3(ib, "LIBHTP: state=%d", connp->out_status);
     if (connp->out_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, "HTP Parser Error");
     }
@@ -1105,7 +1075,6 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
 
     /* Use the current parser transaction to generate fields. */
     /// @todo Check htp state, etc.
-    ib_log_debug3(ib, "LIBHTP: state=%d", connp->out_status);
     if (connp->out_status == STREAM_STATE_ERROR) {
         ib_log_error(ib, "HTP Parser Error");
     }
@@ -1163,7 +1132,6 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
     /// @todo Check htp state, etc.
     tx = modctx->htp->in_tx;
     if (tx != NULL) {
-        ib_log_debug3_tx(itx, "LibHTP: associating itx=%p with tx=%p", itx, tx);
         htp_tx_set_user_data(tx, itx);
 
         modhtp_field_gen_bytestr(itx->dpi,
@@ -1221,7 +1189,6 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
 
             /// @todo Make this a function
             table_iterator_reset(tx->request_cookies);
-            ib_log_debug3_tx(itx, "Adding request_cookies fields");
             while ((key = table_iterator_next(tx->request_cookies,
                                               (void *)&value)) != NULL)
             {
@@ -1268,7 +1235,6 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
 
             /// @todo Make this a function
             table_iterator_reset(tx->request_params_query);
-            ib_log_debug3_tx(itx, "Adding request_params_query fields");
             while ((key = table_iterator_next(tx->request_params_query,
                                               (void *)&value)) != NULL)
             {
@@ -1338,7 +1304,6 @@ static ib_status_t modhtp_gen_request_fields(ib_provider_inst_t *pi,
     /// @todo Check htp state, etc.
     tx = modctx->htp->in_tx;
     if (tx != NULL) {
-        ib_log_debug3_tx(itx, "LibHTP: associating itx=%p with tx=%p", itx, tx);
         htp_tx_set_user_data(tx, itx);
 
         rc = ib_data_add_list(itx->dpi, "request_body_params", &f);
@@ -1351,7 +1316,6 @@ static ib_status_t modhtp_gen_request_fields(ib_provider_inst_t *pi,
 
             /// @todo Make this a function
             table_iterator_reset(tx->request_params_body);
-            ib_log_debug3_tx(itx, "Adding request_params_body fields");
             while ((key = table_iterator_next(tx->request_params_body,
                                               (void *)&value)) != NULL)
             {
