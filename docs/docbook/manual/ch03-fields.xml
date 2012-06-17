@@ -7,7 +7,8 @@
     <para>...</para>
     <section>
         <title>ARGS</title>
-        <para><emphasis role="bold">Description:</emphasis> All request parameters combined.</para>
+        <para><emphasis role="bold">Description:</emphasis> All request parameters combined and
+            normalized.</para>
         <para><emphasis role="bold">Type:</emphasis> Collection</para>
         <para><emphasis role="bold">Scope:</emphasis> Transaction
                 (<literal>REQUEST_HEADERS</literal>, <literal>REQUEST_BODY</literal>)</para>
@@ -15,7 +16,11 @@
         <para><emphasis role="bold">Version:</emphasis> 0.2</para>
         <para>
             <note>
-                <para>Only request header parameters are implemented as of version 0.2.</para>
+                <para>The <literal>ARGS</literal> collection is currently the same as specifying
+                        <literal>REQUEST_URL_PARAMS|REQUEST_BODY_PARAMS</literal>, but this will
+                    change in later releases to include normalization based on parser personalities.
+                    If you do not want normalization, then use
+                        <literal>REQUEST_URL_PARAMS|REQUEST_BODY_PARAMS</literal>.</para>
             </note>
         </para>
     </section>
@@ -55,12 +60,11 @@
         <para><emphasis role="bold">Type:</emphasis> Collection</para>
         <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>This collection contains information for the transaction. Currently captured data from
             operators is stored here in keys "0"-"9".<note>
-                <para>This collection has the potential to be abused. Captures and any other core
-                    functionality should have their own dedicated collection and reserve this for
-                    generic user use.</para>
+                <para>The captures were previously stored in the generic <literal>TX</literal>
+                    collection, but moved to its own collection in version 0.4.</para>
             </note></para>
     </section>
     <section>
@@ -72,7 +76,10 @@
         <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
         <para><emphasis role="bold">Module:</emphasis> geoip</para>
         <para><emphasis role="bold">Version:</emphasis> 0.3</para>
-        <note><para>The address used during lookup is the same as that stored in the <literal>REMOTE_ADDR</literal> field.</para></note>
+        <note><para>The address used during lookup is the same as that stored in the
+                    <literal>REMOTE_ADDR</literal> field, which may be modified from the actual
+                connection (TCP) level address by the <literal>remote_address</literal>
+                module.</para></note>
         <para>Sub-Fields (not all are available prior to GeoIP v1.4.6):
         <itemizedlist>
             <listitem>
@@ -322,7 +329,7 @@ Rule ARGS "@rx test" \
         <para><emphasis role="bold">Type:</emphasis> String</para>
         <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
     <section>
         <title>REQUEST_CONTENT_TYPE</title>
@@ -394,11 +401,11 @@ Rule ARGS "@rx test" \
                 <para>Use the hostname information if provided on the request line</para>
             </listitem>
             <listitem>
-                <para>Alternatively, look up the <literal>Host</literal> request header</para>
+                <para>Alternatively, look up the HTTP <literal>Host</literal> request header</para>
             </listitem>
             <listitem>
                 <para>If the hostname information is provided in both locations, the information in
-                    the <literal>Host</literal> header is ignored</para>
+                    the HTTP <literal>Host</literal> request header is ignored</para>
             </listitem>
         </orderedlist>
         <para>Normalization [TODO What RFC should we refer to?]:</para>
@@ -416,7 +423,7 @@ Rule ARGS "@rx test" \
     </section>
     <section>
         <title>REQUEST_LINE</title>
-        <para><emphasis role="bold">Description:</emphasis> Full request line.</para>
+        <para><emphasis role="bold">Description:</emphasis> Full, raw, request line.</para>
         <para><emphasis role="bold">Type:</emphasis> String</para>
         <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
@@ -443,9 +450,9 @@ Rule ARGS "@rx test" \
         <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> o.3</para>
-        <para>This field contains the protocol name and version, as specified on the request line.
-            Transactions that do not specify the protocol (e.g., HTTP prior to 1.0) will have an
-            empty string value.</para>
+        <para>This field contains the HTTP protocol name and version, as specified on the request
+            line. Transactions that do not specify the protocol (e.g., HTTP prior to 1.0) will have
+            an empty string value.</para>
     </section>
     <section>
         <title>REQUEST_URI</title>

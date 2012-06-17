@@ -10,17 +10,6 @@
                         <scenarioAssociation-array>
                             <scenarioAssociation>
                                 <field name="name">
-                                    <String>ironbee-reference-manual</String>
-                                </field>
-                                <field name="type">
-                                    <String>XSL</String>
-                                </field>
-                                <field name="url">
-                                    <String>ch02-directives.xml</String>
-                                </field>
-                            </scenarioAssociation>
-                            <scenarioAssociation>
-                                <field name="name">
                                     <String>docbook/docbook5.framework/DocBook 5/Docbook PDF</String>
                                 </field>
                                 <field name="type">
@@ -28,6 +17,17 @@
                                 </field>
                                 <field name="url">
                                     <String>ch01-introduction.xml</String>
+                                </field>
+                            </scenarioAssociation>
+                            <scenarioAssociation>
+                                <field name="name">
+                                    <String>ironbee-reference-manual</String>
+                                </field>
+                                <field name="type">
+                                    <String>XSL</String>
+                                </field>
+                                <field name="url">
+                                    <String>ch02-directives.xml</String>
                                 </field>
                             </scenarioAssociation>
                             <scenarioAssociation>

@@ -13,6 +13,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>Off</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.3</para>
         <para>Note: Setting <literal>AuditEngine</literal> to <literal>On</literal> activates audit
             logging, but does not log any transactions in itself. Further activity (e.g., a rule
@@ -28,6 +29,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>"/var/log/ironbee"</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.3</para>
     </section>
     <section>
@@ -39,7 +41,8 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>0700</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
     <section>
         <title>AuditLogFileMode</title>
@@ -50,6 +53,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>0600</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
     </section>
     <section>
@@ -61,7 +65,8 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>ironbee-index.log</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>Relative filenames are based off the <literal>AuditLogBaseDir</literal> directory and
             specifying <literal>None</literal> disables the index file entirely.</para>
     </section>
@@ -74,7 +79,8 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>"%T %h %a %S %s %t %f"</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>
             <itemizedlist>
                 <listitem>
@@ -116,7 +122,8 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>default</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>An audit log consist of many parts; <literal>AuditLogParts</literal> determines which
             parts are recorded by default. The parts are inherited into child contexts (Site,
             Location, etc). Specifying a part with +/- operator will add or remove the given part
@@ -224,89 +231,21 @@
         <para><emphasis role="bold">Description:</emphasis> Configures the directory structure created under the <emphasis>AuditLogBaseDir</emphasis> directory. This is a <emphasis>strftime(3)</emphasis> format string allowing the directory structure to be created based on date/time.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>AuditLogSubDirFormat <replaceable>format-string</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> <literal>403</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>DefaultBlockStatus</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the default HTTP status code used for blocking.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>DefaultBlockStatus <replaceable>http-status-code</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis>
             <literal>None</literal> (audit logs will be created in the base directory)</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
-    </section>
-    <section>
-        <title>DebugLog</title>
-        <para><emphasis role="bold">Description:</emphasis> Configures the location of the debug log
-            file.</para>
-        <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>DebugLog default|<replaceable>filename</replaceable></literal></para>
-        <para><emphasis role="bold">Default:</emphasis>
-            <literal>default</literal></para>
-        <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet (always uses the
-            plugin's default error log)</para>
-    </section>
-    <section>
-        <title>DebugLogLevel</title>
-        <para><emphasis role="bold">Description:</emphasis> Configures the detail level of the
-            entries recorded to the debug log.</para>
-        <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>DebugLogLevel <replaceable>level</replaceable></literal></para>
-        <para><emphasis role="bold">Default:</emphasis>
-            <literal>4</literal></para>
-        <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
-        <para>The following log levels are supported:</para>
-        <itemizedlist>
-            <listitem>
-                <para><literal>0</literal> - fatal errors</para>
-            </listitem>
-            <listitem>
-                <para><literal>1</literal> - errors</para>
-            </listitem>
-            <listitem>
-                <para><literal>2</literal> - warnings</para>
-            </listitem>
-            <listitem>
-                <para><literal>3</literal> - notices</para>
-            </listitem>
-            <listitem>
-                <para><literal>4</literal> - informational messages</para>
-            </listitem>
-            <listitem>
-                <para><literal>5</literal> - debugging: transaction state changes</para>
-            </listitem>
-            <listitem>
-                <para><literal>6</literal> - debugging: log of activities carried out</para>
-            </listitem>
-            <listitem>
-                <para><literal>7</literal> - debugging: activities, with more detail</para>
-            </listitem>
-            <listitem>
-                <para><literal>9</literal> - debugging: developer log messages</para>
-            </listitem>
-        </itemizedlist>
-    </section>
-    <section>
-        <title>Include</title>
-        <para><emphasis role="bold">Description:</emphasis> Includes external file into
-            configuration.</para>
-        <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>Include <replaceable>filename</replaceable></literal></para>
-        <para><emphasis role="bold">Default:</emphasis> None</para>
-        <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
-        <para>Allows inclusion of another file into the current configuration file. The following
-            line will include the contents of the file <filename>sites.conf</filename> into
-            configuration:</para>
-        <programlisting>Include conf/sites.conf</programlisting>
-        <para>If you specify a relative path, the location of the current configuration file will be
-            used to resolve it.</para>
-    </section>
-    <section>
-        <title>InspectionEngine</title>
-        <para><emphasis role="bold">Description:</emphasis> Configures the inspection engine.</para>
-        <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>InspectionEngine On|DetectionOnly|Off</literal></para>
-        <para><emphasis role="bold">Default:</emphasis>
-            <literal>Off</literal></para>
-        <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
     <section>
         <title>Hostname</title>
@@ -319,7 +258,8 @@
                     [path=<replaceable>path</replaceable>]</literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Site</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>The <literal>Hostname</literal> directive establishes a mapping between a Site and one
             or more URL spaces. </para>
         <para>In the simplest case, a site will occupy an entire domain name:</para>
@@ -336,12 +276,40 @@
         <para>Specific ports may be specified:</para>
         <programlisting>Hostname * port=8000</programlisting>
         <para>Path prefixes may be specified as well (NOTE: Not yet specified - do nested Location
-            tags resolve with path= prefix???  Probably should so that path= can easily be changed
+            tags resolve with path= prefix??? Probably should so that path= can easily be changed
             without affecting nested Location tags):</para>
         <programlisting>Hostname * path=/app1</programlisting>
         <para>Finally, to match any hostname on any IP address (which you will need to do in default
             sites), use a single asterisk:</para>
         <programlisting>Hostname *</programlisting>
+    </section>
+    <section>
+        <title>Include</title>
+        <para><emphasis role="bold">Description:</emphasis> Includes external file into
+            configuration.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>Include <replaceable>filename</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para>Allows inclusion of another file into the current configuration file. The following
+            line will include the contents of the file <filename>sites.conf</filename> into
+            configuration:</para>
+        <programlisting>Include conf/sites.conf</programlisting>
+        <para>If you specify a relative path, the location of the current configuration file will be
+            used to resolve it.</para>
+    </section>
+    <section>
+        <title>InspectionEngine</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the inspection engine.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>InspectionEngine On|DetectionOnly|Off</literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>Off</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
     </section>
     <section>
         <title>LoadModule</title>
@@ -351,7 +319,8 @@
             <literal>LoadModule <replaceable>module</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Main</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>This directive will add an external module to the engine, potentially making new
             directives available to the configuration.</para>
     </section>
@@ -363,12 +332,99 @@
             <literal>&lt;Location /site/path>...&lt;/Location></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Site</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>A subcontext created by this directive initially has identical configuration to that
             of the site it belongs to. Further directives are required to introduce changes.
             Locations are evaluated in the order in which they appear in the configuration file. The
             first location that matches request path will be used. This means that you should put
             the most-specific location first, followed by the less specific ones.</para>
+    </section>
+    <section>
+        <title>Log</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the location of the log
+            file.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>Log default|<replaceable>filename</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>default</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>LogHandler</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the log handler.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>LogHandler <replaceable>name</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>None</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <note><para>The log handler allows the log to be handled by another facility (currently the server). For
+                Apache Traffic Server, this should be set to <literal>"ironbee-ts"</literal> and for
+                Apache Web Server, this should be set to <literal>"mod_ironbee"</literal>. Using the
+                log handler overrides the <literal>Log</literal> directive.</para></note>
+    </section>
+    <section>
+        <title>LogLevel</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the detail level of the
+            entries recorded to the log.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>LogLevel <replaceable>level</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>4</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>The following log levels are supported:</para>
+        <itemizedlist>
+            <listitem>
+                <para><literal>emergency</literal> - system unusable</para>
+            </listitem>
+            <listitem>
+                <para><literal>alert</literal> - crisis happened</para>
+            </listitem>
+            <listitem>
+                <para><literal>critical</literal> - crisis coming</para>
+            </listitem>
+            <listitem>
+                <para><literal>error</literal> - error occured</para>
+            </listitem>
+            <listitem>
+                <para><literal>warning</literal> - error lieky to occur</para>
+            </listitem>
+            <listitem>
+                <para><literal>notice</literal> - something unusual happened</para>
+            </listitem>
+            <listitem>
+                <para><literal>info</literal> - informational messages</para>
+            </listitem>
+            <listitem>
+                <para><literal>debug</literal> - debugging: transaction state changes</para>
+            </listitem>
+            <listitem>
+                <para><literal>debug2</literal> - debugging: log of activities carried out</para>
+            </listitem>
+            <listitem>
+                <para><literal>debug3</literal> - debugging: activities, with more detail</para>
+            </listitem>
+            <listitem>
+                <para><literal>trace</literal> - debugging: developer log messages</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+    <section>
+        <title>ModuleBasePath</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the base path where IronBee modules are loaded.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>ModuleBasePath <replaceable>path</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            The <literal>lib</literal> directory under the IronBee install prefix.</para>
+        <para><emphasis role="bold">Context:</emphasis> Main</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
     <section>
         <title>PcreMatchLimit</title>
@@ -399,6 +455,7 @@
             <literal>PersonalityAliasClear <replaceable>alias</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Main</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
     </section>
     <section>
@@ -411,6 +468,7 @@
                 <replaceable>paramValue</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Main</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
         <para>See <literal>PersonalityParam</literal> for the list of all parameters.</para>
     </section>
@@ -422,6 +480,7 @@
             <literal>PersonalityClearAll</literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
     </section>
     <section>
@@ -433,6 +492,7 @@
                 <replaceable>paramValue</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
         <para>Configuration of the <literal>multipart/form-data</literal> parser:</para>
         <variablelist>
@@ -499,6 +559,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>Off</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
     </section>
     <section>
@@ -509,6 +570,7 @@
             <literal>RequestBodyBufferLimit LIMIT_IN_BYTES</literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
     </section>
     <section>
@@ -519,6 +581,7 @@
             <literal>RequestBodyBufferLimitAction Reject|RollOver</literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
         <para>When <literal>Reject</literal> is configured, the transaction with a body larger than
             the buffer will be blocked. With <literal>RollOver</literal> selected, the buffer will
@@ -536,6 +599,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>Off</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
     </section>
     <section>
@@ -546,6 +610,7 @@
             <literal>ResponseBodyBufferLimit LIMIT_IN_BYTES</literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
     </section>
     <section>
@@ -556,6 +621,7 @@
             <literal>ResponseBodyBufferLimitAction Reject|RollOver</literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
         <para>When <literal>Reject</literal> is configured, the transaction with a body larger than
             the buffer will be blocked. With <literal>RollOver</literal> selected, the buffer will
@@ -572,7 +638,65 @@
         </para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+    </section>
+    <section>
+        <title>RuleBasePath</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the base path where external IronBee rules are loaded.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>RuleBasePath <replaceable>path</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            The <literal>lib</literal> directory under the IronBee install prefix.</para>
+        <para><emphasis role="bold">Context:</emphasis> Main</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>RuleEngineLogData</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the data logged by the rule engine.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>RuleEngineLogData <replaceable>type</replaceable> [<replaceable>level</replaceable>]</literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>None</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>The following types are supported:</para>
+        <itemizedlist>
+            <listitem>
+                <para><literal>None</literal> - no rule logging</para>
+            </listitem>
+            <listitem>
+                <para><literal>Fast</literal> - single line (fast) logging</para>
+            </listitem>
+            <listitem>
+                <para><literal>RuleExec</literal> - multi line logging</para>
+            </listitem>
+         </itemizedlist>
+         <para>The following levels are supported:</para>
+         <itemizedlist>
+            <listitem>
+                <para><literal>Full</literal> - log full rule execution (not just rules that trigger actions)</para>
+            </listitem>
+            <listitem>
+                <para><literal>Debug</literal> - developer level debugging</para>
+            </listitem>
+            <listitem>
+                <para><literal>Trace</literal> - extremely verbose</para>
+            </listitem>
+        </itemizedlist>
+    </section>
+    <section>
+        <title>RuleEngineLogLevel</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the logging level for the rule engine.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>RuleEngineLogLevel <replaceable>level</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>Off</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
     </section>
     <section>
         <title>RuleExt</title>
@@ -584,6 +708,7 @@
         </para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
         <para>To load a Lua rule:</para>
         <programlisting>RuleExt file:/path/to/rule.lua phase:REQUEST</programlisting>
@@ -599,7 +724,8 @@
             <literal>SensorId SENSOR_ID</literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Main</para>
-        <para><emphasis role="bold">Version:</emphasis> Trunk</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>TODO: Can we make this directive so that, if not defined, we attempt to detect server
             hostname and use that as ID?</para>
     </section>    
@@ -637,12 +763,25 @@
         </note>
     </section>
     <section>
+        <title>SiteId</title>
+        <para><emphasis role="bold">Description:</emphasis> Unique site identifier.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>SiteId SITE_ID</literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Site</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>TODO: Can we make this directive so that, if not defined, we attempt to detect site
+            hostname and use that as ID?</para>
+    </section>    
+    <section>
         <title>StreamInspect</title>
         <para><emphasis role="bold">Description:</emphasis> Creates a streaming inspection rule,
             which inspects data as it becomes available, outside rule phases.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>StreamInspect INPUT OPERATOR [MODIFIERS]</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
         <para>Normally, rules run in one of the available phases, which happen at strategic points in
             transaction lifecycle. Phase rules are convenient to write, because all the relevant

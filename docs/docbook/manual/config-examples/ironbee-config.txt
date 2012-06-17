@@ -1,68 +1,34 @@
-### Sensor Info
-# 32-bit numeric value
-SensorId 0x98765432
-# Arbitrary name
-SensorName ExampleSensorName
-# Arbitrary hostname
-SensorHostname example.sensor.tld
-
 ### Logging
-#DebugLog /var/log/ironbee/debug.log
-DebugLogLevel 4
-# TODO: Default is still stderr logging - this will go to Apache error_log
-Set logger "mod_ironbee"
+LogLevel 4
+LogHandler ironbee-ts
+
+### Sensor Info
+# Sensor ID, must follow UUID format
+SensorId AAAABBBB-1111-2222-3333-FFFF00000023
 
 ### Load Modules
-LoadModule "ibmod_pcre.so"
+
 LoadModule "ibmod_htp.so"
-LoadModule "ibmod_poc_sig.so"
+LoadModule "ibmod_pcre.so"
+LoadModule "ibmod_rules.so"
 
-# Lua
-LoadModule "ibmod_lua.so"
-LuaLoadModule "example.lua"
+# Parse the user agent
+#LoadModule "ibmod_user_agent.so"
 
-### Main Context (need separate directives for these)
-Set parser "htp"
-
-# Enable inspection engine (TODO: Implement)
-#InspectionEngine On
+# GeoIP lookup
+#LoadModule "ibmod_geoip.so"
+#GeoIPDatabaseFile /var/lib/GeoIP/GeoLiteCity.dat
 
 # Enable audit engine
 AuditEngine RelevantOnly
 AuditLogIndex auditlog.log
 AuditLogBaseDir /tmp/ironbee
+AuditLogSubDirFormat "%Y%m%d-%H%M"
 AuditLogDirMode 0755
 #AuditLogFileMode 0644
+AuditLogParts minimal request -requestBody response -responseBody
 
-### Buffering
-# Request
-RequestBuffering On
-# Response (TODO Implement)
-#ResponseBuffering Off
-
-PocSigTrace On
-
-# -- Sites --
-# TODO: Hostname - currently wildcard can only be on left
-
-# Site 1
-<Site site1>
-    Hostname * ip=127.0.0.1
-
-    PocSigReqHead request_line bar "TESTING: Matched bar in request line."
-
-    <Location /foo>
-        DebugLogLevel 9
-    </Location>
-</Site>
-
-# Site 2
-<Site site2>
-    Hostname * ip=127.0.1.1
-</Site>
-
-# Default
-<Site default>
-    Hostname *
-</Site>
-
+### Sites
+Include "site-1.conf"
+Include "site-2.conf"
+Include "site-default.conf"
