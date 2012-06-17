@@ -5141,7 +5141,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->rule_log_mode      = IB_RULE_LOG_MODE_OFF;
     corecfg->rule_log_flags     = IB_RULE_LOG_FLAG_NONE;
     corecfg->rule_log_level     = IB_RULE_LOG_LEVEL_ERROR;
-    corecfg->block_status       = 500;
+    corecfg->block_status       = 403;
 
     /* Define the logger provider API. */
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_LOGGER,
