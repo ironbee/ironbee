@@ -310,6 +310,20 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    if (ib_rule_should_capture(rule, *result) == true) {
+        ib_field_t *f;
+        const char *name;
+
+        ib_data_capture_clear(tx);
+
+        name = ib_data_capture_name(0);
+        rc = ib_field_create_bytestr_alias(&f, tx->mp, name, strlen(name),
+                                           (uint8_t *)expanded,
+                                           strlen(expanded));
+        ib_data_capture_set_item(tx, 0, f);
+        ib_data_capture_set_item(tx, 1, field);
+    }
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
