@@ -632,14 +632,15 @@
     </section>
     <section>
         <title>Rule</title>
-        <para><emphasis role="bold">Description:</emphasis> Creates a rule.</para>
+        <para><emphasis role="bold">Description:</emphasis> Loads a rule and, in most contexts, enable the rule for execution in that context.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>Rule INPUTS OPERATOR [MODIFIERS]</literal>
         </para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
-        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
-        <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> rules</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <note><para>Loading a rule will, in most contexts, also enable the rule to be executed in that context. However, the main configuration context is special. Loading a rule in the main configuration context will <emphasis>NOT</emphasis> enable the rule, but just load it into memory so that it can be shared by other contexts. You must explicitly use <literal>RuleEnable</literal> to enable the rule.</para></note>
     </section>
     <section>
         <title>RuleBasePath</title>
@@ -651,6 +652,41 @@
         <para><emphasis role="bold">Context:</emphasis> Main</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>RuleDisable</title>
+        <para><emphasis role="bold">Description:</emphasis> Disables a rule from executing in the current configuration context.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>RuleDisable ["all" | "id:"<replaceable>id</replaceable> |
+                    "tag":<replaceable>name</replaceable>] ...</literal>
+        </para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> rules</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>Rules can be disabled by id or tag.  Any number of id or tag modifiers can be specified per directive. All disables are processed after enables.  See the <literal>RuleEnable</literal> directive for an example.</para>
+    </section>
+    <section>
+        <title>RuleEnable</title>
+        <para><emphasis role="bold">Description:</emphasis> Enables a rule for execution in the current configuration context.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>RuleEnable ["all" | "id:"<replaceable>id</replaceable> |
+                    "tag":<replaceable>name</replaceable>] ...</literal>
+        </para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> rules</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>Rules can be disabled by id or tag. Any number of id or tag modifiers can be specified
+            per directive. All enables are processed before disables. For example:
+            <programlisting>Include "rules/big_ruleset.conf"
+
+&lt;Site foo>
+    Hostname foo.example.com
+    RuleEnable id:1234
+    RuleEnable id:3456 tag:SQLi
+    RuleDisable id:5678 tag:experimental tag:heavyweight
+&lt;/Site></programlisting></para>
     </section>
     <section>
         <title>RuleEngineLogData</title>
@@ -708,14 +744,10 @@
         </para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
-        <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para><emphasis role="bold">Module:</emphasis> rules</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>To load a Lua rule:</para>
-        <programlisting>RuleExt file:/path/to/rule.lua phase:REQUEST</programlisting>
-        <para>To reference a rule created by a previously-loaded module:</para>
-        <programlisting>RuleExt mod:moduleName.ruleName phase:REQUEST</programlisting>
-        <para>Note: Complex external rules cannot have their phase and priority information
-            changed.</para>
+        <programlisting>RuleExt lua:/path/to/rule.lua phase:REQUEST</programlisting>
     </section>
     <section>
         <title>SensorId</title>
@@ -781,8 +813,8 @@
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>StreamInspect INPUT OPERATOR [MODIFIERS]</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
-        <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para><emphasis role="bold">Module:</emphasis> rules</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>Normally, rules run in one of the available phases, which happen at strategic points in
             transaction lifecycle. Phase rules are convenient to write, because all the relevant
             data is available for inspection. However, there are situations when it is not possible
@@ -799,17 +831,17 @@
             </listitem>
             <listitem>
                 <para>The <literal>phase</literal> modifier cannot be used, as streaming rules
-                    operate outside phases.</para>
+                    operate outside of phases.</para>
             </listitem>
             <listitem>
-                <para>Only <literal>REQUEST_BODY</literal> and <literal>RESPONSE_BODY</literal> can
+                <para>Only <literal>REQUEST_BODY_STREAM</literal> and <literal>RESPONSE_BODY_STREAM</literal> can
                     be used as inputs.</para>
             </listitem>
             <listitem>
-                <para>Only the <literal>pm</literal> operator can be used.</para>
+                <para>Only the <literal>pm</literal>, and <literal>dfa</literal> operators can be used.</para>
             </listitem>
             <listitem>
-                <para>Transformation functions are not supported.</para>
+                <para>Transformation functions are not yet supported.</para>
             </listitem>
         </itemizedlist>
     </section>
