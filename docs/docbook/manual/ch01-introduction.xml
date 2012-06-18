@@ -110,25 +110,18 @@
             <itemizedlist>
                 <listitem>
                     <para><literal>id</literal> - globally unique identifier, in the form
-                            <literal>vendorPrefix/vendorRuleId[-revision]</literal>. Example:
-                            <literal>ib/10001-2</literal>. Vendor rule ID and revision must be
-                        integers. Vendor prefix is a word that can contain any ASCII letter or
+                            <literal>vendorPrefix/vendorRuleId</literal>. Example:
+                            <literal>ib/10001</literal>. Vendor prefix is a word that can contain any ASCII letter or
                         digit, as well as the colon character. The colon should be used by vendors to
                         differentiate among rule sets. For example:
-                            <literal>ib:default/10001-2</literal> and
-                            <literal>ib:extra/10001-2</literal> represent two separate rules, each
+                            <literal>ib:default/10001</literal> and
+                            <literal>ib:extra/10001</literal> represent two separate rules, each
                         belonging to a different set.</para>
-                    <para>When a rule identifier is reported in the logs, an internal change counter
-                        may appear at the end in brackets (for example: <literal>ib/10001-2
-                            [3]</literal>). The internal change counter keeps track of the changes
-                        made to the rule by configuration. The change counter will not be displayed
-                        if there were no changes.</para>
                 </listitem>
                 <listitem>
                     <para><literal>rev</literal> - revision (or serial), which is used to
                         differentiate between two versions of the same rule; it defaults to 1 if not
-                        specified; it is an error to specify revision in the <literal>id</literal>
-                        and in <literal>rev</literal> labels at the same time</para>
+                        specified.</para>
                 </listitem>
                 <listitem>
                     <para><literal>msg</literal> - message that will be used when the rule triggers.
@@ -138,7 +131,7 @@
                     <para><literal>ref</literal> - contains URL that provides additional
                         documentation for the rule; it is best practice to provide complete
                         documentation for the rule on the publisher's web site; multiple references
-                        are allowed</para>
+                        are allowed (NOTE: This is not yet implemented).</para>
                 </listitem>
                 <listitem>
                     <para><literal>tag</literal> - assigns one or more tags to the rule; tags are
@@ -152,7 +145,10 @@
                 </listitem>
                 <listitem>
                     <para><literal>severity</literal> - determines the seriousness of the
-                        finding</para>
+                        finding (0-100)</para>
+                </listitem>
+                <listitem>
+                    <para><literal>confidence</literal> - determines the confidence the rule has in its logic (0-100)</para>
                 </listitem>
             </itemizedlist>
         </section>
@@ -162,43 +158,35 @@
                 phases:</para>
             <variablelist>
                 <varlistentry>
-                    <term><literal>REQUEST_HEADERS</literal> (1)</term>
+                    <term><literal>REQUEST_HEADER</literal> (1)</term>
                     <listitem>
-                        <para>Invoked after all request headers have been read, but before reading
-                            the request body (if any). Most rules should not this phase, opting for
-                                <literal>REQUEST_BODY</literal> instead.</para>
-                    </listitem>
-                </varlistentry>
-                <varlistentry>
-                    <term><literal>REQUEST_BODY</literal> (2)</term>
-                    <listitem>
-                        <para>Invoked after receiving all request data, which may involve request
-                            body and request trailers, but it will run even when neither is
-                            present.</para>
+                        <para>Invoked after the entire HTTP request headers has been read, but before reading
+                            the HTTP request body (if any). Most rules should not use this phase, opting for
+                            the <literal>REQUEST</literal> phase instead.</para>
                     </listitem>
                 </varlistentry>
                 <varlistentry>
                     <term><literal>REQUEST</literal> (2)</term>
                     <listitem>
-                        <para>Alias for <literal>REQUEST_BODY</literal>. </para>
+                        <para>Invoked after receiving the entire HTTP request, which may involve request
+                            body and request trailers, but it will run even when neither is
+                            present.</para>
                     </listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><literal>RESPONSE_HEADERS</literal> (3)</term>
+                    <term><literal>RESPONSE_HEADER</literal> (3)</term>
                     <listitem>
-                        <para>Invoked after receiving response headers.</para>
+                        <para>Invoked after receiving the HTTP entire response header.</para>
                     </listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><literal>RESPONSE_BODY</literal> (4)</term>
+                    <term><literal>RESPONSE</literal> (4)</term>
                     <listitem>
-                        <para>Invoked after receiving response body (if any) and response trailers
+                        <para>Invoked after receiving the HTTP response body (if any) and response trailers
                             (if any).</para>
                     </listitem>
                 </varlistentry>
             </variablelist>
-            <para>For backward compatibility with ModSecurity rules, each phase can also be
-                specified with a number from 1 to 4.</para>
             <section>
                 <title>Rule ordering</title>
                 <para>The phase information, assigned to every rule, determines when a rule will run
@@ -216,7 +204,7 @@
                         apply the <literal>standalone</literal> modifier to it:</para>
                     <programlisting>Rule ARGS "@rx TEST" phase:REQUEST,standalone</programlisting>
                     <para>When you mark a rule as standalone, the rule engine is free to move it
-                        around to optimize the execution.</para>
+                        around to optimize the execution. (NOTE: this is not yet implemented.)</para>
                 </section>
             </section>
         </section>
