@@ -6,8 +6,27 @@
     <title>Modifiers</title>
     <para>...</para>
     <section>
+        <title>allow</title>
+        <para><emphasis role="bold">Description:</emphasis> Mark a transaction as allowed to proceed
+            to a given inspection point.</para>
+        <para><emphasis role="bold">Type:</emphasis> Action</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>allow[:phase | :request]</literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>By default this allows the transaction to proceed without inspection until the postprocessing phase. This can be changed depending on the modifier used:</para>
+        <itemizedlist>
+            <listitem><para><emphasis role="bold">phase</emphasis> - Proceed to the end of the current phase without further rule execution.</para></listitem>
+            <listitem><para><emphasis role="bold">request</emphasis> - Proceed to the end of the request processing phases without further rule execution.</para></listitem>
+        </itemizedlist>
+    </section>
+    <section>
         <title>logdata</title>
         <para><emphasis role="bold">Description:</emphasis> Add data to be logged with the event.</para>
+        <para><emphasis role="bold">Type:</emphasis> Metadata</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>logdata:<replaceable>data</replaceable></literal></para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.2</para>
@@ -17,8 +36,155 @@
         <para>Note: Up to 128 bytes of data will be recorded.</para>
     </section>
     <section>
+        <title>block</title>
+        <para><emphasis role="bold">Description:</emphasis> Mark a transaction to be blocked.</para>
+        <para><emphasis role="bold">Type:</emphasis> Action</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>block[:advisory | :phase | :immediate]</literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>By default this marks the transaction with an advisory blocking flag. This can be changed depending on the modifier used:</para>
+        <itemizedlist>
+            <listitem><para><emphasis role="bold">advisory</emphasis> - Mark the transaction with an advisory blocking flag which further rules may take into account.</para></listitem>
+            <listitem><para><emphasis role="bold">phase</emphasis> - Block the transaction at the end of the current phase.</para></listitem>
+            <listitem><para><emphasis role="bold">immediate</emphasis> - Block the transaction immediatly after rule execution.</para></listitem>
+        </itemizedlist>
+    </section>
+    <section>
+        <title>capture</title>
+        <para><emphasis role="bold">Description:</emphasis> Enable capturing the matching
+            data.</para>
+        <para><emphasis role="bold">Type:</emphasis> Modifier</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>capture</literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>chain</title>
+        <para><emphasis role="bold">Description:</emphasis>
+        </para>
+        <para><emphasis role="bold">Type:</emphasis> Modifier</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>chain</literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>confidence</title>
+        <para><emphasis role="bold">Description:</emphasis>
+        </para>
+        <para><emphasis role="bold">Type:</emphasis> Metadata</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>confidence:<replaceable>integer (0-100)</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>delRequestHeader</title>
+        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Type:</emphasis> Action</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>delRequestHeader:<replaceable>header-name</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>delResponseHeader</title>
+        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Type:</emphasis> Action</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>delResponseHeader:<replaceable>header-name</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>id</title>
+        <para><emphasis role="bold">Description:</emphasis>
+        </para>
+        <para><emphasis role="bold">Type:</emphasis> Metadata</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>id:<replaceable>name</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>msg</title>
+        <para><emphasis role="bold">Description:</emphasis>
+        </para>
+        <para><emphasis role="bold">Type:</emphasis> Metadata</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>msg:<replaceable>text</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>phase</title>
+        <para><emphasis role="bold">Description:</emphasis>
+        </para>
+        <para><emphasis role="bold">Type:</emphasis> Metadata</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>phase:REQUEST_HEADER|REQUEST|RESPONSE_HEADER|RESPONSE|POSTPROCESS</literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>rev</title>
+        <para><emphasis role="bold">Description:</emphasis>
+        </para>
+        <para><emphasis role="bold">Type:</emphasis> Metadata</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>rev:<replaceable>integer (1-n)</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>setflag</title>
+        <para><emphasis role="bold">Description:</emphasis>
+        </para>
+        <para><emphasis role="bold">Type:</emphasis> Action</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>setflag:[!]<replaceable>flag-name</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>setRequestHeader</title>
+        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Type:</emphasis> Action</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>setRequestHeader:<replaceable>header-name</replaceable>=<replaceable>header-value</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>setResponseHeader</title>
+        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Type:</emphasis> Action</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>setResponseHeader:<replaceable>header-name</replaceable>=<replaceable>header-value</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
         <title>setvar</title>
         <para><emphasis role="bold">Description:</emphasis> Set a variable data field.</para>
+        <para><emphasis role="bold">Type:</emphasis> Action</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>setvar:[!]<replaceable>variable-field-name</replaceable>=[+|-]<replaceable>value</replaceable></literal></para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.2</para>
@@ -33,5 +199,46 @@ setvar:tx:score=-5</programlisting>
         <para>An attempt to modify a value of a non-numerical variable will assume the old value was
             zero (NOTE: Probably should just fail, logging an attempt was made to modify a
             non-numerical value).</para>
+    </section>
+    <section>
+        <title>severity</title>
+        <para><emphasis role="bold">Description:</emphasis>
+        </para>
+        <para><emphasis role="bold">Type:</emphasis> Metadata</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>severity:<replaceable>integer (0-100)</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>status</title>
+        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Type:</emphasis> Modifier</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>status:<replaceable>http-status-code</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>t</title>
+        <para><emphasis role="bold">Description:</emphasis>
+        </para>
+        <para><emphasis role="bold">Type:</emphasis> Modifier</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>t:<replaceable>transformation-name</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>tag</title>
+        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Type:</emphasis> Metadata</para>
+        <para><emphasis role="bold">Syntax:</emphasis> <literal>tag:<replaceable>name</replaceable></literal></para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
 </chapter>
