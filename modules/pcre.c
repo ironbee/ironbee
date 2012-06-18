@@ -609,31 +609,6 @@ static ib_status_t pcre_operator_destroy(ib_operator_inst_t *op_inst)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-//! Ensure that the given field name exists in tx->dpi.
-static ib_status_t ensure_field_exists(ib_engine_t *ib,
-                                       ib_tx_t *tx,
-                                       const char *field_name)
-{
-    IB_FTRACE_INIT();
-
-    ib_status_t rc;
-
-    assert(ib!=NULL);
-    assert(tx!=NULL);
-    assert(tx->dpi!=NULL);
-    assert(field_name!=NULL);
-
-    ib_field_t *ib_field;
-
-    rc = ib_data_get(tx->dpi, field_name, &ib_field);
-
-    if (rc == IB_ENOENT) {
-        ib_data_add_list(tx->dpi, field_name, NULL);
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
 /**
  * Set the matches into the given field name as .0, .1, .2 ... .9.
  *
@@ -648,7 +623,6 @@ static ib_status_t ensure_field_exists(ib_engine_t *ib,
  */
 static ib_status_t pcre_set_matches(ib_engine_t *ib,
                                     ib_tx_t *tx,
-                                    const char* field_name,
                                     int *ovector,
                                     int matches,
                                     const char *subject)
@@ -661,46 +635,30 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
     /* Iterator. */
     int i;
 
-    /* Length of field_name. */
-    const int field_name_sz = strlen(field_name);
-
-    /* The length of the match. */
-    size_t match_len;
-
-    /* The first character in the match. */
-    const char* match_start;
-
-    /* +3 = '.', [digit], and \0. */
-    char *full_field_name = malloc(field_name_sz+3);
-
-    /* Holder to build an optional debug message in. */
-    char *debug_msg;
-
-    /* Holder for a copy of the field value when creating a new field. */
-    ib_bytestr_t *field_value;
-
-    /* Field holder. */
-    ib_field_t *ib_field;
-
-    /* Ensure the above allocations happened. */
-    if (full_field_name==NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    rc = ensure_field_exists(ib, tx, field_name);
+    rc = ib_data_capture_clear(tx);
     if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Could not ensure that field %s was a list.",
-            field_name);
-        free(full_field_name);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        ib_log_error_tx(tx, "Error clearing captures: %s",
+                        ib_status_to_string(rc));
     }
 
     /* We have a match! Now populate TX:0-9 in tx->dpi. */
     ib_log_debug2_tx(tx, "REGEX populating %d matches", matches);
     for (i=0; i<matches; i++)
     {
-        /* Build the field name. Typically TX:0, TX:1 ... TX:9 */
-        sprintf(full_field_name, "%s:%d", field_name, i);
+        /* The length of the match. */
+        size_t match_len;
+
+        /* The first character in the match. */
+        const char *match_start;
+
+        /* Field name */
+        const char *name;
+
+        /* Holder for a copy of the field value when creating a new field. */
+        ib_bytestr_t *bs;
+
+        /* Field holder. */
+        ib_field_t *field;
 
         /* Readability. Mark the start and length of the string. */
         match_start = subject+ovector[i*2];
@@ -709,71 +667,33 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
         /* If debugging this, copy the string value out and print it to the
          * log. This could be dangerous as there could be non-character
          * values in the match. */
-        if (ib_log_get_level(ib) >= 7) {
-            debug_msg = malloc(match_len+1);
+        ib_log_debug2_tx(tx, "REGEX Setting #%d=%.*s",
+                         i, (int)match_len, match_start);
 
-            /* Notice: Don't provoke a crash if malloc fails. */
-            if (debug_msg != NULL) {
-                memcpy(debug_msg, match_start, match_len);
-                debug_msg[match_len] = '\0';
-
-                ib_log_debug2_tx(tx, "REGEX Setting %s=%s",
-                            full_field_name,
-                            debug_msg);
-
-                free(debug_msg);
-            }
+        /* Create a byte-string representation */
+        rc = ib_bytestr_dup_mem(&bs,
+                                tx->mp,
+                                (const uint8_t*)match_start,
+                                match_len);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_field = NULL;
-
-        rc = ib_data_get(tx->dpi, full_field_name, &ib_field);
-
-        /* A field exists. */
-        if (ib_field != NULL && ib_field->type == IB_FTYPE_LIST) {
-            ib_list_t *list;
-            rc = ib_field_mutable_value(ib_field,
-                                        ib_ftype_list_mutable_out(&list));
-            if (rc != IB_OK) {
-                free(full_field_name);
-                IB_FTRACE_RET_STATUS(rc);
-            }
-
-            if (IB_LIST_ELEMENTS(list) > 0) {
-                /* Replace the field we are working on. */
-                ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(list));
-
-                ib_bytestr_dup_mem(&field_value,
-                                   tx->mp,
-                                   (const uint8_t*)match_start,
-                                   match_len);
-                ib_field_setv_no_copy(
-                    ib_field,
-                    ib_ftype_bytestr_mutable_in(field_value)
-                );
-            }
-            else {
-                ib_data_add_bytestr(tx->dpi,
-                                    full_field_name,
-                                    (uint8_t*)subject+ovector[i*2],
-                                    match_len,
-                                    NULL);
-            }
+        /* Create a field to hold the byte-string */
+        name = ib_data_capture_name(i);
+        rc = ib_field_create(&field, tx->mp, name, strlen(name),
+                             IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
         }
-        /* No field. Create a new one. */
-        else {
-            ib_bytestr_dup_mem(&field_value,
-                               tx->mp,
-                               (const uint8_t*)match_start,
-                               match_len);
-            ib_field_setv_no_copy(
-                ib_field,
-                ib_ftype_bytestr_mutable_in(field_value)
-            );
+
+        /* Add it to the capture collection */
+        rc = ib_data_capture_set_item(tx, i, field);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
         }
     }
 
-    free(full_field_name);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -906,7 +826,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 
     if (matches > 0) {
         if (ib_flags_all(rule->flags, IB_RULE_FLAG_CAPTURE) == true) {
-            pcre_set_matches(ib, tx, IB_TX_CAPTURE, ovector, matches, subject);
+            pcre_set_matches(ib, tx, ovector, matches, subject);
         }
         ib_rc = IB_OK;
         *result = 1;
