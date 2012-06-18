@@ -194,4 +194,32 @@ Rule ARGS "@rx complexPattern2"</programlisting>
             within the phase if it wishes to optimize execution.</para>
         <programlisting>Rule ARGS "@rx TEST" phase:REQUEST,standalone</programlisting>
     </section>
+    <section>
+        <title>sqlDecode</title>
+        <para>Decodes input in a way similar to how a DBMS would:</para>
+        <itemizedlist>
+            <listitem>
+                <para>Decodes hexadecimal literals that use the SQL standard format
+                        <literal>x'HEX_ENCODED_VALUE'</literal> (case insensitive)</para>
+            </listitem>
+            <listitem>
+                <para>Decodes hexadecimal literals that use the ODBC format
+                        <literal>0xHEX_ENCODED_VALUE</literal> (case insensitive)</para>
+            </listitem>
+            <listitem>
+                <para>Decodes backslash-escaped characters</para>
+            </listitem>
+        </itemizedlist>
+        <para>References:</para>
+        <itemizedlist>
+            <listitem>
+                <para>MySQL Reference: Hexadecimal Literals
+                    http://dev.mysql.com/doc/refman/5.6/en/hexadecimal-literals.html</para>
+            </listitem>
+            <listitem>
+                <para>String Literals
+                    http://dev.mysql.com/doc/refman/5.6/en/string-literals.html</para>
+            </listitem>
+        </itemizedlist>
+    </section>
 </appendix>

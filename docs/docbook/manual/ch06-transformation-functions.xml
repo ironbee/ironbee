@@ -4,41 +4,82 @@
     xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
     xmlns:html="http://www.w3.org/1999/xhtml" xml:id="ch-transformation-functions">
     <title>Transformation Functions</title>
-    <para>...</para>    
+    <para>...</para>
     <section>
         <title>compressWhitespace</title>
+        <para><emphasis role="bold">Description:</emphasis> Replaces one or more consecutive
+            whitespace characters with a single space.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
         <para>Replaces various whitespace characters with spaces. In addition, consecutive
             whitespace characters will be reduced down to a single space. Whitespace characters are:
                 <literal>0x20</literal>, <literal>\f</literal>, <literal>\t</literal>,
                 <literal>\n</literal>, <literal>\r</literal>, <literal>\v</literal>,
-                <literal>0xa0</literal> (non-breaking white space).</para>        
+                <literal>0xa0</literal> (non-breaking white space).</para>
     </section>
     <section>
-        <title>sqlDecode</title>
-        <para>Decodes input in a way similar to how a DBMS would:</para>
-        <itemizedlist>
-            <listitem>
-                <para>Decodes hexadecimal literals that use the SQL standard format
-                        <literal>x'HEX_ENCODED_VALUE'</literal> (case insensitive)</para>
-            </listitem>
-            <listitem>
-                <para>Decodes hexadecimal literals that use the ODBC format
-                        <literal>0xHEX_ENCODED_VALUE</literal> (case insensitive)</para>
-            </listitem>
-            <listitem>
-                <para>Decodes backslash-escaped characters</para>
-            </listitem>
-        </itemizedlist>
-        <para>References:</para>
-        <itemizedlist>
-            <listitem>
-                <para>MySQL Reference: Hexadecimal Literals
-                    http://dev.mysql.com/doc/refman/5.6/en/hexadecimal-literals.html</para>
-            </listitem>
-            <listitem>
-                <para>String Literals
-                    http://dev.mysql.com/doc/refman/5.6/en/string-literals.html</para>
-            </listitem>
-        </itemizedlist>        
+        <title>count</title>
+        <para><emphasis role="bold">Description:</emphasis> Given a collection, it returns the
+            number if items in the collection.  Given a scalar, returns 1.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>length</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns the byte length of the
+            value.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>lowercase</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns the input as all lower case
+            characters.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>removeWhitespace</title>
+        <para><emphasis role="bold">Description:</emphasis> Removes one or more consecutive
+            whitespace characters.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para>Similar to <literal>compressWhitespace</literal>, except removes the characters
+            instead of replacing them with a single space.</para>
+    </section>
+    <section>
+        <title>trim</title>
+        <para><emphasis role="bold">Description:</emphasis> Removes consecutive whitespace from the
+            beginning and end of the input.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>trimLeft</title>
+        <para><emphasis role="bold">Description:</emphasis> Removes consecutive whitespace from the
+            beginning of the input.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>trimRight</title>
+        <para><emphasis role="bold">Description:</emphasis> Removes consecutive whitespace from the
+            end of the input.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.2</para>
+    </section>
+    <section>
+        <title>min</title>
+        <para><emphasis role="bold">Description:</emphasis> Given a collecion of numeric data,
+            returns the minimum value.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+    </section>
+    <section>
+        <title>max</title>
+        <para><emphasis role="bold">Description:</emphasis> Given a collection of numeric data,
+            returns the maximum value.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
     </section>
 </chapter>
