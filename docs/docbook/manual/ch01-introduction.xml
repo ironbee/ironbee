@@ -158,7 +158,7 @@
                 phases:</para>
             <variablelist>
                 <varlistentry>
-                    <term><literal>REQUEST_HEADER</literal> (1)</term>
+                    <term><literal>REQUEST_HEADER</literal></term>
                     <listitem>
                         <para>Invoked after the entire HTTP request headers has been read, but before reading
                             the HTTP request body (if any). Most rules should not use this phase, opting for
@@ -166,7 +166,7 @@
                     </listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><literal>REQUEST</literal> (2)</term>
+                    <term><literal>REQUEST</literal></term>
                     <listitem>
                         <para>Invoked after receiving the entire HTTP request, which may involve request
                             body and request trailers, but it will run even when neither is
@@ -174,16 +174,24 @@
                     </listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><literal>RESPONSE_HEADER</literal> (3)</term>
+                    <term><literal>RESPONSE_HEADER</literal></term>
                     <listitem>
                         <para>Invoked after receiving the HTTP entire response header.</para>
                     </listitem>
                 </varlistentry>
                 <varlistentry>
-                    <term><literal>RESPONSE</literal> (4)</term>
+                    <term><literal>RESPONSE</literal></term>
                     <listitem>
                         <para>Invoked after receiving the HTTP response body (if any) and response trailers
                             (if any).</para>
+                    </listitem>
+                </varlistentry>
+                <varlistentry>
+                    <term><literal>POSTPROCESS</literal></term>
+                    <listitem>
+                        <para>Invoked after the entire transaction has been processed. This phase is
+                            for logging and tracking data between transactions, such as storing
+                            state. Actions cannot affect the transaction in this phase.</para>
                     </listitem>
                 </varlistentry>
             </variablelist>
