@@ -248,6 +248,17 @@
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
     <section>
+        <title>GeoIPDatabaseFile</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures the location of the geoip database file.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>GeoIPDatabaseFile <replaceable>filename</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>/usr/share/geoip/GeoLiteCity.dat</literal></para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> geoip</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
         <title>Hostname</title>
         <para><emphasis role="bold">Description:</emphasis> Maps hostname, URL, IP address, and port
             combinations to a Site.</para>
