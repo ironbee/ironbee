@@ -352,9 +352,15 @@ sinclude(acinclude/protobuf.m4)
 # Required libs
 CHECK_HTP()
 CHECK_PCRE()
+AX_BOOST_BASE(1.40,
+              [have_boost_low=yes], 
+              [have_boost_low=no])
 AX_BOOST_BASE(1.46,
-              [], 
-              [AC_MSG_ERROR([Boost is required for C++ tools])])
+              [have_boost=yes], 
+              [have_boost=no])
+if test "$have_boost_low" = "no"; then
+    AC_MSG_WARN("Boost required for testing.")
+fi
 
 # Clang does not support -pthread or variants.
 if test "$cc_is_clang" = "yes"; then
@@ -392,6 +398,9 @@ fi
 AM_CONDITIONAL(HAVE_MODP, test "${HAVE_MODP}" != "no")
 
 if test "${enable_clipp}" = "yes" ; then
+    if test "${have_boost}" != "yes"; then
+        AC_MSG_ERROR([Boost is required for clipp])
+    fi
     if test "${enable_cpp}" != "yes" ; then
         AC_MSG_ERROR([C++ is required for clipp])
     fi
