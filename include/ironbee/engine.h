@@ -1665,6 +1665,19 @@ ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
                                ib_field_t **pf);
 
 /**
+ * Remove a data field.
+ * @param dpi Data provider instance
+ * @param name Name as NUL terminated string
+ * @param pf Pointer where old field is written if non-NULL
+ */
+ib_status_t ib_data_remove(ib_provider_inst_t *dpi,
+                           const char *name,
+                           ib_field_t **pf);
+
+#define ib_data_remove(dpi,name,pf) \
+    ib_data_remove_ex(dpi,name,strlen(name),pf)
+
+/**
  * Expand a string using fields from the data store.
  *
  * This function looks through @a str for instances of
@@ -1734,18 +1747,52 @@ ib_status_t DLL_PUBLIC ib_data_expand_test_str_ex(const char *str,
                                                   size_t slen,
                                                   bool *result);
 
-/**
- * Remove a data field.
- * @param dpi Data provider instance
- * @param name Name as NUL terminated string
- * @param pf Pointer where old field is written if non-NULL
- */
-ib_status_t ib_data_remove(ib_provider_inst_t *dpi,
-                           const char *name,
-                           ib_field_t **pf);
 
-#define ib_data_remove(dpi,name,pf) \
-    ib_data_remove_ex(dpi,name,strlen(name),pf)
+/**
+ * Get the name of a capture item (i.e. "0")
+ *
+ * @param[in] num Capture item number
+ *
+ * @returns Name string
+ */
+const char *ib_data_capture_fullname(int num);
+
+/**
+ * Get the full name of a capture item (i.e. "CAPTURE:0")
+ *
+ * @param[in] num Capture item number
+ *
+ * @returns Full name string
+ */
+const char *ib_data_capture_name(int num);
+
+/**
+ * Clear data capture fields
+ *
+ * @param[in] tx Transaction
+ *
+ * @returns IB_OK: All OK
+ *          Error status from: ib_data_capture_init_item()
+ */         
+ib_status_t DLL_PUBLIC ib_data_capture_clear(ib_tx_t *tx);
+
+/**
+ * Set a single capture field item
+ *
+ * @param[in] tx Transaction
+ * @param[in] num Number of the capture field
+ * @param[in] in_field Field to add.
+ *
+ * @returns IB_OK: All OK
+ *          IB_ENVAL: @a num is too large
+ *          Error status from: ib_data_capture_set_list()
+ *                             ib_data_capture_init_item()
+ *                             ib_data_list_push()
+ *                             ib_field_mutable_value()
+ */
+ib_status_t ib_data_capture_set_item(ib_tx_t *tx,
+                                     int num,
+                                     ib_field_t *in_field);
 
 /**
  * @} IronBeeEngineData

@@ -136,6 +136,7 @@ typedef enum {
 
 /** Capture collection name */
 #define IB_TX_CAPTURE           "CAPTURE" /**< Name of the capture collection */
+#define IB_DATA_MAX_CAPTURE_NAME       32 /**< Max capture name */
 
 /** Configuration Context Type */
 /// @todo Perhaps "context scope" is better (CSCOPE)???

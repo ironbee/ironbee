@@ -933,8 +933,8 @@ ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_data_expand_test_str(const char *str,
-                                               bool *result)
+ib_status_t ib_data_expand_test_str(const char *str,
+                                    bool *result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -947,9 +947,9 @@ ib_status_t DLL_PUBLIC ib_data_expand_test_str(const char *str,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_data_expand_test_str_ex(const char *str,
-                                                  size_t slen,
-                                                  bool *result)
+ib_status_t ib_data_expand_test_str_ex(const char *str,
+                                       size_t slen,
+                                       bool *result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc = ib_expand_test_str_ex(
@@ -958,5 +958,173 @@ ib_status_t DLL_PUBLIC ib_data_expand_test_str_ex(const char *str,
         IB_VARIABLE_EXPANSION_PREFIX,
         IB_VARIABLE_EXPANSION_POSTFIX,
         result);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static const int MAX_CAPTURE_NUM = 9;
+typedef struct {
+    const char *full;
+    const char *name;
+} capture_names_t;
+static const capture_names_t names[] =
+{
+    { IB_TX_CAPTURE":0", "0" },
+    { IB_TX_CAPTURE":1", "1" },
+    { IB_TX_CAPTURE":2", "2" },
+    { IB_TX_CAPTURE":3", "3" },
+    { IB_TX_CAPTURE":4", "4" },
+    { IB_TX_CAPTURE":5", "5" },
+    { IB_TX_CAPTURE":6", "6" },
+    { IB_TX_CAPTURE":7", "7" },
+    { IB_TX_CAPTURE":8", "8" },
+    { IB_TX_CAPTURE":9", "9" },
+};
+const char *ib_data_capture_name(int num)
+{
+    IB_FTRACE_INIT();
+    assert(num >= 0);
+
+    if (num <= MAX_CAPTURE_NUM) {
+        IB_FTRACE_RET_CONSTSTR(names[num].name);
+    }
+    else {
+        IB_FTRACE_RET_CONSTSTR("??");
+    }
+}
+const char *ib_data_capture_fullname(int num)
+{
+    IB_FTRACE_INIT();
+    assert(num >= 0);
+
+    if (num <= MAX_CAPTURE_NUM) {
+        IB_FTRACE_RET_CONSTSTR(names[num].full);
+    }
+    else {
+        IB_FTRACE_RET_CONSTSTR(IB_TX_CAPTURE":??");
+    }
+}
+
+/**
+ * Get the capture list, create if required.
+ *
+ * @param[in] tx Transaction
+ * @param[out] list If not NULL, pointer to the capture item's list
+ *
+ * @returns IB_OK: All OK
+ *          IB_ENVAL: @a num is too large
+ *          Error status from: ib_data_get()
+ *                             ib_data_add_list()
+ *                             ib_field_value()
+ */         
+static ib_status_t get_capture_list(ib_tx_t *tx,
+                                    ib_list_t **olist)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_field_t *field = NULL;
+    ib_list_t *list = NULL;
+    ib_provider_inst_t *dpi;
+
+    assert(tx != NULL);
+    dpi = tx->dpi;
+    assert(dpi != NULL);
+    assert(dpi->pr != NULL);
+    assert(dpi->pr->api != NULL);
+
+    IB_PROVIDER_API_TYPE(data) *api =
+        (IB_PROVIDER_API_TYPE(data) *)tx->dpi->pr->api;
+
+    /* Look up the capture list */
+    rc = api->get(tx->dpi, IB_TX_CAPTURE, strlen(IB_TX_CAPTURE), &field);
+    if (rc == IB_ENOENT) {
+        rc = ib_data_add_list(dpi, IB_TX_CAPTURE, &field);
+    }
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (field->type != IB_FTYPE_LIST) {
+        ib_data_remove(dpi, IB_TX_CAPTURE, NULL);
+    }
+    rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&list));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (olist != NULL) {
+        *olist = list;
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_data_capture_clear(ib_tx_t *tx)
+{
+    IB_FTRACE_INIT();
+    assert(tx != NULL);
+
+    ib_status_t rc;
+    ib_list_t *list;
+
+    rc = get_capture_list(tx, &list);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    ib_list_clear(list);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_data_capture_set_item(ib_tx_t *tx,
+                                     int num,
+                                     ib_field_t *in_field)
+{
+    IB_FTRACE_INIT();
+    assert(tx != NULL);
+    assert(num >= 0);
+    assert(in_field != NULL);
+
+    if (num > MAX_CAPTURE_NUM) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    ib_status_t rc;
+    ib_list_t *list;
+    ib_field_t *field;
+    ib_list_node_t *node;
+    ib_list_node_t *next;
+    const char *name;
+
+    name = ib_data_capture_name(num);
+
+    rc = get_capture_list(tx, &list);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Remove any nodes with the same name */
+    IB_LIST_LOOP_SAFE(list, node, next) {
+        field = (ib_field_t *)node->data;
+        if (strncmp(name, field->name, field->nlen) == 0) {
+            ib_list_node_remove(list, node);
+        }
+    }
+    field = NULL;
+
+    /* Make sure we have the correct name */
+    if (strncmp(name, in_field->name, in_field->nlen) == 0) {
+        field = in_field;
+    }
+    else {
+        rc = ib_field_alias(&field, tx->mp, name, strlen(name), in_field);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+                        
+    }
+    assert(field != NULL);
+
+    /* Add the node to the list */
+    rc = ib_list_push(list, field);
+
     IB_FTRACE_RET_STATUS(rc);
 }
