@@ -866,11 +866,6 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_state_notify_tx(ib, handle_request_event, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -927,6 +922,11 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     }
 
     rc = ib_state_notify_tx(ib, request_finished_event, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_state_notify_tx(ib, handle_request_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1129,11 +1129,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
 
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_txdata(ib, tx, response_body_data_event, txdata);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
 
-    rc = ib_state_notify_tx(ib, handle_response_event, tx);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -1175,6 +1171,11 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     }
 
     rc = ib_state_notify_tx(ib, response_finished_event, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_state_notify_tx(ib, handle_response_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

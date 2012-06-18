@@ -807,11 +807,11 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  *
  *   request_started_event [label="request_started *",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_started_event"]
  *   request_header_finished_event [label="request_header_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_header_finished_event"]
- *   request_body_data_event [label="request_body",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_body_data_event"]
+ *   request_body_data_event [label="request_body_data",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_body_data_event"]
  *   request_finished_event [label="request_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref request_finished_event"]
  *   response_started_event [label="response_started *",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_started_event"]
  *   response_header_finished_event [label="response_header_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_header_finished_event"]
- *   response_body_data_event [label="response_body",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_body_data_event"]
+ *   response_body_data_event [label="response_body_data",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_body_data_event"]
  *   response_finished_event [label="response_finished",style=filled,fillcolor="#e6e6e6",shape=ellipse,URL="\ref response_finished_event"]
  *
  *   handle_context_conn_event [label="handle_context_conn **",style=bold,shape=parallelogram,URL="\ref handle_context_conn_event"]
@@ -850,9 +850,9 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  *   handle_context_tx_event -> handle_request_header_event [weight=1.0]
  *   handle_request_header_event -> request_started_event [label="HTTP\nPipeline\nRequest",style=dashed,weight=10.0]
  *   handle_request_header_event -> request_body_data_event [weight=1.0]
- *   request_body_data_event -> handle_request_event [weight=1.0]
- *   handle_request_event -> request_finished_event [weight=1.0]
- *   request_finished_event -> tx_process_event [weight=1.0]
+ *   request_body_data_event -> request_finished_event [weight=1.0]
+ *   request_finished_event -> handle_request_event [weight=1.0]
+ *   handle_request_event -> tx_process_event [weight=1.0]
  *
  *   tx_process_event -> response_started_event [weight=1.0]
  *
@@ -862,11 +862,11 @@ ib_status_t DLL_PUBLIC ib_site_loc_create_default(ib_site_t *site,
  *   response_started_event -> response_header_finished_event [weight=1.0]
  *   response_header_finished_event -> handle_response_header_event [weight=1.0]
  *   handle_response_header_event -> response_body_data_event [weight=1.0]
- *   response_body_data_event -> handle_response_event [weight=1.0]
- *   handle_response_event -> response_finished_event [weight=5.0]
- *   response_finished_event -> response_started_event [label="HTTP\nPipeline\nResponse",style=dashed,weight=10.0]
+ *   response_body_data_event -> response_finished_event [weight=1.0]
+ *   response_finished_event -> handle_response_event [weight=5.0]
+ *   handle_response_event -> response_started_event [label="HTTP\nPipeline\nResponse",style=dashed,weight=10.0]
  *
- *   response_finished_event -> handle_postprocess_event [weight=5.0]
+ *   handle_response_event -> handle_postprocess_event [weight=5.0]
  *   handle_postprocess_event -> tx_finished_event [weight=5.0]
  *
  *   tx_finished_event -> tx_started_event [weight=5.0,constraint=false]
