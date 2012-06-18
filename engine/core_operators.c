@@ -228,11 +228,10 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if ( (*result != 0) &&
-         (ib_flags_all(rule->flags, IB_RULE_FLAG_CAPTURE) == true) )
-    {
+    if (ib_rule_should_capture(rule, *result) == true) {
         ib_data_capture_clear(tx);
         ib_data_capture_set_item(tx, 0, field);
+        ib_data_capture_set_item(tx, 1, field);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

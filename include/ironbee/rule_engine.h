@@ -616,6 +616,17 @@ ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(ib_engine_t *ib,
  */
 ib_mpool_t DLL_PUBLIC *ib_rule_mpool(ib_engine_t *ib);
 
+/**
+ * Determine of operator results should be captured
+ *
+ * @param[in] rule Rule to check
+ * @param[in] result Operator result value
+ *
+ * @returns true if the results should be captured, false otherwise
+ */
+bool ib_rule_should_capture(const ib_rule_t *rule,
+                            ib_num_t result);
+
 
 /**
  * Return rule execution logging mode string

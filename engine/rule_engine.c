@@ -2419,12 +2419,28 @@ static ib_status_t chain_gen_rule_id(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
-                                      ib_context_t *ctx,
-                                      const char *file,
-                                      unsigned int lineno,
-                                      bool is_stream,
-                                      ib_rule_t **prule)
+bool ib_rule_should_capture(const ib_rule_t *rule,
+                            ib_num_t result)
+{
+    IB_FTRACE_INIT();
+
+    if ( (result != 0) &&
+         (rule != NULL) &&
+         (ib_flags_all(rule->flags, IB_RULE_FLAG_CAPTURE) == true) )
+    {
+        IB_FTRACE_RET_BOOL(true);
+    }
+    else {
+        IB_FTRACE_RET_BOOL(false);
+    }
+}
+
+ib_status_t ib_rule_create(ib_engine_t *ib,
+                           ib_context_t *ctx,
+                           const char *file,
+                           unsigned int lineno,
+                           bool is_stream,
+                           ib_rule_t **prule)
 {
     IB_FTRACE_INIT();
     ib_status_t                 rc;
@@ -3062,9 +3078,9 @@ ib_status_t ib_rule_disable_tag(const ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
-                                            ib_rule_t *rule,
-                                            ib_operator_inst_t *opinst)
+ib_status_t ib_rule_set_operator(ib_engine_t *ib,
+                                 ib_rule_t *rule,
+                                 ib_operator_inst_t *opinst)
 {
     IB_FTRACE_INIT();
 
@@ -3078,9 +3094,9 @@ ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
-                                      ib_rule_t *rule,
-                                      const char *id)
+ib_status_t ib_rule_set_id(ib_engine_t *ib,
+                           ib_rule_t *rule,
+                           const char *id)
 {
     IB_FTRACE_INIT();
     assert(ib != NULL);
@@ -3107,7 +3123,7 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule)
+const char *ib_rule_id(const ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
     assert(rule != NULL);
@@ -3123,11 +3139,11 @@ const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule)
     IB_FTRACE_RET_CONSTSTR(NULL);
 }
 
-ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
-                                             const char *name,
-                                             ib_list_t *tfn_names,
-                                             ib_rule_target_t **target,
-                                             ib_num_t *tfns_not_found)
+ib_status_t ib_rule_create_target(ib_engine_t *ib,
+                                  const char *name,
+                                  ib_list_t *tfn_names,
+                                  ib_rule_target_t **target,
+                                  ib_num_t *tfns_not_found)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -3188,9 +3204,9 @@ ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
 }
 
 /* Add a target to a rule */
-ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
-                                          ib_rule_t *rule,
-                                          ib_rule_target_t *target)
+ib_status_t ib_rule_add_target(ib_engine_t *ib,
+                               ib_rule_t *rule,
+                               ib_rule_target_t *target)
 {
     IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
@@ -3212,9 +3228,9 @@ ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
 }
 
 /* Add a transformation to a target */
-ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(ib_engine_t *ib,
-                                              ib_rule_target_t *target,
-                                              const char *name)
+ib_status_t ib_rule_target_add_tfn(ib_engine_t *ib,
+                                   ib_rule_target_t *target,
+                                   const char *name)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -3250,9 +3266,9 @@ ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(ib_engine_t *ib,
 }
 
 /* Add a transformation to all targets of a rule */
-ib_status_t DLL_PUBLIC ib_rule_add_tfn(ib_engine_t *ib,
-                                       ib_rule_t *rule,
-                                       const char *name)
+ib_status_t ib_rule_add_tfn(ib_engine_t *ib,
+                            ib_rule_t *rule,
+                            const char *name)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -3292,10 +3308,10 @@ ib_status_t DLL_PUBLIC ib_rule_add_tfn(ib_engine_t *ib,
 }
 
 /* Add an action to a rule */
-ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
-                                          ib_rule_t *rule,
-                                          ib_action_inst_t *action,
-                                          ib_rule_action_t which)
+ib_status_t ib_rule_add_action(ib_engine_t *ib,
+                               ib_rule_t *rule,
+                               ib_action_inst_t *action,
+                               ib_rule_action_t which)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -3328,8 +3344,8 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(ib_engine_t *ib,
-                                                ib_rule_t *rule)
+ib_status_t ib_rule_chain_invalidate(ib_engine_t *ib,
+                                     ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
