@@ -1607,7 +1607,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     g_ironbee_rules_lua = luaL_newstate();
 
     if (g_ironbee_rules_lua == NULL) {
-        ib_log_alert(ib, "Failed to create LuaJIT state.");
+        ib_log_notice(ib, "Failed to create LuaJIT state.");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
