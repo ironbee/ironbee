@@ -554,6 +554,8 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     }
     else if (rc == IB_OK) {
         *result = 1;
+        ib_data_capture_clear(tx);
+        ib_data_capture_set_item(tx, 0, field);
     }
     else {
         ib_log_error_tx(tx,
