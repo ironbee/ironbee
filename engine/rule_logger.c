@@ -102,7 +102,7 @@ static const char *format_field(const ib_field_t *field,
                 len = bufsize - 1;
             }
             strncpy(buf, (const char *)ib_bytestr_const_ptr(bs), len);
-            *(buf+len-1) = '\0';
+            *(buf+len) = '\0';
             break;
         }
 
@@ -137,7 +137,19 @@ static const char *format_field(const ib_field_t *field,
                 break;
             }
             len = IB_LIST_ELEMENTS(lst);
-            snprintf(buf, bufsize, "list[%zd]", len);
+            if (len == 0) {
+                snprintf(buf, bufsize, "list[%zd]", len);
+            }
+            else {
+                const ib_list_node_t *node;
+                node = ib_list_last_const(lst);
+                if (node == NULL) {
+                    snprintf(buf, bufsize, "list[%zd]", len);
+                }
+                else {
+                    format_field((const ib_field_t *)node->data, buf, bufsize);
+                }
+            }
             break;
         }
 
@@ -761,25 +773,40 @@ static void log_exec_normal_full(const ib_rule_log_exec_t *log_exec,
 
         /* If the debug flag is set, log all of the transformations */
         if (log_exec_flag_debug(log_exec) == true) {
-            const ib_list_node_t *tfnnode;
-            IB_LIST_LOOP_CONST(log_exec->tfn_list, tfnnode) {
-                const ib_rule_tfn_result_t *tfn =
-                    (const ib_rule_tfn_result_t *)
-                    ib_list_node_data_const(tfnnode);
-                char inbuf[MAX_FIELD_BUF];
+            if (ib_list_elements(log_exec->tfn_list) == 0) {
                 char outbuf[MAX_FIELD_BUF];
-
                 ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
-                             "%s %s:%d \"%s\" target \"%s\" tfn \"%s\" "
-                             "\"%s\" -> \"%s\"",
+                             "%s %s:%d \"%s\" target=\"%s\" \"%s\"",
                              LOG_PREFIX,
                              tx->er_ipstr,
                              tx->conn->remote_port,
                              rule->meta.id,
                              result->target->field_name,
-                             tfn->tfn->name,
-                             format_field(tfn->in, inbuf, MAX_FIELD_BUF),
-                             format_field(tfn->out, outbuf, MAX_FIELD_BUF));
+                             format_field(result->original,
+                                          outbuf,
+                                          MAX_FIELD_BUF));
+            }
+            else {
+                const ib_list_node_t *tfnnode;
+                IB_LIST_LOOP_CONST(log_exec->tfn_list, tfnnode) {
+                    const ib_rule_tfn_result_t *tfn =
+                        (const ib_rule_tfn_result_t *)
+                        ib_list_node_data_const(tfnnode);
+                    char inbuf[MAX_FIELD_BUF];
+                    char outbuf[MAX_FIELD_BUF];
+
+                    ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
+                                 "%s %s:%d \"%s\" target=\"%s\" tfn=\"%s\" "
+                                 "\"%s\" -> \"%s\"",
+                                 LOG_PREFIX,
+                                 tx->er_ipstr,
+                                 tx->conn->remote_port,
+                                 rule->meta.id,
+                                 result->target->field_name,
+                                 tfn->tfn->name,
+                                 format_field(tfn->in, inbuf, MAX_FIELD_BUF),
+                                 format_field(tfn->out, outbuf, MAX_FIELD_BUF));
+                }
             }
         }
 
@@ -802,7 +829,7 @@ static void log_exec_normal_full(const ib_rule_log_exec_t *log_exec,
                     (const ib_action_inst_t *)ib_list_node_data_const(actnode);
 
                 ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
-                             "%s %s:%d \"%s\" target \"%s\" op=\"%s\" "
+                             "%s %s:%d \"%s\" target=\"%s\" op=\"%s\" "
                              "result %" PRIu64 "; action \"%s%s\" executed",
                              LOG_PREFIX,
                              tx->er_ipstr,
