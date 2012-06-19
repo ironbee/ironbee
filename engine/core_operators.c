@@ -363,6 +363,10 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+typedef struct {
+    ib_radix_t  *radix;
+    const char  *ascii;
+} ipmatch_data_t;
 /**
  * Create function for the "ipmatch" operator
  *
@@ -387,6 +391,8 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
     size_t copy_len;
     char *p;
     ib_radix_t *radix;
+    ipmatch_data_t *ipmatch_data;
+    char *ascii;
 
     if (parameters == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -408,6 +414,19 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    ipmatch_data = ib_mpool_alloc(mp, sizeof(*ipmatch_data) );
+    if (ipmatch_data == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    ascii = ib_mpool_alloc(mp, copy_len+1);
+    if (ascii == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    *ascii = '\0';
+
+    ipmatch_data->radix = radix;
+    ipmatch_data->ascii = ascii;
+
     /* Split the parameters into the separate pieces */
     for (p = strtok(copy, " ");  p != NULL;  p = strtok(NULL, " ") ) {
         ib_radix_prefix_t *prefix = NULL;
@@ -422,19 +441,23 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
         }
 
         /* Insert the prefix into the radix tree */
-        rc = ib_radix_insert_data(radix, prefix, NULL);
+        rc = ib_radix_insert_data(radix, prefix, copy);
         if (rc != IB_OK) {
             ib_log_error(ib,
                          "Error loading prefix %s to the radix tree: %s",
                          p, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
-
-        ib_log_debug3(ib, "prefix '%s' added to the radix tree", p);
+        if (*ascii != '\0') {
+            strcat(ascii, ",");
+        }
+        strcat(ascii, p);
+        ib_log_debug3(ib, "prefix '%s' added to radix tree %p",
+                      p, (void *)radix);
     }
 
     /* Done */
-    op_inst->data = radix;
+    op_inst->data = ipmatch_data;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -459,12 +482,21 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
                                       ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(rule != NULL);
+    assert(data != NULL);
+    assert(field != NULL);
+    assert(result != NULL);
+
     ib_status_t rc;
-    ib_radix_t *radix = (ib_radix_t *)data; /* The radix matcher object */
-    ib_radix_prefix_t *prefix;              /* The IP address */
-    const char *ipstr;                      /* String version of the address */
-    ib_num_t iplen;                         /* Length of the address string */
-    char *rmatch = NULL;                    /* Radix match */
+    const ipmatch_data_t *ipmatch_data; /* The radix matcher object */
+    ib_radix_prefix_t *prefix;          /* The IP address */
+    const char *ipstr;                  /* String version of the address */
+    ib_num_t iplen;                     /* Length of the address string */
+    char *rmatch = NULL;                /* Radix match */
+
+    ipmatch_data = (const ipmatch_data_t *)data;
 
     /**
      * This works on C-style (NUL terminated) and byte strings.  Note
@@ -512,7 +544,11 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     }
 
     /* Do the matching */
-    rc = ib_radix_match_closest(radix, prefix, &rmatch);
+    rc = ib_radix_match_closest(ipmatch_data->radix, prefix, &rmatch);
+    ib_rule_log_debug(tx, rule, NULL, NULL,
+                      "Matching \"%.*s\" against pattern(s) \"%s\": %s",
+                      (int)iplen, ipstr, ipmatch_data->ascii,
+                      ib_status_to_string(rc));
     if (rc == IB_ENOENT) {
         *result = 0;
     }
