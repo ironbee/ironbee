@@ -1773,7 +1773,7 @@ const char *ib_data_capture_name(int num);
  *
  * @returns IB_OK: All OK
  *          Error status from: ib_data_capture_init_item()
- */         
+ */
 ib_status_t DLL_PUBLIC ib_data_capture_clear(ib_tx_t *tx);
 
 /**

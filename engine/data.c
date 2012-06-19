@@ -1015,7 +1015,7 @@ const char *ib_data_capture_fullname(int num)
  *          Error status from: ib_data_get()
  *                             ib_data_add_list()
  *                             ib_field_value()
- */         
+ */
 static ib_status_t get_capture_list(ib_tx_t *tx,
                                     ib_list_t **olist)
 {
@@ -1119,7 +1119,7 @@ ib_status_t ib_data_capture_set_item(ib_tx_t *tx,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-                        
+
     }
     assert(field != NULL);
 
