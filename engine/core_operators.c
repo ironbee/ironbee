@@ -39,15 +39,17 @@
 
 #include "ironbee_private.h"
 
-
-/* Size of buffer used to convert a bytestr to an int */
-#define MAX_FIELD_NUM_BUF    128
-
 /* Numeric operator params */
 typedef struct {
     const char *str;
     ib_num_t    num;
 } numop_params_t;
+
+/* Structure used for ipmatch operator */
+typedef struct {
+    ib_radix_t  *radix;
+    const char  *ascii;
+} ipmatch_data_t;
 
 /**
  * Allocate a buffer and unescape operator arguments.
@@ -363,10 +365,6 @@ static ib_status_t op_checkflag_execute(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-typedef struct {
-    ib_radix_t  *radix;
-    const char  *ascii;
-} ipmatch_data_t;
 /**
  * Create function for the "ipmatch" operator
  *
@@ -554,8 +552,10 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     }
     else if (rc == IB_OK) {
         *result = 1;
-        ib_data_capture_clear(tx);
-        ib_data_capture_set_item(tx, 0, field);
+        if (ib_rule_should_capture(rule, *result) == true) {
+            ib_data_capture_clear(tx);
+            ib_data_capture_set_item(tx, 0, field);
+        }
     }
     else {
         ib_log_error_tx(tx,
@@ -625,15 +625,12 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
     }
 
     /* Fill in the parameters */
-    if (expandable) {
-        vptr->str = ib_mpool_strdup(mp, params_unesc);
-        if (vptr->str == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
+    vptr->str = ib_mpool_strdup(mp, params_unesc);
+    if (vptr->str == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    else {
+    if (expandable == false) {
         vptr->num = value;
-        vptr->str = NULL;
     }
 
     op_inst->data = vptr;
@@ -755,6 +752,31 @@ static ib_status_t field_to_num(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+static ib_status_t capture_num(ib_tx_t *tx, int num, ib_num_t value)
+{
+    IB_FTRACE_INIT();
+    assert(tx != NULL);
+
+    ib_status_t rc;
+    ib_field_t *field;
+    const char *name;
+    const char *str;
+
+    name = ib_data_capture_name(num);
+
+    str = ib_num_to_string(tx->mp, value);
+    if (str == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    rc = ib_field_create_bytestr_alias(&field, tx->mp, name, strlen(name),
+                                       (uint8_t *)str, strlen(str));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_data_capture_set_item(tx, 0, field);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 /**
  * Execute function for the numeric "equal" operator
  *
@@ -787,7 +809,7 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Get the numeric value (including expansion, etc) */
+    /* Get the numeric value from the param data (including expansion, etc) */
     rc = get_num_value(tx, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -795,6 +817,10 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value == param_value);
+    if (ib_rule_should_capture(rule, *result) == true) {
+        ib_data_capture_clear(tx);
+        rc = capture_num(tx, 0, value);
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -838,6 +864,10 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value != param_value);
+    if (ib_rule_should_capture(rule, *result) == true) {
+        ib_data_capture_clear(tx);
+        rc = capture_num(tx, 0, value);
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -881,6 +911,10 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value > param_value);
+    if (ib_rule_should_capture(rule, *result) == true) {
+        ib_data_capture_clear(tx);
+        rc = capture_num(tx, 0, value);
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -924,6 +958,10 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value < param_value);
+    if (ib_rule_should_capture(rule, *result) == true) {
+        ib_data_capture_clear(tx);
+        rc = capture_num(tx, 0, value);
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -967,6 +1005,10 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value >= param_value);
+    if (ib_rule_should_capture(rule, *result) == true) {
+        ib_data_capture_clear(tx);
+        rc = capture_num(tx, 0, value);
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1010,6 +1052,10 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value <= param_value);
+    if (ib_rule_should_capture(rule, *result) == true) {
+        ib_data_capture_clear(tx);
+        rc = capture_num(tx, 0, value);
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
