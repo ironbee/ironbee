@@ -328,42 +328,6 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
 }
 
 /**
- * Execute function for the "checkflag" operator
- *
- * @param[in] ib Ironbee engine (unused).
- * @param[in] tx The transaction for this operator.
- * @param[in] data Name of the flag to check.
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
- * @param[out] result Pointer to number in which to store the result
- *
- * @returns Status code
- */
-static ib_status_t op_checkflag_execute(ib_engine_t *ib,
-                                        ib_tx_t *tx,
-                                        const ib_rule_t *rule,
-                                        void *data,
-                                        ib_flags_t flags,
-                                        ib_field_t *field,
-                                        ib_num_t *result)
-{
-    IB_FTRACE_INIT();
-
-    /* Data will be a C-Style string */
-    const char *cstr = (const char *)data;
-
-    /* Handle the suspicious flag */
-    if (strcasecmp(cstr, "suspicious") == 0) {
-        *result = ib_tx_flags_isset(tx, IB_TX_FSUSPICIOUS);
-    }
-    else {
-        ib_log_error_tx(tx,  "checkflag operator: invalid flag '%s'", cstr);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
  * Create function for the "ipmatch" operator
  *
  * @param[in] ib The IronBee engine
@@ -1200,24 +1164,6 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-
-    /**
-     * Misc operators
-     */
-
-    /* Register the checkflag operator */
-    rc = ib_operator_register(ib,
-                              "checkflag",
-                              IB_OP_FLAG_ALLOW_NULL|IB_OP_FLAG_PHASE,
-                              strop_create,
-                              NULL,
-                              NULL, /* no destroy function */
-                              NULL,
-                              op_checkflag_execute,
-                              NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
