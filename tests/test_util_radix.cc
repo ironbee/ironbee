@@ -92,7 +92,7 @@ public:
     new PrefixTest(ascii, mtype, rc, pat, __LINE__)
 
 // Some tests are failing; set this to 1 to enable them
-#define ENABLE_FAILING_TESTS 0
+#define ENABLE_FAILING_TESTS 1
 
 
 /* -- Helper functions -- */
@@ -586,6 +586,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
     ib_radix_t *radix = NULL;
     ib_status_t rc;
     char *result = NULL;
+    int n;
 
     static PrefixPattern *patterns[] = {
         PREFIX_PATTERN("192.168.1.1"),    /* #0 */
@@ -610,26 +611,14 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
         PREFIX_TEST("192.168.1.10",   CLOSEST, IB_OK,     patterns[1]),
         PREFIX_TEST("10.0.0.1",       CLOSEST, IB_OK,     patterns[3]),
         PREFIX_TEST("192.168.0.0/16", CLOSEST, IB_OK,     patterns[2]),
-#     if(ENABLE_FAILING_TESTS)
         PREFIX_TEST("192.168.1.27",   CLOSEST, IB_OK,     patterns[2]),
-#     endif
         PREFIX_TEST("127.0.0.1",      CLOSEST, IB_OK,     patterns[4]),
-#     if(ENABLE_FAILING_TESTS)
         PREFIX_TEST("127.0.0.2",      CLOSEST, IB_OK,     patterns[5]),
-#     endif
-#     if(ENABLE_FAILING_TESTS)
-        PREFIX_TEST("192.168.2.10",   CLOSEST, IB_OK,     patterns[2]),
-#     endif
-        PREFIX_TEST("192.169.2.10",   CLOSEST, IB_ENOENT, NULL),
+        PREFIX_TEST("192.168.2.6",    CLOSEST, IB_OK,     patterns[2]),
+        PREFIX_TEST("192.169.2.6",    CLOSEST, IB_ENOENT, NULL),
         NULL,
     };
 
-# if (!ENABLE_FAILING_TESTS)
-    std::cout << "WARNING: One or more failing tests are disabled" << std::endl;
-# endif
-
-    int n;
-    
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -673,7 +662,12 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
         ASSERT_EQ(IB_OK, rc);
 
         result = NULL;
-        rc = ib_radix_match_exact(radix, test->prefix, &result);
+        if (test->match_type == EXACT) {
+            rc = ib_radix_match_exact(radix, test->prefix, &result);
+        }
+        else {
+            rc = ib_radix_match_closest(radix, test->prefix, &result);
+        }
         ASSERT_EQ(test->rc, rc)
             << "Test @" << test->Str();
         if (rc == IB_OK) {
