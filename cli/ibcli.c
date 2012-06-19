@@ -797,7 +797,7 @@ static void print_field(const char *label,
         const char *s;
         ib_field_value(field, ib_ftype_nulstr_out(&s));
         if (maxlen > 0) {
-            printf("  %s = \"%.*s\"\n", label, (int)maxlen, s);
+            printf("  %s = \"%.*s...\"\n", label, (int)maxlen, s);
         }
         else {
             printf("  %s = \"%s\"\n", label, s);
@@ -861,6 +861,8 @@ static void print_field(const char *label,
     }
 }
 
+const size_t max_path_element = 64;
+
 /**
  * Build a path by appending the field name to an existing path.
  *
@@ -869,25 +871,27 @@ static void print_field(const char *label,
  *
  * @returns Pointer to newly allocated path string
  */
-static const char *build_path( const char *path, ib_field_t *field )
+static const char *build_path(const char *path, ib_field_t *field)
 {
     size_t pathlen;
     size_t fullpath_len;
+    size_t tmplen;
     char *fullpath;
+    ssize_t nlen = (ssize_t)field->nlen;
+    bool truncated = false;
 
-    int nlen = (int)field->nlen;
     if ( (nlen <= 0) || (field->name == NULL) ) {
         nlen = 0;
     }
-    else if ( nlen > 32 ) {
-        int i;
+    else if (nlen > (ssize_t)max_path_element) {
+        size_t i;
         const char *p;
-        for (i = 0, p=field->name; isprint(*p) && (i < 32);  i++) {
+        for (i = 0, p=field->name; isprint(*p) && (i < max_path_element); ++i) {
             /* Do nothing */
         }
         nlen = i;
+        truncated = true;
     }
-
 
     /* Special case */
     if ( (nlen == 0) || (field->name == NULL) ) {
@@ -896,7 +900,7 @@ static const char *build_path( const char *path, ib_field_t *field )
 
     /* Allocate a path buffer */
     pathlen = strlen(path);
-    fullpath_len = pathlen + (pathlen > 0 ? 2 : 1) + nlen;
+    fullpath_len = pathlen + (pathlen > 0 ? 2 : 1) + nlen + (truncated ? 3 : 0);
     fullpath = (char *)malloc(fullpath_len);
 
     /* Copy in the base path */
@@ -906,8 +910,14 @@ static const char *build_path( const char *path, ib_field_t *field )
     }
 
     /* Append the field's name */
-    memcpy(fullpath+pathlen+(pathlen > 0 ? 1 : 0), field->name, nlen);
-    fullpath[fullpath_len-1] = '\0';
+    tmplen = pathlen+(pathlen > 0 ? 1 : 0);
+    memcpy(fullpath+tmplen, field->name, nlen);
+    if (truncated) {
+        strcpy(fullpath+tmplen+nlen, "...");
+    }
+    else {
+        fullpath[fullpath_len-1] = '\0';
+    }
     return fullpath;
 }
 
