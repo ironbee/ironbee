@@ -1245,7 +1245,7 @@ ib_status_t ib_radix_ip_to_prefix_ex(const char *cidr,
 {
     IB_FTRACE_INIT();
 
-    char *tmp_cidr;              /* Temporary copy of cidr */
+    char *tmp_cidr = NULL; /* Temporary copy of cidr */
     char *mask = NULL;
     uint64_t nmask = 0;
     bool is_ipv4;
