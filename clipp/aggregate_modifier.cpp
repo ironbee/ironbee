@@ -23,6 +23,7 @@
  */
 
 #include "aggregate_modifier.hpp"
+#include "random_support.hpp"
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -38,45 +39,6 @@ namespace IronBee {
 namespace CLIPP {
 
 namespace  {
-
-typedef boost::function<size_t()> distribution_t;
-
-size_t constant_dist(size_t n)
-{
-    return n;
-}
-
-template <typename DistributionType>
-class random_dist
-{
-public:
-    explicit
-    random_dist(DistributionType dist) :
-        m_rng(clock()),
-        m_dist(dist)
-    {
-        // nop
-    }
-
-    size_t operator()()
-    {
-        size_t result = m_dist(m_rng);
-        if (result < 1) {
-            result = 1;
-        }
-        return result;
-    }
-
-protected:
-    boost::random::mt19937 m_rng;
-    DistributionType       m_dist;
-};
-
-template <typename DistributionType>
-random_dist<DistributionType> make_random_dist(DistributionType dist)
-{
-    return random_dist<DistributionType>(dist);
-}
 
 struct data_t
 {
@@ -101,7 +63,7 @@ struct AggregateModifier::State
 AggregateModifier::AggregateModifier(size_t n) :
     m_state(new State())
 {
-    m_state->distribution = bind(constant_dist, n);
+    m_state->distribution = bind(constant_distribution, n);
 }
 
 bool AggregateModifier::operator()(Input::input_p& input)
@@ -155,7 +117,7 @@ AggregateModifier AggregateModifier::uniform(
         throw runtime_error("Min and max must be positive.");
     }
     AggregateModifier mod;
-    mod.m_state->distribution = make_random_dist(
+    mod.m_state->distribution = make_random_distribution(
         boost::random::uniform_int_distribution<>(min, max)
     );
     return mod;
@@ -170,7 +132,7 @@ AggregateModifier AggregateModifier::binomial(unsigned int t, double p)
         throw runtime_error("p must be less than or equal to 1.");
     }
     AggregateModifier mod;
-    mod.m_state->distribution = make_random_dist(
+    mod.m_state->distribution = make_random_distribution(
         boost::random::binomial_distribution<>(t, p)
     );
     return mod;
@@ -182,7 +144,7 @@ AggregateModifier AggregateModifier::geometric(double p)
         throw runtime_error("p must be in [0,1)");
     }
     AggregateModifier mod;
-    mod.m_state->distribution = make_random_dist(
+    mod.m_state->distribution = make_random_distribution(
         boost::random::geometric_distribution<>(p)
     );
     return mod;
@@ -191,7 +153,7 @@ AggregateModifier AggregateModifier::geometric(double p)
 AggregateModifier AggregateModifier::poisson(double mean)
 {
     AggregateModifier mod;
-    mod.m_state->distribution = make_random_dist(
+    mod.m_state->distribution = make_random_distribution(
         boost::random::poisson_distribution<>(mean)
     );
     return mod;
