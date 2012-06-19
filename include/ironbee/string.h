@@ -411,6 +411,64 @@ ib_status_t ib_str_wspc_compress(ib_strop_t op,
                                  ib_flags_t *result);
 
 /**
+ * Get the number of digits in a number
+ *
+ * @param[in] num The number to operate on
+ *
+ * @returns Number of digits (including '-')
+ */
+size_t ib_num_digits(int64_t num);
+
+/**
+ * Get the number of digits in a number
+ *
+ * @param[in] num The number to operate on
+ *
+ * @returns Number of digits
+ */
+size_t ib_unum_digits(uint64_t num);
+
+/**
+ * Get the size of a string buffer required to store a number
+ *
+ * @param[in] num The number to operate on
+ *
+ * @returns Required string length
+ */
+size_t ib_num_buf_size(int64_t num);
+
+/**
+ * Get the size of a string buffer required to store a number
+ *
+ * @param[in] num The number to operate on
+ *
+ * @returns Required string length
+ */
+size_t ib_unum_buf_size(uint64_t num);
+
+/**
+ * Get a string representation of a number
+ *
+ * @param[in] mp The memory pool to use for allocations
+ * @param[in] value The number to operate on
+ *
+ * @returns The buffer or NULL if allocation fails
+ */
+const char *ib_num_to_string(ib_mpool_t *mp,
+                             int64_t value);
+
+/**
+ * Get a string representation of a number
+ *
+ * @param[in] mp The memory pool to use for allocations
+ * @param[in] value The number to operate on
+ *
+ * @returns The buffer or NULL if allocation fails
+ */
+const char *ib_unum_to_string(ib_mpool_t *mp,
+                              uint64_t value);
+
+/**
  * @} IronBeeUtil
  */
 

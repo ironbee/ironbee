@@ -30,6 +30,8 @@
 #include <errno.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <math.h>
+#include <inttypes.h>
 
 #include <ironbee/types.h>
 #include <ironbee/debug.h>
@@ -143,4 +145,80 @@ const char *ib_strstr_ex(const char *haystack,
     }
 
     IB_FTRACE_RET_CONSTSTR(NULL);
+}
+
+const int64_t  P10_INT64_LIMIT  = (INT64_MAX  / 10);
+const uint64_t P10_UINT64_LIMIT = (UINT64_MAX / 10);
+
+size_t ib_num_digits(int64_t num)
+{
+    size_t n = 1;
+    int64_t po10;
+
+    if (num < 0) {
+        num = -num;
+        ++n;
+    }
+
+    po10 = 10;
+    while (num >= po10) {
+        ++n;
+        if (po10 > P10_INT64_LIMIT)
+            break;
+        po10 *= 10;
+    }
+    return n;
+}
+
+size_t ib_unum_digits(uint64_t num)
+{
+    size_t n = 1;
+    uint64_t po10;
+
+    po10 = 10;
+    while (num >= po10) {
+        ++n;
+        if (po10 > P10_UINT64_LIMIT)
+            break;
+        po10 *= 10;
+    }
+    return n;
+}
+
+size_t ib_num_buf_size(int64_t num)
+{
+    IB_FTRACE_INIT();
+    size_t digits = ib_num_digits(num);
+    IB_FTRACE_RET_UINT(digits + 1);
+}
+
+size_t ib_unum_buf_size(uint64_t num)
+{
+    IB_FTRACE_INIT();
+    size_t digits = ib_unum_digits(num);
+    IB_FTRACE_RET_UINT(digits + 1);
+}
+
+const char *ib_num_to_string(ib_mpool_t *mp,
+                             int64_t value)
+{
+    IB_FTRACE_INIT();
+    size_t size = ib_num_buf_size(value);
+    char *buf = ib_mpool_alloc(mp, size);
+    if (buf != NULL) {
+        snprintf(buf, size, "%"PRId64, value);
+    }
+    IB_FTRACE_RET_CONSTSTR(buf);
+}
+
+const char *ib_unum_to_string(ib_mpool_t *mp,
+                              uint64_t value)
+{
+    IB_FTRACE_INIT();
+    size_t size = ib_unum_buf_size(value);
+    char *buf = ib_mpool_alloc(mp, size);
+    if (buf != NULL) {
+        snprintf(buf, size, "%"PRIu64, value);
+    }
+    IB_FTRACE_RET_CONSTSTR(buf);
 }
