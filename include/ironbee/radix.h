@@ -163,11 +163,14 @@ ib_status_t ib_radix_new(ib_radix_t **radix,
                          ib_mpool_t *pool);
 
 /*
- * Inserts a new user data associated to the prefix passed. The prefix is not
- * used, so developers are responsible to free that prefix
- * Keys can be of "any size" but this will be probably used for
- * CIDR data prefixes only (from 0 to 32 ~ 128 depending on IPv4
- * or IPv6 respectively)
+ * Inserts a new user data associated to the prefix passed.
+ *
+ * The prefix is not used, so developers are responsible to free that prefix
+ * Keys can be of "any size" but this will be probably used for CIDR data
+ * prefixes only (from 0 to 32 ~ 128 depending on IPv4 or IPv6 respectively)
+ *
+ * @note: It's valid to insert NULL @a prefix_data, but if you do so,
+ * it will always fail closest matches.
  *
  * @param radix the radix of the node
  * @param prefix the prefix to use as index
