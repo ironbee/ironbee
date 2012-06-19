@@ -35,6 +35,7 @@
 #include <ironbee/ahocorasick.h>
 
 #include <sys/types.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -442,7 +443,7 @@ enum {
  *
  * @param[in] cidr const char * with format ip/mask where mask is optional
  * @param[in] len length of the str
- * @param[out] result Result: 1 if true, 0 if false
+ * @param[out] result Result: true / false
  *
  * @returns Status code
  */
@@ -454,7 +455,7 @@ enum {
  *
  * @param[in] cidr const char * with format ip/mask where mask is optional
  * @param[in] len length of the str
- * @param[out] result Result: 1 if true, 0 if false
+ * @param[out] result Result: true / false
  *
  * @returns Status code
  */
@@ -466,26 +467,26 @@ enum {
  *
  * @param[in] str const char * with format ip/mask where mask is optional
  * @param[in] len length of the str
- * @param[out] result Result: 1 if true, 0 if false
+ * @param[out] result Result: true / false
  *
  * @returns Status code
  */
 ib_status_t ib_radix_is_ipv4_ex(const char *str,
                                 size_t len,
-                                ib_num_t *result);
+                                bool *result);
 
 /**
  * Determine if the given prefix is IPv6
  *
  * @param[in] str const char * with format ip/mask where mask is optional
  * @param[in] len length of the str
- * @param[out] result Result: 1 if true, 0 if false
+ * @param[out] result Result: true / false
  *
  * @returns Status code
  */
 ib_status_t ib_radix_is_ipv6_ex(const char *str,
                                 size_t len,
-                                ib_num_t *result);
+                                bool *result);
 
 /**
  * Look for a character in a string that can have embedded NUL characters

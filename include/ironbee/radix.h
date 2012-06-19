@@ -299,7 +299,7 @@ ib_status_t ib_radix_ip_to_prefix(const char *cidr,
  * @returns Status code
  */
 ib_status_t ib_radix_ip_to_prefix_ex(const char *cidr,
-                                     ib_num_t len,
+                                     size_t len,
                                      ib_radix_prefix_t **prefix,
                                      ib_mpool_t *mp);
 

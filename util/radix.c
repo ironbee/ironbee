@@ -37,13 +37,14 @@
 #include <arpa/inet.h>
 #include <sys/socket.h> /* For FreeBSD */
 #include <stdlib.h>
+#include <stdbool.h>
 
 ib_status_t ib_radix_prefix_new(ib_radix_prefix_t **prefix,
                                 ib_mpool_t *pool)
 {
     IB_FTRACE_INIT();
-    *prefix = (ib_radix_prefix_t *) ib_mpool_calloc(pool, 1,
-                                                    sizeof(ib_radix_prefix_t));
+    *prefix = (ib_radix_prefix_t *)
+        ib_mpool_calloc(pool, 1, sizeof(ib_radix_prefix_t));
 
     if (*prefix == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -95,8 +96,8 @@ ib_status_t ib_radix_clone_prefix(ib_radix_prefix_t *orig,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    (*new_prefix)->rawbits = (uint8_t *) ib_mpool_calloc(mp, 1, sizeof(uint8_t)*
-                                                         limit);
+    (*new_prefix)->rawbits = (uint8_t *)
+        ib_mpool_calloc(mp, limit, sizeof(uint8_t));
     if ((*new_prefix)->rawbits == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -124,8 +125,8 @@ ib_status_t ib_radix_node_new(ib_radix_node_t **node,
                               ib_mpool_t *pool)
 {
     IB_FTRACE_INIT();
-    *node = (ib_radix_node_t *)ib_mpool_calloc(pool, 1,
-                                               sizeof(ib_radix_node_t));
+    *node = (ib_radix_node_t *)
+        ib_mpool_calloc(pool, 1, sizeof(ib_radix_node_t));
 
     if (*node == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -739,10 +740,10 @@ ib_status_t ib_radix_destroy(ib_radix_t **radix)
  * @returns Status code
  */
 static ib_status_t ib_radix_match_prefix(ib_radix_node_t *node,
-                                                ib_radix_prefix_t *prefix,
-                                                int offset,
-                                                uint8_t type,
-                                                void *result)
+                                         ib_radix_prefix_t *prefix,
+                                         int offset,
+                                         uint8_t type,
+                                         void *result)
 {
     IB_FTRACE_INIT();
     int i = 0;
@@ -804,10 +805,10 @@ static ib_status_t ib_radix_match_prefix(ib_radix_node_t *node,
  * @returns Status code
  */
 static ib_status_t ib_radix_match_all(ib_radix_node_t *node,
-                                                ib_radix_prefix_t *prefix,
-                                                int offset,
-                                                ib_list_t **rlist,
-                                                ib_mpool_t *mp)
+                                      ib_radix_prefix_t *prefix,
+                                      int offset,
+                                      ib_list_t **rlist,
+                                      ib_mpool_t *mp)
 {
     IB_FTRACE_INIT();
     ib_status_t ret = IB_OK;
@@ -980,7 +981,7 @@ ib_status_t ib_radix_match_closest(ib_radix_t *radix,
                                     IB_RADIX_CLOSEST, result);
     }
 
-    if (ret == IB_ENOENT && radix->start->data != NULL) {
+    if ( (ret == IB_ENOENT) && (radix->start->data != NULL) ) {
         *(void **)result = radix->start->data;
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -1083,9 +1084,8 @@ static inline struct in_addr *ib_radix_get_IPV4_addr(const char *ip,
     IB_FTRACE_INIT();
     struct in_addr *rawbytes = NULL;
 
-    if ((rawbytes = (struct in_addr *) ib_mpool_calloc(mp, 1,
-                                               sizeof(struct in_addr))) == NULL)
-    {
+    rawbytes = (struct in_addr *)ib_mpool_calloc(mp, 1, sizeof(struct in_addr));
+    if (rawbytes == NULL) {
         IB_FTRACE_RET_PTR(struct in_addr, NULL);
     }
 
@@ -1110,9 +1110,9 @@ static inline struct in6_addr *ib_radix_get_IPV6_addr(const char *ip,
     IB_FTRACE_INIT();
     struct in6_addr *rawbytes = NULL;
 
-    if ((rawbytes = (struct in6_addr *) ib_mpool_calloc(mp, 1,
-                                              sizeof(struct in6_addr))) == NULL)
-    {
+    rawbytes = (struct in6_addr *)
+        ib_mpool_calloc(mp, 1, sizeof(struct in6_addr));
+    if (rawbytes == NULL) {
         IB_FTRACE_RET_PTR(struct in6_addr, NULL);
     }
 
@@ -1127,8 +1127,8 @@ static inline struct in6_addr *ib_radix_get_IPV6_addr(const char *ip,
  * Determine if a bytestring looks like a CIDR IPV4 address.
  */
 ib_status_t ib_radix_is_ipv4_ex(const char *str,
-                                size_t len,
-                                ib_num_t *result)
+                         size_t len,
+                         bool *result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -1147,7 +1147,7 @@ ib_status_t ib_radix_is_ipv4_ex(const char *str,
  */
 ib_status_t ib_radix_is_ipv6_ex(const char *str,
                                 size_t len,
-                                ib_num_t *result)
+                                bool *result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -1239,110 +1239,124 @@ ib_status_t ib_radix_ip_to_prefix(const char *cidr,
  *  formats, with regex, or functions, thought
  */
 ib_status_t ib_radix_ip_to_prefix_ex(const char *cidr,
-                                     ib_num_t len,
+                                     size_t len,
                                      ib_radix_prefix_t **prefix,
                                      ib_mpool_t *mp)
 {
     IB_FTRACE_INIT();
 
-    /* If we got a mask, we will need to copy the IP to separate it from
-     the mask, and the max length should be the length of a IPv6 in ascii,
-     so 39 plus \0 */
-    char ip_tmp[40];
-
-    const char *mask = NULL;
+    char *tmp_cidr;              /* Temporary copy of cidr */
+    char *mask = NULL;
     uint64_t nmask = 0;
-    ib_num_t is_ipv4;
-    ib_num_t is_ipv6;
-    ib_status_t rc;
+    bool is_ipv4;
+    bool is_ipv6;
+    ib_status_t rc = IB_OK;
+    const char *nul;
 
     /* Verify that there are no NUL chars in the string */
-    if (strlen(cidr) != (size_t)len) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    nul = memchr(cidr, 0, len);
+    if ( (nul != NULL) && (nul < (cidr+len)) ) {
+        rc = IB_EINVAL;
+        goto cleanup;
     }
     rc = ib_radix_is_ipv4_ex(cidr, len, &is_ipv4);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        goto cleanup;
     }
     rc = ib_radix_is_ipv6_ex(cidr, len, &is_ipv6);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        goto cleanup;
     }
+
+    /* Copy cidr to a temporary buffer that is NUL terminated and
+     * can be modified if required.  */
+    tmp_cidr = malloc(len+1);
+    if (tmp_cidr == NULL) {
+        rc = IB_EALLOC;
+        goto cleanup;
+    }
+    memcpy(tmp_cidr, cidr, len);
+    *(tmp_cidr+len) = '\0';
+
     if (is_ipv4) {
         ssize_t offset;
-        rc = ib_radix_strchr_nul_error(cidr, len, '/', &offset);
+
+        rc = ib_radix_strchr_nul_error(tmp_cidr, len, '/', &offset);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            goto cleanup;
         }
         else if (offset >= 0) {
-            mask = cidr + offset;
+            mask = tmp_cidr + offset;
         }
 
         if (mask != NULL) {
             nmask = strtoull(mask+1, NULL, 10);
-
             if (nmask > 32) {
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                rc = IB_EINVAL;
+                goto cleanup;
             }
-
-            /* Don't modify the origin cidr, instead of that, create a local copy
-             in stack memory to avoid allocations */
-            memcpy(ip_tmp, cidr, mask - cidr);
-            ip_tmp[mask - cidr] = '\0';
-            cidr = ip_tmp;
+            *mask = '\0';
         }
         else {
             nmask = 32;
         }
 
-        struct in_addr *cidrv4 = ib_radix_get_IPV4_addr(cidr, mp);
+        struct in_addr *cidrv4 = ib_radix_get_IPV4_addr(tmp_cidr, mp);
         if (cidrv4 == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            rc = IB_EINVAL;
+            goto cleanup;
         }
 
         /* Return a prefix for IPV4 */
-        IB_FTRACE_RET_STATUS(ib_radix_prefix_create(prefix,
-                                                    (uint8_t *) cidrv4,
-                                                    (uint8_t) nmask, mp));
+        rc = ib_radix_prefix_create(prefix,
+                                    (uint8_t *)cidrv4,
+                                    (uint8_t)nmask,
+                                    mp);
     }
-    else if (IB_RADIX_IS_IPV6(cidr)) {
+    else if (IB_RADIX_IS_IPV6(tmp_cidr)) {
         ssize_t offset;
-        rc = ib_radix_strchr_nul_error(cidr, len, '/', &offset);
+        rc = ib_radix_strchr_nul_error(tmp_cidr, len, '/', &offset);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            goto cleanup;
         }
         else if (offset >= 0) {
-            mask = cidr + offset;
+            mask = tmp_cidr + offset;
         }
 
         if (mask != NULL) {
             nmask = strtoull(mask+1, NULL, 10);
-
             if (nmask > 128) {
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                rc = IB_EINVAL;
+                goto cleanup;
             }
-
-            /* Don't modify the origin cidr, instead of that, create a local copy
-             in stack memory to avoid allocations */
-            memcpy(ip_tmp, cidr, mask - cidr);
-            ip_tmp[mask - cidr] = '\0';
-            cidr = ip_tmp;
+            *mask = '\0';
         }
         else {
             nmask = 128;
         }
 
-        struct in6_addr *cidrv6 = ib_radix_get_IPV6_addr(cidr, mp);
+        struct in6_addr *cidrv6 = ib_radix_get_IPV6_addr(tmp_cidr, mp);
         if (cidrv6 == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            rc = IB_EINVAL;
+            goto cleanup;
         }
 
         /* Return a prefix for IPV6 */
-        IB_FTRACE_RET_STATUS(ib_radix_prefix_create(prefix,
-                                                    (uint8_t *) cidrv6,
-                                                    (uint8_t) nmask, mp));
+        rc = ib_radix_prefix_create(prefix,
+                                    (uint8_t *)cidrv6,
+                                    (uint8_t)nmask,
+                                    mp);
     }
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
+    else {
+        rc = IB_EINVAL;
+        goto cleanup;
+    }
+
+cleanup:
+    if (tmp_cidr != NULL) {
+        free(tmp_cidr);
+    }
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 
