@@ -366,6 +366,17 @@ chosen at random for each output input.  Supported distrbutions are:
 - geometric:*p* --- Geometric distribution with *p* chance of success.
 - poisson:*mean* --- Poisson distribution with mean *mean*.
 
+**@splitdata**:*n*<br>
+**@splitdata**:*distribution*:*parameters*
+
+Splits data events up into multiple data events.  The size is dictated by 
+*n* or by the given distribution.  `@splitdata` supports the same 
+distributions as @aggregate.
+
+The pre and post delays of the original event are maintained at the beginning
+and end of the split up events.  There is no delay between the split up 
+events.
+
 **@edit**:*which*
 
 Edit part of each input in an editor.  The environmental variable, `EDITOR`

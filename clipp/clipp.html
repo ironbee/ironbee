@@ -376,6 +376,17 @@ chosen at random for each output input. Supported distrbutions are:</p>
 <li>poisson:<em>mean</em> &#8212; Poisson distribution with mean <em>mean</em>.</li>
 </ul>
 
+<p><strong>@splitdata</strong>:<em>n</em><br>
+<strong>@splitdata</strong>:<em>distribution</em>:<em>parameters</em></p>
+
+<p>Splits data events up into multiple data events. The size is dictated by
+<em>n</em> or by the given distribution. <code>@splitdata</code> supports the same
+distributions as @aggregate.</p>
+
+<p>The pre and post delays of the original event are maintained at the beginning
+and end of the split up events. There is no delay between the split up
+events.</p>
+
 <p><strong>@edit</strong>:<em>which</em></p>
 
 <p>Edit part of each input in an editor. The environmental variable, <code>EDITOR</code>
