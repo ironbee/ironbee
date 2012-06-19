@@ -233,7 +233,6 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
     if (ib_rule_should_capture(rule, *result) == true) {
         ib_data_capture_clear(tx);
         ib_data_capture_set_item(tx, 0, field);
-        ib_data_capture_set_item(tx, 1, field);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -323,7 +322,6 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
                                            (uint8_t *)expanded,
                                            strlen(expanded));
         ib_data_capture_set_item(tx, 0, f);
-        ib_data_capture_set_item(tx, 1, field);
     }
 
     IB_FTRACE_RET_STATUS(rc);
