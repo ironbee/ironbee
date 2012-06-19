@@ -530,5 +530,18 @@ For simple examples see:
 - `view.[ch]pp`
 - `connection_modifiers.[ch]pp`
 
+Appendix 1: Protobuf to/from JSON
+---------------------------------
+
+CLIPP comes with two scripts to convert between protobuf and a JSON based
+format.  These are `pb_to_json.rb` and `json_to_pb.rb`.  Both act as filters,
+taking input on stdin and writing output to stdout.
+
+These scripts are simple, fragile, and load all input into memory.  The 
+resutling JSON is a direct conversion of the protobuf and not as friendly to
+user editing as might be desired: for example, event types are identified by
+number.  As such, the scripts are primarily intended to be used for tweaking
+inputs produced by other means.
+
 
 

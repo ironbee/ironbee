@@ -543,5 +543,17 @@ state class.</p>
 <li><code>view.[ch]pp</code></li>
 <li><code>connection_modifiers.[ch]pp</code></li>
 </ul>
+
+<h2 id="appendix1:protobuftofromjson">Appendix 1: Protobuf to/from JSON</h2>
+
+<p>CLIPP comes with two scripts to convert between protobuf and a JSON based
+format. These are <code>pb_to_json.rb</code> and <code>json_to_pb.rb</code>. Both act as filters,
+taking input on stdin and writing output to stdout.</p>
+
+<p>These scripts are simple, fragile, and load all input into memory. The
+resutling JSON is a direct conversion of the protobuf and not as friendly to
+user editing as might be desired: for example, event types are identified by
+number. As such, the scripts are primarily intended to be used for tweaking
+inputs produced by other means.</p>
 </body>
 </html>
