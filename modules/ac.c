@@ -785,6 +785,27 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
     }
     else if (rc == IB_OK) {
         *result = (ac_ctx->match_cnt > 0) ? 1 : 0;
+
+        if (ib_rule_should_capture(rule, *result) == true) {
+            ib_field_t *f;
+            const char *name;
+            char *scopy;
+
+            ib_data_capture_clear(tx);
+            scopy = (char *)ib_mpool_alloc(tx->mp, subject_len);
+            if (scopy != NULL) {
+                memcpy(scopy, subject, subject_len);
+                name = ib_data_capture_name(0);
+                rc = ib_field_create_bytestr_alias(&f, tx->mp,
+                                                   name, strlen(name),
+                                                   (uint8_t *)scopy,
+                                                   subject_len);
+                if (rc == IB_OK) {
+                    ib_data_capture_set_item(tx, 0, f);
+                }
+            }
+        }
+
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
