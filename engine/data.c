@@ -1011,7 +1011,7 @@ const char *ib_data_capture_fullname(int num)
  * @param[out] list If not NULL, pointer to the capture item's list
  *
  * @returns IB_OK: All OK
- *          IB_ENVAL: @a num is too large
+ *          IB_EINVAL: @a num is too large
  *          Error status from: ib_data_get()
  *                             ib_data_add_list()
  *                             ib_field_value()

@@ -1784,7 +1784,7 @@ ib_status_t DLL_PUBLIC ib_data_capture_clear(ib_tx_t *tx);
  * @param[in] in_field Field to add.
  *
  * @returns IB_OK: All OK
- *          IB_ENVAL: @a num is too large
+ *          IB_EINVAL: @a num is too large
  *          Error status from: ib_data_capture_set_list()
  *                             ib_data_capture_init_item()
  *                             ib_data_list_push()
