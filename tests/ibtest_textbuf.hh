@@ -39,22 +39,46 @@ class TextBuf
 {
 public:
     TextBuf(size_t bufsize)
-        : m_size(bufsize), m_buf(new char [bufsize+1]),
-          m_fmtsize(2*bufsize), m_fmtbuf(new char [m_fmtsize+1])
+        : m_size(bufsize),
+          m_buf(new char [bufsize+1]),
+          m_fmtsize(2*bufsize),
+          m_fmtbuf(new char [m_fmtsize+1])
     {
         SetStr("");
     }
 
-    TextBuf(size_t bufsize, const char *s)
-        : m_size(bufsize), m_buf(new char [bufsize+1]),
-          m_fmtsize(2*bufsize), m_fmtbuf(new char [m_fmtsize+1])
+    TextBuf(const char *s)
+        : m_size(strlen(s)+1),
+          m_buf(new char [m_size]),
+          m_fmtsize(2*m_size),
+          m_fmtbuf(new char [m_fmtsize+1])
     {
         SetStr(s);
     }
 
+    TextBuf(size_t bufsize, const char *s)
+        : m_size(bufsize),
+          m_buf(new char [bufsize+1]),
+          m_fmtsize(2*bufsize),
+          m_fmtbuf(new char [m_fmtsize+1])
+    {
+        SetStr(s);
+    }
+
+    TextBuf(const uint8_t *text, size_t len)
+        : m_size(len),
+          m_buf(new char [len]),
+          m_fmtsize(2*len),
+          m_fmtbuf(new char [m_fmtsize+1])
+    {
+        SetText((uint8_t *)text, len);
+    }
+
     TextBuf(size_t bufsize, const char *text, size_t len)
-        : m_size(bufsize), m_buf(new char [bufsize]),
-          m_fmtsize(2*bufsize), m_fmtbuf(new char [bufsize*2])
+        : m_size(bufsize),
+          m_buf(new char [bufsize]),
+          m_fmtsize(2*bufsize),
+          m_fmtbuf(new char [bufsize*2])
     {
         SetText(text, len);
     }
@@ -86,8 +110,13 @@ public:
         if (s == NULL) {
             return SetNull( false );
         }
-        strncpy(m_buf, s, m_size);
-        m_len = strlen(m_buf);
+        m_len = strlen(s);
+        if (m_len == 0) {
+            m_buf[0] = '\0';
+        }
+        else {
+            strncpy(m_buf, s, m_size);
+        }
         m_null = false;
         m_bytestr = is_bytestr;
         InvalidateFmt( );
@@ -96,11 +125,12 @@ public:
 
     size_t SetText(const uint8_t *text, size_t len)
     {
-        assert (len < m_size);
+        assert (len <= m_size);
         if (text == NULL) {
             return SetNull( true );
         }
         memcpy(m_buf, text, len);
+        m_null = false;
         m_len = len;
         m_buf[len] = '\0';
         m_bytestr = true;
@@ -124,6 +154,10 @@ public:
     {
         return m_null == true ? NULL : m_buf;
     };
+    virtual uint8_t *GetUBuf(void) const
+    {
+        return m_null == true ? NULL : (uint8_t *)m_buf;
+    }
     virtual const char *GetStr(void) const
     {
         return GetBuf();
@@ -154,9 +188,13 @@ public:
         if (IsByteStr() || other.IsByteStr()) {
             if (GetLen() != other.GetLen()) {
                 return false;
-
             }
-            return (memcmp(GetBuf(), other.GetBuf(), GetLen()) == 0);
+            else if (GetLen() == 0) {
+                return true;
+            }
+            else {
+                return (memcmp(GetBuf(), other.GetBuf(), GetLen()) == 0);
+            }
         }
         else {
             return (strcmp(GetBuf(), other.GetBuf()) == 0);

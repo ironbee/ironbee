@@ -58,6 +58,7 @@ check_PROGRAMS = test_gtest \
                  test_util_string_wspc \
                  test_util_hex_escape \
                  test_util_expand \
+                 test_util_decode \
                  test_engine \
                  test_module_ahocorasick \
                  test_module_pcre \
@@ -130,6 +131,8 @@ test_util_string_trim_SOURCES = test_util_string_trim.cc test_main.cc
 test_util_string_wspc_SOURCES = test_util_string_wspc.cc test_main.cc
 
 test_util_expand_SOURCES = test_util_expand.cc test_main.cc
+
+test_util_decode_SOURCES = test_util_decode.cc test_main.cc
 
 test_util_uuid_SOURCES = test_util_uuid.cc test_main.cc
 test_util_uuid_CPPFLAGS = $(CPPFLAGS) $(OSSP_UUID_CFLAGS)

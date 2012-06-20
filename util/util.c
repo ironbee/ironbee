@@ -25,6 +25,7 @@
 
 #include <ironbee/util.h>
 #include <ironbee/uuid.h>
+#include <ironbee/debug.h>
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -416,7 +417,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
     return IB_OK;
 }
 
-char DLL_PUBLIC * ib_util_hex_escape(const char *src, size_t src_len)
+char *ib_util_hex_escape(const char *src, size_t src_len)
 {
     size_t dst_i = 0;
     size_t src_i = 0;
@@ -442,6 +443,40 @@ char DLL_PUBLIC * ib_util_hex_escape(const char *src, size_t src_len)
     dst[dst_i] = '\0';
 
     return dst;
+}
+
+uint8_t *ib_util_copy_on_write(ib_mpool_t *mp,
+                               const uint8_t *data_in,
+                               const uint8_t *cur_in,
+                               size_t size,
+                               uint8_t *cur_out,
+                               uint8_t **data_out)
+{
+    IB_FTRACE_INIT();
+    assert(mp != NULL);
+    assert(data_in != NULL);
+    assert(data_out != NULL);
+    assert(cur_in != NULL);
+    assert(cur_in >= data_in);
+
+    if (*data_out == NULL) {
+        *data_out = ib_mpool_alloc(mp, size);
+        if (*data_out != NULL) {
+            size_t off = cur_in - data_in;
+            if (off == 0) {
+                /* Do nothing */
+            }
+            else if (off == 1) {
+                **data_out = *data_in;
+            }
+            else {
+                memcpy(*data_out, data_in, off);
+            }
+            cur_out = *data_out + off;
+        }
+    }
+
+    IB_FTRACE_RET_PTR(uint8_t, cur_out);
 }
 
 /* -- Library Setup -- */
