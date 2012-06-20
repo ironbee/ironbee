@@ -6,6 +6,13 @@
     <title>Transformation Functions</title>
     <para>...</para>
     <section>
+        <title>base64Decode</title>
+        <para><emphasis role="bold">Description:</emphasis>
+        </para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet.</para>
+    </section>
+    <section>
         <title>compressWhitespace</title>
         <para><emphasis role="bold">Description:</emphasis> Replaces one or more consecutive
             whitespace characters with a single space.</para>
@@ -23,6 +30,32 @@
             number if items in the collection.  Given a scalar, returns 1.</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+    </section>
+    <section>
+        <title>htmlEntityDecode</title>
+        <para><emphasis role="bold">Description:</emphasis> Decodes HTML entities in the
+            data.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet.</para>
+        <para>The following forms are supported:</para>
+        <itemizedlist>
+            <listitem>
+                <para><emphasis role="bold">&amp;#<replaceable>DDDD</replaceable>;</emphasis> -
+                    Numeric code point, where <replaceable>DDDD</replaceable> represents a decimal
+                    number with any number of digits.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">&amp;#x<replaceable>HHHH</replaceable>;</emphasis> -
+                    Numeric code point, where HHHH represents a hexidecimal number with any number
+                    of digits.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">&amp;<replaceable>name</replaceable>;</emphasis> -
+                    Predefined XML named entities (currently: quot, amp, apos, lt, gt). </para>
+            </listitem>
+        </itemizedlist>
+        <para>See
+                <uri>https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references</uri>.</para>
     </section>
     <section>
         <title>length</title>
@@ -48,6 +81,36 @@
             instead of replacing them with a single space.</para>
     </section>
     <section>
+        <title>removeComments</title>
+        <para><emphasis role="bold">Description:</emphasis> Remove various types of code
+            comments.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet.</para>
+        <para>The following style comments are replaced: <itemizedlist>
+                <listitem>
+                    <para><emphasis role="bold">/* ... */</emphasis> - C style comments.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">// ...</emphasis> - C++ style comments.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold"># ...</emphasis> - Shell style comments.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">-- ...</emphasis> - SQL style comments.</para>
+                </listitem>
+            </itemizedlist></para>
+    </section>
+    <section>
+        <title>replaceComments</title>
+        <para><emphasis role="bold">Description:</emphasis> Replace various types of code comments
+            with a single space character.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet.</para>
+        <para>This is similar to <literal>removeComments</literal>, but instead of removing,
+            replaces with a single space character.</para>
+    </section>
+    <section>
         <title>trim</title>
         <para><emphasis role="bold">Description:</emphasis> Removes consecutive whitespace from the
             beginning and end of the input.</para>
@@ -69,6 +132,30 @@
         <para><emphasis role="bold">Version:</emphasis> 0.2</para>
     </section>
     <section>
+        <title>urlDecode</title>
+        <para><emphasis role="bold">Description:</emphasis> Decodes URL encoded values in the
+            input.</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet.</para>
+        <para>Implements decoding the encoding used in application/x-www-form-urlencoded values
+            (percent encoding with additions).</para>
+        <itemizedlist>
+            <listitem>
+                <para><emphasis role="bold">%<replaceable>HH</replaceable>;</emphasis> - Numeric
+                    code point, where HH represents a two digit hexidecimal number.</para>
+            </listitem>
+            <listitem>
+                <para><emphasis role="bold">+</emphasis> - Represents an ASCII space character
+                    (equiv to <literal>%20</literal>). </para>
+            </listitem>
+        </itemizedlist>
+        <warning>
+            <para>Fields which are parsed from the URI and form parameters are already URL Decoded
+                and you should not apply this transformation to these fields unless you are trying
+                to inspect multiple levels of encoding.</para>
+        </warning>
+    </section>
+    <section>
         <title>min</title>
         <para><emphasis role="bold">Description:</emphasis> Given a collecion of numeric data,
             returns the minimum value.</para>
@@ -81,5 +168,11 @@
             returns the maximum value.</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+    </section>
+    <section>
+        <title>normalizePath</title>
+        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet.</para>
     </section>
 </chapter>
