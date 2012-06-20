@@ -31,6 +31,7 @@
 #include <ironbee/string.h>
 
 #include <assert.h>
+#include <stdbool.h>
 
 struct ib_bytestr_t {
     ib_mpool_t *mp;

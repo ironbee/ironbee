@@ -956,6 +956,8 @@ static bool rule_allow(const ib_tx_t *tx,
                        const ib_rule_t *rule,
                        bool check_phase)
 {
+    IB_FTRACE_INIT();
+
     /* Check the ALLOW_ALL flag */
     if ( (meta->phase_num != PHASE_POSTPROCESS) &&
          (ib_tx_flags_isset(tx, IB_TX_ALLOW_ALL) == 1) )
@@ -965,7 +967,7 @@ static bool rule_allow(const ib_tx_t *tx,
                           "ALLOW set",
                           meta->phase_num, meta->name,
                           ib_context_full_get(tx->ctx));
-        IB_FTRACE_RET_UINT(true);
+        IB_FTRACE_RET_BOOL(true);
     }
 
     /* If this is a request phase rule, Check the ALLOW_REQUEST flag */
@@ -977,7 +979,7 @@ static bool rule_allow(const ib_tx_t *tx,
                           "ALLOW_REQUEST set",
                           meta->phase_num, meta->name,
                           ib_context_full_get(tx->ctx));
-        IB_FTRACE_RET_UINT(true);
+        IB_FTRACE_RET_BOOL(true);
     }
 
     /* If check_phase is true, check the ALLOW_PHASE flag */
@@ -990,10 +992,10 @@ static bool rule_allow(const ib_tx_t *tx,
                           "in context \"%s\": ALLOW_PHASE set",
                           meta->phase_num, meta->name,
                           ib_context_full_get(tx->ctx));
-        IB_FTRACE_RET_UINT(true);
+        IB_FTRACE_RET_BOOL(true);
     }
 
-    IB_FTRACE_RET_UINT(false);
+    IB_FTRACE_RET_BOOL(false);
 }
 
 /**
