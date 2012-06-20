@@ -61,32 +61,84 @@
         <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>Enabling capturing will poopulate the <literal>CAPTURE</literal> collection with data
+            from the most recent matching operator. For most operators the
+                <literal>CAPTURE:0</literal> field will be set to the last matching value. Operators
+            that support capturing multiple values may set other items in the
+                <literal>CAPTURE</literal> collection. For example, the <literal>rx</literal>
+            operator supports setting <literal>CAPTURE:1</literal> - <literal>CAPTURE:9</literal>
+            via capturing parens in the regular expression.</para>
     </section>
     <section>
         <title>chain</title>
-        <para><emphasis role="bold">Description:</emphasis>
-        </para>
+        <para><emphasis role="bold">Description:</emphasis> Chains the next rule, so that the next
+            rule will execute only if the current operator evaluates true.</para>
         <para><emphasis role="bold">Type:</emphasis> Modifier</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>chain</literal></para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>Rule chains are essentially rules that are bound together by a logical AND with short
+            circuiting. In a rule chain, each rule in the chain is executed in turn as long as the
+            operators are evaluating true. If an operator evaluates to false, then no further rules
+            in the chain will execute. This allows a rule to execute multiple operators.</para>
+        <para>All rules in the chain will still execute their actions before the next rule in the
+            chain executes.  If you want a rule that only executes an action if all operators
+            evaluate true, then the action should be given on the final rule in the chain.</para>
+        <para>Requirements for chained rules:<itemizedlist>
+                <listitem>
+                    <para>Only the first rule in the chain may have an id or phase, which will be
+                        used for all rule chains.</para>
+                </listitem>
+                <listitem>
+                    <para>A numeric chain ID will be assigned and appended to the rule ID, prefixed
+                        with a dash, to uniquely identify the rule.</para>
+                </listitem>
+                <listitem>
+                    <para>Different metadata attributes (except id/phase) may be given for each
+                        chain, but the first rule's metasta will be the default.</para>
+                </listitem>
+                <listitem>
+                    <para>Specifying one or more tag modifiers is allowed in any chain, but the tags
+                        will be bound to the entire rule chain so that RuleEnable and similar will
+                        act on the entire rule chain, not just an individual rule in the
+                        chain.</para>
+                </listitem>
+            </itemizedlist></para>
+        <para>Example:<programlisting># Start a rule chain, which matches only POST requests. The implicit ID here
+# will be set to "id:1-1".
+Rule REQUEST_METHOD "@rx ^(?i:post)$" id:1 phase:REQUEST chain
+# Only if the above rule's operator evaluates true, will the next rule in the
+# chain execute. This rule checks to see if there are any URI based parameters
+# which typically should not be there for POST requests. If the operator evaluates
+# true, then the setvar action will execute, marking the transaction and an
+# event will be generated with the given msg text. This rule will have the
+# implicit ID set to "id:1-2".
+Rule &amp;REQUEST_URI_PARAMS "@gt 0" "msg:POST with URI parameters." setvar:TX:uri_params_in_post=1 event chain
+# Only if the above two rules' operators return true will the next rule in the
+# chain execute.  This rule checks that certain parameters are not used in
+# on the URI and if so, generates an event and blocks the transaction with the
+# default status code at the end of the phase. This rule will have the implicit
+# ID set to "id:1-3".
+Rule REQUEST_URI_PARAMS:/^(id|sess)$/ "msg:Sensitive parameters in URI." event block:phase</programlisting></para>
     </section>
     <section>
         <title>confidence</title>
-        <para><emphasis role="bold">Description:</emphasis>
-        </para>
+        <para><emphasis role="bold">Description:</emphasis> Numeric value indicating the confidence
+            of the rule.</para>
         <para><emphasis role="bold">Type:</emphasis> Metadata</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>confidence:<replaceable>integer (0-100)</replaceable></literal></para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>Higher confidence rules should have a lower False Positive rate.</para>
     </section>
     <section>
         <title>delRequestHeader</title>
-        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Description:</emphasis> Delete an HTTP header from the
+            request.</para>
         <para><emphasis role="bold">Type:</emphasis> Action</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>delRequestHeader:<replaceable>header-name</replaceable></literal></para>
@@ -96,7 +148,8 @@
     </section>
     <section>
         <title>delResponseHeader</title>
-        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Description:</emphasis> Delete an HTTP header from the
+            response.</para>
         <para><emphasis role="bold">Type:</emphasis> Action</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>delResponseHeader:<replaceable>header-name</replaceable></literal></para>
@@ -106,30 +159,34 @@
     </section>
     <section>
         <title>id</title>
-        <para><emphasis role="bold">Description:</emphasis>
-        </para>
+        <para><emphasis role="bold">Description:</emphasis> Unique identifier for a rule.</para>
         <para><emphasis role="bold">Type:</emphasis> Metadata</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>id:<replaceable>name</replaceable></literal></para>
         <para><emphasis role="bold">Cardinality</emphasis>: 1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>Specifies a unique identifier for a rule.  If a later rule re-uses the same identifier,
+            then it will overwrite the previous rule.</para>
+        <para>TODO: Explain what the full unique id is (taking context and chains into
+            account)</para>
     </section>
     <section>
         <title>msg</title>
-        <para><emphasis role="bold">Description:</emphasis>
-        </para>
+        <para><emphasis role="bold">Description:</emphasis> Message associated with the rule.</para>
         <para><emphasis role="bold">Type:</emphasis> Metadata</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>msg:<replaceable>text</replaceable></literal></para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>This message is used by the <literal>event</literal> action when logging the
+            event.</para>
     </section>
     <section>
         <title>phase</title>
-        <para><emphasis role="bold">Description:</emphasis>
-        </para>
+        <para><emphasis role="bold">Description:</emphasis> The runtime phase at which the rule
+            should execute.</para>
         <para><emphasis role="bold">Type:</emphasis> Metadata</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>phase:REQUEST_HEADER|REQUEST|RESPONSE_HEADER|RESPONSE|POSTPROCESS</literal></para>
@@ -139,29 +196,32 @@
     </section>
     <section>
         <title>rev</title>
-        <para><emphasis role="bold">Description:</emphasis>
-        </para>
+        <para><emphasis role="bold">Description:</emphasis> An integer rule revision.</para>
         <para><emphasis role="bold">Type:</emphasis> Metadata</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>rev:<replaceable>integer (1-n)</replaceable></literal></para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>TODO: Explain how this is used in RuleEnable and when overriding Rules in sub
+            contexts.</para>
     </section>
     <section>
         <title>setflag</title>
-        <para><emphasis role="bold">Description:</emphasis>
-        </para>
+        <para><emphasis role="bold">Description:</emphasis> Set binary attributes (flags) in the
+            transaction.</para>
         <para><emphasis role="bold">Type:</emphasis> Action</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>setflag:[!]<replaceable>flag-name</replaceable></literal></para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>TODO: Document specific flags which may have meaning to the inspection engine.</para>
     </section>
     <section>
         <title>setRequestHeader</title>
-        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Description:</emphasis> Set the value of a HTTP request
+            header.</para>
         <para><emphasis role="bold">Type:</emphasis> Action</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>setRequestHeader:<replaceable>header-name</replaceable>=<replaceable>header-value</replaceable></literal></para>
@@ -171,7 +231,8 @@
     </section>
     <section>
         <title>setResponseHeader</title>
-        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Description:</emphasis> Set the value of an HTTP response
+            header.</para>
         <para><emphasis role="bold">Type:</emphasis> Action</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>setResponseHeader:<replaceable>header-name</replaceable>=<replaceable>header-value</replaceable></literal></para>
@@ -202,18 +263,24 @@ setvar:tx:score=-5</programlisting>
     </section>
     <section>
         <title>severity</title>
-        <para><emphasis role="bold">Description:</emphasis>
-        </para>
+        <para><emphasis role="bold">Description:</emphasis> Numeric value indicating the severity of
+            the issue this rule is trying to protect against.</para>
         <para><emphasis role="bold">Type:</emphasis> Metadata</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>severity:<replaceable>integer (0-100)</replaceable></literal></para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>The severity indicates how much impact a successful attack may be, but does not
+            indicate the quality of protection this rule may provide. The severity is meant to be
+            used as part of a "threat level" indicator.  The "threat level" is essentially severity
+            x confidence, which balances how severe the threat may be with how well this rule might
+            be protecting against it.</para>
     </section>
     <section>
         <title>status</title>
-        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Description:</emphasis> The HTTP status code to use for a
+            blocking action.</para>
         <para><emphasis role="bold">Type:</emphasis> Modifier</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>status:<replaceable>http-status-code</replaceable></literal></para>
@@ -223,8 +290,8 @@ setvar:tx:score=-5</programlisting>
     </section>
     <section>
         <title>t</title>
-        <para><emphasis role="bold">Description:</emphasis>
-        </para>
+        <para><emphasis role="bold">Description:</emphasis> Apply one or more named transformations
+            to each of the targerts in a rule.</para>
         <para><emphasis role="bold">Type:</emphasis> Modifier</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>t:<replaceable>transformation-name</replaceable></literal></para>
@@ -234,11 +301,14 @@ setvar:tx:score=-5</programlisting>
     </section>
     <section>
         <title>tag</title>
-        <para><emphasis role="bold">Description:</emphasis> </para>
+        <para><emphasis role="bold">Description:</emphasis> Apply an arbitrary tag name to a
+            rule.</para>
         <para><emphasis role="bold">Type:</emphasis> Metadata</para>
         <para><emphasis role="bold">Syntax:</emphasis> <literal>tag:<replaceable>name</replaceable></literal></para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+        <para>TODO: Describe where this is used, noteably RuleEnable/RuleDisable and logged with
+            events.</para>
     </section>
 </chapter>
