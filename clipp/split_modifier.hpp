@@ -45,7 +45,7 @@ public:
      * @param[in] n Number of bytes per data event.
      **/
     explicit
-    SplitDataModifier(size_t n = 0);
+    SplitDataModifier(size_t n = 1);
 
     //! Process an input.
     bool operator()(Input::input_p& input);
@@ -91,6 +91,73 @@ public:
      **/
     static
     SplitDataModifier poisson(double mean);
+
+public:
+    struct State;
+    boost::shared_ptr<State> m_state;
+};
+
+/**
+ * Splits header events into multiple header events.
+ *
+ * First event retains pre-delay and final event gets post-delay.
+ * Intermediate events are not delayed.
+ **/
+class SplitHeaderModifier
+{
+public:
+    /**
+     * Constructor.
+     *
+     * @param[in] n Number of header lines per header event.
+     **/
+    explicit
+    SplitHeaderModifier(size_t n = 1);
+
+    //! Process an input.
+    bool operator()(Input::input_p& input);
+
+    /**
+     * Split with sizes chosen uniformly from [@a min, @a max].
+     *
+     * @param[in] min Minimum size (except for last).
+     * @param[in] max Maximum size.
+     **/
+    static
+    SplitHeaderModifier uniform(unsigned int min, unsigned int max);
+
+    /**
+     * Split with sizes chosen from bionomial distribution.
+     *
+     * n is chosen as the number of successful trials out of @a t where
+     * success occurs with probability @a p.
+     *
+     * @param[in] t Number of trials.
+     * @param[in] p Probability of success.
+     **/
+    static
+    SplitHeaderModifier binomial(unsigned int t, double p);
+
+    /**
+     * Split with sizes chosen from geometric distribution.
+     *
+     * n is chosen as the number trials before a failure of probability
+     * 1-@a p.
+     *
+     * @param[in] p Probability of success.
+     **/
+    static
+    SplitHeaderModifier geometric(double p);
+
+    /**
+     * Split with sizes chosen from poisson distribution.
+     *
+     * n is chosen from a poisson distribution with mean @a mean.
+     *
+     * @param[in] mean Mean of distribution.
+     **/
+    static
+    SplitHeaderModifier poisson(double mean);
 
 public:
     struct State;

@@ -221,8 +221,11 @@ component_t init_pcap_generator(const string& arg);
 //! Construct aggregate modifier.  An empty @a arg is 0, otherwise integer.
 component_t init_aggregate_modifier(const string& arg);
 
-//! Construct aggregate modifier.  An empty @a arg is 0, otherwise integer.
+//! Construct split data modifier.  An empty @a arg is 0, otherwise integer.
 component_t init_splitdata_modifier(const string& arg);
+
+//! Construct split header modifier.  An empty @a arg is 0, otherwise integer.
+component_t init_splitheader_modifier(const string& arg);
 
 //! Construct ironbee modifiers.  @a arg is <config path>:<default behavior>.
 component_t init_ironbee_modifier(const string& arg);
@@ -356,6 +359,22 @@ void help()
     "    a geometric distribution with <p> chance of success.\n"
     "  @splitdata:poisson:mean -- \n"
     "    Split data events into events of <n> bytes chosen at random from\n"
+    "    a poisson distribution with mean <mean>.\n"
+    "  @splitheader -- \n"
+    "    Split header events so that each header line has its own event."
+    "  @splitheader:<n> -- \n"
+    "    Split header into events of at most <n> lines.\n"
+    "  @splitheader:uniform:min,max -- \n"
+    "    Split header into events of <min> to <max> lines chosen\n"
+    "    uniformly at random.\n"
+    "  @splitheader:binomial:t,p -- \n"
+    "    Split header into events of <n> lines chosen at random from\n"
+    "    a binomial distribution of <t> trials with <p> chance of success.\n"
+    "  @splitheader:geometric:p -- \n"
+    "    Split header into events of <n> lines chosen at random from\n"
+    "    a geometric distribution with <p> chance of success.\n"
+    "  @splitheader:poisson:mean -- \n"
+    "    Split header into events of <n> lines chosen at random from\n"
     "    a poisson distribution with mean <mean>.\n"
     "  @edit:which -- Edit part of each input with EDITOR.  <which> can be:\n"
     "    - request -- request line.\n"
@@ -536,6 +555,7 @@ int main(int argc, char** argv)
         ("unparse",         construct_argless_component<UnparseModifier>)
         ("aggregate",       init_aggregate_modifier)
         ("splitdata",       init_splitdata_modifier)
+        ("splitheader",     init_splitheader_modifier)
         ("edit",            construct_component<EditModifier>)
         ("limit",           construct_component<LimitModifier, size_t>)
         ("select",          init_select_modifier)
@@ -794,15 +814,19 @@ component_t init_pcap_generator(const string& arg)
 }
 #endif
 
-component_t init_aggregate_modifier(const string& arg)
+template <typename ModifierType>
+component_t init_randomized_modifier(
+    const string& name,
+    const string& arg
+)
 {
     if (arg.empty()) {
-        return AggregateModifier();
+        return ModifierType();
     }
     else {
         vector<string> subargs = split_on_char(arg, ':');
         if (subargs.size() == 1) {
-            return construct_component<AggregateModifier, size_t>(subargs[0]);
+            return construct_component<ModifierType, size_t>(subargs[0]);
         }
         else if (subargs.size() == 2) {
             vector<string> subsubargs = split_on_char(subargs[1], ',');
@@ -812,7 +836,7 @@ component_t init_aggregate_modifier(const string& arg)
                         "Expected two distribution arguments."
                     );
                 }
-                return AggregateModifier::uniform(
+                return ModifierType::uniform(
                     boost::lexical_cast<unsigned int>(subsubargs[0]),
                     boost::lexical_cast<unsigned int>(subsubargs[1])
                 );
@@ -823,7 +847,7 @@ component_t init_aggregate_modifier(const string& arg)
                         "Expected two distribution arguments."
                     );
                 }
-                return AggregateModifier::binomial(
+                return ModifierType::binomial(
                     boost::lexical_cast<unsigned int>(subsubargs[0]),
                     boost::lexical_cast<double>(subsubargs[1])
                 );
@@ -834,7 +858,7 @@ component_t init_aggregate_modifier(const string& arg)
                         "Expected one distribution argument."
                     );
                 }
-                return AggregateModifier::geometric(
+                return ModifierType::geometric(
                     boost::lexical_cast<double>(subsubargs[0])
                 );
             }
@@ -844,7 +868,7 @@ component_t init_aggregate_modifier(const string& arg)
                         "Expected one distribution argument."
                     );
                 }
-                return AggregateModifier::poisson(
+                return ModifierType::poisson(
                     boost::lexical_cast<double>(subsubargs[0])
                 );
             }
@@ -861,71 +885,31 @@ component_t init_aggregate_modifier(const string& arg)
     }
 }
 
+component_t init_aggregate_modifier(const string& arg)
+{
+    return init_randomized_modifier<AggregateModifier>(
+        "aggregate",
+        arg
+    );
+}
+
 component_t init_splitdata_modifier(const string& arg)
 {
     if (arg.empty()) {
         throw runtime_error("@splitdata requires an argument.");
     }
-    else {
-        vector<string> subargs = split_on_char(arg, ':');
-        if (subargs.size() == 1) {
-            return construct_component<SplitDataModifier, size_t>(subargs[0]);
-        }
-        else if (subargs.size() == 2) {
-            vector<string> subsubargs = split_on_char(subargs[1], ',');
-            if (subargs[0] == "uniform") {
-                if (subsubargs.size() != 2) {
-                    throw runtime_error(
-                        "Expected two distribution arguments."
-                    );
-                }
-                return SplitDataModifier::uniform(
-                    boost::lexical_cast<unsigned int>(subsubargs[0]),
-                    boost::lexical_cast<unsigned int>(subsubargs[1])
-                );
-            }
-            else if (subargs[0] == "binomial") {
-                if (subsubargs.size() != 2) {
-                    throw runtime_error(
-                        "Expected two distribution arguments."
-                    );
-                }
-                return SplitDataModifier::binomial(
-                    boost::lexical_cast<unsigned int>(subsubargs[0]),
-                    boost::lexical_cast<double>(subsubargs[1])
-                );
-            }
-            else if (subargs[0] == "geometric") {
-                if (subsubargs.size() != 1) {
-                    throw runtime_error(
-                        "Expected one distribution argument."
-                    );
-                }
-                return SplitDataModifier::geometric(
-                    boost::lexical_cast<double>(subsubargs[0])
-                );
-            }
-            else if (subargs[0] == "poisson") {
-                if (subsubargs.size() != 1) {
-                    throw runtime_error(
-                        "Expected one distribution argument."
-                    );
-                }
-                return SplitDataModifier::poisson(
-                    boost::lexical_cast<double>(subsubargs[0])
-                );
-            }
-            else {
-                throw runtime_error(
-                    "Unknown distribution: " +
-                    subargs[0]
-                );
-            }
-        }
-        else {
-            throw runtime_error("Error parsing split arguments.");
-        }
-    }
+    return init_randomized_modifier<SplitDataModifier>(
+        "splitdata",
+        arg
+    );
+}
+
+component_t init_splitheader_modifier(const string& arg)
+{
+    return init_randomized_modifier<SplitHeaderModifier>(
+        "splitheader",
+        arg
+    );
 }
 
 component_t init_select_modifier(const string& arg)

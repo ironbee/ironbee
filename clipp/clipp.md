@@ -369,9 +369,21 @@ chosen at random for each output input.  Supported distrbutions are:
 **@splitdata**:*n*<br>
 **@splitdata**:*distribution*:*parameters*
 
-Splits data events up into multiple data events.  The size is dictated by 
-*n* or by the given distribution.  `@splitdata` supports the same 
+Splits data events up into multiple data events.  The size in bytes is 
+dictated by *n* or by the given distribution.  `@splitdata` supports the same 
 distributions as @aggregate.
+
+The pre and post delays of the original event are maintained at the beginning
+and end of the split up events.  There is no delay between the split up 
+events.
+
+**@splitheader**<br>
+**@splitheader**:*n*<br>
+**@splitheader**:*distribution*:*parameters*
+
+Splits header events up into multiple header events.  The size in header 
+lines is dictated by *n* or by the given distribution.  `@splitheader` 
+supports the same distributions as @aggregate.
 
 The pre and post delays of the original event are maintained at the beginning
 and end of the split up events.  There is no delay between the split up 
