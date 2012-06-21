@@ -105,6 +105,12 @@ require 'json'
 
         write_pb(io, pb_input)
       end
+
+      def self.hash_to_pb(input_as_hash)
+        result = ""
+        write_hash_to_pb(StringIO.new(result), input_as_hash)
+        result
+      end
     end
   end
 end
