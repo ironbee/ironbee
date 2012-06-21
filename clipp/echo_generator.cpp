@@ -65,6 +65,7 @@ bool EchoGenerator::operator()(Input::input_p& out_input)
     }
 
     out_input->id                = m_state->id;
+    out_input->source             = m_state;
     out_input->connection = Input::Connection();
     out_input->connection.connection_opened(
         Input::Buffer(local_ip),  local_port,
