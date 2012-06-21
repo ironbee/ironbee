@@ -16,6 +16,9 @@ require 'tmpdir'
 require 'erb'
 require 'open3'
 
+$:.unshift(File.dirname(__FILE__))
+require 'hash_to_pb'
+
 # Assertion module.
 #
 # Mixed in to CLIPPTestCase
@@ -68,8 +71,9 @@ class CLIPPTestCase < Test::Unit::TestCase
   # Execute clipp using the clipp config at config_path.  Output is displayed
   # to standard out and returned.  If exit status is non-zero then nil is
   # returned.
-  def run_clipp(config_path)
-    stdout, stderr, status = Open3.capture3(CLIPP, '-c', config_path)
+  def run_clipp(config_path, stdin)
+    stdout, stderr, status =
+      Open3.capture3(CLIPP, '-c', config_path, :stdin_data => stdin)
 
     puts "#{CLIPP} -c #{config_path}"
     puts "== CLIPP Configuration =="
@@ -131,10 +135,11 @@ public
   # Run clipp.  Determines the context which all clipp assertions run under.
   # Includes an assertion that clipp exited normally.
   #
-  # All arguments are key-values.  :input is required.
+  # All arguments are key-values.  :input or :input_hashes is required.
   #
   # Configuration Options:
   # +input+::    One or more clipp input chains.
+  # +input_hashes+:: Input as array of hashes.  See hash_to_pb.rb.
   # +template+:: ERB template to use for ironbee configuration file.  The
   #              result of this template can be used via IRONBEE_CONFIG.
   # +consumer+:: Consumer chain.  IRONBEE_CONFIG will be replaced with the
@@ -150,7 +155,24 @@ public
   #
   # More options coming in the future.
   def clipp(config)
-    fatal ":input required in config." if ! config[:input]
+    config = config.dup
+
+    if config[:input] && config[:input_hashes]
+      CLIPPTestCase::fatal "Can't have both :input_hashes and :input."
+    end
+
+    if ! config[:input] && ! config[:input_hashes]
+      CLIPPTestCase::fatal "Must have :input or :input_hashes."
+    end
+
+    if config[:input_hashes]
+      config[:stdin] = ""
+      config[:input_hashes].each do |h|
+        config[:stdin] +=
+          IronBee::CLIPP::HashToPB::hash_to_pb(h)
+      end
+      config[:input] = "pb:-"
+    end
 
     config_path = write_temp_file(
       "clipp_test_RAND.config",
@@ -166,7 +188,7 @@ public
       "#{config[:input]} #{consumer_chain}\n"
     )
 
-    @log = @clipp_log = run_clipp(clipp_config)
+    @log = @clipp_log = run_clipp(clipp_config, config[:stdin])
 
     assert_not_nil(@log)
   end
