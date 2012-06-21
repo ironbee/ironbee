@@ -60,6 +60,7 @@ clipp_LDFLAGS = \
     -lboost_filesystem \
     -lboost_program_options \
     -lboost_regex \
+    -lboost_thread-mt \
     -lprotobuf
 
 if HAVE_MODP

@@ -210,6 +210,9 @@ component_t construct_component(const string& arg)
  * above.
  **/
 
+//! Construct threaded IronBee consumer, interpreting @a arg as @e path:n
+component_t init_ironbee_threaded_consumer(const string& arg);
+
 //! Construct raw generator, interpreting @a arg as @e request,response.
 component_t init_raw_generator(const string& arg);
 
@@ -308,6 +311,8 @@ void help()
     "\n"
     "Consumers:\n"
     "  ironbee:<path>  -- Internal IronBee using <path> as configuration.\n"
+    "  ironbee_threaded:<path>:<n> -- Internal IronBee using <n> threads\n"
+    "                                 and <path> as configuration.\n"
     "  writepb:<path>  -- Output to protobuf file at <path>.\n"
     "  writehtp:<path> -- Output in HTP test format at <path>.\n"
     "                     Best with unparsed format and only 1 connection.\n"
@@ -538,6 +543,7 @@ int main(int argc, char** argv)
     // Declare consumers.
     component_factory_map_t consumer_factory_map = boost::assign::map_list_of
         ("ironbee",  construct_component<IronBeeConsumer>)
+        ("ironbee_threaded",  init_ironbee_threaded_consumer)
         ("writepb",  construct_component<PBConsumer>)
         ("writehtp", construct_component<HTPConsumer>)
         ("view",     construct_component<ViewConsumer>)
@@ -980,6 +986,23 @@ component_t init_set_modifier(const string& arg)
     const string value = modified_arg.substr(colon_i + 1);
 
     return SetModifier(which, key, value);
+}
+
+component_t init_ironbee_threaded_consumer(const string& arg)
+{
+    string config_path;
+    size_t num_workers;
+
+    vector<string> subargs = split_on_char(arg, ':');
+    if (subargs.size() == 2) {
+        config_path = subargs[0];
+        num_workers = boost::lexical_cast<size_t>(subargs[1]);
+    }
+    else {
+        throw runtime_error("Could not parse ironbee_threaded arg: " + arg);
+    }
+
+    return IronBeeThreadedConsumer(config_path, num_workers);
 }
 
 component_t init_ironbee_modifier(const string& arg)

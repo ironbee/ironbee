@@ -452,14 +452,22 @@ clipp:
 - `clipp:block` -- Override behavior, preventing input from continuing.
 - `clipp:break` -- Abort current chain, moving on to next chain.
 
+Note: At present, there is no support for a multithreaded IronBee modifier.
+
 Consumers
 ---------
 
 **ironbee**:*path*
 
-This consumer initialized an IronBee engine, loads *path* as configuration, 
+This consumer initializes an IronBee engine, loads *path* as configuration, 
 and feeds all events to it.  The pre- and post- delay attributes of Events
 are interpreted.
+
+**ironbee_threaded**:*path*:*workers*
+
+This consumer behaves as `ironbee` except that it will spawn multiple worker 
+threads to notify IronBee of events.  The *workers* argument specifies how
+many worker threads to spawn.
 
 **view**
 **view:id**

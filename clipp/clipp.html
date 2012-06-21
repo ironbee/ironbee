@@ -466,13 +466,21 @@ clipp:</p>
 <li><code>clipp:break</code> &#8211; Abort current chain, moving on to next chain.</li>
 </ul>
 
+<p>Note: At present, there is no support for a multithreaded IronBee modifier.</p>
+
 <h2 id="consumers">Consumers</h2>
 
 <p><strong>ironbee</strong>:<em>path</em></p>
 
-<p>This consumer initialized an IronBee engine, loads <em>path</em> as configuration,
+<p>This consumer initializes an IronBee engine, loads <em>path</em> as configuration,
 and feeds all events to it. The pre- and post- delay attributes of Events
 are interpreted.</p>
+
+<p><strong>ironbee_threaded</strong>:<em>path</em>:<em>workers</em></p>
+
+<p>This consumer behaves as <code>ironbee</code> except that it will spawn multiple worker
+threads to notify IronBee of events. The <em>workers</em> argument specifies how
+many worker threads to spawn.</p>
 
 <p><strong>view</strong>
 <strong>view:id</strong>

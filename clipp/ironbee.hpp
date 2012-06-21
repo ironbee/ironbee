@@ -58,6 +58,28 @@ private:
 };
 
 /**
+ * CLIPP consumer that feeds inputs to an internal threaded IronBee Engine.
+ *
+ * This consumer is as IronBeeConsumer except that it will spawn multiple
+ * threads to feed data to IronBee.  It will wait until at least one thread
+ * is free, and then pass on the input and return.
+ **/
+class IronBeeThreadedConsumer
+{
+public:
+    IronBeeThreadedConsumer(
+        const std::string& config_path,
+        size_t             num_inputs
+    );
+
+    bool operator()(const Input::input_p& input);
+
+private:
+    struct State;
+    boost::shared_ptr<State> m_state;
+};
+
+/**
  * CLIPP modifier that feeds inputs to an internal IronBee Engine.
  *
  * This behaves as IronBeeConsumer (see above), but as a modifier.  Default

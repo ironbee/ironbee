@@ -28,7 +28,9 @@
 #include <ironbeepp/all.hpp>
 #include <ironbee/action.h>
 #include <ironbee/debug.h>
+
 #include <boost/make_shared.hpp>
+#include <boost/thread.hpp>
 
 using namespace std;
 
@@ -44,7 +46,7 @@ class adapt_header :
 {
 public:
     explicit adapt_header(IronBee::MemoryPool mp) :
-        m_mp( mp )
+        m_mp(mp)
     {
         // nop
     }
@@ -72,7 +74,7 @@ class IronBeeDelegate :
 public:
     explicit
     IronBeeDelegate(IronBee::Engine engine) :
-        m_engine( engine )
+        m_engine(engine)
     {
         // nop
     }
@@ -81,27 +83,30 @@ public:
     {
         using namespace boost;
 
-        if (m_connection) {
-            m_connection.destroy();
+        {
+            lock_guard<mutex> guard(m_mutex);
+
+            if (m_connection) {
+                m_connection.destroy();
+            }
+            m_connection = IronBee::Connection::create(m_engine);
+
+            char* local_ip = strndup(
+                event.local_ip.data,
+                event.local_ip.length
+            );
+            m_connection.memory_pool().register_cleanup(bind(free,local_ip));
+            char* remote_ip = strndup(
+                event.remote_ip.data,
+                event.remote_ip.length
+            );
+            m_connection.memory_pool().register_cleanup(bind(free,remote_ip));
+
+            m_connection.set_local_ip_string(local_ip);
+            m_connection.set_local_port(event.local_port);
+            m_connection.set_remote_ip_string(remote_ip);
+            m_connection.set_remote_port(event.remote_port);
         }
-        m_connection = IronBee::Connection::create(m_engine);
-
-        char* local_ip = strndup(
-            event.local_ip.data,
-            event.local_ip.length
-        );
-        m_connection.memory_pool().register_cleanup(bind(free,local_ip));
-        char* remote_ip = strndup(
-            event.remote_ip.data,
-            event.remote_ip.length
-        );
-        m_connection.memory_pool().register_cleanup(bind(free,remote_ip));
-
-
-        m_connection.set_local_ip_string(local_ip);
-        m_connection.set_local_port(event.local_port);
-        m_connection.set_remote_ip_string(remote_ip);
-        m_connection.set_remote_port(event.remote_port);
 
         m_engine.notify().connection_opened(m_connection);
     }
@@ -115,7 +120,11 @@ public:
             );
         }
         m_engine.notify().connection_closed(m_connection);
-        m_connection.destroy();
+
+        {
+            boost::lock_guard<boost::mutex> guard(m_mutex);
+            m_connection.destroy();
+        }
         m_connection = IronBee::Connection();
     };
 
@@ -337,6 +346,7 @@ private:
     IronBee::Engine      m_engine;
     IronBee::Connection  m_connection;
     IronBee::Transaction m_transaction;
+    boost::mutex         m_mutex;
 };
 
 void load_configuration(IronBee::Engine engine, const std::string& path)
@@ -419,6 +429,110 @@ ib_status_t clipp_action_execute(
 
 } // extern "C"
 
+// Move to new file?
+template <typename WorkType>
+class FunctionWorkerPool :
+    private boost::noncopyable
+{
+    typedef boost::unique_lock<boost::mutex> lock_t;
+
+    void do_work()
+    {
+        WorkType local_work;
+        for (;;) {
+            {
+                lock_t lock(m_mutex);
+                ++m_num_workers_available;
+
+            }
+            m_worker_available_cv.notify_one();
+
+            {
+                lock_t lock(m_mutex);
+                while (! m_work_available) {
+                    m_work_available_cv.wait(lock);
+                    if (m_shutdown) {
+                        return;
+                    }
+                }
+
+                local_work = m_work;
+                m_work_available = false;
+                --m_num_workers_available;
+            }
+            m_work_accepted_barrier.wait();
+
+            m_work_function(local_work);
+        }
+    }
+
+public:
+    FunctionWorkerPool(
+        size_t                          num_workers,
+        boost::function<void(WorkType)> work_function
+    ) :
+        m_num_workers(num_workers),
+        m_work_function(work_function),
+        m_work_accepted_barrier(2),
+        m_num_workers_available(0),
+        m_work_available(false),
+        m_shutdown(false)
+    {
+        for (size_t i = 0; i < num_workers; ++i) {
+            m_thread_group.create_thread(boost::bind(
+                &FunctionWorkerPool::do_work,
+                this
+            ));
+        }
+    }
+
+    void operator()(WorkType work)
+    {
+        {
+            lock_t lock(m_mutex);
+
+            while (m_num_workers_available == 0) {
+                m_worker_available_cv.wait(lock);
+            }
+
+            m_work           = work;
+            m_work_available = true;
+
+            m_work_available_cv.notify_one();
+        }
+        m_work_accepted_barrier.wait();
+    }
+
+    void shutdown()
+    {
+        {
+            lock_t lock(m_mutex);
+            while (m_num_workers_available < m_num_workers) {
+                m_worker_available_cv.wait(lock);
+            }
+        }
+
+        m_shutdown = true;
+        m_work_available_cv.notify_all();
+
+        m_thread_group.join_all();
+    }
+
+private:
+    size_t                          m_num_workers;
+    boost::function<void(WorkType)> m_work_function;
+
+    boost::mutex                    m_mutex;
+    boost::condition_variable       m_worker_available_cv;
+    boost::condition_variable       m_work_available_cv;
+    boost::barrier                  m_work_accepted_barrier;
+    boost::thread_group             m_thread_group;
+    size_t                          m_num_workers_available;
+    bool                            m_work_available;
+    bool                            m_shutdown;
+    WorkType                        m_work;
+};
+
 } // Anonymous
 
 struct IronBeeConsumer::State
@@ -497,7 +611,7 @@ bool IronBeeModifier::operator()(Input::input_p& input)
     IronBeeDelegate delegate(m_state->engine);
 
     switch (m_state->behavior) {
-        case ALLOW:  m_state->current_action = ACTION_ALLOW;  break;
+        case ALLOW: m_state->current_action = ACTION_ALLOW;  break;
         case BLOCK: m_state->current_action = ACTION_BLOCK; break;
         default:
             throw logic_error("Unknown behavior.  Please report as bug.");
@@ -512,6 +626,65 @@ bool IronBeeModifier::operator()(Input::input_p& input)
         default:
             throw logic_error("Unknown clipp action.  Please report as bug.");
     }
+}
+
+struct IronBeeThreadedConsumer::State
+{
+    void process_input(Input::input_p input)
+    {
+        if (! input) {
+            return;
+        }
+
+        IronBeeDelegate delegate(engine);
+        input->connection.dispatch(delegate, true);
+    }
+
+    explicit
+    State(size_t num_workers) :
+        worker_pool(
+            num_workers,
+            boost::bind(
+                &IronBeeThreadedConsumer::State::process_input,
+                this,
+                _1
+            )
+        ),
+        server_value(__FILE__, "clipp")
+
+    {
+        IronBee::initialize();
+        engine = IronBee::Engine::create(server_value.get());
+    }
+
+    ~State()
+    {
+        worker_pool.shutdown();
+
+        engine.destroy();
+        IronBee::shutdown();
+    }
+
+
+    FunctionWorkerPool<Input::input_p> worker_pool;
+    IronBee::Engine      engine;
+    IronBee::ServerValue server_value;
+};
+
+IronBeeThreadedConsumer::IronBeeThreadedConsumer(
+    const string& config_path,
+    size_t        num_workers
+) :
+    m_state(make_shared<State>(num_workers))
+{
+    load_configuration(m_state->engine, config_path);
+}
+
+bool IronBeeThreadedConsumer::operator()(const Input::input_p& input)
+{
+    m_state->worker_pool(input);
+
+    return true;
 }
 
 } // CLIPP
