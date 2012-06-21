@@ -132,6 +132,50 @@ private
 
 public
 
+  # Create a simple input with a single connection of a single transaction
+  # of a single connection data in and connection data out event.
+  def simple_hash(request, response = "")
+    {
+      "id" => "simple_hash",
+      "connection" => {
+        "pre_transaction_event" => [
+          {
+            "which" => 1,
+            "connection_event" => {
+              "local_ip" => "1.2.3.4",
+              "local_port" => 1000,
+              "remote_ip" => "5.6.7.8",
+              "remote_port" => 80
+            }
+          }
+        ],
+        "transaction" => [
+          {
+            "event" => [
+              {
+                "which" => 2,
+                "data_event" => {"data" => request}
+              }
+            ]
+          },
+          {
+            "event" => [
+              {
+                "which" => 3,
+                "data_event" => {"data" => response}
+              }
+            ]
+          },
+        ],
+        "post_transaction_event" => [
+           {
+             "which" => 4
+           }
+        ]
+      }
+    }
+  end
+
   # Run clipp.  Determines the context which all clipp assertions run under.
   # Includes an assertion that clipp exited normally.
   #

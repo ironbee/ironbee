@@ -44,4 +44,10 @@ class TestTesting < CLIPPTestCase
         ]
     )
   end
+
+  def test_simple_hash
+    clipp(
+      input_hashes: [simple_hash("GET /foo HTTP/1.1", "HTTP/1.1 200 OK")]
+    )
+  end
 end
