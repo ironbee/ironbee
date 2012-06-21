@@ -1,7 +1,7 @@
 $:.unshift(File.dirname(File.dirname(__FILE__)))
 require 'clipp_test'
 
-class TestBasic < CLIPPTestCase
+class TestRegression < CLIPPTestCase
   def test_trivial
     clipp(input: "echo:foo")
   end
@@ -20,5 +20,15 @@ class TestBasic < CLIPPTestCase
 
   def test_manyblank
     clipp(input: "raw:manyblank.req,manyblank.resp")
+  end
+
+  def test_basic_rule
+    clipp(
+      input: "echo:\"GET /foo\"",
+      default_site_config: <<-EOS
+        Rule REQUEST_METHOD "@rx GET" id:1 phase:REQUEST_HEADER block event
+      EOS
+    )
+    assert_log_match /action "block" executed/
   end
 end
