@@ -41,13 +41,17 @@ class TestTesting < CLIPPTestCase
               ]
             }
           }
-        ]
+        ],
+        consumer: 'view'
     )
+    assert_log_match %r{GET /ssldb/ HTTP/1.1}
   end
 
   def test_simple_hash
     clipp(
-      input_hashes: [simple_hash("GET /foo HTTP/1.1", "HTTP/1.1 200 OK")]
+      input_hashes: [simple_hash("GET /foo HTTP/1.1", "HTTP/1.1 200 OK")],
+      consumer: 'view'
     )
+    assert_log_match %r{GET /foo HTTP/1.1}
   end
 end
