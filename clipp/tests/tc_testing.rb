@@ -54,4 +54,16 @@ class TestTesting < CLIPPTestCase
     )
     assert_log_match %r{GET /foo HTTP/1.1}
   end
+
+  def test_erb
+    clipp(
+      input_hashes: [
+        simple_hash(
+          erb("<%= c[:method] %> /foo HTTP/1.1", method: 'GET')
+        )
+      ],
+      consumer: 'view'
+    )
+    assert_log_match %r{GET /foo HTTP/1.1}
+  end
 end

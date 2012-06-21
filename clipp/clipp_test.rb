@@ -130,7 +130,24 @@ private
     to
   end
 
+  def make_context(c)
+    binding
+  end
+
 public
+
+  # Evaluate ERB with specific context.
+  #
+  # Context is a hash that is made available to the ERB as c.  E.g.,
+  # {:foo => 5} allows <%= c[:foo] %> in the ERB to be replaced by 5.
+  def erb(erb_text, context = {})
+    ERB.new(erb_text).result(make_context(context))
+  end
+
+  # As above, but takes a path to a file.
+  def erb_file(erb_path, context = {})
+    erb(IO.read(erb_path))
+  end
 
   # Create a simple input with a single connection of a single transaction
   # of a single connection data in and connection data out event.
