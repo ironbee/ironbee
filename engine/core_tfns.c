@@ -737,7 +737,7 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(mp != NULL);
-     assert(fin != NULL);
+    assert(fin != NULL);
     assert(fout != NULL);
     assert(pflags != NULL);
 
@@ -792,6 +792,114 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
                                        din, dlen,
                                        &dout, &dlen,
                                        &result);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_create_bytestr_alias(fout, mp,
+                                           fin->name, fin->nlen,
+                                           dout, dlen);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        break;
+    }
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    } /* switch(fin->type) */
+
+    /* Check the flags */
+    if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == true) {
+        *pflags = IB_TFN_FMODIFIED;
+    }
+    else {
+        *pflags = IB_TFN_NONE;
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * HTML entity decode transformation
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @note For non-ASCII (utf8, etc) you should use case folding.
+ *
+ * @returns IB_OK if successful.
+ */
+static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
+                                          ib_mpool_t *mp,
+                                          void *fndata,
+                                          const ib_field_t *fin,
+                                          ib_field_t **fout,
+                                          ib_flags_t *pflags)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_flags_t result;
+
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(fin != NULL);
+    assert(fout != NULL);
+    assert(pflags != NULL);
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
+
+    switch(fin->type) {
+    case IB_FTYPE_NULSTR :
+    {
+        const char *in;
+        char *out;
+        rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        if (in == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        rc = ib_util_decode_html_entity_cow(mp, (char *)in, &out, &result);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_create(fout, mp,
+                             fin->name, fin->nlen,
+                             IB_FTYPE_NULSTR,
+                             ib_ftype_nulstr_in(out));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        break;
+    }
+
+    case IB_FTYPE_BYTESTR:
+    {
+        const ib_bytestr_t *bs;
+        const uint8_t *din;
+        uint8_t *dout;
+        size_t dlen;
+        rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        if (bs == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        din = ib_bytestr_const_ptr(bs);
+        if (din == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        dlen = ib_bytestr_length(bs);
+        rc = ib_util_decode_html_entity_cow_ex(mp,
+                                               din, dlen,
+                                               &dout, &dlen,
+                                               &result);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -882,6 +990,11 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     rc = ib_tfn_register(ib, "urlDecode", tfn_url_decode, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_tfn_register(ib, "htmlEntityDecode", tfn_html_entity_decode, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
