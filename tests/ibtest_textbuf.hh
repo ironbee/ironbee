@@ -41,7 +41,7 @@ public:
     TextBuf(size_t bufsize)
         : m_size(bufsize),
           m_buf(new char [bufsize+1]),
-          m_fmtsize(2*bufsize),
+          m_fmtsize(4*bufsize),
           m_fmtbuf(new char [m_fmtsize+1])
     {
         SetStr("");
@@ -50,7 +50,7 @@ public:
     TextBuf(const char *s)
         : m_size(strlen(s)+1),
           m_buf(new char [m_size]),
-          m_fmtsize(2*m_size),
+          m_fmtsize(4*m_size),
           m_fmtbuf(new char [m_fmtsize+1])
     {
         SetStr(s);
@@ -59,16 +59,16 @@ public:
     TextBuf(size_t bufsize, const char *s)
         : m_size(bufsize),
           m_buf(new char [bufsize+1]),
-          m_fmtsize(2*bufsize),
+          m_fmtsize(4*bufsize),
           m_fmtbuf(new char [m_fmtsize+1])
     {
         SetStr(s);
     }
 
     TextBuf(const uint8_t *text, size_t len)
-        : m_size(len),
-          m_buf(new char [len]),
-          m_fmtsize(2*len),
+        : m_size(len+1),
+          m_buf(new char [len+1]),
+          m_fmtsize(4*len),
           m_fmtbuf(new char [m_fmtsize+1])
     {
         SetText((uint8_t *)text, len);
@@ -77,7 +77,7 @@ public:
     TextBuf(size_t bufsize, const char *text, size_t len)
         : m_size(bufsize),
           m_buf(new char [bufsize]),
-          m_fmtsize(2*bufsize),
+          m_fmtsize(4*bufsize),
           m_fmtbuf(new char [bufsize*2])
     {
         SetText(text, len);
@@ -236,8 +236,19 @@ public:
                 *buf++ = '\\';
                 *buf++ = '0';
             }
-            else {
+            else if (*str == '"') {
+                *buf++ = '\\';
+                *buf++ = '"';
+            }
+            else if (isprint(*str) ) {
                 *buf++ = *str;
+            }
+            else {
+                uint8_t *p = (uint8_t *)str;
+                char tmp[8];
+                snprintf(tmp, sizeof(tmp), "_\\x%02x_", *p);
+                strcpy(buf, tmp);
+                buf += strlen(tmp);
             }
             ++str;
             ++n;

@@ -450,7 +450,8 @@ uint8_t *ib_util_copy_on_write(ib_mpool_t *mp,
                                const uint8_t *cur_in,
                                size_t size,
                                uint8_t *cur_out,
-                               uint8_t **data_out)
+                               uint8_t **data_out,
+                               const uint8_t **end_out)
 {
     IB_FTRACE_INIT();
     assert(mp != NULL);
@@ -462,6 +463,9 @@ uint8_t *ib_util_copy_on_write(ib_mpool_t *mp,
     if (*data_out == NULL) {
         *data_out = ib_mpool_alloc(mp, size);
         if (*data_out != NULL) {
+            if (end_out != NULL) {
+                *end_out = *data_out + size;
+            }
             size_t off = cur_in - data_in;
             if (off == 0) {
                 /* Do nothing */

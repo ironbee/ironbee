@@ -219,7 +219,8 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
  * @param[in] cur_in Current position in @a data_in
  * @param[in] size Size of buffer to allocate
  * @param[in] cur_out Current output pointer
- * @param[in,out] data_out Newly allocated buffer (
+ * @param[in,out] data_out Output buffer (possibly newly allocated)
+ * @param[in,out] end_out End of output buffer (ignored if NULL)
  *
  * @return New output position in @a data_out,
  *         or NULL if unable to allocate memory
@@ -229,17 +230,18 @@ uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
                                           const uint8_t *cur_in,
                                           size_t size,
                                           uint8_t *cur_out,
-                                          uint8_t **data_out);
+                                          uint8_t **data_out,
+                                          const uint8_t **end_out);
 
 /**
  * In-place decode a URL (NUL-string version)
  *
- * @param[in,out] data_in Buffer to operate on
+ * @param[in,out] data Buffer to operate on
  * @param[out] result Result flags
  *
  * @returns Status (IB_OK)
  */
-ib_status_t DLL_PUBLIC ib_util_decode_url(char *data_in,
+ib_status_t DLL_PUBLIC ib_util_decode_url(char *data,
                                           ib_flags_t *result);
 
 /**
@@ -268,10 +270,10 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_ex(uint8_t *data_in,
  * @returns Status: IB_OK
  *                  IB_EALLOC for allocation errors
  */
-ib_status_t ib_util_decode_url_cow(ib_mpool_t *mp,
-                                   const char *data_in,
-                                   char **data_out,
-                                   ib_flags_t *result);
+ib_status_t DLL_PUBLIC ib_util_decode_url_cow(ib_mpool_t *mp,
+                                              const char *data_in,
+                                              char **data_out,
+                                              ib_flags_t *result);
 
 /**
  * Copy-on-write decode a URL (ex version)
@@ -292,6 +294,72 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                                                  uint8_t **data_out,
                                                  size_t *dlen_out,
                                                  ib_flags_t *result);
+
+/**
+ * In-place decode HTML entities (NUL-string version)
+ *
+ * @param[in,out] data Buffer to operate on
+ * @param[out] result Result flags
+ *
+ * @returns Status (IB_OK)
+ */
+ib_status_t DLL_PUBLIC ib_util_decode_html_entity(
+    char *data,
+    ib_flags_t *result);
+
+/**
+ * In-place decode HTML entities (ex version)
+ *
+ * @param[in,out] data Buffer to operate on
+ * @param[in] dlen_in Length of @a buf
+ * @param[out] dlen_out Output length
+ * @param[out] result Result flags
+ *
+ * @returns Status (IB_OK)
+ */
+ib_status_t DLL_PUBLIC ib_util_decode_html_entity_ex(
+    uint8_t *data,
+    size_t dlen_in,
+    size_t *dlen_out,
+    ib_flags_t *result);
+
+/**
+ * Copy-on-write decode HTML entity (NUL-string version)
+ *
+ * @param[in] mp Memory pool for allocations
+ * @param[in] data_in Buffer to operate on
+ * @param[out] data_out Output data
+ * @param[out] result Result flags
+ *
+ * @returns Status: IB_OK
+ *                  IB_EALLOC for allocation errors
+ */
+ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow(
+    ib_mpool_t *mp,
+    const char *data_in,
+    char **data_out,
+    ib_flags_t *result);
+
+/**
+ * Copy-on-write decode HTML entity (ex version)
+ *
+ * @param[in] mp Memory pool for allocations
+ * @param[in] data_in Buffer to operate on
+ * @param[in] dlen_in Length of @a buf
+ * @param[out] data_out Output data
+ * @param[out] dlen_out Length of @a data_out
+ * @param[out] result Result flags
+ *
+ * @returns Status IB_OK
+ *                 IB_EALLOC for allocation errors
+ */
+ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow_ex(
+    ib_mpool_t *mp,
+    const uint8_t *data_in,
+    size_t dlen_in,
+    uint8_t **data_out,
+    size_t *dlen_out,
+    ib_flags_t *result);
 
 /**
  * Malloc a @c char* and escape @a src into it and return that @c char*.
