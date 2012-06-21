@@ -211,27 +211,27 @@ component_t construct_component(const string& arg)
  **/
 
 //! Construct threaded IronBee consumer, interpreting @a arg as @e path:n
-component_t init_ironbee_threaded_consumer(const string& arg);
+component_t construct_ironbee_threaded_consumer(const string& arg);
 
 //! Construct raw generator, interpreting @a arg as @e request,response.
-component_t init_raw_generator(const string& arg);
+component_t construct_raw_generator(const string& arg);
 
 #ifdef HAVE_NIDS
 //! Construct pcap generator, interpreting @a arg as @e <path>:<filter>
-component_t init_pcap_generator(const string& arg);
+component_t construct_pcap_generator(const string& arg);
 #endif
 
 //! Construct aggregate modifier.  An empty @a arg is 0, otherwise integer.
-component_t init_aggregate_modifier(const string& arg);
+component_t construct_aggregate_modifier(const string& arg);
 
 //! Construct split data modifier.  An empty @a arg is 0, otherwise integer.
-component_t init_splitdata_modifier(const string& arg);
+component_t construct_splitdata_modifier(const string& arg);
 
 //! Construct split header modifier.  An empty @a arg is 0, otherwise integer.
-component_t init_splitheader_modifier(const string& arg);
+component_t construct_splitheader_modifier(const string& arg);
 
 //! Construct ironbee modifiers.  @a arg is <config path>:<default behavior>.
-component_t init_ironbee_modifier(const string& arg);
+component_t construct_ironbee_modifier(const string& arg);
 
 /**
  * Construct select modifier.
@@ -239,14 +239,14 @@ component_t init_ironbee_modifier(const string& arg);
  * @param[in] arg @a arg is a comma separated list of either single indices
  *                are ranges: @a i-j.
  **/
-component_t init_select_modifier(const string& arg);
+component_t construct_select_modifier(const string& arg);
 
 /**
  * Construct set modifier.
  *
  * @param[in] arg @a arg is either >key:value, <key:value, or key:value.
  **/
-component_t init_set_modifier(const string& arg);
+component_t construct_set_modifier(const string& arg);
 
 ///@}
 
@@ -529,21 +529,21 @@ int main(int argc, char** argv)
     // Declare generators.
     component_factory_map_t generator_factory_map = boost::assign::map_list_of
         ("modsec",   construct_component<ModSecAuditLogGenerator>)
-        ("raw",      init_raw_generator)
+        ("raw",      construct_raw_generator)
         ("pb",       construct_component<PBGenerator>)
         ("apache",   construct_component<ApacheGenerator>)
         ("suricata", construct_component<SuricataGenerator>)
         ("htp",      construct_component<HTPGenerator>)
         ("echo",     construct_component<EchoGenerator>)
 #ifdef HAVE_NIDS
-        ("pcap",     init_pcap_generator)
+        ("pcap",     construct_pcap_generator)
 #endif
         ;
 
     // Declare consumers.
     component_factory_map_t consumer_factory_map = boost::assign::map_list_of
         ("ironbee",  construct_component<IronBeeConsumer>)
-        ("ironbee_threaded",  init_ironbee_threaded_consumer)
+        ("ironbee_threaded",  construct_ironbee_threaded_consumer)
         ("writepb",  construct_component<PBConsumer>)
         ("writehtp", construct_component<HTPConsumer>)
         ("view",     construct_component<ViewConsumer>)
@@ -559,15 +559,15 @@ int main(int argc, char** argv)
         ("set_remote_port", construct_component<SetRemotePortModifier, uint32_t>)
         ("parse",           construct_argless_component<ParseModifier>)
         ("unparse",         construct_argless_component<UnparseModifier>)
-        ("aggregate",       init_aggregate_modifier)
-        ("splitdata",       init_splitdata_modifier)
-        ("splitheader",     init_splitheader_modifier)
+        ("aggregate",       construct_aggregate_modifier)
+        ("splitdata",       construct_splitdata_modifier)
+        ("splitheader",     construct_splitheader_modifier)
         ("edit",            construct_component<EditModifier>)
         ("limit",           construct_component<LimitModifier, size_t>)
-        ("select",          init_select_modifier)
-        ("set",             init_set_modifier)
+        ("select",          construct_select_modifier)
+        ("set",             construct_set_modifier)
         ("fillbody",        construct_argless_component<FillBodyModifier>)
-        ("ironbee",         init_ironbee_modifier)
+        ("ironbee",         construct_ironbee_modifier)
         ;
 
     // Convert argv to args.
@@ -792,7 +792,7 @@ vector<string> split_on_char(const string& src, char c)
     return r;
 }
 
-component_t init_raw_generator(const string& arg)
+component_t construct_raw_generator(const string& arg)
 {
     vector<string> subargs = split_on_char(arg, ',');
     if (subargs.size() != 2) {
@@ -806,7 +806,7 @@ component_t init_raw_generator(const string& arg)
 }
 
 #ifdef HAVE_NIDS
-component_t init_pcap_generator(const string& arg)
+component_t construct_pcap_generator(const string& arg)
 {
     vector<string> subargs = split_on_char(arg, ':');
     if (subargs.size() == 1) {
@@ -821,7 +821,7 @@ component_t init_pcap_generator(const string& arg)
 #endif
 
 template <typename ModifierType>
-component_t init_randomized_modifier(
+component_t construct_randomized_modifier(
     const string& name,
     const string& arg
 )
@@ -891,34 +891,34 @@ component_t init_randomized_modifier(
     }
 }
 
-component_t init_aggregate_modifier(const string& arg)
+component_t construct_aggregate_modifier(const string& arg)
 {
-    return init_randomized_modifier<AggregateModifier>(
+    return construct_randomized_modifier<AggregateModifier>(
         "aggregate",
         arg
     );
 }
 
-component_t init_splitdata_modifier(const string& arg)
+component_t construct_splitdata_modifier(const string& arg)
 {
     if (arg.empty()) {
         throw runtime_error("@splitdata requires an argument.");
     }
-    return init_randomized_modifier<SplitDataModifier>(
+    return construct_randomized_modifier<SplitDataModifier>(
         "splitdata",
         arg
     );
 }
 
-component_t init_splitheader_modifier(const string& arg)
+component_t construct_splitheader_modifier(const string& arg)
 {
-    return init_randomized_modifier<SplitHeaderModifier>(
+    return construct_randomized_modifier<SplitHeaderModifier>(
         "splitheader",
         arg
     );
 }
 
-component_t init_select_modifier(const string& arg)
+component_t construct_select_modifier(const string& arg)
 {
     if (arg.empty()) {
         throw runtime_error("@select requires an argument.");
@@ -959,7 +959,7 @@ component_t init_select_modifier(const string& arg)
     return SelectModifier(select);
 }
 
-component_t init_set_modifier(const string& arg)
+component_t construct_set_modifier(const string& arg)
 {
     SetModifier::which_e which = SetModifier::BOTH;
 
@@ -988,7 +988,7 @@ component_t init_set_modifier(const string& arg)
     return SetModifier(which, key, value);
 }
 
-component_t init_ironbee_threaded_consumer(const string& arg)
+component_t construct_ironbee_threaded_consumer(const string& arg)
 {
     string config_path;
     size_t num_workers;
@@ -1005,7 +1005,7 @@ component_t init_ironbee_threaded_consumer(const string& arg)
     return IronBeeThreadedConsumer(config_path, num_workers);
 }
 
-component_t init_ironbee_modifier(const string& arg)
+component_t construct_ironbee_modifier(const string& arg)
 {
     IronBeeModifier::behavior_e behavior = IronBeeModifier::ALLOW;
     string config_path;
