@@ -101,7 +101,7 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
     uint8_t *in  = data_in;
     uint8_t *end = data_in + dlen_in;
     bool modified = false;
-    
+
     while (in < end) {
         if (*in == '%') {
             /* Character is a percent sign. */
@@ -197,7 +197,7 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
     const uint8_t *in  = data_in;
     const uint8_t *end = data_in + dlen_in;
     *data_out = NULL;
-    
+
     while (in < end) {
         if (*in == '%') {
             /* Character is a percent sign. */
