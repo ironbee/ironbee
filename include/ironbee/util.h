@@ -219,7 +219,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
  * @param[in] cur_in Current position in @a data_in
  * @param[in] size Size of buffer to allocate
  * @param[in] cur_out Current output pointer
- * @param[ni,out] data_out Newly allocated buffer (
+ * @param[in,out] data_out Newly allocated buffer (
  *
  * @return New output position in @a data_out,
  *         or NULL if unable to allocate memory
@@ -234,7 +234,7 @@ uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
 /**
  * In-place decode a URL (NUL-string version)
  *
- * @param[in,out] data Buffer to operate on
+ * @param[in,out] data_in Buffer to operate on
  * @param[out] result Result flags
  *
  * @returns Status (IB_OK)
@@ -246,7 +246,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url(char *data_in,
  * In-place decode a URL (ex version)
  *
  * @param[in,out] data_in Buffer to operate on
- * @param[int] dlen_in Length of @a buf
+ * @param[in] dlen_in Length of @a buf
  * @param[out] dlen_out Output length
  * @param[out] result Result flags
  *
@@ -278,7 +278,7 @@ ib_status_t ib_util_decode_url_cow(ib_mpool_t *mp,
  *
  * @param[in] mp Memory pool for allocations
  * @param[in] data_in Buffer to operate on
- * @param[int] dlen_in Length of @a buf
+ * @param[in] dlen_in Length of @a buf
  * @param[out] data_out Output data
  * @param[out] dlen_out Length of @a data_out
  * @param[out] result Result flags
