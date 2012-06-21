@@ -1,4 +1,4 @@
-LogLevel notice
+LogLevel <%= config[:log_level] || "info" %>
 
 SensorId 215e7620-7783-012f-86c5-001f5b320164
 SensorName ClippTests
@@ -11,6 +11,8 @@ LoadModule "ibmod_radix.so"
 LoadModule "ibmod_ac.so"
 LoadModule "ibmod_rules.so"
 LoadModule "ibmod_user_agent.so"
+
+RuleEngineLogData RuleExec +Full +Debug +Trace
 
 Set parser "htp"
 
