@@ -407,10 +407,12 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                     ++t1;
                 }
                 if (t1 > t2) { /* Do we have at least one digit? */
-                    char *tmp = memdup(t2, t1 - t2);
+                    size_t tlen = t1 - t2;
+                    char *tmp = memdup(t2, tlen);
                     if (tmp == NULL) {
                         IB_FTRACE_RET_STATUS(IB_EALLOC);
                     }
+                    *(tmp + tlen) = '\0';
 
                     /* Decode the entity. */
                     /* ENH What about others? */
@@ -613,10 +615,12 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                 }
                 if (t1 > t2) { /* Do we have at least one digit? */
                     uint8_t c;
-                    char *tmp = memdup(t2, t1 - t2);
+                    size_t tlen = t1 - t2;
+                    char *tmp = memdup(t2, tlen);
                     if (tmp == NULL) {
                         IB_FTRACE_RET_STATUS(IB_EALLOC);
                     }
+                    *(tmp + tlen) = '\0';
 
                     /* Decode the entity. */
                     /* ENH What about others? */
