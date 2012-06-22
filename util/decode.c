@@ -264,20 +264,27 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static void *memdup(const void *in, size_t len)
+static void *memdup(const void *in, size_t len, bool nul)
 {
     IB_FTRACE_INIT();
     assert(in != NULL);
     void *p;
+    size_t size = len;
+    if (nul) {
+        ++size;
+    }
 
     if (len <= 0) {
         IB_FTRACE_RET_PTR(void, NULL);
     }
-    p = malloc(len);
+    p = malloc(size);
     if (p == NULL) {
         IB_FTRACE_RET_PTR(void, NULL);
     }
     memcpy(p, in, len);
+    if (nul) {
+        *((char *)p + len) = '\0';
+    }
 
     IB_FTRACE_RET_PTR(void, p);
 }
@@ -349,7 +356,7 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                     }
                     if (t1 > t2) { /* Do we have at least one digit? */
                         /* Decode the entity. */
-                        char *tmp = memdup(t2, t1 - t2);
+                        char *tmp = memdup(t2, t1 - t2, true);
                         if (tmp == NULL) {
                             IB_FTRACE_RET_STATUS(IB_EALLOC);
                         }
@@ -378,7 +385,7 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                     }
                     if (t1 > t2) { /* Do we have at least one digit? */
                         /* Decode the entity. */
-                        char *tmp = memdup(t2, t1 - t2);
+                        char *tmp = memdup(t2, t1 - t2, true);
                         if (tmp == NULL) {
                             IB_FTRACE_RET_STATUS(IB_EALLOC);
                         }
@@ -408,11 +415,10 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                 }
                 if (t1 > t2) { /* Do we have at least one digit? */
                     size_t tlen = t1 - t2;
-                    char *tmp = memdup(t2, tlen);
+                    char *tmp = memdup(t2, tlen, true);
                     if (tmp == NULL) {
                         IB_FTRACE_RET_STATUS(IB_EALLOC);
                     }
-                    *(tmp + tlen) = '\0';
 
                     /* Decode the entity. */
                     /* ENH What about others? */
@@ -548,7 +554,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                     }
                     if (t1 > t2) { /* Do we have at least one digit? */
                         /* Decode the entity. */
-                        char *tmp = memdup(t2, t1 - t2);
+                        char *tmp = memdup(t2, t1 - t2, true);
                         if (tmp == NULL) {
                             IB_FTRACE_RET_STATUS(IB_EALLOC);
                         }
@@ -581,7 +587,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                     }
                     if (t1 > t2) { /* Do we have at least one digit? */
                         /* Decode the entity. */
-                        char *tmp = memdup(t2, t1 - t2);
+                        char *tmp = memdup(t2, t1 - t2, true);
                         if (tmp == NULL) {
                             IB_FTRACE_RET_STATUS(IB_EALLOC);
                         }
@@ -616,11 +622,10 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                 if (t1 > t2) { /* Do we have at least one digit? */
                     uint8_t c;
                     size_t tlen = t1 - t2;
-                    char *tmp = memdup(t2, tlen);
+                    char *tmp = memdup(t2, tlen, true);
                     if (tmp == NULL) {
                         IB_FTRACE_RET_STATUS(IB_EALLOC);
                     }
-                    *(tmp + tlen) = '\0';
 
                     /* Decode the entity. */
                     /* ENH What about others? */
