@@ -79,6 +79,14 @@ public:
         // nop
     }
 
+    ~IronBeeDelegate()
+    {
+        if (m_connection) {
+            boost::lock_guard<boost::mutex> guard(m_mutex);
+            m_connection.destroy();
+        }
+    }
+
     void connection_opened(const Input::ConnectionEvent& event)
     {
         using namespace boost;
