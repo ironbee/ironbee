@@ -89,13 +89,274 @@ public:
     };
 };
 
-// Base class for string modification tests
-class BaseStrModTest : public ::testing::Test
+// Class to test simple string manipulations.  This class is designed to work
+// with string manipulation function families that have the followwing
+// implementation functions:
+// - in-place manipulation of NUL-terminated strings
+// - in-place manipulation of byte strings (_ex version)
+// - copy-on-write manipulation of NUL-terminated strings
+// - copy-on-write manipulation of byte strings (_ex version)
+class TestSimpleStringManipulation : public ::testing::Test
 {
 public:
-    BaseStrModTest(size_t call_buf_size, size_t buf_size,
-                   ib_strmod_fn_t fn, const char *fn_name,
-                   ib_strmod_ex_fn_t ex_fn, const char *ex_fn_name)
+    TestSimpleStringManipulation( void )
+        : m_mpool(NULL)
+    {
+    };
+
+    virtual void SetUp( void )
+    {
+        ib_status_t rc = ib_mpool_create(&m_mpool, NULL, NULL);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not create memory pool");
+        }
+    }
+
+    virtual void TearDown( void )
+    {
+        if (m_mpool != NULL) {
+            ib_mpool_destroy(m_mpool);
+        }
+        m_mpool = NULL;
+    }
+
+    typedef enum { TYPE_NUL, TYPE_EX } test_type_t;
+
+    virtual const char *TestName(
+        ib_strop_t strop,
+        test_type_t ex,
+        int lineno,
+        const char *label) = 0;
+
+    virtual ib_status_t ExecInplaceNul(
+        char *buf,
+        ib_flags_t &result)
+    {
+        return IB_ENOTIMPL;
+    }
+
+    virtual ib_status_t ExecInplaceEx(
+        uint8_t *data_in,
+        size_t dlen_in,
+        size_t &dlen_out,
+        ib_flags_t &result)
+    {
+        return IB_ENOTIMPL;
+    }
+
+    virtual ib_status_t ExecCowNul(
+        const char *data_in,
+        char **data_out,
+        ib_flags_t &result)
+    {
+        return IB_ENOTIMPL;
+    }
+
+    virtual ib_status_t ExecCowEx(
+        const uint8_t *data_in,
+        size_t dlen_in,
+        uint8_t **data_out,
+        size_t &dlen_out,
+        ib_flags_t &result)
+    {
+        return IB_ENOTIMPL;
+    }
+
+
+    void RunTest(int lineno, const char *label,
+                 const char *in,
+                 const char *out = NULL)
+    {
+        TextBuf input(in);
+        if (label == NULL) {
+            label = in;
+        }
+        if (out == NULL) {
+            out = in;
+        }
+        TextBuf expected(out);
+        RunTestInplaceNul(lineno, label, input, expected);
+        RunTestInplaceEx(lineno, label, input, expected);
+        RunTestCowNul(lineno, label, input, expected);
+        RunTestCowEx(lineno, label, input, expected);
+    }
+
+    void RunTest(int lineno, const char *label,
+                 const uint8_t *in, size_t inlen,
+                 const uint8_t *out = NULL, size_t outlen = 0)
+    {
+        TextBuf input(in, inlen);
+        if (out == NULL) {
+            out = in;
+            outlen = inlen;
+        }
+        TextBuf expected(out, outlen);
+        RunTestInplaceEx(lineno, label, input, expected);
+        RunTestCowEx(lineno, label, input, expected);
+    }
+
+protected:
+    const char *TestNameImpl(const char *test, ib_strop_t op, test_type_t tt,
+                             int lineno, const char *label)
+    {
+        static char buf[128];
+        snprintf(buf, sizeof(buf),
+                 "%s%s%s() \"%s\" @ %d",
+                 test,
+                 op == IB_STROP_INPLACE ? "" : "_cow",
+                 tt == TYPE_EX  ? "_ex" : "",
+                 label, lineno);
+        return buf;
+    }
+
+    void CheckResult(const char *name,
+                     const TextBuf &input,
+                     const TextBuf &expected,
+                     ib_flags_t expected_unmodified_result,
+                     ib_flags_t expected_modified_result,
+                     ib_flags_t result,
+                     const TextBuf &output)
+    {
+        const char *modstr;
+        ib_flags_t eresult;
+
+        if (input == expected) {
+            eresult = expected_unmodified_result;
+            modstr = "should not be modified";
+        }
+        else {
+            eresult = expected_modified_result;
+            modstr = "should be modified";
+        }
+        ASSERT_EQ(eresult, result)
+            << name << " " << modstr << " " << std::endl
+            << " Expected: "
+            << " [" << expected.GetLen() << "]"
+            << " \"" << expected.GetFmt() << "\"" << std::endl
+            << " Actual:   "
+            << " [" << output.GetLen() << "]"
+            << " \"" << output.GetFmt() << "\"";
+
+        ASSERT_TRUE(expected == output)
+            << name << std::endl
+            << " Expected: "
+            << " [" << expected.GetLen() << "]"
+            << " \"" << expected.GetFmt() << "\"" << std::endl
+            << " Actual:   "
+            << " [" << output.GetLen() << "]"
+            << " \"" << output.GetFmt() << "\"";
+    }
+
+    void RunTestInplaceNul(int lineno, const char *label,
+                           const TextBuf &input, const TextBuf &expected)
+    {
+        size_t len = input.GetLen();
+        char buf[len];
+        ib_status_t rc;
+        ib_flags_t result;
+
+        strcpy(buf, input.GetStr());
+
+        rc = ExecInplaceNul(buf, result);
+        if (rc == IB_ENOTIMPL) {
+            return;
+        }
+        const char *name = TestName(IB_STROP_INPLACE, TYPE_NUL, lineno, label);
+        ASSERT_EQ(IB_OK, rc) << name;
+
+        TextBuf output(buf);
+        CheckResult(name, input,
+                    expected,
+                    IB_STRFLAG_ALIAS,
+                    ( IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED ),
+                    result, output);
+    }
+
+    void RunTestInplaceEx(int lineno, const char *label,
+                          const TextBuf &input, const TextBuf &expected)
+    {
+        size_t len = input.GetLen();
+        uint8_t buf[len];
+        ib_status_t rc;
+        size_t outlen;
+        ib_flags_t result;
+
+        memcpy(buf, input.GetBuf(), len);
+
+        rc = ExecInplaceEx(buf, len, outlen, result);
+        if (rc == IB_ENOTIMPL) {
+            return;
+        }
+        const char *name = TestName(IB_STROP_INPLACE, TYPE_EX, lineno, label);
+        ASSERT_EQ(IB_OK, rc) << name;
+
+        TextBuf output(buf, outlen);
+        CheckResult(name, input,
+                    expected,
+                    IB_STRFLAG_ALIAS,
+                    ( IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED ),
+                    result, output);
+    }
+
+    void RunTestCowNul(int lineno, const char *label,
+                       const TextBuf &input, const TextBuf &expected)
+    {
+        char *out;
+        ib_status_t rc;
+        ib_flags_t result;
+
+        rc = ExecCowNul(input.GetStr(), &out, result);
+        if (rc == IB_ENOTIMPL) {
+            return;
+        }
+        const char *name = TestName(IB_STROP_COW, TYPE_NUL, lineno, label);
+        ASSERT_EQ(IB_OK, rc) << name;
+
+        TextBuf output(out);
+        CheckResult(name, input,
+                    expected,
+                    IB_STRFLAG_ALIAS,
+                    ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
+                    result, output);
+    }
+
+    void RunTestCowEx(int lineno, const char *label,
+                      const TextBuf &input, const TextBuf &expected)
+    {
+        size_t len = input.GetLen();
+        uint8_t *out;
+        ib_status_t rc;
+        size_t outlen;
+        ib_flags_t result;
+
+        rc = ExecCowEx(input.GetUBuf(), len, &out, outlen, result);
+        if (rc == IB_ENOTIMPL) {
+            return;
+        }
+        const char *name = TestName(IB_STROP_COW, TYPE_EX, lineno, label);
+        ASSERT_EQ(IB_OK, rc) << name;
+
+        TextBuf output(out, outlen);
+        CheckResult(name, input,
+                    expected,
+                    IB_STRFLAG_ALIAS,
+                    ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
+                    result, output);
+    }
+
+public:
+    ib_mpool_t *m_mpool;
+};
+
+// Base class for string modification tests.  This class is specifically for
+// testing string modification tests that use the ib_strmod_fn_t and
+// ib_strmod_ex_fn_t interfaces.
+class TestStringModification : public ::testing::Test
+{
+public:
+    TestStringModification(size_t call_buf_size, size_t buf_size,
+                           ib_strmod_fn_t fn, const char *fn_name,
+                           ib_strmod_ex_fn_t ex_fn, const char *ex_fn_name)
         : m_strmod_fn(fn),
           m_callbuf(call_buf_size, fn_name),
           m_strmod_ex_fn(ex_fn),

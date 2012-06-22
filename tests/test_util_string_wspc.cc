@@ -79,12 +79,13 @@ private:
     TextBuf     m_exbuf_compress; // Expected output text
 };
 
-class TestIBUtilStrWspcBase : public BaseStrModTest
+class TestIBUtilStrWspcBase : public TestStringModification
 {
 public:
     TestIBUtilStrWspcBase(ib_strmod_fn_t fn, const char *fn_name,
                           ib_strmod_ex_fn_t ex_fn, const char *ex_fn_name)
-        : BaseStrModTest(BufSize, CallBufSize, fn, fn_name, ex_fn, ex_fn_name)
+        : TestStringModification(BufSize, CallBufSize, fn, fn_name,
+                                 ex_fn, ex_fn_name)
     {
     }
 

@@ -177,12 +177,13 @@ private:
 };
 
 
-class TestIBUtilStrTrimBase : public BaseStrModTest
+class TestStringTrim : public TestStringModification
 {
 public:
-    TestIBUtilStrTrimBase(ib_strmod_fn_t fn, const char *fn_name,
+    TestStringTrim(ib_strmod_fn_t fn, const char *fn_name,
                           ib_strmod_ex_fn_t ex_fn, const char *ex_fn_name)
-        : BaseStrModTest(BufSize, CallBufSize, fn, fn_name, ex_fn, ex_fn_name)
+        : TestStringModification(BufSize, CallBufSize, fn, fn_name,
+                                 ex_fn, ex_fn_name)
     {
     }
 
@@ -273,11 +274,11 @@ public:
 
 
 // Base string version of trim tests
-class TestIBUtilStrTrim : public TestIBUtilStrTrimBase
+class TestIBUtilStrTrim : public TestStringTrim
 {
 public:
     TestIBUtilStrTrim(ib_strmod_fn_t fn, const char *name)
-        : TestIBUtilStrTrimBase(fn, name, NULL, NULL)
+        : TestStringTrim(fn, name, NULL, NULL)
     {
     }
 
@@ -363,11 +364,11 @@ public:
 };
 
 // Base "ex" version of trim tests
-class TestIBUtilStrTrimEx : public TestIBUtilStrTrimBase
+class TestIBUtilStrTrimEx : public TestStringTrim
 {
 public:
     TestIBUtilStrTrimEx(ib_strmod_ex_fn_t fn, const char *fn_name )
-        : TestIBUtilStrTrimBase(NULL, NULL, fn, fn_name)
+        : TestStringTrim(NULL, NULL, fn, fn_name)
     {
     }
 

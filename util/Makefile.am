@@ -8,6 +8,7 @@ libibutil_la_SOURCES = lock.c util.c logformat.c \
                        array.c list.c stream.c hash.c bytestr.c field.c \
                        cfgmap.c radix.c ahocorasick.c expand.c \
                        string.c strlower.c strtrim.c strwspc.c \
+                       path.c \
                        decode.c \
                        clock.c types.c \
                        ironbee_util_private.h

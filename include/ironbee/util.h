@@ -237,7 +237,7 @@ uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
  * In-place decode a URL (NUL-string version)
  *
  * @param[in,out] data Buffer to operate on
- * @param[out] result Result flags
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
  *
  * @returns Status code:
  * - IB_OK: Success
@@ -249,9 +249,9 @@ ib_status_t DLL_PUBLIC ib_util_decode_url(char *data,
  * In-place decode a URL (ex version)
  *
  * @param[in,out] data_in Buffer to operate on
- * @param[in] dlen_in Length of @a buf
+ * @param[in] dlen_in Length of @a data_in
  * @param[out] dlen_out Output length
- * @param[out] result Result flags
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
  *
  * @returns Status code:
  * - IB_OK: Success
@@ -267,7 +267,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_ex(uint8_t *data_in,
  * @param[in] mp Memory pool for allocations
  * @param[in] data_in Buffer to operate on
  * @param[out] data_out Output data
- * @param[out] result Result flags
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
  *
  * @returns Status code:
  * - IB_OK: Success
@@ -283,10 +283,10 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow(ib_mpool_t *mp,
  *
  * @param[in] mp Memory pool for allocations
  * @param[in] data_in Buffer to operate on
- * @param[in] dlen_in Length of @a buf
+ * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Output data
  * @param[out] dlen_out Length of @a data_out
- * @param[out] result Result flags
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
  *
  * @returns Status code:
  * - IB_OK: Success
@@ -316,9 +316,9 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity(
  * In-place decode HTML entities (ex version)
  *
  * @param[in,out] data Buffer to operate on
- * @param[in] dlen_in Length of @a buf
+ * @param[in] dlen_in Length of @a data
  * @param[out] dlen_out Output length
- * @param[out] result Result flags
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
  *
  * @returns Status (IB_OK)
  */
@@ -334,7 +334,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity_ex(
  * @param[in] mp Memory pool for allocations
  * @param[in] data_in Buffer to operate on
  * @param[out] data_out Output data
- * @param[out] result Result flags
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
  *
  * @returns Status: IB_OK
  *                  IB_EALLOC for allocation errors
@@ -355,13 +355,95 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow(
  * @param[out] dlen_out Length of @a data_out
  * @param[out] result Result flags
  *
- * @returns Status IB_OK
- *                 IB_EALLOC for allocation errors
+ * @returns Status code
+ * - IB_OK: Success
+ * - IB_EALLOC: Allocation error
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow_ex(
     ib_mpool_t *mp,
     const uint8_t *data_in,
     size_t dlen_in,
+    uint8_t **data_out,
+    size_t *dlen_out,
+    ib_flags_t *result);
+
+
+/**
+ * Normalize a path (in-place / NUL string version)
+ *
+ * @param[in,out] data Buffer to operate on
+ * @param[in] win Handle Windows style '\' as well as '/'
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
+ *
+ * @returns Status code
+ * - IB_OK: Success
+ * - IB_EALLOC: Allocation error
+ */
+ib_status_t DLL_PUBLIC ib_util_normalize_path(
+    char *data,
+    bool win,
+    ib_flags_t *result);
+
+/**
+ * Normalize a path (in-place / ex version)
+ *
+ * @param[in] data Buffer to operate on
+ * @param[in] dlen_in Length of @a buf
+ * @param[in] win Handle Windows style '\' as well as '/'
+ * @param[out] dlen_out Length of @a data after normalization
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
+ *
+ * @returns Status code
+ * - IB_OK: Success
+ * - IB_EALLOC: Allocation error
+ */
+ib_status_t DLL_PUBLIC ib_util_normalize_path_ex(
+    uint8_t *data,
+    size_t dlen_in,
+    bool win,
+    size_t *dlen_out,
+    ib_flags_t *result);
+
+/**
+ * Normalize a path (copy-on-write / NUL string version)
+ *
+ * @param[in] mp Memory pool for allocations
+ * @param[in] data_in Buffer to operate on
+ * @param[in] win Handle Windows style '\' as well as '/'
+ * @param[out] data_out Output data
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
+ *
+ * @returns Status code
+ * - IB_OK: Success
+ * - IB_EALLOC: Allocation error
+ */
+ib_status_t DLL_PUBLIC ib_util_normalize_path_cow(
+    ib_mpool_t *mp,
+    const char *data_in,
+    bool win,
+    char **data_out,
+    ib_flags_t *result);
+
+/**
+ * Normalize a path (copy-on-write / ex version)
+ *
+ * @param[in] mp Memory pool for allocations
+ * @param[in] data_in Buffer to operate on
+ * @param[in] dlen_in Length of @a data_in
+ * @param[in] win Handle Windows style '\' as well as '/'
+ * @param[out] data_out Output data
+ * @param[out] dlen_out Length of @a data_out
+ * @param[out] result Result flags (IB_STRFLAG_xxx)
+ *
+ * @returns Status code
+ * - IB_OK: Success
+ * - IB_EALLOC: Allocation error
+ */
+ib_status_t DLL_PUBLIC ib_util_normalize_path_cow_ex(
+    ib_mpool_t *mp,
+    const uint8_t *data_in,
+    size_t dlen_in,
+    bool win,
     uint8_t **data_out,
     size_t *dlen_out,
     ib_flags_t *result);

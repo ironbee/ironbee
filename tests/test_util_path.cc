@@ -31,6 +31,9 @@
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
+#include "ibtest_textbuf.hh"
+#include "ibtest_strbase.hh"
+
 #include <string.h>
 #include <stdexcept>
 
@@ -114,4 +117,236 @@ TEST_F(TestIBUtilPath, relative_path)
             << "Test: in1 = '" << test->in1 << "'"
             << ", in2 = '" << test->in2 << "'";
     }
+}
+
+class TestNormalizePath : public TestSimpleStringManipulation
+{
+public:
+    const char *TestName(ib_strop_t op, test_type_t tt,
+                         int lineno, const char *label)
+    {
+        return TestNameImpl("normalize_path", op, tt, lineno, label);
+    }
+
+    ib_status_t ExecInplaceNul(char *buf, ib_flags_t &result)
+    {
+        return ib_util_normalize_path(buf, false, &result);
+    }
+
+    ib_status_t ExecInplaceEx(uint8_t *data_in,
+                              size_t dlen_in,
+                              size_t &dlen_out,
+                              ib_flags_t &result)
+    {
+        return ib_util_normalize_path_ex(data_in, dlen_in, false,
+                                         &dlen_out, &result);
+    }
+
+    ib_status_t ExecCowNul(const char *data_in,
+                           char **data_out,
+                           ib_flags_t &result)
+    {
+        return ib_util_normalize_path_cow(m_mpool, data_in, false,
+                                          data_out, &result);
+    }
+    ib_status_t ExecCowEx(const uint8_t *data_in,
+                          size_t dlen_in,
+                          uint8_t **data_out,
+                          size_t &dlen_out,
+                          ib_flags_t &result)
+    {
+        return ib_util_normalize_path_cow_ex(m_mpool,
+                                             data_in, dlen_in, false,
+                                             data_out, &dlen_out,
+                                             &result);
+    }
+};
+
+TEST_F(TestNormalizePath, Basic)
+{
+    RunTest(__LINE__, "Empty", "", "");
+    RunTest(__LINE__, NULL, "/");
+    RunTest(__LINE__, NULL, ".", "");
+    RunTest(__LINE__, NULL, "..");
+    RunTest(__LINE__, NULL, "../", "../");
+    RunTest(__LINE__, NULL, "x", "x");
+    RunTest(__LINE__, NULL, "./..", "..");
+    RunTest(__LINE__, NULL, "./../", "../");
+    RunTest(__LINE__, NULL, "..", "..");
+    RunTest(__LINE__, NULL, "../.", "..");
+    RunTest(__LINE__, NULL, ".././", "../");
+    RunTest(__LINE__, NULL, "../..", "../..");
+    RunTest(__LINE__, NULL, "../../", "../../");
+    RunTest(__LINE__, NULL, "/foo", "/foo");
+    RunTest(__LINE__, NULL, "/foo/.", "/foo");
+    RunTest(__LINE__, NULL, "/foo/..", "/");
+    RunTest(__LINE__, NULL, "/foo/../", "/");
+    RunTest(__LINE__, NULL, "/foo/../bar", "/bar");
+    RunTest(__LINE__, NULL, "/foo/bar", "/foo/bar");
+    RunTest(__LINE__, NULL, "/foo/bar/..", "/foo");
+    RunTest(__LINE__, NULL, "/foo/bar/../", "/foo/");
+    RunTest(__LINE__, NULL, "/foo/bar/baz", "/foo/bar/baz");
+}
+
+TEST_F(TestNormalizePath, NulByte)
+{
+    const uint8_t in[] = "/foo/bar\0/baz";
+    const uint8_t out[] = "/foo/bar\0/baz";
+    RunTest(__LINE__, NULL, in, sizeof(in)-1, out, sizeof(out)-1);
+}
+
+TEST_F(TestNormalizePath, Complex)
+{
+    RunTest(__LINE__, NULL, "/dir/foo//bar", "/dir/foo/bar");
+    RunTest(__LINE__, NULL, "dir/foo//bar/", "dir/foo/bar/");
+    RunTest(__LINE__, NULL, "dir/../foo", "foo");
+    RunTest(__LINE__, NULL, "dir/../../foo", "../foo");
+    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar", "../../foo/bar");
+    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar/.", "../../foo/bar");
+    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar/./", "../../foo/bar/");
+    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar/..", "../../foo");
+    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar/../", "../../foo/");
+    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar/", "../../foo/bar/");
+    RunTest(__LINE__, NULL,
+            "dir//.//..//.//..//..//foo//bar", "../../foo/bar");
+    RunTest(__LINE__, NULL,
+            "dir//.//..//.//..//..//foo//bar//", "../../foo/bar/");
+    RunTest(__LINE__, NULL,
+            "dir/subdir/subsubdir/subsubsubdir/../../..", "dir");
+    RunTest(__LINE__, NULL,
+            "dir/./subdir/./subsubdir/./subsubsubdir/../../..", "dir");
+    RunTest(__LINE__, NULL,
+            "dir/./subdir/../subsubdir/../subsubsubdir/..", "dir");
+    RunTest(__LINE__, NULL,
+            "/dir/./subdir/../subsubdir/../subsubsubdir/../", "/dir/");
+    RunTest(__LINE__, NULL,
+            "/./.././../../../../../../..//../etc/./passwd", "/etc/passwd");
+
+    uint8_t in[] = "/./.././../../../../../../../\0/../etc/./passwd";
+    uint8_t out[] = "/etc/passwd";
+    RunTest(__LINE__, NULL, in, sizeof(in)-1, out, sizeof(out)-1);
+
+}
+
+class TestNormalizePathWin : public TestSimpleStringManipulation
+{
+public:
+    const char *TestName(ib_strop_t op, test_type_t tt,
+                         int lineno, const char *label)
+    {
+        return TestNameImpl("normalize_path(win)", op, tt, lineno, label);
+    }
+
+    ib_status_t ExecInplaceNul(char *buf, ib_flags_t &result)
+    {
+        return ib_util_normalize_path(buf, true, &result);
+    }
+
+    ib_status_t ExecInplaceEx(uint8_t *data_in,
+                              size_t dlen_in,
+                              size_t &dlen_out,
+                              ib_flags_t &result)
+    {
+        return ib_util_normalize_path_ex(data_in, dlen_in, true,
+                                         &dlen_out, &result);
+    }
+
+    ib_status_t ExecCowNul(const char *data_in,
+                           char **data_out,
+                           ib_flags_t &result)
+    {
+        return ib_util_normalize_path_cow(m_mpool, data_in, true,
+                                          data_out, &result);
+    }
+    ib_status_t ExecCowEx(const uint8_t *data_in,
+                          size_t dlen_in,
+                          uint8_t **data_out,
+                          size_t &dlen_out,
+                          ib_flags_t &result)
+    {
+        return ib_util_normalize_path_cow_ex(m_mpool,
+                                             data_in, dlen_in, true,
+                                             data_out, &dlen_out,
+                                             &result);
+    }
+};
+
+TEST_F(TestNormalizePathWin, Empty)
+{
+    RunTest(__LINE__, "Empty", "", "");
+}
+
+TEST_F(TestNormalizePathWin, Slashes)
+{
+    RunTest(__LINE__, NULL, "\\foo\\bar\\baz", "/foo/bar/baz");
+
+    const uint8_t in[]  = "\\foo\\bar\0\\baz";
+    const uint8_t out[] =  "/foo/bar\0/baz";
+    RunTest(__LINE__, NULL, in, sizeof(in)-1, out, sizeof(out)-1);
+}
+
+TEST_F(TestNormalizePathWin, Basics)
+{
+    RunTest(__LINE__, NULL, "x", "x");
+    RunTest(__LINE__, NULL, ".", "");
+    RunTest(__LINE__, NULL, ".\\", "");
+    RunTest(__LINE__, NULL, ".\\..", "..");
+    RunTest(__LINE__, NULL, ".\\..\\", "../");
+    RunTest(__LINE__, NULL, "..", "..");
+    RunTest(__LINE__, NULL, "..\\", "../");
+    RunTest(__LINE__, NULL, "..\\.", "..");
+    RunTest(__LINE__, NULL, "..\\.\\", "../");
+    RunTest(__LINE__, NULL, "..\\..", "../..");
+    RunTest(__LINE__, NULL, "..\\..\\", "../../");
+}
+
+TEST_F(TestNormalizePathWin, Complex)
+{
+    RunTest(__LINE__, NULL,
+            "\\dir\\foo\\\\bar", "/dir/foo/bar");
+    RunTest(__LINE__, NULL,
+            "dir\\foo\\\\bar\\", "dir/foo/bar/");
+    RunTest(__LINE__, NULL,
+            "dir\\..\\foo", "foo");
+    RunTest(__LINE__, NULL,
+            "dir\\..\\..\\foo", "../foo");
+    RunTest(__LINE__, NULL,
+            "dir\\.\\..\\.\\..\\..\\foo\\bar", "../../foo/bar");
+    RunTest(__LINE__, NULL,
+            "dir\\.\\..\\.\\..\\..\\foo\\bar\\.", "../../foo/bar");
+    RunTest(__LINE__, NULL,
+            "dir\\.\\..\\.\\..\\..\\foo\\bar\\.\\", "../../foo/bar/");
+    RunTest(__LINE__, NULL,
+            "dir\\.\\..\\.\\..\\..\\foo\\bar\\..", "../../foo");
+    RunTest(__LINE__, NULL,
+            "dir\\.\\..\\.\\..\\..\\foo\\bar\\..\\", "../../foo/");
+    RunTest(__LINE__, NULL,
+            "dir\\.\\..\\.\\..\\..\\foo\\bar\\", "../../foo/bar/");
+    RunTest(__LINE__, NULL,
+            "dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar", "../../foo/bar");
+    RunTest(__LINE__, NULL,
+            "dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar\\\\",
+            "../../foo/bar/");
+    RunTest(__LINE__, NULL,
+            "dir\\subdir\\subsubdir\\subsubsubdir\\..\\..\\..", "dir");
+    RunTest(__LINE__, NULL,
+            "dir\\.\\subdir\\.\\subsubdir\\.\\subsubsubdir\\..\\..\\..",
+            "dir");
+    RunTest(__LINE__, NULL,
+            "dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..", "dir");
+    RunTest(__LINE__, NULL,
+            "\\dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..\\",
+            "/dir/");
+    RunTest(__LINE__, NULL,
+            "\\.\\..\\.\\..\\..\\..\\..\\..\\..\\..\\\\..\\etc\\.\\passwd",
+            "/etc/passwd");
+}
+
+TEST_F(TestNormalizePathWin, Nul)
+{
+    const uint8_t in[]  =
+        "\\.\\..\\.\\..\\..\\..\\..\\..\\..\\..\\\0\\..\\etc\\.\\passwd";
+    const uint8_t out[] =
+        "/etc/passwd";
+    RunTest(__LINE__, NULL, in, sizeof(in)-1, out, sizeof(out)-1);
 }

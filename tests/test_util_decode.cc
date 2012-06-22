@@ -32,6 +32,7 @@
 #include "ironbee_util_private.h"
 
 #include "ibtest_textbuf.hh"
+#include "ibtest_strbase.hh"
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
@@ -41,264 +42,13 @@
 const size_t BufSize = 512;
 const size_t CallBufSize = BufSize + 32;
 
-class TestDecode : public ::testing::Test
-{
-public:
-    TestDecode( void )
-        : m_mpool(NULL)
-    {
-    };
-
-    virtual void SetUp( void )
-    {
-        ib_status_t rc = ib_mpool_create(&m_mpool, NULL, NULL);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not create memory pool");
-        }
-    }
-
-    virtual void TearDown( void )
-    {
-        if (m_mpool != NULL) {
-            ib_mpool_destroy(m_mpool);
-        }
-        m_mpool = NULL;
-    }
-
-    typedef enum { TYPE_NUL, TYPE_EX } test_type_t;
-
-    virtual const char *TestName(
-        ib_strop_t strop,
-        test_type_t ex,
-        int lineno,
-        const char *label) = 0;
-
-    virtual ib_status_t ExecInplaceNul(
-        char *buf,
-        ib_flags_t &result)
-    {
-        return IB_ENOTIMPL;
-    }
-
-    virtual ib_status_t ExecInplaceEx(
-        uint8_t *data_in,
-        size_t dlen_in,
-        size_t &dlen_out,
-        ib_flags_t &result)
-    {
-        return IB_ENOTIMPL;
-    }
-
-    virtual ib_status_t ExecCowNul(
-        const char *data_in,
-        char **data_out,
-        ib_flags_t &result)
-    {
-        return IB_ENOTIMPL;
-    }
-
-    virtual ib_status_t ExecCowEx(
-        const uint8_t *data_in,
-        size_t dlen_in,
-        uint8_t **data_out,
-        size_t &dlen_out,
-        ib_flags_t &result)
-    {
-        return IB_ENOTIMPL;
-    }
-
-
-    void RunTest(int lineno, const char *label,
-                 const char *in,
-                 const char *out = NULL)
-    {
-        TextBuf input(in);
-        if (out == NULL) {
-            out = in;
-        }
-        TextBuf expected(out);
-        RunTestInplaceNul(lineno, label, input, expected);
-        RunTestInplaceEx(lineno, label, input, expected);
-        RunTestCowNul(lineno, label, input, expected);
-        RunTestCowEx(lineno, label, input, expected);
-    }
-
-    void RunTest(int lineno, const char *label,
-                 const uint8_t *in, size_t inlen,
-                 const uint8_t *out = NULL, size_t outlen = 0)
-    {
-        TextBuf input(in, inlen);
-        if (out == NULL) {
-            out = in;
-            outlen = inlen;
-        }
-        TextBuf expected(out, outlen);
-        RunTestInplaceEx(lineno, label, input, expected);
-        RunTestCowEx(lineno, label, input, expected);
-    }
-
-protected:
-    const char *TestNameImpl(const char *test, ib_strop_t op, test_type_t tt,
-                             int lineno, const char *label)
-    {
-        static char buf[128];
-        snprintf(buf, sizeof(buf),
-                 "decode_%s%s%s() \"%s\" @ %d",
-                 test,
-                 op == IB_STROP_INPLACE ? "" : "_cow",
-                 tt == TYPE_EX  ? "_ex" : "",
-                 label, lineno);
-        return buf;
-    }
-
-    void RunTestInplaceNul(int lineno, const char *label,
-                           const TextBuf &input, const TextBuf &expected)
-    {
-        size_t len = input.GetLen();
-        char buf[len];
-        ib_status_t rc;
-        ib_flags_t result;
-
-        strcpy(buf, input.GetStr());
-
-        rc = ExecInplaceNul(buf, result);
-        if (rc == IB_ENOTIMPL) {
-            return;
-        }
-        const char *name = TestName(IB_STROP_INPLACE, TYPE_NUL, lineno, label);
-        ASSERT_EQ(IB_OK, rc) << name;
-
-        if (input == expected) {
-            ib_flags_t eresult = IB_STRFLAG_ALIAS;
-            ASSERT_EQ(eresult, result) << name;
-        }
-        else {
-            ib_flags_t eresult = (IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED);
-            ASSERT_EQ(eresult, result) << name;
-        }
-
-        TextBuf output(buf);
-        ASSERT_TRUE(expected == output)
-            << name
-            << " Expected: \"" << expected.GetFmt() << "\""
-            << "/" << expected.GetLen()
-            << " Actual: \"" << output.GetFmt() << "\""
-            << "/" << output.GetLen();
-    }
-
-    void RunTestInplaceEx(int lineno, const char *label,
-                          const TextBuf &input, const TextBuf &expected)
-    {
-        size_t len = input.GetLen();
-        uint8_t buf[len];
-        ib_status_t rc;
-        size_t outlen;
-        ib_flags_t result;
-
-        memcpy(buf, input.GetBuf(), len);
-
-        rc = ExecInplaceEx(buf, len, outlen, result);
-        if (rc == IB_ENOTIMPL) {
-            return;
-        }
-        const char *name = TestName(IB_STROP_INPLACE, TYPE_EX, lineno, label);
-        ASSERT_EQ(IB_OK, rc) << name;
-
-        if (input == expected) {
-            ib_flags_t eresult = IB_STRFLAG_ALIAS;
-            ASSERT_EQ(eresult, result) << name;
-        }
-        else {
-            ib_flags_t eresult = (IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED);
-            ASSERT_EQ(eresult, result) << name;
-        }
-
-        TextBuf output(buf, outlen);
-        ASSERT_TRUE(expected == output)
-            << name << std::endl
-            << " Expected: \"" << expected.GetFmt() << "\""
-            << "/" << expected.GetLen() << std::endl
-            << " Actual:   \"" << output.GetFmt() << "\""
-            << "/" << output.GetLen();
-    }
-
-    void RunTestCowNul(int lineno, const char *label,
-                       const TextBuf &input, const TextBuf &expected)
-    {
-        char *out;
-        ib_status_t rc;
-        ib_flags_t result;
-
-        rc = ExecCowNul(input.GetStr(), &out, result);
-        if (rc == IB_ENOTIMPL) {
-            return;
-        }
-        const char *name = TestName(IB_STROP_COW, TYPE_NUL, lineno, label);
-        ASSERT_EQ(IB_OK, rc) << name;
-
-        if (input == expected) {
-            ib_flags_t eresult = IB_STRFLAG_ALIAS;
-            ASSERT_EQ(eresult, result) << name;
-        }
-        else {
-            ib_flags_t eresult = (IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED);
-            ASSERT_EQ(eresult, result) << name;
-        }
-
-        TextBuf output(out);
-        ASSERT_TRUE(expected == output)
-            << name
-            << " Expected: \"" << expected.GetFmt() << "\""
-            << "/" << expected.GetLen()
-            << " Actual: \"" << output.GetFmt() << "\""
-            << "/" << output.GetLen();
-    }
-
-    void RunTestCowEx(int lineno, const char *label,
-                      const TextBuf &input, const TextBuf &expected)
-    {
-        size_t len = input.GetLen();
-        uint8_t *out;
-        ib_status_t rc;
-        size_t outlen;
-        ib_flags_t result;
-
-        rc = ExecCowEx(input.GetUBuf(), len, &out, outlen, result);
-        if (rc == IB_ENOTIMPL) {
-            return;
-        }
-        const char *name = TestName(IB_STROP_COW, TYPE_EX, lineno, label);
-        ASSERT_EQ(IB_OK, rc) << name;
-
-        if (input == expected) {
-            ib_flags_t eresult = IB_STRFLAG_ALIAS;
-            ASSERT_EQ(eresult, result) << name;
-        }
-        else {
-            ib_flags_t eresult = (IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED);
-            ASSERT_EQ(eresult, result) << name;
-        }
-
-        TextBuf output(out, outlen);
-        ASSERT_TRUE(expected == output)
-            << name << std::endl
-            << " Expected: \"" << expected.GetFmt() << "\""
-            << "/" << expected.GetLen() << std::endl
-            << " Actual:   \"" << output.GetFmt() << "\""
-            << "/" << output.GetLen();
-    }
-
-public:
-    ib_mpool_t *m_mpool;
-};
-
-class TestDecodeUrl : public TestDecode
+class TestDecodeUrl : public TestSimpleStringManipulation
 {
 public:
     const char *TestName(ib_strop_t op, test_type_t tt,
                          int lineno, const char *label)
     {
-        return TestNameImpl("url", op, tt, lineno, label);
+        return TestNameImpl("decode_url", op, tt, lineno, label);
     }
 
     ib_status_t ExecInplaceNul(char *buf, ib_flags_t &result)
@@ -374,13 +124,13 @@ TEST_F(TestDecodeUrl, Invalid)
     RunTest(__LINE__, "Invalid #8", "%gg", "%gg");
 }
 
-class TestDecodeHtmlEntity : public TestDecode
+class TestDecodeHtmlEntity : public TestSimpleStringManipulation
 {
 public:
     const char *TestName(ib_strop_t op, test_type_t tt,
                          int lineno, const char *label)
     {
-        return TestNameImpl("html_entity", op, tt, lineno, label);
+        return TestNameImpl("decode_html_entity", op, tt, lineno, label);
     }
 
     ib_status_t ExecInplaceNul(char *buf, ib_flags_t &result)
