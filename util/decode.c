@@ -278,7 +278,7 @@ static void *memdup(const void *in, size_t len)
         IB_FTRACE_RET_PTR(void, NULL);
     }
     memcpy(p, in, len);
-    
+
     IB_FTRACE_RET_PTR(void, p);
 }
 
