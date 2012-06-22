@@ -59,6 +59,7 @@ ib_status_t ib_mpool_create_ex(ib_mpool_t **pmp,
     IB_FTRACE_INIT();
     ib_mpool_buffer_t *buf = NULL;
     size_t slot = 0;
+    ib_status_t rc;
 
     /* Make sure that we have an acceptable page_size */
     if (size < IB_MPOOL_MIN_PAGE_SIZE) {
@@ -101,6 +102,7 @@ ib_status_t ib_mpool_create_ex(ib_mpool_t **pmp,
 
     /* Link parent/child. */
     if (parent != NULL) {
+        ib_lock_lock(&(parent->lock));
         (*pmp)->parent = parent;
         if (parent->child_last == NULL) {
             parent->child_last = parent->child = *pmp;
@@ -108,6 +110,13 @@ ib_status_t ib_mpool_create_ex(ib_mpool_t **pmp,
         else {
             parent->child_last = parent->child_last->next = *pmp;
         }
+        ib_lock_unlock(&(parent->lock));
+    }
+
+    /* Initialize lock */
+    rc = ib_lock_init(&((*pmp)->lock));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -115,6 +124,8 @@ ib_status_t ib_mpool_create_ex(ib_mpool_t **pmp,
 
 void ib_mpool_setname(ib_mpool_t *mp, const char *name)
 {
+    ib_lock_lock(&(mp->lock));
+
     /* Free the current name */
     if (mp->name != NULL) {
         free((void *)(mp->name));
@@ -124,19 +135,26 @@ void ib_mpool_setname(ib_mpool_t *mp, const char *name)
     if (name != NULL) {
         mp->name = strdup(name);
     }
+
+    ib_lock_unlock(&(mp->lock));
 }
 
 const char *ib_mpool_name(const ib_mpool_t* mp)
 {
-    if ( mp == NULL ) {
-        return NULL;
+    const char* result = NULL;
+    if ( mp != NULL ) {
+        result = mp->name;
     }
-    return mp->name;
+
+    return result;
 }
 
 void *ib_mpool_alloc(ib_mpool_t *mp, size_t size)
 {
     IB_FTRACE_INIT();
+
+    ib_lock_lock(&(mp->lock));
+
     void *ptr = NULL;
     ib_mpool_buffer_t *buf = NULL;
     ib_mpool_buffer_t *iter = NULL;
@@ -276,12 +294,241 @@ void *ib_mpool_alloc(ib_mpool_t *mp, size_t size)
     /* Update mem in use */
     mp->inuse += size;
 
+    ib_lock_unlock(&(mp->lock));
+
     IB_FTRACE_RET_PTR(void, ptr);
 }
+
+void ib_mpool_clear(ib_mpool_t *mp)
+{
+    IB_FTRACE_INIT();
+
+
+    ib_mpool_buffer_t *buf;
+    ib_mpool_buffer_t *next;
+    ib_mpool_t *child;
+    ib_mpool_t *child_next;
+    size_t free_space;
+    int i;
+
+    if (mp == NULL) {
+        IB_FTRACE_RET_VOID();
+    }
+
+    ib_lock_lock(&(mp->lock));
+
+    /* Destroy child pools. */
+    for (child = mp->child; child != NULL; child = child_next) {
+        child_next = child->next;
+        ib_mpool_destroy(child);
+    }
+    mp->child = mp->child_last = NULL;
+
+    /* Move all indexed buffers to busy_buffers. */
+    for (i = 0; i < IB_MPOOL_MAX_INDEX; ++i) {
+        buf = mp->indexed[i];
+        if (buf != NULL) {
+            for (; buf != NULL; buf = next) {
+                next = buf->next;
+                buf->prev = NULL;
+                buf->next = mp->busy_buffers;
+                mp->busy_buffers = buf;
+            }
+            mp->indexed[i] = NULL;
+        }
+    }
+
+    /* Reset all buffers and index them. */
+    for (free_space = 0, buf = mp->busy_buffers; buf != NULL; buf = next) {
+        next = buf->next;
+        /* Return some mem to the system if we have enough space already. */
+        if (free_space > IB_MPOOL_INCREASE_FACTOR * IB_MPOOL_DEFAULT_PAGE_SIZE)
+        {
+            free(buf);
+        }
+        else {
+            size_t slot = 0;
+
+            IB_MPOOL_BUFFER_RESET(buf);
+
+            /* Index the remaining buffer of the page */
+            IB_MPOOL_SET_INDEX(IB_MPOOL_BUFFER_AVAILABLE(buf), slot);
+            IB_MPOOL_ADD_BUFFER(mp, buf, slot);
+            free_space += buf->size;
+        }
+    }
+
+    mp->busy_buffers = NULL;
+    mp->size = free_space;
+    mp->inuse = 0;
+
+    ib_lock_unlock(&(mp->lock));
+
+    IB_FTRACE_RET_VOID();
+}
+
+static
+void ib_mpool_destroy_helper(ib_mpool_t* mp, bool lock_parents)
+{
+    IB_FTRACE_INIT();
+
+    ib_mpool_buffer_t *buf;
+    ib_mpool_buffer_t *next;
+    ib_mpool_t *child;
+    ib_mpool_t *child_next;
+    int i;
+
+    if (mp == NULL) {
+        IB_FTRACE_RET_VOID();
+    }
+
+    ib_lock_lock(&(mp->lock));
+
+    /* Free the name */
+    if (mp->name != NULL) {
+        free((void *)(mp->name));
+        mp->name = NULL;
+    }
+
+    /* Destroy child pools. */
+    for (child = mp->child; child != NULL; child = child_next) {
+        child_next = child->next;
+        ib_mpool_destroy_helper(child, false);
+    }
+    mp->child = mp->child_last = NULL;
+
+    /* Run all of the cleanup functions.
+     * This must happen before freeing the pool buffers.*/
+    if (mp->cleanup != NULL) {
+        ib_mpool_cleanup_t *mpc;
+
+        for (mpc = mp->cleanup; mpc != NULL; mpc = mpc->next) {
+            mpc->free(mpc->free_data);
+        }
+    }
+
+    /* Free the indexed buffers. */
+    for (i = 0; i <= IB_MPOOL_MAX_INDEX; ++i) {
+        buf = mp->indexed[i];
+        if (buf != NULL) {
+            for (; buf != NULL; buf = next) {
+                next = buf->next;
+                free(buf->buffer);
+                free(buf);
+            }
+            mp->indexed[i] = NULL;
+        }
+    }
+
+    /* Free all busy buffers. */
+    for (buf = mp->busy_buffers; buf != NULL; buf = next) {
+        next = buf->next;
+        free(buf->buffer);
+        free(buf);
+    }
+
+    mp->busy_buffers = NULL;
+    mp->current = NULL;
+    mp->size = 0;
+    mp->inuse = 0;
+
+    /* Unlink parent/child. */
+    if (mp->parent != NULL) {
+        ib_mpool_t *parent = mp->parent;
+        ib_mpool_t *mp_prev = NULL;
+
+        if (lock_parents) {
+            ib_lock_lock(&(parent->lock));
+        }
+
+        /* Remove this mp from the child list. */
+        if (parent->child == mp) {
+            /* First in list. */
+            parent->child = parent->child->next;
+        }
+        else {
+            mp_prev = parent->child;
+            ib_mpool_t *mp_child = mp_prev ? mp_prev->next : NULL;
+
+            /* Search the list. */
+            while (mp_child != NULL) {
+                if (mp_child == mp) {
+                    mp_prev->next = mp_child->next;
+                    break;
+                }
+                mp_prev = mp_child;
+                mp_child = mp_child->next;
+            }
+        }
+
+        /* Update last child reference if required. */
+        if (parent->child_last == mp) {
+            parent->child_last = mp_prev;
+        }
+
+        if (lock_parents) {
+            ib_lock_unlock(&(parent->lock));
+        }
+    }
+
+    ib_lock_unlock(&(mp->lock));
+    ib_lock_destroy(&(mp->lock));
+
+    free(mp);
+
+    IB_FTRACE_RET_VOID();
+}
+
+void ib_mpool_destroy(ib_mpool_t *mp)
+{
+    IB_FTRACE_INIT();
+
+    ib_mpool_destroy_helper(mp, true);
+
+    IB_FTRACE_RET_VOID();
+}
+
+ib_status_t ib_mpool_cleanup_register(ib_mpool_t *mp,
+                                      ib_mpool_cleanup_fn_t cleanup,
+                                      void *data)
+{
+    IB_FTRACE_INIT();
+
+    ib_mpool_cleanup_t *mpc;
+
+    mpc = (ib_mpool_cleanup_t *)ib_mpool_alloc(mp, sizeof(*mpc));
+
+    if (mpc == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    ib_lock_lock(&(mp->lock));
+
+    mpc->next = NULL;
+    mpc->free = cleanup;
+    mpc->free_data = data;
+
+    /* Add the cleanup to the end of the list. */
+    if (mp->cleanup_last == NULL) {
+        mp->cleanup_last = mp->cleanup = mpc;
+    }
+    else {
+        mp->cleanup_last = mp->cleanup_last->next = mpc;
+    }
+
+    ib_lock_unlock(&(mp->lock));
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/* The following routines do not need locking as the heavy lifting is handled
+ * by the routines above.
+ */
 
 void *ib_mpool_calloc(ib_mpool_t *mp, size_t nelem, size_t size)
 {
     IB_FTRACE_INIT();
+
     void *ptr = ib_mpool_alloc(mp, nelem * size);
 
     if (ptr == NULL) {
@@ -331,190 +578,4 @@ void *ib_mpool_memdup(ib_mpool_t *mp, const void *src, size_t size)
     }
 
     IB_FTRACE_RET_PTR(void, ptr);
-}
-
-void ib_mpool_clear(ib_mpool_t *mp)
-{
-    IB_FTRACE_INIT();
-    ib_mpool_buffer_t *buf;
-    ib_mpool_buffer_t *next;
-    ib_mpool_t *child;
-    ib_mpool_t *child_next;
-    size_t free_space;
-    int i;
-
-    if (mp == NULL) {
-        IB_FTRACE_RET_VOID();
-    }
-
-    /* Destroy child pools. */
-    for (child = mp->child; child != NULL; child = child_next) {
-        child_next = child->next;
-        ib_mpool_destroy(child);
-    }
-    mp->child = mp->child_last = NULL;
-
-    /* Move all indexed buffers to busy_buffers. */
-    for (i = 0; i < IB_MPOOL_MAX_INDEX; ++i) {
-        buf = mp->indexed[i];
-        if (buf != NULL) {
-            for (; buf != NULL; buf = next) {
-                next = buf->next;
-                buf->prev = NULL;
-                buf->next = mp->busy_buffers;
-                mp->busy_buffers = buf;
-            }
-            mp->indexed[i] = NULL;
-        }
-    }
-
-    /* Reset all buffers and index them. */
-    for (free_space = 0, buf = mp->busy_buffers; buf != NULL; buf = next) {
-        next = buf->next;
-        /* Return some mem to the system if we have enough space already. */
-        if (free_space > IB_MPOOL_INCREASE_FACTOR * IB_MPOOL_DEFAULT_PAGE_SIZE)
-        {
-            free(buf);
-        }
-        else {
-            size_t slot = 0;
-
-            IB_MPOOL_BUFFER_RESET(buf);
-
-            /* Index the remaining buffer of the page */
-            IB_MPOOL_SET_INDEX(IB_MPOOL_BUFFER_AVAILABLE(buf), slot);
-            IB_MPOOL_ADD_BUFFER(mp, buf, slot);
-            free_space += buf->size;
-        }
-    }
-
-    mp->busy_buffers = NULL;
-    mp->size = free_space;
-    mp->inuse = 0;
-
-    IB_FTRACE_RET_VOID();
-}
-
-void ib_mpool_destroy(ib_mpool_t *mp)
-{
-    IB_FTRACE_INIT();
-    ib_mpool_buffer_t *buf;
-    ib_mpool_buffer_t *next;
-    ib_mpool_t *child;
-    ib_mpool_t *child_next;
-    int i;
-
-    if (mp == NULL) {
-        IB_FTRACE_RET_VOID();
-    }
-
-    /* Free the name */
-    if (mp->name != NULL) {
-        free((void *)(mp->name));
-        mp->name = NULL;
-    }
-
-    /* Destroy child pools. */
-    for (child = mp->child; child != NULL; child = child_next) {
-        child_next = child->next;
-        ib_mpool_destroy(child);
-    }
-    mp->child = mp->child_last = NULL;
-
-    /* Run all of the cleanup functions.
-     * This must happen before freeing the pool buffers.*/
-    if (mp->cleanup != NULL) {
-        ib_mpool_cleanup_t *mpc;
-
-        for (mpc = mp->cleanup; mpc != NULL; mpc = mpc->next) {
-            mpc->free(mpc->free_data);
-        }
-    }
-
-    /* Free the indexed buffers. */
-    for (i = 0; i <= IB_MPOOL_MAX_INDEX; ++i) {
-        buf = mp->indexed[i];
-        if (buf != NULL) {
-            for (; buf != NULL; buf = next) {
-                next = buf->next;
-                free(buf->buffer);
-                free(buf);
-            }
-            mp->indexed[i] = NULL;
-        }
-    }
-
-    /* Free all busy buffers. */
-    for (buf = mp->busy_buffers; buf != NULL; buf = next) {
-        next = buf->next;
-        free(buf->buffer);
-        free(buf);
-    }
-
-    mp->busy_buffers = NULL;
-    mp->current = NULL;
-    mp->size = 0;
-    mp->inuse = 0;
-
-    /* Unlink parent/child. */
-    if (mp->parent != NULL) {
-        ib_mpool_t *parent = mp->parent;
-        ib_mpool_t *mp_prev = NULL;
-
-        /* Remove this mp from the child list. */
-        if (parent->child == mp) {
-            /* First in list. */
-            parent->child = parent->child->next;
-        }
-        else {
-            mp_prev = parent->child;
-            ib_mpool_t *mp_child = mp_prev ? mp_prev->next : NULL;
-
-            /* Search the list. */
-            while (mp_child != NULL) {
-                if (mp_child == mp) {
-                    mp_prev->next = mp_child->next;
-                    break;
-                }
-                mp_prev = mp_child;
-                mp_child = mp_child->next;
-            }
-        }
-
-        /* Update last child reference if required. */
-        if (parent->child_last == mp) {
-            parent->child_last = mp_prev;
-        }
-    }
-
-    free(mp);
-
-    IB_FTRACE_RET_VOID();
-}
-
-ib_status_t ib_mpool_cleanup_register(ib_mpool_t *mp,
-                                      ib_mpool_cleanup_fn_t cleanup,
-                                      void *data)
-{
-    IB_FTRACE_INIT();
-    ib_mpool_cleanup_t *mpc;
-
-    mpc = (ib_mpool_cleanup_t *)ib_mpool_alloc(mp, sizeof(*mpc));
-    if (mpc == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    mpc->next = NULL;
-    mpc->free = cleanup;
-    mpc->free_data = data;
-
-    /* Add the cleanup to the end of the list. */
-    if (mp->cleanup_last == NULL) {
-        mp->cleanup_last = mp->cleanup = mpc;
-    }
-    else {
-        mp->cleanup_last = mp->cleanup_last->next = mpc;
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
 }

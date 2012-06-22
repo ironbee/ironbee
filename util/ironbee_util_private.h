@@ -33,6 +33,7 @@
 #include <ironbee/field.h>
 #include <ironbee/radix.h>
 #include <ironbee/ahocorasick.h>
+#include <ironbee/lock.h>
 
 #include <sys/types.h>
 #include <stdbool.h>
@@ -141,7 +142,7 @@ struct ib_mpool_t {
     ib_mpool_cleanup_t     *cleanup_last; /**< Last cleanup */
 
     ib_mpool_buffer_t      *indexed[IB_MPOOL_MAX_INDEX + 1];/**< Buffer index */
-    /// @todo Threads? Will we need a to lock allocs/free()s?
+    ib_lock_t               lock;         /**< Pool lock */
     /// @todo Make this a list/node so IB_LIST_* macros will work?
 };
 
