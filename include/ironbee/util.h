@@ -216,7 +216,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
  *
  * @param[in] mp Memory pool to use for allocations
  * @param[in] data_in Input data
- * @param[in] cur_in Current position in @a data_in
+ * @param[in] end_in End of data to copy from @a data_in
  * @param[in] size Size of buffer to allocate
  * @param[in] cur_out Current output pointer
  * @param[in,out] data_out Output buffer (possibly newly allocated)
@@ -227,7 +227,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
  */
 uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
                                           const uint8_t *data_in,
-                                          const uint8_t *cur_in,
+                                          const uint8_t *end_in,
                                           size_t size,
                                           uint8_t *cur_out,
                                           uint8_t **data_out,
@@ -239,7 +239,8 @@ uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
  * @param[in,out] data Buffer to operate on
  * @param[out] result Result flags
  *
- * @returns Status (IB_OK)
+ * @returns Status code:
+ * - IB_OK: Success
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url(char *data,
                                           ib_flags_t *result);
@@ -252,7 +253,8 @@ ib_status_t DLL_PUBLIC ib_util_decode_url(char *data,
  * @param[out] dlen_out Output length
  * @param[out] result Result flags
  *
- * @returns Status (IB_OK)
+ * @returns Status code:
+ * - IB_OK: Success
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url_ex(uint8_t *data_in,
                                              size_t dlen_in,
@@ -267,8 +269,9 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_ex(uint8_t *data_in,
  * @param[out] data_out Output data
  * @param[out] result Result flags
  *
- * @returns Status: IB_OK
- *                  IB_EALLOC for allocation errors
+ * @returns Status code:
+ * - IB_OK: Success
+ * - IB_EALLOC: allocation error
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url_cow(ib_mpool_t *mp,
                                               const char *data_in,
@@ -285,8 +288,9 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow(ib_mpool_t *mp,
  * @param[out] dlen_out Length of @a data_out
  * @param[out] result Result flags
  *
- * @returns Status IB_OK
- *                 IB_EALLOC for allocation errors
+ * @returns Status code:
+ * - IB_OK: Success
+ * - IB_EALLOC: allocation error
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                                                  const uint8_t *data_in,
@@ -301,7 +305,8 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow_ex(ib_mpool_t *mp,
  * @param[in,out] data Buffer to operate on
  * @param[out] result Result flags
  *
- * @returns Status (IB_OK)
+ * @returns Status code:
+ * - IB_OK: Success
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity(
     char *data,

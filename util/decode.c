@@ -561,6 +561,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                         out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
                                                     out, data_out, &end_out);
                         if (out == NULL) {
+                            free(tmp);
                             IB_FTRACE_RET_STATUS(IB_EALLOC);
                         }
                         *out++ = (uint8_t)strtol(tmp, NULL, 16);
@@ -594,6 +595,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                         out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
                                                     out, data_out, &end_out);
                         if (out == NULL) {
+                            free(tmp);
                             IB_FTRACE_RET_STATUS(IB_EALLOC);
                         }
                         *out++ = (uint8_t)strtol(tmp, NULL, 10);

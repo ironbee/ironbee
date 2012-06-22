@@ -447,7 +447,7 @@ char *ib_util_hex_escape(const char *src, size_t src_len)
 
 uint8_t *ib_util_copy_on_write(ib_mpool_t *mp,
                                const uint8_t *data_in,
-                               const uint8_t *cur_in,
+                               const uint8_t *end_in,
                                size_t size,
                                uint8_t *cur_out,
                                uint8_t **data_out,
@@ -457,8 +457,8 @@ uint8_t *ib_util_copy_on_write(ib_mpool_t *mp,
     assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
-    assert(cur_in != NULL);
-    assert(cur_in >= data_in);
+    assert(end_in != NULL);
+    assert(end_in >= data_in);
 
     if (*data_out == NULL) {
         *data_out = ib_mpool_alloc(mp, size);
@@ -466,7 +466,7 @@ uint8_t *ib_util_copy_on_write(ib_mpool_t *mp,
             if (end_out != NULL) {
                 *end_out = *data_out + size;
             }
-            size_t off = cur_in - data_in;
+            size_t off = end_in - data_in;
             if (off == 0) {
                 /* Do nothing */
             }
