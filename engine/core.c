@@ -326,6 +326,8 @@ struct core_audit_cfg_t {
     FILE           *index_fp;       /**< Index file pointer */
     FILE           *fp;             /**< Audit log file pointer */
     const char     *fn;             /**< Audit log file name */
+    const char     *full_path;      /**< Audit log full path */
+    const char     *temp_path;      /**< Full path to tempoary filename */
     int             parts_written;  /**< Parts written so far */
     const char     *boundary;       /**< Audit log boundary */
     ib_tx_t        *tx;             /**< Transaction being logged */
@@ -383,10 +385,13 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     char *dn = (char *)malloc(dn_sz);
     char *audit_filename;
     int audit_filename_sz;
+    char *temp_filename;
+    int temp_filename_sz;
     const time_t log_seconds = IB_CLOCK_SECS(log->tx->t.logtime);
     int sys_rc;
     ib_status_t ib_rc;
     struct tm gmtime_result;
+    ib_site_t *site;
 
     if (dtmp == NULL || dn == NULL) {
         ib_log_error(log->ib,  "Failed to allocate internal buffers.");
@@ -431,11 +436,21 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     }
 
     /* Generate the full audit log filename. */
-    audit_filename_sz = strlen(dn) + strlen(cfg->tx->id) + 6;
-    audit_filename = (char *)ib_mpool_alloc(cfg->tx->mp, audit_filename_sz);
-    sys_rc = snprintf(audit_filename,
-                      audit_filename_sz,
-                      "%s/%s.log", dn, cfg->tx->id);
+    site = ib_context_site_get(log->ctx);
+    if (site != NULL) {
+        audit_filename_sz = strlen(dn) + strlen(cfg->tx->id) +
+            strlen(site->id_str) + 7;
+        audit_filename = (char *)ib_mpool_alloc(cfg->tx->mp, audit_filename_sz);
+        sys_rc = snprintf(audit_filename,
+                          audit_filename_sz,
+                          "%s/%s_%s.log", dn, cfg->tx->id,site->id_str);
+    } else {
+        audit_filename_sz = strlen(dn) + strlen(cfg->tx->id) + 6;
+        audit_filename = (char *)ib_mpool_alloc(cfg->tx->mp, audit_filename_sz);
+        sys_rc = snprintf(audit_filename,
+                          audit_filename_sz,
+                          "%s/%s.log", dn, cfg->tx->id);
+    }
     if (sys_rc >= (int)audit_filename_sz) {
         /// @todo Better error.
         ib_log_error(log->ib,
@@ -454,14 +469,29 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
+    // Create temporary filename to use while writing the audit log
+    temp_filename_sz = strlen(audit_filename) + 6;
+    temp_filename = (char *)ib_mpool_alloc(cfg->tx->mp, temp_filename_sz);
+    sys_rc = snprintf(temp_filename,
+                      temp_filename_sz,
+                      "%s.part", audit_filename);
+    if (sys_rc >= (int)temp_filename_sz) {
+        /// @todo Better error.
+        ib_log_error(log->ib,
+                     "Could not create temporary audit log filename: too long");
+        free(dtmp);
+        free(dn);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    
     /// @todo Use corecfg->auditlog_fmode as file mode for new file
-    cfg->fp = fopen(audit_filename, "ab");
+    cfg->fp = fopen(temp_filename, "ab");
     if (cfg->fp == NULL) {
         sys_rc = errno;
         /// @todo Better error.
         ib_log_error(log->ib,
                      "Could not open audit log \"%s\": %s (%d)",
-                     audit_filename, strerror(sys_rc), sys_rc);
+                     temp_filename, strerror(sys_rc), sys_rc);
         free(dtmp);
         free(dn);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -469,8 +499,10 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
 
     /* Track the relative audit log filename. */
     cfg->fn = audit_filename + (strlen(corecfg->auditlog_dir) + 1);
+    cfg->full_path = audit_filename;
+    cfg->temp_path = temp_filename;
 
-    ib_log_debug(log->ib, "AUDITLOG: %s", audit_filename);
+    ib_log_debug(log->ib, "AUDITLOG: %s", temp_filename);
 
     free(dtmp);
     free(dn);
@@ -987,6 +1019,16 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
     /* Close the audit log. */
     if (cfg->fp != NULL) {
         fclose(cfg->fp);
+        //rename temp to real
+        sys_rc = rename(cfg->temp_path, cfg->full_path);
+        if (sys_rc != 0) {
+            sys_rc = errno;
+            ib_log_error(log->ib,
+                         "Error renaming auditlog %s: %s (%d)",
+                         cfg->temp_path,
+                         strerror(sys_rc), sys_rc);
+            IB_FTRACE_RET_STATUS(IB_EOTHER);
+        }
         cfg->fp = NULL;
     }
 
