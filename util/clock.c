@@ -30,6 +30,8 @@
 #include <time.h>
 #include <sys/time.h>
 
+#if 0
+// FIXME: Just use gettimeofday for now until issues between wall/clock time are fixed.
 #ifdef CLOCK_MONOTONIC_RAW
 #define IB_CLOCK                  CLOCK_MONOTONIC_RAW
 #else
@@ -37,6 +39,7 @@
 #define IB_CLOCK                  CLOCK_MONOTONIC
 #endif /* CLOCK_MONOTONIC */
 #endif /* CLOCK_MONOTONIC_RAW */
+#endif
 
 ib_clock_type_t ib_clock_type(void)
 {
