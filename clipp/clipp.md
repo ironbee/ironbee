@@ -264,7 +264,7 @@ blocks begin with `>>>` on a line by itself and response blocks begin with
 `<<<` on a line by itself. 
 
 This generator produces a single Input from the file.  The Input consists of
-a transaction for every pair of request and response blocks.  The connction
+a transaction for every pair of request and response blocks.  The connection
 opened event has bogus information.
 
 You may omit response blocks in which case they default to the empty string.  
@@ -357,8 +357,8 @@ the number of transactions is at least *n*, the connection is passed on.
 Note that the final connection may have less than *n* transactions, i.e.,
 it will have the remainder.
 
-If given a distrbution and distrbution parameters, the value of *n* will be
-chosen at random for each output input.  Supported distrbutions are:
+If given a distribution and distribution parameters, the value of *n* will be
+chosen at random for each output input.  Supported distributions are:
 
 - uniform:*min*,*max* --- Uniform distribution from [*min*, *max*].
 - binomial:*t*,*p* --- Binomial distribution of *t* trials with *p* chance of
@@ -392,7 +392,7 @@ events.
 **@edit**:*which*
 
 Edit part of each input in an editor.  The environmental variable, `EDITOR`
-determines which editor to use or `vi` if it is unset.  The *which* paramter 
+determines which editor to use or `vi` if it is unset.  The *which* parameter 
 can be any of:
 
 - request --- Request line.
@@ -526,7 +526,7 @@ next input.
 When the generator returns false, a singular, i.e., NULL, input will be sent
 through the modifier chain.  This allows modifiers to detect end-of-input
 conditions and produce additional input if appropriate, e.g., for 
-aggregation or reordering.  Modifiers that are not concerend with end-of-input
+aggregation or reordering.  Modifiers that are not concerned with end-of-input
 conditions should immediately return true when passed a singular input.  The
 chain will be complete when the generator returns false and a singular input
 reaches the consumer.
@@ -561,7 +561,7 @@ For simple examples see:
 - `view.[ch]pp`
 - `connection_modifiers.[ch]pp`
 
-Appendix 1: Protobuf to/from JSON
+Appendix 1: Protobuf to/from JSON/Ruby Hash
 ---------------------------------
 
 CLIPP comes with two scripts to convert between protobuf and a JSON based
@@ -569,10 +569,86 @@ format.  These are `pb_to_json.rb` and `json_to_pb.rb`.  Both act as filters,
 taking input on stdin and writing output to stdout.
 
 These scripts are simple, fragile, and load all input into memory.  The 
-resutling JSON is a direct conversion of the protobuf and not as friendly to
+resulting JSON is a direct conversion of the protobuf and not as friendly to
 user editing as might be desired: for example, event types are identified by
 number.  As such, the scripts are primarily intended to be used for tweaking
 inputs produced by other means.
 
+The `json_to_pb.rb` script actually converts the JSON to a Ruby Hash and the 
+Ruby Hash to protobuf.  The hash to protobuf conversion is available to Ruby 
+scripts in `hash_to_pb.rb`.
 
+Appendix 2: CLIPP Based Unit Tests
+----------------------------------
 
+CLIPP comes with a unit test suite and support for writing unit tests that
+use clipp.  This testing infrastructure is an extension to Ruby `Test::Unit`.
+If you are unfamiliar with Test::Unit, read up on that before continuing.
+
+CLIPP Testing Support comes with three types of extensions.  They can be
+accessed by subclassing `CLIPPTestCase` instead of `Test::Unit::TestCase`.
+They main additions are:
+
+- A command `clipp` which invokes clipp and stores the output.
+- A set of assertions about the most recent `clipp` invocation.
+- A set of helper routines for generating CLIPP inputs.
+
+**The `clipp` command**
+
+The `clipp` command takes a configuration hash.  The only required options are
+an input describing option (`:input` or `:input_hash`).  Several others can
+manipulate how clipp is run, and all options are provided to the ERB template
+for generating the IronBee configuration file.
+
+Currently meaningful options modifying how CLIPP is invoked are:
+
+- `:input` --- A CLIPP chain to use as input, e.g., `htp:my.t`. 
+- `:input_hash` --- A specially formatted hash representing a CLIPP Input.  
+   You will usually construct the hash with helper functions rather than 
+   directly.  The hash is the same as described in Appendix 1.
+- `:template` -- A path to an ERB template to use for the IronBee 
+   configuration file.  The result (as a path) can be referenced in 
+   `:consumer` via `IRONBEE_CONFIG`.  This defaults to `ironbee.config.erb`
+   in the tests directory.
+- `:consumer` -- A CLIPP consumer chain.  If omitted, `ironbee:IRONBEE_CONFIG`
+  is used.  `IRONBEE_CONFIG` is replaced with a path to the evaluation of the
+  ERB file specified via `:template`.
+  
+Exactly one of `:input` and `:input_hash` is required.
+  
+The following options are used by the default IronBee configuration template:
+
+- `:config` --- Text inserted before the default site section.
+- `:default_site_config` --- Text inserted in the default site section.
+- `:config_trailer` --- Text inserted after the default site section.
+- `:log_level` --- The log level to run at.  Defaults to `notice`.
+
+**Assertions**
+
+Currently only two assertions are supported:
+
+- `assert_log_match` *regex* --- Asserts that *regex* appears in the output
+  of the most recent CLIPP invocation.
+- `assert_log_no_match` *regex* --- Asserts that *regex* does **not** appears 
+  in the output of the most recent CLIPP invocation.
+  
+Additional assertions will be added as needed.
+
+**Input Generation**
+
+Helper routines are provided to generate inputs.  Ultimately, these produce 
+hashes to be passed to CLIPP via the `:input_hash` option.
+
+Routines that generate hashes:
+
+- `simple_hash(`*request*, *response*`)` --- Behaves identically to the raw
+  generator, i.e., produces a single connection with a single transaction
+  with connection data in and connection data out events.
+
+Routines that return text to be used in the hash generating routines.
+
+- `erb(`*erb_text*, *context*`)` --- Evaluates *erb_text* as ERB.  In the ERB,
+  *context* is available via the local variable `c`.  The *context* parameter
+  defaults to the empty hash.
+- `erb_file(`*erb_path*, *context*`)` --- As above, but the ERB text is loaded
+  from the file at *erb_path*.

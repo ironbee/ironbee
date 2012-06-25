@@ -213,6 +213,7 @@ public
   # +config+::              Inserted before default site section.
   # +default_site_config+:: Inserted inside default site section.
   # +config_trailer+::      Inserted at end of configuration file.
+  # +log_level+::           What log level to run at; default 'notice'.
   #
   # More options coming in the future.
   def clipp(config)

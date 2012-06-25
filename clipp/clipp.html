@@ -272,7 +272,7 @@ blocks begin with <code>&gt;&gt;&gt;</code> on a line by itself and response blo
 <code>&lt;&lt;&lt;</code> on a line by itself. </p>
 
 <p>This generator produces a single Input from the file. The Input consists of
-a transaction for every pair of request and response blocks. The connction
+a transaction for every pair of request and response blocks. The connection
 opened event has bogus information.</p>
 
 <p>You may omit response blocks in which case they default to the empty string.<br/>
@@ -365,8 +365,8 @@ the number of transactions is at least <em>n</em>, the connection is passed on.<
 Note that the final connection may have less than <em>n</em> transactions, i.e.,
 it will have the remainder.</p>
 
-<p>If given a distrbution and distrbution parameters, the value of <em>n</em> will be
-chosen at random for each output input. Supported distrbutions are:</p>
+<p>If given a distribution and distribution parameters, the value of <em>n</em> will be
+chosen at random for each output input. Supported distributions are:</p>
 
 <ul>
 <li>uniform:<em>min</em>,<em>max</em> &#8212; Uniform distribution from [<em>min</em>, <em>max</em>].</li>
@@ -402,7 +402,7 @@ events.</p>
 <p><strong>@edit</strong>:<em>which</em></p>
 
 <p>Edit part of each input in an editor. The environmental variable, <code>EDITOR</code>
-determines which editor to use or <code>vi</code> if it is unset. The <em>which</em> paramter
+determines which editor to use or <code>vi</code> if it is unset. The <em>which</em> parameter
 can be any of:</p>
 
 <ul>
@@ -538,7 +538,7 @@ next input.</p>
 <p>When the generator returns false, a singular, i.e., NULL, input will be sent
 through the modifier chain. This allows modifiers to detect end-of-input
 conditions and produce additional input if appropriate, e.g., for
-aggregation or reordering. Modifiers that are not concerend with end-of-input
+aggregation or reordering. Modifiers that are not concerned with end-of-input
 conditions should immediately return true when passed a singular input. The
 chain will be complete when the generator returns false and a singular input
 reaches the consumer.</p>
@@ -575,16 +575,106 @@ state class.</p>
 <li><code>connection_modifiers.[ch]pp</code></li>
 </ul>
 
-<h2 id="appendix1:protobuftofromjson">Appendix 1: Protobuf to/from JSON</h2>
+<h2 id="appendix1:protobuftofromjsonrubyhash">Appendix 1: Protobuf to/from JSON/Ruby Hash</h2>
 
 <p>CLIPP comes with two scripts to convert between protobuf and a JSON based
 format. These are <code>pb_to_json.rb</code> and <code>json_to_pb.rb</code>. Both act as filters,
 taking input on stdin and writing output to stdout.</p>
 
 <p>These scripts are simple, fragile, and load all input into memory. The
-resutling JSON is a direct conversion of the protobuf and not as friendly to
+resulting JSON is a direct conversion of the protobuf and not as friendly to
 user editing as might be desired: for example, event types are identified by
 number. As such, the scripts are primarily intended to be used for tweaking
 inputs produced by other means.</p>
+
+<p>The <code>json_to_pb.rb</code> script actually converts the JSON to a Ruby Hash and the
+Ruby Hash to protobuf. The hash to protobuf conversion is available to Ruby
+scripts in <code>hash_to_pb.rb</code>.</p>
+
+<h2 id="appendix2:clippbasedunittests">Appendix 2: CLIPP Based Unit Tests</h2>
+
+<p>CLIPP comes with a unit test suite and support for writing unit tests that
+use clipp. This testing infrastructure is an extension to Ruby <code>Test::Unit</code>.
+If you are unfamiliar with Test::Unit, read up on that before continuing.</p>
+
+<p>CLIPP Testing Support comes with three types of extensions. They can be
+accessed by subclassing <code>CLIPPTestCase</code> instead of <code>Test::Unit::TestCase</code>.
+They main additions are:</p>
+
+<ul>
+<li>A command <code>clipp</code> which invokes clipp and stores the output.</li>
+<li>A set of assertions about the most recent <code>clipp</code> invocation.</li>
+<li>A set of helper routines for generating CLIPP inputs.</li>
+</ul>
+
+<p><strong>The <code>clipp</code> command</strong></p>
+
+<p>The <code>clipp</code> command takes a configuration hash. The only required options are
+an input describing option (<code>:input</code> or <code>:input_hash</code>). Several others can
+manipulate how clipp is run, and all options are provided to the ERB template
+for generating the IronBee configuration file.</p>
+
+<p>Currently meaningful options modifying how CLIPP is invoked are:</p>
+
+<ul>
+<li><code>:input</code> &#8212; A CLIPP chain to use as input, e.g., <code>htp:my.t</code>.</li>
+<li><code>:input_hash</code> &#8212; A specially formatted hash representing a CLIPP Input.<br/>
+ You will usually construct the hash with helper functions rather than
+ directly. The hash is the same as described in Appendix 1.</li>
+<li><code>:template</code> &#8211; A path to an ERB template to use for the IronBee
+ configuration file. The result (as a path) can be referenced in
+ <code>:consumer</code> via <code>IRONBEE_CONFIG</code>. This defaults to <code>ironbee.config.erb</code>
+ in the tests directory.</li>
+<li><code>:consumer</code> &#8211; A CLIPP consumer chain. If omitted, <code>ironbee:IRONBEE_CONFIG</code>
+ is used. <code>IRONBEE_CONFIG</code> is replaced with a path to the evaluation of the
+ ERB file specified via <code>:template</code>.</li>
+</ul>
+
+<p>Exactly one of <code>:input</code> and <code>:input_hash</code> is required.</p>
+
+<p>The following options are used by the default IronBee configuration template:</p>
+
+<ul>
+<li><code>:config</code> &#8212; Text inserted before the default site section.</li>
+<li><code>:default_site_config</code> &#8212; Text inserted in the default site section.</li>
+<li><code>:config_trailer</code> &#8212; Text inserted after the default site section.</li>
+<li><code>:log_level</code> &#8212; The log level to run at. Defaults to <code>notice</code>.</li>
+</ul>
+
+<p><strong>Assertions</strong></p>
+
+<p>Currently only two assertions are supported:</p>
+
+<ul>
+<li><code>assert_log_match</code> <em>regex</em> &#8212; Asserts that <em>regex</em> appears in the output
+ of the most recent CLIPP invocation.</li>
+<li><code>assert_log_no_match</code> <em>regex</em> &#8212; Asserts that <em>regex</em> does <strong>not</strong> appears
+ in the output of the most recent CLIPP invocation.</li>
+</ul>
+
+<p>Additional assertions will be added as needed.</p>
+
+<p><strong>Input Generation</strong></p>
+
+<p>Helper routines are provided to generate inputs. Ultimately, these produce
+hashes to be passed to CLIPP via the <code>:input_hash</code> option.</p>
+
+<p>Routines that generate hashes:</p>
+
+<ul>
+<li><code>simple_hash(</code><em>request</em>, <em>response</em><code>)</code> &#8212; Behaves identically to the raw
+ generator, i.e., produces a single connection with a single transaction
+ with connection data in and connection data out events.</li>
+</ul>
+
+<p>Routines that return text to be used in the hash generating routines.</p>
+
+<ul>
+<li><code>erb(</code><em>erb_text</em>, <em>context</em><code>)</code> &#8212; Evaluates <em>erb_text</em> as ERB. In the ERB,
+ <em>context</em> is available via the local variable <code>c</code>. The <em>context</em> parameter
+ defaults to the empty hash.</li>
+<li><code>erb_file(</code><em>erb_path</em>, <em>context</em><code>)</code> &#8212; As above, but the ERB text is loaded
+ from the file at <em>erb_path</em>.</li>
+</ul>
 </body>
 </html>
