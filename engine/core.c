@@ -483,7 +483,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
         free(dn);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    
+
     /// @todo Use corecfg->auditlog_fmode as file mode for new file
     cfg->fp = fopen(temp_filename, "ab");
     if (cfg->fp == NULL) {
