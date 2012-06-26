@@ -34,22 +34,27 @@
 #include <ironbee/mpool.h>
 
 /**
+ * Check if a character is a valid hex character
+ *
  * NOTE: Be careful as these can ONLY be used on static values for X.
- * (i.e. VALID_HEX(c++) will NOT work)
+ * (i.e. IS_HEX_CHAR(c++) will NOT work)
+ *
+ * @param[in] ch The character to check
+ *
+ * @returns: true if the @a ch is a valid hex character, otherwise false
  */
-#define IS_HEX_CHAR(X) \
-    ( ((X >= '0') && (X <= '9')) || \
-      ((X >= 'a') && (X <= 'f')) || \
-      ((X >= 'A') && (X <= 'F')) )
-#define ISODIGIT(X) \
-    ((X >= '0') && (X <= '7'))
+#define IS_HEX_CHAR(ch) \
+    ( (((ch) >= '0') && ((ch) <= '9')) || \
+      (((ch) >= 'a') && ((ch) <= 'f')) || \
+      (((ch) >= 'A') && ((ch) <= 'F')) )
 
+/** ASCII code for a non-breaking space. */
 #define NBSP 160
 
 /**
- * Convert a byte from hex to a digit.
+ * Convert a 2-character string from hex to a digit.
  *
- * Converts a byte given as its hexadecimal representation
+ * Converts the two chars @a ptr given as its hexadecimal representation
  * into a proper byte. Handles uppercase and lowercase letters
  * but does not check for overflows.
  *
@@ -60,8 +65,8 @@
 static uint8_t x2c(const uint8_t *ptr)
 {
     IB_FTRACE_INIT();
-    register uint8_t digit;
-    register uint8_t c;
+    uint8_t digit;
+    uint8_t c;
 
     c = *(ptr + 0);
     digit = ( (c >= 'A') ? ((c & 0xdf) - 'A') + 10 : (c - '0') );
@@ -117,7 +122,8 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
                     *out++ = x2c(in + 1);
                     in += 3;
                     modified = true;
-                } else {
+                }
+                else {
                     /* Not a valid encoding, skip this % */
                     if (in == out) {
                         ++out;
@@ -128,7 +134,8 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
                         modified = true;
                     }
                 }
-            } else {
+            }
+            else {
                 /* Not enough bytes available, copy the raw bytes. */
                 if (in == out) {
                     ++out;
@@ -139,12 +146,14 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
                     modified = true;
                 }
             }
-        } else {
+        }
+        else {
             /* Character is not a percent sign. */
             if (*in == '+') {
                 *out++ = ' ';
                 modified = true;
-            } else if (out != in) {
+            }
+            else if (out != in) {
                 *out++ = *in;
                 modified = true;
             }
@@ -217,7 +226,8 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                     }
                     *out++ = x2c(in + 1);
                     in += 3;
-                } else {
+                }
+                else {
                     /* Not a valid encoding, skip this % */
                     if (out == NULL) {
                         ++in;
@@ -226,7 +236,8 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                         *out++ = *in++;
                     }
                 }
-            } else {
+            }
+            else {
                 /* Not enough bytes available, copy the raw bytes. */
                 if (out == NULL) {
                     ++in;
@@ -235,7 +246,8 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                     *out++ = *in++;
                 }
             }
-        } else {
+        }
+        else {
             /* Character is not a percent sign. */
             if (*in == '+') {
                 out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
@@ -244,7 +256,8 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                     IB_FTRACE_RET_STATUS(IB_EALLOC);
                 }
                 *out++ = ' ';
-            } else if (out != NULL) {
+            }
+            else if (out != NULL) {
                 *out++ = *in;
             }
             ++in;
@@ -373,10 +386,12 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                         }
 
                         continue;
-                    } else {
+                    }
+                    else {
                         goto HTML_ENT_OUT;
                     }
-                } else {
+                }
+                else {
                     /* Decimal entity. */
                     const uint8_t *t2 = t1;
 
@@ -402,11 +417,13 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                         }
 
                         continue;
-                    } else {
+                    }
+                    else {
                         goto HTML_ENT_OUT;
                     }
                 }
-            } else {
+            }
+            else {
                 /* Text entity. */
                 const uint8_t *t2 = t1;
 
@@ -576,10 +593,12 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                         }
 
                         continue;
-                    } else {
+                    }
+                    else {
                         goto HTML_ENT_OUT;
                     }
-                } else {
+                }
+                else {
                     /* Decimal entity. */
                     const uint8_t *t2 = t1;
 
@@ -610,11 +629,13 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                         }
 
                         continue;
-                    } else {
+                    }
+                    else {
                         goto HTML_ENT_OUT;
                     }
                 }
-            } else {
+            }
+            else {
                 /* Text entity. */
                 const uint8_t *t2 = t1;
 

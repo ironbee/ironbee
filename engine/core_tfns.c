@@ -48,8 +48,6 @@
  * @param[out] fout Output field.
  * @param[out] pflags Transformation flags.
  *
- * @note For non-ASCII (utf8, etc) you should use case folding.
- *
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_strmod(ib_engine_t *ib,
@@ -158,8 +156,6 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
  * @param[in] fin Input field.
  * @param[out] fout Output field.
  * @param[out] pflags Transformation flags.
- *
- * @note For non-ASCII (utf8, etc) you should use case folding.
  *
  * @returns IB_OK if successful.
  */
@@ -720,8 +716,6 @@ static ib_status_t tfn_min(ib_engine_t *ib,
  * @param[out] fout Output field.
  * @param[out] pflags Transformation flags.
  *
- * @note For non-ASCII (utf8, etc) you should use case folding.
- *
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_url_decode(ib_engine_t *ib,
@@ -827,8 +821,6 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
  * @param[in] fin Input field.
  * @param[out] fout Output field.
  * @param[out] pflags Transformation flags.
- *
- * @note For non-ASCII (utf8, etc) you should use case folding.
  *
  * @returns IB_OK if successful.
  */
@@ -936,8 +928,6 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
  * @param[out] fout Output field.
  * @param[out] pflags Transformation flags.
  *
- * @note For non-ASCII (utf8, etc) you should use case folding.
- *
  * @returns IB_OK if successful.
  */
 static ib_status_t normalize_path(ib_engine_t *ib,
@@ -1044,8 +1034,6 @@ static ib_status_t normalize_path(ib_engine_t *ib,
  * @param[out] fout Output field.
  * @param[out] pflags Transformation flags.
  *
- * @note For non-ASCII (utf8, etc) you should use case folding.
- *
  * @returns IB_OK if successful.
  */
 static ib_status_t tfn_normalize_path(ib_engine_t *ib,
@@ -1077,8 +1065,6 @@ static ib_status_t tfn_normalize_path(ib_engine_t *ib,
  * @param[in] fin Input field.
  * @param[out] fout Output field.
  * @param[out] pflags Transformation flags.
- *
- * @note For non-ASCII (utf8, etc) you should use case folding.
  *
  * @returns IB_OK if successful.
  */
