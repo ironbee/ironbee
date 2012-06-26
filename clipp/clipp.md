@@ -436,6 +436,9 @@ Adds any missing body events and replaces the contents of body events with an
 appropriate number (based on Content-Length) or @s.  This is useful for input
 sources that lack bodies or for sanitizing sensitive bodies.
 
+Any negative or unparsable value of Context-Length is treated as 0.  Any value
+over 1e6 bytes is treated as 1e6 bytes.
+
 **@ironbee**:*config*:*behavior*
 
 Run IronBee as a modifier.  By default, this behaves as the consumer except

@@ -39,6 +39,8 @@ namespace CLIPP {
 
 namespace  {
 
+static const size_t c_context_length_limit = 1e6; // 1 MB
+
 size_t extract_longest_content_length(const Input::HeaderEvent& event)
 {
     static const string content_length("Content-Length");
@@ -53,15 +55,22 @@ size_t extract_longest_content_length(const Input::HeaderEvent& event)
                 header.first.data + header.first.length
             )
         )) {
-            size_t length = 0;
+            int64_t length = 0;
             try {
-                length = boost::lexical_cast<size_t>(
+                length = boost::lexical_cast<int64_t>(
                     header.second.to_s()
                 );
             }
             catch (boost::bad_lexical_cast) {
                 // nop
             }
+            if (length < 0) {
+                length = 0;
+            }
+            else if (length > c_context_length_limit) {
+                length = c_context_length_limit;
+            }
+
             if (length > result) {
                 result = length;
             }
