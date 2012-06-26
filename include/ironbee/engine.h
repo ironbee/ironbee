@@ -35,6 +35,7 @@
 #include <ironbee/parsed_content.h>
 #include <ironbee/engine_types.h>
 #include <ironbee/server.h>
+#include <ironbee/cfgmap.h>
 
 #include <stdarg.h>
 #include <stdbool.h>

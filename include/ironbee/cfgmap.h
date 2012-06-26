@@ -63,6 +63,7 @@ extern "C" {
 /**
  * Configuration Map
  */
+typedef struct ib_cfgmap_t ib_cfgmap_t;
 struct ib_cfgmap_t {
     ib_mpool_t         *mp;           /**< Memory pool */
     ib_hash_t          *hash;         /**< The underlying hash */
@@ -108,6 +109,7 @@ typedef ib_status_t (*ib_cfgmap_set_fn_t)(
 );
 
 /** Config map initialization structure. */
+typedef struct ib_cfgmap_init_t ib_cfgmap_init_t;
 struct ib_cfgmap_init_t {
     const char          *name; /**< Field name */
     ib_ftype_t           type; /**< Field type */
