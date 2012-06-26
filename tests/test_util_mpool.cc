@@ -35,10 +35,6 @@
 #include <valgrind/memcheck.h>
 #endif
 
-// used for accessing the mpool internals
-#include <util/ironbee_util_private.h>
-
-
 #if defined(HAVE_VALGRIND)
 static unsigned int last_leaked = 0;
 static unsigned int last_reachable = 0;

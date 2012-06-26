@@ -31,7 +31,7 @@
 
 #include <ironbee/debug.h>
 
-#include "ironbee_util_private.h"
+#include "ahocorasick_private.h"
 
 #include <ctype.h>
 

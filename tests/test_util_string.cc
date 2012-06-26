@@ -27,8 +27,6 @@
 #include <ironbee/types.h>
 #include <ironbee/string.h>
 
-#include "ironbee_util_private.h"
-
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 

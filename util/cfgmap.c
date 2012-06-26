@@ -29,8 +29,6 @@
 #include <ironbee/util.h>
 #include <ironbee/bytestr.h>
 
-#include "ironbee_util_private.h"
-
 ib_status_t ib_cfgmap_create(ib_cfgmap_t **pcm,
                              ib_mpool_t *pool)
 {

@@ -26,7 +26,7 @@
 
 #include <ironbee/util.h>
 
-#include "ironbee_util_private.h"
+#include "util/ahocorasick_private.h"
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"

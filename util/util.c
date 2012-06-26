@@ -35,8 +35,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "ironbee_util_private.h"
-
 /* -- Logging -- */
 
 static struct _ibutil_logger_t {

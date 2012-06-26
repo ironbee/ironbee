@@ -31,8 +31,6 @@
 
 #include <ironbee/debug.h>
 
-#include "ironbee_util_private.h"
-
 ib_status_t ib_list_create(ib_list_t **plist, ib_mpool_t *pool)
 {
     IB_FTRACE_INIT();

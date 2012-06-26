@@ -32,8 +32,6 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/debug.h>
 
-#include "ironbee_util_private.h"
-
 #include <inttypes.h>
 #include <assert.h>
 

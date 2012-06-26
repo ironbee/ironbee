@@ -31,8 +31,6 @@
 
 #include <ironbee/debug.h>
 
-#include "ironbee_util_private.h"
-
 enum {
     IB_LOGFORMAT_ST_NONE,
     IB_LOGFORMAT_ST_PR,

@@ -26,8 +26,7 @@
 
 #include <ironbee/mpool.h>
 #include <ironbee/util.h>
-
-#include "ironbee_util_private.h"
+#include <ironbee/list.h>
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"

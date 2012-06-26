@@ -28,8 +28,6 @@
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
-#include "ironbee_util_private.h"
-
 #include "ibtest_textbuf.hh"
 #include "ibtest_strbase.hh"
 

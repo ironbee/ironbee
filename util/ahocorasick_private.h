@@ -15,8 +15,8 @@
  * limitations under the License.
  *****************************************************************************/
 
-#ifndef _IB_UTIL_PRIVATE_H_
-#define _IB_UTIL_PRIVATE_H_
+#ifndef _IB_AHOCORASICK_PRIVATE_H_
+#define _IB_AHOCORASICK_PRIVATE_H_
 
 /**
  * @file
@@ -26,17 +26,7 @@
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
  */
 
-#include <ironbee/types.h>
-#include <ironbee/mpool.h>
-#include <ironbee/list.h>
-#include <ironbee/hash.h>
-#include <ironbee/field.h>
-#include <ironbee/radix.h>
 #include <ironbee/ahocorasick.h>
-#include <ironbee/lock.h>
-
-#include <sys/types.h>
-#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -87,10 +77,9 @@ struct ib_ac_bintree_t {
     ib_ac_bintree_t   *right;     /**< chars greater than current */
 };
 
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* IB_UTIL_PRIVATE_H_ */
+#endif /* IB_AHOCORASICK_PRIVATE_H_ */
 
