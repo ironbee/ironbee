@@ -927,6 +927,182 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
 }
 
 /**
+ * Path normalization transformation
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fin Input field.
+ * @param[in] win Handle windows-style '\'?
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @note For non-ASCII (utf8, etc) you should use case folding.
+ *
+ * @returns IB_OK if successful.
+ */
+static ib_status_t normalize_path(ib_engine_t *ib,
+                                  ib_mpool_t *mp,
+                                  const ib_field_t *fin,
+                                  bool win,
+                                  ib_field_t **fout,
+                                  ib_flags_t *pflags)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_flags_t result;
+
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(fin != NULL);
+    assert(fout != NULL);
+    assert(pflags != NULL);
+
+    /* Initialize the output field pointer */
+    *fout = NULL;
+
+    switch(fin->type) {
+    case IB_FTYPE_NULSTR :
+    {
+        const char *in;
+        char *out;
+        rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        if (in == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        rc = ib_util_normalize_path_cow(mp, (char *)in, win, &out, &result);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_create(fout, mp,
+                             fin->name, fin->nlen,
+                             IB_FTYPE_NULSTR,
+                             ib_ftype_nulstr_in(out));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        break;
+    }
+
+    case IB_FTYPE_BYTESTR:
+    {
+        const ib_bytestr_t *bs;
+        const uint8_t *din;
+        uint8_t *dout;
+        size_t dlen;
+        rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        if (bs == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        din = ib_bytestr_const_ptr(bs);
+        if (din == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        dlen = ib_bytestr_length(bs);
+        rc = ib_util_normalize_path_cow_ex(mp,
+                                           din, dlen, win,
+                                           &dout, &dlen,
+                                           &result);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_field_create_bytestr_alias(fout, mp,
+                                           fin->name, fin->nlen,
+                                           dout, dlen);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        break;
+    }
+    default:
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    } /* switch(fin->type) */
+
+    /* Check the flags */
+    if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == true) {
+        *pflags = IB_TFN_FMODIFIED;
+    }
+    else {
+        *pflags = IB_TFN_NONE;
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Path normalization transformation
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @note For non-ASCII (utf8, etc) you should use case folding.
+ *
+ * @returns IB_OK if successful.
+ */
+static ib_status_t tfn_normalize_path(ib_engine_t *ib,
+                                      ib_mpool_t *mp,
+                                      void *fndata,
+                                      const ib_field_t *fin,
+                                      ib_field_t **fout,
+                                      ib_flags_t *pflags)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(fin != NULL);
+    assert(fout != NULL);
+    assert(pflags != NULL);
+
+    rc = normalize_path(ib, mp, fin, false, fout, pflags);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Path normalization transformation with support for Windows path separator
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in] fndata Function specific data.
+ * @param[in] fin Input field.
+ * @param[out] fout Output field.
+ * @param[out] pflags Transformation flags.
+ *
+ * @note For non-ASCII (utf8, etc) you should use case folding.
+ *
+ * @returns IB_OK if successful.
+ */
+static ib_status_t tfn_normalize_path_win(ib_engine_t *ib,
+                                          ib_mpool_t *mp,
+                                          void *fndata,
+                                          const ib_field_t *fin,
+                                          ib_field_t **fout,
+                                          ib_flags_t *pflags)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    assert(ib != NULL);
+    assert(mp != NULL);
+    assert(fin != NULL);
+    assert(fout != NULL);
+    assert(pflags != NULL);
+
+    rc = normalize_path(ib, mp, fin, true, fout, pflags);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
  * Initialize the core transformations
  **/
 ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
@@ -995,6 +1171,16 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     rc = ib_tfn_register(ib, "htmlEntityDecode", tfn_html_entity_decode, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_tfn_register(ib, "normalizePath", tfn_normalize_path, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_tfn_register(ib, "normalizePathWin", tfn_normalize_path_win, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
