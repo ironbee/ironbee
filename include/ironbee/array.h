@@ -44,6 +44,9 @@ extern "C" {
  * @{
  */
 
+/**
+ * A dynamic array.
+ */
 typedef struct ib_array_t ib_array_t;
 
 /**

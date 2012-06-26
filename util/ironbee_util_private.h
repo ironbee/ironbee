@@ -43,41 +43,6 @@ extern "C" {
 #endif
 
 /**
- * Dynamic array structure.
- */
-struct ib_array_t {
-    ib_mpool_t       *mp;
-    size_t            ninit;
-    size_t            nextents;
-    size_t            nelts;
-    size_t            size;
-    void             *extents;
-};
-
-/**
- * Calculate the extent index from the array index for an array.
- *
- * @param arr Array
- * @param idx Array index
- *
- * @returns Extent index where data resides
- */
-#define IB_ARRAY_EXTENT_INDEX(arr,idx) \
-    ((idx) / (arr)->ninit)
-
-/**
- * Calculate the data index from the array and extent indexes for an array.
- *
- * @param arr Array
- * @param idx Array index
- * @param extent_idx Extent index (via @ref IB_ARRAY_EXTENT_INDEX)
- *
- * @returns Data index where data resides within the given extent
- */
-#define IB_ARRAY_DATA_INDEX(arr,idx,extent_idx) \
-    ((idx) - ((extent_idx) * (arr)->ninit))
-
-/**
  * Set to 1 the specified bit index of a byte array
  * Warning: The bit offset/index starts from the HSB
  *

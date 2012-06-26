@@ -38,14 +38,45 @@
  */
 
 #include "ironbee_config_auto.h"
-
 #include <ironbee/array.h>
-
 #include <ironbee/debug.h>
 
-#include "ironbee_util_private.h"
-
 #include <string.h>
+
+/**
+ * Dynamic array structure.
+ */
+struct ib_array_t {
+    ib_mpool_t       *mp;
+    size_t            ninit;
+    size_t            nextents;
+    size_t            nelts;
+    size_t            size;
+    void             *extents;
+};
+
+/**
+ * Calculate the extent index from the array index for an array.
+ *
+ * @param arr Array
+ * @param idx Array index
+ *
+ * @returns Extent index where data resides
+ */
+#define IB_ARRAY_EXTENT_INDEX(arr,idx) \
+    ((idx) / (arr)->ninit)
+
+/**
+ * Calculate the data index from the array and extent indexes for an array.
+ *
+ * @param arr Array
+ * @param idx Array index
+ * @param extent_idx Extent index (via @ref IB_ARRAY_EXTENT_INDEX)
+ *
+ * @returns Data index where data resides within the given extent
+ */
+#define IB_ARRAY_DATA_INDEX(arr,idx,extent_idx) \
+    ((idx) - ((extent_idx) * (arr)->ninit))
 
 ib_status_t ib_array_create(ib_array_t **parr, ib_mpool_t *pool,
                             size_t ninit, size_t nextents)
