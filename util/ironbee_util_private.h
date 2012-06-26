@@ -43,14 +43,6 @@ extern "C" {
 #endif
 
 /**
- * Dynamic Shared Object (DSO) structure.
- */
-struct ib_dso_t {
-    ib_mpool_t          *mp;            /**< Memory pool */
-    void                *handle;        /**< Real DSO handle */
-};
-
-/**
  * Field value structure.
  *
  * This allows for multiple types of values to be stored within a field.

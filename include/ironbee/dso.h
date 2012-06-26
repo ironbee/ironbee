@@ -23,6 +23,7 @@
  * @brief IronBee &mdash; DSO Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include <ironbee/build.h>
@@ -42,43 +43,69 @@ extern "C" {
  * @{
  */
 
+/**
+ * A dso file.
+ */
+typedef struct ib_dso_t ib_dso_t;
+
+/**
+ * Generic type for a DSO symbol.
+ *
+ * @sa ib_dso_sym_find().
+ */
+typedef void ib_dso_sym_t;
 
 /**
  * Open a dynamic shared object (DSO) from a file.
  *
- * @param pdso DSO handle is stored in *dso
- * @param file DSO filename
- * @param pool Memory pool to use
+ * @param[out] pdso DSO handle is stored in @a *dso.
+ * @param[in]  file DSO filename.
+ * @param[in]  pool Memory pool to use.
  *
- * @returns Status code.
+ * @returns
+ * - IB_EINVAL -- Unable to open DSO file.
+ * - IB_EALLOC -- Allocation error.
+ * - IB_OK     -- Success.
  */
-ib_status_t DLL_PUBLIC ib_dso_open(ib_dso_t **pdso,
-                                   const char *file,
-                                   ib_mpool_t *pool);
+ib_status_t DLL_PUBLIC ib_dso_open(
+    ib_dso_t   **pdso,
+    const char  *file,
+    ib_mpool_t  *pool
+);
 
 
 /**
  * Close a dynamic shared object (DSO).
  *
- * @param dso DSO handle is stored in *dso
+ * @param[in] dso DSO to close.
  *
- * @returns Status code.
+ * @returns
+ * - IB_EINVAL   -- @a dso is null.
+ * - IB_EUNKNOWN -- Failed to close DSO.
+ * - IB_OK       -- Success.
  */
-ib_status_t DLL_PUBLIC ib_dso_close(ib_dso_t *dso);
+ib_status_t DLL_PUBLIC ib_dso_close(
+    ib_dso_t *dso
+);
 
 
 /**
  * Find a given symbol in a dynamic shared object (DSO).
  *
- * @param dso DSO handle
- * @param name DSO symbol name
- * @param psym DSO symbol handle is stored in *sym
+ * @param[out] psym DSO symbol handle is stored in @a *sym.
+ * @param[in]  dso  DSO to search in.
+ * @param[in]  name DSO symbol name.
  *
- * @returns Status code.
+ * @returns
+ * - IB_EINVAL -- dso or psym is null.
+ * - IB_ENOENT -- No symbol in @a dso named @a name.
+ * - IB_OK     -- Success.
  */
-ib_status_t DLL_PUBLIC ib_dso_sym_find(ib_dso_t *dso,
-                                       const char *name,
-                                       ib_dso_sym_t **psym);
+ib_status_t DLL_PUBLIC ib_dso_sym_find(
+    ib_dso_sym_t **psym,
+    ib_dso_t      *dso,
+    const char    *name
+);
 
 /** @} IronBeeUtilDso */
 

@@ -101,7 +101,7 @@ extern "C" {
  * - @e   DD: 2-digit day
  * - @e    n: Revision number if changes more than once in a day (default=0)
  */
-#define IB_ABINUM    2012061101
+#define IB_ABINUM    2012062600
 
 /**
  * @} IronBeeRelease

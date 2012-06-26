@@ -18,7 +18,9 @@
 /**
  * @file
  * @brief IronBee &mdash; Utility DSO Functions
+ *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -28,13 +30,21 @@
 #include <ironbee/debug.h>
 #include <ironbee/util.h>
 
-#include "ironbee_util_private.h"
-
 #include <dlfcn.h>
 
-ib_status_t DLL_PUBLIC ib_dso_open(ib_dso_t **dso,
-                                   const char *file,
-                                   ib_mpool_t *pool)
+/**
+ * Dynamic Shared Object (DSO) structure.
+ */
+struct ib_dso_t {
+    ib_mpool_t *mp;     /**< Memory pool */
+    void       *handle; /**< Real DSO handle */
+};
+
+ib_status_t ib_dso_open(
+    ib_dso_t   **dso,
+    const char  *file,
+    ib_mpool_t  *pool
+)
 {
     IB_FTRACE_INIT();
     void *handle;
@@ -59,7 +69,9 @@ ib_status_t DLL_PUBLIC ib_dso_open(ib_dso_t **dso,
 }
 
 
-ib_status_t DLL_PUBLIC ib_dso_close(ib_dso_t *dso)
+ib_status_t ib_dso_close(
+    ib_dso_t *dso
+)
 {
     IB_FTRACE_INIT();
     if (dso == NULL) {
@@ -73,20 +85,22 @@ ib_status_t DLL_PUBLIC ib_dso_close(ib_dso_t *dso)
 }
 
 
-ib_status_t DLL_PUBLIC ib_dso_sym_find(ib_dso_t *dso,
-                                       const char *name,
-                                       ib_dso_sym_t **sym)
+ib_status_t DLL_PUBLIC ib_dso_sym_find(
+    ib_dso_sym_t **psym,
+    ib_dso_t      *dso,
+    const char    *name
+)
 {
     IB_FTRACE_INIT();
     char *err;
 
-    if (dso == NULL) {
+    if (dso == NULL || psym == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     dlerror(); /* Clear any errors */
 
-    *sym = dlsym(dso->handle, name);
+    *psym = dlsym(dso->handle, name);
     err = dlerror();
     if (err != NULL) {
         ib_util_log_error("%s", err);
@@ -95,4 +109,3 @@ ib_status_t DLL_PUBLIC ib_dso_sym_find(ib_dso_t *dso,
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-

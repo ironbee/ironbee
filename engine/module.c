@@ -129,7 +129,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_dso_sym_find(dso, IB_MODULE_SYM_NAME, &sym.dso);
+    rc = ib_dso_sym_find(&sym.dso, dso, IB_MODULE_SYM_NAME);
     if (rc != IB_OK || &IB_MODULE_SYM == sym.fn_sym) {
         ib_log_error(ib, "Failed to load module %s: no symbol named %s",
                      file, IB_MODULE_SYM_NAME);

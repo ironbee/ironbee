@@ -42,9 +42,6 @@ extern "C" {
 
 /* Type definitions. */
 
-typedef struct ib_dso_t ib_dso_t;
-typedef void ib_dso_sym_t;
-
 typedef uint32_t ib_flags_t;
 typedef uint64_t ib_flags64_t;
 typedef struct ib_cfgmap_t ib_cfgmap_t;
