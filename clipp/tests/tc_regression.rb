@@ -31,4 +31,17 @@ class TestRegression < CLIPPTestCase
     )
     assert_log_match /action "block" executed/
   end
+
+  def test_negative_content_length
+    request = <<-EOS
+      GET / HTTP/1.1
+      Content-Length: -1
+
+    EOS
+    request.gsub!(/^\s+/,"")
+    clipp(
+      input_hashes: [simple_hash(request)],
+      input: "pb:- @parse @fillbody"
+    )
+  end
 end
