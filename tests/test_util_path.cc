@@ -122,10 +122,9 @@ TEST_F(TestIBUtilPath, relative_path)
 class TestNormalizePath : public TestSimpleStringManipulation
 {
 public:
-    const char *TestName(ib_strop_t op, test_type_t tt,
-                         int lineno, const char *label)
+    const char *TestName(ib_strop_t op, test_type_t tt)
     {
-        return TestNameImpl("normalize_path", op, tt, lineno, label);
+        return TestNameImpl("normalize_path", op, tt);
     }
 
     ib_status_t ExecInplaceNul(char *buf, ib_flags_t &result)
@@ -164,77 +163,72 @@ public:
 
 TEST_F(TestNormalizePath, Basic)
 {
-    RunTest(__LINE__, "Empty", "", "");
-    RunTest(__LINE__, NULL, "/");
-    RunTest(__LINE__, NULL, ".", "");
-    RunTest(__LINE__, NULL, "..");
-    RunTest(__LINE__, NULL, "../", "../");
-    RunTest(__LINE__, NULL, "x", "x");
-    RunTest(__LINE__, NULL, "./..", "..");
-    RunTest(__LINE__, NULL, "./../", "../");
-    RunTest(__LINE__, NULL, "..", "..");
-    RunTest(__LINE__, NULL, "../.", "..");
-    RunTest(__LINE__, NULL, ".././", "../");
-    RunTest(__LINE__, NULL, "../..", "../..");
-    RunTest(__LINE__, NULL, "../../", "../../");
-    RunTest(__LINE__, NULL, "/foo", "/foo");
-    RunTest(__LINE__, NULL, "/foo/.", "/foo");
-    RunTest(__LINE__, NULL, "/foo/..", "/");
-    RunTest(__LINE__, NULL, "/foo/../", "/");
-    RunTest(__LINE__, NULL, "/foo/../bar", "/bar");
-    RunTest(__LINE__, NULL, "/foo/bar", "/foo/bar");
-    RunTest(__LINE__, NULL, "/foo/bar/..", "/foo");
-    RunTest(__LINE__, NULL, "/foo/bar/../", "/foo/");
-    RunTest(__LINE__, NULL, "/foo/bar/baz", "/foo/bar/baz");
+    {
+        SCOPED_TRACE("Empty");
+        RunTest("", "");
+    }
+    RunTest("/");
+    RunTest(".", "");
+    RunTest("..");
+    RunTest("../", "../");
+    RunTest("x", "x");
+    RunTest("./..", "..");
+    RunTest("./../", "../");
+    RunTest("..", "..");
+    RunTest("../.", "..");
+    RunTest(".././", "../");
+    RunTest("../..", "../..");
+    RunTest("../../", "../../");
+    RunTest("/foo", "/foo");
+    RunTest("/foo/.", "/foo");
+    RunTest("/foo/..", "/");
+    RunTest("/foo/../", "/");
+    RunTest("/foo/../bar", "/bar");
+    RunTest("/foo/bar", "/foo/bar");
+    RunTest("/foo/bar/..", "/foo");
+    RunTest("/foo/bar/../", "/foo/");
+    RunTest("/foo/bar/baz", "/foo/bar/baz");
 }
 
 TEST_F(TestNormalizePath, NulByte)
 {
     const uint8_t in[] = "/foo/bar\0/baz";
     const uint8_t out[] = "/foo/bar\0/baz";
-    RunTest(__LINE__, NULL, in, sizeof(in)-1, out, sizeof(out)-1);
+    RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
 }
 
 TEST_F(TestNormalizePath, Complex)
 {
-    RunTest(__LINE__, NULL, "/dir/foo//bar", "/dir/foo/bar");
-    RunTest(__LINE__, NULL, "dir/foo//bar/", "dir/foo/bar/");
-    RunTest(__LINE__, NULL, "dir/../foo", "foo");
-    RunTest(__LINE__, NULL, "dir/../../foo", "../foo");
-    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar", "../../foo/bar");
-    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar/.", "../../foo/bar");
-    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar/./", "../../foo/bar/");
-    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar/..", "../../foo");
-    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar/../", "../../foo/");
-    RunTest(__LINE__, NULL, "dir/./.././../../foo/bar/", "../../foo/bar/");
-    RunTest(__LINE__, NULL,
-            "dir//.//..//.//..//..//foo//bar", "../../foo/bar");
-    RunTest(__LINE__, NULL,
-            "dir//.//..//.//..//..//foo//bar//", "../../foo/bar/");
-    RunTest(__LINE__, NULL,
-            "dir/subdir/subsubdir/subsubsubdir/../../..", "dir");
-    RunTest(__LINE__, NULL,
-            "dir/./subdir/./subsubdir/./subsubsubdir/../../..", "dir");
-    RunTest(__LINE__, NULL,
-            "dir/./subdir/../subsubdir/../subsubsubdir/..", "dir");
-    RunTest(__LINE__, NULL,
-            "/dir/./subdir/../subsubdir/../subsubsubdir/../", "/dir/");
-    RunTest(__LINE__, NULL,
-            "/./.././../../../../../../..//../etc/./passwd", "/etc/passwd");
+    RunTest("/dir/foo//bar", "/dir/foo/bar");
+    RunTest("dir/foo//bar/", "dir/foo/bar/");
+    RunTest("dir/../foo", "foo");
+    RunTest("dir/../../foo", "../foo");
+    RunTest("dir/./.././../../foo/bar", "../../foo/bar");
+    RunTest("dir/./.././../../foo/bar/.", "../../foo/bar");
+    RunTest("dir/./.././../../foo/bar/./", "../../foo/bar/");
+    RunTest("dir/./.././../../foo/bar/..", "../../foo");
+    RunTest("dir/./.././../../foo/bar/../", "../../foo/");
+    RunTest("dir/./.././../../foo/bar/", "../../foo/bar/");
+    RunTest("dir//.//..//.//..//..//foo//bar", "../../foo/bar");
+    RunTest("dir//.//..//.//..//..//foo//bar//", "../../foo/bar/");
+    RunTest("dir/subdir/subsubdir/subsubsubdir/../../..", "dir");
+    RunTest("dir/./subdir/./subsubdir/./subsubsubdir/../../..", "dir");
+    RunTest("dir/./subdir/../subsubdir/../subsubsubdir/..", "dir");
+    RunTest("/dir/./subdir/../subsubdir/../subsubsubdir/../", "/dir/");
+    RunTest("/./.././../../../../../../..//../etc/./passwd", "/etc/passwd");
 
     uint8_t in[] = "/./.././../../../../../../../\0/../etc/./passwd";
     uint8_t out[] = "/etc/passwd";
-    RunTest(__LINE__, NULL, in, sizeof(in)-1, out, sizeof(out)-1);
+    RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
 
 }
 
 class TestNormalizePathWin : public TestSimpleStringManipulation
 {
 public:
-    const char *TestName(ib_strop_t op, test_type_t tt,
-                         int lineno, const char *label)
+    const char *TestName(ib_strop_t op, test_type_t tt)
     {
-        return TestNameImpl("normalize_path(win)", op, tt, lineno, label);
+        return TestNameImpl("normalize_path(win)", op, tt);
     }
 
     ib_status_t ExecInplaceNul(char *buf, ib_flags_t &result)
@@ -273,72 +267,58 @@ public:
 
 TEST_F(TestNormalizePathWin, Empty)
 {
-    RunTest(__LINE__, "Empty", "", "");
+    RunTest("", "");
 }
 
 TEST_F(TestNormalizePathWin, Slashes)
 {
-    RunTest(__LINE__, NULL, "\\foo\\bar\\baz", "/foo/bar/baz");
+    RunTest("\\foo\\bar\\baz", "/foo/bar/baz");
 
-    const uint8_t in[]  = "\\foo\\bar\0\\baz";
-    const uint8_t out[] =  "/foo/bar\0/baz";
-    RunTest(__LINE__, NULL, in, sizeof(in)-1, out, sizeof(out)-1);
+    {
+        const uint8_t in[]  = "\\foo\\bar\0\\baz";
+        const uint8_t out[] =  "/foo/bar\0/baz";
+        SCOPED_TRACE("\\foo\\bar\\0\\baz");
+        RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
+    }
 }
 
 TEST_F(TestNormalizePathWin, Basics)
 {
-    RunTest(__LINE__, NULL, "x", "x");
-    RunTest(__LINE__, NULL, ".", "");
-    RunTest(__LINE__, NULL, ".\\", "");
-    RunTest(__LINE__, NULL, ".\\..", "..");
-    RunTest(__LINE__, NULL, ".\\..\\", "../");
-    RunTest(__LINE__, NULL, "..", "..");
-    RunTest(__LINE__, NULL, "..\\", "../");
-    RunTest(__LINE__, NULL, "..\\.", "..");
-    RunTest(__LINE__, NULL, "..\\.\\", "../");
-    RunTest(__LINE__, NULL, "..\\..", "../..");
-    RunTest(__LINE__, NULL, "..\\..\\", "../../");
+    RunTest("x", "x");
+    RunTest(".", "");
+    RunTest(".\\", "");
+    RunTest(".\\..", "..");
+    RunTest(".\\..\\", "../");
+    RunTest("..", "..");
+    RunTest("..\\", "../");
+    RunTest("..\\.", "..");
+    RunTest("..\\.\\", "../");
+    RunTest("..\\..", "../..");
+    RunTest("..\\..\\", "../../");
 }
 
 TEST_F(TestNormalizePathWin, Complex)
 {
-    RunTest(__LINE__, NULL,
-            "\\dir\\foo\\\\bar", "/dir/foo/bar");
-    RunTest(__LINE__, NULL,
-            "dir\\foo\\\\bar\\", "dir/foo/bar/");
-    RunTest(__LINE__, NULL,
-            "dir\\..\\foo", "foo");
-    RunTest(__LINE__, NULL,
-            "dir\\..\\..\\foo", "../foo");
-    RunTest(__LINE__, NULL,
-            "dir\\.\\..\\.\\..\\..\\foo\\bar", "../../foo/bar");
-    RunTest(__LINE__, NULL,
-            "dir\\.\\..\\.\\..\\..\\foo\\bar\\.", "../../foo/bar");
-    RunTest(__LINE__, NULL,
-            "dir\\.\\..\\.\\..\\..\\foo\\bar\\.\\", "../../foo/bar/");
-    RunTest(__LINE__, NULL,
-            "dir\\.\\..\\.\\..\\..\\foo\\bar\\..", "../../foo");
-    RunTest(__LINE__, NULL,
-            "dir\\.\\..\\.\\..\\..\\foo\\bar\\..\\", "../../foo/");
-    RunTest(__LINE__, NULL,
-            "dir\\.\\..\\.\\..\\..\\foo\\bar\\", "../../foo/bar/");
-    RunTest(__LINE__, NULL,
-            "dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar", "../../foo/bar");
-    RunTest(__LINE__, NULL,
-            "dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar\\\\",
+    RunTest("\\dir\\foo\\\\bar", "/dir/foo/bar");
+    RunTest("dir\\foo\\\\bar\\", "dir/foo/bar/");
+    RunTest("dir\\..\\foo", "foo");
+    RunTest("dir\\..\\..\\foo", "../foo");
+    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar", "../../foo/bar");
+    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar\\.", "../../foo/bar");
+    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar\\.\\", "../../foo/bar/");
+    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar\\..", "../../foo");
+    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar\\..\\", "../../foo/");
+    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar\\", "../../foo/bar/");
+    RunTest("dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar", "../../foo/bar");
+    RunTest("dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar\\\\",
             "../../foo/bar/");
-    RunTest(__LINE__, NULL,
-            "dir\\subdir\\subsubdir\\subsubsubdir\\..\\..\\..", "dir");
-    RunTest(__LINE__, NULL,
-            "dir\\.\\subdir\\.\\subsubdir\\.\\subsubsubdir\\..\\..\\..",
+    RunTest("dir\\subdir\\subsubdir\\subsubsubdir\\..\\..\\..", "dir");
+    RunTest("dir\\.\\subdir\\.\\subsubdir\\.\\subsubsubdir\\..\\..\\..",
             "dir");
-    RunTest(__LINE__, NULL,
-            "dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..", "dir");
-    RunTest(__LINE__, NULL,
-            "\\dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..\\",
+    RunTest("dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..", "dir");
+    RunTest("\\dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..\\",
             "/dir/");
-    RunTest(__LINE__, NULL,
-            "\\.\\..\\.\\..\\..\\..\\..\\..\\..\\..\\\\..\\etc\\.\\passwd",
+    RunTest("\\.\\..\\.\\..\\..\\..\\..\\..\\..\\..\\\\..\\etc\\.\\passwd",
             "/etc/passwd");
 }
 
@@ -348,5 +328,5 @@ TEST_F(TestNormalizePathWin, Nul)
         "\\.\\..\\.\\..\\..\\..\\..\\..\\..\\..\\\0\\..\\etc\\.\\passwd";
     const uint8_t out[] =
         "/etc/passwd";
-    RunTest(__LINE__, NULL, in, sizeof(in)-1, out, sizeof(out)-1);
+    RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
 }

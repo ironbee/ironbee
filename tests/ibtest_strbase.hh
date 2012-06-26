@@ -124,9 +124,7 @@ public:
 
     virtual const char *TestName(
         ib_strop_t strop,
-        test_type_t ex,
-        int lineno,
-        const char *label) = 0;
+        test_type_t ex) = 0;
 
     virtual ib_status_t ExecInplaceNul(
         char *buf,
@@ -163,26 +161,21 @@ public:
     }
 
 
-    void RunTest(int lineno, const char *label,
-                 const char *in,
+    void RunTest(const char *in,
                  const char *out = NULL)
     {
         TextBuf input(in);
-        if (label == NULL) {
-            label = in;
-        }
         if (out == NULL) {
             out = in;
         }
         TextBuf expected(out);
-        RunTestInplaceNul(lineno, label, input, expected);
-        RunTestInplaceEx(lineno, label, input, expected);
-        RunTestCowNul(lineno, label, input, expected);
-        RunTestCowEx(lineno, label, input, expected);
+        RunTestInplaceNul(input, expected);
+        RunTestInplaceEx(input, expected);
+        RunTestCowNul(input, expected);
+        RunTestCowEx(input, expected);
     }
 
-    void RunTest(int lineno, const char *label,
-                 const uint8_t *in, size_t inlen,
+    void RunTest(const uint8_t *in, size_t inlen,
                  const uint8_t *out = NULL, size_t outlen = 0)
     {
         TextBuf input(in, inlen);
@@ -191,21 +184,19 @@ public:
             outlen = inlen;
         }
         TextBuf expected(out, outlen);
-        RunTestInplaceEx(lineno, label, input, expected);
-        RunTestCowEx(lineno, label, input, expected);
+        RunTestInplaceEx(input, expected);
+        RunTestCowEx(input, expected);
     }
 
 protected:
-    const char *TestNameImpl(const char *test, ib_strop_t op, test_type_t tt,
-                             int lineno, const char *label)
+    const char *TestNameImpl(const char *test, ib_strop_t op, test_type_t tt)
     {
         static char buf[128];
         snprintf(buf, sizeof(buf),
-                 "%s%s%s() \"%s\" @ %d",
+                 "%s%s%s()",
                  test,
                  op == IB_STROP_INPLACE ? "" : "_cow",
-                 tt == TYPE_EX  ? "_ex" : "",
-                 label, lineno);
+                 tt == TYPE_EX  ? "_ex" : "");
         return buf;
     }
 
@@ -247,8 +238,7 @@ protected:
             << " \"" << output.GetFmt() << "\"";
     }
 
-    void RunTestInplaceNul(int lineno, const char *label,
-                           const TextBuf &input, const TextBuf &expected)
+    void RunTestInplaceNul(const TextBuf &input, const TextBuf &expected)
     {
         size_t len = input.GetLen();
         char buf[len];
@@ -261,7 +251,7 @@ protected:
         if (rc == IB_ENOTIMPL) {
             return;
         }
-        const char *name = TestName(IB_STROP_INPLACE, TYPE_NUL, lineno, label);
+        const char *name = TestName(IB_STROP_INPLACE, TYPE_NUL);
         ASSERT_EQ(IB_OK, rc) << name;
 
         TextBuf output(buf);
@@ -272,8 +262,7 @@ protected:
                     result, output);
     }
 
-    void RunTestInplaceEx(int lineno, const char *label,
-                          const TextBuf &input, const TextBuf &expected)
+    void RunTestInplaceEx(const TextBuf &input, const TextBuf &expected)
     {
         size_t len = input.GetLen();
         uint8_t buf[len];
@@ -287,7 +276,7 @@ protected:
         if (rc == IB_ENOTIMPL) {
             return;
         }
-        const char *name = TestName(IB_STROP_INPLACE, TYPE_EX, lineno, label);
+        const char *name = TestName(IB_STROP_INPLACE, TYPE_EX);
         ASSERT_EQ(IB_OK, rc) << name;
 
         TextBuf output(buf, outlen);
@@ -298,8 +287,7 @@ protected:
                     result, output);
     }
 
-    void RunTestCowNul(int lineno, const char *label,
-                       const TextBuf &input, const TextBuf &expected)
+    void RunTestCowNul(const TextBuf &input, const TextBuf &expected)
     {
         char *out;
         ib_status_t rc;
@@ -309,7 +297,7 @@ protected:
         if (rc == IB_ENOTIMPL) {
             return;
         }
-        const char *name = TestName(IB_STROP_COW, TYPE_NUL, lineno, label);
+        const char *name = TestName(IB_STROP_COW, TYPE_NUL);
         ASSERT_EQ(IB_OK, rc) << name;
 
         TextBuf output(out);
@@ -320,8 +308,7 @@ protected:
                     result, output);
     }
 
-    void RunTestCowEx(int lineno, const char *label,
-                      const TextBuf &input, const TextBuf &expected)
+    void RunTestCowEx(const TextBuf &input, const TextBuf &expected)
     {
         size_t len = input.GetLen();
         uint8_t *out;
@@ -333,7 +320,7 @@ protected:
         if (rc == IB_ENOTIMPL) {
             return;
         }
-        const char *name = TestName(IB_STROP_COW, TYPE_EX, lineno, label);
+        const char *name = TestName(IB_STROP_COW, TYPE_EX);
         ASSERT_EQ(IB_OK, rc) << name;
 
         TextBuf output(out, outlen);
