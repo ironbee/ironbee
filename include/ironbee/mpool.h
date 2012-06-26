@@ -52,6 +52,8 @@ typedef ib_status_t (*ib_mpool_cleanup_fn_t)(void *);
  * @note If a pool has a parent specified, then any call to clear/destroy
  * on the parent will propagate to all descendants.
  *
+ * @note This function is thread safe.
+ *
  * @param pmp Address which new pool is written
  * @param name Logical name of the pool (for debugging purposes)
  * @param parent Optional parent memory pool (or NULL)
@@ -69,6 +71,8 @@ ib_status_t DLL_PUBLIC ib_mpool_create(ib_mpool_t **pmp,
  * @note If a pool has a parent specified, then any call to clear/destroy
  * on the parent will propagate to all descendants.
  *
+ * @note This function is thread safe.
+ *
  * @param pmp Address which new pool is written
  * @param name Logical name of the pool (for debugging purposes)
  * @param parent Optional parent memory pool (or NULL)
@@ -84,6 +88,8 @@ ib_status_t DLL_PUBLIC ib_mpool_create_ex(ib_mpool_t **pmp,
 
 /**
  * Set the name of a memory pool.
+ *
+ * @note This function is not thread safe if called on the same @a mp.
  *
  * @param mp Memory pool
  * @param name New name
@@ -101,6 +107,8 @@ const char DLL_PUBLIC *ib_mpool_name(const ib_mpool_t* mp);
 /**
  * Allocate memory from a memory pool.
  *
+ * @note This function is not thread safe if called on the same @a mp.
+ *
  * @param mp Memory pool
  * @param size Size in bytes
  *
@@ -110,6 +118,8 @@ void DLL_PUBLIC *ib_mpool_alloc(ib_mpool_t *mp, size_t size);
 
 /**
  * Allocate memory from a memory pool and initialize to zero.
+ *
+ * @note This function is not thread safe if called on the same @a mp.
  *
  * @param mp Memory pool
  * @param nelem Number of elements to allocate
@@ -122,6 +132,8 @@ void DLL_PUBLIC *ib_mpool_calloc(ib_mpool_t *mp, size_t nelem, size_t size);
 /**
  * Duplicate a string.
  *
+ * @note This function is not thread safe if called on the same @a mp.
+ *
  * @param mp Memory pool
  * @param src String to copy
  *
@@ -131,6 +143,8 @@ char DLL_PUBLIC *ib_mpool_strdup(ib_mpool_t *mp, const char *src);
 
 /**
  * Duplicate a buffer, returning a NUL terminated string.
+ *
+ * @note This function is not thread safe if called on the same @a mp.
  *
  * The result is a NUL
  *
@@ -147,6 +161,8 @@ char DLL_PUBLIC *ib_mpool_memdup_to_str(ib_mpool_t *mp,
 /**
  * Duplicate a memory block.
  *
+ * @note This function is not thread safe if called on the same @a mp.
+ *
  * @param mp Memory pool
  * @param src Memory addr
  * @param size Size of memory
@@ -158,6 +174,8 @@ void DLL_PUBLIC *ib_mpool_memdup(ib_mpool_t *mp, const void *src, size_t size);
 /**
  * Deallocate all memory allocated from the pool and any descendant pools.
  *
+ * @note This function is thread safe.
+ *
  * @param mp Memory pool
  */
 void DLL_PUBLIC ib_mpool_clear(ib_mpool_t *mp);
@@ -165,12 +183,16 @@ void DLL_PUBLIC ib_mpool_clear(ib_mpool_t *mp);
 /**
  * Destroy pool and any descendant pools.
  *
+ * @note This function is thread safe.
+ *
  * @param mp Memory pool
  */
 void DLL_PUBLIC ib_mpool_destroy(ib_mpool_t *mp);
 
 /**
  * Register a function to be called when a memory pool is destroyed.
+ *
+ * @note This function is not thread safe if called on the same @a mp.
  *
  * @param mp Memory pool
  * @param cleanup Cleanup function
