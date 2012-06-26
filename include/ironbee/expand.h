@@ -31,6 +31,7 @@
 #include <ironbee/types.h>
 #include <ironbee/mpool.h>
 #include <ironbee/hash.h>
+#include <ironbee/field.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -190,9 +190,28 @@ typedef enum {
 } ib_ftype_t;
 
 /**
- * Field numerical value types.
+ * Private Implementation Detail.
+ */
+typedef struct ib_field_val_t ib_field_val_t;
+
+/** Field Structure */
+typedef struct ib_field_t ib_field_t;
+struct ib_field_t {
+    ib_mpool_t     *mp;        /**< Memory pool */
+    ib_ftype_t      type;      /**< Field type */
+    const char     *name;      /**< Field name; not '\0' terminated! */
+    size_t          nlen;      /**< Field name length */
+    const char     *tfn;       /**< Transformations performed */
+    ib_field_val_t *val;       /**< Private value store */
+};
+
+/**
+ * Field numerical signed value type
  */
 typedef int64_t ib_num_t;
+/**
+ * Field numerical unsigned value type
+ */
 typedef uint64_t ib_unum_t;
 
 /**
@@ -522,16 +541,6 @@ typedef ib_status_t (*ib_field_set_fn_t)(
     void       *in_pval,
     void       *data
 );
-
-/** Field Structure */
-struct ib_field_t {
-    ib_mpool_t     *mp;        /**< Memory pool */
-    ib_ftype_t      type;      /**< Field type */
-    const char     *name;      /**< Field name; not '\0' terminated! */
-    size_t          nlen;      /**< Field name length */
-    const char     *tfn;       /**< Transformations performed */
-    ib_field_val_t *val;       /**< Private value store */
-};
 
 /**
  * Create a field, copying name/data into the field.

@@ -43,28 +43,6 @@ extern "C" {
 #endif
 
 /**
- * Field value structure.
- *
- * This allows for multiple types of values to be stored within a field.
- */
-struct ib_field_val_t {
-    ib_field_get_fn_t  fn_get;        /**< Function to get a value. */
-    ib_field_set_fn_t  fn_set;        /**< Function to set a value. */
-    void              *cbdata_get;    /**< Data passed to fn_get. */
-    void              *cbdata_set;    /**< Data passed to fn_get. */
-    void              *pval;          /**< Address where value is stored */
-    union {
-        ib_num_t       num;           /**< Generic numeric value */
-        ib_unum_t      unum;          /**< Generic unsigned numeric value */
-        ib_bytestr_t  *bytestr;       /**< Byte string value */
-        char          *nulstr;        /**< NUL string value */
-        ib_list_t     *list;          /**< List of fields */
-        ib_stream_t   *stream;        /**< Stream buffer */
-        void          *ptr;           /**< Pointer value */
-    } u;
-};
-
-/**
  * Dynamic array structure.
  */
 struct ib_array_t {
