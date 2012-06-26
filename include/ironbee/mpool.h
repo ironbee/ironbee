@@ -34,7 +34,6 @@
 extern "C" {
 #endif
 
-
 /**
  * @defgroup IronBeeUtilMemPool Memory Pool
  * @ingroup IronBeeUtil
@@ -44,6 +43,17 @@ extern "C" {
  * @{
  */
 
+/**
+ * A memory pool.
+ */
+typedef struct ib_mpool_t ib_mpool_t;
+
+/**
+ * Callback clean up function.
+ *
+ * Only parameter is a pointer to the memory cleanup was registered for.
+ * Should return IB_OK on success.
+ */
 typedef ib_status_t (*ib_mpool_cleanup_fn_t)(void *);
 
 /**
@@ -103,6 +113,14 @@ void DLL_PUBLIC ib_mpool_setname(ib_mpool_t *mp, const char *name);
  * @returns name
  */
 const char DLL_PUBLIC *ib_mpool_name(const ib_mpool_t* mp);
+
+/**
+ * Get the amount of memory in use by a memory pool.
+ *
+ * @param mp Memory pool.
+ * @returns Bytes in use.
+ */
+size_t DLL_PUBLIC ib_mpool_inuse(const ib_mpool_t* mp);
 
 /**
  * Allocate memory from a memory pool.

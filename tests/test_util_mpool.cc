@@ -46,16 +46,6 @@ static unsigned int last_suppressed = 0;
 static unsigned int last_dubious = 0;
 #endif
 
-int buffer_list_size(ib_mpool_buffer_t *buf)
-{
-    int size =0;
-    ib_mpool_buffer_t *iter;
-    for (iter = buf; iter != NULL; iter = iter->next) {
-        ++size;
-    }
-    return size;
-}
-
 void check_for_leaks()
 {
 #if defined(HAVE_VALGRIND)
@@ -92,11 +82,6 @@ TEST_F(MpoolTest, CreateDestroy) {
     rc = ib_mpool_create(&pool, "base", NULL);
     ASSERT_EQ(IB_OK, rc);
 
-    EXPECT_EQ(IB_MPOOL_DEFAULT_PAGE_SIZE, pool->size);
-    EXPECT_EQ(1UL, pool->buffer_cnt);
-    EXPECT_EQ(0UL, pool->inuse);
-    EXPECT_EQ(IB_MPOOL_DEFAULT_PAGE_SIZE, pool->page_size);
-
     ib_mpool_destroy(pool);
 
     check_for_leaks();
@@ -110,7 +95,7 @@ TEST_F(MpoolTest, SingleAlloc) {
     ASSERT_EQ(IB_OK, rc);
 
     ib_mpool_alloc(pool, 32);
-    EXPECT_EQ(32UL, pool->inuse);
+    EXPECT_EQ(32UL, ib_mpool_inuse(pool));
 
     ib_mpool_destroy(pool);
 
@@ -127,7 +112,7 @@ TEST_F(MpoolTest, TwoAllocs) {
     ib_mpool_alloc(pool, 32);
     ib_mpool_alloc(pool, 32);
 
-    EXPECT_EQ(64UL, pool->inuse);
+    EXPECT_EQ(64UL, ib_mpool_inuse(pool));
 
     ib_mpool_destroy(pool);
 

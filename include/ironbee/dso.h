@@ -27,6 +27,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/types.h>
+#include <ironbee/mpool.h>
 
 #ifdef __cplusplus
 extern "C" {

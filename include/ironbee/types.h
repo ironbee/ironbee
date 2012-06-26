@@ -41,8 +41,6 @@ extern "C" {
  */
 
 /* Type definitions. */
-typedef struct ib_mpool_t ib_mpool_t;
-typedef struct ib_mpool_buffer_t ib_mpool_buffer_t;
 
 typedef struct ib_dso_t ib_dso_t;
 typedef void ib_dso_sym_t;

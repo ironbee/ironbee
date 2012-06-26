@@ -27,6 +27,7 @@
 
 #include <ironbee/types.h>
 #include <ironbee/build.h>
+#include <ironbee/mpool.h>
 
 #include <string.h>
 
