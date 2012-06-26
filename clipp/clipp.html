@@ -621,9 +621,9 @@ for generating the IronBee configuration file.</p>
 
 <ul>
 <li><code>:input</code> &#8212; A CLIPP chain to use as input, e.g., <code>htp:my.t</code>.</li>
-<li><code>:input_hash</code> &#8212; A specially formatted hash representing a CLIPP Input.<br/>
- You will usually construct the hash with helper functions rather than
- directly. The hash is the same as described in Appendix 1.</li>
+<li><code>:input_hashes</code> &#8212; An array of specially formatted hash representing a<br/>
+ CLIPP Inputs. You will usually construct the hashes with helper functions
+ rather than directly. The hash is the same as described in Appendix 1.</li>
 <li><code>:template</code> &#8211; A path to an ERB template to use for the IronBee
  configuration file. The result (as a path) can be referenced in
  <code>:consumer</code> via <code>IRONBEE_CONFIG</code>. This defaults to <code>ironbee.config.erb</code>

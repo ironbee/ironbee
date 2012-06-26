@@ -606,9 +606,9 @@ for generating the IronBee configuration file.
 Currently meaningful options modifying how CLIPP is invoked are:
 
 - `:input` --- A CLIPP chain to use as input, e.g., `htp:my.t`. 
-- `:input_hash` --- A specially formatted hash representing a CLIPP Input.  
-   You will usually construct the hash with helper functions rather than 
-   directly.  The hash is the same as described in Appendix 1.
+- `:input_hashes` --- An array of specially formatted hash representing a   
+   CLIPP Inputs.  You will usually construct the hashes with helper functions 
+   rather than directly.  The hash is the same as described in Appendix 1.
 - `:template` -- A path to an ERB template to use for the IronBee 
    configuration file.  The result (as a path) can be referenced in 
    `:consumer` via `IRONBEE_CONFIG`.  This defaults to `ironbee.config.erb`
