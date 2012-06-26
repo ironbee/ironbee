@@ -32,7 +32,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/debug.h>
 
-#include "util/ironbee_util_private.h"
+#include "util/radix_private.h"
 
 // Simple class to store a prefix pattern
 class PrefixPattern

@@ -27,17 +27,139 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/radix.h>
+#include "util/radix_private.h"
 
 #include <ironbee/debug.h>
 #include <ironbee/field.h>     /* For ib_num_t */
-
-#include "ironbee_util_private.h"
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/socket.h> /* For FreeBSD */
 #include <stdlib.h>
 #include <stdbool.h>
+
+/**
+ * Set to 1 the specified bit index of a byte array
+ * Warning: The bit offset/index starts from the HSB
+ *
+ * @param byte Array of byte (uint8_t*)
+ * @param bit index of bit
+ */
+#define IB_SET_BIT_ARRAY(byte, bit) \
+    (byte[bit / 8] |= (0x01 << (7 - (bit % 8))));
+
+/**
+ * Read a bit from the specified byte
+ * Warning: The bit offset/index starts from the HSB
+ *
+ * @param byte Byte to look at (uint8_t)
+ * @param bit index of bit
+ * @returns 0 or 1
+ */
+#define IB_READ_BIT(byte, bit) \
+    ((byte >> (7 - ((bit) % 8)) ) & 0x01)
+
+/**
+ * Calculate the size in bytes to hold a prefix of length bits
+ *
+ * @param bits The number of bits we want to store
+ * @returns size in bytes needed for that bits
+ */
+#define IB_BITS_TO_BYTES(bits) \
+    (((bits) % 8 == 0) ? ((bits) / 8) : ((bits) / 8) + 1)
+
+/**
+ * Set to 1 the specified bit index of a byte
+ * Warning: The bit offset/index starts from the HSB
+ *
+ * @param byte Byte to look at (uint8_t)
+ * @param bit index of bit
+ */
+#define IB_SET_BIT(byte, bit) \
+    (byte |= (0x01 << (7 - (bit % 8))));
+
+/**
+ * Read the HSB of a byte
+ *
+ * @param byte Byte to look at (uint8_t)
+ * @returns 0 or 1
+ */
+#define IB_GET_DIR(byte) \
+    (((byte) >> 7) & 0x01)
+
+
+/**
+ * Return if the given prefix is IPV4
+ *
+ * @param[in] cidr const char * with format ip/mask where mask is optional
+ * @returns 1 if true, 0 if false
+ */
+#define IB_RADIX_IS_IPV4(cidr) ((strchr(cidr, ':') == NULL) ? 1 : 0)
+
+/**
+ * Return if the given prefix is IPV6
+ *
+ * @param cidr const char * with format ip/mask where mask is optional
+ * @returns 1 if true, 0 if false
+ */
+#define IB_RADIX_IS_IPV6(cidr) ((strchr(cidr, ':') != NULL) ? 1 : 0)
+
+/**
+ * Determine if the given prefix is IPV4
+ *
+ * @param[in] cidr const char * with format ip/mask where mask is optional
+ * @param[in] len length of the str
+ * @param[out] result Result: true / false
+ *
+ * @returns Status code
+ */
+#define IB_RADIX_IS_IPV4_EX(cidr,len,result)                          \
+    ib_radix_is_ipv4_ex((cidr), (len), &result)
+
+/**
+ * Determine if the given prefix is IPV6
+ *
+ * @param[in] cidr const char * with format ip/mask where mask is optional
+ * @param[in] len length of the str
+ * @param[out] result Result: true / false
+ *
+ * @returns Status code
+ */
+#define IB_RADIX_IS_IPV6_EX(cidr,len,result)                          \
+    ib_radix_is_ipv6_ex((cidr), (len), &result)
+
+/**
+ * Look for a character in a string that can have embedded NUL characters
+ * in it.  This version will ignore NUL characters.
+ *
+ * @param[in] str String to search
+ * @param[in] len length of the str
+ * @param[in] c The character to search for
+ * @param[out] offset Offset of the character; -1 if not found
+ *
+ * @return Status code
+ */
+ib_status_t ib_radix_strchr_nul_ignore(const char *str,
+                                       size_t len,
+                                       int c,
+                                       ssize_t *offset);
+
+/**
+ * Look for a character in a string that can have embedded NUL characters
+ * in it.  This version returns an error if a NUL character is encountered
+ * before len chars.
+ *
+ * @param[in] str String to search
+ * @param[in] len length of the str
+ * @param[in] c The character to search for
+ * @param[out] offset Offset of the character; -1 if not found
+ *
+ * @return Status code
+ */
+ib_status_t ib_radix_strchr_nul_error(const char *str,
+                                      size_t len,
+                                      int c,
+                                      ssize_t *offset);
 
 ib_status_t ib_radix_prefix_new(ib_radix_prefix_t **prefix,
                                 ib_mpool_t *pool)
