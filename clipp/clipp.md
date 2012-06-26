@@ -617,7 +617,9 @@ Currently meaningful options modifying how CLIPP is invoked are:
   is used.  `IRONBEE_CONFIG` is replaced with a path to the evaluation of the
   ERB file specified via `:template`.
   
-Exactly one of `:input` and `:input_hash` is required.
+One of `:input` and `:input_hashes` is required.  If `:input_hashes` is 
+provided, protobuf will be provided to stdin and `:input` will default to `pb:-`.  If you override `:input`, e.g., to add modifiers, be sure to begin
+with `pb:-` as the generator.
   
 The following options are used by the default IronBee configuration template:
 

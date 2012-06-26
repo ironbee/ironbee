@@ -633,7 +633,9 @@ for generating the IronBee configuration file.</p>
  ERB file specified via <code>:template</code>.</li>
 </ul>
 
-<p>Exactly one of <code>:input</code> and <code>:input_hash</code> is required.</p>
+<p>One of <code>:input</code> and <code>:input_hashes</code> is required. If <code>:input_hashes</code> is
+provided, protobuf will be provided to stdin and <code>:input</code> will default to <code>pb:-</code>. If you override <code>:input</code>, e.g., to add modifiers, be sure to begin
+with <code>pb:-</code> as the generator.</p>
 
 <p>The following options are used by the default IronBee configuration template:</p>
 

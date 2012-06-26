@@ -219,10 +219,6 @@ public
   def clipp(config)
     config = config.dup
 
-    if config[:input] && config[:input_hashes]
-      CLIPPTestCase::fatal "Can't have both :input_hashes and :input."
-    end
-
     if ! config[:input] && ! config[:input_hashes]
       CLIPPTestCase::fatal "Must have :input or :input_hashes."
     end
