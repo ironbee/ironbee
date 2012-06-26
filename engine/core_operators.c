@@ -829,6 +829,10 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
     if (ib_rule_should_capture(rule, *result) == true) {
         ib_data_capture_clear(tx);
         rc = capture_num(tx, 0, value);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error storing capture #0: %s",
+                            ib_status_to_string(rc));
+        }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -876,6 +880,10 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
     if (ib_rule_should_capture(rule, *result) == true) {
         ib_data_capture_clear(tx);
         rc = capture_num(tx, 0, value);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error storing capture #0: %s",
+                            ib_status_to_string(rc));
+        }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -923,6 +931,10 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
     if (ib_rule_should_capture(rule, *result) == true) {
         ib_data_capture_clear(tx);
         rc = capture_num(tx, 0, value);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error storing capture #0: %s",
+                            ib_status_to_string(rc));
+        }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -970,6 +982,10 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
     if (ib_rule_should_capture(rule, *result) == true) {
         ib_data_capture_clear(tx);
         rc = capture_num(tx, 0, value);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error storing capture #0: %s",
+                            ib_status_to_string(rc));
+        }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1017,6 +1033,10 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
     if (ib_rule_should_capture(rule, *result) == true) {
         ib_data_capture_clear(tx);
         rc = capture_num(tx, 0, value);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Error storing capture #0: %s",
+                            ib_status_to_string(rc));
+        }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
