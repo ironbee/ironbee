@@ -744,6 +744,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     if (field->type == IB_FTYPE_NULSTR) {
         ib_rc = ib_field_value(field, ib_ftype_nulstr_out(&subject));
         if (ib_rc != IB_OK) {
+            free(ovector);
             IB_FTRACE_RET_STATUS(ib_rc);
         }
 
@@ -754,6 +755,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
     else if (field->type == IB_FTYPE_BYTESTR) {
         ib_rc = ib_field_value(field, ib_ftype_bytestr_out(&bytestr));
         if (ib_rc != IB_OK) {
+            free(ovector);
             IB_FTRACE_RET_STATUS(ib_rc);
         }
 
@@ -1117,6 +1119,7 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
     if (field->type == IB_FTYPE_NULSTR) {
         ib_rc = ib_field_value(field, ib_ftype_nulstr_out(&subject));
         if (ib_rc != IB_OK) {
+            free(ovector);
             IB_FTRACE_RET_STATUS(ib_rc);
         }
 
@@ -1125,6 +1128,7 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
     else if (field->type == IB_FTYPE_BYTESTR) {
         ib_rc = ib_field_value(field, ib_ftype_bytestr_out(&bytestr));
         if (ib_rc != IB_OK) {
+            free(ovector);
             IB_FTRACE_RET_STATUS(ib_rc);
         }
 
@@ -1179,6 +1183,7 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
                         rule_data->id);
     }
     else {
+        free(ovector);
         ib_log_error_tx(tx,
                         "Unexpected error fetching dfa data "
                         "for dfa operator %s",

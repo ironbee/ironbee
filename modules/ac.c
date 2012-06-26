@@ -691,13 +691,13 @@ static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
     /* Stream rules maintain state across calls.
      * If a rule is a stream rule, try to fetch the rule context data. */
     if (ib_rule_is_stream(rule)) {
-        modac_workspace_t *workspace;
+        modac_workspace_t *workspace = NULL;
 
         ib_log_debug_tx(tx, "Fetching stream rule data.");
 
         rc = get_dfa_tx_data(tx, rule->meta.id, &workspace);
 
-        if (rc == IB_ENOENT || workspace == NULL) {
+        if ( (rc == IB_ENOENT) || (workspace == NULL) ) {
             rc = alloc_ac_tx_data(tx, ac, rule->meta.id, &workspace);
             if (rc != IB_OK) {
                 ib_log_error_tx(tx,

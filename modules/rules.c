@@ -1629,18 +1629,21 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     for (i = 0; lua_search_paths[i] != NULL; ++i)
     {
+        char *tmp;
         ib_log_debug(ib,
             "Adding \"%s\" to lua search path.", lua_search_paths[i]);
 
         /* Strlen + 2. One for \0 and 1 for the path separator. */
-        path = realloc(path,
-                       strlen(lua_search_paths[i]) +
-                       strlen(lua_file_pattern) + 2);
+        tmp = realloc(path,
+                      strlen(lua_search_paths[i]) +
+                      strlen(lua_file_pattern) + 2);
 
-        if (path == NULL) {
+        if (tmp == NULL) {
             ib_log_error(ib, "Could allocate buffer for string append.");
+            free(path);
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
+        path = tmp;
 
         strcpy(path, lua_search_paths[i]);
         strcpy(path + strlen(path), "/");

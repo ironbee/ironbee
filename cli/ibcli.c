@@ -1935,6 +1935,8 @@ static ib_status_t run_transaction(ib_engine_t* ib,
         char *rsp = strdup(rsp_file);
         printf("Transaction #%zd: req=%s rsp=%s\n",
                trans_num, basename(req), basename(rsp) );
+        free(req);
+        free(rsp);
     }
     else {
         printf("Transaction #%zd:\n", trans_num);
