@@ -1061,7 +1061,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
                          ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
-    rule->flags |= IB_RULE_FLAG_EXTERNAL;
+    ib_flags_set(rule->flags, (IB_RULE_FLAG_EXTERNAL | IB_RULE_FLAG_NO_TGT));
 
     /* Parse all of the modifiers */
     mod = targets;
@@ -1364,6 +1364,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
                          ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
+    ib_flags_set(rule->flags, IB_RULE_FLAG_NO_TGT);
 
     /* Set the rule's stream */
     rc = ib_rule_set_phase(cp->ib, rule, phase);
@@ -1518,6 +1519,101 @@ static ib_status_t parse_ruledisable_params(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * @brief Parse an Action directive.
+ * @details Register an Action directive to the engine.
+ * @param[in,out] cp Configuration parser that contains the engine being
+ *                configured.
+ * @param[in] name The directive name.
+ * @param[in] vars The list of variables passed to @a name.
+ * @param[in] cbdata User data. Unused.
+ */
+static ib_status_t parse_action_params(ib_cfgparser_t *cp,
+                                       const char *name,
+                                       const ib_list_t *vars,
+                                       void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    const ib_list_node_t *node;
+    ib_rule_t *rule = NULL;
+
+    if (cbdata != NULL) {
+        IB_FTRACE_MSG("Callback data is not null.");
+    }
+
+    /* Allocate a rule */
+    rc = ib_rule_create(cp->ib, cp->cur_ctx,
+                        cp->cur_file, cp->cur_lineno,
+                        false, &rule);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to allocate rule: %s",
+                         ib_status_to_string(rc));
+        goto cleanup;
+    }
+    ib_flags_set(rule->flags, IB_RULE_FLAG_ACTION);
+
+    /* Parse the operator */
+    rc = parse_operator(cp, rule, "@nop");
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "Error parsing rule operator \"nop\": %s",
+                         ib_status_to_string(rc));
+        goto cleanup;
+    }
+
+    /* Parse all of the modifiers */
+    IB_LIST_LOOP_CONST(vars, node) {
+        rc = parse_modifier(cp, rule, node->data);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp,
+                             "Error parsing action modifier \"%s\": %s",
+                             (const char *)node->data,
+                             ib_status_to_string(rc));
+            goto cleanup;
+        }
+    }
+
+    /* Check the rule modifiers. */
+    rc = check_rule_modifiers(cp, rule);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Finally, register the rule */
+    rc = ib_rule_register(cp->ib, cp->cur_ctx, rule);
+    if (rc == IB_EEXIST) {
+        ib_cfg_log_warning(cp, "Not overwriting existing rule");
+        rc = IB_OK;
+    }
+    else if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error registering rule: %s",
+                         ib_status_to_string(rc));
+        goto cleanup;
+    }
+
+    /* Disable the entire chain if this rule is invalid */
+cleanup:
+    if ((rule != NULL) && ((rule->flags & IB_RULE_FLAG_VALID) == 0)) {
+        ib_status_t irc = ib_rule_chain_invalidate(cp->ib, rule);
+        if (irc != IB_OK) {
+            ib_cfg_log_error(cp, "Error invalidating rule chain: %s",
+                             ib_status_to_string(irc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        else {
+            const char *chain = \
+                rule->meta.chain_id == NULL ? "UNKNOWN" : rule->meta.chain_id;
+            ib_cfg_log_debug2(cp,
+                              "Invalidated all rules in chain \"%s\"",
+                              chain);
+        }
+    }
+
+    /* Done */
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 
 static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
 
@@ -1549,6 +1645,12 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
     IB_DIRMAP_INIT_LIST(
         "RuleDisable",
         parse_ruledisable_params,
+        NULL
+    ),
+
+    IB_DIRMAP_INIT_LIST(
+        "Action",
+        parse_action_params,
         NULL
     ),
 

@@ -1043,6 +1043,33 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
 }
 
 /**
+ * Execute function for the "nop" operator
+ *
+ * @param[in] ib Ironbee engine (unused)
+ * @param[in] tx The transaction for this operator (unused)
+ * @param[in] rule Parent rule to the operator
+ * @param[in] data Operator data (unused)
+ * @param[in] flags Operator instance flags
+ * @param[in] field Field value (unused)
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code (IB_OK)
+ */
+static ib_status_t op_nop_execute(ib_engine_t *ib,
+                                  ib_tx_t *tx,
+                                  const ib_rule_t *rule,
+                                  void *data,
+                                  ib_flags_t flags,
+                                  ib_field_t *field,
+                                  ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    ib_log_debug2_tx(tx, "NOP operator returning 1");
+    *result = 1;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Initialize the core operators
  **/
 ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
@@ -1181,6 +1208,19 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               NULL,
                               op_le_execute,
                               NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register NOP operator */
+    rc = ib_operator_register(ib,
+                              "nop",
+                              ( IB_OP_FLAG_ALLOW_NULL |
+                                IB_OP_FLAG_PHASE |
+                                IB_OP_FLAG_STREAM ),
+                              NULL, NULL, /* No create function */
+                              NULL, NULL, /* no destroy function */
+                              op_nop_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

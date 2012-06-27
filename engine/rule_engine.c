@@ -564,6 +564,19 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     /* Log what we're going to do */
     ib_rule_log_debug(tx, rule, NULL, NULL, "Executing rule");
 
+    /* If this is a no-target rule (i.e. action), do nothing */
+    if (ib_flags_all(rule->flags, IB_RULE_FLAG_NO_TGT) == true) {
+        assert(ib_list_elements(rule->target_fields) == 0);
+        rc = ib_operator_execute(ib, tx, rule, opinst, NULL, rule_result);
+        if (rc != IB_OK) {
+            ib_rule_log_warn(tx, rule, NULL, NULL,
+                             "Operator \"%s\" returned an error: %s",
+                             opinst->op->name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        goto done;
+    }
+
     /*
      * Loop through all of the fields.
      *
@@ -680,6 +693,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     }
 
     /* Invert? */
+done:
     if ( (opinst->flags & IB_OPINST_FLAG_INVERT) != 0) {
         *rule_result = (*rule_result == 0);
     }
@@ -2190,12 +2204,14 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
         ctx_rule->rule = rule;
-        if (ib_flags_all(rule->flags, IB_RULE_FLAG_MAIN_CTX) == true) {
-            ctx_rule->flags = IB_RULECTX_FLAG_NONE;
-        }
-        else {
+        if ( (ib_flags_all(rule->flags, IB_RULE_FLAG_MAIN_CTX) == false) ||
+             (ib_flags_all(rule->flags, IB_RULE_FLAG_FORCE_EN) == true) )
+        {
             ctx_rule->flags = IB_RULECTX_FLAG_ENABLED;
             ib_flags_set(rule->flags, IB_RULE_FLAG_MARK);
+        }
+        else {
+            ctx_rule->flags = IB_RULECTX_FLAG_NONE;
         }
         rc = ib_list_push(all_rules, ctx_rule);
         if (rc != IB_OK) {
@@ -2573,7 +2589,10 @@ bool ib_rule_allow_tfns(const ib_rule_t *rule)
     assert(rule != NULL);
     assert(rule->phase_meta != NULL);
 
-    if ( (rule->phase_meta->flags & PHASE_FLAG_ALLOW_TFNS) != 0) {
+    if (ib_flags_all(rule->flags, IB_RULE_FLAG_NO_TGT)) {
+        IB_FTRACE_RET_BOOL(false);
+    }
+    else if (ib_flags_all(rule->phase_meta->flags, PHASE_FLAG_ALLOW_TFNS)) {
         IB_FTRACE_RET_BOOL(true);
     }
     else {
@@ -2767,6 +2786,20 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     if (rule->opinst->op->fn_execute == NULL) {
         ib_log_error(ib, "Cannot register rule: No operator function");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Verify that the rule has at least one target */
+    if (ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT) == true) {
+        if (ib_list_elements(rule->target_fields) != 0) {
+            ib_log_error(ib, "Cannot register rule: Action rule has targets");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+    else {
+        if (ib_list_elements(rule->target_fields) == 0) {
+            ib_log_error(ib, "Cannot register rule: No targets");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
     }
 
     /* Verify that the rule has an ID */
@@ -3216,6 +3249,13 @@ ib_status_t ib_rule_add_target(ib_engine_t *ib,
     assert(ib != NULL);
     assert(rule != NULL);
     assert(target != NULL);
+
+    /* Enforce the no target flag */
+    if (ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT) == true) {
+        ib_log_error(ib, "Attempt to add target to action rule \"%s\"",
+                     rule->meta.id);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
 
     /* Push the field */
     rc = ib_list_push(rule->target_fields, (void *)target);
