@@ -45,9 +45,17 @@
 
 
 /* -- Constants -- */
-const char DPI_LIST_FILTER_MARKER = ':';
-const char DPI_LIST_FILTER_PREFIX = '/';
-const char DPI_LIST_FILTER_SUFFIX = '/';
+static const char DPI_LIST_FILTER_MARKER = ':';
+static const char DPI_LIST_FILTER_PREFIX = '/';
+static const char DPI_LIST_FILTER_SUFFIX = '/';
+
+/*
+ * Parameters used for variable expansion in rules.
+ */
+/** Variable prefix */
+static const char *IB_VARIABLE_EXPANSION_PREFIX = "%{";
+/** Variable postfix */
+static const char *IB_VARIABLE_EXPANSION_POSTFIX = "}";
 
 /* Internal helper functions */
 

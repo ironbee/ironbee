@@ -43,12 +43,6 @@
 #include "state_notify_private.h"
 
 /**
- * Parameters used for variable expansion in rules.
- */
-#define IB_VARIABLE_EXPANSION_PREFIX  "%{"  /**< Variable prefix */
-#define IB_VARIABLE_EXPANSION_POSTFIX "}"   /**< Variable postfix */
-
-/**
  * Initialize the core fields.
  *
  * Called when the core is loaded, registers the core field generators.
