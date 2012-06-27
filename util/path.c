@@ -36,8 +36,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "ironbee_util_private.h"
-
 ib_status_t ib_util_mkpath(const char *path, mode_t mode)
 {
     IB_FTRACE_INIT();
