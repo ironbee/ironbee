@@ -57,12 +57,11 @@ class CLIPPTestCase < Test::Unit::TestCase
   # Source test directory.
   TESTDIR          = File.join(File.expand_path(File.dirname(__FILE__)), 'tests')
   # Build test directory.
-  BUILDDIR         = File.join(
-    ($abs_builddir || ENV['abs_builddir'] || fatal("abs_builddir not set.")),
-    'tests'
-  )
+  BUILDDIR         = \
+    ($abs_builddir || ENV['abs_builddir'] || fatal("abs_builddir not set."))
+
   # CLIPP executable.
-  CLIPP            = File.join(BUILDDIR, '..', 'clipp')
+  CLIPP            = File.join(BUILDDIR, 'clipp')
   # Default IronBee configuration template.
   DEFAULT_TEMPLATE = 'TESTDIR/ironbee.config.erb'
   # Default consumer.
@@ -224,12 +223,13 @@ public
     end
 
     if config[:input_hashes]
-      config[:stdin] = ""
+      input_content = ""
       config[:input_hashes].each do |h|
-        config[:stdin] +=
+        input_content +=
           IronBee::CLIPP::HashToPB::hash_to_pb(h)
       end
-      config[:input] = "pb:-"
+      input_path = write_temp_file("clipp_test_RAND.pb", input_content)
+      config[:input] = "pb:#{input_path}"
     end
 
     config_path = write_temp_file(
