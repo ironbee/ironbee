@@ -28,7 +28,7 @@
 #include <ironbee/release.h>
 #include <ironbee/core.h>
 #include <ironbee/state_notify.h>
-#include "ironbee_private.h"
+#include <ironbee/util.h>
 
 #include "gtest/gtest.h"
 
@@ -64,7 +64,7 @@ public:
     void setRuleBasePath(const char* path)
     {
         ib_core_cfg_t *corecfg = NULL;
-        ib_context_module_config(ib_engine->ctx,
+        ib_context_module_config(ib_context_main(ib_engine),
                                  ib_core_module(),
                                  static_cast<void*>(&corecfg));
         corecfg->rule_base_path = path;
@@ -78,7 +78,7 @@ public:
     void setModuleBasePath(const char* path)
     {
         ib_core_cfg_t *corecfg = NULL;
-        ib_context_module_config(ib_engine->ctx,
+        ib_context_module_config(ib_context_main(ib_engine),
                                  ib_core_module(),
                                  static_cast<void*>(&corecfg));
         corecfg->module_base_path = path;
