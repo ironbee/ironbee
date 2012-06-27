@@ -33,6 +33,9 @@
 #include <ironbee/field.h>
 #include <ironbee/bytestr.h>
 
+// @todo Remove once ib_engine_operator_get() is available.
+#include "engine_private.h"
+
 class PcreModuleTest : public BaseModuleFixture {
 public:
 
@@ -76,12 +79,12 @@ public:
         assert(ib_conn->tx!=NULL);
         ib_tx = ib_conn->tx;
 
-        char* str1 = (char *)ib_mpool_alloc(ib_engine->mp, (strlen(s1)+1));
+        char* str1 = (char *)ib_mpool_alloc(ib_engine_pool_main_get(ib_engine), (strlen(s1)+1));
         if (str1 == NULL) {
             throw std::runtime_error("Could not allocate string 1.");
         }
         strcpy(str1, s1);
-        char* str2 = (char *)ib_mpool_alloc(ib_engine->mp, (strlen(s2)+1));
+        char* str2 = (char *)ib_mpool_alloc(ib_engine_pool_main_get(ib_engine), (strlen(s2)+1));
         if (str1 == NULL) {
             throw std::runtime_error("Could not allocate string 2.");
         }
@@ -89,7 +92,7 @@ public:
     
         // Create field 1.
         rc = ib_field_create(&field1,
-                             ib_engine->mp,
+                             ib_engine_pool_main_get(ib_engine),
                              IB_FIELD_NAME("field1"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(str1));
@@ -99,7 +102,7 @@ public:
 
         // Create field 2.
         rc = ib_field_create(&field2,
-                             ib_engine->mp,
+                             ib_engine_pool_main_get(ib_engine),
                              IB_FIELD_NAME("field2"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(str2));
@@ -109,7 +112,7 @@ public:
 
         /* Create rule 1 */
         rc = (ib_rule_create(ib_engine,
-                             ib_engine->ectx,
+                             ib_context_engine(ib_engine),
                              __FILE__,
                              __LINE__,
                              true,
@@ -117,7 +120,7 @@ public:
 
         /* Create rule 2 */
         rc = (ib_rule_create(ib_engine,
-                             ib_engine->ectx,
+                             ib_context_engine(ib_engine),
                              __FILE__,
                              __LINE__,
                              true,

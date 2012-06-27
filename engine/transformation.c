@@ -34,6 +34,7 @@
 #include <ironbee/field.h>
 #include <ironbee/transformation.h>
 
+#include "engine_private.h"
 #include "ironbee_private.h"
 
 

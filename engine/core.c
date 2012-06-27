@@ -37,7 +37,9 @@
 #include <ironbee/field.h>
 #include <ironbee/rule_defs.h>
 #include <ironbee/rule_engine.h>
-#include <ironbee_private.h>
+
+#include "engine_private.h"
+#include "ironbee_private.h"
 
 #include <errno.h>
 #include <ctype.h>

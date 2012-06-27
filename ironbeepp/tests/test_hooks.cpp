@@ -39,6 +39,8 @@
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
 
+#include "state_notify_private.h"
+#include "engine_private.h"
 #include "ironbee_private.h"
 
 #include <string>

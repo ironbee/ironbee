@@ -36,7 +36,9 @@
 #include <ironbee/mpool.h>
 #include <ironbee/action.h>
 #include <ironbee/rule_engine.h>
-#include <ironbee_private.h>
+
+#include "engine_private.h"
+#include "ironbee_private.h"
 
 
 /**

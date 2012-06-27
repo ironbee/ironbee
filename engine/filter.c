@@ -30,6 +30,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 
+#include "engine_private.h"
 #include "ironbee_private.h"
 
 ib_status_t ib_fctl_tx_create(ib_fctl_t **pfc,

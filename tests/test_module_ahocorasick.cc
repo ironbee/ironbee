@@ -32,6 +32,9 @@
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>
 
+// @todo Remove this once there is something like ib_engine_operator_get()
+#include "engine_private.h"
+
 class AhoCorasickModuleTest : public BaseFixture {
 public:
     ib_module_t *rules_mod;
@@ -62,20 +65,20 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
     ib_field_t* field1;
     ib_field_t* field2;
 
-    char* str1 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string1")+1));
-    char* str2 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string2")+1));
+    char* str1 = (char *) ib_mpool_alloc(ib_engine_pool_main_get(ib_engine), (strlen("string1")+1));
+    char* str2 = (char *) ib_mpool_alloc(ib_engine_pool_main_get(ib_engine), (strlen("string2")+1));
     strcpy(str1, "string1");
     strcpy(str2, "string2");
 
     conn = buildIronBeeConnection();
 
-    ib_tx_create(&tx, conn, ib_engine->ectx);
+    ib_tx_create(&tx, conn, ib_context_engine(ib_engine));
 
     // Create field 1.
     ASSERT_EQ(IB_OK,
         ib_field_create(
             &field1, 
-            ib_engine->mp, 
+            ib_engine_pool_main_get(ib_engine), 
             IB_FIELD_NAME("field1"), 
             IB_FTYPE_NULSTR, 
             ib_ftype_nulstr_in(str1)
@@ -86,7 +89,7 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
     ASSERT_EQ(IB_OK,
         ib_field_create(
             &field2, 
-            ib_engine->mp,
+            ib_engine_pool_main_get(ib_engine),
             IB_FIELD_NAME("field2"), 
             IB_FTYPE_NULSTR, 
             ib_ftype_nulstr_in(str2)
@@ -97,7 +100,7 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
     ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, &op, "pm"));
 
     ASSERT_IB_OK(ib_rule_create(ib_engine,
-                                ib_engine->ectx,
+                                ib_context_engine(ib_engine),
                                 __FILE__,
                                 __LINE__,
                                 true,
@@ -142,20 +145,20 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     ib_field_t* field1;
     ib_field_t* field2;
 
-    char* str1 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string1")+1));
-    char* str2 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string2")+1));
+    char* str1 = (char *) ib_mpool_alloc(ib_engine_pool_main_get(ib_engine), (strlen("string1")+1));
+    char* str2 = (char *) ib_mpool_alloc(ib_engine_pool_main_get(ib_engine), (strlen("string2")+1));
     strcpy(str1, "string1");
     strcpy(str2, "string2");
 
     conn = buildIronBeeConnection();
 
-    ib_tx_create(&tx, conn, ib_engine->ectx);
+    ib_tx_create(&tx, conn, ib_context_engine(ib_engine));
 
     // Create field 1.
     ASSERT_EQ(IB_OK,
         ib_field_create(
             &field1, 
-            ib_engine->mp, 
+            ib_engine_pool_main_get(ib_engine), 
             IB_FIELD_NAME("field1"), 
             IB_FTYPE_NULSTR, 
             ib_ftype_nulstr_in(str1)
@@ -166,7 +169,7 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     ASSERT_EQ(IB_OK,
         ib_field_create(
             &field2,
-            ib_engine->mp,
+            ib_engine_pool_main_get(ib_engine),
             IB_FIELD_NAME("field2"),
             IB_FTYPE_NULSTR,
             ib_ftype_nulstr_in(str2)
@@ -177,7 +180,7 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, &op, "pmf"));
 
     ASSERT_IB_OK(ib_rule_create(ib_engine,
-                                ib_engine->ectx,
+                                ib_context_engine(ib_engine),
                                 __FILE__,
                                 __LINE__,
                                 true,

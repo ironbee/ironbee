@@ -31,6 +31,7 @@
 
 #include <inttypes.h>
 
+#include "engine_private.h"
 #include "ironbee_private.h"
 
 /// @todo Probably need to load into a given context???

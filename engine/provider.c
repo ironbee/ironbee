@@ -28,6 +28,7 @@
 
 #include <ironbee/mpool.h>
 
+#include "engine_private.h"
 #include "ironbee_private.h"
 
 ib_status_t ib_provider_define(ib_engine_t *ib,

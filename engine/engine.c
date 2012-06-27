@@ -48,6 +48,8 @@
 #include <ironbee/state_notify.h>
 
 #include "ironbee_private.h"
+#include "engine_private.h"
+#include "state_notify_private.h"
 
 /* -- Constants -- */
 

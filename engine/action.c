@@ -28,6 +28,7 @@
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
+#include "engine_private.h"
 #include "ironbee_private.h"
 
 #include <string.h>

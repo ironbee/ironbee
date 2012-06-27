@@ -51,6 +51,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/field.h>
 
+#include "engine_private.h"
 #include "ironbee_private.h"
 
 /* Set DEBUG_ARGS_ENABLE to non-zero enable the debug log command line

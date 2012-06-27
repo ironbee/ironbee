@@ -21,9 +21,12 @@
 
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
+#include <ironbee/debug.h>
 
 #include <assert.h>
 
+#include "state_notify_private.h"
+#include "engine_private.h"
 #include "ironbee_private.h"
 
 #define CALL_HOOKS(out_rc, first_hook, event, whicb, ib, tx, param) \

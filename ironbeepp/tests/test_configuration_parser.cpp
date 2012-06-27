@@ -29,6 +29,7 @@
 
 #include "gtest/gtest.h"
 
+#include "engine_private.h"
 #include "ironbee_private.h"
 #include <ironbee/engine.h>
 #include <ironbee/config.h>

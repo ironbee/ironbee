@@ -24,6 +24,7 @@
 
 #include <ironbeepp/module_bootstrap.hpp>
 
+#include "engine_private.h"
 #include "ironbee_private.h"
 
 #include "fixture.hpp"
