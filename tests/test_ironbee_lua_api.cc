@@ -23,6 +23,7 @@
 #include "base_fixture.h"
 
 extern "C" {
+#include "engine_private.h"
 #include <ironbee/release.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>

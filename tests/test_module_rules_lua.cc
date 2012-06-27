@@ -30,6 +30,7 @@ extern "C" {
 }
 
 #include "ibtest_util.hh"
+#include "engine_private.h"
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>
