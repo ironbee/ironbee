@@ -1252,8 +1252,8 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
     rc = parse_operator(cp, rule, op->data);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-                         "Error parsing rule targets: %s",
-                         ib_status_to_string(rc));
+                         "Error parsing rule operator \"%s\": %s",
+                         (const char *)op->data, ib_status_to_string(rc));
         goto cleanup;
     }
 
