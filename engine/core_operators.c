@@ -38,6 +38,8 @@
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
+#include "core_private.h"
+
 /* Numeric operator params */
 typedef struct {
     const char *str;

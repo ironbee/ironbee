@@ -29,8 +29,9 @@
 #include <ironbee/core.h>
 #include <ironbee/provider.h>
 
-#include <assert.h>
+#include "core_private.h"
 
+#include <assert.h>
 
 /* -- Field Generation Routines -- */
 

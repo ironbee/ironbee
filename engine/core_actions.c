@@ -39,6 +39,7 @@
 #include <ironbee/util.h>
 
 #include "engine_private.h"
+#include "core_private.h"
 
 /**
  * Setvar action data.

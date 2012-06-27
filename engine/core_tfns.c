@@ -38,6 +38,8 @@
 #include <ironbee/debug.h>
 #include <ironbee/util.h>
 
+#include "core_private.h"
+
 /**
  * String modification transformation core
  *

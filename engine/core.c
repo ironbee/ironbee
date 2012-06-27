@@ -42,6 +42,7 @@
 #include <ironbee/provider.h>
 
 #include "rule_engine_private.h"
+#include "core_private.h"
 #include "engine_private.h"
 
 #include <errno.h>
@@ -132,69 +133,6 @@ static ib_core_cfg_t core_global_cfg;
 #define IB_ALPARTS_RESPONSE \
     IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADER | \
     IB_ALPART_HTTP_RESPONSE_BODY|IB_ALPART_HTTP_RESPONSE_TRAILER
-
-/* -- Initializers -- */
-
-/**
- * Initialize the core fields.
- *
- * Called when the core is loaded, registers the core field generators.
- *
- * @param[in,out] ib IronBee object
- * @param[in] mod Module object
- */
-ib_status_t ib_core_fields_init(ib_engine_t *ib,
-                                ib_module_t *mod);
-
-/**
- * Initialize the core config context for fields.
- *
- * Called when the core is loaded, registers the core field generators.
- *
- * @param[in,out] ib IronBee object
- * @param[in] mod Module object
- * @param[in] ctx Context.
- * @param[in] cbdata Callback data.
- *
- * @returns IB_OK on success.
- */
-ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
-                                    ib_module_t *mod,
-                                    ib_context_t *ctx,
-                                    void *cbdata);
-/**
- * Initialize the core transformations.
- *
- * Called when the rule engine is loaded; registers the core transformations.
- *
- * @param[in,out] ib IronBee object
- * @param[in] mod Module object
- */
-ib_status_t ib_core_transformations_init(ib_engine_t *ib,
-                                         ib_module_t *mod);
-
-/**
- * Initialize the core operators.
- *
- * Called when the rule engine is loaded, registers the core operators.
- *
- * @param[in,out] ib IronBee object
- * @param[in] mod Module object
- */
-ib_status_t ib_core_operators_init(ib_engine_t *ib,
-                                   ib_module_t *mod);
-
-/**
- * Initialize the core actions.
- *
- * Called when the rule engine is loaded; registers the core actions.
- *
- * @param[in,out] ib IronBee object
- * @param[in] mod Module object
- */
-ib_status_t ib_core_actions_init(ib_engine_t *ib,
-                                 ib_module_t *mod);
-
 
 /* -- Utilities -- */
 

@@ -43,6 +43,7 @@
 #include <ironbee/mpool.h>
 
 #include "engine_private.h"
+#include "rule_engine_private.h"
 
 /**
  * Phase Flags
