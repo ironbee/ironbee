@@ -166,7 +166,7 @@ typedef struct {
 } ib_rule_enable_t;
 
 /**
- * Rules data for each context; typedef in ironbee_private.h
+ * Rules data for each context.
  */
 struct ib_rule_context_t {
     ib_ruleset_t           ruleset;      /**< Rules to exec */
@@ -178,7 +178,7 @@ struct ib_rule_context_t {
 };
 
 /**
- * Rule engine data; typedef in ironbee_private.h
+ * Rule engine data.
  */
 struct ib_rule_engine_t {
     ib_list_t             *rule_list;   /**< All rules owned by this context */

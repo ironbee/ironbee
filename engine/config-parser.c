@@ -43,7 +43,6 @@
 #include <ironbee/mpool.h>
 
 #include "config-parser.h"
-#include "ironbee_private.h"
 
 /**
  * Finite state machine type.

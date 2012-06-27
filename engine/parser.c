@@ -34,9 +34,7 @@
 #include <ironbee/util.h>
 #include <ironbee/core.h>
 #include <ironbee/provider.h>
-
-#include "ironbee_private.h"
-
+#include <ironbee/debug.h>
 
 /* -- Exported Parser Routines -- */
 

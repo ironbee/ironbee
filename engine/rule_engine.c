@@ -42,9 +42,7 @@
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
-#include "ironbee_private.h"
 #include "engine_private.h"
-
 
 /**
  * Phase Flags

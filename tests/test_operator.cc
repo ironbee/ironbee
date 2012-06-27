@@ -29,8 +29,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>
-
-#include "ironbee_private.h"
+#include <ironbee/debug.h>
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"

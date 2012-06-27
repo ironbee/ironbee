@@ -30,8 +30,6 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/hash.h>
 
-#include "ironbee_private.h"
-
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 

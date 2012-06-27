@@ -33,10 +33,9 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/field.h>
 #include <ironbee/transformation.h>
+#include <ironbee/debug.h>
 
 #include "engine_private.h"
-#include "ironbee_private.h"
-
 
 /* -- Transformation Routines -- */
 

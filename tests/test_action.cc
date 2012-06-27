@@ -27,8 +27,6 @@
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 
-#include "ironbee_private.h"
-
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 

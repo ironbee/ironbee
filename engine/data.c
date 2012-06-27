@@ -31,7 +31,6 @@
 #include <string.h>
 #include <pcre.h>
 
-
 #include <ironbee/engine.h>
 #include <ironbee/string.h>
 #include <ironbee/bytestr.h>
@@ -40,9 +39,8 @@
 #include <ironbee/field.h>
 #include <ironbee/expand.h>
 #include <ironbee/transformation.h>
-
-#include "ironbee_private.h"
-
+#include <ironbee/debug.h>
+#include <ironbee/util.h>
 
 /* -- Constants -- */
 static const char DPI_LIST_FILTER_MARKER = ':';

@@ -35,8 +35,8 @@
 #include <ironbee/transformation.h>
 #include <ironbee/field.h>
 #include <ironbee/string.h>
-
-#include "ironbee_private.h"
+#include <ironbee/debug.h>
+#include <ironbee/util.h>
 
 /**
  * String modification transformation core

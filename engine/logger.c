@@ -29,17 +29,15 @@
 #include <stdarg.h>
 #include <string.h>
 #include <assert.h>
-
 #include <unistd.h>
+#include <time.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/core.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
 #include <ironbee/clock.h>
-
-#include "ironbee_private.h"
-
+#include <ironbee/debug.h>
 
 /* -- Internal Routines -- */
 

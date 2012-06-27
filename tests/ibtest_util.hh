@@ -34,8 +34,6 @@
 #include <ironbee/module.h>
 #include <ironbee/server.h>
 
-#include "ironbee_private.h"
-
 /**
  * @defgroup IronBeeTests Unit Testing
  *

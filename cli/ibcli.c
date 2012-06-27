@@ -37,6 +37,7 @@
 #include <errno.h>
 #include <glob.h>
 #include <libgen.h>
+#include <stdlib.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/state_notify.h>
@@ -50,9 +51,10 @@
 #include <ironbee/rule_defs.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/field.h>
+#include <ironbee/debug.h>
+#include <ironbee/util.h>
 
 #include "engine_private.h"
-#include "ironbee_private.h"
 
 /* Set DEBUG_ARGS_ENABLE to non-zero enable the debug log command line
  * handling.  It's currently disabled because Log and LogLevel

@@ -28,7 +28,7 @@
 #include <ironbee/lock.h>
 #include <ironbee/array.h>
 
-#include "ironbee_private.h"
+#include "state_notify_private.h"
 
 #include <stdio.h>
 

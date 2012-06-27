@@ -36,8 +36,7 @@
 #include <ironbee/operator.h>
 #include <ironbee/field.h>
 #include <ironbee/string.h>
-
-#include "ironbee_private.h"
+#include <ironbee/util.h>
 
 /* Numeric operator params */
 typedef struct {

@@ -36,10 +36,9 @@
 #include <ironbee/mpool.h>
 #include <ironbee/action.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/util.h>
 
 #include "engine_private.h"
-#include "ironbee_private.h"
-
 
 /**
  * Setvar action data.

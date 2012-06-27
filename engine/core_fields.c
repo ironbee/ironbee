@@ -27,7 +27,7 @@
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/core.h>
-#include <ironbee_private.h>
+#include <ironbee/provider.h>
 
 #include <assert.h>
 

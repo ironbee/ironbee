@@ -28,11 +28,11 @@
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/dso.h>
+#include <ironbee/debug.h>
 
 #include <inttypes.h>
 
 #include "engine_private.h"
-#include "ironbee_private.h"
 
 /// @todo Probably need to load into a given context???
 ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)

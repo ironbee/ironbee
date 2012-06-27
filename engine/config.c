@@ -30,7 +30,6 @@
 #include <ironbee/mpool.h>
 
 #include "config-parser.h"
-#include "ironbee_private.h"
 #include "engine_private.h"
 
 #include <fcntl.h>

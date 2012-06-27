@@ -41,8 +41,6 @@
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
-#include "ironbee_private.h"
-
 /**
  * Prefix used for all rule engine log entries.
  */
