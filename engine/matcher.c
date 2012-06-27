@@ -36,6 +36,17 @@
 
 #include "ironbee_private.h"
 
+/**
+ * Matcher.
+ */
+struct ib_matcher_t {
+    ib_engine_t             *ib;          /**< Engine */
+    ib_mpool_t              *mp;          /**< Memory pool */
+    ib_provider_t           *mpr;         /**< Matcher provider */
+    ib_provider_inst_t      *mpi;         /**< Matcher provider instance */
+    const char              *key;         /**< Matcher key */
+};
+
 ib_status_t ib_matcher_create(ib_engine_t *ib,
                               ib_mpool_t *pool,
                               const char *key,

@@ -43,17 +43,6 @@
 #include "state_notify_private.h"
 
 /**
- * Matcher.
- */
-struct ib_matcher_t {
-    ib_engine_t             *ib;          /**< Engine */
-    ib_mpool_t              *mp;          /**< Memory pool */
-    ib_provider_t           *mpr;         /**< Matcher provider */
-    ib_provider_inst_t      *mpi;         /**< Matcher provider instance */
-    const char              *key;         /**< Matcher key */
-};
-
-/**
  * Parameters used for variable expansion in rules.
  */
 #define IB_VARIABLE_EXPANSION_PREFIX  "%{"  /**< Variable prefix */
