@@ -839,9 +839,12 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     }
 
     /* Transformation modifiers */
-    if ( (ib_rule_allow_tfns(rule) == true) &&
-         (strcasecmp(name, "t") == 0) )
-    {
+    if (strcasecmp(name, "t") == 0) {
+        if (ib_rule_allow_tfns(rule) == false) {
+            ib_cfg_log_error(cp, "Transformations not supported for this rule");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
         if (value == NULL) {
             ib_cfg_log_error(cp, "Modifier transformation with no value");
             IB_FTRACE_RET_STATUS(IB_EINVAL);

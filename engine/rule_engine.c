@@ -302,7 +302,7 @@ static ib_status_t find_phase_stream_meta(
 }
 
 /**
- * Execute a target's transformations.
+ * Execute transformations on a target.
  *
  * @param[in] ib Engine
  * @param[in] tx Transaction
@@ -313,13 +313,13 @@ static ib_status_t find_phase_stream_meta(
  *
  * @returns Status code
  */
-static ib_status_t execute_target_tfns(ib_engine_t *ib,
-                                       ib_tx_t *tx,
-                                       const ib_rule_t *rule,
-                                       ib_rule_target_t *target,
-                                       ib_field_t *value,
-                                       ib_field_t **result,
-                                       ib_rule_log_exec_t *log_exec)
+static ib_status_t execute_tfns(ib_engine_t *ib,
+                                ib_tx_t *tx,
+                                const ib_rule_t *rule,
+                                ib_rule_target_t *target,
+                                ib_field_t *value,
+                                ib_field_t **result,
+                                ib_rule_log_exec_t *log_exec)
 {
     IB_FTRACE_INIT();
     ib_status_t     rc;
@@ -612,8 +612,8 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
 
         /* Execute the target transformations */
         if (value != NULL) {
-            rc = execute_target_tfns(ib, tx, rule, target,
-                                     value, &tfnvalue, log_exec);
+            rc = execute_tfns(ib, tx, rule, target,
+                              value, &tfnvalue, log_exec);
             if (rc != IB_OK) {
                 ib_rule_log_error(tx, rule, target, NULL,
                                   "Error executing transformations : %s",
