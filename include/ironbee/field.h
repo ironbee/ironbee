@@ -30,6 +30,8 @@
 #include <ironbee/types.h>
 #include <ironbee/list.h>
 #include <ironbee/mpool.h>
+#include <ironbee/stream.h>
+#include <ironbee/bytestr.h>
 
 #include <string.h>
 

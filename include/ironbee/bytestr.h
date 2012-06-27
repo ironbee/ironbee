@@ -45,6 +45,8 @@ extern "C" {
  * @{
  */
 
+typedef struct ib_bytestr_t ib_bytestr_t;
+
 #define IB_BYTESTR_FREADONLY           (1<<0)
 
 #define IB_BYTESTR_CHECK_FREADONLY(f)  ((f) & IB_BYTESTR_FREADONLY)

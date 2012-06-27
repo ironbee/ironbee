@@ -50,6 +50,9 @@ extern "C" {
  * @{
  */
 
+typedef struct ib_stream_t ib_stream_t;
+typedef struct ib_sdata_t ib_sdata_t;
+
 typedef enum {
     IB_STREAM_DATA,                      /**< Data is available */
     IB_STREAM_FLUSH,                     /**< Data should be flushed */

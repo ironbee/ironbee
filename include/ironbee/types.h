@@ -20,7 +20,9 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Type Definitions
+ * @brief IronBee &mdash; General Type Definitions
+ *
+ * These are types that are used throughout IronBee.
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */
@@ -41,16 +43,11 @@ extern "C" {
  */
 
 /* Type definitions. */
-
 typedef uint32_t ib_flags_t;
 typedef uint64_t ib_flags64_t;
-typedef struct ib_bytestr_t ib_bytestr_t;
-typedef struct ib_stream_t ib_stream_t;
-typedef struct ib_sdata_t ib_sdata_t;
 
 /** Generic function pointer type. */
 typedef void (*ib_void_fn_t)(void);
-
 
 /** Status code. */
 typedef enum ib_status_t {
