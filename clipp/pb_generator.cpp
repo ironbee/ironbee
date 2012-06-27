@@ -91,14 +91,6 @@ namespace {
 
 struct data_t
 {
-    explicit
-    data_t(size_t buffer_size) :
-        buffer(new char[buffer_size])
-    {
-        // nop
-    }
-
-    boost::scoped_array<char> buffer;
     PB::Input                 pb_input;
 };
 
@@ -277,12 +269,14 @@ bool PBGenerator::operator()(Input::input_p& input)
     }
     size = ntohl(raw_size);
 
-    boost::shared_ptr<data_t> data = make_shared<data_t>(size);
+    boost::shared_ptr<data_t> data = make_shared<data_t>();
     input->source = data;
 
-    m_state->input->read(data->buffer.get(), size);
+    boost::scoped_array<char> buffer(new char[size]);
 
-    google::protobuf::io::ArrayInputStream in(data->buffer.get(), size);
+    m_state->input->read(buffer.get(), size);
+
+    google::protobuf::io::ArrayInputStream in(buffer.get(), size);
     google::protobuf::io::GzipInputStream unzipped_in(&in);
 
     if (! data->pb_input.ParseFromZeroCopyStream(&unzipped_in)) {
