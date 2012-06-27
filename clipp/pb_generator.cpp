@@ -286,7 +286,7 @@ bool PBGenerator::operator()(Input::input_p& input)
     google::protobuf::io::GzipInputStream unzipped_in(&in);
 
     if (! data->pb_input.ParseFromZeroCopyStream(&unzipped_in)) {
-        throw runtime_error("Failed to parse input->");
+        throw runtime_error("Failed to parse input.");
     }
 
     // Input
