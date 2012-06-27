@@ -4,8 +4,9 @@ $:.unshift(File.dirname(__FILE__))
 require 'clipp.pb'
 require 'zlib'
 require 'json'
+require 'stringio'
 
-  module IronBee
+module IronBee
   module CLIPP
     module HashToPB
       private
