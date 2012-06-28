@@ -56,7 +56,10 @@ TEST_F(TestConnection, basic)
     ib_conn.ctx = (ib_context_t*)1236;
     EXPECT_EQ(ib_conn.ctx, conn.context().ib());
 
-    ib_conn.t.started = 17;
+    ib_conn.tv_created.tv_sec = 0;
+    ib_conn.tv_created.tv_usec = 0;
+
+    ib_conn.t.started = 0;
     EXPECT_EQ(ib_conn.t.started, IronBee::ptime_to_ib(conn.started_time()));
 
     ib_conn.t.finished = 18;

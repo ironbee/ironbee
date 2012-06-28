@@ -36,12 +36,21 @@
 namespace IronBee {
 
 /**
- * Convert ib_time_t (microseconds since epoch) to ptime.
+ * Convert ib_timeval_t to ptime.
  *
- * @param[in] t Microseconds since epoch.
- * @return @a t as ptime.
+ * @param[in] tv IronBee time value structure
+ * @return @a tv as ptime.
  **/
-boost::posix_time::ptime ib_to_ptime(ib_time_t t);
+boost::posix_time::ptime ib_to_ptime(ib_timeval_t tv);
+
+/**
+ * Convert ib_timeval_t with ib_time_t offset to ptime.
+ *
+ * @param[in] tv IronBee time value structure
+ * @param[in] offset IronBee time value (microsecond offset)
+ * @return @a tv with offset as ptime.
+ **/
+boost::posix_time::ptime ib_to_ptime(ib_timeval_t tv, ib_time_t offset);
 
 /**
  * Convert ptime to ib_time_t (microseconds since epoch).

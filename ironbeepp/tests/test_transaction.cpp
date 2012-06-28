@@ -60,14 +60,14 @@ TEST_F(TestTransaction, basic)
     ib_tx.ctx = (ib_context_t*)1237;
     EXPECT_EQ(ib_tx.ctx, tx.context().ib());
 
-    ib_tx.t.started = 17;
+    ib_tx.tv_created.tv_sec = 0;
+    ib_tx.tv_created.tv_usec = 0;
+
+    ib_tx.t.started = 0;
     EXPECT_EQ(ib_tx.t.started, ptime_to_ib(tx.started_time()));
 
     ib_tx.t.finished = 18;
     EXPECT_EQ(ib_tx.t.finished, ptime_to_ib(tx.finished_time()));
-
-    ib_tx.t.started = 1;
-    EXPECT_EQ(ib_tx.t.started, ptime_to_ib(tx.started_time()));
 
     ib_tx.t.request_started = 2;
     EXPECT_EQ(ib_tx.t.request_started, ptime_to_ib(tx.request_started_time()));

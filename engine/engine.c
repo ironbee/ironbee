@@ -504,6 +504,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     }
 
     /* Mark time. */
+    ib_clock_gettimeofday(&(*pconn)->tv_created);
     (*pconn)->t.started = ib_clock_get_time();
 
     /* Name the connection pool */
@@ -679,7 +680,10 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     snprintf(namebuf, sizeof(namebuf), "TX/%p", (void *)tx);
     ib_mpool_setname(pool, namebuf);
 
+    /* Mark time. */
+    ib_clock_gettimeofday(&tx->tv_created);
     tx->t.started = ib_clock_get_time();
+
     tx->ib = ib;
     tx->mp = pool;
     tx->ctx = ib->ctx;

@@ -31,22 +31,33 @@ using namespace IronBee;
 
 TEST(Clock, Basic)
 {
-    ib_time_t ib = 0;
+    ib_timeval_t tv_ib = { 0 };
+    ib_time_t t_ib = 0;
     ptime p = from_time_t(0);
 
-    EXPECT_EQ(p, ib_to_ptime(ib));
-    EXPECT_EQ(ib, ptime_to_ib(p));
-    EXPECT_EQ(p, ib_to_ptime(ptime_to_ib(p)));
-    EXPECT_EQ(ib, ptime_to_ib(ib_to_ptime(ib)));
+    EXPECT_EQ(p, ib_to_ptime(tv_ib));
+    EXPECT_EQ(t_ib, ptime_to_ib(p));
 
-    ib = 17;
-    p += microseconds(17);
+    tv_ib.tv_sec = 17;
+    tv_ib.tv_usec = 492;
+    t_ib = 17000492;
+    p += seconds(17) + microseconds(492);
 
-    EXPECT_EQ(p, ib_to_ptime(ib));
-    EXPECT_EQ(ib, ptime_to_ib(p));
-    EXPECT_EQ(p, ib_to_ptime(ptime_to_ib(p)));
-    EXPECT_EQ(ib, ptime_to_ib(ib_to_ptime(ib)));
+    EXPECT_EQ(p, ib_to_ptime(tv_ib));
+    EXPECT_EQ(t_ib, ptime_to_ib(p));
+
+    tv_ib.tv_sec = 1340857461;
+    tv_ib.tv_usec = 492;
+    t_ib = 1340857461000492 + 4;
+    p = from_time_t(0);
+    p += seconds(1340857461) + microseconds(492) + microseconds(4);
+
+    EXPECT_EQ(p, ib_to_ptime(tv_ib, 4));
+    EXPECT_EQ(t_ib, ptime_to_ib(p));
 
     ptime now = microsec_clock::universal_time();
-    EXPECT_EQ(now, ib_to_ptime(ptime_to_ib(now)));
+    ptime now_plus_4 = now + microseconds(4);
+    t_ib = ptime_to_ib(now);
+    IB_CLOCK_TIMEVAL(tv_ib, t_ib);
+    EXPECT_EQ(now_plus_4, ib_to_ptime(tv_ib, 4));
 }

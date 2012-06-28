@@ -29,9 +29,9 @@
 
 #include <time.h>
 #include <sys/time.h>
+#include <assert.h>
+#include <stdio.h>
 
-#if 0
-// FIXME: Just use gettimeofday for now until issues between wall/clock time are fixed.
 #ifdef CLOCK_MONOTONIC_RAW
 #define IB_CLOCK                  CLOCK_MONOTONIC_RAW
 #else
@@ -39,7 +39,6 @@
 #define IB_CLOCK                  CLOCK_MONOTONIC
 #endif /* CLOCK_MONOTONIC */
 #endif /* CLOCK_MONOTONIC_RAW */
-#endif
 
 ib_clock_type_t ib_clock_type(void)
 {
@@ -55,7 +54,7 @@ ib_clock_type_t ib_clock_type(void)
 }
 
 ib_time_t ib_clock_get_time(void) {
-    uint64_t us;
+    uint64_t usec;
 
 #ifdef IB_CLOCK
     struct timespec ts;
@@ -71,12 +70,52 @@ ib_time_t ib_clock_get_time(void) {
     /* There are 1 million microsecs in a sec.
      * There are 1000 nanosecs in a microsec
      */
-    us = (ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
+    usec = (ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 #else
     struct timeval tv;
 
     gettimeofday(&tv, NULL);
-    us = ((tv.tv_sec * 1000000) + tv.tv_usec);
+    usec = ((tv.tv_sec * 1000000) + tv.tv_usec);
 #endif
-    return us;
+
+    return usec;
+}
+
+void ib_clock_gettimeofday(ib_timeval_t *tp) {
+    assert(tp != NULL);
+
+    struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+
+    tp->tv_sec = (uint32_t)tv.tv_sec;
+    tp->tv_usec = (uint32_t)tv.tv_usec;
+}
+
+void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv)
+{
+    assert(ptv != NULL);
+
+    struct timeval tv;
+    time_t t;
+    struct tm *tm;
+
+    IB_CLOCK_ASSIGN_TIMEVAL(tv, *ptv);
+    t = (time_t)tv.tv_sec;
+    tm = localtime(&t);
+    strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);
+    snprintf(buf + 19, 12, ".%04lu-0000", (unsigned long)tv.tv_usec);
+    strftime(buf + 24, 6, "%z", tm);
+}
+
+void ib_clock_relative_timestamp(char *buf, const ib_timeval_t *ptv, ib_time_t offset)
+{
+    assert(ptv != NULL);
+
+    ib_timeval_t adj_tv;
+
+    IB_CLOCK_ASSIGN_TIMEVAL(adj_tv, *ptv);
+    IB_CLOCK_ADJUST_TIMEVAL(adj_tv, offset);
+
+    ib_clock_timestamp(buf, &adj_tv);
 }

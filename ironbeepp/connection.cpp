@@ -39,12 +39,12 @@ Context ConstConnection::context() const
 
 boost::posix_time::ptime ConstConnection::started_time() const
 {
-    return ib_to_ptime(ib()->t.started);
+    return ib_to_ptime(ib()->tv_created);
 }
 
 boost::posix_time::ptime ConstConnection::finished_time() const
 {
-    return ib_to_ptime(ib()->t.finished);
+    return ib_to_ptime(ib()->tv_created, (ib()->t.finished - ib()->t.started));
 }
 
 const char* ConstConnection::remote_ip_string() const

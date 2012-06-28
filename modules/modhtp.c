@@ -1468,9 +1468,6 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
                    iconn->local_ipstr, iconn->local_port,
                    &htv);
 
-    /* Record the connection time. */
-    iconn->t.started = ib_clock_get_time();
-
     /* Store the context. */
     ib_conn_parser_context_set(iconn, modctx);
     htp_connp_set_user_data(modctx->htp, modctx);

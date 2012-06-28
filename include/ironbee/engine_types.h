@@ -172,8 +172,10 @@ struct ib_conn_t {
     ib_hash_t          *data;            /**< Generic data store */
 //    ib_filter_ctl_t    *fctl;            /**< Connection filter controller */
 
+    ib_timeval_t       tv_created;       /**< Connection created time value */
     struct {
-        ib_time_t       started;         /**< Connection started time */
+        ib_time_t       started;         /**< Connection started base time */
+        // TODO: Is opened/closed different than sterted/finished?
         ib_time_t       finished;        /**< Connection finished time */
     } t;
 
@@ -206,8 +208,9 @@ struct ib_tx_t {
     ib_provider_inst_t *epi;             /**< Log event provider instance */
     ib_hash_t          *data;            /**< Generic data store */
     ib_fctl_t          *fctl;            /**< Transaction filter controller */
+    ib_timeval_t       tv_created;       /**< Tx created time value */
     struct {
-        ib_time_t       started;         /**< Tx started time */
+        ib_time_t       started;         /**< Tx started base time */
         ib_time_t       request_started; /**< Request started time */
         ib_time_t       request_header;  /**< Request header time */
         ib_time_t       request_body;    /**< Request body time */
@@ -219,7 +222,7 @@ struct ib_tx_t {
         ib_time_t       postprocess;     /**< Postprocess time */
         ib_time_t       logtime;         /**< Auditlog time */
         ib_time_t       finished;        /**< Tx (response) finished time */
-    } t;
+    } t;                                 /**< Monotonic clock times */
     ib_tx_t            *next;            /**< Next transaction */
     const char         *hostname;        /**< Hostname used in the request */
     const char         *er_ipstr;        /**< Effective remote IP as string */

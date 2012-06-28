@@ -51,62 +51,73 @@ Context ConstTransaction::context() const
 
 boost::posix_time::ptime ConstTransaction::started_time() const
 {
-    return ib_to_ptime(ib()->t.started);
+    return ib_to_ptime(ib()->tv_created);
 }
 
 boost::posix_time::ptime ConstTransaction::request_started_time() const
 {
-    return ib_to_ptime(ib()->t.request_started);
+    return ib_to_ptime(ib()->tv_created,
+                       (ib()->t.request_started - ib()->t.started));
 }
 
 boost::posix_time::ptime ConstTransaction::request_header_time() const
 {
-    return ib_to_ptime(ib()->t.request_header);
+    return ib_to_ptime(ib()->tv_created,
+                       (ib()->t.request_header - ib()->t.started));
 }
 
 boost::posix_time::ptime ConstTransaction::request_body_time() const
 {
-    return ib_to_ptime(ib()->t.request_body);
+    return ib_to_ptime(ib()->tv_created,
+                       (ib()->t.request_body - ib()->t.started));
 }
 
 boost::posix_time::ptime ConstTransaction::request_finished_time() const
 {
-    return ib_to_ptime(ib()->t.request_finished);
+    return ib_to_ptime(ib()->tv_created,
+                       (ib()->t.request_finished - ib()->t.started));
 }
 
 boost::posix_time::ptime ConstTransaction::response_started_time() const
 {
-    return ib_to_ptime(ib()->t.response_started);
+    return ib_to_ptime(ib()->tv_created,
+                       (ib()->t.response_started - ib()->t.started));
 }
 
 boost::posix_time::ptime ConstTransaction::response_header_time() const
 {
-    return ib_to_ptime(ib()->t.response_header);
+    return ib_to_ptime(ib()->tv_created,
+                       (ib()->t.response_header - ib()->t.started));
 }
 
 boost::posix_time::ptime ConstTransaction::response_body_time() const
 {
-    return ib_to_ptime(ib()->t.response_body);
+    return ib_to_ptime(ib()->tv_created,
+                       (ib()->t.response_body - ib()->t.started));
 }
 
 boost::posix_time::ptime ConstTransaction::response_finished_time() const
 {
-    return ib_to_ptime(ib()->t.response_finished);
+    return ib_to_ptime(ib()->tv_created,
+                       (ib()->t.response_finished - ib()->t.started));
 }
 
 boost::posix_time::ptime ConstTransaction::postprocess_time() const
 {
-    return ib_to_ptime(ib()->t.postprocess);
+    return ib_to_ptime(ib()->tv_created,
+                       (ib()->t.postprocess - ib()->t.started));
 }
 
 boost::posix_time::ptime ConstTransaction::logtime_time() const
 {
-    return ib_to_ptime(ib()->t.logtime);
+    return ib_to_ptime(ib()->tv_created,
+                       (ib()->t.logtime - ib()->t.started));
 }
 
 boost::posix_time::ptime ConstTransaction::finished_time() const
 {
-    return ib_to_ptime(ib()->t.finished);
+    return ib_to_ptime(ib()->tv_created,
+                       (ib()->t.finished - ib()->t.started));
 }
 
 Transaction ConstTransaction::next() const

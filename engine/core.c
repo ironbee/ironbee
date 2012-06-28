@@ -40,6 +40,7 @@
 #include <ironbee/debug.h>
 #include <ironbee/util.h>
 #include <ironbee/provider.h>
+#include <ironbee/clock.h>
 
 #include "rule_engine_private.h"
 #include "core_private.h"
@@ -50,6 +51,7 @@
 #include <assert.h>
 #include <time.h>
 #include <sys/time.h>
+#include <stdio.h>
 #include <unistd.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
@@ -70,8 +72,6 @@ static const char * const ib_pipe_shell = "/bin/sh";
 
 /* The default UUID value */
 static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-000000000000";
-
-static void ib_timestamp(char *buf, ib_time_t time);
 
 #ifndef MODULE_BASE_PATH
 /* Always define a module base path. */
@@ -958,11 +958,11 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                         IB_FTRACE_RET_STATUS(IB_EALLOC);
                     }
 
-                    ib_timestamp(tstamp, tx->t.started);
-                     aux = tstamp;
+                    ib_clock_timestamp(tstamp, &tx->tv_created);
+                    aux = tstamp;
                     break;
                 case IB_LOG_FIELD_LOG_FILE:
-                     aux = cfg->fn;
+                    aux = cfg->fn;
                     break;
                 default:
                     ptr[used++] = '\n';
@@ -2255,29 +2255,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
     return strlen(*(const char **)chunk);
 }
 
-/**
- * Generate a timestamp formatted for the audit log.
- *
- * Format: YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ
- * Example: 2010-11-04T12:42:36.3874-0800
- *
- * @param buf Buffer at least 31 bytes in length
- * @param time Epoch time in microseconds
- */
-static void ib_timestamp(char *buf, ib_time_t tim)
-{
-    struct timeval tv;
-    time_t t;
-    struct tm *tm;
-
-    IB_CLOCK_TIMEVAL(tv, tim);
-    t = (time_t)tv.tv_sec;
-    tm = localtime(&t);
-    strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);
-    snprintf(buf + 19, 12, ".%04lu-0000", (unsigned long)tv.tv_usec);
-    strftime(buf + 24, 6, "%z", tm);
-}
-
 #define CORE_AUDITLOG_FORMAT "http-message/1"
 
 static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
@@ -2299,7 +2276,8 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     if (tstamp == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    ib_timestamp(tstamp, log->tx->t.logtime);
+    ib_clock_relative_timestamp(tstamp, &log->tx->tv_created,
+                                (log->tx->t.logtime - log->tx->t.started));
 
     /* TX Time */
     txtime = (char *)ib_mpool_alloc(pool, 30);
@@ -2449,7 +2427,8 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         if (tstamp == NULL) {
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
-        ib_timestamp(tstamp, tx->t.request_started);
+        ib_clock_relative_timestamp(tstamp, &tx->tv_created,
+                                    (tx->t.request_started - tx->t.started));
 
         ib_field_create_bytestr_alias(&f, pool,
                            IB_FIELD_NAME("request-timestamp"),
@@ -2550,7 +2529,8 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     if (tstamp == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    ib_timestamp(tstamp, tx->t.response_started);
+    ib_clock_relative_timestamp(tstamp, &tx->tv_created,
+                                (tx->t.response_started - tx->t.started));
 
     /* Generate a list of fields in this part. */
     rc = ib_list_create(&list, pool);

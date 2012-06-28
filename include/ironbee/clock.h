@@ -42,7 +42,13 @@ extern "C" {
  * @{
  */
 
-/** Microsecond Time */
+/** Fixed size version of "struct timeval" type. */
+typedef struct {
+    uint32_t tv_sec;      /**< Seconds since epoch */
+    uint32_t tv_usec;     /**< Fractional value in microseconds */
+} ib_timeval_t;
+
+/** Microsecond time as 64-bit integer. */
 typedef uint64_t ib_time_t;
 
 /** Clock Types */
@@ -54,9 +60,18 @@ typedef enum ib_clock_type_t {
 } ib_clock_type_t;
 
 /**
- * Convert an ib_time_t to struct timeval.
+ * Convert an ib_timeval_t to ib_time_t.
  *
- * @param[out] tv Timeval structure (struct timeval)
+ * @param[in]  tv IronBee timeval structure (ib_timeval_t)
+ *
+ * @returns Status code
+ */
+#define IB_CLOCK_TIMEVAL_TIME(tv) ((ib_time_t)(((tv).tv_sec * 1000000) + (tv).tv_usec))
+
+/**
+ * Convert an ib_time_t to timeval structure.
+ *
+ * @param[out] tv Timeval structure (ib_timeval_t or struct timeval)
  * @param[in]  time IronBee time structure (ib_time_t)
  *
  * @returns Status code
@@ -65,6 +80,55 @@ typedef enum ib_clock_type_t {
     do { \
         (tv).tv_sec = (time)/1000000 ;\
         (tv).tv_usec = (time) - ((tv).tv_sec * 1000000); \
+    } while (0)
+
+/**
+ * Convert an ib_time_t to ib_timediff_t structure.
+ *
+ * @param[out] td Time diff structure (ib_timediff_t)
+ * @param[in]  time IronBee time structure (ib_time_t)
+ *
+ * @returns Status code
+ */
+#define IB_CLOCK_TIMEDIFF(td, time) \
+    do { \
+        (tv).tv_sec = (time)/1000000 ;\
+        (tv).tv_usec = (time) - ((tv).tv_sec * 1000000); \
+    } while (0)
+
+/**
+ * Assign values between two timeval structures.
+ *
+ * This is meant to convert between struct timeval and
+ * ib_timeval_t. Either types are supported in dest/src.
+ *
+ * @param[out] dest Destination timeval structure
+ * @param[in]  src Source timeval structure
+ *
+ * @returns Status code
+ */
+#define IB_CLOCK_ASSIGN_TIMEVAL(dest, src) \
+    do { \
+        (dest).tv_sec = (src).tv_sec; \
+        (dest).tv_usec = (src).tv_usec; \
+    } while (0)
+
+/**
+ * Adjust a timeval structure by a value in microseconds.
+ *
+ * This is meant to convert between struct timeval and
+ * ib_timeval_t. Either types are supported in dest/src.
+ *
+ * @param[out] dest Destination timeval structure
+ * @param[in]  usec Time in microseconds to adjust dest
+ *
+ * @returns Status code
+ */
+#define IB_CLOCK_ADJUST_TIMEVAL(dest, usec) \
+    do { \
+        ib_time_t t = IB_CLOCK_TIMEVAL_TIME((dest)); \
+        t += (usec); \
+        IB_CLOCK_TIMEVAL((dest),t); \
     } while (0)
 
 /**
@@ -85,14 +149,49 @@ typedef enum ib_clock_type_t {
 ib_clock_type_t DLL_PUBLIC ib_clock_type(void);
 
 /**
- * Get a timestamp.
+ * Get the clock time.
  *
- * @note This is not monotonic on all platforms.
+ * This is to be used for time deltas.
  *
- * @returns Timestamp
+ * @note This is not monotonic nor wall time on all platforms.
+ *
+ * @returns 
  *
  */
 ib_time_t DLL_PUBLIC ib_clock_get_time(void);
+
+/**
+ * IronBee types version of gettimeofday() called with
+ * NULL timezone parameter.
+ *
+ * This is essentially gettimeofday(ib_timeval_t *tp, NULL).
+ *
+ * @param[out] tp Address which timeval is written
+ */
+void ib_clock_gettimeofday(ib_timeval_t *tp);
+
+/**
+ * Generate a string timestamp.
+ *
+ * Format: YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ
+ * Example: 2010-11-04T12:42:36.3874-0800
+ *
+ * @param[out] buf Buffer at least 31 bytes in length
+ * @param[in] ptv Address of timeval structure (struct timeval or ib_timeval_t)
+ */
+void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv);
+
+/**
+ * Generate a string timestamp from a timeval structure and offset.
+ *
+ * Format: YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ
+ * Example: 2010-11-04T12:42:36.3874-0800
+ *
+ * @param[out] buf Buffer at least 31 bytes in length
+ * @param[in] ptv Address of timeval structure (struct timeval or ib_timeval_t)
+ * @param[in] offset Time offset in microseconds
+ */
+void ib_clock_relative_timestamp(char *buf, const ib_timeval_t *ptv, ib_time_t offset);
 
 /** @} IronBeeUtilClock */
 

@@ -39,10 +39,18 @@ namespace IronBee {
 // time_duration behaves strangely with large microsecond values hence the use
 // of both seconds() and microseconds().
 
-boost::posix_time::ptime ib_to_ptime(ib_time_t t)
+boost::posix_time::ptime ib_to_ptime(ib_timeval_t tv)
 {
-    return c_epoch + seconds(t / c_microseconds_per_second)
-                   + microseconds(t % c_microseconds_per_second);
+    return c_epoch + seconds(tv.tv_sec)
+                   + microseconds(tv.tv_usec);
+}
+
+boost::posix_time::ptime ib_to_ptime(ib_timeval_t tv, ib_time_t offset)
+{
+    return c_epoch + seconds(tv.tv_sec)
+                   + microseconds(tv.tv_usec)
+                   + seconds(offset / c_microseconds_per_second)
+                   + microseconds(offset % c_microseconds_per_second);
 }
 
 ib_time_t ptime_to_ib(const boost::posix_time::ptime& t)

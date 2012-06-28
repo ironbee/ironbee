@@ -168,6 +168,11 @@ ffi.cdef [[
     typedef struct ib_sdata_t ib_sdata_t;
     typedef uint64_t ib_time_t;
 
+    typedef struct {
+        uint32_t tv_sec;
+        uint32_t tv_usec;
+    } ib_timeval_t;
+
     /* Parsed Object Types */
     typedef struct ib_parsed_req_line_t ib_parsed_req_line_t;
     typedef struct ib_parsed_resp_line_t ib_parsed_resp_line_t;
@@ -223,6 +228,7 @@ ffi.cdef [[
         void               *parser_ctx;
         ib_provider_inst_t *dpi;
         ib_hash_t          *data;
+        ib_timeval_t        tv_created;
         struct {
             ib_time_t       started;
             ib_time_t       finished;
@@ -270,6 +276,7 @@ ffi.cdef [[
         ib_provider_inst_t *epi;
         ib_hash_t          *data;
         ib_fctl_t          *fctl;
+        ib_timeval_t        tv_created;
         struct {
             ib_time_t       started;
             ib_time_t       request_started;
