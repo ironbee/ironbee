@@ -65,6 +65,7 @@ typedef struct {
 
 /**
  * @brief Malloc and unescape into that buffer the marked string.
+ * @param[in] cp The configuration parser
  * @param[in] fpc_mark The start of the string.
  * @param[in] fpc The current character from ragel.
  * @param[in,out] mp Temporary memory pool passed in by Ragel.
@@ -73,7 +74,8 @@ typedef struct {
  *         larger than the string stored in it if the length of the string is
  *         reduced by Javascript unescaping.
  */
-static char* alloc_cpy_marked_string(const char *fpc_mark,
+static char* alloc_cpy_marked_string(ib_cfgparser_t *cp,
+                                     const char *fpc_mark,
                                      const char *fpc,
                                      ib_mpool_t* mp)
 {
@@ -81,7 +83,7 @@ static char* alloc_cpy_marked_string(const char *fpc_mark,
     size_t pvallen;
     char* pval;
     /* Adjust for quoted value. */
-    if ((*fpc_mark == '"') && (*(afpc-1) == '"') && (fpc_mark+1 < afpc-2)) {
+    if ((*fpc_mark == '"') && (*(afpc-1) == '"') && (fpc_mark+1 < afpc)) {
         fpc_mark++;
         afpc--;
     }
@@ -109,7 +111,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     char *incfile;
     char *pval;
 
-    pval = alloc_cpy_marked_string(mark, fpc, mp);
+    pval = alloc_cpy_marked_string(cp, mark, fpc, mp);
     incfile = ib_util_relative_file(mp, file, pval);
 
     if (access(incfile, R_OK) != 0) {
@@ -158,11 +160,11 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 
     # Parameter
     action push_param {
-        pval = alloc_cpy_marked_string(mark, fpc, mpcfg);
+        pval = alloc_cpy_marked_string(cp, mark, fpc, mpcfg);
         ib_list_push(plist, pval);
     }
     action push_blkparam {
-        pval = alloc_cpy_marked_string(mark, fpc, mpcfg);
+        pval = alloc_cpy_marked_string(cp, mark, fpc, mpcfg);
         ib_list_push(plist, pval);
     }
 
