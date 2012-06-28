@@ -93,8 +93,8 @@ typedef enum ib_clock_type_t {
  */
 #define IB_CLOCK_TIMEDIFF(td, time) \
     do { \
-        (tv).tv_sec = (time)/1000000 ;\
-        (tv).tv_usec = (time) - ((tv).tv_sec * 1000000); \
+        (td).tv_sec = (time)/1000000 ;\
+        (td).tv_usec = (time) - ((td).tv_sec * 1000000); \
     } while (0)
 
 /**
