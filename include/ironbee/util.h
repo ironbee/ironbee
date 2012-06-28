@@ -235,6 +235,21 @@ uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
                                           const uint8_t **end_out);
 
 /**
+ * Duplicate memory using ib_mpool_alloc() or malloc(), optionally add a nul
+ *
+ * @param[in] mp Memory pool to use for allocation, or NULL to use malloc()
+ * @param[in] Input data
+ * @param[in] len Length of input
+ * @param[in] nul Add nul byte?
+ *
+ * @returns Pointer to new buffer or NULL
+ */
+void *ib_util_memdup(ib_mpool_t *mp,
+                     const void *in,
+                     size_t len,
+                     bool nul);
+
+/**
  * In-place decode a URL (NUL-string version)
  *
  * @param[in,out] data Buffer to operate on

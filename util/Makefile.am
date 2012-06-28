@@ -10,6 +10,7 @@ libibutil_la_SOURCES = lock.c util.c logformat.c \
                        string.c strlower.c strtrim.c strwspc.c \
                        path.c \
                        decode.c \
+                       modsec_compat.c \
                        clock.c types.c \
                        ironbee_util_private.h
 libibutil_la_CFLAGS = @OSSP_UUID_CFLAGS@

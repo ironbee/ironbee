@@ -356,6 +356,40 @@ uint8_t *ib_util_copy_on_write(ib_mpool_t *mp,
     IB_FTRACE_RET_PTR(uint8_t, cur_out);
 }
 
+void *ib_util_memdup(ib_mpool_t *mp,
+                     const void *in,
+                     size_t len,
+                     bool nul)
+{
+    IB_FTRACE_INIT();
+    assert(in != NULL);
+
+    void *p;
+    size_t size = len;
+    if (nul) {
+        ++size;
+    }
+
+    if (len <= 0) {
+        IB_FTRACE_RET_PTR(void, NULL);
+    }
+    if (mp != NULL) {
+        p = ib_mpool_alloc(mp, size);
+    }
+    else {
+        p = malloc(size);
+    }
+    if (p == NULL) {
+        IB_FTRACE_RET_PTR(void, NULL);
+    }
+    memcpy(p, in, len);
+    if (nul) {
+        *((char *)p + len) = '\0';
+    }
+
+    IB_FTRACE_RET_PTR(void, p);
+}
+
 /* -- Library Setup -- */
 
 ib_status_t ib_initialize(void)
