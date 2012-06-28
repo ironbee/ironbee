@@ -929,6 +929,7 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value < param_value);
+
     if (ib_rule_should_capture(rule, *result) == true) {
         ib_data_capture_clear(tx);
         rc = capture_num(tx, 0, value);
@@ -1066,6 +1067,11 @@ static ib_status_t op_nop_execute(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_log_debug2_tx(tx, "NOP operator returning 1");
     *result = 1;
+
+    if (ib_rule_should_capture(rule, *result) == true) {
+        ib_data_capture_clear(tx);
+        ib_data_capture_set_item(tx, 0, field);
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1085,7 +1091,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the string equal operator */
     rc = ib_operator_register(ib,
                               "streq",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
                               strop_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -1099,7 +1105,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the string contains operator */
     rc = ib_operator_register(ib,
                               "contains",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
                               strop_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -1113,7 +1119,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the ipmatch operator */
     rc = ib_operator_register(ib,
                               "ipmatch",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
                               op_ipmatch_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -1131,7 +1137,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric equal operator */
     rc = ib_operator_register(ib,
                               "eq",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -1145,7 +1151,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric not-equal operator */
     rc = ib_operator_register(ib,
                               "ne",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -1159,7 +1165,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric greater-than operator */
     rc = ib_operator_register(ib,
                               "gt",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -1173,7 +1179,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric less-than operator */
     rc = ib_operator_register(ib,
                               "lt",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -1187,7 +1193,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric greater-than or equal to operator */
     rc = ib_operator_register(ib,
                               "ge",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -1201,7 +1207,7 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
     /* Register the numeric less-than or equal to operator */
     rc = ib_operator_register(ib,
                               "le",
-                              IB_OP_FLAG_PHASE,
+                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
                               op_numcmp_create,
                               NULL,
                               NULL, /* no destroy function */
@@ -1217,7 +1223,8 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               "nop",
                               ( IB_OP_FLAG_ALLOW_NULL |
                                 IB_OP_FLAG_PHASE |
-                                IB_OP_FLAG_STREAM ),
+                                IB_OP_FLAG_STREAM |
+                                IB_OP_FLAG_CAPTURE ),
                               NULL, NULL, /* No create function */
                               NULL, NULL, /* no destroy function */
                               op_nop_execute, NULL);

@@ -118,6 +118,7 @@ struct ib_operator_t {
 #define IB_OP_FLAG_ALLOW_NULL  (1 << 0)   /**< Op. accepts NULL fields */
 #define IB_OP_FLAG_PHASE       (1 << 1)   /**< Op works with phase rules */
 #define IB_OP_FLAG_STREAM      (1 << 2)   /**< Op works with stream rules */
+#define IB_OP_FLAG_CAPTURE     (1 << 3)   /**< Op supports capture */
 
 struct ib_operator_inst_t {
     struct ib_operator_t *op;    /**< Pointer to the operator type */

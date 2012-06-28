@@ -848,7 +848,9 @@ static ib_status_t modac_init(ib_engine_t *ib,
 
     ib_operator_register(ib,
                          "pm",
-                         IB_OP_FLAG_PHASE|IB_OP_FLAG_STREAM,
+                         ( IB_OP_FLAG_PHASE |
+                           IB_OP_FLAG_STREAM |
+                           IB_OP_FLAG_CAPTURE ),
                          &pm_operator_create,
                          NULL,
                          &pm_operator_destroy,
@@ -857,7 +859,9 @@ static ib_status_t modac_init(ib_engine_t *ib,
                          NULL);
     ib_operator_register(ib,
                          "pmf",
-                         IB_OP_FLAG_PHASE|IB_OP_FLAG_STREAM,
+                         ( IB_OP_FLAG_PHASE |
+                           IB_OP_FLAG_STREAM |
+                           IB_OP_FLAG_CAPTURE ),
                          &pmf_operator_create,
                          NULL,
                          &pm_operator_destroy,

@@ -745,8 +745,15 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
     /* Capture modifier */
     if (strcasecmp(name, "capture") == 0) {
-        rule->flags |= IB_RULE_FLAG_CAPTURE;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        if (ib_flags_any(rule->opinst->op->flags, IB_OP_FLAG_CAPTURE) == true) {
+            rule->flags |= IB_RULE_FLAG_CAPTURE;
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+        else {
+            ib_cfg_log_error(cp, "Capture not supported by operator %s",
+                             rule->opinst->op->name);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
     }
 
     /* Transformation modifiers */

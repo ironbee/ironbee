@@ -78,6 +78,11 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_log_debug_tx(tx, "True operator returning 1");
     *result = 1;
+
+    if (ib_rule_should_capture(rule, *result) == true) {
+        ib_data_capture_clear(tx);
+        ib_data_capture_set_item(tx, 0, field);
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -107,6 +112,8 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     *result = 0;
+    /* Don't check for capture, because we always return zero */
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -134,6 +141,12 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
 
     /* Return true of field is not NULL */
     *result = (field != NULL);
+
+    if (ib_rule_should_capture(rule, *result) == true) {
+        ib_data_capture_clear(tx);
+        ib_data_capture_set_item(tx, 0, field);
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -249,7 +262,8 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               "true",
                               ( IB_OP_FLAG_ALLOW_NULL |
                                 IB_OP_FLAG_PHASE |
-                                IB_OP_FLAG_STREAM ),
+                                IB_OP_FLAG_STREAM |
+                                IB_OP_FLAG_CAPTURE ),
                               NULL, NULL, /* No create function */
                               NULL, NULL, /* no destroy function */
                               op_true_execute, NULL);
@@ -274,7 +288,8 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     rc = ib_operator_register(ib,
                               "exists",
                               ( IB_OP_FLAG_ALLOW_NULL |
-                                IB_OP_FLAG_PHASE ),
+                                IB_OP_FLAG_PHASE |
+                                IB_OP_FLAG_CAPTURE ),
                               NULL, /* No create function */
                               NULL,
                               NULL, /* no destroy function */
