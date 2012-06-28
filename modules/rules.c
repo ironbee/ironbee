@@ -136,125 +136,66 @@ typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*,
 /**
  * Parse rule's operator.
  *
- * Parses the rule's operator string @a str and, stores the results in the
- * rule object @a rule.
+ * Parses the rule's operator and operand strings (@a operator and @a
+ * operand), and stores the results in the rule object @a rule.
  *
  * @param cp IronBee configuration parser
  * @param rule Rule object to update
- * @param str Operator string
+ * @param operator Operator string
+ * @param operand Operand string
  *
  * @returns Status code
  */
 static ib_status_t parse_operator(ib_cfgparser_t *cp,
                                   ib_rule_t *rule,
-                                  const char *str)
+                                  const char *operator,
+                                  const char *operand)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc = IB_OK;
-    const char *at = NULL;
-    ib_num_t bang = 0;
-    const char *op = NULL;
-    const char *cptr;
-    ib_flags_t flags = IB_OPINST_FLAG_NONE;
-    char *copy;
-    char *space;
-    char *args = NULL;
-    ib_operator_inst_t *operator;
+    assert(cp != NULL);
+    assert(rule != NULL);
+    assert(operator != NULL);
 
-    /* Search for leading '!' / '@' */
-    for (cptr = str;  *cptr != '\0';  cptr++) {
-        if ( (at == NULL) && (bang == 0) && (*cptr == '!') ) {
-            bang = 1;
-            flags |= IB_OPINST_FLAG_INVERT;
-        }
-        else if ( (at == NULL) && (*cptr == '@') ) {
-            at = cptr;
-            break;
-        }
-        else if (isblank(*cptr) == 0) {
-            ib_cfg_log_error(cp, "Invalid rule syntax \"%s\"", str);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
+    ib_status_t rc = IB_OK;
+    const char *opname = NULL;
+    const char *cptr = operator;
+    ib_flags_t flags = IB_OPINST_FLAG_NONE;
+    ib_operator_inst_t *opinst;
+
+    /* Leading '!' (invert flag)? */
+    if (*cptr == '!') {
+        flags |= IB_OPINST_FLAG_INVERT;
+        ++cptr;
     }
 
-    /* Make sure that we have an operator */
-    if ( (at == NULL) || strlen(at+1) == 0) {
-        ib_cfg_log_error(cp, "Invalid rule syntax \"%s\"", str);
+    /* Better be an '@' next... */
+    if ( (*cptr != '@') || (isalpha(*(cptr+1)) == 0) ) {
+        ib_cfg_log_error(cp, "Invalid rule syntax \"%s\"", operator);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-
-    /* Make a copy of the string to operate on */
-    copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), at+1);
-    if (copy == NULL) {
-        ib_cfg_log_error(cp,
-                         "Failed to copy rule operator string \"%s\"", at+1);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    op = copy;
-
-    /* Find first space */
-    space = strchr(copy, ' ');
-    if (space != NULL) {
-        size_t  alen;
-        bool empty = false;
-
-        /* Find the first non-whitespace */
-        args = space;
-        while( isspace(*args) ) {
-            ++args;
-        }
-
-        /* Mark the end of the operator itself with a NUL */
-        *space = '\0';
-
-        /* Strip off trailing whitespace from args */
-        alen = strlen(args);
-        if (alen > 0) {
-            char *end = args+alen-1;
-            while( (end > args) && (*end == ' ') ) {
-                *end = '\0';
-                --end;
-            }
-
-            /* Allow for quoting with single quotes */
-            if ( (*args == '\'') && (*end == '\'') ) {
-                if (end == args+1) {
-                    *args = '\0';
-                    empty = true;
-                }
-                else if (args != end) {
-                    ++args;
-                    *end = '\0';
-                    --end;
-                }
-            }
-
-        }
-
-        /* Is args an empty string? */
-        if ( (*args == '\0') && (empty == false) ) {
-            args = NULL;
-        }
-    }
+    opname = cptr + 1;
 
     /* Create the operator instance */
     rc = ib_operator_inst_create(cp->ib,
                                  cp->cur_ctx,
                                  rule,
                                  ib_rule_required_op_flags(rule),
-                                 op,
-                                 args,
+                                 opname,
+                                 operand,
                                  flags,
-                                 &operator);
+                                 &opinst);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-                         "Failed to create operator instance \"%s\": %s",
-                         op, ib_status_to_string(rc));
+                         "Failed to create operator instance "
+                         "operator=\"%s\" operand=\"%s\": %s",
+                         opname,
+                         operand == NULL ? "" : operand,
+                         ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Set the operator */
-    rc = ib_rule_set_operator(cp->ib, rule, operator);
+    rc = ib_rule_set_operator(cp->ib, rule, opinst);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Failed to set operator for rule: %s",
@@ -262,8 +203,11 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     ib_cfg_log_debug3(cp,
-                      "Rule: op=\"%s\"; flags=0x%04x args=\"%s\"",
-                      op, flags, ( (args == NULL) ? "" : args) );
+                      "Rule: operator=\"%s\" operand=\"%s\" "
+                      "flags=0x%04x",
+                      operator,
+                      (operand == NULL) ? "" : operand,
+                      flags);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -277,13 +221,15 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
  * @param[in] cp IronBee configuration parser
  * @param[in] target_str Target field name.
  * @param[out] rewritten Rewritten string.
+ * @param[out] rewrites Number of rewrites found in @a target_str.
  *
  * @returns Status code
  */
 #define MAX_TFN_TOKENS 10
 static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
                                          const char *target_str,
-                                         const char **rewritten)
+                                         const char **rewritten,
+                                         int *rewrites)
 {
     IB_FTRACE_INIT();
     char const *ops[MAX_TFN_TOKENS];
@@ -314,6 +260,7 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
     }
 
     /* No rewrites?  Done */
+    *rewrites = count;
     if (count == 0) {
         *rewritten = target_str;
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -480,101 +427,65 @@ static ib_status_t parse_target_string(ib_cfgparser_t *cp,
  *  - IB_EINVAL if not targets are found, including if the string is empty.
  *  - IB_EALLOC if a memory allocation fails.
  */
-static ib_status_t parse_targets(ib_cfgparser_t *cp,
-                                 ib_rule_t *rule,
-                                 const char *targets_str)
+static ib_status_t parse_target(ib_cfgparser_t *cp,
+                                ib_rule_t *rule,
+                                const char *target_str)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc = IB_OK;
-    const char *cur;
-    char *targets_str_copy;
-    ib_num_t num_targets = 0;
+    ib_status_t rc;
+    const char *rewritten_target_str = NULL;
+    const char *final_target_str; /* Holder for the final target name. */
+    ib_list_t *tfns;              /* Transformations to perform. */
+    ib_rule_target_t *ib_rule_target;
+    int not_found = 0;
+    int rewrites;
 
-    /* Find the start of the target string. */
-    while(isspace(*targets_str)) {
-        ++targets_str;
+    /* First, rewrite cur into rewritten_target_str. */
+    rc = rewrite_target_tokens(cp, target_str,
+                               &rewritten_target_str, &rewrites);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error rewriting target \"%s\"", target_str);
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Fail on an empty target. */
-    if (*targets_str == '\0') {
-        ib_cfg_log_error(cp,  "Rule targets is empty");
+    /* Parse the rewritten string into the final_target_str. */
+    rc = parse_target_string(cp,
+                             rewritten_target_str,
+                             &final_target_str,
+                             &tfns);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error parsing target string \"%s\": %s",
+                         target_str, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Create the target object */
+    rc = ib_rule_create_target(cp->ib,
+                               final_target_str,
+                               tfns,
+                               &ib_rule_target,
+                               &not_found);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "Error creating rule target \"%s\": %s",
+                         final_target_str, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (not_found != 0) {
+        ib_cfg_log_error(cp, "Rule target \"%s\": %d transformations not found",
+                         final_target_str, not_found);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* Make a write-able copy for processing. */
-    targets_str_copy = ib_mpool_strdup(ib_rule_mpool(cp->ib), targets_str);
-    if (targets_str_copy == NULL) {
-        ib_cfg_log_error(cp,  "Failed to copy rule targets");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    /* Add the target to the rule */
+    rc = ib_rule_add_target(cp->ib, rule, ib_rule_target);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to add rule target \"%s\"", target_str);
+        IB_FTRACE_RET_STATUS(rc);
     }
+    ib_cfg_log_debug3(cp, "Added rule target \"%s\" to rule", target_str);
 
-    /* For each rule target separated by '|' or ','... */
-    for (cur = strtok(targets_str_copy, "|,");
-         cur != NULL;
-         cur = strtok(NULL, "|,") )
-    {
-        const char *rewritten_target_str = NULL;
-        const char *final_target_str; /* Holder for the final target name. */
-        ib_list_t *transforms; /* Transforms to perform. */
-        ib_rule_target_t *ib_rule_target;
-        ib_num_t not_found = 0;
-
-        /* First, rewrite cur into rewritten_target_str. */
-        rc = rewrite_target_tokens(cp, cur, &rewritten_target_str);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Error rewriting target \"%s\"", cur);
-            continue;
-        }
-
-        /* Parse the rewritten string into the final_target_str. */
-        rc = parse_target_string(cp,
-                                 rewritten_target_str,
-                                 &final_target_str,
-                                 &transforms);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Error parsing target string \"%s\"", cur);
-            continue;
-        }
-
-        /* Create the target object */
-        rc = ib_rule_create_target(cp->ib,
-                                   final_target_str,
-                                   transforms,
-                                   &ib_rule_target,
-                                   &not_found);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp,
-                         "Error creating rule target \"%s\": %s",
-                         final_target_str, ib_status_to_string(rc));
-            continue;
-
-        }
-        else if (not_found != 0) {
-            ib_cfg_log_error(cp,
-                         "Rule target \"%s\": %" PRId64
-                         " transformations not found",
-                         final_target_str, not_found);
-        }
-
-        /* Add the target to the rule */
-        rc = ib_rule_add_target(cp->ib, rule, ib_rule_target);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Failed to add rule target \"%s\"", cur);
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        ib_cfg_log_debug3(cp,
-                          "Added rule target \"%s\" to rule %p",
-                          cur, (void *)rule);
-        ++num_targets;
-    }
-
-    /* Make sure we have at least one successful target */
-    if (num_targets == 0) {
-        ib_cfg_log_error(cp, "No targets for rule \"%s\"", rule->meta.id);
-        rc = IB_EINVAL;
-    }
-
-    IB_FTRACE_RET_STATUS(rc);
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -1205,28 +1116,15 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    const ib_list_node_t *targets;
-    const ib_list_node_t *op;
-    const ib_list_node_t *mod;
+    const ib_list_node_t *node;
+    const char *nodestr;
+    const char *operator;
+    const char *operand;
     ib_rule_t *rule = NULL;
+    int targets = 0;
 
     if (cbdata != NULL) {
         IB_FTRACE_MSG("Callback data is not null.");
-    }
-
-    /* Get the targets string */
-    targets = ib_list_first_const(vars);
-    if ( (targets == NULL) || (targets->data == NULL) ) {
-        ib_cfg_log_error(cp, "No targets for rule");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* Get the operator string */
-    op = ib_list_node_next_const(targets);
-    if ( (op == NULL) || (op->data == NULL) ) {
-        ib_cfg_log_error(cp, "No operator for rule");
-        rc = IB_EINVAL;
-        goto cleanup;
     }
 
     /* Allocate a rule */
@@ -1239,33 +1137,71 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
         goto cleanup;
     }
 
-    /* Parse the targets */
-    rc = parse_targets(cp, rule, targets->data);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "Error parsing rule targets: %s",
-                         ib_status_to_string(rc));
+    /* Loop through the targets, stop when we encounter an operator */
+    IB_LIST_LOOP_CONST(vars, node) {
+        if (node->data == NULL) {
+            ib_cfg_log_error(cp, "Found invalid rule target");
+            rc = IB_EINVAL;
+            goto cleanup;
+        }
+        nodestr = (const char *)node->data;
+        if ( (*nodestr == '@') ||
+             ((*nodestr != '\0') && (*(nodestr+1) == '@')) )
+        {
+            break;
+        }
+        rc = parse_target(cp, rule, nodestr);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp,
+                             "Error parsing rule target \"%s\": %s",
+                             nodestr, ib_status_to_string(rc));
+            goto cleanup;
+        }
+        ++targets;
+    }
+
+    /* No targets??? */
+    if (targets == 0) {
+        ib_cfg_log_error(cp, "No rule targets found");
+        rc = IB_EINVAL;
         goto cleanup;
     }
 
+    /* Verify that we have an operator and operand */
+    if ( (node == NULL) || (node-> data == NULL) ) {
+        ib_cfg_log_error(cp, "No rule operator found");
+        rc = IB_EINVAL;
+        goto cleanup;
+    }
+    operator = (const char *)node->data;
+    node = ib_list_node_next_const(node);
+    if ( (node == NULL) || (node-> data == NULL) ) {
+        ib_cfg_log_error(cp, "No rule operand found");
+        rc = IB_EINVAL;
+        goto cleanup;
+    }
+    operand = (const char *)node->data;
+
     /* Parse the operator */
-    rc = parse_operator(cp, rule, op->data);
+    rc = parse_operator(cp, rule, operator, operand);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "Error parsing rule operator \"%s\": %s",
-                         (const char *)op->data, ib_status_to_string(rc));
+        ib_cfg_log_error(cp, "Error parsing rule operator \"%s\": %s",
+                         operator, ib_status_to_string(rc));
         goto cleanup;
     }
 
     /* Parse all of the modifiers */
-    mod = op;
-    while( (mod = ib_list_node_next_const(mod)) != NULL) {
-        rc = parse_modifier(cp, rule, mod->data);
+    while( (node = ib_list_node_next_const(node)) != NULL) {
+        if (node->data == NULL) {
+            ib_cfg_log_error(cp, "Found invalid rule modifier");
+            rc = IB_EINVAL;
+            goto cleanup;
+        }
+        nodestr = (const char *)node->data;
+        rc = parse_modifier(cp, rule, nodestr);
         if (rc != IB_OK) {
-            ib_cfg_log_error(cp,
-                             "Error parsing rule modifier \"%s\": %s",
-                             (const char *)mod->data,
-                             ib_status_to_string(rc));
+            ib_cfg_log_error(cp, "Error parsing rule modifier \"%s\": %s",
+                             nodestr, ib_status_to_string(rc));
             goto cleanup;
         }
     }
@@ -1330,6 +1266,8 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     const ib_list_node_t *node;
     ib_rule_phase_t phase = PHASE_INVALID;
     const char *str;
+    const char *operator;
+    const char *operand;
     ib_rule_t *rule;
 
     if (cbdata != NULL) {
@@ -1357,6 +1295,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp, "No operator for rule");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+    operator = (const char *)node->data;
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
@@ -1377,12 +1316,20 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Verify that we have an operand */
+    node = ib_list_node_next_const(node);
+    if ( (node == NULL) || (node-> data == NULL) ) {
+        ib_cfg_log_error(cp, "No rule operand found");
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    operand = (const char *)node->data;
+
     /* Parse the operator */
-    rc = parse_operator(cp, rule, node->data);
+    rc = parse_operator(cp, rule, operator, operand);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-                         "Error parsing rule targets: %s",
-                         ib_status_to_string(rc));
+                         "Error parsing rule operator \"%s\": %s",
+                         operator, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1557,7 +1504,7 @@ static ib_status_t parse_action_params(ib_cfgparser_t *cp,
     ib_flags_set(rule->flags, IB_RULE_FLAG_ACTION);
 
     /* Parse the operator */
-    rc = parse_operator(cp, rule, "@nop");
+    rc = parse_operator(cp, rule, "@nop", NULL);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Error parsing rule operator \"nop\": %s",
@@ -1671,6 +1618,8 @@ static void clean_up_ipc_mem(void)
 static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(m != NULL);
 
 #ifdef ENABLE_LUA
     /* Error code from Iron Bee calls. */

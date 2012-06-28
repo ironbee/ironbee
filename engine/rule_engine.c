@@ -3178,7 +3178,7 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
                                   const char *name,
                                   ib_list_t *tfn_names,
                                   ib_rule_target_t **target,
-                                  ib_num_t *tfns_not_found)
+                                  int *tfns_not_found)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;

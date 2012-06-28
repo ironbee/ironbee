@@ -511,7 +511,7 @@ ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
                                              const char *name,
                                              ib_list_t *tfn_names,
                                              ib_rule_target_t **target,
-                                             ib_num_t *tfns_not_found);
+                                             int *tfns_not_found);
 
 /**
  * Add a target field to a rule.
