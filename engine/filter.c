@@ -84,8 +84,8 @@ ib_status_t ib_fctl_config(ib_fctl_t *fc,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static ib_status_t _filter_exec(ib_filter_t *f,
-                                ib_fdata_t *fdata)
+static ib_status_t filter_exec(ib_filter_t *f,
+                               ib_fdata_t *fdata)
 {
     IB_FTRACE_INIT();
 //    ib_engine_t *ib = f->ib;
@@ -136,7 +136,7 @@ ib_status_t ib_fctl_process(ib_fctl_t *fc)
         IB_LIST_LOOP(fc->filters, node) {
             ib_filter_t *f = (ib_filter_t *)ib_list_node_data(node);
 
-            rc = _filter_exec(f, &fc->fdata);
+            rc = filter_exec(f, &fc->fdata);
             if (rc != IB_OK) {
                 /// @todo Handle errors
                 ib_log_error(ib,
@@ -148,7 +148,7 @@ ib_status_t ib_fctl_process(ib_fctl_t *fc)
 
     /* Buffer if there is a buffer filter. */
     if (fc->fbuffer) {
-        rc = _filter_exec(fc->fbuffer, &fc->fdata);
+        rc = filter_exec(fc->fbuffer, &fc->fdata);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
