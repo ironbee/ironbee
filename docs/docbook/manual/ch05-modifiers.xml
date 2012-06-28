@@ -31,7 +31,7 @@
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.2</para>
         <para>Log a data fragment as part of the error message.</para>
-        <programlisting>Rule ARGS "@rx test" \
+        <programlisting>Rule ARGS @rx pattern \
     "msg:Test matched" logdata:%{MATCHED_VAR}</programlisting>
         <para>Note: Up to 128 bytes of data will be recorded.</para>
     </section>
@@ -115,13 +115,13 @@ Rule REQUEST_METHOD "@rx ^(?i:post)$" id:1 phase:REQUEST chain
 # true, then the setvar action will execute, marking the transaction and an
 # event will be generated with the given msg text. This rule will have the
 # implicit ID set to "id:1-2".
-Rule &amp;REQUEST_URI_PARAMS "@gt 0" "msg:POST with URI parameters." setvar:TX:uri_params_in_post=1 event chain
+Rule &amp;REQUEST_URI_PARAMS @gt 0 "msg:POST with URI parameters." setvar:TX:uri_params_in_post=1 event chain
 # Only if the above two rules' operators return true will the next rule in the
 # chain execute.  This rule checks that certain parameters are not used in
 # on the URI and if so, generates an event and blocks the transaction with the
 # default status code at the end of the phase. This rule will have the implicit
 # ID set to "id:1-3".
-Rule REQUEST_URI_PARAMS:/^(id|sess)$/ "msg:Sensitive parameters in URI." event block:phase</programlisting></para>
+Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." event block:phase</programlisting></para>
     </section>
     <section>
         <title>confidence</title>

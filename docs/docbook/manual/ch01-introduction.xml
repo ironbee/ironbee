@@ -210,7 +210,7 @@
                     <para>Standalone rules are those that do not depend on other rules and which are
                         safe to execute at any point within the phase. To mark a rule as standalone,
                         apply the <literal>standalone</literal> modifier to it:</para>
-                    <programlisting>Rule ARGS "@rx TEST" phase:REQUEST,standalone</programlisting>
+                    <programlisting>Rule ARGS @rx TEST phase:REQUEST standalone</programlisting>
                     <para>When you mark a rule as standalone, the rule engine is free to move it
                         around to optimize the execution. (NOTE: this is not yet implemented.)</para>
                 </section>

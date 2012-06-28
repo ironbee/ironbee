@@ -105,7 +105,7 @@
             separated with whitespace. Set-based matching is capable of matching many patterns at
             the same time, making it efficient for cases when the number of patterns is very large
             (in hundreds and thousands).</para>
-        <programlisting>Rule REQUEST_HEADERS:User-Agent "@pm one two three"</programlisting>
+        <programlisting>Rule REQUEST_HEADERS:User-Agent @pm "one two three"</programlisting>
         <para>If the <literal>capture</literal> modifier is specified on a <literal>@pm</literal>
             rule, the <literal>TX.0</literal> variable will contain the matched data fragment. Do
             note that, because the <literal>pm</literal> operator can easily match many times per
@@ -126,7 +126,7 @@
             the end is removed. Empty lines are ignored, as are comments, which are lines that begin
             with <literal>#</literal>. Relative filenames are resolved from same directory as the
             configuration file.</para>
-        <programlisting>Rule REQUEST_HEADERS:User-Agent "@pmf bad_user_agents.dat"</programlisting>
+        <programlisting>Rule REQUEST_HEADERS:User-Agent @pmf bad_user_agents.dat</programlisting>
     </section>
     <section>
         <title>rx</title>
@@ -138,7 +138,7 @@
         <para>The <literal>rx</literal> operator implements <link xlink:href="http://www.pcre.org/"
                 >PCRE</link> regular expressions. The parameter of the operator is a regular
             expression pattern that is passed to the PCRE library without modification.</para>
-        <programlisting>SecRule ARGS:userId "!@rx ^[0-9]+$"</programlisting>
+        <programlisting>Rule ARGS:userId !@rx ^[0-9]+$</programlisting>
         <para>Patterns are compiled with the following settings:</para>
         <itemizedlist>
             <listitem>
@@ -159,7 +159,7 @@
                 substrings can be used to create new variables in the <literal>TX</literal>
                 collection. To use this feature, specify the <literal>capture</literal> modifier in
                 the rule.</para>
-            <programlisting>Rule ARGS "@rx (\d{13,16})" capture</programlisting>
+            <programlisting>Rule ARGS @rx (\d{13,16}) capture</programlisting>
             <para>When capture is enabled, IronBee will always create a variable
                     <literal>TX.0</literal>, which will contain the entire matching area of the
                 pattern. Anonymous capture groups will create up to 9 variables, from

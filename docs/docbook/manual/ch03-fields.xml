@@ -17,10 +17,10 @@
         <para>
             <note>
                 <para>The <literal>ARGS</literal> collection is currently the same as specifying
-                        <literal>REQUEST_URL_PARAMS|REQUEST_BODY_PARAMS</literal>, but this will
+                        <literal>REQUEST_URL_PARAMS REQUEST_BODY_PARAMS</literal>, but this will
                     change in later releases to include normalization based on parser personalities.
-                    If you do not want normalization, then use
-                        <literal>REQUEST_URL_PARAMS|REQUEST_BODY_PARAMS</literal>.</para>
+                    If you do not want normalization, then use <literal>REQUEST_URL_PARAMS
+                        REQUEST_BODY_PARAMS</literal>.</para>
             </note>
         </para>
     </section>
@@ -281,11 +281,11 @@
         <para>This field is useful in a rule that is inspecting several fields, and you need to
             which of the fields matched. For example:</para>
         <programlisting># Further inspect a matching field
-Rule ARGS "@contains attach_string" chain
+Rule ARGS @contains attack_string chain
     Rule LAST_MATCHED "@rx some.*complex.*patt.*that.*may.*be.*expensive" block
 
 # Log the value of the field that matched
-Rule ARGS "@rx test" \
+Rule ARGS @rx pattern \
     "msg:'Test matched',logdata:%{LAST_MATCHED}"</programlisting>
     </section>
     <section>

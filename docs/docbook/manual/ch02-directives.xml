@@ -645,7 +645,7 @@
         <title>Rule</title>
         <para><emphasis role="bold">Description:</emphasis> Loads a rule and, in most contexts, enable the rule for execution in that context.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>Rule INPUTS OPERATOR [MODIFIERS]</literal>
+            <literal>Rule INPUT [INPUT2 ... INPUTn] @OPERATOR OP_PARAM [MODIFIERS]</literal>
         </para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
@@ -822,7 +822,7 @@
         <para><emphasis role="bold">Description:</emphasis> Creates a streaming inspection rule,
             which inspects data as it becomes available, outside rule phases.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>StreamInspect INPUT OPERATOR [MODIFIERS]</literal></para>
+            <literal>StreamInspect INPUT @OPERATOR OP_PARAM [MODIFIERS]</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
         <para><emphasis role="bold">Module:</emphasis> rules</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
