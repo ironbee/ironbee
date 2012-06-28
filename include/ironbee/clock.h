@@ -44,6 +44,7 @@ extern "C" {
 
 /** Fixed size version of "struct timeval" type. */
 typedef struct {
+    // TODO: Research other system sizes - we may want to use uint64_t
     uint32_t tv_sec;      /**< Seconds since epoch */
     uint32_t tv_usec;     /**< Fractional value in microseconds */
 } ib_timeval_t;
@@ -100,7 +101,7 @@ typedef enum ib_clock_type_t {
  * Assign values between two timeval structures.
  *
  * This is meant to convert between struct timeval and
- * ib_timeval_t. Either types are supported in dest/src.
+ * ib_timeval_t. Either types are supported in dest.
  *
  * @param[out] dest Destination timeval structure
  * @param[in]  src Source timeval structure
@@ -155,18 +156,18 @@ ib_clock_type_t DLL_PUBLIC ib_clock_type(void);
  *
  * @note This is not monotonic nor wall time on all platforms.
  *
- * @returns 
+ * @returns Microsecond time value
  *
  */
 ib_time_t DLL_PUBLIC ib_clock_get_time(void);
 
 /**
- * IronBee types version of gettimeofday() called with
+ * IronBee types version of @c gettimeofday() called with
  * NULL timezone parameter.
  *
- * This is essentially gettimeofday(ib_timeval_t *tp, NULL).
+ * This is essentially @c gettimeofday(ib_timeval_t *tp, @c NULL).
  *
- * @param[out] tp Address which timeval is written
+ * @param[out] tp Address which ib_timeval_t is written
  */
 void ib_clock_gettimeofday(ib_timeval_t *tp);
 
@@ -177,7 +178,7 @@ void ib_clock_gettimeofday(ib_timeval_t *tp);
  * Example: 2010-11-04T12:42:36.3874-0800
  *
  * @param[out] buf Buffer at least 31 bytes in length
- * @param[in] ptv Address of timeval structure (struct timeval or ib_timeval_t)
+ * @param[in] ptv Address of the ib_timeval_t structure
  */
 void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv);
 
@@ -188,7 +189,7 @@ void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv);
  * Example: 2010-11-04T12:42:36.3874-0800
  *
  * @param[out] buf Buffer at least 31 bytes in length
- * @param[in] ptv Address of timeval structure (struct timeval or ib_timeval_t)
+ * @param[in] ptv Address of the ib_timeval_t structure
  * @param[in] offset Time offset in microseconds
  */
 void ib_clock_relative_timestamp(char *buf, const ib_timeval_t *ptv, ib_time_t offset);
