@@ -1615,7 +1615,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     {
         rc = ib_parsed_name_value_pair_list_add(
             hdrs,
-            "uri", 4,
+            "uri", 3,
             (const char *)ib_bytestr_const_ptr(tx->request_line->uri),
             ib_bytestr_length(tx->request_line->uri));
         if (rc != IB_OK) {
@@ -1630,7 +1630,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
     {
         rc = ib_parsed_name_value_pair_list_add(
             hdrs,
-            "protocol", 7,
+            "protocol", 8,
             (const char *)ib_bytestr_const_ptr(tx->request_line->protocol),
             ib_bytestr_length(tx->request_line->protocol));
         if (rc != IB_OK) {
