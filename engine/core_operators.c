@@ -782,7 +782,7 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
     *result = (value == param_value);
     if (ib_rule_should_capture(rule, *result) == true) {
         ib_data_capture_clear(tx);
-        rc = capture_num(tx, 0, value);
+        capture_num(tx, 0, value);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
