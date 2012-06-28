@@ -47,8 +47,7 @@ boost::posix_time::ptime ib_to_ptime(ib_timeval_t tv)
 
 boost::posix_time::ptime ib_to_ptime(ib_timeval_t tv, ib_time_t offset)
 {
-    return c_epoch + seconds(tv.tv_sec)
-                   + microseconds(tv.tv_usec)
+    return c_epoch + ib_to_ptime(tv)
                    + seconds(offset / c_microseconds_per_second)
                    + microseconds(offset % c_microseconds_per_second);
 }
