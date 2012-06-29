@@ -332,7 +332,7 @@ struct core_audit_cfg_t {
     FILE           *fp;             /**< Audit log file pointer */
     const char     *fn;             /**< Audit log file name */
     const char     *full_path;      /**< Audit log full path */
-    const char     *temp_path;      /**< Full path to tempoary filename */
+    const char     *temp_path;      /**< Full path to temporary filename */
     int             parts_written;  /**< Parts written so far */
     const char     *boundary;       /**< Audit log boundary */
     ib_tx_t        *tx;             /**< Transaction being logged */

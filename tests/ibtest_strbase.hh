@@ -90,7 +90,7 @@ public:
 };
 
 // Class to test simple string manipulations.  This class is designed to work
-// with string manipulation function families that have the followwing
+// with string manipulation function families that have the following
 // implementation functions:
 // - in-place manipulation of NUL-terminated strings
 // - in-place manipulation of byte strings (_ex version)

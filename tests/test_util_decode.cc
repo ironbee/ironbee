@@ -81,7 +81,7 @@ public:
 TEST_F(TestDecodeUrl, Basic)
 {
     {
-        SCOPED_TRACE("Emtpy");
+        SCOPED_TRACE("Empty");
         RunTest("", "");
     }
     {
