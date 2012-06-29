@@ -175,7 +175,7 @@ struct ib_conn_t {
     ib_timeval_t       tv_created;       /**< Connection created time value */
     struct {
         ib_time_t       started;         /**< Connection started base time */
-        // TODO: Is opened/closed different than sterted/finished?
+        // TODO: Is opened/closed different than started/finished?
         ib_time_t       finished;        /**< Connection finished time */
     } t;
 

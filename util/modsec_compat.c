@@ -710,7 +710,7 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
                 /* If a relative path and either our normalization has
                  * already hit the rootdir, or this is a backref with no
                  * previous path segment, then mark that the rootdir was hit
-                 * and just copy the backref as no normilization is possible.
+                 * and just copy the backref as no normalization is possible.
                  */
                 if (relative && (hitroot || ((dst - 2) <= data))) {
                     hitroot = true;
