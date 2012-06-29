@@ -2,7 +2,8 @@
 
 SKIP = [
     %r{^cpp/},
-    %r{config-parser.c}
+    %r{config-parser.c},
+    %r{modsec_compat.c}
 ]
 
 $:.unshift(File.dirname(__FILE__))
