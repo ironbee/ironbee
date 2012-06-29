@@ -28,7 +28,7 @@ if LINUX
 LDFLAGS += -lrt
 endif
 
-LDFLAGS += $(HTP_LDFLAGS) $(PCRE_LDFLAGS)
+LDFLAGS += $(HTP_LDFLAGS) $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
 
 # This is a common set of files for runnign tests of modules.
 MODULE_TEST_LDADD = $(LDADD) \
@@ -140,12 +140,8 @@ test_util_uuid_LDADD = $(MODULE_TEST_LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIB
 
 test_util_ahocorasick_SOURCES = test_util_ahocorasick.cc test_main.cc
 
-test_util_mpool_SOURCES = test_util_mpool.cc
-test_util_mpool_CFLAGS = $(AM_CFLAGS) $(VALGRIND_CFLAGS)
-test_util_mpool_LDADD = $(MODULE_TEST_LDADD)
-if HAVE_NO_UNUSED_BUT_SET_VARIABLE
-test_util_mpool_CPPFLAGS = $(CPPFLAGS) -Wno-unused-but-set-variable
-endif
+test_util_mpool_SOURCES = test_util_mpool.cc test_main.cc
+test_util_mpool_LDADD = $(LDADD) -lboost_thread-mt
 
 test_engine_SOURCES = test_engine.cc test_main.cc \
                       test_parsed_content.cc \

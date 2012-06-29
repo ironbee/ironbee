@@ -23,6 +23,7 @@
  * @brief IronBee &mdash; Memory Pool Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
 #include <ironbee/build.h>
@@ -40,21 +41,74 @@ extern "C" {
  *
  * Memory pool routines.
  *
+ * @section thread_safety Thread Safety
+ *
+ * Let A and B be distinct memory pools.  Say that B is a descendant of A if
+ * B is a child of A or a child of a descendant of A.
+ *
+ * The memory pool code is written to be thread safe for different memory
+ * pool families.  That is, if A and B are distinct memory pools where
+ * neither is descendant of the other, than any memory pool routine of A
+ * can coexist with a simultaneous routine on B.
+ *
+ * Two import thread safe cases are:
+ * - A and B can be simultaneously destroyed even if they share a common
+ *   parent.
+ * - A and B can be simultaneously created even if they share a common parent.
+ *
+ * Furthermore, all allocation routines can be called on A and B as long as
+ * A and B are distinct, i.e, even if one is a descendant of the other.
+ *
+ * Common scenarios that are not thread safe include:
+ * - Simultaneously allocations from the same pool.
+ * - Any use of a descendant of a pool while that pool is being cleared or
+ *   destroyed.
+ *
+ * @section Performance
+ *
+ * This implementation is focused on runtime performance.  In particular,
+ * allocation should be very fast and clearing and destroying very fast.  This
+ * involves both internal data structures and algorithms and in reducing the
+ * number of calls to malloc() and free().
+ *
+ * As a consequence of the focus on runtime performance, space performance is
+ * not optimal.  This trade-off can be somewhat tuned by setting the pagesize
+ * for a memory pool.  Largely page sizes will mean higher runtime performance
+ * and higher memory wastage.  The minimum pagesize is currently 1024.
+ *
  * @{
  */
 
 /**
  * A memory pool.
+ *
+ * This type should be used only be pointer and treated as opaque.
  */
 typedef struct ib_mpool_t ib_mpool_t;
 
 /**
  * Callback clean up function.
  *
- * Only parameter is a pointer to the memory cleanup was registered for.
- * Should return IB_OK on success.
+ * Parameter is a pointer to callback data.
  */
-typedef ib_status_t (*ib_mpool_cleanup_fn_t)(void *);
+typedef void (*ib_mpool_cleanup_fn_t)(void *);
+
+/**
+ * Malloc function.
+ *
+ * Function memory pool can use to allocate memory.
+ * Semantics are as malloc().
+ **/
+typedef void *(*ib_mpool_malloc_fn_t)(size_t);
+
+/**
+ * Malloc function.
+ *
+ * Function memory pool can use to free memory.
+ * Semantics are as free().
+ **/
+typedef void (*ib_mpool_free_fn_t)(void *);
+
 
 /**
  * Create a new memory pool.
@@ -62,165 +116,279 @@ typedef ib_status_t (*ib_mpool_cleanup_fn_t)(void *);
  * @note If a pool has a parent specified, then any call to clear/destroy
  * on the parent will propagate to all descendants.
  *
- * @note This function is thread safe.
+ * @param[out] pmp    Address which new pool is written
+ * @param[in]  name   Logical name of the pool (used in reports), can be NULL.
+ * @param[in]  parent Optional parent memory pool (or NULL)
  *
- * @param pmp Address which new pool is written
- * @param name Logical name of the pool (for debugging purposes)
- * @param parent Optional parent memory pool (or NULL)
- *
- * @returns Status code
+ * @returns
+ * - IB_OK     -- Success.
+ * - IB_EINVAL -- @a pmp is NULL.
+ * - IB_EALLOC -- Allocation error.
+ * - Other     -- Locking failure, see ib_lock_lock().
  */
-ib_status_t DLL_PUBLIC ib_mpool_create(ib_mpool_t **pmp,
-                                       const char *name,
-                                       ib_mpool_t *parent);
+ib_status_t DLL_PUBLIC ib_mpool_create(
+    ib_mpool_t **pmp,
+    const char  *name,
+    ib_mpool_t  *parent
+);
 
 /**
  * Create a new memory pool with predefined page size.
- * Minimum size is IB_MPOOL_MIN_PAGE_SIZE (currently 512)
+ *
+ * Minimum page size is currently 1024.  Page size should be a power of 2 for
+ * best memory usage.
  *
  * @note If a pool has a parent specified, then any call to clear/destroy
  * on the parent will propagate to all descendants.
  *
- * @note This function is thread safe.
+ * @param[out] pmp       Address which new pool is written
+ * @param[in]  name      Logical name of the pool (used in reports), can be
+ *                       NULL.
+ * @param[in]  parent    Optional parent memory pool (or NULL)
+ * @param[in]  pagesize  Custom page size (to be used by default in pmp);
+ *                       0 means use default; less than 1024 means 1024.
+ * @param[in]  malloc_fn Malloc function to use; NULL means malloc().
+ * @param[in]  free_fn   Free function to use; NULL means free().
  *
- * @param pmp Address which new pool is written
- * @param name Logical name of the pool (for debugging purposes)
- * @param parent Optional parent memory pool (or NULL)
- * @param size Custom page size (to be used by default in pmp)
- *
- * @returns Status code
+ * @returns
+ * - IB_OK     -- Success.
+ * - IB_EINVAL -- @a pmp is NULL.
+ * - IB_EALLOC -- Allocation error.
+ * - Other     -- Locking failure, see ib_lock_lock().
  */
-ib_status_t DLL_PUBLIC ib_mpool_create_ex(ib_mpool_t **pmp,
-                                          const char *name,
-                                          ib_mpool_t *parent,
-                                          size_t size);
-
+ib_status_t DLL_PUBLIC ib_mpool_create_ex(
+    ib_mpool_t           **pmp,
+    const char            *name,
+    ib_mpool_t            *parent,
+    size_t                 pagesize,
+    ib_mpool_malloc_fn_t   malloc_fn,
+    ib_mpool_free_fn_t     free_fn
+);
 
 /**
  * Set the name of a memory pool.
  *
- * @note This function is not thread safe if called on the same @a mp.
- *
- * @param mp Memory pool
- * @param name New name
+ * @param[in] mp   Memory pool to set name of.
+ * @param[in] name New name; copied.
+ * @returns
+ * - IB_OK     -- Success.
+ * - IB_EINVAL -- @a mp is NULL.
+ * - IB_EALLOC -- Allocation error.
  */
-void DLL_PUBLIC ib_mpool_setname(ib_mpool_t *mp, const char *name);
+ib_status_t DLL_PUBLIC ib_mpool_setname(
+    ib_mpool_t *mp,
+    const char *name
+);
 
 /**
  * Get the name of a memory pool.
  *
- * @param mp Memory pool.
- * @returns name
+ * @param[in] mp Memory pool to fetch name of.
+ * @returns Name of @a mp.
  */
-const char DLL_PUBLIC *ib_mpool_name(const ib_mpool_t* mp);
+const char DLL_PUBLIC *ib_mpool_name(
+    const ib_mpool_t *mp
+);
 
 /**
- * Get the amount of memory in use by a memory pool.
+ * Get the amount of memory allocated by a memory pool.
  *
- * @param mp Memory pool.
+ * This is the sum of the allocations asked for, not the total memory used by
+ * the memory pool.
+ *
+ * @param[in] mp Memory pool to query.
  * @returns Bytes in use.
  */
-size_t DLL_PUBLIC ib_mpool_inuse(const ib_mpool_t* mp);
+size_t DLL_PUBLIC ib_mpool_inuse(
+    const ib_mpool_t* mp
+ );
 
 /**
  * Allocate memory from a memory pool.
  *
- * @note This function is not thread safe if called on the same @a mp.
+ * @param[in] mp   Memory pool to allocate from.
+ * @param[in] size Size in bytes to allocate.
  *
- * @param mp Memory pool
- * @param size Size in bytes
- *
- * @returns Address of allocated memory
+ * @returns Address of allocated memory or NULL on any error.
  */
-void DLL_PUBLIC *ib_mpool_alloc(ib_mpool_t *mp, size_t size);
+void DLL_PUBLIC *ib_mpool_alloc(
+    ib_mpool_t *mp,
+    size_t     size
+);
 
 /**
  * Allocate memory from a memory pool and initialize to zero.
  *
- * @note This function is not thread safe if called on the same @a mp.
+ * @param[in] mp    Memory pool to allocate from.
+ * @param[in] nelem Number of elements to allocate
+ * @param[in] size  Size of each element in bytes
  *
- * @param mp Memory pool
- * @param nelem Number of elements to allocate
- * @param size Size of each element in bytes
- *
- * @returns Address of allocated memory
+ * @returns Address of allocated memory or NULL on any error.
  */
-void DLL_PUBLIC *ib_mpool_calloc(ib_mpool_t *mp, size_t nelem, size_t size);
+void DLL_PUBLIC *ib_mpool_calloc(
+    ib_mpool_t *mp,
+    size_t      nelem,
+    size_t      size
+);
 
 /**
- * Duplicate a string.
+ * Duplicate a NUL terminated string.
  *
- * @note This function is not thread safe if called on the same @a mp.
+ * @param[in] mp  Memory pool to allocate from.
+ * @param[in] src String to copy.
  *
- * @param mp Memory pool
- * @param src String to copy
- *
- * @returns Address of the duplicated string
+ * @returns Address of the duplicated string or NULL on any error.
  */
-char DLL_PUBLIC *ib_mpool_strdup(ib_mpool_t *mp, const char *src);
+char DLL_PUBLIC *ib_mpool_strdup(
+    ib_mpool_t *mp,
+    const char *src
+);
 
 /**
  * Duplicate a buffer, returning a NUL terminated string.
  *
- * @note This function is not thread safe if called on the same @a mp.
+ * @param[in] mp   Memory pool to allocate from.
+ * @param[in] src  Memory to copy.
+ * @param[in] size Size of @a src.
  *
- * The result is a NUL
- *
- * @param mp Memory pool
- * @param src Memory addr
- * @param size Size of memory
- *
- * @returns Address of the duplicated string
+ * @returns Address of the duplicated string or NULL on any error.
  */
-char DLL_PUBLIC *ib_mpool_memdup_to_str(ib_mpool_t *mp,
-                                        const void *src,
-                                        size_t size);
+char DLL_PUBLIC *ib_mpool_memdup_to_str(
+    ib_mpool_t *mp,
+    const void *src,
+    size_t      size
+);
 
 /**
  * Duplicate a memory block.
  *
- * @note This function is not thread safe if called on the same @a mp.
+ * @param[in] mp   Memory pool to allocate from.
+ * @param[in] src  Memory to copy.
+ * @param[in] size Size of @a src.
  *
- * @param mp Memory pool
- * @param src Memory addr
- * @param size Size of memory
- *
- * @returns Address of duplicated memory
+ * @returns Address of the duplicated memory or NULL on any error.
  */
-void DLL_PUBLIC *ib_mpool_memdup(ib_mpool_t *mp, const void *src, size_t size);
+void DLL_PUBLIC *ib_mpool_memdup(
+    ib_mpool_t *mp,
+    const void *src,
+    size_t      size
+);
 
 /**
  * Deallocate all memory allocated from the pool and any descendant pools.
  *
- * @note This function is thread safe.
+ * This does not free the memory but retains it for use in future allocations.
+ * To actually return the memory to the underlying memory system, use
+ * ib_mpool_destroy().
  *
- * @param mp Memory pool
+ * This will call all cleanup functions of @a mp and its descendants.
+ *
+ * Nothing happens if @a mp is NULL.
+ *
+ * @param[in] mp Memory pool to clear.
  */
-void DLL_PUBLIC ib_mpool_clear(ib_mpool_t *mp);
+void DLL_PUBLIC ib_mpool_clear(
+    ib_mpool_t *mp
+);
 
 /**
  * Destroy pool and any descendant pools.
  *
- * @note This function is thread safe.
+ * This is similar to ib_mpool_clear() except that it returns the memory to
+ * the underlying memory system and destroys itself and its descendants.
  *
- * @param mp Memory pool
+ * @a mp or any descendant should not be used after calling this.
+ *
+ * Nothing happens if @a mp is NULL.
+ *
+ * @param[in] mp Memory pool to destroy.
  */
-void DLL_PUBLIC ib_mpool_destroy(ib_mpool_t *mp);
+void DLL_PUBLIC ib_mpool_destroy(
+    ib_mpool_t *mp
+);
 
 /**
- * Register a function to be called when a memory pool is destroyed.
+ * Register a function to be called when a memory pool is cleared or
+ * destroyed.
  *
- * @note This function is not thread safe if called on the same @a mp.
+ * @param[in] mp      Memory pool to associate function with.
+ * @param[in] cleanup Cleanup function
+ * @param[in] data    Data passed to @a cleanup.
  *
- * @param mp Memory pool
- * @param cleanup Cleanup function
- * @param data Data passed to cleanup function
- *
- * @returns Status code
+ * @returns
+ * - IB_OK     -- Success.
+ * - IB_EINVAL -- @a mp or @a cleanup is NULL.
+ * - IB_EALLOC -- Allocation error.
  */
-ib_status_t ib_mpool_cleanup_register(ib_mpool_t *mp,
-                                      ib_mpool_cleanup_fn_t cleanup,
-                                      void *data);
+ib_status_t DLL_PUBLIC ib_mpool_cleanup_register(
+    ib_mpool_t            *mp,
+    ib_mpool_cleanup_fn_t  cleanup,
+    void                  *data
+);
+
+/**
+ * Validate internal consistency of memory pool.
+ *
+ * This function will analyze @a mp and its children for invariant
+ * violations.  Any return value of IB_EOTHER should be reported as a bug
+ * along with the result of ib_mpool_debug_report() and any other information.
+ *
+ * @param[in]  mp      Memory pool to analyze.
+ * @param[out] message Message describing failure.
+ * @returns
+ * - IB_OK on success.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL if @a mp or @a message is NULL.
+ * - IB_EOTHER on failure -- please report as bug.
+ */
+ib_status_t DLL_PUBLIC ib_mpool_validate(
+    const ib_mpool_t  *mp,
+    const char        **message
+);
+
+/**
+ * Dump debugging information on memory pool.
+ *
+ * This provides an extensive report on memory pool intended for developers
+ * debugging memory pool related issues.
+ *
+ * The caller is responsible for freeing the return value.
+ *
+ * This function is slow.
+ *
+ * @param[in] mp Memory pool to dump.
+ * @returns Debug report.
+ */
+const char DLL_PUBLIC *ib_mpool_debug_report(const ib_mpool_t *mp);
+
+/**
+ * Analyze memory pool usage and return a human consumable report.
+ *
+ * The caller is responsible for freeing the return value.
+ *
+ * This function is slow.
+ *
+ * The report contains the following datapoints for a number of items:
+ * - cost       -- Memory allocated, including mpool overhead.
+ * - use        -- Memory returned to client.
+ * - waste      -- cost - use
+ * - efficiency -- use / cost
+ * - free       -- Memory allocated and waiting for reuse.
+ *
+ * The items are:
+ * - Tracks           -- Lists allocations by range.  Each track is for all
+ *                       allocations to large for the previous track and
+ *                       below the listed limit.
+ * - Pages            -- Aggregate of all the tracks.
+ * - PointerPages     -- Internal structures used to track large allocations.
+ * - LargeAllocations -- Bytes returned to caller too large for any track.
+ * - Cleanups         -- Overhead for cleanup functions.
+ * - Total            -- Aggregate of all of the above.
+ *
+ * @param[in] mp Memory pool to analyze.
+ * @returns Usage report.
+ */
+const char DLL_PUBLIC *ib_mpool_analyze(const ib_mpool_t *mp);
 
 /** @} IronBeeUtilMemPool */
 

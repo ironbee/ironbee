@@ -53,9 +53,8 @@ extern "C" {
  *
  * You should never need to use this directly.
  * @param[in] data Data to clean up (delete).
- * @returns IB_OK
  **/
-ib_status_t data_cleanup(void* data);
+void data_cleanup(void* data);
 
 } // extern "C"
 

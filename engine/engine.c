@@ -226,21 +226,17 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
     (*pib)->mp = pool;
 
     /* Create temporary memory pool */
-    /// @todo Need to tune the pool size
-    rc = ib_mpool_create_ex(&((*pib)->temp_mp),
-                            "Engine/Temp",
-                            (*pib)->mp,
-                            8192);
+    rc = ib_mpool_create(&((*pib)->temp_mp),
+                         "Engine/Temp",
+                         (*pib)->mp);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create the config memory pool */
-    /// @todo Need to tune the pool size
-    rc = ib_mpool_create_ex(&((*pib)->config_mp),
-                            "Engine/Config",
-                            (*pib)->mp,
-                            8192);
+    rc = ib_mpool_create(&((*pib)->config_mp),
+                         "Engine/Config",
+                         (*pib)->mp);
     if (rc != IB_OK) {
         goto failed;
     }
@@ -490,7 +486,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
 
     /* Create a sub-pool for each connection and allocate from it */
     /// @todo Need to tune the pool size
-    rc = ib_mpool_create_ex(&pool, "Connection", ib->mp, 2048);
+    rc = ib_mpool_create(&pool, "Connection", ib->mp);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to create connection memory pool: %s", ib_status_to_string(rc));
         rc = IB_EALLOC;
@@ -564,8 +560,7 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     ib_status_t rc;
 
     /* Create a sub-pool for data buffers */
-    /// @todo Need to tune the pool size
-    rc = ib_mpool_create_ex(&pool, NULL, conn->mp, 8192);
+    rc = ib_mpool_create(&pool, NULL, conn->mp);
     if (rc != IB_OK) {
         ib_log_alert(ib,
                      "Failed to create connection data memory pool: %s", ib_status_to_string(rc));
@@ -662,8 +657,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     /* Create a sub-pool from the connection memory pool for each
      * transaction and allocate from it
      */
-    /// @todo Need to tune the pool size
-    rc = ib_mpool_create_ex(&pool, NULL, conn->mp, 8192);
+    rc = ib_mpool_create(&pool, NULL, conn->mp);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to create transaction memory pool: %s", ib_status_to_string(rc));
         rc = IB_EALLOC;

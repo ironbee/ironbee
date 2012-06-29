@@ -31,6 +31,7 @@
 
 #include <ironbee/mpool.h>
 #include <ironbee/debug.h>
+#include <ironbee/util.h>
 
 #include <cassert>
 
@@ -41,7 +42,7 @@ namespace {
 
 extern "C" {
 
-ib_status_t cleanup(
+void cleanup(
     void* cbdata
 )
 {
@@ -53,8 +54,11 @@ ib_status_t cleanup(
     // Now we need to clear our own callback data.
     delete reinterpret_cast<boost::any*>(cbdata);
 
-    // We have no engine...
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(NULL, callback()));
+    ib_status_t rc = IBPP_TRY_CATCH(NULL, callback());
+    if (rc != IB_OK) {
+        // Could we do something better.
+        ib_util_log_error("Failure cleanup; no good remedy.");
+    }
 }
 
 } // extern "C"
@@ -66,16 +70,14 @@ namespace {
 
 MemoryPool create_memory_pool(
     const char* name,
-    ib_mpool_t* parent = NULL,
-    size_t      size   = 0
+    ib_mpool_t* parent = NULL
 )
 {
     ib_mpool_t* ib_mpool = NULL;
-    ib_status_t rc = ib_mpool_create_ex(
+    ib_status_t rc = ib_mpool_create(
         &ib_mpool,
         name,
-        parent,
-        (size != 0 ? size : 1024)
+        parent
     );
 
     Internal::throw_if_error(rc);
@@ -127,17 +129,15 @@ MemoryPool MemoryPool::create()
 }
 
 MemoryPool MemoryPool::create(
-    const char* name,
-    size_t      size
+    const char* name
 )
 {
-    return Internal::create_memory_pool(name, NULL, size);
+    return Internal::create_memory_pool(name, NULL);
 }
 
 MemoryPool MemoryPool::create(
     const char* name,
-    MemoryPool  parent,
-    size_t      size
+    MemoryPool  parent
 )
 {
     if (! parent) {
@@ -148,7 +148,7 @@ MemoryPool MemoryPool::create(
         );
 
     }
-    return Internal::create_memory_pool(name, parent.ib(), size);
+    return Internal::create_memory_pool(name, parent.ib());
 }
 
 MemoryPool MemoryPool::create_subpool() const
@@ -157,11 +157,10 @@ MemoryPool MemoryPool::create_subpool() const
 }
 
 MemoryPool MemoryPool::create_subpool(
-    const char* subpool_name,
-    size_t      size
+    const char* subpool_name
 ) const
 {
-    return create(subpool_name, *this, size);
+    return create(subpool_name, *this);
 }
 
 
@@ -250,8 +249,8 @@ ScopedMemoryPool::ScopedMemoryPool() :
     // nop
 }
 
-ScopedMemoryPool::ScopedMemoryPool(const char* name, size_t size) :
-    m_pool(MemoryPool::create(name, size))
+ScopedMemoryPool::ScopedMemoryPool(const char* name) :
+    m_pool(MemoryPool::create(name))
 {
     // nop
 }

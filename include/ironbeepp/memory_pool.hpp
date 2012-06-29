@@ -195,13 +195,11 @@ public:
      * Create MemoryPool.
      *
      * @param[in] name Name of pool; used for debugging.
-     * @param[in] size Page size if non-0; otherwise uses 1024 byte pages.
      * @returns Memory pool.
      * @throw Appropriate IronBee++ exception on failure.
      **/
     static MemoryPool create(
-        const char* name,
-        size_t      size = 0
+        const char* name
     );
 
     /**
@@ -213,14 +211,12 @@ public:
      *
      * @param[in] name Name of pool; used for debugging.
      * @param[in] parent Parent memory pool.
-     * @param[in] size Page size if non-0; otherwise uses 1024 byte pages.
      * @returns Memory pool.
      * @throw Appropriate IronBee++ exception on failure.
      **/
     static MemoryPool create(
         const char* name,
-        MemoryPool  parent,
-        size_t      size = 0
+        MemoryPool  parent
     );
 
     /**
@@ -237,14 +233,11 @@ public:
      * Create a subpool that will be destroyed when this is destroyed.
      *
      * @param[in] subpool_name Name of pool; used for debugging.
-     * @param[in] size         Page size if non-0; otherwise uses 1024 byte
-     *                         pages.
      * @returns Memory pool.
      * @throw Appropriate IronBee++ exception on failure.
      **/
     MemoryPool create_subpool(
-        const char* subpool_name,
-        size_t      size = 0
+        const char* subpool_name
     ) const;
     //@}
 
@@ -366,11 +359,10 @@ public:
      * Construct memory pool.
      *
      * @param[in] name Name of pool; used for debugging.
-     * @param[in] size Page size if non-0; otherwise uses 1024 byte pages.
      * @throw Appropriate IronBee++ exception on failure.
      **/
     explicit
-    ScopedMemoryPool(const char* name, size_t size = 0);
+    ScopedMemoryPool(const char* name);
 
     /**
      * Destroy associated pool.
