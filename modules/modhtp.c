@@ -990,7 +990,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
      * started, then LibHTP has interpreted this as the response
      * body. Instead, return an error.
      */
-    else if (!ib_tx_flags_isset(itx, IB_TX_FRES_STARTED)) {
+    else if (!ib_tx_flags_isset(itx, IB_TX_FHTTP09|IB_TX_FRES_STARTED)) {
         ib_log_notice_tx(itx,
                         "LibHTP parsing error: "
                         "found response data instead of a response line");

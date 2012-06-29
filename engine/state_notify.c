@@ -775,7 +775,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
 
     if (!ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
         if (tx->request_line == NULL) {
-            ib_log_debug3_tx(tx,
+            ib_log_notice_tx(tx,
                              "Attempted to notify request header finished"
                              " before request started.");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1041,9 +1041,9 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if (!ib_tx_flags_isset(tx, IB_TX_FRES_STARTED)) {
+    if (!ib_tx_flags_isset(tx, IB_TX_FHTTP09|IB_TX_FRES_STARTED)) {
         if (tx->response_line == NULL) {
-            ib_log_debug3_tx(tx,
+            ib_log_notice_tx(tx,
                              "Attempted to notify response header finished"
                              " before response started.");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1103,12 +1103,12 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
         if (!ib_tx_flags_isset(tx, IB_TX_FHTTP09)) {
             ib_log_debug_tx(tx, "Automatically triggering %s",
                             ib_state_event_name(response_header_finished_event));
-        }
-        else if (tx->response_line == NULL) {
-            ib_log_debug3_tx(tx,
-                             "Attempted to notify response body data"
-                             " before response started.");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            if (tx->response_line == NULL) {
+                ib_log_notice_tx(tx,
+                                 "Attempted to notify response body data"
+                                 " before response started.");
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
         }
         rc = ib_state_notify_response_header_finished(ib, tx);
         if (rc != IB_OK) {
