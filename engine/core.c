@@ -4184,9 +4184,12 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     ib_status_t rc;
     ib_core_cfg_t *corecfg;
     const char *p1_unescaped;
+    ib_context_t *ctx;
 
     assert( name != NULL );
     assert( p1 != NULL );
+
+    ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
 
     /* We remove constness to populate this buffer. */
     rc = core_unescape(ib, (char**)&p1_unescaped, p1);
@@ -4200,7 +4203,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
                     "TODO: Handle Directive: %s \"%s\"", name, p1_unescaped);
     }
     else if (strcasecmp("AuditEngine", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         if (strcasecmp("RelevantOnly", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "audit_engine", 2);
@@ -4222,7 +4224,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     else if (strcasecmp("AuditLogIndex", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
 
         /* "None" means do not use the index file at all. */
@@ -4236,13 +4237,11 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogIndexFormat", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "auditlog_index_fmt", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogDirMode", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         long lmode = strtol(p1_unescaped, NULL, 0);
 
         if ((lmode > 0777) || (lmode <= 0)) {
@@ -4254,7 +4253,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogFileMode", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         long lmode = strtol(p1_unescaped, NULL, 0);
 
         if ((lmode > 0777) || (lmode <= 0)) {
@@ -4266,22 +4264,18 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogBaseDir", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "auditlog_dir", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogSubDirFormat", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "auditlog_sdir_fmt", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (
-        strcasecmp("DebugLogLevel", name) == 0 ||
-        strcasecmp("LogLevel", name) == 0
-    ) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+    else if ( (strcasecmp("DebugLogLevel", name) == 0) ||
+              (strcasecmp("LogLevel", name) == 0) )
+    {
         int num_read = 0;
         long level = 0;
         num_read = sscanf(p1_unescaped, "%ld", &level);
@@ -4296,8 +4290,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     /* Set the default block status for responding to blocked transactions. */
-    else if ( strcasecmp("DefaultBlockStatus", name) == 0 ) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+    else if (strcasecmp("DefaultBlockStatus", name) == 0) {
         int status;
 
         rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
@@ -4323,11 +4316,9 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         ib_log_debug2(ib, "DefaultBlockStatus: %d", status);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
-    else if (
-        strcasecmp("DebugLog", name) == 0 ||
-        strcasecmp("Log", name) == 0
-    ) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+    else if ( (strcasecmp("DebugLog", name) == 0) ||
+              (strcasecmp("Log", name) == 0) )
+    {
         ib_mpool_t   *mp  = ib_engine_pool_main_get(ib);
         const char   *uri = NULL;
 
@@ -4354,17 +4345,14 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_string(ctx, "logger.log_uri", uri);
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (
-        strcasecmp("DebugLogHandler", name) == 0 ||
-        strcasecmp("LogHandler", name) == 0
-    ) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+    else if ( (strcasecmp("DebugLogHandler", name) == 0) ||
+              (strcasecmp("LogHandler", name) == 0) )
+    {
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "logger.log_handler", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("RuleEngineLogLevel", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         ib_rule_log_level_t  level = IB_RULE_LOG_LEVEL_ERROR;
         char                *p1_copy = ib_mpool_strdup(cp->mp, p1_unescaped);
         char                *cur;
@@ -4406,7 +4394,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("LoadModule", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
         char *absfile;
         ib_module_t *m;
 
@@ -4436,8 +4423,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("RequestBuffering", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-
         ib_log_debug2(ib, "%s: %s", name, p1_unescaped);
         if (strcasecmp("On", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "buffer_req", 1);
@@ -4448,8 +4433,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("ResponseBuffering", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-
         ib_log_debug2(ib, "%s: %s", name, p1_unescaped);
         if (strcasecmp("On", p1_unescaped) == 0) {
             rc = ib_context_set_num(ctx, "buffer_res", 1);
@@ -4535,8 +4518,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("ModuleBasePath", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-
         rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
 
         if (rc != IB_OK) {
@@ -4550,8 +4531,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     else if (strcasecmp("RuleBasePath", name) == 0) {
-        ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-
         rc = ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
 
         if (rc != IB_OK) {
