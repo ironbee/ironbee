@@ -179,7 +179,8 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         rc = ib_config_directive_process(cp, directive, plist);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
-                             "Failed to process directive \"%s\": %s",
+                             "Failed to process directive \"%s\" "
+                             ": %s (see preceeding messages for details)",
                              directive, ib_status_to_string(rc));
         }
         if (directive != NULL) {

@@ -548,21 +548,24 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
 /**
  * Check that a rule has all the proper modifiers.
  *
+ * @param[in] cp The configuration parser
+ * @param[in] rule The rule to check
+ *
  * @returns IB_EINVAL.
  */
-static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp, ib_rule_t *rule) {
+static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp,
+                                        ib_rule_t *rule)
+{
     IB_FTRACE_INIT();
 
     if ( ib_rule_id(rule) == NULL ) {
-        ib_cfg_log_error(cp, "No rule id when one is required.");
+        ib_cfg_log_error(cp, "No rule id specified.");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     if ( rule->meta.phase == PHASE_INVALID || rule->meta.phase == PHASE_NONE )
     {
-        ib_cfg_log_error(cp,
-                         "Phase invalid or not specified "
-                         "when on is required.");
+        ib_cfg_log_error(cp, "Phase invalid or not specified.");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 

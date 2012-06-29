@@ -149,7 +149,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 }
 
 
-#line 281 "config-parser.rl"
+#line 282 "config-parser.rl"
 
 
 
@@ -372,7 +372,7 @@ static const int ironbee_config_en_finclude = 51;
 static const int ironbee_config_en_main = 25;
 
 
-#line 284 "config-parser.rl"
+#line 285 "config-parser.rl"
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
@@ -426,13 +426,13 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     /* Access all ragel state variables via structure. */
 
-#line 337 "config-parser.rl"
-
 #line 338 "config-parser.rl"
 
 #line 339 "config-parser.rl"
 
 #line 340 "config-parser.rl"
+
+#line 341 "config-parser.rl"
 
 
 #line 439 "config-parser.c"
@@ -444,7 +444,7 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	 fsm.act = 0;
 	}
 
-#line 342 "config-parser.rl"
+#line 343 "config-parser.rl"
 
 #line 450 "config-parser.c"
 	{
@@ -575,7 +575,8 @@ _eof_trans:
         rc = ib_config_directive_process(cp, directive, plist);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
-                             "Failed to process directive \"%s\": %s",
+                             "Failed to process directive \"%s\" "
+                             ": %s (see preceeding messages for details)",
                              directive, ib_status_to_string(rc));
         }
         if (directive != NULL) {
@@ -584,7 +585,7 @@ _eof_trans:
     }
 	break;
 	case 6:
-#line 191 "config-parser.rl"
+#line 192 "config-parser.rl"
 	{
         size_t namelen = (size_t)(( fsm.p) - mark);
         blkname = (char *)calloc(namelen + 1, sizeof(*blkname));
@@ -593,7 +594,7 @@ _eof_trans:
     }
 	break;
 	case 7:
-#line 197 "config-parser.rl"
+#line 198 "config-parser.rl"
 	{
         rc = ib_config_block_start(cp, blkname, plist);
         if (rc != IB_OK) {
@@ -604,7 +605,7 @@ _eof_trans:
     }
 	break;
 	case 8:
-#line 205 "config-parser.rl"
+#line 206 "config-parser.rl"
 	{
         blkname = (char *)cp->cur_blkname;
         rc = ib_config_block_process(cp, blkname);
@@ -620,7 +621,7 @@ _eof_trans:
     }
 	break;
 	case 9:
-#line 220 "config-parser.rl"
+#line 221 "config-parser.rl"
 	{
         rc = include_config_fn(cp, mpcfg, mark, ( fsm.p), file, lineno);
         if (rc == IB_OK) {
@@ -638,15 +639,15 @@ _eof_trans:
 	{ fsm.te = ( fsm.p)+1;}
 	break;
 	case 14:
-#line 248 "config-parser.rl"
+#line 249 "config-parser.rl"
 	{ fsm.act = 1;}
 	break;
 	case 15:
-#line 249 "config-parser.rl"
+#line 250 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 16:
-#line 248 "config-parser.rl"
+#line 249 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 17:
@@ -662,15 +663,15 @@ _eof_trans:
 	}
 	break;
 	case 18:
-#line 253 "config-parser.rl"
+#line 254 "config-parser.rl"
 	{ fsm.act = 3;}
 	break;
 	case 19:
-#line 254 "config-parser.rl"
+#line 255 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 20:
-#line 253 "config-parser.rl"
+#line 254 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 21:
@@ -686,15 +687,15 @@ _eof_trans:
 	}
 	break;
 	case 22:
-#line 258 "config-parser.rl"
+#line 259 "config-parser.rl"
 	{ fsm.act = 5;}
 	break;
 	case 23:
-#line 259 "config-parser.rl"
+#line 260 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 24:
-#line 258 "config-parser.rl"
+#line 259 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 41; goto _again;} }}
 	break;
 	case 25:
@@ -710,19 +711,19 @@ _eof_trans:
 	}
 	break;
 	case 26:
-#line 264 "config-parser.rl"
+#line 265 "config-parser.rl"
 	{ fsm.act = 8;}
 	break;
 	case 27:
-#line 265 "config-parser.rl"
+#line 266 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 28:
-#line 263 "config-parser.rl"
+#line 264 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 29:
-#line 264 "config-parser.rl"
+#line 265 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 30:
@@ -738,43 +739,43 @@ _eof_trans:
 	}
 	break;
 	case 31:
-#line 269 "config-parser.rl"
+#line 270 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 32:
-#line 274 "config-parser.rl"
+#line 275 "config-parser.rl"
 	{ fsm.act = 12;}
 	break;
 	case 33:
-#line 275 "config-parser.rl"
+#line 276 "config-parser.rl"
 	{ fsm.act = 13;}
 	break;
 	case 34:
-#line 278 "config-parser.rl"
+#line 279 "config-parser.rl"
 	{ fsm.act = 16;}
 	break;
 	case 35:
-#line 277 "config-parser.rl"
+#line 278 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 47; goto _again;} }}
 	break;
 	case 36:
-#line 279 "config-parser.rl"
+#line 280 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;}
 	break;
 	case 37:
-#line 273 "config-parser.rl"
+#line 274 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 38:
-#line 275 "config-parser.rl"
+#line 276 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 37; goto _again;} }}
 	break;
 	case 39:
-#line 276 "config-parser.rl"
+#line 277 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 44; goto _again;} }}
 	break;
 	case 40:
-#line 278 "config-parser.rl"
+#line 279 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 41:
@@ -795,7 +796,7 @@ _eof_trans:
 	}
 	}
 	break;
-#line 799 "config-parser.c"
+#line 800 "config-parser.c"
 		}
 	}
 
@@ -812,7 +813,7 @@ _again:
 #line 1 "NONE"
 	{ fsm.act = 0;}
 	break;
-#line 816 "config-parser.c"
+#line 817 "config-parser.c"
 		}
 	}
 
@@ -853,7 +854,8 @@ _again:
         rc = ib_config_directive_process(cp, directive, plist);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
-                             "Failed to process directive \"%s\": %s",
+                             "Failed to process directive \"%s\" "
+                             ": %s (see preceeding messages for details)",
                              directive, ib_status_to_string(rc));
         }
         if (directive != NULL) {
@@ -861,7 +863,7 @@ _again:
         }
     }
 	break;
-#line 865 "config-parser.c"
+#line 867 "config-parser.c"
 		}
 	}
 	}
@@ -869,7 +871,7 @@ _again:
 	_out: {}
 	}
 
-#line 343 "config-parser.rl"
+#line 344 "config-parser.rl"
 
     /* Ensure that our block is always empty on last chunk. */
     if ( is_last_chunk && blkname != NULL ) {
