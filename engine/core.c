@@ -1308,7 +1308,7 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi,
 {
     IB_PROVIDER_IFACE_TYPE(logger) *iface;
     ib_core_cfg_t *main_core_config = NULL;
-    ib_context_t  *main_ctx = ib_context_main(ib);;
+    ib_context_t  *main_ctx = ib_context_main(ib);
     ib_provider_t *main_lp;
     ib_status_t rc;
     const char *uri = NULL;
@@ -5587,7 +5587,8 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
                                   (void *)&main_core_config);
     if (rc != IB_OK) {
         ib_log_alert(ib,
-                     "Failed to fetch main core module context config: %s", ib_status_to_string(rc));
+                     "Failed to fetch main core module context config: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     main_lp = main_core_config->pi.logger->pr;
@@ -5597,7 +5598,8 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
     rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
     if (rc != IB_OK) {
         ib_log_alert(ib,
-                     "Failed to fetch core module context config: %s", ib_status_to_string(rc));
+                     "Failed to fetch core module context config: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -5680,7 +5682,8 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
                                   (void *)&main_core_config);
     if (rc != IB_OK) {
         ib_log_alert(ib,
-                     "Failed to fetch main core module context config: %s", ib_status_to_string(rc));
+                     "Failed to fetch main core module context config: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     main_lp = main_core_config->pi.logger->pr;
@@ -5690,7 +5693,8 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
     if (rc != IB_OK) {
         ib_log_alert(ib,
-                     "Failed to fetch core module context config: %s", ib_status_to_string(rc));
+                     "Failed to fetch core module context config: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 

@@ -135,7 +135,7 @@ static ib_status_t geoip_lookup(
 
         /* Avoids type-punning errors on gcc 4.2.4 with holder values. */
         const ib_num_t charset = geoip_rec->charset;
-        const ib_num_t area_code = geoip_rec->area_code;;
+        const ib_num_t area_code = geoip_rec->area_code;
 
         ib_field_create(&tmp_field,
                         tx->mp,
