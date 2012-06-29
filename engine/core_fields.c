@@ -190,6 +190,7 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     assert(event == tx_started_event);
 
     ib_status_t rc;
+    ib_field_t *tmp;
 
     /* Core Request Fields */
     rc = ib_data_add_stream(tx->dpi, "request_body", NULL);
@@ -313,8 +314,14 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_data_add_list(tx->dpi, "args", NULL);
-    if (rc != IB_OK) {
+    rc = ib_data_get(tx->dpi, "ARGS", &tmp);
+    if (rc == IB_ENOENT) {
+        rc = ib_data_add_list(tx->dpi, "ARGS", NULL);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -442,8 +449,14 @@ static ib_status_t create_header_alias_list(
     assert(header != NULL);
 
     /* Create the list */
-    rc = ib_data_add_list(tx->dpi, name, &f);
-    if (rc != IB_OK) {
+    rc = ib_data_get(tx->dpi, name, &f);
+    if (rc == IB_ENOENT) {
+        rc = ib_data_add_list(tx->dpi, name, &f);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
     rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&header_list));
@@ -585,7 +598,7 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                                     tx->request_line->protocol);
 
     /* Populate the ARGS collection. */
-    rc = ib_data_get(tx->dpi, "args", &f);
+    rc = ib_data_get(tx->dpi, "ARGS", &f);
     if (rc == IB_OK) {
         ib_field_t *param_list;
 
@@ -595,7 +608,8 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
             ib_list_t *field_list;
             ib_list_node_t *node = NULL;
 
-            rc = ib_field_mutable_value(param_list, ib_ftype_list_mutable_out(&field_list));
+            rc = ib_field_mutable_value(param_list,
+                                        ib_ftype_list_mutable_out(&field_list));
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -607,7 +621,8 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                 rc = ib_field_list_add(f, param);
                 if (rc != IB_OK) {
                     ib_log_notice_tx(tx,
-                                     "Failed to add parameter to args collection: %s",
+                                     "Failed to add parameter to "
+                                     "ARGS collection: %s",
                                      ib_status_to_string(rc));
                 }
             }
@@ -645,7 +660,7 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
     assert(event == request_finished_event);
 
     /* Populate the ARGS collection. */
-    rc = ib_data_get(tx->dpi, "args", &f);
+    rc = ib_data_get(tx->dpi, "ARGS", &f);
     if (rc == IB_OK) {
         ib_field_t *param_list;
 
@@ -655,7 +670,8 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
             ib_list_t *field_list;
             ib_list_node_t *node = NULL;
 
-            rc = ib_field_mutable_value(param_list, ib_ftype_list_mutable_out(&field_list));
+            rc = ib_field_mutable_value(param_list,
+                                        ib_ftype_list_mutable_out(&field_list));
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -667,7 +683,8 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
                 rc = ib_field_list_add(f, param);
                 if (rc != IB_OK) {
                     ib_log_notice_tx(tx,
-                                     "Failed to add parameter to args collection: %s",
+                                     "Failed to add parameter to "
+                                     "ARGS collection: %s",
                                      ib_status_to_string(rc));
                 }
             }
