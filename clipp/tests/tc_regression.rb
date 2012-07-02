@@ -26,7 +26,7 @@ class TestRegression < CLIPPTestCase
     clipp(
       input: "echo:\"GET /foo\"",
       default_site_config: <<-EOS
-        Rule REQUEST_METHOD "@rx GET" id:1 phase:REQUEST_HEADER block event
+        Rule REQUEST_METHOD @rx GET id:1 phase:REQUEST_HEADER block event
       EOS
     )
     assert_log_match /action "block" executed/
