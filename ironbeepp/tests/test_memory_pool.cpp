@@ -119,7 +119,7 @@ TEST_F(TestMemoryPool, callbacks)
 
     ASSERT_FALSE(called_flag);
     m.clear();
-    EXPECT_FALSE(called_flag);
+    EXPECT_TRUE(called_flag);
     m.destroy();
     EXPECT_TRUE(called_flag);
 }
