@@ -39,6 +39,12 @@
 #include <stdarg.h>
 
 /**
+ * A single point in memory for us to return when a zero length buffer is
+ * returned.
+ */
+static char s_zero_length_buffer[1];
+
+/**
  * @name Memory Pool Configuration
  *
  * Adjusting the values of these macros can significantly change the time and
@@ -1386,8 +1392,12 @@ void *ib_mpool_alloc(
 
     void *ptr = NULL;
 
-    if (mp == NULL || size == 0) {
+    if (mp == NULL) {
         IB_FTRACE_RET_PTR(void, NULL);
+    }
+
+    if (size == 0) {
+        IB_FTRACE_RET_PTR(void, &s_zero_length_buffer);
     }
 
     size_t track_number = ib_mpool_track_number(size);
@@ -1397,6 +1407,9 @@ void *ib_mpool_alloc(
             (mp->pagesize - mp->tracks[track_number]->used) < size
         ) {
             ib_mpool_page_t *mpage = ib_mpool_acquire_page(mp);
+            if (mpage == NULL) {
+                IB_FTRACE_RET_PTR(void, NULL);
+            }
             mpage->next = mp->tracks[track_number];
             mpage->used = 0;
             mp->tracks[track_number] = mpage;
@@ -1812,9 +1825,14 @@ void *ib_mpool_calloc(
 {
     IB_FTRACE_INIT();
 
-    if (mp == NULL || nelem == 0 || size == 0) {
+    if (mp == NULL) {
         IB_FTRACE_RET_PTR(void, NULL);
     }
+
+    if (nelem == 0 || size == 0) {
+        IB_FTRACE_RET_PTR(void, &s_zero_length_buffer);
+    }
+
 
     void *ptr = ib_mpool_alloc(mp, nelem * size);
 
@@ -1874,8 +1892,12 @@ void *ib_mpool_memdup(
 {
     IB_FTRACE_INIT();
 
-    if (mp == NULL || src == NULL || size == 0) {
+    if (mp == NULL || src == NULL) {
         IB_FTRACE_RET_PTR(void, NULL);
+    }
+
+    if (size == 0) {
+        IB_FTRACE_RET_PTR(void, &s_zero_length_buffer);
     }
 
     void *ptr = ib_mpool_alloc(mp, size);

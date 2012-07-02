@@ -593,3 +593,29 @@ TEST(TestMpool, Multithreading)
     
     ib_mpool_destroy(mp);
 }
+
+TEST(TestMpool, ZeroLength)
+{
+    ib_mpool_t* mp = NULL;
+    ib_status_t rc = ib_mpool_create(&mp, NULL, NULL);
+    
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(mp);
+
+    void *p = ib_mpool_alloc(mp, 0);
+    EXPECT_TRUE(p); // Not dereferencable
+    
+    p = ib_mpool_calloc(mp, 1, 0);
+    EXPECT_TRUE(p);
+
+    p = ib_mpool_calloc(mp, 0, 1);
+    EXPECT_TRUE(p);
+
+    p = ib_mpool_calloc(mp, 0, 0);
+    EXPECT_TRUE(p);
+
+    p = ib_mpool_memdup(mp, "", 0);
+    EXPECT_TRUE(p);
+    
+    ib_mpool_destroy(mp);
+}

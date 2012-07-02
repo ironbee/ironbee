@@ -209,6 +209,9 @@ size_t DLL_PUBLIC ib_mpool_inuse(
  * @param[in] mp   Memory pool to allocate from.
  * @param[in] size Size in bytes to allocate.
  *
+ * If @a size is 0, a non-NULL pointer will be returned, but that pointer
+ * should never be dereferenced.
+ *
  * @returns Address of allocated memory or NULL on any error.
  */
 void DLL_PUBLIC *ib_mpool_alloc(
@@ -222,6 +225,9 @@ void DLL_PUBLIC *ib_mpool_alloc(
  * @param[in] mp    Memory pool to allocate from.
  * @param[in] nelem Number of elements to allocate
  * @param[in] size  Size of each element in bytes
+ *
+ * If @a size * @a nelem is 0, a non-NULL pointer will be returned, but that
+ * pointer should never be dereferenced.
  *
  * @returns Address of allocated memory or NULL on any error.
  */
@@ -261,6 +267,9 @@ char DLL_PUBLIC *ib_mpool_memdup_to_str(
 
 /**
  * Duplicate a memory block.
+ *
+ * If @a size is 0, a non-NULL pointer will be returned, but that pointer
+ * should never be dereferenced.
  *
  * @param[in] mp   Memory pool to allocate from.
  * @param[in] src  Memory to copy.
