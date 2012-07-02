@@ -47,7 +47,7 @@ class TestRegression < CLIPPTestCase
     request.gsub!(/^\s+/,"")
     clipp(
       input_hashes: [simple_hash(request)],
-      input: "pb:- @parse @fillbody"
+      input: "pb:INPUT_PATH @parse @fillbody"
     )
     assert_no_issues
   end

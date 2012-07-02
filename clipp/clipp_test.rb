@@ -234,7 +234,8 @@ public
           IronBee::CLIPP::HashToPB::hash_to_pb(h)
       end
       input_path = write_temp_file("clipp_test_RAND.pb", input_content)
-      config[:input] = "pb:#{input_path}"
+      config[:input] ||= "pb:INPUT_PATH"
+      config[:input].gsub!("INPUT_PATH", input_path)
     end
 
     config_path = write_temp_file(
