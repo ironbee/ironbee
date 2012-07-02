@@ -32,6 +32,11 @@ module CLIPPTestAssertions
   def assert_log_no_match(re)
     assert_no_match(re, log)
   end
+
+  # Assert that nothing higher than notice appears
+  def assert_no_issues
+    assert_log_no_match(/ (EMERGENCY|CRITICAL|ALERT|ERROR|WARNING) /)
+  end
 end
 
 # Base class for CLIPP related test cases.
