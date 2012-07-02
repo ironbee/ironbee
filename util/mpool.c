@@ -1850,14 +1850,16 @@ char *ib_mpool_memdup_to_str(
 {
     IB_FTRACE_INIT();
 
-    if (mp == NULL || src == NULL || size == 0) {
+    if (mp == NULL || src == NULL) {
         IB_FTRACE_RET_STR(NULL);
     }
 
     char *str = (char *)ib_mpool_alloc(mp, size + 1);
 
     if (str != NULL) {
-        memcpy(str, src, size);
+        if (size != 0) {
+            memcpy(str, src, size);
+        }
         *(str + size) = '\0';
     }
 

@@ -432,9 +432,13 @@ TEST(TestMpool, memdup_to_str)
     
     char* s2 = ib_mpool_memdup_to_str(mp, s, 5);
 
-    ASSERT_TRUE(s2);
+    EXPECT_TRUE(s2);
     EXPECT_EQ(string("Hello"), string(s2));
     EXPECT_NE(s, s2);
+    
+    char* s3 = ib_mpool_memdup_to_str(mp, s, 0);
+    EXPECT_TRUE(s3);
+    EXPECT_EQ(string(""), s3);
     
     ib_mpool_destroy(mp);       
 }
