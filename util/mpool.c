@@ -1836,7 +1836,7 @@ char *ib_mpool_strdup(
         IB_FTRACE_RET_STR(NULL);
     }
 
-    size_t size = strlen(src)+1;
+    size_t size = strlen(src);
     char *ptr = ib_mpool_memdup_to_str(mp, src, size);
 
     IB_FTRACE_RET_STR(ptr);
