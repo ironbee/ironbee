@@ -122,8 +122,8 @@ TEST(TestMpool, CreateDestroy)
     
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
-    EXPECT_LT(0, g_malloc_calls);
-    EXPECT_LT(0, g_malloc_bytes);
+    EXPECT_LT(0U, g_malloc_calls);
+    EXPECT_LT(0U, g_malloc_bytes);
     
     void* p = ib_mpool_alloc(mp, 100);
     EXPECT_VALID(mp);
@@ -155,16 +155,16 @@ TEST(TestMpool, OneThousandAllocs)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
 
-    for (int i = 0; i < c_num_allocs; ++i) {
+    for (size_t i = 0; i < c_num_allocs; ++i) {
         void* p = ib_mpool_alloc(mp, g(rng));
         EXPECT_TRUE(p);
         EXPECT_VALID(mp);
     }
 
-    EXPECT_LT(0, g_malloc_bytes);
-    EXPECT_LT(0, g_malloc_calls);
-    EXPECT_EQ(0, g_free_bytes);
-    EXPECT_EQ(0, g_free_calls);
+    EXPECT_LT(0U, g_malloc_bytes);
+    EXPECT_LT(0U, g_malloc_calls);
+    EXPECT_EQ(0U, g_free_bytes);
+    EXPECT_EQ(0U, g_free_calls);
         
     ib_mpool_destroy(mp);
 
@@ -184,8 +184,8 @@ TEST(TestMpool, Clear)
     
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(mp);
-    EXPECT_LT(0, g_malloc_calls);
-    EXPECT_LT(0, g_malloc_bytes);
+    EXPECT_LT(0U, g_malloc_calls);
+    EXPECT_LT(0U, g_malloc_bytes);
     
     for (int i = 1; i <= 1000; ++i) {
         void* p = ib_mpool_alloc(mp, i);
@@ -193,11 +193,11 @@ TEST(TestMpool, Clear)
         EXPECT_VALID(mp);
     }
 
-    EXPECT_EQ(500*1001, ib_mpool_inuse(mp));
+    EXPECT_EQ(500U*1001U, ib_mpool_inuse(mp));
     ib_mpool_clear(mp);
-    EXPECT_EQ(0, ib_mpool_inuse(mp));
-    EXPECT_EQ(0, g_free_calls);
-    EXPECT_EQ(0, g_free_bytes);
+    EXPECT_EQ(0U, ib_mpool_inuse(mp));
+    EXPECT_EQ(0U, g_free_calls);
+    EXPECT_EQ(0U, g_free_bytes);
     
     ib_mpool_destroy(mp);
 
@@ -261,16 +261,17 @@ TEST(TestMpool, ChildrenDeep)
         &top, "children_deep", NULL, 0, 
         &test_malloc, &test_free
     );
+    EXPECT_EQ(IB_OK, rc);
     EXPECT_VALID(top);
 
     test_mpool_helper(top, 5);
     
     EXPECT_VALID(top);
     
-    ASSERT_LT(0, g_malloc_calls);
-    ASSERT_LT(0, g_malloc_bytes);
-    ASSERT_EQ(0, g_free_calls);
-    ASSERT_EQ(0, g_free_bytes);
+    ASSERT_LT(0U, g_malloc_calls);
+    ASSERT_LT(0U, g_malloc_bytes);
+    ASSERT_EQ(0U, g_free_calls);
+    ASSERT_EQ(0U, g_free_bytes);
     
     ib_mpool_destroy(top);
     
@@ -306,10 +307,10 @@ TEST(TestMpool, ChildrenWide)
     
     EXPECT_VALID(top);
     
-    ASSERT_LT(0, g_malloc_calls);
-    ASSERT_LT(0, g_malloc_bytes);
-    ASSERT_EQ(0, g_free_calls);
-    ASSERT_EQ(0, g_free_bytes);
+    ASSERT_LT(0U, g_malloc_calls);
+    ASSERT_LT(0U, g_malloc_bytes);
+    ASSERT_EQ(0U, g_free_calls);
+    ASSERT_EQ(0U, g_free_bytes);
     
     ib_mpool_destroy(top);
     
@@ -564,7 +565,7 @@ void muck_with_parent(ib_mpool_t* parent)
     static const size_t num_mucks = 1e4;
     ib_mpool_t* mp;
     
-    for (int i = 0; i < num_mucks; ++i) {
+    for (size_t i = 0; i < num_mucks; ++i) {
         ib_mpool_create(&mp, NULL, parent);
         ib_mpool_destroy(mp);
     }
@@ -583,7 +584,7 @@ TEST(TestMpool, Multithreading)
     ASSERT_TRUE(mp);
     
     boost::thread_group threads;
-    for (int i = 0; i < num_threads; ++i) {
+    for (size_t i = 0; i < num_threads; ++i) {
         threads.create_thread(boost::bind(muck_with_parent, mp));
     }
     
