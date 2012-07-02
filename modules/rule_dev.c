@@ -206,7 +206,7 @@ static ib_status_t act_log_create(ib_engine_t *ib,
  * @returns Status code
  */
 static ib_status_t act_debuglog_execute(void *data,
-                                        ib_rule_t *rule,
+                                        const ib_rule_t *rule,
                                         ib_tx_t *tx,
                                         ib_flags_t flags,
                                         void *cbdata)

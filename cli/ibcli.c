@@ -1247,7 +1247,7 @@ static ib_status_t action_print_create(ib_engine_t *ib,
  * @returns Status code
  */
 static ib_status_t action_print_execute(void *data,
-                                        ib_rule_t *rule,
+                                        const ib_rule_t *rule,
                                         ib_tx_t *tx,
                                         ib_flags_t flags,
                                         void *cbdata)
@@ -1321,7 +1321,7 @@ static ib_status_t action_printvar_create(ib_engine_t *ib,
  * @returns Status code
  */
 static ib_status_t action_printvar_execute(void *data,
-                                           ib_rule_t *rule,
+                                           const ib_rule_t *rule,
                                            ib_tx_t *tx,
                                            ib_flags_t flags,
                                            void *cbdata)

@@ -144,7 +144,7 @@ ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst)
 }
 
 ib_status_t ib_action_execute(const ib_action_inst_t *act_inst,
-                              ib_rule_t *rule,
+                              const ib_rule_t *rule,
                               ib_tx_t *tx)
 {
     IB_FTRACE_INIT();

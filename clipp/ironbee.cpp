@@ -418,11 +418,11 @@ ib_status_t clipp_action_create(
 }
 
 ib_status_t clipp_action_execute(
-    void*      data,
-    ib_rule_t* rule,
-    ib_tx_t*   tx,
-    ib_flags_t flags,
-    void*      cbdata
+    void*            data,
+    const ib_rule_t* rule,
+    ib_tx_t*         tx,
+    ib_flags_t       flags,
+    void*            cbdata
 )
 {
     IB_FTRACE_INIT();

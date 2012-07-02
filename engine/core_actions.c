@@ -109,7 +109,7 @@ static ib_status_t act_setflags_create(ib_engine_t *ib,
  * @returns Status code
  */
 static ib_status_t act_setflag_execute(void *data,
-                                       ib_rule_t *rule,
+                                       const ib_rule_t *rule,
                                        ib_tx_t *tx,
                                        ib_flags_t flags,
                                        void *cbdata)
@@ -145,7 +145,7 @@ static ib_status_t act_setflag_execute(void *data,
  * @returns IB_OK if successful.
  */
 static ib_status_t act_event_execute(void *data,
-                                     ib_rule_t *rule,
+                                     const ib_rule_t *rule,
                                      ib_tx_t *tx,
                                      ib_flags_t flags,
                                      void *cbdata)
@@ -332,7 +332,7 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
  * @returns Status code
  */
 static ib_status_t act_setvar_execute(void *data,
-                                      ib_rule_t *rule,
+                                      const ib_rule_t *rule,
                                       ib_tx_t *tx,
                                       ib_flags_t flags,
                                       void *cbdata)
@@ -628,7 +628,7 @@ typedef struct act_block_t act_block_t;
  * @param[in] flags Flags. Unused.
  */
 static ib_status_t act_block_execute(void* data,
-                                     ib_rule_t *rule,
+                                     const ib_rule_t *rule,
                                      ib_tx_t *tx,
                                      ib_flags_t flags,
                                      void *cbdata)
@@ -727,7 +727,7 @@ typedef struct act_status_t act_status_t;
  * @returns IB_OK.
  */
 static ib_status_t act_status_execute(void* data,
-                                      ib_rule_t *rule,
+                                      const ib_rule_t *rule,
                                       ib_tx_t *tx,
                                       ib_flags_t flags,
                                       void *cbdata)
@@ -938,7 +938,7 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
 }
 
 static ib_status_t act_set_request_header_execute(void* data,
-                                                  ib_rule_t *rule,
+                                                  const ib_rule_t *rule,
                                                   ib_tx_t *tx,
                                                   ib_flags_t flags,
                                                   void *cbdata)
@@ -973,7 +973,7 @@ static ib_status_t act_set_request_header_execute(void* data,
 }
 
 static ib_status_t act_del_request_header_execute(void* data,
-                                                  ib_rule_t *rule,
+                                                  const ib_rule_t *rule,
                                                   ib_tx_t *tx,
                                                   ib_flags_t flags,
                                                   void *cbdata)
@@ -1001,7 +1001,7 @@ static ib_status_t act_del_request_header_execute(void* data,
 }
 
 static ib_status_t act_set_response_header_execute(void* data,
-                                                  ib_rule_t *rule,
+                                                  const ib_rule_t *rule,
                                                   ib_tx_t *tx,
                                                   ib_flags_t flags,
                                                   void *cbdata)
@@ -1035,10 +1035,10 @@ static ib_status_t act_set_response_header_execute(void* data,
 }
 
 static ib_status_t act_del_response_header_execute(void* data,
-                                                  ib_rule_t *rule,
-                                                  ib_tx_t *tx,
-                                                  ib_flags_t flags,
-                                                  void *cbdata)
+                                                   const ib_rule_t *rule,
+                                                   ib_tx_t *tx,
+                                                   ib_flags_t flags,
+                                                   void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -1119,7 +1119,7 @@ static ib_status_t act_allow_create(ib_engine_t *ib,
  * @param[in] cbdata Unused.
  */
 static ib_status_t act_allow_execute(void *data,
-                                     ib_rule_t *rule,
+                                     const ib_rule_t *rule,
                                      ib_tx_t *tx,
                                      ib_flags_t flags,
                                      void *cbdata)

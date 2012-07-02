@@ -94,11 +94,11 @@ typedef ib_status_t (* ib_action_destroy_fn_t)(
  * @returns IB_OK if successful.
  */
 typedef ib_status_t (* ib_action_execute_fn_t)(
-    void       *data,
-    ib_rule_t  *rule,
-    ib_tx_t    *tx,
-    ib_flags_t flags,
-    void       *cbdata
+    void            *data,
+    const ib_rule_t *rule,
+    ib_tx_t         *tx,
+    ib_flags_t       flags,
+    void            *cbdata
 );
 
 /** Action Structure */
@@ -202,7 +202,7 @@ ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst);
  * @returns IB_OK on success
  */
 ib_status_t ib_action_execute(const ib_action_inst_t *act_inst,
-                              ib_rule_t *rule,
+                              const ib_rule_t *rule,
                               ib_tx_t *tx);
 
 #ifdef __cplusplus

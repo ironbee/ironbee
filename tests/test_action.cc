@@ -102,7 +102,7 @@ static ib_status_t create_fn(ib_engine_t *ib,
 }
 
 static ib_status_t execute_fn(void *data,
-                              ib_rule_t *rule,
+                              const ib_rule_t *rule,
                               ib_tx_t *tx,
                               ib_flags_t flags,
                               void *cbdata)

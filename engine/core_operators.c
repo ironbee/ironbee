@@ -312,7 +312,7 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if (ib_rule_should_capture(rule, *result) == true) {
+    if ( (tx != NULL) && (ib_rule_should_capture(rule, *result) == true) ) {
         ib_field_t *f;
         const char *name;
 
