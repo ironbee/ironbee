@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1511 
+personal_ws-1.1 en 1512 
 refactor
 cfg
 backreference
@@ -999,6 +999,7 @@ startpat
 DebugLogLevel
 punycode
 ruleset
+exop
 nbytes
 soso
 IronBeeRuleDefs
