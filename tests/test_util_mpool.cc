@@ -166,6 +166,16 @@ TEST(TestMpool, OneThousandAllocs)
     EXPECT_EQ(0U, g_free_bytes);
     EXPECT_EQ(0U, g_free_calls);
         
+    // The following is mostly for valgrind, hence the stringification.
+    char* output = ib_mpool_analyze(mp);
+    ASSERT_TRUE(output);
+    EXPECT_FALSE(string(output).empty());
+    free(output);
+    output = ib_mpool_debug_report(mp);
+    ASSERT_TRUE(output);
+    EXPECT_FALSE(string(output).empty());
+    free(output);
+    
     ib_mpool_destroy(mp);
 
     ASSERT_EQ(g_malloc_calls, g_free_calls);
