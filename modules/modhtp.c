@@ -2157,8 +2157,8 @@ static ib_status_t modhtp_context_close(ib_engine_t *ib,
     /* If there is not a parser set, then use this parser. */
     pi = ib_parser_provider_get_instance(ctx);
     if (pi == NULL) {
-        ib_log_info(ib, "Using \"%s\" parser by default in context %s.",
-                    MODULE_NAME_STR, ib_context_full_get(ctx));
+        ib_log_debug(ib, "Using \"%s\" parser by default in context %s.",
+                     MODULE_NAME_STR, ib_context_full_get(ctx));
 
         /* Lookup/set this parser provider instance. */
         rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_PARSER,
