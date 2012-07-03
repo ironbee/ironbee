@@ -124,37 +124,36 @@ two_span_t parse_header(const span_t& span)
 }
 
 template <typename StartEventType>
-void convert_connection_data(
+three_span_t convert_first_line(
     Input::event_list_t& events,
-    const span_t&        data,
+    span_t&              input,
     Input::event_e       start_event,
-    Input::event_e       header_event,
-    Input::event_e       header_finished_event,
-    Input::event_e       body_event,
-    Input::event_e       finished_event,
-    double               pre_delay,
-    double               post_delay
+    double               pre_delay
 )
 {
-    span_t input = data;
+    span_t current_line = fetch_line(input);
+    three_span_t info = parse_first_line(current_line);
+    events.push_back(
+        boost::make_shared<StartEventType>(
+            start_event,
+            to_buffer(current_line),
+            to_buffer(info.get<0>()),
+            to_buffer(info.get<1>()),
+            to_buffer(info.get<2>())
+        )
+    );
+    events.back()->pre_delay = pre_delay;
 
-    // Request line
-    {
-        span_t current_line = fetch_line(input);
-        three_span_t info = parse_first_line(current_line);
-        events.push_back(
-            boost::make_shared<StartEventType>(
-                start_event,
-                to_buffer(current_line),
-                to_buffer(info.get<0>()),
-                to_buffer(info.get<1>()),
-                to_buffer(info.get<2>())
-            )
-        );
-        events.back()->pre_delay = pre_delay;
-    }
+    return info;
+}
 
-    // Headers
+void convert_headers(
+    Input::event_list_t& events,
+    span_t&              input,
+    Input::event_e       header_event,
+    Input::event_e       header_finished_event
+)
+{
     Input::header_list_t headers;
     const char* begin = input.begin();
     ParseModifier::parse_header_block(headers, begin, input.end());
@@ -168,17 +167,29 @@ void convert_connection_data(
     events.push_back(
         boost::make_shared<Input::NullEvent>(header_finished_event)
     );
+}
 
-    // Remainder is body.
+void convert_remainder(
+    Input::event_list_t& events,
+    span_t&              input,
+    Input::event_e       body_event,
+    Input::event_e       finished_event,
+    double               pre_delay,
+    double               post_delay
+)
+{
     if (! input.empty()) {
         events.push_back(
             boost::make_shared<Input::DataEvent>(body_event, to_buffer(input))
         );
+        events.back()->pre_delay = pre_delay;
+        pre_delay = 0;
     }
 
     events.push_back(
         boost::make_shared<Input::NullEvent>(finished_event)
     );
+    events.back()->pre_delay  = pre_delay;
     events.back()->post_delay = post_delay;
 }
 
@@ -208,6 +219,7 @@ bool ParseModifier::operator()(Input::input_p& input)
         OUT
     };
     last_seen_e last_seen = NOTHING;
+    bool is_http09;
     BOOST_FOREACH(Input::Transaction& tx, input->connection.transactions) {
         new_transactions.push_back(Input::Transaction());
         Input::Transaction& new_tx = new_transactions.back();
@@ -225,15 +237,31 @@ bool ParseModifier::operator()(Input::input_p& input)
                         dynamic_cast<Input::DataEvent&>(
                             *event
                         );
-                    convert_connection_data<Input::RequestEvent>(
+                    span_t input = from_buffer(specific.data);
+                    three_span_t info =
+                        convert_first_line<Input::RequestEvent>(
+                            new_tx.events,
+                            input,
+                            Input::REQUEST_STARTED,
+                            specific.pre_delay
+                        );
+                    is_http09 = info.get<2>().empty();
+
+                    if (! is_http09) {
+                        convert_headers(
+                            new_tx.events,
+                            input,
+                            Input::REQUEST_HEADER,
+                            Input::REQUEST_HEADER_FINISHED
+                        );
+                    }
+
+                    convert_remainder(
                         new_tx.events,
-                        from_buffer(specific.data),
-                        Input::REQUEST_STARTED,
-                        Input::REQUEST_HEADER,
-                        Input::REQUEST_HEADER_FINISHED,
+                        input,
                         Input::REQUEST_BODY,
                         Input::REQUEST_FINISHED,
-                        specific.pre_delay,
+                        0,
                         specific.post_delay
                     );
                     break;
@@ -250,14 +278,29 @@ bool ParseModifier::operator()(Input::input_p& input)
                         dynamic_cast<Input::DataEvent&>(
                             *event
                         );
-                    convert_connection_data<Input::ResponseEvent>(
+
+                    span_t input = from_buffer(specific.data);
+
+                    if (! is_http09) {
+                        convert_first_line<Input::RequestEvent>(
+                            new_tx.events,
+                            input,
+                            Input::RESPONSE_STARTED,
+                            specific.pre_delay
+                        );
+                        convert_headers(
+                            new_tx.events,
+                            input,
+                            Input::RESPONSE_HEADER,
+                            Input::RESPONSE_HEADER_FINISHED
+                        );
+                    }
+
+                    convert_remainder(
                         new_tx.events,
-                        from_buffer(specific.data),
-                        Input::RESPONSE_STARTED,
-                        Input::RESPONSE_HEADER,
-                        Input::RESPONSE_HEADER_FINISHED,
-                        Input::RESPONSE_BODY,
-                        Input::RESPONSE_FINISHED,
+                        input,
+                        Input::REQUEST_BODY,
+                        Input::REQUEST_FINISHED,
                         specific.pre_delay,
                         specific.post_delay
                     );

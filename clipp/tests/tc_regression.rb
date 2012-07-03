@@ -51,4 +51,23 @@ class TestRegression < CLIPPTestCase
     )
     assert_no_issues
   end
+
+  def test_parse_http09
+    request = <<-EOS
+      POST /
+      This is the body.
+    EOS
+    request.gsub!(/^\s+/,"")
+    response = <<-EOS
+      This is the body.
+    EOS
+    response.gsub!(/^\s+/,"")
+    clipp(
+      input_hashes: [simple_hash(request, response)],
+      input: "pb:INPUT_PATH @parse",
+      consumer: "view"
+    )
+    assert_no_issues
+    assert_log_no_match /_HEADER/
+  end
 end
