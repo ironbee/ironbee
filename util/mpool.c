@@ -872,7 +872,7 @@ bool ib_mpool_report_printf(
  *         failure.
  */
 static
-const char *ib_mpool_report_convert(
+char *ib_mpool_report_convert(
     ib_mpool_report_t *report
 )
 {
@@ -1667,7 +1667,7 @@ char DLL_PUBLIC *ib_mpool_path(
 
 ib_status_t ib_mpool_validate(
     const ib_mpool_t  *mp,
-    const char       **message
+    char             **message
 )
 {
 /**@cond DoNotDocument*/
@@ -1832,7 +1832,7 @@ child_error:
 #undef VALIDATE_ERROR
 }
 
-const char *ib_mpool_analyze(
+char *ib_mpool_analyze(
     const ib_mpool_t *mp
 )
 {
@@ -1843,7 +1843,7 @@ const char *ib_mpool_analyze(
     }
 
     ib_mpool_report_t report;
-    const char *report_text = NULL;
+    char *report_text = NULL;
 
     ib_mpool_report_init(&report);
 
@@ -1857,7 +1857,7 @@ const char *ib_mpool_analyze(
     IB_FTRACE_RET_STR(report_text);
 }
 
-const char *ib_mpool_debug_report(
+char *ib_mpool_debug_report(
     const ib_mpool_t *mp
 )
 {
@@ -1868,7 +1868,7 @@ const char *ib_mpool_debug_report(
     }
 
     ib_mpool_report_t report;
-    const char *report_text = NULL;
+    char *report_text = NULL;
 
     ib_mpool_report_init(&report);
 

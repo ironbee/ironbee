@@ -354,6 +354,8 @@ char DLL_PUBLIC *ib_mpool_path(
  * violations.  Any return value of IB_EOTHER should be reported as a bug
  * along with the result of ib_mpool_debug_report() and any other information.
  *
+ * The caller is responsible for freeing @c *message.
+ *
  * @param[in]  mp      Memory pool to analyze.
  * @param[out] message Message describing failure.
  * @returns
@@ -364,7 +366,7 @@ char DLL_PUBLIC *ib_mpool_path(
  */
 ib_status_t DLL_PUBLIC ib_mpool_validate(
     const ib_mpool_t  *mp,
-    const char        **message
+    char             **message
 );
 
 /**
@@ -380,7 +382,7 @@ ib_status_t DLL_PUBLIC ib_mpool_validate(
  * @param[in] mp Memory pool to dump.
  * @returns Debug report.
  */
-const char DLL_PUBLIC *ib_mpool_debug_report(const ib_mpool_t *mp);
+char DLL_PUBLIC *ib_mpool_debug_report(const ib_mpool_t *mp);
 
 /**
  * Analyze memory pool usage and return a human consumable report.
@@ -409,7 +411,7 @@ const char DLL_PUBLIC *ib_mpool_debug_report(const ib_mpool_t *mp);
  * @param[in] mp Memory pool to analyze.
  * @returns Usage report.
  */
-const char DLL_PUBLIC *ib_mpool_analyze(const ib_mpool_t *mp);
+char DLL_PUBLIC *ib_mpool_analyze(const ib_mpool_t *mp);
 
 /** @} IronBeeUtilMemPool */
 

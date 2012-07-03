@@ -91,7 +91,7 @@ void reset_test()
 
 #define EXPECT_VALID(mp) \
     do { \
-        const char* av_message; \
+        char* av_message; \
         EXPECT_EQ(IB_OK, ib_mpool_validate(mp, &av_message)) << av_message; \
     } while (0)
 
@@ -552,7 +552,7 @@ TEST(TestMpool, TestEINVAL)
     EXPECT_EQ(IB_EINVAL, ib_mpool_cleanup_register(NULL, test_cleanup, NULL));
     EXPECT_EQ(IB_EINVAL, ib_mpool_cleanup_register(mp, NULL, NULL));
     
-    const char* message;
+    char* message;
     
     EXPECT_EQ(IB_EINVAL, ib_mpool_validate(NULL, &message));
     EXPECT_EQ(IB_EINVAL, ib_mpool_validate(mp, NULL));
