@@ -1,10 +1,12 @@
-$:.unshift(File.dirname(File.dirname(__FILE__)))
+$:.unshift(File.dirname(File.dirname(File.expand_path(__FILE__))))
 require 'clipp_test'
 
-class TestTesting < CLIPPTestCase
+class TestTesting < Test::Unit::TestCase
+  include CLIPPTest
+
   def test_input_hashes
     clipp(
-        input_hashes: [
+        :input_hashes => [
           {
             "id" => "input_hash",
             "connection" => {
@@ -42,27 +44,27 @@ class TestTesting < CLIPPTestCase
             }
           }
         ],
-        consumer: 'view'
+        :consumer => 'view'
     )
     assert_log_match %r{GET /ssldb/ HTTP/1.1}
   end
 
   def test_simple_hash
     clipp(
-      input_hashes: [simple_hash("GET /foo HTTP/1.1", "HTTP/1.1 200 OK")],
-      consumer: 'view'
+      :input_hashes => [simple_hash("GET /foo HTTP/1.1", "HTTP/1.1 200 OK")],
+      :consumer     => 'view'
     )
     assert_log_match %r{GET /foo HTTP/1.1}
   end
 
   def test_erb
     clipp(
-      input_hashes: [
+      :input_hashes => [
         simple_hash(
-          erb("<%= c[:method] %> /foo HTTP/1.1", method: 'GET')
+          erb("<%= c[:method] %> /foo HTTP/1.1", :method => 'GET')
         )
       ],
-      consumer: 'view'
+      :consumer => 'view'
     )
     assert_log_match %r{GET /foo HTTP/1.1}
   end

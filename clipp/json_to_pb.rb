@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby19
+#!/usr/bin/env ruby
 
 # Script to convert JSON to clipp protobuf.
 # The inverse of pb_to_json.

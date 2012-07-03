@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby19
+#!/usr/bin/env ruby
 
 #
 # Defines the CLIPPTestCase class which can be used in place of
@@ -11,10 +11,10 @@
 # to the build location of clipp.
 #
 
+require 'rubygems'
 require 'test/unit'
 require 'tmpdir'
 require 'erb'
-require 'open3'
 
 $:.unshift(File.dirname(__FILE__))
 require 'hash_to_pb'
@@ -45,7 +45,7 @@ end
 # the clipp command which invokes clipp to run IronBee and a number of
 # assertions about the most recent run (see CLIPPTestAssertions)
 #
-class CLIPPTestCase < Test::Unit::TestCase
+module CLIPPTest
   include CLIPPTestAssertions
 
   # Access log of most recent clipp run.
@@ -72,27 +72,48 @@ class CLIPPTestCase < Test::Unit::TestCase
   # Default consumer.
   DEFAULT_CONSUMER = 'ironbee:IRONBEE_CONFIG'
 
+  # Execute cmd and return [output, exit status]
+  # stdin is closed immediately.
+  def run_command(cmd, *args)
+    r,w = IO.pipe
+
+    pid = fork do
+      r.close
+      STDIN.close
+      STDOUT.reopen(w)
+      STDERR.reopen(w)
+
+      exec(cmd, *args)
+    end
+
+    w.close
+    pid, status = Process::wait2(pid)
+
+    output = r.read
+
+    [output, status]
+  end
+
   # Execute clipp using the clipp config at config_path.  Output is displayed
   # to standard out and returned.  If exit status is non-zero then nil is
   # returned.
-  def run_clipp(config_path, stdin)
-    stdout, stderr, status =
-      Open3.capture3(CLIPP, '-c', config_path, :stdin_data => stdin)
+  def run_clipp(config_path)
+    output, status = run_command(
+      CLIPP, '-c', config_path
+    )
 
     puts "#{CLIPP} -c #{config_path}"
     puts "== CLIPP Configuration =="
     puts IO.read(config_path)
-    puts "== STDOUT =="
-    puts stdout
-    puts "== STDERR =="
-    puts stderr
+    puts "== OUTPUT =="
+    puts output
     puts
     puts "Exit status: #{status.exitstatus}"
 
     if status.exitstatus != 0
       nil
     else
-      stdout + "\n" + stderr
+      output
     end
   end
 
@@ -252,7 +273,7 @@ public
       "#{config[:input]} #{consumer_chain}\n"
     )
 
-    @log = @clipp_log = run_clipp(clipp_config, config[:stdin])
+    @log = @clipp_log = run_clipp(clipp_config)
 
     assert_not_nil(@log)
   end

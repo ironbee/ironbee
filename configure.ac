@@ -250,10 +250,6 @@ AC_ARG_ENABLE(clipp,
 [
   enable_clipp="${enable_cpp}"
 ])
-AC_CHECK_PROG(ruby19, 'ruby19', 'ruby19', '')
-if test "$ruby19" = "" -a "$enable_clipp" = "yes"; then
-    AC_MSG_WARN("Ruby required for testing clipp.")
-fi
 
 ### Disable Lua
 AC_ARG_ENABLE(lua,

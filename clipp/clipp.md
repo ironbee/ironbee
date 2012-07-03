@@ -589,8 +589,9 @@ use clipp.  This testing infrastructure is an extension to Ruby `Test::Unit`.
 If you are unfamiliar with Test::Unit, read up on that before continuing.
 
 CLIPP Testing Support comes with three types of extensions.  They can be
-accessed by subclassing `CLIPPTestCase` instead of `Test::Unit::TestCase`.
-They main additions are:
+accessed by including the `CLIPPTest` mixin.
+
+The main additions are:
 
 - A command `clipp` which invokes clipp and stores the output.
 - A set of assertions about the most recent `clipp` invocation.

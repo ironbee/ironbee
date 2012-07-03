@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby19
+#!/usr/bin/env ruby
 
 $:.unshift(File.dirname(__FILE__))
 
