@@ -582,7 +582,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     (*pconn)->t.started = ib_clock_get_time();
 
     /* Name the connection pool */
-    snprintf(namebuf, sizeof(namebuf), "Connection/%p", (void *)(*pconn));
+    snprintf(namebuf, sizeof(namebuf), "conn[%p]", (void *)(*pconn));
     ib_mpool_setname(pool, namebuf);
 
     (*pconn)->ib = ib;
@@ -749,7 +749,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     }
 
     /* Name the transaction pool */
-    snprintf(namebuf, sizeof(namebuf), "TX/%p", (void *)tx);
+    snprintf(namebuf, sizeof(namebuf), "tx[%p]", (void *)tx);
     ib_mpool_setname(pool, namebuf);
 
     /* Mark time. */
