@@ -124,9 +124,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
 
 failed:
     /* Make sure everything is cleaned up on failure */
-    if (pool != NULL) {
-        ib_mpool_destroy(pool);
-    }
+    ib_engine_pool_destroy(ib, pool);
     *pcp = NULL;
 
     IB_FTRACE_RET_STATUS(rc);
@@ -419,8 +417,9 @@ void ib_cfgparser_destroy(ib_cfgparser_t *cp)
     IB_FTRACE_INIT();
 
     if (cp != NULL) {
-        ib_mpool_destroy(cp->mp);
+        ib_engine_pool_destroy(cp->ib, cp->mp);
     }
+
     IB_FTRACE_RET_VOID();
 }
 

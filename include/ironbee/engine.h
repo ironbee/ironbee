@@ -220,6 +220,19 @@ ib_mpool_t DLL_PUBLIC *ib_engine_pool_temp_get(ib_engine_t *ib);
 void DLL_PUBLIC ib_engine_pool_temp_destroy(ib_engine_t *ib);
 
 /**
+ * Destroy a memory pool.
+ *
+ * This destroys the memory pool @a mp.  If IB_DEBUG_MEMORY is defined,
+ * it will validate and analyze the pool before destruction.
+ *
+ * Will do nothing if @a mp is NULL.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] mp Memory pool to destroy.
+ */
+void DLL_PUBLIC ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp);
+
+/**
  * Destroy an engine.
  *
  * @param ib Engine handle

@@ -343,7 +343,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
 failed:
     /* Make sure everything is cleaned up on failure */
     if (*pib != NULL) {
-        ib_mpool_destroy((*pib)->mp);
+        ib_engine_pool_destroy(*pib, (*pib)->mp);
     }
     *pib = NULL;
 
@@ -426,10 +426,72 @@ ib_mpool_t *ib_engine_pool_temp_get(ib_engine_t *ib)
 void ib_engine_pool_temp_destroy(ib_engine_t *ib)
 {
     IB_FTRACE_INIT();
-    ib_mpool_destroy(ib->temp_mp);
+    ib_engine_pool_destroy(ib, ib->temp_mp);
     ib->temp_mp = NULL;
     IB_FTRACE_RET_VOID();
 }
+
+void ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+
+
+    if (mp == NULL) {
+        IB_FTRACE_RET_VOID();
+    }
+
+#ifdef IB_DEBUG_MEMORY
+    {
+        ib_status_t rc;
+        char *message = NULL;
+        char *path = ib_mpool_path(mp);
+
+        if (path == NULL) {
+            /* This will probably also fail... */
+            ib_log_emergency(ib, "Allocation error.");
+            goto finish;
+        }
+
+        rc = ib_mpool_validate(mp, &message);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Memory pool %s failed to validate: %s",
+                path, (message ? message : "no message")
+            );
+        }
+
+        if (message != NULL) {
+            free(message);
+            message = NULL;
+        }
+
+        message = ib_mpool_analyze(mp);
+        if (message == NULL) {
+            ib_log_emergency(ib, "Allocation error.");
+            goto finish;
+        }
+
+        /* We use printf to coincide with the final memory debug which
+         * can't be logged because it occurs too late in engine destruction.
+         */
+        printf("Memory Pool Analysis of %s:\n%s", path, message);
+
+    finish:
+        if (path != NULL) {
+            free(path);
+        }
+        if (message != NULL) {
+            free(message);
+        }
+    }
+#endif
+
+    ib_mpool_destroy(mp);
+
+    IB_FTRACE_RET_VOID();
+}
+
 
 void ib_engine_destroy(ib_engine_t *ib)
 {
@@ -471,6 +533,22 @@ void ib_engine_destroy(ib_engine_t *ib)
                ib->server->vernum, ib->server->abinum,
                ib->server->filename, ib->server->name, ib);
 
+#ifdef IB_DEBUG_MEMORY
+        /* We can't use ib_engine_pool_destroy here as too little of the
+         * the engine is left.
+         *
+         * But always output memory usage stats.
+         *
+         * Also can't use logging anymore.
+         */
+        {
+            char *report = ib_mpool_analyze(ib->mp);
+            if (report != NULL) {
+                printf("Engine Memory Use:\n%s\n", report);
+                free(report);
+            }
+        }
+#endif
         ib_mpool_destroy(ib->mp);
     }
     IB_FTRACE_RET_VOID();
@@ -523,7 +601,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
 failed:
     /* Make sure everything is cleaned up on failure */
     if (*pconn != NULL) {
-        ib_mpool_destroy((*pconn)->mp);
+        ib_engine_pool_destroy(ib, (*pconn)->mp);
     }
     *pconn = NULL;
 
@@ -597,7 +675,7 @@ void ib_conn_destroy(ib_conn_t *conn)
 {
     /// @todo Probably need to update state???
     if ( conn != NULL && conn->mp != NULL ) {
-        ib_mpool_destroy(conn->mp);
+        ib_engine_pool_destroy(conn->ib, conn->mp);
         /* Don't do this: conn->mp = NULL; conn is now freed memory! */
     }
 }
@@ -741,7 +819,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
 failed:
     /* Make sure everything is cleaned up on failure */
     if (tx != NULL) {
-        ib_mpool_destroy(tx->mp);
+        ib_engine_pool_destroy(ib, tx->mp);
     }
     tx = NULL;
 
@@ -778,7 +856,7 @@ void ib_tx_destroy(ib_tx_t *tx)
     }
 
     /// @todo Probably need to update state???
-    ib_mpool_destroy(tx->mp);
+    ib_engine_pool_destroy(tx->ib, tx->mp);
 }
 
 ib_status_t ib_site_create(ib_site_t **psite,
@@ -1506,7 +1584,7 @@ ib_status_t ib_context_create(ib_context_t **pctx,
 failed:
     /* Make sure everything is cleaned up on failure */
     if (ctx != NULL) {
-        ib_mpool_destroy(ctx->mp);
+        ib_engine_pool_destroy(ib, ctx->mp);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -1771,7 +1849,7 @@ void ib_context_destroy(ib_context_t *ctx)
         }
     }
 
-    ib_mpool_destroy(ctx->mp);
+    ib_engine_pool_destroy(ib, ctx->mp);
 
     IB_FTRACE_RET_VOID();
 }
