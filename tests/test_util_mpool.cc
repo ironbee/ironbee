@@ -620,3 +620,46 @@ TEST(TestMpool, ZeroLength)
     
     ib_mpool_destroy(mp);
 }
+
+TEST(TestMpool, Path)
+{
+    ib_mpool_t* mp   = NULL;
+    ib_mpool_t* mp_a = NULL;
+    ib_mpool_t* mp_b = NULL;
+
+    ib_status_t rc = ib_mpool_create(&mp, "foo", NULL);
+    
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(mp);
+    
+    char* path = ib_mpool_path(mp);
+    
+    ASSERT_TRUE(path);
+    EXPECT_EQ(string("/foo"), path);
+    
+    free(path);
+    
+    rc = ib_mpool_create(&mp_a, "bar", mp);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(mp_a);
+    
+    path = ib_mpool_path(mp_a);
+    
+    ASSERT_TRUE(path);
+    EXPECT_EQ(string("/foo/bar"), path);
+    
+    free(path);
+
+    rc = ib_mpool_create(&mp_b, "baz", mp_a);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(mp_b);
+    
+    path = ib_mpool_path(mp_b);
+    
+    ASSERT_TRUE(path);
+    EXPECT_EQ(string("/foo/bar/baz"), path);
+    
+    free(path);
+    
+    ib_mpool_destroy(mp);
+}

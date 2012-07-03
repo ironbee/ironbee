@@ -958,10 +958,18 @@ bool ib_mpool_debug_report_helper(
     assert(mp     != NULL);
     assert(report != NULL);
 
+    char *path = ib_mpool_path(mp);
+
+    if (path == NULL) {
+        goto failure;
+    }
+
     IMR_PRINTF(
         "Debug Report for %p [%s]\n",
-        mp, (mp->name ? mp->name : "NULL")
+        mp, path
     );
+
+    free(path);
 
     IMR_PRINTF("%s", "Attributes:\n");
     IMR_PRINTF("  pagesize               = %zd\n", mp->pagesize);
@@ -1086,10 +1094,18 @@ bool ib_mpool_analyze_helper(
 
     const size_t unit_page_cost =
         mp->pagesize + sizeof(ib_mpool_page_t) - 1;
+    char *path = ib_mpool_path(mp);
+
+    if (path == NULL) {
+        goto failure;
+    }
+
     IMR_PRINTF(
         "Analysis of mpool %p [%s]\n",
-        mp, (mp->name ? mp->name : "NULL")
+        mp, path
     );
+
+    free(path);
 
     IMR_PRINTF("%s", "Tracks:\n");
     for (size_t track_num = 0; track_num < IB_MPOOL_NUM_TRACKS; ++track_num) {
@@ -1594,6 +1610,59 @@ ib_status_t ib_mpool_cleanup_register(
     mp->cleanups = cleanup;
 
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+char DLL_PUBLIC *ib_mpool_path(
+    const ib_mpool_t *mp
+)
+{
+    IB_FTRACE_INIT();
+
+    static const char* c_null_name = "null";
+
+/**@cond DoNotDocument*/
+#define NAME_OF(mp) ((mp)->name ? (mp)->name : c_null_name)
+/**@endcond*/
+
+    size_t  path_length = 0;
+    char   *path_buffer = NULL;
+    char   *path_i      = NULL;
+
+    /* Pass 1, estimate length. */
+    for (
+        const ib_mpool_t* current = mp;
+        current != NULL;
+        current = current->parent
+    ) {
+        path_length += 1 + strlen(NAME_OF(current));
+    }
+
+    assert(path_length > 0);
+
+    path_buffer = (char *)malloc(path_length + 1);
+    if (path_buffer == NULL) {
+        IB_FTRACE_RET_STR(NULL);
+    }
+    path_i = path_buffer + path_length;
+    *path_i = '\0';
+
+    /* Pass 2, fill buffer. */
+    for (
+        const ib_mpool_t* current = mp;
+        current != NULL;
+        current = current->parent
+    ) {
+        size_t length = strlen(NAME_OF(current));
+        path_i -= length;
+        memcpy(path_i, NAME_OF(current), length);
+        --path_i;
+        *path_i = '/';
+    }
+
+    assert(path_i == path_buffer);
+
+    IB_FTRACE_RET_STR(path_buffer);
+#undef NAME_OF
 }
 
 ib_status_t ib_mpool_validate(

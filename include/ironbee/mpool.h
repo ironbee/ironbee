@@ -336,6 +336,18 @@ ib_status_t DLL_PUBLIC ib_mpool_cleanup_register(
 );
 
 /**
+ * Full path of a memory pool.
+ *
+ * Caller is responsible for freeing return.
+ *
+ * @param[in] mp Memory pool to get full path of.
+ * @return String or NULL on any allocation error.
+ */
+char DLL_PUBLIC *ib_mpool_path(
+    const ib_mpool_t *mp
+);
+
+/**
  * Validate internal consistency of memory pool.
  *
  * This function will analyze @a mp and its children for invariant
