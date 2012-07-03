@@ -884,10 +884,11 @@ char *ib_mpool_report_convert(
         IB_FTRACE_RET_STR("");
     }
 
-    char *page = (char *)malloc(report->total_size);
+    char *page = (char *)malloc(report->total_size + 1);
     if (page == NULL) {
         IB_FTRACE_RET_STR(NULL);
     }
+    *page = '\0';
 
     IB_MPOOL_FOREACH(ib_mpool_report_line_t, line, report->first) {
         strcat(page, line->line);
