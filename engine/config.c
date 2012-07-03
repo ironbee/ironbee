@@ -84,7 +84,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
     ib_status_t rc;
 
     /* Create parser memory pool */
-    rc = ib_mpool_create(&pool, "Config/Parser", ib->mp);
+    rc = ib_mpool_create(&pool, "cfgparser", ib->mp);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
