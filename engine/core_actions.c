@@ -347,7 +347,8 @@ static ib_status_t act_setvar_execute(void *data,
     ib_field_t *cur = NULL;
     ib_field_t *new;
     char *expanded = NULL;
-    const char *expanded_name = NULL;
+    const char *name = NULL;
+    size_t namelen;
     size_t exlen;
     ib_status_t rc;
     const char *bsdata = NULL;
@@ -365,23 +366,30 @@ static ib_status_t act_setvar_execute(void *data,
     /* Expand the string */
     if (svdata->name_expand) {
         char *tmp;
-        rc = ib_data_expand_str(tx->dpi, svdata->name, &tmp);
+        size_t len;
+        rc = ib_data_expand_str_ex(tx->dpi,
+                                   svdata->name, strlen(svdata->name),
+                                   false,
+                                   &tmp, &len);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
                          "setvar: Failed to expand name \"%s\": %s",
                          svdata->name, ib_status_to_string(rc));
         }
-        expanded_name = tmp;
+        name = tmp;
+        namelen = len;
         ib_log_debug_tx(tx,
-                        "setvar: Expanded variable name from \"%s\" to \"%s\"",
-                        svdata->name, expanded_name);
+                        "setvar: Expanded variable name from "
+                        "\"%s\" to \"%.*s\"",
+                        svdata->name, (int)namelen, name);
     }
     else {
-        expanded_name = svdata->name;
+        name = svdata->name;
+        namelen = strlen(svdata->name);
     }
 
     /* Get the current value */
-    ib_data_get(tx->dpi, expanded_name, &cur);
+    ib_data_get_ex(tx->dpi, name, namelen, &cur);
 
     /* Expand the string */
     if ( (flags & IB_ACTINST_FLAG_EXPAND) != 0) {
@@ -413,15 +421,16 @@ static ib_status_t act_setvar_execute(void *data,
         ib_bytestr_t *bs = NULL;
 
         if (cur != NULL) {
-            ib_data_remove(tx->dpi, expanded_name, NULL);
+            ib_data_remove_ex(tx->dpi, name, namelen, NULL);
         }
 
         /* Create a bytestr to hold it. */
         rc = ib_bytestr_alias_mem(&bs, tx->mp, (uint8_t *)expanded, exlen);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                         "setvar: Failed to bytestring for field %s: %s",
-                         expanded_name, ib_status_to_string(rc));
+                            "setvar: Failed to create bytestring "
+                            "for field \"%.*s\": %s",
+                            (int)namelen, name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -429,14 +438,14 @@ static ib_status_t act_setvar_execute(void *data,
         rc = ib_field_create(
             &new,
             tx->mp,
-            IB_FIELD_NAME(expanded_name),
+            name, namelen,
             svdata->type,
             ib_ftype_bytestr_in(bs)
         );
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                         "setvar: Failed to create field %s: %s",
-                         expanded_name, ib_status_to_string(rc));
+                            "setvar: Failed to create field \"%.*s\": %s",
+                            (int)namelen, name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -444,8 +453,8 @@ static ib_status_t act_setvar_execute(void *data,
         rc = ib_data_add(tx->dpi, new);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                         "setvar: Failed to add field %s: %s",
-                         expanded_name, ib_status_to_string(rc));
+                            "setvar: Failed to add field \"%.*s\": %s",
+                            (int)namelen, name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -455,21 +464,21 @@ static ib_status_t act_setvar_execute(void *data,
         assert(svdata->type == IB_FTYPE_NUM);
 
         if (cur != NULL) {
-            ib_data_remove(tx->dpi, expanded_name, NULL);
+            ib_data_remove_ex(tx->dpi, name, namelen, NULL);
         }
 
         /* Create the new field */
         rc = ib_field_create(
             &new,
             tx->mp,
-            IB_FIELD_NAME(expanded_name),
+            name, namelen,
             svdata->type,
             ib_ftype_num_in(&svdata->value.num)
         );
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                         "setvar: Failed to create field %s: %s",
-                         expanded_name, ib_status_to_string(rc));
+                            "setvar: Failed to create field \"%.*s\": %s",
+                            (int)namelen, name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -477,8 +486,8 @@ static ib_status_t act_setvar_execute(void *data,
         rc = ib_data_add(tx->dpi, new);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                         "setvar: Failed to add field %s: %s",
-                         expanded_name, ib_status_to_string(rc));
+                            "setvar: Failed to add field \"%.*s\": %s",
+                            (int)namelen, name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -486,11 +495,32 @@ static ib_status_t act_setvar_execute(void *data,
     /* Numerical operation : Add */
     else if (svdata->op == SETVAR_NUMADD) {
         assert(svdata->type == IB_FTYPE_NUM);
+
+        /* If it doesn't exist, create the variable with a value of zero */
         if (cur == NULL) {
-            ib_log_error_tx(tx,
-                         "setvar: field %s does not exist for NUMADD action",
-                         expanded_name);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            ib_num_t tmp = 0;
+
+            /* Create the new field */
+            rc = ib_field_create(&cur,
+                                 tx->mp,
+                                 name, namelen,
+                                 svdata->type,
+                                 ib_ftype_num_in(&tmp));
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx,
+                                "setvar: Failed to create field \"%.*s\": %s",
+                                (int)namelen, name, ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            /* Add the field to the DPI */
+            rc = ib_data_add(tx->dpi, cur);
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx,
+                                "setvar: Failed to add field \"%.*s\": %s",
+                                (int)namelen, name, ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
         }
 
         /* Handle num and unum types */
@@ -516,8 +546,8 @@ static ib_status_t act_setvar_execute(void *data,
         }
         else {
             ib_log_error_tx(tx,
-                         "setvar: field %s type %d invalid for NUMADD action",
-                         expanded_name, cur->type);
+                            "setvar: field \"%.*s\" type %d invalid for NUMADD",
+                            (int)namelen, name, cur->type);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
