@@ -1335,8 +1335,7 @@ static ib_status_t action_printvar_execute(void *data,
     /* Lookup the variable in the DPI */
     rc = ib_data_get(tx->dpi, varname, &field);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx,
-                     "setvar: Failed to lookup '%s': %d", varname, rc);
+        ib_log_error_tx(tx, "printvar: Failed to lookup '%s': %d", varname, rc);
     }
 
     snprintf(buf, sizeof(buf), "Var %s", varname);
