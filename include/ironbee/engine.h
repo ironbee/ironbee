@@ -1704,12 +1704,14 @@ ib_status_t ib_data_remove(ib_provider_inst_t *dpi,
  *
  * @param[in] dpi Data provider instance
  * @param[in] str NUL-terminated string to expand
+ * @param[in] recurse Do recursive expansion?
  * @param[out] result Pointer to the expanded string.
  *
  * @returns Status code
  */
 ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
                                const char *str,
+                               bool recurse,
                                char **result);
 
 /**
@@ -1721,6 +1723,7 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
  * @param[in] str String to expand
  * @param[in] slen Length of string @a str to expand
  * @param[in] nul Append NUL byte to @a result?
+ * @param[in] recurse Do recursive expansion?
  * @param[out] result Pointer to the expanded string.
  * @param[out] result_len Length of @a result.
  *
@@ -1730,6 +1733,7 @@ ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
                                   const char *str,
                                   size_t slen,
                                   bool nul,
+                                  bool recurse,
                                   char **result,
                                   size_t *result_len);
 

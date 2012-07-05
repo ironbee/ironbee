@@ -220,7 +220,7 @@ static ib_status_t act_debuglog_execute(void *data,
 
     /* Expand the string */
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
+        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
                          "log_execute: Failed to expand string '%s': %s",

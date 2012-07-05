@@ -1259,7 +1259,7 @@ static ib_status_t action_print_execute(void *data,
 
     /* Expand the string */
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(tx->dpi, cstr, &expanded);
+        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
                          "print: Failed to expand string '%s': %d",
@@ -1471,7 +1471,7 @@ static ib_status_t op_print_execute(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        rc = ib_data_expand_str(tx->dpi, pdata->text, (char **)&text);
+        rc = ib_data_expand_str(tx->dpi, pdata->text, false, (char **)&text);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }

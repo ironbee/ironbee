@@ -288,6 +288,7 @@ ib_status_t ib_expand_str(ib_mpool_t *mp,
                           const char *str,
                           const char *prefix,
                           const char *suffix,
+                          bool recurse,
                           ib_hash_t *hash,
                           char **result)
 {
@@ -303,8 +304,11 @@ ib_status_t ib_expand_str(ib_mpool_t *mp,
     assert(result != NULL);
 
     /* Let ib_expand_str_ex() do the heavy lifting */
-    rc = ib_expand_str_ex(
-        mp, str, strlen(str), prefix, suffix, true, hash, result, &len);
+    rc = ib_expand_str_ex(mp, str, strlen(str),
+                          prefix, suffix,
+                          true, recurse,
+                          hash,
+                          result, &len);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -316,6 +320,7 @@ ib_status_t ib_expand_str_gen(ib_mpool_t *mp,
                               const char *str,
                               const char *prefix,
                               const char *suffix,
+                              bool recurse,
                               ib_expand_lookup_fn_t lookup_fn,
                               const void *lookup_data,
                               char **result)
@@ -332,7 +337,8 @@ ib_status_t ib_expand_str_gen(ib_mpool_t *mp,
     assert(result != NULL);
 
     /* Let ib_expand_str_gen_ex() do the heavy lifting */
-    rc = ib_expand_str_gen_ex(mp, str, strlen(str), prefix, suffix, true,
+    rc = ib_expand_str_gen_ex(mp, str, strlen(str), prefix, suffix,
+                              true, recurse,
                               lookup_fn, lookup_data, result, &len);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -374,6 +380,7 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
                              const char *prefix,
                              const char *suffix,
                              bool nul,
+                             bool recurse,
                              const ib_hash_t *hash,
                              char **result,
                              size_t *result_len)
@@ -382,7 +389,8 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
     ib_status_t rc;
 
     rc = ib_expand_str_gen_ex(mp, str, str_len,
-                              prefix, suffix, nul,
+                              prefix, suffix,
+                              nul, recurse,
                               hash_lookup, hash,
                               result, result_len);
     IB_FTRACE_RET_STATUS(rc);
@@ -397,6 +405,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
                                  const char *prefix,
                                  const char *suffix,
                                  bool nul,
+                                 bool recurse,
                                  ib_expand_lookup_fn_t lookup_fn,
                                  const void *lookup_data,
                                  char **result,
@@ -457,7 +466,12 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
         /* Look for the last prefix in the string with a matching suffix */
         slen = buflen;
         while ( (pre == NULL) && (slen >= pre_len) ) {
-            pre = ib_strrstr_ex(buf, slen, prefix, pre_len);
+            if (recurse == true) {
+                pre = ib_strrstr_ex(buf, slen, prefix, pre_len);
+            }
+            else {
+                pre = ib_strstr_ex(buf, slen, prefix, pre_len);
+            }
             if (pre == NULL) {
                 break;
             }
@@ -474,7 +488,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
                                buflen - (pre_off + pre_len),
                                suffix,
                                suf_len);
-            if (suf == NULL) {
+            if ( (recurse == true) && (suf == NULL) ) {
                 slen = (pre - buf);
                 pre = NULL;
             }

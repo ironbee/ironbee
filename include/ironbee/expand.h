@@ -78,6 +78,7 @@ typedef ib_status_t (* ib_expand_lookup_fn_t)(const void *data,
  * @param[in] str String to expand
  * @param[in] prefix Prefix string (e.g. "%{")
  * @param[in] suffix Suffix string (e.g. "}")
+ * @param[in] recurse Do recursive expansion?
  * @param[in] hash Hash from which to lookup and expand names in @a str
  * @param[out] result Resulting string
  *
@@ -87,6 +88,7 @@ ib_status_t DLL_PUBLIC ib_expand_str(ib_mpool_t *mp,
                                      const char *str,
                                      const char *prefix,
                                      const char *suffix,
+                                     bool recurse,
                                      ib_hash_t *hash,
                                      char **result);
 
@@ -105,6 +107,7 @@ ib_status_t DLL_PUBLIC ib_expand_str(ib_mpool_t *mp,
  * @param[in] str String to expand
  * @param[in] prefix Prefix string (e.g. "%{")
  * @param[in] suffix Suffix string (e.g. "}")
+ * @param[in] recurse Do recursive expansion?
  * @param[in] lookup_fn Function to lookup a key in @a lookup_data
  * @param[in] lookup_data Hash-like object in which to expand names in @a str
  * @param[out] result Resulting string
@@ -115,6 +118,7 @@ ib_status_t DLL_PUBLIC ib_expand_str_gen(ib_mpool_t *mp,
                                          const char *str,
                                          const char *prefix,
                                          const char *suffix,
+                                         bool recurse,
                                          ib_expand_lookup_fn_t lookup_fn,
                                          const void *lookup_data,
                                          char **result);
@@ -136,6 +140,7 @@ ib_status_t DLL_PUBLIC ib_expand_str_gen(ib_mpool_t *mp,
  * @param[in] prefix Prefix string (e.g. "%{")
  * @param[in] suffix Suffix string (e.g. "}")
  * @param[in] nul Append a NUL byte to the end of @a result?
+ * @param[in] recurse Do recursive expansion?
  * @param[in] hash Hash from which to lookup and expand names in @a str
  * @param[out] result Resulting string
  * @param[out] result_len Length of @a result
@@ -151,6 +156,7 @@ ib_status_t DLL_PUBLIC ib_expand_str_ex(ib_mpool_t *mp,
                                         const char *prefix,
                                         const char *suffix,
                                         bool nul,
+                                        bool recurse,
                                         const ib_hash_t *hash,
                                         char **result,
                                         size_t *result_len);
@@ -172,6 +178,7 @@ ib_status_t DLL_PUBLIC ib_expand_str_ex(ib_mpool_t *mp,
  * @param[in] prefix Prefix string (e.g. "%{")
  * @param[in] suffix Suffix string (e.g. "}")
  * @param[in] nul Append a NUL byte to the end of @a result?
+ * @param[in] recurse Do recursive expansion?
  * @param[in] lookup_fn Function to lookup a key in @a lookup_data
  * @param[in] lookup_data Hash-like object in which to expand names in @a str
  * @param[out] result Resulting string
@@ -188,6 +195,7 @@ ib_status_t DLL_PUBLIC ib_expand_str_gen_ex(ib_mpool_t *mp,
                                             const char *prefix,
                                             const char *suffix,
                                             bool nul,
+                                            bool recurse,
                                             ib_expand_lookup_fn_t lookup_fn,
                                             const void *lookup_data,
                                             char **result,

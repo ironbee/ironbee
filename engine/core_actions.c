@@ -161,7 +161,7 @@ static ib_status_t act_event_execute(void *data,
     /* Expand the message string */
     if ( (rule->meta.flags & IB_RULEMD_FLAG_EXPAND_MSG) != 0) {
         char *tmp;
-        rc = ib_data_expand_str(tx->dpi, rule->meta.msg, &tmp);
+        rc = ib_data_expand_str(tx->dpi, rule->meta.msg, false, &tmp);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
                          "event: Failed to expand string '%s': %s",
@@ -197,7 +197,7 @@ static ib_status_t act_event_execute(void *data,
     if (rule->meta.data != NULL) {
         if ( (rule->meta.flags & IB_RULEMD_FLAG_EXPAND_DATA) != 0) {
             char *tmp;
-            rc = ib_data_expand_str(tx->dpi, rule->meta.data, &tmp);
+            rc = ib_data_expand_str(tx->dpi, rule->meta.data, false, &tmp);
             if (rc != IB_OK) {
                 ib_log_error_tx(tx,
                              "event: Failed to expand data '%s': %s",
@@ -369,7 +369,7 @@ static ib_status_t act_setvar_execute(void *data,
         size_t len;
         rc = ib_data_expand_str_ex(tx->dpi,
                                    svdata->name, strlen(svdata->name),
-                                   false,
+                                   false, true,
                                    &tmp, &len);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
@@ -396,7 +396,7 @@ static ib_status_t act_setvar_execute(void *data,
         assert(svdata->type == IB_FTYPE_BYTESTR);
 
         rc = ib_data_expand_str_ex(
-            tx->dpi, bsdata, bslen, false, &expanded, &exlen);
+            tx->dpi, bsdata, bslen, false, true, &expanded, &exlen);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
                          "setvar: Failed to expand string \"%.*s\": %s",
@@ -1009,7 +1009,8 @@ static ib_status_t act_set_request_header_execute(void* data,
     act_header_set_t *act_header_set = (act_header_set_t *)data;
     char *expanded_value;
 
-    rc = ib_data_expand_str(tx->dpi, act_header_set->value, &expanded_value);
+    rc = ib_data_expand_str(tx->dpi, act_header_set->value, true,
+                            &expanded_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1072,7 +1073,8 @@ static ib_status_t act_set_response_header_execute(void* data,
     act_header_set_t *act_header_set = (act_header_set_t *)data;
     char *expanded_value;
 
-    rc = ib_data_expand_str(tx->dpi, act_header_set->value, &expanded_value);
+    rc = ib_data_expand_str(tx->dpi, act_header_set->value, true,
+                            &expanded_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

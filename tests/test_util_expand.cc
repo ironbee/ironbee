@@ -53,6 +53,7 @@ public:
     {
         m_pool = NULL;
         m_hash = NULL;
+        m_recurse = true;
     }
 
     ~TestIBUtilExpand()
@@ -172,6 +173,11 @@ public:
         }
     }
 
+    void SetRecurse(bool recurse)
+    {
+        m_recurse = recurse;
+    }
+
     void PrintError(ib_num_t lineno,
                     const char *text,
                     const char *prefix,
@@ -179,7 +185,8 @@ public:
                     const char *expected,
                     const char *value)
     {
-        std::cout << "Test defined on line " << lineno << " failed"
+        std::cout << "Test defined on line " << lineno << " failed "
+                  << "with recursion " << (m_recurse ? "enabled" : "disabled")
                   << std::endl;
         std::cout << "'" << text << "' expanded using '" << prefix << suffix
                   << "' -> '" << value << "' expected '" << expected
@@ -194,6 +201,7 @@ public:
                     ib_num_t value)
     {
         std::cout << "Test defined on line " << lineno << " failed"
+                  << "with recursion " << (m_recurse ? "enabled" : "disabled")
                   << std::endl;
         std::cout << "'" << text << "' expanded using '" << prefix << suffix
                   << "' -> '" << value << "' expected '" << expected
@@ -203,6 +211,7 @@ public:
 protected:
     ib_mpool_t *m_pool;
     ib_hash_t  *m_hash;
+    bool        m_recurse;
 };
 
 class TestIBUtilExpandStr : public TestIBUtilExpand
@@ -214,7 +223,10 @@ public:
                           const char *suffix,
                           char **result)
     {
-        return ::ib_expand_str(m_pool, text, prefix, suffix, m_hash, result);
+        return ::ib_expand_str(m_pool, text,
+                               prefix, suffix,
+                               m_recurse,
+                               m_hash, result);
     }
 
     bool IsExpected(ib_num_t lineno,
@@ -323,6 +335,23 @@ TEST_F(TestIBUtilExpandStr, test_expand_errors)
 
 TEST_F(TestIBUtilExpandStr, test_expand_basics)
 {
+    SetRecurse(true);
+    RunTest(__LINE__, "simple text",      "%{", "}",  "simple text");
+    RunTest(__LINE__, "simple text",      "$(", ")",  "simple text");
+    RunTest(__LINE__, "text:%{Key1}",     "%{", "}",  "text:Value1");
+    RunTest(__LINE__, "text:%{Key1}",     "$(", ")",  "text:%{Key1}");
+    RunTest(__LINE__, "text:{Key1}",      "{",  "}",  "text:Value1");
+    RunTest(__LINE__, "text:%{Key1}",     "<<", ">>", "text:%{Key1}");
+    RunTest(__LINE__, "text:<<Key1>>",    "<<", ">>", "text:Value1");
+    RunTest(__LINE__, "text:<<Key1>>",    "%{", "}",  "text:<<Key1>>");
+    RunTest(__LINE__, "text:$(Key1)",     "%{", "}",  "text:$(Key1)");
+    RunTest(__LINE__, "text:$(Key1)",     "$(", ")",  "text:Value1");
+    RunTest(__LINE__, "text:${Key1}",     "%{", "}",  "text:${Key1}");
+    RunTest(__LINE__, "text:${Key1}",     "$(", ")",  "text:${Key1}");
+    RunTest(__LINE__, "text:${Key1}",     "${", "}",  "text:Value1");
+    RunTest(__LINE__, "text:%{Key2}",     "%{", "}",  "text:Value2");
+
+    SetRecurse(false);
     RunTest(__LINE__, "simple text",      "%{", "}",  "simple text");
     RunTest(__LINE__, "simple text",      "$(", ")",  "simple text");
     RunTest(__LINE__, "text:%{Key1}",     "%{", "}",  "text:Value1");
@@ -339,8 +368,33 @@ TEST_F(TestIBUtilExpandStr, test_expand_basics)
     RunTest(__LINE__, "text:%{Key2}",     "%{", "}",  "text:Value2");
 }
 
+TEST_F(TestIBUtilExpandStr, test_expand_recurse)
+{
+    SetRecurse(true);
+    RunTest(__LINE__, "%{foo}",           "%{", "}",  "");
+    RunTest(__LINE__, "%%{Key1}",         "%{", "}",  "%Value1");
+    RunTest(__LINE__, "%{%{DNE}",         "%{", "}",  "%{");
+    RunTest(__LINE__, "%{%{Key1}",        "%{", "}",  "%{Value1");
+    RunTest(__LINE__, "%{%{Key1}}",       "%{", "}",  "");
+    RunTest(__LINE__, "%{%{Ref1}}",       "%{", "}",  "Value1");
+    RunTest(__LINE__, "%{%{Ref2}2}",      "%{", "}",  "Value2");
+}
+
+TEST_F(TestIBUtilExpandStr, test_expand_norecurse)
+{
+    SetRecurse(false);
+    RunTest(__LINE__, "%{foo}",           "%{", "}",  "");
+    RunTest(__LINE__, "%%{Key1}",         "%{", "}",  "%Value1");
+    RunTest(__LINE__, "%{%{DNE}",         "%{", "}",  "");
+    RunTest(__LINE__, "%{%{Key1}",        "%{", "}",  "");
+    RunTest(__LINE__, "%{%{Key1}}",       "%{", "}",  "}");
+    RunTest(__LINE__, "%{%{Ref1}}",       "%{", "}",  "}");
+    RunTest(__LINE__, "%{%{Ref2}2}",      "%{", "}",  "2}");
+}
+
 TEST_F(TestIBUtilExpandStr, test_expand_corner_cases)
 {
+    SetRecurse(true);
     RunTest(__LINE__, "%{}",              "%{", "}",  "");
     RunTest(__LINE__, "%{}",              "{",  "}",  "%");
     RunTest(__LINE__, "%{}%" ,            "%{", "}",  "%");
@@ -349,12 +403,21 @@ TEST_F(TestIBUtilExpandStr, test_expand_corner_cases)
     RunTest(__LINE__, "%{foo}",           "%{", "}",  "");
     RunTest(__LINE__, "%%{foo}",          "%{", "}",  "%");
     RunTest(__LINE__, "%%{Key1}",         "%{", "}",  "%Value1");
-    RunTest(__LINE__, "%{%{foo}",         "%{", "}",  "%{");
-    RunTest(__LINE__, "%{%{DNE}",         "%{", "}",  "%{");
-    RunTest(__LINE__, "%{%{Key1}",        "%{", "}",  "%{Value1");
-    RunTest(__LINE__, "%{%{Key1}}",       "%{", "}",  "");
-    RunTest(__LINE__, "%{%{Ref1}}",       "%{", "}",  "Value1");
-    RunTest(__LINE__, "%{%{Ref2}2}",      "%{", "}",  "Value2");
+    RunTest(__LINE__, "text:%{Key11}",    "%{", "}",  "text:");
+    RunTest(__LINE__, "text:%{Key 1}",    "%{", "}",  "text:");
+    RunTest(__LINE__, "text:%{Key*1}",    "%{", "}",  "text:");
+    RunTest(__LINE__, "text:%{Key1 }",    "%{", "}",  "text:");
+    RunTest(__LINE__, "%{Key9}",          "%{", "}",  "");
+
+    SetRecurse(false);
+    RunTest(__LINE__, "%{}",              "%{", "}",  "");
+    RunTest(__LINE__, "%{}",              "{",  "}",  "%");
+    RunTest(__LINE__, "%{}%" ,            "%{", "}",  "%");
+    RunTest(__LINE__, "%{}%{",            "%{", "}",  "%{");
+    RunTest(__LINE__, "%{}}",             "%{", "}",  "}");
+    RunTest(__LINE__, "%{foo}",           "%{", "}",  "");
+    RunTest(__LINE__, "%%{foo}",          "%{", "}",  "%");
+    RunTest(__LINE__, "%%{Key1}",         "%{", "}",  "%Value1");
     RunTest(__LINE__, "text:%{Key11}",    "%{", "}",  "text:");
     RunTest(__LINE__, "text:%{Key 1}",    "%{", "}",  "text:");
     RunTest(__LINE__, "text:%{Key*1}",    "%{", "}",  "text:");
@@ -364,6 +427,16 @@ TEST_F(TestIBUtilExpandStr, test_expand_corner_cases)
 
 TEST_F(TestIBUtilExpandStr, test_expand_complex)
 {
+    SetRecurse(true);
+    RunTest(__LINE__, "%{Key1}:%{Key2}",  "%{", "}",  "Value1:Value2");
+    RunTest(__LINE__, "%{Key1}:%{Key2}",  "%{", "}",  "Value1:Value2");
+    RunTest(__LINE__, "%{Key3}:%{Key1}",  "%{", "}",  "Value3:Value1");
+    RunTest(__LINE__, "%{Key1}:%{Key2}==${Key3}", "%{", "}",
+            "Value1:Value2==${Key3}");
+    RunTest(__LINE__, "%{Key1}:%{Key2}==%{Key3}", "%{", "}",
+             "Value1:Value2==Value3");
+
+    SetRecurse(false);
     RunTest(__LINE__, "%{Key1}:%{Key2}",  "%{", "}",  "Value1:Value2");
     RunTest(__LINE__, "%{Key1}:%{Key2}",  "%{", "}",  "Value1:Value2");
     RunTest(__LINE__, "%{Key3}:%{Key1}",  "%{", "}",  "Value3:Value1");
@@ -375,6 +448,17 @@ TEST_F(TestIBUtilExpandStr, test_expand_complex)
 
 TEST_F(TestIBUtilExpandStr, test_expand_numbers)
 {
+    SetRecurse(true);
+    RunTest(__LINE__, "%{Key4}",          "%{", "}",  "0");
+    RunTest(__LINE__, "%{Key5}",          "%{", "}",  "1");
+    RunTest(__LINE__, "%{Key6}",          "%{", "}",  "-1");
+    RunTest(__LINE__, "%{Key7}",          "%{", "}",  "0");
+    RunTest(__LINE__, "%{Key8}",          "%{", "}",  "1");
+    RunTest(__LINE__, "%{Key4}-%{Key8}",  "%{", "}",  "0-1");
+    RunTest(__LINE__, "%{Key4}-%{Key6}",  "%{", "}",  "0--1");
+    RunTest(__LINE__, "%{Key4}+%{Key8}",  "%{", "}",  "0+1");
+
+    SetRecurse(false);
     RunTest(__LINE__, "%{Key4}",          "%{", "}",  "0");
     RunTest(__LINE__, "%{Key5}",          "%{", "}",  "1");
     RunTest(__LINE__, "%{Key6}",          "%{", "}",  "-1");
@@ -416,6 +500,23 @@ TEST_F(TestIBUtilExpandTestStr, test_expand_test_errors)
 
 TEST_F(TestIBUtilExpandTestStr, test_expand_test_str)
 {
+    SetRecurse(true);
+    RunTest(__LINE__, "simple text",      "%{", "}",  false);
+    RunTest(__LINE__, "simple text",      "$(", ")",  false);
+    RunTest(__LINE__, "text:%{Key1}",     "%{", "}",  true);
+    RunTest(__LINE__, "text:%{Key1}",     "$(", ")",  false);
+    RunTest(__LINE__, "text:{Key1}",      "{",  "}",  true);
+    RunTest(__LINE__, "text:%{Key1}",     "<<", ">>", false);
+    RunTest(__LINE__, "text:<<Key1>>",    "<<", ">>", true);
+    RunTest(__LINE__, "text:<<Key1>>",    "%{", "}",  false);
+    RunTest(__LINE__, "text:$(Key1)",     "%{", "}",  false);
+    RunTest(__LINE__, "text:$(Key1)",     "$(", ")",  true);
+    RunTest(__LINE__, "text:${Key1}",     "%{", "}",  false);
+    RunTest(__LINE__, "text:${Key1}",     "$(", ")",  false);
+    RunTest(__LINE__, "text:${Key1}",     "${", "}",  true);
+    RunTest(__LINE__, "text:%{Key2}",     "%{", "}",  true);
+
+    SetRecurse(true);
     RunTest(__LINE__, "simple text",      "%{", "}",  false);
     RunTest(__LINE__, "simple text",      "$(", ")",  false);
     RunTest(__LINE__, "text:%{Key1}",     "%{", "}",  true);
