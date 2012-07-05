@@ -179,6 +179,22 @@ const char DLL_PUBLIC *ib_strstr_ex(const char *haystack,
                                     size_t      needle_len);
 
 /**
+ * Reverse strstr() clone that works with non-NUL terminated strings.
+ *
+ * @param[in] haystack String to search.
+ * @param[in] haystack_len Length of @a haystack.
+ * @param[in] needle String to search for.
+ * @param[in] needle_len Length of @a needle.
+ *
+ * @returns Pointer to the last match in @a haystack, or NULL if no match
+ * found.
+ */
+const char DLL_PUBLIC *ib_strrstr_ex(const char *haystack,
+                                     size_t      haystack_len,
+                                     const char *needle,
+                                     size_t      needle_len);
+
+/**
  * Simple ASCII lowercase function.
  *
  * @param[in] op String modify operation

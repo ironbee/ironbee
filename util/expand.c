@@ -440,10 +440,10 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
 
     /* Loop til the cows come home */
     while (1) {
-        const char *pre;        /* Pointer to found prefix string */
+        const char *pre = NULL; /* Pointer to found prefix string */
         size_t      pre_off;    /* Offset of prefix in the string */
-        const char *post;       /* Pointer to found suffix string */
-        const char *name;       /* Pointer to the name between pre and post */
+        const char *suf;        /* Pointer to found suffix string */
+        const char *name;       /* Pointer to the name between pre and suffix */
         size_t      namelen;    /* Length of the name */
         char       *new;        /* New buffer */
         size_t      newlen;     /* Length of new buffer */
@@ -452,39 +452,49 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
         const char *fptr;       /* Final block (after the suffix) */
         size_t      flen;       /* Length of the final block */
         ib_field_t *f;          /* Field */
+        size_t      slen;       /* Length of the buffer to search for prefix */
 
-        /* Look for the prefix in the string */
-        pre = ib_strstr_ex(buf, buflen, prefix, pre_len);
-        if (pre == NULL) {
-            break;
+        /* Look for the last prefix in the string with a matching suffix */
+        slen = buflen;
+        while ( (pre == NULL) && (slen >= pre_len) ) {
+            pre = ib_strrstr_ex(buf, slen, prefix, pre_len);
+            if (pre == NULL) {
+                break;
+            }
+
+            /* Lazy compute suffix length */
+            if (suf_len == SIZE_MAX) {
+                suf_len = strlen(suffix);
+                assert (suf_len != 0);
+            }
+
+            /* And the next matching suffix */
+            pre_off = pre - buf;
+            suf = ib_strstr_ex(pre+pre_len,
+                               buflen - (pre_off + pre_len),
+                               suffix,
+                               suf_len);
+            if (suf == NULL) {
+                slen = (pre - buf);
+                pre = NULL;
+            }
         }
 
-        /* Lazy compute suffix length */
-        if (suf_len == SIZE_MAX) {
-            suf_len = strlen(suffix);
-            assert (suf_len != 0);
-        }
-
-        /* And the next matching suffix */
-        pre_off = pre - buf;
-        post = ib_strstr_ex(pre+pre_len,
-                            buflen - (pre_off + pre_len),
-                            suffix,
-                            suf_len);
-        if (post == NULL) {
+        /* Did we find a matching pair? */
+        if ( (pre == NULL) || (suf == NULL) ) {
             break;
         }
 
         /* The name is the block between the two */
         name = (pre + pre_len);
-        namelen = (post - pre) - pre_len;
+        namelen = (suf - pre) - pre_len;
 
         /* Length of the initial block */
         iptr = buf;
         ilen = (pre - buf);
 
         /* The final block */
-        fptr = (post + suf_len);
+        fptr = (suf + suf_len);
         flen = buflen - (pre_off + pre_len + namelen + suf_len);
 
         /* Zero length name? Expand it to "" */
@@ -563,7 +573,7 @@ ib_status_t ib_expand_test_str_ex(const char *str,
 {
     IB_FTRACE_INIT();
     const char *pre;      /* Pointer to found prefix pattern */
-    const char *post;     /* Pointer to found suffix pattern */
+    const char *suf;      /* Pointer to found suffix pattern */
     size_t pre_off;       /* Offset of prefix */
     size_t pre_len;       /* Length of prefix string */
 
@@ -588,13 +598,13 @@ ib_status_t ib_expand_test_str_ex(const char *str,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    /* And the next matching suffix pattern. */
+    /* And a next matching suffix pattern. */
     pre_off = pre - str;
-    post = ib_strstr_ex(pre + pre_len,
-                        str_len - (pre_off + pre_len),
-                        suffix,
-                        strlen(suffix));
-    if (post == NULL) {
+    suf = ib_strstr_ex(pre + pre_len,
+                       str_len - (pre_off + pre_len),
+                       suffix,
+                       strlen(suffix));
+    if (suf == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 

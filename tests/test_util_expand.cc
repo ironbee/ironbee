@@ -63,15 +63,17 @@ public:
     virtual void SetUp()
     {
         static const field_def_t field_defs [] = {
-            { "Key1", IB_FTYPE_NULSTR,  "Value1", 0,  0 },
-            { "Key2", IB_FTYPE_NULSTR,  "Value2", 0,  0 },
-            { "Key3", IB_FTYPE_BYTESTR, "Value3", 0,  0 },
-            { "Key4", IB_FTYPE_NUM,     NULL,     0,  0 },
-            { "Key5", IB_FTYPE_NUM,     NULL,     1,  0 },
-            { "Key6", IB_FTYPE_NUM,     NULL,     -1, 0 },
-            { "Key7", IB_FTYPE_UNUM,    NULL,     0,  0 },
-            { "Key8", IB_FTYPE_UNUM,    NULL,     0,  1 },
-            { NULL,   IB_FTYPE_GENERIC, NULL,     0,  0 },
+            { "Key1", IB_FTYPE_NULSTR,  "Value1",  0,  0 },
+            { "Key2", IB_FTYPE_NULSTR,  "Value2",  0,  0 },
+            { "Key3", IB_FTYPE_BYTESTR, "Value3",  0,  0 },
+            { "Key4", IB_FTYPE_NUM,     NULL,      0,  0 },
+            { "Key5", IB_FTYPE_NUM,     NULL,      1,  0 },
+            { "Key6", IB_FTYPE_NUM,     NULL,     -1,  0 },
+            { "Key7", IB_FTYPE_UNUM,    NULL,      0,  0 },
+            { "Key8", IB_FTYPE_UNUM,    NULL,      0,  1 },
+            { "Ref1", IB_FTYPE_NULSTR,  "Key1",    0,  0 },
+            { "Ref2", IB_FTYPE_NULSTR,  "Key",     0,  0 },
+            { NULL,   IB_FTYPE_GENERIC, NULL,      0,  0 },
         };
         ib_status_t rc;
 
@@ -347,9 +349,12 @@ TEST_F(TestIBUtilExpandStr, test_expand_corner_cases)
     RunTest(__LINE__, "%{foo}",           "%{", "}",  "");
     RunTest(__LINE__, "%%{foo}",          "%{", "}",  "%");
     RunTest(__LINE__, "%%{Key1}",         "%{", "}",  "%Value1");
-    RunTest(__LINE__, "%{%{foo}",         "%{", "}",  "");
-    RunTest(__LINE__, "%{%{Key1}",        "%{", "}",  "");
-    RunTest(__LINE__, "%{%{Key1}}",       "%{", "}",  "}");
+    RunTest(__LINE__, "%{%{foo}",         "%{", "}",  "%{");
+    RunTest(__LINE__, "%{%{DNE}",         "%{", "}",  "%{");
+    RunTest(__LINE__, "%{%{Key1}",        "%{", "}",  "%{Value1");
+    RunTest(__LINE__, "%{%{Key1}}",       "%{", "}",  "");
+    RunTest(__LINE__, "%{%{Ref1}}",       "%{", "}",  "Value1");
+    RunTest(__LINE__, "%{%{Ref2}2}",      "%{", "}",  "Value2");
     RunTest(__LINE__, "text:%{Key11}",    "%{", "}",  "text:");
     RunTest(__LINE__, "text:%{Key 1}",    "%{", "}",  "text:");
     RunTest(__LINE__, "text:%{Key*1}",    "%{", "}",  "text:");

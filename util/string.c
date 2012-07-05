@@ -147,6 +147,45 @@ const char *ib_strstr_ex(const char *haystack,
     IB_FTRACE_RET_CONSTSTR(NULL);
 }
 
+/**
+ * Reverse strstr() clone that works with non-NUL terminated strings
+ */
+const char *ib_strrstr_ex(const char *haystack,
+                          size_t      haystack_len,
+                          const char *needle,
+                          size_t      needle_len)
+{
+    IB_FTRACE_INIT();
+    size_t imax;
+    const char *hp;
+
+    /* If either pointer is NULL or either length is zero, done */
+    if ( (haystack == NULL) || (haystack_len == 0) ||
+         (needle == NULL) || (needle_len == 0) )
+    {
+        IB_FTRACE_RET_CONSTSTR(NULL);
+    }
+
+    /* Search for the needle */
+    imax = haystack_len - needle_len;
+    for (hp = haystack + imax; hp >= haystack; --hp) {
+        bool found = true;
+        size_t j = 0;
+
+        for (j = 0; j < needle_len; ++j) {
+            if ( *(hp + j) != *(needle + j) ) {
+                found = false;
+                break;
+            }
+        }
+        if (found == true) {
+            IB_FTRACE_RET_CONSTSTR(hp);
+        }
+    }
+
+    IB_FTRACE_RET_CONSTSTR(NULL);
+}
+
 const int64_t  P10_INT64_LIMIT  = (INT64_MAX  / 10);
 const uint64_t P10_UINT64_LIMIT = (UINT64_MAX / 10);
 
