@@ -366,7 +366,7 @@ char DLL_PUBLIC *ib_mpool_path(
  */
 ib_status_t DLL_PUBLIC ib_mpool_validate(
     const ib_mpool_t  *mp,
-    char             **message
+    const char       **message
 );
 
 /**

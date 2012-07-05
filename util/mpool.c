@@ -877,11 +877,12 @@ char *ib_mpool_report_convert(
 )
 {
     IB_FTRACE_INIT();
+    static char nullbuf[] = "";
 
     assert(report != NULL);
 
     if (report->total_size == 0) {
-        IB_FTRACE_RET_STR("");
+        IB_FTRACE_RET_STR(nullbuf);
     }
 
     char *page = (char *)malloc(report->total_size + 1);
@@ -1668,7 +1669,7 @@ char DLL_PUBLIC *ib_mpool_path(
 
 ib_status_t ib_mpool_validate(
     const ib_mpool_t  *mp,
-    char             **message
+    const char       **message
 )
 {
 /**@cond DoNotDocument*/
