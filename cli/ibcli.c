@@ -95,7 +95,7 @@ typedef struct {
 } printop_params_t;
 
 /* Dump flags */
-#define DUMP_TX                 (1<< 0) /* Dump base transaction */
+#define DUMP_TX_ARGS            (1<< 0) /* Dump base transaction */
 #define DUMP_TX_FULL            (1<< 1) /* Dump full transaction */
 #define DUMP_USER_AGENT         (1<< 2) /* Dump user agent data */
 #define DUMP_GEOIP              (1<< 3) /* Dump GeoIP data */
@@ -483,10 +483,10 @@ static ib_status_t command_line(int argc, char *argv[])
                 settings.dump_flags |= DUMP_USER_AGENT;
             }
             else if (strcasecmp(optarg, "tx") == 0) {
-                settings.dump_flags |= DUMP_TX;
+                settings.dump_flags |= DUMP_TX_ARGS;
             }
             else if (strcasecmp(optarg, "tx-full") == 0) {
-                settings.dump_flags |= (DUMP_TX|DUMP_TX_FULL);
+                settings.dump_flags |= DUMP_TX_FULL;
             }
             else {
                 fprintf(stderr, "Unknown dump: %s", optarg);
@@ -1003,36 +1003,40 @@ static ib_status_t print_tx( ib_engine_t *ib,
     ib_status_t rc;
 
     ib_log_debug3_tx(tx, "print_tx");
-    printf("TX:\n");
 
     /* ARGS */
-    rc = ib_data_get(tx->dpi, "ARGS", &field);
-    if (rc == IB_OK) {
-        print_field("ARGS", field, 0);
+    if (test_dump_flags(DUMP_TX_ARGS) != 0) {
+        printf("[TX ARGS]:\n");
+        rc = ib_data_get(tx->dpi, "ARGS", &field);
+        if (rc == IB_OK) {
+            print_field("ARGS", field, 0);
 
-        // @todo Remove mutable once list is const correct.
-        rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&lst));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
+            // @todo Remove mutable once list is const correct.
+            rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&lst));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
 
-        if (lst == NULL) {
-            printf("print_tx: Failed ARGS is not a list\n");
-            ib_log_debug(ib, "print_tx: ARGS is not a list");
-            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+            if (lst == NULL) {
+                printf("print_tx: Failed ARGS is not a list\n");
+                ib_log_debug(ib, "print_tx: ARGS is not a list");
+                IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+            }
+            print_list("ARGS", lst);
         }
-        print_list("ARGS", lst);
-    }
-    else {
-        printf("print_tx: Failed to get ARGS: %d\n", rc);
-        ib_log_debug_tx(tx, "print_tx: Failed to get ARGS: %s",
-                     ib_status_to_string(rc));
+        else {
+            printf("print_tx: Failed to get ARGS: %d\n", rc);
+            ib_log_debug_tx(tx, "print_tx: Failed to get ARGS: %s",
+                            ib_status_to_string(rc));
+        }
     }
 
     /* Not doing a full dump?  Done */
     if (test_dump_flags(DUMP_TX_FULL) == 0) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
+
+    printf("[TX all]:\n");
 
     /* Build the list */
     rc = ib_list_create(&lst, ib->mp);
@@ -1614,7 +1618,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
     }
 
     /* Register the tx handler */
-    if (test_dump_flags(DUMP_TX) != 0) {
+    if (test_dump_flags(DUMP_TX_ARGS|DUMP_TX_FULL) != 0) {
         if (settings.verbose > 2) {
             printf("Registering tx handlers\n");
         }
