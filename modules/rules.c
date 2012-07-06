@@ -1094,7 +1094,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
 
     /* Disable the entire chain if this rule is invalid */
     if ( (rule->flags & IB_RULE_FLAG_VALID) == 0) {
-        rc = ib_rule_chain_invalidate(cp->ib, rule);
+        rc = ib_rule_chain_invalidate(cp->ib, cp->cur_ctx, rule);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Error invalidating rule chain: %s",
                              ib_status_to_string(rc));
@@ -1237,7 +1237,7 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
     /* Disable the entire chain if this rule is invalid */
 cleanup:
     if ((rule != NULL) && ((rule->flags & IB_RULE_FLAG_VALID) == 0)) {
-        ib_status_t irc = ib_rule_chain_invalidate(cp->ib, rule);
+        ib_status_t irc = ib_rule_chain_invalidate(cp->ib, cp->cur_ctx, rule);
         if (irc != IB_OK) {
             ib_cfg_log_error(cp, "Error invalidating rule chain: %s",
                              ib_status_to_string(irc));
@@ -1555,7 +1555,7 @@ static ib_status_t parse_action_params(ib_cfgparser_t *cp,
     /* Disable the entire chain if this rule is invalid */
 cleanup:
     if ((rule != NULL) && ((rule->flags & IB_RULE_FLAG_VALID) == 0)) {
-        ib_status_t irc = ib_rule_chain_invalidate(cp->ib, rule);
+        ib_status_t irc = ib_rule_chain_invalidate(cp->ib, cp->cur_ctx, rule);
         if (irc != IB_OK) {
             ib_cfg_log_error(cp, "Error invalidating rule chain: %s",
                              ib_status_to_string(irc));

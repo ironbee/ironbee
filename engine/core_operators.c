@@ -137,6 +137,8 @@ static ib_status_t strop_create(ib_engine_t *ib,
     size_t str_len;
 
     if (parameters == NULL) {
+        ib_log_error(ib, "Missing parameter for operator %s",
+                     op_inst->op->name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -577,6 +579,9 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
     else {
         rc = ib_string_to_num_ex(params_unesc, params_unesc_len, 0, &value);
         if (rc != IB_OK) {
+            ib_log_error(ib, "Parameter \"%s\" for operator %s "
+                         "is not a valid number",
+                         params_unesc, op_inst->op->name);
             IB_FTRACE_RET_STATUS(rc);
         }
     }

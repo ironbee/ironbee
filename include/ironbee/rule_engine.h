@@ -604,6 +604,7 @@ ib_status_t DLL_PUBLIC ib_rule_register(ib_engine_t *ib,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(ib_engine_t *ib,
+                                                ib_context_t *ctx,
                                                 ib_rule_t *rule);
 
 

@@ -3406,6 +3406,7 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
 }
 
 ib_status_t ib_rule_chain_invalidate(ib_engine_t *ib,
+                                     ib_context_t *ctx,
                                      ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
@@ -3421,7 +3422,7 @@ ib_status_t ib_rule_chain_invalidate(ib_engine_t *ib,
 
     /* Invalidate the entire chain upwards */
     if (rule->chained_from != NULL) {
-        tmp_rc = ib_rule_chain_invalidate(ib, rule->chained_from);
+        tmp_rc = ib_rule_chain_invalidate(ib, NULL, rule->chained_from);
         if (tmp_rc != IB_OK) {
             rc = tmp_rc;
         }
@@ -3429,10 +3430,15 @@ ib_status_t ib_rule_chain_invalidate(ib_engine_t *ib,
 
     /* If this rule was previously valid, walk down the chain, too */
     if ( (orig & IB_RULE_FLAG_VALID) && (rule->chained_rule != NULL) ) {
-        tmp_rc = ib_rule_chain_invalidate(ib, rule->chained_rule);
+        tmp_rc = ib_rule_chain_invalidate(ib, NULL, rule->chained_rule);
         if (tmp_rc != IB_OK) {
             rc = tmp_rc;
         }
+    }
+
+    /* Clear the previous rule pointer */
+    if (ctx != NULL) {
+        ctx->rules->parser_data.previous = NULL;
     }
 
     IB_FTRACE_RET_STATUS(rc);
