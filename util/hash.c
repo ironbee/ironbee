@@ -122,7 +122,7 @@ struct ib_hash_t {
 };
 
 /**
- * Search for an entry in @a hash matching @key.
+ * Search for an entry in @a hash matching @a key.
  *
  * @param[in]  hash       Hash table.
  * @param[out] hash_entry Hash entry.

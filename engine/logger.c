@@ -49,6 +49,7 @@
  *
  * @param fp File pointer.
  * @param level Log level.
+ * @param ib IronBee engine.
  * @param file Source filename.
  * @param line Source line number.
  * @param fmt Formatting string.

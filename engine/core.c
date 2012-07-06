@@ -236,6 +236,7 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
  *
  * @param data Logger data (FILE *)
  * @param level Log level
+ * @param ib IronBee engine
  * @param file Source code filename (typically __FILE__) or NULL
  * @param line Source code line number (typically __LINE__) or NULL
  * @param fmt Printf like format string
@@ -820,7 +821,7 @@ static ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
  * Write part of a audit log. This call should be protected by a lock.
  *
  * @param[in] lpi Log provider interface.
- * @param[in] log The log record.
+ * @param[in] part The log record.
  * @return IB_OK or other. See log file for details of failure.
  */
 static ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
@@ -886,7 +887,8 @@ static ib_status_t core_audit_write_footer(ib_provider_inst_t *lpi,
  *
  * @param lpi provider instance
  * @param log audit log instance
- * @param line buffer to store the line before writing to disk/pipe..
+ * @param line buffer to store the line before writing to disk/pipe.
+ * @param line_size Size of @a line.
  *
  * @returns Status code
  */
@@ -1089,8 +1091,10 @@ static IB_PROVIDER_IFACE_TYPE(audit) core_audit_iface = {
 /**
  * Core data provider implementation to add a data field.
  *
- * @param dpi Data provider instance
- * @param f Field
+ * @param dpi Data provider instance.
+ * @param f Field.
+ * @param name Name of field.
+ * @param nlen Length of @a name.
  *
  * @returns Status code
  */
@@ -1110,8 +1114,10 @@ static ib_status_t core_data_add(ib_provider_inst_t *dpi,
 /**
  * Core data provider implementation to set a data field.
  *
- * @param dpi Data provider instance
- * @param f Field
+ * @param dpi Data provider instance.
+ * @param f Field.
+ * @param name Name of field.
+ * @param nlen Length of @a name.
  *
  * @returns Status code
  */
@@ -1233,7 +1239,7 @@ static ib_status_t core_data_get_all(ib_provider_inst_t *dpi,
 /**
  * Core data provider implementation to remove a data field.
  *
- * The data field which is removed is written to @ref pf if it
+ * The data field which is removed is written to @a pf if it
  * is not NULL.
  *
  * @param dpi Data provider instance
@@ -1293,7 +1299,7 @@ static IB_PROVIDER_IFACE_TYPE(data) core_data_iface = {
  *
  * @param lpi Logger provider instance
  * @param level Log level
- * @param tx Transaction info (or NULL)
+ * @param ib IronBee engine
  * @param file Source code filename (typically __FILE__)
  * @param line Source code line number (typically __LINE__)
  * @param fmt Printf like format string
@@ -1422,6 +1428,7 @@ done:
  *
  * @param lpi Logger provider instance
  * @param level Log level
+ * @param ib IronBee engine
  * @param file Source code filename (typically __FILE__)
  * @param line Source code line number (typically __LINE__)
  * @param fmt Printf like format string
@@ -1524,8 +1531,7 @@ static IB_PROVIDER_API_TYPE(logger) logger_api = {
 /**
  * Write an audit log.
  *
- * @param ib Engine
- * @param lpr Audit provider
+ * @param lpi Audit provider
  *
  * @returns Status code
  */
@@ -1696,7 +1702,7 @@ static ib_status_t logevent_api_remove_event(ib_provider_inst_t *epi,
  * Core logevent provider API implementation to fetch events.
  *
  * @param epi Logevent provider instance
- * @param id Event ID to remove
+ * @param pevents Event ID to remove
  *
  * @returns Status code
  */
@@ -2575,7 +2581,6 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
 /**
  * Add request/response header fields to the audit log
  *
- * @param[in,out] log Audit log to log to
  * @param[in] tx Transaction
  * @param[in] mpool Memory pool to user for allocations
  * @param[in,out] list List to add the fields to
@@ -3073,7 +3078,7 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
  * This just does a version and sanity check on a registered provider.
  *
  * @param ib Engine
- * @param lpr Logger provider
+ * @param pr Logger provider
  *
  * @returns Status code
  */
@@ -3110,6 +3115,8 @@ static ib_status_t parser_register(ib_engine_t *ib,
  *
  * @param dpi Data provider instance
  * @param f Field to add
+ * @param name Name of field
+ * @param nlen Length of @a name
  *
  * @returns Status code
  */
@@ -3143,6 +3150,8 @@ static ib_status_t data_api_add(ib_provider_inst_t *dpi,
  *
  * @param dpi Data provider instance
  * @param f Field to add
+ * @param name Name of field
+ * @param nlen Length of @a name
  *
  * @returns Status code
  */
@@ -3351,7 +3360,7 @@ static IB_PROVIDER_API_TYPE(data) data_api = {
  * This just does a version and sanity check on a registered provider.
  *
  * @param ib Engine
- * @param lpr Logger provider
+ * @param pr Logger provider
  *
  * @returns Status code
  */
@@ -3456,6 +3465,7 @@ static ib_status_t matcher_api_compile_pattern(ib_provider_t *mpr,
  * @param flags Flags
  * @param data Data buffer to perform match on
  * @param dlen Data buffer length
+ * @param ctx @todo Document this
  *
  * @returns Status code
  */
@@ -3489,8 +3499,7 @@ static ib_status_t matcher_api_match_compiled(ib_provider_t *mpr,
  * Multiple patterns can be added to a provider instance and all used
  * to perform a match later on.
  *
- * @param mpi Matcher provider instance
- * @param patt Pattern
+ * @todo Document parameters
  *
  * @returns Status code
  */
@@ -3553,6 +3562,7 @@ static ib_status_t matcher_api_add_pattern(ib_provider_inst_t *mpi,
  * @param flags Flags
  * @param data Data buffer
  * @param dlen Data buffer length
+ * @param ctx @todo document this
  *
  * @returns Status code
  */
@@ -3926,7 +3936,6 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
  *
  * @param cp Config parser
  * @param name Directive name
- * @param p1 First parameter
  * @param cbdata Callback data (from directive registration)
  *
  * @returns Status code
@@ -4057,7 +4066,6 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
  *
  * @param cp Config parser
  * @param name Directive name
- * @param p1 First parameter
  * @param cbdata Callback data (from directive registration)
  *
  * @returns Status code
@@ -4591,8 +4599,7 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
  *
  * @param cp Config parser
  * @param name Directive name
- * @param flags Flags
- * @param fmask Flags mask (which bits were actually set)
+ * @param vars Arguments to directive.
  * @param cbdata Callback data (from directive registration)
  *
  * @returns Status code
