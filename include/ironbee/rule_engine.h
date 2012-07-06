@@ -599,6 +599,7 @@ ib_status_t DLL_PUBLIC ib_rule_register(ib_engine_t *ib,
  * Invalidate an entire rule chain
  *
  * @param[in] ib IronBee engine
+ * @param[in,out] ctx Context in which to execute the rule
  * @param[in,out] rule Rule to invalidate
  *
  * @returns Status code
