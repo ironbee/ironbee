@@ -87,9 +87,8 @@ module CLIPPTest
     end
 
     w.close
-    pid, status = Process::wait2(pid)
-
     output = r.read
+    pid, status = Process::wait2(pid)
 
     [output, status]
   end
