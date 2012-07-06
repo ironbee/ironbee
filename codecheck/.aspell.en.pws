@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1514 
+personal_ws-1.1 en 1516 
 refactor
 cfg
 backreference
@@ -65,6 +65,7 @@ SensorId
 cpp
 strftime
 redeclare
+DNE
 VConn
 TearDown
 binradix
@@ -308,6 +309,7 @@ inttypes
 cpath
 linelen
 IronBeeClock
+strrstr
 cpart
 cfgfile
 addList
