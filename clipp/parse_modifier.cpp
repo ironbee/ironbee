@@ -219,7 +219,7 @@ bool ParseModifier::operator()(Input::input_p& input)
         OUT
     };
     last_seen_e last_seen = NOTHING;
-    bool is_http09;
+    bool is_http09 = false;
     BOOST_FOREACH(Input::Transaction& tx, input->connection.transactions) {
         new_transactions.push_back(Input::Transaction());
         Input::Transaction& new_tx = new_transactions.back();
