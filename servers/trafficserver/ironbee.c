@@ -434,11 +434,11 @@ static void ib_ssn_ctx_destroy(ib_ssn_ctx * data)
 /**
  * Flush data that's buffered and free up the buffer.
  * Forward to output channel if in buffering mode; else just discard.
- * 
+ *
  * @param[in] ibd Input/output filter context
  * @param[in] chunk Chunk of buffered data
  * @return Number of bytes written to output
- */ 
+ */
 static unsigned int ib_iobuf_flush(ibd_ctx *ibd, ib_filter_iobuf *chunk)
 {
     unsigned int bytes;
@@ -460,7 +460,7 @@ static unsigned int ib_iobuf_flush(ibd_ctx *ibd, ib_filter_iobuf *chunk)
         TSDebug("ironbee", "Writing %d bytes buffered data", chunk->len);
         TSIOBufferWrite(ibd->data->output_buffer, chunk->buf, chunk->len);
         bytes += chunk->len;
-        
+
     }
     TSfree(chunk->buf);
     TSfree(chunk);
@@ -472,14 +472,14 @@ static unsigned int ib_iobuf_flush(ibd_ctx *ibd, ib_filter_iobuf *chunk)
  * If in unbuffered mode, pass straight through and return data size
  * If in buffered mode, consume and buffer it, and return -1 to indicate consumed
  * If in error mode (either already or just detected), discard data and return 0
- * 
+ *
  * @param[in,out] data session context data
  * @param[in,out] ibd Input/output filter context
  * @param[in,out] vio TS viobuf from which to read
  * @param[in] towrite Number of bytes to read
  * @return Number of bytes written to output if unbuffered,
  * @return or -1 if input data consumed and buffered
- */ 
+ */
 static int64_t ib_iobuf_buffer(ib_txn_ctx *data, ibd_ctx *ibd, TSVIO vio, int64_t towrite)
 {
     int64_t ret = 0;
