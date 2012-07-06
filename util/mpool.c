@@ -1668,7 +1668,7 @@ char DLL_PUBLIC *ib_mpool_path(
 
 ib_status_t ib_mpool_validate(
     const ib_mpool_t  *mp,
-    const char       **message
+    char             **message
 )
 {
 /**@cond DoNotDocument*/
