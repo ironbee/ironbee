@@ -143,6 +143,7 @@ char *ib_util_relative_file(ib_mpool_t *mp,
                             const char *ref_file,
                             const char *file_path)
 {
+    IB_FTRACE_INIT();
     char *refcopy;       /* Copy of reference file */
     const char *ref_dir; /* Reference directory */
     char *tmp;
