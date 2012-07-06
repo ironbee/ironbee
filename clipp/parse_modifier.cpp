@@ -299,8 +299,8 @@ bool ParseModifier::operator()(Input::input_p& input)
                     convert_remainder(
                         new_tx.events,
                         input,
-                        Input::REQUEST_BODY,
-                        Input::REQUEST_FINISHED,
+                        Input::RESPONSE_BODY,
+                        Input::RESPONSE_FINISHED,
                         specific.pre_delay,
                         specific.post_delay
                     );
