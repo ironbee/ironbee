@@ -357,7 +357,8 @@ char DLL_PUBLIC *ib_mpool_path(
  * The caller is responsible for freeing @c *message.
  *
  * @param[in]  mp      Memory pool to analyze.
- * @param[out] message Message describing failure.
+ * @param[out] message Message describing failure or NULL if IB_OK or
+ *                     IB_EALLOC.
  * @returns
  * - IB_OK on success.
  * - IB_EALLOC on allocation failure.

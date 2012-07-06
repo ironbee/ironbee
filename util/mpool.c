@@ -877,12 +877,11 @@ char *ib_mpool_report_convert(
 )
 {
     IB_FTRACE_INIT();
-    static char nullbuf[] = "";
 
     assert(report != NULL);
 
     if (report->total_size == 0) {
-        IB_FTRACE_RET_STR(nullbuf);
+        IB_FTRACE_RET_STR(NULL);
     }
 
     char *page = (char *)malloc(report->total_size + 1);
@@ -1812,7 +1811,7 @@ error:
     {
         char *message_page = (char *)mp->malloc_fn(c_message_size);
         if (! message_page) {
-            *message = "Could not allocate memory for message.";
+            *message = NULL;
         }
         else {
             *message = message_page;
