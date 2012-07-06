@@ -54,9 +54,9 @@ static size_t MAX_FIELD_BUF = 64;
 /**
  * Format a field into a string buffer
  *
- * @param f Input field
+ * @param field Input field
  * @param buf Buffer for output
- * @param buflen Size of @a buf
+ * @param bufsize Size of @a buf
  *
  * @returns @a buf
  */
@@ -579,7 +579,7 @@ static bool log_exec_flag_trace(const ib_rule_log_exec_t *log_exec)
  *
  * @param[in] log_exec Execution logging data
  * @param[out] buf Buffer to fill
- * @param[in] size of @a buf
+ * @param[in] bufsize of @a buf
  */
 static void build_act_buf(const ib_rule_log_exec_t *log_exec,
                           char *buf,

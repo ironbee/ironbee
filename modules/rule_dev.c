@@ -122,6 +122,7 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator (unused).
+ * @param[in] rule Parent rule to the operator
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -158,6 +159,7 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
  * @param[in] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters from the rule definition
  * @param[in,out] inst Action instance
+ * @param[in] cbdata Callback data (unused)
  *
  * @returns Status code
  */
@@ -202,6 +204,7 @@ static ib_status_t act_log_create(ib_engine_t *ib,
  * @param[in] rule The matched rule
  * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
+ * @param[in] cbdata Callback data (unused)
  *
  * @returns Status code
  */

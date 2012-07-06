@@ -88,7 +88,7 @@ struct modbinradix_content_t {
  * Add a prefix to the prefixes of the binradix, given a prefix and
  * callback + extra arg
  *
- * @param mpr matcher provider
+ * @param mpi matcher provider
  * @param prefixes pointer to the prefix container (i.e.: an BinRadix tree)
  * @param prefix the prefix to be added
  * @param callback the callback to register with the given prefix
@@ -151,7 +151,7 @@ static ib_status_t modbinradix_add_prefix_ex(ib_provider_inst_t *mpi,
  * Initialize a provider instance with the given data
  *
  * @param mpi provider instance
- * @param extra data
+ * @param data data
  *
  * @return status of the operation
  */
@@ -189,6 +189,7 @@ static ib_status_t modbinradix_provider_instance_init(ib_provider_inst_t *mpi,
  * @param flags extra flags
  * @param data the data to search in
  * @param dlen length of the the data to search in
+ * @param ctx Current configuration context
  *
  * @return status of the operation
  */
@@ -336,4 +337,3 @@ IB_MODULE_INIT(
     NULL,                                   /**< Context destroy function */
     NULL                                    /**< Callback data */
 );
-

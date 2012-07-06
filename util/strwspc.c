@@ -86,6 +86,7 @@ typedef ib_status_t (* outplace_fn_t)(const uint8_t *data_in,
 /**
  * Count the amount of whitespace in a string
  *
+ * @param[in] force_other_zero If true, force @a other to zero
  * @param[in] minlen Minimum length of a run of whitespace to count
  * @param[in] data String to analyze
  * @param[in] dlen Length of @a dlen
@@ -395,13 +396,14 @@ static ib_status_t ws_compress(const uint8_t *data_in,
  * @param[in] op String trim operation
  * @param[in] mp Memory pool
  * @param[in] minlen Minimum length of a run of whitespace to count
+ * @param[in] fn_count Function to count whitespace
  * @param[in] fn_inplace In-place whitespace removal/compression function
  * @param[in] fn_outplace Non-in-place whitespace removal/compression function
  * @param[in] data_in Pointer to input data
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Pointer to output data
  * @param[in] dlen_out Length of @a data_out
- * @param[out] flags Flags detailing the result (@c IB_STRFLAG_xx)
+ * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
  * @result Status code
  */

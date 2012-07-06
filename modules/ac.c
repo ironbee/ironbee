@@ -253,7 +253,7 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
  * Add a pattern to the patterns of the matcher given a pattern and
  * callback + extra arg
  *
- * @param mpr matcher provider
+ * @param mpi matcher provider
  * @param patterns pointer to the pattern container (i.e.: an AC tree)
  * @param patt the pattern to be added
  * @param callback the callback to register with the given pattern
@@ -304,7 +304,7 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
  * Initialize a provider instance with the given data
  *
  * @param mpi provider instance
- * @param extra data
+ * @param data data
  *
  * @return status of the operation
  */
@@ -338,13 +338,15 @@ static ib_status_t modac_provider_instance_init(ib_provider_inst_t *mpi,
  * @param flags extra flags
  * @param data the data to search in
  * @param dlen length of the the data to search in
+ * @param ctx Current configuration context
  *
  * @return status of the operation
  */
 static ib_status_t modac_match(ib_provider_inst_t *mpi,
-                                 ib_flags_t flags,
-                                 const uint8_t *data,
-                                 size_t dlen, void *ctx)
+                               ib_flags_t flags,
+                               const uint8_t *data,
+                               size_t dlen,
+                               void *ctx)
 {
     IB_FTRACE_INIT();
     modac_provider_data_t *dt = mpi->data;
@@ -431,7 +433,6 @@ static void nop_ac_match(ib_ac_t *orig,
  * @param[in] filename Filename to read.
  * @param[in,out] buffer Character buffer pointer that will be malloced
  *                and must be free'ed by the caller.
- * @param[in,out] len The length of buffer, which will also be resized.
  */
 static ib_status_t readfile(const char* filename, char **buffer)
 {

@@ -87,7 +87,7 @@ static ib_status_t inplace(ib_flags_t inflags,
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Output data
  * @param[out] dlen_out Length of @a data_out
- * @param[out] oflags Output flags (@c IB_STRFLAG_xxx)
+ * @param[out] result Output flags (@c IB_STRFLAG_xxx)
  *
  * @returns Status code.
  */

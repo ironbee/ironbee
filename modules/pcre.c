@@ -141,10 +141,10 @@ static modpcre_cfg_t modpcre_global_cfg = {
  * disable JIT optimizations and some a few other normal optimizations.
  *
  * @param[in] pool The memory pool to allocate memory out of.
- * @param[out] pcre_cpatt Struct containing the compilation.
+ * @param[out] dfa_cpatt Struct containing the compilation.
  * @param[in] patt The uncompiled pattern to match.
  * @param[out] errptr Pointer to an error message describing the failure.
- * @param[out] errorffset The location of the failure, if this fails.
+ * @param[out] erroffset The location of the failure, if this fails.
  * @returns IronBee status. IB_EINVAL if the pattern is invalid,
  *          IB_EALLOC if memory allocation fails or IB_OK.
  */
@@ -265,7 +265,8 @@ static ib_status_t dfa_compile_internal(ib_mpool_t *pool,
  * @param[out] pcre_cpatt Struct containing the compilation.
  * @param[in] patt The uncompiled pattern to match.
  * @param[out] errptr Pointer to an error message describing the failure.
- * @param[out] errorffset The location of the failure, if this fails.
+ * @param[out] erroffset The location of the failure, if this fails.
+ *
  * @returns IronBee status. IB_EINVAL if the pattern is invalid,
  *          IB_EALLOC if memory allocation fails or IB_OK.
  */
@@ -436,7 +437,8 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
  *             a modpcre_cpatt_t* is stored in *pcpatt.
  * @param[in] patt The uncompiled pattern to match.
  * @param[out] errptr Pointer to an error message describing the failure.
- * @param[out] errorffset The location of the failure, if this fails.
+ * @param[out] erroffset The location of the failure, if this fails.
+ *
  * @returns IronBee status. IB_EINVAL if the pattern is invalid,
  *          IB_EALLOC if memory allocation fails or IB_OK.
  */
@@ -556,11 +558,13 @@ static IB_PROVIDER_IFACE_TYPE(matcher) modpcre_matcher_iface = {
  * @brief Create the PCRE operator.
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
+ * @param[in] rule Parent rule to the operator
  * @param[in,out] pool The memory pool into which @c op_inst->data
  *                will be allocated.
- * @param[in] The regular expression to be built.
+ * @param[in] pattern The regular expression to be built.
  * @param[out] op_inst The operator instance that will be populated by
  *             parsing @a pattern.
+ *
  * @returns IB_OK on success or IB_EALLOC on any other type of error.
  */
 static ib_status_t pcre_operator_create(ib_engine_t *ib,
@@ -614,7 +618,6 @@ static ib_status_t pcre_operator_destroy(ib_operator_inst_t *op_inst)
  *
  * @param[in] ib The IronBee engine to log to.
  * @param[in] tx The transaction to store the values into (tx->dpi).
- * @param[in] field_name The field to populate with Regex matches.
  * @param[in] ovector The vector of integer pairs of matches from PCRE.
  * @param[in] matches The number of matches.
  * @param[in] subject The matched-against string data.
@@ -702,10 +705,12 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine
  * @param[in] tx The transaction.
- * @param[in,out] User data. A @c pcre_rule_data_t.
+ * @param[in] rule The parent rule
+ * @param[in,out] data User data. A @c pcre_rule_data_t.
  * @param[in] flags Operator instance flags
  * @param[in] field The field content.
  * @param[out] result The result.
+ *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
 static ib_status_t pcre_operator_execute(ib_engine_t *ib,
@@ -865,11 +870,13 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
  * @brief Create the PCRE operator.
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
+ * @param[in] rule Parent rule to the operator
  * @param[in,out] pool The memory pool into which @c op_inst->data
  *                will be allocated.
- * @param[in] The regular expression to be built.
+ * @param[in] pattern The regular expression to be built.
  * @param[out] op_inst The operator instance that will be populated by
  *             parsing @a pattern.
+ *
  * @returns IB_OK on success or IB_EALLOC on any other type of error.
  */
 static ib_status_t dfa_operator_create(ib_engine_t *ib,
@@ -1077,10 +1084,12 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
  *
  * @param[in] ib Ironbee engine
  * @param[in] tx The transaction.
- * @param[in,out] User data. A @c pcre_rule_data_t.
+ * @param[in] rule The parent rule
+ * @param[in,out] data User data. A @c pcre_rule_data_t.
  * @param[in] flags Operator instance flags
  * @param[in] field The field content.
  * @param[out] result The result.
+ *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
 static ib_status_t dfa_operator_execute(ib_engine_t *ib,
@@ -1240,15 +1249,11 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
 }
 
 /**
- * @brief Execute the rule.
+ * @brief Destroy the dfa operator
  *
- * @param[in] ib Ironbee engine
- * @param[in] tx The transaction.
- * @param[in,out] User data. A @c pcre_rule_data_t.
- * @param[in] flags Operator instance flags
- * @param[in] field The field content.
- * @param[out] result The result.
- * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
+ * @param[in,out] op_inst The operator instance
+ *
+ * @returns IB_OK
  */
 static ib_status_t dfa_operator_destroy(ib_operator_inst_t *op_inst)
 {

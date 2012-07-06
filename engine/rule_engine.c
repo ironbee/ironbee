@@ -226,7 +226,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
  *
  * @param phase_num Phase number to check
  *
- * @returns true if @phase_num is valid, false if not.
+ * @returns true if @a phase_num is valid, false if not.
  */
 static inline bool is_phase_num_valid(ib_rule_phase_t phase_num)
 {
@@ -860,7 +860,7 @@ done:
  * Execute a single phase rule, it's actions, and it's chained rules.
  *
  * @param[in] ib Engine
- * @param[in] event Event type
+ * @param[in] rule Rule to execute
  * @param[in,out] tx Transaction
  * @param[in] recursion Recursion limit
  * @param[in,out] rule_result Result of rule execution
@@ -980,7 +980,7 @@ static bool rule_is_runnable(const ib_rule_ctx_data_t *ctx_rule,
  * Check if allow affects the current rule
  *
  * @param[in] tx Transaction
- * @param[in] Meta Rule's phase meta-data
+ * @param[in] meta Rule's phase meta-data
  * @param[in] rule Rule to check (or NULL)
  * @param[in] check_phase Check if ALLOW_PHASE is set
  *
@@ -1182,10 +1182,11 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
  * Execute a single stream txdata rule, and it's actions
  *
  * @param[in] ib Engine
- * @param[in] event Event type
+ * @param[in] rule Rule to execute
  * @param[in] tx Transaction
  * @param[in,out] txdata Transaction data
- * @param[in,out] rule_result Result of rule execution
+ * @param[in,out] result Result of rule execution
+ * @param[in,out] log_exec Rule execution log object
  *
  * @returns Status code
  */
@@ -1249,10 +1250,11 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
  * Execute a single stream header rule, and it's actions
  *
  * @param[in] ib Engine
- * @param[in] event Event type
+ * @param[in] rule Rule to execute
  * @param[in] tx Transaction
  * @param[in] header Parsed header
  * @param[in,out] rule_result Result of rule execution
+ * @param[in,out] log_exec Rule execution log object
  *
  * @returns Status code
  */
@@ -1698,7 +1700,7 @@ static ib_status_t run_stream_tx_rules(ib_engine_t *ib,
  *
  * @param[in] ib Engine
  * @param[in] mp Memory pool to use for allocations
- * @param[in,out] rule_engine Rule engine
+ * @param[in,out] ctx_rules Context's rules
  *
  * @returns Status code
  */
@@ -2006,8 +2008,8 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
 /**
  * Enable/disable an individual rule
  *
- * @param[in] value true:Enable, false:Disable
- * @param[in,out] rule Rule to enable/disable
+ * @param[in] enable true:Enable, false:Disable
+ * @param[in,out] ctx_rule Context rule to enable/disable
  */
 static void set_rule_enable(bool enable,
                             ib_rule_ctx_data_t *ctx_rule)
@@ -2030,8 +2032,8 @@ static void set_rule_enable(bool enable,
  * @param[in] ib IronBee engine
  * @param[in] ctx Current IronBee context
  * @param[in] match Enable match data
- * @param[in] value true:Enable, false:Disable
- * @param[in,out] rules List of rules to search for matches to @a enable
+ * @param[in] enable true:Enable, false:Disable
+ * @param[in,out] ctx_rule_list List of rules to search for matches to @a enable
  *
  * @returns Status code
  */

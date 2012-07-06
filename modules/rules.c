@@ -294,7 +294,7 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
 /**
  * Parse the transformations from a target string
  *
- * @param[in] ib Engine
+ * @param[in] cp Configuration parser
  * @param[in] str Target field string to parse
  * @param[out] target Target name
  * @param[out] tfns List of transformation names
@@ -417,10 +417,9 @@ static ib_status_t parse_target_string(ib_cfgparser_t *cp,
  * Parses the rule's target field list string @a target_str, and stores the
  * results in the rule object @a rule.
  *
- * @param cp IronBee configuration parser
- * @param rule Rule to operate on
- * @param targets_str List of one or more target field names separated
- *                    by @c | or @c , .
+ * @param[in] cp IronBee configuration parser
+ * @param[in,out] rule Rule to operate on
+ * @param[in] target_str Target string to parse
  *
  * @returns
  *  - IB_OK if there is one or more targets.

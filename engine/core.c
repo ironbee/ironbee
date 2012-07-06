@@ -3465,7 +3465,7 @@ static ib_status_t matcher_api_compile_pattern(ib_provider_t *mpr,
  * @param flags Flags
  * @param data Data buffer to perform match on
  * @param dlen Data buffer length
- * @param ctx @todo Document this
+ * @param ctx Context
  *
  * @returns Status code
  */
@@ -3473,7 +3473,8 @@ static ib_status_t matcher_api_match_compiled(ib_provider_t *mpr,
                                               void *cpatt,
                                               ib_flags_t flags,
                                               const uint8_t *data,
-                                              size_t dlen, void *ctx)
+                                              size_t dlen,
+                                              void *ctx)
 {
     IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(matcher) *iface = mpr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface:NULL;
@@ -3562,7 +3563,7 @@ static ib_status_t matcher_api_add_pattern(ib_provider_inst_t *mpi,
  * @param flags Flags
  * @param data Data buffer
  * @param dlen Data buffer length
- * @param ctx @todo document this
+ * @param ctx Context
  *
  * @returns Status code
  */

@@ -16,7 +16,7 @@
  *****************************************************************************/
 
 /**
- * @file
+ * @file modules/radix
  * @brief IronBee &mdash; Radix Matcher Module
  *
  * This module adds a IP Radix based matcher named "radix".
@@ -88,7 +88,7 @@ struct modradix_content_t {
  * Add a prefix to the prefixes of the radix, given a prefix and
  * callback + extra arg
  *
- * @param mpr matcher provider
+ * @param mpi matcher provider
  * @param prefixes pointer to the prefix container (i.e.: an Radix tree)
  * @param prefix the prefix to be added
  * @param callback the callback to register with the given prefix
@@ -151,7 +151,7 @@ static ib_status_t modradix_add_prefix_ex(ib_provider_inst_t *mpi,
  * Initialize a provider instance with the given data
  *
  * @param mpi provider instance
- * @param extra data
+ * @param data data
  *
  * @return status of the operation
  */
@@ -338,4 +338,3 @@ IB_MODULE_INIT(
     NULL,                                   /**< Context destroy function */
     NULL                                    /**< Callback data */
 );
-

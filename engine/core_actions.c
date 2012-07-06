@@ -681,6 +681,7 @@ typedef struct act_block_t act_block_t;
  * @param[in] rule The rule structure.
  * @param[out] tx The transaction we are going to modify.
  * @param[in] flags Flags. Unused.
+ * @param[in] cbdata Callback data. Unused.
  */
 static ib_status_t act_block_execute(void* data,
                                      const ib_rule_t *rule,
@@ -778,6 +779,7 @@ typedef struct act_status_t act_status_t;
  * @param[in] rule The rule. Unused.
  * @param[out] tx The field in this struct, @c block_status, is set.
  * @param[in] flags The flags used to create this rule. Unused.
+ * @param[in] cbdata Callback data. Unused.
  *
  * @returns IB_OK.
  */
@@ -881,7 +883,7 @@ typedef struct act_header_del_t act_header_del_t;
  * @param[in] ib The IronBee engine.
  * @param[in] ctx The context.
  * @param[in] mp The memory pool this is allocated out of.
- * @param[in] params Parameters of the format name=<header name>.
+ * @param[in] params Parameters of the format name=&lt;header name&gt;.
  * @param[out] inst The action instance being initialized.
  * @param[in] cbdata Unused.
  *
@@ -925,7 +927,7 @@ static ib_status_t act_del_header_create(ib_engine_t *ib,
  * @param[in] ib The IronBee engine.
  * @param[in] ctx The context.
  * @param[in] mp The memory pool this is allocated out of.
- * @param[in] params Parameters of the format name=<header name>.
+ * @param[in] params Parameters of the format name=&gt;header name&lt;.
  * @param[out] inst The action instance being initialized.
  * @param[in] cbdata Unused.
  *

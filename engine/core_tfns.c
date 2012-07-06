@@ -45,7 +45,8 @@
  *
  * @param[in] ib IronBee engine
  * @param[in] mp Memory pool to use for allocations.
- * @param[in] fndata Function specific data.
+ * @param[in] str_fn NUL-terminated string transformation function
+ * @param[in] ex_fn EX (string/length) transformation function
  * @param[in] fin Input field.
  * @param[out] fout Output field.
  * @param[out] pflags Transformation flags.

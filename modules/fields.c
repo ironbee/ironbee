@@ -91,8 +91,8 @@ const char *g_type_names [ ] =
  * @param[in] mp Memory pool to use for allocations
  * @param[in] str String to parse as a type name
  * @param[out] type Field type
- * @param[out] list_type If @a type is list, the type of the elements in
- *                       the list, if specified, otherwise IB_FTYPE_GENERIC
+ * @param[out] element_type If @a type is list, the type of the elements in
+ *             the list, if specified, otherwise IB_FTYPE_GENERIC
  *
  * @return Status code
  */

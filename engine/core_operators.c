@@ -62,7 +62,7 @@ typedef struct {
  *             unescaped string in it.
  * @param[out] str_unesc_len On success *str_unesc_len is assigned the length
  *             of the unescaped string. Note that this may be different
- *             that strlen(*str_unesc) because \x00 will place a NULL
+ *             that strlen(*str_unesc) because \\x00 will place a NULL
  *             in the middle of @a *str_unesc.
  *             This string should be wrapped in an ib_bytestr_t.
  * @returns IB_OK on success. IB_EALLOC on error. IB_EINVAL if @a str
@@ -117,6 +117,7 @@ static ib_status_t unescape_op_args(ib_engine_t *ib,
  *
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
+ * @param[in] rule Parent rule to the operator
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters
  * @param[in,out] op_inst Instance operator
@@ -164,6 +165,7 @@ static ib_status_t strop_create(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
+ * @param[in] rule Parent rule to the operator
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -246,6 +248,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine (unused).
  * @param[in] tx The transaction for this operator (unused).
+ * @param[in] rule Parent rule to the operator
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -335,6 +338,7 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
  *
  * @param[in] ib The IronBee engine
  * @param[in] ctx The current IronBee context (unused)
+ * @param[in] rule Parent rule to the operator
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] parameters Constant parameters (ip address strings)
  * @param[in,out] op_inst Instance operator
@@ -429,6 +433,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
+ * @param[in] rule Parent rule to the operator
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -536,6 +541,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
  *
  * @param[in] ib The IronBee engine (unused)
  * @param[in] ctx The current IronBee context (unused)
+ * @param[in] rule Parent rule to the operator
  * @param[in,out] mp Memory pool to use for allocation
  * @param[in] params Constant parameters
  * @param[in,out] op_inst Instance operator
@@ -750,6 +756,7 @@ static ib_status_t capture_num(ib_tx_t *tx, int num, ib_num_t value)
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
+ * @param[in] rule Parent rule to the operator
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -797,6 +804,7 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
+ * @param[in] rule Parent rule to the operator
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -848,6 +856,7 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
+ * @param[in] rule Parent rule to the operator
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -899,6 +908,7 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
+ * @param[in] rule Parent rule to the operator
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -951,6 +961,7 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
+ * @param[in] rule Parent rule to the operator
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -1002,6 +1013,7 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
  *
  * @param[in] ib Ironbee engine.
  * @param[in] tx The transaction for this operator.
+ * @param[in] rule Parent rule to the operator
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value

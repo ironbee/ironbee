@@ -426,8 +426,8 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
  *
  * @param ib Engine.
  * @param tx Transaction.
- * @param event Event type.
- * @param cbdata Callback data
+ * @param name Collection name
+ * @param header Header list to alias
  *
  * @returns Status code
  */

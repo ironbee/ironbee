@@ -342,6 +342,7 @@ static void ib_ac_unlink_unuseful(ib_ac_t *ac_tree,
 /**
  * Add items to the bintree for fast goto() transitions. Recursive calls
  *
+ * @param state State to add
  * @param states states array sorted by it's letter
  * @param lb left branch index
  * @param rb right branch index
@@ -351,11 +352,11 @@ static void ib_ac_unlink_unuseful(ib_ac_t *ac_tree,
  * @return ib_status_t status of the operation
  */
 static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
-                                  ib_ac_state_t *states[],
-                                  int pos,
-                                  int lb,
-                                  int rb,
-                                  ib_mpool_t *pool)
+                                            ib_ac_state_t *states[],
+                                            int pos,
+                                            int lb,
+                                            int rb,
+                                            ib_mpool_t *pool)
 {
     IB_FTRACE_INIT();
     ib_status_t st;
@@ -364,8 +365,8 @@ static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
 
     if ((pos - lb) > 1) {
         left = lb + (pos - lb) / 2;
-        state->left = (ib_ac_bintree_t *)ib_mpool_calloc(pool, 1,
-                                                   sizeof(ib_ac_bintree_t));
+        state->left = (ib_ac_bintree_t *)
+            ib_mpool_calloc(pool, 1, sizeof(ib_ac_bintree_t));
         if (state->left == NULL) {
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
@@ -376,8 +377,8 @@ static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
 
     if ((rb - pos) > 1) {
         right = pos + (rb - pos) / 2;
-        state->right = (ib_ac_bintree_t *)ib_mpool_calloc(pool, 1,
-                                                   sizeof(ib_ac_bintree_t));
+        state->right = (ib_ac_bintree_t *)
+            ib_mpool_calloc(pool, 1, sizeof(ib_ac_bintree_t));
         if (state->right == NULL) {
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
@@ -636,7 +637,7 @@ ib_status_t ib_ac_build_links(ib_ac_t *ac_tree)
  * Wrapper for the callback call
  *
  * @param ac_ctx the matching context
- * @param ac_ctx the state where a pattern match (output) is found
+ * @param state the state where a pattern match (output) is found
  *
  */
 static void ib_ac_do_callback(ib_ac_context_t *ac_ctx,

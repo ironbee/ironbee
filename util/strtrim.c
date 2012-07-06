@@ -80,6 +80,8 @@ static size_t find_nonws_left(const uint8_t *str,
  *
  * @param[in] op String modification operation
  * @param[in] mp Memory pool
+ * @param[in] copy_on_cow Use copy-on-write semantics?
+ * @param[in] flags string-op flags
  * @param[in] data_in Input data
  * @param[out] data_out Output data
  * @param[out] dlen_out Length of @a data_out
@@ -132,7 +134,9 @@ static ib_status_t zero_len_ex(ib_strop_t op,
  * @param[in] op String modification operation
  * @param[in] mp Memory pool
  * @param[in] copy_on_cow Always treat COW as copy
+ * @param[in] flags String-op flags
  * @param[in] str_in Input data
+ * @param[in] offset Offset into @a str_in
  * @param[out] str_out Output data
  * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *
@@ -269,7 +273,7 @@ static size_t find_nonws_right(const uint8_t *str,
  * @param[in] mp Memory pool
  * @param[in] flags Incoming flags
  * @param[in] data_in Input data
- * @param[in] data_len Length of @a data_in
+ * @param[in] dlen_in Length of @a data_in
  * @param[in] offset Offset of last non-whitespace in @a data_in
  * @param[out] data_out Output data
  * @param[out] dlen_out Length of @a data_out to use
@@ -322,14 +326,14 @@ static ib_status_t trim_right_ex(ib_strop_t op,
 }
 
 /**
- * Return a zero-length string that may be an alias into the original
- * or a new allocation.
+ * Trim whitespace off the right (end) of a string
  *
  * @param[in] op String modification operation
  * @param[in] mp Memory pool
  * @param[in] flags Incoming flags
  * @param[in] str_in Input string
  * @param[in] len Length of @a str_in to use
+ * @param[in] offset Offset into @a str_in
  * @param[out] str_out Output data
  * @param[out] result Flags detailing the result (@c IB_STRFLAG_xx)
  *

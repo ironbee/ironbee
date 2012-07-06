@@ -855,7 +855,7 @@ ib_status_t ib_radix_destroy(ib_radix_t **radix)
  *
  * @param node the node to check
  * @param prefix the prefix we are searching
- * @param offset, the number of bits already compared +1 (cur position)
+ * @param offset the number of bits already compared +1 (cur position)
  * @param type can be IB_RADIX_PREFIX or IB_RADIX_CLOSEST
  * @param result reference to the pointer that will be linked to the data if any
  *
