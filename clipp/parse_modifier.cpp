@@ -282,7 +282,7 @@ bool ParseModifier::operator()(Input::input_p& input)
                     span_t input = from_buffer(specific.data);
 
                     if (! is_http09) {
-                        convert_first_line<Input::RequestEvent>(
+                        convert_first_line<Input::ResponseEvent>(
                             new_tx.events,
                             input,
                             Input::RESPONSE_STARTED,
