@@ -450,8 +450,8 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
     /* Loop til the cows come home */
     while (1) {
         const char *pre = NULL; /* Pointer to found prefix string */
-        size_t      pre_off;    /* Offset of prefix in the string */
-        const char *suf;        /* Pointer to found suffix string */
+        size_t      pre_off = 0;/* Offset of prefix in the string */
+        const char *suf = NULL; /* Pointer to found suffix string */
         const char *name;       /* Pointer to the name between pre and suffix */
         size_t      namelen;    /* Length of the name */
         char       *new;        /* New buffer */
