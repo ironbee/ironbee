@@ -1461,8 +1461,8 @@ static int check_ts_version(void)
             return 0;
         }
 
-        /* Need at least TS 2.0 */
-        if (major_ts_version >= 2) {
+        /* Need at least TS 3.0 */
+        if (major_ts_version >= 3) {
             result = 1;
         }
 
