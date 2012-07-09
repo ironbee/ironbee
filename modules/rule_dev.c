@@ -29,6 +29,7 @@
  */
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
@@ -118,6 +119,52 @@ static ib_status_t op_false_execute(ib_engine_t *ib,
 }
 
 /**
+ * Create function for the "assert" operator
+ *
+ * @param[in] ib The IronBee engine (unused)
+ * @param[in] ctx The current IronBee context (unused)
+ * @param[in] rule Parent rule to the operator
+ * @param[in,out] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters
+ * @param[in,out] op_inst Instance operator
+ *
+ * @returns Status code
+ */
+static ib_status_t op_assert_create(ib_engine_t *ib,
+                                    ib_context_t *ctx,
+                                    const ib_rule_t *rule,
+                                    ib_mpool_t *mp,
+                                    const char *parameters,
+                                    ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    bool expand;
+    char *str;
+
+    if (parameters == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    str = ib_mpool_strdup(mp, parameters);
+    if (str == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Do we need expansion? */
+    rc = ib_data_expand_test_str(str, &expand);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (expand == true) {
+        op_inst->flags |= IB_ACTINST_FLAG_EXPAND;
+    }
+
+    op_inst->data = str;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Execute function for the "exists" operator
  *
  * @param[in] ib Ironbee engine (unused).
@@ -148,6 +195,55 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
         ib_data_capture_set_item(tx, 0, field);
     }
 
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Execute function for the "assert" operator
+ *
+ * @note This operator is enabled only for builds configured with
+ * "--enable-devel".
+ *
+ * @param[in] ib Ironbee engine (unused)
+ * @param[in] tx The transaction for this operator (unused)
+ * @param[in] rule Parent rule to the operator
+ * @param[in] data Operator data (unused)
+ * @param[in] flags Operator instance flags
+ * @param[in] field Field value (unused)
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_assert_execute(ib_engine_t *ib,
+                                     ib_tx_t *tx,
+                                     const ib_rule_t *rule,
+                                     void *data,
+                                     ib_flags_t flags,
+                                     ib_field_t *field,
+                                     ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+
+    /* This works on C-style (NUL terminated) strings */
+    const char *cstr = (const char *)data;
+    char *expanded = NULL;
+    ib_status_t rc;
+
+    /* Expand the string */
+    if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
+        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                         "log_execute: Failed to expand string '%s': %s",
+                         cstr, ib_status_to_string(rc));
+        }
+    }
+    else {
+        expanded = (char *)cstr;
+    }
+
+    ib_log_error_tx(tx, "ASSERT: %s", expanded);
+    assert(0 && expanded);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -238,6 +334,93 @@ static ib_status_t act_debuglog_execute(void *data,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Create function for the assert action.
+ *
+ * @param[in] ib IronBee engine (unused)
+ * @param[in] ctx Current context.
+ * @param[in] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters from the rule definition
+ * @param[in,out] inst Action instance
+ * @param[in] cbdata Callback data (unused)
+ *
+ * @returns Status code
+ */
+static ib_status_t act_assert_create(ib_engine_t *ib,
+                                     ib_context_t *ctx,
+                                     ib_mpool_t *mp,
+                                     const char *parameters,
+                                     ib_action_inst_t *inst,
+                                     void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    bool expand;
+    char *str;
+
+    if (parameters == NULL) {
+        parameters = "";
+    }
+
+    str = ib_mpool_strdup(mp, parameters);
+    if (str == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Do we need expansion? */
+    rc = ib_data_expand_test_str(str, &expand);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (expand == true) {
+        inst->flags |= IB_ACTINST_FLAG_EXPAND;
+    }
+
+    inst->data = str;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Execute function for the "assert" action
+ *
+ * @param[in] data C-style string to log
+ * @param[in] rule The matched rule
+ * @param[in] tx IronBee transaction
+ * @param[in] flags Action instance flags
+ * @param[in] cbdata Callback data (unused)
+ *
+ * @returns Status code
+ */
+static ib_status_t act_assert_execute(void *data,
+                                      const ib_rule_t *rule,
+                                      ib_tx_t *tx,
+                                      ib_flags_t flags,
+                                      void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    /* This works on C-style (NUL terminated) strings */
+    const char *cstr = (const char *)data;
+    char *expanded = NULL;
+    ib_status_t rc;
+
+    /* Expand the string */
+    if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
+        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                         "log_execute: Failed to expand string '%s': %s",
+                         cstr, ib_status_to_string(rc));
+        }
+    }
+    else {
+        expanded = (char *)cstr;
+    }
+
+    ib_log_error_tx(tx, "ASSERT: %s \"%s\"", rule->meta.id, expanded);
+    assert(0 && expanded);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
 /**
  * Called to initialize the rule development module
@@ -303,6 +486,19 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Register the false operator */
+    rc = ib_operator_register(ib,
+                              "assert",
+                              ( IB_OP_FLAG_ALLOW_NULL |
+                                IB_OP_FLAG_PHASE |
+                                IB_OP_FLAG_STREAM ),
+                              op_assert_create, NULL,
+                              NULL, NULL, /* no destroy function */
+                              op_assert_execute, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /**
      * Debug logging actions
      */
@@ -325,6 +521,17 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                             act_log_create, NULL,
                             NULL, NULL, /* no destroy function */
                             act_debuglog_execute, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the assert action */
+    rc = ib_action_register(ib,
+                            "assert",
+                            IB_ACT_FLAG_NONE,
+                            act_assert_create, NULL,
+                            NULL, NULL, /* no destroy function */
+                            act_assert_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
