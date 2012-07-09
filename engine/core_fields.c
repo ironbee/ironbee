@@ -325,6 +325,12 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Initialize CAPTURE */
+    rc = ib_data_capture_clear(tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Core Response Fields */
     rc = ib_data_add_stream(tx->dpi, "response_body", NULL);
     if (rc != IB_OK) {

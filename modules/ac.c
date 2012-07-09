@@ -430,11 +430,15 @@ static void nop_ac_match(ib_ac_t *orig,
 
 /**
  * @brief Read the given file into memory and return the malloced buffer.
+ *
+ * @param[in] ib Ironbee engine.
  * @param[in] filename Filename to read.
  * @param[in,out] buffer Character buffer pointer that will be malloced
  *                and must be free'ed by the caller.
  */
-static ib_status_t readfile(const char* filename, char **buffer)
+static ib_status_t readfile(ib_engine_t *ib,
+                            const char* filename,
+                            char **buffer)
 {
     IB_FTRACE_INIT();
 
@@ -446,26 +450,26 @@ static ib_status_t readfile(const char* filename, char **buffer)
     ssize_t total_bytes_read;
 
     if (fd < 0) {
-        fprintf(stderr,
-                "Failed to open pattern file %s - %s",
-                filename,
-                strerror(errno));
+        ib_log_error(ib,
+                     "Failed to open pattern file %s: %s",
+                     filename,
+                     strerror(errno));
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     rc = fstat(fd, &fd_stat);
 
     if (rc == -1) {
-        fprintf(stderr,
-                "Failed to stat file %s - %s", filename, strerror(errno));
+        ib_log_error(ib,
+                "Failed to stat file %s: %s", filename, strerror(errno));
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Protect the user from building a tree from a 1GB file of patterns. */
     if (fd_stat.st_size > 1024000000) {
-        fprintf(stderr,
-                "Refusing to parse file %s because it is too large.",
-                filename);
+        ib_log_error(ib,
+                     "Refusing to parse file %s because it is too large.",
+                     filename);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -545,7 +549,7 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
     }
 
     /* Populate file. This data must be free'ed. */
-    rc = readfile(pattern_file_unescaped, &file);
+    rc = readfile(ib, pattern_file_unescaped, &file);
 
     free(pattern_file_unescaped);
 

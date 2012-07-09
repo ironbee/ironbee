@@ -550,7 +550,7 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
         *pf = NULL;
     }
 
-    rc = ib_field_create(&f, dpi->mp, IB_S2SL(name), IB_FTYPE_LIST, NULL);
+    rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_LIST, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -583,7 +583,7 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
         *pf = NULL;
     }
 
-    rc = ib_field_create(&f, dpi->mp, IB_S2SL(name), IB_FTYPE_SBUFFER, NULL);
+    rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_SBUFFER, NULL);
     if (rc != IB_OK) {
         ib_util_log_debug("SBUFFER field creation failed: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
