@@ -556,13 +556,17 @@ static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp,
                                         ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
+    bool child = ib_flags_all(rule->flags, IB_RULE_FLAG_CHCHILD);
 
-    if ( ib_rule_id(rule) == NULL ) {
-        ib_cfg_log_error(cp, "No rule id specified.");
+    if ( (child == false) && (ib_rule_id(rule) == NULL) )
+    {
+        ib_cfg_log_error(cp, "No rule id specified flags=0x%04x.", rule->flags);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if ( rule->meta.phase == PHASE_INVALID || rule->meta.phase == PHASE_NONE )
+    if ( (child == false) &&
+         ((rule->meta.phase == PHASE_INVALID) ||
+          (rule->meta.phase == PHASE_NONE)) )
     {
         ib_cfg_log_error(cp, "Phase invalid or not specified.");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
