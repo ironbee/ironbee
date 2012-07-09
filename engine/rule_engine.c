@@ -215,6 +215,13 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
 };
 
 /**
+ * Simple stack of values for creating FIELD* fields
+ */
+typedef struct {
+    ib_list_t *stack;           /**< The actual list */
+} value_stack_t;
+
+/**
  * The rule engine uses recursion to walk through lists and chains.  These
  * define the limits of the recursion depth.
  */
@@ -324,7 +331,7 @@ static ib_status_t execute_tfns(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     ib_status_t     rc;
-    ib_num_t        n = 0;
+    int             n = 0;
     ib_list_node_t *node = NULL;
     ib_field_t     *in_field;
     ib_field_t     *out = NULL;
@@ -360,7 +367,7 @@ static ib_status_t execute_tfns(ib_engine_t *ib,
         /* Run it */
         ++n;
         ib_rule_log_debug(tx, rule, target, tfn,
-                          "Executing field transformation #%" PRId64, n);
+                          "Executing field transformation #%d", n);
         ib_rule_log_field(tx, rule, target, tfn, "before tfn", in_field);
         rc = ib_tfn_transform(ib, tx->mp, tfn, in_field, &out, &flags);
         if (rc != IB_OK) {
@@ -375,9 +382,7 @@ static ib_status_t execute_tfns(ib_engine_t *ib,
         /* Verify that out isn't NULL */
         if (out == NULL) {
             ib_rule_log_error(tx, rule, target, tfn,
-                              "Target transformation #%" PRId64
-                              " returned NULL",
-                              n);
+                              "Target transformation #%d returned NULL", n);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
@@ -531,6 +536,251 @@ static ib_status_t report_block_to_server(ib_engine_t *ib, ib_tx_t *tx)
 }
 
 /**
+ * Initialize a value stack object
+ *
+ * @param[in] tx Transaction
+ * @param[in,out] vs The value stack to initialize
+ */
+static void value_stack_init(ib_tx_t *tx,
+                             value_stack_t *vs)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    rc = ib_list_create(&(vs->stack), tx->mp);
+    if (rc != IB_OK) {
+        ib_rule_log_warn(tx, NULL, NULL, NULL,
+                         "Failed to create value stack: %s",
+                         ib_status_to_string(rc));
+    }
+    IB_FTRACE_RET_VOID();
+}
+
+/**
+ * Push a value onto a value stack object
+ *
+ * @param[in,out] vs The value stack to push onto
+ * @param[in] value The value to push
+ *
+ * @returns true if the value was successfully pushed
+ */
+static bool value_stack_push(value_stack_t *vs,
+                             const ib_field_t *value)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    if (vs->stack == NULL) {
+        IB_FTRACE_RET_BOOL(false);
+    }
+    rc = ib_list_push(vs->stack, (ib_field_t *)value);
+    if (rc != IB_OK) {
+        ib_rule_log_warn(NULL, NULL, NULL, NULL,
+                         "Failed to push value onto value stack: %s",
+                         ib_status_to_string(rc));
+        IB_FTRACE_RET_BOOL(false);
+    }
+    IB_FTRACE_RET_BOOL(true);
+}
+
+/**
+ * Pop the value off a value stack object
+ *
+ * @param[in,out] vs The value stack to pop from
+ * @param[in] pushed true if the value was successfully pushed
+ *
+ */
+static void value_stack_pop(value_stack_t *vs,
+                            bool pushed)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+
+    if ( (pushed != true) || (vs->stack == NULL) ) {
+        IB_FTRACE_RET_VOID();
+    }
+    rc = ib_list_pop(vs->stack, NULL);
+    if (rc != IB_OK) {
+        ib_rule_log_warn(NULL, NULL, NULL, NULL,
+                         "Failed to pop value from value stack: %s",
+                         ib_status_to_string(rc));
+    }
+    IB_FTRACE_RET_VOID();
+}
+
+/**
+ * Clear the target fields (FIELD, FIELD_NAME, FIELD_NAME_FULL)
+ *
+ * @param[in] ib Engine
+ * @param[in] tx Transaction
+ *
+ * @returns Status code
+ */
+static ib_status_t clear_target_fields(ib_engine_t *ib,
+                                       ib_tx_t *tx)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+
+    /* Create FIELD */
+    ib_data_remove(tx->dpi, "FIELD", NULL);
+    ib_data_remove(tx->dpi, "FIELD_NAME", NULL);
+    ib_data_remove(tx->dpi, "FIELD_NAME_FULL", NULL);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Set the target fields (FIELD, FIELD_NAME, FIELD_NAME_FULL)
+ *
+ * @param[in] ib Engine
+ * @param[in] tx Transaction
+ * @param[in] rule Rule being executed
+ * @param[in] target Target data
+ * @param[in] value_stack Stack of values
+ *
+ * @returns Status code
+ */
+static ib_status_t set_target_fields(ib_engine_t *ib,
+                                     ib_tx_t *tx,
+                                     const ib_rule_t *rule,
+                                     const ib_rule_target_t *target,
+                                     const value_stack_t *value_stack)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(rule != NULL);
+    assert(value_stack != NULL);
+
+    ib_field_t *f;
+    ib_bytestr_t *bs;
+    ib_status_t rc = IB_OK;
+    ib_status_t trc;
+    const ib_field_t *value;
+    const ib_list_node_t *node;
+    size_t namelen;
+    size_t nameoff;
+    int names;
+    int n;
+    char *name;
+
+    if (value_stack->stack == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);       /* Do nothing for now */
+    }
+
+    /* The current value is the top of the stack */
+    node = ib_list_last_const(value_stack->stack);
+    assert(node != NULL);
+    value = (const ib_field_t *)node->data;
+    if (value == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);       /* Do nothing for now */
+    }
+
+    /* Create FIELD */
+    (void)ib_data_remove(tx->dpi, "FIELD", NULL);
+    trc = ib_data_add_named(tx->dpi,
+                           (ib_field_t *)value,
+                           IB_FIELD_NAME("FIELD"));
+    if (trc != IB_OK) {
+        ib_rule_log_error(tx, rule, target, NULL,
+                          "Failed to create FIELD: %s",
+                          ib_status_to_string(trc));
+        rc = trc;
+    }
+
+    /* Create FIELD_NAME */
+    trc = ib_data_get(tx->dpi, "FIELD_NAME", &f);
+    if (trc == IB_ENOENT) {
+        trc = ib_data_add_bytestr_ex(tx->dpi,
+                                    IB_FIELD_NAME("FIELD_NAME"),
+                                    (uint8_t *)value->name,
+                                    value->nlen,
+                                    NULL);
+    }
+    else if (trc == IB_OK) {
+        trc = ib_bytestr_dup_mem(&bs, tx->mp,
+                                (uint8_t *)value->name,
+                                value->nlen);
+        if (trc == IB_OK) {
+            trc = ib_field_setv(f, bs);
+        }
+    }
+    if (trc != IB_OK) {
+        ib_rule_log_error(tx, rule, target, NULL,
+                          "Failed to create FIELD_NAME: %s",
+                          ib_status_to_string(trc));
+        rc = trc;
+    }
+
+    /* Create FIELD_NAME_FULL */
+
+    /* Step 1: Calculate the buffer size & allocate */
+    namelen = 0;
+    names = 0;
+    IB_LIST_LOOP_CONST(value_stack->stack, node) {
+        if (node->data != NULL) {
+            ++names;
+            value = (const ib_field_t *)node->data;
+            if (value->nlen > 0) {
+                namelen += (value->nlen + 1);
+            }
+        }
+    }
+    /* Remove space for the final ":" */
+    if (namelen > 0) {
+        --namelen;
+    }
+    name = ib_mpool_alloc(tx->mp, namelen);
+    if (name == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Step 2: Populate the name buffer. */
+    nameoff = 0;
+    n = 0;
+    IB_LIST_LOOP_CONST(value_stack->stack, node) {
+        if (node->data != NULL) {
+            value = (const ib_field_t *)node->data;
+            if (value->nlen > 0) {
+                memcpy(name+nameoff, value->name, value->nlen);
+                nameoff += value->nlen;
+                if (++n < names) {
+                    *(name+nameoff) = ':';
+                    ++nameoff;
+                }
+            }
+        }
+    }
+
+    /* Step 3: Update the FIELD_NAME_FULL field. */
+    trc = ib_data_get(tx->dpi, "FIELD_NAME_FULL", &f);
+    if (trc == IB_ENOENT) {
+        trc = ib_data_add_bytestr_ex(tx->dpi,
+                                    IB_FIELD_NAME("FIELD_NAME_FULL"),
+                                    (uint8_t *)name, namelen,
+                                    NULL);
+    }
+    else if (trc == IB_OK) {
+        trc = ib_bytestr_dup_mem(&bs, tx->mp, (uint8_t *)name, namelen);
+        if (trc == IB_OK) {
+            trc = ib_field_setv(f, bs);
+        }
+    }
+    if (trc != IB_OK) {
+        ib_rule_log_error(tx, rule, target, NULL,
+                          "Failed to create FIELD_NAME_FULL: %s",
+                          ib_status_to_string(trc));
+        rc = trc;
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
  * Execute a rule on a list of values
  *
  * @param[in] ib Engine
@@ -538,6 +788,7 @@ static ib_status_t report_block_to_server(ib_engine_t *ib, ib_tx_t *tx)
  * @param[in] rule Rule being executed
  * @param[in] target Target data
  * @param[in] opinst Operator instance
+ * @param[in] value_stack Stack of values
  * @param[in] value Field value to operate on
  * @param[in] recursion Recursion limit -- won't recurse if recursion is zero
  * @param[in,out] rule_result Pointer to number in which to store the result
@@ -549,8 +800,9 @@ static ib_status_t execute_operator(ib_engine_t *ib,
                                     ib_tx_t *tx,
                                     const ib_rule_t *rule,
                                     const ib_rule_target_t *target,
-                                    ib_operator_inst_t *opinst,
-                                    ib_field_t *value,
+                                    const ib_operator_inst_t *opinst,
+                                    value_stack_t *value_stack,
+                                    const ib_field_t *value,
                                     ib_num_t recursion,
                                     ib_num_t *rule_result,
                                     ib_rule_log_exec_t *log_exec)
@@ -559,8 +811,9 @@ static ib_status_t execute_operator(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(opinst != NULL);
+    assert(rule != NULL);
     assert(target != NULL);
+    assert(opinst != NULL);
 
     ib_status_t rc;
 
@@ -574,29 +827,32 @@ static ib_status_t execute_operator(ib_engine_t *ib,
 
     /* Handle a list by looping through it */
     if ( (value != NULL) && (value->type == IB_FTYPE_LIST) ) {
-        // @todo Remove mutable once list is const correct.
-        ib_list_t *vlist;
-        rc = ib_field_mutable_value(value, ib_ftype_list_mutable_out(&vlist));
+        const ib_list_t *vlist;
+        rc = ib_field_value(value, ib_ftype_list_out(&vlist));
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_list_node_t *node = NULL;
-        ib_num_t n = 0;
+        const ib_list_node_t *node = NULL;
+        int n = 0;
 
-        IB_LIST_LOOP(vlist, node) {
-            ib_field_t *nvalue = (ib_field_t *)ib_list_node_data(node);
+        IB_LIST_LOOP_CONST(vlist, node) {
+            const ib_field_t *nvalue =
+                (const ib_field_t *)ib_list_node_data_const(node);
+            bool pushed;
+
             ++n;
+            pushed = value_stack_push(value_stack, nvalue);
 
-            rc = execute_operator(ib, tx, rule, target, opinst,
+            rc = execute_operator(ib, tx, rule, target, opinst, value_stack,
                                   nvalue, recursion,
                                   rule_result, log_exec);
             if (rc != IB_OK) {
                 ib_rule_log_warn(tx, rule, target, NULL,
-                                 "Error executing list element #%" PRId64
-                                 ": %s",
+                                 "Error executing list element #%d: %s",
                                  n, ib_status_to_string(rc));
             }
+            value_stack_pop(value_stack, pushed);
         }
         ib_rule_log_debug(tx, NULL, target, NULL,
                           "Operator (list %zd) => %" PRId64,
@@ -605,12 +861,22 @@ static ib_status_t execute_operator(ib_engine_t *ib,
 
     /* No recursion required, handle it here */
     else {
-        ib_list_t *actions;
-        ib_num_t   result = 0;
-        ib_num_t   trc;
+        ib_list_t  *actions;
+        ib_num_t    result = 0;
+        ib_num_t    trc;
+
+        /* Fill in the FIELD* fields */
+        rc = set_target_fields(ib, tx, rule, target, value_stack);
+        if (rc != IB_OK) {
+            ib_rule_log_error(tx, rule, NULL, NULL,
+                              "Error creating one or more FIELD* fields: %s",
+                              ib_status_to_string(rc));
+        }
 
         /* Execute the operator */
-        rc = ib_operator_execute(ib, tx, rule, opinst, value, &result);
+        /* @todo remove the cast-away of the constness of value */
+        rc = ib_operator_execute(ib, tx, rule, opinst,
+                                 (ib_field_t *)value, &result);
         if (rc != IB_OK) {
             ib_rule_log_warn(tx, rule, target, NULL,
                              "Operator returned an error: %s",
@@ -639,9 +905,13 @@ static ib_status_t execute_operator(ib_engine_t *ib,
         else {
             actions = rule->false_actions;
         }
+
         ib_rule_log_exec_set_result(log_exec, result, actions);
         trc = execute_action_list(ib, rule, tx, result, actions);
         ib_rule_log_exec(log_exec);
+
+        /* Done. */
+        clear_target_fields(ib, tx);
 
         if (trc == IB_DECLINED) {
             ib_rule_log_warn(tx, rule, NULL, NULL,
@@ -691,6 +961,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     ib_list_node_t       *node = NULL;
     ib_operator_inst_t   *opinst = rule->opinst;
     ib_status_t           rc = IB_OK;
+    value_stack_t         value_stack;
 
     /* Special case: External rules */
     if (ib_flags_all(rule->flags, IB_RULE_FLAG_EXTERNAL) == true) {
@@ -722,6 +993,9 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         goto done;
     }
 
+    /* Initialize the value stack */
+    value_stack_init(tx, &value_stack);
+
     /*
      * Loop through all of the fields.
      *
@@ -738,7 +1012,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         ib_field_t       *tfnvalue = NULL;   /* Value after transformations */
         ib_status_t       getrc;             /* Status from ib_data_get() */
         ib_num_t          target_result = 0; /* Result of this target */
-
+        bool              pushed = true;
 
         /* Get the field value */
         getrc = ib_data_get(tx->dpi, fname, &value);
@@ -768,6 +1042,9 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
             }
         }
 
+        /* Put the value on the value stack */
+        pushed = value_stack_push(&value_stack, value);
+
         /* Execute the rule operator on the value */
         if ( (value != NULL) && (value->type == IB_FTYPE_LIST) ) {
             ib_list_t *value_list;
@@ -785,12 +1062,16 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
             IB_LIST_LOOP(value_list, value_node) {
                 ib_num_t result = 0;
                 ib_field_t *node_value = (ib_field_t *)value_node->data;
+                bool lpushed;
+
+                lpushed = value_stack_push(&value_stack, node_value);
 
                 rc = execute_operator(ib,
                                       tx,
                                       rule,
                                       target,
                                       opinst,
+                                      &value_stack,
                                       node_value,
                                       MAX_LIST_RECURSION,
                                       &result,
@@ -809,6 +1090,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                 if (result != 0) {
                     target_result = result;
                 }
+                value_stack_pop(&value_stack, lpushed);
             }
         }
         else {
@@ -819,6 +1101,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                                   rule,
                                   target,
                                   opinst,
+                                  &value_stack,
                                   tfnvalue,
                                   MAX_LIST_RECURSION,
                                   &target_result,
@@ -827,6 +1110,9 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                 ib_rule_log_error(tx, rule, target, NULL,
                                   "Operator returned an error: %s",
                                   ib_status_to_string(rc));
+
+                /* Clean up the value stack before we return */
+                value_stack_pop(&value_stack, pushed);
                 IB_FTRACE_RET_STATUS(rc);
             }
             ib_rule_log_debug(tx, rule, target, NULL,
@@ -842,6 +1128,9 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         if (target_result != 0) {
             *rule_result = target_result;
         }
+
+        /* Pop this element off the value stack */
+        value_stack_pop(&value_stack, pushed);
     }
 
     /* Invert? */
@@ -1201,6 +1490,8 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     ib_status_t          rc = IB_OK;
     ib_operator_inst_t  *opinst = rule->opinst;
     ib_field_t          *value = NULL;
+    value_stack_t        value_stack;
+    bool                 pushed;
 
     assert(ib != NULL);
     assert(rule != NULL);
@@ -1230,6 +1521,18 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Initialize the value stack */
+    value_stack_init(tx, &value_stack);
+    pushed = value_stack_push(&value_stack, value);
+
+    /* Fill in the FIELD* fields */
+    rc = set_target_fields(ib, tx, rule, NULL, &value_stack);
+    if (rc != IB_OK) {
+        ib_rule_log_error(tx, rule, NULL, NULL,
+                          "Error creating one or more FIELD* fields: %s",
+                          ib_status_to_string(rc));
+    }
+
     /* Execute the rule operator */
     rc = ib_operator_execute(ib, tx, rule, opinst, value, result);
     if (rc != IB_OK) {
@@ -1242,6 +1545,8 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
 
     /* Add a target execution result to the log object */
     ib_rule_log_exec_add_stream_tgt(log_exec, value, *result);
+
+    value_stack_pop(&value_stack, pushed);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1270,6 +1575,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
     ib_operator_inst_t  *opinst = rule->opinst;
     ib_field_t          *value;
     ib_parsed_name_value_pair_list_t *nvpair;
+    value_stack_t        value_stack;
 
     assert(ib != NULL);
     assert(rule != NULL);
@@ -1277,6 +1583,8 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
     assert(rule_result != NULL);
     assert(rule->phase_meta->is_stream == true);
 
+    /* Initialize the value stack */
+    value_stack_init(tx, &value_stack);
 
     /*
      * Execute the rule operator.
@@ -1288,6 +1596,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
     *rule_result = 0;
     for (nvpair = header;  nvpair != NULL;  nvpair = nvpair->next) {
         ib_num_t result = 0;
+        bool pushed;
 
         /* Create a field to hold the data */
         ib_rule_log_debug(tx, rule, NULL, NULL,
@@ -1310,6 +1619,16 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
+        pushed = value_stack_push(&value_stack, value);
+
+        /* Fill in the FIELD* fields */
+        rc = set_target_fields(ib, tx, rule, NULL, &value_stack);
+        if (rc != IB_OK) {
+            ib_rule_log_warn(tx, rule, NULL, NULL,
+                             "Error creating FIELD* fields: %s",
+                             ib_status_to_string(rc));
+        }
+
         /* Execute the rule operator */
         rc = ib_operator_execute(ib, tx, rule, opinst, value, &result);
         if (rc != IB_OK) {
@@ -1326,6 +1645,8 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
         if (result != 0) {
             *rule_result = result;
         }
+
+        value_stack_pop(&value_stack, pushed);
     }
     ib_log_debug3_tx(tx, "Operator \"%s\" => %" PRId64,
                      opinst->op->name, *rule_result);
@@ -1511,6 +1832,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         }
 
         ib_rule_log_exec(log_exec);
+        clear_target_fields(ib, tx);
     }
 
     if ( block_phase != 0 ) {

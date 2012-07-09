@@ -76,9 +76,9 @@ static ib_status_t join2(ib_mpool_t *mp,
 
     /* Copy the blocks in */
     p = buf;
-    memcpy(p, p1, l1);
+    memmove(p, p1, l1);
     p += l1;
-    memcpy(p, p2, l2);
+    memmove(p, p2, l2);
     p += l2;
     if (nul == true) {
         *p = '\0';
@@ -130,11 +130,11 @@ static ib_status_t join3(ib_mpool_t *mp,
 
     /* Copy the blocks in */
     p = buf;
-    memcpy(p, p1, l1);
+    memmove(p, p1, l1);
     p += l1;
-    memcpy(p, p2, l2);
+    memmove(p, p2, l2);
     p += l2;
-    memcpy(p, p3, l3);
+    memmove(p, p3, l3);
     p += l3;
     if (nul == true) {
         *p = '\0';

@@ -250,7 +250,7 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
 
     IB_LIST_LOOP(list, list_node) {
         int pcre_rc;
-        ib_field_t *list_field = (ib_field_t *) list_node->data;
+        ib_field_t *list_field = (ib_field_t *)list_node->data;
         pcre_rc = pcre_exec(pcre_pattern,
                             NULL,
                             list_field->name,
@@ -1091,7 +1091,6 @@ ib_status_t ib_data_capture_set_item(ib_tx_t *tx,
     IB_FTRACE_INIT();
     assert(tx != NULL);
     assert(num >= 0);
-    assert(in_field != NULL);
 
     if (num > MAX_CAPTURE_NUM) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1119,6 +1118,10 @@ ib_status_t ib_data_capture_set_item(ib_tx_t *tx,
         }
     }
     field = NULL;
+
+    if(in_field == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
 
     /* Make sure we have the correct name */
     if (strncmp(name, in_field->name, in_field->nlen) == 0) {

@@ -273,3 +273,39 @@ TEST_F(TestIBUtilField, Alias)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(std::string(v), std::string(s));
 }
+
+TEST_F(TestIBUtilField, AliasBytestr)
+{
+    const char s1[] = "hello";
+    const char s2[] = "bye";
+    ib_field_t *f;
+    const ib_bytestr_t *obs;
+    ib_status_t rc;
+    ib_bytestr_t *bs;
+    uint8_t *copy;
+
+    copy = (uint8_t *)ib_mpool_memdup(m_pool, "x", 1);
+    rc = ib_field_create_bytestr_alias(&f, m_pool,
+                                       IB_FIELD_NAME("foo"), copy, 0);
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_bytestr_dup_nulstr(&bs, m_pool, s1);
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_field_setv(f, bs);
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_field_value(f, ib_ftype_bytestr_out(&obs));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(strlen(s1), ib_bytestr_length(obs));
+    ASSERT_EQ(0, memcmp(s1,
+                        ib_bytestr_const_ptr(obs), ib_bytestr_length(obs)) );
+
+    rc = ib_bytestr_dup_nulstr(&bs, m_pool, s2);
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_field_setv(f, bs);
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_field_value(f, ib_ftype_bytestr_out(&obs));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(strlen(s2), ib_bytestr_length(obs));
+    ASSERT_EQ(0, memcmp(s2,
+                        ib_bytestr_const_ptr(obs), ib_bytestr_length(obs)) );
+}

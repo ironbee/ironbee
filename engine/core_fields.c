@@ -368,6 +368,15 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    rc = core_field_placeholder_bytestr(tx->dpi, "FIELD_NAME");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = core_field_placeholder_bytestr(tx->dpi, "FIELD_NAME_FULL");
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     rc = ib_data_add_list(tx->dpi, "response_cookies", NULL);
 
     IB_FTRACE_RET_STATUS(rc);
