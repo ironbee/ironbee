@@ -194,7 +194,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
 
     /* Expand the string */
     if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
-        rc = ib_data_expand_str(tx->dpi, cstr, true, &expanded);
+        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -271,7 +271,7 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
 
     /* Expand the string */
     if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
-        rc = ib_data_expand_str(tx->dpi, cstr, true, &expanded);
+        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -637,7 +637,7 @@ static ib_status_t get_num_value(ib_tx_t *tx,
     }
 
     /* Expand the string */
-    rc = ib_data_expand_str(tx->dpi, pdata->str, true, &expanded);
+    rc = ib_data_expand_str(tx->dpi, pdata->str, false, &expanded);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

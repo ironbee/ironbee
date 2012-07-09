@@ -369,7 +369,7 @@ static ib_status_t act_setvar_execute(void *data,
         size_t len;
         rc = ib_data_expand_str_ex(tx->dpi,
                                    svdata->name, strlen(svdata->name),
-                                   false, true,
+                                   false, false,
                                    &tmp, &len);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
@@ -396,7 +396,7 @@ static ib_status_t act_setvar_execute(void *data,
         assert(svdata->type == IB_FTYPE_BYTESTR);
 
         rc = ib_data_expand_str_ex(
-            tx->dpi, bsdata, bslen, false, true, &expanded, &exlen);
+            tx->dpi, bsdata, bslen, false, false, &expanded, &exlen);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
                          "setvar: Failed to expand string \"%.*s\": %s",
@@ -1011,7 +1011,7 @@ static ib_status_t act_set_request_header_execute(void* data,
     act_header_set_t *act_header_set = (act_header_set_t *)data;
     char *expanded_value;
 
-    rc = ib_data_expand_str(tx->dpi, act_header_set->value, true,
+    rc = ib_data_expand_str(tx->dpi, act_header_set->value, false,
                             &expanded_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -1075,7 +1075,7 @@ static ib_status_t act_set_response_header_execute(void* data,
     act_header_set_t *act_header_set = (act_header_set_t *)data;
     char *expanded_value;
 
-    rc = ib_data_expand_str(tx->dpi, act_header_set->value, true,
+    rc = ib_data_expand_str(tx->dpi, act_header_set->value, false,
                             &expanded_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
