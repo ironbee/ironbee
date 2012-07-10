@@ -68,7 +68,7 @@ typedef struct htp_uri_t htp_uri_t;
 
 // -- Defines -------------------------------------------------------------------------------------
 
-#define HTP_BASE_VERSION_TEXT	"master"
+#define HTP_BASE_VERSION_TEXT	"0.3.0"
 
 #define HTP_ERROR              -1
 #define HTP_OK                  0
