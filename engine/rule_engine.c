@@ -549,6 +549,7 @@ static void value_stack_init(ib_tx_t *tx,
 
     rc = ib_list_create(&(vs->stack), tx->mp);
     if (rc != IB_OK) {
+        vs->stack = NULL;
         ib_rule_log_warn(tx, NULL, NULL, NULL,
                          "Failed to create value stack: %s",
                          ib_status_to_string(rc));
