@@ -4,7 +4,6 @@ $:.unshift(File.dirname(__FILE__))
 require 'rubygems'
 require 'clipp.pb'
 require 'zlib'
-require 'json'
 require 'stringio'
 
 module IronBee
