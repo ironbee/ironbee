@@ -463,7 +463,6 @@ static ib_status_t tfn_count(ib_engine_t *ib,
 
     /* If this is a list, return it's count */
     if (fin->type == IB_FTYPE_LIST) {
-        // @todo Remove mutable once list is const correct.
         const ib_list_t *lst;
         rc = ib_field_value(fin, ib_ftype_list_out(&lst));
         if (rc != IB_OK) {

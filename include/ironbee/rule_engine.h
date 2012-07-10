@@ -94,6 +94,7 @@ typedef struct {
  */
 struct ib_rule_target_t {
     const char            *field_name;    /**< The field name */
+    const char            *target_str;    /**< The target string */
     ib_list_t             *tfn_list;      /**< List of transformations */
 };
 
@@ -500,6 +501,7 @@ const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule);
  * Create a rule target.
  *
  * @param[in] ib IronBee engine
+ * @param[in] str Target string
  * @param[in] name Target name
  * @param[in] tfn_names List of transformations to add (or NULL)
  * @param[in,out] target Pointer to new target
@@ -508,6 +510,7 @@ const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule);
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
+                                             const char *str,
                                              const char *name,
                                              ib_list_t *tfn_names,
                                              ib_rule_target_t **target,

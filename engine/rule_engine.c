@@ -701,7 +701,7 @@ static ib_status_t set_target_fields(ib_engine_t *ib,
         rc = trc;
     }
 
-    /* Create FIELD_TRANSFORMED */
+    /* Create FIELD_TFN */
     if (transformed != NULL) {
         (void)ib_data_remove(tx->dpi, "FIELD_TFN", NULL);
         trc = ib_data_add_named(tx->dpi,
@@ -713,6 +713,24 @@ static ib_status_t set_target_fields(ib_engine_t *ib,
                               ib_status_to_string(trc));
             rc = trc;
         }
+    }
+
+    /* Create FIELD_TARGET */
+    trc = ib_data_get(tx->dpi, "FIELD_TARGET", &f);
+    if (trc == IB_ENOENT) {
+        trc = ib_data_add_nulstr_ex(tx->dpi,
+                                    IB_FIELD_NAME("FIELD_TARGET"),
+                                    target->target_str,
+                                    NULL);
+    }
+    else if (trc == IB_OK) {
+        trc = ib_field_setv(f, ib_ftype_nulstr_in(target->target_str));
+    }
+    if (trc != IB_OK) {
+        ib_rule_log_error(tx, rule, target, NULL,
+                          "Failed to create FIELD_TARGET: %s",
+                          ib_status_to_string(trc));
+        rc = trc;
     }
 
     /* Create FIELD_NAME */
@@ -3542,6 +3560,7 @@ const char *ib_rule_id(const ib_rule_t *rule)
 }
 
 ib_status_t ib_rule_create_target(ib_engine_t *ib,
+                                  const char *str,
                                   const char *name,
                                   ib_list_t *tfn_names,
                                   ib_rule_target_t **target,
@@ -3574,6 +3593,19 @@ ib_status_t ib_rule_create_target(ib_engine_t *ib,
     if ((*target)->field_name == NULL) {
         ib_log_error(ib, "Error copying target field name \"%s\"", name);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Copy the original */
+    if (str == NULL) {
+        (*target)->target_str = NULL;
+    }
+    else {
+        (*target)->target_str =
+            (char *)ib_mpool_strdup(ib_rule_mpool(ib), str);
+        if ((*target)->target_str == NULL) {
+            ib_log_error(ib, "Error copying target string \"%s\"", str);
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
     }
 
     /* Create the field transformation list */

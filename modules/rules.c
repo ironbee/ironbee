@@ -460,6 +460,7 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
 
     /* Create the target object */
     rc = ib_rule_create_target(cp->ib,
+                               target_str,
                                final_target_str,
                                tfns,
                                &ib_rule_target,
