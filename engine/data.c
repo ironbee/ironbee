@@ -130,9 +130,6 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_log_debug(dpi->pr->ib, "Iterating over list of size %zd.",
-                     IB_LIST_ELEMENTS(list));
-
         IB_LIST_LOOP(list, list_node) {
             ib_field_t *list_field =
                 (ib_field_t *) IB_LIST_NODE_DATA(list_node);
