@@ -113,6 +113,12 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
         goto failed;
     }
 
+    /* Create the include tracking list */
+    rc = ib_hash_create(&((*pcp)->includes), pool);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
     /* Other fields are NULLed via calloc */
 
     ib_log_debug3(ib, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",

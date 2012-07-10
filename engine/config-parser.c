@@ -112,9 +112,62 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     int statval;
     char *incfile;
     char *pval;
+    char *real;
+    char *lookup;
+    void *freeme = NULL;
 
     pval = alloc_cpy_marked_string(cp, mark, fpc, mp);
     incfile = ib_util_relative_file(mp, file, pval);
+    if (incfile == NULL) {
+        ib_cfg_log_error(cp, "Failed to resolve included file \"%s\": %s",
+                         file, strerror(errno));
+        return IB_ENOENT;
+    }
+
+    real = realpath(incfile, NULL);
+    if (real == NULL) {
+        ib_cfg_log_error(cp,
+                         "Failed to find real path of included file "
+                         "(using original \"%s\"): %s",
+                         incfile, strerror(errno));
+        real = incfile;
+    }
+    else {
+        if (strcmp(real, incfile) != 0) {
+            ib_cfg_log_notice(cp,
+                              "Real path of included file \"%s\" is \"%s\"",
+                              incfile, real);
+        }
+        freeme = real;
+    }
+
+    /* Look up the real file path in the hash */
+    rc = ib_hash_get(cp->includes, &lookup, real);
+    if (rc == IB_OK) {
+        ib_cfg_log_warning(cp,
+                           "Included file \"%s\" already included: skipping",
+                           real);
+        return IB_OK;
+    }
+    else if (rc != IB_ENOENT) {
+        ib_cfg_log_error(cp, "Error looking up include file \"%s\": %s",
+                         real, strerror(errno));
+    }
+
+    /* Put the real name in the hash */
+    lookup = ib_mpool_strdup(mp, real);
+    if (freeme != NULL) {
+        free(freeme);
+        freeme = NULL;
+    }
+    if (lookup != NULL) {
+        rc = ib_hash_set(cp->includes, lookup, lookup);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp,
+                             "Error adding include file to hash \"%s\": %s",
+                             lookup, strerror(errno));
+        }
+    }
 
     if (access(incfile, R_OK) != 0) {
         ib_cfg_log_error(cp, "Cannot access included file \"%s\": %s",
@@ -149,11 +202,11 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 }
 
 
-#line 282 "config-parser.rl"
+#line 335 "config-parser.rl"
 
 
 
-#line 157 "config-parser.c"
+#line 210 "config-parser.c"
 static const char _ironbee_config_actions[] = {
 	0, 1, 0, 1, 1, 1, 8, 1,
 	10, 1, 12, 1, 21, 1, 23, 1,
@@ -372,7 +425,7 @@ static const int ironbee_config_en_finclude = 51;
 static const int ironbee_config_en_main = 25;
 
 
-#line 285 "config-parser.rl"
+#line 338 "config-parser.rl"
 
 ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
                                            const char *buf,
@@ -426,16 +479,16 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 
     /* Access all ragel state variables via structure. */
 
-#line 338 "config-parser.rl"
+#line 391 "config-parser.rl"
 
-#line 339 "config-parser.rl"
+#line 392 "config-parser.rl"
 
-#line 340 "config-parser.rl"
+#line 393 "config-parser.rl"
 
-#line 341 "config-parser.rl"
+#line 394 "config-parser.rl"
 
 
-#line 439 "config-parser.c"
+#line 492 "config-parser.c"
 	{
 	 fsm.cs = ironbee_config_start;
 	 fsm.top = 0;
@@ -444,9 +497,9 @@ ib_status_t ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
 	 fsm.act = 0;
 	}
 
-#line 343 "config-parser.rl"
+#line 396 "config-parser.rl"
 
-#line 450 "config-parser.c"
+#line 503 "config-parser.c"
 	{
 	int _klen;
 	unsigned int _trans;
@@ -467,7 +520,7 @@ _resume:
 #line 1 "NONE"
 	{ fsm.ts = ( fsm.p);}
 	break;
-#line 471 "config-parser.c"
+#line 524 "config-parser.c"
 		}
 	}
 
@@ -534,11 +587,11 @@ _eof_trans:
 		switch ( *_acts++ )
 		{
 	case 0:
-#line 153 "config-parser.rl"
+#line 206 "config-parser.rl"
 	{ mark = ( fsm.p); }
 	break;
 	case 1:
-#line 154 "config-parser.rl"
+#line 207 "config-parser.rl"
 	{
         rc = IB_EOTHER;
         ib_cfg_log_error(cp,
@@ -547,21 +600,21 @@ _eof_trans:
     }
 	break;
 	case 2:
-#line 162 "config-parser.rl"
+#line 215 "config-parser.rl"
 	{
         pval = alloc_cpy_marked_string(cp, mark, ( fsm.p), mpcfg);
         ib_list_push(plist, pval);
     }
 	break;
 	case 3:
-#line 166 "config-parser.rl"
+#line 219 "config-parser.rl"
 	{
         pval = alloc_cpy_marked_string(cp, mark, ( fsm.p), mpcfg);
         ib_list_push(plist, pval);
     }
 	break;
 	case 4:
-#line 172 "config-parser.rl"
+#line 225 "config-parser.rl"
 	{
         size_t namelen = (size_t)(( fsm.p) - mark);
         directive = (char *)calloc(namelen + 1, sizeof(*directive));
@@ -570,7 +623,7 @@ _eof_trans:
     }
 	break;
 	case 5:
-#line 178 "config-parser.rl"
+#line 231 "config-parser.rl"
 	{
         rc = ib_config_directive_process(cp, directive, plist);
         if (rc != IB_OK) {
@@ -585,7 +638,7 @@ _eof_trans:
     }
 	break;
 	case 6:
-#line 192 "config-parser.rl"
+#line 245 "config-parser.rl"
 	{
         size_t namelen = (size_t)(( fsm.p) - mark);
         blkname = (char *)calloc(namelen + 1, sizeof(*blkname));
@@ -594,7 +647,7 @@ _eof_trans:
     }
 	break;
 	case 7:
-#line 198 "config-parser.rl"
+#line 251 "config-parser.rl"
 	{
         rc = ib_config_block_start(cp, blkname, plist);
         if (rc != IB_OK) {
@@ -605,7 +658,7 @@ _eof_trans:
     }
 	break;
 	case 8:
-#line 206 "config-parser.rl"
+#line 259 "config-parser.rl"
 	{
         blkname = (char *)cp->cur_blkname;
         rc = ib_config_block_process(cp, blkname);
@@ -621,7 +674,7 @@ _eof_trans:
     }
 	break;
 	case 9:
-#line 221 "config-parser.rl"
+#line 274 "config-parser.rl"
 	{
         rc = include_config_fn(cp, mpcfg, mark, ( fsm.p), file, lineno);
         if (rc == IB_OK) {
@@ -639,15 +692,15 @@ _eof_trans:
 	{ fsm.te = ( fsm.p)+1;}
 	break;
 	case 14:
-#line 249 "config-parser.rl"
+#line 302 "config-parser.rl"
 	{ fsm.act = 1;}
 	break;
 	case 15:
-#line 250 "config-parser.rl"
+#line 303 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 16:
-#line 249 "config-parser.rl"
+#line 302 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 17:
@@ -663,15 +716,15 @@ _eof_trans:
 	}
 	break;
 	case 18:
-#line 254 "config-parser.rl"
+#line 307 "config-parser.rl"
 	{ fsm.act = 3;}
 	break;
 	case 19:
-#line 255 "config-parser.rl"
+#line 308 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 20:
-#line 254 "config-parser.rl"
+#line 307 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 21:
@@ -687,15 +740,15 @@ _eof_trans:
 	}
 	break;
 	case 22:
-#line 259 "config-parser.rl"
+#line 312 "config-parser.rl"
 	{ fsm.act = 5;}
 	break;
 	case 23:
-#line 260 "config-parser.rl"
+#line 313 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 24:
-#line 259 "config-parser.rl"
+#line 312 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 41; goto _again;} }}
 	break;
 	case 25:
@@ -711,19 +764,19 @@ _eof_trans:
 	}
 	break;
 	case 26:
-#line 265 "config-parser.rl"
+#line 318 "config-parser.rl"
 	{ fsm.act = 8;}
 	break;
 	case 27:
-#line 266 "config-parser.rl"
+#line 319 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 28:
-#line 264 "config-parser.rl"
+#line 317 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 29:
-#line 265 "config-parser.rl"
+#line 318 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 30:
@@ -739,43 +792,43 @@ _eof_trans:
 	}
 	break;
 	case 31:
-#line 270 "config-parser.rl"
+#line 323 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.cs =  fsm.stack[-- fsm.top]; goto _again;} }}
 	break;
 	case 32:
-#line 275 "config-parser.rl"
+#line 328 "config-parser.rl"
 	{ fsm.act = 12;}
 	break;
 	case 33:
-#line 276 "config-parser.rl"
+#line 329 "config-parser.rl"
 	{ fsm.act = 13;}
 	break;
 	case 34:
-#line 279 "config-parser.rl"
+#line 332 "config-parser.rl"
 	{ fsm.act = 16;}
 	break;
 	case 35:
-#line 278 "config-parser.rl"
+#line 331 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 47; goto _again;} }}
 	break;
 	case 36:
-#line 280 "config-parser.rl"
+#line 333 "config-parser.rl"
 	{ fsm.te = ( fsm.p)+1;}
 	break;
 	case 37:
-#line 274 "config-parser.rl"
+#line 327 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 38:
-#line 276 "config-parser.rl"
+#line 329 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 37; goto _again;} }}
 	break;
 	case 39:
-#line 277 "config-parser.rl"
+#line 330 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;{ { fsm.stack[ fsm.top++] =  fsm.cs;  fsm.cs = 44; goto _again;} }}
 	break;
 	case 40:
-#line 279 "config-parser.rl"
+#line 332 "config-parser.rl"
 	{ fsm.te = ( fsm.p);( fsm.p)--;}
 	break;
 	case 41:
@@ -796,7 +849,7 @@ _eof_trans:
 	}
 	}
 	break;
-#line 800 "config-parser.c"
+#line 853 "config-parser.c"
 		}
 	}
 
@@ -813,7 +866,7 @@ _again:
 #line 1 "NONE"
 	{ fsm.act = 0;}
 	break;
-#line 817 "config-parser.c"
+#line 870 "config-parser.c"
 		}
 	}
 
@@ -833,7 +886,7 @@ _again:
 	while ( __nacts-- > 0 ) {
 		switch ( *__acts++ ) {
 	case 1:
-#line 154 "config-parser.rl"
+#line 207 "config-parser.rl"
 	{
         rc = IB_EOTHER;
         ib_cfg_log_error(cp,
@@ -842,14 +895,14 @@ _again:
     }
 	break;
 	case 2:
-#line 162 "config-parser.rl"
+#line 215 "config-parser.rl"
 	{
         pval = alloc_cpy_marked_string(cp, mark, ( fsm.p), mpcfg);
         ib_list_push(plist, pval);
     }
 	break;
 	case 5:
-#line 178 "config-parser.rl"
+#line 231 "config-parser.rl"
 	{
         rc = ib_config_directive_process(cp, directive, plist);
         if (rc != IB_OK) {
@@ -863,7 +916,7 @@ _again:
         }
     }
 	break;
-#line 867 "config-parser.c"
+#line 920 "config-parser.c"
 		}
 	}
 	}
@@ -871,7 +924,7 @@ _again:
 	_out: {}
 	}
 
-#line 344 "config-parser.rl"
+#line 397 "config-parser.rl"
 
     /* Ensure that our block is always empty on last chunk. */
     if ( is_last_chunk && blkname != NULL ) {

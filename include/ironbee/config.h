@@ -53,6 +53,7 @@ struct ib_cfgparser_t {
     ib_mpool_t             *mp;          /**< Memory pool */
     ib_list_t              *stack;       /**< Stack tracking contexts */
     ib_list_t              *block;       /**< Stack tracking blocks */
+    ib_hash_t              *includes;    /**< Include tracking hash */
 
     /* Parsing states */
     ib_context_t           *cur_ctx;     /**< Current context */

@@ -44,7 +44,7 @@
 
 /**
  * Finite state machine type.
- * 
+ *
  * Contains state information for Ragel's parser.
  * Many of these values and names come from the Ragel documentation, section
  * 5.1 Variable Used by Ragel. p35 of The Ragel Guide 6.7 found at
@@ -110,9 +110,62 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     int statval;
     char *incfile;
     char *pval;
+    char *real;
+    char *lookup;
+    void *freeme = NULL;
 
     pval = alloc_cpy_marked_string(cp, mark, fpc, mp);
     incfile = ib_util_relative_file(mp, file, pval);
+    if (incfile == NULL) {
+        ib_cfg_log_error(cp, "Failed to resolve included file \"%s\": %s",
+                         file, strerror(errno));
+        return IB_ENOENT;
+    }
+
+    real = realpath(incfile, NULL);
+    if (real == NULL) {
+        ib_cfg_log_error(cp,
+                         "Failed to find real path of included file "
+                         "(using original \"%s\"): %s",
+                         incfile, strerror(errno));
+        real = incfile;
+    }
+    else {
+        if (strcmp(real, incfile) != 0) {
+            ib_cfg_log_notice(cp,
+                              "Real path of included file \"%s\" is \"%s\"",
+                              incfile, real);
+        }
+        freeme = real;
+    }
+
+    /* Look up the real file path in the hash */
+    rc = ib_hash_get(cp->includes, &lookup, real);
+    if (rc == IB_OK) {
+        ib_cfg_log_warning(cp,
+                           "Included file \"%s\" already included: skipping",
+                           real);
+        return IB_OK;
+    }
+    else if (rc != IB_ENOENT) {
+        ib_cfg_log_error(cp, "Error looking up include file \"%s\": %s",
+                         real, strerror(errno));
+    }
+
+    /* Put the real name in the hash */
+    lookup = ib_mpool_strdup(mp, real);
+    if (freeme != NULL) {
+        free(freeme);
+        freeme = NULL;
+    }
+    if (lookup != NULL) {
+        rc = ib_hash_set(cp->includes, lookup, lookup);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp,
+                             "Error adding include file to hash \"%s\": %s",
+                             lookup, strerror(errno));
+        }
+    }
 
     if (access(incfile, R_OK) != 0) {
         ib_cfg_log_error(cp, "Cannot access included file \"%s\": %s",
@@ -141,7 +194,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 	                 incfile, ib_status_to_string(rc));
         return rc;
     }
-    
+
     ib_cfg_log_debug(cp, "Done processing include file \"%s\"", incfile);
     return IB_OK;
 }
