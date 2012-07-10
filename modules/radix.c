@@ -309,7 +309,7 @@ static ib_status_t modradix_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug(ib, "AC Status: compiled=\"%d.%d %s\" Radix Matcher"
+    ib_log_debug(ib, "Radix Status: compiled=\"%d.%d %s\" Radix Matcher"
                         " registered", RADIX_MAJOR, RADIX_MINOR,
                         IB_XSTRINGIFY(RADIX_DATE));
 
