@@ -404,7 +404,7 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path(
  * Normalize a path (in-place / ex version)
  *
  * @param[in] data Buffer to operate on
- * @param[in] dlen_in Length of @a buf
+ * @param[in] dlen_in Length of @a data
  * @param[in] win Handle Windows style '\' as well as '/'
  * @param[out] dlen_out Length of @a data after normalization
  * @param[out] result Result flags (IB_STRFLAG_xxx)

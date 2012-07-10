@@ -965,7 +965,7 @@ static ib_status_t normalize_path(ib_engine_t *ib,
         if (in == NULL) {
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
-        rc = ib_util_normalize_path_cow(mp, (char *)in, win, &out, &result);
+        rc = ib_util_normalize_path_cow(mp, in, win, &out, &result);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
