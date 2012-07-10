@@ -396,6 +396,7 @@ static ib_status_t ws_compress(const uint8_t *data_in,
  * @param[in] op String trim operation
  * @param[in] mp Memory pool
  * @param[in] minlen Minimum length of a run of whitespace to count
+ * @param[in] nul Add NUL byte
  * @param[in] fn_count Function to count whitespace
  * @param[in] fn_inplace In-place whitespace removal/compression function
  * @param[in] fn_outplace Non-in-place whitespace removal/compression function
@@ -410,6 +411,7 @@ static ib_status_t ws_compress(const uint8_t *data_in,
 static ib_status_t ws_op(ib_strop_t op,
                          ib_mpool_t *mp,
                          size_t minlen,
+                         bool nul,
                          count_fn_t fn_count,
                          inplace_fn_t fn_inplace,
                          outplace_fn_t fn_outplace,
@@ -442,7 +444,7 @@ static ib_status_t ws_op(ib_strop_t op,
     case IB_STROP_COPY:
         fn_count(minlen, data_in, dlen_in, &count, &other);
         olen = dlen_in - count;
-        *data_out = ib_mpool_alloc(mp, olen);
+        *data_out = ib_mpool_alloc(mp, olen + (nul ? 1 : 0));
         if (*data_out == NULL) {
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
@@ -466,7 +468,7 @@ static ib_status_t ws_op(ib_strop_t op,
         }
         else {
             olen = dlen_in - count;
-            *data_out = ib_mpool_alloc(mp, olen);
+            *data_out = ib_mpool_alloc(mp, olen + (nul ? 1 : 0));
             if (*data_out == NULL) {
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
@@ -480,6 +482,9 @@ static ib_status_t ws_op(ib_strop_t op,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    if (nul) {
+        *(*data_out + (*dlen_out)) = '\0';
+    }
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -502,8 +507,10 @@ ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
     assert(result != NULL);
 
     rc = ws_op(op, mp,
-               1, ws_remove_count, ws_remove_inplace, ws_remove,
-               data_in, dlen_in, data_out, dlen_out, result);
+               1, false,
+               ws_remove_count, ws_remove_inplace, ws_remove,
+               data_in, dlen_in,
+               data_out, dlen_out, result);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -523,19 +530,16 @@ ib_status_t ib_str_wspc_remove(ib_strop_t op,
     assert(data_out != NULL);
     assert(result != NULL);
 
-    /* Let the _ex version do the real work */
-    len = strlen(data_in);
-    rc = ib_str_wspc_remove_ex(op, mp,
-                               (uint8_t *)data_in, len,
-                               (uint8_t **)data_out, &len,
-                               result);
-    if (rc == IB_OK) {
-        *((*data_out)+len) = '\0';
-    }
+    rc = ws_op(op, mp,
+               1, true,
+               ws_remove_count, ws_remove_inplace, ws_remove,
+               (uint8_t *)data_in, strlen(data_in),
+               (uint8_t **)data_out, &len, result);
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
-/*Compress whitespace in a string (extended version) */
+/* Compress whitespace in a string (extended version) */
 ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
                                     ib_mpool_t *mp,
                                     uint8_t *data_in,
@@ -554,8 +558,10 @@ ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
     assert(result != NULL);
 
     rc = ws_op(op, mp,
-               2, ws_compress_count, ws_compress_inplace, ws_compress,
-               data_in, dlen_in, data_out, dlen_out, result);
+               2, false,
+               ws_compress_count, ws_compress_inplace, ws_compress,
+               data_in, dlen_in,
+               data_out, dlen_out, result);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -575,14 +581,11 @@ ib_status_t ib_str_wspc_compress(ib_strop_t op,
     assert(data_out != NULL);
     assert(result != NULL);
 
-    /* Let the _ex version do the real work */
-    len = strlen(data_in);
-    rc = ib_str_wspc_compress_ex(op, mp,
-                                 (uint8_t *)data_in, len,
-                                 (uint8_t **)data_out, &len,
-                                 result);
-    if (rc == IB_OK) {
-        *((*data_out)+len) = '\0';
-    }
+    rc = ws_op(op, mp,
+               2, true,
+               ws_compress_count, ws_compress_inplace, ws_compress,
+               (uint8_t *)data_in, strlen(data_in),
+               (uint8_t **)data_out, &len, result);
+
     IB_FTRACE_RET_STATUS(rc);
 }
