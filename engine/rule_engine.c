@@ -631,6 +631,7 @@ static void clear_target_fields(ib_engine_t *ib,
 
     /* Create FIELD */
     ib_data_remove(tx->dpi, "FIELD", NULL);
+    ib_data_remove(tx->dpi, "FIELD_TFN", NULL);
     ib_data_remove(tx->dpi, "FIELD_NAME", NULL);
     ib_data_remove(tx->dpi, "FIELD_NAME_FULL", NULL);
 
@@ -638,13 +639,14 @@ static void clear_target_fields(ib_engine_t *ib,
 }
 
 /**
- * Set the target fields (FIELD, FIELD_NAME, FIELD_NAME_FULL)
+ * Set the target fields (FIELD, FIELD_TFN, FIELD_NAME, FIELD_NAME_FULL)
  *
  * @param[in] ib Engine
  * @param[in] tx Transaction to add the target fields to
  * @param[in] rule Rule being executed
  * @param[in] target Target data
  * @param[in] value_stack Stack of values
+ * @param[in] transformed Transformed value
  *
  * @returns Status code
  */
@@ -652,7 +654,8 @@ static ib_status_t set_target_fields(ib_engine_t *ib,
                                      ib_tx_t *tx,
                                      const ib_rule_t *rule,
                                      const ib_rule_target_t *target,
-                                     const value_stack_t *value_stack)
+                                     const value_stack_t *value_stack,
+                                     const ib_field_t *transformed)
 {
     IB_FTRACE_INIT();
 
@@ -696,6 +699,20 @@ static ib_status_t set_target_fields(ib_engine_t *ib,
                           "Failed to create FIELD: %s",
                           ib_status_to_string(trc));
         rc = trc;
+    }
+
+    /* Create FIELD_TRANSFORMED */
+    if (transformed != NULL) {
+        (void)ib_data_remove(tx->dpi, "FIELD_TFN", NULL);
+        trc = ib_data_add_named(tx->dpi,
+                                (ib_field_t *)value,
+                                IB_FIELD_NAME("FIELD_TFN"));
+        if (trc != IB_OK) {
+            ib_rule_log_error(tx, rule, target, NULL,
+                              "Failed to create FIELD_TFN: %s",
+                              ib_status_to_string(trc));
+            rc = trc;
+        }
     }
 
     /* Create FIELD_NAME */
@@ -873,7 +890,7 @@ static ib_status_t execute_operator(ib_engine_t *ib,
         ib_num_t    trc;
 
         /* Fill in the FIELD* fields */
-        rc = set_target_fields(ib, tx, rule, target, value_stack);
+        rc = set_target_fields(ib, tx, rule, target, value_stack, value);
         if (rc != IB_OK) {
             ib_rule_log_error(tx, rule, NULL, NULL,
                               "Error creating one or more FIELD* fields: %s",
@@ -1533,7 +1550,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     pushed = value_stack_push(&value_stack, value);
 
     /* Fill in the FIELD* fields */
-    rc = set_target_fields(ib, tx, rule, NULL, &value_stack);
+    rc = set_target_fields(ib, tx, rule, NULL, &value_stack, value);
     if (rc != IB_OK) {
         ib_rule_log_error(tx, rule, NULL, NULL,
                           "Error creating one or more FIELD* fields: %s",
@@ -1629,7 +1646,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
         pushed = value_stack_push(&value_stack, value);
 
         /* Fill in the FIELD* fields */
-        rc = set_target_fields(ib, tx, rule, NULL, &value_stack);
+        rc = set_target_fields(ib, tx, rule, NULL, &value_stack, value);
         if (rc != IB_OK) {
             ib_rule_log_warn(tx, rule, NULL, NULL,
                              "Error creating FIELD* fields: %s",
