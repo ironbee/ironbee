@@ -647,9 +647,7 @@ ib_status_t ib_field_setv_ex(
     {
         const char *s = (const char *)in_pval;
         if (s != NULL) {
-            size_t len = strlen(s)+1;
-
-            *(char **)(f->val->pval) = ib_mpool_memdup(f->mp, s, len);
+            *(char **)(f->val->pval) = ib_mpool_strdup(f->mp, s);
             if (*(void **)(f->val->pval) == NULL) {
                 rc = IB_EALLOC;
                 goto failed;
