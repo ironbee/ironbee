@@ -65,7 +65,8 @@ check_PROGRAMS = test_gtest \
                  test_module_pcre \
                  test_operator \
                  test_action \
-                 test_config
+                 test_config \
+                 test_util_ipset
 if ENABLE_LUA
 check_PROGRAMS += test_module_rules_lua \
                   test_luajit
@@ -122,6 +123,8 @@ test_util_hash_SOURCES = test_util_hash.cc test_main.cc
 test_util_list_SOURCES = test_util_list.cc test_main.cc
 
 test_util_radix_SOURCES = test_util_radix.cc test_main.cc
+
+test_util_ipset_SOURCES = test_util_ipset.cc test_main.cc
 
 test_util_field_SOURCES = test_util_field.cc test_main.cc
 

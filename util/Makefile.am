@@ -12,7 +12,7 @@ libibutil_la_SOURCES = lock.c util.c logformat.c \
                        decode.c \
                        escape.c \
                        modsec_compat.c \
-                       clock.c types.c
+                       clock.c types.c ipset.c
 
 EXTRA_DIST = ahocorasick_private.h radix_private.h
 
