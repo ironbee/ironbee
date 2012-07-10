@@ -509,8 +509,6 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     cfg->full_path = audit_filename;
     cfg->temp_path = temp_filename;
 
-    ib_log_debug(log->ib, "AUDITLOG: %s", temp_filename);
-
     free(dtmp);
     free(dn);
 
@@ -1037,6 +1035,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
                          strerror(sys_rc), sys_rc);
             IB_FTRACE_RET_STATUS(IB_EOTHER);
         }
+        ib_log_debug(log->ib, "AUDITLOG: %s", cfg->full_path);
         cfg->fp = NULL;
     }
 
