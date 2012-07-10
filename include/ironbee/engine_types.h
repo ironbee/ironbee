@@ -28,6 +28,7 @@
 #include <ironbee/types.h>
 #include <ironbee/mpool.h>
 #include <ironbee/hash.h>
+#include <ironbee/stream.h>
 #include <ironbee/clock.h>
 #include <ironbee/uuid.h>
 #include <ironbee/parsed_content.h>
@@ -236,10 +237,12 @@ struct ib_tx_t {
     /* Request */
     ib_parsed_req_line_t *request_line;  /**< Request line */
     ib_parsed_header_wrapper_t *request_header;/**< Request header */
+    ib_stream_t        *request_body;    /**< Request body (up to a limit) */
 
     /* Response */
     ib_parsed_resp_line_t *response_line;/**< Response line */
     ib_parsed_header_wrapper_t *response_header;/**< Response header */
+    ib_stream_t        *response_body;   /**< Response body (up to a limit) */
 };
 
 /** Site Structure */

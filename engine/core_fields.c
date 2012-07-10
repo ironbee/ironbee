@@ -27,6 +27,8 @@
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/core.h>
+#include <ironbee/field.h>
+#include <ironbee/stream.h>
 #include <ironbee/provider.h>
 
 #include "core_private.h"
@@ -193,11 +195,6 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     ib_field_t *tmp;
 
     /* Core Request Fields */
-    rc = ib_data_add_stream(tx->dpi, "request_body", NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
     rc = core_field_placeholder_bytestr(tx->dpi, "request_line");
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -332,11 +329,6 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     }
 
     /* Core Response Fields */
-    rc = ib_data_add_stream(tx->dpi, "response_body", NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
     rc = core_field_placeholder_bytestr(tx->dpi, "response_line");
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);

@@ -2701,27 +2701,12 @@ static ib_status_t ib_auditlog_add_part_http_request_body(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT();
     ib_tx_t *tx = log->tx;
-    ib_field_t *f;
     ib_status_t rc;
-    ib_stream_t *s;
-
-    /* Get the field storing the raw body via stream buffer. */
-    rc = ib_data_get(tx->dpi, "request_body", &f);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Add the part to the auditlog. */
-    /// @todo Remove mutable once stream is const aware.
-    rc = ib_field_mutable_value(f, ib_ftype_sbuffer_mutable_out(&s));
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
 
     rc = ib_auditlog_part_add(log,
                               "http-request-body",
                               "application/octet-stream",
-                              s,
+                              tx->request_body,
                               ib_auditlog_gen_raw_stream,
                               NULL);
 
@@ -2797,27 +2782,12 @@ static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT();
     ib_tx_t *tx = log->tx;
-    ib_field_t *f;
     ib_status_t rc;
-    ib_stream_t *s;
-
-    /* Get the field storing the raw body via stream buffer. */
-    rc = ib_data_get(tx->dpi, "response_body", &f);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Add the part to the auditlog. */
-    /// @todo Remove mutable once stream is const aware.
-    rc = ib_field_mutable_value(f, ib_ftype_sbuffer_mutable_out(&s));
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
 
     rc = ib_auditlog_part_add(log,
                               "http-response-body",
                               "application/octet-stream",
-                              s,
+                              tx->response_body,
                               ib_auditlog_gen_raw_stream,
                               NULL);
 
@@ -3809,6 +3779,91 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
+                                               ib_tx_t *tx,
+                                               ib_state_event_type_t event,
+                                               ib_txdata_t *txdata,
+                                               void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+
+    ib_core_cfg_t *corecfg;
+    void *data_copy;
+    ib_status_t rc;
+
+    if (txdata == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Get the current context config. */
+    rc = ib_context_module_config(tx->ctx, ib_core_module(), (void *)&corecfg);
+    if (rc != IB_OK) {
+        ib_log_alert(ib,
+                     "Failed to fetch core module context config: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (! (corecfg->auditlog_parts & IB_ALPART_HTTP_REQUEST_BODY)) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    data_copy = ib_mpool_memdup(tx->mp, txdata->data, txdata->dlen);
+
+    // TODO: Add a limit to this: size and type
+    rc = ib_stream_push(tx->request_body,
+                        IB_STREAM_DATA,
+                        data_copy,
+                        txdata->dlen);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t core_hook_response_body_data(ib_engine_t *ib,
+                                                ib_tx_t *tx,
+                                                ib_state_event_type_t event,
+                                                ib_txdata_t *txdata,
+                                                void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+
+    ib_core_cfg_t *corecfg;
+    void *data_copy;
+    ib_status_t rc;
+
+    if (txdata == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Get the current context config. */
+    rc = ib_context_module_config(tx->ctx, ib_core_module(), (void *)&corecfg);
+    if (rc != IB_OK) {
+        ib_log_alert(ib,
+                     "Failed to fetch core module context config: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (! (corecfg->auditlog_parts & IB_ALPART_HTTP_RESPONSE_BODY)) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    data_copy = ib_mpool_memdup(tx->mp, txdata->data, txdata->dlen);
+
+    // TODO: Add a limit to this: size and type
+    rc = ib_stream_push(tx->response_body,
+                        IB_STREAM_DATA,
+                        data_copy,
+                        txdata->dlen);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
 
 
 /* -- Directive Handlers -- */
@@ -5248,6 +5303,13 @@ static ib_status_t core_init(ib_engine_t *ib,
     /*
      * ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header,NULL);
      */
+
+    /* Register auditlog body buffering hooks. */
+    ib_hook_txdata_register(ib, request_body_data_event,
+                            core_hook_request_body_data, NULL);
+
+    ib_hook_txdata_register(ib, response_body_data_event,
+                            core_hook_response_body_data, NULL);
 
     /* Register logevent hooks. */
     ib_hook_tx_register(ib, handle_postprocess_event,

@@ -299,9 +299,11 @@ ffi.cdef [[
 
         ib_parsed_req_line_t *request_line;
         ib_parsed_header_wrapper_t *request_header;
+        ib_stream_t        *request_body;
 
         ib_parsed_resp_line_t *response_line;
         ib_parsed_header_wrapper_t *response_header;
+        ib_stream_t        *response_body;
     };
 
     /* Parsed Name Value Pair List Node */

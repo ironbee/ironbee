@@ -782,6 +782,16 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
         goto failed;
     }
 
+    /* Create the body buffers. */
+    rc = ib_stream_create(&tx->request_body, tx->mp);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+    rc = ib_stream_create(&tx->response_body, tx->mp);
+    if (rc != IB_OK) {
+        goto failed;
+    }
+
     /**
      * After this, we have generally succeeded and are now outputting
      * the transaction to the conn object and the ptx pointer.
