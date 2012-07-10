@@ -215,7 +215,8 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
 };
 
 /**
- * Simple stack of values for creating FIELD* fields
+ * Simple stack of values for creating FIELD, FIELD_NAME and 
+ * FIELD_NAME_FULL fields
  */
 typedef struct {
     ib_list_t *stack;           /**< The actual list */
@@ -545,6 +546,8 @@ static void value_stack_init(ib_tx_t *tx,
                              value_stack_t *vs)
 {
     IB_FTRACE_INIT();
+    assert(tx != NULL);
+    assert(vs != NULL);
     ib_status_t rc;
 
     rc = ib_list_create(&(vs->stack), tx->mp);
@@ -569,6 +572,7 @@ static bool value_stack_push(value_stack_t *vs,
                              const ib_field_t *value)
 {
     IB_FTRACE_INIT();
+    assert(vs != NULL);
     ib_status_t rc;
 
     if (vs->stack == NULL) {
@@ -595,6 +599,7 @@ static void value_stack_pop(value_stack_t *vs,
                             bool pushed)
 {
     IB_FTRACE_INIT();
+    assert(vs != NULL);
     ib_status_t rc;
 
     if ( (pushed != true) || (vs->stack == NULL) ) {
@@ -613,31 +618,30 @@ static void value_stack_pop(value_stack_t *vs,
  * Clear the target fields (FIELD, FIELD_NAME, FIELD_NAME_FULL)
  *
  * @param[in] ib Engine
- * @param[in] tx Transaction
+ * @param[in] tx Transaction to clear the target fields from
  *
- * @returns Status code
  */
-static ib_status_t clear_target_fields(ib_engine_t *ib,
-                                       ib_tx_t *tx)
+static void clear_target_fields(ib_engine_t *ib,
+                                ib_tx_t *tx)
 {
     IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(tx != NULL);
+    assert(tx->dpi != NULL);
 
     /* Create FIELD */
     ib_data_remove(tx->dpi, "FIELD", NULL);
     ib_data_remove(tx->dpi, "FIELD_NAME", NULL);
     ib_data_remove(tx->dpi, "FIELD_NAME_FULL", NULL);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_VOID();
 }
 
 /**
  * Set the target fields (FIELD, FIELD_NAME, FIELD_NAME_FULL)
  *
  * @param[in] ib Engine
- * @param[in] tx Transaction
+ * @param[in] tx Transaction to add the target fields to
  * @param[in] rule Rule being executed
  * @param[in] target Target data
  * @param[in] value_stack Stack of values
@@ -654,6 +658,7 @@ static ib_status_t set_target_fields(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
+    assert(tx->dpi != NULL);
     assert(rule != NULL);
     assert(value_stack != NULL);
 
@@ -749,7 +754,8 @@ static ib_status_t set_target_fields(ib_engine_t *ib,
             if (value->nlen > 0) {
                 memcpy(name+nameoff, value->name, value->nlen);
                 nameoff += value->nlen;
-                if (++n < names) {
+                ++n;
+                if (n < names) {
                     *(name+nameoff) = ':';
                     ++nameoff;
                 }
