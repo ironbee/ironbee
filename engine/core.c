@@ -1200,7 +1200,7 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
  *
  * @returns Status code
  */
-static ib_status_t core_data_get(ib_provider_inst_t *dpi,
+static ib_status_t core_data_get(const ib_provider_inst_t *dpi,
                                  const char *name,
                                  size_t nlen,
                                  ib_field_t **pf)
@@ -1209,7 +1209,7 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
     ib_status_t rc;
 
     rc = ib_hash_get_ex(
-        (ib_hash_t *)dpi->data,
+        (const ib_hash_t *)dpi->data,
         pf,
         (void *)name, nlen
     );
@@ -1225,13 +1225,13 @@ static ib_status_t core_data_get(ib_provider_inst_t *dpi,
  *
  * @returns Status code
  */
-static ib_status_t core_data_get_all(ib_provider_inst_t *dpi,
+static ib_status_t core_data_get_all(const ib_provider_inst_t *dpi,
                                      ib_list_t *list)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    rc = ib_hash_get_all((ib_hash_t *)dpi->data, list);
+    rc = ib_hash_get_all((const ib_hash_t *)dpi->data, list);
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -3196,7 +3196,7 @@ static ib_status_t data_api_set_relative(ib_provider_inst_t *dpi,
  *
  * @returns Status code
  */
-static ib_status_t data_api_get(ib_provider_inst_t *dpi,
+static ib_status_t data_api_get(const ib_provider_inst_t *dpi,
                                 const char *name,
                                 size_t nlen,
                                 ib_field_t **pf)
@@ -3229,7 +3229,7 @@ static ib_status_t data_api_get(ib_provider_inst_t *dpi,
  *
  * @returns Status code
  */
-static ib_status_t data_api_get_all(ib_provider_inst_t *dpi,
+static ib_status_t data_api_get_all(const ib_provider_inst_t *dpi,
                                     ib_list_t *list)
 {
     IB_FTRACE_INIT();

@@ -1511,7 +1511,7 @@ ib_status_t DLL_PUBLIC ib_data_add_stream_ex(ib_provider_inst_t *dpi,
  *
  * @returns IB_OK on success or IB_ENOENT if the element is not found.
  */
-ib_status_t DLL_PUBLIC ib_data_get_ex(ib_provider_inst_t *dpi,
+ib_status_t DLL_PUBLIC ib_data_get_ex(const ib_provider_inst_t *dpi,
                                       const char *name,
                                       size_t nlen,
                                       ib_field_t **pf);
@@ -1524,7 +1524,7 @@ ib_status_t DLL_PUBLIC ib_data_get_ex(ib_provider_inst_t *dpi,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_data_get_all(ib_provider_inst_t *dpi,
+ib_status_t DLL_PUBLIC ib_data_get_all(const ib_provider_inst_t *dpi,
                                        ib_list_t *list);
 
 /**

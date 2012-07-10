@@ -100,8 +100,10 @@ extern "C" {
  * - @e   MM: 2-digit month
  * - @e   DD: 2-digit day
  * - @e    n: Revision number if changes more than once in a day (default=0)
+ *
+ * @note: Update ironbeepp/abi_compatibility to match
  */
-#define IB_ABINUM    2012070900
+#define IB_ABINUM    2012071000
 
 /**
  * @} IronBeeRelease

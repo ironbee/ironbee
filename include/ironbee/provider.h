@@ -506,12 +506,13 @@ IB_PROVIDER_DECLARE_IFACE(data) {
     IB_PROVIDER_FUNC(
         ib_status_t,
         get,
-        (ib_provider_inst_t *pi, const char *name, size_t nlen, ib_field_t **pf)
+        (const ib_provider_inst_t *pi,
+         const char *name, size_t nlen, ib_field_t **pf)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
         get_all,
-        (ib_provider_inst_t *pi, ib_list_t *list)
+        (const ib_provider_inst_t *pi, ib_list_t *list)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
@@ -546,12 +547,13 @@ IB_PROVIDER_DECLARE_API(data) {
     IB_PROVIDER_FUNC(
         ib_status_t,
         get,
-        (ib_provider_inst_t *pi, const char *name, size_t nlen, ib_field_t **pf)
+        (const ib_provider_inst_t *pi,
+         const char *name, size_t nlen, ib_field_t **pf)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,
         get_all,
-        (ib_provider_inst_t *pi, ib_list_t *list)
+        (const ib_provider_inst_t *pi, ib_list_t *list)
     );
     IB_PROVIDER_FUNC(
         ib_status_t,

@@ -83,7 +83,7 @@ static const char *IB_VARIABLE_EXPANSION_POSTFIX = "}";
  *  - Other if a dynamic field fails.
  */
 static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
-                                        ib_provider_inst_t *dpi,
+                                        const ib_provider_inst_t *dpi,
                                         const ib_field_t *parent_field,
                                         const char *name,
                                         size_t name_len,
@@ -184,7 +184,7 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
  *  - IB_ENOENT if the field name is not found.
  */
 static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
-                                             ib_provider_inst_t *dpi,
+                                             const ib_provider_inst_t *dpi,
                                              const ib_field_t *parent_field,
                                              const char *pattern,
                                              size_t pattern_len,
@@ -595,7 +595,7 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
+ib_status_t ib_data_get_ex(const ib_provider_inst_t *dpi,
                            const char *name,
                            size_t name_len,
                            ib_field_t **pf)
@@ -710,7 +710,7 @@ error_handler:
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_data_get_all(ib_provider_inst_t *dpi,
+ib_status_t ib_data_get_all(const ib_provider_inst_t *dpi,
                             ib_list_t *list)
 {
     IB_FTRACE_INIT();
