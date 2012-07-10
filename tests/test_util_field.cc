@@ -69,12 +69,20 @@ TEST_F(TestIBUtilField, test_field_create)
     const char *nulstrval = "TestValue";
     ib_num_t numval = 5;
     ib_bytestr_t *bytestrval;
+    const char *nulout;
+    const char *nulcopy;
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_nulstr"), IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulstrval));
+    nulcopy = ib_mpool_strdup(m_pool, nulstrval);
+    ASSERT_STRNE(NULL, nulcopy);
+    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_nulstr"), IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulcopy));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(11UL, f->nlen);
     ASSERT_EQ(0, memcmp("test_nulstr", f->name, 11));
+
+    rc = ib_field_value(f, ib_ftype_nulstr_out(&nulout));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_STREQ(nulstrval, nulout);
 
     rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_num"), IB_FTYPE_NUM, ib_ftype_num_in(&numval));
     ASSERT_EQ(IB_OK, rc);
