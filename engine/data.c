@@ -886,7 +886,7 @@ static ib_status_t expand_lookup_fn(const void *data,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
+ib_status_t ib_data_expand_str(const ib_provider_inst_t *dpi,
                                const char *str,
                                bool recurse,
                                char **result)
@@ -910,7 +910,7 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
+ib_status_t ib_data_expand_str_ex(const ib_provider_inst_t *dpi,
                                   const char *str,
                                   size_t slen,
                                   bool nul,

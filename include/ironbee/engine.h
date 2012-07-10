@@ -1709,7 +1709,7 @@ ib_status_t ib_data_remove(ib_provider_inst_t *dpi,
  *
  * @returns Status code
  */
-ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
+ib_status_t ib_data_expand_str(const ib_provider_inst_t *dpi,
                                const char *str,
                                bool recurse,
                                char **result);
@@ -1729,7 +1729,7 @@ ib_status_t ib_data_expand_str(ib_provider_inst_t *dpi,
  *
  * @returns Status code
  */
-ib_status_t ib_data_expand_str_ex(ib_provider_inst_t *dpi,
+ib_status_t ib_data_expand_str_ex(const ib_provider_inst_t *dpi,
                                   const char *str,
                                   size_t slen,
                                   bool nul,
