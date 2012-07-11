@@ -307,25 +307,25 @@ ib_status_t ib_server_filter_data(
 #else /* DOXYGEN */
 
 #define ib_server_error_response(svr,tx,status) \
-    (svr) && (svr)->err_fn ? (svr)->err_fn(tx, status, (svr)->err_data) \
-                  : IB_ENOTIMPL;
+    ((svr) && (svr)->err_fn) ? (svr)->err_fn(tx, status, (svr)->err_data) \
+                  : IB_ENOTIMPL
 #define ib_server_error_header(svr,tx,name,val) \
-    (svr) && (svr)->err_hdr_fn ? (svr)->err_hdr_fn(tx, name, val, (svr)->err_hdr_data) \
-                      : IB_ENOTIMPL;
+    ((svr) && (svr)->err_hdr_fn) ? (svr)->err_hdr_fn(tx, name, val, (svr)->err_hdr_data) \
+                      : IB_ENOTIMPL
 #define ib_server_error_body(svr,tx,data) \
-    (svr) && (svr)->err_data_fn ? (svr)->err_data_fn(tx, data, (svr)->err_data_data) \
-                       : IB_ENOTIMPL;
+    ((svr) && (svr)->err_data_fn) ? (svr)->err_data_fn(tx, data, (svr)->err_data_data) \
+                       : IB_ENOTIMPL
 #define ib_server_header(svr,tx,dir,action,hdr,value) \
-    (svr) && (svr)->hdr_fn ? (svr)->hdr_fn(tx,dir,action,hdr,value,(svr)->hdr_data) \
-                  : IB_ENOTIMPL;
+    ((svr) && (svr)->hdr_fn) ? (svr)->hdr_fn(tx,dir,action,hdr,value,(svr)->hdr_data) \
+                  : IB_ENOTIMPL
 
 #ifdef HAVE_FILTER_DATA_API
 #define ib_server_filter_init(svr,tx,dir) \
-    (svr)->init_fn ? (svr)->init_fn(tx, dir, (svr)->init_data) \
-                   : IB_ENOTIMPL;
+    ((svr) && (svr)->init_fn) ? (svr)->init_fn(tx, dir, (svr)->init_data) \
+                   : IB_ENOTIMPL
 #define ib_server_filter_data(svr,tx,dir,data,len) \
-    (svr)->data_fn ? (svr)->data_fn(tx,dir,data,len,(svr)->data_data) \
-                   : IB_ENOTIMPL;
+    ((svr) && (svr)->data_fn) ? (svr)->data_fn(tx,dir,data,len,(svr)->data_data) \
+                   : IB_ENOTIMPL
 #endif /* HAVE_FILTER_DATA_API */
 
 #endif /* DOXYGEN */
