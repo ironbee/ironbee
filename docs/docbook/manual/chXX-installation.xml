@@ -110,7 +110,7 @@
             </tr>
             <tr>
                 <td>LibHTP</td>
-                <td>latest</td>
+                <td>0.3.0+</td>
                 <td>Security-aware parser for the HTTP protocol.</td>
                 <td>https://github.com/ironbee/libhtp</td>
             </tr>
