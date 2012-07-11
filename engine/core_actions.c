@@ -327,9 +327,95 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
 }
 
 /**
+ * Get a field from the DPI
+ *
+ * @param[in] tx Transaction to get the value from
+ * @param[in] name Name of the value
+ * @param[in] namelen Length of @a name
+ * @param[out] field The field from the DPI
+ *
+ * @returns Status code
+ */
+static ib_status_t get_data_value(ib_tx_t *tx,
+                                  const char *name,
+                                  size_t namelen,
+                                  ib_field_t **field)
+{
+    IB_FTRACE_INIT();
+
+    assert(tx != NULL);
+    assert(name != NULL);
+    assert(field != NULL);
+
+    ib_field_t *cur = NULL;
+    ib_status_t rc;
+    ib_list_t *list;
+    ib_list_node_t *first;
+    size_t elements;
+
+    rc = ib_data_get_ex(tx->dpi, name, namelen, &cur);
+    if ( (rc == IB_ENOENT) || (cur == NULL) ) {
+        *field = NULL;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    else if (rc != IB_OK) {
+        *field = NULL;
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* If we got back something other than a list, or it's name matches
+     * what we asked for, we're done */
+    if ( (cur->type != IB_FTYPE_LIST) ||
+         ((cur->nlen == namelen) && (memcmp(name, cur->name, namelen) == 0)) )
+    {
+        *field = cur;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /*
+     * If we got back a list and the field name doesn't match the name we
+     * requested, assume that we got back a filtered list.
+     */
+    rc = ib_field_value(cur, ib_ftype_list_mutable_out(&list) );
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx,
+                        "setvar: Failed to get list from \"%.*s\": %s",
+                        (int)namelen, name, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* No elements?  Filtered list with no values.  Return NULL. */
+    elements = ib_list_elements(list);
+    if (elements == 0) {
+        *field = NULL;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    if (elements != 1) {
+        ib_log_notice_tx(tx,
+                         "setvar:Got back list with %zd elements", elements);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Use the first (only) element in the list as our field */
+    first = ib_list_first(list);
+    if (first == NULL) {
+        ib_log_error_tx(tx,
+                        "setvar: Failed to get first list element "
+                        "from \"%.*s\": %s",
+                        (int)namelen, name, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
+    /* Finally, take the data from the first node.  Check and mate. */
+    *field = (ib_field_t *)first->data;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Execute function for the "set variable" action
  *
- * @param[in] data Name of the flag to set
+ * @param[in] data Setvar data (setvar_data_t *)
  * @param[in] rule The matched rule
  * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
@@ -344,6 +430,11 @@ static ib_status_t act_setvar_execute(void *data,
                                       void *cbdata)
 {
     IB_FTRACE_INIT();
+
+    assert(data != NULL);
+    assert(rule != NULL);
+    assert(tx != NULL);
+
     ib_field_t *cur = NULL;
     ib_field_t *new;
     char *expanded = NULL;
@@ -389,7 +480,10 @@ static ib_status_t act_setvar_execute(void *data,
     }
 
     /* Get the current value */
-    ib_data_get_ex(tx->dpi, name, namelen, &cur);
+    rc = get_data_value(tx, name, namelen, &cur);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Expand the string */
     if ( (flags & IB_ACTINST_FLAG_EXPAND) != 0) {
@@ -498,23 +592,9 @@ static ib_status_t act_setvar_execute(void *data,
 
         /* If it doesn't exist, create the variable with a value of zero */
         if (cur == NULL) {
-            ib_num_t tmp = 0;
 
             /* Create the new field */
-            rc = ib_field_create(&cur,
-                                 tx->mp,
-                                 name, namelen,
-                                 svdata->type,
-                                 ib_ftype_num_in(&tmp));
-            if (rc != IB_OK) {
-                ib_log_error_tx(tx,
-                                "setvar: Failed to create field \"%.*s\": %s",
-                                (int)namelen, name, ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
-
-            /* Add the field to the DPI */
-            rc = ib_data_add(tx->dpi, cur);
+            rc = ib_data_add_num_ex(tx->dpi, name, namelen, 0, &cur);
             if (rc != IB_OK) {
                 ib_log_error_tx(tx,
                                 "setvar: Failed to add field \"%.*s\": %s",
