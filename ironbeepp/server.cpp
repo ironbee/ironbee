@@ -103,6 +103,7 @@ ServerValue::ServerValue(
     const char* name
 )
 {
+    memset(&m_value, 0, sizeof(m_value));
     m_value.vernum = IB_VERNUM;
     m_value.abinum = IB_ABINUM;
     m_value.version = IB_VERSION;
