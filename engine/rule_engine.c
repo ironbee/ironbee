@@ -631,6 +631,7 @@ static void clear_target_fields(ib_engine_t *ib,
 
     /* Create FIELD */
     ib_data_remove(tx->dpi, "FIELD", NULL);
+    ib_data_remove(tx->dpi, "FIELD_TARGET", NULL);
     ib_data_remove(tx->dpi, "FIELD_TFN", NULL);
     ib_data_remove(tx->dpi, "FIELD_NAME", NULL);
     ib_data_remove(tx->dpi, "FIELD_NAME_FULL", NULL);
@@ -716,21 +717,23 @@ static ib_status_t set_target_fields(ib_engine_t *ib,
     }
 
     /* Create FIELD_TARGET */
-    trc = ib_data_get(tx->dpi, "FIELD_TARGET", &f);
-    if (trc == IB_ENOENT) {
-        trc = ib_data_add_nulstr_ex(tx->dpi,
-                                    IB_FIELD_NAME("FIELD_TARGET"),
-                                    target->target_str,
-                                    NULL);
-    }
-    else if (trc == IB_OK) {
-        trc = ib_field_setv(f, ib_ftype_nulstr_in(target->target_str));
-    }
-    if (trc != IB_OK) {
-        ib_rule_log_error(tx, rule, target, NULL,
-                          "Failed to create FIELD_TARGET: %s",
-                          ib_status_to_string(trc));
-        rc = trc;
+    if (target != NULL) {
+        trc = ib_data_get(tx->dpi, "FIELD_TARGET", &f);
+        if (trc == IB_ENOENT) {
+            trc = ib_data_add_nulstr_ex(tx->dpi,
+                                        IB_FIELD_NAME("FIELD_TARGET"),
+                                        target->target_str,
+                                        NULL);
+        }
+        else if (trc == IB_OK) {
+            trc = ib_field_setv(f, ib_ftype_nulstr_in(target->target_str));
+        }
+        if (trc != IB_OK) {
+            ib_rule_log_error(tx, rule, target, NULL,
+                              "Failed to create FIELD_TARGET: %s",
+                              ib_status_to_string(trc));
+            rc = trc;
+        }
     }
 
     /* Create FIELD_NAME */
