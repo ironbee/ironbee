@@ -1533,6 +1533,12 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
     struct timeval tv;
     int ec;
 
+    /* Ignore any zero length data. */
+    if (qcdata->dlen == 0) {
+        ib_log_debug3(ib, "Ignoring zero length incoming data.");
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
     gettimeofday(&tv, NULL);
 
     /* Fetch context from the connection. */
@@ -1597,6 +1603,12 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
     ib_tx_t *itx = NULL;
     struct timeval tv;
     int ec;
+
+    /* Ignore any zero length data. */
+    if (qcdata->dlen == 0) {
+        ib_log_debug3(ib, "Ignoring zero length outgoing data.");
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
 
     gettimeofday(&tv, NULL);
 
