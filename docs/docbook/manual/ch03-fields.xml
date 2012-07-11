@@ -68,6 +68,59 @@
             </note></para>
     </section>
     <section>
+        <title>FIELD</title>
+        <para><emphasis role="bold">Description:</emphasis> An alias to the current field
+            being inspected.</para>
+        <para><emphasis role="bold">Type:</emphasis> Variable (same type as the aliased
+            field)</para>
+        <para><emphasis role="bold">Scope:</emphasis> Rule</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.5</para>
+        <para>This field is useful only in field expansions within actions when you
+            must have the original value of the field being inspected. For example:</para>
+        <programlisting># Log the field value with an event
+Rule ARGS @contains attack_string id:123 phase:REQUEST logdata:%{FIELD} event
+
+# Create a collection matching a pattern for later use
+Rule REQUEST_HEADERS @rx pattern1 id:124 phase:REQUEST_HEADER setvar:NEW_COL:%{FIELD_NAME}=%{FIELD}
+Rule ARGS @rx pattern2 id:125 phase:REQUEST setvar:NEW_COL:%{FIELD_NAME}=%{FIELD}
+...
+# Then perform further matches on the new collection in another phase, which
+# is not possible via chaining.
+Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block</programlisting>
+    </section>
+    <section>
+        <title>FIELD_NAME</title>
+        <para><emphasis role="bold">Description:</emphasis> An alias to the current field
+            name being inspected, not including the collection name if it is a sub-field
+            in a collection.</para>
+        <para><emphasis role="bold">Type:</emphasis> Variable (same type as the aliased
+            field)</para>
+        <para><emphasis role="bold">Scope:</emphasis> Rule</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.5</para>
+        <para>This field is useful only in field expansions within actions when you
+            must have the name of the field being inspected. The collection name is not
+            prepended, so if <literal>ARGS:foo</literal> is being inspected, the value
+            will be <literal>foo</literal>, not <literal>ARGS:foo</literal>. If you
+            want the full name with the collection prepended, then use
+            <literal>FIELD_NAME_FULL</literal>.</para>
+    </section>
+    <section>
+        <title>FIELD_NAME_FULL</title>
+        <para><emphasis role="bold">Description:</emphasis> An alias to the current field
+            name being inspected, including the collection name if it is a sub-field
+            in a collection.</para>
+        <para><emphasis role="bold">Type:</emphasis> Variable (same type as the aliased
+            field)</para>
+        <para><emphasis role="bold">Scope:</emphasis> Rule</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.5</para>
+        <para>This field is useful only in field expansions within actions when you
+            must have the full name of the field being inspected. See <literal>FIELD_NAME</literal>
+            .</para>
+    </section>
+    <section>
         <title>GEOIP</title>
         <para><emphasis role="bold">Description:</emphasis> If the <emphasis>geoip</emphasis> module
             is loaded, then a lookup will be performed on the remote (client) address and the
