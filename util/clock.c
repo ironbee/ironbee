@@ -101,7 +101,7 @@ void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv)
     struct tm *tm;
 
     IB_CLOCK_ASSIGN_TIMEVAL(tv, *ptv);
-    t = (time_t)tv.tv_sec;
+    t = tv.tv_sec;
     tm = localtime(&t);
     strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);
     snprintf(buf + 19, 12, ".%04lu-0000", (unsigned long)tv.tv_usec);

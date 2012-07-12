@@ -67,7 +67,7 @@ typedef enum ib_clock_type_t {
  *
  * @returns Status code
  */
-#define IB_CLOCK_TIMEVAL_TIME(tv) ((ib_time_t)(((tv).tv_sec * 1000000) + (tv).tv_usec))
+#define IB_CLOCK_TIMEVAL_TIME(tv) ((ib_time_t)((((ib_time_t)(tv).tv_sec) * 1000000) + (tv).tv_usec))
 
 /**
  * Convert an ib_time_t to timeval structure.
