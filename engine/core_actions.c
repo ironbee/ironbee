@@ -974,23 +974,126 @@ static ib_status_t act_status_create(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Expand a header name from the DPI
+ *
+ * @todo This should be removed, and expand_name should be used
+ *
+ * @param[in] tx Transaction to get the value from
+ * @param[in] label Label to use for debug / error messages
+ * @param[in] name Name to expand
+ * @param[in] expandable Is @a expandable?
+ * @param[out] exname Expanded name
+ * @param[out] exnlen Length of @a exname
+ *
+ * @returns Status code
+ */
+static ib_status_t expand_name_hdr(ib_tx_t *tx,
+                                   const char *label,
+                                   const char *name,
+                                   bool expandable,
+                                   const char **exname,
+                                   size_t *exnlen)
+{
+    IB_FTRACE_INIT();
+    assert(tx != NULL);
+    assert(label != NULL);
+    assert(name != NULL);
+    assert(exname != NULL);
+    assert(exnlen != NULL);
+
+    /* If it's expandable, expand it */
+    if (expandable) {
+        char *tmp;
+        size_t len;
+        ib_status_t rc;
+
+        rc = ib_data_expand_str(tx->dpi, name, false, &tmp);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                            "%s: Failed to expand name \"%s\": %s",
+                            label, name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        len = strlen(tmp);
+        *exname = tmp;
+        *exnlen = len;
+        ib_log_debug_tx(tx,
+                        "%s: Expanded variable name from "
+                        "\"%s\" to \"%.*s\"",
+                        label, name, (int)len, tmp);
+    }
+    else {
+        *exname = name;
+        *exnlen = strlen(name);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Expand a string from the DPI
+ *
+ * @todo Should call ib_data_expand_str_ex()
+ *
+ * @param[in] tx Transaction to get the value from
+ * @param[in] label Label to use for debug / error messages
+ * @param[in] str String to expand
+ * @param[in] flags Action flags
+ * @param[out] expanded Expanded string
+ * @param[out] exlen Length of @a expanded
+ *
+ * @returns Status code
+ */
+static ib_status_t expand_str(ib_tx_t *tx,
+                              const char *label,
+                              const char *str,
+                              ib_flags_t flags,
+                              const char **expanded,
+                              size_t *exlen)
+{
+    IB_FTRACE_INIT();
+    assert(tx != NULL);
+    assert(label != NULL);
+    assert(str != NULL);
+    assert(expanded != NULL);
+    assert(exlen != NULL);
+
+    /* If it's expandable, expand it */
+    if ( (flags & IB_ACTINST_FLAG_EXPAND) != 0) {
+        char *tmp;
+        size_t len;
+        ib_status_t rc;
+
+        rc = ib_data_expand_str(tx->dpi, str, false, &tmp);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                            "%s: Failed to expand \"%s\": %s",
+                            label, str, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        len = strlen(tmp);
+        *expanded = tmp;
+        *exlen = len;
+        ib_log_debug_tx(tx,
+                        "%s: Expanded \"%s\" to \"%.*s\"",
+                        label, str, (int)len, tmp);
+    }
+    else {
+        *expanded = str;
+        *exlen = strlen(str);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
 /**
  * Holds the name of the header and the value to set it to.
  */
-struct act_header_set_t {
-    const char *name; /**< Name of the header to operate on. */
-    const char *value; /**< Value to replace the header with. */
+struct act_header_data_t {
+    const char *name;        /**< Name of the header to operate on. */
+    bool        name_expand; /**< Is name expandable? */
+    const char *value;       /**< Value to replace the header with. */
 };
-typedef struct act_header_set_t act_header_set_t;
-
-/**
- * Holds the name of the header to delete.
- */
-struct act_header_del_t {
-    const char *name; /**< Name of the header to remove. */
-};
-typedef struct act_header_del_t act_header_del_t;
+typedef struct act_header_data_t act_header_data_t;
 
 /**
  * Common create routine for delResponseHeader and delRequestHeader action.
@@ -1013,25 +1116,39 @@ static ib_status_t act_del_header_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    act_header_del_t *act_header_del =
-        (act_header_del_t *)ib_mpool_alloc(mp, sizeof(*act_header_del));
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(mp != NULL);
+    assert(params != NULL);
+    assert(inst != NULL);
 
-    if ( act_header_del == NULL ) {
+    act_header_data_t *act_data =
+        (act_header_data_t *)ib_mpool_alloc(mp, sizeof(*act_data));
+    ib_status_t rc;
+
+    if (act_data == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    if ( params == NULL || strlen(params) == 0 ) {
+    if ( (params == NULL) || (strlen(params) == 0) ) {
         ib_log_error(ib, "Operation requires a parameter.");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    act_header_del->name = ib_mpool_strdup(mp, params);
+    act_data->name = ib_mpool_strdup(mp, params);
 
-    if (act_header_del->name == NULL) {
+    if (act_data->name == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    inst->data = act_header_del;
+    /* Does the name need to be expanded? */
+    rc = ib_data_expand_test_str_ex(params, strlen(params),
+                                    &(act_data->name_expand));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    inst->data = act_data;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1057,18 +1174,26 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(mp != NULL);
+    assert(params != NULL);
+    assert(inst != NULL);
+
     size_t name_len;
     size_t value_len;
     size_t params_len;
     char *equals_idx;
-    act_header_set_t *act_header_set =
-        (act_header_set_t *)ib_mpool_alloc(mp, sizeof(*act_header_set));
+    act_header_data_t *act_data =
+        (act_header_data_t *)ib_mpool_alloc(mp, sizeof(*act_data));
+    bool expand = false;
+    ib_status_t rc;
 
-    if (act_header_set == NULL) {
+    if (act_data == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    if (params == NULL || strlen(params) == 0) {
+    if ( (params == NULL) || (strlen(params) == 0) ) {
         ib_log_error(ib, "Operation requires a parameter");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1086,26 +1211,39 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
     name_len = equals_idx - params;
     value_len = params_len - name_len - 1;
 
-    act_header_set->name = (const char *)ib_mpool_memdup(mp,
-                                                         params,
-                                                         name_len+1);
-    if (act_header_set->name == NULL) {
+    act_data->name = (const char *)ib_mpool_memdup(mp, params, name_len+1);
+    if (act_data->name == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Terminate name with '\0'. This replaces the '=' that was copied.
      * Notice that we strip the const-ness of this value to make this one
      * assignment. */
-    ((char *)act_header_set->name)[name_len] = '\0';
+    ((char *)act_data->name)[name_len] = '\0';
 
-    act_header_set->value = (value_len == 0)?
+    /* Does the name need to be expanded? */
+    rc = ib_data_expand_test_str_ex(act_data->name, name_len,
+                                    &(act_data->name_expand));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    act_data->value = (value_len == 0)?
         ib_mpool_strdup(mp, ""):
         ib_mpool_strdup(mp, equals_idx+1);
-    if (act_header_set->value == NULL) {
+    if (act_data->value == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    inst->data = act_header_set;
+    rc = ib_data_expand_test_str_ex(act_data->value, value_len, &expand);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (expand == true) {
+        inst->flags |= IB_ACTINST_FLAG_EXPAND;
+    }
+
+    inst->data = act_data;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1123,29 +1261,41 @@ static ib_status_t act_set_request_header_execute(void* data,
     assert(tx->ib->server);
 
     ib_status_t rc;
-    act_header_set_t *act_header_set = (act_header_set_t *)data;
-    char *expanded_value;
+    act_header_data_t *act_data = (act_header_data_t *)data;
+    const char *value;
+    size_t value_len;
+    const char *name;
+    size_t name_len;
 
-    rc = ib_data_expand_str(tx->dpi, act_header_set->value, false,
-                            &expanded_value);
+    /* Expand the name (if required) */
+    rc = expand_name_hdr(tx, "setRequestHeader",
+                         act_data->name, act_data->name_expand,
+                         &name, &name_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug_tx(tx, "Setting request header %s=%s",
-                    act_header_set->name, expanded_value);
+    rc = expand_str(tx, "setRequestHeader", act_data->value, flags,
+                    &value, &value_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
+    ib_log_debug_tx(tx, "Setting request header \"%.*s\"=\"%.*s\"",
+                    (int)name_len, name, (int)value_len, value);
+
+    /* Note: ignores lengths for now */
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_REQUEST,
                           IB_HDR_SET,
-                          act_header_set->name,
-                          expanded_value);
+                          name,
+                          value);
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static ib_status_t act_del_request_header_execute(void* data,
+static ib_status_t act_del_request_header_execute(void *data,
                                                   const ib_rule_t *rule,
                                                   ib_tx_t *tx,
                                                   ib_flags_t flags,
@@ -1159,15 +1309,26 @@ static ib_status_t act_del_request_header_execute(void* data,
     assert(tx->ib->server);
 
     ib_status_t rc;
-    act_header_del_t *act_header_del = (act_header_del_t *)data;
+    act_header_data_t *act_data = (act_header_data_t *)data;
+    const char *name;
+    size_t name_len;
 
-    ib_log_debug_tx(tx, "Deleting request header %s",
-                    act_header_del->name);
+    /* Expand the name (if required) */
+    rc = expand_name_hdr(tx, "delRequestHeader",
+                         act_data->name, act_data->name_expand,
+                         &name, &name_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_log_debug_tx(tx, "Deleting request header \"%.*s\"",
+                    (int)name_len, name);
+    /* Note: ignores lengths for now */
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_REQUEST,
                           IB_HDR_UNSET,
-                          act_header_del->name,
+                          name,
                           "");
 
     IB_FTRACE_RET_STATUS(rc);
@@ -1187,23 +1348,36 @@ static ib_status_t act_set_response_header_execute(void* data,
     assert(tx->ib->server);
 
     ib_status_t rc;
-    act_header_set_t *act_header_set = (act_header_set_t *)data;
-    char *expanded_value;
+    act_header_data_t *act_data = (act_header_data_t *)data;
+    const char *value;
+    size_t value_len;
+    const char *name;
+    size_t name_len;
 
-    rc = ib_data_expand_str(tx->dpi, act_header_set->value, false,
-                            &expanded_value);
+    /* Expand the name (if required) */
+    rc = expand_name_hdr(tx, "setResponseHeader",
+                         act_data->name, act_data->name_expand,
+                         &name, &name_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug_tx(tx, "Setting response header %s=%s",
-                    act_header_set->name, act_header_set->value);
+    rc = expand_str(tx, "setResponseHeader", act_data->value, flags,
+                    &value, &value_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_log_debug_tx(tx, "Setting response header \"%.*s\"=\"%.*s\"",
+                    (int)name_len, name, (int)value_len, value);
+
+    /* Note: ignores lengths for now */
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_RESPONSE,
                           IB_HDR_SET,
-                          act_header_set->name,
-                          expanded_value);
+                          name,
+                          value);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1222,15 +1396,27 @@ static ib_status_t act_del_response_header_execute(void* data,
     assert(tx->ib->server);
 
     ib_status_t rc;
-    act_header_del_t *act_header_del = (act_header_del_t *)data;
+    act_header_data_t *act_data = (act_header_data_t *)data;
+    const char *name;
+    size_t name_len;
 
-    ib_log_debug_tx(tx, "Deleting response header %s",
-                    act_header_del->name);
+    /* Expand the name (if required) */
+    rc = expand_name_hdr(tx, "delResponseHeader",
+                         act_data->name, act_data->name_expand,
+                         &name, &name_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_log_debug_tx(tx, "Deleting response header \"%.*s\"",
+                    (int)name_len, name);
+
+    /* Note: ignores lengths for now */
     rc = ib_server_header(tx->ib->server,
                           tx,
                           IB_SERVER_RESPONSE,
                           IB_HDR_UNSET,
-                          act_header_del->name,
+                          name,
                           "");
 
     IB_FTRACE_RET_STATUS(rc);
