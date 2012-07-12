@@ -327,6 +327,62 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
 }
 
 /**
+ * Expand a name from the DPI
+ *
+ * @param[in] tx Transaction to get the value from
+ * @param[in] label Label to use for debug / error messages
+ * @param[in] name Name to expand
+ * @param[in] expandable Is @a expandable?
+ * @param[out] exname Expanded name
+ * @param[out] exnlen Length of @a exname
+ *
+ * @returns Status code
+ */
+static ib_status_t expand_name(ib_tx_t *tx,
+                               const char *label,
+                               const char *name,
+                               bool expandable,
+                               const char **exname,
+                               size_t *exnlen)
+{
+    IB_FTRACE_INIT();
+    assert(tx != NULL);
+    assert(label != NULL);
+    assert(name != NULL);
+    assert(exname != NULL);
+    assert(exnlen != NULL);
+
+    /* If it's expandable, expand it */
+    if (expandable) {
+        char *tmp;
+        size_t len;
+        ib_status_t rc;
+
+        rc = ib_data_expand_str_ex(tx->dpi,
+                                   name, strlen(name),
+                                   false, false,
+                                   &tmp, &len);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx,
+                            "%s: Failed to expand name \"%s\": %s",
+                            label, name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        *exname = tmp;
+        *exnlen = len;
+        ib_log_debug_tx(tx,
+                        "%s: Expanded variable name from "
+                        "\"%s\" to \"%.*s\"",
+                        label, name, (int)len, tmp);
+    }
+    else {
+        *exname = name;
+        *exnlen = strlen(name);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Get a field from the DPI
  *
  * @param[in] tx Transaction to get the value from
@@ -454,29 +510,12 @@ static ib_status_t act_setvar_execute(void *data,
         bslen = ib_bytestr_length(svdata->value.bstr);
     }
 
-    /* Expand the string */
-    if (svdata->name_expand) {
-        char *tmp;
-        size_t len;
-        rc = ib_data_expand_str_ex(tx->dpi,
-                                   svdata->name, strlen(svdata->name),
-                                   false, false,
-                                   &tmp, &len);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                         "setvar: Failed to expand name \"%s\": %s",
-                         svdata->name, ib_status_to_string(rc));
-        }
-        name = tmp;
-        namelen = len;
-        ib_log_debug_tx(tx,
-                        "setvar: Expanded variable name from "
-                        "\"%s\" to \"%.*s\"",
-                        svdata->name, (int)namelen, name);
-    }
-    else {
-        name = svdata->name;
-        namelen = strlen(svdata->name);
+    /* Expand the name (if required) */
+    rc = expand_name(tx, "setvar",
+                     svdata->name, svdata->name_expand,
+                     &name, &namelen);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the current value */
@@ -529,13 +568,11 @@ static ib_status_t act_setvar_execute(void *data,
         }
 
         /* Create the new field */
-        rc = ib_field_create(
-            &new,
-            tx->mp,
-            name, namelen,
-            svdata->type,
-            ib_ftype_bytestr_in(bs)
-        );
+        rc = ib_field_create(&new,
+                             tx->mp,
+                             name, namelen,
+                             svdata->type,
+                             ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
                             "setvar: Failed to create field \"%.*s\": %s",
@@ -562,13 +599,11 @@ static ib_status_t act_setvar_execute(void *data,
         }
 
         /* Create the new field */
-        rc = ib_field_create(
-            &new,
-            tx->mp,
-            name, namelen,
-            svdata->type,
-            ib_ftype_num_in(&svdata->value.num)
-        );
+        rc = ib_field_create(&new,
+                             tx->mp,
+                             name, namelen,
+                             svdata->type,
+                             ib_ftype_num_in(&svdata->value.num));
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
                             "setvar: Failed to create field \"%.*s\": %s",
