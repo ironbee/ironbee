@@ -684,11 +684,10 @@ static ib_status_t set_target_fields(ib_engine_t *ib,
 
     /* The current value is the top of the stack */
     node = ib_list_last_const(value_stack->stack);
-    assert(node != NULL);
-    value = (const ib_field_t *)node->data;
-    if (value == NULL) {
+    if ( (node == NULL) || (node->data == NULL) ) {
         IB_FTRACE_RET_STATUS(IB_OK);       /* Do nothing for now */
     }
+    value = (const ib_field_t *)node->data;
 
     /* Create FIELD */
     (void)ib_data_remove(tx->dpi, "FIELD", NULL);
@@ -857,7 +856,6 @@ static ib_status_t execute_operator(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
     assert(rule != NULL);
-    assert(target != NULL);
     assert(opinst != NULL);
 
     ib_status_t rc;
@@ -1025,10 +1023,14 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     /* Log what we're going to do */
     ib_rule_log_debug(tx, rule, NULL, NULL, "Executing rule");
 
+    /* Initialize the value stack */
+    value_stack_init(tx, &value_stack);
+
     /* If this is a no-target rule (i.e. action), do nothing */
     if (ib_flags_all(rule->flags, IB_RULE_FLAG_NO_TGT) == true) {
         assert(ib_list_elements(rule->target_fields) == 0);
-        rc = ib_operator_execute(ib, tx, rule, opinst, NULL, rule_result);
+        rc = execute_operator(ib, tx, rule, NULL, rule->opinst, &value_stack,
+                              NULL, MAX_LIST_RECURSION, rule_result, log_exec);
         if (rc != IB_OK) {
             ib_rule_log_warn(tx, rule, NULL, NULL,
                              "Operator \"%s\" returned an error: %s",
@@ -1037,9 +1039,6 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         }
         goto done;
     }
-
-    /* Initialize the value stack */
-    value_stack_init(tx, &value_stack);
 
     /* Create a new execution logging object */
     rc = ib_rule_log_exec_create(tx, rule, &log_exec);
