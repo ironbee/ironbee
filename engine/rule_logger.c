@@ -712,7 +712,8 @@ static void log_exec_fast_full(const ib_rule_log_exec_t *log_exec,
             assert(rslt != NULL);
 
             /* Only log rule targets that caused an action to execute */
-            if ( (rslt->act_list == NULL) ||
+            if ( (rslt->value == NULL) ||
+                 (rslt->act_list == NULL) ||
                  (ib_list_elements(rslt->act_list) == 0) )
             {
                 continue;
