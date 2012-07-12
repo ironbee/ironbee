@@ -1131,6 +1131,10 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                                   "Operator result => %" PRId64,
                                   result);
 
+                /* Add a target execution result to the log object */
+                ib_rule_log_exec_add_tgt(log_exec, target, value,
+                                         tfnvalue, result);
+
                 /* Store the result */
                 if (result != 0) {
                     target_result = result;
@@ -1160,14 +1164,15 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                 value_stack_pop(&value_stack, pushed);
                 IB_FTRACE_RET_STATUS(rc);
             }
+
+            /* Add a target execution result to the log object */
+            ib_rule_log_exec_add_tgt(log_exec, target, value,
+                                     tfnvalue, target_result);
+
             ib_rule_log_debug(tx, rule, target, NULL,
                               "Operator result => %" PRId64,
                               target_result);
         }
-
-        /* Add a target execution result to the log object */
-        ib_rule_log_exec_add_tgt(log_exec, target, value,
-                                 tfnvalue, target_result);
 
         /* Store the result */
         if (target_result != 0) {
