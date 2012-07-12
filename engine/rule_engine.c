@@ -1026,20 +1026,6 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     /* Initialize the value stack */
     value_stack_init(tx, &value_stack);
 
-    /* If this is a no-target rule (i.e. action), do nothing */
-    if (ib_flags_all(rule->flags, IB_RULE_FLAG_NO_TGT) == true) {
-        assert(ib_list_elements(rule->target_fields) == 0);
-        rc = execute_operator(ib, tx, rule, NULL, rule->opinst, &value_stack,
-                              NULL, MAX_LIST_RECURSION, rule_result, log_exec);
-        if (rc != IB_OK) {
-            ib_rule_log_warn(tx, rule, NULL, NULL,
-                             "Operator \"%s\" returned an error: %s",
-                             opinst->op->name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        goto done;
-    }
-
     /* Create a new execution logging object */
     rc = ib_rule_log_exec_create(tx, rule, &log_exec);
     if (rc != IB_OK) {
@@ -1047,6 +1033,27 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                           "Rule engine: Failed to create log object: %s",
                           ib_status_to_string(rc));
         rc = IB_OK;
+    }
+
+    /* If this is a no-target rule (i.e. action), do nothing */
+    if (ib_flags_all(rule->flags, IB_RULE_FLAG_NO_TGT) == true) {
+        assert(ib_list_elements(rule->target_fields) == 0);
+        ib_field_t *f;
+        ib_field_create(&f, tx->mp, IB_FIELD_NAME("NULL"),
+                        IB_FTYPE_NULSTR, ib_ftype_nulstr_in("NULL"));
+        ib_rule_target_t tgt;
+        tgt.field_name = "NULL";
+        tgt.target_str = "NULL";
+        ib_list_create(&tgt.tfn_list, tx->mp);
+        rc = execute_operator(ib, tx, rule, &tgt, rule->opinst, &value_stack,
+                              f, MAX_LIST_RECURSION, rule_result, log_exec);
+        if (rc != IB_OK) {
+            ib_rule_log_warn(tx, rule, NULL, NULL,
+                             "Operator \"%s\" returned an error: %s",
+                             opinst->op->name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        goto done;
     }
 
     /*
