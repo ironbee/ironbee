@@ -597,25 +597,28 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     const ib_list_node_t *node;
     const ib_field_t     *forwarded;
 
+    ib_log_debug3_tx(tx, "Checking for alternate remote address");
+
     /* Extract the X-Forwarded-For from the provider instance */
     rc = ib_data_get(tx->dpi, "request_headers:X-Forwarded-For", &field);
     if ( (field == NULL) || (rc != IB_OK) ) {
-        ib_log_debug_tx(tx, "No forward header");
+        ib_log_debug_tx(tx, "No X-Forwarded-For field");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* Because we asked for a filtered item, what we get back is a list */
     rc = ib_field_value(field, ib_ftype_list_out(&list));
     if (rc != IB_OK) {
+        ib_log_debug_tx(tx, "No request header collection");
         IB_FTRACE_RET_STATUS(rc);
     }
     if (ib_list_elements(list) == 0) {
-        ib_log_debug_tx(tx, "No forward header");
+        ib_log_debug_tx(tx, "No X-Forwarded-For header found");
         IB_FTRACE_RET_STATUS(rc);
     }
     node = ib_list_last_const(list);
     if ( (node == NULL) || (node->data == NULL) ) {
-        ib_log_debug_tx(tx, "No forward header");
+        ib_log_notice_tx(tx, "Invalid X-Forwarded-For header found");
         IB_FTRACE_RET_STATUS(rc);
     }
     forwarded = (const ib_field_t *)node->data;
@@ -625,11 +628,12 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
                              ib_ftype_bytestr_out(&bs),
                              IB_FTYPE_BYTESTR);
     if (rc != IB_OK) {
+        ib_log_notice_tx(tx, "Invalid X-Forwarded-For header value");
         IB_FTRACE_RET_STATUS(rc);
     }
 
     if (bs == NULL) {
-        ib_log_debug_tx(tx, "Forward header not a bytestr");
+        ib_log_notice_tx(tx, "X-Forwarded-For header not a bytestr");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     len = ib_bytestr_length(bs);
@@ -654,7 +658,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     memcpy(buf, data, len);
     buf[len] = '\0';
 
-    ib_log_debug_tx(tx, "Remote address => '%s'", buf);
+    ib_log_info_tx(tx, "Remote address changed to '%s'", buf);
 
     /* This will lose the pointer to the original address
      * buffer, but it should be cleaned up with the rest
