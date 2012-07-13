@@ -549,6 +549,14 @@ void DLL_PUBLIC *ib_conn_parser_context_get(ib_conn_t *conn);
 #define ib_conn_flags_set(conn, flag) do { (conn)->flags |= (flag); } while(0)
 
 /**
+ * Unset connection flags.
+ *
+ * @param conn Connection structure
+ * @param flag Flags
+ */
+#define ib_conn_flags_unset(conn, flag) do { (conn)->flags &= ~(flag); } while(0)
+
+/**
  * Check if connection flags are all set.
  *
  * @param conn Connection structure
@@ -615,6 +623,16 @@ ib_status_t DLL_PUBLIC ib_tx_create(ib_tx_t **ptx,
  * @returns All current flags
  */
 #define ib_tx_flags_set(tx, flag) do { (tx)->flags |= (flag); } while(0)
+
+/**
+ * Unset transaction flags.
+ *
+ * @param tx Transaction structure
+ * @param flag Flags
+ *
+ * @returns All current flags
+ */
+#define ib_tx_flags_unset(tx, flag) do { (tx)->flags &= ~(flag); } while(0)
 
 /**
  * Check if transaction flags are all set.

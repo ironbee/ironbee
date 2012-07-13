@@ -119,13 +119,35 @@ static ib_status_t act_setflag_execute(void *data,
 
     /* Data will be a C-Style string */
     const char *cstr = (const char *)data;
+    int remove_flag = 0;
+
+    if (*cstr == '!') {
+        remove_flag = 1;
+        ++cstr;
+    }
 
     /* Handle the suspicious flag */
     if (strcasecmp(cstr, "suspicious") == 0) {
-        ib_tx_flags_set(tx, IB_TX_FSUSPICIOUS);
+        // FIXME: Expose via FLAGS collection
+        if (remove_flag) {
+            ib_tx_flags_unset(tx, IB_TX_FSUSPICIOUS);
+        }
+        else {
+            ib_tx_flags_set(tx, IB_TX_FSUSPICIOUS);
+        }
+    }
+    else if (strcasecmp(cstr, "block") == 0) {
+        if (remove_flag) {
+            // FIXME: Remove in FLAGS collection
+            ib_tx_flags_unset(tx, IB_TX_BLOCK_ADVISORY|IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE);
+        }
+        else {
+            // FIXME: Set in FLAGS collection
+            ib_tx_flags_set(tx, IB_TX_BLOCK_ADVISORY);
+        }
     }
     else {
-        ib_log_error_tx(tx,  "Set flag action: invalid flag '%s'", cstr);
+        ib_log_notice_tx(tx,  "Set flag action: invalid flag '%s'", cstr);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
