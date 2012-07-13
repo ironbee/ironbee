@@ -1348,10 +1348,10 @@ static void ironbee_logger(void *dummy,
 
     if ( (file != NULL) && (line > 0) ) {
         ib_core_cfg_t *corecfg = NULL;
-        ib_status_t rc = ib_context_module_config(ib_context_main(ib),
-                                                  ib_core_module(),
-                                                  (void *)&corecfg);
-        if ( (rc == IB_OK) && ((int)corecfg->log_level >= IB_LOG_DEBUG) ) {
+        ib_status_t ibrc = ib_context_module_config(ib_context_main(ib),
+                                                    ib_core_module(),
+                                                    (void *)&corecfg);
+        if ( (ibrc == IB_OK) && ((int)corecfg->log_level >= IB_LOG_DEBUG) ) {
             while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
                 file += 3;
             }

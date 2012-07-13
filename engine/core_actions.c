@@ -811,7 +811,7 @@ struct act_block_t {
 typedef struct act_block_t act_block_t;
 
 /**
- * Executes the function stored in cbdata.
+ * Executes the function stored in @a data.
  *
  * @param[in] data Cast to an @c act_block_t and the @c execute field is
  *            called on the given @a tx.
