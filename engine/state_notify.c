@@ -796,13 +796,13 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FREQ_SEENHEADER);
 
-    rc = ib_state_notify_tx(ib, request_header_finished_event, tx);
+    /* Notify the request header is finished. */
+    rc = iface->request_header_finished(pi, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Notify the request header is finished. */
-    rc = iface->request_header_finished(pi, tx);
+    rc = ib_state_notify_tx(ib, request_header_finished_event, tx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1058,17 +1058,17 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
 
     ib_tx_flags_set(tx, IB_TX_FRES_SEENHEADER);
 
-    rc = ib_state_notify_tx(ib, response_header_finished_event, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
     /* Notify the parser the response header finished. */
     if (iface->response_header_finished != NULL) {
         rc = iface->response_header_finished(pi, tx);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
+    }
+
+    rc = ib_state_notify_tx(ib, response_header_finished_event, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Notify the engine and any callbacks of the data. */
