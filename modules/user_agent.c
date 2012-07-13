@@ -503,7 +503,10 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    assert(event == request_header_finished_event);
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(tx->dpi != NULL);
+    assert(event == handle_request_header_event);
 
     ib_field_t         *req_agent = NULL;
     ib_status_t         rc = IB_OK;
@@ -578,26 +581,49 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    assert(event == request_header_finished_event);
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(tx->dpi != NULL);
+    assert(event == handle_request_header_event);
 
-    ib_field_t          *field = NULL;
-    ib_status_t          rc = IB_OK;
-    const ib_bytestr_t  *bs;
-    const uint8_t       *data;
-    unsigned             len;
-    char                *buf;
-    uint8_t             *comma;
+    ib_field_t           *field = NULL;
+    ib_status_t           rc = IB_OK;
+    const ib_bytestr_t   *bs;
+    const uint8_t        *data;
+    unsigned              len;
+    char                 *buf;
+    uint8_t              *comma;
+    const ib_list_t      *list;
+    const ib_list_node_t *node;
+    const ib_field_t     *forwarded;
 
     /* Extract the X-Forwarded-For from the provider instance */
-    rc = ib_data_get(tx->dpi, "request_headers.X-Forwarded-For", &field);
+    rc = ib_data_get(tx->dpi, "request_headers:X-Forwarded-For", &field);
     if ( (field == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx, "No forward header");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
+    /* Because we asked for a filtered item, what we get back is a list */
+    rc = ib_field_value(field, ib_ftype_list_out(&list));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    if (ib_list_elements(list) == 0) {
+        ib_log_debug_tx(tx, "No forward header");
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    node = ib_list_last_const(list);
+    if ( (node == NULL) || (node->data == NULL) ) {
+        ib_log_debug_tx(tx, "No forward header");
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    forwarded = (const ib_field_t *)node->data;
 
     /* Found it: copy the data into a newly allocated string buffer */
-    rc = ib_field_value_type(field, ib_ftype_bytestr_out(&bs), IB_FTYPE_BYTESTR);
+    rc = ib_field_value_type(forwarded,
+                             ib_ftype_bytestr_out(&bs),
+                             IB_FTYPE_BYTESTR);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -616,7 +642,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     }
 
     /* Allocate the memory */
-    buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
+    buf = (char *)ib_mpool_alloc(tx->mp, len+1);
     if (buf == NULL) {
         ib_log_error_tx(tx,
                      "Failed to allocate %d bytes for local address",
@@ -639,7 +665,8 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     rc = ib_data_add_bytestr(tx->dpi, "remote_addr", (uint8_t*)buf, len, NULL);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
-                     "Failed to create remote address TX field: %s", ib_status_to_string(rc));
+                        "Failed to create remote address TX field: %s",
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -665,7 +692,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     unsigned int failed_frule_num;
 
     /* Register the user agent callback */
-    rc = ib_hook_tx_register(ib, request_header_finished_event,
+    rc = ib_hook_tx_register(ib, handle_request_header_event,
                              modua_user_agent,
                              NULL);
     if (rc != IB_OK) {
@@ -673,7 +700,7 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     }
 
     /* Register the remote address callback */
-    rc = ib_hook_tx_register(ib, request_header_finished_event,
+    rc = ib_hook_tx_register(ib, handle_request_header_event,
                              modua_remoteip,
                              NULL);
     if (rc != IB_OK) {
