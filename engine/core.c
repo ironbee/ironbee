@@ -250,15 +250,10 @@ static void core_logger(void *data, ib_log_level_t level,
     IB_FTRACE_INIT();
 
     char *new_fmt;
-    char time_info[32 + 1];
-    struct tm *tminfo;
-    time_t timet;
-
+    char time_info[31];
     FILE *fp = (FILE *)data;
 
-    timet = time(NULL);
-    tminfo = localtime(&timet);
-    strftime(time_info, sizeof(time_info)-1, "%d%m%Y.%Hh%Mm%Ss", tminfo);
+    ib_clock_timestamp(time_info, NULL);
 
     /* 100 is more than sufficient. */
     new_fmt = (char *)malloc(strlen(time_info) + strlen(fmt) + 100);
