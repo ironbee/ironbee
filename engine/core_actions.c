@@ -243,6 +243,18 @@ static ib_status_t act_event_execute(void *data,
     /// @todo Probably need to copy here
     event->tags = rule->meta.tags;
 
+    /* Set the actions if appropriate */
+    if (ib_tx_flags_isset(tx,
+                          (IB_TX_BLOCK_ADVISORY |
+                           IB_TX_BLOCK_PHASE |
+                           IB_TX_BLOCK_IMMEDIATE)) )
+    {
+        event->rec_action = IB_LEVENT_ACTION_BLOCK;
+    }
+    if (ib_tx_flags_isset(tx, (IB_TX_BLOCK_PHASE | IB_TX_BLOCK_IMMEDIATE)) ) {
+        event->action = IB_LEVENT_ACTION_BLOCK;
+    }
+
     /* Log the event. */
     rc = ib_event_add(tx->epi, event);
     if (rc != IB_OK) {
@@ -698,20 +710,68 @@ static ib_status_t act_setvar_execute(void *data,
 }
 
 /**
+ * Find event from this rule
+ *
+ * @param[in] tx The transaction to search
+ * @param[in] rule The rule that fired the action
+ * @param[out] event Matching event
+ *
+ * @return IB_OK (if found)
+ *         IB_ENOENT if not found
+ *         Errors returned by ib_event_get_all()
+ */
+static ib_status_t get_event(ib_tx_t *tx,
+                             const ib_rule_t *rule,
+                             ib_logevent_t **event)
+{
+    IB_FTRACE_INIT();
+
+    assert(tx != NULL);
+    assert(tx->epi != NULL);
+    assert(rule != NULL);
+
+    ib_status_t rc;
+    ib_list_t *event_list;
+    ib_list_node_t *event_node;
+
+    rc = ib_event_get_all(tx->epi, &event_list);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    event_node = ib_list_last(event_list);
+    if (event_node == NULL) {
+        IB_FTRACE_RET_STATUS(IB_ENOENT);
+    }
+    ib_logevent_t *e = (ib_logevent_t *)event_node->data;
+    if (strcmp(e->rule_id, ib_rule_id(rule)) == 0) {
+        *event = e;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_ENOENT);
+}
+
+/**
  * Set the IB_TX_BLOCK_ADVISORY flag and set the DPI value @c FLAGS:BLOCK=1.
  *
- * @param[out] tx The transaction we are going to modify.
+ * @param[in,out] tx The transaction we are going to modify.
+ * @param[in] rule The rule that fired the action
  *
  * @return IB_DECLINED
  */
-static ib_status_t act_block_advisory_execute(ib_tx_t *tx)
+static ib_status_t act_block_advisory_execute(ib_tx_t *tx,
+                                              const ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
+
+    assert(tx != NULL);
+    assert(rule != NULL);
 
     ib_status_t rc;
     ib_field_t *ib_flags_field;
     ib_field_t *ib_block_field;
     ib_num_t ib_num_one = 1;
+    ib_logevent_t *event;
 
     /* Don't re-set the flag because it bloats the DPI value FLAGS
      * with lots of BLOCK entries. */
@@ -758,6 +818,15 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx)
                                 ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
+
+        /* Update the event (if required) */
+        rc = get_event(tx, rule, &event);
+        if (rc == IB_OK) {
+            event->rec_action = IB_LEVENT_ACTION_BLOCK;
+        }
+        else if (rc != IB_ENOENT) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_DECLINED);
@@ -766,15 +835,30 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx)
 /**
  * Set the IB_TX_BLOCK_PHASE flag in the tx.
  *
- * @param[out] tx The transaction we are going to modify.
+ * @param[in,out] tx The transaction we are going to modify.
+ * @param[in] rule The rule that fired the action
  *
  * @return IB_DECLINED
  */
-static ib_status_t act_block_phase_execute(ib_tx_t *tx)
+static ib_status_t act_block_phase_execute(ib_tx_t *tx,
+                                           const ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
 
+    ib_status_t rc;
+    ib_logevent_t *event;
+
     ib_tx_flags_set(tx, IB_TX_BLOCK_PHASE);
+
+    /* Update the event (if required) */
+    rc = get_event(tx, rule, &event);
+    if (rc == IB_OK) {
+        event->rec_action = IB_LEVENT_ACTION_BLOCK;
+        event->action = IB_LEVENT_ACTION_BLOCK;
+    }
+    else if (rc != IB_ENOENT) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     IB_FTRACE_RET_STATUS(IB_DECLINED);
 }
@@ -782,15 +866,32 @@ static ib_status_t act_block_phase_execute(ib_tx_t *tx)
 /**
  * Set the IB_TX_BLOCK_IMMEDIATE flag in the tx.
  *
- * @param[out] tx The transaction we are going to modify.
+ * @param[in,out] tx The transaction we are going to modify.
+ * @param[in] rule The rule that fired the action
  *
  * @returns IB_DECLINED.
  */
-static ib_status_t act_block_immediate_execute(ib_tx_t *tx)
+static ib_status_t act_block_immediate_execute(ib_tx_t *tx,
+                                               const ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
+    assert(tx != NULL);
+    assert(rule != NULL);
+
+    ib_status_t rc;
+    ib_logevent_t *event;
 
     ib_tx_flags_set(tx, IB_TX_BLOCK_IMMEDIATE);
+
+    /* Update the event (if required) */
+    rc = get_event(tx, rule, &event);
+    if (rc == IB_OK) {
+        event->rec_action = IB_LEVENT_ACTION_BLOCK;
+        event->action = IB_LEVENT_ACTION_BLOCK;
+    }
+    else if (rc != IB_ENOENT) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     IB_FTRACE_RET_STATUS(IB_DECLINED);
 }
@@ -798,7 +899,7 @@ static ib_status_t act_block_immediate_execute(ib_tx_t *tx)
 /**
  * The function that implements flagging a particular block type.
  */
-typedef ib_status_t(*act_block_execution_t)(ib_tx_t *);
+typedef ib_status_t(*act_block_execution_t)(ib_tx_t *tx, const ib_rule_t *rule);
 
 /**
  * Internal block action structure.
@@ -831,7 +932,7 @@ static ib_status_t act_block_execute(void* data,
     assert(data);
     assert(tx);
 
-    ib_status_t rc = ((const act_block_t *)data)->execute(tx);
+    ib_status_t rc = ((const act_block_t *)data)->execute(tx, rule);
 
     IB_FTRACE_RET_STATUS(rc);
 }
