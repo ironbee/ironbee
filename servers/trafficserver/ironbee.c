@@ -44,6 +44,7 @@
 #include <ironbee/module.h> /* Only needed while config is in here. */
 #include <ironbee/provider.h>
 #include <ironbee/server.h>
+#include <ironbee/core.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/util.h>
 #include <ironbee/debug.h>
@@ -1336,34 +1337,45 @@ static void ironbee_logger(void *dummy,
                            const char *fmt,
                            va_list ap)
 {
-    char buf[8192 + 1];
-    int limit = 7000;
-    int ec;
-    TSReturnCode rc;
+    char buf[7000];
+    char *new_fmt;
     const char *errmsg = NULL;
+    TSReturnCode rc;
 
-    /* Buffer the log line. */
-    ec = vsnprintf(buf, sizeof(buf), fmt, ap);
-    if (ec >= limit) {
-        /* Mark as truncated, with a " ...". */
-        memcpy(buf + (limit - 5), " ...", 5);
-        errmsg = "Data truncated in log";
+    /* 100 is more than sufficient. */
+    new_fmt = (char *)malloc(strlen(fmt) + 100);
+    sprintf(new_fmt, "%-10s- ", ib_log_level_to_string(level));
+
+    if ( (file != NULL) && (line > 0) ) {
+        ib_core_cfg_t *corecfg = NULL;
+        ib_status_t rc = ib_context_module_config(ib_context_main(ib),
+                                                  ib_core_module(),
+                                                  (void *)&corecfg);
+        if ( (rc == IB_OK) && ((int)corecfg->log_level >= IB_LOG_DEBUG) ) {
+            while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
+                file += 3;
+            }
+
+            static const size_t c_line_info_length = 35;
+            char line_info[c_line_info_length];
+            snprintf(
+                line_info,
+                c_line_info_length,
+                "(%23s:%-5d) ",
+                file,
+                line
+            );
+            strcat(new_fmt, line_info);
+        }
     }
+    strcat(new_fmt, fmt);
+
+    vsnprintf(buf, sizeof(buf), new_fmt, ap);
+    free(new_fmt);
 
     /* Write it to the ironbee log. */
     /* FIXME: why is the format arg's prototype not const char* ? */
-    if ((file != NULL) && (line > 0)) {
-        rc = TSTextLogObjectWrite(ironbee_log,
-                                  (char *)"(%s:%d) %s",
-                                  file, line,
-                                  buf);
-    }
-    else {
-        rc = TSTextLogObjectWrite(ironbee_log,
-                                  (char *)"%s",
-                                  buf);
-    }
-
+    rc = TSTextLogObjectWrite(ironbee_log, (char *)"%s", buf);
     if (rc != TS_SUCCESS) {
         errmsg = "Data logging failed!";
     }
