@@ -2148,6 +2148,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
         /* Turn tag list into JSON list, limiting the size. */
         char tags[128] = "\0";
+        const char *fields = "";
 
         if (e->tags != NULL) {
             ib_list_node_t *tnode;
@@ -2187,6 +2188,14 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             return strlen(*(const char **)chunk);
         }
 
+        if (e->fields != NULL) {
+            const ib_list_node_t *field_node;
+            field_node = ib_list_first_const(e->fields);
+            if (field_node != NULL) {
+                fields = (const char *)field_node->data;
+            }
+        }
+
         ib_log_debug(ib, "TODO: Data escaping not implemented!");
         rlen = snprintf((char *)rec, CORE_JSON_MAX_REC_LEN,
                         "%s"
@@ -2199,8 +2208,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         "      \"confidence\": %u,\r\n"
                         "      \"severity\": %u,\r\n"
                         "      \"tags\": [%s],\r\n"
-                        // TODO Add fields
-                        "      \"fields\": [],\r\n"
+                        "      \"fields\": [%s],\r\n"
                         "      \"msg\": \"%s\",\r\n"
                         // TODO Add properly escaped (binary) data
                         "      \"data\": \"%s\"\r\n"
@@ -2214,6 +2222,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         e->confidence,
                         e->severity,
                         tags,
+                        fields,
                         e->msg ? e->msg : "-",
                         ib_data_escape(e->data, e->data_len));
 
