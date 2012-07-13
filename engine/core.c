@@ -925,7 +925,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
 
             switch (lf->fields[i]) {
                 case IB_LOG_FIELD_REMOTE_ADDR:
-                    aux = conn->remote_ipstr;
+                    aux = tx->er_ipstr;
                     break;
                 case IB_LOG_FIELD_LOCAL_ADDR:
                     aux = conn->local_ipstr;
@@ -2445,8 +2445,8 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 
         ib_field_create_bytestr_alias(&f, pool,
                            IB_FIELD_NAME("remote-addr"),
-                           (uint8_t *)tx->conn->remote_ipstr,
-                           strlen(tx->conn->remote_ipstr));
+                           (uint8_t *)tx->er_ipstr,
+                           strlen(tx->er_ipstr));
         ib_list_push(list, f);
 
         unum = tx->conn->remote_port;
