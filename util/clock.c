@@ -94,13 +94,16 @@ void ib_clock_gettimeofday(ib_timeval_t *tp) {
 
 void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv)
 {
-    assert(ptv != NULL);
-
     struct timeval tv;
     time_t t;
     struct tm *tm;
 
-    IB_CLOCK_ASSIGN_TIMEVAL(tv, *ptv);
+    if (ptv != NULL) {
+        IB_CLOCK_ASSIGN_TIMEVAL(tv, *ptv);
+    }
+    else {
+        gettimeofday(&tv, NULL);
+    }
     t = tv.tv_sec;
     tm = localtime(&t);
     strftime(buf, 30, "%Y-%m-%dT%H:%M:%S", tm);
@@ -110,11 +113,14 @@ void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv)
 
 void ib_clock_relative_timestamp(char *buf, const ib_timeval_t *ptv, ib_time_t offset)
 {
-    assert(ptv != NULL);
-
     ib_timeval_t adj_tv;
 
-    IB_CLOCK_ASSIGN_TIMEVAL(adj_tv, *ptv);
+    if (ptv != NULL) {
+        IB_CLOCK_ASSIGN_TIMEVAL(adj_tv, *ptv);
+    }
+    else {
+        gettimeofday(&adj_tv, NULL);
+    }
     IB_CLOCK_ADJUST_TIMEVAL(adj_tv, offset);
 
     ib_clock_timestamp(buf, &adj_tv);

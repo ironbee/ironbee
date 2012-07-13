@@ -174,22 +174,26 @@ void ib_clock_gettimeofday(ib_timeval_t *tp);
 /**
  * Generate a string timestamp.
  *
+ * If ptv is NULL, then the current time is used.
+ *
  * Format: YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ
  * Example: 2010-11-04T12:42:36.3874-0800
  *
  * @param[out] buf Buffer at least 31 bytes in length
- * @param[in] ptv Address of the ib_timeval_t structure
+ * @param[in] ptv Address of the ib_timeval_t structure or NULL
  */
 void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv);
 
 /**
  * Generate a string timestamp from a timeval structure and offset.
  *
+ * If ptv is NULL, then the current time is used.
+ *
  * Format: YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ
  * Example: 2010-11-04T12:42:36.3874-0800
  *
  * @param[out] buf Buffer at least 31 bytes in length
- * @param[in] ptv Address of the ib_timeval_t structure
+ * @param[in] ptv Address of the ib_timeval_t structure or NULL
  * @param[in] offset Time offset in microseconds
  */
 void ib_clock_relative_timestamp(char *buf, const ib_timeval_t *ptv, ib_time_t offset);
