@@ -119,7 +119,7 @@ void ib_clock_relative_timestamp(char *buf, const ib_timeval_t *ptv, ib_time_t o
         IB_CLOCK_ASSIGN_TIMEVAL(adj_tv, *ptv);
     }
     else {
-        gettimeofday(&adj_tv, NULL);
+        ib_clock_gettimeofday(&adj_tv);
     }
     IB_CLOCK_ADJUST_TIMEVAL(adj_tv, offset);
 
