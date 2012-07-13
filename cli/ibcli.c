@@ -1433,7 +1433,7 @@ static ib_status_t action_printvar_execute(void *data,
     assert(tx != NULL);
     const char *varname = (const char *)data;
     size_t namelen;
-    ib_field_t *field;
+    ib_field_t *field = NULL;
     ib_status_t rc;
     static char buf[128];
 
