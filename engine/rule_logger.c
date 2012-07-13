@@ -710,13 +710,22 @@ static void log_exec_fast_full(const ib_rule_log_exec_t *log_exec,
             const ib_rule_log_rslt_t *rslt =
                 (const ib_rule_log_rslt_t *)rslt_node->data;
             assert(rslt != NULL);
+            const char *name;
+            size_t nlen;
 
             /* Only log rule targets that caused an action to execute */
-            if ( (rslt->value == NULL) ||
-                 (rslt->act_list == NULL) ||
+            if ( (rslt->act_list == NULL) ||
                  (ib_list_elements(rslt->act_list) == 0) )
             {
                 continue;
+            }
+            if (rslt->value == NULL) {
+                name = "";
+                nlen = 0;
+            }
+            else {
+                name = rslt->value->name;
+                nlen = rslt->value->nlen;
             }
 
             actbuf[0] = '\0';
@@ -732,7 +741,7 @@ static void log_exec_fast_full(const ib_rule_log_exec_t *log_exec,
                          rule->meta.id,
                          tgt->target->field_name,
                          rule->opinst->op->name,
-                         (int)rslt->value->nlen, rslt->value->name,
+                         (int)nlen, name,
                          actbuf);
         }
     }

@@ -1037,23 +1037,10 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
 
     /* If this is a no-target rule (i.e. action), do nothing */
     if (ib_flags_all(rule->flags, IB_RULE_FLAG_NO_TGT) == true) {
-        assert(ib_list_elements(rule->target_fields) == 0);
-        ib_field_t *f;
-        ib_field_create(&f, tx->mp, IB_FIELD_NAME("NULL"),
-                        IB_FTYPE_NULSTR, ib_ftype_nulstr_in("NULL"));
-        ib_rule_target_t tgt;
-        tgt.field_name = "NULL";
-        tgt.target_str = "NULL";
-        ib_list_create(&tgt.tfn_list, tx->mp);
-        rc = execute_operator(ib, tx, rule, &tgt, rule->opinst, &value_stack,
-                              f, MAX_LIST_RECURSION, rule_result, log_exec);
-        if (rc != IB_OK) {
-            ib_rule_log_warn(tx, rule, NULL, NULL,
-                             "Operator \"%s\" returned an error: %s",
-                             opinst->op->name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        goto done;
+        assert(ib_list_elements(rule->target_fields) == 1);
+    }
+    else {
+        assert(ib_list_elements(rule->target_fields) != 0);
     }
 
     /*
@@ -1198,7 +1185,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     }
 
     /* Invert? */
-done:
+    /* done: */
     if ( (opinst->flags & IB_OPINST_FLAG_INVERT) != 0) {
         *rule_result = (*rule_result == 0);
     }
@@ -3210,6 +3197,31 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
             ib_log_error(ib, "Cannot register rule: Action rule has targets");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
+
+        /* Give it a fake target */
+        assert(ib_list_elements(rule->target_fields) == 0);
+        ib_field_t *f = NULL;
+        ib_rule_target_t *tgt = NULL;
+
+        rc = ib_field_create(&f, ib_rule_mpool(ib), IB_FIELD_NAME("NULL"),
+                             IB_FTYPE_NULSTR, ib_ftype_nulstr_in("NULL"));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        tgt = ib_mpool_calloc(ib_rule_mpool(ib), sizeof(*tgt), 1);
+        if (tgt == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        tgt->field_name = "NULL";
+        tgt->target_str = "NULL";
+        rc = ib_list_create(&(tgt->tfn_list), ib_rule_mpool(ib));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_list_push(rule->target_fields, tgt);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
     else {
         if (ib_list_elements(rule->target_fields) == 0) {
@@ -3306,6 +3318,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
 
     /* If no previous rule in the list, add the new rule */
     if (lookup == NULL) {
+
         /* Add the rule to the list */
         rc = ib_list_push(context_rules->rule_list, rule);
         if (rc != IB_OK) {
