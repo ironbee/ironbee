@@ -250,7 +250,7 @@ static ib_status_t act_event_execute(void *data,
         if ( (rc == IB_OK) && (field->type == IB_FTYPE_NULSTR) ) {
             const char *name = NULL;
             rc = ib_field_value(field, ib_ftype_nulstr_out(&name));
-            if (name != NULL) {
+            if (rc == IB_OK) {
                 ib_logevent_field_add(event, name);
             }
         }
