@@ -114,9 +114,9 @@ typedef struct CCallInfo {
   _(ANY,	lj_mem_newgco,		2,  FS, P32, CCI_L) \
   _(ANY,	lj_math_random_step, 1, FS, NUM, CCI_CASTU64|CCI_NOFPRCLOBBER) \
   _(ANY,	lj_vm_modi,		2,  FN, INT, 0) \
-  _(ANY,	sinh,			1,  N, NUM, 0) \
-  _(ANY,	cosh,			1,  N, NUM, 0) \
-  _(ANY,	tanh,			1,  N, NUM, 0) \
+  _(ANY,	sinh,			ARG1_FP,  N, NUM, 0) \
+  _(ANY,	cosh,			ARG1_FP,  N, NUM, 0) \
+  _(ANY,	tanh,			ARG1_FP,  N, NUM, 0) \
   _(ANY,	fputc,			2,  S, INT, 0) \
   _(ANY,	fwrite,			4,  S, INT, 0) \
   _(ANY,	fflush,			1,  S, INT, 0) \
@@ -209,7 +209,7 @@ LJ_DATA const CCallInfo lj_ir_callinfo[IRCALL__MAX+1];
 #define fp64_ul2d __aeabi_ul2d
 #define fp64_l2f __aeabi_l2f
 #define fp64_ul2f __aeabi_ul2f
-#if LJ_TARGET_OSX
+#if LJ_TARGET_IOS
 #define fp64_d2l __fixdfdi
 #define fp64_d2ul __fixunsdfdi
 #define fp64_f2l __fixsfdi

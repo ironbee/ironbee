@@ -519,7 +519,12 @@ static int lj_cf_package_seeall(lua_State *L)
 static void setpath(lua_State *L, const char *fieldname, const char *envname,
 		    const char *def)
 {
+#if LJ_TARGET_CONSOLE
+  const char *path = NULL;
+  UNUSED(envname);
+#else
   const char *path = getenv(envname);
+#endif
   if (path == NULL) {
     lua_pushstring(L, def);
   } else {

@@ -60,7 +60,7 @@
 /* Select native OS if no target OS defined. */
 #ifndef LUAJIT_OS
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(_XBOX_VER)
 #define LUAJIT_OS	LUAJIT_OS_WINDOWS
 #elif defined(__linux__)
 #define LUAJIT_OS	LUAJIT_OS_LINUX
@@ -96,8 +96,19 @@
 #define LJ_TARGET_WINDOWS	(LUAJIT_OS == LUAJIT_OS_WINDOWS)
 #define LJ_TARGET_LINUX		(LUAJIT_OS == LUAJIT_OS_LINUX)
 #define LJ_TARGET_OSX		(LUAJIT_OS == LUAJIT_OS_OSX)
+#define LJ_TARGET_IOS		(LJ_TARGET_OSX && LUAJIT_TARGET == LUAJIT_ARCH_ARM)
 #define LJ_TARGET_POSIX		(LUAJIT_OS > LUAJIT_OS_WINDOWS)
 #define LJ_TARGET_DLOPEN	LJ_TARGET_POSIX
+
+#ifdef __CELLOS_LV2__
+#define LJ_TARGET_PS3		1
+#define LJ_TARGET_CONSOLE	1
+#endif
+
+#if _XBOX_VER >= 200
+#define LJ_TARGET_XBOX360	1
+#define LJ_TARGET_CONSOLE	1
+#endif
 
 #define LJ_NUMMODE_SINGLE	0	/* Single-number mode only. */
 #define LJ_NUMMODE_SINGLE_DUAL	1	/* Default to single-number mode. */
@@ -111,7 +122,11 @@
 #define LJ_ARCH_BITS		32
 #define LJ_ARCH_ENDIAN		LUAJIT_LE
 #define LJ_ARCH_HASFPU		1
-#define LJ_ABI_WIN		LJ_TARGET_WINDOWS
+#if LJ_TARGET_WINDOWS || __CYGWIN__
+#define LJ_ABI_WIN		1
+#else
+#define LJ_ABI_WIN		0
+#endif
 #define LJ_TARGET_X86		1
 #define LJ_TARGET_X86ORX64	1
 #define LJ_TARGET_EHRETREG	0
@@ -149,15 +164,25 @@
 #define LJ_TARGET_MASKROT	1
 #define LJ_TARGET_UNIFYROT	2	/* Want only IR_BROR. */
 #define LJ_ARCH_NUMMODE		LJ_NUMMODE_DUAL
-#if LJ_TARGET_OSX
-/* Runtime code generation is restricted on iOS. Complain to Apple, not me. */
-#define LJ_ARCH_NOJIT		1
+
+#if __ARM_ARCH_7__ || __ARM_ARCH_7A__ || __ARM_ARCH_7R__
+#define LJ_ARCH_VERSION		70
+#elif __ARM_ARCH_6T2__
+#define LJ_ARCH_VERSION		61
+#elif __ARM_ARCH_6__ || __ARM_ARCH_6J__ || __ARM_ARCH_6K__ || __ARM_ARCH_6Z__ || __ARM_ARCH_6ZK__
+#define LJ_ARCH_VERSION		60
+#else
+#define LJ_ARCH_VERSION		50
 #endif
 
 #elif LUAJIT_TARGET == LUAJIT_ARCH_PPC
 
 #define LJ_ARCH_NAME		"ppc"
+#if _LP64
+#define LJ_ARCH_BITS		64
+#else
 #define LJ_ARCH_BITS		32
+#endif
 #define LJ_ARCH_ENDIAN		LUAJIT_BE
 #define LJ_ARCH_HASFPU		1
 #define LJ_TARGET_PPC		1
@@ -167,6 +192,36 @@
 #define LJ_TARGET_MASKROT	1
 #define LJ_TARGET_UNIFYROT	1	/* Want only IR_BROL. */
 #define LJ_ARCH_NUMMODE		LJ_NUMMODE_DUAL_SINGLE
+
+#if _ARCH_PWR7
+#define LJ_ARCH_VERSION		70
+#elif _ARCH_PWR6
+#define LJ_ARCH_VERSION		60
+#elif _ARCH_PWR5X
+#define LJ_ARCH_VERSION		51
+#elif _ARCH_PWR5
+#define LJ_ARCH_VERSION		50
+#elif _ARCH_PWR4
+#define LJ_ARCH_VERSION		40
+#else
+#define LJ_ARCH_VERSION		0
+#endif
+#if __PPC64__ || __powerpc64__ || LJ_TARGET_XBOX360
+#define LJ_ARCH_PPC64		1
+#define LJ_ARCH_NOFFI		1
+#endif
+#if _ARCH_PPCSQ
+#define LJ_ARCH_SQRT		1
+#endif
+#if _ARCH_PWR5X
+#define LJ_ARCH_ROUND		1
+#endif
+#if __PPU__
+#define LJ_ARCH_CELL		1
+#endif
+#if LJ_TARGET_XBOX360
+#define LJ_ARCH_XENON		1
+#endif
 
 #elif LUAJIT_TARGET == LUAJIT_ARCH_PPCSPE
 
@@ -205,6 +260,12 @@
 #define LJ_TARGET_UNIFYROT	2	/* Want only IR_BROR. */
 #define LJ_ARCH_NUMMODE		LJ_NUMMODE_SINGLE
 
+#if _MIPS_ARCH_MIPS32R2
+#define LJ_ARCH_VERSION		20
+#else
+#define LJ_ARCH_VERSION		10
+#endif
+
 #else
 #error "No target architecture defined"
 #endif
@@ -215,7 +276,11 @@
 
 /* Check for minimum required compiler versions. */
 #if defined(__GNUC__)
-#if LJ_TARGET_X64
+#if LJ_TARGET_X86
+#if (__GNUC__ < 3) || ((__GNUC__ == 3) && __GNUC_MINOR__ < 4)
+#error "Need at least GCC 3.4 or newer"
+#endif
+#elif LJ_TARGET_X64
 #if __GNUC__ < 4
 #error "Need at least GCC 4.0 or newer"
 #endif
@@ -223,13 +288,9 @@
 #if (__GNUC__ < 4) || ((__GNUC__ == 4) && __GNUC_MINOR__ < 2)
 #error "Need at least GCC 4.2 or newer"
 #endif
-#elif LJ_TARGET_PPC
+#elif !LJ_TARGET_PS3
 #if (__GNUC__ < 4) || ((__GNUC__ == 4) && __GNUC_MINOR__ < 3)
 #error "Need at least GCC 4.3 or newer"
-#endif
-#else
-#if (__GNUC__ < 3) || ((__GNUC__ == 3) && __GNUC_MINOR__ < 4)
-#error "Need at least GCC 3.4 or newer"
 #endif
 #endif
 #endif
@@ -243,7 +304,10 @@
 #if defined(__ARM_PCS_VFP)
 #error "No support for ARM hard-float ABI (yet)"
 #endif
-#if !(__ARM_EABI__ || LJ_TARGET_OSX)
+#if __ARM_ARCH_6M__ || __ARM_ARCH_7M__ || __ARM_ARCH_7EM__
+#error "No support for Cortex-M CPUs"
+#endif
+#if !(__ARM_EABI__ || LJ_TARGET_IOS)
 #error "Only ARM EABI or iOS 3.0+ ABI is supported"
 #endif
 #elif LJ_TARGET_PPC || LJ_TARGET_PPCSPE
@@ -272,8 +336,16 @@
 #define LJ_DUALNUM		0
 #endif
 
+#if LJ_TARGET_IOS || LJ_TARGET_CONSOLE
+/* Runtime code generation is restricted on iOS. Complain to Apple, not me. */
+/* Ditto for the consoles. Complain to Sony or MS, not me. */
+#ifndef LUAJIT_ENABLE_JIT
+#define LJ_OS_NOJIT		1
+#endif
+#endif
+
 /* Disable or enable the JIT compiler. */
-#if defined(LUAJIT_DISABLE_JIT) || defined(LJ_ARCH_NOJIT)
+#if defined(LUAJIT_DISABLE_JIT) || defined(LJ_ARCH_NOJIT) || defined(LJ_OS_NOJIT)
 #define LJ_HASJIT		0
 #else
 #define LJ_HASJIT		1
@@ -316,8 +388,8 @@
 #define LUAJIT_NO_EXP2
 #endif
 
-#if defined(__symbian__) || (LJ_TARGET_ARM && LJ_TARGET_OSX)
-#define LUAJIT_NO_UNWIND
+#if defined(LUAJIT_NO_UNWIND) || defined(__symbian__) || LJ_TARGET_IOS || LJ_TARGET_PS3
+#define LJ_NO_UNWIND		1
 #endif
 
 #endif

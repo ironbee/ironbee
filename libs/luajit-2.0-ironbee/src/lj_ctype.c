@@ -43,7 +43,7 @@
 #define CTKWDEF(_) \
   /* Type specifiers. */ \
   _("void",		-1,	CTOK_VOID) \
-  _("_Bool",		1,	CTOK_BOOL) \
+  _("_Bool",		0,	CTOK_BOOL) \
   _("bool",		1,	CTOK_BOOL) \
   _("char",		1,	CTOK_CHAR) \
   _("int",		4,	CTOK_INT) \
@@ -453,6 +453,10 @@ static void ctype_repr(CTRepr *ctr, CTypeID id)
       ctype_preptype(ctr, ct, qual, (info & CTF_UNION) ? "union" : "struct");
       return;
     case CT_ENUM:
+      if (id == CTID_CTYPEID) {
+	ctype_preplit(ctr, "ctype");
+	return;
+      }
       ctype_preptype(ctr, ct, qual, "enum");
       return;
     case CT_ATTRIB:

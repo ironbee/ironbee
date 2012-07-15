@@ -57,6 +57,10 @@ td.convop { font-style: italic; width: 16em; }
 <a href="http://luajit.org/performance.html">Performance <span class="ext">&raquo;</span></a>
 </li><li>
 <a href="http://luajit.org/download.html">Download <span class="ext">&raquo;</span></a>
+</li><li>
+<a href="http://wiki.luajit.org/">Wiki <span class="ext">&raquo;</span></a>
+</li><li>
+<a href="http://luajit.org/list.html">Mailing List <span class="ext">&raquo;</span></a>
 </li></ul>
 </div>
 <div id="main">
@@ -287,22 +291,24 @@ arguments to C&nbsp;calls:
 <tr class="odd separate">
 <td class="convin">nil</td><td class="convop"><tt>NULL</tt> &rarr;</td><td class="convout"><tt>(void *)</tt></td></tr>
 <tr class="even">
-<td class="convin">userdata</td><td class="convop">userdata payload &rarr;</td><td class="convout"><tt>(void *)</tt></td></tr>
-<tr class="odd">
 <td class="convin">lightuserdata</td><td class="convop">lightuserdata address &rarr;</td><td class="convout"><tt>(void *)</tt></td></tr>
-<tr class="even separate">
-<td class="convin">string</td><td class="convop">match against <tt>enum</tt> constant</td><td class="convout"><tt>enum</tt></td></tr>
 <tr class="odd">
-<td class="convin">string</td><td class="convop">copy string data + zero-byte</td><td class="convout"><tt>int8_t[]</tt>, <tt>uint8_t[]</tt></td></tr>
+<td class="convin">userdata</td><td class="convop">userdata payload &rarr;</td><td class="convout"><tt>(void *)</tt></td></tr>
 <tr class="even">
-<td class="convin">string</td><td class="convop">string data &rarr;</td><td class="convout"><tt>const char[]</tt></td></tr>
+<td class="convin">io.* file</td><td class="convop">get FILE * handle &rarr;</td><td class="convout"><tt>(void *)</tt></td></tr>
 <tr class="odd separate">
-<td class="convin">function</td><td class="convop"><a href="#callback">create callback</a> &rarr;</td><td class="convout">C function type</td></tr>
-<tr class="even separate">
-<td class="convin">table</td><td class="convop"><a href="#init_table">table initializer</a></td><td class="convout">Array</td></tr>
+<td class="convin">string</td><td class="convop">match against <tt>enum</tt> constant</td><td class="convout"><tt>enum</tt></td></tr>
+<tr class="even">
+<td class="convin">string</td><td class="convop">copy string data + zero-byte</td><td class="convout"><tt>int8_t[]</tt>, <tt>uint8_t[]</tt></td></tr>
 <tr class="odd">
-<td class="convin">table</td><td class="convop"><a href="#init_table">table initializer</a></td><td class="convout"><tt>struct</tt>/<tt>union</tt></td></tr>
+<td class="convin">string</td><td class="convop">string data &rarr;</td><td class="convout"><tt>const char[]</tt></td></tr>
 <tr class="even separate">
+<td class="convin">function</td><td class="convop"><a href="#callback">create callback</a> &rarr;</td><td class="convout">C function type</td></tr>
+<tr class="odd separate">
+<td class="convin">table</td><td class="convop"><a href="#init_table">table initializer</a></td><td class="convout">Array</td></tr>
+<tr class="even">
+<td class="convin">table</td><td class="convop"><a href="#init_table">table initializer</a></td><td class="convout"><tt>struct</tt>/<tt>union</tt></td></tr>
+<tr class="odd separate">
 <td class="convin">cdata</td><td class="convop">cdata payload &rarr;</td><td class="convout">C type</td></tr>
 </table>
 <p>
@@ -584,8 +590,7 @@ ffi.new("struct nested", {x=1,y={2,3}}) --> x = 1, y.a = 2, y.b = 3
 <p>
 All of the standard Lua operators can be applied to cdata objects or a
 mix of a cdata object and another Lua object. The following list shows
-the valid combinations. All other combinations currently raise an
-error.
+the pre-defined operations.
 </p>
 <p>
 Reference types are dereferenced <em>before</em> performing each of
@@ -594,7 +599,9 @@ C&nbsp;type pointed to by the reference.
 </p>
 <p>
 The pre-defined operations are always tried first before deferring to a
-metamethod for a ctype (if defined).
+metamethod or index table (if any) for the corresponding ctype (except
+for <tt>__new</tt>). An error is raised if the metamethod lookup or
+index table lookup fails.
 </p>
 
 <h3 id="cdata_array">Indexing a cdata object</h3>
@@ -619,7 +626,9 @@ field value and <a href="#convert_tolua">converts it to a Lua
 object</a>. A write access <a href="#convert_fromlua">converts a Lua
 object to the field type</a> and stores the converted value to the
 field. An error is raised if a write access to a constant
-<tt>struct</tt>/<tt>union</tt> or a constant field is attempted.</li>
+<tt>struct</tt>/<tt>union</tt> or a constant field is attempted.
+Scoped enum constants or static constants are treated like a constant
+field.</li>
 
 <li><b>Indexing a complex number</b>: a complex number can be indexed
 either by a cdata number or a Lua number with the values 0 or 1, or by
@@ -638,6 +647,12 @@ assigning to an index of a vector raises an error.</li>
 
 </ul>
 <p>
+A ctype object can be indexed with a string key, too. The only
+pre-defined operation is reading scoped constants of
+<tt>struct</tt>/<tt>union</tt> types. All other accesses defer
+to the corresponding metamethods or index tables (if any).
+</p>
+<p>
 Note: since there's (deliberately) no address-of operator, a cdata
 object holding a value type is effectively immutable after
 initialization. The JIT compiler benefits from this fact when applying
@@ -655,7 +670,12 @@ to <tt>foo.c</tt>.
 <ul>
 
 <li><b>Constructor</b>: a ctype object can be called and used as a
-<a href="ext_ffi_api.html#ffi_new">constructor</a>.</li>
+<a href="ext_ffi_api.html#ffi_new">constructor</a>. This is equivalent
+to <tt>ffi.new(ct, ...)</tt>, unless a <tt>__new</tt> metamethod is
+defined. The <tt>__new</tt> metamethod is called with the ctype object
+plus any other arguments passed to the contructor. Note that you have to
+use <tt>ffi.new</tt> inside of it, since calling <tt>ct(...)</tt> would
+cause infinite recursion.</li>
 
 <li><b>C&nbsp;function call</b>: a cdata function or cdata function
 pointer can be called. The passed arguments are
@@ -721,6 +741,11 @@ of them is an <tt>uint64_t</tt>, the other side is converted to an
 <tt>uint64_t</tt> and an unsigned comparison is performed. Otherwise
 both sides are converted to an <tt>int64_t</tt> and a signed
 comparison is performed.</li>
+
+<li><b>Comparisons for equality/inequality</b> never raise an error.
+Even incompatible pointers can be compared for equality by address. Any
+other incompatible comparison (also with non-cdata objects) treats the
+two sides as unequal.</li>
 
 </ul>
 
@@ -1105,7 +1130,7 @@ suboptimal performance, especially when used in inner loops:
 <li>Table initializers.</li>
 <li>Initialization of nested <tt>struct</tt>/<tt>union</tt> types.</li>
 <li>Allocations of variable-length arrays or structs.</li>
-<li>Allocations of C&nbsp;types with a size &gt; 64&nbsp;bytes or an
+<li>Allocations of C&nbsp;types with a size &gt; 128&nbsp;bytes or an
 alignment &gt; 8&nbsp;bytes.</li>
 <li>Conversions from lightuserdata to <tt>void&nbsp;*</tt>.</li>
 <li>Pointer differences for element sizes that are not a power of

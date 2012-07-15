@@ -264,7 +264,7 @@ enum {
 /* C data object. Payload follows. */
 typedef struct GCcdata {
   GCHeader;
-  uint16_t typeid;	/* C type ID. */
+  uint16_t ctypeid;	/* C type ID. */
 } GCcdata;
 
 /* Prepended to variable-sized or realigned C data objects. */
@@ -437,6 +437,12 @@ enum {
 #define setvmstate(g, st)	((g)->vmstate = ~LJ_VMST_##st)
 
 /* Metamethods. ORDER MM */
+#ifdef LJ_HASFFI
+#define MMDEF_FFI(_) _(new)
+#else
+#define MMDEF_FFI(_)
+#endif
+
 #ifdef LUAJIT_ENABLE_LUA52COMPAT
 #define MMDEF_52(_) _(pairs) _(ipairs)
 #else
@@ -450,7 +456,7 @@ enum {
   /* The following must be in ORDER ARITH. */ \
   _(add) _(sub) _(mul) _(div) _(mod) _(pow) _(unm) \
   /* The following are used in the standard libraries. */ \
-  _(metatable) _(tostring) MMDEF_52(_)
+  _(metatable) _(tostring) MMDEF_FFI(_) MMDEF_52(_)
 
 typedef enum {
 #define MMENUM(name)	MM_##name,
@@ -836,7 +842,7 @@ static LJ_AINLINE lua_Number numberVnum(cTValue *o)
 LJ_DATA const char *const lj_obj_typename[1+LUA_TCDATA+1];
 LJ_DATA const char *const lj_obj_itypename[~LJ_TNUMX+1];
 
-#define typename(o)	(lj_obj_itypename[itypemap(o)])
+#define lj_typename(o)	(lj_obj_itypename[itypemap(o)])
 
 /* Compare two objects without calling metamethods. */
 LJ_FUNC int lj_obj_equal(cTValue *o1, cTValue *o2);

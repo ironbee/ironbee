@@ -121,6 +121,7 @@ LJ_NORET static void cp_errmsg(CPState *cp, CPToken tok, ErrMsg em, ...)
     tokstr = NULL;
   } else if (tok == CTOK_IDENT || tok == CTOK_INTEGER || tok == CTOK_STRING ||
 	     tok >= CTOK_FIRSTDECL) {
+    if (cp->sb.n == 0) cp_save(cp, '$');
     cp_save(cp, '\0');
     tokstr = cp->sb.buf;
   } else {
@@ -201,6 +202,38 @@ static CPToken cp_ident(CPState *cp)
   if (ctype_type(cp->ct->info) == CT_KW)
     return ctype_cid(cp->ct->info);
   return CTOK_IDENT;
+}
+
+/* Parse parameter. */
+static CPToken cp_param(CPState *cp)
+{
+  CPChar c = cp_get(cp);
+  TValue *o = cp->param;
+  if (lj_char_isident(c) || c == '$')  /* Reserve $xyz for future extensions. */
+    cp_errmsg(cp, c, LJ_ERR_XSYNTAX);
+  if (!o || o >= cp->L->top)
+    cp_err(cp, LJ_ERR_FFI_NUMPARAM);
+  cp->param = o+1;
+  if (tvisstr(o)) {
+    cp->str = strV(o);
+    cp->val.id = 0;
+    cp->ct = &cp->cts->tab[0];
+    return CTOK_IDENT;
+  } else if (tvisnumber(o)) {
+    cp->val.i32 = numberVint(o);
+    cp->val.id = CTID_INT32;
+    return CTOK_INTEGER;
+  } else {
+    GCcdata *cd;
+    if (!tviscdata(o))
+      lj_err_argtype(cp->L, (int)(o-cp->L->base)+1, "type parameter");
+    cd = cdataV(o);
+    if (cd->ctypeid == CTID_CTYPEID)
+      cp->val.id = *(CTypeID *)cdataptr(cd);
+    else
+      cp->val.id = cd->ctypeid;
+    return '$';
+  }
 }
 
 /* Parse string or character constant. */
@@ -317,6 +350,8 @@ static CPToken cp_next_(CPState *cp)
       return '>';
     case '-':
       cp_get(cp); if (cp->c != '>') return '-'; cp_get(cp); return CTOK_DEREF;
+    case '$':
+      return cp_param(cp);
     case '\0': return CTOK_EOF;
     default: { CPToken c = cp->c; cp_get(cp); return c; }
     }
@@ -403,6 +438,7 @@ static int cp_istypedecl(CPState *cp)
 {
   if (cp->tok >= CTOK_FIRSTDECL && cp->tok <= CTOK_LASTDECL) return 1;
   if (cp->tok == CTOK_IDENT && ctype_istypedef(cp->ct->info)) return 1;
+  if (cp->tok == '$') return 1;
   return 0;
 }
 
@@ -935,16 +971,16 @@ static void cp_decl_reset(CPDecl *decl)
 
 /* Parse constant initializer. */
 /* NYI: FP constants and strings as initializers. */
-static CTypeID cp_decl_constinit(CPState *cp, CType **ctp, CTypeID typeid)
+static CTypeID cp_decl_constinit(CPState *cp, CType **ctp, CTypeID ctypeid)
 {
-  CType *ctt = ctype_get(cp->cts, typeid);
+  CType *ctt = ctype_get(cp->cts, ctypeid);
   CTInfo info;
   CTSize size;
   CPValue k;
   CTypeID constid;
   while (ctype_isattrib(ctt->info)) {  /* Skip attributes. */
-    typeid = ctype_cid(ctt->info);  /* Update ID, too. */
-    ctt = ctype_get(cp->cts, typeid);
+    ctypeid = ctype_cid(ctt->info);  /* Update ID, too. */
+    ctt = ctype_get(cp->cts, ctypeid);
   }
   info = ctt->info;
   size = ctt->size;
@@ -953,7 +989,7 @@ static CTypeID cp_decl_constinit(CPState *cp, CType **ctp, CTypeID typeid)
   cp_check(cp, '=');
   cp_expr_sub(cp, &k, 0);
   constid = lj_ctype_new(cp->cts, ctp);
-  (*ctp)->info = CTINFO(CT_CONSTVAL, CTF_CONST|typeid);
+  (*ctp)->info = CTINFO(CT_CONSTVAL, CTF_CONST|ctypeid);
   k.u32 <<= 8*(4-size);
   if ((info & CTF_UNSIGNED))
     k.u32 >>= 8*(4-size);
@@ -1317,18 +1353,18 @@ static CTypeID cp_decl_struct(CPState *cp, CPDecl *sdecl, CTInfo sinfo)
 	CPARSE_MODE_DIRECT|CPARSE_MODE_ABSTRACT|CPARSE_MODE_FIELD;
 
       for (;;) {
-	CTypeID typeid;
+	CTypeID ctypeid;
 
 	if (lastdecl) cp_err_token(cp, '}');
 
 	/* Parse field declarator. */
 	decl.bits = CTSIZE_INVALID;
 	cp_declarator(cp, &decl);
-	typeid = cp_decl_intern(cp, &decl);
+	ctypeid = cp_decl_intern(cp, &decl);
 
 	if ((scl & CDF_STATIC)) {  /* Static constant in struct namespace. */
 	  CType *ct;
-	  CTypeID fieldid = cp_decl_constinit(cp, &ct, typeid);
+	  CTypeID fieldid = cp_decl_constinit(cp, &ct, ctypeid);
 	  ctype_get(cp->cts, lastid)->sib = fieldid;
 	  lastid = fieldid;
 	  ctype_setname(ct, decl.name);
@@ -1336,7 +1372,7 @@ static CTypeID cp_decl_struct(CPState *cp, CPDecl *sdecl, CTInfo sinfo)
 	  CTSize bsz = CTBSZ_FIELD;  /* Temp. for layout phase. */
 	  CType *ct;
 	  CTypeID fieldid = lj_ctype_new(cp->cts, &ct);  /* Do this first. */
-	  CType *tct = ctype_raw(cp->cts, typeid);
+	  CType *tct = ctype_raw(cp->cts, ctypeid);
 
 	  if (decl.bits == CTSIZE_INVALID) {  /* Regular field. */
 	    if (ctype_isarray(tct->info) && tct->size == CTSIZE_INVALID)
@@ -1347,7 +1383,7 @@ static CTypeID cp_decl_struct(CPState *cp, CPDecl *sdecl, CTInfo sinfo)
 	      if (!((ctype_isstruct(tct->info) && !(tct->info & CTF_VLA)) ||
 		    ctype_isenum(tct->info)))
 		cp_err_token(cp, CTOK_IDENT);
-	      ct->info = CTINFO(CT_ATTRIB, CTATTRIB(CTA_SUBTYPE) + typeid);
+	      ct->info = CTINFO(CT_ATTRIB, CTATTRIB(CTA_SUBTYPE) + ctypeid);
 	      ct->size = ctype_isstruct(tct->info) ?
 			 (decl.attr|0x80000000u) : 0;  /* For layout phase. */
 	      goto add_field;
@@ -1361,7 +1397,7 @@ static CTypeID cp_decl_struct(CPState *cp, CPDecl *sdecl, CTInfo sinfo)
 	  }
 
 	  /* Create temporary field for layout phase. */
-	  ct->info = CTINFO(CT_FIELD, typeid + (bsz << CTSHIFT_BITCSZ));
+	  ct->info = CTINFO(CT_FIELD, ctypeid + (bsz << CTSHIFT_BITCSZ));
 	  ct->size = decl.attr;
 	  if (decl.name) ctype_setname(ct, decl.name);
 
@@ -1441,7 +1477,7 @@ static CTypeID cp_decl_enum(CPState *cp, CPDecl *sdecl)
 static CPscl cp_decl_spec(CPState *cp, CPDecl *decl, CPscl scl)
 {
   uint32_t cds = 0, sz = 0;
-  CTInfo tdef = 0;
+  CTypeID tdef = 0;
 
   decl->cp = cp;
   decl->mode = cp->mode;
@@ -1469,6 +1505,10 @@ static CPscl cp_decl_spec(CPState *cp, CPDecl *decl, CPscl scl)
 	  (cds & (CDF_SHORT|CDF_LONG|CDF_SIGNED|CDF_UNSIGNED|CDF_COMPLEX)))
 	goto end_decl;
       tdef = ctype_cid(cp->ct->info);  /* Get typedef. */
+      cp_next(cp);
+      break;
+    case '$':
+      tdef = cp->val.id;
       cp_next(cp);
       break;
     default:
@@ -1502,8 +1542,13 @@ end_decl:
     /* Determine type info and size. */
     CTInfo info = CTINFO(CT_NUM, (cds & CDF_UNSIGNED) ? CTF_UNSIGNED : 0);
     if ((cds & CDF_BOOL)) {
-      info = CTINFO(CT_NUM, CTF_UNSIGNED|CTF_BOOL);
-      lua_assert(sz == 1);
+      if ((cds & ~(CDF_SCL|CDF_BOOL|CDF_INT|CDF_SIGNED|CDF_UNSIGNED)))
+	cp_errmsg(cp, 0, LJ_ERR_FFI_INVTYPE);
+      info |= CTF_BOOL;
+      if (!sz) {
+	if (!(cds & CDF_SIGNED)) info |= CTF_UNSIGNED;
+	sz = 1;
+      }
     } else if ((cds & CDF_FP)) {
       info = CTINFO(CT_NUM, CTF_FP);
       if ((cds & CDF_LONG)) sz = sizeof(long double);
@@ -1557,7 +1602,7 @@ static void cp_decl_func(CPState *cp, CPDecl *fdecl)
   if (cp->tok != ')') {
     do {
       CPDecl decl;
-      CTypeID typeid, fieldid;
+      CTypeID ctypeid, fieldid;
       CType *ct;
       if (cp_opt(cp, '.')) {  /* Vararg function. */
 	cp_check(cp, '.');  /* Workaround for the minimalistic lexer. */
@@ -1568,16 +1613,16 @@ static void cp_decl_func(CPState *cp, CPDecl *fdecl)
       cp_decl_spec(cp, &decl, CDF_REGISTER);
       decl.mode = CPARSE_MODE_DIRECT|CPARSE_MODE_ABSTRACT;
       cp_declarator(cp, &decl);
-      typeid = cp_decl_intern(cp, &decl);
-      ct = ctype_raw(cp->cts, typeid);
+      ctypeid = cp_decl_intern(cp, &decl);
+      ct = ctype_raw(cp->cts, ctypeid);
       if (ctype_isvoid(ct->info))
 	break;
       else if (ctype_isrefarray(ct->info))
-	typeid = lj_ctype_intern(cp->cts,
+	ctypeid = lj_ctype_intern(cp->cts,
 	  CTINFO(CT_PTR, CTALIGN_PTR|ctype_cid(ct->info)), CTSIZE_PTR);
       else if (ctype_isfunc(ct->info))
-	typeid = lj_ctype_intern(cp->cts,
-	  CTINFO(CT_PTR, CTALIGN_PTR|typeid), CTSIZE_PTR);
+	ctypeid = lj_ctype_intern(cp->cts,
+	  CTINFO(CT_PTR, CTALIGN_PTR|ctypeid), CTSIZE_PTR);
       /* Add new parameter. */
       fieldid = lj_ctype_new(cp->cts, &ct);
       if (anchor)
@@ -1586,7 +1631,7 @@ static void cp_decl_func(CPState *cp, CPDecl *fdecl)
 	anchor = fieldid;
       lastid = fieldid;
       if (decl.name) ctype_setname(ct, decl.name);
-      ct->info = CTINFO(CT_FIELD, typeid);
+      ct->info = CTINFO(CT_FIELD, ctypeid);
       ct->size = nargs++;
     } while (cp_opt(cp, ','));
   }
@@ -1750,28 +1795,28 @@ static void cp_decl_multi(CPState *cp)
 	goto decl_end;  /* Accept empty declaration of struct/union/enum. */
     }
     for (;;) {
-      CTypeID typeid;
+      CTypeID ctypeid;
       cp_declarator(cp, &decl);
-      typeid = cp_decl_intern(cp, &decl);
+      ctypeid = cp_decl_intern(cp, &decl);
       if (decl.name && !decl.nameid) {  /* NYI: redeclarations are ignored. */
 	CType *ct;
 	CTypeID id;
 	if ((scl & CDF_TYPEDEF)) {  /* Create new typedef. */
 	  id = lj_ctype_new(cp->cts, &ct);
-	  ct->info = CTINFO(CT_TYPEDEF, typeid);
+	  ct->info = CTINFO(CT_TYPEDEF, ctypeid);
 	  goto noredir;
-	} else if (ctype_isfunc(ctype_get(cp->cts, typeid)->info)) {
+	} else if (ctype_isfunc(ctype_get(cp->cts, ctypeid)->info)) {
 	  /* Treat both static and extern function declarations as extern. */
-	  ct = ctype_get(cp->cts, typeid);
+	  ct = ctype_get(cp->cts, ctypeid);
 	  /* We always get new anonymous functions (typedefs are copied). */
 	  lua_assert(gcref(ct->name) == NULL);
-	  id = typeid;  /* Just name it. */
+	  id = ctypeid;  /* Just name it. */
 	} else if ((scl & CDF_STATIC)) {  /* Accept static constants. */
-	  id = cp_decl_constinit(cp, &ct, typeid);
+	  id = cp_decl_constinit(cp, &ct, ctypeid);
 	  goto noredir;
 	} else {  /* External references have extern or no storage class. */
 	  id = lj_ctype_new(cp->cts, &ct);
-	  ct->info = CTINFO(CT_EXTERN, typeid);
+	  ct->info = CTINFO(CT_EXTERN, ctypeid);
 	}
 	if (decl.redir) {  /* Add attribute for redirected symbol name. */
 	  CType *cta;
@@ -1821,6 +1866,8 @@ static TValue *cpcparser(lua_State *L, lua_CFunction dummy, void *ud)
     cp_decl_multi(cp);
   else
     cp_decl_single(cp);
+  if (cp->param && cp->param != cp->L->top)
+    cp_err(cp, LJ_ERR_FFI_NUMPARAM);
   lua_assert(cp->depth == 0);
   return NULL;
 }

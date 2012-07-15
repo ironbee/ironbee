@@ -35,7 +35,7 @@ static int carith_checkarg(lua_State *L, CTState *cts, CDArith *ca)
   for (i = 0; i < 2; i++, o++) {
     if (tviscdata(o)) {
       GCcdata *cd = cdataV(o);
-      CTypeID id = (CTypeID)cd->typeid;
+      CTypeID id = (CTypeID)cd->ctypeid;
       CType *ct = ctype_raw(cts, id);
       uint8_t *p = (uint8_t *)cdataptr(cd);
       if (ctype_isptr(ct->info)) {
@@ -199,17 +199,21 @@ static int lj_carith_meta(lua_State *L, CTState *cts, CDArith *ca, MMS mm)
 {
   cTValue *tv = NULL;
   if (tviscdata(L->base))
-    tv = lj_ctype_meta(cts, cdataV(L->base)->typeid, mm);
+    tv = lj_ctype_meta(cts, cdataV(L->base)->ctypeid, mm);
   if (!tv && L->base+1 < L->top && tviscdata(L->base+1))
-    tv = lj_ctype_meta(cts, cdataV(L->base+1)->typeid, mm);
+    tv = lj_ctype_meta(cts, cdataV(L->base+1)->ctypeid, mm);
   if (!tv) {
     const char *repr[2];
     int i;
+    if (mm == MM_eq) {  /* Equality checks never raise an error. */
+      setboolV(L->top-1, 0);
+      return 1;
+    }
     for (i = 0; i < 2; i++) {
       if (ca->ct[i])
 	repr[i] = strdata(lj_ctype_repr(L, ctype_typeid(cts, ca->ct[i]), NULL));
       else
-	repr[i] = typename(&L->base[i]);
+	repr[i] = lj_typename(&L->base[i]);
     }
     lj_err_callerv(L, mm == MM_len ? LJ_ERR_FFI_BADLEN :
 		      mm == MM_concat ? LJ_ERR_FFI_BADCONCAT :

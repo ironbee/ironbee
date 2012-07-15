@@ -16,11 +16,10 @@
 MAJVER=  2
 MINVER=  0
 RELVER=  0
-PREREL=  -beta9
+PREREL=  -beta10
 EXNAME=  -ironbee
 VERSION= $(MAJVER).$(MINVER).$(RELVER)$(PREREL)$(EXNAME)
 ABIVER=  5.1
-NODOTABIVER=  51
 
 ##############################################################################
 #
@@ -36,9 +35,12 @@ INSTALL_LIB=   $(DPREFIX)/lib
 INSTALL_SHARE= $(DPREFIX)/share
 INSTALL_INC=   $(DPREFIX)/include/luajit$(EXNAME)-$(MAJVER).$(MINVER)
 
-INSTALL_JITLIB= $(INSTALL_SHARE)/luajit$(EXNAME)-$(VERSION)/jit
-INSTALL_LMOD= $(INSTALL_SHARE)/lua/$(ABIVER)
-INSTALL_CMOD= $(INSTALL_LIB)/lua/$(ABIVER)
+INSTALL_LJLIBD= $(INSTALL_SHARE)/luajit$(EXNAME)-$(VERSION)
+INSTALL_JITLIB= $(INSTALL_LJLIBD)/jit
+INSTALL_LMODD= $(INSTALL_SHARE)/lua
+INSTALL_LMOD= $(INSTALL_LMODD)/$(ABIVER)
+INSTALL_CMODD= $(INSTALL_LIB)/lua
+INSTALL_CMOD= $(INSTALL_CMODD)/$(ABIVER)
 INSTALL_MAN= $(INSTALL_SHARE)/man/man1
 INSTALL_PKGCONFIG= $(INSTALL_LIB)/pkgconfig
 
@@ -48,8 +50,8 @@ INSTALL_ANAME= libluajit$(EXNAME)-$(ABIVER).a
 INSTALL_SONAME= libluajit$(EXNAME)-$(ABIVER).so.$(MAJVER).$(MINVER).$(RELVER)
 INSTALL_SOSHORT= libluajit$(EXNAME)-$(ABIVER).so
 INSTALL_DYLIBNAME= libluajit$(EXNAME)-$(NODOTABIVER).$(MAJVER).$(MINVER).$(RELVER).dylib
-INSTALL_DYLIBSHORT1= libluajit$(EXNAME)-$(NODOTABIVER).dylib
-INSTALL_DYLIBSHORT2= libluajit$(EXNAME)-$(NODOTABIVER).$(MAJVER).dylib
+INSTALL_DYLIBSHORT1= libluajit$(EXNAME)-$(ABIVER).dylib
+INSTALL_DYLIBSHORT2= libluajit$(EXNAME)-$(ABIVER).$(MAJVER).dylib
 INSTALL_PCNAME= luajit$(EXNAME).pc
 
 INSTALL_STATIC= $(INSTALL_LIB)/$(INSTALL_ANAME)
@@ -62,12 +64,16 @@ INSTALL_PC= $(INSTALL_PKGCONFIG)/$(INSTALL_PCNAME)
 
 INSTALL_DIRS= $(INSTALL_BIN) $(INSTALL_LIB) $(INSTALL_INC) $(INSTALL_MAN) \
   $(INSTALL_PKGCONFIG) $(INSTALL_JITLIB) $(INSTALL_LMOD) $(INSTALL_CMOD)
+UNINSTALL_DIRS= $(INSTALL_JITLIB) $(INSTALL_LJLIBD) $(INSTALL_INC) \
+  $(INSTALL_LMOD) $(INSTALL_LMODD) $(INSTALL_CMOD) $(INSTALL_CMODD)
 
 RM= rm -f
 MKDIR= mkdir -p
+RMDIR= rmdir 2>/dev/null
 SYMLINK= ln -sf
 INSTALL_X= install -m 0755
 INSTALL_F= install -m 0644
+UNINSTALL= $(RM)
 LDCONFIG= ldconfig -n
 SED_PC= sed -e "s|^prefix=.*|prefix=$(PREFIX)|"
 
@@ -76,7 +82,7 @@ FILE_A= libluajit$(EXNAME).a
 FILE_SO= libluajit$(EXNAME).so
 FILE_MAN= luajit$(EXNAME).1
 FILE_PC= luajit$(EXNAME).pc
-FILES_INC= lua.h lualib.h lauxlib.h luaconf.h lua.hpp luajit$(EXNAME).h
+FILES_INC= lua.h lualib.h lauxlib.h luaconf.h lua.hpp luajit.h
 FILES_JITLIB= bc.lua v.lua dump.lua dis_x86.lua dis_x64.lua dis_arm.lua \
 	      dis_ppc.lua dis_mips.lua dis_mipsel.lua bcsave.lua vmdef.lua
 
@@ -114,14 +120,27 @@ install: $(INSTALL_DEP)
 	  $(INSTALL_F) $(FILE_PC).tmp $(INSTALL_PC) && \
 	  $(RM) $(FILE_PC).tmp
 	cd src && $(INSTALL_F) $(FILES_INC) $(INSTALL_INC)
-	cd lib && $(INSTALL_F) $(FILES_JITLIB) $(INSTALL_JITLIB)
-	@echo "==== Successfully installed luajit$(EXNAME) $(VERSION) to $(PREFIX) ===="
+	@echo "==== Successfully installed LuaJIT$(EXNAME) $(VERSION) to $(PREFIX) ===="
 	@echo ""
 	@echo "Note: the beta releases deliberately do NOT install a symlink for luajit$(EXNAME)"
 	@echo "You can do this now by running this command (with sudo):"
 	@echo ""
 	@echo "  $(SYMLINK) $(INSTALL_TNAME) $(INSTALL_TSYM)"
 	@echo ""
+
+uninstall:
+	@echo "==== Uninstalling LuaJIT $(VERSION) from $(PREFIX) ===="
+	$(UNINSTALL) $(INSTALL_T) $(INSTALL_STATIC) $(INSTALL_DYN) $(INSTALL_SHORT1) $(INSTALL_SHORT2) $(INSTALL_MAN)/$(FILE_MAN) $(INSTALL_PC)
+	for file in $(FILES_JITLIB); do \
+	  $(UNINSTALL) $(INSTALL_JITLIB)/$$file; \
+	  done
+	for file in $(FILES_INC); do \
+	  $(UNINSTALL) $(INSTALL_INC)/$$file; \
+	  done
+	$(LDCONFIG) $(INSTALL_LIB)
+	test -f $(INSTALL_TSYM) || $(UNINSTALL) $(INSTALL_TSYM)
+	$(RMDIR) $(UNINSTALL_DIRS) || :
+	@echo "==== Successfully uninstalled LuaJIT $(VERSION) from $(PREFIX) ===="
 
 ##############################################################################
 
@@ -135,9 +154,6 @@ clean:
 cleaner:
 	$(MAKE) -C src cleaner
 
-distclean:
-	$(MAKE) -C src distclean
-
-.PHONY: all install amalg clean cleaner distclean
+.PHONY: all install amalg clean cleaner
 
 ##############################################################################
