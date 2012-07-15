@@ -206,17 +206,19 @@ static IRRef asm_fuselsl2(ASMState *as, IRRef ref)
 
 /* Fuse XLOAD/XSTORE reference into load/store operand. */
 static void asm_fusexref(ASMState *as, ARMIns ai, Reg rd, IRRef ref,
-			 RegSet allow)
+			 RegSet allow, int32_t ofs)
 {
   IRIns *ir = IR(ref);
-  int32_t ofs = 0;
   Reg base;
   if (ra_noreg(ir->r) && mayfuse(as, ref)) {
     int32_t lim = (ai & 0x04000000) ? 4096 : 256;
     if (ir->o == IR_ADD) {
-      if (irref_isk(ir->op2) && (ofs = IR(ir->op2)->i) > -lim && ofs < lim) {
+      int32_t ofs2;
+      if (irref_isk(ir->op2) &&
+	  (ofs2 = ofs + IR(ir->op2)->i) > -lim && ofs2 < lim) {
+	ofs = ofs2;
 	ref = ir->op1;
-      } else {
+      } else if (ofs == 0) {
 	IRRef lref = ir->op1, rref = ir->op2;
 	Reg rn, rm;
 	if ((ai & 0x04000000)) {
@@ -237,6 +239,7 @@ static void asm_fusexref(ASMState *as, ARMIns ai, Reg rd, IRRef ref,
 	return;
       }
     } else if (ir->o == IR_STRREF) {
+      lua_assert(ofs == 0);
       ofs = (int32_t)sizeof(GCstr);
       if (irref_isk(ir->op2)) {
 	ofs += IR(ir->op2)->i;
@@ -584,8 +587,8 @@ static void asm_href(ASMState *as, IRIns *ir, IROp merge)
   else
     emit_branch(as, ARMF_CC(ARMI_B, CC_EQ), l_end);
   if (!irt_ispri(kt)) {
-    emit_nm(as, ARMF_CC(ARMI_CMP, CC_EQ)^khi, tmp+1, keyhi);
-    emit_nm(as, ARMI_CMP^k, tmp, key);
+    emit_nm(as, ARMF_CC(ARMI_CMP, CC_EQ)^k, tmp, key);
+    emit_nm(as, ARMI_CMP^khi, tmp+1, keyhi);
     emit_lsox(as, ARMI_LDRD, tmp, dest, (int32_t)offsetof(Node, key));
   } else {
     emit_n(as, ARMI_CMP^khi, tmp);
@@ -656,7 +659,8 @@ static void asm_hrefk(ASMState *as, IRIns *ir)
   }
   asm_guardcc(as, CC_NE);
   if (!irt_ispri(irkey->t)) {
-    RegSet even = (as->freeset & (as->freeset >> 1) & allow & RSET_GPREVEN);
+    RegSet even = (as->freeset & allow);
+    even = even & (even >> 1) & RSET_GPREVEN;
     if (even) {
       key = ra_scratch(as, even);
       if (rset_test(as->freeset, key+1)) {
@@ -674,10 +678,9 @@ static void asm_hrefk(ASMState *as, IRIns *ir)
 	     (int32_t)ir_knum(irkey)->u32.hi, allow);
     emit_opk(as, ARMI_CMP, 0, key,
 	     (int32_t)ir_knum(irkey)->u32.lo, allow);
-  } else if (ra_hasreg(key)) {
-    emit_n(as, ARMF_CC(ARMI_CMN, CC_EQ)|ARMI_K12|-irt_toitype(irkey->t), type);
-    emit_opk(as, ARMI_CMP, 0, key, irkey->i, allow);
   } else {
+    if (ra_hasreg(key))
+      emit_opk(as, ARMF_CC(ARMI_CMP, CC_EQ), 0, key, irkey->i, allow);
     emit_n(as, ARMI_CMN|ARMI_K12|-irt_toitype(irkey->t), type);
   }
   emit_lso(as, ARMI_LDR, type, idx, kofs+4);
@@ -690,6 +693,8 @@ static void asm_newref(ASMState *as, IRIns *ir)
 {
   const CCallInfo *ci = &lj_ir_callinfo[IRCALL_lj_tab_newkey];
   IRRef args[3];
+  if (ir->r == RID_SINK)
+    return;
   args[0] = ASMREF_L;     /* lua_State *L */
   args[1] = ir->op1;      /* GCtab *t     */
   args[2] = ASMREF_TMP1;  /* cTValue *key */
@@ -809,29 +814,33 @@ static void asm_fload(ASMState *as, IRIns *ir)
 
 static void asm_fstore(ASMState *as, IRIns *ir)
 {
-  Reg src = ra_alloc1(as, ir->op2, RSET_GPR);
-  IRIns *irf = IR(ir->op1);
-  Reg idx = ra_alloc1(as, irf->op1, rset_exclude(RSET_GPR, src));
-  int32_t ofs = field_ofs[irf->op2];
-  ARMIns ai = asm_fxstoreins(ir);
-  if ((ai & 0x04000000))
-    emit_lso(as, ai, src, idx, ofs);
-  else
-    emit_lsox(as, ai, src, idx, ofs);
+  if (ir->r != RID_SINK) {
+    Reg src = ra_alloc1(as, ir->op2, RSET_GPR);
+    IRIns *irf = IR(ir->op1);
+    Reg idx = ra_alloc1(as, irf->op1, rset_exclude(RSET_GPR, src));
+    int32_t ofs = field_ofs[irf->op2];
+    ARMIns ai = asm_fxstoreins(ir);
+    if ((ai & 0x04000000))
+      emit_lso(as, ai, src, idx, ofs);
+    else
+      emit_lsox(as, ai, src, idx, ofs);
+  }
 }
 
 static void asm_xload(ASMState *as, IRIns *ir)
 {
   Reg dest = ra_dest(as, ir, RSET_GPR);
   lua_assert(!(ir->op2 & IRXLOAD_UNALIGNED));
-  asm_fusexref(as, asm_fxloadins(ir), dest, ir->op1, RSET_GPR);
+  asm_fusexref(as, asm_fxloadins(ir), dest, ir->op1, RSET_GPR, 0);
 }
 
-static void asm_xstore(ASMState *as, IRIns *ir)
+static void asm_xstore(ASMState *as, IRIns *ir, int32_t ofs)
 {
-  Reg src = ra_alloc1(as, ir->op2, RSET_GPR);
-  asm_fusexref(as, asm_fxstoreins(ir), src, ir->op1,
-	       rset_exclude(RSET_GPR, src));
+  if (ir->r != RID_SINK) {
+    Reg src = ra_alloc1(as, ir->op2, RSET_GPR);
+    asm_fusexref(as, asm_fxstoreins(ir), src, ir->op1,
+		 rset_exclude(RSET_GPR, src), ofs);
+  }
 }
 
 static void asm_ahuvload(ASMState *as, IRIns *ir)
@@ -869,21 +878,23 @@ static void asm_ahuvload(ASMState *as, IRIns *ir)
 
 static void asm_ahustore(ASMState *as, IRIns *ir)
 {
-  RegSet allow = RSET_GPR;
-  Reg idx, src = RID_NONE, type = RID_NONE;
-  int32_t ofs = 0;
-  int hiop = ((ir+1)->o == IR_HIOP);
-  if (!irt_ispri(ir->t)) {
-    src = ra_alloc1(as, ir->op2, allow);
-    rset_clear(allow, src);
+  if (ir->r != RID_SINK) {
+    RegSet allow = RSET_GPR;
+    Reg idx, src = RID_NONE, type = RID_NONE;
+    int32_t ofs = 0;
+    int hiop = ((ir+1)->o == IR_HIOP);
+    if (!irt_ispri(ir->t)) {
+      src = ra_alloc1(as, ir->op2, allow);
+      rset_clear(allow, src);
+    }
+    if (hiop)
+      type = ra_alloc1(as, (ir+1)->op2, allow);
+    else
+      type = ra_allock(as, (int32_t)irt_toitype(ir->t), allow);
+    idx = asm_fuseahuref(as, ir->op1, &ofs, rset_exclude(allow, type));
+    if (ra_hasreg(src)) emit_lso(as, ARMI_STR, src, idx, ofs);
+    emit_lso(as, ARMI_STR, type, idx, ofs+4);
   }
-  if (hiop)
-    type = ra_alloc1(as, (ir+1)->op2, allow);
-  else
-    type = ra_allock(as, (int32_t)irt_toitype(ir->t), allow);
-  idx = asm_fuseahuref(as, ir->op1, &ofs, rset_exclude(allow, type));
-  if (ra_hasreg(src)) emit_lso(as, ARMI_STR, src, idx, ofs);
-  emit_lso(as, ARMI_STR, type, idx, ofs+4);
 }
 
 static void asm_sload(ASMState *as, IRIns *ir)
@@ -930,9 +941,9 @@ static void asm_sload(ASMState *as, IRIns *ir)
 static void asm_cnew(ASMState *as, IRIns *ir)
 {
   CTState *cts = ctype_ctsG(J2G(as->J));
-  CTypeID typeid = (CTypeID)IR(ir->op1)->i;
+  CTypeID ctypeid = (CTypeID)IR(ir->op1)->i;
   CTSize sz = (ir->o == IR_CNEWI || ir->op2 == REF_NIL) ?
-	      lj_ctype_size(cts, typeid) : (CTSize)IR(ir->op2)->i;
+	      lj_ctype_size(cts, ctypeid) : (CTSize)IR(ir->op2)->i;
   const CCallInfo *ci = &lj_ir_callinfo[IRCALL_lj_mem_newgco];
   IRRef args[2];
   RegSet allow = (RSET_GPR & ~RSET_SCRATCH);
@@ -965,12 +976,12 @@ static void asm_cnew(ASMState *as, IRIns *ir)
       ofs -= 4; ir--;
     }
   }
-  /* Initialize gct and typeid. lj_mem_newgco() already sets marked. */
+  /* Initialize gct and ctypeid. lj_mem_newgco() already sets marked. */
   {
-    uint32_t k = emit_isk12(ARMI_MOV, typeid);
-    Reg r = k ? RID_R1 : ra_allock(as, typeid, allow);
+    uint32_t k = emit_isk12(ARMI_MOV, ctypeid);
+    Reg r = k ? RID_R1 : ra_allock(as, ctypeid, allow);
     emit_lso(as, ARMI_STRB, RID_TMP, RID_RET, offsetof(GCcdata, gct));
-    emit_lsox(as, ARMI_STRH, r, RID_RET, offsetof(GCcdata, typeid));
+    emit_lsox(as, ARMI_STRH, r, RID_RET, offsetof(GCcdata, ctypeid));
     emit_d(as, ARMI_MOV|ARMI_K12|~LJ_TCDATA, RID_TMP);
     if (k) emit_d(as, ARMI_MOV^k, RID_R1);
   }
@@ -1017,8 +1028,8 @@ static void asm_obar(ASMState *as, IRIns *ir)
   args[0] = ASMREF_TMP1;  /* global_State *g */
   args[1] = ir->op1;      /* TValue *tv      */
   asm_gencall(as, ci, args);
-  if ((*as->mcp >> 28) == CC_AL)
-    *as->mcp = ARMF_CC(*as->mcp, CC_NE);
+  if ((l_end[-1] >> 28) == CC_AL)
+    l_end[-1] = ARMF_CC(l_end[-1], CC_NE);
   else
     emit_branch(as, ARMF_CC(ARMI_B, CC_EQ), l_end);
   ra_allockreg(as, i32ptr(J2G(as->J)), ra_releasetmp(as, ASMREF_TMP1));
@@ -1374,6 +1385,10 @@ static void asm_hiop(ASMState *as, IRIns *ir)
     if (uselo || usehi)
       asm_fpmin_max(as, ir-1, (ir-1)->o == IR_MIN ? CC_HI : CC_LO);
     return;
+  } else if ((ir-1)->o == IR_XSTORE) {
+    if ((ir-1)->r != RID_SINK)
+      asm_xstore(as, ir, 4);
+    return;
   }
   if (!usehi) return;  /* Skip unused hiword op for all remaining ops. */
   switch ((ir-1)->o) {
@@ -1522,7 +1537,7 @@ static void asm_gc_check(ASMState *as)
   asm_gencall(as, ci, args);
   tmp1 = ra_releasetmp(as, ASMREF_TMP1);
   tmp2 = ra_releasetmp(as, ASMREF_TMP2);
-  emit_loadi(as, tmp2, (int32_t)as->gcsteps);
+  emit_loadi(as, tmp2, as->gcsteps);
   /* Jump around GC step if GC total < GC threshold. */
   emit_branch(as, ARMF_CC(ARMI_B, CC_LS), l_end);
   emit_nm(as, ARMI_CMP, RID_TMP, tmp2);
@@ -1636,6 +1651,7 @@ static void asm_ir(ASMState *as, IRIns *ir)
   case IR_USE: ra_alloc1(as, ir->op1, RSET_GPR); break;
   case IR_PHI: asm_phi(as, ir); break;
   case IR_HIOP: asm_hiop(as, ir); break;
+  case IR_GCSTEP: asm_gcstep(as, ir); break;
 
   /* Guarded assertions. */
   case IR_EQ: case IR_NE:
@@ -1702,7 +1718,7 @@ static void asm_ir(ASMState *as, IRIns *ir)
 
   case IR_ASTORE: case IR_HSTORE: case IR_USTORE: asm_ahustore(as, ir); break;
   case IR_FSTORE: asm_fstore(as, ir); break;
-  case IR_XSTORE: asm_xstore(as, ir); break;
+  case IR_XSTORE: asm_xstore(as, ir, 0); break;
 
   /* Allocations. */
   case IR_SNEW: case IR_XSNEW: asm_snew(as, ir); break;

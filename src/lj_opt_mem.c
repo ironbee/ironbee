@@ -21,6 +21,7 @@
 /* Some local macros to save typing. Undef'd at the end. */
 #define IR(ref)		(&J->cur.ir[(ref)])
 #define fins		(&J->fold.ins)
+#define fleft		(&J->fold.left)
 #define fright		(&J->fold.right)
 
 /*
@@ -181,7 +182,8 @@ static TRef fwd_ahload(jit_State *J, IRRef xref)
       lua_assert(ir->o != IR_TNEW || irt_isnil(fins->t));
       if (irt_ispri(fins->t)) {
 	return TREF_PRI(irt_type(fins->t));
-      } else if (irt_isnum(fins->t) || irt_isstr(fins->t)) {
+      } else if (irt_isnum(fins->t) || (LJ_DUALNUM && irt_isint(fins->t)) ||
+		 irt_isstr(fins->t)) {
 	TValue keyv;
 	cTValue *tv;
 	IRIns *key = IR(xr->op2);
@@ -191,6 +193,8 @@ static TRef fwd_ahload(jit_State *J, IRRef xref)
 	lua_assert(itype2irt(tv) == irt_type(fins->t));
 	if (irt_isnum(fins->t))
 	  return lj_ir_knum_u64(J, tv->u64);
+	else if (LJ_DUALNUM && irt_isint(fins->t))
+	  return lj_ir_kint(J, intV(tv));
 	else
 	  return lj_ir_kstr(J, strV(tv));
       }
@@ -250,6 +254,30 @@ TRef LJ_FASTCALL lj_opt_fwd_hload(jit_State *J)
   if (ref)
     return ref;
   return EMITFOLD;
+}
+
+/* HREFK forwarding. */
+TRef LJ_FASTCALL lj_opt_fwd_hrefk(jit_State *J)
+{
+  IRRef tab = fleft->op1;
+  IRRef ref = J->chain[IR_NEWREF];
+  while (ref > tab) {
+    IRIns *newref = IR(ref);
+    if (tab == newref->op1) {
+      if (fright->op1 == newref->op2)
+	return ref;  /* Forward from NEWREF. */
+      else
+	goto docse;
+    } else if (aa_table(J, tab, newref->op1) != ALIAS_NO) {
+      goto docse;
+    }
+    ref = newref->prev;
+  }
+  /* No conflicting NEWREF: key location unchanged for HREFK of TDUP. */
+  if (IR(tab)->o == IR_TDUP)
+    fins->t.irt &= ~IRT_GUARD;  /* Drop HREFK guard. */
+docse:
+  return CSEFOLD;
 }
 
 /* Check whether HREF of TNEW/TDUP can be folded to niltv. */
@@ -869,6 +897,7 @@ int lj_opt_fwd_wasnonnil(jit_State *J, IROpT loadop, IRRef xref)
 
 #undef IR
 #undef fins
+#undef fleft
 #undef fright
 
 #endif

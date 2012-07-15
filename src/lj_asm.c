@@ -71,7 +71,7 @@ typedef struct ASMState {
   IRRef loopref;	/* Reference of LOOP instruction (or 0). */
 
   BCReg topslot;	/* Number of slots for stack check (unless 0). */
-  MSize gcsteps;	/* Accumulated number of GC steps (per section). */
+  int32_t gcsteps;	/* Accumulated number of GC steps (per section). */
 
   GCtrace *T;		/* Trace to assemble. */
   GCtrace *parent;	/* Parent trace (or NULL). */
@@ -87,10 +87,7 @@ typedef struct ASMState {
   int32_t krefk[RID_NUM_KREF];
 #endif
   IRRef1 phireg[RID_MAX];  /* PHI register references. */
-  uint16_t parentmap[LJ_MAX_JSLOTS];  /* Parent slot to RegSP map. */
-#if LJ_SOFTFP
-  uint16_t parentmaphi[LJ_MAX_JSLOTS];  /* Parent slot to hi RegSP map. */
-#endif
+  uint16_t parentmap[LJ_MAX_JSLOTS];  /* Parent instruction to RegSP map. */
 } ASMState;
 
 #define IR(ref)			(&as->ir[(ref)])
@@ -781,23 +778,65 @@ static int asm_snap_canremat(ASMState *as)
   return 0;
 }
 
+/* Check whether a sunk store corresponds to an allocation. */
+static int asm_sunk_store(ASMState *as, IRIns *ira, IRIns *irs)
+{
+  if (irs->s == 255) {
+    if (irs->o == IR_ASTORE || irs->o == IR_HSTORE ||
+	irs->o == IR_FSTORE || irs->o == IR_XSTORE) {
+      IRIns *irk = IR(irs->op1);
+      if (irk->o == IR_AREF || irk->o == IR_HREFK)
+	irk = IR(irk->op1);
+      return (IR(irk->op1) == ira);
+    }
+    return 0;
+  } else {
+    return (ira + irs->s == irs);  /* Quick check. */
+  }
+}
+
 /* Allocate register or spill slot for a ref that escapes to a snapshot. */
 static void asm_snap_alloc1(ASMState *as, IRRef ref)
 {
   IRIns *ir = IR(ref);
-  if (!ra_used(ir)) {
-    RegSet allow = (!LJ_SOFTFP && irt_isnum(ir->t)) ? RSET_FPR : RSET_GPR;
-    /* Get a weak register if we have a free one or can rematerialize. */
-    if ((as->freeset & allow) ||
-	(allow == RSET_FPR && asm_snap_canremat(as))) {
-      Reg r = ra_allocref(as, ref, allow);  /* Allocate a register. */
-      if (!irt_isphi(ir->t))
-	ra_weak(as, r);  /* But mark it as weakly referenced. */
-      checkmclim(as);
-      RA_DBGX((as, "snapreg   $f $r", ref, ir->r));
+  if (!irref_isk(ref) && (!(ra_used(ir) || ir->r == RID_SUNK))) {
+    if (ir->r == RID_SINK) {
+      ir->r = RID_SUNK;
+#if LJ_HASFFI
+      if (ir->o == IR_CNEWI) {  /* Allocate CNEWI value. */
+	asm_snap_alloc1(as, ir->op2);
+	if (LJ_32 && (ir+1)->o == IR_HIOP)
+	  asm_snap_alloc1(as, (ir+1)->op2);
+      }
+#endif
+      else {  /* Allocate stored values for TNEW, TDUP and CNEW. */
+	IRIns *irs;
+	lua_assert(ir->o == IR_TNEW || ir->o == IR_TDUP || ir->o == IR_CNEW);
+	for (irs = IR(as->snapref-1); irs > ir; irs--)
+	  if (irs->r == RID_SINK && asm_sunk_store(as, ir, irs)) {
+	    lua_assert(irs->o == IR_ASTORE || irs->o == IR_HSTORE ||
+		       irs->o == IR_FSTORE || irs->o == IR_XSTORE);
+	    asm_snap_alloc1(as, irs->op2);
+	    if (LJ_32 && (irs+1)->o == IR_HIOP)
+	      asm_snap_alloc1(as, (irs+1)->op2);
+	  }
+      }
+    } else if (ir->o == IR_CONV && ir->op2 == IRCONV_NUM_INT) {
+      asm_snap_alloc1(as, ir->op1);
     } else {
-      ra_spill(as, ir);  /* Otherwise force a spill slot. */
-      RA_DBGX((as, "snapspill $f $s", ref, ir->s));
+      RegSet allow = (!LJ_SOFTFP && irt_isfp(ir->t)) ? RSET_FPR : RSET_GPR;
+      if ((as->freeset & allow) ||
+	       (allow == RSET_FPR && asm_snap_canremat(as))) {
+	/* Get a weak register if we have a free one or can rematerialize. */
+	Reg r = ra_allocref(as, ref, allow);  /* Allocate a register. */
+	if (!irt_isphi(ir->t))
+	  ra_weak(as, r);  /* But mark it as weakly referenced. */
+	checkmclim(as);
+	RA_DBGX((as, "snapreg   $f $r", ref, ir->r));
+      } else {
+	ra_spill(as, ir);  /* Otherwise force a spill slot. */
+	RA_DBGX((as, "snapspill $f $s", ref, ir->s));
+      }
     }
   }
 }
@@ -851,7 +890,7 @@ static void asm_snap_prep(ASMState *as)
 {
   if (as->curins < as->snapref) {
     do {
-      lua_assert(as->snapno != 0);
+      if (as->snapno == 0) return;  /* Called by sunk stores before snap #0. */
       as->snapno--;
       as->snapref = as->T->snap[as->snapno].ref;
     } while (as->curins < as->snapref);
@@ -975,6 +1014,22 @@ static void asm_tdup(ASMState *as, IRIns *ir)
   asm_gencall(as, ci, args);
 }
 
+static void asm_gc_check(ASMState *as);
+
+/* Explicit GC step. */
+static void asm_gcstep(ASMState *as, IRIns *ir)
+{
+  IRIns *ira;
+  for (ira = IR(as->stopins+1); ira < ir; ira++)
+    if ((ira->o == IR_TNEW || ira->o == IR_TDUP ||
+	 (LJ_HASFFI && (ira->o == IR_CNEW || ira->o == IR_CNEWI))) &&
+	ra_used(ira))
+      as->gcsteps++;
+  if (as->gcsteps)
+    asm_gc_check(as);
+  as->gcsteps = 0x80000000;  /* Prevent implicit GC check further up. */
+}
+
 /* -- PHI and loop handling ----------------------------------------------- */
 
 /* Break a PHI cycle by renaming to a free register (evict if needed). */
@@ -1079,6 +1134,64 @@ static void asm_phi_shuffle(ASMState *as)
   }
 }
 
+/* Copy unsynced left/right PHI spill slots. Rarely needed. */
+static void asm_phi_copyspill(ASMState *as)
+{
+  int need = 0;
+  IRIns *ir;
+  for (ir = IR(as->orignins-1); ir->o == IR_PHI; ir--)
+    if (ra_hasspill(ir->s) && ra_hasspill(IR(ir->op1)->s))
+      need |= irt_isfp(ir->t) ? 2 : 1;  /* Unsynced spill slot? */
+  if ((need & 1)) {  /* Copy integer spill slots. */
+#if !LJ_TARGET_X86ORX64
+    Reg r = RID_TMP;
+#else
+    Reg r = RID_RET;
+    if ((as->freeset & RSET_GPR))
+      r = rset_pickbot((as->freeset & RSET_GPR));
+    else
+      emit_spload(as, IR(regcost_ref(as->cost[r])), r, SPOFS_TMP);
+#endif
+    for (ir = IR(as->orignins-1); ir->o == IR_PHI; ir--) {
+      if (ra_hasspill(ir->s)) {
+	IRIns *irl = IR(ir->op1);
+	if (ra_hasspill(irl->s) && !irt_isfp(ir->t)) {
+	  emit_spstore(as, irl, r, sps_scale(irl->s));
+	  emit_spload(as, ir, r, sps_scale(ir->s));
+	}
+      }
+    }
+#if LJ_TARGET_X86ORX64
+    if (!rset_test(as->freeset, r))
+      emit_spstore(as, IR(regcost_ref(as->cost[r])), r, SPOFS_TMP);
+#endif
+  }
+#if !LJ_SOFTFP
+  if ((need & 2)) {  /* Copy FP spill slots. */
+#if LJ_TARGET_X86
+    Reg r = RID_XMM0;
+#else
+    Reg r = RID_FPRET;
+#endif
+    if ((as->freeset & RSET_FPR))
+      r = rset_pickbot((as->freeset & RSET_FPR));
+    if (!rset_test(as->freeset, r))
+      emit_spload(as, IR(regcost_ref(as->cost[r])), r, SPOFS_TMP);
+    for (ir = IR(as->orignins-1); ir->o == IR_PHI; ir--) {
+      if (ra_hasspill(ir->s)) {
+	IRIns *irl = IR(ir->op1);
+	if (ra_hasspill(irl->s) && irt_isfp(ir->t)) {
+	  emit_spstore(as, irl, r, sps_scale(irl->s));
+	  emit_spload(as, ir, r, sps_scale(ir->s));
+	}
+      }
+    }
+    if (!rset_test(as->freeset, r))
+      emit_spstore(as, IR(regcost_ref(as->cost[r])), r, SPOFS_TMP);
+  }
+#endif
+}
+
 /* Emit renames for left PHIs which are only spilled outside the loop. */
 static void asm_phi_fixup(ASMState *as)
 {
@@ -1109,6 +1222,8 @@ static void asm_phi(ASMState *as, IRIns *ir)
   RegSet afree = (as->freeset & allow);
   IRIns *irl = IR(ir->op1);
   IRIns *irr = IR(ir->op2);
+  if (ir->r == RID_SINK)  /* Sink PHI. */
+    return;
   /* Spill slot shuffling is not implemented yet (but rarely needed). */
   if (ra_hasspill(irl->s) || ra_hasspill(irr->s))
     lj_trace_err(as->J, LJ_TRERR_NYIPHI);
@@ -1132,16 +1247,16 @@ static void asm_phi(ASMState *as, IRIns *ir)
     if (ra_hasreg(irl->r) || ra_hasreg(irr->r))
       lj_trace_err(as->J, LJ_TRERR_NYIPHI);
     ra_spill(as, ir);
-    irl->s = irr->s = ir->s;  /* Sync left/right PHI spill slots. */
+    irr->s = ir->s;  /* Set right PHI spill slot. Sync left slot later. */
   }
 }
 
-static void asm_gc_check(ASMState *as);
 static void asm_loop_fixup(ASMState *as);
 
 /* Middle part of a loop. */
 static void asm_loop(ASMState *as)
 {
+  MCode *mcspill;
   /* LOOP is a guard, so the snapno is up to date. */
   as->loopsnapno = as->snapno;
   if (as->gcsteps)
@@ -1151,10 +1266,14 @@ static void asm_loop(ASMState *as)
   as->sectref = 0;
   if (!neverfuse(as)) as->fuseref = 0;
   asm_phi_shuffle(as);
+  mcspill = as->mcp;
+  asm_phi_copyspill(as);
   asm_loop_fixup(as);
   as->mcloop = as->mcp;
   RA_DBGX((as, "===== LOOP ====="));
   if (!as->realign) RA_DBG_FLUSH();
+  if (as->mcp != mcspill)
+    emit_jmp(as, mcspill);
 }
 
 /* -- Target-specific assembler ------------------------------------------- */
@@ -1186,15 +1305,6 @@ static void asm_head_root(ASMState *as)
   as->T->topslot = gcref(as->T->startpt)->pt.framesize;
 }
 
-/* Get RegSP for parent slot. */
-static LJ_AINLINE RegSP asm_head_parentrs(ASMState *as, IRIns *ir)
-{
-#if LJ_SOFTFP
-  if (ir->o == IR_HIOP) return as->parentmaphi[(ir-1)->op1];
-#endif
-  return as->parentmap[ir->op1];
-}
-
 /* Head of a side trace.
 **
 ** The current simplistic algorithm requires that all slots inherited
@@ -1221,8 +1331,8 @@ static void asm_head_side(ASMState *as)
     IRIns *ir = IR(i);
     RegSP rs;
     lua_assert((ir->o == IR_SLOAD && (ir->op2 & IRSLOAD_PARENT)) ||
-	       (LJ_SOFTFP && ir->o == IR_HIOP));
-    rs = asm_head_parentrs(as, ir);
+	       (LJ_SOFTFP && ir->o == IR_HIOP) || ir->o == IR_PVAL);
+    rs = as->parentmap[i - REF_FIRST];
     if (ra_hasreg(ir->r)) {
       rset_clear(allow, ir->r);
       if (ra_hasspill(ir->s)) {
@@ -1262,7 +1372,7 @@ static void asm_head_side(ASMState *as)
 	Reg r;
 	RegSP rs;
 	irt_clearmark(ir->t);
-	rs = asm_head_parentrs(as, ir);
+	rs = as->parentmap[i - REF_FIRST];
 	if (!ra_hasspill(regsp_spill(rs)))
 	  ra_sethint(ir->r, rs);  /* Hint may be gone, set it again. */
 	else if (sps_scale(regsp_spill(rs))+spdelta == sps_scale(ir->s))
@@ -1299,13 +1409,13 @@ static void asm_head_side(ASMState *as)
     RegSet work = ~as->freeset & RSET_ALL;
     while (work) {
       Reg r = rset_pickbot(work);
-      IRIns *ir = IR(regcost_ref(as->cost[r]));
-      RegSP rs = asm_head_parentrs(as, ir);
+      IRRef ref = regcost_ref(as->cost[r]);
+      RegSP rs = as->parentmap[ref - REF_FIRST];
       rset_clear(work, r);
       if (ra_hasspill(regsp_spill(rs))) {
 	int32_t ofs = sps_scale(regsp_spill(rs));
 	ra_free(as, r);
-	emit_spload(as, ir, r, ofs);
+	emit_spload(as, IR(ref), r, ofs);
 	checkmclim(as);
       }
     }
@@ -1431,7 +1541,9 @@ static void asm_tail_link(ASMState *as)
 static void asm_setup_regsp(ASMState *as)
 {
   GCtrace *T = as->T;
-  IRRef i, nins;
+  int sink = T->sinktags;
+  IRRef nins = T->nins;
+  IRIns *ir, *lastir;
   int inloop;
 #if LJ_TARGET_ARM
   uint32_t rload = 0xa6402a64;
@@ -1440,15 +1552,15 @@ static void asm_setup_regsp(ASMState *as)
   ra_setup(as);
 
   /* Clear reg/sp for constants. */
-  for (i = T->nk; i < REF_BIAS; i++)
-    IR(i)->prev = REGSP_INIT;
+  for (ir = IR(T->nk), lastir = IR(REF_BASE); ir < lastir; ir++)
+    ir->prev = REGSP_INIT;
 
   /* REF_BASE is used for implicit references to the BASE register. */
-  IR(REF_BASE)->prev = REGSP_HINT(RID_BASE);
+  lastir->prev = REGSP_HINT(RID_BASE);
 
-  nins = T->nins;
-  if (IR(nins-1)->o == IR_RENAME) {
-    do { nins--; } while (IR(nins-1)->o == IR_RENAME);
+  ir = IR(nins-1);
+  if (ir->o == IR_RENAME) {
+    do { ir--; nins--; } while (ir->o == IR_RENAME);
     T->nins = nins;  /* Remove any renames left over from ASM restart. */
   }
   as->snaprename = nins;
@@ -1459,34 +1571,44 @@ static void asm_setup_regsp(ASMState *as)
   as->orignins = nins;
   as->curins = nins;
 
+  /* Setup register hints for parent link instructions. */
+  ir = IR(REF_FIRST);
+  if (as->parent) {
+    uint16_t *p;
+    lastir = lj_snap_regspmap(as->parent, as->J->exitno, ir);
+    if (lastir - ir > LJ_MAX_JSLOTS)
+      lj_trace_err(as->J, LJ_TRERR_NYICOAL);
+    as->stopins = (IRRef)((lastir-1) - as->ir);
+    for (p = as->parentmap; ir < lastir; ir++) {
+      RegSP rs = ir->prev;
+      *p++ = (uint16_t)rs;  /* Copy original parent RegSP to parentmap. */
+      if (!ra_hasspill(regsp_spill(rs)))
+	ir->prev = (uint16_t)REGSP_HINT(regsp_reg(rs));
+      else
+	ir->prev = REGSP_INIT;
+    }
+  }
+
   inloop = 0;
   as->evenspill = SPS_FIRST;
-  for (i = REF_FIRST; i < nins; i++) {
-    IRIns *ir = IR(i);
+  for (lastir = IR(nins); ir < lastir; ir++) {
+    if (sink) {
+      if (ir->r == RID_SINK)
+	continue;
+      if (ir->r == RID_SUNK) {  /* Revert after ASM restart. */
+	ir->r = RID_SINK;
+	continue;
+      }
+    }
     switch (ir->o) {
     case IR_LOOP:
       inloop = 1;
       break;
-    /* Set hints for slot loads from a parent trace. */
+#if LJ_TARGET_ARM
     case IR_SLOAD:
-      if ((ir->op2 & IRSLOAD_PARENT)) {
-	RegSP rs = as->parentmap[ir->op1];
-	lua_assert(regsp_used(rs));
-	as->stopins = i;
-	if (!ra_hasspill(regsp_spill(rs)) && ra_hasreg(regsp_reg(rs))) {
-	  ir->prev = (uint16_t)REGSP_HINT(regsp_reg(rs));
-	  continue;
-	}
-      }
-#if LJ_TARGET_ARM
-      if ((ir->op2 & IRSLOAD_TYPECHECK) || (ir+1)->o == IR_HIOP) {
-	ir->prev = (uint16_t)REGSP_HINT((rload & 15));
-	rload = lj_ror(rload, 4);
-	continue;
-      }
-#endif
-      break;
-#if LJ_TARGET_ARM
+      if (!((ir->op2 & IRSLOAD_TYPECHECK) || (ir+1)->o == IR_HIOP))
+	break;
+      /* fallthrough */
     case IR_ALOAD: case IR_HLOAD: case IR_ULOAD: case IR_VLOAD:
       ir->prev = (uint16_t)REGSP_HINT((rload & 15));
       rload = lj_ror(rload, 4);
@@ -1511,25 +1633,12 @@ static void asm_setup_regsp(ASMState *as)
 #if LJ_SOFTFP || (LJ_32 && LJ_HASFFI)
     case IR_HIOP:
       switch ((ir-1)->o) {
-#if LJ_SOFTFP
-      case IR_SLOAD:
-	if (((ir-1)->op2 & IRSLOAD_PARENT)) {
-	  RegSP rs = as->parentmaphi[(ir-1)->op1];
-	  lua_assert(regsp_used(rs));
-	  as->stopins = i;
-	  if (!ra_hasspill(regsp_spill(rs)) && ra_hasreg(regsp_reg(rs))) {
-	    ir->prev = (uint16_t)REGSP_HINT(regsp_reg(rs));
-	    continue;
-	  }
-	}
-#if LJ_TARGET_ARM
-	/* fallthrough */
-      case IR_ALOAD: case IR_HLOAD: case IR_ULOAD: case IR_VLOAD:
+#if LJ_SOFTFP && LJ_TARGET_ARM
+      case IR_SLOAD: case IR_ALOAD: case IR_HLOAD: case IR_ULOAD: case IR_VLOAD:
 	if (ra_hashint((ir-1)->r)) {
 	  ir->prev = (ir-1)->prev + 1;
 	  continue;
 	}
-#endif
 	break;
 #endif
 #if LJ_NEED_FP64
@@ -1639,7 +1748,8 @@ static void asm_setup_regsp(ASMState *as)
       /* fallthrough */
     default:
       /* Propagate hints across likely 'op reg, imm' or 'op reg'. */
-      if (irref_isk(ir->op2) && !irref_isk(ir->op1)) {
+      if (irref_isk(ir->op2) && !irref_isk(ir->op1) &&
+	  ra_hashint(regsp_reg(IR(ir->op1)->prev))) {
 	ir->prev = IR(ir->op1)->prev;
 	continue;
       }
@@ -1674,15 +1784,8 @@ void lj_asm_trace(jit_State *J, GCtrace *T)
   as->loopref = J->loopref;
   as->realign = NULL;
   as->loopinv = 0;
-  if (J->parent) {
-    as->parent = traceref(J, J->parent);
-    lj_snap_regspmap(as->parentmap, as->parent, J->exitno, 0);
-#if LJ_SOFTFP
-    lj_snap_regspmap(as->parentmaphi, as->parent, J->exitno, 1);
-#endif
-  } else {
-    as->parent = NULL;
-  }
+  as->parent = J->parent ? traceref(J, J->parent) : NULL;
+
   /* Reserve MCode memory. */
   as->mctop = origtop = lj_mcode_reserve(J, &as->mcbot);
   as->mcp = as->mctop;
@@ -1724,7 +1827,7 @@ void lj_asm_trace(jit_State *J, GCtrace *T)
   /* Emit head of trace. */
   RA_DBG_REF();
   checkmclim(as);
-  if (as->gcsteps) {
+  if (as->gcsteps > 0) {
     as->curins = as->T->snap[0].ref;
     asm_snap_prep(as);  /* The GC check is a guard. */
     asm_gc_check(as);

@@ -80,6 +80,10 @@ td.compatno {
 <a href="http://luajit.org/performance.html">Performance <span class="ext">&raquo;</span></a>
 </li><li>
 <a href="http://luajit.org/download.html">Download <span class="ext">&raquo;</span></a>
+</li><li>
+<a href="http://wiki.luajit.org/">Wiki <span class="ext">&raquo;</span></a>
+</li><li>
+<a href="http://luajit.org/list.html">Mailing List <span class="ext">&raquo;</span></a>
 </li></ul>
 </div>
 <div id="main">
@@ -185,8 +189,8 @@ open a terminal window and change to this directory. Now unpack the archive
 and change to the newly created directory:
 </p>
 <pre class="code">
-tar zxf LuaJIT-2.0.0-beta9.tar.gz
-cd LuaJIT-2.0.0-beta9</pre>
+tar zxf LuaJIT-2.0.0-beta10.tar.gz
+cd LuaJIT-2.0.0-beta10</pre>
 <h3>Building LuaJIT</h3>
 <p>
 The supplied Makefiles try to auto-detect the settings needed for your
@@ -236,11 +240,11 @@ Obviously the prefixes given during build and installation need to be the same.
 <p style="color: #c00000;">
 Note: to avoid overwriting a previous version, the beta test releases
 only install the LuaJIT executable under the versioned name (i.e.
-<tt>luajit-2.0.0-beta9</tt>). You probably want to create a symlink
+<tt>luajit-2.0.0-beta10</tt>). You probably want to create a symlink
 for convenience, with a command like this:
 </p>
 <pre class="code" style="color: #c00000;">
-sudo ln -sf luajit-2.0.0-beta9&nbsp;/usr/local/bin/luajit
+sudo ln -sf luajit-2.0.0-beta10&nbsp;/usr/local/bin/luajit
 </pre>
 
 <h2 id="windows">Windows Systems</h2>
@@ -325,7 +329,7 @@ Then follow the installation instructions below.
 Copy <tt>luajit.exe</tt> and <tt>lua51.dll</tt> (built in the <tt>src</tt>
 directory) to a newly created directory (any location is ok).
 Add <tt>lua</tt> and <tt>lua\jit</tt> directories below it and copy
-all Lua files from the <tt>lib</tt> directory of the distribution
+all Lua files from the <tt>src\jit</tt> directory of the distribution
 to the latter directory.
 </p>
 <p>
