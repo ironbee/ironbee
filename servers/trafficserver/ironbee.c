@@ -169,6 +169,24 @@ typedef struct {
     ib_filter_ctx *data;
 } ibd_ctx;
 
+static void add_header_field(TSMBuffer bufp, TSMLoc hdr_loc,
+                             const char *field_name, const char *field_value)
+{
+    int rv;
+    TSMLoc field_loc;
+    rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
+    if (rv != TS_SUCCESS) {
+        TSError("Failed to add MIME header field: %s", field_name);
+    }
+    rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
+                               field_name, strlen(field_name));
+    rv = TSMimeHdrFieldValueStringSet(bufp, hdr_loc, field_loc, -1,
+                                      field_value, strlen(field_value));
+    rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
+    TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+}
+
+
 /**
  * Callback functions for Ironbee to signal to us
  */
@@ -999,17 +1017,15 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
     /* Add the ironbee site id to an internal header. */
     site = ib_context_site_get(data->tx->ctx);
+    add_header_field(bufp, hdr_loc, "@IB-SITE-ID", site->id_str);
 
-    rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
-    if (rv != TS_SUCCESS) {
-        TSError("Failed to add @IB-SITE-ID MIME header field");
+    /* Add internal header if we blocked the transaction */
+    if ((data->tx->flags & IB_TX_BLOCK_PHASE)
+        || (data->tx->flags & IB_TX_BLOCK_IMMEDIATE) ) {
+        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "blocked");
+    } else if (data->tx->flags & IB_TX_BLOCK_ADVISORY) {
+        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "advisory");
     }
-    rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
-                               "@IB-SITE-ID", 11);
-    rv = TSMimeHdrFieldValueStringSet(bufp, hdr_loc, field_loc, -1,
-                                      site->id_str, strlen(site->id_str));
-    rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
-    TSHandleMLocRelease(bufp, hdr_loc, field_loc);
 
     /* Now manipulate header as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
