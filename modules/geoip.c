@@ -19,7 +19,7 @@
 #include <math.h>
 #include <strings.h>
 
-#include <GeoIPCity.h>
+#include <GeoIP.h>
 
 #include <ironbee/cfgmap.h>
 #include <ironbee/debug.h>
@@ -79,10 +79,8 @@ static ib_status_t geoip_lookup(
 
     ib_field_t *tmp_field = NULL;
 
-    ib_num_t longitude;
-    ib_num_t latitude;
-
-    GeoIPRecord *geoip_rec;
+    /* Id of geo ip record to read. */
+    int geoip_id;
 
     ib_log_debug_tx(tx, "GeoIP Lookup '%s'", ip);
 
@@ -101,176 +99,64 @@ static ib_status_t geoip_lookup(
         ib_log_alert_tx(tx,
                      "GeoIP database was never opened. Perhaps the "
                      "configuration file needs a GeoIPDatabaseFile "
-                     "\"/usr/share/geoip/GeoLiteCity.dat\" line?");
+                     "\"/usr/share/geoip/GeoLite.dat\" line?");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    geoip_rec = GeoIP_record_by_addr(geoip_db, ip);
+    geoip_id = GeoIP_id_by_addr(geoip_db, ip);
 
-    if (geoip_rec != NULL)
+    if (geoip_id > 0)
     {
+        const char *tmp_str;
+
         ib_log_debug_tx(tx, "GeoIP record found.");
-
-        /* Append the floats latitude and longitude.
-         * NOTE: Future work may add a float type to the Ironbee DPI. */
-
-        latitude = lround(geoip_rec->latitude);
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        IB_FIELD_NAME("latitude"),
-                        IB_FTYPE_NUM,
-                        ib_ftype_num_in(&latitude));
-        ib_field_list_add(geoip_lst, tmp_field);
-
-        longitude = lround(geoip_rec->longitude);
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        IB_FIELD_NAME("longitude"),
-                        IB_FTYPE_NUM,
-                        ib_ftype_num_in(&longitude));
-        ib_field_list_add(geoip_lst, tmp_field);
 
         /* Add integers. */
         tmp_field = NULL;
 
-        /* Avoids type-punning errors on gcc 4.2.4 with holder values. */
-        const ib_num_t charset = geoip_rec->charset;
-        const ib_num_t area_code = geoip_rec->area_code;
-
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        IB_FIELD_NAME("area_code"),
-                        IB_FTYPE_NUM,
-                        ib_ftype_num_in(&area_code));
-        ib_field_list_add(geoip_lst, tmp_field);
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        IB_FIELD_NAME("charset"),
-                        IB_FTYPE_NUM,
-                        ib_ftype_num_in(&charset));
-        ib_field_list_add(geoip_lst, tmp_field);
-
-        /* Add strings. */
-        if (geoip_rec->country_code!=NULL)
+        tmp_str = GeoIP_code_by_id(geoip_id);
+        if (tmp_str)
         {
             ib_field_create(&tmp_field,
                             tx->mp,
                             IB_FIELD_NAME("country_code"),
                             IB_FTYPE_NULSTR,
-                            ib_ftype_nulstr_in(geoip_rec->country_code));
+                            ib_ftype_nulstr_in(tmp_str));
             ib_field_list_add(geoip_lst, tmp_field);
         }
 
-        if (geoip_rec->country_code3!=NULL)
+        tmp_str = GeoIP_code3_by_id(geoip_id);
+        if (tmp_str)
         {
             ib_field_create(&tmp_field,
                             tx->mp,
                             IB_FIELD_NAME("country_code3"),
                             IB_FTYPE_NULSTR,
-                            ib_ftype_nulstr_in(geoip_rec->country_code3));
+                            ib_ftype_nulstr_in(tmp_str));
             ib_field_list_add(geoip_lst, tmp_field);
         }
 
-        if (geoip_rec->country_name!=NULL)
+        tmp_str = GeoIP_country_name_by_id(geoip_db, geoip_id);
+        if (tmp_str)
         {
             ib_field_create(&tmp_field,
                             tx->mp,
                             IB_FIELD_NAME("country_name"),
                             IB_FTYPE_NULSTR,
-                            ib_ftype_nulstr_in(geoip_rec->country_name));
+                            ib_ftype_nulstr_in(tmp_str));
             ib_field_list_add(geoip_lst, tmp_field);
         }
 
-        if (geoip_rec->region!=NULL)
-        {
-            ib_field_create(&tmp_field,
-                            tx->mp,
-                            IB_FIELD_NAME("region"),
-                            IB_FTYPE_NULSTR,
-                            ib_ftype_nulstr_in(geoip_rec->region));
-            ib_field_list_add(geoip_lst, tmp_field);
-        }
-
-        if (geoip_rec->city!=NULL)
-        {
-            ib_field_create(&tmp_field,
-                            tx->mp,
-                            IB_FIELD_NAME("city"),
-                            IB_FTYPE_NULSTR,
-                            ib_ftype_nulstr_in(geoip_rec->city));
-            ib_field_list_add(geoip_lst, tmp_field);
-        }
-
-        if (geoip_rec->postal_code!=NULL)
-        {
-            ib_field_create(&tmp_field,
-                            tx->mp,
-                            IB_FIELD_NAME("postal_code"),
-                            IB_FTYPE_NULSTR,
-                            ib_ftype_nulstr_in(geoip_rec->postal_code));
-            ib_field_list_add(geoip_lst, tmp_field);
-        }
-
-        if (geoip_rec->continent_code!=NULL)
+        tmp_str = GeoIP_continent_by_id(geoip_id);
+        if (tmp_str)
         {
             ib_field_create(&tmp_field,
                             tx->mp,
                             IB_FIELD_NAME("continent_code"),
                             IB_FTYPE_NULSTR,
-                            ib_ftype_nulstr_in(geoip_rec->continent_code));
+                            ib_ftype_nulstr_in(tmp_str));
             ib_field_list_add(geoip_lst, tmp_field);
         }
-        /* If we have GeoIP_lib_version() we are using GeoIP > 1.4.6 which means we also support confidence items */
-#ifdef GEOIP_HAVE_VERSION
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        IB_FIELD_NAME("accuracy_radius"),
-                        IB_FTYPE_NUM,
-                        ib_ftype_num_in(&geoip_rec->accuracy_radius));
-        ib_field_list_add(geoip_lst, tmp_field);
-
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        IB_FIELD_NAME("metro_code"),
-                        IB_FTYPE_NUM,
-                        ib_ftype_num_in(&geoip_rec->metro_code));
-        ib_field_list_add(geoip_lst, tmp_field);
-
-        /* Wrap single character arguments into a 2-character string and add. */
-        one_char_str[0] = geoip_rec->country_conf;
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        IB_FIELD_NAME("country_conf"),
-                        IB_FTYPE_NULSTR,
-                        ib_ftype_nulstr_in(one_char_str));
-        ib_field_list_add(geoip_lst, tmp_field);
-
-        one_char_str[0] = geoip_rec->region_conf;
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        IB_FIELD_NAME("region_conf"),
-                        IB_FTYPE_NULSTR,
-                        ib_ftype_nulstr_in(one_char_str));
-        ib_field_list_add(geoip_lst, tmp_field);
-
-        one_char_str[0] = geoip_rec->city_conf;
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        IB_FIELD_NAME("city_conf"),
-                        IB_FTYPE_NULSTR,
-                        ib_ftype_nulstr_in(one_char_str));
-        ib_field_list_add(geoip_lst, tmp_field);
-
-        one_char_str[0] = geoip_rec->postal_conf;
-        ib_field_create(&tmp_field,
-                        tx->mp,
-                        IB_FIELD_NAME("postal_conf"),
-                        IB_FTYPE_NULSTR,
-                        ib_ftype_nulstr_in(one_char_str));
-        ib_field_list_add(geoip_lst, tmp_field);
-#endif /* GEOIP_HAVE_VERSION */
-
-        GeoIPRecord_delete(geoip_rec);
     }
     else
     {
