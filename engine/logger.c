@@ -248,6 +248,29 @@ ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+ib_status_t DLL_PUBLIC ib_logevent_field_add_ex(ib_logevent_t *le,
+                                                const char *name,
+                                                size_t nlen)
+{
+    IB_FTRACE_INIT();
+    char *name_copy;
+    ib_status_t rc;
+
+    assert(le != NULL);
+
+    if (le->fields == NULL) {
+        rc = ib_list_create(&le->fields, le->mp);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    name_copy = ib_mpool_memdup_to_str(le->mp, name, nlen);
+    rc = ib_list_push(le->fields, name_copy);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
 ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
                                             const void *data,
                                             size_t dlen)
