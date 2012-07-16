@@ -147,8 +147,8 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
         /* Send back the result_list inside of result_field. */
         rc = ib_field_create(result_field,
                              dpi->mp,
-                             name,
-                             name_len,
+                             parent_field->name,
+                             parent_field->nlen,
                              IB_FTYPE_LIST,
                              result_list);
 
