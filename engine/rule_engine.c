@@ -2451,9 +2451,9 @@ static ib_status_t enable_rules(ib_engine_t *ib,
                                  name, ctx_rule->rule->meta.id);
         }
         if (matches == 0) {
-            ib_cfg_log_warning_ex(ib, match->file, match->lineno,
-                                  "No rules by ALL to %s",
-                                  match->enable_str);
+            ib_cfg_log_notice_ex(ib, match->file, match->lineno,
+                                 "No rules by ALL to %s",
+                                 match->enable_str);
         }
         else {
             ib_cfg_log_debug_ex(ib, match->file, match->lineno,
@@ -2481,9 +2481,9 @@ static ib_status_t enable_rules(ib_engine_t *ib,
 
             }
         }
-        ib_cfg_log_error_ex(ib, match->file, match->lineno,
-                            "No rule with ID of \"%s\" to %s",
-                            match->enable_str, lcname);
+        ib_cfg_log_notice_ex(ib, match->file, match->lineno,
+                             "No rule with ID of \"%s\" to %s",
+                             match->enable_str, lcname);
         IB_FTRACE_RET_STATUS(IB_ENOENT);
         break;
 
@@ -2518,9 +2518,9 @@ static ib_status_t enable_rules(ib_engine_t *ib,
             }
         }
         if (matches == 0) {
-            ib_cfg_log_warning_ex(ib, match->file, match->lineno,
-                                  "No rules with tag of \"%s\" to %s",
-                                  match->enable_str, lcname);
+            ib_cfg_log_notice_ex(ib, match->file, match->lineno,
+                                 "No rules with tag of \"%s\" to %s",
+                                 match->enable_str, lcname);
         }
         else {
             ib_cfg_log_debug_ex(ib, match->file, match->lineno,
@@ -2669,10 +2669,10 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
         /* Apply disable */
         rc = enable_rules(ib, ctx, enable, false, all_rules);
         if (rc != IB_OK) {
-            ib_cfg_log_error_ex(ib, enable->file, enable->lineno,
-                                "Error disabling all rules "
-                                "in \"%s\" temp list",
-                                ib_context_full_get(ctx));
+            ib_cfg_log_notice_ex(ib, enable->file, enable->lineno,
+                                 "Error disabling all rules "
+                                 "in \"%s\" temp list",
+                                 ib_context_full_get(ctx));
         }
     }
 
@@ -2687,10 +2687,10 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
         /* Find rule */
         rc = enable_rules(ib, ctx, enable, true, all_rules);
         if (rc != IB_OK) {
-            ib_cfg_log_error_ex(ib, enable->file, enable->lineno,
-                                "Error enabling specified rules "
-                                "in \"%s\" temp list",
-                                ib_context_full_get(ctx));
+            ib_cfg_log_notice_ex(ib, enable->file, enable->lineno,
+                                 "Error enabling specified rules "
+                                 "in \"%s\" temp list",
+                                 ib_context_full_get(ctx));
         }
     }
 
@@ -2708,10 +2708,10 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
         /* Find rule */
         rc = enable_rules(ib, ctx, enable, false, all_rules);
         if (rc != IB_OK) {
-            ib_cfg_log_error_ex(ib, enable->file, enable->lineno,
-                                "Error disabling specified rules "
-                                "in \"%s\" temp list",
-                                ib_context_full_get(ctx));
+            ib_cfg_log_notice_ex(ib, enable->file, enable->lineno,
+                                 "Error disabling specified rules "
+                                 "in \"%s\" temp list",
+                                 ib_context_full_get(ctx));
         }
     }
 
@@ -3285,15 +3285,15 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     if ( (lookup != NULL) &&
          (rule->meta.revision <= lookup->meta.revision) )
     {
-        ib_cfg_log_warning_ex(ib,
-                              rule->meta.config_file,
-                              rule->meta.config_line,
-                              "Not replacing rule \"%s\" of context=\"%s\" "
-                              "rev=%u with rev=%u",
-                              rule->meta.id,
-                              ib_context_full_get(ctx),
-                              lookup->meta.revision,
-                              rule->meta.revision);
+        ib_cfg_log_notice_ex(ib,
+                             rule->meta.config_file,
+                             rule->meta.config_line,
+                             "Not replacing rule \"%s\" of context=\"%s\" "
+                             "rev=%u with rev=%u",
+                             rule->meta.id,
+                             ib_context_full_get(ctx),
+                             lookup->meta.revision,
+                             rule->meta.revision);
         IB_FTRACE_RET_STATUS(IB_EEXIST);
     }
 
@@ -3350,15 +3350,15 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
             }
         }
 
-        ib_cfg_log_notice_ex(ib,
-                             rule->meta.config_file,
-                             rule->meta.config_line,
-                             "Replaced rule \"%s\" of context=\"%s\" "
-                             "rev=%u with rev=%u",
-                             rule->meta.id,
-                             ib_context_full_get(ctx),
-                             lookup->meta.revision,
-                             rule->meta.revision);
+        ib_cfg_log_info_ex(ib,
+                           rule->meta.config_file,
+                           rule->meta.config_line,
+                           "Replaced rule \"%s\" of context=\"%s\" "
+                           "rev=%u with rev=%u",
+                           rule->meta.id,
+                           ib_context_full_get(ctx),
+                           lookup->meta.revision,
+                           rule->meta.revision);
     }
 
     /* Mark the rule as valid */
@@ -3782,10 +3782,10 @@ ib_status_t ib_rule_add_tfn(ib_engine_t *ib,
         ib_rule_target_t *target = (ib_rule_target_t *)ib_list_node_data(node);
         rc = ib_rule_target_add_tfn(ib, target, name);
         if (rc != IB_OK) {
-            ib_log_error(ib,
-                         "Error adding tfn \"%s\" to target \"%s\" "
-                         "rule \"%s\"",
-                         name, target->field_name, rule->meta.id);
+            ib_log_notice(ib,
+                          "Error adding tfn \"%s\" to target \"%s\" "
+                          "rule \"%s\"",
+                          name, target->field_name, rule->meta.id);
         }
     }
 
