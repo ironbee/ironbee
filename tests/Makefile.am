@@ -86,12 +86,13 @@ TEST_EXTRAS = \
        TestIronBeeModuleRulesLua.operator_test.config \
        test_module_rules_lua.lua
 
-EXTRA_DIST = \
-       gtest \
-       base_fixture.h \
-       $(TEST_EXTRAS)
+TEST_SRC = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
 
-BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
+EXTRA_DIST = \
+	gtest \
+	base_fixture.h \
+	$(TEST_EXTRAS) \
+	$(TEST_SRC)
 
 $(abs_builddir)/%: $(srcdir)/%
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
