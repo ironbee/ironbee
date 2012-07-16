@@ -13,7 +13,10 @@ doxygen doxygen-pdf:
 manual:
 	@(cd docs && $(MAKE) manual)
 
-.PHONY: doxygen doxygen-pdf manual
+luajit:
+	@(cd libs && $(MAKE) )
+
+.PHONY: doxygen doxygen-pdf manual luajit
 
 if CPP
 ironbeepp_include_HEADERS = \
