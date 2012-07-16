@@ -306,7 +306,7 @@ static IB_PROVIDER_IFACE_TYPE(logger) core_logger_iface = {
 
 static ib_status_t core_logevent_write(ib_provider_inst_t *epi, ib_logevent_t *e)
 {
-    ib_log_notice(epi->pr->ib, "Event [id %016" PRIx32 "][type %d]: %s",
+    ib_log_debug(epi->pr->ib, "Wrote log event [id %016" PRIx32 "][type %d]: %s",
                  e->event_id, e->type, e->msg);
     return IB_OK;
 }
