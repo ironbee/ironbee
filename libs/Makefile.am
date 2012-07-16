@@ -11,9 +11,9 @@ endif
 clean-local:
 if ENABLE_LUA
 if FREEBSD
-	(rm -f .build-luajit && cd luajit-2.0-ironbee && gmake distclean)
+	(rm -f .build-luajit && cd luajit-2.0-ironbee && gmake cleaner)
 else
-	(rm -f .build-luajit && cd luajit-2.0-ironbee && $(MAKE) distclean)
+	(rm -f .build-luajit && cd luajit-2.0-ironbee && $(MAKE) cleaner)
 endif
 endif
 
