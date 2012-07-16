@@ -2265,19 +2265,6 @@ ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
                                              const char *name);
 
 /**
- * Add a field name to the event (ex version).
- *
- * @param[in] le Log event
- * @param[in] name Field name to add (string will be copied)
- * @param[in] nlen Length of @a name
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_logevent_field_add_ex(ib_logevent_t *le,
-                                                const char *name,
-                                                size_t nlen);
-
-/**
  * Set data for the event.
  *
  * @param[in] le Log event
