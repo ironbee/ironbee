@@ -188,14 +188,16 @@ TEST_F(TestIBUtilArray, test_array_loop)
          0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
         10, 11, 12, 13, 14, 15, 16, 17, 18, 19
     };
-
+    const size_t count = (sizeof(init)/sizeof(int));
+    size_t prev;
+        
     rc = ib_array_create(&arr, m_pool, 16, 8);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(arr);
     ASSERT_EQ(16UL, ib_array_size(arr));
     ASSERT_EQ(0UL, ib_array_elements(arr));
 
-    for (i = 0; i < (sizeof(init)/sizeof(int)); i++) {
+    for (i = 0; i < count; i++) {
         rc = ib_array_setn(arr, i, init + i);
         ASSERT_EQ(IB_OK, rc);
     }
@@ -204,8 +206,17 @@ TEST_F(TestIBUtilArray, test_array_loop)
     rc = ib_array_get(arr, 1, &val);
     ASSERT_EQ(IB_OK, rc);
 
+    prev = -1;
     IB_ARRAY_LOOP(arr, nelts, i, val) {
-        //ASSERT_EQ(init[i], *val);
+        ASSERT_EQ(i, prev+1);
+        prev = i;
+        ASSERT_EQ(init[i], *val);
+    }
+
+    prev = count;
+    IB_ARRAY_LOOP_REVERSE(arr, nelts, i, val) {
+        ASSERT_EQ(i, prev-1);
+        prev = i;
         ASSERT_EQ(init[i], *val);
     }
 }
