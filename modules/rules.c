@@ -698,7 +698,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     if (strcasecmp(name, "rev") == 0) {
         int rev = value ? atoi(value) : 0;
 
-        if ( (rev <= 0) || (rev > UINT16_MAX) ) {
+        if ( (rev < 0) || (rev > UINT16_MAX) ) {
             ib_cfg_log_error(cp, "Invalid revision: %s", value);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
