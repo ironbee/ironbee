@@ -669,9 +669,9 @@ static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
     log->ctx->auditlog->index_fp = cfg->index_fp;
     ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
 
-    ib_log_debug(log->ib, "AUDITLOG INDEX%s: %s",
-                 (log->ctx->auditlog->index[0] == '|'?" (piped)":""),
-                 index_file);
+    ib_log_info(log->ib, "AUDITLOG INDEX%s: %s",
+                (log->ctx->auditlog->index[0] == '|'?" (piped)":""),
+                index_file);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1030,7 +1030,7 @@ static ib_status_t core_audit_close(ib_provider_inst_t *lpi,
                          strerror(sys_rc), sys_rc);
             IB_FTRACE_RET_STATUS(IB_EOTHER);
         }
-        ib_log_debug(log->ib, "AUDITLOG: %s", cfg->full_path);
+        ib_log_info(log->ib, "AUDITLOG: %s", cfg->full_path);
         cfg->fp = NULL;
     }
 
