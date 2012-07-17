@@ -840,7 +840,7 @@ static void log_tfns(const ib_rule_log_exec_t *log_exec,
 
     if (ib_list_elements(tgt->tfn_list) == 0) {
         ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
-                     "%s %s:%d \"%s\" target=\"%s\" \"%s\" No tranformations",
+                     "%s %s:%d \"%s\" target=\"%s\" \"%s\" No transformations",
                      LOG_PREFIX,
                      tx->er_ipstr,
                      tx->conn->remote_port,

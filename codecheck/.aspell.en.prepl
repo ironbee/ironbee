@@ -39,6 +39,7 @@ mutale mutable
 prefixs prefix
 prefixs prefixes
 tranformations Transformations
+tranformations transformations
 aborter aborted
 interator iterator
 failes fails

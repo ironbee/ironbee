@@ -214,7 +214,7 @@ ib_status_t ib_rule_log_exec_set_tgt_final(ib_rule_log_exec_t *log_exec,
  * Add a stream target result to a rule execution log
  *
  * @param[in,out] log_exec The execution logging object
- * @param[in] value Value passed to the opeartor
+ * @param[in] value Value passed to the operator
  *
  * @returns IB_OK on success
  */
