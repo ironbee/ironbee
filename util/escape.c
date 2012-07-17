@@ -118,8 +118,8 @@ allocate:
             break; 
 
         case '\0':
-            size = 5;
-            ostr = "\\0000";
+            size = 6;
+            ostr = "\\u0000";
             break;
 
         default:
@@ -129,7 +129,7 @@ allocate:
 
         if (optr + size > oend) {
             assert (mult == 2);
-            mult = 5;
+            mult = 6;
             goto allocate;
         }
         if (size == 1) {

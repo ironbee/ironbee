@@ -178,7 +178,7 @@ public:
         return IB_ENOTIMPL;
     }
 
-    virtual ib_status_t ExecCopyExToStr(
+    virtual ib_status_t ExecCopyExToNul(
         const uint8_t *data_in,
         size_t dlen_in,
         char **data_out,
@@ -201,7 +201,7 @@ public:
         RunTestCowEx(input, expected);
         RunTestCopyNul(input, expected);
         RunTestCopyEx(input, expected);
-        RunTestCopyExToStr(input, expected);
+        RunTestCopyExToNul(input, expected);
     }
 
     void RunTest(const uint8_t *in, size_t inlen,
@@ -222,8 +222,8 @@ public:
         TextBuf input(in, inlen);
         TextBuf expected(out);
         //RunTestCopyNul(input, expected);
-        //RunTestCopyEx(input, expected);
-        RunTestCopyExToStr(input, expected);
+        RunTestCopyEx(input, expected);
+        RunTestCopyExToNul(input, expected);
     }
 
 protected:
@@ -385,7 +385,7 @@ protected:
         TextBuf output(out);
         CheckResult(name, input,
                     expected,
-                    IB_STRFLAG_ALIAS,
+                    IB_STRFLAG_NEWBUF,
                     ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
                     result, output);
     }
@@ -413,14 +413,14 @@ protected:
                     result, output);
     }
 
-    void RunTestCopyExToStr(const TextBuf &input, const TextBuf &expected)
+    void RunTestCopyExToNul(const TextBuf &input, const TextBuf &expected)
     {
         ib_status_t rc;
         size_t len = input.GetLen();
         char *out;
         ib_flags_t result;
 
-        rc = ExecCopyExToStr(input.GetUBuf(), len, &out, result);
+        rc = ExecCopyExToNul(input.GetUBuf(), len, &out, result);
         if (rc == IB_ENOTIMPL) {
             return;
         }
@@ -430,7 +430,7 @@ protected:
         TextBuf output(out);
         CheckResult(name, input,
                     expected,
-                    IB_STRFLAG_ALIAS,
+                    IB_STRFLAG_NEWBUF,
                     ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
                     result, output);
     }

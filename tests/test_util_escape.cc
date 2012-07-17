@@ -61,8 +61,19 @@ public:
                                         (char **)data_out, &dlen_out,
                                         &result);
     }
+    ib_status_t ExecCopyExToNul(const uint8_t *data_in,
+                                size_t dlen_in,
+                                char **data_out,
+                                ib_flags_t &result)
+    {
+        size_t dlen_out;
+        return ib_string_escape_json_ex(m_mpool,
+                                        data_in, dlen_in,
+                                        true,
+                                        data_out, &dlen_out,
+                                        &result);
+    }
     ib_status_t ExecCopyNul(const char *data_in,
-                            size_t dlen_in,
                             char **data_out,
                             ib_flags_t &result)
     {
@@ -134,8 +145,8 @@ TEST_F(TestEscapeJSON, Simple)
     {
         SCOPED_TRACE("Simple #11");
         const uint8_t in[]  = "\0";
-        const char    out[] = "\\0000";
-        RunTest(in, sizeof(in), out);
+        const char    out[] = "\\u0000";
+        RunTest(in, sizeof(in)-1, out);
     }
 }
 TEST_F(TestEscapeJSON, Complex)
@@ -143,7 +154,7 @@ TEST_F(TestEscapeJSON, Complex)
     {
         SCOPED_TRACE("Complex #1");
         const uint8_t in[]  = "Test\0Case";
-        const char    out[] = "Test\\0000Case";
+        const char    out[] = "Test\\u0000Case";
         RunTest(in, sizeof(in)-1, out);
     }
     {
@@ -157,7 +168,7 @@ TEST_F(TestEscapeJSON, Complex)
     {
         SCOPED_TRACE("Complex #4");
         const uint8_t in[]  = "x\t\tfoo\0y";
-        const char    out[] = "x\\t\\tfoo\\0000y";
+        const char    out[] = "x\\t\\tfoo\\u0000y";
         RunTest(in, sizeof(in)-1, out);
     }
     {
