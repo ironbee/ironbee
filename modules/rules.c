@@ -1484,6 +1484,102 @@ static ib_status_t parse_ruledisable_params(ib_cfgparser_t *cp,
 }
 
 /**
+ * @brief Parse a RuleMarker directive.
+ * @details Register a RuleMarker directive to the engine.
+ * @param[in,out] cp Configuration parser that contains the engine being
+ *                configured.
+ * @param[in] name The directive name.
+ * @param[in] vars The list of variables passed to @a name.
+ * @param[in] cbdata User data. Unused.
+ */
+static ib_status_t parse_rulemarker_params(ib_cfgparser_t *cp,
+                                           const char *name,
+                                           const ib_list_t *vars,
+                                           void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    const ib_list_node_t *node;
+    ib_rule_t *rule = NULL;
+
+    if (cbdata != NULL) {
+        IB_FTRACE_MSG("Callback data is not null.");
+    }
+
+    /* Allocate a rule */
+    rc = ib_rule_create(cp->ib, cp->cur_ctx,
+                        cp->cur_file, cp->cur_lineno,
+                        false, &rule);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to allocate rule: %s",
+                         ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    ib_flags_set(rule->flags, IB_RULE_FLAG_ACTION);
+
+    /* Force the operator to one that will not execute (negated nop). */
+    rc = parse_operator(cp, rule, "!@nop", NULL);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "Error parsing rule operator \"nop\": %s",
+                         ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Parse all of the modifiers, only allowing id and phase. */
+    IB_LIST_LOOP_CONST(vars, node) {
+        const char *param = (const char *)node->data;
+
+        if (   (strncasecmp(param, "id:", 3) == 0)
+            || (strncasecmp(param, "phase:", 6) == 0))
+        {
+            rc = parse_modifier(cp, rule, node->data);
+            if (rc != IB_OK) {
+                ib_cfg_log_error(cp,
+                                 "Error parsing %s modifier \"%s\": %s",
+                                 name,
+                                 (const char *)node->data,
+                                 ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+        else {
+            ib_cfg_log_error(cp, "Invalid %s parameter \"%s\"", name, param);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+
+    /* Force a zero revision so it can always be overridden. */
+    rc = parse_modifier(cp, rule, "rev:0");
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "Error parsing %s modifier \"rev:0\": %s",
+                         name,
+                         ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Check the rule modifiers. */
+    rc = check_rule_modifiers(cp, rule);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Finally, register the rule. */
+    rc = ib_rule_register(cp->ib, cp->cur_ctx, rule);
+    if (rc == IB_EEXIST) {
+        ib_cfg_log_notice(cp, "Not overwriting existing rule");
+        rc = IB_OK;
+    }
+    else if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error registering rule marker: %s",
+                         ib_status_to_string(rc));
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
  * @brief Parse an Action directive.
  * @details Register an Action directive to the engine.
  * @param[in,out] cp Configuration parser that contains the engine being
@@ -1591,6 +1687,12 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
     IB_DIRMAP_INIT_LIST(
         "RuleExt",
         parse_ruleext_params,
+        NULL
+    ),
+
+    IB_DIRMAP_INIT_LIST(
+        "RuleMarker",
+        parse_rulemarker_params,
         NULL
     ),
 
