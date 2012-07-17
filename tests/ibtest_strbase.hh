@@ -120,7 +120,7 @@ public:
         m_mpool = NULL;
     }
 
-    typedef enum { TYPE_NUL, TYPE_EX } test_type_t;
+    typedef enum { TYPE_NUL, TYPE_EX, TYPE_EX_TO_STR } test_type_t;
 
     virtual const char *TestName(
         ib_strop_t strop,
@@ -160,6 +160,32 @@ public:
         return IB_ENOTIMPL;
     }
 
+    virtual ib_status_t ExecCopyNul(
+        const char *data_in,
+        char **data_out,
+        ib_flags_t &result)
+    {
+        return IB_ENOTIMPL;
+    }
+
+    virtual ib_status_t ExecCopyEx(
+        const uint8_t *data_in,
+        size_t dlen_in,
+        uint8_t **data_out,
+        size_t &dlen_out,
+        ib_flags_t &result)
+    {
+        return IB_ENOTIMPL;
+    }
+
+    virtual ib_status_t ExecCopyExToStr(
+        const uint8_t *data_in,
+        size_t dlen_in,
+        char **data_out,
+        ib_flags_t &result)
+    {
+        return IB_ENOTIMPL;
+    }
 
     void RunTest(const char *in,
                  const char *out = NULL)
@@ -173,6 +199,9 @@ public:
         RunTestInplaceEx(input, expected);
         RunTestCowNul(input, expected);
         RunTestCowEx(input, expected);
+        RunTestCopyNul(input, expected);
+        RunTestCopyEx(input, expected);
+        RunTestCopyExToStr(input, expected);
     }
 
     void RunTest(const uint8_t *in, size_t inlen,
@@ -186,6 +215,15 @@ public:
         TextBuf expected(out, outlen);
         RunTestInplaceEx(input, expected);
         RunTestCowEx(input, expected);
+    }
+
+    void RunTest(const uint8_t *in, size_t inlen, const char *out)
+    {
+        TextBuf input(in, inlen);
+        TextBuf expected(out);
+        //RunTestCopyNul(input, expected);
+        //RunTestCopyEx(input, expected);
+        RunTestCopyExToStr(input, expected);
     }
 
 protected:
@@ -324,6 +362,72 @@ protected:
         ASSERT_EQ(IB_OK, rc) << name;
 
         TextBuf output(out, outlen);
+        CheckResult(name, input,
+                    expected,
+                    IB_STRFLAG_ALIAS,
+                    ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
+                    result, output);
+    }
+
+    void RunTestCopyNul(const TextBuf &input, const TextBuf &expected)
+    {
+        char *out;
+        ib_status_t rc;
+        ib_flags_t result;
+
+        rc = ExecCopyNul(input.GetStr(), &out, result);
+        if (rc == IB_ENOTIMPL) {
+            return;
+        }
+        const char *name = TestName(IB_STROP_COPY, TYPE_NUL);
+        ASSERT_EQ(IB_OK, rc) << name;
+
+        TextBuf output(out);
+        CheckResult(name, input,
+                    expected,
+                    IB_STRFLAG_ALIAS,
+                    ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
+                    result, output);
+    }
+
+    void RunTestCopyEx(const TextBuf &input, const TextBuf &expected)
+    {
+        size_t len = input.GetLen();
+        uint8_t *out;
+        ib_status_t rc;
+        size_t outlen;
+        ib_flags_t result;
+
+        rc = ExecCopyEx(input.GetUBuf(), len, &out, outlen, result);
+        if (rc == IB_ENOTIMPL) {
+            return;
+        }
+        const char *name = TestName(IB_STROP_COPY, TYPE_EX);
+        ASSERT_EQ(IB_OK, rc) << name;
+
+        TextBuf output(out, outlen);
+        CheckResult(name, input,
+                    expected,
+                    IB_STRFLAG_NEWBUF,
+                    ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
+                    result, output);
+    }
+
+    void RunTestCopyExToStr(const TextBuf &input, const TextBuf &expected)
+    {
+        ib_status_t rc;
+        size_t len = input.GetLen();
+        char *out;
+        ib_flags_t result;
+
+        rc = ExecCopyExToStr(input.GetUBuf(), len, &out, result);
+        if (rc == IB_ENOTIMPL) {
+            return;
+        }
+        const char *name = TestName(IB_STROP_COPY, TYPE_EX);
+        ASSERT_EQ(IB_OK, rc) << name;
+
+        TextBuf output(out);
         CheckResult(name, input,
                     expected,
                     IB_STRFLAG_ALIAS,
