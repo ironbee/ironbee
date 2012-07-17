@@ -605,7 +605,7 @@ static bool log_exec_flag_trace(const ib_rule_log_exec_t *log_exec)
 /**
  * Build action list buffer
  *
- * @param[in] act_list Action list
+ * @param[in] rslt Rule log result
  * @param[in,out] buf Buffer to fill (must be initialized with '\\0')
  * @param[in] bufsize of @a buf
  */

@@ -1517,8 +1517,10 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
  * @param[in] ib Engine
  * @param[in] rule Rule to execute
  * @param[in] tx Transaction
- * @param[in] header Parsed header
- * @param[in,out] rule_result Result of rule execution
+ * @param[in] value Value to pass to the operator
+ * @param[in] value_stack Value stack for logging
+ * @param[in] result Result from the operator
+ * @param[out] block_phase Block at end of the current phase?
  * @param[in,out] log_exec Rule execution log object
  *
  * @returns Status code
@@ -1628,7 +1630,7 @@ static ib_status_t execute_stream_operator(ib_engine_t *ib,
  * @param[in] rule Rule to execute
  * @param[in] tx Transaction
  * @param[in,out] txdata Transaction data
- * @param[in,out] result Result of rule execution
+ * @param[out] block_phase Block at end of this phase?
  * @param[in,out] log_exec Rule execution log object
  *
  * @returns Status code
@@ -1637,7 +1639,6 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
                                               ib_tx_t *tx,
                                               const ib_rule_t *rule,
                                               ib_txdata_t *txdata,
-                                              ib_num_t *result,
                                               bool *block_phase,
                                               ib_rule_log_exec_t *log_exec)
 {
@@ -1645,11 +1646,11 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     ib_status_t    rc = IB_OK;
     ib_field_t    *value = NULL;
     value_stack_t  value_stack;
+    ib_num_t       result = 0;
 
     assert(ib != NULL);
     assert(rule != NULL);
     assert(txdata != NULL);
-    assert(result != NULL);
     assert(rule->phase_meta->is_stream == true);
 
 
@@ -1678,7 +1679,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     value_stack_init(tx, &value_stack);
 
     rc = execute_stream_operator(ib, tx, rule, value, &value_stack,
-                                 result, block_phase, log_exec);
+                                 &result, block_phase, log_exec);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1690,7 +1691,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
  * @param[in] rule Rule to execute
  * @param[in] tx Transaction
  * @param[in] header Parsed header
- * @param[in,out] rule_result Result of rule execution
+ * @param[out] block_phase Block at end of this phase?
  * @param[in,out] log_exec Rule execution log object
  *
  * @returns Status code
@@ -1699,7 +1700,6 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
                                               ib_tx_t *tx,
                                               const ib_rule_t *rule,
                                               ib_parsed_header_t *header,
-                                              ib_num_t *rule_result,
                                               bool *block_phase,
                                               ib_rule_log_exec_t *log_exec)
 {
@@ -1708,11 +1708,11 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
     ib_field_t          *value;
     ib_parsed_name_value_pair_list_t *nvpair;
     value_stack_t        value_stack;
+    ib_num_t             rule_result = 0;
 
     assert(ib != NULL);
     assert(rule != NULL);
     assert(header != NULL);
-    assert(rule_result != NULL);
     assert(rule->phase_meta->is_stream == true);
 
     /* Initialize the value stack */
@@ -1725,7 +1725,6 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
      * returns an error.  This needs further discussion to determine what the
      * correct behavior should be.
      */
-    *rule_result = 0;
     for (nvpair = header;  nvpair != NULL;  nvpair = nvpair->next) {
         ib_num_t result = 0;
 
@@ -1755,11 +1754,11 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
 
         /* Store the result */
         if (result != 0) {
-            *rule_result = result;
+            rule_result = result;
         }
     }
     ib_log_debug3_tx(tx, "Operator \"%s\" => %" PRId64,
-                     rule->opinst->op->name, *rule_result);
+                     rule->opinst->op->name, rule_result);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1845,7 +1844,6 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         const ib_rule_ctx_data_t *ctx_rule =
             (const ib_rule_ctx_data_t *)node->data;
         const ib_rule_t    *rule;
-        ib_num_t            result = 0;
         ib_status_t         rc = IB_OK;
         ib_status_t         trc;
         ib_rule_log_exec_t *log_exec = NULL;
@@ -1880,11 +1878,11 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
          */
         if (txdata != NULL) {
             rc = execute_stream_txdata_rule(ib, tx, rule, txdata,
-                                            &result, &block_phase, log_exec);
+                                            &block_phase, log_exec);
         }
         else if (header != NULL) {
             rc = execute_stream_header_rule(ib, tx, rule, header,
-                                            &result, &block_phase, log_exec);
+                                            &block_phase, log_exec);
         }
         if (rc != IB_OK) {
             ib_rule_log_error(tx, rule, NULL, NULL,
