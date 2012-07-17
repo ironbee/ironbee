@@ -473,6 +473,17 @@ else
     AC_MSG_RESULT([yes, $abs_top_srcdir]) 
 fi
 
+dnl Check for out of tree builds
+AC_MSG_CHECKING([for out of tree build])
+if test "x$srcdir" != "x." ; then
+   AC_MSG_RESULT([yes]);
+   out_of_tree=yes
+else
+   AC_MSG_RESULT([no]);
+   out_of_tree=no
+fi
+AM_CONDITIONAL([OUT_OF_TREE],[test "$out_of_tree" = "yes"])
+
 dnl Substitutions
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(CONFIG_MACRO_DIR)
