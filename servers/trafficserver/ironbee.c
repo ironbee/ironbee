@@ -1062,20 +1062,6 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     TSDebug("ironbee", "process_hdr: notifying header finished");
     rv = (*ibd->ib_notify_header_finished)(ironbee, data->tx);
 
-    /* Add the ironbee site id to an internal header. */
-    site = ib_context_site_get(data->tx->ctx);
-
-    rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
-    if (rv != TS_SUCCESS) {
-        TSError("Failed to add @IB-SITE-ID MIME header field");
-    }
-    rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
-                               "@IB-SITE-ID", 11);
-    rv = TSMimeHdrFieldValueStringSet(bufp, hdr_loc, field_loc, -1,
-                                      site->id_str, strlen(site->id_str));
-    rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
-    TSHandleMLocRelease(bufp, hdr_loc, field_loc);
-
     /* Now manipulate header as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
         if (hdr->dir != ibd->dir)
@@ -1133,6 +1119,20 @@ add_hdr:
                 break;
         }
     }
+
+    /* Add the ironbee site id to an internal header. */
+    site = ib_context_site_get(data->tx->ctx);
+
+    rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
+    if (rv != TS_SUCCESS) {
+        TSError("Failed to add @IB-SITE-ID MIME header field");
+    }
+    rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
+                               "@IB-SITE-ID", 11);
+    rv = TSMimeHdrFieldValueStringSet(bufp, hdr_loc, field_loc, -1,
+                                      site->id_str, strlen(site->id_str));
+    rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
+    TSHandleMLocRelease(bufp, hdr_loc, field_loc);
 
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     TSIOBufferReaderFree(readerp);
