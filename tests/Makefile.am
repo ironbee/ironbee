@@ -143,7 +143,7 @@ test_util_uuid_LDADD = $(MODULE_TEST_LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIB
 test_util_ahocorasick_SOURCES = test_util_ahocorasick.cc test_main.cc
 
 test_util_mpool_SOURCES = test_util_mpool.cc test_main.cc
-test_util_mpool_LDADD = $(LDADD) -lboost_thread-mt
+test_util_mpool_LDADD = $(LDADD) -lboost_thread-mt -lboost_system
 
 test_engine_SOURCES = test_engine.cc test_main.cc \
                       test_parsed_content.cc \
