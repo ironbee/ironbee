@@ -65,6 +65,7 @@ typedef enum {
 } ib_hdr_outcome;
 #define IB_HDR_OUTCOME_IS_HTTP(outcome,data) \
     (outcome == HDR_HTTP_STATUS && (data)->status >= 200 && (data)->status < 600)
+#define IB_HTTP_CODE(num) ((num) >= 200 && (num) < 600)
 
 typedef struct {
     ib_conn_t *iconn;
@@ -85,6 +86,11 @@ typedef struct {
     TSIOBufferReader output_reader;
     char *buf;
     unsigned int buflen;
+    /* Nobuf - no buffering
+     * Discard - transmission aborted, discard remaining data
+     * buffer - buffer everything until EOS or abortedby error
+     */
+    enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER } buffering;
 } ib_filter_ctx;
 
 #define IBD_REQ IB_SERVER_REQUEST
@@ -440,9 +446,8 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
     char *bufp = NULL;
 
     TSDebug("ironbee", "Entering process_data()");
-    /* Get the output (downstream) vconnection where we'll write data to. */
+//    enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER } buffering = BUFFER;
 
-    output_conn = TSTransformOutputVConnGet(contp);
 
     /* Get the write VIO for the write operation that was performed on
      * ourself. This VIO contains the buffer that we are to read from
@@ -453,13 +458,36 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
     input_vio = TSVConnWriteVIOGet(contp);
 
     data = TSContDataGet(contp);
+    if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
+                                        * so we discard all this data
+                                        */
+        ibd->data->buffering = IOBUF_DISCARD;
+    }
+
     if (!ibd->data->output_buffer) {
         first_time = 1;
 
         ibd->data->output_buffer = TSIOBufferCreate();
         ibd->data->output_reader = TSIOBufferReaderAlloc(ibd->data->output_buffer);
         TSDebug("ironbee", "\tWriting %"PRId64" bytes on VConn", TSVIONBytesGet(input_vio));
-        ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, INT64_MAX);
+
+        /* Is buffering configured? */
+        if (!IB_HTTP_CODE(data->status)) {
+            ib_num_t num;
+            const char *word = ibd->ibd->dir == IBD_REQ ? "buffer_req" : "buffer_res";
+            ib_status_t rc = ib_context_get(data->tx->ctx, word,
+                                            ib_ftype_num_out(&num), NULL);
+            if (rc != IB_OK) {
+                TSError ("Error determining buffering configuration");
+            }
+            ibd->data->buffering = (num == 0) ? IOBUF_NOBUF : IOBUF_BUFFER;
+        }
+
+        if (ibd->data->buffering == IOBUF_NOBUF) {
+            /* Get the output (downstream) vconnection where we'll write data to. */
+            output_conn = TSTransformOutputVConnGet(contp);
+            ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, INT64_MAX);
+        }
     }
     if (ibd->data->buf) {
         /* this is the second call to us, and we have data buffered.
@@ -468,11 +496,16 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         ib_txdata_t itxdata;
         itxdata.data = (uint8_t *)ibd->data->buf;
         itxdata.dlen = ibd->data->buflen;
-        TSDebug("ironbee", "process_data: calling ib_state_notify_%s_body() %s:%d", ((ibd->ibd->dir == IBD_REQ)?"request":"response"), __FILE__, __LINE__);
+        TSDebug("ironbee", "process_data: calling ib_state_notify_%s_body() %s:%d", ibd->ibd->word, __FILE__, __LINE__);
         (*ibd->ibd->ib_notify_body)(ironbee, data->tx, &itxdata);
         TSfree(ibd->data->buf);
         ibd->data->buf = NULL;
         ibd->data->buflen = 0;
+        if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
+                                            * so we discard all this data
+                                            */
+            ibd->data->buffering = IOBUF_DISCARD;
+        }
     }
 
     /* test for input data */
@@ -480,11 +513,20 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
 
     if (!buf_test) {
         TSDebug("ironbee", "No more data, finishing");
-        TSVIONBytesSet(ibd->data->output_vio, TSVIONDoneGet(input_vio));
-        TSVIOReenable(ibd->data->output_vio);
-        ibd->data->output_buffer = NULL;
-        ibd->data->output_reader = NULL;
-        ibd->data->output_vio = NULL;
+        if (ibd->data->buffering != IOBUF_DISCARD) {
+            if (ibd->data->output_vio == NULL) {
+                /* Get the output (downstream) vconnection where we'll write data to. */
+                output_conn = TSTransformOutputVConnGet(contp);
+                ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, TSIOBufferReaderAvail(ibd->data->output_reader));
+            }
+            else {
+                TSVIONBytesSet(ibd->data->output_vio, TSVIONDoneGet(input_vio));
+            }
+            TSVIOReenable(ibd->data->output_vio);
+        }
+        //ibd->data->output_buffer = NULL;
+        //ibd->data->output_reader = NULL;
+        //ibd->data->output_vio = NULL;
         return;
     }
 
@@ -509,7 +551,12 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         if (towrite > 0) {
             int btowrite = towrite;
             /* Copy the data from the read buffer to the output buffer. */
-            TSIOBufferCopy(TSVIOBufferGet(ibd->data->output_vio), TSVIOReaderGet(input_vio), towrite, 0);
+            if (ibd->data->buffering == IOBUF_NOBUF) {
+                TSIOBufferCopy(TSVIOBufferGet(ibd->data->output_vio), TSVIOReaderGet(input_vio), towrite, 0);
+            }
+            else if (ibd->data->buffering != IOBUF_DISCARD) {
+                TSIOBufferCopy(ibd->data->output_buffer, TSVIOReaderGet(input_vio), towrite, 0);
+            }
 
             /* first time through, we have to buffer the data until
              * after the headers have been sent.  Ugh!
@@ -540,6 +587,11 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                     TSDebug("ironbee", "process_data: calling ib_state_notify_%s_body() %s:%d", ((ibd->ibd->dir == IBD_REQ)?"request":"response"), __FILE__, __LINE__);
                     (*ibd->ibd->ib_notify_body)(ironbee, data->tx,
                                                 (ilength!=0) ? &itxdata : NULL);
+                    if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
+                                                        * so we discard all this data
+                                                        */
+                        ibd->data->buffering = IOBUF_DISCARD;
+                    }
                 }
 
                 /* and mark it as all consumed */
@@ -560,7 +612,9 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
              * the output connection and allow it to consume data from the
              * output buffer.
              */
-            TSVIOReenable(ibd->data->output_vio);
+            if (ibd->data->buffering == IOBUF_NOBUF) {
+                TSVIOReenable(ibd->data->output_vio);
+            }
 
             /* Call back the input VIO continuation to let it know that we
              * are ready for more data.
@@ -575,8 +629,19 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
          * is done reading. We then re-enable the output connection so
          * that it can consume the data we just gave it.
          */
-        TSVIONBytesSet(ibd->data->output_vio, TSVIONDoneGet(input_vio));
-        TSVIOReenable(ibd->data->output_vio);
+        if (ibd->data->buffering != IOBUF_DISCARD) {
+            if (ibd->data->output_vio == NULL) {
+                /* Get the output (downstream) vconnection where we'll write data to. */
+                output_conn = TSTransformOutputVConnGet(contp);
+                ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, TSIOBufferReaderAvail(ibd->data->output_reader));
+            }
+            else {
+                TSVIONBytesSet(ibd->data->output_vio, TSVIONDoneGet(input_vio));
+            }
+            TSVIOReenable(ibd->data->output_vio);
+        }
+        //TSVIONBytesSet(ibd->data->output_vio, TSVIONDoneGet(input_vio));
+        //TSVIOReenable(ibd->data->output_vio);
 
         /* Call back the input VIO continuation to let it know that we
          * have completed the write operation.
@@ -1192,13 +1257,15 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 }
             }
 
-            /* hook to examine output headers */
-            // FIXME: I think this is now only used for error_response
-            /* Not sure why we can't do it right now, but it seems headers
-             * are not yet available.
-             * Can we use another case switch in this function?
+            /* If ironbee signalled an error while processing request body data,
+             * this is the first opportunity to divert to an errordoc
              */
-            //TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+            if (IB_HTTP_CODE(txndata->status)) {
+                TSDebug("ironbee", "HTTP code %d contp=%p", txndata->status, contp);
+                TSHttpTxnHookAdd(txnp, TS_HTTP_SEND_RESPONSE_HDR_HOOK, contp);
+                TSHttpTxnReenable(txnp, TS_EVENT_HTTP_ERROR);
+                break;
+            }
 
             /* hook an output filter to watch data */
             connp = TSTransformCreate(out_data_event, txnp);
