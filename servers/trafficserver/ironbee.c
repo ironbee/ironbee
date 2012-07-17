@@ -1027,6 +1027,9 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "advisory");
     }
 
+    /* Add internal header for effective IP address */
+    add_header_field(bufp, hdr_loc, "@IB-EFFECTIVE-IP", data->tx->er_ipstr);
+
     /* Now manipulate header as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
         if (hdr->dir != ibd->dir)
