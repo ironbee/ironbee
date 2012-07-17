@@ -87,16 +87,18 @@ TEST_EXTRAS = \
        test_module_rules_lua.lua
 
 EXTRA_DIST = \
-       gtest \
-       base_fixture.h \
-       $(TEST_EXTRAS)
+	gtest \
+	base_fixture.h \
+	$(TEST_EXTRAS)
 
+if OUT_OF_TREE
 BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
+endif
 
 $(abs_builddir)/%: $(srcdir)/%
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
-	cp -f $< $@; \
-    fi
+	  cp -f $< $@; \
+	fi
 
 test_util_hex_escape_SOURCES = test_util_hex_escape.cc \
                                test_gtest.cc \
