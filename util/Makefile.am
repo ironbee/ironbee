@@ -10,6 +10,7 @@ libibutil_la_SOURCES = lock.c util.c logformat.c \
                        string.c strlower.c strtrim.c strwspc.c \
                        path.c \
                        decode.c \
+                       escape.c \
                        modsec_compat.c \
                        clock.c types.c
 
