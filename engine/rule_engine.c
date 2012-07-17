@@ -215,7 +215,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
 };
 
 /**
- * Simple stack of values for creating FIELD, FIELD_NAME and 
+ * Simple stack of values for creating FIELD, FIELD_NAME and
  * FIELD_NAME_FULL fields
  */
 typedef struct {
@@ -1614,7 +1614,7 @@ static ib_status_t execute_stream_operator(ib_engine_t *ib,
                           "Error executing action for rule: %s",
                           ib_status_to_string(rc));
     }
-    
+
     ib_rule_log_exec(log_exec);
     clear_target_fields(ib, tx);
 
