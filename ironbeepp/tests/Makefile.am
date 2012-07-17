@@ -17,6 +17,9 @@ include $(top_srcdir)/build/tests.mk
 
 TESTS_ENVIRONMENT = ./gtest_executor.sh
 
+BUILT_SOURCES= \
+    $(abs_builddir)/gtest_executor.sh
+
 $(abs_builddir)/%: $(srcdir)/%
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
 	cp -f $< $@; \
@@ -50,7 +53,7 @@ check_PROGRAMS = \
     test_ironbee \
     test_server \
     test_engine
-
+    
 TESTS=$(check_PROGRAMS)
 
 test_catch_SOURCES                = test_catch.cpp
