@@ -761,6 +761,35 @@
         <programlisting>RuleExt lua:/path/to/rule.lua phase:REQUEST</programlisting>
     </section>
     <section>
+        <title>RuleMarker</title>
+        <para><emphasis role="bold">Description:</emphasis> Creates a rule marker (plcaeholder)
+            which will not be executed, but instead should be overridden. The idea is that rule sets
+            can include placeholders for optional custom rules which can be overridden, but maintain
+            execution order.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>RuleMarker id:<replaceable>ID</replaceable> phase:<replaceable>PHASE</replaceable></literal>
+        </para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Module:</emphasis> rules</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.5</para>
+        <para>To mark and later replace a rule:</para>
+        <programlisting>Rule ARGS @rx foo id:1 rev:1 phase:REQUEST
+RuleMarker id:2 phase:REQUEST
+Rule #MY_VALUE @gt 0 id:3 rev:1 phase:REQUEST setRequestHeader:X-Foo:%{MY_VALUE}
+
+&lt;Site test>
+    Hostname *
+
+    Rule &amp;ARGS @gt 5 id:2 phase:REQUEST setvar:MY_VALUE=5
+    RuleEnable all
+&lt;/Site></programlisting>
+        <para>In the above example, rule id:2 in the main context would be replaced by the rule id:2
+            in the site context, then the rules would execute id:1, id:2 and id:3.  If Rule id:2 was
+            not replaced in the site context, then rules would execute id:1 then id:3 as id:2 is
+            only a marker (placeholder).</para>
+    </section>
+    <section>
         <title>SensorId</title>
         <para><emphasis role="bold">Description:</emphasis> Unique sensor identifier.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
