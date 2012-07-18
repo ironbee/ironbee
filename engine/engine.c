@@ -61,6 +61,7 @@ const ib_default_string_t ib_default_string = {
     "/",         /* uri_root_path */
 };
 
+const char *default_auditlog_index = "ironbee-index.log";
 
 /* -- Internal Structures -- */
 
@@ -1580,7 +1581,15 @@ ib_status_t ib_context_create(ib_context_t **pctx,
         goto failed;
     }
 
-    rc = ib_context_set_auditlog_index(ctx, "ironbee-index.log");
+    if (parent != NULL) {
+        rc = ib_context_set_auditlog_index(
+            ctx,
+            parent->auditlog->index_enabled,
+            parent->auditlog->index_default ? NULL : parent->auditlog->index);
+    }
+    else {
+        rc = ib_context_set_auditlog_index(ctx, true, NULL);
+    }
     if (rc != IB_OK) {
         goto failed;
     }
@@ -1654,6 +1663,7 @@ ib_status_t ib_context_open(ib_context_t *ctx)
 }
 
 ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
+                                          bool enable,
                                           const char *idx)
 {
     IB_FTRACE_INIT();
@@ -1683,7 +1693,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
         ctx->auditlog->owner = ctx;
 
         /* Set index_fp_lock. */
-        if (idx != NULL) {
+        if (enable == true) {
             rc = ib_lock_init(&ctx->auditlog->index_fp_lock);
             if (rc != IB_OK) {
                 ib_log_debug2(ctx->ib,
@@ -1694,10 +1704,18 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
             }
 
             /* Set index. */
+            if (idx == NULL) {
+                ctx->auditlog->index_default = true;
+                idx = default_auditlog_index;
+            }
+            else {
+                ctx->auditlog->index_default = false;
+            }
             ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
             if (ctx->auditlog->index == NULL) {
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
+            ctx->auditlog->index_enabled = true;
         }
         else {
             ctx->auditlog->index = NULL;
@@ -1707,7 +1725,9 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
     /* Else the auditlog struct is initialized and owned by this ctx. */
     else {
         bool unlock = false;
-        if (ctx->auditlog->index != NULL) {
+        if (ctx->auditlog->index_enabled == true) {
+            const char *cidx = ctx->auditlog->index; /* Current index */
+
             rc = ib_lock_lock(&ctx->auditlog->index_fp_lock);
             if (rc != IB_OK) {
                 ib_log_debug2(ctx->ib, "Failed lock to audit index %s",
@@ -1717,7 +1737,11 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
             unlock = true;
 
             /* Check that we aren't re-setting a value in the same context. */
-            if ( (idx != NULL) && (strcmp(idx, ctx->auditlog->index) == 0) ) {
+            if ( (enable && ctx->auditlog->index_enabled) &&
+                 ( ((idx == NULL) && ctx->auditlog->index_default) ||
+                   ((idx != NULL) && (cidx != NULL) &&
+                    (strcmp(idx, cidx) == 0)) ) )
+            {
                 if (unlock) {
                     ib_lock_unlock(&ctx->auditlog->index_fp_lock);
                 }
@@ -1730,7 +1754,19 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
         }
 
         /* Replace the old index value with the new index value. */
-        if (idx != NULL) {
+        if (enable == false) {
+            ctx->auditlog->index_enabled = false;
+            ctx->auditlog->index_default = false;
+            ctx->auditlog->index = NULL;
+        }
+        else {
+            if (idx == NULL) {
+                idx = default_auditlog_index;
+                ctx->auditlog->index_default = true;
+            }
+            else {
+                ctx->auditlog->index_default = false;
+            }
             ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
             if (ctx->auditlog->index == NULL) {
                 if (unlock) {
@@ -1738,9 +1774,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
                 }
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
-        }
-        else {
-            ctx->auditlog->index = NULL;
+            ctx->auditlog->index_enabled = true;
         }
 
         /* Close the audit log file if it is open. */

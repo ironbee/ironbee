@@ -48,11 +48,13 @@
  * index.
  */
 typedef struct ib_auditlog_cfg_t ib_auditlog_cfg_t;
- struct ib_auditlog_cfg_t {
-    char *index;            /**< Index file. */
-    FILE *index_fp;         /**< Index file pointer. */
-    ib_lock_t index_fp_lock; /**< Lock to protect index_fp. */
-    ib_context_t *owner;    /**< Owning context. Only owner should edit. */
+struct ib_auditlog_cfg_t {
+    bool          index_enabled; /**< Index file enabled? */
+    bool          index_default; /**< Index file is default? */
+    char         *index;         /**< Index file name. */
+    FILE         *index_fp;      /**< Index file pointer. */
+    ib_lock_t     index_fp_lock; /**< Lock to protect index_fp. */
+    ib_context_t *owner;         /**< Owning context. Only owner should edit. */
 };
 
 /**

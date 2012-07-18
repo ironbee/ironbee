@@ -805,7 +805,8 @@ static IB_PROVIDER_API_TYPE(logger) logger_api = {
 static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_IFACE_TYPE(audit) *iface = (IB_PROVIDER_IFACE_TYPE(audit) *)lpi->pr->iface;
+    IB_PROVIDER_IFACE_TYPE(audit) *iface =
+        (IB_PROVIDER_IFACE_TYPE(audit) *)lpi->pr->iface;
     ib_auditlog_t *log = (ib_auditlog_t *)lpi->data;
     ib_list_node_t *node;
     ib_status_t rc;
@@ -3654,12 +3655,11 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
         /* "None" means do not use the index file at all. */
         if (strcasecmp("None", p1_unescaped) == 0) {
-            rc = ib_context_set_auditlog_index(ctx, NULL);
+            rc = ib_context_set_auditlog_index(ctx, false, NULL);
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        rc = ib_context_set_auditlog_index(ctx, p1_unescaped);
-
+        rc = ib_context_set_auditlog_index(ctx, true, p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogIndexFormat", name) == 0) {
