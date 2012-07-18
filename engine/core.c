@@ -1790,6 +1790,7 @@ static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
 static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
                                          const uint8_t **chunk)
 {
+    IB_FTRACE_INIT();
     ib_engine_t *ib = part->log->ib;
     ib_field_t *f;
     uint8_t *rec;
@@ -1949,6 +1950,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
                                             const uint8_t **chunk)
 {
+    IB_FTRACE_INIT();
     ib_engine_t *ib = part->log->ib;
     ib_field_t *f;
     uint8_t *rec;
@@ -2090,6 +2092,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                                           const uint8_t **chunk)
 {
+    IB_FTRACE_INIT();
     ib_engine_t *ib = part->log->ib;
     ib_list_t *list = (ib_list_t *)part->part_data;
     void *list_first;
