@@ -2134,7 +2134,8 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         /* Turn tag list into JSON list, limiting the size. */
         char tags[128] = "\0";
         char fields[128] = "\0";
-        const char *logdata;
+        const char *logdata = "";
+        const char *ruleid = "-";
 
         if (e->tags != NULL) {
             ib_list_node_t *tnode;
@@ -2210,10 +2211,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             }
         }
 
-        if (e->data == NULL) {
-            logdata = "";
-        }
-        else {
+        if (e->data != NULL) {
             char *escaped;
             ib_status_t rc;
             ib_flags_t rslt;
@@ -2232,6 +2230,24 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                 escaped = (char *)"";
             }
             logdata = escaped;
+        }
+
+        if (e->rule_id != NULL) {
+            char *escaped;
+            ib_status_t rc;
+            ib_flags_t rslt;
+
+            rc = ib_string_escape_json(part->log->mp,
+                                       e->rule_id,
+                                       &escaped,
+                                       &rslt);
+            if (rc != IB_OK) {
+                ib_log_error_tx(part->log->tx,
+                                "Failed to escape rule ID \"%s\": %s",
+                                e->rule_id, ib_status_to_string(rc));
+                escaped = (char *)"";
+            }
+            ruleid = escaped;
         }
 
         ib_log_debug(ib, "TODO: Data escaping not implemented!");
@@ -2253,7 +2269,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         "    }",
                         (list_first == part->gen_data ? "" : ",\r\n"),
                         e->event_id,
-                        e->rule_id ? e->rule_id : "-",
+                        ruleid,
                         ib_logevent_type_name(e->type),
                         ib_logevent_action_name(e->rec_action),
                         ib_logevent_action_name(e->action),
