@@ -1740,6 +1740,7 @@ static ib_status_t logevent_api_write_events(ib_provider_inst_t *epi)
 static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
                                          const uint8_t **chunk)
 {
+    IB_FTRACE_INIT();
     ib_sdata_t *sdata;
     size_t dlen;
 
@@ -1750,7 +1751,7 @@ static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
         if (stream->slen == 0) {
             *chunk = NULL;
             part->gen_data = (void *)-1;
-            return 0;
+            IB_FTRACE_RET_SIZET(0);
         }
 
         sdata = (ib_sdata_t *)IB_LIST_FIRST(stream);
@@ -1765,11 +1766,11 @@ static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
             part->gen_data = (void *)-1;
         }
 
-        return dlen;
+        IB_FTRACE_RET_SIZET(dlen);
     }
     else if (part->gen_data == (void *)-1) {
         part->gen_data = NULL;
-        return 0;
+        IB_FTRACE_RET_SIZET(0);
     }
 
     sdata = (ib_sdata_t *)part->gen_data;
@@ -1784,7 +1785,7 @@ static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
         part->gen_data = (void *)-1;
     }
 
-    return dlen;
+    IB_FTRACE_RET_SIZET(dlen);
 }
 
 static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
@@ -1810,16 +1811,16 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
             ib_log_error(ib, "No data in audit log part: %s", part->name);
             *chunk = (const uint8_t *)"{}";
             part->gen_data = (void *)-1;
-            return strlen(*(const char **)chunk);
+            IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
         }
 
         *chunk = (const uint8_t *)"{\r\n";
         part->gen_data = ib_list_first(list);
-        return strlen(*(const char **)chunk);
+        IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
     }
     else if (part->gen_data == (void *)-1) {
         part->gen_data = NULL;
-        return 0;
+        IB_FTRACE_RET_SIZET(0);
     }
 
     f = (ib_field_t *)ib_list_node_data((ib_list_node_t *)part->gen_data);
@@ -1832,7 +1833,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
         /* Error. */
         if (rec == NULL) {
             *chunk = (const uint8_t *)"}";
-            return strlen(*(const char **)chunk);
+            IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
         }
 
         /* Next is used to determine if there is a trailing comma. */
@@ -1845,7 +1846,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
             const char *ns;
             rc = ib_field_value(f, ib_ftype_nulstr_out(&ns));
             if (rc != IB_OK) {
-                return 0;
+                IB_FTRACE_RET_SIZET(0);
             }
 
             rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
@@ -1860,7 +1861,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
             const ib_bytestr_t *bs;
             rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
             if (rc != IB_OK) {
-                return 0;
+                IB_FTRACE_RET_SIZET(0);
             }
 
             rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
@@ -1876,7 +1877,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
             ib_num_t n;
             rc = ib_field_value(f, ib_ftype_num_out(&n));
             if (rc != IB_OK) {
-                return 0;
+                IB_FTRACE_RET_SIZET(0);
             }
 
             rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
@@ -1892,7 +1893,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
             ib_unum_t u;
             rc = ib_field_value(f, ib_ftype_unum_out(&u));
             if (rc != IB_OK) {
-                return 0;
+                IB_FTRACE_RET_SIZET(0);
             }
 
             rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
@@ -1923,7 +1924,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
                          part->name, rlen);
             *chunk = (const uint8_t *)"\r\n";
             part->gen_data = (void *)-1;
-            return strlen(*(const char **)chunk);
+            IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
         }
 
         *chunk = rec;
@@ -1932,7 +1933,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
         ib_log_error(ib, "NULL field in part: %s", part->name);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = (void *)-1;
-        return strlen(*(const char **)chunk);
+        IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
     }
     part->gen_data = ib_list_node_next((ib_list_node_t *)part->gen_data);
 
@@ -1941,10 +1942,10 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
         size_t clen = strlen(*(const char **)chunk);
         (*(uint8_t **)chunk)[clen] = '}';
         part->gen_data = (void *)-1;
-        return clen + 1;
+        IB_FTRACE_RET_SIZET(clen + 1);
     }
 
-    return strlen(*(const char **)chunk);
+    IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
 }
 
 static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
@@ -1970,7 +1971,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
         if (ib_list_elements(list) == 0) {
             ib_log_error(ib, "No data in audit log part: %s", part->name);
             part->gen_data = NULL;
-            return 0;
+            IB_FTRACE_RET_SIZET(0);
         }
 
         /* First should be a request/response line. */
@@ -1982,7 +1983,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
             rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
             if (rc != IB_OK) {
-                return 0;
+                IB_FTRACE_RET_SIZET(0);
             }
 
             rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
@@ -1995,7 +1996,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
                              part->name, rlen);
                 *chunk = (const uint8_t *)"\r\n";
                 part->gen_data = (void *)-1;
-                return strlen(*(const char **)chunk);
+                IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
             }
 
             *chunk = rec;
@@ -2005,13 +2006,13 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
                 part->gen_data = (void *)-1;
             }
 
-            return strlen(*(const char **)chunk);
+            IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
         }
     }
     else if (part->gen_data == (void *)-1) {
         part->gen_data = NULL;
         *chunk = (const uint8_t *)"";
-        return 0;
+        IB_FTRACE_RET_SIZET(0);
     }
 
     /* Header Lines */
@@ -2020,13 +2021,13 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
         ib_log_error(ib, "NULL field in part: %s", part->name);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = (void *)-1;
-        return strlen(*(const char **)chunk);
+        IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
     }
 
     rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_HEADER_MAX_FIELD_LEN);
     if (rec == NULL) {
         *chunk = NULL;
-        return 0;
+        IB_FTRACE_RET_SIZET(0);
     }
 
     /// @todo Quote values
@@ -2036,7 +2037,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
         const char *s;
         rc = ib_field_value(f, ib_ftype_nulstr_out(&s));
         if (rc != IB_OK) {
-            return 0;
+            IB_FTRACE_RET_SIZET(0);
         }
 
         rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
@@ -2050,7 +2051,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
         const ib_bytestr_t *bs;
         rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
-            return 0;
+            IB_FTRACE_RET_SIZET(0);
         }
         rlen = snprintf((char *)rec, CORE_HEADER_MAX_FIELD_LEN,
                         "%" IB_BYTESTR_FMT ": "
@@ -2073,7 +2074,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
                      part->name, rlen);
         *chunk = (const uint8_t *)"\r\n";
         part->gen_data = (void *)-1;
-        return strlen(*(const char **)chunk);
+        IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
     }
 
     *chunk = rec;
@@ -2086,7 +2087,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
         part->gen_data = (void *)-1;
     }
 
-    return strlen(*(const char **)chunk);
+    IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
 }
 
 static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
@@ -2111,16 +2112,16 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             ib_log_error(ib, "No events in audit log");
             *chunk = (const uint8_t *)"{}";
             part->gen_data = (void *)-1;
-            return strlen(*(const char **)chunk);
+            IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
         }
 
         *chunk = (const uint8_t *)"{\r\n  \"events\": [\r\n";
         part->gen_data = ib_list_first(list);
-        return strlen(*(const char **)chunk);
+        IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
     }
     else if (part->gen_data == (void *)-1) {
         part->gen_data = NULL;
-        return 0;
+        IB_FTRACE_RET_SIZET(0);
     }
 
     /* Used to detect the first event. */
@@ -2183,7 +2184,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         /* Error. */
         if (rec == NULL) {
             *chunk = (const uint8_t *)"  ]\r\n}";
-            return strlen(*(const char **)chunk);
+            IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
         }
 
         if (e->fields != NULL) {
@@ -2203,7 +2204,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                     ib_log_error_tx(part->log->tx,
                                     "Failed to escape field name \"%s\": %s",
                                     field_name, ib_status_to_string(rc));
-                    IB_FTRACE_RET_STATUS(rc);
+                    escaped = (char *)"";
                 }
                 snprintf(fields, sizeof(fields), "\"%s\"", escaped);
             }
@@ -2228,7 +2229,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                                 "Failed to escape log data \"%.*s\": %s",
                                 (int)e->data_len, (const char *)e->data,
                                 ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
+                escaped = (char *)"";
             }
             logdata = escaped;
         }
@@ -2268,7 +2269,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             ib_log_error(ib, "Event too large to log: %zd", rlen);
             *chunk = (const uint8_t *)"    {}";
             part->gen_data = (void *)-1;
-            return strlen(*(const char **)chunk);
+            IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
         }
 
         *chunk = rec;
@@ -2277,7 +2278,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         ib_log_error(ib, "NULL event");
         *chunk = (const uint8_t *)"    {}";
         part->gen_data = (void *)-1;
-        return strlen(*(const char **)chunk);
+        IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
     }
     part->gen_data = ib_list_node_next((ib_list_node_t *)part->gen_data);
 
@@ -2293,13 +2294,13 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                 *chunk = (const uint8_t *)"    {}\r\n  ]\r\n}";
             }
             memcpy(*(uint8_t **)chunk + clen, "]}", 2);
-            return clen + 2;
+            IB_FTRACE_RET_SIZET(clen + 2);
         }
         memcpy(*(uint8_t **)chunk + clen, "\r\n  ]\r\n}", 8);
-        return clen + 8;
+        IB_FTRACE_RET_SIZET(clen + 8);
     }
 
-    return strlen(*(const char **)chunk);
+    IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
 }
 
 #define CORE_AUDITLOG_FORMAT "http-message/1"
