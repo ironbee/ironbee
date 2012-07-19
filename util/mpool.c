@@ -343,6 +343,10 @@ struct ib_mpool_t
      * Singly linked list of all child pools.
      **/
     ib_mpool_t *children;
+    /**
+     * End of children list.
+     **/
+    ib_mpool_t *children_end;
 
     /**
      * Lock for multithreading support.
@@ -361,17 +365,29 @@ struct ib_mpool_t
      **/
     ib_mpool_page_t         *tracks[IB_MPOOL_NUM_TRACKS];
     /**
+     * End of tracks.
+     **/
+    ib_mpool_page_t        *tracks_end[IB_MPOOL_NUM_TRACKS];
+    /**
      * Singly linked list of pointers page for large allocations.
      *
      * @sa ib_mpool_t
      **/
     ib_mpool_pointer_page_t *large_allocations;
     /**
+     * End of large allocations list.
+     **/
+    ib_mpool_pointer_page_t *large_allocations_end;
+    /**
      * Singly linked list of cleanup functions.
      *
      * @sa ib_mpool_t
      **/
     ib_mpool_cleanup_t      *cleanups;
+    /**
+     * End of cleanup list.
+     **/
+    ib_mpool_cleanup_t      *cleanups_end;
     /**
      * Singly linked list of free pages.
      *
@@ -545,31 +561,6 @@ ib_mpool_page_t *ib_mpool_acquire_page(
 }
 
 /**
- * Release a page.
- *
- * Pushes the page onto the free list.
- *
- * @param[in] mp    Memory pool that owns page.
- * @param[in] mpage Page to release.
- **/
-static
-void ib_mpool_release_page(
-    ib_mpool_t      *mp,
-    ib_mpool_page_t *mpage
-)
-{
-    IB_FTRACE_INIT();
-
-    assert(mp    != NULL);
-    assert(mpage != NULL);
-
-    mpage->next = mp->free_pages;
-    mp->free_pages = mpage;
-
-    IB_FTRACE_RET_VOID();
-}
-
-/**
  * Acquire a new pointer page.
  *
  * Pops a pointer page from the free list if available or allocates a new
@@ -602,31 +593,6 @@ ib_mpool_pointer_page_t *ib_mpool_acquire_pointer_page(
 }
 
 /**
- * Release a pointer page.
- *
- * Pushes the pointer page onto the free list.
- *
- * @param[in] mp    Memory pool that owns pointer page.
- * @param[in] ppage Pointer page to release.
- **/
-static
-void ib_mpool_release_pointer_page(
-    ib_mpool_t              *mp,
-    ib_mpool_pointer_page_t *ppage
-)
-{
-    IB_FTRACE_INIT();
-
-    assert(mp    != NULL);
-    assert(ppage != NULL);
-
-    ppage->next = mp->free_pointer_pages;
-    mp->free_pointer_pages = ppage;
-
-    IB_FTRACE_RET_VOID();
-}
-
-/**
  * Acquire a new cleanup node.
  *
  * Pops a cleanup node from the free list if available or allocates a new
@@ -656,31 +622,6 @@ ib_mpool_cleanup_t *ib_mpool_acquire_cleanup(
     }
 
     IB_FTRACE_RET_PTR(void, cleanup);
-}
-
-/**
- * Release a cleanup node.
- *
- * Pushes the cleanup node onto the free list.
- *
- * @param[in] mp      Memory pool that owns cleanup node.
- * @param[in] cleanup Cleanup node to release.
- **/
-static
-void ib_mpool_release_cleanup(
-    ib_mpool_t         *mp,
-    ib_mpool_cleanup_t *cleanup
-)
-{
-    IB_FTRACE_INIT();
-
-    assert(mp      != NULL);
-    assert(cleanup != NULL);
-
-    cleanup->next = mp->free_cleanups;
-    mp->free_cleanups = cleanup;
-
-    IB_FTRACE_RET_VOID();
 }
 
 /**@}*/
@@ -979,10 +920,13 @@ bool ib_mpool_debug_report_helper(
         mp->large_allocation_inuse);
     IMR_PRINTF("  next                   = %p\n",  mp->next);
     IMR_PRINTF("  children               = %p\n",  mp->children);
+    IMR_PRINTF("  children_end           = %p\n",  mp->children_end);
     IMR_PRINTF("  lock                   = %p\n",  &(mp->lock));
     IMR_PRINTF("  tracks                 = %p\n",  mp->tracks);
     IMR_PRINTF("  large_allocations      = %p\n",  mp->large_allocations);
+    IMR_PRINTF("  large_allocations_end  = %p\n",  mp->large_allocations_end);
     IMR_PRINTF("  cleanups               = %p\n",  mp->cleanups);
+    IMR_PRINTF("  cleanups_end           = %p\n",  mp->cleanups_end);
     IMR_PRINTF("  free_pages             = %p\n",  mp->free_pages);
     IMR_PRINTF("  free_pointer_pages     = %p\n",  mp->free_pointer_pages);
     IMR_PRINTF("  free_cleanups          = %p\n",  mp->free_cleanups);
@@ -1325,6 +1269,9 @@ ib_status_t ib_mpool_create_ex(
             goto failure;
         }
         mp->next = parent->children;
+        if (parent->children == NULL) {
+            parent->children_end = mp;
+        }
         parent->children = mp;
         ib_lock_unlock(&(parent->lock));
     }
@@ -1429,6 +1376,9 @@ void *ib_mpool_alloc(
             }
             mpage->next = mp->tracks[track_number];
             mpage->used = 0;
+            if (mp->tracks[track_number] == NULL) {
+                mp->tracks_end[track_number] = mpage;
+            }
             mp->tracks[track_number] = mpage;
         }
 
@@ -1456,6 +1406,9 @@ void *ib_mpool_alloc(
             );
             pointers->next = mp->large_allocations;
             pointers->next_pointer = 0;
+            if (mp->large_allocations == NULL) {
+                mp->large_allocations_end = pointers;
+            }
             mp->large_allocations = pointers;
         }
 
@@ -1490,21 +1443,30 @@ void ib_mpool_clear(
     ib_mpool_free_large_allocations(mp);
 
     for (size_t track_num = 0; track_num < IB_MPOOL_NUM_TRACKS; ++track_num) {
-        IB_MPOOL_FOREACH(ib_mpool_page_t, mpage, mp->tracks[track_num]) {
-            ib_mpool_release_page(mp, mpage);
+        if (mp->tracks[track_num] != NULL) {
+            assert(mp->tracks_end[track_num] != NULL);
+            mp->tracks_end[track_num]->next = mp->free_pages;
+            mp->free_pages                  = mp->tracks[track_num];
+            mp->tracks[track_num]           = NULL;
+            mp->tracks_end[track_num]       = NULL;
         }
-        mp->tracks[track_num] = NULL;
     }
 
-    IB_MPOOL_FOREACH(ib_mpool_pointer_page_t, ppage, mp->large_allocations) {
-        ib_mpool_release_pointer_page(mp, ppage);
+    if (mp->large_allocations != NULL) {
+        assert(mp->large_allocations_end != NULL);
+        mp->large_allocations_end->next = mp->free_pointer_pages;
+        mp->free_pointer_pages          = mp->large_allocations;
+        mp->large_allocations           = NULL;
+        mp->large_allocations_end       = NULL;
     }
-    mp->large_allocations = NULL;
 
-    IB_MPOOL_FOREACH(ib_mpool_cleanup_t, cleanup, mp->cleanups) {
-        ib_mpool_release_cleanup(mp, cleanup);
+    if (mp->cleanups != NULL) {
+        assert(mp->cleanups_end != NULL);
+        mp->cleanups_end->next = mp->free_cleanups;
+        mp->free_cleanups      = mp->cleanups;
+        mp->cleanups           = NULL;
+        mp->cleanups_end       = NULL;
     }
-    mp->cleanups = NULL;
 
     mp->inuse                  = 0;
     mp->large_allocation_inuse = 0;
@@ -1573,6 +1535,9 @@ void ib_mpool_destroy(
         assert(*my_handle != NULL);
 
         *my_handle = mp->next;
+        if (mp->parent->children == NULL) {
+            mp->parent->children_end = NULL;
+        }
 
         ib_lock_unlock(&(mp->parent->lock));
     }
@@ -1608,6 +1573,9 @@ ib_status_t ib_mpool_cleanup_register(
     cleanup->function      = cleanup_function;
     cleanup->function_data = function_data;
 
+    if (mp->cleanups == NULL) {
+        mp->cleanups_end = cleanup;
+    }
     mp->cleanups = cleanup;
 
     IB_FTRACE_RET_STATUS(IB_OK);
