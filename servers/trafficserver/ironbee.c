@@ -1075,7 +1075,9 @@ add_hdr:
 
     /* Add the ironbee site id to an internal header. */
     site = ib_context_site_get(data->tx->ctx);
-    add_header_field(bufp, hdr_loc, "@IB-SITE-ID", site->id_str);
+    if (site != NULL) {
+        add_header_field(bufp, hdr_loc, "@IB-SITE-ID", site->id_str);
+    }
 
     /* Add internal header if we blocked the transaction */
     if ((data->tx->flags & (IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE)) != 0) {
