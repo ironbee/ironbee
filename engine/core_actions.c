@@ -317,9 +317,9 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* Simple checks; params should look like '<name>=<value>' */
+    /* Simple checks; params should look like '<name>=[<value>]' */
     eq = strchr(params, '=');
-    if ( (eq == NULL) || (eq == params) || (*(eq+1) == '\0') ) {
+    if ( (eq == NULL) || (eq == params) ) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -594,12 +594,18 @@ static ib_status_t act_setvar_execute(void *data,
         }
     }
     else if (svdata->type == IB_FTYPE_BYTESTR) {
-        expanded = ib_mpool_memdup(tx->mp, bsdata, bslen);
-        if (expanded == NULL) {
-            ib_log_error_tx(tx,
-                         "setvar: Failed to copy string \"%.*s\"",
-                         (int)bslen, bsdata);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        if (bsdata == NULL) {
+            assert(bslen == 0);
+            expanded = ib_mpool_alloc(tx->mp, 0);
+        }
+        else {
+            expanded = ib_mpool_memdup(tx->mp, bsdata, bslen);
+            if (expanded == NULL) {
+                ib_log_error_tx(tx,
+                                "setvar: Failed to copy string \"%.*s\"",
+                                (int)bslen, bsdata);
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
         }
         exlen = bslen;
     }
