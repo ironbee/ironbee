@@ -56,7 +56,7 @@ extern "C" {
  * @param[out] result Result flags (IB_STRFLAG_xx)
  *
  * @returns IB_OK if successful
- *          IB_EALLOC if allocation errors occur 
+ *          IB_EALLOC if allocation errors occur
  */
 ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
                                      const uint8_t *data_in,
@@ -75,7 +75,7 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
  * @param[out] result Result flags (IB_STRFLAG_xx)
  *
  * @returns IB_OK if successful
- *          IB_EALLOC if allocation errors occur 
+ *          IB_EALLOC if allocation errors occur
  */
 ib_status_t ib_string_escape_json(ib_mpool_t *mp,
                                   const char *data_in,

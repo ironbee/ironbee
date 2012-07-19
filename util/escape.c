@@ -115,7 +115,7 @@ allocate:
         case '\t':
             size = 2;
             ostr = "\\t";
-            break; 
+            break;
 
         case '\0':
             size = 6;
