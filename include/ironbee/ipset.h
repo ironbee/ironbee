@@ -285,7 +285,7 @@ ib_status_t ib_ipset4_init(
  * Query @a set for @a ip.
  *
  * Query if @a ip is not contained in any negative networks of @a set and
- * is contained in at elast one positive network of @a set.
+ * is contained in at least one positive network of @a set.
  *
  * All entries can be retrieved by treating [@a *out_general_entry, @a
  * *out_specific_entry] as an array of ib_ipset4_entry_t.

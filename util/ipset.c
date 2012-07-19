@@ -101,7 +101,7 @@ ib_ipset6_ip_t ib_ipset6_canonical(
 }
 
 /**
- * True iff @a a_net is a prefix of @a b_net (v4 verison).
+ * True iff @a a_net is a prefix of @a b_net (v4 version).
  *
  * @param[in] a_net Network to check if prefix.
  * @param[in] b_net Network to check if prefix of.
@@ -122,7 +122,7 @@ bool ib_ipset4_is_prefix(
 }
 
 /**
- * True iff @a a_net is a prefix of @a b_net (v6 verison).
+ * True iff @a a_net is a prefix of @a b_net (v6 version).
  *
  * @param[in] a_net Network to check if prefix.
  * @param[in] b_net Network to check if prefix of.
