@@ -1015,21 +1015,6 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     TSDebug("ironbee", "process_hdr: notifying header finished");
     rv = (*ibd->ib_notify_header_finished)(ironbee, data->tx);
 
-    /* Add the ironbee site id to an internal header. */
-    site = ib_context_site_get(data->tx->ctx);
-    add_header_field(bufp, hdr_loc, "@IB-SITE-ID", site->id_str);
-
-    /* Add internal header if we blocked the transaction */
-    if ((data->tx->flags & IB_TX_BLOCK_PHASE)
-        || (data->tx->flags & IB_TX_BLOCK_IMMEDIATE) ) {
-        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "blocked");
-    } else if (data->tx->flags & IB_TX_BLOCK_ADVISORY) {
-        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "advisory");
-    }
-
-    /* Add internal header for effective IP address */
-    add_header_field(bufp, hdr_loc, "@IB-EFFECTIVE-IP", data->tx->er_ipstr);
-
     /* Now manipulate header as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
         if (hdr->dir != ibd->dir)
@@ -1087,6 +1072,21 @@ add_hdr:
                 break;
         }
     }
+
+    /* Add the ironbee site id to an internal header. */
+    site = ib_context_site_get(data->tx->ctx);
+    add_header_field(bufp, hdr_loc, "@IB-SITE-ID", site->id_str);
+
+    /* Add internal header if we blocked the transaction */
+    if ((data->tx->flags & (IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE)) != 0) {
+        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "blocked");
+    }
+    else if (data->tx->flags & IB_TX_BLOCK_ADVISORY) {
+        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "advisory");
+    }
+
+    /* Add internal header for effective IP address */
+    add_header_field(bufp, hdr_loc, "@IB-EFFECTIVE-IP", data->tx->er_ipstr);
 
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     TSIOBufferReaderFree(readerp);
