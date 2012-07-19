@@ -127,7 +127,7 @@ const char *ib_logevent_type_str[] = {
 static const char *ib_logevent_action_str[] = {
     "Unknown",
     "Log",
-    "Block",
+    "Blocked",
     "Ignore",
     "Allow",
     NULL
