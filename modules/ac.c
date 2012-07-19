@@ -689,7 +689,6 @@ static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
     assert(ac);
     assert(ac_ctx);
     assert(rule);
-    assert(rule->meta.id);
 
     ib_status_t rc;
 
@@ -700,10 +699,10 @@ static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
 
         ib_log_debug_tx(tx, "Fetching stream rule data.");
 
-        rc = get_dfa_tx_data(tx, rule->meta.id, &workspace);
+        rc = get_dfa_tx_data(tx, ib_rule_id(rule), &workspace);
 
         if ( (rc == IB_ENOENT) || (workspace == NULL) ) {
-            rc = alloc_ac_tx_data(tx, ac, rule->meta.id, &workspace);
+            rc = alloc_ac_tx_data(tx, ac, ib_rule_id(rule), &workspace);
             if (rc != IB_OK) {
                 ib_log_error_tx(tx,
                                 "Unexpected error creating tx data: %d",

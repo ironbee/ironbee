@@ -76,6 +76,7 @@ typedef enum {
  */
 typedef struct {
     const char            *id;              /**< Rule ID */
+    const char            *full_id;         /**< Rule's "full" ID */
     const char            *chain_id;        /**< Rule's chain ID */
     const char            *msg;             /**< Rule message */
     const char            *data;            /**< Rule logdata */
@@ -464,6 +465,36 @@ ib_status_t DLL_PUBLIC ib_rule_set_chain(ib_engine_t *ib,
  *          if neither is set.
  */
 const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule);
+
+/**
+ * Check for a match against a rule's ID
+ *
+ * @param[in] rule Rule to match
+ * @param[in] id ID to attempt to match against
+ * @param[in] parents Check parent rules (in case of chains)?
+ * @param[in] children Check child rules (in case of chains)?
+ *
+ * @returns true if match is found, false if not
+ */
+bool DLL_PUBLIC ib_rule_id_match(const ib_rule_t *rule,
+                                 const char *id,
+                                 bool parents,
+                                 bool children);
+
+/**
+ * Check for a match against a rule's tags
+ *
+ * @param[in] rule Rule to match
+ * @param[in] tag Tag to attempt to match against
+ * @param[in] parents Check parent rules (in case of chains)?
+ * @param[in] children Check child rules (in case of chains)?
+ *
+ * @returns true if match is found, false if not
+ */
+bool DLL_PUBLIC ib_rule_tag_match(const ib_rule_t *rule,
+                                  const char *tag,
+                                  bool parents,
+                                  bool children);
 
 /**
  * Create a rule target.

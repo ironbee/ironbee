@@ -561,7 +561,8 @@ static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp,
 
     if ( (child == false) && (ib_rule_id(rule) == NULL) )
     {
-        ib_cfg_log_error(cp, "No rule id specified flags=0x%04x.", rule->flags);
+        ib_cfg_log_error(cp, "No rule id specified (flags=0x%04x)",
+                         rule->flags);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 

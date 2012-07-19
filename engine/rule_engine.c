@@ -1246,8 +1246,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
     trc = execute_phase_rule_targets(ib, rule, tx, rule_result);
     if (trc != IB_OK) {
         ib_rule_log_error(tx, rule, NULL, NULL,
-                          "Error executing rule \"%s\": %s",
-                          rule->meta.id,
+                          "Error executing rule: %s",
                           ib_status_to_string(trc));
         rc = trc;
     }
@@ -1264,7 +1263,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
     if ( (*rule_result != 0) && (rule->chained_rule != NULL) ) {
         ib_rule_log_debug(tx, rule, NULL, NULL,
                           "Chaining to rule \"%s\"",
-                          rule->chained_rule->meta.id);
+                          ib_rule_id(rule->chained_rule));
         trc = execute_phase_rule(ib,
                                  rule->chained_rule,
                                  tx,
@@ -1276,8 +1275,9 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
         }
         else if (trc != IB_OK) {
             ib_rule_log_error(tx, rule, NULL, NULL,
-                              "Error executing chained rule \"%s\"",
-                              rule->chained_rule->meta.id);
+                              "Error executing chained rule \"%s\": %s",
+                              ib_rule_id(rule->chained_rule),
+                              ib_status_to_string(trc));
             rc = trc;
         }
     }
@@ -2446,7 +2446,7 @@ static ib_status_t enable_rules(ib_engine_t *ib,
             set_rule_enable(enable, ctx_rule);
             ib_cfg_log_debug2_ex(ib, match->file, match->lineno,
                                  "%sd rule matched \"%s\" by ALL",
-                                 name, ctx_rule->rule->meta.id);
+                                 name, ib_rule_id(ctx_rule->rule));
         }
         if (matches == 0) {
             ib_cfg_log_notice_ex(ib, match->file, match->lineno,
@@ -2469,14 +2469,20 @@ static ib_status_t enable_rules(ib_engine_t *ib,
                              match->enable_str, lcname);
         IB_LIST_LOOP(ctx_rule_list, node) {
             ib_rule_ctx_data_t *ctx_rule;
+            bool matched;
             ctx_rule = (ib_rule_ctx_data_t *)ib_list_node_data(node);
-            if (strcasecmp(match->enable_str, ctx_rule->rule->meta.id) == 0) {
+
+            /* Match the rule ID, including children */
+            matched = ib_rule_id_match(ctx_rule->rule,
+                                       match->enable_str,
+                                       false,
+                                       true);
+            if (matched == true) {
                 set_rule_enable(enable, ctx_rule);
                 ib_cfg_log_debug2_ex(ib, match->file, match->lineno,
                                      "%sd ID matched rule \"%s\"",
-                                     name, ctx_rule->rule->meta.id);
+                                     name, ib_rule_id(ctx_rule->rule));
                 IB_FTRACE_RET_STATUS(IB_OK);
-
             }
         }
         ib_cfg_log_notice_ex(ib, match->file, match->lineno,
@@ -2490,29 +2496,27 @@ static ib_status_t enable_rules(ib_engine_t *ib,
                              "Looking for rules with tag \"%s\" to %s",
                              match->enable_str, lcname);
         IB_LIST_LOOP(ctx_rule_list, node) {
-            const ib_list_node_t *tagnode;
             ib_rule_ctx_data_t   *ctx_rule;
             ib_rule_t            *rule;
+            bool                  matched;
 
             ctx_rule = (ib_rule_ctx_data_t *)ib_list_node_data(node);
             rule = ctx_rule->rule;
 
-            IB_LIST_LOOP_CONST(rule->meta.tags, tagnode) {
-                const char *tag;
-
-                tag = (const char *)ib_list_node_data_const(tagnode);
-                if (strcasecmp(tag, match->enable_str) == 0) {
-                    ++matches;
-                    set_rule_enable(enable, ctx_rule);
-                    ib_cfg_log_debug2_ex(ib, match->file, match->lineno,
-                                         "%s tag \"%s\" matched "
-                                         "rule \"%s\" from ctx=\"%s\"",
-                                         name,
-                                         match->enable_str,
-                                         rule->meta.id,
-                                         ib_context_full_get(rule->ctx));
-                    break;
-                }
+            matched = ib_rule_tag_match(ctx_rule->rule,
+                                        match->enable_str,
+                                        false,
+                                        true);
+            if (matched == true) {
+                ++matches;
+                set_rule_enable(enable, ctx_rule);
+                ib_cfg_log_debug2_ex(ib, match->file, match->lineno,
+                                     "%s tag \"%s\" matched "
+                                     "rule \"%s\" from ctx=\"%s\"",
+                                     name,
+                                     match->enable_str,
+                                     ib_rule_id(rule),
+                                     ib_context_full_get(rule->ctx));
             }
         }
         if (matches == 0) {
@@ -2619,7 +2623,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
         ib_log_debug3(ib, "Adding rule \"%s\" from \"%s\" to ctx temp list",
-                      rule->meta.id, ib_context_full_get(rule->ctx));
+                      ib_rule_id(rule), ib_context_full_get(rule->ctx));
     }
 
     /* Step 3: Loop through all of the context's rules, add them
@@ -2634,7 +2638,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
         /* If the rule is chained or marked */
         if (ib_flags_all(rule->flags, skip_flags) == true) {
             ib_log_debug3(ib, "Skipping marked/chained rule \"%s\" from \"%s\"",
-                          rule->meta.id, ib_context_full_get(rule->ctx));
+                          ib_rule_id(rule), ib_context_full_get(rule->ctx));
             continue;
         }
 
@@ -2650,7 +2654,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
         ib_log_debug3(ib, "Adding rule \"%s\" from \"%s\" to ctx temp list",
-                      rule->meta.id, ib_context_full_get(rule->ctx));
+                      ib_rule_id(rule), ib_context_full_get(rule->ctx));
     }
 
     /* Step 4: Disable rules (All) */
@@ -2731,7 +2735,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
         /* If it's not enabled, skip to the next rule */
         if (ib_flags_all(ctx_rule->flags, skip_flags) == false) {
             ib_log_debug3(ib, "Skipping disabled rule \"%s\" from \"%s\"",
-                          rule->meta.id, ib_context_full_get(rule->ctx));
+                          ib_rule_id(rule), ib_context_full_get(rule->ctx));
             continue;
         }
 
@@ -2758,7 +2762,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
         ib_log_debug(ib,
                      "Enabled rule \"%s\" rev=%u type=\"%s\" phase=%d/\"%s\" "
                      "for context \"%s\"",
-                     rule->meta.id, rule->meta.revision,
+                     ib_rule_id(rule), rule->meta.revision,
                      rule->phase_meta->is_stream ? "Stream" : "Normal",
                      ruleset_phase->phase_num,
                      rule->phase_meta->name,
@@ -3147,6 +3151,58 @@ ib_status_t ib_rule_match(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+static ib_status_t gen_full_id(ib_engine_t *ib,
+                             ib_context_t *ctx,
+                             ib_rule_t *rule)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(rule != NULL);
+    assert(rule->meta.id != NULL);
+
+    size_t len = 1;    /* Space for trailing nul */
+    char *buf;
+    const char *part1;
+    const char *part2;
+    const char *part3;
+
+    /* Calculate the length */
+    if (ib_flags_all(rule->flags, IB_RULE_FLAG_MAIN_CTX) ) {
+        part1 = "main/";
+        part2 = NULL;
+        len += 5;                            /* "main/" */
+    }
+    else {
+        const ib_site_t *site = ib_context_site_get(ctx);
+        assert(site != NULL);
+        part1 = "site/";
+        part2 = site->id_str;
+        len += 5 + strlen(site->id_str) + 1; /* "site/<id>/" */
+    }
+    part3 = rule->meta.id;
+    len += strlen(part3);
+
+    /* Allocate the buffer */
+    buf = (char *)ib_mpool_alloc(ctx->mp, len);
+    if (buf == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Finally, build the string */
+    strcpy(buf, part1);
+    if (part2 != NULL) {
+        strcat(buf, part2);
+        strcat(buf, "/");
+    }
+    strcat(buf, part3);
+    assert(strlen(buf) == len-1);
+
+    rule->meta.full_id = buf;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 ib_status_t ib_rule_register(ib_engine_t *ib,
                              ib_context_t *ctx,
                              ib_rule_t *rule)
@@ -3249,6 +3305,12 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         }
     }
 
+    /* Build the rule's full ID */
+    rc = gen_full_id(ib, ctx, rule);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Get the rule engine and previous rule */
     context_rules = ctx->rules;
 
@@ -3261,7 +3323,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         }
         ib_log_debug3(ib,
                       "Registered rule \"%s\" chained from rule \"%s\"",
-                      rule->meta.id, rule->chained_from->meta.id);
+                      ib_rule_id(rule), ib_rule_id(rule->chained_from));
     }
 
     /* Put this rule in the hash */
@@ -3273,7 +3335,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                             rule->meta.config_line,
                             "Error finding matching rule "
                             "for \"%s\" of context=\"%s\": %s",
-                            rule->meta.id,
+                            ib_rule_id(rule),
                             ib_context_full_get(ctx),
                             ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -3288,7 +3350,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                              rule->meta.config_line,
                              "Not replacing rule \"%s\" of context=\"%s\" "
                              "rev=%u with rev=%u",
-                             rule->meta.id,
+                             ib_rule_id(rule),
                              ib_context_full_get(ctx),
                              lookup->meta.revision,
                              rule->meta.revision);
@@ -3308,7 +3370,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                             rule->meta.config_line,
                             "Error adding rule \"%s\" "
                             "to context=\"%s\" hash: %s",
-                            rule->meta.id,
+                            ib_rule_id(rule),
                             ib_context_full_get(ctx),
                             ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
@@ -3325,7 +3387,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                                 rule->meta.config_line,
                                 "Error adding rule \"%s\" "
                                 "to context=\"%s\" list: %s",
-                                rule->meta.id,
+                                ib_rule_id(rule),
                                 ib_context_full_get(ctx),
                                 ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -3334,7 +3396,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                             rule->meta.config_file,
                             rule->meta.config_line,
                             "Added rule \"%s\" rev=%u to context=\"%s\"",
-                            rule->meta.id,
+                            ib_rule_id(rule),
                             rule->meta.revision,
                             ib_context_full_get(ctx));
     }
@@ -3353,7 +3415,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
                            rule->meta.config_line,
                            "Replaced rule \"%s\" of context=\"%s\" "
                            "rev=%u with rev=%u",
-                           rule->meta.id,
+                           ib_rule_id(rule),
                            ib_context_full_get(ctx),
                            lookup->meta.revision,
                            rule->meta.revision);
@@ -3588,17 +3650,91 @@ ib_status_t ib_rule_set_id(ib_engine_t *ib,
 const char *ib_rule_id(const ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
+
     assert(rule != NULL);
+
+    if (rule->meta.full_id != NULL) {
+        IB_FTRACE_RET_CONSTSTR(rule->meta.full_id);
+    }
 
     if (rule->meta.id != NULL) {
         IB_FTRACE_RET_CONSTSTR(rule->meta.id);
     }
+    IB_FTRACE_RET_CONSTSTR(rule->meta.id);
+}
 
-    if (rule->meta.chain_id != NULL) {
-        IB_FTRACE_RET_CONSTSTR(rule->meta.chain_id);
+bool ib_rule_id_match(const ib_rule_t *rule,
+                      const char *id,
+                      bool parents,
+                      bool children)
+{
+    IB_FTRACE_INIT();
+
+    /* First match the rule's ID and full ID */
+    if ( (strcasecmp(id, rule->meta.id) == 0) ||
+         (strcasecmp(id, rule->meta.full_id) == 0) )
+    {
+        IB_FTRACE_RET_BOOL(true);
+    }
+    
+    /* Check parent rules if requested */
+    if ( (parents == true) && (rule->chained_from != NULL) ) {
+        bool match = ib_rule_id_match(rule->chained_from, id,
+                                      parents, children);
+        if (match == true) {
+            IB_FTRACE_RET_BOOL(true);
+        }
     }
 
-    IB_FTRACE_RET_CONSTSTR(NULL);
+    /* Check child rules if requested */
+    if ( (children == true) && (rule->chained_rule != NULL) ) {
+        bool match = ib_rule_id_match(rule->chained_rule,
+                                      id, parents, children);
+        if (match == true) {
+            IB_FTRACE_RET_BOOL(true);
+        }
+    }
+
+    /* Finally, no match */
+    IB_FTRACE_RET_BOOL(false);
+}
+
+bool ib_rule_tag_match(const ib_rule_t *rule,
+                       const char *tag,
+                       bool parents,
+                       bool children)
+{
+    IB_FTRACE_INIT();
+    const ib_list_node_t *node;
+
+    /* First match the rule's tags */
+    IB_LIST_LOOP_CONST(rule->meta.tags, node) {
+        const char *ruletag = (const char *)ib_list_node_data_const(node);
+        if (strcasecmp(tag, ruletag) == 0) {
+            IB_FTRACE_RET_BOOL(true);
+        }
+    }
+    
+    /* Check parent rules if requested */
+    if ( (parents == true) && (rule->chained_from != NULL) ) {
+        bool match = ib_rule_tag_match(rule->chained_from,
+                                       tag, parents, children);
+        if (match == true) {
+            IB_FTRACE_RET_BOOL(true);
+        }
+    }
+
+    /* Check child rules if requested */
+    if ( (children == true) && (rule->chained_rule != NULL) ) {
+        bool match = ib_rule_tag_match(rule->chained_rule,
+                                       tag, parents, children);
+        if (match == true) {
+            IB_FTRACE_RET_BOOL(true);
+        }
+    }
+
+    /* Finally, no match */
+    IB_FTRACE_RET_BOOL(false);
 }
 
 ib_status_t ib_rule_create_target(ib_engine_t *ib,
