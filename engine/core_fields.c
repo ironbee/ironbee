@@ -24,14 +24,14 @@
 
 #include "ironbee_config_auto.h"
 
+#include "core_private.h"
+
+#include <ironbee/core.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
-#include <ironbee/core.h>
 #include <ironbee/field.h>
-#include <ironbee/stream.h>
 #include <ironbee/provider.h>
-
-#include "core_private.h"
+#include <ironbee/stream.h>
 
 #include <assert.h>
 

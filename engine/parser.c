@@ -24,17 +24,16 @@
 
 #include "ironbee_config_auto.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-
-
-#include <ironbee/engine.h>
-#include <ironbee/util.h>
 #include <ironbee/core.h>
-#include <ironbee/provider.h>
 #include <ironbee/debug.h>
+#include <ironbee/engine.h>
+#include <ironbee/provider.h>
+#include <ironbee/util.h>
+
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* -- Exported Parser Routines -- */
 

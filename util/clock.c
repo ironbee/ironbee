@@ -27,10 +27,11 @@
 
 #include <ironbee/clock.h>
 
-#include <time.h>
-#include <sys/time.h>
 #include <assert.h>
 #include <stdio.h>
+#include <time.h>
+
+#include <sys/time.h>
 
 #ifdef CLOCK_MONOTONIC_RAW
 #define IB_CLOCK                  CLOCK_MONOTONIC_RAW

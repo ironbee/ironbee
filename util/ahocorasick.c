@@ -29,9 +29,9 @@
 
 #include <ironbee/ahocorasick.h>
 
-#include <ironbee/debug.h>
-
 #include "ahocorasick_private.h"
+
+#include <ironbee/debug.h>
 
 #include <ctype.h>
 

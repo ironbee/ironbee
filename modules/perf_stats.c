@@ -27,22 +27,23 @@
 /* We need this before time.h, so that we get the right prototypes. */
 #include "ironbee_config_auto.h"
 
-#include <ironbee/engine.h>
-#include <ironbee/debug.h>
-#include <ironbee/module.h>
-#include <ironbee/provider.h>
-#include <ironbee/hash.h>
-#include <ironbee/mpool.h>
 #include <ironbee/clock.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
+#include <ironbee/hash.h>
+#include <ironbee/module.h>
+#include <ironbee/mpool.h>
+#include <ironbee/provider.h>
 
-#include <stdint.h>
-#include <time.h>
-#include <inttypes.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <string.h>
 #include <strings.h>
+#include <time.h>
+
+#include <sys/time.h>
+#include <sys/types.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME               perf_stats

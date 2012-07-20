@@ -24,24 +24,26 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <user_agent_private.h>
-#include <stdint.h>
-#include <sys/types.h>
-#include <string.h>
-#include <ctype.h>
-#include <assert.h>
-#include <stdio.h>
-#include <inttypes.h>
+#include "user_agent_private.h"
 
-#include <ironbee/types.h>
-#include <ironbee/engine.h>
-#include <ironbee/util.h>
-#include <ironbee/module.h>
-#include <ironbee/debug.h>
-#include <ironbee/hash.h>
 #include <ironbee/bytestr.h>
-#include <ironbee/mpool.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
 #include <ironbee/field.h>
+#include <ironbee/hash.h>
+#include <ironbee/module.h>
+#include <ironbee/mpool.h>
+#include <ironbee/types.h>
+#include <ironbee/util.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+
+#include <sys/types.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        user_agent

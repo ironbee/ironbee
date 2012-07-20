@@ -25,10 +25,10 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/types.h>
 #include <ironbee/build.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
+#include <ironbee/types.h>
 
 #include <stddef.h>
 #include <sys/types.h>

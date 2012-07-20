@@ -25,26 +25,19 @@
  */
 #include "ironbee_config_auto.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <strings.h>
-#include <time.h>
-#include <ctype.h>
-
-#include <ironbee/engine.h>
-#include <ironbee/state_notify.h>
-#include <ironbee/debug.h>
-#include <ironbee/field.h>
-#include <ironbee/string.h>
 #include <ironbee/bytestr.h>
-#include <ironbee/mpool.h>
-#include <ironbee/hash.h>
 #include <ironbee/cfgmap.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
+#include <ironbee/field.h>
+#include <ironbee/hash.h>
 #include <ironbee/module.h>
+#include <ironbee/mpool.h>
 #include <ironbee/provider.h>
+#include <ironbee/state_notify.h>
+#include <ironbee/string.h>
 
+#include <dslib.h>
 #ifdef __clang__
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wundef"
@@ -53,9 +46,15 @@
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-#include <dslib.h>
 
 #include <assert.h>
+#include <ctype.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <time.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        htp

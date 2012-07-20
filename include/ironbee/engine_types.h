@@ -25,14 +25,14 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
-#include <ironbee/types.h>
-#include <ironbee/mpool.h>
-#include <ironbee/hash.h>
-#include <ironbee/stream.h>
 #include <ironbee/clock.h>
-#include <ironbee/uuid.h>
+#include <ironbee/hash.h>
+#include <ironbee/mpool.h>
 #include <ironbee/parsed_content.h>
 #include <ironbee/rule_defs.h>
+#include <ironbee/stream.h>
+#include <ironbee/types.h>
+#include <ironbee/uuid.h>
 
 #include <stdint.h>
 

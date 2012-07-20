@@ -24,24 +24,21 @@
 
 #include "ironbee_config_auto.h"
 
-#include <assert.h>
-#include <inttypes.h>
+#include "rule_engine_private.h"
 
+#include <ironbee/action.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/core.h>
-#include <ironbee/util.h>
-#include <ironbee/field.h>
 #include <ironbee/debug.h>
+#include <ironbee/field.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
-#include <ironbee/action.h>
-#include <ironbee/transformation.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/transformation.h>
+#include <ironbee/util.h>
 
-#include <ironbee/debug.h>
-#include <ironbee/mpool.h>
-
-#include "rule_engine_private.h"
+#include <assert.h>
+#include <inttypes.h>
 
 /**
  * Prefix used for all rule engine log entries.

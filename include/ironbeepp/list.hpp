@@ -30,21 +30,22 @@
 #ifndef __IBPP__LIST__
 #define __IBPP__LIST__
 
+#include <ironbeepp/internal/throw.hpp>
+
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/memory_pool.hpp>
-#include <ironbeepp/internal/throw.hpp>
-
-#include <boost/iterator/iterator_facade.hpp>
-#include <boost/utility/enable_if.hpp>
-#include <boost/type_traits/is_same.hpp>
-#include <boost/type_traits/is_convertible.hpp>
-#include <boost/type_traits/remove_const.hpp>
-
-#include <ostream>
 
 #include <ironbee/list.h>
+
+#include <boost/iterator/iterator_facade.hpp>
+#include <boost/type_traits/is_convertible.hpp>
+#include <boost/type_traits/is_same.hpp>
+#include <boost/type_traits/remove_const.hpp>
+#include <boost/utility/enable_if.hpp>
+
+#include <ostream>
 
 namespace IronBee {
 

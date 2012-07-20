@@ -26,8 +26,8 @@
  */
 
 #include <ironbee/engine_types.h>
-#include <ironbee/types.h>
 #include <ironbee/release.h>
+#include <ironbee/types.h>
 
 #include <stdint.h>
 

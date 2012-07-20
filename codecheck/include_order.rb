@@ -1,0 +1,213 @@
+#!/usr/bin/env ruby
+
+$:.unshift(File.dirname(__FILE__))
+require 'all-code'
+
+CANONICAL_INCLUDE_ORDER = [
+  '"ironbee_config_auto.h"',
+
+  :self,
+  :private,
+
+  '"config-parser.h"',
+
+  # Dirt hack section
+  '"user_agent_private.h"',
+  '<ironbee/module_sym.h>',
+
+  '<ironbeepp/internal/catch.hpp>',
+  '<ironbeepp/internal/data.hpp>',
+  '<ironbeepp/internal/throw.hpp>',
+
+  '<ironbeepp/abi_compatibility.hpp>',
+  '<ironbeepp/byte_string.hpp>',
+  '<ironbeepp/clock.hpp>',
+  '<ironbeepp/common_semantics.hpp>',
+  '<ironbeepp/configuration_directives.hpp>',
+  '<ironbeepp/configuration_map.hpp>',
+  '<ironbeepp/configuration_parser.hpp>',
+  '<ironbeepp/connection.hpp>',
+  '<ironbeepp/connection_data.hpp>',
+  '<ironbeepp/context.hpp>',
+  '<ironbeepp/engine.hpp>',
+  '<ironbeepp/exception.hpp>',
+  '<ironbeepp/field.hpp>',
+  '<ironbeepp/hooks.hpp>',
+  '<ironbeepp/ironbee.hpp>',
+  '<ironbeepp/list.hpp>',
+  '<ironbeepp/memory_pool.hpp>',
+  '<ironbeepp/module.hpp>',
+  '<ironbeepp/module_bootstrap.hpp>',
+  '<ironbeepp/module_delegate.hpp>',
+  '<ironbeepp/notifier.hpp>',
+  '<ironbeepp/parsed_name_value.hpp>',
+  '<ironbeepp/parsed_request_line.hpp>',
+  '<ironbeepp/parsed_response_line.hpp>',
+  '<ironbeepp/server.hpp>',
+  '<ironbeepp/site.hpp>',
+  '<ironbeepp/transaction.hpp>',
+  '<ironbeepp/transaction_data.hpp>',
+
+  '"ahocorasick_private.h"',
+  '"core_private.h"',
+  '"engine_private.h"',
+  '"ironbee_private.h"',
+  '"rule_engine_private.h"',
+  '"radix_private.h"',
+  '"rules_lua_private.h"',
+  '"state_notify_private.h"',
+  '"user_agent_private.h"',
+  '"lua/ironbee.h"',
+
+  '<ironbee/action.h>',
+  '<ironbee/ahocorasick.h>',
+  '<ironbee/array.h>',
+  '<ironbee/build.h>',
+  '<ironbee/bytestr.h>',
+  '<ironbee/cfgmap.h>',
+  '<ironbee/clock.h>',
+  '<ironbee/config.h>',
+  '<ironbee/core.h>',
+  '<ironbee/debug.h>',
+  '<ironbee/dso.h>',
+  '<ironbee/engine.h>',
+  '<ironbee/engine_types.h>',
+  '<ironbee/escape.h>',
+  '<ironbee/expand.h>',
+  '<ironbee/field.h>',
+  '<ironbee/hash.h>',
+  '<ironbee/list.h>',
+  '<ironbee/lock.h>',
+  '<ironbee/logformat.h>',
+  '<ironbee/module.h>',
+  '<ironbee/module_sym.h>',
+  '<ironbee/mpool.h>',
+  '<ironbee/operator.h>',
+  '<ironbee/ipset.h>',
+  '<ironbee/parsed_content.h>',
+  '<ironbee/provider.h>',
+  '<ironbee/radix.h>',
+  '<ironbee/release.h>',
+  '<ironbee/rule_defs.h>',
+  '<ironbee/rule_engine.h>',
+  '<ironbee/server.h>',
+  '<ironbee/state_notify.h>',
+  '<ironbee/string.h>',
+  '<ironbee/stream.h>',
+  '<ironbee/transformation.h>',
+  '<ironbee/types.h>',
+  '<ironbee/util.h>',
+  '<ironbee/uuid.h>',
+
+  '<boost/any.hpp>',
+  '<boost/bind.hpp>',
+  '<boost/date_time/posix_time/posix_time.hpp>',
+  '<boost/date_time/posix_time/ptime.hpp>',
+  '<boost/exception/all.hpp>',
+  '<boost/foreach.hpp>',
+  '<boost/function.hpp>',
+  '<boost/iterator/iterator_facade.hpp>',
+  '<boost/mpl/or.hpp>',
+  '<boost/noncopyable.hpp>',
+  '<boost/operators.hpp>',
+  '<boost/static_assert.hpp>',
+  '<boost/type_traits/is_class.hpp>',
+  '<boost/type_traits/is_convertible.hpp>',
+  '<boost/type_traits/is_same.hpp>',
+  '<boost/type_traits/is_signed.hpp>',
+  '<boost/type_traits/is_unsigned.hpp>',
+  '<boost/type_traits/remove_const.hpp>',
+  '<boost/utility.hpp>',
+  '<boost/utility/enable_if.hpp>',
+  '<boost/uuid/uuid.hpp>',
+
+  '<dslib.h>',
+  '<GeoIP.h>',
+  '<htp.h>',
+  '<lauxlib.h>',
+  '<lua.h>',
+  '<lualib.h>',
+  '<pcre.h>',
+  '<pthread.h>',
+  '<uuid.h>',
+
+  '<iostream>',
+  '<list>',
+  '<ostream>',
+  '<string>',
+
+  '<cassert>',
+
+  '<assert.h>',
+  '<ctype.h>',
+  '<dlfcn.h>',
+  '<errno.h>',
+  '<fcntl.h>',
+  '<glib.h>',
+  '<getopt.h>',
+  '<glob.h>',
+  '<inttypes.h>',
+  '<libgen.h>',
+  '<limits.h>',
+  '<math.h>',
+  '<stdarg.h>',
+  '<stdbool.h>',
+  '<stddef.h>',
+  '<stdint.h>',
+  '<stdio.h>',
+  '<stdlib.h>',
+  '<string.h>',
+  '<strings.h>',
+  '<time.h>',
+  '<unistd.h>',
+  '<sys/ipc.h>',
+  '<sys/sem.h>',
+  '<sys/stat.h>',
+  '<sys/time.h>',
+  '<sys/types.h>',
+  '<arpa/inet.h>',
+  '<netinet/in.h>',
+]
+
+def extract_includes(path)
+  result = []
+  IO::foreach(path) do |line|
+    line.strip!
+    if line =~ /^#include (.+[">])$/
+      result << $1
+    end
+  end
+  result
+end
+
+all_ironbee_code do |path|
+  next if path =~ /test/
+  last_index = -1
+  self_name = nil
+  private_name = nil
+  if path =~ /(\.c(pp)?)$/
+    self_name = Regexp.new(
+      "ironbee/" + File.basename(path, $1) + '\.h' + ($2 || "")
+    )
+    private_name = Regexp.new(
+      File.basename(path, $1) + '_private\.h' + ($2 || "")
+    )
+  end
+  extract_includes(path).each do |i|
+    index = nil
+    if i =~ self_name
+      index = CANONICAL_INCLUDE_ORDER.index(:self)
+    elsif i =~ private_name
+      index = CANONICAL_INCLUDE_ORDER.index(:private)
+    end
+    index ||= CANONICAL_INCLUDE_ORDER.index(i)
+
+    if index.nil?
+      puts "Unknown include in #{path}: #{i}"
+    elsif index <= last_index
+      puts "Include out of order in #{path}: #{i}"
+    else
+      last_index = index
+    end
+  end
+end

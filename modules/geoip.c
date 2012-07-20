@@ -15,20 +15,20 @@
  * limitations under the License.
  *****************************************************************************/
 
-#include <assert.h>
-#include <math.h>
-#include <strings.h>
-
-#include <GeoIP.h>
-
 #include <ironbee/cfgmap.h>
+#include <ironbee/config.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
+#include <ironbee/field.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
 #include <ironbee/util.h>
-#include <ironbee/config.h>
-#include <ironbee/field.h>
+
+#include <GeoIP.h>
+
+#include <assert.h>
+#include <math.h>
+#include <strings.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        geoip

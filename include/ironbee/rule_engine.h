@@ -25,11 +25,11 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <ironbee/build.h>
-#include <ironbee/types.h>
-#include <ironbee/rule_defs.h>
-#include <ironbee/operator.h>
 #include <ironbee/action.h>
+#include <ironbee/build.h>
+#include <ironbee/operator.h>
+#include <ironbee/rule_defs.h>
+#include <ironbee/types.h>
 
 #ifdef __cplusplus
 extern "C" {

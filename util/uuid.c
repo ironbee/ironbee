@@ -29,9 +29,10 @@
 #include <ironbee/debug.h>
 #include <ironbee/lock.h>
 
-#include <string.h>
 #include <uuid.h>
+
 #include <assert.h>
+#include <string.h>
 
 /*
  * These are initialized by ib_uuid_init();

@@ -27,13 +27,13 @@
 
 #include <ironbee/field.h>
 
-#include <ironbee/stream.h>
-#include <ironbee/util.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/debug.h>
+#include <ironbee/stream.h>
+#include <ironbee/util.h>
 
-#include <inttypes.h>
 #include <assert.h>
+#include <inttypes.h>
 
 #if ((__GNUC__==4) && (__GNUC_MINOR__==4))
 #pragma GCC optimize ("O0")

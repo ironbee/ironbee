@@ -25,11 +25,11 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/types.h>
 #include <ironbee/list.h>
+#include <ironbee/types.h>
 
-#include <string.h>
 #include <stdint.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {

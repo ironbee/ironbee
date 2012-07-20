@@ -31,17 +31,18 @@
 #ifndef __IBPP__PARSED_NAME_VALUE__
 #define __IBPP__PARSED_NAME_VALUE__
 
-#include <ironbeepp/abi_compatibility.hpp>
-#include <ironbeepp/common_semantics.hpp>
-#include <ironbeepp/byte_string.hpp>
-#include <ironbeepp/transaction.hpp>
 #include <ironbeepp/internal/throw.hpp>
+
+#include <ironbeepp/abi_compatibility.hpp>
+#include <ironbeepp/byte_string.hpp>
+#include <ironbeepp/common_semantics.hpp>
+#include <ironbeepp/transaction.hpp>
 
 #include <ironbee/parsed_content.h>
 
-#include <ostream>
-
 #include <boost/foreach.hpp>
+
+#include <ostream>
 
 // IronBee C Type
 typedef struct ib_parsed_name_value_pair_list_t

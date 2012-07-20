@@ -28,10 +28,10 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/types.h>
+#include <ironbee/logformat.h>
 #include <ironbee/module.h>
 #include <ironbee/rule_defs.h>
-#include <ironbee/logformat.h>
+#include <ironbee/types.h>
 
 #include <stdio.h>
 

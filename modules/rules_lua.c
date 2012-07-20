@@ -15,10 +15,11 @@
  * limitations under the License.
  *****************************************************************************/
 
-#include "rules_lua.h"
+#include "rules_lua_private.h"
+
+#include <ironbee/types.h>
 
 #include <lua.h>
-#include <ironbee/types.h>
 
 #define THREAD_NAME_BUFFER_SZ 20
 

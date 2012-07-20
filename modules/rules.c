@@ -17,39 +17,43 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/core.h>
-#include <ironbee/cfgmap.h>
-#include <ironbee/debug.h>
-#include <ironbee/engine.h>
-#include <ironbee/lock.h>
-#include <ironbee/module.h>
-#include <ironbee/provider.h>
-#include <ironbee/util.h>
-#include <ironbee/list.h>
-#include <ironbee/config.h>
-#include <ironbee/mpool.h>
-#include <ironbee/rule_engine.h>
-#include <ironbee/operator.h>
-#include <ironbee/action.h>
 
 #ifdef ENABLE_LUA
-#include "rules_lua.h"
+#include "rules_lua_private.h"
 #include "lua/ironbee.h"
+#endif
 
+#include <ironbee/action.h>
+#include <ironbee/cfgmap.h>
+#include <ironbee/config.h>
+#include <ironbee/core.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
+#include <ironbee/list.h>
+#include <ironbee/lock.h>
+#include <ironbee/module.h>
+#include <ironbee/mpool.h>
+#include <ironbee/operator.h>
+#include <ironbee/provider.h>
+#include <ironbee/rule_engine.h>
+#include <ironbee/util.h>
+
+#ifdef ENABLE_LUA
 #include <lua.h>
 #endif
 
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <inttypes.h>
 #include <math.h>
 #include <string.h>
 #include <strings.h>
-#include <sys/types.h>
+
 #include <sys/ipc.h>
 #include <sys/sem.h>
 #include <sys/stat.h>
-#include <ctype.h>
+#include <sys/types.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        rules

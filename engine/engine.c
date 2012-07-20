@@ -25,30 +25,30 @@
 
 #include "ironbee_config_auto.h"
 
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <assert.h>
-#include <inttypes.h>
-
-#include <sys/types.h> /* getpid */
-#include <arpa/inet.h> /* htonl */
-#include <unistd.h>
-
 #include <ironbee/engine.h>
-#include <ironbee/mpool.h>
-#include <ironbee/hash.h>
+#include "engine_private.h"
+
+#include "state_notify_private.h"
+
 #include <ironbee/cfgmap.h>
-#include <ironbee/debug.h>
-#include <ironbee/module.h>
 #include <ironbee/core.h>
+#include <ironbee/debug.h>
+#include <ironbee/hash.h>
+#include <ironbee/module.h>
+#include <ironbee/mpool.h>
 #include <ironbee/server.h>
 #include <ironbee/state_notify.h>
 
-#include "engine_private.h"
-#include "state_notify_private.h"
+#include <assert.h>
+#include <inttypes.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <arpa/inet.h> /* htonl */
+#include <sys/types.h> /* getpid */
 
 /* -- Constants -- */
 

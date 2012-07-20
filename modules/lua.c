@@ -24,29 +24,27 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <strings.h>
-#include <time.h>
-#include <ctype.h>
-#include <errno.h>
-#include <assert.h>
+#include "lua/ironbee.h"
 
-#include <ironbee/core.h>
-#include <ironbee/engine.h>
-#include <ironbee/debug.h>
-#include <ironbee/mpool.h>
-#include <ironbee/hash.h>
-#include <ironbee/cfgmap.h>
-#include <ironbee/module.h>
-#include <ironbee/provider.h>
 #include <ironbee/array.h>
+#include <ironbee/cfgmap.h>
+#include <ironbee/core.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
 #include <ironbee/field.h>
+#include <ironbee/hash.h>
+#include <ironbee/module.h>
+#include <ironbee/mpool.h>
+#include <ironbee/provider.h>
 #include <ironbee/util.h>
 
-#include "lua/ironbee.h"
+#include <lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
@@ -55,9 +53,12 @@
 #endif
 #include <inttypes.h>
 
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <time.h>
 
 /* -- Module Setup -- */
 

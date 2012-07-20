@@ -23,17 +23,16 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/util.h>
-#include <ironbee/string.h>
-#include <ironbee/uuid.h>
 #include <ironbee/debug.h>
+#include <ironbee/string.h>
+#include <ironbee/util.h>
+#include <ironbee/uuid.h>
 
-#include <stdio.h>
-#include <libgen.h>
-#include <ctype.h>
-#include <string.h>
 #include <assert.h>
-
+#include <ctype.h>
+#include <libgen.h>
+#include <stdio.h>
+#include <string.h>
 
 /**
  * Check if a character is a valid hex character

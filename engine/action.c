@@ -25,10 +25,11 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/action.h>
-#include <ironbee/debug.h>
-#include <ironbee/mpool.h>
 
 #include "engine_private.h"
+
+#include <ironbee/debug.h>
+#include <ironbee/mpool.h>
 
 #include <string.h>
 

@@ -24,20 +24,20 @@
 
 #include "ironbee_config_auto.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <assert.h>
-#include <unistd.h>
-#include <time.h>
-
-#include <ironbee/engine.h>
+#include <ironbee/clock.h>
 #include <ironbee/core.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
-#include <ironbee/clock.h>
-#include <ironbee/debug.h>
+
+#include <assert.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
 
 /* -- Internal Routines -- */
 

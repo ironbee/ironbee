@@ -25,10 +25,10 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/lock.h>
-#include <ironbee/array.h>
-
 #include "state_notify_private.h"
+
+#include <ironbee/array.h>
+#include <ironbee/lock.h>
 
 #include <stdio.h>
 

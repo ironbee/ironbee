@@ -23,15 +23,15 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/debug.h>
+#include <ironbee/mpool.h>
+#include <ironbee/string.h>
+#include <ironbee/types.h>
+#include <ironbee/util.h>
+
 #include <assert.h>
 #include <ctype.h>
 #include <stdbool.h>
-
-#include <ironbee/types.h>
-#include <ironbee/debug.h>
-#include <ironbee/util.h>
-#include <ironbee/string.h>
-#include <ironbee/mpool.h>
 
 ib_status_t ib_util_decode_url(char *data,
                                ib_flags_t *result)

@@ -24,18 +24,20 @@
 #ifndef __MODULES__RULES_LUA_H
 #define __MODULES__RULES_LUA_H
 
+#include "lua/ironbee.h"
+
 #include <ironbee/cfgmap.h>
+#include <ironbee/config.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
+#include <ironbee/list.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
-#include <ironbee/util.h>
-#include <ironbee/list.h>
-#include <ironbee/config.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/util.h>
+
 #include <lua.h>
 
-#include "lua/ironbee.h"
 /**
  * Load the ironbee-ffi.lua file into the given Lua state.
  *

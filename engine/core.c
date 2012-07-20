@@ -30,38 +30,36 @@
 #define _POSIX_SOURCE
 #endif
 
-#include <ironbee/mpool.h>
-#include <ironbee/bytestr.h>
-#include <ironbee/string.h>
-#include <ironbee/cfgmap.h>
-#include <ironbee/field.h>
-#include <ironbee/rule_defs.h>
-#include <ironbee/rule_engine.h>
-#include <ironbee/debug.h>
-#include <ironbee/util.h>
-#include <ironbee/provider.h>
-#include <ironbee/clock.h>
-#include <ironbee/escape.h>
-
-#include "rule_engine_private.h"
 #include "core_private.h"
 #include "engine_private.h"
+#include "rule_engine_private.h"
 
-#include <errno.h>
-#include <ctype.h>
+#include <ironbee/bytestr.h>
+#include <ironbee/cfgmap.h>
+#include <ironbee/clock.h>
+#include <ironbee/debug.h>
+#include <ironbee/escape.h>
+#include <ironbee/field.h>
+#include <ironbee/mpool.h>
+#include <ironbee/provider.h>
+#include <ironbee/rule_defs.h>
+#include <ironbee/rule_engine.h>
+#include <ironbee/string.h>
+#include <ironbee/util.h>
+
 #include <assert.h>
-#include <time.h>
-#include <sys/time.h>
-#include <stdio.h>
-#include <unistd.h>
-
+#include <ctype.h>
+#include <errno.h>
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
-
 #include <inttypes.h>
+#include <stdio.h>
+#include <time.h>
+#include <unistd.h>
+#include <sys/time.h>
 
 #define MODULE_NAME        core
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)

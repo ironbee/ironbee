@@ -29,9 +29,10 @@
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
-#include <iostream>
 
 #include <ironbee/engine.h>
+
+#include <iostream>
 
 namespace IronBee {
 

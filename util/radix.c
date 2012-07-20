@@ -27,16 +27,16 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/radix.h>
-#include "util/radix_private.h"
+#include "radix_private.h"
 
 #include <ironbee/debug.h>
 #include <ironbee/field.h>     /* For ib_num_t */
 
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <sys/socket.h> /* For FreeBSD */
-#include <stdlib.h>
 #include <stdbool.h>
+#include <stdlib.h>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <sys/socket.h> /* For FreeBSD */
 
 /**
  * Set to 1 the specified bit index of a byte array

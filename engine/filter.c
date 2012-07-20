@@ -24,14 +24,14 @@
 
 #include "ironbee_config_auto.h"
 
-#include <string.h>
-#include <inttypes.h>
+#include "engine_private.h"
 
+#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
-#include <ironbee/debug.h>
 
-#include "engine_private.h"
+#include <inttypes.h>
+#include <string.h>
 
 ib_status_t ib_fctl_tx_create(ib_fctl_t **pfc,
                               ib_tx_t *tx,

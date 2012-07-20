@@ -23,18 +23,19 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/util.h>
-#include <ironbee/string.h>
-#include <ironbee/uuid.h>
 #include <ironbee/debug.h>
+#include <ironbee/string.h>
+#include <ironbee/util.h>
+#include <ironbee/uuid.h>
 
-#include <stdio.h>
-#include <sys/stat.h>
+#include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
-#include <ctype.h>
+#include <stdio.h>
 #include <string.h>
-#include <assert.h>
+
+#include <sys/stat.h>
 
 ib_status_t ib_util_mkpath(const char *path, mode_t mode)
 {

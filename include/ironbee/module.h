@@ -30,8 +30,8 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/types.h>
 #include <ironbee/config.h>
+#include <ironbee/types.h>
 
 #ifdef __cplusplus
 extern "C" {

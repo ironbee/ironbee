@@ -25,8 +25,8 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/types.h>
 #include <ironbee/mpool.h>
+#include <ironbee/types.h>
 
 #ifdef __cplusplus
 extern "C" {

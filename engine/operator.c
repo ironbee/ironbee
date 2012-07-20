@@ -26,10 +26,10 @@
 
 #include <ironbee/operator.h>
 
+#include "engine_private.h"
+
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
-
-#include "engine_private.h"
 
 ib_status_t ib_operator_register(ib_engine_t *ib,
                                  const char *name,

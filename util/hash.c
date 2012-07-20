@@ -30,9 +30,9 @@
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
-#include <string.h>
-#include <ctype.h>
 #include <assert.h>
+#include <ctype.h>
+#include <string.h>
 #include <time.h>
 
 /* Internal Declarations */

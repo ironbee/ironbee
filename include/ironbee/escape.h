@@ -26,9 +26,10 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/types.h>
 #include <ironbee/string.h>
+#include <ironbee/types.h>
 
+#include <stdbool.h>
 #include <string.h>
 
 #ifdef __cplusplus

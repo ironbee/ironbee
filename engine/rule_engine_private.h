@@ -27,6 +27,8 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/rule_engine.h>
+
 #include <ironbee/types.h>
 
 /**

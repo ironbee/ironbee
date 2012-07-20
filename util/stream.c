@@ -25,8 +25,8 @@
 
 #include <ironbee/stream.h>
 
-#include <ironbee/mpool.h>
 #include <ironbee/debug.h>
+#include <ironbee/mpool.h>
 
 ib_status_t ib_stream_create(ib_stream_t **pstream, ib_mpool_t *pool)
 {

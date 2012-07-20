@@ -24,37 +24,38 @@
 
 #include "ironbee_config_auto.h"
 
-#include <assert.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdarg.h>
-#include <getopt.h>
-#include <ctype.h>
-#include <sys/types.h>
-#include <inttypes.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <glob.h>
-#include <libgen.h>
-#include <stdlib.h>
+#include "engine_private.h"
 
-#include <ironbee/engine.h>
-#include <ironbee/state_notify.h>
-#include <ironbee/server.h>
-#include <ironbee/provider.h>
-#include <ironbee/module.h>
-#include <ironbee/config.h>
-#include <ironbee/mpool.h>
 #include <ironbee/bytestr.h>
-#include <ironbee/string.h>
+#include <ironbee/config.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
+#include <ironbee/field.h>
+#include <ironbee/module.h>
+#include <ironbee/mpool.h>
+#include <ironbee/provider.h>
 #include <ironbee/rule_defs.h>
 #include <ironbee/rule_engine.h>
-#include <ironbee/field.h>
-#include <ironbee/debug.h>
+#include <ironbee/server.h>
+#include <ironbee/state_notify.h>
+#include <ironbee/string.h>
 #include <ironbee/util.h>
 
-#include "engine_private.h"
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <getopt.h>
+#include <glob.h>
+#include <inttypes.h>
+#include <libgen.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <sys/stat.h>
+#include <sys/types.h>
 
 /* Set DEBUG_ARGS_ENABLE to non-zero enable the debug log command line
  * handling.  It's currently disabled because Log and LogLevel

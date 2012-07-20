@@ -24,21 +24,20 @@
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
  */
 
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
+#include <ironbee/module.h>
+#include <ironbee/mpool.h>
+#include <ironbee/provider.h>
+#include <ironbee/radix.h>
+
+#include <ctype.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <strings.h>
 #include <time.h>
-#include <ctype.h>
-
-#include <ironbee/engine.h>
-#include <ironbee/debug.h>
-#include <ironbee/mpool.h>
-#include <ironbee/radix.h>
-#include <ironbee/module.h>
-#include <ironbee/provider.h>
-
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        binradix

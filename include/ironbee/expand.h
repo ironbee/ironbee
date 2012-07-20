@@ -25,13 +25,13 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <stdbool.h>
-
 #include <ironbee/build.h>
-#include <ironbee/types.h>
-#include <ironbee/mpool.h>
-#include <ironbee/hash.h>
 #include <ironbee/field.h>
+#include <ironbee/hash.h>
+#include <ironbee/mpool.h>
+#include <ironbee/types.h>
+
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {

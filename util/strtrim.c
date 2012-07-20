@@ -23,19 +23,18 @@
 
 #include "ironbee_config_auto.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <assert.h>
-#include <errno.h>
-#include <ctype.h>
-#include <stdbool.h>
-
-#include <ironbee/types.h>
 #include <ironbee/debug.h>
-#include <ironbee/types.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
+#include <ironbee/types.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /**
  * Special case return value for search_{left,right}

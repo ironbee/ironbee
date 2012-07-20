@@ -23,20 +23,22 @@
 
 #include "ironbee_config_auto.h"
 
-#include <sys/types.h>
+#include <ironbee/expand.h>
+
+#include <ironbee/bytestr.h>
+#include <ironbee/debug.h>
+#include <ironbee/field.h>
+#include <ironbee/hash.h>
+#include <ironbee/mpool.h>
+#include <ironbee/string.h>
+#include <ironbee/types.h>
+
+#include <assert.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
-#include <inttypes.h>
-#include <assert.h>
 
-#include <ironbee/expand.h>
-#include <ironbee/types.h>
-#include <ironbee/string.h>
-#include <ironbee/hash.h>
-#include <ironbee/field.h>
-#include <ironbee/bytestr.h>
-#include <ironbee/mpool.h>
-#include <ironbee/debug.h>
+#include <sys/types.h>
 
 #define NUM_BUF_LEN 64
 

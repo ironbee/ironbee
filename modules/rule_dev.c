@@ -27,20 +27,21 @@
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
 
-#include <ironbee/engine.h>
-#include <ironbee/mpool.h>
-#include <ironbee/module.h>
+#include <ironbee/action.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/debug.h>
+#include <ironbee/engine.h>
 #include <ironbee/field.h>
-#include <ironbee/string.h>
-#include <ironbee/rule_engine.h>
-#include <ironbee/action.h>
+#include <ironbee/module.h>
+#include <ironbee/mpool.h>
 #include <ironbee/operator.h>
+#include <ironbee/rule_engine.h>
+#include <ironbee/string.h>
+
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        rule_dev

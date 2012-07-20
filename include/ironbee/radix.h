@@ -26,9 +26,9 @@
  */
 
 #include <ironbee/build.h>
-#include <ironbee/types.h>
-#include <ironbee/list.h>
 #include <ironbee/field.h>     /* For ib_num_t */
+#include <ironbee/list.h>
+#include <ironbee/types.h>
 
 #include <string.h>
 

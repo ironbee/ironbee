@@ -24,18 +24,19 @@
 
 #include "ironbee_config_auto.h"
 
-#include <string.h>
-#include <assert.h>
-
-#include <ironbee/engine.h>
-#include <ironbee/mpool.h>
-#include <ironbee/hash.h>
-#include <ironbee/bytestr.h>
-#include <ironbee/field.h>
 #include <ironbee/transformation.h>
-#include <ironbee/debug.h>
 
 #include "engine_private.h"
+
+#include <ironbee/bytestr.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
+#include <ironbee/field.h>
+#include <ironbee/hash.h>
+#include <ironbee/mpool.h>
+
+#include <assert.h>
+#include <string.h>
 
 /* -- Transformation Routines -- */
 

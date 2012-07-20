@@ -24,21 +24,21 @@
 
 #include "ironbee_config_auto.h"
 
-#include <assert.h>
-#include <ctype.h>
+#include "core_private.h"
 
-#include <ironbee/engine.h>
-#include <ironbee/mpool.h>
 #include <ironbee/bytestr.h>
-#include <ironbee/radix.h>
 #include <ironbee/debug.h>
-#include <ironbee/rule_engine.h>
-#include <ironbee/operator.h>
+#include <ironbee/engine.h>
 #include <ironbee/field.h>
+#include <ironbee/mpool.h>
+#include <ironbee/operator.h>
+#include <ironbee/radix.h>
+#include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
-#include "core_private.h"
+#include <assert.h>
+#include <ctype.h>
 
 /* Numeric operator params */
 typedef struct {

@@ -24,23 +24,24 @@
 
 #include "ironbee_config_auto.h"
 
-#include <assert.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <pcre.h>
-
-#include <ironbee/engine.h>
-#include <ironbee/string.h>
 #include <ironbee/bytestr.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
+#include <ironbee/expand.h>
+#include <ironbee/field.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
-#include <ironbee/field.h>
-#include <ironbee/expand.h>
+#include <ironbee/string.h>
 #include <ironbee/transformation.h>
-#include <ironbee/debug.h>
 #include <ironbee/util.h>
+
+#include <pcre.h>
+
+#include <assert.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* -- Constants -- */
 static const char DPI_LIST_FILTER_MARKER = ':';

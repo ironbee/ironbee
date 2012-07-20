@@ -24,16 +24,17 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/util.h>
-#include <ironbee/uuid.h>
-#include <ironbee/debug.h>
 
-#include <stdio.h>
-#include <sys/stat.h>
+#include <ironbee/debug.h>
+#include <ironbee/uuid.h>
+
+#include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <libgen.h>
-#include <ctype.h>
+#include <stdio.h>
 #include <string.h>
-#include <assert.h>
+#include <sys/stat.h>
 
 /* -- Logging -- */
 

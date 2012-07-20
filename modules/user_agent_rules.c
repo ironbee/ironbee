@@ -24,18 +24,20 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <user_agent_private.h>
-#include <stdint.h>
-#include <sys/types.h>
-#include <string.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <stddef.h>
-#include <errno.h>
-#include <stdio.h>
+#include "user_agent_private.h"
 
-#include <ironbee/types.h>
 #include <ironbee/debug.h>
+#include <ironbee/types.h>
+
+#include <ctype.h>
+#include <errno.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <sys/types.h>
 
 /* The actual rules */
 static modua_match_ruleset_t modua_match_ruleset =

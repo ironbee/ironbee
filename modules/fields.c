@@ -46,23 +46,22 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
+#include <ironbee/bytestr.h>
+#include <ironbee/cfgmap.h>
+#include <ironbee/config.h>
+#include <ironbee/core.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
+#include <ironbee/field.h>
+#include <ironbee/list.h>
+#include <ironbee/module.h>
+#include <ironbee/mpool.h>
+#include <ironbee/util.h>
+
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
-#include <assert.h>
-
-#include <ironbee/core.h>
-#include <ironbee/cfgmap.h>
-#include <ironbee/debug.h>
-#include <ironbee/engine.h>
-#include <ironbee/module.h>
-#include <ironbee/util.h>
-#include <ironbee/mpool.h>
-#include <ironbee/bytestr.h>
-#include <ironbee/list.h>
-#include <ironbee/field.h>
-#include <ironbee/config.h>
-
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        fields

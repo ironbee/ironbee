@@ -24,22 +24,22 @@
 
 #include "ironbee_config_auto.h"
 
-#include <stdlib.h>
-#include <strings.h>
-#include <assert.h>
+#include "core_private.h"
+#include "engine_private.h"
 
-#include <ironbee/debug.h>
-#include <ironbee/types.h>
-#include <ironbee/string.h>
-#include <ironbee/field.h>
-#include <ironbee/bytestr.h>
-#include <ironbee/mpool.h>
 #include <ironbee/action.h>
+#include <ironbee/bytestr.h>
+#include <ironbee/debug.h>
+#include <ironbee/field.h>
+#include <ironbee/mpool.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/string.h>
+#include <ironbee/types.h>
 #include <ironbee/util.h>
 
-#include "engine_private.h"
-#include "core_private.h"
+#include <assert.h>
+#include <stdlib.h>
+#include <strings.h>
 
 /**
  * Setvar action data.

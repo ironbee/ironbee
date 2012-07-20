@@ -23,19 +23,18 @@
 
 #include "ironbee_config_auto.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <limits.h>
-#include <assert.h>
-#include <errno.h>
-#include <ctype.h>
-
-#include <ironbee/util.h>
-#include <ironbee/types.h>
 #include <ironbee/debug.h>
-#include <ironbee/types.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
+#include <ironbee/types.h>
+#include <ironbee/util.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /**
  * Simple in-place ASCII lowercase function.

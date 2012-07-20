@@ -18,16 +18,16 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/state_notify.h>
+#include "state_notify_private.h"
 
+#include "engine_private.h"
+
+#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
-#include <ironbee/debug.h>
 #include <ironbee/provider.h>
 
 #include <assert.h>
-
-#include "state_notify_private.h"
-#include "engine_private.h"
 
 #define CALL_HOOKS(out_rc, first_hook, event, whicb, ib, tx, param) \
     do { \

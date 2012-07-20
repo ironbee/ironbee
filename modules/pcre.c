@@ -24,29 +24,28 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <assert.h>
-#include <ctype.h>
-#include <pcre.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <string.h>
-#include <strings.h>
-#include <time.h>
-
-
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
-#include <ironbee/rule_engine.h>
+#include <ironbee/field.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/provider.h>
+#include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
-#include <ironbee/field.h>
 
+#include <pcre.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <time.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        pcre

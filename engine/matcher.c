@@ -24,16 +24,15 @@
 
 #include "ironbee_config_auto.h"
 
-#include <string.h>
-
-#include <ironbee/engine.h>
-#include <ironbee/mpool.h>
 #include <ironbee/bytestr.h>
-#include <ironbee/provider.h>
-#include <ironbee/field.h>
 #include <ironbee/debug.h>
+#include <ironbee/engine.h>
+#include <ironbee/field.h>
+#include <ironbee/mpool.h>
+#include <ironbee/provider.h>
 
 #include <inttypes.h>
+#include <string.h>
 
 /**
  * Matcher.

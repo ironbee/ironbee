@@ -20,8 +20,8 @@
 
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
-#include <ironbee/types.h>
 #include <ironbee/parsed_content.h>
+#include <ironbee/types.h>
 
 #ifdef __cplusplus
 extern "C" {

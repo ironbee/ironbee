@@ -24,15 +24,14 @@
 
 #include "ironbee_config_auto.h"
 
-/* System includes. */
-#include <assert.h>
-
-/* Public IronBee includes. */
-#include <ironbee/debug.h>
 #include <ironbee/parsed_content.h>
-#include <ironbee/mpool.h>
-#include <ironbee/engine_types.h>
+
+#include <ironbee/debug.h>
 #include <ironbee/engine.h>
+#include <ironbee/engine_types.h>
+#include <ironbee/mpool.h>
+
+#include <assert.h>
 
 ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
     ib_parsed_name_value_pair_list_wrapper_t **headers,

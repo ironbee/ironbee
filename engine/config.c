@@ -26,17 +26,22 @@
 
 #include <ironbee/config.h>
 
-#include <ironbee/debug.h>
-#include <ironbee/mpool.h>
-
 #include "config-parser.h"
 #include "engine_private.h"
 
-#include <fcntl.h>
-#include <errno.h>
+#include <ironbee/debug.h>
+#include <ironbee/mpool.h>
+
 #include <assert.h>
-#include <inttypes.h>
 #include <ctype.h>
+#include <errno.h>
+#include <fcntl.h>
+#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
+/* C99 requires that inttypes.h only exposes PRI* macros
+ * for C++ implementations if this is defined: */
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
 
 /* -- Internal -- */
 

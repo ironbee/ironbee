@@ -32,11 +32,11 @@
 #include <ironbee/debug.h>
 #include <ironbee/lock.h>
 
-#include <stdlib.h>
 #include <assert.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdarg.h>
+#include <stdlib.h>
 
 /**
  * A single point in memory for us to return when a zero length buffer is

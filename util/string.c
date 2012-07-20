@@ -23,21 +23,21 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/string.h>
+
+#include <ironbee/debug.h>
+#include <ironbee/mpool.h>
+#include <ironbee/types.h>
+
+#include <assert.h>
+#include <ctype.h>
+#include <errno.h>
+#include <inttypes.h>
+#include <limits.h>
+#include <math.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <limits.h>
-#include <assert.h>
-#include <errno.h>
-#include <ctype.h>
-#include <stdbool.h>
-#include <math.h>
-#include <inttypes.h>
-
-#include <ironbee/types.h>
-#include <ironbee/debug.h>
-#include <ironbee/types.h>
-#include <ironbee/mpool.h>
-#include <ironbee/string.h>
 
 /**
  * Length of the string buffer for converting strings.

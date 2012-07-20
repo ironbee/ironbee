@@ -27,20 +27,21 @@
 #ifndef __IBPP__FIELD__
 #define __IBPP__FIELD__
 
+#include <ironbeepp/internal/data.hpp>
+
 #include <ironbeepp/abi_compatibility.hpp>
+#include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/exception.hpp>
-#include <ironbeepp/memory_pool.hpp>
-#include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/list.hpp>
-#include <ironbeepp/internal/data.hpp>
+#include <ironbeepp/memory_pool.hpp>
 
 #include <ironbee/field.h>
 
 #include <boost/mpl/or.hpp>
+#include <boost/type_traits/is_convertible.hpp>
 #include <boost/type_traits/is_signed.hpp>
 #include <boost/type_traits/is_unsigned.hpp>
-#include <boost/type_traits/is_convertible.hpp>
 
 #include <ostream>
 
