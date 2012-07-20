@@ -3672,7 +3672,7 @@ bool ib_rule_id_match(const ib_rule_t *rule,
     {
         IB_FTRACE_RET_BOOL(true);
     }
-    
+
     /* Check parent rules if requested */
     if ( (parents == true) && (rule->chained_from != NULL) ) {
         bool match = ib_rule_id_match(rule->chained_from, id,
@@ -3710,7 +3710,7 @@ bool ib_rule_tag_match(const ib_rule_t *rule,
             IB_FTRACE_RET_BOOL(true);
         }
     }
-    
+
     /* Check parent rules if requested */
     if ( (parents == true) && (rule->chained_from != NULL) ) {
         bool match = ib_rule_tag_match(rule->chained_from,
