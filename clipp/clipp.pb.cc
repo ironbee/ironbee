@@ -462,7 +462,7 @@ bool ConnectionEvent::MergePartialFromCodedStream(
         if (input->ExpectTag(16)) goto parse_local_port;
         break;
       }
-      
+
       // optional uint32 local_port = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -478,7 +478,7 @@ bool ConnectionEvent::MergePartialFromCodedStream(
         if (input->ExpectTag(26)) goto parse_remote_ip;
         break;
       }
-      
+
       // optional string remote_ip = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -495,7 +495,7 @@ bool ConnectionEvent::MergePartialFromCodedStream(
         if (input->ExpectTag(32)) goto parse_remote_port;
         break;
       }
-      
+
       // optional uint32 remote_port = 4;
       case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -511,7 +511,7 @@ bool ConnectionEvent::MergePartialFromCodedStream(
         if (input->ExpectAtEnd()) return true;
         break;
       }
-      
+
       default: {
       handle_uninterpreted:
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -538,12 +538,12 @@ void ConnectionEvent::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteString(
       1, this->local_ip(), output);
   }
-  
+
   // optional uint32 local_port = 2;
   if (has_local_port()) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->local_port(), output);
   }
-  
+
   // optional string remote_ip = 3;
   if (has_remote_ip()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
@@ -552,12 +552,12 @@ void ConnectionEvent::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteString(
       3, this->remote_ip(), output);
   }
-  
+
   // optional uint32 remote_port = 4;
   if (has_remote_port()) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(4, this->remote_port(), output);
   }
-  
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -575,12 +575,12 @@ void ConnectionEvent::SerializeWithCachedSizes(
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         1, this->local_ip(), target);
   }
-  
+
   // optional uint32 local_port = 2;
   if (has_local_port()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->local_port(), target);
   }
-  
+
   // optional string remote_ip = 3;
   if (has_remote_ip()) {
     ::google::protobuf::internal::WireFormat::VerifyUTF8String(
@@ -590,12 +590,12 @@ void ConnectionEvent::SerializeWithCachedSizes(
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         3, this->remote_ip(), target);
   }
-  
+
   // optional uint32 remote_port = 4;
   if (has_remote_port()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(4, this->remote_port(), target);
   }
-  
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -605,7 +605,7 @@ void ConnectionEvent::SerializeWithCachedSizes(
 
 int ConnectionEvent::ByteSize() const {
   int total_size = 0;
-  
+
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     // optional string local_ip = 1;
     if (has_local_ip()) {
@@ -613,28 +613,28 @@ int ConnectionEvent::ByteSize() const {
         ::google::protobuf::internal::WireFormatLite::StringSize(
           this->local_ip());
     }
-    
+
     // optional uint32 local_port = 2;
     if (has_local_port()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
           this->local_port());
     }
-    
+
     // optional string remote_ip = 3;
     if (has_remote_ip()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
           this->remote_ip());
     }
-    
+
     // optional uint32 remote_port = 4;
     if (has_remote_port()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
           this->remote_port());
     }
-    
+
   }
   if (!unknown_fields().empty()) {
     total_size +=
@@ -691,7 +691,7 @@ void ConnectionEvent::CopyFrom(const ConnectionEvent& from) {
 }
 
 bool ConnectionEvent::IsInitialized() const {
-  
+
   return true;
 }
 
@@ -804,7 +804,7 @@ bool DataEvent::MergePartialFromCodedStream(
         if (input->ExpectAtEnd()) return true;
         break;
       }
-      
+
       default: {
       handle_uninterpreted:
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -828,7 +828,7 @@ void DataEvent::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       1, this->data(), output);
   }
-  
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -843,7 +843,7 @@ void DataEvent::SerializeWithCachedSizes(
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         1, this->data(), target);
   }
-  
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -853,7 +853,7 @@ void DataEvent::SerializeWithCachedSizes(
 
 int DataEvent::ByteSize() const {
   int total_size = 0;
-  
+
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     // required bytes data = 1;
     if (has_data()) {
@@ -861,7 +861,7 @@ int DataEvent::ByteSize() const {
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->data());
     }
-    
+
   }
   if (!unknown_fields().empty()) {
     total_size +=
@@ -910,7 +910,7 @@ void DataEvent::CopyFrom(const DataEvent& from) {
 
 bool DataEvent::IsInitialized() const {
   if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
-  
+
   return true;
 }
 
@@ -1050,7 +1050,7 @@ bool RequestEvent::MergePartialFromCodedStream(
         if (input->ExpectTag(18)) goto parse_method;
         break;
       }
-      
+
       // optional bytes method = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -1064,7 +1064,7 @@ bool RequestEvent::MergePartialFromCodedStream(
         if (input->ExpectTag(26)) goto parse_uri;
         break;
       }
-      
+
       // optional bytes uri = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -1078,7 +1078,7 @@ bool RequestEvent::MergePartialFromCodedStream(
         if (input->ExpectTag(34)) goto parse_protocol;
         break;
       }
-      
+
       // optional bytes protocol = 4;
       case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -1092,7 +1092,7 @@ bool RequestEvent::MergePartialFromCodedStream(
         if (input->ExpectAtEnd()) return true;
         break;
       }
-      
+
       default: {
       handle_uninterpreted:
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -1116,25 +1116,25 @@ void RequestEvent::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       1, this->raw(), output);
   }
-  
+
   // optional bytes method = 2;
   if (has_method()) {
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       2, this->method(), output);
   }
-  
+
   // optional bytes uri = 3;
   if (has_uri()) {
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       3, this->uri(), output);
   }
-  
+
   // optional bytes protocol = 4;
   if (has_protocol()) {
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       4, this->protocol(), output);
   }
-  
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -1149,28 +1149,28 @@ void RequestEvent::SerializeWithCachedSizes(
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         1, this->raw(), target);
   }
-  
+
   // optional bytes method = 2;
   if (has_method()) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         2, this->method(), target);
   }
-  
+
   // optional bytes uri = 3;
   if (has_uri()) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         3, this->uri(), target);
   }
-  
+
   // optional bytes protocol = 4;
   if (has_protocol()) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         4, this->protocol(), target);
   }
-  
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -1180,7 +1180,7 @@ void RequestEvent::SerializeWithCachedSizes(
 
 int RequestEvent::ByteSize() const {
   int total_size = 0;
-  
+
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     // optional bytes raw = 1;
     if (has_raw()) {
@@ -1188,28 +1188,28 @@ int RequestEvent::ByteSize() const {
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->raw());
     }
-    
+
     // optional bytes method = 2;
     if (has_method()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->method());
     }
-    
+
     // optional bytes uri = 3;
     if (has_uri()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->uri());
     }
-    
+
     // optional bytes protocol = 4;
     if (has_protocol()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->protocol());
     }
-    
+
   }
   if (!unknown_fields().empty()) {
     total_size +=
@@ -1266,7 +1266,7 @@ void RequestEvent::CopyFrom(const RequestEvent& from) {
 }
 
 bool RequestEvent::IsInitialized() const {
-  
+
   return true;
 }
 
@@ -1409,7 +1409,7 @@ bool ResponseEvent::MergePartialFromCodedStream(
         if (input->ExpectTag(18)) goto parse_protocol;
         break;
       }
-      
+
       // optional bytes protocol = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -1423,7 +1423,7 @@ bool ResponseEvent::MergePartialFromCodedStream(
         if (input->ExpectTag(26)) goto parse_status;
         break;
       }
-      
+
       // optional bytes status = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -1437,7 +1437,7 @@ bool ResponseEvent::MergePartialFromCodedStream(
         if (input->ExpectTag(34)) goto parse_message;
         break;
       }
-      
+
       // optional bytes message = 4;
       case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -1451,7 +1451,7 @@ bool ResponseEvent::MergePartialFromCodedStream(
         if (input->ExpectAtEnd()) return true;
         break;
       }
-      
+
       default: {
       handle_uninterpreted:
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -1475,25 +1475,25 @@ void ResponseEvent::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       1, this->raw(), output);
   }
-  
+
   // optional bytes protocol = 2;
   if (has_protocol()) {
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       2, this->protocol(), output);
   }
-  
+
   // optional bytes status = 3;
   if (has_status()) {
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       3, this->status(), output);
   }
-  
+
   // optional bytes message = 4;
   if (has_message()) {
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       4, this->message(), output);
   }
-  
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -1508,28 +1508,28 @@ void ResponseEvent::SerializeWithCachedSizes(
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         1, this->raw(), target);
   }
-  
+
   // optional bytes protocol = 2;
   if (has_protocol()) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         2, this->protocol(), target);
   }
-  
+
   // optional bytes status = 3;
   if (has_status()) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         3, this->status(), target);
   }
-  
+
   // optional bytes message = 4;
   if (has_message()) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         4, this->message(), target);
   }
-  
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -1539,7 +1539,7 @@ void ResponseEvent::SerializeWithCachedSizes(
 
 int ResponseEvent::ByteSize() const {
   int total_size = 0;
-  
+
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     // optional bytes raw = 1;
     if (has_raw()) {
@@ -1547,28 +1547,28 @@ int ResponseEvent::ByteSize() const {
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->raw());
     }
-    
+
     // optional bytes protocol = 2;
     if (has_protocol()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->protocol());
     }
-    
+
     // optional bytes status = 3;
     if (has_status()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->status());
     }
-    
+
     // optional bytes message = 4;
     if (has_message()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->message());
     }
-    
+
   }
   if (!unknown_fields().empty()) {
     total_size +=
@@ -1625,7 +1625,7 @@ void ResponseEvent::CopyFrom(const ResponseEvent& from) {
 }
 
 bool ResponseEvent::IsInitialized() const {
-  
+
   return true;
 }
 
@@ -1748,7 +1748,7 @@ bool Header::MergePartialFromCodedStream(
         if (input->ExpectTag(18)) goto parse_value;
         break;
       }
-      
+
       // required bytes value = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -1762,7 +1762,7 @@ bool Header::MergePartialFromCodedStream(
         if (input->ExpectAtEnd()) return true;
         break;
       }
-      
+
       default: {
       handle_uninterpreted:
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -1786,13 +1786,13 @@ void Header::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       1, this->name(), output);
   }
-  
+
   // required bytes value = 2;
   if (has_value()) {
     ::google::protobuf::internal::WireFormatLite::WriteBytes(
       2, this->value(), output);
   }
-  
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -1807,14 +1807,14 @@ void Header::SerializeWithCachedSizes(
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         1, this->name(), target);
   }
-  
+
   // required bytes value = 2;
   if (has_value()) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
         2, this->value(), target);
   }
-  
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -1824,7 +1824,7 @@ void Header::SerializeWithCachedSizes(
 
 int Header::ByteSize() const {
   int total_size = 0;
-  
+
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     // required bytes name = 1;
     if (has_name()) {
@@ -1832,14 +1832,14 @@ int Header::ByteSize() const {
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->name());
     }
-    
+
     // required bytes value = 2;
     if (has_value()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::BytesSize(
           this->value());
     }
-    
+
   }
   if (!unknown_fields().empty()) {
     total_size +=
@@ -1891,7 +1891,7 @@ void Header::CopyFrom(const Header& from) {
 
 bool Header::IsInitialized() const {
   if ((_has_bits_[0] & 0x00000003) != 0x00000003) return false;
-  
+
   return true;
 }
 
@@ -1994,7 +1994,7 @@ bool HeaderEvent::MergePartialFromCodedStream(
         if (input->ExpectAtEnd()) return true;
         break;
       }
-      
+
       default: {
       handle_uninterpreted:
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2018,7 +2018,7 @@ void HeaderEvent::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       1, this->header(i), output);
   }
-  
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -2033,7 +2033,7 @@ void HeaderEvent::SerializeWithCachedSizes(
       WriteMessageNoVirtualToArray(
         1, this->header(i), target);
   }
-  
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -2043,7 +2043,7 @@ void HeaderEvent::SerializeWithCachedSizes(
 
 int HeaderEvent::ByteSize() const {
   int total_size = 0;
-  
+
   // repeated .IronBee.CLIPP.PB.Header header = 1;
   total_size += 1 * this->header_size();
   for (int i = 0; i < this->header_size(); i++) {
@@ -2051,7 +2051,7 @@ int HeaderEvent::ByteSize() const {
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         this->header(i));
   }
-  
+
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -2094,7 +2094,7 @@ void HeaderEvent::CopyFrom(const HeaderEvent& from) {
 }
 
 bool HeaderEvent::IsInitialized() const {
-  
+
   for (int i = 0; i < header_size(); i++) {
     if (!this->header(i).IsInitialized()) return false;
   }
@@ -2243,7 +2243,7 @@ bool Event::MergePartialFromCodedStream(
         if (input->ExpectTag(17)) goto parse_pre_delay;
         break;
       }
-      
+
       // optional double pre_delay = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2259,7 +2259,7 @@ bool Event::MergePartialFromCodedStream(
         if (input->ExpectTag(25)) goto parse_post_delay;
         break;
       }
-      
+
       // optional double post_delay = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2275,7 +2275,7 @@ bool Event::MergePartialFromCodedStream(
         if (input->ExpectTag(34)) goto parse_connection_event;
         break;
       }
-      
+
       // optional .IronBee.CLIPP.PB.ConnectionEvent connection_event = 4;
       case 4: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2289,7 +2289,7 @@ bool Event::MergePartialFromCodedStream(
         if (input->ExpectTag(42)) goto parse_data_event;
         break;
       }
-      
+
       // optional .IronBee.CLIPP.PB.DataEvent data_event = 5;
       case 5: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2303,7 +2303,7 @@ bool Event::MergePartialFromCodedStream(
         if (input->ExpectTag(50)) goto parse_request_event;
         break;
       }
-      
+
       // optional .IronBee.CLIPP.PB.RequestEvent request_event = 6;
       case 6: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2317,7 +2317,7 @@ bool Event::MergePartialFromCodedStream(
         if (input->ExpectTag(58)) goto parse_response_event;
         break;
       }
-      
+
       // optional .IronBee.CLIPP.PB.ResponseEvent response_event = 7;
       case 7: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2331,7 +2331,7 @@ bool Event::MergePartialFromCodedStream(
         if (input->ExpectTag(66)) goto parse_header_event;
         break;
       }
-      
+
       // optional .IronBee.CLIPP.PB.HeaderEvent header_event = 8;
       case 8: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2345,7 +2345,7 @@ bool Event::MergePartialFromCodedStream(
         if (input->ExpectAtEnd()) return true;
         break;
       }
-      
+
       default: {
       handle_uninterpreted:
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2368,47 +2368,47 @@ void Event::SerializeWithCachedSizes(
   if (has_which()) {
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(1, this->which(), output);
   }
-  
+
   // optional double pre_delay = 2;
   if (has_pre_delay()) {
     ::google::protobuf::internal::WireFormatLite::WriteDouble(2, this->pre_delay(), output);
   }
-  
+
   // optional double post_delay = 3;
   if (has_post_delay()) {
     ::google::protobuf::internal::WireFormatLite::WriteDouble(3, this->post_delay(), output);
   }
-  
+
   // optional .IronBee.CLIPP.PB.ConnectionEvent connection_event = 4;
   if (has_connection_event()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       4, this->connection_event(), output);
   }
-  
+
   // optional .IronBee.CLIPP.PB.DataEvent data_event = 5;
   if (has_data_event()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       5, this->data_event(), output);
   }
-  
+
   // optional .IronBee.CLIPP.PB.RequestEvent request_event = 6;
   if (has_request_event()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       6, this->request_event(), output);
   }
-  
+
   // optional .IronBee.CLIPP.PB.ResponseEvent response_event = 7;
   if (has_response_event()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       7, this->response_event(), output);
   }
-  
+
   // optional .IronBee.CLIPP.PB.HeaderEvent header_event = 8;
   if (has_header_event()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       8, this->header_event(), output);
   }
-  
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -2421,52 +2421,52 @@ void Event::SerializeWithCachedSizes(
   if (has_which()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(1, this->which(), target);
   }
-  
+
   // optional double pre_delay = 2;
   if (has_pre_delay()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(2, this->pre_delay(), target);
   }
-  
+
   // optional double post_delay = 3;
   if (has_post_delay()) {
     target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(3, this->post_delay(), target);
   }
-  
+
   // optional .IronBee.CLIPP.PB.ConnectionEvent connection_event = 4;
   if (has_connection_event()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
         4, this->connection_event(), target);
   }
-  
+
   // optional .IronBee.CLIPP.PB.DataEvent data_event = 5;
   if (has_data_event()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
         5, this->data_event(), target);
   }
-  
+
   // optional .IronBee.CLIPP.PB.RequestEvent request_event = 6;
   if (has_request_event()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
         6, this->request_event(), target);
   }
-  
+
   // optional .IronBee.CLIPP.PB.ResponseEvent response_event = 7;
   if (has_response_event()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
         7, this->response_event(), target);
   }
-  
+
   // optional .IronBee.CLIPP.PB.HeaderEvent header_event = 8;
   if (has_header_event()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
         8, this->header_event(), target);
   }
-  
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -2476,7 +2476,7 @@ void Event::SerializeWithCachedSizes(
 
 int Event::ByteSize() const {
   int total_size = 0;
-  
+
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     // required uint32 which = 1;
     if (has_which()) {
@@ -2484,52 +2484,52 @@ int Event::ByteSize() const {
         ::google::protobuf::internal::WireFormatLite::UInt32Size(
           this->which());
     }
-    
+
     // optional double pre_delay = 2;
     if (has_pre_delay()) {
       total_size += 1 + 8;
     }
-    
+
     // optional double post_delay = 3;
     if (has_post_delay()) {
       total_size += 1 + 8;
     }
-    
+
     // optional .IronBee.CLIPP.PB.ConnectionEvent connection_event = 4;
     if (has_connection_event()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->connection_event());
     }
-    
+
     // optional .IronBee.CLIPP.PB.DataEvent data_event = 5;
     if (has_data_event()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->data_event());
     }
-    
+
     // optional .IronBee.CLIPP.PB.RequestEvent request_event = 6;
     if (has_request_event()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->request_event());
     }
-    
+
     // optional .IronBee.CLIPP.PB.ResponseEvent response_event = 7;
     if (has_response_event()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->response_event());
     }
-    
+
     // optional .IronBee.CLIPP.PB.HeaderEvent header_event = 8;
     if (has_header_event()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->header_event());
     }
-    
+
   }
   if (!unknown_fields().empty()) {
     total_size +=
@@ -2599,7 +2599,7 @@ void Event::CopyFrom(const Event& from) {
 
 bool Event::IsInitialized() const {
   if ((_has_bits_[0] & 0x00000001) != 0x00000001) return false;
-  
+
   if (has_data_event()) {
     if (!this->data_event().IsInitialized()) return false;
   }
@@ -2714,7 +2714,7 @@ bool Transaction::MergePartialFromCodedStream(
         if (input->ExpectAtEnd()) return true;
         break;
       }
-      
+
       default: {
       handle_uninterpreted:
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2738,7 +2738,7 @@ void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       1, this->event(i), output);
   }
-  
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -2753,7 +2753,7 @@ void Transaction::SerializeWithCachedSizes(
       WriteMessageNoVirtualToArray(
         1, this->event(i), target);
   }
-  
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -2763,7 +2763,7 @@ void Transaction::SerializeWithCachedSizes(
 
 int Transaction::ByteSize() const {
   int total_size = 0;
-  
+
   // repeated .IronBee.CLIPP.PB.Event event = 1;
   total_size += 1 * this->event_size();
   for (int i = 0; i < this->event_size(); i++) {
@@ -2771,7 +2771,7 @@ int Transaction::ByteSize() const {
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         this->event(i));
   }
-  
+
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -2814,7 +2814,7 @@ void Transaction::CopyFrom(const Transaction& from) {
 }
 
 bool Transaction::IsInitialized() const {
-  
+
   for (int i = 0; i < event_size(); i++) {
     if (!this->event(i).IsInitialized()) return false;
   }
@@ -2923,7 +2923,7 @@ bool Connection::MergePartialFromCodedStream(
         if (input->ExpectTag(18)) goto parse_transaction;
         break;
       }
-      
+
       // repeated .IronBee.CLIPP.PB.Transaction transaction = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2938,7 +2938,7 @@ bool Connection::MergePartialFromCodedStream(
         if (input->ExpectTag(26)) goto parse_post_transaction_event;
         break;
       }
-      
+
       // repeated .IronBee.CLIPP.PB.Event post_transaction_event = 3;
       case 3: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2953,7 +2953,7 @@ bool Connection::MergePartialFromCodedStream(
         if (input->ExpectAtEnd()) return true;
         break;
       }
-      
+
       default: {
       handle_uninterpreted:
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -2977,19 +2977,19 @@ void Connection::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       1, this->pre_transaction_event(i), output);
   }
-  
+
   // repeated .IronBee.CLIPP.PB.Transaction transaction = 2;
   for (int i = 0; i < this->transaction_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       2, this->transaction(i), output);
   }
-  
+
   // repeated .IronBee.CLIPP.PB.Event post_transaction_event = 3;
   for (int i = 0; i < this->post_transaction_event_size(); i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       3, this->post_transaction_event(i), output);
   }
-  
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -3004,21 +3004,21 @@ void Connection::SerializeWithCachedSizes(
       WriteMessageNoVirtualToArray(
         1, this->pre_transaction_event(i), target);
   }
-  
+
   // repeated .IronBee.CLIPP.PB.Transaction transaction = 2;
   for (int i = 0; i < this->transaction_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
         2, this->transaction(i), target);
   }
-  
+
   // repeated .IronBee.CLIPP.PB.Event post_transaction_event = 3;
   for (int i = 0; i < this->post_transaction_event_size(); i++) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
         3, this->post_transaction_event(i), target);
   }
-  
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -3028,7 +3028,7 @@ void Connection::SerializeWithCachedSizes(
 
 int Connection::ByteSize() const {
   int total_size = 0;
-  
+
   // repeated .IronBee.CLIPP.PB.Event pre_transaction_event = 1;
   total_size += 1 * this->pre_transaction_event_size();
   for (int i = 0; i < this->pre_transaction_event_size(); i++) {
@@ -3036,7 +3036,7 @@ int Connection::ByteSize() const {
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         this->pre_transaction_event(i));
   }
-  
+
   // repeated .IronBee.CLIPP.PB.Transaction transaction = 2;
   total_size += 1 * this->transaction_size();
   for (int i = 0; i < this->transaction_size(); i++) {
@@ -3044,7 +3044,7 @@ int Connection::ByteSize() const {
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         this->transaction(i));
   }
-  
+
   // repeated .IronBee.CLIPP.PB.Event post_transaction_event = 3;
   total_size += 1 * this->post_transaction_event_size();
   for (int i = 0; i < this->post_transaction_event_size(); i++) {
@@ -3052,7 +3052,7 @@ int Connection::ByteSize() const {
       ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
         this->post_transaction_event(i));
   }
-  
+
   if (!unknown_fields().empty()) {
     total_size +=
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
@@ -3097,7 +3097,7 @@ void Connection::CopyFrom(const Connection& from) {
 }
 
 bool Connection::IsInitialized() const {
-  
+
   for (int i = 0; i < pre_transaction_event_size(); i++) {
     if (!this->pre_transaction_event(i).IsInitialized()) return false;
   }
@@ -3228,7 +3228,7 @@ bool Input::MergePartialFromCodedStream(
         if (input->ExpectTag(18)) goto parse_connection;
         break;
       }
-      
+
       // required .IronBee.CLIPP.PB.Connection connection = 2;
       case 2: {
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -3242,7 +3242,7 @@ bool Input::MergePartialFromCodedStream(
         if (input->ExpectAtEnd()) return true;
         break;
       }
-      
+
       default: {
       handle_uninterpreted:
         if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
@@ -3269,13 +3269,13 @@ void Input::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteString(
       1, this->id(), output);
   }
-  
+
   // required .IronBee.CLIPP.PB.Connection connection = 2;
   if (has_connection()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
       2, this->connection(), output);
   }
-  
+
   if (!unknown_fields().empty()) {
     ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
         unknown_fields(), output);
@@ -3293,14 +3293,14 @@ void Input::SerializeWithCachedSizes(
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
         1, this->id(), target);
   }
-  
+
   // required .IronBee.CLIPP.PB.Connection connection = 2;
   if (has_connection()) {
     target = ::google::protobuf::internal::WireFormatLite::
       WriteMessageNoVirtualToArray(
         2, this->connection(), target);
   }
-  
+
   if (!unknown_fields().empty()) {
     target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
         unknown_fields(), target);
@@ -3310,7 +3310,7 @@ void Input::SerializeWithCachedSizes(
 
 int Input::ByteSize() const {
   int total_size = 0;
-  
+
   if (_has_bits_[0 / 32] & (0xffu << (0 % 32))) {
     // optional string id = 1;
     if (has_id()) {
@@ -3318,14 +3318,14 @@ int Input::ByteSize() const {
         ::google::protobuf::internal::WireFormatLite::StringSize(
           this->id());
     }
-    
+
     // required .IronBee.CLIPP.PB.Connection connection = 2;
     if (has_connection()) {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::MessageSizeNoVirtual(
           this->connection());
     }
-    
+
   }
   if (!unknown_fields().empty()) {
     total_size +=
@@ -3377,7 +3377,7 @@ void Input::CopyFrom(const Input& from) {
 
 bool Input::IsInitialized() const {
   if ((_has_bits_[0] & 0x00000002) != 0x00000002) return false;
-  
+
   if (has_connection()) {
     if (!this->connection().IsInitialized()) return false;
   }
