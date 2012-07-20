@@ -38,19 +38,40 @@
 #include <boost/lexical_cast.hpp>
 
 #define ASSERT_IB_OK(x) ASSERT_EQ(IB_OK, (x))
+const size_t EXCEPTION_BUF_SIZE = 128;
 
 class BaseFixture : public ::testing::Test {
 public:
     void SetUp() {
+        ib_status_t rc;
+        char buf[EXCEPTION_BUF_SIZE+1];
         ibt_ibserver.vernum = IB_VERNUM;
         ibt_ibserver.abinum = IB_ABINUM;
         ibt_ibserver.version = IB_VERSION;
         ibt_ibserver.filename = __FILE__;
         ibt_ibserver.name = "unit_tests";
 
-        ib_initialize();
-        ib_engine_create(&ib_engine, &ibt_ibserver);
-        ib_engine_init(ib_engine);
+        rc = ib_initialize();
+        if (rc != IB_OK) {
+            snprintf(buf, EXCEPTION_BUF_SIZE,
+                     "Failed to initialize IronBee: %s",
+                     ib_status_to_string(rc));
+            throw std::runtime_error(buf);
+        }
+        rc = ib_engine_create(&ib_engine, &ibt_ibserver);
+        if (rc != IB_OK) {
+            snprintf(buf, EXCEPTION_BUF_SIZE,
+                     "Failed to create IronBee Engine: %s",
+                     ib_status_to_string(rc));
+            throw std::runtime_error(buf);
+        }
+        rc = ib_engine_init(ib_engine);
+        if (rc != IB_OK) {
+            snprintf(buf, EXCEPTION_BUF_SIZE,
+                     "Failed to initialize IronBee Engine: %s",
+                     ib_status_to_string(rc));
+            throw std::runtime_error(buf);
+        }
 
         resetRuleBasePath();
         resetModuleBasePath();
