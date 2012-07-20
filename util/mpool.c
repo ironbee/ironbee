@@ -1773,6 +1773,54 @@ ib_status_t ib_mpool_validate(
         }
     }
 
+    /* Validate end pointers */
+/** @cond DoNotDocument */
+#define VALIDATE_END(list_type, begin, end, name) \
+    { \
+        if ((begin) != NULL) { \
+            const list_type *ve_i = (begin); \
+            while (ve_i->next != NULL) { \
+                ve_i = ve_i->next; \
+            } \
+            if (ve_i != (end)) { \
+                VALIDATE_ERROR( \
+                    "List " name " has invalid end: %p %p", \
+                    ve_i, (end) \
+                ); \
+            } \
+        } \
+        else if ((end) != NULL) { \
+            VALIDATE_ERROR( \
+                "List " name " has end but no beginning: %p", \
+                (end) \
+            ); \
+        } \
+    }
+/** @endcond */
+    VALIDATE_END(ib_mpool_t, mp->children, mp->children_end, "children");
+    for (
+        size_t track_num = 0;
+        track_num < IB_MPOOL_NUM_TRACKS;
+        ++track_num
+    ) {
+        VALIDATE_END(
+            ib_mpool_page_t,
+            mp->tracks[track_num], mp->tracks_end[track_num],
+            "track"
+        );
+    }
+    VALIDATE_END(
+        ib_mpool_pointer_page_t,
+        mp->large_allocations, mp->large_allocations_end,
+        "large_allocations"
+    );
+    VALIDATE_END(
+        ib_mpool_cleanup_t,
+        mp->cleanups, mp->cleanups_end,
+        "cleanups"
+    );
+#undef VALIDATE_END
+
     /* Normal exit */
     IB_FTRACE_RET_STATUS(IB_OK);
 
