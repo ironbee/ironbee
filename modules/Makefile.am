@@ -73,7 +73,7 @@ ibmod_rules_la_LIBADD = -lm
 if ENABLE_LUA
 ibmod_rules_la_SOURCES += \
     rules_lua.c \
-    rules_lua.h
+    rules_lua_private.h
 
 ibmod_rules_la_CPPFLAGS += \
     $(top_builddir)/lua/libironbee-lua.la \
