@@ -958,6 +958,14 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    if (    ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)
+        && !ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED))
+    {
+        ib_log_debug_tx(tx, "Automatically triggering %s",
+                        ib_state_event_name(request_finished_event));
+        ib_state_notify_request_finished(ib, tx);
+    }
+
     /* Mark the time. */
     tx->t.response_started = ib_clock_get_time();
 
