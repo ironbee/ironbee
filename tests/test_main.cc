@@ -21,7 +21,7 @@
 ///
 /// This file should be compiled in with all unit tests to server as
 /// a common main().
-/// 
+///
 /// @author Brian Rectanus <brectanus@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 

@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; Aho Corasick Module Tests
-/// 
+///
 /// @author Sam Baskinger <sbaskinger@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -77,10 +77,10 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
     // Create field 1.
     ASSERT_EQ(IB_OK,
         ib_field_create(
-            &field1, 
-            ib_engine_pool_main_get(ib_engine), 
-            IB_FIELD_NAME("field1"), 
-            IB_FTYPE_NULSTR, 
+            &field1,
+            ib_engine_pool_main_get(ib_engine),
+            IB_FIELD_NAME("field1"),
+            IB_FTYPE_NULSTR,
             ib_ftype_nulstr_in(str1)
         )
     );
@@ -88,10 +88,10 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
     // Create field 2.
     ASSERT_EQ(IB_OK,
         ib_field_create(
-            &field2, 
+            &field2,
             ib_engine_pool_main_get(ib_engine),
-            IB_FIELD_NAME("field2"), 
-            IB_FTYPE_NULSTR, 
+            IB_FIELD_NAME("field2"),
+            IB_FTYPE_NULSTR,
             ib_ftype_nulstr_in(str2)
         )
     );
@@ -157,10 +157,10 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     // Create field 1.
     ASSERT_EQ(IB_OK,
         ib_field_create(
-            &field1, 
-            ib_engine_pool_main_get(ib_engine), 
-            IB_FIELD_NAME("field1"), 
-            IB_FTYPE_NULSTR, 
+            &field1,
+            ib_engine_pool_main_get(ib_engine),
+            IB_FIELD_NAME("field1"),
+            IB_FTYPE_NULSTR,
             ib_ftype_nulstr_in(str1)
         )
     );

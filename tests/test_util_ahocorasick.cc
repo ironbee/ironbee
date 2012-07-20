@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; Aho Corasick Pattern Matcher provider tests
-/// 
+///
 /// @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -39,21 +39,21 @@ public:
     TestIBUtilAhoCorasick()
     {
         ib_status_t rc;
-        
+
         ib_initialize();
-        
+
         rc = ib_mpool_create(&m_pool, NULL, NULL);
         if (rc != IB_OK) {
             throw std::runtime_error("Failed to create mpool.");
         }
     }
-    
+
     ~TestIBUtilAhoCorasick()
     {
         ib_mpool_destroy(m_pool);
         ib_shutdown();
     }
-    
+
 protected:
     ib_mpool_t* m_pool;
 };
@@ -111,7 +111,7 @@ TEST_F(TestIBUtilAhoCorasick, generic_ac_test)
     ASSERT_EQ(ac_tree->root, ac_tree->root->child->fail);
     ASSERT_TRUE(ac_tree->root->child->child);
     ASSERT_EQ('e', ac_tree->root->child->child->letter);
-    ASSERT_TRUE(ac_tree->root->child->child->flags & 
+    ASSERT_TRUE(ac_tree->root->child->child->flags &
         IB_AC_FLAG_STATE_OUTPUT);
     ASSERT_TRUE(ac_tree->root->child->child->child);
     ASSERT_EQ('r', ac_tree->root->child->child->child->letter);
@@ -195,7 +195,7 @@ TEST_F(TestIBUtilAhoCorasick, test_ib_ac_consume)
         );
         ASSERT_TRUE(rc == IB_OK || rc == IB_ENOENT);
     }
-    
+
     ASSERT_TRUE(ac_mctx.match_list);
     ASSERT_EQ(4UL, ib_list_elements(ac_mctx.match_list));
 
@@ -213,7 +213,7 @@ TEST_F(TestIBUtilAhoCorasick, test_ib_ac_consume)
         );
         ASSERT_TRUE(rc == IB_OK || rc == IB_ENOENT);
     }
-    
+
     ASSERT_TRUE(ac_mctx.match_list);
     ASSERT_EQ(4UL, ib_list_elements(ac_mctx.match_list));
 
@@ -232,7 +232,7 @@ TEST_F(TestIBUtilAhoCorasick, test_ib_ac_consume)
 
         ASSERT_TRUE(rc == IB_OK || rc == IB_ENOENT);
     }
-    
+
     ASSERT_TRUE(ac_mctx.match_list);
     ASSERT_EQ(4UL, ib_list_elements(ac_mctx.match_list));
 }
@@ -245,7 +245,7 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_case_sensitive)
     const char *text = "sHeRsHiS";
     ib_ac_t *ac_tree = NULL;
     ib_ac_context_t ac_mctx;
-    
+
     rc = ib_ac_create(&ac_tree, 0, m_pool);
     ASSERT_EQ(IB_OK, rc);
 
@@ -276,7 +276,7 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_case_sensitive)
     );
 
     ASSERT_EQ(IB_ENOENT, rc);
-    
+
     if (ac_mctx.match_list != NULL) {
         ASSERT_NE(0UL, ib_list_elements(ac_mctx.match_list));
     }
@@ -422,7 +422,7 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_check_list)
     const char *text = "shershis";
     ib_ac_t *ac_tree = NULL;
     ib_ac_context_t ac_mctx;
-    
+
     rc = ib_ac_create(&ac_tree, 0, m_pool);
     ASSERT_EQ(IB_OK, rc);
 
@@ -464,9 +464,9 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_check_list)
 #ifdef ENABLE_VERBOSE_DEBUG_AHOCORASICK
         printf(
             "From list: Pattern:%s, len:%d, offset:%d relative_offset:%d\n",
-            mt->pattern, 
+            mt->pattern,
             mt->pattern_len,
-            mt->offset, 
+            mt->offset,
             mt->relative_offset
         );
 #endif
@@ -513,7 +513,7 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_contained_patterns)
     const char *text = "abcabcabcabc";
     ib_ac_t *ac_tree = NULL;
     ib_ac_context_t ac_mctx;
-    
+
     rc = ib_ac_create(&ac_tree, 0, m_pool);
     ASSERT_EQ(IB_OK, rc);
 

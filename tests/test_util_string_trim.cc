@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; String Util Test Functions
-/// 
+///
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -476,7 +476,7 @@ static TestDatum str_test_data [ ] =
     TestDatum(__LINE__, "  a",         2, 0),
     TestDatum(__LINE__, "   ab",       3, 0),
     TestDatum(__LINE__, "  \nab",      3, 0),
-                                       
+
     TestDatum(__LINE__, " a ",         1, 1),
     TestDatum(__LINE__, " a   ",       1, 3),
     TestDatum(__LINE__, " ab   ",      1, 3),
@@ -611,28 +611,28 @@ static TestDatum ex_test_data [ ] =
     TestDatum(__LINE__, " \0 ", 3,      1, 1),
     TestDatum(__LINE__, "  \0\n", 4,    2, 1),
     TestDatum(__LINE__, "\t \0 \n", 5,  2, 2),
-                                        
+
     TestDatum(__LINE__, "a\0", 2,       0, 0),
     TestDatum(__LINE__, "ab\0", 3,      0, 0),
     TestDatum(__LINE__, "ab\0:", 4,     0, 0),
-                                        
+
     TestDatum(__LINE__, "\0a ", 3,      0, 1),
     TestDatum(__LINE__, "a\0   ", 5,    0, 3),
     TestDatum(__LINE__, "a\0b   ", 6,   0, 3),
     TestDatum(__LINE__, "ab\0  \n", 6,  0, 3),
-                                        
+
     TestDatum(__LINE__, "a\0", 2,       0, 0),
     TestDatum(__LINE__, " \0a", 3,      1, 0),
     TestDatum(__LINE__, "  a\0", 4,     2, 0),
     TestDatum(__LINE__, "   a\0b", 6,   3, 0),
     TestDatum(__LINE__, "  \nab\0", 6,  3, 0),
-                                        
+
     TestDatum(__LINE__, " a\0 ", 4,     1, 1),
     TestDatum(__LINE__, " \0a ", 4,     1, 1),
     TestDatum(__LINE__, " a\0   ", 6,   1, 3),
     TestDatum(__LINE__, " a\0b   ", 7,  1, 3),
     TestDatum(__LINE__, " ab\0  \n", 7, 1, 3),
-                                        
+
     TestDatum(__LINE__, " a \0", 4,     1, 0),
     TestDatum(__LINE__, "\0 a \0", 5,   0, 0),
     TestDatum(__LINE__, "\0 ab\0", 5,   0, 0),

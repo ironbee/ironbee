@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; Radix Test Functions
-/// 
+///
 /// @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -79,7 +79,7 @@ public:
                  lineno, match_type == EXACT ? "EXACT" : "CLOSEST", ascii);
         return buf;
     }
-    
+
 public:
     MatchType            match_type;
     ib_status_t          rc;
@@ -97,7 +97,7 @@ public:
 
 /* -- Helper functions -- */
 
-/** 
+/**
  * Helper functions for printing node info
  */
 #if 0
@@ -108,7 +108,7 @@ void padding(int i)
         printf("..");
 }
 
-/** 
+/**
  * Helper functions for printing node info
  */
 void printBin(uint8_t *prefix,
@@ -124,7 +124,7 @@ void printBin(uint8_t *prefix,
     printf(" [%d] ", prefixlen);
 }
 
-/** 
+/**
  * Helper functions for printing node info
  */
 void printKey(ib_radix_prefix_t *prefix)
@@ -133,7 +133,7 @@ void printKey(ib_radix_prefix_t *prefix)
         printBin(prefix->rawbits, prefix->prefixlen);
 }
 
-/** 
+/**
  * Helper function, prints user data recursively with indentation accumulated
  * from the tree level
  */
@@ -172,7 +172,7 @@ static void ib_radix_node_print_ud(ib_radix_t *radix,
                                bitlen + node->prefix->prefixlen, ud);
 }
 
-/** 
+/**
  * Helper function, prints user data
  */
 static void ib_radix_print(ib_radix_t *radix,
@@ -184,7 +184,7 @@ static void ib_radix_print(ib_radix_t *radix,
         printf("Empty\n");
         return;
     }
-    
+
     padding(level);
     printf("ROOT: ");
 
@@ -221,13 +221,13 @@ TEST(TestIBUtilRadix, test_radix_prefix_new)
     ib_mpool_t *mp = NULL;
     ib_radix_prefix_t *prefix = NULL;
     ib_status_t rc;
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_radix_prefix_new(&prefix, mp);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_FALSE(prefix->rawbits);
@@ -242,7 +242,7 @@ TEST(TestIBUtilRadix, test_radix_prefix_create_and_destroy)
     ib_mpool_t *mp = NULL;
     ib_radix_prefix_t *prefix = NULL;
     ib_status_t rc;
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -255,7 +255,7 @@ TEST(TestIBUtilRadix, test_radix_prefix_create_and_destroy)
     prefix_data[2] = 0xCC;
     prefix_data[3] = 0xDD;
     prefix_data[4] = 0xEE;
-    
+
     rc = ib_radix_prefix_create(&prefix, prefix_data, 5 * 8, mp);
 
     ASSERT_EQ(IB_OK, rc);
@@ -272,12 +272,12 @@ TEST(TestIBUtilRadix, test_radix_node_new)
     ib_mpool_t *mp = NULL;
     ib_radix_node_t *node = NULL;
     ib_status_t rc;
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_radix_node_new(&node, mp);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_FALSE(node->zero);
@@ -294,12 +294,12 @@ TEST(TestIBUtilRadix, test_radix_create_and_destroy)
     ib_mpool_t *mp = NULL;
     ib_radix_t *radix = NULL;
     ib_status_t rc;
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(radix);
@@ -315,13 +315,13 @@ TEST(TestIBUtilRadix, test_radix_create_insert_destroy)
     ib_mpool_t *mp = NULL;
     ib_radix_t *radix = NULL;
     ib_status_t rc;
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(radix);
@@ -334,7 +334,7 @@ TEST(TestIBUtilRadix, test_radix_create_insert_destroy)
     prefix_data[2] = 0xCC;
     prefix_data[3] = 0xDD;
     prefix_data[4] = 0xEE;
-    
+
     ib_radix_prefix_t *prefix = NULL;
     rc = ib_radix_prefix_create(&prefix, prefix_data, 5 * 8, mp);
     ASSERT_EQ(IB_OK, rc);
@@ -372,20 +372,20 @@ TEST(TestIBUtilRadix, test_radix_create_insert_destroy)
     ib_mpool_destroy(radix->mp);
 }
 
-/* @test Test util radix library - ib_radix_new() and ib_radix_insert_data() 
+/* @test Test util radix library - ib_radix_new() and ib_radix_insert_data()
  * with NULL datas */
 TEST(TestIBUtilRadix, test_radix_insert_null_data)
 {
     ib_mpool_t *mp = NULL;
     ib_radix_t *radix = NULL;
     ib_status_t rc;
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_radix_new(&radix, NULL, NULL, NULL, mp);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(radix);
@@ -398,7 +398,7 @@ TEST(TestIBUtilRadix, test_radix_insert_null_data)
     prefix_data[2] = 0xCC;
     prefix_data[3] = 0xDD;
     prefix_data[4] = 0xEE;
-    
+
     ib_radix_prefix_t *prefix = NULL;
     rc = ib_radix_prefix_create(&prefix, prefix_data, 5 * 8, mp);
 
@@ -427,7 +427,7 @@ TEST(TestIBUtilRadix, test_radix_is_ipv4_ex)
     const char ascii5[] = "192.168.2.0\0/23";
     const char ascii6[] = "AA\0AA:BBBB::1/111";
 
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -534,7 +534,7 @@ TEST(TestIBUtilRadix, test_radix_ip_to_prefix)
 
     char *cidr1 = NULL;
     char *cidr2 = NULL;
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
@@ -624,7 +624,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv4)
 
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(radix);
@@ -708,13 +708,13 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
 
     ib_list_node_t *node;
     ib_list_node_t *node_next;
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(radix);
@@ -800,7 +800,7 @@ TEST(TestIBUtilRadix, test_radix_match_functions_ipv6)
 
         //printf("Elem: %s\n", val);
         i++;
-    }   
+    }
 
     /* To view the tree contents -> ib_radix_print(radix, 1); */
 
@@ -892,13 +892,13 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv4)
 
     char *cidr1 = NULL;
 
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(radix);
@@ -1068,13 +1068,13 @@ TEST(TestIBUtilRadix, test_radix_match_closest_ipv6)
 
     char *cidr1 = NULL;
 
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(radix);
@@ -1246,17 +1246,17 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
 
     ib_list_node_t *node;
     ib_list_node_t *node_next;
-    
+
 
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_mpool_create(&mp_tmp, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_mpool_create(&mp, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_radix_new(&radix, NULL, pdata, NULL, mp_tmp);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(radix);
@@ -1313,14 +1313,14 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
     cidr1 = (char *) ib_mpool_calloc(mp, 1, strlen(ascii5) + 1);
     ASSERT_TRUE(cidr1);
     memcpy(cidr1, ascii5, strlen(ascii5) + 1);
-    
+
     rc = ib_radix_ip_to_prefix(cidr1, &prefix5, mp);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(4UL, ib_radix_elements(radix));
 
     /* Now that we have some keys inserted, let's clone the radix to the other
      * memory pool (mp) */
-         
+
     ib_radix_clone_radix(radix, &radix_ok, mp);
 
     /* destroy the temporary pool */
@@ -1340,7 +1340,7 @@ TEST(TestIBUtilRadix, test_radix_clone_and_match_functions_ipv4)
 
         //printf("Elem: %s\n", val);
         i++;
-    }   
+    }
 
     /* To view the tree contents -> ib_radix_print(radix_ok, 1); */
 

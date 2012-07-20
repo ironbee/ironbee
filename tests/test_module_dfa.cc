@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; PCRE module tests
-/// 
+///
 /// @author Brian Rectanus <brectanus@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -38,7 +38,7 @@ public:
     ib_conn_t *ib_conn;
     ib_tx_t *ib_tx;
 
-    DfaModuleTest() : BaseModuleFixture("ibmod_pcre.so") 
+    DfaModuleTest() : BaseModuleFixture("ibmod_pcre.so")
     {
     }
 

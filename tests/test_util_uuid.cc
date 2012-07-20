@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; UUID Test Functions
-/// 
+///
 /// @author Brian Rectanus <brectanus@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -80,18 +80,18 @@ TEST(TestIBUtilUUID, predefined)
     ib_status_t rc;
 
     ib_uuid_initialize();
-    
+
     for (rec = &uuidstr[0];rec->str != NULL; ++rec) {
         ib_uuid_t uuid;
         bzero(&uuid, UUID_LEN_BIN);
         rc = ib_uuid_ascii_to_bin(&uuid, rec->str);
         ASSERT_EQ(rec->ret, rc);
-                
+
         if (rc == IB_OK) {
             ASSERT_EQ(0, memcmp(&rec->val, &uuid, UUID_LEN_BIN));
         }
     }
-    
+
     ib_uuid_shutdown();
 }
 
@@ -102,25 +102,25 @@ TEST(TestIBUtilUUID, random)
     ib_status_t rc;
     char *str = (char *)malloc(UUID_LEN_STR+1);
     int i;
- 
-    ib_uuid_initialize();   
-     
+
+    ib_uuid_initialize();
+
     for (i=0; i<100; ++i) {
         bzero(&uuid, UUID_LEN_BIN);
-    
+
         rc = ib_uuid_create_v4(&uuid);
         EXPECT_EQ(IB_OK, rc);
         EXPECT_NE(0UL, uuid.uint64[0]+uuid.uint64[1]);
-        
+
         rc = ib_uuid_bin_to_ascii(str, &uuid);
         EXPECT_EQ(IB_OK, rc);
-        
+
         rc = ib_uuid_ascii_to_bin(&uuid2, str);
         EXPECT_EQ(IB_OK, rc);
-        
+
         EXPECT_EQ(0, memcmp(&uuid, &uuid2, UUID_LEN_BIN));
     }
-    
+
     free(str);
     ib_uuid_shutdown();
 }

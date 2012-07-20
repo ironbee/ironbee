@@ -17,7 +17,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; LUA rules module tests
-/// 
+///
 /// @author Brian Rectanus <brectanus@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -82,7 +82,7 @@ class TestIronBeeModuleRulesLua : public BaseFixture {
 TEST_F(TestIronBeeModuleRulesLua, load_eval)
 {
     lua_State *L = luaL_newstate();
-    
+
     luaL_openlibs(L);
 
     setSearchPath(L);
@@ -157,7 +157,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
     strcpy(str1, "string 1");
 
     ib_tx_generate_id(&tx, ib_engine->mp);
-    
+
     // Create field 1.
     ASSERT_EQ(IB_OK,
         ib_field_create(

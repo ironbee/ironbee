@@ -47,44 +47,44 @@ class TestIPSet : public ::testing::Test
 {
 protected:
     // Helper routines.
-    
+
     /** Chose a random integer uniformly from [@a min, @a max]. */
     size_t random(size_t min, size_t max)
     {
         static boost::random::mt19937 rng;
         return boost::random::uniform_int_distribution<size_t>(min, max)(rng);
     }
-    
+
     /** Construct v4 IP from 4 chars. */
     ib_ipset4_ip_t ip4(char a, char b, char c, char d)
     {
         return (a << 24) + (b << 16) + (c << 8) + d;
     }
-    
+
     /** Construct v4 network from 4 chars and number of bits. */
     ib_ipset4_network_t net4(char a, char b, char c, char d, size_t bits)
     {
         ib_ipset4_network_t result;
         result.ip = ip4(a, b, c, d);
         result.size = bits;
-        
+
         return result;
     }
-    
+
     /** Construct v4 entry from chars, bits, and data. */
     ib_ipset4_entry_t entry4(
-        char a, char b, char c, char d, size_t bits, 
+        char a, char b, char c, char d, size_t bits,
         void* data = NULL
     )
     {
         ib_ipset4_entry_t result;
         result.network = net4(a, b, c, d, bits);
         result.data = data;
-        
+
         return result;
     }
-     
-    /** Construct a v6 IP from four uint32_t. */   
+
+    /** Construct a v6 IP from four uint32_t. */
     ib_ipset6_ip_t ip6(uint32_t a, uint32_t b, uint32_t c, uint32_t d)
     {
         ib_ipset6_ip_t ip;
@@ -94,7 +94,7 @@ protected:
         ip.ip[3] = d;
         return ip;
     }
-    
+
     /** Construct a v6 network from four uint32_t and the number of bits. */
     ib_ipset6_network_t net6(
         uint32_t a, uint32_t b, uint32_t c, uint32_t d, size_t bits
@@ -103,35 +103,35 @@ protected:
         ib_ipset6_network_t result;
         result.ip = ip6(a, b, c, d);
         result.size = bits;
-        
+
         return result;
     }
-    
+
     /** Construct a v6 entry from ints, bits, and data. */
     ib_ipset6_entry_t entry6(
-        uint32_t a, uint32_t b, uint32_t c, uint32_t d, size_t bits, 
+        uint32_t a, uint32_t b, uint32_t c, uint32_t d, size_t bits,
         void* data = NULL
     )
     {
         ib_ipset6_entry_t result;
         result.network = net6(a, b, c, d, bits);
         result.data = data;
-        
+
         return result;
     }
-    
+
     /** Set bit @a bit to @a value in @a ip. */
     void set_bit(ib_ipset4_ip_t& ip, size_t bit, int value = 1)
     {
         ip |= (value << (31 - bit));
     }
-    
+
     /** Overload of above for v6 IPs. */
     void set_bit(ib_ipset6_ip_t& ip, size_t bit, int value = 1)
     {
         set_bit(ip.ip[bit / 32], bit % 32, value);
     }
-    
+
     /** Set @a ip to be @a num_ones 1s followed by zeros. */
     void make_ones(ib_ipset4_ip_t& ip, size_t num_ones)
     {
@@ -140,7 +140,7 @@ protected:
             ip = ~(0xffffffff >> num_ones);
         }
     }
-    
+
     /** Overload of the above for v6 IPs. */
     void make_ones(ib_ipset6_ip_t& ip, size_t num_ones)
     {
@@ -181,14 +181,14 @@ bool operator<(const ib_ipset6_ip_t& a, const ib_ipset6_ip_t& b)
 TEST_F(TestIPSet, TrivialCreation)
 {
     ib_status_t rc;
-    
+
     {
         ib_ipset4_t set;
 
         rc = ib_ipset4_init(&set, NULL, 0, NULL, 0);
         EXPECT_EQ(IB_OK, rc);
     }
-    
+
     {
         ib_ipset6_t set;
 
@@ -203,17 +203,17 @@ TEST_F(TestIPSet, Simple4)
     ib_ipset4_t set;
     vector<ib_ipset4_entry_t> positive;
     vector<ib_ipset4_entry_t> negative;
-    
+
     positive.push_back(entry4(1, 0, 0, 0, 8));
     negative.push_back(entry4(1, 2, 3, 0, 24));
-    
+
     rc = ib_ipset4_init(
         &set,
         negative.data(), negative.size(),
         positive.data(), positive.size()
     );
     ASSERT_EQ(IB_OK, rc);
-    
+
     const ib_ipset4_entry_t* result;
     rc = ib_ipset4_query(&set, ip4(1, 2, 100, 20), &result, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
@@ -233,11 +233,11 @@ TEST_F(TestIPSet, Complex4)
     ib_ipset4_t set;
     vector<ib_ipset4_entry_t> positive;
     vector<ib_ipset4_entry_t> negative;
-    
+
     static int marker_a = 1;
     static int marker_b = 2;
     static int marker_c = 3;
-    
+
     positive.push_back(entry4(2, 1, 0, 0, 16));
     positive.push_back(entry4(2, 5, 0, 0, 16));
     positive.push_back(entry4(2, 4, 0, 0, 16));
@@ -247,26 +247,26 @@ TEST_F(TestIPSet, Complex4)
     positive.push_back(entry4(2, 3, 0, 0, 16, &marker_b));
     positive.push_back(entry4(2, 3, 1, 0, 24, &marker_c));
     positive.push_back(entry4(2, 2, 0, 0, 16));
-    
+
     negative.push_back(entry4(2, 5, 128, 0, 17));
     negative.push_back(entry4(2, 2, 3,   0, 24));
     negative.push_back(entry4(2, 2, 7,   0, 24));
     negative.push_back(entry4(2, 2, 1,   0, 24));
     negative.push_back(entry4(3, 0, 0,   0, 8));
-        
+
     rc = ib_ipset4_init(
         &set,
         negative.data(), negative.size(),
         positive.data(), positive.size()
     );
     ASSERT_EQ(IB_OK, rc);
-    
+
     const ib_ipset4_entry_t* entry    = NULL;
     const ib_ipset4_entry_t* specific = NULL;
     const ib_ipset4_entry_t* general  = NULL;
 
     rc = ib_ipset4_query(
-        &set, ip4(1, 2, 100, 20), 
+        &set, ip4(1, 2, 100, 20),
         &entry, &specific, &general
     );
     EXPECT_EQ(IB_OK, rc);
@@ -274,7 +274,7 @@ TEST_F(TestIPSet, Complex4)
     EXPECT_EQ(entry, general);
     EXPECT_EQ(&marker_a, reinterpret_cast<const int*>(entry->data));
     rc = ib_ipset4_query(
-        &set, ip4(2, 3, 1,   2),  
+        &set, ip4(2, 3, 1,   2),
         &entry, &specific, &general
     );
     EXPECT_EQ(IB_OK, rc);
@@ -283,7 +283,7 @@ TEST_F(TestIPSet, Complex4)
     EXPECT_EQ(&marker_b, reinterpret_cast<const int*>(general->data));
     EXPECT_EQ(&marker_c, reinterpret_cast<const int*>(specific->data));
     rc = ib_ipset4_query(
-        &set, ip4(2, 5, 130, 1),  
+        &set, ip4(2, 5, 130, 1),
         &entry, &specific, &general
     );
     EXPECT_FALSE(entry);
@@ -295,12 +295,12 @@ TEST_F(TestIPSet, Complex4)
 TEST_F(TestIPSet, Structured4)
 {
     static const size_t c_num_tests = 1e5;
-    
+
     ib_status_t rc;
     ib_ipset4_t set;
     vector<ib_ipset4_entry_t> positive;
     vector<ib_ipset4_entry_t> negative;
-    
+
     // Set includes all ips that begin with a sequence of ones followed by
     // at most one zero.  I.e., positive entries are all possible prefixes of
     // 1s and negative entries are all possible prefixes of 1s followed by two
@@ -311,23 +311,23 @@ TEST_F(TestIPSet, Structured4)
         entry.network.size = i;
         entry.data = NULL;
         positive.push_back(entry);
-        
+
         if (entry.network.size <= 30) {
             entry.network.size += 2;
             negative.push_back(entry);
         }
     }
-        
+
     rc = ib_ipset4_init(
         &set,
         negative.data(), negative.size(),
         positive.data(), positive.size()
     );
     ASSERT_EQ(IB_OK, rc);
-   
+
     // Use asserts as if something is wrong, output could be huge with
     // expects.
-    
+
     // Test a bunch of positives.
     for (size_t i = 0; i < c_num_tests; ++i) {
         ib_ipset4_ip_t ip;
@@ -342,7 +342,7 @@ TEST_F(TestIPSet, Structured4)
         rc = ib_ipset4_query(&set, ip, NULL, NULL, NULL);
         ASSERT_EQ(IB_OK, rc);
     }
-    
+
     // Test a bunch of negatives.
     for (size_t i = 0; i < c_num_tests; ++i) {
         ib_ipset4_ip_t ip;
@@ -357,32 +357,32 @@ TEST_F(TestIPSet, PositiveSet4)
 {
     static const size_t c_num_tests = 1e5;
     static const size_t c_num_ips   = 1024;
-    
+
     ib_status_t rc;
     ib_ipset4_t set;
     vector<ib_ipset4_entry_t> positive;
     std::set<ib_ipset4_ip_t> ips;
-    
+
     // To limit the search space, the first 20 bits will be 0.
     while (ips.size() < c_num_ips) {
         ib_ipset4_entry_t entry;
         make_ones(entry.network.ip, 20);
         entry.network.ip |= random(0, 4095);
         entry.network.size = 32;
-        
+
         bool is_new = ips.insert(entry.network.ip).second;
         if (is_new) {
             positive.push_back(entry);
         }
     }
-        
+
     rc = ib_ipset4_init(
         &set,
         NULL, 0,
         positive.data(), positive.size()
     );
     ASSERT_EQ(IB_OK, rc);
-    
+
     // Test a bunch of ips.
     for (size_t i = 0; i < c_num_tests; ++i) {
         ib_ipset4_ip_t ip;
@@ -405,17 +405,17 @@ TEST_F(TestIPSet, Simple6)
     ib_ipset6_t set;
     vector<ib_ipset6_entry_t> positive;
     vector<ib_ipset6_entry_t> negative;
-    
+
     positive.push_back(entry6(1, 0, 0, 0, 32));
     negative.push_back(entry6(1, 2, 3, 0, 96));
-    
+
     rc = ib_ipset6_init(
         &set,
         negative.data(), negative.size(),
         positive.data(), positive.size()
     );
     ASSERT_EQ(IB_OK, rc);
-    
+
     const ib_ipset6_entry_t* result;
     rc = ib_ipset6_query(&set, ip6(1, 2, 100, 20), &result, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
@@ -435,11 +435,11 @@ TEST_F(TestIPSet, Complex6)
     ib_ipset6_t set;
     vector<ib_ipset6_entry_t> positive;
     vector<ib_ipset6_entry_t> negative;
-    
+
     static int marker_a = 1;
     static int marker_b = 2;
     static int marker_c = 3;
-    
+
     positive.push_back(entry6(2, 1, 0, 0, 64));
     positive.push_back(entry6(2, 5, 0, 0, 64));
     positive.push_back(entry6(2, 4, 0, 0, 64));
@@ -449,27 +449,27 @@ TEST_F(TestIPSet, Complex6)
     positive.push_back(entry6(2, 3, 0, 0, 64, &marker_b));
     positive.push_back(entry6(2, 3, 1, 0, 96, &marker_c));
     positive.push_back(entry6(2, 2, 0, 0, 64));
-    
+
     negative.push_back(entry6(2, 5, 0x10000000, 0, 65));
     negative.push_back(entry6(2, 5, 0x10000000, 0, 33));
     negative.push_back(entry6(2, 2, 3,   0, 96));
     negative.push_back(entry6(2, 2, 7,   0, 96));
     negative.push_back(entry6(2, 2, 1,   0, 96));
     negative.push_back(entry6(3, 0, 0,   0, 32));
-        
+
     rc = ib_ipset6_init(
         &set,
         negative.data(), negative.size(),
         positive.data(), positive.size()
     );
     ASSERT_EQ(IB_OK, rc);
-    
+
     const ib_ipset6_entry_t* entry    = NULL;
     const ib_ipset6_entry_t* specific = NULL;
     const ib_ipset6_entry_t* general  = NULL;
 
     rc = ib_ipset6_query(
-        &set, ip6(1, 2, 100, 20), 
+        &set, ip6(1, 2, 100, 20),
         &entry, &specific, &general
     );
     EXPECT_EQ(IB_OK, rc);
@@ -477,7 +477,7 @@ TEST_F(TestIPSet, Complex6)
     EXPECT_EQ(entry, general);
     EXPECT_EQ(&marker_a, reinterpret_cast<const int*>(entry->data));
     rc = ib_ipset6_query(
-        &set, ip6(2, 3, 1,   2),  
+        &set, ip6(2, 3, 1,   2),
         &entry, &specific, &general
     );
     EXPECT_EQ(IB_OK, rc);
@@ -486,7 +486,7 @@ TEST_F(TestIPSet, Complex6)
     EXPECT_EQ(&marker_b, reinterpret_cast<const int*>(general->data));
     EXPECT_EQ(&marker_c, reinterpret_cast<const int*>(specific->data));
     rc = ib_ipset6_query(
-        &set, ip6(2, 5, 0x11000000, 1),  
+        &set, ip6(2, 5, 0x11000000, 1),
         &entry, &specific, &general
     );
     EXPECT_FALSE(entry);
@@ -498,12 +498,12 @@ TEST_F(TestIPSet, Complex6)
 TEST_F(TestIPSet, Structured6)
 {
     static const size_t c_num_tests = 1e5;
-    
+
     ib_status_t rc;
     ib_ipset6_t set;
     vector<ib_ipset6_entry_t> positive;
     vector<ib_ipset6_entry_t> negative;
-    
+
     // Set includes all ips that begin with a sequence of ones followed by
     // at most one zero.  I.e., positive entries are all possible prefixes of
     // 1s and negative entries are all possible prefixes of 1s followed by two
@@ -514,23 +514,23 @@ TEST_F(TestIPSet, Structured6)
         entry.network.size = i;
         entry.data = NULL;
         positive.push_back(entry);
-        
+
         if (entry.network.size <= 126) {
             entry.network.size += 2;
             negative.push_back(entry);
         }
     }
-        
+
     rc = ib_ipset6_init(
         &set,
         negative.data(), negative.size(),
         positive.data(), positive.size()
     );
     ASSERT_EQ(IB_OK, rc);
-   
+
     // Use asserts as if something is wrong, output could be huge with
     // expects.
-    
+
     // Test a bunch of positives.
     for (size_t i = 0; i < c_num_tests; ++i) {
         ib_ipset6_ip_t ip;
@@ -545,7 +545,7 @@ TEST_F(TestIPSet, Structured6)
         rc = ib_ipset6_query(&set, ip, NULL, NULL, NULL);
         ASSERT_EQ(IB_OK, rc);
     }
-    
+
     // Test a bunch of negatives.
     for (size_t i = 0; i < c_num_tests; ++i) {
         ib_ipset6_ip_t ip;
@@ -560,32 +560,32 @@ TEST_F(TestIPSet, PositiveSet6)
 {
     static const size_t c_num_tests = 1e5;
     static const size_t c_num_ips   = 1024;
-    
+
     ib_status_t rc;
     ib_ipset6_t set;
     vector<ib_ipset6_entry_t> positive;
     std::set<ib_ipset6_ip_t> ips;
-    
+
     // To limit the search space, the first 116 bits will be 1.
     while (ips.size() < c_num_ips) {
         ib_ipset6_entry_t entry;
         make_ones(entry.network.ip, 116);
         entry.network.ip.ip[3] |= random(0, 4095);
         entry.network.size = 128;
-        
+
         bool is_new = ips.insert(entry.network.ip).second;
         if (is_new) {
             positive.push_back(entry);
         }
     }
-        
+
     rc = ib_ipset6_init(
         &set,
         NULL, 0,
         positive.data(), positive.size()
     );
     ASSERT_EQ(IB_OK, rc);
-    
+
     // Test a bunch of ips.
     for (size_t i = 0; i < c_num_tests; ++i) {
         ib_ipset6_ip_t ip;
@@ -616,7 +616,7 @@ TEST_F(TestIPSet, Inval)
     EXPECT_EQ(IB_EINVAL, ib_ipset6_init(&set6, NULL, 1, NULL, 0));
     EXPECT_EQ(IB_EINVAL, ib_ipset6_init(&set6, NULL, 0, NULL, 1));
     EXPECT_EQ(
-        IB_EINVAL, 
+        IB_EINVAL,
         ib_ipset6_query(NULL, ib_ipset6_ip_t(), NULL, NULL, NULL)
     );
 }

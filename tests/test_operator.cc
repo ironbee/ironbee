@@ -43,7 +43,7 @@ ib_status_t test_create_fn(ib_engine_t *ib,
                            ib_operator_inst_t *op_inst)
 {
     IB_FTRACE_INIT();
-    
+
     char *str;
     str = ib_mpool_strdup(pool, data);
     if (str == NULL) {
@@ -71,7 +71,7 @@ ib_status_t test_execute_fn(ib_engine_t *ib,
     char *searchstr = (char *)data;
     const char* s;
     ib_status_t rc;
-    
+
     if (field->type != IB_FTYPE_NULSTR) {
         return IB_EINVAL;
     }
@@ -80,7 +80,7 @@ ib_status_t test_execute_fn(ib_engine_t *ib,
     if (rc != IB_OK) {
         return rc;
     }
-    
+
     if (strstr(s, searchstr) == NULL) {
         *result = 0;
     }
@@ -174,10 +174,10 @@ TEST_F(CoreOperatorsTest, ContainsTest)
     const char *matching = "data with needle in it";
     const char *nonmatching = "non matching string";
     ib_field_create(
-        &field, 
+        &field,
         ib_engine_pool_main_get(ib_engine),
-        IB_FIELD_NAME("testfield"), 
-        IB_FTYPE_NULSTR, 
+        IB_FIELD_NAME("testfield"),
+        IB_FTYPE_NULSTR,
         NULL
     );
 

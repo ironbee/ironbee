@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; Logformat Test Functions
-/// 
+///
 /// @author Pablo Rincon Crespo <pablo.rincon.crespo@gmail.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -42,19 +42,19 @@ public:
     TestIBUtilLogformat()
     {
         ib_status_t rc;
-        
+
         ib_initialize();
         rc = ib_mpool_create(&m_pool, NULL, NULL);
         if (rc != IB_OK) {
             throw std::runtime_error("Could not create mpool.");
         }
     }
-    
+
     ~TestIBUtilLogformat()
     {
-        ib_shutdown();        
+        ib_shutdown();
     }
-    
+
 protected:
     ib_mpool_t* m_pool;
 };
@@ -63,9 +63,9 @@ protected:
 TEST_F(TestIBUtilLogformat, test_logformat_create_and_set)
 {
     ib_status_t rc;
- 
+
     ib_logformat_t *lf = NULL;
-    
+
     rc = ib_logformat_create(m_pool, &lf);
     ASSERT_EQ(IB_OK, rc);
 
@@ -94,9 +94,9 @@ TEST_F(TestIBUtilLogformat, test_logformat_create_and_set)
 TEST_F(TestIBUtilLogformat, test_logformat_set)
 {
     ib_status_t rc;
-    
+
     ib_logformat_t *lf = NULL;
-    
+
     rc = ib_logformat_create(m_pool, &lf);
     ASSERT_EQ(IB_OK, rc);
 

@@ -107,7 +107,7 @@ class ParsedContentHeaderTest : public ParsedContentTest {
                                       size_t value_len,
                                       void *user_data)
     {
-        ParsedContentHeaderTest *o = 
+        ParsedContentHeaderTest *o =
             reinterpret_cast<ParsedContentHeaderTest*>(user_data);
 
         o->count = o->count + 1;
@@ -121,10 +121,10 @@ class ParsedContentHeaderTest : public ParsedContentTest {
                                       void *user_data)
     {
         using std::list;
-    
-        ParsedContentHeaderTest *o = 
+
+        ParsedContentHeaderTest *o =
             reinterpret_cast<ParsedContentHeaderTest*>(user_data);
-    
+
         o->count = o->count + 1;
         o->names.push_back(name);
         o->values.push_back(value);

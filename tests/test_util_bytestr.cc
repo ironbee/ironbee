@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; Byte String Test Functions
-/// 
+///
 /// @author Brian Rectanus <brectanus@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -39,19 +39,19 @@ public:
     TestIBUtilByteStr()
     {
         ib_status_t rc;
-        
+
         ib_initialize();
         rc = ib_mpool_create(&m_pool, NULL, NULL);
         if (rc != IB_OK) {
             throw std::runtime_error("Could not create mpool.");
         }
     }
-    
+
     ~TestIBUtilByteStr()
     {
-        ib_shutdown();        
+        ib_shutdown();
     }
-    
+
 protected:
     ib_mpool_t* m_pool;
 };
@@ -63,7 +63,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_create_and_destroy)
 {
     ib_bytestr_t *bs;
     ib_status_t rc;
-    
+
     rc = ib_bytestr_create(&bs, m_pool, 10);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
@@ -78,7 +78,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_dup_mem)
     ib_status_t rc;
     uint8_t data[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
     uint8_t *ptr;
-        
+
     rc = ib_bytestr_dup_mem(&bs, m_pool, data, sizeof(data));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
@@ -96,7 +96,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_dup_nulstr)
     ib_status_t rc;
     char data[] = "abcdef";
     uint8_t *ptr;
-        
+
     rc = ib_bytestr_dup_nulstr(&bs, m_pool, data);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
@@ -114,7 +114,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_alias_mem)
     ib_status_t rc;
     uint8_t data[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
     uint8_t *ptr;
-    
+
     rc = ib_bytestr_alias_mem(&bs, m_pool, data, sizeof(data));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
@@ -135,7 +135,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_alias_nulstr)
     ib_status_t rc;
     char data[] = "abcdef";
     uint8_t *ptr;
-        
+
     rc = ib_bytestr_alias_nulstr(&bs, m_pool, data);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
@@ -159,7 +159,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_append)
     char data3[] = "foo";
     uint8_t data4[] = { 'b', 'a', 'r' };
     uint8_t *ptr;
-        
+
     rc = ib_bytestr_dup_nulstr(&bs1, m_pool, data1);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs1);

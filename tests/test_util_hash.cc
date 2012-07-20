@@ -37,19 +37,19 @@
 class TestIBUtilHash : public testing::Test
 {
 public:
-    TestIBUtilHash() 
+    TestIBUtilHash()
     {
         ib_status_t rc = ib_mpool_create(&m_pool, NULL, NULL);
         if (rc != IB_OK) {
             throw std::runtime_error("Could not initialize mpool.");
         }
     }
-    
+
     ~TestIBUtilHash()
     {
         ib_mpool_destroy(m_pool);
     }
-    
+
 protected:
     ib_mpool_t* m_pool;
 };
@@ -127,9 +127,9 @@ TEST_F(TestIBUtilHash, test_hash_ex)
     static const char  key4[] = "kEY2";
 
     ASSERT_EQ(IB_OK, ib_hash_create_ex(
-        &hash, 
-        m_pool, 
-        32, 
+        &hash,
+        m_pool,
+        32,
         ib_hashfunc_djb2,
         ib_hashequal_default
     ));
@@ -152,13 +152,13 @@ TEST_F(TestIBUtilHash, test_hash_ex)
 
     val = NULL;
     EXPECT_EQ(
-        IB_ENOENT, 
+        IB_ENOENT,
         ib_hash_get_ex(hash, &val, (void *)key3, 2)
     );
 
     val = NULL;
     EXPECT_EQ(
-        IB_ENOENT, 
+        IB_ENOENT,
         ib_hash_get_ex(hash, &val, (void *)key4, 2)
     );
 }
@@ -232,7 +232,7 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
             }
         }
     }
-    
+
     EXPECT_EQ(1000UL, ib_hash_size(hash));
 
     // After resizing
@@ -291,7 +291,7 @@ TEST_F(TestIBUtilHash, test_hash_getall)
         ib_list_node_t *li  = NULL;
         ib_list_node_t *li2 = NULL;
         size_t num_found = 0;
-        // We know that all elements of list are unique, so we make sure 
+        // We know that all elements of list are unique, so we make sure
         //every element of list is in list2.
         IB_LIST_LOOP(list, li) {
             IB_LIST_LOOP(list2, li2) {
@@ -371,16 +371,16 @@ TEST_F(TestIBUtilHash, test_hash_collision_delete)
     static const char* b     = "def";
     static const char* c     = "ghi";
     const char*        value = NULL;
-    
+
     // Make sure we have collisions.
     ASSERT_EQ(IB_OK, ib_hash_create_ex(
-        &hash, 
+        &hash,
         m_pool,
         32,
         test_hash_delete_hashfunc,
         ib_hashequal_default
     ));
-    
+
     ASSERT_EQ(IB_OK, ib_hash_set(hash, a, (void *)a));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, b, (void *)b));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, c, (void *)c));
@@ -390,14 +390,14 @@ TEST_F(TestIBUtilHash, test_hash_collision_delete)
     EXPECT_EQ(b, value);
     EXPECT_EQ(IB_OK, ib_hash_get(hash, &value, c));
     EXPECT_EQ(c, value);
-    
+
     EXPECT_EQ(IB_OK, ib_hash_set(hash, a, NULL));
-    
+
     EXPECT_EQ(IB_ENOENT, ib_hash_get(hash, &value, a));
     EXPECT_EQ(IB_OK, ib_hash_get(hash, &value, b));
     EXPECT_EQ(b, value);
     EXPECT_EQ(IB_OK, ib_hash_get(hash, &value, c));
-    EXPECT_EQ(c, value); 
+    EXPECT_EQ(c, value);
 }
 
 TEST_F(TestIBUtilHash, test_hash_remove)
@@ -407,7 +407,7 @@ TEST_F(TestIBUtilHash, test_hash_remove)
     static const char* b     = "def";
     static const char* c     = "ghi";
     const char*        value = NULL;
-    
+
     ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, a, (void *)a));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, b, (void *)b));
@@ -419,7 +419,7 @@ TEST_F(TestIBUtilHash, test_hash_remove)
     EXPECT_EQ(IB_OK, ib_hash_get(hash, &value, c));
     EXPECT_EQ(c, value);
     EXPECT_EQ(3UL, ib_hash_size(hash));
-    
+
     EXPECT_EQ(IB_OK, ib_hash_remove(hash, &value, a));
     EXPECT_EQ(a, value);
     EXPECT_EQ(2UL, ib_hash_size(hash));
@@ -428,14 +428,14 @@ TEST_F(TestIBUtilHash, test_hash_remove)
     EXPECT_EQ(IB_OK, ib_hash_remove(hash, NULL, c));
     EXPECT_EQ(1UL, ib_hash_size(hash));
     EXPECT_EQ(IB_ENOENT, ib_hash_get(hash, &value, c));
-    
+
     ASSERT_EQ(IB_OK, ib_hash_set(hash, a, (void *)7));
     EXPECT_EQ(2UL, ib_hash_size(hash));
-    
+
     EXPECT_EQ(IB_ENOENT, ib_hash_remove(hash, NULL, c));
-    
+
     EXPECT_EQ(
-        IB_OK, 
+        IB_OK,
         ib_hash_remove_ex(hash, &value, (void *)b, 3)
     );
     EXPECT_EQ(b, value);
@@ -445,9 +445,9 @@ TEST_F(TestIBUtilHash, test_hash_remove)
 TEST_F(TestIBUtilHash, bad_size) {
     ib_hash_t *hash = NULL;
     ASSERT_EQ(IB_EINVAL, ib_hash_create_ex(
-        &hash, 
-        m_pool, 
-        3,         
+        &hash,
+        m_pool,
+        3,
         ib_hashfunc_djb2,
         ib_hashequal_default
     ));

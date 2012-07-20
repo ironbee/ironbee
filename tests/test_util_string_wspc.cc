@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; String Util Test Functions
-/// 
+///
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -270,7 +270,7 @@ static TestDatum str_test_data [ ] =
     TestDatum(__LINE__, "  a",         "a",       " a"),
     TestDatum(__LINE__, "   ab",       "ab",      " ab"),
     TestDatum(__LINE__, "  \nab",      "ab",      " ab"),
-                                       
+
     TestDatum(__LINE__, " a ",         "a",       " a "),
     TestDatum(__LINE__, " a   ",       "a",       " a "),
     TestDatum(__LINE__, " ab   ",      "ab",      " ab "),
@@ -386,7 +386,7 @@ static TestDatum ex_test_data [ ] =
     TestDatum(__LINE__, " \0 ", 3,      "\0", 1, " \0 ", 3),
     TestDatum(__LINE__, "  \0\n", 4,    "\0", 1, " \0 ", 3),
     TestDatum(__LINE__, "\t \0 \n", 5,  "\0", 1, " \0 ", 3),
-                                        
+
     TestDatum(__LINE__, "a\0", 2,       "a\0", 2, "a\0", 2),
     TestDatum(__LINE__, "ab\0", 3,      "ab\0", 3, "ab\0", 3),
     TestDatum(__LINE__, "ab\0:", 4,     "ab\0:", 4, "ab\0:", 4),
@@ -395,19 +395,19 @@ static TestDatum ex_test_data [ ] =
     TestDatum(__LINE__, "a\0   ", 5,    "a\0", 2, "a\0 ", 3),
     TestDatum(__LINE__, "a\0b   ", 6,   "a\0b", 3, "a\0b ", 4),
     TestDatum(__LINE__, "ab\0  \n", 6,  "ab\0", 3, "ab\0 ", 4),
-                                        
+
     TestDatum(__LINE__, "a\0", 2,       "a\0", 2, "a\0", 2),
     TestDatum(__LINE__, " \0a", 3,      "\0a", 2, " \0a", 3),
     TestDatum(__LINE__, "  a\0", 4,     "a\0", 2, " a\0", 3),
     TestDatum(__LINE__, "   a\0b", 6,   "a\0b", 3, " a\0b", 4),
     TestDatum(__LINE__, "  \nab\0", 6,  "ab\0", 3, " ab\0", 4),
-                                        
+
     TestDatum(__LINE__, " a\0 ", 4,     "a\0", 2, " a\0 ", 4),
     TestDatum(__LINE__, " \0a ", 4,     "\0a", 2, " \0a ", 4),
     TestDatum(__LINE__, " a\0   ", 6,   "a\0", 2, " a\0 ", 4),
     TestDatum(__LINE__, " a\0b   ", 7,  "a\0b", 3, " a\0b ", 5),
     TestDatum(__LINE__, " ab\0  \n", 7, "ab\0", 3, " ab\0 ", 5),
-                                        
+
     TestDatum(__LINE__, " a \0", 4,     "a\0", 2, " a \0", 4),
     TestDatum(__LINE__, "\0 a \0", 5,   "\0a\0", 3, "\0 a \0", 5),
     TestDatum(__LINE__, "\0 ab\0", 5,   "\0ab\0", 4, "\0 ab\0", 5),

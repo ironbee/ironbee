@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; UUID Test Functions
-/// 
+///
 /// @author Brian Rectanus <brectanus@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -37,7 +37,7 @@ TEST(TestIBUtilUnescapeString, singleCharacter) {
                                            str,
                                            strlen(str),
                                            IB_UTIL_UNESCAPE_NULTERMINATE));
-  
+
   EXPECT_EQ('\r', str2[0]);
   EXPECT_EQ('\n', str2[1]);
   EXPECT_EQ('\t', str2[2]);
@@ -55,7 +55,7 @@ TEST(TestIBUtilUnescapeString, singleBytes) {
                                            str,
                                            strlen(str),
                                            IB_UTIL_UNESCAPE_NULTERMINATE));
-  
+
   EXPECT_EQ(chk[0], str2[0]);
   EXPECT_EQ(chk[1], str2[1]);
   EXPECT_EQ('\0', str2[2]);
@@ -72,7 +72,7 @@ TEST(TestIBUtilUnescapeString, longBytes) {
                                            str,
                                            strlen(str),
                                            IB_UTIL_UNESCAPE_NULTERMINATE));
-  
+
   EXPECT_EQ(chk[0], str2[0]);
   EXPECT_EQ(chk[1], str2[1]);
   EXPECT_EQ(chk[2], str2[2]);
@@ -173,21 +173,21 @@ TEST(TestIBUtilUnescapeString, nullsInString) {
                                                &len,
                                                src2,
                                                strlen(src2),
-                                               IB_UTIL_UNESCAPE_NONULL | 
+                                               IB_UTIL_UNESCAPE_NONULL |
                                                IB_UTIL_UNESCAPE_NULTERMINATE));
 
   ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
                                                &len,
                                                src3,
                                                strlen(src3),
-                                               IB_UTIL_UNESCAPE_NONULL | 
+                                               IB_UTIL_UNESCAPE_NONULL |
                                                IB_UTIL_UNESCAPE_NULTERMINATE));
 
   ASSERT_EQ(IB_EBADVAL, ib_util_unescape_string(dst,
                                                &len,
                                                src4,
                                                strlen(src4),
-                                               IB_UTIL_UNESCAPE_NONULL | 
+                                               IB_UTIL_UNESCAPE_NONULL |
                                                IB_UTIL_UNESCAPE_NULTERMINATE));
 }
 

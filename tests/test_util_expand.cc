@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; Expand String Test Functions
-/// 
+///
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -49,7 +49,7 @@ typedef struct
 class TestIBUtilExpand : public testing::Test
 {
 public:
-    TestIBUtilExpand() 
+    TestIBUtilExpand()
     {
         m_pool = NULL;
         m_hash = NULL;
@@ -110,10 +110,10 @@ public:
             switch( fdef->type ) {
                 case IB_FTYPE_NULSTR:
                     rc = ib_field_create(
-                        &field, 
-                        m_pool, 
+                        &field,
+                        m_pool,
                         IB_FIELD_NAME(fdef->key),
-                        fdef->type, 
+                        fdef->type,
                         ib_ftype_nulstr_in(fdef->vstr)
                     );
                     break;
@@ -127,28 +127,28 @@ public:
                         throw std::runtime_error(msg);
                     }
                     rc = ib_field_create(
-                        &field, 
-                        m_pool, 
+                        &field,
+                        m_pool,
                         IB_FIELD_NAME(fdef->key),
                         fdef->type,
-                        ib_ftype_bytestr_in(bs) 
+                        ib_ftype_bytestr_in(bs)
                     );
                     break;
                 case IB_FTYPE_NUM:
                     rc = ib_field_create(
-                        &field, 
-                        m_pool, 
+                        &field,
+                        m_pool,
                         IB_FIELD_NAME(fdef->key),
-                        fdef->type, 
+                        fdef->type,
                         ib_ftype_num_in(&(fdef->vnum))
                     );
                     break;
                 case IB_FTYPE_UNUM:
                     rc = ib_field_create(
-                        &field, 
-                        m_pool, 
+                        &field,
+                        m_pool,
                         IB_FIELD_NAME(fdef->key),
-                        fdef->type, 
+                        fdef->type,
                         ib_ftype_unum_in(&(fdef->vunum))
                     );
                     break;
@@ -207,7 +207,7 @@ public:
                   << "' -> '" << value << "' expected '" << expected
                   << "'" << std::endl;
     }
-    
+
 protected:
     ib_mpool_t *m_pool;
     ib_hash_t  *m_hash;

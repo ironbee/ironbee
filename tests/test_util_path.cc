@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee - Path Test Functions
-/// 
+///
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -72,7 +72,7 @@ public:
     TestIBUtilPath()
     {
         ib_status_t rc;
-        
+
         ib_initialize();
         rc = ib_mpool_create(&m_pool, NULL, NULL);
         if (rc != IB_OK) {
@@ -82,7 +82,7 @@ public:
 
     ~TestIBUtilPath()
     {
-        ib_shutdown();        
+        ib_shutdown();
     }
 
 protected:

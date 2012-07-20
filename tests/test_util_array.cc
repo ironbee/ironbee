@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; Array Test Functions
-/// 
+///
 /// @author Brian Rectanus <brectanus@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -39,19 +39,19 @@ public:
     TestIBUtilArray()
     {
         ib_status_t rc;
-        
+
         ib_initialize();
         rc = ib_mpool_create(&m_pool, NULL, NULL);
         if (rc != IB_OK) {
             throw std::runtime_error("Could not create mpool.");
         }
     }
-    
+
     ~TestIBUtilArray()
     {
-        ib_shutdown();        
+        ib_shutdown();
     }
-    
+
 protected:
     ib_mpool_t* m_pool;
 };
@@ -63,7 +63,7 @@ TEST_F(TestIBUtilArray, test_array_create_and_destroy)
 {
     ib_array_t *arr;
     ib_status_t rc;
-    
+
     rc = ib_array_create(&arr, m_pool, 10, 10);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(arr);
@@ -84,7 +84,7 @@ TEST_F(TestIBUtilArray, test_array_set_and_get)
     int v1000 = 1000;
     int v1000000 = 1000000;
     int *val;
-        
+
     rc = ib_array_create(&arr, m_pool, 10, 10);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(arr);
@@ -188,7 +188,7 @@ TEST_F(TestIBUtilArray, test_array_loop)
          0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
         10, 11, 12, 13, 14, 15, 16, 17, 18, 19
     };
-        
+
     rc = ib_array_create(&arr, m_pool, 16, 8);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(arr);

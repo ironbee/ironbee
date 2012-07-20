@@ -19,7 +19,7 @@
 /// @file
 /// IronBee - Unit testing utility functions implementation.
 /// @brief IronBee &mdash; String Util Test Functions
-/// 
+///
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 #ifndef __IBTEST_STRBASE_HH__
@@ -80,7 +80,7 @@ public:
         TextBuf(bufsize, fn)
     {
     };
-    
+
     const char *Stringize(const char *op, const BaseTestDatum &datum)
     {
         snprintf(m_fmtbuf, m_size,
@@ -477,7 +477,7 @@ public:
         }
         assert(0);
     }
-    
+
     virtual const char *FnName(void) const = 0;
     ib_mpool_t *MemPool( void ) { return m_mpool; };
 
@@ -611,7 +611,7 @@ public:
         char *out = NULL;
         char *in;
         ib_status_t rc;
-        
+
         m_inbuf.Set(test.InBuf());
         in = const_cast<char *>(m_inbuf.GetBuf());
         assert(in != NULL);
@@ -628,7 +628,7 @@ public:
         uint8_t *out;
         size_t outlen;
         ib_status_t rc;
-        
+
         m_inbuf.Set(test.InBuf());
 
         rc = m_strmod_ex_fn(m_op, MemPool(),
@@ -657,7 +657,7 @@ public:
         }
 
         // NEWBUF and ALIAS result flags should never both be set
-        bool both = 
+        bool both =
             ib_flags_all(result, IB_STRFLAG_NEWBUF|IB_STRFLAG_ALIAS);
         ASSERT_FALSE(both)
             << "Line " << lineno << ": " << Stringize(test)

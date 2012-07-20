@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; Engine Test Functions
-/// 
+///
 /// @author Brian Rectanus <brectanus@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -49,7 +49,7 @@ TEST(TestIronBee, test_engine_create_null_server)
     rc = ib_engine_create(&ib, NULL);
     ASSERT_EQ(IB_EINVAL, rc);
     ASSERT_FALSE(ib);
-    
+
     ib_shutdown();
 }
 
@@ -99,7 +99,7 @@ static ib_status_t foo2bar(ib_engine_t *ib,
         if (rc != IB_OK) {
             return rc;
         }
-        
+
         const uint8_t *data_in;
         size_t dlen_in;
         uint8_t *data_out;
@@ -183,7 +183,7 @@ TEST(TestIronBee, test_tfn)
     ib_bytestr_dup_nulstr(&bs, ib->mp, "foo");
     fin = NULL;
     ib_field_create(
-        &fin, ib->mp, IB_FIELD_NAME("ByteStr"), 
+        &fin, ib->mp, IB_FIELD_NAME("ByteStr"),
         IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs)
     );
     fout = NULL;
@@ -197,8 +197,8 @@ TEST(TestIronBee, test_tfn)
     strcpy((char *)data_in, "foo");
     fin = NULL;
     ib_field_create(
-        &fin, ib->mp, IB_FIELD_NAME("NulStr"), 
-        IB_FTYPE_NULSTR, 
+        &fin, ib->mp, IB_FIELD_NAME("NulStr"),
+        IB_FTYPE_NULSTR,
         ib_ftype_nulstr_in((char *)data_in)
     );
     fout = NULL;
@@ -224,17 +224,17 @@ static ib_status_t dyn_get(
     ib_num_t numval = 5;
     ib_field_t *newf;
     ib_status_t rc;
-    
+
     const char* carg = (const char *)arg;
 
-    rc = ib_field_create(&newf, mp, carg, alen, IB_FTYPE_NUM, 
+    rc = ib_field_create(&newf, mp, carg, alen, IB_FTYPE_NUM,
         ib_ftype_num_in(&numval));
     if (rc != IB_OK) {
         return rc;
     }
 
     *(void**)out_value = newf;
-    
+
     return IB_OK;
 }
 
@@ -265,10 +265,10 @@ TEST(TestIronBee, test_dpi_dynf)
     ASSERT_EQ(
         IB_OK,
         ib_field_create_dynamic(
-            &dynf, 
+            &dynf,
             ib_engine_pool_main_get(ib),
-            IB_FIELD_NAME("test_dynf"), 
-            IB_FTYPE_GENERIC, 
+            IB_FIELD_NAME("test_dynf"),
+            IB_FTYPE_GENERIC,
             dyn_get, (void *)ib_engine_pool_main_get(ib),
             NULL, NULL
         )

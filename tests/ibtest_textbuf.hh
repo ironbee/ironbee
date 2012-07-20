@@ -19,7 +19,7 @@
 /// @file
 /// IronBee - Unit testing utility functions implementation.
 /// @brief IronBee &mdash; String Util Test Functions
-/// 
+///
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 #ifndef __IBTEST_TEXTBUF_HH__

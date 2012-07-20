@@ -36,7 +36,7 @@ extern "C" {
 using namespace std;
 
 /**
- * @class IronBeeLuaApi test_ironbee_lua_api.cc test_ironbee_lua_api.cc 
+ * @class IronBeeLuaApi test_ironbee_lua_api.cc test_ironbee_lua_api.cc
  *
  * Test the IronBee Lua Api.
  *
@@ -95,7 +95,7 @@ public:
         lua_setglobal(L, "ib_engine");
         lua_pushlightuserdata(L, ib_tx);
         lua_setglobal(L, "ib_tx");
-    
+
         /* Construct an IB value. */
         eval("ib = ibapi:new(ib_engine, ib_tx)");
     }
@@ -128,8 +128,8 @@ public:
     /**
      * Append the path do a directory to the Lua search path.
      *
-     * @param[in] path Path to a directory containing *.lua files. 
-     *            The string "/?.lua" is appended to the path before the 
+     * @param[in] path Path to a directory containing *.lua files.
+     *            The string "/?.lua" is appended to the path before the
      *            path is appended to Lua's package.path value.
      */
     void appendToSearchPath(const string& path)

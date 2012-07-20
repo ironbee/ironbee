@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; List Test Functions
-/// 
+///
 /// @author Brian Rectanus <brectanus@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -39,19 +39,19 @@ public:
     TestIBUtilList()
     {
         ib_status_t rc;
-        
+
         ib_initialize();
         rc = ib_mpool_create(&m_pool, NULL, NULL);
         if (rc != IB_OK) {
             throw std::runtime_error("Could not create mpool.");
         }
     }
-    
+
     ~TestIBUtilList()
     {
-        ib_shutdown();        
+        ib_shutdown();
     }
-    
+
 protected:
     ib_mpool_t* m_pool;
 };
@@ -63,7 +63,7 @@ TEST_F(TestIBUtilList, test_list_create_and_destroy)
 {
     ib_list_t *list;
     ib_status_t rc;
-        
+
     rc = ib_list_create(&list, m_pool);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
@@ -81,7 +81,7 @@ TEST_F(TestIBUtilList, test_list_push_and_pop)
     int v3 = 3;
     int v4 = 4;
     int *val;
-    
+
     rc = ib_list_create(&list, m_pool);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
@@ -149,7 +149,7 @@ TEST_F(TestIBUtilList, test_list_unshift_and_shift)
     int v3 = 3;
     int v4 = 4;
     int *val;
-    
+
     rc = ib_list_create(&list, m_pool);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
@@ -215,7 +215,7 @@ TEST_F(TestIBUtilList, test_list_loop)
     int init[] = { 0, 1, 2, 3, 4 };
     int *val;
     int i;
-    
+
     rc = ib_list_create(&list, m_pool);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
@@ -248,12 +248,12 @@ TEST_F(TestIBUtilList, test_list_loop_safe)
     int init[] = { 0, 1, 2, 3, 4 };
     int *val;
     int i;
-    
+
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
     rc = ib_mpool_create(&m_pool, NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
-    
+
     rc = ib_list_create(&list, m_pool);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
@@ -313,7 +313,7 @@ TEST_F(TestIBUtilList, test_list_loop_reverse_safe)
     int init[] = { 0, 1, 2, 3, 4 };
     int *val;
     int i;
-    
+
     rc = ib_list_create(&list, m_pool);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);

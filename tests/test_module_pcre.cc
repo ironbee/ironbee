@@ -18,7 +18,7 @@
 //////////////////////////////////////////////////////////////////////////////
 /// @file
 /// @brief IronBee &mdash; PCRE module tests
-/// 
+///
 /// @author Brian Rectanus <brectanus@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
@@ -46,7 +46,7 @@ public:
     ib_field_t* field1;
     ib_field_t* field2;
 
-    PcreModuleTest() : BaseModuleFixture("ibmod_pcre.so") 
+    PcreModuleTest() : BaseModuleFixture("ibmod_pcre.so")
     {
     }
 
@@ -89,7 +89,7 @@ public:
             throw std::runtime_error("Could not allocate string 2.");
         }
         strcpy(str2, s2);
-    
+
         // Create field 1.
         rc = ib_field_create(&field1,
                              ib_engine_pool_main_get(ib_engine),

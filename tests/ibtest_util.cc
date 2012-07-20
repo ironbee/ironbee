@@ -24,7 +24,7 @@
  */
 
 #include "ibtest_util.hh"
-   
+
 ib_server_t ibt_ibserver = {
    IB_SERVER_HEADER_DEFAULTS,
    "unit_tests"
