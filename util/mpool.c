@@ -1441,6 +1441,7 @@ void ib_mpool_clear(
 
     ib_mpool_call_cleanups(mp);
     ib_mpool_free_large_allocations(mp);
+    ib_mpool_setname(mp, NULL);
 
     for (size_t track_num = 0; track_num < IB_MPOOL_NUM_TRACKS; ++track_num) {
         if (mp->tracks[track_num] != NULL) {

@@ -206,8 +206,8 @@ TEST(TestMpool, Clear)
     EXPECT_EQ(500U*1001U, ib_mpool_inuse(mp));
     ib_mpool_clear(mp);
     EXPECT_EQ(0U, ib_mpool_inuse(mp));
-    EXPECT_EQ(0U, g_free_calls);
-    EXPECT_EQ(0U, g_free_bytes);
+    EXPECT_EQ(1U, g_free_calls); // name
+    EXPECT_EQ(15U, g_free_bytes); // name
     
     ib_mpool_destroy(mp);
 
