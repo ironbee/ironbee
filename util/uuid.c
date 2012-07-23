@@ -91,7 +91,7 @@ ib_status_t ib_uuid_ascii_to_bin(
 
     assert(str_len == UUID_LEN_STR);
 
-    rc = ib_lock_init(&g_uuid_lock);
+    rc = ib_lock_lock(&g_uuid_lock);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -139,7 +139,7 @@ ib_status_t ib_uuid_bin_to_ascii(
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib_lock_init(&g_uuid_lock);
+    rc = ib_lock_lock(&g_uuid_lock);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -180,7 +180,7 @@ ib_status_t ib_uuid_create_v4(ib_uuid_t *uuid)
     size_t uuid_len = UUID_LEN_BIN;
     ib_status_t rc = IB_OK;
 
-    rc = ib_lock_init(&g_uuid_lock);
+    rc = ib_lock_lock(&g_uuid_lock);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
