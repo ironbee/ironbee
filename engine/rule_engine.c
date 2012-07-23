@@ -425,7 +425,7 @@ static ib_status_t execute_action(ib_engine_t *ib,
 
     /* Run it, check the results */
     rc = ib_action_execute(action, rule, tx);
-    if ( (rc != IB_OK) && (rc != IB_DECLINED) ) {
+    if ( rc != IB_OK ) {
         ib_rule_log_error(tx, rule, NULL, NULL,
                           "Action \"%s\" returned an error: %s",
                           action->action->name, ib_status_to_string(rc));
@@ -473,22 +473,14 @@ static ib_status_t execute_action_list(ib_engine_t *ib,
         /* Execute the action */
         arc = execute_action(ib, rule, tx, result, action);
 
-        /* If it declined, then it may have blocked. */
-        if (arc == IB_DECLINED) {
-            rc = IB_DECLINED;
-        }
-
         /* Record an error status code unless a block rc is to be reported. */
-        else if (arc != IB_OK) {
+        if (arc != IB_OK) {
             ib_rule_log_error(tx, rule, NULL, NULL,
-                              "Action %s/\"%s\" returned an error: %d",
-                              name, action->action->name, arc);
-
-            /* Only report errors codes if there is not a block signal
-             * (IB_DECLINED) set to be returned. */
-            if (rc != IB_DECLINED) {
-                rc = arc;
-            }
+                              "Action %s/\"%s\" returned an error: %s",
+                              name,
+                              action->action->name,
+                              ib_status_to_string(arc));
+            rc = arc;
         }
     }
 
@@ -520,7 +512,7 @@ static ib_status_t report_block_to_server(ib_engine_t *ib, ib_tx_t *tx)
     assert(tx);
     assert(tx->ctx);
 
-    ib_log_debug_tx(tx, "Setting HTTP error response: status=%" PRId64,
+    ib_log_debug_tx(tx, "Setting HTTP error response: status=%d",
                     tx->block_status);
     rc = ib_server_error_response(ib->server, tx, tx->block_status);
     if (rc == IB_DECLINED) {
@@ -868,17 +860,19 @@ static ib_status_t execute_operator(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
-    /* Handle a list by looping through it */
+    /* Handle a list by looping through it and recursivly calling this func. */
     if ( (value != NULL) && (value->type == IB_FTYPE_LIST) ) {
-        const ib_list_t *vlist;
+        const ib_list_t      *vlist;
+        const ib_list_node_t *node = NULL; /* Node in vlist. */
+        int                   n    = 0;    /* Nth value in the vlist. */
+
+        /* Fetch list out of value into vlist. */
         rc = ib_field_value(value, ib_ftype_list_out(&vlist));
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        const ib_list_node_t *node = NULL;
-        int n = 0;
-
+        /* Iterate over vlist. */
         IB_LIST_LOOP_CONST(vlist, node) {
             const ib_field_t *nvalue =
                 (const ib_field_t *)ib_list_node_data_const(node);
@@ -887,6 +881,7 @@ static ib_status_t execute_operator(ib_engine_t *ib,
             ++n;
             pushed = value_stack_push(value_stack, nvalue);
 
+            /* Recursive call. */
             rc = execute_operator(ib, tx, rule, target, opinst, value_stack,
                                   nvalue, recursion,
                                   rule_result, log_exec);
@@ -956,20 +951,7 @@ static ib_status_t execute_operator(ib_engine_t *ib,
         /* Done. */
         clear_target_fields(ib, tx);
 
-        if (trc == IB_DECLINED) {
-            ib_rule_log_warn(tx, rule, NULL, NULL,
-                             "Action returned EDECLINED");
-            rc = trc;
-            if (tx->flags & IB_TX_BLOCK_IMMEDIATE) {
-                ib_rule_log_debug(tx, rule, NULL, NULL,
-                                  "Rule caused immediate block.");
-                ib_rule_log_debug(tx, rule, NULL, NULL,
-                                  "Aborting chain rules because of "
-                                  "immediate block.");
-                IB_FTRACE_RET_STATUS(IB_DECLINED);
-            }
-        }
-        else if (trc != IB_OK) {
+        if (trc != IB_OK) {
             ib_rule_log_error(tx, rule, NULL, NULL,
                               "Failed to execute action for rule");
             rc = trc;
@@ -1374,8 +1356,9 @@ static bool rule_allow(const ib_tx_t *tx,
  * @param[in] event Event type.
  * @param[in] cbdata Callback data (actually phase_rule_cbdata_t).
  *
- * @returns Status code. IB_OK on success. IB_DECLINED to signal that
- *          rule processing should not continue.
+ * @returns 
+ *   - IB_OK on success.
+ *   - IB_DECLINED if the httpd plugin declines to block the traffic.
  */
 static ib_status_t run_phase_rules(ib_engine_t *ib,
                                    ib_tx_t *tx,
@@ -1393,9 +1376,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     const ib_ruleset_phase_t   *ruleset_phase;
     ib_list_t                  *rules;
     ib_list_node_t             *node = NULL;
-
-    /* Boolean indicating a block at the end of this phase. */
-    int                         block_phase = 0;
+    ib_status_t                rc;
 
     ruleset_phase = &(ctx->rules->ruleset.phases[meta->phase_num]);
     assert(ruleset_phase != NULL);
@@ -1467,40 +1448,38 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                                      MAX_CHAIN_RECURSION,
                                      &rule_result);
 
-        /* Handle declined return code. Did this block? */
-        if( rule_rc == IB_DECLINED ) {
-            if ( tx->flags & IB_TX_BLOCK_PHASE ) {
-                ib_rule_log_debug(tx, rule, NULL, NULL,
-                                  "Rule resulted in phase block: %s",
-                                  ib_status_to_string(rule_rc));
-                block_phase = 1;
-            }
-            else if ( tx->flags & IB_TX_BLOCK_IMMEDIATE ) {
-                ib_rule_log_debug(tx, rule, NULL, NULL,
-                                  "Rule resulted in immediate block: %s",
-                                  ib_status_to_string(rule_rc));
-                ib_rule_log_debug(tx, rule, NULL, NULL,
-                                  "Rule processing is aborted by "
-                                  "immediate block.");
-                report_block_to_server(ib, tx);
-                IB_FTRACE_RET_STATUS(IB_DECLINED);
-            }
-            else if ( tx->flags & IB_TX_BLOCK_ADVISORY ) {
-                ib_rule_log_debug(tx, rule, NULL, NULL,
-                                  "Rule resulted in advisory block: %s",
-                                  ib_status_to_string(rule_rc));
-            }
-        }
-        else if (rule_rc != IB_OK) {
+        if (rule_rc != IB_OK) {
             ib_rule_log_error(tx, rule, NULL, NULL,
                               "Error executing rule: %s",
                               ib_status_to_string(rule_rc));
         }
+
+        /* Handle declined return code. Did this block? */
+        if ( ib_tx_flags_isset( tx, IB_TX_BLOCK_IMMEDIATE ) ) {
+            ib_rule_log_debug(tx, rule, NULL, NULL,
+                              "Rule resulted in immediate block: %s",
+                              ib_status_to_string(rule_rc));
+            ib_rule_log_debug(tx, rule, NULL, NULL,
+                              "Rule processing is aborted by "
+                              "immediate block.");
+            rule_rc = report_block_to_server(ib, tx);
+            if ( rule_rc != IB_OK ) {
+                ib_rule_log_error(tx, rule, NULL, NULL, "Failed to block.");
+            }
+            else {
+                IB_FTRACE_RET_STATUS(IB_OK);
+            }
+        }
     }
 
-    if ( block_phase != 0 ) {
-        report_block_to_server(ib, tx);
-        IB_FTRACE_RET_STATUS(IB_DECLINED);
+    if ( ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE ) ) {
+        ib_log_debug_tx(tx, "Rule resulted in phase block");
+        rc = report_block_to_server(ib, tx);
+        if ( rc != IB_OK ) {
+            ib_log_error_tx(tx,
+                            "Failed to block phase: %s",
+                            ib_status_to_string(rc));
+        }
     }
 
     /*
@@ -1520,7 +1499,6 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
  * @param[in] value Value to pass to the operator
  * @param[in] value_stack Value stack for logging
  * @param[in] result Result from the operator
- * @param[out] block_phase Block at end of the current phase?
  * @param[in,out] log_exec Rule execution log object
  *
  * @returns Status code
@@ -1531,7 +1509,6 @@ static ib_status_t execute_stream_operator(ib_engine_t *ib,
                                            ib_field_t *value,
                                            value_stack_t *value_stack,
                                            ib_num_t *result,
-                                           bool *block_phase,
                                            ib_rule_log_exec_t *log_exec)
 {
     IB_FTRACE_INIT();
@@ -1587,34 +1564,20 @@ static ib_status_t execute_stream_operator(ib_engine_t *ib,
 
     rc = execute_action_list(ib, rule, tx, *result, actions);
 
-    /* Handle declined return code. Did this block? */
-    if (rc == IB_DECLINED) {
-        if (tx->flags & IB_TX_BLOCK_PHASE) {
-            ib_rule_log_debug(tx, rule, NULL, NULL,
-                              "Rule resulted in phase block: %s",
-                              ib_status_to_string(rc));
-            *block_phase = true;
-        }
-        else if (tx->flags & IB_TX_BLOCK_IMMEDIATE) {
-            ib_rule_log_debug(tx, rule, NULL, NULL,
-                              "Rule resulted in immediate block: %s",
-                              ib_status_to_string(rc));
-            ib_rule_log_debug(tx, rule, NULL, NULL,
-                              "Rule processing is aborted by "
-                              "immediate block.");
-            report_block_to_server(ib, tx);
-            IB_FTRACE_RET_STATUS(IB_DECLINED);
-        }
-        else if (tx->flags & IB_TX_BLOCK_ADVISORY) {
-            ib_rule_log_debug(tx, rule, NULL, NULL,
-                              "Rule resulted in advisory block: %s",
-                              ib_status_to_string(rc));
-        }
-    }
-    else if (rc != IB_OK) {
+    if (rc != IB_OK) {
         ib_rule_log_error(tx, rule, NULL, NULL,
                           "Error executing action for rule: %s",
                           ib_status_to_string(rc));
+    }
+
+    if ( ib_tx_flags_isset( tx, IB_TX_BLOCK_IMMEDIATE ) ) {
+        ib_rule_log_debug(tx, rule, NULL, NULL,
+                          "Rule resulted in immediate block: %s",
+                          ib_status_to_string(rc));
+        ib_rule_log_debug(tx, rule, NULL, NULL,
+                          "Rule processing is aborted by "
+                          "immediate block.");
+        report_block_to_server(ib, tx);
     }
     
     ib_rule_log_exec(log_exec);
@@ -1630,7 +1593,6 @@ static ib_status_t execute_stream_operator(ib_engine_t *ib,
  * @param[in] rule Rule to execute
  * @param[in] tx Transaction
  * @param[in,out] txdata Transaction data
- * @param[out] block_phase Block at end of this phase?
  * @param[in,out] log_exec Rule execution log object
  *
  * @returns Status code
@@ -1639,7 +1601,6 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
                                               ib_tx_t *tx,
                                               const ib_rule_t *rule,
                                               ib_txdata_t *txdata,
-                                              bool *block_phase,
                                               ib_rule_log_exec_t *log_exec)
 {
     IB_FTRACE_INIT();
@@ -1679,7 +1640,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     value_stack_init(tx, &value_stack);
 
     rc = execute_stream_operator(ib, tx, rule, value, &value_stack,
-                                 &result, block_phase, log_exec);
+                                 &result, log_exec);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1691,7 +1652,6 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
  * @param[in] rule Rule to execute
  * @param[in] tx Transaction
  * @param[in] header Parsed header
- * @param[out] block_phase Block at end of this phase?
  * @param[in,out] log_exec Rule execution log object
  *
  * @returns Status code
@@ -1700,7 +1660,6 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
                                               ib_tx_t *tx,
                                               const ib_rule_t *rule,
                                               ib_parsed_header_t *header,
-                                              bool *block_phase,
                                               ib_rule_log_exec_t *log_exec)
 {
     IB_FTRACE_INIT();
@@ -1750,7 +1709,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
         }
 
         rc = execute_stream_operator(ib, tx, rule, value, &value_stack,
-                                     &result, block_phase, log_exec);
+                                     &result, log_exec);
 
         /* Store the result */
         if (result != 0) {
@@ -1773,8 +1732,8 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
  * @param[in] header Parsed header (or NULL)
  * @param[in] meta Phase meta data
  *
- * @returns Status code IB_OK or IB_DECLINED if rule processing should not
- *          continue.
+ * @returns
+ *   - Status code IB_OK
  */
 static ib_status_t run_stream_rules(ib_engine_t *ib,
                                     ib_tx_t *tx,
@@ -1796,7 +1755,6 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         &(ctx->rules->ruleset.phases[meta->phase_num]);
     ib_list_t                *rules = ruleset_phase->rule_list;
     const ib_list_node_t     *node = NULL;
-    bool                      block_phase = false; /* Block at end of phase? */
 
     /* Allow (skip) this phase? */
     if (rule_allow(tx, meta, NULL, false) == true) {
@@ -1877,12 +1835,10 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
          * determine what the correct behavior should be.
          */
         if (txdata != NULL) {
-            rc = execute_stream_txdata_rule(ib, tx, rule, txdata,
-                                            &block_phase, log_exec);
+            rc = execute_stream_txdata_rule(ib, tx, rule, txdata, log_exec);
         }
         else if (header != NULL) {
-            rc = execute_stream_header_rule(ib, tx, rule, header,
-                                            &block_phase, log_exec);
+            rc = execute_stream_header_rule(ib, tx, rule, header, log_exec);
         }
         if (rc != IB_OK) {
             ib_rule_log_error(tx, rule, NULL, NULL,
@@ -1893,9 +1849,8 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         ib_rule_log_exec(log_exec);
     }
 
-    if (block_phase) {
+    if ( ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE) ) {
         report_block_to_server(ib, tx);
-        IB_FTRACE_RET_STATUS(IB_DECLINED);
     }
 
     /*
