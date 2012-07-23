@@ -779,7 +779,10 @@ static ib_status_t get_event(ib_tx_t *tx,
  * @param[in,out] tx The transaction we are going to modify.
  * @param[in] rule The rule that fired the action
  *
- * @return IB_DECLINED
+ * @return 
+ *   - IB_OK on success.
+ *   - Errors by ib_data_add_num.
+ *   - Other if an event exists, but cannot be retrieved for this action.
  */
 static ib_status_t act_block_advisory_execute(ib_tx_t *tx,
                                               const ib_rule_t *rule)
@@ -790,8 +793,6 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx,
     assert(rule != NULL);
 
     ib_status_t rc;
-    ib_field_t *ib_flags_field;
-    ib_field_t *ib_block_field;
     ib_num_t ib_num_one = 1;
     ib_logevent_t *event;
 
@@ -802,42 +803,12 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx,
         /* Set the flag in the transaction. */
         ib_tx_flags_set(tx, IB_TX_BLOCK_ADVISORY);
 
-        /* Get the FLAGS list of values or create it if missing. */
-        rc = ib_data_get(tx->dpi, "FLAGS", &ib_flags_field);
-        if (rc == IB_ENOENT) {
-
-            rc = ib_data_add_list(tx->dpi, "FLAGS", &ib_flags_field);
-            if (rc != IB_OK) {
-                ib_log_error_tx(tx, "Could not create FLAGS field: %s",
-                                    ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
-
-        }
-        else if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Could not retrieve FLAGS field: %s",
-                                ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Create the IB_FTYPE_NUM field to add to FLAGS. */
-        rc = ib_field_create(&ib_block_field,
-                             tx->mp,
-                             "BLOCK",
-                             5,
-                             IB_FTYPE_NUM,
-                             &ib_num_one);
-        if ( rc != IB_OK ) {
-            ib_log_error_tx(tx, "Failed to create the IB_NUM field BLOCK: %s",
-                                ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Add BLOCK=1 to FLAGS. */
-        rc = ib_field_list_add(ib_flags_field, ib_block_field);
+        /* When doing an advisory block, mark the DPI with FLAGS:BLOCK=1. */
+        rc = ib_data_add_num(tx->dpi, "FLAGS:BLOCK", ib_num_one, NULL);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Could not add blocked field to flags: %s",
-                                ib_status_to_string(rc));
+            ib_log_error_tx(tx,
+                            "Could not set value FLAGS:BLOCK=1: %s",
+                            ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -847,11 +818,14 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx,
             event->rec_action = IB_LEVENT_ACTION_BLOCK;
         }
         else if (rc != IB_ENOENT) {
+            ib_log_error_tx(tx,
+                "Failed to fetch event associated with this action: %s",
+                ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_DECLINED);
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -860,7 +834,9 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx,
  * @param[in,out] tx The transaction we are going to modify.
  * @param[in] rule The rule that fired the action
  *
- * @return IB_DECLINED
+ * @return
+ *   - IB_OK on success.
+ *   - Other if an event exists, but cannot be retrieved for this action.
  */
 static ib_status_t act_block_phase_execute(ib_tx_t *tx,
                                            const ib_rule_t *rule)
@@ -882,7 +858,7 @@ static ib_status_t act_block_phase_execute(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    IB_FTRACE_RET_STATUS(IB_DECLINED);
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -891,7 +867,9 @@ static ib_status_t act_block_phase_execute(ib_tx_t *tx,
  * @param[in,out] tx The transaction we are going to modify.
  * @param[in] rule The rule that fired the action
  *
- * @returns IB_DECLINED.
+ * @returns
+ *   - IB_OK on succes.
+ *   - Other if an event exists, but cannot be retrieved for this action.
  */
 static ib_status_t act_block_immediate_execute(ib_tx_t *tx,
                                                const ib_rule_t *rule)
@@ -915,7 +893,7 @@ static ib_status_t act_block_immediate_execute(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    IB_FTRACE_RET_STATUS(IB_DECLINED);
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -1072,10 +1050,12 @@ static ib_status_t act_status_execute(void* data,
  * @param[out] inst The action instance that will be initialized.
  * @param[in] cbdata Unused.
  *
- * @return IB_OK on success. IB_EALLOC on an allocation error from mp.
- *         IB_EINVAL if @a param is NULL or not convertible with
- *         @c atoi(const @c char*) to an integer in the range 200 through 599,
- *         inclusive.
+ * @return
+ *   - IB_OK on success.
+ *   - IB_EALLOC on an allocation error from mp.
+ *   - IB_EINVAL if @a param is NULL or not convertible with
+ *               @c atoi(const @c char*) to an integer in the range 200
+ *               through 599 inclusive.
  */
 static ib_status_t act_status_create(ib_engine_t *ib,
                                      ib_context_t *ctx,
