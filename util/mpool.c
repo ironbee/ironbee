@@ -253,6 +253,9 @@ struct ib_mpool_cleanup_t {
  * When a pool is destroyed all pages, pointer pages, cleanup nodes, and the
  * pool itself are freed.  In contrast, when a pool is cleared, the pages,
  * pointer pages, and cleanup nodes are moved to free lists for future reuse.
+ * Release functions similar to destroy except that if there is a parent pool
+ * the pool is cleared and added to the free children list of the parent
+ * pool.
  *
  * Finally, cleanup functions can be registered with a pool to be called on
  * clear or destroy.  It is assumed that these are relatively rare.  They are
@@ -406,6 +409,12 @@ struct ib_mpool_t
      * @sa ib_mpool_t
      **/
     ib_mpool_cleanup_t      *free_cleanups;
+    /**
+     * Singly linked list of free children.
+     *
+     * @sa ib_mpool_t
+     **/
+    ib_mpool_t              *free_children;
 };
 
 /**
@@ -520,6 +529,42 @@ size_t ib_mpool_track_number(size_t size)
     }
 
     IB_FTRACE_RET_UINT(r);
+}
+
+/**
+ * Remove a child pool from a parent pools child list.
+ *
+ * The parent should usually be locked before calling this.
+ *
+ * @param[in] child Child to remove from parent pool.
+ */
+static
+void ib_mpool_remove_child_from_parent(const ib_mpool_t *child)
+{
+    IB_FTRACE_INIT();
+
+    assert(child         != NULL);
+    assert(child->parent != NULL);
+
+    if (child->parent->children == child) {
+        child->parent->children = child->next;
+        if (child->next == NULL) {
+            child->parent->children_end = NULL;
+        }
+    }
+    else {
+        /* Find node whose next node is child. */
+        ib_mpool_t *before_child = child->parent->children;
+        while (before_child->next != child) {
+            before_child = before_child->next;
+        }
+        before_child->next = child->next;
+        if (child->next == NULL) {
+            child->parent->children_end = before_child;
+        }
+    }
+
+    IB_FTRACE_RET_VOID();
 }
 
 /**@}*/
@@ -930,6 +975,7 @@ bool ib_mpool_debug_report_helper(
     IMR_PRINTF("  free_pages             = %p\n",  mp->free_pages);
     IMR_PRINTF("  free_pointer_pages     = %p\n",  mp->free_pointer_pages);
     IMR_PRINTF("  free_cleanups          = %p\n",  mp->free_cleanups);
+    IMR_PRINTF("  free_children          = %p\n",  mp->free_children);
 
     IMR_PRINTF("%s", "Tracks:\n");
     for (size_t track_num = 0; track_num < IB_MPOOL_NUM_TRACKS; ++track_num) {
@@ -989,6 +1035,18 @@ bool ib_mpool_debug_report_helper(
         IMR_PRINTF("  %p\n", cleanup);
     }
 
+    IMR_PRINTF("Done with %p.  Moving on to free children.\n\n", mp);
+
+    IB_MPOOL_FOREACH(
+        const ib_mpool_t, free_child,
+        mp->free_children
+    ) {
+        bool result = ib_mpool_debug_report_helper(free_child, report);
+        if (! result) {
+            goto failure;
+        }
+    }
+
     IMR_PRINTF("Done with %p.  Moving on to children.\n\n", mp);
 
     IB_MPOOL_FOREACH(
@@ -1004,6 +1062,89 @@ bool ib_mpool_debug_report_helper(
     IB_FTRACE_RET_BOOL(true);
 
 failure:
+    IB_FTRACE_RET_BOOL(false);
+}
+
+/**
+ * Add analyze of free child @a free_child to @a report.
+ *
+ * @sa ib_mpool_analyze_helper()
+ *
+ * @param[in]  free_child     Free child to analyze.
+ * @param[in]  report         Report to append to.
+ * @param[out] free_child_use Bytes used by free child.
+ * @return true iff success.
+ */
+static
+bool ib_mpool_analyze_free_child(
+    const ib_mpool_t  *free_child,
+    ib_mpool_report_t *report,
+     size_t           *free_child_use
+)
+{
+    IB_FTRACE_INIT();
+
+    assert(free_child != NULL);
+    assert(report     != NULL);
+
+    const size_t unit_page_cost =
+        free_child->pagesize + sizeof(ib_mpool_page_t) - 1;
+
+    size_t free_page         = 0;
+    size_t free_cleanup      = 0;
+    size_t free_pointer_page = 0;
+
+    size_t total_used = sizeof(*free_child);
+
+    IB_MPOOL_FOREACH(
+        const ib_mpool_page_t, mpage,
+        free_child->free_pages
+    ) {
+        free_page += unit_page_cost;
+    }
+
+    IB_MPOOL_FOREACH(
+        const ib_mpool_pointer_page_t, ppage,
+        free_child->free_pointer_pages
+    ) {
+        free_pointer_page += sizeof(ib_mpool_pointer_page_t);
+    }
+
+    IB_MPOOL_FOREACH(
+        const ib_mpool_cleanup_t, cleanup,
+        free_child->free_cleanups
+    ) {
+        free_cleanup += sizeof(ib_mpool_cleanup_t);
+    }
+
+    IMR_PRINTF("%zd=%zd+%zd+%zd",
+        free_page + free_cleanup + free_pointer_page,
+        free_page, free_cleanup, free_pointer_page
+    );
+
+    total_used += free_page + free_cleanup + free_pointer_page;
+
+    if (free_child->free_children != NULL) {
+        IMR_PRINTF("%s", " + [");
+        IB_MPOOL_FOREACH(
+            const ib_mpool_t, free_subchild,
+            free_child->free_children
+        ) {
+            size_t child_use = 0;
+            ib_mpool_analyze_free_child(free_subchild, report, &child_use);
+            total_used += child_use;
+            if (free_subchild->next != NULL) {
+                IMR_PRINTF("%s", " + ");
+            }
+        }
+        IMR_PRINTF("%s", "]");
+    }
+
+    *free_child_use = total_used;
+    IB_FTRACE_RET_BOOL(true);
+
+failure:
+    *free_child_use = 0;
     IB_FTRACE_RET_BOOL(false);
 }
 
@@ -1151,15 +1292,42 @@ bool ib_mpool_analyze_helper(
         );
     }
 
-    IMR_PRINTF("Done with %p.  Moving on to children.\n\n", mp);
+    if (mp->free_children != NULL) {
+        IMR_PRINTF("%s", "Free children: ");
 
-    IB_MPOOL_FOREACH(
-        const ib_mpool_t, child,
-        mp->children
-    ) {
-        bool result = ib_mpool_analyze_helper(child, report);
-        if (! result) {
-            goto failure;
+        size_t total_free_child_use = 0;
+        IB_MPOOL_FOREACH(
+            const ib_mpool_t, free_child,
+            mp->free_children
+        ) {
+            size_t free_child_use = 0;
+            bool result = ib_mpool_analyze_free_child(
+                free_child,
+                report,
+                &free_child_use
+            );
+            if (! result) {
+                goto failure;
+            }
+            total_free_child_use += free_child_use;
+            if (free_child->next != NULL) {
+                IMR_PRINTF("%s", " + ");
+            }
+        }
+        IMR_PRINTF("\nTotal Free Child Use=%zd\n", total_free_child_use);
+    }
+
+    if (mp->children != NULL) {
+        IMR_PRINTF("Done with %p.  Moving on to children.\n\n", mp);
+
+        IB_MPOOL_FOREACH(
+            const ib_mpool_t, child,
+            mp->children
+        ) {
+            bool result = ib_mpool_analyze_helper(child, report);
+            if (! result) {
+                goto failure;
+            }
         }
     }
 
@@ -1254,11 +1422,32 @@ ib_status_t ib_mpool_create_ex(
         }
     }
 
-    mp = (ib_mpool_t *)malloc_fn(sizeof(**pmp));
-    if (mp == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    if (
+        parent != NULL &&
+        parent->free_children != NULL &&
+        parent->free_children->pagesize  == pagesize &&
+        parent->free_children->malloc_fn == malloc_fn &&
+        parent->free_children->free_fn   == free_fn
+    ) {
+        rc = ib_lock_lock(&(parent->lock));
+        if (rc != IB_OK) {
+            goto failure;
+        }
+        mp = parent->free_children;
+        parent->free_children = mp->next;
+        ib_lock_unlock(&(parent->lock));
+
+        mp->next = NULL;
+        assert(mp->inuse                  == 0);
+        assert(mp->large_allocation_inuse == 0);
     }
-    memset(mp, 0, sizeof(**pmp));
+    else {
+        mp = (ib_mpool_t *)malloc_fn(sizeof(**pmp));
+        if (mp == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        memset(mp, 0, sizeof(**pmp));
+    }
     *pmp = mp;
 
     rc = ib_lock_init(&(mp->lock));
@@ -1290,8 +1479,6 @@ ib_status_t ib_mpool_create_ex(
         parent->children = mp;
         ib_lock_unlock(&(parent->lock));
     }
-
-    ib_lock_unlock(&(mp->lock));
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
@@ -1529,10 +1716,15 @@ void ib_mpool_destroy(
         mp->free_fn(cleanup);
     }
 
+   /* We remove the child's parent link so that the child does not
+    * worry about us as we also face imminent destruction.
+    */
+
+    IB_MPOOL_FOREACH(ib_mpool_t, free_child, mp->free_children) {
+        free_child->parent = NULL;
+        ib_mpool_destroy(free_child);
+    }
     IB_MPOOL_FOREACH(ib_mpool_t, child, mp->children) {
-        /* We remove the child's parent link so that the child does not
-         * worry about us as we also face imminent destruction.
-         */
         child->parent = NULL;
         ib_mpool_destroy(child);
     }
@@ -1541,19 +1733,7 @@ void ib_mpool_destroy(
         /* We have no good options if lock or unlock fails, so we hope. */
         ib_lock_lock(&(mp->parent->lock));
 
-        ib_mpool_t **my_handle = &(mp->parent->children);
-
-        while(*my_handle != NULL && *my_handle != mp) {
-            my_handle = &((*my_handle)->next);
-        }
-
-        assert(my_handle != NULL);
-        assert(*my_handle != NULL);
-
-        *my_handle = mp->next;
-        if (mp->parent->children == NULL) {
-            mp->parent->children_end = NULL;
-        }
+        ib_mpool_remove_child_from_parent(mp);
 
         ib_lock_unlock(&(mp->parent->lock));
     }
@@ -1563,6 +1743,43 @@ void ib_mpool_destroy(
     }
 
     mp->free_fn(mp);
+
+    IB_FTRACE_RET_VOID();
+}
+
+void ib_mpool_release(
+    ib_mpool_t *mp
+)
+{
+    IB_FTRACE_INIT();
+
+    if (mp == NULL) {
+        IB_FTRACE_RET_VOID();
+    }
+
+    if (mp->parent == NULL) {
+        ib_mpool_destroy(mp);
+        IB_FTRACE_RET_VOID();
+    }
+
+    /* Clear pool and all subpools. */
+    ib_mpool_clear(mp);
+
+    /* Release all subpools. */
+    IB_MPOOL_FOREACH(ib_mpool_t, child, mp->children) {
+        ib_mpool_release(child);
+    }
+
+    ib_lock_lock(&(mp->parent->lock));
+
+    /* Remove from parent child list. */
+    ib_mpool_remove_child_from_parent(mp);
+
+    /* Add to parent free children list. */
+    mp->next = mp->parent->free_children;
+    mp->parent->free_children = mp;
+
+    ib_lock_unlock(&(mp->parent->lock));
 
     IB_FTRACE_RET_VOID();
 }
@@ -1744,8 +1961,14 @@ ib_status_t ib_mpool_validate(
             child = child->next;
         }
         if (child == NULL) {
+            child = mp->parent->free_children;
+            while (child != NULL && child != mp) {
+                child = child->next;
+            }
+        }
+        if (child == NULL) {
             VALIDATE_ERROR(
-                "Not a child of my parent: %p",
+                "Not a child or free child of my parent: %p",
                 child
             );
         }
@@ -1771,22 +1994,6 @@ ib_status_t ib_mpool_validate(
         }
     }
 
-    /* Validate children */
-    IB_MPOOL_FOREACH(ib_mpool_t, child, mp->children) {
-        if (child->parent != mp) {
-            VALIDATE_ERROR(
-                "Child does not consider me its parent: %p %p",
-                child, child->parent
-            );
-        }
-        ib_status_t rc = ib_mpool_validate(child, message);
-        if (rc == IB_EOTHER) {
-            goto child_error;
-        }
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
 
     /* Validate end pointers */
 /** @cond DoNotDocument */
@@ -1835,6 +2042,83 @@ ib_status_t ib_mpool_validate(
         "cleanups"
     );
 #undef VALIDATE_END
+
+    /* Validate children */
+    IB_MPOOL_FOREACH(ib_mpool_t, child, mp->children) {
+        if (child->parent != mp) {
+            VALIDATE_ERROR(
+                "Child does not consider me its parent: %p %p",
+                child, child->parent
+            );
+        }
+        ib_status_t rc = ib_mpool_validate(child, message);
+        if (rc == IB_EOTHER) {
+            goto child_error;
+        }
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Validate free children */
+    IB_MPOOL_FOREACH(ib_mpool_t, free_child, mp->free_children) {
+        if (free_child->parent != mp) {
+            VALIDATE_ERROR(
+                "Free Child does not consider me its parent: %p %p",
+                free_child, free_child->parent
+            );
+        }
+        /* Free child specific checks. */
+        if (free_child->children != NULL) {
+            VALIDATE_ERROR(
+                "Free Child has children: %p",
+                free_child
+            );
+        }
+        for (
+            size_t track_num = 0;
+            track_num < IB_MPOOL_NUM_TRACKS;
+            ++track_num
+        ) {
+            if (free_child->tracks[track_num] != NULL) {
+                VALIDATE_ERROR(
+                    "Free Child has pages: %p %zd",
+                    free_child, track_num
+                );
+            }
+        }
+        if (free_child->large_allocations != NULL) {
+            VALIDATE_ERROR(
+                "Free Child has large allocations: %p",
+                free_child
+            );
+        }
+        if (free_child->cleanups != NULL) {
+            VALIDATE_ERROR(
+                "Free Child has cleanups: %p",
+                free_child
+            );
+        }
+        if (
+            free_child->pagesize  != mp->pagesize ||
+            free_child->malloc_fn != mp->malloc_fn ||
+            free_child->free_fn   != mp->free_fn
+        ) {
+            VALIDATE_ERROR(
+                "Free Child has different parameters: %p",
+                free_child
+            );
+        }
+
+        /* Normal validation, including validation of free grandchildren. */
+        ib_status_t rc = ib_mpool_validate(free_child, message);
+        if (rc == IB_EOTHER) {
+            goto child_error;
+        }
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
 
     /* Normal exit */
     IB_FTRACE_RET_STATUS(IB_OK);

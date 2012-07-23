@@ -673,3 +673,169 @@ TEST(TestMpool, Path)
 
     ib_mpool_destroy(mp);
 }
+
+TEST(TestMpool, ReleaseNoParent)
+{
+    reset_test();
+
+    ib_mpool_t* mp = NULL;
+    ib_status_t rc =
+        ib_mpool_create_ex(&mp, "release_no_parent", NULL, 0,
+            &test_malloc, &test_free);
+    EXPECT_VALID(mp);
+
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(mp);
+    EXPECT_LT(0U, g_malloc_calls);
+    EXPECT_LT(0U, g_malloc_bytes);
+
+    void* p = ib_mpool_alloc(mp, 100);
+    EXPECT_VALID(mp);
+
+    EXPECT_TRUE(p);
+
+    ib_mpool_release(mp);
+
+    ASSERT_EQ(g_malloc_calls, g_free_calls);
+    ASSERT_EQ(g_malloc_bytes, g_free_bytes);
+}
+
+TEST(TestMpool, ReleaseSimple)
+{
+    reset_test();
+
+    ib_mpool_t* mp = NULL;
+    ib_status_t rc =
+        ib_mpool_create_ex(&mp, "release_simple", NULL, 0,
+            &test_malloc, &test_free);
+    EXPECT_VALID(mp);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(mp);
+
+    EXPECT_LT(0U, g_malloc_calls);
+    EXPECT_LT(0U, g_malloc_bytes);
+
+    ib_mpool_t* child = NULL;
+    rc = ib_mpool_create(&child, "release_simple_child", mp);
+
+    EXPECT_VALID(child);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(child);
+
+    void* p = ib_mpool_alloc(child, 100);
+    EXPECT_VALID(child);
+    EXPECT_VALID(mp);
+    EXPECT_TRUE(p);
+
+    size_t saved_malloc_calls = g_malloc_calls;
+    size_t saved_malloc_bytes = g_malloc_bytes;
+
+    ib_mpool_release(child);
+
+    EXPECT_VALID(mp);
+
+    ASSERT_EQ(g_malloc_calls, saved_malloc_calls);
+    ASSERT_EQ(g_malloc_bytes, saved_malloc_bytes);
+
+    rc = ib_mpool_create(&child, "release_simple_child2", mp);
+
+    EXPECT_VALID(child);
+    EXPECT_VALID(mp);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(child);
+
+    // 1 extra malloc for name only.
+    ASSERT_EQ(g_malloc_calls, saved_malloc_calls + 1);
+
+    ib_mpool_release(child);
+
+    EXPECT_VALID(mp);
+
+    ib_mpool_destroy(mp);
+
+    ASSERT_EQ(g_malloc_calls, g_free_calls);
+    ASSERT_EQ(g_malloc_bytes, g_free_bytes);
+}
+
+TEST(TestMpool, ReleaseComplex)
+{
+    reset_test();
+
+    ib_mpool_t* mp = NULL;
+    ib_status_t rc =
+        ib_mpool_create_ex(&mp, "release_complex", NULL, 0,
+            &test_malloc, &test_free);
+    EXPECT_VALID(mp);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(mp);
+
+    EXPECT_LT(0U, g_malloc_calls);
+    EXPECT_LT(0U, g_malloc_bytes);
+
+    ib_mpool_t* child_a = NULL;
+    rc = ib_mpool_create(&child_a, "release_complex_child_a", mp);
+
+    EXPECT_VALID(child_a);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(child_a);
+
+    ib_mpool_t* child_b = NULL;
+    rc = ib_mpool_create(&child_b, "release_complex_child_b", mp);
+
+    EXPECT_VALID(child_b);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(child_b);
+
+    ib_mpool_t* tmp = NULL;
+
+    rc = ib_mpool_create(&tmp, "release_complex_child_aa", child_a);
+    EXPECT_EQ(IB_OK, rc);
+    EXPECT_VALID(mp);
+    rc = ib_mpool_create(&tmp, "release_complex_child_ab", child_a);
+    EXPECT_EQ(IB_OK, rc);
+    EXPECT_VALID(mp);
+    rc = ib_mpool_create(&tmp, "release_complex_child_ba", child_b);
+    EXPECT_EQ(IB_OK, rc);
+    EXPECT_VALID(mp);
+    rc = ib_mpool_create(&tmp, "release_complex_child_bb", child_b);
+    EXPECT_EQ(IB_OK, rc);
+    EXPECT_VALID(mp);
+
+    size_t saved_malloc_calls = g_malloc_calls;
+    size_t saved_malloc_bytes = g_malloc_bytes;
+
+    ib_mpool_release(child_a);
+
+    EXPECT_VALID(mp);
+
+    ASSERT_EQ(g_malloc_calls, saved_malloc_calls);
+    ASSERT_EQ(g_malloc_bytes, saved_malloc_bytes);
+
+    rc = ib_mpool_create(&child_a, "release_complex_child_a2", mp);
+
+    EXPECT_VALID(child_a);
+    EXPECT_VALID(mp);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(child_a);
+
+    // 1 extra malloc for name only.
+    ASSERT_EQ(g_malloc_calls, saved_malloc_calls + 1);
+
+    rc = ib_mpool_create(&tmp, "release_complex_child_aa2", child_a);
+
+    EXPECT_VALID(child_a);
+    EXPECT_VALID(mp);
+    ASSERT_EQ(IB_OK, rc);
+
+    // 1 extra malloc for name only.
+    ASSERT_EQ(g_malloc_calls, saved_malloc_calls + 2);
+
+    ib_mpool_release(child_a);
+
+    EXPECT_VALID(mp);
+
+    ib_mpool_destroy(mp);
+
+    ASSERT_EQ(g_malloc_calls, g_free_calls);
+    ASSERT_EQ(g_malloc_bytes, g_free_bytes);
+}

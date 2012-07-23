@@ -52,8 +52,8 @@ extern "C" {
  * can coexist with a simultaneous routine on B.
  *
  * Two import thread safe cases are:
- * - A and B can be simultaneously destroyed even if they share a common
- *   parent.
+ * - A and B can be simultaneously destroyed or released even if they share a
+ *   common parent.
  * - A and B can be simultaneously created even if they share a common parent.
  *
  * Furthermore, all allocation routines can be called on A and B as long as
@@ -61,8 +61,8 @@ extern "C" {
  *
  * Common scenarios that are not thread safe include:
  * - Simultaneously allocations from the same pool.
- * - Any use of a descendant of a pool while that pool is being cleared or
- *   destroyed.
+ * - Any use of a descendant of a pool while that pool is being cleared,
+ *   released, or destroyed.
  *
  * @section Performance
  *
@@ -113,8 +113,8 @@ typedef void (*ib_mpool_free_fn_t)(void *);
 /**
  * Create a new memory pool.
  *
- * @note If a pool has a parent specified, then any call to clear/destroy
- * on the parent will propagate to all descendants.
+ * @note If a pool has a parent specified, then any call to
+ * clear/destroy/release on the parent will propagate to all descendants.
  *
  * @param[out] pmp    Address which new pool is written
  * @param[in]  name   Logical name of the pool (used in reports), can be NULL.
@@ -316,6 +316,29 @@ void DLL_PUBLIC ib_mpool_clear(
  * @param[in] mp Memory pool to destroy.
  */
 void DLL_PUBLIC ib_mpool_destroy(
+    ib_mpool_t *mp
+);
+
+/**
+ * Clear pool and release to parent.
+ *
+ * If @a mp has no parent, this is identical to ib_mpool_destroy().  If @a mp
+ * has a parent, then this is semantically identical to ib_mpool_destroy(),
+ * but instead of freeing the pool, it is added to the free subpool list of
+ * its parent and will be reused the next time ib_mpool_create() is called
+ * with the parent.
+ *
+ * In the presence of a parent, release is significantly faster than destroy
+ * but does not return memory to malloc/free.  It is a good choice if new
+ * subpools will be created soon.
+ *
+ * Release should only be used if all subpools of the parent have the same
+ * pagesize, malloc, and free functions.  If these parameters vary, the
+ * subpools may not be reused leading to excess memory usage.
+ *
+ * @param[in] mp Memory pool to release.
+ */
+void DLL_PUBLIC ib_mpool_release(
     ib_mpool_t *mp
 );
 
