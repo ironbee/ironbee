@@ -77,7 +77,6 @@ class TestTesting < Test::Unit::TestCase
         Action id:1 phase:REQUEST_HEADER setRequestHeader:X-Foo=bar
       EOS
     )
-    assert_no_issues
     assert_log_match /clipp_header/
   end
 end
