@@ -141,14 +141,17 @@ ib_status_t DLL_PUBLIC ib_mpool_create(
  * @note If a pool has a parent specified, then any call to clear/destroy
  * on the parent will propagate to all descendants.
  *
+ * Default parameter values means copy from parent if present or use
+ * 4096, malloc(), and free() otherwise.
+ *
  * @param[out] pmp       Address which new pool is written
  * @param[in]  name      Logical name of the pool (used in reports), can be
  *                       NULL.
  * @param[in]  parent    Optional parent memory pool (or NULL)
  * @param[in]  pagesize  Custom page size (to be used by default in pmp);
  *                       0 means use default; less than 1024 means 1024.
- * @param[in]  malloc_fn Malloc function to use; NULL means malloc().
- * @param[in]  free_fn   Free function to use; NULL means free().
+ * @param[in]  malloc_fn Malloc function to use; NULL means use default.
+ * @param[in]  free_fn   Free function to use; NULL means use default.
  *
  * @returns
  * - IB_OK     -- Success.

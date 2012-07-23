@@ -1225,7 +1225,12 @@ ib_status_t ib_mpool_create_ex(
     }
 
     if (pagesize == 0) {
-        pagesize = IB_MPOOL_DEFAULT_PAGE_SIZE;
+        if (parent != NULL) {
+            pagesize = parent->pagesize;
+        }
+        else {
+            pagesize = IB_MPOOL_DEFAULT_PAGE_SIZE;
+        }
     }
 
     if (pagesize < IB_MPOOL_MINIMUM_PAGESIZE) {
@@ -1233,10 +1238,20 @@ ib_status_t ib_mpool_create_ex(
     }
 
     if (malloc_fn == NULL) {
-        malloc_fn = &malloc;
+        if (parent != NULL) {
+            malloc_fn = parent->malloc_fn;
+        }
+        else {
+            malloc_fn = &malloc;
+        }
     }
     if (free_fn == NULL) {
-        free_fn = &free;
+        if (parent != NULL) {
+            free_fn = parent->free_fn;
+        }
+        else {
+            free_fn = &free;
+        }
     }
 
     mp = (ib_mpool_t *)malloc_fn(sizeof(**pmp));
