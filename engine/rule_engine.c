@@ -1253,10 +1253,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
                                  recursion,
                                  rule_result);
 
-        if (trc == IB_DECLINED) {
-            rc = trc;
-        }
-        else if (trc != IB_OK) {
+        if (trc != IB_OK) {
             ib_rule_log_error(tx, rule, NULL, NULL,
                               "Error executing chained rule \"%s\"",
                               rule->chained_rule->meta.id);
