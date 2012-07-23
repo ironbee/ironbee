@@ -68,4 +68,16 @@ class TestTesting < Test::Unit::TestCase
     )
     assert_log_match %r{GET /foo HTTP/1.1}
   end
+
+  def test_clipp_header
+    clipp(
+      :log_level => "alert",
+      :input => "echo:\"GET /foo\"",
+      :default_site_config => <<-EOS
+        Action id:1 phase:REQUEST_HEADER setRequestHeader:X-Foo=bar
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /clipp_header/
+  end
 end

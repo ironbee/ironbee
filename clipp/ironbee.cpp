@@ -435,6 +435,48 @@ ib_status_t clipp_action_execute(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+ib_status_t clipp_error(
+    ib_tx_t* tx,
+    int      status,
+    void*
+)
+{
+    IB_FTRACE_INIT();
+
+    ib_log_error_tx(tx, "clipp_error: %d", status);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t clipp_header(
+    ib_tx_t*                  tx,
+    ib_server_direction_t     dir,
+    ib_server_header_action_t action,
+    const char*               hdr,
+    const char*               value,
+    void*
+)
+{
+    IB_FTRACE_INIT();
+
+    static const char* c_header_actions[] = {
+        "set",
+        "append",
+        "merge",
+        "add",
+        "unset"
+    };
+
+    ib_log_alert_tx(tx,
+        "clipp_header: dir=%s action=%s hdr=%s value=%s",
+        (dir == IB_SERVER_REQUEST ? "request" : "response"),
+        c_header_actions[action],
+        hdr, value
+    );
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 } // extern "C"
 
 // Move to new file?
@@ -591,6 +633,9 @@ IronBeeModifier::IronBeeModifier(
     m_state(make_shared<State>())
 {
     m_state->behavior = behavior;
+
+    m_state->server_value.get().ib()->err_fn = clipp_error;
+    m_state->server_value.get().ib()->hdr_fn = clipp_header;
 
     ib_status_t rc = ib_action_register(
         m_state->engine.ib(),
