@@ -76,6 +76,14 @@ extern "C" {
  * for a memory pool.  Largely page sizes will mean higher runtime performance
  * and higher memory wastage.  The minimum pagesize is currently 1024.
  *
+ * @section Valgrind
+ *
+ * If mpool.c is compield with IB_MPOOL_VALGRIND defined then additional code
+ * will be added to communicate with valgrind.  This will allow valgrind to
+ * properly track mpool usage and report memory errors.  It adds a small
+ * performance penalty and ~8 additional bytes per allocation (slightly more,
+ * amortized).
+ *
  * @{
  */
 

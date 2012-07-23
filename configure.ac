@@ -221,7 +221,23 @@ AC_ARG_ENABLE(devel,
   devel="no"
 ])
 
+
 AM_CONDITIONAL([BUILD_DEV_MODULES], [test "$devel" != "no"])
+
+### Mpool Valgrind Support
+AC_ARG_ENABLE(mpool-valgrind,
+              AS_HELP_STRING([--enable-mpool-valgrind],
+                             [Add valgrind hints to mpool code.]),
+[
+  mpool_valgrind=$enableval
+],
+[
+  mpool_valgrind="no"
+])
+
+if test "$mpool_valgrind" != "no"; then
+    AC_DEFINE([IB_MPOOL_VALGRIND], [1], [Valgrind support in mpool.])
+fi
 
 ### CLI
 AC_ARG_ENABLE(cli,

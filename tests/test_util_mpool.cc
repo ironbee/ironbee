@@ -203,7 +203,7 @@ TEST(TestMpool, Clear)
         EXPECT_VALID(mp);
     }
 
-    EXPECT_EQ(500U*1001U, ib_mpool_inuse(mp));
+    EXPECT_LE(500U*1001U, ib_mpool_inuse(mp));
     ib_mpool_clear(mp);
     EXPECT_EQ(0U, ib_mpool_inuse(mp));
     EXPECT_EQ(1U, g_free_calls); // name

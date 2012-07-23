@@ -32,11 +32,16 @@
 #include <ironbee/debug.h>
 #include <ironbee/lock.h>
 
+#ifdef IB_MPOOL_VALGRIND
+#include <valgrind/memcheck.h>
+#endif
+
 #include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 
 /**
  * A single point in memory for us to return when a zero length buffer is
@@ -51,6 +56,25 @@ static char s_zero_length_buffer[1];
  * space performance of memory pool.  See ib_mpool_analyze().
  */
 /**@{*/
+
+/**
+ * Size of redzones to place between allocations.
+ *
+ * If this is non-zero, then:
+ * - A gap of this size will be placed before and after the allocation.  This
+ *   effectively means that a page needs 2*IB_MPOOL_REDZONE_SIZE more bytes
+ *   available than usual to fulfill an allocation.
+ * - If IB_MPOOL_VALGRIND is defined then these gaps are marked as red zones
+ *   for valgrind.
+ *
+ * Note that the cost of a single redzone is added to each allocation for the
+ * purpose of bytes in use and ib_mpool_analyze().
+ */
+#ifdef IB_MPOOL_VALGRIND
+#define IB_MPOOL_REDZONE_SIZE 8
+#else
+#define IB_MPOOL_REDZONE_SIZE 0
+#endif
 
 /**
  * Default Page Size in bytes.
@@ -602,7 +626,11 @@ ib_mpool_page_t *ib_mpool_acquire_page(
         mpage = mp->malloc_fn(sizeof(ib_mpool_page_t) + mp->pagesize - 1);
     }
 
-    IB_FTRACE_RET_PTR(void, mpage);
+#ifdef IB_MPOOL_VALGRIND
+    VALGRIND_MAKE_MEM_NOACCESS(&(mpage->page), mp->pagesize);
+#endif
+
+    IB_FTRACE_RET_PTR(ib_mpool_page_t, mpage);
 }
 
 /**
@@ -1480,6 +1508,10 @@ ib_status_t ib_mpool_create_ex(
         ib_lock_unlock(&(parent->lock));
     }
 
+#ifdef IB_MPOOL_VALGRIND
+    VALGRIND_CREATE_MEMPOOL(mp, IB_MPOOL_REDZONE_SIZE, 0);
+#endif
+
     IB_FTRACE_RET_STATUS(IB_OK);
 
 failure:
@@ -1566,11 +1598,19 @@ void *ib_mpool_alloc(
         IB_FTRACE_RET_PTR(void, &s_zero_length_buffer);
     }
 
-    size_t track_number = ib_mpool_track_number(size);
+    /* Actual size: will add redzone if small allocation. */
+    size_t actual_size = size;
+
+    size_t track_number = ib_mpool_track_number(actual_size);
     if (track_number < IB_MPOOL_NUM_TRACKS) {
         /* Small allocation */
+        /* Need to make sure we leave red zone at end. */
+        actual_size += IB_MPOOL_REDZONE_SIZE;
         if (mp->tracks[track_number] == NULL ||
-            (mp->pagesize - mp->tracks[track_number]->used) < size
+            (mp->pagesize -
+             mp->tracks[track_number]->used -
+             IB_MPOOL_REDZONE_SIZE
+            ) < actual_size
         ) {
             ib_mpool_page_t *mpage = ib_mpool_acquire_page(mp);
             if (mpage == NULL) {
@@ -1586,12 +1626,20 @@ void *ib_mpool_alloc(
 
         ib_mpool_page_t *mpage = mp->tracks[track_number];
 
-        assert((mpage->used + size) <= mp->pagesize);
-        ptr = &(mpage->page) + mpage->used;
-        mpage->used += size;
+        assert(
+            (mpage->used + actual_size) <=
+            mp->pagesize - IB_MPOOL_REDZONE_SIZE
+        );
+        ptr = &(mpage->page) + mpage->used + IB_MPOOL_REDZONE_SIZE;
+        mpage->used += actual_size;
+
+#ifdef IB_MPOOL_VALGRIND
+        VALGRIND_MEMPOOL_ALLOC(mp, ptr, size);
+#endif
     }
     else {
         /* Large allocation */
+        /* Large allocations do not use redzones. */
         if (
             mp->large_allocations == NULL ||
             mp->large_allocations->next_pointer
@@ -1626,7 +1674,7 @@ void *ib_mpool_alloc(
         mp->large_allocation_inuse += size;
     }
 
-    mp->inuse += size;
+    mp->inuse += actual_size;
 
     IB_FTRACE_RET_PTR(void, ptr);
 }
@@ -1677,6 +1725,11 @@ void ib_mpool_clear(
     IB_MPOOL_FOREACH(ib_mpool_t, child, mp->children) {
         ib_mpool_clear(child);
     }
+
+#ifdef IB_MPOOL_VALGRIND
+    VALGRIND_DESTROY_MEMPOOL(mp);
+    VALGRIND_CREATE_MEMPOOL(mp, IB_MPOOL_REDZONE_SIZE, 0);
+#endif
 
     IB_FTRACE_RET_VOID();
 }
@@ -1744,6 +1797,13 @@ void ib_mpool_destroy(
 
     mp->free_fn(mp);
 
+#ifdef IB_MPOOL_VALGRIND
+    /* Check existance so we don't double destroy free children's pools. */
+    if (VALGRIND_MEMPOOL_EXISTS(mp)) {
+        VALGRIND_DESTROY_MEMPOOL(mp);
+    }
+#endif
+
     IB_FTRACE_RET_VOID();
 }
 
@@ -1780,6 +1840,10 @@ void ib_mpool_release(
     mp->parent->free_children = mp;
 
     ib_lock_unlock(&(mp->parent->lock));
+
+#ifdef IB_MPOOL_VALGRIND
+    VALGRIND_DESTROY_MEMPOOL(mp);
+#endif
 
     IB_FTRACE_RET_VOID();
 }
@@ -1902,12 +1966,13 @@ ib_status_t ib_mpool_validate(
         size_t track_size = IB_MPOOL_TRACK_SIZE(track_num);
         IB_MPOOL_FOREACH(ib_mpool_page_t, mpage, mp->tracks[track_num]) {
             /* If the page is not the first in the track then its remaining
-             * memory must be less than the appropriate size.
+             * memory must be less than the appropriate size: i.e., too small
+             * to do another allocation.
              */
             size_t remaining = mp->pagesize - mpage->used;
             if (
                 mpage     != mp->tracks[track_num] &&
-                remaining >= track_size
+                remaining >= track_size + 2*IB_MPOOL_REDZONE_SIZE
             ) {
                 VALIDATE_ERROR(
                     "Available memory: %zd %p %zd",
