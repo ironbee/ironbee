@@ -243,6 +243,9 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
     if (rv != TS_SUCCESS) {
         TSError("ErrorDoc - TSHttpHdrStatusSet");
     }
+    if (reason == NULL) {
+        reason = "Other";
+    }
     rv = TSHttpHdrReasonSet(bufp, hdr_loc, reason, strlen(reason));
     if (rv != TS_SUCCESS) {
         TSError("ErrorDoc - TSHttpHdrReasonSet");
