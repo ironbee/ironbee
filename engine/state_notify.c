@@ -1191,12 +1191,11 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Mark time. */
-    tx->t.postprocess = ib_clock_get_time();
-
-    rc = ib_state_notify_tx(ib, handle_postprocess_event, tx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+    if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
+        rc = ib_state_notify_postprocess(ib, tx);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     /* Mark the time. */
@@ -1217,3 +1216,33 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
 
     IB_FTRACE_RET_STATUS(rc);
 }
+
+ib_status_t ib_state_notify_postprocess(ib_engine_t *ib,
+                                        ib_tx_t *tx)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+
+    ib_status_t rc;
+
+    if (ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
+        ib_log_error_tx(tx, "Attempted to notify previously notified event: %s",
+                     ib_state_event_name(handle_postprocess_event));
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Mark time. */
+    tx->t.postprocess = ib_clock_get_time();
+
+    ib_tx_flags_set(tx, IB_TX_FPOSTPROCESS);
+
+    rc = ib_state_notify_tx(ib, handle_postprocess_event, tx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+

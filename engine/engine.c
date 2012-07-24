@@ -838,16 +838,26 @@ failed:
 
 void ib_tx_destroy(ib_tx_t *tx)
 {
-    ib_tx_t *curr;
-
     /// @todo It should always be the first one in the list,
     ///       so this should not be needed and should cause an error
     ///       or maybe for us to throw a flag???
     assert(tx != NULL);
+    assert(tx->ib != NULL);
     assert(tx->conn != NULL);
     assert(tx->conn->tx_first == tx);
 
+    ib_engine_t *ib = tx->ib;
+    ib_tx_t *curr;
+
     ib_log_debug3_tx(tx, "TX DESTROY p=%p id=%s", tx, tx->id);
+
+    /* Make sure that the post processing state was notified. */
+    if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
+        ib_log_info_tx(tx,
+                       "Forcing engine to run post processing "
+                       "prior to destroying transaction.");
+        ib_state_notify_postprocess(ib, tx);
+    }
 
     /* Keep track of the first/current tx. */
     tx->conn->tx_first = tx->next;
