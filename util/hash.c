@@ -214,6 +214,17 @@ static ib_status_t ib_hash_resize_slots(
     ib_hash_t *hash
 );
 
+/**
+ * Fast downcase.
+ *
+ * @param[in] c Character to downcase.
+ * @return Downcased version of @a c.
+ */
+inline
+static char ib_hash_tolower(
+    char c
+);
+
 /* End Internal Declarations */
 
 /* Internal Definitions */
@@ -356,6 +367,49 @@ ib_status_t ib_hash_resize_slots(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+inline
+static char ib_hash_tolower(
+    char c
+)
+{
+    static const char s_table[] = {
+        0,   1,   2,   3,   4,   5,   6,   7,
+        8,   9,   10,  11,  12,  13,  14,  15,
+        16,  17,  18,  19,  20,  21,  22,  23,
+        24,  25,  26,  27,  28,  29,  30,  31,
+        32,  33,  34,  35,  36,  37,  38,  39,
+        40,  41,  42,  43,  44,  45,  46,  47,
+        48,  49,  50,  51,  52,  53,  54,  55,
+        56,  57,  58,  59,  60,  61,  62,  63,
+        64,  97,  98,  99,  100, 101, 102, 103,
+        104, 105, 106, 107, 108, 109, 110, 111,
+        112, 113, 114, 115, 116, 117, 118, 119,
+        120, 121, 122, 91,  92,  93,  94,  95,
+        96,  97,  98,  99,  100, 101, 102, 103,
+        104, 105, 106, 107, 108, 109, 110, 111,
+        112, 113, 114, 115, 116, 117, 118, 119,
+        120, 121, 122, 123, 124, 125, 126, 127,
+        128, 129, 130, 131, 132, 133, 134, 135,
+        136, 137, 138, 139, 140, 141, 142, 143,
+        144, 145, 146, 147, 148, 149, 150, 151,
+        152, 153, 154, 155, 156, 157, 158, 159,
+        160, 161, 162, 163, 164, 165, 166, 167,
+        168, 169, 170, 171, 172, 173, 174, 175,
+        176, 177, 178, 179, 180, 181, 182, 183,
+        184, 185, 186, 187, 188, 189, 190, 191,
+        192, 193, 194, 195, 196, 197, 198, 199,
+        200, 201, 202, 203, 204, 205, 206, 207,
+        208, 209, 210, 211, 212, 213, 214, 215,
+        216, 217, 218, 219, 220, 221, 222, 223,
+        224, 225, 226, 227, 228, 229, 230, 231,
+        232, 233, 234, 235, 236, 237, 238, 239,
+        240, 241, 242, 243, 244, 245, 246, 247,
+        248, 249, 250, 251, 252, 253, 254, 255
+    };
+
+    return s_table[(unsigned int)c];
+}
+
 /* End Internal Definitions */
 
 uint32_t ib_hashfunc_djb2(
@@ -390,7 +444,7 @@ uint32_t ib_hashfunc_djb2_nocase(
     const unsigned char *key_s = (const unsigned char *)key;
 
     for (size_t i = 0; i < key_length; ++i) {
-        hash = ((hash << 5) + hash) + tolower(key_s[i]);
+        hash = ((hash << 5) + hash) + ib_hash_tolower(key_s[i]);
     }
 
     IB_FTRACE_RET_UINT(hash);
@@ -432,7 +486,7 @@ int ib_hashequal_nocase(
     }
 
     for (size_t i = 0; i < a_length; ++i) {
-        if (tolower(a_s[i]) != tolower(b_s[i])) {
+        if (ib_hash_tolower(a_s[i]) != ib_hash_tolower(b_s[i])) {
             IB_FTRACE_RET_INT(0);
         }
     }
