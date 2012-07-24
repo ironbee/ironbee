@@ -330,6 +330,10 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
         cp->linebuf = NULL;
     }
 
+    if (length == 0) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
     /* Handle lines that end with a backslash */
     len = length - 1;
     if (*(buffer+len) == '\n') {
