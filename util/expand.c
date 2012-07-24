@@ -449,7 +449,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    /* Loop til the cows come home */
+    /* Loop until there is nothing more to find. */
     while (1) {
         const char *pre = NULL; /* Pointer to found prefix string */
         size_t      pre_off = 0;/* Offset of prefix in the string */
