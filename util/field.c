@@ -29,6 +29,7 @@
 
 #include <ironbee/bytestr.h>
 #include <ironbee/debug.h>
+#include <ironbee/engine.h>
 #include <ironbee/stream.h>
 #include <ironbee/util.h>
 
@@ -70,6 +71,10 @@ void ib_field_util_log_debug(
     IB_FTRACE_INIT();
     assert(prefix != NULL);
     assert(f != NULL);
+
+    if (ib_util_get_log_level() < IB_LOG_DEBUG) {
+        IB_FTRACE_RET_VOID();
+    }
 
     if (ib_field_is_dynamic(f)) {
         ib_util_log_debug(
