@@ -1817,7 +1817,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 
         /* No data. */
         if (ib_list_elements(list) == 0) {
-            ib_log_error(ib, "No data in audit log part: %s", part->name);
+            ib_log_info(ib, "No data in audit log part: %s", part->name);
             *chunk = (const uint8_t *)"{}";
             part->gen_data = (void *)-1;
             IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
@@ -1978,7 +1978,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
 
         /* No data. */
         if (ib_list_elements(list) == 0) {
-            ib_log_error(ib, "No data in audit log part: %s", part->name);
+            ib_log_info(ib, "No data in audit log part: %s", part->name);
             part->gen_data = NULL;
             IB_FTRACE_RET_SIZET(0);
         }
