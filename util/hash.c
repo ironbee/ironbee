@@ -377,7 +377,7 @@ uint32_t ib_hashfunc_djb2(
     IB_FTRACE_RET_UINT(hash);
 }
 
-uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
+uint32_t ib_hashfunc_djb2_nocase(
     const void *key,
     size_t      key_length,
     uint32_t    randomizer
@@ -396,7 +396,7 @@ uint32_t DLL_PUBLIC ib_hashfunc_djb2_nocase(
     IB_FTRACE_RET_UINT(hash);
 }
 
-int DLL_PUBLIC ib_hashequal_default(
+int ib_hashequal_default(
     const void *a,
     size_t      a_length,
     const void *b,
@@ -413,7 +413,7 @@ int DLL_PUBLIC ib_hashequal_default(
    );
 }
 
-int DLL_PUBLIC ib_hashequal_nocase(
+int ib_hashequal_nocase(
     const void *a,
     size_t      a_length,
     const void *b,
@@ -523,7 +523,7 @@ ib_status_t ib_hash_create(
     ));
 }
 
-ib_status_t DLL_PUBLIC ib_hash_create_nocase(
+ib_status_t ib_hash_create_nocase(
     ib_hash_t  **hash,
     ib_mpool_t  *pool
 ) {
@@ -541,7 +541,7 @@ ib_status_t DLL_PUBLIC ib_hash_create_nocase(
     ));
 }
 
-ib_mpool_t DLL_PUBLIC *ib_hash_pool(
+ib_mpool_t *ib_hash_pool(
     ib_hash_t *hash
 ) {
     IB_FTRACE_INIT();
@@ -551,7 +551,7 @@ ib_mpool_t DLL_PUBLIC *ib_hash_pool(
     IB_FTRACE_RET_PTR(ib_mpool_t, hash->pool);
 }
 
-size_t DLL_PUBLIC ib_hash_size(
+size_t ib_hash_size(
     ib_hash_t* hash
 ) {
     IB_FTRACE_INIT();
