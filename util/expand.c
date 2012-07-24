@@ -440,7 +440,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
 
     /* Compute prefix length */
     pre_len = strlen(prefix);
-    assert (pre_len != 0);
+    assert(pre_len != 0);
 
     /* Check for minimum string length */
     if (str_len < (pre_len+1) ) {
