@@ -2334,7 +2334,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     ib_status_t rc;
 
     /* Timestamp */
-    tstamp = (char *)ib_mpool_alloc(pool, 30);
+    tstamp = (char *)ib_mpool_alloc(pool, 31);
     if (tstamp == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -2342,7 +2342,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                                 (log->tx->t.logtime - log->tx->t.started));
 
     /* TX Time */
-    txtime = (char *)ib_mpool_alloc(pool, 30);
+    txtime = (char *)ib_mpool_alloc(pool, 31);
     if (txtime == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -2485,7 +2485,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         ib_unum_t unum;
 
         /* Timestamp */
-        tstamp = (char *)ib_mpool_alloc(pool, 30);
+        tstamp = (char *)ib_mpool_alloc(pool, 31);
         if (tstamp == NULL) {
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
@@ -2587,7 +2587,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     ib_status_t rc;
 
     /* Timestamp */
-    tstamp = (char *)ib_mpool_alloc(pool, 30);
+    tstamp = (char *)ib_mpool_alloc(pool, 31);
     if (tstamp == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
