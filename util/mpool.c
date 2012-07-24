@@ -1696,6 +1696,14 @@ void ib_mpool_clear(
     for (size_t track_num = 0; track_num < IB_MPOOL_NUM_TRACKS; ++track_num) {
         if (mp->tracks[track_num] != NULL) {
             assert(mp->tracks_end[track_num] != NULL);
+#ifdef IB_MPOOL_VALGRIND
+            IB_MPOOL_FOREACH(
+                const ib_mpool_page_t, mpage,
+                mp->tracks[track_num]
+            ) {
+                VALGRIND_MAKE_MEM_NOACCESS(&(mpage->page), mp->pagesize);
+            }
+#endif
             mp->tracks_end[track_num]->next = mp->free_pages;
             mp->free_pages                  = mp->tracks[track_num];
             mp->tracks[track_num]           = NULL;
