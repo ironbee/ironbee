@@ -1329,8 +1329,6 @@ ib_status_t ib_mpool_create_ex(
         ib_lock_unlock(&(parent->lock));
     }
 
-    ib_lock_unlock(&(mp->lock));
-
     IB_FTRACE_RET_STATUS(IB_OK);
 
 failure:
