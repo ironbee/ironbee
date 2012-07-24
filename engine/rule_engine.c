@@ -1349,7 +1349,7 @@ static bool rule_allow(const ib_tx_t *tx,
  * @param[in] event Event type.
  * @param[in] cbdata Callback data (actually phase_rule_cbdata_t).
  *
- * @returns 
+ * @returns
  *   - IB_OK on success.
  *   - IB_DECLINED if the httpd plugin declines to block the traffic.
  */

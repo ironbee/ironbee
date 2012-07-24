@@ -779,7 +779,7 @@ static ib_status_t get_event(ib_tx_t *tx,
  * @param[in,out] tx The transaction we are going to modify.
  * @param[in] rule The rule that fired the action
  *
- * @return 
+ * @return
  *   - IB_OK on success.
  *   - Errors by ib_data_add_num.
  *   - Other if an event exists, but cannot be retrieved for this action.
