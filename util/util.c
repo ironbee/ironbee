@@ -83,6 +83,11 @@ ib_status_t ib_util_log_level(int level)
     return IB_OK;
 }
 
+int ib_util_get_log_level()
+{
+    return _ibutil_logger.level;
+}
+
 ib_status_t ib_util_log_logger(ib_util_fn_logger_t callback,
                                void *cbdata)
 {

@@ -94,6 +94,13 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
 ib_status_t DLL_PUBLIC ib_util_log_level(int level);
 
 /**
+ * Get the logger level.
+ *
+ * @returns Logger level.
+ */
+int DLL_PUBLIC ib_util_get_log_level();
+
+/**
  * Set the logger.
  *
  * Sets a callback which will be called to perform the logging. Any value
