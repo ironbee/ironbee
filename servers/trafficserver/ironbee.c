@@ -1011,6 +1011,9 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         sprintf(cstatus, "%d", status);
 
         reason = TSHttpHdrReasonGet(bufp, hdr_loc, &r_len);
+        if (reason == NULL) {
+            reason = "Other";
+        }
 
         ib_log_debug_tx(data->tx, "RESP_LINE: %s %d %s",
                         cversion, status, reason);
