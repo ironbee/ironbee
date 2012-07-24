@@ -253,6 +253,18 @@ ib_status_t DLL_PUBLIC ib_state_notify_response_finished(ib_engine_t *ib,
 
 
 /**
+ * Notify the state machine that post processing should run.
+ *
+ * @param ib Engine handle
+ * @param tx Transaction data
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_state_notify_postprocess(ib_engine_t *ib,
+                                                   ib_tx_t *tx);
+
+
+/**
  * @} IronBeeEngineState
  */
 #ifdef __cplusplus

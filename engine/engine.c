@@ -838,16 +838,26 @@ failed:
 
 void ib_tx_destroy(ib_tx_t *tx)
 {
-    ib_tx_t *curr;
-
     /// @todo It should always be the first one in the list,
     ///       so this should not be needed and should cause an error
     ///       or maybe for us to throw a flag???
     assert(tx != NULL);
+    assert(tx->ib != NULL);
     assert(tx->conn != NULL);
     assert(tx->conn->tx_first == tx);
 
+    ib_engine_t *ib = tx->ib;
+    ib_tx_t *curr;
+
     ib_log_debug3_tx(tx, "TX DESTROY p=%p id=%s", tx, tx->id);
+
+    /* Make sure that the post processing state was notified. */
+    if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
+        ib_log_info_tx(tx,
+                       "Forcing engine to run post processing "
+                       "prior to destroying transaction.");
+        ib_state_notify_postprocess(ib, tx);
+    }
 
     /* Keep track of the first/current tx. */
     tx->conn->tx_first = tx->next;
@@ -1621,7 +1631,8 @@ ib_status_t ib_context_open(ib_context_t *ctx)
             rc = m->fn_ctx_open(ib, m, ctx, m->cbdata_ctx_open);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
-                ib_log_error(ib, "Failed to call context open: %s", ib_status_to_string(rc));
+                ib_log_error(ib, "Failed to call context open: %s",
+                             ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
@@ -1630,7 +1641,8 @@ ib_status_t ib_context_open(ib_context_t *ctx)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
+ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
+                                          const char *idx)
 {
     IB_FTRACE_INIT();
 
@@ -1639,7 +1651,6 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
     assert(ctx != NULL);
     assert(ctx->ib != NULL);
     assert(ctx->mp != NULL);
-    assert(idx != NULL);
 
     /* Check if a new audit log structure must be allocated:
      *   1. if auditlog == NULL or
@@ -1647,8 +1658,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
      *      not change its auditlog->index value (or auditlog->index_fp).
      *      We must make a new auditlog that the passed in ib_context_t
      *      ctx owns.  */
-    if (ctx->auditlog == NULL || ctx->auditlog->owner != ctx)
-    {
+    if (ctx->auditlog == NULL || ctx->auditlog->owner != ctx) {
 
         ctx->auditlog = (ib_auditlog_cfg_t *)
             ib_mpool_calloc(ctx->mp, 1, sizeof(*ctx->auditlog));
@@ -1661,54 +1671,64 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
         ctx->auditlog->owner = ctx;
 
         /* Set index_fp_lock. */
-        rc = ib_lock_init(&ctx->auditlog->index_fp_lock);
+        if (idx != NULL) {
+            rc = ib_lock_init(&ctx->auditlog->index_fp_lock);
+            if (rc != IB_OK) {
+                ib_log_debug2(ctx->ib,
+                              "Failed to initialize lock "
+                              "for audit index %s: %s",
+                              idx, ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
 
-        if (rc!=IB_OK) {
-            ib_log_debug2(ctx->ib,
-                "Failed to initialize lock for audit index %s", idx);
-
-            IB_FTRACE_RET_STATUS(rc);
+            /* Set index. */
+            ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
+            if (ctx->auditlog->index == NULL) {
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
         }
-
-        /* Set index. */
-        ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
-
-        if (ctx->auditlog->index == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        else {
+            ctx->auditlog->index = NULL;
+            ctx->auditlog->index_fp = NULL;
         }
     }
     /* Else the auditlog struct is initialized and owned by this ctx. */
     else {
-        rc = ib_lock_lock(&ctx->auditlog->index_fp_lock);
+        bool unlock = false;
+        if (ctx->auditlog->index != NULL) {
+            rc = ib_lock_lock(&ctx->auditlog->index_fp_lock);
+            if (rc != IB_OK) {
+                ib_log_debug2(ctx->ib, "Failed lock to audit index %s",
+                              ctx->auditlog->index);
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            unlock = true;
 
-        if (rc!=IB_OK) {
-            ib_log_debug2(ctx->ib, "Failed lock to audit index %s", idx);
-            IB_FTRACE_RET_STATUS(rc);
-        }
+            /* Check that we aren't re-setting a value in the same context. */
+            if ( (idx != NULL) && (strcmp(idx, ctx->auditlog->index) == 0) ) {
+                if (unlock) {
+                    ib_lock_unlock(&ctx->auditlog->index_fp_lock);
+                }
+                ib_log_debug2(ctx->ib,
+                              "Re-setting log same value. No action: %s",
+                              idx);
 
-        /* Check that we aren't re-setting a value in the same context. */
-        if ( ! strcmp(idx, ctx->auditlog->index) ) {
-
-            ib_lock_unlock(&ctx->auditlog->index_fp_lock);
-
-            ib_log_debug2(ctx->ib,
-                         "Re-setting log same value. No action: %s",
-                         idx);
-
-            IB_FTRACE_RET_STATUS(IB_OK);
+                IB_FTRACE_RET_STATUS(IB_OK);
+            }
         }
 
         /* Replace the old index value with the new index value. */
-        ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
-
-        if (ctx->auditlog->index == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        if (idx != NULL) {
+            ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
+            if (ctx->auditlog->index == NULL) {
+                if (unlock) {
+                    ib_lock_unlock(&ctx->auditlog->index_fp_lock);
+                }
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
         }
-
-        /* Fail on alloc error. */
-        if (ctx->auditlog->index == NULL) {
-            ib_lock_unlock(&ctx->auditlog->index_fp_lock);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        else {
+            ctx->auditlog->index = NULL;
         }
 
         /* Close the audit log file if it is open. */
@@ -1717,7 +1737,9 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx, const char* idx)
             ctx->auditlog->index_fp = NULL;
         }
 
-        ib_lock_unlock(&ctx->auditlog->index_fp_lock);
+        if (unlock) {
+            ib_lock_unlock(&ctx->auditlog->index_fp_lock);
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

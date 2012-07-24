@@ -243,6 +243,9 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
     if (rv != TS_SUCCESS) {
         TSError("ErrorDoc - TSHttpHdrStatusSet");
     }
+    if (reason == NULL) {
+        reason = "Other";
+    }
     rv = TSHttpHdrReasonSet(bufp, hdr_loc, reason, strlen(reason));
     if (rv != TS_SUCCESS) {
         TSError("ErrorDoc - TSHttpHdrReasonSet");
@@ -1008,6 +1011,9 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         sprintf(cstatus, "%d", status);
 
         reason = TSHttpHdrReasonGet(bufp, hdr_loc, &r_len);
+        if (reason == NULL) {
+            reason = "Other";
+        }
 
         ib_log_debug_tx(data->tx, "RESP_LINE: %s %d %s",
                         cversion, status, reason);
@@ -1080,21 +1086,6 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     TSDebug("ironbee", "process_hdr: notifying header finished");
     rv = (*ibd->ib_notify_header_finished)(ironbee, data->tx);
 
-    /* Add the ironbee site id to an internal header. */
-    site = ib_context_site_get(data->tx->ctx);
-    add_header_field(bufp, hdr_loc, "@IB-SITE-ID", site->id_str);
-
-    /* Add internal header if we blocked the transaction */
-    if ((data->tx->flags & IB_TX_BLOCK_PHASE)
-        || (data->tx->flags & IB_TX_BLOCK_IMMEDIATE) ) {
-        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "blocked");
-    } else if (data->tx->flags & IB_TX_BLOCK_ADVISORY) {
-        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "advisory");
-    }
-
-    /* Add internal header for effective IP address */
-    add_header_field(bufp, hdr_loc, "@IB-EFFECTIVE-IP", data->tx->er_ipstr);
-
     /* Now manipulate header as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
         if (hdr->dir != ibd->dir)
@@ -1155,17 +1146,20 @@ add_hdr:
 
     /* Add the ironbee site id to an internal header. */
     site = ib_context_site_get(data->tx->ctx);
-
-    rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
-    if (rv != TS_SUCCESS) {
-        TSError("Failed to add @IB-SITE-ID MIME header field");
+    if (site != NULL) {
+        add_header_field(bufp, hdr_loc, "@IB-SITE-ID", site->id_str);
     }
-    rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
-                               "@IB-SITE-ID", 11);
-    rv = TSMimeHdrFieldValueStringSet(bufp, hdr_loc, field_loc, -1,
-                                      site->id_str, strlen(site->id_str));
-    rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
-    TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+
+    /* Add internal header if we blocked the transaction */
+    if ((data->tx->flags & (IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE)) != 0) {
+        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "blocked");
+    }
+    else if (data->tx->flags & IB_TX_BLOCK_ADVISORY) {
+        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "advisory");
+    }
+
+    /* Add internal header for effective IP address */
+    add_header_field(bufp, hdr_loc, "@IB-EFFECTIVE-IP", data->tx->er_ipstr);
 
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     TSIOBufferReaderFree(readerp);

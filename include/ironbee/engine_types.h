@@ -134,6 +134,7 @@ typedef enum {
 #define IB_TX_ALLOW_PHASE       (1 << 21) /**< Allow current phase */
 #define IB_TX_ALLOW_REQUEST     (1 << 22) /**< Allow all request phases */
 #define IB_TX_ALLOW_ALL         (1 << 23) /**< Allow transaction */
+#define IB_TX_FPOSTPROCESS      (1 << 24) /**< Postprocessing occured */
 
 /** Capture collection name */
 #define IB_TX_CAPTURE           "CAPTURE" /**< Name of the capture collection */

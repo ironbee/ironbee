@@ -521,6 +521,10 @@ static ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
     ib_status_t ib_rc;
     int sys_rc;
 
+    if (log->ctx->auditlog->index == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
     /* Lock the auditlog configuration for the context.
      * We lock up here to ensure that external resources are not
      * double-opened instead of locking only the assignment to
@@ -704,7 +708,6 @@ static ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     assert(NULL != log);
     assert(NULL != log->ctx);
     assert(NULL != log->ctx->auditlog);
-    assert(NULL != log->ctx->auditlog->index);
 
     rc = ib_context_module_config(log->ctx, ib_core_module(),
                                   (void *)&corecfg);
@@ -1545,13 +1548,17 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
     if (iface->open != NULL) {
         rc = iface->open(lpi, log);
         if (rc != IB_OK) {
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            if (log->ctx->auditlog->index != NULL) {
+                ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            }
             IB_FTRACE_RET_STATUS(rc);
         }
     }
 
     /* Lock to write. */
-    rc = ib_lock_lock(&log->ctx->auditlog->index_fp_lock);
+    if (log->ctx->auditlog->index != NULL) {
+        rc = ib_lock_lock(&log->ctx->auditlog->index_fp_lock);
+    }
 
     if (rc!=IB_OK) {
         ib_log_error(lpi->pr->ib,
@@ -1584,13 +1591,17 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
     if (iface->write_footer != NULL) {
         rc = iface->write_footer(lpi, log);
         if (rc != IB_OK) {
-            ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            if (log->ctx->auditlog->index != NULL) {
+                ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+            }
             IB_FTRACE_RET_STATUS(rc);
         }
     }
 
     /* Writing is done. Unlock. Close is thread-safe. */
-    ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+    if (log->ctx->auditlog->index != NULL) {
+        ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
+    }
 
     /* Close the log if required. */
     if (iface->close != NULL) {

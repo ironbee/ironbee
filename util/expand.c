@@ -66,7 +66,8 @@ static ib_status_t join2(ib_mpool_t *mp,
                          size_t *olen)
 {
     IB_FTRACE_INIT();
-    size_t buflen = l1 + l2 + (nul == true ? 1 : 0);
+    size_t slen = l1 + l2;
+    size_t buflen = slen + (nul == true ? 1 : 0);
     char *buf;
     char *p;
 
@@ -88,7 +89,7 @@ static ib_status_t join2(ib_mpool_t *mp,
 
     /* Done */
     *out = buf;
-    *olen = buflen;
+    *olen = slen;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -120,7 +121,8 @@ static ib_status_t join3(ib_mpool_t *mp,
                          size_t *olen)
 {
     IB_FTRACE_INIT();
-    size_t buflen = l1 + l2 + l3 + (nul == true ? 1 : 0);
+    size_t slen = l1 + l2 + l3;
+    size_t buflen = slen + (nul == true ? 1 : 0);
     char *buf;
     char *p;
 
@@ -144,7 +146,7 @@ static ib_status_t join3(ib_mpool_t *mp,
 
     /* Done */
     *out = buf;
-    *olen = buflen;
+    *olen = slen;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -511,7 +513,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
 
         /* The final block */
         fptr = (suf + suf_len);
-        flen = buflen - (pre_off + pre_len + namelen + suf_len);
+        flen = (buf + buflen ) - fptr;
 
         /* Zero length name? Expand it to "" */
         if (namelen == 0) {
@@ -524,6 +526,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
                 IB_FTRACE_RET_STATUS(rc);
             }
             buf = new;
+            buflen = newlen;
             continue;
         }
 
@@ -540,6 +543,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
                 IB_FTRACE_RET_STATUS(rc);
             }
             buf = new;
+            buflen = newlen;
             continue;
         }
         else if (rc != IB_OK) {
