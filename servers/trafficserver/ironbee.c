@@ -376,6 +376,7 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
         hdr_do *x;
         TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s txn_count=%d", data->tx->conn, data->tx, data->tx->id, data->ssn->txn_count);
         ib_tx_destroy(data->tx);
+        data->tx = NULL;
         if (data->out.output_buffer) {
             TSIOBufferDestroy(data->out.output_buffer);
             data->out.output_buffer = NULL;
@@ -760,10 +761,9 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 static int out_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ib_txn_ctx *data = TSContDataGet(contp);
-    if ( (data == NULL) || (data->out.output_buffer == NULL) ||
-         (data->out.buflen == (unsigned int)-1) )
-    {
-        TSDebug("ironbee", "\tout_data_event: buf == NULL or buflen = -1");
+    if (data->out.buflen == (unsigned int)-1) {
+        TSDebug("ironbee", "\tout_data_event: buflen = -1");
+        //ib_log_debug(ironbee, 9, "ironbee/out_data_event(): buflen = -1");
         return 0;
     }
     ibd_ctx direction;
@@ -787,10 +787,9 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
 static int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ib_txn_ctx *data = TSContDataGet(contp);
-    if ( (data == NULL) || (data->in.output_buffer == NULL) ||
-         (data->in.buflen == (unsigned int)-1) )
-    {
-        TSDebug("ironbee", "\tin_data_event: buf == NULL or buflen == -1");
+    if (data->out.buflen == (unsigned int)-1) {
+        TSDebug("ironbee", "\tin_data_event: buflen = -1");
+        //ib_log_debug(ironbee, 9, "ironbee/in_data_event(): buflen = -1");
         return 0;
     }
     ibd_ctx direction;
@@ -1362,7 +1361,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* CLEANUP EVENTS */
         case TS_EVENT_HTTP_TXN_CLOSE:
-            TSDebug("ironbee", "TXN Close: %lx\n", (long unsigned int)contp);
+            TSDebug("ironbee", "TXN Close: %p\n", (void *)contp);
             ib_txn_ctx_destroy(TSContDataGet(contp));
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);
@@ -1370,7 +1369,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             break;
 
         case TS_EVENT_HTTP_SSN_CLOSE:
-            TSDebug("ironbee", "SSN Close: %lx\n", (long unsigned int)contp);
+            TSDebug("ironbee", "SSN Close: %p\n", (void *)contp);
             ib_ssn_ctx_destroy(TSContDataGet(contp));
             TSContDestroy(contp);
             TSHttpSsnReenable(ssnp, TS_EVENT_HTTP_CONTINUE);
