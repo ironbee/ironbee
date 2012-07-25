@@ -61,6 +61,15 @@ typedef enum ib_clock_type_t {
 } ib_clock_type_t;
 
 /**
+ * Convert microseconds (usec) to milliseconds (msec).
+ *
+ * @param[in] usec Microseconds
+ *
+ * @returns Milliseconds from microseconds
+ */
+#define IB_CLOCK_USEC_TO_MSEC(usec) ((usec) / 1000)
+
+/**
  * Convert an ib_timeval_t to ib_time_t.
  *
  * @param[in]  tv IronBee timeval structure (ib_timeval_t)
