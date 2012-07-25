@@ -761,11 +761,11 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
 static int out_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ib_txn_ctx *data = TSContDataGet(contp);
-    if ( (data == NULL) || (data->out.output_buffer == NULL) ||
-         (data->out.buflen == (unsigned int)-1) )
-    {
-        TSDebug("ironbee", "\tout_data_event: buf == NULL or buflen = -1");
-        return 0;
+    if (data->out.buflen == (unsigned int)-1) {
+    TSDebug("ironbee", "\tout_data_event: buflen = -1");
+    //ib_log_debug(ironbee, 9,
+                     //"ironbee/out_data_event(): buflen = -1");
+    return 0;
     }
     ibd_ctx direction;
     direction.ibd = &ironbee_direction_resp;
@@ -788,11 +788,11 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
 static int in_data_event(TSCont contp, TSEvent event, void *edata)
 {
     ib_txn_ctx *data = TSContDataGet(contp);
-    if ( (data == NULL) || (data->in.output_buffer == NULL) ||
-         (data->in.buflen == (unsigned int)-1) )
-    {
-        TSDebug("ironbee", "\tin_data_event: buf == NULL or buflen == -1");
-        return 0;
+    if (data->out.buflen == (unsigned int)-1) {
+    TSDebug("ironbee", "\tin_data_event: buflen = -1");
+    //ib_log_debug(ironbee, 9,
+                 //"ironbee/in_data_event(): buflen = -1");
+    return 0;
     }
     ibd_ctx direction;
     direction.ibd = &ironbee_direction_req;
