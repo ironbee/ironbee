@@ -333,6 +333,9 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
     len = length - 1;
     if (*(buffer+len) == '\n') {
         --len;
+        if (len == 0) {
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
     }
     if (*(buffer+len) == '\\') {
         --len;
