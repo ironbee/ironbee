@@ -83,7 +83,7 @@ ib_status_t ib_util_log_level(int level)
     return IB_OK;
 }
 
-int ib_util_get_log_level()
+int ib_util_get_log_level(void)
 {
     return _ibutil_logger.level;
 }

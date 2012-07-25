@@ -98,7 +98,7 @@ ib_status_t DLL_PUBLIC ib_util_log_level(int level);
  *
  * @returns Logger level.
  */
-int DLL_PUBLIC ib_util_get_log_level();
+int DLL_PUBLIC ib_util_get_log_level(void);
 
 /**
  * Set the logger.
