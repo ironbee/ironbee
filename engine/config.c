@@ -291,7 +291,7 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    size_t len;
+    const char *end;
 
     assert(cp != NULL);
     assert(buffer != NULL);
@@ -330,21 +330,23 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
     }
 
     /* Handle lines that end with a backslash */
-    len = length - 1;
-    if (*(buffer+len) == '\n') {
-        --len;
-        if (len == 0) {
+    end = buffer + (length - 1);
+    if (*end == '\n') {
+        if (end == buffer) {
             IB_FTRACE_RET_STATUS(IB_OK);
         }
+        --end;
     }
-    if (*(buffer+len) == '\\') {
-        --len;
-        char *newbuf = (char *)ib_mpool_alloc(cp->mp, len+1);
+    if (*end == '\\') {
+        size_t len = end - buffer;
+        char *newbuf = (char *)ib_mpool_alloc(cp->mp, len + 1);
         if (newbuf == NULL) {
             ib_cfg_log_error(cp, "Unable to allocate line continuation buffer");
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
-        strncpy(newbuf, buffer, len);
+        if (len > 0) {
+            memcpy(newbuf, buffer, len);
+        }
         *(newbuf+len) = '\0';
         cp->linebuf = newbuf;
         IB_FTRACE_RET_STATUS(IB_OK);
