@@ -249,7 +249,7 @@ static void core_logger(void *data, ib_log_level_t level,
     IB_FTRACE_INIT();
 
     char *new_fmt;
-    char time_info[31];
+    char time_info[30];
     FILE *fp = (FILE *)data;
 
     ib_clock_timestamp(time_info, NULL);
@@ -951,7 +951,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                     break;
                 case IB_LOG_FIELD_TIMESTAMP:
                     /* Prepare timestamp (only if needed) */
-                    tstamp = (char *)ib_mpool_alloc(log->mp, 31);
+                    tstamp = (char *)ib_mpool_alloc(log->mp, 30);
                     if (tstamp == NULL) {
                         IB_FTRACE_RET_STATUS(IB_EALLOC);
                     }
@@ -2335,30 +2335,52 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_engine_t *ib = log->ib;
+    ib_tx_t *tx = log->tx;
     ib_site_t *site;
     ib_mpool_t *pool = log->mp;
     ib_field_t *f;
     ib_list_t *list;
+    ib_num_t txtime = 0;
     char *tstamp;
-    char *txtime;
     char *log_format;
     ib_status_t rc;
 
     /* Timestamp */
-    tstamp = (char *)ib_mpool_alloc(pool, 31);
+    tstamp = (char *)ib_mpool_alloc(pool, 30);
     if (tstamp == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     ib_clock_relative_timestamp(tstamp, &log->tx->tv_created,
                                 (log->tx->t.logtime - log->tx->t.started));
 
-    /* TX Time */
-    txtime = (char *)ib_mpool_alloc(pool, 31);
-    if (txtime == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    /*
+     * Transaction time depends on where processing stopped.
+     */
+    if (tx->t.response_finished > tx->t.request_started) {
+        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.response_finished - tx->t.request_started);
     }
-    snprintf(txtime, 30, "%d",
-             (int)(log->tx->t.response_finished - log->tx->t.request_started));
+    else if (tx->t.response_body > tx->t.request_started) {
+        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.response_body - tx->t.request_started);
+    }
+    else if (tx->t.response_header > tx->t.request_started) {
+        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.response_header - tx->t.request_started);
+    }
+    else if (tx->t.response_started > tx->t.request_started) {
+        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.response_started - tx->t.request_started);
+    }
+    else if (tx->t.request_finished > tx->t.request_started) {
+        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.request_finished - tx->t.request_started);
+    }
+    else if (tx->t.request_body > tx->t.request_started) {
+        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.request_body - tx->t.request_started);
+    }
+    else if (tx->t.request_header > tx->t.request_started) {
+        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.request_header - tx->t.request_started);
+    }
+    else if (tx->t.request_started > tx->t.started) {
+        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.request_started - tx->t.started);
+    }
+
 
     /* Log Format */
     log_format = ib_mpool_strdup(pool, CORE_AUDITLOG_FORMAT);
@@ -2372,10 +2394,10 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_field_create_bytestr_alias(&f, pool,
-                       IB_FIELD_NAME("tx-time"),
-                       (uint8_t *)txtime,
-                       strlen(txtime));
+    ib_field_create(&f, pool,
+                    IB_FIELD_NAME("tx-time"),
+                    IB_FTYPE_NUM,
+                    ib_ftype_num_in(&txtime));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
@@ -2496,7 +2518,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         ib_unum_t unum;
 
         /* Timestamp */
-        tstamp = (char *)ib_mpool_alloc(pool, 31);
+        tstamp = (char *)ib_mpool_alloc(pool, 30);
         if (tstamp == NULL) {
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
@@ -2598,7 +2620,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     ib_status_t rc;
 
     /* Timestamp */
-    tstamp = (char *)ib_mpool_alloc(pool, 31);
+    tstamp = (char *)ib_mpool_alloc(pool, 30);
     if (tstamp == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
