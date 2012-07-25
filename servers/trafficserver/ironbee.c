@@ -1363,7 +1363,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* CLEANUP EVENTS */
         case TS_EVENT_HTTP_TXN_CLOSE:
-            TSDebug("ironbee", "TXN Close: %lx\n", (long unsigned int)contp);
+            TSDebug("ironbee", "TXN Close: %p\n", (void *)contp);
             ib_txn_ctx_destroy(TSContDataGet(contp));
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);
@@ -1371,7 +1371,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             break;
 
         case TS_EVENT_HTTP_SSN_CLOSE:
-            TSDebug("ironbee", "SSN Close: %lx\n", (long unsigned int)contp);
+            TSDebug("ironbee", "SSN Close: %p\n", (void *)contp);
             ib_ssn_ctx_destroy(TSContDataGet(contp));
             TSContDestroy(contp);
             TSHttpSsnReenable(ssnp, TS_EVENT_HTTP_CONTINUE);
