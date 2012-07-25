@@ -66,7 +66,8 @@ check_PROGRAMS = test_gtest \
                  test_operator \
                  test_action \
                  test_config \
-                 test_util_ipset
+                 test_util_ipset \
+                 test_util_ip
 if ENABLE_LUA
 check_PROGRAMS += test_module_rules_lua \
                   test_luajit
@@ -125,6 +126,8 @@ test_util_list_SOURCES = test_util_list.cc test_main.cc
 test_util_radix_SOURCES = test_util_radix.cc test_main.cc
 
 test_util_ipset_SOURCES = test_util_ipset.cc test_main.cc
+
+test_util_ip_SOURCES = test_util_ip.cc test_main.cc
 
 test_util_field_SOURCES = test_util_field.cc test_main.cc
 

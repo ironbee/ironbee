@@ -18,14 +18,17 @@
 #ifndef _IB_IP_H_
 #define _IB_IP_H_
 
-#include <stdint.h>
-
 /**
  * @file
  * @brief IronBee &mdash; IP Utility Types and Functions
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
+
+#include <ironbee/build.h>
+#include <ironbee/types.h>
+
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -96,6 +99,36 @@ struct ib_ip6_network_t
      **/
     uint8_t size;
 };
+
+/**
+ * Convert a string of the form a.b.c.d to an ib_ip4_t.
+ *
+ * @param[in]  s  String to convert.
+ * @param[out] ip IP address corresponding to s.  Can be NULL if only want to
+ *                validate @a s.
+ * @returns
+ * - IB_OK on success.
+ * - IB_EINVAL if @a s is not a proper IP address.
+ */
+ib_status_t DLL_PUBLIC ib_ip4_str_to_ip(
+    const char *s,
+    ib_ip4_t   *ip
+ );
+
+/**
+ * Convert a string of the form a.b.c.d/mask to an ib_ip4_network_t.
+ *
+ * @param[in]  s   String to convert.
+ * @param[out] net Network corresponding to s.  Can be NULL if only want to
+ *                 validate @a s.
+ * @returns
+ * - IB_OK on success.
+ * - IB_EINVAL if @a s is not a proper network.
+ */
+ib_status_t DLL_PUBLIC ib_ip4_str_to_net(
+    const char       *s,
+    ib_ip4_network_t *net
+);
 
 /** @} IronBeeUtilIP */
 
