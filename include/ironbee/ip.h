@@ -43,34 +43,34 @@ extern "C" {
 /**
  * An IPv4 address.
  */
-typedef uint32_t ib_ipset4_ip_t;
+typedef uint32_t ib_ip4_t;
 
 /**
  * An IPv4 network.
  */
-typedef struct ib_ipset4_network_t ib_ipset4_network_t;
-struct ib_ipset4_network_t
+typedef struct ib_ip4_network_t ib_ip4_network_t;
+struct ib_ip4_network_t
 {
     /**
      * Network address.
      *
      * All bits except the initial @c mask will be treated as zero.
      **/
-    ib_ipset4_ip_t ip;
+    ib_ip4_t ip;
 
     /**
      * Network mask as the number of initial 1s.
      *
      * The actual mask is \f$1^{size}0^{32-size}\f$.
      **/
-    uint8_t        size;
+    uint8_t size;
 };
 
 /**
  * An IPv6 address.
  */
-typedef struct ib_ipset6_ip_t ib_ipset6_ip_t;
-struct ib_ipset6_ip_t
+typedef struct ib_ip6_t ib_ip6_t;
+struct ib_ip6_t
 {
     /** IP as four 32 bit words. */
     uint32_t ip[4];
@@ -79,22 +79,22 @@ struct ib_ipset6_ip_t
 /**
  * An IPv6 network.
  */
-typedef struct ib_ipset6_network_t ib_ipset6_network_t;
-struct ib_ipset6_network_t
+typedef struct ib_ip6_network_t ib_ip6_network_t;
+struct ib_ip6_network_t
 {
     /**
      * Network address.
      *
      * All bits except the initial @c mask will be treated as zero.
      **/
-    ib_ipset6_ip_t ip;
+    ib_ip6_t ip;
 
     /**
      * Network mask as the number of initial 1s.
      *
      * The actual mask is \f$1^{size}0^{128-size}\f$.
      **/
-    uint8_t        size;
+    uint8_t size;
 };
 
 /** @} IronBeeUtilIP */

@@ -64,8 +64,8 @@ uint32_t ib_ipset4_mask(size_t bits)
  * @return Address of @a net with all bits outside of mask set to 0.
  */
 static
-ib_ipset4_ip_t ib_ipset4_canonical(
-    ib_ipset4_network_t net
+ib_ip4_t ib_ipset4_canonical(
+    ib_ip4_network_t net
 )
 {
     IB_FTRACE_INIT();
@@ -82,11 +82,11 @@ ib_ipset4_ip_t ib_ipset4_canonical(
  * @return Address of @a net with all bits outside of mask set to 0.
  */
 static
-ib_ipset6_ip_t ib_ipset6_canonical(
-    ib_ipset6_network_t net
+ib_ip6_t ib_ipset6_canonical(
+    ib_ip6_network_t net
 )
 {
-    ib_ipset6_ip_t ip = {{0, 0, 0, 0}};
+    ib_ip6_t ip = {{0, 0, 0, 0}};
 
     size_t initial_bytes = net.size / 32;
     size_t initial_bits  = net.size % 32;
@@ -108,8 +108,8 @@ ib_ipset6_ip_t ib_ipset6_canonical(
  */
 static
 bool ib_ipset4_is_prefix(
-    ib_ipset4_network_t a_net,
-    ib_ipset4_network_t b_net
+    ib_ip4_network_t a_net,
+    ib_ip4_network_t b_net
 )
 {
     IB_FTRACE_INIT();
@@ -129,8 +129,8 @@ bool ib_ipset4_is_prefix(
  */
 static
 bool ib_ipset6_is_prefix(
-    const ib_ipset6_network_t a_net,
-    const ib_ipset6_network_t b_net
+    const ib_ip6_network_t a_net,
+    const ib_ip6_network_t b_net
 )
 {
     IB_FTRACE_INIT();
@@ -151,12 +151,12 @@ bool ib_ipset6_is_prefix(
 }
 
 /**
- * Comparison function for ib_ipset4_network_t (strict).
+ * Comparison function for ib_ip4_network_t (strict).
  *
  * Networks are treated as bit strings of length @c size.  They are then
  * ordered lexicographically with tied broken by length (longer is greater).
  *
- * Assumes @a a and @a b are pointers to ib_ipset4_network_t in canonical
+ * Assumes @a a and @a b are pointers to ib_ip4_network_t in canonical
  * form.
  *
  * @param[in] a LHS.
@@ -174,8 +174,8 @@ int ib_ipset4_compare_strict(
 {
     IB_FTRACE_INIT();
 
-    const ib_ipset4_network_t *a_net = (const ib_ipset4_network_t *)a;
-    const ib_ipset4_network_t *b_net = (const ib_ipset4_network_t *)b;
+    const ib_ip4_network_t *a_net = (const ib_ip4_network_t *)a;
+    const ib_ip4_network_t *b_net = (const ib_ip4_network_t *)b;
 
     assert(a_net->ip == ib_ipset4_canonical(*a_net));
     assert(b_net->ip == ib_ipset4_canonical(*b_net));
@@ -197,12 +197,12 @@ int ib_ipset4_compare_strict(
 }
 
 /**
- * Comparison function for ib_ipset4_network_t.
+ * Comparison function for ib_ip4_network_t.
  *
  * This function is as ib_ipset4_compare_strict() except that it considers
  * elements to be equal if either is a prefix of the other.
  *
- * Assumes @a a and @a b are pointers to ib_ipset4_network_t in canonical
+ * Assumes @a a and @a b are pointers to ib_ip4_network_t in canonical
  * form.
  *
  * @param[in] a LHS.
@@ -221,8 +221,8 @@ int ib_ipset4_compare(
 {
     IB_FTRACE_INIT();
 
-    const ib_ipset4_network_t *a_net = (const ib_ipset4_network_t *)a;
-    const ib_ipset4_network_t *b_net = (const ib_ipset4_network_t *)b;
+    const ib_ip4_network_t *a_net = (const ib_ip4_network_t *)a;
+    const ib_ip4_network_t *b_net = (const ib_ip4_network_t *)b;
 
     assert(a_net->ip == ib_ipset4_canonical(*a_net));
     assert(b_net->ip == ib_ipset4_canonical(*b_net));
@@ -238,11 +238,11 @@ int ib_ipset4_compare(
 }
 
 /**
- * Comparison function for ib_ipset6_network_t (strict).
+ * Comparison function for ib_ip6_network_t (strict).
  *
  * As ib_ipset4_compare_strict() but for v6 networks.
  *
- *Assumes @a a and @a b are pointers to ib_ipset6_network_t in canonical
+ *Assumes @a a and @a b are pointers to ib_ip6_network_t in canonical
  * form.
  *
  * @sa ib_ipset4_compare_strict()
@@ -262,8 +262,8 @@ int ib_ipset6_compare_strict(
 {
     IB_FTRACE_INIT();
 
-    const ib_ipset6_network_t *a_net = (const ib_ipset6_network_t *)a;
-    const ib_ipset6_network_t *b_net = (const ib_ipset6_network_t *)b;
+    const ib_ip6_network_t *a_net = (const ib_ip6_network_t *)a;
+    const ib_ip6_network_t *b_net = (const ib_ip6_network_t *)b;
 
     for (int i = 0; i < 4; ++i) {
         if (a_net->ip.ip[i] < b_net->ip.ip[i]) {
@@ -285,12 +285,12 @@ int ib_ipset6_compare_strict(
 }
 
 /**
- * Comparison function for ib_ipset6_network_t.
+ * Comparison function for ib_ip6_network_t.
  *
  * This function is as ib_ipset6_compare_strict() except that it considers
  * elements to be equal if either is a prefix of the other.
  *
- * Assumes @a a and @a b are pointers to ib_ipset6_network_t in canonical
+ * Assumes @a a and @a b are pointers to ib_ip6_network_t in canonical
  * form.
  *
  * @sa ib_ipset6_compare()
@@ -311,8 +311,8 @@ int ib_ipset6_compare(
 {
     IB_FTRACE_INIT();
 
-    const ib_ipset6_network_t *a_net = (const ib_ipset6_network_t *)a;
-    const ib_ipset6_network_t *b_net = (const ib_ipset6_network_t *)b;
+    const ib_ip6_network_t *a_net = (const ib_ip6_network_t *)a;
+    const ib_ip6_network_t *b_net = (const ib_ip6_network_t *)b;
 
     if (
         ib_ipset6_is_prefix(*a_net, *b_net) ||
@@ -515,7 +515,7 @@ ib_status_t ib_ipset_query(
 
 ib_status_t ib_ipset4_query(
     const ib_ipset4_t        *set,
-    ib_ipset4_ip_t            ip,
+    ib_ip4_t                  ip,
     const ib_ipset4_entry_t **out_entry,
     const ib_ipset4_entry_t **out_specific_entry,
     const ib_ipset4_entry_t **out_general_entry
@@ -523,7 +523,7 @@ ib_status_t ib_ipset4_query(
 {
     IB_FTRACE_INIT();
 
-    ib_ipset4_network_t net = {ip, 32};
+    ib_ip4_network_t net = {ip, 32};
 
     if (set == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -547,7 +547,7 @@ ib_status_t ib_ipset4_query(
 
 ib_status_t ib_ipset6_query(
     const ib_ipset6_t        *set,
-    ib_ipset6_ip_t            ip,
+    ib_ip6_t                  ip,
     const ib_ipset6_entry_t **out_entry,
     const ib_ipset6_entry_t **out_specific_entry,
     const ib_ipset6_entry_t **out_general_entry
@@ -555,7 +555,7 @@ ib_status_t ib_ipset6_query(
 {
     IB_FTRACE_INIT();
 
-    ib_ipset6_network_t net = {ip, 128};
+    ib_ip6_network_t net = {ip, 128};
 
     if (set == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);

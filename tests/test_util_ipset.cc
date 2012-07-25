@@ -56,15 +56,15 @@ protected:
     }
 
     /** Construct v4 IP from 4 chars. */
-    ib_ipset4_ip_t ip4(char a, char b, char c, char d)
+    ib_ip4_t ip4(char a, char b, char c, char d)
     {
         return (a << 24) + (b << 16) + (c << 8) + d;
     }
 
     /** Construct v4 network from 4 chars and number of bits. */
-    ib_ipset4_network_t net4(char a, char b, char c, char d, size_t bits)
+    ib_ip4_network_t net4(char a, char b, char c, char d, size_t bits)
     {
-        ib_ipset4_network_t result;
+        ib_ip4_network_t result;
         result.ip = ip4(a, b, c, d);
         result.size = bits;
 
@@ -85,9 +85,9 @@ protected:
     }
 
     /** Construct a v6 IP from four uint32_t. */
-    ib_ipset6_ip_t ip6(uint32_t a, uint32_t b, uint32_t c, uint32_t d)
+    ib_ip6_t ip6(uint32_t a, uint32_t b, uint32_t c, uint32_t d)
     {
-        ib_ipset6_ip_t ip;
+        ib_ip6_t ip;
         ip.ip[0] = a;
         ip.ip[1] = b;
         ip.ip[2] = c;
@@ -96,11 +96,11 @@ protected:
     }
 
     /** Construct a v6 network from four uint32_t and the number of bits. */
-    ib_ipset6_network_t net6(
+    ib_ip6_network_t net6(
         uint32_t a, uint32_t b, uint32_t c, uint32_t d, size_t bits
     )
     {
-        ib_ipset6_network_t result;
+        ib_ip6_network_t result;
         result.ip = ip6(a, b, c, d);
         result.size = bits;
 
@@ -121,19 +121,19 @@ protected:
     }
 
     /** Set bit @a bit to @a value in @a ip. */
-    void set_bit(ib_ipset4_ip_t& ip, size_t bit, int value = 1)
+    void set_bit(ib_ip4_t& ip, size_t bit, int value = 1)
     {
         ip |= (value << (31 - bit));
     }
 
     /** Overload of above for v6 IPs. */
-    void set_bit(ib_ipset6_ip_t& ip, size_t bit, int value = 1)
+    void set_bit(ib_ip6_t& ip, size_t bit, int value = 1)
     {
         set_bit(ip.ip[bit / 32], bit % 32, value);
     }
 
     /** Set @a ip to be @a num_ones 1s followed by zeros. */
-    void make_ones(ib_ipset4_ip_t& ip, size_t num_ones)
+    void make_ones(ib_ip4_t& ip, size_t num_ones)
     {
         ip = 0xffffffff;
         if (num_ones < 32) {
@@ -142,7 +142,7 @@ protected:
     }
 
     /** Overload of the above for v6 IPs. */
-    void make_ones(ib_ipset6_ip_t& ip, size_t num_ones)
+    void make_ones(ib_ip6_t& ip, size_t num_ones)
     {
         ip.ip[0] = ip.ip[1] = ip.ip[2] = ip.ip[3] = 0;
         for (size_t i = 0; i < num_ones / 32; ++i) {
@@ -155,7 +155,7 @@ protected:
 };
 
 /** Equality for v6 IPs. */
-bool operator==(const ib_ipset6_ip_t& a, const ib_ipset6_ip_t& b)
+bool operator==(const ib_ip6_t& a, const ib_ip6_t& b)
 {
     return
         a.ip[0] == b.ip[0] &&
@@ -165,7 +165,7 @@ bool operator==(const ib_ipset6_ip_t& a, const ib_ipset6_ip_t& b)
 }
 
 /** Lexicographical ordering from v6 IPs. */
-bool operator<(const ib_ipset6_ip_t& a, const ib_ipset6_ip_t& b)
+bool operator<(const ib_ip6_t& a, const ib_ip6_t& b)
 {
     for (size_t i = 0; i < 4; ++i) {
         if (a.ip[i] < b.ip[i]) {
@@ -330,7 +330,7 @@ TEST_F(TestIPSet, Structured4)
 
     // Test a bunch of positives.
     for (size_t i = 0; i < c_num_tests; ++i) {
-        ib_ipset4_ip_t ip;
+        ib_ip4_t ip;
         size_t num_ones = random(1, 32);
         make_ones(ip, num_ones);
         if (num_ones <= 30) {
@@ -345,7 +345,7 @@ TEST_F(TestIPSet, Structured4)
 
     // Test a bunch of negatives.
     for (size_t i = 0; i < c_num_tests; ++i) {
-        ib_ipset4_ip_t ip;
+        ib_ip4_t ip;
         char num_ones = random(1, 30);
         make_ones(ip, num_ones);
         rc = ib_ipset4_query(&set, ip, NULL, NULL, NULL);
@@ -361,7 +361,7 @@ TEST_F(TestIPSet, PositiveSet4)
     ib_status_t rc;
     ib_ipset4_t set;
     vector<ib_ipset4_entry_t> positive;
-    std::set<ib_ipset4_ip_t> ips;
+    std::set<ib_ip4_t> ips;
 
     // To limit the search space, the first 20 bits will be 0.
     while (ips.size() < c_num_ips) {
@@ -385,7 +385,7 @@ TEST_F(TestIPSet, PositiveSet4)
 
     // Test a bunch of ips.
     for (size_t i = 0; i < c_num_tests; ++i) {
-        ib_ipset4_ip_t ip;
+        ib_ip4_t ip;
         make_ones(ip, 20);
         ip |= random(0, 4095);
         bool in_set = (ips.count(ip) != 0);
@@ -533,7 +533,7 @@ TEST_F(TestIPSet, Structured6)
 
     // Test a bunch of positives.
     for (size_t i = 0; i < c_num_tests; ++i) {
-        ib_ipset6_ip_t ip;
+        ib_ip6_t ip;
         size_t num_ones = random(1, 128);
         make_ones(ip, num_ones);
         if (num_ones <= 126) {
@@ -548,7 +548,7 @@ TEST_F(TestIPSet, Structured6)
 
     // Test a bunch of negatives.
     for (size_t i = 0; i < c_num_tests; ++i) {
-        ib_ipset6_ip_t ip;
+        ib_ip6_t ip;
         char num_ones = random(1, 126);
         make_ones(ip, num_ones);
         rc = ib_ipset6_query(&set, ip, NULL, NULL, NULL);
@@ -564,7 +564,7 @@ TEST_F(TestIPSet, PositiveSet6)
     ib_status_t rc;
     ib_ipset6_t set;
     vector<ib_ipset6_entry_t> positive;
-    std::set<ib_ipset6_ip_t> ips;
+    std::set<ib_ip6_t> ips;
 
     // To limit the search space, the first 116 bits will be 1.
     while (ips.size() < c_num_ips) {
@@ -588,7 +588,7 @@ TEST_F(TestIPSet, PositiveSet6)
 
     // Test a bunch of ips.
     for (size_t i = 0; i < c_num_tests; ++i) {
-        ib_ipset6_ip_t ip;
+        ib_ip6_t ip;
         make_ones(ip, 116);
         ip.ip[3] |= random(0, 4095);
         bool in_set = (ips.count(ip) != 0);
@@ -617,6 +617,6 @@ TEST_F(TestIPSet, Inval)
     EXPECT_EQ(IB_EINVAL, ib_ipset6_init(&set6, NULL, 0, NULL, 1));
     EXPECT_EQ(
         IB_EINVAL,
-        ib_ipset6_query(NULL, ib_ipset6_ip_t(), NULL, NULL, NULL)
+        ib_ipset6_query(NULL, ib_ip6_t(), NULL, NULL, NULL)
     );
 }

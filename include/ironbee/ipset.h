@@ -78,12 +78,12 @@ struct ib_ipset4_entry_t
     /**
      * Network.
      */
-    ib_ipset4_network_t  network;
+    ib_ip4_network_t network;
 
     /**
      * Associated data.
      */
-    void                *data;
+    void *data;
 };
 
 /**
@@ -106,12 +106,12 @@ struct ib_ipset6_entry_t
     /**
      * Network.
      */
-    ib_ipset6_network_t  network;
+    ib_ip6_network_t network;
 
     /**
      * Associated data.
      */
-    void                *data;
+    void *data;
 };
 
 /**
@@ -262,7 +262,7 @@ ib_status_t ib_ipset4_init(
  */
 ib_status_t ib_ipset4_query(
     const ib_ipset4_t        *set,
-    ib_ipset4_ip_t            ip,
+    ib_ip4_t                  ip,
     const ib_ipset4_entry_t **out_entry,
     const ib_ipset4_entry_t **out_specific_entry,
     const ib_ipset4_entry_t **out_general_entry
@@ -292,7 +292,7 @@ ib_status_t ib_ipset6_init(
  */
 ib_status_t ib_ipset6_query(
     const ib_ipset6_t        *set,
-    ib_ipset6_ip_t            ip,
+    ib_ip6_t                  ip,
     const ib_ipset6_entry_t **out_entry,
     const ib_ipset6_entry_t **out_specific_entry,
     const ib_ipset6_entry_t **out_general_entry
