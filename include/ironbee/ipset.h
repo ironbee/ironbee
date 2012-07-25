@@ -26,6 +26,7 @@
  */
 
 #include <ironbee/build.h>
+#include <ironbee/ip.h>
 #include <ironbee/types.h>
 
 #include <string.h>
@@ -69,32 +70,6 @@ extern "C" {
  */
 
 /**
- * An IPv4 address.
- */
-typedef uint32_t ib_ipset4_ip_t;
-
-/**
- * An IPv4 network.
- */
-typedef struct ib_ipset4_network_t ib_ipset4_network_t;
-struct ib_ipset4_network_t
-{
-    /**
-     * Network address.
-     *
-     * All bits except the initial @c mask will be treated as zero.
-     **/
-    ib_ipset4_ip_t ip;
-
-    /**
-     * Network mask as the number of initial 1s.
-     *
-     * The actual mask is \f$1^{size}0^{32-size}\f$.
-     **/
-    uint8_t        size;
-};
-
-/**
  * An IPSet4 entry.
  */
 typedef struct ib_ipset4_entry_t ib_ipset4_entry_t;
@@ -123,38 +98,7 @@ struct ib_ipset4_entry_t
 typedef struct ib_ipset4_t ib_ipset4_t;
 
 /**
- * An IPv6 address.
- */
-typedef struct ib_ipset6_ip_t ib_ipset6_ip_t;
-struct ib_ipset6_ip_t
-{
-    /** IP as four 32 bit words. */
-    uint32_t ip[4];
-};
-
-/**
- * An IPv6 network.
- */
-typedef struct ib_ipset6_network_t ib_ipset6_network_t;
-struct ib_ipset6_network_t
-{
-    /**
-     * Network address.
-     *
-     * All bits except the initial @c mask will be treated as zero.
-     **/
-    ib_ipset6_ip_t ip;
-
-    /**
-     * Network mask as the number of initial 1s.
-     *
-     * The actual mask is \f$1^{size}0^{128-size}\f$.
-     **/
-    uint8_t        size;
-};
-
-/**
- * An IPSet4 entry.
+ * An IPSet6 entry.
  */
 typedef struct ib_ipset6_entry_t ib_ipset6_entry_t;
 struct ib_ipset6_entry_t
