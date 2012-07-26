@@ -30,7 +30,8 @@
 #include "util/radix_private.h"
 
 #include <ironbee/debug.h>
-#include <ironbee/field.h>     /* For ib_num_t */
+#include <ironbee/ip_addr.h>
+#include <ironbee/string.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -88,78 +89,6 @@
     (((byte) >> 7) & 0x01)
 
 
-/**
- * Return if the given prefix is IPV4
- *
- * @param[in] cidr const char * with format ip/mask where mask is optional
- * @returns 1 if true, 0 if false
- */
-#define IB_RADIX_IS_IPV4(cidr) ((strchr(cidr, ':') == NULL) ? 1 : 0)
-
-/**
- * Return if the given prefix is IPV6
- *
- * @param cidr const char * with format ip/mask where mask is optional
- * @returns 1 if true, 0 if false
- */
-#define IB_RADIX_IS_IPV6(cidr) ((strchr(cidr, ':') != NULL) ? 1 : 0)
-
-/**
- * Determine if the given prefix is IPV4
- *
- * @param[in] cidr const char * with format ip/mask where mask is optional
- * @param[in] len length of the str
- * @param[out] result Result: true / false
- *
- * @returns Status code
- */
-#define IB_RADIX_IS_IPV4_EX(cidr,len,result)                          \
-    ib_radix_is_ipv4_ex((cidr), (len), &result)
-
-/**
- * Determine if the given prefix is IPV6
- *
- * @param[in] cidr const char * with format ip/mask where mask is optional
- * @param[in] len length of the str
- * @param[out] result Result: true / false
- *
- * @returns Status code
- */
-#define IB_RADIX_IS_IPV6_EX(cidr,len,result)                          \
-    ib_radix_is_ipv6_ex((cidr), (len), &result)
-
-/**
- * Look for a character in a string that can have embedded NUL characters
- * in it.  This version will ignore NUL characters.
- *
- * @param[in] str String to search
- * @param[in] len length of the str
- * @param[in] c The character to search for
- * @param[out] offset Offset of the character; -1 if not found
- *
- * @return Status code
- */
-ib_status_t ib_radix_strchr_nul_ignore(const char *str,
-                                       size_t len,
-                                       int c,
-                                       ssize_t *offset);
-
-/**
- * Look for a character in a string that can have embedded NUL characters
- * in it.  This version returns an error if a NUL character is encountered
- * before len chars.
- *
- * @param[in] str String to search
- * @param[in] len length of the str
- * @param[in] c The character to search for
- * @param[out] offset Offset of the character; -1 if not found
- *
- * @return Status code
- */
-ib_status_t ib_radix_strchr_nul_error(const char *str,
-                                      size_t len,
-                                      int c,
-                                      ssize_t *offset);
 
 ib_status_t ib_radix_prefix_new(ib_radix_prefix_t **prefix,
                                 ib_mpool_t *pool)
@@ -1245,93 +1174,6 @@ static inline struct in6_addr *ib_radix_get_IPV6_addr(const char *ip,
     IB_FTRACE_RET_PTR(struct in6_addr, rawbytes);
 }
 
-/**
- * Determine if a bytestring looks like a CIDR IPV4 address.
- */
-ib_status_t ib_radix_is_ipv4_ex(const char *str,
-                         size_t len,
-                         bool *result)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc;
-    ssize_t offset;
-
-    rc = ib_radix_strchr_nul_error(str, len, ':', &offset);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    *result = (offset < 0);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * Determine if a bytestring looks like a CIDR IPV6 address.
- */
-ib_status_t ib_radix_is_ipv6_ex(const char *str,
-                                size_t len,
-                                bool *result)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc;
-    ssize_t offset;
-
-    rc = ib_radix_strchr_nul_error(str, len, ':', &offset);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    *result = (offset >= 0);
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * Look for a character in a string that can have embedded NUL characters
- * in it.  This version will ignore NUL characters.
- */
-ib_status_t ib_radix_strchr_nul_ignore(const char *str,
-                                       size_t len,
-                                       int c,
-                                       ssize_t *offset)
-{
-    IB_FTRACE_INIT();
-    const char *p;
-
-    for ( p=str;  len > 0;  ++p, --len) {
-        if (*p == c) {
-            *offset = (p - str);
-            IB_FTRACE_RET_STATUS(IB_OK);
-        }
-    }
-    *offset = -1;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
- * Look for a character in a string that can have embedded NUL characters
- * in it.  This version returns an error if a NUL character is encountered
- * before len chars.
- */
-ib_status_t ib_radix_strchr_nul_error(const char *str,
-                                      size_t len,
-                                      int c,
-                                      ssize_t *offset)
-{
-    IB_FTRACE_INIT();
-    const char *p;
-
-    for ( p=str;  len > 0;  ++p, --len) {
-        if (*p == c) {
-            *offset = (p - str);
-            IB_FTRACE_RET_STATUS(IB_OK);
-        }
-        else if (*p == '\0') {
-            *offset = -1;
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-    }
-    *offset = -1;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
 /*
  * Create a prefix of type ib_radix_prefix_t given the cidr ascii representation
  * Valid for ipv4 and ipv6.
@@ -1373,6 +1215,8 @@ ib_status_t ib_radix_ip_to_prefix_ex(const char *cidr,
     bool is_ipv4;
     bool is_ipv6;
     ib_status_t rc = IB_OK;
+    ib_status_t rc_v4 = IB_OK;
+    ib_status_t rc_v6 = IB_OK;
     const char *nul;
 
     /* Verify that there are no NUL chars in the string */
@@ -1381,12 +1225,10 @@ ib_status_t ib_radix_ip_to_prefix_ex(const char *cidr,
         rc = IB_EINVAL;
         goto cleanup;
     }
-    rc = ib_radix_is_ipv4_ex(cidr, len, &is_ipv4);
-    if (rc != IB_OK) {
-        goto cleanup;
-    }
-    rc = ib_radix_is_ipv6_ex(cidr, len, &is_ipv6);
-    if (rc != IB_OK) {
+    rc_v4 = ib_ipaddr_is_ipv4_ex(cidr, len, true, &is_ipv4);
+    rc_v6 = ib_ipaddr_is_ipv6_ex(cidr, len, true, &is_ipv6);
+    if ( (rc_v4 != IB_OK) && (rc_v6 != IB_OK) ) {
+        rc = IB_EINVAL;
         goto cleanup;
     }
 
@@ -1403,7 +1245,7 @@ ib_status_t ib_radix_ip_to_prefix_ex(const char *cidr,
     if (is_ipv4) {
         ssize_t offset;
 
-        rc = ib_radix_strchr_nul_error(tmp_cidr, len, '/', &offset);
+        rc = ib_strchr_nul_error(tmp_cidr, len, '/', &offset);
         if (rc != IB_OK) {
             goto cleanup;
         }
@@ -1423,7 +1265,7 @@ ib_status_t ib_radix_ip_to_prefix_ex(const char *cidr,
             nmask = 32;
         }
 
-        struct in_addr *cidrv4 = ib_radix_get_IPV4_addr(tmp_cidr, mp);
+        struct in_addr *cidrv4 = ib_ipaddr_get_IPV4(tmp_cidr, mp);
         if (cidrv4 == NULL) {
             rc = IB_EINVAL;
             goto cleanup;
@@ -1435,9 +1277,9 @@ ib_status_t ib_radix_ip_to_prefix_ex(const char *cidr,
                                     (uint8_t)nmask,
                                     mp);
     }
-    else if (IB_RADIX_IS_IPV6(tmp_cidr)) {
+    else if (IB_IPADDR_IS_IPV6(tmp_cidr)) {
         ssize_t offset;
-        rc = ib_radix_strchr_nul_error(tmp_cidr, len, '/', &offset);
+        rc = ib_strchr_nul_error(tmp_cidr, len, '/', &offset);
         if (rc != IB_OK) {
             goto cleanup;
         }

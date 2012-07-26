@@ -45,6 +45,7 @@ check_PROGRAMS = test_gtest \
                  test_util_array \
                  test_util_hash \
                  test_util_list \
+                 test_util_ip_addr \
                  test_util_radix \
                  test_util_field \
                  test_util_unescape_string \
@@ -120,6 +121,8 @@ test_util_logformat_SOURCES = test_util_logformat.cc test_main.cc
 test_util_hash_SOURCES = test_util_hash.cc test_main.cc
 
 test_util_list_SOURCES = test_util_list.cc test_main.cc
+
+test_util_ip_addr_SOURCES = test_util_ip_addr.cc test_main.cc
 
 test_util_radix_SOURCES = test_util_radix.cc test_main.cc
 

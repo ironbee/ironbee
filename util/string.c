@@ -261,3 +261,47 @@ const char *ib_unum_to_string(ib_mpool_t *mp,
     }
     IB_FTRACE_RET_CONSTSTR(buf);
 }
+
+/**
+ * Look for a character in a string that can have embedded NUL characters
+ * in it.  This version will ignore NUL characters.
+ */
+ib_status_t ib_strchr_nul_ignore(const char *str,
+                                 size_t len,
+                                 int c,
+                                 ssize_t *offset)
+{
+    IB_FTRACE_INIT();
+    const char *p;
+
+    for ( p=str;  len > 0;  ++p, --len) {
+        if (*p == c) {
+            *offset = (p - str);
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+    }
+    *offset = -1;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_strchr_nul_error(const char *str,
+                                size_t len,
+                                int c,
+                                ssize_t *offset)
+{
+    IB_FTRACE_INIT();
+    const char *p;
+
+    for ( p=str;  len > 0;  ++p, --len) {
+        if (*p == c) {
+            *offset = (p - str);
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+        else if (*p == '\0') {
+            *offset = -1;
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+    *offset = -1;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}

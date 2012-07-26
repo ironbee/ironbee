@@ -80,32 +80,6 @@ enum {
     IB_RADIX_CLOSEST,
 };
 
-/**
- * Determine if the given prefix is IPV4
- *
- * @param[in] str const char * with format ip/mask where mask is optional
- * @param[in] len length of the str
- * @param[out] result Result: true / false
- *
- * @returns Status code
- */
-ib_status_t ib_radix_is_ipv4_ex(const char *str,
-                                size_t len,
-                                bool *result);
-
-/**
- * Determine if the given prefix is IPv6
- *
- * @param[in] str const char * with format ip/mask where mask is optional
- * @param[in] len length of the str
- * @param[out] result Result: true / false
- *
- * @returns Status code
- */
-ib_status_t ib_radix_is_ipv6_ex(const char *str,
-                                size_t len,
-                                bool *result);
-
 
 #ifdef __cplusplus
 }

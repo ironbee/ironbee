@@ -29,6 +29,7 @@
 #include <ironbee/field.h>     /* For ib_num_t */
 
 #include <string.h>
+#include <stdlib.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -131,6 +132,39 @@ typedef ib_status_t (* ib_strmod_fn_t) (ib_strop_t op,
  * @param[in] c Character to search for
  */
 char DLL_PUBLIC *ib_strchr(const char *s, size_t l, int c);
+
+/**
+ * Look for a character in a string that can have embedded NUL characters
+ * in it.  This version will ignore NUL characters.
+ *
+ * @param[in] str String to search
+ * @param[in] len length of the str
+ * @param[in] c The character to search for
+ * @param[out] offset Offset of the character; -1 if not found
+ *
+ * @return Status code
+ */
+ib_status_t DLL_PUBLIC ib_strchr_nul_ignore(const char *str,
+                                            size_t len,
+                                            int c,
+                                            ssize_t *offset);
+
+/**
+ * Look for a character in a string that can have embedded NUL characters
+ * in it.  This version returns an error if a NUL character is encountered
+ * before len chars.
+ *
+ * @param[in] str String to search
+ * @param[in] len length of the str
+ * @param[in] c The character to search for
+ * @param[out] offset Offset of the character; -1 if not found
+ *
+ * @return Status code
+ */
+ib_status_t DLL_PUBLIC ib_strchr_nul_error(const char *str,
+                                           size_t len,
+                                           int c,
+                                           ssize_t *offset);
 
 /**
  * Convert a string to a number, with error checking

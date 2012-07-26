@@ -8,6 +8,7 @@ libibutil_la_SOURCES = lock.c util.c logformat.c \
                        array.c list.c stream.c hash.c bytestr.c field.c \
                        cfgmap.c radix.c ahocorasick.c expand.c \
                        string.c strlower.c strtrim.c strwspc.c \
+                       ip_addr.c \
                        path.c \
                        decode.c \
                        escape.c \
