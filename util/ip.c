@@ -43,7 +43,7 @@
  * @param[out] consumed Number of bytes of @a s consumed.
  * @returns As ib_ip4_str_to_ip().
  */
-ib_status_t ib_ip4_str_to_ip_helper(
+static ib_status_t ib_ip4_str_to_ip_helper(
     const char *s,
     ib_ip4_t   *ip,
     int        *consumed
