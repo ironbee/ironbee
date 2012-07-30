@@ -1,5 +1,20 @@
 IronBee is not ready for users yet.  Currently it is available in a technology preview.  To build this code:
 
+Before you install:
+
+You will need a few dependencies. ossp-uuid (uuid), apache2, and
+libhtp. You can install uuid and apache2 through your operating
+systems package manager. For libhtp, do the following:
+
+Install libhtp
+
+  git clone git://github.com/ironbee/libhtp.git
+  cd libhtp
+  ./autogen.sh
+  ./configure
+  make
+  sudo make install
+
 Get the code:
 
   git clone git://github.com/ironbee/ironbee.git
