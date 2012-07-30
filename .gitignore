@@ -67,6 +67,7 @@ Makefile.in
 /docs/doxygen_external/
 /docs/docbook/manual/output/
 /docs/docbook/manual/.fop/
+/docs/docbook/manual/fop.xconf
 /libs/luajit-2.0-ironbee/
 /libs/libhtp/
 /ironbee.pc
