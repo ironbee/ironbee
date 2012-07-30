@@ -76,6 +76,8 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/expand.h>',
   '<ironbee/field.h>',
   '<ironbee/hash.h>',
+  '<ironbee/ip.h>',
+  '<ironbee/ipset.h>',
   '<ironbee/list.h>',
   '<ironbee/lock.h>',
   '<ironbee/logformat.h>',
@@ -130,6 +132,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<pcre.h>',
   '<pthread.h>',
   '<uuid.h>',
+  '<valgrind/memcheck.h>',
 
   '<iostream>',
   '<list>',
