@@ -28,58 +28,12 @@
 #include <ironbee/ip.h>
 #include <ironbee/debug.h>
 
+#include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
-/* Internal */
-
-/** True iff @a x is in [0, 255] */
-#define IB_IP4_VALID_OCTET(x) ((x) >= 0 && (x) <= 255)
-
-/**
- * As ib_ip4_str_to_ip() but does not require all of @a s to be consumed.
- *
- * @param[in] s         String to parse.
- * @param[out] ip       IP at beginning of @a s.
- * @param[out] consumed Number of bytes of @a s consumed.
- * @returns As ib_ip4_str_to_ip().
- */
-static ib_status_t ib_ip4_str_to_ip_helper(
-    const char *s,
-    ib_ip4_t   *ip,
-    int        *consumed
-)
-{
-    IB_FTRACE_INIT();
-
-    int r = 0;
-    int a = 0;
-    int b = 0;
-    int c = 0;
-    int d = 0;
-
-    if (s == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    r = sscanf(s, "%d.%d.%d.%d%n", &a, &b, &c, &d, consumed);
-    if (
-        r != 4 ||
-        ! IB_IP4_VALID_OCTET(a) ||
-        ! IB_IP4_VALID_OCTET(b) ||
-        ! IB_IP4_VALID_OCTET(c) ||
-        ! IB_IP4_VALID_OCTET(d)
-    ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    if (ip != NULL) {
-        *ip = (a << 24) + (b << 16) + (c << 8) + d;
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/* End Internal */
+#include <arpa/inet.h>
 
 ib_status_t ib_ip4_str_to_ip(
     const char *s,
@@ -88,11 +42,20 @@ ib_status_t ib_ip4_str_to_ip(
 {
     IB_FTRACE_INIT();
 
-    int consumed = 0;
-    ib_status_t rc = ib_ip4_str_to_ip_helper(s, ip, &consumed);
-    if (rc != IB_OK || s[consumed] != '\0') {
+    if (s == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+
+    ib_ip4_t local_ip;
+    if (ip == NULL) {
+        ip = &local_ip;
+    }
+    int r = 0;
+    r = inet_pton(AF_INET, s, ip);
+    if (r != 1) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    *ip = htonl(*ip);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -104,31 +67,118 @@ ib_status_t ib_ip4_str_to_net(
 {
     IB_FTRACE_INIT();
 
-    int         consumed  = 0;
-    int         consumed2 = 0;
-    ib_status_t rc        = IB_OK;
-    int         r         = 0;
-    int         size      = 0;
-    ib_ip4_t    ip        = 0;
+    ib_status_t rc = IB_OK;
+    ib_ip4_network_t local_net;
 
-    rc = ib_ip4_str_to_ip_helper(s, &ip, &consumed);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+
+    if (s == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    if (net == NULL) {
+        net = &local_net;
     }
 
-    r = sscanf(s + consumed, "/%d%n", &size, &consumed2);
+    char buffer[18];
+    const char *slash = strchr(s, '/');
+
+    if (slash == NULL || (slash - s) > 17) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    memcpy(buffer, s, slash - s);
+
+    rc = ib_ip4_str_to_ip(buffer, &(net->ip));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    int size = 0;
+    int consumed = 0;
+    int r = sscanf(slash, "/%d%n", &size, &consumed);
     if (
         r != 1 ||
         size < 0 || size > 32 ||
-        s[consumed + consumed2] != '\0'
+        slash[consumed] != '\0'
     ) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if (net != NULL) {
-        net->ip   = ip;
-        net->size = size;
+    net->size = size;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_ip6_str_to_ip(
+    const char *s,
+    ib_ip6_t   *ip
+)
+{
+    IB_FTRACE_INIT();
+
+    if (s == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+
+    ib_ip6_t local_ip;
+    if (ip == NULL) {
+        ip = &local_ip;
+    }
+    int r = inet_pton(AF_INET6, s, ip);
+    if (r != 1) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    for (int i = 0; i < 4; ++i) {
+        ip->ip[i] = ntohl(ip->ip[i]);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+
+ib_status_t ib_ip6_str_to_net(
+    const char       *s,
+    ib_ip6_network_t *net
+)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc = IB_OK;
+    ib_ip6_network_t local_net;
+
+    if (s == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    if (net == NULL) {
+        net = &local_net;
+    }
+
+    char buffer[40];
+    const char *slash = strchr(s, '/');
+
+    if (slash == NULL || (slash - s) > 40) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    strncpy(buffer, s, slash - s);
+    buffer[slash-s] = '\0';
+
+    rc = ib_ip6_str_to_ip(buffer, &(net->ip));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    int size = 0;
+    int consumed = 0;
+    int r = sscanf(slash, "/%d%n", &size, &consumed);
+    if (
+        r != 1 ||
+        size < 0 || size > 128 ||
+        slash[consumed] != '\0'
+    ) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    net->size = size;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

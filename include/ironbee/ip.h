@@ -130,6 +130,39 @@ ib_status_t DLL_PUBLIC ib_ip4_str_to_net(
     ib_ip4_network_t *net
 );
 
+/**
+ * Convert a string of the form eight groups of 4 hexidecimal digits to an
+ * ib_ip6_t.
+ *
+ * @param[in]  s  String to convert.
+ * @param[out] ip IP address corresponding to s.  Can be NULL if only want to
+ *                validate @a s.
+ * @returns
+ * - IB_OK on success.
+ * - IB_EINVAL if @a s is not a proper IP address.
+ */
+ib_status_t DLL_PUBLIC ib_ip6_str_to_ip(
+    const char *s,
+    ib_ip6_t   *ip
+);
+
+/**
+ * Convert a string of the form IP/mask to an ib_ip6_network_t.
+ *
+ * See ib_ip6_str_to_ip() for the format of IP.
+ *
+ * @param[in]  s   String to convert.
+ * @param[out] net Network corresponding to s.  Can be NULL if only want to
+ *                 validate @a s.
+ * @returns
+ * - IB_OK on success.
+ * - IB_EINVAL if @a s is not a proper network.
+ */
+ib_status_t DLL_PUBLIC ib_ip6_str_to_net(
+    const char       *s,
+    ib_ip6_network_t *net
+);
+
 /** @} IronBeeUtilIP */
 
 #ifdef __cplusplus
