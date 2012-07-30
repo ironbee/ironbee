@@ -45,7 +45,7 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
     ib_status_t rc;
 
     if (strcmp(path, ".") == 0 || strcmp(path, "/") == 0) {
-        return IB_OK;
+        IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* Attempt to create the dir.  If it returns ENOENT, then
@@ -58,7 +58,7 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
         /* Some implementations may modify the path argument,
          * so make a copy first. */
         if ((cpath = strdup(path)) == NULL) {
-            return IB_EALLOC;
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
 
         if ((ppath = dirname(cpath)) == NULL) {
