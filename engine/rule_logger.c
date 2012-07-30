@@ -706,6 +706,9 @@ static void log_exec_fast_full(const ib_rule_log_exec_t *log_exec,
         const ib_list_node_t *rslt_node;
         assert(tgt != NULL);
 
+        if (tgt->original == NULL) {
+            continue;
+        }
         IB_LIST_LOOP_CONST(tgt->rslt_list, rslt_node) {
             const ib_rule_log_rslt_t *rslt =
                 (const ib_rule_log_rslt_t *)rslt_node->data;
@@ -786,6 +789,9 @@ static void log_exec_fast(const ib_rule_log_exec_t *log_exec,
         const ib_list_node_t *rslt_node;
         assert(tgt != NULL);
 
+        if (tgt->original == NULL) {
+            continue;
+        }
         IB_LIST_LOOP_CONST(tgt->rslt_list, rslt_node) {
             const ib_rule_log_rslt_t *rslt =
                 (const ib_rule_log_rslt_t *)rslt_node->data;
@@ -947,6 +953,18 @@ static void log_exec_normal_full(const ib_rule_log_exec_t *log_exec,
         const ib_list_node_t *rslt_node;
         assert(tgt != NULL);
 
+        if (tgt->original == NULL) {
+            if (log_exec_flag_trace(log_exec) == true) {
+                ib_log_tx_ex(log_exec->tx, IB_LOG_INFO, file, line,
+                             "%s %s:%d \"%s\" target=\"%s\" Not Found",
+                             LOG_PREFIX,
+                             log_exec->tx->er_ipstr,
+                             log_exec->tx->conn->remote_port,
+                             log_exec->rule->meta.id,
+                             tgt->target->field_name);
+            }
+            continue;
+        }
         IB_LIST_LOOP_CONST(tgt->rslt_list, rslt_node) {
             const ib_rule_log_rslt_t *rslt =
                 (const ib_rule_log_rslt_t *)rslt_node->data;
@@ -984,6 +1002,9 @@ static void log_exec_normal(const ib_rule_log_exec_t *log_exec,
         const ib_list_node_t *rslt_node;
         assert(tgt != NULL);
 
+        if (tgt->original == NULL) {
+            continue;
+        }
         IB_LIST_LOOP_CONST(tgt->rslt_list, rslt_node) {
             const ib_list_node_t *act_node;
             const ib_rule_log_rslt_t *rslt =
