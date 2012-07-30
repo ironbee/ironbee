@@ -856,7 +856,7 @@ static ib_status_t execute_operator(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
-    /* Handle a list by looping through it and recursivly calling this func. */
+    /* Handle a list by looping through it and recursively calling this func. */
     if ( (value != NULL) && (value->type == IB_FTYPE_LIST) ) {
         const ib_list_t      *vlist;
         const ib_list_node_t *node = NULL; /* Node in vlist. */

@@ -1806,7 +1806,7 @@ void ib_mpool_destroy(
     mp->free_fn(mp);
 
 #ifdef IB_MPOOL_VALGRIND
-    /* Check existance so we don't double destroy free children's pools. */
+    /* Check existence so we don't double destroy free children's pools. */
     if (VALGRIND_MEMPOOL_EXISTS(mp)) {
         VALGRIND_DESTROY_MEMPOOL(mp);
     }

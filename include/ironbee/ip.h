@@ -131,7 +131,7 @@ ib_status_t DLL_PUBLIC ib_ip4_str_to_net(
 );
 
 /**
- * Convert a string of the form eight groups of 4 hexidecimal digits to an
+ * Convert a string of the form eight groups of 4 hexadecimal digits to an
  * ib_ip6_t.
  *
  * @param[in]  s  String to convert.

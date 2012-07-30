@@ -874,7 +874,7 @@ static ib_status_t act_block_phase_execute(ib_tx_t *tx,
  * @param[in] rule The rule that fired the action
  *
  * @returns
- *   - IB_OK on succes.
+ *   - IB_OK on success.
  *   - Other if an event exists, but cannot be retrieved for this action.
  */
 static ib_status_t act_block_immediate_execute(ib_tx_t *tx,

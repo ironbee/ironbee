@@ -78,7 +78,7 @@ extern "C" {
  *
  * @section Valgrind
  *
- * If mpool.c is compield with IB_MPOOL_VALGRIND defined then additional code
+ * If mpool.c is compiled with IB_MPOOL_VALGRIND defined then additional code
  * will be added to communicate with valgrind.  This will allow valgrind to
  * properly track mpool usage and report memory errors.  It adds a small
  * performance penalty and ~8 additional bytes per allocation (slightly more,
