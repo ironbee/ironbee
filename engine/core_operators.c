@@ -470,7 +470,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     assert(result != NULL);
 
     ib_status_t rc;
-    const ipmatch4_data_t *ipmatch_data; /* The radix matcher object */
+    const ipmatch4_data_t *ipmatch_data;
     ib_ip4_t ip;                         /* The IP address */
     const char *ipstr;                   /* String version of the address */
     char ipstr_buffer[17];
