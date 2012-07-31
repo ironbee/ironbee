@@ -388,8 +388,12 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
     ipmatch_data->ascii = ascii;
 
     /* Count the number of parameters. */
-    for (p = strtok(copy, " ");  p != NULL;  p = strtok(NULL, " ") ) {
-        ++num_parameters;
+    for (p = copy; *p != '\0';) {
+        while (*p == ' ') {++p;}
+        if (*p != '\0') {
+            ++num_parameters;
+            while (*p && *p != ' ') {++p;}
+        }
     }
 
     entries = ib_mpool_alloc(mp, num_parameters * sizeof(*entries));
