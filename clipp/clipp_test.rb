@@ -21,7 +21,7 @@ require 'hash_to_pb'
 
 # Assertion module.
 #
-# Mixed in to CLIPPTestCase
+# Mixed in to CLIPPTest.
 module CLIPPTestAssertions
   # Assert that _re_ appears in the log.
   def assert_log_match(re)
@@ -39,6 +39,18 @@ module CLIPPTestAssertions
   end
 end
 
+# Log helper module.
+#
+# Mixed into CLIPPTest.
+module CLIPPTestLogHelper
+  # Number of times re appears in the log.
+  def log_count(re)
+    n = 0
+    log.scan(re) {n += 1}
+    n
+  end
+end
+
 # Base class for CLIPP related test cases.
 #
 # This class should be used in place of Test::Unit::TestCase.  It adds
@@ -47,6 +59,7 @@ end
 #
 module CLIPPTest
   include CLIPPTestAssertions
+  include CLIPPTestLogHelper
 
   # Access log of most recent clipp run.
   attr_reader :log
