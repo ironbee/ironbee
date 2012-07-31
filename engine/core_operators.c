@@ -330,41 +330,55 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
 /**
  * Create function for the "ipmatch" operator
  *
- * @param[in] ib The IronBee engine
- * @param[in] ctx The current IronBee context (unused)
- * @param[in] rule Parent rule to the operator
- * @param[in,out] mp Memory pool to use for allocation
- * @param[in] parameters Constant parameters (ip address strings)
- * @param[in,out] op_inst Instance operator
+ * @param[in] ib         The IronBee engine.
+ * @param[in] ctx        The current IronBee context (unused).
+ * @param[in] rule       Parent rule to the operator.
+ * @param[in] mp         Memory pool to use for allocation.
+ * @param[in] parameters Parameters (IPv4 address or networks)
+ * @param[in] op_inst    Instance operator.
  *
- * @returns Status code
+ * @returns
+ * - IB_OK if no failure.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL on unable to parse @a parameters as IP addresses or networks.
  */
-static ib_status_t op_ipmatch_create(ib_engine_t *ib,
-                                     ib_context_t *ctx,
-                                     const ib_rule_t *rule,
-                                     ib_mpool_t *mp,
-                                     const char *parameters,
-                                     ib_operator_inst_t *op_inst)
+static
+ib_status_t op_ipmatch_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *mp,
+    const char         *parameters,
+    ib_operator_inst_t *op_inst
+)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
-    char *copy;
-    size_t copy_len;
-    char *p;
-    size_t num_parameters = 0;
-    ib_ipset4_entry_t *entries = NULL;
-    size_t i = 0;
-    ib_ipset4_t *ipset;
+
+    assert(ib      != NULL);
+    assert(ctx     != NULL);
+    assert(rule    != NULL);
+    assert(mp      != NULL);
+    assert(op_inst != NULL);
+
+    ib_status_t        rc             = IB_OK;
+    char              *copy           = NULL;
+    size_t             copy_len       = 0;
+    char              *p              = NULL;
+    size_t             num_parameters = 0;
+    ib_ipset4_entry_t *entries        = NULL;
+    size_t             i              = 0;
+    ib_ipset4_t       *ipset          = NULL;
 
     if (parameters == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* Make a copy of the parameters to operate on */
+    /* Make a copy of the parameters to operate on. */
     rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
     if (rc != IB_OK) {
         ib_log_error(ib,
-                     "Error unescaping rule parameters '%s'", parameters);
+            "Error unescaping rule parameters '%s'", parameters
+        );
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -430,52 +444,52 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
 /**
  * Execute function for the "ipmatch" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] rule Parent rule to the operator
- * @param[in] data C-style string to compare to
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
- * @param[out] result Pointer to number in which to store the result
+ * @param[in] ib      Ironbee engine.
+ * @param[in] tx      The transaction for this operator.
+ * @param[in] rule    Parent rule to the operator.
+ * @param[in] data    IP Set data.
+ * @param[in] flags   Operator instance flags.
+ * @param[in] field   Field value.
+ * @param[out] result Pointer to number in which to store the result.
  *
- * @returns Status code
+ * @returns
+ * - IB_OK if no failure, regardless of match status.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL on unable to parse @a field as IP address.
  */
-static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
-                                      ib_tx_t *tx,
-                                      const ib_rule_t *rule,
-                                      void *data,
-                                      ib_flags_t flags,
-                                      ib_field_t *field,
-                                      ib_num_t *result)
+static
+ib_status_t op_ipmatch_execute(
+    ib_engine_t     *ib,
+    ib_tx_t         *tx,
+    const ib_rule_t *rule,
+    void            *data,
+    ib_flags_t       flags,
+    ib_field_t      *field,
+    ib_num_t        *result
+)
 {
     IB_FTRACE_INIT();
-    assert(ib != NULL);
-    assert(tx != NULL);
-    assert(rule != NULL);
-    assert(data != NULL);
-    assert(field != NULL);
+    assert(ib     != NULL);
+    assert(tx     != NULL);
+    assert(rule   != NULL);
+    assert(data   != NULL);
+    assert(field  != NULL);
     assert(result != NULL);
 
-    ib_status_t rc;
-    const ib_ipset4_t *ipset;
-    ib_ip4_t ip;                         /* The IP address */
-    const char *ipstr;                   /* String version of the address */
-    char ipstr_buffer[17];
+    ib_status_t        rc               = IB_OK;
+    const ib_ipset4_t *ipset            = NULL;
+    ib_ip4_t           ip               = 0;
+    const char        *ipstr            = NULL;
+    char               ipstr_buffer[17] = "\0";
 
     ipset = (const ib_ipset4_t *)data;
 
-    /**
-     * This works on C-style (NUL terminated) and byte strings.  Note
-     * that data is assumed to be a NUL terminated string (because our
-     * configuration parser can't produce anything else).
-     **/
     if (field->type == IB_FTYPE_NULSTR) {
         rc = ib_field_value(field, ib_ftype_nulstr_out(&ipstr));
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        /* Verify that we got out a string */
         if (ipstr == NULL) {
             ib_log_error_tx(tx, "Failed to get NULSTR from field");
             IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
@@ -488,11 +502,9 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        /* Verify that we got out a bytestr */
         assert(bs != NULL);
         assert(ib_bytestr_length(bs) < 17);
 
-        /* Get the bytestr's length and pointer */
         strncpy(
             ipstr_buffer,
             (const char *)ib_bytestr_const_ptr(bs),
@@ -505,14 +517,12 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /* Convert the IP address string to an IP object */
     rc = ib_ip4_str_to_ip(ipstr, &ip);
     if (rc != IB_OK) {
         ib_log_info_tx(tx, "Could not parse as IP: %s", ipstr);
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Do the matching */
     rc = ib_ipset4_query(ipset, ip, NULL, NULL, NULL);
     if (rc == IB_ENOENT) {
         *result = 0;
