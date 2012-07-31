@@ -182,11 +182,9 @@ struct ib_conn_t {
     } t;
 
     const char         *remote_ipstr;    /**< Remote IP as string */
-//    struct sockaddr_storage remote_addr; /**< Remote address */
     uint16_t            remote_port;     /**< Remote port */
 
     const char         *local_ipstr;     /**< Local IP as string */
-//    struct sockaddr_storage local_addr;  /**< Local address */
     uint16_t            local_port;      /**< Local port */
 
     size_t              tx_count;        /**< Transaction count */
