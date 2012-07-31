@@ -72,4 +72,53 @@ class TestRegression < Test::Unit::TestCase
     assert_no_issues
     assert_log_no_match /_HEADER/
   end
+
+  def test_ipmatch_09
+    clipp(
+      :input => "echo:\"GET /foo\" @set_remote_ip:6.6.6.6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch "6.6.6.6" id:1 rev:1 phase:REQUEST_HEADER event block
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /action "block" executed/
+  end
+
+  def test_ipmatch_11
+    request = <<-EOS
+GET / HTTP/1.1
+Content-Length: 1234
+
+    EOS
+    input = [simple_hash(request)]
+    clipp(
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @set_remote_ip:6.6.6.6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.6.6 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER event block
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /action "block" executed/
+
+    clipp(
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @set_remote_ip:6.6.6.6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.6.0/24 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER event block
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /action "block" executed/
+
+    clipp(
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @set_remote_ip:6.6.6.6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.5.0/24 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER event block
+      EOS
+    )
+    assert_no_issues
+    assert_log_no_match /action "block" executed/
+  end
 end
