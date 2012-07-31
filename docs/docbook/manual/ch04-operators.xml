@@ -59,7 +59,16 @@
     </section>
     <section>
         <title>ipmatch</title>
-        <para><emphasis role="bold">Description:</emphasis> Returns true if a target IP address
+        <para><emphasis role="bold">Description:</emphasis> Returns true if a target IPv4 address
+            matches any given whitespace separated address in CIDR format.</para>
+        <para><emphasis role="bold">Types:</emphasis> String</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.3</para>
+        <para/>
+    </section>
+    <section>
+        <title>ipmatch6</title>
+        <para><emphasis role="bold">Description:</emphasis> Returns true if a target IPv6 address
             matches any given whitespace separated address in CIDR format.</para>
         <para><emphasis role="bold">Types:</emphasis> String</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
