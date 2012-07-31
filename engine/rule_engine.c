@@ -1879,9 +1879,14 @@ static ib_status_t run_stream_header_rules(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
-    assert(header != NULL);
     assert(cbdata != NULL);
 
+    if (header == NULL) {
+        ib_log_notice_tx(tx,
+                         "Skipping stream header rule processing because "
+                         "there are no headers");
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
     const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
     ib_status_t rc;
     rc = run_stream_rules(ib, tx, event, NULL, header, meta);
