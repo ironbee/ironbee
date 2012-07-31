@@ -522,7 +522,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     /* Convert the IP address string to an IP object */
     rc = ib_ip4_str_to_ip(ipstr, &ip);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Error parsing %s", ipstr);
+        ib_log_info_tx(tx, "Could not parse as IP: %s", ipstr);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -540,7 +540,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     }
     else {
         ib_log_error_tx(tx,
-            "Radix matcher failed matching for %s: %s",
+            "Error searching set for ip %s: %s",
             ipstr, ib_status_to_string(rc)
         );
         IB_FTRACE_RET_STATUS(rc);
