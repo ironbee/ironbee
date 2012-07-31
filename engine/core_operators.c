@@ -46,12 +46,6 @@ typedef struct {
     ib_num_t    num;
 } numop_params_t;
 
-/* Structure used for ipmatch operator */
-typedef struct {
-    ib_ipset4_t  ipset;
-    const char  *ascii;
-} ipmatch4_data_t;
-
 /**
  * Allocate a buffer and unescape operator arguments.
  * @param[in] ib IronBee engine used for logging.
@@ -357,11 +351,10 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
     char *copy;
     size_t copy_len;
     char *p;
-    ipmatch4_data_t *ipmatch_data;
-    char *ascii;
     size_t num_parameters = 0;
     ib_ipset4_entry_t *entries = NULL;
     size_t i = 0;
+    ib_ipset4_t *ipset;
 
     if (parameters == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -375,17 +368,10 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ipmatch_data = ib_mpool_alloc(mp, sizeof(*ipmatch_data));
-    if (ipmatch_data == NULL) {
+    ipset = ib_mpool_alloc(mp, sizeof(*ipset));
+    if (ipset == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    ascii = ib_mpool_alloc(mp, copy_len+1);
-    if (ascii == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    *ascii = '\0';
-
-    ipmatch_data->ascii = ascii;
 
     /* Count the number of parameters. */
     for (p = copy; *p != '\0';) {
@@ -418,16 +404,12 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        if (*ascii != '\0') {
-            strcat(ascii, ",");
-        }
-        strcat(ascii, p);
         ++i;
     }
     assert(i == num_parameters);
 
     rc = ib_ipset4_init(
-        &(ipmatch_data->ipset),
+        ipset,
         NULL, 0,
         entries, num_parameters
     );
@@ -440,7 +422,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
     }
 
     /* Done */
-    op_inst->data = ipmatch_data;
+    op_inst->data = ipset;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -475,12 +457,12 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     assert(result != NULL);
 
     ib_status_t rc;
-    const ipmatch4_data_t *ipmatch_data;
+    const ib_ipset4_t *ipset;
     ib_ip4_t ip;                         /* The IP address */
     const char *ipstr;                   /* String version of the address */
     char ipstr_buffer[17];
 
-    ipmatch_data = (const ipmatch4_data_t *)data;
+    ipset = (const ib_ipset4_t *)data;
 
     /**
      * This works on C-style (NUL terminated) and byte strings.  Note
@@ -531,7 +513,7 @@ static ib_status_t op_ipmatch_execute(ib_engine_t *ib,
     }
 
     /* Do the matching */
-    rc = ib_ipset4_query(&(ipmatch_data->ipset), ip, NULL, NULL, NULL);
+    rc = ib_ipset4_query(ipset, ip, NULL, NULL, NULL);
     if (rc == IB_ENOENT) {
         *result = 0;
     }
