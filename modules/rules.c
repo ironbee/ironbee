@@ -563,14 +563,14 @@ static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp,
     IB_FTRACE_INIT();
     bool child = ib_flags_all(rule->flags, IB_RULE_FLAG_CHCHILD);
 
-    if ( (child == false) && (ib_rule_id(rule) == NULL) )
+    if ( (! child) && (ib_rule_id(rule) == NULL) )
     {
         ib_cfg_log_error(cp, "No rule id specified (flags=0x%04x)",
                          rule->flags);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if ( (child == false) &&
+    if ( (! child) &&
          ((rule->meta.phase == PHASE_INVALID) ||
           (rule->meta.phase == PHASE_NONE)) )
     {
@@ -648,7 +648,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             ib_cfg_log_error(cp, "Expansion test failed: %d", rc);
             IB_FTRACE_RET_STATUS(rc);
         }
-        if (expand == true) {
+        if (expand) {
             rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_MSG;
         }
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -663,7 +663,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             ib_cfg_log_error(cp, "Expansion test failed: %d", rc);
             IB_FTRACE_RET_STATUS(rc);
         }
-        if (expand == true) {
+        if (expand) {
             rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_DATA;
         }
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -712,7 +712,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     }
 
     /* Phase modifiers (Not valid for stream rules) */
-    if (ib_rule_is_stream(rule) == false) {
+    if (! ib_rule_is_stream(rule)) {
         ib_rule_phase_t phase = PHASE_NONE;
         if (strcasecmp(name, "phase") == 0) {
             if (value == NULL) {
@@ -748,7 +748,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     }
 
     /* Chain modifier */
-    if ( (ib_rule_allow_chain(rule) == true) &&
+    if ( (ib_rule_allow_chain(rule)) &&
          (strcasecmp(name, "chain") == 0) )
     {
         rc = ib_rule_set_chain(cp->ib, rule);
@@ -757,7 +757,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
     /* Capture modifier */
     if (strcasecmp(name, "capture") == 0) {
-        if (ib_flags_any(rule->opinst->op->flags, IB_OP_FLAG_CAPTURE) == true) {
+        if (ib_flags_any(rule->opinst->op->flags, IB_OP_FLAG_CAPTURE)) {
             rule->flags |= IB_RULE_FLAG_CAPTURE;
             IB_FTRACE_RET_STATUS(IB_OK);
         }
@@ -770,7 +770,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
     /* Transformation modifiers */
     if (strcasecmp(name, "t") == 0) {
-        if (ib_rule_allow_tfns(rule) == false) {
+        if (! ib_rule_allow_tfns(rule)) {
             ib_cfg_log_error(cp, "Transformations not supported for this rule");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }

@@ -4793,13 +4793,13 @@ static ib_status_t core_dir_rulelogdata(ib_cfgparser_t *cp,
             ++pname;
         }
 
-        if ((first == true) && (strcasecmp(param, "None") == 0)) {
+        if (first && (strcasecmp(param, "None") == 0)) {
             log_mode = IB_RULE_LOG_MODE_OFF;
         }
-        else if ((first == true) && (strcasecmp(param, "Fast") == 0)) {
+        else if (first && (strcasecmp(param, "Fast") == 0)) {
             log_mode = IB_RULE_LOG_MODE_FAST;
         }
-        else if ((first == true) && (strcasecmp(param, "RuleExec") == 0)) {
+        else if (first && (strcasecmp(param, "RuleExec") == 0)) {
             log_mode = IB_RULE_LOG_MODE_EXEC;
             ib_flags_set(log_flags, IB_RULE_LOG_FLAG_FULL);
         }

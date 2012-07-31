@@ -66,7 +66,7 @@ public:
     char *GetBuf(void) const { return m_chopbuf; };
     size_t GetLen(void) const { return m_choplen; };
     const char *GetFmt(void) const {
-        if (IsFmtValid() == false) {
+        if (! IsFmtValid()) {
             if (m_bytestr) {
                 BuildFmt(m_chopbuf, m_choplen);
             }
@@ -81,12 +81,12 @@ public:
     {
         m_choplen = m_len;
         const char *start = m_buf;
-        if (skip == true) {
+        if (skip) {
             assert(m_choplen >= m_cutleft);
             m_choplen -= m_cutleft;
             start += m_cutleft;
         }
-        if (cut == true) {
+        if (cut) {
             assert(m_choplen >= m_cutright);
             m_choplen -= m_cutright;
         }
@@ -148,20 +148,20 @@ public:
         m_exout.SetByteStr(is_bytestr);
     };
     const ExTextBuf &ExpectedOut(void) const {
-        assert (m_exvalid == true);
+        assert (m_exvalid);
         return m_exout;
     };
     bool ExpectedMod(void) const {
-        assert (m_exvalid == true);
+        assert (m_exvalid);
         return m_exmod;
     }
     bool BuildChopBuf(bool skip, bool cut) const {
         if (m_exconst) {
             m_exvalid = true;
         }
-        if (m_exvalid != true) {
+        if (! m_exvalid) {
             bool mod = m_exout.BuildChopBuf(skip, cut);
-            m_exmod = (mod == true) ? true : false;
+            m_exmod = (mod) ? true : false;
             m_exvalid = true;
         }
         return m_exmod;
@@ -190,7 +190,7 @@ public:
         bool ls = LeftSpace();
         bool as = AllSpace();
 
-        if ( (mod == false) || (as == true) || (ls == true) ) {
+        if ( (! mod) || (as) || (ls) ) {
             return true;
         }
         else {
@@ -203,10 +203,10 @@ public:
         bool rs = RightSpace();
         bool as = AllSpace();
 
-        if ( (mod == false) || (as == true) ) {
+        if ( (! mod) || (as) ) {
             return true;
         }
-        else if ( (IsByteStr() == true) && (rs == true) ) {
+        else if ( (IsByteStr()) && (rs) ) {
             return true;
         }
         else {
@@ -220,13 +220,13 @@ public:
         bool rs = RightSpace();
         bool as = AllSpace();
 
-        if ( (mod == false) || (as == true) ) {
+        if ( (! mod) || (as) ) {
             return true;
         }
-        else if ( (IsByteStr() == true) && (rs == true) ) {
+        else if ( (IsByteStr()) && (rs) ) {
             return true;
         }
-        else if ( (ls == true) && (rs == false) ) {
+        else if ( ls && (! rs) ) {
             return true;
         }
         else {
@@ -260,7 +260,7 @@ public:
         ib_status_t rc;
 
         SetOp( op );
-        for (test = test_data;  test->IsEnd() == false;  ++test) {
+        for (test = test_data; ! test->IsEnd();  ++test) {
             ib_flags_t result;
             test->ClearExpected();
             test->SetByteStr( IsByteStr() );

@@ -152,7 +152,7 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
         }
     }
     *dlen_out = (out - data_in);
-    *result = ( (modified == true) ?
+    *result = ( modified ?
                 (IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED) : IB_STRFLAG_ALIAS );
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -419,7 +419,7 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
     }
 
     *dlen_out = (out - data);
-    *result = ( (modified == true) ?
+    *result = ( modified ?
                 (IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED) : IB_STRFLAG_ALIAS );
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -667,10 +667,10 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
     relative = ((*data == '/') || (win && (*data == '\\'))) ? false : true;
     trailing = ((*end == '/') || (win && (*end == '\\'))) ? true : false;
 
-    while ( (done == false) && (src <= end) && (dst <= end) ) {
+    while ( (! done) && (src <= end) && (dst <= end) ) {
 
         /* Convert backslash to forward slash on Windows only. */
-        if (win == true) {
+        if (win) {
             if (*src == '\\') {
                 *src = '/';
                 modified = true;

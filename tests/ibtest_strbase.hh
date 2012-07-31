@@ -483,12 +483,12 @@ public:
 
     const char *BoolStr(bool v) const
     {
-        return (v == true ? "true" : "false");
+        return (v ? "true" : "false");
     }
 
     virtual bool ExpectCowAlias(bool mod) const
     {
-        return (mod == false) ? true : false;
+        return (! mod);
     }
 
     ib_flags_t ExpectedResult(ib_strop_t op, bool mod) const
@@ -508,7 +508,7 @@ public:
             result = ExpectCowAlias(mod) ? IB_STRFLAG_ALIAS : IB_STRFLAG_NEWBUF;
             break;
         }
-        if (mod == true) {
+        if (mod) {
             result |= IB_STRFLAG_MODIFIED;
         }
         return result;
@@ -571,19 +571,19 @@ public:
             return s;
         }
         s = "<";
-        if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == true) {
+        if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
             if (n++ > 0) {
                 s += ",";
             }
             s += "MODIFIED";
         }
-        if (ib_flags_all(result, IB_STRFLAG_NEWBUF) == true) {
+        if (ib_flags_all(result, IB_STRFLAG_NEWBUF)) {
             if (n++ > 0) {
                 s += ",";
             }
             s += "NEWBUF";
         }
-        if (ib_flags_all(result, IB_STRFLAG_ALIAS) == true) {
+        if (ib_flags_all(result, IB_STRFLAG_ALIAS)) {
             if (n++ > 0) {
                 s += ",";
             }

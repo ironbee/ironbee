@@ -99,7 +99,7 @@ static ib_status_t zero_len_ex(ib_strop_t op,
 {
     IB_FTRACE_INIT();
 
-    if ( (copy_on_cow == true) && (op == IB_STROP_COW) ) {
+    if ( copy_on_cow && (op == IB_STROP_COW) ) {
         op = IB_STROP_COPY;
     }
 
@@ -152,7 +152,7 @@ static ib_status_t zero_len(ib_strop_t op,
 {
     IB_FTRACE_INIT();
 
-    if ( (copy_on_cow == true) && (op == IB_STROP_COW) ) {
+    if ( copy_on_cow && (op == IB_STROP_COW) ) {
         op = IB_STROP_COPY;
     }
 

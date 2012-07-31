@@ -229,7 +229,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if (ib_rule_should_capture(rule, *result) == true) {
+    if (ib_rule_should_capture(rule, *result)) {
         ib_data_capture_clear(tx);
         ib_data_capture_set_item(tx, 0, field);
     }
@@ -311,7 +311,7 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if ( (tx != NULL) && (ib_rule_should_capture(rule, *result) == true) ) {
+    if ( (tx != NULL) && (ib_rule_should_capture(rule, *result)) ) {
         ib_field_t *f;
         const char *name;
 
@@ -529,7 +529,7 @@ ib_status_t op_ipmatch_execute(
     }
     else if (rc == IB_OK) {
         *result = 1;
-        if (ib_rule_should_capture(rule, *result) == true) {
+        if (ib_rule_should_capture(rule, *result)) {
             ib_data_capture_clear(tx);
             ib_data_capture_set_item(tx, 0, field);
         }
@@ -747,7 +747,7 @@ ib_status_t op_ipmatch6_execute(
     }
     else if (rc == IB_OK) {
         *result = 1;
-        if (ib_rule_should_capture(rule, *result) == true) {
+        if (ib_rule_should_capture(rule, *result)) {
             ib_data_capture_clear(tx);
             ib_data_capture_set_item(tx, 0, field);
         }
@@ -829,7 +829,7 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
     if (vptr->str == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    if (expandable == false) {
+    if (! expandable) {
         vptr->num = value;
     }
 
@@ -1018,7 +1018,7 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value == param_value);
-    if (ib_rule_should_capture(rule, *result) == true) {
+    if (ib_rule_should_capture(rule, *result)) {
         ib_data_capture_clear(tx);
         capture_num(tx, 0, value);
     }
@@ -1066,7 +1066,7 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value != param_value);
-    if (ib_rule_should_capture(rule, *result) == true) {
+    if (ib_rule_should_capture(rule, *result)) {
         ib_data_capture_clear(tx);
         rc = capture_num(tx, 0, value);
         if (rc != IB_OK) {
@@ -1118,7 +1118,7 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value > param_value);
-    if (ib_rule_should_capture(rule, *result) == true) {
+    if (ib_rule_should_capture(rule, *result)) {
         ib_data_capture_clear(tx);
         rc = capture_num(tx, 0, value);
         if (rc != IB_OK) {
@@ -1171,7 +1171,7 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
     /* Do the comparison */
     *result = (value < param_value);
 
-    if (ib_rule_should_capture(rule, *result) == true) {
+    if (ib_rule_should_capture(rule, *result)) {
         ib_data_capture_clear(tx);
         rc = capture_num(tx, 0, value);
         if (rc != IB_OK) {
@@ -1223,7 +1223,7 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value >= param_value);
-    if (ib_rule_should_capture(rule, *result) == true) {
+    if (ib_rule_should_capture(rule, *result)) {
         ib_data_capture_clear(tx);
         rc = capture_num(tx, 0, value);
         if (rc != IB_OK) {
@@ -1275,7 +1275,7 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
 
     /* Do the comparison */
     *result = (value <= param_value);
-    if (ib_rule_should_capture(rule, *result) == true) {
+    if (ib_rule_should_capture(rule, *result)) {
         ib_data_capture_clear(tx);
         rc = capture_num(tx, 0, value);
         if (rc != IB_OK) {
@@ -1311,7 +1311,7 @@ static ib_status_t op_nop_execute(ib_engine_t *ib,
     ib_log_debug2_tx(tx, "NOP operator returning 1");
     *result = 1;
 
-    if (ib_rule_should_capture(rule, *result) == true) {
+    if (ib_rule_should_capture(rule, *result)) {
         ib_data_capture_clear(tx);
         ib_data_capture_set_item(tx, 0, field);
     }

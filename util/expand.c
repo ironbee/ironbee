@@ -67,7 +67,7 @@ static ib_status_t join2(ib_mpool_t *mp,
 {
     IB_FTRACE_INIT();
     size_t slen = l1 + l2;
-    size_t buflen = slen + (nul == true ? 1 : 0);
+    size_t buflen = slen + (nul ? 1 : 0);
     char *buf;
     char *p;
 
@@ -83,7 +83,7 @@ static ib_status_t join2(ib_mpool_t *mp,
     p += l1;
     memmove(p, p2, l2);
     p += l2;
-    if (nul == true) {
+    if (nul) {
         *p = '\0';
     }
 
@@ -122,7 +122,7 @@ static ib_status_t join3(ib_mpool_t *mp,
 {
     IB_FTRACE_INIT();
     size_t slen = l1 + l2 + l3;
-    size_t buflen = slen + (nul == true ? 1 : 0);
+    size_t buflen = slen + (nul ? 1 : 0);
     char *buf;
     char *p;
 
@@ -140,7 +140,7 @@ static ib_status_t join3(ib_mpool_t *mp,
     p += l2;
     memmove(p, p3, l3);
     p += l3;
-    if (nul == true) {
+    if (nul) {
         *p = '\0';
     }
 
@@ -470,7 +470,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
         /* Look for the last prefix in the string with a matching suffix */
         slen = buflen;
         while ( (pre == NULL) && (slen >= pre_len) ) {
-            if (recurse == true) {
+            if (recurse) {
                 pre = ib_strrstr_ex(buf, slen, prefix, pre_len);
             }
             else {
@@ -492,7 +492,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
                                buflen - (pre_off + pre_len),
                                suffix,
                                suf_len);
-            if ( (recurse == true) && (suf == NULL) ) {
+            if ( recurse && (suf == NULL) ) {
                 slen = (pre - buf);
                 pre = NULL;
             }

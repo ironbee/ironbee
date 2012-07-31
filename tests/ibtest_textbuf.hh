@@ -152,11 +152,11 @@ public:
 
     virtual char *GetBuf(void) const
     {
-        return m_null == true ? NULL : m_buf;
+        return m_null ? NULL : m_buf;
     };
     virtual uint8_t *GetUBuf(void) const
     {
-        return m_null == true ? NULL : (uint8_t *)m_buf;
+        return m_null ? NULL : (uint8_t *)m_buf;
     }
     virtual const char *GetStr(void) const
     {
@@ -164,12 +164,12 @@ public:
     };
     virtual const uint8_t *GetText(void) const
     {
-        return m_null == true ? NULL : (uint8_t *)m_buf;
+        return m_null ? NULL : (uint8_t *)m_buf;
     };
     virtual size_t GetLen(void) const { return m_len; };
     virtual const char *GetFmt(void) const
     {
-        if (IsFmtValid() == false) {
+        if (! IsFmtValid()) {
             if (m_bytestr) {
                 return BuildFmt(m_buf, m_len);
             }

@@ -140,7 +140,7 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
     } /* switch(fin->type) */
 
     /* Check the flags */
-    if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == true) {
+    if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
         *pflags = IB_TFN_FMODIFIED;
     }
     else {
@@ -600,9 +600,9 @@ static ib_status_t list_minmax(bool is_max,
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
-        if ( (first == true) ||
-             ( ((is_max == true) && (value > mmvalue)) ||
-               ((is_max == false) && (value < mmvalue)) ) )
+        if ( first ||
+             ( (is_max && (value > mmvalue)) ||
+               ((! is_max) && (value < mmvalue)) ) )
         {
             first = false;
             mmvalue = value;
@@ -804,7 +804,7 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
     } /* switch(fin->type) */
 
     /* Check the flags */
-    if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == true) {
+    if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
         *pflags = IB_TFN_FMODIFIED;
     }
     else {
@@ -910,7 +910,7 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
     } /* switch(fin->type) */
 
     /* Check the flags */
-    if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == true) {
+    if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
         *pflags = IB_TFN_FMODIFIED;
     }
     else {
@@ -1016,7 +1016,7 @@ static ib_status_t normalize_path(ib_engine_t *ib,
     } /* switch(fin->type) */
 
     /* Check the flags */
-    if (ib_flags_all(result, IB_STRFLAG_MODIFIED) == true) {
+    if (ib_flags_all(result, IB_STRFLAG_MODIFIED)) {
         *pflags = IB_TFN_FMODIFIED;
     }
     else {

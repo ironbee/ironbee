@@ -791,7 +791,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
     else if (rc == IB_OK) {
         *result = (ac_ctx->match_cnt > 0) ? 1 : 0;
 
-        if (ib_rule_should_capture(rule, *result) == true) {
+        if (ib_rule_should_capture(rule, *result)) {
             ib_field_t *f;
             const char *name;
             char *scopy;

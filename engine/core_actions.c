@@ -245,7 +245,7 @@ static ib_status_t act_event_execute(void *data,
     event->tags = rule->meta.tags;
 
     /* Populate fields */
-    if (ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT) == false) {
+    if (! ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT)) {
         rc = ib_data_get(tx->dpi, "FIELD_NAME_FULL", &field);
         if ( (rc == IB_OK) && (field->type == IB_FTYPE_NULSTR) ) {
             const char *name = NULL;
@@ -366,7 +366,7 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-        else if (expand == true) {
+        else if (expand) {
             inst->flags |= IB_ACTINST_FLAG_EXPAND;
         }
 
@@ -1370,7 +1370,7 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (expand == true) {
+    else if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
@@ -1626,7 +1626,7 @@ static ib_status_t act_allow_execute(void *data,
 
     /* For post process, treat ALLOW_ALL like ALLOW_PHASE */
     if ( (rule->meta.phase == PHASE_POSTPROCESS) &&
-         (ib_flags_all(set_flags, IB_TX_ALLOW_ALL) == true) )
+         (ib_flags_all(set_flags, IB_TX_ALLOW_ALL)) )
     {
         set_flags |= IB_TX_ALLOW_PHASE;
     }
@@ -1635,7 +1635,7 @@ static ib_status_t act_allow_execute(void *data,
     ib_tx_flags_set(tx, set_flags);
 
     /* For ALLOW_PHASE, store the current phase */
-    if (ib_flags_all(set_flags, IB_TX_ALLOW_PHASE) == true) {
+    if (ib_flags_all(set_flags, IB_TX_ALLOW_PHASE)) {
         tx->allow_phase = rule->meta.phase;
     }
 

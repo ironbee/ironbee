@@ -125,7 +125,7 @@ static void ws_count(bool force_other_zero,
     }
 
     *count = icount;
-    *other = (force_other_zero == true) ? 0 : iother;
+    *other = (force_other_zero) ? 0 : iother;
     IB_FTRACE_RET_VOID();
 }
 
@@ -313,10 +313,10 @@ static ib_status_t ws_compress_inplace(uint8_t *buf,
             ++optr;
             in_wspc = false;
         }
-        else if (in_wspc == true) {
+        else if (in_wspc) {
             modified = true;
         }
-        else if (in_wspc == false) {
+        else if (! in_wspc) {
             *optr = ' ';
             ++optr;
             in_wspc = true;
@@ -377,7 +377,7 @@ static ib_status_t ws_compress(const uint8_t *data_in,
             ++optr;
             in_wspc = false;
         }
-        else if (in_wspc == false) {
+        else if (! in_wspc) {
             assert (optr < oend);
             *optr = ' ';
             ++optr;

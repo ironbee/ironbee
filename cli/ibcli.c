@@ -1232,7 +1232,7 @@ static ib_status_t action_print_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (expand == true) {
+    else if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
@@ -1317,7 +1317,7 @@ static ib_status_t action_printvar_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (expand == true) {
+    else if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
@@ -1543,7 +1543,7 @@ static ib_status_t op_print_create(ib_engine_t *ib,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-        else if (expand == true) {
+        else if (expand) {
             op_inst->flags |= IB_OPINST_FLAG_EXPAND;
         }
     }

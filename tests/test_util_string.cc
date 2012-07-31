@@ -38,7 +38,7 @@ public:
 
     const char *BoolStr(bool b)
     {
-        return (b == true) ? "True" : "False";
+        return (b) ? "True" : "False";
     }
 
     void RunTest(int line,

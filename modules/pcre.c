@@ -831,7 +831,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 #endif
 
     if (matches > 0) {
-        if (ib_flags_all(rule->flags, IB_RULE_FLAG_CAPTURE) == true) {
+        if (ib_flags_all(rule->flags, IB_RULE_FLAG_CAPTURE)) {
             pcre_set_matches(ib, tx, ovector, matches, subject);
         }
         ib_rc = IB_OK;

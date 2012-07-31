@@ -255,7 +255,7 @@ static ib_status_t find_phase_meta(ib_rule_phase_t phase_num,
     const ib_rule_phase_meta_t *meta;
 
     assert (phase_meta != NULL);
-    assert (is_phase_num_valid(phase_num) == true);
+    assert (is_phase_num_valid(phase_num));
 
     /* Loop through all parent rules */
     for (meta = rule_phase_meta;  meta->phase_num != PHASE_INVALID;  ++meta)
@@ -290,7 +290,7 @@ static ib_status_t find_phase_stream_meta(
     const ib_rule_phase_meta_t *meta;
 
     assert (phase_meta != NULL);
-    assert (is_phase_num_valid(phase_num) == true);
+    assert (is_phase_num_valid(phase_num));
 
     /* Loop through all parent rules */
     for (meta = rule_phase_meta;  meta->phase_num != PHASE_INVALID;  ++meta)
@@ -590,7 +590,7 @@ static void value_stack_pop(value_stack_t *vs,
     assert(vs != NULL);
     ib_status_t rc;
 
-    if ( (pushed != true) || (vs->stack == NULL) ) {
+    if ( (! pushed) || (vs->stack == NULL) ) {
         IB_FTRACE_RET_VOID();
     }
     rc = ib_list_pop(vs->stack, NULL);
@@ -985,7 +985,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     ib_rule_log_exec_t *log_exec = NULL;
 
     /* Special case: External rules */
-    if (ib_flags_all(rule->flags, IB_RULE_FLAG_EXTERNAL) == true) {
+    if (ib_flags_all(rule->flags, IB_RULE_FLAG_EXTERNAL)) {
 
         /* Execute the operator */
         ib_rule_log_debug(tx, rule, NULL, NULL, "Executing external rule");
@@ -1014,7 +1014,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     }
 
     /* If this is a no-target rule (i.e. action), do nothing */
-    if (ib_flags_all(rule->flags, IB_RULE_FLAG_NO_TGT) == true) {
+    if (ib_flags_all(rule->flags, IB_RULE_FLAG_NO_TGT)) {
         assert(ib_list_elements(rule->target_fields) == 1);
     }
     else {
@@ -1044,7 +1044,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         if (getrc == IB_ENOENT) {
             bool allow_null =
                 ib_flags_all(opinst->op->flags, IB_OP_FLAG_ALLOW_NULL);
-            if (allow_null == false) {
+            if (! allow_null) {
                 continue;
             }
         }
@@ -1199,7 +1199,7 @@ static ib_status_t execute_phase_rule(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(rule != NULL);
-    assert(rule->phase_meta->is_stream == false);
+    assert(! rule->phase_meta->is_stream);
     assert(tx != NULL);
     assert(rule_result != NULL);
 
@@ -1274,10 +1274,10 @@ static bool rule_is_runnable(const ib_rule_ctx_data_t *ctx_rule,
     IB_FTRACE_INIT();
 
     /* Skip invalid / disabled rules */
-    if (ib_flags_all(ctx_rule->flags, IB_RULECTX_FLAG_ENABLED) != true) {
+    if (! ib_flags_all(ctx_rule->flags, IB_RULECTX_FLAG_ENABLED)) {
         IB_FTRACE_RET_UINT(false);
     }
-    if (ib_flags_all(rule->flags, IB_RULE_FLAG_VALID) != true) {
+    if (! ib_flags_all(rule->flags, IB_RULE_FLAG_VALID)) {
         IB_FTRACE_RET_UINT(false);
     }
 
@@ -1314,7 +1314,7 @@ static bool rule_allow(const ib_tx_t *tx,
     }
 
     /* If this is a request phase rule, Check the ALLOW_REQUEST flag */
-    if ( (ib_flags_all(meta->flags, PHASE_FLAG_REQUEST) == true) &&
+    if ( (ib_flags_all(meta->flags, PHASE_FLAG_REQUEST)) &&
          (ib_tx_flags_isset(tx, IB_TX_ALLOW_REQUEST) == 1) )
     {
         ib_rule_log_debug(tx, rule, NULL, NULL,
@@ -1326,7 +1326,7 @@ static bool rule_allow(const ib_tx_t *tx,
     }
 
     /* If check_phase is true, check the ALLOW_PHASE flag */
-    if ( (check_phase == true) &&
+    if ( check_phase &&
          (tx->allow_phase == meta->phase_num) &&
          (ib_tx_flags_isset(tx, IB_TX_ALLOW_PHASE) == 1) )
     {
@@ -1377,7 +1377,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     assert(rules != NULL);
 
     /* Allow (skip) this phase? */
-    if (rule_allow(tx, meta, NULL, false) == true) {
+    if (rule_allow(tx, meta, NULL, false)) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -1423,14 +1423,14 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
 
         /* Skip invalid / disabled rules */
         rule = ctx_rule->rule;
-        if (rule_is_runnable(ctx_rule, rule) != true) {
+        if (! rule_is_runnable(ctx_rule, rule)) {
             ib_rule_log_debug(tx, rule, NULL, NULL,
                               "Not executing invalid/disabled phase rule");
             continue;
         }
 
         /* Allow (skip) this phase? */
-        if (rule_allow(tx, meta, rule, true) == true) {
+        if (rule_allow(tx, meta, rule, true)) {
             break;
         }
 
@@ -1605,7 +1605,7 @@ static ib_status_t execute_stream_txdata_rule(ib_engine_t *ib,
     assert(ib != NULL);
     assert(rule != NULL);
     assert(txdata != NULL);
-    assert(rule->phase_meta->is_stream == true);
+    assert(rule->phase_meta->is_stream);
 
 
     /*
@@ -1665,7 +1665,7 @@ static ib_status_t execute_stream_header_rule(ib_engine_t *ib,
     assert(ib != NULL);
     assert(rule != NULL);
     assert(header != NULL);
-    assert(rule->phase_meta->is_stream == true);
+    assert(rule->phase_meta->is_stream);
 
     /* Initialize the value stack */
     value_stack_init(tx, &value_stack);
@@ -1750,7 +1750,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     const ib_list_node_t     *node = NULL;
 
     /* Allow (skip) this phase? */
-    if (rule_allow(tx, meta, NULL, false) == true) {
+    if (rule_allow(tx, meta, NULL, false)) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -1801,14 +1801,14 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
 
         /* Skip invalid / disabled rules */
         rule = ctx_rule->rule;
-        if (rule_is_runnable(ctx_rule, rule) != true) {
+        if (! rule_is_runnable(ctx_rule, rule)) {
             ib_rule_log_debug(tx, rule, NULL, NULL,
                               "Not executing invalid/disabled stream rule");
             continue;
         }
 
         /* Allow (skip) this phase? */
-        if (rule_allow(tx, meta, rule, true) == true) {
+        if (rule_allow(tx, meta, rule, true)) {
             break;
         }
 
@@ -2345,7 +2345,7 @@ static void set_rule_enable(bool enable,
     IB_FTRACE_INIT();
     assert(ctx_rule != NULL);
 
-    if (enable == true) {
+    if (enable) {
         ib_flags_set(ctx_rule->flags, IB_RULECTX_FLAG_ENABLED);
     }
     else {
@@ -2380,8 +2380,8 @@ static ib_status_t enable_rules(ib_engine_t *ib,
 
     ib_list_node_t *node;
     unsigned int    matches = 0;
-    const char     *name = enable == true ? "Enable" : "Disable";
-    const char     *lcname = enable == true ? "enable" : "disable";
+    const char     *name = enable ? "Enable" : "Disable";
+    const char     *lcname = enable ? "enable" : "disable";
 
     switch (match->enable_type) {
 
@@ -2425,7 +2425,7 @@ static ib_status_t enable_rules(ib_engine_t *ib,
                                        match->enable_str,
                                        false,
                                        true);
-            if (matched == true) {
+            if (matched) {
                 set_rule_enable(enable, ctx_rule);
                 ib_cfg_log_debug2_ex(ib, match->file, match->lineno,
                                      "%sd ID matched rule \"%s\"",
@@ -2455,7 +2455,7 @@ static ib_status_t enable_rules(ib_engine_t *ib,
                                         match->enable_str,
                                         false,
                                         true);
-            if (matched == true) {
+            if (matched) {
                 ++matches;
                 set_rule_enable(enable, ctx_rule);
                 ib_cfg_log_debug2_ex(ib, match->file, match->lineno,
@@ -2539,7 +2539,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
                       ref->meta.id, ib_context_full_get(ref->ctx));
 
         /* If it's a chained rule, skip it */
-        if (ib_flags_any(ref->flags, skip_flags) == true) {
+        if (ib_flags_any(ref->flags, skip_flags)) {
             continue;
         }
 
@@ -2557,8 +2557,8 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
         ctx_rule->rule = rule;
-        if ( (ib_flags_all(rule->flags, IB_RULE_FLAG_MAIN_CTX) == false) ||
-             (ib_flags_all(rule->flags, IB_RULE_FLAG_FORCE_EN) == true) )
+        if ( (! ib_flags_all(rule->flags, IB_RULE_FLAG_MAIN_CTX)) ||
+                ib_flags_all(rule->flags, IB_RULE_FLAG_FORCE_EN) )
         {
             ctx_rule->flags = IB_RULECTX_FLAG_ENABLED;
             ib_flags_set(rule->flags, IB_RULE_FLAG_MARK);
@@ -2584,7 +2584,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
         ib_rule_ctx_data_t *ctx_rule;
 
         /* If the rule is chained or marked */
-        if (ib_flags_all(rule->flags, skip_flags) == true) {
+        if (ib_flags_all(rule->flags, skip_flags)) {
             ib_log_debug3(ib, "Skipping marked/chained rule \"%s\" from \"%s\"",
                           ib_rule_id(rule), ib_context_full_get(rule->ctx));
             continue;
@@ -2681,7 +2681,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
         rule = ctx_rule->rule;
 
         /* If it's not enabled, skip to the next rule */
-        if (ib_flags_all(ctx_rule->flags, skip_flags) == false) {
+        if (! ib_flags_all(ctx_rule->flags, skip_flags)) {
             ib_log_debug3(ib, "Skipping disabled rule \"%s\" from \"%s\"",
                           ib_rule_id(rule), ib_context_full_get(rule->ctx));
             continue;
@@ -2774,7 +2774,7 @@ static ib_status_t chain_gen_rule_id(ib_engine_t *ib,
     ib_num_t pos;
 
     /* If it's already set, do nothing */
-    if ( (rule->meta.id != NULL) && (force == false) ) {
+    if ( (rule->meta.id != NULL) && (! force) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -2797,7 +2797,7 @@ bool ib_rule_should_capture(const ib_rule_t *rule,
 
     if ( (result != 0) &&
          (rule != NULL) &&
-         (ib_flags_all(rule->flags, IB_RULE_FLAG_CAPTURE) == true) )
+         (ib_flags_all(rule->flags, IB_RULE_FLAG_CAPTURE)) )
     {
         IB_FTRACE_RET_BOOL(true);
     }
@@ -3012,7 +3012,7 @@ ib_status_t ib_rule_set_phase(ib_engine_t *ib,
                      rule->meta.phase);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if (is_phase_num_valid(phase_num) != true) {
+    if (! is_phase_num_valid(phase_num)) {
         ib_log_error(ib, "Cannot set rule phase: Invalid phase %d",
                      phase_num);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -3173,7 +3173,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_log_error(ib, "Cannot register rule: Phase is invalid");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    if (is_phase_num_valid(phase_num) != true) {
+    if (! is_phase_num_valid(phase_num)) {
         ib_log_error(ib, "Cannot register rule: Invalid phase %d", phase_num);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -3194,7 +3194,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     }
 
     /* Verify that the rule has at least one target */
-    if (ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT) == true) {
+    if (ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT)) {
         if (ib_list_elements(rule->target_fields) != 0) {
             ib_log_error(ib, "Cannot register rule: Action rule has targets");
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -3239,7 +3239,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
     }
 
     /* If either of the chain flags is set, the chain ID is the rule's ID */
-    if (ib_flags_any(rule->flags, IB_RULE_FLAG_CHAIN) == true) {
+    if (ib_flags_any(rule->flags, IB_RULE_FLAG_CHAIN)) {
         if (rule->chained_from != NULL) {
             rule->meta.chain_id = rule->chained_from->meta.chain_id;
         }
@@ -3264,9 +3264,7 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
 
     /* Handle chained rule */
     if (rule->chained_from != NULL) {
-        if (ib_flags_all(rule->chained_from->flags, IB_RULE_FLAG_VALID)
-            != true)
-        {
+        if (! ib_flags_all(rule->chained_from->flags, IB_RULE_FLAG_VALID)) {
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         ib_log_debug3(ib,
@@ -3413,7 +3411,7 @@ ib_status_t ib_rule_enable(const ib_engine_t *ib,
     item->lineno = lineno;
 
     /* Add the item to the appropriate list */
-    if (enable == true) {
+    if (enable) {
         rc = ib_list_push(ctx->rules->enable_list, item);
     }
     else {
@@ -3423,7 +3421,7 @@ ib_status_t ib_rule_enable(const ib_engine_t *ib,
         ib_cfg_log_error_ex(ib, file, lineno,
                             "Error adding %s %s \"%s\" "
                             "to context=\"%s\" list: %s",
-                            enable == true ? "enable" : "disable",
+                            enable ? "enable" : "disable",
                             str == NULL ? "<None>" : str,
                             name,
                             ib_context_full_get(ctx),
@@ -3626,19 +3624,19 @@ bool ib_rule_id_match(const ib_rule_t *rule,
     }
 
     /* Check parent rules if requested */
-    if ( (parents == true) && (rule->chained_from != NULL) ) {
+    if ( parents && (rule->chained_from != NULL) ) {
         bool match = ib_rule_id_match(rule->chained_from, id,
                                       parents, children);
-        if (match == true) {
+        if (match) {
             IB_FTRACE_RET_BOOL(true);
         }
     }
 
     /* Check child rules if requested */
-    if ( (children == true) && (rule->chained_rule != NULL) ) {
+    if ( children && (rule->chained_rule != NULL) ) {
         bool match = ib_rule_id_match(rule->chained_rule,
                                       id, parents, children);
-        if (match == true) {
+        if (match) {
             IB_FTRACE_RET_BOOL(true);
         }
     }
@@ -3664,19 +3662,19 @@ bool ib_rule_tag_match(const ib_rule_t *rule,
     }
 
     /* Check parent rules if requested */
-    if ( (parents == true) && (rule->chained_from != NULL) ) {
+    if ( parents && (rule->chained_from != NULL) ) {
         bool match = ib_rule_tag_match(rule->chained_from,
                                        tag, parents, children);
-        if (match == true) {
+        if (match) {
             IB_FTRACE_RET_BOOL(true);
         }
     }
 
     /* Check child rules if requested */
-    if ( (children == true) && (rule->chained_rule != NULL) ) {
+    if ( children && (rule->chained_rule != NULL) ) {
         bool match = ib_rule_tag_match(rule->chained_rule,
                                        tag, parents, children);
-        if (match == true) {
+        if (match) {
             IB_FTRACE_RET_BOOL(true);
         }
     }
@@ -3776,7 +3774,7 @@ ib_status_t ib_rule_add_target(ib_engine_t *ib,
     assert(target != NULL);
 
     /* Enforce the no target flag */
-    if (ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT) == true) {
+    if (ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT)) {
         ib_log_error(ib, "Attempt to add target to action rule \"%s\"",
                      rule->meta.id);
         IB_FTRACE_RET_STATUS(IB_EINVAL);

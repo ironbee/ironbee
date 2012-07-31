@@ -139,7 +139,7 @@ const char *ib_strstr_ex(const char *haystack,
                 break;
             }
         }
-        if (found == true) {
+        if (found) {
             IB_FTRACE_RET_CONSTSTR(hp);
         }
     }
@@ -178,7 +178,7 @@ const char *ib_strrstr_ex(const char *haystack,
                 break;
             }
         }
-        if (found == true) {
+        if (found) {
             IB_FTRACE_RET_CONSTSTR(hp);
         }
     }

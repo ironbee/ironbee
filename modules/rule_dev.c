@@ -81,7 +81,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
     ib_log_debug_tx(tx, "True operator returning 1");
     *result = 1;
 
-    if (ib_rule_should_capture(rule, *result) == true) {
+    if (ib_rule_should_capture(rule, *result)) {
         ib_data_capture_clear(tx);
         ib_data_capture_set_item(tx, 0, field);
     }
@@ -157,7 +157,7 @@ static ib_status_t op_assert_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (expand == true) {
+    else if (expand) {
         op_inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
@@ -191,7 +191,7 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
     /* Return true of field is not NULL */
     *result = (field != NULL);
 
-    if (ib_rule_should_capture(rule, *result) == true) {
+    if (ib_rule_should_capture(rule, *result)) {
         ib_data_capture_clear(tx);
         ib_data_capture_set_item(tx, 0, field);
     }
@@ -286,7 +286,7 @@ static ib_status_t act_log_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (expand == true) {
+    else if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
@@ -373,7 +373,7 @@ static ib_status_t act_assert_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if (expand == true) {
+    else if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 

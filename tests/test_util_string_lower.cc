@@ -127,7 +127,7 @@ public:
     }
 
     const char *BoolStr(bool v) {
-        return (v == true ? "true" : "false");
+        return (v ? "true" : "false");
     }
     const char *Stringize(const TestDatum &test) {
         return m_callbuf.Stringize(test);
@@ -139,7 +139,7 @@ public:
     void RunTests(const TestDatum *test_data) {
         const TestDatum *test;
         ib_status_t rc;
-        for (test = test_data;  test->IsEnd() == false;  ++test) {
+        for (test = test_data; ! test->IsEnd();  ++test) {
             bool modified;
             rc = RunTest(*test, modified);
             CheckResults(*test, rc, modified);

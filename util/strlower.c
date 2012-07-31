@@ -253,7 +253,7 @@ ib_status_t ib_strlower(ib_strop_t op,
     }
 
     if (rc == IB_OK) {
-        if (ib_flags_all(*result, IB_STRFLAG_MODIFIED) == true) {
+        if (ib_flags_all(*result, IB_STRFLAG_MODIFIED)) {
             *(out+len) = '\0';
         }
         *str_out = out;

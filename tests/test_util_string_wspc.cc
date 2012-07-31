@@ -110,7 +110,7 @@ public:
         ib_status_t rc;
 
         SetOp(op);
-        for (test = test_data;  test->IsEnd() == false;  ++test) {
+        for (test = test_data; ! test->IsEnd();  ++test) {
             ib_flags_t result;
             rc = RunTest(*test, result);
             CheckResults(*test, rc, result);

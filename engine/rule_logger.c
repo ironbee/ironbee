@@ -496,7 +496,7 @@ void ib_rule_vlog(ib_rule_log_level_t level,
             strcat(fmtbuf, "rule:\"");
             strcat(fmtbuf, rule->meta.id);
             strcat(fmtbuf, "\"");
-            if (log_opinst == true) {
+            if (log_opinst) {
                 strcat(fmtbuf, " operator:\"");
                 strcat(fmtbuf, rule->opinst->op->name);
                 strcat(fmtbuf, "\"");
@@ -506,7 +506,7 @@ void ib_rule_vlog(ib_rule_log_level_t level,
 
         /* Add the target field name */
         if (target != NULL) {
-            if (first != true) {
+            if (! first) {
                 strcat(fmtbuf, " ");
             }
             else {
@@ -519,7 +519,7 @@ void ib_rule_vlog(ib_rule_log_level_t level,
 
         /* Add the transformation name */
         if (tfn != NULL) {
-            if (first != true) {
+            if (! first) {
                 strcat(fmtbuf, " ");
             }
             strcat(fmtbuf, "tfn:\"");
@@ -628,7 +628,7 @@ static void build_act_buf(const ib_rule_log_rslt_t *rslt,
             (const ib_action_inst_t *)ib_list_node_data_const(node);
 
         /* For the second and following actions, add a comma to the string */
-        if (first == false) {
+        if (! first) {
             strncpy(cur, ",", remain);
             ++cur;
             --remain;
@@ -831,7 +831,7 @@ static void log_tfns(const ib_rule_log_exec_t *log_exec,
     char outbuf[MAX_FIELD_BUF];
 
     /* If the debug flag is set, log all of the transformations */
-    if (log_exec_flag_debug(log_exec) != true) {
+    if (! log_exec_flag_debug(log_exec)) {
         IB_FTRACE_RET_VOID();
     }
 
@@ -1023,7 +1023,7 @@ void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
     }
 
     /* Remove source file info if Trace isn't enabled */
-    if (log_exec_flag_trace(log_exec) == false) {
+    if (! log_exec_flag_trace(log_exec)) {
         file = NULL;
         line = 0;
     }
@@ -1033,7 +1033,7 @@ void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
         break;
 
     case IB_RULE_LOG_MODE_FAST:
-        if (log_exec_flag_full(log_exec) == true) {
+        if (log_exec_flag_full(log_exec)) {
             log_exec_fast_full(log_exec, file, line);
         }
         else {
@@ -1042,7 +1042,7 @@ void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
         break;
 
     case IB_RULE_LOG_MODE_EXEC:
-        if (log_exec_flag_full(log_exec) == true) {
+        if (log_exec_flag_full(log_exec)) {
             log_exec_normal_full(log_exec, file, line);
         }
         else {

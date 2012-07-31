@@ -362,7 +362,7 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                         length,
                                         file,
                                         lineno,
-                                        (more == true ? 1 : 0) );
+                                        (more ? 1 : 0) );
     IB_FTRACE_RET_STATUS(rc);
 }
 
