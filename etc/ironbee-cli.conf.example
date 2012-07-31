@@ -17,7 +17,6 @@ SensorHostname example.sensor.tld
 
 LoadModule "ibmod_htp.so"
 LoadModule "ibmod_pcre.so"
-LoadModule "ibmod_radix.so"
 LoadModule "ibmod_ac.so"
 LoadModule "ibmod_rules.so"
 

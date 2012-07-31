@@ -137,12 +137,6 @@ function onEventHandleContextConn(ib, conn)
         ironbee.ib_log_debug(ib, "Created PCRE matcher=%p", pcre)
     end
 
-    -- Create a radix matcher for later use
-    if radix == nil then
-        radix = ironbee.ib_matcher_create(ib, conn.mp(), "radix")
-        ironbee.ib_log_debug(ib, "Created radix matcher=%p", radix)
-    end
-
     -- Create a ac matcher for later use
     if ac == nil then
         ac = ironbee.ib_matcher_create(ib, conn.mp(), "ac")
