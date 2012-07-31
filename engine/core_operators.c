@@ -544,6 +544,224 @@ ib_status_t op_ipmatch_execute(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+
+/**
+ * Create function for the "ipmatch6" operator
+ *
+ * @param[in] ib         The IronBee engine.
+ * @param[in] ctx        The current IronBee context (unused).
+ * @param[in] rule       Parent rule to the operator.
+ * @param[in] mp         Memory pool to use for allocation.
+ * @param[in] parameters Parameters (IPv6 address or networks)
+ * @param[in] op_inst    Instance operator.
+ *
+ * @returns
+ * - IB_OK if no failure.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL on unable to parse @a parameters as IP addresses or networks.
+ */
+static
+ib_status_t op_ipmatch6_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *mp,
+    const char         *parameters,
+    ib_operator_inst_t *op_inst
+)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib      != NULL);
+    assert(ctx     != NULL);
+    assert(rule    != NULL);
+    assert(mp      != NULL);
+    assert(op_inst != NULL);
+
+    ib_status_t        rc             = IB_OK;
+    char              *copy           = NULL;
+    size_t             copy_len       = 0;
+    char              *p              = NULL;
+    size_t             num_parameters = 0;
+    ib_ipset6_entry_t *entries        = NULL;
+    size_t             i              = 0;
+    ib_ipset6_t       *ipset          = NULL;
+
+    if (parameters == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Make a copy of the parameters to operate on. */
+    rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+            "Error unescaping rule parameters '%s'", parameters
+        );
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    ipset = ib_mpool_alloc(mp, sizeof(*ipset));
+    if (ipset == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Count the number of parameters. */
+    for (p = copy; *p != '\0';) {
+        while (*p == ' ') {++p;}
+        if (*p != '\0') {
+            ++num_parameters;
+            while (*p && *p != ' ') {++p;}
+        }
+    }
+
+    entries = ib_mpool_alloc(mp, num_parameters * sizeof(*entries));
+    if (entries == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* Fill entries. */
+    i = 0;
+    for (p = strtok(copy, " ");  p != NULL;  p = strtok(NULL, " ") ) {
+        assert(i < num_parameters);
+        entries[i].data = NULL;
+        rc = ib_ip6_str_to_net(p, &entries[i].network);
+        if (rc == IB_EINVAL) {
+            rc = ib_ip6_str_to_ip(p, &(entries[i].network.ip));
+            if (rc == IB_OK) {
+                entries[i].network.size = 128;
+            }
+        }
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Error parsing: %s", p);
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        ++i;
+    }
+    assert(i == num_parameters);
+
+    rc = ib_ipset6_init(
+        ipset,
+        NULL, 0,
+        entries, num_parameters
+    );
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+            "Error initializing internal data: %s",
+            ib_status_to_string(rc)
+        );
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Done */
+    op_inst->data = ipset;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Execute function for the "ipmatch6" operator
+ *
+ * @param[in] ib      Ironbee engine.
+ * @param[in] tx      The transaction for this operator.
+ * @param[in] rule    Parent rule to the operator.
+ * @param[in] data    IP Set data.
+ * @param[in] flags   Operator instance flags.
+ * @param[in] field   Field value.
+ * @param[out] result Pointer to number in which to store the result.
+ *
+ * @returns
+ * - IB_OK if no failure, regardless of match status.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL on unable to parse @a field as IP address.
+ */
+static
+ib_status_t op_ipmatch6_execute(
+    ib_engine_t     *ib,
+    ib_tx_t         *tx,
+    const ib_rule_t *rule,
+    void            *data,
+    ib_flags_t       flags,
+    ib_field_t      *field,
+    ib_num_t        *result
+)
+{
+    IB_FTRACE_INIT();
+    assert(ib     != NULL);
+    assert(tx     != NULL);
+    assert(rule   != NULL);
+    assert(data   != NULL);
+    assert(field  != NULL);
+    assert(result != NULL);
+
+    ib_status_t        rc               = IB_OK;
+    const ib_ipset6_t *ipset            = NULL;
+    ib_ip6_t           ip               = {{0, 0, 0, 0}};
+    const char        *ipstr            = NULL;
+    char               ipstr_buffer[41] = "\0";
+
+    ipset = (const ib_ipset6_t *)data;
+
+    if (field->type == IB_FTYPE_NULSTR) {
+        rc = ib_field_value(field, ib_ftype_nulstr_out(&ipstr));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        if (ipstr == NULL) {
+            ib_log_error_tx(tx, "Failed to get NULSTR from field");
+            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        }
+    }
+    else if (field->type == IB_FTYPE_BYTESTR) {
+        const ib_bytestr_t *bs;
+        rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        assert(bs != NULL);
+        assert(ib_bytestr_length(bs) < 41);
+
+        strncpy(
+            ipstr_buffer,
+            (const char *)ib_bytestr_const_ptr(bs),
+            ib_bytestr_length(bs)
+        );
+        ipstr_buffer[ib_bytestr_length(bs)] = '\0';
+        ipstr = ipstr_buffer;
+    }
+    else {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    rc = ib_ip6_str_to_ip(ipstr, &ip);
+    if (rc != IB_OK) {
+        ib_log_info_tx(tx, "Could not parse as IP: %s", ipstr);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_ipset6_query(ipset, ip, NULL, NULL, NULL);
+    if (rc == IB_ENOENT) {
+        *result = 0;
+    }
+    else if (rc == IB_OK) {
+        *result = 1;
+        if (ib_rule_should_capture(rule, *result) == true) {
+            ib_data_capture_clear(tx);
+            ib_data_capture_set_item(tx, 0, field);
+        }
+    }
+    else {
+        ib_log_error_tx(tx,
+            "Error searching set for ip %s: %s",
+            ipstr, ib_status_to_string(rc)
+        );
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 /**
  * Create function for the numeric comparison operators
  *
@@ -1150,6 +1368,20 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               NULL, /* no destroy function */
                               NULL,
                               op_ipmatch_execute,
+                              NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the ipmatch6 operator */
+    rc = ib_operator_register(ib,
+                              "ipmatch6",
+                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              op_ipmatch6_create,
+                              NULL,
+                              NULL, /* no destroy function */
+                              NULL,
+                              op_ipmatch6_execute,
                               NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);

@@ -121,4 +121,42 @@ Content-Length: 1234
     assert_no_issues
     assert_log_no_match /action "block" executed/
   end
+
+  def test_ipmatch6_11
+    request = <<-EOS
+GET / HTTP/1.1
+Content-Length: 1234
+
+    EOS
+    input = [simple_hash(request)]
+    clipp(
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @set_remote_ip:6::6:6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::6:6 1::2:3" id:1 rev:1 phase:REQUEST_HEADER event block
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /action "block" executed/
+
+    clipp(
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @set_remote_ip:6::6:6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::6:0/112 1::2:3" id:1 rev:1 phase:REQUEST_HEADER event block
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /action "block" executed/
+
+    clipp(
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @set_remote_ip:6::6:6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::5:0/112 1::2:3" id:1 rev:1 phase:REQUEST_HEADER event block
+      EOS
+    )
+    assert_no_issues
+    assert_log_no_match /action "block" executed/
+  end
 end
