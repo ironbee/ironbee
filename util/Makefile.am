@@ -14,7 +14,7 @@ libibutil_la_SOURCES = lock.c util.c logformat.c \
                        modsec_compat.c \
                        clock.c types.c ipset.c ip.c
 
-EXTRA_DIST = ahocorasick_private.h radix_private.h
+EXTRA_DIST = ahocorasick_private.h
 
 libibutil_la_CFLAGS = @OSSP_UUID_CFLAGS@
 if FREEBSD
