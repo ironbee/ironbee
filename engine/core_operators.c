@@ -418,6 +418,7 @@ static ib_status_t op_ipmatch_create(ib_engine_t *ib,
             strcat(ascii, ",");
         }
         strcat(ascii, p);
+        ++i;
     }
     assert(i == num_parameters);
 
