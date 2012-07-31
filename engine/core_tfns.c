@@ -32,7 +32,6 @@
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
-#include <ironbee/radix.h>
 #include <ironbee/string.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>
