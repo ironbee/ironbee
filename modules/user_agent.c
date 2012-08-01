@@ -31,7 +31,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
-#include <ironbee/ip_addr.h>
+#include <ironbee/ip.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
@@ -668,11 +668,12 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     }
 
     /* Verify that it looks like a valid IP v4/6 address */
-    rc = ib_ipaddr_is_ip_ex((const char *)stripped, len, false, NULL, NULL);
+    rc = ib_ip_validate_ex((const char *)stripped, len);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
-                        "X-Forwarded-For \"%.*s\" is not a valid IP address",
-                        (int)len, stripped);
+            "X-Forwarded-For \"%.*s\" is not a valid IP address",
+            (int)len, stripped
+        );
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 

@@ -29,6 +29,7 @@
 #include <ironbee/types.h>
 
 #include <stdint.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -161,6 +162,34 @@ ib_status_t DLL_PUBLIC ib_ip6_str_to_ip(
 ib_status_t DLL_PUBLIC ib_ip6_str_to_net(
     const char       *s,
     ib_ip6_network_t *net
+);
+
+/**
+ * Validate an IPv4/IPv6 address.
+ *
+ * @param[in] s   String to validate.
+ * @param[in] len Length of @a s.
+ *
+ * @returns
+ * - IB_OK If @a s is an IPv4 or IPv6 address.
+ * - IB_EINVAL Otherwise.
+ */
+ib_status_t DLL_PUBLIC ib_ip_validate_ex(
+    const char *s,
+    size_t      len
+);
+
+/**
+ * Validate an IPv4/IPv6 address.
+ *
+ * @param[in] s   String to validate.
+ *
+ * @returns
+ * - IB_OK If @a s is an IPv4 or IPv6 address.
+ * - IB_EINVAL Otherwise.
+ */
+ib_status_t DLL_PUBLIC ib_ip_validate(
+    const char *s
 );
 
 /** @} IronBeeUtilIP */

@@ -182,3 +182,48 @@ ib_status_t ib_ip6_str_to_net(
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
+
+ib_status_t ib_ip_validate_ex(
+    const char *s,
+    size_t      len
+)
+{
+    IB_FTRACE_INIT();
+
+    char buffer[40];
+
+    if (len >= 40) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    strncpy(buffer, s, len);
+    buffer[len] = '\0';
+
+    IB_FTRACE_RET_STATUS(ib_ip_validate(buffer));
+}
+
+ib_status_t ib_ip_validate(
+    const char *s
+)
+{
+    IB_FTRACE_INIT();
+
+    const char *colon = NULL;
+    const char *period = NULL;
+
+    colon = strchr(s, ':');
+    if (colon == NULL) {
+        IB_FTRACE_RET_STATUS(
+            ib_ip4_str_to_ip(s, NULL)
+        );
+    }
+    else {
+        period = strchr(s, '.');
+        if (period != NULL && period < colon) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        IB_FTRACE_RET_STATUS(
+            ib_ip6_str_to_ip(s, NULL)
+        );
+    }
+}

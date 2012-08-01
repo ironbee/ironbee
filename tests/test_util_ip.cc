@@ -270,3 +270,15 @@ TEST(TestIP, ip6_str_to_net)
     rc = ib_ip6_str_to_net("1:2:3:4:5:6:7:8/-5", NULL);
     EXPECT_EQ(IB_EINVAL, rc);
 }
+
+TEST(TestIP, ip_validate)
+{
+    EXPECT_EQ(IB_OK, ib_ip_validate("1.2.3.4"));
+    EXPECT_EQ(IB_OK, ib_ip_validate("::1"));
+    EXPECT_EQ(IB_OK, ib_ip_validate("1:2:3:4:5:6:7:8"));
+    EXPECT_EQ(IB_OK, ib_ip_validate("::ffff:1.2.3.4"));
+
+    EXPECT_EQ(IB_EINVAL, ib_ip_validate("foobar"));
+    EXPECT_EQ(IB_EINVAL, ib_ip_validate("1.2.3.4foobar"));
+    EXPECT_EQ(IB_EINVAL, ib_ip_validate("1.2.3.4:ffff::"));
+}
