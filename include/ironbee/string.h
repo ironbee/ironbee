@@ -28,8 +28,8 @@
 #include <ironbee/build.h>
 #include <ironbee/field.h>     /* For ib_num_t */
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
