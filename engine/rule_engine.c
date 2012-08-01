@@ -1042,9 +1042,10 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         /* Get the field value */
         getrc = ib_data_get(tx->dpi, fname, &value);
         if (getrc == IB_ENOENT) {
-            bool allow_null =
+            bool allow  =
                 ib_flags_all(opinst->op->flags, IB_OP_FLAG_ALLOW_NULL);
-            if (! allow_null) {
+            ib_rule_log_exec_add_tgt(log_exec, target, NULL);
+            if (! allow) {
                 continue;
             }
         }

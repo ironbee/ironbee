@@ -31,8 +31,10 @@
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
+#include <ironbee/ip_addr.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
+#include <ironbee/string.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
 
@@ -592,12 +594,15 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     ib_status_t           rc = IB_OK;
     const ib_bytestr_t   *bs;
     const uint8_t        *data;
-    unsigned              len;
+    size_t                len;
     char                 *buf;
     uint8_t              *comma;
     const ib_list_t      *list;
     const ib_list_node_t *node;
     const ib_field_t     *forwarded;
+    uint8_t              *stripped;
+    size_t                num;
+    ib_flags_t            flags;
 
     ib_log_debug3_tx(tx, "Checking for alternate remote address");
 
@@ -614,8 +619,14 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
         ib_log_debug_tx(tx, "No request header collection");
         IB_FTRACE_RET_STATUS(rc);
     }
-    if (ib_list_elements(list) == 0) {
+
+    num = ib_list_elements(list);
+    if (num == 0) {
         ib_log_debug_tx(tx, "No X-Forwarded-For header found");
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (num != 1) {
+        ib_log_debug_tx(tx, "%zd X-Forwarded-For headers found: ignoring", num);
         IB_FTRACE_RET_STATUS(rc);
     }
     node = ib_list_last_const(list);
@@ -647,20 +658,38 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
         len = comma - data;
     }
 
-    /* Allocate the memory */
+    /* Trim whitespace */
+    stripped = (uint8_t *)data;
+    rc = ib_strtrim_lr_ex(IB_STROP_INPLACE, tx->mp,
+                          stripped, len,
+                          &stripped, &len, &flags);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Verify that it looks like a valid IP v4/6 address */
+    rc = ib_ipaddr_is_ip_ex((const char *)stripped, len, false, NULL, NULL);
+    if (rc != IB_OK) {
+        ib_log_error_tx(tx,
+                        "X-Forwarded-For \"%.*s\" is not a valid IP address",
+                        (int)len, stripped);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Allocate memory for copy of stripped string */
     buf = (char *)ib_mpool_alloc(tx->mp, len+1);
     if (buf == NULL) {
         ib_log_error_tx(tx,
-                     "Failed to allocate %d bytes for local address",
+                     "Failed to allocate %zd bytes for remote address",
                      len+1);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Copy the string out */
-    memcpy(buf, data, len);
+    memcpy(buf, stripped, len);
     buf[len] = '\0';
 
-    ib_log_info_tx(tx, "Remote address changed to '%s'", buf);
+    ib_log_info_tx(tx, "Remote address changed to \"%s\"", buf);
 
     /* This will lose the pointer to the original address
      * buffer, but it should be cleaned up with the rest

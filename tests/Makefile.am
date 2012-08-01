@@ -45,6 +45,7 @@ check_PROGRAMS = test_gtest \
                  test_util_array \
                  test_util_hash \
                  test_util_list \
+                 test_util_ip_addr \
                  test_util_field \
                  test_util_unescape_string \
                  test_util_uuid \
@@ -125,6 +126,8 @@ test_util_list_SOURCES = test_util_list.cc test_main.cc
 test_util_ipset_SOURCES = test_util_ipset.cc test_main.cc
 
 test_util_ip_SOURCES = test_util_ip.cc test_main.cc
+
+test_util_ip_addr_SOURCES = test_util_ip_addr.cc test_main.cc
 
 test_util_field_SOURCES = test_util_field.cc test_main.cc
 

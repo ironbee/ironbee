@@ -848,66 +848,69 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
 static int next_line(const char **linep, size_t *lenp)
 {
     int rv = 1;
-    size_t lelen = 2;
+
     size_t len = 0;
+    size_t lelen = 2;
     const char *end;
     const char *line = *linep;
-    if (line[0] == '\r' && line[1] == '\n') {
+
+    if ( (line[0] == '\r') && (line[1] == '\n') ) {
         return 0; /* blank line = no more hdr lines */
     }
-    else if (line[0] == '\r' || line[0] == '\n') {
+    else if ( (line[0] == '\r') || (line[0] == '\n') ) {
         return 0; /* blank line which is also malformed HTTP */
     }
-    else {
-        /* skip to next start-of-line from where we are */
-        line += strcspn(line, "\r\n");
-        if (line[0] == '\r' && line[1] == '\n') {
-            /* valid line end.  Set pointer to start of next line */
-            line += 2;
-        }
-        else {   /* bogus lineend!
-                  * Treat a single '\r' or '\n' as a lineend
-                  */
-            line += 1;
-            rv = 2; /* bogus linend */
-        }
-        if (line[0] == '\r' && line[1] == '\n') {
-            return 0; /* blank line = no more hdr lines */
-        }
-        else if (line[0] == '\r' || line[0] == '\n') {
-            return 0; /* blank line which is also malformed HTTP */
-        }
-        /* Use a loop here to catch theoretically-unlimited numbers
-         * of continuation lines in a folded header.  The isspace
-         * tests for a continuation line
-         */
-        do {
-            if (len > 0) {
-                /* we have a continuation line.  Add the lineend. */
-                len += lelen;
-            }
-            end = strstr(line + len, "\r\n");
-            if (end) {  /* All's well, this is a good line */
-                lelen = 2;
-            }
-            else {
-                /* Malformed header.  Check for a bogus single-char lineend */
-                end = line + strcspn(line + len, "\r\n");
-                if (end > line) {
-                    lelen = 1;
-                    rv = 2;
-                }
-                else { /* nothing at all we can interpret as lineend */
-                    return -1;
-                }
-            }
-            len = end - line;
-        } while (isspace(end[lelen]) && end[lelen] != '\r' && end[lelen] != '\n');
 
-        *lenp = len;
-        *linep = line;
-        return rv;
+    /* skip to next start-of-line from where we are */
+    line += strcspn(line, "\r\n");
+    if ( (line[0] == '\r') && (line[1] == '\n') ) {
+        /* valid line end.  Set pointer to start of next line */
+        line += 2;
     }
+    else {   /* bogus lineend!
+              * Treat a single '\r' or '\n' as a lineend
+              */
+        line += 1;
+        rv = 2; /* bogus linend */
+    }
+    if ( (line[0] == '\r') && (line[1] == '\n') ) {
+        return 0; /* blank line = no more hdr lines */
+    }
+    else if ( (line[0] == '\r') || (line[0] == '\n') ) {
+        return 0; /* blank line which is also malformed HTTP */
+    }
+
+    /* Use a loop here to catch theoretically-unlimited numbers
+     * of continuation lines in a folded header.  The isspace
+     * tests for a continuation line
+     */
+    do {
+        if (len > 0) {
+            /* we have a continuation line.  Add the lineend. */
+            len += lelen;
+        }
+        end = line + strcspn(line + len, "\r\n");
+        if ( (line[0] == '\r') && (line[1] == '\n') ) {
+            lelen = 2;             /* All's well, this is a good line */
+        }
+        else {
+            /* Malformed header.  Check for a bogus single-char lineend */
+            if (end > line) {
+                lelen = 1;
+                rv = 2;
+            }
+            else { /* nothing at all we can interpret as lineend */
+                return -1;
+            }
+        }
+        len = end - line;
+    } while ( (isspace(end[lelen]) != 0) &&
+              (end[lelen] != '\r') &&
+              (end[lelen] != '\n') );
+
+    *lenp = len;
+    *linep = line;
+    return rv;
 }
 
 /**
@@ -941,7 +944,6 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     unsigned char *dptr, *icdatabuf;
 
     ib_parsed_header_wrapper_t *ibhdrs;
-    size_t n_len, v_len;
 
     TSDebug("ironbee", "process %s headers\n", ibd->word);
 
@@ -1071,8 +1073,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     blockp = TSIOBufferReaderStart(readerp);
 
     len = TSIOBufferBlockReadAvail(blockp, readerp);
-    //ib_log_debug(ironbee, 9,
-                 //"ts/ironbee/process_header: len=%ld", len );
+    //ib_log_debug(ironbee, 9, "ts/ironbee/process_header: len=%ld", len);
 
     /* if we're going to enable manipulation of headers, we need a copy */
     icdatabuf = dptr = TSmalloc(len);
@@ -1101,11 +1102,15 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     // get_line ensures CRLF (line_len + 2)?
     line = (const char*) icdatabuf;
     while (next_line(&line, &line_len) > 0) {
+        size_t n_len;
+        size_t v_len;
+
         n_len = strcspn(line, ":");
         lptr = line + n_len + 1;
         while (isspace(*lptr) && lptr < line + line_len)
             ++lptr;
         v_len = line_len - (lptr - line);
+
         /* Ironbee presumably wants to know of anything zero-length
          * so don't reject on those grounds!
          */
