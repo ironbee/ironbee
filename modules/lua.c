@@ -496,7 +496,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib_engine,
     }
 
     lua_pushstring(L, name);
-    sys_rc = lua_pcall(L, 1,0,0);
+    sys_rc = lua_pcall(L, 1, 0, 0);
     if (sys_rc != 0) {
         ib_log_error(ib_engine,  "Failed to run lua module \"%s\" - %s (%d)",
                      file, lua_tostring(L, -1), sys_rc);

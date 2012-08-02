@@ -65,16 +65,16 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
                                     VPRINTF_ATTRIBUTE(5);
 
 /** Normal Logger. */
-#define ib_util_log(lvl,...) \
-  ib_util_log_ex((lvl),__FILE__,__LINE__,__VA_ARGS__)
+#define ib_util_log(lvl, ...) \
+  ib_util_log_ex((lvl), __FILE__, __LINE__, __VA_ARGS__)
 
 /** Error Logger. */
 #define ib_util_log_error(...) \
-  ib_util_log_ex(3,__FILE__,__LINE__,__VA_ARGS__)
+  ib_util_log_ex(3, __FILE__, __LINE__, __VA_ARGS__)
 
 /** Debug Logger. */
 #define ib_util_log_debug(...) \
-  ib_util_log_ex(7,__FILE__,__LINE__,__VA_ARGS__)
+  ib_util_log_ex(7, __FILE__, __LINE__, __VA_ARGS__)
 
 
 /**
@@ -516,7 +516,7 @@ void DLL_PUBLIC ib_shutdown(void);
  * @returns boolean value
  */
 bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
-#define ib_flags_any(flags,check) \
+#define ib_flags_any(flags, check) \
     ( ( ((flags) & (check)) != 0) ? true : false)
 
 /**
@@ -528,7 +528,7 @@ bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
  * @returns boolean value
  */
 bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
-#define ib_flags_all(flags,check) \
+#define ib_flags_all(flags, check) \
     ( ( ((flags) & (check)) == (check)) ? true : false)
 
 /**
@@ -540,7 +540,7 @@ bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
  * @returns updated flags
  */
 bool ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
-#define ib_flags_set(flags,flags_set) \
+#define ib_flags_set(flags, flags_set) \
     ( (flags) |= (flags_set) )
 
 /**
@@ -552,7 +552,7 @@ bool ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
  * @returns updated flags
  */
 bool ib_flags_clear(ib_flags_t flags, ib_flags_t flags_clear);
-#define ib_flags_clear(flags,flags_clear) \
+#define ib_flags_clear(flags, flags_clear) \
     ( (flags) &= (~(flags_clear)) )
 
 

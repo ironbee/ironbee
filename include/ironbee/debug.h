@@ -273,7 +273,7 @@ void DLL_PUBLIC ib_trace_str(const char *file,
  * @param type The type of pointer to return
  * @param rv Return value
  */
-#define IB_FTRACE_RET_PTR(type,rv) \
+#define IB_FTRACE_RET_PTR(type, rv) \
     do { \
         type *__ib_ft_rv = rv; \
         ib_trace_ptr(__FILE__, __LINE__, __ib_fname__, "returned", (void *)__ib_ft_rv); \
@@ -307,12 +307,12 @@ void DLL_PUBLIC ib_trace_str(const char *file,
 #else
 /** @cond internal */
 #define ib_trace_init(fn)
-#define ib_trace_msg(file,line,func,msg)
-#define ib_trace_num(file,line,func,msg,num)
-#define ib_trace_status(file,line,func,msg,rc)
-#define ib_trace_unum(file,line,func,msg,unum)
-#define ib_trace_ptr(file,line,func,msg,ptr)
-#define ib_trace_str(file,line,func,msg,str)
+#define ib_trace_msg(file, line, func, msg)
+#define ib_trace_num(file, line, func, msg, num)
+#define ib_trace_status(file, line, func, msg, rc)
+#define ib_trace_unum(file, line, func, msg, unum)
+#define ib_trace_ptr(file, line, func, msg, ptr)
+#define ib_trace_str(file, line, func, msg, str)
 /** @endcond */
 
 #define IB_FTRACE_INIT(name)
@@ -323,7 +323,7 @@ void DLL_PUBLIC ib_trace_str(const char *file,
 #define IB_FTRACE_RET_UINT(rv) return (rv)
 #define IB_FTRACE_RET_BOOL(rv) return (rv)
 #define IB_FTRACE_RET_SIZET(rv) return (rv)
-#define IB_FTRACE_RET_PTR(type,rv) return (rv)
+#define IB_FTRACE_RET_PTR(type, rv) return (rv)
 #define IB_FTRACE_RET_STR(rv) return (rv)
 #define IB_FTRACE_RET_CONSTSTR(rv) return (rv)
 #endif /* IB_DEBUG */

@@ -61,7 +61,7 @@ typedef struct ib_bytestr_t ib_bytestr_t;
  * @param s String
  * @param l Length
  */
-#define IB_BYTESTRSL_FMT_PARAM(s,l)  (int)(l), (const char *)(s)
+#define IB_BYTESTRSL_FMT_PARAM(s, l)  (int)(l), (const char *)(s)
 
 /**
  * Parameter for byte string formatter.

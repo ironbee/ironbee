@@ -151,7 +151,7 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
  * @param basetype Type of structure holding values
  * @param field Field name in structure holding values
  */
-#define IB_CFGMAP_INIT_ENTRY(name,type,basetype,field) \
+#define IB_CFGMAP_INIT_ENTRY(name, type, basetype, field) \
     { \
         (name), \
         (type), \
@@ -170,7 +170,7 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
  * @param get      Getter function.
  * @param get_data Getter data.
  */
-#define IB_CFGMAP_INIT_DYNAMIC_ENTRY(name,type,set,set_data,get,get_data) \
+#define IB_CFGMAP_INIT_DYNAMIC_ENTRY(name, type, set, set_data, get, get_data) \
     { \
         (name), \
         (type), \

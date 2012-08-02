@@ -443,7 +443,7 @@ static ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
         audit_filename = (char *)ib_mpool_alloc(cfg->tx->mp, audit_filename_sz);
         sys_rc = snprintf(audit_filename,
                           audit_filename_sz,
-                          "%s/%s_%s.log", dn, cfg->tx->id,site->id_str);
+                          "%s/%s_%s.log", dn, cfg->tx->id, site->id_str);
     }
     else {
         audit_filename_sz = strlen(dn) + strlen(cfg->tx->id) + 6;

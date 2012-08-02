@@ -129,8 +129,8 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(ib_engine_t *ib,
                                      const char *name,
                                      ib_tfn_t **ptfn);
 
-#define ib_tfn_lookup(ib,name,ptfn) \
-    ib_tfn_lookup_ex(ib,name,strlen(name),ptfn)
+#define ib_tfn_lookup(ib, name, ptfn) \
+    ib_tfn_lookup_ex(ib, name, strlen(name), ptfn)
 
 /**
  * Transform data.

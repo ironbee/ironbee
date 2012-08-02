@@ -71,7 +71,7 @@ extern "C" {
  * @param[in] xfn_ctx_destroy     Context destroy function
  * @param[in] xcbdata_ctx_destroy Context destroy function callback data
  */
-#define IB_MODULE_INIT_DYNAMIC(m,xfilename,xdata,xib,xname,xgcdata,xgclen,xfn_cfg_copy,xcbdata_cfg_copy,xcm_init,xdm_init,xfn_init,xcbdata_init,xfn_fini,xcbdata_fini,xfn_ctx_open,xcbdata_ctx_open,xfn_ctx_close,xcbdata_ctx_close,xfn_ctx_destroy,xcbdata_ctx_destroy) \
+#define IB_MODULE_INIT_DYNAMIC(m, xfilename, xdata, xib, xname, xgcdata, xgclen, xfn_cfg_copy, xcbdata_cfg_copy, xcm_init, xdm_init, xfn_init, xcbdata_init, xfn_fini, xcbdata_fini, xfn_ctx_open, xcbdata_ctx_open, xfn_ctx_close, xcbdata_ctx_close, xfn_ctx_destroy, xcbdata_ctx_destroy) \
     do { \
         (m)->vernum             = IB_VERNUM; \
         (m)->abinum             = IB_ABINUM; \

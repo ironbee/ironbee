@@ -84,7 +84,7 @@ struct ib_strval_t {
 };
 
 #define IB_STRVAL_MAP(name) ib_strval_t name[]
-#define IB_STRVAL_PAIR(str,val) { str, val }
+#define IB_STRVAL_PAIR(str, val) { str, val }
 #define IB_STRVAL_PAIR_LAST { NULL, 0 }
 
 /** Callback for ending (processing) a block */
@@ -168,9 +168,9 @@ struct ib_dirmap_init_t {
  * but if we are in C++, uses generic @c _init member.
  **/
 #ifdef __cplusplus
-#define IB_DIRMAP_INIT_CB_HELPER(name,cb) { (ib_void_fn_t)(cb) }
+#define IB_DIRMAP_INIT_CB_HELPER(name, cb) { (ib_void_fn_t)(cb) }
 #else
-#define IB_DIRMAP_INIT_CB_HELPER(name,cb) { .name = (cb) }
+#define IB_DIRMAP_INIT_CB_HELPER(name, cb) { .name = (cb) }
 #endif
 /** @endcond */
 
@@ -189,8 +189,8 @@ struct ib_dirmap_init_t {
  * @param cb Callback
  * @param cbdata Callback data
  */
-#define IB_DIRMAP_INIT_ONOFF(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_ONOFF, IB_DIRMAP_INIT_CB_HELPER(fn_onoff,(cb)), NULL, (cbdata), NULL, NULL }
+#define IB_DIRMAP_INIT_ONOFF(name, cb, cbdata) \
+    { (name), IB_DIRTYPE_ONOFF, IB_DIRMAP_INIT_CB_HELPER(fn_onoff, (cb)), NULL, (cbdata), NULL, NULL }
 
 /**
  * Directive with a single string parameter.
@@ -199,8 +199,8 @@ struct ib_dirmap_init_t {
  * @param cb Callback
  * @param cbdata Callback data
  */
-#define IB_DIRMAP_INIT_PARAM1(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_PARAM1, IB_DIRMAP_INIT_CB_HELPER(fn_param1,(cb)), NULL, (cbdata), NULL, NULL }
+#define IB_DIRMAP_INIT_PARAM1(name, cb, cbdata) \
+    { (name), IB_DIRTYPE_PARAM1, IB_DIRMAP_INIT_CB_HELPER(fn_param1, (cb)), NULL, (cbdata), NULL, NULL }
 
 /**
  * Directive with two string parameters.
@@ -209,8 +209,8 @@ struct ib_dirmap_init_t {
  * @param cb Callback
  * @param cbdata Callback data
  */
-#define IB_DIRMAP_INIT_PARAM2(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_PARAM2, IB_DIRMAP_INIT_CB_HELPER(fn_param2,(cb)), NULL, (cbdata), NULL, NULL }
+#define IB_DIRMAP_INIT_PARAM2(name, cb, cbdata) \
+    { (name), IB_DIRTYPE_PARAM2, IB_DIRMAP_INIT_CB_HELPER(fn_param2, (cb)), NULL, (cbdata), NULL, NULL }
 
 /**
  * Directive with list of string parameters.
@@ -219,8 +219,8 @@ struct ib_dirmap_init_t {
  * @param cb Callback
  * @param cbdata Callback data
  */
-#define IB_DIRMAP_INIT_LIST(name,cb,cbdata) \
-    { (name), IB_DIRTYPE_LIST, IB_DIRMAP_INIT_CB_HELPER(fn_list,(cb)), NULL, (cbdata), NULL, NULL }
+#define IB_DIRMAP_INIT_LIST(name, cb, cbdata) \
+    { (name), IB_DIRTYPE_LIST, IB_DIRMAP_INIT_CB_HELPER(fn_list, (cb)), NULL, (cbdata), NULL, NULL }
 
 /**
  * Directive with list of unique options string parameters which are
@@ -236,8 +236,8 @@ struct ib_dirmap_init_t {
  * @param cbdata Callback data
  * @param valmap Array of @ref ib_strval_t structures mapping options to values
  */
-#define IB_DIRMAP_INIT_OPFLAGS(name,cb,cbdata,valmap) \
-    { (name), IB_DIRTYPE_OPFLAGS, IB_DIRMAP_INIT_CB_HELPER(fn_opflags,(cb)), NULL, (cbdata), NULL, (valmap) }
+#define IB_DIRMAP_INIT_OPFLAGS(name, cb, cbdata, valmap) \
+    { (name), IB_DIRTYPE_OPFLAGS, IB_DIRMAP_INIT_CB_HELPER(fn_opflags, (cb)), NULL, (cbdata), NULL, (valmap) }
 
 /**
  * Block with single parameter enclosing more directives.
@@ -250,8 +250,8 @@ struct ib_dirmap_init_t {
  * @param cbdata Callback data for @a cb
  * @param blkenddata Callback data for @a blkend
  */
-#define IB_DIRMAP_INIT_SBLK1(name,cb,blkend,cbdata,blkenddata) \
-    { (name), IB_DIRTYPE_SBLK1, IB_DIRMAP_INIT_CB_HELPER(fn_sblk1,(cb)), (blkend), (cbdata), (blkenddata), NULL }
+#define IB_DIRMAP_INIT_SBLK1(name, cb, blkend, cbdata, blkenddata) \
+    { (name), IB_DIRTYPE_SBLK1, IB_DIRMAP_INIT_CB_HELPER(fn_sblk1, (cb)), (blkend), (cbdata), (blkenddata), NULL }
 
 /** Required last entry. */
 #define IB_DIRMAP_INIT_LAST { NULL }
@@ -527,37 +527,37 @@ void DLL_PUBLIC ib_cfg_vlog_ex(const ib_engine_t *ib,
 /** Log (Configuration form) */
 #define ib_cfg_log(cp, level, ...) ib_cfg_log_f((cp), (level), __FILE__, __LINE__, __VA_ARGS__)
 /** Log Emergency (Configuration form) */
-#define ib_cfg_log_emergency(cp,...) \
+#define ib_cfg_log_emergency(cp, ...) \
     ib_cfg_log((cp), IB_LOG_EMERGENCY, __VA_ARGS__)
 /** Log Alert (Configuration form) */
-#define ib_cfg_log_alert(cp,...) \
+#define ib_cfg_log_alert(cp, ...) \
     ib_cfg_log((cp), IB_LOG_ALERT, __VA_ARGS__)
 /** Log Critical (Configuration form) */
-#define ib_cfg_log_critical(cp,...) \
+#define ib_cfg_log_critical(cp, ...) \
     ib_cfg_log((cp), IB_LOG_CRITICAL, __VA_ARGS__)
 /** Log Error (Configuration form) */
-#define ib_cfg_log_error(cp,...) \
+#define ib_cfg_log_error(cp, ...) \
     ib_cfg_log((cp), IB_LOG_ERROR, __VA_ARGS__)
 /** Log Warning (Configuration form) */
-#define ib_cfg_log_warning(cp,...) \
+#define ib_cfg_log_warning(cp, ...) \
     ib_cfg_log((cp), IB_LOG_WARNING, __VA_ARGS__)
 /** Log Notice (Configuration form) */
-#define ib_cfg_log_notice(cp,...) \
+#define ib_cfg_log_notice(cp, ...) \
     ib_cfg_log((cp), IB_LOG_NOTICE, __VA_ARGS__)
 /** Log Info (Configuration form) */
-#define ib_cfg_log_info(cp,...) \
+#define ib_cfg_log_info(cp, ...) \
     ib_cfg_log((cp), IB_LOG_INFO, __VA_ARGS__)
 /** Log Debug (Configuration form) */
-#define ib_cfg_log_debug(cp,...) \
+#define ib_cfg_log_debug(cp, ...) \
     ib_cfg_log((cp), IB_LOG_DEBUG, __VA_ARGS__)
 /** Log Debug2 (Configuration form) */
-#define ib_cfg_log_debug2(cp,...) \
+#define ib_cfg_log_debug2(cp, ...) \
     ib_cfg_log((cp), IB_LOG_DEBUG2, __VA_ARGS__)
 /** Log Debug3 (Configuration form) */
-#define ib_cfg_log_debug3(cp,...) \
+#define ib_cfg_log_debug3(cp, ...) \
     ib_cfg_log((cp), IB_LOG_DEBUG3, __VA_ARGS__)
 /** Log Trace (Configuration form) */
-#define ib_cfg_log_trace(cp,...) \
+#define ib_cfg_log_trace(cp, ...) \
     ib_cfg_log((cp), IB_LOG_TRACE, __VA_ARGS__)
 
 /** Log (Configuration / ex form) */
@@ -582,10 +582,10 @@ void DLL_PUBLIC ib_cfg_vlog_ex(const ib_engine_t *ib,
 #define ib_cfg_log_notice_ex(ib, cfgfile, cfgline, ...) \
     ib_cfg_log_ex((ib), (cfgfile), (cfgline), IB_LOG_NOTICE, __VA_ARGS__)
 /** Log Info (Configuration / ex form) */
-#define ib_cfg_log_info_ex(ib, cfgfile, cfgline,...) \
+#define ib_cfg_log_info_ex(ib, cfgfile, cfgline, ...) \
     ib_cfg_log_ex((ib), (cfgfile), (cfgline), IB_LOG_INFO, __VA_ARGS__)
 /** Log Debug (Configuration / ex form) */
-#define ib_cfg_log_debug_ex(ib, cfgfile, cfgline,...) \
+#define ib_cfg_log_debug_ex(ib, cfgfile, cfgline, ...) \
     ib_cfg_log_ex((ib), (cfgfile), (cfgline), IB_LOG_DEBUG, __VA_ARGS__)
 /** Log Debug2 (Configuration / ex form) */
 #define ib_cfg_log_debug2_ex(ib, cfgfile, cfgline, ...) \

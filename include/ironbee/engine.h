@@ -1577,8 +1577,8 @@ ib_status_t DLL_PUBLIC ib_data_add_num(ib_provider_inst_t *dpi,
                                        ib_num_t val,
                                        ib_field_t **pf);
 
-#define ib_data_add_num(dpi,name,val,pf) \
-    ib_data_add_num_ex(dpi,name,strlen(name),val,pf)
+#define ib_data_add_num(dpi, name, val, pf) \
+    ib_data_add_num_ex((dpi), (name), strlen((name)), (val), (pf))
 
 /**
  * Create and add a nulstr data field.
@@ -1595,8 +1595,8 @@ ib_status_t DLL_PUBLIC ib_data_add_nulstr(ib_provider_inst_t *dpi,
                                           const char *val,
                                           ib_field_t **pf);
 
-#define ib_data_add_nulstr(dpi,name,val,pf) \
-    ib_data_add_nulstr_ex(dpi,name,strlen(name),val,pf)
+#define ib_data_add_nulstr(dpi, name, val, pf) \
+    ib_data_add_nulstr_ex((dpi), (name), strlen((name)), (val), (pf))
 
 /**
  * Create and add a bytestr data field.
@@ -1616,8 +1616,8 @@ ib_status_t DLL_PUBLIC ib_data_add_bytestr(ib_provider_inst_t *dpi,
                                            size_t vlen,
                                            ib_field_t **pf);
 
-#define ib_data_add_bytestr(dpi,name,val,vlen,pf) \
-    ib_data_add_bytestr_ex(dpi,name,strlen(name),val,vlen,pf)
+#define ib_data_add_bytestr(dpi, name, val, vlen, pf) \
+    ib_data_add_bytestr_ex((dpi), (name), strlen((name)), (val), (vlen), (pf))
 
 /**
  * Create and add a list data field.
@@ -1632,8 +1632,8 @@ ib_status_t DLL_PUBLIC ib_data_add_list(ib_provider_inst_t *dpi,
                                         const char *name,
                                         ib_field_t **pf);
 
-#define ib_data_add_list(dpi,name,pf) \
-    ib_data_add_list_ex(dpi,name,strlen(name),pf)
+#define ib_data_add_list(dpi, name, pf) \
+    ib_data_add_list_ex((dpi), (name), strlen((name)), (pf))
 
 /**
  * Create and add a stream buffer data field.
@@ -1648,8 +1648,8 @@ ib_status_t DLL_PUBLIC ib_data_add_stream(ib_provider_inst_t *dpi,
                                           const char *name,
                                           ib_field_t **pf);
 
-#define ib_data_add_stream(dpi,name,pf) \
-    ib_data_add_stream_ex(dpi,name,strlen(name),pf)
+#define ib_data_add_stream(dpi, name, pf) \
+    ib_data_add_stream_ex((dpi), (name), strlen((name)), (pf))
 
 /**
  * Get a data field.
@@ -1664,8 +1664,8 @@ ib_status_t DLL_PUBLIC ib_data_get(ib_provider_inst_t *dpi,
                                    const char *name,
                                    ib_field_t **pf);
 
-#define ib_data_get(dpi,name,pf) \
-    ib_data_get_ex(dpi,name,strlen(name),pf)
+#define ib_data_get(dpi, name, pf) \
+    ib_data_get_ex((dpi), (name), strlen((name)), (pf))
 
 /**
  * Get a data field with a transformation.
@@ -1681,8 +1681,8 @@ ib_status_t DLL_PUBLIC ib_data_tfn_get(ib_provider_inst_t *dpi,
                                        const char *name,
                                        ib_field_t **pf,
                                        const char *tfn);
-#define ib_data_tfn_get(dpi,name,pf,tfn) \
-    ib_data_tfn_get_ex(dpi,name,strlen(name),pf,tfn)
+#define ib_data_tfn_get(dpi, name, pf, tfn) \
+    ib_data_tfn_get_ex((dpi), (name), strlen((name)), (pf), (tfn))
 
 /**
  * Remove a data field.
@@ -1706,8 +1706,8 @@ ib_status_t ib_data_remove(ib_provider_inst_t *dpi,
                            const char *name,
                            ib_field_t **pf);
 
-#define ib_data_remove(dpi,name,pf) \
-    ib_data_remove_ex(dpi,name,strlen(name),pf)
+#define ib_data_remove(dpi, name, pf) \
+    ib_data_remove_ex((dpi), (name), strlen((name)), (pf))
 
 /**
  * Expand a string using fields from the data store.
@@ -1953,54 +1953,54 @@ typedef void (*ib_log_logger_fn_t)(
 VPRINTF_ATTRIBUTE(6);
 
 /** Log Generic */
-#define ib_log(ib,lvl,...) ib_log_ex((ib), (lvl), __FILE__, __LINE__, __VA_ARGS__)
+#define ib_log(ib, lvl, ...) ib_log_ex((ib), (lvl), __FILE__, __LINE__, __VA_ARGS__)
 /** Log Emergency */
-#define ib_log_emergency(ib,...) ib_log((ib), IB_LOG_EMERGENCY, __VA_ARGS__)
+#define ib_log_emergency(ib, ...) ib_log((ib), IB_LOG_EMERGENCY, __VA_ARGS__)
 /** Log Alert */
-#define ib_log_alert(ib,...)     ib_log((ib), IB_LOG_ALERT, __VA_ARGS__)
+#define ib_log_alert(ib, ...)     ib_log((ib), IB_LOG_ALERT, __VA_ARGS__)
 /** Log Critical */
-#define ib_log_critical(ib,...)  ib_log((ib), IB_LOG_CRITICAL, __VA_ARGS__)
+#define ib_log_critical(ib, ...)  ib_log((ib), IB_LOG_CRITICAL, __VA_ARGS__)
 /** Log Error */
-#define ib_log_error(ib,...)     ib_log((ib), IB_LOG_ERROR, __VA_ARGS__)
+#define ib_log_error(ib, ...)     ib_log((ib), IB_LOG_ERROR, __VA_ARGS__)
 /** Log Warning */
-#define ib_log_warning(ib,...)   ib_log((ib), IB_LOG_WARNING, __VA_ARGS__)
+#define ib_log_warning(ib, ...)   ib_log((ib), IB_LOG_WARNING, __VA_ARGS__)
 /** Log Notice */
-#define ib_log_notice(ib,...)    ib_log((ib), IB_LOG_NOTICE, __VA_ARGS__)
+#define ib_log_notice(ib, ...)    ib_log((ib), IB_LOG_NOTICE, __VA_ARGS__)
 /** Log Info */
-#define ib_log_info(ib,...)      ib_log((ib), IB_LOG_INFO, __VA_ARGS__)
+#define ib_log_info(ib, ...)      ib_log((ib), IB_LOG_INFO, __VA_ARGS__)
 /** Log Debug */
-#define ib_log_debug(ib,...)     ib_log((ib), IB_LOG_DEBUG, __VA_ARGS__)
+#define ib_log_debug(ib, ...)     ib_log((ib), IB_LOG_DEBUG, __VA_ARGS__)
 /** Log Debug2 */
-#define ib_log_debug2(ib,...)    ib_log((ib), IB_LOG_DEBUG2, __VA_ARGS__)
+#define ib_log_debug2(ib, ...)    ib_log((ib), IB_LOG_DEBUG2, __VA_ARGS__)
 /** Log Debug3 */
-#define ib_log_debug3(ib,...)    ib_log((ib), IB_LOG_DEBUG3, __VA_ARGS__)
+#define ib_log_debug3(ib, ...)    ib_log((ib), IB_LOG_DEBUG3, __VA_ARGS__)
 /** Log Trace */
-#define ib_log_trace(ib,...)     ib_log((ib), IB_LOG_TRACE, __VA_ARGS__)
+#define ib_log_trace(ib, ...)     ib_log((ib), IB_LOG_TRACE, __VA_ARGS__)
 
 /** Log Generic (Transaction form) */
-#define ib_log_tx(tx,lvl,...) ib_log_tx_ex(tx, (lvl), __FILE__, __LINE__, __VA_ARGS__)
+#define ib_log_tx(tx, lvl, ...) ib_log_tx_ex(tx,  (lvl), __FILE__, __LINE__, __VA_ARGS__)
 /** Log Emergency (Transaction form) */
-#define ib_log_emergency_tx(tx,...) ib_log_tx(tx, IB_LOG_EMERGENCY, __VA_ARGS__)
+#define ib_log_emergency_tx(tx, ...) ib_log_tx(tx,  IB_LOG_EMERGENCY, __VA_ARGS__)
 /** Log Alert (Transaction form) */
-#define ib_log_alert_tx(tx,...)     ib_log_tx(tx, IB_LOG_ALERT, __VA_ARGS__)
+#define ib_log_alert_tx(tx, ...)     ib_log_tx(tx,  IB_LOG_ALERT, __VA_ARGS__)
 /** Log Critical (Transaction form) */
-#define ib_log_critical_tx(tx,...)  ib_log_tx(tx, IB_LOG_CRITICAL, __VA_ARGS__)
+#define ib_log_critical_tx(tx, ...)  ib_log_tx(tx,  IB_LOG_CRITICAL, __VA_ARGS__)
 /** Log Error (Transaction form) */
-#define ib_log_error_tx(tx,...)     ib_log_tx(tx, IB_LOG_ERROR, __VA_ARGS__)
+#define ib_log_error_tx(tx, ...)     ib_log_tx(tx,  IB_LOG_ERROR, __VA_ARGS__)
 /** Log Warning (Transaction form) */
-#define ib_log_warning_tx(tx,...)   ib_log_tx(tx, IB_LOG_WARNING, __VA_ARGS__)
+#define ib_log_warning_tx(tx, ...)   ib_log_tx(tx,  IB_LOG_WARNING, __VA_ARGS__)
 /** Log Notice (Transaction form) */
-#define ib_log_notice_tx(tx,...)    ib_log_tx(tx, IB_LOG_NOTICE, __VA_ARGS__)
+#define ib_log_notice_tx(tx, ...)    ib_log_tx(tx,  IB_LOG_NOTICE, __VA_ARGS__)
 /** Log Info (Transaction form) */
-#define ib_log_info_tx(tx,...)      ib_log_tx(tx, IB_LOG_INFO, __VA_ARGS__)
+#define ib_log_info_tx(tx, ...)      ib_log_tx(tx,  IB_LOG_INFO, __VA_ARGS__)
 /** Log Debug (Transaction form) */
-#define ib_log_debug_tx(tx,...)     ib_log_tx(tx, IB_LOG_DEBUG, __VA_ARGS__)
+#define ib_log_debug_tx(tx, ...)     ib_log_tx(tx,  IB_LOG_DEBUG, __VA_ARGS__)
 /** Log Debug2 (Transaction form) */
-#define ib_log_debug2_tx(tx,...)    ib_log_tx(tx, IB_LOG_DEBUG2, __VA_ARGS__)
+#define ib_log_debug2_tx(tx, ...)    ib_log_tx(tx,  IB_LOG_DEBUG2, __VA_ARGS__)
 /** Log Debug3 (Transaction form) */
-#define ib_log_debug3_tx(tx,...)    ib_log_tx(tx, IB_LOG_DEBUG3, __VA_ARGS__)
+#define ib_log_debug3_tx(tx, ...)    ib_log_tx(tx,  IB_LOG_DEBUG3, __VA_ARGS__)
 /** Log Trace (Transaction form) */
-#define ib_log_trace_tx(tx,...)     ib_log_tx(tx, IB_LOG_TRACE, __VA_ARGS__)
+#define ib_log_trace_tx(tx, ...)     ib_log_tx(tx,  IB_LOG_TRACE, __VA_ARGS__)
 
 /**
  * Generic Logger for engine.

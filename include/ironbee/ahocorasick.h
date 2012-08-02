@@ -153,7 +153,7 @@ typedef void (*ib_ac_callback_t)(ib_ac_t *orig,
  * @param ac_ctx the ac matching context
  * @param ac_t the ac tree
  */
-#define ib_ac_init_ctx(ac_ctx,ac_t) \
+#define ib_ac_init_ctx(ac_ctx, ac_t) \
         do { \
             (ac_ctx)->ac_tree = (ac_t); \
             if ((ac_t) != NULL) {\
@@ -169,7 +169,7 @@ typedef void (*ib_ac_callback_t)(ib_ac_t *orig,
  * @param ac_ctx the ac matching context
  * @param ac_t the ac tree
  */
-#define ib_ac_reset_ctx(ac_ctx,ac_t) \
+#define ib_ac_reset_ctx(ac_ctx, ac_t) \
         do { \
             (ac_ctx)->ac_tree = (ac_t); \
             if ((ac_t) != NULL) {\

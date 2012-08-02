@@ -138,7 +138,7 @@ typedef enum ib_clock_type_t {
     do { \
         ib_time_t t = IB_CLOCK_TIMEVAL_TIME((dest)); \
         t += (usec); \
-        IB_CLOCK_TIMEVAL((dest),t); \
+        IB_CLOCK_TIMEVAL((dest), t); \
     } while (0)
 
 /**

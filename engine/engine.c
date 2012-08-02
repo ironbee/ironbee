@@ -530,7 +530,7 @@ void ib_engine_destroy(ib_engine_t *ib)
             }
         }
 
-        ib_log_debug3(ib, "Destroy IB handle (%d,%d,%s,%s): %p",
+        ib_log_debug3(ib, "Destroy IB handle (%d, %d, %s, %s): %p",
                ib->server->vernum, ib->server->abinum,
                ib->server->filename, ib->server->name, ib);
 

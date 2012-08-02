@@ -152,7 +152,7 @@ struct ib_list_t {
  * @param node Node to insert
  * @param ntype Node type literal
  */
-#define IB_LIST_NODE_INSERT_AFTER(list,at,node,ntype) \
+#define IB_LIST_NODE_INSERT_AFTER(list, at, node, ntype) \
     do { \
         ntype *__ib_list_node_ia_tmp = (at)->next; \
         (at)->next = (node); \
@@ -169,7 +169,7 @@ struct ib_list_t {
  * @param node Node to insert
  * @param ntype Node type literal
  */
-#define IB_LIST_NODE_INSERT_BEFORE(list,at,node,ntype) \
+#define IB_LIST_NODE_INSERT_BEFORE(list, at, node, ntype) \
     do { \
         ntype *__ib_list_node_ib_tmp = (at)->prev; \
         (at)->prev = (node); \
@@ -185,7 +185,7 @@ struct ib_list_t {
  * @param node Node to insert
  * @param ntype Node type literal
  */
-#define IB_LIST_NODE_INSERT_LAST(list,node,ntype) \
+#define IB_LIST_NODE_INSERT_LAST(list, node, ntype) \
     do { \
         IB_LIST_NODE_INSERT_AFTER((list), (list)->tail, (node), ntype); \
         (list)->tail = (node); \
@@ -198,7 +198,7 @@ struct ib_list_t {
  * @param node Node to insert
  * @param ntype Node type literal
  */
-#define IB_LIST_NODE_INSERT_FIRST(list,node,ntype) \
+#define IB_LIST_NODE_INSERT_FIRST(list, node, ntype) \
     do { \
         IB_LIST_NODE_INSERT_BEFORE((list), (list)->head, (node), ntype); \
         (list)->head = (node); \
@@ -210,7 +210,7 @@ struct ib_list_t {
  * @param list List
  * @param node Node to insert
  */
-#define IB_LIST_NODE_INSERT_INITIAL(list,node) \
+#define IB_LIST_NODE_INSERT_INITIAL(list, node) \
     do { \
         (list)->head = (list)->tail =(node); \
         (node)->next = (node)->prev = NULL; \
@@ -223,7 +223,7 @@ struct ib_list_t {
  * @param list List
  * @param node Node to insert
  */
-#define IB_LIST_NODE_REMOVE(list,node) \
+#define IB_LIST_NODE_REMOVE(list, node) \
     do { \
         if ((node)->prev != NULL) { \
             (node)->prev->next = (node)->next; \
@@ -271,7 +271,7 @@ struct ib_list_t {
  * @param list List
  * @param node Symbol holding node
  */
-#define IB_LIST_LOOP(list,node) \
+#define IB_LIST_LOOP(list, node) \
     for ((node) = ib_list_first(list); \
          (node) != NULL; \
          (node) = ib_list_node_next(node))
@@ -287,7 +287,7 @@ struct ib_list_t {
  * @param list List
  * @param node Symbol holding node
  */
-#define IB_LIST_LOOP_CONST(list,node) \
+#define IB_LIST_LOOP_CONST(list, node) \
     for ((node) = ib_list_first_const(list); \
          (node) != NULL; \
          (node) = ib_list_node_next_const(node))
@@ -304,7 +304,7 @@ struct ib_list_t {
  * @param node Symbol holding node
  * @param node_next Symbol holding next node
  */
-#define IB_LIST_LOOP_SAFE(list,node,node_next) \
+#define IB_LIST_LOOP_SAFE(list, node, node_next) \
     for ((node) = ib_list_first(list), \
            (node_next) = ib_list_node_next(node); \
          (node) != NULL; \
@@ -322,7 +322,7 @@ struct ib_list_t {
  * @param list List
  * @param node Symbol holding node
  */
-#define IB_LIST_LOOP_REVERSE(list,node) \
+#define IB_LIST_LOOP_REVERSE(list, node) \
     for ((node) = ib_list_last(list); \
          (node) != NULL; \
          (node) = ib_list_node_prev(node))
@@ -340,7 +340,7 @@ struct ib_list_t {
  * @param node Symbol holding node
  * @param node_next Symbol holding next node
  */
-#define IB_LIST_LOOP_REVERSE_SAFE(list,node,node_next) \
+#define IB_LIST_LOOP_REVERSE_SAFE(list, node, node_next) \
     for ((node) = ib_list_last(list), \
            (node_next) = ib_list_node_prev(node); \
          (node) != NULL; \
