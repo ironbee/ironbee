@@ -13,7 +13,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *****************************************************************************/
+ ****************************************************************************/
 
 /**
  * @file
@@ -1398,7 +1398,7 @@ static ib_status_t modhtp_gen_response_fields(ib_provider_inst_t *pi,
  * TODO: Fix libhtp to have an interface that accepts pre-parsed HTTP
  *       data so that reconstructing the raw HTTP is not required. This
  *       will greatly simplify the interface.
- *****************************************************************************/
+ ****************************************************************************/
 
 static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
                                      ib_conn_t *iconn)
