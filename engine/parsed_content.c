@@ -450,8 +450,9 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
     if (raw == NULL) {
         if (method_len + uri_len + protocol_len == 0) {
             ib_log_notice_tx(tx,
-                             "Unable to generate raw request line without line "
-                             "components - using zero length request line.");
+                "Unable to generate raw request line without line "
+                "components - using zero length request line."
+            );
 
             rc = ib_bytestr_dup_mem(&line_tmp->raw,
                                     tx->mp,

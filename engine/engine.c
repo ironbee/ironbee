@@ -269,7 +269,8 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
                      "Server %s (built against engine version %s) is not "
                      "compatible with this engine (version %s): "
                      "ABI %d > %d",
-                     server->filename, server->version, IB_VERSION, server->abinum, IB_ABINUM);
+                     server->filename, server->version, IB_VERSION,
+                     server->abinum, IB_ABINUM);
         rc = IB_EINCOMPAT;
         goto failed;
     }
@@ -566,7 +567,10 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     /// @todo Need to tune the pool size
     rc = ib_mpool_create(&pool, "conn", ib->mp);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create connection memory pool: %s", ib_status_to_string(rc));
+        ib_log_alert(ib,
+            "Failed to create connection memory pool: %s",
+            ib_status_to_string(rc)
+        );
         rc = IB_EALLOC;
         goto failed;
     }
@@ -641,11 +645,14 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     rc = ib_mpool_create(&pool, "conn_data", conn->mp);
     if (rc != IB_OK) {
         ib_log_alert(ib,
-                     "Failed to create connection data memory pool: %s", ib_status_to_string(rc));
+            "Failed to create connection data memory pool: %s",
+            ib_status_to_string(rc)
+        );
         rc = IB_EALLOC;
         goto failed;
     }
-    *pconndata = (ib_conndata_t *)ib_mpool_calloc(pool, 1, sizeof(**pconndata));
+    *pconndata =
+        (ib_conndata_t *)ib_mpool_calloc(pool, 1, sizeof(**pconndata));
     if (*pconndata == NULL) {
         ib_log_alert(ib, "Failed to allocate memory for connection data");
         rc = IB_EALLOC;
@@ -657,7 +664,9 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
     (*pconndata)->dlen = 0;
     (*pconndata)->data = (uint8_t *)ib_mpool_calloc(pool, 1, dalloc);
     if ((*pconndata)->data == NULL) {
-        ib_log_alert(ib, "Failed to allocate memory for connection data buffer");
+        ib_log_alert(ib,
+            "Failed to allocate memory for connection data buffer"
+        );
         rc = IB_EALLOC;
         goto failed;
     }
@@ -737,7 +746,10 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
      */
     rc = ib_mpool_create(&pool, "tx", conn->mp);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create transaction memory pool: %s", ib_status_to_string(rc));
+        ib_log_alert(ib,
+            "Failed to create transaction memory pool: %s",
+            ib_status_to_string(rc)
+        );
         rc = IB_EALLOC;
         goto failed;
     }
@@ -1766,7 +1778,10 @@ ib_status_t ib_context_close(ib_context_t *ctx)
             rc = m->fn_ctx_close(ib, m, ctx, m->cbdata_ctx_close);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
-                ib_log_error(ib, "Failed to call context init: %s", ib_status_to_string(rc));
+                ib_log_error(ib,
+                    "Failed to call context init: %s",
+                    ib_status_to_string(rc)
+                );
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
@@ -1876,7 +1891,10 @@ void ib_context_destroy(ib_context_t *ctx)
             rc = m->fn_ctx_destroy(ib, m, ctx, m->cbdata_ctx_destroy);
             if (rc != IB_OK) {
                 /// @todo Log the error???  Fail???
-                ib_log_error(ib, "Failed to call context fini: %s", ib_status_to_string(rc));
+                ib_log_error(ib,
+                    "Failed to call context fini: %s",
+                    ib_status_to_string(rc)
+                );
             }
         }
     }
@@ -1908,7 +1926,9 @@ ib_status_t ib_context_init_cfg(ib_context_t *ctx,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    ib_log_debug3(ctx->ib, "Initializing context %s base=%p", ib_context_full_get(ctx), base);
+    ib_log_debug3(ctx->ib,
+        "Initializing context %s base=%p", ib_context_full_get(ctx), base
+    );
 
     if (init == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -2030,32 +2050,44 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
     while (numips--) {
         /// @todo IP should be IP:Port combo
         ib_log_debug2_tx(tx, "Checking IP %s against context %s",
-                     tx->conn->local_ipstr, ip?ip:"ANY");
+                     tx->conn->local_ipstr, ip ? ip : "ANY");
         if ((ip == NULL) || (strcmp(ip, tx->conn->local_ipstr) == 0)) {
-            numhosts = loc->site->hosts ? ib_list_elements(loc->site->hosts) : 1;
-            hostnode = loc->site->hosts ? ib_list_first(loc->site->hosts) : NULL;
-            host = hostnode ? (const char *)ib_list_node_data(hostnode) : NULL;
+            numhosts =
+                loc->site->hosts ? ib_list_elements(loc->site->hosts) : 1;
+            hostnode =
+                loc->site->hosts ? ib_list_first(loc->site->hosts) : NULL;
+            host =
+                hostnode ? (const char *)ib_list_node_data(hostnode) : NULL;
 
             while (numhosts--) {
-                size_t hostlen = host?strlen(host):0;
+                size_t hostlen = host ? strlen(host) : 0;
                 off_t cmpoffset = txhostlen - hostlen;
-                const char *cmphost = (cmpoffset >= 0)?txhost + cmpoffset:NULL;
+                const char *cmphost =
+                    (cmpoffset >= 0) ? txhost + cmpoffset : NULL;
                 if (cmphost != NULL) {
-                    ib_log_debug2_tx(tx, "Checking Host \"%s\" (effective=\"%s\") against context %s",
-                                 txhost, cmphost, (host&&*host)?host:"ANY");
+                    ib_log_debug2_tx(tx,
+                        "Checking Host \"%s\" (effective=\"%s\") against"
+                        " context %s",
+                        txhost, cmphost, (host && *host) ? host : "ANY"
+                    );
                     if ((host == NULL) || (strcmp(host, cmphost) == 0)) {
                         path = loc->path;
 
                         ib_log_debug2_tx(tx,
-                                      "Checking Location path '%s' "
-                                      "against context (%s) path '%s'",
-                                      txpath, ctx->ctx_full, path?path:"ANY");
+                            "Checking Location path '%s' "
+                            "against context (%s) path '%s'",
+                            txpath, ctx->ctx_full, path ? path : "ANY"
+                        );
 
-                        if ((path == NULL) || (strncmp(path, txpath, strlen(path)) == 0)) {
+                        if (
+                            (path == NULL) ||
+                            (strncmp(path, txpath, strlen(path)) == 0)
+                        ) {
                             ib_log_debug2_tx(tx,
-                                          "Site \"%s:%s\" matched ctx=%p '%s'",
-                                          loc->site->name, loc->path,
-                                          ctx, ctx->ctx_full);
+                                "Site \"%s:%s\" matched ctx=%p '%s'",
+                                loc->site->name, loc->path,
+                                ctx, ctx->ctx_full
+                            );
                             IB_FTRACE_RET_STATUS(IB_OK);
                         }
                     }
@@ -2072,13 +2104,16 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
                 }
                 else {
                     ib_log_debug2_tx(tx,
-                                  "Skipping Host \"%s\" "
-                                  "check against context %s '%s'",
-                                  txhost, host?host:"ANY", ctx->ctx_full);
+                        "Skipping Host \"%s\" "
+                        "check against context %s '%s'",
+                        txhost, host ? host : "ANY", ctx->ctx_full
+                    );
                 }
                 if (numhosts > 0) {
                     hostnode = ib_list_node_next(hostnode);
-                    host = hostnode ? (const char *)ib_list_node_data(hostnode) : NULL;
+                    host = hostnode ?
+                        (const char *)ib_list_node_data(hostnode) :
+                        NULL;
                 }
             }
         }

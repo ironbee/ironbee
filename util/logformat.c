@@ -43,7 +43,9 @@ ib_status_t ib_logformat_create(ib_mpool_t *mp, ib_logformat_t **lf) {
         return IB_EINVAL;
     }
 
-    *lf = (ib_logformat_t *)ib_mpool_calloc(mp, 1, sizeof(ib_logformat_t) + 1);
+    *lf = (ib_logformat_t *)ib_mpool_calloc(mp,
+        1, sizeof(ib_logformat_t) + 1
+    );
     if (*lf == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -68,7 +70,7 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, const char *format) {
 
     literal[0] = '\0';
 
-    /* Store the original format (right now its just for debugging purposes) */
+    /* Store the original format (right now its just for debugging) */
     lf->orig_format = ib_mpool_strdup(lf->mp, format);
     if (lf->orig_format == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -86,7 +88,8 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, const char *format) {
                 /* Which field? */
                 switch (lf->orig_format[i]) {
                     case IB_LOG_FIELD_REMOTE_ADDR:
-                        lf->fields[lf->field_cnt++] = IB_LOG_FIELD_REMOTE_ADDR;
+                        lf->fields[lf->field_cnt++] =
+                            IB_LOG_FIELD_REMOTE_ADDR;
                         break;
                     case IB_LOG_FIELD_LOCAL_ADDR:
                         lf->fields[lf->field_cnt++] = IB_LOG_FIELD_LOCAL_ADDR;
@@ -101,7 +104,8 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, const char *format) {
                         lf->fields[lf->field_cnt++] = IB_LOG_FIELD_SENSOR_ID;
                         break;
                     case IB_LOG_FIELD_TRANSACTION_ID:
-                        lf->fields[lf->field_cnt++] = IB_LOG_FIELD_TRANSACTION_ID;
+                        lf->fields[lf->field_cnt++] =
+                             IB_LOG_FIELD_TRANSACTION_ID;
                         break;
                     case IB_LOG_FIELD_TIMESTAMP:
                         lf->fields[lf->field_cnt++] = IB_LOG_FIELD_TIMESTAMP;
@@ -128,7 +132,9 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, const char *format) {
                         IB_FTRACE_RET_STATUS(IB_EINVAL);
                     }
 
-                    /* Add string end for later usage with *printf() functions*/
+                    /* Add string end for later usage with *printf()
+                     * functions
+                     */
                     literal[j] = '\0';
                     lf->literals[l] = ib_mpool_strdup(lf->mp, literal);
                     if (lf->literals[l] == NULL) {

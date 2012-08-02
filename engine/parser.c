@@ -52,7 +52,10 @@ ib_provider_inst_t *ib_parser_provider_get_instance(ib_context_t *ctx)
     IB_FTRACE_RET_PTR(ib_provider_inst_t, corecfg->pi.parser);
 }
 
-ib_status_t ib_parser_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
+ib_status_t ib_parser_provider_set_instance(
+    ib_context_t       *ctx,
+    ib_provider_inst_t *pi
+)
 {
     IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;

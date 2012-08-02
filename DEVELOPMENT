@@ -111,10 +111,10 @@ Ongoing Contributions
 If you or your group will have ongoing contributions, then you should consider
 using Github's "fork" feature instead of sending in patches. This forks a 
 working copy of the primary IronBee git repository for your own use which you
-can commit to as you wish. In addition, others can pull, test and contribute to
-your code as well. Periodically you will want to sync up with the upstream
-repository and Github allows this through "Pull Requests". Below are some basic
-instructions for doing this.
+can commit to as you wish. In addition, others can pull, test and contribute
+to your code as well. Periodically you will want to sync up with the upstream
+repository and Github allows this through "Pull Requests". Below are some 
+basic instructions for doing this.
 
 1) Create a forked repository in Github
 

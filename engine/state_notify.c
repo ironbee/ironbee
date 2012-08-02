@@ -154,7 +154,8 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
     assert(line->protocol != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -208,7 +209,8 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     assert((line == NULL) || (line->msg != NULL));
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -292,7 +294,8 @@ ib_status_t ib_state_notify_request_started(
     assert(line != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     /* Validate. */
@@ -405,8 +408,8 @@ static ib_status_t ib_context_get_ex(
             ib_site_t *site = ib_context_site_get(ctx);
             ib_log_debug2(ib, "Selected context %d=%p '%s' site=%s(%s)",
                           (int)i, ctx, ib_context_full_get(ctx),
-                          (site?site->id_str:"none"),
-                          (site?site->name:"none"));
+                          (site ? site->id_str : "none"),
+                          (site ? site->name : "none"));
             *pctx = ctx;
             break;
         }
@@ -431,7 +434,8 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
     assert(conn != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -498,7 +502,8 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
 
     ib_conn_t *conn = conndata->conn;
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -532,7 +537,8 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
 
     ib_conn_t *conn = conndata->conn;
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -565,7 +571,8 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
     assert(conn != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -710,7 +717,8 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
     assert(header != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -758,7 +766,8 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     assert(tx != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -834,7 +843,8 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     assert(txdata != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -881,7 +891,8 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     assert(tx != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     /* Validate. */
@@ -987,7 +998,8 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
     assert(header != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -1034,7 +1046,8 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     assert(tx != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -1095,7 +1108,8 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     assert(txdata != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -1153,7 +1167,8 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     assert(tx != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED)) {

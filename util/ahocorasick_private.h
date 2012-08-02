@@ -61,7 +61,7 @@ struct ib_ac_state_t {
     ib_ac_char_t      *pattern;   /**< (sub) pattern path to this state */
 
     ib_ac_callback_t   callback;  /**< callback function for matches */
-    void              *data;      /**< callback (or match entry) extra params */
+    void              *data;   /**< callback (or match entry) extra params */
 
 };
 

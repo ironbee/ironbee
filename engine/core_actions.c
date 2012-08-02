@@ -139,7 +139,11 @@ static ib_status_t act_setflag_execute(void *data,
     else if (strcasecmp(cstr, "block") == 0) {
         if (remove_flag) {
             // FIXME: Remove in FLAGS collection
-            ib_tx_flags_unset(tx, IB_TX_BLOCK_ADVISORY|IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE);
+            ib_tx_flags_unset(tx,
+                IB_TX_BLOCK_ADVISORY |
+                IB_TX_BLOCK_PHASE    |
+                IB_TX_BLOCK_IMMEDIATE
+            );
         }
         else {
             // FIXME: Set in FLAGS collection
@@ -258,9 +262,11 @@ static ib_status_t act_event_execute(void *data,
             const ib_bytestr_t *bs;
             rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
             if (rc == IB_OK) {
-                ib_logevent_field_add_ex(event,
-                                         (const char *)ib_bytestr_const_ptr(bs),
-                                         ib_bytestr_length(bs));
+                ib_logevent_field_add_ex(
+                    event,
+                    (const char *)ib_bytestr_const_ptr(bs),
+                    ib_bytestr_length(bs)
+                );
             }
         }
     }
@@ -723,8 +729,9 @@ static ib_status_t act_setvar_execute(void *data,
         }
         else {
             ib_log_error_tx(tx,
-                            "setvar: field \"%.*s\" type %d invalid for NUMADD",
-                            (int)namelen, name, cur->type);
+                "setvar: field \"%.*s\" type %d invalid for NUMADD",
+                (int)namelen, name, cur->type
+            );
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
     }
@@ -905,7 +912,10 @@ static ib_status_t act_block_immediate_execute(ib_tx_t *tx,
 /**
  * The function that implements flagging a particular block type.
  */
-typedef ib_status_t(*act_block_execution_t)(ib_tx_t *tx, const ib_rule_t *rule);
+typedef ib_status_t(*act_block_execution_t)(
+    ib_tx_t         *tx,
+    const ib_rule_t *rule
+);
 
 /**
  * Internal block action structure.

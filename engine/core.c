@@ -1465,7 +1465,7 @@ static void logger_api_logmsg(ib_provider_inst_t *lpi,
      */
     /// @todo Probably should not need this check
     if (iface != NULL) {
-        iface->logger((lpi->pr->data?lpi->pr->data:lpi->data),
+        iface->logger((lpi->pr->data ? lpi->pr->data : lpi->data),
                       level, ib, file, line, fmt, ap);
     }
 
@@ -3498,7 +3498,8 @@ static ib_status_t matcher_api_compile_pattern(ib_provider_t *mpr,
 
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_IFACE_TYPE(matcher) *iface = mpr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(matcher) *iface =
+        mpr ? (IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -3535,7 +3536,8 @@ static ib_status_t matcher_api_match_compiled(ib_provider_t *mpr,
                                               void *ctx)
 {
     IB_FTRACE_INIT();
-    IB_PROVIDER_IFACE_TYPE(matcher) *iface = mpr?(IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface:NULL;
+    IB_PROVIDER_IFACE_TYPE(matcher) *iface =
+        mpr ? (IB_PROVIDER_IFACE_TYPE(matcher) *)mpr->iface : NULL;
     ib_status_t rc;
 
     if (iface == NULL) {
@@ -5389,7 +5391,7 @@ static ib_status_t core_init(ib_engine_t *ib,
      * path, etc)
      */
     /*
-     * ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header,NULL);
+     * ib_hook_register(ib, handle_context_tx_event, (void *)parser_hook_req_header, NULL);
      */
 
     /* Register auditlog body buffering hooks. */

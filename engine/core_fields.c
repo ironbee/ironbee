@@ -86,8 +86,10 @@ static void core_gen_tx_bytestr_alias_field(ib_tx_t *tx,
 
     rc = ib_data_add(tx->dpi, f);
     if (rc != IB_OK) {
-        ib_log_warning(tx->ib, "Failed add \"%s\" field to transaction data store: %s",
-                       name, ib_status_to_string(rc));
+        ib_log_warning_tx(tx,
+            "Failed add \"%s\" field to transaction data store: %s",
+            name, ib_status_to_string(rc)
+        );
     }
 }
 
@@ -113,68 +115,12 @@ static void core_gen_tx_numeric_field(ib_tx_t *tx,
 
     rc = ib_data_add(tx->dpi, f);
     if (rc != IB_OK) {
-        ib_log_warning(tx->ib, "Failed add \"%s\" field to transaction data store: %s",
-                       name, ib_status_to_string(rc));
+        ib_log_warning_tx(tx,
+            "Failed add \"%s\" field to transaction data store: %s",
+            name, ib_status_to_string(rc)
+        );
     }
 }
-
-#if 0
-// Currently unused
-static void core_gen_conn_bytestr_alias_field(ib_conn_t *conn,
-                                              const char *name,
-                                              ib_bytestr_t *val)
-{
-    ib_field_t *f;
-
-    assert(conn != NULL);
-    assert(name != NULL);
-    assert(val != NULL);
-
-    ib_status_t rc = ib_field_create_no_copy(&f, conn->mp,
-                                             name, strlen(name),
-                                             IB_FTYPE_BYTESTR,
-                                             val);
-    if (rc != IB_OK) {
-        ib_log_warning(conn->ib, "Failed to create \"%s\" field: %s",
-                     name, ib_status_to_string(rc));
-        return;
-    }
-
-    rc = ib_data_add(conn->dpi, f);
-    if (rc != IB_OK) {
-        ib_log_warning(conn->ib, "Failed add \"%s\" field to connection data store: %s",
-                       name, ib_status_to_string(rc));
-    }
-}
-
-static void core_gen_conn_numeric_field(ib_conn_t *conn,
-                                        const char *name,
-                                        ib_num_t val)
-{
-    ib_field_t *f;
-
-    assert(conn != NULL);
-    assert(name != NULL);
-
-    ib_num_t num = val;
-    ib_status_t rc = ib_field_create(&f, conn->mp,
-                                     name, strlen(name),
-                                     IB_FTYPE_NUM,
-                                     &num);
-    if (rc != IB_OK) {
-        ib_log_warning(conn->ib, "Failed to create \"%s\" field: %s",
-                     name, ib_status_to_string(rc));
-        return;
-    }
-
-    rc = ib_data_add(conn->dpi, f);
-    if (rc != IB_OK) {
-        ib_log_warning(conn->ib, "Failed add \"%s\" field to transaction data store: %s",
-                       name, ib_status_to_string(rc));
-    }
-}
-#endif
-
 
 /* -- Hooks -- */
 
@@ -615,8 +561,10 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
             ib_list_t *field_list;
             ib_list_node_t *node = NULL;
 
-            rc = ib_field_mutable_value(param_list,
-                                        ib_ftype_list_mutable_out(&field_list));
+            rc = ib_field_mutable_value(
+                param_list,
+                ib_ftype_list_mutable_out(&field_list)
+            );
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -677,8 +625,10 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
             ib_list_t *field_list;
             ib_list_node_t *node = NULL;
 
-            rc = ib_field_mutable_value(param_list,
-                                        ib_ftype_list_mutable_out(&field_list));
+            rc = ib_field_mutable_value(
+                param_list,
+                ib_ftype_list_mutable_out(&field_list)
+            );
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }
@@ -704,10 +654,12 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
 /*
  * Callback used to generate response header fields.
  */
-static ib_status_t core_gen_response_header_fields(ib_engine_t *ib,
-                                                   ib_tx_t *tx,
-                                                   ib_state_event_type_t event,
-                                                   void *cbdata)
+static ib_status_t core_gen_response_header_fields(
+    ib_engine_t           *ib,
+    ib_tx_t               *tx,
+    ib_state_event_type_t  event,
+    void                  *cbdata
+)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -782,7 +734,9 @@ ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
     rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
     if (rc != IB_OK) {
         ib_log_alert(ib,
-                     "Failed to fetch core module context config: %s", ib_status_to_string(rc));
+            "Failed to fetch core module context config: %s",
+            ib_status_to_string(rc)
+        );
         IB_FTRACE_RET_STATUS(rc);
     }
 

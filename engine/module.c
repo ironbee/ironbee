@@ -55,7 +55,10 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
 
     rc = ib_array_setn(ib->modules, m->idx, m);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to register module %s: %s", m->name, ib_status_to_string(rc));
+        ib_log_error(ib,
+            "Failed to register module %s: %s",
+            m->name, ib_status_to_string(rc)
+        );
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -127,7 +130,9 @@ ib_status_t ib_module_load(ib_module_t **pm,
     ib_log_debug2(ib, "Loading module: %s", file);
     rc = ib_dso_open(&dso, file, ib->config_mp);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to load module %s: %s", file, ib_status_to_string(rc));
+        ib_log_error(ib,
+            "Failed to load module %s: %s", file, ib_status_to_string(rc)
+        );
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -212,7 +217,8 @@ ib_status_t ib_module_register_context(ib_module_t *m,
     ib_status_t rc;
 
     /* Create a module context data structure. */
-    cfgdata = (ib_context_data_t *)ib_mpool_calloc(ctx->mp, 1, sizeof(*cfgdata));
+    cfgdata =
+        (ib_context_data_t *)ib_mpool_calloc(ctx->mp, 1, sizeof(*cfgdata));
     if (cfgdata == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }

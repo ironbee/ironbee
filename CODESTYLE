@@ -94,8 +94,8 @@ directly related to code formatting.
  * @author Author Two <author2@company.com>
  */
 
-* All public functions MUST include doxygen documentation such as follows. This
-  documentation MUST be in the public header file.
+* All public functions MUST include doxygen documentation such as follows. 
+  This documentation MUST be in the public header file.
 
 /**
  * Some brief description.

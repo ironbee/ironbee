@@ -62,9 +62,11 @@ ib_time_t ib_clock_get_time(void) {
 
     /* Ticks seem to be an undesirable due for many reasons.
      * IB_CLOCK is set to CLOCK_MONOTONIC which is vulnerable to slew or
-     * if available set to CLOCK_MONOTONIC_RAW which does not suffer from slew.
+     * if available set to CLOCK_MONOTONIC_RAW which does not suffer from
+     * slew.
      *
-     * timespec provides sec and nsec resolution so we have to convert to msec.
+     * timespec provides sec and nsec resolution so we have to convert to
+     * msec.
      */
     clock_gettime(IB_CLOCK, &ts);
 
@@ -112,7 +114,11 @@ void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv)
     strftime(buf + 24, 6, "%z", tm);
 }
 
-void ib_clock_relative_timestamp(char *buf, const ib_timeval_t *ptv, ib_time_t offset)
+void ib_clock_relative_timestamp(
+    char               *buf,
+    const ib_timeval_t *ptv,
+    ib_time_t           offset
+)
 {
     ib_timeval_t adj_tv;
 

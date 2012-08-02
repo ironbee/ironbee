@@ -54,9 +54,9 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
 
     const uint8_t *iptr;
     const uint8_t *iend = data_in + dlen_in;
-    size_t mult = 2;     /* Size multiplier */
-    size_t buflen;       /* Length of data buf can hold */
-    size_t bufsize;      /* Size of allocated buffer (may hold trailing nul) */
+    size_t mult = 2; /* Size multiplier */
+    size_t buflen;   /* Length of data buf can hold */
+    size_t bufsize;  /* Size of allocated buffer (may hold trailing nul) */
     char *buf;
     char *optr;
     const char *oend;

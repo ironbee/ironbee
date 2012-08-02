@@ -1157,7 +1157,9 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "htmlEntityDecode", tfn_html_entity_decode, NULL);
+    rc = ib_tfn_register(ib,
+        "htmlEntityDecode", tfn_html_entity_decode, NULL
+    );
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1167,7 +1169,9 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "normalizePathWin", tfn_normalize_path_win, NULL);
+    rc = ib_tfn_register(ib,
+        "normalizePathWin", tfn_normalize_path_win, NULL
+    );
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

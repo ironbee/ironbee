@@ -63,7 +63,7 @@ struct ib_array_t {
  *
  * @returns Extent index where data resides
  */
-#define IB_ARRAY_EXTENT_INDEX(arr,idx) \
+#define IB_ARRAY_EXTENT_INDEX(arr, idx) \
     ((idx) / (arr)->ninit)
 
 /**
@@ -75,7 +75,7 @@ struct ib_array_t {
  *
  * @returns Data index where data resides within the given extent
  */
-#define IB_ARRAY_DATA_INDEX(arr,idx,extent_idx) \
+#define IB_ARRAY_DATA_INDEX(arr, idx, extent_idx) \
     ((idx) - ((extent_idx) * (arr)->ninit))
 
 ib_status_t ib_array_create(ib_array_t **parr, ib_mpool_t *pool,
@@ -111,7 +111,8 @@ ib_status_t ib_array_create(ib_array_t **parr, ib_mpool_t *pool,
 
     /* Create the first data array in the first extent slot. */
     *((void ***)(*parr)->extents) = (void **)ib_mpool_calloc(pool,
-                                                             ninit, sizeof(void *));
+        ninit, sizeof(void *)
+    );
     if (*((void ***)(*parr)->extents) == NULL) {
         rc = IB_EALLOC;
         goto failed;
@@ -173,7 +174,8 @@ ib_status_t ib_array_setn(ib_array_t *arr, size_t idx, void *val)
         }
 
         ((void ***)arr->extents)[r] = (void **)ib_mpool_calloc(arr->mp,
-                                                               arr->ninit, sizeof(void *));
+            arr->ninit, sizeof(void *)
+        );
         arr->size += arr->ninit;
     }
 

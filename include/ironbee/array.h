@@ -151,10 +151,11 @@ size_t DLL_PUBLIC ib_array_size(ib_array_t *arr);
  * @param idx Symbol holding the index, set for each iteration
  * @param val Symbol holding the value at the index, set for each iteration
  */
-#define IB_ARRAY_LOOP(arr,ne,idx,val) \
-    for ((ne)=ib_array_elements(arr), (idx)=0; \
-         ib_array_get((arr),(idx),(void *)&(val))==IB_OK && (idx)<(ne); \
-         (idx)++)
+#define IB_ARRAY_LOOP(arr, ne, idx, val) \
+    for ((ne) = ib_array_elements(arr), (idx) = 0; \
+         ib_array_get((arr), (idx), (void *)&(val)) \
+             == IB_OK && (idx) < (ne); \
+         ++(idx))
 
 /**
  * Dynamic array loop in reverse.
@@ -176,10 +177,10 @@ size_t DLL_PUBLIC ib_array_size(ib_array_t *arr);
  * @param idx Symbol holding the index, set for each iteration
  * @param val Symbol holding the value at the index, set for each iteration
  */
-#define IB_ARRAY_LOOP_REVERSE(arr,ne,idx,val) \
-    for ((ne)=ib_array_elements(arr), (idx)=(ne)>0?(ne)-1:0; \
-         ib_array_get((arr),(idx),(void *)&(val))==IB_OK && (idx)>0; \
-         (idx)--)
+#define IB_ARRAY_LOOP_REVERSE(arr, ne, idx, val) \
+    for ((ne) = ib_array_elements(arr), (idx) = (ne) > 0 ? (ne)-1 : 0; \
+         ib_array_get((arr), (idx), (void *)&(val)) == IB_OK && (idx) > 0; \
+         --(idx))
 
 /** @} IronBeeUtilArray */
 

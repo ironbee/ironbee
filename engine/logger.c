@@ -173,6 +173,7 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
 
     char buf[IB_LEVENT_MSG_BUF_SIZE];
     va_list ap;
+    int r = 0;
 
     *ple = (ib_logevent_t *)ib_mpool_calloc(pool, 1, sizeof(**ple));
     if (*ple == NULL) {
@@ -193,7 +194,8 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
      * with "..." if truncation is required.
      */
     va_start(ap, fmt);
-    if (vsnprintf(buf, IB_LEVENT_MSG_BUF_SIZE, fmt, ap) >= IB_LEVENT_MSG_BUF_SIZE) {
+    r = vsnprintf(buf, IB_LEVENT_MSG_BUF_SIZE, fmt, ap);
+    if (r >= IB_LEVENT_MSG_BUF_SIZE) {
         memcpy(buf + (IB_LEVENT_MSG_BUF_SIZE - 3), "...", 3);
     }
     va_end(ap);

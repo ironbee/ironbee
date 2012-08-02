@@ -205,7 +205,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        *result = (strcmp(fval,expanded) == 0);
+        *result = (strcmp(fval, expanded) == 0);
     }
     else if (field->type == IB_FTYPE_BYTESTR) {
         const ib_bytestr_t *value;
@@ -219,7 +219,9 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
         len = ib_bytestr_length(value);
 
         if (len == strlen(expanded)) {
-            *result = (memcmp(ib_bytestr_const_ptr(value), expanded, len) == 0);
+            *result = (
+                memcmp(ib_bytestr_const_ptr(value), expanded, len) == 0
+            );
         }
         else {
             *result = 0;

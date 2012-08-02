@@ -650,7 +650,7 @@ static ib_status_t modlua_module_load(ib_engine_t *ib,
         NULL,                           /* Config copier data */
         NULL,                           /* Configuration field map */
         NULL,                           /* Config directive map */
-        (use_onload?modlua_init_lua_wrapper:NULL),/* Initialize function */
+        (use_onload ? modlua_init_lua_wrapper : NULL), /* Initialize function */
         NULL,                           /* Callback data */
         NULL,                           /* Finish function */
         NULL,                           /* Callback data */

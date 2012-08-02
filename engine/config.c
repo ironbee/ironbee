@@ -151,20 +151,21 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                                const char *file)
 {
     IB_FTRACE_INIT();
-    int ec;                                    /**< Error code for sys calls. */
-    int fd = open(file, O_RDONLY);             /**< File to read. */
-    unsigned lineno = 1;                       /**< Current line number */
-    ssize_t nbytes = 0;                        /**< Bytes read by one read(). */
-    const size_t bufsz = 8192;                 /**< Buffer size. */
-    size_t buflen = 0;                         /**< Last char in buffer. */
-    char *buf = NULL;                          /**< Buffer. */
-    char *eol = 0;                             /**< buf[eol] = end of line. */
-    char *bol = 0;                             /**< buf[bol] = begin line. */
+    int ec             = 0;    /* Error code for sys calls. */
+    int fd             = 0;    /* File to read. */
+    unsigned lineno    = 1;    /* Current line number */
+    ssize_t nbytes     = 0;    /* Bytes read by one read(). */
+    const size_t bufsz = 8192; /* Buffer size. */
+    size_t buflen      = 0;    /* Last char in buffer. */
+    char *buf          = NULL; /* Buffer. */
+    char *eol          = 0;    /* buf[eol] = end of line. */
+    char *bol          = 0;    /* buf[bol] = begin line. */
 
     ib_status_t rc = IB_OK;
     unsigned error_count = 0;
     ib_status_t error_rc = IB_OK;
 
+    fd = open(file, O_RDONLY);
     if (fd == -1) {
         ec = errno;
         ib_cfg_log_error(cp, "Could not open config file \"%s\": (%d) %s",
@@ -190,7 +191,9 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                           nbytes, buflen);
 
         if ( nbytes == 0 ) { /* EOF */
-            rc = ib_cfgparser_parse_buffer(cp, buf, nbytes, file, lineno, true);
+            rc = ib_cfgparser_parse_buffer(
+                cp, buf, nbytes, file, lineno, true
+            );
             ++lineno;
             if (rc != IB_OK) {
                 ++error_count;
@@ -318,7 +321,9 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
         newlen += (length + 2);
         newbuf = (char *)ib_mpool_alloc(cp->mp, newlen);
         if (newbuf == NULL) {
-            ib_cfg_log_error(cp, "Unable to allocate line continuation buffer");
+            ib_cfg_log_error(cp,
+                "Unable to allocate line continuation buffer"
+            );
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
         strcpy(newbuf, cp->linebuf);
@@ -346,7 +351,9 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
         size_t len = end - buffer;
         char *newbuf = (char *)ib_mpool_alloc(cp->mp, len + 1);
         if (newbuf == NULL) {
-            ib_cfg_log_error(cp, "Unable to allocate line continuation buffer");
+            ib_cfg_log_error(cp,
+                "Unable to allocate line continuation buffer"
+            );
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
         if (len > 0) {
@@ -371,7 +378,7 @@ static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
     IB_FTRACE_INIT();
     cp->cur_ctx = ctx;
     cp->cur_loc = (ib_loc_t *)ctx->fn_ctx_data;
-    cp->cur_site = cp->cur_loc?cp->cur_loc->site:NULL;
+    cp->cur_site = cp->cur_loc ? cp->cur_loc->site : NULL;
     IB_FTRACE_RET_VOID();
 }
 
@@ -429,10 +436,11 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     ctx = (ib_context_t *)ib_list_node_data(ib_list_last(cp->stack));
     cfgp_set_current(cp, ctx);
 
-    ib_cfg_log_debug3(cp, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
-                      cp->cur_ctx, ib_context_full_get(cp->cur_ctx),
-                      cp->cur_site, cp->cur_site?cp->cur_site->name:"NONE",
-                      cp->cur_loc, cp->cur_loc?cp->cur_loc->path:"/");
+    ib_cfg_log_debug3(cp,
+        "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
+        cp->cur_ctx, ib_context_full_get(cp->cur_ctx),
+        cp->cur_site, cp->cur_site ? cp->cur_site->name : "NONE",
+        cp->cur_loc, cp->cur_loc ? cp->cur_loc->path : "/");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -480,7 +488,8 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
     }
 
     /* The last in the list is now the current. */
-    cp->cur_blkname = (const char *)ib_list_node_data(ib_list_last(cp->block));
+    cp->cur_blkname =
+        (const char *)ib_list_node_data(ib_list_last(cp->block));
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -634,7 +643,9 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                     fmask = ~0;
                 }
 
-                ib_cfg_log_debug3(cp, "Processing %s option: %s", name, opname);
+                ib_cfg_log_debug3(cp,
+                    "Processing %s option: %s", name, opname
+                );
 
                 /* Remove the operator from the name if required.
                  * and determine the numeric value of the option
@@ -646,7 +657,9 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
 
                 rc = cfgp_opval(opname, rec->valmap, &val);
                 if (rc != IB_OK) {
-                    ib_cfg_log_error(cp, "Invalid %s option: %s", name, opname);
+                    ib_cfg_log_error(cp,
+                        "Invalid %s option: %s", name, opname
+                    );
                     IB_FTRACE_RET_STATUS(rc);
                 }
 

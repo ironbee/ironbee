@@ -53,7 +53,8 @@ ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file);
  *
  * @param[in,out] ib Used for logging and adding the Lua rule to.
  * @param[in,out] L The Lua state used to load @a file and store the rule.
- * @param[in] func_name The name the contents of the file will be stored under.
+ * @param[in] func_name The name the contents of the file will be stored
+ *                      under.
  * @param[in] file The file that holds the Lua script that makes up the rule.
  * @returns The IronBee status. IB_OK on success.
  */
@@ -63,7 +64,8 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
                              const char *func_name);
 
 /**
- * Call the Lua function \a func_name in the @c lua_State @a L and treat it as an IronBee rule.
+ * Call the Lua function @a func_name in the @c lua_State @a L and treat it
+ * as an IronBee rule.
  *
  * @param[in] ib The IronBee context. Used for logging.
  * @param[in,out] tx The transaction object. This is passed to the rule

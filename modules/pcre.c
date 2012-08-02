@@ -1287,7 +1287,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_log_debug(ib,"PCRE Status: compiled=\"%d.%d %s\" loaded=\"%s\"",
+    ib_log_debug(ib, "PCRE Status: compiled=\"%d.%d %s\" loaded=\"%s\"",
         PCRE_MAJOR, PCRE_MINOR, IB_XSTRINGIFY(PCRE_DATE), pcre_version());
 
     /* Register operators. */

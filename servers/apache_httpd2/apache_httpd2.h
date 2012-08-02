@@ -41,10 +41,10 @@ typedef struct ironbee_config_t ironbee_config_t;
 
 /** Server configuration */
 struct ironbee_config_t {
-    int            enabled;           /**< Is plugin enabled? */
-    const char    *config;            /**< Config file */
-    size_t         buf_size;          /**< Buffer size. */
-    size_t         flush_size;        /**< Bytes in buffer to trigger flush. */
+    int            enabled;    /**< Is plugin enabled? */
+    const char    *config;     /**< Config file */
+    size_t         buf_size;   /**< Buffer size. */
+    size_t         flush_size; /**< Bytes in buffer to trigger flush. */
 };
 
 #ifdef __cplusplus

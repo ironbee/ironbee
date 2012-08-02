@@ -42,7 +42,9 @@ ib_status_t ib_provider_define(ib_engine_t *ib,
     char *type_copy;
 
     /* Create the provider definition. */
-    prd = (ib_provider_def_t *)ib_mpool_calloc(ib->config_mp, 1, sizeof(*prd));
+    prd = (ib_provider_def_t *)ib_mpool_calloc(ib->config_mp,
+        1, sizeof(*prd)
+    );
     if (prd == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }

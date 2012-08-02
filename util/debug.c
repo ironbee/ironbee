@@ -44,132 +44,153 @@ void ib_trace_init(const char *fn)
     }
 }
 
-void ib_trace_msg(const char *file,
-                  int line,
-                  const char *func,
-                  const char *msg)
+void ib_trace_msg(
+    const char *file,
+    int         line,
+    const char *func,
+    const char *msg
+)
 {
     if (! ib_trace_fh) {
         return;
     }
 
-    const char *sep = func?"() - ":"";
+    const char *sep = func ? "() - " : "";
 
-    fprintf(ib_trace_fh, "IronBee TRACE [%s:%d]: %s%s%s\n",
-            file, line,
-            (func?func:""), sep, msg);
+    fprintf(ib_trace_fh,
+        "IronBee TRACE [%s:%d]: %s%s%s\n",
+        file, line,
+        (func ? func : ""), sep, msg
+    );
     fflush(ib_trace_fh);
 }
 
-void ib_trace_num(const char *file,
-                  int line,
-                  const char *func,
-                  const char *msg,
-                  intmax_t num)
+void ib_trace_num(
+    const char *file,
+    int         line,
+    const char *func,
+    const char *msg,
+    intmax_t    num
+)
 
 {
     if (! ib_trace_fh) {
         return;
     }
 
-    const char *sep = func?"() - ":"";
-    const char *sep2 = msg?" ":"";
+    const char *sep = func ? "() - " : "";
+    const char *sep2 = msg ? " " : "";
 
-    fprintf(ib_trace_fh, "IronBee TRACE [%s:%d]: %s%s%s%s%" PRIuMAX " (0x%" PRIxMAX ")\n",
-            file, line,
-            (func?func:""), sep,
-            (msg?msg:""), sep2,
-            num, num);
+    fprintf(ib_trace_fh,
+        "IronBee TRACE [%s:%d]: %s%s%s%s%" PRIuMAX " (0x%" PRIxMAX ")\n",
+        file, line,
+        (func ? func : ""), sep,
+        (msg ? msg : ""), sep2,
+        num, num
+    );
     fflush(ib_trace_fh);
 }
 
-void ib_trace_unum(const char *file,
-                   int line,
-                   const char *func,
-                   const char *msg,
-                   uintmax_t unum)
-
+void ib_trace_unum(
+    const char *file,
+    int         line,
+    const char *func,
+    const char *msg,
+    uintmax_t   unum
+)
 {
     if (! ib_trace_fh) {
         return;
     }
 
-    const char *sep = func?"() - ":"";
-    const char *sep2 = msg?" ":"";
+    const char *sep = func ? "() - " : "";
+    const char *sep2 = msg ? " " : "";
 
-    fprintf(ib_trace_fh, "IronBee TRACE [%s:%d]: %s%s%s%s%" PRIuMAX " (0x%" PRIxMAX ")\n",
-            file, line,
-            (func?func:""), sep,
-            (msg?msg:""), sep2,
-            unum, unum);
+    fprintf(ib_trace_fh,
+        "IronBee TRACE [%s:%d]: %s%s%s%s%" PRIuMAX " (0x%" PRIxMAX ")\n",
+        file, line,
+        (func ? func : ""), sep,
+        (msg ? msg : ""), sep2,
+        unum, unum
+    );
     fflush(ib_trace_fh);
 }
 
-void ib_trace_ptr(const char *file,
-                  int line,
-                  const char *func,
-                  const char *msg,
-                  void *ptr)
-
+void ib_trace_ptr(
+    const char *file,
+    int         line,
+    const char *func,
+    const char *msg,
+    void       *ptr
+)
 {
     if (! ib_trace_fh) {
         return;
     }
 
-    const char *sep = func?"() - ":"";
-    const char *sep2 = msg?" ":"";
+    const char *sep = func ? "() - " : "";
+    const char *sep2 = msg ? " " : "";
 
-    fprintf(ib_trace_fh, "IronBee TRACE [%s:%d]: %s%s%s%s%p\n",
+    fprintf(ib_trace_fh,
+            "IronBee TRACE [%s:%d]: %s%s%s%s%p\n",
             file, line,
-            (func?func:""), sep,
-            (msg?msg:""), sep2,
-            ptr);
+            (func ? func : ""), sep,
+            (msg ? msg : ""), sep2,
+            ptr
+    );
     fflush(ib_trace_fh);
 }
 
-void ib_trace_str(const char *file,
-                  int line,
-                  const char *func,
-                  const char *msg,
-                  const char *str)
+void ib_trace_str(
+    const char *file,
+    int         line,
+    const char *func,
+    const char *msg,
+    const char *str
+)
 
 {
     if (! ib_trace_fh) {
         return;
     }
 
-    const char *sep = func?"() - ":"";
-    const char *sep2 = msg?" ":"";
+    const char *sep = func ? "() - " : "";
+    const char *sep2 = msg ? " " : "";
     const char *real_str = (str != NULL) ? str : "(null)";
 
-    fprintf(ib_trace_fh, "IronBee TRACE [%s:%d]: %s%s%s%s\"%s\"\n",
-            file, line,
-            (func?func:""), sep,
-            (msg?msg:""), sep2,
-            real_str);
+    fprintf(ib_trace_fh,
+        "IronBee TRACE [%s:%d]: %s%s%s%s\"%s\"\n",
+        file, line,
+        (func ? func : ""), sep,
+        (msg ? msg : ""), sep2,
+        real_str
+    );
     fflush(ib_trace_fh);
 }
 
-void ib_trace_status(const char *file,
-                     int line,
-                     const char *func,
-                     const char *msg,
-                     ib_status_t rc)
+void ib_trace_status(
+    const char *file,
+    int         line,
+    const char *func,
+    const char *msg,
+    ib_status_t rc
+)
 {
     if (! ib_trace_fh) {
         return;
     }
 
-    const char *sep = func?"() - ":"";
-    const char *sep2 = msg?" ":"";
+    const char *sep = func ? "() - " : "";
+    const char *sep2 = msg ? " " : "";
 
-    fprintf(ib_trace_fh, "IronBee TRACE [%s:%d]: %s%s%s%s%s)\n",
-            file, line,
-            (func?func:""), sep,
-            (msg?msg:""), sep2,
-            ib_status_to_string(rc));
+    fprintf(ib_trace_fh,
+        "IronBee TRACE [%s:%d]: %s%s%s%s%s)\n",
+        file, line,
+        (func ? func : ""), sep,
+        (msg ? msg : ""), sep2,
+        ib_status_to_string(rc)
+    );
     fflush(ib_trace_fh);
 }
 
 #endif /* IB_DEBUG */
-

@@ -107,7 +107,9 @@ ib_status_t ib_uuid_ascii_to_bin(
         goto finish;
     }
 
-    uuid_rc = uuid_export(g_ossp_uuid, UUID_FMT_BIN, (void *)&uuid, &uuid_len);
+    uuid_rc = uuid_export(g_ossp_uuid,
+        UUID_FMT_BIN, (void *)&uuid, &uuid_len
+    );
     if (uuid_rc == UUID_RC_MEM) {
         rc = IB_EALLOC;
         goto finish;
@@ -196,7 +198,9 @@ ib_status_t ib_uuid_create_v4(ib_uuid_t *uuid)
         goto finish;
     }
 
-    uuid_rc = uuid_export(g_ossp_uuid, UUID_FMT_BIN, (void *)&uuid, &uuid_len);
+    uuid_rc = uuid_export(g_ossp_uuid,
+        UUID_FMT_BIN, (void *)&uuid, &uuid_len
+    );
     if (uuid_rc == UUID_RC_MEM) {
         rc = IB_EALLOC;
         goto finish;

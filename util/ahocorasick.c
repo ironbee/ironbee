@@ -809,7 +809,8 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
                             mt->pattern = outs->pattern;
                             mt->data = state->data;
                             mt->pattern_len = outs->level + 1;
-                            mt->offset = ac_ctx->processed - (outs->level + 1);
+                            mt->offset =
+                                ac_ctx->processed - (outs->level + 1);
                             mt->relative_offset = ac_ctx->current_offset -
                                                          (outs->level + 1);
 

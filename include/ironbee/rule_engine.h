@@ -183,8 +183,8 @@ struct ib_rule_context_t {
  * Rule engine data.
  */
 struct ib_rule_engine_t {
-    ib_list_t             *rule_list;   /**< All rules owned by this context */
-    ib_hash_t             *rule_hash;   /**< Hash of rules (by rule-id) */
+    ib_list_t             *rule_list; /**< All rules owned by this context */
+    ib_hash_t             *rule_hash; /**< Hash of rules (by rule-id) */
 };
 
 /**

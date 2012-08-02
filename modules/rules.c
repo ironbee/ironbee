@@ -476,8 +476,10 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (not_found != 0) {
-        ib_cfg_log_error(cp, "Rule target \"%s\": %d transformations not found",
-                         final_target_str, not_found);
+        ib_cfg_log_error(cp,
+            "Rule target \"%s\": %d transformations not found",
+            final_target_str, not_found
+        );
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -771,7 +773,9 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     /* Transformation modifiers */
     if (strcasecmp(name, "t") == 0) {
         if (! ib_rule_allow_tfns(rule)) {
-            ib_cfg_log_error(cp, "Transformations not supported for this rule");
+            ib_cfg_log_error(cp,
+                "Transformations not supported for this rule"
+            );
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
@@ -1003,9 +1007,10 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
         rc = parse_modifier(cp, rule, mod->data);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
-                             "Error parsing external rule modifier \"%s\": %s",
-                             (const char *)mod->data,
-                             ib_status_to_string(rc));
+                "Error parsing external rule modifier \"%s\": %s",
+                (const char *)mod->data,
+                ib_status_to_string(rc)
+            );
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -1826,7 +1831,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
         ib_lua_add_require_path(ib, g_ironbee_rules_lua, path);
 
-        ib_log_debug(ib,"Added \"%s\" to lua search path.", path);
+        ib_log_debug(ib, "Added \"%s\" to lua search path.", path);
     }
 
     /* We are done with path. To be safe, we NULL it as there is more work

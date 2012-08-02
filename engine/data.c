@@ -446,7 +446,13 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
         *pf = NULL;
     }
 
-    rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_NUM, ib_ftype_num_in(&val));
+    rc = ib_field_create(
+        &f,
+        dpi->mp,
+        name, nlen,
+        IB_FTYPE_NUM,
+        ib_ftype_num_in(&val)
+    );
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -480,7 +486,13 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
         *pf = NULL;
     }
 
-    rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_NULSTR, ib_ftype_nulstr_in(val));
+    rc = ib_field_create(
+        &f,
+        dpi->mp,
+        name, nlen,
+        IB_FTYPE_NULSTR,
+        ib_ftype_nulstr_in(val)
+    );
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -583,12 +595,16 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
 
     rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_SBUFFER, NULL);
     if (rc != IB_OK) {
-        ib_util_log_debug("SBUFFER field creation failed: %s", ib_status_to_string(rc));
+        ib_util_log_debug(
+            "SBUFFER field creation failed: %s", ib_status_to_string(rc)
+        );
         IB_FTRACE_RET_STATUS(rc);
     }
 
     rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
-    ib_util_log_debug("SBUFFER field creation returned: %s", ib_status_to_string(rc));
+    ib_util_log_debug(
+        "SBUFFER field creation returned: %s", ib_status_to_string(rc)
+    );
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;
     }
@@ -775,7 +791,10 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
         /* Get the non-tfn field. */
         rc = api->get(dpi, name, nlen, pf);
         if (rc != IB_OK) {
-            ib_log_debug(ib, "Failed to fetch field: %p (%s)", *pf, ib_status_to_string(rc));
+            ib_log_debug(ib,
+                "Failed to fetch field: %p (%s)",
+                *pf, ib_status_to_string(rc)
+            );
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -818,8 +837,9 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                     if (rc != IB_OK) {
                         /// @todo What to do here?  Fail or ignore?
                         ib_log_error(ib,
-                                     "Transformation failed: %" IB_BYTESTR_FMT,
-                                     IB_BYTESTRSL_FMT_PARAM(tname, len));
+                            "Transformation failed: %" IB_BYTESTR_FMT,
+                            IB_BYTESTRSL_FMT_PARAM(tname, len)
+                        );
                     }
                 }
                 else {

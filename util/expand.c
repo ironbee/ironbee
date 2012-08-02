@@ -456,7 +456,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
         const char *pre = NULL; /* Pointer to found prefix string */
         size_t      pre_off = 0;/* Offset of prefix in the string */
         const char *suf = NULL; /* Pointer to found suffix string */
-        const char *name;       /* Pointer to the name between pre and suffix */
+        const char *name;       /* Pointer to name between pre and suffix */
         size_t      namelen;    /* Length of the name */
         char       *new;        /* New buffer */
         size_t      newlen;     /* Length of new buffer */
@@ -465,7 +465,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
         const char *fptr;       /* Final block (after the suffix) */
         size_t      flen;       /* Length of the final block */
         ib_field_t *f;          /* Field */
-        size_t      slen;       /* Length of the buffer to search for prefix */
+        size_t      slen;       /* Length of the buffer to search */
 
         /* Look for the last prefix in the string with a matching suffix */
         slen = buflen;

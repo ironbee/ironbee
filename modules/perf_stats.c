@@ -197,7 +197,7 @@ static ib_status_t mod_perf_stats_reg_conn_counter(
         }
     }
 
-    rc = ib_hash_set(connp->data, "MOD_PERF_STATS" ,perf_info);
+    rc = ib_hash_set(connp->data, "MOD_PERF_STATS", perf_info);
     if (rc != IB_OK) {
         ib_log_debug(ib, "Failed to store perf stats in connection data: %s", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);

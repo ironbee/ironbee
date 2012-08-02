@@ -49,7 +49,8 @@ ib_status_t ib_list_push(ib_list_t *list, void *data)
 {
     IB_FTRACE_INIT();
     ib_list_node_t *node = (ib_list_node_t *)ib_mpool_calloc(list->mp,
-                                                             1, sizeof(*node));
+        1, sizeof(*node)
+    );
     if (node == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -87,7 +88,8 @@ ib_status_t ib_list_unshift(ib_list_t *list, void *data)
 {
     IB_FTRACE_INIT();
     ib_list_node_t *node = (ib_list_node_t *)ib_mpool_calloc(list->mp,
-                                                             1, sizeof(*node));
+        1, sizeof(*node)
+    );
     if (node == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }

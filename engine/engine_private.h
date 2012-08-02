@@ -90,7 +90,7 @@ struct ib_engine_t {
     ib_hash_t          *dirmap;           /**< Hash tracking directive map */
     ib_hash_t          *apis;             /**< Hash tracking provider APIs */
     ib_hash_t          *providers;        /**< Hash tracking providers */
-    ib_hash_t          *tfns;             /**< Hash tracking transformations */
+    ib_hash_t          *tfns;             /**< Hash tracking transforms */
     ib_hash_t          *operators;        /**< Hash tracking operators */
     ib_hash_t          *actions;          /**< Hash tracking rules */
     ib_rule_engine_t   *rule_engine;      /**< Rule engine data */

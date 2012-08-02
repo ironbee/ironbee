@@ -196,7 +196,7 @@ static void ib_hash_next(
  * @param[in,out] entry Set to each entry in @a hash in sequence.
  * @param[in]     hash  Hash table to iterate through.
  **/
-#define IB_HASH_LOOP(entry,hash) \
+#define IB_HASH_LOOP(entry, hash) \
     for ( \
         ib_hash_iterator_t iterator = ib_hash_first(hash); \
         ((entry) = iterator.current_entry) != NULL; \

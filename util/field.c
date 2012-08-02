@@ -282,7 +282,9 @@ ib_status_t ib_field_create_alias(
     memcpy(name_copy, name, nlen);
     (*pf)->name = (const char *)name_copy;
 
-    (*pf)->val = (ib_field_val_t *)ib_mpool_calloc(mp, 1, sizeof(*((*pf)->val)));
+    (*pf)->val = (ib_field_val_t *)ib_mpool_calloc(mp,
+        1, sizeof(*((*pf)->val))
+    );
     if ((*pf)->val == NULL) {
         rc = IB_EALLOC;
         goto failed;

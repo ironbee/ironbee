@@ -63,8 +63,8 @@ typedef enum {
     HDR_ERROR,
     HDR_HTTP_STATUS
 } ib_hdr_outcome;
-#define IB_HDR_OUTCOME_IS_HTTP(outcome,data) \
-    (outcome == HDR_HTTP_STATUS && (data)->status >= 200 && (data)->status < 600)
+#define IB_HDR_OUTCOME_IS_HTTP(outcome, data) \
+    ((outcome) == HDR_HTTP_STATUS && (data)->status >= 200 && (data)->status < 600)
 #define IB_HTTP_CODE(num) ((num) >= 200 && (num) < 600)
 
 typedef struct tx_list {

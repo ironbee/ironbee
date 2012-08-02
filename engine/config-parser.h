@@ -53,12 +53,14 @@ extern "C" {
  * @{
  */
 
-ib_status_t DLL_PUBLIC ib_cfgparser_ragel_parse_chunk(ib_cfgparser_t *cp,
-                                                      const char *buf,
-                                                      const size_t blen,
-                                                      const char *file,
-                                                      unsigned int lineno,
-                                                      const int is_last_block);
+ib_status_t DLL_PUBLIC ib_cfgparser_ragel_parse_chunk(
+    ib_cfgparser_t *cp,
+    const char     *buf,
+    const size_t    blen,
+    const char     *file,
+    unsigned int    lineno,
+    const int       is_last_block
+);
 
 /**
  * @} IronBeeConfigParser

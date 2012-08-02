@@ -130,7 +130,8 @@ void ib_util_log_ex(int level,
  *        character 15 being returned. If a character is not
  *        submitted that is hexadecimal, then -1 is returned.
  * @param[in] a the input character to be converted. A-F, a-f, or 0-9.
- * @returns The byte value of the passed in hexadecimal character. -1 otherwise.
+ * @returns The byte value of the passed in hexadecimal character or -1 on
+ *          failure.
  */
 static inline char hexchar_to_byte(char a) {
   switch(a) {
@@ -224,7 +225,8 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
                             return IB_EINVAL;
                         }
 
-                        /* Ensure that the next 2 characters are hex digits. */
+                        /* Ensure that the next 2 characters are hex digits.
+                         */
                         for (i=1; i <= 2; i++) {
                             if ( ! isxdigit(src[src_i + i]) ) {
                                 return IB_EINVAL;
@@ -252,7 +254,8 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
                             return IB_EINVAL;
                         }
 
-                        /* Ensure that the next 4 characters are hex digits. */
+                        /* Ensure that the next 4 characters are hex digits.
+                         */
                         for ( i=1; i <= 4; i++ ) {
                             if ( ! isxdigit(src[src_i + i]) ) {
                                 return IB_EINVAL;

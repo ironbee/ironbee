@@ -59,12 +59,14 @@ typedef struct ib_operator_inst_t ib_operator_inst_t;
  *
  * @returns IB_OK if successful.
  */
-typedef ib_status_t (* ib_operator_create_fn_t)(ib_engine_t *ib,
-                                                ib_context_t *ctx,
-                                                const ib_rule_t *rule,
-                                                ib_mpool_t *pool,
-                                                const char *parameters,
-                                                ib_operator_inst_t *op_inst);
+typedef ib_status_t (* ib_operator_create_fn_t)(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *pool,
+    const char         *parameters,
+    ib_operator_inst_t *op_inst
+);
 
 /**
  * Operator instance destruction callback type.
@@ -76,7 +78,9 @@ typedef ib_status_t (* ib_operator_create_fn_t)(ib_engine_t *ib,
  *
  * @returns IB_OK if successful.
  */
-typedef ib_status_t (* ib_operator_destroy_fn_t)(ib_operator_inst_t *op_inst);
+typedef ib_status_t (* ib_operator_destroy_fn_t)(
+    ib_operator_inst_t *op_inst
+);
 
 /**
  * Operator instance execution callback type.
@@ -91,13 +95,15 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(ib_operator_inst_t *op_inst);
  *
  * @returns IB_OK if successful.
  */
-typedef ib_status_t (* ib_operator_execute_fn_t)(ib_engine_t *ib,
-                                                 ib_tx_t *tx,
-                                                 const ib_rule_t *rule,
-                                                 void *data,
-                                                 ib_flags_t flags,
-                                                 ib_field_t *field,
-                                                 ib_num_t *result);
+typedef ib_status_t (* ib_operator_execute_fn_t)(
+    ib_engine_t     *ib,
+    ib_tx_t         *tx,
+    const ib_rule_t *rule,
+    void            *data,
+    ib_flags_t       flags,
+    ib_field_t      *field,
+    ib_num_t        *result
+);
 
 /** Operator Structure */
 typedef struct ib_operator_t ib_operator_t;
@@ -154,15 +160,17 @@ struct ib_operator_inst_t {
  *
  * @returns IB_OK on success, IB_EINVAL if the name is not unique.
  */
-ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
-                                            const char *name,
-                                            ib_flags_t flags,
-                                            ib_operator_create_fn_t fn_create,
-                                            void *cd_create,
-                                            ib_operator_destroy_fn_t fn_destroy,
-                                            void *cd_destroy,
-                                            ib_operator_execute_fn_t fn_execute,
-                                            void *cd_execute);
+ib_status_t DLL_PUBLIC ib_operator_register(
+    ib_engine_t              *ib,
+    const char               *name,
+    ib_flags_t                flags,
+    ib_operator_create_fn_t   fn_create,
+    void                     *cd_create,
+    ib_operator_destroy_fn_t  fn_destroy,
+    void                     *cd_destroy,
+    ib_operator_execute_fn_t  fn_execute,
+    void                     *cd_execute
+);
 
 /**
  * Create an operator instance.
@@ -183,14 +191,16 @@ ib_status_t DLL_PUBLIC ib_operator_register(ib_engine_t *ib,
  *          IB_EINVAL if the required operator flags do not match,
  *          IB_ENOENT if the named operator does not exist
  */
-ib_status_t DLL_PUBLIC ib_operator_inst_create(ib_engine_t *ib,
-                                               ib_context_t *ctx,
-                                               const ib_rule_t *rule,
-                                               ib_flags_t required_op_flags,
-                                               const char *name,
-                                               const char *parameters,
-                                               ib_flags_t flags,
-                                               ib_operator_inst_t **op_inst);
+ib_status_t DLL_PUBLIC ib_operator_inst_create(
+    ib_engine_t         *ib,
+    ib_context_t        *ctx,
+    const ib_rule_t     *rule,
+    ib_flags_t           required_op_flags,
+    const char          *name,
+    const char          *parameters,
+    ib_flags_t           flags,
+    ib_operator_inst_t **op_inst
+);
 
 /**
  * Destroy an operator instance.
@@ -201,7 +211,9 @@ ib_status_t DLL_PUBLIC ib_operator_inst_create(ib_engine_t *ib,
  *
  * @returns IB_OK on success.
  */
-ib_status_t DLL_PUBLIC ib_operator_inst_destroy(ib_operator_inst_t *op_inst);
+ib_status_t DLL_PUBLIC ib_operator_inst_destroy(
+    ib_operator_inst_t *op_inst
+);
 
 /**
  * Call the execute function for an operator instance.
@@ -215,12 +227,14 @@ ib_status_t DLL_PUBLIC ib_operator_inst_destroy(ib_operator_inst_t *op_inst);
  *
  * @returns IB_OK on success
  */
-ib_status_t DLL_PUBLIC ib_operator_execute(ib_engine_t *ib,
-                                           ib_tx_t *tx,
-                                           const ib_rule_t *rule,
-                                           const ib_operator_inst_t *op_inst,
-                                           ib_field_t *field,
-                                           ib_num_t *result);
+ib_status_t DLL_PUBLIC ib_operator_execute(
+    ib_engine_t              *ib,
+    ib_tx_t                  *tx,
+    const ib_rule_t          *rule,
+    const ib_operator_inst_t *op_inst,
+    ib_field_t               *field,
+    ib_num_t                 *result
+);
 
 #ifdef __cplusplus
 }

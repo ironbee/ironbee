@@ -176,8 +176,8 @@ static ib_status_t modua_parse_uastring(char *str,
  * av: Actual value
  * mv: Match value
  */
-#define RESULT_EQ(av,mv)  ( ((av) == (mv)) ? YES : NO )
-#define RESULT_NE(av,mv) ( ((av) != (mv)) ? YES : NO )
+#define RESULT_EQ(av, mv)  ( ((av) == (mv)) ? YES : NO )
+#define RESULT_NE(av, mv) ( ((av) != (mv)) ? YES : NO )
 
 /**
  * Match a field against the specified match rule.

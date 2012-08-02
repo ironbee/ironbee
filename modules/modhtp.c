@@ -225,8 +225,8 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
     return rc;
 }
 
-#define modhtp_field_gen_list(dpi,name,pf) \
-    ib_data_add_list_ex(dpi,name,strlen(name),pf)
+#define modhtp_field_gen_list(dpi, name, pf) \
+    ib_data_add_list_ex((dpi), (name), strlen((name)), (pf))
 
 /* -- Utility functions -- */
 static ib_status_t modhtp_add_flag_to_collection(ib_tx_t *itx,
