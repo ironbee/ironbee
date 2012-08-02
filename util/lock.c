@@ -75,4 +75,3 @@ ib_status_t ib_lock_destroy(ib_lock_t *lock)
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-

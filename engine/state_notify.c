@@ -1260,4 +1260,3 @@ ib_status_t ib_state_notify_postprocess(ib_engine_t *ib,
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-

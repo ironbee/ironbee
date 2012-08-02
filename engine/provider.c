@@ -229,4 +229,3 @@ void ib_provider_data_set(ib_provider_t *pr, void *data)
     pr->data = data;
     IB_FTRACE_RET_VOID();
 }
-

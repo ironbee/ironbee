@@ -71,4 +71,3 @@ ib_status_t ib_parser_provider_set_instance(
 
     IB_FTRACE_RET_STATUS(rc);
 }
-

@@ -102,4 +102,3 @@ ib_status_t ib_stream_pull(ib_stream_t *s,
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-

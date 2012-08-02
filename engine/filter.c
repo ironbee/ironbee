@@ -256,4 +256,3 @@ ib_status_t ib_filter_register(ib_filter_t **pf,
 
     IB_FTRACE_RET_STATUS(rc);
 }
-

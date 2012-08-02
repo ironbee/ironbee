@@ -850,5 +850,3 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
 
     IB_FTRACE_RET_STATUS(IB_ENOENT);
 }
-
-

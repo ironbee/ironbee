@@ -203,4 +203,3 @@ const void *ib_list_node_data_const(const ib_list_node_t *node)
     IB_FTRACE_INIT();
     IB_FTRACE_RET_PTR(void, IB_LIST_NODE_DATA(node));
 }
-

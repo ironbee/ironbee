@@ -29,5 +29,3 @@ TEST(luajit, init_test)
 
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
 }
-
-

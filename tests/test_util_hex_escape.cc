@@ -26,4 +26,3 @@ TEST(TestUtilHexEscape, basic) {
 
     free(s);
 }
-

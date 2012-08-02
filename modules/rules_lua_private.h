@@ -147,4 +147,3 @@ void ib_lua_add_require_path(ib_engine_t *ib_engine,
                              const char *path);
 
 #endif // __MODULES__RULES_LUA_H
-

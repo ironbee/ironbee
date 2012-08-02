@@ -76,4 +76,3 @@ TEST_F(DfaModuleTest, matches)
     /* If we do not crash, we are generally OK. */
     ASSERT_TRUE(ib_tx);
 }
-

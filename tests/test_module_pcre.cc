@@ -335,4 +335,3 @@ TEST_F(PcreModuleTest, test_match_capture)
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
     ASSERT_EQ(0U, IB_LIST_ELEMENTS(ib_list));
 }
-

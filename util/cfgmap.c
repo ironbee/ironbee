@@ -255,4 +255,3 @@ ib_status_t ib_cfgmap_get(const ib_cfgmap_t *cm,
     rc = ib_field_value(f, out_val);
     IB_FTRACE_RET_STATUS(rc);
 }
-

@@ -82,4 +82,3 @@ struct ib_ac_bintree_t {
 #endif
 
 #endif /* IB_AHOCORASICK_PRIVATE_H_ */
-

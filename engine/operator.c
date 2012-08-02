@@ -165,6 +165,3 @@ ib_status_t ib_operator_execute(ib_engine_t *ib,
 
     IB_FTRACE_RET_STATUS(rc);
 }
-
-
-

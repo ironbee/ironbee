@@ -202,4 +202,3 @@ TEST(TestIBUtilUnescapeString, removesQuotes) {
                                              IB_UTIL_UNESCAPE_NULTERMINATE));
     ASSERT_STREQ("\"hi\'", dst);
 }
-
