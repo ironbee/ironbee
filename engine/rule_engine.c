@@ -26,6 +26,7 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <math.h>
 
 #include <ironbee/bytestr.h>
 #include <ironbee/rule_engine.h>
@@ -852,6 +853,99 @@ static ib_status_t execute_operator(ib_engine_t *ib,
 
     ib_status_t rc;
 
+    /* This if-block is only to log operator values when tracing. */
+    if ( ib_rule_log_level(ib) >= IB_RULE_LOG_LEVEL_TRACE ) {
+        if ( value->type == IB_FTYPE_NUM ) {
+            ib_num_t num;
+            rc = ib_field_value(value, ib_ftype_num_out(&num));
+            if ( rc != IB_OK ) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            ib_rule_log_trace(tx,
+                              rule,
+                              target,
+                              NULL,
+                              "Exec of op %s on field %s = %" PRId64,
+                              opinst->op->name,
+                              target->field_name,
+                              num);
+        }
+        else if ( value->type == IB_FTYPE_UNUM ) {
+            ib_unum_t unum;
+            rc = ib_field_value(value, ib_ftype_unum_out(&unum));
+            if ( rc != IB_OK ) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            ib_rule_log_trace(tx,
+                              rule,
+                              target,
+                              NULL,
+                              "Exec of op %s on field %s = %" PRIu64,
+                              opinst->op->name,
+                              target->field_name,
+                              unum);
+        }
+        else if ( value->type == IB_FTYPE_NULSTR ) {
+            const char* nulstr;
+            rc = ib_field_value(value, ib_ftype_nulstr_out(&nulstr));
+
+            if ( rc != IB_OK ) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            const char* escaped_value =
+                ib_util_hex_escape(nulstr, strlen(nulstr));
+            if ( escaped_value == NULL ) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            ib_rule_log_trace(tx,
+                              rule,
+                              target,
+                              NULL,
+                              "Exec of op %s on field %s = %s",
+                              opinst->op->name,
+                              target->field_name,
+                              escaped_value);
+            free((void*)escaped_value);
+        }
+        else if ( value->type == IB_FTYPE_BYTESTR ) {
+            const char* escaped_value;
+            const ib_bytestr_t *bytestr;
+
+            rc = ib_field_value(value, ib_ftype_bytestr_out(&bytestr));
+            if ( rc != IB_OK ) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            escaped_value = ib_util_hex_escape(
+                (const char*)ib_bytestr_const_ptr(bytestr),
+                ib_bytestr_size(bytestr));
+            if ( escaped_value == NULL ) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            ib_rule_log_trace(tx,
+                              rule,
+                              target,
+                              NULL,
+                              "Exec of op %s on field %s = %s",
+                              opinst->op->name,
+                              target->field_name,
+                              escaped_value);
+            free((void*)escaped_value);
+        }
+        else {
+            ib_rule_log_trace(tx,
+                              rule,
+                              target,
+                              NULL,
+                              "Exec of op %s on field %s = %s",
+                              opinst->op->name,
+                              target->field_name,
+                              "[cannot decode field type]");
+        }
+    }
+
     /* Limit recursion */
     --recursion;
     if (recursion <= 0) {
@@ -1017,6 +1111,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         rc = IB_OK;
     }
 
+
     /* If this is a no-target rule (i.e. action), do nothing */
     if (ib_flags_all(rule->flags, IB_RULE_FLAG_NO_TGT) == true) {
         assert(ib_list_elements(rule->target_fields) == 1);
@@ -1024,6 +1119,9 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
     else {
         assert(ib_list_elements(rule->target_fields) != 0);
     }
+
+    ib_rule_log_debug(tx, rule, NULL, NULL, "Operating on %zd fields.",
+                      ib_list_elements(rule->target_fields));
 
     /*
      * Loop through all of the fields.
@@ -1050,8 +1148,25 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                 ib_flags_all(opinst->op->flags, IB_OP_FLAG_ALLOW_NULL);
             ib_rule_log_exec_add_tgt(log_exec, target, NULL);
             if (allow == false) {
+                ib_rule_log_debug(tx,
+                                  rule,
+                                  target,
+                                  NULL,
+                                  "Operator %s will not execute because "
+                                  "there is no field %s.",
+                                  opinst->op->name,
+                                  fname);
                 continue;
             }
+
+            ib_rule_log_debug(tx,
+                              rule,
+                              target,
+                              NULL,
+                              "Operator %s receiving null argument because "
+                              "there is no field %s.",
+                              opinst->op->name,
+                              fname);
         }
         else if (getrc != IB_OK) {
             ib_rule_log_error(tx, rule, target, NULL,
@@ -1081,7 +1196,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
         /* Put the value on the value stack */
         pushed = value_stack_push(&value_stack, value);
 
-        /* Execute the rule operator on the value */
+        /* Execute the rule operator on the value. */
         if ( (tfnvalue != NULL) && (tfnvalue->type == IB_FTYPE_LIST) ) {
             ib_list_t *value_list;
             ib_list_node_t *value_node;
@@ -1094,6 +1209,20 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                 continue;
             }
 
+            /* Log when there are no arguments. */
+            if ( ib_list_elements(value_list) == 0 &&
+                 ib_rule_log_level(ib) >= IB_RULE_LOG_LEVEL_TRACE ) {
+                ib_rule_log_trace(tx,
+                                  rule,
+                                  target,
+                                  NULL,
+                                  "Rule not running because there are no "
+                                  "values for operator %s "
+                                  "to operate on in field %s.",
+                                  opinst->op->name,
+                                  fname);
+            }
+
             /* Run operations on each list element. */
             IB_LIST_LOOP(value_list, value_node) {
                 ib_num_t result = 0;
@@ -1101,6 +1230,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
                 bool lpushed;
 
                 lpushed = value_stack_push(&value_stack, node_value);
+
 
                 rc = execute_operator(ib,
                                       tx,
