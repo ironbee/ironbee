@@ -301,7 +301,8 @@ ib_status_t ib_hash_find_entry(
 
 ib_hash_iterator_t ib_hash_first(
     const ib_hash_t *hash
-) {
+)
+{
     /* There is no ftrace return macro for custom types. */
     assert(hash != NULL);
 

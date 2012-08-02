@@ -99,7 +99,7 @@ typedef struct ib_mpool_t ib_mpool_t;
  *
  * Parameter is a pointer to callback data.
  */
-typedef void (*ib_mpool_cleanup_fn_t)(void *);
+typedef void (*ib_mpool_cleanup_fn_t)(void *data);
 
 /**
  * Malloc function.
@@ -107,7 +107,7 @@ typedef void (*ib_mpool_cleanup_fn_t)(void *);
  * Function memory pool can use to allocate memory.
  * Semantics are as malloc().
  **/
-typedef void *(*ib_mpool_malloc_fn_t)(size_t);
+typedef void *(*ib_mpool_malloc_fn_t)(size_t size);
 
 /**
  * Malloc function.
@@ -115,7 +115,7 @@ typedef void *(*ib_mpool_malloc_fn_t)(size_t);
  * Function memory pool can use to free memory.
  * Semantics are as free().
  **/
-typedef void (*ib_mpool_free_fn_t)(void *);
+typedef void (*ib_mpool_free_fn_t)(void *ptr);
 
 
 /**

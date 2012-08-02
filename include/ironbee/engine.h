@@ -1949,7 +1949,8 @@ typedef void (*ib_log_logger_fn_t)(
     int                line,
     const char        *fmt,
     va_list            ap
-) VPRINTF_ATTRIBUTE(6);
+)
+VPRINTF_ATTRIBUTE(6);
 
 /** Log Generic */
 #define ib_log(ib,lvl,...) ib_log_ex((ib), (lvl), __FILE__, __LINE__, __VA_ARGS__)
@@ -2017,7 +2018,8 @@ void DLL_PUBLIC ib_log_ex(
     int                line,
     const char        *fmt,
     ...
-) PRINTF_ATTRIBUTE(5, 6);
+)
+PRINTF_ATTRIBUTE(5, 6);
 
 /**
  * Transaction Logger for engine.
@@ -2035,7 +2037,8 @@ void DLL_PUBLIC ib_log_tx_ex(
      int             line,
      const char     *fmt,
      ...
-) PRINTF_ATTRIBUTE(5, 6);
+)
+PRINTF_ATTRIBUTE(5, 6);
 
 /**
  * Generic Logger for engine.  valist version.
@@ -2054,7 +2057,8 @@ void DLL_PUBLIC ib_vlog_ex(
     int                line,
     const char        *fmt,
     va_list            ap
-) VPRINTF_ATTRIBUTE(5);
+)
+VPRINTF_ATTRIBUTE(5);
 
 /**
  * Transaction Logger for engine.  valist version.
@@ -2073,7 +2077,8 @@ void DLL_PUBLIC ib_vlog_tx_ex(
     int                line,
     const char        *fmt,
     va_list            ap
-) VPRINTF_ATTRIBUTE(5);
+)
+VPRINTF_ATTRIBUTE(5);
 
 /**
  * Return the configured logging level.

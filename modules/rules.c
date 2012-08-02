@@ -132,9 +132,9 @@ static ib_status_t lookup_phase(const char *str,
  *          new thread, and a @c lua_State** which will be assigned a
  *          new @c lua_State*.
  */
-typedef ib_status_t(*critical_section_fn_t)(ib_engine_t*,
-                                            lua_State*,
-                                            lua_State**);
+typedef ib_status_t(*critical_section_fn_t)(ib_engine_t *ib,
+                                            lua_State *parent,
+                                            lua_State **out_new);
 #endif
 
 /**

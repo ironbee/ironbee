@@ -83,8 +83,7 @@ enum cb_data_type {
     IB_CBDATA_NONE,
 };
 
-int ib_state_event_cbdata_type(ib_state_event_type_t);
-
+int ib_state_event_cbdata_type(ib_state_event_type_t event_type);
 
 /**
  * List of callback data types for event id to type lookups.
