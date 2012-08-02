@@ -128,7 +128,7 @@ static int modhtp_personality(const char *name)
             IB_FTRACE_RET_INT(rec->val);
         }
 
-        rec++;
+        ++rec;
     }
 
     IB_FTRACE_RET_INT(-1);

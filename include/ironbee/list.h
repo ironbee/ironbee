@@ -158,7 +158,7 @@ struct ib_list_t {
         (at)->next = (node); \
         (node)->prev = (at); \
         (node)->next = __ib_list_node_ia_tmp; \
-        (list)->nelts++; \
+        ++(list)->nelts; \
     } while(0)
 
 /**
@@ -175,7 +175,7 @@ struct ib_list_t {
         (at)->prev = (node); \
         (node)->prev = __ib_list_node_ib_tmp; \
         (node)->next = (at); \
-        (list)->nelts++; \
+        ++(list)->nelts; \
     } while(0)
 
 /**
@@ -231,7 +231,7 @@ struct ib_list_t {
         if ((node)->next != NULL) { \
             (node)->next->prev = (node)->prev; \
         } \
-        (list)->nelts--; \
+        --(list)->nelts; \
     } while(0)
 
 /**

@@ -645,7 +645,7 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
 
     /* We have a match! Now populate TX:0-9 in tx->dpi. */
     ib_log_debug2_tx(tx, "REGEX populating %d matches", matches);
-    for (i=0; i<matches; i++)
+    for (i = 0; i < matches; ++i)
     {
         /* The length of the match. */
         size_t match_len;

@@ -78,7 +78,7 @@ ib_status_t ib_logformat_set(ib_logformat_t *lf, const char *format) {
 
     for (; lf->orig_format[i] != '\0' &&
          lf->field_cnt < IB_LOGFORMAT_MAXFIELDS &&
-         j < IB_LOGFORMAT_MAXLINELEN; i++)
+         j < IB_LOGFORMAT_MAXLINELEN; ++i)
     {
         if (i == 0 && lf->orig_format[i] != '%') {
             lf->literal_starts = 1;

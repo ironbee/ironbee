@@ -180,7 +180,7 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
     length = (len == 0) ? strlen(pattern) : len;
     parent = ac_tree->root;
 
-    for (i = 0; i < length; i++) {
+    for (i = 0; i < length; ++i) {
         ib_ac_char_t letter = pattern[i];
 
         if (ac_tree->flags & IB_AC_FLAG_PARSER_NOCASE)
@@ -208,7 +208,7 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
             /* Copy the content it should match to reach this state.
              * If the state produces an output, it will be the pattern
              * it self */
-            for (j = 0; j <= i; j++) {
+            for (j = 0; j <= i; ++j) {
                 child->pattern[j] = pattern[j];
             }
             child->pattern[i + 1] = '\0';
@@ -217,7 +217,7 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
         if (i == length - 1) {
             if ((child->flags & IB_AC_FLAG_STATE_OUTPUT) == 0)
             {
-                ac_tree->pattern_cnt++;
+                ++ac_tree->pattern_cnt;
                 child->flags |= IB_AC_FLAG_STATE_OUTPUT;
             }
 
@@ -433,7 +433,7 @@ static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
          child != NULL;
          child = child->sibling)
     {
-        count++;
+        ++count;
     }
 
     states = (ib_ac_state_t **)ib_mpool_calloc(ac_tree->mp, count,
@@ -444,13 +444,13 @@ static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
     }
 
     child = state->child;
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; ++i) {
         states[i] = child;
         child = child->sibling;
     }
 
-    for (i = 0; i < count - 1; i++) {
-        for (j = i + 1; j < count; j++) {
+    for (i = 0; i < count - 1; ++i) {
+        for (j = i + 1; j < count; ++j) {
             ib_ac_state_t *tmp;
 
             if (states[i]->letter < states[j]->letter) {
@@ -476,7 +476,7 @@ static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
     ib_ac_add_bintree_sorted(state->bintree, states, pos, -1, count,
                                       ac_tree->mp);
 
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; ++i) {
         if (states[i]->child != NULL) {
             ib_ac_build_bintree(ac_tree, states[i]);
         }
@@ -654,7 +654,7 @@ static void ib_ac_do_callback(ib_ac_context_t *ac_ctx,
                       ac_ctx->current_offset - (state->level + 1));
     }
 
-    state->match_cnt++;
+    ++state->match_cnt;
 
     IB_FTRACE_RET_VOID();
 }
@@ -708,8 +708,8 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
 
     while (data < end) {
         ib_ac_char_t letter = (unsigned char)*data++;
-        ac_ctx->processed++;
-        ac_ctx->current_offset++;
+        ++ac_ctx->processed;
+        ++ac_ctx->current_offset;
 
         if (ac_tree->flags & IB_AC_FLAG_PARSER_NOCASE) {
             letter = tolower(letter);
@@ -724,8 +724,8 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
                 if (fgoto->flags & IB_AC_FLAG_STATE_OUTPUT) {
                     flag_match = 1;
 
-                    fgoto->match_cnt++;
-                    ac_ctx->match_cnt++;
+                    ++fgoto->match_cnt;
+                    ++ac_ctx->match_cnt;
 
                     ac_ctx->current = fgoto;
                     state = fgoto;
@@ -779,8 +779,8 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
                          * that are present as independent patterns as well
                          * in the tree */
 
-                        outs->match_cnt++;
-                        ac_ctx->match_cnt++;
+                        ++outs->match_cnt;
+                        ++ac_ctx->match_cnt;
 
                         if (flags & IB_AC_FLAG_CONSUME_DOCALLBACK)
                         {

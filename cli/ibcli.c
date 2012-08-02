@@ -332,7 +332,8 @@ static ib_status_t add_request_header(const char *str,
     }
 
     /* Account for it */
-    num = settings.request_headers.num_headers++;
+    num = settings.request_headers.num_headers;
+    ++settings.request_headers.num_headers;
 
     /* Add it in */
     strcpy(buf, str);
@@ -503,7 +504,7 @@ static ib_status_t command_line(int argc, char *argv[])
             /* Delete? */
             if (*optarg == '-') {
                 delete = 1;
-                optarg++;
+                ++optarg;
             }
 
             /* Get a pointer to the first colon, count the number of
@@ -689,7 +690,7 @@ static ib_status_t trace_tx_request(
 
     ib_log_debug(ib, "trace_tx_request");
 
-    settings.trace_request_cnt++;
+    ++settings.trace_request_cnt;
     trace_ctx->request = settings.trace_request_cnt;
 
     fprintf(stderr, "REQUEST [%d]: %.*s\n",
@@ -722,7 +723,7 @@ static ib_status_t trace_tx_response(
 
     ib_log_debug(ib, "trace_tx_response");
 
-    settings.trace_response_cnt++;
+    ++settings.trace_response_cnt;
     trace_ctx->response = settings.trace_response_cnt;
 
     /* HTTP/0.9 will not have a response line, so just output the protocol. */
@@ -1181,9 +1182,10 @@ static ib_status_t print_geoip(
     /* Loop through the list & print everything */
     IB_LIST_LOOP(lst, node) {
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
-        if (count++ == 0) {
+        if (count == 0) {
             printf("GeoIP data:\n");
         }
+        ++count;
         print_field("", field, 0);
     }
     if (count == 0) {
@@ -2172,7 +2174,7 @@ static void run_connection(ib_engine_t* ib)
          && (max_trans > (size_t)settings.max_transactions) ) {
         max_trans = (size_t)settings.max_transactions;
     }
-    for (trans_num = 0;  trans_num < max_trans;  trans_num++) {
+    for (trans_num = 0;  trans_num < max_trans; ++trans_num) {
         size_t req_num = (nreq == 1) ? 0 : trans_num;
         size_t rsp_num = (nrsp == 1) ? 0 : trans_num;
 

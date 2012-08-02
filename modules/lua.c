@@ -202,7 +202,7 @@ static const char *modlua_data_reader(lua_State *L, void *udata, size_t *size)
     *size = cpart->dlen;
 
     /* Increment the iteration through our list of chunks. */
-    tracker->part++;
+    ++tracker->part;
 
     /* Return the chunk of Lua byte code. */
     IB_FTRACE_RET_CONSTSTR((const char *)cpart->data);
@@ -442,7 +442,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib_engine,
         name_start = (char *)file;
     }
     else {
-        name_start++;
+        ++name_start;
     }
     name_end = index(name_start, '.');
     if (name_end == NULL) {

@@ -233,7 +233,7 @@ static void mod_perf_stats_event_start(
         perfp->start_usec = ib_clock_get_time();
 
         /* Increment the call counter */
-        perfp->call_cnt++;
+        ++perfp->call_cnt;
 
         ib_log_debug(ib, "Start Callback: %s (%"PRIu64") (%"PRIu64") ",
                      perfp->name, perfp->call_cnt, perfp->start_usec);

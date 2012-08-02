@@ -70,7 +70,7 @@ static ib_status_t cfgp_opval(const char *opname, const ib_strval_t *map,
             *pval = rec->val;
             return IB_OK;
         }
-        rec++;
+        ++rec;
     }
 
     *pval = 0;
@@ -518,7 +518,7 @@ ib_status_t ib_config_register_directives(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        rec++;
+        ++rec;
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -652,7 +652,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                  * by using the value map.
                  */
                 if (oper != 0) {
-                    opname++;
+                    ++opname;
                 }
 
                 rc = cfgp_opval(opname, rec->valmap, &val);
@@ -674,7 +674,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                     flags |= val;
                 }
 
-                i++;
+                ++i;
             }
 
             rc = rec->cb.fn_opflags(cp, name, flags, fmask, rec->cbdata_cb);

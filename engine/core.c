@@ -846,7 +846,7 @@ static ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
             fflush(cfg->fp);
             IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
         }
-        cfg->parts_written++;
+        ++cfg->parts_written;
     }
 
     /* Finish the part. */
@@ -4304,7 +4304,7 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
                  * just skipping over the wildcard (assuming only one)
                  * for now.
                  */
-                p_unescaped++;
+                ++p_unescaped;
             }
             ib_log_debug2(ib, "Adding host \"%s\" to site \"%s\"",
                          p_unescaped, cp->cur_site->name);

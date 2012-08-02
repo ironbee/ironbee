@@ -517,7 +517,7 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
     ib_action_inst_t  *action;
     ib_rule_action_t   atype = RULE_ACTION_TRUE;
     if (*name == '!') {
-        name++;
+        ++name;
         atype = RULE_ACTION_FALSE;
     }
 
@@ -624,7 +624,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         *colon = '\0';
         value = colon + 1;
         while( isspace(*value) ) {
-            value++;
+            ++value;
         }
         if (*value == '\0') {
             value = NULL;

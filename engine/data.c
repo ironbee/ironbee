@@ -819,7 +819,7 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
 
         /* Transform. */
         tname = tfn;
-        for (i = 0; i <= tlen; i++) {
+        for (i = 0; i <= tlen; ++i) {
             ib_tfn_t *t;
             ib_flags_t flags;
 
