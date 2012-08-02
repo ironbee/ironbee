@@ -87,11 +87,13 @@
 #undef IB_MODULE_INIT
 #endif
 
+/** @cond internal */
 /* Macros to allow for expanding arguments with concatenation. */
 #define IB_XMODULE_SYM(prefix)        prefix ## __module_sym
 #define IB_XXMODULE_SYM(prefix)       IB_XMODULE_SYM(prefix)
 #define IB_XMODULE_STRUCT(prefix)     prefix ## __module_struct
 #define IB_XXMODULE_STRUCT(prefix)    IB_XMODULE_STRUCT(prefix)
+/** @endcond */
 
 /** Module symbol name. */
 #define IB_MODULE_SYM                 IB_XXMODULE_SYM(IB_MODULE_SYM_PREFIX)
