@@ -26,7 +26,6 @@
 
 #include <assert.h>
 #include <inttypes.h>
-#include <math.h>
 
 #include <ironbee/bytestr.h>
 #include <ironbee/rule_engine.h>
