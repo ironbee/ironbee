@@ -525,6 +525,82 @@ static ib_status_t get_data_value(ib_tx_t *tx,
 }
 
 /**
+ * Contains logic for expanding act_setvar_execute field names for assignement.
+ *
+ *  @param[in] rule
+ *  @param[in] tx
+ *  @param[in] setvar_data
+ *  @param[in] flags
+ *  @param[out] expanded The expanded string, possibly allocated from
+ *              the memory pool or the result of
+ *              an ib_mpool_alloc(mp, 0) call.
+ *  @param[out] exlen The length of @a expanded.
+ *
+ *  @return
+ *    - IB_OK @a expanded and @a exlen are populated.
+ *    - IB_EINVAL if there was an internal error during expansion.
+ *    - IB_EALLOC on memory errors.
+ *
+ */
+static ib_status_t expand_data(
+    const ib_rule_t *rule,
+    ib_tx_t *tx,
+    const setvar_data_t *setvar_data,
+    ib_flags_t flags,
+    char** expanded,
+    size_t *exlen)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    /* Pull the data out of the bytestr */
+    const char *bsdata =
+        (const char *)ib_bytestr_ptr(setvar_data->value.bstr);
+    size_t bslen = ib_bytestr_length(setvar_data->value.bstr);
+
+    /* Expand the string */
+    if (flags & IB_ACTINST_FLAG_EXPAND) {
+
+        rc = ib_data_expand_str_ex(
+            tx->dpi, bsdata, bslen, false, false, expanded, exlen);
+        if (rc != IB_OK) {
+            ib_rule_log_debug(
+                tx,
+                rule,
+                NULL,
+                NULL,
+                "setvar: Failed to expand string \"%.*s\": %s",
+                (int) bslen, bsdata, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else if (bsdata == NULL) {
+        assert(bslen == 0);
+
+        /* Get a non-null pointer that should never be derefferenced. */
+        *expanded = ib_mpool_alloc(tx->mp, 0);
+    }
+    else {
+        *expanded = ib_mpool_memdup(tx->mp, bsdata, bslen);
+        if (*expanded == NULL) {
+            ib_rule_log_debug(
+                tx,
+                rule,
+                NULL,
+                NULL,
+                "setvar: Failed to copy string \"%.*s\"",
+                (int)bslen,
+                bsdata);
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+    }
+    *exlen = bslen;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Execute function for the "set variable" action
  *
  * @param[in] data Setvar data (setvar_data_t *)
@@ -534,6 +610,9 @@ static ib_status_t get_data_value(ib_tx_t *tx,
  * @param[in] cbdata Unused.
  *
  * @returns Status code
+ *    - IB_OK The operator succeeded.
+ *    - IB_EINVAL if there was an internal error during expansion.
+ *    - IB_EALLOC on memory errors.
  */
 static ib_status_t act_setvar_execute(void *data,
                                       const ib_rule_t *rule,
@@ -549,189 +628,159 @@ static ib_status_t act_setvar_execute(void *data,
 
     ib_field_t *cur = NULL;
     ib_field_t *new;
-    char *expanded = NULL;
+    char *value = NULL;
     const char *name = NULL;
-    size_t namelen;
-    size_t exlen;
+    size_t nlen;
+    size_t vlen;
     ib_status_t rc;
-    const char *bsdata = NULL;
-    size_t bslen = 0;
 
     /* Data should be a setvar_data_t created in our create function */
-    const setvar_data_t *svdata = (const setvar_data_t *)data;
-
-    /* Pull the data out of the bytestr */
-    if (svdata->type == IB_FTYPE_BYTESTR) {
-        bsdata = (const char *)ib_bytestr_ptr(svdata->value.bstr);
-        bslen = ib_bytestr_length(svdata->value.bstr);
-    }
+    const setvar_data_t *setvar_data = (const setvar_data_t *)data;
 
     /* Expand the name (if required) */
     rc = expand_name(tx, "setvar",
-                     svdata->name, svdata->name_expand,
-                     &name, &namelen);
+                     setvar_data->name, setvar_data->name_expand,
+                     &name, &nlen);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the current value */
-    rc = get_data_value(tx, name, namelen, &cur);
+    rc = get_data_value(tx, name, nlen, &cur);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Expand the string */
-    if ( (flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        assert(svdata->type == IB_FTYPE_BYTESTR);
+    /* If setvar_data contains a byte string, we might expand it. */
+    if (setvar_data->type == IB_FTYPE_BYTESTR) {
 
-        rc = ib_data_expand_str_ex(
-            tx->dpi, bsdata, bslen, false, false, &expanded, &exlen);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                         "setvar: Failed to expand string \"%.*s\": %s",
-                         (int) bslen, bsdata, ib_status_to_string(rc));
+        rc = expand_data(rule, tx, setvar_data, flags, &value, &vlen);
+
+        if ( rc != IB_OK ) {
             IB_FTRACE_RET_STATUS(rc);
         }
     }
-    else if (svdata->type == IB_FTYPE_BYTESTR) {
-        if (bsdata == NULL) {
-            assert(bslen == 0);
-            expanded = ib_mpool_alloc(tx->mp, 0);
-        }
-        else {
-            expanded = ib_mpool_memdup(tx->mp, bsdata, bslen);
-            if (expanded == NULL) {
-                ib_log_error_tx(tx,
-                                "setvar: Failed to copy string \"%.*s\"",
-                                (int)bslen, bsdata);
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+
+    switch(setvar_data->op) {
+        /* Handle bytestr operations (currently only set) */
+        case SETVAR_STRSET:
+            assert(setvar_data->type == IB_FTYPE_BYTESTR);
+            ib_bytestr_t *bs = NULL;
+
+            if (cur != NULL) {
+                ib_data_remove_ex(tx->dpi, name, nlen, NULL);
             }
-        }
-        exlen = bslen;
-    }
 
-    /* Handle bytestr operations (currently only set) */
-    if (svdata->op == SETVAR_STRSET) {
-        assert(svdata->type == IB_FTYPE_BYTESTR);
-        ib_bytestr_t *bs = NULL;
-
-        if (cur != NULL) {
-            ib_data_remove_ex(tx->dpi, name, namelen, NULL);
-        }
-
-        /* Create a bytestr to hold it. */
-        rc = ib_bytestr_alias_mem(&bs, tx->mp, (uint8_t *)expanded, exlen);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                            "setvar: Failed to create bytestring "
-                            "for field \"%.*s\": %s",
-                            (int)namelen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Create the new field */
-        rc = ib_field_create(&new,
-                             tx->mp,
-                             name, namelen,
-                             svdata->type,
-                             ib_ftype_bytestr_in(bs));
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                            "setvar: Failed to create field \"%.*s\": %s",
-                            (int)namelen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Add the field to the DPI */
-        rc = ib_data_add(tx->dpi, new);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                            "setvar: Failed to add field \"%.*s\": %s",
-                            (int)namelen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-
-    /* Numerical operation : Set */
-    else if (svdata->op == SETVAR_NUMSET) {
-        assert(svdata->type == IB_FTYPE_NUM);
-
-        if (cur != NULL) {
-            ib_data_remove_ex(tx->dpi, name, namelen, NULL);
-        }
-
-        /* Create the new field */
-        rc = ib_field_create(&new,
-                             tx->mp,
-                             name, namelen,
-                             svdata->type,
-                             ib_ftype_num_in(&svdata->value.num));
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                            "setvar: Failed to create field \"%.*s\": %s",
-                            (int)namelen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Add the field to the DPI */
-        rc = ib_data_add(tx->dpi, new);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                            "setvar: Failed to add field \"%.*s\": %s",
-                            (int)namelen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-
-    /* Numerical operation : Add */
-    else if (svdata->op == SETVAR_NUMADD) {
-        assert(svdata->type == IB_FTYPE_NUM);
-
-        /* If it doesn't exist, create the variable with a value of zero */
-        if (cur == NULL) {
+            /* Create a bytestr to hold it. */
+            rc = ib_bytestr_alias_mem(&bs, tx->mp, (uint8_t *)value, vlen);
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx,
+                                "setvar: Failed to create bytestring "
+                                "for field \"%.*s\": %s",
+                                (int)nlen, name, ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
 
             /* Create the new field */
-            rc = ib_data_add_num_ex(tx->dpi, name, namelen, 0, &cur);
+            rc = ib_field_create(&new,
+                                 tx->mp,
+                                 name, nlen,
+                                 setvar_data->type,
+                                 ib_ftype_bytestr_in(bs));
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx,
+                                "setvar: Failed to create field \"%.*s\": %s",
+                                (int)nlen, name, ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            /* Add the field to the DPI */
+            rc = ib_data_add(tx->dpi, new);
             if (rc != IB_OK) {
                 ib_log_error_tx(tx,
                                 "setvar: Failed to add field \"%.*s\": %s",
-                                (int)namelen, name, ib_status_to_string(rc));
+                                (int)nlen, name, ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
-        }
+            break;
+        /* Numerical operation : Set */
+        case SETVAR_NUMSET:
+            assert(setvar_data->type == IB_FTYPE_NUM);
 
-        /* Handle num and unum types */
-        if (cur->type == IB_FTYPE_NUM) {
-            ib_num_t num;
-            rc = ib_field_value(cur, ib_ftype_num_out(&num));
+            if (cur != NULL) {
+                ib_data_remove_ex(tx->dpi, name, nlen, NULL);
+            }
+
+            /* Create the new field */
+            rc = ib_field_create(&new,
+                                 tx->mp,
+                                 name, nlen,
+                                 setvar_data->type,
+                                 ib_ftype_num_in(&setvar_data->value.num));
             if (rc != IB_OK) {
+                ib_log_error_tx(tx,
+                                "setvar: Failed to create field \"%.*s\": %s",
+                                (int)nlen, name, ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
 
-            num += svdata->value.num;
-            ib_field_setv(cur, ib_ftype_num_in(&num));
-        }
-        else if (cur->type == IB_FTYPE_UNUM) {
-            ib_unum_t num;
-            rc = ib_field_setv(cur, ib_ftype_unum_out(&num));
+            /* Add the field to the DPI */
+            rc = ib_data_add(tx->dpi, new);
             if (rc != IB_OK) {
+                ib_log_error_tx(tx,
+                                "setvar: Failed to add field \"%.*s\": %s",
+                                (int)nlen, name, ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
+    
+            break;
+        /* Numerical operation : Add */
+        case SETVAR_NUMADD:
+            assert(setvar_data->type == IB_FTYPE_NUM);
 
-            num += (ib_unum_t)svdata->value.num;
-            ib_field_setv(cur, ib_ftype_unum_in(&num));
-        }
-        else {
-            ib_log_error_tx(tx,
-                            "setvar: field \"%.*s\" type %d invalid for NUMADD",
-                            (int)namelen, name, cur->type);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-    }
+            /* If it doesn't exist, create the variable with a value of zero */
+            if (cur == NULL) {
 
-    /* Should never get here. */
-    else {
-        assert(0 && "Invalid setvar operator");
+                /* Create the new field */
+                rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur);
+                if (rc != IB_OK) {
+                    ib_log_error_tx(
+                        tx,
+                        "setvar: Failed to add field \"%.*s\": %s",
+                        (int)nlen, name, ib_status_to_string(rc));
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+            }
+
+            /* Handle num and unum types */
+            if (cur->type == IB_FTYPE_NUM) {
+                ib_num_t num;
+                rc = ib_field_value(cur, ib_ftype_num_out(&num));
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+
+                num += setvar_data->value.num;
+                ib_field_setv(cur, ib_ftype_num_in(&num));
+            }
+            else if (cur->type == IB_FTYPE_UNUM) {
+                ib_unum_t num;
+                rc = ib_field_setv(cur, ib_ftype_unum_out(&num));
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+    
+                num += (ib_unum_t)setvar_data->value.num;
+                ib_field_setv(cur, ib_ftype_unum_in(&num));
+            }
+            else {
+                ib_log_error_tx(
+                    tx,
+                    "setvar: field \"%.*s\" type %d invalid for NUMADD",
+                     (int)nlen, name, cur->type);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+            break;
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -744,9 +793,10 @@ static ib_status_t act_setvar_execute(void *data,
  * @param[in] rule The rule that fired the action
  * @param[out] event Matching event
  *
- * @return IB_OK (if found)
- *         IB_ENOENT if not found
- *         Errors returned by ib_event_get_all()
+ * @return
+ *   - IB_OK (if found)
+ *   - IB_ENOENT if not found
+ *   - Errors returned by ib_event_get_all()
  */
 static ib_status_t get_event(ib_tx_t *tx,
                              const ib_rule_t *rule,
