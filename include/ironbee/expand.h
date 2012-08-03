@@ -112,7 +112,10 @@ ib_status_t DLL_PUBLIC ib_expand_str(ib_mpool_t *mp,
  * @param[in] lookup_data Hash-like object in which to expand names in @a str
  * @param[out] result Resulting string
  *
- * @returns Status code
+ * @returns Status code of ib_expand_str_gen_ex.
+ *   - IB_OK on success or if the string is not expandable.
+ *   - IB_EINVAL if prefix or suffix is zero length.
+ *   - IB_EALLOC if a memory allocation failed.
  */
 ib_status_t DLL_PUBLIC ib_expand_str_gen(ib_mpool_t *mp,
                                          const char *str,
