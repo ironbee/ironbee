@@ -484,8 +484,6 @@ void ib_rule_vlog(ib_rule_log_level_t level,
     fmtlen += strlen(fmt) + 4;
     fmtbuf = malloc(fmtlen);
 
-    snprintf(fmtbuf, fmtlen, "%s/%s", LOG_PREFIX, prefix);
-
     if (fmtbuf != NULL) {
         bool first = true;
 

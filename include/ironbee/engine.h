@@ -1725,7 +1725,10 @@ ib_status_t ib_data_remove(ib_provider_inst_t *dpi,
  * @param[in] recurse Do recursive expansion?
  * @param[out] result Pointer to the expanded string.
  *
- * @returns Status code
+ * @returns The code of ib_expand_str_gen.
+ *   - IB_OK on success or if the string is not expandable.
+ *   - IB_EINVAL if prefix or suffix is zero length.
+ *   - IB_EALLOC if a memory allocation failed.
  */
 ib_status_t ib_data_expand_str(const ib_provider_inst_t *dpi,
                                const char *str,
@@ -1745,7 +1748,10 @@ ib_status_t ib_data_expand_str(const ib_provider_inst_t *dpi,
  * @param[out] result Pointer to the expanded string.
  * @param[out] result_len Length of @a result.
  *
- * @returns Status code
+ * @returns The code of ib_expand_str_gen.
+ *   - IB_OK on success or if the string is not expandable.
+ *   - IB_EINVAL if prefix or suffix is zero length.
+ *   - IB_EALLOC if a memory allocation failed.
  */
 ib_status_t ib_data_expand_str_ex(const ib_provider_inst_t *dpi,
                                   const char *str,
