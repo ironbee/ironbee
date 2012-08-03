@@ -39,6 +39,7 @@
 #include <ironbee/util.h>
 
 #include "engine_private.h"
+#include "rule_engine_private.h"
 #include "core_private.h"
 
 /**
@@ -397,20 +398,23 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
 static ib_status_t expand_name(const ib_rule_t *rule,
                                ib_tx_t *tx,
                                const char *label,
-                               const char *name,
-                               bool expandable,
+                               const setvar_data_t *setvar_data,
                                const char **exname,
                                size_t *exnlen)
 {
     IB_FTRACE_INIT();
-    assert(tx != NULL);
-    assert(label != NULL);
-    assert(name != NULL);
-    assert(exname != NULL);
-    assert(exnlen != NULL);
+    assert(tx);
+    assert(rule);
+    assert(label);
+    assert(setvar_data);
+    assert(exname);
+    assert(exnlen);
+
+    /* Readability: Alias a common field. */
+    const char *name = setvar_data->name;
 
     /* If it's expandable, expand it */
-    if (expandable) {
+    if (setvar_data->name_expand) {
         char *tmp;
         size_t len;
         ib_status_t rc;
@@ -569,6 +573,7 @@ static ib_status_t get_data_value(ib_tx_t *tx,
 static ib_status_t expand_data(
     const ib_rule_t *rule,
     ib_tx_t *tx,
+    const char *label,
     const setvar_data_t *setvar_data,
     ib_flags_t flags,
     char** expanded,
@@ -576,50 +581,108 @@ static ib_status_t expand_data(
 {
     IB_FTRACE_INIT();
 
+    assert(tx);
+    assert(rule);
+    assert(label);
+    assert(setvar_data);
+    assert(expanded);
+    assert(exlen);
+
     ib_status_t rc;
 
-    /* Pull the data out of the bytestr */
-    const char *bsdata =
-        (const char *)ib_bytestr_ptr(setvar_data->value.bstr);
-    size_t bslen = ib_bytestr_length(setvar_data->value.bstr);
+    /* If setvar_data contains a byte string, we might expand it. */
+    if (setvar_data->type == IB_FTYPE_BYTESTR) {
 
-    /* Expand the string */
-    if (flags & IB_ACTINST_FLAG_EXPAND) {
+        /* Pull the data out of the bytestr */
+        const char *bsdata =
+            (const char *)ib_bytestr_ptr(setvar_data->value.bstr);
+        size_t bslen = ib_bytestr_length(setvar_data->value.bstr);
+    
+        /* Expand the string */
+        if (flags & IB_ACTINST_FLAG_EXPAND) {
+    
+            rc = ib_data_expand_str_ex(
+                tx->dpi, bsdata, bslen, false, false, expanded, exlen);
+            if (rc != IB_OK) {
+                ib_rule_log_debug(
+                    tx,
+                    rule,
+                    NULL,
+                    NULL,
+                    "%s: Failed to expand string \"%.*s\": %s",
+                    label, (int) bslen, bsdata, ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
 
-        rc = ib_data_expand_str_ex(
-            tx->dpi, bsdata, bslen, false, false, expanded, exlen);
-        if (rc != IB_OK) {
             ib_rule_log_debug(
                 tx,
                 rule,
                 NULL,
                 NULL,
-                "setvar: Failed to expand string \"%.*s\": %s",
-                (int) bslen, bsdata, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    else if (bsdata == NULL) {
-        assert(bslen == 0);
+                "%s: Field \"%s\" was expanded.",
+                label,
+                setvar_data->name);
 
-        /* Get a non-null pointer that should never be derefferenced. */
-        *expanded = ib_mpool_alloc(tx->mp, 0);
+            if (ib_rule_log_level(tx->ib) >= IB_RULE_LOG_LEVEL_TRACE) {
+                const char* hex_coded = ib_util_hex_escape(bsdata, bslen);
+                if (hex_coded) {
+                    ib_rule_log_debug(
+                        tx,
+                        rule,
+                        NULL,
+                        NULL,
+                        "%s: Field \"%s\" has value: %s",
+                        label,
+                        setvar_data->name,
+                        hex_coded);
+                    free((void*)hex_coded);
+                }
+            }
+        }
+        else if (bsdata == NULL) {
+            assert(bslen == 0);
+    
+            /* Get a non-null pointer that should never be derefferenced. */
+            *expanded = ib_mpool_alloc(tx->mp, 0);
+
+            ib_rule_log_debug(
+                tx,
+                rule,
+                NULL,
+                NULL,
+                "%s: Field \"%s\" is null.",
+                label,
+                setvar_data->name);
+        }
+        else {
+            *expanded = ib_mpool_memdup(tx->mp, bsdata, bslen);
+            if ( ! *expanded) {
+                ib_rule_log_debug(
+                    tx,
+                    rule,
+                    NULL,
+                    NULL,
+                    "%s: Failed to copy string \"%.*s\"",
+                    label,
+                    (int)bslen,
+                    bsdata);
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
+        }
+        *exlen = bslen;
     }
     else {
-        *expanded = ib_mpool_memdup(tx->mp, bsdata, bslen);
-        if (*expanded == NULL) {
-            ib_rule_log_debug(
-                tx,
-                rule,
-                NULL,
-                NULL,
-                "setvar: Failed to copy string \"%.*s\"",
-                (int)bslen,
-                bsdata);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
+        ib_rule_log_debug(
+            tx,
+            rule,
+            NULL,
+            NULL,
+            "%s: Did not expand \"%s\" because it is not a byte string.",
+            label,
+            setvar_data->name
+            );
+
     }
-    *exlen = bslen;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -662,27 +725,21 @@ static ib_status_t act_setvar_execute(void *data,
     const setvar_data_t *setvar_data = (const setvar_data_t *)data;
 
     /* Expand the name (if required) */
-    rc = expand_name(rule, tx, "setvar",
-                     setvar_data->name, setvar_data->name_expand,
-                     &name, &nlen);
+    rc = expand_name(rule, tx, "setvar", setvar_data, &name, &nlen);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Get the cur_fieldrent value */
+    /* Get the current value */
     rc = get_data_value(tx, name, nlen, &cur_field);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* If setvar_data contains a byte string, we might expand it. */
-    if (setvar_data->type == IB_FTYPE_BYTESTR) {
-
-        rc = expand_data(rule, tx, setvar_data, flags, &value, &vlen);
-
-        if ( rc != IB_OK ) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
+    rc = expand_data(rule, tx, "setvar", setvar_data, flags, &value, &vlen);
+    if ( rc != IB_OK ) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     switch(setvar_data->op) {
