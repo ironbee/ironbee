@@ -394,7 +394,8 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t expand_name(ib_tx_t *tx,
+static ib_status_t expand_name(const ib_rule_t *rule,
+                               ib_tx_t *tx,
                                const char *label,
                                const char *name,
                                bool expandable,
@@ -419,22 +420,45 @@ static ib_status_t expand_name(ib_tx_t *tx,
                                    false, false,
                                    &tmp, &len);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                            "%s: Failed to expand name \"%s\": %s",
-                            label, name, ib_status_to_string(rc));
+            ib_rule_log_error(
+                tx,
+                rule,
+                NULL,
+                NULL,
+                "%s: Failed to expand name \"%s\": %s",
+                label,
+                name,
+                ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
         *exname = tmp;
         *exnlen = len;
-        ib_log_debug_tx(tx,
-                        "%s: Expanded variable name from "
-                        "\"%s\" to \"%.*s\"",
-                        label, name, (int)len, tmp);
+        ib_rule_log_debug(
+            tx,
+            rule,
+            NULL,
+            NULL,
+            "%s: Expanded variable name from \"%s\" to \"%.*s\"",
+            label,
+            name,
+            (int)len,
+            tmp);
     }
     else {
         *exname = name;
         *exnlen = strlen(name);
+
+        ib_rule_log_debug(
+            tx,
+            rule,
+            NULL,
+            NULL,
+            "%s: No expansion of %s",
+            label,
+            name);
     }
+
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -626,27 +650,27 @@ static ib_status_t act_setvar_execute(void *data,
     assert(rule != NULL);
     assert(tx != NULL);
 
-    ib_field_t *cur = NULL;
-    ib_field_t *new;
-    char *value = NULL;
-    const char *name = NULL;
-    size_t nlen;
-    size_t vlen;
     ib_status_t rc;
+    ib_field_t *cur_field = NULL;
+    ib_field_t *new_field;
+    const char *name = NULL; /* Name of the field we are setting. */
+    size_t nlen;             /* Name length. */
+    char *value = NULL;      /* Value we are setting the field name to. */
+    size_t vlen;             /* Value length. */
 
     /* Data should be a setvar_data_t created in our create function */
     const setvar_data_t *setvar_data = (const setvar_data_t *)data;
 
     /* Expand the name (if required) */
-    rc = expand_name(tx, "setvar",
+    rc = expand_name(rule, tx, "setvar",
                      setvar_data->name, setvar_data->name_expand,
                      &name, &nlen);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Get the current value */
-    rc = get_data_value(tx, name, nlen, &cur);
+    /* Get the cur_fieldrent value */
+    rc = get_data_value(tx, name, nlen, &cur_field);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -662,12 +686,12 @@ static ib_status_t act_setvar_execute(void *data,
     }
 
     switch(setvar_data->op) {
-        /* Handle bytestr operations (currently only set) */
+        /* Handle bytestr operations (cur_fieldrently only set) */
         case SETVAR_STRSET:
             assert(setvar_data->type == IB_FTYPE_BYTESTR);
             ib_bytestr_t *bs = NULL;
 
-            if (cur != NULL) {
+            if (cur_field != NULL) {
                 ib_data_remove_ex(tx->dpi, name, nlen, NULL);
             }
 
@@ -681,8 +705,8 @@ static ib_status_t act_setvar_execute(void *data,
                 IB_FTRACE_RET_STATUS(rc);
             }
 
-            /* Create the new field */
-            rc = ib_field_create(&new,
+            /* Create the new_field field */
+            rc = ib_field_create(&new_field,
                                  tx->mp,
                                  name, nlen,
                                  setvar_data->type,
@@ -695,7 +719,7 @@ static ib_status_t act_setvar_execute(void *data,
             }
 
             /* Add the field to the DPI */
-            rc = ib_data_add(tx->dpi, new);
+            rc = ib_data_add(tx->dpi, new_field);
             if (rc != IB_OK) {
                 ib_log_error_tx(tx,
                                 "setvar: Failed to add field \"%.*s\": %s",
@@ -707,12 +731,12 @@ static ib_status_t act_setvar_execute(void *data,
         case SETVAR_NUMSET:
             assert(setvar_data->type == IB_FTYPE_NUM);
 
-            if (cur != NULL) {
+            if (cur_field != NULL) {
                 ib_data_remove_ex(tx->dpi, name, nlen, NULL);
             }
 
-            /* Create the new field */
-            rc = ib_field_create(&new,
+            /* Create the new_field field */
+            rc = ib_field_create(&new_field,
                                  tx->mp,
                                  name, nlen,
                                  setvar_data->type,
@@ -725,7 +749,7 @@ static ib_status_t act_setvar_execute(void *data,
             }
 
             /* Add the field to the DPI */
-            rc = ib_data_add(tx->dpi, new);
+            rc = ib_data_add(tx->dpi, new_field);
             if (rc != IB_OK) {
                 ib_log_error_tx(tx,
                                 "setvar: Failed to add field \"%.*s\": %s",
@@ -739,10 +763,10 @@ static ib_status_t act_setvar_execute(void *data,
             assert(setvar_data->type == IB_FTYPE_NUM);
 
             /* If it doesn't exist, create the variable with a value of zero */
-            if (cur == NULL) {
+            if (cur_field == NULL) {
 
-                /* Create the new field */
-                rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur);
+                /* Create the new_field field */
+                rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur_field);
                 if (rc != IB_OK) {
                     ib_log_error_tx(
                         tx,
@@ -753,31 +777,31 @@ static ib_status_t act_setvar_execute(void *data,
             }
 
             /* Handle num and unum types */
-            if (cur->type == IB_FTYPE_NUM) {
+            if (cur_field->type == IB_FTYPE_NUM) {
                 ib_num_t num;
-                rc = ib_field_value(cur, ib_ftype_num_out(&num));
+                rc = ib_field_value(cur_field, ib_ftype_num_out(&num));
                 if (rc != IB_OK) {
                     IB_FTRACE_RET_STATUS(rc);
                 }
 
                 num += setvar_data->value.num;
-                ib_field_setv(cur, ib_ftype_num_in(&num));
+                ib_field_setv(cur_field, ib_ftype_num_in(&num));
             }
-            else if (cur->type == IB_FTYPE_UNUM) {
+            else if (cur_field->type == IB_FTYPE_UNUM) {
                 ib_unum_t num;
-                rc = ib_field_setv(cur, ib_ftype_unum_out(&num));
+                rc = ib_field_setv(cur_field, ib_ftype_unum_out(&num));
                 if (rc != IB_OK) {
                     IB_FTRACE_RET_STATUS(rc);
                 }
     
                 num += (ib_unum_t)setvar_data->value.num;
-                ib_field_setv(cur, ib_ftype_unum_in(&num));
+                ib_field_setv(cur_field, ib_ftype_unum_in(&num));
             }
             else {
                 ib_log_error_tx(
                     tx,
                     "setvar: field \"%.*s\" type %d invalid for NUMADD",
-                     (int)nlen, name, cur->type);
+                     (int)nlen, name, cur_field->type);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
             break;
@@ -1208,6 +1232,7 @@ static ib_status_t expand_name_hdr(ib_tx_t *tx,
         *exname = name;
         *exnlen = strlen(name);
     }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
