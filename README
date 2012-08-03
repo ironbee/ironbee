@@ -1,7 +1,7 @@
-LibHTP (http://www.libhtp.org)
+LibHTP
 ============================================================================
 Copyright 2009-2010 Open Information Security Foundation
-Copyright 2010-2011 Qualys, Inc.
+Copyright 2010-2012 Qualys, Inc.
 ============================================================================
 
 LibHTP is a security-aware parser for the HTTP protocol and the related bits
@@ -33,9 +33,9 @@ follows:
  |             IT CAN BE CONSIDER COMPLETE. AT THE MOMENT, THE FOCUS OF DEVELOPMENT
  |             IS ON ACHIEVING THE FIRST TWO GOALS.
 
-
 See the LICENSE, COPYING and NOTICE files distributed with this work for
 information regarding licensing, copying and copyright ownership.
+
 
 INSTALLATION
 ------------
@@ -46,25 +46,17 @@ The installation process should be as simple as:
   $ make
   $ sudo make install
 
- | NOTE    If you already have an early 0.2.x version installed, you must
- |         uninstall it before proceeding. Initially /usr was used for the
- |         installation, but /usr/local is used now. If you forgot to uninstall,
- |         clean all traces of LibHTP from /usr/lib/libhtp* and /usr/include/htp/*.
-
 If you want to use a repository version of LibHTP, do the following:
 
- 1. Use svn export to retrieve the sources of the version you wish to use
+ 1. Retrieve the sources of the version you wish to use
 
- 2. Run ./update_version, which will update htp.c with the latest Subversion
-    revision used
+ 2. Update the version number in htp.pc.in and configure.ac
 
- 3. You may wish to also update htp.pc.in and configure.ac with the correct version
+ 3. Run autoconf -i --force, which will prepare the library for installation
 
- 4. Run autoconf -i --force, which will prepare the library for installation
+ 4. Run doxygen to generate the API documentation
 
- 5. Run doxygen to generate the API documentation
-
- 6. Continue to install as described above
+ 5. Continue to install as described above
 
 
 DOCUMENTATION
