@@ -902,7 +902,7 @@ static ib_status_t execute_operator(ib_engine_t *ib,
                               opinst->op->name,
                               target->field_name,
                               escaped_value);
-            free((void*)escaped_value);
+            free((void *)escaped_value);
         }
         else if ( value->type == IB_FTYPE_BYTESTR ) {
             const char* escaped_value;
@@ -914,7 +914,7 @@ static ib_status_t execute_operator(ib_engine_t *ib,
             }
 
             escaped_value = ib_util_hex_escape(
-                (const char*)ib_bytestr_const_ptr(bytestr),
+                (const char *)ib_bytestr_const_ptr(bytestr),
                 ib_bytestr_size(bytestr));
             if ( escaped_value == NULL ) {
                 IB_FTRACE_RET_STATUS(rc);
@@ -927,7 +927,7 @@ static ib_status_t execute_operator(ib_engine_t *ib,
                               opinst->op->name,
                               target->field_name,
                               escaped_value);
-            free((void*)escaped_value);
+            free((void *)escaped_value);
         }
         else {
             ib_rule_log_trace(tx,

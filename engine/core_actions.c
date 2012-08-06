@@ -631,7 +631,7 @@ static ib_status_t expand_data(
 
             if (ib_rule_log_level(tx->ib) >= IB_RULE_LOG_LEVEL_TRACE) {
                 const char* hex_coded = ib_util_hex_escape(bsdata, bslen);
-                if (hex_coded) {
+                if (hex_coded != NULL) {
                     ib_rule_log_debug(
                         tx,
                         rule,
@@ -641,7 +641,7 @@ static ib_status_t expand_data(
                         label,
                         setvar_data->name,
                         hex_coded);
-                    free((void*)hex_coded);
+                    free((void *)hex_coded);
                 }
             }
         }
@@ -662,7 +662,7 @@ static ib_status_t expand_data(
         }
         else {
             *expanded = ib_mpool_memdup(tx->mp, bsdata, bslen);
-            if ( ! *expanded) {
+            if (*expanded == NULL) {
                 ib_rule_log_debug(
                     tx,
                     rule,
