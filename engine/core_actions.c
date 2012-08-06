@@ -559,7 +559,7 @@ static ib_status_t get_data_value(ib_tx_t *tx,
 }
 
 /**
- * Contains logic for expanding act_setvar_execute field names for assignement.
+ * Contains logic for expanding act_setvar_execute field names for assignment.
  *
  *  @param[in] rule
  *  @param[in] tx
@@ -648,7 +648,7 @@ static ib_status_t expand_data(
         else if (bsdata == NULL) {
             assert(bslen == 0);
 
-            /* Get a non-null pointer that should never be derefferenced. */
+            /* Get a non-null pointer that should never be dereferenced. */
             *expanded = ib_mpool_alloc(tx->mp, 0);
 
             ib_rule_log_debug(
