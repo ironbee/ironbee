@@ -603,10 +603,10 @@ static ib_status_t expand_data(
         const char *bsdata =
             (const char *)ib_bytestr_ptr(setvar_data->value.bstr);
         size_t bslen = ib_bytestr_length(setvar_data->value.bstr);
-    
+
         /* Expand the string */
         if (flags & IB_ACTINST_FLAG_EXPAND) {
-    
+
             rc = ib_data_expand_str_ex(
                 tx->dpi, bsdata, bslen, false, false, expanded, exlen);
             if (rc != IB_OK) {
@@ -647,7 +647,7 @@ static ib_status_t expand_data(
         }
         else if (bsdata == NULL) {
             assert(bslen == 0);
-    
+
             /* Get a non-null pointer that should never be derefferenced. */
             *expanded = ib_mpool_alloc(tx->mp, 0);
 
@@ -819,7 +819,7 @@ static ib_status_t act_setvar_execute(void *data,
                                 (int)nlen, name, ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
-    
+
             break;
         /* Numerical operation : Add */
         case SETVAR_NUMADD:
@@ -856,7 +856,7 @@ static ib_status_t act_setvar_execute(void *data,
                 if (rc != IB_OK) {
                     IB_FTRACE_RET_STATUS(rc);
                 }
-    
+
                 num += (ib_unum_t)setvar_data->value.num;
                 ib_field_setv(cur_field, ib_ftype_unum_in(&num));
             }

@@ -1142,7 +1142,7 @@ static ib_status_t execute_phase_rule_targets(ib_engine_t *ib,
             bool allow  =
                 ib_flags_all(opinst->op->flags, IB_OP_FLAG_ALLOW_NULL);
             ib_rule_log_exec_add_tgt(log_exec, target, NULL);
-            
+
             if (! allow) {
                 ib_rule_log_debug(tx,
                                   rule,
