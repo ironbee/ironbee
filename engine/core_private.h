@@ -27,6 +27,7 @@
 
 #include <ironbee/types.h>
 #include <ironbee/engine.h>
+#include "core_audit_private.h"
 
 /**
  * Initialize the core fields.
@@ -88,5 +89,6 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib,
  */
 ib_status_t ib_core_actions_init(ib_engine_t *ib,
                                  ib_module_t *mod);
+
 
 #endif /* _IB_CORE_PRIVATE_H_ */

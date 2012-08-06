@@ -2,10 +2,9 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 
 include $(top_srcdir)/build/common.mk
 
-
 EXTRA_DIST =  config-parser.rl run-ragel.py \
               engine_private.h state_notify_private.h rule_engine_private.h \
-              core_private.h
+              core_private.h core_audit_private.h
 
 lib_LTLIBRARIES = libironbee.la
 libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
@@ -19,6 +18,7 @@ libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
                         core_tfns.c \
                         core_operators.c \
                         core_actions.c \
+			core_audit.c \
                         rule_logger.c \
                         rule_engine.c \
                         state_notify.c \
@@ -36,7 +36,6 @@ install-exec-hook: $(lib_LTLIBRARIES)
 	  rebase -v $(DESTDIR)$(libdir)/$$base.dylib; \
 	done
 endif
-
 
 # Ragel generated files
 RUNRAGEL=$(srcdir)/run-ragel.py
