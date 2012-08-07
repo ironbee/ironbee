@@ -61,6 +61,7 @@ TSTextLogObject ironbee_log;
 typedef enum {
     HDR_OK,
     HDR_ERROR,
+    HDR_HTTP_100,
     HDR_HTTP_STATUS
 } ib_hdr_outcome;
 #define IB_HDR_OUTCOME_IS_HTTP(outcome,data) \
@@ -730,7 +731,6 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
         TSDebug("ironbee", "\tVConn is closed");
         TSContDestroy(contp);    /* from null-transform, ???? */
 
-
         return 0;
     }
     switch (event) {
@@ -939,6 +939,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
     const char *line, *lptr;
     size_t line_len = 0;
     ib_site_t *site;
+    int nhdrs = 0;
 
     char *head_buf;
     unsigned char *dptr, *icdatabuf;
@@ -1062,6 +1063,12 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         ib_log_debug_tx(data->tx, "ib_state_notify_response_started rline=%p", rline);
         rv = ib_state_notify_response_started(ironbee, data->tx, rline);
 
+        /* A transitional response doesn't have most of what a real response
+         * does, so we need to wait for the real response to go further
+         */
+        if (status == TS_HTTP_STATUS_CONTINUE) {
+            return HDR_HTTP_100;
+        }
     }
 
     /* Get the data into an IOBuffer so we can access them! */
@@ -1117,12 +1124,19 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         rv = ib_parsed_name_value_pair_list_add(ibhdrs,
                                                 line, n_len,
                                                 lptr, v_len);
+        ++nhdrs;
     }
 
-    TSDebug("ironbee", "process_hdr: notifying header data");
-    rv = (*ibd->ib_notify_header)(ironbee, data->tx, ibhdrs);
-    TSDebug("ironbee", "process_hdr: notifying header finished");
-    rv = (*ibd->ib_notify_header_finished)(ironbee, data->tx);
+    /* If there are no headers, treat as a transitional response */
+    if (nhdrs > 0) {
+        TSDebug("ironbee", "process_hdr: notifying header data");
+        rv = (*ibd->ib_notify_header)(ironbee, data->tx, ibhdrs);
+        TSDebug("ironbee", "process_hdr: notifying header finished");
+        rv = (*ibd->ib_notify_header_finished)(ironbee, data->tx);
+    }
+    else {
+        return HDR_HTTP_100;
+    }
 
     /* Now manipulate header as requested by ironbee */
     for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
@@ -1311,6 +1325,16 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* Feed ironbee the headers if not done alread. */
             if (!ib_tx_flags_isset(txndata->tx, IB_TX_FRES_STARTED)) {
                 status = process_hdr(txndata, txnp, &ironbee_direction_resp);
+
+                /* OK, if this was an HTTP 100 response, it's not the
+                 * response we're interested in.  No headers have been
+                 * sent yet, and no data will be sent until we've
+                 * reached here again with the final response.
+                 */
+                if (status == HDR_HTTP_100) {
+                    TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
+                    break;
+                }
                 // FIXME: Need to know if this fails as it (I think) means
                 //        that the response did not come from the server and
                 //        that ironbee should ignore it.
@@ -1391,8 +1415,23 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             }
             else {
                 /* Other nonzero statuses not supported */
-                if (status != HDR_OK) {
+                switch(status) {
+                  case HDR_OK:
+                    break;	/* All's well */
+                  case HDR_HTTP_STATUS:
+                    // FIXME: should we take the initiative here and return 500?
+                    TSError("Internal error: ts-ironbee requested error but no error response set");
+                    break;
+                  case HDR_HTTP_100:
+                    /* This can't actually happen with current Trafficserver
+                     * versions, as TS will generate a 400 error without
+                     * reference to us.  But in case that changes in future ...
+                     */
+                    TSError("No request headers found!");
+                    break;
+                  default:
                     TSError("Unhandled state arose in handling request headers");
+                    break;
                 }
                 TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             }
