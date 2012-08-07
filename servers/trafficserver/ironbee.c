@@ -1051,8 +1051,8 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
             reason = "Other";
         }
 
-        ib_log_debug_tx(data->tx, "RESP_LINE: %s %d %s",
-                        cversion, status, reason);
+        ib_log_debug_tx(data->tx, "RESP_LINE: %s %d %.*s",
+                        cversion, status, (int)r_len, reason);
 
         rv = ib_parsed_resp_line_create(data->tx, &rline,
                                         NULL, 0,
