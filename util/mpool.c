@@ -1301,9 +1301,9 @@ bool ib_mpool_analyze_helper(
     IMR_PRINTF(
         "Cleanups:         use=%12zd cost=%12zd waste=%12zd free=%12zd "
         "efficiency=%4.1f%%\n",
-        pointer_page_use, pointer_page_cost,
-        pointer_page_cost - pointer_page_use, free_pointer_page,
-        100*(double)pointer_page_use / pointer_page_cost
+        cleanup_use, cleanup_cost,
+        cleanup_cost - cleanup_use, free_cleanup,
+        100*(double)cleanup_use / cleanup_cost
     );
     {
         size_t total_use = page_use + pointer_page_use + cleanup_use +
