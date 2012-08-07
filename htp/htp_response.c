@@ -331,6 +331,10 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             }
 
             if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
+                if (connp->out_decompressor != NULL) {
+                    connp->out_decompressor->destroy(connp->out_decompressor);
+                    connp->out_decompressor = NULL;
+                }                
                 connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp,
                     connp->out_tx->response_content_encoding);
                 if (connp->out_decompressor != NULL) {
