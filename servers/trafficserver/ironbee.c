@@ -128,13 +128,13 @@ typedef struct {
 #define START_RESPONSE 0x04
 #define DATA 0
 
-typedef struct hdr_do {
+typedef struct hdr_action_t {
     ib_server_header_action_t action;
     ib_server_direction_t dir;
-    char *hdr;
-    char *value;
-    struct hdr_do *next;
-} hdr_do;
+    const char *hdr;
+    const char *value;
+    struct hdr_action_t *next;
+} hdr_action_t;
 
 typedef struct hdr_list {
     char *hdr;
@@ -157,7 +157,7 @@ typedef struct {
     ib_filter_ctx out;
     int state;
     int status;
-    hdr_do *hdr_actions;
+    hdr_action_t *hdr_actions;
     hdr_list *err_hdrs;
     char *err_body;    /* this one can't be const */
 } ib_txn_ctx;
@@ -168,7 +168,7 @@ typedef struct {
 typedef struct {
     ib_server_direction_t dir;
     const char *word;
-    TSReturnCode (*hdr_get)(TSHttpTxn, TSMBuffer *, TSMLoc *);
+    TSReturnCode (*ts_hdr_get)(TSHttpTxn, TSMBuffer *, TSMLoc *);
     ib_status_t (*ib_notify_header)(ib_engine_t*, ib_tx_t*,
                  ib_parsed_header_wrapper_t*);
     ib_status_t (*ib_notify_header_finished)(ib_engine_t*, ib_tx_t*);
@@ -203,24 +203,6 @@ typedef struct {
     ib_filter_ctx *data;
 } ibd_ctx;
 
-static void add_header_field(TSMBuffer bufp, TSMLoc hdr_loc,
-                             const char *field_name, const char *field_value)
-{
-    int rv;
-    TSMLoc field_loc;
-    rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
-    if (rv != TS_SUCCESS) {
-        TSError("Failed to add MIME header field: %s", field_name);
-    }
-    rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
-                               field_name, strlen(field_name));
-    rv = TSMimeHdrFieldValueStringSet(bufp, hdr_loc, field_loc, -1,
-                                      field_value, strlen(field_value));
-    rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
-    TSHandleMLocRelease(bufp, hdr_loc, field_loc);
-}
-
-
 /**
  * Callback functions for Ironbee to signal to us
  */
@@ -230,7 +212,7 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
                                       void *cbdata)
 {
     ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
-    hdr_do *header;
+    hdr_action_t *header;
     /* Logic for whether we're in time for the requested action */
     /* Output headers can change any time before they're sent */
     /* Input headers can only be touched during their read */
@@ -401,7 +383,7 @@ ib_server_t DLL_LOCAL ibplugin = {
 static void ib_txn_ctx_destroy(ib_txn_ctx * data)
 {
     if (data) {
-        hdr_do *x;
+        hdr_action_t *x;
 //        TSDebug("ironbee", "TX DESTROY: conn=>%p tx=%p id=%s txn_count=%d", data->tx->conn, data->tx, data->tx->id, data->ssn->txn_count);
 //        ib_tx_destroy(data->tx);
 //        data->tx = NULL;
@@ -419,8 +401,8 @@ static void ib_txn_ctx_destroy(ib_txn_ctx * data)
         }
         while (x=data->hdr_actions, x != NULL) {
             data->hdr_actions = x->next;
-            TSfree(x->hdr);
-            TSfree(x->value);
+            TSfree( (char *)x->hdr);
+            TSfree( (char *)x->value);
             TSfree(x);
         }
         /* Decrement the txn count on the ssn, and destroy ssn if it's closing */
@@ -913,6 +895,86 @@ static int next_line(const char **linep, size_t *lenp)
     return rv;
 }
 
+static void header_action(TSMBuffer bufp,
+                          TSMLoc hdr_loc,
+                          const hdr_action_t *act)
+{
+    TSMLoc field_loc;
+    int rv;
+
+    switch (act->action) {
+
+    case IB_HDR_SET:  /* replace any previous instance == unset + add */
+    case IB_HDR_UNSET:  /* unset it */
+        TSDebug("ironbee", "Remove HTTP Header \"%s\"", act->hdr);
+        /* Use a while loop in case there are multiple instances */
+        while (field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, act->hdr,
+                                              strlen(act->hdr)),
+               field_loc != TS_NULL_MLOC) {
+            TSMimeHdrFieldDestroy(bufp, hdr_loc, field_loc);
+            TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+        }
+        if (act->action == IB_HDR_UNSET)
+            break;
+        /* else fallthrough to ADD */
+
+    case IB_HDR_ADD:  /* add it in, regardless of whether it exists */
+add_hdr:
+        TSDebug("ironbee", "Add HTTP Header \"%s\"=\"%s\"",
+                act->hdr, act->value);
+        rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
+        if (rv != TS_SUCCESS) {
+            TSError("Failed to add MIME header field \"%s\"", act->hdr);
+        }
+        rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
+                                   act->hdr, strlen(act->hdr));
+        if (rv != TS_SUCCESS) {
+            TSError("Failed to set name of MIME header field \"%s\"",
+                    act->hdr);
+        }
+        rv = TSMimeHdrFieldValueStringSet(bufp, hdr_loc, field_loc, -1,
+                                          act->value, strlen(act->value));
+        if (rv != TS_SUCCESS) {
+            TSError("Failed to set value of MIME header field \"%s\"",
+                    act->hdr);
+        }
+        rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
+        if (rv != TS_SUCCESS) {
+            TSError("Failed to append MIME header field \"%s\"", act->hdr);
+        }
+        TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+        break;
+
+    case IB_HDR_MERGE:  /* append UNLESS value already appears */
+        /* FIXME: implement this in full */
+        /* treat this as APPEND */
+
+    case IB_HDR_APPEND: /* append it to any existing instance */
+        TSDebug("ironbee", "Merge/Append HTTP Header \"%s\"=\"%s\"",
+                act->hdr, act->value);
+        field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, act->hdr,
+                                       strlen(act->hdr));
+        if (field_loc == TS_NULL_MLOC) {
+            /* this is identical to IB_HDR_ADD */
+            goto add_hdr;
+        }
+        /* This header exists, so append to it
+         * (the function is called Insert but actually appends
+         */
+        rv = TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, -1,
+                                             act->value, strlen(act->value));
+        if (rv != TS_SUCCESS) {
+            TSError("Failed to insert MIME header field \"%s\"", act->hdr);
+        }
+        TSHandleMLocRelease(bufp, hdr_loc, field_loc);
+        break;
+
+    default:  /* bug !! */
+        TSDebug("ironbee", "Bogus header action %d", act->action);
+        break;
+    }
+}
+
 /**
  * Process an HTTP header from ATS.
  *
@@ -924,18 +986,19 @@ static int next_line(const char **linep, size_t *lenp)
  * @return OK (nothing to tell), Error (something bad happened),
  *         HTTP_STATUS (check data->status).
  */
-static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
+static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
+                                  TSHttpTxn txnp,
                                   ironbee_direction_t *ibd)
 {
     int rv;
     TSMBuffer bufp;
     TSMLoc hdr_loc;
-    TSMLoc field_loc;
     TSIOBuffer iobufp;
     TSIOBufferReader readerp;
     TSIOBufferBlock blockp;
     int64_t len;
-    hdr_do *hdr;
+    hdr_action_t *act;
+    hdr_action_t setact;
     const char *line, *lptr;
     size_t line_len = 0;
     ib_site_t *site;
@@ -946,7 +1009,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
 
     ib_parsed_header_wrapper_t *ibhdrs;
 
-    TSDebug("ironbee", "process %s headers\n", ibd->word);
+    TSDebug("ironbee", "processing %s headers", ibd->word);
 
     /* Use alternative simpler path to get the un-doctored request
      * if we have the fix for TS-998
@@ -956,11 +1019,12 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
      */
     /* We'll get a bogus URL from TS-998 */
 
-    rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
+    rv = (*ibd->ts_hdr_get)(txnp, &bufp, &hdr_loc);
     if (rv) {
         TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
         return HDR_ERROR;
     }
+
     if (ibd->dir == IBD_REQ) {
         ib_parsed_req_line_t *rline;
         int m_len;
@@ -1138,87 +1202,52 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data, TSHttpTxn txnp,
         return HDR_HTTP_100;
     }
 
-    /* Now manipulate header as requested by ironbee */
-    for (hdr = data->hdr_actions; hdr != NULL; hdr = hdr->next) {
-        if (hdr->dir != ibd->dir)
-            continue;    /* it's not for us */
-
-        TSDebug("ironbee", "Manipulating HTTP headers");
-
-        switch (hdr->action) {
-            case IB_HDR_SET:  /* replace any previous instance == unset + add */
-            case IB_HDR_UNSET:  /* unset it */
-                TSDebug("ironbee", "Remove HTTP Header %s", hdr->hdr);
-                /* Use a while loop in case there are multiple instances */
-                while (field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, hdr->hdr,
-                                                      strlen(hdr->hdr)),
-                           field_loc != TS_NULL_MLOC) {
-                    TSMimeHdrFieldDestroy(bufp, hdr_loc, field_loc);
-                    TSHandleMLocRelease(bufp, hdr_loc, field_loc);
-                }
-                if (hdr->action == IB_HDR_UNSET)
-                    break;
-                /* else fallthrough to ADD */
-            case IB_HDR_ADD:  /* add it in, regardless of whether it exists */
-add_hdr:
-                TSDebug("ironbee", "Add HTTP Header %s=%s", hdr->hdr, hdr->value);
-                rv = TSMimeHdrFieldCreate(bufp, hdr_loc, &field_loc);
-                if (rv != TS_SUCCESS)
-                     TSError("Failed to add MIME header field");
-                rv = TSMimeHdrFieldNameSet(bufp, hdr_loc, field_loc,
-                                           hdr->hdr, strlen(hdr->hdr));
-                rv = TSMimeHdrFieldValueStringSet(bufp, hdr_loc, field_loc, -1,
-                                                  hdr->value, strlen(hdr->value));
-                rv = TSMimeHdrFieldAppend(bufp, hdr_loc, field_loc);
-                TSHandleMLocRelease(bufp, hdr_loc, field_loc);
-                break;
-            case IB_HDR_MERGE:  /* append UNLESS value already appears */
-                /* FIXME: implement this in full */
-                /* treat this as APPEND */
-            case IB_HDR_APPEND: /* append it to any existing instance */
-                TSDebug("ironbee", "Merge/Append HTTP Header %s=%s", hdr->hdr, hdr->value);
-                field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, hdr->hdr,
-                                               strlen(hdr->hdr));
-                if (field_loc == TS_NULL_MLOC) {
-                    /* this is identical to IB_HDR_ADD */
-                    goto add_hdr;
-                }
-                /* This header exists, so append to it
-                 * (the function is called Insert but actually appends
-                 */
-                rv = TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, -1,
-                                               hdr->value, strlen(hdr->value));
-                TSHandleMLocRelease(bufp, hdr_loc, field_loc);
-                break;
-            default:  /* bug !! */
-                TSDebug("ironbee", "Bogus header action %d", hdr->action);
-                break;
-        }
-    }
+    /* Initialize the header action */
+    setact.action = IB_HDR_SET;
+    setact.dir = ibd->dir;
 
     /* Add the ironbee site id to an internal header. */
     site = ib_context_site_get(data->tx->ctx);
     if (site != NULL) {
-        add_header_field(bufp, hdr_loc, "@IB-SITE-ID", site->id_str);
+        setact.hdr = "@IB-SITE-ID";
+        setact.value = site->id_str;
+        header_action(bufp, hdr_loc, &setact);
     }
-
-    /* Add internal header if we blocked the transaction */
-    if ((data->tx->flags & (IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE)) != 0) {
-        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "blocked");
-    }
-    else if (data->tx->flags & IB_TX_BLOCK_ADVISORY) {
-        add_header_field(bufp, hdr_loc, "@IB-BLOCK-FLAG", "advisory");
+    else {
+        TSDebug("ironbee", "No site available for @IB-SITE-ID");
     }
 
     /* Add internal header for effective IP address */
-    add_header_field(bufp, hdr_loc, "@IB-EFFECTIVE-IP", data->tx->er_ipstr);
+    setact.hdr = "@IB-EFFECTIVE-IP";
+    setact.value = data->tx->er_ipstr;
+    header_action(bufp, hdr_loc, &setact);
+
+    /* Now manipulate header as requested by ironbee */
+    for (act = data->hdr_actions; act != NULL; act = act->next) {
+        if (act->dir != ibd->dir)
+            continue;    /* it's not for us */
+
+        TSDebug("ironbee", "Manipulating HTTP headers");
+        header_action(bufp, hdr_loc, act);
+    }
+
+    /* Add internal header if we blocked the transaction */
+    setact.hdr = "@IB-BLOCK-FLAG";
+    if ((data->tx->flags & (IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE)) != 0) {
+        setact.value = "blocked";
+        header_action(bufp, hdr_loc, &setact);
+    }
+    else if (data->tx->flags & IB_TX_BLOCK_ADVISORY) {
+        setact.value = "advisory";
+        header_action(bufp, hdr_loc, &setact);
+    }
 
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     TSIOBufferReaderFree(readerp);
     TSIOBufferDestroy(iobufp);
     TSfree(icdatabuf);
 
-    return data->status == 0 ? HDR_OK : HDR_HTTP_STATUS;
+    return (data->status == 0) ? HDR_OK : HDR_HTTP_STATUS;
 }
 
 /**
