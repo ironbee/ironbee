@@ -238,6 +238,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
         }
         if (directive != NULL) {
             free(directive);
+            directive = NULL;
         }
     }
 
@@ -272,9 +273,13 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 
     # include file logic
     action include_config {
+        if (directive != NULL) {
+            free(directive);
+            directive = NULL;
+        }
         rc = include_config_fn(cp, mpcfg, mark, fpc, file, lineno);
         if (rc == IB_OK) {
-            ib_cfg_log_debug(cp, "Done processing include direction");
+            ib_cfg_log_debug(cp, "Done processing include directive");
         }
         else {
             ib_cfg_log_error(cp,
