@@ -845,7 +845,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
             memcpy(tmp_c, subject, subject_len);
             tmp_c[subject_len] = '\0';
             /* No match. Return false to the caller (*result = 0). */
-            ib_log_debug2_tx(tx, "No match for [%s] using pattern [%s].",
+            ib_log_debug2_tx(tx, "No match for \"%s\" using pattern \"%s\".",
                         tmp_c,
                         rule_data->patt);
             free(tmp_c);
@@ -1228,7 +1228,7 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
             memcpy(tmp_c, subject, subject_len);
             tmp_c[subject_len] = '\0';
             /* No match. Return false to the caller (*result = 0). */
-            ib_log_debug2_tx(tx, "No match for [%s] using pattern [%s].",
+            ib_log_debug2_tx(tx, "No match for \"%s\" using pattern \"%s\".",
                         tmp_c,
                         rule_data->patt);
             free(tmp_c);
