@@ -292,13 +292,17 @@ ib_status_t ib_state_notify_request_started(
     assert(line != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface = pi?(IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface:NULL;
+    assert(pi != NULL);
+
+    IB_PROVIDER_IFACE_TYPE(parser) *iface =
+        (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface;
     ib_status_t rc;
 
     /* Validate. */
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
-        ib_log_error_tx(tx, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(request_started_event));
+        ib_log_error_tx(tx,
+                        "Attempted to notify previously notified event: %s",
+                        ib_state_event_name(request_started_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
