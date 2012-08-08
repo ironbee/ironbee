@@ -1310,7 +1310,6 @@ static ib_status_t op_nop_execute(ib_engine_t *ib,
                                   ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    ib_log_debug2_tx(tx, "NOP operator returning 1");
     *result = 1;
 
     if (ib_rule_should_capture(rule, *result)) {

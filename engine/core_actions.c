@@ -949,9 +949,13 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx,
         /* When doing an advisory block, mark the DPI with FLAGS:BLOCK=1. */
         rc = ib_data_add_num(tx->dpi, "FLAGS:BLOCK", ib_num_one, NULL);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                            "Could not set value FLAGS:BLOCK=1: %s",
-                            ib_status_to_string(rc));
+            ib_rule_log_error(
+                tx,
+                rule,
+                NULL,
+                NULL,
+                "Could not set value FLAGS:BLOCK=1: %s",
+                ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
@@ -961,12 +965,23 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx,
             event->rec_action = IB_LEVENT_ACTION_BLOCK;
         }
         else if (rc != IB_ENOENT) {
-            ib_log_error_tx(tx,
+            ib_rule_log_error(
+                tx,
+                rule,
+                NULL,
+                NULL,
                 "Failed to fetch event associated with this action: %s",
                 ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
+
+    ib_rule_log_debug(
+        tx,
+        rule,
+        NULL,
+        NULL,
+        "Advisory block.");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -998,8 +1013,22 @@ static ib_status_t act_block_phase_execute(ib_tx_t *tx,
         event->action = IB_LEVENT_ACTION_BLOCK;
     }
     else if (rc != IB_ENOENT) {
+        ib_rule_log_error(
+            tx,
+            rule,
+            NULL,
+            NULL,
+            "Failed phase block: %s.",
+            ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
+
+    ib_rule_log_debug(
+        tx,
+        rule,
+        NULL,
+        NULL,
+        "Phase block.");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1033,8 +1062,22 @@ static ib_status_t act_block_immediate_execute(ib_tx_t *tx,
         event->action = IB_LEVENT_ACTION_BLOCK;
     }
     else if (rc != IB_ENOENT) {
+        ib_rule_log_error(
+            tx,
+            rule,
+            NULL,
+            NULL,
+            "Failed immediate block: %s.",
+            ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
+
+    ib_rule_log_debug(
+        tx,
+        rule,
+        NULL,
+        NULL,
+        "Immediate block.");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1519,6 +1562,9 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Set the request header in @c tx->dpi.
+ */
 static ib_status_t act_set_request_header_execute(void* data,
                                                   const ib_rule_t *rule,
                                                   ib_tx_t *tx,
@@ -1540,21 +1586,35 @@ static ib_status_t act_set_request_header_execute(void* data,
     size_t name_len;
 
     /* Expand the name (if required) */
-    rc = expand_name_hdr(tx, "setRequestHeader",
-                         act_data->name, act_data->name_expand,
-                         &name, &name_len);
+    rc = expand_name_hdr(tx,
+                         "setRequestHeader",
+                         act_data->name,
+                         act_data->name_expand,
+                         &name,
+                         &name_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = expand_str(tx, "setRequestHeader", act_data->value, flags,
-                    &value, &value_len);
+    rc = expand_str(tx,
+                    "setRequestHeader",
+                    act_data->value,
+                    flags,
+                    &value,
+                    &value_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug_tx(tx, "Setting request header \"%.*s\"=\"%.*s\"",
-                    (int)name_len, name, (int)value_len, value);
+    ib_rule_log_debug(tx,
+                      rule,
+                      NULL,
+                      NULL,
+                      "Setting request header \"%.*s\"=\"%.*s\"",
+                      (int)name_len,
+                      name,
+                      (int)value_len,
+                      value);
 
     /* Note: ignores lengths for now */
     rc = ib_server_header(tx->ib->server,
