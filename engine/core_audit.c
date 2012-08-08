@@ -23,17 +23,17 @@
  */
 
 #include "ironbee_config_auto.h"
-#include <ironbee/core.h>
-#include <ironbee/rule_engine.h>
 
-#include "rule_engine_private.h"
-#include "core_private.h"
 #include "core_audit_private.h"
+#include "core_private.h"
 #include "engine_private.h"
+#include "rule_engine_private.h"
 
-#include <ironbee/engine_types.h>
+#include <ironbee/core.h>
 #include <ironbee/debug.h>
+#include <ironbee/engine_types.h>
 #include <ironbee/provider.h>
+#include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
 
 #include <assert.h>

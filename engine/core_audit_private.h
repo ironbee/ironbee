@@ -25,8 +25,9 @@
 #ifndef _IB_CORE_AUDIT_PRIVATE_H_
 #define _IB_CORE_AUDIT_PRIVATE_H_
 
-#include <stdio.h>
 #include <ironbee/core.h>
+
+#include <stdio.h>
 
 /* -- Audit Provider -- */
 

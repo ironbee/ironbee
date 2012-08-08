@@ -49,6 +49,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/transaction_data.hpp>',
 
   '"ahocorasick_private.h"',
+  '"core_audit_private.h"',
   '"core_private.h"',
   '"engine_private.h"',
   '"ironbee_private.h"',

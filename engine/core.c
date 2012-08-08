@@ -30,8 +30,8 @@
 #define _POSIX_SOURCE
 #endif
 
-#include "core_audit_private.h"
 #include "core_private.h"
+#include "core_audit_private.h"
 #include "engine_private.h"
 #include "rule_engine_private.h"
 
