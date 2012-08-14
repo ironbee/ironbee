@@ -46,6 +46,7 @@ check_PROGRAMS = test_gtest \
                  test_util_hash \
                  test_util_list \
                  test_util_field \
+                 test_util_cfgmap \
                  test_util_unescape_string \
                  test_util_uuid \
                  test_util_logformat \
@@ -119,6 +120,8 @@ test_util_array_SOURCES = test_util_array.cc test_main.cc
 test_util_logformat_SOURCES = test_util_logformat.cc test_main.cc
 
 test_util_hash_SOURCES = test_util_hash.cc test_main.cc
+
+test_util_cfgmap_SOURCES = test_util_cfgmap.cc test_main.cc
 
 test_util_list_SOURCES = test_util_list.cc test_main.cc
 
