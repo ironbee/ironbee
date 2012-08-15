@@ -854,7 +854,16 @@ static ib_status_t execute_operator(ib_engine_t *ib,
 
     /* This if-block is only to log operator values when tracing. */
     if ( ib_rule_log_level(ib) >= IB_RULE_LOG_LEVEL_TRACE ) {
-        if ( value->type == IB_FTYPE_NUM ) {
+        if ( value == NULL ) {
+            ib_rule_log_trace(tx,
+                              rule,
+                              target,
+                              NULL,
+                              "Exec of op %s on field %s = NULL",
+                              opinst->op->name,
+                              target->field_name);
+        }
+        else if ( value->type == IB_FTYPE_NUM ) {
             ib_num_t num;
             rc = ib_field_value(value, ib_ftype_num_out(&num));
             if ( rc != IB_OK ) {
