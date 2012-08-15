@@ -220,6 +220,11 @@ typedef struct {
     ib_filter_ctx *data;
 } ibd_ctx;
 
+static bool is_error_status(int status)
+{
+    return ( (status >= 200) && (status < 600) );
+}
+
 static void add_header_field(TSMBuffer bufp, TSMLoc hdr_loc,
                              const char *field_name, const char *field_value)
 {
@@ -275,7 +280,8 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
 {
     const char *reason = TSHttpHdrReasonLookup(txndata->status);
     TSMBuffer bufp;
-    TSMLoc hdr_loc, field_loc;
+    TSMLoc hdr_loc;
+    TSMLoc field_loc;
     hdr_list *hdrs;
     TSReturnCode rv;
 
@@ -332,6 +338,7 @@ errordoc_free:
         TSfree(hdrs);
         hdrs = txndata->err_hdrs;
     }
+
     if (txndata->err_body) {
         /* this will free the body, so copy it first! */
         TSHttpTxnErrorBodySet(txnp, txndata->err_body,
@@ -341,13 +348,19 @@ errordoc_free:
     if (rv != TS_SUCCESS) {
         TSError("ErrorDoc - TSHandleMLocRelease 2");
     }
+    TSDebug("ironbee", "Sent error %d \"%s\"", txndata->status, reason);
 }
 
 static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 {
     ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
     TSDebug("ironbee", "ib_error_callback with status=%d", status);
-    if (status >= 200 && status < 600) {
+    if ( is_error_status(status) ) {
+        if (is_error_status(ctx->status) ) {
+            TSDebug("ironbee",
+                    "  Ignoring: status already set to %d", ctx->status);
+            return IB_OK;
+        }
         /* We can't return an error after the response has started */
         if (ctx->state & START_RESPONSE) {
             TSDebug("ironbee", "Too late to change status=%d", status);
