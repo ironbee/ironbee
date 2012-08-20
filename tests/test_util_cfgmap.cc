@@ -17,10 +17,9 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /// @file
-/// @brief IronBee &mdash; Hash Test
+/// @brief IronBee &cfgmap; Configuration Mapping Test
 ///
-/// @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
-/// @author Christopher Alfeld <calfeld@qualys.com>
+/// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
 #include <ironbee/hash.h>
