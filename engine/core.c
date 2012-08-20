@@ -831,13 +831,11 @@ static ib_status_t audit_api_write_log(ib_provider_inst_t *lpi)
     /* Lock to write. */
     if (log->ctx->auditlog->index != NULL) {
         rc = ib_lock_lock(&log->ctx->auditlog->index_fp_lock);
-    }
-
-    if (rc!=IB_OK) {
-        ib_log_error(lpi->pr->ib,
-                     "Cannot lock %s for write.",
-                     log->ctx->auditlog->index);
-        IB_FTRACE_RET_STATUS(rc);
+        if (rc != IB_OK) {
+            ib_log_error(lpi->pr->ib, "Cannot lock %s for write.",
+                         log->ctx->auditlog->index);
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     /* Write the header if required. */
