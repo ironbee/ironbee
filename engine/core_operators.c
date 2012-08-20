@@ -26,6 +26,7 @@
 
 #include <assert.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
@@ -622,6 +623,7 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
  * @returns Status code
  */
 static ib_status_t get_num_value(ib_tx_t *tx,
+                                 const ib_rule_t *rule,
                                  const numop_params_t *pdata,
                                  ib_flags_t flags,
                                  ib_num_t *result)
@@ -643,7 +645,14 @@ static ib_status_t get_num_value(ib_tx_t *tx,
     }
 
     /* Convert string the expanded string to a number */
-    IB_FTRACE_RET_STATUS(ib_string_to_num(expanded, 0, result) );
+    rc = ib_string_to_num(expanded, 0, result);
+    if (rc != IB_OK) {
+        ib_rule_log_error(tx, rule, NULL, NULL,
+                          "Failed to convert expanded parameter \"%s\" "
+                          "to a number: %s",
+                          expanded, ib_status_to_string(rc));
+    }
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -655,7 +664,8 @@ static ib_status_t get_num_value(ib_tx_t *tx,
  *
  * @returns Status code
  */
-static ib_status_t field_to_num(ib_engine_t *ib,
+static ib_status_t field_to_num(ib_tx_t *tx,
+                                const ib_rule_t *rule,
                                 ib_field_t *field,
                                 ib_num_t *result)
 {
@@ -679,6 +689,9 @@ static ib_status_t field_to_num(ib_engine_t *ib,
                 }
 
                 if (n > INT64_MAX) {
+                    ib_rule_log_error(tx, rule, NULL, NULL,
+                                      "Overflow in converting number %"PRIu64,
+                                      n);
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
                 }
 
@@ -695,6 +708,10 @@ static ib_status_t field_to_num(ib_engine_t *ib,
 
                 rc = ib_string_to_num(fval, 0, result);
                 if (rc != IB_OK) {
+                    ib_rule_log_error(tx, rule, NULL, NULL,
+                                      "Failed to convert string \"%s\" "
+                                      "to a number: %s",
+                                      fval, ib_status_to_string(rc));
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
                 }
             }
@@ -714,12 +731,21 @@ static ib_status_t field_to_num(ib_engine_t *ib,
                     0,
                     result);
                 if (rc != IB_OK) {
+                    ib_rule_log_error(tx, rule, NULL, NULL,
+                                      "Failed to convert byte string \"%.*s\" "
+                                      "to a number: %s",
+                                      (int)ib_bytestr_length(bs),
+                                      (const char *)ib_bytestr_const_ptr(bs),
+                                      ib_status_to_string(rc));
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
                 }
             }
             break;
 
         default:
+            ib_rule_log_error(tx, rule, NULL, NULL,
+                              "Unable to convert field type %d to a number",
+                              field->type);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -779,13 +805,13 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(ib, field, &value);
+    rc = field_to_num(tx, rule, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the numeric value from the param data (including expansion, etc) */
-    rc = get_num_value(tx, pdata, flags, &param_value);
+    rc = get_num_value(tx, rule, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -827,13 +853,13 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(ib, field, &value);
+    rc = field_to_num(tx, rule, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the numeric value (including expansion, etc) */
-    rc = get_num_value(tx, pdata, flags, &param_value);
+    rc = get_num_value(tx, rule, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -879,13 +905,13 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(ib, field, &value);
+    rc = field_to_num(tx, rule, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the numeric value (including expansion, etc) */
-    rc = get_num_value(tx, pdata, flags, &param_value);
+    rc = get_num_value(tx, rule, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -931,13 +957,13 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(ib, field, &value);
+    rc = field_to_num(tx, rule, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the numeric value (including expansion, etc) */
-    rc = get_num_value(tx, pdata, flags, &param_value);
+    rc = get_num_value(tx, rule, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -984,13 +1010,13 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(ib, field, &value);
+    rc = field_to_num(tx, rule, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Expand the data value? */
-    rc = get_num_value(tx, pdata, flags, &param_value);
+    rc = get_num_value(tx, rule, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1036,13 +1062,13 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(ib, field, &value);
+    rc = field_to_num(tx, rule, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Expand the data value? */
-    rc = get_num_value(tx, pdata, flags, &param_value);
+    rc = get_num_value(tx, rule, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
