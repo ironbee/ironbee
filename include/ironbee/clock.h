@@ -142,7 +142,7 @@ typedef enum ib_clock_type_t {
     } while (0)
 
 /**
- * Convert an ib_time_t to seconds (epoch)
+ * Convert an ib_time_t (microseconds) to seconds
  *
  * @param[in]  time IronBee time structure (ib_time_t)
  *
@@ -161,7 +161,8 @@ ib_clock_type_t DLL_PUBLIC ib_clock_type(void);
 /**
  * Get the clock time.
  *
- * This is to be used for time deltas.
+ * This is to be used for time deltas, and the value may or may not be related
+ * to the value returned by time(3) (i.e. seconds since epoch).
  *
  * @note This is not monotonic nor wall time on all platforms.
  *
@@ -172,7 +173,7 @@ ib_time_t DLL_PUBLIC ib_clock_get_time(void);
 
 /**
  * IronBee types version of @c gettimeofday() called with
- * NULL timezone parameter.
+ * NULL timezone parameter.  The returned time is relative to epoch.
  *
  * This is essentially @c gettimeofday(ib_timeval_t *tp, @c NULL).
  *
