@@ -134,9 +134,9 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     }
     else {
         if (strcmp(real, incfile) != 0) {
-            ib_cfg_log_debug(cp,
-                             "Real path of included file \"%s\" is \"%s\"",
-                             incfile, real);
+            ib_cfg_log_notice(cp,
+                              "Real path of included file \"%s\" is \"%s\"",
+                              incfile, real);
         }
         freeme = real;
     }
