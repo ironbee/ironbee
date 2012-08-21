@@ -110,7 +110,7 @@ void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv)
     t = tv.tv_sec;
     tm = localtime(&t);
     strftime(buf, 20, "%Y-%m-%dT%H:%M:%S", tm);
-    snprintf(buf + 19, 6, ".%04lu", (unsigned long)tv.tv_usec);
+    snprintf(buf + 19, 8, ".%06lu", (unsigned long)tv.tv_usec);
     strftime(buf + 24, 6, "%z", tm);
 }
 
