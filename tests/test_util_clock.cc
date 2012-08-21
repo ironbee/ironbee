@@ -47,13 +47,13 @@ double TvToSecs(const ib_timeval_t &tv)
 
 bool CheckUsecDiff(int64_t diff, unsigned int usecs)
 {
-    int64_t limit = usecs ? usecs / 10 : 100000;
+    int64_t limit = usecs ? usecs / 5 : 100000;
     return (diff >= 0) && (abs(diff - usecs) < limit);
 }
 bool CheckSecDiff(double diff, double secs, double limit=-1.0)
 {
     if (limit < 0.0) {
-        limit = (secs > 0.0001) ? secs * 0.1 : 1e-5;
+        limit = (secs > 0.0001) ? secs * 0.2 : 1e-5;
     }
     return (diff >= 0.0) && (fabs(diff - secs) < limit);
 }
@@ -87,30 +87,35 @@ TEST(TestClock, test_get_time)
     ib_time_t time1;
     ib_time_t time2;
     unsigned int usecs;
+    bool rv;
 
     usecs = 1000;
     time1 = ib_clock_get_time( );
     usleep(usecs);
     time2 = ib_clock_get_time( );
-    ASSERT_TRUE( CheckDelta(time1, time2, usecs) );
+    rv = CheckDelta(time1, time2, usecs);
+    ASSERT_TRUE(rv);
 
     usecs = 10000;
     time1 = ib_clock_get_time( );
     usleep(usecs);
     time2 = ib_clock_get_time( );
-    ASSERT_TRUE( CheckDelta(time1, time2, usecs) );
+    rv = CheckDelta(time1, time2, usecs);
+    ASSERT_TRUE(rv);
 
     usecs = 100000;
     time1 = ib_clock_get_time( );
     usleep(usecs);
     time2 = ib_clock_get_time( );
-    ASSERT_TRUE( CheckDelta(time1, time2, usecs) );
+    rv = CheckDelta(time1, time2, usecs);
+    ASSERT_TRUE(rv);
 
     usecs = 1000000;
     time1 = ib_clock_get_time( );
     usleep(usecs);
     time2 = ib_clock_get_time( );
-    ASSERT_TRUE( CheckDelta(time1, time2, usecs) );
+    rv = CheckDelta(time1, time2, usecs);
+    ASSERT_TRUE(rv);
 }
 
 TEST(TestClock, test_gettimeofday)
@@ -176,7 +181,7 @@ void TestTimestamp(bool relative, int seconds)
 
     ASSERT_STRNE(NULL, strptime(buf, "%Y-%m-%dT%H:%M:%S", &tm));
     tv.tv_sec = mktime(&tm) - seconds;
-    ASSERT_EQ(itv.tv_sec, tv.tv_sec);
+    ASSERT_EQ( (uint32_t)itv.tv_sec, (uint32_t)tv.tv_sec);
     tv.tv_usec = atoi(buf+20) * 100;
     rv = Compare(tv, itv, 0.001);
     ASSERT_TRUE(rv);
