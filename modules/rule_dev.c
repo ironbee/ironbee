@@ -276,54 +276,6 @@ static istype_params_t istype_params[] = {
     { IsTypeSnum,    1, { IB_FTYPE_NUM } },
 };
 
-#if 0
-/**
- * Create function for the "isxxxx" operator family
- *
- * @param[in] ib The IronBee engine (unused)
- * @param[in] ctx The current IronBee context (unused)
- * @param[in] rule Parent rule to the operator
- * @param[in,out] mp Memory pool to use for allocation
- * @param[in] parameters Constant parameters
- * @param[in,out] op_inst Instance operator
- *
- * @returns Status code
- */
-static ib_status_t op_istype_create(ib_engine_t *ib,
-                                    ib_context_t *ctx,
-                                    const ib_rule_t *rule,
-                                    ib_mpool_t *mp,
-                                    const char *parameters,
-                                    ib_operator_inst_t *op_inst)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc;
-    bool expand;
-    char *str;
-
-    if (parameters == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    str = ib_mpool_strdup(mp, parameters);
-    if (str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Do we need expansion? */
-    rc = ib_data_expand_test_str(str, &expand);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    else if (expand == true) {
-        op_inst->flags |= IB_ACTINST_FLAG_EXPAND;
-    }
-
-    op_inst->data = str;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-#endif
-
 /**
  * Execute function for the "istype" operator family
  *
