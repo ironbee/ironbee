@@ -59,6 +59,7 @@ ib_status_t ib_dso_open(
 
     *dso = ib_mpool_alloc(pool, sizeof(**dso));
     if (*dso == NULL) {
+        dlclose(handle);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
