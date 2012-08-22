@@ -190,7 +190,7 @@ TEST_F(TestIBUtilArray, test_array_loop)
     };
     const size_t count = (sizeof(init)/sizeof(int));
     size_t prev;
-        
+
     rc = ib_array_create(&arr, m_pool, 16, 8);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(arr);

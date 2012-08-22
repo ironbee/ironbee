@@ -696,4 +696,3 @@ ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log)
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-
