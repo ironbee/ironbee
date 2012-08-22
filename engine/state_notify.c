@@ -294,14 +294,19 @@ ib_status_t ib_state_notify_request_started(
     assert(line != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
+
+    assert(pi != NULL);
+
     IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
+        (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface;
+
     ib_status_t rc;
 
     /* Validate. */
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
-        ib_log_error_tx(tx, "Attempted to notify previously notified event: %s",
-                     ib_state_event_name(request_started_event));
+        ib_log_error_tx(tx,
+                        "Attempted to notify previously notified event: %s",
+                        ib_state_event_name(request_started_event));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -895,6 +900,11 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
         pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
 
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
+
     /* Validate. */
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_FINISHED)) {
         ib_log_error_tx(tx, "Attempted to notify previously notified event: %s",
@@ -1170,6 +1180,11 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     IB_PROVIDER_IFACE_TYPE(parser) *iface =
         pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
     ib_status_t rc;
+
+    if (iface == NULL) {
+        ib_log_alert(ib, "Failed to fetch parser interface.");
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+    }
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED)) {
         ib_log_error_tx(tx, "Attempted to notify previously notified event: %s",

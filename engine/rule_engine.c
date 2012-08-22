@@ -49,9 +49,10 @@
 #define PHASE_FLAG_IS_STREAM     (1 << 1)  /**< Phase is steam inspection */
 #define PHASE_FLAG_ALLOW_CHAIN   (1 << 2)  /**< Rule allows chaining */
 #define PHASE_FLAG_ALLOW_TFNS    (1 << 3)  /**< Rule allows transformations */
-#define PHASE_FLAG_REQUEST       (1 << 4)  /**< One of the request phases */
-#define PHASE_FLAG_RESPONSE      (1 << 5)  /**< One of the response phases */
-#define PHASE_FLAG_POSTPROCESS   (1 << 6)  /**< Post process phase */
+#define PHASE_FLAG_FORCE         (1 << 4)  /**< Force execution for phase */
+#define PHASE_FLAG_REQUEST       (1 << 5)  /**< One of the request phases */
+#define PHASE_FLAG_RESPONSE      (1 << 6)  /**< One of the response phases */
+#define PHASE_FLAG_POSTPROCESS   (1 << 7)  /**< Post process phase */
 
 /**
  * Max # of data types (IB_DTYPE_*) per rule phase
@@ -139,6 +140,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_ALLOW_CHAIN |
           PHASE_FLAG_ALLOW_TFNS |
+          PHASE_FLAG_FORCE |
           PHASE_FLAG_POSTPROCESS ),
         "Post Process",
         IB_OP_FLAG_PHASE,
@@ -850,7 +852,16 @@ static ib_status_t execute_operator(ib_engine_t *ib,
 
     /* This if-block is only to log operator values when tracing. */
     if ( ib_rule_log_level(ib) >= IB_RULE_LOG_LEVEL_TRACE ) {
-        if ( value->type == IB_FTYPE_NUM ) {
+        if ( value == NULL ) {
+            ib_rule_log_trace(tx,
+                              rule,
+                              target,
+                              NULL,
+                              "Exec of op %s on field %s = NULL",
+                              opinst->op->name,
+                              target->field_name);
+        }
+        else if ( value->type == IB_FTYPE_NUM ) {
             ib_num_t num;
             rc = ib_field_value(value, ib_ftype_num_out(&num));
             if ( rc != IB_OK ) {
@@ -1515,6 +1526,19 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     /* Clear the phase allow flag */
     ib_flags_clear(tx->flags, IB_TX_ALLOW_PHASE);
     tx->allow_phase = PHASE_NONE;
+
+    /* If we're blocking, skip processing */
+    if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE | IB_TX_BLOCK_IMMEDIATE) &&
+        (ib_flags_any(meta->flags, PHASE_FLAG_FORCE) == false) )
+    {
+        ib_rule_log_debug(tx, NULL, NULL, NULL,
+                          "Not executing rules for phase %d/\"%s\" "
+                          "in context \"%s\" because transaction previously "
+                          "has been blocked with status %d",
+                          meta->phase_num, meta->name,
+                          ib_context_full_get(ctx), tx->block_status);
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
 
     /* Sanity check */
     if (ruleset_phase->phase_num != meta->phase_num) {

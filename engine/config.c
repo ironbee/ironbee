@@ -145,12 +145,38 @@ failed:
     IB_FTRACE_RET_STATUS(rc);
 }
 
+static char *find_eol(char *buf, size_t len, size_t *skip)
+{
+    IB_FTRACE_INIT();
+
+    char *cr;
+    char *lf;
+
+    cr = (char *)memchr(buf, '\r', len);
+    lf = (char *)memchr(buf, '\n', len);
+    
+    if ( (cr != NULL) && (lf == (cr + 1)) ) {
+        *skip = 2;
+        *cr = '\n';
+        IB_FTRACE_RET_CONSTSTR(cr);
+    }
+    else if (lf != NULL) {
+        *skip = 1;
+        IB_FTRACE_RET_CONSTSTR(lf);
+    }
+    else {
+        *skip = 0;
+        IB_FTRACE_RET_CONSTSTR(NULL);
+    }
+}
+
 /// @todo Create a ib_cfgparser_parse_ex that can parse non-files (DBs, etc)
 
 ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                                const char *file)
 {
     IB_FTRACE_INIT();
+
     int ec             = 0;    /* Error code for sys calls. */
     int fd             = 0;    /* File to read. */
     unsigned lineno    = 1;    /* Current line number */
@@ -203,14 +229,15 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
             break;
         }
         else if ( nbytes > 0 ) { /* Normal. */
+            size_t skip;
 
             /* The first line always begins at buf[0]. */
             bol = buf;
-            eol = (char *)memchr(bol, '\n', buflen);
+            eol = find_eol(bol, buflen, &skip);
 
             /* Check that we found at least 1 end-of-line in this file. */
             if (eol == NULL) {
-                if (buflen<bufsz) {
+                if (buflen < bufsz) {
                     /* There is no end-of-line (\n) character and
                      * there is more to read.
                      * Kick back out to while loop. */
@@ -234,15 +261,17 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                  * Iterate through it and all others, passing each line to
                  * ib_cfgparser_parse_buffer() */
                 do {
-                    rc = ib_cfgparser_parse_buffer(cp, bol, eol-bol+1,
+                    rc = ib_cfgparser_parse_buffer(cp, bol, eol-bol+skip,
                                                    file, lineno, false);
                     ++lineno;
                     if (rc != IB_OK) {
                         ++error_count;
                         error_rc = rc;
                     }
-                    bol = eol+1;
-                    eol = (char *)memchr(bol, '\n', buf+buflen-bol);
+                    bol = eol + skip;
+
+                    /* Find next end of line */
+                    eol = find_eol(bol, buf+buflen-bol, &skip);
                 } while (eol != NULL);
 
                 /* There are no more end-of-line opportunities.
@@ -347,6 +376,12 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
         }
         --end;
     }
+    if (*end == '\r') {
+        if (end == buffer) {
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+        --end;
+    }
     if (*end == '\\') {
         size_t len = end - buffer;
         char *newbuf = (char *)ib_mpool_alloc(cp->mp, len + 1);
@@ -364,6 +399,7 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
+    ib_cfg_log_debug(cp, "Passing \"%.*s\" to Ragel", (int)length, buffer);
     rc = ib_cfgparser_ragel_parse_chunk(cp,
                                         buffer,
                                         length,

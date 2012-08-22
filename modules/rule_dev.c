@@ -166,40 +166,6 @@ static ib_status_t op_assert_create(ib_engine_t *ib,
 }
 
 /**
- * Execute function for the "exists" operator
- *
- * @param[in] ib Ironbee engine (unused).
- * @param[in] tx The transaction for this operator (unused).
- * @param[in] rule Parent rule to the operator
- * @param[in] data Operator data (unused)
- * @param[in] flags Operator instance flags
- * @param[in] field Field value
- * @param[out] result Pointer to number in which to store the result
- *
- * @returns Status code
- */
-static ib_status_t op_exists_execute(ib_engine_t *ib,
-                                     ib_tx_t *tx,
-                                     const ib_rule_t *rule,
-                                     void *data,
-                                     ib_flags_t flags,
-                                     ib_field_t *field,
-                                     ib_num_t *result)
-{
-    IB_FTRACE_INIT();
-
-    /* Return true of field is not NULL */
-    *result = (field != NULL);
-
-    if (ib_rule_should_capture(rule, *result)) {
-        ib_data_capture_clear(tx);
-        ib_data_capture_set_item(tx, 0, field);
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
  * Execute function for the "assert" operator
  *
  * @note This operator is enabled only for builds configured with
@@ -245,6 +211,112 @@ static ib_status_t op_assert_execute(ib_engine_t *ib,
 
     ib_log_error_tx(tx, "ASSERT: %s", expanded);
     assert(0 && expanded);
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Execute function for the "exists" operator
+ *
+ * @param[in] ib Ironbee engine (unused).
+ * @param[in] tx The transaction for this operator (unused).
+ * @param[in] rule Parent rule to the operator
+ * @param[in] data Operator data (unused)
+ * @param[in] flags Operator instance flags
+ * @param[in] field Field value
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_exists_execute(ib_engine_t *ib,
+                                     ib_tx_t *tx,
+                                     const ib_rule_t *rule,
+                                     void *data,
+                                     ib_flags_t flags,
+                                     ib_field_t *field,
+                                     ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+
+    /* Return true of field is not NULL */
+    *result = (field != NULL);
+
+    if (ib_rule_should_capture(rule, *result)) {
+        ib_data_capture_clear(tx);
+        ib_data_capture_set_item(tx, 0, field);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/* IsType operators */
+typedef enum
+{
+    IsTypeStr,
+    IsTypeNulStr,
+    IsTypeByteStr,
+    IsTypeNum,
+    IsTypeUnum,
+    IsTypeSnum,
+} istype_t;
+
+/* IsType operator data */
+typedef struct
+{
+    istype_t    istype;
+    int         numtypes;
+    ib_ftype_t  types[2];
+} istype_params_t;
+
+/* IsType operators data */
+static istype_params_t istype_params[] = {
+    { IsTypeStr,     2, { IB_FTYPE_NULSTR, IB_FTYPE_BYTESTR } },
+    { IsTypeNulStr,  1, { IB_FTYPE_NULSTR } },
+    { IsTypeByteStr, 1, { IB_FTYPE_BYTESTR } },
+    { IsTypeNum,     2, { IB_FTYPE_NUM, IB_FTYPE_UNUM } },
+    { IsTypeUnum,    1, { IB_FTYPE_UNUM } },
+    { IsTypeSnum,    1, { IB_FTYPE_NUM } },
+};
+
+/**
+ * Execute function for the "istype" operator family
+ *
+ * @note This operator is enabled only for builds configured with
+ * "--enable-devel".
+ *
+ * @param[in] ib Ironbee engine (unused)
+ * @param[in] tx The transaction for this operator (unused)
+ * @param[in] rule Parent rule to the operator
+ * @param[in] data Operator data (unused)
+ * @param[in] flags Operator instance flags
+ * @param[in] field Field value (unused)
+ * @param[out] result Pointer to number in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t op_istype_execute(ib_engine_t *ib,
+                                     ib_tx_t *tx,
+                                     const ib_rule_t *rule,
+                                     void *data,
+                                     ib_flags_t flags,
+                                     ib_field_t *field,
+                                     ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    assert(field != NULL);
+
+    /* Ignore data */
+    const istype_params_t *params =
+        (istype_params_t *)rule->opinst->op->cd_execute;
+    int n;
+
+    assert(params != NULL);
+
+    *result = false;
+    for (n = 0; n < params->numtypes; ++n) {
+        if (params->types[n] == field->type) {
+            *result = true;
+        }
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -496,6 +568,82 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               op_assert_create, NULL,
                               NULL, NULL, /* no destroy function */
                               op_assert_execute, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /**
+     * IsType operators
+     */
+
+    /* Register the IsStr operator */
+    rc = ib_operator_register(ib,
+                              "IsStr",
+                              ( IB_OP_FLAG_PHASE |
+                                IB_OP_FLAG_STREAM ),
+                              NULL, NULL, /* no create function */
+                              NULL, NULL, /* no destroy function */
+                              op_istype_execute, &istype_params[IsTypeStr]);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the IsNulStr operator */
+    rc = ib_operator_register(ib,
+                              "IsNulStr",
+                              ( IB_OP_FLAG_PHASE |
+                                IB_OP_FLAG_STREAM ),
+                              NULL, NULL, /* no create function */
+                              NULL, NULL, /* no destroy function */
+                              op_istype_execute, &istype_params[IsTypeNulStr]);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the IsByteStr operator */
+    rc = ib_operator_register(ib,
+                              "IsByteStr",
+                              ( IB_OP_FLAG_PHASE |
+                                IB_OP_FLAG_STREAM ),
+                              NULL, NULL, /* no create function */
+                              NULL, NULL, /* no destroy function */
+                              op_istype_execute, &istype_params[IsTypeByteStr]);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the IsNum operator */
+    rc = ib_operator_register(ib,
+                              "IsNum",
+                              ( IB_OP_FLAG_PHASE |
+                                IB_OP_FLAG_STREAM ),
+                              NULL, NULL, /* no create function */
+                              NULL, NULL, /* no destroy function */
+                              op_istype_execute, &istype_params[IsTypeNum]);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the IsUnum operator */
+    rc = ib_operator_register(ib,
+                              "IsUnum",
+                              ( IB_OP_FLAG_PHASE |
+                                IB_OP_FLAG_STREAM ),
+                              NULL, NULL, /* no create function */
+                              NULL, NULL, /* no destroy function */
+                              op_istype_execute, &istype_params[IsTypeUnum]);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the IsSnum operator */
+    rc = ib_operator_register(ib,
+                              "IsSnum",
+                              ( IB_OP_FLAG_PHASE |
+                                IB_OP_FLAG_STREAM ),
+                              NULL, NULL, /* no create function */
+                              NULL, NULL, /* no destroy function */
+                              op_istype_execute, &istype_params[IsTypeSnum]);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

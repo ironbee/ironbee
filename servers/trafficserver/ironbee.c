@@ -167,31 +167,50 @@ typedef struct {
  */
 typedef struct {
     ib_server_direction_t dir;
-    const char *word;
-    TSReturnCode (*ts_hdr_get)(TSHttpTxn, TSMBuffer *, TSMLoc *);
+
+    const char *label;
+    TSReturnCode (*hdr_get)(TSHttpTxn, TSMBuffer *, TSMLoc *);
+
     ib_status_t (*ib_notify_header)(ib_engine_t*, ib_tx_t*,
                  ib_parsed_header_wrapper_t*);
     ib_status_t (*ib_notify_header_finished)(ib_engine_t*, ib_tx_t*);
     ib_status_t (*ib_notify_body)(ib_engine_t*, ib_tx_t*, ib_txdata_t*);
     ib_status_t (*ib_notify_end)(ib_engine_t*, ib_tx_t*);
-} ironbee_direction_t;
+} ib_direction_data_t;
 
-static ironbee_direction_t ironbee_direction_req = {
+#if 0  /* Currently unused */
+static ib_direction_data_t ib_direction_server_req = {
     IBD_REQ,
-    "request",
-    TSHttpTxnClientReqGet,
-    //ib_state_notify_conn_data_in
+    "server request",
+    TSHttpTxnServerReqGet,
     ib_state_notify_request_header_data,
     ib_state_notify_request_header_finished,
     ib_state_notify_request_body_data,
     ib_state_notify_request_finished
 };
-static ironbee_direction_t ironbee_direction_resp = {
+#endif
+static ib_direction_data_t ib_direction_client_req = {
+    IBD_REQ,
+    "client request",
+    TSHttpTxnClientReqGet,
+    ib_state_notify_request_header_data,
+    ib_state_notify_request_header_finished,
+    ib_state_notify_request_body_data,
+    ib_state_notify_request_finished
+};
+static ib_direction_data_t ib_direction_server_resp = {
     IBD_RESP,
-    "response",
-    //TSHttpTxnClientRespGet,
+    "server response",
     TSHttpTxnServerRespGet,
-    //ib_state_notify_conn_data_out
+    ib_state_notify_response_header_data,
+    ib_state_notify_response_header_finished,
+    ib_state_notify_response_body_data,
+    ib_state_notify_response_finished
+};
+static ib_direction_data_t ib_direction_client_resp = {
+    IBD_RESP,
+    "client response",
+    TSHttpTxnClientRespGet,
     ib_state_notify_response_header_data,
     ib_state_notify_response_header_finished,
     ib_state_notify_response_body_data,
@@ -199,9 +218,15 @@ static ironbee_direction_t ironbee_direction_resp = {
 };
 
 typedef struct {
-    ironbee_direction_t *ibd;
+    ib_direction_data_t *ibd;
     ib_filter_ctx *data;
 } ibd_ctx;
+
+
+static bool is_error_status(int status)
+{
+    return ( (status >= 200) && (status < 600) );
+}
 
 /**
  * Callback functions for Ironbee to signal to us
@@ -240,7 +265,8 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
 {
     const char *reason = TSHttpHdrReasonLookup(txndata->status);
     TSMBuffer bufp;
-    TSMLoc hdr_loc, field_loc;
+    TSMLoc hdr_loc;
+    TSMLoc field_loc;
     hdr_list *hdrs;
     TSReturnCode rv;
     /* to notify ironbee */
@@ -341,6 +367,7 @@ errordoc_free:
         TSfree(hdrs);
         hdrs = txndata->err_hdrs;
     }
+
     if (txndata->err_body) {
         /* this will free the body, so copy it first! */
         TSHttpTxnErrorBodySet(txnp, txndata->err_body,
@@ -350,6 +377,7 @@ errordoc_free:
     if (rv != TS_SUCCESS) {
         TSError("ErrorDoc - TSHandleMLocRelease 2");
     }
+
     if (nhdrs > 0) {
         TSDebug("ironbee", "process_hdr: notifying header data");
         rc = ib_state_notify_response_header_data(ironbee, txndata->tx, ibhdrs);
@@ -362,13 +390,20 @@ errordoc_free:
             TSError("ErrorDoc - ib_state_notify_response_header_finished");
         }
     }
+
+    TSDebug("ironbee", "Sent error %d \"%s\"", txndata->status, reason);
 }
 
 static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 {
     ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
     TSDebug("ironbee", "ib_error_callback with status=%d", status);
-    if (status >= 200 && status < 600) {
+    if ( is_error_status(status) ) {
+        if (is_error_status(ctx->status) ) {
+            TSDebug("ironbee",
+                    "  Ignoring: status already set to %d", ctx->status);
+            return IB_OK;
+        }
         /* We can't return an error after the response has started */
         if (ctx->state & START_RESPONSE) {
             TSDebug("ironbee", "Too late to change status=%d", status);
@@ -556,6 +591,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
     if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
                                         * so we discard all this data
                                         */
+        TSDebug("ironbee", "Status is %d, discarding", data->status);
         ibd->data->buffering = IOBUF_DISCARD;
     }
 
@@ -591,7 +627,9 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         ib_txdata_t itxdata;
         itxdata.data = (uint8_t *)ibd->data->buf;
         itxdata.dlen = ibd->data->buflen;
-        TSDebug("ironbee", "process_data: calling ib_state_notify_%s_body() %s:%d", ibd->ibd->word, __FILE__, __LINE__);
+        TSDebug("ironbee",
+                "process_data: calling ib_state_notify_%s_body() %s:%d",
+                ibd->ibd->label, __FILE__, __LINE__);
         (*ibd->ibd->ib_notify_body)(ironbee, data->tx, &itxdata);
         TSfree(ibd->data->buf);
         ibd->data->buf = NULL;
@@ -599,6 +637,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
         if (IB_HTTP_CODE(data->status)) {  /* We're going to an error document,
                                             * so we discard all this data
                                             */
+            TSDebug("ironbee", "Status is %d, discarding", data->status);
             ibd->data->buffering = IOBUF_DISCARD;
         }
     }
@@ -763,7 +802,7 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
      * TSVConnClose.
      */
     ib_txn_ctx *data;
-    TSDebug("ironbee", "Entering out_data for %s\n", ibd->ibd->word);
+    TSDebug("ironbee", "Entering out_data for %s\n", ibd->ibd->label);
 
     if (TSVConnClosedGet(contp)) {
         TSDebug("ironbee", "\tVConn is closed");
@@ -839,7 +878,7 @@ static int out_data_event(TSCont contp, TSEvent event, void *edata)
         return 0;
     }
     ibd_ctx direction;
-    direction.ibd = &ironbee_direction_resp;
+    direction.ibd = &ib_direction_server_resp;
     direction.data = &data->out;
     return data_event(contp, event, &direction);
 }
@@ -865,7 +904,7 @@ static int in_data_event(TSCont contp, TSEvent event, void *edata)
         return 0;
     }
     ibd_ctx direction;
-    direction.ibd = &ironbee_direction_req;
+    direction.ibd = &ib_direction_client_req;
     direction.data = &data->in;
     return data_event(contp, event, &direction);
 }
@@ -1044,7 +1083,7 @@ add_hdr:
  */
 static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                                   TSHttpTxn txnp,
-                                  ironbee_direction_t *ibd)
+                                  ib_direction_data_t *ibd)
 {
     int rv;
     TSMBuffer bufp;
@@ -1065,7 +1104,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
     ib_parsed_header_wrapper_t *ibhdrs;
 
-    TSDebug("ironbee", "processing %s headers", ibd->word);
+    TSDebug("ironbee", "process %s headers\n", ibd->label);
 
     /* Use alternative simpler path to get the un-doctored request
      * if we have the fix for TS-998
@@ -1075,9 +1114,9 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
      */
     /* We'll get a bogus URL from TS-998 */
 
-    rv = (*ibd->ts_hdr_get)(txnp, &bufp, &hdr_loc);
-    if (rv) {
-        TSError ("couldn't retrieve %s header: %d\n", ibd->word, rv);
+    rv = (*ibd->hdr_get)(txnp, &bufp, &hdr_loc);
+    if (rv != 0) {
+        TSError ("couldn't retrieve %s header: %d\n", ibd->label, rv);
         return HDR_ERROR;
     }
 
@@ -1410,7 +1449,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* Feed ironbee the headers if not done alread. */
             if (!ib_tx_flags_isset(txndata->tx, IB_TX_FRES_STARTED)) {
-                status = process_hdr(txndata, txnp, &ironbee_direction_resp);
+                status = process_hdr(txndata, txnp, &ib_direction_server_resp);
 
                 /* OK, if this was an HTTP 100 response, it's not the
                  * response we're interested in.  No headers have been
@@ -1465,6 +1504,13 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
                 error_response(txnp, txndata);
             }
 
+            txndata->state |= START_RESPONSE;
+
+            /* Feed ironbee the headers if not done alread. */
+            if (!ib_tx_flags_isset(txndata->tx, IB_TX_FRES_STARTED)) {
+                status = process_hdr(txndata, txnp, &ib_direction_client_resp);
+            }
+
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
 
@@ -1492,7 +1538,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
         case TS_EVENT_HTTP_PRE_REMAP:
         case TS_EVENT_HTTP_OS_DNS:
             txndata = TSContDataGet(contp);
-            status = process_hdr(txndata, txnp, &ironbee_direction_req);
+            status = process_hdr(txndata, txnp, &ib_direction_client_req);
             txndata->state |= HDRS_IN;
             if (IB_HDR_OUTCOME_IS_HTTP(status, txndata)) {
                 TSDebug("ironbee", "HTTP code %d contp=%p", txndata->status, contp);
