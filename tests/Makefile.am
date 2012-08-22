@@ -48,6 +48,7 @@ check_PROGRAMS = test_gtest \
                  test_util_field \
                  test_util_cfgmap \
                  test_util_clock \
+                 test_util_dso \
                  test_util_unescape_string \
                  test_util_uuid \
                  test_util_logformat \
@@ -74,6 +75,7 @@ check_PROGRAMS += test_module_rules_lua \
                   test_luajit
 endif
 
+check_LTLIBRARIES = libtest_util_dso_lib.la
 
 TESTS=$(check_PROGRAMS)
 
@@ -98,6 +100,10 @@ EXTRA_DIST = \
 if OUT_OF_TREE
 BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
 endif
+
+check-programs: $(check_PROGRAMS)
+check-libs:  $(check_LTLIBRARIES)
+build: check-programs check-libs
 
 $(abs_builddir)/%: $(srcdir)/%
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
@@ -125,6 +131,17 @@ test_util_hash_SOURCES = test_util_hash.cc test_main.cc
 test_util_cfgmap_SOURCES = test_util_cfgmap.cc test_main.cc
 
 test_util_clock_SOURCES = test_util_clock.cc test_main.cc
+
+test_util_dso_SOURCES = test_util_dso.cc test_main.cc
+test_util_dso_CFLAGS = -rpath $(PWD)
+
+test_util_dso_lib_CFLAGS = \
+	$(CFLAGS) @GCC_CHARACTERISTICS_CFLAGS@ -prefer-pic -shared
+
+libtest_util_dso_lib_la_SOURCES = test_util_dso_lib.c
+libtest_util_dso_lib_la_LDFLAGS = \
+	$(LDFLAGS) @GCC_CHARACTERISTICS_LDFLAGS@ \
+	-shared -version-info 0:0:0 -rpath $(PWD)
 
 test_util_list_SOURCES = test_util_list.cc test_main.cc
 
