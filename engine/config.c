@@ -154,7 +154,7 @@ static char *find_eol(char *buf, size_t len, size_t *skip)
 
     cr = (char *)memchr(buf, '\r', len);
     lf = (char *)memchr(buf, '\n', len);
-    
+
     if ( (cr != NULL) && (lf == (cr + 1)) ) {
         *skip = 2;
         *cr = '\n';

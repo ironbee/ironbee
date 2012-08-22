@@ -25,7 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include "core_private.h"
-     
+
 #include <ironbee/bytestr.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
