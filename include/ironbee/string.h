@@ -91,7 +91,7 @@ typedef ib_status_t (* ib_strmod_ex_fn_t) (ib_strop_t op,
  *
  * @param[in] op String modify operation
  * @param[in] mp Memory pool for allocations
- * @param[in] str_in Data to convert to lower case
+ * @param[in] str_in Data to operate on
  * @param[out] str_out Output data
  * @param[out] result Result flags (@c IB_STRFLAG_xxx)
  *

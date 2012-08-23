@@ -182,7 +182,7 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
         break;
 
     case IB_STROP_COPY:
-        *data_out = ib_mpool_alloc(mp, dlen_in);
+        *data_out = ib_mpool_memdup(mp, data_in, dlen_in);
         if (*data_out == NULL) {
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
