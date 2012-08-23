@@ -109,6 +109,8 @@
 
 #include <string>
 
+#include <csignal>
+
 using namespace std;
 using namespace IronBee::CLIPP;
 using boost::bind;
@@ -506,6 +508,23 @@ void build_modifiers(
  }
 
 /**
+ * Has a signal been trigerred?
+ *
+ * Set to 0 by main() and 1 by handle_signal().
+ */
+static sig_atomic_t s_received_signal;
+
+/**
+ * Signal handler.
+ *
+ * Flips flag.
+ */
+void handle_signal(int)
+{
+    s_received_signal = 1;
+}
+
+/**
  * Main
  *
  * Interprets arguments, constructs the actual chains, and executes them.
@@ -523,6 +542,13 @@ int main(int argc, char** argv)
         help();
         return 1;
     }
+
+    // Signals
+    s_received_signal = 0;
+    signal(SIGINT,  handle_signal);
+    signal(SIGHUP,  handle_signal);
+    signal(SIGTERM, handle_signal);
+    signal(SIGQUIT, handle_signal);
 
     list<string> args;
 
@@ -767,6 +793,15 @@ int main(int argc, char** argv)
             if (! consumer_continue) {
                 cerr << "Consumer refusing input." << endl;
             }
+
+            if (s_received_signal == 1) {
+                break;
+            }
+        }
+
+        if (s_received_signal == 1) {
+            cout << "Received Signal: Exiting." << endl;
+            break;
         }
     }
 
