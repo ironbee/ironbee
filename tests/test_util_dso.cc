@@ -39,7 +39,7 @@
 #if defined(__APPLE__) && defined(__MACH__)
 #define DSO_SUFFIX ".dylib"
 #else
-#define DSO_SUFFIX "" DSO_SUFFIX
+#define DSO_SUFFIX ".so"
 #endif
 
 class TestIBUtilDso : public ::testing::Test
