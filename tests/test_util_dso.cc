@@ -36,6 +36,11 @@
 
 #include <stdexcept>
 
+#if defined(__APPLE__) && defined(__MACH__)
+#define DSO_SUFFIX ".dylib"
+#else
+#define DSO_SUFFIX "" DSO_SUFFIX
+#endif
 
 class TestIBUtilDso : public ::testing::Test
 {
@@ -88,7 +93,7 @@ TEST_F(TestIBUtilDso, test_open)
     {
         SCOPED_TRACE("test_open: normal");
         ib_status_t rc;
-        rc = DsoOpen(".libs/libtest_util_dso_lib.so");
+        rc = DsoOpen(".libs/libtest_util_dso_lib" DSO_SUFFIX);
         ASSERT_EQ(IB_OK, rc);
 
         rc = DsoClose( );
@@ -98,7 +103,7 @@ TEST_F(TestIBUtilDso, test_open)
     {
         SCOPED_TRACE("test_open: does not exist");
         ib_status_t rc;
-        rc = DsoOpen(".libs/libtest_doesnotexist.so");
+        rc = DsoOpen(".libs/libtest_doesnotexist" DSO_SUFFIX);
         ASSERT_EQ(IB_EINVAL, rc);
 
         rc = DsoClose( );
@@ -112,7 +117,7 @@ TEST_F(TestIBUtilDso, test_sym_find)
     ib_status_t   rc;
     ib_dso_sym_t *sym;
 
-    rc = DsoOpen(".libs/libtest_util_dso_lib.so");
+    rc = DsoOpen(".libs/libtest_util_dso_lib" DSO_SUFFIX);
     ASSERT_EQ(IB_OK, rc);
 
     {
@@ -141,7 +146,7 @@ TEST_F(TestIBUtilDso, test_lib)
     int                      num;
     const char              *str;
 
-    rc = DsoOpen(".libs/libtest_util_dso_lib.so");
+    rc = DsoOpen(".libs/libtest_util_dso_lib" DSO_SUFFIX);
     ASSERT_EQ(IB_OK, rc);
 
     rc = DsoSymFind("ib_test_util_dso_getfns", &sym);
