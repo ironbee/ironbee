@@ -147,8 +147,6 @@ static int modhtp_callback_log(htp_log_t *log)
         case HTP_LOG_ERROR:
         case HTP_LOG_WARNING:
         case HTP_LOG_NOTICE:
-            level = IB_LOG_NOTICE;
-            break;
         case HTP_LOG_INFO:
             level = IB_LOG_INFO;
             break;
@@ -990,7 +988,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
      * body. Instead, return an error.
      */
     else if (!ib_tx_flags_isset(itx, IB_TX_FHTTP09|IB_TX_FRES_STARTED)) {
-        ib_log_notice_tx(itx,
+        ib_log_info_tx(itx,
                         "LibHTP parsing error: "
                         "found response data instead of a response line");
         IB_FTRACE_RET_INT(HTP_ERROR);
@@ -1573,14 +1571,14 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
                 /// @todo Buffer it for next time?
             }
             else if (ec != STREAM_STATE_DATA) {
-                ib_log_notice(ib, "LibHTP request parsing error: %d", ec);
+                ib_log_info(ib, "LibHTP request parsing error: %d", ec);
             }
             break;
         case STREAM_STATE_ERROR:
-            ib_log_notice(ib, "LibHTP parser in \"error\" state");
+            ib_log_info(ib, "LibHTP parser in \"error\" state");
             break;
         case STREAM_STATE_DATA_OTHER:
-            ib_log_error(ib, "LibHTP parser in \"other\" state");
+            ib_log_notice(ib, "LibHTP parser in \"other\" state");
             break;
         default:
             ib_log_error(ib, "LibHTP parser in unhandled state %d",
@@ -1644,14 +1642,14 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
                 /// @todo Buffer it for next time?
             }
             else if (ec != STREAM_STATE_DATA) {
-                ib_log_notice(ib, "LibHTP response parsing error: %d", ec);
+                ib_log_info(ib, "LibHTP response parsing error: %d", ec);
             }
             break;
         case STREAM_STATE_ERROR:
-            ib_log_notice(ib, "LibHTP parser in \"error\" state");
+            ib_log_info(ib, "LibHTP parser in \"error\" state");
             break;
         case STREAM_STATE_DATA_OTHER:
-            ib_log_error(ib, "LibHTP parser in \"other\" state");
+            ib_log_notice(ib, "LibHTP parser in \"other\" state");
             break;
         default:
             ib_log_error(ib, "LibHTP parser in unhandled state %d",
