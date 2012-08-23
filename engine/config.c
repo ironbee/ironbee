@@ -158,15 +158,15 @@ static char *find_eol(char *buf, size_t len, size_t *skip)
     if ( (cr != NULL) && (lf == (cr + 1)) ) {
         *skip = 2;
         *cr = '\n';
-        IB_FTRACE_RET_CONSTSTR(cr);
+        IB_FTRACE_RET_STR(cr);
     }
     else if (lf != NULL) {
         *skip = 1;
-        IB_FTRACE_RET_CONSTSTR(lf);
+        IB_FTRACE_RET_STR(lf);
     }
     else {
         *skip = 0;
-        IB_FTRACE_RET_CONSTSTR(NULL);
+        IB_FTRACE_RET_STR(NULL);
     }
 }
 
