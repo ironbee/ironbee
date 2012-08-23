@@ -22,9 +22,9 @@
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
-#include <ironbee/hash.h>
-
 #include "ironbee_config_auto.h"
+
+#include <ironbee/hash.h>
 
 #include <ironbee/types.h>
 #include <ironbee/mpool.h>
