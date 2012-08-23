@@ -104,7 +104,7 @@ TEST_F(TestIBUtilDso, test_open)
         rc = DsoClose( );
         ASSERT_EQ(IB_OK, rc);
     }
-    
+
 }
 
 TEST_F(TestIBUtilDso, test_sym_find)
