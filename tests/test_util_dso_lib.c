@@ -35,14 +35,14 @@
 
 const uint32_t pat1_val = 0x5a5a5a5a;
 const uint32_t pat2_val = 0xa5a5a5a5;
-typedef struct ib_test_util_dso_data_t
+struct ib_test_util_dso_data_t
 {
     uint32_t    pat1;
     ib_mpool_t *mp;
     int         num;
     const char *str;
     uint32_t    pat2;
-} ib_test_util_dso_data_t;
+};
 
 static ib_status_t check_data(const ib_test_util_dso_data_t *data)
 {
