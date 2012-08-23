@@ -56,6 +56,7 @@ check_PROGRAMS = test_gtest \
                  test_util_mpool \
                  test_util_path \
                  test_util_string \
+                 test_util_string_lower \
                  test_util_string_trim \
                  test_util_string_wspc \
                  test_util_hex_escape \
@@ -154,6 +155,8 @@ test_util_field_SOURCES = test_util_field.cc test_main.cc
 test_util_path_SOURCES = test_util_path.cc test_main.cc
 
 test_util_string_SOURCES = test_util_string.cc test_main.cc
+
+test_util_string_lower_SOURCES = test_util_string_lower.cc test_main.cc
 
 test_util_string_trim_SOURCES = test_util_string_trim.cc test_main.cc
 

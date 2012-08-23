@@ -221,20 +221,26 @@ public:
     {
         TextBuf input(in, inlen);
         TextBuf expected(out);
-        //RunTestCopyNul(input, expected);
         RunTestCopyEx(input, expected);
         RunTestCopyExToNul(input, expected);
     }
 
 protected:
+    const char *TestOpName(ib_strop_t op)
+    {
+        static const char *ops[] = { "", "_copy", "_cow" };
+        return ops[op];
+    }
+    const char *TestTypeName(test_type_t tt)
+    {
+        static const char *types[] = { "nul", "ex", "ex_to_str" };
+        return types[tt];
+    }
     const char *TestNameImpl(const char *test, ib_strop_t op, test_type_t tt)
     {
         static char buf[128];
         snprintf(buf, sizeof(buf),
-                 "%s%s%s()",
-                 test,
-                 op == IB_STROP_INPLACE ? "" : "_cow",
-                 tt == TYPE_EX  ? "_ex" : "");
+                 "%s%s_%s()", test, TestOpName(op), TestTypeName(tt) );
         return buf;
     }
 
