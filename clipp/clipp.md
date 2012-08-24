@@ -457,6 +457,11 @@ clipp:
 
 Note: At present, there is no support for a multithreaded IronBee modifier.
 
+**@time**
+
+Outputs timing information to standard out.  For each input, outputs id,
+time in microseconds since start, and time in microseconds since previous input.
+
 Consumers
 ---------
 

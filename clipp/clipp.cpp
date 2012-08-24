@@ -92,6 +92,7 @@
 #include "header_modifiers.hpp"
 #include "fill_body_modifier.hpp"
 #include "split_modifier.hpp"
+#include "time_modifier.hpp"
 
 // Consumer and Modifier
 #include "view.hpp"
@@ -409,6 +410,7 @@ void help()
     "    clipp:allow passes data through; clipp:block blocks data;\n"
     "    and clipp:break stops the current chain.\n"
     "    <behavior> is optional and defaults to 'allow'.\n"
+    "  @time -- Output timing of each transaction.\n"
     ;
 }
 
@@ -594,6 +596,7 @@ int main(int argc, char** argv)
         ("set",             construct_set_modifier)
         ("fillbody",        construct_argless_component<FillBodyModifier>)
         ("ironbee",         construct_ironbee_modifier)
+        ("time",            construct_argless_component<TimeModifier>)
         ;
 
     // Convert argv to args.

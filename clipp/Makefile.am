@@ -38,7 +38,8 @@ clipp_SOURCES = \
     select_modifier.cpp \
     header_modifiers.cpp \
     fill_body_modifier.cpp \
-    split_modifier.cpp
+    split_modifier.cpp \
+    time_modifier.cpp
 
 if HAVE_NIDS
 clipp_SOURCES += pcap_generator.cpp

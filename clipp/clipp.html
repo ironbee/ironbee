@@ -7,6 +7,7 @@
 	<meta name="data" content="May, 2012"/>
 </head>
 <body>
+
 <h1 id="clippusermanual">CLIPP User Manual</h1>
 
 <p>Christopher Alfeld <a href="&#x6d;&#x61;&#x69;&#108;&#116;&#111;&#58;&#99;&#x61;&#x6c;&#102;&#x65;&#108;&#100;&#x40;&#x71;&#x75;&#x61;&#108;&#121;&#x73;&#x2e;&#x63;&#x6f;&#109;">&#x63;&#x61;&#108;&#102;&#x65;&#x6c;&#100;&#64;&#x71;&#117;&#x61;&#x6c;&#x79;&#x73;&#x2e;&#x63;&#111;&#x6d;</a><br>
@@ -471,6 +472,11 @@ clipp:</p>
 
 <p>Note: At present, there is no support for a multithreaded IronBee modifier.</p>
 
+<p><strong>@time</strong></p>
+
+<p>Outputs timing information to standard out. For each input, outputs id,
+time in seconds since start, and time in seconds since previous input.</p>
+
 <h2 id="consumers">Consumers</h2>
 
 <p><strong>ironbee</strong>:<em>path</em></p>
@@ -682,5 +688,6 @@ hashes to be passed to CLIPP via the <code>:input_hash</code> option.</p>
 <li><code>erb_file(</code><em>erb_path</em>, <em>context</em><code>)</code> &#8212; As above, but the ERB text is loaded
  from the file at <em>erb_path</em>.</li>
 </ul>
+
 </body>
 </html>
