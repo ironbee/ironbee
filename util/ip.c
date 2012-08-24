@@ -86,6 +86,7 @@ ib_status_t ib_ip4_str_to_net(
     }
 
     memcpy(buffer, s, slash - s);
+    buffer[slash - s] = '\0';
 
     rc = ib_ip4_str_to_ip(buffer, &(net->ip));
     if (rc != IB_OK) {
