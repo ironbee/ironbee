@@ -30,30 +30,12 @@
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
+#include "simple_fixture.hh"
 
 #include <stdexcept>
 
-class TestIBUtilList : public ::testing::Test
+class TestIBUtilList : public SimpleFixture
 {
-public:
-    TestIBUtilList()
-    {
-        ib_status_t rc;
-
-        ib_initialize();
-        rc = ib_mpool_create(&m_pool, NULL, NULL);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not create mpool.");
-        }
-    }
-
-    ~TestIBUtilList()
-    {
-        ib_shutdown();
-    }
-
-protected:
-    ib_mpool_t* m_pool;
 };
 
 /* -- Tests -- */
@@ -64,7 +46,7 @@ TEST_F(TestIBUtilList, test_list_create_and_destroy)
     ib_list_t *list;
     ib_status_t rc;
 
-    rc = ib_list_create(&list, m_pool);
+    rc = ib_list_create(&list, MemPool());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -82,7 +64,7 @@ TEST_F(TestIBUtilList, test_list_push_and_pop)
     int v4 = 4;
     int *val;
 
-    rc = ib_list_create(&list, m_pool);
+    rc = ib_list_create(&list, MemPool());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -150,7 +132,7 @@ TEST_F(TestIBUtilList, test_list_unshift_and_shift)
     int v4 = 4;
     int *val;
 
-    rc = ib_list_create(&list, m_pool);
+    rc = ib_list_create(&list, MemPool());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -216,7 +198,7 @@ TEST_F(TestIBUtilList, test_list_loop)
     int *val;
     int i;
 
-    rc = ib_list_create(&list, m_pool);
+    rc = ib_list_create(&list, MemPool());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -234,8 +216,6 @@ TEST_F(TestIBUtilList, test_list_loop)
         i++;
     }
     ASSERT_EQ(5UL, ib_list_elements(list));
-
-    ib_mpool_destroy(m_pool);
 }
 
 /// @test Test util list library - IB_LIST_LOOP_SAFE()
@@ -251,10 +231,8 @@ TEST_F(TestIBUtilList, test_list_loop_safe)
 
     rc = ib_initialize();
     ASSERT_EQ(IB_OK, rc);
-    rc = ib_mpool_create(&m_pool, NULL, NULL);
-    ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_list_create(&list, m_pool);
+    rc = ib_list_create(&list, MemPool());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -284,7 +262,7 @@ TEST_F(TestIBUtilList, test_list_loop_reverse)
     int *val;
     int i;
 
-    rc = ib_list_create(&list, m_pool);
+    rc = ib_list_create(&list, MemPool());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));
@@ -314,7 +292,7 @@ TEST_F(TestIBUtilList, test_list_loop_reverse_safe)
     int *val;
     int i;
 
-    rc = ib_list_create(&list, m_pool);
+    rc = ib_list_create(&list, MemPool());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(list);
     ASSERT_EQ(0UL, ib_list_elements(list));

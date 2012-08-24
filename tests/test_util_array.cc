@@ -30,30 +30,12 @@
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
+#include "simple_fixture.hh"
 
 #include <stdexcept>
 
-class TestIBUtilArray : public ::testing::Test
+class TestIBUtilArray : public SimpleFixture
 {
-public:
-    TestIBUtilArray()
-    {
-        ib_status_t rc;
-
-        ib_initialize();
-        rc = ib_mpool_create(&m_pool, NULL, NULL);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not create mpool.");
-        }
-    }
-
-    ~TestIBUtilArray()
-    {
-        ib_shutdown();
-    }
-
-protected:
-    ib_mpool_t* m_pool;
 };
 
 /* -- Tests -- */
@@ -64,7 +46,7 @@ TEST_F(TestIBUtilArray, test_array_create_and_destroy)
     ib_array_t *arr;
     ib_status_t rc;
 
-    rc = ib_array_create(&arr, m_pool, 10, 10);
+    rc = ib_array_create(&arr, MemPool(), 10, 10);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(arr);
     ASSERT_EQ(10UL, ib_array_size(arr));
@@ -85,7 +67,7 @@ TEST_F(TestIBUtilArray, test_array_set_and_get)
     int v1000000 = 1000000;
     int *val;
 
-    rc = ib_array_create(&arr, m_pool, 10, 10);
+    rc = ib_array_create(&arr, MemPool(), 10, 10);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(arr);
     ASSERT_EQ(10UL, ib_array_size(arr));
@@ -191,7 +173,7 @@ TEST_F(TestIBUtilArray, test_array_loop)
     const size_t count = (sizeof(init)/sizeof(int));
     size_t prev;
 
-    rc = ib_array_create(&arr, m_pool, 16, 8);
+    rc = ib_array_create(&arr, MemPool(), 16, 8);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(arr);
     ASSERT_EQ(16UL, ib_array_size(arr));

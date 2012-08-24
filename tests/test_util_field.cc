@@ -25,28 +25,23 @@
 
 #include "ironbee_config_auto.h"
 
+#include "gtest/gtest.h"
+#include "gtest/gtest-spi.h"
+#include "simple_fixture.hh"
+
 #include <ironbee/field.h>
 #include <ironbee/util.h>
 #include <ironbee/mpool.h>
 #include <ironbee/bytestr.h>
 
-#include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
-
 #include <stdexcept>
 
-class TestIBUtilField : public ::testing::Test
+class TestIBUtilField : public SimpleFixture
 {
 public:
     TestIBUtilField()
     {
-        ib_status_t rc;
-
         ib_initialize();
-        rc = ib_mpool_create(&m_pool, NULL, NULL);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not create mpool.");
-        }
         ib_util_log_level(1000); // XXX
     }
 
@@ -54,9 +49,6 @@ public:
     {
         ib_shutdown();
     }
-
-protected:
-    ib_mpool_t* m_pool;
 };
 
 /* -- Tests -- */
@@ -72,9 +64,10 @@ TEST_F(TestIBUtilField, test_field_create)
     const char *nulout;
     const char *nulcopy;
 
-    nulcopy = ib_mpool_strdup(m_pool, nulstrval);
+    nulcopy = MemPoolStrDup(nulstrval);
     ASSERT_STRNE(NULL, nulcopy);
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_nulstr"), IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulcopy));
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_nulstr"),
+                         IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulcopy));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(11UL, f->nlen);
@@ -84,31 +77,37 @@ TEST_F(TestIBUtilField, test_field_create)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_STREQ(nulstrval, nulout);
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_num"), IB_FTYPE_NUM, ib_ftype_num_in(&numval));
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_num"),
+                         IB_FTYPE_NUM, ib_ftype_num_in(&numval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(8UL, f->nlen);
     ASSERT_EQ(0, memcmp("test_num", f->name, 8));
 
-    rc = ib_bytestr_dup_mem(&bytestrval, m_pool, (uint8_t *)nulstrval, strlen(nulstrval));
+    rc = ib_bytestr_dup_mem(&bytestrval, MemPool(),
+                            (uint8_t *)nulstrval, strlen(nulstrval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_bytestr"), IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bytestrval));
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_bytestr"),
+                         IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bytestrval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
     ASSERT_EQ(12UL, f->nlen);
     ASSERT_EQ(0, memcmp("test_bytestr", f->name, 12));
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_nulstr_ex"),  IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulstrval));
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_nulstr_ex"),
+                         IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulstrval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_num_ex"),  IB_FTYPE_NUM, ib_ftype_num_in(&numval));
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_num_ex"),
+                         IB_FTYPE_NUM, ib_ftype_num_in(&numval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 
-    rc = ib_field_create(&f, m_pool, IB_FIELD_NAME("test_bytestr_ex"),  IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bytestrval));
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_bytestr_ex"),
+                         IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bytestrval));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(f);
 }
@@ -132,7 +131,12 @@ static ib_status_t dyn_get(
     /* Keep track of how many times this was called */
     ++g_dyn_call_count;
 
-    snprintf(g_dyn_call_val, sizeof(g_dyn_call_val), "testval_%s_%.*s_call%02d", (const char *)data, (int)alen, (const char *)arg, g_dyn_call_count);
+    snprintf(g_dyn_call_val, sizeof(g_dyn_call_val),
+             "testval_%s_%.*s_call%02d",
+             (const char *)data,
+             (int)alen,
+             (const char *)arg,
+             g_dyn_call_count);
 
     *reinterpret_cast<const char**>(out_value) = g_dyn_call_val;
 
@@ -172,7 +176,10 @@ static ib_status_t dyn_set(
 {
     ++g_dyn_call_count;
 
-    snprintf(g_dyn_call_val, sizeof(g_dyn_call_val), "testval_%s_%.*s_%s_call%02d", (const char *)data, (int)alen, (const char *)arg, (const char *)val, g_dyn_call_count);
+    snprintf(g_dyn_call_val, sizeof(g_dyn_call_val),
+             "testval_%s_%.*s_%s_call%02d",
+             (const char *)data, (int)alen,
+             (const char *)arg, (const char *)val, g_dyn_call_count);
 
     return IB_OK;
 }
@@ -187,7 +194,7 @@ TEST_F(TestIBUtilField, test_dyn_field)
 
     /* Create a field with no initial value. */
     rc = ib_field_create_dynamic(
-        &dynf, m_pool,
+        &dynf, MemPool(),
         IB_FIELD_NAME("test_dynf"), IB_FTYPE_NULSTR,
         dyn_get, (void *)"dynf_get",
         dyn_set, (void *)"dynf_set"
@@ -231,7 +238,7 @@ TEST_F(TestIBUtilField, test_dyn_field)
 
     /* Create another field with no initial value. */
     rc = ib_field_create_dynamic(
-        &cdynf, m_pool,
+        &cdynf, MemPool(),
         IB_FIELD_NAME("test_cdynf"), IB_FTYPE_NULSTR,
         dyn_get_cached, (void *)("cdynf_get"),
         dyn_set, NULL
@@ -273,7 +280,7 @@ TEST_F(TestIBUtilField, Alias)
     ib_field_t *f;
     ib_status_t rc;
 
-    rc = ib_field_create_alias(&f, m_pool, "foo", 3, IB_FTYPE_NULSTR,
+    rc = ib_field_create_alias(&f, MemPool(), "foo", 3, IB_FTYPE_NULSTR,
         ib_ftype_nulstr_mutable_out(&s));
     ASSERT_EQ(IB_OK, rc);
     v = "hello";
@@ -292,12 +299,12 @@ TEST_F(TestIBUtilField, AliasBytestr)
     ib_bytestr_t *bs;
     uint8_t *copy;
 
-    copy = (uint8_t *)ib_mpool_memdup(m_pool, "x", 1);
-    rc = ib_field_create_bytestr_alias(&f, m_pool,
+    copy = (uint8_t *)MemPoolMemDup("x", 1);
+    rc = ib_field_create_bytestr_alias(&f, MemPool(),
                                        IB_FIELD_NAME("foo"), copy, 0);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_bytestr_dup_nulstr(&bs, m_pool, s1);
+    rc = ib_bytestr_dup_nulstr(&bs, MemPool(), s1);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_field_setv(f, bs);
     ASSERT_EQ(IB_OK, rc);
@@ -307,7 +314,7 @@ TEST_F(TestIBUtilField, AliasBytestr)
     ASSERT_EQ(0, memcmp(s1,
                         ib_bytestr_const_ptr(obs), ib_bytestr_length(obs)) );
 
-    rc = ib_bytestr_dup_nulstr(&bs, m_pool, s2);
+    rc = ib_bytestr_dup_nulstr(&bs, MemPool(), s2);
     ASSERT_EQ(IB_OK, rc);
     rc = ib_field_setv(f, bs);
     ASSERT_EQ(IB_OK, rc);

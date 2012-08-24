@@ -25,6 +25,7 @@
 #include <ironbee/hash.h>
 
 #include "ironbee_config_auto.h"
+#include "simple_fixture.hh"
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
@@ -70,33 +71,13 @@ static IB_CFGMAP_INIT_STRUCTURE(config_map) = {
     IB_CFGMAP_INIT_LAST
 };
 
-class TestIBUtilCfgMapBase : public testing::Test
-{
-public:
-    virtual void SetUp()
-    {
-        ib_status_t rc = ib_mpool_create(&m_pool, NULL, NULL);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not initialize mpool.");
-        }
-    }
-
-    virtual void TearDown()
-    {
-        ib_mpool_destroy(m_pool);
-    }
-
-protected:
-    ib_mpool_t    *m_pool;
-};
-
-TEST_F(TestIBUtilCfgMapBase, test_init)
+TEST_F(SimpleFixture, test_init)
 {
     ib_cfgmap_t   *cfgmap = NULL;
     test_config_t  config;
     ib_status_t    rc;
 
-    rc = ib_cfgmap_create(&cfgmap, m_pool);
+    rc = ib_cfgmap_create(&cfgmap, MemPool());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(cfgmap);
 
@@ -104,16 +85,16 @@ TEST_F(TestIBUtilCfgMapBase, test_init)
     ASSERT_EQ(IB_OK, rc);
 }
 
-class TestIBUtilCfgMap : public TestIBUtilCfgMapBase
+class TestIBUtilCfgMap : public SimpleFixture
 {
 public:
     virtual void SetUp()
     {
         ib_status_t rc;
-        TestIBUtilCfgMapBase::SetUp();
+        SimpleFixture::SetUp();
 
         m_cfgmap = NULL;
-        rc = ib_cfgmap_create(&m_cfgmap, m_pool);
+        rc = ib_cfgmap_create(&m_cfgmap, MemPool());
         if (rc != IB_OK) {
             throw std::runtime_error("Could not create config map.");
         }
@@ -126,7 +107,7 @@ public:
 
     virtual void TearDown()
     {
-        TestIBUtilCfgMapBase::TearDown();
+        SimpleFixture::TearDown();
     }
 
 protected:

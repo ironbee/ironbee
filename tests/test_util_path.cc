@@ -31,6 +31,7 @@
 
 #include "ibtest_textbuf.hh"
 #include "ibtest_strbase.hh"
+#include "simple_fixture.hh"
 
 #include <string.h>
 #include <stdexcept>
@@ -66,27 +67,8 @@ static struct test_path_data_t test_rel_file[] = {
 };
 
 /* -- Tests -- */
-class TestIBUtilPath : public ::testing::Test
+class TestIBUtilPath : public SimpleFixture
 {
-public:
-    TestIBUtilPath()
-    {
-        ib_status_t rc;
-
-        ib_initialize();
-        rc = ib_mpool_create(&m_pool, NULL, NULL);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not create mpool.");
-        }
-    }
-
-    ~TestIBUtilPath()
-    {
-        ib_shutdown();
-    }
-
-protected:
-    ib_mpool_t* m_pool;
 };
 
 /// @test Test util path functions - ib_util_relative_path()
@@ -96,7 +78,7 @@ TEST_F(TestIBUtilPath, path_join)
 
     for (test = &test_path_join[0]; test->in1 != NULL; ++test) {
         const char *out;
-        out = ib_util_path_join(m_pool, test->in1, test->in2);
+        out = ib_util_path_join(MemPool(), test->in1, test->in2);
         EXPECT_STREQ(test->out, out)
             << "Test: in1 = '" << test->in1 << "'"
             << ", in2 = '" << test->in2 << "'";
@@ -110,7 +92,7 @@ TEST_F(TestIBUtilPath, relative_path)
 
     for (test = &test_rel_file[0]; test->in1 != NULL; ++test) {
         const char *out;
-        out = ib_util_relative_file(m_pool, test->in1, test->in2);
+        out = ib_util_relative_file(MemPool(), test->in1, test->in2);
         EXPECT_STREQ(test->out, out)
             << "Test: in1 = '" << test->in1 << "'"
             << ", in2 = '" << test->in2 << "'";

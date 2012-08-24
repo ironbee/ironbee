@@ -24,14 +24,16 @@
 
 #include "ironbee_config_auto.h"
 
+#include "gtest/gtest.h"
+#include "gtest/gtest-spi.h"
+
+#include "simple_fixture.hh"
+
 #include <ironbee/expand.h>
 #include <ironbee/types.h>
 #include <ironbee/field.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/hash.h>
-
-#include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 #include <stdexcept>
 #include <string>
@@ -46,12 +48,11 @@ typedef struct
     ib_unum_t       vunum;
 } field_def_t;
 
-class TestIBUtilExpand : public testing::Test
+class TestIBUtilExpand : public SimpleFixture
 {
 public:
     TestIBUtilExpand()
     {
-        m_pool = NULL;
         m_hash = NULL;
         m_recurse = true;
     }
@@ -78,11 +79,8 @@ public:
         };
         ib_status_t rc;
 
-        rc = ib_mpool_create(&m_pool, NULL, NULL);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not initialize mpool.");
-        }
-        rc = ib_hash_create(&m_hash, m_pool);
+        SimpleFixture::SetUp( );
+        rc = ib_hash_create(&m_hash, MemPool());
         if (rc != IB_OK) {
             throw std::runtime_error("Could not initialize hash.");
         }
@@ -91,10 +89,7 @@ public:
 
     virtual void TearDown()
     {
-        if (m_pool != NULL) {
-            ib_mpool_destroy(m_pool);
-        }
-        m_pool = NULL;
+        SimpleFixture::TearDown();
     }
 
     virtual void PopulateHash( const field_def_t field_defs[] )
@@ -111,14 +106,14 @@ public:
                 case IB_FTYPE_NULSTR:
                     rc = ib_field_create(
                         &field,
-                        m_pool,
+                        MemPool(),
                         IB_FIELD_NAME(fdef->key),
                         fdef->type,
                         ib_ftype_nulstr_in(fdef->vstr)
                     );
                     break;
                 case IB_FTYPE_BYTESTR:
-                    rc = ib_bytestr_dup_nulstr(&bs, m_pool, fdef->vstr);
+                    rc = ib_bytestr_dup_nulstr(&bs, MemPool(), fdef->vstr);
                     if (rc != IB_OK) {
                         msg  = "Error creating bytestr from '";
                         msg += fdef->vstr;
@@ -128,7 +123,7 @@ public:
                     }
                     rc = ib_field_create(
                         &field,
-                        m_pool,
+                        MemPool(),
                         IB_FIELD_NAME(fdef->key),
                         fdef->type,
                         ib_ftype_bytestr_in(bs)
@@ -137,7 +132,7 @@ public:
                 case IB_FTYPE_NUM:
                     rc = ib_field_create(
                         &field,
-                        m_pool,
+                        MemPool(),
                         IB_FIELD_NAME(fdef->key),
                         fdef->type,
                         ib_ftype_num_in(&(fdef->vnum))
@@ -146,7 +141,7 @@ public:
                 case IB_FTYPE_UNUM:
                     rc = ib_field_create(
                         &field,
-                        m_pool,
+                        MemPool(),
                         IB_FIELD_NAME(fdef->key),
                         fdef->type,
                         ib_ftype_unum_in(&(fdef->vunum))
@@ -209,7 +204,6 @@ public:
     }
 
 protected:
-    ib_mpool_t *m_pool;
     ib_hash_t  *m_hash;
     bool        m_recurse;
 };
@@ -223,7 +217,7 @@ public:
                           const char *suffix,
                           char **result)
     {
-        return ::ib_expand_str(m_pool, text,
+        return ::ib_expand_str(MemPool(), text,
                                prefix, suffix,
                                m_recurse,
                                m_hash, result);

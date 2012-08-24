@@ -29,36 +29,21 @@
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
+#include "simple_fixture.hh"
 
 #include <ironbee/mpool.h>
 
 #include <stdexcept>
 
-class TestIBUtilHash : public testing::Test
+class TestIBUtilHash : public SimpleFixture
 {
-public:
-    TestIBUtilHash()
-    {
-        ib_status_t rc = ib_mpool_create(&m_pool, NULL, NULL);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not initialize mpool.");
-        }
-    }
-
-    ~TestIBUtilHash()
-    {
-        ib_mpool_destroy(m_pool);
-    }
-
-protected:
-    ib_mpool_t* m_pool;
 };
 
 TEST_F(TestIBUtilHash, test_hash_create)
 {
     ib_hash_t *hash = NULL;
 
-    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, MemPool()));
     ASSERT_TRUE(hash);
     EXPECT_EQ(0UL, ib_hash_size(hash));
     ib_hash_clear(hash);
@@ -69,7 +54,7 @@ TEST_F(TestIBUtilHash, test_hash_set_and_get)
     ib_hash_t  *hash  = NULL;
     const char *value = NULL;
 
-    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, MemPool()));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, "Key", (void *)"value"));
     EXPECT_EQ(1UL, ib_hash_size(hash));
 
@@ -95,7 +80,7 @@ TEST_F(TestIBUtilHash, test_hash_nocase)
 {
     ib_hash_t *hash = NULL;
 
-    ASSERT_EQ(IB_OK, ib_hash_create_nocase(&hash, m_pool));
+    ASSERT_EQ(IB_OK, ib_hash_create_nocase(&hash, MemPool()));
 
     ASSERT_EQ(IB_OK, ib_hash_set(hash, "Key", (void *)"value"));
 
@@ -128,7 +113,7 @@ TEST_F(TestIBUtilHash, test_hash_ex)
 
     ASSERT_EQ(IB_OK, ib_hash_create_ex(
         &hash,
-        m_pool,
+        MemPool(),
         32,
         ib_hashfunc_djb2,
         ib_hashequal_default
@@ -210,13 +195,13 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
 
     static const char combs[] = "abcdefghij";
 
-    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, MemPool()));
 
     // Insert 1000 keys with value equal to the key used.
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
             for (int k = 0; k < 10; k++) {
-                char *c = (char *)ib_mpool_calloc(m_pool, 1, 4);
+                char *c = (char *)ib_mpool_calloc(MemPool(), 1, 4);
                 ASSERT_TRUE(c);
                 c[0] = combs[i];
                 c[1] = combs[j];
@@ -239,7 +224,7 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
             for (int k = 0; k < 10; k++) {
-                char *c = (char *)ib_mpool_calloc(m_pool, 1, 4);
+                char *c = (char *)ib_mpool_calloc(MemPool(), 1, 4);
                 ASSERT_TRUE(c);
                 c[0] = combs[i];
                 c[1] = combs[j];
@@ -262,15 +247,15 @@ TEST_F(TestIBUtilHash, test_hash_getall)
 
     static const char combs[] = "abcdefghij";
 
-    ASSERT_EQ(IB_OK, ib_list_create(&list, m_pool));
-    ASSERT_EQ(IB_OK, ib_list_create(&list2, m_pool));
-    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
+    ASSERT_EQ(IB_OK, ib_list_create(&list, MemPool()));
+    ASSERT_EQ(IB_OK, ib_list_create(&list2, MemPool()));
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, MemPool()));
 
     // Insert 1000 keys with value equal to the key used.
     for (int i = 0; i < 10; i++) {
         for (int j = 0; j < 10; j++) {
             for (int k = 0; k < 10; k++) {
-                char *c = (char *)ib_mpool_calloc(m_pool, 1, 4);
+                char *c = (char *)ib_mpool_calloc(MemPool(), 1, 4);
                 EXPECT_TRUE(c);
                 c[0] = combs[i];
                 c[1] = combs[j];
@@ -311,14 +296,14 @@ TEST_F(TestIBUtilHash, test_hash_clear)
 
     static const char combs[] = "abcdefghij";
 
-    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, MemPool()));
 
     // Insert 1000 keys with value equal to the key used.
     for (int i = 0; i < 10; ++i) {
         for (int j = 0; j < 10; ++j) {
             for (int k = 0; k < 10; ++k) {
                 char *v;
-                char *c = (char *)ib_mpool_calloc(m_pool, 1, 4);
+                char *c = (char *)ib_mpool_calloc(MemPool(), 1, 4);
                 EXPECT_TRUE(c);
                 c[0] = combs[i];
                 c[1] = combs[j];
@@ -340,7 +325,7 @@ TEST_F(TestIBUtilHash, test_hash_clear)
         for (int j = 9; j >= 0; --j) {
             for (int k = 9; k >= 0; --k) {
                 char *v;
-                char *c = (char *)ib_mpool_calloc(m_pool, 1, 4);
+                char *c = (char *)ib_mpool_calloc(MemPool(), 1, 4);
                 EXPECT_TRUE(c);
                 c[0] = combs[i];
                 c[1] = combs[j];
@@ -375,7 +360,7 @@ TEST_F(TestIBUtilHash, test_hash_collision_delete)
     // Make sure we have collisions.
     ASSERT_EQ(IB_OK, ib_hash_create_ex(
         &hash,
-        m_pool,
+        MemPool(),
         32,
         test_hash_delete_hashfunc,
         ib_hashequal_default
@@ -408,7 +393,7 @@ TEST_F(TestIBUtilHash, test_hash_remove)
     static const char* c     = "ghi";
     const char*        value = NULL;
 
-    ASSERT_EQ(IB_OK, ib_hash_create(&hash, m_pool));
+    ASSERT_EQ(IB_OK, ib_hash_create(&hash, MemPool()));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, a, (void *)a));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, b, (void *)b));
     ASSERT_EQ(IB_OK, ib_hash_set(hash, c, (void *)c));
@@ -446,7 +431,7 @@ TEST_F(TestIBUtilHash, bad_size) {
     ib_hash_t *hash = NULL;
     ASSERT_EQ(IB_EINVAL, ib_hash_create_ex(
         &hash,
-        m_pool,
+        MemPool(),
         3,
         ib_hashfunc_djb2,
         ib_hashequal_default

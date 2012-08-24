@@ -25,6 +25,7 @@
 #include <ironbee/hash.h>
 
 #include "ironbee_config_auto.h"
+#include "simple_fixture.hh"
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
@@ -42,7 +43,7 @@
 #define DSO_SUFFIX ".so"
 #endif
 
-class TestIBUtilDso : public ::testing::Test
+class TestIBUtilDso : public SimpleFixture
 {
 public:
     TestIBUtilDso( ) : m_dso(NULL) { };
@@ -52,22 +53,9 @@ public:
         DsoClose( );
     }
 
-    virtual void SetUp()
-    {
-        ib_status_t rc = ib_mpool_create(&m_pool, NULL, NULL);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not initialize mpool.");
-        }
-    }
-
-    virtual void TearDown()
-    {
-        ib_mpool_destroy(m_pool);
-    }
-
     ib_status_t DsoOpen(const char *file)
     {
-        return ib_dso_open(&m_dso, file, m_pool);
+        return ib_dso_open(&m_dso, file, MemPool());
     }
     ib_status_t DsoClose( void )
     {
@@ -84,7 +72,6 @@ public:
     }
 
 protected:
-    ib_mpool_t    *m_pool;
     ib_dso_t      *m_dso;
 };
 
@@ -156,7 +143,7 @@ TEST_F(TestIBUtilDso, test_lib)
     rc = getfns(&fns);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = fns->fn_create(&data, m_pool, 3);
+    rc = fns->fn_create(&data, MemPool(), 3);
     ASSERT_EQ(IB_OK, rc);
 
     rc = fns->fn_getnum(data, &num);

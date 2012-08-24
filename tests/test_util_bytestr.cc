@@ -30,30 +30,12 @@
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
+#include "simple_fixture.hh"
 
 #include <stdexcept>
 
-class TestIBUtilByteStr : public ::testing::Test
+class TestIBUtilByteStr : public SimpleFixture
 {
-public:
-    TestIBUtilByteStr()
-    {
-        ib_status_t rc;
-
-        ib_initialize();
-        rc = ib_mpool_create(&m_pool, NULL, NULL);
-        if (rc != IB_OK) {
-            throw std::runtime_error("Could not create mpool.");
-        }
-    }
-
-    ~TestIBUtilByteStr()
-    {
-        ib_shutdown();
-    }
-
-protected:
-    ib_mpool_t* m_pool;
 };
 
 /* -- Tests -- */
@@ -64,7 +46,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_create_and_destroy)
     ib_bytestr_t *bs;
     ib_status_t rc;
 
-    rc = ib_bytestr_create(&bs, m_pool, 10);
+    rc = ib_bytestr_create(&bs, MemPool(), 10);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
     ASSERT_EQ(0UL, ib_bytestr_length(bs));
@@ -79,7 +61,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_dup_mem)
     uint8_t data[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
     uint8_t *ptr;
 
-    rc = ib_bytestr_dup_mem(&bs, m_pool, data, sizeof(data));
+    rc = ib_bytestr_dup_mem(&bs, MemPool(), data, sizeof(data));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
@@ -97,7 +79,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_dup_nulstr)
     char data[] = "abcdef";
     uint8_t *ptr;
 
-    rc = ib_bytestr_dup_nulstr(&bs, m_pool, data);
+    rc = ib_bytestr_dup_nulstr(&bs, MemPool(), data);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
@@ -115,7 +97,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_alias_mem)
     uint8_t data[] = { 'a', 'b', 'c', 'd', 'e', 'f' };
     uint8_t *ptr;
 
-    rc = ib_bytestr_alias_mem(&bs, m_pool, data, sizeof(data));
+    rc = ib_bytestr_alias_mem(&bs, MemPool(), data, sizeof(data));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
@@ -130,13 +112,12 @@ TEST_F(TestIBUtilByteStr, test_bytestr_alias_mem)
 /// @test Test util bytestr library - ib_bytestr_alias_nulstr()
 TEST_F(TestIBUtilByteStr, test_bytestr_alias_nulstr)
 {
-    ib_mpool_t *m_pool;
     ib_bytestr_t *bs;
     ib_status_t rc;
     char data[] = "abcdef";
     uint8_t *ptr;
 
-    rc = ib_bytestr_alias_nulstr(&bs, m_pool, data);
+    rc = ib_bytestr_alias_nulstr(&bs, MemPool(), data);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs);
     ASSERT_EQ(6UL, ib_bytestr_length(bs));
@@ -160,7 +141,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_append)
     uint8_t data4[] = { 'b', 'a', 'r' };
     uint8_t *ptr;
 
-    rc = ib_bytestr_dup_nulstr(&bs1, m_pool, data1);
+    rc = ib_bytestr_dup_nulstr(&bs1, MemPool(), data1);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs1);
     ASSERT_EQ(6UL, ib_bytestr_length(bs1));
@@ -168,7 +149,7 @@ TEST_F(TestIBUtilByteStr, test_bytestr_append)
     ptr = ib_bytestr_const_ptr(bs1);
     ASSERT_EQ(0, strncmp("abcdef", (char *)ptr, 6));
 
-    rc = ib_bytestr_dup_nulstr(&bs2, m_pool, data2);
+    rc = ib_bytestr_dup_nulstr(&bs2, MemPool(), data2);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(bs2);
     ASSERT_EQ(6UL, ib_bytestr_length(bs2));
