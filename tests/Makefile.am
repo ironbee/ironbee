@@ -42,6 +42,7 @@ CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
           $(BOOST_CPPFLAGS)
 
 check_PROGRAMS = test_gtest \
+                 test_util_types \
                  test_util_array \
                  test_util_hash \
                  test_util_list \
@@ -122,6 +123,8 @@ test_util_unescape_string_SOURCES = test_util_unescape_string.cc \
                                     test_main.cc
 
 test_gtest_SOURCES = test_gtest.cc test_main.cc
+
+test_util_types_SOURCES = test_util_types.cc test_main.cc
 
 test_util_array_SOURCES = test_util_array.cc test_main.cc
 
