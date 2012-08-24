@@ -40,25 +40,26 @@ const size_t BufSize = 64;
 const size_t CallBufSize = BufSize + 32;
 
 // Expected output buffer
-class ExTextBuf : public TextBuf
+class ExpectedTextBuf : public TextBuf
 {
 public:
-    ExTextBuf(size_t lno, const char *s)
+    ExpectedTextBuf(size_t lno, const char *s)
         : TextBuf(BufSize, s),
           m_lineno(lno), m_cutleft(0), m_cutright(0), m_choplen(0) {
     };
 
-    ExTextBuf(size_t lno, const char *s, size_t len)
+    ExpectedTextBuf(size_t lno, const char *s, size_t len)
         : TextBuf(BufSize, s, len),
           m_lineno(lno), m_cutleft(0), m_cutright(0), m_choplen(0) {
     };
 
-    ExTextBuf(size_t lno, const char *s, size_t skip, size_t cut)
+    ExpectedTextBuf(size_t lno, const char *s, size_t skip, size_t cut)
         : TextBuf(BufSize, s),
           m_lineno(lno), m_cutleft(skip), m_cutright(cut), m_choplen(0) {
     };
 
-    ExTextBuf(size_t lno, const char *s, size_t len, size_t skip, size_t cut)
+    ExpectedTextBuf(size_t lno, const char *s,
+                    size_t len, size_t skip, size_t cut)
         : TextBuf(BufSize, s, len),
           m_lineno(lno), m_cutleft(skip), m_cutright(cut), m_choplen(0) {
     };
@@ -147,7 +148,7 @@ public:
     void SetByteStr(bool is_bytestr) const {
         m_exout.SetByteStr(is_bytestr);
     };
-    const ExTextBuf &ExpectedOut(void) const {
+    const ExpectedTextBuf &ExpectedOut(void) const {
         assert (m_exvalid);
         return m_exout;
     };
@@ -168,10 +169,10 @@ public:
     };
 
 private:
-    mutable bool       m_exvalid;     // Expected output valid?
-    mutable bool       m_exconst;     // Expected output constant?
-    mutable ExTextBuf  m_exout;       // Expected output text
-    mutable bool  m_exmod;       // Expected output modified?
+    mutable bool            m_exvalid;     // Expected output valid?
+    mutable bool            m_exconst;     // Expected output constant?
+    mutable ExpectedTextBuf m_exout;       // Expected output text
+    mutable bool            m_exmod;       // Expected output modified?
 };
 
 
@@ -389,7 +390,7 @@ public:
             << " Data out is NULL";
 
         if (out != NULL) {
-            const ExTextBuf &expected = test.ExpectedOut();
+            const ExpectedTextBuf &expected = test.ExpectedOut();
             size_t exlen = expected.GetLen();
             EXPECT_EQ(exlen, outlen)
                 << "Line " << lno << ": " << Stringize(test)
