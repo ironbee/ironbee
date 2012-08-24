@@ -64,6 +64,7 @@ check_PROGRAMS = test_gtest \
                  test_util_expand \
                  test_util_escape \
                  test_util_decode \
+                 test_util_stream \
                  test_engine \
                  test_module_ahocorasick \
                  test_module_pcre \
@@ -170,6 +171,8 @@ test_util_expand_SOURCES = test_util_expand.cc test_main.cc
 test_util_escape_SOURCES = test_util_escape.cc test_main.cc
 
 test_util_decode_SOURCES = test_util_decode.cc test_main.cc
+
+test_util_stream_SOURCES = test_util_stream.cc test_main.cc
 
 test_util_uuid_SOURCES = test_util_uuid.cc test_main.cc
 test_util_uuid_CPPFLAGS = $(CPPFLAGS) $(OSSP_UUID_CFLAGS)
