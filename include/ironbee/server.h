@@ -28,6 +28,7 @@
 #include <ironbee/engine_types.h>
 #include <ironbee/release.h>
 #include <ironbee/types.h>
+#include <ironbee/regex.h>
 
 #include <stdint.h>
 
@@ -75,7 +76,8 @@ typedef enum {
     IB_HDR_APPEND,
     IB_HDR_MERGE,
     IB_HDR_ADD,
-    IB_HDR_UNSET
+    IB_HDR_UNSET,
+    IB_HDR_EDIT
 } ib_server_header_action_t;
 
 typedef ib_status_t (*ib_server_error_fn_t)(
@@ -100,6 +102,7 @@ typedef ib_status_t (*ib_server_header_fn_t)(
     ib_server_header_action_t action,
     const char *hdr,
     const char *value,
+    ib_rx_t *rx,
     void *cbdata
 );
 
@@ -315,8 +318,8 @@ ib_status_t ib_server_filter_data(
 #define ib_server_error_body(svr, tx, data) \
     ((svr) && (svr)->err_data_fn) ? (svr)->err_data_fn(tx, data, (svr)->err_data_data) \
                        : IB_ENOTIMPL
-#define ib_server_header(svr, tx, dir, action, hdr, value) \
-    ((svr) && (svr)->hdr_fn) ? (svr)->hdr_fn(tx, dir, action, hdr, value, (svr)->hdr_data) \
+#define ib_server_header(svr, tx, dir, action, hdr, value, rx) \
+    ((svr) && (svr)->hdr_fn) ? (svr)->hdr_fn(tx, dir, action, hdr, value, (svr)->hdr_data, rx) \
                   : IB_ENOTIMPL
 
 #ifdef HAVE_FILTER_DATA_API
