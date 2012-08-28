@@ -1407,6 +1407,7 @@ struct act_header_data_t {
     const char *name;        /**< Name of the header to operate on. */
     bool        name_expand; /**< Is name expandable? */
     const char *value;       /**< Value to replace the header with. */
+    ib_rx_t    *rx;          /**< Regexp substitution to apply to header */
 };
 typedef struct act_header_data_t act_header_data_t;
 
@@ -1503,6 +1504,7 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
         (act_header_data_t *)ib_mpool_alloc(mp, sizeof(*act_data));
     bool expand = false;
     ib_status_t rc;
+    size_t value_offs = 1;
 
     if (act_data == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -1520,11 +1522,14 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
         ib_log_error(ib, "Format for parameter is name=value: %s", params);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+    else if (equals_idx[1] == '~') {
+        value_offs = 2;    /* =~ for a regexp substitution arg */
+    }
 
     /* Compute string lengths needed for parsing out name and value. */
     params_len = strlen(params);
     name_len = equals_idx - params;
-    value_len = params_len - name_len - 1;
+    value_len = params_len - name_len - value_offs;
 
     act_data->name = (const char *)ib_mpool_memdup(mp, params, name_len+1);
     if (act_data->name == NULL) {
@@ -1545,7 +1550,7 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
 
     act_data->value = (value_len == 0)?
         ib_mpool_strdup(mp, ""):
-        ib_mpool_strdup(mp, equals_idx+1);
+        ib_mpool_strdup(mp, equals_idx+value_offs);
     if (act_data->value == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -1556,6 +1561,14 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
     }
     else if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
+    }
+
+    /* If we have a regexp and we're not expanding, we can compile it now */
+    if (!(inst->flags & IB_ACTINST_FLAG_EXPAND) && (value_offs == 2)) {
+        act_data->rx = ib_rx_compile(mp, act_data->value);
+    }
+    else {
+        act_data->rx = NULL;
     }
 
     inst->data = act_data;
@@ -1622,7 +1635,69 @@ static ib_status_t act_set_request_header_execute(void* data,
                           IB_SERVER_REQUEST,
                           IB_HDR_SET,
                           name,
-                          value);
+                          value, NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t act_edit_request_header_execute(void* data,
+                                                   const ib_rule_t *rule,
+                                                   ib_tx_t *tx,
+                                                   ib_flags_t flags,
+                                                   void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(data);
+    assert(tx);
+    assert(tx->ib);
+    assert(tx->ib->server);
+
+    ib_status_t rc;
+    act_header_data_t *act_data = (act_header_data_t *)data;
+    const char *value;
+    size_t value_len;
+    const char *name;
+    size_t name_len;
+
+    /* Expand the name (if required) */
+    rc = expand_name_hdr(tx,
+                         "editRequestHeader",
+                         act_data->name,
+                         act_data->name_expand,
+                         &name,
+                         &name_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = expand_str(tx,
+                    "editRequestHeader",
+                    act_data->value,
+                    flags,
+                    &value,
+                    &value_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_rule_log_debug(tx,
+                      rule,
+                      NULL,
+                      NULL,
+                      "Applying regexp to request header \"%.*s\"=~\"%.*s\"",
+                      (int)name_len,
+                      name,
+                      (int)value_len,
+                      value);
+
+    /* Note: ignores lengths for now */
+    rc = ib_server_header(tx->ib->server,
+                          tx,
+                          IB_SERVER_REQUEST,
+                          IB_HDR_EDIT,
+                          name,
+                          value, act_data->rx);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1661,7 +1736,7 @@ static ib_status_t act_del_request_header_execute(void *data,
                           IB_SERVER_REQUEST,
                           IB_HDR_UNSET,
                           name,
-                          "");
+                          "", NULL);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1709,7 +1784,55 @@ static ib_status_t act_set_response_header_execute(void* data,
                           IB_SERVER_RESPONSE,
                           IB_HDR_SET,
                           name,
-                          value);
+                          value, NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+static ib_status_t act_edit_response_header_execute(void* data,
+                                                    const ib_rule_t *rule,
+                                                    ib_tx_t *tx,
+                                                    ib_flags_t flags,
+                                                    void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(data);
+    assert(tx);
+    assert(tx->ib);
+    assert(tx->ib->server);
+
+    ib_status_t rc;
+    act_header_data_t *act_data = (act_header_data_t *)data;
+    const char *value;
+    size_t value_len;
+    const char *name;
+    size_t name_len;
+
+    /* Expand the name (if required) */
+    rc = expand_name_hdr(tx, "editResponseHeader",
+                         act_data->name, act_data->name_expand,
+                         &name, &name_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = expand_str(tx, "editResponseHeader", act_data->value, flags,
+                    &value, &value_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_log_debug_tx(tx, "Applying regexp to response header \"%.*s\"=~\"%.*s\"",
+                    (int)name_len, name, (int)value_len, value);
+
+    /* Note: ignores lengths for now */
+    rc = ib_server_header(tx->ib->server,
+                          tx,
+                          IB_SERVER_RESPONSE,
+                          IB_HDR_EDIT,
+                          name,
+                          value, act_data->rx);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1749,7 +1872,7 @@ static ib_status_t act_del_response_header_execute(void* data,
                           IB_SERVER_RESPONSE,
                           IB_HDR_UNSET,
                           name,
-                          "");
+                          "", NULL);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1925,6 +2048,16 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     }
 
     rc = ib_action_register(ib,
+                            "editRequestHeader",
+                            IB_ACT_FLAG_NONE,
+                            act_set_header_create, NULL,
+                            NULL, NULL,
+                            act_edit_request_header_execute, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_action_register(ib,
                             "delRequestHeader",
                             IB_ACT_FLAG_NONE,
                             act_del_header_create, NULL,
@@ -1940,6 +2073,16 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             act_set_header_create, NULL,
                             NULL, NULL,
                             act_set_response_header_execute, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_action_register(ib,
+                            "editResponseHeader",
+                            IB_ACT_FLAG_NONE,
+                            act_set_header_create, NULL,
+                            NULL, NULL,
+                            act_edit_response_header_execute, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
