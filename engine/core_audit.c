@@ -622,7 +622,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
     rc = ib_logformat_format(lf, line, line_size, line_len,
                              audit_add_line_item, &cbdata);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log)

@@ -271,7 +271,8 @@ ib_status_t ib_logformat_parse(ib_logformat_t *lf,
     } /* for (i...) */
 
     if (state != STATE_NORMAL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        rc = IB_EINVAL;
+        goto cleanup;
     }
 
     /* Add any literal string we might be in the middle of */
@@ -326,6 +327,10 @@ ib_status_t ib_logformat_format(const ib_logformat_t *lf,
                 IB_FTRACE_RET_STATUS(rc);
             }
             len = strlen(str);
+            break;
+
+        default:
+            assert(0);
         }
 
         /* Copy into buffer */
