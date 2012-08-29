@@ -15,7 +15,7 @@
  * limitations under the License.
  ****************************************************************************/
 
-/* Derived from regexp utilities in Apache HTTPD
+/* Derived from regexp utilities in Apache HTTPD */
  * Licensed to the Apache Software Foundation (ASF) under the above License.
  */
 
