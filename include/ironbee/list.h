@@ -306,7 +306,7 @@ struct ib_list_t {
  */
 #define IB_LIST_LOOP_SAFE(list, node, node_next) \
     for ((node) = ib_list_first(list), \
-           (node_next) = ib_list_node_next(node); \
+         (node_next) = ib_list_node_next(node); \
          (node) != NULL; \
          (node) = (node_next), \
            (node_next) = ib_list_node_next(node))
@@ -342,7 +342,7 @@ struct ib_list_t {
  */
 #define IB_LIST_LOOP_REVERSE_SAFE(list, node, node_next) \
     for ((node) = ib_list_last(list), \
-           (node_next) = ib_list_node_prev(node); \
+         (node_next) = ib_list_node_prev(node); \
          (node) != NULL; \
          (node) = (node_next), \
            (node_next) = ib_list_node_prev(node))

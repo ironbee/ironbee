@@ -229,7 +229,7 @@ public:
     }
 
     void loadModule(ib_module_t **ib_module,
-                            const std::string& module_file)
+                    const std::string& module_file)
     {
         ib_status_t rc;
 

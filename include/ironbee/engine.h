@@ -466,8 +466,8 @@ ib_status_t DLL_PUBLIC ib_context_set_num(ib_context_t *ctx,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_context_set_string(ib_context_t *ctx,
-                                      const char *name,
-                                      const char *val);
+                                             const char *name,
+                                             const char *val);
 
 /**
  * Get a value and length from the config context.
@@ -1695,9 +1695,9 @@ ib_status_t DLL_PUBLIC ib_data_tfn_get(ib_provider_inst_t *dpi,
  * @param pf Pointer where old field is written if non-NULL
  */
 ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
-                               const char *name,
-                               size_t nlen,
-                               ib_field_t **pf);
+                              const char *name,
+                              size_t nlen,
+                              ib_field_t **pf);
 
 /**
  * Remove a data field.

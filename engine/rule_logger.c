@@ -805,12 +805,12 @@ static void log_exec_fast(const ib_rule_log_exec_t *log_exec,
 
     now = ib_clock_get_time();
     ib_log_tx_ex(tx, IB_LOG_INFO, file, line,
-                   "%s %s:%d %"PRIu64"us %s actions=%s",
-                   LOG_PREFIX,
-                   tx->er_ipstr, tx->conn->remote_port,
-                   now - tx->t.started,
-                   rule->meta.id,
-                   actbuf);
+                 "%s %s:%d %"PRIu64"us %s actions=%s",
+                 LOG_PREFIX,
+                 tx->er_ipstr, tx->conn->remote_port,
+                 now - tx->t.started,
+                 rule->meta.id,
+                 actbuf);
 
     IB_FTRACE_RET_VOID();
 }

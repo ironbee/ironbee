@@ -779,8 +779,8 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
 }
 
 void ib_cfg_log_f(ib_cfgparser_t *cp, ib_log_level_t level,
-                 const char *file, int line,
-                 const char *fmt, ...)
+                  const char *file, int line,
+                  const char *fmt, ...)
 {
     IB_FTRACE_INIT();
     assert(cp != NULL);

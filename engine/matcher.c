@@ -217,7 +217,7 @@ ib_status_t ib_matcher_add_pattern_ex(ib_matcher_t *m,
     mapi = (IB_PROVIDER_API_TYPE(matcher) *)m->mpr->api;
 
     rc = mapi->add_pattern_ex(m->mpi, &m->mpr->data, patt, callback, arg,
-                               errptr, erroffset);
+                              errptr, erroffset);
     if (rc != IB_OK) {
         ib_log_debug(m->mpr->ib,
                      "Failed to add pattern %s patt: (%s) %s at "
@@ -274,8 +274,8 @@ ib_status_t ib_matcher_exec_field(ib_matcher_t *m,
         }
 
         rc = iface->match(m->mpi, flags,
-                                   (uint8_t *)cs,
-                                   strlen(cs), ctx);
+                          (uint8_t *)cs,
+                          strlen(cs), ctx);
         break;
     /// @todo How to handle numeric fields???
     default:

@@ -97,9 +97,9 @@ static ib_status_t geoip_lookup(
 
     if (geoip_db == NULL) {
         ib_log_alert_tx(tx,
-                     "GeoIP database was never opened. Perhaps the "
-                     "configuration file needs a GeoIPDatabaseFile "
-                     "\"/usr/share/geoip/GeoLite.dat\" line?");
+                        "GeoIP database was never opened. Perhaps the "
+                        "configuration file needs a GeoIPDatabaseFile "
+                        "\"/usr/share/geoip/GeoLite.dat\" line?");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 

@@ -84,11 +84,11 @@ static const char *IB_VARIABLE_EXPANSION_POSTFIX = "}";
  *  - Other if a dynamic field fails.
  */
 static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
-                                        const ib_provider_inst_t *dpi,
-                                        const ib_field_t *parent_field,
-                                        const char *name,
-                                        size_t name_len,
-                                        ib_field_t **result_field)
+                                         const ib_provider_inst_t *dpi,
+                                         const ib_field_t *parent_field,
+                                         const char *name,
+                                         size_t name_len,
+                                         ib_field_t **result_field)
 {
     IB_FTRACE_INIT();
 
@@ -698,11 +698,11 @@ ib_status_t ib_data_get_ex(const ib_provider_inst_t *dpi,
 
             /* Handle extracting a subfield for a list of a dynamic field. */
             rc = ib_data_get_subfields(api,
-                                      dpi,
-                                      parent_field,
-                                      filter_marker+1,
-                                      name_len - (filter_marker+1-name),
-                                      pf);
+                                       dpi,
+                                       parent_field,
+                                       filter_marker+1,
+                                       name_len - (filter_marker+1-name),
+                                       pf);
         }
     }
 
@@ -829,9 +829,9 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                 rc = ib_tfn_lookup_ex(ib, tname, len, &t);
                 if (rc == IB_OK) {
                     ib_log_debug2(ib,
-                                 "TFN: %" IB_BYTESTR_FMT ".%" IB_BYTESTR_FMT,
-                                 IB_BYTESTRSL_FMT_PARAM(name, nlen),
-                                 IB_BYTESTRSL_FMT_PARAM(tname, len));
+                                  "TFN: %" IB_BYTESTR_FMT ".%" IB_BYTESTR_FMT,
+                                  IB_BYTESTRSL_FMT_PARAM(name, nlen),
+                                  IB_BYTESTRSL_FMT_PARAM(tname, len));
 
                     rc = ib_tfn_transform(ib, dpi->mp, t, *pf, pf, &flags);
                     if (rc != IB_OK) {
@@ -870,9 +870,9 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
 }
 
 ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
-                               const char *name,
-                               size_t nlen,
-                               ib_field_t **pf)
+                              const char *name,
+                              size_t nlen,
+                              ib_field_t **pf)
 {
     IB_FTRACE_INIT();
 

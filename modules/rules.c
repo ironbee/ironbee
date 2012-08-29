@@ -276,8 +276,8 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
     new = ib_mpool_alloc(cp->mp, target_len);
     if (new == NULL) {
         ib_cfg_log_error(cp,
-                     "Failed to duplicate target field string \"%s\"",
-                     target_str);
+                         "Failed to duplicate target field string \"%s\"",
+                         target_str);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -1025,9 +1025,9 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     if (strncasecmp(file_name, "lua:", 4) == 0) {
 #ifdef ENABLE_LUA
         rc = ib_lua_load_func(cp->ib,
-                             g_ironbee_rules_lua,
-                             file_name+4,
-                             ib_rule_id(rule));
+                              g_ironbee_rules_lua,
+                              file_name+4,
+                              ib_rule_id(rule));
 
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Failed to load lua file %s", file_name+4);

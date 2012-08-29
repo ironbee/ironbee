@@ -239,11 +239,11 @@ public:
         }
     }
 
-    void RunTest( ib_num_t lineno,
-                  const char *text,
-                  const char *prefix,
-                  const char *suffix,
-                  const char *expected )
+    void RunTest(ib_num_t lineno,
+                 const char *text,
+                 const char *prefix,
+                 const char *suffix,
+                 const char *expected)
     {
         char *result;
         ib_status_t rc;
@@ -280,11 +280,11 @@ public:
         }
     }
 
-    void RunTest( ib_num_t lineno,
-                  const char *text,
-                  const char *prefix,
-                  const char *suffix,
-                  bool expected )
+    void RunTest(ib_num_t lineno,
+                 const char *text,
+                 const char *prefix,
+                 const char *suffix,
+                 bool expected)
     {
         bool result;
         ib_status_t rc;
@@ -428,7 +428,7 @@ TEST_F(TestIBUtilExpandStr, test_expand_complex)
     RunTest(__LINE__, "%{Key1}:%{Key2}==${Key3}", "%{", "}",
             "Value1:Value2==${Key3}");
     RunTest(__LINE__, "%{Key1}:%{Key2}==%{Key3}", "%{", "}",
-             "Value1:Value2==Value3");
+            "Value1:Value2==Value3");
 
     SetRecurse(false);
     RunTest(__LINE__, "%{Key1}:%{Key2}",  "%{", "}",  "Value1:Value2");
@@ -437,7 +437,7 @@ TEST_F(TestIBUtilExpandStr, test_expand_complex)
     RunTest(__LINE__, "%{Key1}:%{Key2}==${Key3}", "%{", "}",
             "Value1:Value2==${Key3}");
     RunTest(__LINE__, "%{Key1}:%{Key2}==%{Key3}", "%{", "}",
-             "Value1:Value2==Value3");
+            "Value1:Value2==Value3");
 }
 
 TEST_F(TestIBUtilExpandStr, test_expand_numbers)

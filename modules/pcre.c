@@ -845,8 +845,8 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
             tmp_c[subject_len] = '\0';
             /* No match. Return false to the caller (*result = 0). */
             ib_log_debug2_tx(tx, "No match for \"%s\" using pattern \"%s\".",
-                        tmp_c,
-                        rule_data->patt);
+                             tmp_c,
+                             rule_data->patt);
             free(tmp_c);
         }
 
@@ -879,11 +879,11 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
  * @returns IB_OK on success or IB_EALLOC on any other type of error.
  */
 static ib_status_t dfa_operator_create(ib_engine_t *ib,
-                                        ib_context_t *ctx,
-                                        const ib_rule_t *rule,
-                                        ib_mpool_t *pool,
-                                        const char *pattern,
-                                        ib_operator_inst_t *op_inst)
+                                       ib_context_t *ctx,
+                                       const ib_rule_t *rule,
+                                       ib_mpool_t *pool,
+                                       const char *pattern,
+                                       ib_operator_inst_t *op_inst)
 {
     IB_FTRACE_INIT();
     const char* errptr;
@@ -1172,14 +1172,15 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
         ib_rc = alloc_dfa_tx_data(tx, rule_data->id, &dfa_workspace);
         if (ib_rc != IB_OK) {
             free(ovector);
-            ib_log_error_tx(tx, "Unexpected error creating tx storage "
-                                "for dfa operator %s",
-                                rule_data->id);
+            ib_log_error_tx(tx,
+                "Unexpected error creating tx storage "
+                "for dfa operator %s",
+                rule_data->id);
             IB_FTRACE_RET_STATUS(ib_rc);
         }
 
         ib_log_debug_tx(tx,
-                       "Created DFA workspace at %p for id %s.",
+                        "Created DFA workspace at %p for id %s.",
                         dfa_workspace,
                         rule_data->id);
     }
@@ -1228,8 +1229,8 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
             tmp_c[subject_len] = '\0';
             /* No match. Return false to the caller (*result = 0). */
             ib_log_debug2_tx(tx, "No match for \"%s\" using pattern \"%s\".",
-                        tmp_c,
-                        rule_data->patt);
+                             tmp_c,
+                             rule_data->patt);
             free(tmp_c);
         }
 

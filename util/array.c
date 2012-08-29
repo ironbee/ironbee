@@ -163,8 +163,8 @@ ib_status_t ib_array_setn(ib_array_t *arr, size_t idx, void *val)
          */
         if (r >= arr->nextents) {
             void *new_extents = (void *)ib_mpool_calloc(arr->mp,
-                                                            arr->nextents * 2,
-                                                            sizeof(void *));
+                                                        arr->nextents * 2,
+                                                        sizeof(void *));
             if (new_extents == NULL) {
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }

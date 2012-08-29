@@ -457,11 +457,11 @@ ib_status_t DLL_PUBLIC ib_config_block_process(ib_cfgparser_t *cp,
  * @param[in] fmt printf-style format string
  */
 void DLL_PUBLIC ib_cfg_log_f(ib_cfgparser_t *cp,
-                            ib_log_level_t level,
-                            const char *file,
-                            int line,
-                            const char *fmt, ...)
-                            PRINTF_ATTRIBUTE(5, 6);
+                             ib_log_level_t level,
+                             const char *file,
+                             int line,
+                             const char *fmt, ...)
+                             PRINTF_ATTRIBUTE(5, 6);
 /** @endcond */
 
 /**

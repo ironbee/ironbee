@@ -192,8 +192,8 @@ static ib_status_t act_event_execute(void *data,
         rc = ib_data_expand_str(tx->dpi, rule->meta.msg, false, &tmp);
         if (rc != IB_OK) {
             ib_log_error_tx(tx,
-                         "event: Failed to expand string '%s': %s",
-                         rule->meta.msg, ib_status_to_string(rc));
+                            "event: Failed to expand string '%s': %s",
+                            rule->meta.msg, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
         expanded = tmp;
@@ -228,8 +228,8 @@ static ib_status_t act_event_execute(void *data,
             rc = ib_data_expand_str(tx->dpi, rule->meta.data, false, &tmp);
             if (rc != IB_OK) {
                 ib_log_error_tx(tx,
-                             "event: Failed to expand data '%s': %s",
-                             rule->meta.data, ib_status_to_string(rc));
+                                "event: Failed to expand data '%s': %s",
+                                rule->meta.data, ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
             expanded = tmp;
@@ -240,7 +240,7 @@ static ib_status_t act_event_execute(void *data,
         rc = ib_logevent_data_set(event, expanded, strlen(expanded));
         if (rc != IB_OK) {
             ib_log_error_tx(tx,  "event: Failed to set data: %s",
-                         ib_status_to_string(rc));
+                            ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -1268,16 +1268,17 @@ static ib_status_t act_status_create(ib_engine_t *ib,
 
     if (params == NULL) {
         ib_log_error(ib, "Action status must be given a parameter "
-                         "x where 200 <= x < 600.");
+                     "x where 200 <= x < 600.");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     block_status = atoi(params);
 
     if ( block_status < 200 || block_status >= 600 ) {
-        ib_log_error(ib, "Action status must be given a parameter "
-                         "x where 200 <= x < 600. It was given %s.",
-                         params);
+        ib_log_error(ib,
+                     "Action status must be given a parameter "
+                     "x where 200 <= x < 600. It was given %s.",
+                     params);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -1667,10 +1668,10 @@ static ib_status_t act_del_request_header_execute(void *data,
 }
 
 static ib_status_t act_set_response_header_execute(void* data,
-                                                  const ib_rule_t *rule,
-                                                  ib_tx_t *tx,
-                                                  ib_flags_t flags,
-                                                  void *cbdata)
+                                                   const ib_rule_t *rule,
+                                                   ib_tx_t *tx,
+                                                   ib_flags_t flags,
+                                                   void *cbdata)
 {
     IB_FTRACE_INIT();
 

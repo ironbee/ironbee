@@ -316,8 +316,10 @@ static ib_status_t modac_provider_instance_init(ib_provider_inst_t *mpi,
     ib_status_t rc;
     modac_provider_data_t *dt;
 
-    dt = (modac_provider_data_t *) ib_mpool_calloc(mpi->mp, 1,
-                                         sizeof(modac_provider_data_t));
+    dt = (modac_provider_data_t *)ib_mpool_calloc(
+        mpi->mp, 1,
+        sizeof(modac_provider_data_t)
+    );
     if (dt == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -357,7 +359,7 @@ static ib_status_t modac_match(ib_provider_inst_t *mpi,
     }
 
     ib_log_debug(mpi->pr->ib, "Matching AGAINST AC tree %p",
-                     dt->ac_tree);
+                 dt->ac_tree);
 
 
     ib_ac_t *ac_tree = dt->ac_tree;
@@ -379,28 +381,28 @@ static ib_status_t modac_match(ib_provider_inst_t *mpi,
 }
 
 static ib_status_t modac_compile(ib_provider_t *mpr,
-                                   ib_mpool_t *pool,
-                                   void *pcpatt,
-                                   const char *patt,
-                                   const char **errptr,
-                                   int *erroffset)
+                                 ib_mpool_t *pool,
+                                 void *pcpatt,
+                                 const char *patt,
+                                 const char **errptr,
+                                 int *erroffset)
 {
     IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
 static ib_status_t modac_match_compiled(ib_provider_t *mpr,
-                                          void *cpatt,
-                                          ib_flags_t flags,
-                                          const uint8_t *data,
-                                          size_t dlen, void *ctx)
+                                        void *cpatt,
+                                        ib_flags_t flags,
+                                        const uint8_t *data,
+                                        size_t dlen, void *ctx)
 {
     IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
 static ib_status_t modac_add_pattern(ib_provider_inst_t *pi,
-                                       void *cpatt)
+                                     void *cpatt)
 {
     IB_FTRACE_INIT();
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
@@ -462,7 +464,7 @@ static ib_status_t readfile(ib_engine_t *ib,
 
     if (rc == -1) {
         ib_log_error(ib,
-                "Failed to stat file %s: %s", filename, strerror(errno));
+                     "Failed to stat file %s: %s", filename, strerror(errno));
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 

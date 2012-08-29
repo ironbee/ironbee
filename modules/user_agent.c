@@ -240,8 +240,8 @@ static modua_matchresult_t modua_frule_match(const char *str,
  *
  * @returns 1 if all rules match, otherwise 0
  */
-static int modua_mrule_match( const char *fields[],
-                              const modua_match_rule_t *rule)
+static int modua_mrule_match(const char *fields[],
+                             const modua_match_rule_t *rule)
 {
     IB_FTRACE_INIT();
     const modua_field_rule_t *fr;
@@ -403,8 +403,8 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     buf = (char *)ib_mpool_calloc(tx->mp, 1, len+1);
     if (buf == NULL) {
         ib_log_error_tx(tx,
-                      "Failed to allocate %zd bytes for agent string",
-                      len+1);
+                        "Failed to allocate %zd bytes for agent string",
+                        len+1);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
@@ -434,7 +434,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     }
     else {
         ib_log_debug_tx(tx, "Matched to rule #%d / category '%s'",
-                     rule->rule_num, rule->category );
+                        rule->rule_num, rule->category );
     }
 
     /* Build a new list. */
@@ -525,8 +525,9 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     }
 
     if (req_agent->type != IB_FTYPE_LIST) {
-        ib_log_error_tx(tx, "Expected request_headers:User-Agent to "
-                            "return list of values.");
+        ib_log_error_tx(tx,
+            "Expected request_headers:User-Agent to "
+            "return list of values.");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -681,8 +682,8 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     buf = (char *)ib_mpool_alloc(tx->mp, len+1);
     if (buf == NULL) {
         ib_log_error_tx(tx,
-                     "Failed to allocate %zd bytes for remote address",
-                     len+1);
+                        "Failed to allocate %zd bytes for remote address",
+                        len+1);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 

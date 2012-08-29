@@ -80,7 +80,7 @@ static void core_gen_tx_bytestr_alias_field(ib_tx_t *tx,
                                              val);
     if (rc != IB_OK) {
         ib_log_warning(tx->ib, "Failed to create \"%s\" field: %s",
-                     name, ib_status_to_string(rc));
+                       name, ib_status_to_string(rc));
         return;
     }
 
@@ -109,7 +109,7 @@ static void core_gen_tx_numeric_field(ib_tx_t *tx,
                                      &num);
     if (rc != IB_OK) {
         ib_log_warning(tx->ib, "Failed to create \"%s\" field: %s",
-                     name, ib_status_to_string(rc));
+                       name, ib_status_to_string(rc));
         return;
     }
 

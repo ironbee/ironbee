@@ -388,10 +388,10 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib_engine,
     }
 
     ib_log_debug3(ib_engine,
-                 "Registering lua event handler m=%p event=%d: onEvent%s",
-                 module,
-                 event,
-                 event_name);
+                  "Registering lua event handler m=%p event=%d: onEvent%s",
+                  module,
+                  event,
+                  event_name);
 
     /* Create an event list if required. */
     if (modcfg->event_reg[event] == NULL) {
@@ -403,7 +403,7 @@ static ib_status_t modlua_register_event_handler(ib_engine_t *ib_engine,
 
     /* Add the lua module to the lua event list. */
     ib_log_debug3(ib_engine, "Adding module=%p to event=%d list=%p",
-                 module, event, modcfg->event_reg[event]);
+                  module, event, modcfg->event_reg[event]);
     rc = ib_list_push(modcfg->event_reg[event], (void *)module);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -457,7 +457,7 @@ static ib_status_t modlua_load_lua_file(ib_engine_t *ib_engine,
     name[name_len] = '\0';
 
     ib_log_debug2(ib_engine, "Loading lua module \"%s\": %s",
-                 name, file);
+                  name, file);
 
     /* Save the Lua chunk. */
     ib_log_debug3(ib_engine, "Allocating chunk");
@@ -533,8 +533,8 @@ static ib_status_t modlua_init_lua_wrapper(ib_engine_t *ib,
         int ec;
 
         ib_log_debug3(ib,
-                     "Executing lua module handler \"%s.%s\" via wrapper",
-                     module->name, funcname);
+                      "Executing lua module handler \"%s.%s\" via wrapper",
+                      module->name, funcname);
         lua_pushlightuserdata(L, ib);
         lua_pushstring(L, module->name);
         lua_pushstring(L, funcname);
@@ -767,7 +767,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
     lua_getfield(L, -1, "loaded");
     lua_getfield(L, -1, module->name);
     ib_log_debug3(ib, "Module load returned type=%s",
-                 lua_typename(L, lua_type(L, -1)));
+                  lua_typename(L, lua_type(L, -1)));
     if (lua_istable(L, -1)) {
         lua_pushnil(L);
         while (lua_next(L, -2)) {
@@ -778,7 +778,7 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
                 if (lua_isstring(L, -1)) {
                     val = lua_tostring(L, -1);
                     ib_log_debug3(ib, "Lua module \"%s\" %s=\"%s\"",
-                                 module->name, key, val);
+                                  module->name, key, val);
                 }
                 else if (lua_isfunction(L, -1)) {
                     val = lua_topointer(L, -1);
@@ -788,9 +788,9 @@ static ib_status_t modlua_lua_module_init(ib_engine_t *ib,
                      */
                     if (strncmp("onEvent", key, 7) == 0) {
                         ib_log_debug3(ib,
-                                     "Lua module \"%s\" registering event "
-                                     "handler: %s",
-                                     module->name, key);
+                                      "Lua module \"%s\" registering event "
+                                      "handler: %s",
+                                      module->name, key);
 
                         /* key + 7 it the event name following "onEvent" */
                         rc = modlua_register_event_handler(ib,
@@ -836,7 +836,7 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
 
         chunk = (modlua_chunk_t *)m->data;
         ib_log_debug3(ib, "Lua %p module \"%s\" module=%p chunk=%p",
-                     L, IB_FFI_MODULE_STR, m, chunk);
+                      L, IB_FFI_MODULE_STR, m, chunk);
         ec = modlua_load_lua_data(ib, L, chunk);
         if (ec != 0) {
             ib_log_error(ib, "Failed to init lua module \"%s\" - %s (%d)",
@@ -1266,8 +1266,8 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
         int ec;
 
         ib_log_debug3(ib,
-                     "Executing lua handler \"%s.%s\" via wrapper",
-                     modname, funcname);
+                      "Executing lua handler \"%s.%s\" via wrapper",
+                      modname, funcname);
         lua_pushlightuserdata(L, ib);
         lua_pushstring(L, modname);
         lua_pushstring(L, funcname);
@@ -1317,10 +1317,9 @@ static ib_status_t modlua_exec_lua_handler(ib_engine_t *ib,
  *
  * @return Status code.
  */
-static ib_status_t modlua_handle_conndata_event(ib_engine_t *ib,
-                                                    ib_state_event_type_t event,
-                                                    ib_conndata_t *conndata,
-                                                    void *cbdata)
+static ib_status_t modlua_handle_conndata_event(ib_engine_t *ib,                                                              ib_state_event_type_t event,
+                                                ib_conndata_t *conndata,
+                                                void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_conn_t *conn = conndata->conn;
@@ -1333,7 +1332,6 @@ static ib_status_t modlua_handle_conndata_event(ib_engine_t *ib,
     /* Get the module config. */
     /// @todo For now, context is in main, not conn
     rc = ib_context_module_config(conn->ctx,
-    //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to fetch module %s config: %s",
@@ -1369,8 +1367,9 @@ static ib_status_t modlua_handle_conndata_event(ib_engine_t *ib,
      */
     IB_LIST_LOOP(luaevents, node) {
         ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug3(ib, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
-                     m->name, m, event, ib_state_event_name(event));
+        ib_log_debug3(ib,
+                      "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+                      m->name, m, event, ib_state_event_name(event));
         rc = modlua_exec_lua_handler(ib, conndata, lua, m->name, event);
         if (rc != IB_OK) {
             ib_log_error(ib, "Error executing lua handler");
@@ -1392,10 +1391,10 @@ static ib_status_t modlua_handle_conndata_event(ib_engine_t *ib,
  * @return Status code
  */
 static ib_status_t modlua_handle_txdata_event(ib_engine_t *ib,
-                                                  ib_tx_t *tx,
-                                                  ib_state_event_type_t event,
-                                                  ib_txdata_t *txdata,
-                                                  void *cbdata)
+                                              ib_tx_t *tx,
+                                              ib_state_event_type_t event,
+                                              ib_txdata_t *txdata,
+                                              void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_conn_t *conn = tx->conn;
@@ -1408,11 +1407,10 @@ static ib_status_t modlua_handle_txdata_event(ib_engine_t *ib,
     /* Get the module config. */
     /// @todo For now, context is in main, not tx
     rc = ib_context_module_config(tx->ctx,
-    //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Failed to fetch module %s config: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
+                        MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1445,9 +1443,11 @@ static ib_status_t modlua_handle_txdata_event(ib_engine_t *ib,
      */
     IB_LIST_LOOP(luaevents, node) {
         ib_module_t *module = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug3_tx(tx,
-                     "Lua module \"%s\" (%p) has handler for event[%d]=%s",
-                     module->name, module, event, ib_state_event_name(event));
+        ib_log_debug3_tx(
+            tx,
+            "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+            module->name, module, event, ib_state_event_name(event)
+        );
         rc = modlua_exec_lua_handler(ib, txdata, lua, module->name, event);
         if (rc != IB_OK) {
             ib_log_error_tx(tx, "Error executing lua handler");
@@ -1468,9 +1468,9 @@ static ib_status_t modlua_handle_txdata_event(ib_engine_t *ib,
  * @return Status code.
  */
 static ib_status_t modlua_handle_conn_event(ib_engine_t *ib,
-                                                ib_state_event_type_t event,
-                                                ib_conn_t *conn,
-                                                void *cbdata)
+                                            ib_state_event_type_t event,
+                                            ib_conn_t *conn,
+                                            void *cbdata)
 {
     IB_FTRACE_INIT();
     modlua_cfg_t *modcfg;
@@ -1482,7 +1482,6 @@ static ib_status_t modlua_handle_conn_event(ib_engine_t *ib,
     /* Get the module config. */
     /// @todo For now, context is in main, not conn
     rc = ib_context_module_config(conn->ctx,
-    //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to fetch module %s config: %s",
@@ -1518,9 +1517,11 @@ static ib_status_t modlua_handle_conn_event(ib_engine_t *ib,
      */
     IB_LIST_LOOP(luaevents, node) {
         ib_module_t *module = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug3(ib,
-                     "Lua module \"%s\" (%p) has handler for event[%d]=%s",
-                     module->name, module, event, ib_state_event_name(event));
+        ib_log_debug3(
+            ib,
+            "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+            module->name, module, event, ib_state_event_name(event)
+        );
         rc = modlua_exec_lua_handler(ib, conn, lua, module->name, event);
         if (rc != IB_OK) {
             ib_log_error(ib, "Error executing lua handler");
@@ -1541,9 +1542,9 @@ static ib_status_t modlua_handle_conn_event(ib_engine_t *ib,
  * @return Status code.
  */
 static ib_status_t modlua_handle_tx_event(ib_engine_t *ib,
-                                              ib_tx_t *tx,
-                                              ib_state_event_type_t event,
-                                              void *cbdata)
+                                          ib_tx_t *tx,
+                                          ib_state_event_type_t event,
+                                          void *cbdata)
 {
     IB_FTRACE_INIT();
     modlua_cfg_t *modcfg;
@@ -1555,11 +1556,10 @@ static ib_status_t modlua_handle_tx_event(ib_engine_t *ib,
     /* Get the module config. */
     /// @todo For now, context is in main, not tx
     rc = ib_context_module_config(tx->ctx,
-    //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Failed to fetch module %s config: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
+                        MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1591,8 +1591,11 @@ static ib_status_t modlua_handle_tx_event(ib_engine_t *ib,
      */
     IB_LIST_LOOP(luaevents, node) {
         ib_module_t *m = (ib_module_t *)ib_list_node_data(node);
-        ib_log_debug3_tx(tx, "Lua module \"%s\" (%p) has handler for event[%d]=%s",
-                     m->name, m, event, ib_state_event_name(event));
+        ib_log_debug3_tx(
+            tx,
+            "Lua module \"%s\" (%p) has handler for event[%d]=%s",
+            m->name, m, event, ib_state_event_name(event)
+        );
         rc = modlua_exec_lua_handler(ib, tx, lua, m->name, event);
         if (rc != IB_OK) {
             ib_log_error_tx(tx, "Error executing lua handler");
@@ -1629,11 +1632,10 @@ static ib_status_t modlua_handle_reqline_event(ib_engine_t *ib,
     /* Get the module config. */
     /// @todo For now, context is in main, not tx
     rc = ib_context_module_config(tx->ctx,
-    //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Failed to fetch module %s config: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
+                        MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1705,11 +1707,10 @@ static ib_status_t modlua_handle_respline_event(ib_engine_t *ib,
     /* Get the module config. */
     /// @todo For now, context is in main, not tx
     rc = ib_context_module_config(tx->ctx,
-    //rc = ib_context_module_config(ib_context_main(ib),
                                   IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Failed to fetch module %s config: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
+                        MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1800,8 +1801,8 @@ static ib_status_t modlua_init(ib_engine_t *ib,
 
     /* Hook to initialize the lua runtime with the connection. */
     rc = ib_hook_conn_register(ib, conn_started_event,
-                          modlua_init_lua_runtime,
-                          NULL);
+                               modlua_init_lua_runtime,
+                               NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
@@ -1809,8 +1810,8 @@ static ib_status_t modlua_init(ib_engine_t *ib,
 
     /* Hook to destroy the lua runtime with the connection. */
     rc = ib_hook_conn_register(ib, conn_finished_event,
-                          modlua_destroy_lua_runtime,
-                          NULL);
+                               modlua_destroy_lua_runtime,
+                               NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to register hook: %s",
                      ib_status_to_string(rc));
@@ -2098,9 +2099,9 @@ static ib_status_t modlua_dir_lua_wrapper(ib_cfgparser_t *cp,
         int ec;
 
         ib_log_debug3(ib,
-                     "Executing lua config handler \"%s.%s\" via wrapper",
-                     wcbdata->fn_config_modname,
-                     wcbdata->fn_config_name);
+                      "Executing lua config handler \"%s.%s\" via wrapper",
+                      wcbdata->fn_config_modname,
+                      wcbdata->fn_config_name);
         lua_pushlightuserdata(L, ib);
         lua_pushstring(L, wcbdata->fn_config_modname);
         lua_pushstring(L, wcbdata->fn_config_name);
@@ -2184,9 +2185,9 @@ static ib_status_t modlua_blkend_lua_wrapper(ib_cfgparser_t *cp,
         int ec;
 
         ib_log_debug3(ib,
-                     "Executing lua config handler \"%s.%s\" via wrapper",
-                     wcbdata->fn_config_modname,
-                     wcbdata->fn_config_name);
+                      "Executing lua config handler \"%s.%s\" via wrapper",
+                      wcbdata->fn_config_modname,
+                      wcbdata->fn_config_name);
         lua_pushlightuserdata(L, ib);
         lua_pushstring(L, wcbdata->fn_config_modname);
         lua_pushstring(L, wcbdata->fn_config_name);

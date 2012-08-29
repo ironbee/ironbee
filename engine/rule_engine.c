@@ -682,8 +682,8 @@ static ib_status_t set_target_fields(ib_engine_t *ib,
     /* Create FIELD */
     (void)ib_data_remove(tx->dpi, "FIELD", NULL);
     trc = ib_data_add_named(tx->dpi,
-                           (ib_field_t *)value,
-                           IB_FIELD_NAME("FIELD"));
+                            (ib_field_t *)value,
+                            IB_FIELD_NAME("FIELD"));
     if (trc != IB_OK) {
         ib_rule_log_error(tx, rule, target, NULL,
                           "Failed to create FIELD: %s",
@@ -729,15 +729,15 @@ static ib_status_t set_target_fields(ib_engine_t *ib,
     trc = ib_data_get(tx->dpi, "FIELD_NAME", &f);
     if (trc == IB_ENOENT) {
         trc = ib_data_add_bytestr_ex(tx->dpi,
-                                    IB_FIELD_NAME("FIELD_NAME"),
-                                    (uint8_t *)value->name,
-                                    value->nlen,
-                                    NULL);
+                                     IB_FIELD_NAME("FIELD_NAME"),
+                                     (uint8_t *)value->name,
+                                     value->nlen,
+                                     NULL);
     }
     else if (trc == IB_OK) {
         trc = ib_bytestr_dup_mem(&bs, tx->mp,
-                                (uint8_t *)value->name,
-                                value->nlen);
+                                 (uint8_t *)value->name,
+                                 value->nlen);
         if (trc == IB_OK) {
             trc = ib_field_setv(f, bs);
         }
@@ -794,9 +794,9 @@ static ib_status_t set_target_fields(ib_engine_t *ib,
     trc = ib_data_get(tx->dpi, "FIELD_NAME_FULL", &f);
     if (trc == IB_ENOENT) {
         trc = ib_data_add_bytestr_ex(tx->dpi,
-                                    IB_FIELD_NAME("FIELD_NAME_FULL"),
-                                    (uint8_t *)name, namelen,
-                                    NULL);
+                                     IB_FIELD_NAME("FIELD_NAME_FULL"),
+                                     (uint8_t *)name, namelen,
+                                     NULL);
     }
     else if (trc == IB_OK) {
         trc = ib_bytestr_dup_mem(&bs, tx->mp, (uint8_t *)name, namelen);
@@ -3255,8 +3255,8 @@ ib_status_t ib_rule_match(ib_engine_t *ib,
 }
 
 static ib_status_t gen_full_id(ib_engine_t *ib,
-                             ib_context_t *ctx,
-                             ib_rule_t *rule)
+                               ib_context_t *ctx,
+                               ib_rule_t *rule)
 {
     IB_FTRACE_INIT();
 

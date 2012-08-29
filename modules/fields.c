@@ -381,9 +381,9 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
  * @returns Status code
  */
 static ib_status_t fields_tx_header_finished(ib_engine_t *ib,
-                                     ib_tx_t *tx,
-                                     ib_state_event_type_t event,
-                                     void *data)
+                                             ib_tx_t *tx,
+                                             ib_state_event_type_t event,
+                                             void *data)
 {
     IB_FTRACE_INIT();
 

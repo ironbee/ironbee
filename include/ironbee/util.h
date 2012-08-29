@@ -153,8 +153,8 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
  * @return Pointer to new path, or NULL if unable to allocate memory
  */
 char DLL_PUBLIC *ib_util_relative_file(ib_mpool_t *mp,
-                            const char *ref_file,
-                            const char *file_path);
+                                       const char *ref_file,
+                                       const char *file_path);
 
 
 /**
@@ -167,8 +167,8 @@ char DLL_PUBLIC *ib_util_relative_file(ib_mpool_t *mp,
  * @return Pointer to new path, or NULL if unable to allocate memory
  */
 char DLL_PUBLIC *ib_util_path_join(ib_mpool_t *mp,
-                        const char *parent,
-                        const char *file_path);
+                                   const char *parent,
+                                   const char *file_path);
 
 /**
  * Unescape a Javascript-escaped string into the @a dst string buffer.

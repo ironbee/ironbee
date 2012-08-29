@@ -46,7 +46,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
     m->ib = ib;
 
     ib_log_debug2(ib, "Initializing module %s (%zd): %s",
-                 m->name, m->idx, m->filename);
+                  m->name, m->idx, m->filename);
 
     /* Register directives */
     if (m->dm_init != NULL) {
@@ -64,7 +64,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
 
     if (ib->ctx != NULL) {
         ib_log_debug2(ib, "Registering module \"%s\" with main context %p",
-                     m->name, ib->ctx);
+                      m->name, ib->ctx);
         ib_module_register_context(m, ib->ctx);
     }
     else {
@@ -163,11 +163,11 @@ ib_status_t ib_module_load(ib_module_t **pm,
     }
 
     ib_log_debug3(ib,
-                 "Loaded module %s: "
-                 "vernum=%d abinum=%d version=%s index=%zd filename=%s",
-                 (*pm)->name,
-                 (*pm)->vernum, (*pm)->abinum, (*pm)->version,
-                 (*pm)->idx, (*pm)->filename);
+                  "Loaded module %s: "
+                  "vernum=%d abinum=%d version=%s index=%zd filename=%s",
+                  (*pm)->name,
+                  (*pm)->vernum, (*pm)->abinum, (*pm)->version,
+                  (*pm)->idx, (*pm)->filename);
 
     rc = ib_module_init(*pm, ib);
     IB_FTRACE_RET_STATUS(rc);
@@ -186,12 +186,12 @@ ib_status_t ib_module_unload(ib_module_t *m)
     ib = m->ib;
 
     ib_log_debug3(ib,
-                 "Unloading module %s: "
-                 "vernum=%d abinum=%d version=%s index=%zd"
-                 " filename=%s",
-                 m->name,
-                 m->vernum, m->abinum, m->version,
-                 m->idx, m->filename);
+                  "Unloading module %s: "
+                  "vernum=%d abinum=%d version=%s index=%zd"
+                  " filename=%s",
+                  m->name,
+                  m->vernum, m->abinum, m->version,
+                  m->idx, m->filename);
 
     /* Finish the module */
     if (m->fn_fini != NULL) {

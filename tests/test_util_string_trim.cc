@@ -180,7 +180,7 @@ class TestStringTrim : public TestStringModification
 {
 public:
     TestStringTrim(ib_strmod_fn_t fn, const char *fn_name,
-                          ib_strmod_ex_fn_t ex_fn, const char *ex_fn_name)
+                   ib_strmod_ex_fn_t ex_fn, const char *ex_fn_name)
         : TestStringModification(BufSize, CallBufSize, fn, fn_name,
                                  ex_fn, ex_fn_name)
     {

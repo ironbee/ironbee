@@ -106,7 +106,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
 
     /* Generate the full audit log directory name. */
     sys_rc = snprintf(dn, dn_sz, "%s%s%s",
-                  corecfg->auditlog_dir, (*dtmp)?"/":"", dtmp);
+                      corecfg->auditlog_dir, (*dtmp)?"/":"", dtmp);
     if (sys_rc >= dn_sz) {
         /// @todo Better error.
         ib_log_error(log->ib,

@@ -85,8 +85,8 @@ extern "C" {
  * value (001 . 002 . 003).
  */
 #define IB_VERNUM    (uint32_t)(((IB_VERSION_MAJOR) * 1000000) + \
-                      ((IB_VERSION_MAJOR) * 1000) + \
-                      (IB_VERSION_MAINT))
+                                ((IB_VERSION_MAJOR) * 1000) + \
+                                (IB_VERSION_MAINT))
 
 /**
  * ABI version number.

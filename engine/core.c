@@ -1200,7 +1200,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
         /* Verify size. */
         if (rlen >= CORE_JSON_MAX_FIELD_LEN) {
             ib_log_notice(ib, "Item too large to log in part %s: %zd",
-                         part->name, rlen);
+                          part->name, rlen);
             *chunk = (const uint8_t *)"\r\n";
             part->gen_data = (void *)-1;
             IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
@@ -1228,7 +1228,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
 }
 
 static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
-                                            const uint8_t **chunk)
+                                           const uint8_t **chunk)
 {
     IB_FTRACE_INIT();
     ib_engine_t *ib = part->log->ib;
@@ -1272,7 +1272,7 @@ static size_t ib_auditlog_gen_header_flist(ib_auditlog_part_t *part,
             /* Verify size. */
             if (rlen >= CORE_HEADER_MAX_FIELD_LEN) {
                 ib_log_notice(ib, "Item too large to log in part %s: %zd",
-                             part->name, rlen);
+                              part->name, rlen);
                 *chunk = (const uint8_t *)"\r\n";
                 part->gen_data = (void *)-1;
                 IB_FTRACE_RET_SIZET(strlen(*(const char **)chunk));
@@ -1671,59 +1671,59 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                       IB_FIELD_NAME("log-timestamp"),
-                       (uint8_t *)tstamp,
-                       strlen(tstamp));
+                                  IB_FIELD_NAME("log-timestamp"),
+                                  (uint8_t *)tstamp,
+                                  strlen(tstamp));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                       IB_FIELD_NAME("log-format"),
-                       (uint8_t *)log_format,
-                       strlen(log_format));
+                                  IB_FIELD_NAME("log-format"),
+                                  (uint8_t *)log_format,
+                                  strlen(log_format));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                       IB_FIELD_NAME("log-id"),
-                       (uint8_t *)cfg->boundary,
-                       strlen(cfg->boundary));
+                                  IB_FIELD_NAME("log-id"),
+                                  (uint8_t *)cfg->boundary,
+                                  strlen(cfg->boundary));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                       IB_FIELD_NAME("sensor-id"),
-                       (uint8_t *)ib->sensor_id_str,
-                       strlen(ib->sensor_id_str));
+                                  IB_FIELD_NAME("sensor-id"),
+                                  (uint8_t *)ib->sensor_id_str,
+                                  strlen(ib->sensor_id_str));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                       IB_FIELD_NAME("sensor-name"),
-                       (uint8_t *)ib->sensor_name,
-                       strlen(ib->sensor_name));
+                                  IB_FIELD_NAME("sensor-name"),
+                                  (uint8_t *)ib->sensor_name,
+                                  strlen(ib->sensor_name));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                       IB_FIELD_NAME("sensor-version"),
-                       (uint8_t *)ib->sensor_version,
-                       strlen(ib->sensor_version));
+                                  IB_FIELD_NAME("sensor-version"),
+                                  (uint8_t *)ib->sensor_version,
+                                  strlen(ib->sensor_version));
     ib_list_push(list, f);
 
     ib_field_create_bytestr_alias(&f, pool,
-                       IB_FIELD_NAME("sensor-hostname"),
-                       (uint8_t *)ib->sensor_hostname,
-                       strlen(ib->sensor_hostname));
+                                  IB_FIELD_NAME("sensor-hostname"),
+                                  (uint8_t *)ib->sensor_hostname,
+                                  strlen(ib->sensor_hostname));
     ib_list_push(list, f);
 
     site = ib_context_site_get(log->ctx);
     if (site != NULL) {
         ib_field_create_bytestr_alias(&f, pool,
-                           IB_FIELD_NAME("site-id"),
-                           (uint8_t *)site->id_str,
-                           strlen(site->id_str));
+                                      IB_FIELD_NAME("site-id"),
+                                      (uint8_t *)site->id_str,
+                                      strlen(site->id_str));
         ib_list_push(list, f);
 
         ib_field_create_bytestr_alias(&f, pool,
-                           IB_FIELD_NAME("site-name"),
-                           (uint8_t *)site->name,
-                           strlen(site->name));
+                                      IB_FIELD_NAME("site-name"),
+                                      (uint8_t *)site->name,
+                                      strlen(site->name));
         ib_list_push(list, f);
     }
 
@@ -1796,21 +1796,21 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                                     (tx->t.request_started - tx->t.started));
 
         ib_field_create_bytestr_alias(&f, pool,
-                           IB_FIELD_NAME("request-timestamp"),
-                           (uint8_t *)tstamp,
-                           strlen(tstamp));
+                                      IB_FIELD_NAME("request-timestamp"),
+                                      (uint8_t *)tstamp,
+                                      strlen(tstamp));
         ib_list_push(list, f);
 
         ib_field_create_bytestr_alias(&f, pool,
-                           IB_FIELD_NAME("tx-id"),
-                           (uint8_t *)tx->id,
-                           strlen(tx->id));
+                                      IB_FIELD_NAME("tx-id"),
+                                      (uint8_t *)tx->id,
+                                      strlen(tx->id));
         ib_list_push(list, f);
 
         ib_field_create_bytestr_alias(&f, pool,
-                           IB_FIELD_NAME("remote-addr"),
-                           (uint8_t *)tx->er_ipstr,
-                           strlen(tx->er_ipstr));
+                                      IB_FIELD_NAME("remote-addr"),
+                                      (uint8_t *)tx->er_ipstr,
+                                      strlen(tx->er_ipstr));
         ib_list_push(list, f);
 
         unum = tx->conn->remote_port;
@@ -1821,9 +1821,9 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         ib_list_push(list, f);
 
         ib_field_create_bytestr_alias(&f, pool,
-                           IB_FIELD_NAME("local-addr"),
-                           (uint8_t *)tx->conn->local_ipstr,
-                           strlen(tx->conn->local_ipstr));
+                                      IB_FIELD_NAME("local-addr"),
+                                      (uint8_t *)tx->conn->local_ipstr,
+                                      strlen(tx->conn->local_ipstr));
         ib_list_push(list, f);
 
         unum = tx->conn->local_port;
@@ -1836,9 +1836,9 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         /// @todo If this is NULL, parser failed - what to do???
         if (tx->path != NULL) {
             ib_field_create_bytestr_alias(&f, pool,
-                               IB_FIELD_NAME("request-uri-path"),
-                               (uint8_t *)tx->path,
-                               strlen(tx->path));
+                                          IB_FIELD_NAME("request-uri-path"),
+                                          (uint8_t *)tx->path,
+                                          strlen(tx->path));
             ib_list_push(list, f);
         }
 
@@ -1861,9 +1861,9 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
         /// @todo If this is NULL, parser failed - what to do???
         if (tx->hostname != NULL) {
             ib_field_create_bytestr_alias(&f, pool,
-                               IB_FIELD_NAME("request-hostname"),
-                               (uint8_t *)tx->hostname,
-                               strlen(tx->hostname));
+                                          IB_FIELD_NAME("request-hostname"),
+                                          (uint8_t *)tx->hostname,
+                                          strlen(tx->hostname));
             ib_list_push(list, f);
         }
     }
@@ -1904,9 +1904,9 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
     }
 
     ib_field_create_bytestr_alias(&f, pool,
-                       IB_FIELD_NAME("response-timestamp"),
-                       (uint8_t *)tstamp,
-                       strlen(tstamp));
+                                  IB_FIELD_NAME("response-timestamp"),
+                                  (uint8_t *)tstamp,
+                                  strlen(tstamp));
     ib_list_push(list, f);
 
     rc = ib_data_get_ex(tx->dpi, IB_S2SL("response_status"), &f);
@@ -2427,7 +2427,7 @@ static ib_status_t parser_register(ib_engine_t *ib,
     /* Verify that required interface functions are implemented. */
     if ((iface->conn_data_in == NULL) || (iface->conn_data_out == NULL)) {
         ib_log_alert(ib, "The data in/out and generate interface functions "
-                            "MUST be implemented by a parser provider");
+                     "MUST be implemented by a parser provider");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -2712,7 +2712,7 @@ static ib_status_t data_register(ib_engine_t *ib,
         || (iface->clear == NULL))
     {
         ib_log_alert(ib, "All required interface functions "
-                            "MUST be implemented by a data provider");
+                     "MUST be implemented by a data provider");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -2853,7 +2853,7 @@ static ib_status_t matcher_api_add_pattern_ex(ib_provider_inst_t *mpi,
     iface = (IB_PROVIDER_IFACE_TYPE(matcher) *)mpi->pr->iface;
 
     rc = iface->add_ex(mpi, patterns, patt, callback, arg,
-                               errptr, erroffset);
+                       errptr, erroffset);
     if (rc != IB_OK) {
         ib_log_error(mpi->pr->ib,
                      "Failed to add pattern %s patt: (%s) %s at"
@@ -3308,7 +3308,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     }
 
     ib_log_debug2(ib,
-                 "Creating default location for site \"%s\"", p1_unescaped);
+                  "Creating default location for site \"%s\"", p1_unescaped);
     rc = ib_site_loc_create_default(site, &loc);
     if (rc != IB_OK) {
         ib_log_error(ib,
@@ -3318,7 +3318,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
     }
 
     ib_log_debug2(ib,
-                 "Creating context for \"%s:%s\"", p1_unescaped, loc->path);
+                  "Creating context for \"%s:%s\"", p1_unescaped, loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
                            "site", p1_unescaped,
                            ib_context_siteloc_chooser,
@@ -3426,14 +3426,14 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     rc = core_unescape(ib, &p1_unescaped, p1);
     if ( rc != IB_OK ) {
         ib_log_debug2(ib,
-                     "Failed to unescape parameter %s=%s.", name, p1);
+                      "Failed to unescape parameter %s=%s.", name, p1);
         IB_FTRACE_RET_STATUS(rc);
     }
 
     ib_log_debug2(ib,
-                 "Creating location \"%s\" for site \"%s\"",
-                 p1_unescaped,
-                 site->name);
+                  "Creating location \"%s\" for site \"%s\"",
+                  p1_unescaped,
+                  site->name);
     rc = ib_site_loc_create(site, &loc, p1_unescaped);
     if (rc != IB_OK) {
         ib_log_error(ib,
@@ -3444,9 +3444,9 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
     }
 
     ib_log_debug2(ib,
-                 "Creating context for \"%s:%s\"",
-                 site->name,
-                 loc->path);
+                  "Creating context for \"%s:%s\"",
+                  site->name,
+                  loc->path);
     rc = ib_context_create(&ctx, ib, cp->cur_ctx,
                            "location", p1_unescaped,
                            ib_context_siteloc_chooser,
@@ -3454,10 +3454,10 @@ static ib_status_t core_dir_loc_start(ib_cfgparser_t *cp,
                            loc);
     if (rc != IB_OK) {
         ib_log_debug2(ib,
-                     "Failed to create context for \"%s:%s\": %s",
-                     site->name,
-                     loc->path,
-                     ib_status_to_string(rc));
+                      "Failed to create context for \"%s:%s\": %s",
+                      site->name,
+                      loc->path,
+                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     ib_cfgparser_context_push(cp, ctx);
@@ -3556,7 +3556,7 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
         if (strncasecmp("ip=", p_unescaped, 3) == 0) {
             p_unescaped += 3; /* Skip over ip= */
             ib_log_debug2(ib, "Adding IP \"%s\" to site \"%s\"",
-                         p_unescaped, cp->cur_site->name);
+                          p_unescaped, cp->cur_site->name);
             rc = ib_site_address_add(cp->cur_site, p_unescaped);
         }
         else if (strncasecmp("path=", p_unescaped, 5) == 0) {
@@ -3577,7 +3577,7 @@ static ib_status_t core_dir_hostname(ib_cfgparser_t *cp,
                 ++p_unescaped;
             }
             ib_log_debug2(ib, "Adding host \"%s\" to site \"%s\"",
-                         p_unescaped, cp->cur_site->name);
+                          p_unescaped, cp->cur_site->name);
             rc = ib_site_hostname_add(cp->cur_site, p_unescaped);
         }
     }
@@ -3625,7 +3625,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
 
     if (strcasecmp("InspectionEngine", name) == 0) {
         ib_log_debug(ib,
-                    "TODO: Handle Directive: %s \"%s\"", name, p1_unescaped);
+                     "TODO: Handle Directive: %s \"%s\"", name, p1_unescaped);
     }
     else if (strcasecmp("AuditEngine", name) == 0) {
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
@@ -3880,10 +3880,10 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_uuid_ascii_to_bin(&ib->sensor_id, (const char *)p1_unescaped);
         if (rc != IB_OK) {
             ib_log_error(ib, "Invalid UUID at %s: %s should have "
-                            "UUID format "
-                            "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
-                            " hex values)",
-                            name, p1_unescaped);
+                         "UUID format "
+                         "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
+                         " hex values)",
+                         name, p1_unescaped);
 
             /* Use the default id. */
             ib->sensor_id_str = (const char *)ib_uuid_default_str;
@@ -3926,10 +3926,10 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_uuid_ascii_to_bin(&site->id, (const char *)p1_unescaped);
         if (rc != IB_OK) {
             ib_log_error(ib, "Invalid UUID at %s: %s should have "
-                            "UUID format "
-                            "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
-                            " hex values)",
-                            name, p1_unescaped);
+                         "UUID format "
+                         "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx where x are"
+                         " hex values)",
+                         name, p1_unescaped);
 
             /* Use the default id. */
             site->id_str = (const char *)ib_uuid_default_str;
@@ -5148,9 +5148,9 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     fp = (FILE *) lpi->data;
     if (fp != NULL) {
         if (fclose(fp) < 0) {
-            fprintf( stderr,
-                     "core_ctx_destroy:Failed closing our fp %p: %s\n",
-                     (void *)fp, strerror(errno) );
+            fprintf(stderr,
+                    "core_ctx_destroy:Failed closing our fp %p: %s\n",
+                    (void *)fp, strerror(errno) );
         }
         lpi->data = NULL;
     }

@@ -156,8 +156,8 @@ static ib_status_t ib_register_hook(
     /* Insert the hook at the end of the list */
     if (last == NULL) {
         ib_log_debug3(ib, "Registering %s hook: %p",
-               ib_state_event_name(event),
-               hook->callback.as_void);
+                      ib_state_event_name(event),
+                      hook->callback.as_void);
 
         ib->hook[event] = hook;
 
@@ -170,8 +170,8 @@ static ib_status_t ib_register_hook(
     last->next = hook;
 
     ib_log_debug3(ib, "Registering %s hook after %p: %p",
-           ib_state_event_name(event), last->callback.as_void,
-           hook->callback.as_void);
+                  ib_state_event_name(event), last->callback.as_void,
+                  hook->callback.as_void);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -532,8 +532,8 @@ void ib_engine_destroy(ib_engine_t *ib)
         }
 
         ib_log_debug3(ib, "Destroy IB handle (%d, %d, %s, %s): %p",
-               ib->server->vernum, ib->server->abinum,
-               ib->server->filename, ib->server->name, ib);
+                      ib->server->vernum, ib->server->abinum,
+                      ib->server->filename, ib->server->name, ib);
 
 #ifdef IB_DEBUG_MEMORY
         /* We can't use ib_engine_pool_destroy here as too little of the
@@ -2070,7 +2070,7 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
     txpath = tx->path;
 
     ib_log_debug3_tx(tx, "CHOOSER: ctx=%p '%s' tx=%p loc=%p",
-                  ctx, ctx->ctx_full, tx, loc);
+                     ctx, ctx->ctx_full, tx, loc);
 
     /*
      * Check for a matching IP address, then a matching hostname and
@@ -2084,7 +2084,7 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
     while (numips--) {
         /// @todo IP should be IP:Port combo
         ib_log_debug2_tx(tx, "Checking IP %s against context %s",
-                     tx->conn->local_ipstr, ip ? ip : "ANY");
+                         tx->conn->local_ipstr, ip ? ip : "ANY");
         if ((ip == NULL) || (strcmp(ip, tx->conn->local_ipstr) == 0)) {
             numhosts =
                 loc->site->hosts ? ib_list_elements(loc->site->hosts) : 1;
@@ -2131,9 +2131,9 @@ ib_status_t ib_context_siteloc_chooser(const ib_context_t *ctx,
                 {
                     /* Match default (wildcard) site for missing host. */
                     ib_log_debug2_tx(tx,
-                                  "Site \"%s:%s\" matched ctx=%p '%s'",
-                                  loc->site->name, loc->path,
-                                  ctx, ctx->ctx_full);
+                                     "Site \"%s:%s\" matched ctx=%p '%s'",
+                                     loc->site->name, loc->path,
+                                     ctx, ctx->ctx_full);
                     IB_FTRACE_RET_STATUS(IB_OK);
                 }
                 else {

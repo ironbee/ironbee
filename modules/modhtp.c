@@ -227,9 +227,11 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
     ib_data_add_list_ex((dpi), (name), strlen((name)), (pf))
 
 /* -- Utility functions -- */
-static ib_status_t modhtp_add_flag_to_collection(ib_tx_t *itx,
-                                      const char *collection_name,
-                                      const char *flag)
+static ib_status_t modhtp_add_flag_to_collection(
+    ib_tx_t *itx,
+    const char *collection_name,
+    const char *flag
+)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -250,12 +252,12 @@ static ib_status_t modhtp_add_flag_to_collection(ib_tx_t *itx,
         rc = ib_field_list_add(f, lf);
         if (rc != IB_OK) {
             ib_log_debug3_tx(itx, "Failed to add %s field: %s",
-                         collection_name, flag);
+                             collection_name, flag);
         }
     }
     else {
         ib_log_debug3_tx(itx, "Failed to add flag collection: %s",
-                     collection_name);
+                         collection_name);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -296,12 +298,12 @@ static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
     if (flags & HTP_INVALID_CHUNKING) {
         flags ^= HTP_INVALID_CHUNKING;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "INVALID_CHUNKING");
+                                           "INVALID_CHUNKING");
     }
     if (flags & HTP_INVALID_FOLDING) {
         flags ^= HTP_INVALID_FOLDING;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "INVALID_FOLDING");
+                                           "INVALID_FOLDING");
     }
     if (flags & HTP_MULTI_PACKET_HEAD) {
         flags ^= HTP_MULTI_PACKET_HEAD;
@@ -313,58 +315,58 @@ static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
          */
         if (! ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
             rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                        "MULTI_PACKET_HEAD");
+                                               "MULTI_PACKET_HEAD");
         }
     }
     if (flags & HTP_PATH_ENCODED_NUL) {
         flags ^= HTP_PATH_ENCODED_NUL;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "PATH_ENCODED_NUL");
+                                           "PATH_ENCODED_NUL");
     }
     if (flags & HTP_PATH_ENCODED_SEPARATOR) {
         flags ^= HTP_PATH_ENCODED_SEPARATOR;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "PATH_ENCODED_SEPARATOR");
+                                           "PATH_ENCODED_SEPARATOR");
     }
     if (flags & HTP_PATH_FULLWIDTH_EVASION) {
         flags ^= HTP_PATH_FULLWIDTH_EVASION;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "PATH_FULLWIDTH_EVASION");
+                                           "PATH_FULLWIDTH_EVASION");
     }
     if (flags & HTP_PATH_INVALID_ENCODING) {
         flags ^= HTP_PATH_INVALID_ENCODING;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "PATH_INVALID_ENCODING");
+                                           "PATH_INVALID_ENCODING");
     }
     if (flags & HTP_PATH_OVERLONG_U) {
         flags ^= HTP_PATH_OVERLONG_U;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "PATH_OVERLONG_U");
+                                           "PATH_OVERLONG_U");
     }
     if (flags & HTP_PATH_UTF8_INVALID) {
         flags ^= HTP_PATH_UTF8_INVALID;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "PATH_UTF8_INVALID");
+                                           "PATH_UTF8_INVALID");
     }
     if (flags & HTP_PATH_UTF8_OVERLONG) {
         flags ^= HTP_PATH_UTF8_OVERLONG;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "PATH_UTF8_OVERLONG");
+                                           "PATH_UTF8_OVERLONG");
     }
     if (flags & HTP_PATH_UTF8_VALID) {
         flags ^= HTP_PATH_UTF8_VALID;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "PATH_UTF8_VALID");
+                                           "PATH_UTF8_VALID");
     }
     if (flags & HTP_REQUEST_SMUGGLING) {
         flags ^= HTP_REQUEST_SMUGGLING;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "REQUEST_SMUGGLING");
+                                           "REQUEST_SMUGGLING");
     }
     if (flags & HTP_STATUS_LINE_INVALID) {
         flags ^= HTP_STATUS_LINE_INVALID;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                    "STATUS_LINE_INVALID");
+                                           "STATUS_LINE_INVALID");
     }
 
     /* If flags is not 0 we did not handle one of the bits. */
@@ -519,8 +521,8 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     rc = ib_state_notify_request_started(ib, itx, req_line);
     if (rc != IB_OK) {
         ib_log_error_tx(itx,
-                     "Error notifying request started: %s",
-                     ib_status_to_string(rc));
+                        "Error notifying request started: %s",
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
     else if (tx->flags) {
@@ -574,9 +576,8 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
 
     if (itx->hostname == NULL) {
         ib_log_debug_tx(itx,
-
-                     "Unknown hostname - using ip: %s",
-                     iconn->local_ipstr);
+                        "Unknown hostname - using ip: %s",
+                        iconn->local_ipstr);
         /// @todo Probably should set a flag here
         itx->hostname = ib_mpool_strdup(itx->mp, iconn->local_ipstr);
     }
@@ -593,7 +594,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, itx);
     if (rc != IB_OK) {
         ib_log_error_tx(itx, "Error creating header wrapper: %s",
-                     ib_status_to_string(rc));
+                        ib_status_to_string(rc));
     }
     else {
         htp_header_t *hdr = NULL;
@@ -617,13 +618,13 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     rc = ib_state_notify_request_header_data(ib, itx, ibhdrs);
     if (rc != IB_OK) {
         ib_log_error_tx(itx, "Error notifying request header data: %s",
-                     ib_status_to_string(rc));
+                        ib_status_to_string(rc));
     }
 
     rc = ib_state_notify_request_header_finished(ib, itx);
     if (rc != IB_OK) {
         ib_log_error_tx(itx, "Error notifying request header finished: %s",
-                     ib_status_to_string(rc));
+                        ib_status_to_string(rc));
     }
 
     IB_FTRACE_RET_INT(HTP_OK);
@@ -678,8 +679,8 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
         rc = ib_state_notify_request_body_data(ib, itx, &itxdata);
         if (rc != IB_OK) {
             ib_log_error_tx(itx,
-                         "ib_state_notify_request_body_data() failed: %s",
-                         ib_status_to_string(rc));
+                            "ib_state_notify_request_body_data() failed: %s",
+                            ib_status_to_string(rc));
         }
     }
 
@@ -905,7 +906,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, itx);
     if (rc != IB_OK) {
         ib_log_error_tx(itx, "Error creating header wrapper: %s",
-                     ib_status_to_string(rc));
+                        ib_status_to_string(rc));
     }
     else {
         htp_header_t *hdr = NULL;
@@ -919,9 +920,11 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
                 bstr_ptr(hdr->value),
                 bstr_len(hdr->value));
             if (rc != IB_OK) {
-                ib_log_error_tx(itx,
-                             "Error adding response header name / value: %s",
-                             ib_status_to_string(rc));
+                ib_log_error_tx(
+                    itx,
+                    "Error adding response header name / value: %s",
+                    ib_status_to_string(rc)
+                );
                 continue;
             }
         }
@@ -930,13 +933,13 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     rc = ib_state_notify_response_header_data(ib, itx, ibhdrs);
     if (rc != IB_OK) {
         ib_log_error_tx(itx, "Error notifying response header data: %s",
-                     ib_status_to_string(rc));
+                        ib_status_to_string(rc));
     }
 
     rc = ib_state_notify_response_header_finished(ib, itx);
     if (rc != IB_OK) {
         ib_log_error_tx(itx, "Error notifying response header finished: %s",
-                     ib_status_to_string(rc));
+                        ib_status_to_string(rc));
     }
 
     IB_FTRACE_RET_INT(HTP_OK);
@@ -989,8 +992,8 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
      */
     else if (!ib_tx_flags_isset(itx, IB_TX_FHTTP09|IB_TX_FRES_STARTED)) {
         ib_log_info_tx(itx,
-                        "LibHTP parsing error: "
-                        "found response data instead of a response line");
+                       "LibHTP parsing error: "
+                       "found response data instead of a response line");
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
@@ -1002,8 +1005,8 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
         rc = ib_state_notify_response_body_data(ib, itx, &itxdata);
         if (rc != IB_OK) {
             ib_log_error_tx(itx,
-                         "ib_state_notify_response_body_data() failed: %s",
-                         ib_status_to_string(rc));
+                            "ib_state_notify_response_body_data() failed: %s",
+                            ib_status_to_string(rc));
         }
     }
 
@@ -1094,9 +1097,11 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
     }
 
     /// @todo Notify tx_dataout_event w/response trailer
-    ib_log_debug_tx(itx,
-
-                 "TODO: tx_dataout_event w/response trailer: tx=%p", itx);
+    ib_log_debug_tx(
+        itx,
+        "TODO: tx_dataout_event w/response trailer: tx=%p",
+        itx
+    );
 
     IB_FTRACE_RET_INT(HTP_OK);
 }
@@ -1118,7 +1123,7 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(itx, "Failed to fetch module %s config: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
+                        MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1193,11 +1198,11 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
 
                 /* Create a list field as an alias into htp memory. */
                 rc = ib_field_create_bytestr_alias(&lf,
-                                           itx->mp,
-                                           bstr_ptr(key),
-                                           bstr_len(key),
-                                           (uint8_t *)bstr_ptr(value),
-                                           bstr_len(value));
+                                                   itx->mp,
+                                                   bstr_ptr(key),
+                                                   bstr_len(key),
+                                                   (uint8_t *)bstr_ptr(value),
+                                                   bstr_len(value));
                 if (rc != IB_OK) {
                     ib_log_debug3_tx(itx,
                                      "Failed to create field: %s",
@@ -1239,11 +1244,11 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
 
                 /* Create a list field as an alias into htp memory. */
                 rc = ib_field_create_bytestr_alias(&lf,
-                                           itx->mp,
-                                           bstr_ptr(key),
-                                           bstr_len(key),
-                                           (uint8_t *)bstr_ptr(value),
-                                           bstr_len(value));
+                                                   itx->mp,
+                                                   bstr_ptr(key),
+                                                   bstr_len(key),
+                                                   (uint8_t *)bstr_ptr(value),
+                                                   bstr_len(value));
                 if (rc != IB_OK) {
                     ib_log_debug3_tx(itx,
                                      "Failed to create field: %s",
@@ -1290,7 +1295,7 @@ static ib_status_t modhtp_gen_request_fields(ib_provider_inst_t *pi,
     rc = ib_context_module_config(ctx, IB_MODULE_STRUCT_PTR, (void *)&modcfg);
     if (rc != IB_OK) {
         ib_log_alert_tx(itx, "Failed to fetch module %s config: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
+                        MODULE_NAME_STR, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1320,11 +1325,11 @@ static ib_status_t modhtp_gen_request_fields(ib_provider_inst_t *pi,
 
                 /* Create a list field as an alias into htp memory. */
                 rc = ib_field_create_bytestr_alias(&lf,
-                                           itx->mp,
-                                           bstr_ptr(key),
-                                           bstr_len(key),
-                                           (uint8_t *)bstr_ptr(value),
-                                           bstr_len(value));
+                                                   itx->mp,
+                                                   bstr_ptr(key),
+                                                   bstr_len(key),
+                                                   (uint8_t *)bstr_ptr(value),
+                                                   bstr_len(value));
                 if (rc != IB_OK) {
                     ib_log_debug3_tx(itx,
                                      "Failed to create field: %s",
@@ -1615,11 +1620,11 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
 
     ib_log_debug3(ib, "LibHTP outgoing data status=%d", htp->out_status);
     ib_log_debug3(ib,
-                 "DATA: %s:%d -> %s:%d len=%d %" IB_BYTESTR_FMT,
-                 iconn->local_ipstr, iconn->local_port,
-                 iconn->remote_ipstr, iconn->remote_port,
-                 (int)qcdata->dlen,
-                 IB_BYTESTRSL_FMT_PARAM(qcdata->data, qcdata->dlen));
+                  "DATA: %s:%d -> %s:%d len=%d %" IB_BYTESTR_FMT,
+                  iconn->local_ipstr, iconn->local_port,
+                  iconn->remote_ipstr, iconn->remote_port,
+                  (int)qcdata->dlen,
+                  IB_BYTESTRSL_FMT_PARAM(qcdata->data, qcdata->dlen));
 
     /* Lookup the current htp and ironbee transactions */
     tx = htp->out_tx;
@@ -2015,8 +2020,10 @@ static ib_status_t modhtp_iface_response_header_data(ib_provider_inst_t *pi,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static ib_status_t modhtp_iface_response_header_finished(ib_provider_inst_t *pi,
-                                                          ib_tx_t *itx)
+static ib_status_t modhtp_iface_response_header_finished(
+    ib_provider_inst_t *pi,
+    ib_tx_t *itx
+)
 {
     IB_FTRACE_INIT();
 

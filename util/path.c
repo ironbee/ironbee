@@ -169,8 +169,8 @@ char *ib_util_relative_file(ib_mpool_t *mp,
 }
 
 ib_status_t ib_util_normalize_path(char *data,
-                                  bool win,
-                                  ib_flags_t *result)
+                                   bool win,
+                                   ib_flags_t *result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
