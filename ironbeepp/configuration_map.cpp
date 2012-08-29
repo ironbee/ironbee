@@ -49,14 +49,17 @@ ib_status_t cfgmap_get(
 
     assert(base != NULL);
 
-    ib_status_t rc = IBPP_TRY_CATCH(NULL,(
+    try {
         Internal::data_to_value<
             configuration_map_init_getter_translator_t
         >(cbdata)(
             base, out_value, field
-        )
-    ));
-    IB_FTRACE_RET_STATUS(rc);
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception());
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t cfgmap_set(
@@ -70,13 +73,17 @@ ib_status_t cfgmap_set(
 
     assert(base != NULL);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(NULL,
+    try {
         Internal::data_to_value<
             configuration_map_init_setter_translator_t
         >(cbdata)(
             base, field, in_value
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception());
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t cfgmap_handle_get(

@@ -151,11 +151,15 @@ ib_status_t initialize(
 
     assert(ib_engine = ib_module->ib);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<Module::initialize_t>(cbdata)(
             Module(ib_module)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t finalize(
@@ -169,11 +173,15 @@ ib_status_t finalize(
 
     assert(ib_engine = ib_module->ib);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<Module::finalize_t>(cbdata)(
             Module(ib_module)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t context_open(
@@ -187,12 +195,16 @@ ib_status_t context_open(
 
     assert(ib_engine = ib_module->ib);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<Module::context_open_t>(cbdata)(
             Module(ib_module),
             Context(ib_context)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t context_close(
@@ -206,12 +218,16 @@ ib_status_t context_close(
 
     assert(ib_engine = ib_module->ib);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<Module::context_close_t>(cbdata)(
             Module(ib_module),
             Context(ib_context)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t context_destroy(
@@ -225,12 +241,16 @@ ib_status_t context_destroy(
 
     assert(ib_engine = ib_module->ib);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<Module::context_destroy_t>(cbdata)(
             Module(ib_module),
             Context(ib_context)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t configuration_copy(
@@ -248,7 +268,7 @@ ib_status_t configuration_copy(
     assert(dst != NULL);
     assert(src != NULL);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<
             boost::function<
                 void(ib_module_t*, void*, const void*, size_t)
@@ -258,8 +278,12 @@ ib_status_t configuration_copy(
             dst,
             src,
             length
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 };
 
 } // extern "C"

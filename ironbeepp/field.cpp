@@ -122,7 +122,8 @@ ib_status_t field_dynamic_get(
     const char* carg = reinterpret_cast<const char*>(arg);
 
     // No engine available.
-    ib_status_t rc = IBPP_TRY_CATCH(NULL, {
+    ib_status_t rc = IB_OK;
+    try {
         switch (field->type) {
             case IB_FTYPE_NUM: {
                 ib_num_t* n = reinterpret_cast<ib_num_t*>(out_val);
@@ -179,7 +180,10 @@ ib_status_t field_dynamic_get(
                     )
                 );
         }
-    });
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception());
+    }
 
     // If we got here, it is in error.
     assert(rc != IB_OK);
@@ -199,7 +203,7 @@ ib_status_t field_dynamic_set(
     const char* carg = reinterpret_cast<const char*>(arg);
 
     // No engine available.
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(NULL, {
+    try {
         switch (field->type) {
             case IB_FTYPE_NUM:
                 Internal::data_to_value<Field::number_set_t>(cbdata)(
@@ -253,7 +257,11 @@ ib_status_t field_dynamic_set(
                     )
                 );
         }
-    }));
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception());
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 } // extern "C"

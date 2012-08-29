@@ -19,8 +19,8 @@
  * @file
  * @brief IronBee++ Internals -- Catch
  *
- * This file provides IBPP_TRY_CATCH(), a macro to aid in converting C++
- * exceptions into ib_status_t return values.
+ * This file provides convert_exception, a function to aid in converting
+ * C++ exceptions into ib_status_t return values.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
@@ -28,9 +28,9 @@
 #ifndef __IBPP__INTERNAL__CATCH__
 #define __IBPP__INTERNAL__CATCH__
 
-#include <ironbeepp/exception.hpp>
-
 #include <ironbee/types.h>
+
+#include <cstdlib> // for NULL
 
 struct ib_engine_t;
 
@@ -40,142 +40,27 @@ class Engine;
 
 namespace Internal {
 
-/**
- * Handle an IronBee++ exception.
- *
- * If @a engine is non-NULL, then uses it to emit a log error via
- * ib_log_error().  Otherwise, uses ib_util_log_error().
- *
- * @param[in] engine Engine to use for logging; may be null.
- * @param[in] status Which error occurred.
- * @param[in] e      Exception caught.
- *
- * @returns Appropriate ib_status_t.
- **/
-ib_status_t ibpp_caught_ib_exception(
-     ib_engine_t* engine,
-     ib_status_t  status,
-     const error& e
-);
 
 /**
- * Log, if possible, a boost::exception.
+ * Handle any exception and translate into an IronBee status code.
  *
- * If @a engine is non-NULL, then uses it to emit a log error via
- * ib_log_error().  Otherwise, uses ib_util_log_error().
+ * This function will terminate the process if called outside of a catch
+ * block.
  *
- * @param[in] engine Engine to use for logging; may be null.
- * @param[in] e      Exception caught.
- *
- * @returns Appropriate ib_status_t.
- **/
-ib_status_t ibpp_caught_boost_exception(
-    ib_engine_t*            engine,
-    const boost::exception& e
-);
-
-/**
- * Log, if possible, a std::exception.
- *
- * If @a engine is non-NULL, then uses it to emit a log error via
- * ib_log_error().  Otherwise, uses ib_util_log_error().
- *
- * @param[in] engine Engine to use for logging; may be null.
- * @param[in] status Which error occurred.
- * @param[in] e      Exception caught.
- **/
-ib_status_t ibpp_caught_std_exception(
-    ib_engine_t*          engine,
-    ib_status_t           status,
-    const std::exception& e
-);
-
-/**
- * Log, if possible, an exception we know nothing about.
- *
- * If @a engine is non-NULL, then uses it to emit a log error via
- * ib_log_error().  Otherwise, uses ib_util_log_error().
- *
- * @param[in] engine Engine to use for logging; may be null.
- **/
-ib_status_t ibpp_caught_unknown_exception(
-    ib_engine_t* engine
-);
-
-/**
- * Turn an Ironbee::Engine into an ib_engine_t*.
- *
- * @param[in] engine Engine to transform.
- *
- * @returns ib_engine_t* form of @a engine.
- **/
-ib_engine_t* normalize_engine(Engine& engine);
-
-/**
- * Overload of previous function to handle trivial case.
- *
- * @param[in] engine Engine.
- *
- * @returns @a engine
- **/
-ib_engine_t* normalize_engine(ib_engine_t* engine);
-
-} // Internal
-} // IronBee
-
-/**
- * Helper macro for implementing IBPP_TRY_CATCH().
- *
- * @sa IBPP_TRY_CATCH()
- *
- * @param[in] ib_engine      Engine to use for logging, possibly NULL.
- * @param[in] exception_type The type of the exception to catch.
- * @param[in] ib_status      The return value to return.
- **/
-#define IBPP_CATCH_IB(ib_engine, exception_type, ib_status) \
-    catch (const exception_type& e) { \
-        ibpp_try_catch_status = \
-            ::IronBee::Internal::ibpp_caught_ib_exception(\
-                ::IronBee::Internal::normalize_engine(ib_engine), \
-                ib_status, \
-                e \
-            ); \
-    }
-
-/**
- * Helper macro for implementing IBPP_TRY_CATCH().
- *
- * @sa IBPP_TRY_CATCH()
- *
- * @param[in] ib_engine      Engine to use for logging, possibly NULL.
- * @param[in] exception_type The type of the exception to catch.
- * @param[in] ib_status      The return value to return.
- **/
-#define IBPP_CATCH_STD(ib_engine, exception_type, ib_status) \
-    catch (const exception_type& e) { \
-        ibpp_try_catch_status = \
-            ::IronBee::Internal::ibpp_caught_std_exception(\
-                ::IronBee::Internal::normalize_engine(ib_engine), \
-                ib_status, \
-                e \
-            ); \
-    }
-
-/**
- * Macro to translate exceptions to log messages and return values.
- *
- * This will evaluate @a statement instead a try block and catch any
- * exceptions.  If an exception is thrown, an error message will be logged
- * (except for IB_EALLOC errors).  The macro as a whole evaluates to an
- * appropriate ib_status_t.
- *
- * E.g.,
+ * Use like this:
  * @code
- * IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine, my_cpp_func()));
+ * try {
+ *   my_cpp_func();
+ * }
+ * catch (...) {
+ *   return Internal::convert_exception(ib_engine);
+ * }
  * @endcode
  *
- * If @a ib_engine is non-NULL, an error log message will be logged via
- * ib_log_error().
+ * All exceptions except allocation errors will result in log messages.  If
+ * an engine is provided, the engine logger will be used, otherwise the util
+ * logger will be used.  This logging behavior can be overridden via the
+ * @a logging parameter.
  *
  * - The subclasses of IronBee::error turn into their corresponding
  *   ib_status_t.  E.g., declined becomes IB_DECLINED.
@@ -198,52 +83,21 @@ ib_engine_t* normalize_engine(ib_engine_t* engine);
  * Log level 1 is used unless an errinfo_level is attached to the exception,
  * in which case its value is used instead.
  *
- * @param[in] ib_engine Engine to use for logging; may be NULL, an
- *                      ib_engine_t*, or an IronBee::Engine&.
- * @param[in] statement The statement to evaluate.
+ * @param[in] ib_engine Engine to use for logging; may be NULL
+ * @param[in] logging   Can be set to false to prevent any logging.
  **/
-#define IBPP_TRY_CATCH(ib_engine, statement) \
-     ({ \
-        ib_status_t ibpp_try_catch_status = IB_OK; \
-        try { (statement); } \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::declined,     IB_DECLINED) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::eunknown,     IB_EUNKNOWN) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::enotimpl,     IB_ENOTIMPL) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::eincompat,    IB_EINCOMPAT) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::ealloc,       IB_EALLOC) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::einval,       IB_EINVAL) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::enoent,       IB_ENOENT) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::etrunc,       IB_ETRUNC) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::etimedout,    IB_ETIMEDOUT) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::eagain,       IB_EAGAIN) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::eother,       IB_EOTHER) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::ebadval,      IB_EBADVAL) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::eexist,       IB_EEXIST) \
-        IBPP_CATCH_IB((ib_engine), ::IronBee::error,        IB_EUNKNOWN) \
-        IBPP_CATCH_STD((ib_engine), ::std::invalid_argument, IB_EINVAL) \
-        IBPP_CATCH_STD((ib_engine), ::std::bad_alloc,        IB_EALLOC) \
-        catch (const boost::exception& e) {\
-            ibpp_try_catch_status = \
-                ::IronBee::Internal::ibpp_caught_boost_exception(\
-                    ::IronBee::Internal::normalize_engine((ib_engine)), \
-                    e \
-                ); \
-        } \
-        catch (const std::exception& e) {\
-            ibpp_try_catch_status = \
-                ::IronBee::Internal::ibpp_caught_std_exception(\
-                    ::IronBee::Internal::normalize_engine((ib_engine)), \
-                    IB_EUNKNOWN, \
-                    e \
-                ); \
-        } \
-        catch(...) {\
-            ibpp_try_catch_status = \
-                ::IronBee::Internal::ibpp_caught_unknown_exception(\
-                    ::IronBee::Internal::normalize_engine((ib_engine)) \
-                ); \
-        } \
-        ibpp_try_catch_status; \
-    })
+ib_status_t convert_exception(
+    ib_engine_t* engine  = NULL,
+    bool         logging = true
+);
+
+//! Overload of previous for Engine.
+ib_status_t convert_exception(
+    Engine engine,
+    bool   logging = true
+);
+
+} // Internal
+} // IronBee
 
 #endif

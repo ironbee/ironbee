@@ -260,8 +260,8 @@ void delegate_on_load(
  *
  * @remark A major purpose of this function is to move the code flow out of
  * preprocessor macros and into a proper C++ function call.  The call to this
- * function is wrapped in an IBPP_TRY_CATCH() and the function is defined in
- * an unpolluted C++ environment.
+ * function is wrapped in try/catch and the function is defined in  an
+ * unpolluted C++ environment.
  *
  * @warning @a name and @a filename should be string literals if possible.  In
  * particular, their lifetime must exceed that of the module.
@@ -301,7 +301,7 @@ extern "C" { \
 ib_module_t* IB_MODULE_SYM(ib_engine_t* ib) \
 { \
     static ib_module_t ib_module; \
-    ib_status_t rc = IBPP_TRY_CATCH(ib, { \
+    try { \
         ::IronBee::Internal::bootstrap_module(\
             ib, \
             ib_module, \
@@ -309,8 +309,11 @@ ib_module_t* IB_MODULE_SYM(ib_engine_t* ib) \
             __FILE__ \
         ); \
         on_load(::IronBee::Module(&ib_module)); \
-    }); \
-    assert(rc == IB_OK); \
+    } \
+    catch (...) { \
+        ::IronBee::Internal::convert_exception(); \
+        return NULL; \
+    } \
     return &ib_module; \
 } \
 }

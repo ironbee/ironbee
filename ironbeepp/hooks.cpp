@@ -37,12 +37,16 @@ ib_status_t null(
     assert(ib_engine != NULL);
     assert(cbdata != NULL);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<HooksRegistrar::null_t>(cbdata)(
             Engine(ib_engine),
             static_cast<Engine::state_event_e>(event)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -70,14 +74,18 @@ ib_status_t header_data(
     assert(ib_header != NULL);
     assert(cbdata != NULL);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<HooksRegistrar::header_data_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
             ParsedNameValue(ib_header)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -106,14 +114,18 @@ ib_status_t request_line(
     assert(ib_request_line != NULL);
     assert(cbdata != NULL);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<HooksRegistrar::request_line_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
             ParsedRequestLine(ib_request_line)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -142,14 +154,18 @@ ib_status_t response_line(
     assert(ib_response_line != NULL);
     assert(cbdata != NULL);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<HooksRegistrar::response_line_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
             ParsedResponseLine(ib_response_line)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -175,13 +191,17 @@ ib_status_t connection(
     assert(ib_connection != NULL);
     assert(cbdata != NULL);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<HooksRegistrar::connection_t>(cbdata)(
             Engine(ib_engine),
             static_cast<Engine::state_event_e>(event),
             Connection(ib_connection)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -207,13 +227,17 @@ ib_status_t connection_data(
     assert(ib_connection_data != NULL);
     assert(cbdata != NULL);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<HooksRegistrar::connection_data_t>(cbdata)(
             Engine(ib_engine),
             static_cast<Engine::state_event_e>(event),
             ConnectionData(ib_connection_data)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -239,13 +263,17 @@ ib_status_t transaction(
     assert(ib_transaction != NULL);
     assert(cbdata != NULL);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<HooksRegistrar::transaction_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_transaction),
             static_cast<Engine::state_event_e>(event)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -274,14 +302,18 @@ ib_status_t transaction_data(
     assert(ib_transaction_data != NULL);
     assert(cbdata != NULL);
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(ib_engine,
+    try {
         Internal::data_to_value<HooksRegistrar::transaction_data_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
             TransactionData(ib_transaction_data)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 } // Hooks

@@ -30,15 +30,19 @@ ib_status_t config_start_block(
 {
     IB_FTRACE_INIT();
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(cfgparser->ib,
+    try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::start_block_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
             name,
             param
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t config_end_block(
@@ -49,14 +53,18 @@ ib_status_t config_end_block(
 {
     IB_FTRACE_INIT();
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(cfgparser->ib,
+    try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::end_block_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
             name
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t config_param1(
@@ -68,15 +76,19 @@ ib_status_t config_param1(
 {
     IB_FTRACE_INIT();
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(cfgparser->ib,
+    try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::param1_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
             name,
             param
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t config_param2(
@@ -89,7 +101,7 @@ ib_status_t config_param2(
 {
     IB_FTRACE_INIT();
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(cfgparser->ib,
+    try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::param2_t
         >(cbdata)(
@@ -97,8 +109,12 @@ ib_status_t config_param2(
             name,
             param1,
             param2
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t config_list(
@@ -110,15 +126,19 @@ ib_status_t config_list(
 {
     IB_FTRACE_INIT();
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(cfgparser->ib,
+    try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::list_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
             name,
             List<const char*>(params)
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t config_on_off(
@@ -130,15 +150,19 @@ ib_status_t config_on_off(
 {
     IB_FTRACE_INIT();
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(cfgparser->ib,
+    try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::on_off_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
             name,
             value
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t config_op_flags(
@@ -151,7 +175,7 @@ ib_status_t config_op_flags(
 {
     IB_FTRACE_INIT();
 
-    IB_FTRACE_RET_STATUS(IBPP_TRY_CATCH(cfgparser->ib,
+    try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::op_flags_t
         >(cbdata)(
@@ -159,8 +183,12 @@ ib_status_t config_op_flags(
             name,
             value,
             mask
-        )
-    ));
+        );
+    }
+    catch (...) {
+        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 }

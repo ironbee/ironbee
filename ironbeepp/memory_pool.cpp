@@ -54,7 +54,13 @@ void cleanup(
     // Now we need to clear our own callback data.
     delete reinterpret_cast<boost::any*>(cbdata);
 
-    ib_status_t rc = IBPP_TRY_CATCH(NULL, callback());
+    ib_status_t rc = IB_OK;
+    try {
+        callback();
+    }
+    catch (...) {
+        rc = Internal::convert_exception();
+    }
     if (rc != IB_OK) {
         // Could we do something better.
         ib_util_log_error("Failure cleanup; no good remedy.");
