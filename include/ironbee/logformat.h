@@ -23,10 +23,14 @@
  * @brief IronBee &mdash; Log Format Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <ironbee/mpool.h>
 #include <ironbee/types.h>
+#include <ironbee/list.h>
+#include <ironbee/mpool.h>
+
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,9 +45,7 @@ extern "C" {
  *
  * @{
  */
-#define IB_LOGFORMAT_MAXFIELDS 128
-#define IB_LOGFORMAT_MAXLINELEN 8192
-#define IB_LOGFORMAT_DEFAULT ((char *)"%T %h %a %S %s %t %f")
+#define IB_LOGFORMAT_DEFAULT "%T %h %a %S %s %t %f"
 
 typedef struct ib_logformat_t ib_logformat_t;
 
@@ -57,21 +59,53 @@ typedef struct ib_logformat_t ib_logformat_t;
 #define IB_LOG_FIELD_TIMESTAMP          'T'
 #define IB_LOG_FIELD_LOG_FILE           'f'
 
-struct ib_logformat_t {
-    ib_mpool_t *mp;
-    char *orig_format;
-    uint8_t literal_starts;
+typedef enum {
+    item_type_literal,              /* String literal */
+    item_type_format                /* Format character */
+} ib_logformat_itype_t;
 
-    /* We could use here an ib_list, but this will is faster */
-    char fields[IB_LOGFORMAT_MAXFIELDS];     /**< Used to hold the field list */
-    char *literals[IB_LOGFORMAT_MAXFIELDS + 2]; /**< Used to hold the list of
-                                                   literal strings at the start,
-                                                 end, and between fields */
-    int literals_len[IB_LOGFORMAT_MAXFIELDS + 2]; /**< Used to hold the sizes of
-                                                       literal strings */
-    uint8_t field_cnt;   /**< Fields count */
-    uint8_t literal_cnt; /**< Literals count */
+typedef struct ib_logformat_field_t {
+    char         fchar;
+} ib_logformat_field_t;
+
+#define IB_LOGFORMAT_MAX_SHORT_LITERAL (sizeof(char *) - 1)
+typedef struct ib_logformat_literal_t {
+    union {
+        char   short_str[IB_LOGFORMAT_MAX_SHORT_LITERAL + 1];
+        char  *str;
+    } buf;
+    size_t     len;
+} ib_logformat_literal_t;
+
+typedef struct ib_logformat_item_t {
+    ib_logformat_itype_t  itype;    /* Item type */
+    union {
+        ib_logformat_field_t   field;
+        ib_logformat_literal_t literal;
+    } item;
+} ib_logformat_item_t;
+
+struct ib_logformat_t {
+    ib_mpool_t  *mp;
+    char        *format;
+    ib_list_t   *items;          /* List of pointers to ib_logformat_item_t */
 };
+
+/**
+ * Callback function to get an individual data item
+ *
+ * @param[in] lf Logformat data
+ * @param[in] field Data on the field to get
+ * @param[in] cbdata Callback-specific data
+ * @param[out] str String representation of the item to add to line
+ *
+ * @returns Status code
+ */
+typedef ib_status_t (* ib_logformat_fn_t)(
+    const ib_logformat_t        *lf,
+    const ib_logformat_field_t  *field,
+    const void                  *cbdata,
+    const char                 **str);
 
 /**
  * Creates a logformat helper
@@ -91,7 +125,27 @@ ib_status_t ib_logformat_create(ib_mpool_t *mp, ib_logformat_t **lf);
  *
  * @returns Status code
  */
-ib_status_t ib_logformat_set(ib_logformat_t *lf, const char *format);
+ib_status_t ib_logformat_parse(ib_logformat_t *lf, const char *format);
+
+/**
+ * Used to format a parsed logformat line.
+ *
+ * @param[in] lf Pointer to the logformat helper
+ * @param[in,out] line Line buffer
+ * @param[in] line_size Size of @a line
+ * @param[out] line_len Length of data written to @a line_size
+ * @param[in] fn Callback function to fill get an individual field
+ * @param[in] fndata Callback specific data
+ *
+ * @returns Status code
+ */
+ib_status_t ib_logformat_format(const ib_logformat_t *lf,
+                                char *line,
+                                size_t line_size,
+                                size_t *line_len,
+                                ib_logformat_fn_t fn,
+                                void *fndata);
+
 /** @} IronBeeUtilLogformat */
 
 

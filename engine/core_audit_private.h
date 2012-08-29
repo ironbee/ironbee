@@ -114,22 +114,6 @@ ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
 ib_status_t core_audit_write_footer(ib_provider_inst_t *lpi,
                                     ib_auditlog_t *log);
 
-/**
- * Render the log index line. Line must have a size of
- * IB_LOGFORMAT_MAX_INDEX_LENGTH + 1
- *
- * @param lpi provider instance
- * @param log audit log instance
- * @param line buffer to store the line before writing to disk/pipe.
- * @param line_size Size of @a line.
- *
- * @returns Status code
- */
-ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
-                                      ib_auditlog_t *log,
-                                      char *line,
-                                      int *line_size);
-
 ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log);
 
 #endif // _IB_CORE_AUDIT_PRIVATE_H_

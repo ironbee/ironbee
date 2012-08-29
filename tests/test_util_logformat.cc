@@ -42,7 +42,7 @@ class TestIBUtilLogformat : public SimpleFixture
 };
 
 /// @test Test util logformat library - ib_logformat_create() and *_set()
-TEST_F(TestIBUtilLogformat, test_logformat_create_and_set)
+TEST_F(TestIBUtilLogformat, test_create)
 {
     ib_status_t rc;
 
@@ -50,54 +50,230 @@ TEST_F(TestIBUtilLogformat, test_logformat_create_and_set)
 
     rc = ib_logformat_create(MemPool(), &lf);
     ASSERT_EQ(IB_OK, rc);
-
-    rc = ib_logformat_set(lf, IB_LOGFORMAT_DEFAULT);
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(0, strncmp(lf->fields, "ThaSstf", 7));
-    ASSERT_EQ(7, lf->field_cnt);
-    ASSERT_EQ(6, lf->literal_cnt);
-    ASSERT_FALSE(lf->literals[6]);
-    ASSERT_EQ(0, lf->literal_starts);
-
-    int i = 0;
-    /* All the literal strings between fields are spaces, because of the
-       default format string */
-
-    /* We DO want to check for '\0' as well as the data itself */
-    ASSERT_EQ(0, memcmp(lf->literals[i++], " ", 2));
-    ASSERT_EQ(0, memcmp(lf->literals[i++], " ", 2));
-    ASSERT_EQ(0, memcmp(lf->literals[i++], " ", 2));
-    ASSERT_EQ(0, memcmp(lf->literals[i++], " ", 2));
-    ASSERT_EQ(0, memcmp(lf->literals[i++], " ", 2));
-    ASSERT_EQ(0, memcmp(lf->literals[i++], " ", 2));
+    ASSERT_TRUE(MemPool() == lf->mp);
+    ASSERT_TRUE(lf->items != NULL);
 }
 
-/// @test Test util logformat library - ib_logformat_create() and *_set()
-TEST_F(TestIBUtilLogformat, test_logformat_set)
+#define REMOTE_IP  "10.10.10.10"
+#define LOCAL_IP   "192.168.1.1"
+#define HOST_NAME  "myhost.some.org"
+#define SITE_ID    "AAAABBBB-1111-2222-3333-000000000000"
+#define SENSOR_ID  "AAAABBBB-1111-2222-3333-FFFF00000023"
+#define TX_ID      "00001111-1111-2222-3333-444455556666"
+#define TIME_STAMP "2012-01-23:34:56.4567-0600"
+#define LOG_FILE   "/tmp/my_file.log"
+
+ib_status_t format_field(
+    const ib_logformat_t        *lf,
+    const ib_logformat_field_t  *field,
+    const void                  *cbdata,
+    const char                 **str)
+{
+    assert(cbdata == NULL);
+
+    switch (field->fchar) {
+    case IB_LOG_FIELD_REMOTE_ADDR:
+        *str = REMOTE_IP;
+        break;
+    case IB_LOG_FIELD_LOCAL_ADDR:
+        *str = LOCAL_IP;
+        break;
+    case IB_LOG_FIELD_HOSTNAME:
+        *str = HOST_NAME;
+        break;
+    case IB_LOG_FIELD_SITE_ID:
+        *str = SITE_ID;
+        break;
+    case IB_LOG_FIELD_SENSOR_ID:
+        *str = SENSOR_ID;
+        break;
+    case IB_LOG_FIELD_TRANSACTION_ID:
+        *str = TX_ID;
+        break;
+    case IB_LOG_FIELD_TIMESTAMP:
+        *str = TIME_STAMP;
+        break;
+    case IB_LOG_FIELD_LOG_FILE:
+        *str = LOG_FILE;
+        break;
+    default:
+        *str = "\n";
+        /* Not understood */
+        return IB_EINVAL;
+        break;
+    }
+    return IB_OK;
+}
+
+static const size_t buflen = 8192;
+TEST_F(TestIBUtilLogformat, test_parse_default)
 {
     ib_status_t rc;
-
     ib_logformat_t *lf = NULL;
+    const ib_list_node_t *node;
+    const ib_logformat_item_t *item;
+    static char linebuf[buflen + 1];
+    static const char *formatted = \
+        TIME_STAMP " " HOST_NAME " " REMOTE_IP " " SENSOR_ID " " SITE_ID " " \
+        TX_ID " " LOG_FILE;
+    size_t len;
 
     rc = ib_logformat_create(MemPool(), &lf);
     ASSERT_EQ(IB_OK, rc);
 
-    rc = ib_logformat_set(lf, (char *)"Myformat %S %h %s %f end");
+    rc = ib_logformat_parse(lf, IB_LOGFORMAT_DEFAULT);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(0, strncmp(lf->fields, "Shsf", 4));
-    ASSERT_EQ(4, lf->field_cnt);
-    ASSERT_EQ(5, lf->literal_cnt);
-    ASSERT_FALSE(lf->literals[5]);
-    ASSERT_EQ(1, lf->literal_starts);
 
-    int i = 0;
-    /* All the literal strings between fields are spaces, because of the
-       default format string */
+    ASSERT_STREQ(IB_LOGFORMAT_DEFAULT, lf->format);
 
-    /* We DO want to check for '\0' as well as the data itself */
-    ASSERT_EQ(0, memcmp(lf->literals[i++], "Myformat ", 9));
-    ASSERT_EQ(0, memcmp(lf->literals[i++], " ", 2));
-    ASSERT_EQ(0, memcmp(lf->literals[i++], " ", 2));
-    ASSERT_EQ(0, memcmp(lf->literals[i++], " ", 2));
-    ASSERT_EQ(0, memcmp(lf->literals[i++], " end", 5));
+    ASSERT_EQ(13U, ib_list_elements(lf->items));
+
+    node = ib_list_first_const(lf->items);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_format, item->itype);
+    ASSERT_EQ('T', item->item.field.fchar);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_literal, item->itype);
+    ASSERT_STREQ(" ", item->item.literal.buf.short_str);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_format, item->itype);
+    ASSERT_EQ('h', item->item.field.fchar);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_literal, item->itype);
+    ASSERT_STREQ(" ", item->item.literal.buf.short_str);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_format, item->itype);
+    ASSERT_EQ('a', item->item.field.fchar);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_literal, item->itype);
+    ASSERT_STREQ(" ", item->item.literal.buf.short_str);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_format, item->itype);
+    ASSERT_EQ('S', item->item.field.fchar);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_literal, item->itype);
+    ASSERT_STREQ(" ", item->item.literal.buf.short_str);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_format, item->itype);
+    ASSERT_EQ('s', item->item.field.fchar);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_literal, item->itype);
+    ASSERT_STREQ(" ", item->item.literal.buf.short_str);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_format, item->itype);
+    ASSERT_EQ('t', item->item.field.fchar);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_literal, item->itype);
+    ASSERT_STREQ(" ", item->item.literal.buf.short_str);
+
+    node = ib_list_node_next_const(node);
+    ASSERT_TRUE(node != NULL);
+    item = (const ib_logformat_item_t *)node->data;
+    ASSERT_EQ(item_type_format, item->itype);
+    ASSERT_EQ('f', item->item.field.fchar);
+
+    rc = ib_logformat_format(lf, linebuf, 64, &len, format_field, NULL);
+    ASSERT_EQ(IB_ETRUNC, rc);
+
+    rc = ib_logformat_format(lf, linebuf, buflen, &len, format_field, NULL);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_STREQ(formatted, linebuf);
+}
+
+/// @test Test util logformat library - ib_logformat_parse()
+TEST_F(TestIBUtilLogformat, test_parse_custom1)
+{
+    ib_status_t rc;
+    ib_logformat_t *lf = NULL;
+    size_t len;
+    static char linebuf[buflen + 1];
+    static const char *formatted = \
+        "MyFormat " SITE_ID " " SENSOR_ID " " HOST_NAME " " LOG_FILE " END";
+
+    rc = ib_logformat_create(MemPool(), &lf);
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_logformat_parse(lf, "MyFormat %s %S %h %f END");
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(9U, ib_list_elements(lf->items));
+
+    rc = ib_logformat_format(lf, linebuf, buflen, &len, format_field, NULL);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_STREQ(formatted, linebuf);
+}
+
+TEST_F(TestIBUtilLogformat, test_parse_custom2)
+{
+    ib_status_t rc;
+    ib_logformat_t *lf = NULL;
+    size_t len;
+    static char linebuf[buflen + 1];
+    static const char *formatted = \
+        "Start" SITE_ID SENSOR_ID " " HOST_NAME LOG_FILE "End";
+
+    rc = ib_logformat_create(MemPool(), &lf);
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_logformat_parse(lf, "Start%s%S %h%fEnd");
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(7U, ib_list_elements(lf->items));
+
+    rc = ib_logformat_format(lf, linebuf, buflen, &len, format_field, NULL);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_STREQ(formatted, linebuf);
+}
+
+TEST_F(TestIBUtilLogformat, test_parse_custom3)
+{
+    ib_status_t rc;
+    ib_logformat_t *lf = NULL;
+    size_t len;
+    static char linebuf[buflen + 1];
+    static const char *formatted = \
+        "Start" SITE_ID " \\ " SENSOR_ID " " HOST_NAME "  \t" LOG_FILE " %End";
+
+    rc = ib_logformat_create(MemPool(), &lf);
+    ASSERT_EQ(IB_OK, rc);
+
+    rc = ib_logformat_parse(lf, "Start%s \\\\ %S %h\\n\\r\\t%f %%End");
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(9U, ib_list_elements(lf->items));
+
+    rc = ib_logformat_format(lf, linebuf, buflen, &len, format_field, NULL);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_STREQ(formatted, linebuf);
 }
