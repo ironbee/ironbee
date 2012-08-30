@@ -42,25 +42,21 @@ extern "C" {
 typedef pthread_mutex_t ib_lock_t;
 
 /**
- * param[in] ib The IronBee engine.
  * param[in,out] lock The lock.
  */
 ib_status_t DLL_PUBLIC ib_lock_init(ib_lock_t *lock);
 
 /**
- * param[in] ib The IronBee engine.
  * param[in,out] lock The lock.
  */
 ib_status_t DLL_PUBLIC ib_lock_lock(ib_lock_t *lock);
 
 /**
- * param[in] ib The IronBee engine.
  * param[in,out] lock The lock.
  */
 ib_status_t DLL_PUBLIC ib_lock_unlock(ib_lock_t *lock);
 
 /**
- * param[in] ib The IronBee engine.
  * param[in,out] lock The lock.
  */
 ib_status_t DLL_PUBLIC ib_lock_destroy(ib_lock_t *lock);

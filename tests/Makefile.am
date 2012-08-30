@@ -43,6 +43,7 @@ CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
 
 check_PROGRAMS = test_gtest \
                  test_util_types \
+                 test_util_mpool \
                  test_util_array \
                  test_util_hash \
                  test_util_list \
@@ -53,8 +54,8 @@ check_PROGRAMS = test_gtest \
                  test_util_unescape_string \
                  test_util_uuid \
                  test_util_logformat \
+                 test_util_lock \
                  test_util_ahocorasick \
-                 test_util_mpool \
                  test_util_path \
                  test_util_string \
                  test_util_string_lower \
@@ -136,6 +137,8 @@ test_util_hash_SOURCES = test_util_hash.cc test_main.cc
 test_util_cfgmap_SOURCES = test_util_cfgmap.cc test_main.cc
 
 test_util_clock_SOURCES = test_util_clock.cc test_main.cc
+
+test_util_lock_SOURCES = test_util_lock.cc test_main.cc
 
 test_util_dso_SOURCES = test_util_dso.cc test_main.cc
 test_util_dso_CFLAGS = -rpath $(PWD)
