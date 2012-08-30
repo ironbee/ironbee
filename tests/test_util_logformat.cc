@@ -19,7 +19,7 @@
 /// @file
 /// @brief IronBee &mdash; Logformat Test Functions
 ///
-/// @author Pablo Rincon Crespo <pablo.rincon.crespo@gmail.com>
+/// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
 #include "ironbee_config_auto.h"
