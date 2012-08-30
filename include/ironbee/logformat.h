@@ -26,9 +26,9 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <ironbee/types.h>
 #include <ironbee/list.h>
 #include <ironbee/mpool.h>
+#include <ironbee/types.h>
 
 #include <stdbool.h>
 

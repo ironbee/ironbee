@@ -127,7 +127,7 @@ static ib_status_t create_item_literal(ib_logformat_t *lf,
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    
+
     item->item.literal.buf.str = (char *)ib_mpool_alloc(lf->mp, len+1);
     if (item->item.literal.buf.str == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -146,7 +146,7 @@ static ib_status_t create_item_field(ib_logformat_t *lf,
     IB_FTRACE_INIT();
     assert(lf != NULL);
     assert(lf->mp != NULL);
-    
+
     ib_status_t rc;
     ib_logformat_item_t *item;
 
