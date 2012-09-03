@@ -75,4 +75,5 @@ endif
 clipp_LDADD = \
     @PCRE_LDADD@ \
     $(top_builddir)/ironbeepp/libibpp.la \
-    $(top_builddir)/engine/libironbee.la
+    $(top_builddir)/engine/libironbee.la \
+    $(top_builddir)/util/libibutil.la
