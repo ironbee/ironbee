@@ -28,6 +28,7 @@
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
+#include <ironbee/decode.h>
 
 #include <assert.h>
 #include <ctype.h>

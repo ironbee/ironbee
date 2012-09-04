@@ -27,6 +27,7 @@
 #include <ironbee/types.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
+#include <ironbee/decode.h>
 #include <ironbee/mpool.h>
 
 #include "ibtest_textbuf.hh"

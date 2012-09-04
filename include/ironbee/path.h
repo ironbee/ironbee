@@ -40,6 +40,15 @@ extern "C" {
 #endif
 
 /**
+ * @defgroup IronBeeUtilPath Utility Decode Functions
+ * @ingroup IronBeeUtil
+ *
+ * Code to perform path operations
+ *
+ * @{
+ */
+
+/**
  * Create a directory path recursively.
  *
  * @param path Path to create
@@ -194,7 +203,7 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path_cow_ex(
 
 
 /**
- * @} IronBeeUtil
+ * @} IronBeeUtilPath
  */
 
 #ifdef __cplusplus
