@@ -77,3 +77,6 @@ clipp_LDADD = \
     $(top_builddir)/ironbeepp/libibpp.la \
     $(top_builddir)/engine/libironbee.la \
     $(top_builddir)/util/libibutil.la
+
+clipp.pb.cc: $(srcdir)/clipp.proto
+	protoc --cpp_out=$(builddir) --proto_path=$(srcdir) $<
