@@ -34,6 +34,7 @@
 #include <ironbee/debug.h>
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>
+#include <ironbee/escape.h>
 #include <ironbee/operator.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>

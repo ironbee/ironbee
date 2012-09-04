@@ -15,7 +15,7 @@
  * limitations under the License.
  ****************************************************************************/
 
-#include "ironbee/util.h"
+#include "ironbee/escape.h"
 #include <gtest/gtest.h>
 
 TEST(TestUtilHexEscape, basic) {

@@ -36,6 +36,7 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
+#include <ironbee/escape.h>
 #include <ironbee/util.h>
 
 #include <assert.h>

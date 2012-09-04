@@ -36,7 +36,7 @@
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
-#include <ironbee/util.h>
+#include <ironbee/escape.h>
 
 #include <lauxlib.h>
 #include <lua.h>

@@ -22,7 +22,7 @@
 #include <ironbee/field.h>
 #include <ironbee/module.h>
 #include <ironbee/provider.h>
-#include <ironbee/util.h>
+#include <ironbee/escape.h>
 
 #include <GeoIP.h>
 
