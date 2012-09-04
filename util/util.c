@@ -196,6 +196,35 @@ void *ib_util_memdup(ib_mpool_t *mp,
     IB_FTRACE_RET_PTR(void, p);
 }
 
+FILE *ib_util_fdup(FILE *fh, const char *mode)
+{
+    int      fd;
+    int      new_fd = -1;
+    FILE    *new_fh = NULL;
+
+    // Step 1: Get the file descriptor of the file handle
+    fd = fileno(fh);
+    if ( fd < 0 ) {
+        return NULL;
+    }
+
+    // Step 2: Get a new file descriptor (via dup(2) )
+    new_fd = dup(fd);
+    if ( new_fd < 0 ) {
+        return NULL;
+    }
+
+    // Step 3: Create a new file handle from the new file descriptor
+    new_fh = fdopen(new_fd, mode);
+    if ( new_fh == NULL ) {
+        // Close the file descriptor if fdopen() fails!!
+        close( new_fd );
+    }
+
+    // Done
+    return new_fh;
+}
+
 /* -- Library Setup -- */
 
 ib_status_t ib_initialize(void)

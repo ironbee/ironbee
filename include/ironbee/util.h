@@ -32,6 +32,8 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #include <sys/types.h>
 
@@ -207,10 +209,28 @@ uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
  * Implemented in: util/util.c
  * Tested in:
  */
-void *ib_util_memdup(ib_mpool_t *mp,
-                     const void *in,
-                     size_t len,
-                     bool nul);
+void DLL_PUBLIC *ib_util_memdup(ib_mpool_t *mp,
+                                const void *in,
+                                size_t len,
+                                bool nul);
+
+/**
+ * Duplicate a file handle
+ *
+ * This is a simple function which basically does fdopen(dup(fileno(fp)))
+ * with some error checking.  This code takes care to make sure that
+ * a file handle isn't leaked in the process.
+ *
+ * @param[in] fh File handle
+ * @param[in] mode Mode string to pass to fdopen()
+ *
+ * @returns New file handle (or NULL).
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in:
+ */
+FILE DLL_PUBLIC *ib_util_fdup(FILE *fh, const char *mode);
 
 /**
  * Initialize the IB lib.

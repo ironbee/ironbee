@@ -134,46 +134,6 @@ static ib_core_cfg_t core_global_cfg;
 /* -- Utilities -- */
 
 /**
- * Duplicate a file handle
- *
- * This is a simple function which basically does fdopen(dup(fileno(fp)))
- * with some error checking.  This code takes care to make sure that
- * a file handle isn't leaked in the process.
- *
- * @param[in] fh File handle
- *
- * @returns New file handle (or NULL).
- */
-static FILE *fdup( FILE *fh )
-{
-    int      fd;
-    int      new_fd = -1;
-    FILE    *new_fh = NULL;
-
-    // Step 1: Get the file descriptor of the file handle
-    fd = fileno(fh);
-    if ( fd < 0 ) {
-        return NULL;
-    }
-
-    // Step 2: Get a new file descriptor (via dup(2) )
-    new_fd = dup(fd);
-    if ( new_fd < 0 ) {
-        return NULL;
-    }
-
-    // Step 3: Create a new file handle from the new file descriptor
-    new_fh = fdopen(new_fd, "a");
-    if ( new_fh == NULL ) {
-        // Close the file descriptor if fdopen() fails!!
-        close( new_fd );
-    }
-
-    // Done
-    return new_fh;
-}
-
-/**
  * Unescape a value using ib_util_unescape_string.
  *
  * It is guaranteed that @a dst will not be populated with a string
@@ -663,7 +623,7 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi,
 
     /* Finally, use stderr as a fallback. */
     if (fp == NULL) {
-        fp = fdup(stderr);
+        fp = ib_util_fdup(stderr, "a");
     }
 
     /* Copy the file pointer to the interface data.  We do this to
@@ -5061,7 +5021,7 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
        when the context was created) */
     orig_fp = (FILE *) lpi->data;
     if ( orig_fp != NULL ) {
-        FILE *new_fp = fdup( orig_fp );
+        FILE *new_fp = ib_util_fdup(orig_fp, "a");
         if ( new_fp != NULL ) {
             lpi->data = new_fp;
         }
