@@ -58,7 +58,7 @@ extern "C" {
  *
  * @internal
  * Implemented in: util/path.c
- * Tested in:
+ * Tested in: tests/test_util_path.cc
  */
 ib_status_t DLL_PUBLIC ib_util_mkpath(
     const char   *path,

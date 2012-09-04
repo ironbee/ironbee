@@ -33,9 +33,82 @@
 #include "ibtest_strbase.hh"
 #include "simple_fixture.hh"
 
+#include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <stdexcept>
 
+
+/* -- mkpath() Tests -- */
+class TestIBUtilMkPath : public SimpleFixture
+{
+public:
+    TestIBUtilMkPath() : m_basedir(NULL) { };
+
+    virtual void SetUp(void)
+    {
+        SimpleFixture::SetUp();
+    }
+    virtual void TearDown()
+    {
+        const size_t pathsize = 1024;
+        SimpleFixture::TearDown();
+        if (m_basedir != NULL) {
+            char buf[pathsize + 1];
+            snprintf(buf, pathsize, "/bin/rm -fr %s", m_basedir);
+            if (system(buf) != 0) {
+                std::string error = "Failed to cleanup ";
+                error += m_basedir;
+                throw std::runtime_error(error);
+            }
+            m_basedir = NULL;
+        }
+    }
+
+    char        *m_basedir;
+};
+
+/// @test Test util path functions - ib_util_mkpath()
+TEST_F(TestIBUtilMkPath, mkpath)
+{
+    const size_t pathsize = 1024;
+    ib_status_t  rc;
+    char         tmpl[pathsize + 1];
+    char         path[pathsize + 1];
+    struct stat  sbuf;
+
+    strcpy(tmpl, "/tmp/XXXXXX");
+    m_basedir = mkdtemp(tmpl);
+    ASSERT_STRNE(NULL, m_basedir)
+        << "mkdtemp() returned " << strerror(errno) << std::endl;
+
+    snprintf(path, pathsize, "%s/a", m_basedir);
+    rc = ib_util_mkpath(path, 0700);
+    ASSERT_EQ(IB_OK, rc);
+
+    ASSERT_EQ(0, stat(path, &sbuf));
+    ASSERT_TRUE(S_ISDIR(sbuf.st_mode));
+    ASSERT_EQ(0700U, (sbuf.st_mode & 0777));
+
+    snprintf(path, pathsize, "%s/a/b", m_basedir);
+    rc = ib_util_mkpath(path, 0750);
+    ASSERT_EQ(IB_OK, rc);
+
+    ASSERT_EQ(0, stat(path, &sbuf));
+    ASSERT_TRUE(S_ISDIR(sbuf.st_mode));
+    ASSERT_EQ(0750U, (sbuf.st_mode & 0777));
+
+    snprintf(path, pathsize, "%s/b/c/d/e", m_basedir);
+    rc = ib_util_mkpath(path, 0755);
+    ASSERT_EQ(IB_OK, rc);
+
+    ASSERT_EQ(0, stat(path, &sbuf));
+    ASSERT_TRUE(S_ISDIR(sbuf.st_mode));
+    ASSERT_EQ(0755U, (sbuf.st_mode & 0777));
+}
+
+
+/* -- Join / relative path tests -- */
 struct test_path_data_t {
     int            lineno;
     const char    *in1;
