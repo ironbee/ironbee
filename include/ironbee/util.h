@@ -242,7 +242,7 @@ void DLL_PUBLIC ib_shutdown(void);
  *
  * @internal
  * Implemented in: (self)
- * Tested in:
+ * Tested in: tests/test_util_flags.cc
  */
 bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_any(flags, check) \
@@ -258,7 +258,7 @@ bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
  *
  * @internal
  * Implemented in: (self)
- * Tested in:
+ * Tested in: tests/test_util_flags.cc
  */
 bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_all(flags, check) \
@@ -274,7 +274,7 @@ bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
  *
  * @internal
  * Implemented in: (self)
- * Tested in:
+ * Tested in: tests/test_util_flags.cc
  */
 bool ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
 #define ib_flags_set(flags, flags_set) \
@@ -290,7 +290,7 @@ bool ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
  *
  * @internal
  * Implemented in: (self)
- * Tested in:
+ * Tested in: tests/test_util_flags.cc
  */
 bool ib_flags_clear(ib_flags_t flags, ib_flags_t flags_clear);
 #define ib_flags_clear(flags, flags_clear) \
