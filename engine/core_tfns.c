@@ -35,6 +35,7 @@
 #include <ironbee/string.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>
+#include <ironbee/path.h>
 
 #include <assert.h>
 #include <ctype.h>

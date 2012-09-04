@@ -39,6 +39,7 @@
 #include <ironbee/util.h>
 #include <ironbee/config.h>
 #include <ironbee/mpool.h>
+#include <ironbee/path.h>
 
 #include "config-parser.h"
 

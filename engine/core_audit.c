@@ -35,6 +35,7 @@
 #include <ironbee/provider.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
+#include <ironbee/path.h>
 
 #include <assert.h>
 #include <errno.h>
