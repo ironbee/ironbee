@@ -58,21 +58,46 @@ extern "C" {
  * @param file Optional source filename (or NULL)
  * @param line Optional source line number (or 0)
  * @param fmt Formatting string
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in:
  */
 typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
                                     const char *file, int line,
                                     const char *fmt, va_list ap)
                                     VPRINTF_ATTRIBUTE(5);
 
-/** Normal Logger. */
+/**
+ * Utility log at passed in level
+ *
+ * @param lvl Log level
+ *
+ * @internal
+ * Implemented in: (self)
+ * Tested in:
+ */
 #define ib_util_log(lvl, ...) \
   ib_util_log_ex((lvl), __FILE__, __LINE__, __VA_ARGS__)
 
-/** Error Logger. */
+/**
+ * Utility log at error level
+ *
+ * @internal
+ * Implemented in: (self)
+ * Tested in:
+ */
 #define ib_util_log_error(...) \
   ib_util_log_ex(3, __FILE__, __LINE__, __VA_ARGS__)
 
-/** Debug Logger. */
+
+/**
+ * Utility log at debug level
+ *
+ * @internal
+ * Implemented in: (self)
+ * Tested in:
+ */
 #define ib_util_log_debug(...) \
   ib_util_log_ex(7, __FILE__, __LINE__, __VA_ARGS__)
 
@@ -90,6 +115,10 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  * @param level Log level
  *
  * @returns Status code
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_log_level(int level);
 
@@ -97,6 +126,10 @@ ib_status_t DLL_PUBLIC ib_util_log_level(int level);
  * Get the logger level.
  *
  * @returns Logger level.
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in:
  */
 int DLL_PUBLIC ib_util_get_log_level(void);
 
@@ -110,6 +143,10 @@ int DLL_PUBLIC ib_util_get_log_level(void);
  * @param cbdata Data passed to callback
  *
  * @returns Status code
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_log_logger(ib_util_fn_logger_t callback,
                                           void *cbdata);
@@ -121,6 +158,10 @@ ib_status_t DLL_PUBLIC ib_util_log_logger(ib_util_fn_logger_t callback,
  * @param file Filename (or NULL)
  * @param line Line number (or 0)
  * @param fmt Printf-like format string
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in:
  */
 void DLL_PUBLIC ib_util_log_ex(int level,
                                const char *file, int line,
@@ -134,6 +175,10 @@ void DLL_PUBLIC ib_util_log_ex(int level,
  * @param mode Mode to create directories with
  *
  * @returns Status code
+ *
+ * @internal
+ * Implemented in: util/path.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
 
@@ -151,6 +196,10 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(const char *path, mode_t mode);
  * @param[in] file_path New file's path
  *
  * @return Pointer to new path, or NULL if unable to allocate memory
+ *
+ * @internal
+ * Implemented in: util/path.c
+ * Tested in:
  */
 char DLL_PUBLIC *ib_util_relative_file(ib_mpool_t *mp,
                                        const char *ref_file,
@@ -165,6 +214,10 @@ char DLL_PUBLIC *ib_util_relative_file(ib_mpool_t *mp,
  * @param[in] file_path Child portion of path
  *
  * @return Pointer to new path, or NULL if unable to allocate memory
+ *
+ * @internal
+ * Implemented in: util/path.c
+ * Tested in:
  */
 char DLL_PUBLIC *ib_util_path_join(ib_mpool_t *mp,
                                    const char *parent,
@@ -207,6 +260,10 @@ char DLL_PUBLIC *ib_util_path_join(ib_mpool_t *mp,
  *          be decoded because of the flag settings.
  *
  *          On a failure @a dst_len are left in an inconsistent state.
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in: tests/test_util_unescape_string.cc
  */
 ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
                                                size_t *dst_len,
@@ -221,7 +278,7 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
  * buffer of size @a size is allocated, @a data_out is pointed at it, input
  * data from @a data_in up to @a cur_in is copied into it, and a pointer into
  * the output @a data_out at the same offset is returned.  See code in
- * util/decode.c for example usage.
+ * util/modsec_compat.c for example usage.
  *
  * @param[in] mp Memory pool to use for allocations
  * @param[in] data_in Input data
@@ -233,6 +290,10 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
  *
  * @return New output position in @a data_out,
  *         or NULL if unable to allocate memory
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in:
  */
 uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
                                           const uint8_t *data_in,
@@ -251,6 +312,10 @@ uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
  * @param[in] nul Add nul byte?
  *
  * @returns Pointer to new buffer or NULL
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in:
  */
 void *ib_util_memdup(ib_mpool_t *mp,
                      const void *in,
@@ -265,6 +330,10 @@ void *ib_util_memdup(ib_mpool_t *mp,
  *
  * @returns Status code:
  * - IB_OK: Success
+ *
+ * @internal
+ * Implemented in: util/decode.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url(char *data,
                                           ib_flags_t *result);
@@ -279,6 +348,10 @@ ib_status_t DLL_PUBLIC ib_util_decode_url(char *data,
  *
  * @returns Status code:
  * - IB_OK: Success
+ *
+ * @internal
+ * Implemented in: util/decode.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url_ex(uint8_t *data_in,
                                              size_t dlen_in,
@@ -296,6 +369,10 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_ex(uint8_t *data_in,
  * @returns Status code:
  * - IB_OK: Success
  * - IB_EALLOC: allocation error
+ *
+ * @internal
+ * Implemented in: util/decode.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url_cow(ib_mpool_t *mp,
                                               const char *data_in,
@@ -315,6 +392,10 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow(ib_mpool_t *mp,
  * @returns Status code:
  * - IB_OK: Success
  * - IB_EALLOC: allocation error
+ *
+ * @internal
+ * Implemented in: util/decode.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                                                  const uint8_t *data_in,
@@ -331,6 +412,10 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow_ex(ib_mpool_t *mp,
  *
  * @returns Status code:
  * - IB_OK: Success
+ *
+ * @internal
+ * Implemented in: util/decode.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity(
     char *data,
@@ -345,6 +430,10 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity(
  * @param[out] result Result flags (IB_STRFLAG_xxx)
  *
  * @returns Status (IB_OK)
+ *
+ * @internal
+ * Implemented in: util/decode.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity_ex(
     uint8_t *data,
@@ -362,6 +451,10 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity_ex(
  *
  * @returns Status: IB_OK
  *                  IB_EALLOC for allocation errors
+ *
+ * @internal
+ * Implemented in: util/decode.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow(
     ib_mpool_t *mp,
@@ -382,6 +475,10 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow(
  * @returns Status code
  * - IB_OK: Success
  * - IB_EALLOC: Allocation error
+ *
+ * @internal
+ * Implemented in: util/decode.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow_ex(
     ib_mpool_t *mp,
@@ -402,6 +499,10 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow_ex(
  * @returns Status code
  * - IB_OK: Success
  * - IB_EALLOC: Allocation error
+ *
+ * @internal
+ * Implemented in: util/path.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_normalize_path(
     char *data,
@@ -420,6 +521,10 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path(
  * @returns Status code
  * - IB_OK: Success
  * - IB_EALLOC: Allocation error
+ *
+ * @internal
+ * Implemented in: util/path.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_normalize_path_ex(
     uint8_t *data,
@@ -440,6 +545,10 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path_ex(
  * @returns Status code
  * - IB_OK: Success
  * - IB_EALLOC: Allocation error
+ *
+ * @internal
+ * Implemented in: util/path.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_normalize_path_cow(
     ib_mpool_t *mp,
@@ -462,6 +571,10 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path_cow(
  * @returns Status code
  * - IB_OK: Success
  * - IB_EALLOC: Allocation error
+ *
+ * @internal
+ * Implemented in: util/path.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_util_normalize_path_cow_ex(
     ib_mpool_t *mp,
@@ -492,6 +605,10 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path_cow_ex(
  * @returns
  * - NULL on error;
  * - a NUL-terminated string that must be free'ed on success.
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in:
  */
 char DLL_PUBLIC * ib_util_hex_escape(const char *src, size_t src_len);
 
@@ -499,11 +616,19 @@ char DLL_PUBLIC * ib_util_hex_escape(const char *src, size_t src_len);
  * Initialize the IB lib.
  *
  * @returns Status code
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in:
  */
 ib_status_t DLL_PUBLIC ib_initialize(void);
 
 /**
  * Shutdown the IB lib.
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in:
  */
 void DLL_PUBLIC ib_shutdown(void);
 
@@ -514,6 +639,10 @@ void DLL_PUBLIC ib_shutdown(void);
  * @param[in] check Flag bits to test check in @a flags
  *
  * @returns boolean value
+ *
+ * @internal
+ * Implemented in: (self)
+ * Tested in:
  */
 bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_any(flags, check) \
@@ -526,6 +655,10 @@ bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
  * @param[in] check Flag bits to test check in @a flags
  *
  * @returns boolean value
+ *
+ * @internal
+ * Implemented in: (self)
+ * Tested in:
  */
 bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_all(flags, check) \
@@ -538,6 +671,10 @@ bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
  * @param[in] flags_set Flag bits to set in @a flags
  *
  * @returns updated flags
+ *
+ * @internal
+ * Implemented in: (self)
+ * Tested in:
  */
 bool ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
 #define ib_flags_set(flags, flags_set) \
@@ -550,6 +687,10 @@ bool ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
  * @param[in] flags_clear Flag bits to clear in @a flags
  *
  * @returns updated flags
+ *
+ * @internal
+ * Implemented in: (self)
+ * Tested in:
  */
 bool ib_flags_clear(ib_flags_t flags, ib_flags_t flags_clear);
 #define ib_flags_clear(flags, flags_clear) \
