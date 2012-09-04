@@ -44,6 +44,11 @@ void ib_trace_init(const char *fn)
     }
 }
 
+void ib_trace_init_fp(FILE *fp)
+{
+    ib_trace_fh = fp;
+}
+
 void ib_trace_msg(
     const char *file,
     int         line,
@@ -121,7 +126,7 @@ void ib_trace_ptr(
     int         line,
     const char *func,
     const char *msg,
-    void       *ptr
+    const void *ptr
 )
 {
     if (! ib_trace_fh) {

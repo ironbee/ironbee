@@ -28,7 +28,7 @@
 #include <ironbee/build.h>
 #include <ironbee/types.h>
 
-#include <stdint.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -53,6 +53,15 @@ extern "C" {
  * @param fn Filename to log tracing to (or NULL for default)
  */
 void DLL_PUBLIC ib_trace_init(const char *fn);
+
+/**
+ * Initialize tracing system from an open file pointer.
+ *
+ * @todo This will evolve into something much more useful.
+ *
+ * @param fp Filepointer for log tracing
+ */
+void DLL_PUBLIC ib_trace_init_fp(FILE *fp);
 
 /** @cond internal */
 /**
@@ -126,7 +135,7 @@ void DLL_PUBLIC ib_trace_ptr(const char *file,
                              int line,
                              const char *func,
                              const char *msg,
-                             void *ptr);
+                             const void *ptr);
 
 /**
  * Log a string trace message.
