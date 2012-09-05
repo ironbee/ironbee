@@ -185,7 +185,7 @@ void DLL_PUBLIC ib_util_log_ex(int level,
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in:
+ * Tested in: tests/test_util_misc.cc
  */
 uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
                                           const uint8_t *data_in,

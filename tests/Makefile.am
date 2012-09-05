@@ -56,6 +56,7 @@ check_PROGRAMS = test_gtest \
                  test_util_uuid \
                  test_util_logformat \
                  test_util_lock \
+                 test_util_misc \
                  test_util_ahocorasick \
                  test_util_path \
                  test_util_string \
@@ -143,6 +144,8 @@ test_util_cfgmap_SOURCES = test_util_cfgmap.cc test_main.cc
 test_util_clock_SOURCES = test_util_clock.cc test_main.cc
 
 test_util_lock_SOURCES = test_util_lock.cc test_main.cc
+
+test_util_misc_SOURCES = test_util_misc.cc test_main.cc
 
 test_util_dso_SOURCES = test_util_dso.cc test_main.cc
 test_util_dso_CFLAGS = -rpath $(PWD)
