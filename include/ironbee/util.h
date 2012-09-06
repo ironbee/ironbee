@@ -228,7 +228,7 @@ void DLL_PUBLIC *ib_util_memdup(ib_mpool_t *mp,
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in:
+ * Tested in: tests/test_util_misc.cc
  */
 FILE DLL_PUBLIC *ib_util_fdup(FILE *fh, const char *mode);
 

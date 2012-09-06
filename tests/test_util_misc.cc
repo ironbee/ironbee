@@ -394,3 +394,141 @@ TEST_F(TestIBUtilCopyOnWrite, random)
             << "  @ offset:" << eoffset << " count:" << ecount <<  std::endl;
     }
 }
+
+class TestIBUtilFdup : public testing::Test
+{
+public:
+    typedef enum { PRIMARY, DUPLICATE } fd_t;
+    enum { NUM_FDS = 2 };
+
+    TestIBUtilFdup()
+    {
+        memset(m_fds, 0, sizeof(m_fds));
+    }
+    virtual ~TestIBUtilFdup( )
+    {
+        CloseFds( );
+    }
+
+    virtual void SetUp()
+    {
+        testing::Test::SetUp();
+        m_fds[0] = tmpfile();
+        if (m_fds[0] == NULL) {
+            throw std::runtime_error("tmpfile() failed.");
+        }
+    }
+
+    virtual void TearDown()
+    {
+        testing::Test::TearDown();
+        CloseFds( );
+    }
+
+    // Implement basic operations
+    bool Close(fd_t which) {
+        return CloseFd(&m_fds[which]);
+    }
+    bool Seek(fd_t which, long offset, int whence)
+    {
+        return fseek(m_fds[which], offset, whence) == 0;
+    }
+    bool Puts(fd_t which, const char *buf)
+    {
+        return fputs(buf, m_fds[which]) != EOF;
+    }
+    bool Gets(fd_t which)
+    {
+        const size_t  bufsize = 1024;
+        char          buf[bufsize+1];
+        return fgets(buf, bufsize, m_fds[which]) != NULL;
+    }
+
+    FILE *GetFd(fd_t which) { return m_fds[which]; };
+    void SetFd(fd_t which, FILE *fd) { m_fds[which] = fd; };
+
+protected:
+    // Close all open FDs
+    bool CloseFd(FILE **pfd)
+    {
+        bool ret = true;
+        if (*pfd != NULL) {
+            if (fclose(*pfd) != 0) {
+                ret = false;
+            }
+            *pfd = NULL;
+        }
+        return ret;
+    }
+
+    void CloseFds( void )
+    {
+        for(int n = 0;  n < NUM_FDS;  ++n) {
+            Close((fd_t)n);
+        }
+    }
+
+protected:
+    FILE   *m_fds[NUM_FDS];
+};
+
+/* -- ib_util_copy_on_write() Tests -- */
+TEST_F(TestIBUtilFdup, fdup)
+{
+    int           ret;
+    FILE         *fd;
+
+    ret = fputs("hello\n", GetFd(PRIMARY));
+    if (ret == EOF) {
+        throw std::runtime_error("fputs() failed.");
+    }
+
+    // Duplicate the descriptor
+    fd = ib_util_fdup(GetFd(PRIMARY), "a+");
+    ASSERT_NE((FILE *)NULL, fd);
+    ASSERT_NE(GetFd(PRIMARY), fd);
+    SetFd(DUPLICATE, fd);
+
+    // Write to the original descriptor
+    ASSERT_TRUE(Seek(PRIMARY, 0L, SEEK_END));
+    ASSERT_TRUE(Puts(PRIMARY, "hello\n"));
+
+    // Verify that we can read from the duplicate descriptor
+    ASSERT_TRUE(Seek(DUPLICATE, 0L, SEEK_SET));
+    ASSERT_TRUE(Gets(DUPLICATE)) << strerror(errno) << std::endl;
+
+    // Verify that we can write to the duplicate descriptor
+    ASSERT_TRUE(Seek(DUPLICATE, 0L, SEEK_END));
+    ASSERT_TRUE(Puts(DUPLICATE, "hello again\n"));
+
+    // Close the duplicate, should no longer be able to use it
+    ASSERT_TRUE(Close(DUPLICATE));
+
+    // Original should still be valid, though
+    ASSERT_TRUE(Seek(PRIMARY, 0L, SEEK_SET));
+    ASSERT_TRUE(Gets(PRIMARY));
+    ASSERT_TRUE(Seek(PRIMARY, 0L, SEEK_END));
+    ASSERT_TRUE(Puts(PRIMARY, "hello\n"));
+
+    // Duplicate the descriptor to a read-only
+    fd = ib_util_fdup(GetFd(PRIMARY), "r");
+    ASSERT_NE((FILE *)NULL, fd);
+    ASSERT_NE(GetFd(PRIMARY), fd);
+    SetFd(DUPLICATE, fd);
+
+    // Verify that we can still write to the duplicate descriptor
+    ASSERT_TRUE(Seek(PRIMARY, 0L, SEEK_END));
+    ASSERT_TRUE(Puts(PRIMARY, "hello\n"));
+
+    // We should still be able to read from the duplicate
+    ASSERT_TRUE(Seek(DUPLICATE, 0L, SEEK_SET));
+    ASSERT_TRUE(Gets(DUPLICATE));
+
+    // Writing to the duplicate should not work now
+    ASSERT_TRUE(Seek(DUPLICATE, 0L, SEEK_END));
+    ASSERT_FALSE(Puts(DUPLICATE, "hello again\n"));
+
+    // Done; Close both fds
+    ASSERT_TRUE(Close(DUPLICATE));
+    ASSERT_TRUE(Close(PRIMARY));
+}
