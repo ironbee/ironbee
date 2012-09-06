@@ -364,8 +364,8 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
             connp->out_tx->progress = TX_PROGRESS_RES_BODY;
-        }// 3. If a Content-Length header field (section 14.14) is present, its
-            //   value in bytes represents the length of the message-body.
+        } // 3. If a Content-Length header field (section 14.14) is present, its
+          //   value in bytes represents the length of the message-body.
         else if (cl != NULL) {
             // We know the exact length
             connp->out_tx->response_transfer_coding = IDENTITY;
@@ -431,7 +431,8 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         return HTP_ERROR;
     }
 
-    // start decompression engines if decompression is still enabled
+    // Start decompression engines if decompression is still enabled (the user
+    // may have turned it off in the RESPONSE_HEADERS_COMPLETE hook).
     if (connp->cfg->response_decompression_enabled) {
         if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
             connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp,
@@ -444,7 +445,8 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             }
         }
     } else {
-        // reset content encoding flag to indicate users change in preference
+        // Reset the content encoding flag to indicate
+        // that there is no decompression taking place.
         connp->out_tx->response_content_encoding = COMPRESSION_NONE;
     }
 
