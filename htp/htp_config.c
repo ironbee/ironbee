@@ -549,7 +549,7 @@ void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int case_insensitive) 
  * Configures whether consecutive path segment separators will be compressed. When
  * enabled, a path such as "/one//two" will be normalized to "/one/two". The backslash_separators
  * and decode_separators parameters are used before compression takes place. For example, if
- * backshasl_deparators and decode_separators are both enabled, the path "/one\\/two\/%5cthree/%2f//four"
+ * backslash_separators and decode_separators are both enabled, the path "/one\\/two\/%5cthree/%2f//four"
  * will be converted to "/one/two/three/four".
  *
  * @param cfg
