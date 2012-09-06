@@ -17,7 +17,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /// @file
-/// @brief IronBee - Misc Utilility Function Tests
+/// @brief IronBee &mdash; Misc Utilility Function Tests
 ///
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
@@ -123,7 +123,7 @@ public:
         }
         return (errors == 0);
     }
-    
+
     void FreeBuf( void )
     {
         if (m_buf != NULL) {
@@ -205,7 +205,7 @@ TEST_F(TestIBUtilMemDup, random)
     int            loop;
 
     for (loop = 0;  loop < 100;  ++loop) {
-        const uint8_t *buf; 
+        const uint8_t *buf;
         size_t         eoffset;
         size_t         ecount;
 

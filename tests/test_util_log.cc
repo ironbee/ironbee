@@ -17,7 +17,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /// @file
-/// @brief IronBee &clock; Debug utility tests
+/// @brief IronBee &mdash; Log utility tests
 ///
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
@@ -117,7 +117,7 @@ private:
         vfprintf(log_fp, fmt, ap);
         fputs("\n", log_fp);
     }
-    
+
 protected:
     int       m_lines;
 };
