@@ -69,6 +69,7 @@ check_PROGRAMS = test_gtest \
                  test_util_decode \
                  test_util_stream \
                  test_util_debug \
+                 test_util_log \
                  test_engine \
                  test_module_ahocorasick \
                  test_module_pcre \
@@ -186,6 +187,9 @@ test_util_stream_SOURCES = test_util_stream.cc test_main.cc
 
 test_util_debug_SOURCES = test_util_debug.cc test_main.cc
 test_util_debug_LDADD = $(LDADD) -lboost_regex
+
+test_util_log_SOURCES = test_util_log.cc test_main.cc
+test_util_log_LDADD = $(LDADD) -lboost_regex
 
 test_util_uuid_SOURCES = test_util_uuid.cc test_main.cc
 test_util_uuid_CPPFLAGS = $(CPPFLAGS) $(OSSP_UUID_CFLAGS)

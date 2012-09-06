@@ -60,10 +60,6 @@ extern "C" {
  * @param file Optional source filename (or NULL)
  * @param line Optional source line number (or 0)
  * @param fmt Formatting string
- *
- * @internal
- * Implemented in: util/util.c
- * Tested in:
  */
 typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
                                     const char *file, int line,
@@ -77,7 +73,7 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  *
  * @internal
  * Implemented in: (self)
- * Tested in:
+ * Tested in: tests/test_util_log.cc
  */
 #define ib_util_log(lvl, ...) \
   ib_util_log_ex((lvl), __FILE__, __LINE__, __VA_ARGS__)
@@ -87,7 +83,7 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  *
  * @internal
  * Implemented in: (self)
- * Tested in:
+ * Tested in: tests/test_util_log.cc
  */
 #define ib_util_log_error(...) \
   ib_util_log_ex(3, __FILE__, __LINE__, __VA_ARGS__)
@@ -98,7 +94,7 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  *
  * @internal
  * Implemented in: (self)
- * Tested in:
+ * Tested in: tests/test_util_log.cc
  */
 #define ib_util_log_debug(...) \
   ib_util_log_ex(7, __FILE__, __LINE__, __VA_ARGS__)
@@ -113,7 +109,7 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in:
+ * Tested in: tests/test_util_log.cc
  */
 ib_status_t DLL_PUBLIC ib_util_log_level(int level);
 
@@ -124,7 +120,7 @@ ib_status_t DLL_PUBLIC ib_util_log_level(int level);
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in:
+ * Tested in: tests/test_util_log.cc
  */
 int DLL_PUBLIC ib_util_get_log_level(void);
 
@@ -141,7 +137,7 @@ int DLL_PUBLIC ib_util_get_log_level(void);
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in:
+ * Tested in: tests/test_util_log.cc
  */
 ib_status_t DLL_PUBLIC ib_util_log_logger(ib_util_fn_logger_t callback,
                                           void *cbdata);
@@ -156,7 +152,7 @@ ib_status_t DLL_PUBLIC ib_util_log_logger(ib_util_fn_logger_t callback,
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in:
+ * Tested in: tests/test_util_log.cc
  */
 void DLL_PUBLIC ib_util_log_ex(int level,
                                const char *file, int line,
