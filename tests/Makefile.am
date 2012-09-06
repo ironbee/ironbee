@@ -147,6 +147,9 @@ test_util_clock_SOURCES = test_util_clock.cc test_main.cc
 test_util_lock_SOURCES = test_util_lock.cc test_main.cc
 
 test_util_misc_SOURCES = test_util_misc.cc test_main.cc
+test_util_misc_CPPFLAGS = $(CPPFLAGS) $(OSSP_UUID_CFLAGS)
+test_util_misc_LDADD = \
+	$(MODULE_TEST_LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIBS)
 
 test_util_dso_SOURCES = test_util_dso.cc test_main.cc
 test_util_dso_CFLAGS = -rpath $(PWD)

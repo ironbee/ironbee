@@ -246,7 +246,7 @@ FILE DLL_PUBLIC *ib_util_fdup(FILE *fh, const char *mode);
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in:
+ * Tested in: tests/test_util_misc.cc
  */
 ib_status_t DLL_PUBLIC ib_initialize(void);
 
@@ -255,7 +255,7 @@ ib_status_t DLL_PUBLIC ib_initialize(void);
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in:
+ * Tested in: tests/test_util_misc.cc
  */
 void DLL_PUBLIC ib_shutdown(void);
 

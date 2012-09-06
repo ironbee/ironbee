@@ -31,6 +31,8 @@
 
 #include "simple_fixture.hh"
 
+#include <uuid.h>
+
 #include <sys/time.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -531,4 +533,22 @@ TEST_F(TestIBUtilFdup, fdup)
     // Done; Close both fds
     ASSERT_TRUE(Close(DUPLICATE));
     ASSERT_TRUE(Close(PRIMARY));
+}
+
+
+/* -- initialize / shutdown functions -- */
+
+TEST(IBUtil, initialize)
+{
+    extern uuid_t *g_ossp_uuid;
+    ib_status_t rc;
+
+    ASSERT_EQ((uuid_t *)NULL, g_ossp_uuid);
+    ASSERT_EQ((ib_util_fn_logger_t)NULL, ib_util_get_log_logger());
+
+    rc = ib_initialize( );
+    ASSERT_EQ(IB_OK, rc);
+
+    ASSERT_NE((uuid_t *)NULL, g_ossp_uuid);
+    ASSERT_NE((ib_util_fn_logger_t)NULL, ib_util_get_log_logger());
 }
