@@ -28,6 +28,7 @@
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
+#include "ibtest_log_fixture.hh"
 
 #ifdef IB_DEBUG
 
@@ -37,108 +38,33 @@
 #include <stdio.h>
 
 #include <string>
-#include <map>
 #include <stdexcept>
-#include <iostream>
-#include <fstream>
 
-#include <boost/regex.hpp>
-
-
-const size_t linebuf_size = 1024;
-
-class TestIBUtilDebug : public testing::Test
+class TestIBUtilDebug : public IBLogFixture
 {
 public:
-    TestIBUtilDebug() : log_fp(NULL)
+    TestIBUtilDebug() : IBLogFixture()
     {
     }
 
     ~TestIBUtilDebug()
     {
-        TearDown( );
     }
 
-    virtual void SetUp()
+    void SetUp()
     {
-        Close( );
-        log_fp = tmpfile();
-        if (log_fp == NULL) {
-            throw std::runtime_error("Failed to open tempory file.");
-        }
+        IBLogFixture::SetUp();
         ib_trace_init_fp(log_fp);
     }
 
-    virtual void TearDown()
+    void TearDown()
     {
-        Close( );
+        IBLogFixture::TearDown();
     }
 
-    void Close( )
+    void ClosedFp( )
     {
-        if (log_fp != NULL) {
-            fclose(log_fp);
-            log_fp = NULL;
-            ib_trace_init_fp(stderr);
-        }
-    }
-
-    const std::string &Cat( void )
-    {
-        fpos_t pos;
-
-        if (fgetpos(log_fp, &pos) != 0) {
-            throw std::runtime_error("Failed to get file position.");
-        }
-        rewind(log_fp);
-
-        catbuf = "";
-        while(fgets(linebuf, linebuf_size, log_fp) != NULL) {
-            catbuf += linebuf;
-        }
-        if (fsetpos(log_fp, &pos) != 0) {
-            throw std::runtime_error("Failed to set file position.");
-        }
-        return catbuf;
-    }
-
-    bool Grep(const std::string &pat)
-    {
-        boost::regex re = boost::regex(pat);
-        bool match_found = false;
-        fpos_t pos;
-
-        if (fgetpos(log_fp, &pos) != 0) {
-            throw std::runtime_error("Failed to get file position.");
-        }
-        rewind(log_fp);
-
-        while(fgets(linebuf, linebuf_size, log_fp) != NULL) {
-            bool result = boost::regex_search(linebuf, re);
-            if(result) {
-                match_found = true;
-                break;
-            }
-        }
-        if (fsetpos(log_fp, &pos) != 0) {
-            throw std::runtime_error("Failed to set file position.");
-        }
-
-        return match_found;
-    }
-
-    bool Grep(const char *pat)
-    {
-        return Grep( std::string(pat) );
-    }
-
-    bool Grep(const std::string &p1, const std::string &p2)
-    {
-        std::string pat;
-        pat = p1;
-        pat += ".*";
-        pat += p2;
-        return Grep(pat);
+        ib_trace_init_fp(stderr);
     }
 
     bool GrepCurFn(void)
@@ -163,9 +89,6 @@ public:
 
 protected:
     std::string          cur_fn;
-    mutable std::string  catbuf;
-    FILE                *log_fp;
-    char                 linebuf[linebuf_size+1];
 };
 
 TEST_F(TestIBUtilDebug, trace_msg)
