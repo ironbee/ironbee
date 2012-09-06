@@ -1599,6 +1599,9 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
         // TODO Handle whitespace around hostname
         htp_normalize_hostname_inplace(new_hostname);
 
+        if (parsed_uri->hostname != NULL) bstr_free(&parsed_uri->hostname);
+        parsed_uri->hostname = new_hostname;
+
         // Port
         int port = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(hostname) + colon + 1,
             bstr_len(hostname) - colon - 1, 10);
