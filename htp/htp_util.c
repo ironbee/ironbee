@@ -306,7 +306,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
     va_start(args, fmt);
 
     int r = vsnprintf(buf, 1023, fmt, args);
-    
+
     va_end(args);
 
     if (r < 0) {
@@ -337,7 +337,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
         connp->last_error = log;
     }
 
-    hook_run_all(connp->cfg->hook_log, log);   
+    hook_run_all(connp->cfg->hook_log, log);
 }
 
 /**
@@ -1710,7 +1710,7 @@ char *htp_tx_progress_as_string(htp_tx_t *tx) {
             return "DONE";
     }
 
-    return "UNKOWN";
+    return "UNKNOWN";
 }
 
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
@@ -1830,6 +1830,10 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
     for (i = 0; i < list_size(tx->request_header_lines); i++) {
         htp_header_line_t *hl = list_get(tx->request_header_lines, i);
         len += bstr_len(hl->line);
+        if (hl->terminators)
+            len += bstr_len(hl->terminators);
+        else
+            len += 2; // 0d 0a
     }
 
     request_headers_raw = bstr_alloc(len);
@@ -1841,6 +1845,10 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
     for (i = 0; i < list_size(tx->request_header_lines); i++) {
         htp_header_line_t *hl = list_get(tx->request_header_lines, i);
         bstr_add_str_noex(request_headers_raw, hl->line);
+        if (hl->terminators)
+            bstr_add_str_noex(request_headers_raw, hl->terminators);
+        else
+            bstr_add_cstr_noex(request_headers_raw, "\r\n");
     }
 
     return request_headers_raw;
@@ -1892,6 +1900,10 @@ bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx) {
     for (i = 0; i < list_size(tx->response_header_lines); i++) {
         htp_header_line_t *hl = list_get(tx->response_header_lines, i);
         len += bstr_len(hl->line);
+        if (hl->terminators)
+            len += bstr_len(hl->terminators);
+        else
+            len += 2; // 0d 0a
     }
 
     response_headers_raw = bstr_alloc(len);
@@ -1903,6 +1915,10 @@ bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx) {
     for (i = 0; i < list_size(tx->response_header_lines); i++) {
         htp_header_line_t *hl = list_get(tx->response_header_lines, i);
         bstr_add_str_noex(response_headers_raw, hl->line);
+        if (hl->terminators)
+            bstr_add_str_noex(response_headers_raw, hl->terminators);
+        else
+            bstr_add_cstr_noex(response_headers_raw, "\r\n");
     }
 
     return response_headers_raw;
