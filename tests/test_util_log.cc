@@ -137,14 +137,18 @@ TEST(TestIBUtilLogSet, set_logger)
 {
     ib_status_t rc;
 
+    ASSERT_EQ((ib_util_fn_logger_t)NULL, ib_util_get_log_logger());
+
     rc = ib_util_log_logger(LoggerFn, NULL);
     ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ((ib_util_fn_logger_t)LoggerFn, ib_util_get_log_logger());
 
     ib_util_log_ex(0, __FILE__, __LINE__, "Message %d", 1);
     ASSERT_EQ(1, log_lines);
 
     rc = ib_util_log_logger(NULL, NULL);
     ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ((ib_util_fn_logger_t)NULL, ib_util_get_log_logger());
 
     ib_util_log_ex(0, __FILE__, __LINE__, "Message %d", 1);
     ASSERT_EQ(1, log_lines);

@@ -143,6 +143,17 @@ ib_status_t DLL_PUBLIC ib_util_log_logger(ib_util_fn_logger_t callback,
                                           void *cbdata);
 
 /**
+ * Get the current logger.
+ *
+ * @returns The current logger
+ *
+ * @internal
+ * Implemented in: util/util.c
+ * Tested in: tests/test_util_log.cc
+ */
+ib_util_fn_logger_t DLL_PUBLIC ib_util_get_log_logger(void);
+
+/**
  * Write a log entry via the logger callback.
  *
  * @param level Log level (0-9)

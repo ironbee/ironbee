@@ -42,7 +42,7 @@ static struct _ibutil_logger_t {
     ib_util_fn_logger_t   callback;
     int                   level;
     void                 *cbdata;
-} _ibutil_logger;
+} _ibutil_logger = { NULL, 0, NULL };
 
 /**
  * Builtin Logger.
@@ -95,6 +95,11 @@ ib_status_t ib_util_log_logger(ib_util_fn_logger_t callback,
     _ibutil_logger.cbdata = cbdata;
 
     return IB_OK;
+}
+
+ib_util_fn_logger_t ib_util_get_log_logger(void)
+{
+    return _ibutil_logger.callback;
 }
 
 void ib_util_log_ex(int level,
