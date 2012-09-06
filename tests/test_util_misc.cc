@@ -36,12 +36,14 @@
 #include <errno.h>
 #include <stdexcept>
 
+/* uint8_t * NULL for comparisons */
+#define UNULL ((uint8_t *)NULL)
 
-/* -- copy_on_write() Tests -- */
-class TestIBUtilCopyOnWrite : public SimpleFixture
+/* Class to create & compare to a random buffer */
+class RandomBuffer : public SimpleFixture
 {
 public:
-    TestIBUtilCopyOnWrite() : m_bufsize(0), m_buf(NULL)
+    RandomBuffer() : m_bufsize(0), m_buf(NULL)
     {
         struct timeval tv;
         if (gettimeofday(&tv, NULL) != 0) {
@@ -50,7 +52,7 @@ public:
         srandom((unsigned int)tv.tv_usec);
     };
 
-    ~TestIBUtilCopyOnWrite()
+    ~RandomBuffer()
     {
         FreeBuf( );
     };
@@ -123,12 +125,11 @@ public:
     void FreeBuf( void )
     {
         if (m_buf != NULL) {
-            // free(m_buf); /* Using mpool */
             m_buf = NULL;
         }
     }
 
-    uint8_t *Buf(void) { return m_buf; };
+    uint8_t *BufPtr(size_t offset = 0) { return m_buf + offset; };
     size_t BufSize(void) { return m_bufsize; };
 
 protected:
@@ -136,8 +137,98 @@ protected:
     uint8_t     *m_buf;
 };
 
+/* -- ib_util_memdup() Tests -- */
+
+extern "C" {
+static size_t g_malloc_calls = 0;
+static void *test_malloc(size_t size)
+{
+    ++g_malloc_calls;
+    return malloc(size);
+}
+}
+
+class TestIBUtilMemDup : public RandomBuffer
+{
+};
+
+/// @test Test util memdup function - ib_util_memdup()
+TEST_F(TestIBUtilMemDup, basic)
+{
+    const uint8_t *buf;
+    size_t         eoffset;
+    size_t         ecount;
+    ib_mpool_t    *local_mpool;
+    ib_status_t    rc;
+
+    rc = ib_mpool_create_ex(&local_mpool, "test", NULL, 0, &test_malloc, NULL);
+    if (rc != IB_OK) {
+        throw std::runtime_error("Failed to create memory pool");
+    }
+
+    // Setup
+    CreateBuf(128, 128);
+
+    g_malloc_calls = 0;
+    buf = (uint8_t *)ib_util_memdup(local_mpool, BufPtr(), BufSize(), false);
+    ASSERT_NE(UNULL, buf);
+    ASSERT_EQ(1U, g_malloc_calls);
+    ASSERT_TRUE(Compare(buf, BufSize(), &eoffset, &ecount))
+        << "Error offset:" << eoffset << " count:" << ecount <<  std::endl;
+
+    // Duplicate it via malloc
+    g_malloc_calls = 0;
+    buf = (uint8_t *)ib_util_memdup(NULL, BufPtr(), BufSize(), false);
+    ASSERT_NE(UNULL, buf);
+    ASSERT_EQ(0U, g_malloc_calls);
+    ASSERT_TRUE(Compare(buf, BufSize(), &eoffset, &ecount))
+        << "Error offset:" << eoffset << " count:" << ecount <<  std::endl;
+}
+
+TEST_F(TestIBUtilMemDup, strings)
+{
+    const char *buf;
+    const char *s = "abc123";
+
+    buf = (char *)ib_util_memdup(MemPool(), s, strlen(s), true);
+    ASSERT_STREQ(s, (char *)buf);
+
+    // Duplicate it via malloc
+    buf = (char *)ib_util_memdup(MemPool(), s, strlen(s), false);
+    ASSERT_EQ(0, memcmp(s, buf, strlen(s)));
+}
+
+TEST_F(TestIBUtilMemDup, random)
+{
+    int            loop;
+
+    for (loop = 0;  loop < 100;  ++loop) {
+        const uint8_t *buf; 
+        size_t         eoffset;
+        size_t         ecount;
+
+        // Setup
+        CreateBuf(128 * 1024);
+
+        // Simple case: new buffer, random offset
+        buf = (uint8_t *)ib_util_memdup(MemPool(), BufPtr(), BufSize(), false);
+
+        ASSERT_NE(UNULL, buf)
+            << "Error @ Loop #" << loop
+            << "  Failed to allocate buffer size:" << BufSize() << std::endl;
+        ASSERT_TRUE(Compare(buf, BufSize(), &eoffset, &ecount))
+            << "Error @ Loop #" << loop
+            << "  buffer size:" << BufSize()
+            << "  @ offset:" << eoffset << " count:" << ecount <<  std::endl;
+    }
+}
+
+/* -- ib_util_copy_on_write() Tests -- */
+class TestIBUtilCopyOnWrite : public RandomBuffer
+{
+};
+
 /// @test Test util copy on write functions - ib_util_copy_on_write()
-#define UNULL ((uint8_t *)NULL)
 TEST_F(TestIBUtilCopyOnWrite, basic)
 {
     size_t         offset;
@@ -151,7 +242,7 @@ TEST_F(TestIBUtilCopyOnWrite, basic)
 
     // Simple case: new buffer, start == buf
     offset = 0;
-    cur = ib_util_copy_on_write(MemPool(), m_buf, m_buf + offset, BufSize(),
+    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
                                 NULL, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -161,7 +252,7 @@ TEST_F(TestIBUtilCopyOnWrite, basic)
     // Next case: re-use buffer, start == buf
     out_buf_bak = out_buf;
     offset = 0;
-    cur = ib_util_copy_on_write(MemPool(), m_buf, m_buf + offset, BufSize(),
+    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
                                 out_buf + offset, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -172,7 +263,7 @@ TEST_F(TestIBUtilCopyOnWrite, basic)
     // Next case: re-use buffer, start != buf
     out_buf_bak = out_buf;
     offset = BufSize() / 2;
-    cur = ib_util_copy_on_write(MemPool(), m_buf, m_buf + offset, BufSize(),
+    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
                                 out_buf + offset, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -196,7 +287,7 @@ TEST_F(TestIBUtilCopyOnWrite, copy_half)
     offset = BufSize() / 2;
 
     // Simple case: new buffer, start != end
-    cur = ib_util_copy_on_write(MemPool(), m_buf, m_buf + offset, BufSize(),
+    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
                                 NULL, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -207,7 +298,44 @@ TEST_F(TestIBUtilCopyOnWrite, copy_half)
 
     // Next case: re-use buffer, start != end
     out_buf_bak = out_buf;
-    cur = ib_util_copy_on_write(MemPool(), m_buf, m_buf + offset, BufSize(),
+    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
+                                out_buf + offset, &out_buf, &out_end);
+    ASSERT_NE(UNULL, cur);
+    ASSERT_NE(UNULL, out_buf);
+    ASSERT_EQ(out_buf + offset, cur);
+    ASSERT_EQ(out_buf_bak, out_buf);
+    ASSERT_EQ(out_buf + BufSize(), out_end);
+    ASSERT_TRUE(Compare(out_buf, offset, &eoffset, &ecount))
+        << "Error offset:" << eoffset << " count:" << ecount <<  std::endl;
+}
+
+TEST_F(TestIBUtilCopyOnWrite, copy_whole)
+{
+    size_t         offset;
+    uint8_t       *out_buf  = NULL;
+    const uint8_t *out_end  = NULL;
+    uint8_t       *out_buf_bak;
+    uint8_t       *cur;
+    size_t         eoffset;
+    size_t         ecount;
+
+    // Setup
+    CreateBuf(128, 128);
+    offset = BufSize();
+
+    // Simple case: new buffer, start == end
+    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
+                                NULL, &out_buf, &out_end);
+    ASSERT_NE(UNULL, cur);
+    ASSERT_NE(UNULL, out_buf);
+    ASSERT_EQ(out_buf + offset, cur);
+    ASSERT_EQ(out_buf + BufSize(), out_end);
+    ASSERT_TRUE(Compare(out_buf, offset, &eoffset, &ecount))
+        << "Error offset:" << eoffset << " count:" << ecount <<  std::endl;
+
+    // Next case: re-use buffer, start == end
+    out_buf_bak = out_buf;
+    cur = ib_util_copy_on_write(MemPool(), BufPtr(), BufPtr(offset), BufSize(),
                                 out_buf + offset, &out_buf, &out_end);
     ASSERT_NE(UNULL, cur);
     ASSERT_NE(UNULL, out_buf);
@@ -236,7 +364,8 @@ TEST_F(TestIBUtilCopyOnWrite, random)
         offset = (random() % BufSize());
 
         // Simple case: new buffer, random offset
-        cur = ib_util_copy_on_write(MemPool(), m_buf, m_buf + offset, BufSize(),
+        cur = ib_util_copy_on_write(MemPool(),
+                                    BufPtr(), BufPtr(offset), BufSize(),
                                     NULL, &out_buf, &out_end);
         ASSERT_NE(UNULL, cur);
         ASSERT_NE(UNULL, out_buf);
@@ -250,7 +379,8 @@ TEST_F(TestIBUtilCopyOnWrite, random)
 
         // Next case: re-use buffer, random offset
         out_buf_bak = out_buf;
-        cur = ib_util_copy_on_write(MemPool(), m_buf, m_buf + offset, BufSize(),
+        cur = ib_util_copy_on_write(MemPool(),
+                                    BufPtr(), BufPtr(offset), BufSize(),
                                     out_buf + offset, &out_buf, &out_end);
         ASSERT_NE(UNULL, cur);
         ASSERT_NE(UNULL, out_buf);
@@ -263,41 +393,4 @@ TEST_F(TestIBUtilCopyOnWrite, random)
             << "  copy size:" << offset
             << "  @ offset:" << eoffset << " count:" << ecount <<  std::endl;
     }
-}
-
-TEST_F(TestIBUtilCopyOnWrite, copy_whole)
-{
-    size_t         offset;
-    uint8_t       *out_buf  = NULL;
-    const uint8_t *out_end  = NULL;
-    uint8_t       *out_buf_bak;
-    uint8_t       *cur;
-    size_t         eoffset;
-    size_t         ecount;
-
-    // Setup
-    CreateBuf(128, 128);
-    offset = BufSize();
-
-    // Simple case: new buffer, start == end
-    cur = ib_util_copy_on_write(MemPool(), m_buf, m_buf + offset, BufSize(),
-                                NULL, &out_buf, &out_end);
-    ASSERT_NE(UNULL, cur);
-    ASSERT_NE(UNULL, out_buf);
-    ASSERT_EQ(out_buf + offset, cur);
-    ASSERT_EQ(out_buf + BufSize(), out_end);
-    ASSERT_TRUE(Compare(out_buf, offset, &eoffset, &ecount))
-        << "Error offset:" << eoffset << " count:" << ecount <<  std::endl;
-
-    // Next case: re-use buffer, start == end
-    out_buf_bak = out_buf;
-    cur = ib_util_copy_on_write(MemPool(), m_buf, m_buf + offset, BufSize(),
-                                out_buf + offset, &out_buf, &out_end);
-    ASSERT_NE(UNULL, cur);
-    ASSERT_NE(UNULL, out_buf);
-    ASSERT_EQ(out_buf + offset, cur);
-    ASSERT_EQ(out_buf_bak, out_buf);
-    ASSERT_EQ(out_buf + BufSize(), out_end);
-    ASSERT_TRUE(Compare(out_buf, offset, &eoffset))
-        << "Error offset:" << eoffset << " count:" << ecount <<  std::endl;
 }

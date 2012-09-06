@@ -207,7 +207,7 @@ uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in:
+ * Tested in: tests/test_util_misc.cc
  */
 void DLL_PUBLIC *ib_util_memdup(ib_mpool_t *mp,
                                 const void *in,
