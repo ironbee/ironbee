@@ -616,6 +616,7 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
  * Get expanded numeric value of a string
  *
  * @param[in] tx Transaction
+ * @param[in] rule Parent rule to the operator
  * @param[in] pdata Parameter data
  * @param[in] flags Operator instance flags
  * @param[out] result Pointer to number in which to store the result
@@ -658,7 +659,8 @@ static ib_status_t get_num_value(ib_tx_t *tx,
 /**
  * Get integer representation of a field
  *
- * @param[in] ib Ironbee engine.
+ * @param[in] tx Ironbee transaction
+ * @param[in] rule Parent rule to the operator
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *

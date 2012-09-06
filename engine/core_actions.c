@@ -386,10 +386,10 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
 /**
  * Expand a name from the DPI
  *
+ * @param[in] rule The rule executing this action
  * @param[in] tx Transaction to get the value from
  * @param[in] label Label to use for debug / error messages
- * @param[in] name Name to expand
- * @param[in] expandable Is @a expandable?
+ * @param[in] setvar_data Setvar parameters
  * @param[out] exname Expanded name
  * @param[out] exnlen Length of @a exname
  *
@@ -557,6 +557,7 @@ static ib_status_t get_data_value(ib_tx_t *tx,
  *
  *  @param[in] rule
  *  @param[in] tx
+ *  @param[in] label Label (used for log messages)
  *  @param[in] setvar_data
  *  @param[in] flags
  *  @param[out] expanded The expanded string, possibly allocated from
