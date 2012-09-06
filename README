@@ -40,19 +40,21 @@ information regarding licensing, copying and copyright ownership.
 INSTALLATION
 ------------
 
-The installation process should be as simple as:
+Assuming you're using an already packaged version of LibHTP, the installation
+process should be as simple as:
 
   $ ./configure
   $ make
   $ sudo make install
 
-If you want to use a repository version of LibHTP, do the following:
+If you've retrieved your LibHTP directly from the repository, you will need
+to perform the following steps first:
 
  1. Retrieve the sources of the version you wish to use
 
  2. Update the version number in htp.pc.in and configure.ac
 
- 3. Run autoconf -i --force, which will prepare the library for installation
+ 3. Run autoreconf -i --force, which will update the build system
 
  4. Run doxygen to generate the API documentation
 
