@@ -277,12 +277,12 @@ char DLL_PUBLIC *ib_mpool_memdup_to_str(
 );
 
 /**
- * Duplicate a memory block using memory pool or malloc().
+ * Duplicate a memory block using memory pool.
  *
  * If @a size is 0, a non-NULL pointer will be returned, but that pointer
  * should never be dereferenced.
  *
- * @param[in] mp   Memory pool to allocate from; NULL to use malloc()
+ * @param[in] mp   Memory pool to allocate from.
  * @param[in] src  Memory to copy.
  * @param[in] size Size of @a src.
  *
