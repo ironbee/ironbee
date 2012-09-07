@@ -886,7 +886,7 @@ size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
  * Process a chunk of inbound (client or request) data.
  * 
  * @param connp
- * @param timestamp
+ * @param timestamp Optional.
  * @param data
  * @param len
  * @return STREAM_STATE_DATA, STREAM_STATE_ERROR or STEAM_STATE_DATA_OTHER (see QUICK_START).  STREAM_STATE_CLOSED and STREAM_STATE_TUNNEL are also possible.
@@ -922,8 +922,12 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
         return STREAM_STATE_CLOSED;
     }
 
-    // Store the current chunk information
-    memcpy(&connp->in_timestamp, timestamp, sizeof(*timestamp));
+    // Remember the timestamp of the current request data chunk
+    if (timestamp != NULL) {
+        memcpy(&connp->in_timestamp, timestamp, sizeof(*timestamp));
+    }
+    
+    // Store the current chunk information    
     connp->in_current_data = data;
     connp->in_current_len = len;
     connp->in_current_offset = 0;

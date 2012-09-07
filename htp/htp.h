@@ -537,10 +537,10 @@ struct htp_conn_t {
     /** Parsing flags: PIPELINED_CONNECTION. */
     unsigned int flags;   
 
-    /** When was this connection opened? */
+    /** When was this connection opened? Can be NULL. */
     htp_time_t open_timestamp;
 
-    /** When was this connection closed? */
+    /** When was this connection closed? Can be NULL. */
     htp_time_t close_timestamp;
     
     /** Inbound data counter. */
@@ -590,7 +590,7 @@ struct htp_connp_t {
     
     unsigned int out_data_other_at_tx_end;
 
-    /** The time when the last request data chunk was received. */
+    /** The time when the last request data chunk was received. Can be NULL. */
     htp_time_t in_timestamp;
 
     /** Pointer to the current request data chunk. */
@@ -667,7 +667,7 @@ struct htp_connp_t {
      */
     size_t out_next_tx_index;
 
-    /** The time when the last response data chunk was received. */
+    /** The time when the last response data chunk was received. Can be NULL. */
     htp_time_t out_timestamp;
 
     /** Pointer to the current response data chunk. */

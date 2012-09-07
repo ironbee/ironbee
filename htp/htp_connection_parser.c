@@ -49,11 +49,15 @@ void htp_connp_clear_error(htp_connp_t *connp) {
  * Closes the connection associated with the supplied parser.
  *
  * @param connp
- * @param timestamp
+ * @param timestamp Optional.
  */
 void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp) {
-    // Update internal information
-    memcpy(&connp->conn->close_timestamp, timestamp, sizeof(*timestamp));
+    // Update timestamp
+    if (timestamp != NULL) {
+        memcpy(&connp->conn->close_timestamp, timestamp, sizeof(*timestamp));
+    }
+    
+    // Update internal flags
     connp->in_status = STREAM_STATE_CLOSED;
     connp->out_status = STREAM_STATE_CLOSED;
 
@@ -233,7 +237,7 @@ htp_log_t *htp_connp_get_last_error(htp_connp_t *connp) {
  * @param remote_port Remote port
  * @param local_addr Local address
  * @param local_port Local port
- * @param timestamp
+ * @param timestamp Optional.
  */
 void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp) {
     if ((connp->in_status != STREAM_STATE_NEW) || (connp->out_status != STREAM_STATE_NEW)) {
@@ -259,7 +263,12 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
     }
 
     connp->conn->local_port = local_port;
-    memcpy(&connp->conn->open_timestamp, timestamp, sizeof(*timestamp));
+    
+    // Remember when the connection was opened.
+    if (timestamp != NULL) {
+        memcpy(&connp->conn->open_timestamp, timestamp, sizeof(*timestamp));
+    }
+    
     connp->in_status = STREAM_STATE_OPEN;
     connp->out_status = STREAM_STATE_OPEN;
 }

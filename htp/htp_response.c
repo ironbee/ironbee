@@ -826,7 +826,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
  * Process a chunk of outbound (server or response) data.
  *
  * @param connp
- * @param timestamp
+ * @param timestamp Optional.
  * @param data
  * @param len
  * @return HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed
@@ -862,8 +862,12 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
         return STREAM_STATE_CLOSED;
     }
 
+    // Remember the timestamp of the current response data chunk
+    if (timestamp != NULL) {
+        memcpy(&connp->out_timestamp, timestamp, sizeof(*timestamp));
+    }
+    
     // Store the current chunk information
-    memcpy(&connp->out_timestamp, timestamp, sizeof(*timestamp));
     connp->out_current_data = data;
     connp->out_current_len = len;
     connp->out_current_offset = 0;
