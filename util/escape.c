@@ -35,8 +35,8 @@
 #include <errno.h>
 #include <inttypes.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* Convert a bytestring to a json string with escaping, ex version */
 ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,

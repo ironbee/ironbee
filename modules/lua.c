@@ -31,12 +31,12 @@
 #include <ironbee/core.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
+#include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
-#include <ironbee/escape.h>
 
 #include <lauxlib.h>
 #include <lua.h>

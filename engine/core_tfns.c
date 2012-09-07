@@ -28,15 +28,15 @@
 
 #include <ironbee/bytestr.h>
 #include <ironbee/debug.h>
+#include <ironbee/decode.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
+#include <ironbee/path.h>
 #include <ironbee/string.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>
-#include <ironbee/path.h>
-#include <ironbee/decode.h>
 
 #include <assert.h>
 #include <ctype.h>

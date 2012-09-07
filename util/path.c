@@ -23,10 +23,11 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/path.h>
+
 #include <ironbee/debug.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
-#include <ironbee/path.h>
 
 #include <assert.h>
 #include <ctype.h>

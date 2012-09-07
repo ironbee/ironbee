@@ -32,10 +32,10 @@
 #include <ironbee/core.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine_types.h>
+#include <ironbee/path.h>
 #include <ironbee/provider.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
-#include <ironbee/path.h>
 
 #include <assert.h>
 #include <errno.h>

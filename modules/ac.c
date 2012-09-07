@@ -29,6 +29,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
+#include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
@@ -36,7 +37,6 @@
 #include <ironbee/provider.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/types.h>
-#include <ironbee/escape.h>
 #include <ironbee/util.h>
 
 #include <assert.h>

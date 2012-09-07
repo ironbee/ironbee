@@ -23,12 +23,13 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/decode.h>
+
 #include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>
-#include <ironbee/decode.h>
 
 #include <assert.h>
 #include <ctype.h>

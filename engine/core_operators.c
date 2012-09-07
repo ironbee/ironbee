@@ -29,13 +29,13 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
+#include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/ipset.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
-#include <ironbee/escape.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
