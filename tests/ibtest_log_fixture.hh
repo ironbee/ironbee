@@ -54,7 +54,7 @@ public:
         Close( );
         log_fp = tmpfile();
         if (log_fp == NULL) {
-            throw std::runtime_error("Failed to open tempory file.");
+            throw std::runtime_error("Failed to open temporary file.");
         }
     }
 

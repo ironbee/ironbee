@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1573 
+personal_ws-1.1 en 1584 
 malloced
 libnet
 endpat
@@ -50,6 +50,8 @@ ctl
 DNS
 dpi
 ffi
+fds
+FDs
 cdef
 HandleResponseHeaders
 cfgfile
@@ -220,6 +222,7 @@ Lst
 ParsedResponseLine
 ConstField
 LTS
+lvl
 libwww
 mpr
 dest
@@ -615,11 +618,13 @@ xg
 UnitTesting
 onEventResponseHeader
 IronBeeUtilLogformat
+tmpfile
 CHUNKING
 zd
 VX
 ConstTransactionData
 iobufp
+XXXXXX
 runnable
 actionname
 basedir
@@ -867,6 +872,7 @@ AhoCorasick
 ahocorasick
 xdata
 dereferenced
+fputs
 lineno
 AdsBot
 buflen
@@ -952,6 +958,7 @@ FOREACH
 getters
 exout
 Rincon
+IronBeeUtilPath
 nelem
 ptime
 ttoWrite
@@ -1005,6 +1012,7 @@ ConnDataOut
 ParsedNameValues
 ironbee
 IronBee
+compat
 Alfeld
 subnet
 ConstServer
@@ -1301,6 +1309,7 @@ free'ed
 ConnStarted
 fieldrently
 IronBeeModule
+mkdtemp
 UnitTest
 tlen
 NOTIMPL
@@ -1350,6 +1359,7 @@ IsType
 reindex
 tVConn
 dmode
+IronBeeUtilDecode
 xname
 hashequal
 uTorrent
@@ -1437,6 +1447,7 @@ uuid
 Downcased
 sogou
 decrypt
+mkpath
 onEventHandleResponse
 realloc'ed
 noKey

@@ -102,7 +102,7 @@ TEST_F(TestIBUtilDebug, trace_msg)
 
 TEST_F(TestIBUtilDebug, trace_function)
 {
-    SetFunctionName("trace_fuction");
+    SetFunctionName("trace_function");
     ib_trace_msg(__FILE__, __LINE__, FunctionNameC(), "here");
     ASSERT_TRUE ( GrepCurFn() ) << Cat() << std::endl;
     ASSERT_TRUE ( Grep("here") ) << Cat() << std::endl;

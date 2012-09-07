@@ -59,7 +59,7 @@ void DLL_PUBLIC ib_trace_init(const char *fn);
  *
  * @todo This will evolve into something much more useful.
  *
- * @param fp Filepointer for log tracing
+ * @param fp File pointer for log tracing
  */
 void DLL_PUBLIC ib_trace_init_fp(FILE *fp);
 
