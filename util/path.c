@@ -62,7 +62,9 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
 
-        if ((ppath = dirname(cpath)) == NULL) {
+        /* Some implementation returns a pointer to internal storage which
+         * may change in recursive calls.  So another copy. */
+        if ((ppath = strdup(dirname(cpath))) == NULL) {
             rc = IB_EINVAL;
             goto cleanup;
         }
@@ -88,6 +90,9 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
 cleanup:
     if (cpath != NULL) {
         free(cpath);
+    }
+    if (ppath != NULL) {
+        free(ppath);
     }
 
     IB_FTRACE_RET_STATUS(rc);
