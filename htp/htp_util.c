@@ -1601,7 +1601,8 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
 
         if (parsed_uri->hostname != NULL) bstr_free(&parsed_uri->hostname);
         parsed_uri->hostname = new_hostname;
-
+        parsed_uri->port_number = 0;
+        
         // Port
         int port = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(hostname) + colon + 1,
             bstr_len(hostname) - colon - 1, 10);
@@ -1614,8 +1615,6 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
                 // Port was specified in connection and is different from the TCP port
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request server port=%d number differs from the actual TCP port=%d", port, connp->conn->local_port);
             } else {
-                if (parsed_uri->hostname != NULL) bstr_free(&parsed_uri->hostname);
-                parsed_uri->hostname = new_hostname;
                 parsed_uri->port_number = port;                
             }
         }
