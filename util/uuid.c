@@ -41,7 +41,7 @@
  * every creation.  So we only keep one at reuse it.
  */
 static ib_lock_t  g_uuid_lock;
-uuid_t           *g_ossp_uuid = NULL;
+uuid_t           *g_ossp_uuid;
 
 ib_status_t ib_uuid_initialize(void)
 {
