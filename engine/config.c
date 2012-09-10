@@ -156,8 +156,9 @@ static char *find_eol(char *buf, size_t len, size_t *skip)
     lf = (char *)memchr(buf, '\n', len);
 
     if ( (cr != NULL) && (lf == (cr + 1)) ) {
-        *skip = 2;
+        *skip = 1;
         *cr = '\n';
+        *lf = ' ';
         IB_FTRACE_RET_STR(cr);
     }
     else if (lf != NULL) {
