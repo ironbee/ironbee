@@ -78,7 +78,6 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
                                    ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    ib_log_debug_tx(tx, "True operator returning 1");
     *result = 1;
 
     if (ib_rule_should_capture(rule, *result)) {

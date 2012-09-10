@@ -66,9 +66,9 @@ IB_MODULE_DECLARE();
  * Phase lookup table.
  */
 typedef struct {
-    const char       *str;
-    bool         is_stream;
-    ib_rule_phase_t   phase;
+    const char          *str;
+    bool                 is_stream;
+    ib_rule_phase_num_t  phase;
 } phase_lookup_t;
 static phase_lookup_t phase_lookup_table[] =
 {
@@ -110,7 +110,7 @@ static ib_lock_t g_lua_lock;
  */
 static ib_status_t lookup_phase(const char *str,
                                 bool is_stream,
-                                ib_rule_phase_t *phase)
+                                ib_rule_phase_num_t *phase)
 {
     IB_FTRACE_INIT();
     const phase_lookup_t *item;
@@ -715,7 +715,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
     /* Phase modifiers (Not valid for stream rules) */
     if (! ib_rule_is_stream(rule)) {
-        ib_rule_phase_t phase = PHASE_NONE;
+        ib_rule_phase_num_t phase = PHASE_NONE;
         if (strcasecmp(name, "phase") == 0) {
             if (value == NULL) {
                 ib_cfg_log_error(cp, "Modifier PHASE with no value");
@@ -728,7 +728,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             }
         }
         else {
-            ib_rule_phase_t tphase;
+            ib_rule_phase_num_t tphase;
             rc = lookup_phase(name, false, &tphase);
             if (rc == IB_OK) {
                 phase = tphase;
@@ -1288,7 +1288,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     IB_FTRACE_INIT();
     ib_status_t rc;
     const ib_list_node_t *node;
-    ib_rule_phase_t phase = PHASE_INVALID;
+    ib_rule_phase_num_t phase = PHASE_INVALID;
     const char *str;
     const char *operator;
     const char *operand;

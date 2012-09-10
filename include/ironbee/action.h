@@ -122,6 +122,7 @@ struct ib_action_inst_t {
     struct ib_action_t *action; /**< Pointer to the action type */
     ib_flags_t          flags;  /**< Action instance flags */
     void               *data;   /**< Data passed to the execute function */
+    const char         *params; /**< Text of parameters */
 };
 
 /** Action instance flags */

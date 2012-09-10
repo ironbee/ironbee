@@ -11,7 +11,8 @@ LoadModule "ibmod_ac.so"
 LoadModule "ibmod_rules.so"
 LoadModule "ibmod_user_agent.so"
 
-RuleEngineLogData RuleExec +Full +Debug +Trace
+RuleEngineLogData all
+RuleEngineLogLevel Debug
 
 Set parser "htp"
 

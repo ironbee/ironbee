@@ -115,6 +115,7 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
     }
     (*op_inst)->op = op;
     (*op_inst)->flags = flags;
+    (*op_inst)->params = ib_mpool_strdup(pool, parameters);
 
     if (op->fn_create != NULL) {
         rc = op->fn_create(ib, ctx, rule, pool, parameters, *op_inst);

@@ -127,9 +127,10 @@ struct ib_operator_t {
 #define IB_OP_FLAG_CAPTURE     (1 << 3)   /**< Op supports capture */
 
 struct ib_operator_inst_t {
-    struct ib_operator_t *op;    /**< Pointer to the operator type */
-    ib_flags_t            flags; /**< Operator instance flags */
-    void                 *data;  /**< Data passed to the execute function */
+    struct ib_operator_t *op;     /**< Pointer to the operator type */
+    ib_flags_t            flags;  /**< Operator instance flags */
+    void                 *data;   /**< Data passed to the execute function */
+    char                 *params; /**< Operator instance parameters */
 };
 
 /** Operator instance flags */

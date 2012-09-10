@@ -131,6 +131,41 @@ static ib_core_cfg_t core_global_cfg;
     IB_ALPART_HTTP_RESPONSE_METADATA|IB_ALPART_HTTP_RESPONSE_HEADER | \
     IB_ALPART_HTTP_RESPONSE_BODY|IB_ALPART_HTTP_RESPONSE_TRAILER
 
+
+/* Rule log parts amalgamation */
+#define IB_RULE_LOG_FLAGS_REQUEST                               \
+    ( IB_RULE_LOG_FLAG_REQ_LINE |                               \
+      IB_RULE_LOG_FLAG_REQ_HEADER |                             \
+      IB_RULE_LOG_FLAG_REQ_BODY )
+#define IB_RULE_LOG_FLAGS_RESPONSE                   \
+    ( IB_RULE_LOG_FLAG_RSP_LINE |                    \
+      IB_RULE_LOG_FLAG_RSP_HEADER |                  \
+      IB_RULE_LOG_FLAG_RSP_BODY )
+#define IB_RULE_LOG_FLAGS_EXEC                         \
+    ( IB_RULE_LOG_FLAG_PHASE |                         \
+      IB_RULE_LOG_FLAG_RULE |                          \
+      IB_RULE_LOG_FLAG_RULE_DATA |                     \
+      IB_RULE_LOG_FLAG_TFN |                           \
+      IB_RULE_LOG_FLAG_OPERATOR |                      \
+      IB_RULE_LOG_FLAG_ACTION )
+#define IB_RULE_LOG_FLAGS_ALL                                \
+    ( IB_RULE_LOG_FLAG_TX |                                  \
+      IB_RULE_LOG_FLAG_REQ_LINE |                            \
+      IB_RULE_LOG_FLAG_REQ_HEADER |                          \
+      IB_RULE_LOG_FLAG_REQ_BODY |                            \
+      IB_RULE_LOG_FLAG_RSP_LINE |                            \
+      IB_RULE_LOG_FLAG_RSP_HEADER |                          \
+      IB_RULE_LOG_FLAG_RSP_BODY |                            \
+      IB_RULE_LOG_FLAG_PHASE |                               \
+      IB_RULE_LOG_FLAG_RULE |                                \
+      IB_RULE_LOG_FLAG_RULE_DATA |                           \
+      IB_RULE_LOG_FLAG_TFN |                                 \
+      IB_RULE_LOG_FLAG_OPERATOR |                            \
+      IB_RULE_LOG_FLAG_ACTION |                              \
+      IB_RULE_LOG_FLAG_EVENT |                               \
+      IB_RULE_LOG_FLAG_AUDIT )
+
+
 /* -- Utilities -- */
 
 /**
@@ -3657,22 +3692,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         rc = ib_context_set_string(ctx, "auditlog_sdir_fmt", p1_unescaped);
         IB_FTRACE_RET_STATUS(rc);
     }
-    else if ( (strcasecmp("DebugLogLevel", name) == 0) ||
-              (strcasecmp("LogLevel", name) == 0) )
-    {
-        int num_read = 0;
-        long level = 0;
-        num_read = sscanf(p1_unescaped, "%ld", &level);
-        if (num_read == 0) {
-            level = ib_log_string_to_level(p1_unescaped);
-            if (level > IB_LOG_TRACE) {
-                IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-            }
-        }
-        ib_log_debug2(ib, "%s: %ld", name, level);
-        rc = ib_context_set_num(ctx, "logger.log_level", level);
-        IB_FTRACE_RET_STATUS(rc);
-    }
     /* Set the default block status for responding to blocked transactions. */
     else if (strcasecmp("DefaultBlockStatus", name) == 0) {
         int status;
@@ -3734,47 +3753,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     {
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
         rc = ib_context_set_string(ctx, "logger.log_handler", p1_unescaped);
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    else if (strcasecmp("RuleEngineLogLevel", name) == 0) {
-        ib_rule_log_level_t  level = IB_RULE_LOG_LEVEL_ERROR;
-        char                *p1_copy = ib_mpool_strdup(cp->mp, p1_unescaped);
-        char                *cur;
-
-        if (p1_copy == NULL) {
-            ib_cfg_log_error(cp, "Error copying \"%s\" for \"%s\"",
-                             p1_unescaped, name);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-
-        cur = strtok(p1_copy, ",");
-        do {
-            if (strcasecmp("Off", cur) == 0) {
-                level = IB_RULE_LOG_LEVEL_ERROR;
-                break;
-            }
-            else if (strcasecmp("Error", cur) == 0) {
-                level = IB_RULE_LOG_LEVEL_ERROR;
-            }
-            else if (strcasecmp("Warning", cur) == 0) {
-                level = IB_RULE_LOG_LEVEL_WARNING;
-            }
-            else if (strcasecmp("Debug", cur) == 0) {
-                level = IB_RULE_LOG_LEVEL_DEBUG;
-            }
-            else if (strcasecmp("Trace", cur) == 0) {
-                level = IB_RULE_LOG_LEVEL_TRACE;
-            }
-            else {
-                ib_log_error(ib,
-                             "Invalid value for %s: \"%s\"",
-                             name, cur);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-            }
-            cur = strtok(NULL, ",");
-        } while (cur != NULL);
-        ib_log_debug2(ib, "%s: %d", name, level);
-        rc = ib_context_set_num(ctx, "rule_log_level", level);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("LoadModule", name) == 0) {
@@ -3932,6 +3910,90 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
+static ib_status_t strval_pair_lookup(const char *name,
+                                      const ib_strval_t *map,
+                                      ib_num_t *pval)
+{
+    ib_strval_t *rec = (ib_strval_t *)map;
+
+    while (rec->str != NULL) {
+        if (strcasecmp(name, rec->str) == 0) {
+            *pval = rec->val;
+            return IB_OK;
+        }
+        ++rec;
+    }
+
+    *pval = 0;
+
+    return IB_EINVAL;
+}
+
+/**
+ * Handle loglevel directives.
+ *
+ * @param cp Config parser
+ * @param name Directive name
+ * @param p1 First parameter
+ * @param cbdata Callback data (from directive registration)
+ *
+ * @returns Status code
+ */
+static ib_status_t core_dir_loglevel(ib_cfgparser_t *cp,
+                                     const char *name,
+                                     const char *p1,
+                                     void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(cbdata != NULL);
+
+    ib_engine_t *ib = cp->ib;
+    ib_status_t rc;
+    const ib_strval_t *map = (const ib_strval_t *)cbdata;
+    ib_context_t *ctx;
+    ib_num_t level;
+    long tmp = 0;
+
+    assert(name != NULL);
+    assert(p1 != NULL);
+
+    ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+
+    if (sscanf(p1, "%ld", &tmp) != 0) {
+        level = tmp;
+    }
+    else {
+        rc = strval_pair_lookup(p1, map, &level);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        }
+    }
+
+    if ( (strcasecmp("DebugLogLevel", name) == 0) ||
+         (strcasecmp("LogLevel", name) == 0) )
+    {
+        ib_log_debug2(ib, "%s: %u", name, (unsigned int)level);
+        rc = ib_context_set_num(ctx, "logger.log_level", level);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (strcasecmp("RuleEngineLogLevel", name) == 0) {
+        ib_log_debug2(ib, "%s: %u", name, (unsigned int)level);
+        rc = ib_context_set_num(ctx, "rule_log_level", level);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    else if (strcasecmp("RuleEngineDebugLogLevel", name) == 0) {
+        ib_log_debug2(ib, "%s: %u", name, (unsigned int)level);
+        rc = ib_context_set_num(ctx, "rule_debug_log_level", level);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_log_error(ib, "Unhandled directive: %s %s", name, p1);
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
+}
+
 /**
  * Handle single parameter directives.
  *
@@ -3970,124 +4032,82 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
 }
 
 /**
- * Handle rule log data directive.
+ * Handle single parameter directives.
  *
  * @param cp Config parser
  * @param name Directive name
- * @param vars Arguments to directive.
+ * @param flags Flags
+ * @param fmask Flags mask (which bits were actually set)
  * @param cbdata Callback data (from directive registration)
  *
  * @returns Status code
  */
-static ib_status_t core_dir_rulelogdata(ib_cfgparser_t *cp,
-                                        const char *name,
-                                        const ib_list_t *vars,
-                                        void *cbdata)
+static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
+                                          const char *name,
+                                          ib_flags_t flags,
+                                          ib_flags_t fmask,
+                                          void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
-    const ib_list_node_t *node;
-    ib_rule_log_mode_t log_mode;
-    ib_flags_t log_flags;
-    const char *modestr;
-    ib_status_t rc = IB_OK;
     ib_num_t tmp;
-    bool first = true;
+    ib_flags_t log_flags;
+    ib_flags_t new_mode_flags;
+    int num_mode_flags;
+    ib_status_t rc;
 
-    if (cbdata != NULL) {
-        IB_FTRACE_MSG("Callback data is not null.");
-    }
-
-    /* Get current rule logging type */
-    rc = ib_context_get(ctx, "rule_log_mode", ib_ftype_num_out(&tmp), NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    log_mode = (ib_rule_log_mode_t)tmp;
-
-    /* Get current rule logging flags */
     rc = ib_context_get(ctx, "rule_log_flags", ib_ftype_num_out(&tmp), NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    log_flags = (ib_flags_t)tmp;
+    log_flags = tmp;
 
-    /* Loop through all of the parameters in the list */
-    IB_LIST_LOOP_CONST(vars, node) {
-        const char *param = (const char *)node->data;
-        char modifier = '\0';
-        const char *pname = param;
+    /* Make sure that only one of the mode bits is set */
+    new_mode_flags = (flags & IB_RULE_LOG_MODE_MASK);
+    num_mode_flags = 0;
+    if (new_mode_flags) {
+        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_ALL);
+        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_ACT);
+        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_ERROR);
+        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_TRUE);
+        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_FALSE);
+    }
+    if (num_mode_flags > 1) {
+        ib_cfg_log_error(cp, "More than one rule log mode set");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    /* Note: At this point, new_mode_flags should have 0 or 1 bits set */
 
-        if ( (*pname == '+') || (*pname == '-') ) {
-            modifier = *pname;
-            ++pname;
-        }
+    /* Merge the set flags with the previous value. */
+    log_flags = (flags & fmask) | (log_flags & ~fmask);
 
-        if (first && (strcasecmp(param, "None") == 0)) {
-            log_mode = IB_RULE_LOG_MODE_OFF;
-        }
-        else if (first && (strcasecmp(param, "Fast") == 0)) {
-            log_mode = IB_RULE_LOG_MODE_FAST;
-        }
-        else if (first && (strcasecmp(param, "RuleExec") == 0)) {
-            log_mode = IB_RULE_LOG_MODE_EXEC;
-            ib_flags_set(log_flags, IB_RULE_LOG_FLAG_FULL);
-        }
-        else if (strcasecmp(pname, "Full") == 0) {
-            if (modifier == '-') {
-                ib_flags_clear(log_flags, IB_RULE_LOG_FLAG_FULL);
-            }
-            else {
-                ib_flags_set(log_flags, IB_RULE_LOG_FLAG_FULL);
-            }
-        }
-        else if (strcasecmp(pname, "Debug") == 0) {
-            if (modifier == '-') {
-                ib_flags_clear(log_flags, IB_RULE_LOG_FLAG_DEBUG);
-            }
-            else {
-                ib_flags_set(log_flags, IB_RULE_LOG_FLAG_DEBUG);
-            }
-        }
-        else if (strcasecmp(pname, "Trace") == 0) {
-            if (modifier == '-') {
-                ib_flags_clear(log_flags, IB_RULE_LOG_FLAG_TRACE);
-            }
-            else {
-                ib_flags_set(log_flags, IB_RULE_LOG_FLAG_TRACE);
-            }
+    /* Count the number of mode flag bits set now... */
+    num_mode_flags = 0;
+    if (ib_flags_any(log_flags, IB_RULE_LOG_MODE_MASK) ) {
+        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_ALL);
+        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_ACT);
+        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_ERROR);
+        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_TRUE);
+        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_FALSE);
+    }
+
+    /* Now, ensure that there is exactly one mode bit set */
+    if (num_mode_flags != 1) {
+        ib_flags_clear(log_flags, IB_RULE_LOG_MODE_MASK);
+        if (new_mode_flags) {
+            ib_flags_set(log_flags, new_mode_flags);
         }
         else {
-            ib_cfg_log_error(cp, "Invalid %s parameter \"%s\"", name, param);
-            rc = IB_EINVAL;
-            continue;
+            ib_flags_set(log_flags, IB_RULE_LOG_FLAG_MODE_ALL);
         }
-        first = false;
     }
 
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    ib_log_debug2(ib, "RULE ENGINE LOG FLAGS: 0x%08lu",
+                  (unsigned long)log_flags);
 
-    /* Get mode as a string */
-    modestr = ib_rule_log_mode_str(log_mode);
-    ib_log_debug2(ib, "Rule Log Mode: %s", modestr);
-    ib_log_debug2(ib, "Rule Log flags: %02x", log_flags);
-
-    rc = ib_context_set_num(ctx, "rule_log_mode", log_mode);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error setting log mode to %s: %s",
-                         modestr, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
     rc = ib_context_set_num(ctx, "rule_log_flags", log_flags);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error setting log flags to %02x: %s",
-                         log_flags, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -4237,9 +4257,40 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
 
 
 /**
+ * Mapping of valid debug log levels to numerical value
+ */
+static IB_STRVAL_MAP(core_debuglog_levels_map) = {
+    IB_STRVAL_PAIR("emergency", IB_LOG_EMERGENCY),
+    IB_STRVAL_PAIR("alert", IB_LOG_ALERT),
+    IB_STRVAL_PAIR("critical", IB_LOG_CRITICAL),
+    IB_STRVAL_PAIR("error", IB_LOG_ERROR),
+    IB_STRVAL_PAIR("warning", IB_LOG_WARNING),
+    IB_STRVAL_PAIR("notice", IB_LOG_NOTICE),
+    IB_STRVAL_PAIR("info", IB_LOG_INFO),
+    IB_STRVAL_PAIR("debug", IB_LOG_DEBUG),
+    IB_STRVAL_PAIR("debug2", IB_LOG_DEBUG2),
+    IB_STRVAL_PAIR("debug3", IB_LOG_DEBUG3),
+    IB_STRVAL_PAIR("trace", IB_LOG_TRACE),
+    IB_STRVAL_PAIR_LAST
+};
+
+/**
+ * Mapping of valid debug rule debug levels to numerical value
+ */
+static IB_STRVAL_MAP(core_ruledebuglog_levels_map) = {
+    IB_STRVAL_PAIR("error", IB_RULE_LOG_LEVEL_ERROR),
+    IB_STRVAL_PAIR("warning", IB_RULE_LOG_LEVEL_WARNING),
+    IB_STRVAL_PAIR("notice", IB_RULE_LOG_LEVEL_NOTICE),
+    IB_STRVAL_PAIR("info", IB_RULE_LOG_LEVEL_INFO),
+    IB_STRVAL_PAIR("debug", IB_RULE_LOG_LEVEL_DEBUG),
+    IB_STRVAL_PAIR("trace", IB_RULE_LOG_LEVEL_TRACE),
+    IB_STRVAL_PAIR_LAST
+};
+
+/**
  * Mapping of valid audit log part names to flag values.
  */
-static IB_STRVAL_MAP(core_parts_map) = {
+static IB_STRVAL_MAP(core_auditlog_parts_map) = {
     /* Auditlog Part Groups */
     IB_STRVAL_PAIR("none", 0),
     IB_STRVAL_PAIR("minimal", IB_ALPART_HEADER|IB_ALPART_EVENTS),
@@ -4261,6 +4312,44 @@ static IB_STRVAL_MAP(core_parts_map) = {
     IB_STRVAL_PAIR("responsebody", IB_ALPART_HTTP_RESPONSE_BODY),
     IB_STRVAL_PAIR("responsetrailer", IB_ALPART_HTTP_RESPONSE_TRAILER),
     IB_STRVAL_PAIR("debugfields", IB_ALPART_DEBUG_FIELDS),
+
+    /* End */
+    IB_STRVAL_PAIR_LAST
+};
+
+/**
+ * Mapping of valid rule logging names to flag values.
+ */
+static IB_STRVAL_MAP(core_rulelog_flags_map) = {
+    /* Rule log Flag Groups */
+    IB_STRVAL_PAIR("all", IB_RULE_LOG_FLAGS_ALL),
+    IB_STRVAL_PAIR("request", IB_RULE_LOG_FLAGS_REQUEST),
+    IB_STRVAL_PAIR("response", IB_RULE_LOG_FLAGS_RESPONSE),
+    IB_STRVAL_PAIR("ruleExec", IB_RULE_LOG_FLAGS_EXEC),
+
+    /* Rule log Individual flags */
+    IB_STRVAL_PAIR("tx", IB_RULE_LOG_FLAG_TX),
+    IB_STRVAL_PAIR("requestLine", IB_RULE_LOG_FLAG_REQ_LINE),
+    IB_STRVAL_PAIR("requestHeader", IB_RULE_LOG_FLAG_REQ_HEADER),
+    IB_STRVAL_PAIR("requestBody", IB_RULE_LOG_FLAG_REQ_BODY),
+    IB_STRVAL_PAIR("responseLine", IB_RULE_LOG_FLAG_RSP_LINE),
+    IB_STRVAL_PAIR("responseHeader", IB_RULE_LOG_FLAG_RSP_HEADER),
+    IB_STRVAL_PAIR("responseBody", IB_RULE_LOG_FLAG_RSP_BODY),
+    IB_STRVAL_PAIR("phase", IB_RULE_LOG_FLAG_PHASE),
+    IB_STRVAL_PAIR("rule", IB_RULE_LOG_FLAG_RULE),
+    IB_STRVAL_PAIR("ruleData", IB_RULE_LOG_FLAG_RULE_DATA),
+    IB_STRVAL_PAIR("transformation", IB_RULE_LOG_FLAG_TFN),
+    IB_STRVAL_PAIR("operator", IB_RULE_LOG_FLAG_OPERATOR),
+    IB_STRVAL_PAIR("action", IB_RULE_LOG_FLAG_ACTION),
+    IB_STRVAL_PAIR("event", IB_RULE_LOG_FLAG_EVENT),
+    IB_STRVAL_PAIR("audit", IB_RULE_LOG_FLAG_AUDIT),
+    IB_STRVAL_PAIR("timing", IB_RULE_LOG_FLAG_TIMING),
+
+    IB_STRVAL_PAIR("allRules", IB_RULE_LOG_FLAG_MODE_ALL),
+    IB_STRVAL_PAIR("actionableRulesOnly", IB_RULE_LOG_FLAG_MODE_ACT),
+    IB_STRVAL_PAIR("operatorErrorOnly", IB_RULE_LOG_FLAG_MODE_ERROR),
+    IB_STRVAL_PAIR("returnedTrueOnly", IB_RULE_LOG_FLAG_MODE_TRUE),
+    IB_STRVAL_PAIR("returnedFalseOnly", IB_RULE_LOG_FLAG_MODE_FALSE),
 
     /* End */
     IB_STRVAL_PAIR_LAST
@@ -4323,8 +4412,8 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     /* Logging */
     IB_DIRMAP_INIT_PARAM1(
         "DebugLogLevel",
-        core_dir_param1,
-        NULL
+        core_dir_loglevel,
+        core_debuglog_levels_map
     ),
     IB_DIRMAP_INIT_PARAM1(
         "DebugLog",
@@ -4338,8 +4427,8 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     ),
     IB_DIRMAP_INIT_PARAM1(
         "LogLevel",
-        core_dir_param1,
-        NULL
+        core_dir_loglevel,
+        core_debuglog_levels_map
     ),
     IB_DIRMAP_INIT_PARAM1(
         "Log",
@@ -4425,7 +4514,7 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         "AuditLogParts",
         core_dir_auditlogparts,
         NULL,
-        core_parts_map
+        core_auditlog_parts_map
     ),
 
     /* Search Paths - Modules */
@@ -4442,16 +4531,22 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL
     ),
 
-    /* Rule logging level */
-    IB_DIRMAP_INIT_LIST(
+    /* Rule logging data */
+    IB_DIRMAP_INIT_OPFLAGS(
         "RuleEngineLogData",
-        core_dir_rulelogdata,
-        NULL
+        core_dir_rulelog_data,
+        NULL,
+        core_rulelog_flags_map
     ),
     IB_DIRMAP_INIT_PARAM1(
         "RuleEngineLogLevel",
-        core_dir_param1,
-        NULL
+        core_dir_loglevel,
+        core_debuglog_levels_map
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "RuleEngineDebugLogLevel",
+        core_dir_loglevel,
+        core_ruledebuglog_levels_map
     ),
 
     /* End */
@@ -4501,36 +4596,36 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_status_t rc;
 
     /* Get the core module config. */
-    rc = ib_context_module_config(ib->ctx, m,
-                                  (void *)&corecfg);
+    rc = ib_context_module_config(ib->ctx, m, (void *)&corecfg);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch core module config: %s", ib_status_to_string(rc));
+        ib_log_alert(ib, "Failed to fetch core module config: %s",
+                     ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Set defaults */
-    corecfg->log_level          = 4;
-    corecfg->log_uri            = "";
-    corecfg->log_handler        = MODULE_NAME_STR;
-    corecfg->logevent           = MODULE_NAME_STR;
-    corecfg->parser             = MODULE_NAME_STR;
-    corecfg->buffer_req         = 0;
-    corecfg->buffer_res         = 0;
-    corecfg->audit_engine       = 0;
-    corecfg->auditlog_dmode     = 0700;
-    corecfg->auditlog_fmode     = 0600;
-    corecfg->auditlog_parts     = IB_ALPARTS_DEFAULT;
-    corecfg->auditlog_dir       = "/var/log/ironbee";
-    corecfg->auditlog_sdir_fmt  = "";
-    corecfg->auditlog_index_fmt = IB_LOGFORMAT_DEFAULT;
-    corecfg->audit              = MODULE_NAME_STR;
-    corecfg->data               = MODULE_NAME_STR;
-    corecfg->module_base_path   = X_MODULE_BASE_PATH;
-    corecfg->rule_base_path     = X_RULE_BASE_PATH;
-    corecfg->rule_log_mode      = IB_RULE_LOG_MODE_OFF;
-    corecfg->rule_log_flags     = IB_RULE_LOG_FLAG_NONE;
-    corecfg->rule_log_level     = IB_RULE_LOG_LEVEL_ERROR;
-    corecfg->block_status       = 403;
+    corecfg->log_level            = 4;
+    corecfg->log_uri              = "";
+    corecfg->log_handler          = MODULE_NAME_STR;
+    corecfg->logevent             = MODULE_NAME_STR;
+    corecfg->parser               = MODULE_NAME_STR;
+    corecfg->buffer_req           = 0;
+    corecfg->buffer_res           = 0;
+    corecfg->audit_engine         = 0;
+    corecfg->auditlog_dmode       = 0700;
+    corecfg->auditlog_fmode       = 0600;
+    corecfg->auditlog_parts       = IB_ALPARTS_DEFAULT;
+    corecfg->auditlog_dir         = "/var/log/ironbee";
+    corecfg->auditlog_sdir_fmt    = "";
+    corecfg->auditlog_index_fmt   = IB_LOGFORMAT_DEFAULT;
+    corecfg->audit                = MODULE_NAME_STR;
+    corecfg->data                 = MODULE_NAME_STR;
+    corecfg->module_base_path     = X_MODULE_BASE_PATH;
+    corecfg->rule_base_path       = X_RULE_BASE_PATH;
+    corecfg->rule_log_flags       = IB_RULE_LOG_FLAG_MODE_ALL;
+    corecfg->rule_log_level       = IB_RULE_LOG_LEVEL_ERROR;
+    corecfg->rule_debug_log_level = IB_LOG_INFO;
+    corecfg->block_status         = 403;
 
     /* Define the logger provider API. */
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_LOGGER,
@@ -4794,12 +4889,6 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
 
     /* Rule logging */
     IB_CFGMAP_INIT_ENTRY(
-        "rule_log_mode",
-        IB_FTYPE_NUM,
-        ib_core_cfg_t,
-        rule_log_mode
-    ),
-    IB_CFGMAP_INIT_ENTRY(
         "rule_log_flags",
         IB_FTYPE_NUM,
         ib_core_cfg_t,
@@ -4810,6 +4899,12 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_FTYPE_NUM,
         ib_core_cfg_t,
         rule_log_level
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "rule_debug_log_level",
+        IB_FTYPE_NUM,
+        ib_core_cfg_t,
+        rule_debug_log_level
     ),
 
     /* Parser */

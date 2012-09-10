@@ -81,7 +81,7 @@ typedef struct {
     const char            *msg;             /**< Rule message */
     const char            *data;            /**< Rule logdata */
     ib_list_t             *tags;            /**< Rule tags */
-    ib_rule_phase_t        phase;           /**< Phase number */
+    ib_rule_phase_num_t    phase;           /**< Phase number */
     uint8_t                severity;        /**< Rule severity */
     uint8_t                confidence;      /**< Rule confidence */
     uint16_t               revision;        /**< Rule revision # */
@@ -144,7 +144,7 @@ typedef struct {
  *  rule_list is a list of pointers to ib_rule_ctx_data_t objects.
  */
 typedef struct {
-    ib_rule_phase_t             phase_num;   /**< Phase number */
+    ib_rule_phase_num_t         phase_num;   /**< Phase number */
     const ib_rule_phase_meta_t *phase_meta;  /**< Rule phase meta-data */
     ib_list_t                  *rule_list;   /**< Rules to execute in phase */
 } ib_ruleset_phase_t;
@@ -375,7 +375,7 @@ ib_status_t ib_rule_disable_tag(const ib_engine_t *ib,
  */
 ib_status_t ib_rule_set_phase(ib_engine_t *ib,
                               ib_rule_t *rule,
-                              ib_rule_phase_t phase);
+                              ib_rule_phase_num_t phase);
 
 /**
  * Query as to whether a rule allow transformations
@@ -637,7 +637,7 @@ bool ib_rule_should_capture(const ib_rule_t *rule,
  * @warning There is currently a 1024 byte formatter limit when prefixing the
  *          log header data.
  *
- * @param[in] level Log level
+ * @param[in] level Rule log level
  * @param[in] tx Transaction information
  * @param[in] rule Rule to log (or NULL)
  * @param[in] target Rule target (or NULL)
@@ -666,7 +666,7 @@ void ib_rule_vlog(ib_rule_log_level_t level,
  * @warning There is currently a 1024 byte formatter limit when prefixing the
  *          log header data.
  *
- * @param[in] level Log level
+ * @param[in] level Rule log level
  * @param[in] tx Transaction information
  * @param[in] rule Rule to log (or NULL)
  * @param[in] target Rule target (or NULL)
@@ -691,26 +691,32 @@ void ib_rule_log(ib_rule_log_level_t level,
  * Rule execution logging
  *
  * @param[in] log_exec Rule logging execution object
- * @param[in] file Source file name
- * @param[in] line Source line number
  */
-void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec,
-                         const char *file,
-                         int line);
+void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec);
 
 /** Rule execution logging */
 #define ib_rule_log_exec(log_exec) \
-    ib_rule_log_exec_ex(log_exec, __FILE__, __LINE__)
+    ib_rule_log_exec_ex(log_exec)
 
 /** Rule error logging */
 #define ib_rule_log_error(tx, rule, target, tfn, ...) \
     ib_rule_log(IB_RULE_LOG_LEVEL_ERROR, tx, rule, target, tfn, \
                 "ERROR", __FILE__, __LINE__, __VA_ARGS__)
 
-/** Rule full logging */
+/** Rule warning logging */
 #define ib_rule_log_warn(tx, rule, target, tfn, ...) \
     ib_rule_log(IB_RULE_LOG_LEVEL_WARNING, tx, rule, target, tfn, \
                 "WARNING", __FILE__, __LINE__, __VA_ARGS__)
+
+/** Rule notice logging */
+#define ib_rule_log_notice(tx, rule, target, tfn, ...) \
+    ib_rule_log(IB_RULE_LOG_LEVEL_NOTICE, tx, rule, target, tfn, \
+                "NOTICE", __FILE__, __LINE__, __VA_ARGS__)
+
+/** Rule info logging */
+#define ib_rule_log_info(tx, rule, target, tfn, ...) \
+    ib_rule_log(IB_RULE_LOG_LEVEL_INFO, tx, rule, target, tfn, \
+                "INFO", __FILE__, __LINE__, __VA_ARGS__)
 
 /** Rule debug logging */
 #define ib_rule_log_debug(tx, rule, target, tfn, ...) \

@@ -91,9 +91,9 @@ struct ib_core_cfg_t {
     const char      *data;              /**< Active data provider key */
     const char      *module_base_path;  /**< Module base path. */
     const char      *rule_base_path;    /**< Rule base path. */
-    ib_rule_log_mode_t rule_log_mode;   /**< Rule execution logging mode */
-    ib_flags_t       rule_log_flags;    /**< Rule execution logging flags */
-    ib_rule_log_level_t rule_log_level; /**< Rule debug logging level */
+    ib_num_t         rule_log_flags;    /**< Rule execution logging flags */
+    ib_num_t         rule_log_level;    /**< Rule execution logging level */
+    ib_num_t         rule_debug_log_level; /**< Rule debug logging level */
     ib_num_t         block_status;      /**< Status codes when blocking. */
 };
 

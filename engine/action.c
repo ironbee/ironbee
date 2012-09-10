@@ -107,6 +107,7 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
     }
     (*act_inst)->action = action;
     (*act_inst)->flags = flags;
+    (*act_inst)->params = ib_mpool_strdup(pool, parameters);
 
     if (action->fn_create != NULL) {
         rc = action->fn_create(

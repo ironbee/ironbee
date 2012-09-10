@@ -631,7 +631,7 @@ static ib_status_t expand_data(
                 label,
                 setvar_data->name);
 
-            if (ib_rule_log_level(tx->ib) >= IB_RULE_LOG_LEVEL_TRACE) {
+            if (ib_rule_debug_log_level(tx->ctx) >= IB_RULE_LOG_LEVEL_TRACE) {
                 const char* hex_coded = ib_util_hex_escape(bsdata, bslen);
                 if (hex_coded != NULL) {
                     ib_rule_log_debug(
