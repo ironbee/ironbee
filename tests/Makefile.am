@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I../acinclude
 
 include $(top_srcdir)/build/tests.mk
 
-LIBUTIL_LDADD = $(top_builddir)/util/libibutil.la
+LIBUTIL_LDADD = $(top_builddir)/util/libibutil.la $(PCRE_LDADD)
 noinst_LIBRARIES = libgtest.a libgtest_main.a
 
 libgtest_a_SOURCES = gtest/gtest-all.cc
