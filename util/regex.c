@@ -24,7 +24,7 @@
 
 /* Compiling with DOXYGEN will leave ib_rx_nmatch unimplemented */
 #ifdef DOXYGEN
-#error Don't compile with DOXYGEN!
+#error "Don't compile with DOXYGEN!"
 #endif
 
 #define HUGE_STRING_LEN 8192
