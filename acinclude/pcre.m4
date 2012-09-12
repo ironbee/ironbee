@@ -63,7 +63,7 @@ if test -n "${pcre_path}"; then
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(pcre VERSION: $PCRE_VERSION); fi
     PCRE_CFLAGS="`${PCRE_CONFIG} --cflags`"
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(pcre CFLAGS: $PCRE_CFLAGS); fi
-    PCRE_LDADD="`${PCRE_CONFIG} --libs-posix`"
+    PCRE_LDADD="`${PCRE_CONFIG} --libs`"
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(pcre LDADD: $PCRE_LDADD); fi
 else
     AC_MSG_RESULT([no])

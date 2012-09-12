@@ -9,7 +9,6 @@ libibutil_la_SOURCES = lock.c util.c logformat.c \
                        cfgmap.c ahocorasick.c expand.c \
                        string.c strlower.c strtrim.c strwspc.c \
                        path.c \
-                       regex.c \
                        decode.c \
                        escape.c \
                        modsec_compat.c \

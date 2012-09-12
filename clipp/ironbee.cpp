@@ -454,7 +454,6 @@ ib_status_t clipp_header(
     ib_server_header_action_t action,
     const char*               hdr,
     const char*               value,
-    ib_rx_t*                  rx,
     void*
 )
 {
@@ -466,7 +465,6 @@ ib_status_t clipp_header(
         "merge",
         "add",
         "unset"
-        "edit"
     };
 
     ib_log_alert_tx(tx,

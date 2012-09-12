@@ -369,9 +369,7 @@
 // won't compile otherwise.  We can #include it here as we already
 // included <stdlib.h>, which is guaranteed to define size_t through
 // <stddef.h>.
-
-/* regex.h clashes with pcreposix.h included through many files ... */
-# include <pcreposix.h>  // NOLINT
+# include <regex.h>  // NOLINT
 
 # define GTEST_USES_POSIX_RE 1
 

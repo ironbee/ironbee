@@ -47,7 +47,6 @@
 #include <ironbee/core.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/util.h>
-#include <ironbee/regex.h>
 #include <ironbee/debug.h>
 
 
@@ -134,7 +133,6 @@ typedef struct hdr_action_t {
     ib_server_direction_t dir;
     const char *hdr;
     const char *value;
-    ib_rx_t *rx;
     struct hdr_action_t *next;
 } hdr_action_t;
 
@@ -236,7 +234,7 @@ static bool is_error_status(int status)
 static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
                                       ib_server_header_action_t action,
                                       const char *hdr, const char *value,
-                                      ib_rx_t *rx, void *cbdata)
+                                      void *cbdata)
 {
     ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
     hdr_action_t *header;
@@ -248,16 +246,6 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
         (ctx->state & HDRS_IN && dir == IB_SERVER_REQUEST))
         return IB_ENOTIMPL;  /* too late for requested op */
 
-    if (action == IB_HDR_EDIT) {
-        if (rx == NULL) {
-            rx = ib_rx_compile(tx->mp, value);
-            if (rx == NULL) {
-                TSError("Failed to parse '%s' as a regexp", value);
-                return IB_EINVAL;
-            }
-        }
-    }
-
     header = TSmalloc(sizeof(*header));
     header->next = ctx->hdr_actions;
     ctx->hdr_actions = header;
@@ -266,7 +254,6 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
     header->action = action = action == IB_HDR_MERGE ? IB_HDR_APPEND : action;
     header->hdr = TSstrdup(hdr);
     header->value = TSstrdup(value);
-    header->rx = rx;
 
     return IB_OK;
 }
@@ -1003,15 +990,12 @@ static int next_line(const char **linep, size_t *lenp)
     return rv;
 }
 
-static void header_action(TSMBuffer bufp, TSMLoc hdr_loc,
-                          const hdr_action_t *act, ib_mpool_t *pool)
+static void header_action(TSMBuffer bufp,
+                          TSMLoc hdr_loc,
+                          const hdr_action_t *act)
 {
     TSMLoc field_loc;
     int rv;
-    char *oldval;
-    char *newval;
-    int len;
-    int nmatch;
 
     switch (act->action) {
 
@@ -1079,37 +1063,6 @@ add_hdr:
         }
         TSHandleMLocRelease(bufp, hdr_loc, field_loc);
         break;
-
-    case IB_HDR_EDIT: /* apply regexp */
-        TSDebug("ironbee", "Apply regexp %s to %s",
-                act->hdr, act->value);
-        field_loc = TSMimeHdrFieldFind(bufp, hdr_loc, act->hdr,
-                                       strlen(act->hdr));
-        if (field_loc == TS_NULL_MLOC) {
-            TSDebug("ironbee", "No %s header found", act->hdr);
-            break;
-        }
-        /* Get the current value of the header */
-        oldval = (char*) TSMimeHdrFieldValueStringGet(bufp, hdr_loc, field_loc,
-                                                      0, &len);
-        /* We need a string for rx */
-        oldval = TSstrndup(oldval, len);
-        nmatch = ib_rx_exec(pool, act->rx, oldval, &newval, NULL);
-        TSfree(oldval);
-
-        /* nmatch is positive iff the regex substitution changed anything */
-        if (nmatch > 0) {
-            TSDebug("ironbee", "Transformed to '%s'", newval);
-            if (TSMimeHdrFieldValuesClear(bufp, hdr_loc, field_loc)
-                    != TS_SUCCESS) {
-                TSError("Failed to clear header\n");
-            }
-            if (TSMimeHdrFieldValueStringInsert(bufp, hdr_loc, field_loc, 0,
-                                                newval, strlen(newval))
-                    != TS_SUCCESS) {
-                TSError("Failed to update header\n");
-            }
-        }
 
     default:  /* bug !! */
         TSDebug("ironbee", "Bogus header action %d", act->action);
@@ -1354,7 +1307,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     if (site != NULL) {
         setact.hdr = "@IB-SITE-ID";
         setact.value = site->id_str;
-        header_action(bufp, hdr_loc, &setact, data->tx->mp);
+        header_action(bufp, hdr_loc, &setact);
     }
     else {
         TSDebug("ironbee", "No site available for @IB-SITE-ID");
@@ -1363,7 +1316,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     /* Add internal header for effective IP address */
     setact.hdr = "@IB-EFFECTIVE-IP";
     setact.value = data->tx->er_ipstr;
-    header_action(bufp, hdr_loc, &setact, data->tx->mp);
+    header_action(bufp, hdr_loc, &setact);
 
     /* Now manipulate header as requested by ironbee */
     for (act = data->hdr_actions; act != NULL; act = act->next) {
@@ -1371,18 +1324,18 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
             continue;    /* it's not for us */
 
         TSDebug("ironbee", "Manipulating HTTP headers");
-        header_action(bufp, hdr_loc, act, data->tx->mp);
+        header_action(bufp, hdr_loc, act);
     }
 
     /* Add internal header if we blocked the transaction */
     setact.hdr = "@IB-BLOCK-FLAG";
     if ((data->tx->flags & (IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE)) != 0) {
         setact.value = "blocked";
-        header_action(bufp, hdr_loc, &setact, data->tx->mp);
+        header_action(bufp, hdr_loc, &setact);
     }
     else if (data->tx->flags & IB_TX_BLOCK_ADVISORY) {
         setact.value = "advisory";
-        header_action(bufp, hdr_loc, &setact, data->tx->mp);
+        header_action(bufp, hdr_loc, &setact);
     }
 
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
@@ -1553,7 +1506,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             txndata->state |= START_RESPONSE;
 
-            /* Feed ironbee the headers if not done already. */
+            /* Feed ironbee the headers if not done alread. */
             if (!ib_tx_flags_isset(txndata->tx, IB_TX_FRES_STARTED)) {
                 status = process_hdr(txndata, txnp, &ib_direction_client_resp);
             }
