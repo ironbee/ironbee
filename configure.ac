@@ -555,6 +555,5 @@ AC_CONFIG_FILES([ironbee.pc])
 # doxygen
 AC_CONFIG_FILES([docs/internal.doxy])
 AC_CONFIG_FILES([docs/external.doxy])
-AC_CONFIG_FILES([docs/fulldocs.doxy])
 
 AC_OUTPUT
