@@ -304,13 +304,21 @@ fi
 
 DOXYGEN=$doxygen
 
-dnl TODO: Use these to gen doxygen configs
-DOXYGEN_INPUT="include util engine modules servers tests"
-DOXYGEN_FILES=`find $DOXYGEN_INPUT -type f -regex '.*\.\(h\|c\|cc\)$' | grep -v 'tests/gtest/\|libs/'`
-DOXYGEN_DEPS=""
-dnl Make deps into a single line with relative path from docs dir
-for f in $DOXYGEN_FILES; do
-    DOXYGEN_DEPS="$DOXYGEN_DEPS ../$f"
+DOXYGEN_DIRS="include util engine modules plugins automata"
+EXTERNAL_DOXYGEN_FILES=`cd $srcdir;find -E $DOXYGEN_DIRS -type f -regex '.*\.(h|hpp|hh)'`
+INTERNAL_DOXYGEN_FILES=`cd $srcdir;find -E $DOXYGEN_DIRS -type f -regex '.*\.(h|hpp|c|cpp|cc)'`
+DOXYGEN_INPUT=""
+DOXYGEN_TOP=`cd $srcdir;pwd`
+for dir in $DOXYGEN_DIRS; do
+    DOXYGEN_INPUT="$DOXYGEN_INPUT $DOXYGEN_TOP/$dir"
+done
+DOXYGEN_EXTERNAL_DEPS=""
+for f in $EXTERNAL_DOXYGEN_FILES; do
+    DOXYGEN_EXTERNAL_DEPS="$DOXYGEN_EXTERNAL_DEPS \$(abs_top_srcdir)/$f"
+done
+DOXYGEN_INTERNAL_DEPS=""
+for f in $INTERNAL_DOXYGEN_FILES; do
+    DOXYGEN_INTERNAL_DEPS="$DOXYGEN_INTERNAL_DEPS \$(abs_top_srcdir)/$f"
 done
 
 ### Java
@@ -507,13 +515,15 @@ AC_SUBST(TOPLEVEL_SUBDIRS)
 AC_SUBST(LIBS_SUBDIRS)
 AC_SUBST(SERVERS_SUBDIRS)
 AC_SUBST(RAGEL)
-AC_SUBST(DOXYGEN)
-AC_SUBST(DOXYGEN_INPUT)
-AC_SUBST(DOXYGEN_DEPS)
 AC_SUBST(JAVA)
 AC_SUBST(VALGRIND)
 AC_SUBST(LDFLAGS)
 AC_SUBST(IB_DEBUG)
+AC_SUBST(DOXYGEN)
+AC_SUBST(DOXYGEN_EXTERNAL_DEPS)
+AC_SUBST(DOXYGEN_INTERNAL_DEPS)
+AC_SUBST(DOXYGEN_INPUT)
+AC_SUBST(DOXYGEN_TOP)
 dnl Generate files
 AC_CONFIG_FILES([Makefile])
 
