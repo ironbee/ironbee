@@ -83,8 +83,8 @@ namespace Internal {
  * Log level 1 is used unless an errinfo_level is attached to the exception,
  * in which case its value is used instead.
  *
- * @param[in] ib_engine Engine to use for logging; may be NULL
- * @param[in] logging   Can be set to false to prevent any logging.
+ * @param[in] engine  Engine to use for logging; may be NULL
+ * @param[in] logging Can be set to false to prevent any logging.
  **/
 ib_status_t convert_exception(
     ib_engine_t* engine  = NULL,
