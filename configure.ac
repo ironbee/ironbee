@@ -93,18 +93,7 @@ AC_PROG_LN_S
 
 dnl Checks for libraries.
 
-
-dnl Checks for header files.
-AC_HEADER_STDC
-AC_CHECK_HEADERS(stdint.h unistd.h sys/param.h sys/time.h time.h sys/mkdev.h sys/sysmacros.h string.h memory.h fcntl.h dirent.h sys/ndir.h ndir.h alloca.h locale.h arpa/inet.h netinet/in.h)
-
-AC_HEADER_MAJOR
-AC_FUNC_ALLOCA
-AC_STRUCT_TM
-AC_STRUCT_ST_BLOCKS
-AC_FUNC_CLOSEDIR_VOID
-AC_CHECK_FUNCS([memset strcasecmp])
-AC_CHECK_FUNC(mknod)
+AC_CHECK_HEADERS(arpa/inet.h netinet/in.h)
 
 # Check for -Wno-null-dereference
 AC_MSG_CHECKING(for -Wno-null-dereference support)    
