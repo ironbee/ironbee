@@ -63,6 +63,173 @@ struct ib_field_val_t {
     } u;
 };
 
+const char *ib_field_type_name(
+    ib_ftype_t ftype
+)
+{
+    IB_FTRACE_INIT();
+
+    switch(ftype) {
+    case IB_FTYPE_GENERIC:
+        IB_FTRACE_RET_CONSTSTR("GENERIC");
+    case IB_FTYPE_NUM:
+        IB_FTRACE_RET_CONSTSTR("NUM");
+    case IB_FTYPE_UNUM:
+        IB_FTRACE_RET_CONSTSTR("UNUM");
+    case IB_FTYPE_NULSTR:
+        IB_FTRACE_RET_CONSTSTR("NULSTR");
+    case IB_FTYPE_BYTESTR:
+        IB_FTRACE_RET_CONSTSTR("BYTESTR");
+    case IB_FTYPE_LIST:
+        IB_FTRACE_RET_CONSTSTR("LIST");
+    case IB_FTYPE_SBUFFER:
+        IB_FTRACE_RET_CONSTSTR("SBUFFER");
+    default:
+        IB_FTRACE_RET_CONSTSTR("UNKNOWN");
+    }
+}
+
+const char *ib_field_format(
+    const ib_field_t  *field,
+    bool               quote,
+    const char       **type_name,
+    char              *buf,
+    size_t             bufsize
+)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    const char *tname = NULL;
+
+    assert(buf != NULL);
+    assert(bufsize > 0);
+
+    *buf = '\0';
+    if (field == NULL) {
+        tname = "NULL";
+        if (quote) {
+            strncpy(buf, "\"\"", bufsize-1);
+            *(buf+bufsize) = '\0';
+        }
+        else {
+            *buf = '\0';
+        }
+    }
+    else {
+        switch (field->type) {
+
+        case IB_FTYPE_NULSTR :
+        {
+            const char *s;
+            tname = "NULSTR";
+            rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
+            if (rc != IB_OK) {
+                break;
+            }
+            if (quote) {
+                snprintf(buf, bufsize, "\"%s\"", s);
+            }
+            else {
+                strncpy(buf, s, bufsize-1);
+                *(buf+bufsize-1) = '\0';
+            }
+            break;
+        }
+
+        case IB_FTYPE_BYTESTR:
+        {
+            const ib_bytestr_t *bs;
+
+            tname = "BYTESTR";
+            rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+            if (rc != IB_OK) {
+                break;
+            }
+
+            if (quote) {
+                snprintf(buf, bufsize, "\"%.*s\"",
+                         (int)ib_bytestr_length(bs),
+                         (const char *)ib_bytestr_const_ptr(bs));
+            }
+            else {
+                size_t len = ib_bytestr_length(bs);
+                if (len > (bufsize - 1) ) {
+                    len = bufsize - 1;
+                }
+                strncpy(buf, (const char *)ib_bytestr_const_ptr(bs), len);
+                *(buf+len) = '\0';
+            }
+            break;
+        }
+
+        case IB_FTYPE_NUM :          /**< Numeric value */
+        {
+            ib_num_t n;
+            tname = "NUM";
+            rc = ib_field_value(field, ib_ftype_num_out(&n));
+            if (rc != IB_OK) {
+                break;
+            }
+            snprintf(buf, bufsize, "%"PRId64, n);
+            break;
+        }
+
+        case IB_FTYPE_UNUM :         /**< Unsigned numeric value */
+        {
+            ib_unum_t u;
+            tname = "UNUM";
+            rc = ib_field_value(field, ib_ftype_unum_out(&u));
+            if (rc != IB_OK) {
+                break;
+            }
+            snprintf(buf, bufsize, "%"PRIu64, u);
+            break;
+        }
+
+        case IB_FTYPE_LIST :         /**< List */
+        {
+            const ib_list_t *lst;
+            size_t len;
+
+            tname = "LIST";
+            rc = ib_field_value(field, ib_ftype_list_out(&lst));
+            if (rc != IB_OK) {
+                break;
+            }
+            len = IB_LIST_ELEMENTS(lst);
+            if (len == 0) {
+                snprintf(buf, bufsize, "list[%zd]", len);
+            }
+            else {
+                const ib_list_node_t *node;
+                node = ib_list_last_const(lst);
+                if (node == NULL) {
+                    snprintf(buf, bufsize, "list[%zd]", len);
+                }
+                else {
+                    ib_field_format((const ib_field_t *)node->data, quote,
+                                    &tname, buf, bufsize);
+                }
+            }
+            break;
+        }
+
+        default:
+            tname = buf;
+            snprintf(buf, bufsize, "type = %d", field->type);
+            break;
+        }
+    }
+
+    /* Store the type name */
+    if (type_name != NULL) {
+        *type_name = tname;
+    }
+
+    /* Return the buffer */
+    IB_FTRACE_RET_CONSTSTR(buf);
+}
+
 void ib_field_util_log_debug(
     const char       *prefix,
     const ib_field_t *f

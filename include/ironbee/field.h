@@ -34,6 +34,7 @@
 #include <ironbee/types.h>
 
 #include <string.h>
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -943,6 +944,34 @@ int ib_field_is_dynamic(
 void ib_field_util_log_debug(
     const char       *prefix,
     const ib_field_t *f
+);
+
+/**
+ * Format a field into a string buffer
+ *
+ * @param[in] field Input field
+ * @param[in] quote true to quote strings
+ * @param[out] type_name Type name string (or NULL)
+ * @param[out] buf Buffer for output
+ * @param[out] bufsize Size of @a buf
+ *
+ * @returns @a buf
+ */
+const char DLL_PUBLIC *ib_field_format(const ib_field_t *field,
+                                       bool quote,
+                                       const char **type_name,
+                                       char *buf,
+                                       size_t bufsize);
+
+/**
+ * Return a string representation of a field type
+ *
+ * @param[in] ftype Field type
+ *
+ * @returns String representation of the type
+ */
+const char DLL_PUBLIC *ib_field_type_name(
+    ib_ftype_t        ftype
 );
 
 /**
