@@ -88,7 +88,7 @@ TEST_F(TestIBUtilMkPath, mkpath)
 
     ASSERT_EQ(0, stat(path, &sbuf));
     ASSERT_TRUE(S_ISDIR(sbuf.st_mode));
-    ASSERT_EQ(0700, (sbuf.st_mode & 0777));
+    ASSERT_EQ((mode_t)0700, (sbuf.st_mode & 0777));
 
     snprintf(path, pathsize, "%s/a/b", m_basedir);
     rc = ib_util_mkpath(path, 0750);
@@ -96,7 +96,7 @@ TEST_F(TestIBUtilMkPath, mkpath)
 
     ASSERT_EQ(0, stat(path, &sbuf));
     ASSERT_TRUE(S_ISDIR(sbuf.st_mode));
-    ASSERT_EQ(0750, (sbuf.st_mode & 0777));
+    ASSERT_EQ((mode_t)0750, (sbuf.st_mode & 0777));
 
     snprintf(path, pathsize, "%s/b/c/d/e", m_basedir);
     rc = ib_util_mkpath(path, 0755);
@@ -104,7 +104,7 @@ TEST_F(TestIBUtilMkPath, mkpath)
 
     ASSERT_EQ(0, stat(path, &sbuf));
     ASSERT_TRUE(S_ISDIR(sbuf.st_mode));
-    ASSERT_EQ(0755, (sbuf.st_mode & 0777));
+    ASSERT_EQ((mode_t)0755, (sbuf.st_mode & 0777));
 }
 
 
