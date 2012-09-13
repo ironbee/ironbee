@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Generator for ModSec Audit Logs
+ * @brief IronBee --- CLIPP Generator for ModSec Audit Logs
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

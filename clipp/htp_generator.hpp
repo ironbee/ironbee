@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP HTP Generator.
+ * @brief IronBee --- CLIPP HTP Generator.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

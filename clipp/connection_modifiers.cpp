@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Connection Modifiers Implementation
+ * @brief IronBee --- CLIPP Connection Modifiers Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

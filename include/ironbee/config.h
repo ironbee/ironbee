@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Configuration Functions
+ * @brief IronBee --- Configuration Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

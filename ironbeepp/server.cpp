@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Server Implementation
+ * @brief IronBee++ --- Server Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

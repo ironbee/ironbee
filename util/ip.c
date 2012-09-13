@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; IP Implementation
+ * @brief IronBee --- IP Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  * @nosubgrouping

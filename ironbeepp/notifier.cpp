@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Notifier Implementation
+ * @brief IronBee++ --- Notifier Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

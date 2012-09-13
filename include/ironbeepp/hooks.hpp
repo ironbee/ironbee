@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Hooks
+ * @brief IronBee++ --- Hooks
  *
  * This file defines HooksRegistrar, a helper class for
  * Engine::register_hooks().

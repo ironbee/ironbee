@@ -17,7 +17,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /// @file
-/// @brief IronBee &mdash; Field Test Functions
+/// @brief IronBee --- Field Test Functions
 ///
 /// @author Brian Rectanus <brectanus@qualys.com>
 /// @author Christopher Alfeld <calfeld@qualys.com>

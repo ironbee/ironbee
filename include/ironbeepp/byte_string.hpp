@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; ByteString
+ * @brief IronBee++ --- ByteString
  *
  * This file defines (Const)ByteString, a wrapper for ib_bytestr_t.
  *

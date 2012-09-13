@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; LUA Module
+ * @brief IronBee --- LUA Module
  *
  * This module integrates with luajit, allowing lua modules to be loaded.
  *

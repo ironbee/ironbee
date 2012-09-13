@@ -23,7 +23,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Module
+ * @brief IronBee --- Module
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>

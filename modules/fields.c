@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Fields Module
+ * @brief IronBee --- Fields Module
  *
  * This module can be used to create fields in the TX DPI.  These fields are
  * defined through the use of the FieldTx configuration directive.

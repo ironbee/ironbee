@@ -17,7 +17,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /// @file
-/// @brief IronBee &mdash; Hash Test
+/// @brief IronBee --- Hash Test
 ///
 /// @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
 /// @author Christopher Alfeld <calfeld@qualys.com>

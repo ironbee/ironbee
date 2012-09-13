@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; String escape functions
+ * @brief IronBee --- String escape functions
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 

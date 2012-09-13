@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Engine Private Declarations
+ * @brief IronBee --- Engine Private Declarations
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Fill Body Modifier Implementation
+ * @brief IronBee --- CLIPP Fill Body Modifier Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Memory Pool Implementation
+ * @brief IronBee --- Memory Pool Implementation
  *
  * See ib_mpool_t for details.
  *

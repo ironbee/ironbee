@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Performance Measurement Module
+ * @brief IronBee --- Performance Measurement Module
  *
  * This module records performance stats
  *

@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; IP Set Utility Functions
+ * @brief IronBee --- IP Set Utility Functions
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

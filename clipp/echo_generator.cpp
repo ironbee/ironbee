@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Echo Generator Implementation
+ * @brief IronBee --- CLIPP Echo Generator Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

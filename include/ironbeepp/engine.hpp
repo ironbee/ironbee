@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Engine
+ * @brief IronBee++ --- Engine
  *
  * This code is under construction.  Do not use yet.
  *

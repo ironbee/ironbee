@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Exceptions
+ * @brief IronBee++ --- Exceptions
  *
  * Defines the exception hierarchy used by IronBee++.
  *

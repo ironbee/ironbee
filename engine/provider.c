@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Provider Interface
+ * @brief IronBee --- Provider Interface
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Protobuf Consumer
+ * @brief IronBee --- CLIPP Protobuf Consumer
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

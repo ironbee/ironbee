@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Internals &mdash; Module Bootstrap Tests (B)
+ * @brief IronBee++ Internals --- Module Bootstrap Tests (B)
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

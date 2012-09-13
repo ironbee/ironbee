@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Random Support
+ * @brief IronBee --- CLIPP Random Support
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

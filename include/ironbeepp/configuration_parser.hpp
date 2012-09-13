@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; ConfigurationParser
+ * @brief IronBee++ --- ConfigurationParser
  *
  * This file defines (Const)ConfigurationParser, a wrapper for ib_cfgparser_t.
  *

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Module
+ * @brief IronBee++ --- Module
  *
  * This file defines Module, a wrapper for ib_module_t.
  *

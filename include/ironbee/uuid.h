@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; UUID Utility Functions
+ * @brief IronBee --- UUID Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Site
+ * @brief IronBee++ --- Site
  *
  * This file defines (Const)Site, a wrapper for ib_site_t and (Const)Location,
  * a wrapper for ib_loc_t..

@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Ironbee as a server plugin
+ * @brief IronBee --- Ironbee as a server plugin
  *
  * @author Brian Rectanus <brectanus@qualys.com>, Nick Kew <nkew@qualys.com>
  */

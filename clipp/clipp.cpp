@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP
+ * @brief IronBee --- CLIPP
  *
  * A CLI for IronBee.
  *

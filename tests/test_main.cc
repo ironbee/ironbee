@@ -17,7 +17,7 @@
 
 //////////////////////////////////////////////////////////////////////////////
 /// @file
-/// @brief IronBee &mdash; Test Framework Main Function
+/// @brief IronBee --- Test Framework Main Function
 ///
 /// This file should be compiled in with all unit tests to server as
 /// a common main().

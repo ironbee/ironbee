@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Configuration Parser
+ * @brief IronBee --- CLIPP Configuration Parser
  *
  * Defines parser of CLIPP configuration.
  *

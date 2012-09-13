@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Operator interface
+ * @brief IronBee --- Operator interface
  *
  * @author Craig Forbes <cforbes@qualys.com>
  */

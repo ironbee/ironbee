@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Rule development module
+ * @brief IronBee --- Rule development module
  *
  * This is a module that defines some rule operators and actions for
  * development purposes.

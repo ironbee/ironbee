@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Clock
+ * @brief IronBee++ --- Clock
  *
  * This file defines ib_to_ptime() and ptime_to_ib() to convert between
  * boost's ptime and IronBee's ib_time_t.

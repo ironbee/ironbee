@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Notifier
+ * @brief IronBee++ --- Notifier
  *
  * This file defines Notifier, a helper class for notifying an Engine of
  * events (state changes).

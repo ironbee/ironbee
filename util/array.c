@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Utility Array Functions
+ * @brief IronBee --- Utility Array Functions
  * @author Brian Rectanus <brectanus@qualys.com>
  *
  * This is a dynamic array implemented as an array of arrays allocated

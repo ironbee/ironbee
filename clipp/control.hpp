@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Control Exceptions.
+ * @brief IronBee --- CLIPP Control Exceptions.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

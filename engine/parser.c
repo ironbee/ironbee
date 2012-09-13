@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Parser
+ * @brief IronBee --- Parser
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Select Modifier Implementation
+ * @brief IronBee --- CLIPP Select Modifier Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

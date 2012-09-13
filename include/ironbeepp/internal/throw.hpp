@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Internal Throw
+ * @brief IronBee++ --- Internal Throw
  *
  * This is the opposite of catch.hpp.  It converts status codes into
  * exceptions.

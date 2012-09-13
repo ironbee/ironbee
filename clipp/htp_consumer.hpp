@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP HTP Test Consumer
+ * @brief IronBee --- CLIPP HTP Test Consumer
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

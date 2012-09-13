@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Rule Engine Private Declarations
+ * @brief IronBee --- Rule Engine Private Declarations
  *
  * These definitions and routines are called by core and nowhere else.
  *

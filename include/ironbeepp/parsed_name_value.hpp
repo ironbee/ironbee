@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; ParsedNameValue
+ * @brief IronBee++ --- ParsedNameValue
  *
  * This file defines (Const)ParsedNameValue, a wrapper for
  * ib_parsed_name_value_pair_list_t.

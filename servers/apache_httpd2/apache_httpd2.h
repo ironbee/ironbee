@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Apache Httpd Functions
+ * @brief IronBee --- Apache Httpd Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; HTP Module
+ * @brief IronBee --- HTP Module
  *
  * This module adds a PCRE based matcher named "pcre".
  *

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Types related functions.
+ * @brief IronBee --- Types related functions.
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 

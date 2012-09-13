@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Field Utility Functions
+ * @brief IronBee --- Field Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>
@@ -73,11 +73,11 @@ extern "C" {
  * passing convention.  The @c void *arguments are all named by passing
  * convention.  Thus:
  *
- * - @a in_pval &mdash; @c ib_ftype_X_in
- * - @a out_pval &mdash; @c ib_ftype_X_out
- * - @a mutable_in_pval &mdash; @c ib_ftype_X_mutable_in
- * - @a mutable_out_pval &mdash; @c ib_ftype_X_mutable_out
- * - @a storage_pval &mdash; @c ib_ftype_X_storage
+ * - @a in_pval --- @c ib_ftype_X_in
+ * - @a out_pval --- @c ib_ftype_X_out
+ * - @a mutable_in_pval --- @c ib_ftype_X_mutable_in
+ * - @a mutable_out_pval --- @c ib_ftype_X_mutable_out
+ * - @a storage_pval --- @c ib_ftype_X_storage
  *
  * The storage type is used by ib_field_create_alias() and is the way to
  * pass the location to use for field storage.

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP PB Generator Implementation
+ * @brief IronBee --- CLIPP PB Generator Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

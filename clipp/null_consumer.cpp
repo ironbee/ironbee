@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Null Consumer Implementation
+ * @brief IronBee --- CLIPP Null Consumer Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

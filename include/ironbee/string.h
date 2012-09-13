@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; String Utility Functions
+ * @brief IronBee --- String Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

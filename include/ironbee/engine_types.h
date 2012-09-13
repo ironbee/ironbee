@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Engine Types.
+ * @brief IronBee --- Engine Types.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */

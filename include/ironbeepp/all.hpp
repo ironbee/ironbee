@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; All IronBee++ Headers
+ * @brief IronBee++ --- All IronBee++ Headers
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

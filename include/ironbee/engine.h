@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Engine
+ * @brief IronBee --- Engine
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>

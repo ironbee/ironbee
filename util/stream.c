@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Stream Buffer Routines
+ * @brief IronBee --- Stream Buffer Routines
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Time Modifier Implementation
+ * @brief IronBee --- CLIPP Time Modifier Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

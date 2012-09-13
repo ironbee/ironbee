@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Module Bootstrap
+ * @brief IronBee++ --- Module Bootstrap
  *
  * This file defines macros to aid in building an IronBee module using
  * IronBee++.  If you are interested in IronBee::Module, the analogue to
@@ -46,7 +46,7 @@
  *
  * The methods a delegate must define are:
  *
- * - @c constructor(@c IronBee::Module @a module) &mdash; The constructor is
+ * - @c constructor(@c IronBee::Module @a module) --- The constructor is
  *   the only time the module is provided.  If subclassing ModuleDelegate, it
  *   should be passed to the parent constructor which will make it available
  *   via ModuleDelegate::module().  If not subclassing, you should store it
@@ -55,18 +55,18 @@
  *   of module that you need to, e.g., to set up a configuration map.  Use
  *   @c initialize() (see below) to interact with the engine, e.g., to set
  *   up hooks.
- * - @c destructor &mdash; The destructor will be called when the module is
+ * - @c destructor --- The destructor will be called when the module is
  *   destroyed.  A default destructor is acceptable.
- * - @c initialize() &mdash; @c initialize is called when the engine
+ * - @c initialize() --- @c initialize is called when the engine
  *   initializes the module.  This is where you should set up hooks or
  *   otherwise do initial interaction with the engine.
- * - @c context_open(@c IronBee::Context @a context) &mdash; @c
+ * - @c context_open(@c IronBee::Context @a context) --- @c
  *   context_open is called whenever a new context is opened.  The lifetime
  *   of @a context is until just after the corresponding @c context_destroy
  *   is called.
- * - @c context_close(@c IronBee::Context @a context) &mdash; As above, but
+ * - @c context_close(@c IronBee::Context @a context) --- As above, but
  *   for the context closing.
- * - @c context_destroy(@c IronBee::Context @a context) &mdash; As above,
+ * - @c context_destroy(@c IronBee::Context @a context) --- As above,
  *   but for the context being destroyed.
  *
  * Any exceptions thrown in your code, will be translated into, when possible,
@@ -171,7 +171,7 @@ void delegate_context_destroy(
 }
 
 /**
- * Finalizer for delegates &mdash; destroys delegate.
+ * Finalizer for delegates --- destroys delegate.
  *
  * This is called at module finalization.  It destroys the delegate causing
  * the destructor to be called.

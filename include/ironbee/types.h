@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; General Type Definitions
+ * @brief IronBee --- General Type Definitions
  *
  * These are types that are used throughout IronBee.
  *

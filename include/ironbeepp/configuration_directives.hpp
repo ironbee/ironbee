@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; ConfigurationDirectives
+ * @brief IronBee++ --- ConfigurationDirectives
  *
  * This file defines ConfigurationDirectivesRegistrar, a helper class for
  * attaching directives to an Engine.

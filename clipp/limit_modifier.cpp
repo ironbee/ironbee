@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Limit Modifier Implementation
+ * @brief IronBee --- CLIPP Limit Modifier Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

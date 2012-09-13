@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Internals &mdash; Clock Tests
+ * @brief IronBee++ Internals --- Clock Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

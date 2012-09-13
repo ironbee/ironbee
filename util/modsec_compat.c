@@ -14,7 +14,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Utility Functions from ModSecurity
+ * @brief IronBee --- Utility Functions from ModSecurity
  *
  * These utility functions and routines are based on ModSecurity code.
  *

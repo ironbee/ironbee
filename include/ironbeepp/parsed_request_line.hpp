@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; ParsedRequestLine
+ * @brief IronBee++ --- ParsedRequestLine
  *
  * This file defines (Const)ParsedRequestLine, a wrapper for
  * ib_parsed_req_line_t.

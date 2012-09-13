@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Transformation interface
+ * @brief IronBee --- Transformation interface
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */

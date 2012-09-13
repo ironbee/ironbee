@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Log Format Utility Functions
+ * @brief IronBee --- Log Format Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Nick LeRoy <nleroy@qualys.com>

@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Action interface
+ * @brief IronBee --- Action interface
  *
  * @author Craig Forbes <cforbes@qualys.com>
  */

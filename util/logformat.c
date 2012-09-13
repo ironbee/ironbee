@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Utility Log Format helper functions
+ * @brief IronBee --- Utility Log Format helper functions
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Apache 2.x Plugin
+ * @brief IronBee --- Apache 2.x Plugin
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

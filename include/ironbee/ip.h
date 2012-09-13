@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; IP Utility Types and Functions
+ * @brief IronBee --- IP Utility Types and Functions
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

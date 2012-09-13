@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Internals &mdash; Configuration Map Tests
+ * @brief IronBee++ Internals --- Configuration Map Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

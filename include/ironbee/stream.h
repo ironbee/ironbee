@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Stream Routines
+ * @brief IronBee --- Stream Routines
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

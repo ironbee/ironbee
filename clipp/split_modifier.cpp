@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Split Modifier Implementation
+ * @brief IronBee --- CLIPP Split Modifier Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

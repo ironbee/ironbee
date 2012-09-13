@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Input
+ * @brief IronBee --- CLIPP Input
  *
  * Defines Input, the fundamental unit of input that CLIPP will give to
  * IronBee and related structures.

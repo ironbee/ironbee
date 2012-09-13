@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Configuration Map
+ * @brief IronBee++ --- Configuration Map
  *
  * This file defines code related to configuration map.  Unlike other portions
  * of IronBee++, the code in this file diverges significantly from the C API.
@@ -237,7 +237,7 @@ public:
     );
 
     /**
-     * Create number entry &mdash; data member.
+     * Create number entry --- data member.
      *
      * @a FieldType must be convertible to int64_t.
      *
@@ -254,7 +254,7 @@ public:
     );
 
     /**
-     * Create number entry &mdash; function member.
+     * Create number entry --- function member.
      *
      * @param[in] name   Name of entry.
      * @param[in] getter Getter member.
@@ -303,7 +303,7 @@ public:
     );
 
     /**
-     * Create unsigned number entry &mdash; data member.
+     * Create unsigned number entry --- data member.
      *
      * @a FieldType must be convertible to uint64_t.
      *
@@ -320,7 +320,7 @@ public:
     );
 
     /**
-     * Create unsigned number entry &mdash; function member.
+     * Create unsigned number entry --- function member.
      *
      * @param[in] name   Name of entry.
      * @param[in] getter Getter member.
@@ -373,7 +373,7 @@ public:
     );
 
     /**
-     * Create null string entry &mdash; data member.
+     * Create null string entry --- data member.
      *
      * @a FieldType must be convertible to const char*.
      *
@@ -390,7 +390,7 @@ public:
     );
 
     /**
-     * Create null string entry &mdash; function member.
+     * Create null string entry --- function member.
      *
      * @param[in] name   Name of entry.
      * @param[in] getter Getter member.
@@ -470,7 +470,7 @@ public:
     );
 
     /**
-     * Create byte string entry &mdash; data member.
+     * Create byte string entry --- data member.
      *
      * @a FieldType must be convertible to ConstByteString.
      *
@@ -487,7 +487,7 @@ public:
     );
 
     /**
-     * Create byte string entry &mdash; function member.
+     * Create byte string entry --- function member.
      *
      * @param[in] name   Name of entry.
      * @param[in] getter Getter member.
@@ -515,7 +515,7 @@ public:
     );
 
     /**
-     * Create byte string entry &mdash; string data member.
+     * Create byte string entry --- string data member.
      *
      * @a FieldType must be convertible to std::string.
      *
@@ -532,7 +532,7 @@ public:
     );
 
     /**
-     * Create byte string entry &mdash; string function member.
+     * Create byte string entry --- string function member.
      *
      * @param[in] name   Name of entry.
      * @param[in] getter Getter member.

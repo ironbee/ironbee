@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Field
+ * @brief IronBee++ --- Field
  *
  * This file defines Field, a wrapper for ib_field_t.
  *
@@ -71,7 +71,7 @@ public:
 
     //! Types of field values.
     enum type_e {
-        //! Generic &mdash; Currently unsupported in IronBee++
+        //! Generic --- Currently unsupported in IronBee++
         GENERIC         = IB_FTYPE_GENERIC,
         //! Signed Number
         NUMBER          = IB_FTYPE_NUM,
@@ -83,7 +83,7 @@ public:
         BYTE_STRING     = IB_FTYPE_BYTESTR,
         //! List &mdash.
         LIST            = IB_FTYPE_LIST,
-        //! Stream Buffer &mdash; Currently unsupported in IronBee++
+        //! Stream Buffer --- Currently unsupported in IronBee++
         STREAM_BUFFER   = IB_FTYPE_SBUFFER
     };
 

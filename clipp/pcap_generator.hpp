@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Generator for PCAP
+ * @brief IronBee --- CLIPP Generator for PCAP
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

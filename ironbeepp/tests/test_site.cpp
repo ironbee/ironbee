@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Internals &mdash; Site Tests
+ * @brief IronBee++ Internals --- Site Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Transaction
+ * @brief IronBee++ --- Transaction
  *
  * This file defines (Const)Transaction, a wrapper for ib_tx_t.
  *

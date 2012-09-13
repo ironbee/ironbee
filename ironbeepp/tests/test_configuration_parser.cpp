@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Internals &mdash; Configuration Directives Tests
+ * @brief IronBee++ Internals --- Configuration Directives Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

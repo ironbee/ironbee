@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; IronBee Library Routines
+ * @brief IronBee++ --- IronBee Library Routines
  *
  * This file defines routines that apply to global IronBee state.
  *

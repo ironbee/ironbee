@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; ParsedResponseLine
+ * @brief IronBee++ --- ParsedResponseLine
  *
  * This file defines (Const)ParsedResponseLine, a wrapper for
  * ib_parsed_resp_line_t.

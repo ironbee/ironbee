@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Server
+ * @brief IronBee++ --- Server
  *
  * This file defines (Const)Server, a wrapper for ib_server_t.
  *

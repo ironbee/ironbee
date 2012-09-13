@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP IronBee Consumer and Modifier.
+ * @brief IronBee --- CLIPP IronBee Consumer and Modifier.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

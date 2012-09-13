@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Memory Pool
+ * @brief IronBee++ --- Memory Pool
  *
  * This file defines MemoryPool, a wrapper for ib_mpool_t.
  *

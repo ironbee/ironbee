@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Suricata Generator Implementation
+ * @brief IronBee --- CLIPP Suricata Generator Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

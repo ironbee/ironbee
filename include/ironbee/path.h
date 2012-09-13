@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Utility Path Functions
+ * @brief IronBee --- Utility Path Functions
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Top level API documentation.
+ * @brief IronBee++ --- Top level API documentation.
  *
  * This file contains no code, only API documentations.  It functions as the
  * main page of the API documentation.

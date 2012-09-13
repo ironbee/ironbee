@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; API Compatibility
+ * @brief IronBee++ --- API Compatibility
  *
  * This file is a compile time assert that the expected IronBee ABI matches
  * the provided IronBee ABI.

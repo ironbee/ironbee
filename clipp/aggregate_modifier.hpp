@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Aggregate Modifier
+ * @brief IronBee --- CLIPP Aggregate Modifier
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; HTP Module
+ * @brief IronBee --- HTP Module
  *
  * This module integrates libhtp.
  *

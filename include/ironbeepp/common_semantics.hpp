@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; ByteString
+ * @brief IronBee++ --- ByteString
  *
  * This file defines the CommonSemantics template that provides common
  * pointer-like semantics for most IronBee++ types.

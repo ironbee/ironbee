@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Hash Utility Functions Implementation
+ * @brief IronBee --- Hash Utility Functions Implementation
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
  * @author Christopher Alfeld <calfeld@qualys.com>

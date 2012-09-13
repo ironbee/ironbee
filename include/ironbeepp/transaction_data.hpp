@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; TransactionData
+ * @brief IronBee++ --- TransactionData
  *
  * This file defines (Const)TransactionData, a wrapper for ib_txdata_t.
  *

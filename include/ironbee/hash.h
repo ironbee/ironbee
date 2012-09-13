@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Hash Utility Functions
+ * @brief IronBee --- Hash Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>

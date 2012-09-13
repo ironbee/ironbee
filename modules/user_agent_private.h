@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Private user agent module definitions
+ * @brief IronBee --- Private user agent module definitions
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */

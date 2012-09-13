@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Rule engine definitions
+ * @brief IronBee --- Rule engine definitions
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */

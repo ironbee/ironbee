@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Parse Modifier Implementation
+ * @brief IronBee --- CLIPP Parse Modifier Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

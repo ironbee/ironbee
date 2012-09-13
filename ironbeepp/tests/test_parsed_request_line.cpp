@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Internals &mdash; ParsedRequestLine Tests
+ * @brief IronBee++ Internals --- ParsedRequestLine Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

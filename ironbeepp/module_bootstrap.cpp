@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Module Bootstrap Implementation
+ * @brief IronBee++ --- Module Bootstrap Implementation
  *
  * @sa module_bootstrap.hpp
  *

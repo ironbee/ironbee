@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; ModSec Audit Log Parser Implementation.
+ * @brief IronBee --- ModSec Audit Log Parser Implementation.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

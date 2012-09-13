@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP NULL Consumer
+ * @brief IronBee --- CLIPP NULL Consumer
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

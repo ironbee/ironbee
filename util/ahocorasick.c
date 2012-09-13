@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Utility Aho Corasick Pattern Matcher
+ * @brief IronBee --- Utility Aho Corasick Pattern Matcher
  * @author Pablo Rincon <pablo.rincon.crespo@gmail.com>
  */
 

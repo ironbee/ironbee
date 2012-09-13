@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Connection
+ * @brief IronBee++ --- Connection
  *
  * This file defines (Const)Connection, a wrapper for ib_conn_t.
  *

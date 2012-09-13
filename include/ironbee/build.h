@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Build Definitions
+ * @brief IronBee --- Build Definitions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

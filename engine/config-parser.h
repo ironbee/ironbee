@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Configuration Parser
+ * @brief IronBee --- Configuration Parser
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

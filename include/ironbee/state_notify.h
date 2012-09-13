@@ -29,7 +29,7 @@ extern "C" {
 
 /**
  * @file
- * @brief IronBee &mdash; Interface for handling parsed content.
+ * @brief IronBee --- Interface for handling parsed content.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */

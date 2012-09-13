@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Transformations
+ * @brief IronBee --- Transformations
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

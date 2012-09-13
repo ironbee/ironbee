@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; Context
+ * @brief IronBee++ --- Context
  *
  * This file defines (Const)Context, a wrapper for ib_context_t.
  *

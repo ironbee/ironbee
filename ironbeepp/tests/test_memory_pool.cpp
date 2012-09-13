@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Internals &mdash; Memory Pool Tests
+ * @brief IronBee++ Internals --- Memory Pool Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

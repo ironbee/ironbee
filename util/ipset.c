@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; IP Set Implementation
+ * @brief IronBee --- IP Set Implementation
  *
  * See ib_ipset4_t for details.
  *

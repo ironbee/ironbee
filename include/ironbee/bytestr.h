@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Byte String Utility Functions
+ * @brief IronBee --- Byte String Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

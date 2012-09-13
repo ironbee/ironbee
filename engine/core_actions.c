@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; core actions
+ * @brief IronBee --- core actions
  *
  * @author Craig Forbes <cforbes@qualys.com>
  */

@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Release Data
+ * @brief IronBee --- Release Data
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

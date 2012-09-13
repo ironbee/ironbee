@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP View Consumer Implementation
+ * @brief IronBee --- CLIPP View Consumer Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

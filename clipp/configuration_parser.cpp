@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Configuration Parser Implementation
+ * @brief IronBee --- CLIPP Configuration Parser Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

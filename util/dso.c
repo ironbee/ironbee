@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Utility DSO Functions
+ * @brief IronBee --- Utility DSO Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>

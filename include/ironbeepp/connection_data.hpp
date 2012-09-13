@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; ConnectionData
+ * @brief IronBee++ --- ConnectionData
  *
  * This file defines (Const)ConnectionData, a wrapper for ib_conndata_t.
  *

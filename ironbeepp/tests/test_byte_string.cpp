@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Internals &mdash; Byte String Tests
+ * @brief IronBee++ Internals --- Byte String Tests
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/

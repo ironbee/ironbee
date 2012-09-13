@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Raw Generator
+ * @brief IronBee --- CLIPP Raw Generator
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */

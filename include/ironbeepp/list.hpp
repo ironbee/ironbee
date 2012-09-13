@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ &mdash; List
+ * @brief IronBee++ --- List
  *
  * This file defines (Const)List, a wrapper for ib_list_t.
  *

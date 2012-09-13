@@ -20,7 +20,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; AhoCorasick Utility Functions
+ * @brief IronBee --- AhoCorasick Utility Functions
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  */

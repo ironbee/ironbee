@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; Utility Configuration Tree Functions
+ * @brief IronBee --- Utility Configuration Tree Functions
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 

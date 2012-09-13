@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee &mdash; CLIPP Edit Modifier Implementation
+ * @brief IronBee --- CLIPP Edit Modifier Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
