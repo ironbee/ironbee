@@ -17,18 +17,24 @@
 
 /* Derived from regexp utilities in Apache HTTPD */
 
+/**
+ * @file
+ * @brief IronBee --- Perl-like Regexp utilities Implementation.
+ */
+
+#include <ironbee/types.h>
+#include <ironbee/regex.h>
+#include <ironbee/mpool.h>
+
 #include <ctype.h>
-#include "ironbee/types.h"
-#include "ironbee/regex.h"
-#include "ironbee/mpool.h"
 
 /* Compiling with DOXYGEN will leave ib_rx_nmatch unimplemented */
 #ifdef DOXYGEN
-#error Don`t compile with DOXYGEN!
+#error "Don`t compile with DOXYGEN!"
 #endif
 
-/** If we're using regex.h instead of pcreposix, we need dummy defs
- *  for unsupported PCRE extenstions.
+/* If we're using regex.h instead of pcreposix, we need dummy defs
+ * for unsupported PCRE extenstions.
  */
 #ifndef HAVE_PCRE
 #define REG_UTF8 0
@@ -40,26 +46,25 @@
 #define IB_PREGSUB_MAXLEN (HUGE_STRING_LEN * 8)
 #define IB_SIZE_MAX (~((size_t)0))
 
-
-/** Flags are a bitfield combining the regex library with our own bits.
- *  To avoid any risk of a future change causing conflict, declare all
- *  the bits here, with conversion macro
+/* Flags are a bitfield combining the regex library with our own bits.
+ * To avoid any risk of a future change causing conflict, declare all
+ * the bits here, with conversion macro
  */
 
-#define IB_REG_ICASE    0x01 /** use a case-insensitive match */
-#define IB_REG_NEWLINE  0x02 /** don't match newlines against '.' etc */
-#define IB_REG_NOTBOL   0x04 /** ^ will not match against start-of-string */
-#define IB_REG_NOTEOL   0x08 /** $ will not match against end-of-string */
+#define IB_REG_ICASE    0x01 /**< use a case-insensitive match */
+#define IB_REG_NEWLINE  0x02 /**< don't match newlines against '.' etc */
+#define IB_REG_NOTBOL   0x04 /**< ^ will not match against start-of-string */
+#define IB_REG_NOTEOL   0x08 /**< $ will not match against end-of-string */
 
-#define IB_REG_EXTENDED (0)  /** unused */
-#define IB_REG_NOSUB    (0)  /** unused */
+#define IB_REG_EXTENDED (0)  /**< unused */
+#define IB_REG_NOSUB    (0)  /**< unused */
 
 #define IB_REG_MULTI 0x10    /* perl's /g (needs fixing) */
 #define IB_REG_NOMEM 0x20    /* nomem in our code */
 #define IB_REG_DOTALL 0x40   /* perl's /s flag */
 #define IB_REG_UTF8 0x80     /* match utf-8 */
 
-/** Fix on posix extended standard + very-low-hanging PCRE for now */
+/* Fix on posix extended standard + very-low-hanging PCRE for now */
 #define REGCOMP_FLAGS(flags)                           \
     REG_EXTENDED                                     | \
     (((flags)&IB_REG_ICASE) ? REG_ICASE : 0)         | \
@@ -72,21 +77,6 @@
     (((flags)&IB_REG_NOTEOL) ? REG_NOTEOL : 0)
 
 
-/**
- * Compile a pattern into a regexp.
- * supports perl-like formats
- *    match-string
- *    /match-string/flags
- *    s/match-string/replacement-string/flags
- *    Intended to support more perl-like stuff as and when round tuits happen
- * match-string is anything supported by ib_regcomp
- * replacement-string is a substitution string and may contain backreferences
- * flags should correspond with perl syntax: treat failure to do so as a bug
- * 
- * @param pool Pool to allocate from
- * @param pattern Pattern to compile
- * @return Compiled regexp, or NULL in case of compile/syntax error
- */
 ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
 {
     /* perl style patterns
@@ -211,7 +201,6 @@ ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
  * Parts of this code are based on Henry Spencer's regsub(), from his
  * AT&T V8 regexp package.
  */
-
 static ib_status_t regsub_core(ib_mpool_t *p, char **result, const char *input,
                                const char *source, size_t nmatch,
                                regmatch_t pmatch[])
@@ -286,19 +275,6 @@ static ib_status_t regsub_core(ib_mpool_t *p, char **result, const char *input,
     return IB_OK;
 }
 
-/**
- * Apply a regexp operation to a string.
- * @param pool Pool to allocate from
- * @param rx The regex match to apply
- * @param pattern The string to apply it to
- * @param newpattern The modified string (ignored if the operation doesn't
- *                                        modify the string)
- * @param match If non-null, will contain regexp memory/backreferences
- *              for the match on return.  Not meaningful for a substitution.
- * @return Number of times a match happens.  Normally 0 (no match) or 1
- *         (match found), but may be greater if a transforming pattern
- *         is applied with the 'g' flag.
- */
 int ib_rx_exec(ib_mpool_t *pool, ib_rx_t *rx, const char *pattern,
                char **newpattern, ib_rxmatch_t *match)
 {
@@ -331,7 +307,7 @@ int ib_rx_exec(ib_mpool_t *pool, ib_rx_t *rx, const char *pattern,
         return 0; /* no match, nothing to do */
     }
     if (rx->subs) {
-        ib_status_t rc = regsub_core(pool, newpattern, rx->subs, pattern, 
+        ib_status_t rc = regsub_core(pool, newpattern, rx->subs, pattern,
                                      match->nmatch, match->pmatch);
         if (rc != IB_OK) {
             return 0; /* FIXME - should we do more to handle error? */
@@ -360,13 +336,6 @@ int ib_rx_exec(ib_mpool_t *pool, ib_rx_t *rx, const char *pattern,
     return ret;
 }
 
-/**
- * Get a pointer to a match from regex memory
- * @param match The regexp match
- * @param n The match number to retrieve (must be between 0 and nmatch)
- * @param len Returns the length of the match pattern.
- * @param pattern Returns the match pattern
- */
 void ib_rx_match(ib_rxmatch_t *match, int n, int *len, const char **pattern)
 {
     if (n >= 0 && (size_t)n < ib_rx_nmatch(match)) {
