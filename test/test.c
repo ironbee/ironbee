@@ -294,12 +294,12 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
         int remote_port, local_port;
 
         parse_filename(testname, &remote_addr, &remote_port, &local_addr, &local_port);
-        htp_connp_open(*connp, (const char *) remote_addr, remote_port, (const char *) local_addr, local_port, &tv_start);
+        htp_connp_open(*connp, (const char *) remote_addr, remote_port, (const char *) local_addr, local_port, 0, &tv_start);
         free(remote_addr);
         free(local_addr);
     } else {
         // No connection metadata; provide some fake information instead
-        htp_connp_open(*connp, (const char *) "127.0.0.1", 10000, (const char *) "127.0.0.1", 80, &tv_start);
+        htp_connp_open(*connp, (const char *) "127.0.0.1", 10000, (const char *) "127.0.0.1", 80, 0, &tv_start);
     }
 
     // Find all chunks and feed them to the parser
