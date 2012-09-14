@@ -34,6 +34,7 @@
 /test/Makefile.in
 /test/main*
 /test/test_bstr*
+/test/test_utils
 extras/ruby/*.gem
 /docs/Makefile
 /docs/Makefile.in
