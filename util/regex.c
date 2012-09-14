@@ -35,7 +35,7 @@
 #endif
 
 /* If we're using regex.h instead of pcreposix, we need dummy defs
- * for unsupported PCRE extenstions.
+ * for unsupported PCRE extensions.
  */
 #ifndef HAVE_PCRE
 #define REG_UTF8 0
@@ -109,7 +109,7 @@ ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
         str += 2;
     }
     /* TODO: support perl's after/before */
-    /* FIXME: fix these simplminded delims */
+    /* FIXME: fix these simpleminded delims */
 
     /* we think there's a delimiter.  Allow for it not to be if unmatched */
     if (delim) {
