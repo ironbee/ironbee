@@ -1044,7 +1044,7 @@ void ib_rule_log_exec_ex(
         rule_log(log_tx, log_exec, "RULE_START %s", rule_type);
     }
 
-    /* 
+    /*
      * Log all of the targets whose result that matched the result type.
      */
     if (log_exec->tgt_list != NULL) {
