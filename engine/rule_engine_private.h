@@ -27,10 +27,9 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include <ironbee/rule_engine.h>
-
-#include <ironbee/types.h>
 #include <ironbee/clock.h>
+#include <ironbee/rule_engine.h>
+#include <ironbee/types.h>
 
 /**
  * Rule transformation results for logging.

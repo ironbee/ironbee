@@ -26,9 +26,9 @@
  */
 
 #include <ironbee/engine_types.h>
+#include <ironbee/regex.h>
 #include <ironbee/release.h>
 #include <ironbee/types.h>
-#include <ironbee/regex.h>
 
 #include <stdint.h>
 

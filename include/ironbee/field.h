@@ -33,8 +33,8 @@
 #include <ironbee/stream.h>
 #include <ironbee/types.h>
 
-#include <string.h>
 #include <stdbool.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {

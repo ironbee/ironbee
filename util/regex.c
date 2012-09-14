@@ -22,9 +22,10 @@
  * @brief IronBee --- Perl-like Regexp utilities Implementation.
  */
 
-#include <ironbee/types.h>
 #include <ironbee/regex.h>
+
 #include <ironbee/mpool.h>
+#include <ironbee/types.h>
 
 #include <ctype.h>
 

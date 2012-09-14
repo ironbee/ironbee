@@ -57,12 +57,13 @@
 #ifndef IB_REGEX_H
 #define IB_REGEX_H
 
+#include <ironbee/mpool.h>
+
 #ifdef HAVE_PCRE
 #include <pcreposix.h>
 #else
 #include <regex.h>
 #endif
-#include "ironbee/mpool.h"
 
 /* Allow for C++ users */
 
