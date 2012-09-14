@@ -42,7 +42,7 @@
 ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
                                      const uint8_t *data_in,
                                      size_t dlen_in,
-                                     bool nul,
+                                     bool add_nul,
                                      char **data_out,
                                      size_t *dlen_out,
                                      ib_flags_t *result)
@@ -65,7 +65,7 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
 
 allocate:
     buflen = mult * dlen_in;
-    bufsize = buflen + (nul ? 1 : 0);
+    bufsize = buflen + (add_nul ? 1 : 0);
     buf = ib_mpool_alloc(mp, bufsize);
     if (buf == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -76,6 +76,8 @@ allocate:
         size_t size = 1;
         const char *ostr = NULL;
         uint8_t c = *iptr;
+        char tmp[16];
+
         switch (c) {
 
         case '\"':
@@ -124,7 +126,13 @@ allocate:
             break;
 
         default:
-            size = 1;
+            if (isprint(c) == 0) {
+                size = sprintf(tmp, "\\u%04x", c);
+                ostr = tmp;
+            }
+            else {
+                size = 1;
+            }
             break;
         }
 
@@ -145,7 +153,7 @@ allocate:
    }
 
     /* Add on our nul byte if required */
-    if (nul) {
+    if (add_nul) {
         *optr = '\0';
         ++optr;
     }

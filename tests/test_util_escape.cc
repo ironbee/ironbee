@@ -44,6 +44,7 @@ const size_t CallBufSize = BufSize + 32;
 class TestEscapeJSON : public TestSimpleStringManipulation
 {
 public:
+
     const char *TestName(ib_strop_t op, test_type_t tt)
     {
         return TestNameImpl("escape_json", op, tt);
@@ -149,6 +150,43 @@ TEST_F(TestEscapeJSON, Simple)
         RunTest(in, sizeof(in)-1, out);
     }
 }
+
+TEST_F(TestEscapeJSON, NonPrint)
+{
+    {
+        SCOPED_TRACE("NonPrint #1");
+        const uint8_t in[]  = "Test""\x001""Case";
+        const char    out[] = "Test\\u0001Case";
+        RunTest(in, sizeof(in)-1, out);
+    }
+    {
+        SCOPED_TRACE("NonPrint #2");
+        RunTest("x" "\x07f"   "\x080"   "\x0ff"   "y",
+                "x" "\\u007f" "\\u0080" "\\u00ff" "y");
+    }
+    {
+        int c;
+        for (c = 1;  c <= 0xff;  ++c) {
+            char inbuf[16];
+            char outbuf[16];
+            char testname[32];
+
+            // Skip characters that are escaped specially
+            if (isprint(c) || isspace(c) || (c == 0x08) ) {
+                continue;
+            }
+
+            snprintf(testname, sizeof(testname), "NonPrint #3-%02x", c);
+            SCOPED_TRACE(testname);
+
+            strcpy(inbuf, "|x|");
+            inbuf[1] = c;
+            snprintf(outbuf, sizeof(outbuf), "|\\u%04x|", c);
+            RunTest(inbuf, outbuf);
+        }
+    }
+}
+
 TEST_F(TestEscapeJSON, Complex)
 {
     {
