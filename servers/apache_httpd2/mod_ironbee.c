@@ -176,6 +176,7 @@ static ib_status_t ib_header_callback(
     ib_server_header_action_t action,
     const char *hdr,
     const char *value,
+    ib_rx_t *rx,
     void *cbdata)
 {
     //ap_filter_t *f = ctx;
