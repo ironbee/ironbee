@@ -4043,10 +4043,10 @@ static ib_status_t core_dir_auditlogparts(ib_cfgparser_t *cp,
  * @returns Status code
  */
 static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
-                                          const char *name,
-                                          ib_flags_t flags,
-                                          ib_flags_t fmask,
-                                          void *cbdata)
+                                         const char *name,
+                                         ib_flags_t flags,
+                                         ib_flags_t fmask,
+                                         void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;

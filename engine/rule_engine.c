@@ -1018,7 +1018,7 @@ static ib_status_t execute_operator(ib_engine_t *ib,
         /* Execute the operator */
         /* @todo remove the cast-away of the constness of value */
         op_rc = ib_operator_execute(ib, tx, rule, opinst,
-                                 (ib_field_t *)value, &result);
+                                    (ib_field_t *)value, &result);
         if (op_rc != IB_OK) {
             ib_rule_log_warn(tx, rule, target, NULL,
                              "Operator returned an error: %s",

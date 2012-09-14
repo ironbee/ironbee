@@ -237,8 +237,10 @@ static ib_status_t regsub_core(ib_mpool_t *p, char **result, const char *input,
         }
         else if (no < nmatch && pmatch[no].rm_so < pmatch[no].rm_eo) {
             if (IB_SIZE_MAX - len <=
-                          (size_t)(pmatch[no].rm_eo - pmatch[no].rm_so))
+                (size_t)(pmatch[no].rm_eo - pmatch[no].rm_so)
+            ) {
                 return IB_EALLOC;
+            }
             len += pmatch[no].rm_eo - pmatch[no].rm_so;
         }
 
