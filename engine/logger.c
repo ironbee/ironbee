@@ -196,7 +196,7 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
     va_start(ap, fmt);
     r = vsnprintf(buf, IB_LEVENT_MSG_BUF_SIZE, fmt, ap);
     if (r >= IB_LEVENT_MSG_BUF_SIZE) {
-        memcpy(buf + (IB_LEVENT_MSG_BUF_SIZE - 3), "...", 3);
+        memcpy(buf + (IB_LEVENT_MSG_BUF_SIZE - 4), "...", 3);
     }
     va_end(ap);
 
