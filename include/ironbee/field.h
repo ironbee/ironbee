@@ -951,17 +951,21 @@ void ib_field_util_log_debug(
  *
  * @param[in] field Input field
  * @param[in] quote true to quote strings
+ * @param[in] escape true to json escape strings
  * @param[out] type_name Type name string (or NULL)
  * @param[out] buf Buffer for output
  * @param[out] bufsize Size of @a buf
  *
  * @returns @a buf
  */
-const char DLL_PUBLIC *ib_field_format(const ib_field_t *field,
-                                       bool quote,
-                                       const char **type_name,
-                                       char *buf,
-                                       size_t bufsize);
+const char DLL_PUBLIC *ib_field_format(
+    const ib_field_t *field,
+    bool quote,
+    bool escape,
+    const char **type_name,
+    char *buf,
+    size_t bufsize
+);
 
 /**
  * Return a string representation of a field type

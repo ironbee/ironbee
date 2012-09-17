@@ -45,6 +45,57 @@ extern "C" {
  * @{
  */
 
+
+/**
+ * Convert a bytestring to a json string with escaping
+ *
+ * @param[in] data_in Input data
+ * @param[in] dlen_in Length of data in @a data_in
+ * @param[in] nul Save room for and append a nul byte?
+ * @param[out] data_out Output buffer
+ * @param[in] dsize_out Size of @a data_out
+ * @param[out] dlen_out Length of data in @a data_out (or NULL)
+ * @param[out] result Result flags (IB_STRFLAG_xx) (or NULL)
+ *
+ * @returns IB_OK if successful
+ *          IB_EALLOC if allocation errors occur
+ *
+ * @internal
+ * Implemented in: util/escape.c
+ * Tested in: tests/test_util_escape.cc
+ */
+ib_status_t ib_string_escape_json_buf_ex(
+    const uint8_t *data_in,
+    size_t dlen_in,
+    bool add_nul,
+    char *data_out,
+    size_t dsize_out,
+    size_t *dlen_out,
+    ib_flags_t *result
+);
+
+/**
+ * Convert a bytestring to a json string with escaping
+ *
+ * @param[in] data_in Input data
+ * @param[out] data_out Output buffer
+ * @param[in] dsize_out Size of @a data_out
+ * @param[out] result Result flags (IB_STRFLAG_xx) (or NULL)
+ *
+ * @returns IB_OK if successful
+ *          IB_EALLOC if allocation errors occur
+ *
+ * @internal
+ * Implemented in: util/escape.c
+ * Tested in: tests/test_util_escape.cc
+ */
+ib_status_t ib_string_escape_json_buf(
+    const char *data_in,
+    char *data_out,
+    size_t dsize_out,
+    ib_flags_t *result
+);
+
 /**
  * Convert a bytestring to a json string with escaping
  *

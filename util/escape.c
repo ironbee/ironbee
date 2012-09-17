@@ -38,40 +38,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Convert a bytestring to a json string with escaping, ex version */
-ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
-                                     const uint8_t *data_in,
-                                     size_t dlen_in,
-                                     bool add_nul,
-                                     char **data_out,
-                                     size_t *dlen_out,
-                                     ib_flags_t *result)
+/* Convert a c-string to a json string with escaping, external buf version */
+ib_status_t ib_string_escape_json_buf_ex(
+    const uint8_t *data_in,
+    size_t dlen_in,
+    bool add_nul,
+    char *data_out,
+    size_t dsize_out,
+    size_t *dlen_out,
+    ib_flags_t *result
+)
 {
     IB_FTRACE_INIT();
-    assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
-    assert(result != NULL);
 
     const uint8_t *iptr;
     const uint8_t *iend = data_in + dlen_in;
-    size_t mult = 2; /* Size multiplier */
-    size_t buflen;   /* Length of data buf can hold */
-    size_t bufsize;  /* Size of allocated buffer (may hold trailing nul) */
-    char *buf;
     char *optr;
     const char *oend;
     bool modified = false;
+    ib_status_t rc = IB_OK;
 
-allocate:
-    buflen = mult * dlen_in;
-    bufsize = buflen + (add_nul ? 1 : 0);
-    buf = ib_mpool_alloc(mp, bufsize);
-    if (buf == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    if (add_nul) {
+        oend = data_out + dsize_out - 1;
     }
-    oend = buf + buflen;
-    optr = buf;
+    else {
+        oend = data_out + dsize_out;
+    }
+    optr = data_out;
     for (iptr = data_in; iptr < iend; ++iptr) {
         size_t size = 1;
         const char *ostr = NULL;
@@ -137,9 +132,8 @@ allocate:
         }
 
         if (optr + size > oend) {
-            assert (mult == 2);
-            mult = 6;
-            goto allocate;
+            rc = IB_ETRUNC;
+            break;
         }
         if (size == 1) {
             *optr = (char)*iptr;
@@ -157,17 +151,79 @@ allocate:
         *optr = '\0';
         ++optr;
     }
-    if (modified) {
-        *result = IB_STRFLAG_MODIFIED | IB_STRFLAG_NEWBUF;
+
+    if (result != NULL) {
+        if (modified) {
+            *result = IB_STRFLAG_MODIFIED;
+        }
+        else {
+            *result = IB_STRFLAG_NONE;
+        }
     }
-    else {
-        *result = IB_STRFLAG_NEWBUF;
-    }
-    *data_out = buf;
     if (dlen_out != NULL) {
-        *dlen_out = optr - buf;
+        *dlen_out = optr - data_out;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/* Convert a c-string to a json string with escaping */
+ib_status_t ib_string_escape_json_buf(const char *data_in,
+                                      char *data_out,
+                                      size_t dsize_out,
+                                      ib_flags_t *result)
+{
+    IB_FTRACE_INIT();
+    assert(data_in != NULL);
+    assert(data_out != NULL);
+
+    ib_status_t rc;
+    rc = ib_string_escape_json_buf_ex((const uint8_t *)data_in, strlen(data_in),
+                                      true,
+                                      data_out, dsize_out, NULL,
+                                      result);
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/* Convert a bytestring to a json string with escaping, ex version */
+ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
+                                     const uint8_t *data_in,
+                                     size_t dlen_in,
+                                     bool add_nul,
+                                     char **data_out,
+                                     size_t *dlen_out,
+                                     ib_flags_t *result)
+{
+    IB_FTRACE_INIT();
+    assert(mp != NULL);
+    assert(data_in != NULL);
+    assert(data_out != NULL);
+    assert(result != NULL);
+
+    size_t mult = 2; /* Size multiplier */
+    size_t buflen;   /* Length of data buf can hold */
+    size_t bufsize;  /* Size of allocated buffer (may hold trailing nul) */
+    char *buf;
+    ib_status_t rc;
+
+allocate:
+    buflen = mult * dlen_in;
+    bufsize = buflen + (add_nul ? 1 : 0);
+    buf = ib_mpool_alloc(mp, bufsize);
+    if (buf == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    rc = ib_string_escape_json_buf_ex(data_in, dlen_in, add_nul,
+                                      buf, bufsize, dlen_out, result);
+    if (rc == IB_ETRUNC) {
+        assert (mult == 2);
+        mult = 6;
+        goto allocate;
+    }
+    *result |= IB_STRFLAG_NEWBUF;
+    *data_out = buf;
+
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /* Convert a c-string to a json string with escaping */

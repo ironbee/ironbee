@@ -32,6 +32,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/stream.h>
 #include <ironbee/util.h>
+#include <ironbee/escape.h>
 
 #include <assert.h>
 #include <inttypes.h>
@@ -92,6 +93,7 @@ const char *ib_field_type_name(
 const char *ib_field_format(
     const ib_field_t  *field,
     bool               quote,
+    bool               escape,
     const char       **type_name,
     char              *buf,
     size_t             bufsize
@@ -126,7 +128,15 @@ const char *ib_field_format(
             if (rc != IB_OK) {
                 break;
             }
-            if (quote) {
+            if (escape && quote) {
+                rc = ib_string_escape_json_buf(s, buf+1, bufsize-2, NULL);
+                *(buf+0) = '\"';
+                strcat(buf, "\"");
+            }
+            else if (escape) {
+                rc = ib_string_escape_json_buf(s, buf, bufsize, NULL);
+            }
+            else if (quote) {
                 snprintf(buf, bufsize, "\"%s\"", s);
             }
             else {
@@ -146,7 +156,25 @@ const char *ib_field_format(
                 break;
             }
 
-            if (quote) {
+            if (escape && quote) {
+                size_t len;
+                rc = ib_string_escape_json_buf_ex(ib_bytestr_const_ptr(bs),
+                                                  ib_bytestr_length(bs),
+                                                  true,
+                                                  buf+1, bufsize-2, &len,
+                                                  NULL);
+                *(buf+0) = '\"';
+                strcat(buf+len, "\"");
+            }
+            else if (escape) {
+                size_t len;
+                rc = ib_string_escape_json_buf_ex(ib_bytestr_const_ptr(bs),
+                                                  ib_bytestr_length(bs),
+                                                  true,
+                                                  buf, bufsize, &len,
+                                                  NULL);
+            }
+            else if (quote) {
                 snprintf(buf, bufsize, "\"%.*s\"",
                          (int)ib_bytestr_length(bs),
                          (const char *)ib_bytestr_const_ptr(bs));
@@ -207,7 +235,8 @@ const char *ib_field_format(
                     snprintf(buf, bufsize, "list[%zd]", len);
                 }
                 else {
-                    ib_field_format((const ib_field_t *)node->data, quote,
+                    ib_field_format((const ib_field_t *)node->data,
+                                    quote, escape,
                                     &tname, buf, bufsize);
                 }
             }

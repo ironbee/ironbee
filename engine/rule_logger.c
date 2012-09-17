@@ -179,8 +179,10 @@ ib_rule_log_level_t ib_rule_debug_log_level(ib_context_t *ctx)
 }
 
 /* Log TX start */
-ib_status_t ib_rule_log_tx_create(ib_tx_t *tx,
-                                  ib_rule_log_tx_t **log_tx)
+ib_status_t ib_rule_log_tx_create(
+    ib_tx_t *tx,
+    ib_rule_log_tx_t **log_tx
+)
 {
     IB_FTRACE_INIT();
     ib_flags_t flags;
@@ -896,7 +898,8 @@ static void log_tfns(
                  tfn->tfn->name,
                  (int)tgt->original->nlen, tgt->original->name,
                  ib_field_type_name(tgt->original->type),
-                 ib_field_format(tfn->out, true, NULL, buf, MAX_FIELD_BUF),
+                 ib_field_format(tfn->out, true, true, NULL,
+                                 buf, MAX_FIELD_BUF),
                  tfn->status == IB_OK ? "" : ib_status_to_string(tfn->status));
     }
 
@@ -973,7 +976,8 @@ static void log_result(
         rule_log(log_tx, log_exec, "OP %s \"%s\" %s %ld %s",
                  log_exec->rule->opinst->op->name,
                  log_exec->rule->opinst->params,
-                 ib_field_format(rslt->value, true, NULL, buf, MAX_FIELD_BUF),
+                 ib_field_format(rslt->value, true, true, NULL,
+                                 buf, MAX_FIELD_BUF),
                  (long int)rslt->result,
                  (rslt->status == IB_OK ? "" :
                   ib_status_to_string(rslt->status)));
@@ -1070,7 +1074,7 @@ void ib_rule_log_exec_ex(
                              "RULE_DATA %.*s %s %s",
                              (int)tgt->original->nlen, tgt->original->name,
                              ib_field_type_name(tgt->original->type),
-                             ib_field_format(tgt->original, true, NULL,
+                             ib_field_format(tgt->original, true, true, NULL,
                                              buf, MAX_FIELD_BUF));
                 }
             }

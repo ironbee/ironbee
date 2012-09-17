@@ -112,8 +112,184 @@ TEST_F(TestIBUtilField, test_field_create)
     ASSERT_TRUE(f);
 }
 
+/// @test Test util field library - ib_field_format() with nulstr
+TEST_F(TestIBUtilField, test_field_format_nulstr)
+{
+    ib_field_t *f;
+    ib_status_t rc;
+    char fmtbuf1[8];
+    char fmtbuf2[32];
+    const char *nul1 = "\"a\n\"";
+    const char *nul2 = "\fabcdefghijk\t";
+    const char *tname;
+    const char *buf;
+    char *nulcopy;
+
+    nulcopy = MemPoolStrDup(nul1);
+    ASSERT_STRNE(NULL, nulcopy);
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_nulstr"),
+                         IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulcopy));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(f);
+
+    buf = ib_field_format(f, false, false, &tname, fmtbuf1, sizeof(fmtbuf1));
+    ASSERT_STREQ(nul1, fmtbuf1);
+    ASSERT_STREQ("NULSTR", tname);
+    ASSERT_EQ(buf, fmtbuf1);
+
+    buf = ib_field_format(f, true, false, &tname, fmtbuf1, sizeof(fmtbuf1));
+    ASSERT_STREQ("\"\"a\n\"\"", fmtbuf1);
+    ASSERT_STREQ("NULSTR", tname);
+    ASSERT_EQ(buf, fmtbuf1);
+
+    buf = ib_field_format(f, true, true, &tname, fmtbuf1, sizeof(fmtbuf1));
+    ASSERT_STREQ("\"\\\"a\\n\"", fmtbuf1);
+    ASSERT_STREQ("NULSTR", tname);
+    ASSERT_EQ(buf, fmtbuf1);
+
+
+    nulcopy = MemPoolStrDup(nul2);
+    ASSERT_STRNE(NULL, nulcopy);
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_nulstr"),
+                         IB_FTYPE_NULSTR, ib_ftype_nulstr_in(nulcopy));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(f);
+
+    buf = ib_field_format(f, false, false, NULL, fmtbuf1, sizeof(fmtbuf1));
+    ASSERT_STREQ("\fabcdef", fmtbuf1);
+    ASSERT_EQ(buf, fmtbuf1);
+
+    buf = ib_field_format(f, false, false, NULL, fmtbuf2, sizeof(fmtbuf2));
+    ASSERT_STREQ(nul2, fmtbuf2);
+    ASSERT_EQ(buf, fmtbuf2);
+
+    buf = ib_field_format(f, true, false, NULL, fmtbuf2, sizeof(fmtbuf2));
+    ASSERT_STREQ("\"\fabcdefghijk\t\"", fmtbuf2);
+    ASSERT_EQ(buf, fmtbuf2);
+
+    buf = ib_field_format(f, false, true, NULL, fmtbuf2, sizeof(fmtbuf2));
+    ASSERT_STREQ("\\fabcdefghijk\\t", fmtbuf2);
+    ASSERT_EQ(buf, fmtbuf2);
+
+    buf = ib_field_format(f, true, true, NULL, fmtbuf2, sizeof(fmtbuf2));
+    ASSERT_STREQ("\"\\fabcdefghijk\\t\"", fmtbuf2);
+    ASSERT_EQ(buf, fmtbuf2);
+
+}
+
+/// @test Test util field library - ib_field_format() with bytestr
+TEST_F(TestIBUtilField, test_field_format_bytestr)
+{
+    ib_field_t *f;
+    ib_status_t rc;
+    char fmtbuf[32];
+    const uint8_t in1[] = "a\0b";
+    const uint8_t in2[] = "\fabcd\0efghijk\t";
+    size_t size;
+    ib_bytestr_t *bs;
+    const char *tname;
+    const char *buf;
+
+    size = sizeof(in1) - 1;
+    rc = ib_bytestr_dup_mem(&bs, MemPool(), in1, size);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(f != NULL);
+
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_bytestr"),
+                         IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(f);
+
+    buf = ib_field_format(f, false, false, &tname, fmtbuf, sizeof(fmtbuf));
+    ASSERT_STREQ((const char *)in1, fmtbuf);
+    ASSERT_STREQ("BYTESTR", tname);
+    ASSERT_EQ(buf, fmtbuf);
+
+    buf = ib_field_format(f, false, true, &tname, fmtbuf, sizeof(fmtbuf));
+    ASSERT_STREQ("a\\u0000b", fmtbuf);
+    ASSERT_STREQ("BYTESTR", tname);
+    ASSERT_EQ(buf, fmtbuf);
+
+    buf = ib_field_format(f, true, true, &tname, fmtbuf, sizeof(fmtbuf));
+    ASSERT_STREQ("\"a\\u0000b\"", fmtbuf);
+    ASSERT_STREQ("BYTESTR", tname);
+    ASSERT_EQ(buf, fmtbuf);
+
+
+    size = sizeof(in2) - 1;
+    rc = ib_bytestr_dup_mem(&bs, MemPool(), in2, size);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(f != NULL);
+
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_bytestr"),
+                         IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(f);
+
+    buf = ib_field_format(f, false, false, NULL, fmtbuf, sizeof(fmtbuf));
+    ASSERT_STREQ((const char *)in2, fmtbuf);
+    ASSERT_EQ(buf, fmtbuf);
+
+    buf = ib_field_format(f, true, false, NULL, fmtbuf, sizeof(fmtbuf));
+    ASSERT_STREQ("\"\fabcd\"", fmtbuf);
+    ASSERT_EQ(buf, fmtbuf);
+
+    buf = ib_field_format(f, false, true, NULL, fmtbuf, sizeof(fmtbuf));
+    ASSERT_STREQ("\\fabcd\\u0000efghijk\\t", fmtbuf);
+    ASSERT_EQ(buf, fmtbuf);
+
+    buf = ib_field_format(f, true, true, NULL, fmtbuf, sizeof(fmtbuf));
+    ASSERT_STREQ("\"\\fabcd\\u0000efghijk\\t\"", fmtbuf);
+    ASSERT_EQ(buf, fmtbuf);
+}
+
+/// @test Test util field library - ib_field_format() with numeric types
+TEST_F(TestIBUtilField, test_field_format_num)
+{
+    ib_field_t *f;
+    ib_status_t rc;
+    char fmtbuf[32];
+    ib_num_t num;
+    ib_unum_t unum;
+    const char *tname;
+    const char *buf;
+
+    num = -10;
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_num"),
+                         IB_FTYPE_NUM, ib_ftype_num_in(&num));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(f);
+
+    buf = ib_field_format(f, false, false, &tname, fmtbuf, sizeof(fmtbuf));
+    ASSERT_STREQ("-10", fmtbuf);
+    ASSERT_STREQ("NUM", tname);
+    ASSERT_EQ(buf, fmtbuf);
+
+    buf = ib_field_format(f, true, true, &tname, fmtbuf, sizeof(fmtbuf));
+    ASSERT_STREQ("-10", fmtbuf);
+    ASSERT_STREQ("NUM", tname);
+    ASSERT_EQ(buf, fmtbuf);
+
+    unum = 1;
+    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_unum"),
+                         IB_FTYPE_UNUM, ib_ftype_unum_in(&unum));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_TRUE(f);
+
+    buf = ib_field_format(f, false, false, &tname, fmtbuf, sizeof(fmtbuf));
+    ASSERT_STREQ("1", fmtbuf);
+    ASSERT_STREQ("UNUM", tname);
+    ASSERT_EQ(buf, fmtbuf);
+
+    buf = ib_field_format(f, true, true, &tname, fmtbuf, sizeof(fmtbuf));
+    ASSERT_STREQ("1", fmtbuf);
+    ASSERT_STREQ("UNUM", tname);
+    ASSERT_EQ(buf, fmtbuf);
+}
+
 // Globals used to test if dyn_* caching is working
 static int g_dyn_call_count;
+
 static char g_dyn_call_val[1024];
 
 // Dynamic get function which increments a global counter and modifies
