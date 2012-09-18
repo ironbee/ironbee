@@ -213,7 +213,7 @@ int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     }
 
     // Create parser instance
-    connp->in_tx->request_mpartp = htp_mpartp_create(connp, boundary);
+    connp->in_tx->request_mpartp = htp_mpartp_create(connp->cfg, boundary);
     if (connp->in_tx->request_mpartp == NULL) {
         free(boundary);
         return HOOK_ERROR;

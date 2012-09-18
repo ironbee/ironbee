@@ -1609,7 +1609,8 @@ int main_multipart1(int argc, char** argv) {
 // int main(int argc, char** argv) {
     htp_mpartp_t *mpartp = NULL;
 
-    mpartp = htp_mpartp_create(NULL, "BBB");
+    htp_cfg_t *cfg = htp_config_create();
+    mpartp = htp_mpartp_create(cfg, "BBB");
 
     unsigned char *i1 = "x0000x\n--BBB\nx1111x\n--\nx2222x\n--";
     unsigned char *i2 = "BBB\nx3333x\n--B";
@@ -1661,7 +1662,7 @@ int main_multipart2(int argc, char** argv) {
     htp_config_register_multipart_parser(cfg);
 
     htp_connp_t *connp = htp_connp_create(cfg);
-    mpartp = htp_mpartp_create(connp, boundary);
+    mpartp = htp_mpartp_create(cfg, boundary);
 
     mpartp->extract_files = 1;
     mpartp->extract_dir = "c:/temp";

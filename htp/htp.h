@@ -782,9 +782,6 @@ struct htp_file_t {
 };
 
 struct htp_file_data_t {
-    /** Transaction pointer. */
-    htp_tx_t *tx;
-
     /** File information. */
     htp_file_t *file;
 

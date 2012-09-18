@@ -309,7 +309,7 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
     htp_mpart_part_t * part = calloc(1, sizeof (htp_mpart_part_t));
     if (part == NULL) return NULL;
 
-    part->headers = mpartp->connp->cfg->create_table(4);
+    part->headers = mpartp->cfg->create_table(4);
     if (part->headers == NULL) {
         free(part);
         return NULL;
@@ -388,18 +388,17 @@ int htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
 }
 
 int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, unsigned char *data, size_t len) {
-    if (part->mpartp->connp == NULL) return HTP_OK;   
+    if (part->mpartp->cfg == NULL) return HTP_OK;
 
     htp_file_data_t file_data;
 
-    file_data.tx = part->mpartp->connp->in_tx;
     file_data.file = part->file;
     file_data.file->len += len;
     file_data.data = data;
     file_data.len = len;
 
     // Send data to callbacks
-    int rc = hook_run_all(part->mpartp->connp->cfg->hook_request_file_data, &file_data);
+    int rc = hook_run_all(part->mpartp->cfg->hook_request_file_data, &file_data);
     if (rc != HOOK_OK) {
         // TODO
     }
@@ -593,12 +592,12 @@ static int htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
  * @param boundary
  * @return New parser, or NULL on memory allocation failure.
  */
-htp_mpartp_t * htp_mpartp_create(htp_connp_t *connp, char *boundary) {
-    if ((connp == NULL)||(boundary == NULL)) return NULL;
+htp_mpartp_t * htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
+    if ((cfg == NULL)||(boundary == NULL)) return NULL;
     htp_mpartp_t *mpartp = calloc(1, sizeof (htp_mpartp_t));
     if (mpartp == NULL) return NULL;
 
-    mpartp->connp = connp;
+    mpartp->cfg = cfg;
 
     mpartp->boundary_pieces = bstr_builder_create();
     if (mpartp->boundary_pieces == NULL) {
@@ -612,7 +611,7 @@ htp_mpartp_t * htp_mpartp_create(htp_connp_t *connp, char *boundary) {
         return NULL;
     }
 
-    mpartp->parts = connp->cfg->create_list_array(64);
+    mpartp->parts = cfg->create_list_array(64);
     if (mpartp->parts == NULL) {
         htp_mpartp_destroy(&mpartp);
         return NULL;

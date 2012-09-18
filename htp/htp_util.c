@@ -2243,7 +2243,6 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
         
         file_data.data = d->data;
         file_data.len = d->len;
-        file_data.tx = connp->in_tx;
         file_data.file = connp->put_file;
         file_data.file->len += d->len;
 

@@ -98,7 +98,7 @@ struct htp_mpart_part_t {
 };
 
 struct htp_mpartp_t {
-    htp_connp_t *connp;
+    htp_cfg_t *cfg;
 
     /** Boundary to be used to extract parts. */
     char *boundary;
@@ -140,7 +140,7 @@ struct htp_mpartp_t {
     int cr_aside;
 };
 
-htp_mpartp_t *htp_mpartp_create(htp_connp_t *connp, char *boundary);
+htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary);
 void htp_mpartp_destroy(htp_mpartp_t **mpartp);
 
 int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len);
