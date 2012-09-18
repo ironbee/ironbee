@@ -193,12 +193,11 @@ TEST_F(TestIBUtilField, test_field_format_bytestr)
     size = sizeof(in1) - 1;
     rc = ib_bytestr_dup_mem(&bs, MemPool(), in1, size);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_TRUE(f != NULL);
 
     rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_bytestr"),
                          IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_TRUE(f);
+    ASSERT_TRUE(f != NULL);
 
     buf = ib_field_format(f, false, false, &tname, fmtbuf, sizeof(fmtbuf));
     ASSERT_STREQ((const char *)in1, fmtbuf);

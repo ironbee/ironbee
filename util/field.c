@@ -129,12 +129,12 @@ const char *ib_field_format(
                 break;
             }
             if (escape && quote) {
-                rc = ib_string_escape_json_buf(s, buf+1, bufsize-2, NULL);
+                ib_string_escape_json_buf(s, buf+1, bufsize-2, NULL);
                 *(buf+0) = '\"';
                 strcat(buf, "\"");
             }
             else if (escape) {
-                rc = ib_string_escape_json_buf(s, buf, bufsize, NULL);
+                ib_string_escape_json_buf(s, buf, bufsize, NULL);
             }
             else if (quote) {
                 snprintf(buf, bufsize, "\"%s\"", s);
@@ -158,21 +158,20 @@ const char *ib_field_format(
 
             if (escape && quote) {
                 size_t len;
-                rc = ib_string_escape_json_buf_ex(ib_bytestr_const_ptr(bs),
-                                                  ib_bytestr_length(bs),
-                                                  true,
-                                                  buf+1, bufsize-2, &len,
-                                                  NULL);
+                ib_string_escape_json_buf_ex(ib_bytestr_const_ptr(bs),
+                                             ib_bytestr_length(bs),
+                                             true,
+                                             buf+1, bufsize-2, &len,
+                                             NULL);
                 *(buf+0) = '\"';
                 strcat(buf+len, "\"");
             }
             else if (escape) {
-                size_t len;
-                rc = ib_string_escape_json_buf_ex(ib_bytestr_const_ptr(bs),
-                                                  ib_bytestr_length(bs),
-                                                  true,
-                                                  buf, bufsize, &len,
-                                                  NULL);
+                ib_string_escape_json_buf_ex(ib_bytestr_const_ptr(bs),
+                                             ib_bytestr_length(bs),
+                                             true,
+                                             buf, bufsize, NULL,
+                                             NULL);
             }
             else if (quote) {
                 snprintf(buf, bufsize, "\"%.*s\"",

@@ -51,7 +51,7 @@ extern "C" {
  *
  * @param[in] data_in Input data
  * @param[in] dlen_in Length of data in @a data_in
- * @param[in] nul Save room for and append a nul byte?
+ * @param[in] add_nul Save room for and append a nul byte?
  * @param[out] data_out Output buffer
  * @param[in] dsize_out Size of @a data_out
  * @param[out] dlen_out Length of data in @a data_out (or NULL)
