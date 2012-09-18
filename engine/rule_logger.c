@@ -35,6 +35,7 @@
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/transformation.h>
+#include <ironbee/escape.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
@@ -714,9 +715,28 @@ static void log_tx_body(
 )
 {
     IB_FTRACE_INIT();
+    ib_sdata_t *sdata;
+    ib_status_t rc;
 
-    // todo
-    ib_log_tx_ex(log_tx->tx, log_tx->level, NULL, 0, "%s", label);
+    if (body == NULL) {
+        IB_FTRACE_RET_VOID();
+    }
+    rc = ib_stream_peek(body, &sdata);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_VOID();
+    }
+    if (sdata->type == IB_STREAM_DATA) {
+        char *buf;
+        ib_flags_t result;
+
+        ib_string_escape_json_ex(log_tx->tx->mp,
+                                 sdata->data, sdata->dlen,
+                                 true, &buf, NULL, &result);
+        if (rc == IB_OK) {
+            ib_log_tx_ex(log_tx->tx, log_tx->level, NULL, 0, "%s %zd \"%s\"",
+                         label, sdata->dlen, buf);
+        }
+    }
     IB_FTRACE_RET_VOID();
 }
 
@@ -740,7 +760,7 @@ static void log_tx_response_body(
 {
     IB_FTRACE_INIT();
 
-    if (ib_flags_all(log_tx->flags, IB_RULE_LOG_FLAG_RSP_BODY)) {
+    if (ib_flags_all(log_tx->flags, IB_RULE_LOG_FLAG_RSP_BODY) == true) {
         log_tx_body(log_tx, "RES_BODY", tx->response_body);
     }
     IB_FTRACE_RET_VOID();
@@ -969,7 +989,7 @@ static void log_result(
     assert(rslt != NULL);
     char buf[MAX_FIELD_BUF+1];
 
-    if(tgt->tfn_list != NULL) {
+    if (tgt->tfn_list != NULL) {
         log_tfns(log_tx, log_exec, tgt);
     }
 
@@ -1016,7 +1036,7 @@ static int get_count(
 {
     IB_FTRACE_INIT();
 
-    switch(log_tx->mode) {
+    switch (log_tx->mode) {
     case IB_RULE_LOG_MODE_ACT:
         IB_FTRACE_RET_INT(counts->num_actions);
     case IB_RULE_LOG_MODE_ERROR:
