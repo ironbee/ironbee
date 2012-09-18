@@ -102,3 +102,22 @@ ib_status_t ib_stream_pull(ib_stream_t *s,
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
+
+ib_status_t ib_stream_peek(const ib_stream_t *s,
+                           ib_sdata_t **psdata)
+{
+    IB_FTRACE_INIT();
+
+    if (s->nelts == 0) {
+        if (psdata != NULL) {
+            *psdata = NULL;
+        }
+        IB_FTRACE_RET_STATUS(IB_ENOENT);
+    }
+
+    if (psdata != NULL) {
+        *psdata = s->head;
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}

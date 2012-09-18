@@ -106,11 +106,18 @@ TEST_F(TestStream, test_push)
     rc = Push(IB_STREAM_DATA, str, len);
     ASSERT_EQ(IB_OK, rc);
 
+    rc = ib_stream_peek(m_stream, &sdata);
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(IB_STREAM_DATA, sdata->type);
+    ASSERT_EQ(len, sdata->dlen);
+    ASSERT_STREQ(str, (char *)sdata->data);
+
     rc = ib_stream_pull(m_stream, &sdata);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(IB_STREAM_DATA, sdata->type);
     ASSERT_EQ(len, sdata->dlen);
     ASSERT_STREQ(str, (char *)sdata->data);
+    ASSERT_EQ((size_t)0, m_stream->slen);
 }
 
 TEST_F(TestStream, test_push_sdata)

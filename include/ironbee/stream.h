@@ -135,6 +135,17 @@ ib_status_t DLL_PUBLIC ib_stream_pull(ib_stream_t *s,
                                       ib_sdata_t **psdata);
 
 /**
+ * Examine a chunk of data (or metadata) from a stream.
+ *
+ * @param s Stream
+ * @param psdata Address which stream data is written
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_stream_peek(const ib_stream_t *s,
+                                      ib_sdata_t **psdata);
+
+/**
  * @} IronBeeUtilStream
  */
 
