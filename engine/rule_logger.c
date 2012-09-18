@@ -975,14 +975,16 @@ static void log_result(
 
     if (rslt->value == NULL) {
         rule_log(log_tx, log_exec,
-                 "RULE_DATA %.*s %s %s",
+                 "RULE_DATA \"%s\" \"%.*s\" %s %s",
+                 tgt->target->target_str,
                  tgt->original == NULL ? 4 : (int)tgt->original->nlen,
                  tgt->original == NULL ? "None" : tgt->original->name,
                  "NULL", "NULL");
     }
     else {
         rule_log(log_tx, log_exec,
-                 "RULE_DATA %.*s %s %s",
+                 "RULE_DATA \"%s\" \"%.*s\" %s %s",
+                 tgt->target->target_str,
                  (int)rslt->value->nlen, rslt->value->name,
                  ib_field_type_name(rslt->value->type),
                  ib_field_format(rslt->value, true, true, NULL,
