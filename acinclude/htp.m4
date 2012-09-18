@@ -10,9 +10,9 @@ HTP_CFLAGS=""
 HTP_CPPFLAGS=""
 HTP_LDADD=""
 HTP_LDFLAGS=""
-HTP_CONFIG=pkg-config
 HTP_PKGNAMES="htp htp1"
 HTP_SONAMES="so la sl dll dylib"
+pkg_configs="bin/pkg-config pkg-config"
 
 AC_DEFUN([CHECK_HTP],
 [dnl
@@ -33,18 +33,13 @@ for x in ${test_paths}; do
     fi
 
     dnl # Try known config script names/locations
-    for y in $HTP_CONFIG; do
-        if test -e "${x}/bin/${y}"; then
-            HTP_CONFIG="${x}/bin/${y}"
-            htp_config="${HTP_CONFIG}"
-            break
-        elif test -e "${x}/${y}"; then
+    for y in ${pkg_configs}; do
+        if test -e "${x}/${y}"; then
             HTP_CONFIG="${x}/${y}"
-            htp_config="${HTP_CONFIG}"
             break
         fi
     done
-    if test -n "${htp_config}"; then
+    if test -n "${HTP_CONFIG}"; then
         break
     fi
 done
