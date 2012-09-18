@@ -50,6 +50,7 @@
  */
 static const size_t MAX_FIELD_BUF = 64;
 static const size_t PREFIX_BUFSIZE = 32;
+static const size_t REV_BUFSIZE = 16;
 
 /**
  * If any of these flags are set, enable rule logging
@@ -972,6 +973,22 @@ static void log_result(
         log_tfns(log_tx, log_exec, tgt);
     }
 
+    if (rslt->value == NULL) {
+        rule_log(log_tx, log_exec,
+                 "RULE_DATA %.*s %s %s",
+                 tgt->original == NULL ? 4 : (int)tgt->original->nlen,
+                 tgt->original == NULL ? "None" : tgt->original->name,
+                 "NULL", "NULL");
+    }
+    else {
+        rule_log(log_tx, log_exec,
+                 "RULE_DATA %.*s %s %s",
+                 (int)rslt->value->nlen, rslt->value->name,
+                 ib_field_type_name(rslt->value->type),
+                 ib_field_format(rslt->value, true, true, NULL,
+                                 buf, MAX_FIELD_BUF));
+    }
+
     if (ib_flags_all(log_tx->flags, IB_RULE_LOG_FLAG_OPERATOR) ) {
         rule_log(log_tx, log_exec, "OP %s \"%s\" %s %ld %s",
                  log_exec->rule->opinst->op->name,
@@ -1020,6 +1037,7 @@ void ib_rule_log_exec_ex(
     IB_FTRACE_INIT();
     const ib_list_node_t *tgt_node;
     const ib_rule_log_tx_t *log_tx;
+    const ib_rule_t *rule;
 
     if ( (log_exec == NULL) || (log_exec->rule == NULL) ) {
         IB_FTRACE_RET_VOID();
@@ -1029,6 +1047,8 @@ void ib_rule_log_exec_ex(
     if (get_count(log_tx, &log_exec->counts) == 0) {
         IB_FTRACE_RET_VOID();
     }
+
+    rule = log_exec->rule;
 
     /*
      * Log the rule start and/or data
@@ -1063,19 +1083,12 @@ void ib_rule_log_exec_ex(
             }
 
             if (ib_flags_all(log_tx->flags, IB_RULE_LOG_FLAG_RULE_DATA)) {
-                if (tgt->original == NULL) {
+                bool allow_null = ib_flags_all(rule->opinst->op->flags,
+                                               IB_OP_FLAG_ALLOW_NULL);
+                if ( (tgt->original == NULL) && (allow_null == false) ) {
                     rule_log(log_tx, log_exec,
                              "RULE_DATA %s NOT_FOUND",
                              tgt->target->field_name);
-                }
-                else {
-                    char buf[MAX_FIELD_BUF+1];
-                    rule_log(log_tx, log_exec,
-                             "RULE_DATA %.*s %s %s",
-                             (int)tgt->original->nlen, tgt->original->name,
-                             ib_field_type_name(tgt->original->type),
-                             ib_field_format(tgt->original, true, true, NULL,
-                                             buf, MAX_FIELD_BUF));
                 }
             }
 
@@ -1149,9 +1162,15 @@ void ib_rule_vlog(
 
         /* Add the rule and operator name */
         if (rule != NULL) {
+            char revbuf[REV_BUFSIZE+1];
+
+            snprintf(revbuf, REV_BUFSIZE, "%d", rule->meta.revision);
+
             strcat(fmtbuf, "rule:\"");
             strcat(fmtbuf, rule->meta.id);
-            strcat(fmtbuf, "\"");
+            strcat(fmtbuf, "\" rev:");
+            strcat(fmtbuf, revbuf);
+
             if (log_opinst) {
                 strcat(fmtbuf, " operator:\"");
                 strcat(fmtbuf, rule->opinst->op->name);

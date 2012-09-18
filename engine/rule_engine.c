@@ -69,6 +69,7 @@ struct ib_rule_phase_meta_t {
     ib_state_hook_type_t   hook_type;
     ib_flags_t             flags;
     const char            *name;
+    const char            *description;
     ib_flags_t             required_op_flags;
     ib_state_event_type_t  event;
 };
@@ -82,6 +83,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         (ib_state_hook_type_t) -1,
         ( PHASE_FLAG_ALLOW_CHAIN |
           PHASE_FLAG_ALLOW_TFNS ),
+        NULL,
         "Generic 'Phase' Rule",
         IB_OP_FLAG_PHASE,
         (ib_state_event_type_t) -1
@@ -94,6 +96,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_ALLOW_CHAIN |
           PHASE_FLAG_ALLOW_TFNS |
           PHASE_FLAG_REQUEST ),
+        "REQUEST_HEADER",
         "Request Header",
         IB_OP_FLAG_PHASE,
         handle_request_header_event
@@ -106,6 +109,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_ALLOW_CHAIN |
           PHASE_FLAG_ALLOW_TFNS |
           PHASE_FLAG_REQUEST ),
+        "REQUEST_BODY",
         "Request Body",
         IB_OP_FLAG_PHASE,
         handle_request_event
@@ -118,6 +122,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_ALLOW_CHAIN |
           PHASE_FLAG_ALLOW_TFNS |
           PHASE_FLAG_RESPONSE ),
+        "RESPONSE_HEADER",
         "Response Header",
         IB_OP_FLAG_PHASE,
         handle_response_header_event
@@ -130,6 +135,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_ALLOW_CHAIN |
           PHASE_FLAG_ALLOW_TFNS |
           PHASE_FLAG_RESPONSE ),
+        "RESPONSE_BODY",
         "Response Body",
         IB_OP_FLAG_PHASE,
         handle_response_event
@@ -143,6 +149,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
           PHASE_FLAG_ALLOW_TFNS |
           PHASE_FLAG_FORCE |
           PHASE_FLAG_POSTPROCESS ),
+        "POST_PROCESS",
         "Post Process",
         IB_OP_FLAG_PHASE,
         handle_postprocess_event
@@ -154,6 +161,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         PHASE_NONE,
         (ib_state_hook_type_t) -1,
         (PHASE_FLAG_IS_STREAM),
+        NULL,
         "Generic 'Stream Inspection' Rule",
         IB_OP_FLAG_STREAM,
         (ib_state_event_type_t) -1
@@ -165,6 +173,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
           PHASE_FLAG_REQUEST ),
+        "REQUEST_HEADER_STREAM",
         "Request Header Stream",
         IB_OP_FLAG_STREAM,
         handle_context_tx_event
@@ -176,6 +185,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
           PHASE_FLAG_REQUEST ),
+        "REQUEST_BODY_STREAM",
         "Request Body Stream",
         IB_OP_FLAG_STREAM,
         request_body_data_event
@@ -187,6 +197,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
           PHASE_FLAG_RESPONSE ),
+        "RESPONSE_HEADER_STREAM",
         "Response Header Stream",
         IB_OP_FLAG_STREAM,
         response_header_data_event
@@ -198,6 +209,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         ( PHASE_FLAG_IS_VALID |
           PHASE_FLAG_IS_STREAM |
           PHASE_FLAG_RESPONSE ),
+        "RESPONSE_BODY_STREAM",
         "Response Body Stream",
         IB_OP_FLAG_STREAM,
         response_body_data_event
@@ -207,6 +219,7 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         PHASE_INVALID,
         (ib_state_hook_type_t) -1,
         PHASE_FLAG_NONE,
+        NULL,
         "Invalid",
         IB_OP_FLAG_NONE,
         (ib_state_event_type_t) -1
@@ -269,6 +282,43 @@ static ib_status_t find_phase_meta(ib_rule_phase_num_t phase_num,
         }
     }
     IB_FTRACE_RET_STATUS(IB_ENOENT);
+}
+
+/**
+ * Return a phase's name string
+ *
+ * @param[in] phase_meta Rule phase meta-data
+ *
+ * @returns Name string
+ */
+static const char *phase_name(
+    const ib_rule_phase_meta_t *phase_meta)
+{
+    IB_FTRACE_INIT();
+
+    assert (phase_meta != NULL);
+    if (phase_meta->name != NULL) {
+        IB_FTRACE_RET_CONSTSTR(phase_meta->name);
+    }
+    else {
+        IB_FTRACE_RET_CONSTSTR(phase_meta->description);
+    }
+}
+
+/**
+ * Return a phase's description string
+ *
+ * @param[in] phase_meta Rule phase meta-data
+ *
+ * @returns Description string
+ */
+static const char *phase_description(
+    const ib_rule_phase_meta_t *phase_meta)
+{
+    IB_FTRACE_INIT();
+
+    assert (phase_meta != NULL);
+    IB_FTRACE_RET_CONSTSTR(phase_meta->description);
 }
 
 /**
@@ -1531,7 +1581,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
 
     /* Log the transaction event start */
     ib_rule_log_tx_event_start(log_tx, event);
-    ib_rule_log_phase(log_tx, meta->phase_num, meta->name);
+    ib_rule_log_phase(log_tx, meta->phase_num, phase_name(meta));
 
     /* Allow (skip) this phase? */
     if (rule_allow(tx, meta, NULL, false)) {
@@ -1551,7 +1601,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                           "Not executing rules for phase %d/\"%s\" "
                           "in context \"%s\" because transaction previously "
                           "has been blocked with status %d",
-                          meta->phase_num, meta->name,
+                          meta->phase_num, phase_name(meta),
                           ib_context_full_get(ctx), tx->block_status);
         rc = IB_OK;
         goto finish;
@@ -1561,7 +1611,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     if (ruleset_phase->phase_num != meta->phase_num) {
         ib_rule_log_error(tx, NULL, NULL, NULL,
                           "Rule engine: Phase %d/\"%s\" is %d",
-                          meta->phase_num, meta->name,
+                          meta->phase_num, phase_name(meta),
                           ruleset_phase->phase_num);
         rc = IB_EINVAL;
         goto finish;
@@ -1571,7 +1621,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_rule_log_debug(tx, NULL, NULL, NULL,
                           "No rules for phase %d/\"%s\" in context \"%s\"",
-                          meta->phase_num, meta->name,
+                          meta->phase_num, phase_name(meta),
                           ib_context_full_get(ctx));
         rc = IB_OK;
         goto finish;
@@ -1580,7 +1630,8 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
                       "Executing %zd rules for phase %d/\"%s\" "
                       "in context \"%s\"",
                       IB_LIST_ELEMENTS(rules),
-                      meta->phase_num, meta->name, ib_context_full_get(ctx));
+                      meta->phase_num, phase_name(meta),
+                      ib_context_full_get(ctx));
 
     /*
      * Loop through all of the rules for this phase, execute them.
@@ -1925,7 +1976,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
 
     /* Log the transaction event start */
     ib_rule_log_tx_event_start(log_tx, event);
-    ib_rule_log_phase(log_tx, meta->phase_num, meta->name);
+    ib_rule_log_phase(log_tx, meta->phase_num, phase_name(meta));
 
     /* Allow (skip) this phase? */
     if (rule_allow(tx, meta, NULL, false)) {
@@ -1944,7 +1995,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     if (ruleset_phase->phase_num != meta->phase_num) {
         ib_rule_log_error(tx, NULL, NULL, NULL,
                           "Rule engine: Stream %d/\"%s\" is %d",
-                          meta->phase_num, meta->name,
+                          meta->phase_num, phase_name(meta),
                           ruleset_phase->phase_num);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1953,7 +2004,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     if (IB_LIST_ELEMENTS(rules) == 0) {
         ib_rule_log_debug(tx, NULL, NULL, NULL,
                           "No rules for stream %d/\"%s\" in context \"%s\"",
-                          meta->phase_num, meta->name,
+                          meta->phase_num, phase_name(meta),
                           ib_context_full_get(ctx));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -1961,7 +2012,8 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
                       "Executing %zd rules for stream %d/\"%s\" "
                       "in context \"%s\"",
                       IB_LIST_ELEMENTS(rules),
-                      meta->phase_num, meta->name, ib_context_full_get(ctx));
+                      meta->phase_num, phase_name(meta),
+                      ib_context_full_get(ctx));
 
     /*
      * Loop through all of the rules for this phase, execute them.
@@ -2326,7 +2378,8 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
                 ib_log_error(ib,
                              "Unknown hook registration type %d for "
                              "phase %d/\"%s\"",
-                             meta->phase_num, meta->event, meta->name);
+                             meta->phase_num, meta->event,
+                             phase_description(meta));
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
         }
@@ -2336,7 +2389,8 @@ static ib_status_t register_callbacks(ib_engine_t *ib,
             ib_log_error(ib,
                          "Hook \"%s\" registration for phase "
                          "%d/%d/\"%s\" returned %s",
-                         hook_type, meta->phase_num, meta->event, meta->name,
+                         hook_type, meta->phase_num, meta->event,
+                         phase_description(meta),
                          ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -2892,7 +2946,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
                      ib_rule_id(rule), rule->meta.revision,
                      rule->phase_meta->is_stream ? "Stream" : "Normal",
                      ruleset_phase->phase_num,
-                     rule->phase_meta->name,
+                     phase_name(rule->phase_meta),
                      ib_context_full_get(ctx));
     }
 
