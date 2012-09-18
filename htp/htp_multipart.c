@@ -513,8 +513,9 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
 
                 // Store data to disk
                 if (part->file->fd != -1) {
-                    // TODO RC
-                    write(part->file->fd, data, len);
+                    if (write(part->file->fd, data, len) < 0) {
+                        return -1;
+                    }
                 }
                 break;
         }
