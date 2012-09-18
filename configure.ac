@@ -119,7 +119,7 @@ dnl Check for GCC signed overflow warning support
 dnl -----------------------------------------------
 AC_MSG_CHECKING(for gcc support of -Wstrict-overflow=1)
 TMPCFLAGS="${CFLAGS}"
-CFLAGS="${CFLAGS} -Wstrict-overflow=1"
+CFLAGS="${CFLAGS} -Wstrict-overflow=1 -Werror -Wfatal-errors"
 AC_TRY_COMPILE(,,[gcc_have_strict_overflow=yes],[gcc_have_strict_overflow=no])
 AC_MSG_RESULT($gcc_have_strict_overflow)
 if test "$gcc_have_strict_overflow" != "yes"; then
