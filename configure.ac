@@ -293,7 +293,7 @@ fi
 
 DOXYGEN=$doxygen
 
-DOXYGEN_DIRS="include util engine modules plugins automata"
+DOXYGEN_DIRS="include util engine modules"
 EXTERNAL_DOXYGEN_FILES=`cd $srcdir;find -E $DOXYGEN_DIRS -type f -regex '.*\.(h|hpp|hh)'`
 INTERNAL_DOXYGEN_FILES=`cd $srcdir;find -E $DOXYGEN_DIRS -type f -regex '.*\.(h|hpp|c|cpp|cc)'`
 DOXYGEN_INPUT=""
