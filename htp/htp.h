@@ -852,7 +852,7 @@ struct htp_header_t {
     /** Header value. */
     bstr *value;   
 
-    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED, HTP_FIELD_IGNORED */
+    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED */
     unsigned int flags;
 };
 
