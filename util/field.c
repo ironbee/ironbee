@@ -30,9 +30,9 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
+#include <ironbee/escape.h>
 #include <ironbee/stream.h>
 #include <ironbee/util.h>
-#include <ironbee/escape.h>
 
 #include <assert.h>
 #include <inttypes.h>

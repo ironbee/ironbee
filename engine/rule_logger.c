@@ -30,12 +30,12 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/core.h>
 #include <ironbee/debug.h>
+#include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/transformation.h>
-#include <ironbee/escape.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
