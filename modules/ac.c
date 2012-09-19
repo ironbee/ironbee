@@ -504,6 +504,8 @@ static ib_status_t readfile(ib_engine_t *ib,
         total_bytes_read += bytes_read;
     } while ( total_bytes_read < len );
 
+    close(fd);
+
     /* Null terminate the buffer */
     (*buffer)[total_bytes_read] = '\0';
 
