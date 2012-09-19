@@ -22,6 +22,8 @@
  * @brief IronBee --- Perl-like Regexp utilities Implementation.
  */
 
+#include "ironbee_config_auto.h"
+
 #include <ironbee/regex.h>
 
 #include <ironbee/mpool.h>
