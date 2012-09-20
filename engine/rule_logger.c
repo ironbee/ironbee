@@ -690,7 +690,9 @@ static void log_tx_request_header(
     IB_FTRACE_INIT();
 
     if (ib_flags_all(log_tx->flags, IB_RULE_LOG_FLAG_REQ_HEADER)) {
-        log_tx_header(log_tx, "REQ_HEADER", tx->request_header);
+        if (tx->request_header != NULL) {
+            log_tx_header(log_tx, "REQ_HEADER", tx->request_header);
+        }
     }
     IB_FTRACE_RET_VOID();
 }
@@ -703,7 +705,9 @@ static void log_tx_response_header(
     IB_FTRACE_INIT();
 
     if (ib_flags_all(log_tx->flags, IB_RULE_LOG_FLAG_RSP_HEADER)) {
-        log_tx_header(log_tx, "RES_HEADER", tx->response_header);
+        if (tx->response_header != NULL) {
+            log_tx_header(log_tx, "RES_HEADER", tx->response_header);
+        }
     }
     IB_FTRACE_RET_VOID();
 }
