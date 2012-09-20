@@ -1524,7 +1524,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             ruleid = escaped;
         }
 
-        ib_log_debug(ib, "TODO: Data escaping not implemented!");
         rlen = snprintf((char *)rec, CORE_JSON_MAX_REC_LEN,
                         "%s"
                         "    {\r\n"
@@ -1538,7 +1537,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         "      \"tags\": [%s],\r\n"
                         "      \"fields\": [%s],\r\n"
                         "      \"msg\": \"%s\",\r\n"
-                        // TODO Add properly escaped (binary) data
                         "      \"data\": \"%s\"\r\n"
                         "    }",
                         (list_first == part->gen_data ? "" : ",\r\n"),
