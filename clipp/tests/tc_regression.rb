@@ -109,7 +109,7 @@ Content-Length: 1234
       EOS
     )
     assert_no_issues
-    assert_log_match /ACTION BLOCK/
+    assert_log_match /ACTION block/
 
     clipp(
       :input_hashes => input,
