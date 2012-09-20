@@ -69,7 +69,7 @@ TEST_F(ConnectionParsingTest, Get) {
     ASSERT_EQ(list_size(connp->conn->transactions), 1);
     
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
-    EXPECT_TRUE(tx != NULL);
+    ASSERT_TRUE(tx != NULL);
 
     if (bstr_cmp_c(tx->request_method, "GET") != 0) {
         FAIL();
@@ -78,6 +78,19 @@ TEST_F(ConnectionParsingTest, Get) {
     if (bstr_cmp_c(tx->request_uri, "/?p=%20") != 0) {
         FAIL();
     }
+    
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    
+    ASSERT_TRUE(tx->parsed_uri->query != NULL);
+    
+    ASSERT_TRUE(bstr_cmp_c(tx->parsed_uri->query, "p=%20"));
+    
+    ASSERT_TRUE(tx->request_params_query != NULL);
+    
+    bstr *p = (bstr *)table_get_c(tx->request_params_query, "p");
+    ASSERT_TRUE(p != NULL);
+    
+    ASSERT_EQ(bstr_cmp_c(p, " "), 0);
 
     SUCCEED();
 }
@@ -89,7 +102,7 @@ TEST_F(ConnectionParsingTest, ApacheHeaderParsing) {
     ASSERT_EQ(list_size(connp->conn->transactions), 1);
     
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
-    EXPECT_TRUE(tx != NULL);
+    ASSERT_TRUE(tx != NULL);
 
     ASSERT_EQ(table_size(tx->request_headers), 9);
 
@@ -156,5 +169,5 @@ TEST_F(ConnectionParsingTest, PostUrlencoded) {
     ASSERT_EQ(list_size(connp->conn->transactions), 2);
     
     htp_tx_t *tx1 = (htp_tx_t *)list_get(connp->conn->transactions, 0);
-    EXPECT_TRUE(tx1 != NULL);
+    ASSERT_TRUE(tx1 != NULL);
 }
