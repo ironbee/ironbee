@@ -138,7 +138,7 @@ TEST_F(ConnectionParsingTest, ApacheHeaderParsing) {
                 bstr *b = bstr_dup_mem("BEFORE", 6);
                 if (bstr_cmp(h->value, b) != 0)  {
                     bstr_free(&b);
-                    FAIL();
+                    FAIL() << "Incorrect value for Header-With-NUL";
                 }
                 break;
         }
@@ -147,4 +147,14 @@ TEST_F(ConnectionParsingTest, ApacheHeaderParsing) {
     }
 
     SUCCEED();
+}
+
+TEST_F(ConnectionParsingTest, PostUrlencoded) {
+    int rc = test_run(home, "03-post-urlencoded.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 2);
+    
+    htp_tx_t *tx1 = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    EXPECT_TRUE(tx1 != NULL);
 }

@@ -109,23 +109,6 @@ int test_post_urlencoded_chunked(htp_cfg_t *cfg) {
 /**
  *
  */
-int test_post_urlencoded(htp_cfg_t *cfg) {
-    htp_connp_t *connp = NULL;
-
-    int rc = test_run(home, "03-post-urlencoded.t", cfg, &connp);
-    if (rc < 0) {
-        if (connp != NULL) htp_connp_destroy_all(connp);
-        return -1;
-    }
-
-    htp_connp_destroy_all(connp);
-
-    return 1;
-}
-
-/**
- *
- */
 int test_expect(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
@@ -854,7 +837,6 @@ int main(int argc, char** argv) {
     cfg->parse_request_http_authentication = 1;
 
     RUN_TEST(test_http09, cfg);
-    RUN_TEST(test_post_urlencoded, cfg);
     RUN_TEST(test_post_urlencoded_chunked, cfg);
     RUN_TEST(test_expect, cfg);
     RUN_TEST(test_uri_normal, cfg);
