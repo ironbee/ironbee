@@ -265,7 +265,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     strncat(filename, "/", 1024 - strlen(filename));
     strncat(filename, testname, 1024 - strlen(filename));
 
-    printf("Filename: %s\n", filename);
+    // printf("Filename: %s\n", filename);
 
     // Initinialize test
 

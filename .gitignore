@@ -39,3 +39,4 @@
 extras/ruby/*.gem
 /docs/Makefile
 /docs/Makefile.in
+/test/test_main

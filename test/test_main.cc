@@ -1,6 +1,5 @@
 /***************************************************************************
- * Copyright (c) 2009-2010, Open Information Security Foundation
- * Copyright (c) 2009-2012, Qualys, Inc.
+ * Copyright (c) 2011-2012, Qualys, Inc.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -31,48 +30,48 @@
 
 /**
  * @file
+ *
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#ifndef _TEST_H
-#define	_TEST_H
+#include <iostream>
+#include <gtest/gtest.h>
+#include <htp/htp.h>
+#include "test.h"
 
-#include <fcntl.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+class ConnectionParsingTest : public testing::Test {
+    
+protected:
+    
+    virtual void SetUp() {
+        home = (char *)"./files";
+        
+        cfg = htp_config_create();
+        htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2_2);
+    }
+    
+    virtual void TearDown() {
+        htp_config_destroy(cfg);
+    }
 
-#define UNKNOWN     0
-#define CLIENT      1
-#define SERVER      2
-
-#ifndef O_BINARY
-#define O_BINARY    0
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct test_t test_t;
-
-struct test_t {
-    char *buf;
-    size_t pos;
-    size_t len;
-
-    char *chunk;
-    size_t chunk_offset;
-    size_t chunk_len;
-    int chunk_direction;
+    htp_cfg_t *cfg;
+    
+    char *home;
 };
 
-int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp);
+TEST_F(ConnectionParsingTest, Get) {
+    htp_connp_t *connp = NULL;
 
-#ifdef __cplusplus
+    int rc = test_run(home, "01-get.t", cfg, &connp);
+    if (rc < 0) {
+        if (connp != NULL) {
+            htp_connp_destroy_all(connp);
+        }
+        
+        FAIL();
+    }
+
+    htp_connp_destroy_all(connp);
+
+    SUCCEED();
 }
-#endif
-
-#endif	/* _TEST_H */
-
