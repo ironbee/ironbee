@@ -69,6 +69,7 @@ TEST_F(ConnectionParsingTest, Get) {
     ASSERT_EQ(list_size(connp->conn->transactions), 1);
     
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    EXPECT_TRUE(tx != NULL);
 
     if (bstr_cmp_c(tx->request_method, "GET") != 0) {
         FAIL();
@@ -76,6 +77,73 @@ TEST_F(ConnectionParsingTest, Get) {
     
     if (bstr_cmp_c(tx->request_uri, "/?p=%20") != 0) {
         FAIL();
+    }
+
+    SUCCEED();
+}
+
+TEST_F(ConnectionParsingTest, ApacheHeaderParsing) {
+    int rc = test_run(home, "02-header-test-apache2.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    EXPECT_TRUE(tx != NULL);
+
+    ASSERT_EQ(table_size(tx->request_headers), 9);
+
+    // Check every header
+    int count = 0;
+    bstr *key = NULL;
+    htp_header_t *h = NULL;
+    table_iterator_reset(tx->request_headers);
+    while ((key = table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
+
+        switch (count) {
+            case 0:
+                ASSERT_EQ(bstr_cmp_c(h->name, " Invalid-Folding"), 0);
+                ASSERT_EQ(bstr_cmp_c(h->value, "1"), 0);
+                break;
+            case 1:
+                ASSERT_EQ(bstr_cmp_c(h->name, "Valid-Folding"), 0);
+                ASSERT_EQ(bstr_cmp_c(h->value, "2 2"), 0);
+                break;
+            case 2:
+                ASSERT_EQ(bstr_cmp_c(h->name, "Normal-Header"), 0);
+                ASSERT_EQ(bstr_cmp_c(h->value, "3"), 0);
+                break;
+            case 3:
+                ASSERT_EQ(bstr_cmp_c(h->name, "Invalid Header Name"), 0);
+                ASSERT_EQ(bstr_cmp_c(h->value, "4"), 0);
+                break;
+            case 4:
+                ASSERT_EQ(bstr_cmp_c(h->name, "Same-Name-Headers"), 0);
+                ASSERT_EQ(bstr_cmp_c(h->value, "5, 6"), 0);
+                break;
+            case 5:
+                ASSERT_EQ(bstr_cmp_c(h->name, "Empty-Value-Header"), 0);
+                ASSERT_EQ(bstr_cmp_c(h->value, ""), 0);
+                break;
+            case 6:
+                ASSERT_EQ(bstr_cmp_c(h->name, ""), 0);
+                ASSERT_EQ(bstr_cmp_c(h->value, "8, "), 0);
+                break;
+            case 7:
+                ASSERT_EQ(bstr_cmp_c(h->name, "Header-With-LWS-After"), 0);
+                ASSERT_EQ(bstr_cmp_c(h->value, "9"), 0);
+                break;
+            case 8:
+                ASSERT_EQ(bstr_cmp_c(h->name, "Header-With-NUL"), 0);
+                bstr *b = bstr_dup_mem("BEFORE", 6);
+                if (bstr_cmp(h->value, b) != 0)  {
+                    bstr_free(&b);
+                    FAIL();
+                }
+                break;
+        }
+
+        count++;
     }
 
     SUCCEED();
