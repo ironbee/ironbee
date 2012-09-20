@@ -25,17 +25,18 @@ require 'hash_to_pb'
 module CLIPPTestAssertions
   # Assert that _re_ appears in the log.
   def assert_log_match(re)
-    assert_match(re, log)
+    assert_match(re, log, "#{re.inspect} was not found in log.")
   end
 
   # Assert that _re_ does not appear in the log.
   def assert_log_no_match(re)
-    assert_no_match(re, log)
+    assert_no_match(re, log, "#{re.inspect} was found in log.")
   end
 
   # Assert that nothing higher than notice appears
   def assert_no_issues
-    assert_log_no_match(/ (EMERGENCY|CRITICAL|ALERT|ERROR|WARNING) /)
+    assert_log_no_match(/ (EMERGENCY|CRITICAL|ALERT|ERROR|WARNING) /,
+      "A message of level WARNING or above occurred in the log.")
   end
 end
 
@@ -287,6 +288,6 @@ public
 
     @log = @clipp_log = run_clipp(clipp_config)
 
-    assert_not_nil(@log)
+    assert_not_nil(@log, "No output.")
   end
 end
