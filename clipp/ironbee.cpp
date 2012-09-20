@@ -435,6 +435,37 @@ ib_status_t clipp_action_execute(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+ib_status_t clipp_announce_action_create(
+    ib_engine_t*      ib,
+    ib_context_t*     ctx,
+    ib_mpool_t*       mp,
+    const char*       params,
+    ib_action_inst_t* inst,
+    void*             cbdata
+)
+{
+    IB_FTRACE_INIT();
+
+    inst->data = ib_mpool_strdup(mp, params);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t clipp_announce_action_execute(
+    void*            data,
+    const ib_rule_t* rule,
+    ib_tx_t*         tx,
+    ib_flags_t       flags,
+    void*            cbdata
+)
+{
+    IB_FTRACE_INIT();
+
+    cout << "CLIPP ANNOUNCE: " << reinterpret_cast<const char*>(data) << endl;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 ib_status_t clipp_error(
     ib_tx_t* tx,
     int      status,
@@ -639,7 +670,9 @@ IronBeeModifier::IronBeeModifier(
     m_state->server_value.get().ib()->err_fn = clipp_error;
     m_state->server_value.get().ib()->hdr_fn = clipp_header;
 
-    ib_status_t rc = ib_action_register(
+    ib_status_t rc = IB_OK;
+
+    rc = ib_action_register(
         m_state->engine.ib(),
         "clipp",
         IB_ACT_FLAG_NONE,
@@ -652,6 +685,21 @@ IronBeeModifier::IronBeeModifier(
     );
     if (rc != IB_OK) {
         throw runtime_error("Could not register clipp action.");
+    }
+
+    rc = ib_action_register(
+        m_state->engine.ib(),
+        "clipp_announce",
+        IB_ACT_FLAG_NONE,
+        clipp_announce_action_create,
+        NULL,
+        NULL,
+        NULL,
+        clipp_announce_action_execute,
+        NULL
+    );
+    if (rc != IB_OK) {
+        throw runtime_error("Could not register clipp_announce action.");
     }
 
     load_configuration(m_state->engine, config_path);

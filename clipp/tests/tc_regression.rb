@@ -33,11 +33,11 @@ class TestRegression < Test::Unit::TestCase
     clipp(
       :input => "echo:\"GET /foo\"",
       :default_site_config => <<-EOS
-        Rule REQUEST_METHOD @rx GET id:1 phase:REQUEST_HEADER block event
+        Rule REQUEST_METHOD @rx GET id:1 phase:REQUEST_HEADER clipp_announce:basic_rule
       EOS
     )
     assert_no_issues
-    assert_log_match /ACTION block/
+    assert_log_match /CLIPP ANNOUNCE: basic_rule/
   end
 
   def test_negative_content_length
@@ -77,11 +77,11 @@ class TestRegression < Test::Unit::TestCase
     clipp(
       :input => "echo:\"GET /foo\" @set_remote_ip:6.6.6.6",
       :default_site_config => <<-EOS
-        Rule REMOTE_ADDR @ipmatch "6.6.6.6" id:1 rev:1 phase:REQUEST_HEADER event block
+        Rule REMOTE_ADDR @ipmatch "6.6.6.6" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_09
       EOS
     )
     assert_no_issues
-    assert_log_match /ACTION block/
+    assert_log_match /CLIPP ANNOUNCE: ipmatch_09/
   end
 
   def test_ipmatch_11
@@ -95,31 +95,31 @@ Content-Length: 1234
       :input_hashes => input,
       :input => "pb:INPUT_PATH @set_remote_ip:6.6.6.6",
       :default_site_config => <<-EOS
-        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.6.6 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER event block
+        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.6.6 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_11a
       EOS
     )
     assert_no_issues
-    assert_log_match /ACTION block/
+    assert_log_match /CLIPP ANNOUNCE: ipmatch_11a/
 
     clipp(
       :input_hashes => input,
       :input => "pb:INPUT_PATH @set_remote_ip:6.6.6.6",
       :default_site_config => <<-EOS
-        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.6.0/24 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER event block
+        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.6.0/24 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_11b
       EOS
     )
     assert_no_issues
-    assert_log_match /ACTION block/
+    assert_log_match /CLIPP ANNOUNCE: ipmatch_11b/
 
     clipp(
       :input_hashes => input,
       :input => "pb:INPUT_PATH @set_remote_ip:6.6.6.6",
       :default_site_config => <<-EOS
-        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.5.0/24 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER event block
+        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.5.0/24 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_11c
       EOS
     )
     assert_no_issues
-    assert_log_no_match /ACTION block/
+    assert_log_no_match /CLIPP ANNOUNCE: ipmatch_11c/
   end
 
   def test_ipmatch6_11
@@ -133,30 +133,30 @@ Content-Length: 1234
       :input_hashes => input,
       :input => "pb:INPUT_PATH @set_remote_ip:6::6:6",
       :default_site_config => <<-EOS
-        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::6:6 1::2:3" id:1 rev:1 phase:REQUEST_HEADER event block
+        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::6:6 1::2:3" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch6_11a
       EOS
     )
     assert_no_issues
-    assert_log_match /ACTION block/
+    assert_log_match /CLIPP ANNOUNCE: ipmatch6_11a/
 
     clipp(
       :input_hashes => input,
       :input => "pb:INPUT_PATH @set_remote_ip:6::6:6",
       :default_site_config => <<-EOS
-        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::6:0/112 1::2:3" id:1 rev:1 phase:REQUEST_HEADER event block
+        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::6:0/112 1::2:3" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch6_11b
       EOS
     )
     assert_no_issues
-    assert_log_match /ACTION block/
+    assert_log_match /CLIPP ANNOUNCE: ipmatch6_11b/
 
     clipp(
       :input_hashes => input,
       :input => "pb:INPUT_PATH @set_remote_ip:6::6:6",
       :default_site_config => <<-EOS
-        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::5:0/112 1::2:3" id:1 rev:1 phase:REQUEST_HEADER event block
+        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::5:0/112 1::2:3" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch6_11c
       EOS
     )
     assert_no_issues
-    assert_log_no_match /ACTION block/
+    assert_log_no_match /CLIPP ANNOUNCE: ipmatch6_11c/
   end
 end
