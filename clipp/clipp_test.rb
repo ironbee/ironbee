@@ -35,8 +35,7 @@ module CLIPPTestAssertions
 
   # Assert that nothing higher than notice appears
   def assert_no_issues
-    assert_log_no_match(/ (EMERGENCY|CRITICAL|ALERT|ERROR|WARNING) /,
-      "A message of level WARNING or above occurred in the log.")
+    assert_log_no_match(/ (EMERGENCY|CRITICAL|ALERT|ERROR|WARNING) /)
   end
 end
 
