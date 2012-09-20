@@ -51,8 +51,11 @@ protected:
     }
     
     virtual void TearDown() {
+        htp_connp_destroy_all(connp);
         htp_config_destroy(cfg);
     }
+    
+    htp_connp_t *connp;
 
     htp_cfg_t *cfg;
     
@@ -60,18 +63,20 @@ protected:
 };
 
 TEST_F(ConnectionParsingTest, Get) {
-    htp_connp_t *connp = NULL;
-
     int rc = test_run(home, "01-get.t", cfg, &connp);
-    if (rc < 0) {
-        if (connp != NULL) {
-            htp_connp_destroy_all(connp);
-        }
-        
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+
+    if (bstr_cmp_c(tx->request_method, "GET") != 0) {
         FAIL();
     }
-
-    htp_connp_destroy_all(connp);
+    
+    if (bstr_cmp_c(tx->request_uri, "/?p=%20") != 0) {
+        FAIL();
+    }
 
     SUCCEED();
 }
