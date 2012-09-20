@@ -76,6 +76,14 @@ static const size_t REV_BUFSIZE = 16;
       IB_RULE_LOG_FLAG_ACTION )
 
 /**
+ * If any of these flags are set, enable result gathering
+ */
+#define RULE_LOG_FLAG_RESULT_ENABLE                  \
+    ( IB_RULE_LOG_FLAG_RULE_DATA |                   \
+      IB_RULE_LOG_FLAG_OPERATOR |                    \
+      IB_RULE_LOG_FLAG_ACTION )
+
+/**
  * Mapping of valid rule logging names to flag values.
  */
 static IB_STRVAL_MAP(flags_map) = {
@@ -312,7 +320,7 @@ ib_status_t ib_rule_log_exec_add_target(
     tgt->transformed = NULL;
 
     /* Initialize the result list */
-    if (ib_flags_all(log_exec->log_tx->flags, IB_RULE_LOG_FLAG_OPERATOR) ) {
+    if (ib_flags_any(log_exec->log_tx->flags, RULE_LOG_FLAG_RESULT_ENABLE) ) {
         rc = ib_list_create(&tgt->rslt_list, log_exec->log_tx->tx->mp);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -321,7 +329,7 @@ ib_status_t ib_rule_log_exec_add_target(
     tgt->num_results = 0;
 
     /* Initialize the transformation list */
-    if (ib_flags_all(log_exec->log_tx->flags, IB_RULE_LOG_FLAG_TFN) ) {
+    if (ib_flags_any(log_exec->log_tx->flags, IB_RULE_LOG_FLAG_TFN) ) {
         rc = ib_list_create(&tgt->tfn_list, log_exec->log_tx->tx->mp);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -1007,22 +1015,24 @@ static void log_result(
         log_tfns(log_tx, log_exec, tgt);
     }
 
-    if (rslt->value == NULL) {
-        rule_log(log_tx, log_exec,
-                 "RULE_DATA \"%s\" \"%.*s\" %s %s",
-                 tgt->target->target_str,
-                 tgt->original == NULL ? 4 : (int)tgt->original->nlen,
-                 tgt->original == NULL ? "None" : tgt->original->name,
-                 "NULL", "NULL");
-    }
-    else {
-        rule_log(log_tx, log_exec,
-                 "RULE_DATA \"%s\" \"%.*s\" %s %s",
-                 tgt->target->target_str,
-                 (int)rslt->value->nlen, rslt->value->name,
-                 ib_field_type_name(rslt->value->type),
-                 ib_field_format(rslt->value, true, true, NULL,
-                                 buf, MAX_FIELD_BUF));
+    if (ib_flags_all(log_tx->flags, IB_RULE_LOG_FLAG_RULE_DATA) ) {
+        if (rslt->value == NULL) {
+            rule_log(log_tx, log_exec,
+                     "RULE_DATA \"%s\" \"%.*s\" %s %s",
+                     tgt->target->target_str,
+                     tgt->original == NULL ? 4 : (int)tgt->original->nlen,
+                     tgt->original == NULL ? "None" : tgt->original->name,
+                     "NULL", "NULL");
+        }
+        else {
+            rule_log(log_tx, log_exec,
+                     "RULE_DATA \"%s\" \"%.*s\" %s %s",
+                     tgt->target->target_str,
+                     (int)rslt->value->nlen, rslt->value->name,
+                     ib_field_type_name(rslt->value->type),
+                     ib_field_format(rslt->value, true, true, NULL,
+                                     buf, MAX_FIELD_BUF));
+        }
     }
 
     if (ib_flags_all(log_tx->flags, IB_RULE_LOG_FLAG_OPERATOR) ) {
