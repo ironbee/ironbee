@@ -959,12 +959,22 @@ static void log_actions(
     IB_LIST_LOOP_CONST(rslt->act_list, act_node) {
         const ib_rule_log_act_t *act =
             (const ib_rule_log_act_t *)ib_list_node_data_const(act_node);
+        const char *status =
+            act->status == IB_OK ?"" : ib_status_to_string(act->status);
 
-        rule_log(log_tx, log_exec,
-                 "ACTION %s \"%s\" %s",
-                 act->act_inst->action->name,
-                 act->act_inst->params,
-                 act->status == IB_OK ?"" : ib_status_to_string(act->status));
+        if (act->act_inst->params == NULL) {
+            rule_log(log_tx, log_exec,
+                     "ACTION %s None %s",
+                     act->act_inst->action->name,
+                     status);
+        }
+        else {
+            rule_log(log_tx, log_exec,
+                     "ACTION %s \"%s\" %s",
+                     act->act_inst->action->name,
+                     act->act_inst->params,
+                     status);
+        }
     }
 
     IB_FTRACE_RET_VOID();
