@@ -48,6 +48,7 @@ protected:
         
         cfg = htp_config_create();
         htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2_2);
+        htp_config_register_request_line(cfg, htp_ch_urlencoded_callback_request_line);
     }
     
     virtual void TearDown() {
@@ -71,19 +72,15 @@ TEST_F(ConnectionParsingTest, Get) {
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    if (bstr_cmp_c(tx->request_method, "GET") != 0) {
-        FAIL();
-    }
+    ASSERT_EQ(bstr_cmp_c(tx->request_method, "GET"), 0);
     
-    if (bstr_cmp_c(tx->request_uri, "/?p=%20") != 0) {
-        FAIL();
-    }
+    ASSERT_EQ(bstr_cmp_c(tx->request_uri, "/?p=%20"), 0);
     
     ASSERT_TRUE(tx->parsed_uri != NULL);
     
     ASSERT_TRUE(tx->parsed_uri->query != NULL);
     
-    ASSERT_TRUE(bstr_cmp_c(tx->parsed_uri->query, "p=%20"));
+    ASSERT_TRUE(bstr_cmp_c(tx->parsed_uri->query, "p=%20") == 0);
     
     ASSERT_TRUE(tx->request_params_query != NULL);
     
