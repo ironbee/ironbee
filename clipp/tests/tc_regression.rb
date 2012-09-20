@@ -37,7 +37,7 @@ class TestRegression < Test::Unit::TestCase
       EOS
     )
     assert_no_issues
-    assert_log_match /action "block" executed/
+    assert_log_match /ACTION block/
   end
 
   def test_negative_content_length
@@ -81,7 +81,7 @@ class TestRegression < Test::Unit::TestCase
       EOS
     )
     assert_no_issues
-    assert_log_match /action "block" executed/
+    assert_log_match /ACTION block/
   end
 
   def test_ipmatch_11
@@ -99,7 +99,7 @@ Content-Length: 1234
       EOS
     )
     assert_no_issues
-    assert_log_match /action "block" executed/
+    assert_log_match /ACTION block/
 
     clipp(
       :input_hashes => input,
@@ -109,7 +109,7 @@ Content-Length: 1234
       EOS
     )
     assert_no_issues
-    assert_log_match /action "block" executed/
+    assert_log_match /ACTION BLOCK/
 
     clipp(
       :input_hashes => input,
@@ -119,7 +119,7 @@ Content-Length: 1234
       EOS
     )
     assert_no_issues
-    assert_log_no_match /action "block" executed/
+    assert_log_no_match /ACTION block/
   end
 
   def test_ipmatch6_11
@@ -137,7 +137,7 @@ Content-Length: 1234
       EOS
     )
     assert_no_issues
-    assert_log_match /action "block" executed/
+    assert_log_match /ACTION block/
 
     clipp(
       :input_hashes => input,
@@ -147,7 +147,7 @@ Content-Length: 1234
       EOS
     )
     assert_no_issues
-    assert_log_match /action "block" executed/
+    assert_log_match /ACTION block/
 
     clipp(
       :input_hashes => input,
@@ -157,6 +157,6 @@ Content-Length: 1234
       EOS
     )
     assert_no_issues
-    assert_log_no_match /action "block" executed/
+    assert_log_no_match /ACTION block/
   end
 end
