@@ -181,7 +181,5 @@ TEST_F(ConnectionParsingTest, PostUrlencodedChunked) {
     bstr *p = (bstr *)table_get_c(tx->request_params_body, "p");
     ASSERT_TRUE(p != NULL);
     
-    fprint_bstr(stderr, "p", p);
-    
     ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
 }
