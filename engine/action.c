@@ -145,9 +145,8 @@ ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst)
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_action_execute(const ib_action_inst_t *act_inst,
-                              const ib_rule_t *rule,
-                              ib_tx_t *tx)
+ib_status_t ib_action_execute(const ib_rule_exec_t *rule_exec,
+                              const ib_action_inst_t *act_inst)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -155,9 +154,8 @@ ib_status_t ib_action_execute(const ib_action_inst_t *act_inst,
     if (act_inst != NULL && act_inst->action != NULL
         && act_inst->action->fn_execute != NULL) {
         rc = act_inst->action->fn_execute(
+            rule_exec,
             act_inst->data,
-            rule,
-            tx,
             act_inst->flags,
             act_inst->action->cbdata_execute
         );

@@ -71,6 +71,8 @@ struct ib_rule_log_rslt_t {
     ib_status_t             status;      /**< Operator return status */
     ib_list_t              *act_list;    /**< List of executed actions */
     int                     num_actions; /**< # of actions */
+    ib_list_t              *event_list;  /**< List of events created */
+    int                     num_events;  /**< # of events */
 };
 typedef struct ib_rule_log_rslt_t ib_rule_log_rslt_t;
 
@@ -97,7 +99,7 @@ struct ib_rule_log_exec_t {
     ib_timeval_t            start_time;  /**< Time of start of rule execution */
     ib_timeval_t            end_time;    /**< Time of end of rule execution */
     ib_flags_t              enable;      /**< Enable flags */
-    ib_rule_log_tx_t       *log_tx;      /**< Rule log transaction */
+    ib_rule_log_tx_t       *tx_log;      /**< Rule transaction log */
     const ib_rule_t        *rule;        /**< Rule being executed */
     ib_list_t              *tgt_list;    /**< List of ib_rule_tgt_result_t */
     int                     num_tgt;     /**< # of targets */
@@ -108,13 +110,13 @@ struct ib_rule_log_exec_t {
  * Rule transaction logging data
  */
 struct ib_rule_log_tx_t {
+    ib_mpool_t             *mp;          /**< Memory pool for allocations */
     ib_timeval_t            start_time;  /**< Time of start of rule engine */
     ib_timeval_t            end_time;    /**< Time of end of rule engine */
     ib_flags_t              flags;       /**< Rule logging flags */
     ib_rule_log_mode_t      mode;        /**< Rule logging mode */
     ib_log_level_t          level;       /**< Level to log at */
     ib_rule_phase_num_t     last_phase;  /**< Phase of phase log */
-    ib_tx_t                *tx;          /**< The transaction */
 };
 
 /**
@@ -186,7 +188,7 @@ ib_log_level_t ib_rule_log_level(ib_context_t *ctx);
  *
  * @return The log level configured.
  */
-ib_rule_log_level_t ib_rule_debug_log_level(ib_context_t *ctx);
+ib_rule_dlog_level_t ib_rule_dlog_level(ib_context_t *ctx);
 
 /**
  * Dump the enabled rule log flags
@@ -200,68 +202,66 @@ void ib_rule_log_flags_dump(ib_engine_t *ib,
                             ib_context_t *ctx);
 
 /**
- * Create a rule execution logging object
+ * Create a rule transaction logging object
  *
- * @param[in] tx The IronBee transaction
- * @param[out] log_tx The new transaction rule logging object
+ * @param[in] rule_exec The rule execution object
+ * @param[in] tx_log The new rule transaction log object
  *
  * @returns IB_OK on success,
  *          IB_EALLOC if the allocation failed,
  *          Error status returned by ib_mpool_calloc()
  */
-ib_status_t ib_rule_log_tx_create(ib_tx_t *tx,
-                                  ib_rule_log_tx_t **log_tx);
-
-/**
- * Log transaction events for the rule logger (start of phase)
- *
- * @param[in] log_tx The transaction rule logging object
- * @param[in] event The transaction event to log (as required)
- *
- * @returns void
- */
-void ib_rule_log_tx_event_start(const ib_rule_log_tx_t *log_tx,
-                                ib_state_event_type_t event);
-
-/**
- * Log transaction events for the rule logger (end of phase)
- *
- * @param[in] log_tx The transaction rule logging object
- * @param[in] event The transaction event to log (as required)
- *
- * @returns void
- */
-void ib_rule_log_tx_event_end(const ib_rule_log_tx_t *log_tx,
-                              ib_state_event_type_t event);
-
-/**
- * Log start of phase
- *
- * @param[in] log_tx The transaction rule logging object
- * @param[in] phase_num Phase number
- * @param[in] phase_name Name of phase
- *
- * @returns void
- */
-void ib_rule_log_phase(ib_rule_log_tx_t *log_tx,
-                       ib_rule_phase_num_t phase_num,
-                       const char *phase_name);
+ib_status_t ib_rule_log_tx_create(const ib_rule_exec_t *rule_exec,
+                                  ib_rule_log_tx_t **tx_log);
 
 /**
  * Create a rule execution logging object
  *
- * @param[in] log_tx The IronBee transaction
- * @param[in] rule Rule being executed
- * @param[out] log_exec The new execution logging object
+ * @param[in] rule_exec Rule execution object
+ * @param[out] exec_log The new execution logging object
  *
  * @returns IB_OK on success,
  *          IB_EALLOC if the allocation failed,
  *          Error status returned by ib_mpool_calloc()
  *          Error status returned by ib_list_create()
  */
-ib_status_t ib_rule_log_exec_create(ib_rule_log_tx_t *log_tx,
-                                    const ib_rule_t *rule,
-                                    ib_rule_log_exec_t **log_exec);
+ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
+                                    ib_rule_log_exec_t **exec_log);
+
+/**
+ * Log transaction events for the rule logger (start of phase)
+ *
+ * @param[in] rule_exec Rule execution object
+ * @param[in] event The transaction event to log (as required)
+ *
+ * @returns void
+ */
+void ib_rule_log_tx_event_start(const ib_rule_exec_t *rule_exec,
+                                ib_state_event_type_t event);
+
+/**
+ * Log transaction events for the rule logger (end of phase)
+ *
+ * @param[in] rule_exec Rule execution object
+ * @param[in] event The transaction event to log (as required)
+ *
+ * @returns void
+ */
+void ib_rule_log_tx_event_end(const ib_rule_exec_t *rule_exec,
+                              ib_state_event_type_t event);
+
+/**
+ * Log start of phase
+ *
+ * @param[in] rule_exec Rule execution object
+ * @param[in] phase_num Phase number
+ * @param[in] phase_name Name of phase
+ *
+ * @returns void
+ */
+void ib_rule_log_phase(const ib_rule_exec_t *rule_exec,
+                       ib_rule_phase_num_t phase_num,
+                       const char *phase_name);
 
 /**
  * Add a target result to a rule execution log
@@ -298,7 +298,7 @@ ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *log_exec,
 /**
  * Add an action to a rule execution logging object
  *
- * @param[in,out] log_exec The new execution logging object
+ * @param[in,out] exec_log The new execution logging object
  * @param[in] act_inst The action instance to log
  * @param[in] status Status returned by the action
  *
@@ -306,36 +306,49 @@ ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *log_exec,
  *          IB_EALLOC if an allocation failed
  *          Error status returned by ib_list_push()
  */
-ib_status_t ib_rule_log_exec_add_action(ib_rule_log_exec_t *log_exec,
+ib_status_t ib_rule_log_exec_add_action(ib_rule_log_exec_t *exec_log,
                                         const ib_action_inst_t *act_inst,
                                         ib_status_t status);
 
 /**
+ * Add an event to a rule execution logging object
+ *
+ * @param[in,out] exec_log The rule execution log object
+ * @param[in] event The event to log
+ *
+ * @returns IB_OK on success,
+ *          IB_EALLOC if an allocation failed
+ *          Error status returned by ib_list_push()
+ */
+ib_status_t ib_rule_log_exec_add_event(ib_rule_log_exec_t *exec_log,
+                                       const ib_logevent_t *event);
+
+/**
  * Set the current target's final value (after all transformations)
  *
- * @param[in,out] log_exec The execution logging object
+ * @param[in,out] exec_log Rule execution log object
  * @param[in] final Target after all transformations
  *
  * @returns IB_OK on success,
  */
-ib_status_t ib_rule_log_exec_set_tgt_final(ib_rule_log_exec_t *log_exec,
+ib_status_t ib_rule_log_exec_set_tgt_final(ib_rule_log_exec_t *exec_log,
                                            const ib_field_t *final);
 
 /**
  * Add a stream target result to a rule execution log
  *
- * @param[in,out] log_exec The execution logging object
+ * @param[in,out] exec_log The execution logging object
  * @param[in] field Value passed to the operator
  *
  * @returns IB_OK on success
  */
-ib_status_t ib_rule_log_exec_add_stream_tgt(ib_rule_log_exec_t *log_exec,
+ib_status_t ib_rule_log_exec_add_stream_tgt(ib_rule_log_exec_t *exec_log,
                                             const ib_field_t *field);
 
 /**
  * Add a transformation to a rule execution log
  *
- * @param[in,out] log_exec The execution logging object
+ * @param[in,out] exec_log The execution logging object
  * @param[in] tfn The transformation to add
  * @param[in] in Value before transformation
  * @param[in] out Value after transformation
@@ -343,29 +356,22 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(ib_rule_log_exec_t *log_exec,
  *
  * @returns IB_OK on success
  */
-ib_status_t ib_rule_log_exec_add_tfn(ib_rule_log_exec_t *log_exec,
+ib_status_t ib_rule_log_exec_add_tfn(ib_rule_log_exec_t *exec_log,
                                      const ib_tfn_t *tfn,
                                      const ib_field_t *in,
                                      const ib_field_t *out,
                                      ib_status_t status);
 
 /**
- * Log a field's value
+ * Add an event to a rule execution log
  *
- * @param[in] tx Transaction
- * @param[in] rule Rule to log (or NULL)
- * @param[in] target Rule target (or NULL)
- * @param[in] tfn Transformation (or NULL)
- * @param[in] label Label string
- * @param[in] f Field
+ * @param[in,out] exec_log The execution logging object
+ * @param[in] event The event to add
+ *
+ * @returns IB_OK on success
  */
-void ib_rule_log_field(const ib_tx_t *tx,
-                       const ib_rule_t *rule,
-                       const ib_rule_target_t *target,
-                       const ib_tfn_t *tfn,
-                       const char *label,
-                       const ib_field_t *f);
-
+ib_status_t ib_rule_log_exec_add_event(ib_rule_log_exec_t *exec_log,
+                                       const ib_logevent_t *event);
 
 
 #endif /* IB_RULE_ENGINE_PRIVATE_H_ */

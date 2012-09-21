@@ -156,23 +156,29 @@ typedef enum {
 } ib_rule_log_mode_t;
 
 /**
- * Rule log tx events.
+ * Rule log debugging level
  **/
 typedef enum {
-    IB_RULE_LOG_LEVEL_ALWAYS,       /**< Always log this message */
-    IB_RULE_LOG_LEVEL_ERROR,        /**< Error in rule execution */
-    IB_RULE_LOG_LEVEL_WARNING,      /**< Warning in rule execution */
-    IB_RULE_LOG_LEVEL_NOTICE,       /**< Something unusual rule execution */
-    IB_RULE_LOG_LEVEL_INFO,         /**< Something usual in rule execution */
-    IB_RULE_LOG_LEVEL_DEBUG,        /**< Developer oriented information */
-    IB_RULE_LOG_LEVEL_TRACE,        /**< Reserved for future use */
-} ib_rule_log_level_t;
+    IB_RULE_DLOG_ALWAYS,            /**< Always log this message */
+    IB_RULE_DLOG_ERROR,             /**< Error in rule execution */
+    IB_RULE_DLOG_WARNING,           /**< Warning in rule execution */
+    IB_RULE_DLOG_NOTICE,            /**< Something unusual rule execution */
+    IB_RULE_DLOG_INFO,              /**< Something usual in rule execution */
+    IB_RULE_DLOG_DEBUG,             /**< Developer oriented information */
+    IB_RULE_DLOG_TRACE,             /**< Reserved for future use */
+} ib_rule_dlog_level_t;
 
 /**
- * Rule engine: Basic rule type
+ * Rule engine: Basic rule type information
  */
 typedef struct ib_rule_t ib_rule_t;
+typedef struct ib_rule_exec_t ib_rule_exec_t;
 typedef struct ib_rule_target_t ib_rule_target_t;
+
+/**
+ * Rule execution logging data
+ */
+typedef struct ib_rule_log_exec_t ib_rule_log_exec_t;
 typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
 
 

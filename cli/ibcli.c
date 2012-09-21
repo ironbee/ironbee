@@ -1245,17 +1245,15 @@ static ib_status_t action_print_create(ib_engine_t *ib,
 /**
  * Execute function for the "print" action
  *
+ * @param[in] rule_exec The rule execution object
  * @param[in] data C-style string to log
- * @param[in] rule The matched rule
- * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
  * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
-static ib_status_t action_print_execute(void *data,
-                                        const ib_rule_t *rule,
-                                        ib_tx_t *tx,
+static ib_status_t action_print_execute(const ib_rule_exec_t *rule_exec,
+                                        void *data,
                                         ib_flags_t flags,
                                         void *cbdata)
 {
@@ -1266,18 +1264,18 @@ static ib_status_t action_print_execute(void *data,
 
     /* Expand the string */
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
+        rc = ib_data_expand_str(rule_exec->tx->dpi, cstr, false, &expanded);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                         "print: Failed to expand string '%s': %d",
-                         cstr, rc);
+            ib_rule_log_error(rule_exec,
+                              "print: Failed to expand string '%s': %d",
+                              cstr, rc);
         }
     }
     else {
         expanded = (char *)cstr;
     }
 
-    printf( "Rule %s => %s\n", ib_rule_id(rule), expanded);
+    printf( "Rule %s => %s\n", ib_rule_id(rule_exec->rule), expanded);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1416,24 +1414,24 @@ static ib_status_t get_data_value(ib_tx_t *tx,
 /**
  * Execute function for the "print" action
  *
+ * @param[in] rule_exec The rule execution object
  * @param[in] data C-style string to log
- * @param[in] rule The matched rule
- * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
  * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
-static ib_status_t action_printvar_execute(void *data,
-                                           const ib_rule_t *rule,
-                                           ib_tx_t *tx,
+static ib_status_t action_printvar_execute(const ib_rule_exec_t *rule_exec,
+                                           void *data,
                                            ib_flags_t flags,
                                            void *cbdata)
 {
     IB_FTRACE_INIT();
     assert(data != NULL);
-    assert(rule != NULL);
-    assert(tx != NULL);
+    assert(rule_exec != NULL);
+    assert(rule_exec->tx != NULL);
+
+    ib_tx_t *tx = rule_exec->tx;
     const char *varname = (const char *)data;
     size_t namelen;
     ib_field_t *field = NULL;
@@ -1449,14 +1447,14 @@ static ib_status_t action_printvar_execute(void *data,
                                    false, false,
                                    &tmp, &len);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                         "setvar: Failed to expand name \"%s\": %s",
-                         varname, ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec,
+                              "setvar: Failed to expand name \"%s\": %s",
+                              varname, ib_status_to_string(rc));
         }
-        ib_log_debug_tx(tx,
-                        "setvar: Expanded variable name from "
-                        "\"%s\" to \"%.*s\"",
-                        varname, (int)len, tmp);
+        ib_rule_log_debug(rule_exec,
+                          "setvar: Expanded variable name from "
+                          "\"%s\" to \"%.*s\"",
+                          varname, (int)len, tmp);
         varname = tmp;
         namelen = len;
     }
@@ -1467,12 +1465,12 @@ static ib_status_t action_printvar_execute(void *data,
     /* Lookup the variable in the DPI */
     rc = get_data_value(tx, varname, namelen, &field);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "printvar: Failed to lookup \"%.*s\": %d",
-                        (int)namelen, varname, rc);
+        ib_rule_log_error(rule_exec, "printvar: Failed to lookup \"%.*s\": %d",
+                          (int)namelen, varname, rc);
     }
 
     snprintf(buf, sizeof(buf), "%s: Var %.*s",
-             rule->meta.id, (int)namelen, varname);
+             rule_exec->rule->meta.id, (int)namelen, varname);
     print_field(buf, field, 0);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1568,8 +1566,7 @@ static ib_status_t op_print_create(ib_engine_t *ib,
 /**
  * Execute function for the "print" operator
  *
- * @param[in] ib Ironbee engine (unused)
- * @param[in] tx The transaction for this operator (unused)
+ * @param[in] rule_exec The rule execution object
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
@@ -1577,18 +1574,20 @@ static ib_status_t op_print_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_print_execute(ib_engine_t *ib,
-                                    ib_tx_t *tx,
-                                    const ib_rule_t *rule,
+static ib_status_t op_print_execute(const ib_rule_exec_t *rule_exec,
                                     void *data,
                                     ib_flags_t flags,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(rule_exec != NULL);
+    assert(rule_exec->tx != NULL);
+
     const printop_params_t *pdata = (const printop_params_t *)data;
     const char *label =  "_field_name_";
     const char *text;
+    ib_tx_t *tx = rule_exec->tx;
 
     if ( (pdata->text != NULL) && ((flags & IB_OPINST_FLAG_EXPAND) != 0)) {
         ib_status_t rc;

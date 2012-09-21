@@ -917,9 +917,7 @@ static ib_status_t lua_operator_create(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t lua_operator_execute(ib_engine_t *ib,
-                                        ib_tx_t *tx,
-                                        const ib_rule_t *rule,
+static ib_status_t lua_operator_execute(const ib_rule_exec_t *rule_exec,
                                         void *data,
                                         ib_flags_t flags,
                                         ib_field_t *field,
@@ -929,11 +927,12 @@ static ib_status_t lua_operator_execute(ib_engine_t *ib,
     ib_status_t ib_rc;
     const char *func_name = (char *) data;
 
-    ib_log_debug3_tx(tx, "Calling lua function %s.", func_name);
+    ib_rule_log_trace(rule_exec, "Calling lua function %s.", func_name);
 
-    ib_rc = ib_lua_func_eval_r(ib, tx, func_name, result);
+    ib_rc = ib_lua_func_eval_r(rule_exec->ib, rule_exec->tx, func_name, result);
 
-    ib_log_debug3_tx(tx, "Lua function %s=%"PRIu64".", func_name, *result);
+    ib_rule_log_trace(rule_exec,
+                      "Lua function %s=%"PRIu64".", func_name, *result);
 
     IB_FTRACE_RET_STATUS(ib_rc);
 }

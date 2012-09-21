@@ -737,9 +737,7 @@ static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t pm_operator_execute(ib_engine_t *ib,
-                                       ib_tx_t *tx,
-                                       const ib_rule_t *rule,
+static ib_status_t pm_operator_execute(const ib_rule_exec_t *rule_exec,
                                        void *data,
                                        ib_flags_t flags,
                                        ib_field_t *field,
@@ -747,13 +745,12 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    assert(ib);
-    assert(tx);
-    assert(rule);
+    assert(rule_exec);
     assert(data);
 
     ib_ac_t *ac = (ib_ac_t *)data;
     ib_ac_context_t *ac_ctx = NULL;
+    ib_tx_t *tx = rule_exec->tx;
     ib_status_t rc;
 
     const char* subject;
@@ -781,7 +778,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    rc = initialize_ac_ctx(tx, ac, rule, &ac_ctx);
+    rc = initialize_ac_ctx(tx, ac, rule_exec->rule, &ac_ctx);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Cannot initialize AhoCorasic context: %d", rc);
         IB_FTRACE_RET_STATUS(rc);
@@ -796,7 +793,7 @@ static ib_status_t pm_operator_execute(ib_engine_t *ib,
     else if (rc == IB_OK) {
         *result = (ac_ctx->match_cnt > 0) ? 1 : 0;
 
-        if (ib_rule_should_capture(rule, *result)) {
+        if (ib_rule_should_capture(rule_exec, *result)) {
             ib_field_t *f;
             const char *name;
             char *scopy;

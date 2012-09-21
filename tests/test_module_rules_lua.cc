@@ -142,6 +142,8 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
 TEST_F(TestIronBeeModuleRulesLua, operator_test)
 {
     ib_tx_t tx;
+
+    memset(&tx, 0, sizeof(tx));
     tx.ib = ib_engine;
 
     ib_operator_t op;
@@ -186,9 +188,15 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
 
     op_inst->data = (void *) rule_name;
 
+    ib_rule_exec_t rule_exec;
+    memset(&rule_exec, 0, sizeof(rule_exec));
+    rule_exec.ib = ib_engine;
+    rule_exec.tx = &tx;
+    rule_exec.rule = rule;
+
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, &tx, rule, op_inst->data, op_inst->flags, field1, &result));
+        &rule_exec, op_inst->data, op_inst->flags, field1, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);

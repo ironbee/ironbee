@@ -85,9 +85,7 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(
 /**
  * Operator instance execution callback type.
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] rule The rule that owns the operator instance being executed.
+ * @param[in] rule_exec The rule execution object
  * @param[in] data Instance data needed for execution.
  * @param[in] flags Operator instance flags.
  * @param[in] field The field to operate on.
@@ -96,13 +94,11 @@ typedef ib_status_t (* ib_operator_destroy_fn_t)(
  * @returns IB_OK if successful.
  */
 typedef ib_status_t (* ib_operator_execute_fn_t)(
-    ib_engine_t     *ib,
-    ib_tx_t         *tx,
-    const ib_rule_t *rule,
-    void            *data,
-    ib_flags_t       flags,
-    ib_field_t      *field,
-    ib_num_t        *result
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result
 );
 
 /** Operator Structure */
@@ -219,9 +215,7 @@ ib_status_t DLL_PUBLIC ib_operator_inst_destroy(
 /**
  * Call the execute function for an operator instance.
  *
- * @param[in] ib Ironbee engine
- * @param[in] tx The transaction for this action.
- * @param[in] rule The rule that owns the operator instance being executed.
+ * @param[in] rule_exec The rule execution object
  * @param[in] op_inst Operator instance to use.
  * @param[in] field Field to operate on.
  * @param[out] result The result of the operator
@@ -229,9 +223,7 @@ ib_status_t DLL_PUBLIC ib_operator_inst_destroy(
  * @returns IB_OK on success
  */
 ib_status_t DLL_PUBLIC ib_operator_execute(
-    ib_engine_t              *ib,
-    ib_tx_t                  *tx,
-    const ib_rule_t          *rule,
+    const ib_rule_exec_t     *rule_exec,
     const ib_operator_inst_t *op_inst,
     ib_field_t               *field,
     ib_num_t                 *result

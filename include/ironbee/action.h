@@ -85,20 +85,18 @@ typedef ib_status_t (* ib_action_destroy_fn_t)(
 /**
  * Action instance execution callback type
  *
+ * @param[in] rule_exec The rule execution object
  * @param[in] data Instance data needed for execution.
- * @param[in] rule The rule executing this action.
- * @param[in] tx The transaction for this action.
  * @param[in] flags The action instance flags
  * @param[in] cbdata Callback data passed to ib_action_register().
  *
  * @returns IB_OK if successful.
  */
 typedef ib_status_t (* ib_action_execute_fn_t)(
-    void            *data,
-    const ib_rule_t *rule,
-    ib_tx_t         *tx,
-    ib_flags_t       flags,
-    void            *cbdata
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    void                 *cbdata
 );
 
 /** Action Structure */
@@ -196,15 +194,13 @@ ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst);
 /**
  * Call the execute function for an action instance.
  *
+ * @param[in] rule_exec The rule exection object
  * @param[in] act_inst Action instance to use.
- * @param[in] rule The rule executing this action.
- * @param[in] tx The transaction for this action.
  *
  * @returns IB_OK on success
  */
-ib_status_t ib_action_execute(const ib_action_inst_t *act_inst,
-                              const ib_rule_t *rule,
-                              ib_tx_t *tx);
+ib_status_t ib_action_execute(const ib_rule_exec_t *rule_exec,
+                              const ib_action_inst_t *act_inst);
 
 #ifdef __cplusplus
 }

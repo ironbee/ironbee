@@ -57,9 +57,7 @@ IB_MODULE_DECLARE();
  * @note This operator is enabled only for builds configured with
  * "--enable-devel".
  *
- * @param[in] ib Ironbee engine (unused)
- * @param[in] tx The transaction for this operator (unused)
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
@@ -69,9 +67,7 @@ IB_MODULE_DECLARE();
  *
  * @returns Status code
  */
-static ib_status_t op_true_execute(ib_engine_t *ib,
-                                   ib_tx_t *tx,
-                                   const ib_rule_t *rule,
+static ib_status_t op_true_execute(const ib_rule_exec_t *rule_exec,
                                    void *data,
                                    ib_flags_t flags,
                                    ib_field_t *field,
@@ -80,9 +76,9 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
     IB_FTRACE_INIT();
     *result = 1;
 
-    if (ib_rule_should_capture(rule, *result)) {
-        ib_data_capture_clear(tx);
-        ib_data_capture_set_item(tx, 0, field);
+    if (ib_rule_should_capture(rule_exec, *result)) {
+        ib_data_capture_clear(rule_exec->tx);
+        ib_data_capture_set_item(rule_exec->tx, 0, field);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -93,9 +89,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
  * @note This operator is enabled only for builds configured with
  * "--enable-devel".
  *
- * @param[in] ib Ironbee engine (unused)
- * @param[in] tx The transaction for this operator (unused)
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
@@ -103,9 +97,7 @@ static ib_status_t op_true_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_false_execute(ib_engine_t *ib,
-                                    ib_tx_t *tx,
-                                    const ib_rule_t *rule,
+static ib_status_t op_false_execute(const ib_rule_exec_t *rule_exec,
                                     void *data,
                                     ib_flags_t flags,
                                     ib_field_t *field,
@@ -170,9 +162,7 @@ static ib_status_t op_assert_create(ib_engine_t *ib,
  * @note This operator is enabled only for builds configured with
  * "--enable-devel".
  *
- * @param[in] ib Ironbee engine (unused)
- * @param[in] tx The transaction for this operator (unused)
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
@@ -180,9 +170,7 @@ static ib_status_t op_assert_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_assert_execute(ib_engine_t *ib,
-                                     ib_tx_t *tx,
-                                     const ib_rule_t *rule,
+static ib_status_t op_assert_execute(const ib_rule_exec_t *rule_exec,
                                      void *data,
                                      ib_flags_t flags,
                                      ib_field_t *field,
@@ -197,18 +185,18 @@ static ib_status_t op_assert_execute(ib_engine_t *ib,
 
     /* Expand the string */
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
+        rc = ib_data_expand_str(rule_exec->tx->dpi, cstr, false, &expanded);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                         "log_execute: Failed to expand string '%s': %s",
-                         cstr, ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec,
+                              "log_execute: Failed to expand string '%s': %s",
+                              cstr, ib_status_to_string(rc));
         }
     }
     else {
         expanded = (char *)cstr;
     }
 
-    ib_log_error_tx(tx, "ASSERT: %s", expanded);
+    ib_rule_log_error(rule_exec, "ASSERT: %s", expanded);
     assert(0 && expanded);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -216,9 +204,7 @@ static ib_status_t op_assert_execute(ib_engine_t *ib,
 /**
  * Execute function for the "exists" operator
  *
- * @param[in] ib Ironbee engine (unused).
- * @param[in] tx The transaction for this operator (unused).
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -226,9 +212,7 @@ static ib_status_t op_assert_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_exists_execute(ib_engine_t *ib,
-                                     ib_tx_t *tx,
-                                     const ib_rule_t *rule,
+static ib_status_t op_exists_execute(const ib_rule_exec_t *rule_exec,
                                      void *data,
                                      ib_flags_t flags,
                                      ib_field_t *field,
@@ -239,9 +223,9 @@ static ib_status_t op_exists_execute(ib_engine_t *ib,
     /* Return true of field is not NULL */
     *result = (field != NULL);
 
-    if (ib_rule_should_capture(rule, *result)) {
-        ib_data_capture_clear(tx);
-        ib_data_capture_set_item(tx, 0, field);
+    if (ib_rule_should_capture(rule_exec, *result)) {
+        ib_data_capture_clear(rule_exec->tx);
+        ib_data_capture_set_item(rule_exec->tx, 0, field);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -282,9 +266,7 @@ static istype_params_t istype_params[] = {
  * @note This operator is enabled only for builds configured with
  * "--enable-devel".
  *
- * @param[in] ib Ironbee engine (unused)
- * @param[in] tx The transaction for this operator (unused)
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
@@ -292,9 +274,7 @@ static istype_params_t istype_params[] = {
  *
  * @returns Status code
  */
-static ib_status_t op_istype_execute(ib_engine_t *ib,
-                                     ib_tx_t *tx,
-                                     const ib_rule_t *rule,
+static ib_status_t op_istype_execute(const ib_rule_exec_t *rule_exec,
                                      void *data,
                                      ib_flags_t flags,
                                      ib_field_t *field,
@@ -305,7 +285,7 @@ static ib_status_t op_istype_execute(ib_engine_t *ib,
 
     /* Ignore data */
     const istype_params_t *params =
-        (istype_params_t *)rule->opinst->op->cd_execute;
+        (istype_params_t *)rule_exec->rule->opinst->op->cd_execute;
     int n;
 
     assert(params != NULL);
@@ -368,17 +348,15 @@ static ib_status_t act_log_create(ib_engine_t *ib,
 /**
  * Execute function for the "debuglog" action
  *
+ * @param[in] rule_exec The rule execution object
  * @param[in] data C-style string to log
- * @param[in] rule The matched rule
- * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
  * @param[in] cbdata Callback data (unused)
  *
  * @returns Status code
  */
-static ib_status_t act_debuglog_execute(void *data,
-                                        const ib_rule_t *rule,
-                                        ib_tx_t *tx,
+static ib_status_t act_debuglog_execute(const ib_rule_exec_t *rule_exec,
+                                        void *data,
                                         ib_flags_t flags,
                                         void *cbdata)
 {
@@ -391,18 +369,18 @@ static ib_status_t act_debuglog_execute(void *data,
 
     /* Expand the string */
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
+        rc = ib_data_expand_str(rule_exec->tx->dpi, cstr, false, &expanded);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                         "log_execute: Failed to expand string '%s': %s",
-                         cstr, ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec,
+                              "log_execute: Failed to expand string '%s': %s",
+                              cstr, ib_status_to_string(rc));
         }
     }
     else {
         expanded = (char *)cstr;
     }
 
-    ib_log_debug3_tx(tx, "LOG: %s", expanded);
+    ib_rule_log_trace(rule_exec, "LOG: %s", expanded);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -455,17 +433,15 @@ static ib_status_t act_assert_create(ib_engine_t *ib,
 /**
  * Execute function for the "assert" action
  *
+ * @param[in] rule_exec The rule execution object
  * @param[in] data C-style string to log
- * @param[in] rule The matched rule
- * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
  * @param[in] cbdata Callback data (unused)
  *
  * @returns Status code
  */
-static ib_status_t act_assert_execute(void *data,
-                                      const ib_rule_t *rule,
-                                      ib_tx_t *tx,
+static ib_status_t act_assert_execute(const ib_rule_exec_t *rule_exec,
+                                      void *data,
                                       ib_flags_t flags,
                                       void *cbdata)
 {
@@ -478,18 +454,18 @@ static ib_status_t act_assert_execute(void *data,
 
     /* Expand the string */
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
+        rc = ib_data_expand_str(rule_exec->tx->dpi, cstr, false, &expanded);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                         "log_execute: Failed to expand string '%s': %s",
-                         cstr, ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec,
+                              "log_execute: Failed to expand string '%s': %s",
+                              cstr, ib_status_to_string(rc));
         }
     }
     else {
         expanded = (char *)cstr;
     }
 
-    ib_log_error_tx(tx, "ASSERT: %s \"%s\"", rule->meta.id, expanded);
+    ib_rule_log_error(rule_exec, "ASSERT \"%s\"", expanded);
     assert(0 && expanded);
     IB_FTRACE_RET_STATUS(IB_OK);
 }

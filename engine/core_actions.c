@@ -77,12 +77,13 @@ typedef struct {
  *
  * @returns Status code
  */
-static ib_status_t act_setflags_create(ib_engine_t *ib,
-                                       ib_context_t *ctx,
-                                       ib_mpool_t *mp,
-                                       const char *parameters,
-                                       ib_action_inst_t *inst,
-                                       void *cbdata)
+static ib_status_t act_setflags_create(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_mpool_t *mp,
+    const char *parameters,
+    ib_action_inst_t *inst,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
     char *str;
@@ -103,19 +104,18 @@ static ib_status_t act_setflags_create(ib_engine_t *ib,
 /**
  * Execute function for the "set flag" action
  *
+ * @param[in] rule_exec The rule execution object
  * @param[in] data Name of the flag to set
- * @param[in] rule The matched rule
- * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
  * @param[in] cbdata Unused.
  *
  * @returns Status code
  */
-static ib_status_t act_setflag_execute(void *data,
-                                       const ib_rule_t *rule,
-                                       ib_tx_t *tx,
-                                       ib_flags_t flags,
-                                       void *cbdata)
+static ib_status_t act_setflag_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -132,16 +132,16 @@ static ib_status_t act_setflag_execute(void *data,
     if (strcasecmp(cstr, "suspicious") == 0) {
         // FIXME: Expose via FLAGS collection
         if (remove_flag) {
-            ib_tx_flags_unset(tx, IB_TX_FSUSPICIOUS);
+            ib_tx_flags_unset(rule_exec->tx, IB_TX_FSUSPICIOUS);
         }
         else {
-            ib_tx_flags_set(tx, IB_TX_FSUSPICIOUS);
+            ib_tx_flags_set(rule_exec->tx, IB_TX_FSUSPICIOUS);
         }
     }
     else if (strcasecmp(cstr, "block") == 0) {
         if (remove_flag) {
             // FIXME: Remove in FLAGS collection
-            ib_tx_flags_unset(tx,
+            ib_tx_flags_unset(rule_exec->tx,
                 IB_TX_BLOCK_ADVISORY |
                 IB_TX_BLOCK_PHASE    |
                 IB_TX_BLOCK_IMMEDIATE
@@ -149,11 +149,12 @@ static ib_status_t act_setflag_execute(void *data,
         }
         else {
             // FIXME: Set in FLAGS collection
-            ib_tx_flags_set(tx, IB_TX_BLOCK_ADVISORY);
+            ib_tx_flags_set(rule_exec->tx, IB_TX_BLOCK_ADVISORY);
         }
     }
     else {
-        ib_log_notice_tx(tx,  "Set flag action: invalid flag '%s'", cstr);
+        ib_rule_log_notice(rule_exec,
+                           "Set flag action: invalid flag '%s'", cstr);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -165,36 +166,37 @@ static ib_status_t act_setflag_execute(void *data,
  *
  * Create and event and log it.
  *
+ * @param[in] rule_exec The rule execution object
  * @param[in] data Instance data needed for execution.
- * @param[in] rule The rule executing this action.
- * @param[in] tx The transaction for this action.
  * @param[in] flags Action instance flags
  * @param[in] cbdata Unused.
  *
  * @returns IB_OK if successful.
  */
-static ib_status_t act_event_execute(void *data,
-                                     const ib_rule_t *rule,
-                                     ib_tx_t *tx,
-                                     ib_flags_t flags,
-                                     void *cbdata)
+static ib_status_t act_event_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_status_t  rc;
     ib_logevent_t *event;
     const char *expanded;
     ib_field_t *field;
+    const ib_rule_t *rule = rule_exec->rule;
+    ib_tx_t *tx = rule_exec->tx;
 
-    ib_log_debug_tx(tx, "Creating event via action");
+    ib_rule_log_debug(rule_exec, "Creating event via action");
 
     /* Expand the message string */
     if ( (rule->meta.flags & IB_RULEMD_FLAG_EXPAND_MSG) != 0) {
         char *tmp;
         rc = ib_data_expand_str(tx->dpi, rule->meta.msg, false, &tmp);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                            "event: Failed to expand string '%s': %s",
-                            rule->meta.msg, ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec,
+                              "event: Failed to expand string '%s': %s",
+                              rule->meta.msg, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
         expanded = tmp;
@@ -228,9 +230,9 @@ static ib_status_t act_event_execute(void *data,
             char *tmp;
             rc = ib_data_expand_str(tx->dpi, rule->meta.data, false, &tmp);
             if (rc != IB_OK) {
-                ib_log_error_tx(tx,
-                                "event: Failed to expand data '%s': %s",
-                                rule->meta.data, ib_status_to_string(rc));
+                ib_rule_log_error(rule_exec,
+                                  "event: Failed to expand data '%s': %s",
+                                  rule->meta.data, ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
             expanded = tmp;
@@ -240,7 +242,7 @@ static ib_status_t act_event_execute(void *data,
         }
         rc = ib_logevent_data_set(event, expanded, strlen(expanded));
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,  "event: Failed to set data: %s",
+            ib_rule_log_error(rule_exec, "event: Failed to set data: %s",
                             ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -291,6 +293,12 @@ static ib_status_t act_event_execute(void *data,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Add the event to the rule execution */
+    rc = ib_rule_log_exec_add_event(rule_exec->exec_log, event);
+    if (rc != IB_OK) {
+        /* todo: Ignore this? */
+    }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -306,12 +314,13 @@ static ib_status_t act_event_execute(void *data,
  *
  * @returns Status code
  */
-static ib_status_t act_setvar_create(ib_engine_t *ib,
-                                     ib_context_t *ctx,
-                                     ib_mpool_t *mp,
-                                     const char *params,
-                                     ib_action_inst_t *inst,
-                                     void *cbdata)
+static ib_status_t act_setvar_create(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_mpool_t *mp,
+    const char *params,
+    ib_action_inst_t *inst,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
     size_t nlen;                 /* Name length */
@@ -393,8 +402,7 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
 /**
  * Expand a name from the DPI
  *
- * @param[in] rule The rule executing this action
- * @param[in] tx Transaction to get the value from
+ * @param[in] rule_exec The rule executing this action
  * @param[in] label Label to use for debug / error messages
  * @param[in] setvar_data Setvar parameters
  * @param[out] exname Expanded name
@@ -402,16 +410,15 @@ static ib_status_t act_setvar_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t expand_name(const ib_rule_t *rule,
-                               ib_tx_t *tx,
+static ib_status_t expand_name(const ib_rule_exec_t *rule_exec,
                                const char *label,
                                const setvar_data_t *setvar_data,
                                const char **exname,
                                size_t *exnlen)
 {
     IB_FTRACE_INIT();
-    assert(tx);
-    assert(rule);
+    assert(rule_exec);
+    assert(rule_exec->tx);
     assert(label);
     assert(setvar_data);
     assert(exname);
@@ -419,6 +426,7 @@ static ib_status_t expand_name(const ib_rule_t *rule,
 
     /* Readability: Alias a common field. */
     const char *name = setvar_data->name;
+    ib_tx_t *tx = rule_exec->tx;
 
     /* If it's expandable, expand it */
     if (setvar_data->name_expand) {
@@ -431,42 +439,22 @@ static ib_status_t expand_name(const ib_rule_t *rule,
                                    false, false,
                                    &tmp, &len);
         if (rc != IB_OK) {
-            ib_rule_log_error(
-                tx,
-                rule,
-                NULL,
-                NULL,
-                "%s: Failed to expand name \"%s\": %s",
-                label,
-                name,
-                ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec,
+                              "%s: Failed to expand name \"%s\": %s",
+                              label, name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
         *exname = tmp;
         *exnlen = len;
-        ib_rule_log_debug(
-            tx,
-            rule,
-            NULL,
-            NULL,
-            "%s: Expanded variable name from \"%s\" to \"%.*s\"",
-            label,
-            name,
-            (int)len,
-            tmp);
+        ib_rule_log_debug(rule_exec,
+                          "%s: Expanded variable name from \"%s\" to \"%.*s\"",
+                          label, name, (int)len, tmp);
     }
     else {
         *exname = name;
         *exnlen = strlen(name);
 
-        ib_rule_log_debug(
-            tx,
-            rule,
-            NULL,
-            NULL,
-            "%s: No expansion of %s",
-            label,
-            name);
+        ib_rule_log_debug(rule_exec, "%s: No expansion of %s", label, name);
     }
 
 
@@ -476,21 +464,21 @@ static ib_status_t expand_name(const ib_rule_t *rule,
 /**
  * Get a field from the DPI
  *
- * @param[in] tx Transaction to get the value from
+ * @param[in] rule_exec Rule execution object
  * @param[in] name Name of the value
  * @param[in] namelen Length of @a name
  * @param[out] field The field from the DPI
  *
  * @returns Status code
  */
-static ib_status_t get_data_value(ib_tx_t *tx,
+static ib_status_t get_data_value(const ib_rule_exec_t *rule_exec,
                                   const char *name,
                                   size_t namelen,
                                   ib_field_t **field)
 {
     IB_FTRACE_INIT();
 
-    assert(tx != NULL);
+    assert(rule_exec != NULL);
     assert(name != NULL);
     assert(field != NULL);
 
@@ -499,6 +487,7 @@ static ib_status_t get_data_value(ib_tx_t *tx,
     ib_list_t *list;
     ib_list_node_t *first;
     size_t elements;
+    ib_tx_t *tx = rule_exec->tx;
 
     rc = ib_data_get_ex(tx->dpi, name, namelen, &cur);
     if ( (rc == IB_ENOENT) || (cur == NULL) ) {
@@ -525,9 +514,9 @@ static ib_status_t get_data_value(ib_tx_t *tx,
      */
     rc = ib_field_value(cur, ib_ftype_list_mutable_out(&list) );
     if (rc != IB_OK) {
-        ib_log_error_tx(tx,
-                        "setvar: Failed to get list from \"%.*s\": %s",
-                        (int)namelen, name, ib_status_to_string(rc));
+        ib_rule_log_error(rule_exec,
+                          "setvar: Failed to get list from \"%.*s\": %s",
+                          (int)namelen, name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -539,7 +528,7 @@ static ib_status_t get_data_value(ib_tx_t *tx,
     }
 
     if (elements != 1) {
-        ib_log_notice_tx(tx,
+        ib_rule_log_notice(rule_exec,
                          "setvar:Got back list with %zd elements", elements);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -547,7 +536,7 @@ static ib_status_t get_data_value(ib_tx_t *tx,
     /* Use the first (only) element in the list as our field */
     first = ib_list_first(list);
     if (first == NULL) {
-        ib_log_error_tx(tx,
+        ib_rule_log_error(rule_exec,
                         "setvar: Failed to get first list element "
                         "from \"%.*s\": %s",
                         (int)namelen, name, ib_status_to_string(rc));
@@ -562,8 +551,7 @@ static ib_status_t get_data_value(ib_tx_t *tx,
 /**
  * Contains logic for expanding act_setvar_execute field names for assignment.
  *
- *  @param[in] rule
- *  @param[in] tx
+ *  @param[in] rule_exec The rule execution object
  *  @param[in] label Label (used for log messages)
  *  @param[in] setvar_data
  *  @param[in] flags
@@ -579,24 +567,24 @@ static ib_status_t get_data_value(ib_tx_t *tx,
  *
  */
 static ib_status_t expand_data(
-    const ib_rule_t *rule,
-    ib_tx_t *tx,
+    const ib_rule_exec_t *rule_exec,
     const char *label,
     const setvar_data_t *setvar_data,
     ib_flags_t flags,
-    char** expanded,
+    char **expanded,
     size_t *exlen)
 {
     IB_FTRACE_INIT();
 
-    assert(tx);
-    assert(rule);
+    assert(rule_exec);
+    assert(rule_exec->tx);
     assert(label);
     assert(setvar_data);
     assert(expanded);
     assert(exlen);
 
     ib_status_t rc;
+    ib_tx_t *tx = rule_exec->tx;
 
     /* If setvar_data contains a byte string, we might expand it. */
     if (setvar_data->type == IB_FTYPE_BYTESTR) {
@@ -613,32 +601,23 @@ static ib_status_t expand_data(
                 tx->dpi, bsdata, bslen, false, false, expanded, exlen);
             if (rc != IB_OK) {
                 ib_rule_log_debug(
-                    tx,
-                    rule,
-                    NULL,
-                    NULL,
+                    rule_exec,
                     "%s: Failed to expand string \"%.*s\": %s",
                     label, (int) bslen, bsdata, ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
 
             ib_rule_log_debug(
-                tx,
-                rule,
-                NULL,
-                NULL,
+                rule_exec,
                 "%s: Field \"%s\" was expanded.",
                 label,
                 setvar_data->name);
 
-            if (ib_rule_debug_log_level(tx->ctx) >= IB_RULE_LOG_LEVEL_TRACE) {
+            if (ib_rule_dlog_level(tx->ctx) >= IB_RULE_DLOG_TRACE) {
                 const char* hex_coded = ib_util_hex_escape(bsdata, bslen);
                 if (hex_coded != NULL) {
                     ib_rule_log_debug(
-                        tx,
-                        rule,
-                        NULL,
-                        NULL,
+                        rule_exec,
                         "%s: Field \"%s\" has value: %s",
                         label,
                         setvar_data->name,
@@ -654,10 +633,7 @@ static ib_status_t expand_data(
             *expanded = ib_mpool_alloc(tx->mp, 0);
 
             ib_rule_log_debug(
-                tx,
-                rule,
-                NULL,
-                NULL,
+                rule_exec,
                 "%s: Field \"%s\" is null.",
                 label,
                 setvar_data->name);
@@ -666,10 +642,7 @@ static ib_status_t expand_data(
             *expanded = ib_mpool_memdup(tx->mp, bsdata, bslen);
             if (*expanded == NULL) {
                 ib_rule_log_debug(
-                    tx,
-                    rule,
-                    NULL,
-                    NULL,
+                    rule_exec,
                     "%s: Failed to copy string \"%.*s\"",
                     label,
                     (int)bslen,
@@ -681,10 +654,7 @@ static ib_status_t expand_data(
     }
     else {
         ib_rule_log_debug(
-            tx,
-            rule,
-            NULL,
-            NULL,
+            rule_exec,
             "%s: Did not expand \"%s\" because it is not a byte string.",
             label,
             setvar_data->name
@@ -698,9 +668,8 @@ static ib_status_t expand_data(
 /**
  * Execute function for the "set variable" action
  *
+ * @param[in] rule_exec The rule execution object
  * @param[in] data Setvar data (setvar_data_t *)
- * @param[in] rule The matched rule
- * @param[in] tx IronBee transaction
  * @param[in] flags Action instance flags
  * @param[in] cbdata Unused.
  *
@@ -709,21 +678,22 @@ static ib_status_t expand_data(
  *    - IB_EINVAL if there was an internal error during expansion.
  *    - IB_EALLOC on memory errors.
  */
-static ib_status_t act_setvar_execute(void *data,
-                                      const ib_rule_t *rule,
-                                      ib_tx_t *tx,
-                                      ib_flags_t flags,
-                                      void *cbdata)
+static ib_status_t act_setvar_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
     assert(data != NULL);
-    assert(rule != NULL);
-    assert(tx != NULL);
+    assert(rule_exec != NULL);
+    assert(rule_exec->tx != NULL);
 
     ib_status_t rc;
     ib_field_t *cur_field = NULL;
     ib_field_t *new_field;
+    ib_tx_t *tx = rule_exec->tx;
     const char *name = NULL; /* Name of the field we are setting. */
     size_t nlen;             /* Name length. */
     char *value = NULL;      /* Value we are setting the field name to. */
@@ -733,143 +703,146 @@ static ib_status_t act_setvar_execute(void *data,
     const setvar_data_t *setvar_data = (const setvar_data_t *)data;
 
     /* Expand the name (if required) */
-    rc = expand_name(rule, tx, "setvar", setvar_data, &name, &nlen);
+    rc = expand_name(rule_exec, "setvar", setvar_data, &name, &nlen);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the current value */
-    rc = get_data_value(tx, name, nlen, &cur_field);
+    rc = get_data_value(rule_exec, name, nlen, &cur_field);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* If setvar_data contains a byte string, we might expand it. */
-    rc = expand_data(rule, tx, "setvar", setvar_data, flags, &value, &vlen);
+    rc = expand_data(rule_exec, "setvar", setvar_data, flags, &value, &vlen);
     if ( rc != IB_OK ) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     switch(setvar_data->op) {
-        /* Handle bytestr operations (cur_fieldrently only set) */
-        case SETVAR_STRSET:
-            assert(setvar_data->type == IB_FTYPE_BYTESTR);
-            ib_bytestr_t *bs = NULL;
 
-            if (cur_field != NULL) {
-                ib_data_remove_ex(tx->dpi, name, nlen, NULL);
-            }
+    /* Handle bytestr operations (cur_fieldrently only set) */
+    case SETVAR_STRSET:
+        assert(setvar_data->type == IB_FTYPE_BYTESTR);
+        ib_bytestr_t *bs = NULL;
 
-            /* Create a bytestr to hold it. */
-            rc = ib_bytestr_alias_mem(&bs, tx->mp, (uint8_t *)value, vlen);
-            if (rc != IB_OK) {
-                ib_log_error_tx(tx,
-                                "setvar: Failed to create bytestring "
-                                "for field \"%.*s\": %s",
-                                (int)nlen, name, ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
+        if (cur_field != NULL) {
+            ib_data_remove_ex(tx->dpi, name, nlen, NULL);
+        }
+
+        /* Create a bytestr to hold it. */
+        rc = ib_bytestr_alias_mem(&bs, tx->mp, (uint8_t *)value, vlen);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "setvar: Failed to create bytestring "
+                              "for field \"%.*s\": %s",
+                              (int)nlen, name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Create the new_field field */
+        rc = ib_field_create(&new_field,
+                             tx->mp,
+                             name, nlen,
+                             setvar_data->type,
+                             ib_ftype_bytestr_in(bs));
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "setvar: Failed to create field \"%.*s\": %s",
+                              (int)nlen, name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Add the field to the DPI */
+        rc = ib_data_add(tx->dpi, new_field);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "setvar: Failed to add field \"%.*s\": %s",
+                              (int)nlen, name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        break;
+
+    /* Numerical operation : Set */
+    case SETVAR_NUMSET:
+        assert(setvar_data->type == IB_FTYPE_NUM);
+
+        if (cur_field != NULL) {
+            ib_data_remove_ex(tx->dpi, name, nlen, NULL);
+        }
+
+        /* Create the new_field field */
+        rc = ib_field_create(&new_field,
+                             tx->mp,
+                             name, nlen,
+                             setvar_data->type,
+                             ib_ftype_num_in(&setvar_data->value.num));
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "setvar: Failed to create field \"%.*s\": %s",
+                              (int)nlen, name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Add the field to the DPI */
+        rc = ib_data_add(tx->dpi, new_field);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "setvar: Failed to add field \"%.*s\": %s",
+                              (int)nlen, name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        break;
+
+    /* Numerical operation : Add */
+    case SETVAR_NUMADD:
+        assert(setvar_data->type == IB_FTYPE_NUM);
+
+        /* If it doesn't exist, create the variable with a value of zero */
+        if (cur_field == NULL) {
 
             /* Create the new_field field */
-            rc = ib_field_create(&new_field,
-                                 tx->mp,
-                                 name, nlen,
-                                 setvar_data->type,
-                                 ib_ftype_bytestr_in(bs));
+            rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur_field);
             if (rc != IB_OK) {
-                ib_log_error_tx(tx,
-                                "setvar: Failed to create field \"%.*s\": %s",
-                                (int)nlen, name, ib_status_to_string(rc));
+                ib_rule_log_error(rule_exec,
+                                  "setvar: Failed to add field "
+                                  "\"%.*s\": %s",
+                                  (int)nlen, name,
+                                  ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
+        }
 
-            /* Add the field to the DPI */
-            rc = ib_data_add(tx->dpi, new_field);
+        /* Handle num and unum types */
+        if (cur_field->type == IB_FTYPE_NUM) {
+            ib_num_t num;
+            rc = ib_field_value(cur_field, ib_ftype_num_out(&num));
             if (rc != IB_OK) {
-                ib_log_error_tx(tx,
-                                "setvar: Failed to add field \"%.*s\": %s",
-                                (int)nlen, name, ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
-            break;
-        /* Numerical operation : Set */
-        case SETVAR_NUMSET:
-            assert(setvar_data->type == IB_FTYPE_NUM);
-
-            if (cur_field != NULL) {
-                ib_data_remove_ex(tx->dpi, name, nlen, NULL);
-            }
-
-            /* Create the new_field field */
-            rc = ib_field_create(&new_field,
-                                 tx->mp,
-                                 name, nlen,
-                                 setvar_data->type,
-                                 ib_ftype_num_in(&setvar_data->value.num));
-            if (rc != IB_OK) {
-                ib_log_error_tx(tx,
-                                "setvar: Failed to create field \"%.*s\": %s",
-                                (int)nlen, name, ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
-
-            /* Add the field to the DPI */
-            rc = ib_data_add(tx->dpi, new_field);
-            if (rc != IB_OK) {
-                ib_log_error_tx(tx,
-                                "setvar: Failed to add field \"%.*s\": %s",
-                                (int)nlen, name, ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
-
-            break;
-        /* Numerical operation : Add */
-        case SETVAR_NUMADD:
-            assert(setvar_data->type == IB_FTYPE_NUM);
-
-            /* If it doesn't exist, create the variable with a value of zero */
-            if (cur_field == NULL) {
-
-                /* Create the new_field field */
-                rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur_field);
-                if (rc != IB_OK) {
-                    ib_log_error_tx(
-                        tx,
-                        "setvar: Failed to add field \"%.*s\": %s",
-                        (int)nlen, name, ib_status_to_string(rc));
                     IB_FTRACE_RET_STATUS(rc);
-                }
             }
 
-            /* Handle num and unum types */
-            if (cur_field->type == IB_FTYPE_NUM) {
-                ib_num_t num;
-                rc = ib_field_value(cur_field, ib_ftype_num_out(&num));
-                if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
-                }
+            num += setvar_data->value.num;
+            ib_field_setv(cur_field, ib_ftype_num_in(&num));
+        }
+        else if (cur_field->type == IB_FTYPE_UNUM) {
+            ib_unum_t num;
+            rc = ib_field_setv(cur_field, ib_ftype_unum_out(&num));
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
 
-                num += setvar_data->value.num;
-                ib_field_setv(cur_field, ib_ftype_num_in(&num));
-            }
-            else if (cur_field->type == IB_FTYPE_UNUM) {
-                ib_unum_t num;
-                rc = ib_field_setv(cur_field, ib_ftype_unum_out(&num));
-                if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
-                }
-
-                num += (ib_unum_t)setvar_data->value.num;
-                ib_field_setv(cur_field, ib_ftype_unum_in(&num));
-            }
-            else {
-                ib_log_error_tx(
-                    tx,
-                    "setvar: field \"%.*s\" type %d invalid for NUMADD",
-                     (int)nlen, name, cur_field->type);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
-            }
-            break;
+            num += (ib_unum_t)setvar_data->value.num;
+            ib_field_setv(cur_field, ib_ftype_unum_in(&num));
+        }
+        else {
+            ib_rule_log_error(rule_exec,
+                              "setvar: field \"%.*s\" type %d "
+                              "invalid for NUMADD",
+                              (int)nlen, name, cur_field->type);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        break;
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -878,8 +851,7 @@ static ib_status_t act_setvar_execute(void *data,
 /**
  * Find event from this rule
  *
- * @param[in] tx The transaction to search
- * @param[in] rule The rule that fired the action
+ * @param[in] rule_exec The rule execution object
  * @param[out] event Matching event
  *
  * @return
@@ -887,19 +859,17 @@ static ib_status_t act_setvar_execute(void *data,
  *   - IB_ENOENT if not found
  *   - Errors returned by ib_event_get_all()
  */
-static ib_status_t get_event(ib_tx_t *tx,
-                             const ib_rule_t *rule,
+static ib_status_t get_event(const ib_rule_exec_t *rule_exec,
                              ib_logevent_t **event)
 {
     IB_FTRACE_INIT();
 
-    assert(tx != NULL);
-    assert(tx->epi != NULL);
-    assert(rule != NULL);
+    assert(rule_exec != NULL);
 
     ib_status_t rc;
     ib_list_t *event_list;
     ib_list_node_t *event_node;
+    ib_tx_t *tx = rule_exec->tx;
 
     rc = ib_event_get_all(tx->epi, &event_list);
     if (rc != IB_OK) {
@@ -910,7 +880,7 @@ static ib_status_t get_event(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
     ib_logevent_t *e = (ib_logevent_t *)event_node->data;
-    if (strcmp(e->rule_id, ib_rule_id(rule)) == 0) {
+    if (strcmp(e->rule_id, ib_rule_id(rule_exec->rule)) == 0) {
         *event = e;
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -921,22 +891,23 @@ static ib_status_t get_event(ib_tx_t *tx,
 /**
  * Set the IB_TX_BLOCK_ADVISORY flag and set the DPI value @c FLAGS:BLOCK=1.
  *
- * @param[in,out] tx The transaction we are going to modify.
- * @param[in] rule The rule that fired the action
+ * @param[in] rule_exec The rule execution object
+ *
+ * @returns IB_OK if successful.
  *
  * @return
  *   - IB_OK on success.
  *   - Errors by ib_data_add_num.
  *   - Other if an event exists, but cannot be retrieved for this action.
  */
-static ib_status_t act_block_advisory_execute(ib_tx_t *tx,
-                                              const ib_rule_t *rule)
+static ib_status_t act_block_advisory_execute(
+    const ib_rule_exec_t *rule_exec)
 {
     IB_FTRACE_INIT();
 
-    assert(tx != NULL);
-    assert(rule != NULL);
+    assert(rule_exec != NULL);
 
+    ib_tx_t *tx = rule_exec->tx;
     ib_status_t rc;
     ib_num_t ib_num_one = 1;
     ib_logevent_t *event;
@@ -952,38 +923,27 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx,
         rc = ib_data_add_num(tx->dpi, "FLAGS:BLOCK", ib_num_one, NULL);
         if (rc != IB_OK) {
             ib_rule_log_error(
-                tx,
-                rule,
-                NULL,
-                NULL,
+                rule_exec,
                 "Could not set value FLAGS:BLOCK=1: %s",
                 ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
         /* Update the event (if required) */
-        rc = get_event(tx, rule, &event);
+        rc = get_event(rule_exec, &event);
         if (rc == IB_OK) {
             event->rec_action = IB_LEVENT_ACTION_BLOCK;
         }
         else if (rc != IB_ENOENT) {
-            ib_rule_log_error(
-                tx,
-                rule,
-                NULL,
-                NULL,
-                "Failed to fetch event associated with this action: %s",
-                ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec,
+                              "Failed to fetch event "
+                              "associated with this action: %s",
+                              ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
 
-    ib_rule_log_debug(
-        tx,
-        rule,
-        NULL,
-        NULL,
-        "Advisory block.");
+    ib_rule_log_debug(rule_exec, "Advisory block.");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -991,46 +951,36 @@ static ib_status_t act_block_advisory_execute(ib_tx_t *tx,
 /**
  * Set the IB_TX_BLOCK_PHASE flag in the tx.
  *
- * @param[in,out] tx The transaction we are going to modify.
- * @param[in] rule The rule that fired the action
+ * @param[in] rule_exec The rule execution object
  *
  * @return
  *   - IB_OK on success.
  *   - Other if an event exists, but cannot be retrieved for this action.
  */
-static ib_status_t act_block_phase_execute(ib_tx_t *tx,
-                                           const ib_rule_t *rule)
+static ib_status_t act_block_phase_execute(
+    const ib_rule_exec_t *rule_exec)
 {
     IB_FTRACE_INIT();
 
     ib_status_t rc;
     ib_logevent_t *event;
+    ib_tx_t *tx = rule_exec->tx;
 
     ib_tx_flags_set(tx, IB_TX_BLOCK_PHASE);
 
     /* Update the event (if required) */
-    rc = get_event(tx, rule, &event);
+    rc = get_event(rule_exec, &event);
     if (rc == IB_OK) {
         event->rec_action = IB_LEVENT_ACTION_BLOCK;
         event->action = IB_LEVENT_ACTION_BLOCK;
     }
     else if (rc != IB_ENOENT) {
-        ib_rule_log_error(
-            tx,
-            rule,
-            NULL,
-            NULL,
-            "Failed phase block: %s.",
-            ib_status_to_string(rc));
+        ib_rule_log_error(rule_exec,
+                          "Failed phase block: %s.", ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_rule_log_debug(
-        tx,
-        rule,
-        NULL,
-        NULL,
-        "Phase block.");
+    ib_rule_log_trace(rule_exec, "Phase block.");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1038,58 +988,50 @@ static ib_status_t act_block_phase_execute(ib_tx_t *tx,
 /**
  * Set the IB_TX_BLOCK_IMMEDIATE flag in the tx.
  *
- * @param[in,out] tx The transaction we are going to modify.
- * @param[in] rule The rule that fired the action
+ * @param[in] rule_exec The rule execution object
  *
  * @returns
  *   - IB_OK on success.
  *   - Other if an event exists, but cannot be retrieved for this action.
  */
-static ib_status_t act_block_immediate_execute(ib_tx_t *tx,
-                                               const ib_rule_t *rule)
+static ib_status_t act_block_immediate_execute(
+    const ib_rule_exec_t *rule_exec)
 {
     IB_FTRACE_INIT();
-    assert(tx != NULL);
-    assert(rule != NULL);
+    assert(rule_exec != NULL);
 
     ib_status_t rc;
     ib_logevent_t *event;
 
-    ib_tx_flags_set(tx, IB_TX_BLOCK_IMMEDIATE);
+    ib_tx_flags_set(rule_exec->tx, IB_TX_BLOCK_IMMEDIATE);
 
     /* Update the event (if required) */
-    rc = get_event(tx, rule, &event);
+    rc = get_event(rule_exec, &event);
     if (rc == IB_OK) {
         event->rec_action = IB_LEVENT_ACTION_BLOCK;
         event->action = IB_LEVENT_ACTION_BLOCK;
     }
     else if (rc != IB_ENOENT) {
-        ib_rule_log_error(
-            tx,
-            rule,
-            NULL,
-            NULL,
-            "Failed immediate block: %s.",
-            ib_status_to_string(rc));
+        ib_rule_log_error(rule_exec,
+                          "Failed immediate block: %s.",
+                          ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_rule_log_debug(
-        tx,
-        rule,
-        NULL,
-        NULL,
-        "Immediate block.");
+    ib_rule_log_debug(rule_exec, "Immediate block.");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
  * The function that implements flagging a particular block type.
+ *
+ * @param[in] rule_exec The rule execution object
+ *
+ * @return Return code
  */
 typedef ib_status_t(*act_block_execution_t)(
-    ib_tx_t         *tx,
-    const ib_rule_t *rule
+    const ib_rule_exec_t *rule_exec
 );
 
 /**
@@ -1105,25 +1047,24 @@ typedef struct act_block_t act_block_t;
 /**
  * Executes the function stored in @a data.
  *
+ * @param[in] rule_exec The rule execution object
  * @param[in] data Cast to an @c act_block_t and the @c execute field is
  *            called on the given @a tx.
- * @param[in] rule The rule structure.
- * @param[out] tx The transaction we are going to modify.
  * @param[in] flags Flags. Unused.
  * @param[in] cbdata Callback data. Unused.
  */
-static ib_status_t act_block_execute(void* data,
-                                     const ib_rule_t *rule,
-                                     ib_tx_t *tx,
-                                     ib_flags_t flags,
-                                     void *cbdata)
+static ib_status_t act_block_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
+    assert(rule_exec);
     assert(data);
-    assert(tx);
 
-    ib_status_t rc = ((const act_block_t *)data)->execute(tx, rule);
+    ib_status_t rc = ((const act_block_t *)data)->execute(rule_exec);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -1146,12 +1087,13 @@ static ib_status_t act_block_execute(void* data,
  * @return IB_OK on success or IB_EALLOC if the callback data
  *         cannot be initialized for the rule.
  */
-static ib_status_t act_block_create(ib_engine_t *ib,
-                                    ib_context_t *ctx,
-                                    ib_mpool_t *mp,
-                                    const char *params,
-                                    ib_action_inst_t *inst,
-                                    void *cbdata)
+static ib_status_t act_block_create(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_mpool_t *mp,
+    const char *params,
+    ib_action_inst_t *inst,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -1203,28 +1145,27 @@ typedef struct act_status_t act_status_t;
 /**
  * Set the @c block_status value in @a tx.
  *
+ * @param[in] rule_exec The rule execution object
  * @param[in] data The act_status_t that contains the @c block_status
  *            to assign to @c tx->block_status.
- * @param[in] rule The rule. Unused.
- * @param[out] tx The field in this struct, @c block_status, is set.
  * @param[in] flags The flags used to create this rule. Unused.
  * @param[in] cbdata Callback data. Unused.
  *
  * @returns IB_OK.
  */
-static ib_status_t act_status_execute(void* data,
-                                      const ib_rule_t *rule,
-                                      ib_tx_t *tx,
-                                      ib_flags_t flags,
-                                      void *cbdata)
+static ib_status_t act_status_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
-    assert(data);
-    assert(tx);
+    assert(rule_exec != NULL);
+    assert(data != NULL);
 
     /* NOTE: Range validation of block_status is done in act_status_create. */
-    tx->block_status = ((act_status_t *)data)->block_status;
+    rule_exec->tx->block_status = ((act_status_t *)data)->block_status;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1248,12 +1189,13 @@ static ib_status_t act_status_execute(void* data,
  *               @c atoi(const @c char*) to an integer in the range 200
  *               through 599 inclusive.
  */
-static ib_status_t act_status_create(ib_engine_t *ib,
-                                     ib_context_t *ctx,
-                                     ib_mpool_t *mp,
-                                     const char *params,
-                                     ib_action_inst_t *inst,
-                                     void *cbdata)
+static ib_status_t act_status_create(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_mpool_t *mp,
+    const char *params,
+    ib_action_inst_t *inst,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -1296,7 +1238,7 @@ static ib_status_t act_status_create(ib_engine_t *ib,
  *
  * @todo This should be removed, and expand_name should be used
  *
- * @param[in] tx Transaction to get the value from
+ * @param[in] rule_exec Rule execution object
  * @param[in] label Label to use for debug / error messages
  * @param[in] name Name to expand
  * @param[in] expandable Is @a expandable?
@@ -1305,7 +1247,7 @@ static ib_status_t act_status_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t expand_name_hdr(ib_tx_t *tx,
+static ib_status_t expand_name_hdr(const ib_rule_exec_t *rule_exec,
                                    const char *label,
                                    const char *name,
                                    bool expandable,
@@ -1313,7 +1255,8 @@ static ib_status_t expand_name_hdr(ib_tx_t *tx,
                                    size_t *exnlen)
 {
     IB_FTRACE_INIT();
-    assert(tx != NULL);
+    assert(rule_exec != NULL);
+    assert(rule_exec->tx != NULL);
     assert(label != NULL);
     assert(name != NULL);
     assert(exname != NULL);
@@ -1325,9 +1268,9 @@ static ib_status_t expand_name_hdr(ib_tx_t *tx,
         size_t len;
         ib_status_t rc;
 
-        rc = ib_data_expand_str(tx->dpi, name, false, &tmp);
+        rc = ib_data_expand_str(rule_exec->tx->dpi, name, false, &tmp);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,
+            ib_rule_log_error(rule_exec,
                             "%s: Failed to expand name \"%s\": %s",
                             label, name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
@@ -1335,7 +1278,7 @@ static ib_status_t expand_name_hdr(ib_tx_t *tx,
         len = strlen(tmp);
         *exname = tmp;
         *exnlen = len;
-        ib_log_debug_tx(tx,
+        ib_log_debug_tx(rule_exec->tx,
                         "%s: Expanded variable name from "
                         "\"%s\" to \"%.*s\"",
                         label, name, (int)len, tmp);
@@ -1353,7 +1296,7 @@ static ib_status_t expand_name_hdr(ib_tx_t *tx,
  *
  * @todo Should call ib_data_expand_str_ex()
  *
- * @param[in] tx Transaction to get the value from
+ * @param[in] rule_exec Rule execution object
  * @param[in] label Label to use for debug / error messages
  * @param[in] str String to expand
  * @param[in] flags Action flags
@@ -1362,7 +1305,7 @@ static ib_status_t expand_name_hdr(ib_tx_t *tx,
  *
  * @returns Status code
  */
-static ib_status_t expand_str(ib_tx_t *tx,
+static ib_status_t expand_str(const ib_rule_exec_t *rule_exec,
                               const char *label,
                               const char *str,
                               ib_flags_t flags,
@@ -1370,11 +1313,12 @@ static ib_status_t expand_str(ib_tx_t *tx,
                               size_t *exlen)
 {
     IB_FTRACE_INIT();
-    assert(tx != NULL);
+    assert(rule_exec != NULL);
     assert(label != NULL);
     assert(str != NULL);
     assert(expanded != NULL);
     assert(exlen != NULL);
+    ib_tx_t *tx = rule_exec->tx;
 
     /* If it's expandable, expand it */
     if ( (flags & IB_ACTINST_FLAG_EXPAND) != 0) {
@@ -1384,17 +1328,17 @@ static ib_status_t expand_str(ib_tx_t *tx,
 
         rc = ib_data_expand_str(tx->dpi, str, false, &tmp);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx,
-                            "%s: Failed to expand \"%s\": %s",
-                            label, str, ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec,
+                              "%s: Failed to expand \"%s\": %s",
+                              label, str, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
         len = strlen(tmp);
         *expanded = tmp;
         *exlen = len;
-        ib_log_debug_tx(tx,
-                        "%s: Expanded \"%s\" to \"%.*s\"",
-                        label, str, (int)len, tmp);
+        ib_rule_log_debug(rule_exec,
+                          "%s: Expanded \"%s\" to \"%.*s\"",
+                          label, str, (int)len, tmp);
     }
     else {
         *expanded = str;
@@ -1427,12 +1371,13 @@ typedef struct act_header_data_t act_header_data_t;
  *
  * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
-static ib_status_t act_del_header_create(ib_engine_t *ib,
-                                         ib_context_t *ctx,
-                                         ib_mpool_t *mp,
-                                         const char *params,
-                                         ib_action_inst_t *inst,
-                                         void *cbdata)
+static ib_status_t act_del_header_create(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_mpool_t *mp,
+    const char *params,
+    ib_action_inst_t *inst,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -1485,12 +1430,13 @@ static ib_status_t act_del_header_create(ib_engine_t *ib,
  *
  * @return IB_OK on success. IB_EALLOC if a memory allocation fails.
  */
-static ib_status_t act_set_header_create(ib_engine_t *ib,
-                                         ib_context_t *ctx,
-                                         ib_mpool_t *mp,
-                                         const char *params,
-                                         ib_action_inst_t *inst,
-                                         void *cbdata)
+static ib_status_t act_set_header_create(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_mpool_t *mp,
+    const char *params,
+    ib_action_inst_t *inst,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -1581,19 +1527,28 @@ static ib_status_t act_set_header_create(ib_engine_t *ib,
 
 /**
  * Set the request header in @c tx->dpi.
+ *
+ * @param[in] rule_exec The rule execution object
+ * @param[in] data Instance data needed for execution.
+ * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
+ *
+ * @returns IB_OK if successful.
+ * @param[in] rule_exec The rule execution object
  */
-static ib_status_t act_set_request_header_execute(void* data,
-                                                  const ib_rule_t *rule,
-                                                  ib_tx_t *tx,
-                                                  ib_flags_t flags,
-                                                  void *cbdata)
+static ib_status_t act_set_request_header_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
+    assert(rule_exec);
+    assert(rule_exec->tx);
+    assert(rule_exec->ib);
+    assert(rule_exec->ib->server);
     assert(data);
-    assert(tx);
-    assert(tx->ib);
-    assert(tx->ib->server);
 
     ib_status_t rc;
     act_header_data_t *act_data = (act_header_data_t *)data;
@@ -1601,141 +1556,129 @@ static ib_status_t act_set_request_header_execute(void* data,
     size_t value_len;
     const char *name;
     size_t name_len;
+    ib_tx_t *tx = rule_exec->tx;
 
     /* Expand the name (if required) */
-    rc = expand_name_hdr(tx,
-                         "setRequestHeader",
-                         act_data->name,
-                         act_data->name_expand,
-                         &name,
-                         &name_len);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    rc = expand_str(tx,
-                    "setRequestHeader",
-                    act_data->value,
-                    flags,
-                    &value,
-                    &value_len);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    ib_rule_log_debug(tx,
-                      rule,
-                      NULL,
-                      NULL,
-                      "Setting request header \"%.*s\"=\"%.*s\"",
-                      (int)name_len,
-                      name,
-                      (int)value_len,
-                      value);
-
-    /* Note: ignores lengths for now */
-    rc = ib_server_header(tx->ib->server,
-                          tx,
-                          IB_SERVER_REQUEST,
-                          IB_HDR_SET,
-                          name,
-                          value, NULL);
-
-    IB_FTRACE_RET_STATUS(rc);
-}
-static ib_status_t act_edit_request_header_execute(void* data,
-                                                   const ib_rule_t *rule,
-                                                   ib_tx_t *tx,
-                                                   ib_flags_t flags,
-                                                   void *cbdata)
-{
-    IB_FTRACE_INIT();
-
-    assert(data);
-    assert(tx);
-    assert(tx->ib);
-    assert(tx->ib->server);
-
-    ib_status_t rc;
-    act_header_data_t *act_data = (act_header_data_t *)data;
-    const char *value;
-    size_t value_len;
-    const char *name;
-    size_t name_len;
-
-    /* Expand the name (if required) */
-    rc = expand_name_hdr(tx,
-                         "editRequestHeader",
-                         act_data->name,
-                         act_data->name_expand,
-                         &name,
-                         &name_len);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    rc = expand_str(tx,
-                    "editRequestHeader",
-                    act_data->value,
-                    flags,
-                    &value,
-                    &value_len);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    ib_rule_log_debug(tx,
-                      rule,
-                      NULL,
-                      NULL,
-                      "Applying regexp to request header \"%.*s\"=~\"%.*s\"",
-                      (int)name_len,
-                      name,
-                      (int)value_len,
-                      value);
-
-    /* Note: ignores lengths for now */
-    rc = ib_server_header(tx->ib->server,
-                          tx,
-                          IB_SERVER_REQUEST,
-                          IB_HDR_EDIT,
-                          name,
-                          value, act_data->rx);
-
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-static ib_status_t act_del_request_header_execute(void *data,
-                                                  const ib_rule_t *rule,
-                                                  ib_tx_t *tx,
-                                                  ib_flags_t flags,
-                                                  void *cbdata)
-{
-    IB_FTRACE_INIT();
-
-    assert(data);
-    assert(tx);
-    assert(tx->ib);
-    assert(tx->ib->server);
-
-    ib_status_t rc;
-    act_header_data_t *act_data = (act_header_data_t *)data;
-    const char *name;
-    size_t name_len;
-
-    /* Expand the name (if required) */
-    rc = expand_name_hdr(tx, "delRequestHeader",
+    rc = expand_name_hdr(rule_exec, "setRequestHeader",
                          act_data->name, act_data->name_expand,
                          &name, &name_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug_tx(tx, "Deleting request header \"%.*s\"",
-                    (int)name_len, name);
+    rc = expand_str(rule_exec, "setRequestHeader",
+                    act_data->value, flags, &value, &value_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_rule_log_debug(rule_exec, "Setting request header \"%.*s\"=\"%.*s\"",
+                      (int)name_len, name, (int)value_len, value);
+
     /* Note: ignores lengths for now */
-    rc = ib_server_header(tx->ib->server,
-                          tx,
+    rc = ib_server_header(rule_exec->ib->server, tx,
+                          IB_SERVER_REQUEST, IB_HDR_SET,
+                          name, value, NULL);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @param[in] rule_exec The rule execution object
+ * @param[in] data Instance data needed for execution.
+ * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
+ *
+ * @returns IB_OK if successful.
+ */
+static ib_status_t act_edit_request_header_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(rule_exec);
+    assert(rule_exec->tx);
+    assert(rule_exec->ib);
+    assert(rule_exec->ib->server);
+    assert(data);
+
+    ib_status_t rc;
+    act_header_data_t *act_data = (act_header_data_t *)data;
+    const char *value;
+    size_t value_len;
+    const char *name;
+    size_t name_len;
+    ib_tx_t *tx = rule_exec->tx;
+
+    /* Expand the name (if required) */
+    rc = expand_name_hdr(rule_exec, "editRequestHeader",
+                         act_data->name, act_data->name_expand,
+                         &name, &name_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = expand_str(rule_exec, "editRequestHeader",
+                    act_data->value, flags, &value, &value_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_rule_log_debug(rule_exec,
+                      "Applying regexp to request header \"%.*s\"=~\"%.*s\"",
+                      (int)name_len, name, (int)value_len, value);
+
+    /* Note: ignores lengths for now */
+    rc = ib_server_header(tx->ib->server, tx, IB_SERVER_REQUEST, IB_HDR_EDIT,
+                          name, value, act_data->rx);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * @param[in] rule_exec The rule execution object
+ * @param[in] data Instance data needed for execution.
+ * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
+ *
+ * @returns IB_OK if successful.
+ * @param[in] rule_exec The rule execution object
+ */
+static ib_status_t act_del_request_header_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(rule_exec);
+    assert(rule_exec->tx);
+    assert(rule_exec->ib);
+    assert(rule_exec->ib->server);
+    assert(data);
+
+    ib_status_t rc;
+    act_header_data_t *act_data = (act_header_data_t *)data;
+    const char *name;
+    size_t name_len;
+
+    /* Expand the name (if required) */
+    rc = expand_name_hdr(rule_exec, "delRequestHeader",
+                         act_data->name, act_data->name_expand,
+                         &name, &name_len);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    ib_rule_log_debug(rule_exec, "Deleting request header \"%.*s\"",
+                      (int)name_len, name);
+    /* Note: ignores lengths for now */
+    rc = ib_server_header(rule_exec->ib->server,
+                          rule_exec->tx,
                           IB_SERVER_REQUEST,
                           IB_HDR_UNSET,
                           name,
@@ -1744,18 +1687,27 @@ static ib_status_t act_del_request_header_execute(void *data,
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static ib_status_t act_set_response_header_execute(void* data,
-                                                   const ib_rule_t *rule,
-                                                   ib_tx_t *tx,
-                                                   ib_flags_t flags,
-                                                   void *cbdata)
+/**
+ * @param[in] rule_exec The rule execution object
+ * @param[in] data Instance data needed for execution.
+ * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
+ *
+ * @returns IB_OK if successful.
+ */
+static ib_status_t act_set_response_header_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
+    assert(rule_exec);
+    assert(rule_exec->tx);
+    assert(rule_exec->ib);
+    assert(rule_exec->ib->server);
     assert(data);
-    assert(tx);
-    assert(tx->ib);
-    assert(tx->ib->server);
 
     ib_status_t rc;
     act_header_data_t *act_data = (act_header_data_t *)data;
@@ -1763,47 +1715,57 @@ static ib_status_t act_set_response_header_execute(void* data,
     size_t value_len;
     const char *name;
     size_t name_len;
+    ib_tx_t *tx = rule_exec->tx;
 
     /* Expand the name (if required) */
-    rc = expand_name_hdr(tx, "setResponseHeader",
+    rc = expand_name_hdr(rule_exec, "setResponseHeader",
                          act_data->name, act_data->name_expand,
                          &name, &name_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = expand_str(tx, "setResponseHeader", act_data->value, flags,
+    rc = expand_str(rule_exec, "setResponseHeader", act_data->value, flags,
                     &value, &value_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug_tx(tx, "Setting response header \"%.*s\"=\"%.*s\"",
-                    (int)name_len, name, (int)value_len, value);
+    ib_rule_log_debug(rule_exec, "Setting response header \"%.*s\"=\"%.*s\"",
+                      (int)name_len, name, (int)value_len, value);
 
     /* Note: ignores lengths for now */
-    rc = ib_server_header(tx->ib->server,
-                          tx,
-                          IB_SERVER_RESPONSE,
-                          IB_HDR_SET,
-                          name,
-                          value, NULL);
+    rc = ib_server_header(tx->ib->server, tx,
+                          IB_SERVER_RESPONSE, IB_HDR_SET,
+                          name, value, NULL);
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static ib_status_t act_edit_response_header_execute(void* data,
-                                                    const ib_rule_t *rule,
-                                                    ib_tx_t *tx,
-                                                    ib_flags_t flags,
-                                                    void *cbdata)
+/**
+ *
+ * @param[in] rule_exec The rule execution object
+ * @param[in] data Instance data needed for execution.
+ * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
+ *
+ * @returns IB_OK if successful.
+ * @param[in] rule_exec The rule execution object
+ *
+ */
+static ib_status_t act_edit_response_header_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
+    assert(rule_exec);
+    assert(rule_exec->tx);
+    assert(rule_exec->ib);
+    assert(rule_exec->ib->server);
     assert(data);
-    assert(tx);
-    assert(tx->ib);
-    assert(tx->ib->server);
 
     ib_status_t rc;
     act_header_data_t *act_data = (act_header_data_t *)data;
@@ -1811,16 +1773,18 @@ static ib_status_t act_edit_response_header_execute(void* data,
     size_t value_len;
     const char *name;
     size_t name_len;
+    ib_tx_t *tx = rule_exec->tx;
 
     /* Expand the name (if required) */
-    rc = expand_name_hdr(tx, "editResponseHeader",
+    rc = expand_name_hdr(rule_exec, "editResponseHeader",
                          act_data->name, act_data->name_expand,
                          &name, &name_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = expand_str(tx, "editResponseHeader", act_data->value, flags,
+    rc = expand_str(rule_exec, "editResponseHeader",
+                    act_data->value, flags,
                     &value, &value_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -1830,28 +1794,36 @@ static ib_status_t act_edit_response_header_execute(void* data,
                     (int)name_len, name, (int)value_len, value);
 
     /* Note: ignores lengths for now */
-    rc = ib_server_header(tx->ib->server,
-                          tx,
-                          IB_SERVER_RESPONSE,
-                          IB_HDR_EDIT,
-                          name,
-                          value, act_data->rx);
+    rc = ib_server_header(tx->ib->server, tx,
+                          IB_SERVER_RESPONSE, IB_HDR_EDIT,
+                          name, value, act_data->rx);
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
-static ib_status_t act_del_response_header_execute(void* data,
-                                                   const ib_rule_t *rule,
-                                                   ib_tx_t *tx,
-                                                   ib_flags_t flags,
-                                                   void *cbdata)
+/**
+ *
+ * @param[in] rule_exec The rule execution object
+ * @param[in] data Instance data needed for execution.
+ * @param[in] flags Action instance flags
+ * @param[in] cbdata Unused.
+ *
+ * @returns IB_OK if successful.
+ * @param[in] rule_exec The rule execution object
+ */
+static ib_status_t act_del_response_header_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
+    assert(rule_exec);
+    assert(rule_exec->tx);
+    assert(rule_exec->ib);
+    assert(rule_exec->ib->server);
     assert(data);
-    assert(tx);
-    assert(tx->ib);
-    assert(tx->ib->server);
 
     ib_status_t rc;
     act_header_data_t *act_data = (act_header_data_t *)data;
@@ -1859,19 +1831,19 @@ static ib_status_t act_del_response_header_execute(void* data,
     size_t name_len;
 
     /* Expand the name (if required) */
-    rc = expand_name_hdr(tx, "delResponseHeader",
+    rc = expand_name_hdr(rule_exec, "delResponseHeader",
                          act_data->name, act_data->name_expand,
                          &name, &name_len);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    ib_log_debug_tx(tx, "Deleting response header \"%.*s\"",
-                    (int)name_len, name);
+    ib_rule_log_debug(rule_exec, "Deleting response header \"%.*s\"",
+                      (int)name_len, name);
 
     /* Note: ignores lengths for now */
-    rc = ib_server_header(tx->ib->server,
-                          tx,
+    rc = ib_server_header(rule_exec->ib->server,
+                          rule_exec->tx,
                           IB_SERVER_RESPONSE,
                           IB_HDR_UNSET,
                           name,
@@ -1892,12 +1864,13 @@ static ib_status_t act_del_response_header_execute(void* data,
  *
  * @returns Status code
  */
-static ib_status_t act_allow_create(ib_engine_t *ib,
-                                    ib_context_t *ctx,
-                                    ib_mpool_t *mp,
-                                    const char *parameters,
-                                    ib_action_inst_t *inst,
-                                    void *cbdata)
+static ib_status_t act_allow_create(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_mpool_t *mp,
+    const char *parameters,
+    ib_action_inst_t *inst,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_flags_t flags = IB_TX_FNONE;
@@ -1930,40 +1903,39 @@ static ib_status_t act_allow_create(ib_engine_t *ib,
 /**
  * Allow action.
  *
+ * @param[in] rule_exec The rule execution object
  * @param[in] data Not used.
- * @param[in] rule The rule structure.
- * @param[in,out] tx The transaction we are going to modify.
  * @param[in] flags Flags. Unused.
  * @param[in] cbdata Unused.
  */
-static ib_status_t act_allow_execute(void *data,
-                                     const ib_rule_t *rule,
-                                     ib_tx_t *tx,
-                                     ib_flags_t flags,
-                                     void *cbdata)
+static ib_status_t act_allow_execute(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    void *cbdata)
 {
     IB_FTRACE_INIT();
 
     assert(data != NULL);
-    assert(rule != NULL);
-    assert(tx != NULL);
+    assert(rule_exec != NULL);
+    assert(rule_exec->tx != NULL);
 
     const ib_flags_t *pflags = (const ib_flags_t *)data;
     ib_flags_t set_flags = *pflags;
 
     /* For post process, treat ALLOW_ALL like ALLOW_PHASE */
-    if ( (rule->meta.phase == PHASE_POSTPROCESS) &&
+    if ( (rule_exec->rule->meta.phase == PHASE_POSTPROCESS) &&
          (ib_flags_all(set_flags, IB_TX_ALLOW_ALL)) )
     {
         set_flags |= IB_TX_ALLOW_PHASE;
     }
 
     /* Set the flags in the TX */
-    ib_tx_flags_set(tx, set_flags);
+    ib_tx_flags_set(rule_exec->tx, set_flags);
 
     /* For ALLOW_PHASE, store the current phase */
     if (ib_flags_all(set_flags, IB_TX_ALLOW_PHASE)) {
-        tx->allow_phase = rule->meta.phase;
+        rule_exec->tx->allow_phase = rule_exec->rule->meta.phase;
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

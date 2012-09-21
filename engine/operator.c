@@ -143,9 +143,7 @@ ib_status_t ib_operator_inst_destroy(ib_operator_inst_t *op_inst)
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_operator_execute(ib_engine_t *ib,
-                                ib_tx_t *tx,
-                                const ib_rule_t *rule,
+ib_status_t ib_operator_execute(const ib_rule_exec_t *rule_exec,
                                 const ib_operator_inst_t *op_inst,
                                 ib_field_t *field,
                                 ib_num_t *result)
@@ -157,7 +155,7 @@ ib_status_t ib_operator_execute(ib_engine_t *ib,
         && (op_inst->op->fn_execute != NULL))
     {
         rc = op_inst->op->fn_execute(
-            ib, tx, rule, op_inst->data, op_inst->flags, field, result);
+            rule_exec, op_inst->data, op_inst->flags, field, result);
     }
     else {
         *result = 1;

@@ -82,7 +82,7 @@ TEST_F(ActionTest, CallAction) {
                                    &act);
     ASSERT_EQ(IB_OK, status);
 
-    status = ib_action_execute(act, NULL, NULL);
+    status = ib_action_execute(NULL, act);
     ASSERT_EQ(IB_OK, status);
 }
 
@@ -101,9 +101,8 @@ static ib_status_t create_fn(ib_engine_t *ib,
     return IB_OK;
 }
 
-static ib_status_t execute_fn(void *data,
-                              const ib_rule_t *rule,
-                              ib_tx_t *tx,
+static ib_status_t execute_fn(const ib_rule_exec_t *rule_exec,
+                              void *data,
                               ib_flags_t flags,
                               void *cbdata)
 {
@@ -135,7 +134,7 @@ TEST_F(ActionTest, ExecuteAction) {
     ASSERT_EQ(IB_OK, status);
 
     action_executed = false;
-    status = ib_action_execute(act, NULL, NULL);
+    status = ib_action_execute(NULL, act);
     ASSERT_EQ(IB_OK, status);
     ASSERT_TRUE(action_executed);
     EXPECT_STREQ(action_str, params);

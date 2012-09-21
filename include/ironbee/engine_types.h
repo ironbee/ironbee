@@ -231,7 +231,7 @@ struct ib_tx_t {
     ib_flags_t          flags;           /**< Transaction flags */
     int                 block_status;    /**< TX specific block status to use.*/
     ib_rule_phase_num_t allow_phase;     /**< Phase to allow (skip) */
-    ib_rule_log_tx_t   *rule_log_tx;     /**< Rule engine TX log object */
+    ib_rule_exec_t     *rule_exec;       /**< Rule engine execution object */
 
     /* Request */
     ib_parsed_req_line_t *request_line;  /**< Request line */

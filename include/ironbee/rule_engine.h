@@ -128,8 +128,8 @@ struct ib_rule_t {
  * stored in the 'rule_list' field of ib_ruleset_phase_t.
  */
 typedef struct {
-    ib_rule_t       *rule;         /**< The rule itself */
-    ib_flags_t       flags;        /**< Rule flags (IB_RULECTX_FLAG_xx) */
+    ib_rule_t             *rule;         /**< The rule itself */
+    ib_flags_t             flags;        /**< Rule flags (IB_RULECTX_FLAG_xx) */
 } ib_rule_ctx_data_t;
 
 /**
@@ -188,9 +188,25 @@ struct ib_rule_engine_t {
 };
 
 /**
- * Rule execution logging data
+ * Rule execution data
  */
-typedef struct ib_rule_log_exec_t ib_rule_log_exec_t;
+struct ib_rule_exec_t {
+    ib_engine_t            *ib;          /**< The IronBee engine */
+    ib_tx_t                *tx;          /**< The executing transaction */
+    ib_rule_t              *rule;        /**< The currently executing rule */
+    ib_rule_target_t       *target;      /**< The current rule target */
+    ib_num_t                result;      /**< Rule execution result */
+
+    /* Logging objects */
+    ib_rule_log_tx_t       *tx_log;      /**< Rule TX logging object */
+    ib_rule_log_exec_t     *exec_log;    /**< Rule execution logging object */
+
+    /* Rule stack (for chains) */
+    ib_list_t              *rule_stack;  /**< Stack of rules */
+
+    /* Stack of values for the FIELD* targets */
+    ib_list_t              *value_stack; /**< Stack of values */
+};
 
 /**
  * Create a rule.
@@ -623,110 +639,123 @@ ib_mpool_t DLL_PUBLIC *ib_rule_mpool(ib_engine_t *ib);
 /**
  * Determine of operator results should be captured
  *
- * @param[in] rule Rule to check
+ * @param[in] rule_exec Rule execution object
  * @param[in] result Operator result value
  *
  * @returns true if the results should be captured, false otherwise
  */
-bool ib_rule_should_capture(const ib_rule_t *rule,
+bool ib_rule_should_capture(const ib_rule_exec_t *rule_exec,
                             ib_num_t result);
 
+
 /**
- * Generic Logger for rules.
+ * Perform logging of a rule's execution
+ *
+ * @param[in] rule_exec Rule execution object
+ */
+void ib_rule_log_execution(const ib_rule_exec_t *rule_exec);
+
+/**
+ * Generic Logger for rule execution.
+ *
+ * This is intended to be used when a rule execution object is available.
+ *
+ * @warning There is currently a 1024 byte formatter limit when prefixing the
+ *          log header data.
+ *
+ * @param[in] level Rule log level
+ * @param[in] rule_exec Rule execution object (or NULL)
+ * @param[in] file Filename (or NULL)
+ * @param[in] line Line number (or 0)
+ * @param[in] fmt Printf-like format string
+ */
+void ib_rule_log_exec(ib_rule_dlog_level_t level,
+                      const ib_rule_exec_t *rule_exec,
+                      const char *file,
+                      int line,
+                      const char *fmt, ...)
+    PRINTF_ATTRIBUTE(5, 6);
+
+/** Rule execution error logging */
+#define ib_rule_log_error(rule_exec, ...) \
+    ib_rule_log_exec(IB_RULE_DLOG_ERROR, rule_exec, \
+                     __FILE__, __LINE__, __VA_ARGS__)
+
+/** Rule execution warning logging */
+#define ib_rule_log_warn(rule_exec, ...) \
+    ib_rule_log_exec(IB_RULE_DLOG_WARNING, rule_exec, \
+                     __FILE__, __LINE__, __VA_ARGS__)
+
+/** Rule execution notice logging */
+#define ib_rule_log_notice(rule_exec, ...) \
+    ib_rule_log_exec(IB_RULE_DLOG_NOTICE, rule_exec, \
+                     __FILE__, __LINE__, __VA_ARGS__)
+
+/** Rule execution info logging */
+#define ib_rule_log_info(rule_exec, ...) \
+    ib_rule_log_exec(IB_RULE_DLOG_INFO, rule_exec, \
+                     __FILE__, __LINE__, __VA_ARGS__)
+
+/** Rule execution debug logging */
+#define ib_rule_log_debug(rule_exec, ...) \
+    ib_rule_log_exec(IB_RULE_DLOG_DEBUG, rule_exec, \
+                     __FILE__, __LINE__, __VA_ARGS__)
+
+/** Rule execution trace logging */
+#define ib_rule_log_trace(rule_exec, ...) \
+    ib_rule_log_exec(IB_RULE_DLOG_TRACE, rule_exec, \
+                     __FILE__, __LINE__, __VA_ARGS__)
+
+/**
+ * Generic Logger for with transaction
+ *
+ * This is intended to be used when no rule execution object is available.
  *
  * @warning There is currently a 1024 byte formatter limit when prefixing the
  *          log header data.
  *
  * @param[in] level Rule log level
  * @param[in] tx Transaction information
- * @param[in] rule Rule to log (or NULL)
- * @param[in] target Rule target (or NULL)
- * @param[in] tfn Transformation (or NULL)
- * @param[in] prefix String to prefix log header data (or NULL)
- * @param[in] file Filename (or NULL)
- * @param[in] line Line number (or 0)
- * @param[in] fmt Printf-like format string
- * @param[in] ap Argument list
- */
-void ib_rule_vlog(ib_rule_log_level_t level,
-                  const ib_tx_t *tx,
-                  const ib_rule_t *rule,
-                  const ib_rule_target_t *target,
-                  const ib_tfn_t *tfn,
-                  const char *prefix,
-                  const char *file,
-                  int line,
-                  const char *fmt,
-                  va_list ap)
-                  VPRINTF_ATTRIBUTE(9);
-
-/**
- * Generic Logger for rules.
- *
- * @warning There is currently a 1024 byte formatter limit when prefixing the
- *          log header data.
- *
- * @param[in] level Rule log level
- * @param[in] tx Transaction information
- * @param[in] rule Rule to log (or NULL)
- * @param[in] target Rule target (or NULL)
- * @param[in] tfn Transformation (or NULL)
- * @param[in] prefix String to prefix log header data (or NULL)
  * @param[in] file Filename (or NULL)
  * @param[in] line Line number (or 0)
  * @param[in] fmt Printf-like format string
  */
-void ib_rule_log(ib_rule_log_level_t level,
-                 const ib_tx_t *tx,
-                 const ib_rule_t *rule,
-                 const ib_rule_target_t *target,
-                 const ib_tfn_t *tfn,
-                 const char *prefix,
-                 const char *file,
-                 int line,
-                 const char *fmt, ...)
-                 PRINTF_ATTRIBUTE(9, 10);
+void ib_rule_log_tx(ib_rule_dlog_level_t level,
+                    const ib_tx_t *tx,
+                    const char *file,
+                    int line,
+                    const char *fmt, ...)
+    PRINTF_ATTRIBUTE(5, 6);
 
-/**
- * Rule execution logging
- *
- * @param[in] log_exec Rule logging execution object
- */
-void ib_rule_log_exec_ex(const ib_rule_log_exec_t *log_exec);
+/** Rule error logging (TX version) */
+#define ib_rule_log_tx_error(tx, ...) \
+    ib_rule_log_tx(IB_RULE_DLOG_ERROR, tx, \
+                   __FILE__, __LINE__, __VA_ARGS__)
 
-/** Rule execution logging */
-#define ib_rule_log_exec(log_exec) \
-    ib_rule_log_exec_ex(log_exec)
+/** Rule warning logging (TX version) */
+#define ib_rule_log_tx_warn(tx, ...) \
+    ib_rule_log_tx(IB_RULE_DLOG_WARNING, tx, \
+                   __FILE__, __LINE__, __VA_ARGS__)
 
-/** Rule error logging */
-#define ib_rule_log_error(tx, rule, target, tfn, ...) \
-    ib_rule_log(IB_RULE_LOG_LEVEL_ERROR, tx, rule, target, tfn, \
-                "ERROR", __FILE__, __LINE__, __VA_ARGS__)
+/** Rule notice logging (TX version) */
+#define ib_rule_log_tx_notice(tx, ...) \
+    ib_rule_log_tx(IB_RULE_DLOG_NOTICE, tx, \
+                   __FILE__, __LINE__, __VA_ARGS__)
 
-/** Rule warning logging */
-#define ib_rule_log_warn(tx, rule, target, tfn, ...) \
-    ib_rule_log(IB_RULE_LOG_LEVEL_WARNING, tx, rule, target, tfn, \
-                "WARNING", __FILE__, __LINE__, __VA_ARGS__)
+/** Rule info logging (TX version) */
+#define ib_rule_log_tx_info(tx, ...) \
+    ib_rule_log_tx(IB_RULE_DLOG_INFO, tx, \
+                   __FILE__, __LINE__, __VA_ARGS__)
 
-/** Rule notice logging */
-#define ib_rule_log_notice(tx, rule, target, tfn, ...) \
-    ib_rule_log(IB_RULE_LOG_LEVEL_NOTICE, tx, rule, target, tfn, \
-                "NOTICE", __FILE__, __LINE__, __VA_ARGS__)
+/** Rule debug logging (TX version) */
+#define ib_rule_log_tx_debug(tx, ...) \
+    ib_rule_log_tx(IB_RULE_DLOG_DEBUG, tx, \
+                   __FILE__, __LINE__, __VA_ARGS__)
 
-/** Rule info logging */
-#define ib_rule_log_info(tx, rule, target, tfn, ...) \
-    ib_rule_log(IB_RULE_LOG_LEVEL_INFO, tx, rule, target, tfn, \
-                "INFO", __FILE__, __LINE__, __VA_ARGS__)
-
-/** Rule debug logging */
-#define ib_rule_log_debug(tx, rule, target, tfn, ...) \
-    ib_rule_log(IB_RULE_LOG_LEVEL_DEBUG, tx, rule, target, tfn, \
-                "DEBUG", __FILE__, __LINE__, __VA_ARGS__)
-
-/** Rule trace logging */
-#define ib_rule_log_trace(tx, rule, target, tfn, ...) \
-    ib_rule_log(IB_RULE_LOG_LEVEL_TRACE, tx, rule, target, tfn, \
-                "TRACE", __FILE__, __LINE__, __VA_ARGS__)
+/** Rule trace logging (TX version) */
+#define ib_rule_log_tx_trace(tx, ...) \
+    ib_rule_log_tx(IB_RULE_DLOG_TRACE, tx, \
+                   __FILE__, __LINE__, __VA_ARGS__)
 
 /** @} */
 

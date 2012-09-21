@@ -60,9 +60,7 @@ ib_status_t test_destroy_fn(ib_operator_inst_t *op_inst)
     return IB_OK;
 }
 
-ib_status_t test_execute_fn(ib_engine_t *ib,
-                            ib_tx_t *tx,
-                            const ib_rule_t *rule,
+ib_status_t test_execute_fn(const ib_rule_exec_t *rule_exec,
                             void *data,
                             ib_flags_t flags,
                             ib_field_t *field,
@@ -99,6 +97,7 @@ TEST_F(OperatorTest, OperatorCallTest)
     ib_status_t status;
     ib_num_t call_result;
     ib_rule_t *rule = NULL; /* Unused by this operator. */
+
     status = ib_operator_register(ib_engine,
                                   "test_op",
                                   IB_OP_FLAG_PHASE,
@@ -121,6 +120,11 @@ TEST_F(OperatorTest, OperatorCallTest)
                                      &op);
     ASSERT_EQ(IB_OK, status);
 
+    ib_rule_exec_t rule_exec;
+    memset(&rule_exec, 0, sizeof(rule_exec));
+    rule_exec.ib = ib_engine;
+    rule_exec.rule = rule;
+
     ib_field_t *field;
     const char *matching = "data matching string";
     const char *nonmatching = "non matching string";
@@ -133,14 +137,12 @@ TEST_F(OperatorTest, OperatorCallTest)
     );
 
     ib_field_setv(field, ib_ftype_nulstr_in(matching));
-    status = ib_operator_execute(
-        ib_engine, NULL, rule, op, field, &call_result);
+    status = ib_operator_execute(&rule_exec, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_nulstr_in(nonmatching));
-    status = ib_operator_execute(
-        ib_engine, NULL, rule, op, field, &call_result);
+    status = ib_operator_execute(&rule_exec, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 
@@ -181,15 +183,18 @@ TEST_F(CoreOperatorsTest, ContainsTest)
         NULL
     );
 
+    ib_rule_exec_t rule_exec;
+    memset(&rule_exec, 0, sizeof(rule_exec));
+    rule_exec.ib = ib_engine;
+    rule_exec.rule = rule;
+
     ib_field_setv(field, ib_ftype_nulstr_in(matching));
-    status = ib_operator_execute(
-        ib_engine, NULL, rule, op, field, &call_result);
+    status = ib_operator_execute(&rule_exec, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_nulstr_in(nonmatching));
-    status = ib_operator_execute(
-        ib_engine, NULL, rule, op, field, &call_result);
+    status = ib_operator_execute(&rule_exec, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
 }

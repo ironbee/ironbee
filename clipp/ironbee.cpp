@@ -418,11 +418,10 @@ ib_status_t clipp_action_create(
 }
 
 ib_status_t clipp_action_execute(
-    void*            data,
-    const ib_rule_t* rule,
-    ib_tx_t*         tx,
-    ib_flags_t       flags,
-    void*            cbdata
+    const ib_rule_exec_t* rule_exec,
+    void*                 data,
+    ib_flags_t            flags,
+    void*                 cbdata
 )
 {
     IB_FTRACE_INIT();
@@ -452,11 +451,10 @@ ib_status_t clipp_announce_action_create(
 }
 
 ib_status_t clipp_announce_action_execute(
-    void*            data,
-    const ib_rule_t* rule,
-    ib_tx_t*         tx,
-    ib_flags_t       flags,
-    void*            cbdata
+    const ib_rule_exec_t* rule_exec,
+    void*                 data,
+    ib_flags_t            flags,
+    void*                 cbdata
 )
 {
     IB_FTRACE_INIT();

@@ -56,6 +56,7 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
 {
     ib_tx_t *tx; /**< We do need a transaction for the memory pool. */
 
+    ib_rule_exec_t rule_exec;
     ib_rule_t *rule;
     ib_conn_t *conn;
     ib_operator_t op;
@@ -118,16 +119,22 @@ TEST_F(AhoCorasickModuleTest, test_pm_rule)
                                       IB_OPINST_FLAG_NONE,
                                       &op_inst));
 
+    // Create the rule execution object
+    memset(&rule_exec, 0, sizeof(rule_exec));
+    rule_exec.ib = ib_engine;
+    rule_exec.tx = tx;
+    rule_exec.rule = rule;
+
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, tx, rule, op_inst->data, op_inst->flags, field1, &result));
+        &rule_exec, op_inst->data, op_inst->flags, field1, &result));
 
     // We should fail.
     ASSERT_FALSE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, tx, rule, op_inst->data, op_inst->flags, field2, &result));
+        &rule_exec, op_inst->data, op_inst->flags, field2, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);
@@ -138,6 +145,7 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
     ib_operator_t op;
     ib_operator_inst_t *op_inst = NULL;
     ib_num_t result;
+    ib_rule_exec_t rule_exec;
     ib_rule_t *rule;
     ib_tx_t *tx;
     ib_conn_t *conn;
@@ -198,16 +206,22 @@ TEST_F(AhoCorasickModuleTest, test_pmf_rule)
                                       IB_OPINST_FLAG_NONE,
                                       &op_inst));
 
+    // Create the rule execution object
+    memset(&rule_exec, 0, sizeof(rule_exec));
+    rule_exec.ib = ib_engine;
+    rule_exec.tx = tx;
+    rule_exec.rule = rule;
+
     // Attempt to match.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, tx, rule, op_inst->data, op_inst->flags, field1, &result));
+        &rule_exec, op_inst->data, op_inst->flags, field1, &result));
 
     // We should fail.
     ASSERT_TRUE(result);
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK, op_inst->op->fn_execute(
-        ib_engine, tx, rule, op_inst->data, op_inst->flags, field2, &result));
+        &rule_exec, op_inst->data, op_inst->flags, field2, &result));
 
     // This time we should succeed.
     ASSERT_TRUE(result);

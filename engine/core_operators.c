@@ -159,9 +159,7 @@ static ib_status_t strop_create(ib_engine_t *ib,
 /**
  * Execute function for the "streq" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -169,15 +167,17 @@ static ib_status_t strop_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_streq_execute(ib_engine_t *ib,
-                                    ib_tx_t *tx,
-                                    const ib_rule_t *rule,
+static ib_status_t op_streq_execute(const ib_rule_exec_t *rule_exec,
                                     void *data,
                                     ib_flags_t flags,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(rule_exec != NULL);
+    assert(data != NULL);
+    assert(field != NULL);
+    assert(result != NULL);
 
     /**
      * This works on C-style (NUL terminated) and byte strings.  Note
@@ -187,6 +187,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
     ib_status_t  rc;
     const char  *cstr = (const char *)data;
     char        *expanded;
+    ib_tx_t     *tx = rule_exec->tx;
 
     /* Expand the string */
     if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
@@ -233,9 +234,9 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if (ib_rule_should_capture(rule, *result)) {
-        ib_data_capture_clear(tx);
-        ib_data_capture_set_item(tx, 0, field);
+    if (ib_rule_should_capture(rule_exec, *result)) {
+        ib_data_capture_clear(rule_exec->tx);
+        ib_data_capture_set_item(rule_exec->tx, 0, field);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -244,9 +245,7 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
 /**
  * Execute function for the "contains" operator
  *
- * @param[in] ib Ironbee engine (unused).
- * @param[in] tx The transaction for this operator (unused).
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -254,18 +253,22 @@ static ib_status_t op_streq_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_contains_execute(ib_engine_t *ib,
-                                       ib_tx_t *tx,
-                                       const ib_rule_t *rule,
+static ib_status_t op_contains_execute(const ib_rule_exec_t *rule_exec,
                                        void *data,
                                        ib_flags_t flags,
                                        ib_field_t *field,
                                        ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(rule_exec != NULL);
+    assert(data != NULL);
+    assert(field != NULL);
+    assert(result != NULL);
+
     ib_status_t  rc = IB_OK;
     const char  *cstr = (char *)data;
     char        *expanded;
+    ib_tx_t     *tx = rule_exec->tx;
 
     /* Expand the string */
     if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
@@ -315,17 +318,18 @@ static ib_status_t op_contains_execute(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    if ( (tx != NULL) && (ib_rule_should_capture(rule, *result)) ) {
+    if ( (tx != NULL) && (ib_rule_should_capture(rule_exec, *result)) ) {
         ib_field_t *f;
         const char *name;
 
-        ib_data_capture_clear(tx);
+        ib_data_capture_clear(rule_exec->tx);
 
         name = ib_data_capture_name(0);
-        rc = ib_field_create_bytestr_alias(&f, tx->mp, name, strlen(name),
+        rc = ib_field_create_bytestr_alias(&f, rule_exec->tx->mp,
+                                           name, strlen(name),
                                            (uint8_t *)expanded,
                                            strlen(expanded));
-        ib_data_capture_set_item(tx, 0, f);
+        ib_data_capture_set_item(rule_exec->tx, 0, f);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -448,13 +452,11 @@ ib_status_t op_ipmatch_create(
 /**
  * Execute function for the "ipmatch" operator
  *
- * @param[in] ib      Ironbee engine.
- * @param[in] tx      The transaction for this operator.
- * @param[in] rule    Parent rule to the operator.
- * @param[in] data    IP Set data.
- * @param[in] flags   Operator instance flags.
- * @param[in] field   Field value.
- * @param[out] result Pointer to number in which to store the result.
+ * @param[in] rule_exec Rule execution object
+ * @param[in] data      IP Set data.
+ * @param[in] flags     Operator instance flags.
+ * @param[in] field     Field value.
+ * @param[out] result   Pointer to number in which to store the result.
  *
  * @returns
  * - IB_OK if no failure, regardless of match status.
@@ -463,28 +465,25 @@ ib_status_t op_ipmatch_create(
  */
 static
 ib_status_t op_ipmatch_execute(
-    ib_engine_t     *ib,
-    ib_tx_t         *tx,
-    const ib_rule_t *rule,
-    void            *data,
-    ib_flags_t       flags,
-    ib_field_t      *field,
-    ib_num_t        *result
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result
 )
 {
     IB_FTRACE_INIT();
-    assert(ib     != NULL);
-    assert(tx     != NULL);
-    assert(rule   != NULL);
-    assert(data   != NULL);
-    assert(field  != NULL);
-    assert(result != NULL);
+    assert(rule_exec != NULL);
+    assert(data      != NULL);
+    assert(field     != NULL);
+    assert(result    != NULL);
 
     ib_status_t        rc               = IB_OK;
     const ib_ipset4_t *ipset            = NULL;
     ib_ip4_t           ip               = 0;
     const char        *ipstr            = NULL;
     char               ipstr_buffer[17] = "\0";
+    ib_tx_t           *tx               = rule_exec->tx;
 
     ipset = (const ib_ipset4_t *)data;
 
@@ -533,15 +532,15 @@ ib_status_t op_ipmatch_execute(
     }
     else if (rc == IB_OK) {
         *result = 1;
-        if (ib_rule_should_capture(rule, *result)) {
-            ib_data_capture_clear(tx);
-            ib_data_capture_set_item(tx, 0, field);
+        if (ib_rule_should_capture(rule_exec, *result)) {
+            ib_data_capture_clear(rule_exec->tx);
+            ib_data_capture_set_item(rule_exec->tx, 0, field);
         }
     }
     else {
-        ib_log_error_tx(tx,
-            "Error searching set for ip %s: %s",
-            ipstr, ib_status_to_string(rc)
+        ib_rule_log_error(rule_exec,
+                          "Error searching set for ip %s: %s",
+                          ipstr, ib_status_to_string(rc)
         );
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -666,13 +665,11 @@ ib_status_t op_ipmatch6_create(
 /**
  * Execute function for the "ipmatch6" operator
  *
- * @param[in] ib      Ironbee engine.
- * @param[in] tx      The transaction for this operator.
- * @param[in] rule    Parent rule to the operator.
- * @param[in] data    IP Set data.
- * @param[in] flags   Operator instance flags.
- * @param[in] field   Field value.
- * @param[out] result Pointer to number in which to store the result.
+ * @param[in] rule_exec Rule execution object
+ * @param[in] data      IP Set data.
+ * @param[in] flags     Operator instance flags.
+ * @param[in] field     Field value.
+ * @param[out] result   Pointer to number in which to store the result.
  *
  * @returns
  * - IB_OK if no failure, regardless of match status.
@@ -681,28 +678,25 @@ ib_status_t op_ipmatch6_create(
  */
 static
 ib_status_t op_ipmatch6_execute(
-    ib_engine_t     *ib,
-    ib_tx_t         *tx,
-    const ib_rule_t *rule,
-    void            *data,
-    ib_flags_t       flags,
-    ib_field_t      *field,
-    ib_num_t        *result
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result
 )
 {
     IB_FTRACE_INIT();
-    assert(ib     != NULL);
-    assert(tx     != NULL);
-    assert(rule   != NULL);
-    assert(data   != NULL);
-    assert(field  != NULL);
-    assert(result != NULL);
+    assert(rule_exec != NULL);
+    assert(data      != NULL);
+    assert(field     != NULL);
+    assert(result    != NULL);
 
     ib_status_t        rc               = IB_OK;
     const ib_ipset6_t *ipset            = NULL;
     ib_ip6_t           ip               = {{0, 0, 0, 0}};
     const char        *ipstr            = NULL;
     char               ipstr_buffer[41] = "\0";
+    ib_tx_t           *tx               = rule_exec->tx;
 
     ipset = (const ib_ipset6_t *)data;
 
@@ -751,15 +745,15 @@ ib_status_t op_ipmatch6_execute(
     }
     else if (rc == IB_OK) {
         *result = 1;
-        if (ib_rule_should_capture(rule, *result)) {
+        if (ib_rule_should_capture(rule_exec, *result)) {
             ib_data_capture_clear(tx);
             ib_data_capture_set_item(tx, 0, field);
         }
     }
     else {
-        ib_log_error_tx(tx,
-            "Error searching set for ip %s: %s",
-            ipstr, ib_status_to_string(rc)
+        ib_rule_log_error(rule_exec,
+                          "Error searching set for ip %s: %s",
+                          ipstr, ib_status_to_string(rc)
         );
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -844,16 +838,14 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
 /**
  * Get expanded numeric value of a string
  *
- * @param[in] tx Transaction
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] pdata Parameter data
  * @param[in] flags Operator instance flags
  * @param[out] result Pointer to number in which to store the result
  *
  * @returns Status code
  */
-static ib_status_t get_num_value(ib_tx_t *tx,
-                                 const ib_rule_t *rule,
+static ib_status_t get_num_value(const ib_rule_exec_t *rule_exec,
                                  const numop_params_t *pdata,
                                  ib_flags_t flags,
                                  ib_num_t *result)
@@ -869,7 +861,7 @@ static ib_status_t get_num_value(ib_tx_t *tx,
     }
 
     /* Expand the string */
-    rc = ib_data_expand_str(tx->dpi, pdata->str, false, &expanded);
+    rc = ib_data_expand_str(rule_exec->tx->dpi, pdata->str, false, &expanded);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -877,7 +869,7 @@ static ib_status_t get_num_value(ib_tx_t *tx,
     /* Convert string the expanded string to a number */
     rc = ib_string_to_num(expanded, 0, result);
     if (rc != IB_OK) {
-        ib_rule_log_error(tx, rule, NULL, NULL,
+        ib_rule_log_error(rule_exec,
                           "Failed to convert expanded parameter \"%s\" "
                           "to a number: %s",
                           expanded, ib_status_to_string(rc));
@@ -888,15 +880,13 @@ static ib_status_t get_num_value(ib_tx_t *tx,
 /**
  * Get integer representation of a field
  *
- * @param[in] tx Ironbee transaction
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
  * @returns Status code
  */
-static ib_status_t field_to_num(ib_tx_t *tx,
-                                const ib_rule_t *rule,
+static ib_status_t field_to_num(const ib_rule_exec_t *rule_exec,
                                 ib_field_t *field,
                                 ib_num_t *result)
 {
@@ -920,7 +910,7 @@ static ib_status_t field_to_num(ib_tx_t *tx,
                 }
 
                 if (n > INT64_MAX) {
-                    ib_rule_log_error(tx, rule, NULL, NULL,
+                    ib_rule_log_error(rule_exec,
                                       "Overflow in converting number %"PRIu64,
                                       n);
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -939,7 +929,7 @@ static ib_status_t field_to_num(ib_tx_t *tx,
 
                 rc = ib_string_to_num(fval, 0, result);
                 if (rc != IB_OK) {
-                    ib_rule_log_error(tx, rule, NULL, NULL,
+                    ib_rule_log_error(rule_exec,
                                       "Failed to convert string \"%s\" "
                                       "to a number: %s",
                                       fval, ib_status_to_string(rc));
@@ -962,7 +952,7 @@ static ib_status_t field_to_num(ib_tx_t *tx,
                     0,
                     result);
                 if (rc != IB_OK) {
-                    ib_rule_log_error(tx, rule, NULL, NULL,
+                    ib_rule_log_error(rule_exec,
                                       "Failed to convert byte string \"%.*s\" "
                                       "to a number: %s",
                                       (int)ib_bytestr_length(bs),
@@ -974,7 +964,7 @@ static ib_status_t field_to_num(ib_tx_t *tx,
             break;
 
         default:
-            ib_rule_log_error(tx, rule, NULL, NULL,
+            ib_rule_log_error(rule_exec,
                               "Unable to convert field type %d to a number",
                               field->type);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -983,37 +973,45 @@ static ib_status_t field_to_num(ib_tx_t *tx,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static ib_status_t capture_num(ib_tx_t *tx, int num, ib_num_t value)
+/**
+ * Store a number in the capture buffer
+ *
+ * @param[in] rule_exec Rule execution object
+ * @param[in] capture The capture number
+ * @param[in] value The actual value
+ */
+static ib_status_t capture_num(const ib_rule_exec_t *rule_exec,
+                               int capture,
+                               ib_num_t value)
 {
     IB_FTRACE_INIT();
-    assert(tx != NULL);
+    assert(rule_exec != NULL);
 
     ib_status_t rc;
     ib_field_t *field;
     const char *name;
     const char *str;
 
-    name = ib_data_capture_name(num);
+    name = ib_data_capture_name(capture);
 
-    str = ib_num_to_string(tx->mp, value);
+    str = ib_num_to_string(rule_exec->tx->mp, value);
     if (str == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-    rc = ib_field_create_bytestr_alias(&field, tx->mp, name, strlen(name),
+    rc = ib_field_create_bytestr_alias(&field, rule_exec->tx->mp,
+                                       name, strlen(name),
                                        (uint8_t *)str, strlen(str));
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    rc = ib_data_capture_set_item(tx, 0, field);
+    rc = ib_data_capture_set_item(rule_exec->tx, 0, field);
     IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
  * Execute function for the numeric "equal" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -1021,9 +1019,7 @@ static ib_status_t capture_num(ib_tx_t *tx, int num, ib_num_t value)
  *
  * @returns Status code
  */
-static ib_status_t op_eq_execute(ib_engine_t *ib,
-                                 ib_tx_t *tx,
-                                 const ib_rule_t *rule,
+static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
                                  void *data,
                                  ib_flags_t flags,
                                  ib_field_t *field,
@@ -1036,22 +1032,22 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(tx, rule, field, &value);
+    rc = field_to_num(rule_exec, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the numeric value from the param data (including expansion, etc) */
-    rc = get_num_value(tx, rule, pdata, flags, &param_value);
+    rc = get_num_value(rule_exec, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Do the comparison */
     *result = (value == param_value);
-    if (ib_rule_should_capture(rule, *result)) {
-        ib_data_capture_clear(tx);
-        capture_num(tx, 0, value);
+    if (ib_rule_should_capture(rule_exec, *result)) {
+        ib_data_capture_clear(rule_exec->tx);
+        capture_num(rule_exec, 0, value);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1059,9 +1055,7 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
 /**
  * Execute function for the numeric "not equal" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -1069,9 +1063,7 @@ static ib_status_t op_eq_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_ne_execute(ib_engine_t *ib,
-                                 ib_tx_t *tx,
-                                 const ib_rule_t *rule,
+static ib_status_t op_ne_execute(const ib_rule_exec_t *rule_exec,
                                  void *data,
                                  ib_flags_t flags,
                                  ib_field_t *field,
@@ -1084,25 +1076,25 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(tx, rule, field, &value);
+    rc = field_to_num(rule_exec, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the numeric value (including expansion, etc) */
-    rc = get_num_value(tx, rule, pdata, flags, &param_value);
+    rc = get_num_value(rule_exec, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Do the comparison */
     *result = (value != param_value);
-    if (ib_rule_should_capture(rule, *result)) {
-        ib_data_capture_clear(tx);
-        rc = capture_num(tx, 0, value);
+    if (ib_rule_should_capture(rule_exec, *result)) {
+        ib_data_capture_clear(rule_exec->tx);
+        rc = capture_num(rule_exec, 0, value);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Error storing capture #0: %s",
-                            ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
+                              ib_status_to_string(rc));
         }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1111,9 +1103,7 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
 /**
  * Execute function for the "gt" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -1121,9 +1111,7 @@ static ib_status_t op_ne_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_gt_execute(ib_engine_t *ib,
-                                 ib_tx_t *tx,
-                                 const ib_rule_t *rule,
+static ib_status_t op_gt_execute(const ib_rule_exec_t *rule_exec,
                                  void *data,
                                  ib_flags_t flags,
                                  ib_field_t *field,
@@ -1136,25 +1124,25 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(tx, rule, field, &value);
+    rc = field_to_num(rule_exec, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the numeric value (including expansion, etc) */
-    rc = get_num_value(tx, rule, pdata, flags, &param_value);
+    rc = get_num_value(rule_exec, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Do the comparison */
     *result = (value > param_value);
-    if (ib_rule_should_capture(rule, *result)) {
-        ib_data_capture_clear(tx);
-        rc = capture_num(tx, 0, value);
+    if (ib_rule_should_capture(rule_exec, *result)) {
+        ib_data_capture_clear(rule_exec->tx);
+        rc = capture_num(rule_exec, 0, value);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Error storing capture #0: %s",
-                            ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
+                              ib_status_to_string(rc));
         }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1163,9 +1151,7 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
 /**
  * Execute function for the numeric "less-than" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data C-style string to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -1173,9 +1159,7 @@ static ib_status_t op_gt_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_lt_execute(ib_engine_t *ib,
-                                 ib_tx_t *tx,
-                                 const ib_rule_t *rule,
+static ib_status_t op_lt_execute(const ib_rule_exec_t *rule_exec,
                                  void *data,
                                  ib_flags_t flags,
                                  ib_field_t *field,
@@ -1188,13 +1172,13 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(tx, rule, field, &value);
+    rc = field_to_num(rule_exec, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the numeric value (including expansion, etc) */
-    rc = get_num_value(tx, rule, pdata, flags, &param_value);
+    rc = get_num_value(rule_exec, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1202,12 +1186,12 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
     /* Do the comparison */
     *result = (value < param_value);
 
-    if (ib_rule_should_capture(rule, *result)) {
-        ib_data_capture_clear(tx);
-        rc = capture_num(tx, 0, value);
+    if (ib_rule_should_capture(rule_exec, *result)) {
+        ib_data_capture_clear(rule_exec->tx);
+        rc = capture_num(rule_exec, 0, value);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Error storing capture #0: %s",
-                            ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
+                              ib_status_to_string(rc));
         }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1216,9 +1200,7 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
 /**
  * Execute function for the numeric "greater than or equal to" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -1226,9 +1208,7 @@ static ib_status_t op_lt_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_ge_execute(ib_engine_t *ib,
-                                 ib_tx_t *tx,
-                                 const ib_rule_t *rule,
+static ib_status_t op_ge_execute(const ib_rule_exec_t *rule_exec,
                                  void *data,
                                  ib_flags_t flags,
                                  ib_field_t *field,
@@ -1241,25 +1221,25 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(tx, rule, field, &value);
+    rc = field_to_num(rule_exec, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Expand the data value? */
-    rc = get_num_value(tx, rule, pdata, flags, &param_value);
+    rc = get_num_value(rule_exec, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Do the comparison */
     *result = (value >= param_value);
-    if (ib_rule_should_capture(rule, *result)) {
-        ib_data_capture_clear(tx);
-        rc = capture_num(tx, 0, value);
+    if (ib_rule_should_capture(rule_exec, *result)) {
+        ib_data_capture_clear(rule_exec->tx);
+        rc = capture_num(rule_exec, 0, value);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Error storing capture #0: %s",
-                            ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
+                              ib_status_to_string(rc));
         }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1268,9 +1248,7 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
 /**
  * Execute function for the "less than or equal to" operator
  *
- * @param[in] ib Ironbee engine.
- * @param[in] tx The transaction for this operator.
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data Pointer to number to compare to
  * @param[in] flags Operator instance flags
  * @param[in] field Field value
@@ -1278,9 +1256,7 @@ static ib_status_t op_ge_execute(ib_engine_t *ib,
  *
  * @returns Status code
  */
-static ib_status_t op_le_execute(ib_engine_t *ib,
-                                 ib_tx_t *tx,
-                                 const ib_rule_t *rule,
+static ib_status_t op_le_execute(const ib_rule_exec_t *rule_exec,
                                  void *data,
                                  ib_flags_t flags,
                                  ib_field_t *field,
@@ -1293,25 +1269,25 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
     ib_status_t           rc;
 
     /* Get integer representation of the field */
-    rc = field_to_num(tx, rule, field, &value);
+    rc = field_to_num(rule_exec, field, &value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Expand the data value? */
-    rc = get_num_value(tx, rule, pdata, flags, &param_value);
+    rc = get_num_value(rule_exec, pdata, flags, &param_value);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Do the comparison */
     *result = (value <= param_value);
-    if (ib_rule_should_capture(rule, *result)) {
-        ib_data_capture_clear(tx);
-        rc = capture_num(tx, 0, value);
+    if (ib_rule_should_capture(rule_exec, *result)) {
+        ib_data_capture_clear(rule_exec->tx);
+        rc = capture_num(rule_exec, 0, value);
         if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Error storing capture #0: %s",
-                            ib_status_to_string(rc));
+            ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
+                              ib_status_to_string(rc));
         }
     }
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1320,9 +1296,7 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
 /**
  * Execute function for the "nop" operator
  *
- * @param[in] ib Ironbee engine (unused)
- * @param[in] tx The transaction for this operator (unused)
- * @param[in] rule Parent rule to the operator
+ * @param[in] rule_exec Rule execution object
  * @param[in] data Operator data (unused)
  * @param[in] flags Operator instance flags
  * @param[in] field Field value (unused)
@@ -1330,9 +1304,7 @@ static ib_status_t op_le_execute(ib_engine_t *ib,
  *
  * @returns Status code (IB_OK)
  */
-static ib_status_t op_nop_execute(ib_engine_t *ib,
-                                  ib_tx_t *tx,
-                                  const ib_rule_t *rule,
+static ib_status_t op_nop_execute(const ib_rule_exec_t *rule_exec,
                                   void *data,
                                   ib_flags_t flags,
                                   ib_field_t *field,
@@ -1341,9 +1313,9 @@ static ib_status_t op_nop_execute(ib_engine_t *ib,
     IB_FTRACE_INIT();
     *result = 1;
 
-    if (ib_rule_should_capture(rule, *result)) {
-        ib_data_capture_clear(tx);
-        ib_data_capture_set_item(tx, 0, field);
+    if (ib_rule_should_capture(rule_exec, *result)) {
+        ib_data_capture_clear(rule_exec->tx);
+        ib_data_capture_set_item(rule_exec->tx, 0, field);
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }

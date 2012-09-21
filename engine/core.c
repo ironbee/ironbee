@@ -4276,12 +4276,12 @@ static IB_STRVAL_MAP(core_debuglog_levels_map) = {
  * Mapping of valid debug rule debug levels to numerical value
  */
 static IB_STRVAL_MAP(core_ruledebuglog_levels_map) = {
-    IB_STRVAL_PAIR("error", IB_RULE_LOG_LEVEL_ERROR),
-    IB_STRVAL_PAIR("warning", IB_RULE_LOG_LEVEL_WARNING),
-    IB_STRVAL_PAIR("notice", IB_RULE_LOG_LEVEL_NOTICE),
-    IB_STRVAL_PAIR("info", IB_RULE_LOG_LEVEL_INFO),
-    IB_STRVAL_PAIR("debug", IB_RULE_LOG_LEVEL_DEBUG),
-    IB_STRVAL_PAIR("trace", IB_RULE_LOG_LEVEL_TRACE),
+    IB_STRVAL_PAIR("error", IB_RULE_DLOG_ERROR),
+    IB_STRVAL_PAIR("warning", IB_RULE_DLOG_WARNING),
+    IB_STRVAL_PAIR("notice", IB_RULE_DLOG_NOTICE),
+    IB_STRVAL_PAIR("info", IB_RULE_DLOG_INFO),
+    IB_STRVAL_PAIR("debug", IB_RULE_DLOG_DEBUG),
+    IB_STRVAL_PAIR("trace", IB_RULE_DLOG_TRACE),
     IB_STRVAL_PAIR_LAST
 };
 
@@ -4621,7 +4621,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->module_base_path     = X_MODULE_BASE_PATH;
     corecfg->rule_base_path       = X_RULE_BASE_PATH;
     corecfg->rule_log_flags       = IB_RULE_LOG_FLAG_MODE_ALL;
-    corecfg->rule_log_level       = IB_RULE_LOG_LEVEL_ERROR;
+    corecfg->rule_log_level       = IB_RULE_DLOG_ERROR;
     corecfg->rule_debug_log_level = IB_LOG_INFO;
     corecfg->block_status         = 403;
 

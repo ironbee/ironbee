@@ -41,6 +41,8 @@ public:
 
     ib_conn_t *ib_conn;
     ib_tx_t *ib_tx;
+    ib_rule_exec_t rule_exec1;
+    ib_rule_exec_t rule_exec2;
     ib_rule_t *rule1;
     ib_rule_t *rule2;
     ib_field_t* field1;
@@ -111,12 +113,25 @@ public:
         }
 
         /* Create rule 1 */
-        rc = (ib_rule_create(ib_engine,
-                             ib_context_engine(ib_engine),
-                             __FILE__,
-                             __LINE__,
-                             true,
-                             &rule1));
+        rc = ib_rule_create(ib_engine,
+                            ib_context_engine(ib_engine),
+                            __FILE__,
+                            __LINE__,
+                            true,
+                            &rule1);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not create rule1.");
+        }
+        rc = ib_rule_set_id(ib_engine, rule1, "rule1");
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not set ID for rule1.");
+        }
+
+        /* Create the rule execution object #1 */
+        memset(&rule_exec1, 0, sizeof(rule_exec1));
+        rule_exec1.ib = ib_engine;
+        rule_exec1.tx = ib_tx;
+        rule_exec1.rule = rule1;
 
         /* Create rule 2 */
         rc = (ib_rule_create(ib_engine,
@@ -125,7 +140,20 @@ public:
                              __LINE__,
                              true,
                              &rule2));
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not create rule2.");
+        }
+        rc = ib_rule_set_id(ib_engine, rule2, "rule2");
+        if (rc != IB_OK) {
+            throw std::runtime_error("Could not set ID for rule2.");
+        }
         rule2->flags |= IB_RULE_FLAG_CAPTURE;
+
+        /* Create the rule execution object #1 */
+        memset(&rule_exec2, 0, sizeof(rule_exec2));
+        rule_exec2.ib = ib_engine;
+        rule_exec2.tx = ib_tx;
+        rule_exec2.rule = rule2;
     }
 
 };
@@ -157,9 +185,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
                                       &op_inst));
 
     // Attempt to match.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
-                                             ib_conn->tx,
-                                             rule1,
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(&rule_exec1,
                                              op_inst->data,
                                              op_inst->flags,
                                              field1,
@@ -169,9 +195,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_FALSE(result);
 
     // Attempt to match again.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
-                                             ib_conn->tx,
-                                             rule1,
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(&rule_exec1,
                                              op_inst->data,
                                              op_inst->flags,
                                              field2,
@@ -200,9 +224,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
                                       &op_inst));
 
     // Attempt to match.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
-                                             ib_conn->tx,
-                                             rule1,
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(&rule_exec1,
                                              op_inst->data,
                                              op_inst->flags,
                                              field1,
@@ -212,9 +234,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     ASSERT_FALSE(result);
 
     // Attempt to match again.
-    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(ib_engine,
-                                             ib_conn->tx,
-                                             rule1,
+    ASSERT_EQ(IB_OK, op_inst->op->fn_execute(&rule_exec1,
                                              op_inst->data,
                                              op_inst->flags,
                                              field2,
@@ -244,9 +264,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
 
     // Attempt to match again.
     ASSERT_EQ(IB_OK,
-              op_inst->op->fn_execute(ib_engine,
-                                      ib_conn->tx,
-                                      rule2,
+              op_inst->op->fn_execute(&rule_exec2,
                                       op_inst->data,
                                       op_inst->flags,
                                       field2,

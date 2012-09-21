@@ -616,26 +616,27 @@ static ib_status_t pcre_operator_destroy(ib_operator_inst_t *op_inst)
 /**
  * Set the matches into the given field name as .0, .1, .2 ... .9.
  *
- * @param[in] ib The IronBee engine to log to.
- * @param[in] tx The transaction to store the values into (tx->dpi).
+ * @param[in] rule_exec Rule execution object
  * @param[in] ovector The vector of integer pairs of matches from PCRE.
  * @param[in] matches The number of matches.
  * @param[in] subject The matched-against string data.
  *
  * @returns IB_OK or IB_EALLOC.
  */
-static ib_status_t pcre_set_matches(ib_engine_t *ib,
-                                    ib_tx_t *tx,
+static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
                                     int *ovector,
                                     int matches,
                                     const char *subject)
 {
     IB_FTRACE_INIT();
 
-    /* IronBee status. */
-    ib_status_t rc;
+    assert(rule_exec != NULL);
+    assert(rule_exec->ib != NULL);
+    assert(rule_exec->tx != NULL);
+    assert(ovector != NULL);
 
-    /* Iterator. */
+    ib_status_t rc;
+    ib_tx_t *tx = rule_exec->tx;
     int i;
 
     rc = ib_data_capture_clear(tx);
@@ -701,11 +702,9 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
 }
 
 /**
- * @brief Execute the rule.
+ * @brief Execute the PCRE operator
  *
- * @param[in] ib Ironbee engine
- * @param[in] tx The transaction.
- * @param[in] rule The parent rule
+ * @param[in] rule_exec The rule execution object
  * @param[in,out] data User data. A @c pcre_rule_data_t.
  * @param[in] flags Operator instance flags
  * @param[in] field The field content.
@@ -713,9 +712,7 @@ static ib_status_t pcre_set_matches(ib_engine_t *ib,
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
-static ib_status_t pcre_operator_execute(ib_engine_t *ib,
-                                         ib_tx_t *tx,
-                                         const ib_rule_t *rule,
+static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
                                          void *data,
                                          ib_flags_t flags,
                                          ib_field_t *field,
@@ -723,10 +720,11 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
 
-    assert(ib!=NULL);
-    assert(tx!=NULL);
-    assert(tx->dpi!=NULL);
-    assert(data!=NULL);
+    assert(rule_exec != NULL);
+    assert(rule_exec->ib != NULL);
+    assert(rule_exec->tx != NULL);
+    assert(rule_exec->tx->dpi != NULL);
+    assert(data != NULL);
 
     int matches;
     ib_status_t ib_rc;
@@ -780,7 +778,7 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 
     /* Debug block. Escapes a string and prints it to the log.
      * Memory is freed. */
-    if (ib_log_get_level(ib) >= 9) {
+    if (ib_log_get_level(rule_exec->ib) >= 9) {
 
         /* Worst case, we can have a string that is 4x larger.
          * Consider if a string of 0xF7 is passed.  That single character
@@ -788,18 +786,18 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
          * character. */
         char *debug_str = ib_util_hex_escape(subject, subject_len);
 
-        if ( debug_str != NULL ) {
-            ib_log_debug3_tx(tx, "Matching against: %s", debug_str);
-            free( debug_str );
+        if (debug_str != NULL) {
+            ib_rule_log_trace(rule_exec, "Matching against: %s", debug_str);
+            free(debug_str);
         }
     }
 
 #ifdef PCRE_JIT_STACK
     /* Log if we expected jit, but did not get it. */
     if (rule_data->is_jit && jit_stack == NULL) {
-        ib_log_debug(ib,
-                     "Failed to allocate a jit stack for a jit-compiled rule. "
-                     "Not using jit for this call.");
+        ib_rule_log_debug(rule_exec,
+                          "Failed to allocate a jit stack for a jit-compiled "
+                          "rule.  Not using jit for this call.");
         edata = NULL;
     }
 
@@ -832,22 +830,22 @@ static ib_status_t pcre_operator_execute(ib_engine_t *ib,
 #endif
 
     if (matches > 0) {
-        if (ib_flags_all(rule->flags, IB_RULE_FLAG_CAPTURE)) {
-            pcre_set_matches(ib, tx, ovector, matches, subject);
+        if (ib_flags_all(rule_exec->rule->flags, IB_RULE_FLAG_CAPTURE)) {
+            pcre_set_matches(rule_exec, ovector, matches, subject);
         }
         ib_rc = IB_OK;
         *result = 1;
     }
     else if (matches == PCRE_ERROR_NOMATCH) {
 
-        if (ib_log_get_level(ib) >= 7) {
+        if (ib_log_get_level(rule_exec->ib) >= 7) {
             char* tmp_c = malloc(subject_len+1);
             memcpy(tmp_c, subject, subject_len);
             tmp_c[subject_len] = '\0';
             /* No match. Return false to the caller (*result = 0). */
-            ib_log_debug2_tx(tx, "No match for \"%s\" using pattern \"%s\".",
-                             tmp_c,
-                             rule_data->patt);
+            ib_rule_log_trace(rule_exec,
+                              "No match for \"%s\" using pattern \"%s\".",
+                              tmp_c, rule_data->patt);
             free(tmp_c);
         }
 
@@ -1080,11 +1078,9 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
 }
 
 /**
- * @brief Execute the rule.
+ * @brief Execute the dfa operator
  *
- * @param[in] ib Ironbee engine
- * @param[in] tx The transaction.
- * @param[in] rule The parent rule
+ * @param[in] rule_exec The rule execution object
  * @param[in,out] data User data. A @c pcre_rule_data_t.
  * @param[in] flags Operator instance flags
  * @param[in] field The field content.
@@ -1092,19 +1088,20 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
  *
  * @returns IB_OK most times. IB_EALLOC when a memory allocation error handles.
  */
-static ib_status_t dfa_operator_execute(ib_engine_t *ib,
-                                        ib_tx_t *tx,
-                                        const ib_rule_t *rule,
+static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
                                         void *data,
                                         ib_flags_t flags,
                                         ib_field_t *field,
                                         ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    assert(tx);
+    assert(rule_exec);
+    assert(rule_exec->tx != NULL);
+    assert(rule_exec->ib != NULL);
     assert(data);
 
 
+    ib_tx_t *tx = rule_exec->tx;
     int matches;
     ib_status_t ib_rc;
     const int ovecsize = 3 * MATCH_MAX;
@@ -1151,7 +1148,7 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
 
     /* Debug block. Escapes a string and prints it to the log.
      * Memory is freed. */
-    if (ib_log_get_level(ib) >= 9) {
+    if (ib_log_get_level(rule_exec->ib) >= 9) {
 
         /* Worst case, we can have a string that is 4x larger.
          * Consider if a string of 0xF7 is passed.  That single character
@@ -1173,31 +1170,31 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
         ib_rc = alloc_dfa_tx_data(tx, rule_data->id, &dfa_workspace);
         if (ib_rc != IB_OK) {
             free(ovector);
-            ib_log_error_tx(tx,
-                "Unexpected error creating tx storage "
-                "for dfa operator %s",
-                rule_data->id);
+            ib_rule_log_error(rule_exec,
+                              "Unexpected error creating tx storage "
+                              "for dfa operator %s",
+                              rule_data->id);
             IB_FTRACE_RET_STATUS(ib_rc);
         }
 
-        ib_log_debug_tx(tx,
-                        "Created DFA workspace at %p for id %s.",
-                        dfa_workspace,
-                        rule_data->id);
+        ib_rule_log_debug(rule_exec,
+                          "Created DFA workspace at %p for id %s.",
+                          dfa_workspace,
+                          rule_data->id);
     }
     else if (ib_rc == IB_OK) {
         options = PCRE_PARTIAL_SOFT | PCRE_DFA_RESTART;
-        ib_log_debug_tx(tx,
-                        "Reusing existing DFA workspace %p for id %s.",
-                        dfa_workspace,
-                        rule_data->id);
+        ib_rule_log_debug(rule_exec,
+                          "Reusing existing DFA workspace %p for id %s.",
+                          dfa_workspace,
+                          rule_data->id);
     }
     else {
         free(ovector);
-        ib_log_error_tx(tx,
-                        "Unexpected error fetching dfa data "
-                        "for dfa operator %s",
-                        rule_data->id);
+        ib_rule_log_error(rule_exec,
+                          "Unexpected error fetching dfa data "
+                          "for dfa operator %s",
+                          rule_data->id);
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
@@ -1218,20 +1215,22 @@ static ib_status_t dfa_operator_execute(ib_engine_t *ib,
         *result = 1;
     }
     else if (matches == PCRE_ERROR_PARTIAL) {
-        ib_log_debug2_tx(tx, "Partial match found, but not a full match.");
+        ib_rule_log_debug(rule_exec,
+                          "Partial match found, but not a full match.");
         ib_rc = IB_OK;
         *result = 0;
     }
     else if (matches == PCRE_ERROR_NOMATCH) {
 
-        if (ib_log_get_level(ib) >= 7) {
+        if (ib_log_get_level(rule_exec->ib) >= 7) {
             char* tmp_c = malloc(subject_len+1);
             memcpy(tmp_c, subject, subject_len);
             tmp_c[subject_len] = '\0';
             /* No match. Return false to the caller (*result = 0). */
-            ib_log_debug2_tx(tx, "No match for \"%s\" using pattern \"%s\".",
-                             tmp_c,
-                             rule_data->patt);
+            ib_rule_log_debug(rule_exec,
+                              "No match for \"%s\" using pattern \"%s\".",
+                              tmp_c,
+                              rule_data->patt);
             free(tmp_c);
         }
 
