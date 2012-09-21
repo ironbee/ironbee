@@ -441,6 +441,16 @@ struct htp_cfg_t {
     int parse_request_http_authentication;
     int extract_request_files;
     char *tmpdir;
+    
+    /** Whether the local port should be used as the outgoing connection port,
+     *  usually when the local machine is the target of a firewall redirect
+     *  (without dport alteration)
+     *  This will be false (0) in cases where the local machine is:
+     *  - explicitly set as the browser proxy
+     *  - operating as a transparent proxy (eg using linux TRPOXY)
+     *  - using a firewall redirect but with dport altered
+     *  In cases where this is false, the remote port is used */
+    int use_local_port;
 
     // Hooks
 
@@ -546,16 +556,6 @@ struct htp_conn_t {
 
     /** Local port. */
     int local_port;
-
-    /** Whether the local port should be used as the outgoing connection port,
-     *  usually when the local machine is the target of a firewall redirect
-     *  (without dport alteration)
-     *  This will be false (0) in cases where the local machine is:
-     *  - explicitly set as the browser proxy
-     *  - operating as a transparent proxy (eg using linux TRPOXY)
-     *  - using a firewall redirect but with dport altered
-     *  In cases where this is false, the remote port is used */
-    int use_local_port;
 
     /** Transactions carried out on this connection. The list may contain
      *  NULL elements when some of the transactions are deleted (and then
@@ -1235,11 +1235,7 @@ void htp_config_register_multipart_parser(htp_cfg_t *cfg);
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
 htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg);
-void htp_connp_open(htp_connp_t *connp,
-    const char *remote_addr, int remote_port,
-    const char *local_addr, int local_port,
-    int use_local_port,
-    htp_time_t *timestamp);
+void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp);
 void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp);
 void htp_connp_destroy(htp_connp_t *connp);
 void htp_connp_destroy_all(htp_connp_t *connp);

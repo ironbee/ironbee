@@ -147,9 +147,9 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
             first = current;
 
             if (first == SERVER) {
-                htp_connp_open(*connp, local_addr, 80, remote_addr, 80, 0, &tv);
+                htp_connp_open(*connp, local_addr, 80, remote_addr, 80, &tv);
             } else {
-                htp_connp_open(*connp, remote_addr, 80, local_addr, 80, 0, &tv);
+                htp_connp_open(*connp, remote_addr, 80, local_addr, 80, &tv);
             }
         }
 

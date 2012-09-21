@@ -243,7 +243,6 @@ htp_log_t *htp_connp_get_last_error(htp_connp_t *connp) {
 void htp_connp_open(htp_connp_t *connp,
       const char *remote_addr, int remote_port,
       const char *local_addr, int local_port,
-      int use_local_port,
       htp_time_t *timestamp) {
     if ((connp->in_status != STREAM_STATE_NEW) || (connp->out_status != STREAM_STATE_NEW)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Connection is already open");
@@ -268,7 +267,6 @@ void htp_connp_open(htp_connp_t *connp,
     }
 
     connp->conn->local_port = local_port;
-    connp->conn->use_local_port = use_local_port;
     
     // Remember when the connection was opened.
     if (timestamp != NULL) {
