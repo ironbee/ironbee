@@ -49,6 +49,8 @@ protected:
         cfg = htp_config_create();
         htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2_2);
         htp_config_register_request_line(cfg, htp_ch_urlencoded_callback_request_line);
+        htp_config_register_request_headers(cfg, htp_ch_urlencoded_callback_request_headers);
+        htp_config_register_request_headers(cfg, htp_ch_multipart_callback_request_headers);
     }
     
     virtual void TearDown() {
@@ -88,8 +90,6 @@ TEST_F(ConnectionParsingTest, Get) {
     ASSERT_TRUE(p != NULL);
     
     ASSERT_EQ(bstr_cmp_c(p, " "), 0);
-
-    SUCCEED();
 }
 
 TEST_F(ConnectionParsingTest, ApacheHeaderParsing) {
@@ -155,8 +155,6 @@ TEST_F(ConnectionParsingTest, ApacheHeaderParsing) {
 
         count++;
     }
-
-    SUCCEED();
 }
 
 TEST_F(ConnectionParsingTest, PostUrlencoded) {
@@ -167,4 +165,23 @@ TEST_F(ConnectionParsingTest, PostUrlencoded) {
     
     htp_tx_t *tx1 = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx1 != NULL);
+}
+
+TEST_F(ConnectionParsingTest, PostUrlencodedChunked) {
+    int rc = test_run(home, "04-post-urlencoded-chunked.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->request_params_body != NULL);
+    
+    bstr *p = (bstr *)table_get_c(tx->request_params_body, "p");
+    ASSERT_TRUE(p != NULL);
+    
+    fprint_bstr(stderr, "p", p);
+    
+    ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
 }

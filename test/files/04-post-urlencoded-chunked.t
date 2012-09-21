@@ -5,8 +5,8 @@ Content-Type: application/x-www-form-urlencoded
 User-Agent: Mozilla
 Cookie: 1
 
-9
-012345678
+b
+p=012345678
 1
 9
 0

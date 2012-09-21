@@ -67,48 +67,6 @@ int test_http09(htp_cfg_t *cfg) {
 /**
  *
  */
-int test_post_urlencoded_chunked(htp_cfg_t *cfg) {
-    htp_connp_t *connp = NULL;
-
-    int rc = test_run(home, "04-post-urlencoded-chunked.t", cfg, &connp);
-    if (rc < 0) {
-        if (connp != NULL) htp_connp_destroy_all(connp);
-        return -1;
-    }
-
-    htp_tx_t *tx = list_get(connp->conn->transactions, 0);
-
-    bstr *key = NULL;
-    htp_header_t *h = NULL;
-    table_iterator_reset(tx->request_headers);
-    while ((key = table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
-        char *key = bstr_util_strdup_to_c(h->name);
-        char *value = bstr_util_strdup_to_c(h->value);
-        printf("--   REQUEST HEADER [%s][%s]\n", key, value);
-        free(value);
-        free(key);
-    }
-
-    table_iterator_reset(tx->response_headers);
-    while ((key = table_iterator_next(tx->response_headers, (void **) & h)) != NULL) {
-        char *key = bstr_util_strdup_to_c(h->name);
-        char *value = bstr_util_strdup_to_c(h->value);
-        printf("--   RESPONSE HEADER [%s][%s]\n", key, value);
-        free(value);
-        free(key);
-    }
-
-    bstr *raw = htp_tx_get_request_headers_raw(tx);
-    fprint_raw_data(stdout, "REQUEST HEADERS RAW 2", bstr_ptr(raw), bstr_len(raw));
-
-    htp_connp_destroy_all(connp);
-
-    return 1;
-}
-
-/**
- *
- */
 int test_expect(htp_cfg_t *cfg) {
     htp_connp_t *connp = NULL;
 
@@ -837,7 +795,6 @@ int main(int argc, char** argv) {
     cfg->parse_request_http_authentication = 1;
 
     RUN_TEST(test_http09, cfg);
-    RUN_TEST(test_post_urlencoded_chunked, cfg);
     RUN_TEST(test_expect, cfg);
     RUN_TEST(test_uri_normal, cfg);
     RUN_TEST(test_pipelined_connection, cfg);
