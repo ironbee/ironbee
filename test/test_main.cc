@@ -163,8 +163,15 @@ TEST_F(ConnectionParsingTest, PostUrlencoded) {
     
     ASSERT_EQ(list_size(connp->conn->transactions), 2);
     
-    htp_tx_t *tx1 = (htp_tx_t *)list_get(connp->conn->transactions, 0);
-    ASSERT_TRUE(tx1 != NULL);
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->request_params_body != NULL);
+    
+    bstr *p = (bstr *)table_get_c(tx->request_params_body, "p");
+    ASSERT_TRUE(p != NULL);
+    
+    ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
 }
 
 TEST_F(ConnectionParsingTest, PostUrlencodedChunked) {
