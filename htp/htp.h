@@ -1361,7 +1361,7 @@ void htp_txh_state_response_start(htp_tx_t *tx);
  * @param line
  * @param alloc_strategy
  */     
-void htp_tx_set_res_line_c(htp_tx_t *tx, char *line, int alloc_strategy);
+void htp_txh_set_res_line_c(htp_tx_t *tx, char *line, int alloc_strategy);
 
 /**
  * Change transaction state to RESPONSE_LINE and invoke all
@@ -1379,7 +1379,7 @@ void htp_txh_state_response_line(htp_tx_t *tx);
  * @param value
  * @param alloc_strategy
  */     
-void htp_tx_set_res_header_c(htp_tx_t *tx, char *name, char *value, int alloc_strategy);
+void htp_txh_set_res_header_c(htp_tx_t *tx, char *name, char *value, int alloc_strategy);
 
 /**
  * Change transaction state to RESPONSE_HEADERS and invoke all
