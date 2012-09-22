@@ -385,12 +385,12 @@ TEST_F(ConnectionParsingTest, Multipart) {
     ASSERT_TRUE(tx->request_params_body != NULL);
     
     bstr *field1 = (bstr *)table_get_c(tx->request_params_body, "field1");
-    // XXX
-    // ASSERT_TRUE(field1 != NULL);
+    ASSERT_TRUE(field1 != NULL); 
+    ASSERT_EQ(bstr_cmp_c(field1, "0123456789"), 0);
     
     bstr *field2 = (bstr *)table_get_c(tx->request_params_body, "field2");
-    // XXX
-    // ASSERT_TRUE(field2 != NULL);
+    ASSERT_TRUE(field2 != NULL);
+    ASSERT_EQ(bstr_cmp_c(field2, "9876543210"), 0);
 }
 
 TEST_F(ConnectionParsingTest, CompressedResponseDeflate) {

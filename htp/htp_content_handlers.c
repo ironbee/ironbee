@@ -180,6 +180,8 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
         // TODO RC
 
         // Extract parameters
+        d->tx->request_params_body_reused = 1;
+        
         htp_mpart_part_t *part = NULL;
         list_iterator_reset(d->tx->request_mpartp->parts);
         while ((part = (htp_mpart_part_t *) list_iterator_next(d->tx->request_mpartp->parts)) != NULL) {
