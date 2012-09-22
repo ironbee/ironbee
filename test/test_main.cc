@@ -44,13 +44,23 @@ class ConnectionParsingTest : public testing::Test {
 protected:
     
     virtual void SetUp() {
-        home = (char *)"./files";
+        // Try the current working directory first
+        int fd = open("./files/anchor.empty", 0, O_RDONLY);
+        if (fd != -1) {
+            close(fd);
+            home = (char *)"./files";
+        } else {
+            int fd = open("./test/files/anchor.empty", 0, O_RDONLY);
+            if (fd != -1) {
+                close(fd);
+                home = (char *)"./test/files";
+            }
+        }
         
         cfg = htp_config_create();
         htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2_2);
-        htp_config_register_request_line(cfg, htp_ch_urlencoded_callback_request_line);
-        htp_config_register_request_headers(cfg, htp_ch_urlencoded_callback_request_headers);
-        htp_config_register_request_headers(cfg, htp_ch_multipart_callback_request_headers);
+        htp_config_register_urlencoded_parser(cfg);
+        htp_config_register_multipart_parser(cfg);
     }
     
     virtual void TearDown() {
@@ -408,7 +418,22 @@ TEST_F(ConnectionParsingTest, UrlEncoded) {
     
     ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
     
-    // TODO More checks
+    ASSERT_EQ(bstr_cmp_c(tx->request_method, "POST"), 0);
+    ASSERT_EQ(bstr_cmp_c(tx->request_uri, "/?p=1&q=2"), 0);
+    
+    ASSERT_TRUE(tx->request_params_body != NULL);
+    
+    bstr *body_p = (bstr *)table_get_c(tx->request_params_body, "p");
+    ASSERT_TRUE(body_p != NULL);
+    ASSERT_EQ(bstr_cmp_c(body_p, "3"), 0);
+    
+    bstr *body_q = (bstr *)table_get_c(tx->request_params_body, "q");
+    ASSERT_TRUE(body_q != NULL);
+    ASSERT_EQ(bstr_cmp_c(body_q, "4"), 0);
+    
+    bstr *body_z = (bstr *)table_get_c(tx->request_params_body, "z");
+    ASSERT_TRUE(body_z != NULL);
+    ASSERT_EQ(bstr_cmp_c(body_z, "5"), 0);
 }
 
 TEST_F(ConnectionParsingTest, AmbiguousHost) {
