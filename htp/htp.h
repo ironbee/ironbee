@@ -1266,8 +1266,135 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn);
 
      void htp_tx_set_user_data(htp_tx_t *tx, void *user_data);
     void *htp_tx_get_user_data(htp_tx_t *tx);
+    
+/**
+ * Initialize hybrid parsing mode, change state to TRANSACTION_START,
+ * and invoke all registered callbacks.
+ * 
+ * @param tx
+ */
+void htp_txh_state_transaction_start(htp_tx_t *tx);
+    
+/**
+ * Set transaction request line.
+ * 
+ * @param tx
+ * @param line
+ * @param alloc_strategy
+ */
+void htp_txh_set_req_line_c(htp_tx_t *tx, char *line, int alloc_strategy);
+     
+/**
+ * Set transaction request method.
+ * 
+ * @param tx
+ * @param method
+ * @param alloc_strategy
+ */
+void htp_txh_set_req_method_c(htp_tx_t *tx, char *method, int alloc_strategy);
+     
+/**
+ * Set transaction request URI.
+ * 
+ * @param tx
+ * @param uri
+ * @param alloc_strategy
+ */
+void htp_txh_set_req_uri_c(htp_tx_t *tx, char *uri, int alloc_strategy);
+     
+/**
+ * Set transaction protocol string (e.g., "HTTP/1.0"). Do not invoke
+ * when HTTP/0.9 is used.
+ * 
+ * @param tx
+ * @param protocol
+ * @param alloc_strategy
+ */
+void htp_txh_set_req_protocol_c(htp_tx_t *tx, char *protocol, int alloc_strategy);
+     
+/**
+ * Change transaction state to REQUEST_LINE and invoke all
+ * registered callbacks.
+ * 
+ * @param tx
+*/
+void htp_txh_state_request_line(htp_tx_t *tx);
+     
+/**
+ * Set one request header. This function should be invoked once for
+ * each available header, and in the order in which headers were
+ * seen in the request.
+ * 
+ * @param tx
+ * @param name
+ * @param value
+ * @param alloc_strategy
+ */
+void htp_txh_set_req_header_c(htp_tx_t *tx, char *name, char *value, int alloc_strategy);
+     
+/**
+ * Change transaction state to REQUEST_HEADERS and invoke all
+ * registered callbacks.
+ * 
+ * @param tx
+ */
+void htp_txh_state_request_headers(htp_tx_t *tx);
+     
+// XXX trailers?
+     
+/**
+ * Change transaction state to REQUEST and invoke all
+ * registered callbacks.
+ */
+void htp_txh_state_request(htp_tx_t *tx);
 
-// void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
+/**
+ * Change transaction state to RESPONSE_START and invoke all
+ * registered callbacks.
+ */
+void htp_txh_state_response_start(htp_tx_t *tx);
+     
+/**
+ * Set response line.
+ * 
+ * @param tx
+ * @param line
+ * @param alloc_strategy
+ */     
+void htp_tx_set_res_line_c(htp_tx_t *tx, char *line, int alloc_strategy);
+
+/**
+ * Change transaction state to RESPONSE_LINE and invoke all
+ * registered callbacks.
+ */
+void htp_txh_state_response_line(htp_tx_t *tx);
+
+/**
+ * Set one response header. This function should be invoked once for
+ * each available header, and in the order in which headers were
+ * seen in the response.
+ * 
+ * @param tx
+ * @param name
+ * @param value
+ * @param alloc_strategy
+ */     
+void htp_tx_set_res_header_c(htp_tx_t *tx, char *name, char *value, int alloc_strategy);
+
+/**
+ * Change transaction state to RESPONSE_HEADERS and invoke all
+ * registered callbacks.
+ */
+void htp_txh_state_response_headers(htp_tx_t *tx);
+
+// XXX how do we handle trailers?
+
+/**
+ * Change transaction state to RESPONSE and invoke all
+ * registered callbacks.
+ */
+void htp_txh_state_response(htp_tx_t *tx);
+
 
 // Parsing functions
 
