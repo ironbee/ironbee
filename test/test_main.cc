@@ -329,7 +329,9 @@ TEST_F(ConnectionParsingTest, CompressedResponseContentType) {
     
     ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
     
-    // TODO Check that the response was correctly decompressed (content, length)
+    ASSERT_EQ(tx->response_message_len, 187);
+    
+    ASSERT_EQ(tx->response_entity_len, 225);
 }
 
 TEST_F(ConnectionParsingTest, CompressedResponseChunked) {
@@ -343,7 +345,9 @@ TEST_F(ConnectionParsingTest, CompressedResponseChunked) {
     
     ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
     
-    // TODO Check that the response was correctly decompressed (content, length)
+    ASSERT_EQ(tx->response_message_len, 28261);
+    
+    ASSERT_EQ(tx->response_entity_len, 159590);
 }
 
 TEST_F(ConnectionParsingTest, SuccessfulConnectRequest) {
