@@ -83,8 +83,16 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
 int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
     // Check the request content type to see if it matches our MIME type
     if ((connp->in_tx->request_content_type == NULL) || (bstr_cmp_c(connp->in_tx->request_content_type, HTP_URLENCODED_MIME_TYPE) != 0)) {
+        #ifdef HTP_DEBUG
+        fprintf(stderr, "htp_ch_urlencoded_callback_request_headers: Body not URLENCODED\n");
+        #endif
+
         return HOOK_OK;
     }
+    
+    #ifdef HTP_DEBUG
+    fprintf(stderr, "htp_ch_urlencoded_callback_request_headers: Parsing URLENCODED body\n");
+    #endif
 
     // Create parser instance
     connp->in_tx->request_urlenp_body = htp_urlenp_create(connp->in_tx);
@@ -172,6 +180,8 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
         // TODO RC
 
         // Extract parameters
+        d->tx->request_params_body_reused = 1;
+        
         htp_mpart_part_t *part = NULL;
         list_iterator_reset(d->tx->request_mpartp->parts);
         while ((part = (htp_mpart_part_t *) list_iterator_next(d->tx->request_mpartp->parts)) != NULL) {
@@ -198,8 +208,16 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
 int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     // Check the request content type to see if it matches our MIME type
     if ((connp->in_tx->request_content_type == NULL) || (bstr_cmp_c(connp->in_tx->request_content_type, HTP_MULTIPART_MIME_TYPE) != 0)) {
+        #ifdef HTP_DEBUG
+        fprintf(stderr, "htp_ch_multipart_callback_request_headers: Body not MULTIPART\n");
+        #endif
+
         return HOOK_OK;
     }
+    
+    #ifdef HTP_DEBUG
+    fprintf(stderr, "htp_ch_multipart_callback_request_headers: Parsing MULTIPART body\n");
+    #endif
 
     htp_header_t *ct = table_get_c(connp->in_tx->request_headers, "content-type");
     if (ct == NULL) return HOOK_OK;

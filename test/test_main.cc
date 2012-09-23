@@ -44,13 +44,23 @@ class ConnectionParsingTest : public testing::Test {
 protected:
     
     virtual void SetUp() {
-        home = (char *)"./files";
+        // Try the current working directory first
+        int fd = open("./files/anchor.empty", 0, O_RDONLY);
+        if (fd != -1) {
+            close(fd);
+            home = (char *)"./files";
+        } else {
+            int fd = open("./test/files/anchor.empty", 0, O_RDONLY);
+            if (fd != -1) {
+                close(fd);
+                home = (char *)"./test/files";
+            }
+        }
         
         cfg = htp_config_create();
         htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2_2);
-        htp_config_register_request_line(cfg, htp_ch_urlencoded_callback_request_line);
-        htp_config_register_request_headers(cfg, htp_ch_urlencoded_callback_request_headers);
-        htp_config_register_request_headers(cfg, htp_ch_multipart_callback_request_headers);
+        htp_config_register_urlencoded_parser(cfg);
+        htp_config_register_multipart_parser(cfg);
     }
     
     virtual void TearDown() {
@@ -189,4 +199,285 @@ TEST_F(ConnectionParsingTest, PostUrlencodedChunked) {
     ASSERT_TRUE(p != NULL);
     
     ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
+    
+    ASSERT_EQ(tx->request_message_len, 25)
+            ;
+    ASSERT_EQ(tx->request_entity_len, 12);
 }
+
+TEST_F(ConnectionParsingTest, Expect) {
+    int rc = test_run(home, "05-expect.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+}
+
+TEST_F(ConnectionParsingTest, UriNormal) {
+    int rc = test_run(home, "06-uri-normal.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+}
+
+TEST_F(ConnectionParsingTest, PipelinedConn) {
+    int rc = test_run(home, "07-pipelined-connection.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 2);
+    
+    ASSERT_TRUE(connp->conn->flags & PIPELINED_CONNECTION);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+}
+
+TEST_F(ConnectionParsingTest, NotPipelinedConn) {
+    int rc = test_run(home, "08-not-pipelined-connection.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 2);
+    
+    ASSERT_FALSE(connp->conn->flags & PIPELINED_CONNECTION);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_FALSE(tx->flags & HTP_MULTI_PACKET_HEAD);
+}
+
+TEST_F(ConnectionParsingTest, MultiPacketRequest) {
+    int rc = test_run(home, "09-multi-packet-request-head.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->flags & HTP_MULTI_PACKET_HEAD);
+}
+
+TEST_F(ConnectionParsingTest, HeaderHostParsing) {
+    int rc = test_run(home, "10-host-in-headers.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 4);
+    
+    htp_tx_t *tx1 = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx1 != NULL);
+    ASSERT_TRUE(tx1->parsed_uri->hostname != NULL);
+    ASSERT_EQ(bstr_cmp_c(tx1->parsed_uri->hostname, "www.example.com"), 0);
+    
+    htp_tx_t *tx2 = (htp_tx_t *)list_get(connp->conn->transactions, 1);
+    ASSERT_TRUE(tx2 != NULL);
+    ASSERT_TRUE(tx2->parsed_uri->hostname != NULL);
+    ASSERT_EQ(bstr_cmp_c(tx2->parsed_uri->hostname, "www.example.com"), 0);
+    
+    htp_tx_t *tx3 = (htp_tx_t *)list_get(connp->conn->transactions, 2);
+    ASSERT_TRUE(tx3 != NULL);
+    ASSERT_TRUE(tx3->parsed_uri->hostname != NULL);
+    ASSERT_EQ(bstr_cmp_c(tx3->parsed_uri->hostname, "www.example.com"), 0);
+    
+    htp_tx_t *tx4 = (htp_tx_t *)list_get(connp->conn->transactions, 3);
+    ASSERT_TRUE(tx4 != NULL);
+    ASSERT_TRUE(tx4->parsed_uri->hostname != NULL);
+    ASSERT_EQ(bstr_cmp_c(tx4->parsed_uri->hostname, "www.example.com"), 0);
+}
+
+TEST_F(ConnectionParsingTest, ResponseWithoutContentLength) {
+    int rc = test_run(home, "11-response-stream-closure.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+}
+
+TEST_F(ConnectionParsingTest, FailedConnectRequest) {
+    int rc = test_run(home, "12-connect-request.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    
+    ASSERT_EQ(bstr_cmp_c(tx->request_method, "CONNECT"), 0);
+    
+    ASSERT_EQ(tx->response_status_number, 405);
+}
+
+TEST_F(ConnectionParsingTest, CompressedResponseContentType) {
+    int rc = test_run(home, "13-compressed-response-gzip-ct.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    
+    ASSERT_EQ(tx->response_message_len, 187);
+    
+    ASSERT_EQ(tx->response_entity_len, 225);
+}
+
+TEST_F(ConnectionParsingTest, CompressedResponseChunked) {
+    int rc = test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    
+    ASSERT_EQ(tx->response_message_len, 28261);
+    
+    ASSERT_EQ(tx->response_entity_len, 159590);
+}
+
+TEST_F(ConnectionParsingTest, SuccessfulConnectRequest) {
+    int rc = test_run(home, "15-connect-complete.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    
+    ASSERT_EQ(bstr_cmp_c(tx->request_method, "CONNECT"), 0);
+    
+    ASSERT_EQ(tx->response_status_number, 200);
+}
+
+TEST_F(ConnectionParsingTest, ConnectRequestWithExtraData) {
+    int rc = test_run(home, "16-connect-extra.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 2);
+    
+    htp_tx_t *tx1 = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx1 != NULL);
+    
+    ASSERT_TRUE(tx1->progress == TX_PROGRESS_DONE);
+    
+    htp_tx_t *tx2 = (htp_tx_t *)list_get(connp->conn->transactions, 1);
+    ASSERT_TRUE(tx2 != NULL);
+    
+    ASSERT_TRUE(tx2->progress == TX_PROGRESS_DONE);
+}
+
+TEST_F(ConnectionParsingTest, Multipart) {
+    int rc = test_run(home, "17-multipart-1.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    
+    ASSERT_TRUE(tx->request_params_body != NULL);
+    
+    bstr *field1 = (bstr *)table_get_c(tx->request_params_body, "field1");
+    ASSERT_TRUE(field1 != NULL); 
+    ASSERT_EQ(bstr_cmp_c(field1, "0123456789"), 0);
+    
+    bstr *field2 = (bstr *)table_get_c(tx->request_params_body, "field2");
+    ASSERT_TRUE(field2 != NULL);
+    ASSERT_EQ(bstr_cmp_c(field2, "9876543210"), 0);
+}
+
+TEST_F(ConnectionParsingTest, CompressedResponseDeflate) {
+    int rc = test_run(home, "18-compressed-response-deflate.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    
+    ASSERT_EQ(tx->response_message_len, 755);
+    
+    ASSERT_EQ(tx->response_entity_len, 1433);
+}
+
+TEST_F(ConnectionParsingTest, UrlEncoded) {
+    int rc = test_run(home, "19-urlencoded-test.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    
+    ASSERT_EQ(bstr_cmp_c(tx->request_method, "POST"), 0);
+    ASSERT_EQ(bstr_cmp_c(tx->request_uri, "/?p=1&q=2"), 0);
+    
+    ASSERT_TRUE(tx->request_params_body != NULL);
+    
+    bstr *body_p = (bstr *)table_get_c(tx->request_params_body, "p");
+    ASSERT_TRUE(body_p != NULL);
+    ASSERT_EQ(bstr_cmp_c(body_p, "3"), 0);
+    
+    bstr *body_q = (bstr *)table_get_c(tx->request_params_body, "q");
+    ASSERT_TRUE(body_q != NULL);
+    ASSERT_EQ(bstr_cmp_c(body_q, "4"), 0);
+    
+    bstr *body_z = (bstr *)table_get_c(tx->request_params_body, "z");
+    ASSERT_TRUE(body_z != NULL);
+    ASSERT_EQ(bstr_cmp_c(body_z, "5"), 0);
+}
+
+TEST_F(ConnectionParsingTest, AmbiguousHost) {
+    int rc = test_run(home, "20-ambiguous-host.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 2);
+    
+    htp_tx_t *tx1 = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx1 != NULL);
+    ASSERT_TRUE(tx1->progress == TX_PROGRESS_DONE);
+    ASSERT_FALSE(tx1->flags & HTP_AMBIGUOUS_HOST);
+    
+    htp_tx_t *tx2 = (htp_tx_t *)list_get(connp->conn->transactions, 1);
+    ASSERT_TRUE(tx2 != NULL);
+    ASSERT_TRUE(tx2->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx2->flags & HTP_AMBIGUOUS_HOST);
+}
+
+TEST_F(ConnectionParsingTest, Http_0_9) {
+    int rc = test_run(home, "21-http09.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+    
+    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    
+    htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+}
+
+
+
+
+

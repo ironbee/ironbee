@@ -414,7 +414,12 @@ int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, unsigned char 
  * @param len
  * @param is_line
  */
-int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size_t len, int is_line) {    
+int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size_t len, int is_line) {
+    #if HTP_DEBUG
+    fprint_raw_data(stderr, "htp_mpart_part_handle_data: data chunk", (unsigned char *)data, len);
+    fprintf(stderr, "Part type: %d\n", part->type);
+    #endif
+    
     // TODO We don't actually need the is_line parameter, because we can
     //      discover that ourselves by looking at the last byte in the buffer.
 
@@ -423,7 +428,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
 
     // We currently do not process the preamble and epilogue parts
     if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) return 1;
-
+    
     if (part->mpartp->current_mode == MULTIPART_MODE_LINE) {
         // Line mode
 
@@ -520,7 +525,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
                 break;
         }
     }
-
+    
     return 1;
 }
 
@@ -533,6 +538,10 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
  * @param is_line
  */
 static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, unsigned char *data, size_t len, int is_line) {
+    #if HTP_DEBUG
+    fprint_raw_data(stderr, "htp_mpartp_handle_data: data chunk", (unsigned char *)data, len);
+    #endif
+
     if (len == 0) return 1;
 
     // Do we have a part already?
@@ -571,6 +580,10 @@ static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, unsigned char *data, siz
  * @param mpartp
  */
 static int htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
+    #if HTP_DEBUG
+    fprintf(stderr, "htp_mpartp_handle_boundary");
+    #endif
+            
     // TODO Having mpartp->seen_last_boundary set here means that there's
     //      a boundary after the "last boundary".
 
@@ -635,7 +648,7 @@ htp_mpartp_t * htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
     while (i < mpartp->boundary_len) {
         mpartp->boundary[i] = tolower((int) ((unsigned char) boundary[i - 4]));
         i++;
-    }
+    }   
 
     mpartp->state = MULTIPART_STATE_BOUNDARY;
     mpartp->bpos = 2;
@@ -809,7 +822,12 @@ int htp_mpartp_finalize(htp_mpartp_t * mpartp) {
 int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len) {
     size_t pos = 0; // Current position in the input chunk.
     size_t startpos = 0; // The starting position of data.
-    size_t data_return_pos = 0; // The position of the (possible) boundary.    
+    size_t data_return_pos = 0; // The position of the (possible) boundary.
+
+    #if HTP_DEBUG
+    fprint_raw_data(stderr, "htp_mpartp_parse: data chunk", (unsigned char *)data, len);
+    fprintf(stderr, "htp_mpartp_parse: state %d\n", mpartp->state);
+    #endif
 
     // Loop while there's data in the buffer
     while (pos < len) {
@@ -882,15 +900,15 @@ STATE_SWITCH:
                 // Possible boundary
                 while (pos < len) {                    
                     // Remember the first byte in the new line; we'll need to
-                    // determine if the line is a part of a folder header.
+                    // determine if the line is a part of a folded header.
                     if (mpartp->bpos == 2) {
                         mpartp->first_boundary_byte = data[pos];
                     }
-
+                    
                     // Check if the bytes match
                     if (!(tolower((int) data[pos]) == mpartp->boundary[mpartp->bpos])) {
                         // Boundary mismatch
-
+                        
                         // Process stored data
                         htp_martp_process_aside(mpartp, 0);
 
@@ -910,11 +928,12 @@ STATE_SWITCH:
 
                     // Consume one matched boundary byte
                     pos++;
-
+                    mpartp->bpos++;
+                    
                     // Have we seen all boundary bytes?
-                    if (++mpartp->bpos == mpartp->boundary_len) {
+                    if (mpartp->bpos + 2 == mpartp->boundary_len) {
                         // Boundary match!
-
+                        
                         // Process stored data
                         htp_martp_process_aside(mpartp, 1);
 
@@ -955,7 +974,7 @@ STATE_SWITCH:
                 }
                 break;
 
-            case MULTIPART_STATE_BOUNDARY_IS_LAST1:
+            case MULTIPART_STATE_BOUNDARY_IS_LAST1:              
                 // One more dash left to go
                 if (data[pos] == '-') {
                     // This is indeed the last boundary in the payload
@@ -1094,6 +1113,10 @@ int htp_mpartp_extract_boundary(bstr * content_type, char **boundary) {
     if (*boundary == NULL) return -8;
     memcpy(*boundary, data + start, pos - start);
     (*boundary)[pos - start] = '\0';
+    
+    #if HTP_DEBUG
+    fprint_raw_data(stderr, "htp_mpartp_extract_boundary", (unsigned char *)*boundary, strlen(*boundary));
+    #endif
 
     return HTP_OK;
 }

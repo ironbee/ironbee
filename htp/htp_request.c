@@ -140,6 +140,9 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
         IN_NEXT_BYTE(connp);
 
         if (connp->in_next_byte == -1) {
+            // Keep track of actual data length
+            connp->in_tx->request_entity_len += d.len;
+            
             // Send data to callbacks            
             int rc = htp_req_run_hook_body_data(connp, &d);
             if (rc != HOOK_OK) {
@@ -152,12 +155,14 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
             return HTP_DATA;
         } else {
             connp->in_tx->request_message_len++;
-            connp->in_tx->request_entity_len++;
             connp->in_chunked_length--;
             d.len++;
 
             if (connp->in_chunked_length == 0) {
                 // End of data chunk
+                
+                // Keep track of actual data length
+                connp->in_tx->request_entity_len += d.len;
 
                 // Send data to callbacks               
                 int rc = htp_req_run_hook_body_data(connp, &d);
@@ -236,6 +241,9 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 
         if (connp->in_next_byte == -1) {
             // End of chunk
+            
+            // Keep track of actual data length
+            connp->in_tx->request_entity_len += d.len;
 
             int rc = htp_req_run_hook_body_data(connp, &d);
             if (rc != HOOK_OK) {
@@ -248,12 +256,14 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
             return HTP_DATA;
         } else {
             connp->in_tx->request_message_len++;
-            connp->in_tx->request_entity_len++;
             connp->in_body_data_left--;
             d.len++;
 
             if (connp->in_body_data_left == 0) {
                 // End of body
+                
+                // Keep track of actual data length
+                connp->in_tx->request_entity_len += d.len;
 
                 int rc = htp_req_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
@@ -846,9 +856,11 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
         // only if there was a request body
         if (connp->in_tx->request_transfer_coding != -1) {
             htp_tx_data_t d;
+            
             d.data = NULL;
             d.len = 0;
             d.tx = connp->in_tx;
+            
             htp_req_run_hook_body_data(connp, &d);
         }
 

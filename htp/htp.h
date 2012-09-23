@@ -931,18 +931,36 @@ struct htp_tx_t {
      *  will never have the port as a number.
      */
     htp_uri_t *parsed_uri_incomplete;
+    
+    /* HTTP 1.1 RFC
+     * 
+     * 4.3 Message Body
+     * 
+     * The message-body (if any) of an HTTP message is used to carry the
+     * entity-body associated with the request or response. The message-body
+     * differs from the entity-body only when a transfer-coding has been
+     * applied, as indicated by the Transfer-Encoding header field (section
+     * 14.41).
+     *
+     *     message-body = entity-body
+     *                  | <entity-body encoded as per Transfer-Encoding>
+     */
 
-    /** The actual message length (the length _after_ transformations
-     *  have been applied). This field will change as a request body is being
-     *  received, with the final value available once the entire body has
-     *  been received.
+    /** The length of the request message-body. In most cases, this value
+     *  will be the same as request_entity_len. The values will be different
+     *  if request compression or chunking were applied. In that case,
+     *  request_message_len contains the length of the request body as it
+     *  has been seen over TCP; request_entity_len contains length after
+     *  de-chunking and decompression.
      */
     size_t request_message_len;
 
-    /** The actual entity length (the length _before_ transformations
-     *  have been applied). This field will change as a request body is being
-     *  received, with the final value available once the entire body has
-     *  been received.
+    /** The length of the request entity-body. In most cases, this value
+     *  will be the same as request_message_len. The values will be different
+     *  if request compression or chunking were applied. In that case,
+     *  request_message_len contains the length of the request body as it
+     *  has been seen over TCP; request_entity_len contains length after
+     *  de-chunking and decompression.
      */
     size_t request_entity_len;
 
@@ -1094,20 +1112,38 @@ struct htp_tx_t {
     /** Contains response header separator. */
     bstr *response_headers_sep;
 
-    /** The actual message length (the length _after_ transformations
-     *  have been applied). This field will change as a request body is being
-     *  received, with the final value available once the entire body has
-     *  been received.
+    /* HTTP 1.1 RFC
+     * 
+     * 4.3 Message Body
+     * 
+     * The message-body (if any) of an HTTP message is used to carry the
+     * entity-body associated with the request or response. The message-body
+     * differs from the entity-body only when a transfer-coding has been
+     * applied, as indicated by the Transfer-Encoding header field (section
+     * 14.41).
+     *
+     *     message-body = entity-body
+     *                  | <entity-body encoded as per Transfer-Encoding>
+     */
+
+    /** The length of the response message-body. In most cases, this value
+     *  will be the same as response_entity_len. The values will be different
+     *  if response compression or chunking were applied. In that case,
+     *  response_message_len contains the length of the response body as it
+     *  has been seen over TCP; response_entity_len contains the length after
+     *  de-chunking and decompression.
      */
     size_t response_message_len;
 
-    /** The actual entity length (the length _before_ transformations
-     *  have been applied). This field will change as a request body is being
-     *  received, with the final value available once the entire body has
-     *  been received.
+    /** The length of the response entity-body. In most cases, this value
+     *  will be the same as response_message_len. The values will be different
+     *  if request compression or chunking were applied. In that case,
+     *  response_message_len contains the length of the response body as it
+     *  has been seen over TCP; response_entity_len contains length after
+     *  de-chunking and decompression.
      */
     size_t response_entity_len;
-
+    
     /** Response transfer coding: IDENTITY or CHUNKED. Only available on responses that have bodies. */
     int response_transfer_coding;
 
