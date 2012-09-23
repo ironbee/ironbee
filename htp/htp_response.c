@@ -44,6 +44,13 @@
  * @return HTP_OK on state change, HTP_ERROR on error.
  */
 static int htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK(htp_tx_data_t *d) {
+    #if HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, d->data, d->len);
+    #endif
+
+    // Keep track of actual response body length
+    d->tx->response_entity_len += d->len;
+
     // Invoke all callbacks    
     int rc = htp_res_run_hook_body_data(d->tx->connp, d);
     if (rc != HOOK_OK) {
@@ -75,7 +82,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     for (;;) {
         OUT_NEXT_BYTE_OR_RETURN(connp);
 
-        connp->out_tx->request_message_len++;
+        connp->out_tx->response_message_len++;
 
         if (connp->out_next_byte == LF) {
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
@@ -105,6 +112,9 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
             if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                 connp->out_decompressor->decompress(connp->out_decompressor, &d);
             } else {
+                // Keep track of actual response body length
+                d.tx->response_entity_len += d.len;
+    
                 // Send data to callbacks                
                 int rc = htp_res_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
@@ -125,7 +135,6 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
             return HTP_DATA;
         } else {
             connp->out_tx->response_message_len++;
-            connp->out_tx->response_entity_len++;
             connp->out_chunked_length--;
             d.len++;
 
@@ -135,6 +144,9 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
                 if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                     connp->out_decompressor->decompress(connp->out_decompressor, &d);
                 } else {
+                    // Keep track of actual response body length
+                    d.tx->response_entity_len += d.len;
+    
                     // Send data to callbacks                    
                     int rc = htp_res_run_hook_body_data(connp, &d);
                     if (rc != HOOK_OK) {
@@ -226,6 +238,9 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                 if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                     connp->out_decompressor->decompress(connp->out_decompressor, &d);
                 } else {                    
+                    // Keep track of actual response body length
+                    d.tx->response_entity_len += d.len;
+                    
                     int rc = htp_res_run_hook_body_data(connp, &d);
                     if (rc != HOOK_OK) {
                         switch (rc) {
@@ -256,7 +271,6 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
             }
         } else {
             connp->out_tx->response_message_len++;
-            connp->out_tx->response_entity_len++;
 
             if (connp->out_body_data_left > 0) {
                 // We know the length of response body
@@ -272,6 +286,9 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                         if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                             connp->out_decompressor->decompress(connp->out_decompressor, &d);
                         } else {                            
+                            // Keep track of actual response body length
+                            d.tx->response_entity_len += d.len;
+                            
                             int rc = htp_res_run_hook_body_data(connp, &d);
                             if (rc != HOOK_OK) {
                                 switch (rc) {
@@ -745,9 +762,11 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
                 d.tx = connp->out_tx;
                 d.data = connp->out_line;
                 d.len = connp->out_line_len + chomp_result;
-
-                connp->out_tx->response_message_len += d.len;
-                connp->out_tx->response_entity_len += d.len;
+                
+                d.tx->response_message_len += d.len;
+                
+                // Keep track of actual response body length
+                d.tx->response_entity_len += d.len;
                 
                 int rc = htp_res_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
@@ -820,9 +839,11 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
         // only if there was a response body
         if (connp->out_tx->response_transfer_coding != -1) {
             htp_tx_data_t d;
+            
+            d.tx = connp->out_tx;
             d.data = NULL;
             d.len = 0;
-            d.tx = connp->out_tx;
+            
             htp_res_run_hook_body_data(connp, &d);
         }
 

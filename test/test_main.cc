@@ -199,6 +199,10 @@ TEST_F(ConnectionParsingTest, PostUrlencodedChunked) {
     ASSERT_TRUE(p != NULL);
     
     ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
+    
+    ASSERT_EQ(tx->request_message_len, 25)
+            ;
+    ASSERT_EQ(tx->request_entity_len, 12);
 }
 
 TEST_F(ConnectionParsingTest, Expect) {
@@ -408,7 +412,9 @@ TEST_F(ConnectionParsingTest, CompressedResponseDeflate) {
     
     ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
     
-    // TODO Check that the response was correctly decompressed (content, length)
+    ASSERT_EQ(tx->response_message_len, 755);
+    
+    ASSERT_EQ(tx->response_entity_len, 1433);
 }
 
 TEST_F(ConnectionParsingTest, UrlEncoded) {
