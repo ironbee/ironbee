@@ -1467,7 +1467,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     /* Open the connection */
     htp_connp_open(modctx->htp,
                    iconn->remote_ipstr, iconn->remote_port,
-                   iconn->local_ipstr, iconn->local_port, (int)true,
+                   iconn->local_ipstr, iconn->local_port,
                    &htv);
 
     /* Store the context. */
