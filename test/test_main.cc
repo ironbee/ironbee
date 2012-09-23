@@ -309,7 +309,9 @@ TEST_F(ConnectionParsingTest, FailedConnectRequest) {
     
     ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
     
-    // TODO Check response status is correct
+    ASSERT_EQ(bstr_cmp_c(tx->request_method, "CONNECT"), 0);
+    
+    ASSERT_EQ(tx->response_status_number, 405);
 }
 
 TEST_F(ConnectionParsingTest, CompressedResponseContentType) {
@@ -351,7 +353,9 @@ TEST_F(ConnectionParsingTest, SuccessfulConnectRequest) {
     
     ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
     
-    // TODO Check response status is correct
+    ASSERT_EQ(bstr_cmp_c(tx->request_method, "CONNECT"), 0);
+    
+    ASSERT_EQ(tx->response_status_number, 200);
 }
 
 TEST_F(ConnectionParsingTest, ConnectRequestWithExtraData) {
@@ -404,7 +408,7 @@ TEST_F(ConnectionParsingTest, CompressedResponseDeflate) {
     
     ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
     
-    // TODO More checks
+    // TODO Check that the response was correctly decompressed (content, length)
 }
 
 TEST_F(ConnectionParsingTest, UrlEncoded) {
