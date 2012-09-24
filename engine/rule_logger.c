@@ -548,6 +548,10 @@ ib_status_t ib_rule_log_exec_add_action(ib_rule_log_exec_t *log_exec,
     }
     rslt = node->data;
 
+    if (rslt->act_list == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
     object = (ib_rule_log_act_t *)
         ib_mpool_calloc(log_exec->log_tx->tx->mp, sizeof(*object), 1);
     if (object == NULL) {
