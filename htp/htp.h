@@ -1310,15 +1310,6 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn);
  * @param tx
  */
 void htp_txh_state_transaction_start(htp_tx_t *tx);
-    
-/**
- * Set transaction request line.
- * 
- * @param tx
- * @param line
- * @param alloc_strategy
- */
-void htp_txh_set_req_line_c(htp_tx_t *tx, char *line, int alloc_strategy);
      
 /**
  * Set transaction request method.
@@ -1339,14 +1330,22 @@ void htp_txh_set_req_method_c(htp_tx_t *tx, char *method, int alloc_strategy);
 void htp_txh_set_req_uri_c(htp_tx_t *tx, char *uri, int alloc_strategy);
      
 /**
- * Set transaction protocol string (e.g., "HTTP/1.0"). Do not invoke
- * when HTTP/0.9 is used.
+ * Set request protocol string (e.g., "HTTP/1.0"). Do not invoke
+ * when HTTP/0.9 is used. Must be invoked before htp_txh_set_req_protocol_number().
  * 
  * @param tx
  * @param protocol
  * @param alloc_strategy
  */
 void htp_txh_set_req_protocol_c(htp_tx_t *tx, char *protocol, int alloc_strategy);
+
+/**
+ * Set request protocol version. Must be invoked after htp_txh_set_req_protocol_c().
+ * 
+ * @param tx
+ * @param protocol
+ */
+void htp_txh_set_req_protocol_number(htp_tx_t *tx, int protocol);
      
 /**
  * Change transaction state to REQUEST_LINE and invoke all
