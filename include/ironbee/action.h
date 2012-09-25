@@ -194,7 +194,7 @@ ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst);
 /**
  * Call the execute function for an action instance.
  *
- * @param[in] rule_exec The rule exection object
+ * @param[in] rule_exec The rule execution object
  * @param[in] act_inst Action instance to use.
  *
  * @returns IB_OK on success

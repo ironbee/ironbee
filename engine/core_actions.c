@@ -243,7 +243,7 @@ static ib_status_t act_event_execute(
         rc = ib_logevent_data_set(event, expanded, strlen(expanded));
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec, "event: Failed to set data: %s",
-                            ib_status_to_string(rc));
+                              ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -529,7 +529,7 @@ static ib_status_t get_data_value(const ib_rule_exec_t *rule_exec,
 
     if (elements != 1) {
         ib_rule_log_notice(rule_exec,
-                         "setvar:Got back list with %zd elements", elements);
+                           "setvar:Got back list with %zd elements", elements);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
@@ -537,9 +537,9 @@ static ib_status_t get_data_value(const ib_rule_exec_t *rule_exec,
     first = ib_list_first(list);
     if (first == NULL) {
         ib_rule_log_error(rule_exec,
-                        "setvar: Failed to get first list element "
-                        "from \"%.*s\": %s",
-                        (int)namelen, name, ib_status_to_string(rc));
+                          "setvar: Failed to get first list element "
+                          "from \"%.*s\": %s",
+                          (int)namelen, name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
@@ -1271,8 +1271,8 @@ static ib_status_t expand_name_hdr(const ib_rule_exec_t *rule_exec,
         rc = ib_data_expand_str(rule_exec->tx->dpi, name, false, &tmp);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
-                            "%s: Failed to expand name \"%s\": %s",
-                            label, name, ib_status_to_string(rc));
+                              "%s: Failed to expand name \"%s\": %s",
+                              label, name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
         len = strlen(tmp);

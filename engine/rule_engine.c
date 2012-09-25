@@ -1450,9 +1450,9 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
     rc = rule_exec_push_rule(rule_exec, rule);
     if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,
-                             "Rule engine: "
-                             "Failed to set rule in execution object: %s",
-                             ib_status_to_string(rc));
+                          "Rule engine: "
+                          "Failed to set rule in execution object: %s",
+                          ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
