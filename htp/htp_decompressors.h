@@ -51,6 +51,8 @@ typedef struct htp_decompressor_t htp_decompressor_t;
 #define COMPRESSION_NONE        0
 #define COMPRESSION_GZIP        1
 #define COMPRESSION_DEFLATE     2
+#define COMPRESSION_AUTO        98
+#define COMPRESSION_DISABLED    99
 
 #ifdef __cplusplus
 extern "C" {
