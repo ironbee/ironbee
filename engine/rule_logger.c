@@ -172,10 +172,10 @@ static void rule_vlog_tx(
 
     /* Calculate the prefix length */
     if (rule != NULL) {
-        fmtlen += strlen(rule->meta.id) + 16;
+        fmtlen += strlen(rule->meta.id) + 24;
     }
     else {
-        fmtlen += 4;
+        fmtlen += 8;
     }
 
     /* Using the length, build a new format buffer */
