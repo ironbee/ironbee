@@ -56,6 +56,7 @@ typedef struct ib_rule_log_act_t ib_rule_log_act_t;
  */
 struct ib_rule_log_count_t {
     int                     num_actions; /**< Total # of actions executed */
+    int                     num_events;  /**< Total # of events */
     int                     num_errors;  /**< Total # of operator errors */
     int                     num_true;    /**< Total # of true results */
     int                     num_false;   /**< Total # of false results */

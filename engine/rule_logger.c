@@ -725,25 +725,25 @@ ib_status_t ib_rule_log_exec_add_action(ib_rule_log_exec_t *exec_log,
     if (exec_log == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
-    ++exec_log->counts.num_actions;
+    ++(exec_log->counts.num_actions);
 
     node = ib_list_last(exec_log->tgt_list);
     if ( (node == NULL) || (node->data == NULL) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     tgt = node->data;
-    ++tgt->counts.num_actions;
+    ++(tgt->counts.num_actions);
 
     if (tgt->rslt_list == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
-    ++(tgt->num_results);
 
     node = ib_list_last(tgt->rslt_list);
     if ( (node == NULL) || (node->data == NULL) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     rslt = node->data;
+    ++(rslt->num_actions);
 
     if (rslt->act_list == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -773,25 +773,25 @@ ib_status_t ib_rule_log_exec_add_event(ib_rule_log_exec_t *exec_log,
     if (exec_log == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
-    ++exec_log->counts.num_actions;
+    ++(exec_log->counts.num_events);
 
     node = ib_list_last(exec_log->tgt_list);
     if ( (node == NULL) || (node->data == NULL) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     tgt = node->data;
-    ++tgt->counts.num_actions;
+    ++(tgt->counts.num_events);
 
     if (tgt->rslt_list == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
-    ++(tgt->num_results);
 
     node = ib_list_last(tgt->rslt_list);
     if ( (node == NULL) || (node->data == NULL) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     rslt = node->data;
+    ++(rslt->num_events);
 
     if (rslt->event_list == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -1106,7 +1106,7 @@ static void log_tfns(
 }
 
 /**
- * Log a rule result
+ * Log a rule result's actions
  *
  * @param[in] rule_exec Rule execution object
  * @param[in] rslt Rule result logging object
@@ -1149,6 +1149,57 @@ static void log_actions(
                           act->act_inst->action->name,
                           act->act_inst->params,
                           status);
+        }
+    }
+
+    IB_FTRACE_RET_VOID();
+}
+
+/**
+ * Log a rule result's events
+ *
+ * @param[in] rule_exec Rule execution object
+ * @param[in] rslt Rule result logging object
+ */
+static void log_events(
+    const ib_rule_exec_t *rule_exec,
+    const ib_rule_log_rslt_t *rslt
+)
+{
+    IB_FTRACE_INIT();
+    const ib_list_node_t *event_node;
+    ib_rule_log_tx_t *tx_log;
+
+    assert(rule_exec != NULL);
+    assert(rule_exec->tx_log != NULL);
+    assert(rslt != NULL);
+    assert(rslt->event_list != NULL);
+
+    tx_log = rule_exec->tx_log;
+
+    if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_EVENT) == false) {
+        IB_FTRACE_RET_VOID();
+    }
+
+    IB_LIST_LOOP_CONST(rslt->event_list, event_node) {
+        const ib_logevent_t *event =
+            (const ib_logevent_t *)ib_list_node_data_const(event_node);
+
+        if (event->msg == NULL) {
+            rule_log_exec(rule_exec, "EVENT");
+        }
+        else {
+            char tags[128];
+            ib_strlist_escape_json_buf(event->tags, ", ",
+                                       tags, sizeof(tags),
+                                       NULL, NULL);
+            rule_log_exec(rule_exec,
+                          "EVENT %s %s %s [%u/%u] [%s] \"%s\"",
+                          event->rule_id,
+                          ib_logevent_type_name(event->type),
+                          ib_logevent_action_name(event->action),
+                          event->confidence, event->severity,
+                          tags, event->msg);
         }
     }
 
@@ -1217,6 +1268,9 @@ static void log_result(
 
     if (rslt->act_list != NULL) {
         log_actions(rule_exec, rslt);
+    }
+    if (rslt->event_list != NULL) {
+        log_events(rule_exec, rslt);
     }
 
     IB_FTRACE_RET_VOID();
