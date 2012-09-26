@@ -99,7 +99,7 @@ typedef enum {
 #define IB_RULE_LOG_FLAG_RSP_BODY   (1 <<  6) /**< Response body */
 #define IB_RULE_LOG_FLAG_PHASE      (1 <<  7) /**< Rule engine phase */
 #define IB_RULE_LOG_FLAG_RULE       (1 <<  8) /**< Rule start / end */
-#define IB_RULE_LOG_FLAG_RULE_DATA  (1 <<  9) /**< Rule data */
+#define IB_RULE_LOG_FLAG_TARGET     (1 <<  9) /**< Target data */
 #define IB_RULE_LOG_FLAG_TFN        (1 << 10) /**< Transformation */
 #define IB_RULE_LOG_FLAG_OPERATOR   (1 << 11) /**< Operator */
 #define IB_RULE_LOG_FLAG_ACTION     (1 << 12) /**< Action */

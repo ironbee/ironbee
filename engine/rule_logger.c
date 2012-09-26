@@ -58,7 +58,7 @@ static const size_t REV_BUFSIZE = 16;
  */
 #define RULE_LOG_FLAG_RULE_ENABLE                            \
     ( IB_RULE_LOG_FLAG_RULE |                                \
-      IB_RULE_LOG_FLAG_RULE_DATA |                           \
+      IB_RULE_LOG_FLAG_TARGET |                              \
       IB_RULE_LOG_FLAG_TFN |                                 \
       IB_RULE_LOG_FLAG_OPERATOR |                            \
       IB_RULE_LOG_FLAG_ACTION |                              \
@@ -70,7 +70,7 @@ static const size_t REV_BUFSIZE = 16;
  * If any of these flags are set, enable target gathering
  */
 #define RULE_LOG_FLAG_TARGET_ENABLE                  \
-    ( IB_RULE_LOG_FLAG_RULE_DATA |                   \
+    ( IB_RULE_LOG_FLAG_TARGET |                      \
       IB_RULE_LOG_FLAG_TFN |                         \
       IB_RULE_LOG_FLAG_OPERATOR |                    \
       IB_RULE_LOG_FLAG_ACTION )
@@ -79,7 +79,7 @@ static const size_t REV_BUFSIZE = 16;
  * If any of these flags are set, enable result gathering
  */
 #define RULE_LOG_FLAG_RESULT_ENABLE                  \
-    ( IB_RULE_LOG_FLAG_RULE_DATA |                   \
+    ( IB_RULE_LOG_FLAG_TARGET |                      \
       IB_RULE_LOG_FLAG_OPERATOR |                    \
       IB_RULE_LOG_FLAG_ACTION )
 
@@ -96,7 +96,7 @@ static IB_STRVAL_MAP(flags_map) = {
     IB_STRVAL_PAIR("responseBody", IB_RULE_LOG_FLAG_RSP_BODY),
     IB_STRVAL_PAIR("phase", IB_RULE_LOG_FLAG_PHASE),
     IB_STRVAL_PAIR("rule", IB_RULE_LOG_FLAG_RULE),
-    IB_STRVAL_PAIR("ruleData", IB_RULE_LOG_FLAG_RULE_DATA),
+    IB_STRVAL_PAIR("target", IB_RULE_LOG_FLAG_TARGET),
     IB_STRVAL_PAIR("transformation", IB_RULE_LOG_FLAG_TFN),
     IB_STRVAL_PAIR("operator", IB_RULE_LOG_FLAG_OPERATOR),
     IB_STRVAL_PAIR("action", IB_RULE_LOG_FLAG_ACTION),
@@ -172,10 +172,10 @@ static void rule_vlog_tx(
 
     /* Calculate the prefix length */
     if (rule != NULL) {
-        fmtlen += strlen(rule->meta.id) + 10;
+        fmtlen += strlen(rule->meta.id) + 16;
     }
-    if (target != NULL) {
-        fmtlen += strlen(target->field_name) + 10;
+    else {
+        fmtlen += 4;
     }
 
     /* Using the length, build a new format buffer */
@@ -183,35 +183,13 @@ static void rule_vlog_tx(
     fmtbuf = malloc(fmtlen);
 
     if (fmtbuf != NULL) {
-        bool first = true;
-
-        strcpy(fmtbuf, "[");
-
-        /* Add the rule and operator name */
-        if (rule != NULL) {
-            char revbuf[REV_BUFSIZE+1];
-
-            snprintf(revbuf, REV_BUFSIZE, "%d", rule->meta.revision);
-
-            strcat(fmtbuf, "rule:\"");
-            strcat(fmtbuf, rule->meta.id);
-            strcat(fmtbuf, "\" rev:");
-            strcat(fmtbuf, revbuf);
-
-            first = false;
+        if (rule == NULL) {
+            strcpy(fmtbuf, "[] ");
         }
-
-        /* Add the target field name */
-        if (target != NULL) {
-            if (! first) {
-                strcat(fmtbuf, " ");
-            }
-            strcat(fmtbuf, "target:\"");
-            strcat(fmtbuf, target->field_name);
-            strcat(fmtbuf, "\"");
+        else {
+            snprintf(fmtbuf, fmtlen, "[rule:\"%s\" rev:%d] ",
+                     ib_rule_id(rule), rule->meta.revision);
         }
-
-        strcat(fmtbuf, "] ");
         strcat(fmtbuf, fmt);
         fmt = fmtbuf;
         freeptr = fmtbuf;
@@ -1092,7 +1070,7 @@ static void log_tfns(
             (const ib_rule_log_tfn_t *)ib_list_node_data_const(tfn_node);
 
         rule_log_exec(rule_exec,
-                      "TFN %s %.*s %s %s %s",
+                      "TFN %s() %.*s %s %s %s",
                       tfn->tfn->name,
                       (int)tgt->original->nlen, tgt->original->name,
                       ib_field_type_name(tgt->original->type),
@@ -1137,19 +1115,12 @@ static void log_actions(
         const char *status =
             act->status == IB_OK ?"" : ib_status_to_string(act->status);
 
-        if (act->act_inst->params == NULL) {
-            rule_log_exec(rule_exec,
-                          "ACTION %s None %s",
-                          act->act_inst->action->name,
-                          status);
-        }
-        else {
-            rule_log_exec(rule_exec,
-                          "ACTION %s \"%s\" %s",
-                          act->act_inst->action->name,
-                          act->act_inst->params,
-                          status);
-        }
+        rule_log_exec(rule_exec,
+                      "ACTION %s(%s) %s",
+                      act->act_inst->action->name,
+                      (act->act_inst->params == NULL ?
+                       "" : act->act_inst->params),
+                      status);
     }
 
     IB_FTRACE_RET_VOID();
@@ -1234,21 +1205,22 @@ static void log_result(
         log_tfns(rule_exec, tgt);
     }
 
-    if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_RULE_DATA) ) {
+    if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_TARGET) ) {
         if (rslt->value == NULL) {
             rule_log_exec(rule_exec,
-                          "RULE_DATA \"%s\" \"%.*s\" %s %s",
+                          "TARGET \"%s\" %s \"%.*s\" %s",
                           tgt->target->target_str,
+                          "N/A",
                           tgt->original == NULL ? 4 : (int)tgt->original->nlen,
                           tgt->original == NULL ? "None" : tgt->original->name,
-                          "NULL", "NULL");
+                          "NULL");
         }
         else {
             rule_log_exec(rule_exec,
-                          "RULE_DATA \"%s\" \"%.*s\" %s %s",
+                          "TARGET \"%s\" %s \"%.*s\" %s",
                           tgt->target->target_str,
-                          (int)rslt->value->nlen, rslt->value->name,
                           ib_field_type_name(rslt->value->type),
+                          (int)rslt->value->nlen, rslt->value->name,
                           ib_field_format(rslt->value, true, true, NULL,
                                           buf, MAX_FIELD_BUF));
         }
@@ -1256,14 +1228,14 @@ static void log_result(
 
     if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_OPERATOR) ) {
         rule_log_exec(rule_exec,
-                      "OP %s \"%s\" %s %ld %s",
+                      "OP %s(%s) %s %s",
                       rule_exec->exec_log->rule->opinst->op->name,
                       rule_exec->exec_log->rule->opinst->params,
                       ib_field_format(rslt->value, true, true, NULL,
                                       buf, MAX_FIELD_BUF),
-                      (long int)rslt->result,
-                      (rslt->status == IB_OK ? "" :
-                       ib_status_to_string(rslt->status)));
+                      (rslt->status == IB_OK ?
+                       (rslt->result == 0 ? "FALSE" : "TRUE") :
+                       ib_status_to_string(rslt->status)) );
     }
 
     if (rslt->act_list != NULL) {
@@ -1353,12 +1325,12 @@ void ib_rule_log_execution(
                 continue;
             }
 
-            if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_RULE_DATA)) {
+            if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_TARGET)) {
                 bool allow_null = ib_flags_all(rule->opinst->op->flags,
                                                IB_OP_FLAG_ALLOW_NULL);
                 if ( (tgt->original == NULL) && (allow_null == false) ) {
                     rule_log_exec(rule_exec,
-                                  "RULE_DATA %s NOT_FOUND",
+                                  "TARGET %s NOT_FOUND",
                                   tgt->target->field_name);
                 }
             }

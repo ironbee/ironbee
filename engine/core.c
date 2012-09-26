@@ -144,7 +144,7 @@ static ib_core_cfg_t core_global_cfg;
 #define IB_RULE_LOG_FLAGS_EXEC                         \
     ( IB_RULE_LOG_FLAG_PHASE |                         \
       IB_RULE_LOG_FLAG_RULE |                          \
-      IB_RULE_LOG_FLAG_RULE_DATA |                     \
+      IB_RULE_LOG_FLAG_TARGET |                        \
       IB_RULE_LOG_FLAG_TFN |                           \
       IB_RULE_LOG_FLAG_OPERATOR |                      \
       IB_RULE_LOG_FLAG_ACTION )
@@ -158,7 +158,7 @@ static ib_core_cfg_t core_global_cfg;
       IB_RULE_LOG_FLAG_RSP_BODY |                            \
       IB_RULE_LOG_FLAG_PHASE |                               \
       IB_RULE_LOG_FLAG_RULE |                                \
-      IB_RULE_LOG_FLAG_RULE_DATA |                           \
+      IB_RULE_LOG_FLAG_TARGET |                              \
       IB_RULE_LOG_FLAG_TFN |                                 \
       IB_RULE_LOG_FLAG_OPERATOR |                            \
       IB_RULE_LOG_FLAG_ACTION |                              \
@@ -4299,7 +4299,7 @@ static IB_STRVAL_MAP(core_rulelog_flags_map) = {
     IB_STRVAL_PAIR("responseBody", IB_RULE_LOG_FLAG_RSP_BODY),
     IB_STRVAL_PAIR("phase", IB_RULE_LOG_FLAG_PHASE),
     IB_STRVAL_PAIR("rule", IB_RULE_LOG_FLAG_RULE),
-    IB_STRVAL_PAIR("ruleData", IB_RULE_LOG_FLAG_RULE_DATA),
+    IB_STRVAL_PAIR("target", IB_RULE_LOG_FLAG_TARGET),
     IB_STRVAL_PAIR("transformation", IB_RULE_LOG_FLAG_TFN),
     IB_STRVAL_PAIR("operator", IB_RULE_LOG_FLAG_OPERATOR),
     IB_STRVAL_PAIR("action", IB_RULE_LOG_FLAG_ACTION),
