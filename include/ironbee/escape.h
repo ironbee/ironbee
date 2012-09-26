@@ -60,6 +60,8 @@ extern "C" {
  * @returns IB_OK if successful
  *          IB_EALLOC if allocation errors occur
  *
+ * @note: @a dlen_out will include the nul byte if requested by @a add_nul
+ *
  * @internal
  * Implemented in: util/escape.c
  * Tested in: tests/test_util_escape.cc
@@ -80,10 +82,13 @@ ib_status_t ib_string_escape_json_buf_ex(
  * @param[in] data_in Input data
  * @param[out] data_out Output buffer
  * @param[in] dsize_out Size of @a data_out
+ * @param[out] dlen_out Length of data in @a data_out (or NULL)
  * @param[out] result Result flags (IB_STRFLAG_xx) (or NULL)
  *
  * @returns IB_OK if successful
  *          IB_EALLOC if allocation errors occur
+ *
+ * @note: @a dlen_out will NOT include the nul byte
  *
  * @internal
  * Implemented in: util/escape.c
@@ -93,6 +98,35 @@ ib_status_t ib_string_escape_json_buf(
     const char *data_in,
     char *data_out,
     size_t dsize_out,
+    size_t *dlen_out,
+    ib_flags_t *result
+);
+
+/**
+ * Convert a list of NUL strings to a json string with escaping
+ *
+ * @param[in] items List of strings to escape
+ * @param[in] join String to use for joining items in @a items
+ * @param[out] data_out Output buffer
+ * @param[in] dsize_out Size of @a data_out
+ * @param[out] dlen_out Length of data in @a data_out (or NULL)
+ * @param[out] result Result flags (IB_STRFLAG_xx) (or NULL)
+ *
+ * @returns IB_OK if successful
+ *          IB_ETRUNC if @a data_out is truncated
+ *
+ * @note: @a dlen_out will NOT include the nul byte
+ *
+ * @internal
+ * Implemented in: util/escape.c
+ * Tested in: tests/test_util_escape.cc
+ */
+ib_status_t ib_strlist_escape_json_buf(
+    const ib_list_t *items,
+    const char *join,
+    char *data_out,
+    size_t dsize_out,
+    size_t *dlen_out,
     ib_flags_t *result
 );
 

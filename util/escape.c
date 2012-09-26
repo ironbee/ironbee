@@ -29,6 +29,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
+#include <ironbee/util.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -59,6 +60,10 @@ ib_status_t ib_string_escape_json_buf_ex(
     const char *oend;
     bool modified = false;
     ib_status_t rc = IB_OK;
+
+    if (result != NULL) {
+        *result = IB_STRFLAG_NONE;
+    }
 
     if (add_nul) {
         oend = data_out + dsize_out - 1;
@@ -133,6 +138,7 @@ ib_status_t ib_string_escape_json_buf_ex(
 
         if (optr + size > oend) {
             rc = IB_ETRUNC;
+            modified = true;
             break;
         }
         if (size == 1) {
@@ -152,13 +158,8 @@ ib_status_t ib_string_escape_json_buf_ex(
         ++optr;
     }
 
-    if (result != NULL) {
-        if (modified) {
-            *result = IB_STRFLAG_MODIFIED;
-        }
-        else {
-            *result = IB_STRFLAG_NONE;
-        }
+    if ( (result != NULL) && modified) {
+        *result = IB_STRFLAG_MODIFIED;
     }
     if (dlen_out != NULL) {
         *dlen_out = optr - data_out;
@@ -170,6 +171,7 @@ ib_status_t ib_string_escape_json_buf_ex(
 ib_status_t ib_string_escape_json_buf(const char *data_in,
                                       char *data_out,
                                       size_t dsize_out,
+                                      size_t *dlen_out,
                                       ib_flags_t *result)
 {
     IB_FTRACE_INIT();
@@ -179,9 +181,99 @@ ib_status_t ib_string_escape_json_buf(const char *data_in,
     ib_status_t rc;
     rc = ib_string_escape_json_buf_ex((const uint8_t *)data_in, strlen(data_in),
                                       true,
-                                      data_out, dsize_out, NULL,
+                                      data_out, dsize_out, dlen_out,
                                       result);
+
+    /* Subtrace the nul byte from the length */
+    if (dlen_out != NULL) {
+        --(*dlen_out);
+    }
     IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
+                                       const char *join,
+                                       char *data_out,
+                                       size_t dsize_out,
+                                       size_t *dlen_out,
+                                       ib_flags_t *result)
+{
+    IB_FTRACE_INIT();
+    assert(data_out != NULL);
+    assert(join != NULL);
+
+    const ib_list_node_t *node;
+    char *cur = data_out;
+    size_t remain = dsize_out;
+    bool first = true;
+    size_t elements;
+    size_t joinlen = strlen(join);
+
+    if (dlen_out != NULL) {
+        *dlen_out = 0;
+    }
+    if (result != NULL) {
+        *result = IB_STRFLAG_NONE;
+    }
+
+    /* Handle NULL / empty list */
+    if (items == NULL) {
+        elements = 0;
+    }
+    else {
+        elements = ib_list_elements(items);
+    }
+    if (elements == 0) {
+        *data_out = '\0';
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    IB_LIST_LOOP_CONST(items, node) {
+        const char *str = (const char *)ib_list_node_data_const(node);
+        ib_status_t rc;
+        ib_flags_t rslt;
+        size_t len;
+
+        /* First one? */
+        if (! first) {
+            if (remain < (joinlen + 1) ) {
+                IB_FTRACE_RET_STATUS(IB_ETRUNC);
+            }
+            strcpy(cur, join);
+            cur += joinlen;
+            remain -= joinlen;
+        }
+        else {
+            first = false;
+        }
+
+        /* Escape directly into the current buffer */
+        rc = ib_string_escape_json_buf(str, cur, remain, &len, &rslt);
+
+        /* Adjust pointer and length */
+        if ( (rc == IB_OK) || (rc == IB_ETRUNC) ) {
+            if (dlen_out != NULL) {
+                *dlen_out += len;
+            }
+            cur += len;
+            remain -= len;
+        }
+
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        if ( (result != NULL) && (ib_flags_all(rslt, IB_STRFLAG_MODIFIED)) ) {
+            *result = IB_STRFLAG_MODIFIED;
+        }
+
+        /* Quit if we're out of space */
+        if (remain == 0) {
+            IB_FTRACE_RET_STATUS(IB_ETRUNC);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /* Convert a bytestring to a json string with escaping, ex version */

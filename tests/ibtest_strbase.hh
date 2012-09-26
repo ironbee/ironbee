@@ -187,6 +187,27 @@ public:
         return IB_ENOTIMPL;
     }
 
+    virtual ib_status_t ExecNulToNulBuf(
+        const char *data_in,
+        char *data_out,
+        size_t dsize_out,
+        size_t &dlen_out,
+        ib_flags_t &result)
+    {
+        return IB_ENOTIMPL;
+    }
+
+    virtual ib_status_t ExecExToNulBuf(
+        const uint8_t *data_in,
+        size_t dlen_in,
+        char *data_out,
+        size_t dsize_out,
+        size_t &dlen_out,
+        ib_flags_t &result)
+    {
+        return IB_ENOTIMPL;
+    }
+
     void RunTest(const char *in,
                  const char *out = NULL)
     {
@@ -201,7 +222,7 @@ public:
         RunTestCowEx(input, expected);
         RunTestCopyNul(input, expected);
         RunTestCopyEx(input, expected);
-        RunTestCopyExToNul(input, expected);
+        RunTestBuf(in, out, strlen(out)+1, IB_OK);
     }
 
     void RunTest(const uint8_t *in, size_t inlen,
@@ -223,12 +244,47 @@ public:
         TextBuf expected(out);
         RunTestCopyEx(input, expected);
         RunTestCopyExToNul(input, expected);
+        RunTestBuf(in, inlen, out, strlen(out)+1, IB_OK);
+    }
+
+    void RunTestBuf(const char *in,
+                    const char *out,
+                    size_t bufsize,
+                    ib_status_t rc = IB_OK)
+    {
+        TextBuf input(in);
+        if (out == NULL) {
+            out = in;
+        }
+        TextBuf expected(out);
+        if ( (rc == IB_OK) && (bufsize <= expected.GetLen()) ) {
+            rc = IB_ETRUNC;
+        }
+        RunTestNulToNulBuf(input, expected, bufsize, rc);
+        RunTestExToNulBuf(input, expected, bufsize, rc);
+    }
+
+    void RunTestBuf(const uint8_t *in,
+                    size_t inlen,
+                    const char *out,
+                    size_t bufsize,
+                    ib_status_t rc = IB_OK)
+    {
+        TextBuf input(in, inlen);
+        if (out == NULL) {
+            out = (const char *)in;
+        }
+        TextBuf expected(out);
+        if ( (rc == IB_OK) && (bufsize <= expected.GetLen()) ) {
+            rc = IB_ETRUNC;
+        }
+        RunTestExToNulBuf(input, expected, bufsize, rc);
     }
 
 protected:
     const char *TestOpName(ib_strop_t op)
     {
-        static const char *ops[] = { "", "_copy", "_cow" };
+        static const char *ops[] = { "", "_copy", "_cow", "_buf" };
         return ops[op];
     }
     const char *TestTypeName(test_type_t tt)
@@ -249,19 +305,20 @@ protected:
                      const TextBuf &expected,
                      ib_flags_t expected_unmodified_result,
                      ib_flags_t expected_modified_result,
+                     ib_status_t rc,
                      ib_flags_t result,
                      const TextBuf &output)
     {
         const char *modstr;
         ib_flags_t eresult;
 
-        if (input == expected) {
-            eresult = expected_unmodified_result;
-            modstr = "should not be modified";
-        }
-        else {
+        if ( (rc == IB_ETRUNC) || (input != expected) ) {
             eresult = expected_modified_result;
             modstr = "should be modified";
+        }
+        else {
+            eresult = expected_unmodified_result;
+            modstr = "should not be modified";
         }
         ASSERT_EQ(eresult, result)
             << name << " " << modstr << " " << std::endl
@@ -272,14 +329,16 @@ protected:
             << " [" << output.GetLen() << "]"
             << " \"" << output.GetFmt() << "\"";
 
-        ASSERT_TRUE(expected == output)
-            << name << std::endl
-            << " Expected: "
-            << " [" << expected.GetLen() << "]"
-            << " \"" << expected.GetFmt() << "\"" << std::endl
-            << " Actual:   "
-            << " [" << output.GetLen() << "]"
-            << " \"" << output.GetFmt() << "\"";
+        if (rc != IB_ETRUNC) {
+            ASSERT_TRUE(expected == output)
+                << name << std::endl
+                << " Expected: "
+                << " [" << expected.GetLen() << "]"
+                << " \"" << expected.GetFmt() << "\"" << std::endl
+                << " Actual:   "
+                << " [" << output.GetLen() << "]"
+                << " \"" << output.GetFmt() << "\"";
+        }
     }
 
     void RunTestInplaceNul(const TextBuf &input, const TextBuf &expected)
@@ -302,8 +361,8 @@ protected:
         CheckResult(name, input,
                     expected,
                     IB_STRFLAG_ALIAS,
-                    ( IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED ),
-                    result, output);
+                    (IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED),
+                    rc, result, output);
     }
 
     void RunTestInplaceEx(const TextBuf &input, const TextBuf &expected)
@@ -327,8 +386,8 @@ protected:
         CheckResult(name, input,
                     expected,
                     IB_STRFLAG_ALIAS,
-                    ( IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED ),
-                    result, output);
+                    (IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED),
+                    rc, result, output);
     }
 
     void RunTestCowNul(const TextBuf &input, const TextBuf &expected)
@@ -348,8 +407,8 @@ protected:
         CheckResult(name, input,
                     expected,
                     IB_STRFLAG_ALIAS,
-                    ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
-                    result, output);
+                    (IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED),
+                    rc, result, output);
     }
 
     void RunTestCowEx(const TextBuf &input, const TextBuf &expected)
@@ -371,8 +430,8 @@ protected:
         CheckResult(name, input,
                     expected,
                     IB_STRFLAG_ALIAS,
-                    ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
-                    result, output);
+                    (IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED),
+                    rc, result, output);
     }
 
     void RunTestCopyNul(const TextBuf &input, const TextBuf &expected)
@@ -392,8 +451,8 @@ protected:
         CheckResult(name, input,
                     expected,
                     IB_STRFLAG_NEWBUF,
-                    ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
-                    result, output);
+                    (IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED),
+                    rc, result, output);
     }
 
     void RunTestCopyEx(const TextBuf &input, const TextBuf &expected)
@@ -415,8 +474,8 @@ protected:
         CheckResult(name, input,
                     expected,
                     IB_STRFLAG_NEWBUF,
-                    ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
-                    result, output);
+                    (IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED),
+                    rc, result, output);
     }
 
     void RunTestCopyExToNul(const TextBuf &input, const TextBuf &expected)
@@ -430,15 +489,69 @@ protected:
         if (rc == IB_ENOTIMPL) {
             return;
         }
-        const char *name = TestName(IB_STROP_COPY, TYPE_EX);
+        const char *name = TestName(IB_STROP_COPY, TYPE_NUL);
         ASSERT_EQ(IB_OK, rc) << name;
 
         TextBuf output(out);
         CheckResult(name, input,
                     expected,
                     IB_STRFLAG_NEWBUF,
-                    ( IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED ),
-                    result, output);
+                    (IB_STRFLAG_NEWBUF | IB_STRFLAG_MODIFIED),
+                    rc, result, output);
+    }
+
+    void RunTestNulToNulBuf(const TextBuf &input,
+                            const TextBuf &expected,
+                            size_t bufsize,
+                            ib_status_t expected_rc)
+    {
+        char buf[bufsize];
+        size_t len;
+        ib_status_t rc;
+        ib_flags_t result;
+
+        rc = ExecNulToNulBuf(input.GetBuf(),
+                             buf, bufsize, len,
+                             result);
+        if (rc == IB_ENOTIMPL) {
+            return;
+        }
+        const char *name = TestName(IB_STROP_BUF, TYPE_NUL);
+        ASSERT_EQ(expected_rc, rc) << name;
+
+        TextBuf output(buf);
+        CheckResult(name, input,
+                    expected,
+                    IB_STRFLAG_NONE,
+                    IB_STRFLAG_MODIFIED,
+                    rc, result, output);
+    }
+
+    void RunTestExToNulBuf(const TextBuf &input,
+                           const TextBuf &expected,
+                           size_t bufsize,
+                           ib_status_t expected_rc)
+    {
+        char buf[bufsize];
+        size_t len;
+        ib_status_t rc;
+        ib_flags_t result;
+
+        rc = ExecExToNulBuf(input.GetUBuf(), input.GetLen(),
+                            buf, bufsize, len,
+                            result);
+        if (rc == IB_ENOTIMPL) {
+            return;
+        }
+        const char *name = TestName(IB_STROP_BUF, TYPE_EX_TO_STR);
+        ASSERT_EQ(expected_rc, rc) << name;
+
+        TextBuf output(buf);
+        CheckResult(name, input,
+                    expected,
+                    IB_STRFLAG_NONE,
+                    IB_STRFLAG_MODIFIED,
+                    rc, result, output);
     }
 
 public:
@@ -480,6 +593,8 @@ public:
             return "COW";
         case IB_STROP_COPY:
             return "COPY";
+        case IB_STROP_BUF:
+            return "BUF";
         }
         assert(0);
     }
@@ -512,6 +627,10 @@ public:
 
         case IB_STROP_COW:
             result = ExpectCowAlias(mod) ? IB_STRFLAG_ALIAS : IB_STRFLAG_NEWBUF;
+            break;
+
+        case IB_STROP_BUF:
+            result = IB_STRFLAG_NONE;
             break;
         }
         if (mod) {

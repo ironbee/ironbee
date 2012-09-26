@@ -129,12 +129,12 @@ const char *ib_field_format(
                 break;
             }
             if (escape && quote) {
-                ib_string_escape_json_buf(s, buf+1, bufsize-2, NULL);
+                ib_string_escape_json_buf(s, buf+1, bufsize-2, NULL, NULL);
                 *(buf+0) = '\"';
                 strcat(buf, "\"");
             }
             else if (escape) {
-                ib_string_escape_json_buf(s, buf, bufsize, NULL);
+                ib_string_escape_json_buf(s, buf, bufsize, NULL, NULL);
             }
             else if (quote) {
                 snprintf(buf, bufsize, "\"%s\"", s);

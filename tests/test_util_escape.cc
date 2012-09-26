@@ -28,10 +28,12 @@
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 #include <ironbee/mpool.h>
+#include <ironbee/list.h>
 #include <ironbee/escape.h>
 
 #include "ibtest_textbuf.hh"
 #include "ibtest_strbase.hh"
+#include "simple_fixture.hh"
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
@@ -62,6 +64,7 @@ public:
                                         (char **)data_out, &dlen_out,
                                         &result);
     }
+
     ib_status_t ExecCopyExToNul(const uint8_t *data_in,
                                 size_t dlen_in,
                                 char **data_out,
@@ -74,6 +77,7 @@ public:
                                         data_out, &dlen_out,
                                         &result);
     }
+
     ib_status_t ExecCopyNul(const char *data_in,
                             char **data_out,
                             ib_flags_t &result)
@@ -82,6 +86,30 @@ public:
                                      data_in,
                                      data_out,
                                      &result);
+    }
+
+    ib_status_t ExecNulToNulBuf(const char *data_in,
+                                char *data_out,
+                                size_t dsize_out,
+                                size_t &dlen_out,
+                                ib_flags_t &result)
+    {
+        return ib_string_escape_json_buf(data_in,
+                                         data_out, dsize_out, &dlen_out,
+                                         &result);
+    }
+
+    ib_status_t ExecExToNulBuf(const uint8_t *data_in,
+                               size_t dlen_in,
+                               char *data_out,
+                               size_t dsize_out,
+                               size_t &dlen_out,
+                               ib_flags_t &result)
+    {
+        return ib_string_escape_json_buf_ex(data_in, dlen_in,
+                                            true,
+                                            data_out, dsize_out, &dlen_out,
+                                            &result);
     }
 };
 
@@ -212,5 +240,171 @@ TEST_F(TestEscapeJSON, Complex)
     {
         SCOPED_TRACE("Complex #5");
         RunTest("x\n\ry", "x\\n\\ry");
+    }
+}
+
+TEST_F(TestEscapeJSON, FixedBuffer)
+{
+    {
+        SCOPED_TRACE("FixedBuffer #1");
+        RunTestBuf("x", "x", 1);
+    }
+    {
+        SCOPED_TRACE("FixedBuffer #2");
+        RunTestBuf("x", "x", 2);
+    }
+    {
+        SCOPED_TRACE("FixedBuffer #3");
+        RunTestBuf("xx", "xx", 2);
+    }
+    {
+        SCOPED_TRACE("FixedBuffer #4");
+        RunTestBuf("xx", "xx", 3);
+    }
+    {
+        SCOPED_TRACE("FixedBuffer #5");
+        RunTestBuf("/", "\\/", 1);
+    }
+    {
+        SCOPED_TRACE("FixedBuffer #6");
+        RunTestBuf("/", "\\/", 2);
+    }
+    {
+        SCOPED_TRACE("FixedBuffer #7");
+        RunTestBuf("/", "\\/", 3);
+    }
+    {
+        SCOPED_TRACE("FixedBuffer #8");
+        RunTestBuf("\"", "\\\"", 1);
+    }
+    {
+        SCOPED_TRACE("FixedBuffer #9");
+        RunTestBuf("\"", "\\\"", 2);
+    }
+}
+
+class TestEscapeStrListJSON : public SimpleFixture
+{
+public:
+
+    void RunTest(size_t bufsize,
+                 ib_status_t expected_rc,
+                 ib_flags_t expected_result,
+                 const char *expected,
+                 const char *join,
+                 size_t num, ...)
+    {
+        va_list va;
+        const char *s;
+        ib_status_t rc;
+        ib_list_t *slist;
+        size_t n;
+
+        rc = ib_list_create(&slist, m_pool);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Error creating string list");
+        }
+
+        va_start(va, num);
+        for (n = 0;  n < num;  ++n) {
+            s = va_arg(va, char *);
+            rc = ib_list_push(slist, (void *)s);
+            if (rc != IB_OK) {
+                throw std::runtime_error("Error creating string list");
+            }
+        }
+        va_end(va);
+
+        RunTest(slist, join, bufsize, expected_rc, expected_result, expected);
+
+    }
+
+    void RunTest(const ib_list_t *slist,
+                 const char *join,
+                 size_t bufsize,
+                 ib_status_t expected_rc,
+                 ib_flags_t expected_result,
+                 const char *expected)
+    {
+        char buf[bufsize];
+        size_t len;
+        ib_flags_t result;
+        ib_status_t rc;
+
+        rc = ib_strlist_escape_json_buf(slist, join, buf, bufsize,
+                                        &len, &result);
+        ASSERT_EQ(expected_rc, rc);
+        if (rc != IB_OK) {
+            return;
+        }
+        ASSERT_EQ(expected_result, result);
+        ASSERT_STREQ(expected, buf);
+    }
+};
+
+TEST_F(TestEscapeStrListJSON, simple)
+{
+    {
+        SCOPED_TRACE("NULL list");
+        RunTest(NULL, "", 16, IB_OK, IB_STRFLAG_NONE, "");
+    }
+    {
+        SCOPED_TRACE("Empty list");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "", "", 0);
+    }
+    {
+        SCOPED_TRACE("List #1");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x", "", 1, "x");
+    }
+    {
+        SCOPED_TRACE("List #2");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x", ",", 1, "x");
+    }
+    {
+        SCOPED_TRACE("List #3");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "xy", "", 2, "x", "y");
+    }
+    {
+        SCOPED_TRACE("List #4");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x,y", ",", 2, "x", "y");
+    }
+    {
+        SCOPED_TRACE("List #5");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x, y", ", ", 2, "x", "y");
+    }
+    {
+        SCOPED_TRACE("List #6");
+        RunTest(16, IB_ETRUNC, IB_STRFLAG_MODIFIED,
+                "aaaa,bbbb,cccc,dddd", ",",
+                4, "aaaa", "bbbb", "cccc", "dddd");
+    }
+    {
+        SCOPED_TRACE("List #7");
+        RunTest(32, IB_OK, IB_STRFLAG_NONE,
+                "aaaa,bbbb,cccc,dddd", ",",
+                4, "aaaa", "bbbb", "cccc", "dddd");
+    }
+}
+
+TEST_F(TestEscapeStrListJSON, JSON)
+{
+    {
+        SCOPED_TRACE("Simple #1");
+        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "a\\tb", "", 1, "a\tb");
+    }
+    {
+        SCOPED_TRACE("Simple #2");
+        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "a\\tb,x\\ty",
+                ",", 2, "a\tb", "x\ty");
+    }
+    {
+        SCOPED_TRACE("Simple #3");
+        RunTest(16, IB_ETRUNC, IB_STRFLAG_MODIFIED, "a\\tb, c\\nd, x\\ty",
+                ", ", 3, "a\tb", "c\nd", "x\ty");
+    }
+    {
+        SCOPED_TRACE("Simple #4");
+        RunTest(32, IB_OK, IB_STRFLAG_MODIFIED, "a\\tb, c\\nd, x\\ty",
+                ", ", 3, "a\tb", "c\nd", "x\ty");
     }
 }

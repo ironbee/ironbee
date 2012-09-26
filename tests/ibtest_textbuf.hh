@@ -201,7 +201,6 @@ public:
         }
     };
 
-
     bool operator != (const TextBuf &other) const {
         return !(*this == other);
     };

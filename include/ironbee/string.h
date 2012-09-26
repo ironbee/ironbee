@@ -52,6 +52,7 @@ typedef enum {
     IB_STROP_INPLACE,     /**< Perform the operation in-place */
     IB_STROP_COPY,        /**< Always copy the input */
     IB_STROP_COW,         /**< Use copy-on-write semantics */
+    IB_STROP_BUF,         /**< Use pre-allocated buffer */
 } ib_strop_t;
 
 /**
