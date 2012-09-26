@@ -1410,48 +1410,15 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         char fields[128] = "\0";
         const char *logdata = "";
         const char *ruleid = "-";
+        ib_status_t rc;
 
-        if (e->tags != NULL) {
-            ib_list_node_t *tnode;
-            size_t tags_len = sizeof(tags);
-            char *tag_ptr = tags;
-            bool first = true;
-
-            IB_LIST_LOOP(e->tags, tnode) {
-                char *tag = (char *)ib_list_node_data(tnode);
-                char *escaped;
-                ib_flags_t rslt;
-                ib_status_t rc;
-
-                rc = ib_string_escape_json(part->log->mp, tag, &escaped, &rslt);
-                if (rc != IB_OK) {
-                    ib_log_error_tx(part->log->tx,
-                                    "Failed to escape \"%s\": %s",
-                                    tag, ib_status_to_string(rc));
-                    IB_FTRACE_RET_STATUS(rc);
-                }
-                int wrote = snprintf(tag_ptr, tags_len,
-                                     "%s\"%s\"",
-                                     (first ? "" : ", "), escaped);
-                first = false;
-
-
-                /* Check that data was written, terminating if not. */
-                if (wrote >= (int)tags_len) {
-                    /* Not enough room. */
-                    *tag_ptr = '\0';
-                    break;
-                }
-
-
-                /* Adjust the length that remains in the tags buffer. */
-                tags_len -= wrote;
-                if (tags_len <= 0) {
-                    break;
-                }
-
-                tag_ptr += wrote;
-            }
+        rc = ib_strlist_escape_json_buf(e->tags, ", ",
+                                        tags, sizeof(tags),
+                                        NULL, NULL);
+        if (rc != IB_OK) {
+            ib_log_error_tx(part->log->tx,
+                            "Failed to escape tags for audit log: %s",
+                            ib_status_to_string(rc));
         }
 
         rec = (uint8_t *)ib_mpool_alloc(part->log->mp, CORE_JSON_MAX_REC_LEN);
@@ -1468,7 +1435,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             if (field_node != NULL) {
                 const char *field_name = (const char *)field_node->data;
                 char *escaped;
-                ib_status_t rc;
                 ib_flags_t rslt;
 
                 rc = ib_string_escape_json(part->log->mp,
@@ -1487,7 +1453,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
         if (e->data != NULL) {
             char *escaped;
-            ib_status_t rc;
             ib_flags_t rslt;
 
             /* Note: Log data is expanded in act_event_execute() */
@@ -1508,7 +1473,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
         if (e->rule_id != NULL) {
             char *escaped;
-            ib_status_t rc;
             ib_flags_t rslt;
 
             rc = ib_string_escape_json(part->log->mp,
