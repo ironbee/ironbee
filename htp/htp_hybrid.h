@@ -218,7 +218,7 @@ void htp_txh_res_set_status_line_c(htp_tx_t *tx, char *line, alloc_strategy allo
  * @param tx
  * @param status
  */
-void htp_txh_res_set_status(htp_tx_t *tx, int status);
+void htp_txh_res_set_status_code(htp_tx_t *tx, int status);
 
 /**
  * Change transaction state to RESPONSE_LINE and invoke all
