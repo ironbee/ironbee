@@ -584,9 +584,6 @@ ib_status_t ib_rule_log_exec_add_tfn(ib_rule_log_exec_t *exec_log,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     tgt = node->data;
-    if (tgt->tfn_list) {
-        IB_FTRACE_RET_STATUS(IB_OK);
-    }
     if (tgt->tfn_list == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -1066,10 +1063,10 @@ static void log_tfns(
             (const ib_rule_log_tfn_t *)ib_list_node_data_const(tfn_node);
 
         rule_log_exec(rule_exec,
-                      "TFN %s() %.*s %s %s %s",
+                      "TFN %s() %s %.*s %s %s",
                       tfn->tfn->name,
-                      (int)tgt->original->nlen, tgt->original->name,
                       ib_field_type_name(tgt->original->type),
+                      (int)tgt->original->nlen, tgt->original->name,
                       ib_field_format(tfn->out, true, true, NULL,
                                       buf, MAX_FIELD_BUF),
                       ( tfn->status == IB_OK ?
