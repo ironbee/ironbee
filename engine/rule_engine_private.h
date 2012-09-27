@@ -117,7 +117,8 @@ struct ib_rule_log_tx_t {
     ib_flags_t              flags;       /**< Rule logging flags */
     ib_rule_log_mode_t      mode;        /**< Rule logging mode */
     ib_log_level_t          level;       /**< Level to log at */
-    ib_rule_phase_num_t     last_phase;  /**< Phase of phase log */
+    ib_rule_phase_num_t     cur_phase;   /**< Current phase # */
+    const char             *phase_name;  /**< Name of current phase */
 };
 
 /**

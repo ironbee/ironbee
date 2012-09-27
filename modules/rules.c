@@ -1297,7 +1297,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
         IB_FTRACE_MSG("Callback data is not null.");
     }
 
-    /* Get the targets string */
+    /* Get the phase string */
     node = ib_list_first_const(vars);
     if ( (node == NULL) || (node->data == NULL) ) {
         ib_cfg_log_error(cp, "No stream for StreamInspect");

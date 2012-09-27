@@ -398,6 +398,8 @@ ib_status_t ib_rule_log_tx_create(
     /* Complete the new object, store pointer to it */
     object->level = ib_rule_log_level(rule_exec->tx->ctx);
     object->flags = flags;
+    object->cur_phase = PHASE_NONE;
+    object->phase_name = NULL;
     object->mode = mode;
     object->mp = rule_exec->tx->mp;
     *tx_log = object;
@@ -446,6 +448,7 @@ ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
     /* Complete the new object, store pointer to it */
     new->tx_log = tx_log;
     new->rule = rule_exec->rule;
+
     /* Don't need to initialize num_xxx because we use calloc() above */
     *exec_log = new;
 
@@ -554,6 +557,7 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(ib_rule_log_exec_t *exec_log,
     *(fname + field->nlen) = '\0';
     target->field_name = fname;
     target->tfn_list = NULL;
+    target->target_str = NULL;
 
     rc = ib_rule_log_exec_add_target(exec_log, target, field);
     if (rc != IB_OK) {
@@ -853,7 +857,7 @@ static void log_tx_header(
 
     for (nvpair = wrap->head;  nvpair != NULL;  nvpair = nvpair->next) {
         rule_log_exec(rule_exec,
-                      "%s %.*s %.*s",
+                      "%s %.*s: %.*s",
                       label,
                       IB_BYTESTR_FMT_PARAM(nvpair->name),
                       IB_BYTESTR_FMT_PARAM(nvpair->value));
@@ -1024,9 +1028,10 @@ void ib_rule_log_phase(
     }
 
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_PHASE)) {
-        if (phase_num != rule_exec->tx_log->last_phase) {
+        if (phase_num != rule_exec->tx_log->cur_phase) {
             rule_log_exec(rule_exec, "PHASE %s", phase_name);
-            rule_exec->tx_log->last_phase = phase_num;
+            rule_exec->tx_log->cur_phase = phase_num;
+            rule_exec->tx_log->phase_name = phase_name;
         }
     }
     IB_FTRACE_RET_VOID();
@@ -1208,7 +1213,28 @@ static void log_result(
                           tgt->original == NULL ? "None" : tgt->original->name,
                           "NULL");
         }
-        else {
+        else if (ib_rule_is_stream(rule_exec->rule) ) {
+            rule_log_exec(rule_exec,
+                          "TARGET \"%s\" %s \"%.*s\" %s",
+                          rule_exec->tx_log->phase_name,
+                          ib_field_type_name(rslt->value->type),
+                          (int)rslt->value->nlen, rslt->value->name,
+                          ib_field_format(rslt->value, true, true, NULL,
+                                          buf, MAX_FIELD_BUF));
+        }
+        else if ( (tgt->original->type == IB_FTYPE_LIST) &&
+                  (rslt->value->type != IB_FTYPE_LIST) )
+        {
+            rule_log_exec(rule_exec,
+                          "TARGET \"%s\" %s \"%.*s:%.*s\" %s",
+                          tgt->target->target_str,
+                          ib_field_type_name(tgt->original->type),
+                          (int)tgt->original->nlen, tgt->original->name,
+                          (int)rslt->value->nlen, rslt->value->name,
+                          ib_field_format(rslt->value, true, true, NULL,
+                                          buf, MAX_FIELD_BUF));
+        }
+        else  {
             rule_log_exec(rule_exec,
                           "TARGET \"%s\" %s \"%.*s\" %s",
                           tgt->target->target_str,
@@ -1221,11 +1247,9 @@ static void log_result(
 
     if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_OPERATOR) ) {
         rule_log_exec(rule_exec,
-                      "OP %s(%s) %s %s",
+                      "OP %s(%s) %s",
                       rule_exec->exec_log->rule->opinst->op->name,
                       rule_exec->exec_log->rule->opinst->params,
-                      ib_field_format(rslt->value, true, true, NULL,
-                                      buf, MAX_FIELD_BUF),
                       (rslt->status == IB_OK ?
                        (rslt->result == 0 ? "FALSE" : "TRUE") :
                        ib_status_to_string(rslt->status)) );
