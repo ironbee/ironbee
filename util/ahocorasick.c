@@ -199,8 +199,7 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
             child->letter = letter;
             child->level = i;
 
-            child->pattern = (char *)ib_mpool_calloc(ac_tree->mp, 1,
-                                                  i + 1);
+            child->pattern = (char *)ib_mpool_calloc(ac_tree->mp, 1, i + 2);
             if (child->pattern == NULL) {
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
