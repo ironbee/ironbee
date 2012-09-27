@@ -5,7 +5,7 @@ $:.unshift(File.dirname(__FILE__))
 require 'all-code'
 
 all_ironbee_code do |path|
-  if path =~ /\.c$/ && path !~ /modules/ && path !~ /plugins/
+  if path =~ /\.c$/ && path !~ /modules/ && path !~ /plugins/ && path !~ /automata/
     IO.foreach( path ) do |line|
       if line =~ /^#include/
         if line !~ /^#include "ironbee_config_auto.h"/

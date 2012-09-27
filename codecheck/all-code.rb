@@ -14,6 +14,7 @@ def all_ironbee_code
   globs = []
 
   [
+    'automata',
     'cpp',
     'cli',
     'engine',
