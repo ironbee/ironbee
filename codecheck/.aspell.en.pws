@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1627 
+personal_ws-1.1 en 1683 
 malloced
 libnet
 endpat
@@ -25,6 +25,7 @@ bol
 vernum
 RuleEngineDebugLogLevel
 CLI
+CMD
 CCBA
 clk
 dev
@@ -49,10 +50,10 @@ fff
 parens
 ctl
 DNS
-dpi
 ffi
-FDs
+dpi
 fds
+FDs
 cdef
 HandleResponseHeaders
 cfgfile
@@ -111,6 +112,7 @@ strstr
 cfgs
 allocators
 ConfigurationParser
+indices
 idx
 lifecycle
 Trustwave
@@ -122,6 +124,7 @@ requestheader
 STRREQBODY
 ConstParsedRequestLine
 iis
+cerr
 unshifts
 tEvent
 hpp
@@ -129,6 +132,7 @@ HSB
 argc
 AuditLogPart
 STRRSPBODY
+fieldtype
 FieldType
 any's
 hte
@@ -146,6 +150,7 @@ argv
 Sosospider
 SubclassType
 cidr
+STDIN
 Kew
 IPs
 ips
@@ -183,6 +188,7 @@ autogen
 defs
 LHS
 instantiation
+determinization
 psdata
 linebuf
 mem
@@ -246,6 +252,7 @@ msn
 submatches
 setname
 preprocessor
+EINSANE
 nop
 WebSockets
 auth
@@ -295,6 +302,7 @@ ectx
 RHS
 conf
 rIP
+OutputHandler
 complexPattern
 RequestBodyBufferLimitAction
 sep
@@ -332,6 +340,8 @@ subfield
 FixMe
 SQL
 IronBeeUtilCfgMap
+RVO
+vec
 postlen
 pchunk
 tmp
@@ -348,6 +358,7 @@ txdata
 ver
 str
 WAM
+pseudocode
 IronBeeUtilDebug
 WAP
 UNC
@@ -377,8 +388,8 @@ xbd
 xbe
 AuditLogSubDirFormat
 templated
-xbf
 xca
+xbf
 xcb
 xcc
 sys
@@ -409,6 +420,7 @@ url
 xec
 xcm
 xed
+vls
 xee
 xfa
 xef
@@ -435,6 +447,7 @@ xib
 xhh
 rawbits
 PcreMatchLimitRecursion
+cstr
 postprocess
 IronBeeUtilHash
 streq
@@ -477,7 +490,10 @@ ce
 mdash
 da
 ap
+subautomata
 typesafe
+bm
+ObjectMapType
 de
 df
 dF
@@ -514,6 +530,7 @@ eq
 gg
 nocase
 fn
+et
 adjval
 ia
 fp
@@ -523,6 +540,7 @@ SecAction
 hh
 matcher
 fs
+VARRAY
 regexec
 jd
 VirtualHost
@@ -561,6 +579,7 @@ nonalnum
 lt
 Metcalf
 lu
+pb
 Wchar
 lx
 pe
@@ -619,6 +638,7 @@ tv
 xc
 xd
 tx
+IronAutomataVariableLengthStructure
 ty
 xe
 debugFields
@@ -627,6 +647,7 @@ xF
 xf
 TxStarted
 xg
+chunked
 UnitTesting
 onEventResponseHeader
 IronBeeUtilLogformat
@@ -651,6 +672,7 @@ AuditLogFileMode
 setRequestHeader
 STRRSPHDR
 backend
+BufferAssembler
 structs
 ConstMemoryPool
 InkAPI
@@ -690,12 +712,14 @@ fout
 errno
 pstream
 PointerPages
+abcdabcdabcdabcdabcdabcdabcdabcd
 cfgline
 fptr
 doesnt
 IBPP
 blkenddata
 atexit
+nodetype
 regex
 pvallen
 binget
@@ -715,6 +739,7 @@ newpattern
 ibapi
 corecfg
 ConstConnection
+eudoxus
 prequal
 func
 RequestBuffering
@@ -746,8 +771,8 @@ IronBeeUtilClock
 Docbook
 RelevantOnly
 strcasecmp
-requestheaders
 requestHeaders
+requestheaders
 userId
 portably
 libloader
@@ -769,6 +794,7 @@ Chroot
 bitwise
 ilen
 RuleExt
+durations
 abcabc
 facebookexternalhit
 AuditLogGenerator
@@ -791,6 +817,7 @@ bytestrings
 PersonalityAliasClear
 AuditLogParts
 onEventRequestStarted
+subengines
 nIncoming
 IBUtil
 sensorName
@@ -838,6 +865,7 @@ redzone
 ConnectionData
 ibmod
 evaluatable
+metaprogramming
 sockaddr
 responsetrailers
 responseTrailers
@@ -909,6 +937,7 @@ regexs
 cbdata
 einval
 STRREQHDR
+AutomataReader
 logError
 MyClass
 responseLine
@@ -927,6 +956,7 @@ ConstLists
 IronBeeBufferFlushSize
 json
 TxField
+STDOUT
 IronBeeEngineState
 onEventHandleResponseHeader
 abcdefghijklfoo
@@ -958,6 +988,7 @@ incutio
 uintptr
 delim
 Expen
+gzipped
 nbsp
 FMODIFIED
 minlen
@@ -966,6 +997,7 @@ Qualys
 IronBeeEngine
 IronBeeTests
 dolist
+proto
 abcdefxxx
 frule
 Deinitialize
@@ -1064,10 +1096,12 @@ UUIDv
 internalhash
 ctxdata
 LuaPackagePath
+nonadvancing
 msec
 devel
 parr
 subexpressions
+IronAutomataEudoxusAutomata
 patt
 msie
 RuleDisable
@@ -1138,6 +1172,7 @@ ftype
 SetUp
 IronBeeUtilStream
 ConnFinished
+benchmarker
 ConstEngine
 xfilename
 ActivateModule
@@ -1205,10 +1240,12 @@ xgcdata
 TestValue
 IronBeeUtilString
 automata
+seekable
 parsers
 modpcre
 delResponseHeader
 pfield
+IDMapType
 PRED
 reqs
 IronBeeActions
@@ -1230,6 +1267,7 @@ eventp
 ftrace
 createn
 priv
+tunable
 FINPLACE
 MemoryPools
 ConstParsedResponseLine
@@ -1237,8 +1275,11 @@ tabc
 sdir
 errfunc
 ptfn
+ironautomata
+IronAutomata
 unregister
 ninit
+TimingInfo
 operatorErrorOnly
 subname
 IronbeeConnection
@@ -1276,12 +1317,14 @@ const
 contp
 Ironbee's
 IronBee's
+optimizers
 nPipeline
 abinum
 nasyncronous
 vsnprintf
 sigs
 getValues
+IronAutomataEudoxus
 substrings
 fullinfo
 usetime
@@ -1291,6 +1334,7 @@ DOTALL
 Shsf
 ovector
 geolocation
+IronAutomataIntermediate
 inttypes
 IronBeeUtilField
 IronBeeUtilIPSet
@@ -1299,6 +1343,7 @@ HandleContextTx
 oflags
 moduleName
 modulename
+ifstream
 HandleConnect
 Finalizer
 IsNulStr
@@ -1309,6 +1354,7 @@ errinfo
 lookup
 Javascript
 ResponseBodyBufferLimit
+istream
 tfns
 tfoo
 isalnum
@@ -1357,9 +1403,11 @@ malloc
 soso
 Timestamps
 getfns
+metacode
 EOTHER
 subfields
 xgclen
+EudoxusCompiler
 strftime
 paren
 cfgparser
@@ -1375,6 +1423,7 @@ delRequestHeader
 microsec
 actionableRulesOnly
 rPort
+IronAutomataBits
 NetFront
 netfront
 LoadModule
@@ -1396,6 +1445,7 @@ tVConn
 dmode
 IronBeeUtilDecode
 xname
+elementtype
 hashequal
 uTorrent
 simplePattern
@@ -1439,6 +1489,7 @@ IronBeeEngineLogEvent
 RuleMarker
 ByteString
 bytestring
+subengine
 vlen
 VARNAME
 UNum
@@ -1454,6 +1505,7 @@ reutilize
 uncompiled
 pmatch
 fallthrough
+Functor
 onEventHandleRequestHeaders
 ourself
 fixups
@@ -1530,8 +1582,8 @@ copyless
 ConstLocation
 ConfigurationDirectives
 ConstByteStrings
-ByteStr
 bytestr
+ByteStr
 htonl
 nulstr
 NulStr
@@ -1539,6 +1591,8 @@ FreeBSD
 paramName
 LEVENT
 htree
+referants
+endian
 trimLeft
 invis
 IronBeeEngineLog
@@ -1602,6 +1656,8 @@ IronBeeUtilMemPool
 Baiduspider
 BaiDuSpider
 REQBDYS
+tradeoffs
+endianness
 onEventTxDataOut
 fabcdef
 BaseFixture

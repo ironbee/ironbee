@@ -16,6 +16,7 @@ theres There's
 yse use
 vargs variable args
 convertable convertible
+performant fast
 allcation allocation
 otheres others
 unsinged unsigned
@@ -66,5 +67,6 @@ hdrs headers
 occured occurred
 parseable parsable
 verison version
+prepends prefixes
 addres address
 signalled signaled

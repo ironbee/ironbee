@@ -25,7 +25,7 @@
  *          prefix for all types and functions.  This file can not be
  *          directly compiled.  Compile eudoxus.c instead.
  *
- * The IA_EUDOXUS(x) macro prepends IA_EUDOXUS_PREFIX and an underscore to
+ * The IA_EUDOXUS(x) macro prefixes IA_EUDOXUS_PREFIX and an underscore to
  * @c x.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>

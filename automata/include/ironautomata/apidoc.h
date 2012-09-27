@@ -47,7 +47,7 @@
  *
  * 1. Each stage can focus on its particular problems.  Generators can use an
  *    expressive automata representation and not worry about generic
- *    optimizations; Engines can use a compact or performant representation;
+ *    optimizations; Engines can use a compact or fast representation;
  *    etc.
  * 2. Code can be reused.  A generic enough engine can run automata from a
  *    variety of generators (algorithms).  Many optimizations can similarly
