@@ -85,7 +85,7 @@ static ib_status_t inplace(ib_flags_t inflags,
  * @param[in] data_in Data to convert to lower case
  * @param[in] dlen_in Length of @a data_in
  * @param[out] data_out Output data
- * @param[out] dlen_out Length of @a data_out
+ * @param[out] dlen_out Length of @a data_out (or NULL)
  * @param[out] result Output flags (@c IB_STRFLAG_xxx)
  *
  * @returns Status code.
@@ -106,14 +106,15 @@ static ib_status_t copy_on_write(ib_mpool_t *mp,
     assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
-    assert(dlen_out != NULL);
     assert(result != NULL);
 
     /* Initializations */
     iend = data_in + dlen_in;
     *result = IB_STRFLAG_ALIAS;
     *data_out = (uint8_t *)data_in;
-    *dlen_out = dlen_in;
+    if (dlen_out != NULL) {
+        *dlen_out = dlen_in;
+    }
     obuf = NULL;    /* Output buffer; NULL until output buffer allocated */
     optr = NULL;    /* Output pointer; NULL until obuf is allocated */
 
@@ -239,12 +240,12 @@ ib_status_t ib_strlower(ib_strop_t op,
         uint8_t *uint8ptr;
         rc = copy_on_write(mp,
                            (uint8_t *)str_in, len+1,
-                           &uint8ptr, &len, result);
+                           &uint8ptr, NULL, result);
         out = (char *)uint8ptr;
 #else
         rc = copy_on_write(mp,
                            (uint8_t *)str_in, len+1,
-                           (uint8_t **)&out, &len, result);
+                           (uint8_t **)&out, NULL, result);
 #endif
         break;
     }
