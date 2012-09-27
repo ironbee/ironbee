@@ -9,6 +9,12 @@ libironautomata_la_SOURCES = \
     logger.cpp \
     intermediate.pb.cc
 
+bin_PROGRAMS = \
+  intermediate_to_dot
+  
+intermediate_to_dot_SOURCES = intermediate_to_dot.cpp
+
+LDADD = libironautomata.la
 AM_CPPFLAGS = \
 	$(PROTOBUF_CPPFLAGS) \
 	$(BOOST_CPPFLAGS) \
