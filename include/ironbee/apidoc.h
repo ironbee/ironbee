@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ --- Top level API documentation.
+ * @brief IronBee --- Top level API documentation.
  *
  * This file contains no code, only API documentations.  It functions as the
  * main page of the API documentation.
@@ -40,6 +40,10 @@
  *
  * If you are interested in developing the above in C++, see @ref
  * ironbeepp page.
+ *
+ * if you are interested in IronAutomata, an automata creation and execution
+ * framework that targets IronBee's needs but has minimal dependence on
+ * IronBee, see @ref ironautomata.
  *
  * If you are an IronBee developer, you may be interested in the private API.
  * First, make sure you are viewing the internal version of this
