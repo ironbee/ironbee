@@ -23,3 +23,6 @@ test_intermediate_SOURCES = test_intermediate.cpp
 test_vls_SOURCES = test_vls.cpp
 
 TESTS = $(check_PROGRAMS)
+
+check-local:
+	(cd $(srcdir); abs_builddir=$(abs_builddir) $(ruby) ./ts_all.rb $(test_args))
