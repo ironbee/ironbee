@@ -74,6 +74,13 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
  * @param tx
  */
 void htp_tx_destroy(htp_tx_t *tx) {
+    // Destroy a private connection parser, which
+    // is used when in hybrid parsing mode.
+    if (tx->connp_is_private) {
+        htp_connp_destroy(tx->connp);
+        tx->connp = NULL;
+    }
+
     bstr_free(&tx->request_line);
     bstr_free(&tx->request_line_raw);
     bstr_free(&tx->request_method);

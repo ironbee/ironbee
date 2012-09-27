@@ -38,3 +38,34 @@
 #include <stdlib.h>
 
 #include "htp_hybrid.h"
+
+
+int htp_txh_state_transaction_start(htp_tx_t *tx) {
+    // Check that this transaction is not already
+    // associated with a connection parser.
+    if (tx->connp != NULL) {
+        return HTP_ERROR;
+    }
+
+    // Mark the connection parser as private so that
+    // we know we need to destroy it when the transaction
+    // is being destroyed.
+    tx->connp_is_private = 1;
+
+    // Create a private connection parser.
+    tx->connp = htp_connp_create(tx->cfg);
+    if (tx->connp == NULL) return HTP_ERROR;
+
+    // Wire the structures together.
+    tx->connp->in_tx = tx;
+    tx->conn = tx->connp->conn;
+
+    // Run hook TRANSACTION_START
+    // TODO
+
+    // Change state into request line parsing
+    tx->connp->in_state = htp_connp_REQ_LINE;
+    tx->connp->in_tx->progress = TX_PROGRESS_REQ_LINE;
+
+    return HTP_OK;
+}

@@ -48,7 +48,8 @@ extern "C" {
  */
 enum alloc_strategy {
     /** Make copies of all data. This strategy should be used when
-     *  the supplied buffers are transient and will go away.
+     *  the supplied buffers are transient and will go away after
+     *  the invoked function returns.
      */
     ALLOC_COPY  = 1,
 
@@ -65,7 +66,7 @@ enum alloc_strategy {
  * 
  * @param[in] tx
  */
-void htp_txh_state_transaction_start(htp_tx_t *tx);
+int htp_txh_state_transaction_start(htp_tx_t *tx);
      
 /**
  * Set transaction request method.

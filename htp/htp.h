@@ -860,6 +860,8 @@ struct htp_tx_t {
     /** The connection parsed associated with this transaction. */
     htp_connp_t *connp;
 
+    int connp_is_private;
+
     /** The connection to which this transaction belongs. */
     htp_conn_t *conn;
 
