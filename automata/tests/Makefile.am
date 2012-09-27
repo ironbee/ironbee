@@ -10,5 +10,9 @@ test: check
 
 TESTS_ENVIRONMENT = $(top_srcdir)/tests/gtest_executor.sh
 
-check_PROGRAMS = 
+check_PROGRAMS = \
+    test_vls
+    
+test_vls_SOURCES = test_vls.cpp
+
 TESTS = $(check_PROGRAMS)
