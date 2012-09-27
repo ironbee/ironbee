@@ -2,6 +2,12 @@
 
 $:.unshift(File.dirname(__FILE__))
 require 'all-code'
+require 'set'
+
+EXCEPTION_INCLUDES = Set.new [
+  '<ironautomata/eudoxus_subautomata.h>',
+  '"eudoxus_subengine.c"'
+]
 
 CANONICAL_INCLUDE_ORDER = [
   '"ironbee_config_auto.h"',
@@ -59,6 +65,19 @@ CANONICAL_INCLUDE_ORDER = [
   '"user_agent_private.h"',
   '"lua/ironbee.h"',
 
+  # Automata
+  '<ironautomata/bits.h>',
+  '<ironautomata/eudoxus.h>',
+  '<ironautomata/eudoxus_automata.h>',
+  '<ironautomata/vls.h>',
+
+  '<ironautomata/buffer.hpp>',
+  '<ironautomata/eudoxus_compiler.hpp>',
+  '<ironautomata/intermediate.hpp>',
+  '<ironautomata/intermediate.pb.h>',
+  '<ironautomata/logger.hpp>',
+  # End Automata
+
   '<ironbee/action.h>',
   '<ironbee/ahocorasick.h>',
   '<ironbee/array.h>',
@@ -105,15 +124,25 @@ CANONICAL_INCLUDE_ORDER = [
 
   '<boost/any.hpp>',
   '<boost/bind.hpp>',
+  '<boost/chrono.hpp>',
   '<boost/date_time/posix_time/posix_time.hpp>',
   '<boost/date_time/posix_time/ptime.hpp>',
   '<boost/exception/all.hpp>',
+  '<boost/filesystem.hpp>',
+  '<boost/filesystem/fstream.hpp>',
   '<boost/foreach.hpp>',
+  '<boost/format.hpp>',
   '<boost/function.hpp>',
   '<boost/iterator/iterator_facade.hpp>',
+  '<boost/lexical_cast.hpp>',
+  '<boost/make_shared.hpp>',
   '<boost/mpl/or.hpp>',
   '<boost/noncopyable.hpp>',
   '<boost/operators.hpp>',
+  '<boost/program_options.hpp>',
+  '<boost/scoped_array.hpp>',
+  '<boost/scoped_ptr.hpp>',
+  '<boost/shared_ptr.hpp>',
   '<boost/static_assert.hpp>',
   '<boost/type_traits/is_class.hpp>',
   '<boost/type_traits/is_convertible.hpp>',
@@ -124,6 +153,9 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/utility.hpp>',
   '<boost/utility/enable_if.hpp>',
   '<boost/uuid/uuid.hpp>',
+
+  '<google/protobuf/io/gzip_stream.h>',
+  '<google/protobuf/io/zero_copy_stream_impl_lite.h>',
 
   '<dslib.h>',
   '<GeoIP.h>',
@@ -137,10 +169,16 @@ CANONICAL_INCLUDE_ORDER = [
   '<uuid.h>',
   '<valgrind/memcheck.h>',
 
+  '<algorithm>',
+  '<fstream>',
   '<iostream>',
   '<list>',
+  '<map>',
   '<ostream>',
+  '<queue>',
+  '<set>',
   '<string>',
+  '<vector>',
 
   '<cassert>',
 
@@ -173,7 +211,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<sys/time.h>',
   '<sys/types.h>',
   '<arpa/inet.h>',
-  '<netinet/in.h>',
+  '<netinet/in.h>'
 ]
 
 def extract_includes(path)
@@ -194,13 +232,14 @@ all_ironbee_code do |path|
   private_name = nil
   if path =~ /(\.c(pp)?)$/
     self_name = Regexp.new(
-      "ironbee/" + File.basename(path, $1) + '\.h' + ($2 || "")
+      "iron(bee|automata)/" + File.basename(path, $1) + '\.h' + ($2 || "")
     )
     private_name = Regexp.new(
       File.basename(path, $1) + '_private\.h' + ($2 || "")
     )
   end
   extract_includes(path).each do |i|
+    next if EXCEPTION_INCLUDES.member?(i)
     index = nil
     if i =~ self_name
       index = CANONICAL_INCLUDE_ORDER.index(:self)
