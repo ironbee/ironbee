@@ -44,6 +44,7 @@ CLEANFILES = \
     intermediate.pb.h \
     include/ironautomata/intermediate.pb.h
 
+$(srcdir)/eudoxus_compiler.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
 $(srcdir)/intermediate.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
 
 $(builddir)/include/ironautomata/intermediate.pb.h: intermediate.pb.h
