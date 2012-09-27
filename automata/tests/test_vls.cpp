@@ -26,6 +26,8 @@
 
 #include <algorithm>
 
+#include <stdint.h>
+
 #include "gtest/gtest.h"
 
 using namespace std;
@@ -60,7 +62,7 @@ TEST(TestVls, Basic)
     IA_VLS_ADVANCE_IF(vls, uint32_t, true);
 
     uint32_t vls_c = IA_VLS_IF(vls, uint32_t, 1234, false);
-    EXPECT_EQ(1234, vls_c);
+    EXPECT_EQ(1234UL, vls_c);
 
     uint32_t* vls_d = IA_VLS_IF_PTR(vls, uint32_t, true);
     ASSERT_TRUE(vls_d);

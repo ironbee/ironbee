@@ -97,7 +97,7 @@ TEST(TestIntermediate, Basic)
     ASSERT_TRUE(edge_ab.target);
     EXPECT_TRUE(edge_ab.advance);
     EXPECT_TRUE(edge_ab.values_bm.empty());
-    EXPECT_EQ(1, edge_ab.values.size());
+    EXPECT_EQ(1U, edge_ab.values.size());
     EXPECT_EQ('a', edge_ab.values[0]);
     const node_t& node_b = *edge_ab.target;
     EXPECT_FALSE(node_b.output);
@@ -465,7 +465,7 @@ TEST(TestIntermediate, BitmapEdgeIterator)
     vector<uint8_t> result;
     pair<edge_value_iterator, edge_value_iterator> values = edge_values(edge);
     copy(values.first, values.second, back_inserter(result));
-    ASSERT_EQ(result.size(), 37);
+    ASSERT_EQ(37UL, result.size());
     for (int i = 0; i <= 36; ++i) {
         EXPECT_EQ(result[i], 7 * i);
     }
@@ -484,7 +484,7 @@ TEST(TestIntermediate, VectorEdgeIterator)
     vector<uint8_t> result;
     pair<edge_value_iterator, edge_value_iterator> values = edge_values(edge);
     copy(values.first, values.second, back_inserter(result));
-    ASSERT_EQ(result.size(), 37);
+    ASSERT_EQ(37UL, result.size());
     for (int i = 0; i <= 36; ++i) {
         EXPECT_EQ(result[i], 7 * i);
     }

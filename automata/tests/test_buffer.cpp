@@ -53,9 +53,9 @@ TEST(TestBuffer, IndexAndPtr)
     buffer_t buffer;
     BufferAssembler a(buffer);
 
-    EXPECT_EQ(3, a.index(buffer.data() + 3));
+    EXPECT_EQ(3UL, a.index(buffer.data() + 3));
     EXPECT_EQ(buffer.data() + 3, a.ptr<char>(3));
-    EXPECT_EQ(3, a.index(a.ptr<char>(3)));
+    EXPECT_EQ(3UL, a.index(a.ptr<char>(3)));
 }
 
 namespace {
@@ -98,7 +98,7 @@ TEST(TestBuffer, AppendArray)
     EXPECT_EQ(5 * sizeof(int), a.size());
     EXPECT_EQ(buffer.data(), reinterpret_cast<char*>(p));
 
-    for (int i = 0; i < buffer.size(); ++i) {
+    for (size_t i = 0; i < buffer.size(); ++i) {
         EXPECT_EQ(0, buffer[i]);
     }
 }
@@ -129,6 +129,6 @@ TEST(TestBuffer, AppendBytes)
 
     uint8_t* p = a.append_bytes(content.data(), content.size());
     EXPECT_EQ(buffer.data(), reinterpret_cast<char*>(p));
-    EXPECT_EQ(3, a.size());
+    EXPECT_EQ(3UL, a.size());
     EXPECT_TRUE(equal(buffer.begin(), buffer.end(), content.begin()));
 }
