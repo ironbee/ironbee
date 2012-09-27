@@ -14,10 +14,12 @@ TESTS_ENVIRONMENT = $(top_srcdir)/tests/gtest_executor.sh
 check_PROGRAMS = \
     test_bits \
     test_buffer \
+    test_intermediate \
     test_vls
     
 test_bits_SOURCES = test_bits.cpp
 test_buffer_SOURCES = test_buffer.cpp
+test_intermediate_SOURCES = test_intermediate.cpp
 test_vls_SOURCES = test_vls.cpp
 
 TESTS = $(check_PROGRAMS)

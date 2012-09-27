@@ -5,6 +5,8 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 lib_LTLIBRARIES = libironautomata.la
 libironautomata_la_SOURCES = \
 	buffer.cpp \
+    intermediate.cpp \
+    logger.cpp \
     intermediate.pb.cc
 
 AM_CPPFLAGS = \
@@ -24,6 +26,8 @@ CLEANFILES = \
     intermediate.pb.cc \
     intermediate.pb.h \
     include/ironautomata/intermediate.pb.h
+
+$(srcdir)/intermediate.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
 
 $(builddir)/include/ironautomata/intermediate.pb.h: intermediate.pb.h
 	mkdir -p $(builddir)/include/ironautomata
