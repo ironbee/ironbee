@@ -158,7 +158,7 @@ static void rule_vlog_tx(
 {
     IB_FTRACE_INIT();
     char *fmtbuf = NULL;
-    size_t fmtlen = PREFIX_BUFSIZE + 1;
+    size_t fmtlen;
     void *freeptr = NULL;
     ib_rule_dlog_level_t dlog_level =
         (tx->ctx == NULL) ? IB_RULE_DLOG_INFO : ib_rule_dlog_level(tx->ctx);
@@ -168,18 +168,14 @@ static void rule_vlog_tx(
         IB_FTRACE_RET_VOID();
     }
 
-    /* Build a new format buffer with rule ID and target field name */
-
-    /* Calculate the prefix length */
-    if (rule != NULL) {
-        fmtlen += strlen(rule->meta.id) + 24;
+    /* Allocate new format buffer */
+    if (rule == NULL) {
+        fmtlen = strlen(fmt) + 8;
     }
     else {
-        fmtlen += 8;
+        const char *id = ib_rule_id(rule);
+        fmtlen = strlen(fmt) + strlen(id) + 24;
     }
-
-    /* Using the length, build a new format buffer */
-    fmtlen += strlen(fmt) + 4;
     fmtbuf = malloc(fmtlen);
 
     if (fmtbuf != NULL) {
