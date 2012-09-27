@@ -106,6 +106,7 @@ static IB_STRVAL_MAP(flags_map) = {
 
     IB_STRVAL_PAIR("allRules", IB_RULE_LOG_FLAG_MODE_ALL),
     IB_STRVAL_PAIR("actionableRulesOnly", IB_RULE_LOG_FLAG_MODE_ACT),
+    IB_STRVAL_PAIR("operatorExecOnly", IB_RULE_LOG_FLAG_MODE_EXEC),
     IB_STRVAL_PAIR("operatorErrorOnly", IB_RULE_LOG_FLAG_MODE_ERROR),
     IB_STRVAL_PAIR("returnedTrueOnly", IB_RULE_LOG_FLAG_MODE_TRUE),
     IB_STRVAL_PAIR("returnedFalseOnly", IB_RULE_LOG_FLAG_MODE_FALSE),
@@ -382,6 +383,9 @@ ib_status_t ib_rule_log_tx_create(
     if (ib_flags_all(flags, IB_RULE_LOG_FLAG_MODE_ACT)) {
         mode = IB_RULE_LOG_MODE_ACT;
     }
+    else if (ib_flags_all(flags, IB_RULE_LOG_FLAG_MODE_EXEC)) {
+        mode = IB_RULE_LOG_MODE_EXEC;
+    }
     else if (ib_flags_all(flags, IB_RULE_LOG_FLAG_MODE_ERROR)) {
         mode = IB_RULE_LOG_MODE_ERROR;
     }
@@ -448,6 +452,12 @@ ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
     /* Complete the new object, store pointer to it */
     new->tx_log = tx_log;
     new->rule = rule_exec->rule;
+    if (ib_rule_is_stream(rule_exec->rule)) {
+        new->mode = IB_RULE_LOG_MODE_EXEC;
+    }
+    else {
+        new->mode = tx_log->mode;
+    }
 
     /* Don't need to initialize num_xxx because we use calloc() above */
     *exec_log = new;
@@ -627,18 +637,19 @@ static void count_result(ib_rule_log_count_t *counts,
 
 ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *exec_log,
                                         const ib_field_t *value,
-                                        ib_num_t result,
-                                        ib_status_t status)
+                                        ib_num_t result)
 {
     IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     ib_rule_log_rslt_t *object;
     ib_list_node_t *node;
     ib_rule_log_tgt_t *tgt;
+    ib_status_t status;
 
     if (exec_log == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
+    status = exec_log->op_status;
     count_result(&exec_log->counts, result, status);
 
     node = ib_list_last(exec_log->tgt_list);
@@ -652,15 +663,13 @@ ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *exec_log,
     }
 
     object = (ib_rule_log_rslt_t *)
-        ib_mpool_alloc(exec_log->tx_log->mp, sizeof(*object));
+        ib_mpool_calloc(exec_log->tx_log->mp, sizeof(*object), 1);
     if (object == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     object->value = value;
     object->result = result;
     object->status = status;
-    object->num_actions = 0;
-    object->num_events = 0;
 
     if (ib_flags_all(exec_log->tx_log->flags, IB_RULE_LOG_FLAG_ACTION) ) {
         rc = ib_list_create(&(object->act_list), exec_log->tx_log->mp);
@@ -774,6 +783,30 @@ ib_status_t ib_rule_log_exec_add_event(ib_rule_log_exec_t *exec_log,
 
     rc = ib_list_push(rslt->event_list, (ib_logevent_t *)event);
     IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_rule_log_exec_op(ib_rule_log_exec_t *exec_log,
+                                const ib_operator_inst_t *opinst,
+                                ib_status_t status)
+{
+    IB_FTRACE_INIT();
+    ib_list_node_t *node;
+    ib_rule_log_tgt_t *tgt;
+
+    if (exec_log == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    ++(exec_log->counts.num_execs);
+    exec_log->op_status = status;
+
+    node = ib_list_last(exec_log->tgt_list);
+    if ( (node == NULL) || (node->data == NULL) ) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    tgt = node->data;
+    ++(tgt->counts.num_execs);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 static void log_tx_start(
@@ -1266,15 +1299,17 @@ static void log_result(
 }
 
 static int get_count(
-    const ib_rule_log_tx_t *tx_log,
+    const ib_rule_log_exec_t *exec_log,
     const ib_rule_log_count_t *counts
 )
 {
     IB_FTRACE_INIT();
 
-    switch (tx_log->mode) {
+    switch (exec_log->mode) {
     case IB_RULE_LOG_MODE_ACT:
         IB_FTRACE_RET_INT(counts->num_actions);
+    case IB_RULE_LOG_MODE_EXEC:
+        IB_FTRACE_RET_INT(counts->num_execs);
     case IB_RULE_LOG_MODE_ERROR:
         IB_FTRACE_RET_INT(counts->num_errors);
     case IB_RULE_LOG_MODE_TRUE:
@@ -1304,7 +1339,7 @@ void ib_rule_log_execution(
     }
 
     tx_log = rule_exec->tx_log;
-    if (get_count(tx_log, &exec_log->counts) == 0) {
+    if (get_count(exec_log, &exec_log->counts) == 0) {
         IB_FTRACE_RET_VOID();
     }
 
@@ -1338,7 +1373,7 @@ void ib_rule_log_execution(
             const ib_list_node_t *rslt_node;
             assert(tgt != NULL);
 
-            if (get_count(tx_log, &tgt->counts) == 0) {
+            if (get_count(exec_log, &tgt->counts) == 0) {
                 continue;
             }
 

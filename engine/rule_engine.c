@@ -1168,6 +1168,10 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
             ib_rule_log_warn(rule_exec, "Operator returned an error: %s",
                              ib_status_to_string(op_rc));
         }
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec, "Failed to log operator execution: %s",
+                              ib_status_to_string(rc));
+        }
 
         /* Store the result */
         if (result != 0) {
@@ -1191,7 +1195,7 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
             actions = rule_exec->rule->false_actions;
         }
 
-        ib_rule_log_exec_add_result(rule_exec->exec_log, value, result, op_rc);
+        ib_rule_log_exec_add_result(rule_exec->exec_log, value, result);
         act_rc = execute_action_list(rule_exec, result, actions);
 
         /* Done. */
@@ -1229,15 +1233,24 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
     /* Special case: External rules */
     if (ib_flags_all(rule->flags, IB_RULE_FLAG_EXTERNAL)) {
+        ib_status_t op_rc;
 
         /* Execute the operator */
         ib_rule_log_trace(rule_exec, "Executing external rule");
-        rc = ib_operator_execute(rule_exec, opinst, NULL, &rule_exec->result);
-        if (rc != IB_OK) {
+        op_rc = ib_operator_execute(rule_exec, opinst, NULL,
+                                    &rule_exec->result);
+        if (op_rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "External operator returned an error: %s",
+                              ib_status_to_string(op_rc));
+        }
+        rc = ib_rule_log_exec_op(rule_exec->exec_log, opinst, op_rc);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "Failed to log external operator execution: %s",
                               ib_status_to_string(rc));
         }
+        ib_rule_log_execution(rule_exec);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -1791,13 +1804,16 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
     }
 
     /* Execute the rule operator */
-    op_rc = ib_operator_execute(rule_exec, rule->opinst,
-                                value, &result);
+    op_rc = ib_operator_execute(rule_exec, rule->opinst, value, &result);
     if (op_rc != IB_OK) {
-        ib_rule_log_error(rule_exec,
-                          "Operator returned an error: %s",
+        ib_rule_log_error(rule_exec, "Operator returned an error: %s",
                           ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(op_rc);
+    }
+    rc = ib_rule_log_exec_op(rule_exec->exec_log, rule->opinst, rc);
+    if (rc != IB_OK) {
+        ib_rule_log_error(rule_exec, "Failed to log operator execution: %s",
+                          ib_status_to_string(rc));
     }
     ib_rule_log_trace(rule_exec, "Operator => %" PRId64, result);
 
@@ -1817,7 +1833,7 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
      */
     actions = (result != 0) ? rule->true_actions : rule->false_actions;
 
-    ib_rule_log_exec_add_result(rule_exec->exec_log, value, result, op_rc);
+    ib_rule_log_exec_add_result(rule_exec->exec_log, value, result);
 
     rc = execute_action_list(rule_exec, result, actions);
 

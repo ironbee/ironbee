@@ -55,6 +55,7 @@ typedef struct ib_rule_log_act_t ib_rule_log_act_t;
  * Rule result counts for logging.
  */
 struct ib_rule_log_count_t {
+    int                     num_execs;   /**< Total # of operator executions */
     int                     num_actions; /**< Total # of actions executed */
     int                     num_events;  /**< Total # of events */
     int                     num_errors;  /**< Total # of operator errors */
@@ -105,6 +106,8 @@ struct ib_rule_log_exec_t {
     ib_list_t              *tgt_list;    /**< List of ib_rule_tgt_result_t */
     int                     num_tgt;     /**< # of targets */
     ib_rule_log_count_t     counts;      /**< Result counting info */
+    ib_rule_log_mode_t      mode;        /**< Rule logging mode */
+    ib_status_t             op_status;   /**< Return status of last operator */
 };
 
 /**
@@ -266,6 +269,21 @@ void ib_rule_log_phase(const ib_rule_exec_t *rule_exec,
                        const char *phase_name);
 
 /**
+ * Notify logger that an operator has been executed
+ *
+ * @param[in,out] log_exec The execution logging object
+ * @param[in] opinst Operator instance
+ * @param[in] status Status returned by the operator
+ *
+ * @returns IB_OK on success,
+ *          IB_EALLOC if an allocation failed
+ *          Error status returned by ib_list_push()
+ */
+ib_status_t ib_rule_log_exec_op(ib_rule_log_exec_t *log_exec,
+                                const ib_operator_inst_t *opinst,
+                                ib_status_t status);
+
+/**
  * Add a target result to a rule execution log
  *
  * @param[in,out] log_exec The execution logging object
@@ -286,7 +304,6 @@ ib_status_t ib_rule_log_exec_add_target(ib_rule_log_exec_t *log_exec,
  * @param[in,out] log_exec The new execution logging object
  * @param[in] value The value passed to the operator
  * @param[in] result Execution result
- * @param[in] status Status returned by the operator
  *
  * @returns IB_OK on success,
  *          IB_EALLOC if an allocation failed
@@ -294,8 +311,7 @@ ib_status_t ib_rule_log_exec_add_target(ib_rule_log_exec_t *log_exec,
  */
 ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *log_exec,
                                         const ib_field_t *value,
-                                        ib_num_t result,
-                                        ib_status_t status);
+                                        ib_num_t result);
 
 /**
  * Add an action to a rule execution logging object

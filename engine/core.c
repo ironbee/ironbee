@@ -4031,6 +4031,7 @@ static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
     if (new_mode_flags) {
         num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_ALL);
         num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_ACT);
+        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_EXEC);
         num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_ERROR);
         num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_TRUE);
         num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_FALSE);
@@ -4049,6 +4050,7 @@ static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
     if (ib_flags_any(log_flags, IB_RULE_LOG_MODE_MASK) ) {
         num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_ALL);
         num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_ACT);
+        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_EXEC);
         num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_ERROR);
         num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_TRUE);
         num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_FALSE);
@@ -4309,6 +4311,7 @@ static IB_STRVAL_MAP(core_rulelog_flags_map) = {
 
     IB_STRVAL_PAIR("allRules", IB_RULE_LOG_FLAG_MODE_ALL),
     IB_STRVAL_PAIR("actionableRulesOnly", IB_RULE_LOG_FLAG_MODE_ACT),
+    IB_STRVAL_PAIR("operatorExecOnly", IB_RULE_LOG_FLAG_MODE_EXEC),
     IB_STRVAL_PAIR("operatorErrorOnly", IB_RULE_LOG_FLAG_MODE_ERROR),
     IB_STRVAL_PAIR("returnedTrueOnly", IB_RULE_LOG_FLAG_MODE_TRUE),
     IB_STRVAL_PAIR("returnedFalseOnly", IB_RULE_LOG_FLAG_MODE_FALSE),
