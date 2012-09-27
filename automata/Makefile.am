@@ -5,6 +5,9 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 lib_LTLIBRARIES = libironautomata.la
 libironautomata_la_SOURCES = \
 	buffer.cpp \
+    eudoxus.c \
+    eudoxus_automata.c \
+    eudoxus_compiler.cpp \
     intermediate.cpp \
     logger.cpp \
     intermediate.pb.cc
