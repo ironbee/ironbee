@@ -1,0 +1,68 @@
+/*
+ * Intermediate Format Protobuf
+ *
+ * The intermediate format is chunked.  Each chunk is a uint32 in network
+ * byte order indicating the length of the following Chunk message.  This
+ * behavior enables streaming of automata.
+ *
+ * Nodes and outputs have uint64 identifiers.  These identifiers must be
+ * strictly above 0 (0 indicates a null referent) and no pair of nodes or
+ * outputs may have the same identifiers, although a node and an output may
+ * share one.  There is no requirement that identifiers by contiguous.
+ */
+
+package IronAutomata.Intermediate.PB;
+
+message Edge
+{
+    required uint64 target    = 1;
+
+    /* If values_bm is present than values should not be and vice versa.
+     *
+     * If neither values or values_bm is present, then this is an epsilon
+     * edge and should be followed on any input. In contrast, defaults
+     * are followed on any input that matches no edge.
+     */
+    optional bytes  values_bm = 2;
+    optional bytes  values    = 3;
+
+    // If true or absent, advance input on following this edge.
+    optional bool   advance   = 4;
+};
+
+message Node
+{
+    required uint64 id                 = 1;
+    optional uint64 first_output       = 2;
+    repeated Edge   edges              = 3;
+
+    // Followed on an input that no edge matches.
+    optional uint64 default_target     = 4;
+
+    // If true or absent, advance input on following default.
+    optional bool   advance_on_default = 5;
+};
+
+message Output
+{
+    required uint64 id      = 1;
+    required bytes  content = 2;
+    optional uint64 next    = 3;
+};
+
+// Multiple graph messages in a single automata will result in undefined
+// behavior.
+message Graph
+{
+    /* If present and true, then outputs will not be emitted if the input
+     * was not advanced.
+     */
+    optional bool no_advance_no_output = 1;
+};
+
+message Chunk
+{
+    optional Graph  graph   = 1;
+    repeated Node   nodes   = 2;
+    repeated Output outputs = 3;
+};
