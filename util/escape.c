@@ -184,7 +184,7 @@ ib_status_t ib_string_escape_json_buf(const char *data_in,
                                       data_out, dsize_out, dlen_out,
                                       result);
 
-    /* Subtrace the nul byte from the length */
+    /* Subtract the nul byte from the length */
     if (dlen_out != NULL) {
         --(*dlen_out);
     }
