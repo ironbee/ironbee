@@ -45,34 +45,42 @@ extern "C" {
  * 
  */
 enum alloc_strategy {
-    ALLOC_COPY  = 1, /* Copy all data. */
-    ALLOC_REUSE = 2  /* Reuse buffers. */
+    /** Make copies of all data. This strategy should be used when
+     *  the supplied buffers are transient and will go away.
+     */
+    ALLOC_COPY  = 1,
+
+    /** Reuse buffers, without a change of ownership. We assume the
+     *  buffers will continue to be available until the transaction
+     *  is deleted by the container.
+     */
+    ALLOC_REUSE = 2
 };
     
 /**
  * Initialize hybrid parsing mode, change state to TRANSACTION_START,
  * and invoke all registered callbacks.
  * 
- * @param tx
+ * @param[in] tx
  */
 void htp_txh_state_transaction_start(htp_tx_t *tx);
      
 /**
  * Set transaction request method.
  * 
- * @param tx
- * @param method
- * @param alloc
+ * @param[in] tx
+ * @param[in] method
+ * @param[in] alloc
  */
-void htp_txh_req_set_method_c(htp_tx_t *tx, char *method, alloc_strategy alloc);
+void htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, alloc_strategy alloc);
 
 /**
  * Set transaction request method. This additional function is used to
  * account for any differences in method interpretation between LibHTP and
  * the container.
  * 
- * @param tx
- * @param method_number
+ * @param[in] tx
+ * @param[in] method_number
  */
 void htp_txh_req_set_method_number(htp_tx_t *tx, int method_numer);
      
@@ -80,9 +88,9 @@ void htp_txh_req_set_method_number(htp_tx_t *tx, int method_numer);
  * Set transaction request URI. If the URI contains a query string, it will
  * be extracted from it and the parameter parsed.
  * 
- * @param tx
- * @param uri
- * @param alloc
+ * @param[in] tx
+ * @param[in] uri
+ * @param[in] alloc
  */
 void htp_txh_req_set_uri_c(htp_tx_t *tx, char *uri, alloc_strategy alloc);
 
@@ -90,39 +98,43 @@ void htp_txh_req_set_uri_c(htp_tx_t *tx, char *uri, alloc_strategy alloc);
  * Sets transaction query string. Any available parameters will be parsed
  * and processed.
  * 
- * @param tx
- * @param query_string
- * @param alloc
+ * @param[in] tx
+ * @param[in] query_string
+ * @param[in] alloc
  */
 void htp_txh_req_set_query_string_c(htp_tx_t *tx, char *query_string, alloc_strategy alloc);
 
 /**
- * Set request protocol string (e.g., "HTTP/1.0"). Do not invoke
- * when HTTP/0.9 is used. Must be invoked before htp_txh_set_req_protocol_number().
+ * Set request protocol string (e.g., "HTTP/1.0"), which will then be parsed
+ * to extract protocol name and version. Do not invoke when HTTP/0.9 is used
+ * (because this protocol version does not actually use the protocol string).
+ * Must be invoked before htp_txh_set_req_protocol_number().
  * 
- * @param tx
- * @param protocol
- * @param alloc
+ * @param[in] tx
+ * @param[in] protocol
+ * @param[in] alloc
  */
-void htp_txh_req_set_protocol_c(htp_tx_t *tx, char *protocol, alloc_strategy alloc);
+void htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, alloc_strategy alloc);
 
 /**
- * Set request protocol version. Must be invoked after htp_txh_set_req_protocol_c().
- * Convert the protocol version number to an integer by multiplying it with 100. For
- * example, 1.1 becomes 110. Alternatively, use the HTTP_0_9, HTTP_1_0, and HTTP_1_1
- * constants.
+ * Set request protocol version number. Must be invoked after
+ * htp_txh_set_req_protocol_c(), because it will overwrite the previously
+ * extracted version number. Convert the protocol version number to an integer
+ * by multiplying it with 100. For example, 1.1 becomes 110. Alternatively,
+ * use the HTTP_0_9, HTTP_1_0, and HTTP_1_1 constants.
  * 
- * @param tx
- * @param protocol
+ * @param[in] tx
+ * @param[in] protocol
  */
 void htp_txh_req_set_protocol_number(htp_tx_t *tx, int protocol);
 
 /**
- * Forces HTTP/0.9 as the transaction protocol. This method exists to minimize
- * the possibility of LibHTP using a different protocol version for a particular
- * transaction.
- * 
- * @param is_http_0_9
+ * Forces HTTP/0.9 as the transaction protocol. This method exists to ensure
+ * that both LibHTP and the container treat the transaction as HTTP/0.9, despite
+ * potential differences in how protocol version is determined.
+ *
+ * @param[in] tx
+ * @param[in] is_http_0_9
  */
 void htp_txh_req_set_protocol_http_0_9(htp_tx_t *tx, int is_http_0_9);
      
@@ -130,7 +142,7 @@ void htp_txh_req_set_protocol_http_0_9(htp_tx_t *tx, int is_http_0_9);
  * Change transaction state to REQUEST_LINE and invoke all
  * registered callbacks.
  * 
- * @param tx
+ * @param[in] tx
 */
 void htp_txh_state_request_line(htp_tx_t *tx);
      
@@ -139,12 +151,12 @@ void htp_txh_state_request_line(htp_tx_t *tx);
  * each available header, and in the order in which headers were
  * seen in the request.
  * 
- * @param tx
- * @param name
- * @param value
- * @param alloc
+ * @param[in] tx
+ * @param[in] name
+ * @param[in] value
+ * @param[in] alloc
  */
-void htp_txh_req_set_header_c(htp_tx_t *tx, char *name, char *value, alloc_strategy alloc);
+void htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, alloc_strategy alloc);
 
 /**
  * Removes all request headers associated with this transaction. This
@@ -155,7 +167,7 @@ void htp_txh_req_set_header_c(htp_tx_t *tx, char *name, char *value, alloc_strat
  * the headers are set for the second time, they will potentially contain
  * a mixture of standard and trailing headers.
  * 
- * @param tx
+ * @param[in] tx
  */
 void htp_txh_req_headers_clear(htp_tx_t *tx);
      
@@ -163,7 +175,7 @@ void htp_txh_req_headers_clear(htp_tx_t *tx);
  * Change transaction state to REQUEST_HEADERS and invoke all
  * registered callbacks.
  * 
- * @param tx
+ * @param[in] tx
  */
 void htp_txh_state_request_headers(htp_tx_t *tx);    
      
@@ -174,8 +186,8 @@ void htp_txh_state_request_headers(htp_tx_t *tx);
  * instruct LibHTP to attempt decompress if the headers indicate that
  * compression was used by the client.
  * 
- * @param tx
- * @param compression_method
+ * @param[in] tx
+ * @param[in] compression_method
  */
 void htp_txh_req_set_compression(htp_tx_t *tx, int compression_method);
 
@@ -184,41 +196,65 @@ void htp_txh_req_set_compression(htp_tx_t *tx, int compression_method);
  * handling of chunked encoding is implemented by the container. The
  * supplied body will be decompressed if instructed by a previous
  * invocation of htp_txh_req_set_compression(). When you're done
- * submitting body data, invoking a state change (to REQUEST) will
- * finalize any processing that might be pending.
+ * submitting body data, invoke a state change (to REQUEST) to
+ * finalize any processing that might be pending. The supplied data is
+ * fully consumed and there is no expectation that it will be available
+ * afterwards. The protocol parsing code makes no copies of the data,
+ * but some parsers might.
  * 
- * @param tx
+ * @param[in] tx
  */
-void htp_txh_req_process_body_data(htp_tx_t *tx, char *data, size_t len);
+void htp_txh_req_process_body_data(htp_tx_t *tx, const char *data, size_t len);
 
 /**
  * Change transaction state to REQUEST and invoke all
  * registered callbacks.
+ *
+ * @param[in] tx
  */
 void htp_txh_state_request(htp_tx_t *tx);
 
 /**
  * Change transaction state to RESPONSE_START and invoke all
  * registered callbacks.
+ *
+ * @param[in] tx
  */
 void htp_txh_state_response_start(htp_tx_t *tx);
      
 /**
  * Set response line.
  * 
- * @param tx
- * @param line
- * @param alloc
+ * @param[in] tx
+ * @param[in] line
+ * @param[in] alloc
  */     
-void htp_txh_res_set_status_line_c(htp_tx_t *tx, char *line, alloc_strategy alloc);
+void htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, alloc_strategy alloc);
+
+/**
+ * Set response protocol string.
+ *
+ * @param[in] tx
+ * @param[in] protocol
+ */
+void htp_txh_res_set_status_protocol(htp_tx_t *tx, const char *protocol);
 
 /**
  * Set response status code, as seen by the container.
  * 
- * @param tx
- * @param status
+ * @param[in] tx
+ * @param[in] status
  */
 void htp_txh_res_set_status_code(htp_tx_t *tx, int status);
+
+/**
+ * Set response status message, which is the part of the response
+ * line that comes after the status code.
+ *
+ * @param[in] tx
+ * @param[in] message
+ */
+void htp_txh_res_set_status_message(htp_tx_t *tx, const char *message);
 
 /**
  * Change transaction state to RESPONSE_LINE and invoke all
@@ -231,12 +267,12 @@ void htp_txh_state_response_line(htp_tx_t *tx);
  * each available header, and in the order in which headers were
  * seen in the response.
  * 
- * @param tx
- * @param name
- * @param value
- * @param alloc
+ * @param[in] tx
+ * @param[in] name
+ * @param[in] value
+ * @param[in] alloc
  */     
-void htp_txh_res_set_header_c(htp_tx_t *tx, char *name, char *value, alloc_strategy alloc);
+void htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, alloc_strategy alloc);
 
 /**
  * Removes all response headers associated with this transaction. This
@@ -247,7 +283,7 @@ void htp_txh_res_set_header_c(htp_tx_t *tx, char *name, char *value, alloc_strat
  * the headers are set for the second time, they will potentially contain
  * a mixture of standard and trailing headers.
  * 
- * @param tx
+ * @param[in] tx
  */
 void htp_txh_res_headers_clear(htp_tx_t *tx);
 
@@ -264,8 +300,8 @@ void htp_txh_state_response_headers(htp_tx_t *tx);
  * instruct LibHTP to attempt decompress if the headers indicate that
  * compression was used by the client.
  * 
- * @param tx
- * @param compression
+ * @param[in] tx
+ * @param[in] compression
  */
 void htp_txh_res_set_compression(htp_tx_t *tx, int compression);
 
@@ -277,15 +313,17 @@ void htp_txh_res_set_compression(htp_tx_t *tx, int compression);
  * submitting body data, invoking a state change (to RESPONSE) will
  * finalize any processing that might be pending.
  * 
- * @param tx
- * @param data
- * @param len
+ * @param[in] tx
+ * @param[in] data
+ * @param[in] len
  */
-void htp_txh_res_process_body_data(htp_tx_t *tx, char *data, size_t len);
+void htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len);
 
 /**
  * Change transaction state to RESPONSE and invoke all
  * registered callbacks.
+ *
+ * @param[in] tx
  */
 void htp_txh_state_response(htp_tx_t *tx);
 
