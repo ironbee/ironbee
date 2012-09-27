@@ -13,11 +13,13 @@ libironautomata_la_SOURCES = \
     intermediate.pb.cc
 
 bin_PROGRAMS = \
+    bench \
     ec \
     intermediate_to_dot
   
-intermediate_to_dot_SOURCES = intermediate_to_dot.cpp
+bench_SOURCES = bench.cpp
 ec_SOURCES = ec.cpp
+intermediate_to_dot_SOURCES = intermediate_to_dot.cpp
 
 LDADD = libironautomata.la
 AM_CPPFLAGS = \
@@ -31,7 +33,8 @@ AM_LDFLAGS = \
     -lprotobuf \
     -lboost_program_options \
     -lboost_system \
-    -lboost_filesystem
+    -lboost_filesystem \
+    -lboost_chrono
     
 # Ignore protobuf warnings.
 CPPFLAGS += -Wno-shadow -Wno-extra
