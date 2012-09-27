@@ -37,6 +37,8 @@
 #ifndef HTP_HYBRID_H
 #define	HTP_HYBRID_H
 
+#include "htp.h"
+
 #ifdef	__cplusplus
 extern "C" {
 #endif
@@ -72,7 +74,7 @@ void htp_txh_state_transaction_start(htp_tx_t *tx);
  * @param[in] method
  * @param[in] alloc
  */
-void htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, alloc_strategy alloc);
+void htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc);
 
 /**
  * Set transaction request method. This additional function is used to
@@ -92,7 +94,7 @@ void htp_txh_req_set_method_number(htp_tx_t *tx, int method_numer);
  * @param[in] uri
  * @param[in] alloc
  */
-void htp_txh_req_set_uri_c(htp_tx_t *tx, char *uri, alloc_strategy alloc);
+void htp_txh_req_set_uri_c(htp_tx_t *tx, char *uri, enum alloc_strategy alloc);
 
 /**
  * Sets transaction query string. Any available parameters will be parsed
@@ -102,7 +104,7 @@ void htp_txh_req_set_uri_c(htp_tx_t *tx, char *uri, alloc_strategy alloc);
  * @param[in] query_string
  * @param[in] alloc
  */
-void htp_txh_req_set_query_string_c(htp_tx_t *tx, char *query_string, alloc_strategy alloc);
+void htp_txh_req_set_query_string_c(htp_tx_t *tx, char *query_string, enum alloc_strategy alloc);
 
 /**
  * Set request protocol string (e.g., "HTTP/1.0"), which will then be parsed
@@ -114,7 +116,7 @@ void htp_txh_req_set_query_string_c(htp_tx_t *tx, char *query_string, alloc_stra
  * @param[in] protocol
  * @param[in] alloc
  */
-void htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, alloc_strategy alloc);
+void htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_strategy alloc);
 
 /**
  * Set request protocol version number. Must be invoked after
@@ -156,7 +158,7 @@ void htp_txh_state_request_line(htp_tx_t *tx);
  * @param[in] value
  * @param[in] alloc
  */
-void htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, alloc_strategy alloc);
+void htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
 
 /**
  * Removes all request headers associated with this transaction. This
@@ -229,7 +231,7 @@ void htp_txh_state_response_start(htp_tx_t *tx);
  * @param[in] line
  * @param[in] alloc
  */     
-void htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, alloc_strategy alloc);
+void htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_strategy alloc);
 
 /**
  * Set response protocol string.
@@ -272,7 +274,7 @@ void htp_txh_state_response_line(htp_tx_t *tx);
  * @param[in] value
  * @param[in] alloc
  */     
-void htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, alloc_strategy alloc);
+void htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
 
 /**
  * Removes all response headers associated with this transaction. This
