@@ -15,7 +15,9 @@ libironautomata_la_SOURCES = \
 	buffer.cpp \
     eudoxus_compiler.cpp \
     intermediate.cpp \
-    logger.cpp \
+    logger.cpp
+
+nodist_libironautomata_la_SOURCES = \
     intermediate.pb.cc
 
 bin_PROGRAMS = \
