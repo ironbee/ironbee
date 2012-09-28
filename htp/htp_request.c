@@ -444,18 +444,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
 
     // Run hook REQUEST_HEADERS
     int rc = hook_run_all(connp->cfg->hook_request_headers, connp);
-    if (rc != HOOK_OK) {
-        switch (rc) {
-            case HOOK_STOP:
-                return HTP_STOP;
-            case HOOK_ERROR:
-            case HOOK_DECLINED:
-            default:
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                    "Request headers callback returned error (%d)", rc);
-                return HTP_ERROR;
-        }
-    }
+    if (rc != HOOK_OK) return rc;
 
     return HTP_OK;
 }
@@ -550,18 +539,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
 
                     // Run hook REQUEST_TRAILER
                     int rc = hook_run_all(connp->cfg->hook_request_trailer, connp);
-                    if (rc != HOOK_OK) {
-                        switch (rc) {
-                            case HOOK_STOP:
-                                return HTP_STOP;
-                            case HOOK_ERROR:
-                            case HOOK_DECLINED:
-                            default:
-                                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                                    "Request headers callback returned error (%d)", rc);
-                                return HTP_ERROR;
-                        }
-                    }
+                    if (rc != HOOK_OK) return rc;
 
                     // We've completed parsing this request
                     connp->in_state = htp_connp_REQ_IDLE;
@@ -720,25 +698,14 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 
                 // Keep the original URI components, but
                 // create a copy which we can normalize and use internally
-                if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri)) {
+                if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri) != HTP_OK) {
                     // Note: downstream responsible for error logging
                     return HTP_ERROR;
                 }
 
                 // Run hook REQUEST_URI_NORMALIZE
                 int rc = hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
-                if (rc != HOOK_OK) {
-                    switch (rc) {
-                        case HOOK_STOP:
-                            return HTP_STOP;
-                        case HOOK_ERROR:
-                        case HOOK_DECLINED:
-                        default:
-                            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                                "Request headers callback returned error (%d)", rc);
-                            return HTP_ERROR;
-                    }
-                }
+                if (rc != HOOK_OK) return rc;
 
                 // Now is a good time to generate request_uri_normalized, before we finalize
                 // parsed_uri (and lose the information which parts were provided in the request and
@@ -815,18 +782,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 
             // Run hook REQUEST_LINE
             int rc = hook_run_all(connp->cfg->hook_request_line, connp);
-            if (rc != HOOK_OK) {
-                switch (rc) {
-                    case HOOK_STOP:
-                        return HTP_STOP;
-                    case HOOK_ERROR:
-                    case HOOK_DECLINED:
-                    default:
-                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                            "Request headers callback returned error (%d)", rc);
-                        return HTP_ERROR;
-                }
-            }
+            if (rc != HOOK_OK) return rc;
 
             // Clean up.
             connp->in_line_len = 0;
@@ -866,18 +822,7 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
 
         // Run hook REQUEST
         int rc = hook_run_all(connp->cfg->hook_request, connp);
-        if (rc != HOOK_OK) {
-            switch (rc) {
-                case HOOK_STOP:
-                    return HTP_STOP;
-                case HOOK_ERROR:
-                case HOOK_DECLINED:
-                default:
-                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Request headers callback returned error (%d)", rc);
-                    return HTP_ERROR;
-            }
-        }
+        if (rc != HOOK_OK) return rc;
 
         // Clean-up
         if (connp->put_file != NULL) {
@@ -918,18 +863,7 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
 
     // Run hook TRANSACTION_START
     int rc = hook_run_all(connp->cfg->hook_transaction_start, connp);
-    if (rc != HOOK_OK) {
-        switch (rc) {
-            case HOOK_STOP:
-                return HTP_STOP;
-            case HOOK_ERROR:
-            case HOOK_DECLINED:
-            default:
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                    "Request headers callback returned error (%d)", rc);
-                return HTP_ERROR;
-        }
-    }
+    if (rc != HOOK_OK) return rc;
 
     // Change state into request line parsing
     connp->in_state = htp_connp_REQ_LINE;

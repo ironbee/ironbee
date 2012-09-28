@@ -36,34 +36,7 @@
 
 #include "hooks.h"
 
-/**
- * Creates a new hook.
- *
- * @return New htp_hook_t structure on success, NULL on failure
- */
-htp_hook_t *hook_create(void) {
-    htp_hook_t *hook = calloc(1, sizeof (htp_hook_t));
-    if (hook == NULL) return NULL;
-
-    hook->callbacks = list_array_create(4);
-    if (hook->callbacks == NULL) {
-        free(hook);
-        return NULL;
-    }   
-
-    return hook;
-}
-
-/**
- * Creates a copy of the provided hook. The hook is allowed to be NULL,
- * in which case this function simply returns a NULL.
- *
- * @param hook
- * @return A copy of the hook, or NULL (if the provided hook was NULL
- *         or, if it wasn't, if there was a memory allocation problem while
- *         constructing a copy).
- */
-htp_hook_t * hook_copy(htp_hook_t *hook) {
+htp_hook_t * hook_copy(const htp_hook_t *hook) {
     if (hook == NULL) return NULL;
 
     htp_hook_t *copy = hook_create();
@@ -81,12 +54,19 @@ htp_hook_t * hook_copy(htp_hook_t *hook) {
     return copy;
 }
 
-/**
- * Destroys an existing hook. It is all right to send a NULL
- * to this method because it will simply return straight away.
- *
- * @param hook
- */
+htp_hook_t *hook_create(void) {
+    htp_hook_t *hook = calloc(1, sizeof (htp_hook_t));
+    if (hook == NULL) return NULL;
+
+    hook->callbacks = list_array_create(4);
+    if (hook->callbacks == NULL) {
+        free(hook);
+        return NULL;
+    }   
+
+    return hook;
+}
+
 void hook_destroy(htp_hook_t *hook) {
     if (hook == NULL) return;
 
@@ -101,17 +81,10 @@ void hook_destroy(htp_hook_t *hook) {
     free(hook);
 }
 
-/**
- * Registers a new callback with the hook.
- *
- * @param hook
- * @param callback_fn
- * @return 1 on success, -1 on memory allocation error
- */
-int hook_register(htp_hook_t **hook, htp_callback_fn_t callback_fn) {
+int hook_register(htp_hook_t **hook, const htp_callback_fn_t callback_fn) {
     int hook_created = 0;
     htp_callback_t *callback = calloc(1, sizeof (htp_callback_t));
-    if (callback == NULL) return -1;
+    if (callback == NULL) return HOOK_ERROR;
 
     callback->fn = callback_fn;
 
@@ -120,7 +93,7 @@ int hook_register(htp_hook_t **hook, htp_callback_fn_t callback_fn) {
         *hook = hook_create();
         if (*hook == NULL) {
             free(callback);
-            return -1;
+            return HOOK_ERROR;
         }
 
         hook_created = 1;
@@ -133,63 +106,45 @@ int hook_register(htp_hook_t **hook, htp_callback_fn_t callback_fn) {
         }
         
         free(callback);
-        return -1;
+        return HOOK_ERROR;
     }
 
-    return 1;
+    return HOOK_OK;
 }
 
-/**
- * Runs all the callbacks associated with a given hook. Only stops if
- * one of the callbacks returns an error (HOOK_ERROR) or stop (HOOK_STOP).
- *
- * @param hook
- * @param data
- * @return HOOK_OK or HOOK_ERROR
- */
-int hook_run_all(htp_hook_t *hook, void *data) {
-    int ret;
+int hook_run_all(htp_hook_t *hook, void *user_data) {
+    if (hook == NULL) return HOOK_OK;
 
-    if (hook == NULL) {
-        return HOOK_OK;
-    }
-
+    // Loop through registered callbacks,
+    // giving each a chance to run.
     htp_callback_t *callback = NULL;
     list_iterator_reset(hook->callbacks);
     while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
-        ret = callback->fn(data);
-        if (ret == HOOK_ERROR) {
-            return HOOK_ERROR;
-        }
-        else if (ret == HOOK_STOP) {
-            return HOOK_STOP;
+        int rc = callback->fn(user_data);
+        if ((rc != HOOK_OK)&&(rc != HOOK_DECLINED)) {
+            // Return HOOK_STOP or error.
+            return rc;
         }
     }
 
     return HOOK_OK;
 }
 
-/**
- * Run callbacks until one of them accepts to service the hook.
- *
- * @param hook
- * @param data
- * @return HOOK_OK on success, HOOK_DECLINED if no callback wanted to run and HOOK_ERROR on error.
- */
-int hook_run_one(htp_hook_t *hook, void *data) {
-    if (hook == NULL) {
-        return HOOK_DECLINED;
-    }
+int hook_run_one(htp_hook_t *hook, void *user_data) {
+    if (hook == NULL) return HOOK_DECLINED;
 
+    // Look through registered callbacks
+    // until one accepts to process the hook.
     htp_callback_t *callback = NULL;
     list_iterator_reset(hook->callbacks);
     while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
-        int status = callback->fn(data);
-        // HOOK_OK, HOOK_ERROR and HOOK_STOP will stop hook processing
-        if (status != HOOK_DECLINED) {
-            return status;
+        int rc = callback->fn(user_data);
+        if (rc != HOOK_DECLINED) {
+            // Return HOOK_OK, HOOK_STOP, or error.
+            return rc;
         }
     }
 
+    // No hook wanted to process the callback.
     return HOOK_DECLINED;
 }

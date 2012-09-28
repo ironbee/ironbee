@@ -2236,6 +2236,7 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
 
     // Run configuration hooks second
     rc = hook_run_all(connp->cfg->hook_request_body_data, d);
+    if (rc != HOOK_OK) return rc;
 
     // On PUT requests, treat request body as file
     if (connp->put_file != NULL) {
@@ -2247,7 +2248,7 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
         file_data.file->len += d->len;
 
         hook_run_all(connp->cfg->hook_request_file_data, &file_data);
-        // TODO Handle rc
+        if (rc != HOOK_OK) return rc;
     }
 
     return rc;
@@ -2271,7 +2272,9 @@ int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
 
     // Run configuration hooks second
     rc = hook_run_all(connp->cfg->hook_response_body_data, d);
-    return rc;
+    if (rc != HOOK_OK) return rc;
+    
+    return HOOK_OK;
 }
 
 bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffset) {
