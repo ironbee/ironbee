@@ -36,8 +36,8 @@
 
 #include <ironbee/build.h>
 #include <ironbee/engine.h>
-#include <ironbee/rule_defs.h>
 #include <ironbee/field.h>
+#include <ironbee/rule_defs.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus
