@@ -25,6 +25,7 @@
 #include <ironautomata/intermediate.hpp>
 #include <ironautomata/bits.h>
 
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/make_shared.hpp>
@@ -46,6 +47,10 @@ using namespace std;
 
 namespace IronAutomata {
 namespace Intermediate {
+
+node_t::node_t() : advance_on_default(true) {}
+
+edge_t::edge_t() : advance(true) {}
 
 bool read_chunk(istream& input, PB::Chunk& chunk)
 {
@@ -117,6 +122,167 @@ void write_chunk(ostream& output, PB::Chunk& chunk)
     if (! output) {
         throw runtime_error("Error writing chunk.");
     }
+}
+
+namespace  {
+
+class AutomataWriter
+{
+public:
+    explicit
+    AutomataWriter(ostream& output, size_t chunk_size = 0) :
+        m_output(output),
+        m_pb_chunk_size(chunk_size),
+        m_next_id(1)
+    {
+        // nop
+    }
+
+    void write_automata(const automata_t& automata)
+    {
+        if (automata.no_advance_no_output) {
+            PB::Graph* pb_graph = m_pb_chunk.mutable_graph();
+            pb_graph->set_no_advance_no_output(true);
+        }
+
+        breadth_first(
+            automata,
+            boost::bind(&AutomataWriter::bfs_visit, this, _1)
+        );
+
+        write_outputs();
+
+        if (
+            m_pb_chunk.nodes_size() + m_pb_chunk.outputs_size() > 0
+        ) {
+            write_chunk(m_output, m_pb_chunk);
+        }
+    }
+
+    template <typename T>
+    id_t acquire_id(map<T, id_t>& to_id_map, const T& object)
+    {
+        typename map<T, id_t>::iterator iter = to_id_map.find(object);
+        if (iter == to_id_map.end()) {
+            iter = to_id_map.insert(iter, make_pair(object, m_next_id));
+            ++m_next_id;
+        }
+        return iter->second;
+    }
+
+    id_t acquire_id(const node_p& node)
+    {
+        return acquire_id(m_node_to_id, node);
+    }
+
+    id_t acquire_id(const output_p& output)
+    {
+        return acquire_id(m_output_to_id, output);
+    }
+
+    void bfs_visit(const node_p& node)
+    {
+        PB::Node* pb_node = m_pb_chunk.add_nodes();
+        pb_node->set_id(acquire_id(node));
+        if (node->output) {
+            id_t output_id = acquire_id(node->output);
+            pb_node->set_first_output(output_id);
+        }
+        if (node->default_target) {
+            pb_node->set_default_target(acquire_id(node->default_target));
+        }
+        if (! node->advance_on_default) {
+            pb_node->set_advance_on_default(false);
+        }
+        BOOST_FOREACH(const edge_t& edge, node->edges) {
+            PB::Edge* pb_edge = pb_node->add_edges();
+            if (! edge.target) {
+                throw invalid_argument("Edge without target.");
+            }
+            pb_edge->set_target(acquire_id(edge.target));
+            if (! edge.advance) {
+                pb_edge->set_advance(false);
+            }
+            if (! edge.values.empty() && ! edge.values_bm.empty()) {
+                throw invalid_argument("Edge with both vector and bitmap.");
+            }
+            if (! edge.values.empty()) {
+                pb_edge->set_values(
+                    edge.values.data(), edge.values.size()
+                );
+            }
+            else if (! edge.values_bm.empty()) {
+                pb_edge->set_values_bm(
+                    edge.values_bm.data(), edge.values_bm.size()
+                );
+            }
+        }
+        flush();
+    }
+
+    void write_outputs()
+    {
+        typedef list<output_p> output_list_t;
+        output_list_t todo;
+        BOOST_FOREACH(const output_to_id_t::value_type& v, m_output_to_id) {
+            todo.push_back(v.first);
+        }
+
+        // We'll use last_id to detect when we have a new output.
+        id_t last_id = m_next_id;
+        while (! todo.empty()) {
+            output_p output = todo.front();
+            todo.pop_front();
+
+            PB::Output* pb_output = m_pb_chunk.add_outputs();
+            pb_output->set_id(acquire_id(output));
+            pb_output->set_content(
+                output->content.data(), output->content.size()
+            );
+            if (output->next_output) {
+                id_t next_id = acquire_id(output->next_output);
+                if (next_id >= last_id) {
+                    todo.push_back(output->next_output);
+                }
+                pb_output->set_next(next_id);
+            }
+            flush();
+        }
+    }
+
+    void flush()
+    {
+        if (
+            size_t(m_pb_chunk.nodes_size() + m_pb_chunk.outputs_size())
+            >= m_pb_chunk_size
+        ) {
+            write_chunk(m_output, m_pb_chunk);
+            m_pb_chunk.Clear();
+        }
+    }
+
+private:
+    ostream&  m_output;
+    size_t    m_pb_chunk_size;
+    id_t      m_next_id;
+    PB::Chunk m_pb_chunk;
+
+    typedef map<output_p, id_t> output_to_id_t;
+    typedef map<node_p, id_t> node_to_id_t;
+    output_to_id_t m_output_to_id;
+    node_to_id_t m_node_to_id;
+};
+
+}
+
+void write_automata(
+    const automata_t& automata,
+    ostream&          output,
+    size_t            chunk_size
+)
+{
+    AutomataWriter writer(output, chunk_size);
+    writer.write_automata(automata);
 }
 
 /**

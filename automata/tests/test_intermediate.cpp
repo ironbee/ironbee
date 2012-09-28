@@ -26,6 +26,7 @@
 #include <ironautomata/bits.h>
 
 #include <boost/foreach.hpp>
+#include <boost/make_shared.hpp>
 
 #include <google/protobuf/io/gzip_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
@@ -469,4 +470,71 @@ TEST(TestIntermediate, VectorEdgeIterator)
     for (int i = 0; i <= 36; ++i) {
         EXPECT_EQ(result[i], 7 * i);
     }
+}
+
+// Very basic test; more significant testing will be done by end to end tests.
+TEST(TestIntermediate, WriteAutomata)
+{
+    using namespace IronAutomata::Intermediate;
+    using boost::make_shared;
+
+    stringstream s;
+
+    {
+        automata_t a;
+        node_p   node   = a.start_node = make_shared<node_t>();
+        output_p output = node->output = make_shared<output_t>();
+
+        output->content.push_back('7');
+        output->content.push_back('3');
+
+        output_p other_output = output->next_output = make_shared<output_t>();
+        other_output->content.push_back('9');
+
+        node->edges.push_back(edge_t());
+        edge_t& edge = node->edges.back();
+
+        node_p other_node = edge.target = make_shared<node_t>();
+        edge.values.push_back('5');
+
+        write_automata(a, s);
+        s.seekp(0);
+    }
+
+    IronAutomata::ostream_logger logger(cout);
+    AutomataReader reader(logger);
+
+    bool success = reader.read_from_istream(s);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(reader.clean());
+    EXPECT_TRUE(reader.success());
+
+    automata_t a = reader.automata();
+
+    EXPECT_FALSE(a.no_advance_no_output);
+    ASSERT_TRUE(a.start_node);
+    node_p node = a.start_node;
+    EXPECT_TRUE(node->advance_on_default);
+    ASSERT_TRUE(node->output);
+    ASSERT_EQ(1UL, node->edges.size());
+    EXPECT_FALSE(node->default_target);
+    output_p output = node->output;
+    ASSERT_EQ(2UL, output->content.size());
+    EXPECT_EQ('7', output->content[0]);
+    EXPECT_EQ('3', output->content[1]);
+    ASSERT_TRUE(output->next_output);
+    output = output->next_output;
+    ASSERT_EQ(1UL, output->content.size());
+    EXPECT_EQ('9', output->content[0]);
+    EXPECT_FALSE(output->next_output);
+    edge_t& edge = node->edges.front();
+    EXPECT_TRUE(edge.advance);
+    ASSERT_TRUE(edge.target);
+    ASSERT_EQ(1UL, edge.values.size());
+    EXPECT_EQ('5', edge.values[0]);
+    node = edge.target;
+    EXPECT_FALSE(node->default_target);
+    EXPECT_TRUE(node->edges.empty());
+    EXPECT_TRUE(node->advance_on_default);
+    EXPECT_FALSE(node->output);
 }

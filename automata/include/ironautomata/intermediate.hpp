@@ -78,6 +78,9 @@ typedef boost::shared_ptr<output_t> output_p;
  */
 struct edge_t
 {
+    //! Constructor. advance set to true.
+    edge_t();
+
     //! Target.
     node_p target;
     //! Advance input on following.
@@ -105,6 +108,9 @@ struct edge_t
  */
 struct node_t
 {
+    //! Constructor: advance_on_default set to true.
+    node_t();
+
     //! First output.
     output_p output;
 
@@ -148,7 +154,7 @@ struct automata_t
  * @return true if a chunk was read and false on EOF.
  * @throw runtime_error on error.
  */
-bool read_chunk(std::istream& input, PB::Chunk& chunk)
+bool read_chunk(std::istream& input, PB::Chunk& chunk);
 
 /**
  * Write a chunk to a stream.
@@ -259,6 +265,25 @@ bool read_automata(
     automata_t&   destination,
     std::istream& input,
     logger_t      logger = nop_logger
+);
+
+/**
+ * Write an automata.
+ *
+ * The write interface is significantly simpler than the read interface as it
+ * does significantly less validation.
+ *
+ * @param[in] automata   Automata to write.
+ * @param[in] output     Stream to write to.
+ * @param[in] chunk_size If non-0, no chunk will contain more than
+ *                       @a chunk_size nodes and outputs.
+ * @throw runtime_error on write error.
+ * @throw invalid_argument if @a automata is invalid.
+ */
+void write_automata(
+    const automata_t&   automata,
+    std::ostream&       output,
+    size_t              chunk_size = 0
 );
 
 /**
