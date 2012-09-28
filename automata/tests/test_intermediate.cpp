@@ -32,6 +32,8 @@
 
 #include <sstream>
 
+#include <arpa/inet.h>
+
 #include "gtest/gtest.h"
 
 using namespace std;
