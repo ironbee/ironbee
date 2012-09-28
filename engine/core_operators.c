@@ -42,12 +42,6 @@
 #include <ctype.h>
 #include <inttypes.h>
 
-/* Numeric operator params */
-typedef struct {
-    const char *str;
-    ib_num_t    num;
-} numop_params_t;
-
 /**
  * Allocate a buffer and unescape operator arguments.
  * @param[in] ib IronBee engine used for logging.
@@ -780,7 +774,7 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
                                     ib_operator_inst_t *op_inst)
 {
     IB_FTRACE_INIT();
-    numop_params_t *vptr;
+    ib_field_t *f;
     ib_status_t rc;
     bool expandable;
     ib_num_t value;
@@ -816,22 +810,21 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
         }
     }
 
-    /* Allocate storage for the value */
-    vptr = (numop_params_t *)ib_mpool_alloc(mp, sizeof(*vptr));
-    if (vptr == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    if (expandable) {
+        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
+                             IB_FTYPE_NULSTR, ib_ftype_nulstr_in(params_unesc));
+    }
+    else {
+        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
+                             IB_FTYPE_NUM, ib_ftype_num_in(&value));
     }
 
-    /* Fill in the parameters */
-    vptr->str = ib_mpool_strdup(mp, params_unesc);
-    if (vptr->str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    if (! expandable) {
-        vptr->num = value;
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    op_inst->data = vptr;
+    op_inst->data = f;
+    op_inst->fparam = f;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -839,29 +832,36 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
  * Get expanded numeric value of a string
  *
  * @param[in] rule_exec Rule execution object
- * @param[in] pdata Parameter data
+ * @param[in] field Operator instance field
  * @param[in] flags Operator instance flags
  * @param[out] result Pointer to number in which to store the result
  *
  * @returns Status code
  */
 static ib_status_t get_num_value(const ib_rule_exec_t *rule_exec,
-                                 const numop_params_t *pdata,
+                                 const ib_field_t *field,
                                  ib_flags_t flags,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    ib_num_t rc;
+    ib_status_t rc;
+    const char *original;
     char *expanded;
 
     /* Easy case: just return the number from the pdata structure */
     if ( (flags & IB_OPINST_FLAG_EXPAND) == 0) {
-        *result = pdata->num;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        rc = ib_field_value(field, ib_ftype_num_out(result));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Get the string from the field */
+    rc = ib_field_value(field, ib_ftype_nulstr_out(&original));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Expand the string */
-    rc = ib_data_expand_str(rule_exec->tx->dpi, pdata->str, false, &expanded);
+    rc = ib_data_expand_str(rule_exec->tx->dpi, original, false, &expanded);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1026,10 +1026,10 @@ static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              param_value;  /* Parameter value */
-    ib_num_t              value;
-    ib_status_t           rc;
+    const ib_field_t *pdata = (const ib_field_t *)data;
+    ib_num_t          param_value;  /* Parameter value */
+    ib_num_t          value;
+    ib_status_t       rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(rule_exec, field, &value);
@@ -1070,10 +1070,10 @@ static ib_status_t op_ne_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              param_value;  /* Parameter value */
-    ib_num_t              value;
-    ib_status_t           rc;
+    const ib_field_t *pdata = (const ib_field_t *)data;
+    ib_num_t          param_value;  /* Parameter value */
+    ib_num_t          value;
+    ib_status_t       rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(rule_exec, field, &value);
@@ -1118,10 +1118,10 @@ static ib_status_t op_gt_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              param_value;  /* Parameter value */
-    ib_num_t              value;
-    ib_status_t           rc;
+    const ib_field_t *pdata = (const ib_field_t *)data;
+    ib_num_t          param_value;  /* Parameter value */
+    ib_num_t          value;
+    ib_status_t       rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(rule_exec, field, &value);
@@ -1166,10 +1166,10 @@ static ib_status_t op_lt_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              param_value;  /* Parameter value */
-    ib_num_t              value;
-    ib_status_t           rc;
+    const ib_field_t *pdata = (const ib_field_t *)data;
+    ib_num_t          param_value;  /* Parameter value */
+    ib_num_t          value;
+    ib_status_t       rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(rule_exec, field, &value);
@@ -1215,10 +1215,10 @@ static ib_status_t op_ge_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              param_value;  /* Parameter value */
-    ib_num_t              value;
-    ib_status_t           rc;
+    const ib_field_t *pdata = (const ib_field_t *)data;
+    ib_num_t          param_value;  /* Parameter value */
+    ib_num_t          value;
+    ib_status_t       rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(rule_exec, field, &value);
@@ -1263,10 +1263,10 @@ static ib_status_t op_le_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    const numop_params_t *pdata = (const numop_params_t *)data;
-    ib_num_t              param_value;  /* Parameter value */
-    ib_num_t              value;
-    ib_status_t           rc;
+    const ib_field_t *pdata = (const ib_field_t *)data;
+    ib_num_t          param_value;  /* Parameter value */
+    ib_num_t          value;
+    ib_status_t       rc;
 
     /* Get integer representation of the field */
     rc = field_to_num(rule_exec, field, &value);

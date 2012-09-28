@@ -116,12 +116,21 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
     (*op_inst)->op = op;
     (*op_inst)->flags = flags;
     (*op_inst)->params = ib_mpool_strdup(pool, parameters);
+    (*op_inst)->fparam = NULL;
 
     if (op->fn_create != NULL) {
         rc = op->fn_create(ib, ctx, rule, pool, parameters, *op_inst);
     }
     else {
         rc = IB_OK;
+    }
+
+    if ((*op_inst)->fparam == NULL) {
+        rc = ib_field_create(&((*op_inst)->fparam),
+                             pool,
+                             IB_FIELD_NAME("param"),
+                             IB_FTYPE_NULSTR,
+                             ib_ftype_nulstr_in(parameters));
     }
 
     IB_FTRACE_RET_STATUS(rc);

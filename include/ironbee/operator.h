@@ -37,6 +37,7 @@
 #include <ironbee/build.h>
 #include <ironbee/engine.h>
 #include <ironbee/rule_defs.h>
+#include <ironbee/field.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus
@@ -123,10 +124,11 @@ struct ib_operator_t {
 #define IB_OP_FLAG_CAPTURE     (1 << 3)   /**< Op supports capture */
 
 struct ib_operator_inst_t {
-    struct ib_operator_t *op;     /**< Pointer to the operator type */
-    ib_flags_t            flags;  /**< Operator instance flags */
-    void                 *data;   /**< Data passed to the execute function */
-    char                 *params; /**< Operator instance parameters */
+    struct ib_operator_t *op;      /**< Pointer to the operator type */
+    ib_flags_t            flags;   /**< Operator instance flags */
+    void                 *data;    /**< Data passed to the execute function */
+    char                 *params;  /**< Parameters passed to create */
+    ib_field_t           *fparam;  /**< Parameters as a field */
 };
 
 /** Operator instance flags */

@@ -1229,6 +1229,7 @@ static void log_result(
     assert(rule_exec->exec_log != NULL);
     assert(tgt != NULL);
     assert(rslt != NULL);
+
     char buf[MAX_FIELD_BUF+1];
     ib_rule_log_tx_t *tx_log = rule_exec->tx_log;
 
@@ -1282,7 +1283,8 @@ static void log_result(
         rule_log_exec(rule_exec,
                       "OP %s(%s) %s",
                       rule_exec->exec_log->rule->opinst->op->name,
-                      rule_exec->exec_log->rule->opinst->params,
+                      ib_field_format(rule_exec->exec_log->rule->opinst->fparam,
+                                      true, false, NULL, buf, MAX_FIELD_BUF),
                       (rslt->status == IB_OK ?
                        (rslt->result == 0 ? "FALSE" : "TRUE") :
                        ib_status_to_string(rslt->status)) );
