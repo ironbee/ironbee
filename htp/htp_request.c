@@ -720,7 +720,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 
                 // Keep the original URI components, but
                 // create a copy which we can normalize and use internally
-                if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri)) {
+                if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri) != HTP_OK) {
                     // Note: downstream responsible for error logging
                     return HTP_ERROR;
                 }

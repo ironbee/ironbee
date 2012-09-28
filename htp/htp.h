@@ -71,10 +71,10 @@ typedef struct htp_uri_t htp_uri_t;
 #define HTP_BASE_VERSION_TEXT	"master"
 
 #define HTP_ERROR              -1
-#define HTP_OK                  0
-#define HTP_DATA                1
-#define HTP_DATA_OTHER          2
-#define HTP_DECLINED            3
+#define HTP_DECLINED            0
+#define HTP_OK                  1
+#define HTP_DATA                2
+#define HTP_DATA_OTHER          3
 #define HTP_STOP                4
 
 #define PROTOCOL_UNKNOWN        -1

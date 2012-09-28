@@ -37,23 +37,17 @@
 #ifndef _HOOKS_H
 #define	_HOOKS_H
 
-#include "dslib.h"
+typedef struct htp_hook_t htp_hook_t;
+typedef struct htp_callback_t htp_callback_t;
+typedef int (*htp_callback_fn_t) (void *);
 
-#ifdef _HTP_H
+#include "dslib.h"
+#include "htp.h"
+
 #define HOOK_ERROR      HTP_ERROR
 #define HOOK_OK         HTP_OK
 #define HOOK_DECLINED   HTP_DECLINED
 #define HOOK_STOP       HTP_STOP
-#else
-#define HOOK_ERROR      -1
-#define HOOK_OK          1
-#define HOOK_DECLINED    0
-#define HOOK_STOP        4
-#endif
-
-typedef struct htp_hook_t htp_hook_t;
-typedef struct htp_callback_t htp_callback_t;
-typedef int (*htp_callback_fn_t) (void *);
 
 #ifdef __cplusplus
 extern "C" {
