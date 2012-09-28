@@ -716,10 +716,17 @@ static ib_status_t execute_action_list(const ib_rule_exec_t *rule_exec,
                                        const ib_list_t *actions)
 {
     IB_FTRACE_INIT();
+    assert(rule_exec != NULL);
+
     const ib_list_node_t *node = NULL;
     ib_status_t           rc = IB_OK;
-    const char           *name = (result != 0) ? "True" : "False";
+    const char           *name;
 
+    if (actions == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    name = (result != 0) ? "True" : "False";
     ib_rule_log_trace(rule_exec, "Executing rule %s actions", name);
 
     /*
@@ -1149,8 +1156,8 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
     else {
         ib_list_t  *actions;
         ib_num_t    result = 0;
-        ib_status_t op_rc;
-        ib_status_t act_rc;
+        ib_status_t op_rc = IB_OK;
+        ib_status_t act_rc = IB_OK;
 
         /* Fill in the FIELD* fields */
         rc = set_target_fields(rule_exec, value);
@@ -1188,7 +1195,10 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
         if ( (opinst->flags & IB_OPINST_FLAG_INVERT) != 0) {
             result = (result == 0);
         }
-        if (result != 0) {
+        if (op_rc != IB_OK) {
+            actions = NULL;
+        }
+        else if (result != 0) {
             actions = rule_exec->rule->true_actions;
         }
         else {
@@ -1791,6 +1801,7 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
     bool             pushed = rule_exec_push_value(rule_exec, value);
     ib_num_t         result = 0;
     ib_status_t      op_rc;
+    ib_status_t      act_rc;
 
     /* Add a target execution result to the log object */
     ib_rule_log_exec_add_stream_tgt(rule_exec->exec_log, value);
@@ -1831,16 +1842,23 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
      * returns an error.  This needs further discussion to determine what
      * the correct behavior should be.
      */
-    actions = (result != 0) ? rule->true_actions : rule->false_actions;
+    if (op_rc != IB_OK) {
+        actions = NULL;
+    }
+    else if (result != 0) {
+        actions = rule_exec->rule->true_actions;
+    }
+    else {
+        actions = rule_exec->rule->false_actions;
+    }
 
     ib_rule_log_exec_add_result(rule_exec->exec_log, value, result);
+    act_rc = execute_action_list(rule_exec, result, actions);
 
-    rc = execute_action_list(rule_exec, result, actions);
-
-    if (rc != IB_OK) {
+    if (act_rc != IB_OK) {
         ib_rule_log_error(rule_exec,
                           "Error executing action for rule: %s",
-                          ib_status_to_string(rc));
+                          ib_status_to_string(act_rc));
     }
 
     if (ib_tx_flags_isset(rule_exec->tx, IB_TX_BLOCK_IMMEDIATE) ) {
