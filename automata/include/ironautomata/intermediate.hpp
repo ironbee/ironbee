@@ -145,10 +145,19 @@ struct automata_t
  *
  * @param[in]  input Stream to read from.
  * @param[out] chunk Chunk to write to.
- * @return true a chunk was read and false on EOF.
+ * @return true if a chunk was read and false on EOF.
  * @throw runtime_error on error.
  */
-bool read_chunk(std::istream& input, PB::Chunk& chunk);
+bool read_chunk(std::istream& input, PB::Chunk& chunk)
+
+/**
+ * Write a chunk to a stream.
+ *
+ * @param[in] output Stream to write to.
+ * @param[in] chunk  Chunk to write.
+ * @throw runtime_error on error.
+ */
+void write_chunk(std::ostream& output, PB::Chunk& chunk);
 
 /**
  * Read automata from protobuf.

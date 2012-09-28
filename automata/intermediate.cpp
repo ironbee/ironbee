@@ -92,6 +92,33 @@ bool read_chunk(istream& input, PB::Chunk& chunk)
     return true;
 }
 
+void write_chunk(ostream& output, PB::Chunk& chunk)
+{
+    if (! output) {
+        throw runtime_error("Bad output.");
+    }
+    string buffer;
+    google::protobuf::io::StringOutputStream buffer_s(&buffer);
+    google::protobuf::io::GzipOutputStream zipped_output(&buffer_s);
+
+    chunk.SerializeToZeroCopyStream(&zipped_output);
+    zipped_output.Close();
+
+    uint32_t size = buffer.length();
+    uint32_t nsize = htonl(size);
+
+    output.write(
+        reinterpret_cast<const char*>(&nsize), sizeof(uint32_t)
+    );
+    if (! output) {
+        throw runtime_error("Error writing header.");
+    }
+    output.write(buffer.data(), size);
+    if (! output) {
+        throw runtime_error("Error writing chunk.");
+    }
+}
+
 /**
  * Implementation of AutomataReader.
  */

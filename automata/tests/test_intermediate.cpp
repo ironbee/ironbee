@@ -39,27 +39,6 @@
 using namespace std;
 using namespace IronAutomata::Intermediate;
 
-namespace {
-
-void chunk_to_if(ostream& out, const PB::Chunk& chunk)
-{
-    string buffer;
-    google::protobuf::io::StringOutputStream output(&buffer);
-    google::protobuf::io::GzipOutputStream zipped_output(&output);
-
-    chunk.SerializeToZeroCopyStream(&zipped_output);
-    zipped_output.Close();
-
-    uint32_t size = buffer.length();
-    uint32_t nsize = htonl(size);
-
-    out.write(
-        reinterpret_cast<const char*>(&nsize), sizeof(uint32_t)
-    );
-    out.write(buffer.data(), size);
-}
-
-}
 
 TEST(TestIntermediate, Basic)
 {
@@ -75,7 +54,7 @@ TEST(TestIntermediate, Basic)
         PB::Node* pb_node_b = pb_chunk.add_nodes();
         pb_node_b->set_id(2);
 
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
@@ -113,7 +92,7 @@ TEST(TestIntermediate, Trivial)
     stringstream s;
     {
         PB::Chunk pb_chunk;
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
@@ -194,7 +173,7 @@ TEST(TestIntermediate, DuplicateOutput)
         pb_node_a->set_id(1);
         pb_node_a->set_first_output(1);
 
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
@@ -218,7 +197,7 @@ TEST(TestIntermediate, DuplicateNode)
         PB::Node* pb_node_b = pb_chunk.add_nodes();
         pb_node_b->set_id(1);
 
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
@@ -246,7 +225,7 @@ TEST(TestIntermediate, TooValuedEdge)
         PB::Node* pb_node_b = pb_chunk.add_nodes();
         pb_node_b->set_id(2);
 
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
@@ -273,7 +252,7 @@ TEST(TestIntermediate, BadValuesBitmap)
         PB::Node* pb_node_b = pb_chunk.add_nodes();
         pb_node_b->set_id(2);
 
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
@@ -300,7 +279,7 @@ TEST(TestIntermediate, BitMapEdge)
         PB::Node* pb_node_b = pb_chunk.add_nodes();
         pb_node_b->set_id(2);
 
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
@@ -338,7 +317,7 @@ TEST(TestIntermediate, EpsilonEdge)
         PB::Node* pb_node_b = pb_chunk.add_nodes();
         pb_node_b->set_id(2);
 
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
@@ -370,7 +349,7 @@ TEST(TestIntermediate, MissingNode)
         PB::Edge* pb_edge_ab = pb_node_a->add_edges();
         pb_edge_ab->set_target(2);
 
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
@@ -394,7 +373,7 @@ TEST(TestIntermediate, ExcessNode)
         PB::Node* pb_node_b = pb_chunk.add_nodes();
         pb_node_b->set_id(2);
 
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
@@ -417,7 +396,7 @@ TEST(TestIntermediate, MissingOutput)
         pb_node_a->set_id(1);
         pb_node_a->set_first_output(2);
 
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
@@ -440,7 +419,7 @@ TEST(TestIntermediate, ExcessOutput)
         pb_output->set_id(1);
         pb_output->set_content("content");
 
-        chunk_to_if(s, pb_chunk);
+        write_chunk(s, pb_chunk);
     }
     s.seekp(0);
 
