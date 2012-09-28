@@ -21,10 +21,12 @@ nodist_libironautomata_la_SOURCES = \
     intermediate.pb.cc
 
 bin_PROGRAMS = \
+    ac_generator \
     bench \
     ec \
     intermediate_to_dot
-  
+      
+ac_generator_SOURCES = ac_generator.cpp
 bench_SOURCES = bench.cpp
 ec_SOURCES = ec.cpp
 intermediate_to_dot_SOURCES = intermediate_to_dot.cpp
