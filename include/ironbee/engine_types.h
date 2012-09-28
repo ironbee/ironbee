@@ -135,6 +135,10 @@ typedef enum {
 #define IB_TX_ALLOW_REQUEST     (1 << 22) /**< Allow all request phases */
 #define IB_TX_ALLOW_ALL         (1 << 23) /**< Allow transaction */
 #define IB_TX_FPOSTPROCESS      (1 << 24) /**< Post-processing occurred */
+#define IB_TX_FINSPECT_REQHDR   (1 << 25) /**< Inspect request header */
+#define IB_TX_FINSPECT_REQBODY  (1 << 26) /**< Inspect request body */
+#define IB_TX_FINSPECT_RSPHDR   (1 << 27) /**< Inspect response header */
+#define IB_TX_FINSPECT_RSPBODY  (1 << 28) /**< Inspect response body */
 
 /** Capture collection name */
 #define IB_TX_CAPTURE           "CAPTURE" /**< Name of the capture collection */

@@ -65,6 +65,16 @@ typedef struct {
     setvar_value_t   value;       /**< Value */
 } setvar_data_t;
 
+typedef enum {
+    setflag_op_set,               /**< Set the flag */
+    setflag_op_clear              /**< Clear the flag */
+} setflag_op_t;
+
+typedef struct {
+    const ib_tx_flag_map_t *flag;
+    setflag_op_t            op;
+} setflag_data_t;
+
 /**
  * Create function for the setflags action.
  *
@@ -86,19 +96,38 @@ static ib_status_t act_setflags_create(
     void *cbdata)
 {
     IB_FTRACE_INIT();
-    char *str;
+    const ib_tx_flag_map_t *flag;
+    setflag_data_t *data;
+    setflag_op_t op;
 
     if (parameters == NULL) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    str = ib_mpool_strdup(mp, parameters);
-    if (str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    if (*parameters == '!') {
+        op = setflag_op_clear;
+        ++parameters;
+    }
+    else {
+        op = setflag_op_set;
     }
 
-    inst->data = str;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    for (flag = ib_core_fields_tx_flags();  flag->name != NULL;  ++flag) {
+        if (strcasecmp(flag->name, parameters) == 0) {
+            if (flag->read_only) {
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+            data = ib_mpool_alloc(mp, sizeof(*data));
+            if (data == NULL) {
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
+            data->op = op;
+            data->flag = flag;
+            inst->data = (void *)data;
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+    }
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
 /**
@@ -119,43 +148,38 @@ static ib_status_t act_setflag_execute(
 {
     IB_FTRACE_INIT();
 
-    /* Data will be a C-Style string */
-    const char *cstr = (const char *)data;
-    int remove_flag = 0;
+    /* Data will be a setflag_data_t */
+    const setflag_data_t *opdata = (const setflag_data_t *)data;
+    ib_num_t value;
+    ib_status_t rc;
 
-    if (*cstr == '!') {
-        remove_flag = 1;
-        ++cstr;
-    }
+    switch (opdata->op) {
 
-    /* Handle the suspicious flag */
-    if (strcasecmp(cstr, "suspicious") == 0) {
-        // FIXME: Expose via FLAGS collection
-        if (remove_flag) {
-            ib_tx_flags_unset(rule_exec->tx, IB_TX_FSUSPICIOUS);
-        }
-        else {
-            ib_tx_flags_set(rule_exec->tx, IB_TX_FSUSPICIOUS);
-        }
-    }
-    else if (strcasecmp(cstr, "block") == 0) {
-        if (remove_flag) {
-            // FIXME: Remove in FLAGS collection
-            ib_tx_flags_unset(rule_exec->tx,
-                IB_TX_BLOCK_ADVISORY |
-                IB_TX_BLOCK_PHASE    |
-                IB_TX_BLOCK_IMMEDIATE
-            );
-        }
-        else {
-            // FIXME: Set in FLAGS collection
-            ib_tx_flags_set(rule_exec->tx, IB_TX_BLOCK_ADVISORY);
-        }
-    }
-    else {
-        ib_rule_log_notice(rule_exec,
-                           "Set flag action: invalid flag '%s'", cstr);
+    case setflag_op_set:
+        ib_tx_flags_set(rule_exec->tx, opdata->flag->tx_flag);
+        value = 1;
+        break;
+
+    case setflag_op_clear:
+        ib_tx_flags_unset(rule_exec->tx, opdata->flag->tx_flag);
+        value = 0;
+        break;
+
+    default:
         IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* This fails because ib_data_remove() doesn't handle fields within
+     * collections */
+    rc = ib_data_remove(rule_exec->tx->dpi, opdata->flag->tx_name, NULL);
+    if (rc != IB_OK) {
+        /* Do nothing */
+    }
+
+    rc = ib_data_add_num(rule_exec->tx->dpi, opdata->flag->tx_name,
+                         value, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

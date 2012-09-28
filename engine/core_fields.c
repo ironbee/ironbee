@@ -45,6 +45,47 @@ static const uint8_t core_placeholder_value[] = {
     'u', 'e', '_', '_',  0,   0,   0,   0
 };
 
+static const ib_tx_flag_map_t core_tx_flag_map[] = {
+    {
+        "suspicious",
+        "FLAGS:suspicious",
+        IB_TX_FSUSPICIOUS,
+        false,
+        false
+    },
+    {
+        "inspectRequestHeader",
+        "FLAGS:inspectRequestHeader",
+        IB_TX_FINSPECT_REQHDR,
+        false,
+        true
+    },
+    {
+        "inspectRequestBody",
+        "FLAGS:inspectRequestBody",
+        IB_TX_FINSPECT_REQBODY,
+        false,
+        false
+    },
+    {
+        "inspectResponseHeader",
+        "FLAGS:inspectResponseHeader",
+        IB_TX_FINSPECT_RSPHDR,
+        false,
+        false
+    },
+    {
+        "inspectResponseBody",
+        "FLAGS:inspectResponseBody",
+        IB_TX_FINSPECT_RSPBODY,
+        false,
+        false
+    },
+
+    /* End */
+    { NULL, NULL, IB_TX_FNONE, true, false },
+};
+
 static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
                                                   const char *name)
 {
@@ -257,9 +298,22 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* ARGS collection */
     rc = ib_data_get(tx->dpi, "ARGS", &tmp);
     if (rc == IB_ENOENT) {
         rc = ib_data_add_list(tx->dpi, "ARGS", NULL);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    else if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Flags collection */
+    rc = ib_data_get(tx->dpi, "FLAGS", &tmp);
+    if (rc == IB_ENOENT) {
+        rc = ib_data_add_list(tx->dpi, "FLAGS", NULL);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -373,6 +427,30 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
+                                             ib_tx_t *tx,
+                                             ib_state_event_type_t event,
+                                             void *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(tx->dpi != NULL);
+    assert(event == tx_started_event);
+
+    ib_status_t rc;
+    const ib_tx_flag_map_t *flag;
+
+    for (flag = ib_core_fields_tx_flags();  flag->name != NULL;  ++flag) {
+        rc = ib_data_add_num(tx->dpi, flag->tx_name, flag->default_value, NULL);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
 /**
  * Create an alias list collection.
@@ -759,6 +837,9 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
     ib_hook_tx_register(ib, tx_started_event,
                         core_gen_placeholder_fields, NULL);
 
+    ib_hook_tx_register(ib, tx_started_event,
+                        core_gen_flags_collection, NULL);
+
     ib_hook_tx_register(ib, request_header_finished_event,
                         core_gen_request_header_fields, NULL);
 
@@ -772,4 +853,11 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
                         core_gen_response_body_fields, NULL);
 
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/* Get the core TX flags */
+const ib_tx_flag_map_t *ib_core_fields_tx_flags( )
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_PTR(const ib_tx_flag_map_t, core_tx_flag_map);
 }

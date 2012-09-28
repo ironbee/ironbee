@@ -30,6 +30,14 @@
 #include <ironbee/engine.h>
 #include <ironbee/types.h>
 
+typedef struct {
+    const char      *name;          /**< Flag name */
+    const char      *tx_name;       /**< Name in the TX "FLAGS" collection */
+    ib_flags_t       tx_flag;       /**< TX flag value */
+    bool             read_only;     /**< Is setflag valid for this flag? */
+    bool             default_value; /**< The flag's default value? */
+} ib_tx_flag_map_t;
+
 /**
  * Initialize the core fields.
  *
@@ -57,6 +65,13 @@ ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
                                     ib_module_t *mod,
                                     ib_context_t *ctx,
                                     void *cbdata);
+
+/**
+ * Get the core flags collection
+ *
+ * @returns Pointer to array of ib_tx_flag_map_t
+ */
+const ib_tx_flag_map_t *ib_core_fields_tx_flags( void );
 
 /**
  * Initialize the core transformations.
