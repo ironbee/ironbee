@@ -1,5 +1,5 @@
 LDFLAGS += $(BOOST_LDFLAGS) -L$(top_builddir)/tests -L$(builddir)/.. \
-    -lironautomata
+    -lironautomata -liaeudoxus
 CPPFLAGS += $(BOOST_CPPFLAGS) -I$(top_srcdir)/tests \
     -I$(srcdir)/../include -I$(builddir)/../include
 LDADD = $(LIBUTIL_LDADD) \
