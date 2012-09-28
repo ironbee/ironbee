@@ -1,12 +1,18 @@
+# If CPP is not defined, we do very litte.
+lib_LTLIBRARIES = libiaeudoxus.la
+libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c
+
+AM_CPPFLAGS = -I$(srcdir)/include
+
+if CPP
+
 SUBDIRS = . tests
 
 ACLOCAL_AMFLAGS = -I ../../acinclude
 
-lib_LTLIBRARIES = libironautomata.la
+lib_LTLIBRARIES += libironautomata.la
 libironautomata_la_SOURCES = \
 	buffer.cpp \
-    eudoxus.c \
-    eudoxus_automata.c \
     eudoxus_compiler.cpp \
     intermediate.cpp \
     logger.cpp \
@@ -21,12 +27,11 @@ bench_SOURCES = bench.cpp
 ec_SOURCES = ec.cpp
 intermediate_to_dot_SOURCES = intermediate_to_dot.cpp
 
-LDADD = libironautomata.la
-AM_CPPFLAGS = \
+LDADD = libironautomata.la libiaeudoxus.la
+AM_CPPFLAGS += \
+    -I$(builddir)/include \
 	$(PROTOBUF_CPPFLAGS) \
-	$(BOOST_CPPFLAGS) \
-    -I$(srcdir)/include \
-    -I$(builddir)/include
+	$(BOOST_CPPFLAGS)
 AM_LDFLAGS = \
     $(PROTOBUF_LDFLAGS) \
 	$(BOOST_LDFLAGS) \
@@ -53,3 +58,5 @@ $(builddir)/include/ironautomata/intermediate.pb.h: intermediate.pb.h
 
 intermediate.pb.cc intermediate.pb.h: $(srcdir)/intermediate.proto
 	protoc --cpp_out=$(builddir) --proto_path=$(srcdir) $<
+
+endif
