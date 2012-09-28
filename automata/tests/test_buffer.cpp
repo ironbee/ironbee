@@ -70,19 +70,21 @@ struct foo_t
 
 TEST(TestBuffer, AppendObject)
 {
-
     foo_t f = {1, 2};
     foo_t g = {3, 4};
     buffer_t buffer;
     BufferAssembler a(buffer);
 
     foo_t* f_p = a.append_object(f);
+    size_t f_index = a.index(f_p);
     EXPECT_EQ(sizeof(foo_t), a.size());
     EXPECT_EQ(buffer.data(), reinterpret_cast<char*>(f_p));
     foo_t* g_p = a.append_object(g);
     EXPECT_EQ(2 * sizeof(foo_t), a.size());
     EXPECT_EQ(buffer.data() + sizeof(foo_t), reinterpret_cast<char*>(g_p));
 
+    // f_p may have been invalidated.
+    f_p = a.ptr<foo_t>(f_index);
     EXPECT_EQ(f.a, f_p->a);
     EXPECT_EQ(f.b, f_p->b);
     EXPECT_EQ(g.a, g_p->a);
