@@ -36,7 +36,7 @@
 
 #include "hooks.h"
 
-htp_hook_t * hook_copy(htp_hook_t *hook) {
+htp_hook_t * hook_copy(const htp_hook_t *hook) {
     if (hook == NULL) return NULL;
 
     htp_hook_t *copy = hook_create();
@@ -81,10 +81,10 @@ void hook_destroy(htp_hook_t *hook) {
     free(hook);
 }
 
-int hook_register(htp_hook_t **hook, htp_callback_fn_t callback_fn) {
+int hook_register(htp_hook_t **hook, const htp_callback_fn_t callback_fn) {
     int hook_created = 0;
     htp_callback_t *callback = calloc(1, sizeof (htp_callback_t));
-    if (callback == NULL) return -1;
+    if (callback == NULL) return HOOK_ERROR;
 
     callback->fn = callback_fn;
 
@@ -93,7 +93,7 @@ int hook_register(htp_hook_t **hook, htp_callback_fn_t callback_fn) {
         *hook = hook_create();
         if (*hook == NULL) {
             free(callback);
-            return -1;
+            return HOOK_ERROR;
         }
 
         hook_created = 1;
@@ -106,13 +106,13 @@ int hook_register(htp_hook_t **hook, htp_callback_fn_t callback_fn) {
         }
         
         free(callback);
-        return -1;
+        return HOOK_ERROR;
     }
 
-    return 1;
+    return HOOK_OK;
 }
 
-int hook_run_all(htp_hook_t *hook, void *data) {
+int hook_run_all(htp_hook_t *hook, void *user_data) {
     int ret;
 
     if (hook == NULL) {
@@ -122,7 +122,7 @@ int hook_run_all(htp_hook_t *hook, void *data) {
     htp_callback_t *callback = NULL;
     list_iterator_reset(hook->callbacks);
     while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
-        ret = callback->fn(data);
+        ret = callback->fn(user_data);
         if (ret == HOOK_ERROR) {
             return HOOK_ERROR;
         }
@@ -134,7 +134,7 @@ int hook_run_all(htp_hook_t *hook, void *data) {
     return HOOK_OK;
 }
 
-int hook_run_one(htp_hook_t *hook, void *data) {
+int hook_run_one(htp_hook_t *hook, void *user_data) {
     if (hook == NULL) {
         return HOOK_DECLINED;
     }
@@ -142,7 +142,7 @@ int hook_run_one(htp_hook_t *hook, void *data) {
     htp_callback_t *callback = NULL;
     list_iterator_reset(hook->callbacks);
     while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
-        int status = callback->fn(data);
+        int status = callback->fn(user_data);
         // HOOK_OK, HOOK_ERROR and HOOK_STOP will stop hook processing
         if (status != HOOK_DECLINED) {
             return status;

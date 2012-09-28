@@ -46,8 +46,8 @@
 #define HOOK_STOP       HTP_STOP
 #else
 #define HOOK_ERROR      -1
-#define HOOK_OK          0
-#define HOOK_DECLINED    1
+#define HOOK_OK          1
+#define HOOK_DECLINED    0
 #define HOOK_STOP        4
 #endif
 
@@ -71,17 +71,17 @@ struct htp_callback_t {
  * Creates a copy of the provided hook. The hook is allowed to be NULL,
  * in which case this function simply returns a NULL.
  *
- * @param hook
+ * @param[in] hook
  * @return A copy of the hook, or NULL (if the provided hook was NULL
  *         or, if it wasn't, if there was a memory allocation problem while
  *         constructing a copy).
  */
-htp_hook_t *hook_copy(htp_hook_t *hook);
+htp_hook_t *hook_copy(const htp_hook_t *hook);
 
 /**
  * Creates a new hook.
  *
- * @return New htp_hook_t structure on success, NULL on failure
+ * @return New htp_hook_t structure on success, NULL on failure.
  */
 htp_hook_t *hook_create(void);
 
@@ -89,41 +89,40 @@ htp_hook_t *hook_create(void);
  * Destroys an existing hook. It is all right to send a NULL
  * to this method because it will simply return straight away.
  *
- * @param hook
+ * @param hook[in]
  */
 void hook_destroy(htp_hook_t *hook);
 
 /**
  * Registers a new callback with the hook.
  *
- * @param hook
- * @param callback_fn
- * @return 1 on success, -1 on memory allocation error
+ * @param[in] hook
+ * @param[in] callback_fn
+ * @return HOOK_OK on success, HOOK_ERROR on memory allocation error.
  */
-int hook_register(htp_hook_t **hook, htp_callback_fn_t callback_fn);
+int hook_register(htp_hook_t **hook, const htp_callback_fn_t callback_fn);
 
 /**
  * Runs all the callbacks associated with a given hook. Only stops if
  * one of the callbacks returns an error (HOOK_ERROR) or stop (HOOK_STOP).
  *
- * @param hook
- * @param data
- * @return HOOK_OK or HOOK_ERROR
+ * @param[in] hook
+ * @param[in] user_data
+ * @return HOOK_OK or HOOK_ERROR.
  */
-int hook_run_all(htp_hook_t *hook, void *data);
+int hook_run_all(htp_hook_t *hook, void *user_data);
 
 /**
- * Run callbacks until one of them accepts to service the hook.
+ * Run callbacks one by one until one of them accepts to service the hook.
  *
- * @param hook
- * @param data
+ * @param[in] hook
+ * @param[in] data
  * @return HOOK_OK on success, HOOK_DECLINED if no callback wanted to run and HOOK_ERROR on error.
  */
-int hook_run_one(htp_hook_t *hook, void *data);
+int hook_run_one(htp_hook_t *hook, void *user_data);
 
 #ifdef __cplusplus
 }
 #endif
 
 #endif	/* _HOOKS_H */
-
