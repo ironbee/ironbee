@@ -1,0 +1,5 @@
+0.4
+---
+
+- HOOK_OK is now 1 (was 0); HOOK_DECLINED is now 0 (was 1).
+
