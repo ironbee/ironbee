@@ -253,6 +253,12 @@ string output_transform_integer(
     return boost::lexical_cast<string>(x);
 }
 
+//! Return empty string.
+string output_transform_nop(const char*, size_t, const uint8_t*)
+{
+    return string();
+}
+
 //! Write output to @a out.
 void output_record_list(
     const string& s,
@@ -273,6 +279,12 @@ void output_record_count(
 {
     output_record_map_t::iterator i = counts.insert(make_pair(s, 0)).first;
     ++i->second;
+}
+
+//! Do nothing.
+void output_record_nop(const string&, const uint8_t*)
+{
+    // nop
 }
 
 /**
@@ -334,10 +346,10 @@ int main(int argc, char **argv)
             "where to read automata from; required, but -a is optional"
         )
         ("type,t", po::value<string>(&output_type_s),
-            "output type: string, length, integer; default is string"
+            "output type: string, length, integer, nop; default is string"
         )
         ("record,r", po::value<string>(&record_s),
-            "output record: list, count; default is list"
+            "output record: list, count, nop; default is list"
         )
         ("size,s", po::value<size_t>(&block_size),
             "input block size; default = 1024"
@@ -378,6 +390,9 @@ int main(int argc, char **argv)
     }
     else if (output_type_s == "integer") {
         output_transform = output_transform_integer;
+    }
+    else if (output_type_s == "nop") {
+        output_transform = output_transform_nop;
     }
     else {
         cout << "Error: Unknown output type: " << output_type_s << endl;
@@ -444,6 +459,9 @@ int main(int argc, char **argv)
             _1,
             boost::ref(counts)
         );
+    }
+    else if (record_s == "nop") {
+        output_callback = output_record_nop;
     }
     else {
         cout << "Error: Unknown output record " << record_s << endl;
