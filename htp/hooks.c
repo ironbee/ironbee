@@ -113,21 +113,21 @@ int hook_register(htp_hook_t **hook, const htp_callback_fn_t callback_fn) {
 }
 
 int hook_run_all(htp_hook_t *hook, void *user_data) {
-    int ret;
+    if (hook == NULL) return HOOK_OK;
 
-    if (hook == NULL) {
-        return HOOK_OK;
-    }
-
+    // Loop through registered callbacks,
+    // giving each a chance to run.
     htp_callback_t *callback = NULL;
     list_iterator_reset(hook->callbacks);
     while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
-        ret = callback->fn(user_data);
-        if (ret == HOOK_ERROR) {
-            return HOOK_ERROR;
-        }
-        else if (ret == HOOK_STOP) {
-            return HOOK_STOP;
+        int rc = callback->fn(user_data);
+        if ((rc != HOOK_OK)&&(rc != HOOK_DECLINED)) {
+            if (rc < 0) {
+                // TODO Log error
+            }
+            
+            // Return HOOK_STOP or error.
+            return rc;
         }
     }
 
@@ -135,19 +135,24 @@ int hook_run_all(htp_hook_t *hook, void *user_data) {
 }
 
 int hook_run_one(htp_hook_t *hook, void *user_data) {
-    if (hook == NULL) {
-        return HOOK_DECLINED;
-    }
+    if (hook == NULL) return HOOK_DECLINED;
 
+    // Look through registered callbacks
+    // until one accepts to process the hook.
     htp_callback_t *callback = NULL;
     list_iterator_reset(hook->callbacks);
     while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
-        int status = callback->fn(user_data);
-        // HOOK_OK, HOOK_ERROR and HOOK_STOP will stop hook processing
-        if (status != HOOK_DECLINED) {
-            return status;
+        int rc = callback->fn(user_data);
+        if (rc != HOOK_DECLINED) {
+            if (rc < 0) {
+                // TODO Log error
+            }
+        
+            // Return HOOK_OK, HOOK_STOP, or error.
+            return rc;
         }
     }
 
+    // No hook wanted to process the callback.
     return HOOK_DECLINED;
 }

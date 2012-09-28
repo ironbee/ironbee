@@ -102,7 +102,9 @@ int hook_register(htp_hook_t **hook, const htp_callback_fn_t callback_fn);
  *
  * @param[in] hook
  * @param[in] user_data
- * @return HOOK_OK or HOOK_ERROR.
+ * @return HOOK_OK if at least one hook ran successfully, HOOK_STOP if there was
+ *         no error but processing should stop, and HOOK_ERROR or any other value
+ *         less than zero on error.
  */
 int hook_run_all(htp_hook_t *hook, void *user_data);
 
@@ -110,8 +112,10 @@ int hook_run_all(htp_hook_t *hook, void *user_data);
  * Run callbacks one by one until one of them accepts to service the hook.
  *
  * @param[in] hook
- * @param[in] data
- * @return HOOK_OK on success, HOOK_DECLINED if no callback wanted to run and HOOK_ERROR on error.
+ * @param[in] user_data
+ * @return HOOK_OK if a hook was found to process the callback, HOOK_DECLINED if
+ *         no hook could be found, HOOK_STOP if a hook signalled the processing
+ *         to stop, and HOOK_ERROR or any other value less than zero on error.
  */
 int hook_run_one(htp_hook_t *hook, void *user_data);
 
