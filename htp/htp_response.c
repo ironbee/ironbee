@@ -497,18 +497,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
     // Run hook RESPONSE_HEADERS_COMPLETE
     int rc = hook_run_all(connp->cfg->hook_response_headers, connp);
-    if (rc != HOOK_OK) {
-        switch (rc) {
-            case HOOK_STOP:
-                return HTP_STOP;
-            case HOOK_ERROR:
-            case HOOK_DECLINED:
-            default:
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                    "Request headers callback returned error (%d)", rc);
-                return HTP_ERROR;
-        }
-    }
+    if (rc != HOOK_OK) return rc;
 
     // Start decompression engines if decompression is still enabled (the user
     // may have turned it off in the RESPONSE_HEADERS_COMPLETE hook).
@@ -604,18 +593,7 @@ int htp_connp_RES_HEADERS(htp_connp_t * connp) {
                 } else {
                     // Run hook response_TRAILER
                     int rc = hook_run_all(connp->cfg->hook_response_trailer, connp);
-                    if (rc != HOOK_OK) {
-                        switch (rc) {
-                            case HOOK_STOP:
-                                return HTP_STOP;
-                            case HOOK_ERROR:
-                            case HOOK_DECLINED:
-                            default:
-                                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                                    "Request headers callback returned error (%d)", rc);
-                                return HTP_ERROR;
-                        }
-                    }
+                    if (rc != HOOK_OK) return rc;
 
                     // We've completed parsing this response
                     connp->out_state = htp_connp_RES_IDLE;
@@ -785,18 +763,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
 
             // Run hook RESPONSE_LINE
             int rc = hook_run_all(connp->cfg->hook_response_line, connp);
-            if (rc != HOOK_OK) {
-                switch (rc) {
-                    case HOOK_STOP:
-                        return HTP_STOP;
-                    case HOOK_ERROR:
-                    case HOOK_DECLINED:
-                    default:
-                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                            "Request headers callback returned error (%d)", rc);
-                        return HTP_ERROR;
-                }
-            }
+            if (rc != HOOK_OK) return rc;
 
             // Clean up.
             connp->out_line_len = 0;
@@ -849,18 +816,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
 
         // Run hook RESPONSE
         int rc = hook_run_all(connp->cfg->hook_response, connp);
-        if (rc != HOOK_OK) {
-            switch (rc) {
-                case HOOK_STOP:
-                    return HTP_STOP;
-                case HOOK_ERROR:
-                case HOOK_DECLINED:
-                default:
-                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Request headers callback returned error (%d)", rc);
-                    return HTP_ERROR;
-            }
-        }
+        if (rc != HOOK_OK) return rc;
 
         if (connp->cfg->tx_auto_destroy) {
             htp_tx_destroy(connp->out_tx);
@@ -915,11 +871,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
 
     // Run hook RESPONSE_START
     int rc = hook_run_all(connp->cfg->hook_response_start, connp);
-    if (rc != HOOK_OK) {
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-            "Response start callback returned error (%d)", rc);
-        return HTP_ERROR;
-    }
+    if (rc != HOOK_OK) return rc;
 
     // Change state into response line parsing, except if we're following
     // a short HTTP/0.9 request, because such requests to not have a

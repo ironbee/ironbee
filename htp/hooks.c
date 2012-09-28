@@ -122,10 +122,6 @@ int hook_run_all(htp_hook_t *hook, void *user_data) {
     while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
         int rc = callback->fn(user_data);
         if ((rc != HOOK_OK)&&(rc != HOOK_DECLINED)) {
-            if (rc < 0) {
-                // TODO Log error
-            }
-            
             // Return HOOK_STOP or error.
             return rc;
         }
@@ -144,10 +140,6 @@ int hook_run_one(htp_hook_t *hook, void *user_data) {
     while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
         int rc = callback->fn(user_data);
         if (rc != HOOK_DECLINED) {
-            if (rc < 0) {
-                // TODO Log error
-            }
-        
             // Return HOOK_OK, HOOK_STOP, or error.
             return rc;
         }
