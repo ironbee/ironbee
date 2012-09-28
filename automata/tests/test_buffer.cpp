@@ -112,8 +112,8 @@ TEST(TestBuffer, AppendString)
 
     static const char c_content[] = "Hello World";
     char* p = a.append_string(c_content);
-    EXPECT_EQ(string(c_content), string(p));
-    EXPECT_EQ(string(c_content), string(buffer.data()));
+    EXPECT_EQ(string(c_content), string(p, sizeof(c_content) - 1));
+    EXPECT_EQ(string(c_content), string(buffer.data(), sizeof(c_content) - 1));
     EXPECT_EQ(buffer.data(), p);
     // -1 because no NUL.
     EXPECT_EQ(sizeof(c_content) - 1, a.size());
