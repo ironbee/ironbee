@@ -470,12 +470,22 @@ clipp:</p>
 <li><code>clipp:break</code> &#8211; Abort current chain, moving on to next chain.</li>
 </ul>
 
+<p>IronBee rules can also use the <code>clipp_announce</code> action to produce output:</p>
+
+<pre><code>clipp_announce:&quot;Hello World&quot;
+</code></pre>
+
+<p>will cause clipp to output:</p>
+
+<pre><code>CLIPP ANNOUNCE: Hello World
+</code></pre>
+
 <p>Note: At present, there is no support for a multithreaded IronBee modifier.</p>
 
 <p><strong>@time</strong></p>
 
 <p>Outputs timing information to standard out. For each input, outputs id,
-time in seconds since start, and time in seconds since previous input.</p>
+time in microseconds since start, and time in microseconds since previous input.</p>
 
 <h2 id="consumers">Consumers</h2>
 
@@ -484,6 +494,8 @@ time in seconds since start, and time in seconds since previous input.</p>
 <p>This consumer initializes an IronBee engine, loads <em>path</em> as configuration,
 and feeds all events to it. The pre- and post- delay attributes of Events
 are interpreted.</p>
+
+<p>See @ironbee above.</p>
 
 <p><strong>ironbee_threaded</strong>:<em>path</em>:<em>workers</em></p>
 

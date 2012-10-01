@@ -455,6 +455,14 @@ clipp:
 - `clipp:block` -- Override behavior, preventing input from continuing.
 - `clipp:break` -- Abort current chain, moving on to next chain.
 
+IronBee rules can also use the `clipp_announce` action to produce output:
+
+    clipp_announce:"Hello World"
+    
+will cause clipp to output:
+
+    CLIPP ANNOUNCE: Hello World
+
 Note: At present, there is no support for a multithreaded IronBee modifier.
 
 **@time**
@@ -470,6 +478,8 @@ Consumers
 This consumer initializes an IronBee engine, loads *path* as configuration, 
 and feeds all events to it.  The pre- and post- delay attributes of Events
 are interpreted.
+
+See @ironbee above.
 
 **ironbee_threaded**:*path*:*workers*
 
