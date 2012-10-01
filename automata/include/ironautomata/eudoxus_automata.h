@@ -54,7 +54,7 @@ extern "C" {
  * This is checked by @c ia_eudoxus_create_ methods to insure that an automata
  * was generated for the current engine.
  */
-#define IA_EUDOXUS_VERSION 1
+#define IA_EUDOXUS_VERSION 2
 
 /**
  * A Eudoxus Automata.
@@ -120,6 +120,11 @@ struct ia_eudoxus_automata_t
      * Number of bytes defining automata after end of this structure.
      */
     uint64_t data_length;
+
+    /**
+     * Index of first (i.e., start) node.  At most 256 bytes in.
+     */
+    uint8_t start_index;
 
     /** @} */
 

@@ -47,8 +47,14 @@ struct result_t
     //! ID width used.
     size_t id_width;
 
+    //! Align to used.
+    size_t align_to;
+
     //! Number of IDs used.
     size_t ids_used;
+
+    //! Number of bytes of padding added.
+    size_t padding;
 };
 
 /**
@@ -56,11 +62,13 @@ struct result_t
  *
  * @param[in] automata Automata to compile.
  * @param[in] id_width Width of all id fields in bytes.
+ * @param[in] align_to Node indices will be padded to be 0 mod @a align_to.
  * @return Compilation result.
  */
 result_t compile(
     const Intermediate::automata_t& automata,
-    size_t                          id_width = 8
+    size_t                          id_width = 8,
+    size_t                          align_to = 1
 );
 
 /**
@@ -70,10 +78,12 @@ result_t compile(
  * id width.  It can take significantly longer than compile().
  *
  * @param[in] automata Automata to compile.
+ * @param[in] align_to Node indices will be padded to be 0 mod @a align_to.
  * @return Compilation result.
  */
 result_t compile_minimal(
-     const Intermediate::automata_t& automata
+    const Intermediate::automata_t& automata,
+    size_t                          align_to = 1
 );
 
 } // EudoxusCompiler

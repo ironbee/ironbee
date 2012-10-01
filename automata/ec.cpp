@@ -46,6 +46,7 @@ int main(int argc, char **argv)
     string output_s;
     string input_s;
     size_t id_width = 0;
+    size_t align_to = 1;
 
     po::options_description desc("Options:");
     desc.add_options()
@@ -58,6 +59,10 @@ int main(int argc, char **argv)
         )
         ("id-width,w", po::value<size_t>(&id_width),
             "fix id width; defaults to smallest possible"
+        )
+        ("align,a", po::value<size_t>(&align_to),
+            "add padding to align all node indices to be 0 mod this; "
+            "default 1"
         )
         ;
 
@@ -125,11 +130,15 @@ int main(int argc, char **argv)
         );
         EudoxusCompiler::result_t result;
         if (id_width == 0) {
-            result = EudoxusCompiler::compile_minimal(automata);
+            result = EudoxusCompiler::compile_minimal(automata, align_to);
         }
         else {
             try {
-                result = EudoxusCompiler::compile(automata, id_width);
+                result = EudoxusCompiler::compile(
+                    automata,
+                    id_width,
+                    align_to
+                );
             }
             catch (out_of_range) {
                 cout << "Error: id width too small." << endl;
@@ -139,7 +148,9 @@ int main(int argc, char **argv)
 
         cout << "bytes    = " << result.buffer.size() << endl;
         cout << "id_width = " << result.id_width << endl;
+        cout << "align_to = " << result.align_to << endl;
         cout << "ids_used = " << result.ids_used << endl;
+        cout << "padding  = " << result.padding << endl;
 
         output_stream.write(result.buffer.data(), result.buffer.size());
         if (! output_stream) {

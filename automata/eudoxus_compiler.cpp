@@ -53,10 +53,13 @@ public:
     /**
      * Constructor.
      *
-     * @param[in] result Where to store results.
+     * @param[in] result   Where to store results.
+     * @param[in] align_to Padding will be added as needed to align all node
+     *                     indices to @a align_to.  I.e.,
+     *                     index mod @a align_to will be 0.
      */
     explicit
-    Compiler(result_t& result);
+    Compiler(result_t& result, size_t align_to = 1);
 
     /**
      * Compile automata.
@@ -108,6 +111,20 @@ private:
                 throw out_of_range("id_width too small");
             }
 
+            size_t index = m_parent.m_assembler.size();
+            size_t alignment = index % m_parent.m_align_to;
+            size_t padding = (
+                alignment == 0 ?
+                0 :
+                m_parent.m_align_to - alignment
+            );
+            if (padding > 0) {
+                m_parent.m_result.padding += padding;
+                for (size_t i = 0; i < padding; ++i) {
+                    m_parent.m_assembler.append_object(uint8_t(0xaa));
+                }
+            }
+            assert(m_parent.m_assembler.size() % m_parent.m_align_to == 0);
             m_parent.m_node_map[node] = m_parent.m_assembler.size();
             // Eventually there will be other node types.
             low_node(*node);
@@ -335,6 +352,9 @@ private:
     //! Where to store the result.
     result_t& m_result;
 
+    //! What to align node indices to.
+    size_t m_align_to;
+
     //! Assembler of m_result.buffer.
     BufferAssembler m_assembler;
 
@@ -368,8 +388,9 @@ private:
 };
 
 template <size_t id_width>
-Compiler<id_width>::Compiler(result_t& result) :
+Compiler<id_width>::Compiler(result_t& result, size_t align_to) :
     m_result(result),
+    m_align_to(align_to),
     m_assembler(result.buffer),
     m_max_index(numeric_limits<e_id_t>::max())
 {
@@ -383,6 +404,7 @@ void Compiler<id_width>::compile(
 {
     m_result.buffer.clear();
     m_result.ids_used = 0;
+    m_result.padding = 0;
 
     // Header
     ia_eudoxus_automata_t* e_automata =
@@ -414,6 +436,8 @@ void Compiler<id_width>::compile(
     e_automata->num_nodes   = m_node_map.size();
     e_automata->num_outputs = m_output_map.size();
     e_automata->data_length = m_result.buffer.size();
+    assert(m_node_map[automata.start_node] < 256);
+    e_automata->start_index = m_node_map[automata.start_node];
 
     m_result.ids_used = m_node_id_map.size() + m_output_id_map.size();
 }
@@ -422,22 +446,24 @@ void Compiler<id_width>::compile(
 
 result_t compile(
     const Intermediate::automata_t& automata,
-    size_t                          id_width
+    size_t                          id_width,
+    size_t                          align_to
 )
 {
     result_t result;
 
     result.id_width = id_width;
+    result.align_to = align_to;
 
     switch (id_width) {
     case 1:
-        Compiler<1>(result).compile(automata); break;
+        Compiler<1>(result, align_to).compile(automata); break;
     case 2:
-        Compiler<2>(result).compile(automata); break;
+        Compiler<2>(result, align_to).compile(automata); break;
     case 4:
-        Compiler<4>(result).compile(automata); break;
+        Compiler<4>(result, align_to).compile(automata); break;
     case 8:
-        Compiler<8>(result).compile(automata); break;
+        Compiler<8>(result, align_to).compile(automata); break;
     default:
         throw logic_error("Unsupported id_width.");
     }
@@ -446,7 +472,8 @@ result_t compile(
 }
 
 result_t compile_minimal(
-    const Intermediate::automata_t& automata
+    const Intermediate::automata_t& automata,
+    size_t                          align_to
 )
 {
     static const size_t c_id_widths[] = {1, 2, 4, 8};
@@ -459,7 +486,7 @@ result_t compile_minimal(
     for (i = 0; i < c_num_id_widths; ++i) {
         bool success = true;
         try {
-            result = compile(automata, c_id_widths[i]);
+            result = compile(automata, c_id_widths[i], align_to);
         }
         catch (out_of_range) {
             // move on to next id_width.
