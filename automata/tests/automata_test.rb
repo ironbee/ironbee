@@ -1,7 +1,10 @@
-
+$:.unshift(File.dirname(File.dirname(File.expand_path(__FILE__))))
+require 'ac_generator'
 require 'set'
 
 module AutomataTest
+  BENCH = File.join(ENV['abs_builddir'], "..", "bench")
+  EC = File.join(ENV['abs_builddir'], "..", "ec")
 
   # Returns map of word to ending position of word in input.
   def substrings(words, input)
@@ -35,4 +38,27 @@ module AutomataTest
     end
   end
 
+  def ac_test(words, text, prefix = "full_test")
+    dir = "/tmp/automata_test_#{prefix}#{$$}"
+    Dir.mkdir(dir)
+    puts "Test files are in #{dir}"
+    automata_path = File.join(dir, "automata")
+    File.open(automata_path, "w") do |fp|
+      fp.print IronAutomata::aho_corasick(words)
+    end
+
+    input_path = File.join(dir, "input")
+    File.open(input_path, "w") do |fp|
+      fp.print text
+    end
+
+    eudoxus_path = File.join(dir, "eudoxus")
+    system(EC, "-i", automata_path, "-o", eudoxus_path)
+
+    output_path = File.join(dir, "output")
+    system(BENCH, "-a", eudoxus_path, "-o", output_path, "-i", input_path, "-t", "length")
+
+    output_substrings = parse_bench_output(IO.read(output_path))
+    assert_substrings_equal(substrings(words, text), output_substrings)
+  end
 end
