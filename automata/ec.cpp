@@ -45,6 +45,7 @@ int main(int argc, char **argv)
 
     string output_s;
     string input_s;
+    size_t id_width = 0;
 
     po::options_description desc("Options:");
     desc.add_options()
@@ -54,6 +55,9 @@ int main(int argc, char **argv)
         )
         ("input,i", po::value<string>(&input_s),
             "where to read input from; required; but -i is optional"
+        )
+        ("id-width,w", po::value<size_t>(&id_width),
+            "fix id width; defaults to smallest possible"
         )
         ;
 
@@ -79,6 +83,14 @@ int main(int argc, char **argv)
         cout << "Input is required." << endl;
         cout << desc << endl;
         return 1;
+    }
+
+    switch (id_width) {
+        case 0: case 1: case 2: case 4: case 8: break;
+        default:
+          cout << "id-width must be 0, 1, 2, 4, or 8." << endl;
+          cout << desc << endl;
+          return 1;
     }
 
     fs::path input(input_s);
@@ -111,8 +123,19 @@ int main(int argc, char **argv)
             input_stream,
             ostream_logger(cout)
         );
-        EudoxusCompiler::result_t result =
-            EudoxusCompiler::compile_minimal(automata);
+        EudoxusCompiler::result_t result;
+        if (id_width == 0) {
+            result = EudoxusCompiler::compile_minimal(automata);
+        }
+        else {
+            try {
+                result = EudoxusCompiler::compile(automata, id_width);
+            }
+            catch (out_of_range) {
+                cout << "Error: id width too small." << endl;
+                return 1;
+            }
+        }
 
         cout << "bytes    = " << result.buffer.size() << endl;
         cout << "id_width = " << result.id_width << endl;
