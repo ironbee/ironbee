@@ -29,9 +29,13 @@ module AutomataTest
   end
 
   def assert_substrings_equal(a, b)
+
     a_keys = Set.new a.keys
     b_keys = Set.new b.keys
-    assert_equal(a_keys, b_keys, "Keys mismatch.")
+    a_minus_b = a_keys - b_keys
+    b_minus_a = b_keys - a_keys
+    assert_block("Missing keys: #{a_minus_b.to_a.join(', ')}") {a_minus_b.empty?}
+    assert_block("Extra keys: #{b_minus_a.to_a.join(', ')}") {b_minus_a.empty?}
 
     a.each do |word, locations|
       assert_equal(locations, b[word], "Locations of #{word} mismatch.")
@@ -55,7 +59,7 @@ module AutomataTest
   end
 
   def ac_test(words, text, prefix = "full_test")
-    dir = "/tmp/automata_test_#{prefix}#{$$}"
+    dir = "/tmp/automata_test_#{prefix}#{$$}.#{rand(100000)}"
     Dir.mkdir(dir)
     puts "Test files are in #{dir}"
 
