@@ -9,9 +9,14 @@ module AutomataTest
   # Returns map of word to ending position of word in input.
   def substrings(words, input)
     result = Hash.new {|h,k| h[k] = Set.new}
+    l = input.length
     words.each do |word|
-      input.scan(word) do
-        result[word] << $`.length + word.length
+      i = 0
+      while i + word.length < l
+        j = input.index(word, i)
+        break if ! j
+        result[word] << j + word.length
+        i = j + 1
       end
     end
     result
