@@ -1,6 +1,8 @@
 # If CPP is not defined, we do very litte.
 lib_LTLIBRARIES = libiaeudoxus.la
-libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c
+libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c \
+	include/ironautomata/*.h
+EXTRA_libiaeudoxus_la_SOURCES = eudoxus_subengine.c
 
 AM_CPPFLAGS = -I$(srcdir)/include
 
@@ -15,7 +17,8 @@ libironautomata_la_SOURCES = \
 	buffer.cpp \
     eudoxus_compiler.cpp \
     intermediate.cpp \
-    logger.cpp
+    logger.cpp \
+    include/ironautomata/*.hpp
 
 nodist_libironautomata_la_SOURCES = \
     intermediate.pb.cc
