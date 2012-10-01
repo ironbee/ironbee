@@ -72,11 +72,16 @@ ia_eudoxus_result_t IA_EUDOXUS(next_low)(
     bool has_nonadvancing   = ia_bit8(state->node->header.flags, 1);
     bool has_default        = ia_bit8(state->node->header.flags, 2);
     bool advance_on_default = ia_bit8(state->node->header.flags, 3);
+    bool has_edges          = ia_bit8(state->node->header.flags, 4);
     const IA_EUDOXUS(low_node_t) *node
         = (const IA_EUDOXUS(low_node_t) *)(state->node);
+    if (has_nonadvancing & ! has_edges) {
+        return IA_EUDOXUS_EINVAL;
+    }
 
     ia_vls_state_t vls;
     IA_VLS_INIT(vls, node);
+    uint8_t out_degree = IA_VLS_IF(vls, uint8_t, 0, has_edges);
     // Advance past first_output.
     IA_VLS_ADVANCE_IF(vls, IA_EUDOXUS_ID_T, has_output);
     IA_EUDOXUS_ID_T default_node = IA_VLS_IF(
@@ -88,8 +93,8 @@ ia_eudoxus_result_t IA_EUDOXUS(next_low)(
     uint8_t *advance = IA_VLS_VARRAY_IF(
         vls,
         uint8_t,
-        node->out_degree / 8,
-        has_nonadvancing
+        out_degree / 8,
+        has_nonadvancing & has_edges
     );
     IA_EUDOXUS(low_edge_t) *edges = IA_VLS_FINAL(
         vls,
@@ -99,26 +104,28 @@ ia_eudoxus_result_t IA_EUDOXUS(next_low)(
     IA_EUDOXUS_ID_T next_node            = 0;
     bool            advance_on_next_node = true;
 
-    int             i                    = 0;
-    while (i < node->out_degree && edges[i].c != c) {
-        ++i;
-    }
-
-    if (i == node->out_degree) {
-        if (has_default) {
-            next_node            = default_node;
-            advance_on_next_node = advance_on_default;
+    if (has_edges) {
+        int i = 0;
+        while (i < out_degree && edges[i].c != c) {
+            ++i;
         }
-    }
-    else {
-        next_node = edges[i].next_node;
-        if (has_nonadvancing) {
-            advance_on_default = ia_bitv(advance, i);
+
+        if (i != out_degree) {
+            next_node = edges[i].next_node;
+            if (has_nonadvancing) {
+                advance_on_next_node = ia_bitv(advance, i);
+            }
         }
     }
 
     if (next_node == 0) {
-        return IA_EUDOXUS_END;
+        if (has_default) {
+            next_node            = default_node;
+            advance_on_next_node = advance_on_default;
+        }
+        else {
+            return IA_EUDOXUS_END;
+        }
     }
 
     if (advance_on_next_node) {
@@ -152,6 +159,7 @@ ia_eudoxus_result_t IA_EUDOXUS(output_low)(
     assert(state->node     != NULL);
 
     bool has_output = ia_bit8(state->node->header.flags, 0);
+    bool has_edges  = ia_bit8(state->node->header.flags, 4);
 
     if (! has_output) {
         return IA_EUDOXUS_OK;
@@ -162,6 +170,7 @@ ia_eudoxus_result_t IA_EUDOXUS(output_low)(
 
     ia_vls_state_t vls;
     IA_VLS_INIT(vls, node);
+    IA_VLS_ADVANCE_IF(vls, uint8_t, has_edges);
     IA_EUDOXUS_ID_T output = IA_VLS_IF(
         vls,
         IA_EUDOXUS_ID_T,

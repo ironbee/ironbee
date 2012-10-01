@@ -152,7 +152,12 @@ private:
                 header->header.flags = ia_setbit8(header->header.flags, 3);
             }
 
-            header->out_degree = node.edges.size();
+            if (node.edges.size() > 0) {
+                header->header.flags = ia_setbit8(header->header.flags, 4);
+                m_parent.m_assembler.append_object(
+                    uint8_t(node.edges.size())
+                );
+            }
 
             if (node.output) {
                 m_parent.append_output_ref(node.output);

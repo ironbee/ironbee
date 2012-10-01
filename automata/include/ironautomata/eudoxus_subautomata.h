@@ -67,20 +67,25 @@ struct IA_EUDOXUS(low_node_t)
      * flag1: has_nonadvancing -- edges only; not including default.
      * flag2: has_default
      * flag3: advance_on_default
+     * flag4: has_edges
      */
     ia_eudoxus_node_header_t header;
 
-    /**
+    /* variable: */
+
+    /*
      * Number of edges, not including default.
      *
      * I.e., the size of advance and edges.
      */
-    uint8_t         out_degree;
+    /*
+    uint8_t out_degree if has_edges
+    */
 
-    /* variable:
+    /*
     IA_EUDOXUS_ID_T first_output          if has_output
     IA_EUDOXUS_ID_T default_node          if has_defaults
-    uint8_t         advance[out_degree/8] if has_nonadvancing
+    uint8_t         advance[out_degree/8] if has_nonadvancing & has_edges
     low_edge_t      edges[]
     */
 } __attribute((packed));
