@@ -139,6 +139,9 @@ struct output_t
 //! Automata.
 struct automata_t
 {
+    //! Constructor: no_advance_no_output set to false.
+    automata_t();
+
     //! Starting node.
     node_p start_node;
 

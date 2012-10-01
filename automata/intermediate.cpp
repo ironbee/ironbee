@@ -52,6 +52,8 @@ node_t::node_t() : advance_on_default(true) {}
 
 edge_t::edge_t() : advance(true) {}
 
+automata_t::automata_t() : no_advance_no_output(false) {}
+
 bool read_chunk(istream& input, PB::Chunk& chunk)
 {
     if (input.bad()) {
