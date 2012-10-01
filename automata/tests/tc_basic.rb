@@ -17,4 +17,21 @@ class TestBasic < Test::Unit::TestCase
 
     ac_test(words, text)
   end
+
+  def test_large
+    words_input = "/usr/share/dict/words"
+    n = 291
+
+    words = []
+    File.open(words_input, "r") do |fp|
+      while n > 0
+        words << fp.gets.chomp
+        n -= 1
+      end
+    end
+
+    text = words.join(" ")
+
+    ac_test(words, text)
+  end
 end
