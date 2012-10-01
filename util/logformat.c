@@ -302,7 +302,7 @@ ib_status_t ib_logformat_format(const ib_logformat_t *lf,
     const ib_list_node_t *node;
     size_t line_remain = line_size - 1;
     char *line_cur = line;
-    bool truncated;
+    bool truncated = false;
 
     IB_LIST_LOOP_CONST(lf->items, node) {
         const ib_logformat_item_t *item =
@@ -334,7 +334,6 @@ ib_status_t ib_logformat_format(const ib_logformat_t *lf,
         }
 
         /* Copy into buffer */
-        truncated = false;
         strncpy(line_cur, str, line_remain);
         if (len > line_remain) {
             len = line_remain;
@@ -343,19 +342,15 @@ ib_status_t ib_logformat_format(const ib_logformat_t *lf,
         line_cur += len;
         line_remain -= len;
 
-        if (truncated) {
-            IB_FTRACE_RET_STATUS(IB_ETRUNC);
+        /* If no space remains, don't bother to try further... */
+        if (line_remain == 0) {
+            break;
         }
     }
 
-    if (line_remain) {
-        *line_cur = '\0';
-        --line_remain;
-        truncated = false;
-    }
-    else {
-        truncated = true;
-    }
+    /* We left an extra byte in the buffer, so it should be safe to terminte
+     * the string */
+    *line_cur = '\0';
     *line_len = (line_cur - line);
 
     IB_FTRACE_RET_STATUS(truncated ? IB_ETRUNC : IB_OK);

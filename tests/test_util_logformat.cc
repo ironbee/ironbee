@@ -106,6 +106,7 @@ ib_status_t format_field(
 }
 
 static const size_t buflen = 8192;
+static const size_t trunclen = 64;
 TEST_F(TestIBUtilLogformat, test_parse_default)
 {
     ib_status_t rc;
@@ -206,12 +207,18 @@ TEST_F(TestIBUtilLogformat, test_parse_default)
     ASSERT_EQ(item_type_format, item->itype);
     ASSERT_EQ('f', item->item.field.fchar);
 
-    rc = ib_logformat_format(lf, linebuf, 64, &len, format_field, NULL);
-    ASSERT_EQ(IB_ETRUNC, rc);
-
     rc = ib_logformat_format(lf, linebuf, buflen, &len, format_field, NULL);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_STREQ(formatted, linebuf);
+
+    /* Verify that truncation is handled correctly */
+    rc = ib_logformat_format(lf, linebuf, trunclen, &len, format_field, NULL);
+    ASSERT_EQ(IB_ETRUNC, rc);
+    ASSERT_EQ(len, trunclen-1);
+    char trunc_buf[trunclen];
+    strncpy(trunc_buf, formatted, trunclen-1);
+    trunc_buf[trunclen-1] = '\0';
+    ASSERT_STREQ(trunc_buf, linebuf);
 }
 
 /// @test Test util logformat library - ib_logformat_parse()
