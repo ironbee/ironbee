@@ -332,6 +332,7 @@ int main(int argc, char **argv)
     string output_type_s("string");
     string record_s("list");
     size_t block_size = 1024;
+    size_t overlap_size = 128;
 
     po::options_description desc("Options:");
     desc.add_options()
@@ -353,6 +354,9 @@ int main(int argc, char **argv)
         )
         ("size,s", po::value<size_t>(&block_size),
             "input block size; default = 1024"
+        )
+        ("overlap,l", po::value<size_t>(&overlap_size),
+            "how much to overlap blocks; default = 128"
         )
         ;
 
@@ -377,6 +381,11 @@ int main(int argc, char **argv)
     if (! vm.count("automata")) {
         cout << "automata is required." << endl;
         cout << desc << endl;
+        return 1;
+    }
+
+    if (overlap_size > block_size / 2) {
+        cout << "block_size must be at least twice overlap size." << endl;
         return 1;
     }
 
@@ -448,7 +457,7 @@ int main(int argc, char **argv)
             output_record_list,
             _1,
             _2,
-            &input_buffer[0],
+            &input_buffer[overlap_size],
             boost::ref(pre_block),
             boost::ref(*output)
         );
@@ -485,7 +494,16 @@ int main(int argc, char **argv)
     bool at_end = false;
     while (! at_end && *input) {
         TimingInfo local_ti;
-        input->read(reinterpret_cast<char*>(&input_buffer[0]), block_size);
+        // Shift overlap to front.
+        copy(
+            &input_buffer[block_size - overlap_size], &input_buffer[block_size],
+            &input_buffer[0]
+        );
+        input->read(
+            reinterpret_cast<char*>(&input_buffer[overlap_size]),
+            block_size - overlap_size
+        );
+
         size_t read = input->gcount();
         if (read == 0) {
             break;
@@ -493,7 +511,7 @@ int main(int argc, char **argv)
         ti.switch_event(TimingInfo::EUDOXUS);
         rc = ia_eudoxus_execute(
             state,
-            &input_buffer[0],
+            &input_buffer[overlap_size],
             read
         );
         ti.switch_event(TimingInfo::DEFAULT);
