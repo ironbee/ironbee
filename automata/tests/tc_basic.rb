@@ -8,6 +8,11 @@ if ! ENV['abs_builddir']
   raise "Need environmental variable abs_builddir properly set."
 end
 
+def random_word(max_length)
+  length = rand(max_length) + 1
+  (1..length).collect {"%c" % (97 + rand(26))}.join
+end
+
 class TestBasic < Test::Unit::TestCase
   include AutomataTest
 
@@ -19,16 +24,13 @@ class TestBasic < Test::Unit::TestCase
   end
 
   def test_large
-    words_input = "/usr/share/dict/words"
-    n = 291
+    n = 1000
 
-    words = []
-    File.open(words_input, "r") do |fp|
-      while n > 0
-        words << fp.gets.chomp
-        n -= 1
-      end
+    words = Set.new
+    while words.size < n
+      words << random_word(10)
     end
+    words = words.to_a
 
     text = words.join(" ")
 
