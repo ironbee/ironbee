@@ -800,7 +800,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     rc = register_action_modifier(cp, rule, name, value);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error registering action \"%s\": %s",
-                         value, ib_status_to_string(rc));
+                         name, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
