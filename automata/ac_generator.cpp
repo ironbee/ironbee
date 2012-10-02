@@ -26,6 +26,7 @@
  */
 
 #include <ironautomata/intermediate.hpp>
+#include <ironautomata/optimize_edges.hpp>
 #include <ironautomata/buffer.hpp>
 
 #include <boost/lexical_cast.hpp>
@@ -239,5 +240,6 @@ int main(int argc, char** argv)
 
     process_failures(a);
 
+    breadth_first(a, optimize_edges);
     write_automata(a, cout, chunk_size);
 }

@@ -18,6 +18,7 @@ libironautomata_la_SOURCES = \
     eudoxus_compiler.cpp \
     intermediate.cpp \
     logger.cpp \
+    optimize_edges.cpp \
     include/ironautomata/*.hpp
 
 nodist_libironautomata_la_SOURCES = \
