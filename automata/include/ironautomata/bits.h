@@ -129,6 +129,20 @@ uint8_t ia_setbit8(uint8_t byte, int i)
 }
 
 /**
+ * Return @a byte with @a i th bit set to 0.
+ *
+ * @param[in] byte Byte to unset bit of.
+ * @param[in] i    Bit to unset.
+ * @return @a byte with @a i th bit set to 0.
+ */
+static
+inline
+uint8_t ia_unsetbit8(uint8_t byte, int i)
+{
+    return byte & ~(1 << i);
+}
+
+/**
  * Return @a word with @a i th bit set to 1.
  *
  * @param[in] word Word to set bit of.
@@ -140,6 +154,20 @@ inline
 uint16_t ia_setbit16(uint16_t word, int i)
 {
     return word | (1 << i);
+}
+
+/**
+ * Return @a word with @a i th bit set to 0.
+ *
+ * @param[in] word Word to unset bit of.
+ * @param[in] i    Bit to unset.
+ * @return @a word with @a i th bit set to 0.
+ */
+static
+inline
+uint16_t ia_unsetbit16(uint16_t word, int i)
+{
+    return word & ~(1 << i);
 }
 
 /**
@@ -157,6 +185,20 @@ uint32_t ia_setbit32(uint32_t word, int i)
 }
 
 /**
+ * Return @a word with @a i th bit set to 0.
+ *
+ * @param[in] word Word to unset bit of.
+ * @param[in] i    Bit to unset.
+ * @return @a word with @a i th bit set to 0.
+ */
+static
+inline
+uint32_t ia_unsetbit32(uint32_t word, int i)
+{
+    return word & ~(1 << i);
+}
+
+/**
  * Return @a word with @a i th bit set to 1.
  *
  * @param[in] word Word to set bit of.
@@ -171,6 +213,20 @@ uint64_t ia_setbit64(uint64_t word, int i)
 }
 
 /**
+ * Return @a word with @a i th bit set to 0.
+ *
+ * @param[in] word Word to unset bit of.
+ * @param[in] i    Bit to unset.
+ * @return @a word with @a i th bit set to 0.
+ */
+static
+inline
+uint64_t ia_unsetbit64(uint64_t word, int i)
+{
+    return word & ~(1 << i);
+}
+
+/**
  * Change the @a i th bit of the the bytes at @a bytes to 1.
  *
  * @param[in] bytes Byte sequence to change.
@@ -181,6 +237,19 @@ inline
 void ia_setbitv(uint8_t *bytes, int i)
 {
     bytes[i / 8] = ia_setbit8(bytes[i / 8], i % 8);
+}
+
+/**
+ * Change the @a i th bit of the the bytes at @a bytes to 0.
+ *
+ * @param[in] bytes Byte sequence to change.
+ * @param[in] i     Bit to unset.
+ */
+static
+inline
+void ia_unsetbitv(uint8_t *bytes, int i)
+{
+    bytes[i / 8] = ia_unsetbit8(bytes[i / 8], i % 8);
 }
 
 /**

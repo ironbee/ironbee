@@ -107,3 +107,48 @@ TEST(TestBits, set)
         EXPECT_EQ(bytes[i / 8], other_bytes[i / 8]);
     }
 }
+
+TEST(TestBits, Unset)
+{
+    uint8_t u8;
+    uint16_t u16;
+    uint32_t u32;
+    uint64_t u64;
+    uint8_t bytes[10];
+    uint8_t other_bytes[10];
+
+    u8 = 0xff & ~0x12;
+    for (int i = 0; i < 8; ++i) {
+        u8 &= ~(1 << i);
+        EXPECT_EQ(u8, ia_unsetbit8(u8, i));
+    }
+
+    u16 = 0xffff & ~0x1234;
+    for (int i = 0; i < 16; ++i) {
+        u16 &= ~(1 << i);
+        EXPECT_EQ(u16, ia_unsetbit16(u16, i));
+    }
+
+    u32 = 0xffffffff & ~0x12345678;
+    for (int i = 0; i < 32; ++i) {
+        u32 &= ~(1 << i);
+        EXPECT_EQ(u32, ia_unsetbit32(u32, i));
+    }
+
+    u64 = 0xffffffffffffffff & ~0x123456789abcdef0;
+    for (int i = 0; i < 64; ++i) {
+        u64 &= ~(1 << i);
+        EXPECT_EQ(u64, ia_unsetbit64(u64, i));
+    }
+
+    bytes[0] = 13;
+    for (int i = 1; i < 10; ++i) {
+        bytes[i] = (bytes[i-1]+3)*7;
+    }
+    memcpy(other_bytes, bytes, 10);
+    for (int i = 0; i < 80; ++i) {
+        bytes[i / 8] &= ~(1 << (i % 8));
+        ia_unsetbitv(other_bytes, i);
+        EXPECT_EQ(bytes[i / 8], other_bytes[i / 8]);
+    }
+}
