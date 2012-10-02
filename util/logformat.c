@@ -348,7 +348,7 @@ ib_status_t ib_logformat_format(const ib_logformat_t *lf,
         }
     }
 
-    /* We left an extra byte in the buffer, so it should be safe to terminte
+    /* We left an extra byte in the buffer, so it should be safe to terminate
      * the string */
     *line_cur = '\0';
     *line_len = (line_cur - line);

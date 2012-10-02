@@ -290,7 +290,7 @@ ia_eudoxus_result_t ia_eudoxus_create_state(
     state->callback_data  = callback_data;
     state->input_location = NULL;
     state->node           = (ia_eudoxus_node_t *)(
-        (char*)eudoxus->automata + eudoxus->automata->start_index
+        (char *)eudoxus->automata + eudoxus->automata->start_index
     );
 
     *out_state = state;

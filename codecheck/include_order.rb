@@ -76,6 +76,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironautomata/intermediate.hpp>',
   '<ironautomata/intermediate.pb.h>',
   '<ironautomata/logger.hpp>',
+  '<ironautomata/optimize_edges.hpp>',
   # End Automata
 
   '<ironbee/action.h>',

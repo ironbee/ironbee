@@ -25,13 +25,13 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include <ironautomata/buffer.hpp>
 #include <ironautomata/intermediate.hpp>
 #include <ironautomata/optimize_edges.hpp>
-#include <ironautomata/buffer.hpp>
 
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/make_shared.hpp>
-#include <boost/foreach.hpp>
 
 #include <list>
 
@@ -84,7 +84,7 @@ struct ACNode : public Node
     }
 };
 
-//! Shared pointer to ac_ndoe_t.
+//! Shared pointer to ac_node_t.
 typedef boost::shared_ptr<ACNode> ac_node_p;
 
 /**

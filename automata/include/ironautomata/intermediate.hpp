@@ -134,7 +134,7 @@ public:
     /**
      * Constructor.
      *
-     * Constructs as epsilo (valueless) edge, but values can be added with
+     * Constructs as epsilon (valueless) edge, but values can be added with
      * add().
      *
      * @param[in] target  Target.
@@ -312,12 +312,12 @@ public:
     explicit
     Node(bool advance_on_default = true);
 
-    //! First Output accesor.
+    //! First Output accessor.
     const output_p& first_output() const
     {
         return m_first_output;
     }
-    //! First Output accesor.
+    //! First Output accessor.
     output_p& first_output()
     {
         return m_first_output;
@@ -416,7 +416,7 @@ public:
         const output_p&      next_output = output_p()
     );
 
-    //! Construct from stirng.
+    //! Construct from string.
     explicit
     Output(
         const std::string& content,
