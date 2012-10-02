@@ -120,7 +120,7 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    Intermediate::automata_t automata;
+    Intermediate::Automata automata;
     bool success = false;
     try {
         success = Intermediate::read_automata(

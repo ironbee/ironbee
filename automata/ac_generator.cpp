@@ -43,10 +43,10 @@ using boost::make_shared;
  * Specialized subclass node type.
  *
  * Adds a pointer to the last output in the output chain to allow easy
- * merging of output sets.  All nodes will be created as ac_node_t's and
+ * merging of output sets.  All nodes will be created as ACNode's and
  * static pointer casts will be used to retrieve when needed.
  */
-struct ac_node_t : public node_t
+struct ACNode : public Node
 {
     /**
      * Last output in output change.
@@ -62,7 +62,7 @@ struct ac_node_t : public node_t
      */
     void set_output(const output_p& to)
     {
-        output = last_output = to;
+        first_output() = last_output = to;
     }
 
     /**
@@ -74,32 +74,34 @@ struct ac_node_t : public node_t
     void append_outputs(const node_p& other)
     {
         if (! last_output) {
-            assert(! output);
-            output = last_output = other->output;
+            assert(! first_output());
+            first_output() = last_output = other->first_output();
         }
         else {
-            last_output->next_output = other->output;
+            last_output->next_output() = other->first_output();
             last_output.reset();
         }
     }
 };
 
 //! Shared pointer to ac_ndoe_t.
-typedef boost::shared_ptr<ac_node_t> ac_node_p;
+typedef boost::shared_ptr<ACNode> ac_node_p;
 
 /**
  * Returns next node for an input of @a c at node @a node or node_p() if none.
  */
 node_p find_next(const node_p& node, uint8_t c)
 {
-    BOOST_FOREACH(const edge_t& edge, node->edges) {
-        BOOST_FOREACH(uint8_t v, edge_values(edge)) {
-            if (c == v) {
-                return edge.target;
-            }
-        }
+    Node::edge_list_t next_edges = node->edges_for(c);
+    if (next_edges.empty()) {
+        return node_p();
     }
-    return node_p();
+    else {
+        if (next_edges.size() != 1) {
+            throw logic_error("Unexpected non-determinism.");
+        }
+        return next_edges.front().target();
+    }
 }
 
 /**
@@ -108,13 +110,13 @@ node_p find_next(const node_p& node, uint8_t c)
  * This function must be called one or more times before process_failures() is
  * called and never after.
  */
-void add_word(automata_t& a, const string& s)
+void add_word(Automata& a, const string& s)
 {
-    if (! a.start_node) {
-        a.start_node = make_shared<ac_node_t>();
+    if (! a.start_node()) {
+        a.start_node() = make_shared<ACNode>();
     }
 
-    node_p current_node = a.start_node;
+    node_p current_node = a.start_node();
     size_t j = 0;
     while (j < s.length()) {
         uint8_t c = s[j];
@@ -132,22 +134,22 @@ void add_word(automata_t& a, const string& s)
         uint8_t c = s[j];
         ++j;
 
-        current_node->edges.push_back(edge_t());
-        edge_t& edge = current_node->edges.back();
-        edge.target = make_shared<ac_node_t>();
-        edge.values.push_back(c);
-        current_node = edge.target;
+        current_node->edges().push_back(Edge());
+        Edge& edge = current_node->edges().back();
+        edge.target() = make_shared<ACNode>();
+        edge.add(c);
+        current_node = edge.target();
     }
 
-    assert(! current_node->output);
-    output_p output = make_shared<output_t>();
-    boost::static_pointer_cast<ac_node_t>(current_node)->set_output(output);
+    assert(! current_node->first_output());
+    output_p output = make_shared<Output>();
+    boost::static_pointer_cast<ACNode>(current_node)->set_output(output);
 
     IronAutomata::buffer_t content_buffer;
     IronAutomata::BufferAssembler assembler(content_buffer);
     assembler.append_object(uint32_t(s.length()));
 
-    output->content.assign(content_buffer.begin(), content_buffer.end());
+    output->content().assign(content_buffer.begin(), content_buffer.end());
 }
 
 /**
@@ -155,17 +157,17 @@ void add_word(automata_t& a, const string& s)
  *
  * See add_word() for discussion.
  */
-void process_failures(automata_t& a)
+void process_failures(Automata& a)
 {
-    assert(a.start_node);
+    assert(a.start_node());
 
     typedef list<node_p> node_list_t;
     node_list_t todo;
 
-    BOOST_FOREACH(const edge_t& edge, a.start_node->edges) {
-        const node_p& target = edge.target;
-        target->default_target = a.start_node;
-        target->advance_on_default = false;
+    BOOST_FOREACH(const Edge& edge, a.start_node()->edges()) {
+        const node_p& target = edge.target();
+        target->default_target() = a.start_node();
+        target->advance_on_default() = false;
         todo.push_back(target);
     }
 
@@ -175,36 +177,36 @@ void process_failures(automata_t& a)
         node_p r = todo.front();
         todo.pop_front();
 
-        BOOST_FOREACH(const edge_t& edge, r->edges) {
-            assert(edge.values.size() == 1);
-            uint8_t c = edge.values[0];
-            node_p s = edge.target;
+        BOOST_FOREACH(const Edge& edge, r->edges()) {
+            assert(edge.size() == 1);
+            uint8_t c = *edge.begin();
+            node_p s = edge.target();
 
             todo.push_back(s);
 
-            node_p current_node = r->default_target;
+            node_p current_node = r->default_target();
             node_p next_node;
             for (;;) {
                 next_node = find_next(current_node, c);
-                if (current_node == a.start_node || next_node) {
+                if (current_node == a.start_node() || next_node) {
                     break;
                 }
-                assert(current_node->default_target);
-                current_node = current_node->default_target;
+                assert(current_node->default_target());
+                current_node = current_node->default_target();
             }
 
-            assert(current_node == a.start_node || next_node);
-            if (current_node == a.start_node && ! next_node) {
-                s->default_target = a.start_node;
+            assert(current_node == a.start_node() || next_node);
+            if (current_node == a.start_node() && ! next_node) {
+                s->default_target() = a.start_node();
             }
             else {
-                s->default_target = next_node;
+                s->default_target() = next_node;
             }
-            s->advance_on_default = false;
+            s->advance_on_default() = false;
 
-            if (s->default_target->output) {
-                ac_node_p ac_s = boost::static_pointer_cast<ac_node_t>(s);
-                ac_s->append_outputs(s->default_target);
+            if (s->default_target()->first_output()) {
+                ac_node_p ac_s = boost::static_pointer_cast<ACNode>(s);
+                ac_s->append_outputs(s->default_target());
             }
         }
     }
@@ -223,7 +225,7 @@ int main(int argc, char** argv)
         chunk_size = boost::lexical_cast<size_t>(argv[1]);
     }
 
-    automata_t a;
+    Automata a;
 
     list<string> words;
     string s;
@@ -234,9 +236,9 @@ int main(int argc, char** argv)
         }
     }
 
-    assert(a.start_node);
-    a.start_node->default_target = a.start_node;
-    a.start_node->advance_on_default = true;
+    assert(a.start_node());
+    a.start_node()->default_target() = a.start_node();
+    a.start_node()->advance_on_default() = true;
 
     process_failures(a);
 

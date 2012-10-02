@@ -17,7 +17,7 @@
 
  /**
  * @file
- * @brief IronAutomata --- Intermediate Format Implementation
+ * @brief IronAutomata --- Optimize Edges Implementation
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
@@ -45,45 +45,35 @@ void optimize_edges(const node_p& node)
     targets_map_t targets;
     targets_set_t epsilons;
 
-    BOOST_FOREACH(const edge_t& edge, node->edges) {
-        if (edge.values.empty() && edge.values_bm.empty()) {
-            epsilons.insert(make_pair(edge.target, edge.advance));
+    BOOST_FOREACH(const Edge& edge, node->edges()) {
+        if (edge.epsilon()) {
+            epsilons.insert(make_pair(edge.target(), edge.advance()));
         }
         else {
-            BOOST_FOREACH(uint8_t c, edge_values(edge)) {
-                targets[make_pair(edge.target, edge.advance)].insert(c);
+            BOOST_FOREACH(uint8_t c, edge) {
+                targets[make_pair(edge.target(), edge.advance())].insert(c);
             }
         }
     }
 
-    list<edge_t> new_edges;
+    list<Edge> new_edges;
     BOOST_FOREACH(const targets_map_t::value_type& v, targets) {
-        new_edges.push_back(edge_t());
-        edge_t& edge = new_edges.back();
-        edge.target = v.first.first;
-        edge.advance = v.first.second;
-
-        if (v.second.size() < 32) {
-            copy(
-                v.second.begin(), v.second.end(),
-                back_inserter(edge.values)
-            );
-        }
-        else {
-            edge.values_bm.resize(32, 0);
-            BOOST_FOREACH(uint8_t c, v.second) {
-                ia_setbitv(edge.values_bm.data(), c);
-            }
+        new_edges.push_back(Edge());
+        Edge& edge = new_edges.back();
+        edge.target() = v.first.first;
+        edge.advance() = v.first.second;
+        BOOST_FOREACH(uint8_t c, v.second) {
+            edge.add(c);
         }
     }
     BOOST_FOREACH(const target_key_t& key, epsilons) {
-        new_edges.push_back(edge_t());
-        edge_t& edge = new_edges.back();
-        edge.target = key.first;
-        edge.advance = key.second;
+        new_edges.push_back(Edge());
+        Edge& edge = new_edges.back();
+        edge.target() = key.first;
+        edge.advance() = key.second;
     }
 
-    node->edges.swap(new_edges);
+    node->edges().swap(new_edges);
 }
 
 } // Intermediate

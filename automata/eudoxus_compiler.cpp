@@ -67,7 +67,7 @@ public:
      * @param[in]  automata Automata to compile.
      */
     void compile(
-        const Intermediate::automata_t& automata
+        const Intermediate::Automata& automata
     );
 
 private:
@@ -133,9 +133,9 @@ private:
     private:
         //! True iff @a edge does not advance input.
         static
-        bool is_nonadvancing(const Intermediate::edge_t& edge)
+        bool is_nonadvancing(const Intermediate::Edge& edge)
         {
-            return ! edge.advance;
+            return ! edge.advance();
         }
 
         /**
@@ -145,71 +145,71 @@ private:
          *
          * @param[in] node Intermediate node to compile.
          */
-        void low_node(const Intermediate::node_t& node)
+        void low_node(const Intermediate::Node& node)
         {
             e_low_node_t* header =
                 m_parent.m_assembler.append_object(e_low_node_t());
 
             bool has_nonadvancing = (
-                find_if(node.edges.begin(), node.edges.end(), is_nonadvancing)
-            ) != node.edges.end();
+                find_if(node.edges().begin(), node.edges().end(), is_nonadvancing)
+            ) != node.edges().end();
 
             header->header.type = IA_EUDOXUS_LOW;
             header->header.flags = 0;
-            if (node.output) {
+            if (node.first_output()) {
                 header->header.flags = ia_setbit8(header->header.flags, 0);
             }
             if (has_nonadvancing) {
                 header->header.flags = ia_setbit8(header->header.flags, 1);
             }
-            if (node.default_target) {
+            if (node.default_target()) {
                 header->header.flags = ia_setbit8(header->header.flags, 2);
             }
-            if (node.advance_on_default) {
+            if (node.advance_on_default()) {
                 header->header.flags = ia_setbit8(header->header.flags, 3);
             }
 
-            if (node.edges.size() > 0) {
+            if (node.edges().size() > 0) {
                 header->header.flags = ia_setbit8(header->header.flags, 4);
                 m_parent.m_assembler.append_object(
-                    uint8_t(node.edges.size())
+                    uint8_t(node.edges().size())
                 );
             }
 
-            if (node.output) {
-                m_parent.append_output_ref(node.output);
-                m_parent.m_outputs.insert(node.output);
+            if (node.first_output()) {
+                m_parent.append_output_ref(node.first_output());
+                m_parent.m_outputs.insert(node.first_output());
             }
 
-            if (node.default_target) {
-                m_parent.append_node_ref(node.default_target);
+            if (node.default_target()) {
+                m_parent.append_node_ref(node.default_target());
             }
 
             size_t advance_index = 0;
             if (has_nonadvancing) {
                 uint8_t* advance =
                     m_parent.m_assembler.template append_array<uint8_t>(
-                        (node.edges.size() + 7) / 8
+                        (node.edges().size() + 7) / 8
                     );
                 advance_index = m_parent.m_assembler.index(advance);
             }
 
             size_t edge_i = 0;
-            BOOST_FOREACH(const Intermediate::edge_t& edge, node.edges) {
-                if (edge.values.empty() && edge.values_bm.empty()) {
+            BOOST_FOREACH(const Intermediate::Edge& edge, node.edges()) {
+                if (edge.epsilon()) {
                     throw runtime_error(
                         "Epsilon edges currently unsupported."
                     );
                 }
                 set<uint8_t> values;
-                BOOST_FOREACH(uint8_t value, edge_values(edge)) {
+                BOOST_FOREACH(uint8_t value, edge) {
                     bool in_set = ! values.insert(value).second;
                     if (in_set) {
                         throw runtime_error(
                             "Non-deterministic automata unsupported."
                         );
                     }
-                    if (has_nonadvancing && edge.advance) {
+                    if (has_nonadvancing && edge.advance()) {
                         ia_setbitv(
                             m_parent.m_assembler.template ptr<uint8_t>(
                                 advance_index
@@ -224,7 +224,7 @@ private:
                     e_edge->c = value;
                     m_parent.register_node_ref(
                         m_parent.m_assembler.index(&(e_edge->next_node)),
-                        edge.target
+                        edge.target()
                     );
                 }
             }
@@ -317,10 +317,10 @@ private:
         while (! todo.empty()) {
             const Intermediate::output_p output = todo.front();
             todo.pop_front();
-            if (output->next_output) {
-                bool is_new = m_outputs.insert(output->next_output).second;
+            if (output->next_output()) {
+                bool is_new = m_outputs.insert(output->next_output()).second;
                 if (is_new) {
-                    todo.push_back(output->next_output);
+                    todo.push_back(output->next_output());
                 }
             }
         }
@@ -333,15 +333,15 @@ private:
         {
             e_output_t* e_output = m_assembler.append_object(e_output_t());
             m_output_map[output] = m_assembler.index(e_output);
-            e_output->output_length = output->content.size();
+            e_output->output_length = output->content().size();
             // Register even if NULL to get id count correct.
             register_output_ref(
                 m_assembler.index(&(e_output->next_output)),
-                output->next_output
+                output->next_output()
             );
             m_assembler.append_bytes(
-                output->content.data(),
-                output->content.size()
+                output->content().data(),
+                output->content().size()
             );
         }
     }
@@ -399,7 +399,7 @@ Compiler<id_width>::Compiler(result_t& result, size_t align_to) :
 
 template <size_t id_width>
 void Compiler<id_width>::compile(
-    const Intermediate::automata_t& automata
+    const Intermediate::Automata& automata
 )
 {
     m_result.buffer.clear();
@@ -412,7 +412,7 @@ void Compiler<id_width>::compile(
     e_automata->version              = IA_EUDOXUS_VERSION;
     e_automata->id_width             = id_width;
     e_automata->is_big_endian        = ia_eudoxus_is_big_endian();
-    e_automata->no_advance_no_output = automata.no_advance_no_output;
+    e_automata->no_advance_no_output = automata.no_advance_no_output();
     e_automata->reserved             = 0;
 
     // Fill in at end.
@@ -436,8 +436,8 @@ void Compiler<id_width>::compile(
     e_automata->num_nodes   = m_node_map.size();
     e_automata->num_outputs = m_output_map.size();
     e_automata->data_length = m_result.buffer.size();
-    assert(m_node_map[automata.start_node] < 256);
-    e_automata->start_index = m_node_map[automata.start_node];
+    assert(m_node_map[automata.start_node()] < 256);
+    e_automata->start_index = m_node_map[automata.start_node()];
 
     m_result.ids_used = m_node_id_map.size() + m_output_id_map.size();
 }
@@ -445,9 +445,9 @@ void Compiler<id_width>::compile(
 } // Anonymous
 
 result_t compile(
-    const Intermediate::automata_t& automata,
-    size_t                          id_width,
-    size_t                          align_to
+    const Intermediate::Automata& automata,
+    size_t                        id_width,
+    size_t                        align_to
 )
 {
     result_t result;
@@ -472,8 +472,8 @@ result_t compile(
 }
 
 result_t compile_minimal(
-    const Intermediate::automata_t& automata,
-    size_t                          align_to
+    const Intermediate::Automata& automata,
+    size_t                        align_to
 )
 {
     static const size_t c_id_widths[] = {1, 2, 4, 8};

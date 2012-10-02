@@ -39,9 +39,217 @@
 
 using namespace std;
 using namespace IronAutomata::Intermediate;
+using boost::make_shared;
 
+// Edge
 
-TEST(TestIntermediate, Basic)
+TEST(TestIntermediate, EdgeConstructors)
+{
+    Edge edge;
+
+    EXPECT_FALSE(edge.target());
+    EXPECT_TRUE(edge.advance());
+    EXPECT_TRUE(edge.empty());
+
+    node_p target_a = make_shared<Node>();
+    node_p target_b = make_shared<Node>();
+
+    edge = Edge(target_a, false);
+    EXPECT_EQ(target_a, edge.target());
+    EXPECT_FALSE(edge.advance());
+    EXPECT_TRUE(edge.empty());
+
+    byte_vector_t bytes;
+    bytes.push_back('a');
+    bytes.push_back('b');
+    bytes.push_back('c');
+
+    edge = Edge::make_from_vector(target_b, true, bytes);
+    EXPECT_EQ(target_b, edge.target());
+    EXPECT_TRUE(edge.advance());
+    EXPECT_EQ(3UL, edge.size());
+    EXPECT_TRUE(edge.has_value('a'));
+    EXPECT_TRUE(edge.has_value('b'));
+    EXPECT_TRUE(edge.has_value('c'));
+
+    bytes.clear();
+    bytes.resize(32, 0);
+    ia_setbitv(bytes.data(), 'd');
+    ia_setbitv(bytes.data(), 'e');
+    ia_setbitv(bytes.data(), 'f');
+    edge = Edge::make_from_bitmap(target_a, false, bytes);
+    EXPECT_EQ(target_a, edge.target());
+    EXPECT_FALSE(edge.advance());
+    EXPECT_EQ(3UL, edge.size());
+    EXPECT_TRUE(edge.has_value('d'));
+    EXPECT_TRUE(edge.has_value('e'));
+    EXPECT_TRUE(edge.has_value('f'));
+}
+
+TEST(TestIntermediate, EdgeBitmapIterator)
+{
+    byte_vector_t bitmap(32, 0);
+    for (int i = 0; i <= 36; ++i ) {
+        ia_setbitv(bitmap.data(), 7 * i);
+    }
+    Edge edge = Edge::make_from_bitmap(node_p(), false, bitmap);
+    vector<uint8_t> result;
+    copy(edge.begin(), edge.end(), back_inserter(result));
+    ASSERT_EQ(37UL, result.size());
+    for (int i = 0; i <= 36; ++i) {
+        EXPECT_EQ(result[i], 7 * i);
+    }
+}
+
+TEST(TestIntermediate, EdgeVectorIterator)
+{
+    byte_vector_t values;
+    for (int i = 0; i <= 36; ++i ) {
+        values.push_back(7 * i);
+    }
+    Edge edge = Edge::make_from_vector(node_p(), false, values);
+
+    vector<uint8_t> result;
+    copy(edge.begin(), edge.end(), back_inserter(result));
+    ASSERT_EQ(37UL, result.size());
+    for (int i = 0; i <= 36; ++i) {
+        EXPECT_EQ(result[i], 7 * i);
+    }
+}
+
+TEST(TestIntermediate, EdgeAddRemove)
+{
+    Edge edge;
+
+    edge.add('a');
+    EXPECT_EQ(1UL, edge.size());
+    EXPECT_TRUE(edge.bitmap().empty());
+    EXPECT_TRUE(edge.has_value('a'));
+    edge.add('b');
+    EXPECT_EQ(2UL, edge.size());
+    EXPECT_TRUE(edge.bitmap().empty());
+    EXPECT_TRUE(edge.has_value('b'));
+
+    edge.clear();
+
+    for (uint8_t c = 0; c < 200; c += 3) {
+        edge.add(c);
+    }
+
+    for (uint8_t c = 0; c < 200; ++c) {
+        EXPECT_EQ(c % 3 == 0, edge.has_value(c));
+    }
+
+    edge.remove(21);
+    EXPECT_FALSE(edge.has_value(21));
+}
+
+TEST(TestIntermediate, EdgeSwitch)
+{
+    Edge edge;
+    edge.add('a');
+    edge.add('d');
+    edge.add('g');
+
+    edge.switch_to_bitmap();
+    ASSERT_EQ(32UL, edge.bitmap().size());
+    EXPECT_TRUE(edge.vector().empty());
+
+    EXPECT_TRUE(edge.has_value('a'));
+    EXPECT_TRUE(edge.has_value('d'));
+    EXPECT_TRUE(edge.has_value('g'));
+    EXPECT_FALSE(edge.has_value('h'));
+
+    edge.switch_to_vector();
+    ASSERT_EQ(3UL, edge.vector().size());
+    EXPECT_TRUE(edge.bitmap().empty());
+    EXPECT_TRUE(edge.has_value('a'));
+    EXPECT_TRUE(edge.has_value('d'));
+    EXPECT_TRUE(edge.has_value('g'));
+    EXPECT_FALSE(edge.has_value('h'));
+}
+
+TEST(TestIntermediate, EdgeMatches)
+{
+    Edge edge;
+
+    EXPECT_TRUE(edge.matches('a'));
+
+    edge.add('b');
+    EXPECT_FALSE(edge.matches('a'));
+    EXPECT_TRUE(edge.matches('b'));
+    edge.add('c');
+    EXPECT_TRUE(edge.matches('b'));
+    EXPECT_TRUE(edge.matches('c'));
+
+    edge.switch_to_bitmap();
+    EXPECT_TRUE(edge.matches('b'));
+    EXPECT_TRUE(edge.matches('c'));
+}
+
+// Node
+
+TEST(TestIntermediate, NodeConstructor)
+{
+    Node node;
+    EXPECT_TRUE(node.advance_on_default());
+    EXPECT_FALSE(node.first_output());
+    EXPECT_FALSE(node.default_target());
+    EXPECT_TRUE(node.edges().empty());
+    node = Node(false);
+    EXPECT_FALSE(node.advance_on_default());
+}
+
+TEST(TestIntermediate, NodeEdges)
+{
+    Node node;
+    node_p target_a = make_shared<Node>();
+    node_p target_a2 = make_shared<Node>();
+    node_p target_b = make_shared<Node>();
+    byte_vector_t values;
+    values.push_back('a');
+    node.edges().push_back(Edge::make_from_vector(target_a, false, values));
+    node.edges().push_back(Edge::make_from_vector(target_a2, false, values));
+    values[0] = 'b';
+    node.edges().push_back(Edge::make_from_vector(target_b, false, values));
+
+    Node::edge_list_t edges = node.edges_for('a');
+    EXPECT_EQ(2UL, edges.size());
+    EXPECT_TRUE(edges.front().matches('a'));
+    EXPECT_EQ(1UL, edges.front().size());
+    edges = node.edges_for('b');
+    EXPECT_EQ(1UL, edges.size());
+    EXPECT_EQ(target_b, edges.front().target());
+    EXPECT_TRUE(edges.front().matches('b'));
+    EXPECT_EQ(1UL, edges.front().size());
+
+    node_p target_default = make_shared<Node>();
+
+    node.default_target() = target_default;
+
+    Node::target_info_list_t targets;
+
+    targets = node.targets_for('a');
+    EXPECT_EQ(2UL, targets.size());
+    targets = node.targets_for('b');
+    EXPECT_EQ(1UL, targets.size());
+    targets = node.targets_for('c');
+    EXPECT_EQ(1UL, targets.size());
+    EXPECT_EQ(target_default, targets.front().first);
+
+    node_p target_epsilon = make_shared<Node>();
+    node.edges().push_back(Edge(target_epsilon));
+    targets = node.targets_for('a');
+    EXPECT_EQ(3UL, targets.size());
+    targets = node.targets_for('b');
+    EXPECT_EQ(2UL, targets.size());
+    targets = node.targets_for('c');
+    EXPECT_EQ(1UL, targets.size());
+}
+
+// Reader
+
+TEST(TestIntermediate, ReaderBasic)
 {
     stringstream s;
     {
@@ -67,28 +275,27 @@ TEST(TestIntermediate, Basic)
     EXPECT_TRUE(reader.clean());
     EXPECT_TRUE(reader.success());
 
-    const automata_t& automata = reader.automata();
-    EXPECT_FALSE(automata.no_advance_no_output);
-    ASSERT_TRUE(automata.start_node);
-    const node_t& node_a = *automata.start_node;
-    EXPECT_FALSE(node_a.default_target);
-    EXPECT_TRUE(node_a.advance_on_default);
-    EXPECT_FALSE(node_a.output);
-    EXPECT_EQ(1UL, node_a.edges.size());
-    const edge_t& edge_ab = *node_a.edges.begin();
-    ASSERT_TRUE(edge_ab.target);
-    EXPECT_TRUE(edge_ab.advance);
-    EXPECT_TRUE(edge_ab.values_bm.empty());
-    EXPECT_EQ(1U, edge_ab.values.size());
-    EXPECT_EQ('a', edge_ab.values[0]);
-    const node_t& node_b = *edge_ab.target;
-    EXPECT_FALSE(node_b.output);
-    EXPECT_FALSE(node_b.default_target);
-    EXPECT_TRUE(node_b.advance_on_default);
-    EXPECT_TRUE(node_b.edges.empty());
+    const Automata& automata = reader.automata();
+    EXPECT_FALSE(automata.no_advance_no_output());
+    ASSERT_TRUE(automata.start_node());
+    const Node& node_a = *automata.start_node();
+    EXPECT_FALSE(node_a.default_target());
+    EXPECT_TRUE(node_a.advance_on_default());
+    EXPECT_FALSE(node_a.first_output());
+    EXPECT_EQ(1UL, node_a.edges().size());
+    const Edge& edge_ab = *node_a.edges().begin();
+    ASSERT_TRUE(edge_ab.target());
+    EXPECT_TRUE(edge_ab.advance());
+    EXPECT_EQ(1U, edge_ab.size());
+    EXPECT_EQ('a', *edge_ab.begin());
+    const Node& node_b = *edge_ab.target();
+    EXPECT_FALSE(node_b.first_output());
+    EXPECT_FALSE(node_b.default_target());
+    EXPECT_TRUE(node_b.advance_on_default());
+    EXPECT_TRUE(node_b.edges().empty());
 }
 
-TEST(TestIntermediate, Trivial)
+TEST(TestIntermediate, ReaderTrivial)
 {
     stringstream s;
     {
@@ -105,12 +312,12 @@ TEST(TestIntermediate, Trivial)
     EXPECT_TRUE(reader.clean());
     EXPECT_TRUE(reader.success());
 
-    const automata_t& automata = reader.automata();
-    EXPECT_FALSE(automata.no_advance_no_output);
-    EXPECT_FALSE(automata.start_node);
+    const Automata& automata = reader.automata();
+    EXPECT_FALSE(automata.no_advance_no_output());
+    EXPECT_FALSE(automata.start_node());
 }
 
-TEST(TestIntermediate, EmptyInput)
+TEST(TestIntermediate, ReaderEmptyInput)
 {
     stringstream s;
 
@@ -119,10 +326,10 @@ TEST(TestIntermediate, EmptyInput)
 
     bool success = reader.read_from_istream(s);
     EXPECT_TRUE(success);
-    EXPECT_FALSE(reader.automata().start_node);
+    EXPECT_FALSE(reader.automata().start_node());
 }
 
-TEST(TestIntermediate, InvalidSize)
+TEST(TestIntermediate, ReaderInvalidSize)
 {
     stringstream s;
 
@@ -139,7 +346,7 @@ TEST(TestIntermediate, InvalidSize)
     EXPECT_FALSE(success);
 }
 
-TEST(TestIntermediate, InvalidChunk)
+TEST(TestIntermediate, ReaderInvalidChunk)
 {
     static const char junk[] = "Hello World";
     stringstream s;
@@ -158,7 +365,7 @@ TEST(TestIntermediate, InvalidChunk)
     EXPECT_FALSE(success);
 }
 
-TEST(TestIntermediate, DuplicateOutput)
+TEST(TestIntermediate, ReaderDuplicateOutput)
 {
     stringstream s;
     {
@@ -187,7 +394,7 @@ TEST(TestIntermediate, DuplicateOutput)
     EXPECT_TRUE(reader.success());
 }
 
-TEST(TestIntermediate, DuplicateNode)
+TEST(TestIntermediate, ReaderDuplicateNode)
 {
     stringstream s;
     {
@@ -211,7 +418,7 @@ TEST(TestIntermediate, DuplicateNode)
     EXPECT_TRUE(reader.success());
 }
 
-TEST(TestIntermediate, TooValuedEdge)
+TEST(TestIntermediate, ReaderTooValuedEdge)
 {
     stringstream s;
     {
@@ -239,7 +446,7 @@ TEST(TestIntermediate, TooValuedEdge)
     EXPECT_TRUE(reader.success());
 }
 
-TEST(TestIntermediate, BadValuesBitmap)
+TEST(TestIntermediate, ReaderBadValuesBitmap)
 {
     stringstream s;
     {
@@ -266,7 +473,7 @@ TEST(TestIntermediate, BadValuesBitmap)
     EXPECT_TRUE(reader.success());
 }
 
-TEST(TestIntermediate, BitMapEdge)
+TEST(TestIntermediate, ReaderBitMapEdge)
 {
     stringstream s;
     {
@@ -292,20 +499,15 @@ TEST(TestIntermediate, BitMapEdge)
     EXPECT_TRUE(reader.clean());
     EXPECT_TRUE(reader.success());
 
-    const automata_t& automata = reader.automata();
-    ASSERT_TRUE(automata.start_node);
-    const node_t& node_a = *automata.start_node;
-    ASSERT_EQ(1UL, node_a.edges.size());
-    const edge_t& edge_ab = *node_a.edges.begin();
-    EXPECT_TRUE(edge_ab.values.empty());
-    EXPECT_EQ(32UL, edge_ab.values_bm.size());
-    EXPECT_EQ('a', edge_ab.values_bm[0]);
-    EXPECT_EQ('b', edge_ab.values_bm[1]);
-    EXPECT_EQ('c', edge_ab.values_bm[2]);
-    EXPECT_EQ('d', edge_ab.values_bm[3]);
+    const Automata& automata = reader.automata();
+    ASSERT_TRUE(automata.start_node());
+    const Node& node_a = *automata.start_node();
+    ASSERT_EQ(1UL, node_a.edges().size());
+    const Edge& edge_ab = *node_a.edges().begin();
+    EXPECT_EQ(104UL, edge_ab.size());
 }
 
-TEST(TestIntermediate, EpsilonEdge)
+TEST(TestIntermediate, ReaderEpsilonEdge)
 {
     stringstream s;
     {
@@ -330,16 +532,15 @@ TEST(TestIntermediate, EpsilonEdge)
     EXPECT_TRUE(reader.clean());
     EXPECT_TRUE(reader.success());
 
-    const automata_t& automata = reader.automata();
-    ASSERT_TRUE(automata.start_node);
-    const node_t& node_a = *automata.start_node;
-    ASSERT_EQ(1UL, node_a.edges.size());
-    const edge_t& edge_ab = *node_a.edges.begin();
-    EXPECT_TRUE(edge_ab.values.empty());
-    EXPECT_TRUE(edge_ab.values_bm.empty());
+    const Automata& automata = reader.automata();
+    ASSERT_TRUE(automata.start_node());
+    const Node& node_a = *automata.start_node();
+    ASSERT_EQ(1UL, node_a.edges().size());
+    const Edge& edge_ab = *node_a.edges().begin();
+    EXPECT_TRUE(edge_ab.empty());
 }
 
-TEST(TestIntermediate, MissingNode)
+TEST(TestIntermediate, ReaderMissingNode)
 {
     stringstream s;
     {
@@ -363,7 +564,7 @@ TEST(TestIntermediate, MissingNode)
     EXPECT_FALSE(reader.success());
 }
 
-TEST(TestIntermediate, ExcessNode)
+TEST(TestIntermediate, ReaderExcessNode)
 {
     stringstream s;
     {
@@ -387,7 +588,7 @@ TEST(TestIntermediate, ExcessNode)
     EXPECT_TRUE(reader.success());
 }
 
-TEST(TestIntermediate, MissingOutput)
+TEST(TestIntermediate, ReaderMissingOutput)
 {
     stringstream s;
     {
@@ -410,7 +611,7 @@ TEST(TestIntermediate, MissingOutput)
     EXPECT_FALSE(reader.success());
 }
 
-TEST(TestIntermediate, ExcessOutput)
+TEST(TestIntermediate, ReaderExcessOutput)
 {
     stringstream s;
     {
@@ -433,47 +634,10 @@ TEST(TestIntermediate, ExcessOutput)
     EXPECT_TRUE(reader.success());
 }
 
-TEST(TestIntermediate, BitmapEdgeIterator)
-{
-    using namespace IronAutomata::Intermediate;
-
-    edge_t edge;
-    edge.values_bm.resize(32);
-
-    for (int i = 0; i <= 36; ++i ) {
-        ia_setbitv(edge.values_bm.data(), 7 * i);
-    }
-
-    vector<uint8_t> result;
-    pair<edge_value_iterator, edge_value_iterator> values = edge_values(edge);
-    copy(values.first, values.second, back_inserter(result));
-    ASSERT_EQ(37UL, result.size());
-    for (int i = 0; i <= 36; ++i) {
-        EXPECT_EQ(result[i], 7 * i);
-    }
-}
-
-TEST(TestIntermediate, VectorEdgeIterator)
-{
-    using namespace IronAutomata::Intermediate;
-
-    edge_t edge;
-
-    for (int i = 0; i <= 36; ++i ) {
-        edge.values.push_back(7 * i);
-    }
-
-    vector<uint8_t> result;
-    pair<edge_value_iterator, edge_value_iterator> values = edge_values(edge);
-    copy(values.first, values.second, back_inserter(result));
-    ASSERT_EQ(37UL, result.size());
-    for (int i = 0; i <= 36; ++i) {
-        EXPECT_EQ(result[i], 7 * i);
-    }
-}
+// Writer
 
 // Very basic test; more significant testing will be done by end to end tests.
-TEST(TestIntermediate, WriteAutomata)
+TEST(TestIntermediate, Writer)
 {
     using namespace IronAutomata::Intermediate;
     using boost::make_shared;
@@ -481,21 +645,21 @@ TEST(TestIntermediate, WriteAutomata)
     stringstream s;
 
     {
-        automata_t a;
-        node_p   node   = a.start_node = make_shared<node_t>();
-        output_p output = node->output = make_shared<output_t>();
+        Automata a;
+        node_p   node   = a.start_node()       = make_shared<Node>();
+        output_p output = node->first_output() = make_shared<Output>();
 
-        output->content.push_back('7');
-        output->content.push_back('3');
+        output->content().push_back('7');
+        output->content().push_back('3');
 
-        output_p other_output = output->next_output = make_shared<output_t>();
-        other_output->content.push_back('9');
+        output_p other_output = output->next_output() = make_shared<Output>();
+        other_output->content().push_back('9');
 
-        node->edges.push_back(edge_t());
-        edge_t& edge = node->edges.back();
+        node->edges().push_back(Edge());
+        Edge& edge = node->edges().back();
 
-        node_p other_node = edge.target = make_shared<node_t>();
-        edge.values.push_back('5');
+        node_p other_node = edge.target() = make_shared<Node>();
+        edge.add('5');
 
         write_automata(a, s);
         s.seekp(0);
@@ -509,32 +673,32 @@ TEST(TestIntermediate, WriteAutomata)
     EXPECT_TRUE(reader.clean());
     EXPECT_TRUE(reader.success());
 
-    automata_t a = reader.automata();
+    Automata a = reader.automata();
 
-    EXPECT_FALSE(a.no_advance_no_output);
-    ASSERT_TRUE(a.start_node);
-    node_p node = a.start_node;
-    EXPECT_TRUE(node->advance_on_default);
-    ASSERT_TRUE(node->output);
-    ASSERT_EQ(1UL, node->edges.size());
-    EXPECT_FALSE(node->default_target);
-    output_p output = node->output;
-    ASSERT_EQ(2UL, output->content.size());
-    EXPECT_EQ('7', output->content[0]);
-    EXPECT_EQ('3', output->content[1]);
-    ASSERT_TRUE(output->next_output);
-    output = output->next_output;
-    ASSERT_EQ(1UL, output->content.size());
-    EXPECT_EQ('9', output->content[0]);
-    EXPECT_FALSE(output->next_output);
-    edge_t& edge = node->edges.front();
-    EXPECT_TRUE(edge.advance);
-    ASSERT_TRUE(edge.target);
-    ASSERT_EQ(1UL, edge.values.size());
-    EXPECT_EQ('5', edge.values[0]);
-    node = edge.target;
-    EXPECT_FALSE(node->default_target);
-    EXPECT_TRUE(node->edges.empty());
-    EXPECT_TRUE(node->advance_on_default);
-    EXPECT_FALSE(node->output);
+    EXPECT_FALSE(a.no_advance_no_output());
+    ASSERT_TRUE(a.start_node());
+    node_p node = a.start_node();
+    EXPECT_TRUE(node->advance_on_default());
+    ASSERT_TRUE(node->first_output());
+    ASSERT_EQ(1UL, node->edges().size());
+    EXPECT_FALSE(node->default_target());
+    output_p output = node->first_output();
+    ASSERT_EQ(2UL, output->content().size());
+    EXPECT_EQ('7', output->content()[0]);
+    EXPECT_EQ('3', output->content()[1]);
+    ASSERT_TRUE(output->next_output());
+    output = output->next_output();
+    ASSERT_EQ(1UL, output->content().size());
+    EXPECT_EQ('9', output->content()[0]);
+    EXPECT_FALSE(output->next_output());
+    Edge& edge = node->edges().front();
+    EXPECT_TRUE(edge.advance());
+    ASSERT_TRUE(edge.target());
+    ASSERT_EQ(1UL, edge.size());
+    EXPECT_EQ('5', *edge.begin());
+    node = edge.target();
+    EXPECT_FALSE(node->default_target());
+    EXPECT_TRUE(node->edges().empty());
+    EXPECT_TRUE(node->advance_on_default());
+    EXPECT_FALSE(node->first_output());
 }

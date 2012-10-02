@@ -48,11 +48,344 @@ using namespace std;
 namespace IronAutomata {
 namespace Intermediate {
 
-node_t::node_t() : advance_on_default(true) {}
+// Edge
 
-edge_t::edge_t() : advance(true) {}
+namespace {
 
-automata_t::automata_t() : no_advance_no_output(false) {}
+size_t find_one(const vector<uint8_t>& bm, size_t i)
+{
+    size_t j = i;
+    while (j < bm.size() * 8 && ! ia_bitv(bm.data(), j)) {
+        ++j;
+    }
+
+    return j;
+}
+
+} // Anonymous
+
+Edge::const_iterator::const_iterator() :
+    m_edge(NULL)
+{
+    // nop
+}
+
+Edge::const_iterator::const_iterator(const Edge& edge) :
+    m_edge(&edge)
+{
+    if (m_edge->m_vector.empty() && ! m_edge->m_bitmap.empty()) {
+        m_bitmap_i = find_one(m_edge->m_bitmap, 0);
+        if (m_bitmap_i > 255) {
+            m_edge = NULL;
+        }
+    }
+    else if (! m_edge->m_vector.empty()) {
+        m_string_i = m_edge->m_vector.begin();
+    }
+    else {
+        m_edge = NULL;
+    }
+}
+
+void Edge::const_iterator::increment()
+{
+    if (! m_edge) {
+        return;
+    }
+    if (m_edge->m_vector.empty()) {
+        m_bitmap_i = find_one(m_edge->m_bitmap, m_bitmap_i + 1);
+        if (m_bitmap_i > 255) {
+            m_edge = NULL;
+        }
+    }
+    else {
+        ++m_string_i;
+        if (m_string_i == m_edge->m_vector.end()) {
+            m_edge = NULL;
+        }
+    }
+}
+
+bool Edge::const_iterator::equal(const const_iterator& other) const
+{
+    if (! m_edge && ! other.m_edge) {
+        return true;
+    }
+    if (m_edge != other.m_edge) {
+        return false;
+    }
+    if (m_edge->m_vector.empty()) {
+        return m_bitmap_i == other.m_bitmap_i;
+    }
+    return m_string_i == other.m_string_i;
+}
+
+uint8_t Edge::const_iterator::dereference() const
+{
+    if (! m_edge) {
+        return 0;
+    }
+    if (m_edge->m_vector.empty()) {
+        return m_bitmap_i;
+    }
+    else {
+        return *m_string_i;
+    }
+}
+
+Edge::Edge() :
+    m_advance(true)
+{
+    // nop
+}
+
+Edge::Edge(
+    const node_p& target,
+    bool          advance
+) :
+    m_target(target),
+    m_advance(advance)
+{
+    // nop
+}
+
+Edge Edge::make_from_vector(
+    const node_p&        target,
+    bool                 advance,
+    const byte_vector_t& values
+)
+{
+    Edge edge(target, advance);
+    edge.m_vector = values;
+    return edge;
+}
+
+Edge Edge::make_from_bitmap(
+    const node_p&        target,
+    bool                 advance,
+    const byte_vector_t& bitmap
+)
+{
+    if (bitmap.size() != 32) {
+        throw logic_error("Bitmap must be 256 bits.");
+    }
+    Edge edge(target, advance);
+    edge.m_bitmap = bitmap;
+    return edge;
+}
+
+Edge::iterator Edge::begin() const
+{
+    return iterator(*this);
+}
+
+Edge::iterator Edge::end() const
+{
+    return iterator();
+}
+
+size_t Edge::size() const
+{
+    if (m_vector.empty()) {
+        return distance(begin(), end());
+    }
+    else {
+        return m_vector.size();
+    }
+}
+
+bool Edge::empty() const
+{
+    if (m_vector.empty()) {
+        return begin() == end();
+    }
+    else {
+        return false;
+    }
+}
+
+bool Edge::epsilon() const
+{
+    return empty();
+}
+
+bool Edge::has_value(uint8_t c) const
+{
+    if (! m_vector.empty()) {
+        return find(m_vector.begin(), m_vector.end(), c) != m_vector.end();
+    }
+    else {
+        assert(m_bitmap.size() == 32);
+        return ia_bitv(m_bitmap.data(), c);
+    }
+}
+
+bool Edge::matches(uint8_t c) const
+{
+    return epsilon() || has_value(c);
+}
+
+void Edge::add(uint8_t c)
+{
+    if (! m_vector.empty() || m_bitmap.empty()) {
+        if (find(m_vector.begin(), m_vector.end(), c) == m_vector.end()) {
+            m_vector.push_back(c);
+        }
+    }
+    else {
+        assert(m_bitmap.size() == 32);
+        ia_setbitv(m_bitmap.data(), c);
+    }
+    if (m_vector.size() == 32) {
+        switch_to_bitmap();
+    }
+}
+
+void Edge::remove(uint8_t c)
+{
+    if (! m_vector.empty()) {
+        byte_vector_t::iterator pos =
+            find(m_vector.begin(), m_vector.end(), c);
+        if (pos != m_vector.end()) {
+            m_vector.erase(pos);
+        }
+    }
+    else if (! m_bitmap.empty()) {
+        assert(m_bitmap.size() == 32);
+        ia_unsetbitv(m_bitmap.data(), c);
+    }
+}
+
+void Edge::switch_to_bitmap()
+{
+    if (m_vector.empty()) {
+        return;
+    }
+    byte_vector_t values;
+    values.swap(m_vector);
+    assert(m_vector.empty());
+    m_bitmap.resize(32, 0);
+    BOOST_FOREACH(uint8_t c, values) {
+        add(c);
+    }
+}
+
+void Edge::switch_to_vector()
+{
+    if (m_bitmap.empty()) {
+        return;
+    }
+    byte_vector_t bitmap;
+    bitmap.swap(m_bitmap);
+    assert(m_bitmap.empty());
+    for (uint8_t c = 0; c < 255; ++c) {
+        if (ia_bitv(bitmap.data(), c)) {
+            m_vector.push_back(c);
+        }
+    }
+}
+
+void Edge::clear()
+{
+    Edge empty;
+    swap(empty);
+}
+
+void Edge::swap(Edge& other)
+{
+    std::swap(other.m_target, m_target);
+    std::swap(other.m_advance, m_advance);
+    std::swap(other.m_vector, m_vector);
+    std::swap(other.m_bitmap, m_bitmap);
+}
+
+// Node
+
+Node::Node(bool advance_on_default) :
+    m_advance_on_default(advance_on_default)
+{
+    // nop
+}
+
+Node::edge_list_t Node::edges_for(uint8_t c) const
+{
+    edge_list_t result;
+
+    // This would be a great place for copy_if.
+    BOOST_FOREACH(const Edge& edge, m_edges) {
+        if (edge.matches(c)) {
+            result.push_back(edge);
+        }
+    }
+
+    return result;
+}
+
+Node::target_info_list_t Node::targets_for(uint8_t c) const
+{
+    target_info_list_t result;
+
+    edge_list_t matching_edges = edges_for(c);
+    if (matching_edges.empty() && m_default_target) {
+        result.push_back(make_pair(m_default_target, m_advance_on_default));
+    }
+    else {
+        BOOST_FOREACH(const Edge& edge, matching_edges) {
+            result.push_back(make_pair(edge.target(), edge.advance()));
+        }
+    }
+
+    return result;
+}
+
+void Node::clear()
+{
+    Node empty;
+    swap(empty);
+}
+
+void Node::swap(Node& other)
+{
+    std::swap(m_first_output, other.m_first_output);
+    std::swap(m_default_target, other.m_default_target);
+    std::swap(m_advance_on_default, other.m_advance_on_default);
+    std::swap(m_edges, other.m_edges);
+}
+
+// Output
+
+Output::Output()
+{
+    // nop
+}
+
+Output::Output(
+    const byte_vector_t& content,
+    const output_p&      next_output
+) :
+    m_content(content.begin(), content.end()),
+    m_next_output(next_output)
+{
+    // nop
+}
+
+Output::Output(
+    const std::string& content,
+    const output_p&    next_output
+) :
+    m_content(content.begin(), content.end()),
+    m_next_output(next_output)
+{
+    // nop
+}
+
+// Automata
+
+Automata::Automata(bool no_advance_no_output) :
+    m_no_advance_no_output(no_advance_no_output)
+{
+    // nop
+}
 
 bool read_chunk(istream& input, PB::Chunk& chunk)
 {
@@ -140,9 +473,9 @@ public:
         // nop
     }
 
-    void write_automata(const automata_t& automata)
+    void write_automata(const Automata& automata)
     {
-        if (automata.no_advance_no_output) {
+        if (automata.no_advance_no_output()) {
             PB::Graph* pb_graph = m_pb_chunk.mutable_graph();
             pb_graph->set_no_advance_no_output(true);
         }
@@ -186,36 +519,33 @@ public:
     {
         PB::Node* pb_node = m_pb_chunk.add_nodes();
         pb_node->set_id(acquire_id(node));
-        if (node->output) {
-            id_t output_id = acquire_id(node->output);
+        if (node->first_output()) {
+            id_t output_id = acquire_id(node->first_output());
             pb_node->set_first_output(output_id);
         }
-        if (node->default_target) {
-            pb_node->set_default_target(acquire_id(node->default_target));
+        if (node->default_target()) {
+            pb_node->set_default_target(acquire_id(node->default_target()));
         }
-        if (! node->advance_on_default) {
+        if (! node->advance_on_default()) {
             pb_node->set_advance_on_default(false);
         }
-        BOOST_FOREACH(const edge_t& edge, node->edges) {
+        BOOST_FOREACH(const Edge& edge, node->edges()) {
             PB::Edge* pb_edge = pb_node->add_edges();
-            if (! edge.target) {
+            if (! edge.target()) {
                 throw invalid_argument("Edge without target.");
             }
-            pb_edge->set_target(acquire_id(edge.target));
-            if (! edge.advance) {
+            pb_edge->set_target(acquire_id(edge.target()));
+            if (! edge.advance()) {
                 pb_edge->set_advance(false);
             }
-            if (! edge.values.empty() && ! edge.values_bm.empty()) {
-                throw invalid_argument("Edge with both vector and bitmap.");
-            }
-            if (! edge.values.empty()) {
+            if (! edge.vector().empty()) {
                 pb_edge->set_values(
-                    edge.values.data(), edge.values.size()
+                    edge.vector().data(), edge.vector().size()
                 );
             }
-            else if (! edge.values_bm.empty()) {
+            else if (! edge.bitmap().empty()) {
                 pb_edge->set_values_bm(
-                    edge.values_bm.data(), edge.values_bm.size()
+                    edge.bitmap().data(), edge.bitmap().size()
                 );
             }
         }
@@ -239,12 +569,12 @@ public:
             PB::Output* pb_output = m_pb_chunk.add_outputs();
             pb_output->set_id(acquire_id(output));
             pb_output->set_content(
-                output->content.data(), output->content.size()
+                output->content().data(), output->content().size()
             );
-            if (output->next_output) {
-                id_t next_id = acquire_id(output->next_output);
+            if (output->next_output()) {
+                id_t next_id = acquire_id(output->next_output());
                 if (next_id >= last_id) {
-                    todo.push_back(output->next_output);
+                    todo.push_back(output->next_output());
                 }
                 pb_output->set_next(next_id);
             }
@@ -278,7 +608,7 @@ private:
 }
 
 void write_automata(
-    const automata_t& automata,
+    const Automata& automata,
     ostream&          output,
     size_t            chunk_size
 )
@@ -442,7 +772,7 @@ struct AutomataReader::AutomataReaderImpl
     logger_t m_logger;
 
     //! Automata being constructor.
-    automata_t m_automata;
+    Automata m_automata;
 
     //! True iff error() never called.
     bool m_success;
@@ -542,7 +872,7 @@ AutomataReader::AutomataReaderImpl::AutomataReaderImpl(logger_t logger) :
     m_chunk_number(0),
     m_start_node_id(0)
 {
-    m_automata.no_advance_no_output = false;
+    m_automata.no_advance_no_output() = false;
 }
 
 void AutomataReader::AutomataReaderImpl::error(const string& what)
@@ -571,7 +901,7 @@ void AutomataReader::AutomataReaderImpl::process_graph(
 )
 {
     if (pb_graph.has_no_advance_no_output()) {
-        m_automata.no_advance_no_output = pb_graph.no_advance_no_output();
+        m_automata.no_advance_no_output() = pb_graph.no_advance_no_output();
     }
 }
 
@@ -604,15 +934,15 @@ void AutomataReader::AutomataReaderImpl::process_output(const PB::Output& pb_out
     }
 
     output_p& output = find_or_create_by_id(m_output_map, pb_output.id());
-    output->content.reserve(pb_output.content().size());
-    output->content.insert(
-        output->content.begin(),
+    output->content().reserve(pb_output.content().size());
+    output->content().insert(
+        output->content().begin(),
         pb_output.content().begin(), pb_output.content().end()
     );
     if (pb_output.has_next() && pb_output.next() != 0) {
         output_p& next_output =
             find_or_create_by_id(m_output_map, pb_output.next());
-        output->next_output = next_output;
+        output->next_output() = next_output;
         m_output_ids_referenced.insert(pb_output.next());
     }
 }
@@ -638,16 +968,16 @@ void AutomataReader::AutomataReaderImpl::process_node(const PB::Node& pb_node)
         output_p& output =
             find_or_create_by_id(m_output_map, pb_node.first_output());
         m_output_ids_referenced.insert(pb_node.first_output());
-        node->output = output;
+        node->first_output() = output;
     }
 
     if (pb_node.has_default_target()) {
         node_p& target =
             find_or_create_by_id(m_node_map, pb_node.default_target());
         m_node_ids_referenced.insert(pb_node.default_target());
-        node->default_target = target;
+        node->default_target() = target;
     }
-    node->advance_on_default = (
+    node->advance_on_default() = (
         pb_node.has_advance_on_default() ?
         pb_node.advance_on_default() :
         true
@@ -668,11 +998,9 @@ void AutomataReader::AutomataReaderImpl::process_edge(
     m_node_ids_referenced.insert(pb_edge.target());
 
     // Most validation of edges is handled once all data is loaded.
-    source->edges.push_back(edge_t());
-    edge_t& edge = source->edges.back();
-    edge.target = target;
-    edge.advance =
-        (pb_edge.has_advance() ? pb_edge.advance() : true);
+    bool advance = (pb_edge.has_advance() ? pb_edge.advance() : true);
+    source->edges().push_back(Edge(target, advance));
+    Edge& edge = source->edges().back();
     if (pb_edge.has_values_bm()) {
         if (pb_edge.values_bm().size() != 32) {
             warn((boost::format(
@@ -680,9 +1008,9 @@ void AutomataReader::AutomataReaderImpl::process_edge(
                 "Expected 32, was %d."
             ) % pb_edge.values_bm().size()).str());
         }
-        edge.values_bm.reserve(pb_edge.values_bm().size());
-        edge.values_bm.insert(
-            edge.values_bm.begin(),
+        edge.bitmap().reserve(pb_edge.values_bm().size());
+        edge.bitmap().insert(
+            edge.bitmap().begin(),
             pb_edge.values_bm().begin(), pb_edge.values_bm().end()
         );
         if (pb_edge.has_values()) {
@@ -695,9 +1023,9 @@ void AutomataReader::AutomataReaderImpl::process_edge(
     }
     else {
         if (pb_edge.has_values()) {
-            edge.values.reserve(pb_edge.values().size());
-            edge.values.insert(
-                edge.values.begin(),
+            edge.vector().reserve(pb_edge.values().size());
+            edge.vector().insert(
+                edge.vector().begin(),
                 pb_edge.values().begin(), pb_edge.values().end()
             );
         }
@@ -722,7 +1050,7 @@ void AutomataReader::AutomataReaderImpl::check_id_list(
     );
     BOOST_FOREACH(const id_t& id, ids) {
         const string message = (boost::format(
-            "%s %d %s."
+            "%s %d %s"
         ) % prefix % id % suffix).str();
         if (is_warning) {
             warn(message);
@@ -773,7 +1101,7 @@ void AutomataReader::AutomataReaderImpl::finish()
             ).str());
         }
         else {
-            m_automata.start_node = start_nmi->second;
+            m_automata.start_node() = start_nmi->second;
         }
     }
 }
@@ -800,15 +1128,15 @@ bool AutomataReader::clean() const
     return m_impl->m_clean;
 }
 
-const automata_t& AutomataReader::automata() const
+const Automata& AutomataReader::automata() const
 {
     return m_impl->m_automata;
 }
 
 bool read_automata(
-    automata_t& destination,
-    istream& input,
-    logger_t logger
+    Automata& destination,
+    istream&  input,
+    logger_t  logger
 )
 {
     AutomataReader reader(logger);
@@ -818,7 +1146,7 @@ bool read_automata(
 }
 
 void breadth_first(
-    const automata_t&                    automata,
+    const Automata&                    automata,
     boost::function<void(const node_p&)> callback
 )
 {
@@ -827,12 +1155,12 @@ void breadth_first(
     typedef queue<node_p> todo_t;
     todo_t todo;
 
-    if (! automata.start_node) {
+    if (! automata.start_node()) {
         return;
     }
 
-    todo.push(automata.start_node);
-    queued.insert(automata.start_node);
+    todo.push(automata.start_node());
+    queued.insert(automata.start_node());
 
     while (! todo.empty()) {
         node_p node = todo.front();
@@ -840,108 +1168,21 @@ void breadth_first(
 
         callback(node);
 
-        BOOST_FOREACH(const edge_t& edge, node->edges) {
-            const node_p& target = edge.target;
+        BOOST_FOREACH(const Edge& edge, node->edges()) {
+            const node_p& target = edge.target();
             bool need_to_queue = queued.insert(target).second;
             if (need_to_queue) {
                 todo.push(target);
             }
         }
-        if (node->default_target) {
-            const node_p& target = node->default_target;
+        if (node->default_target()) {
+            const node_p& target = node->default_target();
             bool need_to_queue = queued.insert(target).second;
             if (need_to_queue) {
                 todo.push(target);
             }
         }
     }
-}
-
-namespace {
-
-size_t find_one(const vector<uint8_t>& bm, size_t i)
-{
-    size_t j = i;
-    while (j < bm.size() * 8 && ! ia_bitv(bm.data(), j)) {
-        ++j;
-    }
-
-    return j;
-}
-
-} // Anonymous
-
-edge_value_iterator::edge_value_iterator() :
-    m_edge(NULL)
-{
-    // nop
-}
-
-edge_value_iterator::edge_value_iterator(const edge_t& edge) :
-    m_edge(&edge)
-{
-    if (m_edge->values.empty()) {
-        m_bitmap_i = find_one(m_edge->values_bm, 0);
-    }
-    else {
-        m_string_i = m_edge->values.begin();
-    }
-}
-
-void edge_value_iterator::increment()
-{
-    if (! m_edge) {
-        return;
-    }
-    if (m_edge->values.empty()) {
-        m_bitmap_i = find_one(m_edge->values_bm, m_bitmap_i + 1);
-        if (m_bitmap_i > 255) {
-            m_edge = NULL;
-        }
-    }
-    else {
-        ++m_string_i;
-        if (m_string_i == m_edge->values.end()) {
-            m_edge = NULL;
-        }
-    }
-}
-
-bool edge_value_iterator::equal(const edge_value_iterator& other) const
-{
-    if (! m_edge && ! other.m_edge) {
-        return true;
-    }
-    if (m_edge != other.m_edge) {
-        return false;
-    }
-    if (m_edge->values.empty()) {
-        return m_bitmap_i == other.m_bitmap_i;
-    }
-    return m_string_i == other.m_string_i;
-}
-
-uint8_t edge_value_iterator::dereference() const
-{
-    if (! m_edge) {
-        return 0;
-    }
-    if (m_edge->values.empty()) {
-        return m_bitmap_i;
-    }
-    else {
-        return *m_string_i;
-    }
-}
-
-std::pair<edge_value_iterator, edge_value_iterator> edge_values(
-     const edge_t& edge
-)
-{
-    return make_pair(
-        edge_value_iterator(edge),
-        edge_value_iterator()
-    );
 }
 
 } // Intermediate

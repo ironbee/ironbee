@@ -66,9 +66,9 @@ struct result_t
  * @return Compilation result.
  */
 result_t compile(
-    const Intermediate::automata_t& automata,
-    size_t                          id_width = 8,
-    size_t                          align_to = 1
+    const Intermediate::Automata& automata,
+    size_t                        id_width = 8,
+    size_t                        align_to = 1
 );
 
 /**
@@ -82,8 +82,8 @@ result_t compile(
  * @return Compilation result.
  */
 result_t compile_minimal(
-    const Intermediate::automata_t& automata,
-    size_t                          align_to = 1
+    const Intermediate::Automata& automata,
+    size_t                        align_to = 1
 );
 
 } // EudoxusCompiler

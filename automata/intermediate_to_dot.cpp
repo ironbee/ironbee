@@ -53,10 +53,9 @@ void bytes_to_vec(const std::string& bytes, vector<uint8_t>& vec)
  * @param[in]  pb_edge Protobuf Edge.
  * @param[out] edge    Intermediate edge.
  */
-void pb_edge_to_edge(const PB::Edge& pb_edge, edge_t& edge)
+void pb_edge_to_edge(const PB::Edge& pb_edge, Edge& edge)
 {
-    edge.values.clear();
-    edge.values_bm.clear();
+    edge.clear();
 
     if (pb_edge.has_values_bm() && pb_edge.has_values()) {
         throw runtime_error(
@@ -65,10 +64,10 @@ void pb_edge_to_edge(const PB::Edge& pb_edge, edge_t& edge)
     }
 
     if (pb_edge.has_values_bm()) {
-        bytes_to_vec(pb_edge.values_bm(), edge.values_bm);
+        bytes_to_vec(pb_edge.values_bm(), edge.bitmap());
     }
     else if (pb_edge.has_values()) {
-        bytes_to_vec(pb_edge.values(), edge.values);
+        bytes_to_vec(pb_edge.values(), edge.vector());
     }
     else {
         throw runtime_error(
@@ -137,7 +136,7 @@ int main(int argc, char** argv)
         }
 
         bool first_node = true;
-        edge_t edge;
+        Edge edge;
         BOOST_FOREACH(const PB::Node& node, chunk.nodes()) {
             cout << "  " << node.id() << " [label=\"" << node.id() << "\"";
 
@@ -157,11 +156,11 @@ int main(int argc, char** argv)
                 }
                 cout << "  " << node.id() << " -> " << pb_edge.target()
                      << " [weight=1000, label=\"";
-                if (edge.values.empty() && edge.values_bm.empty()) {
+                if (edge.epsilon()) {
                     cout << "&epsilon;";
                 }
                 else {
-                    BOOST_FOREACH(uint8_t c, edge_values(edge)) {
+                    BOOST_FOREACH(uint8_t c, edge) {
                         output_content(cout, (boost::format("%c") % c).str());
                     }
                 }
