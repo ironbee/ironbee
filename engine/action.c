@@ -108,6 +108,7 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
     (*act_inst)->action = action;
     (*act_inst)->flags = flags;
     (*act_inst)->params = ib_mpool_strdup(pool, parameters);
+    (*act_inst)->fparam = NULL;
 
     if (action->fn_create != NULL) {
         rc = action->fn_create(
@@ -121,6 +122,14 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
     }
     else {
         rc = IB_OK;
+    }
+
+    if ((*act_inst)->fparam == NULL) {
+        rc = ib_field_create(&((*act_inst)->fparam),
+                             pool,
+                             IB_FIELD_NAME("param"),
+                             IB_FTYPE_NULSTR,
+                             ib_ftype_nulstr_in(parameters));
     }
 
     IB_FTRACE_RET_STATUS(rc);

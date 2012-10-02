@@ -121,6 +121,7 @@ struct ib_action_inst_t {
     ib_flags_t          flags;  /**< Action instance flags */
     void               *data;   /**< Data passed to the execute function */
     const char         *params; /**< Text of parameters */
+    ib_field_t         *fparam; /**< Parameters as a field */
 };
 
 /** Action instance flags */

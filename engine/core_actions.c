@@ -97,7 +97,6 @@ static ib_status_t act_setflags_create(
 {
     IB_FTRACE_INIT();
     const ib_tx_flag_map_t *flag;
-    setflag_data_t *data;
     setflag_op_t op;
 
     if (parameters == NULL) {
@@ -114,6 +113,8 @@ static ib_status_t act_setflags_create(
 
     for (flag = ib_core_fields_tx_flags();  flag->name != NULL;  ++flag) {
         if (strcasecmp(flag->name, parameters) == 0) {
+            setflag_data_t *data;
+
             if (flag->read_only) {
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
@@ -1227,7 +1228,8 @@ static ib_status_t act_status_create(
     assert(mp);
 
     act_status_t *act_status;
-    int block_status;
+    ib_num_t block_status;
+    ib_status_t rc;
 
     act_status = (act_status_t *) ib_mpool_alloc(mp, sizeof(*act_status));
     if (act_status == NULL) {
@@ -1242,7 +1244,7 @@ static ib_status_t act_status_create(
 
     block_status = atoi(params);
 
-    if ( block_status < 200 || block_status >= 600 ) {
+    if ( (block_status < 200) || (block_status >= 600) ) {
         ib_log_error(ib,
                      "Action status must be given a parameter "
                      "x where 200 <= x < 600. It was given %s.",
@@ -1251,6 +1253,12 @@ static ib_status_t act_status_create(
     }
 
     act_status->block_status = block_status;
+
+    rc = ib_field_create(&(inst->fparam), mp, IB_FIELD_NAME("param"),
+                         IB_FTYPE_NUM, ib_ftype_num_in(&block_status));
+    if (rc != IB_OK) {
+        /* Do nothing */
+    }
 
     inst->data = act_status;
 

@@ -1145,12 +1145,13 @@ static void log_actions(
             (const ib_rule_log_act_t *)ib_list_node_data_const(act_node);
         const char *status =
             act->status == IB_OK ?"" : ib_status_to_string(act->status);
+        char buf[MAX_FIELD_BUF+1];
 
         rule_log_exec(rule_exec,
                       "ACTION %s(%s) %s",
                       act->act_inst->action->name,
-                      (act->act_inst->params == NULL ?
-                       "" : act->act_inst->params),
+                      ib_field_format(act->act_inst->fparam,
+                                      true, false, NULL, buf, MAX_FIELD_BUF),
                       status);
     }
 
