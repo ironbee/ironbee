@@ -240,6 +240,8 @@ int main(int argc, char** argv)
     a.start_node()->default_target() = a.start_node();
     a.start_node()->advance_on_default() = true;
 
+    a.no_advance_no_output() = true;
+
     process_failures(a);
 
     breadth_first(a, optimize_edges);
