@@ -17,6 +17,7 @@ libironautomata_la_SOURCES = \
 	buffer.cpp \
     eudoxus_compiler.cpp \
     intermediate.cpp \
+    intermediate_to_dot.cpp \
     logger.cpp \
     optimize_edges.cpp \
     include/ironautomata/*.hpp
