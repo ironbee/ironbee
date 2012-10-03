@@ -24,6 +24,7 @@
 #endif
 
 #include <ironbee/action.h>
+#include <ironbee/string.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
 #include <ironbee/core.h>
@@ -61,6 +62,14 @@
 
 /* Declare the public module symbol. */
 IB_MODULE_DECLARE();
+
+/**
+ * Per-context data
+ */
+typedef struct {
+    ib_list_t        *setvar_list;  /**< List of fields declared via setvar */
+} rules_context_cfg_t;
+static rules_context_cfg_t rules_global_cfg = { NULL };
 
 /**
  * Phase lookup table.
@@ -1683,6 +1692,183 @@ cleanup:
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * @brief Parse a SetVar directive.
+ *
+ * @details Register a SetVar directive to the engine.
+ *
+ * @param[in] cp Configuration parser
+ * @param[in] directive The directive name.
+ * @param[in] vars The list of variables passed to @c name.
+ * @param[in] cbdata User data. Unused.
+ */
+static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
+                                       const char *directive,
+                                       const ib_list_t *vars,
+                                       void *cbdata)
+{
+    IB_FTRACE_INIT();
+    ib_status_t rc;
+    ib_module_t  *mod;
+    rules_context_cfg_t *cfg;
+    ib_mpool_t *mp = ib_engine_pool_main_get(cp->ib);
+    const ib_list_node_t *node;
+    ib_field_t *field = NULL;
+    const char *name;
+    const char *value;
+    ib_num_t num_val;
+
+    /* Get my module object */
+    rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &mod);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to get rule module: %s",
+                         ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Get the context configuration */
+    rc = ib_context_module_config(cp->cur_ctx, mod, &cfg);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to get rule module configuration: %s",
+                         ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Initialize the fields list */
+    if (cfg->setvar_list == NULL) {
+        rc = ib_list_create(&(cfg->setvar_list), mp);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp, "Failed to create setvar directive list: %s",
+                             ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Get the field name string */
+    node = ib_list_first_const(vars);
+    if ( (node == NULL) || (node->data == NULL) ) {
+        ib_cfg_log_error(cp, "No name specified for setvar directive");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    name = (const char *)(node->data);
+
+    /* Get the value node */
+    node = ib_list_node_next_const(node);
+    if ( (node == NULL) || (node->data == NULL) ) {
+        ib_cfg_log_error(cp, "No value specified for setvar directive");
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    value = (const char *)(node->data);
+
+    /* Create the field based on whether the value looks like a number or not */
+    rc = ib_string_to_num(value, 0, &num_val);
+    if (rc == IB_OK) {
+        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
+                             IB_FTYPE_NUM, ib_ftype_num_in(&num_val));
+    }
+    else {
+        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
+                             IB_FTYPE_NULSTR, ib_ftype_nulstr_in(value));
+    }
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error creating field for setvar: %s",
+                         ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Add the field to the list */
+    rc = ib_list_push(cfg->setvar_list, field);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error pushing value on list: %s",
+                         ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    if (field->type == IB_FTYPE_NUM) {
+        ib_cfg_log_debug(cp,
+                         "Created numeric field \"%s\" %ld",
+                         name, (long int)num_val);
+    }
+    else {
+        ib_cfg_log_debug(cp, "Created string field \"%s\" \"%s\"", name, value);
+    }
+
+    /* Done */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Handle request_header events for the SetVar directive
+ *
+ * Walks through the list of fields defined for this context by the SetVar
+ * directives, and populates the transaction's DPI with copies.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] event Event type
+ * @param[in,out] tx Transaction object
+ * @param[in] data Callback data (not used)
+ *
+ * @returns Status code
+ */
+static ib_status_t rules_header_finished(ib_engine_t *ib,
+                                         ib_tx_t *tx,
+                                         ib_state_event_type_t event,
+                                         void *data)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(event == request_header_finished_event);
+
+    ib_module_t  *mod;
+    rules_context_cfg_t *cfg;
+    const ib_list_node_t *node;
+    ib_status_t rc = IB_OK;
+
+    /* Get my module object */
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &mod);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to get rule module: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Get the context configuration */
+    rc = ib_context_module_config(tx->ctx, mod, &cfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to get rule module configuration: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* If list is NULL, we're done */
+    if (cfg->setvar_list == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Loop through the list */
+    IB_LIST_LOOP_CONST(cfg->setvar_list, node) {
+        const ib_field_t *field =
+            (const ib_field_t *)ib_list_node_data_const(node);
+        ib_field_t *newf;
+
+        rc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
+        if (rc != IB_OK) {
+            ib_log_debug_tx(tx, "Failed to copy field: %d", rc);
+            continue;
+        }
+        rc = ib_data_add(tx->dpi, newf);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI",
+                            (int)field->nlen, field->name);
+        }
+        ib_log_trace_tx(tx, "SetVar: Created field \"%.*s\" (type %s)",
+                        (int)field->nlen, field->name,
+                        ib_field_type_name(field->type));
+    }
+
+    IB_FTRACE_RET_STATUS(rc);
+}
 
 static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
 
@@ -1729,6 +1915,12 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
         NULL
     ),
 
+    IB_DIRMAP_INIT_LIST(
+        "SetVar",
+        parse_setvar_params,
+        NULL
+    ),
+
     /* signal the end of the list */
     IB_DIRMAP_INIT_LAST
 };
@@ -1740,7 +1932,7 @@ static void clean_up_ipc_mem(void)
 }
 #endif
 
-static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
+static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     IB_FTRACE_INIT();
     assert(ib != NULL);
@@ -1854,8 +2046,32 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
             IB_FTRACE_RET_STATUS(ib_rc);
         }
     }
-
 #endif
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
+{
+    IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(m != NULL);
+
+    ib_status_t rc;
+
+    /* Initialize the LUA logic */
+    rc = rules_lua_init(ib, m, cbdata);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Register the rules header_finished callback */
+    rc = ib_hook_tx_register(ib,
+                             request_header_finished_event,
+                             rules_header_finished,
+                             NULL);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Hook register returned %d", rc);
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1880,7 +2096,7 @@ static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,           /* Default metadata */
     MODULE_NAME_STR,                     /* Module name */
-    IB_MODULE_CONFIG_NULL,               /* Global config data */
+    IB_MODULE_CONFIG(&rules_global_cfg), /* Global config data */
     NULL,                                /* Configuration field map */
     rules_directive_map,                 /* Config directive map */
     rules_init,                          /* Initialize function */
