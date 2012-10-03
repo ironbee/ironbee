@@ -28,12 +28,12 @@ bin_PROGRAMS = \
     ac_generator \
     bench \
     ec \
-    intermediate_to_dot
+    to_dot \
       
 ac_generator_SOURCES = ac_generator.cpp
 bench_SOURCES = bench.cpp
 ec_SOURCES = ec.cpp
-intermediate_to_dot_SOURCES = intermediate_to_dot.cpp
+to_dot_SOURCES = to_dot.cpp
 
 LDADD = libironautomata.la libiaeudoxus.la
 AM_CPPFLAGS += \

@@ -19,6 +19,9 @@
  * @file
  * @brief IronBee --- Output Intermediate Format as DOT.
  *
+ * This utility streams protobuf.  There is a very similar routine,
+ * intermediate_to_dot() which writes out an Automata.
+ *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
