@@ -29,7 +29,7 @@ bin_PROGRAMS = \
     ac_generator \
     bench \
     ec \
-    to_dot \
+    to_dot
       
 ac_generator_SOURCES = ac_generator.cpp
 bench_SOURCES = bench.cpp
