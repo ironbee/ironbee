@@ -15,8 +15,8 @@
  * limitations under the License.
  ****************************************************************************/
 
-#ifndef _IA_OPRIMIZE_EDGES_HPP_
-#define _IA_OPRIMIZE_EDGES_HPP_
+#ifndef _IA_OPTIMIZE_EDGES_HPP_
+#define _IA_OPTIMIZE_EDGES_HPP_
 
 /**
  * @file
