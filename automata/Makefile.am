@@ -20,6 +20,7 @@ libironautomata_la_SOURCES = \
     intermediate_to_dot.cpp \
     logger.cpp \
     optimize_edges.cpp \
+    translate_nonadvancing.cpp \
     include/ironautomata/*.hpp
 
 nodist_libironautomata_la_SOURCES = \
@@ -29,12 +30,14 @@ bin_PROGRAMS = \
     ac_generator \
     bench \
     ec \
-    to_dot
+    to_dot \
+    optimize
       
 ac_generator_SOURCES = ac_generator.cpp
 bench_SOURCES = bench.cpp
 ec_SOURCES = ec.cpp
 to_dot_SOURCES = to_dot.cpp
+optimize_SOURCES = optimize.cpp
 
 LDADD = libironautomata.la libiaeudoxus.la
 AM_CPPFLAGS += \
