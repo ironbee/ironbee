@@ -20,7 +20,8 @@ class TestBasic < Test::Unit::TestCase
     words = ["he", "she", "his", "hers"]
     text = "she saw his world as he saw hers..."
 
-    ac_test(words, text)
+    ac_test(words, text, "traditional")
+    ac_test(words, text, "traditional_optimized", true)
   end
 
   def test_large
@@ -34,6 +35,29 @@ class TestBasic < Test::Unit::TestCase
 
     text = words.join(" ")
 
-    ac_test(words, text)
+    ac_test(words, text, "large")
+  end
+
+  def test_moderate
+    n = 200
+
+    words = Set.new
+    while words.size < n
+      words << random_word(10)
+    end
+    words = words.to_a
+
+    text = words.join(" ")
+
+    ac_test(words, text, "moderate")
+    ac_test(words, text, "moderate_optimized", true)
+  end
+
+  def test_aaaa
+    words = ["a", "aa", "aaa", "aaaa"]
+    text = "aaaaaaaaaaaa"
+
+    ac_test(words, text, "aaaa")
+    ac_test(words, text, "aaaa_optimized", true)
   end
 end

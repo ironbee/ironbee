@@ -5,6 +5,8 @@ module AutomataTest
   BENCH = File.join(ENV['abs_builddir'], "..", "bench")
   EC = File.join(ENV['abs_builddir'], "..", "ec")
   ACGEN = File.join(ENV['abs_builddir'], "..", "ac_generator")
+  OPTIMIZE = File.join(ENV['abs_builddir'], "..", "optimize")
+  OPTIMIZE_ARGS = ["--fast"]
 
   # Returns map of word to ending position of word in input.
   def substrings(words, input)
@@ -34,7 +36,6 @@ module AutomataTest
   end
 
   def assert_substrings_equal(a, b)
-
     a_keys = Set.new a.keys
     b_keys = Set.new b.keys
     a_minus_b = a_keys - b_keys
@@ -63,7 +64,7 @@ module AutomataTest
     assert($?.success?)
   end
 
-  def ac_test(words, text, prefix = "full_test")
+  def ac_test(words, text, prefix = "full_test", optimize = false)
     dir = "/tmp/automata_test_#{prefix}#{$$}.#{rand(100000)}"
     Dir.mkdir(dir)
     puts "Test files are in #{dir}"
@@ -73,12 +74,19 @@ module AutomataTest
       fp.puts words.join("\n")
     end
 
-    automata_path = File.join(dir, "automata")
-    run_from_file([ACGEN], words_path, automata_path)
+    ac_automata_path = File.join(dir, "ac_automata")
+    run_from_file([ACGEN], words_path, ac_automata_path)
 
     input_path = File.join(dir, "input")
     File.open(input_path, "w") do |fp|
       fp.print text
+    end
+
+    if optimize
+      automata_path = File.join(dir, "optimized_automata")
+      run_from_file([OPTIMIZE, *OPTIMIZE_ARGS], ac_automata_path, automata_path)
+    else
+      automata_path = ac_automata_path
     end
 
     eudoxus_path = File.join(dir, "eudoxus")
