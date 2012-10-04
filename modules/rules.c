@@ -17,14 +17,12 @@
 
 #include "ironbee_config_auto.h"
 
-
 #ifdef ENABLE_LUA
 #include "rules_lua_private.h"
 #include "lua/ironbee.h"
 #endif
 
 #include <ironbee/action.h>
-#include <ironbee/string.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
 #include <ironbee/core.h>
@@ -37,6 +35,7 @@
 #include <ironbee/operator.h>
 #include <ironbee/provider.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/string.h>
 #include <ironbee/util.h>
 
 #ifdef ENABLE_LUA
