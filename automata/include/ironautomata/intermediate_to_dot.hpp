@@ -52,7 +52,7 @@ namespace Intermediate {
  *
  * @param[in] to               Where to write dot.
  * @param[in] automata         Automata to render.
- * @param[in] label_by_pointer If true, nodes will be labeled by poitner
+ * @param[in] label_by_pointer If true, nodes will be labeled by pointer
  *                             rather than BFS order.
  */
 void intermediate_to_dot(
