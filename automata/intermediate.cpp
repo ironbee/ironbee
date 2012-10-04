@@ -338,6 +338,35 @@ Node::target_info_list_t Node::targets_for(uint8_t c) const
     return result;
 }
 
+Node::targets_by_input_t Node::build_targets_by_input() const
+{
+    targets_by_input_t result(256);
+
+    BOOST_FOREACH(const Edge& edge, m_edges) {
+        target_info_t info(edge.target(), edge.advance());
+        if (edge.epsilon()) {
+            for (int c = 0; c < 256; ++c) {
+                result[c].push_back(info);
+            }
+        }
+        else {
+            BOOST_FOREACH(uint8_t c, edge) {
+                result[c].push_back(info);
+            }
+        }
+    }
+    if (m_default_target) {
+        target_info_t info(m_default_target, m_advance_on_default);
+        for (int c = 0; c < 256; ++c) {
+            if (result[c].empty()) {
+                result[c].push_back(info);
+            }
+        }
+    }
+
+    return result;
+}
+
 void Node::clear()
 {
     Node empty;

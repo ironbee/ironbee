@@ -380,6 +380,25 @@ public:
      */
     target_info_list_t targets_for(uint8_t c) const;
 
+    //! Map of input to targets.
+    typedef std::vector<target_info_list_t> targets_by_input_t;
+
+    /**
+     * Construct a map of input to targets.
+     *
+     * This method is equivalent to:
+     * @code
+     * targets_by_input_t result(256);
+     * for (int c = 0; c < 256; ++c) {
+     *     result[c] = targets_for(c);
+     * }
+     * return result;
+     * @endcode
+     *
+     * However, it is significantly faster.
+     */
+    targets_by_input_t build_targets_by_input() const;
+
     //! Clear node.
     void clear();
 

@@ -31,6 +31,7 @@
 #include <google/protobuf/io/gzip_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 
+#include <algorithm>
 #include <sstream>
 
 #include <arpa/inet.h>
@@ -40,6 +41,16 @@
 using namespace std;
 using namespace IronAutomata::Intermediate;
 using boost::make_shared;
+
+namespace {
+
+template <typename A, typename B>
+bool equal(const A& a, const B& b)
+{
+    return equal(a.begin(), a.end(), b.begin());
+}
+
+}
 
 // Edge
 
@@ -245,6 +256,31 @@ TEST(TestIntermediate, NodeEdges)
     EXPECT_EQ(2UL, targets.size());
     targets = node.targets_for('c');
     EXPECT_EQ(1UL, targets.size());
+}
+
+TEST(TestIntermediate, BuildTargetsByInput)
+{
+    Node node;
+    node_p target_a = make_shared<Node>();
+    node_p target_b = make_shared<Node>();
+    node_p target_b2 = make_shared<Node>();
+    node_p target_other = make_shared<Node>();
+    node.edges().push_back(Edge::make_from_vector(target_a, false, byte_vector_t(1, 'a')));
+    node.edges().push_back(Edge::make_from_vector(target_b, false, byte_vector_t(1, 'b')));
+    node.edges().push_back(Edge::make_from_vector(target_b2, false, byte_vector_t(1, 'b')));
+    node.default_target() = target_other;
+
+    Node::targets_by_input_t targets = node.build_targets_by_input();
+    EXPECT_TRUE(equal(node.targets_for('a'), targets['a']));
+    EXPECT_TRUE(equal(node.targets_for('b'), targets['b']));
+    EXPECT_TRUE(equal(node.targets_for('c'), targets['c']));
+
+    node.clear();
+    node.edges().push_back(Edge::make_from_vector(target_a, false, byte_vector_t(1, 'a')));
+    node.edges().push_back(Edge(target_a));
+    targets = node.build_targets_by_input();
+    EXPECT_TRUE(equal(node.targets_for('a'), targets['a']));
+    EXPECT_TRUE(equal(node.targets_for('b'), targets['b']));
 }
 
 // Reader
