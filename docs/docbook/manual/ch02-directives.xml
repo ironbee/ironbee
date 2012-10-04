@@ -260,38 +260,29 @@
     </section>
     <section>
         <title>Hostname</title>
-        <para><emphasis role="bold">Description:</emphasis> Maps hostname, URL, IP address, and port
-            combinations to a Site.</para>
+        <para><emphasis role="bold">Description:</emphasis> Maps hostnames to a Site.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>Hostname <replaceable>hostname</replaceable>
-                    [<replaceable>hostname</replaceable>] ...
-                    [ip=<replaceable>ipaddress</replaceable>] [port=<replaceable>port</replaceable>]
-                    [path=<replaceable>path</replaceable>]</literal></para>
-        <para><emphasis role="bold">Default:</emphasis> None</para>
+            <literal>Hostname <replaceable>hostname</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>*</literal> (any)</para>
         <para><emphasis role="bold">Context:</emphasis> Site</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>The <literal>Hostname</literal> directive establishes a mapping between a Site and one
             or more URL spaces. </para>
-        <para>In the simplest case, a site will occupy an entire domain name:</para>
+        <para>In the simplest case, a site will occupy a single hostname:</para>
         <programlisting>Hostname www.ironbee.com</programlisting>
-        <para>More often than not, however, several domain names will be used:</para>
-        <programlisting>Hostname www.ironbee.com ironbee.com</programlisting>
-        <para>Wildcards are permitted when there is a large number of subdomains to map or when the
-            subdomains are not known in advance. Only one wildcard character per hostname is
-            allowed:</para>
-        <programlisting>Hostname *.ironbee.com ironbee.com</programlisting>
-        <para>When there is a unique IP address assigned to the site, you can configure a site to
-            match any hostname that uses the IP address (both IPv4 and IPv6 are supported):</para>
-        <programlisting>Hostname * ip=192.168.1.1</programlisting>
-        <para>Specific ports may be specified:</para>
-        <programlisting>Hostname * port=8000</programlisting>
-        <para>Path prefixes may be specified as well (NOTE: Not yet specified - do nested Location
-            tags resolve with path= prefix??? Probably should so that path= can easily be changed
-            without affecting nested Location tags):</para>
-        <programlisting>Hostname * path=/app1</programlisting>
+        <para>More often than not, however, several names will be used:</para>
+        <programlisting>Hostname www.ironbee.com
+Hostname ironbee.com</programlisting>
+        <para>Wildcards are permitted when there there are multiple names under a common domain.
+            Only one wildcard character per hostname is allowed and it must currently be on the
+            left-hand side:</para>
+        <programlisting>Hostname ironbee.com
+Hostname *.ironbee.com</programlisting>
         <para>Finally, to match any hostname on any IP address (which you will need to do in default
-            sites), use a single asterisk:</para>
+            sites), use a single asterisk, which is the default if no Hostname directive is
+            specified for a site:</para>
         <programlisting>Hostname *</programlisting>
     </section>
     <section>
@@ -350,6 +341,23 @@
             Locations are evaluated in the order in which they appear in the configuration file. The
             first location that matches request path will be used. This means that you should put
             the most-specific location first, followed by the less specific ones.</para>
+        <para>
+            <programlisting>Include rules.conf
+
+&lt;Site site1>
+    Service *:80
+    Service 10.0.1.2:443
+    Hostname site1.example.com
+
+    &lt;Location /prefix/app1>
+        RuleEnable all
+    &lt;/Location>
+
+    &lt;Location /prefix>
+        RuleEnable tag:GenericRules
+    &lt;/Location>
+&lt;/Site></programlisting>
+        </para>
     </section>
     <section>
         <title>Log</title>
@@ -684,6 +692,31 @@ Rule #MY_VALUE @gt 0 id:3 rev:1 phase:REQUEST setRequestHeader:X-Foo:%{MY_VALUE}
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>TODO: Can we make this directive so that, if not defined, we attempt to detect server
             hostname and use that as ID?</para>
+    </section>
+    <section>
+        <title>Service</title>
+        <para><emphasis role="bold">Description:</emphasis> Maps IP address and port combinations to
+            a Site.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>Hostname
+                <replaceable>ip</replaceable>:<replaceable>port</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            <literal>*:*</literal> (any ip:any port)</para>
+        <para><emphasis role="bold">Context:</emphasis> Site</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        <para>The <literal>Service</literal> directive establishes a mapping between a Site and one
+            or more services (IP Address/Port combinations). A wildcard (<literal>*</literal>) may
+            be used to mean "any".</para>
+        <para>A site may run on only a specific port:</para>
+        <programlisting>Service *:80</programlisting>
+        <para>More often than not, however, several ports will be used and a port may have a specfic
+            IP address to bind to if the site is SSL/TLS enabled:</para>
+        <programlisting>Service *:80
+Service 10.0.1.2:443</programlisting>
+        <para>The default, if no <literal>Service</literal> directive is specified for a site, is to
+            match any ip and port, which can also be explictly defined as:</para>
+        <programlisting>Service *:*</programlisting>
     </section>    
     <section>
         <title>Site</title>
@@ -696,26 +729,32 @@ Rule #MY_VALUE @gt 0 id:3 rev:1 phase:REQUEST setRequestHeader:X-Foo:%{MY_VALUE}
         <para>At the highest level, a configuration will contain one or more sites. For
             example:</para>
         <programlisting>&lt;Site site1>
+    Service *:80
     Hostname site1.example.com
+    Hostname site1-alternate.example.com
 &lt;/Site>
 
 &lt;Site site2>
+    Service *:80
+    Service 10.0.1.2:443
     Hostname site2.example.com
 &lt;/Site>
 
 &lt;Site default>
+    Service *:*
     Hostname *
-&lt;/Site>s</programlisting>
+&lt;/Site></programlisting>
         <para>Before it can process a transaction, IronBee will examine the current configuration
-            looking for a site to assign the transaction to. The default site is used as the choice
-            of last resort, when a better selection cannot be made. The <literal>Site</literal>
-            directive only establishes site boundaries and assigns a unique handle to each site; the
-                <literal>Hostname</literal> directive is responsible for the mapping.</para>
+            looking for a site to assign the transaction. Sites are processed in the configured
+            order where the first matching site is chosen.  A default site can be specified as the
+            last site using wildcards when all previous sites fail to match. The
+                <literal>Site</literal> directive only establishes configuration boundaries and
+            assigns a unique handle to each site; the Service and <literal>Hostname</literal>
+            directives are responsible for the mapping.</para>
         <note>
             <para>Every configuration should have a default site. IronBee will generate a run-time
-                error if it is unable to find a site to assign to a transaction. When in blocking
-                mode, the error will cause the transaction to be blocked. Otherwise, a warning will
-                be raised.</para>
+                error if it is unable to find a site to assign to a transaction. TODO: Should we
+                block if no site is chosen?</para>
         </note>
     </section>
     <section>
