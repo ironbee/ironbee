@@ -278,7 +278,7 @@ void Edge::switch_to_vector()
     byte_vector_t bitmap;
     bitmap.swap(m_bitmap);
     assert(m_bitmap.empty());
-    for (uint8_t c = 0; c < 255; ++c) {
+    for (int c = 0; c < 256; ++c) {
         if (ia_bitv(bitmap.data(), c)) {
             m_vector.push_back(c);
         }
