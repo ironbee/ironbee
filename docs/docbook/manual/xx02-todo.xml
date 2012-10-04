@@ -92,6 +92,122 @@
             path will be constructed (using back references?).</para>
     </section>
     <section>
+        <title>PersonalityAdd</title>
+        <para><emphasis role="bold">Description:</emphasis> Adds a personality to the current
+            configuration, configuring all the parameters the alias contains</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityAdd <replaceable>alias</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para>The parameters extracted from the personality being added will overwrite the existing
+            settings, but non-overlapping settings will be preserved. This allows multiple
+            personalities to be stacked as needed.</para>
+    </section>
+    <section>
+        <title>PersonalityAliasClear</title>
+        <para><emphasis role="bold">Description:</emphasis> Clears a previously configured
+            personality alias</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityAliasClear <replaceable>alias</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Main</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+    </section>
+    <section>
+        <title>PersonalityAliasParam</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures a parameter for the given
+            alias</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityAliasParam <replaceable>alias</replaceable>
+                <replaceable>paramName</replaceable>
+                <replaceable>paramValue</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Main</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>See <literal>PersonalityParam</literal> for the list of all parameters.</para>
+    </section>
+    <section>
+        <title>PersonalityClearAll</title>
+        <para><emphasis role="bold">Description:</emphasis> Clears all personality configuration in
+            the current context</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityClearAll</literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+    </section>
+    <section>
+        <title>PersonalityParam</title>
+        <para><emphasis role="bold">Description:</emphasis> Configures a specific personality
+            parameter</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>PersonalityParam <replaceable>paramName</replaceable>
+                <replaceable>paramValue</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis> None</para>
+        <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para>Configuration of the <literal>multipart/form-data</literal> parser:</para>
+        <variablelist>
+            <varlistentry>
+                <term><literal>multipart.file_limit</literal></term>
+                <listitem>
+                    <para>Configures a hard limit for the number of files that will be accepted in
+                        one request. Default: 100</para>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+        <para>Request parameters personality parameters:</para>
+        <variablelist>
+            <varlistentry>
+                <term><literal>params.urlencoded_separator</literal></term>
+                <listitem>
+                    <para>Default separator: <literal>&amp;</literal></para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>params.multi_retrieval</literal></term>
+                <listitem>
+                    <para>Possible values: <literal>first</literal>, <literal>last</literal>,
+                            <literal>combined_comma</literal>, <literal>combined_dbman</literal>,
+                            <literal>array_perl</literal>, <literal>array_python</literal>. No
+                        default setting; a configuration error is raised if an attempt to use a
+                        single variable is detected and the personality has not been
+                        configured.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>params.name_transformation</literal></term>
+                <listitem>
+                    <para>Possible values: <literal>none</literal> (default),
+                        <literal>php</literal>.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>params.source_order</literal></term>
+                <listitem>
+                    <para>Possible values: place source identifiers in the order in which you wish
+                        new parameters to be added to <literal>ARGS</literal> (<literal>G</literal>
+                        for query string parameters, <literal>P</literal> for request body
+                        parameters, <literal>C</literal> for cookies, and <literal>U</literal> for
+                        parameters extracted from request URLs). Default:
+                        <literal>GP</literal>.</para>
+                </listitem>
+            </varlistentry>
+            <varlistentry>
+                <term><literal>params.parse_limit</literal></term>
+                <listitem>
+                    <para>Configures a hard limit for the number of parameters created during
+                        parsing. Default: 1000</para>
+                </listitem>
+            </varlistentry>
+        </variablelist>
+    </section>
+    <section>
         <title>Variable: ARGS_URI</title>
         <para>Request parameters extracted from request URI.</para>
     </section>
