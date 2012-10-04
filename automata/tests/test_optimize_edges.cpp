@@ -252,6 +252,7 @@ TEST(TestOptimizeEdges, Epsilon)
     Edge edge;
     edge.target() = target_a;
     node->edges().push_back(edge);
+    edge.target() = target_b;
     edge.add('c');
     node->edges().push_back(edge);
 
@@ -265,9 +266,96 @@ TEST(TestOptimizeEdges, Epsilon)
     }
 
     ASSERT_EQ(1UL, c->size());
-    ASSERT_EQ(target_a, c->target());
+    ASSERT_EQ(target_b, c->target());
     ASSERT_TRUE(c->has_value('c'));
 
     ASSERT_TRUE(epsilon->epsilon());
     ASSERT_EQ(target_a, epsilon->target());
+}
+
+TEST(TestOptimizeEdges, UseDefault)
+{
+    node_p node = make_shared<Node>();
+    node_p target_a = make_shared<Node>();
+    node_p target_b = make_shared<Node>();
+
+    Edge edge;
+    edge.target() = target_a;
+    edge.advance() = false;
+    for (int c = 0; c < 200; ++c) {
+        edge.add(c);
+    }
+    node->edges().push_back(edge);
+    edge.clear();
+    edge.target() = target_b;
+    for (int c = 200; c < 256; ++c) {
+        edge.add(c);
+    }
+    node->edges().push_back(edge);
+
+    optimize_edges(node);
+
+    ASSERT_EQ(1UL, node->edges().size());
+    ASSERT_EQ(target_a, node->default_target());
+    ASSERT_FALSE(node->advance_on_default());
+    const Edge& e = node->edges().front();
+    ASSERT_EQ(56, e.size());
+    ASSERT_EQ(target_b, e.target());
+}
+
+TEST(TestOptimizeEdge, UseEpsilons)
+{
+    node_p node = make_shared<Node>();
+    node_p target_a = make_shared<Node>();
+    node_p target_b = make_shared<Node>();
+
+    Edge edge;
+    edge.target() = target_a;
+    for (int c = 0; c < 200; ++c) {
+        edge.add(c);
+    }
+    node->edges().push_back(edge);
+    edge.clear();
+    edge.target() = target_b;
+    for (int c = 200; c < 256; ++c) {
+        edge.add(c);
+    }
+    node->edges().push_back(edge);
+    edge.target() = target_a;
+    node->edges().push_back(edge);
+
+    optimize_edges(node);
+
+    ASSERT_EQ(2UL, node->edges().size());
+    const Edge* edge_a = &node->edges().front();
+    const Edge* edge_b = &node->edges().back();
+    if (edge_a->target() == target_b) {
+        swap(edge_a, edge_b);
+    }
+
+    ASSERT_TRUE(edge_a->epsilon());
+}
+
+TEST(TestOptimizeEdge, SingleDefault)
+{
+    node_p node = make_shared<Node>();
+    node_p target_a = make_shared<Node>();
+
+    Edge edge;
+    edge.target() = target_a;
+    for (int c = 0; c < 200; ++c) {
+        edge.add(c);
+    }
+    node->edges().push_back(edge);
+    edge.clear();
+    edge.target() = target_a;
+    for (int c = 200; c < 256; ++c) {
+        edge.add(c);
+    }
+    node->edges().push_back(edge);
+
+    optimize_edges(node);
+
+    ASSERT_TRUE(node->edges().empty());
+    ASSERT_EQ(target_a, node->default_target());
 }

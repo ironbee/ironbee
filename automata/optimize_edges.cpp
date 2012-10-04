@@ -38,42 +38,68 @@ namespace Intermediate {
 void optimize_edges(const node_p& node)
 {
     typedef set<uint8_t> input_set_t;
-    typedef pair<node_p, bool> target_key_t;
-    typedef map<target_key_t, input_set_t> targets_map_t;
-    typedef set<target_key_t> targets_set_t;
+    typedef map<Node::target_info_t, input_set_t> inputs_by_target_t;
 
-    targets_map_t targets;
-    targets_set_t epsilons;
+    Node::targets_by_input_t by_input = node->build_targets_by_input();
+    inputs_by_target_t by_target;
 
-    BOOST_FOREACH(const Edge& edge, node->edges()) {
-        if (edge.epsilon()) {
-            epsilons.insert(make_pair(edge.target(), edge.advance()));
+    // Invert map.
+    for (int c = 0; c < 256; ++c) {
+        BOOST_FOREACH(const Node::target_info_t& info, by_input[c]) {
+            by_target[info].insert(c);
         }
-        else {
-            BOOST_FOREACH(uint8_t c, edge) {
-                targets[make_pair(edge.target(), edge.advance())].insert(c);
+    }
+
+    // Check for use default.  That is, every input has a target but no
+    // target has every input.
+    bool is_complete = true;
+    for (int c = 0; c < 256; ++c) {
+        if (by_input[c].empty()) {
+            is_complete = false;
+            break;
+        }
+    }
+
+    // Find biggest, this will also tell us if there is any epsilon.
+    inputs_by_target_t::iterator biggest;
+    size_t biggest_size = 0;
+    for (
+        inputs_by_target_t::iterator i = by_target.begin();
+        i != by_target.end();
+        ++i
+    ) {
+        size_t s = i->second.size();
+        if (s > biggest_size) {
+            biggest_size = s;
+            biggest = i;
+        }
+    }
+    bool has_epsilon = (biggest_size == 256);
+
+    // If complete and no epsilons or a single complete edge, use default.
+    if (is_complete && (! has_epsilon || by_target.size() == 1)) {
+        node->default_target() = biggest->first.first;
+        node->advance_on_default() = biggest->first.second;
+        by_target.erase(biggest);
+    }
+    else {
+        // no default
+        node->default_target().reset();
+    }
+
+    // Default is set, now build edges.
+    node->edges().clear();
+    BOOST_FOREACH(const inputs_by_target_t::value_type& v, by_target) {
+        node->edges().push_back(Edge(v.first.first, v.first.second));
+        Edge& edge = node->edges().back();
+
+        if (v.second.size() != 256) {
+            BOOST_FOREACH(uint8_t c, v.second) {
+                edge.add(c);
             }
         }
+        // Else Epsilon.
     }
-
-    list<Edge> new_edges;
-    BOOST_FOREACH(const targets_map_t::value_type& v, targets) {
-        new_edges.push_back(Edge());
-        Edge& edge = new_edges.back();
-        edge.target() = v.first.first;
-        edge.advance() = v.first.second;
-        BOOST_FOREACH(uint8_t c, v.second) {
-            edge.add(c);
-        }
-    }
-    BOOST_FOREACH(const target_key_t& key, epsilons) {
-        new_edges.push_back(Edge());
-        Edge& edge = new_edges.back();
-        edge.target() = key.first;
-        edge.advance() = key.second;
-    }
-
-    node->edges().swap(new_edges);
 }
 
 } // Intermediate

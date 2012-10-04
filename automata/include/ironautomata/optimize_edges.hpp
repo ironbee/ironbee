@@ -34,9 +34,14 @@ namespace Intermediate {
  * Ensure that @a node has the optimal (in terms of space) representation of
  * its edges.
  *
- * Ensures that @c node.edges contains exactly one edge_t for each distinct
- * target/advance setting.  For each such edge, a bitmap will be used if there
- * are 32 or more values and a values vector otherwise.
+ * Ensures that @c node.edges contains at most one edge_t for each distinct
+ * target/advance setting.  For complete nodes (nodes with a target for every
+ * input), the optimal default target will be chosen.  For targets that are
+ * reached on every input, epsilon edges will be used.
+ *
+ * @warning Multiplicity for a single input, target, advance tuple will be
+ * lost.  E.g., if there are multiple identical edges in @a node, they will
+ * be collapsed to a single edge.
  *
  * @param[in] node Node to optimize.
  */
