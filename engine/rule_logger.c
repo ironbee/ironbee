@@ -1263,7 +1263,7 @@ static void log_result(
             rule_log_exec(rule_exec,
                           "TARGET \"%s\" %s \"%.*s:%.*s\" %s",
                           tgt->target->target_str,
-                          ib_field_type_name(tgt->original->type),
+                          ib_field_type_name(rslt->value->type),
                           (int)tgt->original->nlen, tgt->original->name,
                           (int)rslt->value->nlen, rslt->value->name,
                           ib_field_format(rslt->value, true, true, NULL,
