@@ -54,7 +54,7 @@ extern "C" {
  * This is checked by @c ia_eudoxus_create_ methods to insure that an automata
  * was generated for the current engine.
  */
-#define IA_EUDOXUS_VERSION 2
+#define IA_EUDOXUS_VERSION 3
 
 /**
  * A Eudoxus Automata.

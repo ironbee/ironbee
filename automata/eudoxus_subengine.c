@@ -81,9 +81,9 @@ ia_eudoxus_result_t IA_EUDOXUS(next_low)(
 
     ia_vls_state_t vls;
     IA_VLS_INIT(vls, node);
-    uint8_t out_degree = IA_VLS_IF(vls, uint8_t, 0, has_edges);
     // Advance past first_output.
     IA_VLS_ADVANCE_IF(vls, IA_EUDOXUS_ID_T, has_output);
+    uint8_t out_degree = IA_VLS_IF(vls, uint8_t, 0, has_edges);
     IA_EUDOXUS_ID_T default_node = IA_VLS_IF(
         vls,
         IA_EUDOXUS_ID_T,
@@ -136,68 +136,6 @@ ia_eudoxus_result_t IA_EUDOXUS(next_low)(
     state->node = (const ia_eudoxus_node_t *)(
         (const char *)(state->eudoxus->automata) + next_node
     );
-
-    return IA_EUDOXUS_OK;
-}
-
-/**
- * Output function for low degree nodes.
- *
- * @sa IA_EUDOXUS(output) for details.
- */
-static
-ia_eudoxus_result_t IA_EUDOXUS(output_low)(
-    ia_eudoxus_state_t *state
-)
-{
-    if (state == NULL) {
-        return IA_EUDOXUS_EINSANE;
-    }
-
-    assert(state->eudoxus  != NULL);
-    assert(state->callback != NULL);
-    assert(state->node     != NULL);
-
-    bool has_output = ia_bit8(state->node->header.flags, 0);
-    bool has_edges  = ia_bit8(state->node->header.flags, 4);
-
-    if (! has_output) {
-        return IA_EUDOXUS_OK;
-    }
-
-    const IA_EUDOXUS(low_node_t) *node
-        = (const IA_EUDOXUS(low_node_t) *)(state->node);
-
-    ia_vls_state_t vls;
-    IA_VLS_INIT(vls, node);
-    IA_VLS_ADVANCE_IF(vls, uint8_t, has_edges);
-    IA_EUDOXUS_ID_T output = IA_VLS_IF(
-        vls,
-        IA_EUDOXUS_ID_T,
-        0,
-        has_output
-    );
-
-    if (output == 0) {
-        return IA_EUDOXUS_EINVAL;
-    }
-
-    while (output != 0) {
-        const IA_EUDOXUS(output_t) *output_obj =
-            (const IA_EUDOXUS(output_t) *)(
-                (const char *)(state->eudoxus->automata) + output
-            );
-        ia_eudoxus_command_t command = state->callback(
-            output_obj->output,
-            output_obj->output_length,
-            state->input_location,
-            state->callback_data
-        );
-        if (command != IA_EUDOXUS_CMD_CONTINUE) {
-            return (ia_eudoxus_result_t)command;
-        }
-        output = output_obj->next_output;
-    }
 
     return IA_EUDOXUS_OK;
 }
@@ -277,8 +215,8 @@ ia_eudoxus_result_t IA_EUDOXUS(next)(
  * This function should only be called if a callback is defined, i.e., if
  * @c state->callback is not NULL.
  *
- * As with the previous function, this simply calls an appropriate output
- * function based on node type and interprets the return code.
+ * All node types use flag 0 to indicate the present of output and the first
+ * variable member to contain the id of the first output.
  *
  * @param[in,out] state Current state.
  * @return See ia_eudoxus_execute() for return codes meanings.
@@ -296,48 +234,43 @@ ia_eudoxus_result_t IA_EUDOXUS(output)(
     assert(state->node     != NULL);
     assert(state->callback != NULL);
 
-    ia_eudoxus_result_t result = IA_EUDOXUS_OK;
+    bool has_output = ia_bit8(state->node->header.flags, 0);
 
-    switch (state->node->header.type) {
-    case 0:
-        result = IA_EUDOXUS(output_low)(state);
-        break;
-    default:
-        ia_eudoxus_set_error_printf(
-            state->eudoxus,
-            "Unknown node type: %d",
-            state->node->header.type
-        );
+    if (! has_output) {
+        return IA_EUDOXUS_OK;
+    }
+
+    ia_vls_state_t vls;
+    IA_VLS_INIT(vls, state->node);
+    IA_EUDOXUS_ID_T output = IA_VLS_IF(
+        vls,
+        IA_EUDOXUS_ID_T,
+        0,
+        has_output
+    );
+
+    if (output == 0) {
         return IA_EUDOXUS_EINVAL;
     }
 
-    switch (result) {
-    case IA_EUDOXUS_OK:
-    case IA_EUDOXUS_STOP:
-    case IA_EUDOXUS_ERROR:
-    case IA_EUDOXUS_EINVAL:
-    case IA_EUDOXUS_EINSANE:
-        /* Nop */
-        break;
-    case IA_EUDOXUS_EXT_NO_NEXT:
-        ia_eudoxus_set_error_cstr(
-            state->eudoxus,
-            "Insanity! Nonsense from my output function.  "
-            "Please report as bug."
+    while (output != 0) {
+        const IA_EUDOXUS(output_t) *output_obj =
+            (const IA_EUDOXUS(output_t) *)(
+                (const char *)(state->eudoxus->automata) + output
+            );
+        ia_eudoxus_command_t command = state->callback(
+            output_obj->output,
+            output_obj->output_length,
+            state->input_location,
+            state->callback_data
         );
-        return IA_EUDOXUS_EINSANE;
-    default:
-        /* Insanity error. */
-        ia_eudoxus_set_error_printf(
-            state->eudoxus,
-            "Insanity! Unknown next result: %d."
-            "  Please report as bug.",
-            result
-        );
-        return IA_EUDOXUS_EINSANE;
+        if (command != IA_EUDOXUS_CMD_CONTINUE) {
+            return (ia_eudoxus_result_t)command;
+        }
+        output = output_obj->next_output;
     }
 
-    return result;
+    return IA_EUDOXUS_OK;
 }
 
 /**

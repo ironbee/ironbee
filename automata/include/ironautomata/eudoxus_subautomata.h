@@ -74,6 +74,14 @@ struct IA_EUDOXUS(low_node_t)
     /* variable: */
 
     /*
+     * First output.  Important that this is the first variable entry so it
+     * matches other (future) node types.
+     */
+    /*
+    IA_EUDOXUS_ID_T first_output          if has_output
+    */
+
+    /*
      * Number of edges, not including default.
      *
      * I.e., the size of advance and edges.
@@ -83,7 +91,6 @@ struct IA_EUDOXUS(low_node_t)
     */
 
     /*
-    IA_EUDOXUS_ID_T first_output          if has_output
     IA_EUDOXUS_ID_T default_node          if has_defaults
     uint8_t         advance[out_degree/8] if has_nonadvancing & has_edges
     low_edge_t      edges[]

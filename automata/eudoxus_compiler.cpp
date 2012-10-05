@@ -147,38 +147,42 @@ private:
          */
         void low_node(const Intermediate::Node& node)
         {
-            e_low_node_t* header =
-                m_parent.m_assembler.append_object(e_low_node_t());
-
             bool has_nonadvancing = (
                 find_if(node.edges().begin(), node.edges().end(), is_nonadvancing)
             ) != node.edges().end();
 
-            header->header.type = IA_EUDOXUS_LOW;
-            header->header.flags = 0;
-            if (node.first_output()) {
-                header->header.flags = ia_setbit8(header->header.flags, 0);
-            }
-            if (has_nonadvancing) {
-                header->header.flags = ia_setbit8(header->header.flags, 1);
-            }
-            if (node.default_target()) {
-                header->header.flags = ia_setbit8(header->header.flags, 2);
-            }
-            if (node.advance_on_default()) {
-                header->header.flags = ia_setbit8(header->header.flags, 3);
-            }
+            {
+                e_low_node_t* header =
+                    m_parent.m_assembler.append_object(e_low_node_t());
 
-            if (node.edges().size() > 0) {
-                header->header.flags = ia_setbit8(header->header.flags, 4);
-                m_parent.m_assembler.append_object(
-                    uint8_t(node.edges().size())
-                );
+                header->header.type = IA_EUDOXUS_LOW;
+                header->header.flags = 0;
+                if (node.first_output()) {
+                    header->header.flags = ia_setbit8(header->header.flags, 0);
+                }
+                if (has_nonadvancing) {
+                    header->header.flags = ia_setbit8(header->header.flags, 1);
+                }
+                if (node.default_target()) {
+                    header->header.flags = ia_setbit8(header->header.flags, 2);
+                }
+                if (node.advance_on_default()) {
+                    header->header.flags = ia_setbit8(header->header.flags, 3);
+                }
+                if (! node.edges().empty()) {
+                    header->header.flags = ia_setbit8(header->header.flags, 4);
+                }
             }
 
             if (node.first_output()) {
                 m_parent.append_output_ref(node.first_output());
                 m_parent.m_outputs.insert(node.first_output());
+            }
+
+            if (! node.edges().empty()) {
+                m_parent.m_assembler.append_object(
+                    uint8_t(node.edges().size())
+                );
             }
 
             if (node.default_target()) {
