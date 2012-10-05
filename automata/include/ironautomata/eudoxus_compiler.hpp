@@ -37,6 +37,11 @@ namespace IronAutomata {
 namespace EudoxusCompiler {
 
 /**
+ * Which version of Eudoxus this compiler targets.
+ */
+extern const int EUDOXUS_VERSION;
+
+/**
  * Result of a compilation.
  */
 struct result_t

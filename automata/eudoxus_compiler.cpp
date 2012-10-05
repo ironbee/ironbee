@@ -37,6 +37,8 @@ using namespace std;
 namespace IronAutomata {
 namespace EudoxusCompiler {
 
+const int EUDOXUS_VERSION = 3;
+
 namespace {
 
 /**
@@ -413,7 +415,7 @@ void Compiler<id_width>::compile(
     // Header
     ia_eudoxus_automata_t* e_automata =
         m_assembler.append_object(ia_eudoxus_automata_t());
-    e_automata->version              = IA_EUDOXUS_VERSION;
+    e_automata->version              = EUDOXUS_VERSION;
     e_automata->id_width             = id_width;
     e_automata->is_big_endian        = ia_eudoxus_is_big_endian();
     e_automata->no_advance_no_output = automata.no_advance_no_output();
