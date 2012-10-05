@@ -42,7 +42,6 @@ public:
     TestIBUtilField()
     {
         ib_initialize();
-        ib_util_log_level(1000); // XXX
     }
 
     ~TestIBUtilField()
