@@ -28,6 +28,7 @@
 #include "core_private.h"
 #include "engine_private.h"
 #include "rule_engine_private.h"
+#include "rule_logger_private.h"
 
 #include <ironbee/core.h>
 #include <ironbee/debug.h>
@@ -184,6 +185,9 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     cfg->fn = audit_filename + (strlen(corecfg->auditlog_dir) + 1);
     cfg->full_path = audit_filename;
     cfg->temp_path = temp_filename;
+
+    /* Log it via the rule logger */
+    ib_rule_log_audit(cfg->tx->rule_exec, audit_filename);
 
     free(dtmp);
     free(dn);

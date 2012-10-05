@@ -24,6 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
+#include "rule_logger_private.h"
 #include "rule_engine_private.h"
 
 #include <ironbee/action.h>
@@ -1066,6 +1067,26 @@ void ib_rule_log_phase(
             rule_exec->tx_log->cur_phase = phase_num;
             rule_exec->tx_log->phase_name = phase_name;
         }
+    }
+    IB_FTRACE_RET_VOID();
+}
+
+/* Log audit log file */
+void ib_rule_log_audit(
+    const ib_rule_exec_t *rule_exec,
+    const const char *path
+)
+{
+    IB_FTRACE_INIT();
+    assert(rule_exec != NULL);
+    assert(path != NULL);
+
+    if (rule_exec->tx_log == NULL) {
+        IB_FTRACE_RET_VOID();
+    }
+
+    if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_AUDIT)) {
+        rule_log_exec(rule_exec, "AUDIT %s", path);
     }
     IB_FTRACE_RET_VOID();
 }

@@ -421,6 +421,7 @@ static ib_status_t rule_exec_create(ib_tx_t *tx,
     exec->rule = NULL;
     exec->target = NULL;
     exec->result = 0;
+    tx->rule_exec = exec;
 
     exec->exec_log = NULL;
 
