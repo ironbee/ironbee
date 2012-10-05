@@ -53,7 +53,7 @@ namespace Intermediate {
  *   - Multiple edges: If @a conservative, do nothing, otherwise, as above
  *     for eh edge.
  *
- * This search and changes is iterated until the automata stabilizies.
+ * This search and changes is iterated until the automata stabilizes.
  *
  * @note If no_advance_no_output is set, this routine will eliminate all
  * non-advancing edges for deterministic automata (or non-deterministic if

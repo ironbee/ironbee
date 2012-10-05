@@ -50,7 +50,7 @@ int main(int argc, char **argv)
         ("fast", "optimize for speed")
         ("chunk-size,s X",
             po::value<size_t>(&chunk_size),
-            "set chunk size of outut to X")
+            "set chunk size of output to X")
         ("translate-nonadvancing",
             "translate non-advancing edges [fast]")
         ("translate-nonadvancing-aggressive",
