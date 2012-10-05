@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1696 
+personal_ws-1.1 en 1697 
 malloced
 libnet
 endpat
@@ -1435,6 +1435,7 @@ IronAutomataBits
 NetFront
 netfront
 LoadModule
+BasicIronBee
 setResponseHeader
 ConstContext
 udata
