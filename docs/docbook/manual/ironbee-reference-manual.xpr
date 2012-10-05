@@ -1,44 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project version="13.2">
+<project version="14.0">
     <meta>
         <filters directoryPatterns="" filePatterns="" positiveFilePatterns="" showHiddenFiles="false"/>
         <options>
-            <serialized version="13.2" xml:space="preserve">
+            <serialized version="14.0" xml:space="preserve">
                 <map>
                     <entry>
                         <String>scenario.associations</String>
                         <scenarioAssociation-array>
                             <scenarioAssociation>
-                                <field name="name">
-                                    <String>ironbee-reference-manual</String>
-                                </field>
-                                <field name="type">
-                                    <String>XSL</String>
-                                </field>
                                 <field name="url">
                                     <String>ch02-directives.xml</String>
                                 </field>
-                            </scenarioAssociation>
-                            <scenarioAssociation>
-                                <field name="name">
-                                    <String>docbook/docbook5.framework/DocBook 5/Docbook PDF</String>
+                                <field name="scenarioIds">
+                                    <list>
+                                        <String>ironbee-reference-manual</String>
+                                    </list>
                                 </field>
-                                <field name="type">
-                                    <String>XSL</String>
-                                </field>
-                                <field name="url">
-                                    <String>ch01-introduction.xml</String>
-                                </field>
-                            </scenarioAssociation>
-                            <scenarioAssociation>
-                                <field name="name">
-                                    <String>docbook/docbook5.framework/DocBook 5/Docbook HTML</String>
-                                </field>
-                                <field name="type">
-                                    <String>XSL</String>
-                                </field>
-                                <field name="url">
-                                    <String>ironbee-reference-manual.xml</String>
+                                <field name="scenarioTypes">
+                                    <list>
+                                        <String>XSL</String>
+                                    </list>
                                 </field>
                             </scenarioAssociation>
                         </scenarioAssociation-array>
@@ -466,6 +448,10 @@
                     <entry>
                         <String>scenarios.load.from.project</String>
                         <Boolean>true</Boolean>
+                    </entry>
+                    <entry>
+                        <String>validation.scenarios</String>
+                        <validationScenario-array/>
                     </entry>
                 </map>
             </serialized>
