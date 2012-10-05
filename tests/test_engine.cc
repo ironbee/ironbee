@@ -74,6 +74,7 @@ TEST(TestIronBee, test_engine_config_basic)
         "SensorHostname unit-testing.sensor.tld\n"
         "ModuleBasePath " IB_XSTRINGIFY(MODULE_BASE_PATH) "\n"
         "RuleBasePath " IB_XSTRINGIFY(RULE_BASE_PATH) "\n"
+        "AuditLogEngine Off\n"
         "LoadModule ibmod_htp.so\n"
         "<Site *>\n"
         "  Hostname *\n"

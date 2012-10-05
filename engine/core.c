@@ -4576,7 +4576,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->parser               = MODULE_NAME_STR;
     corecfg->buffer_req           = 0;
     corecfg->buffer_res           = 0;
-    corecfg->audit_engine         = 0;
+    corecfg->audit_engine         = 1;
     corecfg->auditlog_dmode       = 0700;
     corecfg->auditlog_fmode       = 0600;
     corecfg->auditlog_parts       = IB_ALPARTS_DEFAULT;

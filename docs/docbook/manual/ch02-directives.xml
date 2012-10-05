@@ -11,13 +11,16 @@
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>AuditEngine On|Off|RelevantOnly</literal></para>
         <para><emphasis role="bold">Default:</emphasis>
-            <literal>Off</literal></para>
+            <literal>RelevantOnly</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.3</para>
-        <para>Note: Setting <literal>AuditEngine</literal> to <literal>On</literal> activates audit
-            logging, but does not log any transactions in itself. Further activity (e.g., a rule
-            match) is required for a transaction to be recorded.</para>
+        <para>Setting <literal>AuditEngine</literal> to <literal>RelevantOnly</literal>, the
+            default, does not log any transactions in itself. Instead, further activity (e.g., a
+            rule match) is required for a transaction to be recorded. Setting
+                <literal>AuditEngine</literal> to <literal>On</literal> activates audit logging for
+                <emphasis role="bold">all transactions</emphasis>, which may cause a large amount of
+            data to be logged.</para>
     </section>
     <section>
         <title>AuditLogBaseDir</title>
