@@ -41,58 +41,97 @@
 ib_status_t ib_util_mkpath(const char *path, mode_t mode)
 {
     IB_FTRACE_INIT();
-    char *ppath = NULL;
-    char *cpath = NULL;
-    ib_status_t rc;
+
+    /* Mutable copy of path. */
+    char *path_work = NULL;
+
+    /* End of path_work; points to the terminating NULL. */
+    char *path_end;
+
+    /* path_work to exists_end is the part of path that exists. */
+    char *exists_end;
+
+    /* final result code. */
+    ib_status_t rc = IB_OK;
 
     if (strcmp(path, ".") == 0 || strcmp(path, "/") == 0) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    /* Attempt to create the dir.  If it returns ENOENT, then
-     * recursively attempt to create the parent dir(s) until
-     * they are all created.
+    /* Could save one pass by using malloc and memcpy instead of strdup.
+     * But this is simpler.
      */
-    if ((mkdir(path, mode) == -1) && (errno == ENOENT)) {
-        int ec;
+    path_work = strdup(path);
+    path_end = path_work + strlen(path_work);
+    if (path_work == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
 
-        /* Some implementations may modify the path argument,
-         * so make a copy first. */
-        if ((cpath = strdup(path)) == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+    /* Find portion of path that already exists. */
+    exists_end = path_work;
+    if (*path_work == '/') {
+        ++exists_end;
+    }
+    while (exists_end < path_end) {
+        char *old_exists_end = exists_end;
+        struct stat stat_result;
+        int stat_rc;
+
+        /* Find next / */
+        for (;exists_end < path_end && *exists_end !='/'; ++exists_end);
+
+        /* Check if path so far exists. */
+        *exists_end = '\0';
+        stat_rc = stat(path_work, &stat_result);
+        if (exists_end != path_end) {
+            *exists_end = '/';
+        }
+        if (stat_rc != 0) {
+            exists_end = old_exists_end;
+            break;
         }
 
-        /* Some implementation returns a pointer to internal storage which
-         * may change in recursive calls.  So another copy. */
-        if ((ppath = strdup(dirname(cpath))) == NULL) {
-            rc = IB_EINVAL;
-            goto cleanup;
+        /* If done, exit. */
+        if (exists_end == path_end) {
+            break;
         }
 
-        rc = ib_util_mkpath(ppath, mode);
-        if (rc != IB_OK) {
-            goto cleanup;
-        }
+        ++exists_end;
+    }
 
-        /* Parent path was created, so try again. */
-        ec = mkdir(path, mode);
-        if (ec == -1) {
-            ec = errno;
+    /* If entire path exists, we're done. */
+    if (exists_end == path_end) {
+        rc = IB_OK;
+        goto finish;
+    }
+
+    /* Otherwise, keep going, creating as we go. */
+    while (exists_end < path_end) {
+        int mkdir_rc;
+
+        /* Find next / */
+        for (;exists_end < path_end && *exists_end !='/'; ++exists_end);
+        *exists_end = '\0';
+
+        mkdir_rc = mkdir(path_work, mode);
+        if (mkdir_rc != 0) {
             ib_util_log_error("Failed to create path \"%s\": %s (%d)",
-                              path, strerror(ec), ec);
-            rc = IB_EINVAL;
-            goto cleanup;
+                              path_work, strerror(errno), errno);
         }
+        if (exists_end != path_end) {
+            *exists_end = '/';
+        }
+        if (mkdir_rc != 0) {
+            rc = IB_EINVAL;
+            goto finish;
+        }
+
+        ++exists_end;
     }
 
-    rc = IB_OK;
-
-cleanup:
-    if (cpath != NULL) {
-        free(cpath);
-    }
-    if (ppath != NULL) {
-        free(ppath);
+finish:
+    if (path_work != NULL) {
+        free(path_work);
     }
 
     IB_FTRACE_RET_STATUS(rc);
