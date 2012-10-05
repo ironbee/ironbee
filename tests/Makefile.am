@@ -34,6 +34,8 @@ LDFLAGS += $(HTP_LDFLAGS) $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
 MODULE_TEST_LDADD = $(LDADD) \
                     $(HTP_LDADD) \
                     $(PCRE_LDADD) \
+		    -lboost_filesystem \
+		    -lboost_system \
                     $(top_builddir)/engine/libironbee.la
 
 # Point the module base path to the modules build dir
@@ -92,6 +94,7 @@ TEST_EXTRAS = \
        ahocorasick.patterns \
        DfaModuleTest.matches.config \
        gtest_executor.sh \
+       BasicIronBee.config \
        PcreModuleTest.test_load_module.config \
        PcreModuleTest.test_pcre_operator.config \
        PcreModuleTest.test_match_basic.config \

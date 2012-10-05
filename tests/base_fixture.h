@@ -36,6 +36,7 @@
 #include <string>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/filesystem.hpp>
 
 #define ASSERT_IB_OK(x) ASSERT_EQ(IB_OK, (x))
 const size_t EXCEPTION_BUF_SIZE = 128;
@@ -162,7 +163,14 @@ public:
             std::string(info->name()) +
             ".config";
 
-        configureIronBee(configFile);
+        if ( boost::filesystem::exists(boost::filesystem::path(configFile)) )
+        {
+            configureIronBee(configFile);
+        }
+        else
+        {
+            configureIronBee("BasicIronBee.config");
+        }
     }
 
     void sendDataIn(ib_conn_t *ib_conn, const std::string& req)

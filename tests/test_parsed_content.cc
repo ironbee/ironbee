@@ -136,6 +136,9 @@ class ParsedContentHeaderTest : public ParsedContentTest {
 
 TEST_F(ParsedContentTest, create_destroy)
 {
+    resetRuleBasePath();
+    resetModuleBasePath();
+    configureIronBee();
     ib_conn_t *c = buildIronBeeConnection();
     ib_tx_t *tx;
 
@@ -150,6 +153,10 @@ TEST_F(ParsedContentTest, create_destroy)
 
 TEST_F(ParsedContentHeaderTest, list_err)
 {
+    resetRuleBasePath();
+    resetModuleBasePath();
+    configureIronBee();
+
     ib_status_t rc;
     ib_tx_t *tx;
     ib_conn_t *c = buildIronBeeConnection();
@@ -189,6 +196,10 @@ TEST_F(ParsedContentHeaderTest, list_err)
 
 TEST_F(ParsedContentHeaderTest, list_ok)
 {
+    resetRuleBasePath();
+    resetModuleBasePath();
+    configureIronBee();
+
     ib_status_t rc;
     ib_tx_t *tx;
     ib_conn_t *c = buildIronBeeConnection();
