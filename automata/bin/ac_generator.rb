@@ -6,7 +6,7 @@
 # automata to stdout.
 #
 
-$:.unshift(File.dirname(__FILE__))
+$:.unshift(File.dirname(File.dirname(__FILE__)))
 require 'intermediate'
 require 'set'
 

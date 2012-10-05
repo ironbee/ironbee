@@ -520,6 +520,7 @@ AC_CONFIG_FILES([libs/Makefile])
 AC_CONFIG_FILES([util/Makefile])
 AC_CONFIG_FILES([engine/Makefile])
 AC_CONFIG_FILES([automata/Makefile])
+AC_CONFIG_FILES([automata/bin/Makefile])
 AC_CONFIG_FILES([automata/tests/Makefile])
 
 AC_CONFIG_FILES([servers/Makefile])

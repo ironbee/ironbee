@@ -8,7 +8,7 @@ AM_CPPFLAGS = -I$(srcdir)/include
 
 if CPP
 
-SUBDIRS = . tests
+SUBDIRS = . bin tests
 
 ACLOCAL_AMFLAGS = -I ../../acinclude
 
@@ -25,19 +25,6 @@ libironautomata_la_SOURCES = \
 
 nodist_libironautomata_la_SOURCES = \
     intermediate.pb.cc
-
-bin_PROGRAMS = \
-    ac_generator \
-    bench \
-    ec \
-    to_dot \
-    optimize
-      
-ac_generator_SOURCES = ac_generator.cpp
-bench_SOURCES = bench.cpp
-ec_SOURCES = ec.cpp
-to_dot_SOURCES = to_dot.cpp
-optimize_SOURCES = optimize.cpp
 
 LDADD = libironautomata.la libiaeudoxus.la
 AM_CPPFLAGS += \

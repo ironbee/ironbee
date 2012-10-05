@@ -2,10 +2,11 @@ $:.unshift(File.dirname(File.dirname(File.expand_path(__FILE__))))
 require 'set'
 
 module AutomataTest
-  BENCH = File.join(ENV['abs_builddir'], "..", "bench")
-  EC = File.join(ENV['abs_builddir'], "..", "ec")
-  ACGEN = File.join(ENV['abs_builddir'], "..", "ac_generator")
-  OPTIMIZE = File.join(ENV['abs_builddir'], "..", "optimize")
+  BINDIR = File.expand_path(File.join(ENV['abs_builddir'], "..", "bin"))
+  BENCH = File.join(BINDIR, "bench")
+  EC = File.join(BINDIR, "ec")
+  ACGEN = File.join(BINDIR, "ac_generator")
+  OPTIMIZE = File.join(BINDIR, "optimize")
   OPTIMIZE_ARGS = ["--fast"]
 
   # Returns map of word to ending position of word in input.
