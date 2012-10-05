@@ -299,7 +299,7 @@ TEST(TestOptimizeEdges, UseDefault)
     ASSERT_EQ(target_a, node->default_target());
     ASSERT_FALSE(node->advance_on_default());
     const Edge& e = node->edges().front();
-    ASSERT_EQ(56, e.size());
+    ASSERT_EQ(56UL, e.size());
     ASSERT_EQ(target_b, e.target());
 }
 
