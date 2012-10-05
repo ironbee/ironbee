@@ -449,6 +449,14 @@ ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
         }
     }
 
+    /* Create the list of audit logs */
+    if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_AUDIT)) {
+        rc = ib_list_create(&(new->audit_list), tx_log->mp);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
     /* Complete the new object, store pointer to it */
     new->tx_log = tx_log;
     new->rule = rule_exec->rule;
@@ -785,6 +793,25 @@ ib_status_t ib_rule_log_exec_add_event(ib_rule_log_exec_t *exec_log,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/* Log audit log file */
+void ib_rule_log_add_audit(
+    const ib_rule_exec_t *rule_exec,
+    const const char *audit_log
+)
+{
+    IB_FTRACE_INIT();
+    assert(rule_exec != NULL);
+    assert(audit_log != NULL);
+
+    if ( (rule_exec->exec_log == NULL) ||
+         (rule_exec->exec_log->audit_list == NULL) )
+    {
+        IB_FTRACE_RET_VOID();
+    }
+    ib_list_push(rule_exec->exec_log->audit_list, (void *)audit_log);
+    IB_FTRACE_RET_VOID();
+}
+
 ib_status_t ib_rule_log_exec_op(ib_rule_log_exec_t *exec_log,
                                 const ib_operator_inst_t *opinst,
                                 ib_status_t status)
@@ -1047,6 +1074,26 @@ void ib_rule_log_tx_event_end(
     IB_FTRACE_RET_VOID();
 }
 
+/* Log audit log file */
+static void log_audit(
+    const ib_rule_exec_t *rule_exec
+)
+{
+    IB_FTRACE_INIT();
+    assert(rule_exec != NULL);
+    const ib_list_node_t *node;
+
+    if (rule_exec->exec_log->audit_list == NULL) {
+        IB_FTRACE_RET_VOID();
+    }
+
+    IB_LIST_LOOP_CONST(rule_exec->exec_log->audit_list, node) {
+        const char *path = (const char *)node->data;
+        rule_log_exec(rule_exec, "AUDIT %s", path);
+    }
+    IB_FTRACE_RET_VOID();
+}
+
 /* Log phase start */
 void ib_rule_log_phase(
     const ib_rule_exec_t *rule_exec,
@@ -1065,27 +1112,11 @@ void ib_rule_log_phase(
             rule_log_exec(rule_exec, "PHASE %s", phase_name);
             rule_exec->tx_log->cur_phase = phase_num;
             rule_exec->tx_log->phase_name = phase_name;
+
+            if (phase_num == PHASE_POSTPROCESS) {
+                log_audit(rule_exec);
+            }
         }
-    }
-    IB_FTRACE_RET_VOID();
-}
-
-/* Log audit log file */
-void ib_rule_log_audit(
-    const ib_rule_exec_t *rule_exec,
-    const const char *path
-)
-{
-    IB_FTRACE_INIT();
-    assert(rule_exec != NULL);
-    assert(path != NULL);
-
-    if (rule_exec->tx_log == NULL) {
-        IB_FTRACE_RET_VOID();
-    }
-
-    if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_AUDIT)) {
-        rule_log_exec(rule_exec, "AUDIT %s", path);
     }
     IB_FTRACE_RET_VOID();
 }

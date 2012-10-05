@@ -186,7 +186,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     cfg->temp_path = temp_filename;
 
     /* Log it via the rule logger */
-    ib_rule_log_audit(cfg->tx->rule_exec, audit_filename);
+    ib_rule_log_add_audit(cfg->tx->rule_exec, audit_filename);
 
     free(dtmp);
     free(dn);
@@ -356,10 +356,6 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
 
     log->ctx->auditlog->index_fp = cfg->index_fp;
     ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-
-    ib_log_info(log->ib, "AUDITLOG INDEX%s: %s",
-                (log->ctx->auditlog->index[0] == '|'?" (piped)":""),
-                index_file);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -668,7 +664,6 @@ ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log)
             ib_rc = IB_EOTHER;
             goto cleanup;
         }
-        ib_log_info(log->ib, "AUDITLOG: %s", cfg->full_path);
         cfg->fp = NULL;
     }
 

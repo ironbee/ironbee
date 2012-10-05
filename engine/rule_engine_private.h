@@ -104,6 +104,7 @@ struct ib_rule_log_exec_t {
     ib_rule_log_tx_t       *tx_log;      /**< Rule transaction log */
     const ib_rule_t        *rule;        /**< Rule being executed */
     ib_list_t              *tgt_list;    /**< List of ib_rule_tgt_result_t */
+    ib_list_t              *audit_list;  /**< List of audit log file names */
     int                     num_tgt;     /**< # of targets */
     ib_rule_log_count_t     counts;      /**< Result counting info */
     ib_rule_log_mode_t      mode;        /**< Rule logging mode */
@@ -396,10 +397,10 @@ ib_status_t ib_rule_log_exec_add_event(ib_rule_log_exec_t *exec_log,
  * Log an audit log file for the rule logger
  *
  * @params[in] rule_exec Rule execution logging object
- * @params[in] path Full path of the audit log file
+ * @params[in] audit_log Full path of the audit log file
  */
-void ib_rule_log_audit(const ib_rule_exec_t *rule_exec,
-                       const const char *path);
+void ib_rule_log_add_audit(const ib_rule_exec_t *rule_exec,
+                           const const char *audit_log);
 
 
 #endif /* IB_RULE_ENGINE_PRIVATE_H_ */
