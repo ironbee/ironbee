@@ -28,7 +28,6 @@
 #include "core_private.h"
 #include "engine_private.h"
 #include "rule_engine_private.h"
-#include "rule_logger_private.h"
 
 #include <ironbee/core.h>
 #include <ironbee/debug.h>

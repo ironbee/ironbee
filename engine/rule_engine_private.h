@@ -392,4 +392,14 @@ ib_status_t ib_rule_log_exec_add_event(ib_rule_log_exec_t *exec_log,
                                        const ib_logevent_t *event);
 
 
+/**
+ * Log an audit log file for the rule logger
+ *
+ * @params[in] rule_exec Rule execution logging object
+ * @params[in] path Full path of the audit log file
+ */
+void ib_rule_log_audit(const ib_rule_exec_t *rule_exec,
+                       const const char *path);
+
+
 #endif /* IB_RULE_ENGINE_PRIVATE_H_ */
