@@ -90,15 +90,15 @@ ia_eudoxus_result_t IA_EUDOXUS(next_low)(
         0,
         has_default
     );
-    uint8_t *advance = IA_VLS_VARRAY_IF(
+    const uint8_t *advance = IA_VLS_VARRAY_IF(
         vls,
-        uint8_t,
+        const uint8_t,
         out_degree / 8,
         has_nonadvancing & has_edges
     );
-    IA_EUDOXUS(low_edge_t) *edges = IA_VLS_FINAL(
+    const IA_EUDOXUS(low_edge_t) *edges = IA_VLS_FINAL(
         vls,
-        IA_EUDOXUS(low_edge_t)
+        const IA_EUDOXUS(low_edge_t)
     );
 
     IA_EUDOXUS_ID_T next_node            = 0;
