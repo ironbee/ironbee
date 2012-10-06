@@ -113,7 +113,7 @@ WS            := &quot; &quot;
 BACKSLASH     := &quot;\&quot;
 </code></pre>
 
-<p>The grammar is likely to change in in the near future. </p>
+<p>The grammar is likely to change in in the near future.</p>
 
 <p>All arguments after the flags are joined with whitespace and treated as
 configuration text. You may also ask <code>clipp</code> to load configuration from a
@@ -135,7 +135,7 @@ ironbee:ironbee.conf
 <h2 id="input">Input</h2>
 
 <p>An <em>Input</em> is the fundamental unit of data in <code>clipp</code>. Generators produce
-them, modifiers modify them, and consumers consumer them. An Input represents
+them, modifiers modify them, and consumers consume them. An Input represents
 a single connection with zero or more transactions. The Input format is
 oriented around IronBee server plugin events and is designed to adapt to
 future changes such as additional events.</p>
@@ -197,7 +197,7 @@ and value.</p>
 <li><p>Consists of a connection open event, then a sequence of transactions each
 consisting of a connection data in and a connection data out event, and then a
 connection closed event. These inputs are typical of generators that read
-other formats including <code>modsec</code>, <code>apache</code>, <code>raw</code>, and <code>suricata</code>.<br/>
+other formats including <code>modsec</code>, <code>apache</code>, <code>raw</code>, and <code>suricata</code>.
 Unmodified, they are usually consumed by an IronBee that uses modhtp to
 parse them.</p></li>
 <li><p>Consists of a connection open event, then a sequence of transactions each
@@ -214,7 +214,7 @@ data in might occur several times in a row to test data that comes in batches.</
 
 <p>The CLIPP protobuf file format and it associated components: <code>pb</code> and
 <code>writepb</code> are especially important. The protobuf format completely captures
-the Input is the most powerful and flexible format.</p>
+the Input making it the most powerful and flexible format.</p>
 
 <p>The Protobuf format is compact to begin with and uses gzip compression to
 further reduce its size. If you have a lot of data that you are going to run
@@ -223,14 +223,14 @@ first via <code>writepb</code>.</p>
 
 <h2 id="generators">Generators</h2>
 
-<p>All generators except pcap that take file system paths support using - to
+<p>All generators &#8211; except pcap &#8211; that take file system paths, support using <code>-</code> to
 indicate stdin.</p>
 
-<p><strong>pb</strong>:<em>path</em> </p>
+<p><strong>pb</strong>:<em>path</em></p>
 
 <p>Generate Input from CLIPP Protobuf file.</p>
 
-<p><strong>raw</strong>:<em>request</em>,<em>response</em> </p>
+<p><strong>raw</strong>:<em>request</em>,<em>response</em></p>
 
 <p>Generate events from a pair of raw files. Bogus IP and ports are used for the
 connection opened event. You can override those with the <code>@set_</code><em>X</em>
@@ -243,7 +243,7 @@ transaction.</p>
 
 <p><strong>modsec</strong>:<em>path</em> &#8212; Generate events from ModSecurity audit log.</p>
 
-<p>ModSecurity audit logs are often somewhat corrupted. CLIPP will emit a
+<p>Serial ModSecurity audit logs &#8211; those that have multiple entries &#8211; are often somewhat corrupted. CLIPP will emit a
 message, ignore, and continue processing whenever it fails to parse an entry.</p>
 
 <p>This generator produces an Input for each audit log entry. The Input consists
@@ -263,20 +263,21 @@ of a single transaction with the fabricated request and response.</p>
 
 <p><strong>suricata</strong>:<em>path</em> &#8212; Generate events from a Suricata log.</p>
 
-<p>This generator behaves almost identically to <code>apache</code> but reads Suricata log
-format instead. </p>
+<p>This generator behaves almost identically to <code>apache</code> but reads Suricata http log
+format instead.</p>
 
 <p><strong>htp</strong>:*path: &#8212; Generate events from a libHTP test file.</p>
 
 <p>A libHTP test file is a sequence of request and response blocks. Request
 blocks begin with <code>&gt;&gt;&gt;</code> on a line by itself and response blocks begin with
-<code>&lt;&lt;&lt;</code> on a line by itself. </p>
+<code>&lt;&lt;&lt;</code> on a line by itself.</p>
 
 <p>This generator produces a single Input from the file. The Input consists of
 a transaction for every pair of request and response blocks. The connection
-opened event has bogus information.</p>
+opened event has bogus information. Similar to <code>raw</code>, the connection information
+can be specified with the <code>@set_</code><em>X</em> modifiers.</p>
 
-<p>You may omit response blocks in which case they default to the empty string.<br/>
+<p>You may omit response blocks in which case they default to the empty string.
 You may not omit request blocks.</p>
 
 <p><strong>echo</strong>:<em>request</em>: &#8212; Generate a event with request line <em>request</em>.</p>
@@ -290,9 +291,9 @@ request is a single line. Connection information is bogus.</p>
 <p>Generates inputs based on reassembled PCAP.</p>
 
 <p>The PCAP is reassembled via libNIDS. It is somewhat fragile and may get
-transaction boundaries wrong if there a connection has traffic flowing
-simultaneously in both directions. It generates connection data events so
-use @parse if you want parsed events.</p>
+transaction boundaries wrong if there is a connection that has traffic flowing
+simultaneously in both directions. It generates connection data events, so
+use <code>@parse</code> if you want parsed events.</p>
 
 <p>Note that only complete streams are generated as inputs. In particular, this
 means that you will need both directions of traffic to get any inputs, e.g.,
@@ -341,7 +342,7 @@ first line on spaces into three values (the request/response line values),
 splits the next lines on : into two values (header key and value), and, when
 it sees a blank line, treats the remainder of the data as the body.</p>
 
-<p>At present, @parse does not support repeated connection data in or connection
+<p>At present, <code>@parse</code> does not support repeated connection data in or connection
 data out events. Handling those properly (also repeat parsed events) would
 require a smarter parser and handling those dumbly (join them and process as
 a single block of text) was deemed more unexpected than useful. So, if
@@ -362,7 +363,7 @@ if some of those events are repeated.</p>
 <p>Aggregates multiple connections together. The first connection provides the
 pre and post transactions events. Subsequent transactions have their
 transactions appended to the first. When there are no more inputs or when
-the number of transactions is at least <em>n</em>, the connection is passed on.<br/>
+the number of transactions is at least <em>n</em>, the connection is passed on.
 Note that the final connection may have less than <em>n</em> transactions, i.e.,
 it will have the remainder.</p>
 
@@ -382,7 +383,7 @@ chosen at random for each output input. Supported distributions are:</p>
 
 <p>Splits data events up into multiple data events. The size in bytes is
 dictated by <em>n</em> or by the given distribution. <code>@splitdata</code> supports the same
-distributions as @aggregate.</p>
+distributions as <code>@aggregate</code>.</p>
 
 <p>The pre and post delays of the original event are maintained at the beginning
 and end of the split up events. There is no delay between the split up
@@ -394,7 +395,7 @@ events.</p>
 
 <p>Splits header events up into multiple header events. The size in header
 lines is dictated by <em>n</em> or by the given distribution. <code>@splitheader</code>
-supports the same distributions as @aggregate.</p>
+supports the same distributions as <code>@aggregate</code>.</p>
 
 <p>The pre and post delays of the original event are maintained at the beginning
 and end of the split up events. There is no delay between the split up
@@ -422,7 +423,7 @@ can be any of:</p>
 <p><strong>@limit</strong>:<em>n</em></p>
 
 <p>Stop chain after <em>n</em> inputs. If there are additional later chains, <code>clipp</code>
-move onto the next one.</p>
+will move onto the next one.</p>
 
 <p><code>@limit</code> is written to play well with the other modifiers. However, it is
 good practice (and behaves most intuitively) if you place it last in the
@@ -431,7 +432,7 @@ chain.</p>
 <p><strong>@select</strong>:<em>which</em></p>
 
 <p>Only allow certain inputs through. Inputs are indexed starting with 1.
-<em>which</em> is a comma separated list of either single indices are ranges of
+<em>which</em> is a comma separated list of either single indices or ranges of
 indices specified as <code>i-j</code>.</p>
 
 <p><strong>@set</strong>:<em>key</em>:<em>value</em></p>
@@ -446,7 +447,7 @@ changed.</p>
 <p><strong>@fillbody</strong></p>
 
 <p>Adds any missing body events and replaces the contents of body events with an
-appropriate number (based on Content-Length) or @s. This is useful for input
+appropriate number (based on Content-Length) or <code>@s</code>. This is useful for input
 sources that lack bodies or for sanitizing sensitive bodies.</p>
 
 <p>Any negative or unparsable value of Context-Length is treated as 0. Any value
@@ -455,7 +456,7 @@ over 1e6 bytes is treated as 1e6 bytes.</p>
 <p><strong>@ironbee</strong>:<em>config</em>:<em>behavior</em></p>
 
 <p>Run IronBee as a modifier. By default, this behaves as the consumer except
-as a modifier, i.e., there can be later components. </p>
+as a modifier, i.e., there can be later components.</p>
 
 <p><em>behavior</em> is optional and can be <code>allow</code> or <code>block</code> with <code>allow</code> as the
 default. If set to <code>block</code>, then inputs are blocked (prevented from
@@ -495,7 +496,7 @@ time in microseconds since start, and time in microseconds since previous input.
 and feeds all events to it. The pre- and post- delay attributes of Events
 are interpreted.</p>
 
-<p>See @ironbee above.</p>
+<p>See <code>@ironbee</code> above.</p>
 
 <p><strong>ironbee_threaded</strong>:<em>path</em>:<em>workers</em></p>
 
@@ -509,7 +510,7 @@ many worker threads to spawn.</p>
 
 <p>These consumer are identical to the modifiers of the same name except that they behave as a consumer, i.e., can appear as the final chain.</p>
 
-<p><strong>writepb</strong>:<em>path</em> </p>
+<p><strong>writepb</strong>:<em>path</em></p>
 
 <p>This consumer writes the Inputs to <em>path</em> in the CLIPP protobuf format. This
 format perfectly captures the Inputs.</p>
@@ -535,7 +536,7 @@ need to write a factory functional which takes a single <code>std::string</code>
 and returns the component functional.</p>
 
 <p>All components use shared pointers to the Input class for their parameter.
-This type is called an <code>input_p</code>. All components return a bool. </p>
+This type is called an <code>input_p</code>. All components return a bool.</p>
 
 <p>Generators take an <code>input_p&amp;</code> parameter. The parameter is guaranteed to be
 non-singular, i.e., non-NULL. The generator can either reuse the Input
@@ -574,7 +575,7 @@ to process the input and false otherwise. If a consumer returns false,
 exceptions. Errors during construction will cause <code>clipp</code> to exit. Errors
 during Input processing will cause <code>clipp</code> to emit an error and move on to the
 next input. Thus, e.g., if a Consumer suffers a fatal error it should both
-through an exception and arrange to return false in the future.</p>
+throw an exception and arrange to return false in the future.</p>
 
 <p>The Input classes provide a variety of routines to ease component writing.
 For Generators, there are methods to easily add new Transactions and Events.
@@ -616,7 +617,7 @@ scripts in <code>hash_to_pb.rb</code>.</p>
 
 <p>CLIPP comes with a unit test suite and support for writing unit tests that
 use clipp. This testing infrastructure is an extension to Ruby <code>Test::Unit</code>.
-If you are unfamiliar with Test::Unit, read up on that before continuing.</p>
+If you are unfamiliar with <code>Test::Unit</code>, read up on that before continuing.</p>
 
 <p>CLIPP Testing Support comes with three types of extensions. They can be
 accessed by including the <code>CLIPPTest</code> mixin.</p>
@@ -624,7 +625,7 @@ accessed by including the <code>CLIPPTest</code> mixin.</p>
 <p>The main additions are:</p>
 
 <ul>
-<li>A command <code>clipp</code> which invokes clipp and stores the output.</li>
+<li>A command <code>clipp</code> which invokes CLIPP and stores the output.</li>
 <li>A set of assertions about the most recent <code>clipp</code> invocation.</li>
 <li>A set of helper routines for generating CLIPP inputs.</li>
 </ul>
@@ -640,7 +641,7 @@ for generating the IronBee configuration file.</p>
 
 <ul>
 <li><code>:input</code> &#8212; A CLIPP chain to use as input, e.g., <code>htp:my.t</code>.</li>
-<li><code>:input_hashes</code> &#8212; An array of specially formatted hash representing a<br/>
+<li><code>:input_hashes</code> &#8212; An array of specially formatted hash representing
  CLIPP Inputs. You will usually construct the hashes with helper functions
  rather than directly. The hash is the same as described in Appendix 1.</li>
 <li><code>:template</code> &#8211; A path to an ERB template to use for the IronBee
@@ -653,7 +654,8 @@ for generating the IronBee configuration file.</p>
 </ul>
 
 <p>One of <code>:input</code> and <code>:input_hashes</code> is required. If <code>:input_hashes</code> is
-provided, protobuf will be provided to stdin and <code>:input</code> will default to <code>pb:-</code>. If you override <code>:input</code>, e.g., to add modifiers, be sure to begin
+provided, protobuf will be provided to stdin and <code>:input</code> will default to <code>pb:-</code>.
+If you override <code>:input</code>, e.g., to add modifiers, be sure to begin
 with <code>pb:-</code> as the generator.</p>
 
 <p>The following options are used by the default IronBee configuration template:</p>
