@@ -416,8 +416,12 @@ if test "${cpp_code}" = 1 ; then
         echo "*******************************************************"
         echo "* Warning: libnids missing; no pcap support in clipp. *"
         echo "*******************************************************"
-    elif test "${HAVE_NET}" != "yes" ; then
-        AC_MSG_ERROR([libnet is required for clipp])
+    else
+        if test "${HAVE_NET}" != "yes" ; then
+            AC_MSG_ERROR([libnet is required for clipp])
+        fi
+        sinclude(acinclude/glib-2.0.m4)
+        AM_PATH_GLIB_2_0(, , , gthread)
     fi
     if test "${HAVE_MODP}" != "yes" ; then
         echo "********************************************************"

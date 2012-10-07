@@ -45,7 +45,7 @@ if HAVE_NIDS
 clipp_SOURCES += pcap_generator.cpp
 endif
 
-clipp_CFLAGS = @PCRE_CFLAGS@ $(PROTOBUF_CFLAGS) $(NIDS_CFLAGS) $(NET_CFLAGS)
+clipp_CFLAGS = @PCRE_CFLAGS@ $(PROTOBUF_CFLAGS) $(NIDS_CFLAGS) $(NET_CFLAGS) $(GLIB_CFLAGS)
 clipp_CPPFLAGS = @PCRE_CPPFLAGS@ $(AM_CPPFLAGS) \
     ${PROTOBUF_CPPFLAGS} \
     $(NIDS_CPPFLAGS) \
@@ -62,7 +62,8 @@ clipp_LDFLAGS = \
     -lboost_program_options$(BOOST_SUFFIX) \
     -lboost_regex$(BOOST_SUFFIX) \
     -lboost_thread-mt$(BOOST_SUFFIX) \
-    -lprotobuf
+    -lprotobuf \
+    $(GLIB_LIBS)
 
 if HAVE_MODP
 clipp_LDFLAGS += $(MODP_LDFLAGS) -lmodpbase64
