@@ -34,8 +34,8 @@ LDFLAGS += $(HTP_LDFLAGS) $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
 MODULE_TEST_LDADD = $(LDADD) \
                     $(HTP_LDADD) \
                     $(PCRE_LDADD) \
-		    -lboost_filesystem$(BOOST_SUFFIX) \
-		    -lboost_system$(BOOST_SUFFIX) \
+                    -lboost_filesystem$(BOOST_SUFFIX) \
+                    -lboost_system$(BOOST_SUFFIX) \
                     $(top_builddir)/engine/libironbee.la
 
 # Point the module base path to the modules build dir
@@ -189,10 +189,10 @@ test_util_decode_SOURCES = test_util_decode.cc test_main.cc
 test_util_stream_SOURCES = test_util_stream.cc test_main.cc
 
 test_util_debug_SOURCES = test_util_debug.cc test_main.cc
-test_util_debug_LDADD = $(LDADD) -lboost_regex
+test_util_debug_LDADD = $(LDADD) -lboost_regex$(BOOST_SUFFIX)
 
 test_util_log_SOURCES = test_util_log.cc test_main.cc
-test_util_log_LDADD = $(LDADD) -lboost_regex
+test_util_log_LDADD = $(LDADD) -lboost_regex$(BOOST_SUFFIX)
 
 test_util_uuid_SOURCES = test_util_uuid.cc test_main.cc
 test_util_uuid_CPPFLAGS = $(CPPFLAGS) $(OSSP_UUID_CFLAGS)
@@ -201,7 +201,7 @@ test_util_uuid_LDADD = $(MODULE_TEST_LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIB
 test_util_ahocorasick_SOURCES = test_util_ahocorasick.cc test_main.cc
 
 test_util_mpool_SOURCES = test_util_mpool.cc test_main.cc
-test_util_mpool_LDADD = $(LDADD) -lboost_thread-mt -lboost_system
+test_util_mpool_LDADD = $(LDADD) -lboost_thread-mt -lboost_system$(BOOST_SUFFIX)
 
 test_engine_SOURCES = test_engine.cc test_main.cc \
                       test_parsed_content.cc \

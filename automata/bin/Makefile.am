@@ -22,7 +22,7 @@ AM_LDFLAGS = \
     -lboost_program_options$(BOOST_SUFFIX) \
     -lboost_system$(BOOST_SUFFIX) \
     -lboost_filesystem$(BOOST_SUFFIX) \
-    -lboost_chrono
+    -lboost_chrono$(BOOST_SUFFIX)
 
 ac_generator_SOURCES = ac_generator.cpp
 ee_SOURCES = ee.cpp

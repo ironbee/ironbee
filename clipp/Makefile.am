@@ -61,7 +61,7 @@ clipp_LDFLAGS = \
     -lboost_filesystem$(BOOST_SUFFIX) \
     -lboost_program_options$(BOOST_SUFFIX) \
     -lboost_regex$(BOOST_SUFFIX) \
-    -lboost_thread-mt$(BOOST_SUFFIX) \
+    -lboost_thread-mt \
     -lprotobuf \
     $(GLIB_LIBS)
 

@@ -365,10 +365,9 @@ if test "$have_boost_low" = "no"; then
 fi
 AC_ARG_WITH([boost-suffix],
             [  --with-boost-suffix=suffix suffix name for boost libraries],
-            [boostsuffix="$withval"], [boostsuffix=""])
+            [boostsuffix="$withval"],[boostsuffix=""])
 
 BOOST_SUFFIX=${boostsuffix}
-AC_SUBST(BOOST_SUFFIX)
 
 # Clang does not support -pthread or variants.
 if test "$cc_is_clang" = "yes"; then
@@ -513,6 +512,7 @@ AC_SUBST(DOXYGEN_EXTERNAL_DEPS)
 AC_SUBST(DOXYGEN_INTERNAL_DEPS)
 AC_SUBST(DOXYGEN_INPUT)
 AC_SUBST(DOXYGEN_TOP)
+AC_SUBST(BOOST_SUFFIX)
 dnl Generate files
 AC_CONFIG_FILES([Makefile])
 
