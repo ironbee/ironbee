@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1697 
+personal_ws-1.1 en 1698 
 malloced
 libnet
 endpat
@@ -792,6 +792,7 @@ backref
 SecondConfig
 autotools
 Chroot
+popcountll
 bitwise
 ilen
 RuleExt
