@@ -115,6 +115,20 @@ bool ia_bitv(const uint8_t *bytes, int i)
 }
 
 /**
+ * Returns @a i th bit of a 64 bit word sequence.
+ *
+ * @param[in] words Bytes to read from.
+ * @param[in] i     Index of bit to read.
+ * @return true iff @a i th bit of @a bytes is 1.
+ */
+static
+inline
+bool ia_bitv64(const uint64_t *words, int i)
+{
+    return ia_bit64(words[i / 64], i % 64);
+}
+
+/**
  * Return @a byte with @a i th bit set to 1.
  *
  * @param[in] byte Byte to set bit of.
@@ -250,6 +264,32 @@ inline
 void ia_unsetbitv(uint8_t *bytes, int i)
 {
     bytes[i / 8] = ia_unsetbit8(bytes[i / 8], i % 8);
+}
+
+/**
+ * Change the @a i th bit of the 64 bit words at @a words to 1.
+ *
+ * @param[in] words Pointer to uint64_ts.
+ * @param[in] i     Bit to set.
+ */
+static
+inline
+void ia_setbitv64(uint64_t *words, int i)
+{
+    words[i / 64] = ia_setbit64(words[i / 64], i % 64);
+}
+
+/**
+ * Change the @a i th bit of the 64 bit words at @a words to 0.
+ *
+ * @param[in] words Pointer to uint64_ts.
+ * @param[in] i     Bit to set.
+ */
+static
+inline
+void ia_unsetbitv64(uint64_t *words, int i)
+{
+    words[i / 64] = ia_unsetbit64(words[i / 64], i % 64);
 }
 
 /**

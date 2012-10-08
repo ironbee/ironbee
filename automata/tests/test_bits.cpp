@@ -152,3 +152,60 @@ TEST(TestBits, Unset)
         EXPECT_EQ(bytes[i / 8], other_bytes[i / 8]);
     }
 }
+
+TEST(TestBits, Variable64)
+{
+    uint64_t u64[4] = {0, 0, 0, 0};
+
+    for (int i = 7, j = 0; j < 100; ++j) {
+        i = ((i + 3) * 5) % 256;
+
+        ia_setbitv64(u64, i);
+    }
+
+    for (int i = 7, j = 0; j < 100; ++j) {
+        i = ((i + 3) * 5) % 256;
+
+        EXPECT_TRUE(ia_bitv64(u64, i)) << "i = " << i;
+    }
+
+    for (int i = 7, j = 0; j < 100; ++j) {
+        i = ((i + 3) * 5) % 256;
+
+        ia_unsetbitv64(u64, i);
+    }
+
+    EXPECT_EQ(0UL, u64[0]);
+    EXPECT_EQ(0UL, u64[1]);
+    EXPECT_EQ(0UL, u64[2]);
+    EXPECT_EQ(0UL, u64[3]);
+}
+
+TEST(TestBits, Popcount)
+{
+    uint64_t words[4] = {0, 0, 0, 0};
+
+    words[0] = 0x6666666666666666;
+    EXPECT_EQ(32, ia_popcount64(words[0]));
+
+    ia_setbitv64(words, 70);
+    ia_setbitv64(words, 71);
+    ia_setbitv64(words, 130);
+    ia_setbitv64(words, 250);
+
+    EXPECT_EQ(16, ia_popcountv64(words, 32));
+    EXPECT_EQ(22, ia_popcountv64(words, 44));
+    EXPECT_EQ(23, ia_popcountv64(words, 45));
+    EXPECT_EQ(24, ia_popcountv64(words, 46));
+    EXPECT_EQ(24, ia_popcountv64(words, 47));
+    EXPECT_EQ(32, ia_popcountv64(words, 64));
+    EXPECT_EQ(32, ia_popcountv64(words, 65));
+    EXPECT_EQ(32, ia_popcountv64(words, 69));
+    EXPECT_EQ(33, ia_popcountv64(words, 70));
+    EXPECT_EQ(34, ia_popcountv64(words, 71));
+    EXPECT_EQ(34, ia_popcountv64(words, 72));
+    EXPECT_EQ(34, ia_popcountv64(words, 129));
+    EXPECT_EQ(35, ia_popcountv64(words, 130));
+    EXPECT_EQ(36, ia_popcountv64(words, 250));
+>>>>>>> 459be85... fixup: prepopcount
+}
