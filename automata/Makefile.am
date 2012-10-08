@@ -1,3 +1,6 @@
+
+include $(top_srcdir)/build/common.mk
+
 # If CPP is not defined, we do very litte.
 lib_LTLIBRARIES = libiaeudoxus.la
 libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c \

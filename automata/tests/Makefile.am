@@ -1,3 +1,5 @@
+include $(top_srcdir)/build/tests.mk
+
 LDFLAGS += $(BOOST_LDFLAGS) -L$(top_builddir)/tests -L$(builddir)/.. \
     -lironautomata -liaeudoxus
 CPPFLAGS += $(BOOST_CPPFLAGS) -I$(top_srcdir)/tests \
@@ -8,6 +10,9 @@ LDADD = $(LIBUTIL_LDADD) \
 
 .PHONY: test
 test: check
+
+# Ignore protobuf warnings.
+CPPFLAGS += -Wno-shadow -Wno-extra
 
 TESTS_ENVIRONMENT = $(top_srcdir)/tests/gtest_executor.sh
 
