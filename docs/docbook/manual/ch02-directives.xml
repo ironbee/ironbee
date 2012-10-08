@@ -654,49 +654,77 @@ Hostname *.ironbee.com</programlisting>
         <title>RuleEngineLogData</title>
         <para><emphasis role="bold">Description:</emphasis> Configures the data logged by the rule engine.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>RuleEngineLogData <replaceable>type</replaceable> [<replaceable>level</replaceable>]</literal></para>
+            <literal>RuleEngineLogData <replaceable>[+|-]option</replaceable> ...</literal></para>
         <para><emphasis role="bold">Default:</emphasis>
-            <literal>None</literal></para>
+            <literal>ruleExec</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
-        <para>The following types are supported:</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        <para>The following data type options are supported:</para>
         <itemizedlist>
-            <listitem>
-                <para><literal>None</literal> - no rule logging</para>
-            </listitem>
-            <listitem>
-                <para><literal>Fast</literal> - single line (fast) logging</para>
-            </listitem>
-            <listitem>
-                <para><literal>RuleExec</literal> - multi line logging</para>
-            </listitem>
-         </itemizedlist>
-         <para>The following levels are supported:</para>
+            <listitem><para><literal>tx</literal> - Log the
+                    transaction:<programlisting>TX_START clientip:port site-hostname
+...
+TX_END</programlisting></para></listitem>
+            <listitem><para><literal>requestLine</literal> - Log the HTTP request
+                    line:<programlisting>REQ_LINE method uri version-if-given </programlisting></para></listitem>
+            <listitem><para><literal>requestHeader</literal> - Log the HTTP request
+                    header:<programlisting>REQ_HEADER name: value</programlisting></para></listitem>
+            <listitem><para><literal>requestBody</literal> - Log the HTTP request body, possibly in multiple
+                    chunks:<programlisting>REQ_BODY size data</programlisting></para></listitem>
+            <listitem><para><literal>responseLine</literal> - Log the HTTP response
+                    line:<programlisting>RES_LINE version status message </programlisting></para></listitem>
+            <listitem><para><literal>responseHeader</literal> - Log the HTTP response
+                header:<programlisting>RES_HEADER name: value</programlisting></para></listitem>
+            <listitem><para><literal>responseBody</literal> - Log the HTTP response body, possibly in multiple
+                chunks:<programlisting>RES_BODY size data</programlisting></para></listitem>
+            <listitem><para><literal>phase</literal> - Log the phase about to
+                    execute:<programlisting>PHASE name</programlisting></para></listitem>
+            <listitem><para><literal>rule</literal> - Log the rule
+                    executing:<programlisting>RULE_START rule-type
+...
+RULE_END</programlisting></para></listitem>
+            <listitem><para><literal>target</literal> - Log the target being
+                    inspected:<programlisting>TARGET full-target-name {NOT_FOUND|field-type field-name field-value}</programlisting></para></listitem>
+            <listitem><para><literal>transformation</literal> - Log the transformation being
+                    executed:<programlisting>TFN tfn-name(param) {ERROR error}</programlisting></para></listitem>
+            <listitem><para><literal>operator</literal> - Log the operator being
+                    executed:<programlisting>OP op-name(param) TRUE|FALSE {ERROR error}</programlisting></para></listitem>
+            <listitem><para><literal>action</literal> - Log the action being
+                    executed:<programlisting>ACTION action-name(param) {ERROR error}</programlisting></para></listitem>
+            <listitem><para><literal>event</literal> - Log the event being
+                    logged:<programlisting>EVENT rule-id type action [confidence/severity] [csv-tags] msg</programlisting></para></listitem>
+            <listitem><para><literal>audit</literal> - Log the audit log filename being
+                    written:<programlisting>AUDIT audit-log-filename</programlisting></para></listitem>
+        </itemizedlist>
+        <para>The following alias options are supported:</para>
+        <itemizedlist>            
+            <listitem><para><literal>request</literal> - Alias for: <literal>requestLine</literal>, <literal>requestHeader</literal>, <literal>requestBody</literal></para></listitem>
+            <listitem><para><literal>response</literal> - Alias for: <literal>responseLine</literal>, <literal>responseHeader</literal>, <literal>responseBody</literal></para></listitem>
+            <listitem><para><literal>ruleExec</literal> - Alias for: <literal>phase</literal>, <literal>rule</literal>, <literal>target</literal>, <literal>transformation</literal>, <literal>operator</literal>, <literal>action</literal>, <literal>actionableRulesOnly</literal></para></listitem>
+            <listitem><para><literal>default</literal> - Alias for: <literal>ruleExec</literal></para></listitem>
+            <listitem><para><literal>all</literal> - Alias for all data options</para></listitem>
+        </itemizedlist>
+         <para>The following filter options are supported:</para>
          <itemizedlist>
-            <listitem>
-                <para><literal>Full</literal> - log full rule execution (not just rules that trigger actions)</para>
-            </listitem>
-            <listitem>
-                <para><literal>Debug</literal> - developer level debugging</para>
-            </listitem>
-            <listitem>
-                <para><literal>Trace</literal> - extremely verbose</para>
-            </listitem>
+             <listitem><para><literal>actionableRulesOnly</literal> -  Filter option indicating that only rules that were
+                    actionable (actions executed) are logged - any rule specific logging are
+                    delayed/suppressed until at least one action is executed. </para></listitem>
         </itemizedlist>
     </section>
     <section>
         <title>RuleEngineLogLevel</title>
-        <para><emphasis role="bold">Description:</emphasis> Configures the logging level for the rule engine.</para>
+        <para><emphasis role="bold">Description:</emphasis> Configures the logging level which the
+            rule engine will write logs.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>RuleEngineLogLevel <replaceable>level</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis>
-            <literal>Off</literal></para>
+            <literal>info</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.6</para>
     </section>
     <section>
         <title>RuleExt</title>
