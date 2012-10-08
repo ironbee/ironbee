@@ -293,6 +293,46 @@ void ia_unsetbitv64(uint64_t *words, int i)
 }
 
 /**
+ * Population count of a 64 bit word.
+ *
+ * @param[in] word Word to count 1s of.
+ * @return Number of 1s.
+ */
+static
+inline
+int ia_popcount64(uint64_t word)
+{
+#if __GNUC__ >= 4
+    return __builtin_popcountll(word);
+#else
+#error "__builtin_popcountll support required.  Please report this to developers."
+#endif
+}
+
+/**
+ * Population count of 64 bit words.
+ *
+ * @param[in] words Words to counts 1s of.
+ * @param[in] i     Index of last bit to look at.
+ * @return Number of 1s.
+ */
+static
+inline
+int ia_popcountv64(const uint64_t *words, int i)
+{
+    int acc = 0;
+    for (int j = 0; j < i / 64; ++j) {
+        acc += ia_popcount64(words[j]);
+    }
+    if ((i % 64) > 0) {
+        acc += ia_popcount64(
+            words[i / 64] & (~(uint64_t)0 >> (63 - (i % 64)))
+        );
+    }
+    return acc;
+}
+
+/**
  * @} IronAutomataBits
  */
 

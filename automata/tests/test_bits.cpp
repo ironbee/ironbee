@@ -155,30 +155,30 @@ TEST(TestBits, Unset)
 
 TEST(TestBits, Variable64)
 {
-    uint64_t u64[4] = {0, 0, 0, 0};
+    uint64_t words[4] = {0, 0, 0, 0};
 
     for (int i = 7, j = 0; j < 100; ++j) {
         i = ((i + 3) * 5) % 256;
 
-        ia_setbitv64(u64, i);
+        ia_setbitv64(words, i);
     }
 
     for (int i = 7, j = 0; j < 100; ++j) {
         i = ((i + 3) * 5) % 256;
 
-        EXPECT_TRUE(ia_bitv64(u64, i)) << "i = " << i;
+        EXPECT_TRUE(ia_bitv64(words, i)) << "i = " << i;
     }
 
     for (int i = 7, j = 0; j < 100; ++j) {
         i = ((i + 3) * 5) % 256;
 
-        ia_unsetbitv64(u64, i);
+        ia_unsetbitv64(words, i);
     }
 
-    EXPECT_EQ(0UL, u64[0]);
-    EXPECT_EQ(0UL, u64[1]);
-    EXPECT_EQ(0UL, u64[2]);
-    EXPECT_EQ(0UL, u64[3]);
+    EXPECT_EQ(0UL, words[0]);
+    EXPECT_EQ(0UL, words[1]);
+    EXPECT_EQ(0UL, words[2]);
+    EXPECT_EQ(0UL, words[3]);
 }
 
 TEST(TestBits, Popcount)
@@ -207,5 +207,8 @@ TEST(TestBits, Popcount)
     EXPECT_EQ(34, ia_popcountv64(words, 129));
     EXPECT_EQ(35, ia_popcountv64(words, 130));
     EXPECT_EQ(36, ia_popcountv64(words, 250));
+<<<<<<< HEAD
 >>>>>>> 459be85... fixup: prepopcount
+=======
+>>>>>>> af3847c... automata/bits: Add population count routines.
 }
