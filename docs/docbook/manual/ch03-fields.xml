@@ -131,8 +131,7 @@ Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block
         <para><emphasis role="bold">Version:</emphasis> 0.3</para>
         <note><para>The address used during lookup is the same as that stored in the
                     <literal>REMOTE_ADDR</literal> field, which may be modified from the actual
-                connection (TCP) level address by the <literal>remote_address</literal>
-                module.</para></note>
+                connection (TCP) level address by the <literal>user_agent</literal> module.</para></note>
         <para>Sub-Fields (not all are available prior to GeoIP v1.4.6):
         <itemizedlist>
             <listitem>
@@ -348,8 +347,8 @@ Rule ARGS @rx pattern \
         <para><emphasis role="bold">Scope:</emphasis> Connection</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.2</para>
-        <note><para>If the <literal>remote_address</literal> module is also loaded, then the client address will
-                be corrected using any available proxy headers (currently
+        <note><para>If the <literal>user_agent</literal> module is also loaded, then the client address will be
+                corrected using any available proxy headers (currently
                     <literal>X-Forwarded-For</literal>).</para></note>
     </section>
     <section>
