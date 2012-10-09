@@ -25,6 +25,16 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+// Tell glibc to enable fileno()
+#ifndef _POSIX_SOURCE
+#define _POSIX_SOURCE
+#endif
+
+// Tell glibc to enable vasprintf()
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
