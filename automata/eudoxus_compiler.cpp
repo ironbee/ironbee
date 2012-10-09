@@ -37,7 +37,7 @@ using namespace std;
 namespace IronAutomata {
 namespace EudoxusCompiler {
 
-#define CPP_EUDOXUS_VERSION 4
+#define CPP_EUDOXUS_VERSION 5
 #if CPP_EUDOXUS_VERSION != IA_EUDOXUS_VERSION
 #error "Mismatch between compiler version and automata version."
 #endif

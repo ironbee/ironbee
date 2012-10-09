@@ -62,7 +62,7 @@ typedef struct IA_EUDOXUS(low_node_t) IA_EUDOXUS(low_node_t);
 struct IA_EUDOXUS(low_node_t)
 {
     /*
-     * type: 000
+     * type: 00
      * flag0: has_output
      * flag1: has_nonadvancing -- edges only; not including default.
      * flag2: has_default
@@ -168,7 +168,7 @@ typedef struct IA_EUDOXUS(high_node_t) IA_EUDOXUS(high_node_t);
 struct IA_EUDOXUS(high_node_t)
 {
     /*
-     * type: 001
+     * type: 01
      * flag0: has_output
      * flag1: has_nonadvancing -- edges only; not including default
      * flag2: has_default

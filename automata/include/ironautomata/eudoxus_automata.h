@@ -54,7 +54,7 @@ extern "C" {
  * This is checked by @c ia_eudoxus_create_ methods to insure that an automata
  * was generated for the current engine.
  */
-#define IA_EUDOXUS_VERSION 4
+#define IA_EUDOXUS_VERSION 5
 
 /**
  * A Eudoxus Automata.
@@ -168,14 +168,14 @@ typedef enum ia_eudoxus_nodetype_t ia_eudoxus_nodetype_t;
 /**
  * Width in bits of node type.
  */
-#define IA_EUDOXUS_TYPE_WIDTH 3
-     
+#define IA_EUDOXUS_TYPE_WIDTH 2
+
 /**
  * Extract node type from header.
  */
 #define IA_EUDOXUS_TYPE(header) \
      ((header) & (0xff >> (8 - IA_EUDOXUS_TYPE_WIDTH)))
-         
+
 /**
  * Extract flag from header.
  */
