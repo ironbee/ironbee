@@ -309,22 +309,21 @@ private:
                 e_low_node_t* header =
                     m_parent.m_assembler.append_object(e_low_node_t());
 
-                header->header.type = IA_EUDOXUS_LOW;
-                header->header.flags = 0;
+                header->header = IA_EUDOXUS_LOW;
                 if (node.first_output()) {
-                    header->header.flags = ia_setbit8(header->header.flags, 0);
+                    header->header = ia_setbit8(header->header, 0 + IA_EUDOXUS_TYPE_WIDTH);
                 }
                 if (oracle.has_nonadvancing) {
-                    header->header.flags = ia_setbit8(header->header.flags, 1);
+                    header->header = ia_setbit8(header->header, 1 + IA_EUDOXUS_TYPE_WIDTH);
                 }
                 if (node.default_target()) {
-                    header->header.flags = ia_setbit8(header->header.flags, 2);
+                    header->header = ia_setbit8(header->header, 2 + IA_EUDOXUS_TYPE_WIDTH);
                 }
                 if (node.advance_on_default()) {
-                    header->header.flags = ia_setbit8(header->header.flags, 3);
+                    header->header = ia_setbit8(header->header, 3 + IA_EUDOXUS_TYPE_WIDTH);
                 }
                 if (oracle.out_degree > 0) {
-                    header->header.flags = ia_setbit8(header->header.flags, 4);
+                    header->header = ia_setbit8(header->header, 4 + IA_EUDOXUS_TYPE_WIDTH);
                 }
             }
 
@@ -397,25 +396,25 @@ private:
                 e_high_node_t* header =
                     m_parent.m_assembler.append_object(e_high_node_t());
 
-                header->header.type = IA_EUDOXUS_HIGH;
-                header->header.flags = 0;
+                header->header = IA_EUDOXUS_HIGH;
                 if (node.first_output()) {
-                    header->header.flags = ia_setbit8(header->header.flags, 0);
+                    header->header = ia_setbit8(header->header, 0 + IA_EUDOXUS_TYPE_WIDTH);
                 }
                 if (oracle.has_nonadvancing) {
-                    header->header.flags = ia_setbit8(header->header.flags, 1);
+                    header->header = ia_setbit8(header->header, 1 + IA_EUDOXUS_TYPE_WIDTH);
                 }
                 if (node.default_target()) {
-                    header->header.flags = ia_setbit8(header->header.flags, 2);
+                    header->header = ia_setbit8(header->header, 2 + IA_EUDOXUS_TYPE_WIDTH);
                 }
                 if (node.advance_on_default()) {
-                    header->header.flags = ia_setbit8(header->header.flags, 3);
+                    header->header = ia_setbit8(header->header, 3 + IA_EUDOXUS_TYPE_WIDTH);
                 }
                 if (oracle.out_degree < 256) {
-                    header->header.flags = ia_setbit8(header->header.flags, 4);
+                    header->header = ia_setbit8(header->header, 4 + IA_EUDOXUS_TYPE_WIDTH);
                 }
                 if (oracle.use_ali) {
-                    header->header.flags = ia_setbit8(header->header.flags, 5);
+                    cerr << "setting use ali!\n";
+                    header->header = ia_setbit8(header->header, 5 + IA_EUDOXUS_TYPE_WIDTH);
                 }
             }
 

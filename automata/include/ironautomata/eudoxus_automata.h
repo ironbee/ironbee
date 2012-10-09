@@ -166,25 +166,21 @@ enum ia_eudoxus_nodetype_t
 typedef enum ia_eudoxus_nodetype_t ia_eudoxus_nodetype_t;
 
 /**
- * Header of every node type.
- *
- * Every node in automata must start with a @c header member of this type.
+ * Width in bits of node type.
  */
-typedef struct ia_eudoxus_node_header_t ia_eudoxus_node_header_t;
-struct ia_eudoxus_node_header_t
-{
-    /**
-     * Type of node: See ia_eudoxus_nodetype_t.
-     *
-     * More types coming in the future.
-     */
-    int type  : 3;
-
-    /**
-     * Node type specific flags.
-     */
-    int flags : 5;
-} __attribute((packed));
+#define IA_EUDOXUS_TYPE_WIDTH 3
+     
+/**
+ * Extract node type from header.
+ */
+#define IA_EUDOXUS_TYPE(header) \
+     ((header) & (0xff >> (8 - IA_EUDOXUS_TYPE_WIDTH)))
+         
+/**
+ * Extract flag from header.
+ */
+#define IA_EUDOXUS_FLAG(header, n) \
+     (ia_bit8(header, (n) + IA_EUDOXUS_TYPE_WIDTH))
 
 /**
  * A generic node.
@@ -199,7 +195,7 @@ struct ia_eudoxus_node_t
     /**
      * Header.
      */
-    ia_eudoxus_node_header_t header;
+    uint8_t header;
 } __attribute((packed));
 
 /**

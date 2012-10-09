@@ -69,7 +69,7 @@ struct IA_EUDOXUS(low_node_t)
      * flag3: advance_on_default
      * flag4: has_edges
      */
-    ia_eudoxus_node_header_t header;
+    uint8_t header;
 
     /* variable: */
 
@@ -176,7 +176,7 @@ struct IA_EUDOXUS(high_node_t)
      * flag4: has_target_bm
      * flag5: has_ali_bm
      */
-    ia_eudoxus_node_header_t header;
+    uint8_t header;
 
      /* variable:
      IA_EUDOXUS_ID_T first_output if has_output

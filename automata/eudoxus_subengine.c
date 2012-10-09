@@ -68,11 +68,11 @@ ia_eudoxus_result_t IA_EUDOXUS(next_low)(
     assert(state->input_location != NULL);
 
     const uint8_t c = *(state->input_location);
-    bool has_output         = ia_bit8(state->node->header.flags, 0);
-    bool has_nonadvancing   = ia_bit8(state->node->header.flags, 1);
-    bool has_default        = ia_bit8(state->node->header.flags, 2);
-    bool advance_on_default = ia_bit8(state->node->header.flags, 3);
-    bool has_edges          = ia_bit8(state->node->header.flags, 4);
+    bool has_output         = IA_EUDOXUS_FLAG(state->node->header, 0);
+    bool has_nonadvancing   = IA_EUDOXUS_FLAG(state->node->header, 1);
+    bool has_default        = IA_EUDOXUS_FLAG(state->node->header, 2);
+    bool advance_on_default = IA_EUDOXUS_FLAG(state->node->header, 3);
+    bool has_edges          = IA_EUDOXUS_FLAG(state->node->header, 4);
     const IA_EUDOXUS(low_node_t) *node
         = (const IA_EUDOXUS(low_node_t) *)(state->node);
     if (has_nonadvancing & ! has_edges) {
@@ -162,12 +162,12 @@ ia_eudoxus_result_t IA_EUDOXUS(next_high)(
     assert(state->input_location != NULL);
 
     const uint8_t c = *(state->input_location);
-    bool has_output         = ia_bit8(state->node->header.flags, 0);
-    bool has_nonadvancing   = ia_bit8(state->node->header.flags, 1);
-    bool has_default        = ia_bit8(state->node->header.flags, 2);
-    bool advance_on_default = ia_bit8(state->node->header.flags, 3);
-    bool has_target_bm      = ia_bit8(state->node->header.flags, 4);
-    bool has_ali_bm         = ia_bit8(state->node->header.flags, 5);
+    bool has_output         = IA_EUDOXUS_FLAG(state->node->header, 0);
+    bool has_nonadvancing   = IA_EUDOXUS_FLAG(state->node->header, 1);
+    bool has_default        = IA_EUDOXUS_FLAG(state->node->header, 2);
+    bool advance_on_default = IA_EUDOXUS_FLAG(state->node->header, 3);
+    bool has_target_bm      = IA_EUDOXUS_FLAG(state->node->header, 4);
+    bool has_ali_bm         = IA_EUDOXUS_FLAG(state->node->header, 5);
 
     const IA_EUDOXUS(high_node_t) *node
         = (const IA_EUDOXUS(high_node_t) *)(state->node);
@@ -275,7 +275,7 @@ ia_eudoxus_result_t IA_EUDOXUS(next)(
 
     ia_eudoxus_result_t result = IA_EUDOXUS_OK;
 
-    switch (state->node->header.type) {
+    switch (IA_EUDOXUS_TYPE(state->node->header)) {
     case 0:
         result = IA_EUDOXUS(next_low)(state);
         break;
@@ -286,7 +286,7 @@ ia_eudoxus_result_t IA_EUDOXUS(next)(
         ia_eudoxus_set_error_printf(
             state->eudoxus,
             "Unknown node type: %d",
-            state->node->header.type
+            IA_EUDOXUS_TYPE(state->node->header)
         );
         return IA_EUDOXUS_EINVAL;
     }
@@ -346,7 +346,7 @@ ia_eudoxus_result_t IA_EUDOXUS(output)(
     assert(state->node     != NULL);
     assert(state->callback != NULL);
 
-    bool has_output = ia_bit8(state->node->header.flags, 0);
+    bool has_output = IA_EUDOXUS_FLAG(state->node->header, 0);
 
     if (! has_output) {
         return IA_EUDOXUS_OK;
