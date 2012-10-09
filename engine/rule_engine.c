@@ -4257,7 +4257,7 @@ ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
         ib_num_t tmp;
         ib_num_t level;
 
-        if (sscanf(value, "%ld", &tmp) != 0) {
+        if (sscanf(value, "%lld", &tmp) != 0) {
             level = tmp;
         }
         else {
