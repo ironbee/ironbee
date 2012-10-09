@@ -445,7 +445,11 @@ private:
                 ia_bitmap256_t& target_bm =
                     *m_parent.m_assembler.append_object(ia_bitmap256_t());
                 for (int c = 0; c < 256; ++c) {
-                    if (! oracle.targets_by_input[c].empty()) {
+                    if (
+                        ! oracle.targets_by_input[c].empty()
+                        && oracle.targets_by_input[c].front().first !=
+                           node.default_target()
+                    ) {
                         ia_setbitv64(target_bm.bits, c);
                     }
                 }
