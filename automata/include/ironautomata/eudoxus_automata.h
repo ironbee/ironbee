@@ -54,7 +54,7 @@ extern "C" {
  * This is checked by @c ia_eudoxus_create_ methods to insure that an automata
  * was generated for the current engine.
  */
-#define IA_EUDOXUS_VERSION 3
+#define IA_EUDOXUS_VERSION 4
 
 /**
  * A Eudoxus Automata.
@@ -153,7 +153,15 @@ enum ia_eudoxus_nodetype_t
      * A low degree node stores its edges in a vector and uses linear search
      * to determine which edge to follow.
      */
-    IA_EUDOXUS_LOW = 0
+    IA_EUDOXUS_LOW = 0,
+
+    /**
+     * High Degree Node
+     *
+     * A high degree node stores its targets in a vector and uses bitmaps and
+     * populations counts to map inputs to indices in that vector.
+     */
+    IA_EUDOXUS_HIGH = 1
 };
 typedef enum ia_eudoxus_nodetype_t ia_eudoxus_nodetype_t;
 
@@ -192,6 +200,17 @@ struct ia_eudoxus_node_t
      * Header.
      */
     ia_eudoxus_node_header_t header;
+} __attribute((packed));
+
+/**
+ * 256 bit bitmap.
+ *
+ * @sa e.g., ia_bitv64().
+ */
+typedef struct ia_bitmap256_t ia_bitmap256_t;
+struct ia_bitmap256_t
+{
+    uint64_t bits[4];
 } __attribute((packed));
 
 /**

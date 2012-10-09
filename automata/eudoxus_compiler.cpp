@@ -37,7 +37,12 @@ using namespace std;
 namespace IronAutomata {
 namespace EudoxusCompiler {
 
-const int EUDOXUS_VERSION = 3;
+#define CPP_EUDOXUS_VERSION 4
+#if CPP_EUDOXUS_VERSION != IA_EUDOXUS_VERSION
+#error "Mismatch between compiler version and automata version."
+#endif
+const int EUDOXUS_VERSION = CPP_EUDOXUS_VERSION;
+#undef CPP_EUDOXUS_VERSION
 
 namespace {
 
@@ -81,10 +86,130 @@ private:
     typedef typename traits_t::low_edge_t e_low_edge_t;
     //! Eudoxus Low Node.
     typedef typename traits_t::low_node_t e_low_node_t;
+    //! Eudoxus High Node
+    typedef typename traits_t::high_node_t e_high_node_t;
     //! Eudoxus Output.
     typedef typename traits_t::output_t   e_output_t;
 
     friend class BFSVisitor;
+
+    //! True iff @a edge does not advance input.
+    static
+    bool is_nonadvancing(const Intermediate::Edge& edge)
+    {
+        return ! edge.advance();
+    }
+
+    /**
+     * Answer questions about nodes.
+     */
+    struct NodeOracle
+    {
+        //! use_ali will be set if num_consecutive > c_ali_threshold.
+        static const size_t c_ali_threshold = 32;
+
+        //! Constructor.
+        explicit
+        NodeOracle(const Intermediate::node_p& node)
+        {
+            has_nonadvancing = (
+                find_if(node->edges().begin(), node->edges().end(), is_nonadvancing)
+            ) != node->edges().end();
+
+            targets_by_input = node->build_targets_by_input();
+            deterministic = true;
+            out_degree = 0;
+            num_consecutive = 0;
+
+            Intermediate::node_p previous_target;
+            for (int c = 0; c < 256; ++c) {
+                const Intermediate::Node::target_info_list_t& targets
+                     = targets_by_input[c];
+                if (targets.size() > 1) {
+                    deterministic = false;
+                }
+                if (targets.empty()) {
+                    continue;
+                }
+                const Intermediate::node_p& target = targets.front().first;
+                if (target != node->default_target()) {
+                    ++out_degree;
+                    if (previous_target && target == previous_target) {
+                        ++num_consecutive;
+                    }
+                    previous_target = target;
+                }
+            }
+
+            use_ali = (num_consecutive > c_ali_threshold);
+
+            low_node_cost = 0;
+
+            low_node_cost += sizeof(ia_eudoxus_node_header_t);
+            if (node->first_output()) {
+                low_node_cost += sizeof(e_id_t);
+            }
+            if (! node->edges().empty()) {
+                low_node_cost += sizeof(uint8_t);
+                low_node_cost += sizeof(typename traits_t::low_edge_t) * out_degree;
+            }
+            if (node->default_target()) {
+                low_node_cost += sizeof(e_id_t);
+            }
+            if (has_nonadvancing) {
+                low_node_cost += (out_degree + 7) / 8;
+            }
+
+            high_node_cost = 0;
+
+            high_node_cost += sizeof(ia_eudoxus_node_header_t);
+            if (node->first_output()) {
+                high_node_cost += sizeof(e_id_t);
+            }
+            if (node->default_target()) {
+                high_node_cost += sizeof(e_id_t);
+            }
+            if (has_nonadvancing) {
+                high_node_cost += sizeof(ia_bitmap256_t);
+            }
+            if (out_degree < 256) {
+                high_node_cost += sizeof(ia_bitmap256_t);
+            }
+            if (use_ali) {
+                high_node_cost += sizeof(ia_bitmap256_t);
+            }
+            if (use_ali) {
+                high_node_cost += sizeof(e_id_t) * (out_degree - num_consecutive);
+            }
+            else {
+                high_node_cost += sizeof(e_id_t) * out_degree;
+            }
+        }
+
+        //! True if there are non-advancing edges (not including default).
+        bool has_nonadvancing;
+        //! True if every input has at most 1 target.
+        bool deterministic;
+        //! Number of inputs with non-default targets.
+        size_t out_degree;
+        /**
+         * Number of inputs with same target as last input.
+         *
+         * Does not include default targets.
+         */
+        size_t num_consecutive;
+
+        //! True if a high degree node should use an ALI.
+        bool use_ali;
+
+        //! Cost in bytes of representing with a low node.
+        size_t low_node_cost;
+        //! Cost in bytes of representing with a high node.
+        size_t high_node_cost;
+
+        //! Targets by input map.
+        Intermediate::Node::targets_by_input_t targets_by_input;
+    };
 
     /**
      * Functor to use with Intermediate::breadth_first().
@@ -128,17 +253,45 @@ private:
             }
             assert(m_parent.m_assembler.size() % m_parent.m_align_to == 0);
             m_parent.m_node_map[node] = m_parent.m_assembler.size();
-            // Eventually there will be other node types.
-            low_node(*node);
+
+            NodeOracle oracle(node);
+
+            if (! oracle.deterministic) {
+                throw runtime_error(
+                    "Non-deterministic automata unsupported."
+                );
+            }
+
+            size_t old_size = m_parent.m_assembler.size();
+            size_t* bytes_counter = NULL;
+            size_t* nodes_counter = NULL;
+            size_t cost_prediction = 0;
+
+            if (oracle.high_node_cost > oracle.low_node_cost) {
+                cost_prediction = oracle.low_node_cost;
+                bytes_counter = &m_parent.m_result.low_nodes_bytes;
+                nodes_counter = &m_parent.m_result.low_nodes;
+                low_node(*node, oracle);
+            }
+            else {
+                cost_prediction = oracle.high_node_cost;
+                bytes_counter = &m_parent.m_result.high_nodes_bytes;
+                nodes_counter = &m_parent.m_result.high_nodes;
+                high_node(*node, oracle);
+            }
+            size_t bytes_added = m_parent.m_assembler.size() - old_size;
+
+            if (cost_prediction != bytes_added) {
+                throw logic_error(
+                    "Insanity: Incorrect cost prediction."
+                    "  Please report as bug."
+                );
+            }
+            ++(*nodes_counter);
+            (*bytes_counter) += bytes_added;
         }
 
     private:
-        //! True iff @a edge does not advance input.
-        static
-        bool is_nonadvancing(const Intermediate::Edge& edge)
-        {
-            return ! edge.advance();
-        }
 
         /**
          * Compile @a node as a low_node.
@@ -147,12 +300,11 @@ private:
          *
          * @param[in] node Intermediate node to compile.
          */
-        void low_node(const Intermediate::Node& node)
+        void low_node(
+            const Intermediate::Node& node,
+            const NodeOracle& oracle
+        )
         {
-            bool has_nonadvancing = (
-                find_if(node.edges().begin(), node.edges().end(), is_nonadvancing)
-            ) != node.edges().end();
-
             {
                 e_low_node_t* header =
                     m_parent.m_assembler.append_object(e_low_node_t());
@@ -162,7 +314,7 @@ private:
                 if (node.first_output()) {
                     header->header.flags = ia_setbit8(header->header.flags, 0);
                 }
-                if (has_nonadvancing) {
+                if (oracle.has_nonadvancing) {
                     header->header.flags = ia_setbit8(header->header.flags, 1);
                 }
                 if (node.default_target()) {
@@ -171,7 +323,7 @@ private:
                 if (node.advance_on_default()) {
                     header->header.flags = ia_setbit8(header->header.flags, 3);
                 }
-                if (! node.edges().empty()) {
+                if (oracle.out_degree > 0) {
                     header->header.flags = ia_setbit8(header->header.flags, 4);
                 }
             }
@@ -181,9 +333,9 @@ private:
                 m_parent.m_outputs.insert(node.first_output());
             }
 
-            if (! node.edges().empty()) {
+            if (oracle.out_degree > 0) {
                 m_parent.m_assembler.append_object(
-                    uint8_t(node.edges().size())
+                    uint8_t(oracle.out_degree)
                 );
             }
 
@@ -192,10 +344,10 @@ private:
             }
 
             size_t advance_index = 0;
-            if (has_nonadvancing) {
+            if (oracle.has_nonadvancing) {
                 uint8_t* advance =
                     m_parent.m_assembler.template append_array<uint8_t>(
-                        (node.edges().size() + 7) / 8
+                        (oracle.out_degree + 7) / 8
                     );
                 advance_index = m_parent.m_assembler.index(advance);
             }
@@ -207,15 +359,8 @@ private:
                         "Epsilon edges currently unsupported."
                     );
                 }
-                set<uint8_t> values;
                 BOOST_FOREACH(uint8_t value, edge) {
-                    bool in_set = ! values.insert(value).second;
-                    if (in_set) {
-                        throw runtime_error(
-                            "Non-deterministic automata unsupported."
-                        );
-                    }
-                    if (has_nonadvancing && edge.advance()) {
+                    if (oracle.has_nonadvancing && edge.advance()) {
                         ia_setbitv(
                             m_parent.m_assembler.template ptr<uint8_t>(
                                 advance_index
@@ -232,6 +377,103 @@ private:
                         m_parent.m_assembler.index(&(e_edge->next_node)),
                         edge.target()
                     );
+                }
+            }
+        }
+
+        /**
+         * Compile @a node as a high_node.
+         *
+         * Appends a high node to the buffer representing @a node.
+         *
+         * @param[in] node Intermediate node to compile.
+         */
+        void high_node(
+            const Intermediate::Node& node,
+            const NodeOracle& oracle
+        )
+        {
+            {
+                e_high_node_t* header =
+                    m_parent.m_assembler.append_object(e_high_node_t());
+
+                header->header.type = IA_EUDOXUS_HIGH;
+                header->header.flags = 0;
+                if (node.first_output()) {
+                    header->header.flags = ia_setbit8(header->header.flags, 0);
+                }
+                if (oracle.has_nonadvancing) {
+                    header->header.flags = ia_setbit8(header->header.flags, 1);
+                }
+                if (node.default_target()) {
+                    header->header.flags = ia_setbit8(header->header.flags, 2);
+                }
+                if (node.advance_on_default()) {
+                    header->header.flags = ia_setbit8(header->header.flags, 3);
+                }
+                if (oracle.out_degree < 256) {
+                    header->header.flags = ia_setbit8(header->header.flags, 4);
+                }
+                if (oracle.use_ali) {
+                    header->header.flags = ia_setbit8(header->header.flags, 5);
+                }
+            }
+
+            if (node.first_output()) {
+                m_parent.append_output_ref(node.first_output());
+                m_parent.m_outputs.insert(node.first_output());
+            }
+
+            if (node.default_target()) {
+                m_parent.append_node_ref(node.default_target());
+            }
+
+            if (oracle.has_nonadvancing) {
+                ia_bitmap256_t& advance_bm =
+                    *m_parent.m_assembler.append_object(ia_bitmap256_t());
+                for (int c = 0; c < 256; ++c) {
+                    if (
+                        ! oracle.targets_by_input[c].empty() &&
+                        oracle.targets_by_input[c].front().second
+                    ) {
+                        ia_setbitv64(advance_bm.bits, c);
+                    }
+                }
+            }
+
+            if (oracle.out_degree < 256) {
+                ia_bitmap256_t& target_bm =
+                    *m_parent.m_assembler.append_object(ia_bitmap256_t());
+                for (int c = 0; c < 256; ++c) {
+                    if (! oracle.targets_by_input[c].empty()) {
+                        ia_setbitv64(target_bm.bits, c);
+                    }
+                }
+            }
+
+            if (oracle.use_ali) {
+                Intermediate::node_p previous_target;
+                ia_bitmap256_t& ali_bm =
+                    *m_parent.m_assembler.append_object(ia_bitmap256_t());
+                for (int c = 0; c < 256; ++c) {
+                    if (! oracle.targets_by_input[c].empty()) {
+                        const Intermediate::node_p& target =
+                            oracle.targets_by_input[c].front().first;
+                        if (previous_target && target != previous_target) {
+                            ia_setbitv64(ali_bm.bits, c);
+                        }
+                        previous_target = target;
+                    }
+                }
+            }
+
+            for (int c = 0; c < 256; ++c) {
+                if (! oracle.targets_by_input[c].empty()) {
+                    const Intermediate::node_p& target =
+                        oracle.targets_by_input[c].front().first;
+                    if (target != node.default_target()) {
+                        m_parent.append_node_ref(target);
+                    }
                 }
             }
         }
@@ -411,6 +653,10 @@ void Compiler<id_width>::compile(
     m_result.buffer.clear();
     m_result.ids_used = 0;
     m_result.padding = 0;
+    m_result.high_nodes = 0;
+    m_result.high_nodes_bytes = 0;
+    m_result.low_nodes = 0;
+    m_result.low_nodes_bytes = 0;
 
     // Header
     ia_eudoxus_automata_t* e_automata =

@@ -140,6 +140,117 @@ ia_eudoxus_result_t IA_EUDOXUS(next_low)(
     return IA_EUDOXUS_OK;
 }
 
+/* High Degree Node */
+
+/**
+ * Next function for high degree nodes.
+ *
+ * @sa IA_EUDOXUS(next) for details.
+ */
+static
+ia_eudoxus_result_t IA_EUDOXUS(next_high)(
+    ia_eudoxus_state_t *state
+)
+{
+    if (state == NULL) {
+        return IA_EUDOXUS_EINSANE;
+    }
+
+    assert(state->eudoxus        != NULL);
+    assert(state->callback       != NULL);
+    assert(state->node           != NULL);
+    assert(state->input_location != NULL);
+
+    const uint8_t c = *(state->input_location);
+    bool has_output         = ia_bit8(state->node->header.flags, 0);
+    bool has_nonadvancing   = ia_bit8(state->node->header.flags, 1);
+    bool has_default        = ia_bit8(state->node->header.flags, 2);
+    bool advance_on_default = ia_bit8(state->node->header.flags, 3);
+    bool has_target_bm      = ia_bit8(state->node->header.flags, 4);
+    bool has_ali_bm         = ia_bit8(state->node->header.flags, 5);
+
+    const IA_EUDOXUS(high_node_t) *node
+        = (const IA_EUDOXUS(high_node_t) *)(state->node);
+
+    // XXX Add any sanity checks.
+
+    ia_vls_state_t vls;
+    IA_VLS_INIT(vls, node);
+    // Advance past first_output.
+    IA_VLS_ADVANCE_IF(vls, IA_EUDOXUS_ID_T, has_output);
+    IA_EUDOXUS_ID_T default_node = IA_VLS_IF(
+        vls,
+        IA_EUDOXUS_ID_T,
+        0,
+        has_default
+    );
+    const ia_bitmap256_t *advance_bm = IA_VLS_IF_PTR(
+        vls,
+        ia_bitmap256_t,
+        has_nonadvancing
+    );
+    const ia_bitmap256_t *target_bm = IA_VLS_IF_PTR(
+        vls,
+        ia_bitmap256_t,
+        has_target_bm
+    );
+    const ia_bitmap256_t *ali_bm = IA_VLS_IF_PTR(
+        vls,
+        ia_bitmap256_t,
+        has_ali_bm
+    );
+    const IA_EUDOXUS_ID_T *targets = IA_VLS_FINAL(vls, const IA_EUDOXUS_ID_T);
+
+    bool advance_on_next_node = true;
+    IA_EUDOXUS_ID_T next_node = 0;
+    bool has_target = ! has_target_bm || ia_bitv64(target_bm->bits, c);
+
+    if (has_target) {
+        int target_index = -1;
+        if (has_ali_bm) {
+            target_index = ia_popcountv64(ali_bm->bits, c);
+        }
+        else if (has_target_bm) {
+            target_index = ia_popcountv64(target_bm->bits, c);
+        }
+        else {
+            target_index = c;
+        }
+
+        if (target_index < 0 || target_index > 255) {
+            return IA_EUDOXUS_EINVAL;
+        }
+
+        if (has_nonadvancing) {
+            advance_on_next_node = ia_bitv64(advance_bm->bits, c);
+        }
+
+        next_node = targets[target_index];
+
+        assert(next_node != 0);
+    }
+    else {
+        if (has_default) {
+            next_node            = default_node;
+            advance_on_next_node = advance_on_default;
+        }
+        else {
+            return IA_EUDOXUS_END;
+        }
+    }
+
+    if (advance_on_next_node) {
+        state->input_location  += 1;
+        state->remaining_bytes -= 1;
+    }
+
+    state->node = (const ia_eudoxus_node_t *)(
+        (const char *)(state->eudoxus->automata) + next_node
+    );
+
+    return IA_EUDOXUS_OK;
+}
+
 /* Node Generic Code */
 
 /**
@@ -170,6 +281,9 @@ ia_eudoxus_result_t IA_EUDOXUS(next)(
     case 0:
         result = IA_EUDOXUS(next_low)(state);
         break;
+    case 1:
+        result = IA_EUDOXUS(next_high)(state);
+        break;
     default:
         ia_eudoxus_set_error_printf(
             state->eudoxus,
@@ -190,8 +304,8 @@ ia_eudoxus_result_t IA_EUDOXUS(next)(
     case IA_EUDOXUS_EXT_ERROR:
         ia_eudoxus_set_error_cstr(
             state->eudoxus,
-            "Insanity! Nonsense from my next function.  "
-            "Please report as bug."
+            "Insanity! Nonsense from my next function."
+            "  Please report as bug."
         );
         result = IA_EUDOXUS_EINSANE;
         break;

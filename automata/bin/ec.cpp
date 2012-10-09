@@ -146,11 +146,15 @@ int main(int argc, char **argv)
             }
         }
 
-        cout << "bytes    = " << result.buffer.size() << endl;
-        cout << "id_width = " << result.id_width << endl;
-        cout << "align_to = " << result.align_to << endl;
-        cout << "ids_used = " << result.ids_used << endl;
-        cout << "padding  = " << result.padding << endl;
+        cout << "bytes            = " << result.buffer.size() << endl;
+        cout << "id_width         = " << result.id_width << endl;
+        cout << "align_to         = " << result.align_to << endl;
+        cout << "ids_used         = " << result.ids_used << endl;
+        cout << "padding          = " << result.padding << endl;
+        cout << "low_nodes        = " << result.low_nodes << endl;
+        cout << "low_nodes_bytes  = " << result.low_nodes_bytes << endl;
+        cout << "high_nodes       = " << result.high_nodes << endl;
+        cout << "high_nodes_bytes = " << result.high_nodes_bytes << endl;
 
         output_stream.write(result.buffer.data(), result.buffer.size());
         if (! output_stream) {

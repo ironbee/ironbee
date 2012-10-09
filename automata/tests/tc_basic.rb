@@ -60,4 +60,16 @@ class TestBasic < Test::Unit::TestCase
     ac_test(words, text, "aaaa")
     ac_test(words, text, "aaaa_optimized", true)
   end
+
+  def test_wide
+    words = []
+    ('a'..'z').each do |x|
+      words << "a#{x}"
+      words << "a#{x.upcase}"
+    end
+    text = words.join(" ")
+
+    ac_test(words, text, "wide")
+    ac_test(words, text, "wide_optimized", true)
+  end
 end

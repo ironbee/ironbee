@@ -60,6 +60,18 @@ struct result_t
 
     //! Number of bytes of padding added.
     size_t padding;
+
+    //! Number of high nodes.
+    size_t high_nodes;
+
+    //! Bytes of high nodes.
+    size_t high_nodes_bytes;
+
+    //! Number of low nodes.
+    size_t low_nodes;
+
+    //! Bytes of low nodes.
+    size_t low_nodes_bytes;
 };
 
 /**
