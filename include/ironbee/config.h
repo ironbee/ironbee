@@ -439,6 +439,18 @@ ib_status_t DLL_PUBLIC ib_config_block_start(ib_cfgparser_t *cp,
 ib_status_t DLL_PUBLIC ib_config_block_process(ib_cfgparser_t *cp,
                                                const char *name);
 
+/**
+ * Lookup a name/value pair mapping
+ *
+ * @param[in] str String to lookup in @a map
+ * @param[in] map String / value mapping
+ * @param[out] pval Matching value
+ *
+ * @returns IB_OK, IB_EINVAL if @a string not found in @a map
+ */
+ib_status_t DLL_PUBLIC ib_config_strval_pair_lookup(const char *str,
+                                                    const ib_strval_t *map,
+                                                    ib_num_t *pval);
 
 /**
  * Log Generic (Configuration form)

@@ -27,6 +27,7 @@
 
 #include <ironbee/action.h>
 #include <ironbee/build.h>
+#include <ironbee/config.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_defs.h>
 #include <ironbee/types.h>
@@ -207,6 +208,19 @@ struct ib_rule_exec_t {
     /* Stack of values for the FIELD* targets */
     ib_list_t              *value_stack; /**< Stack of values */
 };
+
+/**
+ * Set a rule engine value (for configuration)
+ *
+ * @param[in] cp Configuration parser
+ * @param[in] name Name of parameter
+ * @param[in] value Value to set to
+ *
+ * @returns IB_OK / IB_EINVAL
+ */
+ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
+                               const char *what,
+                               const char *value);
 
 /**
  * Create a rule.

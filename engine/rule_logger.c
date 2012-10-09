@@ -84,6 +84,13 @@ static const size_t REV_BUFSIZE = 16;
       IB_RULE_LOG_FLAG_ACTION )
 
 /**
+ * If any of these flags are set, enable phase loop
+ */
+#define RULE_LOG_FLAG_PHASE_ENABLE                   \
+    ( IB_RULE_LOG_FLAG_PHASE |                       \
+      IB_RULE_LOG_FLAG_AUDIT )
+
+/**
  * Mapping of valid rule logging names to flag values.
  */
 static IB_STRVAL_MAP(flags_map) = {
@@ -104,12 +111,12 @@ static IB_STRVAL_MAP(flags_map) = {
     IB_STRVAL_PAIR("audit", IB_RULE_LOG_FLAG_AUDIT),
     IB_STRVAL_PAIR("timing", IB_RULE_LOG_FLAG_TIMING),
 
-    IB_STRVAL_PAIR("allRules", IB_RULE_LOG_FLAG_MODE_ALL),
-    IB_STRVAL_PAIR("actionableRulesOnly", IB_RULE_LOG_FLAG_MODE_ACT),
-    IB_STRVAL_PAIR("operatorExecOnly", IB_RULE_LOG_FLAG_MODE_EXEC),
-    IB_STRVAL_PAIR("operatorErrorOnly", IB_RULE_LOG_FLAG_MODE_ERROR),
-    IB_STRVAL_PAIR("returnedTrueOnly", IB_RULE_LOG_FLAG_MODE_TRUE),
-    IB_STRVAL_PAIR("returnedFalseOnly", IB_RULE_LOG_FLAG_MODE_FALSE),
+    IB_STRVAL_PAIR("allRules", IB_RULE_LOG_FILT_ALL),
+    IB_STRVAL_PAIR("actionableRulesOnly", IB_RULE_LOG_FILT_ACTIONABLE),
+    IB_STRVAL_PAIR("operatorExecOnly", IB_RULE_LOG_FILT_OPEXEC),
+    IB_STRVAL_PAIR("operatorErrorOnly", IB_RULE_LOG_FILT_ERROR),
+    IB_STRVAL_PAIR("returnedTrueOnly", IB_RULE_LOG_FILT_TRUE),
+    IB_STRVAL_PAIR("returnedFalseOnly", IB_RULE_LOG_FILT_FALSE),
 
     /* End */
     IB_STRVAL_PAIR_LAST
@@ -307,15 +314,24 @@ void ib_rule_log_flags_dump(ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg = NULL;
     ib_strval_t *rec;
+    ib_flags_t flags;
 
     ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
-    if (corecfg->rule_debug_log_level < IB_RULE_DLOG_DEBUG) {
+    if (corecfg->rule_debug_level < IB_RULE_DLOG_DEBUG) {
         IB_FTRACE_RET_VOID();
+    }
+
+    flags = corecfg->rule_log_flags;
+    if (ib_flags_all(flags, IB_RULE_LOG_FILT_ALL)) {
+        ib_flags_clear(flags, IB_RULE_LOG_FILTER_MASK);
+    }
+    else if (ib_flags_any(flags, IB_RULE_LOG_FILTER_MASK) == false) {
+        ib_flags_set(flags, IB_RULE_LOG_FILT_ALL);
     }
 
     rec = (ib_strval_t *)flags_map;
     while (rec->str != NULL) {
-        bool enabled = ib_flags_all(corecfg->rule_log_flags, rec->val);
+        bool enabled = ib_flags_all(flags, rec->val);
         ib_log_trace(ib,
                      "Rule logging flag %s [0x%08x]: %s",
                      rec->str,
@@ -347,7 +363,7 @@ ib_rule_dlog_level_t ib_rule_dlog_level(ib_context_t *ctx)
     IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg = NULL;
     ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
-    IB_FTRACE_RET_INT(corecfg->rule_debug_log_level);
+    IB_FTRACE_RET_INT(corecfg->rule_debug_level);
 }
 
 /* Log TX start */
@@ -359,7 +375,6 @@ ib_status_t ib_rule_log_tx_create(
     IB_FTRACE_INIT();
     ib_flags_t          flags;
     ib_rule_log_tx_t   *object;
-    ib_rule_log_mode_t  mode;
 
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
@@ -379,32 +394,20 @@ ib_status_t ib_rule_log_tx_create(
         ib_clock_gettimeofday(&object->start_time);
     }
 
-    /* Extract the mode */
-    if (ib_flags_all(flags, IB_RULE_LOG_FLAG_MODE_ACT)) {
-        mode = IB_RULE_LOG_MODE_ACT;
+    /* If ALL is set, clear the other filter flags */
+    if (ib_flags_all(flags, IB_RULE_LOG_FILT_ALL)) {
+        ib_flags_clear(flags, IB_RULE_LOG_FILTER_MASK);
     }
-    else if (ib_flags_all(flags, IB_RULE_LOG_FLAG_MODE_EXEC)) {
-        mode = IB_RULE_LOG_MODE_EXEC;
-    }
-    else if (ib_flags_all(flags, IB_RULE_LOG_FLAG_MODE_ERROR)) {
-        mode = IB_RULE_LOG_MODE_ERROR;
-    }
-    else if (ib_flags_all(flags, IB_RULE_LOG_FLAG_MODE_TRUE)) {
-        mode = IB_RULE_LOG_MODE_TRUE;
-    }
-    else if (ib_flags_all(flags, IB_RULE_LOG_FLAG_MODE_FALSE)) {
-        mode = IB_RULE_LOG_MODE_FALSE;
-    }
-    else {
-        mode = IB_RULE_LOG_MODE_ALL;
+    else if (ib_flags_any(flags, IB_RULE_LOG_FILTER_MASK) == false) {
+        ib_flags_set(flags, IB_RULE_LOG_FILT_ALL);
     }
 
     /* Complete the new object, store pointer to it */
     object->level = ib_rule_log_level(rule_exec->tx->ctx);
     object->flags = flags;
+    object->filter = (flags & IB_RULE_LOG_FILTER_ALLMASK);
     object->cur_phase = PHASE_NONE;
     object->phase_name = NULL;
-    object->mode = mode;
     object->mp = rule_exec->tx->mp;
     *tx_log = object;
 
@@ -461,10 +464,10 @@ ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
     new->tx_log = tx_log;
     new->rule = rule_exec->rule;
     if (ib_rule_is_stream(rule_exec->rule)) {
-        new->mode = IB_RULE_LOG_MODE_EXEC;
+        new->filter = IB_RULE_LOG_FILT_OPEXEC;
     }
     else {
-        new->mode = tx_log->mode;
+        new->filter = tx_log->filter;
     }
 
     /* Don't need to initialize num_xxx because we use calloc() above */
@@ -532,7 +535,7 @@ ib_status_t ib_rule_log_exec_set_tgt_final(ib_rule_log_exec_t *exec_log,
     ib_list_node_t *node;
     ib_rule_log_tgt_t *tgt;
 
-    if (exec_log == NULL) {
+    if ( (exec_log == NULL) || (exec_log->tgt_list == NULL) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -660,6 +663,9 @@ ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *exec_log,
     status = exec_log->op_status;
     count_result(&exec_log->counts, result, status);
 
+    if (exec_log->tgt_list == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
     node = ib_list_last(exec_log->tgt_list);
     if ( (node == NULL) || (node->data == NULL) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -719,6 +725,9 @@ ib_status_t ib_rule_log_exec_add_action(ib_rule_log_exec_t *exec_log,
     }
     ++(exec_log->counts.num_actions);
 
+    if (exec_log->tgt_list == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
     node = ib_list_last(exec_log->tgt_list);
     if ( (node == NULL) || (node->data == NULL) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -767,6 +776,9 @@ ib_status_t ib_rule_log_exec_add_event(ib_rule_log_exec_t *exec_log,
     }
     ++(exec_log->counts.num_events);
 
+    if (exec_log->tgt_list == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
     node = ib_list_last(exec_log->tgt_list);
     if ( (node == NULL) || (node->data == NULL) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
@@ -1083,7 +1095,8 @@ static void log_audit(
     assert(rule_exec != NULL);
     const ib_list_node_t *node;
 
-    if (rule_exec->exec_log->audit_list == NULL) {
+    if ( (rule_exec->exec_log == NULL) ||
+         (rule_exec->exec_log->audit_list == NULL) ) {
         IB_FTRACE_RET_VOID();
     }
 
@@ -1102,18 +1115,24 @@ void ib_rule_log_phase(
 )
 {
     IB_FTRACE_INIT();
+    ib_flags_t flags;
 
     if (rule_exec->tx_log == NULL) {
         IB_FTRACE_RET_VOID();
     }
+    flags = rule_exec->tx_log->flags;
 
-    if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_PHASE)) {
+    if (ib_flags_any(flags, RULE_LOG_FLAG_PHASE_ENABLE)) {
         if (phase_num != rule_exec->tx_log->cur_phase) {
-            rule_log_exec(rule_exec, "PHASE %s", phase_name);
-            rule_exec->tx_log->cur_phase = phase_num;
-            rule_exec->tx_log->phase_name = phase_name;
+            if (ib_flags_any(flags, IB_RULE_LOG_FLAG_PHASE)) {
+                rule_log_exec(rule_exec, "PHASE %s", phase_name);
+                rule_exec->tx_log->cur_phase = phase_num;
+                rule_exec->tx_log->phase_name = phase_name;
+            }
 
-            if (phase_num == PHASE_POSTPROCESS) {
+            if ( (phase_num == PHASE_POSTPROCESS) &&
+                 (ib_flags_any(flags, IB_RULE_LOG_FLAG_AUDIT) == true) )
+            {
                 log_audit(rule_exec);
             }
         }
@@ -1352,28 +1371,43 @@ static void log_result(
     IB_FTRACE_RET_VOID();
 }
 
-static int get_count(
+static bool filter(
     const ib_rule_log_exec_t *exec_log,
     const ib_rule_log_count_t *counts
 )
 {
     IB_FTRACE_INIT();
 
-    switch (exec_log->mode) {
-    case IB_RULE_LOG_MODE_ACT:
-        IB_FTRACE_RET_INT(counts->num_actions);
-    case IB_RULE_LOG_MODE_EXEC:
-        IB_FTRACE_RET_INT(counts->num_execs);
-    case IB_RULE_LOG_MODE_ERROR:
-        IB_FTRACE_RET_INT(counts->num_errors);
-    case IB_RULE_LOG_MODE_TRUE:
-        IB_FTRACE_RET_INT(counts->num_true);
-    case IB_RULE_LOG_MODE_FALSE:
-        IB_FTRACE_RET_INT(counts->num_false);
-    case IB_RULE_LOG_MODE_ALL:
-    default:
-        IB_FTRACE_RET_INT(1);
+    if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_ALL) ) {
+        IB_FTRACE_RET_BOOL(true);
     }
+
+    if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_ACTIONABLE) ) {
+        if (counts->num_actions != 0) {
+            IB_FTRACE_RET_BOOL(true);
+        }
+    }
+    if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_OPEXEC) ) {
+        if (counts->num_execs != 0) {
+            IB_FTRACE_RET_BOOL(true);
+        }
+    }
+    if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_ERROR) ) {
+        if (counts->num_errors != 0) {
+            IB_FTRACE_RET_BOOL(true);
+        }
+    }
+    if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_TRUE) ) {
+        if (counts->num_true != 0) {
+            IB_FTRACE_RET_BOOL(true);
+        }
+    }
+    if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_FALSE) ) {
+        if (counts->num_false != 0) {
+            IB_FTRACE_RET_BOOL(true);
+        }
+    }
+    IB_FTRACE_RET_BOOL(false);
 }
 
 /* Log rule execution: exec. */
@@ -1393,7 +1427,7 @@ void ib_rule_log_execution(
     }
 
     tx_log = rule_exec->tx_log;
-    if (get_count(exec_log, &exec_log->counts) == 0) {
+    if (filter(exec_log, &exec_log->counts) == false) {
         IB_FTRACE_RET_VOID();
     }
 
@@ -1427,7 +1461,7 @@ void ib_rule_log_execution(
             const ib_list_node_t *rslt_node;
             assert(tgt != NULL);
 
-            if (get_count(exec_log, &tgt->counts) == 0) {
+            if (filter(exec_log, &tgt->counts) == false) {
                 continue;
             }
 

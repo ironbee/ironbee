@@ -107,12 +107,12 @@ typedef enum {
 #define IB_RULE_LOG_FLAG_AUDIT      (1 << 14) /**< Audit log */
 #define IB_RULE_LOG_FLAG_TIMING     (1 << 15) /**< Timing information */
 /* The following flags control which rules get logged */
-#define IB_RULE_LOG_FLAG_MODE_ALL   (1 << 16) /**< All rules */
-#define IB_RULE_LOG_FLAG_MODE_ACT   (1 << 17) /**< Rules that execute actions */
-#define IB_RULE_LOG_FLAG_MODE_EXEC  (1 << 18) /**< Rules with errors */
-#define IB_RULE_LOG_FLAG_MODE_ERROR (1 << 19) /**< Rules with op executions */
-#define IB_RULE_LOG_FLAG_MODE_TRUE  (1 << 20) /**< Rules that return true */
-#define IB_RULE_LOG_FLAG_MODE_FALSE (1 << 21) /**< Rules that return false */
+#define IB_RULE_LOG_FILT_ALL        (1 << 16) /**< Log all rules */
+#define IB_RULE_LOG_FILT_ACTIONABLE (1 << 17) /**< Rules that execute actions */
+#define IB_RULE_LOG_FILT_OPEXEC     (1 << 18) /**< Rules with op executions */
+#define IB_RULE_LOG_FILT_ERROR      (1 << 19) /**< Rules with errors */
+#define IB_RULE_LOG_FILT_TRUE       (1 << 20) /**< Rules that return true */
+#define IB_RULE_LOG_FILT_FALSE      (1 << 21) /**< Rules that return false */
 
 /**
  * Mask of all of the enable bits of the rule logging flags
@@ -136,26 +136,23 @@ typedef enum {
       IB_RULE_LOG_FLAG_TIMING )
 
 /**
- * Mask of all of the mode bits of the rule logging flags
+ * Mask of all of the filter bits of the rule logging flags.
+ * Note: This mask does *not* include FILT_ALL.
  */
-#define IB_RULE_LOG_MODE_MASK                        \
-    ( IB_RULE_LOG_FLAG_MODE_ALL |                    \
-      IB_RULE_LOG_FLAG_MODE_ACT |                    \
-      IB_RULE_LOG_FLAG_MODE_ERROR |                  \
-      IB_RULE_LOG_FLAG_MODE_TRUE |                   \
-      IB_RULE_LOG_FLAG_MODE_FALSE )
+#define IB_RULE_LOG_FILTER_MASK                      \
+    ( IB_RULE_LOG_FILT_ACTIONABLE |                  \
+      IB_RULE_LOG_FILT_OPEXEC |                      \
+      IB_RULE_LOG_FILT_ERROR |                       \
+      IB_RULE_LOG_FILT_TRUE |                        \
+      IB_RULE_LOG_FILT_FALSE )
 
 /**
- * Rule log mode.
- **/
-typedef enum {
-    IB_RULE_LOG_MODE_ALL,           /**< Log execution of all rules */
-    IB_RULE_LOG_MODE_ACT,           /**< Only rules that execute actions */
-    IB_RULE_LOG_MODE_EXEC,          /**< Only rules with operator executions */
-    IB_RULE_LOG_MODE_ERROR,         /**< Only rules with operator errors */
-    IB_RULE_LOG_MODE_TRUE,          /**< Only rules that return true */
-    IB_RULE_LOG_MODE_FALSE          /**< Only rules that return false */
-} ib_rule_log_mode_t;
+ * Mask of all of the filter bits of the rule logging flags.
+ * Note: This mask does not include FILT_ALL.
+ */
+#define IB_RULE_LOG_FILTER_ALLMASK                   \
+    ( IB_RULE_LOG_FILT_ALL |                         \
+      IB_RULE_LOG_FILTER_MASK )
 
 /**
  * Rule log debugging level

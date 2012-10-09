@@ -779,6 +779,26 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+ib_status_t ib_config_strval_pair_lookup(const char *str,
+                                         const ib_strval_t *map,
+                                         ib_num_t *pval)
+{
+    ib_strval_t *rec = (ib_strval_t *)map;
+
+    while (rec->str != NULL) {
+        if (strcasecmp(str, rec->str) == 0) {
+            *pval = rec->val;
+            return IB_OK;
+        }
+        ++rec;
+    }
+
+    *pval = 0;
+
+    return IB_EINVAL;
+}
+
+
 void ib_cfg_log_f(ib_cfgparser_t *cp, ib_log_level_t level,
                   const char *file, int line,
                   const char *fmt, ...)

@@ -4231,3 +4231,43 @@ ib_status_t ib_rule_chain_invalidate(ib_engine_t *ib,
 
     IB_FTRACE_RET_STATUS(rc);
 }
+
+static IB_STRVAL_MAP(debug_levels_map) = {
+    IB_STRVAL_PAIR("error", IB_RULE_DLOG_ERROR),
+    IB_STRVAL_PAIR("warning", IB_RULE_DLOG_WARNING),
+    IB_STRVAL_PAIR("notice", IB_RULE_DLOG_NOTICE),
+    IB_STRVAL_PAIR("info", IB_RULE_DLOG_INFO),
+    IB_STRVAL_PAIR("debug", IB_RULE_DLOG_DEBUG),
+    IB_STRVAL_PAIR("trace", IB_RULE_DLOG_TRACE),
+    IB_STRVAL_PAIR_LAST
+};
+
+ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
+                               const char *what,
+                               const char *value)
+{
+    IB_FTRACE_INIT();
+    assert(cp != NULL);
+    assert(what != NULL);
+    assert(value != NULL);
+    ib_status_t rc;
+
+    if (strcasecmp(what, "RuleEngineDebugLogLevel") == 0) {
+        ib_num_t tmp;
+        ib_num_t level;
+
+        if (sscanf(value, "%ld", &tmp) != 0) {
+            level = tmp;
+        }
+        else {
+            rc = ib_config_strval_pair_lookup(value, debug_levels_map, &level);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+        rc = ib_context_set_num(cp->cur_ctx, "_RuleEngineDebugLevel", level);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
+}

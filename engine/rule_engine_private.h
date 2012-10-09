@@ -107,7 +107,7 @@ struct ib_rule_log_exec_t {
     ib_list_t              *audit_list;  /**< List of audit log file names */
     int                     num_tgt;     /**< # of targets */
     ib_rule_log_count_t     counts;      /**< Result counting info */
-    ib_rule_log_mode_t      mode;        /**< Rule logging mode */
+    ib_flags_t              filter;      /**< Rule filter flags */
     ib_status_t             op_status;   /**< Return status of last operator */
 };
 
@@ -119,7 +119,7 @@ struct ib_rule_log_tx_t {
     ib_timeval_t            start_time;  /**< Time of start of rule engine */
     ib_timeval_t            end_time;    /**< Time of end of rule engine */
     ib_flags_t              flags;       /**< Rule logging flags */
-    ib_rule_log_mode_t      mode;        /**< Rule logging mode */
+    ib_flags_t              filter;      /**< Rule filter flags */
     ib_log_level_t          level;       /**< Level to log at */
     ib_rule_phase_num_t     cur_phase;   /**< Current phase # */
     const char             *phase_name;  /**< Name of current phase */

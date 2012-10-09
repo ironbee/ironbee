@@ -147,7 +147,8 @@ static ib_core_cfg_t core_global_cfg;
       IB_RULE_LOG_FLAG_TARGET |                        \
       IB_RULE_LOG_FLAG_TFN |                           \
       IB_RULE_LOG_FLAG_OPERATOR |                      \
-      IB_RULE_LOG_FLAG_ACTION )
+      IB_RULE_LOG_FLAG_ACTION |                        \
+      IB_RULE_LOG_FILT_ACTIONABLE )
 #define IB_RULE_LOG_FLAGS_ALL                                \
     ( IB_RULE_LOG_FLAG_TX |                                  \
       IB_RULE_LOG_FLAG_REQ_LINE |                            \
@@ -3872,25 +3873,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
-static ib_status_t strval_pair_lookup(const char *name,
-                                      const ib_strval_t *map,
-                                      ib_num_t *pval)
-{
-    ib_strval_t *rec = (ib_strval_t *)map;
-
-    while (rec->str != NULL) {
-        if (strcasecmp(name, rec->str) == 0) {
-            *pval = rec->val;
-            return IB_OK;
-        }
-        ++rec;
-    }
-
-    *pval = 0;
-
-    return IB_EINVAL;
-}
-
 /**
  * Handle loglevel directives.
  *
@@ -3928,7 +3910,7 @@ static ib_status_t core_dir_loglevel(ib_cfgparser_t *cp,
         level = tmp;
     }
     else {
-        rc = strval_pair_lookup(p1, map, &level);
+        rc = ib_config_strval_pair_lookup(p1, map, &level);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
         }
@@ -3944,11 +3926,6 @@ static ib_status_t core_dir_loglevel(ib_cfgparser_t *cp,
     else if (strcasecmp("RuleEngineLogLevel", name) == 0) {
         ib_log_debug2(ib, "%s: %u", name, (unsigned int)level);
         rc = ib_context_set_num(ctx, "rule_log_level", level);
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    else if (strcasecmp("RuleEngineDebugLogLevel", name) == 0) {
-        ib_log_debug2(ib, "%s: %u", name, (unsigned int)level);
-        rc = ib_context_set_num(ctx, "rule_debug_log_level", level);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -4015,8 +3992,6 @@ static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
     ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
     ib_num_t tmp;
     ib_flags_t log_flags;
-    ib_flags_t new_mode_flags;
-    int num_mode_flags;
     ib_status_t rc;
 
     rc = ib_context_get(ctx, "rule_log_flags", ib_ftype_num_out(&tmp), NULL);
@@ -4025,47 +4000,8 @@ static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
     }
     log_flags = tmp;
 
-    /* Make sure that only one of the mode bits is set */
-    new_mode_flags = (flags & IB_RULE_LOG_MODE_MASK);
-    num_mode_flags = 0;
-    if (new_mode_flags) {
-        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_ALL);
-        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_ACT);
-        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_EXEC);
-        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_ERROR);
-        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_TRUE);
-        num_mode_flags += ib_flags_any(flags, IB_RULE_LOG_FLAG_MODE_FALSE);
-    }
-    if (num_mode_flags > 1) {
-        ib_cfg_log_error(cp, "More than one rule log mode set");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-    /* Note: At this point, new_mode_flags should have 0 or 1 bits set */
-
     /* Merge the set flags with the previous value. */
     log_flags = (flags & fmask) | (log_flags & ~fmask);
-
-    /* Count the number of mode flag bits set now... */
-    num_mode_flags = 0;
-    if (ib_flags_any(log_flags, IB_RULE_LOG_MODE_MASK) ) {
-        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_ALL);
-        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_ACT);
-        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_EXEC);
-        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_ERROR);
-        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_TRUE);
-        num_mode_flags += ib_flags_any(log_flags, IB_RULE_LOG_FLAG_MODE_FALSE);
-    }
-
-    /* Now, ensure that there is exactly one mode bit set */
-    if (num_mode_flags != 1) {
-        ib_flags_clear(log_flags, IB_RULE_LOG_MODE_MASK);
-        if (new_mode_flags) {
-            ib_flags_set(log_flags, new_mode_flags);
-        }
-        else {
-            ib_flags_set(log_flags, IB_RULE_LOG_FLAG_MODE_ALL);
-        }
-    }
 
     ib_log_debug2(ib, "RULE ENGINE LOG FLAGS: 0x%08lu",
                   (unsigned long)log_flags);
@@ -4077,6 +4013,7 @@ static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
 /**
  * Perform any extra duties when certain config parameters are "Set".
  *
+ * @param cp Config parser
  * @param ctx Context
  * @param type Config parameter type
  * @param name Config parameter name
@@ -4084,7 +4021,8 @@ static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
  *
  * @returns Status code
  */
-static ib_status_t core_set_value(ib_context_t *ctx,
+static ib_status_t core_set_value(ib_cfgparser_t *cp,
+                                  ib_context_t *ctx,
                                   ib_ftype_t type,
                                   const char *name,
                                   const char *val)
@@ -4112,27 +4050,27 @@ static ib_status_t core_set_value(ib_context_t *ctx,
                                          val, &pi,
                                          ib->mp, NULL);
         if (rc != IB_OK) {
-            ib_log_alert(ib, "Failed to create %s provider instance: %s",
-                         IB_PROVIDER_TYPE_PARSER, ib_status_to_string(rc));
+            ib_cfg_log_alert(cp, "Failed to create %s provider instance: %s",
+                             IB_PROVIDER_TYPE_PARSER, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
 
         rc = ib_parser_provider_set_instance(ctx, pi);
         if (rc != IB_OK) {
-            ib_log_alert(ib, "Failed to set %s provider instance: %s",
-                         IB_PROVIDER_TYPE_PARSER, ib_status_to_string(rc));
+            ib_cfg_log_alert(cp, "Failed to set %s provider instance: %s",
+                             IB_PROVIDER_TYPE_PARSER, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
     else if (strcasecmp("audit", name) == 0) {
         /* Lookup the audit log provider. */
         rc = ib_provider_lookup(ib,
-                                IB_PROVIDER_TYPE_AUDIT,
+                               IB_PROVIDER_TYPE_AUDIT,
                                 val,
                                 &corecfg->pr.audit);
         if (rc != IB_OK) {
-            ib_log_alert(ib, "Failed to lookup %s audit log provider: %s",
-                         val, ib_status_to_string(rc));
+            ib_cfg_log_alert(cp, "Failed to lookup %s audit log provider: %s",
+                             val, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -4143,8 +4081,8 @@ static ib_status_t core_set_value(ib_context_t *ctx,
                                 val,
                                 &corecfg->pr.data);
         if (rc != IB_OK) {
-            ib_log_alert(ib, "Failed to lookup %s data provider: %s",
-                         val, ib_status_to_string(rc));
+            ib_cfg_log_alert(cp, "Failed to lookup %s data provider: %s",
+                             val, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
@@ -4155,11 +4093,18 @@ static ib_status_t core_set_value(ib_context_t *ctx,
                                 val,
                                 &corecfg->pr.logevent);
         if (rc != IB_OK) {
-            ib_log_alert(ib, "Failed to lookup %s logevent provider: %s",
-                         val, ib_status_to_string(rc));
+            ib_cfg_log_alert(cp, "Failed to lookup %s logevent provider: %s",
+                             val, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
     }
+    else if (strcasecmp("RuleEngineDebugLogLevel", name) == 0) {
+        rc = ib_rule_engine_set(cp, name, val);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
     else {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -4211,7 +4156,7 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
-        rc = core_set_value(ctx, type, p1, p2);
+        rc = core_set_value(cp, ctx, type, p1, p2);
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -4235,19 +4180,6 @@ static IB_STRVAL_MAP(core_debuglog_levels_map) = {
     IB_STRVAL_PAIR("debug2", IB_LOG_DEBUG2),
     IB_STRVAL_PAIR("debug3", IB_LOG_DEBUG3),
     IB_STRVAL_PAIR("trace", IB_LOG_TRACE),
-    IB_STRVAL_PAIR_LAST
-};
-
-/**
- * Mapping of valid debug rule debug levels to numerical value
- */
-static IB_STRVAL_MAP(core_ruledebuglog_levels_map) = {
-    IB_STRVAL_PAIR("error", IB_RULE_DLOG_ERROR),
-    IB_STRVAL_PAIR("warning", IB_RULE_DLOG_WARNING),
-    IB_STRVAL_PAIR("notice", IB_RULE_DLOG_NOTICE),
-    IB_STRVAL_PAIR("info", IB_RULE_DLOG_INFO),
-    IB_STRVAL_PAIR("debug", IB_RULE_DLOG_DEBUG),
-    IB_STRVAL_PAIR("trace", IB_RULE_DLOG_TRACE),
     IB_STRVAL_PAIR_LAST
 };
 
@@ -4309,12 +4241,12 @@ static IB_STRVAL_MAP(core_rulelog_flags_map) = {
     IB_STRVAL_PAIR("audit", IB_RULE_LOG_FLAG_AUDIT),
     IB_STRVAL_PAIR("timing", IB_RULE_LOG_FLAG_TIMING),
 
-    IB_STRVAL_PAIR("allRules", IB_RULE_LOG_FLAG_MODE_ALL),
-    IB_STRVAL_PAIR("actionableRulesOnly", IB_RULE_LOG_FLAG_MODE_ACT),
-    IB_STRVAL_PAIR("operatorExecOnly", IB_RULE_LOG_FLAG_MODE_EXEC),
-    IB_STRVAL_PAIR("operatorErrorOnly", IB_RULE_LOG_FLAG_MODE_ERROR),
-    IB_STRVAL_PAIR("returnedTrueOnly", IB_RULE_LOG_FLAG_MODE_TRUE),
-    IB_STRVAL_PAIR("returnedFalseOnly", IB_RULE_LOG_FLAG_MODE_FALSE),
+    IB_STRVAL_PAIR("allRules", IB_RULE_LOG_FILT_ALL),
+    IB_STRVAL_PAIR("actionableRulesOnly", IB_RULE_LOG_FILT_ACTIONABLE),
+    IB_STRVAL_PAIR("operatorExecOnly", IB_RULE_LOG_FILT_OPEXEC),
+    IB_STRVAL_PAIR("operatorErrorOnly", IB_RULE_LOG_FILT_ERROR),
+    IB_STRVAL_PAIR("returnedTrueOnly", IB_RULE_LOG_FILT_TRUE),
+    IB_STRVAL_PAIR("returnedFalseOnly", IB_RULE_LOG_FILT_FALSE),
 
     /* End */
     IB_STRVAL_PAIR_LAST
@@ -4508,11 +4440,6 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         core_dir_loglevel,
         core_debuglog_levels_map
     ),
-    IB_DIRMAP_INIT_PARAM1(
-        "RuleEngineDebugLogLevel",
-        core_dir_loglevel,
-        core_ruledebuglog_levels_map
-    ),
 
     /* End */
     IB_DIRMAP_INIT_LAST
@@ -4587,9 +4514,10 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->data                 = MODULE_NAME_STR;
     corecfg->module_base_path     = X_MODULE_BASE_PATH;
     corecfg->rule_base_path       = X_RULE_BASE_PATH;
-    corecfg->rule_log_flags       = IB_RULE_LOG_FLAG_MODE_ALL;
-    corecfg->rule_log_level       = IB_RULE_DLOG_ERROR;
-    corecfg->rule_debug_log_level = IB_LOG_INFO;
+    corecfg->rule_log_flags       = IB_RULE_LOG_FLAGS_EXEC;
+    corecfg->rule_log_level       = IB_LOG_INFO;
+    corecfg->rule_debug_str       = "error";
+    corecfg->rule_debug_level     = IB_RULE_DLOG_ERROR;
     corecfg->block_status         = 403;
 
     /* Define the logger provider API. */
@@ -4866,10 +4794,16 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         rule_log_level
     ),
     IB_CFGMAP_INIT_ENTRY(
-        "rule_debug_log_level",
+        "RuleEngineDebugLogLevel",
+        IB_FTYPE_NULSTR,
+        ib_core_cfg_t,
+        rule_debug_str
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        "_RuleEngineDebugLevel",
         IB_FTYPE_NUM,
         ib_core_cfg_t,
-        rule_debug_log_level
+        rule_debug_level
     ),
 
     /* Parser */

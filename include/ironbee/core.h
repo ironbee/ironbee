@@ -93,7 +93,8 @@ struct ib_core_cfg_t {
     const char      *rule_base_path;    /**< Rule base path. */
     ib_num_t         rule_log_flags;    /**< Rule execution logging flags */
     ib_num_t         rule_log_level;    /**< Rule execution logging level */
-    ib_num_t         rule_debug_log_level; /**< Rule debug logging level */
+    const char      *rule_debug_str;    /**< Rule debug logging level */
+    ib_num_t         rule_debug_level;  /**< Rule debug logging level */
     ib_num_t         block_status;      /**< Status codes when blocking. */
 };
 
