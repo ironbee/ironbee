@@ -172,8 +172,6 @@ ia_eudoxus_result_t IA_EUDOXUS(next_high)(
     const IA_EUDOXUS(high_node_t) *node
         = (const IA_EUDOXUS(high_node_t) *)(state->node);
 
-    // XXX Add any sanity checks.
-
     ia_vls_state_t vls;
     IA_VLS_INIT(vls, node);
     // Advance past first_output.
