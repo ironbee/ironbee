@@ -64,8 +64,8 @@ class TestBasic < Test::Unit::TestCase
   def test_wide
     words = []
     ('a'..'z').each do |x|
-      words << "a#{x}"
-      words << "a#{x.upcase}"
+      words << "a#{x}#{x}"
+      words << "a#{x.upcase}#{x}"
     end
     text = words.join(" ")
 
