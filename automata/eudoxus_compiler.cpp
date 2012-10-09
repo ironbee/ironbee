@@ -145,7 +145,7 @@ private:
 
             low_node_cost = 0;
 
-            low_node_cost += sizeof(ia_eudoxus_node_header_t);
+            low_node_cost += sizeof(e_low_node_t);
             if (node->first_output()) {
                 low_node_cost += sizeof(e_id_t);
             }
@@ -162,7 +162,7 @@ private:
 
             high_node_cost = 0;
 
-            high_node_cost += sizeof(ia_eudoxus_node_header_t);
+            high_node_cost += sizeof(e_high_node_t);
             if (node->first_output()) {
                 high_node_cost += sizeof(e_id_t);
             }
