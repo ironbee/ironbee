@@ -1176,6 +1176,7 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
             ib_rule_log_warn(rule_exec, "Operator returned an error: %s",
                              ib_status_to_string(op_rc));
         }
+        rc = ib_rule_log_exec_op(rule_exec->exec_log, opinst, op_rc);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec, "Failed to log operator execution: %s",
                               ib_status_to_string(rc));
