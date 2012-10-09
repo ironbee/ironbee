@@ -32,6 +32,10 @@
 #include <ironautomata/eudoxus_automata.h>
 #include <ironautomata/vls.h>
 
+#ifndef _POSIX_SOURCE
+#define _POSIX_SOURCE
+#endif
+
 #include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
