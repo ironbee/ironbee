@@ -94,7 +94,7 @@ static
 inline
 bool ia_bit64(uint64_t word, int i)
 {
-    return (word & (1 << i)) != 0;
+    return (word & ((uint64_t)1 << i)) != 0;
 }
 
 /**
@@ -223,7 +223,7 @@ static
 inline
 uint64_t ia_setbit64(uint64_t word, int i)
 {
-    return word | (1 << i);
+    return word | ((uint64_t)1 << i);
 }
 
 /**
@@ -237,7 +237,7 @@ static
 inline
 uint64_t ia_unsetbit64(uint64_t word, int i)
 {
-    return word & ~(1 << i);
+    return word & ~((uint64_t)1 << i);
 }
 
 /**
