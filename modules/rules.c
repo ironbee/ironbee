@@ -1800,7 +1800,7 @@ static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
 }
 
 /**
- * Handle request_header events for the SetVar directive
+ * Handle events for the SetVar directive
  *
  * Walks through the list of fields defined for this context by the SetVar
  * directives, and populates the transaction's DPI with copies.
@@ -1812,7 +1812,7 @@ static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
  *
  * @returns Status code
  */
-static ib_status_t rules_request_header(ib_engine_t *ib,
+static ib_status_t setvar_event_handler(ib_engine_t *ib,
                                         ib_tx_t *tx,
                                         ib_state_event_type_t event,
                                         void *data)
@@ -1821,7 +1821,7 @@ static ib_status_t rules_request_header(ib_engine_t *ib,
 
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(event == handle_request_header_event);
+    assert(event == handle_context_tx_event);
 
     ib_module_t  *mod;
     rules_context_cfg_t *cfg;
@@ -2074,8 +2074,8 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     /* Register the rules header_finished callback */
     rc = ib_hook_tx_register(ib,
-                             handle_request_header_event,
-                             rules_request_header,
+                             handle_context_tx_event,
+                             setvar_event_handler,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Hook register returned %d", rc);
