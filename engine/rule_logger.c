@@ -312,16 +312,13 @@ void ib_rule_log_flags_dump(ib_engine_t *ib,
                             ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
-    ib_core_cfg_t *corecfg = NULL;
     ib_strval_t *rec;
     ib_flags_t flags;
 
-    ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
-    if (corecfg->rule_debug_level < IB_RULE_DLOG_DEBUG) {
+    if (ib_rule_dlog_level(ctx) < IB_RULE_DLOG_DEBUG) {
         IB_FTRACE_RET_VOID();
     }
-
-    flags = corecfg->rule_log_flags;
+    flags = ib_rule_log_flags(ctx);
     if (ib_flags_all(flags, IB_RULE_LOG_FILT_ALL)) {
         ib_flags_clear(flags, IB_RULE_LOG_FILTER_MASK);
     }
@@ -1351,14 +1348,22 @@ static void log_result(
     }
 
     if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_OPERATOR) ) {
+        const char *s1;
+        const char *s2;
+        if (rslt->status == IB_OK) {
+            s1 = "";
+            s2 = (rslt->result == 0) ? "FALSE" : "TRUE";
+        }
+        else {
+            s1 = "ERROR ";
+            s2 = ib_status_to_string(rslt->status);
+        }
         rule_log_exec(rule_exec,
-                      "OP %s(%s) %s",
+                      "OP %s(%s) %s%s",
                       rule_exec->exec_log->rule->opinst->op->name,
                       ib_field_format(rule_exec->exec_log->rule->opinst->fparam,
                                       true, false, NULL, buf, MAX_FIELD_BUF),
-                      (rslt->status == IB_OK ?
-                       (rslt->result == 0 ? "FALSE" : "TRUE") :
-                       ib_status_to_string(rslt->status)) );
+                      s1, s2);
     }
 
     if (rslt->act_list != NULL) {
