@@ -1784,11 +1784,15 @@ static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
     }
     if (field->type == IB_FTYPE_NUM) {
         ib_cfg_log_debug(cp,
-                         "Created numeric field \"%s\" %ld",
-                         name, (long int)num_val);
+                         "Created numeric field \"%s\" %ld for context \"%s\"",
+                         name, (long int)num_val,
+                         ib_context_full_get(cp->cur_ctx));
     }
     else {
-        ib_cfg_log_debug(cp, "Created string field \"%s\" \"%s\"", name, value);
+        ib_cfg_log_debug(cp,
+                         "Created string field \"%s\" \"%s\" "
+                         "for context \"%s\"",
+                         name, value, ib_context_full_get(cp->cur_ctx));
     }
 
     /* Done */
@@ -1808,16 +1812,16 @@ static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
  *
  * @returns Status code
  */
-static ib_status_t rules_header_finished(ib_engine_t *ib,
-                                         ib_tx_t *tx,
-                                         ib_state_event_type_t event,
-                                         void *data)
+static ib_status_t rules_request_header(ib_engine_t *ib,
+                                        ib_tx_t *tx,
+                                        ib_state_event_type_t event,
+                                        void *data)
 {
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(event == request_header_finished_event);
+    assert(event == handle_request_header_event);
 
     ib_module_t  *mod;
     rules_context_cfg_t *cfg;
@@ -1827,25 +1831,30 @@ static ib_status_t rules_header_finished(ib_engine_t *ib,
     /* Get my module object */
     rc = ib_engine_module_get(ib, MODULE_NAME_STR, &mod);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to get rule module: %s",
-                     ib_status_to_string(rc));
+        ib_log_error_tx(tx, "Failed to get rule module: %s",
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Get the context configuration */
     rc = ib_context_module_config(tx->ctx, mod, &cfg);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to get rule module configuration: %s",
-                     ib_status_to_string(rc));
+        ib_log_error_tx(tx, "Failed to get rule module configuration: %s",
+                        ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* If list is NULL, we're done */
     if (cfg->setvar_list == NULL) {
+        ib_log_debug_tx(tx, "No SetVars for defined for context \"%s\"",
+                        ib_context_full_get(tx->ctx));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* Loop through the list */
+    ib_log_debug_tx(tx, "Creating %zd SetVar fields for context \"%s\"",
+                    ib_list_elements(cfg->setvar_list),
+                    ib_context_full_get(tx->ctx));
     IB_LIST_LOOP_CONST(cfg->setvar_list, node) {
         const ib_field_t *field =
             (const ib_field_t *)ib_list_node_data_const(node);
@@ -2065,8 +2074,8 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     /* Register the rules header_finished callback */
     rc = ib_hook_tx_register(ib,
-                             request_header_finished_event,
-                             rules_header_finished,
+                             handle_request_header_event,
+                             rules_request_header,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Hook register returned %d", rc);
