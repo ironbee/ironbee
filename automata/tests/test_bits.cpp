@@ -207,8 +207,4 @@ TEST(TestBits, Popcount)
     EXPECT_EQ(34, ia_popcountv64(words, 129));
     EXPECT_EQ(35, ia_popcountv64(words, 130));
     EXPECT_EQ(36, ia_popcountv64(words, 250));
-<<<<<<< HEAD
->>>>>>> 459be85... fixup: prepopcount
-=======
->>>>>>> af3847c... automata/bits: Add population count routines.
 }
