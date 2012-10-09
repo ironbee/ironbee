@@ -26,15 +26,24 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include "ironbee_config_auto.h"
+
+#ifndef _DARWIN_C_SOURCE
+// Tell glibc to enable fileno()
+#ifndef _POSIX_SOURCE
+#define _POSIX_SOURCE
+#endif
+// Tell glibc to enable vasprintf()
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#endif
+
 #include <ironautomata/eudoxus.h>
 #include <ironautomata/bits.h>
 
 #include <ironautomata/eudoxus_automata.h>
 #include <ironautomata/vls.h>
-
-#ifndef _POSIX_SOURCE
-#define _POSIX_SOURCE
-#endif
 
 #include <assert.h>
 #include <stdarg.h>
