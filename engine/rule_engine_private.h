@@ -396,8 +396,8 @@ ib_status_t ib_rule_log_exec_add_event(ib_rule_log_exec_t *exec_log,
 /**
  * Log an audit log file for the rule logger
  *
- * @params[in] rule_exec Rule execution logging object
- * @params[in] audit_log Full path of the audit log file
+ * @param[in] rule_exec Rule execution logging object
+ * @param[in] audit_log Full path of the audit log file
  */
 void ib_rule_log_add_audit(const ib_rule_exec_t *rule_exec,
                            const const char *audit_log);
