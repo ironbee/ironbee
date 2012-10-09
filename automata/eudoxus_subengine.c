@@ -209,7 +209,7 @@ ia_eudoxus_result_t IA_EUDOXUS(next_high)(
             target_index = ia_popcountv64(ali_bm->bits, c);
         }
         else if (has_target_bm) {
-            target_index = ia_popcountv64(target_bm->bits, c);
+            target_index = ia_popcountv64(target_bm->bits, c) - 1;
         }
         else {
             target_index = c;
