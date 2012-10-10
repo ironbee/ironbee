@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1703 
+personal_ws-1.1 en 1704 
 malloced
 libnet
 endpat
@@ -49,11 +49,11 @@ DNE
 fff
 parens
 ctl
-dpi
-ffi
 FDs
 fds
 DNS
+dpi
+ffi
 cdef
 HandleResponseHeaders
 cfgfile
@@ -1126,6 +1126,7 @@ subprocess
 netmasks
 RuleEngineLogLevel
 ACNode's
+Deduplicate
 Lconfig
 HandleResponse
 AuditLog

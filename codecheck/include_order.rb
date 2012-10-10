@@ -72,6 +72,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironautomata/vls.h>',
 
   '<ironautomata/buffer.hpp>',
+  '<ironautomata/deduplicate_outputs.hpp>',
   '<ironautomata/eudoxus_compiler.hpp>',
   '<ironautomata/intermediate.hpp>',
   '<ironautomata/intermediate.pb.h>',

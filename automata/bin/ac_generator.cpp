@@ -26,6 +26,7 @@
  */
 
 #include <ironautomata/buffer.hpp>
+#include <ironautomata/deduplicate_outputs.hpp>
 #include <ironautomata/intermediate.hpp>
 #include <ironautomata/optimize_edges.hpp>
 
@@ -245,5 +246,7 @@ int main(int argc, char** argv)
     process_failures(a);
 
     breadth_first(a, optimize_edges);
+    deduplicate_outputs(a);
+
     write_automata(a, cout, chunk_size);
 }

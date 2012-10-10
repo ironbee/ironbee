@@ -18,6 +18,7 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 lib_LTLIBRARIES += libironautomata.la
 libironautomata_la_SOURCES = \
 	buffer.cpp \
+    deduplicate_outputs.cpp \
     eudoxus_compiler.cpp \
     intermediate.cpp \
     intermediate_to_dot.cpp \
