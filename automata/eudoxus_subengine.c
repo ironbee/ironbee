@@ -276,10 +276,10 @@ ia_eudoxus_result_t IA_EUDOXUS(next)(
     ia_eudoxus_result_t result = IA_EUDOXUS_OK;
 
     switch (IA_EUDOXUS_TYPE(state->node->header)) {
-    case 0:
+    case IA_EUDOXUS_LOW:
         result = IA_EUDOXUS(next_low)(state);
         break;
-    case 1:
+    case IA_EUDOXUS_HIGH:
         result = IA_EUDOXUS(next_high)(state);
         break;
     default:
