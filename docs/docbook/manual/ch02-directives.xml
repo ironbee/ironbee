@@ -13,7 +13,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>RelevantOnly</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.3</para>
         <para>Setting <literal>AuditEngine</literal> to <literal>RelevantOnly</literal>, the
@@ -33,7 +33,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>"/var/log/ironbee"</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.3</para>
     </section>
@@ -46,7 +46,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>0700</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
@@ -59,7 +59,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>0600</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
     </section>
@@ -72,7 +72,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>ironbee-index.log</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>Relative filenames are based off the <literal>AuditLogBaseDir</literal> directory and
@@ -87,7 +87,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>"%T %h %a %S %s %t %f"</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>
@@ -131,7 +131,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>default</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>An audit log consist of many parts; <literal>AuditLogParts</literal> determines which
@@ -243,7 +243,7 @@
             <literal>AuditLogSubDirFormat <replaceable>format-string</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> <literal>403</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
@@ -255,7 +255,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>None</literal> (audit logs will be created in the base directory)</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
@@ -267,7 +267,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>/usr/share/geoip/GeoLiteCity.dat</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> geoip</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
@@ -279,7 +279,7 @@
         <para><emphasis role="bold">Default:</emphasis>
             <literal>*</literal> (any)</para>
         <para><emphasis role="bold">Context:</emphasis> Site</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>The <literal>Hostname</literal> directive establishes a mapping between a Site and one
@@ -307,7 +307,7 @@ Hostname *.ironbee.com</programlisting>
             <literal>Include <replaceable>filename</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
         <para>Allows inclusion of another file into the current configuration file. The following
@@ -325,7 +325,7 @@ Hostname *.ironbee.com</programlisting>
         <para><emphasis role="bold">Default:</emphasis>
             <literal>Off</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
     </section>
@@ -337,7 +337,7 @@ Hostname *.ironbee.com</programlisting>
             <literal>LoadModule <replaceable>module</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Main</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>This directive will add an external module to the engine, potentially making new
@@ -351,7 +351,7 @@ Hostname *.ironbee.com</programlisting>
             <literal>&lt;Location <replaceable>path</replaceable>>...&lt;/Location></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Site</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>A subcontext created by this directive initially has identical configuration to that
@@ -386,7 +386,7 @@ Hostname *.ironbee.com</programlisting>
         <para><emphasis role="bold">Default:</emphasis>
             <literal>default</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
@@ -398,7 +398,7 @@ Hostname *.ironbee.com</programlisting>
         <para><emphasis role="bold">Default:</emphasis>
             <literal>None</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.3</para>
         <note><para>The log handler allows the log to be handled by another facility (currently the server). For
@@ -415,7 +415,7 @@ Hostname *.ironbee.com</programlisting>
         <para><emphasis role="bold">Default:</emphasis>
             <literal>4</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>The following log levels are supported:</para>
@@ -463,7 +463,7 @@ Hostname *.ironbee.com</programlisting>
         <para><emphasis role="bold">Default:</emphasis>
             The <literal>lib</literal> directory under the IronBee install prefix.</para>
         <para><emphasis role="bold">Context:</emphasis> Main</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
@@ -474,7 +474,7 @@ Hostname *.ironbee.com</programlisting>
             <literal>PcreMatchLimit <replaceable>limit</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> 5000</para>
         <para><emphasis role="bold">Context:</emphasis> Main</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> pcre</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>From the <literal>pcreapi</literal> manual: <quote>The match_limit field provides a
@@ -490,7 +490,7 @@ Hostname *.ironbee.com</programlisting>
             <literal>PcreMatchLimitRecursion <replaceable>limit</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> 5000</para>
         <para><emphasis role="bold">Context:</emphasis> Main</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> pcre</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>From the <literal>pcreapi</literal> manual: <quote>The match_limit_recursion field is
@@ -509,7 +509,7 @@ Hostname *.ironbee.com</programlisting>
         <para><emphasis role="bold">Default:</emphasis>
             <literal>Off</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
     </section>
@@ -521,7 +521,7 @@ Hostname *.ironbee.com</programlisting>
             <literal>RequestBodyBufferLimit <replaceable>byte_limit</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
     </section>
@@ -533,7 +533,7 @@ Hostname *.ironbee.com</programlisting>
             <literal>RequestBodyBufferLimitAction Reject|RollOver</literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
         <para>When <literal>Reject</literal> is configured, the transaction with a body larger than
@@ -552,7 +552,7 @@ Hostname *.ironbee.com</programlisting>
         <para><emphasis role="bold">Default:</emphasis>
             <literal>Off</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
     </section>
@@ -564,7 +564,7 @@ Hostname *.ironbee.com</programlisting>
             <literal>ResponseBodyBufferLimit <replaceable>byte_limit</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
     </section>
@@ -576,7 +576,7 @@ Hostname *.ironbee.com</programlisting>
             <literal>ResponseBodyBufferLimitAction Reject|RollOver</literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
         <para>When <literal>Reject</literal> is configured, the transaction with a body larger than
@@ -596,7 +596,7 @@ Hostname *.ironbee.com</programlisting>
         </para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> rules</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <note><para>Loading a rule will, in most contexts, also enable the rule to be executed in that context. However, the main configuration context is special. Loading a rule in the main configuration context will <emphasis>NOT</emphasis> enable the rule, but just load it into memory so that it can be shared by other contexts. You must explicitly use <literal>RuleEnable</literal> to enable the rule.</para></note>
@@ -609,7 +609,7 @@ Hostname *.ironbee.com</programlisting>
         <para><emphasis role="bold">Default:</emphasis>
             The <literal>lib</literal> directory under the IronBee install prefix.</para>
         <para><emphasis role="bold">Context:</emphasis> Main</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
     </section>
@@ -622,7 +622,7 @@ Hostname *.ironbee.com</programlisting>
         </para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> rules</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>Rules can be disabled by id or tag.  Any number of id or tag modifiers can be specified per directive. All disables are processed after enables.  See the <literal>RuleEnable</literal> directive for an example.</para>
@@ -636,7 +636,7 @@ Hostname *.ironbee.com</programlisting>
         </para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> rules</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>Rules can be disabled by id or tag. Any number of id or tag modifiers can be specified
@@ -658,7 +658,7 @@ Hostname *.ironbee.com</programlisting>
         <para><emphasis role="bold">Default:</emphasis>
             <literal>ruleExec</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.6</para>
         <para>The following data type options are supported:</para>
@@ -722,7 +722,7 @@ RULE_END</programlisting></para></listitem>
         <para><emphasis role="bold">Default:</emphasis>
             <literal>info</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.6</para>
     </section>
@@ -737,7 +737,7 @@ RULE_END</programlisting></para></listitem>
         </para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> rules</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>To load a Lua rule:</para>
@@ -755,7 +755,7 @@ RULE_END</programlisting></para></listitem>
         </para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> rules</para>
         <para><emphasis role="bold">Version:</emphasis> 0.5</para>
         <para>To mark and later replace a rule:</para>
@@ -781,7 +781,7 @@ Rule #MY_VALUE @gt 0 id:3 rev:1 phase:REQUEST setRequestHeader:X-Foo:%{MY_VALUE}
             <literal>SensorId <replaceable>sensor_id</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Main</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>TODO: Can we make this directive so that, if not defined, we attempt to detect server
@@ -797,7 +797,7 @@ Rule #MY_VALUE @gt 0 id:3 rev:1 phase:REQUEST setRequestHeader:X-Foo:%{MY_VALUE}
         <para><emphasis role="bold">Default:</emphasis>
             <literal>*:*</literal> (any ip:any port)</para>
         <para><emphasis role="bold">Context:</emphasis> Site</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.6</para>
         <para>The <literal>Service</literal> directive establishes a mapping between a Site and one
@@ -824,7 +824,7 @@ Service 10.0.1.2:443</programlisting>
             <literal>&lt;Site <replaceable>site_name</replaceable>>...&lt;/Site></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Main</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.1</para>
         <para>At the highest level, a configuration will contain one or more sites. For
@@ -865,7 +865,7 @@ Service 10.0.1.2:443</programlisting>
             <literal>SiteId <replaceable>site_id</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis> None</para>
         <para><emphasis role="bold">Context:</emphasis> Site</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>TODO: Can we make this directive so that, if not defined, we attempt to detect site
@@ -878,7 +878,7 @@ Service 10.0.1.2:443</programlisting>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>StreamInspect INPUT @OPERATOR OP_PARAM [MODIFIERS]</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Site, Location</para>
-        <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> rules</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>Normally, rules run in one of the available phases, which happen at strategic points in
