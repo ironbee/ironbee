@@ -8,6 +8,7 @@ libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c \
 EXTRA_libiaeudoxus_la_SOURCES = eudoxus_subengine.c
 
 AM_CPPFLAGS = -I$(srcdir)/include
+CFLAGS += -Wno-inline
 
 if CPP
 
