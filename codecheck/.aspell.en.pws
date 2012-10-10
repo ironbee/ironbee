@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1704 
+personal_ws-1.1 en 1707 
 malloced
 libnet
 endpat
@@ -49,11 +49,11 @@ DNE
 fff
 parens
 ctl
-FDs
-fds
 DNS
-dpi
 ffi
+dpi
+fds
+FDs
 cdef
 HandleResponseHeaders
 cfgfile
@@ -83,6 +83,7 @@ incrementor
 IronBeeUtilAhoCorasick
 ghi
 struct
+RuleEngineDebugLevel
 fpc
 fmt
 bing
@@ -550,6 +551,7 @@ dtype
 FixedBuffer
 fini
 tavail
+FILT
 isxdigit
 ip
 hardcode
@@ -951,6 +953,7 @@ CfgMap
 cfgmap
 nabc
 copyable
+SetVars
 Dataless
 delims
 iconn
