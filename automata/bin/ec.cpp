@@ -155,6 +155,8 @@ int main(int argc, char **argv)
         cout << "low_nodes_bytes  = " << result.low_nodes_bytes << endl;
         cout << "high_nodes       = " << result.high_nodes << endl;
         cout << "high_nodes_bytes = " << result.high_nodes_bytes << endl;
+        cout << "pc_nodes         = " << result.pc_nodes << endl;
+        cout << "pc_nodes_bytes   = " << result.pc_nodes_bytes << endl;
 
         output_stream.write(result.buffer.data(), result.buffer.size());
         if (! output_stream) {

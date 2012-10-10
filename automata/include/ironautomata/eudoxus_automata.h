@@ -54,7 +54,7 @@ extern "C" {
  * This is checked by @c ia_eudoxus_create_ methods to insure that an automata
  * was generated for the current engine.
  */
-#define IA_EUDOXUS_VERSION 5
+#define IA_EUDOXUS_VERSION 6
 
 /**
  * A Eudoxus Automata.
@@ -161,7 +161,22 @@ enum ia_eudoxus_nodetype_t
      * A high degree node stores its targets in a vector and uses bitmaps and
      * populations counts to map inputs to indices in that vector.
      */
-    IA_EUDOXUS_HIGH = 1
+    IA_EUDOXUS_HIGH = 1,
+
+    /**
+     * Path Compression Node
+     *
+     * A node representing a simple sequence of multiple inputs.
+     */
+    IA_EUDOXUS_PC = 2,
+
+    /**
+     * Extended Node
+     *
+     * Current unsupported but may, in the future, indicate that additional
+     * data needs to be read to determine node type.
+     */
+    IA_EUDOXUS_EXTENDED = 3
 };
 typedef enum ia_eudoxus_nodetype_t ia_eudoxus_nodetype_t;
 

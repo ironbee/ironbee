@@ -72,6 +72,12 @@ struct result_t
 
     //! Bytes of low nodes.
     size_t low_nodes_bytes;
+
+    //! Number of PC nodes.
+    size_t pc_nodes;
+
+    //! Bytes of PC nodes.
+    size_t pc_nodes_bytes;
 };
 
 /**

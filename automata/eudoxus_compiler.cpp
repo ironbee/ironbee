@@ -27,6 +27,7 @@
 #include <ironautomata/bits.h>
 #include <ironautomata/eudoxus_automata.h>
 
+#include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 
 #include <queue>
@@ -37,7 +38,7 @@ using namespace std;
 namespace IronAutomata {
 namespace EudoxusCompiler {
 
-#define CPP_EUDOXUS_VERSION 5
+#define CPP_EUDOXUS_VERSION 6
 #if CPP_EUDOXUS_VERSION != IA_EUDOXUS_VERSION
 #error "Mismatch between compiler version and automata version."
 #endif
@@ -88,6 +89,8 @@ private:
     typedef typename traits_t::low_node_t e_low_node_t;
     //! Eudoxus High Node
     typedef typename traits_t::high_node_t e_high_node_t;
+    //! Eudoxus PC Node
+    typedef typename traits_t::pc_node_t e_pc_node_t;
     //! Eudoxus Output.
     typedef typename traits_t::output_t   e_output_t;
 
@@ -211,278 +214,312 @@ private:
         Intermediate::Node::targets_by_input_t targets_by_input;
     };
 
-    /**
-     * Functor to use with Intermediate::breadth_first().
-     */
-    class BFSVisitor
+    //! Set of nodes.
+    typedef set<Intermediate::node_p> node_set_t;
+    //! Map of nodes to set of nodes: it's parents.
+    typedef map<Intermediate::node_p, node_set_t> parent_map_t;
+
+    //! Compile @a node to @a end_of_path into a PC node.
+    void pc_node(
+        const Intermediate::node_p& node,
+        const Intermediate::node_p& end_of_path,
+        size_t                      path_length
+    )
     {
-    public:
-        /**
-         * Constructor.
-         *
-         * @param[in] parent The current Compiler instance.
-         */
-        explicit
-        BFSVisitor(Compiler& parent) :
-            m_parent(parent)
-        {
-            // nop
-        }
+        size_t old_size = m_assembler.size();
 
-        /**
-         * Call operator; process anode.
-         */
-        void operator()(const Intermediate::node_p& node)
         {
-            if (m_parent.m_assembler.size() >= m_parent.m_max_index) {
-                throw out_of_range("id_width too small");
+            e_pc_node_t* header =
+                m_assembler.append_object(e_pc_node_t());
+
+            header->header = IA_EUDOXUS_PC;
+            if (node->first_output()) {
+                header->header = ia_setbit8(header->header, 0 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (node->default_target()) {
+                header->header = ia_setbit8(header->header, 1 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (node->advance_on_default()) {
+                header->header = ia_setbit8(header->header, 2 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (end_of_path->edges().front().advance()) {
+                header->header = ia_setbit8(header->header, 3 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (path_length > 8 || path_length == 6 || path_length == 7 || path_length == 8) {
+                header->header = ia_setbit8(header->header, 4 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (path_length > 8 || path_length == 4 || path_length == 5 || path_length == 8) {
+                header->header = ia_setbit8(header->header, 5 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (path_length > 8 || path_length == 3 || path_length == 5 || path_length == 7) {
+                header->header = ia_setbit8(header->header, 6 + IA_EUDOXUS_TYPE_WIDTH);
             }
 
-            size_t index = m_parent.m_assembler.size();
-            size_t alignment = index % m_parent.m_align_to;
-            size_t padding = (
-                alignment == 0 ?
-                0 :
-                m_parent.m_align_to - alignment
+            assert(has_unique_child(end_of_path));
+            register_node_ref(
+                m_assembler.index(&(header->final_target)),
+                has_unique_child(end_of_path)
             );
-            if (padding > 0) {
-                m_parent.m_result.padding += padding;
-                for (size_t i = 0; i < padding; ++i) {
-                    m_parent.m_assembler.append_object(uint8_t(0xaa));
-                }
-            }
-            assert(m_parent.m_assembler.size() % m_parent.m_align_to == 0);
-            m_parent.m_node_map[node] = m_parent.m_assembler.size();
-
-            NodeOracle oracle(node);
-
-            if (! oracle.deterministic) {
-                throw runtime_error(
-                    "Non-deterministic automata unsupported."
-                );
-            }
-
-            size_t old_size = m_parent.m_assembler.size();
-            size_t* bytes_counter = NULL;
-            size_t* nodes_counter = NULL;
-            size_t cost_prediction = 0;
-
-            if (oracle.high_node_cost > oracle.low_node_cost) {
-                cost_prediction = oracle.low_node_cost;
-                bytes_counter = &m_parent.m_result.low_nodes_bytes;
-                nodes_counter = &m_parent.m_result.low_nodes;
-                low_node(*node, oracle);
-            }
-            else {
-                cost_prediction = oracle.high_node_cost;
-                bytes_counter = &m_parent.m_result.high_nodes_bytes;
-                nodes_counter = &m_parent.m_result.high_nodes;
-                high_node(*node, oracle);
-            }
-            size_t bytes_added = m_parent.m_assembler.size() - old_size;
-
-            if (cost_prediction != bytes_added) {
-                throw logic_error(
-                    "Insanity: Incorrect cost prediction."
-                    "  Please report as bug."
-                );
-            }
-            ++(*nodes_counter);
-            (*bytes_counter) += bytes_added;
         }
 
-    private:
+        if (node->first_output()) {
+            append_output_ref(node->first_output());
+            m_outputs.insert(node->first_output());
+        }
 
-        /**
-         * Compile @a node as a low_node.
-         *
-         * Appends a low node to the buffer representing @a node.
-         *
-         * @param[in] node Intermediate node to compile.
-         */
-        void low_node(
-            const Intermediate::Node& node,
-            const NodeOracle& oracle
-        )
+        if (node->default_target()) {
+            append_node_ref(node->default_target());
+        }
+
+        assert(path_length >= 2);
+        assert(path_length <= 255);
+
+        if (path_length > 8) {
+            m_assembler.append_object(uint8_t(path_length));
+        }
+
+        for (
+            Intermediate::node_p cur = node;
+            cur != end_of_path;
+            cur = has_unique_child(cur)
+        ) {
+            assert(cur->edges().size() == 1);
+            assert(cur->edges().front().size() == 1);
+            m_assembler.append_object(uint8_t(
+               *cur->edges().front().begin()
+            ));
+        }
+
+        ++m_result.pc_nodes;
+        m_result.pc_nodes_bytes += m_assembler.size() - old_size;
+    }
+
+    //! Compile node into a demux (high or low) node.
+    void demux_node(const Intermediate::node_p& node)
+    {
+        NodeOracle oracle(node);
+
+        if (! oracle.deterministic) {
+            throw runtime_error(
+                "Non-deterministic automata unsupported."
+            );
+        }
+
+        size_t old_size = m_assembler.size();
+        size_t* bytes_counter = NULL;
+        size_t* nodes_counter = NULL;
+        size_t cost_prediction = 0;
+
+        if (oracle.high_node_cost > oracle.low_node_cost) {
+            cost_prediction = oracle.low_node_cost;
+            bytes_counter = &m_result.low_nodes_bytes;
+            nodes_counter = &m_result.low_nodes;
+            low_node(*node, oracle);
+        }
+        else {
+            cost_prediction = oracle.high_node_cost;
+            bytes_counter = &m_result.high_nodes_bytes;
+            nodes_counter = &m_result.high_nodes;
+            high_node(*node, oracle);
+        }
+        size_t bytes_added = m_assembler.size() - old_size;
+
+        if (cost_prediction != bytes_added) {
+            throw logic_error(
+                "Insanity: Incorrect cost prediction."
+                "  Please report as bug."
+            );
+        }
+        ++(*nodes_counter);
+        (*bytes_counter) += bytes_added;
+    }
+
+    /**
+     * Compile @a node as a low_node.
+     *
+     * Appends a low node to the buffer representing @a node.
+     *
+     * @param[in] node Intermediate node to compile.
+     */
+    void low_node(
+        const Intermediate::Node& node,
+        const NodeOracle& oracle
+    )
+    {
         {
-            {
-                e_low_node_t* header =
-                    m_parent.m_assembler.append_object(e_low_node_t());
+            e_low_node_t* header =
+                m_assembler.append_object(e_low_node_t());
 
-                header->header = IA_EUDOXUS_LOW;
-                if (node.first_output()) {
-                    header->header = ia_setbit8(header->header, 0 + IA_EUDOXUS_TYPE_WIDTH);
-                }
-                if (oracle.has_nonadvancing) {
-                    header->header = ia_setbit8(header->header, 1 + IA_EUDOXUS_TYPE_WIDTH);
-                }
-                if (node.default_target()) {
-                    header->header = ia_setbit8(header->header, 2 + IA_EUDOXUS_TYPE_WIDTH);
-                }
-                if (node.advance_on_default()) {
-                    header->header = ia_setbit8(header->header, 3 + IA_EUDOXUS_TYPE_WIDTH);
-                }
-                if (oracle.out_degree > 0) {
-                    header->header = ia_setbit8(header->header, 4 + IA_EUDOXUS_TYPE_WIDTH);
-                }
-            }
-
+            header->header = IA_EUDOXUS_LOW;
             if (node.first_output()) {
-                m_parent.append_output_ref(node.first_output());
-                m_parent.m_outputs.insert(node.first_output());
+                header->header = ia_setbit8(header->header, 0 + IA_EUDOXUS_TYPE_WIDTH);
             }
-
+            if (oracle.has_nonadvancing) {
+                header->header = ia_setbit8(header->header, 1 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (node.default_target()) {
+                header->header = ia_setbit8(header->header, 2 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (node.advance_on_default()) {
+                header->header = ia_setbit8(header->header, 3 + IA_EUDOXUS_TYPE_WIDTH);
+            }
             if (oracle.out_degree > 0) {
-                m_parent.m_assembler.append_object(
-                    uint8_t(oracle.out_degree)
+                header->header = ia_setbit8(header->header, 4 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+        }
+
+        if (node.first_output()) {
+            append_output_ref(node.first_output());
+            m_outputs.insert(node.first_output());
+        }
+
+        if (oracle.out_degree > 0) {
+            m_assembler.append_object(
+                uint8_t(oracle.out_degree)
+            );
+        }
+
+        if (node.default_target()) {
+            append_node_ref(node.default_target());
+        }
+
+        size_t advance_index = 0;
+        if (oracle.has_nonadvancing) {
+            uint8_t* advance =
+                m_assembler.template append_array<uint8_t>(
+                    (oracle.out_degree + 7) / 8
+                );
+            advance_index = m_assembler.index(advance);
+        }
+
+        size_t edge_i = 0;
+        BOOST_FOREACH(const Intermediate::Edge& edge, node.edges()) {
+            if (edge.epsilon()) {
+                throw runtime_error(
+                    "Epsilon edges currently unsupported."
                 );
             }
-
-            if (node.default_target()) {
-                m_parent.append_node_ref(node.default_target());
-            }
-
-            size_t advance_index = 0;
-            if (oracle.has_nonadvancing) {
-                uint8_t* advance =
-                    m_parent.m_assembler.template append_array<uint8_t>(
-                        (oracle.out_degree + 7) / 8
-                    );
-                advance_index = m_parent.m_assembler.index(advance);
-            }
-
-            size_t edge_i = 0;
-            BOOST_FOREACH(const Intermediate::Edge& edge, node.edges()) {
-                if (edge.epsilon()) {
-                    throw runtime_error(
-                        "Epsilon edges currently unsupported."
+            BOOST_FOREACH(uint8_t value, edge) {
+                if (oracle.has_nonadvancing && edge.advance()) {
+                    ia_setbitv(
+                        m_assembler.template ptr<uint8_t>(
+                            advance_index
+                        ),
+                        edge_i
                     );
                 }
-                BOOST_FOREACH(uint8_t value, edge) {
-                    if (oracle.has_nonadvancing && edge.advance()) {
-                        ia_setbitv(
-                            m_parent.m_assembler.template ptr<uint8_t>(
-                                advance_index
-                            ),
-                            edge_i
-                        );
-                    }
-                    ++edge_i;
+                ++edge_i;
 
-                    e_low_edge_t* e_edge =
-                        m_parent.m_assembler.append_object(e_low_edge_t());
-                    e_edge->c = value;
-                    m_parent.register_node_ref(
-                        m_parent.m_assembler.index(&(e_edge->next_node)),
-                        edge.target()
-                    );
+                e_low_edge_t* e_edge =
+                    m_assembler.append_object(e_low_edge_t());
+                e_edge->c = value;
+                register_node_ref(
+                    m_assembler.index(&(e_edge->next_node)),
+                    edge.target()
+                );
+            }
+        }
+    }
+
+    /**
+     * Compile @a node as a high_node.
+     *
+     * Appends a high node to the buffer representing @a node.
+     *
+     * @param[in] node Intermediate node to compile.
+     */
+    void high_node(
+        const Intermediate::Node& node,
+        const NodeOracle& oracle
+    )
+    {
+        {
+            e_high_node_t* header =
+                m_assembler.append_object(e_high_node_t());
+
+            header->header = IA_EUDOXUS_HIGH;
+            if (node.first_output()) {
+                header->header = ia_setbit8(header->header, 0 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (oracle.has_nonadvancing) {
+                header->header = ia_setbit8(header->header, 1 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (node.default_target()) {
+                header->header = ia_setbit8(header->header, 2 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (node.advance_on_default()) {
+                header->header = ia_setbit8(header->header, 3 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (oracle.out_degree < 256) {
+                header->header = ia_setbit8(header->header, 4 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+            if (oracle.use_ali) {
+                header->header = ia_setbit8(header->header, 5 + IA_EUDOXUS_TYPE_WIDTH);
+            }
+        }
+
+        if (node.first_output()) {
+            append_output_ref(node.first_output());
+            m_outputs.insert(node.first_output());
+        }
+
+        if (node.default_target()) {
+            append_node_ref(node.default_target());
+        }
+
+        if (oracle.has_nonadvancing) {
+            ia_bitmap256_t& advance_bm =
+                *m_assembler.append_object(ia_bitmap256_t());
+            for (int c = 0; c < 256; ++c) {
+                if (
+                    ! oracle.targets_by_input[c].empty() &&
+                    oracle.targets_by_input[c].front().second
+                ) {
+                    ia_setbitv64(advance_bm.bits, c);
                 }
             }
         }
 
-        /**
-         * Compile @a node as a high_node.
-         *
-         * Appends a high node to the buffer representing @a node.
-         *
-         * @param[in] node Intermediate node to compile.
-         */
-        void high_node(
-            const Intermediate::Node& node,
-            const NodeOracle& oracle
-        )
-        {
-            {
-                e_high_node_t* header =
-                    m_parent.m_assembler.append_object(e_high_node_t());
-
-                header->header = IA_EUDOXUS_HIGH;
-                if (node.first_output()) {
-                    header->header = ia_setbit8(header->header, 0 + IA_EUDOXUS_TYPE_WIDTH);
-                }
-                if (oracle.has_nonadvancing) {
-                    header->header = ia_setbit8(header->header, 1 + IA_EUDOXUS_TYPE_WIDTH);
-                }
-                if (node.default_target()) {
-                    header->header = ia_setbit8(header->header, 2 + IA_EUDOXUS_TYPE_WIDTH);
-                }
-                if (node.advance_on_default()) {
-                    header->header = ia_setbit8(header->header, 3 + IA_EUDOXUS_TYPE_WIDTH);
-                }
-                if (oracle.out_degree < 256) {
-                    header->header = ia_setbit8(header->header, 4 + IA_EUDOXUS_TYPE_WIDTH);
-                }
-                if (oracle.use_ali) {
-                    cerr << "setting use ali!\n";
-                    header->header = ia_setbit8(header->header, 5 + IA_EUDOXUS_TYPE_WIDTH);
+        if (oracle.out_degree < 256) {
+            ia_bitmap256_t& target_bm =
+                *m_assembler.append_object(ia_bitmap256_t());
+            for (int c = 0; c < 256; ++c) {
+                if (
+                    ! oracle.targets_by_input[c].empty()
+                    && oracle.targets_by_input[c].front().first !=
+                       node.default_target()
+                ) {
+                    ia_setbitv64(target_bm.bits, c);
                 }
             }
+        }
 
-            if (node.first_output()) {
-                m_parent.append_output_ref(node.first_output());
-                m_parent.m_outputs.insert(node.first_output());
-            }
-
-            if (node.default_target()) {
-                m_parent.append_node_ref(node.default_target());
-            }
-
-            if (oracle.has_nonadvancing) {
-                ia_bitmap256_t& advance_bm =
-                    *m_parent.m_assembler.append_object(ia_bitmap256_t());
-                for (int c = 0; c < 256; ++c) {
-                    if (
-                        ! oracle.targets_by_input[c].empty() &&
-                        oracle.targets_by_input[c].front().second
-                    ) {
-                        ia_setbitv64(advance_bm.bits, c);
-                    }
-                }
-            }
-
-            if (oracle.out_degree < 256) {
-                ia_bitmap256_t& target_bm =
-                    *m_parent.m_assembler.append_object(ia_bitmap256_t());
-                for (int c = 0; c < 256; ++c) {
-                    if (
-                        ! oracle.targets_by_input[c].empty()
-                        && oracle.targets_by_input[c].front().first !=
-                           node.default_target()
-                    ) {
-                        ia_setbitv64(target_bm.bits, c);
-                    }
-                }
-            }
-
-            if (oracle.use_ali) {
-                Intermediate::node_p previous_target;
-                ia_bitmap256_t& ali_bm =
-                    *m_parent.m_assembler.append_object(ia_bitmap256_t());
-                for (int c = 0; c < 256; ++c) {
-                    if (! oracle.targets_by_input[c].empty()) {
-                        const Intermediate::node_p& target =
-                            oracle.targets_by_input[c].front().first;
-                        if (previous_target && target != previous_target) {
-                            ia_setbitv64(ali_bm.bits, c);
-                        }
-                        previous_target = target;
-                    }
-                }
-            }
-
+        if (oracle.use_ali) {
+            Intermediate::node_p previous_target;
+            ia_bitmap256_t& ali_bm =
+                *m_assembler.append_object(ia_bitmap256_t());
             for (int c = 0; c < 256; ++c) {
                 if (! oracle.targets_by_input[c].empty()) {
                     const Intermediate::node_p& target =
                         oracle.targets_by_input[c].front().first;
-                    if (target != node.default_target()) {
-                        m_parent.append_node_ref(target);
+                    if (previous_target && target != previous_target) {
+                        ia_setbitv64(ali_bm.bits, c);
                     }
+                    previous_target = target;
                 }
             }
         }
 
-        Compiler& m_parent;
-    };
+        for (int c = 0; c < 256; ++c) {
+            if (! oracle.targets_by_input[c].empty()) {
+                const Intermediate::node_p& target =
+                    oracle.targets_by_input[c].front().first;
+                if (target != node.default_target()) {
+                    append_node_ref(target);
+                }
+            }
+        }
+    }
 
     /**
      * Go back over buffer and fill in the identifiers.
@@ -597,6 +634,46 @@ private:
         }
     }
 
+    //! Returns unique child of @a node or singular node_p if no unique child.
+    static
+    Intermediate::node_p has_unique_child(const Intermediate::node_p& node)
+    {
+        if (
+            node->edges().size() == 1 &&
+            node->edges().front().size() == 1
+        ) {
+            return node->edges().front().target();
+        }
+        return Intermediate::node_p();
+    }
+
+    //! Returns true iff @a a and @a b have the same default behavior.
+    static
+    bool same_defaults(
+        const Intermediate::node_p& a,
+        const Intermediate::node_p& b
+    )
+    {
+        return
+            a->default_target()     == b->default_target() &&
+            a->advance_on_default() == b->advance_on_default();
+    }
+
+    //! Add all children of @a node to @a parents.
+    static
+    void calculate_parents(
+        parent_map_t&               parents,
+        const Intermediate::node_p& node
+    )
+    {
+        BOOST_FOREACH(const Intermediate::Edge& edge, node->edges()) {
+            parents[edge.target()].insert(node);
+        }
+        if (node->default_target()) {
+            parents[node->default_target()].insert(node);
+        }
+    }
+
     //! Logger to use.
     logger_t m_logger;
 
@@ -656,10 +733,12 @@ void Compiler<id_width>::compile(
     m_result.buffer.clear();
     m_result.ids_used = 0;
     m_result.padding = 0;
-    m_result.high_nodes = 0;
-    m_result.high_nodes_bytes = 0;
     m_result.low_nodes = 0;
     m_result.low_nodes_bytes = 0;
+    m_result.high_nodes = 0;
+    m_result.high_nodes_bytes = 0;
+    m_result.pc_nodes = 0;
+    m_result.pc_nodes_bytes = 0;
 
     // Header
     ia_eudoxus_automata_t* e_automata =
@@ -678,7 +757,90 @@ void Compiler<id_width>::compile(
     // Store index as it will likely move.
     size_t e_automata_index = m_assembler.index(e_automata);
 
-    Intermediate::breadth_first(automata, BFSVisitor(*this));
+    // Calculate Node Parents
+    parent_map_t parents;
+    breadth_first(
+        automata,
+        boost::bind(calculate_parents, boost::ref(parents), _1)
+    );
+
+    // Adapted BFS... Complicated by path compression nodes.
+    queue<Intermediate::node_p> todo;
+    set<Intermediate::node_p>   queued;
+
+    todo.push(automata.start_node());
+    queued.insert(automata.start_node());
+
+    while (! todo.empty()) {
+        if (m_assembler.size() >= m_max_index) {
+            throw out_of_range("id_width too small");
+        }
+
+        Intermediate::node_p node = todo.front();
+        todo.pop();
+
+        // Padding
+        size_t index = m_assembler.size();
+        size_t alignment = index % m_align_to;
+        size_t padding = (
+            alignment == 0 ?
+            0 :
+            m_align_to - alignment
+        );
+        if (padding > 0) {
+            m_result.padding += padding;
+            for (size_t i = 0; i < padding; ++i) {
+                m_assembler.append_object(uint8_t(0xaa));
+            }
+        }
+        assert(m_assembler.size() % m_align_to == 0);
+
+        // Record node location.
+        m_node_map[node] = m_assembler.size();
+
+        Intermediate::node_p end_of_path = node;
+        Intermediate::node_p child = has_unique_child(end_of_path);
+        size_t path_length = 1;
+        while (
+            path_length <= 255 &&
+            child &&
+            ! child->first_output() &&
+            end_of_path->edges().front().advance() &&
+            has_unique_child(child) &&
+            same_defaults(end_of_path, child) &&
+            parents[child].size() == 1
+        ) {
+            end_of_path = child;
+            child = has_unique_child(child);
+            ++path_length;
+        }
+
+        if (end_of_path != node) {
+            // Path Compression
+            pc_node(node, end_of_path, path_length);
+        }
+        else {
+            // Demux: High or Low
+            demux_node(node);
+        }
+
+        // And add all children of wherever we ended.
+        BOOST_FOREACH(const Intermediate::Edge& edge, end_of_path->edges()) {
+            const Intermediate::node_p& target = edge.target();
+            bool need_to_queue = queued.insert(target).second;
+            if (need_to_queue) {
+                todo.push(target);
+            }
+        }
+        if (end_of_path->default_target()) {
+            const Intermediate::node_p& target =
+                end_of_path->default_target();
+            bool need_to_queue = queued.insert(target).second;
+            if (need_to_queue) {
+                todo.push(target);
+            }
+        }
+    }
 
     complete_outputs();
     append_outputs();

@@ -249,6 +249,101 @@ ia_eudoxus_result_t IA_EUDOXUS(next_high)(
     return IA_EUDOXUS_OK;
 }
 
+/* Path Compression Node */
+
+/**
+ * Next function for path compression nodes.
+ *
+ * @sa IA_EUDOXUS(next) for details.
+ */
+static
+ia_eudoxus_result_t IA_EUDOXUS(next_pc)(
+    ia_eudoxus_state_t *state
+)
+{
+    if (state == NULL) {
+        return IA_EUDOXUS_EINSANE;
+    }
+
+    assert(state->eudoxus        != NULL);
+    assert(state->callback       != NULL);
+    assert(state->node           != NULL);
+    assert(state->input_location != NULL);
+
+    bool has_output         = IA_EUDOXUS_FLAG(state->node->header, 0);
+    bool has_default        = IA_EUDOXUS_FLAG(state->node->header, 1);
+    bool advance_on_default = IA_EUDOXUS_FLAG(state->node->header, 2);
+    bool advance_on_final   = IA_EUDOXUS_FLAG(state->node->header, 3);
+    uint8_t length =
+        2 +
+        IA_EUDOXUS_FLAG(state->node->header, 4) * 4 +
+        IA_EUDOXUS_FLAG(state->node->header, 5) * 2 +
+        IA_EUDOXUS_FLAG(state->node->header, 6);
+
+    const IA_EUDOXUS(pc_node_t) *node
+        = (const IA_EUDOXUS(pc_node_t) *)(state->node);
+
+    ia_vls_state_t vls;
+    IA_VLS_INIT(vls, node);
+    // Advance past first_output.
+    IA_VLS_ADVANCE_IF(vls, IA_EUDOXUS_ID_T, has_output);
+    IA_EUDOXUS_ID_T default_node = IA_VLS_IF(
+        vls,
+        IA_EUDOXUS_ID_T,
+        0,
+        has_default
+    );
+    length = IA_VLS_IF(
+        vls,
+        uint8_t,
+        length,
+        length > 8
+    );
+    const uint8_t *bytes = IA_VLS_FINAL(vls, const uint8_t);
+
+    int byte_index = 0;
+    for (;byte_index < length; ++byte_index) {
+        const uint8_t c = *(state->input_location);
+        if (c == bytes[byte_index]) {
+            state->input_location += 1;
+            state->remaining_bytes -= 1;
+            state->node = NULL;
+            if (state->remaining_bytes == 0) {
+                return IA_EUDOXUS_OK;
+            }
+        }
+        else {
+            break;
+        }
+    }
+
+    IA_EUDOXUS_ID_T next_node = 0;
+    bool advance_on_next_node = true;
+    if (byte_index == length - 1) {
+        assert(node->final_target != 0);
+        next_node = node->final_target;
+        advance_on_next_node = advance_on_final;
+    }
+    else if (has_default) {
+        next_node = default_node;
+        advance_on_next_node = advance_on_default;
+    }
+    else {
+        return IA_EUDOXUS_END;
+    }
+
+    if (advance_on_next_node) {
+        state->input_location  += 1;
+        state->remaining_bytes -= 1;
+    }
+
+    state->node = (const ia_eudoxus_node_t *)(
+        (const char *)(state->eudoxus->automata) + next_node
+    );
+
+    return IA_EUDOXUS_OK;
+}
+
 /* Node Generic Code */
 
 /**
@@ -281,6 +376,9 @@ ia_eudoxus_result_t IA_EUDOXUS(next)(
         break;
     case IA_EUDOXUS_HIGH:
         result = IA_EUDOXUS(next_high)(state);
+        break;
+    case IA_EUDOXUS_PC:
+        result = IA_EUDOXUS(next_pc)(state);
         break;
     default:
         ia_eudoxus_set_error_printf(
@@ -353,7 +451,18 @@ ia_eudoxus_result_t IA_EUDOXUS(output)(
     }
 
     ia_vls_state_t vls;
-    IA_VLS_INIT(vls, state->node);
+    switch (IA_EUDOXUS_TYPE(state->node->header)) {
+        case IA_EUDOXUS_LOW:
+            IA_VLS_INIT(vls, (IA_EUDOXUS(low_node_t) *)(state->node));
+            break;
+        case IA_EUDOXUS_HIGH:
+            IA_VLS_INIT(vls, (IA_EUDOXUS(high_node_t) *)(state->node));
+            break;
+        case IA_EUDOXUS_PC:
+            IA_VLS_INIT(vls, (IA_EUDOXUS(pc_node_t) *)(state->node));
+            break;
+        default: return IA_EUDOXUS_EINSANE;
+    }
     IA_EUDOXUS_ID_T output = IA_VLS_IF(
         vls,
         IA_EUDOXUS_ID_T,

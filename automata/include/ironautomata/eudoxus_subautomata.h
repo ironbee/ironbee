@@ -188,6 +188,47 @@ struct IA_EUDOXUS(high_node_t)
      */
 } __attribute((packed));
 
+/**
+ * Eudoxus Path Compression (PC) Node
+ *
+ * Path Compression nodes represent simple paths through the automata.  I.e.,
+ * a chain of nodes that have a single entrance, single advancing non-default
+ * exit, no outputs after initial node, and identical defaults.  A PC node
+ * will emit outputs while entered, absorb input tokens as long as they match
+ * the path, and continue on to the target (if path is fully matched) or
+ * default (if ever not matched).
+ */
+typedef struct IA_EUDOXUS(pc_node_t) IA_EUDOXUS(pc_node_t);
+struct IA_EUDOXUS(pc_node_t)
+{
+    /*
+     * type: 10
+     * flag0: has_output
+     * flag1: has_default
+     * flag2: advance_on_default
+     * flag3: advance_on_final
+     * flag4+flag5+flag6: length:
+     *   000: 2
+     *   001: 3
+     *   010: 4
+     *   011: 5
+     *   100: 6
+     *   101: 7
+     *   110: 8
+     *   111: use long_length field
+     */
+    uint8_t header;
+
+    IA_EUDOXUS_ID_T final_target;
+
+    /* variable:
+    IA_EUDOXUS_ID_T first_output if has_output
+    IA_EUDOXUS_ID_T default_node if has_default
+    uint8_t long_length if length == 111
+    uint8_t bytes[];
+    */
+} __attribute((packed));
+
 /** @} IronAutomataEudoxusAutomata */
 
 #ifdef __cplusplus
@@ -202,11 +243,12 @@ namespace Eudoxus {
 template <>
 struct subengine_traits<sizeof(IA_EUDOXUS_ID_T)>
 {
-    typedef IA_EUDOXUS_ID_T        id_t;
-    typedef IA_EUDOXUS(output_t)   output_t;
-    typedef IA_EUDOXUS(low_edge_t) low_edge_t;
-    typedef IA_EUDOXUS(low_node_t) low_node_t;
+    typedef IA_EUDOXUS_ID_T         id_t;
+    typedef IA_EUDOXUS(output_t)    output_t;
+    typedef IA_EUDOXUS(low_edge_t)  low_edge_t;
+    typedef IA_EUDOXUS(low_node_t)  low_node_t;
     typedef IA_EUDOXUS(high_node_t) high_node_t;
+    typedef IA_EUDOXUS(pc_node_t)   pc_node_t;
 };
 
 } // Eudoxus
