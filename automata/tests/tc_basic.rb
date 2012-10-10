@@ -72,4 +72,20 @@ class TestBasic < Test::Unit::TestCase
     ac_test(words, text, "wide")
     ac_test(words, text, "wide_optimized", true)
   end
+
+  def test_tails
+    words = ["afoobar", "bfoobar", "cfoobar"]
+    text = words.join(" ")
+
+    ac_test(words, text, "tails")
+    ac_test(words, text, "tails_optimized", true)
+  end
+
+  def test_overlap
+    words = ["aaabbb", "bbbccc", "cccddd", "dddaaa"]
+    text = "aaabbbcccdddaaa"
+
+    ac_test(words, text, "overlap")
+    ac_test(words, text, "overlap_optimized", true)
+  end
 end
