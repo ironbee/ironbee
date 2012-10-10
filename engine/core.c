@@ -4065,7 +4065,7 @@ static ib_status_t core_set_value(ib_cfgparser_t *cp,
     else if (strcasecmp("audit", name) == 0) {
         /* Lookup the audit log provider. */
         rc = ib_provider_lookup(ib,
-                               IB_PROVIDER_TYPE_AUDIT,
+                                IB_PROVIDER_TYPE_AUDIT,
                                 val,
                                 &corecfg->pr.audit);
         if (rc != IB_OK) {
