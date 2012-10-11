@@ -916,11 +916,12 @@ IB_EINCOMPAT     = ffi.cast("int", c.IB_EINCOMPAT)
 IB_EALLOC        = ffi.cast("int", c.IB_EALLOC)
 IB_EINVAL        = ffi.cast("int", c.IB_EINVAL)
 IB_ENOENT        = ffi.cast("int", c.IB_ENOENT)
+IB_ETRUNC        = ffi.cast("int", c.IB_ETRUNC)
 IB_ETIMEDOUT     = ffi.cast("int", c.IB_ETIMEDOUT)
 IB_EAGAIN        = ffi.cast("int", c.IB_EAGAIN)
+IB_EOTHER        = ffi.cast("int", c.IB_EOTHER)
 IB_EBADVAL       = ffi.cast("int", c.IB_EBADVAL)
 IB_EEXIST        = ffi.cast("int", c.IB_EEXIST)
-IB_EOTHER        = ffi.cast("int", c.IB_EOTHER)
 
 -- ===============================================
 -- Field Types
