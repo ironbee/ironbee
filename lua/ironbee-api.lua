@@ -97,7 +97,7 @@ ibapi.eventTypeMap = {
 setmetatable(ibapi.eventTypeMap, { __index = ibutil.returnUnknown })
 
 -- Create an new ironbee object using the given engine and transaction.
-ibapi.new = function(self, ib_engine, ib_tx)
+ibapi.new = function(self, ib_rule_exec, ib_engine, ib_tx)
     -- Basic object
     ib_obj = {}
 
@@ -108,6 +108,7 @@ ibapi.new = function(self, ib_engine, ib_tx)
     ib_obj.private = {}
 
     -- Store raw C values.
+    ib_obj.private.ib_rule_exec = ffi.cast("const ib_rule_exec_t*", ib_rule_exec)
     ib_obj.private.ib_engine = ffi.cast("ib_engine_t*", ib_engine)
     ib_obj.private.ib_tx = ffi.cast("ib_tx_t*", ib_tx)
 

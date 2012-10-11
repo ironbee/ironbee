@@ -102,7 +102,7 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *rule_exec,
+ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
                                  ib_engine_t *ib,
                                  ib_tx_t *tx,
                                  lua_State *L,
@@ -135,7 +135,7 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *rule_exec,
     lua_newtable(L);
 
     lua_pushstring(L, "ib_rule_exec"); /* Push key. */
-    lua_pushlightuserdata(L, (ib_rule_exec_t*)rule_exec); /* Push value. */
+    lua_pushlightuserdata(L, (ib_rule_exec_t*)ib_rule_exec); /* Push value. */
     lua_settable(L, -3);          /* Assign to -3 key -2 and val -1. */
 
     lua_pushstring(L, "ib_tx");   /* Push key. */
@@ -152,15 +152,16 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *rule_exec,
     lua_pushstring(L, "new"); /* Push the name of the function. */
     lua_gettable(L, -3);      /* Get the ib.new function. */
     lua_getglobal(L, "ibapi");/* Push ib table (module) onto stack for self. */
+    lua_pushlightuserdata(L, (ib_rule_exec_t*)ib_rule_exec);
     lua_pushlightuserdata(L, ib); /* Push ib_engine argument to new. */
     lua_pushlightuserdata(L, tx); /* Push ib_tx argument to new. */
-    lua_rc = lua_pcall(L, 3, 1, 0); /* Make new ib api object. */
+    lua_rc = lua_pcall(L, 4, 1, 0); /* Make new ib api object. */
 
     if (lua_rc != 0) {
         ib_log_error_tx(tx,
             "Error running Lua Rule %s - %s", func_name, lua_tostring(L, -1));
         /* Pop (1) error string, (2) string "ib", and (3) new table, (4) func */
-        lua_pop(L, 4);
+        lua_pop(L, 5);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 

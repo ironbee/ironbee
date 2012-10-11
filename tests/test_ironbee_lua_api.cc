@@ -24,6 +24,7 @@
 
 extern "C" {
 #include "engine_private.h"
+#include "rule_engine_private.h"
 #include <ironbee/release.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
@@ -50,6 +51,8 @@ public:
     ib_conn_t *ib_conn;
     ib_tx_t *ib_tx;
     ib_module_t *mod_htp;
+    ib_rule_exec_t ib_rule_exec;
+    ib_rule_t *ib_rule;
 
     /**
      * Calls BaseFixture::SetUp(), then creates a new Lua State,
@@ -59,6 +62,18 @@ public:
     void SetUp()
     {
         BaseFixture::SetUp();
+
+        ASSERT_IB_OK(ib_rule_create(ib_engine,
+                                    ib_engine->ectx,
+                                    __FILE__,
+                                    __LINE__,
+                                    true,
+                                    &ib_rule));
+
+        memset(&ib_rule_exec, 0, sizeof(ib_rule_exec));
+        ib_rule_exec.ib = ib_engine;
+        ib_rule_exec.tx = ib_tx;
+        ib_rule_exec.rule = ib_rule;
 
         ib_state_notify_cfg_started(ib_engine);
 
@@ -91,13 +106,15 @@ public:
         require("ironbee", "ironbee-ffi");
         require("ibapi", "ironbee-api");
 
+        lua_pushlightuserdata(L, &ib_rule_exec);
+        lua_setglobal(L, "ib_rule_exec");
         lua_pushlightuserdata(L, ib_engine);
         lua_setglobal(L, "ib_engine");
         lua_pushlightuserdata(L, ib_tx);
         lua_setglobal(L, "ib_tx");
 
         /* Construct an IB value. */
-        eval("ib = ibapi:new(ib_engine, ib_tx)");
+        eval("ib = ibapi:new(ib_rule_exec, ib_engine, ib_tx)");
     }
 
     void sendDataIn(const string& req) {

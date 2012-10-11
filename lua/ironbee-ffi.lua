@@ -384,6 +384,251 @@ ffi.cdef [[
         uint8_t                  confidence;
         uint8_t                  severity;
     };
+
+    /* Rule and Operator Structures and Types. */
+
+    typedef enum {
+        PHASE_INVALID = -1,
+        PHASE_NONE,
+        PHASE_REQUEST_HEADER,
+        PHASE_REQUEST_BODY,
+        PHASE_RESPONSE_HEADER,
+        PHASE_RESPONSE_BODY,
+        PHASE_POSTPROCESS,
+        PHASE_STR_REQUEST_HEADER,
+        PHASE_STR_REQUEST_BODY,
+        PHASE_STR_RESPONSE_HEADER,
+        PHASE_STR_RESPONSE_BODY,
+        IB_RULE_PHASE_COUNT,
+    } ib_rule_phase_num_t;
+    typedef enum {
+        IB_RULE_DLOG_ALWAYS,
+        IB_RULE_DLOG_ERROR,
+        IB_RULE_DLOG_WARNING,
+        IB_RULE_DLOG_NOTICE,
+        IB_RULE_DLOG_INFO,
+        IB_RULE_DLOG_DEBUG,
+        IB_RULE_DLOG_TRACE,
+    } ib_rule_dlog_level_t;
+    typedef enum {
+        FLAG_OP_SET,
+        FLAG_OP_OR,
+        FLAG_OP_CLEAR,
+    } ib_rule_flagop_t;
+    typedef enum {
+        RULE_ACTION_TRUE,
+        RULE_ACTION_FALSE,
+    } ib_rule_action_t;
+    typedef enum {
+        RULE_ENABLE_ID,
+        RULE_ENABLE_TAG,
+        RULE_ENABLE_ALL,
+    } ib_rule_enable_type_t;
+    typedef struct {
+        const char            *id;
+        const char            *full_id;
+        const char            *chain_id;
+        const char            *msg;
+        const char            *data;
+        ib_list_t             *tags;
+        ib_rule_phase_num_t    phase;
+        uint8_t                severity;
+        uint8_t                confidence;
+        uint16_t               revision;
+        ib_flags_t             flags;
+        const char            *config_file;
+        unsigned int           config_line;
+    } ib_rule_meta_t;
+    struct ib_rule_target_t {
+        const char            *field_name;
+        const char            *target_str;
+        ib_list_t             *tfn_list;
+    };
+    typedef struct ib_rule_phase_meta_t ib_rule_phase_meta_t;
+    typedef struct ib_rule_t ib_rule_t;
+    typedef struct ib_operator_inst_t ib_operator_inst_t;
+    typedef struct ib_rule_exec_t ib_rule_exec_t;
+    struct ib_rule_t {
+        ib_rule_meta_t         meta;
+        const ib_rule_phase_meta_t *phase_meta;
+        ib_operator_inst_t    *opinst;
+        ib_list_t             *target_fields;
+        ib_list_t             *true_actions;
+        ib_list_t             *false_actions;
+        ib_list_t             *parent_rlist;
+        ib_context_t          *ctx;
+        ib_rule_t             *chained_rule;
+        ib_rule_t             *chained_from;
+        ib_flags_t             flags;
+    };
+    typedef ib_status_t (* ib_operator_create_fn_t)(
+        ib_engine_t        *ib,
+        ib_context_t       *ctx,
+        const ib_rule_t    *rule,
+        ib_mpool_t         *pool,
+        const char         *parameters,
+        ib_operator_inst_t *op_inst
+    );
+    typedef ib_status_t (* ib_operator_destroy_fn_t)(
+        ib_operator_inst_t *op_inst
+    );
+    typedef ib_status_t (* ib_operator_execute_fn_t)(
+        const ib_rule_exec_t *rule_exec,
+        void                 *data,
+        ib_flags_t            flags,
+        ib_field_t           *field,
+        ib_num_t             *result
+    );
+    typedef struct ib_operator_t ib_operator_t;
+
+    struct ib_operator_t {
+        char                    *name;
+        ib_flags_t               flags;
+        void                    *cd_create;
+        void                    *cd_destroy;
+        void                    *cd_execute;
+        ib_operator_create_fn_t  fn_create;
+        ib_operator_destroy_fn_t fn_destroy;
+        ib_operator_execute_fn_t fn_execute;
+    };
+
+struct ib_operator_inst_t {
+    struct ib_operator_t *op;      /**< Pointer to the operator type */
+    ib_flags_t            flags;   /**< Operator instance flags */
+    void                 *data;    /**< Data passed to the execute function */
+    char                 *params;  /**< Parameters passed to create */
+    ib_field_t           *fparam;  /**< Parameters as a field */
+};
+ib_status_t ib_operator_register(
+    ib_engine_t              *ib,
+    const char               *name,
+    ib_flags_t                flags,
+    ib_operator_create_fn_t   fn_create,
+    void                     *cd_create,
+    ib_operator_destroy_fn_t  fn_destroy,
+    void                     *cd_destroy,
+    ib_operator_execute_fn_t  fn_execute,
+    void                     *cd_execute
+);
+ib_status_t ib_operator_inst_create(
+    ib_engine_t         *ib,
+    ib_context_t        *ctx,
+    const ib_rule_t     *rule,
+    ib_flags_t           required_op_flags,
+    const char          *name,
+    const char          *parameters,
+    ib_flags_t           flags,
+    ib_operator_inst_t **op_inst
+);
+ib_status_t ib_operator_inst_destroy(
+    ib_operator_inst_t *op_inst
+);
+ib_status_t ib_operator_execute(
+    const ib_rule_exec_t     *rule_exec,
+    const ib_operator_inst_t *op_inst,
+    ib_field_t               *field,
+    ib_num_t                 *result
+);
+
+    /* Rule Structures and Types. */
+
+typedef struct ib_rule_target_t ib_rule_target_t;
+
+/**
+ * Rule execution logging data
+ */
+typedef struct ib_rule_log_exec_t ib_rule_log_exec_t;
+typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
+
+    typedef struct {
+        const char            *id;
+        const char            *full_id;
+        const char            *chain_id;
+        const char            *msg;
+        const char            *data;
+        ib_list_t             *tags;
+        ib_rule_phase_num_t    phase;
+        uint8_t                severity;
+        uint8_t                confidence;
+        uint16_t               revision;
+        ib_flags_t             flags;
+        const char            *config_file;
+        unsigned int           config_line;
+    } ib_rule_meta_t;
+    typedef struct ib_rule_phase_meta_t ib_rule_phase_meta_t;
+    typedef struct {
+        ib_rule_t             *rule;
+        ib_flags_t             flags;
+    } ib_rule_ctx_data_t;
+    
+    /**
+    * Rule engine parser data
+    */
+    typedef struct {
+        ib_rule_t             *previous;     /**< Previous rule parsed */
+    } ib_rule_parser_data_t;
+    
+    /**
+    * Ruleset for a single phase.
+    *  rule_list is a list of pointers to ib_rule_ctx_data_t objects.
+    */
+    typedef struct {
+        ib_rule_phase_num_t         phase_num;   /**< Phase number */
+        const ib_rule_phase_meta_t *phase_meta;  /**< Rule phase meta-data */
+        ib_list_t                  *rule_list;   /**< Rules to execute in phase */
+    } ib_ruleset_phase_t;
+        
+    /**
+    * Set of rules for all phases.
+    * The elements of the phases list are ib_rule_ctx_data_t objects.
+    */
+    typedef struct {
+        ib_ruleset_phase_t     phases[IB_RULE_PHASE_COUNT];
+    } ib_ruleset_t;
+    
+    /**
+    * Data on enable directives.
+    */
+    typedef struct {
+        ib_rule_enable_type_t  enable_type;  /**< Enable All / by ID / by Tag */
+        const char            *enable_str;   /**< String of ID or Tag */
+        const char            *file;         /**< Configuration file of enable */
+        unsigned int           lineno;       /**< Line number in config file */
+    } ib_rule_enable_t;
+    
+    /**
+    * Rules data for each context.
+    */
+    struct ib_rule_context_t {
+        ib_ruleset_t           ruleset;      /**< Rules to exec */
+        ib_list_t             *rule_list;    /**< All rules owned by context */
+        ib_hash_t             *rule_hash;    /**< Hash of rules (by rule-id) */
+        ib_list_t             *enable_list;  /**< Enable All/IDs/tags */
+        ib_list_t             *disable_list; /**< All/IDs/tags disabled */
+        ib_rule_parser_data_t  parser_data;  /**< Rule parser specific data */
+    };
+    
+    /**
+    * Rule engine data.
+    */
+    struct ib_rule_engine_t {
+        ib_list_t             *rule_list; /**< All rules owned by this context */
+        ib_hash_t             *rule_hash; /**< Hash of rules (by rule-id) */
+    };
+
+
+    struct ib_rule_exec_t {
+        ib_engine_t            *ib;
+        ib_tx_t                *tx;
+        ib_rule_t              *rule;
+        ib_rule_target_t       *target;
+        ib_num_t                result;
+        ib_rule_log_tx_t       *tx_log;
+        ib_rule_log_exec_t     *exec_log;
+        ib_list_t              *rule_stack;
+        ib_list_t              *value_stack;
+    };
+    
     const char *ib_logevent_type_name(ib_logevent_type_t num);
     const char *ib_logevent_action_name(ib_logevent_action_t num);
 
