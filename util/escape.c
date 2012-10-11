@@ -44,6 +44,7 @@ ib_status_t ib_string_escape_json_buf_ex(
     const uint8_t *data_in,
     size_t dlen_in,
     bool add_nul,
+    bool quote,
     char *data_out,
     size_t dsize_out,
     size_t *dlen_out,
@@ -65,13 +66,18 @@ ib_status_t ib_string_escape_json_buf_ex(
         *result = IB_STRFLAG_NONE;
     }
 
-    if (add_nul) {
-        oend = data_out + dsize_out - 1;
+    oend = data_out + dsize_out;
+    if (quote) {
+        oend -= 1;
     }
-    else {
-        oend = data_out + dsize_out;
+    if (add_nul) {
+        oend -= 1;
     }
     optr = data_out;
+    if (quote) {
+        *optr = '\"';
+        ++optr;
+    }
     for (iptr = data_in; iptr < iend; ++iptr) {
         size_t size = 1;
         const char *ostr = NULL;
@@ -152,7 +158,12 @@ ib_status_t ib_string_escape_json_buf_ex(
         }
    }
 
-    /* Add on our nul byte if required */
+    /* Add on our quote and nul byte if required */
+    if (quote) {
+        *optr = '\"';
+        modified = true;
+        ++optr;
+    }
     if (add_nul) {
         *optr = '\0';
         ++optr;
@@ -169,6 +180,7 @@ ib_status_t ib_string_escape_json_buf_ex(
 
 /* Convert a c-string to a json string with escaping */
 ib_status_t ib_string_escape_json_buf(const char *data_in,
+                                      bool quote,
                                       char *data_out,
                                       size_t dsize_out,
                                       size_t *dlen_out,
@@ -180,7 +192,7 @@ ib_status_t ib_string_escape_json_buf(const char *data_in,
 
     ib_status_t rc;
     rc = ib_string_escape_json_buf_ex((const uint8_t *)data_in, strlen(data_in),
-                                      true,
+                                      true, quote,
                                       data_out, dsize_out, dlen_out,
                                       result);
 
@@ -192,6 +204,7 @@ ib_status_t ib_string_escape_json_buf(const char *data_in,
 }
 
 ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
+                                       bool quote,
                                        const char *join,
                                        char *data_out,
                                        size_t dsize_out,
@@ -248,7 +261,7 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
         }
 
         /* Escape directly into the current buffer */
-        rc = ib_string_escape_json_buf(str, cur, remain, &len, &rslt);
+        rc = ib_string_escape_json_buf(str, quote, cur, remain, &len, &rslt);
 
         /* Adjust pointer and length */
         if ( (rc == IB_OK) || (rc == IB_ETRUNC) ) {
@@ -281,6 +294,7 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
                                      const uint8_t *data_in,
                                      size_t dlen_in,
                                      bool add_nul,
+                                     bool quote,
                                      char **data_out,
                                      size_t *dlen_out,
                                      ib_flags_t *result)
@@ -299,13 +313,13 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
 
 allocate:
     buflen = mult * dlen_in;
-    bufsize = buflen + (add_nul ? 1 : 0);
+    bufsize = buflen + (add_nul ? 1 : 0) + (quote ? 2 : 0);
     buf = ib_mpool_alloc(mp, bufsize);
     if (buf == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    rc = ib_string_escape_json_buf_ex(data_in, dlen_in, add_nul,
+    rc = ib_string_escape_json_buf_ex(data_in, dlen_in, add_nul, quote,
                                       buf, bufsize, dlen_out, result);
     if (rc == IB_ETRUNC) {
         assert (mult == 2);
@@ -321,6 +335,7 @@ allocate:
 /* Convert a c-string to a json string with escaping */
 ib_status_t ib_string_escape_json(ib_mpool_t *mp,
                                   const char *data_in,
+                                  bool quote,
                                   char **data_out,
                                   ib_flags_t *result)
 {
@@ -333,7 +348,7 @@ ib_status_t ib_string_escape_json(ib_mpool_t *mp,
     ib_status_t rc;
     rc = ib_string_escape_json_ex(mp,
                                   (const uint8_t *)data_in, strlen(data_in),
-                                  true,
+                                  true, quote,
                                   data_out, NULL,
                                   result);
     IB_FTRACE_RET_STATUS(rc);

@@ -1409,11 +1409,11 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         /* Turn tag list into JSON list, limiting the size. */
         char tags[128] = "\0";
         char fields[128] = "\0";
+        char ruleid[128] = "\0";
         const char *logdata = "";
-        const char *ruleid = "-";
         ib_status_t rc;
 
-        rc = ib_strlist_escape_json_buf(e->tags, ", ",
+        rc = ib_strlist_escape_json_buf(e->tags, true, ", ",
                                         tags, sizeof(tags),
                                         NULL, NULL);
         if (rc != IB_OK) {
@@ -1435,20 +1435,17 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             field_node = ib_list_first_const(e->fields);
             if (field_node != NULL) {
                 const char *field_name = (const char *)field_node->data;
-                char *escaped;
                 ib_flags_t rslt;
 
-                rc = ib_string_escape_json(part->log->mp,
-                                           field_name,
-                                           &escaped,
-                                           &rslt);
+                rc = ib_string_escape_json_buf(field_name, true, 
+                                               fields, sizeof(fields), NULL,
+                                               &rslt);
                 if (rc != IB_OK) {
                     ib_log_error_tx(part->log->tx,
                                     "Failed to escape field name \"%s\": %s",
                                     field_name, ib_status_to_string(rc));
-                    escaped = (char *)"";
+                    *fields = '\0';
                 }
-                snprintf(fields, sizeof(fields), "\"%s\"", escaped);
             }
         }
 
@@ -1459,7 +1456,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
             /* Note: Log data is expanded in act_event_execute() */
             rc = ib_string_escape_json_ex(part->log->mp,
                                           e->data, e->data_len,
-                                          true,
+                                          true, false,
                                           &escaped, NULL,
                                           &rslt);
             if (rc != IB_OK) {
@@ -1473,27 +1470,24 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
         }
 
         if (e->rule_id != NULL) {
-            char *escaped;
             ib_flags_t rslt;
 
-            rc = ib_string_escape_json(part->log->mp,
-                                       e->rule_id,
-                                       &escaped,
-                                       &rslt);
+            rc = ib_string_escape_json_buf(e->rule_id, true,
+                                           ruleid, sizeof(ruleid), NULL,
+                                           &rslt);
             if (rc != IB_OK) {
                 ib_log_error_tx(part->log->tx,
                                 "Failed to escape rule ID \"%s\": %s",
                                 e->rule_id, ib_status_to_string(rc));
-                escaped = (char *)"";
+                *ruleid = '\0';
             }
-            ruleid = escaped;
         }
 
         rlen = snprintf((char *)rec, CORE_JSON_MAX_REC_LEN,
                         "%s"
                         "    {\r\n"
                         "      \"event-id\": %" PRIu32 ",\r\n"
-                        "      \"rule-id\": \"%s\",\r\n"
+                        "      \"rule-id\": %s,\r\n"
                         "      \"type\": \"%s\",\r\n"
                         "      \"rec-action\": \"%s\",\r\n"
                         "      \"action\": \"%s\",\r\n"

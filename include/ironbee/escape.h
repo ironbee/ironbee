@@ -51,7 +51,8 @@ extern "C" {
  *
  * @param[in] data_in Input data
  * @param[in] dlen_in Length of data in @a data_in
- * @param[in] add_nul Save room for and append a nul byte?
+ * @param[in] add_nul Append a nul byte?
+ * @param[in] quote Add surrounding quotes?
  * @param[out] data_out Output buffer
  * @param[in] dsize_out Size of @a data_out
  * @param[out] dlen_out Length of data in @a data_out (or NULL)
@@ -70,6 +71,7 @@ ib_status_t ib_string_escape_json_buf_ex(
     const uint8_t *data_in,
     size_t dlen_in,
     bool add_nul,
+    bool quote,
     char *data_out,
     size_t dsize_out,
     size_t *dlen_out,
@@ -80,6 +82,7 @@ ib_status_t ib_string_escape_json_buf_ex(
  * Convert a bytestring to a json string with escaping
  *
  * @param[in] data_in Input data
+ * @param[in] quote Quote the string?
  * @param[out] data_out Output buffer
  * @param[in] dsize_out Size of @a data_out
  * @param[out] dlen_out Length of data in @a data_out (or NULL)
@@ -96,6 +99,7 @@ ib_status_t ib_string_escape_json_buf_ex(
  */
 ib_status_t ib_string_escape_json_buf(
     const char *data_in,
+    bool quote,
     char *data_out,
     size_t dsize_out,
     size_t *dlen_out,
@@ -106,6 +110,7 @@ ib_status_t ib_string_escape_json_buf(
  * Convert a list of NUL strings to a json string with escaping
  *
  * @param[in] items List of strings to escape
+ * @param[in] quote Quote the strings?
  * @param[in] join String to use for joining items in @a items
  * @param[out] data_out Output buffer
  * @param[in] dsize_out Size of @a data_out
@@ -123,6 +128,7 @@ ib_status_t ib_string_escape_json_buf(
  */
 ib_status_t ib_strlist_escape_json_buf(
     const ib_list_t *items,
+    bool quote,
     const char *join,
     char *data_out,
     size_t dsize_out,
@@ -137,6 +143,7 @@ ib_status_t ib_strlist_escape_json_buf(
  * @param[in] data_in Input data
  * @param[in] dlen_in Length of data in @a data_in
  * @param[in] nul Save room for and append a nul byte?
+ * @param[in] quote Save room for and add quotes?
  * @param[out] data_out Output data
  * @param[out] dlen_out Length of data in @a data_out (or NULL)
  * @param[out] result Result flags (IB_STRFLAG_xx)
@@ -152,6 +159,7 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
                                      const uint8_t *data_in,
                                      size_t dlen_in,
                                      bool nul,
+                                     bool quote,
                                      char **data_out,
                                      size_t *dlen_out,
                                      ib_flags_t *result);
@@ -161,6 +169,7 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
  *
  * @param[in] mp Memory pool to use for allocations
  * @param[in] data_in Input data
+ * @param[in] quote Save room for and add quotes?
  * @param[out] data_out Output data
  * @param[out] result Result flags (IB_STRFLAG_xx)
  *
@@ -173,6 +182,7 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
  */
 ib_status_t ib_string_escape_json(ib_mpool_t *mp,
                                   const char *data_in,
+                                  bool quote,
                                   char **data_out,
                                   ib_flags_t *result);
 

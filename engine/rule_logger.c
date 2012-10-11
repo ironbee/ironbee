@@ -986,9 +986,9 @@ static void log_tx_body(
 
         ib_string_escape_json_ex(rule_exec->tx_log->mp,
                                  sdata->data, sdata->dlen,
-                                 true, &buf, NULL, &result);
+                                 true, true, &buf, NULL, &result);
         if (rc == IB_OK) {
-            rule_log_exec(rule_exec, "%s %zd \"%s\"",
+            rule_log_exec(rule_exec, "%s %zd %s",
                           label, sdata->dlen, buf);
         }
     }
@@ -1260,7 +1260,7 @@ static void log_events(
         }
         else {
             char tags[128];
-            ib_strlist_escape_json_buf(event->tags, ", ",
+            ib_strlist_escape_json_buf(event->tags, false, ", ",
                                        tags, sizeof(tags),
                                        NULL, NULL);
             rule_log_exec(rule_exec,

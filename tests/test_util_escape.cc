@@ -46,6 +46,9 @@ const size_t CallBufSize = BufSize + 32;
 class TestEscapeJSON : public TestSimpleStringManipulation
 {
 public:
+    TestEscapeJSON() : m_quote(false) { };
+
+    void SetQuote(bool quote) { this->m_quote = quote; };
 
     const char *TestName(ib_strop_t op, test_type_t tt)
     {
@@ -60,7 +63,7 @@ public:
     {
         return ib_string_escape_json_ex(m_mpool,
                                         data_in, dlen_in,
-                                        false,
+                                        false, m_quote,
                                         (char **)data_out, &dlen_out,
                                         &result);
     }
@@ -73,7 +76,7 @@ public:
         size_t dlen_out;
         return ib_string_escape_json_ex(m_mpool,
                                         data_in, dlen_in,
-                                        true,
+                                        true, m_quote,
                                         data_out, &dlen_out,
                                         &result);
     }
@@ -84,6 +87,7 @@ public:
     {
         return ib_string_escape_json(m_mpool,
                                      data_in,
+                                     m_quote,
                                      data_out,
                                      &result);
     }
@@ -94,7 +98,7 @@ public:
                                 size_t &dlen_out,
                                 ib_flags_t &result)
     {
-        return ib_string_escape_json_buf(data_in,
+        return ib_string_escape_json_buf(data_in, m_quote,
                                          data_out, dsize_out, &dlen_out,
                                          &result);
     }
@@ -107,10 +111,12 @@ public:
                                ib_flags_t &result)
     {
         return ib_string_escape_json_buf_ex(data_in, dlen_in,
-                                            true,
+                                            true, m_quote,
                                             data_out, dsize_out, &dlen_out,
                                             &result);
     }
+protected:
+    bool m_quote;
 };
 
 TEST_F(TestEscapeJSON, Basic)
@@ -175,6 +181,57 @@ TEST_F(TestEscapeJSON, Simple)
         SCOPED_TRACE("Simple #11");
         const uint8_t in[]  = "\0";
         const char    out[] = "\\u0000";
+        RunTest(in, sizeof(in)-1, out);
+    }
+}
+
+TEST_F(TestEscapeJSON, Quoted)
+{
+    SetQuote(true);
+    {
+        SCOPED_TRACE("Simple #1");
+        RunTest("/", "\"\\/\"");
+    }
+    {
+        SCOPED_TRACE("Simple #2");
+        RunTest("\"", "\"\\\"\"");
+    }
+    {
+        SCOPED_TRACE("Simple #3");
+        RunTest("'", "\"'\"");
+    }
+    {
+        SCOPED_TRACE("Simple #4");
+        RunTest("\"", "\"\\\"\"");
+    }
+    {
+        SCOPED_TRACE("Simple #5");
+        RunTest("\\", "\"\\\\\"");
+    }
+    {
+        SCOPED_TRACE("Simple #6");
+        RunTest("\b", "\"\\b\"");
+    }
+    {
+        SCOPED_TRACE("Simple #7");
+        RunTest("\f", "\"\\f\"");
+    }
+    {
+        SCOPED_TRACE("Simple #8");
+        RunTest("\n", "\"\\n\"");
+    }
+    {
+        SCOPED_TRACE("Simple #9");
+        RunTest("\r", "\"\\r\"");
+    }
+    {
+        SCOPED_TRACE("Simple #10");
+        RunTest("\t", "\"\\t\"");
+    }
+    {
+        SCOPED_TRACE("Simple #11");
+        const uint8_t in[]  = "\0";
+        const char    out[] = "\"\\u0000\"";
         RunTest(in, sizeof(in)-1, out);
     }
 }
@@ -291,6 +348,7 @@ public:
                  ib_status_t expected_rc,
                  ib_flags_t expected_result,
                  const char *expected,
+                 bool quote,
                  const char *join,
                  size_t num, ...)
     {
@@ -315,11 +373,13 @@ public:
         }
         va_end(va);
 
-        RunTest(slist, join, bufsize, expected_rc, expected_result, expected);
+        RunTest(slist, quote, join, bufsize,
+                expected_rc, expected_result, expected);
 
     }
 
     void RunTest(const ib_list_t *slist,
+                 bool quote,
                  const char *join,
                  size_t bufsize,
                  ib_status_t expected_rc,
@@ -331,7 +391,7 @@ public:
         ib_flags_t result;
         ib_status_t rc;
 
-        rc = ib_strlist_escape_json_buf(slist, join, buf, bufsize,
+        rc = ib_strlist_escape_json_buf(slist, quote, join, buf, bufsize,
                                         &len, &result);
         ASSERT_EQ(expected_rc, rc);
         if (rc != IB_OK) {
@@ -346,42 +406,89 @@ TEST_F(TestEscapeStrListJSON, simple)
 {
     {
         SCOPED_TRACE("NULL list");
-        RunTest(NULL, "", 16, IB_OK, IB_STRFLAG_NONE, "");
+        RunTest(NULL, false, "", 16, IB_OK, IB_STRFLAG_NONE, "");
     }
     {
         SCOPED_TRACE("Empty list");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "", "", 0);
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "", false, "", 0);
     }
     {
         SCOPED_TRACE("List #1");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x", "", 1, "x");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x", false, "", 1, "x");
     }
     {
         SCOPED_TRACE("List #2");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x", ",", 1, "x");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x", false, ",", 1, "x");
     }
     {
         SCOPED_TRACE("List #3");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "xy", "", 2, "x", "y");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "xy", false, "", 2, "x", "y");
     }
     {
         SCOPED_TRACE("List #4");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x,y", ",", 2, "x", "y");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x,y", false, ",", 2, "x", "y");
     }
     {
         SCOPED_TRACE("List #5");
-        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x, y", ", ", 2, "x", "y");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "x, y", false, ", ", 2, "x", "y");
     }
     {
         SCOPED_TRACE("List #6");
         RunTest(16, IB_ETRUNC, IB_STRFLAG_MODIFIED,
-                "aaaa,bbbb,cccc,dddd", ",",
+                "aaaa,bbbb,cccc,dddd", false, ",",
                 4, "aaaa", "bbbb", "cccc", "dddd");
     }
     {
         SCOPED_TRACE("List #7");
         RunTest(32, IB_OK, IB_STRFLAG_NONE,
-                "aaaa,bbbb,cccc,dddd", ",",
+                "aaaa,bbbb,cccc,dddd", false, ",",
+                4, "aaaa", "bbbb", "cccc", "dddd");
+    }
+}
+
+TEST_F(TestEscapeStrListJSON, quoted)
+{
+    {
+        SCOPED_TRACE("NULL list");
+        RunTest(NULL, true, "", 16, IB_OK, IB_STRFLAG_NONE, "");
+    }
+    {
+        SCOPED_TRACE("Empty list");
+        RunTest(16, IB_OK, IB_STRFLAG_NONE, "", true, "", 0);
+    }
+    {
+        SCOPED_TRACE("List #1");
+        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "\"x\"", true, "", 1, "x");
+    }
+    {
+        SCOPED_TRACE("List #2");
+        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "\"x\"", true, ",", 1, "x");
+    }
+    {
+        SCOPED_TRACE("List #3");
+        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "\"x\"\"y\"", true, "",
+                2, "x", "y");
+    }
+    {
+        SCOPED_TRACE("List #4");
+        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "\"x\",\"y\"", true, ",",
+                2, "x", "y");
+    }
+    {
+        SCOPED_TRACE("List #5");
+        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "\"x\", \"y\"", true, ", ",
+                2, "x", "y");
+    }
+    {
+        SCOPED_TRACE("List #6");
+        RunTest(16, IB_ETRUNC, IB_STRFLAG_MODIFIED,
+                "\"aaaa\",\"bbbb\",\"cccc\",\"dddd\"", true, ",",
+                4, "aaaa", "bbbb", "cccc", "dddd");
+    }
+    {
+        SCOPED_TRACE("List #7");
+        RunTest(32, IB_OK, IB_STRFLAG_MODIFIED,
+                "\"aaaa\",\"bbbb\",\"cccc\",\"dddd\"", true, ",",
                 4, "aaaa", "bbbb", "cccc", "dddd");
     }
 }
@@ -390,21 +497,21 @@ TEST_F(TestEscapeStrListJSON, JSON)
 {
     {
         SCOPED_TRACE("Simple #1");
-        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "a\\tb", "", 1, "a\tb");
+        RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "a\\tb", false, "", 1, "a\tb");
     }
     {
         SCOPED_TRACE("Simple #2");
         RunTest(16, IB_OK, IB_STRFLAG_MODIFIED, "a\\tb,x\\ty",
-                ",", 2, "a\tb", "x\ty");
+                false, ",", 2, "a\tb", "x\ty");
     }
     {
         SCOPED_TRACE("Simple #3");
         RunTest(16, IB_ETRUNC, IB_STRFLAG_MODIFIED, "a\\tb, c\\nd, x\\ty",
-                ", ", 3, "a\tb", "c\nd", "x\ty");
+                false, ", ", 3, "a\tb", "c\nd", "x\ty");
     }
     {
         SCOPED_TRACE("Simple #4");
         RunTest(32, IB_OK, IB_STRFLAG_MODIFIED, "a\\tb, c\\nd, x\\ty",
-                ", ", 3, "a\tb", "c\nd", "x\ty");
+                false, ", ", 3, "a\tb", "c\nd", "x\ty");
     }
 }
