@@ -67,6 +67,7 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
  * Call the Lua function @a func_name in the @c lua_State @a L and treat it
  * as an IronBee rule.
  *
+ * @param[in] ib The IronBee rule execution context. Used for logging.
  * @param[in] ib The IronBee context. Used for logging.
  * @param[in,out] tx The transaction object. This is passed to the rule
  *                as the local variable @c tx.
@@ -75,7 +76,8 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
  * @param[out] return_value The integer that this function evaluates to.
  * @returns IronBee status.
  */
-ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
+ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *rule_exec,
+                                 ib_engine_t *ib,
                                  ib_tx_t *tx,
                                  lua_State *L,
                                  const char *func_name,

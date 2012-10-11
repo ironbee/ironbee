@@ -102,7 +102,8 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
+ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *rule_exec,
+                                 ib_engine_t *ib,
                                  ib_tx_t *tx,
                                  lua_State *L,
                                  const char *func_name,
@@ -132,6 +133,10 @@ ib_status_t ib_lua_func_eval_int(ib_engine_t *ib,
 
     /* Create a table for the coming function call. */
     lua_newtable(L);
+
+    lua_pushstring(L, "ib_rule_exec"); /* Push key. */
+    lua_pushlightuserdata(L, (ib_rule_exec_t*)rule_exec); /* Push value. */
+    lua_settable(L, -3);          /* Assign to -3 key -2 and val -1. */
 
     lua_pushstring(L, "ib_tx");   /* Push key. */
     lua_pushlightuserdata(L, tx); /* Push value. */

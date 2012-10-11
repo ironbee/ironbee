@@ -880,13 +880,16 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
  * @returns IB_OK on success, IB_EUNKNOWN on semaphore locking error, and
  *          IB_EALLOC is returned if a new execution stack cannot be created.
  */
-static ib_status_t ib_lua_func_eval_r(ib_engine_t *ib,
-                                      ib_tx_t *tx,
+static ib_status_t ib_lua_func_eval_r(const ib_rule_exec_t *rule_exec,
                                       const char *func_name,
                                       ib_num_t *result)
 {
     IB_FTRACE_INIT();
 
+    assert(rule_exec);
+
+    ib_engine_t *ib = rule_exec->ib;
+    ib_tx_t *tx = rule_exec->tx;
     int result_int;
     ib_status_t ib_rc;
     lua_State *L;
@@ -899,7 +902,7 @@ static ib_status_t ib_lua_func_eval_r(ib_engine_t *ib,
     }
 
     /* Call the rule in isolation. */
-    ib_rc = ib_lua_func_eval_int(ib, tx, L, func_name, &result_int);
+    ib_rc = ib_lua_func_eval_int(rule_exec, ib, tx, L, func_name, &result_int);
 
     /* Convert the passed in integer type to an ib_num_t. */
     *result = result_int;
@@ -937,7 +940,7 @@ static ib_status_t lua_operator_execute(const ib_rule_exec_t *rule_exec,
 
     ib_rule_log_trace(rule_exec, "Calling lua function %s.", func_name);
 
-    ib_rc = ib_lua_func_eval_r(rule_exec->ib, rule_exec->tx, func_name, result);
+    ib_rc = ib_lua_func_eval_r(rule_exec, func_name, result);
 
     ib_rule_log_trace(rule_exec,
                       "Lua function %s=%"PRIu64".", func_name, *result);

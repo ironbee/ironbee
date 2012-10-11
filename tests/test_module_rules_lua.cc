@@ -102,6 +102,12 @@ TEST_F(TestIronBeeModuleRulesLua, load_func_eval)
     tx.ib = ib_engine;
     tx.id = "tx_id.TestIronBeeModuleRulesLua.load_func_eval";
 
+    ib_rule_exec_t rule_exec;
+    memset(&rule_exec, 0, sizeof(rule_exec));
+    rule_exec.ib = ib_engine;
+    rule_exec.tx = &tx;
+    rule_exec.rule = rule;
+
     lua_State *L = luaL_newstate();
     ASSERT_NE(static_cast<lua_State*>(NULL), L);
     luaL_openlibs(L);
@@ -110,7 +116,7 @@ TEST_F(TestIronBeeModuleRulesLua, load_func_eval)
     ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ironbee", "ironbee-ffi"));
     ASSERT_EQ(IB_OK, ib_lua_require(ib_engine, L, "ibapi", "ironbee-api"));
     ASSERT_EQ(IB_OK, ib_lua_load_func(ib_engine, L, luafile, "f1"));
-    ASSERT_EQ(IB_OK, ib_lua_func_eval_int(ib_engine, &tx, L, "f1", &res));
+    ASSERT_EQ(IB_OK, ib_lua_func_eval_int(&rule_exec, ib_engine, &tx, L, "f1", &res));
     ASSERT_EQ(5, res);
 }
 
@@ -119,6 +125,12 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
     int res = 0;
     ib_tx_t tx;
     tx.ib = ib_engine;
+
+    ib_rule_exec_t rule_exec;
+    memset(&rule_exec, 0, sizeof(rule_exec));
+    rule_exec.ib = ib_engine;
+    rule_exec.tx = &tx;
+    rule_exec.rule = rule;
 
     ib_tx_generate_id(&tx, ib_engine->mp);
     lua_State *L = luaL_newstate();
@@ -134,7 +146,7 @@ TEST_F(TestIronBeeModuleRulesLua, new_state)
     ASSERT_EQ(IB_OK, ib_lua_new_thread(ib_engine, L, &L2));
     ASSERT_NE(static_cast<lua_State*>(NULL), L2);
     ASSERT_EQ(IB_OK, ib_lua_load_func(ib_engine, L2, luafile, "f1"));
-    ASSERT_EQ(IB_OK, ib_lua_func_eval_int(ib_engine, &tx, L2, "f1", &res));
+    ASSERT_EQ(IB_OK, ib_lua_func_eval_int(&rule_exec, ib_engine, &tx, L2, "f1", &res));
     ASSERT_EQ(IB_OK, ib_lua_join_thread(ib_engine, L, &L2));
     ASSERT_EQ(5, res);
 }
