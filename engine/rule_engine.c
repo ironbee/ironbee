@@ -4244,16 +4244,16 @@ static IB_STRVAL_MAP(debug_levels_map) = {
 };
 
 ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
-                               const char *what,
+                               const char *name,
                                const char *value)
 {
     IB_FTRACE_INIT();
     assert(cp != NULL);
-    assert(what != NULL);
+    assert(name != NULL);
     assert(value != NULL);
     ib_status_t rc;
 
-    if (strcasecmp(what, "RuleEngineDebugLogLevel") == 0) {
+    if (strcasecmp(name, "RuleEngineDebugLogLevel") == 0) {
         ib_num_t tmp;
         ib_num_t level;
 

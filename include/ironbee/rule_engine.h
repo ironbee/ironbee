@@ -219,7 +219,7 @@ struct ib_rule_exec_t {
  * @returns IB_OK / IB_EINVAL
  */
 ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
-                               const char *what,
+                               const char *name,
                                const char *value);
 
 /**
