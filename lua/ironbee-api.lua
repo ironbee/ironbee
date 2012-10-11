@@ -199,25 +199,35 @@ ibapi.new = function(self, ib_rule_exec, ib_engine, ib_tx)
         -- If we have more arguments, format msg with them.
         if ... ~= nil then msg = string.format(msg, ...) end
 
+        -- Prepend prefix.
+        msg = prefix .. " " .. msg
+
         -- Log the string.
-        ffi.C.ib_log_tx_ex(self.ib_tx, level, file, line, msg)
+        ffi.C.ib_rule_log_exec(level, self.ib_rule_exec, file, line, msg);
     end
 
     -- Log an error.
     ib_obj.logError = function(self, msg, ...) 
-        self.private:log(0, "LuaAPI - [ERROR]", msg, ...)
+        self.private:log(ffi.C.IB_RULE_DLOG_ERROR, "LuaAPI - [ERROR]", msg, ...)
+    end
+
+    -- Log a warning.
+    ib_obj.logWarn = function(self, msg, ...) 
+        -- Note: Extra space after "INFO " is for text alignment.
+        -- It should be there.
+        self.private:log(ffi.C.IB_RULE_DLOG_WARNING, "LuaAPI - [WARN ]", msg, ...)
     end
 
     -- Log an info message.
     ib_obj.logInfo = function(self, msg, ...) 
         -- Note: Extra space after "INFO " is for text alignment.
         -- It should be there.
-        self.private:log(4, "LuaAPI - [INFO ]", msg, ...)
+        self.private:log(ffi.C.IB_RULE_DLOG_INFO, "LuaAPI - [INFO ]", msg, ...)
     end
 
     -- Log debug information at level 3.
     ib_obj.logDebug = function(self, msg, ...) 
-        self.private:log(7, "LuaAPI - [DEBUG]", msg, ...)
+        self.private:log(ffi.C.IB_RULE_DLOG_DEBUG, "LuaAPI - [DEBUG]", msg, ...)
     end
 
     -- Return a list of all the fields currently defined.

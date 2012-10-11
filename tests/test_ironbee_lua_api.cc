@@ -69,11 +69,8 @@ public:
                                     __LINE__,
                                     true,
                                     &ib_rule));
-
-        memset(&ib_rule_exec, 0, sizeof(ib_rule_exec));
-        ib_rule_exec.ib = ib_engine;
-        ib_rule_exec.tx = ib_tx;
-        ib_rule_exec.rule = ib_rule;
+        ib_rule->meta.id = "const_rule_id";
+        ib_rule->meta.full_id = "full_const_rule_id";
 
         ib_state_notify_cfg_started(ib_engine);
 
@@ -92,6 +89,11 @@ public:
         /* Lib htp.c does this, so we do this here. */
         assert(ib_conn->tx!=NULL);
         ib_tx = ib_conn->tx;
+
+        memset(&ib_rule_exec, 0, sizeof(ib_rule_exec));
+        ib_rule_exec.ib = ib_engine;
+        ib_rule_exec.tx = ib_tx;
+        ib_rule_exec.rule = ib_rule;
 
         /* Initialize a new lua state. */
         L = luaL_newstate();

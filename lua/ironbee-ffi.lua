@@ -612,8 +612,8 @@ typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
     * Rule engine data.
     */
     struct ib_rule_engine_t {
-        ib_list_t             *rule_list; /**< All rules owned by this context */
-        ib_hash_t             *rule_hash; /**< Hash of rules (by rule-id) */
+        ib_list_t             *rule_list;
+        ib_hash_t             *rule_hash;
     };
 
 
@@ -631,6 +631,15 @@ typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
     
     const char *ib_logevent_type_name(ib_logevent_type_t num);
     const char *ib_logevent_action_name(ib_logevent_action_t num);
+
+    void ib_rule_log_exec(
+        ib_rule_dlog_level_t level,
+        const ib_rule_exec_t *rule_exec,
+        const char *file,
+        int line,
+        const char *fmt,
+        ...
+    );
 
     /* Field */
     ib_status_t ib_field_create(ib_field_t **pf,
