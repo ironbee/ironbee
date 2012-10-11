@@ -400,7 +400,7 @@ ib_status_t ib_rule_log_exec_add_event(ib_rule_log_exec_t *exec_log,
  * @param[in] audit_log Full path of the audit log file
  */
 void ib_rule_log_add_audit(const ib_rule_exec_t *rule_exec,
-                           const const char *audit_log);
+                           const char *audit_log);
 
 
 #endif /* IB_RULE_ENGINE_PRIVATE_H_ */
