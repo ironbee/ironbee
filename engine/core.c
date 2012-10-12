@@ -1437,7 +1437,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                 const char *field_name = (const char *)field_node->data;
                 ib_flags_t rslt;
 
-                rc = ib_string_escape_json_buf(field_name, true, 
+                rc = ib_string_escape_json_buf(field_name, true,
                                                fields, sizeof(fields), NULL,
                                                &rslt);
                 if (rc != IB_OK) {
