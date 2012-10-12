@@ -19,8 +19,8 @@
  * @file
  * @brief IronBee --- Eudoxus Benchmarker
  *
- * A benchmarker for Eudoxus.  Runs automata against inputs and records
- * output and timing information.
+ * A command line executor for Eudoxus.  Runs automata against inputs and
+ * records output and timing information.
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
@@ -59,7 +59,7 @@ public:
         DEFAULT,
         //! Eudoxus.  Active while in Eudoxus code.
         EUDOXUS,
-        //! Output.  Active while in bench output code.
+        //! Output.  Active while in ee output code.
         OUTPUT,
         //! Number of event types.
         NUM

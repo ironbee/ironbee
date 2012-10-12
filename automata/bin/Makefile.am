@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 
 bin_PROGRAMS = \
     ac_generator \
-    bench \
+    ee \
     ec \
     to_dot \
     optimize
@@ -24,7 +24,7 @@ AM_LDFLAGS = \
     -lboost_chrono
 
 ac_generator_SOURCES = ac_generator.cpp
-bench_SOURCES = bench.cpp
+ee_SOURCES = ee.cpp
 ec_SOURCES = ec.cpp
 to_dot_SOURCES = to_dot.cpp
 optimize_SOURCES = optimize.cpp

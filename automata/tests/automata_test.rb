@@ -3,7 +3,7 @@ require 'set'
 
 module AutomataTest
   BINDIR = File.expand_path(File.join(ENV['abs_builddir'], "..", "bin"))
-  BENCH = File.join(BINDIR, "bench")
+  EE = File.join(BINDIR, "ee")
   EC = File.join(BINDIR, "ec")
   ACGEN = File.join(BINDIR, "ac_generator")
   OPTIMIZE = File.join(BINDIR, "optimize")
@@ -94,7 +94,7 @@ module AutomataTest
     system(EC, "-i", automata_path, "-o", eudoxus_path)
 
     output_path = File.join(dir, "output")
-    system(BENCH, "-a", eudoxus_path, "-o", output_path, "-i", input_path, "-t", "length")
+    system(EE, "-a", eudoxus_path, "-o", output_path, "-i", input_path, "-t", "length")
 
     output_substrings = parse_bench_output(IO.read(output_path))
     assert_substrings_equal(substrings(words, text), output_substrings)
