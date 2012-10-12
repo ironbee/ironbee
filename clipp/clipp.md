@@ -1,12 +1,10 @@
 Title:  CLIPP User Manual
 Author: Christopher Alfeld <calfeld@qualys.com>
-Data:   May, 2012
 
 CLIPP User Manual
 =================
 
 Christopher Alfeld <calfeld@qualys.com><br>
-May, 2012
 
 Introduction
 ------------
