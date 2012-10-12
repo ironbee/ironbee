@@ -146,7 +146,8 @@ int main(int argc, char **argv)
             }
         }
 
-        cout << "bytes            = " << result.buffer.size() << endl;
+        size_t bytes = result.buffer.size();
+        cout << "bytes            = " << bytes << endl;
         cout << "id_width         = " << result.id_width << endl;
         cout << "align_to         = " << result.align_to << endl;
         cout << "ids_used         = " << result.ids_used << endl;
@@ -157,6 +158,15 @@ int main(int argc, char **argv)
         cout << "high_nodes_bytes = " << result.high_nodes_bytes << endl;
         cout << "pc_nodes         = " << result.pc_nodes << endl;
         cout << "pc_nodes_bytes   = " << result.pc_nodes_bytes << endl;
+
+        static const int c_id_widths[] = {1, 2, 4, 8};
+        for (int i = 0; i < 4; ++i) {
+            int other_id_width = c_id_widths[i];
+            cout << "bytes @ " << other_id_width << "        = "
+                 << (bytes -
+                     (result.ids_used * (result.id_width - other_id_width)))
+                 << endl;
+        }
 
         output_stream.write(result.buffer.data(), result.buffer.size());
         if (! output_stream) {
