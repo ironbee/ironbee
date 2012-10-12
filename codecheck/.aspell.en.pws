@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1707 
+personal_ws-1.1 en 1709 
 malloced
 libnet
 endpat
@@ -49,11 +49,11 @@ DNE
 fff
 parens
 ctl
-DNS
-ffi
 dpi
-fds
+ffi
 FDs
+fds
+DNS
 cdef
 HandleResponseHeaders
 cfgfile
@@ -585,6 +585,7 @@ Metcalf
 lu
 pb
 Wchar
+pc
 lx
 pe
 PRIuMAX
@@ -1034,6 +1035,7 @@ ness
 ENOTIMPL
 subpools
 urlencoded
+demux
 interoperability
 MyFormat
 Myformat
@@ -1129,7 +1131,7 @@ subprocess
 netmasks
 RuleEngineLogLevel
 ACNode's
-Deduplicate
+deduplicate
 Lconfig
 HandleResponse
 AuditLog
