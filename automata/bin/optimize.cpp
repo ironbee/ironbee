@@ -24,7 +24,9 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include <ironautomata/deduplicate_outputs.hpp>
 #include <ironautomata/intermediate.hpp>
+#include <ironautomata/optimize_edges.hpp>
 #include <ironautomata/translate_nonadvancing.hpp>
 
 #include <boost/program_options.hpp>
@@ -43,14 +45,21 @@ int main(int argc, char **argv)
         TN_AGGRESSIVE
     };
     do_translate_nonadvancing_e do_translate_nonadvancing = TN_NONE;
+    bool do_deduplicate_outputs = false;
+    bool do_optimize_edges = false;
 
     po::options_description desc("Options:");
     desc.add_options()
         ("help", "display help and exit")
         ("fast", "optimize for speed")
+        ("space", "optimize for space")
         ("chunk-size,s X",
             po::value<size_t>(&chunk_size),
             "set chunk size of output to X")
+        ("deduplicate-outputs",
+            po::bool_switch(&do_deduplicate_outputs))
+        ("optimize-edges",
+            po::bool_switch(&do_optimize_edges))
         ("translate-nonadvancing",
             "translate non-advancing edges [fast]")
         ("translate-nonadvancing-aggressive",
@@ -73,6 +82,12 @@ int main(int argc, char **argv)
 
     if (vm.count("fast")) {
         do_translate_nonadvancing = TN_CONSERVATIVE;
+        do_deduplicate_outputs = true;
+        do_optimize_edges = true;
+    }
+    if (vm.count("space")) {
+        do_deduplicate_outputs = true;
+        do_optimize_edges = true;
     }
     if (vm.count("translate-nonadvancing")) {
         do_translate_nonadvancing = TN_CONSERVATIVE;
@@ -88,17 +103,29 @@ int main(int argc, char **argv)
 
     if (do_translate_nonadvancing != TN_NONE) {
         cerr << "Compact Nonadvancing"
-            << (do_translate_nonadvancing == TN_CONSERVATIVE ?
-                " conservative" :
-                " aggressive"
-            )
-            << ": ";
+             << (do_translate_nonadvancing == TN_CONSERVATIVE ?
+                 " conservative" :
+                 " aggressive"
+             )
+             << ": ";
         cerr.flush();
         size_t num_fixes = Intermediate::translate_nonadvancing(
             automata,
             do_translate_nonadvancing == TN_AGGRESSIVE
         );
         cerr << num_fixes << endl;
+    }
+    if (do_deduplicate_outputs) {
+        cerr << "Deduplicate Outputs: ";
+        cerr.flush();
+        size_t num_removes = Intermediate::deduplicate_outputs(automata);
+        cerr << num_removes << endl;
+    }
+    if (do_optimize_edges) {
+        cerr << "Optimize Edges: ";
+        cerr.flush();
+        Intermediate::breadth_first(automata, Intermediate::optimize_edges);
+        cerr << "done" << endl;
     }
 
     Intermediate::write_automata(automata, cout);
