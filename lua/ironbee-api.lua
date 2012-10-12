@@ -64,13 +64,18 @@ local ibutil = {
 
 -- Iterate over the ib_list (of type ib_list_t *) calling the 
 -- function func on each ib_field_t* contained in the elements of ib_list.
-ibapi.each_list_node = function(ib_list, func)
+-- The resulting list data is passed to the callback function
+-- as a "ib_field_t*"
+ibapi.each_list_node = function(ib_list, func, cast_type)
     local ib_list_node = ffi.cast("ib_list_node_t*", 
                                   ffi.C.ib_list_first(ib_list))
+    if cast_type == nil then
+      cast_type = "ib_field_t*"
+    end
 
     while ib_list_node ~= nil do
         -- Callback
-        func(ffi.cast("ib_field_t*", ffi.C.ib_list_node_data(ib_list_node)))
+        func(ffi.cast(cast_type, ffi.C.ib_list_node_data(ib_list_node)))
 
         -- Next
         ib_list_node = ffi.C.ib_list_node_next(ib_list_node)
@@ -511,6 +516,17 @@ ibapi.new = function(self, ib_rule_exec, ib_engine, ib_tx)
         end
 
         ffi.C.ib_event_add(self.private.ib_tx.epi, event[0])
+    end
+
+    --
+    -- Call function func on each event in the current transaction.
+    --
+    ib_obj.forEachEvent = function(self, func)
+        local tx = self.private.ib_tx
+        local list = ffi.new("ib_list_t*[1]")
+        ffi.C.ib_event_get_all(self.private.ib_tx.epi, list)
+
+        ibapi.each_list_node(list[0], func, "ib_logevent_t*")
     end
 
     return ib_obj
