@@ -44,6 +44,48 @@
 -- Lua 5.2 and later style class.
 ibapi = {}
 
+local ib_event = {}
+ib_event.new = function(self, event)
+    o = { raw = event }
+    setmetatable(o, self)
+    self.__index = self
+    return o
+end
+ib_event.get_severity = function(self)
+    return self.raw.confidence
+end
+ib_event.get_confidence = function(self)
+    return self.raw.confidence
+end
+ib_event.get_action = function(self)
+    return self.raw.action
+end
+ib_event.get_rule_id = function(self)
+    return ffi.string(self.raw.rule_id)
+end
+ib_event.get_msg = function(self)
+    return ffi.string(self.raw.msg)
+end
+ib_event.each_field = function(self, func)
+    if self.raw.fields ~= nil then
+        ibapi.each_list_node(
+            self.raw.fields,
+            function(charstar)
+                func(ffi.string(charstar))
+            end,
+            "char*")
+    end
+end
+ib_event.each_tag = function(self, func)
+    if self.raw.tags ~= nil then
+        ibapi.each_list_node(
+            self.raw.tags,
+            function(charstar)
+                func(ffi.string(charstar))
+            end,
+            "char*")
+    end
+end
 
 -- Add an event. 
 -- The msg argument is typically a string that is the message to log,
@@ -490,7 +532,12 @@ ibapi.forEachEvent = function(self, func)
     local list = ffi.new("ib_list_t*[1]")
     ffi.C.ib_event_get_all(self.private.ib_tx.epi, list)
 
-    ibapi.each_list_node(list[0], func, "ib_logevent_t*")
+    ibapi.each_list_node(
+        list[0],
+        function(event)
+            func(ib_event:new(event))
+        end ,
+        "ib_logevent_t*")
 end
 
 -- Append a value to the end of the name list. This may be a string

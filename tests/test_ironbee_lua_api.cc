@@ -317,3 +317,11 @@ TEST_F(IronBeeLuaApi, add_event)
     eval("ib:addEvent(\"Saw some failure\")");
     eval("ib:addEvent(\"Saw some failure\", { system = \"public\" } )");
 }
+
+TEST_F(IronBeeLuaApi, read_event)
+{
+    eval("ib:addEvent(\"Saw some failure\")");
+    eval("ib:addEvent(\"Saw some failure\", { system = \"public\" } )");
+    eval("ib:forEachEvent(function(e) print(e:get_rule_id()) end)");
+}
+
