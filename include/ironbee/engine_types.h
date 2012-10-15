@@ -88,6 +88,7 @@ typedef struct ib_tfn_t ib_tfn_t;
 typedef struct ib_logevent_t ib_logevent_t;
 typedef struct ib_auditlog_t ib_auditlog_t;
 typedef struct ib_auditlog_part_t ib_auditlog_part_t;
+typedef struct ib_cfgparser_t ib_cfgparser_t;
 
 typedef struct ib_filter_t ib_filter_t;
 typedef struct ib_fdata_t ib_fdata_t;

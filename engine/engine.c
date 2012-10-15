@@ -52,6 +52,9 @@
 
 /* -- Constants -- */
 
+/** Constant max path used in calls to getcwd() */
+const size_t maxpath = 512;
+
 /** Constant String Values */
 const ib_default_string_t ib_default_string = {
     "",          /* empty */
@@ -257,6 +260,10 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
     if (rc != IB_OK) {
         goto failed;
     }
+
+    /* Set the context's CWD */
+    rc = ib_context_set_cwd((*pib)->ectx, NULL);
+
     (*pib)->ctx = (*pib)->ectx;
 
     /* Check server for ABI compatibility with this engine */
@@ -376,6 +383,12 @@ ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
     rc = ib_context_create(&ctx, ib, ib->ectx,
                            "main", "main",
                            NULL, NULL, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Set the context's CWD */
+    rc = ib_context_set_cwd(ctx, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1660,6 +1673,54 @@ ib_status_t ib_context_open(ib_context_t *ctx)
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_context_set_cwd(ib_context_t *ctx, const char *dir)
+{
+    IB_FTRACE_INIT();
+    assert(ctx != NULL);
+
+    /* For special cases (i.e. tests), allow handle NULL directory */
+    if (dir == NULL) {
+        char *buf = (char *)ib_mpool_alloc(ctx->mp, maxpath);
+        if (buf == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        ctx->ctx_cwd = getcwd(buf, maxpath);
+        if (ctx->ctx_cwd == NULL) {
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Copy it */
+    ctx->ctx_cwd = ib_mpool_strdup(ctx->mp, dir);
+    if (ctx->ctx_cwd == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_context_config_set_parser(ib_context_t *ctx,
+                                         const ib_cfgparser_t *parser)
+{
+    IB_FTRACE_INIT();
+    assert(ctx != NULL);
+    ctx->cfgparser = parser;
+    IB_FTRACE_RET_STATUS(ib_context_set_cwd(ctx, parser->cur_cwd));
+}
+
+const char *ib_context_config_cwd(const ib_context_t *ctx)
+{
+    IB_FTRACE_INIT();
+    assert(ctx != NULL);
+
+    if (ctx->cfgparser == NULL) {
+        IB_FTRACE_RET_CONSTSTR(ctx->ctx_cwd);
+    }
+    else {
+        IB_FTRACE_RET_CONSTSTR(ctx->cfgparser->cur_cwd);
+    }
 }
 
 ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,

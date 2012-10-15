@@ -122,7 +122,9 @@ struct ib_context_t {
     const char              *ctx_type;    /**< Type identifier string. */
     const char              *ctx_name;    /**< Name identifier string. */
     const char              *ctx_full;    /**< Full name of context */
+    const char              *ctx_cwd;     /**< Context's current directory */
     ib_auditlog_cfg_t       *auditlog;    /**< Per-context audit log cfgs. */
+    const ib_cfgparser_t    *cfgparser;   /**< Our configuration parser */
 
     /* Context Selection */
     ib_context_fn_t          fn_ctx;      /**< Context decision function */

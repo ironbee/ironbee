@@ -3284,6 +3284,7 @@ static ib_status_t core_dir_site_start(ib_cfgparser_t *cp,
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+    ib_context_config_set_parser(ctx, cp);
     ib_cfgparser_context_push(cp, ctx);
 
     ib_log_debug2(ib, "Opening context %p for \"%s\"", ctx, name);
