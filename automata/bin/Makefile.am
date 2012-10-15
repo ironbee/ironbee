@@ -5,7 +5,8 @@ bin_PROGRAMS = \
     ee \
     ec \
     to_dot \
-    optimize
+    optimize \
+    trie_generator
       
 LDADD = ../libironautomata.la ../libiaeudoxus.la
 
@@ -28,4 +29,5 @@ ee_SOURCES = ee.cpp
 ec_SOURCES = ec.cpp
 to_dot_SOURCES = to_dot.cpp
 optimize_SOURCES = optimize.cpp
+trie_generator_SOURCES = trie_generator.cpp
 

@@ -88,4 +88,17 @@ class TestBasic < Test::Unit::TestCase
     ac_test(words, text, "overlap")
     ac_test(words, text, "overlap_optimized", true)
   end
+
+  def test_trie
+    words = ["foo", "foobar", "foobaz", "world"]
+
+    automata_test(words, TRIEGEN, "trie") do |dir, eudoxus_path|
+      words.each do |word|
+        output = ee(eudoxus_path, dir, word, "input_#{word}", "output_#{word}", "integer")
+        assert(! output.empty?)
+      end
+      output = ee(eudoxus_path, dir, "goodbye", "input_goodbye", "output_goodbyte", "integer")
+      assert(output.empty?)
+    end
+  end
 end
