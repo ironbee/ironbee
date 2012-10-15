@@ -32,6 +32,9 @@ nodist_libironautomata_la_SOURCES = \
     intermediate.pb.cc \
     $(builddir)/include/ironautomata/intermediate.pb.h
 
+BUILT_SOURCES = intermediate.pb.cc \
+    $(builddir)/include/ironautomata/intermediate.pb.h
+
 LDADD = libironautomata.la libiaeudoxus.la
 AM_CPPFLAGS += \
     -I$(builddir)/include \
