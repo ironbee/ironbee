@@ -334,6 +334,7 @@ int main(int argc, char **argv)
     size_t block_size = 1024;
     size_t overlap_size = 128;
     bool no_output = false;
+    bool final = false;
 
     po::options_description desc("Options:");
     desc.add_options()
@@ -359,6 +360,8 @@ int main(int argc, char **argv)
         ("overlap,l", po::value<size_t>(&overlap_size),
             "how much to overlap blocks; default = 128"
         )
+        ("final,f", po::bool_switch(&final),
+            "only output for final node")
         ;
 
     po::positional_options_description pd;
@@ -512,7 +515,7 @@ int main(int argc, char **argv)
             break;
         }
         ti.switch_event(TimingInfo::EUDOXUS);
-        if (no_output) {
+        if (no_output || final) {
             rc = ia_eudoxus_execute_without_output(
                 state,
                 &input_buffer[overlap_size],
@@ -533,8 +536,6 @@ int main(int argc, char **argv)
             break;
         case IA_EUDOXUS_END:
             cout << "Reached end of automata." << endl;
-            // XXX Make use of future introspection API to return information
-            // about where it ended.
             at_end = true;
             break;
         default:
@@ -543,6 +544,9 @@ int main(int argc, char **argv)
         }
 
         pre_block += read;
+    }
+    if (final) {
+        ia_eudoxus_execute(state, NULL, 0);
     }
     ia_eudoxus_destroy_state(state);
 
