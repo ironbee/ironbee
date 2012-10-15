@@ -36,6 +36,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <libgen.h>
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
  * for C++ implementations if this is defined: */
@@ -334,7 +335,16 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
     assert(cp != NULL);
     assert(buffer != NULL);
 
-    cp->cur_file = file;
+    if (cp->cur_file != file) {
+        cp->cur_file = file;
+        cp->cur_cwd = NULL;
+        if (file != NULL) {
+            char *pathbuf = (char *)ib_mpool_strdup(cp->mp, file);
+            if (pathbuf != NULL) {
+                cp->cur_cwd = dirname(pathbuf);
+            }
+        }
+    }
     cp->cur_lineno = lineno;
 
     /* If the previous line ended with a continuation character,

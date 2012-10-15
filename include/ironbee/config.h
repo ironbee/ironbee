@@ -43,7 +43,6 @@ extern "C" {
  * @{
  */
 
-typedef struct ib_cfgparser_t ib_cfgparser_t;
 typedef struct ib_dirmap_init_t ib_dirmap_init_t;
 typedef struct ib_strval_t ib_strval_t;
 
@@ -62,6 +61,7 @@ struct ib_cfgparser_t {
     ib_loc_t       *cur_loc;     /**< Current location */
     const char     *cur_blkname; /**< Current block name */
     const char     *cur_file;    /**< Current file name */
+    const char     *cur_cwd;     /**< Directory of the current file */
     unsigned int    cur_lineno;  /**< Current line number */
 };
 
