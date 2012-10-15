@@ -335,6 +335,7 @@ int main(int argc, char **argv)
     size_t overlap_size = 128;
     bool no_output = false;
     bool final = false;
+    size_t n = 1;
 
     po::options_description desc("Options:");
     desc.add_options()
@@ -362,6 +363,8 @@ int main(int argc, char **argv)
         )
         ("final,f", po::bool_switch(&final),
             "only output for final node")
+        ("num-runs,n", po::value<size_t>(&n),
+            "number of times to run input through; 0 = infinite, default = 1")
         ;
 
     po::positional_options_description pd;
@@ -417,18 +420,8 @@ int main(int argc, char **argv)
     boost::scoped_ptr<istream> input_mem;
     boost::scoped_ptr<ostream> output_mem;
 
-    istream* input    = &cin;
     ostream* output   = &cout;
 
-    if (! input_s.empty()) {
-        input_mem.reset(new ifstream(input_s.c_str()));
-        input = input_mem.get();
-        if (! *input) {
-            cout << "Error: Could not open " << input_s << " for reading."
-                 << endl;
-            return 1;
-        }
-    }
     if (! output_s.empty()) {
         output_mem.reset(new ofstream(output_s.c_str()));
         output = output_mem.get();
@@ -485,70 +478,85 @@ int main(int argc, char **argv)
     OutputHandler output_handler(ti, output_transform, output_callback);
 
     // Run Engine
-    ia_eudoxus_state_t* state;
-    rc = ia_eudoxus_create_state(
-        &state,
-        eudoxus,
-        c_output_callback,
-        reinterpret_cast<void*>(&output_handler)
-    );
-    if (rc != IA_EUDOXUS_OK) {
-        output_eudoxus_result(eudoxus, rc);
-        return 1;
-    }
-
-    bool at_end = false;
-    while (! at_end && *input) {
-        TimingInfo local_ti;
-        // Shift overlap to front.
-        copy(
-            &input_buffer[block_size - overlap_size], &input_buffer[block_size],
-            &input_buffer[0]
+    for (size_t i = 0; i < n || n == 0; ++i) {
+        ia_eudoxus_state_t* state;
+        rc = ia_eudoxus_create_state(
+            &state,
+            eudoxus,
+            c_output_callback,
+            reinterpret_cast<void*>(&output_handler)
         );
-        input->read(
-            reinterpret_cast<char*>(&input_buffer[overlap_size]),
-            block_size - overlap_size
-        );
-
-        size_t read = input->gcount();
-        if (read == 0) {
-            break;
-        }
-        ti.switch_event(TimingInfo::EUDOXUS);
-        if (no_output || final) {
-            rc = ia_eudoxus_execute_without_output(
-                state,
-                &input_buffer[overlap_size],
-                read
-            );
-        }
-        else {
-            rc = ia_eudoxus_execute(
-                state,
-                &input_buffer[overlap_size],
-                read
-            );
-        }
-        ti.switch_event(TimingInfo::DEFAULT);
-        switch (rc) {
-        case IA_EUDOXUS_OK:
-            // nop
-            break;
-        case IA_EUDOXUS_END:
-            cout << "Reached end of automata." << endl;
-            at_end = true;
-            break;
-        default:
+        if (rc != IA_EUDOXUS_OK) {
             output_eudoxus_result(eudoxus, rc);
             return 1;
         }
 
-        pre_block += read;
+        bool at_end = false;
+        pre_block = 0;
+
+        istream* input = &cin;
+        if (! input_s.empty()) {
+            input_mem.reset(new ifstream(input_s.c_str()));
+            input = input_mem.get();
+            if (! *input) {
+                cout << "Error: Could not open " << input_s << " for reading."
+                     << endl;
+                return 1;
+            }
+        }
+
+        while (! at_end && *input) {
+            TimingInfo local_ti;
+            // Shift overlap to front.
+            copy(
+                &input_buffer[block_size - overlap_size], &input_buffer[block_size],
+                &input_buffer[0]
+            );
+            input->read(
+                reinterpret_cast<char*>(&input_buffer[overlap_size]),
+                block_size - overlap_size
+            );
+
+            size_t read = input->gcount();
+            if (read == 0) {
+                break;
+            }
+            ti.switch_event(TimingInfo::EUDOXUS);
+            if (no_output || final) {
+                rc = ia_eudoxus_execute_without_output(
+                    state,
+                    &input_buffer[overlap_size],
+                    read
+                );
+            }
+            else {
+                rc = ia_eudoxus_execute(
+                    state,
+                    &input_buffer[overlap_size],
+                    read
+                );
+            }
+            ti.switch_event(TimingInfo::DEFAULT);
+            switch (rc) {
+            case IA_EUDOXUS_OK:
+                // nop
+                break;
+            case IA_EUDOXUS_END:
+                cout << "Reached end of automata." << endl;
+                at_end = true;
+                break;
+            default:
+                output_eudoxus_result(eudoxus, rc);
+                return 1;
+            }
+
+            pre_block += read;
+        }
+        if (final) {
+            ia_eudoxus_execute(state, NULL, 0);
+        }
+        ia_eudoxus_destroy_state(state);
     }
-    if (final) {
-        ia_eudoxus_execute(state, NULL, 0);
-    }
-    ia_eudoxus_destroy_state(state);
 
     // If counts, report output.
     if (record_s == "count") {
