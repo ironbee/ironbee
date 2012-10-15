@@ -356,6 +356,27 @@ ia_eudoxus_result_t ia_eudoxus_execute(
 );
 
 /**
+ * As ia_eudoxus_execute() but no output will be generated.
+ *
+ * This method omits output generation.  This behavior is useful for automata
+ * where the effective output is what state, if any, the automata is in when
+ * all input is consumed.  The presence of an end state can be detected by
+ * the absence of an IA_EUDOXUS_END result and any output of that state can be
+ * processed by a subsequent call to ia_eudoxus_execute() (or this method)
+ * with a NULL value of @a input.
+ *
+ * @param[in, out] state        State of automata.
+ * @param[in]      input        Input to execute on.
+ * @param[in]      input_length Length of input.
+ * @return As ia_eudoxus_execute()
+ */
+ia_eudoxus_result_t ia_eudoxus_execute_without_output(
+    ia_eudoxus_state_t *state,
+    const uint8_t      *input,
+    size_t              input_length
+);
+
+/**
  * Set error for @a eudoxus to @a message (claim ownership version).
  *
  * This sets the error message to @a message and indicates that that message

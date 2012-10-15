@@ -505,13 +505,15 @@ ia_eudoxus_result_t IA_EUDOXUS(output)(
  * @param[in, out] state        State of automata.
  * @param[in]      input        Input to execute on.
  * @param[in]      input_length Length of input.
+ * @param[in]      with_output  If true, generate output on transitions.
  * @return See ia_eudoxus_execute() for return codes meanings.
  */
 static
 ia_eudoxus_result_t IA_EUDOXUS(execute)(
     ia_eudoxus_state_t *state,
     const uint8_t      *input,
-    size_t              input_length
+    size_t              input_length,
+    bool                with_output
 )
 {
     if (state == NULL) {
@@ -554,6 +556,7 @@ ia_eudoxus_result_t IA_EUDOXUS(execute)(
 
         /* Call callback. */
         if (
+            with_output &&
             state->callback != NULL &&
             ( ! state->eudoxus->automata->no_advance_no_output ||
               state->input_location != old_input_location )

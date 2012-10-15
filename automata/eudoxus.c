@@ -425,22 +425,42 @@ void ia_eudoxus_set_error_printf(
 
 /* End Specific Subengine Code */
 
+static
+ia_eudoxus_result_t ia_eudoxus_execute_impl(
+    ia_eudoxus_state_t *state,
+    const uint8_t      *input,
+    size_t              input_length,
+    bool                with_output
+)
+{
+    switch (state->eudoxus->automata->id_width) {
+    case 8:
+        return ia_eudoxus8_execute(state, input, input_length, with_output);
+    case 4:
+        return ia_eudoxus4_execute(state, input, input_length, with_output);
+    case 2:
+        return ia_eudoxus2_execute(state, input, input_length, with_output);
+    case 1:
+        return ia_eudoxus1_execute(state, input, input_length, with_output);
+    default:
+        return IA_EUDOXUS_EINCOMPAT;
+    }
+}
+
 ia_eudoxus_result_t ia_eudoxus_execute(
     ia_eudoxus_state_t *state,
     const uint8_t      *input,
     size_t              input_length
 )
 {
-    switch (state->eudoxus->automata->id_width) {
-    case 8:
-        return ia_eudoxus8_execute(state, input, input_length);
-    case 4:
-        return ia_eudoxus4_execute(state, input, input_length);
-    case 2:
-        return ia_eudoxus2_execute(state, input, input_length);
-    case 1:
-        return ia_eudoxus1_execute(state, input, input_length);
-    default:
-        return IA_EUDOXUS_EINCOMPAT;
-    }
+    return ia_eudoxus_execute_impl(state, input, input_length, true);
+}
+
+ia_eudoxus_result_t ia_eudoxus_execute_without_output(
+    ia_eudoxus_state_t *state,
+    const uint8_t      *input,
+    size_t              input_length
+)
+{
+    return ia_eudoxus_execute_impl(state, input, input_length, false);
 }
