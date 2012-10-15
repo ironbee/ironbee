@@ -236,25 +236,14 @@ AS_IF([test "$enable_cli_utility" = "yes"], [util_cli=1], [util_cli=0])
 
 ### CPP
 AC_ARG_ENABLE(cpp,
-              AS_HELP_STRING([--enable-cpp],
-                             [Enable C++ code (disabled by default).]),[enable_cpp="$enableval"],[enable_cpp=no])
+              AS_HELP_STRING([--disable-cpp],
+                             [Disable C++ code.]),[enable_cpp="$enableval"],[enable_cpp=yes])
 AS_IF([test "$enable_cpp" = "yes"], [cpp_code=1], [cpp_code=0])
 AM_CONDITIONAL([CPP], [test "$enable_cpp" = "yes"])
 ironbeepp_includedir='${prefix}/include/ironbeepp'
 ironbeepp_internal_includedir='${prefix}/include/ironbeepp/internal'
 AC_SUBST(ironbeepp_includedir)
 AC_SUBST(ironbeepp_internal_includedir)
-
-### Development-only features
-AC_ARG_ENABLE(clipp,
-              AS_HELP_STRING([--enable-clipp],
-                             [Enable the CPP CLI (clipp).]),
-[
-  enable_clipp=$enableval
-],
-[
-  enable_clipp="${enable_cpp}"
-])
 
 ### Disable Lua
 AC_ARG_ENABLE(lua,
@@ -406,15 +395,12 @@ if test "${HAVE_MODP}" != "no" ; then
 fi
 AM_CONDITIONAL(HAVE_MODP, test "${HAVE_MODP}" != "no")
 
-if test "${enable_clipp}" = "yes" ; then
+if test "${cpp_code}" = "yes" ; then
     if test "${have_boost}" != "yes"; then
-        AC_MSG_ERROR([Boost is required for clipp])
-    fi
-    if test "${enable_cpp}" != "yes" ; then
-        AC_MSG_ERROR([C++ is required for clipp])
+        AC_MSG_ERROR([Boost is required for C++ code])
     fi
     if test "${HAVE_PROTOBUF}" != "yes" ; then
-        AC_MSG_ERROR([protobuf is required for clipp])
+        AC_MSG_ERROR([protobuf is required for C++ code])
     fi
     if test "${HAVE_NIDS}" != "yes" ; then
         echo "*******************************************************"
@@ -462,7 +448,7 @@ if test "$cpp_code" != 0; then
 fi
 
 dnl Enable clipp subdir if enabled
-if test "${enable_clipp}" = "yes"; then
+if test "${cpp_code}" = "yes"; then
     TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} clipp"
 fi
 
