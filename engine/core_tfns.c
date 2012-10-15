@@ -136,6 +136,7 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
         }
         break;
     }
+
     default:
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     } /* switch(fin->type) */

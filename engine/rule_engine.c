@@ -241,6 +241,7 @@ typedef struct {
  * define the limits of the recursion depth.
  */
 #define MAX_LIST_RECURSION   (5)       /**< Max list recursion limit */
+#define MAX_TFN_RECURSION    (5)       /**< Max tfn list recursion limit */
 #define MAX_CHAIN_RECURSION  (10)      /**< Max chain recursion limit */
 
 /**
@@ -597,7 +598,158 @@ static void rule_exec_pop_value(ib_rule_exec_t *rule_exec,
 }
 
 /**
- * Execute transformations on a target.
+ * Execute a single transformation on a target.
+ *
+ * @param[in] rule_exec The rule execution object
+ * @param[in] tfn The transformation to execute
+ * @param[in] value Initial value of the target field
+ * @param[in] recursion Recursion limit -- won't recurse if recursion is zero
+ * @param[out] result Pointer to field in which to store the result
+ *
+ * @returns Status code
+ */
+static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
+                                      const ib_tfn_t *tfn,
+                                      const ib_field_t *value,
+                                      int recursion,
+                                      ib_field_t **result)
+{
+    IB_FTRACE_INIT();
+    ib_status_t     rc;
+    ib_field_t     *out = NULL;
+    bool            unroll = false;
+
+    assert(rule_exec != NULL);
+    assert(tfn != NULL);
+    assert(value != NULL);
+    assert(result != NULL);
+
+    *result = NULL;
+
+    /* Limit recursion */
+    --recursion;
+    if (recursion <= 0) {
+        ib_rule_log_error(rule_exec,
+                          "Rule engine: Unroll recursion limit reached");
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
+
+    /*
+     * If the value is a list, and the transformation can't handle lists,
+     * we'll need to unroll it and recurse.
+     */
+    if (value->type == IB_FTYPE_LIST) {
+        if (ib_flags_all(tfn->tfn_flags, IB_TFN_FLAG_HANDLE_LIST) == false) {
+            unroll = true;
+        }
+        else {
+            ib_rule_log_trace(rule_exec,
+                              "Not unrolling list \"%.*s\" "
+                              "for transformation \"%s\"",
+                              (int)value->nlen, value->name, tfn->name);
+        }
+    }
+
+    /* If we need to unroll the list, handle it here */
+    if (unroll) {
+        const ib_list_t *value_list;
+        const ib_list_node_t *node;
+        ib_list_t *out_list;
+
+        assert(value->type == IB_FTYPE_LIST);
+
+        ib_rule_log_trace(rule_exec,
+                          "Unrolling list \"%.*s\" for transformation \"%s\"",
+                          (int)value->nlen, value->name, tfn->name);
+
+        rc = ib_field_value(value, ib_ftype_list_out(&value_list));
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "Error getting list from field: %s",
+                              ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = ib_list_create(&out_list, rule_exec->tx->mp);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "Error creating list to unroll \"%.*s\" "
+                              "for tranformation \"%s\": %s",
+                              (int)value->nlen, value->name, tfn->name,
+                              ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        IB_LIST_LOOP_CONST(value_list, node) {
+            const ib_field_t *in;
+            ib_field_t *tfn_out;
+
+            in = (const ib_field_t *)node->data;
+            assert(in != NULL);
+
+            rc = execute_tfn_single(rule_exec, tfn, in, recursion, &tfn_out);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            if (tfn_out == NULL) {
+                ib_rule_log_error(rule_exec,
+                                  "Target transformation %s returned NULL",
+                                  tfn->name);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+
+            rc = ib_list_push(out_list, tfn_out);
+            if (rc != IB_OK) {
+                ib_rule_log_error(rule_exec,
+                                  "Error adding tfn result to list: %s",
+                                  ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+
+        /* Finally, create the output field (list) and return it */
+        rc = ib_field_create(&out, rule_exec->tx->mp,
+                             value->name, value->nlen,
+                             IB_FTYPE_LIST, ib_ftype_list_in(out_list));
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "Error creating output list field: %s",
+                              ib_status_to_string(rc));
+        }
+    }
+
+    /* OK, no unrolling required.  Just execute the transformation. */
+    else {
+        ib_flags_t flags;
+        rc = ib_tfn_transform(rule_exec->ib, rule_exec->tx->mp,
+                              tfn, value, &out, &flags);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "Error executing transformation \"%s\": %s",
+                              tfn->name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        ib_rule_log_exec_add_tfn(rule_exec->exec_log, tfn, value, out, rc);
+
+        /* Verify that out isn't NULL */
+        if (out == NULL) {
+            ib_rule_log_error(rule_exec,
+                              "Transformation returned NULL");
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+
+    /* The output of the final operator is the result */
+    if (rc == IB_OK) {
+        *result = out;
+    }
+
+    /* Done. */
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
+ * Execute list of transformations on a target.
  *
  * @param[in] rule_exec The rule execution object
  * @param[in] value Initial value of the target field
@@ -606,15 +758,14 @@ static void rule_exec_pop_value(ib_rule_exec_t *rule_exec,
  * @returns Status code
  */
 static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
-                                ib_field_t *value,
-                                ib_field_t **result)
+                                const ib_field_t *value,
+                                const ib_field_t **result)
 {
     IB_FTRACE_INIT();
-    ib_status_t     rc;
-    int             n = 0;
-    ib_list_node_t *node = NULL;
-    ib_field_t     *in_field;
-    ib_field_t     *out = NULL;
+    ib_status_t          rc;
+    const ib_list_node_t *node = NULL;
+    const ib_field_t     *in_field;
+    ib_field_t           *out = NULL;
 
     assert(rule_exec != NULL);
     assert(result != NULL);
@@ -637,15 +788,13 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
      * Loop through all of the target's transformations.
      */
     in_field = value;
-    IB_LIST_LOOP(rule_exec->target->tfn_list, node) {
-        ib_tfn_t  *tfn = (ib_tfn_t *)node->data;
-        ib_flags_t flags = 0;
+    IB_LIST_LOOP_CONST(rule_exec->target->tfn_list, node) {
+        const ib_tfn_t  *tfn = (const ib_tfn_t *)node->data;
 
         /* Run it */
-        ++n;
-        ib_rule_log_trace(rule_exec, "Executing field transformation #%d", n);
-        rc = ib_tfn_transform(rule_exec->ib, rule_exec->tx->mp,
-                              tfn, in_field, &out, &flags);
+        ib_rule_log_trace(rule_exec, "Executing transformation %s", tfn->name);
+        rc = execute_tfn_single(rule_exec, tfn, in_field,
+                                MAX_TFN_RECURSION, &out);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "Error executing target transformation %s: %s",
@@ -656,7 +805,8 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
         /* Verify that out isn't NULL */
         if (out == NULL) {
             ib_rule_log_error(rule_exec,
-                              "Target transformation #%d returned NULL", n);
+                              "Target transformation %s returned NULL",
+                              tfn->name);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
 
@@ -1013,7 +1163,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
  */
 static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
                                     const ib_field_t *value,
-                                    ib_num_t recursion)
+                                    int recursion)
 {
     IB_FTRACE_INIT();
 
@@ -1293,7 +1443,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         const char         *fname = target->field_name;
         assert(fname != NULL);
         ib_field_t         *value = NULL;      /* Value from the DPI */
-        ib_field_t         *tfnvalue = NULL;   /* Value after tfns */
+        const ib_field_t   *tfnvalue = NULL;   /* Value after tfns */
         ib_status_t         getrc;             /* Status from ib_data_get() */
         ib_num_t            target_result = 0; /* Result of this target */
         bool                pushed = true;
@@ -1338,9 +1488,6 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         if (value != NULL) {
             rc = execute_tfns(rule_exec, value, &tfnvalue);
             if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec,
-                                  "Error executing transformations : %s",
-                                  ib_status_to_string(rc));
                 IB_FTRACE_RET_STATUS(rc);
             }
         }
@@ -1452,7 +1599,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
  */
 static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
                                       ib_rule_t *rule,
-                                      ib_num_t recursion)
+                                      int recursion)
 {
     IB_FTRACE_INIT();
     ib_status_t         rc = IB_OK;
@@ -1490,10 +1637,8 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
      */
     trc = execute_phase_rule_targets(rule_exec);
     if (trc != IB_OK) {
-        ib_rule_log_error(rule_exec,
-                          "Error executing rule: %s",
-                          ib_status_to_string(trc));
         rc = trc;
+        goto cleanup;
     }
 
     /*
@@ -1521,6 +1666,7 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
     }
 
     /* Pop the rule from the execution object */
+cleanup:
     trc = rule_exec_pop_rule(rule_exec);
     if (trc != IB_OK) {
         /* Do nothing */
@@ -1736,21 +1882,21 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
 
         /* Execute the rule, it's actions and chains */
         rule_rc = execute_phase_rule(rule_exec, rule, MAX_CHAIN_RECURSION);
-        if (rule_rc != IB_OK) {
-            ib_rule_log_error(rule_exec,
-                              "Error executing rule: %s",
-                              ib_status_to_string(rule_rc));
-        }
 
         /* Handle declined return code. Did this block? */
         if (ib_tx_flags_isset(tx, IB_TX_BLOCK_IMMEDIATE) ) {
+            bool block_rc;
             ib_rule_log_debug(rule_exec,
                               "Rule resulted in immediate block "
                               "(aborting rule processing): %s",
                               ib_status_to_string(rule_rc));
-            rule_rc = report_block_to_server(rule_exec);
-            if ( rule_rc != IB_OK ) {
-                ib_rule_log_error(rule_exec, "Failed to block.");
+            block_rc = report_block_to_server(rule_exec);
+            if (block_rc != IB_OK) {
+                ib_rule_log_error(rule_exec, "Failed to block: %s",
+                                  ib_status_to_string(block_rc));
+                if (rule_rc == IB_OK) {
+                    rule_rc = block_rc;
+                }
             }
             else {
                 goto finish;
@@ -1761,7 +1907,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE) ) {
         ib_rule_log_tx_debug(tx, "Rule resulted in phase block");
         rc = report_block_to_server(rule_exec);
-        if ( rc != IB_OK ) {
+        if (rc != IB_OK) {
             ib_rule_log_tx_error(tx,
                                  "Failed to block phase: %s",
                                  ib_status_to_string(rc));
