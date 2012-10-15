@@ -124,6 +124,7 @@ int main(int argc, char** argv)
 
     cout << "digraph A {" << endl;
     PB::Chunk chunk;
+    bool first_node = true;
     for (;;) {
         bool at_eof = false;
         try {
@@ -138,7 +139,6 @@ int main(int argc, char** argv)
             break;
         }
 
-        bool first_node = true;
         Edge edge;
         BOOST_FOREACH(const PB::Node& node, chunk.nodes()) {
             cout << "  " << node.id() << " [label=\"" << node.id() << "\"";
