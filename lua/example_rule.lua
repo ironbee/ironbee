@@ -24,15 +24,56 @@
 --
 -- Author: Nick LeRoy <nleroy@qualys.com>
 -- =========================================================================
+
+-- To use this rule in an ironbee.conf file add the line
+--   RuleExt lua:rule.lua id:luarule01 phase:REQUEST_HEADER
+--   Add additional actions such as block:immediate or "msg:A a rule fired."
+
+
+-- Capture the table of inputs to this script.
 t=...
 
-tx = ironbee.newTx(t.tx)
-local host = ironbee.ib_data_get(tx.dpi(), "request_headers.Host")
-if host ~= nil then
-  if host.value() == "pages.cs.wisc.edu" then
-    ironbee.ib_log_debug(tx.ib(), "Host is pages.cs.wisc.edu")
+-- The ib value which is the Ironbee API object. Most of our work is dispatched
+-- off of this object.
+local ib = t.ib
+
+-- The IronBee transaction C struct.
+local tx = t.ib_tx
+
+-- The IronBee engine C struct.
+local engine = t.ib_engine
+
+-- The IronBee rule execution context C struct.
+local ruleexec = t.ib_rule_exec
+
+-- Log using the rule logging framework that we are starting to execute our rule.
+ib:logDebug("Executing rule.")
+
+-- Grab the HTTP Host header value.
+local host = ib:get("REQUEST_HEADERS:Host")
+
+-- Do our check.
+if host ~= nil and host == "myhost.mydomain.com" then
+    ib:logDebug("Host is myhost.mydomain.com. Creating an event.")
+
+    -- Suppress all previous events that may have been generated.
+    -- This is not necessary, but is how we want our rule to operate.
+    ib:forEachEvent(function(evt)
+        evt:setSuppress("other")
+    end)
+
+    -- Now create a event that we want to be generated for this transaction.
+    ib:addEvent("Found target hostname.", {
+            recommended_action = "log",
+            action = "log",
+            confidence = 1,
+            severity = 0.1,
+            tags = { "hostname", "mydomain" },
+            fields = { "REQUEST_HEADESR:Host" }
+        })
     return 1
-  end      
+else
+    ib:logDebug("Unrecognized host.")
+    return 0
 end
 
-return 0

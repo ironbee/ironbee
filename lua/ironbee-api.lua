@@ -33,6 +33,29 @@
 -- getNames(field) - Returns a list of names in this field.
 -- getValues(field) - Returns a list of values in this field.
 -- set(name, value) - set a string, number or table.
+-- forEachEvent(function(event)...) - Call the given function on each event.
+--                                    See the Event Manipulation section.
+--
+-- Event Manipulation
+-- An event object, such as one passed to a callback function by
+-- forEachEvent is a special wrapper object.
+--
+-- event.raw - The raw C struct representing the current event.
+-- event:getSeverity() - Return the number representing the severity.
+-- event:getAction() - Return the integer representing the action.
+-- event:getConfidence() - Return the number representing the confidence.
+-- event:getRuleId() - Return the string representing the rule id.
+-- event:getMsg() - Return the string representing the message.
+-- event:getSuppress() - Return the string showing the suppression value.
+--                       The returned values will be none, false_positive,
+--                       replaced, incomplete, partial, or other.
+-- event:setSuppress(value) - Set the suppression value. This is one of the
+--                            very few values that may be changed in an event.
+--                            Events are mostly immutable things.
+--                            Allowed values are false_positive, replaced,
+--                            incomplete, partial, or other.
+-- event:forEachField(function(tag)...) - Pass each field, as a string, to the callback function.
+-- event:forEachTag(function(tag)...) - Pass each tag, as a string, to the callback function.
 --
 -- Logging
 --
@@ -65,28 +88,28 @@ ib_event.suppressRmap = {}
 for k,v in pairs(ib_event.suppressMap) do
     ib_event.suppressRmap[v] = k
 end
-ib_event.get_severity = function(self)
+ib_event.getSeverity = function(self)
     return self.raw.confidence
 end
-ib_event.get_confidence = function(self)
+ib_event.getConfidence = function(self)
     return self.raw.confidence
 end
-ib_event.get_action = function(self)
+ib_event.getAction = function(self)
     return self.raw.action
 end
-ib_event.get_rule_id = function(self)
+ib_event.getRuleId = function(self)
     return ffi.string(self.raw.rule_id)
 end
-ib_event.get_msg = function(self)
+ib_event.getMsg = function(self)
     return ffi.string(self.raw.msg)
 end
-ib_event.get_suppress = function(self)
+ib_event.getSuppress = function(self)
     return ib_event.suppressRmap[self.raw.suppress]
 end
 -- On an event object set the suppression value using a number or name.
 -- value - may be none, false_positive, replaced, incomplete, partial or other.
 --         The value of none indicates that there is no suppression of the event.
-ib_event.set_suppress = function(self, value)
+ib_event.setSuppress = function(self, value)
     if type(value) == "number" then
             print("Setting number")
         self.raw.suppress = value
@@ -94,7 +117,7 @@ ib_event.set_suppress = function(self, value)
         self.raw.suppress = ib_event.suppressMap[string.lower(value)] or 0
     end
 end
-ib_event.each_field = function(self, func)
+ib_event.forEachField = function(self, func)
     if self.raw.fields ~= nil then
         ibapi.each_list_node(
             self.raw.fields,
@@ -104,7 +127,7 @@ ib_event.each_field = function(self, func)
             "char*")
     end
 end
-ib_event.each_tag = function(self, func)
+ib_event.forEachTag = function(self, func)
     if self.raw.tags ~= nil then
         ibapi.each_list_node(
             self.raw.tags,
@@ -186,7 +209,7 @@ ibapi.addEvent = function(self, msg, options)
     if options.tags ~= nil then
         if type(options.tags) == 'table' then
             for k,v in ipairs(options.tags) do
-                ffi.C.ib_logevent_tag_add(event, v[k])
+                ffi.C.ib_logevent_tag_add(event[0], v)
             end
         end
     end
@@ -195,7 +218,7 @@ ibapi.addEvent = function(self, msg, options)
     if options.fields ~= nil then
         if type(options.fields) == 'table' then
             for k,v in ipairs(options.fields) do
-                ffi.C.ib_logevent_field_add(event, v[k])
+                ffi.C.ib_logevent_field_add(event[0], v)
             end
         end
     end

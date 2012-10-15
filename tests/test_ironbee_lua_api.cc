@@ -323,12 +323,12 @@ TEST_F(IronBeeLuaApi, read_event)
     eval("ib:addEvent(\"Saw some failure\")");
     eval("ib:addEvent(\"Saw some failure\", { system = \"public\" } )");
     eval("ib:forEachEvent(function(e)\n"
-         "    if e:get_suppress() ~= \"none\" then\n"
+         "    if e:getSuppress() ~= \"none\" then\n"
          "        cause_a_crash()\n"
          "    end\n"
-         "    print(e:get_rule_id())\n"
-         "    e:set_suppress(\"incomplete\")\n"
-         "    if e:get_suppress() ~= \"incomplete\" then\n"
+         "    print(e:getRuleId())\n"
+         "    e:setSuppress(\"incomplete\")\n"
+         "    if e:getSuppress() ~= \"incomplete\" then\n"
          "        cause_a_crash()\n"
          "    end\n"
          "end)");
