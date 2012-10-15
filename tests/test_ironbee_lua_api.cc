@@ -333,4 +333,3 @@ TEST_F(IronBeeLuaApi, read_event)
          "    end\n"
          "end)");
 }
-
