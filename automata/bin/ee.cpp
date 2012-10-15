@@ -333,6 +333,7 @@ int main(int argc, char **argv)
     string record_s("list");
     size_t block_size = 1024;
     size_t overlap_size = 128;
+    bool no_output = false;
 
     po::options_description desc("Options:");
     desc.add_options()
@@ -401,6 +402,7 @@ int main(int argc, char **argv)
         output_transform = output_transform_integer;
     }
     else if (output_type_s == "nop") {
+        no_output = true;
         output_transform = output_transform_nop;
     }
     else {
@@ -470,6 +472,7 @@ int main(int argc, char **argv)
         );
     }
     else if (record_s == "nop") {
+        no_output = true;
         output_callback = output_record_nop;
     }
     else {
@@ -509,11 +512,20 @@ int main(int argc, char **argv)
             break;
         }
         ti.switch_event(TimingInfo::EUDOXUS);
-        rc = ia_eudoxus_execute(
-            state,
-            &input_buffer[overlap_size],
-            read
-        );
+        if (no_output) {
+            rc = ia_eudoxus_execute_without_output(
+                state,
+                &input_buffer[overlap_size],
+                read
+            );
+        }
+        else {
+            rc = ia_eudoxus_execute(
+                state,
+                &input_buffer[overlap_size],
+                read
+            );
+        }
         ti.switch_event(TimingInfo::DEFAULT);
         switch (rc) {
         case IA_EUDOXUS_OK:
