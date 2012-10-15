@@ -51,6 +51,20 @@ ib_event.new = function(self, event)
     self.__index = self
     return o
 end
+-- String mapping table.
+ib_event.suppressMap = {
+    none           = ffi.C.IB_LEVENT_SUPPRESS_NONE,
+    false_positive = ffi.C.IB_LEVENT_SUPPRESS_FPOS,
+    replaced       = ffi.C.IB_LEVENT_SUPPRESS_REPLACED,
+    incomplete     = ffi.C.IB_LEVENT_SUPPRESS_INC,
+    partial        = ffi.C.IB_LEVENT_SUPPRESS_INC,
+    other          = ffi.C.IB_LEVENT_SUPPRESS_OTHER
+}
+ib_event.suppressRmap = {}
+-- Build reverse map.
+for k,v in pairs(ib_event.suppressMap) do
+    ib_event.suppressRmap[v] = k
+end
 ib_event.get_severity = function(self)
     return self.raw.confidence
 end
@@ -65,6 +79,20 @@ ib_event.get_rule_id = function(self)
 end
 ib_event.get_msg = function(self)
     return ffi.string(self.raw.msg)
+end
+ib_event.get_suppress = function(self)
+    return ib_event.suppressRmap[self.raw.suppress]
+end
+-- On an event object set the suppression value using a number or name.
+-- value - may be none, false_positive, replaced, incomplete, partial or other.
+--         The value of none indicates that there is no suppression of the event.
+ib_event.set_suppress = function(self, value)
+    if type(value) == "number" then
+            print("Setting number")
+        self.raw.suppress = value
+    else
+        self.raw.suppress = ib_event.suppressMap[string.lower(value)] or 0
+    end
 end
 ib_event.each_field = function(self, func)
     if self.raw.fields ~= nil then

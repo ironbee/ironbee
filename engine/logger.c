@@ -188,6 +188,7 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
     (*ple)->action = action;
     (*ple)->confidence = confidence;
     (*ple)->severity = severity;
+    (*ple)->suppress = IB_LEVENT_SUPPRESS_NONE;
 
     /*
      * Generate the message, replacing the last three characters

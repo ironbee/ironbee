@@ -2196,6 +2196,19 @@ typedef enum {
 } ib_logevent_action_t;
 
 /**
+ * Log Event suppression states.
+ *
+ * Events may be suppressed for different reasons.
+ */
+typedef enum {
+    IB_LEVENT_SUPPRESS_NONE,         /**< Not suppressed. */
+    IB_LEVENT_SUPPRESS_FPOS,         /**< False positive. */
+    IB_LEVENT_SUPPRESS_REPLACED,     /**< Replaced by later event. */
+    IB_LEVENT_SUPPRESS_INC,          /**< Event is partial/incomplete. */
+    IB_LEVENT_SUPPRESS_OTHER         /**< Other reason. */
+} ib_logevent_suppress_t;
+
+/**
  * Lookup log event type name.
  *
  * @param num Numeric ID
@@ -2224,6 +2237,7 @@ struct ib_logevent_t {
     ib_logevent_type_t       type;       /**< Event type */
     ib_logevent_action_t     rec_action; /**< Recommended action */
     ib_logevent_action_t     action;     /**< Action taken */
+    ib_logevent_suppress_t   suppress;   /**< Suppress this event. */
     const void              *data;       /**< Event data */
     size_t                   data_len;   /**< Event data size */
     uint8_t                  confidence; /**< Event confidence (percent) */

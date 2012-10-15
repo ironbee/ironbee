@@ -132,6 +132,13 @@ ffi.cdef [[
         IB_LEVENT_ACTION_ALLOW
     } ib_logevent_action_t;
     typedef enum {
+        IB_LEVENT_SUPPRESS_NONE,
+        IB_LEVENT_SUPPRESS_FPOS,
+        IB_LEVENT_SUPPRESS_REPLACED,
+        IB_LEVENT_SUPPRESS_INC,
+        IB_LEVENT_SUPPRESS_OTHER
+    } ib_logevent_suppress_t;
+    typedef enum {
         IB_LOG_EMERGENCY,
         IB_LOG_ALERT,
         IB_LOG_CRITICAL,
@@ -379,6 +386,7 @@ ffi.cdef [[
         ib_logevent_type_t       type;
         ib_logevent_action_t     rec_action;
         ib_logevent_action_t     action;
+        ib_logevent_suppress_t   suppress;
         void                    *data;
         size_t                   data_len;
         uint8_t                  confidence;
