@@ -94,10 +94,10 @@ class TestBasic < Test::Unit::TestCase
 
     automata_test(words, TRIEGEN, "trie") do |dir, eudoxus_path|
       words.each do |word|
-        output = ee(eudoxus_path, dir, word, "input_#{word}", "output_#{word}", "integer")
+        output = ee(eudoxus_path, dir, word, "input_#{word}", "output_#{word}", "integer", ["-f"])
         assert(! output.empty?)
       end
-      output = ee(eudoxus_path, dir, "goodbye", "input_goodbye", "output_goodbyte", "integer")
+      output = ee(eudoxus_path, dir, "goodbye", "input_goodbye", "output_goodbyte", "integer", ["-f"])
       assert(output.empty?)
     end
   end

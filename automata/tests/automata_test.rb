@@ -66,7 +66,7 @@ module AutomataTest
     assert($?.success?)
   end
 
-  def ee(eudoxus_path, dir, text, input_name = "input", output_name = "output", output_type = "length")
+  def ee(eudoxus_path, dir, text, input_name = "input", output_name = "output", output_type = "length", extra_args = [])
     input_path = File.join(dir, input_name)
     output_path = File.join(dir, output_name)
 
@@ -74,7 +74,7 @@ module AutomataTest
       fp.print text
     end
 
-    system(EE, "-a", eudoxus_path, "-o", output_path, "-i", input_path, "-t", output_type)
+    system(EE, "-a", eudoxus_path, "-o", output_path, "-i", input_path, "-t", output_type, *extra_args)
 
     parse_ee_output(IO.read(output_path))
   end
