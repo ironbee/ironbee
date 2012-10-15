@@ -31,6 +31,7 @@
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
+#include <ironbee/path.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
@@ -436,29 +437,47 @@ static void nop_ac_match(ib_ac_t *orig,
  * @brief Read the given file into memory and return the malloced buffer.
  *
  * @param[in] ib Ironbee engine.
+ * @param[in] ctx Configuration context
+ * @param[in] mp Memory pool to use for allocations
  * @param[in] filename Filename to read.
  * @param[in,out] buffer Character buffer pointer that will be malloced
  *                and must be free'ed by the caller.
  */
-static ib_status_t readfile(ib_engine_t *ib,
-                            const char* filename,
+static ib_status_t readfile(const ib_engine_t *ib,
+                            const ib_context_t *ctx,
+                            ib_mpool_t *mp,
+                            const char *filename,
                             char **buffer)
 {
     IB_FTRACE_INIT();
 
-    int fd = open(filename, O_RDONLY);
+    int fd;
     int rc;
     struct stat fd_stat;
     ssize_t len; /**< Length of the file. */
     ssize_t bytes_read;
     ssize_t total_bytes_read;
 
+    fd = open(filename, O_RDONLY);
     if (fd < 0) {
-        ib_log_error(ib,
-                     "Failed to open pattern file %s: %s",
-                     filename,
-                     strerror(errno));
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        const char *filepath;
+        const char *path = ib_context_config_cwd(ctx);
+        if (path == NULL) {
+            IB_FTRACE_RET_STATUS(IB_ENOENT);
+        }
+        filepath = ib_util_path_join(mp, path, filename);
+        if (filepath == NULL) {
+            ib_log_error(ib, "Failed to create file path for \"%s\"", filename);
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
+        }
+        fd = open(filepath, O_RDONLY);
+        if (fd < 0) {
+            ib_log_error(ib,
+                         "Failed to open pattern file \"%s\" or \"%s\": %s",
+                         filename, filepath, strerror(errno));
+            IB_FTRACE_RET_STATUS(IB_ENOENT);
+        }
+        filename = filepath;
     }
 
     rc = fstat(fd, &fd_stat);
@@ -509,6 +528,7 @@ static ib_status_t readfile(ib_engine_t *ib,
     /* Null terminate the buffer */
     (*buffer)[total_bytes_read] = '\0';
 
+    ib_log_debug(ib, "Read AC pattern file \"%s\"", filename);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -555,7 +575,7 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
     }
 
     /* Populate file. This data must be free'ed. */
-    rc = readfile(ib, pattern_file_unescaped, &file);
+    rc = readfile(ib, ctx, pool, pattern_file_unescaped, &file);
 
     free(pattern_file_unescaped);
 
