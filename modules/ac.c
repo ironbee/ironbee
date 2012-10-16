@@ -31,10 +31,10 @@
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
-#include <ironbee/path.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
+#include <ironbee/path.h>
 #include <ironbee/provider.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/types.h>
