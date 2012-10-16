@@ -4,7 +4,8 @@ include $(top_srcdir)/build/common.mk
 # If CPP is not defined, we do very litte.
 lib_LTLIBRARIES = libiaeudoxus.la
 libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c \
-	include/ironautomata/*.h
+	include/ironautomata/*.h \
+	include/ironautomata/generator/*.h
 EXTRA_libiaeudoxus_la_SOURCES = eudoxus_subengine.c
 
 AM_CPPFLAGS = -I$(srcdir)/include
@@ -26,7 +27,9 @@ libironautomata_la_SOURCES = \
     logger.cpp \
     optimize_edges.cpp \
     translate_nonadvancing.cpp \
-    include/ironautomata/*.hpp
+    aho_corasick.cpp \
+    include/ironautomata/*.hpp \
+    include/ironautomata/generator/*.hpp
 
 nodist_libironautomata_la_SOURCES = \
     intermediate.pb.cc \
