@@ -38,13 +38,13 @@ namespace IronAutomata {
 /**
  * Buffer of bytes.
  *
- * IronAutomata uses vector<char> as its buffer type.  This has means that,
+ * IronAutomata uses vector<uint8_t> as its buffer type.  This has means that,
  * during construction, the vector is periodically enlarged and data copied.
  * Besides time and space costs, this behavior means that pointers retrieved
  * from a buffer are not stable across buffer expansion.  To deal with this,
  * buffer indexes are used.
  */
-typedef std::vector<char> buffer_t;
+typedef std::vector<uint8_t> buffer_t;
 
 /**
  * Build buffers up incrementally.
@@ -118,7 +118,7 @@ public:
     template <typename T>
     size_t index(const T* p) const
     {
-        return reinterpret_cast<const char*>(p) - buffer().data();
+        return reinterpret_cast<const uint8_t*>(p) - buffer().data();
     }
 
     /**

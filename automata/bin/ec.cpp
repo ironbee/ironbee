@@ -168,7 +168,10 @@ int main(int argc, char **argv)
                  << endl;
         }
 
-        output_stream.write(result.buffer.data(), result.buffer.size());
+        output_stream.write(
+            reinterpret_cast<const char *>(result.buffer.data()),
+            result.buffer.size()
+        );
         if (! output_stream) {
             cout << "Error: Error writing output." << endl;;
             success = false;

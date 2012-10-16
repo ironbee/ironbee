@@ -54,7 +54,7 @@ TEST(TestBuffer, IndexAndPtr)
     BufferAssembler a(buffer);
 
     EXPECT_EQ(3UL, a.index(buffer.data() + 3));
-    EXPECT_EQ(buffer.data() + 3, a.ptr<char>(3));
+    EXPECT_EQ(buffer.data() + 3, a.ptr<uint8_t>(3));
     EXPECT_EQ(3UL, a.index(a.ptr<char>(3)));
 }
 
@@ -78,10 +78,10 @@ TEST(TestBuffer, AppendObject)
     foo_t* f_p = a.append_object(f);
     size_t f_index = a.index(f_p);
     EXPECT_EQ(sizeof(foo_t), a.size());
-    EXPECT_EQ(buffer.data(), reinterpret_cast<char*>(f_p));
+    EXPECT_EQ(buffer.data(), reinterpret_cast<uint8_t*>(f_p));
     foo_t* g_p = a.append_object(g);
     EXPECT_EQ(2 * sizeof(foo_t), a.size());
-    EXPECT_EQ(buffer.data() + sizeof(foo_t), reinterpret_cast<char*>(g_p));
+    EXPECT_EQ(buffer.data() + sizeof(foo_t), reinterpret_cast<uint8_t*>(g_p));
 
     // f_p may have been invalidated.
     f_p = a.ptr<foo_t>(f_index);
@@ -98,7 +98,7 @@ TEST(TestBuffer, AppendArray)
 
     int* p = a.append_array<int>(5);
     EXPECT_EQ(5 * sizeof(int), a.size());
-    EXPECT_EQ(buffer.data(), reinterpret_cast<char*>(p));
+    EXPECT_EQ(buffer.data(), reinterpret_cast<uint8_t*>(p));
 
     for (size_t i = 0; i < buffer.size(); ++i) {
         EXPECT_EQ(0, buffer[i]);
@@ -113,8 +113,8 @@ TEST(TestBuffer, AppendString)
     static const char c_content[] = "Hello World";
     char* p = a.append_string(c_content);
     EXPECT_EQ(string(c_content), string(p, sizeof(c_content) - 1));
-    EXPECT_EQ(string(c_content), string(buffer.data(), sizeof(c_content) - 1));
-    EXPECT_EQ(buffer.data(), p);
+    EXPECT_EQ(string(c_content), string(reinterpret_cast<const char*>(buffer.data()), sizeof(c_content) - 1));
+    EXPECT_EQ(reinterpret_cast<const char*>(buffer.data()), p);
     // -1 because no NUL.
     EXPECT_EQ(sizeof(c_content) - 1, a.size());
 }
@@ -130,7 +130,7 @@ TEST(TestBuffer, AppendBytes)
     content.push_back(15);
 
     uint8_t* p = a.append_bytes(content.data(), content.size());
-    EXPECT_EQ(buffer.data(), reinterpret_cast<char*>(p));
+    EXPECT_EQ(buffer.data(), reinterpret_cast<uint8_t*>(p));
     EXPECT_EQ(3UL, a.size());
     EXPECT_TRUE(equal(buffer.begin(), buffer.end(), content.begin()));
 }
