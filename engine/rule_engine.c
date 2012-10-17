@@ -3579,11 +3579,14 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_cfg_log_notice_ex(ib,
                              rule->meta.config_file,
                              rule->meta.config_line,
-                             "Not replacing rule \"%s\" of context=\"%s\" "
-                             "rev=%u with rev=%u",
+                             "Not replacing "
+                             "rule \"%s\" [context:\"%s\" rev:%d] with "
+                             "rule \"%s\" [context:\"%s\" rev:%d]",
+                             ib_rule_id(lookup),
+                             ib_context_full_get(lookup->ctx),
+                             lookup->meta.revision,
                              ib_rule_id(rule),
                              ib_context_full_get(ctx),
-                             lookup->meta.revision,
                              rule->meta.revision);
         IB_FTRACE_RET_STATUS(IB_EEXIST);
     }
@@ -3644,11 +3647,14 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
         ib_cfg_log_info_ex(ib,
                            rule->meta.config_file,
                            rule->meta.config_line,
-                           "Replaced rule \"%s\" of context=\"%s\" "
-                           "rev=%u with rev=%u",
+                           "Replaced "
+                           "rule \"%s\" [context:\"%s\" rev:%d] with "
+                           "rule \"%s\" [context:\"%s\" rev:%d]",
+                           ib_rule_id(lookup),
+                           ib_context_full_get(lookup->ctx),
+                           lookup->meta.revision,
                            ib_rule_id(rule),
                            ib_context_full_get(ctx),
-                           lookup->meta.revision,
                            rule->meta.revision);
     }
 
