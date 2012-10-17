@@ -89,6 +89,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
     IB_FTRACE_INIT();
     ib_mpool_t *pool;
     ib_status_t rc;
+    ib_context_t *ctx;
 
     /* Create parser memory pool */
     rc = ib_mpool_create(&pool, "cfgparser", ib->mp);
@@ -111,8 +112,10 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
     if (rc != IB_OK) {
         goto failed;
     }
-    (*pcp)->cur_ctx = ib_context_main(ib);
-    ib_list_push((*pcp)->stack, (*pcp)->cur_ctx);
+    ctx = ib_context_main(ib);
+    (*pcp)->cur_ctx = ctx;
+    ib_context_config_set_parser(ctx, *pcp);
+    ib_list_push((*pcp)->stack, ctx);
 
     /* Create the block tracking list */
     rc = ib_list_create(&((*pcp)->block), pool);
