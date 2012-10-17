@@ -62,10 +62,11 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
                 d->tx->cfg->create_table(table_size(d->tx->request_urlenp_body->params));
 
             // Transform parameters and store them into the new table
-            bstr *name, *value;
+            bstr *name;
+            void *tvalue;
             table_iterator_reset(d->tx->request_urlenp_body->params);
-            while ((name = table_iterator_next(d->tx->request_urlenp_body->params, (void **) & value)) != NULL) {
-                d->tx->connp->cfg->parameter_processor(d->tx->request_params_body, name, value);
+            while ((name = table_iterator_next(d->tx->request_urlenp_body->params, & tvalue)) != NULL) {
+                d->tx->connp->cfg->parameter_processor(d->tx->request_params_body, name, (bstr *)tvalue);
                 // TODO Check return code
             }
 
@@ -146,11 +147,11 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
 
             // Use the parameter processor on each parameter, storing
             // the results in the newly created table
-            bstr *name = NULL;
-            bstr *value = NULL;
+            bstr *name;
+            void *tvalue;
             table_iterator_reset(connp->in_tx->request_urlenp_query->params);
-            while ((name = table_iterator_next(connp->in_tx->request_urlenp_query->params, (void **) & value)) != NULL) {
-                connp->cfg->parameter_processor(connp->in_tx->request_params_query, name, value);
+            while ((name = table_iterator_next(connp->in_tx->request_urlenp_query->params, & tvalue)) != NULL) {
+                connp->cfg->parameter_processor(connp->in_tx->request_params_query, name, (bstr *)tvalue);
                 // TODO Check return code
             }
 

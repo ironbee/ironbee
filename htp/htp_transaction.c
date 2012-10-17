@@ -127,9 +127,10 @@ void htp_tx_destroy(htp_tx_t *tx) {
     list_destroy(&tx->request_header_lines);
 
     // Destroy request_headers    
-    htp_header_t *h = NULL;
+    void *tvalue;
     table_iterator_reset(tx->request_headers);
-    while (table_iterator_next(tx->request_headers, (void **) & h) != NULL) {
+    while (table_iterator_next(tx->request_headers, &tvalue) != NULL) {
+        htp_header_t *h = (htp_header_t *)tvalue;
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
@@ -162,10 +163,10 @@ void htp_tx_destroy(htp_tx_t *tx) {
     }
     list_destroy(&tx->response_header_lines);
 
-    // Destroy response headers    
-    h = NULL;
+    // Destroy response headers        
     table_iterator_reset(tx->response_headers);
-    while (table_iterator_next(tx->response_headers, (void **) & h) != NULL) {
+    while (table_iterator_next(tx->response_headers, &tvalue) != NULL) {
+        htp_header_t *h = (htp_header_t *)tvalue;
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
@@ -192,29 +193,29 @@ void htp_tx_destroy(htp_tx_t *tx) {
     htp_urlenp_destroy(&tx->request_urlenp_body);
     htp_mpartp_destroy(&tx->request_mpartp);
 
-    if ((tx->request_params_query_reused == 0)&&(tx->request_params_query != NULL)) {
-        bstr *val = NULL;
+    if ((tx->request_params_query_reused == 0)&&(tx->request_params_query != NULL)) {        
         table_iterator_reset(tx->request_params_query);
-        while(table_iterator_next(tx->request_params_query, (void **) &val) != NULL) {
-            bstr_free(&val);
+        while(table_iterator_next(tx->request_params_query, &tvalue) != NULL) {
+            bstr *b = (bstr *)tvalue;
+            bstr_free(&b);
         }
         table_destroy(&tx->request_params_query);
     }
 
-    if ((tx->request_params_body_reused == 0)&&(tx->request_params_body != NULL)) {
-        bstr *val = NULL;
+    if ((tx->request_params_body_reused == 0)&&(tx->request_params_body != NULL)) {        
         table_iterator_reset(tx->request_params_body);
-        while(table_iterator_next(tx->request_params_body, (void **) &val) != NULL) {
-            bstr_free(&val);
+        while(table_iterator_next(tx->request_params_body, &tvalue) != NULL) {
+            bstr *b = (bstr *)tvalue;
+            bstr_free(&b);
         }
         table_destroy(&tx->request_params_body);
     }
 
-    if (tx->request_cookies != NULL) {
-        bstr *val = NULL;
+    if (tx->request_cookies != NULL) {        
         table_iterator_reset(tx->request_cookies);
-        while(table_iterator_next(tx->request_cookies, (void **) &val) != NULL) {
-            bstr_free(&val);
+        while(table_iterator_next(tx->request_cookies, &tvalue) != NULL) {
+            bstr *b = (bstr *)tvalue;
+            bstr_free(&b);
         }
         table_destroy(&tx->request_cookies);
     }

@@ -75,11 +75,12 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
     #endif
     
     // Convert the parameters, one by one
-    bstr *name = NULL;
-    bstr *value = NULL;
+    bstr *name;
+    void *tvalue;
     table_iterator_reset(input_params);
-    while ((name = table_iterator_next(input_params, (void **) & value)) != NULL) {
+    while ((name = table_iterator_next(input_params, &tvalue)) != NULL) {
         bstr *new_name = NULL, *new_value = NULL;
+        bstr *value = (bstr *)tvalue;
         
         // Convert name
         htp_transcode_bstr(cd, name, &new_name);
@@ -87,8 +88,9 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
             iconv_close(cd);
             
             table_iterator_reset(output_params);
-            while(table_iterator_next(output_params, (void **) & value) != NULL) {
-                bstr_free(&value);
+            while(table_iterator_next(output_params, &tvalue) != NULL) {
+                bstr *b = (bstr *)tvalue;
+                bstr_free(&b);
             }
             
             table_destroy(&output_params);
@@ -102,8 +104,9 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
             iconv_close(cd);
             
             table_iterator_reset(output_params);
-            while(table_iterator_next(output_params, (void **) & value) != NULL) {
-                bstr_free(&value);
+            while(table_iterator_next(output_params, &tvalue) != NULL) {
+                bstr *b = (bstr *)tvalue;
+                bstr_free(&b);
             }
             
             table_destroy(&output_params);
@@ -120,8 +123,9 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
     // Destroy the old parameter table if necessary
     if (destroy_old) {
         table_iterator_reset(input_params);
-        while(table_iterator_next(input_params, (void **) & value) != NULL) {
-            bstr_free(&value);
+        while(table_iterator_next(input_params, &tvalue) != NULL) {
+            bstr *b = (bstr *)tvalue;
+            bstr_free(&b);
         }      
     
         table_destroy(&input_params);
@@ -151,7 +155,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
         return HTP_ERROR;
     }
 
-    char *inbuf = bstr_ptr(input);
+    const char *inbuf = bstr_ptr(input);
     size_t inleft = bstr_len(input);
     char *outbuf = buf;
     size_t outleft = buflen;
