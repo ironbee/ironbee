@@ -355,7 +355,7 @@ const char DLL_PUBLIC *ib_context_full_get(const ib_context_t *ctx);
 /**
  * Set the CWD for a context
  *
- * @param[in,ou]t ctx The context to operate on
+ * @param[in,out] ctx The context to operate on
  * @param[in] dir The directory to store (can be NULL)
  *
  * @returns IB_OK, or IB_EALLOC for allocation errors
@@ -366,7 +366,7 @@ ib_status_t DLL_PUBLIC ib_context_set_cwd(ib_context_t *ctx,
 /**
  * Get the CWD for a context
  *
- * @param[in,ou]t ctx The context to operate on
+ * @param[in,out] ctx The context to operate on
  *
  * @returns Pointer to the context's CWD, or NULL if none available
  */
@@ -376,7 +376,7 @@ const char DLL_PUBLIC *ib_context_config_cwd(const ib_context_t *ctx);
  * Set the configuration parser for a context, and the context's CWD from
  * the parser's CWD (if available)
  *
- * @param[in,ou]t ctx The context to operate on
+ * @param[in,out] ctx The context to operate on
  * @param[in] parser The configuration parser
  *
  * @returns IB_OK, or errors returned by @sa ib_context_set_cwd().
