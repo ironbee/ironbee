@@ -39,14 +39,11 @@ int main(int argc, char **argv)
     namespace po = boost::program_options;
 
     size_t chunk_size = 0;
-    enum do_translate_nonadvancing_e {
-        TN_NONE,
-        TN_CONSERVATIVE,
-        TN_AGGRESSIVE
-    };
-    do_translate_nonadvancing_e do_translate_nonadvancing = TN_NONE;
     bool do_deduplicate_outputs = false;
     bool do_optimize_edges = false;
+    bool do_translate_nonadvancing_conservative = false;
+    bool do_translate_nonadvancing_aggressive = false;
+    bool do_translate_nonadvancing_structural = false;
 
     po::options_description desc("Options:");
     desc.add_options()
@@ -60,10 +57,12 @@ int main(int argc, char **argv)
             po::bool_switch(&do_deduplicate_outputs))
         ("optimize-edges",
             po::bool_switch(&do_optimize_edges))
-        ("translate-nonadvancing",
-            "translate non-advancing edges [fast]")
+        ("translate-nonadvancing-conservative",
+            "translate non-advancing edges, conservative version [fast]")
         ("translate-nonadvancing-aggressive",
             "translate non-advancing edges, aggressive version")
+        ("translate-nonadvancing-structural",
+            "translate non-advancing edges, structural version [space]")
         ;
 
     po::variables_map vm;
@@ -81,19 +80,23 @@ int main(int argc, char **argv)
     }
 
     if (vm.count("fast")) {
-        do_translate_nonadvancing = TN_CONSERVATIVE;
+        do_translate_nonadvancing_conservative = true;
         do_deduplicate_outputs = true;
         do_optimize_edges = true;
     }
     if (vm.count("space")) {
+        do_translate_nonadvancing_structural = true;
         do_deduplicate_outputs = true;
         do_optimize_edges = true;
     }
-    if (vm.count("translate-nonadvancing")) {
-        do_translate_nonadvancing = TN_CONSERVATIVE;
+    if (vm.count("translate-nonadvancing-conservative")) {
+        do_translate_nonadvancing_conservative = true;
     }
     if (vm.count("translate-nonadvancing-aggressive")) {
-        do_translate_nonadvancing = TN_AGGRESSIVE;
+            do_translate_nonadvancing_aggressive = true;
+    }
+    if (vm.count("translate-nonadvancing-structural")) {
+        do_translate_nonadvancing_structural = true;
     }
 
     Intermediate::Automata automata;
@@ -101,17 +104,29 @@ int main(int argc, char **argv)
 
     Intermediate::read_automata(automata, cin, logger);
 
-    if (do_translate_nonadvancing != TN_NONE) {
-        cerr << "Compact Nonadvancing"
-             << (do_translate_nonadvancing == TN_CONSERVATIVE ?
-                 " conservative" :
-                 " aggressive"
-             )
-             << ": ";
+    if (do_translate_nonadvancing_conservative) {
+        cerr << "Translate Nonadvancing [conservative]: ";
         cerr.flush();
         size_t num_fixes = Intermediate::translate_nonadvancing(
             automata,
-            do_translate_nonadvancing == TN_AGGRESSIVE
+            false
+        );
+        cerr << num_fixes << endl;
+    }
+    if (do_translate_nonadvancing_aggressive) {
+        cerr << "Translate Nonadvancing [aggressive]: ";
+        cerr.flush();
+        size_t num_fixes = Intermediate::translate_nonadvancing(
+            automata,
+            true
+        );
+        cerr << num_fixes << endl;
+    }
+    if (do_translate_nonadvancing_structural) {
+        cerr << "Translate Nonadvancing [structural]: ";
+        cerr.flush();
+        size_t num_fixes = Intermediate::translate_nonadvancing_structural(
+            automata
         );
         cerr << num_fixes << endl;
     }

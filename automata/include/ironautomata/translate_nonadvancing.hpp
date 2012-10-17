@@ -73,6 +73,26 @@ size_t translate_nonadvancing(
     bool      conservative = true
 );
 
+/**
+ * As translate_nonadvancing() but restricted to non-changing edge structure.
+ *
+ * This optimization does the same basic task as translate_nonadvancing() but
+ * maintains the current edge structure.  Specifically, it will only act when
+ * it suffices to change the target/advance of an Edge object (or default).
+ * In contrast, translate_nonadvancing() will destroy and construct Edge
+ * objects as needed.
+ *
+ * From another view, translate_nonadvancing() works at the abstraction level
+ * of automata and translate_nonadvancing_structural() works at the
+ * abstraction level of the Intermediate structures.
+ *
+ * @param[in] automata Automata to translate.
+ * @return Number of targets changed.
+ */
+size_t translate_nonadvancing_structural(
+    Automata& automata
+);
+
 } // Intermediate
 } // IronAutomata
 
