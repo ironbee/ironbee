@@ -62,12 +62,18 @@ typedef ib_status_t (*ib_tfn_fn_t)(ib_engine_t *ib,
                                    ib_flags_t *pflags);
 
 /** @cond internal */
+
+/** Transformation flags */
+#define IB_TFN_FLAG_NONE        (0x0)      /**< No flags */
+#define IB_TFN_FLAG_HANDLE_LIST (1 << 0)   /**< Tfn can handle lists */
+
 /**
  * Transformation.
  */
 struct ib_tfn_t {
     const char         *name;              /**< Tfn name */
     ib_tfn_fn_t         fn_execute;        /**< Tfn execute function */
+    ib_flags_t          tfn_flags;         /**< Tfn flags */
     void               *fndata;            /**< Tfn function data */
 };
 /** @endcond **/
@@ -92,6 +98,7 @@ struct ib_tfn_t {
  * @param ib Engine handle
  * @param name Transformation name
  * @param fn_execute Transformation execute function
+ * @param flags Transformation flags
  * @param fndata Transformation function data
  *
  * @returns Status code
@@ -99,6 +106,7 @@ struct ib_tfn_t {
 ib_status_t DLL_PUBLIC ib_tfn_register(ib_engine_t *ib,
                                        const char *name,
                                        ib_tfn_fn_t fn_execute,
+                                       ib_flags_t flags,
                                        void *fndata);
 
 /**
@@ -148,8 +156,8 @@ ib_status_t DLL_PUBLIC ib_tfn_lookup(ib_engine_t *ib,
  */
 ib_status_t DLL_PUBLIC ib_tfn_transform(ib_engine_t *ib,
                                         ib_mpool_t *mp,
-                                        ib_tfn_t *tfn,
-                                        ib_field_t *fin,
+                                        const ib_tfn_t *tfn,
+                                        const ib_field_t *fin,
                                         ib_field_t **fout,
                                         ib_flags_t *pflags);
 

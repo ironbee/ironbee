@@ -43,6 +43,7 @@
 ib_status_t ib_tfn_register(ib_engine_t *ib,
                             const char *name,
                             ib_tfn_fn_t fn_execute,
+                            ib_flags_t flags,
                             void *fndata)
 {
     IB_FTRACE_INIT();
@@ -67,6 +68,7 @@ ib_status_t ib_tfn_register(ib_engine_t *ib,
     }
     tfn->name = name_copy;
     tfn->fn_execute = fn_execute;
+    tfn->tfn_flags = flags;
     tfn->fndata = fndata;
 
     rc = ib_hash_set(tfn_hash, name_copy, tfn);
@@ -95,8 +97,8 @@ ib_status_t ib_tfn_lookup_ex(ib_engine_t *ib,
 
 ib_status_t ib_tfn_transform(ib_engine_t *ib,
                              ib_mpool_t *mp,
-                             ib_tfn_t *tfn,
-                             ib_field_t *fin,
+                             const ib_tfn_t *tfn,
+                             const ib_field_t *fin,
                              ib_field_t **fout,
                              ib_flags_t *pflags)
 {

@@ -1100,80 +1100,91 @@ ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
     ib_status_t rc;
 
     /* Define transformations. */
-    rc = ib_tfn_register(ib, "lowercase", tfn_lowercase, NULL);
+    rc = ib_tfn_register(ib, "lowercase", tfn_lowercase,
+                         IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    rc = ib_tfn_register(ib, "lc", tfn_lowercase, NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    rc = ib_tfn_register(ib, "trimLeft", tfn_trim_left, NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    rc = ib_tfn_register(ib, "trimRight", tfn_trim_right, NULL);
+    rc = ib_tfn_register(ib, "lc", tfn_lowercase,
+                         IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "trim", tfn_trim, NULL);
+    rc = ib_tfn_register(ib, "trimLeft", tfn_trim_left,
+                         IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "removeWhitespace", tfn_wspc_remove, NULL);
+    rc = ib_tfn_register(ib, "trimRight", tfn_trim_right,
+                         IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "compressWhitespace", tfn_wspc_compress, NULL);
+    rc = ib_tfn_register(ib, "trim", tfn_trim,
+                         IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "length", tfn_length, NULL);
+    rc = ib_tfn_register(ib, "removeWhitespace", tfn_wspc_remove,
+                         IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "count", tfn_count, NULL);
+    rc = ib_tfn_register(ib, "compressWhitespace", tfn_wspc_compress,
+                         IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "max", tfn_max, NULL);
+    rc = ib_tfn_register(ib, "length", tfn_length,
+                         IB_TFN_FLAG_HANDLE_LIST, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "min", tfn_min, NULL);
+    rc = ib_tfn_register(ib, "count", tfn_count,
+                         IB_TFN_FLAG_HANDLE_LIST, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "urlDecode", tfn_url_decode, NULL);
+    rc = ib_tfn_register(ib, "max", tfn_max,
+                         IB_TFN_FLAG_HANDLE_LIST, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib,
-        "htmlEntityDecode", tfn_html_entity_decode, NULL
-    );
+    rc = ib_tfn_register(ib, "min", tfn_min,
+                         IB_TFN_FLAG_HANDLE_LIST, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib, "normalizePath", tfn_normalize_path, NULL);
+    rc = ib_tfn_register(ib, "urlDecode", tfn_url_decode,
+                         IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_tfn_register(ib,
-        "normalizePathWin", tfn_normalize_path_win, NULL
-    );
+    rc = ib_tfn_register(ib, "htmlEntityDecode", tfn_html_entity_decode,
+                         IB_TFN_FLAG_NONE, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_tfn_register(ib, "normalizePath", tfn_normalize_path,
+                         IB_TFN_FLAG_NONE, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    rc = ib_tfn_register(ib, "normalizePathWin", tfn_normalize_path_win,
+                         IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
