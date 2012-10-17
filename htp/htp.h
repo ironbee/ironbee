@@ -228,10 +228,6 @@ typedef struct htp_uri_t htp_uri_t;
 #define HTP_FILE_MULTIPART  1
 #define HTP_FILE_PUT        2
 
-#ifndef ICONV_CONST
-#define ICONV_CONST
-#endif
-
 #define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->in_current_offset >= (X)->in_current_len) { \
     return HTP_DATA; \

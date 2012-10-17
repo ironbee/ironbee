@@ -37,6 +37,7 @@
 #include <errno.h>
 
 #include "htp.h"
+#include "config.h"
 
 /**
  * Transcode all parameters supplied in the table.
