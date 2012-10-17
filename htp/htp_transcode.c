@@ -155,7 +155,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
         return HTP_ERROR;
     }
 
-    char *inbuf = bstr_ptr(input);
+    const char *inbuf = bstr_ptr(input);
     size_t inleft = bstr_len(input);
     char *outbuf = buf;
     size_t outleft = buflen;
