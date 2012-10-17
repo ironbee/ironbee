@@ -52,18 +52,24 @@ struct ACNode : public Intermediate::Node
     /**
      * Last output in output change.
      *
-     * set_output() will set this and @c output to the same value.
+     * prepend_output() will maintain this and @c first_output.
      * append_outputs() will use it to append another nodes outputs to
      * this nodes output.  append_outputs() should be called at most once.
      */
     Intermediate::output_p last_output;
 
     /**
-     * Set output to @a to.
+     * Prepend an output with content @a content.
      */
-    void set_output(const Intermediate::output_p& to)
+    void prepend_output(const Intermediate::byte_vector_t& content)
     {
-        first_output() = last_output = to;
+        Intermediate::output_p output = make_shared<Intermediate::Output>();
+        output->content() = content;
+        output->next_output() = first_output();
+        if (! last_output) {
+            last_output = output;
+        }
+        first_output() = output;
     }
 
     /**
@@ -228,11 +234,7 @@ void aho_corasick_add_data(
         current_node = edge.target();
     }
 
-    assert(! current_node->first_output());
-    Intermediate::output_p output = make_shared<Intermediate::Output>();
-    boost::static_pointer_cast<ACNode>(current_node)->set_output(output);
-
-    output->content() = data;
+    boost::static_pointer_cast<ACNode>(current_node)->prepend_output(data);
 }
 
 void aho_corasick_finish(
