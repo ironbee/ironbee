@@ -32,13 +32,22 @@
 #include <ironbee/types.h>
 
 /**
- * Rule transformation results for logging.
+ * Rule transformation value for logging.
  */
-struct ib_rule_log_tfn_t {
-    const ib_tfn_t         *tfn;         /**< Transformation */
+struct ib_rule_log_tfn_val_t {
     const ib_field_t       *in;          /**< Value before transformation */
     const ib_field_t       *out;         /**< Value after transformation */
     ib_status_t             status;      /**< Transformation return status */
+};
+typedef struct ib_rule_log_tfn_val_t ib_rule_log_tfn_val_t;
+
+/**
+ * Rule transformation results for logging.
+ */
+struct ib_rule_log_tfn_t {
+    ib_rule_log_tfn_val_t   value;       /**< In, out & status */
+    const ib_tfn_t         *tfn;         /**< Transformation */
+    ib_list_t              *value_list;  /**< List of ib_rule_log_tfn_val_t */
 };
 typedef struct ib_rule_log_tfn_t ib_rule_log_tfn_t;
 
@@ -55,12 +64,12 @@ typedef struct ib_rule_log_act_t ib_rule_log_act_t;
  * Rule result counts for logging.
  */
 struct ib_rule_log_count_t {
-    int                     num_execs;   /**< Total # of operator executions */
-    int                     num_actions; /**< Total # of actions executed */
-    int                     num_events;  /**< Total # of events */
-    int                     num_errors;  /**< Total # of operator errors */
-    int                     num_true;    /**< Total # of true results */
-    int                     num_false;   /**< Total # of false results */
+    int                     exec_count;  /**< Total # of operator executions */
+    int                     act_count;   /**< Total # of actions executed */
+    int                     event_count; /**< Total # of events */
+    int                     error_count; /**< Total # of operator errors */
+    int                     true_count;  /**< Total # of true results */
+    int                     false_count; /**< Total # of false results */
 };
 typedef struct ib_rule_log_count_t ib_rule_log_count_t;
 
@@ -72,9 +81,9 @@ struct ib_rule_log_rslt_t {
     ib_num_t                result;      /**< Result of operator */
     ib_status_t             status;      /**< Operator return status */
     ib_list_t              *act_list;    /**< List of executed actions */
-    int                     num_actions; /**< # of actions */
+    int                     act_count;   /**< # of actions */
     ib_list_t              *event_list;  /**< List of events created */
-    int                     num_events;  /**< # of events */
+    int                     event_count; /**< # of events */
 };
 typedef struct ib_rule_log_rslt_t ib_rule_log_rslt_t;
 
@@ -85,10 +94,12 @@ struct ib_rule_log_tgt_t {
     const ib_rule_target_t *target;      /**< Target of rule */
     const ib_field_t       *original;    /**< Original value */
     const ib_field_t       *transformed; /**< Transformed value */
-    ib_list_t              *tfn_list;    /**< List of transformations */
-    int                     num_tfn;     /**< # of transformations */
-    ib_list_t              *rslt_list;   /**< List of value/result objects */
-    int                     num_results; /**< # of results */
+    ib_list_t              *tfn_list;    /**< List of ib_rule_log_tfn_t */
+    ib_rule_log_tfn_t      *tfn_cur;     /**< Current transformation */
+    int                     tfn_count;   /**< # of transformations */
+    ib_list_t              *rslt_list;   /**< List of ib_rule_log_rslt_t */
+    ib_rule_log_rslt_t     *rslt_cur;    /**< Current result */
+    int                     rslt_count;  /**< # of results */
     ib_rule_log_exec_t     *log_exec;    /**< Parent execution log object */
     ib_rule_log_count_t     counts;      /**< Result counting info */
 };
@@ -103,9 +114,10 @@ struct ib_rule_log_exec_t {
     ib_flags_t              enable;      /**< Enable flags */
     ib_rule_log_tx_t       *tx_log;      /**< Rule transaction log */
     const ib_rule_t        *rule;        /**< Rule being executed */
-    ib_list_t              *tgt_list;    /**< List of ib_rule_tgt_result_t */
+    ib_list_t              *tgt_list;    /**< List of ib_rule_log_tgt_t */
+    ib_rule_log_tgt_t      *tgt_cur;     /**< Current target */
+    int                     tgt_count;   /**< # of targets */
     ib_list_t              *audit_list;  /**< List of audit log file names */
-    int                     num_tgt;     /**< # of targets */
     ib_rule_log_count_t     counts;      /**< Result counting info */
     ib_flags_t              filter;      /**< Rule filter flags */
     ib_status_t             op_status;   /**< Return status of last operator */
@@ -369,13 +381,39 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(ib_rule_log_exec_t *exec_log,
  *
  * @param[in,out] exec_log The execution logging object
  * @param[in] tfn The transformation to add
+ *
+ * @returns IB_OK on success
+ */
+ib_status_t ib_rule_log_exec_tfn_add(ib_rule_log_exec_t *exec_log,
+                                     const ib_tfn_t *tfn);
+
+/**
+ * Add a transformation value for a rule execution log
+ *
+ * @param[in,out] exec_log The execution logging object
  * @param[in] in Value before transformation
  * @param[in] out Value after transformation
  * @param[in] status Status returned by the transformation
  *
  * @returns IB_OK on success
  */
-ib_status_t ib_rule_log_exec_add_tfn(ib_rule_log_exec_t *exec_log,
+ib_status_t ib_rule_log_exec_tfn_value(ib_rule_log_exec_t *exec_log,
+                                       const ib_field_t *in,
+                                       const ib_field_t *out,
+                                       ib_status_t status);
+
+/**
+ * Finish a transformation for a rule execution log
+ *
+ * @param[in,out] exec_log The execution logging object
+ * @param[in] tfn The transformation to add
+ * @param[in] in Value before transformation
+ * @param[in] out Value after transformation
+ * @param[in] status Status returned by the transformation
+ *
+ * @returns IB_OK on success
+ */
+ib_status_t ib_rule_log_exec_tfn_fin(ib_rule_log_exec_t *exec_log,
                                      const ib_tfn_t *tfn,
                                      const ib_field_t *in,
                                      const ib_field_t *out,

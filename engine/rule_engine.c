@@ -697,6 +697,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
                                   tfn->name);
                 IB_FTRACE_RET_STATUS(IB_EINVAL);
             }
+            ib_rule_log_exec_tfn_value(rule_exec->exec_log, in, tfn_out, rc);
 
             rc = ib_list_push(out_list, tfn_out);
             if (rc != IB_OK) {
@@ -729,7 +730,6 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
                               tfn->name, ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
-        ib_rule_log_exec_add_tfn(rule_exec->exec_log, tfn, value, out, rc);
 
         /* Verify that out isn't NULL */
         if (out == NULL) {
@@ -793,6 +793,7 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
 
         /* Run it */
         ib_rule_log_trace(rule_exec, "Executing transformation %s", tfn->name);
+        ib_rule_log_exec_tfn_add(rule_exec->exec_log, tfn);
         rc = execute_tfn_single(rule_exec, tfn, in_field,
                                 MAX_TFN_RECURSION, &out);
         if (rc != IB_OK) {
@@ -800,7 +801,7 @@ static ib_status_t execute_tfns(const ib_rule_exec_t *rule_exec,
                               "Error executing target transformation %s: %s",
                               tfn->name, ib_status_to_string(rc));
         }
-        ib_rule_log_exec_add_tfn(rule_exec->exec_log, tfn, in_field, out, rc);
+        ib_rule_log_exec_tfn_fin(rule_exec->exec_log, tfn, in_field, out, rc);
 
         /* Verify that out isn't NULL */
         if (out == NULL) {
@@ -1901,6 +1902,9 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
             else {
                 goto finish;
             }
+        }
+        if ( (rc == IB_OK) && (rule_rc != IB_OK) ) {
+            /* rc = rule_rc; */
         }
     }
 

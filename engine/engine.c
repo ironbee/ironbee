@@ -263,6 +263,9 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
 
     /* Set the context's CWD */
     rc = ib_context_set_cwd((*pib)->ectx, NULL);
+    if (rc != IB_OK) {
+        goto failed;
+    }
 
     (*pib)->ctx = (*pib)->ectx;
 
@@ -751,7 +754,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
         (void *)&corecfg
     );
 
-    if ( rc != IB_OK ) {
+    if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to retrieve core module configuration.");
     }
 
