@@ -377,6 +377,12 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Run the engine's configuration finished function */
+    rc = ib_engine_cfg_finished(ib);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
     /* Run the hooks. */
     CALL_NULL_HOOKS(&rc, ib->hook[cfg_finished_event], cfg_finished_event, ib);
 

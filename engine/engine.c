@@ -1706,7 +1706,11 @@ ib_status_t ib_context_config_set_parser(ib_context_t *ctx,
 {
     IB_FTRACE_INIT();
     assert(ctx != NULL);
+
     ctx->cfgparser = parser;
+    if (parser == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
     IB_FTRACE_RET_STATUS(ib_context_set_cwd(ctx, parser->cur_cwd));
 }
 
@@ -1849,6 +1853,27 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
         }
     }
 
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_engine_cfg_finished(ib_engine_t *ib)
+{
+    IB_FTRACE_INIT();
+    ib_context_t *ctx;
+    ib_status_t rc;
+    size_t num_contexts;
+    size_t i;
+
+    /* Clear the configuration parsers for all contexts */
+    IB_ARRAY_LOOP(ib->contexts, num_contexts, i, ctx) {
+        if (ctx == NULL) {
+            continue;
+        }
+        rc = ib_context_config_set_parser(ctx, NULL);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

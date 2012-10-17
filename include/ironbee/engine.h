@@ -149,6 +149,15 @@ ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib,
 ib_status_t DLL_PUBLIC ib_engine_init(ib_engine_t *ib);
 
 /**
+ * Inform the engine that the configuration phase is complete
+ *
+ * @param ib Engine handle
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_engine_cfg_finished(ib_engine_t *ib);
+
+/**
  * Create a main context to operate in.
  *
  * @param[in] ib IronBee engine that contains the ectx that we will use
