@@ -61,13 +61,13 @@ public:
     /**
      * Constructor.
      *
-     * @param[in] result   Where to store results.
-     * @param[in] align_to Padding will be added as needed to align all node
-     *                     indices to @a align_to.  I.e.,
-     *                     index mod @a align_to will be 0.
+     * @param[in] result        Where to store results.
+     * @param[in] configuration Compiler configuration.
      */
-    explicit
-    Compiler(result_t& result, size_t align_to = 1);
+    Compiler(
+        result_t& result,
+         configuration_t configuration
+    );
 
     /**
      * Compile automata.
@@ -310,7 +310,10 @@ private:
         size_t* nodes_counter = NULL;
         size_t cost_prediction = 0;
 
-        if (oracle.high_node_cost > oracle.low_node_cost) {
+        if (
+            oracle.high_node_cost * m_configuration.high_node_weight
+             > oracle.low_node_cost
+        ) {
             cost_prediction = oracle.low_node_cost;
             bytes_counter = &m_result.low_nodes_bytes;
             nodes_counter = &m_result.low_nodes;
@@ -680,8 +683,8 @@ private:
     //! Where to store the result.
     result_t& m_result;
 
-    //! What to align node indices to.
-    size_t m_align_to;
+    //! Compiler Configuration.
+    configuration_t m_configuration;
 
     //! Assembler of m_result.buffer.
     BufferAssembler m_assembler;
@@ -716,9 +719,12 @@ private:
 };
 
 template <size_t id_width>
-Compiler<id_width>::Compiler(result_t& result, size_t align_to) :
+Compiler<id_width>::Compiler(
+    result_t&       result,
+    configuration_t configuration
+) :
     m_result(result),
-    m_align_to(align_to),
+    m_configuration(configuration),
     m_assembler(result.buffer),
     m_max_index(numeric_limits<e_id_t>::max())
 {
@@ -781,11 +787,11 @@ void Compiler<id_width>::compile(
 
         // Padding
         size_t index = m_assembler.size();
-        size_t alignment = index % m_align_to;
+        size_t alignment = index % m_configuration.align_to;
         size_t padding = (
             alignment == 0 ?
             0 :
-            m_align_to - alignment
+            m_configuration.align_to - alignment
         );
         if (padding > 0) {
             m_result.padding += padding;
@@ -793,7 +799,7 @@ void Compiler<id_width>::compile(
                 m_assembler.append_object(uint8_t(0xaa));
             }
         }
-        assert(m_assembler.size() % m_align_to == 0);
+        assert(m_assembler.size() % m_configuration.align_to == 0);
 
         // Record node location.
         m_node_map[node] = m_assembler.size();
@@ -859,43 +865,21 @@ void Compiler<id_width>::compile(
     m_result.ids_used = m_node_id_map.size() + m_output_id_map.size();
 }
 
-} // Anonymous
-
-result_t compile(
-    const Intermediate::Automata& automata,
-    size_t                        id_width,
-    size_t                        align_to
-)
-{
-    result_t result;
-
-    result.id_width = id_width;
-    result.align_to = align_to;
-
-    switch (id_width) {
-    case 1:
-        Compiler<1>(result, align_to).compile(automata); break;
-    case 2:
-        Compiler<2>(result, align_to).compile(automata); break;
-    case 4:
-        Compiler<4>(result, align_to).compile(automata); break;
-    case 8:
-        Compiler<8>(result, align_to).compile(automata); break;
-    default:
-        throw logic_error("Unsupported id_width.");
-    }
-
-    return result; // RVO
-}
-
 result_t compile_minimal(
     const Intermediate::Automata& automata,
-    size_t                        align_to
+    configuration_t               configuration
 )
 {
     static const size_t c_id_widths[] = {1, 2, 4, 8};
     static const size_t c_num_id_widths =
         sizeof(c_id_widths) / sizeof(*c_id_widths);
+
+    if (configuration.id_width != 0) {
+        throw logic_error(
+            "compile_minimal called with non-0 id_width."
+            "  Please report as bug."
+        );
+    }
 
     result_t result;
     size_t i;
@@ -903,7 +887,8 @@ result_t compile_minimal(
     for (i = 0; i < c_num_id_widths; ++i) {
         bool success = true;
         try {
-            result = compile(automata, c_id_widths[i], align_to);
+            configuration.id_width = c_id_widths[i];
+            result = compile(automata, configuration);
         }
         catch (out_of_range) {
             // move on to next id_width.
@@ -920,6 +905,48 @@ result_t compile_minimal(
             "Could not fit automata in 2**8 bytes?  "
             "Please report as bug."
         );
+    }
+
+    return result; // RVO
+}
+
+} // Anonymous
+
+configuration_t::configuration_t() :
+    id_width(0),
+    align_to(1),
+    high_node_weight(1.0)
+{
+    // nop
+}
+
+result_t compile(
+    const Intermediate::Automata& automata,
+    configuration_t               configuration
+)
+{
+    if (configuration.id_width == 0) {
+        return compile_minimal(automata, configuration);
+    }
+
+    result_t result;
+    result.configuration = configuration;
+
+    switch (configuration.id_width) {
+    case 1:
+        Compiler<1>(result, configuration).compile(automata);
+        break;
+    case 2:
+        Compiler<2>(result, configuration).compile(automata);
+        break;
+    case 4:
+        Compiler<4>(result, configuration).compile(automata);
+        break;
+    case 8:
+        Compiler<8>(result, configuration).compile(automata);
+        break;
+    default:
+        throw logic_error("Unsupported id_width.");
     }
 
     return result; // RVO

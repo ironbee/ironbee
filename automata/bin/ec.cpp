@@ -47,6 +47,7 @@ int main(int argc, char **argv)
     string input_s;
     size_t id_width = 0;
     size_t align_to = 1;
+    double high_node_weight = 1.0;
 
     po::options_description desc("Options:");
     desc.add_options()
@@ -63,6 +64,11 @@ int main(int argc, char **argv)
         ("align,a", po::value<size_t>(&align_to),
             "add padding to align all node indices to be 0 mod this; "
             "default 1"
+        )
+        ("high-node-weight,h", po::value<double>(&high_node_weight),
+            "Weight of high node cos; "
+            "> 1 favors low nodes; < 1 favors high nodes; 1.0 = smallest; "
+            "default 1.0"
         )
         ;
 
@@ -129,27 +135,23 @@ int main(int argc, char **argv)
             ostream_logger(cout)
         );
         EudoxusCompiler::result_t result;
-        if (id_width == 0) {
-            result = EudoxusCompiler::compile_minimal(automata, align_to);
+        EudoxusCompiler::configuration_t configuration;
+        configuration.id_width = id_width;
+        configuration.align_to = align_to;
+        configuration.high_node_weight = high_node_weight;
+        try {
+            result = EudoxusCompiler::compile(automata, configuration);
         }
-        else {
-            try {
-                result = EudoxusCompiler::compile(
-                    automata,
-                    id_width,
-                    align_to
-                );
-            }
-            catch (out_of_range) {
-                cout << "Error: id width too small." << endl;
-                return 1;
-            }
+        catch (out_of_range) {
+            cout << "Error: id width too small." << endl;
+            return 1;
         }
 
         size_t bytes = result.buffer.size();
         cout << "bytes            = " << bytes << endl;
-        cout << "id_width         = " << result.id_width << endl;
-        cout << "align_to         = " << result.align_to << endl;
+        cout << "id_width         = " << result.configuration.id_width << endl;
+        cout << "align_to         = " << result.configuration.align_to << endl;
+        cout << "high_node_weight = " << result.configuration.high_node_weight << endl;
         cout << "ids_used         = " << result.ids_used << endl;
         cout << "padding          = " << result.padding << endl;
         cout << "low_nodes        = " << result.low_nodes << endl;

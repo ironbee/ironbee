@@ -42,6 +42,74 @@ namespace EudoxusCompiler {
 extern const int EUDOXUS_VERSION;
 
 /**
+ * Compiler configuration.
+ */
+struct configuration_t
+{
+    /**
+     * Constructor; sets reasonable defaults.
+     *
+     * - id_width = 0, i.e., minimal.
+     * - align_to = 1, i.e., no alignment
+     * - high_node_weight = 1.0, i.e., optimize space
+     */
+    configuration_t();
+
+    /**
+     * With of identifiers.  0 = minimal, 1, 2, 4, 8.
+     *
+     * How wide to make every identifier in the automata.  Minimal value is
+     * given by size of automata in bytes (which is influenced by id_width):
+     *
+     * <table>
+     * <tr><th>id_width</th><th>Maximum Automata Size</th></tr>
+     * <tr><td>1</td><td>256</td></tr>
+     * <tr><td>2</td><td>65KB</td></tr>
+     * <tr><td>4</td><td>4GB</td></tr>
+     * <tr><td>8</td><td>16EB</td></tr>
+     * </table>
+     *
+     * A value of 0 will cause compile to choose the minimal id_width.  This
+     * does increase compilation time.
+     */
+    size_t id_width;
+
+    /**
+     * Align indices of node objects to this value.
+     *
+     * This can be used to cause the compiler to insert padding so that the
+     * indices of all node objects are aligned to this value.  Assuming the
+     * automata is loaded into memory at a similarly aligned address, this
+     * will provide alignment for every node which may give performance
+     * benefits at the cost of space.
+     *
+     * A value of 1 indicates no alignment.  Other likely useful values are 4
+     * and 8.
+     */
+    size_t align_to;
+
+    /**
+     * High Node Weight
+     *
+     * This multiplier adjusts the weight of high nodes.  A value of 1
+     * maximizes space; a value less than 1 will allow a sacrafice of space to
+     * prefer high nodes; a a value greater than 1 will allow a sacrafice of
+     * space to prefer low nodes.  A value of 0 will prevent any low nodes and
+     * a value greater than 3000 will prevent any high nodes.
+     *
+     * Weights are in bytes, so, e.g., a value of 0.9 will allow high nodes to
+     * be used if 90% of their space usage is less than the usage of a low
+     * node.
+     *
+     * In practice, values moderately below 1 may provide time performance
+     * benefits and small space costs.  Eventually, smaller values will begin
+     * penalizing performance as low degree nodes are both smaller and faster
+     * for very low degree.
+     */
+    double high_node_weight;
+};
+
+/**
  * Result of a compilation.
  */
 struct result_t
@@ -49,11 +117,11 @@ struct result_t
     //! Compiled automata.
     buffer_t buffer;
 
+    //! Configuration
+    configuration_t configuration;
+
     //! ID width used.
     size_t id_width;
-
-    //! Align to used.
-    size_t align_to;
 
     //! Number of IDs used.
     size_t ids_used;
@@ -81,32 +149,15 @@ struct result_t
 };
 
 /**
- * Compile automata using given id width.
+ * Compile automata.
  *
- * @param[in] automata Automata to compile.
- * @param[in] id_width Width of all id fields in bytes.
- * @param[in] align_to Node indices will be padded to be 0 mod @a align_to.
+ * @param[in] automata      Automata to compile.
+ * @param[in] configuration Compiler configuration.
  * @return Compilation result.
  */
 result_t compile(
     const Intermediate::Automata& automata,
-    size_t                        id_width = 8,
-    size_t                        align_to = 1
-);
-
-/**
- * Two-pass compiler that minimizes id width.
- *
- * This function behaves as compile() but chooses the smallest possible
- * id width.  It can take significantly longer than compile().
- *
- * @param[in] automata Automata to compile.
- * @param[in] align_to Node indices will be padded to be 0 mod @a align_to.
- * @return Compilation result.
- */
-result_t compile_minimal(
-    const Intermediate::Automata& automata,
-    size_t                        align_to = 1
+    configuration_t               configuration = configuration_t()
 );
 
 } // EudoxusCompiler
