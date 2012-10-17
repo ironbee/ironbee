@@ -8,7 +8,10 @@ module AutomataTest
   ACGEN = File.join(BINDIR, "ac_generator")
   TRIEGEN = File.join(BINDIR, "trie_generator")
   OPTIMIZE = File.join(BINDIR, "optimize")
-  OPTIMIZE_ARGS = ["--fast"]
+  OPTIMIZE_ARGS = {
+    :fast => ["--fast"],
+    :space => ["--space"]
+  }
 
   # Returns map of word to ending position of word in input.
   def substrings(words, input)
@@ -100,8 +103,8 @@ module AutomataTest
     run_from_file([generator], words_path, initial_automata_path)
 
     if optimize
-      automata_path = File.join(dir, "optimized_automata")
-      run_from_file([OPTIMIZE, *OPTIMIZE_ARGS], initial_automata_path, automata_path)
+      automata_path = File.join(dir, "optimized_automata_#{optimize}")
+      run_from_file([OPTIMIZE, *OPTIMIZE_ARGS[optimize]], initial_automata_path, automata_path)
     else
       automata_path = initial_automata_path
     end

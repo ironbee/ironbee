@@ -21,7 +21,7 @@ class TestBasic < Test::Unit::TestCase
     text = "she saw his world as he saw hers..."
 
     ac_test(words, text, "traditional")
-    ac_test(words, text, "traditional_optimized", true)
+    ac_test(words, text, "traditional_fast", :fast)
   end
 
   def test_large
@@ -50,7 +50,8 @@ class TestBasic < Test::Unit::TestCase
     text = words.join(" ")
 
     ac_test(words, text, "moderate")
-    ac_test(words, text, "moderate_optimized", true)
+    ac_test(words, text, "moderate_fast", :fast)
+    ac_test(words, text, "moderate_space", :space)
   end
 
   def test_aaaa
@@ -58,7 +59,8 @@ class TestBasic < Test::Unit::TestCase
     text = "aaaaaaaaaaaa"
 
     ac_test(words, text, "aaaa")
-    ac_test(words, text, "aaaa_optimized", true)
+    ac_test(words, text, "aaaa_fast", :fast)
+    ac_test(words, text, "aaaa_space", :space)
   end
 
   def test_wide
@@ -70,7 +72,8 @@ class TestBasic < Test::Unit::TestCase
     text = words.join(" ")
 
     ac_test(words, text, "wide")
-    ac_test(words, text, "wide_optimized", true)
+    ac_test(words, text, "wide_fast", :fast)
+    ac_test(words, text, "wide_space", :space)
   end
 
   def test_tails
@@ -78,7 +81,8 @@ class TestBasic < Test::Unit::TestCase
     text = words.join(" ")
 
     ac_test(words, text, "tails")
-    ac_test(words, text, "tails_optimized", true)
+    ac_test(words, text, "tails_fast", :fast)
+    ac_test(words, text, "tails_space", :space)
   end
 
   def test_overlap
@@ -86,7 +90,8 @@ class TestBasic < Test::Unit::TestCase
     text = "aaabbbcccdddaaa"
 
     ac_test(words, text, "overlap")
-    ac_test(words, text, "overlap_optimized", true)
+    ac_test(words, text, "overlap_fast", :fast)
+    ac_test(words, text, "overlap_space", :space)
   end
 
   def test_trie
