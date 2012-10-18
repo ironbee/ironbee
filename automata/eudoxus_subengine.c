@@ -276,9 +276,9 @@ ia_eudoxus_result_t IA_EUDOXUS(next_pc)(
     bool advance_on_final   = IA_EUDOXUS_FLAG(state->node->header, 3);
     uint8_t length =
         2 +
-        IA_EUDOXUS_FLAG(state->node->header, 4) * 4 +
-        IA_EUDOXUS_FLAG(state->node->header, 5) * 2 +
-        IA_EUDOXUS_FLAG(state->node->header, 6);
+        IA_EUDOXUS_FLAG(state->node->header, 4) * 2 +
+        IA_EUDOXUS_FLAG(state->node->header, 5)
+        ;
 
     const IA_EUDOXUS(pc_node_t) *node
         = (const IA_EUDOXUS(pc_node_t) *)(state->node);
@@ -297,7 +297,7 @@ ia_eudoxus_result_t IA_EUDOXUS(next_pc)(
         vls,
         uint8_t,
         length,
-        length > 8
+        length > 4
     );
     const uint8_t *bytes = IA_VLS_FINAL(vls, const uint8_t);
 
@@ -319,7 +319,7 @@ ia_eudoxus_result_t IA_EUDOXUS(next_pc)(
 
     IA_EUDOXUS_ID_T next_node = 0;
     bool advance_on_next_node = true;
-    if (byte_index == length - 1) {
+    if (byte_index == length) {
         assert(node->final_target != 0);
         next_node = node->final_target;
         advance_on_next_node = advance_on_final;

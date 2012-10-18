@@ -207,15 +207,11 @@ struct IA_EUDOXUS(pc_node_t)
      * flag1: has_default
      * flag2: advance_on_default
      * flag3: advance_on_final
-     * flag4+flag5+flag6: length:
-     *   000: 2
-     *   001: 3
-     *   010: 4
-     *   011: 5
-     *   100: 6
-     *   101: 7
-     *   110: 8
-     *   111: use long_length field
+     * flag4+flag5: length:
+     *   00: 2
+     *   01: 3
+     *   10: 4
+     *   11: use long_length field
      */
     uint8_t header;
 

@@ -38,7 +38,7 @@ using namespace std;
 namespace IronAutomata {
 namespace EudoxusCompiler {
 
-#define CPP_EUDOXUS_VERSION 6
+#define CPP_EUDOXUS_VERSION 7
 #if CPP_EUDOXUS_VERSION != IA_EUDOXUS_VERSION
 #error "Mismatch between compiler version and automata version."
 #endif
@@ -245,14 +245,11 @@ private:
             if (end_of_path->edges().front().advance()) {
                 header->header = ia_setbit8(header->header, 3 + IA_EUDOXUS_TYPE_WIDTH);
             }
-            if (path_length > 8 || path_length == 6 || path_length == 7 || path_length == 8) {
+            if (path_length >= 4) {
                 header->header = ia_setbit8(header->header, 4 + IA_EUDOXUS_TYPE_WIDTH);
             }
-            if (path_length > 8 || path_length == 4 || path_length == 5 || path_length == 8) {
+            if (path_length > 4 || path_length == 3) {
                 header->header = ia_setbit8(header->header, 5 + IA_EUDOXUS_TYPE_WIDTH);
-            }
-            if (path_length > 8 || path_length == 3 || path_length == 5 || path_length == 7) {
-                header->header = ia_setbit8(header->header, 6 + IA_EUDOXUS_TYPE_WIDTH);
             }
 
             assert(has_unique_child(end_of_path));
@@ -274,7 +271,7 @@ private:
         assert(path_length >= 2);
         assert(path_length <= 255);
 
-        if (path_length > 8) {
+        if (path_length > 4) {
             m_assembler.append_object(uint8_t(path_length));
         }
 
@@ -806,7 +803,7 @@ void Compiler<id_width>::compile(
 
         Intermediate::node_p end_of_path = node;
         Intermediate::node_p child = has_unique_child(end_of_path);
-        size_t path_length = 1;
+        size_t path_length = 0;
         while (
             path_length <= 255 &&
             child &&
@@ -821,11 +818,13 @@ void Compiler<id_width>::compile(
             ++path_length;
         }
 
-        if (end_of_path != node) {
+        if (path_length >= 2) {
             // Path Compression
             pc_node(node, end_of_path, path_length);
         }
         else {
+            // Correct for paths of length 1 -- will be low nodes.
+            end_of_path = node;
             // Demux: High or Low
             demux_node(node);
         }
