@@ -92,8 +92,8 @@ struct configuration_t
      * High Node Weight
      *
      * This multiplier adjusts the weight of high nodes.  A value of 1
-     * maximizes space; a value less than 1 will allow a sacrafice of space to
-     * prefer high nodes; a a value greater than 1 will allow a sacrafice of
+     * maximizes space; a value less than 1 will allow a sacrifice of space to
+     * prefer high nodes; a a value greater than 1 will allow a sacrifice of
      * space to prefer low nodes.  A value of 0 will prevent any low nodes and
      * a value greater than 3000 will prevent any high nodes.
      *

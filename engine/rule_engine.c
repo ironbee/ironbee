@@ -674,7 +674,7 @@ static ib_status_t execute_tfn_single(const ib_rule_exec_t *rule_exec,
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "Error creating list to unroll \"%.*s\" "
-                              "for tranformation \"%s\": %s",
+                              "for transformation \"%s\": %s",
                               (int)value->nlen, value->name, tfn->name,
                               ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
