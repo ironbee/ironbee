@@ -24,6 +24,13 @@ class TestBasic < Test::Unit::TestCase
     ac_test(words, text, "traditional_fast", :fast)
   end
 
+  def test_traditional2
+    words = ["he", "she", "his", "hers"]
+    text = "she saw his world as he saw heros..."
+
+    ac_test(words, text, "traditional")
+  end
+
   def test_large
     n = 1000
 
