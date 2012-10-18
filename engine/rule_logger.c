@@ -1215,7 +1215,7 @@ static void log_tfns(
                 continue;
             }
             rule_log_exec(rule_exec,
-                          "TFN %s() %s %.*s:%.*s %s %s",
+                          "TFN %s() %s \"%.*s:%.*s\" %s %s",
                           tfn->tfn->name,
                           ib_field_type_name(value->in->type),
                           (int)tgt->original->nlen, tgt->original->name,
@@ -1228,7 +1228,7 @@ static void log_tfns(
         }
         if (! logged) {
             rule_log_exec(rule_exec,
-                          "TFN %s() %s %.*s %s %s",
+                          "TFN %s() %s \"%.*s\" %s %s",
                           tfn->tfn->name,
                           ib_field_type_name(tgt->original->type),
                           (int)tgt->original->nlen, tgt->original->name,
