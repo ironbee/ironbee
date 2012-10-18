@@ -166,7 +166,7 @@ int main(int argc, char **argv)
             int other_id_width = c_id_widths[i];
             cout << "bytes @ " << other_id_width << "        = "
                  << (bytes -
-                     (result.ids_used * (result.id_width - other_id_width)))
+                     (result.ids_used * (result.configuration.id_width - other_id_width)))
                  << endl;
         }
 

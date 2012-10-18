@@ -120,9 +120,6 @@ struct result_t
     //! Configuration
     configuration_t configuration;
 
-    //! ID width used.
-    size_t id_width;
-
     //! Number of IDs used.
     size_t ids_used;
 
