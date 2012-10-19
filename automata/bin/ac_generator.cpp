@@ -26,27 +26,84 @@
  */
 
 #include <ironautomata/deduplicate_outputs.hpp>
+#include <ironautomata/generator/aho_corasick.hpp>
 #include <ironautomata/intermediate.hpp>
 #include <ironautomata/optimize_edges.hpp>
-#include <ironautomata/generator/aho_corasick.hpp>
 
 #include <boost/lexical_cast.hpp>
+#include <boost/program_options.hpp>
 
 using namespace std;
+
+static const char* c_patterns_help =
+    "Patterns provide a variety of fixed width operators that are shortcuts for\n"
+    "a byte or span of bytes.  E.g., \"foo\\dbar\" is a pattern for \"foo0bar\",\n"
+    "\"foo1bar\", ..., \"foo9bar\".\n"
+    "\n"
+    "Single Shortcuts:\n"
+    "- \\\\ -- Backslash.\n"
+    "- \\t -- Horizontal tab.\n"
+    "- \\v -- Vertical tab.\n"
+    "- \\n -- New line\n"
+    "- \\r -- Carriage return.\n"
+    "- \\f -- Form feed.\n"
+    "- \\0 -- Null.\n"
+    "- \\e -- Escape.\n"
+    "\n"
+    "Parameterized Single Shortcuts:\n"
+    "- \\^X -- Control character, where X is A-Z, [, \\, ], ^, _, or ?.\n"
+    "- \\xXX -- ASCII character XX in hex.\n"
+    "\n"
+    "Multiple Shortcuts:\n"
+    "- \\d -- Digit -- 0-9\n"
+    "- \\D -- Non-Digit -- all but 0-9\n"
+    "- \\h -- Hexadecimal digit -- A-Fa-f0-9\n"
+    "- \\w -- Word Character -- A-Za-z0-9\n"
+    "- \\W -- Non-Word Character -- All but A-Za-z0-9\n"
+    "- \\a -- Alphabetic character -- A-Za-z\n"
+    "- \\l -- Lowercase letters -- a-z\n"
+    "- \\u -- Uppercase letters -- A-Z\n"
+    "- \\s -- White space -- space, \\t\\r\\n\\v\\f\n"
+    "- \\S -- Non-white space -- All but space, \\t\\r\\n\\v\\f\n"
+    "- \\p -- Printable character, ASCII hex 20 through 7E.\n"
+    "- \\. -- Any character.\n"
+    "\n"
+    "Pattern based use string outputs; non-pattern based use length.\n"
+    ;
 
 //! Main
 int main(int argc, char** argv)
 {
+    namespace po = boost::program_options;
     namespace ia = IronAutomata;
 
-    if (argc < 1 || argc > 2) {
-        cout << "Usage: ac_generator [<chunk_size>]" << endl;
-        return 1;
-    }
-
     size_t chunk_size = 0;
-    if (argc == 2) {
-        chunk_size = boost::lexical_cast<size_t>(argv[1]);
+    bool pattern = false;
+
+    po::options_description desc("Options:");
+    desc.add_options()
+        ("help", "display help and exit")
+        ("chunk-size,s X",
+            po::value<size_t>(&chunk_size),
+            "set chunk size of output to X")
+        ("pattern,p",
+            po::bool_switch(&pattern),
+            "interpret inputs as AC patterns")
+        ;
+
+    po::variables_map vm;
+    po::store(
+        po::command_line_parser(argc, argv)
+            .options(desc)
+            .run(),
+        vm
+    );
+    po::notify(vm);
+
+    if (vm.count("help")) {
+        cout << desc << endl;
+        cout << c_patterns_help << endl;
+        return 1;
     }
 
     ia::Intermediate::Automata a;
@@ -56,7 +113,14 @@ int main(int argc, char** argv)
     while (cin) {
         getline(cin, s);
         if (! s.empty()) {
-            ia::Generator::aho_corasick_add_length(a, s);
+            if (! pattern) {
+                ia::Generator::aho_corasick_add_length(a, s);
+            }
+            else {
+                ia::Intermediate::byte_vector_t data;
+                copy(s.begin(), s.end(), back_inserter(data));
+                ia::Generator::aho_corasick_add_pattern(a, s, data);
+            }
         }
     }
 

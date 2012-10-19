@@ -113,4 +113,16 @@ class TestBasic < Test::Unit::TestCase
       assert(output.empty?)
     end
   end
+
+  def test_foo
+    words = ["forb"]
+    text = "aaa ford bbb"
+    ac_test(words, text, "foo")
+  end
+
+  def test_tail
+    words = ["foobar"]
+    text = "foobar"
+    ac_test(words, text, "foobar")
+  end
 end
