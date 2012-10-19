@@ -124,6 +124,9 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
     else {
         rc = IB_OK;
     }
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     if ((*op_inst)->fparam == NULL) {
         rc = ib_field_create(&((*op_inst)->fparam),
