@@ -312,7 +312,7 @@ void ib_rule_log_flags_dump(ib_engine_t *ib,
                             ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
-    ib_strval_t *rec;
+    const ib_strval_t *rec;
     ib_flags_t flags;
 
     if (ib_rule_dlog_level(ctx) < IB_RULE_DLOG_DEBUG) {
@@ -326,13 +326,12 @@ void ib_rule_log_flags_dump(ib_engine_t *ib,
         ib_flags_set(flags, IB_RULE_LOG_FILT_ALL);
     }
 
-    rec = (ib_strval_t *)flags_map;
-    while (rec->str != NULL) {
+    for (rec = flags_map; rec->str != NULL; ++rec) {
         bool enabled = ib_flags_all(flags, rec->val);
         ib_log_trace(ib,
-                     "Rule logging flag %s [0x%08x]: %s",
+                     "Rule logging flag %s [0x%08lx]: %s",
                      rec->str,
-                     (unsigned int)rec->val,
+                     (unsigned long)rec->val,
                      enabled ? "enabled" : "disabled");
         ++rec;
     }
