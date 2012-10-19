@@ -447,6 +447,12 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
+        if (flag->default_value) {
+            ib_tx_flags_set(tx, flag->tx_flag);
+        }
+        else {
+            ib_tx_flags_unset(tx, flag->tx_flag);
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
