@@ -44,7 +44,7 @@
 #include <strings.h>
 
 /**
- * Setvar action data.
+ * Data types for the setvar action.
  */
 typedef enum {
     SETVAR_STRSET,                /**< Set to a constant string */
@@ -65,6 +65,9 @@ typedef struct {
     setvar_value_t   value;       /**< Value */
 } setvar_data_t;
 
+/**
+ * Data types for the setflag action.
+ */
 typedef enum {
     setflag_op_set,               /**< Set the flag */
     setflag_op_clear              /**< Clear the flag */
@@ -74,6 +77,13 @@ typedef struct {
     const ib_tx_flag_map_t *flag;
     setflag_op_t            op;
 } setflag_data_t;
+
+/**
+ * Data types for the event action.
+ */
+typedef struct {
+    ib_logevent_type_t      event_type; /**< Type of the event */
+} event_data_t;
 
 /**
  * Create function for the setflags action.
@@ -187,6 +197,59 @@ static ib_status_t act_setflag_execute(
 }
 
 /**
+ * Create function for the event action.
+ *
+ * @param[in] ib IronBee engine (unused)
+ * @param[in] ctx Current context.
+ * @param[in] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters from the rule definition
+ * @param[in,out] inst Action instance
+ * @param[in] cbdata Unused.
+ *
+ * @returns Status code
+ */
+static ib_status_t act_event_create(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    ib_mpool_t *mp,
+    const char *parameters,
+    ib_action_inst_t *inst,
+    void *cbdata)
+{
+    IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(mp != NULL);
+    assert(inst != NULL);
+
+    event_data_t *event_data;
+    ib_logevent_type_t event_type;
+
+    if (parameters == NULL) {
+        event_type = IB_LEVENT_TYPE_OBSERVATION;
+    }
+    else if (strcasecmp(parameters, "observation") == 0) {
+        event_type = IB_LEVENT_TYPE_OBSERVATION;
+    }
+    else if (strcasecmp(parameters, "alert") == 0) {
+        event_type = IB_LEVENT_TYPE_ALERT;
+    }
+    else {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Allocate an event data object, populate it */
+    event_data = ib_mpool_alloc(mp, sizeof(*event_data));
+    if (event_data == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    event_data->event_type = event_type;
+    inst->data = (void *)event_data;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Event action execution callback.
  *
  * Create and event and log it.
@@ -205,12 +268,16 @@ static ib_status_t act_event_execute(
     void *cbdata)
 {
     IB_FTRACE_INIT();
+    assert(rule_exec != NULL);
+    assert(data != NULL);
+
     ib_status_t  rc;
     ib_logevent_t *event;
     const char *expanded;
     ib_field_t *field;
     const ib_rule_t *rule = rule_exec->rule;
     ib_tx_t *tx = rule_exec->tx;
+    const event_data_t *event_data = (const event_data_t *)data;
 
     ib_rule_log_debug(rule_exec, "Creating event via action");
 
@@ -238,7 +305,7 @@ static ib_status_t act_event_execute(
         &event,
         tx->mp,
         ib_rule_id(rule),
-        IB_LEVENT_TYPE_OBSERVATION,
+        event_data->event_type,
         IB_LEVENT_ACTION_UNKNOWN,
         IB_LEVENT_ACTION_UNKNOWN,
         rule->meta.confidence,
@@ -2004,7 +2071,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
     rc = ib_action_register(ib,
                             "event",
                             IB_ACT_FLAG_NONE,
-                            NULL, /* no create function */ NULL,
+                            act_event_create, NULL,
                             NULL, /* no destroy function */ NULL,
                             act_event_execute, NULL);
     if (rc != IB_OK) {

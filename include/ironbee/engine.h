@@ -2223,8 +2223,9 @@ ib_status_t DLL_PUBLIC ib_auditlog_write(ib_provider_inst_t *pi);
 
 /** Log Event Type */
 typedef enum {
-    IB_LEVENT_TYPE_UNKNOWN,
-    IB_LEVENT_TYPE_OBSERVATION,
+    IB_LEVENT_TYPE_UNKNOWN,          /**< Unknown type */
+    IB_LEVENT_TYPE_OBSERVATION,      /**< Observation event */
+    IB_LEVENT_TYPE_ALERT             /**< Alert event */
 } ib_logevent_type_t;
 
 /** Log Event Action */

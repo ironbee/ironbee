@@ -119,6 +119,7 @@ static void default_logger(FILE *fp, int level,
 const char *ib_logevent_type_str[] = {
     "Unknown",
     "Observation",
+    "Alert",
     NULL
 };
 
