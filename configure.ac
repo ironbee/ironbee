@@ -244,6 +244,10 @@ ironbeepp_includedir='${prefix}/include/ironbeepp'
 ironbeepp_internal_includedir='${prefix}/include/ironbeepp/internal'
 AC_SUBST(ironbeepp_includedir)
 AC_SUBST(ironbeepp_internal_includedir)
+ironautomata_includedir='${prefix}/include/ironautomata'
+AC_SUBST(ironautomata_includedir)
+ironautomata_generator_includedir='${prefix}/include/ironautomata/generator'
+AC_SUBST(ironautomata_generator_includedir)
 
 ### Disable Lua
 AC_ARG_ENABLE(lua,

@@ -3,9 +3,8 @@ include $(top_srcdir)/build/common.mk
 
 # If CPP is not defined, we do very litte.
 lib_LTLIBRARIES = libiaeudoxus.la
-libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c \
-	include/ironautomata/*.h \
-	include/ironautomata/generator/*.h
+libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c
+ironautomata_include_HEADERS = include/ironautomata/*.h
 EXTRA_libiaeudoxus_la_SOURCES = eudoxus_subengine.c
 
 AM_CPPFLAGS = -I$(srcdir)/include
@@ -27,16 +26,19 @@ libironautomata_la_SOURCES = \
     logger.cpp \
     optimize_edges.cpp \
     translate_nonadvancing.cpp \
-    aho_corasick.cpp \
-    include/ironautomata/*.hpp \
-    include/ironautomata/generator/*.hpp
-
-nodist_libironautomata_la_SOURCES = \
-    intermediate.pb.cc \
+    aho_corasick.cpp
+    
+ironautomata_include_HEADERS += \
+    $(srcdir)/include/ironautomata/*.hpp
+    
+nodist_ironautomata_include_HEADERS = \
     $(builddir)/include/ironautomata/intermediate.pb.h
+    
+ironautomata_generator_include_HEADERS = \
+    $(srcdir)/include/ironautomata/generator/*.hpp
 
-BUILT_SOURCES = intermediate.pb.cc \
-    $(builddir)/include/ironautomata/intermediate.pb.h
+nodist_libironautomata_la_SOURCES = intermediate.pb.cc
+BUILT_SOURCES = intermediate.pb.cc
 
 LDADD = libironautomata.la libiaeudoxus.la
 AM_CPPFLAGS += \
