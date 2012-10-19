@@ -982,6 +982,43 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+
+/**
+ * Mapping of valid rule logging names to flag values.
+ */
+static IB_STRVAL_MAP(tx_flags_map) = {
+    IB_STRVAL_PAIR("Error", IB_TX_FERROR),
+    IB_STRVAL_PAIR("HTTP/0.9", IB_TX_FHTTP09),
+    IB_STRVAL_PAIR("Pipelined", IB_TX_FPIPELINED),
+    IB_STRVAL_PAIR("Parsed Data", IB_TX_FPARSED_DATA),
+    IB_STRVAL_PAIR("Request Started", IB_TX_FREQ_STARTED),
+    IB_STRVAL_PAIR("Seen Request Header", IB_TX_FREQ_SEENHEADER),
+    IB_STRVAL_PAIR("No Request Body", IB_TX_FREQ_NOBODY),
+    IB_STRVAL_PAIR("Seen Request BOdy", IB_TX_FREQ_SEENBODY),
+    IB_STRVAL_PAIR("Seen Request Trailer", IB_TX_FREQ_SEENTRAILER),
+    IB_STRVAL_PAIR("Request Finished", IB_TX_FREQ_FINISHED),
+    IB_STRVAL_PAIR("Response Started", IB_TX_FRES_STARTED),
+    IB_STRVAL_PAIR("Seen Response Header", IB_TX_FRES_SEENHEADER),
+    IB_STRVAL_PAIR("Seen Response Body", IB_TX_FRES_SEENBODY),
+    IB_STRVAL_PAIR("Seen Response Trailer", IB_TX_FRES_SEENTRAILER),
+    IB_STRVAL_PAIR("Response Finished", IB_TX_FRES_FINISHED),
+    IB_STRVAL_PAIR("Suspicious", IB_TX_FSUSPICIOUS),
+    IB_STRVAL_PAIR("Block: Advisory", IB_TX_BLOCK_ADVISORY),
+    IB_STRVAL_PAIR("Block: Phase", IB_TX_BLOCK_PHASE),
+    IB_STRVAL_PAIR("Block: Immediate", IB_TX_BLOCK_IMMEDIATE),
+    IB_STRVAL_PAIR("Allow: Phase", IB_TX_ALLOW_PHASE),
+    IB_STRVAL_PAIR("Allow: Request", IB_TX_ALLOW_REQUEST),
+    IB_STRVAL_PAIR("Allow: All", IB_TX_ALLOW_ALL),
+    IB_STRVAL_PAIR("Post-Process", IB_TX_FPOSTPROCESS),
+    IB_STRVAL_PAIR("Inspect Request Header", IB_TX_FINSPECT_REQHDR),
+    IB_STRVAL_PAIR("Inspect Request Body", IB_TX_FINSPECT_REQBODY),
+    IB_STRVAL_PAIR("Inspect Response Header", IB_TX_FINSPECT_RSPHDR),
+    IB_STRVAL_PAIR("Inspect Response Body", IB_TX_FINSPECT_RSPBODY),
+
+    /* End */
+    IB_STRVAL_PAIR_LAST
+};
+
 /**
  * Print transaction details.
  *
@@ -1002,6 +1039,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
     IB_FTRACE_INIT();
     ib_list_t *lst;
     ib_field_t *field = NULL;
+    const ib_strval_t *rec;
     ib_status_t rc;
 
     ib_log_debug3_tx(tx, "print_tx");
@@ -1039,6 +1077,13 @@ static ib_status_t print_tx( ib_engine_t *ib,
     }
 
     printf("[TX all]:\n");
+    printf("  Flags: %08lx\n", (unsigned long)tx->flags);
+
+    for (rec = tx_flags_map; rec->str != NULL; ++rec) {
+        bool on = ib_tx_flags_isset(tx, rec->val);
+        printf("    Flag %s [0x%08lx]: %s\n",
+               rec->str, (unsigned long)rec->val, on ? "On" : "Off");
+    }
 
     /* Build the list */
     rc = ib_list_create(&lst, ib->mp);
