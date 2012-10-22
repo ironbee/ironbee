@@ -134,6 +134,9 @@ int main(int argc, char **argv)
             input_stream,
             ostream_logger(cout)
         );
+        if (! success) {
+            return 1;
+        }
         EudoxusCompiler::result_t result;
         EudoxusCompiler::configuration_t configuration;
         configuration.id_width = id_width;
