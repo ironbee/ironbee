@@ -155,6 +155,7 @@ private:
             case '\'': m_out << "&apos;"; break;
             case '<': m_out << "&lt;"; break;
             case '>': m_out << "&gt;"; break;
+            case '\\': m_out << "\\\\"; break;
             default:
                 if (c < 32 || c > 126) {
                     m_out << boost::format("&lang;%d&rang;") % uint32_t(c);

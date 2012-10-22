@@ -97,6 +97,7 @@ void output_content(ostream& o, const string& v)
         case '\'': cout << "&apos;"; break;
         case '<': cout << "&lt;"; break;
         case '>': cout << "&gt;"; break;
+        case '\\': cout << "\\\\"; break;
         default:
             if (c < 32 || c > 126) {
                 cout << boost::format("&lang;%d&rang;") % uint32_t(c);
