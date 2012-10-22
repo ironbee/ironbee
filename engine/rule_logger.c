@@ -333,7 +333,6 @@ void ib_rule_log_flags_dump(ib_engine_t *ib,
                      rec->str,
                      (unsigned long)rec->val,
                      enabled ? "enabled" : "disabled");
-        ++rec;
     }
     IB_FTRACE_RET_VOID();
 }
