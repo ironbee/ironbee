@@ -33,7 +33,7 @@ module AutomataTest
     result = Hash.new {|h,k| h[k] = Set.new}
     output.split("\n").each do |line|
       line.chomp!
-      if line =~ /^\s*(\d+): (\w+)$/
+      if line =~ /^\s*(\d+): (.+)$/
         result[$2] << $1.to_i
       end
     end
