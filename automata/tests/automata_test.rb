@@ -100,7 +100,10 @@ module AutomataTest
     end
 
     initial_automata_path = File.join(dir, "initial_automata")
-    run_from_file([generator], words_path, initial_automata_path)
+    if ! generator.is_a?(Array)
+      generator = [generator]
+    end
+    run_from_file(generator, words_path, initial_automata_path)
 
     if optimize
       automata_path = File.join(dir, "optimized_automata_#{optimize}")
