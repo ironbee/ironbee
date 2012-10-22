@@ -305,11 +305,13 @@ ia_eudoxus_result_t IA_EUDOXUS(next_pc)(
     for (;byte_index < length; ++byte_index) {
         const uint8_t c = *(state->input_location);
         if (c == bytes[byte_index]) {
-            state->input_location += 1;
-            state->remaining_bytes -= 1;
             state->node = NULL;
-            if (state->remaining_bytes == 0) {
-                return IA_EUDOXUS_OK;
+            if (byte_index < length - 1) {
+                state->input_location += 1;
+                state->remaining_bytes -= 1;
+                if (state->remaining_bytes == 0) {
+                    return IA_EUDOXUS_OK;
+                }
             }
         }
         else {

@@ -252,10 +252,9 @@ private:
                 header->header = ia_setbit8(header->header, 5 + IA_EUDOXUS_TYPE_WIDTH);
             }
 
-            assert(has_unique_child(end_of_path));
             register_node_ref(
                 m_assembler.index(&(header->final_target)),
-                has_unique_child(end_of_path)
+                end_of_path
             );
         }
 
@@ -847,25 +846,28 @@ void Compiler<id_width>::compile(
         if (path_length >= 2) {
             // Path Compression
             pc_node(node, end_of_path, path_length);
-        }
-        else {
-            // Correct for paths of length 1 -- will be low nodes.
-            end_of_path = node;
-            // Demux: High or Low
-            demux_node(node);
-        }
-
-        // And add all children of wherever we ended.
-        BOOST_FOREACH(const Intermediate::Edge& edge, end_of_path->edges()) {
-            const Intermediate::node_p& target = edge.target();
-            bool need_to_queue = queued.insert(target).second;
+            // Add end of path.
+            bool need_to_queue = queued.insert(end_of_path).second;
             if (need_to_queue) {
-                todo.push(target);
+                todo.push(end_of_path);
             }
         }
-        if (end_of_path->default_target()) {
+        else {
+            // Demux: High or Low
+            demux_node(node);
+
+            // And add all children.
+            BOOST_FOREACH(const Intermediate::Edge& edge, node->edges()) {
+                const Intermediate::node_p& target = edge.target();
+                bool need_to_queue = queued.insert(target).second;
+                if (need_to_queue) {
+                    todo.push(target);
+                }
+            }
+        }
+        if (node->default_target()) {
             const Intermediate::node_p& target =
-                end_of_path->default_target();
+                node->default_target();
             bool need_to_queue = queued.insert(target).second;
             if (need_to_queue) {
                 todo.push(target);
