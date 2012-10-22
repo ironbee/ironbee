@@ -502,20 +502,46 @@ private:
                 if (! oracle.targets_by_input[c].empty()) {
                     const Intermediate::node_p& target =
                         oracle.targets_by_input[c].front().first;
-                    if (previous_target && target != previous_target) {
+                    if (target == node.default_target()) {
+                        continue;
+                    }
+                    if (
+                        previous_target &&
+                        target != previous_target
+                    ) {
                         ia_setbitv64(ali_bm.bits, c);
                     }
                     previous_target = target;
                 }
             }
-        }
 
-        for (int c = 0; c < 256; ++c) {
-            if (! oracle.targets_by_input[c].empty()) {
-                const Intermediate::node_p& target =
-                    oracle.targets_by_input[c].front().first;
-                if (target != node.default_target()) {
-                    append_node_ref(target);
+            // Using second loop as ali_bm might be moved by append_node_ref.
+            previous_target.reset();
+            for (int c = 0; c < 256; ++c) {
+                if (! oracle.targets_by_input[c].empty()) {
+                    const Intermediate::node_p& target =
+                        oracle.targets_by_input[c].front().first;
+                    if (target == node.default_target()) {
+                        continue;
+                    }
+                    if (
+                        ! previous_target ||
+                        target != previous_target
+                    ) {
+                        append_node_ref(target);
+                    }
+                    previous_target = target;
+                }
+            }
+        }
+        else {
+            for (int c = 0; c < 256; ++c) {
+                if (! oracle.targets_by_input[c].empty()) {
+                    const Intermediate::node_p& target =
+                        oracle.targets_by_input[c].front().first;
+                    if (target != node.default_target()) {
+                        append_node_ref(target);
+                    }
                 }
             }
         }
