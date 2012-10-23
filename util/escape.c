@@ -533,28 +533,42 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
 
 char *ib_util_hex_escape(const char *src, size_t src_len)
 {
-    size_t dst_i = 0;
-    size_t src_i = 0;
+    const uint8_t *src_ptr;
+    const uint8_t *src_end = (uint8_t *)src + src_len;
     size_t dst_len = src_len * 4 + 1;
     char *dst = malloc(dst_len);
+    char *dst_ptr;
+    const char *dst_end;
 
-    if ( dst == NULL ) {
+    if (dst == NULL) {
         return dst;
     }
+    dst_end = dst + dst_len;
 
-    for ( src_i = 0; src_i < src_len; ++src_i )
+    for (src_ptr = (uint8_t *)src, dst_ptr = dst;
+         (src_ptr < src_end) && (dst_ptr < dst_end);
+         ++src_ptr)
     {
-        if ( isprint(src[src_i]) )
+        if (isprint(*src_ptr))
         {
-            dst[dst_i] = src[src_i];
-            ++dst_i;
+            *dst_ptr = *src_ptr;
+            ++dst_ptr;
         }
         else {
-            dst_i += sprintf(dst + dst_i, "0x%x", src[src_i]);
+            size_t avail = dst_end - dst_ptr;
+            int written;
+
+            assert(avail >= 3);
+            written = snprintf(dst_ptr, avail, "0x%x", *src_ptr);
+            assert(written <= 4);
+            if (written < 3) {
+                break;
+            }
+            dst_ptr += written;
         }
     }
 
-    dst[dst_i] = '\0';
+    *dst_ptr = '\0';
 
     return dst;
 }

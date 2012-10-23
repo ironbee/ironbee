@@ -26,3 +26,18 @@ TEST(TestUtilHexEscape, basic) {
 
     free(s);
 }
+
+TEST(TestUtilHexEscape, corners)
+{
+    char *s;
+
+    const char *S1 = "\x00";
+    s = ib_util_hex_escape(S1, 1);
+    ASSERT_STREQ("0x0", s);
+    free(s);
+
+    const char *S2 = "\x10\x11\x80\xff";
+    s = ib_util_hex_escape(S2, 4);
+    ASSERT_STREQ("0x100x110x800xff", s);
+    free(s);
+}
