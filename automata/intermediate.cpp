@@ -604,6 +604,7 @@ public:
                 id_t next_id = acquire_id(output->next_output());
                 if (next_id >= last_id) {
                     todo.push_back(output->next_output());
+                    last_id = m_next_id;
                 }
                 pb_output->set_next(next_id);
             }
