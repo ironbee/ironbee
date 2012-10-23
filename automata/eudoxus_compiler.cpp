@@ -656,6 +656,9 @@ private:
                 output->content().data(),
                 output->content().size()
             );
+            if (m_assembler.size() >= m_max_index) {
+                throw out_of_range("id_width too small");
+            }
         }
     }
 
@@ -800,10 +803,6 @@ void Compiler<id_width>::compile(
     queued.insert(automata.start_node());
 
     while (! todo.empty()) {
-        if (m_assembler.size() >= m_max_index) {
-            throw out_of_range("id_width too small");
-        }
-
         Intermediate::node_p node = todo.front();
         todo.pop();
 
@@ -872,6 +871,10 @@ void Compiler<id_width>::compile(
             if (need_to_queue) {
                 todo.push(target);
             }
+        }
+
+        if (m_assembler.size() >= m_max_index) {
+            throw out_of_range("id_width too small");
         }
     }
 
