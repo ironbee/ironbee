@@ -34,8 +34,8 @@ LDFLAGS += $(HTP_LDFLAGS) $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
 MODULE_TEST_LDADD = $(LDADD) \
                     $(HTP_LDADD) \
                     $(PCRE_LDADD) \
-		    -lboost_filesystem \
-		    -lboost_system \
+		    -lboost_filesystem$(BOOST_SUFFIX) \
+		    -lboost_system$(BOOST_SUFFIX) \
                     $(top_builddir)/engine/libironbee.la
 
 # Point the module base path to the modules build dir

@@ -57,11 +57,11 @@ clipp_LDFLAGS = \
     $(AM_LDFLAGS) \
     $(PROTOBUF_LDFLAGS) \
     $(BOOST_LDFLAGS) \
-    -lboost_system \
-    -lboost_filesystem \
-    -lboost_program_options \
-    -lboost_regex \
-    -lboost_thread-mt \
+    -lboost_system$(BOOST_SUFFIX) \
+    -lboost_filesystem$(BOOST_SUFFIX) \
+    -lboost_program_options$(BOOST_SUFFIX) \
+    -lboost_regex$(BOOST_SUFFIX) \
+    -lboost_thread-mt$(BOOST_SUFFIX) \
     -lprotobuf
 
 if HAVE_MODP

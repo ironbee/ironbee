@@ -19,9 +19,9 @@ AM_LDFLAGS = \
     $(PROTOBUF_LDFLAGS) \
 	$(BOOST_LDFLAGS) \
     -lprotobuf \
-    -lboost_program_options \
-    -lboost_system \
-    -lboost_filesystem \
+    -lboost_program_options$(BOOST_SUFFIX) \
+    -lboost_system$(BOOST_SUFFIX) \
+    -lboost_filesystem$(BOOST_SUFFIX) \
     -lboost_chrono
 
 ac_generator_SOURCES = ac_generator.cpp
