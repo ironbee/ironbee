@@ -4,7 +4,13 @@ include $(top_srcdir)/build/common.mk
 # If CPP is not defined, we do very litte.
 lib_LTLIBRARIES = libiaeudoxus.la
 libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c
-ironautomata_include_HEADERS = include/ironautomata/*.h
+ironautomata_include_HEADERS = \
+    $(srcdir)/include/ironautomata/apidoc.h \
+    $(srcdir)/include/ironautomata/bits.h \
+    $(srcdir)/include/ironautomata/eudoxus.h \
+    $(srcdir)/include/ironautomata/eudoxus_automata.h \
+    $(srcdir)/include/ironautomata/eudoxus_subautomata.h \
+    $(srcdir)/include/ironautomata/vls.h
 EXTRA_libiaeudoxus_la_SOURCES = eudoxus_subengine.c
 
 AM_CPPFLAGS = -I$(srcdir)/include
@@ -29,13 +35,20 @@ libironautomata_la_SOURCES = \
     aho_corasick.cpp
     
 ironautomata_include_HEADERS += \
-    $(srcdir)/include/ironautomata/*.hpp
+    $(srcdir)/include/ironautomata/buffer.hpp \
+    $(srcdir)/include/ironautomata/deduplicate_outputs.hpp \
+    $(srcdir)/include/ironautomata/eudoxus_compiler.hpp \
+    $(srcdir)/include/ironautomata/intermediate.hpp \
+    $(srcdir)/include/ironautomata/intermediate_to_dot.hpp \
+    $(srcdir)/include/ironautomata/logger.hpp \
+    $(srcdir)/include/ironautomata/optimize_edges.hpp \
+    $(srcdir)/include/ironautomata/translate_nonadvancing.hpp
     
 nodist_ironautomata_include_HEADERS = \
     $(builddir)/include/ironautomata/intermediate.pb.h
     
 ironautomata_generator_include_HEADERS = \
-    $(srcdir)/include/ironautomata/generator/*.hpp
+    $(srcdir)/include/ironautomata/generator/aho_corasick.hpp
 
 nodist_libironautomata_la_SOURCES = intermediate.pb.cc
 BUILT_SOURCES = intermediate.pb.cc
