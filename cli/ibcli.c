@@ -994,7 +994,7 @@ static IB_STRVAL_MAP(tx_flags_map) = {
     IB_STRVAL_PAIR("Request Started", IB_TX_FREQ_STARTED),
     IB_STRVAL_PAIR("Seen Request Header", IB_TX_FREQ_SEENHEADER),
     IB_STRVAL_PAIR("No Request Body", IB_TX_FREQ_NOBODY),
-    IB_STRVAL_PAIR("Seen Request BOdy", IB_TX_FREQ_SEENBODY),
+    IB_STRVAL_PAIR("Seen Request Body", IB_TX_FREQ_SEENBODY),
     IB_STRVAL_PAIR("Seen Request Trailer", IB_TX_FREQ_SEENTRAILER),
     IB_STRVAL_PAIR("Request Finished", IB_TX_FREQ_FINISHED),
     IB_STRVAL_PAIR("Response Started", IB_TX_FRES_STARTED),
