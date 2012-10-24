@@ -176,7 +176,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     // Create the operator instance.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
-                                      NULL,
+                                      ib_context_main(ib_engine),
                                       rule1,
                                       IB_OP_FLAG_PHASE,
                                       "pcre",
@@ -215,7 +215,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     // Create the operator instance.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
-                                      NULL,
+                                      ib_context_main(ib_engine),
                                       rule1,
                                       IB_OP_FLAG_PHASE,
                                       "pcre",
@@ -254,7 +254,7 @@ TEST_F(PcreModuleTest, test_pcre_operator)
     // Create the operator instance.
     ASSERT_EQ(IB_OK,
               ib_operator_inst_create(ib_engine,
-                                      NULL,
+                                      ib_context_main(ib_engine),
                                       rule2,
                                       IB_OP_FLAG_PHASE,
                                       "pcre",

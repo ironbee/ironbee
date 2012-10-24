@@ -417,7 +417,9 @@ ib_context_t *ib_context_engine(const ib_engine_t *ib);
  *
  * @param ib Engine handle
  *
- * @returns Status code
+ * @returns Pointer to the main context (or engine context if the main
+ *          context hasn't been created yet).  This should always be
+ *          a valid pointer, never NULL.
  */
 ib_context_t DLL_PUBLIC *ib_context_main(const ib_engine_t *ib);
 

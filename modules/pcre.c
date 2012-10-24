@@ -53,7 +53,7 @@
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
 /* Name that a hash of tx-specific data is stored under in @c tx->data. */
-#define MODULE_DATA_STR    MODULE_NAME_STR "_DATA"
+#define HASH_NAME_STR      MODULE_NAME_STR "_HASH"
 
 /* How many matches will PCRE find and populate. */
 #define MATCH_MAX 10
@@ -83,186 +83,56 @@
  */
 #define WORKSPACE_SIZE_DEFAULT (WORKSPACE_SIZE_MIN * 10)
 
-typedef struct modpcre_cfg_t modpcre_cfg_t;
-typedef struct modpcre_cpatt_t modpcre_cpatt_t;
-typedef struct modpcre_cpatt_t pcre_rule_data_t;
-
 /* Define the public module symbol. */
 IB_MODULE_DECLARE();
 
 /**
  * Module Configuration Structure.
  */
-struct modpcre_cfg_t {
-    ib_num_t       study;                 /**< Study compiled regexs */
+typedef struct modpcre_cfg_t {
+    ib_num_t       study;                 /**< Bool: Study compiled regexs */
+    ib_num_t       use_jit;               /**< Bool: Use JIT if available */
     ib_num_t       match_limit;           /**< Match limit */
     ib_num_t       match_limit_recursion; /**< Match recursion depth limit */
-};
+} modpcre_cfg_t;
 
 /**
  * Internal representation of PCRE compiled patterns.
  */
-struct modpcre_cpatt_t {
-    pcre          *cpatt;                 /**< Compiled pattern */
-    size_t        cpatt_sz;               /**< Size of cpatt. */
-    pcre_extra    *edata;                 /**< PCRE Study data */
-    size_t        study_data_sz;          /**< Size of edata->study_data. */
-    const char    *patt;                  /**< Regex pattern text */
-    int           is_jit;                 /**< Is this JIT compiled? */
-};
+typedef struct pcre_cpat_data_t {
+    pcre                *cpatt;           /**< Compiled pattern */
+    size_t               cpatt_sz;        /**< Size of cpatt. */
+    pcre_extra          *edata;           /**< PCRE Study data */
+    size_t               study_data_sz;   /**< Size of edata->study_data. */
+    const char          *patt;            /**< Regex pattern text */
+    bool                 is_dfa;          /**< Is this a DFA? */
+    bool                 is_jit;          /**< Is this JIT compiled? */
+} modpcre_cpat_data_t;
 
 /**
- * Internal representation of PCRE compiled patterns for DFA execution.
+ * PCRE and DFA rule data types are an alias for the compiled pattern structure.
  */
-struct dfa_rule_data_t {
-    pcre          *cpatt;                 /**< Compiled pattern */
-    size_t        cpatt_sz;               /**< Size of cpatt. */
-    pcre_extra    *edata;                 /**< PCRE Study data */
-    size_t        study_data_sz;          /**< Size of edata->study_data. */
-    const char    *patt;                  /**< Regex pattern text */
-    const char    *id;                    /**< An id. */
-};
-typedef struct dfa_rule_data_t dfa_rule_data_t;
+typedef struct pcre_rule_data_t {
+    modpcre_cpat_data_t *cpdata;          /**< Compiled pattern data */
+    const char          *id;              /**< ID for DFA rules */
+} modpcre_rule_data_t;
 
 /* Instantiate a module global configuration. */
 static modpcre_cfg_t modpcre_global_cfg = {
     1,    /* study */
+    1,    /* use_jit */
     5000, /* match_limit */
     5000  /* match_limit_recursion */
 };
-
-/**
- * Internal compilation of the dfa pattern.
- *
- * The major difference in this compilation from that of a normal pcre pattern
- * is that it does not use PCRE_JIT because it is intended for use
- * on streaming data. Streaming data is delivered in chunks
- * and partial matches are found. Doing partial matches and resumes
- * disable JIT optimizations and some a few other normal optimizations.
- *
- * @param[in] pool The memory pool to allocate memory out of.
- * @param[out] dfa_cpatt Struct containing the compilation.
- * @param[in] patt The uncompiled pattern to match.
- * @param[out] errptr Pointer to an error message describing the failure.
- * @param[out] erroffset The location of the failure, if this fails.
- * @returns IronBee status. IB_EINVAL if the pattern is invalid,
- *          IB_EALLOC if memory allocation fails or IB_OK.
- */
-static ib_status_t dfa_compile_internal(ib_mpool_t *pool,
-                                        dfa_rule_data_t **dfa_cpatt,
-                                        const char *patt,
-                                        const char **errptr,
-                                        int *erroffset)
-{
-    IB_FTRACE_INIT();
-
-    /* Compiled pattern. */
-    pcre *cpatt = NULL;
-
-    /* Compiled pattern size. Used to copy cpatt. */
-    size_t cpatt_sz;
-
-    /* Extra data structure. This contains the study_data pointer. */
-    pcre_extra *edata = NULL;
-
-    /* Size of edata->study_data. */
-    size_t study_data_sz;
-
-    /* How cpatt is produced. */
-    const int compile_flags = PCRE_DOTALL | PCRE_DOLLAR_ENDONLY;
-
-    /* How edata is produced if we are not using JIT. */
-    const int study_flags = 0;
-
-    cpatt = pcre_compile(patt, compile_flags, errptr, erroffset, NULL);
-
-    if (*errptr != NULL) {
-        ib_util_log_error("PCRE compile error for \"%s\": %s at offset %d",
-                          patt, *errptr, *erroffset);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    edata = pcre_study(cpatt, study_flags, errptr);
-
-    if(*errptr != NULL)  {
-        pcre_free(cpatt);
-        ib_util_log_error("PCRE study failed: %s", *errptr);
-    }
-
-    /* Compute the size of the populated values of cpatt. */
-    pcre_fullinfo(cpatt, edata, PCRE_INFO_SIZE, &cpatt_sz);
-
-    if (edata != NULL) {
-        pcre_fullinfo(cpatt, edata, PCRE_INFO_STUDYSIZE, &study_data_sz);
-    }
-    else {
-        study_data_sz = 0;
-    }
-
-    /**
-     * Below is only allocation and copy operations to pass the PCRE results
-     * back to the output variable dfa_cpatt.
-     */
-
-    *dfa_cpatt = (dfa_rule_data_t *)ib_mpool_alloc(pool, sizeof(**dfa_cpatt));
-    if (*dfa_cpatt == NULL) {
-        pcre_free(cpatt);
-        pcre_free(edata);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    (*dfa_cpatt)->cpatt_sz = cpatt_sz;
-    (*dfa_cpatt)->study_data_sz = study_data_sz;
-
-    /* Copy pattern. */
-    (*dfa_cpatt)->patt  = ib_mpool_strdup(pool, patt);
-    if ((*dfa_cpatt)->patt == NULL) {
-        pcre_free(cpatt);
-        pcre_free(edata);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Copy compiled pattern. */
-    (*dfa_cpatt)->cpatt = ib_mpool_memdup(pool, cpatt, cpatt_sz);
-    pcre_free(cpatt);
-    if ((*dfa_cpatt)->cpatt == NULL) {
-        pcre_free(edata);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Copy extra data (study data). */
-    if (edata != NULL) {
-
-        /* Copy edata. */
-        (*dfa_cpatt)->edata = ib_mpool_memdup(pool, edata, sizeof(*edata));
-
-        if ((*dfa_cpatt)->edata == NULL) {
-            pcre_free(edata);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-
-        /* Copy edata->study_data. */
-        (*dfa_cpatt)->edata->study_data = ib_mpool_memdup(pool,
-                                                           edata->study_data,
-                                                           study_data_sz);
-        pcre_free(edata);
-        if ((*dfa_cpatt)->edata->study_data == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-    }
-    else {
-        (*dfa_cpatt)->edata = NULL;
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
 
 /**
  * Internal compilation of the modpcre pattern.
  *
  * @param[in] ib IronBee engine for logging.
  * @param[in] pool The memory pool to allocate memory out of.
- * @param[out] pcre_cpatt Struct containing the compilation.
+ * @param[in] config Module configuration
+ * @param[in] is_dfa Set to true for DFA
+ * @param[out] pcpdata Pointer to new struct containing the compilation.
  * @param[in] patt The uncompiled pattern to match.
  * @param[out] errptr Pointer to an error message describing the failure.
  * @param[out] erroffset The location of the failure, if this fails.
@@ -272,12 +142,22 @@ static ib_status_t dfa_compile_internal(ib_mpool_t *pool,
  */
 static ib_status_t pcre_compile_internal(ib_engine_t *ib,
                                          ib_mpool_t *pool,
-                                         modpcre_cpatt_t **pcre_cpatt,
+                                         const modpcre_cfg_t *config,
+                                         bool is_dfa,
+                                         modpcre_cpat_data_t **pcpdata,
                                          const char *patt,
                                          const char **errptr,
                                          int *erroffset)
 {
     IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(pool != NULL);
+    assert(config != NULL);
+    assert(pcpdata != NULL);
+    assert(patt != NULL);
+
+    /* Pattern data structure we'll create */
+    modpcre_cpat_data_t *cpdata;
 
     /* Compiled pattern. */
     pcre *cpatt = NULL;
@@ -291,69 +171,80 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     /* Size of edata->study_data. */
     size_t study_data_sz;
 
-    /* Is the compiled regex jit-compiled? This impacts how it is executed. */
-    int is_jit;
-
     /* How cpatt is produced. */
     const int compile_flags = PCRE_DOTALL | PCRE_DOLLAR_ENDONLY;
+
+    /* Are we using JIT? */
+    bool use_jit = !is_dfa;
+
 #ifdef PCRE_HAVE_JIT
-    /* Determine the success of a call. */
-    int rc;
+    if (config->use_jit == 0) {
+        use_jit = false;
+    }
 
-    /* Determines if the pcre compilation was successful with pcre_jit. */
-    int pcre_jit_ret;
-
-    /* How edata is produced if we are using JIT. */
-    const int study_flags = PCRE_STUDY_JIT_COMPILE;
+    /* Do we want to be using JIT? */
+    const bool want_jit = use_jit;
 #else
-
-    /* How edata is produced if we are not using JIT. */
-    const int study_flags = 0;
+    use_jit = false;
 #endif /* PCRE_HAVE_JIT */
 
     cpatt = pcre_compile(patt, compile_flags, errptr, erroffset, NULL);
 
     if (*errptr != NULL) {
-        ib_util_log_error("PCRE compile error for \"%s\": %s at offset %d",
-                          patt, *errptr, *erroffset);
+        ib_log_error(ib, "PCRE compile error for \"%s\": %s at offset %d",
+                     patt, *errptr, *erroffset);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    edata = pcre_study(cpatt, study_flags, errptr);
+    if (config->study) {
+        if (use_jit) {
+            edata = pcre_study(cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
+            if (*errptr != NULL)  {
+                pcre_free(cpatt);
+                use_jit = false;
+                ib_log_warning(ib, "PCRE-JIT study failed: %s", *errptr);
+            }
+        }
+        else {
+            edata = pcre_study(cpatt, 0, errptr);
+            if (*errptr != NULL)  {
+                pcre_free(cpatt);
+                ib_log_error(ib, "PCRE study failed: %s", *errptr);
+            }
+        }
+    }
+    else if (use_jit) {
+        ib_log_warning(ib, "PCRE: Disabling JIT because study disabled");
+        use_jit = false;
+    }
 
 #ifdef PCRE_HAVE_JIT
-    if(*errptr != NULL)  {
-        pcre_free(cpatt);
-        ib_util_log_error("PCRE-JIT study failed: %s", *errptr);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
     /* The check to see if JIT compilation was a success changed in 8.20RC1
        now uses pcre_fullinfo see doc/pcrejit.3 */
-    rc = pcre_fullinfo(cpatt, edata, PCRE_INFO_JIT, &pcre_jit_ret);
-    if (rc != 0) {
-        ib_log_error(ib, "PCRE-JIT failed to get pcre_fullinfo");
-        is_jit = 0;
+    if (use_jit) {
+        int rc;
+        int pcre_jit_ret;
+
+        rc = pcre_fullinfo(cpatt, edata, PCRE_INFO_JIT, &pcre_jit_ret);
+        if (rc != 0) {
+            ib_log_error(ib, "PCRE-JIT failed to get pcre_fullinfo");
+            use_jit = false;
+        }
+        else if (pcre_jit_ret != 1) {
+            ib_log_info(ib, "PCRE-JIT compiler does not support: %s", patt);
+            use_jit = false;
+        }
+        else { /* Assume pcre_jit_ret == 1. */
+            /* Do nothing */
+        }
     }
-    else if (pcre_jit_ret != 1) {
-        ib_log_info(ib, "PCRE-JIT compiler does not support: %s", patt);
-        ib_log_info(ib, "It will fallback to the normal PCRE");
-        is_jit = 0;
+    if (want_jit && !use_jit) {
+        ib_log_info(ib, "Failling back to normal PCRE");
     }
-    else { /* Assume pcre_jit_ret == 1. */
-        is_jit = 1;
-    }
-#else
-    if(*errptr != NULL)  {
-        pcre_free(cpatt);
-        ib_log_info(ib, "PCRE study failed: %s", *errptr);
-    }
-    is_jit = 0;
 #endif /*PCRE_HAVE_JIT*/
 
     /* Compute the size of the populated values of cpatt. */
     pcre_fullinfo(cpatt, edata, PCRE_INFO_SIZE, &cpatt_sz);
-
     if (edata != NULL) {
         pcre_fullinfo(cpatt, edata, PCRE_INFO_STUDYSIZE, &study_data_sz);
     }
@@ -363,26 +254,27 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
 
     /**
      * Below is only allocation and copy operations to pass the PCRE results
-     * back to the output variable pcre_cpatt.
+     * back to the output variable cpdata.
      */
 
-    *pcre_cpatt = (modpcre_cpatt_t *)ib_mpool_alloc(pool, sizeof(**pcre_cpatt));
-    if (*pcre_cpatt == NULL) {
+    cpdata = (modpcre_cpat_data_t *)ib_mpool_alloc(pool, sizeof(*cpdata));
+    if (cpdata == NULL) {
         pcre_free(cpatt);
         pcre_free(edata);
         ib_log_error(ib,
-                     "Failed to allocate pcre_cpatt of size: %zd",
-                     sizeof(**pcre_cpatt));
+                     "Failed to allocate cpdata of size: %zd",
+                     sizeof(*cpdata));
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    (*pcre_cpatt)->is_jit = is_jit;
-    (*pcre_cpatt)->cpatt_sz = cpatt_sz;
-    (*pcre_cpatt)->study_data_sz = study_data_sz;
+    cpdata->is_dfa = is_dfa;
+    cpdata->is_jit = use_jit;
+    cpdata->cpatt_sz = cpatt_sz;
+    cpdata->study_data_sz = study_data_sz;
 
     /* Copy pattern. */
-    (*pcre_cpatt)->patt  = ib_mpool_strdup(pool, patt);
-    if ((*pcre_cpatt)->patt == NULL) {
+    cpdata->patt = ib_mpool_strdup(pool, patt);
+    if (cpdata->patt == NULL) {
         pcre_free(cpatt);
         pcre_free(edata);
         ib_log_error(ib, "Failed to duplicate pattern string: %s", patt);
@@ -390,39 +282,71 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     }
 
     /* Copy compiled pattern. */
-    (*pcre_cpatt)->cpatt = ib_mpool_memdup(pool, cpatt, cpatt_sz);
+    cpdata->cpatt = ib_mpool_memdup(pool, cpatt, cpatt_sz);
     pcre_free(cpatt);
-    if ((*pcre_cpatt)->cpatt == NULL) {
+    if (cpdata->cpatt == NULL) {
         pcre_free(edata);
         ib_log_error(ib, "Failed to duplicate pattern of size: %zd", cpatt_sz);
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
+    ib_log_debug(ib, "PCRE copied cpatt @ %p -> %p (%zd bytes)",
+                 (void *)cpatt, (void *)cpdata->cpatt, cpatt_sz);
 
     /* Copy extra data (study data). */
     if (edata != NULL) {
 
         /* Copy edata. */
-        (*pcre_cpatt)->edata = ib_mpool_memdup(pool, edata, sizeof(*edata));
-
-        if ((*pcre_cpatt)->edata == NULL) {
+        cpdata->edata = ib_mpool_memdup(pool, edata, sizeof(*edata));
+        if (cpdata->edata == NULL) {
             pcre_free(edata);
             ib_log_error(ib, "Failed to duplicate edata.");
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
 
         /* Copy edata->study_data. */
-        (*pcre_cpatt)->edata->study_data = ib_mpool_memdup(pool,
-                                                           edata->study_data,
-                                                           study_data_sz);
+        if (edata->study_data != NULL) {
+            cpdata->edata->study_data =
+                ib_mpool_memdup(pool, edata->study_data, study_data_sz);
+
+            if (cpdata->edata->study_data == NULL) {
+                ib_log_error(ib, "Failed to study data of size: %zd",
+                             study_data_sz);
+                pcre_free(edata);
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
+        }
         pcre_free(edata);
-        if ((*pcre_cpatt)->edata->study_data == NULL) {
-            ib_log_error(ib, "Failed to study data of size: %zd", study_data_sz);
+    }
+    else {
+        cpdata->edata = ib_mpool_calloc(pool, sizeof(*edata), 1);
+        if (cpdata->edata == NULL) {
+            pcre_free(edata);
+            ib_log_error(ib, "Failed to allocate edata.");
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
     }
-    else {
-        (*pcre_cpatt)->edata = NULL;
+
+    /* Set the PCRE limits for non-DFA patterns */
+    if (! is_dfa) {
+        cpdata->edata->flags |=
+            (PCRE_EXTRA_MATCH_LIMIT | PCRE_EXTRA_MATCH_LIMIT_RECURSION);
+        cpdata->edata->match_limit =
+            (unsigned long)config->match_limit;
+        cpdata->edata->match_limit_recursion =
+            (unsigned long)config->match_limit_recursion;
     }
+
+    ib_log_trace(ib,
+                 "Compiled pcre pattern for \"%s\": "
+                 "cpatt=%p edata=%p limit=%ld rlimit=%ld study=%p jit=%s",
+                 patt,
+                 (void *)cpdata->cpatt,
+                 (void *)cpdata->edata,
+                 cpdata->edata->match_limit,
+                 cpdata->edata->match_limit_recursion,
+                 cpdata->edata->study_data,
+                 cpdata->is_jit ? "yes" : "no");
+    *pcpdata = cpdata;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -431,10 +355,10 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
 /* -- Matcher Interface -- */
 
 /**
- * @param[in] mpr Provider object. This is unused.
+ * @param[in] mpr Provider object.
  * @param[in] pool The memory pool to allocate memory out of.
  * @param[out] pcpatt When the pattern is successfully compiled
- *             a modpcre_cpatt_t* is stored in *pcpatt.
+ *             a modpcre_cpat_data_t* is stored in *pcpatt.
  * @param[in] patt The uncompiled pattern to match.
  * @param[out] errptr Pointer to an error message describing the failure.
  * @param[out] erroffset The location of the failure, if this fails.
@@ -452,14 +376,45 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
     IB_FTRACE_INIT();
 
     ib_status_t rc;
+    ib_context_t *ctx;
+    ib_module_t *module;
+    modpcre_cfg_t *config;
+    modpcre_cpat_data_t *cpdata;
+
+    /* Get my module object */
+    rc = ib_engine_module_get(mpr->ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(mpr->ib, "Failed to get pcre module object: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* All we have available is the main configuration */
+    ctx = ib_context_main(mpr->ib);
+    assert(ctx != NULL);
+
+    /* Get the context configuration */
+    rc = ib_context_module_config(ctx, module, &config);
+    if (rc != IB_OK) {
+        ib_log_error(mpr->ib, "Failed to get pcre module configuration: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     rc = pcre_compile_internal(mpr->ib,
                                pool,
-                               (modpcre_cpatt_t **)pcpatt,
+                               config,
+                               false,
+                               &cpdata,
                                patt,
                                errptr,
                                erroffset);
-
+    if ( (rc == IB_OK) && (cpdata != NULL) ) {
+        *(modpcre_cpat_data_t **)pcpatt = cpdata;
+    }
+    else {
+        *(modpcre_cpat_data_t **)pcpatt = NULL;
+    }
     IB_FTRACE_RET_STATUS(rc);
 
 }
@@ -468,7 +423,7 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
  * Provider instance match using pcre_exec.
  *
  * @param[in] mpr Provider instance.
- * @param[in] cpatt Callback data of type modpcre_cpatt_t *.
+ * @param[in] cpatt Callback data of type modpcre_cpat_data_t *.
  * @param[in] flags Flags used in rule compilation.
  * @param[in] data The subject to be checked.
  * @param[in] dlen The length of @a data.
@@ -488,16 +443,24 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
                                           void *ctx)
 {
     IB_FTRACE_INIT();
-    modpcre_cpatt_t *pcre_cpatt = (modpcre_cpatt_t *)cpatt;
+    assert(mpr != NULL);
+    assert(cpatt != NULL);
+    assert(data != NULL);
+
+    modpcre_cpat_data_t *cpdata = (modpcre_cpat_data_t *)cpatt;
     int ec;
     const int ovector_sz = 30;
-    int *ovector = (int *) malloc(ovector_sz*sizeof(*ovector));
+    int *ovector;
 
+    assert(cpdata != NULL);
+    assert(cpdata->is_dfa == false);
+
+    ovector = (int *)malloc(ovector_sz*sizeof(*ovector));
     if (ovector == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ec = pcre_exec(pcre_cpatt->cpatt, pcre_cpatt->edata,
+    ec = pcre_exec(cpdata->cpatt, cpdata->edata,
                    (const char *)data, dlen,
                    0, 0, ovector, ovector_sz);
 
@@ -575,25 +538,65 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
                                         ib_operator_inst_t *op_inst)
 {
     IB_FTRACE_INIT();
-    const char* errptr;
-    int erroffset;
-    pcre_rule_data_t *rule_data = NULL;
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(rule != NULL);
+    assert(pool != NULL);
+    assert(op_inst != NULL);
+
+    modpcre_cpat_data_t *cpdata = NULL;
+    modpcre_rule_data_t *rule_data = NULL;
+    ib_module_t *module;
+    modpcre_cfg_t *config;
     ib_status_t rc;
+    const char *errptr;
+    int erroffset;
 
     if (pattern == NULL) {
         ib_log_error(ib, "No pattern for %s operator", op_inst->op->name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
+
+    /* Get my module object */
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to get pcre module object: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Get the context configuration */
+    rc = ib_context_module_config(ctx, module, &config);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to get pcre module configuration: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Compile the pattern.  Note that the rule data is an alias for
+     * the compiled pattern type */
     rc = pcre_compile_internal(ib,
                                pool,
-                               &rule_data,
+                               config,
+                               false,
+                               &cpdata,
                                pattern,
                                &errptr,
                                &erroffset);
-
-    if (rc==IB_OK) {
-        op_inst->data = rule_data;
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
+
+    /* Allocate a rule data object, populate it */
+    rule_data = ib_mpool_alloc(pool, sizeof(*rule_data));
+    if (rule_data == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    rule_data->cpdata = cpdata;
+    rule_data->id = NULL;           /* Not needed for rx rules */
+
+    /* Rule data is an alias for the compiled pattern data */
+    op_inst->data = rule_data;
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -705,7 +708,7 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
  * @brief Execute the PCRE operator
  *
  * @param[in] rule_exec The rule execution object
- * @param[in,out] data User data. A @c pcre_rule_data_t.
+ * @param[in,out] data User data. A @c modpcre_rule_data_t.
  * @param[in] flags Operator instance flags
  * @param[in] field The field content.
  * @param[out] result The result.
@@ -730,15 +733,16 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
     ib_status_t ib_rc;
     const int ovecsize = 3 * MATCH_MAX;
     int *ovector = (int *)malloc(ovecsize*sizeof(*ovector));
-    const char* subject = NULL;
+    const char *subject = NULL;
     size_t subject_len = 0;
-    const ib_bytestr_t* bytestr;
-    pcre_rule_data_t *rule_data = (pcre_rule_data_t *)data;
+    const ib_bytestr_t *bytestr;
+    modpcre_rule_data_t *rule_data = (modpcre_rule_data_t *)data;
     pcre_extra *edata = NULL;
 #ifdef PCRE_JIT_STACK
-    pcre_jit_stack *jit_stack = pcre_jit_stack_alloc(PCRE_JIT_MIN_STACK_SZ,
-                                                     PCRE_JIT_MAX_STACK_SZ);
+    pcre_jit_stack *jit_stack = NULL;
 #endif
+
+    assert(rule_data->cpdata->is_dfa == false);
 
     if (ovector==NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -793,28 +797,33 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
     }
 
 #ifdef PCRE_JIT_STACK
-    /* Log if we expected jit, but did not get it. */
-    if (rule_data->is_jit && jit_stack == NULL) {
-        ib_rule_log_debug(rule_exec,
-                          "Failed to allocate a jit stack for a jit-compiled "
-                          "rule.  Not using jit for this call.");
-        edata = NULL;
+    if (rule_data->cpdata->is_jit) {
+        jit_stack = pcre_jit_stack_alloc(PCRE_JIT_MIN_STACK_SZ,
+                                         PCRE_JIT_MAX_STACK_SZ);
+        if (jit_stack == NULL) {
+            ib_rule_log_debug(rule_exec,
+                              "Failed to allocate a jit stack for a "
+                              "jit-compiled rule.  "
+                              "Not using jit for this call.");
+        }
+        /* If the study data is NULL or size zero, don't use it. */
+        else if (rule_data->cpdata->study_data_sz > 0) {
+            edata = rule_data->cpdata->edata;
+        }
+        if (edata != NULL) {
+            pcre_assign_jit_stack(edata, NULL, jit_stack);
+        }
     }
-
-    /* If the study data is NULL or size zero, don't use it. */
-    else if (rule_data->edata == NULL || rule_data->study_data_sz <= 0) {
-        edata = NULL;
+#else
+    if (false) {
+        /* Do nothing */
     }
-
-    /* Only if we get here do we use the study data (edata) in the rule_data. */
-    else {
-        edata = rule_data->edata;
-        pcre_assign_jit_stack(rule_data->edata, NULL, jit_stack);
-    }
-
 #endif
+    else if (rule_data->cpdata->study_data_sz > 0) {
+        edata = rule_data->cpdata->edata;
+    }
 
-    matches = pcre_exec(rule_data->cpatt,
+    matches = pcre_exec(rule_data->cpdata->cpatt,
                         edata,
                         subject,
                         subject_len,
@@ -845,7 +854,7 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
             /* No match. Return false to the caller (*result = 0). */
             ib_rule_log_trace(rule_exec,
                               "No match for \"%s\" using pattern \"%s\".",
-                              tmp_c, rule_data->patt);
+                              tmp_c, rule_data->cpdata->patt);
             free(tmp_c);
         }
 
@@ -855,13 +864,58 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
     }
     else {
         /* Some other error occurred. Set the status to false and
-        report the error. */
+         * report the error. */
+        ib_rule_log_error(rule_exec, "RX match failed (cpat=%p): %d",
+                          (void *)rule_data->cpdata->cpatt, matches);
         ib_rc = IB_EUNKNOWN;
         *result = 0;
     }
 
     free(ovector);
     IB_FTRACE_RET_STATUS(ib_rc);
+}
+
+/**
+ * Set the ID of a DFA rule
+ *
+ * @param[in] rule Rule to use ID of (if available)
+ * @param[in] op_inst Operator instance
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in,out] dfa DFA rule object to store ID into
+
+ *
+ * @returns Status code
+ */
+static ib_status_t dfa_id_set(const ib_rule_t *rule,
+                              const ib_operator_inst_t *op_inst,
+                              ib_mpool_t *mp,
+                              modpcre_rule_data_t *rule_data)
+{
+    IB_FTRACE_INIT();
+    const char *rule_id;
+
+    rule_id = ib_rule_id(rule);
+    if (rule_id != NULL) {
+        rule_data->id = rule_id;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* We compute the length of the string buffer as such:
+     * +2 for the 0x prefix.
+     * +1 for the \0 string terminations.
+     * +16 for encoding 8 bytes (64 bits) as hex-pairs (2 chars / byte).
+     */
+    size_t id_sz = 16 + 2 + 1;
+    char *id;
+    id = ib_mpool_alloc(mp, id_sz+1);
+    if (id == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    snprintf(id, id_sz, "%p", op_inst);
+    rule_data->id = id;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -885,46 +939,74 @@ static ib_status_t dfa_operator_create(ib_engine_t *ib,
                                        ib_operator_inst_t *op_inst)
 {
     IB_FTRACE_INIT();
-    const char* errptr;
-    int erroffset;
-    dfa_rule_data_t *rule_data = NULL;
+    assert(ib != NULL);
+    assert(ctx != NULL);
+    assert(rule != NULL);
+    assert(pool != NULL);
+    assert(op_inst != NULL);
+
+    modpcre_cpat_data_t *cpdata;
+    modpcre_rule_data_t *rule_data;
+    ib_module_t *module;
+    modpcre_cfg_t *config;
     ib_status_t rc;
+    const char *errptr;
+    int erroffset;
 
-    rc = dfa_compile_internal(pool,
-                              &rule_data,
-                              pattern,
-                              &errptr,
-                              &erroffset);
-
-    if (rc==IB_OK) {
-        ib_log_debug(ib, "Compiled DFA operator pattern: %s", pattern);
-
-        /* We compute the length of the string buffer as such:
-         * +2 for the 0x prefix.
-         * +1 for the \0 string terminations.
-         * +16 for encoding 8 bytes (64 bits) as hex-pairs (2 chars / byte).
-         */
-        size_t id_sz = 16 + 2 + 1;
-        char *id;
-        id = ib_mpool_alloc(pool, id_sz);
-
-        snprintf(id, id_sz, "%p", op_inst);
-        rule_data->id = id;
-        ib_log_debug(ib, "Created DFA operator with ID %s.", id);
-        op_inst->data = rule_data;
-    }
-    else {
-        ib_log_error(ib, "Failed to parse DFA operator pattern: %s", pattern);
+    /* Get my module object */
+    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to get pcre module object: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Get the context configuration */
+    rc = ib_context_module_config(ctx, module, &config);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to get pcre module configuration: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
+    rc = pcre_compile_internal(ib,
+                               pool,
+                               config,
+                               true,
+                               &cpdata,
+                               pattern,
+                               &errptr,
+                               &erroffset);
+
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to parse DFA operator pattern \"%s\":%s",
+                     pattern, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Allocate a rule data object, populate it */
+    rule_data = ib_mpool_alloc(pool, sizeof(*rule_data));
+    if (rule_data == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+    rule_data->cpdata = cpdata;
+    rc = dfa_id_set(rule, op_inst, pool, rule_data);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Error creating ID for DFA: %s",
+                     ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    ib_log_debug(ib, "Compiled DFA id=\"%s\" operator pattern \"%s\" @ %p",
+                 rule_data->id, pattern, (void *)cpdata->cpatt);
+
+    op_inst->data = (void *)rule_data;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
  * Get or create an ib_hash_t inside of @c tx->data for storing dfa rule data.
  *
- * The hash is stored at the key @c MODULE_DATA_STR.
+ * The hash is stored at the key @c HASH_NAME_STR.
  *
  * @param[in] tx The transaction containing @c tx->data which holds
  *            the @a rule_data object.
@@ -936,7 +1018,7 @@ static ib_status_t dfa_operator_create(ib_engine_t *ib,
  *   - IB_EALLOC on allocation failure
  */
 static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
-                                                ib_hash_t **rule_data)
+                                                ib_hash_t **hash)
 {
     IB_FTRACE_INIT();
 
@@ -946,35 +1028,32 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
     ib_status_t rc;
 
     /* Get or create the hash that contains the rule data. */
-    rc = ib_hash_get(tx->data, rule_data, MODULE_DATA_STR);
-
-    if (rc == IB_OK && *rule_data != NULL) {
-        ib_log_debug2_tx(tx,
-                         "Found rule data hash in tx data named "
-                         MODULE_DATA_STR);
+    rc = ib_hash_get(tx->data, hash, HASH_NAME_STR);
+    if ( (rc == IB_OK) && (*hash != NULL) ) {
+        ib_log_debug2_tx(tx, "Found rule data hash in tx data named "
+                         "\""HASH_NAME_STR "\"");
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     ib_log_debug2_tx(tx, "Rule data hash did not exist in tx data.");
-    ib_log_debug2_tx(tx, "Creating rule data hash " MODULE_DATA_STR);
+    ib_log_debug2_tx(tx, "Creating rule data hash \""HASH_NAME_STR"\"");
 
-    rc = ib_hash_create(rule_data, tx->mp);
+    rc = ib_hash_create(hash, tx->mp);
     if (rc != IB_OK) {
-        ib_log_debug2_tx(tx,
-                         "Failed to create hash " MODULE_DATA_STR ": %d", rc);
+        ib_log_debug2_tx(tx, "Failed to create hash \""HASH_NAME_STR"\": %s",
+                         ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_hash_set(tx->data, MODULE_DATA_STR, *rule_data);
+    rc = ib_hash_set(tx->data, HASH_NAME_STR, *hash);
     if (rc != IB_OK) {
-        ib_log_debug2_tx(tx,
-                         "Failed to store hash " MODULE_DATA_STR ": %d", rc);
-        *rule_data = NULL;
+        ib_log_debug2_tx(tx, "Failed to store hash \""HASH_NAME_STR"\": %s", 
+                         ib_status_to_string(rc));
+        *hash = NULL;
     }
 
-    ib_log_debug2_tx(tx,
-                     "Returning rule hash " MODULE_DATA_STR " at %p.",
-                     *rule_data);
+    ib_log_debug2_tx(tx, "Returning rule hash \""HASH_NAME_STR"\" at %p.",
+                     *hash);
 
     IB_FTRACE_RET_STATUS(rc);
 
@@ -1008,31 +1087,32 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
     assert(id);
     assert(workspace);
 
-    ib_hash_t *rule_data;
+    ib_hash_t *hash;
     ib_status_t rc;
+    dfa_workspace_t *ws;
+    size_t size;
 
-    rc = get_or_create_rule_data_hash(tx, &rule_data);
+    *workspace = NULL;
+    rc = get_or_create_rule_data_hash(tx, &hash);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    *workspace = (dfa_workspace_t *)ib_mpool_alloc(tx->mp, sizeof(**workspace));
-    if (*workspace == NULL) {
+    ws = (dfa_workspace_t *)ib_mpool_alloc(tx->mp, sizeof(*ws));
+    if (ws == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    (*workspace)->wscount = WORKSPACE_SIZE_DEFAULT;
-    (*workspace)->workspace =
-        (int *)ib_mpool_alloc(tx->mp,
-                             sizeof(*((*workspace)->workspace)) *
-                                (*workspace)->wscount);
-    if ((*workspace)->workspace == NULL) {
+    ws->wscount = WORKSPACE_SIZE_DEFAULT;
+    size = sizeof(*(ws->workspace)) * (ws->wscount);
+    ws->workspace = (int *)ib_mpool_alloc(tx->mp, size);
+    if (ws->workspace == NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    rc = ib_hash_set(rule_data, id, *workspace);
-    if (rc != IB_OK) {
-        *workspace = NULL;
+    rc = ib_hash_set(hash, id, ws);
+    if (rc == IB_OK) {
+        *workspace = ws;
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -1061,15 +1141,15 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
     assert(id);
     assert(workspace);
 
-    ib_hash_t *rule_data;
+    ib_hash_t *hash;
     ib_status_t rc;
 
-    rc = get_or_create_rule_data_hash(tx, &rule_data);
+    rc = get_or_create_rule_data_hash(tx, &hash);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    rc = ib_hash_get(rule_data, workspace, id);
+    rc = ib_hash_get(hash, workspace, id);
     if (rc != IB_OK) {
         *workspace = NULL;
     }
@@ -1081,7 +1161,7 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
  * @brief Execute the dfa operator
  *
  * @param[in] rule_exec The rule execution object
- * @param[in,out] data User data. A @c pcre_rule_data_t.
+ * @param[in,out] data User data. A @c modpcre_rule_data_t.
  * @param[in] flags Operator instance flags
  * @param[in] field The field content.
  * @param[out] result The result.
@@ -1105,22 +1185,21 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
     int matches;
     ib_status_t ib_rc;
     const int ovecsize = 3 * MATCH_MAX;
-    dfa_rule_data_t *rule_data;
+    modpcre_rule_data_t *rule_data = (modpcre_rule_data_t *)data;
     int *ovector;
-    const char* subject;
+    const char *subject;
     size_t subject_len;
-    const ib_bytestr_t* bytestr;
+    const ib_bytestr_t *bytestr;
     dfa_workspace_t *dfa_workspace;
+    const char *id = ib_rule_id(rule_exec->rule);
     int options; /* dfa exec options. */
+
+    assert(rule_data->cpdata->is_dfa == true);
 
     ovector = (int *)malloc(ovecsize*sizeof(*ovector));
     if (ovector==NULL) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
-
-    /* Pull out the rule data. */
-    rule_data = (dfa_rule_data_t *)data;
-
 
     if (field->type == IB_FTYPE_NULSTR) {
         ib_rc = ib_field_value(field, ib_ftype_nulstr_out(&subject));
@@ -1156,51 +1235,45 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
          * character. */
         char *debug_str = ib_util_hex_escape(subject, subject_len);
 
-        if ( debug_str != NULL ) {
+        if (debug_str != NULL) {
             ib_log_debug3_tx(tx, "Matching against: %s", debug_str);
-            free( debug_str );
+            free(debug_str);
         }
     }
 
     /* Get the per-tx workspace data for this rule data id. */
-    ib_rc = get_dfa_tx_data(tx, rule_data->id, &dfa_workspace);
+    ib_rc = get_dfa_tx_data(tx, id, &dfa_workspace);
     if (ib_rc == IB_ENOENT) {
         options = PCRE_PARTIAL_SOFT;
 
-        ib_rc = alloc_dfa_tx_data(tx, rule_data->id, &dfa_workspace);
+        ib_rc = alloc_dfa_tx_data(tx, id, &dfa_workspace);
         if (ib_rc != IB_OK) {
             free(ovector);
             ib_rule_log_error(rule_exec,
-                              "Unexpected error creating tx storage "
-                              "for dfa operator %s",
-                              rule_data->id);
+                              "Error creating tx storage for dfa operator: %s",
+                              ib_status_to_string(ib_rc));
             IB_FTRACE_RET_STATUS(ib_rc);
         }
 
-        ib_rule_log_debug(rule_exec,
-                          "Created DFA workspace at %p for id %s.",
-                          dfa_workspace,
-                          rule_data->id);
+        ib_rule_log_debug(rule_exec, "Created DFA workspace at %p.",
+                          dfa_workspace);
     }
     else if (ib_rc == IB_OK) {
         options = PCRE_PARTIAL_SOFT | PCRE_DFA_RESTART;
-        ib_rule_log_debug(rule_exec,
-                          "Reusing existing DFA workspace %p for id %s.",
-                          dfa_workspace,
-                          rule_data->id);
+        ib_rule_log_debug(rule_exec, "Reusing existing DFA workspace %p.",
+                          dfa_workspace);
     }
     else {
         free(ovector);
         ib_rule_log_error(rule_exec,
-                          "Unexpected error fetching dfa data "
-                          "for dfa operator %s",
-                          rule_data->id);
+                          "Error fetching dfa data for dfa operator: %s",
+                          ib_status_to_string(ib_rc));
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
     /* Actually do the DFA match. */
-    matches = pcre_dfa_exec(rule_data->cpatt,
-                            rule_data->edata,
+    matches = pcre_dfa_exec(rule_data->cpdata->cpatt,
+                            rule_data->cpdata->edata,
                             subject,
                             subject_len,
                             0, /* Starting offset. */
@@ -1229,8 +1302,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
             /* No match. Return false to the caller (*result = 0). */
             ib_rule_log_debug(rule_exec,
                               "No match for \"%s\" using pattern \"%s\".",
-                              tmp_c,
-                              rule_data->patt);
+                              tmp_c, rule_data->cpdata->patt);
             free(tmp_c);
         }
 
@@ -1240,6 +1312,8 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
     else {
         /* Some other error occurred. Set the status to false and
         report the error. */
+        ib_rule_log_error(rule_exec, "DFA match failed (cpat=%p): %d",
+                          (void *)rule_data->cpdata->cpatt, matches);
         ib_rc = IB_EUNKNOWN;
         *result = 0;
     }
@@ -1265,6 +1339,186 @@ static ib_status_t dfa_operator_destroy(ib_operator_inst_t *op_inst)
 }
 
 /* -- Module Routines -- */
+
+static IB_CFGMAP_INIT_STRUCTURE(config_map) = {
+    IB_CFGMAP_INIT_ENTRY(
+        MODULE_NAME_STR ".study",
+        IB_FTYPE_NUM,
+        modpcre_cfg_t,
+        study
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        MODULE_NAME_STR ".use_jit",
+        IB_FTYPE_NUM,
+        modpcre_cfg_t,
+        use_jit
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        MODULE_NAME_STR ".match_limit",
+        IB_FTYPE_NUM,
+        modpcre_cfg_t,
+        match_limit
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        MODULE_NAME_STR ".match_limit_recursion",
+        IB_FTYPE_NUM,
+        modpcre_cfg_t,
+        match_limit_recursion
+    ),
+    IB_CFGMAP_INIT_LAST
+};
+
+/**
+ * Handle on/off directives.
+ *
+ * @param[in] cp Config parser
+ * @param[in] name Directive name
+ * @param[in] onoff on/off flag
+ * @param[in] cbdata Callback data (ignored)
+ *
+ * @returns Status code
+ */
+static ib_status_t handle_directive_onoff(ib_cfgparser_t *cp,
+                                          const char *name,
+                                          int onoff,
+                                          void *cbdata)
+{
+    IB_FTRACE_INIT();
+    assert(cp != NULL);
+    assert(name != NULL);
+    assert(cp->ib != NULL);
+
+    ib_engine_t *ib = cp->ib;
+    ib_status_t rc;
+    ib_module_t *module = NULL;
+    modpcre_cfg_t *config = NULL;
+    ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+    const char *pname;
+
+    /* Get my module object */
+    rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to get %s module object: %s",
+                         MODULE_NAME_STR, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Get my module configuration */
+    rc = ib_context_module_config(ctx, module, (void *)&config);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to get %s module configuration: %s",
+                         MODULE_NAME_STR, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (strcasecmp("PcreStudy", name) == 0) {
+        pname = MODULE_NAME_STR ".study";
+    }
+    else if (strcasecmp("PcreUseJit", name) == 0) {
+        pname = MODULE_NAME_STR ".use_jit";
+    }
+    else {
+        ib_cfg_log_error(cp, "Unhandled directive \"%s\"", name);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    rc = ib_context_set_num(ctx, pname, onoff);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to set \"%s\" to %s for \"%s\": %s",
+                         pname, onoff ? "true" : "false", name,
+                         ib_status_to_string(rc));
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Handle single parameter directives.
+ *
+ * @param cp Config parser
+ * @param name Directive name
+ * @param p1 First parameter
+ * @param cbdata Callback data (from directive registration)
+ *
+ * @returns Status code
+ */
+static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
+                                          const char *name,
+                                          const char *p1,
+                                          void *cbdata)
+{
+    IB_FTRACE_INIT();
+    assert(cp != NULL);
+    assert(name != NULL);
+    assert(p1 != NULL);
+    assert(cp->ib != NULL);
+
+    ib_engine_t *ib = cp->ib;
+    ib_status_t rc;
+    ib_module_t *module = NULL;
+    modpcre_cfg_t *config = NULL;
+    ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+    ib_num_t value;
+
+    /* Get my module object */
+    rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to get %s module object: %s",
+                         MODULE_NAME_STR, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Get my module configuration */
+    rc = ib_context_module_config(ctx, module, (void *)&config);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to get %s module configuration: %s",
+                         MODULE_NAME_STR, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* p1 should be a number */
+    rc = ib_string_to_num(p1, 0, &value);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "Failed to convert \"%s\" to a number for \"%s\": %s",
+                         p1, name, ib_status_to_string(rc));
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (strcasecmp("PcreMatchLimit", name) == 0) {
+        rc = ib_context_set_num(ctx, "pcre.match_limit", value);
+    }
+    else if (strcasecmp("PcreMatchLimitRecursion", name) == 0) {
+        rc = ib_context_set_num(ctx, "pcre.match_limit_recursion", value);
+    }
+    else {
+        ib_cfg_log_error(cp, "Unhandled directive \"%s\"", name);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static IB_DIRMAP_INIT_STRUCTURE(directive_map) = {
+    IB_DIRMAP_INIT_ONOFF(
+        "PcreStudy",
+        handle_directive_onoff,
+        NULL
+    ),
+    IB_DIRMAP_INIT_ONOFF(
+        "PcreUseJit",
+        handle_directive_onoff,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "PcreMatchLimit",
+        handle_directive_param,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "PcreMatchLimitRecursion",
+        handle_directive_param,
+        NULL
+    ),
+    IB_DIRMAP_INIT_LAST
+};
 
 static ib_status_t modpcre_init(ib_engine_t *ib,
                                 ib_module_t *m,
@@ -1327,28 +1581,6 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-static IB_CFGMAP_INIT_STRUCTURE(modpcre_config_map) = {
-    IB_CFGMAP_INIT_ENTRY(
-        MODULE_NAME_STR ".study",
-        IB_FTYPE_NUM,
-        modpcre_cfg_t,
-        study
-    ),
-    IB_CFGMAP_INIT_ENTRY(
-        MODULE_NAME_STR ".match_limit",
-        IB_FTYPE_NUM,
-        modpcre_cfg_t,
-        match_limit
-    ),
-    IB_CFGMAP_INIT_ENTRY(
-        MODULE_NAME_STR ".match_limit_recursion",
-        IB_FTYPE_NUM,
-        modpcre_cfg_t,
-        match_limit_recursion
-    ),
-    IB_CFGMAP_INIT_LAST
-};
-
 /**
  * Module structure.
  *
@@ -1358,8 +1590,8 @@ IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,            /**< Default metadata */
     MODULE_NAME_STR,                      /**< Module name */
     IB_MODULE_CONFIG(&modpcre_global_cfg),/**< Global config data */
-    modpcre_config_map,                   /**< Configuration field map */
-    NULL,                                 /**< Config directive map */
+    config_map,                           /**< Configuration field map */
+    directive_map,                        /**< Config directive map */
     modpcre_init,                         /**< Initialize function */
     NULL,                                 /**< Callback data */
     NULL,                                 /**< Finish function */
