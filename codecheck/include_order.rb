@@ -74,6 +74,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironautomata/buffer.hpp>',
   '<ironautomata/deduplicate_outputs.hpp>',
   '<ironautomata/eudoxus_compiler.hpp>',
+  '<ironautomata/generator/aho_corasick.hpp>',
   '<ironautomata/intermediate.hpp>',
   '<ironautomata/intermediate.pb.h>',
   '<ironautomata/logger.hpp>',
@@ -126,6 +127,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/uuid.h>',
 
   '<boost/any.hpp>',
+  '<boost/assign.hpp>',
   '<boost/bind.hpp>',
   '<boost/chrono.hpp>',
   '<boost/date_time/posix_time/posix_time.hpp>',
@@ -147,6 +149,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/scoped_ptr.hpp>',
   '<boost/shared_ptr.hpp>',
   '<boost/static_assert.hpp>',
+  '<boost/tuple/tuple.hpp>',
   '<boost/type_traits/is_class.hpp>',
   '<boost/type_traits/is_convertible.hpp>',
   '<boost/type_traits/is_same.hpp>',
@@ -181,6 +184,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<queue>',
   '<set>',
   '<string>',
+  '<stdexcept>',
   '<vector>',
 
   '<cassert>',
@@ -235,7 +239,7 @@ all_ironbee_code do |path|
   private_name = nil
   if path =~ /(\.c(pp)?)$/
     self_name = Regexp.new(
-      "iron(bee|automata)/" + File.basename(path, $1) + '\.h' + ($2 || "")
+      "iron(bee|automata)/(.+/)?" + File.basename(path, $1) + '\.h' + ($2 || "")
     )
     private_name = Regexp.new(
       File.basename(path, $1) + '_private\.h' + ($2 || "")
