@@ -39,6 +39,13 @@
  */
 
 /**
+ * @namespace IronAutomata::Generator
+ * Top-level IronAutomata Generators.
+ *
+ * @sa @ref ironautomata.
+ */
+
+/**
  * \page ironautomata IronAutomata --- A compact automata framework.
  *
  * IronAutomata is a framework for building and executing automata.  It
