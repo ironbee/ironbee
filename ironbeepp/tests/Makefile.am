@@ -52,6 +52,7 @@ check_PROGRAMS = \
     test_engine
     
 TESTS=$(check_PROGRAMS)
+CLEANFILES=*.xml *.log
 
 test_catch_SOURCES                = test_catch.cpp
 test_data_SOURCES                 = test_data.cpp

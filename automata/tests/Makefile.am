@@ -31,5 +31,7 @@ test_vls_SOURCES = test_vls.cpp
 
 TESTS = $(check_PROGRAMS)
 
+CLEANFILES = *.xml *.log
+
 check-local:
 	(cd $(srcdir); abs_builddir=$(abs_builddir) $(ruby) ./ts_all.rb --verbose $(test_args))

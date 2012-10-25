@@ -79,5 +79,7 @@ clipp_LDADD = \
     $(top_builddir)/engine/libironbee.la \
     $(top_builddir)/util/libibutil.la
 
+CLEANFILES=clipp.pb.cc clipp.pb.h
+
 clipp.pb.cc: $(srcdir)/clipp.proto
 	protoc --cpp_out=$(builddir) --proto_path=$(srcdir) $<
