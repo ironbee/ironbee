@@ -352,6 +352,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     }
 
     /* Set stack limits for JIT */
+#ifdef PCRE_HAVE_JIT
     if (cpdata->is_jit) {
         if (config->jit_stack_start == 0U) {
             cpdata->jit_stack_start =
@@ -368,6 +369,11 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
             cpdata->jit_stack_max = (int)config->jit_stack_max;
         }
     }
+#else
+    if (0) {
+        /* Do nothing */
+    }
+#endif
     else {
         cpdata->jit_stack_start = 0;
         cpdata->jit_stack_max = 0;
