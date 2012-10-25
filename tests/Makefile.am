@@ -8,7 +8,7 @@ noinst_LIBRARIES = libgtest.a libgtest_main.a
 libgtest_a_SOURCES = gtest/gtest-all.cc
 libgtest_main_a_SOURCES = gtest/gtest_main.cc
 
-TESTS_ENVIRONMENT = ./gtest_executor.sh
+TESTS_ENVIRONMENT = $(srcdir)/gtest_executor.sh
 
 LDADD = $(LIBUTIL_LDADD) libgtest.a
 

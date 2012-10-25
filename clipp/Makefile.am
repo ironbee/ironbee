@@ -20,7 +20,7 @@ clipp_SOURCES = \
     view.cpp \
     ironbee.cpp \
     raw_generator.cpp \
-    clipp.pb.cc \
+    $(builddir)/clipp.pb.cc \
     pb_consumer.cpp \
     htp_consumer.cpp \
     null_consumer.cpp \
@@ -81,5 +81,5 @@ clipp_LDADD = \
 
 CLEANFILES=clipp.pb.cc clipp.pb.h
 
-clipp.pb.cc: $(srcdir)/clipp.proto
+$(builddir)/clipp.pb.cc $(builddir)/clipp.pb.h: $(srcdir)/clipp.proto
 	protoc --cpp_out=$(builddir) --proto_path=$(srcdir) $<

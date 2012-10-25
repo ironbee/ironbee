@@ -15,12 +15,7 @@ AM_LDFLAGS = \
 
 include $(top_srcdir)/build/tests.mk
 
-TESTS_ENVIRONMENT = ./gtest_executor.sh
-
-$(abs_builddir)/%: $(srcdir)/%
-	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
-	cp -f $< $@; \
-    fi
+TESTS_ENVIRONMENT = $(top_srcdir)/tests/gtest_executor.sh
 
 check_PROGRAMS = \
     test_catch \
