@@ -64,8 +64,8 @@
  * defined then the machine stack will be used.  */
 #ifdef PCRE_HAVE_JIT
 #define PCRE_JIT_STACK
-#define PCRE_JIT_MIN_STACK_SZ 32*1024
-#define PCRE_JIT_MAX_STACK_SZ 512*1024
+const int PCRE_JIT_STACK_START_MULT = 32;
+const int PCRE_JIT_STACK_MAX_MULT   = 512;
 #endif
 
 /* Port forward the pcre constant PCRE_PARTIAL as PCRE_PARTIAL_SOFT. */
@@ -94,6 +94,8 @@ typedef struct modpcre_cfg_t {
     ib_num_t       use_jit;               /**< Bool: Use JIT if available */
     ib_num_t       match_limit;           /**< Match limit */
     ib_num_t       match_limit_recursion; /**< Match recursion depth limit */
+    ib_num_t       jit_stack_start;       /**< Starting JIT stack size */
+    ib_num_t       jit_stack_max;         /**< Max JIT stack size */
 } modpcre_cfg_t;
 
 /**
@@ -107,6 +109,8 @@ typedef struct pcre_cpat_data_t {
     const char          *patt;            /**< Regex pattern text */
     bool                 is_dfa;          /**< Is this a DFA? */
     bool                 is_jit;          /**< Is this JIT compiled? */
+    int                  jit_stack_start; /**< Starting JIT stack size */
+    int                  jit_stack_max;   /**< Max JIT stack size */
 } modpcre_cpat_data_t;
 
 /**
@@ -119,10 +123,12 @@ typedef struct pcre_rule_data_t {
 
 /* Instantiate a module global configuration. */
 static modpcre_cfg_t modpcre_global_cfg = {
-    1,    /* study */
-    1,    /* use_jit */
-    5000, /* match_limit */
-    5000  /* match_limit_recursion */
+    1,       /* study */
+    1,       /* use_jit */
+    5000,    /* match_limit */
+    5000,    /* match_limit_recursion */
+    0,       /* jit_stack_start; 0 means auto */
+    0        /* jit_stack_max; 0 means auto */
 };
 
 /**
@@ -336,16 +342,41 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
             (unsigned long)config->match_limit_recursion;
     }
 
+    /* Set stack limits for JIT */
+    if (cpdata->is_jit) {
+        if (config->jit_stack_start == 0U) {
+            cpdata->jit_stack_start =
+                PCRE_JIT_STACK_START_MULT * config->match_limit_recursion;
+        }
+        else {
+            cpdata->jit_stack_start = (int)config->jit_stack_start;
+        }
+        if (config->jit_stack_max == 0U) {
+            cpdata->jit_stack_max =
+                PCRE_JIT_STACK_MAX_MULT * config->match_limit_recursion;
+        }
+        else {
+            cpdata->jit_stack_max = (int)config->jit_stack_max;
+        }
+    }
+    else {
+        cpdata->jit_stack_start = 0;
+        cpdata->jit_stack_max = 0;
+    }
+
     ib_log_trace(ib,
                  "Compiled pcre pattern for \"%s\": "
-                 "cpatt=%p edata=%p limit=%ld rlimit=%ld study=%p jit=%s",
+                 "cpatt=%p edata=%p limit=%ld rlimit=%ld study=%p "
+                 "jit=%s jit-stack: start=%d max=%d",
                  patt,
                  (void *)cpdata->cpatt,
                  (void *)cpdata->edata,
                  cpdata->edata->match_limit,
                  cpdata->edata->match_limit_recursion,
                  cpdata->edata->study_data,
-                 cpdata->is_jit ? "yes" : "no");
+                 cpdata->is_jit ? "yes" : "no",
+                 cpdata->jit_stack_start,
+                 cpdata->jit_stack_max);
     *pcpdata = cpdata;
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -798,8 +829,8 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
 
 #ifdef PCRE_JIT_STACK
     if (rule_data->cpdata->is_jit) {
-        jit_stack = pcre_jit_stack_alloc(PCRE_JIT_MIN_STACK_SZ,
-                                         PCRE_JIT_MAX_STACK_SZ);
+        jit_stack = pcre_jit_stack_alloc(rule_data->cpdata->jit_stack_start,
+                                         rule_data->cpdata->jit_stack_max);
         if (jit_stack == NULL) {
             ib_rule_log_debug(rule_exec,
                               "Failed to allocate a jit stack for a "
@@ -1365,6 +1396,18 @@ static IB_CFGMAP_INIT_STRUCTURE(config_map) = {
         modpcre_cfg_t,
         match_limit_recursion
     ),
+    IB_CFGMAP_INIT_ENTRY(
+        MODULE_NAME_STR ".jit_stack_start",
+        IB_FTYPE_NUM,
+        modpcre_cfg_t,
+        jit_stack_start
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        MODULE_NAME_STR ".jit_stack_max",
+        IB_FTYPE_NUM,
+        modpcre_cfg_t,
+        jit_stack_max
+    ),
     IB_CFGMAP_INIT_LAST
 };
 
@@ -1489,6 +1532,12 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     else if (strcasecmp("PcreMatchLimitRecursion", name) == 0) {
         rc = ib_context_set_num(ctx, "pcre.match_limit_recursion", value);
     }
+    else if (strcasecmp("PcreJitStackStart", name) == 0) {
+        rc = ib_context_set_num(ctx, "pcre.jit_stack_start", value);
+    }
+    else if (strcasecmp("PcreJitStackMax", name) == 0) {
+        rc = ib_context_set_num(ctx, "pcre.jit_stack_max", value);
+    }
     else {
         ib_cfg_log_error(cp, "Unhandled directive \"%s\"", name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1514,6 +1563,16 @@ static IB_DIRMAP_INIT_STRUCTURE(directive_map) = {
     ),
     IB_DIRMAP_INIT_PARAM1(
         "PcreMatchLimitRecursion",
+        handle_directive_param,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "PcreJitStackStart",
+        handle_directive_param,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "PcreJitStackMax",
         handle_directive_param,
         NULL
     ),
