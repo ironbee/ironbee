@@ -1446,7 +1446,6 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         ib_field_t         *value = NULL;      /* Value from the DPI */
         const ib_field_t   *tfnvalue = NULL;   /* Value after tfns */
         ib_status_t         getrc;             /* Status from ib_data_get() */
-        ib_num_t            target_result = 0; /* Result of this target */
         bool                pushed = true;
 
 
@@ -1525,7 +1524,6 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
             /* Run operations on each list element. */
             IB_LIST_LOOP(value_list, value_node) {
-                ib_num_t result = 0;
                 ib_field_t *node_value = (ib_field_t *)value_node->data;
                 bool lpushed;
 
@@ -1540,13 +1538,8 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
                                       ib_status_to_string(rc));
                     IB_FTRACE_RET_STATUS(rc);
                 }
-                ib_rule_log_trace(rule_exec,
-                                  "Operator result => %" PRId64, result);
-
-                /* Store the result */
-                if (rule_exec->result != 0) {
-                    target_result = result;
-                }
+                ib_rule_log_trace(rule_exec, "Operator result => %" PRId64,
+                                  rule_exec->result);
                 rule_exec_pop_value(rule_exec, lpushed);
             }
         }
@@ -1565,12 +1558,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
 
             /* Log it */
             ib_rule_log_trace(rule_exec, "Operator result => %" PRId64,
-                              target_result);
-        }
-
-        /* Store the result */
-        if (target_result != 0) {
-            rule_exec->result = target_result;
+                              rule_exec->result);
         }
 
         /* Pop this element off the value stack */
@@ -1583,7 +1571,6 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         rule_exec->result = (rule_exec->result == 0);
     }
 
-    ib_rule_log_trace(rule_exec, "Rule operator => %"PRId64, rule_exec->result);
     ib_rule_log_execution(rule_exec);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -1970,7 +1957,7 @@ static ib_status_t execute_stream_operator(ib_rule_exec_t *rule_exec,
     op_rc = ib_operator_execute(rule_exec, rule->opinst, value, &result);
     if (op_rc != IB_OK) {
         ib_rule_log_error(rule_exec, "Operator returned an error: %s",
-                          ib_status_to_string(rc));
+                          ib_status_to_string(op_rc));
         IB_FTRACE_RET_STATUS(op_rc);
     }
     rc = ib_rule_log_exec_op(rule_exec->exec_log, rule->opinst, rc);
