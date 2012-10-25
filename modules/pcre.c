@@ -76,7 +76,7 @@ const int PCRE_JIT_STACK_MAX_MULT   = 512;
 /**
  * From pcreapi man page.
  */
-#define WORKSPACE_SIZE_MIN 20
+#define WORKSPACE_SIZE_MIN     (20)
 
 /**
  * Build a reasonable buffer size.
@@ -96,12 +96,13 @@ typedef struct modpcre_cfg_t {
     ib_num_t       match_limit_recursion; /**< Match recursion depth limit */
     ib_num_t       jit_stack_start;       /**< Starting JIT stack size */
     ib_num_t       jit_stack_max;         /**< Max JIT stack size */
+    ib_num_t       dfa_workspace_size;    /**< Size of DFA workspace */ 
 } modpcre_cfg_t;
 
 /**
  * Internal representation of PCRE compiled patterns.
  */
-typedef struct pcre_cpat_data_t {
+typedef struct modpcre_cpat_data_t {
     pcre                *cpatt;           /**< Compiled pattern */
     size_t               cpatt_sz;        /**< Size of cpatt. */
     pcre_extra          *edata;           /**< PCRE Study data */
@@ -111,24 +112,26 @@ typedef struct pcre_cpat_data_t {
     bool                 is_jit;          /**< Is this JIT compiled? */
     int                  jit_stack_start; /**< Starting JIT stack size */
     int                  jit_stack_max;   /**< Max JIT stack size */
+    int                  dfa_ws_size;     /**< Size of DFA workspace */ 
 } modpcre_cpat_data_t;
 
 /**
  * PCRE and DFA rule data types are an alias for the compiled pattern structure.
  */
-typedef struct pcre_rule_data_t {
+typedef struct modpcre_rule_data_t {
     modpcre_cpat_data_t *cpdata;          /**< Compiled pattern data */
     const char          *id;              /**< ID for DFA rules */
 } modpcre_rule_data_t;
 
 /* Instantiate a module global configuration. */
 static modpcre_cfg_t modpcre_global_cfg = {
-    1,       /* study */
-    1,       /* use_jit */
-    5000,    /* match_limit */
-    5000,    /* match_limit_recursion */
-    0,       /* jit_stack_start; 0 means auto */
-    0        /* jit_stack_max; 0 means auto */
+    1,                      /* study */
+    1,                      /* use_jit */
+    5000,                   /* match_limit */
+    5000,                   /* match_limit_recursion */
+    0,                      /* jit_stack_start; 0 means auto */
+    0,                      /* jit_stack_max; 0 means auto */
+    WORKSPACE_SIZE_DEFAULT  /* dfa_workspace_size */
 };
 
 /**
@@ -263,7 +266,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
      * back to the output variable cpdata.
      */
 
-    cpdata = (modpcre_cpat_data_t *)ib_mpool_alloc(pool, sizeof(*cpdata));
+    cpdata = (modpcre_cpat_data_t *)ib_mpool_calloc(pool, sizeof(*cpdata), 1);
     if (cpdata == NULL) {
         pcre_free(cpatt);
         pcre_free(edata);
@@ -324,7 +327,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         pcre_free(edata);
     }
     else {
-        cpdata->edata = ib_mpool_calloc(pool, sizeof(*edata), 1);
+        cpdata->edata = ib_mpool_alloc(pool, sizeof(*edata));
         if (cpdata->edata == NULL) {
             pcre_free(edata);
             ib_log_error(ib, "Failed to allocate edata.");
@@ -340,6 +343,12 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
             (unsigned long)config->match_limit;
         cpdata->edata->match_limit_recursion =
             (unsigned long)config->match_limit_recursion;
+        cpdata->dfa_ws_size = 0;
+    }
+    else {
+        cpdata->edata->match_limit = 0U;
+        cpdata->edata->match_limit_recursion = 0U;
+        cpdata->dfa_ws_size = (int)config->dfa_workspace_size;
     }
 
     /* Set stack limits for JIT */
@@ -367,6 +376,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     ib_log_trace(ib,
                  "Compiled pcre pattern for \"%s\": "
                  "cpatt=%p edata=%p limit=%ld rlimit=%ld study=%p "
+                 "dfa=%s dfa-ws-sz=%d "
                  "jit=%s jit-stack: start=%d max=%d",
                  patt,
                  (void *)cpdata->cpatt,
@@ -374,6 +384,8 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
                  cpdata->edata->match_limit,
                  cpdata->edata->match_limit_recursion,
                  cpdata->edata->study_data,
+                 cpdata->is_dfa ? "yes" : "no",
+                 cpdata->dfa_ws_size,
                  cpdata->is_jit ? "yes" : "no",
                  cpdata->jit_stack_start,
                  cpdata->jit_stack_max);
@@ -1100,6 +1112,7 @@ typedef struct dfa_workspace_t dfa_workspace_t;
  * Create the per-transaction data for use with the dfa operator.
  *
  * @param[in,out] tx Transaction to store the value in.
+ * @param[in] cpatt_data Coompiled pattern data
  * @param[in] id The operator identifier used to get it's workspace.
  * @param[out] workspace Created.
  *
@@ -1108,6 +1121,7 @@ typedef struct dfa_workspace_t dfa_workspace_t;
  *   - IB_EALLOC on an allocation error.
  */
 static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
+                                     const modpcre_cpat_data_t *cpatt_data,
                                      const char *id,
                                      dfa_workspace_t **workspace)
 {
@@ -1134,7 +1148,7 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    ws->wscount = WORKSPACE_SIZE_DEFAULT;
+    ws->wscount = cpatt_data->dfa_ws_size;
     size = sizeof(*(ws->workspace)) * (ws->wscount);
     ws->workspace = (int *)ib_mpool_alloc(tx->mp, size);
     if (ws->workspace == NULL) {
@@ -1277,7 +1291,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
     if (ib_rc == IB_ENOENT) {
         options = PCRE_PARTIAL_SOFT;
 
-        ib_rc = alloc_dfa_tx_data(tx, id, &dfa_workspace);
+        ib_rc = alloc_dfa_tx_data(tx, rule_data->cpdata, id, &dfa_workspace);
         if (ib_rc != IB_OK) {
             free(ovector);
             ib_rule_log_error(rule_exec,
@@ -1407,6 +1421,12 @@ static IB_CFGMAP_INIT_STRUCTURE(config_map) = {
         IB_FTYPE_NUM,
         modpcre_cfg_t,
         jit_stack_max
+    ),
+    IB_CFGMAP_INIT_ENTRY(
+        MODULE_NAME_STR ".dfa_workspace_size",
+        IB_FTYPE_NUM,
+        modpcre_cfg_t,
+        dfa_workspace_size
     ),
     IB_CFGMAP_INIT_LAST
 };
@@ -1538,6 +1558,9 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     else if (strcasecmp("PcreJitStackMax", name) == 0) {
         rc = ib_context_set_num(ctx, "pcre.jit_stack_max", value);
     }
+    else if (strcasecmp("PcreDfaWorkspaceSize", name) == 0) {
+        rc = ib_context_set_num(ctx, "pcre.dfa_workspace_size", value);
+    }
     else {
         ib_cfg_log_error(cp, "Unhandled directive \"%s\"", name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1573,6 +1596,11 @@ static IB_DIRMAP_INIT_STRUCTURE(directive_map) = {
     ),
     IB_DIRMAP_INIT_PARAM1(
         "PcreJitStackMax",
+        handle_directive_param,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "PcreDfaWorkspaceSize",
         handle_directive_param,
         NULL
     ),
