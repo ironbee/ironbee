@@ -37,10 +37,18 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <assert.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
+
+/* POSIX doesn't define O_BINARY */
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 
 typedef struct {
     core_audit_cfg_t *cfg;
@@ -69,6 +77,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     int audit_filename_sz;
     char *temp_filename;
     int temp_filename_sz;
+    int fd;
     const time_t log_seconds = IB_CLOCK_SECS(log->tx->t.logtime);
     int sys_rc;
     ib_status_t ib_rc;
@@ -167,13 +176,20 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    /// @todo Use corecfg->auditlog_fmode as file mode for new file
-    cfg->fp = fopen(temp_filename, "ab");
-    if (cfg->fp == NULL) {
+    /* Open the file.  Use open() & fdopen() to avoid chmod() */
+    fd = open(temp_filename,
+              (O_WRONLY|O_APPEND|O_CREAT|O_BINARY),
+              corecfg->auditlog_fmode);
+    if (fd >= 0) {
+        cfg->fp = fdopen(fd, "ab");
+        if (cfg->fp == NULL) {
+            close(fd);
+        }
+    }
+    if ( (fd < 0) || (cfg->fp == NULL) ) {
         sys_rc = errno;
-        /// @todo Better error.
         ib_log_error(log->ib,
-                     "Could not open audit log \"%s\": %s (%d)",
+                     "Failed to open audit log \"%s\": %s (%d)",
                      temp_filename, strerror(sys_rc), sys_rc);
         free(dtmp);
         free(dn);

@@ -3631,14 +3631,14 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogFileMode", name) == 0) {
-        long lmode = strtol(p1_unescaped, NULL, 0);
-
-        if ((lmode > 0777) || (lmode <= 0)) {
+        ib_num_t mode;
+        rc = ib_string_to_num(p1_unescaped, 0, &mode);
+        if ( (rc != IB_OK) || (mode > 0777) || (mode <= 0) ) {
             ib_log_error(ib, "Invalid mode: %s \"%s\"", name, p1_unescaped);
             IB_FTRACE_RET_STATUS(IB_EINVAL);
         }
         ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
-        rc = ib_context_set_num(ctx, "auditlog_fmode", lmode);
+        rc = ib_context_set_num(ctx, "auditlog_fmode", mode);
         IB_FTRACE_RET_STATUS(rc);
     }
     else if (strcasecmp("AuditLogBaseDir", name) == 0) {
