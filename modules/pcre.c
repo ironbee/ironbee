@@ -206,6 +206,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     }
 
     if (config->study) {
+#ifdef PCRE_HAVE_JIT
         if (use_jit) {
             edata = pcre_study(cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
             if (*errptr != NULL)  {
@@ -214,6 +215,11 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
                 ib_log_warning(ib, "PCRE-JIT study failed: %s", *errptr);
             }
         }
+#else
+        if (0) {
+            /* Do nothing */
+        }
+#endif
         else {
             edata = pcre_study(cpatt, 0, errptr);
             if (*errptr != NULL)  {
