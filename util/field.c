@@ -253,6 +253,8 @@ void ib_field_util_log_debug(
     assert(prefix != NULL);
     assert(f != NULL);
 
+    ib_status_t rc;
+
     if (ib_util_get_log_level() < IB_LOG_DEBUG) {
         IB_FTRACE_RET_VOID();
     }
@@ -288,66 +290,65 @@ void ib_field_util_log_debug(
         case IB_FTYPE_GENERIC:
         {
             void *v;
-            ib_field_value(f, ib_ftype_generic_out(&v));
-            ib_util_log_debug(
-                "%s value=%p",
-                prefix, v
-            );
+            rc = ib_field_value(f, ib_ftype_generic_out(&v));
+            if (rc == IB_OK) {
+                ib_util_log_debug("%s value=%p", prefix, v);
+            }
             break;
         }
         case IB_FTYPE_NUM:
         {
             ib_num_t v;
-            ib_field_value(f, ib_ftype_num_out(&v));
-            ib_util_log_debug("%s value=%"PRId64, prefix, v);
+            rc = ib_field_value(f, ib_ftype_num_out(&v));
+            if (rc == IB_OK) {
+                ib_util_log_debug("%s value=%"PRId64, prefix, v);
+            }
             break;
         }
         case IB_FTYPE_UNUM:
         {
             ib_unum_t v;
-            ib_field_value(f, ib_ftype_unum_out(&v));
-            ib_util_log_debug("%s value=%"PRIu64, prefix, v);
+            rc = ib_field_value(f, ib_ftype_unum_out(&v));
+            if (rc == IB_OK) {
+                ib_util_log_debug("%s value=%"PRIu64, prefix, v);
+            }
             break;
         }
         case IB_FTYPE_NULSTR:
         {
             const char *v;
-            ib_field_value(f, ib_ftype_nulstr_out(&v));
-            ib_util_log_debug(
-                "%s value=%s",
-                prefix, v
-            );
+            rc = ib_field_value(f, ib_ftype_nulstr_out(&v));
+            if (rc == IB_OK) {
+                ib_util_log_debug("%s value=%s", prefix, v);
+            }
             break;
         }
         case IB_FTYPE_BYTESTR:
         {
             const ib_bytestr_t *v;
-            ib_field_value(f, ib_ftype_bytestr_out(&v));
-            ib_util_log_debug(
-                "%s value=%" IB_BYTESTR_FMT,
-                prefix,
-                IB_BYTESTR_FMT_PARAM(v)
-            );
+            rc = ib_field_value(f, ib_ftype_bytestr_out(&v));
+            if (rc == IB_OK) {
+                ib_util_log_debug("%s value=%" IB_BYTESTR_FMT,
+                                  prefix, IB_BYTESTR_FMT_PARAM(v));
+            }
             break;
         }
         case IB_FTYPE_LIST:
         {
             const ib_list_t* v;
-            ib_field_value(f, ib_ftype_list_out(&v));
-            ib_util_log_debug(
-                "%s &value=%p",
-                prefix, v
-            );
+            rc = ib_field_value(f, ib_ftype_list_out(&v));
+            if (rc == IB_OK) {
+                ib_util_log_debug("%s &value=%p", prefix, v);
+            }
             break;
         }
         case IB_FTYPE_SBUFFER:
         {
             const ib_stream_t* v;
-            ib_field_value(f, ib_ftype_sbuffer_out(&v));
-            ib_util_log_debug(
-                "%s &value=%p",
-                prefix, v
-            );
+            rc = ib_field_value(f, ib_ftype_sbuffer_out(&v));
+            if (rc == IB_OK) {
+                ib_util_log_debug("%s &value=%p", prefix, v);
+            }
             break;
         }
         default:
@@ -499,6 +500,9 @@ ib_status_t ib_field_create_dynamic(
     ib_status_t rc;
 
     rc = ib_field_create_alias(pf, mp, name, nlen, type, NULL);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     (*pf)->val->fn_get     = fn_get;
     (*pf)->val->fn_set     = fn_set;
@@ -506,7 +510,7 @@ ib_status_t ib_field_create_dynamic(
     (*pf)->val->cbdata_set = cbdata_set;
 
     ib_field_util_log_debug("FIELD_CREATE_DYNAMIC", (*pf));
-    IB_FTRACE_RET_STATUS(rc);
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t ib_field_alias(
