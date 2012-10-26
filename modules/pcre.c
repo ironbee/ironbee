@@ -96,7 +96,7 @@ typedef struct modpcre_cfg_t {
     ib_num_t       match_limit_recursion; /**< Match recursion depth limit */
     ib_num_t       jit_stack_start;       /**< Starting JIT stack size */
     ib_num_t       jit_stack_max;         /**< Max JIT stack size */
-    ib_num_t       dfa_workspace_size;    /**< Size of DFA workspace */ 
+    ib_num_t       dfa_workspace_size;    /**< Size of DFA workspace */
 } modpcre_cfg_t;
 
 /**
@@ -112,7 +112,7 @@ typedef struct modpcre_cpat_data_t {
     bool                 is_jit;          /**< Is this JIT compiled? */
     int                  jit_stack_start; /**< Starting JIT stack size */
     int                  jit_stack_max;   /**< Max JIT stack size */
-    int                  dfa_ws_size;     /**< Size of DFA workspace */ 
+    int                  dfa_ws_size;     /**< Size of DFA workspace */
 } modpcre_cpat_data_t;
 
 /**
@@ -1113,7 +1113,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
 
     rc = ib_hash_set(tx->data, HASH_NAME_STR, *hash);
     if (rc != IB_OK) {
-        ib_log_debug2_tx(tx, "Failed to store hash \""HASH_NAME_STR"\": %s", 
+        ib_log_debug2_tx(tx, "Failed to store hash \""HASH_NAME_STR"\": %s",
                          ib_status_to_string(rc));
         *hash = NULL;
     }
