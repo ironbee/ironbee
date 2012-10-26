@@ -51,7 +51,10 @@ ironautomata_generator_include_HEADERS = \
     $(srcdir)/include/ironautomata/generator/aho_corasick.hpp
 
 nodist_libironautomata_la_SOURCES = intermediate.pb.cc
-BUILT_SOURCES = intermediate.pb.cc
+
+BUILT_SOURCES = intermediate.pb.cc \
+    $(builddir)/include/ironautomata/intermediate.pb.h
+EXTRA_DIST = intermediate.proto
 
 LDADD = libironautomata.la libiaeudoxus.la
 AM_CPPFLAGS += \

@@ -39,7 +39,48 @@ clipp_SOURCES = \
     header_modifiers.cpp \
     fill_body_modifier.cpp \
     split_modifier.cpp \
-    time_modifier.cpp
+    time_modifier.cpp \
+    aggregate_modifier.hpp \
+    apache_generator.hpp \
+    configuration_parser.hpp \
+    connection_modifiers.hpp \
+    control.hpp \
+    echo_generator.hpp \
+    edit_modifier.hpp \
+    fill_body_modifier.hpp \
+    header_modifiers.hpp \
+    htp_consumer.hpp \
+    htp_generator.hpp \
+    input.hpp \
+    ironbee.hpp \
+    limit_modifier.hpp \
+    modsec_audit_log_generator.hpp \
+    modsec_audit_log.hpp \
+    null_consumer.hpp \
+    parse_modifier.hpp \
+    pb_consumer.hpp \
+    pb_generator.hpp \
+    pcap_generator.hpp \
+    random_support.hpp \
+    raw_generator.hpp \
+    select_modifier.hpp \
+    split_modifier.hpp \
+    suricata_generator.hpp \
+    time_modifier.hpp \
+    unparse_modifier.hpp \
+    view.hpp
+
+BUILT_SOURCES=clipp.pb.cc clipp.pb.h
+
+EXTRA_DIST=clipp.proto \
+    clipp_test.rb \
+    clipp_test.rb \
+    hash_to_pb.rb \
+    json_to_pb.rb \
+    pb_to_json.rb \
+    clipp.pb.rb \
+    tests
+
 
 if HAVE_NIDS
 clipp_SOURCES += pcap_generator.cpp
