@@ -206,20 +206,16 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     }
 
     if (config->study) {
-#ifdef PCRE_HAVE_JIT
         if (use_jit) {
+#ifdef PCRE_HAVE_JIT
             edata = pcre_study(cpatt, PCRE_STUDY_JIT_COMPILE, errptr);
             if (*errptr != NULL)  {
                 pcre_free(cpatt);
                 use_jit = false;
                 ib_log_warning(ib, "PCRE-JIT study failed: %s", *errptr);
             }
-        }
-#else
-        if (false) {
-            /* Do nothing */
-        }
 #endif
+        }
         else {
             edata = pcre_study(cpatt, 0, errptr);
             if (*errptr != NULL)  {
@@ -358,8 +354,8 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     }
 
     /* Set stack limits for JIT */
-#ifdef PCRE_HAVE_JIT
     if (cpdata->is_jit) {
+#ifdef PCRE_HAVE_JIT
         if (config->jit_stack_start == 0U) {
             cpdata->jit_stack_start =
                 PCRE_JIT_STACK_START_MULT * config->match_limit_recursion;
@@ -374,12 +370,8 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         else {
             cpdata->jit_stack_max = (int)config->jit_stack_max;
         }
-    }
-#else
-    if (false) {
-        /* Do nothing */
-    }
 #endif
+    }
     else {
         cpdata->jit_stack_start = 0;
         cpdata->jit_stack_max = 0;
@@ -507,12 +499,12 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
     assert(data != NULL);
 
     modpcre_cpat_data_t *cpdata = (modpcre_cpat_data_t *)cpatt;
+    assert(cpdata->is_dfa == false);
+
     int ec;
     const int ovector_sz = 30;
     int *ovector;
 
-    assert(cpdata != NULL);
-    assert(cpdata->is_dfa == false);
 
     ovector = (int *)malloc(ovector_sz*sizeof(*ovector));
     if (ovector == NULL) {
@@ -801,7 +793,7 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
     size_t subject_len = 0;
     const ib_bytestr_t *bytestr;
     modpcre_rule_data_t *rule_data = (modpcre_rule_data_t *)data;
-    pcre_extra *edata = NULL;
+    pcre_extra *edata;
 #ifdef PCRE_JIT_STACK
     pcre_jit_stack *jit_stack = NULL;
 #endif
@@ -860,8 +852,8 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
         }
     }
 
-#ifdef PCRE_JIT_STACK
     if (rule_data->cpdata->is_jit) {
+#ifdef PCRE_JIT_STACK
         jit_stack = pcre_jit_stack_alloc(rule_data->cpdata->jit_stack_start,
                                          rule_data->cpdata->jit_stack_max);
         if (jit_stack == NULL) {
@@ -877,14 +869,15 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
         if (edata != NULL) {
             pcre_assign_jit_stack(edata, NULL, jit_stack);
         }
-    }
 #else
-    if (false) {
-        /* Do nothing */
-    }
+        edata = NULL;
 #endif
+    }
     else if (rule_data->cpdata->study_data_sz > 0) {
         edata = rule_data->cpdata->edata;
+    }
+    else {
+        edata = NULL;
     }
 
     matches = pcre_exec(rule_data->cpdata->cpatt,
