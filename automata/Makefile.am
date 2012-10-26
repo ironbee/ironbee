@@ -78,6 +78,13 @@ CLEANFILES = \
 $(srcdir)/include/ironautomata/intermediate.hpp: $(builddir)/include/ironautomata/intermediate.pb.h
 $(srcdir)/eudoxus_compiler.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
 $(srcdir)/intermediate.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
+$(srcdir)/deduplicate_outputs.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
+$(srcdir)/ac_generator.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
+$(srcdir)/optimize.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
+$(srcdir)/trie_generator.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
+$(srcdir)/intermediate_to_dot.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
+$(srcdir)/optimize_edges.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
+$(srcdir)/translate_nonadvancing.cpp: $(builddir)/include/ironautomata/intermediate.pb.h
 
 $(builddir)/include/ironautomata/intermediate.pb.h: intermediate.pb.h
 	mkdir -p $(builddir)/include/ironautomata
