@@ -609,19 +609,19 @@ ib_status_t ib_ipset4_init(
              ib_ipset4_canonical(set->positive[i].network);
     }
 
-    qsort(
-        set->negative,
-        set->num_negative,
-        sizeof(ib_ipset4_entry_t),
-        &ib_ipset4_compare_strict
-    );
+    if (set->negative != NULL) {
+        qsort(set->negative,
+              set->num_negative,
+              sizeof(ib_ipset4_entry_t),
+              &ib_ipset4_compare_strict);
+    }
 
-    qsort(
-        set->positive,
-        set->num_positive,
-        sizeof(ib_ipset4_entry_t),
-        &ib_ipset4_compare_strict
-    );
+    if (set->positive != NULL) {
+        qsort(set->positive,
+              set->num_positive,
+              sizeof(ib_ipset4_entry_t),
+              &ib_ipset4_compare_strict);
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -657,19 +657,20 @@ ib_status_t ib_ipset6_init(
         set->positive[i].network.ip =
              ib_ipset6_canonical(set->positive[i].network);
     }
-    qsort(
-        set->negative,
-        set->num_negative,
-        sizeof(ib_ipset6_entry_t),
-        &ib_ipset6_compare_strict
-    );
 
-    qsort(
-        set->positive,
-        set->num_positive,
-        sizeof(ib_ipset6_entry_t),
-        &ib_ipset6_compare_strict
-    );
+    if (set->negative != NULL) {
+        qsort(set->negative,
+              set->num_negative,
+              sizeof(ib_ipset6_entry_t),
+              &ib_ipset6_compare_strict);
+    }
+
+    if (set->positive != NULL) {
+        qsort(set->positive,
+              set->num_positive,
+              sizeof(ib_ipset6_entry_t),
+              &ib_ipset6_compare_strict);
+    }
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
