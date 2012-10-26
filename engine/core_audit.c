@@ -37,13 +37,13 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/util.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 /* POSIX doesn't define O_BINARY */
 #ifndef O_BINARY
