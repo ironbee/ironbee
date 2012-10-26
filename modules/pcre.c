@@ -1135,7 +1135,7 @@ typedef struct dfa_workspace_t dfa_workspace_t;
  * Create the per-transaction data for use with the dfa operator.
  *
  * @param[in,out] tx Transaction to store the value in.
- * @param[in] cpatt_data Coompiled pattern data
+ * @param[in] cpatt_data Compiled pattern data
  * @param[in] id The operator identifier used to get it's workspace.
  * @param[out] workspace Created.
  *
