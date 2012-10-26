@@ -216,7 +216,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
             }
         }
 #else
-        if (0) {
+        if (false) {
             /* Do nothing */
         }
 #endif
@@ -254,7 +254,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         }
     }
     if (want_jit && !use_jit) {
-        ib_log_info(ib, "Failling back to normal PCRE");
+        ib_log_info(ib, "Falling back to normal PCRE");
     }
 #endif /*PCRE_HAVE_JIT*/
 
@@ -376,7 +376,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         }
     }
 #else
-    if (0) {
+    if (false) {
         /* Do nothing */
     }
 #endif
@@ -386,7 +386,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     }
 
     ib_log_trace(ib,
-                 "Compiled pcre pattern for \"%s\": "
+                 "Compiled pcre pattern \"%s\": "
                  "cpatt=%p edata=%p limit=%ld rlimit=%ld study=%p "
                  "dfa=%s dfa-ws-sz=%d "
                  "jit=%s jit-stack: start=%d max=%d",
@@ -429,6 +429,10 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
                                    int *erroffset)
 {
     IB_FTRACE_INIT();
+    assert(mpr != NULL);
+    assert(pool != NULL);
+    assert(pcpatt != NULL);
+    assert(patt != NULL);
 
     ib_status_t rc;
     ib_context_t *ctx;
@@ -535,6 +539,8 @@ static ib_status_t modpcre_add_pattern(ib_provider_inst_t *pi,
                                        void *cpatt)
 {
     IB_FTRACE_INIT();
+    assert(pi != NULL);
+    assert(cpatt != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -547,6 +553,7 @@ static ib_status_t modpcre_add_pattern_ex(ib_provider_inst_t *mpi,
                                           int *erroffset)
 {
     IB_FTRACE_INIT();
+    assert(mpi != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -556,6 +563,7 @@ static ib_status_t modpcre_match(ib_provider_inst_t *mpi,
                                  size_t dlen, void *ctx)
 {
     IB_FTRACE_INIT();
+    assert(mpi != NULL);
     IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
 }
 
@@ -667,6 +675,7 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
 static ib_status_t pcre_operator_destroy(ib_operator_inst_t *op_inst)
 {
     IB_FTRACE_INIT();
+    assert(op_inst != NULL);
     /* Nop */
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -937,7 +946,6 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
  * @param[in] op_inst Operator instance
  * @param[in] mp Memory pool to use for allocations
  * @param[in,out] dfa DFA rule object to store ID into
-
  *
  * @returns Status code
  */
@@ -947,6 +955,10 @@ static ib_status_t dfa_id_set(const ib_rule_t *rule,
                               modpcre_rule_data_t *rule_data)
 {
     IB_FTRACE_INIT();
+    assert(rule != NULL);
+    assert(op_inst != NULL);
+    assert(mp != NULL);
+    assert(rule_data != NULL);
     const char *rule_id;
 
     rule_id = ib_rule_id(rule);
@@ -1076,7 +1088,6 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
                                                 ib_hash_t **hash)
 {
     IB_FTRACE_INIT();
-
     assert(tx);
     assert(tx->mp);
 
@@ -1389,6 +1400,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
 static ib_status_t dfa_operator_destroy(ib_operator_inst_t *op_inst)
 {
     IB_FTRACE_INIT();
+    assert(op_inst != NULL);
 
     /* Nop - Memory released by mpool. */
 
@@ -1531,6 +1543,7 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     ib_module_t *module = NULL;
     modpcre_cfg_t *config = NULL;
     ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
+    const char *pname;
     ib_num_t value;
 
     /* Get my module object */
@@ -1559,23 +1572,28 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     }
 
     if (strcasecmp("PcreMatchLimit", name) == 0) {
-        rc = ib_context_set_num(ctx, "pcre.match_limit", value);
+        pname = "pcre.match_limit";
     }
     else if (strcasecmp("PcreMatchLimitRecursion", name) == 0) {
-        rc = ib_context_set_num(ctx, "pcre.match_limit_recursion", value);
+        pname = "pcre.match_limit_recursion";
     }
     else if (strcasecmp("PcreJitStackStart", name) == 0) {
-        rc = ib_context_set_num(ctx, "pcre.jit_stack_start", value);
+        pname = "pcre.jit_stack_start";
     }
     else if (strcasecmp("PcreJitStackMax", name) == 0) {
-        rc = ib_context_set_num(ctx, "pcre.jit_stack_max", value);
+        pname = "pcre.jit_stack_max";
     }
     else if (strcasecmp("PcreDfaWorkspaceSize", name) == 0) {
-        rc = ib_context_set_num(ctx, "pcre.dfa_workspace_size", value);
+        pname = "pcre.dfa_workspace_size";
     }
     else {
         ib_cfg_log_error(cp, "Unhandled directive \"%s\"", name);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    rc = ib_context_set_num(ctx, pname, value);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to set \"%s\" to %ld for \"%s\": %s",
+                         pname, (long int)value, name, ib_status_to_string(rc));
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -1624,6 +1642,8 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
                                 void        *cbdata)
 {
     IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(m != NULL);
     ib_status_t rc;
 
     /* Register as a matcher provider. */
