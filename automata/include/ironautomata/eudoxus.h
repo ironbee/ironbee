@@ -112,7 +112,7 @@ typedef struct ia_eudoxus_t ia_eudoxus_t;
  */
 ia_eudoxus_result_t ia_eudoxus_create(
     ia_eudoxus_t **out_eudoxus,
-    const char    *data
+    char          *data
 );
 
 /**

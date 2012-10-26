@@ -171,7 +171,7 @@ enum ia_eudoxus_extended_command_t
 
 ia_eudoxus_result_t ia_eudoxus_create(
     ia_eudoxus_t **out_eudoxus,
-    const char    *data
+    char          *data
 )
 {
     ia_eudoxus_t        *eudoxus = NULL;
@@ -232,6 +232,7 @@ ia_eudoxus_result_t ia_eudoxus_create_from_file(
 
     did_read = fread(buffer, file_size, 1, fp);
     if (did_read != 1) {
+        free(buffer);
         return IA_EUDOXUS_EINVAL;
     }
 
