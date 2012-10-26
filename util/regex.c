@@ -26,10 +26,12 @@
 
 #include <ironbee/regex.h>
 
+#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 #include <ironbee/types.h>
 
 #include <ctype.h>
+#include <assert.h>
 
 /* Compiling with DOXYGEN will leave ib_rx_nmatch unimplemented */
 #ifdef DOXYGEN
@@ -82,6 +84,10 @@
 
 ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
 {
+    IB_FTRACE_INIT();
+    assert(pool != NULL);
+    assert(pattern != NULL);
+
     /* perl style patterns
      * add support for more as and when wanted
      * substitute: s/rx/subs/
@@ -121,10 +127,10 @@ ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
         if (regcomp(&ret->rx, pattern, 0) == 0) {
             ib_mpool_cleanup_register(pool, (ib_mpool_cleanup_fn_t)regfree,
                                       &ret->rx);
-            return ret;
+            IB_FTRACE_RET_PTR(ib_rx_t, ret);
         }
         else {
-            return NULL;
+            IB_FTRACE_RET_PTR(ib_rx_t, NULL);
         }
     }
 
@@ -139,7 +145,7 @@ ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
         str = endp+1;
         if (!*str || (endp = strchr(str, delim), !endp)) {
             /* missing replacement string is an error */
-            return NULL;
+            IB_FTRACE_RET_PTR(ib_rx_t, NULL);
         }
         ret->subs = ib_mpool_memdup_to_str(pool, str, (endp-str));
     }
@@ -163,7 +169,7 @@ ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
                                   &ret->rx);
     }
     else {
-        return NULL;
+        IB_FTRACE_RET_PTR(ib_rx_t, NULL);
     }
     if (!(ret->flags & IB_REG_NOMEM)) {
         /* count size of memory required, starting at 1 for the whole-match
@@ -185,7 +191,7 @@ ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
             }
         }
     }
-    return ret;
+    IB_FTRACE_RET_PTR(ib_rx_t, ret);
 }
 
 /* This function substitutes for $0-$9, filling in regular expression
@@ -208,6 +214,13 @@ static ib_status_t regsub_core(ib_mpool_t *p, char **result, const char *input,
                                const char *source, size_t nmatch,
                                regmatch_t pmatch[])
 {
+    IB_FTRACE_INIT();
+    assert(p != NULL);
+    assert(result != NULL);
+    assert(input != NULL);
+    assert(source != NULL);
+    assert(pmatch != NULL);
+
     const char *src = input;
     char *dst;
     char c;
@@ -215,14 +228,14 @@ static ib_status_t regsub_core(ib_mpool_t *p, char **result, const char *input,
     size_t len = 0;
 
     if (!source || nmatch>IB_MAX_REG_MATCH)
-        return IB_EINVAL;
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     if (!nmatch) {
         len = strlen(src);
         if (IB_PREGSUB_MAXLEN > 0 && len >= IB_PREGSUB_MAXLEN)
-            return IB_EALLOC;
+            IB_FTRACE_RET_STATUS(IB_EALLOC);
 
         *result = ib_mpool_memdup_to_str(p, src, len);
-        return IB_OK;
+        IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* First pass, find the size */
@@ -241,15 +254,15 @@ static ib_status_t regsub_core(ib_mpool_t *p, char **result, const char *input,
             if (IB_SIZE_MAX - len <=
                 (size_t)(pmatch[no].rm_eo - pmatch[no].rm_so)
             ) {
-                return IB_EALLOC;
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
             len += pmatch[no].rm_eo - pmatch[no].rm_so;
         }
-
     }
 
-    if (len >= IB_PREGSUB_MAXLEN && IB_PREGSUB_MAXLEN > 0)
-        return IB_EALLOC;
+    if (len >= IB_PREGSUB_MAXLEN && IB_PREGSUB_MAXLEN > 0) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
 
     *result = dst = ib_mpool_alloc(p, len + 1);
 
@@ -277,21 +290,26 @@ static ib_status_t regsub_core(ib_mpool_t *p, char **result, const char *input,
     }
     *dst = '\0';
 
-    return IB_OK;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 int ib_rx_exec(ib_mpool_t *pool, ib_rx_t *rx, const char *pattern,
                char **newpattern, ib_rxmatch_t *match)
 {
+    IB_FTRACE_INIT();
+    assert(pool != NULL);
+    assert(rx != NULL);
+    assert(pattern != NULL);
+    assert(newpattern != NULL);
+
     int ret = 1;
     int startl, oldl, newl, diffsz;
-    const char *remainder;
     char *subs;
     ib_rxmatch_t tmp_match;
     regmatch_t tmp_pmatch[IB_MAX_REG_MATCH];
 
     /* If caller asks for a match, we need to give them valid backrefs */
-    if (match) {
+    if (match != NULL) {
         match->match = ib_mpool_strdup(pool, pattern);
         match->nmatch = rx->nmatch;
         match->pmatch = ib_mpool_calloc(pool, match->nmatch, sizeof(regmatch_t));
@@ -309,13 +327,15 @@ int ib_rx_exec(ib_mpool_t *pool, ib_rx_t *rx, const char *pattern,
     if (regexec(&rx->rx, pattern, match->nmatch, match->pmatch,
                 REGEXEC_FLAGS(rx->flags)) != 0) {
         match->match = NULL;
-        return 0; /* no match, nothing to do */
+        IB_FTRACE_RET_INT(0); /* no match, nothing to do */
     }
     if (rx->subs) {
+        const char *remainder;
         ib_status_t rc = regsub_core(pool, newpattern, rx->subs, pattern,
                                      match->nmatch, match->pmatch);
         if (rc != IB_OK) {
-            return 0; /* FIXME - should we do more to handle error? */
+             /* FIXME - should we do more to handle error? */
+            IB_FTRACE_RET_INT(0);
         }
         startl = match->pmatch[0].rm_so;
         oldl = match->pmatch[0].rm_eo - startl;
@@ -338,11 +358,16 @@ int ib_rx_exec(ib_mpool_t *pool, ib_rx_t *rx, const char *pattern,
         strcpy(subs+startl+newl, remainder);
         *newpattern = subs;
     }
-    return ret;
+    IB_FTRACE_RET_INT(ret);
 }
 
 void ib_rx_match(ib_rxmatch_t *match, int n, int *len, const char **pattern)
 {
+    IB_FTRACE_INIT();
+    assert(match != NULL);
+    assert(len != NULL);
+    assert(pattern != NULL);
+
     if (n >= 0 && (size_t)n < ib_rx_nmatch(match)) {
         *pattern = match->match + match->pmatch[n].rm_so;
         *len = match->pmatch[n].rm_eo - match->pmatch[n].rm_so;
@@ -351,4 +376,5 @@ void ib_rx_match(ib_rxmatch_t *match, int n, int *len, const char **pattern)
         *len = -1;
         *pattern = NULL;
     }
+    IB_FTRACE_RET_VOID();
 }
