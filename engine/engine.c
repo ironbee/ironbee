@@ -758,6 +758,8 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
         ib_log_alert(ib, "Failed to retrieve core module configuration.");
     }
 
+    assert(corecfg != NULL);
+
     /* Create a sub-pool from the connection memory pool for each
      * transaction and allocate from it
      */
