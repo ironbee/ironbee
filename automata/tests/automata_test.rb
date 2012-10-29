@@ -113,7 +113,8 @@ module AutomataTest
     end
 
     eudoxus_path = File.join(dir, "eudoxus")
-    system(EC, "-i", automata_path, "-o", eudoxus_path)
+    result = system(EC, "-i", automata_path, "-o", eudoxus_path)
+    assert_block("EC failed.") {result}
 
     if block_given?
       yield dir, eudoxus_path
