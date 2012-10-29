@@ -43,8 +43,10 @@ htp_hook_t * hook_copy(const htp_hook_t *hook) {
     if (copy == NULL) return NULL;
 
     htp_callback_t *callback = NULL;
-    list_iterator_reset(hook->callbacks);
-    while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
+    list_array_iterator_t it;
+    
+    list_array_iterator_create(hook->callbacks, &it);
+    while ((callback = list_array_iterator_next(&it)) != NULL) {
         if (hook_register(&copy, callback->fn) < 0) {
             hook_destroy(copy);
             return NULL;
@@ -58,7 +60,7 @@ htp_hook_t *hook_create(void) {
     htp_hook_t *hook = calloc(1, sizeof (htp_hook_t));
     if (hook == NULL) return NULL;
 
-    hook->callbacks = list_array_create(4);
+    hook->callbacks = (list_array_t *)list_array_create(4);
     if (hook->callbacks == NULL) {
         free(hook);
         return NULL;
@@ -71,41 +73,45 @@ void hook_destroy(htp_hook_t *hook) {
     if (hook == NULL) return;
 
     htp_callback_t *callback = NULL;
-    list_iterator_reset(hook->callbacks);
-    while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
+    list_array_iterator_t it;
+    
+    list_array_iterator_create(hook->callbacks, &it);
+    while ((callback = list_array_iterator_next(&it)) != NULL) {
         free(callback);
     }
 
-    list_destroy(&hook->callbacks);
+    list_array_destroy(&hook->callbacks);
     
     free(hook);
 }
 
 int hook_register(htp_hook_t **hook, const htp_callback_fn_t callback_fn) {
-    int hook_created = 0;
     htp_callback_t *callback = calloc(1, sizeof (htp_callback_t));
     if (callback == NULL) return HOOK_ERROR;
-
+    
     callback->fn = callback_fn;
 
     // Create a new hook if one does not exist
+    int hook_created = 0;
+    
     if (*hook == NULL) {
+        hook_created = 1;
+        
         *hook = hook_create();
         if (*hook == NULL) {
             free(callback);
             return HOOK_ERROR;
         }
-
-        hook_created = 1;
     }
 
     // Add callback 
-    if (list_add((*hook)->callbacks, callback) < 0) {
+    if (list_array_push((*hook)->callbacks, callback) < 0) {
         if (hook_created) {
             free(*hook);
         }
         
         free(callback);
+        
         return HOOK_ERROR;
     }
 
@@ -118,8 +124,10 @@ int hook_run_all(htp_hook_t *hook, void *user_data) {
     // Loop through registered callbacks,
     // giving each a chance to run.
     htp_callback_t *callback = NULL;
-    list_iterator_reset(hook->callbacks);
-    while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
+    list_array_iterator_t it;
+    
+    list_array_iterator_create(hook->callbacks, &it);
+    while ((callback = list_array_iterator_next(&it)) != NULL) {
         int rc = callback->fn(user_data);
         if ((rc != HOOK_OK)&&(rc != HOOK_DECLINED)) {
             // Return HOOK_STOP or error.
@@ -136,8 +144,10 @@ int hook_run_one(htp_hook_t *hook, void *user_data) {
     // Look through registered callbacks
     // until one accepts to process the hook.
     htp_callback_t *callback = NULL;
-    list_iterator_reset(hook->callbacks);
-    while ((callback = list_iterator_next(hook->callbacks)) != NULL) {
+    list_array_iterator_t it;
+    
+    list_array_iterator_create(hook->callbacks, &it);
+    while ((callback = list_array_iterator_next(&it)) != NULL) {
         int rc = callback->fn(user_data);
         if (rc != HOOK_DECLINED) {
             // Return HOOK_OK, HOOK_STOP, or error.

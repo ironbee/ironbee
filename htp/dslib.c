@@ -204,9 +204,7 @@ list_t *list_linked_create(void) {
  *
  * @return 1 on success or -1 on failure (memory allocation)
  */
-static int list_array_push(list_t *_q, void *element) {
-    list_array_t *q = (list_array_t *) _q;   
-
+int list_array_push(list_array_t *q, void *element) {   
     // Check whether we're full
     if (q->current_size >= q->max_size) {
         size_t new_size = q->max_size * 2;
@@ -456,7 +454,7 @@ list_t *list_array_create(size_t size) {
     q->first = 0;
     q->last = 0;
     q->max_size = size;
-    q->push = list_array_push;
+    q->push = (int (*)(list_t *, void *))list_array_push;
     q->pop = list_array_pop;
     q->get = list_array_get;
     q->replace = list_array_replace;

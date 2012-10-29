@@ -117,6 +117,7 @@ list_t *list_linked_create(void);
 void list_linked_destroy(list_linked_t **_l);
 
 list_t *list_array_create(size_t size);
+int list_array_push(list_array_t *l, void *e);
 void list_array_int_iterator_reset(list_array_t *l);
 void *list_array_int_iterator_next(list_array_t *l);
 void list_array_destroy(list_array_t **_l);
