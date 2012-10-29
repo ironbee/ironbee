@@ -121,7 +121,22 @@ int list_array_push(list_array_t *l, void *e);
 void list_array_int_iterator_reset(list_array_t *l);
 void *list_array_int_iterator_next(list_array_t *l);
 void list_array_destroy(list_array_t **_l);
-void list_array_iterator_create(list_array_t *l, list_array_iterator_t *it);
+
+/**
+ * Initialize iterator for the given list. After this, repeatedly
+ * invoking list_array_iterator_next() will walk the entire list.
+ * 
+ * @param[in] l
+ * @param[in] it
+ */
+void list_array_iterator_init(list_array_t *l, list_array_iterator_t *it);
+
+/**
+ * Move the iterator to the next element in the list.
+ * 
+ * @param[in] it
+ * @return Pointer to the next element, or NULL if no more elements are available.
+ */
 void *list_array_iterator_next(list_array_iterator_t *it);
 
 // Table

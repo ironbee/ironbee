@@ -45,7 +45,7 @@ htp_hook_t * hook_copy(const htp_hook_t *hook) {
     htp_callback_t *callback = NULL;
     list_array_iterator_t it;
     
-    list_array_iterator_create(hook->callbacks, &it);
+    list_array_iterator_init(hook->callbacks, &it);
     while ((callback = list_array_iterator_next(&it)) != NULL) {
         if (hook_register(&copy, callback->fn) < 0) {
             hook_destroy(copy);
@@ -75,7 +75,7 @@ void hook_destroy(htp_hook_t *hook) {
     htp_callback_t *callback = NULL;
     list_array_iterator_t it;
     
-    list_array_iterator_create(hook->callbacks, &it);
+    list_array_iterator_init(hook->callbacks, &it);
     while ((callback = list_array_iterator_next(&it)) != NULL) {
         free(callback);
     }
@@ -126,7 +126,7 @@ int hook_run_all(htp_hook_t *hook, void *user_data) {
     htp_callback_t *callback = NULL;
     list_array_iterator_t it;
     
-    list_array_iterator_create(hook->callbacks, &it);
+    list_array_iterator_init(hook->callbacks, &it);
     while ((callback = list_array_iterator_next(&it)) != NULL) {
         int rc = callback->fn(user_data);
         if ((rc != HOOK_OK)&&(rc != HOOK_DECLINED)) {
@@ -146,7 +146,7 @@ int hook_run_one(htp_hook_t *hook, void *user_data) {
     htp_callback_t *callback = NULL;
     list_array_iterator_t it;
     
-    list_array_iterator_create(hook->callbacks, &it);
+    list_array_iterator_init(hook->callbacks, &it);
     while ((callback = list_array_iterator_next(&it)) != NULL) {
         int rc = callback->fn(user_data);
         if (rc != HOOK_DECLINED) {

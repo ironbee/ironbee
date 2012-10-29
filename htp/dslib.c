@@ -405,22 +405,11 @@ void list_array_destroy(list_array_t **_l) {
     *_l = NULL;
 }
 
-/**
- * XXX
- * 
- * @param[in] l
- * @param[in] it
- */
-void list_array_iterator_create(list_array_t *l, list_array_iterator_t *it) {
+void list_array_iterator_init(list_array_t *l, list_array_iterator_t *it) {
     it->l = l;
     it->index = 0;
 }
 
-/**
- * XXX
- * 
- * @param[in] it
- */
 void *list_array_iterator_next(list_array_iterator_t *it) {
     void *r = NULL;
 
