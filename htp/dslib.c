@@ -370,7 +370,7 @@ static int list_array_replace(list_t *_l, size_t idx, void *element) {
  *
  * @param l
  */
-void list_array_iterator_reset(list_array_t *l) {
+void list_array_int_iterator_reset(list_array_t *l) {
     l->iterator_index = 0;
 }
 
@@ -381,7 +381,7 @@ void list_array_iterator_reset(list_array_t *l) {
  * @return the next list value, or NULL if there aren't more elements
  *         left to iterate over or if the element itself is NULL
  */
-void *list_array_iterator_next(list_array_t *l) {
+void *list_array_int_iterator_next(list_array_t *l) {
     void *r = NULL;
 
     if (l->iterator_index < l->current_size) {
@@ -405,6 +405,33 @@ void list_array_destroy(list_array_t **_l) {
     free(l->elements);
     free(l);
     *_l = NULL;
+}
+
+/**
+ * XXX
+ * 
+ * @param[in] l
+ * @param[in] it
+ */
+void list_array_iterator_create(list_array_t *l, list_array_iterator_t *it) {
+    it->l = l;
+    it->index = 0;
+}
+
+/**
+ * XXX
+ * 
+ * @param[in] it
+ */
+void *list_array_iterator_next(list_array_iterator_t *it) {
+    void *r = NULL;
+
+    if (it->index < it->l->current_size) {
+        r = list_get(it->l, it->index);
+        it->index++;
+    }
+
+    return r; 
 }
 
 /**
@@ -434,8 +461,8 @@ list_t *list_array_create(size_t size) {
     q->get = list_array_get;
     q->replace = list_array_replace;
     q->size = list_array_size;
-    q->iterator_reset = (void (*)(list_t *))list_array_iterator_reset;
-    q->iterator_next = (void *(*)(list_t *))list_array_iterator_next;
+    q->iterator_reset = (void (*)(list_t *))list_array_int_iterator_reset;
+    q->iterator_next = (void *(*)(list_t *))list_array_int_iterator_next;
     q->destroy = (void (*)(list_t **))list_array_destroy;
     q->shift = list_array_shift;
 

@@ -39,6 +39,7 @@
 
 typedef struct list_t list_t;
 typedef struct list_array_t list_array_t;
+typedef struct list_array_iterator_t list_array_iterator_t;
 typedef struct list_linked_element_t list_linked_element_t;
 typedef struct list_linked_t list_linked_t;
 typedef struct table_t table_t;
@@ -107,14 +108,20 @@ struct list_array_t {
     size_t iterator_index;
 };
 
+struct list_array_iterator_t {
+    list_array_t *l;
+    size_t index;
+};
+
 list_t *list_linked_create(void);
 void list_linked_destroy(list_linked_t **_l);
 
 list_t *list_array_create(size_t size);
-void list_array_iterator_reset(list_array_t *l);
-void *list_array_iterator_next(list_array_t *l);
+void list_array_int_iterator_reset(list_array_t *l);
+void *list_array_int_iterator_next(list_array_t *l);
 void list_array_destroy(list_array_t **_l);
-
+void list_array_iterator_create(list_array_t *l, list_array_iterator_t *it);
+void *list_array_iterator_next(list_array_iterator_t *it);
 
 // Table
 #define table_add(T, K, E) (T)->add(T, K, E)
