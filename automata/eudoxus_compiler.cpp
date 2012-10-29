@@ -38,7 +38,7 @@ using namespace std;
 namespace IronAutomata {
 namespace EudoxusCompiler {
 
-#define CPP_EUDOXUS_VERSION 7
+#define CPP_EUDOXUS_VERSION 8
 #if CPP_EUDOXUS_VERSION != IA_EUDOXUS_VERSION
 #error "Mismatch between compiler version and automata version."
 #endif
@@ -82,17 +82,17 @@ private:
     //! Subengine traits.
     typedef Eudoxus::subengine_traits<id_width> traits_t;
     //! Eudoxus Identifier.
-    typedef typename traits_t::id_t       e_id_t;
+    typedef typename traits_t::id_t          e_id_t;
     //! Eudoxus Low Edge.
-    typedef typename traits_t::low_edge_t e_low_edge_t;
+    typedef typename traits_t::low_edge_t    e_low_edge_t;
     //! Eudoxus Low Node.
-    typedef typename traits_t::low_node_t e_low_node_t;
+    typedef typename traits_t::low_node_t    e_low_node_t;
     //! Eudoxus High Node
-    typedef typename traits_t::high_node_t e_high_node_t;
+    typedef typename traits_t::high_node_t   e_high_node_t;
     //! Eudoxus PC Node
-    typedef typename traits_t::pc_node_t e_pc_node_t;
-    //! Eudoxus Output.
-    typedef typename traits_t::output_t   e_output_t;
+    typedef typename traits_t::pc_node_t     e_pc_node_t;
+    //! Eudoxus Output List.
+    typedef typename traits_t::output_list_t e_output_list_t;
 
     friend class BFSVisitor;
 
@@ -639,23 +639,66 @@ private:
         }
     }
 
-    //! Appends all outputs in @c m_outputs to the buffer.
+    //! Appends all output lists and outputs in @c m_outputs to the buffer.
     void append_outputs()
     {
+        // Calculate all contents.
+        typedef map<Intermediate::byte_vector_t, size_t> output_content_map_t;
+        output_content_map_t output_contents;
         BOOST_FOREACH(const Intermediate::output_p& output, m_outputs)
         {
-            e_output_t* e_output = m_assembler.append_object(e_output_t());
-            m_output_map[output] = m_assembler.index(e_output);
-            e_output->output_length = output->content().size();
-            // Register even if NULL to get id count correct.
-            register_output_ref(
-                m_assembler.index(&(e_output->next_output)),
-                output->next_output()
-            );
-            m_assembler.append_bytes(
-                output->content().data(),
-                output->content().size()
-            );
+            output_contents.insert(make_pair(output->content(), 0));
+        }
+    
+        // Append all contents.  Note non-const reference.
+        BOOST_FOREACH(
+            output_content_map_t::value_type& v,
+            output_contents
+        )
+        {
+            ia_eudoxus_output_t* e_output = 
+                m_assembler.append_object(ia_eudoxus_output_t());
+            v.second = m_assembler.index(e_output);
+            e_output->length = v.first.size();
+                        
+            m_assembler.append_bytes(v.first.data(), v.first.size());
+            if (m_assembler.size() >= m_max_index) {
+                throw out_of_range("id_width too small");
+            }
+        }
+        
+        m_assembler.ptr<ia_eudoxus_automata_t>(
+            m_e_automata_index
+        )->num_outputs = output_contents.size();
+        m_result.ids_used += output_contents.size();
+        
+        // Handle all outputs.
+        m_assembler.ptr<ia_eudoxus_automata_t>(
+            m_e_automata_index
+        )->first_output_list = m_assembler.size();
+        BOOST_FOREACH(const Intermediate::output_p& output, m_outputs)
+        {
+            if (! output->next_output()) {
+                // Single outputs will just point directly to the content.
+                m_output_map[output] = output_contents[output->content()];
+            }
+            else {
+                // Multiple outputs need a list.
+                e_output_list_t* e_output_list =
+                    m_assembler.append_object(e_output_list_t());
+                
+                ++m_assembler.ptr<ia_eudoxus_automata_t>(
+                    m_e_automata_index
+                )->num_output_lists;
+                
+                m_output_map[output] = m_assembler.index(e_output_list);
+                e_output_list->output = output_contents[output->content()];
+                // Register even if NULL to get id count correct.
+                register_output_ref(
+                    m_assembler.index(&(e_output_list->next_output)),
+                    output->next_output()
+                );
+            }
             if (m_assembler.size() >= m_max_index) {
                 throw out_of_range("id_width too small");
             }
@@ -714,6 +757,9 @@ private:
     //! Assembler of m_result.buffer.
     BufferAssembler m_assembler;
 
+    //! Index of automata structure.
+    size_t m_e_automata_index;
+    
     //! Type of m_node_map.
     typedef map<Intermediate::node_p, size_t> node_map_t;
     //! Type of m_output_map.
@@ -780,13 +826,14 @@ void Compiler<id_width>::compile(
     e_automata->no_advance_no_output = automata.no_advance_no_output();
     e_automata->reserved             = 0;
 
-    // Fill in at end.
-    e_automata->num_nodes   = 0;
-    e_automata->num_outputs = 0;
-    e_automata->data_length = 0;
+    // Fill in later.
+    e_automata->num_nodes        = 0;
+    e_automata->num_outputs      = 0;
+    e_automata->num_output_lists = 0;
+    e_automata->data_length      = 0;
 
     // Store index as it will likely move.
-    size_t e_automata_index = m_assembler.index(e_automata);
+    m_e_automata_index = m_assembler.index(e_automata);
 
     // Calculate Node Parents
     parent_map_t parents;
@@ -885,14 +932,14 @@ void Compiler<id_width>::compile(
     fill_in_ids(m_output_id_map, m_output_map);
 
     // Recover pointer.
-    e_automata = m_assembler.ptr<ia_eudoxus_automata_t>(e_automata_index);
+    e_automata = m_assembler.ptr<ia_eudoxus_automata_t>(m_e_automata_index);
     e_automata->num_nodes   = m_node_map.size();
     e_automata->num_outputs = m_output_map.size();
     e_automata->data_length = m_result.buffer.size();
     assert(m_node_map[automata.start_node()] < 256);
     e_automata->start_index = m_node_map[automata.start_node()];
 
-    m_result.ids_used = m_node_id_map.size() + m_output_id_map.size();
+    m_result.ids_used += m_node_id_map.size() + m_output_id_map.size();
 }
 
 result_t compile_minimal(

@@ -465,32 +465,49 @@ ia_eudoxus_result_t IA_EUDOXUS(output)(
             break;
         default: return IA_EUDOXUS_EINSANE;
     }
-    IA_EUDOXUS_ID_T output = IA_VLS_IF(
+    IA_EUDOXUS_ID_T output_list = IA_VLS_IF(
         vls,
         IA_EUDOXUS_ID_T,
         0,
         has_output
     );
 
-    if (output == 0) {
+    if (output_list == 0) {
         return IA_EUDOXUS_EINVAL;
     }
 
-    while (output != 0) {
-        const IA_EUDOXUS(output_t) *output_obj =
-            (const IA_EUDOXUS(output_t) *)(
-                (const char *)(state->eudoxus->automata) + output
+    while (output_list != 0) {
+        const ia_eudoxus_output_t *output_obj = 0;
+        if (output_list < state->eudoxus->automata->first_output_list) {
+            output_obj = (const ia_eudoxus_output_t *)(
+                (const char *)(state->eudoxus->automata) + 
+                output_list
             );
+            output_list = 0;
+        }
+        else {
+            const IA_EUDOXUS(output_list_t) *output_list_obj =
+                (const IA_EUDOXUS(output_list_t) *)(
+                    (const char *)(state->eudoxus->automata) + output_list
+                );
+            if (output_list_obj->output == 0) {
+                return IA_EUDOXUS_EINVAL;
+            }
+            output_obj = (const ia_eudoxus_output_t *)(
+                (const char *)(state->eudoxus->automata) + 
+                output_list_obj->output
+            );
+            output_list = output_list_obj->next_output;
+        }
         ia_eudoxus_command_t command = state->callback(
-            output_obj->output,
-            output_obj->output_length,
+            output_obj->data,
+            output_obj->length,
             state->input_location,
             state->callback_data
         );
         if (command != IA_EUDOXUS_CMD_CONTINUE) {
             return (ia_eudoxus_result_t)command;
         }
-        output = output_obj->next_output;
     }
 
     return IA_EUDOXUS_OK;

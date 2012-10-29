@@ -54,7 +54,7 @@ extern "C" {
  * This is checked by @c ia_eudoxus_create_ methods to insure that an automata
  * was generated for the current engine.
  */
-#define IA_EUDOXUS_VERSION 7
+#define IA_EUDOXUS_VERSION 8
 
 /**
  * A Eudoxus Automata.
@@ -62,6 +62,9 @@ extern "C" {
  * Note that the in memory representation of an automata exactly matches
  * the on disk representation.  That is, loading an automata is as simple
  * as reading data into memory.
+ *
+ * Automata is this header, followed by all nodes, followed by all outputs,
+ * followed by all output lists.
  */
 typedef struct ia_eudoxus_automata_t ia_eudoxus_automata_t;
 struct ia_eudoxus_automata_t
@@ -115,6 +118,11 @@ struct ia_eudoxus_automata_t
      * Number of outputs in automata.
      */
     uint64_t num_outputs;
+     
+    /**
+     * Numer of output list elements in automata.
+     */
+    uint64_t num_output_lists;
 
     /**
      * Number of bytes defining automata after end of this structure.
@@ -125,6 +133,11 @@ struct ia_eudoxus_automata_t
      * Index of first (i.e., start) node.  At most 256 bytes in.
      */
     uint8_t start_index;
+     
+    /**
+     * Index of first output_list, i.e., where output list elements begin.
+     */
+    uint64_t first_output_list;
 
     /** @} */
 
@@ -223,6 +236,16 @@ struct ia_bitmap256_t
 {
     uint64_t bits[4];
 } __attribute((packed));
+
+/**
+ * Output
+ */
+typedef struct ia_eudoxus_output_t ia_eudoxus_output_t;
+struct ia_eudoxus_output_t
+{
+    uint32_t length;
+    char     data[];
+};
 
 /**
  * Return 1 iff currently big endian.
