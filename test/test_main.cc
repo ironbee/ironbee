@@ -200,8 +200,8 @@ TEST_F(ConnectionParsingTest, PostUrlencodedChunked) {
     
     ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
     
-    ASSERT_EQ(tx->request_message_len, 25)
-            ;
+    ASSERT_EQ(tx->request_message_len, 25);
+    
     ASSERT_EQ(tx->request_entity_len, 12);
 }
 
