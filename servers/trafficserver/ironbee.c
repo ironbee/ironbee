@@ -625,12 +625,32 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                 TSError ("Error determining buffering configuration");
             }
             ibd->data->buffering = (num == 0) ? IOBUF_NOBUF : IOBUF_BUFFER;
+            
+            /* Override buffering based on flags */
+            if (ibd->data->buffering == IOBUF_BUFFER) {
+                if (ibd->ibd->dir == IBD_REQ) {
+                    if (!ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_REQBODY) &&
+                        !ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_REQHDR)) {
+                        ibd->data->buffering = IOBUF_NOBUF;
+                        TSDebug("ironbee", "\tDisable request buffering");
+                    }
+                } else if (ibd->ibd->dir == IBD_RESP) {
+                    if (!ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_RSPBODY) &&
+                        !ib_tx_flags_isset(data->tx, IB_TX_FINSPECT_RSPHDR)) {
+                        ibd->data->buffering = IOBUF_NOBUF;
+                        TSDebug("ironbee", "\tDisable response buffering");
+                    }
+                }
+            }
         }
 
         if (ibd->data->buffering == IOBUF_NOBUF) {
+            TSDebug("ironbee", "\tBuffering: off");
             /* Get the output (downstream) vconnection where we'll write data to. */
             output_conn = TSTransformOutputVConnGet(contp);
             ibd->data->output_vio = TSVConnWrite(output_conn, contp, ibd->data->output_reader, INT64_MAX);
+        } else {
+            TSDebug("ironbee", "\tBuffering: on");
         }
     }
     if (ibd->data->buf) {
