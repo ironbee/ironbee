@@ -793,7 +793,7 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
     size_t subject_len = 0;
     const ib_bytestr_t *bytestr;
     modpcre_rule_data_t *rule_data = (modpcre_rule_data_t *)data;
-    pcre_extra *edata;
+    pcre_extra *edata = NULL;
 #ifdef PCRE_JIT_STACK
     pcre_jit_stack *jit_stack = NULL;
 #endif
