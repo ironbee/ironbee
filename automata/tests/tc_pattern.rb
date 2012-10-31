@@ -132,4 +132,22 @@ class TestPattern < Test::Unit::TestCase
       assert_equal([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].to_set, output_substrings[words[11]])
     end
   end
+
+  def test_overlap
+    words = ['\w\w\d', '\l\w', '\w\w']
+    text = "AA9aa9"
+    # 1: A
+    # 2: A
+    # 3: 9
+    # 4: a
+    # 5: a
+    # 6: 9
+    automata_test(words, [ACGEN, '-p'], "test_overlap") do |dir, eudoxus_path|
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output", "string")
+      assert_equal(words.size, output_substrings.size)
+      assert_equal([3, 6].to_set, output_substrings[words[0]])
+      assert_equal([5, 6].to_set, output_substrings[words[1]])
+      assert_equal([2, 3, 4, 5, 6].to_set, output_substrings[words[2]])
+    end
+  end
 end

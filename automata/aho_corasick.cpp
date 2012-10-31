@@ -121,8 +121,8 @@ void deep_copy(
  * Split edge @a from using @a to_values.
  *
  * Creates a new edge, @c to, with values @a to_values.  Removes @a to_values
- * from edge @a from.  Does shallow or deep copy, based on @a deep, of target
- * of @a from edge to target of @c to edge.
+ * from edge @a from.  Does deep copy of target of @a from edge to target of
+ * @c to edge.
  *
  * Uses deep_copy() and ACNodes so will not work in other contexts.
  *
@@ -134,13 +134,11 @@ void deep_copy(
  *
  * @param[in] from      Edge to split.
  * @param[in] to_values Values to from @a from to a new edge.
- * @param[in] deep      If true does deep copy, else shallow copy.
  * @return New, @c to, edge.
  */
 Intermediate::Edge split_edge(
     Intermediate::Edge&                from,
-    const Intermediate::byte_vector_t& to_values,
-    bool                               deep = true
+    const Intermediate::byte_vector_t& to_values
 );
 
 /**
@@ -252,8 +250,7 @@ void deep_copy(
 
 Intermediate::Edge split_edge(
     Intermediate::Edge&                from,
-    const Intermediate::byte_vector_t& to_values,
-    bool                               deep
+    const Intermediate::byte_vector_t& to_values
 )
 {
     Intermediate::Edge to;
@@ -281,12 +278,8 @@ Intermediate::Edge split_edge(
     // ACNode should be changed to node, and advance() should be updated
     // instead of asserted.
     to.target() = make_shared<ACNode>();
-    if (deep) {
-        deep_copy(to.target(), from.target());
-    }
-    else {
-        *to.target() = *from.target();
-    }
+    deep_copy(to.target(), from.target());
+
     assert(to.advance());
     assert(from.advance());
 
@@ -338,10 +331,8 @@ void process_failures(Intermediate::Automata& automata)
             Intermediate::byte_vector_t cs = edge.vector();
 
             Intermediate::node_p s = edge.target();
-            // It's possible s has already been processed due to shallow copies.
-            if (s->default_target()) {
-                continue;
-            }
+
+            assert(! s->default_target());
 
             todo.push_back(s);
 
@@ -373,7 +364,7 @@ void process_failures(Intermediate::Automata& automata)
 
                     // Should never reach this case in a non-pattern based
                     // AC run.
-                    Intermediate::Edge new_edge = split_edge(edge, shared_cs, false);
+                    Intermediate::Edge new_edge = split_edge(edge, shared_cs);
                     r->edges().push_front(new_edge);
                     Intermediate::node_p s2 = new_edge.target();
                     todo.push_back(s2);
