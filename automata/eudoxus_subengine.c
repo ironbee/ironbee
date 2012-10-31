@@ -480,7 +480,7 @@ ia_eudoxus_result_t IA_EUDOXUS(output)(
         const ia_eudoxus_output_t *output_obj = 0;
         if (output_list < state->eudoxus->automata->first_output_list) {
             output_obj = (const ia_eudoxus_output_t *)(
-                (const char *)(state->eudoxus->automata) + 
+                (const char *)(state->eudoxus->automata) +
                 output_list
             );
             output_list = 0;
@@ -494,7 +494,7 @@ ia_eudoxus_result_t IA_EUDOXUS(output)(
                 return IA_EUDOXUS_EINVAL;
             }
             output_obj = (const ia_eudoxus_output_t *)(
-                (const char *)(state->eudoxus->automata) + 
+                (const char *)(state->eudoxus->automata) +
                 output_list_obj->output
             );
             output_list = output_list_obj->next_output;

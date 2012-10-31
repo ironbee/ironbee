@@ -240,10 +240,10 @@ struct subengine_traits<sizeof(IA_EUDOXUS_ID_T)>
 {
     typedef IA_EUDOXUS_ID_T           id_t;
     typedef IA_EUDOXUS(output_list_t) output_list_t;
-    typedef IA_EUDOXUS(low_edge_t)    low_edge_t;   
-    typedef IA_EUDOXUS(low_node_t)    low_node_t;   
-    typedef IA_EUDOXUS(high_node_t)   high_node_t;  
-    typedef IA_EUDOXUS(pc_node_t)     pc_node_t;    
+    typedef IA_EUDOXUS(low_edge_t)    low_edge_t;
+    typedef IA_EUDOXUS(low_node_t)    low_node_t;
+    typedef IA_EUDOXUS(high_node_t)   high_node_t;
+    typedef IA_EUDOXUS(pc_node_t)     pc_node_t;
 };
 
 } // Eudoxus

@@ -118,7 +118,7 @@ struct ia_eudoxus_automata_t
      * Number of outputs in automata.
      */
     uint64_t num_outputs;
-     
+
     /**
      * Numer of output list elements in automata.
      */
@@ -133,7 +133,7 @@ struct ia_eudoxus_automata_t
      * Index of first (i.e., start) node.  At most 256 bytes in.
      */
     uint8_t start_index;
-     
+
     /**
      * Index of first output_list, i.e., where output list elements begin.
      */

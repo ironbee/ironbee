@@ -649,29 +649,29 @@ private:
         {
             output_contents.insert(make_pair(output->content(), 0));
         }
-    
+
         // Append all contents.  Note non-const reference.
         BOOST_FOREACH(
             output_content_map_t::value_type& v,
             output_contents
         )
         {
-            ia_eudoxus_output_t* e_output = 
+            ia_eudoxus_output_t* e_output =
                 m_assembler.append_object(ia_eudoxus_output_t());
             v.second = m_assembler.index(e_output);
             e_output->length = v.first.size();
-                        
+
             m_assembler.append_bytes(v.first.data(), v.first.size());
             if (m_assembler.size() >= m_max_index) {
                 throw out_of_range("id_width too small");
             }
         }
-        
+
         m_assembler.ptr<ia_eudoxus_automata_t>(
             m_e_automata_index
         )->num_outputs = output_contents.size();
         m_result.ids_used += output_contents.size();
-        
+
         // Handle all outputs.
         m_assembler.ptr<ia_eudoxus_automata_t>(
             m_e_automata_index
@@ -686,11 +686,11 @@ private:
                 // Multiple outputs need a list.
                 e_output_list_t* e_output_list =
                     m_assembler.append_object(e_output_list_t());
-                
+
                 ++m_assembler.ptr<ia_eudoxus_automata_t>(
                     m_e_automata_index
                 )->num_output_lists;
-                
+
                 m_output_map[output] = m_assembler.index(e_output_list);
                 e_output_list->output = output_contents[output->content()];
                 // Register even if NULL to get id count correct.
@@ -759,7 +759,7 @@ private:
 
     //! Index of automata structure.
     size_t m_e_automata_index;
-    
+
     //! Type of m_node_map.
     typedef map<Intermediate::node_p, size_t> node_map_t;
     //! Type of m_output_map.
