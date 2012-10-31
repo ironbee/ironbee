@@ -548,7 +548,7 @@ const Intermediate::byte_vector_t& multiple_subpat_to_set(char subpat[4])
         s_alpha = s_lower;
         add_set(s_alpha, s_upper);
         s_word = s_alpha;
-        add_set(s_alpha, s_digit);
+        add_set(s_word, s_digit);
         set_difference(
             s_any.begin(), s_any.end(),
             s_word.begin(), s_word.end(),
