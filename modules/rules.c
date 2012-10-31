@@ -66,7 +66,7 @@ IB_MODULE_DECLARE();
  * Per-context data
  */
 typedef struct {
-    ib_list_t        *setvar_list;  /**< List of fields declared via setvar */
+    ib_list_t        *initvar_list;  /**< List of fields declared via InitVar */
 } rules_context_cfg_t;
 static rules_context_cfg_t rules_global_cfg = { NULL };
 
@@ -1695,19 +1695,19 @@ cleanup:
 }
 
 /**
- * @brief Parse a SetVar directive.
+ * @brief Parse a InitVar directive.
  *
- * @details Register a SetVar directive to the engine.
+ * @details Register a InitVar directive to the engine.
  *
  * @param[in] cp Configuration parser
  * @param[in] directive The directive name.
  * @param[in] vars The list of variables passed to @c name.
  * @param[in] cbdata User data. Unused.
  */
-static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
-                                       const char *directive,
-                                       const ib_list_t *vars,
-                                       void *cbdata)
+static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
+                                        const char *directive,
+                                        const ib_list_t *vars,
+                                        void *cbdata)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
@@ -1737,10 +1737,10 @@ static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
     }
 
     /* Initialize the fields list */
-    if (cfg->setvar_list == NULL) {
-        rc = ib_list_create(&(cfg->setvar_list), mp);
+    if (cfg->initvar_list == NULL) {
+        rc = ib_list_create(&(cfg->initvar_list), mp);
         if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Failed to create setvar directive list: %s",
+            ib_cfg_log_error(cp, "Failed to create InitVar directive list: %s",
                              ib_status_to_string(rc));
             IB_FTRACE_RET_STATUS(rc);
         }
@@ -1749,7 +1749,7 @@ static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
     /* Get the field name string */
     node = ib_list_first_const(vars);
     if ( (node == NULL) || (node->data == NULL) ) {
-        ib_cfg_log_error(cp, "No name specified for setvar directive");
+        ib_cfg_log_error(cp, "No name specified for InitVar directive");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     name = (const char *)(node->data);
@@ -1757,7 +1757,7 @@ static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
     /* Get the value node */
     node = ib_list_node_next_const(node);
     if ( (node == NULL) || (node->data == NULL) ) {
-        ib_cfg_log_error(cp, "No value specified for setvar directive");
+        ib_cfg_log_error(cp, "No value specified for InitVar directive");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     value = (const char *)(node->data);
@@ -1773,27 +1773,28 @@ static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
                              IB_FTYPE_NULSTR, ib_ftype_nulstr_in(value));
     }
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error creating field for setvar: %s",
+        ib_cfg_log_error(cp, "Error creating field for InitVar: %s",
                          ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Add the field to the list */
-    rc = ib_list_push(cfg->setvar_list, field);
+    rc = ib_list_push(cfg->initvar_list, field);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error pushing value on list: %s",
+        ib_cfg_log_error(cp, "InitVar: Error pushing value on list: %s",
                          ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     if (field->type == IB_FTYPE_NUM) {
         ib_cfg_log_debug(cp,
-                         "Created numeric field \"%s\" %ld for context \"%s\"",
+                         "InitVar: Created numeric field \"%s\" %ld "
+                         "for context \"%s\"",
                          name, (long int)num_val,
                          ib_context_full_get(cp->cur_ctx));
     }
     else {
         ib_cfg_log_debug(cp,
-                         "Created string field \"%s\" \"%s\" "
+                         "InitVar:Created string field \"%s\" \"%s\" "
                          "for context \"%s\"",
                          name, value, ib_context_full_get(cp->cur_ctx));
     }
@@ -1803,9 +1804,9 @@ static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
 }
 
 /**
- * Handle events for the SetVar directive
+ * Handle events for the InitVar directive
  *
- * Walks through the list of fields defined for this context by the SetVar
+ * Walks through the list of fields defined for this context by the InitVar
  * directives, and populates the transaction's DPI with copies.
  *
  * @param[in] ib IronBee object
@@ -1815,10 +1816,10 @@ static ib_status_t parse_setvar_params(ib_cfgparser_t *cp,
  *
  * @returns Status code
  */
-static ib_status_t setvar_event_handler(ib_engine_t *ib,
-                                        ib_tx_t *tx,
-                                        ib_state_event_type_t event,
-                                        void *data)
+static ib_status_t initvar_event_handler(ib_engine_t *ib,
+                                         ib_tx_t *tx,
+                                         ib_state_event_type_t event,
+                                         void *data)
 {
     IB_FTRACE_INIT();
 
@@ -1848,17 +1849,17 @@ static ib_status_t setvar_event_handler(ib_engine_t *ib,
     }
 
     /* If list is NULL, we're done */
-    if (cfg->setvar_list == NULL) {
-        ib_log_debug_tx(tx, "No SetVars for defined for context \"%s\"",
+    if (cfg->initvar_list == NULL) {
+        ib_log_debug_tx(tx, "No InitVars for defined for context \"%s\"",
                         ib_context_full_get(tx->ctx));
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* Loop through the list */
-    ib_log_debug_tx(tx, "Creating %zd SetVar fields for context \"%s\"",
-                    ib_list_elements(cfg->setvar_list),
+    ib_log_debug_tx(tx, "Creating %zd InitVar fields for context \"%s\"",
+                    ib_list_elements(cfg->initvar_list),
                     ib_context_full_get(tx->ctx));
-    IB_LIST_LOOP_CONST(cfg->setvar_list, node) {
+    IB_LIST_LOOP_CONST(cfg->initvar_list, node) {
         const ib_field_t *field =
             (const ib_field_t *)ib_list_node_data_const(node);
         ib_field_t *newf;
@@ -1873,7 +1874,7 @@ static ib_status_t setvar_event_handler(ib_engine_t *ib,
             ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI",
                             (int)field->nlen, field->name);
         }
-        ib_log_trace_tx(tx, "SetVar: Created field \"%.*s\" (type %s)",
+        ib_log_trace_tx(tx, "InitVar: Created field \"%.*s\" (type %s)",
                         (int)field->nlen, field->name,
                         ib_field_type_name(field->type));
     }
@@ -1927,8 +1928,8 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
     ),
 
     IB_DIRMAP_INIT_LIST(
-        "SetVar",
-        parse_setvar_params,
+        "InitVar",
+        parse_initvar_params,
         NULL
     ),
 
@@ -2078,7 +2079,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Register the rules header_finished callback */
     rc = ib_hook_tx_register(ib,
                              handle_context_tx_event,
-                             setvar_event_handler,
+                             initvar_event_handler,
                              NULL);
     if (rc != IB_OK) {
         ib_log_error(ib, "Hook register returned %d", rc);
