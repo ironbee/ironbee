@@ -625,7 +625,7 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
                 TSError ("Error determining buffering configuration");
             }
             ibd->data->buffering = (num == 0) ? IOBUF_NOBUF : IOBUF_BUFFER;
-            
+
             /* Override buffering based on flags */
             if (ibd->data->buffering == IOBUF_BUFFER) {
                 if (ibd->ibd->dir == IBD_REQ) {
