@@ -30,8 +30,8 @@
 #include <ironbee/mpool.h>
 #include <ironbee/types.h>
 
-#include <ctype.h>
 #include <assert.h>
+#include <ctype.h>
 
 /* Compiling with DOXYGEN will leave ib_rx_nmatch unimplemented */
 #ifdef DOXYGEN
