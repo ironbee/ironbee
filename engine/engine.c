@@ -2051,9 +2051,8 @@ ib_status_t ib_context_init_cfg(ib_context_t *ctx,
     IB_FTRACE_INIT();
     ib_status_t rc;
 
-    ib_log_debug3(ctx->ib,
-        "Initializing context %s base=%p", ib_context_full_get(ctx), base
-    );
+    ib_log_debug3(ctx->ib, "Initializing context %s base=%p",
+                  ib_context_full_get(ctx), base);
 
     if (init == NULL) {
         IB_FTRACE_RET_STATUS(IB_OK);

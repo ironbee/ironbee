@@ -2343,13 +2343,20 @@ int main(int argc, char* argv[])
 
     /* Parse the config file. */
     rc = ib_cfgparser_create(&cp, ironbee);
-    if ((rc == IB_OK) && (cp != NULL)) {
-        rc = ib_cfgparser_parse(cp, settings.config_file);
-        ib_cfgparser_destroy(cp);
-        if (rc != IB_OK) {
-            fatal_error("Error parsing configuration: %s\n",
-                        ib_status_to_string(rc));
-        }
+    if (rc != IB_OK) {
+        fatal_error("Error creating configuration parser: %s\n",
+                    ib_status_to_string(rc));
+    }
+    assert(cp != NULL);
+    rc = ib_cfgparser_parse(cp, settings.config_file);
+    if (rc != IB_OK) {
+        fatal_error("Error parsing configuration: %s\n",
+                    ib_status_to_string(rc));
+    }
+    rc = ib_cfgparser_destroy(cp);
+    if (rc != IB_OK) {
+        fatal_error("Error destroying configuration parser: %s\n",
+                    ib_status_to_string(rc));
     }
 
     /* Set all contexts' debug flags from the command line args
@@ -2357,22 +2364,20 @@ int main(int argc, char* argv[])
      * directives. */
 #if DEBUG_ARGS_ENABLE
     if ( (settings.debug_level >= 0) || (settings.debug_uri != NULL) ) {
-        ib_context_t *ctx = NULL;
-        size_t nctx;
-        size_t i;
-        IB_ARRAY_LOOP( ironbee->contexts, nctx, i, ctx ) {
-
-            set_debug( ctx );
+        ib_list_node_t *node;
+        IB_LIST_LOOP(ironbee->contexts, node) {
+            ib_context_t *ctx = (ib_context_t *)node->data;
+            set_debug(ctx);
         }
     }
 #endif
 
     /* Sanity checks */
     ctx = ib_context_main(ironbee);
-    if ( ctx == NULL ) {
+    if (ctx == NULL) {
         fatal_error("Failed to get main context\n");
     }
-    if ( ib_context_get_engine(ctx) != ironbee ) {
+    if (ib_context_get_engine(ctx) != ironbee) {
         fatal_error("ib_context_get_engine returned invalid engine pointer\n");
     }
 

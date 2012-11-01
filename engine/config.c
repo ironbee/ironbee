@@ -87,6 +87,9 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
                                 ib_engine_t *ib)
 {
     IB_FTRACE_INIT();
+    assert(pcp != NULL);
+    assert(ib != NULL);
+
     ib_mpool_t *pool;
     ib_status_t rc;
     ib_context_t *ctx;
@@ -131,20 +134,25 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
 
     /* Other fields are NULLed via calloc */
 
-    ib_log_debug3(ib, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
-                  (*pcp)->cur_ctx,
-                  ib_context_full_get((*pcp)->cur_ctx),
-                  (*pcp)->cur_site,
-                  (*pcp)->cur_site ? (*pcp)->cur_site->name : "NONE",
-                  (*pcp)->cur_loc,
-                  (*pcp)->cur_loc ? (*pcp)->cur_loc->path : "/");
+    /* Add the main context */
+    ctx = ib_context_main(ib);
+    if ( (ctx == NULL) || (!ib_context_type_check(ctx, IB_CTYPE_MAIN)) ) {
+        ib_cfg_log_error(cp, "Failed to get main configuration context");
+        rc = IB_EUNKNOWN;
+        goto failed;
+    }
+    rc = ib_cfgparser_context_push(cp, ctx);
+    if (rc != IB_OK) {
+        goto failed;
+    }
 
-    IB_FTRACE_RET_STATUS(rc);
+    /* Other fields are NULLed via calloc */
+    *pcp = cp;
+    IB_FTRACE_RET_STATUS(IB_OK);
 
 failed:
     /* Make sure everything is cleaned up on failure */
     ib_engine_pool_destroy(ib, pool);
-    *pcp = NULL;
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -313,6 +321,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
     ib_cfg_log_debug3(cp,
                       "Done reading config \"%s\" via fd=%d errno=%d",
                       file, fd, errno);
+
     if ( (error_count == 0) && (rc == IB_OK) ) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
@@ -427,8 +436,6 @@ static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
     cp->cur_ctx = ctx;
-    cp->cur_loc = (ib_loc_t *)ctx->fn_ctx_data;
-    cp->cur_site = cp->cur_loc ? cp->cur_loc->site : NULL;
     IB_FTRACE_RET_VOID();
 }
 
@@ -436,24 +443,22 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
                                       ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
-    ib_engine_t *ib = cp->ib;
+    assert(cp != NULL);
+    assert(ctx != NULL);
     ib_status_t rc;
 
     rc = ib_list_push(cp->stack, ctx);
     if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to push context %p(%s): %s",
-                     ctx, ib_context_full_get(ctx), ib_status_to_string(rc));
+        ib_cfg_log_error(cp, "Failed to push context %p(%s): %s",
+                         ctx, ib_context_full_get(ctx),
+                         ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
     cfgp_set_current(cp, ctx);
 
-    ib_log_debug3(ib, "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
-                  cp->cur_ctx,
-                  ib_context_full_get(cp->cur_ctx),
-                  cp->cur_site,
-                  cp->cur_site ? cp->cur_site->name : "NONE",
-                  cp->cur_loc,
-                  cp->cur_loc ? cp->cur_loc->path : "/");
+    ib_cfg_log_debug3(cp, "Stack: ctx=%p(%s)",
+                      cp->cur_ctx,
+                      ib_context_full_get(cp->cur_ctx));
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -462,6 +467,7 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
                                      ib_context_t **pctx)
 {
     IB_FTRACE_INIT();
+    assert(cp != NULL);
     ib_context_t *ctx;
     ib_status_t rc;
 
@@ -487,10 +493,8 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     cfgp_set_current(cp, ctx);
 
     ib_cfg_log_debug3(cp,
-        "Stack: ctx=%p(%s) site=%p(%s) loc=%p(%s)",
-        cp->cur_ctx, ib_context_full_get(cp->cur_ctx),
-        cp->cur_site, cp->cur_site ? cp->cur_site->name : "NONE",
-        cp->cur_loc, cp->cur_loc ? cp->cur_loc->path : "/");
+                      "Stack: ctx=%p(%s)",
+                      cp->cur_ctx, ib_context_full_get(cp->cur_ctx));
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -499,6 +503,8 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
                                                const char *name)
 {
     IB_FTRACE_INIT();
+    assert(cp != NULL);
+    assert(name != NULL);
     ib_status_t rc;
 
     rc = ib_list_push(cp->block, (void *)name);
@@ -517,6 +523,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
                                               const char **pname)
 {
     IB_FTRACE_INIT();
+    assert(cp != NULL);
     const char *name;
     ib_status_t rc;
 
@@ -547,6 +554,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
 void ib_cfgparser_destroy(ib_cfgparser_t *cp)
 {
     IB_FTRACE_INIT();
+    assert(cp != NULL);
 
     if (cp != NULL) {
         ib_engine_pool_destroy(cp->ib, cp->mp);
@@ -559,6 +567,8 @@ ib_status_t ib_config_register_directives(ib_engine_t *ib,
                                           const ib_dirmap_init_t *init)
 {
     IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(init != NULL);
     const ib_dirmap_init_t *rec = init;
     ib_status_t rc;
 
@@ -611,6 +621,11 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                                         ib_list_t *args)
 {
     IB_FTRACE_INIT();
+    assert(cp != NULL);
+    assert(cp->ib != NULL);
+    assert(name != NULL);
+    assert(args != NULL);
+
     ib_engine_t *ib = cp->ib;
     ib_dirmap_init_t *rec;
     ib_list_node_t *node;
@@ -752,17 +767,24 @@ ib_status_t ib_config_block_start(ib_cfgparser_t *cp,
                                   const char *name,
                                   ib_list_t *args)
 {
+    IB_FTRACE_INIT();
+    assert(cp != NULL);
+    assert(name != NULL);
+
     ib_status_t rc = ib_cfgparser_block_push(cp, name);
     if (rc != IB_OK) {
-        return rc;
+        IB_FTRACE_RET_STATUS(rc);
     }
-    return ib_config_directive_process(cp, name, args);
+    IB_FTRACE_RET_STATUS(ib_config_directive_process(cp, name, args));
 }
 
 ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
                                     const char *name)
 {
     IB_FTRACE_INIT();
+    assert(cp != NULL);
+    assert(name != NULL);
+
     ib_engine_t *ib = cp->ib;
     ib_dirmap_init_t *rec;
     ib_status_t rc;
@@ -780,13 +802,13 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
 
     rc = IB_OK;
     switch (rec->type) {
-        case IB_DIRTYPE_SBLK1:
-            if (rec->fn_blkend != NULL) {
-                rc = rec->fn_blkend(cp, name, rec->cbdata_blkend);
-            }
-            break;
-        default:
-            rc = IB_EINVAL;
+    case IB_DIRTYPE_SBLK1:
+        if (rec->fn_blkend != NULL) {
+            rc = rec->fn_blkend(cp, name, rec->cbdata_blkend);
+        }
+        break;
+    default:
+        rc = IB_EINVAL;
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -796,19 +818,23 @@ ib_status_t ib_config_strval_pair_lookup(const char *str,
                                          const ib_strval_t *map,
                                          ib_num_t *pval)
 {
+    IB_FTRACE_INIT();
+    assert(str != NULL);
+    assert(map != NULL);
+    assert(pval != NULL);
+
     ib_strval_t *rec = (ib_strval_t *)map;
 
     while (rec->str != NULL) {
         if (strcasecmp(str, rec->str) == 0) {
             *pval = rec->val;
-            return IB_OK;
+            IB_FTRACE_RET_STATUS(IB_OK);
         }
         ++rec;
     }
 
     *pval = 0;
-
-    return IB_EINVAL;
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
 
@@ -818,6 +844,7 @@ void ib_cfg_log_f(ib_cfgparser_t *cp, ib_log_level_t level,
 {
     IB_FTRACE_INIT();
     assert(cp != NULL);
+    assert(fmt != NULL);
 
     va_list ap;
     va_start(ap, fmt);
@@ -837,6 +864,7 @@ void ib_cfg_log_ex_f(const ib_engine_t *ib,
 {
     IB_FTRACE_INIT();
     assert(ib != NULL);
+    assert(fmt != NULL);
 
     va_list ap;
     va_start(ap, fmt);
@@ -902,6 +930,8 @@ void ib_cfg_vlog(ib_cfgparser_t *cp, ib_log_level_t level,
                  const char *fmt, va_list ap)
 {
     IB_FTRACE_INIT();
+    assert(cp != NULL);
+    assert(fmt != NULL);
 
     ib_cfg_vlog_ex(cp->ib, cp->cur_file, cp->cur_lineno,
                    level, file, line, fmt, ap);
