@@ -3,6 +3,7 @@
 #include <ironbeepp/engine.hpp>
 
 #include <ironbee/engine.h>
+#include <ironbee/core.h>
 
 namespace IronBee {
 
@@ -45,9 +46,17 @@ Engine ConstContext::engine() const
     return Engine(ib_context_get_engine(ib()));
 }
 
-Site ConstContext::site() const
+ConstSite ConstContext::site() const
 {
-    return Site(ib_context_site_get(ib()));
+    const ib_site_t *ctx;
+    ib_status_t rc;
+
+    rc = ib_core_context_site_get(ib(), &ctx);
+    if (rc != IB_OK) {
+        // TODO
+    }
+
+    return ConstSite(ctx);
 }
 
 // Context

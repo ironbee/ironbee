@@ -61,22 +61,27 @@ struct cfgp_blk_t {
 };
 
 /* Get an option value from a name/mapping. */
-static ib_status_t cfgp_opval(const char *opname, const ib_strval_t *map,
+static ib_status_t cfgp_opval(const char *opname,
+                              const ib_strval_t *map,
                               ib_num_t *pval)
 {
+    IB_FTRACE_INIT();
+    assert(opname != NULL);
+    assert(map != NULL);
+    assert(pval != NULL);
+
     ib_strval_t *rec = (ib_strval_t *)map;
 
     while (rec->str != NULL) {
         if (strcasecmp(opname, rec->str) == 0) {
             *pval = rec->val;
-            return IB_OK;
+            IB_FTRACE_RET_STATUS(IB_OK);
         }
         ++rec;
     }
 
     *pval = 0;
-
-    return IB_EINVAL;
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
 
@@ -93,6 +98,9 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
     ib_mpool_t *pool;
     ib_status_t rc;
     ib_context_t *ctx;
+    ib_cfgparser_t *cp;
+
+    *pcp = NULL;
 
     /* Create parser memory pool */
     rc = ib_mpool_create(&pool, "cfgparser", ib->mp);
@@ -101,38 +109,41 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
         goto failed;
     }
 
-    /* Create the main structure in the memory pool */
-    *pcp = (ib_cfgparser_t *)ib_mpool_calloc(pool, 1, sizeof(**pcp));
-    if (*pcp == NULL) {
+    /* Create the configuration parser object from the memory pool */
+    cp = (ib_cfgparser_t *)ib_mpool_calloc(pool, sizeof(*cp), 1);
+    if (cp == NULL) {
         rc = IB_EALLOC;
         goto failed;
     }
-    (*pcp)->ib = ib;
-    (*pcp)->mp = pool;
+    cp->ib = ib;
+    cp->mp = pool;
 
     /* Create the stack */
-    rc = ib_list_create(&((*pcp)->stack), pool);
+    rc = ib_list_create(&(cp->stack), pool);
     if (rc != IB_OK) {
         goto failed;
     }
-    ctx = ib_context_main(ib);
-    (*pcp)->cur_ctx = ctx;
-    ib_context_config_set_parser(ctx, *pcp);
-    ib_list_push((*pcp)->stack, ctx);
 
     /* Create the block tracking list */
-    rc = ib_list_create(&((*pcp)->block), pool);
+    rc = ib_list_create(&(cp->block), pool);
     if (rc != IB_OK) {
         goto failed;
     }
 
     /* Create the include tracking list */
-    rc = ib_hash_create(&((*pcp)->includes), pool);
+    rc = ib_hash_create(&(cp->includes), pool);
     if (rc != IB_OK) {
         goto failed;
     }
 
-    /* Other fields are NULLed via calloc */
+    /* Notify the state engine that we're starting configuration.
+     * Note: This has a side effect of creating the main context. */
+    rc = ib_state_notify_cfg_started(ib);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to notify configuration start: %s",
+                         ib_status_to_string(rc));
+        goto failed;
+    }
 
     /* Add the main context */
     ctx = ib_context_main(ib);
@@ -141,6 +152,7 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
         rc = IB_EUNKNOWN;
         goto failed;
     }
+    ib_context_config_set_parser(ctx, cp);
     rc = ib_cfgparser_context_push(cp, ctx);
     if (rc != IB_OK) {
         goto failed;
@@ -551,16 +563,22 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-void ib_cfgparser_destroy(ib_cfgparser_t *cp)
+ib_status_t ib_cfgparser_destroy(ib_cfgparser_t *cp)
 {
     IB_FTRACE_INIT();
     assert(cp != NULL);
+    ib_status_t rc;
+
+    rc = ib_state_notify_cfg_finished(cp->ib);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     if (cp != NULL) {
         ib_engine_pool_destroy(cp->ib, cp->mp);
     }
 
-    IB_FTRACE_RET_VOID();
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t ib_config_register_directives(ib_engine_t *ib,

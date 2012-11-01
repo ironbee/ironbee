@@ -72,22 +72,15 @@ public:
         ib_rule->meta.id = "const_rule_id";
         ib_rule->meta.full_id = "full_const_rule_id";
 
-        ib_state_notify_cfg_started(ib_engine);
-
-        assert(ib_engine->temp_mp != NULL);
-        assert(ib_engine->config_mp != NULL);
-
         /* We need the ibmod_htp to initialize the ib_tx. */
         configureIronBee("test_ironbee_lua_api.conf");
-        assert(IB_OK == ib_state_notify_cfg_finished(ib_engine));
-
         ib_conn = buildIronBeeConnection();
 
         sendDataIn("GET / HTTP/1.1\r\nHost: UnitTest\r\n\r\n");
         sendDataOut("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
 
         /* Lib htp.c does this, so we do this here. */
-        assert(ib_conn->tx!=NULL);
+        assert(ib_conn->tx != NULL);
         ib_tx = ib_conn->tx;
 
         memset(&ib_rule_exec, 0, sizeof(ib_rule_exec));

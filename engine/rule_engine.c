@@ -28,6 +28,8 @@
 #include "rule_engine_private.h"
 #include "engine_private.h"
 
+#include <ironbee/engine.h>
+#include <ironbee/core.h>
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/config.h>
@@ -2694,6 +2696,70 @@ static ib_status_t create_rule_context(const ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Copy a list of rules / rule enable from one list to another
+ *
+ * @param[in] src_list List of items to copy
+ * @param[in,out] dest_list List to copy items into
+ *
+ * @returns Status code
+ */
+static ib_status_t copy_list(const ib_list_t *src_list,
+                             ib_list_t *dest_list)
+{
+    IB_FTRACE_INIT();
+    assert(src_list != NULL);
+    assert(dest_list != NULL);
+    ib_status_t rc;
+    const ib_list_node_t *node;
+
+    IB_LIST_LOOP_CONST(src_list, node) {
+        assert(node->data != NULL);
+        rc = ib_list_push(dest_list, node->data);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Import a rule's context from it's parent
+ *
+ * @param[in] parent_rules Parent's rule context object
+ * @param[in,out] ctx_rules Rule context object
+ *
+ * @returns Status code
+ */
+static ib_status_t import_rule_context(const ib_rule_context_t *parent_rules,
+                                       ib_rule_context_t *ctx_rules)
+{
+    IB_FTRACE_INIT();
+    assert(parent_rules != NULL);
+    assert(ctx_rules != NULL);
+    ib_status_t rc;
+
+    /* Copy rules list */
+    rc = copy_list(parent_rules->rule_list, ctx_rules->rule_list);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Copy enable list */
+    rc = copy_list(parent_rules->enable_list, ctx_rules->enable_list);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Copy disable list */
+    rc = copy_list(parent_rules->disable_list, ctx_rules->disable_list);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+                                  
+
 ib_status_t ib_rule_engine_init(ib_engine_t *ib,
                                 ib_module_t *mod)
 {
@@ -2721,7 +2787,7 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
+ib_status_t ib_rule_engine_ctx_open(ib_engine_t *ib,
                                     ib_module_t *mod,
                                     ib_context_t *ctx)
 {
@@ -2749,6 +2815,17 @@ ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
                      "Rule engine failed to initialize phase ruleset: %s",
                      ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* If this is a location context, import our parents context info */
+    if (ctx->ctype == IB_CTYPE_LOCATION) {
+        rc = import_rule_context(ctx->parent->rules, ctx->rules);
+        if (rc != IB_OK) {
+            ib_log_error(ib,
+                         "Rule engine failed to import from parent: %s",
+                         ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -2922,11 +2999,11 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
     ib_list_t      *all_rules;
     ib_list_node_t *node;
     ib_flags_t      skip_flags;
-    ib_status_t     rc;
     ib_context_t   *main_ctx = ib_context_main(ib);
+    ib_status_t     rc;
 
-    /* Don't enable rules for the main context */
-    if (ctx == main_ctx) {
+    /* Don't enable rules for non-location contexts */
+    if (ctx->ctype != IB_CTYPE_LOCATION) {
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
@@ -3249,8 +3326,8 @@ ib_status_t ib_rule_create(ib_engine_t *ib,
     assert(ib != NULL);
     assert(ctx != NULL);
 
-    /* Initialize the context's rule set (if required) */
-    rc = ib_rule_engine_ctx_init(ib, NULL, ctx);
+    /* Open context's rule set (if required) */
+    rc = ib_rule_engine_ctx_open(ib, NULL, ctx);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to initialize rules for context \"%s\"",
                      ib_context_full_get(ctx));
@@ -3545,11 +3622,28 @@ static ib_status_t gen_full_id(ib_engine_t *ib,
         len += 5;                            /* "main/" */
     }
     else {
-        const ib_site_t *site = ib_context_site_get(ctx);
-        assert(site != NULL);
+        ib_status_t rc;
+        const ib_site_t *site;
+
+        if ( (ctx->ctype == IB_CTYPE_LOCATION) ||
+             (ctx->ctype == IB_CTYPE_SITE) )
+        {
+            rc = ib_context_site_get(ib, ctx, &site);
+            if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            else if (site == NULL) {
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+            else {
+                part2 = site->id_str;
+            }
+        }
+        else {
+            part2 = ctx->ctx_name;
+        }
         part1 = "site/";
-        part2 = site->id_str;
-        len += 5 + strlen(site->id_str) + 1; /* "site/<id>/" */
+        len += 5 + strlen(part2) + 1; /* "site/<id>/" */
     }
     part3 = rule->meta.id;
     len += strlen(part3);
@@ -3856,6 +3950,12 @@ ib_status_t ib_rule_enable(const ib_engine_t *ib,
                             ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
+    ib_cfg_log_trace_ex(ib, file, lineno,
+                        "Added %s %s \"%s\" to context=\"%s\" list",
+                        enable ? "enable" : "disable",
+                        str == NULL ? "<None>" : str,
+                        name,
+                        ib_context_full_get(ctx));
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

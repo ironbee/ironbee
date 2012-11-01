@@ -149,15 +149,16 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
                                 ib_module_t *mod);
 
 /**
- * Initialize a context the rule engine.
+ * Rule engine context open
  *
- * Called when a context is initialized; performs rule engine initialization.
+ * Called when a context is opened; performs rule engine context-specific
+ * initializations.
  *
  * @param[in,out] ib IronBee object
  * @param[in] mod Module object
  * @param[in,out] ctx IronBee context
  */
-ib_status_t ib_rule_engine_ctx_init(ib_engine_t *ib,
+ib_status_t ib_rule_engine_ctx_open(ib_engine_t *ib,
                                     ib_module_t *mod,
                                     ib_context_t *ctx);
 

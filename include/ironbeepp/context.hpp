@@ -40,6 +40,7 @@ typedef struct ib_context_t ib_context_t;
 
 namespace IronBee {
 
+class ConstSite;
 class Site;
 class Engine;
 class Context;
@@ -107,7 +108,7 @@ public:
     Engine engine() const;
 
     //! Site of context.
-    Site site() const;
+    ConstSite site() const;
 
 private:
     ib_type m_ib;

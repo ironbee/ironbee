@@ -43,14 +43,14 @@
 
 // IronBee C
 typedef struct ib_site_t ib_site_t;
-typedef struct ib_loc_t ib_loc_t;
+typedef struct ib_site_location_t ib_site_location_t;
 
 namespace IronBee {
 
 class Site;
 
 /**
- * Const Location; equivalent to a const pointer to ib_loc_t.
+ * Const Location; equivalent to a const pointer to ib_site_location_t.
  *
  * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for
  * singularity via CommonSemantics.
@@ -61,7 +61,7 @@ class Site;
  *
  * @sa Location
  * @sa ironbeepp
- * @sa ib_loc_t
+ * @sa ib_site_location_t
  * @nosubgrouping
  **/
 class ConstLocation :
@@ -69,7 +69,7 @@ class ConstLocation :
 {
 public:
     //! C Type.
-    typedef const ib_loc_t* ib_type;
+    typedef const ib_site_location_t* ib_type;
 
     /**
      * Construct singular ConstLocation.
@@ -85,14 +85,14 @@ public:
      **/
     ///@{
 
-    //! const ib_loc_t accessor.
+    //! const ib_site_location_t accessor.
     // Intentionally inlined.
     ib_type ib() const
     {
         return m_ib;
     }
 
-    //! Construct Location from ib_loc_t.
+    //! Construct Location from ib_site_location_t.
     explicit
     ConstLocation(ib_type ib_location);
 
@@ -109,7 +109,7 @@ private:
 };
 
 /**
- * Location; equivalent to a pointer to ib_loc_t.
+ * Location; equivalent to a pointer to ib_site_location_t.
  *
  * Location can be treated as ConstLocation.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
@@ -119,7 +119,7 @@ private:
  *
  * @sa ConstLocation
  * @sa ironbeepp
- * @sa ib_loc_t
+ * @sa ib_site_location_t
  * @nosubgrouping
  **/
 class Location :
@@ -127,7 +127,7 @@ class Location :
 {
 public:
     //! C Type.
-    typedef ib_loc_t* ib_type;
+    typedef ib_site_location_t* ib_type;
 
     /**
      * Remove the constness of a ConstLocation.
@@ -153,13 +153,13 @@ public:
      **/
     ///@{
 
-    //! ib_loc_t accessor.
+    //! ib_site_location_t accessor.
     ib_type ib() const
     {
         return m_ib;
     }
 
-    //! Construct Location from ib_loc_t.
+    //! Construct Location from ib_site_location_t.
     explicit
     Location(ib_type ib_location);
 

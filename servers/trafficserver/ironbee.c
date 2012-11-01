@@ -1164,7 +1164,8 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     hdr_action_t setact;
     const char *line, *lptr;
     size_t line_len = 0;
-    ib_site_t *site;
+    const ib_site_t *site;
+    ib_status_t ib_rc;
     int nhdrs = 0;
 
     char *head_buf;
@@ -1405,7 +1406,12 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     setact.dir = ibd->dir;
 
     /* Add the ironbee site id to an internal header. */
-    site = ib_context_site_get(data->tx->ctx);
+    ib_rc = ib_context_site_get(ironbee, data->tx->ctx, &site);
+    if (ib_rc != IB_OK) {
+        TSDebug("ironbee", "Error getting site for context: %s",
+                ib_status_to_string(ib_rc));
+        site = NULL;
+    }
     if (site != NULL) {
         setact.hdr = "@IB-SITE-ID";
         setact.value = site->id_str;
@@ -1982,24 +1988,25 @@ static int ironbee_init(const char *configfile, const char *logfile)
                           ironbee_conn_init, NULL);
 
 
-    TSDebug("ironbee", "ironbee_init: calling ib_state_notify_cfg_started()");
-    ib_state_notify_cfg_started(ironbee);
-    ctx = ib_context_main(ironbee);
-
-    ib_context_set_string(ctx, IB_PROVIDER_TYPE_LOGGER, "ironbee-ts");
-    ib_context_set_num(ctx, "logger.log_level", 4);
-
+    /* This creates the main context */
     rc = ib_cfgparser_create(&cp, ironbee);
     if (rc != IB_OK) {
         return rc;
     }
-    if (cp != NULL) {  // huh?
-        ib_cfgparser_parse(cp, configfile);
-        ib_cfgparser_destroy(cp);
-    }
-    TSDebug("ironbee", "ironbee_init: calling ib_state_notify_cfg_finished()");
-    ib_state_notify_cfg_finished(ironbee);
 
+    /* Get the main context, set some defaults */
+    ctx = ib_context_main(ironbee);
+    ib_context_set_string(ctx, IB_PROVIDER_TYPE_LOGGER, "ironbee-ts");
+    ib_context_set_num(ctx, "logger.log_level", 4);
+
+    rc = ib_cfgparser_parse(cp, configfile);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_cfgparser_destroy(cp);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     return IB_OK;
 }

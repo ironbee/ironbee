@@ -53,9 +53,9 @@
 typedef struct {
     core_audit_cfg_t *cfg;
     ib_auditlog_t *log;
-    ib_tx_t *tx;
-    ib_conn_t *conn;
-    ib_site_t *site;
+    const ib_tx_t *tx;
+    const ib_conn_t *conn;
+    const ib_site_t *site;
 } auditlog_callback_data_t;
 
 /* The default shell to use for piped commands. */
@@ -82,7 +82,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     int sys_rc;
     ib_status_t ib_rc;
     struct tm gmtime_result;
-    ib_site_t *site;
+    const ib_site_t *site;
 
     if (dtmp == NULL || dn == NULL) {
         ib_log_error(log->ib,  "Failed to allocate internal buffers.");
@@ -126,8 +126,13 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    /* Get the site */
+    ib_rc = ib_context_site_get(log->ib, log->ctx, &site);
+    if (ib_rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(ib_rc);
+    }
+
     /* Generate the full audit log filename. */
-    site = ib_context_site_get(log->ctx);
     if (site != NULL) {
         audit_filename_sz = strlen(dn) + strlen(cfg->tx->id) +
             strlen(site->id_str) + 7;
@@ -615,10 +620,16 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
     ib_core_cfg_t *corecfg;
     ib_tx_t *tx = log->tx;
     ib_conn_t *conn = tx->conn;
-    ib_site_t *site = ib_context_site_get(log->ctx);
+    const ib_site_t *site;
     const ib_logformat_t *lf;
     ib_status_t rc;
     auditlog_callback_data_t cbdata;
+
+    /* Get the site */
+    rc = ib_context_site_get(log->ib, log->ctx, &site);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     /* Retrieve corecfg to get the AuditLogIndexFormat */
     rc = ib_context_module_config(log->ctx, ib_core_module(),

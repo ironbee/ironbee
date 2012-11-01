@@ -164,14 +164,14 @@ void Site::add_host(const char* hostname) const
 
 Location Site::create_location(const char* path) const
 {
-    ib_loc_t* ib_loc = NULL;
+    ib_site_location_t* ib_loc = NULL;
     Internal::throw_if_error(ib_site_loc_create(m_ib, &ib_loc, path));
     return Location(ib_loc);
 }
 
 Location Site::create_default_location() const
 {
-    ib_loc_t* ib_loc = NULL;
+    ib_site_location_t* ib_loc = NULL;
     Internal::throw_if_error(ib_site_loc_create_default(m_ib, &ib_loc));
     return Location(ib_loc);
 }

@@ -1150,6 +1150,7 @@ static ib_status_t print_context(
 {
     IB_FTRACE_INIT();
 
+    printf("  Context Type: %d (\"%s\")\n", ctx->ctype, ctx->ctx_type);
     printf("  Context Name: \"%s\"\n", ctx->ctx_name);
     printf("  Context Full Name: \"%s\"\n", ctx->ctx_full);
 

@@ -122,9 +122,9 @@ public:
     void configureIronBee(const std::string& configFile) {
 
         ib_status_t rc;
-        ib_cfgparser_t *p;
-        rc = ib_cfgparser_create(&p, ib_engine);
+        ib_cfgparser_t *cp;
 
+        rc = ib_cfgparser_create(&cp, ib_engine);
         if (rc != IB_OK) {
             throw std::runtime_error(
                 std::string("Failed to create parser: ") +
@@ -132,11 +132,16 @@ public:
             );
         }
 
-        rc = ib_cfgparser_parse(p, configFile.c_str());
-
+        rc = ib_cfgparser_parse(cp, configFile.c_str());
         if (rc != IB_OK) {
             throw std::runtime_error(
                 std::string("Failed to parse configuration file."));
+        }
+
+        rc = ib_cfgparser_destroy(cp);
+        if (rc != IB_OK) {
+            throw std::runtime_error(
+                std::string("Failed to destroy parser"));
         }
     }
 

@@ -68,6 +68,26 @@ typedef struct ib_rule_engine_t ib_rule_engine_t;
 typedef struct ib_rule_context_t ib_rule_context_t;
 
 /**
+ * Engine configuration state
+ */
+typedef enum {
+    CFG_NOT_STARTED,
+    CFG_STARTED,
+    CFG_FINISHED
+} ib_engine_cfg_state_t;
+
+/**
+ * Configuration Context Selection Data
+ */
+struct ib_context_select_t {
+    const ib_module_t            *module;
+    ib_context_select_fn_t        select_fn;
+    ib_context_get_site_fn_t      get_site_fn;
+    ib_context_get_location_fn_t  get_location_fn;
+};
+typedef struct ib_context_select_t ib_context_select_t;
+
+/**
  * Engine handle.
  */
 struct ib_engine_t {
@@ -77,6 +97,7 @@ struct ib_engine_t {
     ib_provider_inst_t *dpi;              /**< Data provider instance */
     ib_context_t       *ectx;             /**< Engine configuration context */
     ib_context_t       *ctx;              /**< Main configuration context */
+    ib_engine_cfg_state_t cfg_state;      /**< Engine configuration state */
     ib_uuid_t           sensor_id;        /**< Sensor UUID */
     uint32_t            sensor_id_hash;   /**< Sensor UUID hash (4 bytes) */
     const char         *sensor_id_str;    /**< ascii format, for logging */
@@ -88,7 +109,7 @@ struct ib_engine_t {
     ib_server_t        *server;           /**< Info about the server */
     ib_array_t         *modules;          /**< Array tracking modules */
     ib_array_t         *filters;          /**< Array tracking filters */
-    ib_array_t         *contexts;         /**< Configuration contexts */
+    ib_list_t          *contexts;         /**< Configuration contexts */
     ib_hash_t          *dirmap;           /**< Hash tracking directive map */
     ib_hash_t          *apis;             /**< Hash tracking provider APIs */
     ib_hash_t          *providers;        /**< Hash tracking providers */
@@ -99,6 +120,10 @@ struct ib_engine_t {
 
     /* Hooks */
     ib_hook_t *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
+
+    /* Context selection functions */
+    ib_context_select_t act_ctx_select;   /**< Active context selection */
+    ib_context_select_t core_ctx_select;  /**< Core context selection */
 };
 
 /**
@@ -106,36 +131,37 @@ struct ib_engine_t {
  */
 typedef struct ib_context_data_t ib_context_data_t;
 struct ib_context_data_t {
-    ib_module_t        *module;           /**< Module handle */
-    void               *data;             /**< Module config structure */
+    ib_module_t          *module;      /**< Module handle */
+    void                 *data;        /**< Module config structure */
 };
 
 /**
  * Configuration context.
  */
 struct ib_context_t {
-    ib_engine_t             *ib;          /**< Engine */
-    ib_mpool_t              *mp;          /**< Memory pool */
-    ib_cfgmap_t             *cfg;         /**< Config map */
-    ib_array_t              *cfgdata;     /**< Config data */
-    ib_context_t            *parent;      /**< Parent context */
-    const char              *ctx_type;    /**< Type identifier string. */
-    const char              *ctx_name;    /**< Name identifier string. */
-    const char              *ctx_full;    /**< Full name of context */
-    const char              *ctx_cwd;     /**< Context's current directory */
-    ib_auditlog_cfg_t       *auditlog;    /**< Per-context audit log cfgs. */
-    const ib_cfgparser_t    *cfgparser;   /**< Our configuration parser */
+    ib_engine_t          *ib;          /**< Engine */
+    ib_mpool_t           *mp;          /**< Memory pool */
+    ib_cfgmap_t          *cfg;         /**< Config map */
+    ib_array_t           *cfgdata;     /**< Config data */
+    ib_context_t         *parent;      /**< Parent context */
+    ib_list_t            *children;    /**< Child contexts */
+    ib_ctype_t            ctype;       /**< Context type */
+    const char           *ctx_type;    /**< Type identifier string. */
+    const char           *ctx_name;    /**< Name identifier string. */
+    const char           *ctx_full;    /**< Full name of context */
+    const char           *ctx_cwd;     /**< Context's current directory */
+    ib_auditlog_cfg_t    *auditlog;    /**< Per-context audit log cfgs. */
+    const ib_cfgparser_t *cfgparser;   /**< Our configuration parser */
+    bool                  is_open;     /**< True when context is open */
 
-    /* Context Selection */
-    ib_context_fn_t          fn_ctx;      /**< Context decision function */
-    ib_context_site_fn_t     fn_ctx_site; /**< Context site function */
-    void                    *fn_ctx_data; /**< Context function data */
+    /* Data specific to the selector for this context */
+    void                 *selection_data; /**< Selector specific data */
 
     /* Filters */
-    ib_list_t               *filters;     /**< Context enabled filters */
+    ib_list_t            *filters;     /**< Context enabled filters */
 
     /* Rules associated with this context */
-    ib_rule_context_t       *rules;       /**< Rule context data */
+    ib_rule_context_t    *rules;       /**< Rule context data */
 };
 
 #endif /* _IB_ENGINE_PRIVATE_H_ */

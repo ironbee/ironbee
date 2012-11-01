@@ -946,10 +946,12 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
     if (modcfg->config != NULL) {
         ib_context_t *ctx;
 
-        /* Notify the engine that the config process has started. This
-         * will also create a main configuration context.
-         */
-        ib_state_notify_cfg_started(ironbee);
+        /* Parse the config file.  This creates the main context. */
+        rc = ib_cfgparser_create(&cp, ironbee);
+        if ( (rc != IB_OK) || (cp == NULL) ) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         IB_PRODUCT_NAME ": Failed to create IB config parser");
+        }
 
         /* Get the main configuration context. */
         ctx = ib_context_main(ironbee);
@@ -958,22 +960,18 @@ static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp
         ib_context_set_string(ctx, IB_PROVIDER_TYPE_LOGGER, MODULE_NAME_STR);
         ib_context_set_num(ctx, "logger.log_level", 4);
 
-        /* Parse the config file. */
-        rc = ib_cfgparser_create(&cp, ironbee);
-        if ((rc == IB_OK) && (cp != NULL)) {
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                     IB_PRODUCT_NAME ": Parsing IB config: %s", modcfg->config);
+        rc = ib_cfgparser_parse(cp, modcfg->config);
+        if (rc != IB_OK) {
             ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                         IB_PRODUCT_NAME ": Parsing config: %s",
-                         modcfg->config);
-            ib_cfgparser_parse(cp, modcfg->config);
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                         IB_PRODUCT_NAME ": Destroying config parser");
-            ib_cfgparser_destroy(cp);
+                         IB_PRODUCT_NAME ": Destroying IB config parser");
         }
-
-        /* Notify the engine that the config process has finished. This
-         * will also close out the main configuration context.
-         */
-        ib_state_notify_cfg_finished(ironbee);
+        rc = ib_cfgparser_destroy(cp);
+        if (rc != IB_OK) {
+            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                         IB_PRODUCT_NAME ": Error destroying IB config parser");
+        }
     }
     else {
         ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,

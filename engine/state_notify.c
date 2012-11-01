@@ -93,6 +93,7 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(conn != NULL);
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
@@ -118,6 +119,7 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(conndata != NULL);
 
     ib_conn_t *conn = conndata->conn;
@@ -146,6 +148,7 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
     assert(line != NULL);
     assert(line->raw != NULL);
@@ -202,6 +205,7 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
     assert((line == NULL) || (line->raw != NULL));
     assert((line == NULL) || (line->protocol != NULL));
@@ -261,6 +265,7 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
@@ -344,13 +349,20 @@ ib_status_t ib_state_notify_request_started(
 ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
 {
     IB_FTRACE_INIT();
-
     assert(ib != NULL);
-
+    assert(ib->cfg_state == CFG_NOT_STARTED);
     ib_status_t rc;
 
+    /* Ignore extraneous config started events */
+    if (ib->cfg_state == CFG_STARTED) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
     /* Create and configure the main configuration context. */
-    ib_engine_context_create_main(ib);
+    rc = ib_engine_context_create_main(ib);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
 
     rc = ib_context_open(ib->ctx);
     if (rc != IB_OK) {
@@ -360,15 +372,15 @@ ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
     /// @todo Create a temp mem pool???
     CALL_NULL_HOOKS(&rc, ib->hook[cfg_started_event], cfg_started_event, ib);
 
+    ib->cfg_state = CFG_STARTED;
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
 {
     IB_FTRACE_INIT();
-
     assert(ib != NULL);
-
+    assert(ib->cfg_state == CFG_STARTED);
     ib_status_t rc;
 
     /* Initialize (and close) the main configuration context. */
@@ -389,51 +401,8 @@ ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
     /* Destroy the temporary memory pool. */
     ib_engine_pool_temp_destroy(ib);
 
+    ib->cfg_state = CFG_FINISHED;
     IB_FTRACE_RET_STATUS(rc);
-}
-
-static ib_status_t ib_context_get_ex(
-    ib_engine_t *ib,
-    ib_ctype_t type,
-    void *data,
-    ib_context_t **pctx
-) {
-    IB_FTRACE_INIT();
-    ib_context_t *ctx;
-    ib_status_t rc;
-    size_t nctx, i;
-
-    *pctx = NULL;
-
-    /* Run through the config context functions to select the context. */
-    IB_ARRAY_LOOP(ib->contexts, nctx, i, ctx) {
-        ib_log_debug3(ib, "Checking context %d=%p '%s'",
-                      (int)i, ctx, ib_context_full_get(ctx));
-        /* A NULL function is a null context, so skip it */
-        if ((ctx == NULL) || (ctx->fn_ctx == NULL)) {
-            continue;
-        }
-
-        rc = ctx->fn_ctx(ctx, type, data, ctx->fn_ctx_data);
-        if (rc == IB_OK) {
-            ib_site_t *site = ib_context_site_get(ctx);
-            ib_log_debug2(ib, "Selected context %d=%p '%s' site=%s(%s)",
-                          (int)i, ctx, ib_context_full_get(ctx),
-                          (site ? site->id_str : "none"),
-                          (site ? site->name : "none"));
-            *pctx = ctx;
-            break;
-        }
-        else if (rc != IB_DECLINED) {
-            /// @todo Log the error???
-        }
-    }
-    if (*pctx == NULL) {
-        ib_log_debug3(ib, "Using \"main\" context");
-        *pctx = ib_context_main(ib);
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
@@ -442,6 +411,7 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(conn != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
@@ -481,7 +451,7 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
     }
 
     /* Select the connection context to use. */
-    rc = ib_context_get_ex(ib, IB_CTYPE_CONN, conn, &conn->ctx);
+    rc = ib_context_select(ib, conn, NULL, NULL, &conn->ctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -509,6 +479,7 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(conndata != NULL);
 
     ib_conn_t *conn = conndata->conn;
@@ -579,6 +550,7 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(conn != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
@@ -658,6 +630,7 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
     assert(header != NULL);
 
@@ -693,6 +666,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
     assert(txdata != NULL);
 
@@ -774,6 +748,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
@@ -829,7 +804,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     }
 
     /* Select the transaction context to use. */
-    rc = ib_context_get_ex(ib, IB_CTYPE_TX, tx, &tx->ctx);
+    rc = ib_context_select(ib, tx->conn, tx, NULL, &tx->ctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -851,6 +826,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
     assert(txdata != NULL);
 
@@ -900,6 +876,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
@@ -974,6 +951,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
     ib_status_t rc;
@@ -1013,6 +991,7 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
     assert(header != NULL);
 
@@ -1062,6 +1041,7 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
@@ -1124,6 +1104,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
     assert(txdata != NULL);
 
@@ -1184,6 +1165,7 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
     ib_provider_inst_t *pi = ib_parser_provider_get_instance(tx->conn->ctx);
@@ -1264,6 +1246,7 @@ ib_status_t ib_state_notify_postprocess(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
     ib_status_t rc;

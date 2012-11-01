@@ -808,8 +808,10 @@ typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
     /* Config */
     typedef struct ib_cfgparser_t ib_cfgparser_t;
     typedef struct ib_dirmap_init_t ib_dirmap_init_t;
+    typedef struct ib_service_t ib_service_t;
+    typedef struct ib_site_hostname_t ib_site_hostname_t;
+    typedef struct ib_site_location_t ib_site_location_t;
     typedef struct ib_site_t ib_site_t;
-    typedef struct ib_loc_t ib_loc_t;
     typedef enum {
         IB_DIRTYPE_ONOFF,                    /**< Boolean param directive */
         IB_DIRTYPE_PARAM1,                   /**< One param directive */
