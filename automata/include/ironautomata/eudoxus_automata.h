@@ -125,7 +125,7 @@ struct ia_eudoxus_automata_t
     uint64_t num_output_lists;
 
     /**
-     * Number of bytes defining automata after end of this structure.
+     * Number of bytes defining automata including this structure.
      */
     uint64_t data_length;
 
