@@ -120,7 +120,7 @@ struct ia_eudoxus_automata_t
     uint64_t num_outputs;
 
     /**
-     * Numer of output list elements in automata.
+     * Number of output list elements in automata.
      */
     uint64_t num_output_lists;
 
