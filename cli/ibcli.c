@@ -97,9 +97,16 @@ typedef struct {
 
 /* Dump flags */
 #define DUMP_TX_ARGS            (1<< 0) /* Dump base transaction */
-#define DUMP_TX_FULL            (1<< 1) /* Dump full transaction */
-#define DUMP_USER_AGENT         (1<< 2) /* Dump user agent data */
-#define DUMP_GEOIP              (1<< 3) /* Dump GeoIP data */
+#define DUMP_TX_FLAGS           (1<< 1) /* Dump transaction flags */
+#define DUMP_TX_DPI             (1<< 2) /* Dump transaction DPI */
+#define DUMP_TX_ALL                                     \
+    ( DUMP_TX_ARGS | DUMP_TX_FLAGS | DUMP_TX_DPI )
+#define DUMP_USER_AGENT         (1<< 3) /* Dump user agent data */
+#define DUMP_GEOIP              (1<< 4) /* Dump GeoIP data */
+#define DUMP_CONTEXT            (1<< 5) /* Dump context data */
+#define DUMP_ALL                                        \
+    ( DUMP_TX_ALL | DUMP_USER_AGENT | DUMP_GEOIP | DUMP_CONTEXT )
+
 
 /* Runtime settings */
 typedef struct {
@@ -198,9 +205,9 @@ ib_server_t ibplugin = {
  *
  * @param[in] flags Flag bits to test.
  *
- * @returns 1 if the flag bit(s) are set, otherwise 0
+ * @returns true / false
  */
-static ib_num_t test_dump_flags(ib_flags_t flags)
+static bool test_dump_flags(ib_flags_t flags)
 {
     return ( (settings.dump_flags & flags) != 0);
 }
@@ -279,7 +286,7 @@ static void help(void)
     print_option("remote-port", "num", "Specify remote port", 0, NULL );
     print_option("trace", NULL, "Enable tracing", 0, NULL );
     print_option("dump", "name", "Dump specified field", 0,
-                 "tx, tx-full, user-agent, geoip");
+                 "tx, tx-{args,flags,dpi,all}, user-agent, geoip, all");
     print_option("request-header", "name: value",
                  "Specify request field & value", 0, NULL );
     print_option("request-header", "-name:",
@@ -484,14 +491,30 @@ static ib_status_t command_line(int argc, char *argv[])
             else if (strcasecmp(optarg, "user-agent") == 0) {
                 settings.dump_flags |= DUMP_USER_AGENT;
             }
+            else if (strcasecmp(optarg, "tx-args") == 0) {
+                settings.dump_flags |= DUMP_TX_ARGS;
+            }
+            else if (strcasecmp(optarg, "tx-dpi") == 0) {
+                settings.dump_flags |= DUMP_TX_DPI;
+            }
+            else if (strcasecmp(optarg, "tx-flags") == 0) {
+                settings.dump_flags |= DUMP_TX_FLAGS;
+            }
+            else if (strcasecmp(optarg, "tx-all") == 0) {
+                settings.dump_flags |= DUMP_TX_ALL;
+            }
+            else if (strcasecmp(optarg, "all") == 0) {
+                settings.dump_flags |= DUMP_ALL;
+            }
+            /* 2 aliases: tx=>tx-args, tx-full=>tx-all */
             else if (strcasecmp(optarg, "tx") == 0) {
                 settings.dump_flags |= DUMP_TX_ARGS;
             }
             else if (strcasecmp(optarg, "tx-full") == 0) {
-                settings.dump_flags |= DUMP_TX_FULL;
+                settings.dump_flags |= DUMP_TX_ALL;
             }
             else {
-                fprintf(stderr, "Unknown dump: %s", optarg);
+                fprintf(stderr, "Unknown dump: \"%s\"\n", optarg);
                 usage();
             }
         }
@@ -535,12 +558,12 @@ static ib_status_t command_line(int argc, char *argv[])
             int level =  (int) strtol(optarg, NULL, 10);
             if ( ( level == 0 ) && ( errno == EINVAL ) ) {
                 fprintf(stderr,
-                        "--debug-level: invalid level number '%s'", optarg );
+                        "--debug-level: invalid level number '%s'\n", optarg );
                 usage();
             }
             else if ( (level < 0) || (level < 9) ) {
                 fprintf(stderr,
-                        "--debug-level: Level %d out of range (0-9)", level );
+                        "--debug-level: Level %d out of range (0-9)\n", level );
                 usage();
             }
             settings.debug_level = level;
@@ -554,7 +577,7 @@ static ib_status_t command_line(int argc, char *argv[])
                 snprintf( buf, sizeof(buf), "file://%s", s );
             }
             else if ( strncmp(s, "file://", 7) != 0 ) {
-                fprintf( stderr, "--debug-log: Unsupported URI \"%s\"", s );
+                fprintf( stderr, "--debug-log: Unsupported URI \"%s\"\n", s );
                 usage( );
             }
             else {
@@ -570,7 +593,7 @@ static ib_status_t command_line(int argc, char *argv[])
             settings.local_port = (int) strtol(optarg, NULL, 10);
             if ( ( settings.local_port == 0 ) && ( errno == EINVAL ) ) {
                 fprintf(stderr,
-                        "--local-port: invalid port number '%s'", optarg );
+                        "--local-port: invalid port number '%s'\n", optarg );
                 usage();
             }
         }
@@ -581,7 +604,7 @@ static ib_status_t command_line(int argc, char *argv[])
             settings.remote_port = (int) strtol(optarg, NULL, 10);
             if ( ( settings.remote_port == 0 ) && ( errno == EINVAL ) ) {
                 fprintf(stderr,
-                        "--remote-port: invalid port number '%s'", optarg );
+                        "--remote-port: invalid port number '%s'\n", optarg );
                 usage();
             }
         }
@@ -1044,8 +1067,10 @@ static ib_status_t print_tx( ib_engine_t *ib,
 
     ib_log_debug3_tx(tx, "print_tx");
 
+        printf("[[TX]]:\n");
+
     /* ARGS */
-    if (test_dump_flags(DUMP_TX_ARGS) != 0) {
+    if (test_dump_flags(DUMP_TX_ARGS)) {
         printf("[TX ARGS]:\n");
         rc = ib_data_get(tx->dpi, "ARGS", &field);
         if (rc == IB_OK) {
@@ -1071,43 +1096,125 @@ static ib_status_t print_tx( ib_engine_t *ib,
         }
     }
 
-    /* Not doing a full dump?  Done */
-    if (test_dump_flags(DUMP_TX_FULL) == 0) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+    if (test_dump_flags(DUMP_TX_FLAGS)) {
+        printf("[TX Flags: %08lx]\n", (unsigned long)tx->flags);
+        for (rec = tx_flags_map; rec->str != NULL; ++rec) {
+            bool on = ib_tx_flags_isset(tx, rec->val);
+            printf("  %s [0x%08lx]: %s\n",
+                   rec->str, (unsigned long)rec->val, on ? "On" : "Off");
+        }
     }
 
-    printf("[TX all]:\n");
-    printf("  Flags: %08lx\n", (unsigned long)tx->flags);
+    if (test_dump_flags(DUMP_TX_DPI)) {
+        printf("[TX DPI @ %p]\n", (void *)tx->dpi);
 
-    for (rec = tx_flags_map; rec->str != NULL; ++rec) {
-        bool on = ib_tx_flags_isset(tx, rec->val);
-        printf("    Flag %s [0x%08lx]: %s\n",
-               rec->str, (unsigned long)rec->val, on ? "On" : "Off");
+        /* Build the list */
+        rc = ib_list_create(&lst, ib->mp);
+        if (rc != IB_OK) {
+            ib_log_debug_tx(tx, "print_tx: Failed to create tx list: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        }
+
+        /* Extract the request headers field from the provider instance */
+        rc = ib_data_get_all(tx->dpi, lst);
+        if (rc != IB_OK) {
+            ib_log_debug_tx(tx, "print_tx: Failed to get all headers: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        }
+
+        /* Print it all */
+        rc = print_list("", lst);
+        if (rc != IB_OK) {
+            ib_log_debug_tx(tx, "print_tx: Failed printing headers: %s",
+                            ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        }
     }
 
-    /* Build the list */
-    rc = ib_list_create(&lst, ib->mp);
-    if (rc != IB_OK) {
-        ib_log_debug_tx(tx, "print_tx: Failed to create tx list: %s",
-                     ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
+    /* Done */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
-    /* Extract the request headers field from the provider instance */
-    rc = ib_data_get_all(tx->dpi, lst);
-    if (rc != IB_OK) {
-        ib_log_debug_tx(tx, "print_tx: Failed to get all headers: %s",
-                     ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
+/**
+ * Print context
+ *
+ * @param[in] ctx IronBee context
+ *
+ * @returns Status code.
+ */
+static ib_status_t print_context(
+    const ib_context_t *ctx
+)
+{
+    IB_FTRACE_INIT();
 
-    /* Print it all */
-    rc = print_list("", lst);
-    if (rc != IB_OK) {
-        ib_log_debug_tx(tx, "print_tx: Failed printing headers: %s",
-                     ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
-    }
+    printf("  Context Name: \"%s\"\n", ctx->ctx_name);
+    printf("  Context Full Name: \"%s\"\n", ctx->ctx_full);
+
+    /* Done */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Print connection context
+ *
+ * @param[in] ib IronBee object.
+ * @param[in] event Event type.
+ * @param[in] conn Connection object.
+ * @param[in] data Callback data (not used).
+ *
+ * @note The data parameter is unused.
+ *
+ * @returns Status code.
+ */
+static ib_status_t print_context_conn(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_conn_t *conn,
+    void *data
+)
+{
+    IB_FTRACE_INIT();
+
+    printf("[Connection Context Selected]\n");
+    printf("  Remote: %s/%u\n",
+           conn->remote_ipstr, (unsigned int)conn->remote_port);
+    printf("  Local:  %s/%u\n",
+           conn->local_ipstr, (unsigned int)conn->local_port);
+    print_context(conn->ctx);
+
+    /* Done */
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Print TX context
+ *
+ * @param[in] ib IronBee object.
+ * @param[in] tx Transaction object.
+ * @param[in] event Event type.
+ * @param[in] data Callback data (not used).
+ *
+ * @note The data parameter is unused.
+ *
+ * @returns Status code.
+ */
+static ib_status_t print_context_tx(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    ib_state_event_type_t event,
+    void *data
+)
+{
+    IB_FTRACE_INIT();
+
+    printf("[TX Context Selected]\n");
+    printf("  Hostname: \"%s\"\n", tx->hostname);
+    printf("  Effective remote IP: %s\n", tx->er_ipstr);
+    printf("  Path: \"%s\"\n", tx->path);
+    print_context(tx->ctx);
 
     /* Done */
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1752,7 +1859,6 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
-    ib_status_t status = IB_OK;
 
     /* Register the trace handlers */
     if (settings.trace) {
@@ -1774,8 +1880,8 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
             trace_ctx
         );
         if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register tx request handler: %d\n", rc);
-            status = rc;
+            fatal_error("Failed to register tx request handler: %s\n",
+                        ib_status_to_string(rc));
         }
 
         /* Register the response trace handler. */
@@ -1786,13 +1892,13 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
             trace_ctx
         );
         if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register tx response handler: %d\n", rc);
-            status = rc;
+            fatal_error("Failed to register tx header finished handler: %s\n",
+                        ib_status_to_string(rc));
         }
     }
 
     /* Register the tx handler */
-    if (test_dump_flags(DUMP_TX_ARGS|DUMP_TX_FULL) != 0) {
+    if (test_dump_flags(DUMP_TX_ALL)) {
         if (settings.verbose > 2) {
             printf("Registering tx handlers\n");
         }
@@ -1803,8 +1909,8 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
             NULL
         );
         if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register tx handler: %d\n", rc);
-            status = rc;
+            fatal_error("Failed to register tx finished handler: %s\n",
+                        ib_status_to_string(rc));
         }
     }
     /* Register the user agent handler */
@@ -1819,13 +1925,33 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
             NULL
         );
         if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register user_agent handler: %d\n", rc);
-            status = rc;
+            fatal_error("Failed to register user agent handler: %s\n",
+                        ib_status_to_string(rc));
+        }
+    }
+
+    /* Register context hanlders */
+    if (test_dump_flags(DUMP_CONTEXT)) {
+        rc = ib_hook_conn_register(ib,
+                                   handle_context_conn_event,
+                                   print_context_conn,
+                                   NULL);
+        if (rc != IB_OK) {
+            fatal_error("Failed to register connect context handler: %s\n",
+                        ib_status_to_string(rc));
+        }
+        rc = ib_hook_tx_register(ib,
+                                 handle_context_tx_event,
+                                 print_context_tx,
+                                 NULL);
+        if (rc != IB_OK) { 
+            fatal_error("Failed to register tx context handler: %s\n",
+                        ib_status_to_string(rc));
         }
     }
 
     /* Register the GeoIP handler */
-    if (test_dump_flags(DUMP_GEOIP) != 0) {
+    if (test_dump_flags(DUMP_GEOIP)) {
         if (settings.verbose > 2) {
             printf("Registering GeoIP handlers\n");
         }
@@ -1836,12 +1962,12 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
             NULL
         );
         if (rc != IB_OK) {
-            fprintf(stderr, "Failed to register geoip handler: %d\n", rc);
-            status = rc;
+            fatal_error("Failed to register geoip handler: %s\n",
+                        ib_status_to_string(rc));
         }
     }
 
-    IB_FTRACE_RET_STATUS(status);
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 /**
@@ -2329,13 +2455,6 @@ int main(int argc, char* argv[])
     set_debug( ib_context_engine(ironbee) );
 #endif
 
-    /* Notify the engine that the config process has started. */
-    rc = ib_state_notify_cfg_started(ironbee);
-    if (rc != IB_OK) {
-        fatal_error("ib_state_notify_cfg_started() failed: %s\n",
-                    ib_status_to_string(rc));
-    }
-
     /* Set the main context's debug flags from the command line args */
 #if DEBUG_ARGS_ENABLE
     set_debug( ib_context_main(ironbee) );
@@ -2379,13 +2498,6 @@ int main(int argc, char* argv[])
     }
     if (ib_context_get_engine(ctx) != ironbee) {
         fatal_error("ib_context_get_engine returned invalid engine pointer\n");
-    }
-
-    /* Notify the engine that the config process is finished. */
-    rc = ib_state_notify_cfg_finished(ironbee);
-    if (rc != IB_OK) {
-        fatal_error("ib_state_notify_cfg_finished() failed: %s\n",
-                    ib_status_to_string(rc));
     }
 
     /* Pass connection data to the engine. */
