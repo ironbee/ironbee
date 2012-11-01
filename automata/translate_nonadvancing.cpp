@@ -233,7 +233,6 @@ size_t translate_nonadvancing_structural(
                 BOOST_FOREACH(uint8_t c, inputs) {
                     default_inputs.erase(c);
                 }
-                // End XXX
                 if (edge.advance()) {
                     continue;
                 }
