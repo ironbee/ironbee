@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -56,11 +56,8 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
     if (connp->in_header_line_index + 1 == connp->in_header_line_counter) {
         // Single line
         htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines,
-            connp->in_header_line_index);
+                connp->in_header_line_index);
         if (hl == NULL) {
-            // Internal error
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                "Process request header (Apache 2.2): Internal error");
             free(h);
             return HTP_ERROR;
         }
@@ -73,23 +70,31 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
         int i = 0;
 
         for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
-            htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);            
+            htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
+            if (hl == NULL) {
+                free(h);
+                return HTP_ERROR;
+            }
+
             len += bstr_len(hl->line);
         }
 
         tempstr = bstr_alloc(len);
         if (tempstr == NULL) {
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                "Process request header (Apache 2.2): Failed to allocate bstring of %d bytes", len);
             free(h);
             return HTP_ERROR;
         }
 
         for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
             htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
+            if (hl == NULL) {
+                free(h);
+                return HTP_ERROR;
+            }
+
             char *line = bstr_ptr(hl->line);
             size_t llen = bstr_len(hl->line);
-            htp_chomp((unsigned char *)line, &llen);            
+            htp_chomp((unsigned char *) line, &llen);
             bstr_add_mem_noex(tempstr, line, llen);
             hl->header = h;
 
@@ -123,7 +128,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
 
         // Add to existing header
         bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
-            + 2 + bstr_len(h->value));
+                + 2 + bstr_len(h->value));
         if (new_value == NULL) {
             bstr_free(&h->name);
             bstr_free(&h->value);
@@ -138,8 +143,16 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
 
         // replace the header references in all lines
         for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
-          htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
-          hl->header = h_existing;
+            htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
+            if (hl == NULL) {
+                bstr_free(&h->name);
+                bstr_free(&h->value);
+                free(h);
+                bstr_free(&tempstr);
+                return HTP_ERROR;
+            }
+
+            hl->header = h_existing;
         }
 
         // The header is no longer needed
@@ -147,7 +160,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
         bstr_free(&h->value);
         free(h);
 
-        // Keep track of same-name headers        
+        // Keep track of same-name headers
         h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
         // Add as a new header
@@ -264,8 +277,14 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, uns
 
     // Now extract the name and the value
     h->name = bstr_dup_mem((char *) data + name_start, name_end - name_start);
+    if (h->name == NULL) return HTP_ERROR;
+    
     h->value = bstr_dup_mem((char *) data + value_start, value_end - value_start);
-
+    if (h->value == NULL) {
+        bstr_free(&h->name);
+        return HTP_ERROR;
+    }
+    
     return HTP_OK;
 }
 
@@ -296,10 +315,11 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     // No, we don't care if the method is empty.
 
     tx->request_method = bstr_dup_mem((char *) data, pos);
+    if (tx->request_method == NULL) return HTP_ERROR;
 
-#ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->request_method), bstr_len(tx->request_method));
-#endif
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->request_method), bstr_len(tx->request_method));
+    #endif
 
     tx->request_method_number = htp_convert_method_to_number(tx->request_method);
 
@@ -319,10 +339,11 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     }
 
     tx->request_uri = bstr_dup_mem((char *) data + start, pos - start);
+    if (tx->request_uri == NULL) return HTP_ERROR;
 
-#ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->request_uri), bstr_len(tx->request_uri));
-#endif
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->request_uri), bstr_len(tx->request_uri));
+    #endif
 
     // Ignore whitespace after URI
     while ((pos < len) && (htp_is_space(data[pos]))) {
@@ -338,11 +359,12 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
 
     // The protocol information spreads until the end of the line.
     tx->request_protocol = bstr_dup_mem((char *) data + pos, len - pos);
+    if (tx->request_protocol == NULL) return HTP_ERROR;
     tx->request_protocol_number = htp_parse_protocol(tx->request_protocol);
 
-#ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *)bstr_ptr(tx->request_protocol), bstr_len(tx->request_protocol));
-#endif
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->request_protocol), bstr_len(tx->request_protocol));
+    #endif
 
     return HTP_OK;
 }

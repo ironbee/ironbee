@@ -115,28 +115,32 @@ void htp_tx_destroy(htp_tx_t *tx) {
     }
 
     // Destroy request_header_lines
-    htp_header_line_t *hl = NULL;
-    list_iterator_reset(tx->request_header_lines);
-    while ((hl = list_iterator_next(tx->request_header_lines)) != NULL) {
-        bstr_free(&hl->line);
-        // No need to destroy hl->header because
-        // htp_header_line_t does not own it.
-        free(hl);
+    if (tx->request_header_lines != NULL) {
+        htp_header_line_t *hl = NULL;
+        list_iterator_reset(tx->request_header_lines);
+        while ((hl = list_iterator_next(tx->request_header_lines)) != NULL) {
+            bstr_free(&hl->line);
+            // No need to destroy hl->header because
+            // htp_header_line_t does not own it.
+            free(hl);
+        }
+
+        list_destroy(&tx->request_header_lines);
     }
 
-    list_destroy(&tx->request_header_lines);
+    // Destroy request_headers
+    if (tx->request_headers != NULL) {
+        void *tvalue;
+        table_iterator_reset(tx->request_headers);
+        while (table_iterator_next(tx->request_headers, &tvalue) != NULL) {
+            htp_header_t *h = (htp_header_t *) tvalue;
+            bstr_free(&h->name);
+            bstr_free(&h->value);
+            free(h);
+        }
 
-    // Destroy request_headers    
-    void *tvalue;
-    table_iterator_reset(tx->request_headers);
-    while (table_iterator_next(tx->request_headers, &tvalue) != NULL) {
-        htp_header_t *h = (htp_header_t *)tvalue;
-        bstr_free(&h->name);
-        bstr_free(&h->value);
-        free(h);
+        table_destroy(&tx->request_headers);
     }
-
-    table_destroy(&tx->request_headers);
 
     if (tx->request_headers_raw != NULL) {
         bstr_free(&tx->request_headers_raw);
@@ -153,25 +157,32 @@ void htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(&tx->response_headers_sep);
 
     // Destroy response_header_lines
-    hl = NULL;
-    list_iterator_reset(tx->response_header_lines);
-    while ((hl = list_iterator_next(tx->response_header_lines)) != NULL) {
-        bstr_free(&hl->line);
-        // No need to destroy hl->header because
-        // htp_header_line_t does not own it.
-        free(hl);
-    }
-    list_destroy(&tx->response_header_lines);
+    if (tx->response_header_lines != NULL) {
+        htp_header_line_t *hl = NULL;
+        list_iterator_reset(tx->response_header_lines);
+        while ((hl = list_iterator_next(tx->response_header_lines)) != NULL) {
+            bstr_free(&hl->line);
+            // No need to destroy hl->header because
+            // htp_header_line_t does not own it.
+            free(hl);
+        }
 
-    // Destroy response headers        
-    table_iterator_reset(tx->response_headers);
-    while (table_iterator_next(tx->response_headers, &tvalue) != NULL) {
-        htp_header_t *h = (htp_header_t *)tvalue;
-        bstr_free(&h->name);
-        bstr_free(&h->value);
-        free(h);
+        list_destroy(&tx->response_header_lines);
     }
-    table_destroy(&tx->response_headers);
+
+    // Destroy response headers
+    if (tx->response_headers != NULL) {
+        void *tvalue;
+        table_iterator_reset(tx->response_headers);
+        while (table_iterator_next(tx->response_headers, &tvalue) != NULL) {
+            htp_header_t *h = (htp_header_t *) tvalue;
+            bstr_free(&h->name);
+            bstr_free(&h->value);
+            free(h);
+        }
+
+        table_destroy(&tx->response_headers);
+    }
 
     // Tell the connection to remove this transaction
     // from the list
@@ -185,7 +196,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
             tx->connp->out_tx = NULL;
         }
     }
-    
+
     bstr_free(&tx->request_content_type);
     bstr_free(&tx->response_content_type);
 
@@ -193,30 +204,36 @@ void htp_tx_destroy(htp_tx_t *tx) {
     htp_urlenp_destroy(&tx->request_urlenp_body);
     htp_mpartp_destroy(&tx->request_mpartp);
 
-    if ((tx->request_params_query_reused == 0)&&(tx->request_params_query != NULL)) {        
+    if ((tx->request_params_query_reused == 0) && (tx->request_params_query != NULL)) {
+        void *tvalue;
         table_iterator_reset(tx->request_params_query);
-        while(table_iterator_next(tx->request_params_query, &tvalue) != NULL) {
-            bstr *b = (bstr *)tvalue;
+        while (table_iterator_next(tx->request_params_query, &tvalue) != NULL) {
+            bstr *b = (bstr *) tvalue;
             bstr_free(&b);
         }
+        
         table_destroy(&tx->request_params_query);
     }
 
-    if ((tx->request_params_body_reused == 0)&&(tx->request_params_body != NULL)) {        
+    if ((tx->request_params_body_reused == 0) && (tx->request_params_body != NULL)) {
+        void *tvalue;
         table_iterator_reset(tx->request_params_body);
-        while(table_iterator_next(tx->request_params_body, &tvalue) != NULL) {
-            bstr *b = (bstr *)tvalue;
+        while (table_iterator_next(tx->request_params_body, &tvalue) != NULL) {
+            bstr *b = (bstr *) tvalue;
             bstr_free(&b);
         }
+        
         table_destroy(&tx->request_params_body);
     }
 
-    if (tx->request_cookies != NULL) {        
+    if (tx->request_cookies != NULL) {
+        void *tvalue;
         table_iterator_reset(tx->request_cookies);
-        while(table_iterator_next(tx->request_cookies, &tvalue) != NULL) {
-            bstr *b = (bstr *)tvalue;
+        while (table_iterator_next(tx->request_cookies, &tvalue) != NULL) {
+            bstr *b = (bstr *) tvalue;
             bstr_free(&b);
         }
+        
         table_destroy(&tx->request_cookies);
     }
 
@@ -264,7 +281,7 @@ void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
  * @pram callback_fn
  */
 void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *)) {
-    hook_register(&tx->hook_request_body_data, (htp_callback_fn_t)callback_fn);
+    hook_register(&tx->hook_request_body_data, (htp_callback_fn_t) callback_fn);
 }
 
 /**
@@ -274,5 +291,5 @@ void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_d
  * @pram callback_fn
  */
 void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *)) {
-    hook_register(&tx->hook_response_body_data, (htp_callback_fn_t)callback_fn);
+    hook_register(&tx->hook_response_body_data, (htp_callback_fn_t) callback_fn);
 }

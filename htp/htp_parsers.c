@@ -46,6 +46,10 @@
  * @return Protocol version or PROTOCOL_UNKNOWN.
  */
 int htp_parse_protocol(bstr *protocol) {
+    if (protocol == NULL) {
+        return PROTOCOL_UNKNOWN;
+    }
+    
     // TODO This function uses a very strict approach to parsing, whereas
     //      browsers will typically be more flexible, allowing whitespace
     //      before and after the forward slash, as well as allowing leading

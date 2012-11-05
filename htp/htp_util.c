@@ -176,6 +176,8 @@ int htp_is_space(int c) {
  * @return Method number of M_UNKNOWN
  */
 int htp_convert_method_to_number(bstr *method) {
+    if (method == NULL) return M_UNKNOWN;
+
     // TODO Optimize using parallel matching, or something similar
     if (bstr_cmp_c(method, "GET") == 0) return M_GET;
     if (bstr_cmp_c(method, "PUT") == 0) return M_PUT;
@@ -308,10 +310,10 @@ int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int b
 void htp_print_log(FILE *stream, htp_log_t *log) {
     if (log->code != 0) {
         fprintf(stream, "[%d][code %d][file %s][line %d] %s\n", log->level,
-            log->code, log->file, log->line, log->msg);
+                log->code, log->file, log->line, log->msg);
     } else {
         fprintf(stream, "[%d][file %s][line %d] %s\n", log->level,
-            log->file, log->line, log->msg);
+                log->file, log->line, log->msg);
     }
 }
 
@@ -337,7 +339,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
     va_start(args, fmt);
 
     int r = vsnprintf(buf, 1023, fmt, args);
-    
+
     va_end(args);
 
     if (r < 0) {
@@ -353,7 +355,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
 
     // Create a new log entry...
     htp_log_t *log = calloc(1, sizeof (htp_log_t));
-    if (log == NULL) return;    
+    if (log == NULL) return;
 
     log->connp = connp;
     log->file = file;
@@ -456,7 +458,7 @@ int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
 
         // Port
         int port = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(authority)
-            + colon + 1, bstr_len(authority) - colon - 1, 10);
+                + colon + 1, bstr_len(authority) - colon - 1, 10);
         if (port < 0) {
             // Failed to parse port
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid server port information in request");
@@ -479,6 +481,8 @@ int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
 int htp_parse_uri(bstr *input, htp_uri_t **uri) {
+    if (input == NULL) return HTP_ERROR;
+
     char *data = bstr_ptr(input);
     size_t len = bstr_len(input);
     size_t start, pos;
@@ -689,6 +693,8 @@ static uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
  * @param path
  */
 void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
+    if (path == NULL) return;
+
     uint8_t *data = (unsigned char *) bstr_ptr(path);
     size_t len = bstr_len(path);
     size_t rpos = 0;
@@ -1033,7 +1039,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
                         if (rpos + 5 < len) {
                             if (isxdigit(data[rpos + 2]) && (isxdigit(data[rpos + 3]))
-                                && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
+                                    && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
                                 // Decode a valid %u encoding
                                 c = decode_u_encoding_path(cfg, tx, &data[rpos + 2]);
                                 rpos += 6;
@@ -1289,7 +1295,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
                         if (rpos + 5 < len) {
                             if (isxdigit(data[rpos + 2]) && (isxdigit(data[rpos + 3]))
-                                && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
+                                    && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
                                 // Decode a valid %u encoding
                                 c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
                                 rpos += 6;
@@ -1479,17 +1485,20 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     if (incomplete->scheme != NULL) {
         // Duplicate and convert to lowercase
         normalized->scheme = bstr_dup_lower(incomplete->scheme);
+        if (normalized->scheme == NULL) return HTP_ERROR;
     }
 
     // Username
     if (incomplete->username != NULL) {
         normalized->username = bstr_dup(incomplete->username);
+        if (normalized->username == NULL) return HTP_ERROR;
         htp_uriencoding_normalize_inplace(normalized->username);
     }
 
     // Password
     if (incomplete->password != NULL) {
         normalized->password = bstr_dup(incomplete->password);
+        if (normalized->password == NULL) return HTP_ERROR;
         htp_uriencoding_normalize_inplace(normalized->password);
     }
 
@@ -1498,6 +1507,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         // We know that incomplete->hostname does not contain
         // port information, so no need to check for it here
         normalized->hostname = bstr_dup(incomplete->hostname);
+        if (normalized->hostname == NULL) return HTP_ERROR;
         htp_uriencoding_normalize_inplace(normalized->hostname);
         htp_normalize_hostname_inplace(normalized->hostname);
     }
@@ -1506,7 +1516,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     if (incomplete->port != NULL) {
         // Parse provided port
         normalized->port_number = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(incomplete->port),
-            bstr_len(incomplete->port), 10);
+                bstr_len(incomplete->port), 10);
         // We do not report failed port parsing, but leave
         // to upstream to detect and act upon it.
     }
@@ -1515,6 +1525,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     if (incomplete->path != NULL) {
         // Make a copy of the path, on which we can work on
         normalized->path = bstr_dup(incomplete->path);
+        if (normalized->path == NULL) return HTP_ERROR;
 
         // Decode URL-encoded (and %u-encoded) characters, as well as lowercase,
         // compress separators and convert backslashes.
@@ -1538,11 +1549,13 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         // We cannot URL-decode the query string here; it needs to be
         // parsed into individual key-value pairs first.
         normalized->query = bstr_dup(incomplete->query);
+        if (normalized->query == NULL) return HTP_ERROR;
     }
 
     // Fragment
     if (incomplete->fragment != NULL) {
         normalized->fragment = bstr_dup(incomplete->fragment);
+        if (normalized->fragment == NULL) return HTP_ERROR;
         htp_uriencoding_normalize_inplace(normalized->fragment);
     }
 
@@ -1557,6 +1570,8 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
  * @return normalized hostnanme
  */
 bstr *htp_normalize_hostname_inplace(bstr *hostname) {
+    if (hostname == NULL) return NULL;
+    
     bstr_to_lowercase(hostname);
 
     char *data = bstr_ptr(hostname);
@@ -1581,6 +1596,8 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
  * @param hostname
  */
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname) {
+    if (hostname == NULL) return;
+    
     bstr *new_hostname = NULL;
 
     int colon = bstr_chr(hostname, ':');
@@ -1602,10 +1619,10 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
         if (parsed_uri->hostname != NULL) bstr_free(&parsed_uri->hostname);
         parsed_uri->hostname = new_hostname;
         parsed_uri->port_number = 0;
-        
+
         // Port
         int port = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(hostname) + colon + 1,
-            bstr_len(hostname) - colon - 1, 10);
+                bstr_len(hostname) - colon - 1, 10);
         if (port < 0) {
             // Failed to parse port
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid server port information in request");
@@ -1615,7 +1632,7 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
                 // Port was specified in connection and is different from the TCP port
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request server port=%d number differs from the actual TCP port=%d", port, connp->conn->local_port);
             } else {
-                parsed_uri->port_number = port;                
+                parsed_uri->port_number = port;
             }
         }
     }
@@ -1629,10 +1646,10 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
  */
 int htp_is_uri_unreserved(unsigned char c) {
     if (((c >= 0x41) && (c <= 0x5a)) ||
-        ((c >= 0x61) && (c <= 0x7a)) ||
-        ((c >= 0x30) && (c <= 0x39)) ||
-        (c == 0x2d) || (c == 0x2e) ||
-        (c == 0x5f) || (c == 0x7e)) {
+            ((c >= 0x61) && (c <= 0x7a)) ||
+            ((c >= 0x30) && (c <= 0x39)) ||
+            (c == 0x2d) || (c == 0x2e) ||
+            (c == 0x5f) || (c == 0x7e)) {
         return 1;
     } else {
         return 0;
@@ -1646,6 +1663,8 @@ int htp_is_uri_unreserved(unsigned char c) {
  * @param s
  */
 void htp_uriencoding_normalize_inplace(bstr *s) {
+    if (s == NULL) return;
+    
     unsigned char *data = (unsigned char *) bstr_ptr(s);
     size_t len = bstr_len(s);
 
@@ -1701,6 +1720,8 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
  * @param s
  */
 void htp_normalize_uri_path_inplace(bstr *s) {
+    if (s == NULL) return;
+    
     char *data = bstr_ptr(s);
     size_t len = bstr_len(s);
 
@@ -1816,12 +1837,12 @@ void fprint_raw_data_ex(FILE *stream, const char *name, unsigned char *data, siz
     char buf[160];
     size_t len = offset + printlen;
 
-    fprintf(stream, "\n%s: ptr %p offset %" PRIu64 " len %" PRIu64"\n", name, data, (uint64_t)offset, (uint64_t)len);
+    fprintf(stream, "\n%s: ptr %p offset %" PRIu64 " len %" PRIu64"\n", name, data, (uint64_t) offset, (uint64_t) len);
 
     while (offset < len) {
         size_t i;
 
-        sprintf(buf, "%08" PRIx64, (uint64_t)offset);
+        sprintf(buf, "%08" PRIx64, (uint64_t) offset);
         strcat(buf + strlen(buf), "  ");
 
         i = 0;
@@ -2224,7 +2245,7 @@ bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx) {
  * @param connp
  * @param d
  */
-int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {        
+int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Do not invoke callbacks with an empty data chunk
     if ((d->data != NULL) && (d->len == 0)) {
         return HOOK_OK;
@@ -2241,7 +2262,7 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // On PUT requests, treat request body as file
     if (connp->put_file != NULL) {
         htp_file_data_t file_data;
-        
+
         file_data.data = d->data;
         file_data.len = d->len;
         file_data.file = connp->put_file;
@@ -2273,7 +2294,7 @@ int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Run configuration hooks second
     rc = hook_run_all(connp->cfg->hook_response_body_data, d);
     if (rc != HOOK_OK) return rc;
-    
+
     return HOOK_OK;
 }
 

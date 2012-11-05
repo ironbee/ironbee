@@ -526,6 +526,8 @@ static void *table_get_internal(table_t *table, bstr *key) {
  * @return table element, or NULL if not found
  */
 static void *list_table_get_c(const table_t *table, const char *cstr) {
+    if ((table == NULL)||(cstr == NULL)) return NULL;
+    
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.
     bstr *ts = NULL;
@@ -548,6 +550,8 @@ static void *list_table_get_c(const table_t *table, const char *cstr) {
  * @return table element, or NULL if not found
  */
 static void *list_table_get(const table_t *table, const bstr *key) {
+    if ((table == NULL)||(key == NULL)) return NULL;
+    
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.
     bstr *ts = NULL;
@@ -603,6 +607,8 @@ static size_t list_table_size(const table_t *table) {
  * @param table
  */
 static void list_table_clear(table_t *table) {
+    if (table == NULL) return;
+    
     size_t size = list_size(table->list);
 
     list_destroy(&table->list);
