@@ -192,6 +192,7 @@ void TestTimestamp(bool relative, int seconds)
     struct tm      tm;
     ib_timeval_t   itv;
     char           buf[bufsize + 1];
+    time_t         t;
     bool           rv;
 
     ib_clock_gettimeofday(&itv);
@@ -203,6 +204,12 @@ void TestTimestamp(bool relative, int seconds)
         seconds = 0;
         ib_clock_timestamp(buf, &itv);
     }
+
+    /* Initialize tm using the time from above and localtime().  This ensures
+     * that all of the tm structure is initialized properly, in particular
+     * timezone info. */
+    t = (time_t)(itv.tv_sec + seconds);
+    localtime_r(&t, &tm);
 
     ASSERT_STRNE(NULL, strptime(buf, "%Y-%m-%dT%H:%M:%S", &tm));
     tv.tv_sec = mktime(&tm) - seconds;
