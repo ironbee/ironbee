@@ -26,6 +26,9 @@ endif
 
 if LINUX
 LDFLAGS += -lrt
+if CC_IS_CLANG
+LDFLAGS += -lpthread
+endif
 endif
 
 LDFLAGS += $(HTP_LDFLAGS) $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
