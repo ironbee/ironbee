@@ -819,3 +819,15 @@ int bstr_begins_with_nocase(const bstr *haystack, const bstr *needle) {
 int bstr_begins_withc_nocase(const bstr *haystack, const char *needle) {
     return bstr_begins_with_mem_nocase(haystack, needle, strlen(needle));
 }
+
+bstr *bstr_wrap_c(const char *input) {
+    unsigned char *s = malloc(sizeof (bstr_t));
+    if (s == NULL) return NULL;
+
+    bstr_t *b = (bstr_t *) s;
+    b->len = strlen(input);
+    b->size = 0;
+    b->ptr = (char *)input;
+
+    return (bstr *) s;
+}

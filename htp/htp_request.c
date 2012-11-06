@@ -683,113 +683,17 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 // Note: downstream responsible for error logging
                 return HTP_ERROR;
             }
+            
+            // Finalize request line parsing
 
-            if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
-                // Parse authority
-                if (htp_parse_authority(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
-                    // Note: downstream responsible for error logging
-                    return HTP_ERROR;
-                }
-            } else {
-                // Parse the request URI
-                if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
-                    // Note: downstream responsible for error logging
-                    return HTP_ERROR;
-                }
-
-                // Keep the original URI components, but
-                // create a copy which we can normalize and use internally
-                if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri) != HTP_OK) {
-                    // Note: downstream responsible for error logging
-                    return HTP_ERROR;
-                }
-
-                // Run hook REQUEST_URI_NORMALIZE
-                int rc = hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
-                if (rc != HOOK_OK) return rc;
-
-                // Now is a good time to generate request_uri_normalized, before we finalize
-                // parsed_uri (and lose the information which parts were provided in the request and
-                // which parts we added).
-                if (connp->cfg->generate_request_uri_normalized) {
-                    connp->in_tx->request_uri_normalized = htp_unparse_uri_noencode(connp->in_tx->parsed_uri);
-
-                    if (connp->in_tx->request_uri_normalized == NULL) {
-                        // There's no sense in logging anything on a memory allocation failure
-                        return HTP_ERROR;
-                    }
-
-                    #ifdef HTP_DEBUG
-                    fprint_raw_data(stderr, "request_uri_normalized",
-                        (unsigned char *) bstr_ptr(connp->in_tx->request_uri_normalized),
-                        bstr_len(connp->in_tx->request_uri_normalized));
-                    #endif
-                }
-
-                // Finalize parsed_uri
-
-                // Scheme
-                if (connp->in_tx->parsed_uri->scheme != NULL) {
-                    if (bstr_cmp_c(connp->in_tx->parsed_uri->scheme, "http") != 0) {
-                        // TODO Invalid scheme
-                    }
-                } else {
-                    connp->in_tx->parsed_uri->scheme = bstr_dup_c("http");
-                    if (connp->in_tx->parsed_uri->scheme == NULL) {
-                        return HTP_ERROR;
-                    }
-                }
-
-                // Port
-                if (connp->in_tx->parsed_uri->port != NULL) {
-                    if (connp->in_tx->parsed_uri->port_number != -1) {
-                        // Check that the port in the URI is the same
-                        // as the port on which the client is talking
-                        // to the server
-                        if (connp->cfg->use_local_port) {
-                            if (connp->in_tx->parsed_uri->port_number != connp->conn->local_port) {
-                                // Incorrect port; use the real port instead
-                                connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
-                                // TODO Log
-                            }
-                        } else {
-                            connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
-                        }
-                    } else {
-                        // Invalid port; use the real port instead
-                        if (connp->cfg->use_local_port) {
-                            connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
-                        } else {
-                            connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
-                        }
-                        // TODO Log
-                    }
-                } else {
-                    if (connp->cfg->use_local_port) {
-                        connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
-                    } else {
-                        connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
-                    }
-                }
-
-                // Path
-                if (connp->in_tx->parsed_uri->path == NULL) {
-                    connp->in_tx->parsed_uri->path = bstr_dup_c("/");
-                    if (connp->in_tx->parsed_uri->path == NULL) {
-                        return HTP_ERROR;
-                    }
-                }
+            if (htp_txh_state_request_line(connp->in_tx) != HTP_OK) {
+                return HTP_ERROR;
             }
-
-            // Run hook REQUEST_LINE
-            int rc = hook_run_all(connp->cfg->hook_request_line, connp);
-            if (rc != HOOK_OK) return rc;
-
+            
             // Clean up.
             connp->in_line_len = 0;
 
-            // Move on to the next phase.
-            connp->in_state = htp_connp_REQ_PROTOCOL;
+            
 
             return HTP_OK;
         }

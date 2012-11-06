@@ -97,7 +97,7 @@ void htp_txh_req_set_method_number(htp_tx_t *tx, int method_numer);
  * @param[in] uri
  * @param[in] alloc
  */
-void htp_txh_req_set_uri_c(htp_tx_t *tx, char *uri, enum alloc_strategy alloc);
+void htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy alloc);
 
 /**
  * Sets transaction query string. Any available parameters will be parsed
@@ -107,7 +107,7 @@ void htp_txh_req_set_uri_c(htp_tx_t *tx, char *uri, enum alloc_strategy alloc);
  * @param[in] query_string
  * @param[in] alloc
  */
-void htp_txh_req_set_query_string_c(htp_tx_t *tx, char *query_string, enum alloc_strategy alloc);
+void htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum alloc_strategy alloc);
 
 /**
  * Set request protocol string (e.g., "HTTP/1.0"), which will then be parsed
@@ -149,7 +149,7 @@ void htp_txh_req_set_protocol_http_0_9(htp_tx_t *tx, int is_http_0_9);
  * 
  * @param[in] tx
 */
-void htp_txh_state_request_line(htp_tx_t *tx);
+int htp_txh_state_request_line(htp_tx_t *tx);
      
 /**
  * Set one request header. This function should be invoked once for

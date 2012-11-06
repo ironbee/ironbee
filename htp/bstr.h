@@ -135,6 +135,8 @@ unsigned char bstr_char_at(const bstr *s, size_t pos);
 int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *lastlen);
   char *bstr_util_memdup_to_c(const char *data, size_t len);
   char *bstr_util_strdup_to_c(const bstr *);
+  
+  bstr *bstr_wrap_c(const char *input);
 
 #ifdef __cplusplus
 }

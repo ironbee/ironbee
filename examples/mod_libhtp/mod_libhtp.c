@@ -50,12 +50,7 @@ static int libhtp_post_request(request_rec *r) {
     htp_txh_req_set_query_string_c(tx, r->args, ALLOC_REUSE);
     htp_txh_req_set_protocol_c(tx, r->protocol, ALLOC_REUSE);
     htp_txh_req_set_protocol_number(tx, convert_protocol_number(r->proto_num));
-
-    if (r->assbackwards) {
-        htp_txh_req_set_protocol_http_0_9(tx, 1);
-    } else {
-        htp_txh_req_set_protocol_http_0_9(tx, 0);
-    }
+    htp_txh_req_set_protocol_http_0_9(tx, r->assbackwards);
 
     // Request line available
     htp_txh_state_request_line(tx);
