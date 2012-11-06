@@ -59,6 +59,8 @@ enum alloc_strategy {
      */
     ALLOC_REUSE = 2
 };
+
+htp_tx_t *htp_txh_create(htp_connp_t *connp);
     
 /**
  * Initialize hybrid parsing mode, change state to TRANSACTION_START,

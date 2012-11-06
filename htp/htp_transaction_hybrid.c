@@ -39,6 +39,9 @@
 
 #include "htp_hybrid.h"
 
+htp_tx_t *htp_txh_create(htp_connp_t *connp) {
+    return htp_tx_create(connp->cfg, CFG_SHARED, connp->conn);
+}
 
 int htp_txh_state_transaction_start(htp_tx_t *tx) {
     // Check that this transaction is not already
