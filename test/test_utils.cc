@@ -141,7 +141,7 @@ TEST(UtilTest, Space) {
 TEST(UtilTest, Method) {
     bstr *method = bstr_dup_c("GET");
 
-    EXPECT_EQ(M_GET, htp_convert_method_to_number(method));
+    EXPECT_EQ(HTP_M_GET, htp_convert_method_to_number(method));
 
     bstr_free(&method);
 }
