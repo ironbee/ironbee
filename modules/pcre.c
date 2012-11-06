@@ -933,14 +933,16 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
 }
 
 /**
- * Set the ID of a DFA rule
+ * Set the ID of a DFA rule.
  *
- * @param[in] rule Rule to use ID of (if available)
- * @param[in] op_inst Operator instance
- * @param[in] mp Memory pool to use for allocations
- * @param[in,out] dfa DFA rule object to store ID into
+ * @param[in] rule Rule to use ID of (if available).
+ * @param[in] op_inst Operator instance.
+ * @param[in] mp Memory pool to use for allocations.
+ * @param[in,out] rule_data DFA rule object to store ID into.
  *
- * @returns Status code
+ * @returns
+ *   - IB_OK on success.
+ *   - IB_EALLOC on memory failure.
  */
 static ib_status_t dfa_id_set(const ib_rule_t *rule,
                               const ib_operator_inst_t *op_inst,
@@ -1070,7 +1072,7 @@ static ib_status_t dfa_operator_create(ib_engine_t *ib,
  *
  * @param[in] tx The transaction containing @c tx->data which holds
  *            the @a rule_data object.
- * @param[out] rule_data The fetched or created rule data hash. This is set
+ * @param[out] hash The fetched or created rule data hash. This is set
  *             to NULL on failure.
  *
  * @return
