@@ -37,6 +37,7 @@
 #include <stdlib.h>
 
 #include "htp.h"
+#include "htp_hybrid.h"
 
 /**
  * Performs check for a CONNECT transaction to decide whether inbound
@@ -841,33 +842,12 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     // new structures even if there's no more data on the
     // connection.
     IN_TEST_NEXT_BYTE_OR_RETURN(connp);
-
-    // Detect pipelining
-    if (list_size(connp->conn->transactions) > connp->out_next_tx_index) {
-        connp->conn->flags |= PIPELINED_CONNECTION;
-    }
-
-    // Parsing a new request
-    connp->in_tx = htp_tx_create(connp->cfg, CFG_SHARED, connp->conn);
+    
+    connp->in_tx = htp_txh_create(connp);
     if (connp->in_tx == NULL) return HTP_ERROR;
-
-    connp->in_tx->connp = connp;
-
-    list_add(connp->conn->transactions, connp->in_tx);
-
-    connp->in_content_length = -1;
-    connp->in_body_data_left = -1;
-    connp->in_header_line_index = -1;
-    connp->in_header_line_counter = 0;
-    connp->in_chunk_request_index = connp->in_chunk_count;
-
-    // Run hook TRANSACTION_START
-    int rc = hook_run_all(connp->cfg->hook_transaction_start, connp);
-    if (rc != HOOK_OK) return rc;
-
-    // Change state into request line parsing
-    connp->in_state = htp_connp_REQ_LINE;
-    connp->in_tx->progress = TX_PROGRESS_REQ_LINE;
+    
+    // Change state to TRANSACTION_START
+    htp_txh_state_transaction_start(connp->in_tx);
 
     return HTP_OK;
 }

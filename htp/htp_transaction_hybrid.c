@@ -40,31 +40,27 @@
 #include "htp_hybrid.h"
 
 htp_tx_t *htp_txh_create(htp_connp_t *connp) {
-    return htp_tx_create(connp->cfg, CFG_SHARED, connp->conn);
+    // Detect pipelining
+    if (list_size(connp->conn->transactions) > connp->out_next_tx_index) {
+        connp->conn->flags |= PIPELINED_CONNECTION;
+    }
+    
+    htp_tx_t *tx = htp_tx_create(connp->cfg, CFG_SHARED, connp->conn);
+    if (tx == NULL) return NULL;
+    
+    tx->connp = connp;
+    
+    list_add(connp->conn->transactions, tx);
+    
+    htp_connp_in_reset(connp);
+    
+    return tx;
 }
 
 int htp_txh_state_transaction_start(htp_tx_t *tx) {
-    // Check that this transaction is not already
-    // associated with a connection parser.
-    if (tx->connp != NULL) {
-        return HTP_ERROR;
-    }
-
-    // Mark the connection parser as private so that
-    // we know we need to destroy it when the transaction
-    // is being destroyed.
-    tx->connp_is_private = 1;
-
-    // Create a private connection parser.
-    tx->connp = htp_connp_create(tx->cfg);
-    if (tx->connp == NULL) return HTP_ERROR;
-
-    // Wire the structures together.
-    tx->connp->in_tx = tx;
-    tx->conn = tx->connp->conn;
-
     // Run hook TRANSACTION_START
-    // TODO
+    int rc = hook_run_all(tx->connp->cfg->hook_transaction_start, tx->connp);
+    if (rc != HOOK_OK) return rc;
 
     // Change state into request line parsing
     tx->connp->in_state = htp_connp_REQ_LINE;

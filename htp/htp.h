@@ -1275,6 +1275,7 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
 void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp);
 void htp_connp_destroy(htp_connp_t *connp);
 void htp_connp_destroy_all(htp_connp_t *connp);
+void htp_connp_in_reset(htp_connp_t *connp);
 
  void htp_connp_set_user_data(htp_connp_t *connp, void *user_data);
 void *htp_connp_get_user_data(htp_connp_t *connp);
