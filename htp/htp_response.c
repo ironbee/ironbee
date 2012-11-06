@@ -331,7 +331,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // If the request uses the CONNECT method, then not only are we
     // to assume there's no body, but we need to ignore all
     // subsequent data in the stream.
-    if (connp->out_tx->request_method_number == M_CONNECT) {
+    if (connp->out_tx->request_method_number == HTP_M_CONNECT) {
         if ((connp->out_tx->response_status_number >= 200)
             && (connp->out_tx->response_status_number <= 299))
         {

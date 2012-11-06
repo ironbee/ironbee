@@ -176,39 +176,39 @@ int htp_is_space(int c) {
  * @return Method number of M_UNKNOWN
  */
 int htp_convert_method_to_number(bstr *method) {
-    if (method == NULL) return M_UNKNOWN;
+    if (method == NULL) return HTP_M_UNKNOWN;
 
     // TODO Optimize using parallel matching, or something similar
-    if (bstr_cmp_c(method, "GET") == 0) return M_GET;
-    if (bstr_cmp_c(method, "PUT") == 0) return M_PUT;
-    if (bstr_cmp_c(method, "POST") == 0) return M_POST;
-    if (bstr_cmp_c(method, "DELETE") == 0) return M_DELETE;
-    if (bstr_cmp_c(method, "CONNECT") == 0) return M_CONNECT;
-    if (bstr_cmp_c(method, "OPTIONS") == 0) return M_OPTIONS;
-    if (bstr_cmp_c(method, "TRACE") == 0) return M_TRACE;
-    if (bstr_cmp_c(method, "PATCH") == 0) return M_PATCH;
-    if (bstr_cmp_c(method, "PROPFIND") == 0) return M_PROPFIND;
-    if (bstr_cmp_c(method, "PROPPATCH") == 0) return M_PROPPATCH;
-    if (bstr_cmp_c(method, "MKCOL") == 0) return M_MKCOL;
-    if (bstr_cmp_c(method, "COPY") == 0) return M_COPY;
-    if (bstr_cmp_c(method, "MOVE") == 0) return M_MOVE;
-    if (bstr_cmp_c(method, "LOCK") == 0) return M_LOCK;
-    if (bstr_cmp_c(method, "UNLOCK") == 0) return M_UNLOCK;
-    if (bstr_cmp_c(method, "VERSION_CONTROL") == 0) return M_VERSION_CONTROL;
-    if (bstr_cmp_c(method, "CHECKOUT") == 0) return M_CHECKOUT;
-    if (bstr_cmp_c(method, "UNCHECKOUT") == 0) return M_UNCHECKOUT;
-    if (bstr_cmp_c(method, "CHECKIN") == 0) return M_CHECKIN;
-    if (bstr_cmp_c(method, "UPDATE") == 0) return M_UPDATE;
-    if (bstr_cmp_c(method, "LABEL") == 0) return M_LABEL;
-    if (bstr_cmp_c(method, "REPORT") == 0) return M_REPORT;
-    if (bstr_cmp_c(method, "MKWORKSPACE") == 0) return M_MKWORKSPACE;
-    if (bstr_cmp_c(method, "MKACTIVITY") == 0) return M_MKACTIVITY;
-    if (bstr_cmp_c(method, "BASELINE_CONTROL") == 0) return M_BASELINE_CONTROL;
-    if (bstr_cmp_c(method, "MERGE") == 0) return M_MERGE;
-    if (bstr_cmp_c(method, "INVALID") == 0) return M_INVALID;
+    if (bstr_cmp_c(method, "GET") == 0) return HTP_M_GET;
+    if (bstr_cmp_c(method, "PUT") == 0) return HTP_M_PUT;
+    if (bstr_cmp_c(method, "POST") == 0) return HTP_M_POST;
+    if (bstr_cmp_c(method, "DELETE") == 0) return HTP_M_DELETE;
+    if (bstr_cmp_c(method, "CONNECT") == 0) return HTP_M_CONNECT;
+    if (bstr_cmp_c(method, "OPTIONS") == 0) return HTP_M_OPTIONS;
+    if (bstr_cmp_c(method, "TRACE") == 0) return HTP_M_TRACE;
+    if (bstr_cmp_c(method, "PATCH") == 0) return HTP_M_PATCH;
+    if (bstr_cmp_c(method, "PROPFIND") == 0) return HTP_M_PROPFIND;
+    if (bstr_cmp_c(method, "PROPPATCH") == 0) return HTP_M_PROPPATCH;
+    if (bstr_cmp_c(method, "MKCOL") == 0) return HTP_M_MKCOL;
+    if (bstr_cmp_c(method, "COPY") == 0) return HTP_M_COPY;
+    if (bstr_cmp_c(method, "MOVE") == 0) return HTP_M_MOVE;
+    if (bstr_cmp_c(method, "LOCK") == 0) return HTP_M_LOCK;
+    if (bstr_cmp_c(method, "UNLOCK") == 0) return HTP_M_UNLOCK;
+    if (bstr_cmp_c(method, "VERSION_CONTROL") == 0) return HTP_M_VERSION_CONTROL;
+    if (bstr_cmp_c(method, "CHECKOUT") == 0) return HTP_M_CHECKOUT;
+    if (bstr_cmp_c(method, "UNCHECKOUT") == 0) return HTP_M_UNCHECKOUT;
+    if (bstr_cmp_c(method, "CHECKIN") == 0) return HTP_M_CHECKIN;
+    if (bstr_cmp_c(method, "UPDATE") == 0) return HTP_M_UPDATE;
+    if (bstr_cmp_c(method, "LABEL") == 0) return HTP_M_LABEL;
+    if (bstr_cmp_c(method, "REPORT") == 0) return HTP_M_REPORT;
+    if (bstr_cmp_c(method, "MKWORKSPACE") == 0) return HTP_M_MKWORKSPACE;
+    if (bstr_cmp_c(method, "MKACTIVITY") == 0) return HTP_M_MKACTIVITY;
+    if (bstr_cmp_c(method, "BASELINE_CONTROL") == 0) return HTP_M_BASELINE_CONTROL;
+    if (bstr_cmp_c(method, "MERGE") == 0) return HTP_M_MERGE;
+    if (bstr_cmp_c(method, "INVALID") == 0) return HTP_M_INVALID;
     if (bstr_cmp_c(method, "HEAD") == 0) return M_HEAD;
 
-    return M_UNKNOWN;
+    return HTP_M_UNKNOWN;
 }
 
 /**

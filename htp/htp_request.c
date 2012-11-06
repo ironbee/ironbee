@@ -52,7 +52,7 @@ int htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
     // not be a request body, but first we need to wait to see the
     // response in order to determine if the tunneling request
     // was a success.
-    if (connp->in_tx->request_method_number == M_CONNECT) {
+    if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
         connp->in_state = htp_connp_REQ_CONNECT_WAIT_RESPONSE;
         connp->in_status = STREAM_STATE_DATA_OTHER;
         connp->in_tx->progress = TX_PROGRESS_WAIT;
@@ -368,7 +368,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     }
 
     // Check for PUT requests, which we need to treat as file uploads
-    if (connp->in_tx->request_method_number == M_PUT) {
+    if (connp->in_tx->request_method_number == HTP_M_PUT) {
         if (connp->in_tx->connp->in_tx->request_transfer_coding != 0) {
             // Prepare to treat PUT request body as a file
             connp->put_file = calloc(1, sizeof (htp_file_t));
@@ -683,7 +683,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 return HTP_ERROR;
             }
 
-            if (connp->in_tx->request_method_number == M_CONNECT) {
+            if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
                 // Parse authority
                 if (htp_parse_authority(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
                     // Note: downstream responsible for error logging

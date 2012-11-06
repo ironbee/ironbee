@@ -108,36 +108,36 @@ typedef struct htp_uri_t htp_uri_t;
 #define CR '\r'
 #define LF '\n'
 
-#define M_UNKNOWN              -1
+#define HTP_M_UNKNOWN              -1
 
 // The following request method are defined in Apache 2.2.13, in httpd.h.
-#define M_GET                   0
-#define M_PUT                   1
-#define M_POST                  2
-#define M_DELETE                3
-#define M_CONNECT               4
-#define M_OPTIONS               5
-#define M_TRACE                 6
-#define M_PATCH                 7
-#define M_PROPFIND              8
-#define M_PROPPATCH             9
-#define M_MKCOL                 10
-#define M_COPY                  11
-#define M_MOVE                  12
-#define M_LOCK                  13
-#define M_UNLOCK                14
-#define M_VERSION_CONTROL       15
-#define M_CHECKOUT              16
-#define M_UNCHECKOUT            17
-#define M_CHECKIN               18
-#define M_UPDATE                19
-#define M_LABEL                 20
-#define M_REPORT                21
-#define M_MKWORKSPACE           22
-#define M_MKACTIVITY            23
-#define M_BASELINE_CONTROL      24
-#define M_MERGE                 25
-#define M_INVALID               26
+#define HTP_M_GET                   0
+#define HTP_M_PUT                   1
+#define HTP_M_POST                  2
+#define HTP_M_DELETE                3
+#define HTP_M_CONNECT               4
+#define HTP_M_OPTIONS               5
+#define HTP_M_TRACE                 6
+#define HTP_M_PATCH                 7
+#define HTP_M_PROPFIND              8
+#define HTP_M_PROPPATCH             9
+#define HTP_M_MKCOL                 10
+#define HTP_M_COPY                  11
+#define HTP_M_MOVE                  12
+#define HTP_M_LOCK                  13
+#define HTP_M_UNLOCK                14
+#define HTP_M_VERSION_CONTROL       15
+#define HTP_M_CHECKOUT              16
+#define HTP_M_UNCHECKOUT            17
+#define HTP_M_CHECKIN               18
+#define HTP_M_UPDATE                19
+#define HTP_M_LABEL                 20
+#define HTP_M_REPORT                21
+#define HTP_M_MKWORKSPACE           22
+#define HTP_M_MKACTIVITY            23
+#define HTP_M_BASELINE_CONTROL      24
+#define HTP_M_MERGE                 25
+#define HTP_M_INVALID               26
 
 // Interestingly, Apache does not define M_HEAD
 #define M_HEAD                  1000
