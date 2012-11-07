@@ -393,7 +393,7 @@ struct htp_cfg_t {
     htp_hook_t *hook_request_trailer;
 
     /** Request hook, invoked after a complete request is seen. */
-    htp_hook_t *hook_request;
+    htp_hook_t *hook_request_done;
 
     /** Response startup hook, invoked when a response transaction is found and
      *  processing started.
@@ -424,7 +424,7 @@ struct htp_cfg_t {
      *  transaction hook, use this hook to do something whenever a transaction is
      *  complete.
      */
-    htp_hook_t *hook_response;
+    htp_hook_t *hook_response_done;
 
     /**
      * Log hook, invoked every time the library wants to log.
@@ -1140,14 +1140,14 @@ void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_file_data_t *));
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_response_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *));
 

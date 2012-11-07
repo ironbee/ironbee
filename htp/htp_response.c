@@ -801,7 +801,7 @@ int htp_connp_RES_FINALIZE(htp_connp_t * connp) {
         }
 
         // Run hook RESPONSE
-        int rc = hook_run_all(connp->cfg->hook_response, connp);
+        int rc = hook_run_all(connp->cfg->hook_response_done, connp);
         if (rc != HOOK_OK) return rc;
     }
 

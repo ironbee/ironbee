@@ -252,9 +252,9 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
         }
     }
 
-    if (cfg->hook_request != NULL) {
-        copy->hook_request = hook_copy(cfg->hook_request);
-        if (copy->hook_request == NULL) {
+    if (cfg->hook_request_done != NULL) {
+        copy->hook_request_done = hook_copy(cfg->hook_request_done);
+        if (copy->hook_request_done == NULL) {
             htp_config_destroy(copy);
             return NULL;
         }
@@ -300,9 +300,9 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
         }
     }
 
-    if (cfg->hook_response != NULL) {
-        copy->hook_response = hook_copy(cfg->hook_response);
-        if (copy->hook_response == NULL) {
+    if (cfg->hook_response_done != NULL) {
+        copy->hook_response_done = hook_copy(cfg->hook_response_done);
+        if (copy->hook_response_done == NULL) {
             htp_config_destroy(copy);
             return NULL;
         }
@@ -333,13 +333,13 @@ void htp_config_destroy(htp_cfg_t *cfg) {
     hook_destroy(cfg->hook_request_body_data);
     hook_destroy(cfg->hook_request_file_data);
     hook_destroy(cfg->hook_request_trailer);
-    hook_destroy(cfg->hook_request);
+    hook_destroy(cfg->hook_request_done);
     hook_destroy(cfg->hook_response_start);
     hook_destroy(cfg->hook_response_line);
     hook_destroy(cfg->hook_response_headers);
     hook_destroy(cfg->hook_response_body_data);
     hook_destroy(cfg->hook_response_trailer);
-    hook_destroy(cfg->hook_response);
+    hook_destroy(cfg->hook_response_done);
     hook_destroy(cfg->hook_log);
 
     cfg->create_list_linked = NULL;
@@ -383,13 +383,13 @@ void htp_config_register_multipart_parser(htp_cfg_t *cfg) {
 }
 
 /**
- * Registers a request callback.
+ * Registers a request_done callback.
  *
  * @param cfg
  * @param callback_fn
  */
-void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request, (htp_callback_fn_t)callback_fn);
+void htp_config_register_request_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    hook_register(&cfg->hook_request_done, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -455,13 +455,13 @@ void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_
 }
 
 /**
- * Registers a response callback.
+ * Registers a response_done callback.
  *
  * @param cfg
  * @param callback_fn 
  */
-void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response, (htp_callback_fn_t)callback_fn);
+void htp_config_register_response_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    hook_register(&cfg->hook_response_done, (htp_callback_fn_t)callback_fn);
 }
 
 /**

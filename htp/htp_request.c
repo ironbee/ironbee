@@ -710,7 +710,7 @@ int htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
     }
 
     // Run hook REQUEST
-    int rc = hook_run_all(connp->cfg->hook_request, connp);
+    int rc = hook_run_all(connp->cfg->hook_request_done, connp);
     if (rc != HOOK_OK) return rc;
 
     // Clean-up
