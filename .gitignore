@@ -3,6 +3,7 @@
 *.lo
 *.o
 *.slo
+*.exe
 *~
 /a.out.dSYM
 /Makefile
