@@ -129,21 +129,22 @@ if ((X)->out_line_len < (X)->out_line_size) { \
     return HTP_ERROR; \
 }
 
-// Parser states
+    
+// Parser states, in the order in which they are
+// used as a single transaction is processed.
 
 int htp_connp_REQ_IDLE(htp_connp_t *connp);
 int htp_connp_REQ_LINE(htp_connp_t *connp);
 int htp_connp_REQ_PROTOCOL(htp_connp_t *connp);
 int htp_connp_REQ_HEADERS(htp_connp_t *connp);
+int htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp);
+int htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp);
 int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp);
 int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
 int htp_connp_REQ_FINALIZE(htp_connp_t *connp);
-
-int htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp);
-int htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp);
 
 int htp_connp_RES_IDLE(htp_connp_t *connp);
 int htp_connp_RES_LINE(htp_connp_t *connp);
