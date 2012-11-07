@@ -10,7 +10,7 @@
 module AP_MODULE_DECLARE_DATA libhtp_module;
 
 // XXX Handle all allocation failures
-
+    
 static int convert_method_number(int method_number) {
     // We can cheat here because LibHTP reuses Apache's
     // method identifiers. But we really shouldn't.
@@ -34,7 +34,7 @@ static apr_status_t transaction_cleanup(htp_tx_t *tx) {
     return APR_SUCCESS;
 }
 
-static int libhtp_post_request(request_rec *r) {
+static int libhtp_post_read_request(request_rec *r) {
     htp_connp_t *connp = ap_get_module_config(r->connection->conn_config, &libhtp_module);
     if (connp == NULL) return DECLINED;
 
@@ -83,7 +83,7 @@ static apr_status_t connection_cleanup(htp_connp_t *connp) {
     return APR_SUCCESS;
 }
 
-static int libhtp_pre_conn(conn_rec *c, void *csd) {
+static int libhtp_pre_connection(conn_rec *c, void *csd) {
     // Configuration; normally you'd read the configuration from
     // a file, or some other type of storage, but, because this is
     // just an example, we have it hard-coded.
@@ -112,8 +112,8 @@ static int libhtp_pre_conn(conn_rec *c, void *csd) {
 }
 
 static void libhtp_register_hooks(apr_pool_t *p) {
-    ap_hook_pre_connection(libhtp_pre_conn, NULL, NULL, APR_HOOK_MIDDLE);
-    ap_hook_post_read_request(libhtp_post_request, NULL, NULL, APR_HOOK_MIDDLE);
+    ap_hook_pre_connection(libhtp_pre_connection, NULL, NULL, APR_HOOK_MIDDLE);
+    ap_hook_post_read_request(libhtp_post_read_request, NULL, NULL, APR_HOOK_MIDDLE);
 }
 
 /* Dispatch list for API hooks */
