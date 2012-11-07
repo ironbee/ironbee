@@ -1,6 +1,8 @@
+.libs
 *.la
 *.lo
 *.o
+*.slo
 *~
 /a.out.dSYM
 /Makefile
