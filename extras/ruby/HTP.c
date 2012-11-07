@@ -725,7 +725,7 @@ void Init_htp( void )
   rb_define_const( mHTP, "HTP_DATA", INT2FIX( HTP_DATA ) );
   rb_define_const( mHTP, "HTP_DATA_OTHER", INT2FIX( HTP_DATA_OTHER ) );
   rb_define_const( mHTP, "HTP_DECLINED", INT2FIX( HTP_DECLINED ) );
-  rb_define_const( mHTP, "PROTOCOL_UNKNOWN", INT2FIX( PROTOCOL_UNKNOWN ) );
+  rb_define_const( mHTP, "PROTOCOL_UNKNOWN", INT2FIX( HTP_PROTOCOL_UNKNOWN ) );
   rb_define_const( mHTP, "HTTP_0_9", INT2FIX( HTTP_0_9 ) );
   rb_define_const( mHTP, "HTTP_1_0", INT2FIX( HTTP_1_0 ) );
   rb_define_const( mHTP, "HTTP_1_1", INT2FIX( HTTP_1_1 ) );

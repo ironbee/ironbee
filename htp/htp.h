@@ -77,7 +77,7 @@ typedef struct htp_uri_t htp_uri_t;
 #define HTP_DATA_OTHER          3
 #define HTP_STOP                4
 
-#define PROTOCOL_UNKNOWN        -1
+#define HTP_PROTOCOL_UNKNOWN    -1
 #define HTTP_0_9                9
 #define HTTP_1_0                100
 #define HTTP_1_1                101

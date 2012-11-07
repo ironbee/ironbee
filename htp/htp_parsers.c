@@ -47,7 +47,7 @@
  */
 int htp_parse_protocol(bstr *protocol) {
     if (protocol == NULL) {
-        return PROTOCOL_UNKNOWN;
+        return HTP_PROTOCOL_UNKNOWN;
     }
     
     // TODO This function uses a very strict approach to parsing, whereas
@@ -74,7 +74,7 @@ int htp_parse_protocol(bstr *protocol) {
         }
     }
 
-    return PROTOCOL_UNKNOWN;
+    return HTP_PROTOCOL_UNKNOWN;
 }
 
 /**
