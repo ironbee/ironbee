@@ -1340,6 +1340,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp);
 int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
+int htp_connp_RES_FINALIZE(htp_connp_t *connp);
 
 // Utility functions
 
