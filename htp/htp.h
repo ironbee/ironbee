@@ -1327,6 +1327,7 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp);
 int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
+int htp_connp_REQ_FINALIZE(htp_connp_t *connp);
 
 int htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp);
 int htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp);

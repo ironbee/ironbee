@@ -93,10 +93,10 @@ int htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
         // The requested tunnel was established: we are going
         // to ignore the remaining data on this stream
         connp->in_status = STREAM_STATE_TUNNEL;
-        connp->in_state = htp_connp_REQ_IDLE;
+        connp->in_state = htp_connp_REQ_FINALIZE;
     } else {
         // No tunnel; continue to the next transaction
-        connp->in_state = htp_connp_REQ_IDLE;
+        connp->in_state = htp_connp_REQ_FINALIZE;
     }
 
     return HTP_OK;
@@ -143,12 +143,12 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
         if (connp->in_next_byte == -1) {
             // Keep track of actual data length
             connp->in_tx->request_entity_len += d.len;
-            
+
             // Send data to callbacks            
             int rc = htp_req_run_hook_body_data(connp, &d);
             if (rc != HOOK_OK) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                    "Request body data callback returned error (%d)", rc);
+                        "Request body data callback returned error (%d)", rc);
                 return HTP_ERROR;
             }
 
@@ -161,7 +161,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
             if (connp->in_chunked_length == 0) {
                 // End of data chunk
-                
+
                 // Keep track of actual data length
                 connp->in_tx->request_entity_len += d.len;
 
@@ -169,7 +169,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
                 int rc = htp_req_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Request body data callback returned error (%d)", rc);
+                            "Request body data callback returned error (%d)", rc);
                     return HTP_ERROR;
                 }
 
@@ -215,7 +215,7 @@ int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             } else {
                 // Invalid chunk length
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                    "Request chunk encoding: Invalid chunk length");
+                        "Request chunk encoding: Invalid chunk length");
                 return HTP_ERROR;
             }
 
@@ -242,14 +242,14 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 
         if (connp->in_next_byte == -1) {
             // End of chunk
-            
+
             // Keep track of actual data length
             connp->in_tx->request_entity_len += d.len;
 
             int rc = htp_req_run_hook_body_data(connp, &d);
             if (rc != HOOK_OK) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                    "Request body data callback returned error (%d)", rc);
+                        "Request body data callback returned error (%d)", rc);
                 return HTP_ERROR;
             }
 
@@ -262,20 +262,19 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 
             if (connp->in_body_data_left == 0) {
                 // End of body
-                
+
                 // Keep track of actual data length
                 connp->in_tx->request_entity_len += d.len;
 
                 int rc = htp_req_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Request body data callback returned error (%d)", rc);
+                            "Request body data callback returned error (%d)", rc);
                     return HTP_ERROR;
                 }
 
-                // Done
-                connp->in_state = htp_connp_REQ_IDLE;
-                connp->in_tx->progress = TX_PROGRESS_WAIT;
+                // Move to finalize the request
+                connp->in_state = htp_connp_REQ_FINALIZE;
 
                 return HTP_OK;
             }
@@ -300,7 +299,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         if (bstr_cmp_c(te->value, "chunked") != 0) {
             // Invalid T-E header value
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                "Invalid T-E value in request");
+                    "Invalid T-E value in request");
         }
 
         // Chunked encoding is a HTTP/1.1 feature. Check
@@ -357,15 +356,13 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
                 connp->in_state = htp_connp_REQ_BODY_IDENTITY;
                 connp->in_tx->progress = TX_PROGRESS_REQ_BODY;
             } else {
-                connp->in_state = htp_connp_REQ_IDLE;
-                connp->in_tx->progress = TX_PROGRESS_WAIT;
+                connp->in_state = htp_connp_REQ_FINALIZE;
             }
         }
     } else {
         // This request does not have a body, which
         // means that we're done with it
-        connp->in_state = htp_connp_REQ_IDLE;
-        connp->in_tx->progress = TX_PROGRESS_WAIT;
+        connp->in_state = htp_connp_REQ_FINALIZE;
     }
 
     // Check for PUT requests, which we need to treat as file uploads
@@ -391,7 +388,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         if (connp->in_tx->request_protocol_number >= HTTP_1_1) {
             connp->in_tx->flags |= HTP_HOST_MISSING;
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                "Host information in request headers required by HTTP/1.1");
+                    "Host information in request headers required by HTTP/1.1");
         }
     } else {
         // Host information available in the headers
@@ -417,7 +414,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         if (connp->in_tx->request_content_type == NULL) {
             return HTP_ERROR;
         }
-        
+
         // Ignore parameters        
         char *data = bstr_ptr(connp->in_tx->request_content_type);
         size_t len = bstr_len(ct->value);
@@ -488,7 +485,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             // Should we terminate headers?
             if (htp_connp_is_line_terminator(connp, connp->in_line, connp->in_line_len)) {
                 // Terminator line
-                connp->in_tx->request_headers_sep = bstr_dup_mem((char *)connp->in_line, connp->in_line_len);
+                connp->in_tx->request_headers_sep = bstr_dup_mem((char *) connp->in_line, connp->in_line_len);
                 if (connp->in_tx->request_headers_sep == NULL) {
                     return HTP_ERROR;
                 }
@@ -543,8 +540,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     if (rc != HOOK_OK) return rc;
 
                     // We've completed parsing this request
-                    connp->in_state = htp_connp_REQ_IDLE;
-                    connp->in_tx->progress = TX_PROGRESS_WAIT;
+                    connp->in_state = htp_connp_REQ_FINALIZE;
                 }
 
                 return HTP_OK;
@@ -576,7 +572,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     if (!(connp->in_tx->flags & HTP_INVALID_FOLDING)) {
                         connp->in_tx->flags |= HTP_INVALID_FOLDING;
                         htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                            "Invalid request field folding");
+                                "Invalid request field folding");
                     }
                 }
             }
@@ -586,7 +582,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             if (connp->in_header_line->line == NULL) {
                 return HTP_ERROR;
             }
-            
+
             list_add(connp->in_tx->request_header_lines, connp->in_header_line);
             connp->in_header_line = NULL;
 
@@ -616,8 +612,7 @@ int htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
         connp->in_tx->progress = TX_PROGRESS_REQ_HEADERS;
     } else {
         // We're done with this request.
-        connp->in_state = htp_connp_REQ_IDLE;
-        connp->in_tx->progress = TX_PROGRESS_WAIT;
+        connp->in_state = htp_connp_REQ_FINALIZE;
     }
 
     return HTP_OK;
@@ -683,21 +678,61 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
                 // Note: downstream responsible for error logging
                 return HTP_ERROR;
             }
-            
+
             // Finalize request line parsing
 
             if (htp_txh_state_request_line(connp->in_tx) != HTP_OK) {
                 return HTP_ERROR;
             }
-            
+
             // Clean up.
             connp->in_line_len = 0;
 
-            
+
 
             return HTP_OK;
         }
     }
+}
+
+int htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
+    // Run the last REQUEST_BODY_DATA HOOK, but
+    // only if there was a request body.
+    if (connp->in_tx->request_transfer_coding != -1) {
+        htp_tx_data_t d;
+
+        d.data = NULL;
+        d.len = 0;
+        d.tx = connp->in_tx;
+
+        htp_req_run_hook_body_data(connp, &d);
+    }
+
+    // Run hook REQUEST
+    int rc = hook_run_all(connp->cfg->hook_request, connp);
+    if (rc != HOOK_OK) return rc;
+
+    // Clean-up
+    if (connp->put_file != NULL) {
+        bstr_free(&connp->put_file->filename);
+        free(connp->put_file);
+        connp->put_file = NULL;
+    }
+
+    // We're done with this request
+    connp->in_state = htp_connp_REQ_IDLE;
+
+    // Update the transaction status, but only if it did already
+    // move on. This may happen when we're processing a CONNECT
+    // request and need to wait for the response to determine how
+    // to continue to treat the rest of the TCP stream.
+    if (connp->in_tx->progress < TX_PROGRESS_WAIT) {
+        connp->in_tx->progress = TX_PROGRESS_WAIT;
+    }
+
+    connp->in_tx = NULL;
+
+    return HTP_OK;
 }
 
 /**
@@ -709,47 +744,16 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_IDLE(htp_connp_t * connp) {
-    // If we're here and a transaction object exists that
-    // means we've just completed parsing a request. We need
-    // to run the final hook and start over.
-    if (connp->in_tx != NULL) {
-        // Run the last REQUEST_BODY_DATA HOOK, but
-        // only if there was a request body
-        if (connp->in_tx->request_transfer_coding != -1) {
-            htp_tx_data_t d;
-            
-            d.data = NULL;
-            d.len = 0;
-            d.tx = connp->in_tx;
-            
-            htp_req_run_hook_body_data(connp, &d);
-        }
-
-        // Run hook REQUEST
-        int rc = hook_run_all(connp->cfg->hook_request, connp);
-        if (rc != HOOK_OK) return rc;
-
-        // Clean-up
-        if (connp->put_file != NULL) {
-            bstr_free(&connp->put_file->filename);
-            free(connp->put_file);
-            connp->put_file = NULL;
-        }
-
-        // Start afresh
-        connp->in_tx = NULL;
-    }
-
     // We want to start parsing the next request (and change
     // the state from IDLE) only if there's at least one
     // byte of data available. Otherwise we could be creating
     // new structures even if there's no more data on the
     // connection.
     IN_TEST_NEXT_BYTE_OR_RETURN(connp);
-    
+
     connp->in_tx = htp_txh_create(connp);
     if (connp->in_tx == NULL) return HTP_ERROR;
-    
+
     // Change state to TRANSACTION_START
     htp_txh_state_transaction_start(connp->in_tx);
 
@@ -815,9 +819,9 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
 
     // Remember the timestamp of the current request data chunk
     if (timestamp != NULL) {
-        memcpy(&connp->in_timestamp, timestamp, sizeof(*timestamp));
+        memcpy(&connp->in_timestamp, timestamp, sizeof (*timestamp));
     }
-    
+
     // Store the current chunk information    
     connp->in_current_data = data;
     connp->in_current_len = len;
@@ -847,8 +851,8 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
     for (;;) {
         #ifdef HTP_DEBUG
         fprintf(stderr, "htp_connp_req_data: in state=%s, progress=%s\n",
-            htp_connp_in_state_as_string(connp),
-            htp_tx_progress_as_string(connp->in_tx));
+                htp_connp_in_state_as_string(connp),
+                htp_tx_progress_as_string(connp->in_tx));
         #endif
 
         // Return if there's been an error
