@@ -88,9 +88,15 @@ fi
 AC_MSG_CHECKING([OS])
 OS=`uname -s`
 case "$OS" in
+        CYGWIN*)
+                AC_MSG_RESULT(Cygwin)
+                OS_CYGWIN="true"
+                NO_STACK_PROTECTOR="true"
+        ;;
         FreeBSD*)
                 AC_MSG_RESULT(FreeBSD)
                 OS_FREEBSD="true"
+                NO_STACK_PROTECTOR="true"
                 CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
         ;;
@@ -126,7 +132,7 @@ if test "$gcc_have_strict_overflow" != "yes"; then
     CFLAGS="${TMPCFLAGS}"
 fi
 
-if test "$OS_FREEBSD" != "true"; then
+if test "$NO_STACK_PROTECTOR" != "true"; then
 dnl -----------------------------------------------
 dnl Check for GCC stack smashing protection
 dnl -----------------------------------------------
@@ -136,7 +142,7 @@ CFLAGS="${CFLAGS} -fstack-protector"
 AC_TRY_COMPILE(,,[gcc_have_fstack_protector=yes],[gcc_have_fstack_protector=no])
 AC_MSG_RESULT($gcc_have_fstack_protector)
 if test "$gcc_have_fstack_protector" != "yes"; then
-    CFLAGS="${TMPCFLAGS}"
+    CFLAGS="${TMPCFLAGS}"  
 fi
 fi
 
