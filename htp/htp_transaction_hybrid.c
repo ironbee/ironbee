@@ -37,7 +37,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "htp.h"
 #include "htp_hybrid.h"
+#include "htp_private.h"
 
 static bstr *copy_or_wrap_c(const char *input, enum alloc_strategy alloc) {
     if (alloc == ALLOC_REUSE) {

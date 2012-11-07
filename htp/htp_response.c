@@ -35,7 +35,9 @@
  */
 
 #include <stdlib.h>
+
 #include "htp.h"
+#include "htp_private.h"
 
 /**
  * Invoked whenever decompressed response body data becomes available.

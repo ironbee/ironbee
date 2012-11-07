@@ -35,6 +35,7 @@
  */
 
 #include "htp.h"
+#include "htp_private.h"
 
 /**
  * Clears an existing parser error, if any.

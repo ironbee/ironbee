@@ -225,94 +225,6 @@ typedef struct htp_uri_t htp_uri_t;
 #define HTP_FILE_MULTIPART  1
 #define HTP_FILE_PUT        2
 
-#define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
-if ((X)->in_current_offset >= (X)->in_current_len) { \
-    return HTP_DATA; \
-}
-
-#define IN_NEXT_BYTE(X) \
-if ((X)->in_current_offset < (X)->in_current_len) { \
-    (X)->in_next_byte = (X)->in_current_data[(X)->in_current_offset]; \
-    (X)->in_current_offset++; \
-    (X)->in_stream_offset++; \
-} else { \
-    (X)->in_next_byte = -1; \
-}
-
-#define IN_NEXT_BYTE_OR_RETURN(X) \
-if ((X)->in_current_offset < (X)->in_current_len) { \
-    (X)->in_next_byte = (X)->in_current_data[(X)->in_current_offset]; \
-    (X)->in_current_offset++; \
-    (X)->in_stream_offset++; \
-} else { \
-    return HTP_DATA; \
-}
-
-#define IN_COPY_BYTE_OR_RETURN(X) \
-if ((X)->in_current_offset < (X)->in_current_len) { \
-    (X)->in_next_byte = (X)->in_current_data[(X)->in_current_offset]; \
-    (X)->in_current_offset++; \
-    (X)->in_stream_offset++; \
-} else { \
-    return HTP_DATA; \
-} \
-\
-if ((X)->in_line_len < (X)->in_line_size) { \
-    (X)->in_line[(X)->in_line_len] = (X)->in_next_byte; \
-    (X)->in_line_len++; \
-    if (((X)->in_line_len == HTP_HEADER_LIMIT_SOFT)&&(!((X)->in_tx->flags & HTP_FIELD_LONG))) { \
-        (X)->in_tx->flags |= HTP_FIELD_LONG; \
-        htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_SOFT, "Request field over soft limit"); \
-    } \
-} else { \
-    htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_HARD, "Request field over hard limit"); \
-    return HTP_ERROR; \
-}
-
-#define OUT_TEST_NEXT_BYTE_OR_RETURN(X) \
-if ((X)->out_current_offset >= (X)->out_current_len) { \
-    return HTP_DATA; \
-}
-
-#define OUT_NEXT_BYTE(X) \
-if ((X)->out_current_offset < (X)->out_current_len) { \
-    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_offset]; \
-    (X)->out_current_offset++; \
-    (X)->out_stream_offset++; \
-} else { \
-    (X)->out_next_byte = -1; \
-}
-
-#define OUT_NEXT_BYTE_OR_RETURN(X) \
-if ((X)->out_current_offset < (X)->out_current_len) { \
-    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_offset]; \
-    (X)->out_current_offset++; \
-    (X)->out_stream_offset++; \
-} else { \
-    return HTP_DATA; \
-}
-
-#define OUT_COPY_BYTE_OR_RETURN(X) \
-if ((X)->out_current_offset < (X)->out_current_len) { \
-    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_offset]; \
-    (X)->out_current_offset++; \
-    (X)->out_stream_offset++; \
-} else { \
-    return HTP_DATA; \
-} \
-\
-if ((X)->out_line_len < (X)->out_line_size) { \
-    (X)->out_line[(X)->out_line_len] = (X)->out_next_byte; \
-    (X)->out_line_len++; \
-    if (((X)->out_line_len == HTP_HEADER_LIMIT_SOFT)&&(!((X)->out_tx->flags & HTP_FIELD_LONG))) { \
-        (X)->out_tx->flags |= HTP_FIELD_LONG; \
-        htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_SOFT, "Response field over soft limit"); \
-    } \
-} else { \
-    htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_HARD, "Response field over hard limit"); \
-    return HTP_ERROR; \
-}
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -1316,31 +1228,6 @@ int htp_parse_response_line_generic(htp_connp_t *connp);
 int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char *data, size_t len);
 int htp_process_response_header_generic(htp_connp_t *connp);
 
-// Parser states
-
-int htp_connp_REQ_IDLE(htp_connp_t *connp);
-int htp_connp_REQ_LINE(htp_connp_t *connp);
-int htp_connp_REQ_PROTOCOL(htp_connp_t *connp);
-int htp_connp_REQ_HEADERS(htp_connp_t *connp);
-int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp);
-int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp);
-int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
-int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp);
-int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
-int htp_connp_REQ_FINALIZE(htp_connp_t *connp);
-
-int htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp);
-int htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp);
-
-int htp_connp_RES_IDLE(htp_connp_t *connp);
-int htp_connp_RES_LINE(htp_connp_t *connp);
-int htp_connp_RES_HEADERS(htp_connp_t *connp);
-int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp);
-int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp);
-int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp);
-int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp);
-int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp);
-int htp_connp_RES_FINALIZE(htp_connp_t *connp);
 
 // Utility functions
 

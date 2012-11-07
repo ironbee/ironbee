@@ -37,6 +37,7 @@
 #include <stdlib.h>
 
 #include "htp.h"
+#include "htp_private.h"
 #include "htp_hybrid.h"
 
 /**

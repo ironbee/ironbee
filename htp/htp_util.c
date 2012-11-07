@@ -35,6 +35,7 @@
  */
 
 #include "htp.h"
+#include "htp_private.h"
 #include "utf8_decoder.h"
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
