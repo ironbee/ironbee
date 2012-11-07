@@ -7,6 +7,8 @@
 #include "htp.h"
 #include "htp_hybrid.h"
 
+module AP_MODULE_DECLARE_DATA libhtp_module;
+
 // XXX Handle all allocation failures
 
 static int convert_method_number(int method_number) {
@@ -68,7 +70,8 @@ static int libhtp_post_request(request_rec *r) {
 
     // Attach LibHTP's transaction to Apache's request
     ap_set_module_config(r->request_config, &libhtp_module, tx);
-    apr_pool_cleanup_register(r->pool, transaction_cleanup, tx);
+    apr_pool_cleanup_register(r->pool, (void *)tx,
+            (apr_status_t (*)(void *))transaction_cleanup, apr_pool_cleanup_null);
 
     return DECLINED;
 }
@@ -99,10 +102,11 @@ static int libhtp_pre_conn(conn_rec *c, void *csd) {
     }
 
     // Open connection
-    htp_connp_open(connp, c->remote_ip, /* XXX remote port */ 0, c->local_ip, /* XXX local port */);
+    htp_connp_open(connp, c->remote_ip, /* XXX remote port */ 0, c->local_ip, /* XXX local port */0, NULL);
 
     ap_set_module_config(c->conn_config, &libhtp_module, connp);
-    apr_pool_cleanup_register(c->pool, connection_cleanup, connp);
+    apr_pool_cleanup_register(c->pool, (void *)connp,
+            (apr_status_t (*)(void *))connection_cleanup, apr_pool_cleanup_null);
 
     return OK;
 }

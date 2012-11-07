@@ -105,9 +105,6 @@ typedef struct htp_uri_t htp_uri_t;
 
 #define LOG_NO_CODE             0
 
-#define CR '\r'
-#define LF '\n'
-
 #define HTP_M_UNKNOWN              -1
 
 // The following request method are defined in Apache 2.2.13, in httpd.h.
