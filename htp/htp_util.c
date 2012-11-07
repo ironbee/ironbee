@@ -207,7 +207,7 @@ int htp_convert_method_to_number(bstr *method) {
     if (bstr_cmp_c(method, "BASELINE_CONTROL") == 0) return HTP_M_BASELINE_CONTROL;
     if (bstr_cmp_c(method, "MERGE") == 0) return HTP_M_MERGE;
     if (bstr_cmp_c(method, "INVALID") == 0) return HTP_M_INVALID;
-    if (bstr_cmp_c(method, "HEAD") == 0) return M_HEAD;
+    if (bstr_cmp_c(method, "HEAD") == 0) return HTP_M_HEAD;
 
     return HTP_M_UNKNOWN;
 }

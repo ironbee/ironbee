@@ -231,7 +231,7 @@ TEST_F(ConnectionParsingTest, PipelinedConn) {
     
     ASSERT_EQ(list_size(connp->conn->transactions), 2);
     
-    ASSERT_TRUE(connp->conn->flags & PIPELINED_CONNECTION);
+    ASSERT_TRUE(connp->conn->flags & HTP_PIPELINED_CONNECTION);
     
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -243,7 +243,7 @@ TEST_F(ConnectionParsingTest, NotPipelinedConn) {
     
     ASSERT_EQ(list_size(connp->conn->transactions), 2);
     
-    ASSERT_FALSE(connp->conn->flags & PIPELINED_CONNECTION);
+    ASSERT_FALSE(connp->conn->flags & HTP_PIPELINED_CONNECTION);
     
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);

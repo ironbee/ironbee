@@ -773,7 +773,7 @@ void Init_htp( void )
   rb_define_const( mHTP, "M_BASELINE_CONTROL", INT2FIX( M_BASELINE_CONTROL ) );
   rb_define_const( mHTP, "M_MERGE", INT2FIX( M_MERGE ) );
   rb_define_const( mHTP, "M_INVALID", INT2FIX( M_INVALID ) );
-  rb_define_const( mHTP, "M_HEAD", INT2FIX( M_HEAD ) );
+  rb_define_const( mHTP, "M_HEAD", INT2FIX( HTP_M_HEAD ) );
   rb_define_const( mHTP, "HTP_FIELD_UNPARSEABLE", INT2FIX( HTP_FIELD_UNPARSEABLE ) );
   rb_define_const( mHTP, "HTP_FIELD_INVALID", INT2FIX( HTP_FIELD_INVALID ) );
   rb_define_const( mHTP, "HTP_FIELD_FOLDED", INT2FIX( HTP_FIELD_FOLDED ) );
@@ -796,7 +796,7 @@ void Init_htp( void )
   rb_define_const( mHTP, "HTP_PATH_UTF8_OVERLONG", INT2FIX( HTP_PATH_UTF8_OVERLONG ) );
   rb_define_const( mHTP, "HTP_PATH_FULLWIDTH_EVASION", INT2FIX( HTP_PATH_FULLWIDTH_EVASION ) );
   rb_define_const( mHTP, "HTP_STATUS_LINE_INVALID", INT2FIX( HTP_STATUS_LINE_INVALID ) );
-  rb_define_const( mHTP, "PIPELINED_CONNECTION", INT2FIX( PIPELINED_CONNECTION ) );
+  rb_define_const( mHTP, "PIPELINED_CONNECTION", INT2FIX( HTP_PIPELINED_CONNECTION ) );
   rb_define_const( mHTP, "HTP_SERVER_MINIMAL", INT2FIX( HTP_SERVER_MINIMAL ) );
   rb_define_const( mHTP, "HTP_SERVER_GENERIC", INT2FIX( HTP_SERVER_GENERIC ) );
   rb_define_const( mHTP, "HTP_SERVER_IDS", INT2FIX( HTP_SERVER_IDS ) );
@@ -810,8 +810,8 @@ void Init_htp( void )
   rb_define_const( mHTP, "HTP_SERVER_APACHE", INT2FIX( HTP_SERVER_APACHE ) );
   rb_define_const( mHTP, "HTP_SERVER_APACHE_2_2", INT2FIX( HTP_SERVER_APACHE_2_2 ) );
   rb_define_const( mHTP, "NONE", INT2FIX( NONE ) );
-  rb_define_const( mHTP, "IDENTITY", INT2FIX( IDENTITY ) );
-  rb_define_const( mHTP, "CHUNKED", INT2FIX( CHUNKED ) );
+  rb_define_const( mHTP, "IDENTITY", INT2FIX( HTP_CODING_IDENTITY ) );
+  rb_define_const( mHTP, "CHUNKED", INT2FIX( HTP_CODING_CHUNKED ) );
   rb_define_const( mHTP, "TX_PROGRESS_NEW", INT2FIX( TX_PROGRESS_NEW ) );
   rb_define_const( mHTP, "TX_PROGRESS_REQ_LINE", INT2FIX( TX_PROGRESS_REQ_LINE ) );
   rb_define_const( mHTP, "TX_PROGRESS_REQ_HEADERS", INT2FIX( TX_PROGRESS_REQ_HEADERS ) );

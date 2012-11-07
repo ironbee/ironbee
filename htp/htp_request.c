@@ -315,7 +315,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         }
 
         // If the T-E header is present we are going to use it.
-        connp->in_tx->request_transfer_coding = CHUNKED;
+        connp->in_tx->request_transfer_coding = HTP_CODING_CHUNKED;
 
         // We are still going to check for the presence of C-L
         if (cl != NULL) {
@@ -330,7 +330,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         // Next check for the presence of the Content-Length header
         if (cl != NULL) {
         // It seems that we have a request body.
-        connp->in_tx->request_transfer_coding = IDENTITY;
+        connp->in_tx->request_transfer_coding = HTP_CODING_IDENTITY;
 
         // Check for a folded C-L header
         if (cl->flags & HTP_FIELD_FOLDED) {

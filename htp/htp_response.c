@@ -389,7 +389,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     //  message.
     if (((connp->out_tx->response_status_number >= 100) && (connp->out_tx->response_status_number <= 199))
             || (connp->out_tx->response_status_number == 204) || (connp->out_tx->response_status_number == 304)
-            || (connp->out_tx->request_method_number == M_HEAD)) {
+            || (connp->out_tx->request_method_number == HTP_M_HEAD)) {
         // There's no response body        
         connp->out_state = htp_connp_RES_FINALIZE;
     } else {
@@ -425,7 +425,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         //   the length is defined by the chunked encoding (section 3.6).
         if ((te != NULL) && (bstr_cmp_c(te->value, "chunked") == 0)) {
             // If the T-E header is present we are going to use it.
-            connp->out_tx->response_transfer_coding = CHUNKED;
+            connp->out_tx->response_transfer_coding = HTP_CODING_CHUNKED;
 
             // We are still going to check for the presence of C-L
             if (cl != NULL) {
@@ -440,7 +440,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             //   value in bytes represents the length of the message-body.
         else if (cl != NULL) {
             // We know the exact length
-            connp->out_tx->response_transfer_coding = IDENTITY;
+            connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
 
             // Check for multiple C-L headers
             if (cl->flags & HTP_FIELD_REPEATED) {
@@ -751,7 +751,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
                 }
 
                 // Continue to process response body
-                connp->out_tx->response_transfer_coding = IDENTITY;
+                connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
                 connp->out_state = htp_connp_RES_BODY_IDENTITY;
                 connp->out_tx->progress = TX_PROGRESS_RES_BODY;
 
@@ -880,7 +880,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     // a short HTTP/0.9 request, because such requests to not have a
     // response line and headers.
     if (connp->out_tx->protocol_is_simple) {
-        connp->out_tx->response_transfer_coding = IDENTITY;
+        connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
         connp->out_state = htp_connp_RES_BODY_IDENTITY;
         connp->out_tx->progress = TX_PROGRESS_RES_BODY;
     } else {

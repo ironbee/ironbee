@@ -52,7 +52,7 @@ static bstr *copy_or_wrap_c(const char *input, enum alloc_strategy alloc) {
 htp_tx_t *htp_txh_create(htp_connp_t *connp) {
     // Detect pipelining
     if (list_size(connp->conn->transactions) > connp->out_next_tx_index) {
-        connp->conn->flags |= PIPELINED_CONNECTION;
+        connp->conn->flags |= HTP_PIPELINED_CONNECTION;
     }
 
     htp_tx_t *tx = htp_tx_create(connp->cfg, CFG_SHARED, connp->conn);

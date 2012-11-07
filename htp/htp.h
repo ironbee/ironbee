@@ -137,7 +137,7 @@ typedef struct htp_uri_t htp_uri_t;
 #define HTP_M_INVALID               26
 
 // Interestingly, Apache does not define M_HEAD
-#define M_HEAD                  1000
+#define HTP_M_HEAD                  1000
 
 #define HTP_FIELD_UNPARSEABLE           0x000001
 #define HTP_FIELD_INVALID               0x000002
@@ -164,7 +164,7 @@ typedef struct htp_uri_t htp_uri_t;
 
 #define HTP_STATUS_LINE_INVALID         0x200000
 
-#define PIPELINED_CONNECTION        1
+#define HTP_PIPELINED_CONNECTION    1
 
 #define HTP_SERVER_MINIMAL          0
 #define HTP_SERVER_GENERIC          1
@@ -179,9 +179,9 @@ typedef struct htp_uri_t htp_uri_t;
 #define HTP_SERVER_APACHE           11
 #define HTP_SERVER_APACHE_2_2       12
 
-#define NONE                        0
-#define IDENTITY                    1
-#define CHUNKED                     2
+#define HTP_CODING_NONE             0
+#define HTP_CODING_IDENTITY         1
+#define HTP_CODING_CHUNKED          2
 
 #define TX_PROGRESS_NEW             0
 #define TX_PROGRESS_REQ_LINE        1
