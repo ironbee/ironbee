@@ -49,18 +49,16 @@ bstr *bstr_alloc(size_t len) {
     return (bstr *) s;
 }
 
-void bstr_free(bstr **b) {
-    if ((b == NULL) || (*b == NULL)) return;
-    free(*b);
-    *b = NULL;
-}
-
 bstr *bstr_add(bstr *destination, const bstr *source) {
     return bstr_add_mem(destination, bstr_ptr(source), bstr_len(source));
 }
 
 bstr *bstr_add_c(bstr *destination, const char *source) {
     return bstr_add_mem(destination, source, strlen(source));
+}
+
+bstr *bstr_add_c_noex(bstr *destination, const char *source) {
+    return bstr_add_mem_noex(destination, source, strlen(source));
 }
 
 bstr *bstr_add_mem(bstr *destination, const char *data, size_t len) {
@@ -76,14 +74,6 @@ bstr *bstr_add_mem(bstr *destination, const char *data, size_t len) {
     b->len = b->len + len;
 
     return destination;
-}
-
-bstr *bstr_add_noex(bstr *destination, const bstr *source) {
-    return bstr_add_mem_noex(destination, bstr_ptr(source), bstr_len(source));
-}
-
-bstr *bstr_add_c_noex(bstr *destination, const char *source) {
-    return bstr_add_mem_noex(destination, source, strlen(source));
 }
 
 bstr *bstr_add_mem_noex(bstr *destination, const char *data, size_t len) {
@@ -103,87 +93,79 @@ bstr *bstr_add_mem_noex(bstr *destination, const char *data, size_t len) {
     return destination;
 }
 
-bstr *bstr_expand(bstr *s, size_t newsize) {
-    if (((bstr_t *) s)->ptr != NULL) {
-        void * newblock = realloc(((bstr_t *) s)->ptr, newsize);
-        if (newblock == NULL) {
-            return NULL;
-        } else {
-            ((bstr_t *) s)->ptr = newblock;
+bstr *bstr_add_noex(bstr *destination, const bstr *source) {
+    return bstr_add_mem_noex(destination, bstr_ptr(source), bstr_len(source));
+}
+
+int bstr_begins_with(const bstr *haystack, const bstr *needle) {
+    return bstr_begins_with_mem(haystack, bstr_ptr(needle), bstr_len(needle));
+}
+
+int bstr_begins_with_c(const bstr *haystack, const char *needle) {
+    return bstr_begins_with_mem(haystack, needle, strlen(needle));
+}
+
+int bstr_begins_with_c_nocase(const bstr *haystack, const char *needle) {
+    return bstr_begins_with_mem_nocase(haystack, needle, strlen(needle));
+}
+
+int bstr_begins_with_nocase(const bstr *haystack, const bstr *needle) {
+    return bstr_begins_with_mem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
+}
+
+int bstr_begins_with_mem(const bstr *haystack, const char *data, size_t len) {
+    char *hdata = bstr_ptr(haystack);
+    size_t hlen = bstr_len(haystack);
+    size_t pos = 0;
+
+    while ((pos < len) && (pos < hlen)) {
+        if (hdata[pos] != data[pos]) {
+            return 0;
         }
+
+        pos++;
+    }
+
+    if (pos == len) {
+        return 1;
     } else {
-        void *newblock = realloc(s, sizeof (bstr_t) + newsize);
-        if (newblock == NULL) {
-            return NULL;
-        } else {
-            s = newblock;
+        return 0;
+    }
+}
+
+int bstr_begins_with_mem_nocase(const bstr *haystack, const char *data, size_t len) {
+    char *hdata = bstr_ptr(haystack);
+    size_t hlen = bstr_len(haystack);
+    size_t pos = 0;
+
+    while ((pos < len) && (pos < hlen)) {
+        if (tolower((int) hdata[pos]) != tolower((int) data[pos])) {
+            return 0;
         }
+
+        pos++;
     }
 
-    ((bstr_t *) s)->size = newsize;
-
-    return s;
-}
-
-bstr *bstr_dup_c(const char *data) {
-    return bstr_dup_mem(data, strlen(data));
-}
-
-bstr *bstr_dup_mem(const char *data, size_t len) {
-    bstr *b = bstr_alloc(len);
-    if (b == NULL) return NULL;
-    memcpy(bstr_ptr(b), data, len);
-    ((bstr_t *) b)->len = len;
-    return b;
-}
-
-bstr *bstr_dup(const bstr *b) {
-    return bstr_dup_ex(b, 0, bstr_len(b));
-}
-
-bstr *bstr_dup_ex(const bstr *b, size_t offset, size_t len) {
-    bstr *bnew = bstr_alloc(len);
-    if (bnew == NULL) return NULL;
-    memcpy(bstr_ptr(bnew), bstr_ptr(b) + offset, len);
-    ((bstr_t *) bnew)->len = len;
-    return bnew;
-}
-
-char *bstr_util_memdup_to_c(const char *data, size_t len) {
-    // Count how many NUL bytes we have in the string.
-    size_t i, nulls = 0;
-    for (i = 0; i < len; i++) {
-        if (data[i] == '\0') {
-            nulls++;
-        }
+    if (pos == len) {
+        return 1;
+    } else {
+        return 0;
     }
-
-    // Now copy the string into a NUL-terminated buffer.
-    char *r, *t;
-    r = t = malloc(len + nulls + 1);
-    if (t == NULL) return NULL;
-
-    while (len--) {
-        // TODO We have to at least escape the \ characters too
-        // Escape NUL bytes, but just copy everything else.
-        if (*data == '\0') {
-            data++;
-            *t++ = '\\';
-            *t++ = '0';
-        } else {
-            *t++ = *data++;
-        }
-    }
-
-    // Terminate string.
-    *t = '\0';
-
-    return r;
 }
 
-char *bstr_util_strdup_to_c(const bstr *b) {
-    if (b == NULL) return NULL;
-    return bstr_util_memdup_to_c(bstr_ptr(b), bstr_len(b));
+int bstr_char_at(const bstr *s, size_t pos) {
+    unsigned char *data = (unsigned char *) bstr_ptr(s);
+    size_t len = bstr_len(s);
+
+    if (pos >= len) return -1;
+    return data[pos];
+}
+
+void bstr_chop(bstr *s) {
+    bstr_t *b = (bstr_t *) s;
+    if (b->len > 0) {
+        b->len--;
+    }
 }
 
 int bstr_chr(const bstr *b, int c) {
@@ -202,20 +184,16 @@ int bstr_chr(const bstr *b, int c) {
     return -1;
 }
 
-int bstr_rchr(const bstr *b, int c) {
-    char *data = bstr_ptr(b);
-    size_t len = bstr_len(b);
+int bstr_cmp(const bstr *b1, const bstr *b2) {
+    return bstr_cmp_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
+}
 
-    int i = len;
-    while (i >= 0) {
-        if (data[i] == c) {
-            return i;
-        }
+int bstr_cmp_c(const bstr *b, const char *c) {
+    return bstr_cmp_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
+}
 
-        i--;
-    }
-
-    return -1;
+int bstr_cmp_c_nocase(const bstr *b, const char *c) {
+    return bstr_cmp_nocase_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
 }
 
 int bstr_cmp_ex(const char *s1, size_t l1, const char *s2, size_t l2) {
@@ -241,6 +219,10 @@ int bstr_cmp_ex(const char *s1, size_t l1, const char *s2, size_t l2) {
     }
 }
 
+int bstr_cmp_nocase(const bstr *b1, const bstr *b2) {
+    return bstr_cmp_nocase_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
+}
+
 int bstr_cmp_nocase_ex(const char *s1, size_t l1, const char *s2, size_t l2) {
     size_t p1 = 0, p2 = 0;
 
@@ -264,20 +246,136 @@ int bstr_cmp_nocase_ex(const char *s1, size_t l1, const char *s2, size_t l2) {
     }
 }
 
-int bstr_cmp_c(const bstr *b, const char *c) {
-    return bstr_cmp_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
+bstr *bstr_dup(const bstr *b) {
+    return bstr_dup_ex(b, 0, bstr_len(b));
 }
 
-int bstr_cmp_c_nocase(const bstr *b, const char *c) {
-    return bstr_cmp_nocase_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
+bstr *bstr_dup_c(const char *data) {
+    return bstr_dup_mem(data, strlen(data));
 }
 
-int bstr_cmp(const bstr *b1, const bstr *b2) {
-    return bstr_cmp_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
+bstr *bstr_dup_ex(const bstr *b, size_t offset, size_t len) {
+    bstr *bnew = bstr_alloc(len);
+    if (bnew == NULL) return NULL;
+    memcpy(bstr_ptr(bnew), bstr_ptr(b) + offset, len);
+    ((bstr_t *) bnew)->len = len;
+    return bnew;
 }
 
-int bstr_cmp_nocase(const bstr *b1, const bstr *b2) {
-    return bstr_cmp_nocase_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
+bstr *bstr_dup_lower(const bstr *b) {
+    return bstr_to_lowercase(bstr_dup(b));
+}
+
+bstr *bstr_dup_mem(const char *data, size_t len) {
+    bstr *b = bstr_alloc(len);
+    if (b == NULL) return NULL;
+    memcpy(bstr_ptr(b), data, len);
+    ((bstr_t *) b)->len = len;
+    return b;
+}
+
+bstr *bstr_expand(bstr *s, size_t newsize) {
+    if (((bstr_t *) s)->ptr != NULL) {
+        void * newblock = realloc(((bstr_t *) s)->ptr, newsize);
+        if (newblock == NULL) {
+            return NULL;
+        } else {
+            ((bstr_t *) s)->ptr = newblock;
+        }
+    } else {
+        void *newblock = realloc(s, sizeof (bstr_t) + newsize);
+        if (newblock == NULL) {
+            return NULL;
+        } else {
+            s = newblock;
+        }
+    }
+
+    ((bstr_t *) s)->size = newsize;
+
+    return s;
+}
+
+void bstr_free(bstr **b) {
+    if ((b == NULL) || (*b == NULL)) return;
+    free(*b);
+    *b = NULL;
+}
+
+int bstr_index_of(const bstr *haystack, const bstr *needle) {
+    return bstr_index_of_mem(haystack, bstr_ptr(needle), bstr_len(needle));
+}
+
+int bstr_index_of_c(const bstr *haystack, const char *needle) {
+    return bstr_index_of_mem(haystack, needle, strlen(needle));
+}
+
+int bstr_index_of_c_nocase(const bstr *haystack, const char *needle) {
+    return bstr_index_of_mem_nocase(haystack, needle, strlen(needle));
+}
+
+int bstr_index_of_mem(const bstr *haystack, const char *data2, size_t len2) {
+    unsigned char *data = (unsigned char *) bstr_ptr(haystack);
+    size_t len = bstr_len(haystack);
+    size_t i, j;
+
+    // TODO Is an optimisation here justified?
+    //      http://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm
+
+    for (i = 0; i < len; i++) {
+        size_t k = i;
+
+        for (j = 0; ((j < len2) && (k < len)); j++) {
+            if (data[k++] != data2[j]) break;
+        }
+
+        if (j == len2) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+int bstr_index_of_mem_nocase(const bstr *haystack, const char *data2, size_t len2) {
+    unsigned char *data = (unsigned char *) bstr_ptr(haystack);
+    size_t len = bstr_len(haystack);
+    size_t i, j;
+
+    // TODO No need to inspect the last len2 - 1 bytes
+    for (i = 0; i < len; i++) {
+        size_t k = i;
+
+        for (j = 0; ((j < len2) && (k < len)); j++) {
+            if (toupper(data[k++]) != toupper((unsigned char) data2[j])) break;
+        }
+
+        if ((k - i) == len2) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+int bstr_index_of_nocase(const bstr *haystack, const bstr *needle) {
+    return bstr_index_of_mem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
+}
+
+int bstr_rchr(const bstr *b, int c) {
+    char *data = bstr_ptr(b);
+    size_t len = bstr_len(b);
+
+    int i = len;
+    while (i >= 0) {
+        if (data[i] == c) {
+            return i;
+        }
+
+        i--;
+    }
+
+    return -1;
 }
 
 bstr *bstr_to_lowercase(bstr *b) {
@@ -293,10 +391,6 @@ bstr *bstr_to_lowercase(bstr *b) {
     }
 
     return b;
-}
-
-bstr *bstr_dup_lower(const bstr *b) {
-    return bstr_to_lowercase(bstr_dup(b));
 }
 
 int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *lastlen) {
@@ -361,140 +455,46 @@ int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *la
     return rval;
 }
 
-int bstr_index_of(const bstr *haystack, const bstr *needle) {
-    return bstr_index_of_mem(haystack, bstr_ptr(needle), bstr_len(needle));
-}
-
-int bstr_index_of_c(const bstr *haystack, const char *needle) {
-    return bstr_index_of_mem(haystack, needle, strlen(needle));
-}
-
-int bstr_index_of_nocase(const bstr *haystack, const bstr *needle) {
-    return bstr_index_of_mem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
-}
-
-int bstr_index_of_c_nocase(const bstr *haystack, const char *needle) {
-    return bstr_index_of_mem_nocase(haystack, needle, strlen(needle));
-}
-
-int bstr_index_of_mem(const bstr *haystack, const char *data2, size_t len2) {
-    unsigned char *data = (unsigned char *) bstr_ptr(haystack);
-    size_t len = bstr_len(haystack);
-    size_t i, j;
-
-    // TODO Is an optimisation here justified?
-    //      http://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm
-
-    for (i = 0; i < len; i++) {
-        size_t k = i;
-
-        for (j = 0; ((j < len2) && (k < len)); j++) {
-            if (data[k++] != data2[j]) break;
-        }
-
-        if (j == len2) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-int bstr_index_of_mem_nocase(const bstr *haystack, const char *data2, size_t len2) {
-    unsigned char *data = (unsigned char *) bstr_ptr(haystack);
-    size_t len = bstr_len(haystack);
-    size_t i, j;
-
-    // TODO No need to inspect the last len2 - 1 bytes
-    for (i = 0; i < len; i++) {
-        size_t k = i;
-
-        for (j = 0; ((j < len2) && (k < len)); j++) {
-            if (toupper(data[k++]) != toupper((unsigned char) data2[j])) break;
-        }
-
-        if ((k - i) == len2) {
-            return i;
-        }
-    }
-
-    return -1;
-}
-
-void bstr_chop(bstr *s) {
-    bstr_t *b = (bstr_t *) s;
-    if (b->len > 0) {
-        b->len--;
-    }
-}
-
 void bstr_util_adjust_len(bstr *s, size_t newlen) {
     bstr_t *b = (bstr_t *) s;
     b->len = newlen;
 }
 
-int bstr_char_at(const bstr *s, size_t pos) {
-    unsigned char *data = (unsigned char *) bstr_ptr(s);
-    size_t len = bstr_len(s);
-
-    if (pos >= len) return -1;
-    return data[pos];
-}
-
-int bstr_begins_with_mem(const bstr *haystack, const char *data, size_t len) {
-    char *hdata = bstr_ptr(haystack);
-    size_t hlen = bstr_len(haystack);
-    size_t pos = 0;
-
-    while ((pos < len) && (pos < hlen)) {
-        if (hdata[pos] != data[pos]) {
-            return 0;
+char *bstr_util_memdup_to_c(const char *data, size_t len) {
+    // Count how many NUL bytes we have in the string.
+    size_t i, nulls = 0;
+    for (i = 0; i < len; i++) {
+        if (data[i] == '\0') {
+            nulls++;
         }
-
-        pos++;
     }
 
-    if (pos == len) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
+    // Now copy the string into a NUL-terminated buffer.
+    char *r, *t;
+    r = t = malloc(len + nulls + 1);
+    if (t == NULL) return NULL;
 
-int bstr_begins_with_mem_nocase(const bstr *haystack, const char *data, size_t len) {
-    char *hdata = bstr_ptr(haystack);
-    size_t hlen = bstr_len(haystack);
-    size_t pos = 0;
-
-    while ((pos < len) && (pos < hlen)) {
-        if (tolower((int) hdata[pos]) != tolower((int) data[pos])) {
-            return 0;
+    while (len--) {
+        // TODO We have to at least escape the \ characters too
+        // Escape NUL bytes, but just copy everything else.
+        if (*data == '\0') {
+            data++;
+            *t++ = '\\';
+            *t++ = '0';
+        } else {
+            *t++ = *data++;
         }
-
-        pos++;
     }
 
-    if (pos == len) {
-        return 1;
-    } else {
-        return 0;
-    }
+    // Terminate string.
+    *t = '\0';
+
+    return r;
 }
 
-int bstr_begins_with(const bstr *haystack, const bstr *needle) {
-    return bstr_begins_with_mem(haystack, bstr_ptr(needle), bstr_len(needle));
-}
-
-int bstr_begins_with_c(const bstr *haystack, const char *needle) {
-    return bstr_begins_with_mem(haystack, needle, strlen(needle));
-}
-
-int bstr_begins_with_nocase(const bstr *haystack, const bstr *needle) {
-    return bstr_begins_with_mem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
-}
-
-int bstr_begins_with_c_nocase(const bstr *haystack, const char *needle) {
-    return bstr_begins_with_mem_nocase(haystack, needle, strlen(needle));
+char *bstr_util_strdup_to_c(const bstr *b) {
+    if (b == NULL) return NULL;
+    return bstr_util_memdup_to_c(bstr_ptr(b), bstr_len(b));
 }
 
 bstr *bstr_wrap_c(const char *input) {
