@@ -184,7 +184,7 @@ int bstr_begins_with_c(const bstr *bhaystack, const char *cneedle);
  * @param[in] cneedle
  * @return 1 if true, otherwise 0.
  */
-int bstr_begins_withc_nocase(const bstr *bhaystack, const char *cneedle);
+int bstr_begins_with_c_nocase(const bstr *bhaystack, const char *cneedle);
 
 /**
  * Checks whether the bstring begins with the given memory block. Case sensitive.

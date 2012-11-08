@@ -493,7 +493,7 @@ int bstr_begins_with_nocase(const bstr *haystack, const bstr *needle) {
     return bstr_begins_with_mem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
-int bstr_begins_withc_nocase(const bstr *haystack, const char *needle) {
+int bstr_begins_with_c_nocase(const bstr *haystack, const char *needle) {
     return bstr_begins_with_mem_nocase(haystack, needle, strlen(needle));
 }
 
