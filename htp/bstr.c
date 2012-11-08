@@ -433,11 +433,11 @@ void bstr_util_adjust_len(bstr *s, size_t newlen) {
     b->len = newlen;
 }
 
-unsigned char bstr_char_at(const bstr *s, size_t pos) {
+int bstr_char_at(const bstr *s, size_t pos) {
     unsigned char *data = (unsigned char *) bstr_ptr(s);
     size_t len = bstr_len(s);
 
-    if (pos > len) return -1;
+    if (pos >= len) return -1;
     return data[pos];
 }
 

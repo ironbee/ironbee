@@ -222,7 +222,7 @@ int bstr_begins_with_nocase(const bstr *bhaystack, const bstr *cneedle);
  * @return The character at the given location, or -1 if the position is out
  *         of range.
  */
-unsigned char bstr_char_at(const bstr *b, size_t pos);
+int bstr_char_at(const bstr *b, size_t pos);
 
 /**
  * Remove the last byte from bstring, assuming it contains at least one byte.
