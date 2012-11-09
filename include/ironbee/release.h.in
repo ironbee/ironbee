@@ -48,9 +48,9 @@ extern "C" {
 #define IB_PRODUCT_NAME IB_STRINGIFY(IronBee)
 
 /* Version definitions */
-#define IB_VERSION_MAJOR        0 /**< Major version */
-#define IB_VERSION_MINOR        6 /**< Minor version */
-#define IB_VERSION_MAINT        0 /**< Maintenance version */
+#define IB_VERSION_MAJOR        @MAJOR_VERSION@ /**< Major version */
+#define IB_VERSION_MINOR        @MINOR_VERSION@ /**< Minor version */
+#define IB_VERSION_MAINT        @PATCH_VERSION@ /**< Maintenance version */
 #define IB_VERSION_BUILD_EXTRA  0 /**< Extra build number (normally 0) */
 
 /* Handle tacking on a build number */

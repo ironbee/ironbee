@@ -1,0 +1,126 @@
+# Allow _version and _release to be overridden
+%if %{?_version:0}%{!?_version:1}
+%define _version @MAJOR_VERSION@.@MINOR_VERSION@.@PATCH_VERSION@
+%endif
+
+%if %{?_release:0}%{!?_release:1}
+%define _release 1
+%endif
+
+%define prefix   /usr
+
+Summary:        IronBee WAF Base files and cli tool
+Name:           ironbee
+Version:        %{_version} 
+Release:        %{_release}
+License:        ASL 2.0
+Group:          System Environment/Daemons
+Source0:        %{name}-%{version}.tar.gz
+URL:            http://www.ironbee.com
+
+BuildRequires: autoconf, automake, libtool, gcc, gcc-c++ 
+BuildRequires: pcre-devel, zlib-devel, libxml2-devel, httpd-devel 
+BuildRequires: libhtp-devel
+BuildRequires: trafficserver-devel >= 3.1.4
+
+%package devel
+Summary: IronBee Development files
+Group: Development/Libraries 
+%description devel
+Ironbee Development files
+
+%package trafficserver 
+Summary: IronBee Apache Trafficserver Plugin 
+Group: Applications/Internet
+Requires: %{name} = %{version}-%{release}, trafficserver
+%description trafficserver 
+Ironbee Apache Trafficserver Plugin
+
+%package httpd
+Summary: IronBee Apache HTTPD Plugin
+Group: Applications/Internet
+Requires: %{name} = %{version}-%{release}, httpd
+%description httpd 
+Ironbee Apache HTTPD Plugin
+
+%description
+IronBee WAF secretly forged in the volcanic Mount Doom. One bee to rule them all!
+
+%prep
+%setup -q
+
+%build
+#We have to unset existing CFLAGS Sorry RH but this breaks LuaJIT compilation
+unset CFLAGS
+unset CXXFLAGS
+unset FFLAGS
+./configure --build=x86_64-unknown-linux-gnu --host=x86_64-unknown-linux-gnu --target=x86_64-redhat-linux-gnu --program-prefix= --prefix=/usr --exec-prefix=/usr --bindir=/usr/bin --sbindir=/usr/sbin --sysconfdir=/etc/ironbee --datadir=/usr/share --includedir=/usr/include --libdir=/usr/lib64 --libexecdir=/usr/libexec --localstatedir=/var --sharedstatedir=/var/lib --mandir=/usr/share/man --infodir=/usr/share/info
+make %{?_smp_mflags}
+
+%install
+echo $RPM_BUILD_ROOT
+rm -rf $RPM_BUILD_ROOT
+make DESTDIR=$RPM_BUILD_ROOT install
+
+# The clean section  is only needed for EPEL and Fedora < 13
+# http://fedoraproject.org/wiki/PackagingGuidelines#.25clean
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%attr(0755,root,root) %{_libdir}/libironbee.so.*
+%attr(0755,root,root) %{_libdir}/libironbee.so
+%attr(0755,root,root) %{_libdir}/libironbee.la
+%attr(0755,root,root) %{_libdir}/libironbee.a
+%attr(0755,root,root) %{_libdir}/libibutil.so.*
+%attr(0755,root,root) %{_libdir}/libibutil.so
+%attr(0755,root,root) %{_libdir}/libibutil.la
+%attr(0755,root,root) %{_libdir}/libibutil.a
+%attr(0755,root,root) %{_libdir}/libiaeudoxus.so.*
+%attr(0755,root,root) %{_libdir}/libiaeudoxus.so
+%attr(0755,root,root) %{_libdir}/libiaeudoxus.la
+%attr(0755,root,root) %{_libdir}/libiaeudoxus.a
+
+%attr(0755,root,root) %{_libdir}/libibpp.so.*
+%attr(0755,root,root) %{_libdir}/libibpp.so
+%attr(0755,root,root) %{_libdir}/libibpp.la
+%attr(0755,root,root) %{_libdir}/libibpp.a
+%attr(0755,root,root) %{_libdir}/libironautomata.so.*
+%attr(0755,root,root) %{_libdir}/libironautomata.so
+%attr(0755,root,root) %{_libdir}/libironautomata.la
+%attr(0755,root,root) %{_libdir}/libironautomata.a
+
+%attr(0755,root,root) %{_libdir}/*.lua
+%attr(0755,root,root) %{_libdir}/ibmod_*
+%attr(0755,root,root) %{_libdir}/pkgconfig/*.*
+%attr(0755,root,root) %{_bindir}/ibcli
+%attr(0644,root,root) %{_sysconfdir}/ironbee/ironbee-cli.conf.example
+%attr(0644,root,root) %{_sysconfdir}/ironbee/site-1.conf
+%attr(0644,root,root) %{_sysconfdir}/ironbee/site-2.conf
+%attr(0644,root,root) %{_sysconfdir}/ironbee/site-default.conf
+
+%files devel
+%attr(0755,root,root) %{_bindir}/ac_generator
+%attr(0755,root,root) %{_bindir}/clipp
+%attr(0755,root,root) %{_bindir}/ec
+%attr(0755,root,root) %{_bindir}/ee
+%attr(0755,root,root) %{_bindir}/optimize
+%attr(0755,root,root) %{_bindir}/to_dot
+%attr(0755,root,root) %{_bindir}/trie_generator
+
+%attr(0644,root,root) %{_includedir}/ironbee/*
+%attr(0644,root,root) %{_includedir}/ironautomata/*
+%attr(0644,root,root) %{_includedir}/ironbeepp/*
+
+%files trafficserver
+%attr(0644,root,root) %{_sysconfdir}/ironbee/ironbee-trafficserver.conf.example
+%attr(0755,root,root) %{_libdir}/ts_ironbee.so
+%attr(0755,root,root) %{_libdir}/libloader.so
+
+%files httpd
+%attr(0644,root,root) %{_sysconfdir}/ironbee/ironbee-httpd.conf.example
+%attr(0755,root,root) %{_libdir}/mod_ironbee.so
+
+%changelog
+* Sun Dec 18 2011 <wmetcalf@qualys.com> - 0.1
+- initial release for public

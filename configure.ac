@@ -4,12 +4,15 @@ dnl
 
 AC_PREREQ(2.59)
 
-AC_INIT([ironbee], [0.6], [ironbee-team@ironbee.com])
+AC_INIT([ironbee],
+	m4_esyscmd([./get-version.sh VERSION]),
+	[ironbee-team@ironbee.com])
 
 AC_CONFIG_MACRO_DIR([acinclude]) AC_CONFIG_SRCDIR([README])
 AC_CONFIG_HEADERS([ironbee_config_auto_gen.h])
 AC_CONFIG_AUX_DIR([build])
 AC_PREFIX_DEFAULT([/usr/local/ironbee])
+AX_SPLIT_VERSION([$PACKAGE_VERSION])
 
 AM_INIT_AUTOMAKE([foreign])
 
@@ -449,7 +452,7 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="libs util engine servers lua modules etc docs automata tests"
+TOPLEVEL_SUBDIRS="libs util engine servers lua modules etc docs automata tests packaging"
 LIBS_SUBDIRS=""
 SERVERS_SUBDIRS="apache_httpd2 trafficserver"
 
@@ -499,6 +502,9 @@ else
 fi
 AM_CONDITIONAL([OUT_OF_TREE],[test "$out_of_tree" = "yes"])
 
+AC_RPM_CHECK
+AC_SUBST(HAVE_RPM)
+
 dnl Substitutions
 AC_SUBST(AM_CPPFLAGS)
 AC_SUBST(CONFIG_MACRO_DIR)
@@ -516,6 +522,10 @@ AC_SUBST(DOXYGEN_INTERNAL_DEPS)
 AC_SUBST(DOXYGEN_INPUT)
 AC_SUBST(DOXYGEN_TOP)
 AC_SUBST(BOOST_SUFFIX)
+AC_SUBST(MAJOR_VERSION, [$AX_MAJOR_VERSION])
+AC_SUBST(MINOR_VERSION, [$AX_MINOR_VERSION])
+AC_SUBST(PATCH_VERSION, [$AX_POINT_VERSION])
+
 dnl Generate files
 AC_CONFIG_FILES([Makefile])
 
@@ -560,5 +570,13 @@ AC_CONFIG_FILES([ironbee.pc])
 # doxygen
 AC_CONFIG_FILES([docs/internal.doxy])
 AC_CONFIG_FILES([docs/external.doxy])
+
+# version file
+AC_CONFIG_FILES([include/ironbee/release.h])
+
+#packaging
+AC_CONFIG_FILES([packaging/Makefile])
+AC_CONFIG_FILES([packaging/rpm/Makefile])
+AC_CONFIG_FILES([packaging/rpm/ironbee.spec])
 
 AC_OUTPUT
