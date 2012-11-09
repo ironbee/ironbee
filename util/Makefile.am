@@ -12,6 +12,8 @@ libibutil_la_SOURCES = lock.c util.c logformat.c \
                        regex.c \
                        decode.c \
                        escape.c \
+		       kvstore.c \
+		       kvstore_filesystem.c \
                        modsec_compat.c \
                        clock.c types.c ipset.c ip.c
 

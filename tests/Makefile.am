@@ -82,7 +82,8 @@ check_PROGRAMS = test_gtest \
                  test_action \
                  test_config \
                  test_util_ipset \
-                 test_util_ip
+                 test_util_ip \
+		 test_kvstore
 if ENABLE_LUA
 check_PROGRAMS += test_module_rules_lua \
                   test_luajit
@@ -259,5 +260,12 @@ test_luajit_LDADD = $(LDADD) \
                     $(MODULE_TEST_LDADD) \
                     $(top_builddir)/lua/libironbee-lua.la \
                     -lm
+
+test_kvstore_SOURCES = test_main.cc \
+		       test_kvstore.cc
+test_kvstore_CPPFLAGS = $(CPPFLAGS)
+test_kvstore_LDADD = $(LDADD) \
+		     $(MODULE_TEST_LDADD) \
+		     -lm
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml
