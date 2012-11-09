@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <ctype.h>
+#include <assert.h>
 #include <ts/ts.h>
 
 #include <sys/socket.h>
@@ -378,7 +379,6 @@ errordoc_free:
         TSfree(hdrs->hdr);
         TSfree(hdrs->value);
         TSfree(hdrs);
-        hdrs = txndata->err_hdrs;
     }
 
     if (txndata->err_body) {
@@ -1153,6 +1153,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                                   ib_direction_data_t *ibd)
 {
     int rv;
+    ib_hdr_outcome ret = HDR_OK;
     TSMBuffer bufp;
     TSMLoc hdr_loc;
     TSIOBuffer iobufp;
@@ -1167,7 +1168,8 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     int nhdrs = 0;
 
     char *head_buf;
-    unsigned char *dptr, *icdatabuf;
+    unsigned char *dptr;
+    unsigned char *icdatabuf = 0;
 
     ib_parsed_header_wrapper_t *ibhdrs;
 
@@ -1205,6 +1207,8 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         }
         sprintf(cversion, "HTTP/%d.%d", major, minor);
         rv = TSHttpHdrUrlGet(bufp, hdr_loc, &url_loc);
+        /* Failure here implies total bug */
+        assert(rv == TS_SUCCESS);
         iobufp = TSIOBufferCreate();
         TSUrlPrint(bufp, url_loc, iobufp);
 
@@ -1242,8 +1246,14 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                                        method, m_len,
                                        ubuf, u_len,
                                        cversion, strlen(cversion));
-        TSDebug("ironbee", "process_hdr: calling ib_state_notify_request_started()");
-        ib_state_notify_request_started(ironbee, data->tx, rline);
+        if (rv != IB_OK) {
+            /* FIXME: Does error here mean we should bail out totally? */
+            TSError("Error creating ironbee request line!");
+        }
+        else {
+            TSDebug("ironbee", "process_hdr: calling ib_state_notify_request_started()");
+            ib_state_notify_request_started(ironbee, data->tx, rline);
+        }
 
         TSIOBufferReaderFree(readerp);
         TSIOBufferDestroy(iobufp);
@@ -1286,12 +1296,21 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                                         cversion, strlen(cversion),
                                         cstatus, strlen(cstatus),
                                         reason, r_len);
-        TSDebug("ironbee", "process_hdr: calling ib_state_notify_response_started()");
-        ib_log_debug_tx(data->tx, "ib_state_notify_response_started rline=%p", rline);
-        rv = ib_state_notify_response_started(ironbee, data->tx, rline);
+        if (rv != IB_OK) {
+            /* FIXME: Does error here mean we should bail out totally? */
+            TSError("Error creating ironbee response line!");
+        }
+        else {
+            TSDebug("ironbee", "process_hdr: calling ib_state_notify_response_started()");
+            ib_log_debug_tx(data->tx, "ib_state_notify_response_started rline=%p", rline);
+            rv = ib_state_notify_response_started(ironbee, data->tx, rline);
+            if (rv != IB_OK)
+                TSError("Error notifying ironbee response line!");
+        }
 
         /* A transitional response doesn't have most of what a real response
          * does, so we need to wait for the real response to go further
+         * Cleanup is N/A - we haven't yet allocated anything locally!
          */
         if (status == TS_HTTP_STATUS_CONTINUE) {
             return HDR_HTTP_100;
@@ -1333,6 +1352,11 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
      *
      */
     rv = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, data->tx);
+    if (rv != IB_OK) {
+        TSError("Error creating ironbee header wrapper.  Disabling checks!");
+        ret = HDR_ERROR;
+        goto process_hdr_cleanup;
+    }
     // get_line ensures CRLF (line_len + 2)?
     line = (const char*) icdatabuf;
     while (next_line(&line, &line_len) > 0) {
@@ -1351,18 +1375,29 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         rv = ib_parsed_name_value_pair_list_add(ibhdrs,
                                                 line, n_len,
                                                 lptr, v_len);
+        if (rv != IB_OK)
+            TSError("Error adding header '%.*s: %.*s' to Ironbee list",
+                    n_len, line, v_len, lptr);
         ++nhdrs;
     }
 
-    /* If there are no headers, treat as a transitional response */
+    /* Notify headers if present */
     if (nhdrs > 0) {
         TSDebug("ironbee", "process_hdr: notifying header data");
         rv = (*ibd->ib_notify_header)(ironbee, data->tx, ibhdrs);
+        if (rv != IB_OK)
+            TSError("Error notifying Ironbee header data event");
         TSDebug("ironbee", "process_hdr: notifying header finished");
         rv = (*ibd->ib_notify_header_finished)(ironbee, data->tx);
+        if (rv != IB_OK)
+            TSError("Error notifying Ironbee header finished event");
     }
+
+    /* If there are no headers, treat as a transitional response */
     else {
-        return HDR_HTTP_100;
+        TSDebug("ironbee", "Response has no headers!  Treating as transitional!");
+        ret = HDR_HTTP_100;
+        goto process_hdr_cleanup;
     }
 
     /* Initialize the header action */
@@ -1405,12 +1440,18 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         header_action(bufp, hdr_loc, &setact, data->tx->mp);
     }
 
+process_hdr_cleanup:
     TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     TSIOBufferReaderFree(readerp);
     TSIOBufferDestroy(iobufp);
-    TSfree(icdatabuf);
+    if (icdatabuf)
+        TSfree(icdatabuf);
 
-    return (data->status == 0) ? HDR_OK : HDR_HTTP_STATUS;
+    /* If an error sent us to cleanup then it's in ret.  Else just
+     * return whether or not Ironbee has signalled an HTTP status.
+     */
+    return (ret != HDR_OK) ? ret :
+                             (data->status == 0) ? HDR_OK : HDR_HTTP_STATUS;
 }
 
 /**
@@ -1576,6 +1617,12 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* Feed ironbee the headers if not done already. */
             if (!ib_tx_flags_isset(txndata->tx, IB_TX_FRES_STARTED)) {
                 status = process_hdr(txndata, txnp, &ib_direction_client_resp);
+                /* The API function(s) that caused the error to be set
+                 * already returned an error, so a log message here is
+                 * probably superfluous.
+                 */
+                if (status != HDR_OK)
+                    TSDebug("ironbee", "Requested error in response headers, but too late to act on it.");
             }
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
