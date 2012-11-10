@@ -451,7 +451,7 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
     }
 
     /* Select the connection context to use. */
-    rc = ib_context_select(ib, conn, NULL, NULL, &conn->ctx);
+    rc = ib_ctxsel_select_context(ib, conn, NULL, &conn->ctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -804,7 +804,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     }
 
     /* Select the transaction context to use. */
-    rc = ib_context_select(ib, tx->conn, tx, NULL, &tx->ctx);
+    rc = ib_ctxsel_select_context(ib, tx->conn, tx, &tx->ctx);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

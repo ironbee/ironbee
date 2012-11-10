@@ -46,6 +46,7 @@
 #include <ironbee/provider.h>
 #include <ironbee/server.h>
 #include <ironbee/core.h>
+#include <ironbee/site.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/util.h>
 #include <ironbee/regex.h>

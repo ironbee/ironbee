@@ -40,6 +40,7 @@
 #include <ironbee/mpool.h>
 #include <ironbee/server.h>
 #include <ironbee/state_notify.h>
+#include <ironbee/context_selection.h>
 
 #include <assert.h>
 #include <inttypes.h>
@@ -909,301 +910,6 @@ void ib_tx_destroy(ib_tx_t *tx)
     ib_engine_pool_destroy(tx->ib, tx->mp);
 }
 
-ib_status_t ib_site_create(ib_engine_t *ib,
-                           ib_context_t *ctx,
-                           const char *name,
-                           ib_site_t **psite)
-{
-    IB_FTRACE_INIT();
-    assert(ib != NULL);
-    assert(ctx != NULL);
-    assert(ctx->ctype == IB_CTYPE_SITE);
-    assert(name != NULL);
-
-    ib_site_t *site;
-    ib_mpool_t *pool = ib->config_mp;
-    ib_status_t rc;
-
-    if (psite != NULL) {
-        *psite = NULL;
-    }
-
-    /* Create the main structure in the config memory pool */
-    site = (ib_site_t *)ib_mpool_calloc(pool, 1, sizeof(*site));
-    if (site == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    site->ib = ib;
-    site->mp = pool;
-    site->name = ib_mpool_strdup(pool, name);
-    site->context = ctx;
-
-    /* Create the locations list */
-    rc = ib_list_create(&(site->locations), site->mp);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* The host and service lists are created as required */
-
-    if (psite != NULL) {
-        *psite = site;
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t ib_site_close(ib_site_t *site)
-{
-    IB_FTRACE_INIT();
-    assert(site != NULL);
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t ib_site_add_host(ib_site_t *site,
-                             const char *hostname,
-                             ib_site_host_t **psitehost)
-{
-    IB_FTRACE_INIT();
-    assert(site != NULL);
-    assert(hostname != NULL);
-
-    ib_status_t rc;
-    ib_site_host_t *sitehost;
-    size_t hostlen = strlen(hostname);
-    const char *star;
-    bool match_any = false;
-    bool is_wild = false;
-
-    if (psitehost != NULL) {
-        *psitehost = NULL;
-    }
-
-    /* Validate the host name.  Start by finding the right-most '*' */
-    star = strrchr(hostname, '*');
-    if (star == hostname) {
-        if (hostlen == 1) {
-            match_any = true;
-        }
-        else {
-            is_wild = true;
-        }
-    }
-    else if (star != NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* Create the hostname list if this is the first service. */
-    if (site->hosts == NULL) {
-        rc = ib_list_create(&(site->hosts), site->mp);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-
-    /* Create a host object */
-    sitehost = ib_mpool_alloc(site->mp, sizeof(*sitehost));
-    if (sitehost == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    sitehost->hostname_str = ib_mpool_strdup(site->mp, hostname);
-    if (sitehost->hostname_str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    sitehost->hostname_len = strlen(hostname);
-    if (is_wild) {
-        sitehost->suffix_str = sitehost->hostname_str + 1;
-        sitehost->suffix_len = sitehost->hostname_len - 1;
-    }
-    else {
-        sitehost->suffix_str = NULL;
-        sitehost->suffix_len = 0;
-    }
-    sitehost->match_any = match_any;
-
-    /* Add the host to the list */
-    rc = ib_list_push(site->hosts, (void *)sitehost);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (psitehost != NULL) {
-        *psitehost = sitehost;
-    }
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t ib_site_add_service(ib_site_t *site,
-                                const char *service_str,
-                                ib_site_service_t **pservice)
-{
-    IB_FTRACE_INIT();
-    assert(site != NULL);
-    assert(service_str != NULL);
-
-    ib_status_t rc;
-    const char *colon;
-    size_t ip_len;
-    ib_num_t port;
-    ib_site_service_t *service;
-
-    /* Find the colon separator & grab the port # */
-    colon = strrchr(service_str, ':');
-    if (colon == NULL) {
-        port = -1;
-    }
-    else {
-        if (strcmp(colon+1, "*") == 0) {
-            port = -1;
-        }
-        else {
-            rc = ib_string_to_num(colon+1, 10, &port);
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-    }
-
-    /* Validate the IP address */
-    if (colon == NULL) {
-        ip_len = strlen(service_str);
-    }
-    else {
-        ip_len = colon - service_str;
-    }
-
-    /* Create the service structure */
-    service = ib_mpool_alloc(site->mp, sizeof(*service));
-    if (service == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Fill in the port and IP string */
-    service->port = port;
-    if ( (ip_len == 0) || ((ip_len == 1) && (*service_str == '*')) ) {
-        service->ip_str = NULL;
-        service->ip_len = 0;
-    }
-    else {
-        rc = ib_ip_validate_ex(service_str, ip_len);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        service->ip_str = ib_mpool_memdup_to_str(site->mp, service_str, ip_len);
-        if (service->ip_str == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
-        }
-        service->ip_len = ip_len;
-    }
-    service->match_any = (service->ip_len == 0) && (service->port < 0);
-
-    /* Create the services list if this is the first service. */
-    if (site->services == NULL) {
-        rc = ib_list_create(&(site->services), site->mp);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-
-    /* Finally, push our service onto the list */
-    rc = ib_list_push(site->services, service);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (pservice != NULL) {
-        *pservice = service;
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-const ib_site_service_t *ib_site_matchany_service(const ib_site_t *site)
-{
-    IB_FTRACE_INIT();
-    assert(site != NULL);
-    const ib_list_node_t *node;
-
-    if (site->services == NULL) {
-        IB_FTRACE_RET_PTR(const ib_site_service_t, NULL);
-    }
-
-    IB_LIST_LOOP_CONST(site->services, node) {
-        const ib_site_service_t *service =
-            (const ib_site_service_t *)node->data;
-        if (service->match_any == true) {
-            IB_FTRACE_RET_PTR(const ib_site_service_t, service);
-        }
-    }
-
-    IB_FTRACE_RET_PTR(const ib_site_service_t, NULL);
-}
-
-ib_status_t ib_site_add_location(ib_site_t *site,
-                                 ib_context_t *ctx,
-                                 const char *path,
-                                 ib_site_location_t **plocation)
-{
-    IB_FTRACE_INIT();
-    assert(ctx != NULL);
-    assert(ctx->ctype == IB_CTYPE_LOCATION);
-    assert(site != NULL);
-    assert(path != NULL);
-
-    ib_site_location_t *location;
-    ib_status_t rc;
-
-    if (plocation != NULL) {
-        *plocation = NULL;
-    }
-
-    /* Create the location structure in the site memory pool */
-    location =
-        (ib_site_location_t *)ib_mpool_alloc(site->mp, sizeof(*location));
-    if (location == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-    location->site = site;
-    location->path = ib_mpool_strdup(site->mp, path);
-    location->path_len = strlen(path);
-    location->match_any = (strcmp(path, "/") == 0) ? true : false;
-    location->context = ctx;
-
-    /* And, add it to the locations list */
-    rc = ib_list_push(site->locations, (void *)location);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (plocation != NULL) {
-        *plocation = location;
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-const ib_site_location_t *ib_site_matchany_location(const ib_site_t *site)
-{
-    IB_FTRACE_INIT();
-    assert(site != NULL);
-    const ib_list_node_t *node;
-
-    if (site->locations == NULL) {
-        IB_FTRACE_RET_PTR(const ib_site_location_t, NULL);
-    }
-
-    IB_LIST_LOOP_CONST(site->locations, node) {
-        const ib_site_location_t *loc = (const ib_site_location_t *)node->data;
-        if (loc->match_any) {
-            IB_FTRACE_RET_PTR(const ib_site_location_t, loc);
-        }
-    }
-
-    IB_FTRACE_RET_PTR(const ib_site_location_t, NULL);
-}
-
 /* -- State Routines -- */
 
 /**
@@ -1667,84 +1373,6 @@ const ib_list_t *ib_context_get_all(const ib_engine_t *ib)
     IB_FTRACE_RET_PTR(const ib_list_t, ib->contexts);
 }
 
-ib_status_t ib_context_selection_register(
-    ib_engine_t *ib,
-    const ib_module_t *module,
-    ib_context_select_fn_t ctx_select_fn,
-    ib_context_get_site_fn_t ctx_get_site_fn,
-    ib_context_get_location_fn_t ctx_get_location_fn
-)
-{
-    IB_FTRACE_INIT();
-
-    /* Site selction function not optional */
-    if ( (ib == NULL) || (module == NULL) || (ctx_select_fn == NULL) ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* The core module is special */
-    if (module == ib_core_module()) {
-        if (ib->core_ctx_select.module != NULL) {
-            IB_FTRACE_RET_STATUS(IB_DECLINED);
-        }
-        ib->core_ctx_select.module =          module;
-        ib->core_ctx_select.select_fn =       ctx_select_fn;
-        ib->core_ctx_select.get_site_fn =     ctx_get_site_fn;
-        ib->core_ctx_select.get_location_fn = ctx_get_location_fn;
-    }
-    /* If it's not the core module, don't allow a second registrant */
-    else if (ib->act_ctx_select.module != ib_core_module()) {
-        IB_FTRACE_RET_STATUS(IB_DECLINED);
-    }
-
-    /* OK, install the functions as active */
-    ib->act_ctx_select.module =          module;
-    ib->act_ctx_select.select_fn =       ctx_select_fn;
-    ib->act_ctx_select.get_site_fn =     ctx_get_site_fn;
-    ib->act_ctx_select.get_location_fn = ctx_get_location_fn;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t ib_context_selection_unregister(
-    ib_engine_t *ib,
-    const ib_module_t *module)
-{
-    IB_FTRACE_INIT();
-
-    assert(ib != NULL);
-    assert(ib->core_ctx_select.module == ib_core_module());
-
-    /* Don't allow core to unregister. */
-    if (module == ib_core_module()) {
-        IB_FTRACE_RET_STATUS(IB_DECLINED);
-    }
-    /* Verify that this is the current module */
-    else if (module != ib->act_ctx_select.module) {
-        IB_FTRACE_RET_STATUS(IB_DECLINED);
-    }
-
-    /* Revert to the the core's functions */
-    ib->act_ctx_select.module =          ib->core_ctx_select.module;
-    ib->act_ctx_select.select_fn =       ib->core_ctx_select.select_fn;
-    ib->act_ctx_select.get_site_fn =     ib->core_ctx_select.get_site_fn;
-    ib->act_ctx_select.get_location_fn = ib->core_ctx_select.get_location_fn;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-const ib_module_t *ib_context_selection_module_get(
-    ib_engine_t *ib
-)
-{
-    IB_FTRACE_INIT();
-
-    if (ib == NULL) {
-        IB_FTRACE_RET_PTR(const ib_module_t, NULL);
-    }
-    IB_FTRACE_RET_PTR(const ib_module_t, ib->act_ctx_select.module);
-}
-
 ib_status_t ib_context_create(ib_engine_t *ib,
                               ib_context_t *parent,
                               ib_ctype_t ctype,
@@ -1781,7 +1409,7 @@ ib_status_t ib_context_create(ib_engine_t *ib,
     ctx->ctype = ctype;
     ctx->ctx_type = ctx_type;
     ctx->ctx_name = ctx_name;
-    ctx->is_open = false;
+    ctx->state = CTX_CREATED;
 
     /* Generate the full name of the context */
     full_len = 2;
@@ -1917,6 +1545,9 @@ ib_status_t ib_context_open(ib_context_t *ctx)
     size_t ncfgdata;
     size_t i;
 
+    if (ctx->state != CTX_CREATED) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
     ib_log_debug3(ib, "Opening context ctx=%p '%s'", ctx, ctx->ctx_full);
 
     IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
@@ -1936,7 +1567,7 @@ ib_status_t ib_context_open(ib_context_t *ctx)
         }
     }
 
-    ctx->is_open = true;
+    ctx->state = CTX_OPEN;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1977,6 +1608,17 @@ ib_status_t ib_context_config_set_parser(ib_context_t *ctx,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
     IB_FTRACE_RET_STATUS(ib_context_set_cwd(ctx, parser->cur_cwd));
+}
+
+ib_status_t ib_context_config_get_parser(const ib_context_t *ctx,
+                                         const ib_cfgparser_t **pparser)
+{
+    IB_FTRACE_INIT();
+    assert(ctx != NULL);
+    assert(pparser != NULL);
+
+    *pparser = ctx->cfgparser;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 const char *ib_context_config_cwd(const ib_context_t *ctx)
@@ -2149,11 +1791,8 @@ ib_status_t ib_context_close(ib_context_t *ctx)
     size_t ncfgdata;
     size_t i;
 
-    if (! ctx->is_open) {
-        ib_log_alert(ib,
-                     "Attempt to close non-open context %p \"%s\"; ignoring",
-                     ctx, ctx->ctx_full);
-        IB_FTRACE_RET_STATUS(IB_OK);
+    if (ctx->state != CTX_OPEN) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     ib_log_debug3(ib, "Closing context ctx=%p '%s'", ctx, ctx->ctx_full);
 
@@ -2176,63 +1815,84 @@ ib_status_t ib_context_close(ib_context_t *ctx)
         }
     }
 
-    ctx->is_open = false;  /* Mark it as closed */
+    ctx->state = CTX_CLOSED;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_context_select(ib_engine_t *ib,
-                              const ib_conn_t *conn,
-                              const ib_tx_t *tx,
-                              void *data,
-                              ib_context_t **pctx)
+ib_status_t ib_context_site_set(const ib_engine_t *ib,
+                                ib_context_t *ctx,
+                                const ib_site_t *site)
 {
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
-    assert(ib->act_ctx_select.select_fn != NULL);
-    assert(pctx != NULL);
+    assert(ctx != NULL);
 
-    ib_status_t rc;
-    rc = ib->act_ctx_select.select_fn(ib, conn, tx, data, pctx);
-    IB_FTRACE_RET_STATUS(rc);
+    if (ctx->state == CTX_CLOSED) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    if ( (ctx->ctype != IB_CTYPE_SITE) && (ctx->ctype != IB_CTYPE_LOCATION) ) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    ctx->site = site;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_context_site_get(ib_engine_t *ib,
+ib_status_t ib_context_site_get(const ib_engine_t *ib,
                                 const ib_context_t *ctx,
                                 const ib_site_t **psite)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
 
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(psite != NULL);
 
-    if (ib->act_ctx_select.get_site_fn == NULL) {
-        IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    if ( (ctx->ctype != IB_CTYPE_SITE) && (ctx->ctype != IB_CTYPE_LOCATION) ) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib->act_ctx_select.get_site_fn(ib, ctx, psite);
-    IB_FTRACE_RET_STATUS(rc);
+    *psite = ctx->site;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_context_location_get(ib_engine_t *ib,
+ib_status_t ib_context_location_set(const ib_engine_t *ib,
+                                    ib_context_t *ctx,
+                                    const ib_site_location_t *location)
+{
+    IB_FTRACE_INIT();
+
+    assert(ib != NULL);
+    assert(ctx != NULL);
+
+    if (ctx->state == CTX_CLOSED) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    if (ctx->ctype != IB_CTYPE_LOCATION) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    ctx->location = location;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_context_location_get(const ib_engine_t *ib,
                                     const ib_context_t *ctx,
                                     const ib_site_location_t **plocation)
 {
     IB_FTRACE_INIT();
-    ib_status_t rc;
 
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(plocation != NULL);
 
-    if (ib->act_ctx_select.get_location_fn == NULL) {
-        IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    if (ctx->ctype != IB_CTYPE_LOCATION) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    rc = ib->act_ctx_select.get_location_fn(ib, ctx, plocation);
-    IB_FTRACE_RET_STATUS(rc);
+    *plocation = ctx->location;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_context_t *ib_context_parent_get(const ib_context_t *ctx)
@@ -2247,27 +1907,6 @@ void ib_context_parent_set(ib_context_t *ctx,
     IB_FTRACE_INIT();
     ctx->parent = parent;
     IB_FTRACE_RET_VOID();
-}
-
-ib_status_t ib_context_selection_data_set(ib_context_t *ctx,
-                                          void *data)
-{
-    IB_FTRACE_INIT();
-    assert(ctx != NULL);
-
-    ctx->selection_data = data;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t ib_context_selection_data_get(const ib_context_t *ctx,
-                                          void **pdata)
-{
-    IB_FTRACE_INIT();
-    assert(ctx != NULL);
-    assert(pdata != NULL);
-
-    *pdata = ctx->selection_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_ctype_t ib_context_type(const ib_context_t *ctx)

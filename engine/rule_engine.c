@@ -2758,7 +2758,7 @@ static ib_status_t import_rule_context(const ib_rule_context_t *parent_rules,
     }
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-                                  
+
 
 ib_status_t ib_rule_engine_init(ib_engine_t *ib,
                                 ib_module_t *mod)
@@ -3625,9 +3625,9 @@ static ib_status_t gen_full_id(ib_engine_t *ib,
         ib_status_t rc;
         const ib_site_t *site;
 
-        if ( (ctx->ctype == IB_CTYPE_LOCATION) ||
-             (ctx->ctype == IB_CTYPE_SITE) )
-        {
+        switch(ctx->ctype) {
+        case IB_CTYPE_LOCATION :
+        case IB_CTYPE_SITE :
             rc = ib_context_site_get(ib, ctx, &site);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
@@ -3638,8 +3638,8 @@ static ib_status_t gen_full_id(ib_engine_t *ib,
             else {
                 part2 = site->id_str;
             }
-        }
-        else {
+            break;
+        default:
             part2 = ctx->ctx_name;
         }
         part1 = "site/";

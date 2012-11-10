@@ -476,7 +476,8 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
 }
 
 ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
-                                     ib_context_t **pctx)
+                                     ib_context_t **pctx,
+                                     ib_context_t **pcctx)
 {
     IB_FTRACE_INIT();
     assert(cp != NULL);
@@ -504,9 +505,25 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
     ctx = (ib_context_t *)ib_list_node_data(ib_list_last(cp->stack));
     cfgp_set_current(cp, ctx);
 
+    if (pcctx != NULL) {
+        *pcctx = ctx;
+    }
+
     ib_cfg_log_debug3(cp,
                       "Stack: ctx=%p(%s)",
                       cp->cur_ctx, ib_context_full_get(cp->cur_ctx));
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_cfgparser_context_current(const ib_cfgparser_t *cp,
+                                         ib_context_t **pctx)
+{
+    IB_FTRACE_INIT();
+    assert(cp != NULL);
+    assert(pctx != NULL);
+
+    *pctx = cp->cur_ctx;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }

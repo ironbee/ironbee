@@ -8,12 +8,14 @@ EXTRA_DIST =  config-parser.rl run-ragel.py \
 
 lib_LTLIBRARIES = libironbee.la
 libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
+                        context_selection.c site.c \
                         config.c config-parser.c config-parser.h \
                         matcher.c filter.c \
                         operator.c action.c transformation.c \
                         module.c \
                         parsed_content.c \
                         core.c \
+                        core_context_selection.c \
                         core_fields.c \
                         core_tfns.c \
                         core_operators.c \

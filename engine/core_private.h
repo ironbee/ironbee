@@ -29,6 +29,7 @@
 
 #include <ironbee/engine.h>
 #include <ironbee/types.h>
+#include <ironbee/context_selection.h>
 
 typedef struct {
     const char      *name;          /**< Flag name */
@@ -37,6 +38,15 @@ typedef struct {
     bool             read_only;     /**< Is setflag valid for this flag? */
     bool             default_value; /**< The flag's default value? */
 } ib_tx_flag_map_t;
+
+/** Core-module-specific non-context-aware data accessed via module->data */
+typedef struct {
+    ib_list_t            *site_list;      /**< List: ib_site_t */
+    ib_list_t            *selector_list;  /**< List: core_site_selector_t */
+    ib_context_t         *cur_ctx;        /**< Current context */
+    ib_site_t            *cur_site;       /**< Current site */
+    ib_site_location_t   *cur_location;   /**< Current location */
+} ib_core_module_data_t;
 
 /**
  * Initialize the core fields.
@@ -74,6 +84,17 @@ ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
 const ib_tx_flag_map_t *ib_core_fields_tx_flags( void );
 
 /**
+ * Get the core mode and data
+ *
+ * @param[out] core_module Pointer to core module (or NULL)
+ * @param[out] core_data Pointer to core data (or NULL)
+ *
+ * @returns IB_OK / return value from ib_engine_module_get()
+ */
+ib_status_t ib_core_module_data(ib_module_t **core_module,
+                                ib_core_module_data_t **core_data);
+
+/**
  * Initialize the core transformations.
  *
  * Called when the rule engine is loaded; registers the core transformations.
@@ -105,6 +126,21 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib,
  */
 ib_status_t ib_core_actions_init(ib_engine_t *ib,
                                  ib_module_t *mod);
+
+/** Core site selection functions */
+
+
+/**
+ * Initialize the core context selection
+ *
+ * Called when the rule engine is loaded; registers the core context selection
+ * functions.
+ *
+ * @param[in,out] ib IronBee object
+ * @param[in] module Module object
+ */
+ib_status_t ib_core_ctxsel_init(ib_engine_t *ib,
+                                ib_module_t *module);
 
 
 #endif /* _IB_CORE_PRIVATE_H_ */

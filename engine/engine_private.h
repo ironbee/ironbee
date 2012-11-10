@@ -29,6 +29,7 @@
 
 #include <ironbee/array.h>
 #include <ironbee/lock.h>
+#include <ironbee/context_selection.h>
 
 #include <stdio.h>
 
@@ -77,15 +78,33 @@ typedef enum {
 } ib_engine_cfg_state_t;
 
 /**
- * Configuration Context Selection Data
+ * Configuration Context Selection Registration Data
  */
-struct ib_context_select_t {
-    const ib_module_t            *module;
-    ib_context_select_fn_t        select_fn;
-    ib_context_get_site_fn_t      get_site_fn;
-    ib_context_get_location_fn_t  get_location_fn;
+struct ib_ctxsel_registration_t {
+    ib_mpool_t                    *mp;                 /**< Memory pool */
+    const ib_module_t             *module;             /**< Associated Module */
+    void                          *common_cb_data;     /**< Common cb data */
+    ib_ctxsel_select_fn_t          select_fn;          /**< Selection fn */
+    void                          *select_cb_data;     /**< callback data */
+    ib_ctxsel_site_create_fn_t     site_create_fn;     /**< Site create fn */
+    void                          *site_create_cb_data; /**< Callback data */
+    ib_ctxsel_location_create_fn_t location_create_fn;  /**< loc create fn */
+    void                          *location_create_cb_data; /**< Callback data*/
+    ib_ctxsel_host_create_fn_t     host_create_fn;     /**< host-create fn */
+    void                          *host_create_cb_data; /**< Callback data*/
+    ib_ctxsel_service_create_fn_t  service_create_fn;     /**< serv create fn */
+    void                          *service_create_cb_data; /**< Callback data */
+    ib_ctxsel_site_open_fn_t       site_open_fn;       /**< Site-open fn */
+    void                          *site_open_cb_data;  /**< Callback cb data */
+    ib_ctxsel_location_open_fn_t   location_open_fn;   /**< Location-open fn */
+    void                          *location_open_cb_data; /**< Callback data */
+    ib_ctxsel_site_close_fn_t      site_close_fn;      /**< Site-close fn */
+    void                          *site_close_cb_data; /**< Callback data*/
+    ib_ctxsel_location_close_fn_t  location_close_fn;  /**< Location-close fn */
+    void                          *location_close_cb_data; /**< Calblack data*/
+    ib_ctxsel_finalize_fn_t        finalize_fn;        /**< Finalize fn */
+    void                          *finalize_cb_data;   /**< Callback data*/
 };
-typedef struct ib_context_select_t ib_context_select_t;
 
 /**
  * Engine handle.
@@ -121,9 +140,9 @@ struct ib_engine_t {
     /* Hooks */
     ib_hook_t *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
 
-    /* Context selection functions */
-    ib_context_select_t act_ctx_select;   /**< Active context selection */
-    ib_context_select_t core_ctx_select;  /**< Core context selection */
+    /* Context selection function registration; both active and core */
+    ib_ctxsel_registration_t act_ctxsel;  /**< Active context selection reg. */
+    ib_ctxsel_registration_t core_ctxsel; /**< Core context selection reg. */
 };
 
 /**
@@ -134,6 +153,15 @@ struct ib_context_data_t {
     ib_module_t          *module;      /**< Module handle */
     void                 *data;        /**< Module config structure */
 };
+
+/**
+ * Configuration context states
+ */
+typedef enum {
+    CTX_CREATED,
+    CTX_OPEN,
+    CTX_CLOSED
+} ib_context_state_t;
 
 /**
  * Configuration context.
@@ -152,10 +180,11 @@ struct ib_context_t {
     const char           *ctx_cwd;     /**< Context's current directory */
     ib_auditlog_cfg_t    *auditlog;    /**< Per-context audit log cfgs. */
     const ib_cfgparser_t *cfgparser;   /**< Our configuration parser */
-    bool                  is_open;     /**< True when context is open */
+    ib_context_state_t    state;       /**< Context state */
 
     /* Data specific to the selector for this context */
-    void                 *selection_data; /**< Selector specific data */
+    const ib_site_t          *site;     /**< Site for site/location contexts */
+    const ib_site_location_t *location; /**< Location for location contexts */
 
     /* Filters */
     ib_list_t            *filters;     /**< Context enabled filters */

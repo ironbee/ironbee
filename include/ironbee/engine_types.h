@@ -252,65 +252,6 @@ struct ib_tx_t {
 };
 
 
-/**
- * The structures below are used for site selection.  There are a number of
- * non-obvious elements in these that are used to optimize the site selection
- * run-time:
- *
- * 1. The length of the strings is cached in the xxx_len element as an
- *    optimization.  The strings are normal NUL-terminated strings, but having
- *    length cached allows the code to avoid determining the length during the
- *    site selection process.
- *
- * 2. The match_any field in the structure allows the selection to avoid
- *    looking at the other fields in the structure.
- *
- * Note that the code does not enforce that the last item in the lists be
- * a default; it is possible to create a configuration without a default site,
- * or with a default site in the middle of the list, or a default service /
- * location in the middle of the list, or even with multiple defaults.  Don't
- * do that.  If you do, the site selection will not do what you expect.
- */
-
-/** Site Structure */
-struct ib_site_t {
-    ib_uuid_t           id;             /**< Site UUID */
-    const char         *id_str;         /**< ascii format, for logging */
-    ib_engine_t        *ib;             /**< Engine */
-    ib_mpool_t         *mp;             /**< Memory pool */
-    const char         *name;           /**< Site name */
-    ib_context_t       *context;        /**< Site's configuration context */
-    ib_list_t          *hosts;          /**< List of ib_site_host_t* */
-    ib_list_t          *services;       /**< List of ib_site_service_t* */
-    ib_list_t          *locations;      /**< List of ib_site_location_t* */
-};
-
-/** Site host name entity */
-struct ib_site_host_t {
-    const char         *hostname_str;    /** The full hostname */
-    size_t              hostname_len;    /** Length of full_hostname */
-    const char         *suffix_str;      /** Suffix of a wildcarded host name */
-    size_t              suffix_len;      /** Length of suffix */
-    bool                match_any;       /** Match any host? */
-};
-
-/** Site service entry */
-struct ib_site_service_t {
-    const char         *ip_str;          /**< IP address / NULL */
-    size_t              ip_len;          /**< Length of ip_str */
-    int                 port;            /**< Port number / -1 */
-    bool                match_any;       /**< Match any service */
-};
-
-/** Site location data */
-struct ib_site_location_t {
-    ib_site_t          *site;            /**< Parent site */
-    const char         *path;            /**< Location path */
-    size_t              path_len;        /**< Length of path */
-    ib_context_t       *context;         /**< The associated location ctx */
-    bool                match_any;       /**< Match any location? */
-};
-
 /** @} */
 
 #ifdef __cplusplus

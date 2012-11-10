@@ -318,11 +318,24 @@ ib_status_t DLL_PUBLIC ib_cfgparser_context_push(ib_cfgparser_t *cp,
  *
  * @param cp Parser
  * @param pctx Address which the removed context will be written (if non-NULL)
+ * @param pcctx Address of the now current context (if non-NULL)
  *
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_cfgparser_context_pop(ib_cfgparser_t *cp,
-                                                ib_context_t **pctx);
+                                                ib_context_t **pctx,
+                                                ib_context_t **pcctx);
+
+/**
+ * Get the current context off the stack
+ *
+ * @param cp Parser
+ * @param pctx Address which the current context will be written
+ *
+ * @returns Status code (IB_OK)
+ */
+ib_status_t ib_cfgparser_context_current(const ib_cfgparser_t *cp,
+                                         ib_context_t **pctx);
 
 /**
  * Push a new block name onto the stack and make it the current.

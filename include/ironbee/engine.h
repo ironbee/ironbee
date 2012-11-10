@@ -53,52 +53,6 @@ extern "C" {
  * @{
  */
 
-/**
- * Configuration Context Selection Function.
- *
- * @param[in] ib Engine
- * @param[in] conn Connection to select a context for
- * @param[in] tx Transaction to select a context for (or NULL)
- * @param[in] data Generic data that can be used for selection
- * @param[out] pctx Pointer to selected context
- *
- * @returns Status code
- */
-typedef ib_status_t (* ib_context_select_fn_t)(
-    ib_engine_t *ib,
-    const ib_conn_t *conn,
-    const ib_tx_t *tx,
-    void *data,
-    ib_context_t **pctx);
-
-/**
- * Configuration Context Get Site Function.
- *
- * @param[in] ib Engine
- * @param[in] ctx Context to query
- * @param[out] psite Site associated with the context
- *
- * @returns Status code
- */
-typedef ib_status_t (* ib_context_get_site_fn_t)(
-    ib_engine_t *ib,
-    const ib_context_t *ctx,
-    const ib_site_t **psite);
-
-/**
- * Configuration Context Get Location Function.
- *
- * @param[in] ib Engine
- * @param[in] ctx Context to query
- * @param[out] plocation Location associated with the context
- *
- * @returns Status code
- */
-typedef ib_status_t (* ib_context_get_location_fn_t)(
-    ib_engine_t *ib,
-    const ib_context_t *ctx,
-    const ib_site_location_t **plocation);
-
 
 /**
  * Audit log part generator function.
@@ -273,100 +227,6 @@ void DLL_PUBLIC ib_engine_destroy(ib_engine_t *ib);
 const ib_list_t *ib_context_get_all(const ib_engine_t *ib);
 
 /**
- * Register a context selection function family
- *
- * @param[in,out] ib Engine
- * @param[in] module Module doing the registration
- * @param[in] ctx_select_fn Context selection function to register
- * @param[in] ctx_get_site_fn Context "get site" function to register
- * @param[in] ctx_get_location_fn Context "get location" function to register
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_context_selection_register(
-    ib_engine_t                  *ib,
-    const ib_module_t            *module,
-    ib_context_select_fn_t        ctx_select_fn,
-    ib_context_get_site_fn_t      ctx_get_site_fn,
-    ib_context_get_location_fn_t  ctx_get_location_fn
-);
-
-/**
- * Unregister the active context selection function
- *
- * @param[in,out] ib Engine
- * @param[in] module Module doing the unregistration
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_context_selection_unregister(
-    ib_engine_t *ib,
-    const ib_module_t *module
-);
-
-/**
- * Return the active context selection module
- *
- * @param[in,out] ib IronBee engine
- *
- * @returns Pointer to the active context selection module
- */
-const ib_module_t DLL_PUBLIC *ib_context_selection_module_get(
-    ib_engine_t *ib
-);
-
-/**
- * Store context selection data pointer into the context
- *
- * @param[in,out] ctx Context
- * @param[in] data Data pointer to store into the context
- *
- * @returns IB_OK
- *
- * @note Only the active context selector should use this function; it is the
- * caller's responsibility to ensure that it is active (it can do this via @sa
- * ib_context_selection_module_get() ).
- */
-ib_status_t DLL_PUBLIC ib_context_selection_data_set(
-    ib_context_t *ctx,
-    void *data
-);
-
-/**
- * Get the context selection data
- *
- * @param[in,out] ctx Context
- * @param[out] pdata Pointer to the context selection data
- *
- * @returns IB_OK
- *
- * @note Only the active context selector should use this function; it is the
- * caller's responsibility to ensure that it is active (it can do this via @sa
- * ib_context_selection_module_get() ).
- */
-ib_status_t DLL_PUBLIC ib_context_selection_data_get(
-    const ib_context_t *ctx,
-    void **pdata
-);
-
-/**
- * Selection configuration context
- *
- * @param[in] ib Engine
- * @param[in] conn Connection to select a context for
- * @param[in] tx Transaction to select a context for (or NULL)
- * @param[in] data Generic data that can be used for selection
- * @param[out] pctx Pointer to selected context
- *
- * @returns Status code
- */
-ib_status_t ib_context_select(ib_engine_t *ib,
-                              const ib_conn_t *conn,
-                              const ib_tx_t *tx,
-                              void *data,
-                              ib_context_t **pctx);
-
-/**
  * Create a configuration context.
  *
  * @param ib Engine handle
@@ -386,21 +246,18 @@ ib_status_t DLL_PUBLIC ib_context_create(ib_engine_t *ib,
                                          ib_context_t **pctx);
 
 /**
- * Selection configuration context
+ * Set the site associated with the current context
  *
  * @param[in] ib Engine
- * @param[in] conn Connection to select a context for
- * @param[in] tx Transaction to select a context for (or NULL)
- * @param[in] data Generic data that can be used for selection
- * @param[out] pctx Pointer to selected context
+ * @param[in,out] ctx Context to set the site for
+ * @param[in] site Site object to store in context / NULL
  *
  * @returns Status code
  */
-ib_status_t ib_context_select(ib_engine_t *ib,
-                              const ib_conn_t *conn,
-                              const ib_tx_t *tx,
-                              void *data,
-                              ib_context_t **pctx);
+ib_status_t ib_context_site_set(
+    const ib_engine_t *ib,
+    ib_context_t *ctx,
+    const ib_site_t *site);
 
 /**
  * Get the site associated with the current context
@@ -411,9 +268,23 @@ ib_status_t ib_context_select(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t ib_context_site_get(ib_engine_t *ib,
+ib_status_t ib_context_site_get(const ib_engine_t *ib,
                                 const ib_context_t *ctx,
                                 const ib_site_t **psite);
+
+/**
+ * Set the location associated with the current context
+ *
+ * @param[in] ib Engine
+ * @param[in,out] ctx Context to set the location for
+ * @param[in] location Location object to store in context / NULL
+ *
+ * @returns Status code
+ */
+ib_status_t ib_context_location_set(
+    const ib_engine_t *ib,
+    ib_context_t *ctx,
+    const ib_site_location_t *location);
 
 /**
  * Get the location associated with the current context
@@ -424,7 +295,7 @@ ib_status_t ib_context_site_get(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t ib_context_location_get(ib_engine_t *ib,
+ib_status_t ib_context_location_get(const ib_engine_t *ib,
                                     const ib_context_t *ctx,
                                     const ib_site_location_t **plocation);
 
@@ -548,6 +419,17 @@ const char DLL_PUBLIC *ib_context_config_cwd(const ib_context_t *ctx);
  */
 ib_status_t ib_context_config_set_parser(ib_context_t *ctx,
                                          const ib_cfgparser_t *parser);
+
+/**
+ * Get the configuration parser for a context
+ *
+ * @param[in] ctx The context to operate on
+ * @param[out] pparser Pointer to the configuration parser.
+ *
+ * @returns IB_OK
+ */
+ib_status_t ib_context_config_get_parser(const ib_context_t *ctx,
+                                         const ib_cfgparser_t **pparser);
 
 /**
  * Destroy a configuration context.
@@ -839,89 +721,6 @@ ib_status_t DLL_PUBLIC ib_tx_create(ib_tx_t **ptx,
  */
 void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
 
-
-/**
- * Create a site and add it to the context's site list
- *
- * @param[in] ib Engine
- * @param[in,out] ctx Site's configuration context
- * @param[in] name Site name
- * @param[out] psite Address where site will be written / NULL
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_site_create(ib_engine_t *ib,
-                                      ib_context_t *ctx,
-                                      const char *name,
-                                      ib_site_t **psite);
-
-/**
- * Close a site.
- *
- * @param[in,out] site Site to close
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_site_close(ib_site_t *site);
-
-/**
- * Add a service entry to a site
- *
- * @param[in,out] site Site to add to
- * @param[in] service_str Serivce string in the form of ip[:port]
- * @param[out] pservice Pointer to new service object / NULL
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_site_add_service(ib_site_t *site,
-                                           const char *service_str,
-                                           ib_site_service_t **pservice);
-
-/**
- * Get the "match any" service for a site (if any)
- *
- * @param[in] site Site to search
- *
- * @returns Pointer to the first "match any" service or NULL if there is none
- */
-const ib_site_service_t *ib_site_matchany_service(const ib_site_t *site);
-
-/**
- * Add hostname to a site.
- *
- * @param[in,out] site Site to add to
- * @param[in] hostname Hostname string to add
- * @param[out] psitehost Pointer to new site host object / NULL
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_site_add_host(ib_site_t *site,
-                                        const char *hostname,
-                                        ib_site_host_t **psitehost);
-
-/**
- * Add a location to a site.
- *
- * @param site Site
- * @param ctx Location's context
- * @param path Location path
- * @param ploc Address where location will be written / NULL
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_site_add_location(ib_site_t *site,
-                                            ib_context_t *ctx,
-                                            const char *path,
-                                            ib_site_location_t **ploc);
-
-/**
- * Get the "match any" location for a site (if any)
- *
- * @param[in] site Site to search
- *
- * @returns Pointer to the first "match any" location or NULL if there is none
- */
-const ib_site_location_t *ib_site_matchany_location(const ib_site_t *site);
 
 
 /**
