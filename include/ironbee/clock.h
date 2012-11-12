@@ -70,6 +70,12 @@ typedef enum ib_clock_type_t {
 #define IB_CLOCK_USEC_TO_MSEC(usec) ((usec) / 1000)
 
 /**
+ * Number of bytes to format a timestamp as text not including the null 
+ * terminating character.
+ */
+#define IB_CLOCK_FMT_WIDTH 30
+
+/**
  * Convert an ib_timeval_t to ib_time_t.
  *
  * @param[in]  tv IronBee timeval structure (ib_timeval_t)
@@ -189,7 +195,7 @@ void ib_clock_gettimeofday(ib_timeval_t *tp);
  * Format: YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ
  * Example: 2010-11-04T12:42:36.3874-0800
  *
- * @param[out] buf Buffer at least 30 bytes in length
+ * @param[out] buf Buffer at least IB_CLOCK_FMT_WIDTH (30) bytes in length
  * @param[in] ptv Address of the ib_timeval_t structure or NULL
  */
 void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv);
@@ -202,7 +208,7 @@ void ib_clock_timestamp(char *buf, const ib_timeval_t *ptv);
  * Format: YYYY-MM-DDTHH:MM:SS.ssss+/-ZZZZ
  * Example: 2010-11-04T12:42:36.3874-0800
  *
- * @param[out] buf Buffer at least 30 bytes in length
+ * @param[out] buf Buffer at least IB_CLOCK_FMT_WIDTH (30) bytes in length
  * @param[in] ptv Address of the ib_timeval_t structure or NULL
  * @param[in] offset Time offset in microseconds
  */

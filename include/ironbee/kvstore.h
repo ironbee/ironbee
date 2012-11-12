@@ -23,7 +23,6 @@
 #include "ironbee/types.h"
 
 #include <stdlib.h>
-#include <time.h>
 
 /**
  * @file
@@ -85,7 +84,6 @@ typedef ib_status_t (*kvstore_disconnect_t)(kvstore_server_t);
  */
 typedef ib_status_t (*kvstore_merge_policy_t)(
     kvstore_t *kvstore,
-    kvstore_value_t *user_value,
     kvstore_value_t **values,
     size_t value_length,
     kvstore_value_t **resultant_value);
@@ -157,7 +155,7 @@ struct kvstore_value_t {
     size_t value_length; /**< The length of value. */
     char *type;          /**< The name of the type. */
     size_t type_length;  /**< The type name length. */
-    time_t expiration;   /**< The expiration in seconds relative to now. */
+    uint32_t expiration; /**< The expiration in seconds relative to now. */
 };
 
 /**

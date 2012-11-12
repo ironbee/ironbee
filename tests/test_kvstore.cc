@@ -15,24 +15,88 @@
 // limitations under the License.
 //////////////////////////////////////////////////////////////////////////////
 
+extern "C" {
 #include "ironbee_config_auto.h"
 
 #include <ironbee/kvstore.h>
+#include <ironbee/kvstore_filesystem.h>
 #include <ironbee/mpool.h>
 #include <ironbee/util.h>
+#include <ironbee/mpool.h>
+
+}
 
 #include "gtest/gtest.h"
+
 
 class TestKVStore : public testing::Test
 {
     public:
+
+    kvstore_t kvstore;
+    ib_mpool_t *mp;
+
     virtual void SetUp() {
+        mkdir("TestKVStore.d", 0777);
+        kvstore_filesystem_init(&kvstore, "TestKVStore.d");
+        ib_mpool_create(&mp, "TestKVStore", NULL);
     }
 
     virtual void TearDown() {
+        kvstore_filesystem_destroy(&kvstore);
+        ib_mpool_destroy(mp);
     }
 };
 
-TEST_F(TestKVStore, test_init)
-{
+/** 
+ * Exercise SetUp and TearDown.
+ */
+TEST_F(TestKVStore, test_init) {
+    /* Nop */
+}
+
+TEST_F(TestKVStore, test_writes) {
+    kvstore_key_t key;
+    kvstore_value_t val;
+
+    key.key = (void*)ib_mpool_strdup(mp, "k1");
+    key.length = 2;
+    val.value = (void*)ib_mpool_strdup(mp, "A key");
+    val.value_length = 5;
+    val.type = ib_mpool_strdup(mp, "txt");
+    val.type_length = 3;
+    val.expiration = 10;
+
+    ASSERT_EQ(IB_OK, kvstore_set(&kvstore, NULL, &key, &val));
+}
+
+TEST_F(TestKVStore, DISABLED_test_reads) {
+    kvstore_key_t key;
+    kvstore_value_t val;
+
+    key.key = (void*)ib_mpool_strdup(mp, "k2");
+    key.length = 2;
+    val.value = (void*)ib_mpool_strdup(mp, "A key");
+    val.value_length = 5;
+    val.type = ib_mpool_strdup(mp, "txt");
+    val.type_length = 3;
+    val.expiration = 10;
+
+    ASSERT_EQ(IB_OK, kvstore_set(&kvstore, NULL, &key, &val));
+
+    val.value = (void*)ib_mpool_strdup(mp, "Another key");
+    val.value_length = 11;
+    val.expiration = 5;
+
+    ASSERT_EQ(IB_OK, kvstore_set(&kvstore, NULL, &key, &val));
+
+    memset(&val, 0, sizeof(val));
+
+    ASSERT_EQ(IB_OK, kvstore_get(&kvstore, NULL, &key, &val));
+
+    ASSERT_EQ((size_t)3, val.type_length);
+    ASSERT_EQ((size_t)5, val.value_length);
+}
+
+TEST_F(TestKVStore, test_removes) {
 }

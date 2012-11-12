@@ -49,14 +49,16 @@ static void kvstore_free(kvstore_t *kvstore, void *ptr)
 
 static ib_status_t default_merge_policy(
     kvstore_t *kvstore,
-    kvstore_value_t *current_value,
     kvstore_value_t **values,
     size_t value_size,
     kvstore_value_t **resultant_value)
 {
     IB_FTRACE_INIT();
 
-    *resultant_value = current_value;
+    if ( value_size > 0 ) {
+        *resultant_value = values[0];
+    }
+
     return IB_OK;
 }
 
@@ -95,7 +97,7 @@ ib_status_t kvstore_get(
     IB_FTRACE_INIT();
 
     kvstore_value_t *merged_value;
-    kvstore_value_t **values;
+    kvstore_value_t **values = NULL;
     size_t values_length;
     ib_status_t rc;
     size_t i;
@@ -106,12 +108,13 @@ ib_status_t kvstore_get(
 
     rc = kvstore->get(kvstore, key, &values, &values_length);
 
-    if (rc != IB_OK) {
-        return rc;
+    if (rc) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    if (values_length > 0) {
-        rc = merge_policy(kvstore, val, values, values_length, &merged_value);
+    /* Merge any values. */
+    if (values_length > 1) {
+        rc = merge_policy(kvstore, values, values_length, &merged_value);
 
         if (rc != IB_OK) {
             goto exit_get;
@@ -130,17 +133,19 @@ ib_status_t kvstore_get(
     }
 
 exit_get:
+    for (i=0; i < values_length; ++i) {
+        printf("REMOVING %zu of %zu at %p\n", i, values_length, values[i]);
+        kvstore_free_value(kvstore, values[i]);
+    }
 
     /* Never free the user's value. Only free we allocated. */
     if (merged_value != val && merged_value != NULL) {
         kvstore_free_value(kvstore, merged_value);
     }
 
-    for (i=0; i < values_length; ++i) {
-        kvstore_free_value(kvstore, values[i]);
+    if (values) {
+        kvstore->free(kvstore, values);
     }
-
-    kvstore->free(kvstore, values);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -186,6 +191,8 @@ void kvstore_free_value(kvstore_t *kvstore, kvstore_value_t *value) {
     }
 
     kvstore->free(kvstore, value);
+
+    memset(value, 0, sizeof(*value));
 
     IB_FTRACE_RET_VOID();
 }

@@ -2,6 +2,7 @@
 #include "ironbee/kvstore_filesystem.h"
 
 #include "ironbee/debug.h"
+#include "ironbee/clock.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -12,7 +13,6 @@
 #include <strings.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <time.h>
 #include <unistd.h>
 
 /**
@@ -21,12 +21,13 @@
  * Both are 12 to accommodate the typical 10 digits and 2 buffer digits
  * for extreme future-time use.
  */
-#define TIME_T_STR_WIDTH 12
+#define TIME_T_STR_WIDTH 13
 
 /**
  * The sprintf format used for \c time_t types.
  */
-#define TIME_T_STR_FMT "%012zu"
+#define TIME_T_STR_FMT "%012u"
+
 
 /**
  * Malloc and populate a filesystem path for a key/value pair.
@@ -41,8 +42,9 @@
  *            If the \c expiration field in \c value is < 0, then
  *            the expiration value is not included in 
  *            the generated path.
- * @param[in] type The type of the file. This value is ignored
- *            if expiration is < 0.
+ * @param[in] type The type of the file. If null then expiration is
+ *            ignored and a shortened path is generated 
+ *            representing only the directory.
  * @param[in] type_len The type length of the type_len. This value is ignored
  *            if expiration is < 0.
  * @param[out] path The malloc'ed path. The caller must free this.
@@ -57,7 +59,7 @@
 static ib_status_t build_key_path(
     kvstore_t *kvstore,
     const kvstore_key_t *key,
-    time_t expiration,
+    uint32_t expiration,
     char *type,
     size_t type_len,
     char **path)
@@ -68,10 +70,10 @@ static ib_status_t build_key_path(
     int sys_rc;
 
     /* Used to compute expiration in absolute time. */
-    struct timespec ts;
+    ib_timeval_t ib_timeval;
 
     /* Epoch seconds after which this entry should expire. */
-    time_t seconds;
+    uint32_t seconds;
 
     /* A stat struct. sb is the name used in the man page example code. */
     struct stat sb;
@@ -84,9 +86,10 @@ static ib_status_t build_key_path(
         + 1                      /* path separator */
         + key->length            /* key length */
         + 1                      /* path separator */
-        + TIME_T_STR_WIDTH       /* expiration number (size_t) */
+        + IB_CLOCK_FMT_WIDTH     /* width to format a clock timestamp. */
         + 1                      /* dot. */
-        + type_len;
+        + type_len               /* type. */
+        + 1                      /* '\0' */;
 
     char *path_tmp = (char *) kvstore->malloc(kvstore, path_size+1);
 
@@ -105,9 +108,12 @@ static ib_status_t build_key_path(
     path_tmp = strncpy(path_tmp, "/", 1) + 1;
     path_tmp = strncpy(path_tmp, key->key, key->length) + key->length;
 
+    /* Momentarily tag the end of the path for the stat check. */
+    *path_tmp = '\0';
+    errno = 0;
     /* Check for a key directory. Make one if able.*/
     sys_rc = stat(*path, &sb);
-    if (sys_rc == ENOENT) {
+    if (errno == ENOENT) {
         sys_rc = mkdir(*path, 0700);
 
         if (sys_rc) {
@@ -121,28 +127,31 @@ static ib_status_t build_key_path(
         goto eother_failure;
     }
 
-    if ( expiration >= 0 ) {
+    if ( type ) {
         if ( expiration > 0 ) {
-            sys_rc = clock_gettime(CLOCK_REALTIME, &ts);
+            ib_clock_gettimeofday(&ib_timeval);
 
-            if ( sys_rc ) {
-                goto eother_failure;
-            }
-
-            seconds = ts.tv_sec + expiration;
+            seconds = ib_timeval.tv_sec + expiration;
         }
         else {
             seconds = 0;
         }
 
+        printf("SECONDS: %u\n", seconds);
+
         path_tmp = strncpy(path_tmp, "/", 1) + 1;
-        path_tmp += snprintf(path_tmp,
-                             TIME_T_STR_WIDTH,
-                             TIME_T_STR_FMT,
-                             seconds);
+        path_tmp += snprintf(
+            path_tmp,
+            TIME_T_STR_WIDTH,
+            TIME_T_STR_FMT,
+            seconds);
         path_tmp = strncpy(path_tmp, ".", 1) + 1;
         path_tmp = strncpy(path_tmp, type, type_len) + type_len;
     }
+
+    *path_tmp = '\0';
+
+    printf("PATH: %s\n", *path);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
@@ -249,12 +258,13 @@ static ib_status_t extract_type(
     size_t len;
 
     start = rindex(path, '.')+1;
+    printf("TYPE %s %s\n", path, start);
     if (!start) {
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
 
     len = strlen(start);
-    *type = (char*) kvstore->malloc(kvstore, len+1);
+    *type = (char *) kvstore->malloc(kvstore, len+1);
     if (!*type) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -274,13 +284,13 @@ static ib_status_t extract_type(
 static ib_status_t extract_expiration(
     kvstore_t *kvstore,
     const char *path,
-    time_t *expiration)
+    uint32_t *expiration)
 {
     IB_FTRACE_INIT();
 
     const char *start;
     const char *stop;
-    const char *substr;
+    char *substr;
 
     start = rindex(path, '/')+1;
     if (!start) {
@@ -296,6 +306,8 @@ static ib_status_t extract_expiration(
     }
 
     *expiration = atoll(substr);
+
+    free(substr);
     
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -308,6 +320,7 @@ static ib_status_t extract_expiration(
  *   - IB_OK on success.
  *   - IB_EALLOC on memory failure from \c kstore->malloc
  *   - IB_EOTHER on system call failure from file operations.
+ *   - IB_ENOTENT returned when a value is found to be expired.
  */
 static ib_status_t load_kv_value(
     kvstore_t *kvstore,
@@ -317,41 +330,66 @@ static ib_status_t load_kv_value(
     IB_FTRACE_INIT();
 
     ib_status_t rc;
-    kvstore_filesystem_server_t *server =
-        (kvstore_filesystem_server_t *)(kvstore->server);
-    size_t full_path_len = server->directory_length + strlen(file) + 2;
-    char *full_path = malloc(full_path_len);
+    ib_timeval_t ib_timeval;
+    
+    ib_clock_gettimeofday(&ib_timeval);
 
-    if (!full_path) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
+    /* Use kvstore->malloc because of framework contractual requirements. */
     *value = kvstore->malloc(kvstore, sizeof(**value));
     if (!*value) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     /* Populate expiration. */
-    rc = extract_expiration(kvstore, full_path, &((*value)->expiration));
+    rc = extract_expiration(kvstore, file, &((*value)->expiration));
     if (rc) {
         kvstore->free(kvstore, *value);
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
+    /* Remove expired file and signal there is no entry for that file. */
+    if ((*value)->expiration < ib_timeval.tv_sec) {
+
+        printf("NOENT %d vs %d\n",  (*value)->expiration, ib_timeval.tv_sec);
+
+        /* Remove the expired file. */
+        unlink(file);
+
+        /* Try to remove the key directory, though it may not be empty.
+         * Failure is OK. */
+        rmdir(file);
+        kvstore->free(kvstore, *value);
+        *value = NULL;
+        IB_FTRACE_RET_STATUS(IB_ENOENT);
+    }
+
     /* Populate type and type_length. */
-    rc = extract_type(kvstore, full_path, &((*value)->type), &((*value)->type_length));
+    rc = extract_type(
+        kvstore,
+        file,
+        &((*value)->type),
+        &((*value)->type_length));
+
     if (rc) {
         kvstore->free(kvstore, *value);
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
     /* Populate value and value_length. */
-    rc = read_whole_file(kvstore, full_path, &((*value)->value), &((*value)->value_length));
+    rc = read_whole_file(
+        kvstore,
+        file,
+        &((*value)->value),
+        &((*value)->value_length));
+
     if (rc) {
         kvstore->free(kvstore, (*value)->type);
         kvstore->free(kvstore, *value);
+        printf("IB_EOTHER\n");
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
+
+    printf("IB_OK\n");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -376,7 +414,7 @@ static ib_status_t count_dirent(
 
     size_t *i = (size_t *)data;
 
-    if (!strncmp(".", dirent, 1)) {
+    if (strncmp(".", dirent, 1)) {
         ++(*i);
     }
 
@@ -424,7 +462,7 @@ static ib_status_t each_dir(const char *path, each_dir_t f, void* data)
 
     while (1) {
         sys_rc = readdir_r(dir, entry, &result);
-        if (!sys_rc) {
+        if (sys_rc) {
             rc = IB_EOTHER;
             goto rc_failure;
         }
@@ -488,7 +526,7 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    if (!strncmp(".", file, 1)) {
+    if (strncmp(".", file, 1)) {
         /* Build full path. */
         full_path = malloc(bv->path_len + strlen(file) + 2);
         if (!full_path) {
@@ -496,13 +534,17 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
         }
         sprintf(full_path, "%s/%s", path, file);
 
+        printf("load %s\n", full_path);
         rc = load_kv_value(
             bv->kvstore,
             full_path,
             bv->values + bv->values_idx);
 
+        printf("RC---- %d\n", rc);
+        /* If IB_ENOENT, a file was expired on get. */
         if (!rc) {
             bv->values_idx++;
+            printf("values %zu\n", bv->values_idx);
         }
 
         free(full_path);
@@ -532,7 +574,11 @@ static ib_status_t kvget(
 
     /* Count entries. */
     rc = each_dir(path, &count_dirent, &dirent_count);
-    if (!rc) {
+    if (rc) {
+        goto failure1;
+    }
+    if (dirent_count==0){
+        rc = IB_ENOENT;
         goto failure1;
     }
 
@@ -543,16 +589,19 @@ static ib_status_t kvget(
     build_val.values_len = dirent_count;
     build_val.values = (kvstore_value_t**)
         kvstore->malloc(kvstore, sizeof(**values) * dirent_count);
+    memset(build_val.values, 0, sizeof(**values) * dirent_count);
 
     /* Build value array. */
     rc = each_dir(path, &build_value, &build_val);
-    if (!rc) {
+    if (rc) {
         goto failure2;
     }
 
-    /* Commit back results. */
+    /* Commit back results.
+     * NOTE: values_idx does not need a +1 because it points at the
+     *       next empty slot in the values array. */
     *values = build_val.values;
-    *values_length = build_val.values_idx + 1;
+    *values_length = build_val.values_idx;
 
     /* Clean exit. */
     free(path);
@@ -570,6 +619,16 @@ failure1:
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * @param[in] kvstore Key-value store.
+ * @param[in] merge_policy This implementation does not merge on writes.
+ *            Merging is done by the framework on reads.
+ * @param[in] key The key to fetch all values for.
+ * @param[in] value The value to write. The framework contract says that this 
+ *            is also an out-parameters, but in this implementation the
+ *            merge_policy is not used so value is never merged
+ *            and never written to.
+ */
 static ib_status_t kvset(
     kvstore_t *kvstore,
     kvstore_merge_policy_t merge_policy,
@@ -586,26 +645,29 @@ static ib_status_t kvset(
     ssize_t written;
 
     /* Build a path with no expiration value on it. */
-    rc = build_key_path(kvstore,
-                        key,
-                        value->expiration,
-                        value->type,
-                        value->type_length,
-                        &path);
-    if (!rc) {
+    rc = build_key_path(
+        kvstore,
+        key,
+        value->expiration,
+        value->type,
+        value->type_length,
+        &path);
+    if (rc) {
         goto error_1;
     }
-    rc = build_key_path(kvstore,
-                        key,
-                        -1,
-                        NULL,
-                        0,
-                        &tmp_path);
-    if (!rc) {
+
+    rc = build_key_path(
+        kvstore,
+        key,
+        -1,
+        NULL,
+        0,
+        &tmp_path);
+    if (rc) {
         goto error_2;
     }
 
-    tmp_path = realloc(tmp_path, strlen(tmp_path) + 12);
+    tmp_path = realloc(tmp_path, strlen(tmp_path) + 12 + 1);
     if (!tmp_path) {
         rc = IB_EALLOC;
         goto error_2;
@@ -639,6 +701,18 @@ error_1:
     IB_FTRACE_RET_STATUS(rc);
 }
 
+/**
+ * Remove all entries from key directory.
+ *
+ * @param[in] path The path to the key directory. \c rmdir is called on this.
+ * @param[in] file The file inside of the directory pointed to by path
+ *            which will be \c unlink'ed.
+ * @param[in] data Callback data. This is a size_t pointer containing
+ *            the length of the path argument.
+ * @returns
+ *   - IB_OK
+ *   - IB_EALLOC if a memory allocation fails concatinating path and file.
+ */
 static ib_status_t remove_file(const char *path, const char *file, void *data)
 {
     IB_FTRACE_INIT();
@@ -646,7 +720,7 @@ static ib_status_t remove_file(const char *path, const char *file, void *data)
     char *full_path;
     size_t path_len = *(size_t*)(data);
 
-    if (!strncmp(".", file, 1)) {
+    if (strncmp(".", file, 1)) {
         /* Build full path. */
         full_path = malloc(path_len + strlen(file) + 2);
 
@@ -664,6 +738,15 @@ static ib_status_t remove_file(const char *path, const char *file, void *data)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Remove a key from the store.
+ * @param[in] kvstore
+ * @param[in] key
+ * @returns
+ *   - IB_OK on success.
+ *   - IB_EOTHER on system call failure in build_key_path. See \c errno.
+ *   - IB_EALLOC if a memory allocation fails.
+ */
 static ib_status_t kvremove(kvstore_t *kvstore, const kvstore_key_t *key) {
     IB_FTRACE_INIT();
     
@@ -674,7 +757,7 @@ static ib_status_t kvremove(kvstore_t *kvstore, const kvstore_key_t *key) {
     /* Build a path with no expiration value on it. */
     rc = build_key_path(kvstore, key, -1, NULL, 0, &path);
     if (!rc) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        IB_FTRACE_RET_STATUS(rc);
     }
 
     path_len = strlen(path);
@@ -691,6 +774,13 @@ static ib_status_t kvremove(kvstore_t *kvstore, const kvstore_key_t *key) {
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Initializes the kvstore to point at the given directory.
+ * Directory is copied and free'd on kvstore_filesystem_destroy.
+ *
+ * @param[out] kvstore Build this kvstore object.
+ * @param[in] directory Directory kvstore points at.
+ */
 ib_status_t kvstore_filesystem_init(kvstore_t* kvstore, const char* directory)
 {
     IB_FTRACE_INIT();
@@ -700,14 +790,15 @@ ib_status_t kvstore_filesystem_init(kvstore_t* kvstore, const char* directory)
     kvstore_filesystem_server_t *server = malloc(sizeof(*server));
 
     if ( server == NULL ) {
-        return IB_EALLOC;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     server->directory = strdup(directory);
+    server->directory_length = strlen(directory);
 
     if ( server->directory == NULL ) {
         free(server);
-        return IB_EALLOC;
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
     kvstore->server = (kvstore_server_t) server;
@@ -720,11 +811,20 @@ ib_status_t kvstore_filesystem_init(kvstore_t* kvstore, const char* directory)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Destroy any allocated elements of the kvstore structure.
+ * @param[out] kvstore to be destroyed. The contents on disk is untouched
+ *             and another init of kvstore pointing at that directory
+ *             will operate correctly.
+ */
 void kvstore_filesystem_destroy(kvstore_t* kvstore)
 {
     IB_FTRACE_INIT();
 
-    free(kvstore->server);
+    kvstore_filesystem_server_t *server =
+        (kvstore_filesystem_server_t*)(kvstore->server);
+    free((void *)server->directory);
+    free(server);
     kvstore->server = NULL;
 
     IB_FTRACE_RET_VOID();
