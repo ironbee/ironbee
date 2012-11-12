@@ -208,15 +208,23 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
     </section>
     <section>
         <title>setflag</title>
-        <para><emphasis role="bold">Description:</emphasis> Set binary attributes (flags) in the
-            transaction.</para>
+        <para><emphasis role="bold">Description:</emphasis> Set, or unset, boolean transaction attributes (flags).</para>
         <para><emphasis role="bold">Type:</emphasis> Action</para>
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>setflag:[!]<replaceable>flag-name</replaceable></literal></para>
         <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> 0.4</para>
-        <para>TODO: Document specific flags which may have meaning to the inspection engine.</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        <para>Allow setting or unsetting transaction flags. Prefixing with a <literal>!</literal> unsets the flag.</para>
+        <note><para>Currently the <literal>inspectRequestHeader</literal> flag is always set as this is required for the site selection process. Additionally, the <literal>RequestBuffering</literal> and <literal>ResponseBuffering</literal> directives must be enabled to buffer the request or response.</para></note>
+        <itemizedlist>
+            <listitem><para><emphasis role="bold">block</emphasis> - Set if transaction was marked for block.</para></listitem>
+            <listitem><para><emphasis role="bold">suspicious</emphasis> - Set if transaction was marked as suspicious and care should be taken in processing.</para></listitem>
+            <listitem><para><emphasis role="bold">inspectRequestHeader</emphasis> - Set if the engine should inspect the HTTP request header (default: set).</para></listitem>
+            <listitem><para><emphasis role="bold">inspectRequestBody</emphasis> - Set if the engine should inspect the HTTP request body (default: unset).</para></listitem>
+            <listitem><para><emphasis role="bold">inspectResponseHeader</emphasis> - Set if the engine should inspect the HTTP response header (default: unset).</para></listitem>
+            <listitem><para><emphasis role="bold">inspectResponseBody</emphasis> - Set if the engine should inspect the HTTP response body (default: unset).</para></listitem>
+        </itemizedlist>
     </section>
     <section>
         <title>setRequestHeader</title>

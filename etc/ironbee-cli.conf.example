@@ -12,16 +12,10 @@ SensorHostname example.sensor.tld
 
 ### Load Modules
 
-# Must load perf stats module first if you enable it.
-#LoadModule "ibmod_perf_stats.so"
-
 LoadModule "ibmod_htp.so"
 LoadModule "ibmod_pcre.so"
 LoadModule "ibmod_ac.so"
 LoadModule "ibmod_rules.so"
-
-# Parse the user agent
-#LoadModule "ibmod_user_agent.so"
 
 # GeoIP lookup
 #LoadModule "ibmod_geoip.so"
@@ -37,14 +31,12 @@ AuditLogIndex auditlog.log
 AuditLogBaseDir /tmp/ironbee
 AuditLogSubDirFormat "%Y%m%d-%H%M"
 AuditLogDirMode 0755
-#AuditLogFileMode 0644
+AuditLogFileMode 0644
 AuditLogParts minimal request -requestBody response -responseBody
 
 ### Buffering
-# Request
-RequestBuffering On
-# Response (TODO Implement)
-#ResponseBuffering Off
+RequestBuffering Off
+ResponseBuffering Off
 
 # -- Sites --
 Include "site-1.conf"

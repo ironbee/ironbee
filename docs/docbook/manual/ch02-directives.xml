@@ -61,7 +61,7 @@
         <para><emphasis role="bold">Context:</emphasis> Any</para>
         <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.6</para>
     </section>
     <section>
         <title>AuditLogIndex</title>
@@ -253,7 +253,7 @@
         <para><emphasis role="bold">Syntax:</emphasis>
             <literal>DefaultBlockStatus <replaceable>http-status-code</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis>
-            <literal>None</literal> (audit logs will be created in the base directory)</para>
+            <literal>403</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
         <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
@@ -283,7 +283,7 @@
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.4</para>
         <para>The <literal>Hostname</literal> directive establishes a mapping between a Site and one
-            or more URL spaces. </para>
+            or more hostnames. To map IP/Port pairs to a Site, see the <literal>Service</literal> directive.</para>
         <para>In the simplest case, a site will occupy a single hostname:</para>
         <programlisting>Hostname www.ironbee.com</programlisting>
         <para>More often than not, however, several names will be used:</para>
@@ -294,8 +294,8 @@ Hostname ironbee.com</programlisting>
             left-hand side:</para>
         <programlisting>Hostname ironbee.com
 Hostname *.ironbee.com</programlisting>
-        <para>Finally, to match any hostname on any IP address (which you will need to do in default
-            sites), use a single asterisk, which is the default if no Hostname directive is
+        <para>Finally, to match any hostname (which you will need to do in default
+            sites), use a single asterisk, which is the default if no <literal>Hostname</literal> directive is
             specified for a site:</para>
         <programlisting>Hostname *</programlisting>
     </section>
@@ -316,6 +316,18 @@ Hostname *.ironbee.com</programlisting>
         <programlisting>Include conf/sites.conf</programlisting>
         <para>If you specify a relative path, the location of the current configuration file will be
             used to resolve it.</para>
+    </section>
+    <section>
+        <title>InitVar</title>
+        <para><emphasis role="bold">Description:</emphasis> Initializes a locally scoped variable for later use.</para>
+        <para><emphasis role="bold">Syntax:</emphasis>
+            <literal>InitVar <replaceable>var-name</replaceable> <replaceable>initial-value</replaceable></literal></para>
+        <para><emphasis role="bold">Default:</emphasis>
+            None</para>
+        <para><emphasis role="bold">Context:</emphasis> Any</para>
+        <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
+        <para><emphasis role="bold">Module:</emphasis> core</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.6</para>
     </section>
     <section>
         <title>InspectionEngine</title>
@@ -501,17 +513,18 @@ Hostname *.ironbee.com</programlisting>
             match_limit.</quote></para>
     </section>
     <section>
-        <title>RequestBodyBuffering</title>
-        <para><emphasis role="bold">Description:</emphasis> Enable/disable request body
-            buffering.</para>
+        <title>RequestBuffering</title>
+        <para><emphasis role="bold">Description:</emphasis> Enable/disable request buffering.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>RequestBodyBuffering On|Off</literal></para>
+            <literal>RequestBuffering On|Off</literal></para>
         <para><emphasis role="bold">Default:</emphasis>
             <literal>Off</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
         <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        <para>Control request buffering - holding the request during inspection. Currently the HTTP header is always buffered, but this must be enabled for the request body to be buffered.</para>
+        <note><para>This may be renamed to <literal>RequestBodyBuffering</literal> in a future release.</para></note>
     </section>
     <section>
         <title>RequestBodyBufferLimit</title>
@@ -544,17 +557,19 @@ Hostname *.ironbee.com</programlisting>
                 <literal>RollOver</literal>.</para>
     </section>
     <section>
-        <title>ResponseBodyBuffering</title>
-        <para><emphasis role="bold">Description:</emphasis> Enable/disable response body
+        <title>ResponseBuffering</title>
+        <para><emphasis role="bold">Description:</emphasis> Enable/disable response
             buffering.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>ResponseBodyBuffering On|Off</literal></para>
+            <literal>ResponseBuffering On|Off</literal></para>
         <para><emphasis role="bold">Default:</emphasis>
             <literal>Off</literal></para>
         <para><emphasis role="bold">Context:</emphasis> Any</para>
         <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
-        <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+        <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        <para>Control response buffering - holding the response during inspection. Currently the HTTP header is always buffered, but this must be enabled for the response body to be buffered.</para>
+        <note><para>This may be renamed to <literal>ResponseBodyBuffering</literal> in a future release.</para></note>
     </section>
     <section>
         <title>ResponseBodyBufferLimit</title>
@@ -789,30 +804,30 @@ Rule #MY_VALUE @gt 0 id:3 rev:1 phase:REQUEST setRequestHeader:X-Foo:%{MY_VALUE}
     </section>
     <section>
         <title>Service</title>
-        <para><emphasis role="bold">Description:</emphasis> Maps IP address and port combinations to
-            a Site.</para>
+        <para><emphasis role="bold">Description:</emphasis> Maps IP and Port to a site.</para>
         <para><emphasis role="bold">Syntax:</emphasis>
-            <literal>Hostname
-                <replaceable>ip</replaceable>:<replaceable>port</replaceable></literal></para>
+            <literal>Service <replaceable>ip</replaceable>:<replaceable>port</replaceable></literal></para>
         <para><emphasis role="bold">Default:</emphasis>
-            <literal>*:*</literal> (any ip:any port)</para>
+            <literal>*:*</literal> (any)</para>
         <para><emphasis role="bold">Context:</emphasis> Site</para>
         <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
         <para><emphasis role="bold">Module:</emphasis> core</para>
         <para><emphasis role="bold">Version:</emphasis> 0.6</para>
         <para>The <literal>Service</literal> directive establishes a mapping between a Site and one
-            or more services (IP Address/Port combinations). A wildcard (<literal>*</literal>) may
-            be used to mean "any".</para>
-        <para>A site may run on only a specific port:</para>
-        <programlisting>Service *:80</programlisting>
-        <para>More often than not, however, several ports will be used and a port may have a specfic
-            IP address to bind to if the site is SSL/TLS enabled:</para>
+            or IP/Port pairs. To map hostnames to a Site, see the <literal>Hostname</literal> directive.</para>
+        <para>In the simplest case, a site will occupy a single IP/Port pair:</para>
+        <programlisting>Service 192.168.32.5:80</programlisting>
+        <para>More often than not, however, several mappings will be used:</para>
+        <programlisting>Service 192.168.32.5:80
+Service 192.168.32.6:443</programlisting>
+        <para>Wildcards are permitted for both IP and Port:</para>
         <programlisting>Service *:80
-Service 10.0.1.2:443</programlisting>
-        <para>The default, if no <literal>Service</literal> directive is specified for a site, is to
-            match any ip and port, which can also be explictly defined as:</para>
+Service 192.168.32.5:*</programlisting>
+        <para>To match any IP address on any Port (which you will need to do in default
+            sites), use wildcards for both IP and Port, which is the default if no <literal>Service</literal> directive is
+            specified for a site:</para>
         <programlisting>Service *:*</programlisting>
-    </section>    
+    </section>
     <section>
         <title>Site</title>
         <para><emphasis role="bold">Description:</emphasis> A site is one of the main concepts in the configuration in IronBee. The idea is to
