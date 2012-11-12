@@ -1360,8 +1360,8 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     // get_line ensures CRLF (line_len + 2)?
     line = (const char*) icdatabuf;
     while (next_line(&line, &line_len) > 0) {
-        int n_len;
-        int v_len;
+        size_t n_len;
+        size_t v_len;
 
         n_len = strcspn(line, ":");
         lptr = line + n_len + 1;
@@ -1377,7 +1377,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
                                                 lptr, v_len);
         if (rv != IB_OK)
             TSError("Error adding header '%.*s: %.*s' to Ironbee list",
-                    n_len, line, v_len, lptr);
+                    (int)n_len, line, (int)v_len, lptr);
         ++nhdrs;
     }
 
