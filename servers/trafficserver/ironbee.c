@@ -1360,8 +1360,8 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     // get_line ensures CRLF (line_len + 2)?
     line = (const char*) icdatabuf;
     while (next_line(&line, &line_len) > 0) {
-        size_t n_len;
-        size_t v_len;
+        int n_len;
+        int v_len;
 
         n_len = strcspn(line, ":");
         lptr = line + n_len + 1;
