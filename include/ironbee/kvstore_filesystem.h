@@ -42,6 +42,7 @@
  */
 struct kvstore_filesystem_server_t {
     const char *directory; /**< The directory in which files are written. */
+    size_t directory_length; /**< Cache the string length of the directory. */
 };
 typedef struct kvstore_filesystem_server_t kvstore_filesystem_server_t;
 

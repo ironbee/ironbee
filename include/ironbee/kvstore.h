@@ -157,7 +157,7 @@ struct kvstore_value_t {
     size_t value_length; /**< The length of value. */
     char *type;          /**< The name of the type. */
     size_t type_length;  /**< The type name length. */
-    size_t expiration;   /**< The expiration in seconds. */
+    time_t expiration;   /**< The expiration in seconds relative to now. */
 };
 
 /**
