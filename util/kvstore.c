@@ -340,3 +340,7 @@ void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key) {
     IB_FTRACE_RET_VOID();
 }
 
+void ib_kvstore_destroy(ib_kvstore_t *kvstore) {
+    kvstore->destroy(kvstore, kvstore->cbdata);
+}
+

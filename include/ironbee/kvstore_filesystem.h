@@ -59,12 +59,6 @@ ib_status_t ib_kvstore_filesystem_init(
     ib_kvstore_t *kvstore,
     const char *directory);
 
-/**
- * Destroy kvstore.
- * @param[in,out] kvstore The kvstore to destroy.
- */
-void ib_kvstore_filesystem_destroy(ib_kvstore_t *kvstore);
-
  /**
   * @}
   */

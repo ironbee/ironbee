@@ -857,6 +857,28 @@ static ib_status_t kvremove(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Destroy any allocated elements of the kvstore structure.
+ * @param[out] kvstore to be destroyed. The contents on disk is untouched
+ *             and another init of kvstore pointing at that directory
+ *             will operate correctly.
+ * @param[in] cbdata Unused.
+ */
+static void kvdestroy (ib_kvstore_t* kvstore, ib_kvstore_cbdata_t *cbdata)
+{
+    IB_FTRACE_INIT();
+
+    assert(kvstore);
+
+    ib_kvstore_filesystem_server_t *server =
+        (ib_kvstore_filesystem_server_t*)(kvstore->server);
+    free((void *)server->directory);
+    free(server);
+    kvstore->server = NULL;
+
+    IB_FTRACE_RET_VOID();
+}
+
 ib_status_t ib_kvstore_filesystem_init(
     ib_kvstore_t* kvstore,
     const char* directory)
@@ -889,27 +911,8 @@ ib_status_t ib_kvstore_filesystem_init(
     kvstore->remove = kvremove;
     kvstore->connect = kvconnect;
     kvstore->disconnect = kvdisconnect;
+    kvstore->destroy = kvdestroy;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Destroy any allocated elements of the kvstore structure.
- * @param[out] kvstore to be destroyed. The contents on disk is untouched
- *             and another init of kvstore pointing at that directory
- *             will operate correctly.
- */
-void ib_kvstore_filesystem_destroy(ib_kvstore_t* kvstore)
-{
-    IB_FTRACE_INIT();
-
-    assert(kvstore);
-
-    ib_kvstore_filesystem_server_t *server =
-        (ib_kvstore_filesystem_server_t*)(kvstore->server);
-    free((void *)server->directory);
-    free(server);
-    kvstore->server = NULL;
-
-    IB_FTRACE_RET_VOID();
-}

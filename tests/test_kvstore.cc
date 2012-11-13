@@ -43,7 +43,7 @@ class TestKVStore : public testing::Test
     }
 
     virtual void TearDown() {
-        ib_kvstore_filesystem_destroy(&kvstore);
+        ib_kvstore_destroy(&kvstore);
         ib_mpool_destroy(mp);
     }
 };

@@ -178,6 +178,15 @@ typedef void (*ib_kvstore_free_fn_t)(
     ib_kvstore_cbdata_t *cbdata);
 
 /**
+ * Destruction method.
+ * @param[in,out] kvstore The KV store to destroy.
+ * @param[in,out] cbdata The callback data for the user.
+ */
+typedef void (*ib_kvstore_destroy_fn_t)(
+    ib_kvstore_t *kvstore,
+    ib_kvstore_cbdata_t *cbdata);
+
+/**
  * Value type.
  */
 struct ib_kvstore_value_t {
@@ -212,6 +221,7 @@ struct ib_kvstore_t {
     ib_kvstore_set_fn_t set; /**< Set a value in the key-value store. */
     ib_kvstore_remove_fn_t remove; /**< Remove a value from the kv store. */
     ib_kvstore_merge_policy_fn_t default_merge_policy; /**< Dflt policy. */
+    ib_kvstore_destroy_fn_t destroy; /**< Destroy this ib_kvstore_t. */
     ib_kvstore_cbdata_t *cbdata; /**< Callback Data unrelated to server. */
 };
 
@@ -335,6 +345,13 @@ void ib_kvstore_free_value(ib_kvstore_t *kvstore, ib_kvstore_value_t *value);
  * @param[in,out] key The key to be freed using @ref kvstore_free_fn_t.
  */
 void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key);
+
+/**
+ * Destroy this kvstore.
+ * @param[in,out] kvstore The Key-value store.
+ */
+
+void ib_kvstore_destroy(ib_kvstore_t *kvstore);
 
 /**
  * @} Key Value Store
