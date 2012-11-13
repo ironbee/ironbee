@@ -56,6 +56,7 @@ struct ib_field_val_t {
     union {
         ib_num_t       num;           /**< Generic numeric value */
         ib_unum_t      unum;          /**< Generic unsigned numeric value */
+        ib_float_t     fnum;          /**< Floating type value. */
         ib_bytestr_t  *bytestr;       /**< Byte string value */
         char          *nulstr;        /**< NUL string value */
         ib_list_t     *list;          /**< List of fields */
@@ -77,6 +78,8 @@ const char *ib_field_type_name(
         IB_FTRACE_RET_CONSTSTR("NUM");
     case IB_FTYPE_UNUM:
         IB_FTRACE_RET_CONSTSTR("UNUM");
+    case IB_FTYPE_FLOAT:
+        IB_FTRACE_RET_CONSTSTR("FLOAT");
     case IB_FTYPE_NULSTR:
         IB_FTRACE_RET_CONSTSTR("NULSTR");
     case IB_FTYPE_BYTESTR:
@@ -199,6 +202,18 @@ const char *ib_field_format(
             break;
         }
 
+        case IB_FTYPE_FLOAT :        /**< Float numeric value */
+        {
+            ib_float_t f;
+            tname = "FLOAT";
+            rc = ib_field_value(field, ib_ftype_float_out(&f));
+            if (rc != IB_OK) {
+                break;
+            }
+            snprintf(buf, bufsize, "%Lf", f);
+            break;
+        }
+
         case IB_FTYPE_LIST :         /**< List */
         {
             const ib_list_t *lst;
@@ -311,6 +326,15 @@ void ib_field_util_log_debug(
             rc = ib_field_value(f, ib_ftype_unum_out(&v));
             if (rc == IB_OK) {
                 ib_util_log_debug("%s value=%"PRIu64, prefix, v);
+            }
+            break;
+        }
+        case IB_FTYPE_FLOAT:
+        {
+            ib_float_t v;
+            rc = ib_field_value(f, ib_ftype_float_out(&v));
+            if (rc == IB_OK) {
+                ib_util_log_debug("%s value=%Lf", prefix, v);
             }
             break;
         }
@@ -599,6 +623,20 @@ ib_status_t ib_field_copy(
             );
             break;
         }
+        case IB_FTYPE_FLOAT:
+        {
+            ib_float_t v;
+            rc = ib_field_value(src, ib_ftype_float_out(&v));
+            if (rc != IB_OK) {
+                goto failed;
+            }
+            rc = ib_field_create(
+                pf, mp, name, nlen,
+                src->type,
+                ib_ftype_float_in(&v)
+            );
+            break;
+        }
         default:
         {
             void *v;
@@ -762,6 +800,7 @@ ib_status_t ib_field_setv(
     IB_FTRACE_INIT();
 
     ib_status_t rc = ib_field_setv_ex(f, in_pval, NULL, 0);
+
     IB_FTRACE_RET_STATUS(rc);
 }
 
@@ -859,6 +898,12 @@ ib_status_t ib_field_setv_ex(
         *(ib_unum_t *)(f->val->pval) = u;
         break;
     }
+    case IB_FTYPE_FLOAT:
+    {
+        ib_float_t fl = (in_pval != NULL) ? *(ib_float_t *)in_pval : 0;
+        *(ib_float_t *)(f->val->pval) = fl;
+        break;
+    }
     case IB_FTYPE_GENERIC:
     default:
     {
@@ -912,6 +957,12 @@ ib_status_t ib_field_value_ex(
     {
         ib_unum_t *u = (ib_unum_t *)out_pval;
         *u = *(ib_unum_t *)(f->val->pval);
+        break;
+    }
+    case IB_FTYPE_FLOAT:
+    {
+        ib_float_t *fl = (ib_float_t *)out_pval;
+        *fl = *(ib_float_t *)(f->val->pval);
         break;
     }
     default:
@@ -985,7 +1036,10 @@ ib_status_t ib_field_mutable_value(
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
 
-    if (f->type == IB_FTYPE_NUM || f->type == IB_FTYPE_UNUM) {
+    if (f->type == IB_FTYPE_NUM ||
+        f->type == IB_FTYPE_UNUM ||
+        f->type == IB_FTYPE_FLOAT)
+    {
         *(void**)mutable_out_pval = f->val->pval;
     }
     else {

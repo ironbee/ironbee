@@ -127,6 +127,16 @@ extern "C" {
  *     </tr>
  *
  *     <tr>
+ *         <td>@c IB_FTYPE_FLOAT</td>
+ *         <td>@c ib_float_t</td>
+ *         <td>@c const @c ib_float_t*</td>
+ *         <td>@c ib_float_t*</td>
+ *         <td>@c const @c ib_float_t*</td>
+ *         <td>@c ib_float_t**</td>
+ *         <td>@c ib_float_t*</td>
+ *     </tr>
+ *
+ *     <tr>
  *         <td>@c IB_FTYPE_NULSTR</td>
  *         <td>@c char*</td>
  *         <td>@c const @c char*</td>
@@ -186,6 +196,7 @@ typedef enum {
     IB_FTYPE_GENERIC = 0, /**< Generic pointer value */
     IB_FTYPE_NUM,         /**< Numeric value */
     IB_FTYPE_UNUM,        /**< Unsigned numeric value */
+    IB_FTYPE_FLOAT,       /**< Floating point value. */
     IB_FTYPE_NULSTR,      /**< NUL terminated string value */
     IB_FTYPE_BYTESTR,     /**< Binary data value */
     IB_FTYPE_LIST,        /**< List of fields */
@@ -216,6 +227,10 @@ typedef int64_t ib_num_t;
  * Field numerical unsigned value type
  */
 typedef uint64_t ib_unum_t;
+/**
+ * Field float unsigned value type
+ */
+typedef long double ib_float_t;
 
 /**
  * Assert @a v is proper type.
@@ -253,6 +268,35 @@ static inline void *ib_ftype_generic_mutable_out(void **v)
  * Assert @a v is proper type.
  */
 static inline void *ib_ftype_generic_storage(void **v)
+{
+    return (void *)(v);
+}
+
+/**
+ * Assert @a v is proper type.
+ */
+static inline void *ib_ftype_float_mutable_in(ib_float_t *v)
+{
+    return (void *)(v);
+}
+/**
+ * Assert @a v is proper type.
+ */
+static inline void *ib_ftype_float_in(const ib_float_t *v)
+{
+    return (void *)(v);
+}
+/**
+ * Assert @a v is proper type.
+ */
+static inline void *ib_ftype_float_mutable_out(ib_float_t *v)
+{
+    return (void *)(v);
+}
+/**
+ * Assert @a v is proper type.
+ */
+static inline void *ib_ftype_float_out(ib_float_t *v)
 {
     return (void *)(v);
 }

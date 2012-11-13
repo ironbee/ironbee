@@ -271,6 +271,12 @@ ibapi_private.fieldToLua = function(self, field)
         ffi.C.ib_field_value(field, value)
         return tonumber(value[0])
 
+    -- Float Number
+    elseif field.type == ffi.C.IB_FTYPE_FLOAT then
+        local value = ffi.new("ib_float_t[1]")
+        ffi.C.ib_field_value(field, value)
+        return tonumber(value[0])
+
     -- String
     elseif field.type == ffi.C.IB_FTYPE_NULSTR then
         local value = ffi.new("const char*[1]")
@@ -499,13 +505,23 @@ ibapi.set = function(self, name, value)
                                            ffi.cast("char*", value))
         ffi.C.ib_field_setv(ib_field, nval)
     elseif type(value) == 'number' then
-        -- Set a number.
-        local src = ffi.new("ib_num_t[1]", value)
-        local dst = ffi.cast("ib_num_t*",
-                             ffi.C.ib_mpool_alloc(self.private.ib_tx.mp,
-                                                  ffi.sizeof("ib_num_t")))
-        ffi.copy(dst, src, ffi.sizeof("ib_num_t"))
-        ffi.C.ib_field_setv(ib_field, dst)
+        if value == math.floor(value) then
+            -- Set a number.
+            local src = ffi.new("ib_num_t[1]", value)
+            local dst = ffi.cast("ib_num_t*",
+                                ffi.C.ib_mpool_alloc(self.private.ib_tx.mp,
+                                                    ffi.sizeof("ib_num_t")))
+            ffi.copy(dst, src, ffi.sizeof("ib_num_t"))
+            ffi.C.ib_field_setv(ib_field, dst)
+        else
+            -- Set a float number.
+            local src = ffi.new("ib_float_t[1]", value)
+            local dst = ffi.cast("ib_float_t*",
+                                ffi.C.ib_mpool_alloc(self.private.ib_tx.mp,
+                                                    ffi.sizeof("ib_float_t")))
+            ffi.copy(dst, src, ffi.sizeof("ib_float_t"))
+            ffi.C.ib_field_setv(ib_field, dst)
+        end
     elseif type(value) == 'table' then
         -- Delete a table and add it.
         ffi.C.ib_data_remove_ex(self.private.ib_tx.dpi,
@@ -596,9 +612,7 @@ end
 ibapi.appendToList = function(self, listName, fieldName, fieldValue)
 
     local field = ffi.new("ib_field_t*[1]")
-    local cfieldValue
 
-    -- This if block must define fieldType and cfieldValue
     if type(fieldValue) == 'string' then
         -- Create the field
         ffi.C.ib_field_create(field,
@@ -609,14 +623,25 @@ ibapi.appendToList = function(self, listName, fieldName, fieldValue)
                                  ffi.cast("char*", fieldValue))
 
     elseif type(fieldValue) == 'number' then
-        local fieldValue_p = ffi.new("ib_num_t[1]", fieldValue)
+        if fieldValue == math.floor(fieldValue) then
+            local fieldValue_p = ffi.new("ib_num_t[1]", fieldValue)
 
-        ffi.C.ib_field_create(field,
-                                 self.private.ib_tx.mp,
-                                 ffi.cast("char*", fieldName),
-                                 #fieldName,
-                                 ffi.C.IB_FTYPE_NUM,
-                                 fieldValue_p)
+            ffi.C.ib_field_create(field,
+                                  self.private.ib_tx.mp,
+                                  ffi.cast("char*", fieldName),
+                                  #fieldName,
+                                  ffi.C.IB_FTYPE_NUM,
+                                  fieldValue_p)
+        else
+            local fieldValue_p = ffi.new("ib_float_t[1]", fieldValue)
+
+            ffi.C.ib_field_create(field,
+                                  self.private.ib_tx.mp,
+                                  ffi.cast("char*", fieldName),
+                                  #fieldName,
+                                  ffi.C.IB_FTYPE_FLOAT,
+                                  fieldValue_p)
+        end
     else
         return
     end
