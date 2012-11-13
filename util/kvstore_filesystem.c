@@ -4,6 +4,7 @@
 #include "ironbee/debug.h"
 #include "ironbee/clock.h"
 
+#include <assert.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -63,6 +64,9 @@ static ib_status_t build_key_path(
     char **path)
 {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
+    assert(key);
 
     /* System return code. */
     int sys_rc;
@@ -164,6 +168,8 @@ static ib_status_t kvconnect(
 {
     IB_FTRACE_INIT();
 
+    assert(server);
+
     /* Nop. */
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -175,6 +181,8 @@ static ib_status_t kvdisconnect(
 {
     IB_FTRACE_INIT();
     
+    assert(server);
+
     /* Nop. */
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -200,6 +208,9 @@ static ib_status_t read_whole_file(
     size_t *len)
 {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
+    assert(path);
 
     struct stat sb;
     int sys_rc;
@@ -257,6 +268,9 @@ static ib_status_t extract_type(
 {
     IB_FTRACE_INIT();
 
+    assert(kvstore);
+    assert(path);
+
     const char *start;
     size_t len;
 
@@ -289,6 +303,9 @@ static ib_status_t extract_expiration(
     uint32_t *expiration)
 {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
+    assert(path);
 
     const char *start;
     const char *stop;
@@ -330,6 +347,9 @@ static ib_status_t load_kv_value(
     kvstore_value_t **value)
 {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
+    assert(file);
 
     ib_status_t rc;
     ib_timeval_t ib_timeval;
@@ -412,6 +432,9 @@ static ib_status_t count_dirent(
 {
     IB_FTRACE_INIT();
 
+    assert(path);
+    assert(dirent);
+
     size_t *i = (size_t *)data;
 
     if (strncmp(".", dirent, 1)) {
@@ -431,6 +454,9 @@ static ib_status_t count_dirent(
 static ib_status_t each_dir(const char *path, each_dir_t f, void* data)
 {
     IB_FTRACE_INIT();
+
+    assert(path);
+    assert(f);
 
     int tmp_errno; /* Holds errno until other system calls finish. */
     int sys_rc;
@@ -518,6 +544,10 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
 {
     IB_FTRACE_INIT();
 
+    assert(path);
+    assert(file);
+    assert(data);
+
     char *full_path;
     ib_status_t rc;
     build_value_t *bv = (build_value_t*)(data);
@@ -553,6 +583,15 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * Get implementations.
+ *
+ * @param[in] kvstore The key-value store.
+ * @param[in] key The key to fetch.
+ * @param[out] values A pointer to an array of pointers. 
+ * @param[out] values_length The length of *values.
+ * @param[in,out] cbdata Callback data. Unused.
+ */
 static ib_status_t kvget(
     kvstore_t *kvstore,
     const kvstore_key_t *key,
@@ -561,6 +600,9 @@ static ib_status_t kvget(
     ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
+    assert(key);
 
     ib_status_t rc;
     build_value_t build_val;
@@ -640,6 +682,10 @@ static ib_status_t kvset(
     ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
+    assert(key);
+    assert(value);
 
     ib_status_t rc;
     char *path = NULL;
@@ -724,6 +770,10 @@ static ib_status_t remove_file(
 {
     IB_FTRACE_INIT();
 
+    assert(path);
+    assert(file);
+    assert(data);
+
     char *full_path;
     size_t path_len = *(size_t*)(data);
 
@@ -762,6 +812,9 @@ static ib_status_t kvremove(
     ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
+    assert(key);
     
     ib_status_t rc;
     char *path = NULL;
@@ -793,6 +846,10 @@ ib_status_t kvstore_filesystem_init(
 {
     IB_FTRACE_INIT();
 
+    assert(kvstore);
+    assert(directory);
+
+    /* There is no callback data used for this implimentation. */
     kvstore_init(kvstore, NULL);
 
     kvstore_filesystem_server_t *server = malloc(sizeof(*server));
@@ -828,6 +885,8 @@ ib_status_t kvstore_filesystem_init(
 void kvstore_filesystem_destroy(kvstore_t* kvstore)
 {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
 
     kvstore_filesystem_server_t *server =
         (kvstore_filesystem_server_t*)(kvstore->server);

@@ -26,6 +26,7 @@
 #include "ironbee/kvstore.h"
 #include "ironbee/debug.h"
 
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 
@@ -41,6 +42,8 @@
 static void* kvstore_malloc(kvstore_t *kvstore, size_t size, ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
 
     void *r = malloc(size);
 
@@ -58,6 +61,8 @@ static void kvstore_free(kvstore_t *kvstore, void *ptr, ib_kvstore_cbdata_t *cbd
 {
     IB_FTRACE_INIT();
 
+    assert(kvstore);
+
     free(ptr);
 
     IB_FTRACE_RET_VOID();
@@ -73,6 +78,9 @@ static kvstore_value_t * kvstore_value_dup(
     kvstore_value_t *value)
 {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
+    assert(value);
 
     kvstore_value_t *new_value = kvstore->malloc(
         kvstore,
@@ -136,6 +144,9 @@ static ib_status_t default_merge_policy(
 {
     IB_FTRACE_INIT();
 
+    assert(kvstore);
+    assert(values);
+
     if ( value_size > 0 ) {
         *resultant_value = values[0];
     }
@@ -145,6 +156,8 @@ static ib_status_t default_merge_policy(
 
 ib_status_t kvstore_init(kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata) {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
 
     memset(kvstore, 1, sizeof(*kvstore));
     kvstore->malloc = &kvstore_malloc;
@@ -158,6 +171,8 @@ ib_status_t kvstore_init(kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata) {
 ib_status_t kvstore_connect(kvstore_t *kvstore) {
     IB_FTRACE_INIT();
 
+    assert(kvstore);
+
     ib_status_t rc =  kvstore->connect(kvstore, kvstore->cbdata);
 
     IB_FTRACE_RET_STATUS(rc);
@@ -165,6 +180,8 @@ ib_status_t kvstore_connect(kvstore_t *kvstore) {
 
 ib_status_t kvstore_disconnect(kvstore_t *kvstore) {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
 
     ib_status_t rc = kvstore->disconnect(kvstore, kvstore->cbdata);
 
@@ -178,6 +195,9 @@ ib_status_t kvstore_get(
     kvstore_value_t **val)
 {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
+    assert(key);
 
     kvstore_value_t *merged_value = NULL;
     kvstore_value_t **values = NULL;
@@ -248,6 +268,10 @@ ib_status_t kvstore_set(
 {
     IB_FTRACE_INIT();
 
+    assert(kvstore);
+    assert(key);
+    assert(val);
+
     ib_status_t rc;
 
     if ( merge_policy == NULL ) {
@@ -263,6 +287,9 @@ ib_status_t kvstore_remove(kvstore_t *kvstore, const kvstore_key_t *key)
 {
     IB_FTRACE_INIT();
 
+    assert(kvstore);
+    assert(key);
+
     ib_status_t rc = kvstore->remove(kvstore, key, kvstore->cbdata); 
 
     IB_FTRACE_RET_STATUS(rc);
@@ -271,6 +298,9 @@ ib_status_t kvstore_remove(kvstore_t *kvstore, const kvstore_key_t *key)
 
 void kvstore_free_value(kvstore_t *kvstore, kvstore_value_t *value) {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
+    assert(value);
 
     if (value->value) {
         kvstore->free(kvstore, value->value, kvstore->cbdata);
@@ -287,6 +317,9 @@ void kvstore_free_value(kvstore_t *kvstore, kvstore_value_t *value) {
 
 void kvstore_free_key(kvstore_t *kvstore, kvstore_key_t *key) {
     IB_FTRACE_INIT();
+
+    assert(kvstore);
+    assert(key);
 
     if (key->key) {
         kvstore->free(kvstore, key->key, kvstore->cbdata);
