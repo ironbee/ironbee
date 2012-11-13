@@ -730,8 +730,8 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
         /* If debugging this, copy the string value out and print it to the
          * log. This could be dangerous as there could be non-character
          * values in the match. */
-        ib_log_debug2_tx(tx, "REGEX Setting #%d=%.*s",
-                         i, (int)match_len, match_start);
+        ib_log_debug2_tx(tx, "REGEX Setting #%d=\"%.*s\" (len=%zd)",
+                         i, (int)match_len, match_start, match_len);
 
         /* Create a byte-string representation */
         rc = ib_bytestr_dup_mem(&bs,
