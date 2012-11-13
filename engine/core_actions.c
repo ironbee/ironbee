@@ -723,6 +723,7 @@ static ib_status_t expand_data(
 
             /* Get a non-null pointer that should never be dereferenced. */
             *expanded = ib_mpool_alloc(tx->mp, 0);
+            *exlen = bslen;
 
             ib_rule_log_debug(
                 rule_exec,
@@ -741,8 +742,8 @@ static ib_status_t expand_data(
                     bsdata);
                 IB_FTRACE_RET_STATUS(IB_EALLOC);
             }
+            *exlen = bslen;
         }
-        *exlen = bslen;
     }
     else {
         ib_rule_log_debug(
@@ -814,7 +815,7 @@ static ib_status_t act_setvar_execute(
 
     switch(setvar_data->op) {
 
-    /* Handle bytestr operations (cur_fieldrently only set) */
+    /* Handle bytestr operations (currently only set) */
     case SETVAR_STRSET:
         assert(setvar_data->type == IB_FTYPE_BYTESTR);
         ib_bytestr_t *bs = NULL;
