@@ -137,8 +137,6 @@ static ib_status_t build_key_path(
             seconds = 0;
         }
 
-        printf("SECONDS: %u\n", seconds);
-
         path_tmp = strncpy(path_tmp, "/", 1) + 1;
         path_tmp += snprintf(
             path_tmp,
@@ -150,8 +148,6 @@ static ib_status_t build_key_path(
     }
 
     *path_tmp = '\0';
-
-    printf("PATH: %s\n", *path);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 
@@ -258,7 +254,6 @@ static ib_status_t extract_type(
     size_t len;
 
     start = rindex(path, '.')+1;
-    printf("TYPE %s %s\n", path, start);
     if (!start) {
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
@@ -344,13 +339,12 @@ static ib_status_t load_kv_value(
     rc = extract_expiration(kvstore, file, &((*value)->expiration));
     if (rc) {
         kvstore->free(kvstore, *value);
+        *value = NULL;
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
     /* Remove expired file and signal there is no entry for that file. */
     if ((*value)->expiration < ib_timeval.tv_sec) {
-
-        printf("NOENT %d vs %d\n",  (*value)->expiration, ib_timeval.tv_sec);
 
         /* Remove the expired file. */
         unlink(file);
@@ -372,6 +366,7 @@ static ib_status_t load_kv_value(
 
     if (rc) {
         kvstore->free(kvstore, *value);
+        *value = NULL;
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
@@ -385,11 +380,9 @@ static ib_status_t load_kv_value(
     if (rc) {
         kvstore->free(kvstore, (*value)->type);
         kvstore->free(kvstore, *value);
-        printf("IB_EOTHER\n");
+        *value = NULL;
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
-
-    printf("IB_OK\n");
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -534,17 +527,14 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
         }
         sprintf(full_path, "%s/%s", path, file);
 
-        printf("load %s\n", full_path);
         rc = load_kv_value(
             bv->kvstore,
             full_path,
             bv->values + bv->values_idx);
 
-        printf("RC---- %d\n", rc);
         /* If IB_ENOENT, a file was expired on get. */
         if (!rc) {
             bv->values_idx++;
-            printf("values %zu\n", bv->values_idx);
         }
 
         free(full_path);
@@ -588,8 +578,7 @@ static ib_status_t kvget(
     build_val.values_idx = 0;
     build_val.values_len = dirent_count;
     build_val.values = (kvstore_value_t**)
-        kvstore->malloc(kvstore, sizeof(**values) * dirent_count);
-    memset(build_val.values, 0, sizeof(**values) * dirent_count);
+        kvstore->malloc(kvstore, sizeof(*build_val.values) * dirent_count);
 
     /* Build value array. */
     rc = each_dir(path, &build_value, &build_val);
@@ -756,7 +745,7 @@ static ib_status_t kvremove(kvstore_t *kvstore, const kvstore_key_t *key) {
 
     /* Build a path with no expiration value on it. */
     rc = build_key_path(kvstore, key, -1, NULL, 0, &path);
-    if (!rc) {
+    if (rc) {
         IB_FTRACE_RET_STATUS(rc);
     }
 

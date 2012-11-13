@@ -47,6 +47,46 @@ static void kvstore_free(kvstore_t *kvstore, void *ptr)
     IB_FTRACE_RET_VOID();
 }
 
+/**
+ * @param[in] kvstore The Key Value store.
+ * @param[in] value The value that will be duplicated.
+ * @returns Pointer to the duplicate value or NULL.
+ */
+static kvstore_value_t * kvstore_value_dup(
+    kvstore_t *kvstore,
+    kvstore_value_t *value)
+{
+    IB_FTRACE_INIT();
+
+    kvstore_value_t *new_value = kvstore->malloc(kvstore, sizeof(*new_value));
+
+    if (!new_value) {
+        IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
+    }
+
+    new_value->value = kvstore->malloc(kvstore, value->value_length);
+    if (!new_value->value) {
+        kvstore->free(kvstore, new_value);
+        IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
+    }
+
+    new_value->type = kvstore->malloc(kvstore, value->type_length);
+    if (!new_value->type) {
+        kvstore->free(kvstore, new_value->value);
+        kvstore->free(kvstore, new_value);
+        IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
+    }
+
+    /* Copy in all data. */
+    new_value->expiration = value->expiration;
+    new_value->value_length = value->value_length;
+    new_value->type_length = value->type_length;
+    memcpy(new_value->value, value->value, value->value_length);
+    memcpy(new_value->type, value->type, value->type_length);
+
+    IB_FTRACE_RET_PTR((kvstore_value_t*), new_value);
+}
+
 static ib_status_t default_merge_policy(
     kvstore_t *kvstore,
     kvstore_value_t **values,
@@ -92,11 +132,11 @@ ib_status_t kvstore_get(
     kvstore_t *kvstore,
     kvstore_merge_policy_t merge_policy,
     const kvstore_key_t *key,
-    kvstore_value_t *val)
+    kvstore_value_t **val)
 {
     IB_FTRACE_INIT();
 
-    kvstore_value_t *merged_value;
+    kvstore_value_t *merged_value = NULL;
     kvstore_value_t **values = NULL;
     size_t values_length;
     ib_status_t rc;
@@ -109,6 +149,7 @@ ib_status_t kvstore_get(
     rc = kvstore->get(kvstore, key, &values, &values_length);
 
     if (rc) {
+        *val = NULL;
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -120,31 +161,32 @@ ib_status_t kvstore_get(
             goto exit_get;
         }
 
-        if ( merged_value != val ) {
-            /* Shallow-copy merged values into user-provided value. */
-            *val = *merged_value;
-            
-            /* Free the value container, not the member pointers. */
-            kvstore->free(kvstore, merged_value);
-
-            /* NULL merged_value so it is not double-freed later. */
-            merged_value = NULL;
-        }
+        *val = kvstore_value_dup(kvstore, merged_value);
+    }
+    else if (values_length == 1 ) {
+        *val = kvstore_value_dup(kvstore, values[0]);
+    }
+    else {
+        *val = NULL;
     }
 
 exit_get:
     for (i=0; i < values_length; ++i) {
-        printf("REMOVING %zu of %zu at %p\n", i, values_length, values[i]);
+        /* If the merge policy returns a pointer to a value array element,
+         * null it to avoid a double free. */
+        if ( merged_value == values[i] ) {
+            merged_value = NULL;
+        }
         kvstore_free_value(kvstore, values[i]);
-    }
-
-    /* Never free the user's value. Only free we allocated. */
-    if (merged_value != val && merged_value != NULL) {
-        kvstore_free_value(kvstore, merged_value);
     }
 
     if (values) {
         kvstore->free(kvstore, values);
+    }
+
+    /* Never free the user's value. Only free we allocated. */
+    if (merged_value) {
+        kvstore_free_value(kvstore, merged_value);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -191,8 +233,6 @@ void kvstore_free_value(kvstore_t *kvstore, kvstore_value_t *value) {
     }
 
     kvstore->free(kvstore, value);
-
-    memset(value, 0, sizeof(*value));
 
     IB_FTRACE_RET_VOID();
 }

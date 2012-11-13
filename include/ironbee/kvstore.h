@@ -235,7 +235,9 @@ ib_status_t kvstore_disconnect(kvstore_t *kvstore);
  *            If null then the \c default_merge_policy in kvstore is used.
  * @param[in] key The key that will be written to.
  * @param[out] val The stored value. If multiple values are fetched,
- *                 they are merged.
+ *                 they are merged. This value is populated with
+ *                 a value allocated by kvstore->malloc
+ *                 and should be freed with kvstore_value_destroy.
  * @return
  *   - IB_OK on success
  *   - IB_EALLOC on memory allocation error.
@@ -245,7 +247,7 @@ ib_status_t kvstore_get(
     kvstore_t *kvstore,
     kvstore_merge_policy_t merge_policy,
     const kvstore_key_t *key,
-    kvstore_value_t *val);
+    kvstore_value_t **val);
 
 /**
  * Set a value. If a key-conflict is detected on write, then the

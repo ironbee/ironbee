@@ -58,6 +58,7 @@ TEST_F(TestKVStore, test_init) {
 TEST_F(TestKVStore, test_writes) {
     kvstore_key_t key;
     kvstore_value_t val;
+    kvstore_value_t *result;
 
     key.key = (void*)ib_mpool_strdup(mp, "k1");
     key.length = 2;
@@ -68,15 +69,23 @@ TEST_F(TestKVStore, test_writes) {
     val.expiration = 10;
 
     ASSERT_EQ(IB_OK, kvstore_set(&kvstore, NULL, &key, &val));
+
+    /* Force a pruning on multiple test runs. */
+    ASSERT_EQ(IB_OK, kvstore_get(&kvstore, NULL, &key, &result));
+
+    if (result) {
+        kvstore_free_value(&kvstore, result);
+    }
 }
 
-TEST_F(TestKVStore, DISABLED_test_reads) {
+TEST_F(TestKVStore, test_reads) {
     kvstore_key_t key;
     kvstore_value_t val;
+    kvstore_value_t *result;
 
-    key.key = (void*)ib_mpool_strdup(mp, "k2");
+    key.key = (void *)ib_mpool_strdup(mp, "k2");
     key.length = 2;
-    val.value = (void*)ib_mpool_strdup(mp, "A key");
+    val.value = (void *)ib_mpool_strdup(mp, "A key");
     val.value_length = 5;
     val.type = ib_mpool_strdup(mp, "txt");
     val.type_length = 3;
@@ -84,7 +93,7 @@ TEST_F(TestKVStore, DISABLED_test_reads) {
 
     ASSERT_EQ(IB_OK, kvstore_set(&kvstore, NULL, &key, &val));
 
-    val.value = (void*)ib_mpool_strdup(mp, "Another key");
+    val.value = (void *)ib_mpool_strdup(mp, "Another key");
     val.value_length = 11;
     val.expiration = 5;
 
@@ -92,11 +101,31 @@ TEST_F(TestKVStore, DISABLED_test_reads) {
 
     memset(&val, 0, sizeof(val));
 
-    ASSERT_EQ(IB_OK, kvstore_get(&kvstore, NULL, &key, &val));
+    ASSERT_EQ(IB_OK, kvstore_get(&kvstore, NULL, &key, &result));
 
-    ASSERT_EQ((size_t)3, val.type_length);
-    ASSERT_EQ((size_t)5, val.value_length);
+    ASSERT_TRUE(result);
+    ASSERT_EQ((size_t)3, result->type_length);
+    ASSERT_TRUE(( 11 == result->value_length) || ( 5 == result->value_length ));
+
+    kvstore_free_value(&kvstore, result);
 }
 
 TEST_F(TestKVStore, test_removes) {
+    kvstore_key_t key;
+    kvstore_value_t val;
+    kvstore_value_t *result;
+
+    key.key = (void *)ib_mpool_strdup(mp, "k3");
+    key.length = 2;
+    val.value = (void *)ib_mpool_strdup(mp, "A key");
+    val.value_length = 5;
+    val.type = ib_mpool_strdup(mp, "txt");
+    val.type_length = 3;
+    val.expiration = 10;
+
+    ASSERT_EQ(IB_OK, kvstore_set(&kvstore, NULL, &key, &val));
+    ASSERT_EQ(IB_OK, kvstore_remove(&kvstore, &key));
+    ASSERT_EQ(IB_ENOENT, kvstore_get(&kvstore, NULL, &key, &result));
+
+    ASSERT_FALSE(result);
 }
