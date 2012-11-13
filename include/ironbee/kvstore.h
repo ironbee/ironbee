@@ -99,17 +99,17 @@ typedef ib_status_t (*ib_kvstore_merge_policy_fn_t)(
     ib_kvstore_cbdata_t *cbdata);
 
 /**
- * Get a value from the data store. This is called by @ref kvstore_get
+ * Get a value from the data store. This is called by @ref ib_kvstore_get
  * which will free all the allocated results and return the merged final
  * value.
  *
  * @param[in] kvstore The key-value store.
  * @param[in] key The key to get.
  * @param[out] values An array of values stored at the given key.
- *             This is allocated by @ref kvstore_malloc_fn_t and will be
- *             freed with @ref kvstore_free_fn_t.
+ *             This is allocated by @ref ib_kvstore_malloc_fn_t and will be
+ *             freed with @ref ib_kvstore_free_fn_t.
  *             Further, each element in this array will be
- *             freed by a call to @ref kvstore_free_fn_t.
+ *             freed by a call to @ref ib_kvstore_free_fn_t.
  *             These values will be merged before a single value is
  *             returned to the user.
  * @param[out] values_length The length of the array values.
@@ -239,11 +239,11 @@ struct ib_kvstore_t {
  * their respective contracts.
  *
  * See:
- *  - @ref kvstore_connect_fn_t connect
- *  - @ref kvstore_disconnect_fn_t disconnect
- *  - @ref kvstore_get_fn_t get
- *  - @ref kvstore_set_fn_t set
- *  - @ref kvstore_remove_fn_t remove
+ *  - @ref ib_kvstore_connect_fn_t connect
+ *  - @ref ib_kvstore_disconnect_fn_t disconnect
+ *  - @ref ib_kvstore_get_fn_t get
+ *  - @ref ib_kvstore_set_fn_t set
+ *  - @ref ib_kvstore_remove_fn_t remove
  *
  * @param[out] kvstore The server object which is initialized.
  * @param[in] cbdata Data provided to all callback calls. Implementations
@@ -256,7 +256,7 @@ struct ib_kvstore_t {
 ib_status_t ib_kvstore_init(ib_kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata);
 
 /**
- * Connect to the server by calling @ref kvstore_connect_fn_t in kvstore.
+ * Connect to the server by calling @ref ib_kvstore_connect_fn_t in kvstore.
  *
  * @param [in,out] kvstore The kvstore that is connected to the data store.
  * @return
@@ -266,7 +266,7 @@ ib_status_t ib_kvstore_init(ib_kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata);
 ib_status_t ib_kvstore_connect(ib_kvstore_t *kvstore);
 
 /**
- * Disconnect from the server by calling @ref kvstore_disconnect_fn_t in
+ * Disconnect from the server by calling @ref ib_kvstore_disconnect_fn_t in
  * kvstore.
  *
  * @return
@@ -334,7 +334,7 @@ ib_status_t ib_kvstore_remove(
  * Free the value pointer and all member elements.
  *
  * @param[in] kvstore The key value store.
- * @param[in,out] value The value to be freed using @ref kvstore_free_fn_t.
+ * @param[in,out] value The value to be freed using @ref ib_kvstore_free_fn_t.
  */
 void ib_kvstore_free_value(ib_kvstore_t *kvstore, ib_kvstore_value_t *value);
 
@@ -342,7 +342,7 @@ void ib_kvstore_free_value(ib_kvstore_t *kvstore, ib_kvstore_value_t *value);
  * Free the key pointer and all member elements.
  *
  * @param[in] kvstore The key value store.
- * @param[in,out] key The key to be freed using @ref kvstore_free_fn_t.
+ * @param[in,out] key The key to be freed using @ref ib_kvstore_free_fn_t.
  */
 void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key);
 

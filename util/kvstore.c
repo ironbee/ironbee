@@ -135,7 +135,7 @@ static ib_kvstore_value_t * kvstore_value_dup(
  * If the list size is 0, this does nothing.
  *
  * @param[in] kvstore Key-value store.
- * @param[in] values Array of @ref kvstore_value_t pointers.
+ * @param[in] values Array of @ref ib_kvstore_value_t pointers.
  * @param[in] value_size The length of values.
  * @param[out] resultant_value Pointer to values[0] if value_size > 0.
  * @param[in,out] cbdata Context callback data.
