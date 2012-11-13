@@ -17,8 +17,8 @@
 
 /**
  * @file
- * @brief IronBee --- Utility Functions
- * @author Brian Rectanus <brectanus@qualys.com>
+ * @brief IronBee Key-Value Store Implementation --- Key-Value Store Implmemtnation
+ * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -29,6 +29,15 @@
 #include <string.h>
 #include <stdlib.h>
 
+/**
+ * Default malloc implmemtation that wraps malloc.
+ * @param[in] kvstore Key-value store.
+ * @param[in] size Size in bytes.
+ * @param[in] cbdata Callback data. Unused.
+ * @returns
+ *   - Pointer to the new memory segment.
+ *   - Null on error.
+ */
 static void* kvstore_malloc(kvstore_t *kvstore, size_t size, ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
@@ -38,6 +47,13 @@ static void* kvstore_malloc(kvstore_t *kvstore, size_t size, ib_kvstore_cbdata_t
     IB_FTRACE_RET_PTR((void*), r);
 }
 
+/**
+ * Default malloc implmemtation that wraps free.
+ *
+ * @param[in] kvstore Key-value store.
+ * @param[in] ptr Pointer to free.
+ * @param[in] cbdata Callback data. Unused.
+ */
 static void kvstore_free(kvstore_t *kvstore, void *ptr, ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
@@ -58,19 +74,30 @@ static kvstore_value_t * kvstore_value_dup(
 {
     IB_FTRACE_INIT();
 
-    kvstore_value_t *new_value = kvstore->malloc(kvstore, sizeof(*new_value), kvstore->cbdata);
+    kvstore_value_t *new_value = kvstore->malloc(
+        kvstore,
+        sizeof(*new_value),
+        kvstore->cbdata);
 
     if (!new_value) {
         IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
     }
 
-    new_value->value = kvstore->malloc(kvstore, value->value_length, kvstore->cbdata);
+    new_value->value = kvstore->malloc(
+        kvstore,
+        value->value_length,
+        kvstore->cbdata);
+
     if (!new_value->value) {
         kvstore->free(kvstore, new_value, kvstore->cbdata);
         IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
     }
 
-    new_value->type = kvstore->malloc(kvstore, value->type_length, kvstore->cbdata);
+    new_value->type = kvstore->malloc(
+        kvstore,
+        value->type_length,
+        kvstore->cbdata);
+
     if (!new_value->type) {
         kvstore->free(kvstore, new_value->value, kvstore->cbdata);
         kvstore->free(kvstore, new_value, kvstore->cbdata);
@@ -87,6 +114,19 @@ static kvstore_value_t * kvstore_value_dup(
     IB_FTRACE_RET_PTR((kvstore_value_t*), new_value);
 }
 
+/**
+ * Trivial merge policy that returns the first value in the list 
+ * if the list is size 1 or greater.
+ *
+ * If the list size is 0, this does nothing.
+ *
+ * @param[in] kvstore Key-value store.
+ * @param[in] values Array of @ref kvstore_value_t pointers.
+ * @param[in] value_size The length of values.
+ * @param[out] resultant_value Pointer to values[0] if value_size > 0.
+ * @param[in,out] cbdata Context callback data.
+ * @returns IB_OK
+ */
 static ib_status_t default_merge_policy(
     kvstore_t *kvstore,
     kvstore_value_t **values,
@@ -100,7 +140,7 @@ static ib_status_t default_merge_policy(
         *resultant_value = values[0];
     }
 
-    return IB_OK;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t kvstore_init(kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata) {
@@ -111,7 +151,8 @@ ib_status_t kvstore_init(kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata) {
     kvstore->free = &kvstore_free;
     kvstore->default_merge_policy = &default_merge_policy;
     kvstore->cbdata = cbdata;
-    return IB_OK;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_status_t kvstore_connect(kvstore_t *kvstore) {
@@ -157,7 +198,12 @@ ib_status_t kvstore_get(
 
     /* Merge any values. */
     if (values_length > 1) {
-        rc = merge_policy(kvstore, values, values_length, &merged_value, kvstore->cbdata);
+        rc = merge_policy(
+            kvstore,
+            values,
+            values_length,
+            &merged_value,
+            kvstore->cbdata);
 
         if (rc != IB_OK) {
             goto exit_get;

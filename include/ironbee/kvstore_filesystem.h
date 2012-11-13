@@ -18,24 +18,24 @@
 #ifndef __IRONBEE__KVSTORE_FILESYSTEM_H
 #define __IRONBEE__KVSTORE_FILESYSTEM_H
 
+#include "ironbee_config_auto.h"
+
+#include "ironbee/types.h"
+
+#include "ironbee/kvstore.h"
+
 /**
  * @file
- * @brief IronBee --- Key-Value Store Interface
+ * @brief IronBee --- Key-Value Filesystem Store Interface
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
 /**
- * @defgroup IronBeeKeyValueStore Key-Value Store
+ * @ingroup IronBeeKeyValueStore Key-Value Filesystem Store
  * @ingroup IronBeeUtil
  * @{
  */
-
-#include "ironbee_config_auto.h"
-
-#include "ironbee/types.h"
-
-#include "kvstore.h"
 
 /**
  * The filesystem server object.
@@ -47,9 +47,9 @@ struct kvstore_filesystem_server_t {
 typedef struct kvstore_filesystem_server_t kvstore_filesystem_server_t;
 
 /**
- * Initialize s kvstore that writes to a filesystem.
+ * Initializes kvstore that writes to a filesystem.
  *
- * @param[out] kvstore Initialized with kverver and some defaults.
+ * @param[out] kvstore Initialized with kvserver and some defaults.
  * @param[in] directory The directory we will store this data in.
  * @returns
  *   - IB_OK on succes
@@ -66,4 +66,4 @@ void kvstore_filesystem_destroy(kvstore_t *kvstore);
  /**
   * @}
   */
-#endif // __IRONBEE__KVSTORE_FILESYSTEM_H
+#endif /* __IRONBEE__KVSTORE_FILESYSTEM_H */

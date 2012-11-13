@@ -89,7 +89,10 @@ static ib_status_t build_key_path(
         + type_len               /* type. */
         + 1                      /* '\0' */;
 
-    char *path_tmp = (char *) kvstore->malloc(kvstore, path_size+1, kvstore->cbdata);
+    char *path_tmp = (char *) kvstore->malloc(
+        kvstore,
+        path_size+1,
+        kvstore->cbdata);
 
     if ( ! path_tmp ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -708,7 +711,7 @@ error_1:
  * @param[in] path The path to the key directory. @c rmdir is called on this.
  * @param[in] file The file inside of the directory pointed to by path
  *            which will be @c unlink'ed.
- * @param[in,out] cbdata Callback data. This is a size_t pointer containing
+ * @param[in,out] data This is a size_t pointer containing
  *                the length of the path argument.
  * @returns
  *   - IB_OK
@@ -717,7 +720,7 @@ error_1:
 static ib_status_t remove_file(
     const char *path,
     const char *file,
-    ib_kvstore_cbdata_t *cbdata)
+    void *data)
 {
     IB_FTRACE_INIT();
 
@@ -784,25 +787,13 @@ static ib_status_t kvremove(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-/**
- * Initializes the kvstore to point at the given directory.
- * Directory is copied and free'd on kvstore_filesystem_destroy.
- *
- * @param[out] kvstore Build this kvstore object.
- * @param[in] directory Directory kvstore points at.
- * @param[in,out] cbdata Callback data.
- * @returns
- *   - IB_OK success.
- *   - IB_EALLOC Memory allocation errors.
- */
 ib_status_t kvstore_filesystem_init(
     kvstore_t* kvstore,
-    const char* directory,
-    ib_kvstore_cbdata_t *cbdata)
+    const char* directory)
 {
     IB_FTRACE_INIT();
 
-    kvstore_init(kvstore, cbdata);
+    kvstore_init(kvstore, NULL);
 
     kvstore_filesystem_server_t *server = malloc(sizeof(*server));
 
