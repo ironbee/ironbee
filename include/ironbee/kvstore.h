@@ -49,25 +49,30 @@
  * The server object should contain all of the necessary inputs
  * to allow for a connection when passed to the kvstore_connect_t function.
  */
-typedef void * kvstore_server_t;
+typedef void kvstore_server_t;
+
+/**
+ * Type of a callback object for implementations of a key-value store.
+ */
+typedef void ib_kvstore_cbdata_t;
 
 typedef struct kvstore_t kvstore_t;
 typedef struct kvstore_value_t kvstore_value_t;
 typedef struct kvstore_key_t kvstore_key_t;
-typedef void * ib_kvstore_cbdata_t;
+
 
 /**
  * Connect to the server defined in the kvstore_server_t.
  */
 typedef ib_status_t (*kvstore_connect_fn_t)(
-    kvstore_server_t,
+    kvstore_server_t *,
     ib_kvstore_cbdata_t *cbdata);
 
 /**
  * Disconnect from the server defined in the kvstore_server_t.
  */
 typedef ib_status_t (*kvstore_disconnect_fn_t)(
-    kvstore_server_t,
+    kvstore_server_t *,
     ib_kvstore_cbdata_t *cbdata);
 
 /**

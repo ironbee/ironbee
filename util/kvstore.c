@@ -159,7 +159,6 @@ ib_status_t kvstore_init(kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata) {
 
     assert(kvstore);
 
-    memset(kvstore, 1, sizeof(*kvstore));
     kvstore->malloc = &kvstore_malloc;
     kvstore->free = &kvstore_free;
     kvstore->default_merge_policy = &default_merge_policy;
