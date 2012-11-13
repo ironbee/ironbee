@@ -49,30 +49,30 @@
  * The server object should contain all of the necessary inputs
  * to allow for a connection when passed to the kvstore_connect_t function.
  */
-typedef void kvstore_server_t;
+typedef void ib_kvstore_server_t;
 
 /**
  * Type of a callback object for implementations of a key-value store.
  */
 typedef void ib_kvstore_cbdata_t;
 
-typedef struct kvstore_t kvstore_t;
-typedef struct kvstore_value_t kvstore_value_t;
-typedef struct kvstore_key_t kvstore_key_t;
+typedef struct ib_kvstore_t ib_kvstore_t;
+typedef struct ib_kvstore_value_t ib_kvstore_value_t;
+typedef struct ib_kvstore_key_t ib_kvstore_key_t;
 
 
 /**
  * Connect to the server defined in the kvstore_server_t.
  */
-typedef ib_status_t (*kvstore_connect_fn_t)(
-    kvstore_server_t *,
+typedef ib_status_t (*ib_kvstore_connect_fn_t)(
+    ib_kvstore_server_t *,
     ib_kvstore_cbdata_t *cbdata);
 
 /**
  * Disconnect from the server defined in the kvstore_server_t.
  */
-typedef ib_status_t (*kvstore_disconnect_fn_t)(
-    kvstore_server_t *,
+typedef ib_status_t (*ib_kvstore_disconnect_fn_t)(
+    ib_kvstore_server_t *,
     ib_kvstore_cbdata_t *cbdata);
 
 /**
@@ -91,11 +91,11 @@ typedef ib_status_t (*kvstore_disconnect_fn_t)(
  *             free'd with the implementation's free function.
  * @param[in,out] cbdata Callback data passed in during initialization.
  */
-typedef ib_status_t (*kvstore_merge_policy_fn_t)(
-    kvstore_t *kvstore,
-    kvstore_value_t **values,
+typedef ib_status_t (*ib_kvstore_merge_policy_fn_t)(
+    ib_kvstore_t *kvstore,
+    ib_kvstore_value_t **values,
     size_t value_length,
-    kvstore_value_t **resultant_value,
+    ib_kvstore_value_t **resultant_value,
     ib_kvstore_cbdata_t *cbdata);
 
 /**
@@ -115,10 +115,10 @@ typedef ib_status_t (*kvstore_merge_policy_fn_t)(
  * @param[out] values_length The length of the array values.
  * @param[in,out] cbdata Callback data passed in during initialization.
  */
-typedef ib_status_t (*kvstore_get_fn_t)(
-    kvstore_t *kvstore,
-    const kvstore_key_t *key,
-    kvstore_value_t ***values,
+typedef ib_status_t (*ib_kvstore_get_fn_t)(
+    ib_kvstore_t *kvstore,
+    const ib_kvstore_key_t *key,
+    ib_kvstore_value_t ***values,
     size_t *values_length,
     ib_kvstore_cbdata_t *cbdata);
 
@@ -133,11 +133,11 @@ typedef ib_status_t (*kvstore_get_fn_t)(
  * @param[in] value The value to set.
  * @param[in,out] cbdata Callback data passed in during initialization.
  */
-typedef ib_status_t (*kvstore_set_fn_t)(
-    kvstore_t *kvstore,
-    kvstore_merge_policy_fn_t merge_policy,
-    const kvstore_key_t *key,
-    kvstore_value_t *value,
+typedef ib_status_t (*ib_kvstore_set_fn_t)(
+    ib_kvstore_t *kvstore,
+    ib_kvstore_merge_policy_fn_t merge_policy,
+    const ib_kvstore_key_t *key,
+    ib_kvstore_value_t *value,
     ib_kvstore_cbdata_t *cbdata);
 
 /**
@@ -147,9 +147,9 @@ typedef ib_status_t (*kvstore_set_fn_t)(
  * @param[in] key The key of the object to remove.
  * @param[in,out] cbdata Callback data passed in during initialization.
  */
-typedef ib_status_t (*kvstore_remove_fn_t)(
-    kvstore_t *kvstore,
-    const kvstore_key_t *key,
+typedef ib_status_t (*ib_kvstore_remove_fn_t)(
+    ib_kvstore_t *kvstore,
+    const ib_kvstore_key_t *key,
     ib_kvstore_cbdata_t *cbdata);
 
 /**
@@ -160,8 +160,8 @@ typedef ib_status_t (*kvstore_remove_fn_t)(
  * @param[in,out] cbdata Callback data passed in during initialization.
  * @returns Pointer to the memory or NULL on an error.
  */
-typedef void * (*kvstore_malloc_fn_t)(
-    kvstore_t *kvstore,
+typedef void * (*ib_kvstore_malloc_fn_t)(
+    ib_kvstore_t *kvstore,
     size_t size,
     ib_kvstore_cbdata_t *cbdata);
 
@@ -172,15 +172,15 @@ typedef void * (*kvstore_malloc_fn_t)(
  * @param[in,out] ptr The pointer to free.
  * @param[in,out] cbdata Callback data passed in during initialization.
  */
-typedef void (*kvstore_free_fn_t)(
-    kvstore_t *kvstore,
+typedef void (*ib_kvstore_free_fn_t)(
+    ib_kvstore_t *kvstore,
     void *ptr,
     ib_kvstore_cbdata_t *cbdata);
 
 /**
  * Value type.
  */
-struct kvstore_value_t {
+struct ib_kvstore_value_t {
     void *value;         /**< The value pointer. */
     size_t value_length; /**< The length of value. */
     char *type;          /**< The name of the type. */
@@ -191,7 +191,7 @@ struct kvstore_value_t {
 /**
  * Key type.
  */
-struct kvstore_key_t {
+struct ib_kvstore_key_t {
     size_t length;
     void *key;
 };
@@ -202,16 +202,16 @@ struct kvstore_key_t {
  *
  * Function pointer in this structure should never be called directly.
  */
-struct kvstore_t {
-    kvstore_server_t *server; /**< Implementation dependent server data. */
-    kvstore_malloc_fn_t malloc; /**< Malloc memory for keys and values. */
-    kvstore_free_fn_t free; /**< Malloc memory for keys and values. */
-    kvstore_connect_fn_t connect; /**< Method to connect to the server. */
-    kvstore_disconnect_fn_t disconnect; /**< Disconnect from the server. */
-    kvstore_get_fn_t get; /**< Get a value from the key-value store. */
-    kvstore_set_fn_t set; /**< Set a value in the key-value store. */
-    kvstore_remove_fn_t remove; /**< Remove a value from the key-value store. */
-    kvstore_merge_policy_fn_t default_merge_policy; /**< Def. merge policy. */
+struct ib_kvstore_t {
+    ib_kvstore_server_t *server; /**< Implementation dependent server data. */
+    ib_kvstore_malloc_fn_t malloc; /**< Malloc memory for keys and values. */
+    ib_kvstore_free_fn_t free; /**< Malloc memory for keys and values. */
+    ib_kvstore_connect_fn_t connect; /**< Method to connect to the server. */
+    ib_kvstore_disconnect_fn_t disconnect; /**< Disconnect from the server. */
+    ib_kvstore_get_fn_t get; /**< Get a value from the key-value store. */
+    ib_kvstore_set_fn_t set; /**< Set a value in the key-value store. */
+    ib_kvstore_remove_fn_t remove; /**< Remove a value from the kv store. */
+    ib_kvstore_merge_policy_fn_t default_merge_policy; /**< Dflt policy. */
     ib_kvstore_cbdata_t *cbdata; /**< Callback Data unrelated to server. */
 };
 
@@ -243,7 +243,7 @@ struct kvstore_t {
  *
  * @returns IB_OK
  */
-ib_status_t kvstore_init(kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata);
+ib_status_t ib_kvstore_init(ib_kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata);
 
 /**
  * Connect to the server by calling @ref kvstore_connect_fn_t in kvstore.
@@ -253,7 +253,7 @@ ib_status_t kvstore_init(kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata);
  *   - IB_OK on success
  *   - Implementation-defined other value.
  */
-ib_status_t kvstore_connect(kvstore_t *kvstore);
+ib_status_t ib_kvstore_connect(ib_kvstore_t *kvstore);
 
 /**
  * Disconnect from the server by calling @ref kvstore_disconnect_fn_t in
@@ -263,7 +263,7 @@ ib_status_t kvstore_connect(kvstore_t *kvstore);
  *   - IB_OK on success
  *   - Implementation-defined other value.
  */
-ib_status_t kvstore_disconnect(kvstore_t *kvstore);
+ib_status_t ib_kvstore_disconnect(ib_kvstore_t *kvstore);
 
 /**
  * Get the named value.
@@ -280,11 +280,11 @@ ib_status_t kvstore_disconnect(kvstore_t *kvstore);
  *   - IB_EALLOC on memory allocation error.
  *   - Implementation-defined other value.
  */
-ib_status_t kvstore_get(
-    kvstore_t *kvstore,
-    kvstore_merge_policy_fn_t merge_policy,
-    const kvstore_key_t *key,
-    kvstore_value_t **val);
+ib_status_t ib_kvstore_get(
+    ib_kvstore_t *kvstore,
+    ib_kvstore_merge_policy_fn_t merge_policy,
+    const ib_kvstore_key_t *key,
+    ib_kvstore_value_t **val);
 
 /**
  * Set a value. If a key-conflict is detected on write, then the
@@ -301,11 +301,11 @@ ib_status_t kvstore_get(
  *   - IB_EALLOC on memory allocation error.
  *   - Implementation-defined other value.
  */
-ib_status_t kvstore_set(
-    kvstore_t *kvstore,
-    kvstore_merge_policy_fn_t merge_policy,
-    const kvstore_key_t *key,
-    kvstore_value_t *val);
+ib_status_t ib_kvstore_set(
+    ib_kvstore_t *kvstore,
+    ib_kvstore_merge_policy_fn_t merge_policy,
+    const ib_kvstore_key_t *key,
+    ib_kvstore_value_t *val);
 
 /**
  * Remove all stored values under the given key.
@@ -316,7 +316,9 @@ ib_status_t kvstore_set(
  *   - IB_OK on success
  *   - Implementation-specific error code.
  */
-ib_status_t kvstore_remove(kvstore_t *kvstore, const kvstore_key_t *key);
+ib_status_t ib_kvstore_remove(
+    ib_kvstore_t *kvstore,
+    const ib_kvstore_key_t *key);
 
 /**
  * Free the value pointer and all member elements.
@@ -324,7 +326,7 @@ ib_status_t kvstore_remove(kvstore_t *kvstore, const kvstore_key_t *key);
  * @param[in] kvstore The key value store.
  * @param[in,out] value The value to be freed using @ref kvstore_free_fn_t.
  */
-void kvstore_free_value(kvstore_t *kvstore, kvstore_value_t *value);
+void ib_kvstore_free_value(ib_kvstore_t *kvstore, ib_kvstore_value_t *value);
 
 /**
  * Free the key pointer and all member elements.
@@ -332,7 +334,7 @@ void kvstore_free_value(kvstore_t *kvstore, kvstore_value_t *value);
  * @param[in] kvstore The key value store.
  * @param[in,out] key The key to be freed using @ref kvstore_free_fn_t.
  */
-void kvstore_free_key(kvstore_t *kvstore, kvstore_key_t *key);
+void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key);
 
 /**
  * @} Key Value Store

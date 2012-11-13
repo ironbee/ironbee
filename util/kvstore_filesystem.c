@@ -73,8 +73,8 @@
  *   - IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t build_key_path(
-    kvstore_t *kvstore,
-    const kvstore_key_t *key,
+    ib_kvstore_t *kvstore,
+    const ib_kvstore_key_t *key,
     uint32_t expiration,
     char *type,
     size_t type_len,
@@ -97,8 +97,8 @@ static ib_status_t build_key_path(
     /* A stat struct. sb is the name used in the man page example code. */
     struct stat sb;
 
-    kvstore_filesystem_server_t *server =
-        (kvstore_filesystem_server_t *)(kvstore->server);
+    ib_kvstore_filesystem_server_t *server =
+        (ib_kvstore_filesystem_server_t *)(kvstore->server);
 
     size_t path_size =
         server->directory_length /* length of path */
@@ -180,7 +180,7 @@ eother_failure:
 }
 
 static ib_status_t kvconnect(
-    kvstore_server_t *server,
+    ib_kvstore_server_t *server,
     ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
@@ -193,7 +193,7 @@ static ib_status_t kvconnect(
 }
 
 static ib_status_t kvdisconnect(
-    kvstore_server_t *server,
+    ib_kvstore_server_t *server,
     ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
@@ -219,7 +219,7 @@ static ib_status_t kvdisconnect(
  *   - IB_EOTHER on system call failure.
  */
 static ib_status_t read_whole_file(
-    kvstore_t *kvstore,
+    ib_kvstore_t *kvstore,
     const char *path,
     void **data,
     size_t *len)
@@ -278,7 +278,7 @@ eother_failure:
 }
 
 static ib_status_t extract_type(
-    kvstore_t *kvstore,
+    ib_kvstore_t *kvstore,
     const char *path,
     char **type,
     size_t *type_length)
@@ -315,7 +315,7 @@ static ib_status_t extract_type(
  *               the location of the expiration decimals.
  */
 static ib_status_t extract_expiration(
-    kvstore_t *kvstore,
+    ib_kvstore_t *kvstore,
     const char *path,
     uint32_t *expiration)
 {
@@ -359,9 +359,9 @@ static ib_status_t extract_expiration(
  *   - IB_ENOTENT returned when a value is found to be expired.
  */
 static ib_status_t load_kv_value(
-    kvstore_t *kvstore,
+    ib_kvstore_t *kvstore,
     const char *file,
-    kvstore_value_t **value)
+    ib_kvstore_value_t **value)
 {
     IB_FTRACE_INIT();
 
@@ -539,8 +539,8 @@ rc_failure:
  * Callback user data structure for build_value callback function.
  */
 struct build_value_t {
-    kvstore_t *kvstore;        /**< Key value store. */
-    kvstore_value_t **values;  /**< Values array to be build. */
+    ib_kvstore_t *kvstore;        /**< Key value store. */
+    ib_kvstore_value_t **values;  /**< Values array to be build. */
     size_t values_idx;         /**< Next value to be populated. */
     size_t values_len;         /**< Prevent new file causing array overflow. */
     size_t path_len;           /**< Cached path length value. */
@@ -610,9 +610,9 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
  * @param[in,out] cbdata Callback data. Unused.
  */
 static ib_status_t kvget(
-    kvstore_t *kvstore,
-    const kvstore_key_t *key,
-    kvstore_value_t ***values,
+    ib_kvstore_t *kvstore,
+    const ib_kvstore_key_t *key,
+    ib_kvstore_value_t ***values,
     size_t *values_length,
     ib_kvstore_cbdata_t *cbdata)
 {
@@ -647,7 +647,7 @@ static ib_status_t kvget(
     build_val.path_len = strlen(path);
     build_val.values_idx = 0;
     build_val.values_len = dirent_count;
-    build_val.values = (kvstore_value_t**)
+    build_val.values = (ib_kvstore_value_t**)
         kvstore->malloc(kvstore, sizeof(*build_val.values) * dirent_count, kvstore->cbdata);
 
     /* Build value array. */
@@ -692,10 +692,10 @@ failure1:
  * @param[in,out] cbdata Callback data for the user.
  */
 static ib_status_t kvset(
-    kvstore_t *kvstore,
-    kvstore_merge_policy_fn_t merge_policy,
-    const kvstore_key_t *key,
-    kvstore_value_t *value,
+    ib_kvstore_t *kvstore,
+    ib_kvstore_merge_policy_fn_t merge_policy,
+    const ib_kvstore_key_t *key,
+    ib_kvstore_value_t *value,
     ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
@@ -824,8 +824,8 @@ static ib_status_t remove_file(
  *   - IB_EALLOC if a memory allocation fails.
  */
 static ib_status_t kvremove(
-    kvstore_t *kvstore,
-    const kvstore_key_t *key,
+    ib_kvstore_t *kvstore,
+    const ib_kvstore_key_t *key,
     ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
@@ -857,8 +857,8 @@ static ib_status_t kvremove(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t kvstore_filesystem_init(
-    kvstore_t* kvstore,
+ib_status_t ib_kvstore_filesystem_init(
+    ib_kvstore_t* kvstore,
     const char* directory)
 {
     IB_FTRACE_INIT();
@@ -867,9 +867,9 @@ ib_status_t kvstore_filesystem_init(
     assert(directory);
 
     /* There is no callback data used for this implimentation. */
-    kvstore_init(kvstore, NULL);
+    ib_kvstore_init(kvstore, NULL);
 
-    kvstore_filesystem_server_t *server = malloc(sizeof(*server));
+    ib_kvstore_filesystem_server_t *server = malloc(sizeof(*server));
 
     if ( server == NULL ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -883,7 +883,7 @@ ib_status_t kvstore_filesystem_init(
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
 
-    kvstore->server = (kvstore_server_t *) server;
+    kvstore->server = (ib_kvstore_server_t *) server;
     kvstore->get = kvget;
     kvstore->set = kvset;
     kvstore->remove = kvremove;
@@ -899,14 +899,14 @@ ib_status_t kvstore_filesystem_init(
  *             and another init of kvstore pointing at that directory
  *             will operate correctly.
  */
-void kvstore_filesystem_destroy(kvstore_t* kvstore)
+void ib_kvstore_filesystem_destroy(ib_kvstore_t* kvstore)
 {
     IB_FTRACE_INIT();
 
     assert(kvstore);
 
-    kvstore_filesystem_server_t *server =
-        (kvstore_filesystem_server_t*)(kvstore->server);
+    ib_kvstore_filesystem_server_t *server =
+        (ib_kvstore_filesystem_server_t*)(kvstore->server);
     free((void *)server->directory);
     free(server);
     kvstore->server = NULL;

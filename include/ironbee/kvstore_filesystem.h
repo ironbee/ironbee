@@ -40,11 +40,11 @@
 /**
  * The filesystem server object.
  */
-struct kvstore_filesystem_server_t {
+struct ib_kvstore_filesystem_server_t {
     const char *directory; /**< The directory in which files are written. */
     size_t directory_length; /**< Cache the string length of the directory. */
 };
-typedef struct kvstore_filesystem_server_t kvstore_filesystem_server_t;
+typedef struct ib_kvstore_filesystem_server_t ib_kvstore_filesystem_server_t;
 
 /**
  * Initializes kvstore that writes to a filesystem.
@@ -55,13 +55,15 @@ typedef struct kvstore_filesystem_server_t kvstore_filesystem_server_t;
  *   - IB_OK on succes
  *   - IB_EALLOC on memory allocation failure using malloc.
  */
-ib_status_t kvstore_filesystem_init(kvstore_t *kvstore, const char *directory);
+ib_status_t ib_kvstore_filesystem_init(
+    ib_kvstore_t *kvstore,
+    const char *directory);
 
 /**
  * Destroy kvstore.
  * @param[in,out] kvstore The kvstore to destroy.
  */
-void kvstore_filesystem_destroy(kvstore_t *kvstore);
+void ib_kvstore_filesystem_destroy(ib_kvstore_t *kvstore);
 
  /**
   * @}
