@@ -29,7 +29,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-static void* kvstore_malloc(kvstore_t *kvstore, size_t size)
+static void* kvstore_malloc(kvstore_t *kvstore, size_t size, ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -38,7 +38,7 @@ static void* kvstore_malloc(kvstore_t *kvstore, size_t size)
     IB_FTRACE_RET_PTR((void*), r);
 }
 
-static void kvstore_free(kvstore_t *kvstore, void *ptr)
+static void kvstore_free(kvstore_t *kvstore, void *ptr, ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -58,22 +58,22 @@ static kvstore_value_t * kvstore_value_dup(
 {
     IB_FTRACE_INIT();
 
-    kvstore_value_t *new_value = kvstore->malloc(kvstore, sizeof(*new_value));
+    kvstore_value_t *new_value = kvstore->malloc(kvstore, sizeof(*new_value), kvstore->cbdata);
 
     if (!new_value) {
         IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
     }
 
-    new_value->value = kvstore->malloc(kvstore, value->value_length);
+    new_value->value = kvstore->malloc(kvstore, value->value_length, kvstore->cbdata);
     if (!new_value->value) {
-        kvstore->free(kvstore, new_value);
+        kvstore->free(kvstore, new_value, kvstore->cbdata);
         IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
     }
 
-    new_value->type = kvstore->malloc(kvstore, value->type_length);
+    new_value->type = kvstore->malloc(kvstore, value->type_length, kvstore->cbdata);
     if (!new_value->type) {
-        kvstore->free(kvstore, new_value->value);
-        kvstore->free(kvstore, new_value);
+        kvstore->free(kvstore, new_value->value, kvstore->cbdata);
+        kvstore->free(kvstore, new_value, kvstore->cbdata);
         IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
     }
 
@@ -91,7 +91,8 @@ static ib_status_t default_merge_policy(
     kvstore_t *kvstore,
     kvstore_value_t **values,
     size_t value_size,
-    kvstore_value_t **resultant_value)
+    kvstore_value_t **resultant_value,
+    ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
 
@@ -102,20 +103,21 @@ static ib_status_t default_merge_policy(
     return IB_OK;
 }
 
-ib_status_t kvstore_init(kvstore_t *kvstore) {
+ib_status_t kvstore_init(kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata) {
     IB_FTRACE_INIT();
 
     memset(kvstore, 1, sizeof(*kvstore));
     kvstore->malloc = &kvstore_malloc;
     kvstore->free = &kvstore_free;
     kvstore->default_merge_policy = &default_merge_policy;
+    kvstore->cbdata = cbdata;
     return IB_OK;
 }
 
 ib_status_t kvstore_connect(kvstore_t *kvstore) {
     IB_FTRACE_INIT();
 
-    ib_status_t rc =  kvstore->connect(kvstore);
+    ib_status_t rc =  kvstore->connect(kvstore, kvstore->cbdata);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -123,14 +125,14 @@ ib_status_t kvstore_connect(kvstore_t *kvstore) {
 ib_status_t kvstore_disconnect(kvstore_t *kvstore) {
     IB_FTRACE_INIT();
 
-    ib_status_t rc = kvstore->disconnect(kvstore);
+    ib_status_t rc = kvstore->disconnect(kvstore, kvstore->cbdata);
 
     IB_FTRACE_RET_STATUS(rc);
 }
 
 ib_status_t kvstore_get(
     kvstore_t *kvstore,
-    kvstore_merge_policy_t merge_policy,
+    kvstore_merge_policy_fn_t merge_policy,
     const kvstore_key_t *key,
     kvstore_value_t **val)
 {
@@ -146,7 +148,7 @@ ib_status_t kvstore_get(
         merge_policy = kvstore->default_merge_policy;
     }
 
-    rc = kvstore->get(kvstore, key, &values, &values_length);
+    rc = kvstore->get(kvstore, key, &values, &values_length, kvstore->cbdata);
 
     if (rc) {
         *val = NULL;
@@ -155,7 +157,7 @@ ib_status_t kvstore_get(
 
     /* Merge any values. */
     if (values_length > 1) {
-        rc = merge_policy(kvstore, values, values_length, &merged_value);
+        rc = merge_policy(kvstore, values, values_length, &merged_value, kvstore->cbdata);
 
         if (rc != IB_OK) {
             goto exit_get;
@@ -181,7 +183,7 @@ exit_get:
     }
 
     if (values) {
-        kvstore->free(kvstore, values);
+        kvstore->free(kvstore, values, kvstore->cbdata);
     }
 
     /* Never free the user's value. Only free we allocated. */
@@ -194,7 +196,7 @@ exit_get:
 
 ib_status_t kvstore_set(
     kvstore_t *kvstore,
-    kvstore_merge_policy_t merge_policy,
+    kvstore_merge_policy_fn_t merge_policy,
     const kvstore_key_t *key,
     kvstore_value_t *val)
 {
@@ -206,7 +208,7 @@ ib_status_t kvstore_set(
         merge_policy = kvstore->default_merge_policy;
     }
 
-    rc = kvstore->set(kvstore, merge_policy, key, val);
+    rc = kvstore->set(kvstore, merge_policy, key, val, kvstore->cbdata);
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -215,7 +217,7 @@ ib_status_t kvstore_remove(kvstore_t *kvstore, const kvstore_key_t *key)
 {
     IB_FTRACE_INIT();
 
-    ib_status_t rc = kvstore->remove(kvstore, key); 
+    ib_status_t rc = kvstore->remove(kvstore, key, kvstore->cbdata); 
 
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -225,14 +227,14 @@ void kvstore_free_value(kvstore_t *kvstore, kvstore_value_t *value) {
     IB_FTRACE_INIT();
 
     if (value->value) {
-        kvstore->free(kvstore, value->value);
+        kvstore->free(kvstore, value->value, kvstore->cbdata);
     }
 
     if (value->type) {
-        kvstore->free(kvstore, value->type);
+        kvstore->free(kvstore, value->type, kvstore->cbdata);
     }
 
-    kvstore->free(kvstore, value);
+    kvstore->free(kvstore, value, kvstore->cbdata);
 
     IB_FTRACE_RET_VOID();
 }
@@ -241,10 +243,10 @@ void kvstore_free_key(kvstore_t *kvstore, kvstore_key_t *key) {
     IB_FTRACE_INIT();
 
     if (key->key) {
-        kvstore->free(kvstore, key->key);
+        kvstore->free(kvstore, key->key, kvstore->cbdata);
     }
 
-    kvstore->free(kvstore, key);
+    kvstore->free(kvstore, key, kvstore->cbdata);
 
     IB_FTRACE_RET_VOID();
 }

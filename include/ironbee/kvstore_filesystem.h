@@ -27,7 +27,7 @@
 
 /**
  * @defgroup IronBeeKeyValueStore Key-Value Store
- * @ingroup IronBee
+ * @ingroup IronBeeUtil
  * @{
  */
 
