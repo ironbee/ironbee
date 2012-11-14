@@ -289,7 +289,7 @@ static inline void *ib_ftype_float_in(const ib_float_t *v)
 /**
  * Assert @a v is proper type.
  */
-static inline void *ib_ftype_float_mutable_out(ib_float_t *v)
+static inline void *ib_ftype_float_mutable_out(ib_float_t **v)
 {
     return (void *)(v);
 }
