@@ -207,7 +207,6 @@ ib_status_t ib_string_to_float_ex(const char *s,
  * Convert a string to an ib_float_t with error checking.
  *
  * @param[in] s The string to convert.
- * @param[in] slen The string length.
  * @param[in] result The result.
  *
  * @returns 
