@@ -40,6 +40,7 @@
 
 #include <boost/mpl/or.hpp>
 #include <boost/type_traits/is_convertible.hpp>
+#include <boost/type_traits/is_float.hpp>
 #include <boost/type_traits/is_signed.hpp>
 #include <boost/type_traits/is_unsigned.hpp>
 
@@ -77,6 +78,8 @@ public:
         NUMBER          = IB_FTYPE_NUM,
         //! Unsigned Number
         UNSIGNED_NUMBER = IB_FTYPE_UNUM,
+        //! Floating Point
+        FLOAT           = IB_FTYPE_FLOAT,
         //! Null terminated string
         NULL_STRING     = IB_FTYPE_NULSTR,
         //! ByteString
@@ -95,6 +98,7 @@ public:
      *
      * - Signed integral types result in NUMBER.
      * - Unsigned integral types result in UNSIGNED_NUMBER.
+     * - Float types result in FLOAT.
      * - Types convertible to @c const @c char* result in NULL_STRING.
      * - Types convertible to ConstByteString result in BYTE_STRING.
      * - IronBee::List<T> results in LIST.
@@ -107,15 +111,22 @@ public:
     template <typename T>
     static type_e field_type_for_type()
     {
+        // or_ has limited number of arguments, so cascade.
         BOOST_STATIC_ASSERT((
             boost::mpl::or_<
-                boost::is_signed<T>,
-                boost::is_unsigned<T>,
+                boost::is_float<T>,
+                boost::mpl::or_<
+                    boost::is_signed<T>,
+                    boost::is_unsigned<T>
+                >,
                 boost::is_convertible<T,const char*>,
                 boost::is_convertible<T,ConstByteString>,
                 is_list<T>
             >::value
         ));
+        if (boost::is_float<T>::value) {
+            return FLOAT;
+        }
         if (boost::is_signed<T>::value) {
             return NUMBER;
         }
@@ -249,6 +260,17 @@ public:
     uint64_t value_as_unsigned_number(const std::string& arg) const;
     //! Unsigned number value accessor -- dynamic.
     uint64_t value_as_unsigned_number(
+        const char* arg,
+        size_t      arg_length
+    ) const;
+
+
+    //! Float value accessor.
+    long double value_as_float() const;
+    //! Float value accessor -- dynamic.
+    long double value_as_float(const std::string& arg) const;
+    //! Float value accessor -- dynamic.
+    long double value_as_float(
         const char* arg,
         size_t      arg_length
     ) const;
@@ -411,6 +433,22 @@ public:
     );
 
     /**
+     * Create float field.
+     *
+     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] name        Name of key.
+     * @param[in] name_length Length of @a name.
+     * @param[in] value       Value of field.
+     * @throws IronBee++ exception on any error.
+     **/
+    static Field create_float(
+        MemoryPool  pool,
+        const char* name,
+        size_t      name_length,
+        long double value
+    );
+
+    /**
      * Create null string number field.
      *
      * @param[in] pool        Pool to use for memory allocation.
@@ -526,6 +564,21 @@ public:
     );
 
     /**
+     * Create Float alias.
+     *
+     * @param[in] pool        Pool to use for memory allocation.
+     * @param[in] name        Name of key.
+     * @param[in] name_length Length of @a name.
+     * @param[in] value       Where to store value.
+     **/
+    static Field create_alias_float(
+         MemoryPool   pool,
+         const char*  name,
+         size_t       name_length,
+         long double& value
+    );
+
+    /**
      * Create null string alias.
      *
      * @param[in] pool        Pool to use for memory allocation.
@@ -594,6 +647,10 @@ public:
     typedef boost::function<
         uint64_t(ConstField, const char*, size_t)
     > unsigned_number_get_t;
+    //! Float field getter.
+    typedef boost::function<
+        long double(ConstField, const char*, size_t)
+    > float_get_t;
     //! Null string field getter.
     typedef boost::function<
         const char*(ConstField, const char*, size_t)
@@ -611,6 +668,10 @@ public:
     typedef boost::function<
         void(Field, const char*, size_t, uint64_t)
     > unsigned_number_set_t;
+    //! Float field setter.
+    typedef boost::function<
+        void(Field, const char*, size_t, long double)
+    > float_set_t;
     //! Null string field setter.
     typedef boost::function<
         void(Field, const char*, size_t, const char*)
@@ -636,6 +697,15 @@ public:
         size_t                name_length,
         unsigned_number_get_t get,
         unsigned_number_set_t set
+    );
+
+    //! As create_float() but with dynamic setter/getter.
+    static Field create_dynamic_float(
+        MemoryPool  pool,
+        const char* name,
+        size_t      name_length,
+        float_get_t get,
+        float_set_t set
     );
 
     //! As create_null_string() but with dynamic setter/getter.
@@ -707,6 +777,16 @@ public:
         const char* arg, size_t arg_length
     ) const;
 
+    //! Set float value.
+    void set_float(long double value) const;
+    //! Set float value -- dynamic.
+    void set_float(long double value, const std::string& arg) const;
+    //! Set float value -- dynamic.
+    void set_float(
+        long double value,
+        const char* arg, size_t arg_length
+    ) const;
+
     //! Set null string value.
     void set_null_string(const char* value) const;
     //! Set null string value -- dynamic.
@@ -763,6 +843,8 @@ public:
     int64_t& mutable_value_as_number() const;
     //! Unsigned number mutable value accessor.
     uint64_t& mutable_value_as_unsigned_number() const;
+    //! Unsigned number mutable value accessor.
+    long double& mutable_value_as_float() const;
     //! Null string mutable value accessor.
     char* mutable_value_as_null_string() const;
     //! ByteString mutable value accessor.

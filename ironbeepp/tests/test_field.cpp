@@ -74,6 +74,14 @@ TEST_F(TestField, Construction)
     EXPECT_EQ(m_pool, f.memory_pool());
     EXPECT_FALSE(f.is_dynamic());
 
+    f = Field::create_float(m_pool, "test", 4, 17.2);
+    EXPECT_TRUE(f);
+    EXPECT_EQ(Field::FLOAT, f.type());
+    EXPECT_EQ(17.2, f.value_as_float());
+    EXPECT_EQ("test", f.name_as_s());
+    EXPECT_EQ(m_pool, f.memory_pool());
+    EXPECT_FALSE(f.is_dynamic());
+
     f = Field::create_null_string(m_pool, "test", 4, "value");
     EXPECT_TRUE(f);
     EXPECT_EQ(Field::NULL_STRING, f.type());
@@ -108,6 +116,7 @@ TEST_F(TestField, SetAndGet)
 
     f = Field::create_number(m_pool, "test", 4, 17);
     EXPECT_THROW(f.set_unsigned_number(1),     IronBee::einval);
+    EXPECT_THROW(f.set_float(1.1),             IronBee::einval);
     EXPECT_THROW(f.set_null_string("hello"),   IronBee::einval);
     EXPECT_THROW(f.set_byte_string(bs),        IronBee::einval);
     EXPECT_THROW(f.value_as_unsigned_number(), IronBee::einval);
@@ -119,6 +128,7 @@ TEST_F(TestField, SetAndGet)
 
     f = Field::create_unsigned_number(m_pool, "test", 4, 17);
     EXPECT_THROW(f.set_number(1),              IronBee::einval);
+    EXPECT_THROW(f.set_float(1.1),             IronBee::einval);
     EXPECT_THROW(f.set_null_string("hello"),   IronBee::einval);
     EXPECT_THROW(f.set_byte_string(bs),        IronBee::einval);
     EXPECT_THROW(f.value_as_number(),          IronBee::einval);
@@ -128,9 +138,21 @@ TEST_F(TestField, SetAndGet)
     EXPECT_NO_THROW(f.set_unsigned_number(5));
     EXPECT_EQ(5UL, f.value_as_unsigned_number());
 
+    f = Field::create_float(m_pool, "test", 4, 17.1);
+    EXPECT_THROW(f.set_number(1),              IronBee::einval);
+    EXPECT_THROW(f.set_null_string("hello"),   IronBee::einval);
+    EXPECT_THROW(f.set_byte_string(bs),        IronBee::einval);
+    EXPECT_THROW(f.value_as_number(),          IronBee::einval);
+    EXPECT_THROW(f.value_as_null_string(),     IronBee::einval);
+    EXPECT_THROW(f.value_as_byte_string(),     IronBee::einval);
+    EXPECT_THROW(f.value_as_list<int*>(),      IronBee::einval);
+    EXPECT_NO_THROW(f.set_float(5.2));
+    EXPECT_EQ(5.2, f.value_as_float());
+
     f = Field::create_null_string(m_pool, "test", 4, "value");
     EXPECT_THROW(f.set_number(1),              IronBee::einval);
     EXPECT_THROW(f.set_unsigned_number(7),     IronBee::einval);
+    EXPECT_THROW(f.set_float(1.1),             IronBee::einval);
     EXPECT_THROW(f.set_byte_string(bs),        IronBee::einval);
     EXPECT_THROW(f.value_as_number(),          IronBee::einval);
     EXPECT_THROW(f.value_as_unsigned_number(), IronBee::einval);
@@ -143,6 +165,7 @@ TEST_F(TestField, SetAndGet)
     f = Field::create_byte_string(m_pool, "test", 4, bs);
     EXPECT_THROW(f.set_number(1),              IronBee::einval);
     EXPECT_THROW(f.set_unsigned_number(7),     IronBee::einval);
+    EXPECT_THROW(f.set_float(1.1),             IronBee::einval);
     EXPECT_THROW(f.set_null_string("foo"),     IronBee::einval);
     EXPECT_THROW(f.value_as_number(),          IronBee::einval);
     EXPECT_THROW(f.value_as_unsigned_number(), IronBee::einval);
@@ -155,6 +178,7 @@ TEST_F(TestField, SetAndGet)
     f = Field::create_no_copy_list(m_pool, "test", 4, l);
     EXPECT_THROW(f.set_number(1),              IronBee::einval);
     EXPECT_THROW(f.set_unsigned_number(7),     IronBee::einval);
+    EXPECT_THROW(f.set_float(1.1),             IronBee::einval);
     EXPECT_THROW(f.set_byte_string(bs),        IronBee::einval);
     EXPECT_THROW(f.set_null_string("foo"),     IronBee::einval);
     EXPECT_THROW(f.value_as_number(),          IronBee::einval);
@@ -327,6 +351,44 @@ TEST_F(TestField, Dynamic)
     }
 
     {
+        long double v;
+        f = Field::create_dynamic_float(m_pool, "test", 4,
+            test_getter<long double>(v, args),
+            test_setter<long double>(v, args)
+        );
+        v = 12.2;
+        EXPECT_EQ(v, f.value_as_float());
+        EXPECT_EQ(f, args.field);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
+        v = 13.2;
+        args.reset();
+        EXPECT_EQ(v, f.value_as_float("Hello", 5));
+        EXPECT_EQ(f, args.field);
+        EXPECT_EQ("Hello", string(args.arg, args.arg_length));
+        EXPECT_TRUE(f.is_dynamic());
+
+        args.reset();
+        v = 0;
+        f.set_float(23);
+        EXPECT_EQ(23UL, v);
+        EXPECT_EQ(f, args.field);
+        EXPECT_FALSE(args.arg);
+        EXPECT_EQ(0UL, args.arg_length);
+        args.reset();
+        v = 0;
+        f.set_float(24.2, "Hello", 5);
+        EXPECT_EQ(24.2, v);
+        EXPECT_EQ(f, args.field);
+        EXPECT_EQ("Hello", string(args.arg, args.arg_length));
+
+        f.make_static();
+        f.set_float(123.2);
+        EXPECT_FALSE(f.is_dynamic());
+        EXPECT_EQ(123.2, f.value_as_float());
+    }
+
+    {
         const char* v;
         f = Field::create_dynamic_null_string(
             m_pool, "test", 4,
@@ -488,6 +550,10 @@ TEST_F(TestField, TypeForType)
         Field::UNSIGNED_NUMBER,
         Field::field_type_for_type<uint64_t>()
     );
+    EXPECT_EQ(
+        Field::FLOAT,
+        Field::field_type_for_type<long double>()
+    );
     EXPECT_EQ(Field::NULL_STRING, Field::field_type_for_type<char*>());
     EXPECT_EQ(Field::NULL_STRING, Field::field_type_for_type<const char*>());
     EXPECT_EQ(Field::BYTE_STRING, Field::field_type_for_type<ByteString>());
@@ -542,6 +608,14 @@ TEST_F(TestField, CreateAlias)
         EXPECT_EQ(n, 8UL);
     }
     {
+        long double n = 0;
+        Field f = Field::create_alias_float(m_pool, "foo", 3, n);
+
+        f.set_float(8.1);
+
+        EXPECT_EQ(n, 8.1);
+    }
+    {
         char *s = NULL;
         Field f = Field::create_alias_null_string(m_pool, "foo", 3, s);
 
@@ -579,6 +653,11 @@ TEST_F(TestField, Mutable)
         Field f = Field::create_unsigned_number(m_pool, "foo", 3, 7);
         f.mutable_value_as_unsigned_number() = 9;
         EXPECT_EQ(9UL, f.value_as_unsigned_number());
+    }
+    {
+        Field f = Field::create_float(m_pool, "foo", 3, 7.1);
+        f.mutable_value_as_float() = 9.1;
+        EXPECT_EQ(9.1, f.value_as_float());
     }
     {
         Field f = Field::create_null_string(m_pool, "foo", 3, "Hello");

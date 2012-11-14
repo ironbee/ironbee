@@ -45,6 +45,7 @@ std::string type_as_s(Field::type_e type)
     static const std::string generic("GENERIC");
     static const std::string number("NUMBER");
     static const std::string unsigned_number("UNSIGNED NUMBER");
+    static const std::string float_s("FLOAT");
     static const std::string null_string("NULL STRING");
     static const std::string byte_string("BYTE STRING");
     static const std::string list("LIST");
@@ -53,6 +54,7 @@ std::string type_as_s(Field::type_e type)
         case Field::GENERIC: return generic;
         case Field::NUMBER: return number;
         case Field::UNSIGNED_NUMBER: return unsigned_number;
+        case Field::FLOAT: return float_s;
         case Field::NULL_STRING: return null_string;
         case Field::BYTE_STRING: return byte_string;
         case Field::LIST: return list;
@@ -141,6 +143,15 @@ ib_status_t field_dynamic_get(
                 );
                 IB_FTRACE_RET_STATUS(IB_OK);
             }
+            case IB_FTYPE_FLOAT: {
+                ib_float_t* u = reinterpret_cast<ib_float_t*>(out_val);
+                *u = Internal::data_to_value<
+                    Field::float_get_t
+                >(cbdata)(
+                    fieldpp, carg, arg_length
+                );
+                IB_FTRACE_RET_STATUS(IB_OK);
+            }
             case IB_FTYPE_NULSTR:
             {
                 const char** ns = reinterpret_cast<const char**>(out_val);
@@ -217,6 +228,13 @@ ib_status_t field_dynamic_set(
                     Field(field),
                     carg, arg_length,
                     *reinterpret_cast<const uint64_t*>(in_value)
+                );
+                break;
+            case IB_FTYPE_FLOAT:
+                Internal::data_to_value<Field::float_set_t>(cbdata)(
+                    Field(field),
+                    carg, arg_length,
+                    *reinterpret_cast<const long double*>(in_value)
                 );
                 break;
             case IB_FTYPE_NULSTR:
@@ -442,6 +460,9 @@ std::string ConstField::to_s() const
         case UNSIGNED_NUMBER:
             return
                 boost::lexical_cast<std::string>(value_as_unsigned_number());
+        case FLOAT:
+            return
+                boost::lexical_cast<std::string>(value_as_float());
         case NULL_STRING:
             return std::string(value_as_null_string());
         case BYTE_STRING:
@@ -510,6 +531,33 @@ uint64_t ConstField::value_as_unsigned_number(
     uint64_t v;
     Internal::throw_if_error(ib_field_value_ex(
         ib(), ib_ftype_unum_out(&v),
+        arg, arg_length
+    ));
+    return v;
+}
+
+long double ConstField::value_as_float() const
+{
+    Internal::check_type(FLOAT, type());
+    long double v;
+    Internal::throw_if_error(ib_field_value(ib(), ib_ftype_float_out(&v)));
+    return v;
+}
+
+long double ConstField::value_as_float(const std::string& arg) const
+{
+    return value_as_float(arg.data(), arg.length());
+}
+
+long double ConstField::value_as_float(
+    const char* arg,
+    size_t      arg_length
+) const
+{
+    Internal::check_type(FLOAT, type());
+    long double v;
+    Internal::throw_if_error(ib_field_value_ex(
+        ib(), ib_ftype_float_out(&v),
         arg, arg_length
     ));
     return v;
@@ -618,6 +666,21 @@ Field Field::create_unsigned_number(
     );
 }
 
+Field Field::create_float(
+    MemoryPool  pool,
+    const char* name,
+    size_t      name_length,
+    long double value
+)
+{
+    return Internal::create_field(
+        pool,
+        name, name_length,
+        Field::FLOAT,
+        ib_ftype_float_in(&value)
+    );
+}
+
 Field Field::create_null_string(
     MemoryPool  pool,
     const char* name,
@@ -708,6 +771,20 @@ Field Field::create_alias_unsigned_number(
     );
 }
 
+Field Field::create_alias_float(
+     MemoryPool   pool,
+     const char*  name,
+     size_t       name_length,
+     long double& value
+)
+{
+    return Internal::create_alias(
+        pool,
+        name, name_length,
+        Field::FLOAT,
+        ib_ftype_float_storage(&value)
+    );
+}
 
 Field Field::create_alias_null_string(
      MemoryPool  pool,
@@ -790,6 +867,23 @@ Field Field::create_dynamic_unsigned_number(
     );
 }
 
+Field Field::create_dynamic_float(
+    MemoryPool  pool,
+    const char* name,
+    size_t      name_length,
+    float_get_t get,
+    float_set_t set
+)
+{
+    return Internal::create_dynamic_field(
+        pool,
+        name, name_length,
+        Field::FLOAT,
+        Internal::value_to_data(get, pool.ib()),
+        Internal::value_to_data(set, pool.ib())
+    );
+}
+
 Field Field::create_dynamic_null_string(
     MemoryPool        pool,
     const char*       name,
@@ -861,6 +955,25 @@ void Field::set_unsigned_number(
 {
     Internal::check_type(UNSIGNED_NUMBER, type());
     Internal::set_value(ib(), ib_ftype_unum_in(&value), arg, arg_length);
+}
+
+void Field::set_float(long double value) const
+{
+    Internal::check_type(FLOAT, type());
+    Internal::set_value(ib(), ib_ftype_float_in(&value));
+}
+void Field::set_float(long double value, const std::string& arg) const
+{
+    return set_float(value, arg.data(), arg.length());
+}
+
+void Field::set_float(
+    long double value,
+    const char* arg, size_t arg_length
+) const
+{
+    Internal::check_type(FLOAT, type());
+    Internal::set_value(ib(), ib_ftype_float_in(&value), arg, arg_length);
 }
 
 void Field::set_null_string(const char* value) const
@@ -941,6 +1054,16 @@ uint64_t& Field::mutable_value_as_unsigned_number() const
     ib_unum_t* n;
     Internal::throw_if_error(ib_field_mutable_value(ib(),
         ib_ftype_unum_mutable_out(&n)
+    ));
+    return *n;
+}
+
+long double& Field::mutable_value_as_float() const
+{
+    Internal::check_type(FLOAT, type());
+    ib_float_t* n;
+    Internal::throw_if_error(ib_field_mutable_value(ib(),
+        ib_ftype_float_mutable_out(&n)
     ));
     return *n;
 }

@@ -154,6 +154,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/tuple/tuple.hpp>',
   '<boost/type_traits/is_class.hpp>',
   '<boost/type_traits/is_convertible.hpp>',
+  '<boost/type_traits/is_float.hpp>',
   '<boost/type_traits/is_same.hpp>',
   '<boost/type_traits/is_signed.hpp>',
   '<boost/type_traits/is_unsigned.hpp>',
