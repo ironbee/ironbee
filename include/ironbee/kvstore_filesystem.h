@@ -51,7 +51,7 @@ typedef struct ib_kvstore_filesystem_server_t ib_kvstore_filesystem_server_t;
  * @param[out] kvstore Initialized with kvserver and some defaults.
  * @param[in] directory The directory we will store this data in.
  * @returns
- *   - IB_OK on succes
+ *   - IB_OK on success
  *   - IB_EALLOC on memory allocation failure using malloc.
  */
 ib_status_t ib_kvstore_filesystem_init(

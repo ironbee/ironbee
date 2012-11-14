@@ -15,6 +15,7 @@ nullt null
 varargs variable args
 theres There's
 yse use
+kstore kvstore
 vargs variable args
 convertable convertible
 performant fast
@@ -52,6 +53,7 @@ orign origin
 choped chopped
 backwars backwards
 contet context
+enotent ENOENT
 initialzed initialized
 thie This
 stirng string
@@ -70,6 +72,7 @@ mucn much
 hdrs headers
 occured occurred
 parseable parsable
+dflt Default
 verison version
 prepends prefixes
 addres address

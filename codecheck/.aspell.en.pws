@@ -1,5 +1,6 @@
-personal_ws-1.1 en 1741 
+personal_ws-1.1 en 1757 
 malloced
+malloc'ed
 libnet
 endpat
 CTYPE
@@ -53,8 +54,8 @@ ctl
 dpi
 ffi
 DNS
-fds
 FDs
+fds
 cdef
 HandleResponseHeaders
 cfgfile
@@ -587,6 +588,7 @@ xffffffff
 mj
 ne
 lp
+kv
 lr
 nContent
 nonalnum
@@ -616,6 +618,7 @@ Spencer's
 sa
 SÃ
 mbols
+sb
 dtor
 enum
 DSTR
@@ -635,6 +638,7 @@ th
 UD
 va
 rv
+tm
 rx
 ss
 MyFirstIronBee
@@ -827,6 +831,7 @@ optimizations
 LogLevel
 loglevel
 ResponseBodyBufferLimitAction
+free'd
 cdynf
 modsec
 InitVars
@@ -868,6 +873,7 @@ datas
 maincfg
 Simboli
 EAGAIN
+unlink'ed
 vasprintf
 html
 abcdex
@@ -1003,6 +1009,7 @@ apidoc
 exmod
 onEventRequestHeaderData
 tristate
+dirent
 pingdom
 evaled
 minimo
@@ -1116,6 +1123,7 @@ IronBeeTransformations
 lexicographically
 symbian
 ModSecurity
+IronBeeKeyValueStore
 ConstFields
 FirstConfig
 pcfg
@@ -1174,6 +1182,7 @@ ConnOpened
 pdst
 nagios
 perf
+rmdir
 ERRGCMM
 logDebug
 perl
@@ -1314,6 +1323,7 @@ priv
 tunable
 FINPLACE
 MemoryPools
+localtime
 ConstParsedResponseLine
 sdir
 tabc
@@ -1437,8 +1447,10 @@ free'ed
 ConnStarted
 fieldrently
 IronBeeModule
+sprintf
 mkdtemp
 UnitTest
+kvserver
 tlen
 NOTIMPL
 precompilation
@@ -1479,6 +1491,7 @@ LoadModule
 BasicIronBee
 setResponseHeader
 ConstContext
+TestKVStore
 udata
 ValueType
 sudo
@@ -1629,6 +1642,7 @@ DataType
 dorothy
 abCd
 multipart
+kvstore
 SimplePie
 simplepie
 ucweb
@@ -1642,6 +1656,7 @@ bytestr
 htonl
 NulStr
 nulstr
+tmpXXXXXX
 FreeBSD
 paramName
 LEVENT
@@ -1714,6 +1729,7 @@ Baiduspider
 REQBDYS
 tradeoffs
 endianness
+NoSQL
 onEventTxDataOut
 fabcdef
 BaseFixture

@@ -360,9 +360,9 @@ static ib_status_t extract_expiration(
  * @param[out] value The value to be built.
  * @returns
  *   - IB_OK on success.
- *   - IB_EALLOC on memory failure from @c kstore->malloc
+ *   - IB_EALLOC on memory failure from @c kvstore->malloc
  *   - IB_EOTHER on system call failure from file operations.
- *   - IB_ENOTENT returned when a value is found to be expired.
+ *   - IB_ENOENT returned when a value is found to be expired.
  */
 static ib_status_t load_kv_value(
     ib_kvstore_t *kvstore,
@@ -564,7 +564,7 @@ typedef struct build_value_t build_value_t;
  * @param[out] data The data structure to be populated.
  * @returns
  *   - IB_OK
- *   - IB_EALLOC On a memory errror.
+ *   - IB_EALLOC On a memory error.
  */
 static ib_status_t build_value(const char *path, const char *file, void *data)
 {
@@ -789,7 +789,7 @@ error_1:
  *                the length of the path argument.
  * @returns
  *   - IB_OK
- *   - IB_EALLOC if a memory allocation fails concatinating path and file.
+ *   - IB_EALLOC if a memory allocation fails concatenating path and file.
  */
 static ib_status_t remove_file(
     const char *path,

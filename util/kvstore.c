@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee Key-Value Store Implementation --- Key-Value Store Implmemtnation
+ * @brief IronBee Key-Value Store Implementation --- Key-Value Store Implementation
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
@@ -31,7 +31,7 @@
 #include <string.h>
 
 /**
- * Default malloc implmemtation that wraps malloc.
+ * Default malloc implementation that wraps malloc.
  * @param[in] kvstore Key-value store.
  * @param[in] size Size in bytes.
  * @param[in] cbdata Callback data. Unused.
@@ -54,7 +54,7 @@ static void* kvstore_malloc(
 }
 
 /**
- * Default malloc implmemtation that wraps free.
+ * Default malloc implementation that wraps free.
  *
  * @param[in] kvstore Key-value store.
  * @param[in] ptr Pointer to free.
@@ -113,15 +113,9 @@ static ib_kvstore_value_t * kvstore_value_dup(
         kvstore->malloc_cbdata);
 
     if (!new_value->type) {
-<<<<<<< HEAD
         kvstore->free(kvstore, new_value->value, kvstore->free_cbdata);
         kvstore->free(kvstore, new_value, kvstore->free_cbdata);
         IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
-=======
-        kvstore->free(kvstore, new_value->value, kvstore->cbdata);
-        kvstore->free(kvstore, new_value, kvstore->cbdata);
-        IB_FTRACE_RET_PTR((kvstore_value_t *), NULL);
->>>>>>> test_kvstore.cc, kvstore.c, kvstore_filesystem.c: Casting style.
     }
 
     /* Copy in all data. */

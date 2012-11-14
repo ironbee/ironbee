@@ -235,7 +235,7 @@ struct ib_kvstore_t {
     ib_kvstore_remove_fn_t remove; /**< Remove a value from the kv store. */
     ib_kvstore_cbdata_t *remove_cbdata; /**< Remove cbdata. */
 
-    ib_kvstore_merge_policy_fn_t default_merge_policy; /**< Dflt policy. */
+    ib_kvstore_merge_policy_fn_t default_merge_policy; /**< Default policy. */
     ib_kvstore_cbdata_t *merge_policy_cbdata; /**< Merge cbdata. */
 
     ib_kvstore_destroy_fn_t destroy; /**< Destroy this ib_kvstore_t. */
