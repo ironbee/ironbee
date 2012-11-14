@@ -936,4 +936,3 @@ ib_status_t ib_kvstore_filesystem_init(
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
-
