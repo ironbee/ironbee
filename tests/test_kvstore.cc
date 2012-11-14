@@ -48,7 +48,7 @@ class TestKVStore : public testing::Test
     }
 };
 
-/** 
+/**
  * Exercise SetUp and TearDown.
  */
 TEST_F(TestKVStore, test_init) {

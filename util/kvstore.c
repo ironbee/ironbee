@@ -129,7 +129,7 @@ static ib_kvstore_value_t * kvstore_value_dup(
 }
 
 /**
- * Trivial merge policy that returns the first value in the list 
+ * Trivial merge policy that returns the first value in the list
  * if the list is size 1 or greater.
  *
  * If the list size is 0, this does nothing.
@@ -302,7 +302,7 @@ ib_status_t ib_kvstore_remove(
     assert(kvstore);
     assert(key);
 
-    ib_status_t rc = kvstore->remove(kvstore, key, kvstore->remove_cbdata); 
+    ib_status_t rc = kvstore->remove(kvstore, key, kvstore->remove_cbdata);
 
     IB_FTRACE_RET_STATUS(rc);
 }

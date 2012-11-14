@@ -34,7 +34,7 @@
 #include <unistd.h>
 
 /**
- * Define the width for printing a @c time_t field. 
+ * Define the width for printing a @c time_t field.
  * This is related to TIME_T_STR_FMT.
  * Both are 12 to accommodate the typical 10 digits and 2 buffer digits
  * for extreme future-time use.
@@ -59,7 +59,7 @@
  * @param[in] expiration The expiration in seconds. This is ignored
  *            if the argument type is NULL.
  * @param[in] type The type of the file. If null then expiration is
- *            ignored and a shortened path is generated 
+ *            ignored and a shortened path is generated
  *            representing only the directory.
  * @param[in] type_len The type length of the type_len. This value is ignored
  *            if expiration is < 0.
@@ -197,7 +197,7 @@ static ib_status_t kvdisconnect(
     ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
-    
+
     assert(server);
 
     /* Nop. */
@@ -267,7 +267,7 @@ static ib_status_t read_whole_file(
     }
 
     close(fd);
-    
+
     IB_FTRACE_RET_STATUS(IB_OK);
 
 eother_failure:
@@ -309,7 +309,7 @@ static ib_status_t extract_type(
     }
     strncpy(*type, start, len);
     *type_length = len;
-    
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -350,7 +350,7 @@ static ib_status_t extract_expiration(
     *expiration = atoll(substr);
 
     free(substr);
-    
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -376,7 +376,7 @@ static ib_status_t load_kv_value(
 
     ib_status_t rc;
     ib_timeval_t ib_timeval;
-    
+
     ib_clock_gettimeofday(&ib_timeval);
 
     /* Use kvstore->malloc because of framework contractual requirements. */
@@ -562,7 +562,7 @@ typedef struct build_value_t build_value_t;
  * @param[in] path The directory path.
  * @param[in] file The file to load.
  * @param[out] data The data structure to be populated.
- * @returns 
+ * @returns
  *   - IB_OK
  *   - IB_EALLOC On a memory errror.
  */
@@ -614,7 +614,7 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
  *
  * @param[in] kvstore The key-value store.
  * @param[in] key The key to fetch.
- * @param[out] values A pointer to an array of pointers. 
+ * @param[out] values A pointer to an array of pointers.
  * @param[out] values_length The length of *values.
  * @param[in,out] cbdata Callback data. Unused.
  */
@@ -696,7 +696,7 @@ failure1:
  * @param[in] merge_policy This implementation does not merge on writes.
  *            Merging is done by the framework on reads.
  * @param[in] key The key to fetch all values for.
- * @param[in] value The value to write. The framework contract says that this 
+ * @param[in] value The value to write. The framework contract says that this
  *            is also an out-parameters, but in this implementation the
  *            merge_policy is not used so value is never merged
  *            and never written to.
@@ -843,7 +843,7 @@ static ib_status_t kvremove(
 
     assert(kvstore);
     assert(key);
-    
+
     ib_status_t rc;
     char *path = NULL;
     size_t path_len;

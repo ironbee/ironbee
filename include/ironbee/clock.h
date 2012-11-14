@@ -70,7 +70,7 @@ typedef enum ib_clock_type_t {
 #define IB_CLOCK_USEC_TO_MSEC(usec) ((usec) / 1000)
 
 /**
- * Number of bytes to format a timestamp as text not including the null 
+ * Number of bytes to format a timestamp as text not including the null
  * terminating character.
  */
 #define IB_CLOCK_FMT_WIDTH 30

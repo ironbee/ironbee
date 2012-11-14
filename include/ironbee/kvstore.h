@@ -84,10 +84,10 @@ typedef ib_status_t (*ib_kvstore_disconnect_fn_t)(
  *            written.
  * @param[in] values The array of all values that are already stored at
  *            the given key. Optimally this will be 0 or 1, but
- *            depending on the storage engine guarantees, this might be 
+ *            depending on the storage engine guarantees, this might be
  *            much higher.
  * @param[in] value_length The length of values.
- * @param[out] resultant_value This is a created value that may be 
+ * @param[out] resultant_value This is a created value that may be
  *             free'd with the implementation's free function.
  * @param[in,out] cbdata Callback data passed in during initialization.
  */
@@ -126,7 +126,7 @@ typedef ib_status_t (*ib_kvstore_get_fn_t)(
  * Set a value in the data store.
  *
  * @param[in] kvstore The key-value store.
- * @param[in] merge_policy If the implementation supports reporting key 
+ * @param[in] merge_policy If the implementation supports reporting key
  *            conflicts-on-write, the implementation may use this merge
  *            policy to write a single, new value.
  * @param[in] key The key to set.
@@ -245,14 +245,14 @@ struct ib_kvstore_t {
 /**
  * Initialize a kvstore.
  *
- * This will zero the structure and then 
+ * This will zero the structure and then
  * set server to the server parameter, malloc is set to the system malloc
  * definition, free is set to the system free implementation,
  * and default_merge_policy is set to a function that returns the original
  * value.
  *
  * This function is not enough to fully initialize a kvstore_t.
- * You must also define the other function pointers according to 
+ * You must also define the other function pointers according to
  * their respective contracts.
  *
  * See:
