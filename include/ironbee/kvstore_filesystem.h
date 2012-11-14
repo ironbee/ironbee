@@ -20,9 +20,8 @@
 
 #include "ironbee_config_auto.h"
 
-#include "ironbee/types.h"
-
-#include "ironbee/kvstore.h"
+#include <ironbee/kvstore.h>
+#include <ironbee/types.h>
 
 /**
  * @file

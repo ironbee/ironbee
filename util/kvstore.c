@@ -23,12 +23,12 @@
 
 #include "ironbee_config_auto.h"
 
-#include "ironbee/kvstore.h"
-#include "ironbee/debug.h"
+#include <ironbee/kvstore.h>
+#include <ironbee/debug.h>
 
 #include <assert.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
 /**
  * Default malloc implmemtation that wraps malloc.

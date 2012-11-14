@@ -15,23 +15,23 @@
  * limitations under the License.
  ****************************************************************************/
 
-#include "ironbee/kvstore.h"
-#include "ironbee/kvstore_filesystem.h"
+#include <ironbee/kvstore_filesystem.h>
 
-#include "ironbee/debug.h"
-#include "ironbee/clock.h"
+#include <ironbee/clock.h>
+#include <ironbee/debug.h>
+#include <ironbee/kvstore.h>
 
 #include <assert.h>
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 #include <stddef.h>
+#include <stdio.h>
 #include <string.h>
 #include <strings.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <unistd.h>
 
 /**
  * Define the width for printing a @c time_t field.

@@ -102,6 +102,8 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/hash.h>',
   '<ironbee/ip.h>',
   '<ironbee/ipset.h>',
+  '<ironbee/kvstore.h>',
+  '<ironbee/kvstore_filesystem.h>',
   '<ironbee/list.h>',
   '<ironbee/lock.h>',
   '<ironbee/logformat.h>',
@@ -191,6 +193,7 @@ CANONICAL_INCLUDE_ORDER = [
 
   '<assert.h>',
   '<ctype.h>',
+  '<dirent.h>',
   '<dlfcn.h>',
   '<errno.h>',
   '<fcntl.h>',
