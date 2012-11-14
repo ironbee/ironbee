@@ -879,7 +879,7 @@ static ib_status_t get_num_value(const ib_rule_exec_t *rule_exec,
 
 /**
  * Get expanded float value of a string.
- * 
+ *
  * @param[in] rule_exec Rule execution object
  * @param[in] field Operator instance field
  * @param[in] flags Operator instance flags
@@ -1526,7 +1526,7 @@ static ib_status_t op_ge_execute(const ib_rule_exec_t *rule_exec,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-    
+
         /* Do the comparison */
         *result = (value >= param_value);
         if (ib_rule_should_capture(rule_exec, *result)) {
@@ -1555,7 +1555,7 @@ static ib_status_t op_ge_execute(const ib_rule_exec_t *rule_exec,
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-    
+
         /* Do the comparison */
         *result = (value >= param_value);
         if (ib_rule_should_capture(rule_exec, *result)) {

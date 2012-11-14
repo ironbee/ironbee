@@ -193,7 +193,7 @@ ib_status_t DLL_PUBLIC ib_string_to_num_ex(const char *s,
  * @param[in] slen The string length.
  * @param[in] result The result.
  *
- * @returns 
+ * @returns
  *   - IB_OK on success
  *   - IB_EALLOC on string dup failure.
  *   - IB_EINVAL if no conversion could be performed, including because
@@ -209,7 +209,7 @@ ib_status_t ib_string_to_float_ex(const char *s,
  * @param[in] s The string to convert.
  * @param[in] result The result.
  *
- * @returns 
+ * @returns
  *   - IB_OK on success
  *   - IB_EINVAL if no conversion could be performed, including because
  *               of a NULL or zero-length string.

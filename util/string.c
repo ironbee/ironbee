@@ -108,7 +108,7 @@ ib_status_t ib_string_to_num(const char *s,
 }
 
 /**
- * Convert a string to a ib_float_t. 
+ * Convert a string to a ib_float_t.
  */
 ib_status_t ib_string_to_float_ex(const char *s,
                                   size_t slen,
