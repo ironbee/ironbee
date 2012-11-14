@@ -866,7 +866,7 @@ static ib_status_t get_num_value(const ib_rule_exec_t *rule_exec,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Convert string the expanded string to a number */
+    /* Convert the expanded string to a number. */
     rc = ib_string_to_num(expanded, 0, result);
     if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,
@@ -878,11 +878,11 @@ static ib_status_t get_num_value(const ib_rule_exec_t *rule_exec,
 }
 
 /**
- * Get expanded float value of a string.
+ * Get expanded rule string value into a float field.
  *
- * @param[in] rule_exec Rule execution object
- * @param[in] field Operator instance field
- * @param[in] flags Operator instance flags
+ * @param[in] rule_exec Rule execution object.
+ * @param[in] field Operator instance field.
+ * @param[in] flags Operator instance flags.
  * @param[out] result Pointer to number in which to store the result.
  *
  * @returns Status code
@@ -896,6 +896,10 @@ static ib_status_t get_float_value(const ib_rule_exec_t *rule_exec,
     ib_status_t rc;
     const char *original;
     char *expanded;
+
+    assert(rule_exec);
+    assert(field);
+    assert(result);
 
     /* Easy case: just return the float from the pdata structure */
     if ( (flags & IB_OPINST_FLAG_EXPAND) == 0) {
@@ -915,7 +919,7 @@ static ib_status_t get_float_value(const ib_rule_exec_t *rule_exec,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Convert string the expanded string to a number */
+    /* Convert the expanded string to a float. */
     rc = ib_string_to_float(expanded, result);
     if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,
@@ -1058,9 +1062,14 @@ static ib_status_t field_to_float(const ib_rule_exec_t *rule_exec,
 
     switch (field->type) {
         case IB_FTYPE_NUM:
-            rc = ib_field_value(field, ib_ftype_float_out(result));
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+            {
+                ib_num_t n;
+                rc = ib_field_value(field, ib_ftype_num_out(&n));
+                if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+                }
+
+                *result = (ib_float_t)n;
             }
             break;
 
@@ -1072,16 +1081,10 @@ static ib_status_t field_to_float(const ib_rule_exec_t *rule_exec,
                     IB_FTRACE_RET_STATUS(rc);
                 }
 
-                if (n > INT64_MAX) {
-                    ib_rule_log_error(rule_exec,
-                                      "Overflow in converting number %"PRIu64,
-                                      n);
-                    IB_FTRACE_RET_STATUS(IB_EINVAL);
-                }
-
                 *result = (ib_num_t)n;
-                break;
             }
+            break;
+
         case IB_FTYPE_NULSTR :
             {
                 const char *fval;
@@ -1221,7 +1224,7 @@ static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
         ib_float_t value;
         ib_status_t rc;
 
-        /* Get integer representation of the field */
+        /* Get float representation of the field */
         rc = field_to_float(rule_exec, field, &value);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -1299,7 +1302,7 @@ static ib_status_t op_ne_execute(const ib_rule_exec_t *rule_exec,
         ib_float_t value;
         ib_status_t rc;
 
-        /* Get integer representation of the field */
+        /* Get float representation of the field */
         rc = field_to_float(rule_exec, field, &value);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);

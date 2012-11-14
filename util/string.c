@@ -123,7 +123,7 @@ ib_status_t ib_string_to_float_ex(const char *s,
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    char *sdup = (char *)strndup(s, slen);
+    char *sdup = strndup(s, slen);
 
     if ( ! sdup ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
