@@ -304,6 +304,15 @@ static inline void *ib_ftype_float_out(ib_float_t *v)
 /**
  * Assert @a v is proper type.
  */
+static inline void *ib_ftype_float_storage(ib_float_t *v)
+{
+    return (void *)(v);
+}
+
+
+/**
+ * Assert @a v is proper type.
+ */
 static inline void *ib_ftype_num_mutable_in(ib_num_t *v)
 {
     return (void *)(v);
