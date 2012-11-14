@@ -166,21 +166,25 @@ static ib_status_t geoip_lookup(
                         IB_FIELD_NAME("country_code"),
                         IB_FTYPE_NULSTR,
                         ib_ftype_nulstr_in("O1"));
+        ib_field_list_add(geoip_lst, tmp_field);
         ib_field_create(&tmp_field,
                         tx->mp,
                         IB_FIELD_NAME("country_code3"),
                         IB_FTYPE_NULSTR,
                         ib_ftype_nulstr_in("O01"));
+        ib_field_list_add(geoip_lst, tmp_field);
         ib_field_create(&tmp_field,
                         tx->mp,
                         IB_FIELD_NAME("country_name"),
                         IB_FTYPE_NULSTR,
                         ib_ftype_nulstr_in("Other Country"));
+        ib_field_list_add(geoip_lst, tmp_field);
         ib_field_create(&tmp_field,
                         tx->mp,
                         IB_FIELD_NAME("continent_code"),
                         IB_FTYPE_NULSTR,
                         ib_ftype_nulstr_in("O1"));
+        ib_field_list_add(geoip_lst, tmp_field);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
