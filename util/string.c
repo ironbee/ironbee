@@ -108,6 +108,71 @@ ib_status_t ib_string_to_num(const char *s,
 }
 
 /**
+ * Convert a string to a ib_float_t. 
+ */
+ib_status_t ib_string_to_float_ex(const char *s,
+                                  size_t slen,
+                                  ib_float_t *result)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    /* Check for zero length string */
+    if ( (s == NULL) || (*s == '\0') ) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    char *sdup = (char *)strndup(s, slen);
+
+    if ( ! sdup ) {
+        IB_FTRACE_RET_STATUS(IB_EALLOC);
+    }
+
+    /* In this case the _ex function calls out to the no-length function. */
+    rc = ib_string_to_float(sdup, result);
+
+    free(sdup);
+
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+ib_status_t ib_string_to_float(const char *s, ib_float_t *result)
+{
+    IB_FTRACE_INIT();
+
+    char *endptr;
+
+    /* Check for zero length string */
+    if ( (s == NULL) || (*s == '\0') ) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    *result = strtold(s, &endptr);
+
+    if ( *result == 0 ) {
+        /* No conversion possible. */
+        if ( endptr == s ) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+
+        /* Underflow would occur. */
+        if ( errno == ERANGE ) {
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+
+    /* Overflow would occur. */
+    if ( ( *result == HUGE_VALL || *result == -HUGE_VALL ) && errno == ERANGE) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+
+/**
  * strstr() clone that works with non-NUL terminated strings
  */
 const char *ib_strstr_ex(const char *haystack,

@@ -184,6 +184,40 @@ ib_status_t DLL_PUBLIC ib_string_to_num_ex(const char *s,
                                            ib_num_t *result);
 
 /**
+ * Convert a string to an ib_float_t with error checking.
+ *
+ * Avoid using this function because it requires that a copy of the
+ * input string be made to pass to strtold. Prefer @ref ib_string_to_float.
+ *
+ * @param[in] s The string to convert.
+ * @param[in] slen The string length.
+ * @param[in] result The result.
+ *
+ * @returns 
+ *   - IB_OK on success
+ *   - IB_EALLOC on string dup failure.
+ *   - IB_EINVAL if no conversion could be performed, including because
+ *               of a NULL or zero-length string.
+ */
+ib_status_t ib_string_to_float_ex(const char *s,
+                                  size_t slen,
+                                  ib_float_t *result);
+
+/**
+ * Convert a string to an ib_float_t with error checking.
+ *
+ * @param[in] s The string to convert.
+ * @param[in] slen The string length.
+ * @param[in] result The result.
+ *
+ * @returns 
+ *   - IB_OK on success
+ *   - IB_EINVAL if no conversion could be performed, including because
+ *               of a NULL or zero-length string.
+ */
+ib_status_t ib_string_to_float(const char *s, ib_float_t *result);
+
+/**
  * Convert a string to a number, with error checking
  *
  * @param[in] s String to convert
