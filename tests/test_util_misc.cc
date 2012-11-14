@@ -72,7 +72,7 @@ public:
         uint8_t *ptr;
 
         if (*size == 0) {
-            *size = (random() % max_size);
+            *size = (random() % max_size) + 1;
         }
         *buf = (uint8_t *)MemPoolAlloc(*size);
         if (buf == NULL) {
