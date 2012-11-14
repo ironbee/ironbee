@@ -213,16 +213,33 @@ struct ib_kvstore_key_t {
  */
 struct ib_kvstore_t {
     ib_kvstore_server_t *server; /**< Implementation dependent server data. */
+
     ib_kvstore_malloc_fn_t malloc; /**< Malloc memory for keys and values. */
-    ib_kvstore_free_fn_t free; /**< Malloc memory for keys and values. */
+    ib_kvstore_cbdata_t *malloc_cbdata; /**< Malloc cbdata. */
+
+    ib_kvstore_free_fn_t free; /**< Free memory for keys and values. */
+    ib_kvstore_cbdata_t *free_cbdata; /**< Free cbdata. */
+
     ib_kvstore_connect_fn_t connect; /**< Method to connect to the server. */
-    ib_kvstore_disconnect_fn_t disconnect; /**< Disconnect from the server. */
+    ib_kvstore_cbdata_t *connect_cbdata; /**< Connect cbdata. */
+
+    ib_kvstore_disconnect_fn_t disconnect; /**< Disconnect from server. */
+    ib_kvstore_cbdata_t *disconnect_cbdata; /**< Disconnect cbdata. */
+
     ib_kvstore_get_fn_t get; /**< Get a value from the key-value store. */
+    ib_kvstore_cbdata_t *get_cbdata; /**< Get cbdata. */
+
     ib_kvstore_set_fn_t set; /**< Set a value in the key-value store. */
+    ib_kvstore_cbdata_t *set_cbdata; /**< Set cbdata. */
+
     ib_kvstore_remove_fn_t remove; /**< Remove a value from the kv store. */
+    ib_kvstore_cbdata_t *remove_cbdata; /**< Remove cbdata. */
+
     ib_kvstore_merge_policy_fn_t default_merge_policy; /**< Dflt policy. */
+    ib_kvstore_cbdata_t *merge_policy_cbdata; /**< Merge cbdata. */
+
     ib_kvstore_destroy_fn_t destroy; /**< Destroy this ib_kvstore_t. */
-    ib_kvstore_cbdata_t *cbdata; /**< Callback Data unrelated to server. */
+    ib_kvstore_cbdata_t *destroy_cbdata; /**< Destroyed cbdata. */
 };
 
 /**
@@ -246,14 +263,10 @@ struct ib_kvstore_t {
  *  - @ref ib_kvstore_remove_fn_t remove
  *
  * @param[out] kvstore The server object which is initialized.
- * @param[in] cbdata Data provided to all callback calls. Implementations
- *            of a key-value store should hide this parameter from the user
- *            as they do the server parameter. Both are opaque
- *            data pointers that only the implementation uses.
  *
  * @returns IB_OK
  */
-ib_status_t ib_kvstore_init(ib_kvstore_t *kvstore, ib_kvstore_cbdata_t *cbdata);
+ib_status_t ib_kvstore_init(ib_kvstore_t *kvstore);
 
 /**
  * Connect to the server by calling @ref ib_kvstore_connect_fn_t in kvstore.

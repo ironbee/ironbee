@@ -113,7 +113,7 @@ static ib_status_t build_key_path(
     char *path_tmp = (char *) kvstore->malloc(
         kvstore,
         path_size+1,
-        kvstore->cbdata);
+        kvstore->malloc_cbdata);
 
     if ( ! path_tmp ) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
@@ -174,7 +174,7 @@ static ib_status_t build_key_path(
     IB_FTRACE_RET_STATUS(IB_OK);
 
 eother_failure:
-    kvstore->free(kvstore, *path, kvstore->cbdata);
+    kvstore->free(kvstore, *path, kvstore->free_cbdata);
     *path = NULL;
     IB_FTRACE_RET_STATUS(IB_EOTHER);
 }
@@ -240,7 +240,10 @@ static ib_status_t read_whole_file(
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
 
-    dataptr = (char *)kvstore->malloc(kvstore, sb.st_size, kvstore->cbdata);
+    dataptr = (char *)kvstore->malloc(
+        kvstore,
+        sb.st_size,
+        kvstore->malloc_cbdata);
     if (!dataptr) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -271,7 +274,7 @@ eother_failure:
     if (fd >= 0) {
         close(fd);
     }
-    kvstore->free(kvstore, *data, kvstore->cbdata);
+    kvstore->free(kvstore, *data, kvstore->free_cbdata);
     *data = NULL;
     *len = 0;
     IB_FTRACE_RET_STATUS(IB_EOTHER);
@@ -297,7 +300,10 @@ static ib_status_t extract_type(
     }
 
     len = strlen(start);
-    *type = (char *) kvstore->malloc(kvstore, len+1, kvstore->cbdata);
+    *type = (char *) kvstore->malloc(
+        kvstore,
+        len+1,
+        kvstore->malloc_cbdata);
     if (!*type) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -374,7 +380,10 @@ static ib_status_t load_kv_value(
     ib_clock_gettimeofday(&ib_timeval);
 
     /* Use kvstore->malloc because of framework contractual requirements. */
-    *value = kvstore->malloc(kvstore, sizeof(**value), kvstore->cbdata);
+    *value = kvstore->malloc(
+        kvstore,
+        sizeof(**value),
+        kvstore->malloc_cbdata);
     if (!*value) {
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
@@ -382,7 +391,7 @@ static ib_status_t load_kv_value(
     /* Populate expiration. */
     rc = extract_expiration(kvstore, file, &((*value)->expiration));
     if (rc) {
-        kvstore->free(kvstore, *value, kvstore->cbdata);
+        kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
@@ -396,7 +405,7 @@ static ib_status_t load_kv_value(
         /* Try to remove the key directory, though it may not be empty.
          * Failure is OK. */
         rmdir(file);
-        kvstore->free(kvstore, *value, kvstore->cbdata);
+        kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
@@ -409,7 +418,7 @@ static ib_status_t load_kv_value(
         &((*value)->type_length));
 
     if (rc) {
-        kvstore->free(kvstore, *value, kvstore->cbdata);
+        kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
@@ -422,8 +431,8 @@ static ib_status_t load_kv_value(
         &((*value)->value_length));
 
     if (rc) {
-        kvstore->free(kvstore, (*value)->type, kvstore->cbdata);
-        kvstore->free(kvstore, *value, kvstore->cbdata);
+        kvstore->free(kvstore, (*value)->type, kvstore->free_cbdata);
+        kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
         IB_FTRACE_RET_STATUS(IB_EOTHER);
     }
@@ -647,8 +656,10 @@ static ib_status_t kvget(
     build_val.path_len = strlen(path);
     build_val.values_idx = 0;
     build_val.values_len = dirent_count;
-    build_val.values = (ib_kvstore_value_t**)
-        kvstore->malloc(kvstore, sizeof(*build_val.values) * dirent_count, kvstore->cbdata);
+    build_val.values = (ib_kvstore_value_t**)kvstore->malloc(
+        kvstore,
+        sizeof(*build_val.values) * dirent_count,
+        kvstore->malloc_cbdata);
 
     /* Build value array. */
     rc = each_dir(path, &build_value, &build_val);
@@ -670,7 +681,7 @@ static ib_status_t kvget(
      * Reverse initialization error labels.
      */
 failure2:
-    kvstore->free(kvstore, build_val.values, kvstore->cbdata);
+    kvstore->free(kvstore, build_val.values, kvstore->free_cbdata);
 failure1:
     if (path) {
         free(path);
@@ -889,7 +900,7 @@ ib_status_t ib_kvstore_filesystem_init(
     assert(directory);
 
     /* There is no callback data used for this implimentation. */
-    ib_kvstore_init(kvstore, NULL);
+    ib_kvstore_init(kvstore);
 
     ib_kvstore_filesystem_server_t *server = malloc(sizeof(*server));
 
@@ -912,6 +923,16 @@ ib_status_t ib_kvstore_filesystem_init(
     kvstore->connect = kvconnect;
     kvstore->disconnect = kvdisconnect;
     kvstore->destroy = kvdestroy;
+
+    kvstore->malloc_cbdata = NULL;
+    kvstore->free_cbdata = NULL;
+    kvstore->connect_cbdata = NULL;
+    kvstore->disconnect_cbdata = NULL;
+    kvstore->get_cbdata = NULL;
+    kvstore->set_cbdata = NULL;
+    kvstore->remove_cbdata = NULL;
+    kvstore->merge_policy_cbdata = NULL;
+    kvstore->destroy_cbdata = NULL;
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
