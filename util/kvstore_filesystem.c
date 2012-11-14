@@ -501,9 +501,11 @@ static ib_status_t each_dir(const char *path, each_dir_t f, void* data)
     }
 
     /* Man page-specified to portably allocate the dirent buffer for entry. */
-    dirent_sz = (offsetof(struct dirent, d_name) +
-                pathconf(path, _PC_NAME_MAX) + 1 + sizeof(long))
-                & -sizeof(long);
+    dirent_sz =
+        (
+            offsetof(struct dirent, d_name) +
+            pathconf(path, _PC_NAME_MAX) + 1 + sizeof(long)
+        ) & -sizeof(long);
 
     entry = malloc(dirent_sz);
 
