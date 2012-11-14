@@ -60,9 +60,9 @@ TEST_F(TestKVStore, test_writes) {
     ib_kvstore_value_t val;
     ib_kvstore_value_t *result;
 
-    key.key = (void*)ib_mpool_strdup(mp, "k1");
+    key.key = (void *)ib_mpool_strdup(mp, "k1");
     key.length = 2;
-    val.value = (void*)ib_mpool_strdup(mp, "A key");
+    val.value = (void *)ib_mpool_strdup(mp, "A key");
     val.value_length = 5;
     val.type = ib_mpool_strdup(mp, "txt");
     val.type_length = 3;

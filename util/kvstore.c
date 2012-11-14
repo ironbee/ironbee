@@ -50,7 +50,7 @@ static void* kvstore_malloc(
 
     void *r = malloc(size);
 
-    IB_FTRACE_RET_PTR((void*), r);
+    IB_FTRACE_RET_PTR((void *), r);
 }
 
 /**
@@ -94,7 +94,7 @@ static ib_kvstore_value_t * kvstore_value_dup(
         kvstore->malloc_cbdata);
 
     if (!new_value) {
-        IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
+        IB_FTRACE_RET_PTR((kvstore_value_t *), NULL);
     }
 
     new_value->value = kvstore->malloc(
@@ -113,9 +113,15 @@ static ib_kvstore_value_t * kvstore_value_dup(
         kvstore->malloc_cbdata);
 
     if (!new_value->type) {
+<<<<<<< HEAD
         kvstore->free(kvstore, new_value->value, kvstore->free_cbdata);
         kvstore->free(kvstore, new_value, kvstore->free_cbdata);
         IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
+=======
+        kvstore->free(kvstore, new_value->value, kvstore->cbdata);
+        kvstore->free(kvstore, new_value, kvstore->cbdata);
+        IB_FTRACE_RET_PTR((kvstore_value_t *), NULL);
+>>>>>>> test_kvstore.cc, kvstore.c, kvstore_filesystem.c: Casting style.
     }
 
     /* Copy in all data. */
@@ -125,7 +131,7 @@ static ib_kvstore_value_t * kvstore_value_dup(
     memcpy(new_value->value, value->value, value->value_length);
     memcpy(new_value->type, value->type, value->type_length);
 
-    IB_FTRACE_RET_PTR((kvstore_value_t*), new_value);
+    IB_FTRACE_RET_PTR((kvstore_value_t *), new_value);
 }
 
 /**

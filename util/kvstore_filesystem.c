@@ -576,7 +576,7 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
 
     char *full_path;
     ib_status_t rc;
-    build_value_t *bv = (build_value_t*)(data);
+    build_value_t *bv = (build_value_t *)(data);
 
     /* Return if there is no space left in our array.
      * Partial results are not an error as an asynchronous write may
@@ -803,7 +803,7 @@ static ib_status_t remove_file(
     assert(data);
 
     char *full_path;
-    size_t path_len = *(size_t*)(data);
+    size_t path_len = *(size_t *)(data);
 
     if (strncmp(".", file, 1)) {
         /* Build full path. */
@@ -882,7 +882,7 @@ static void kvdestroy (ib_kvstore_t* kvstore, ib_kvstore_cbdata_t *cbdata)
     assert(kvstore);
 
     ib_kvstore_filesystem_server_t *server =
-        (ib_kvstore_filesystem_server_t*)(kvstore->server);
+        (ib_kvstore_filesystem_server_t *)(kvstore->server);
     free((void *)server->directory);
     free(server);
     kvstore->server = NULL;
