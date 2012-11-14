@@ -1308,7 +1308,7 @@ static ib_status_t op_ne_execute(const ib_rule_exec_t *rule_exec,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        /* Get the numeric value (including expansion, etc) */
+        /* Get the float value (including expansion, etc) */
         rc = get_float_value(rule_exec, pdata, flags, &param_value);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -1383,13 +1383,13 @@ static ib_status_t op_gt_execute(const ib_rule_exec_t *rule_exec,
         ib_float_t value;
         ib_status_t rc;
 
-        /* Get integer representation of the field */
+        /* Get float representation of the field */
         rc = field_to_float(rule_exec, field, &value);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        /* Get the numeric value (including expansion, etc) */
+        /* Get the float value (including expansion, etc) */
         rc = get_float_value(rule_exec, pdata, flags, &param_value);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -1465,13 +1465,13 @@ static ib_status_t op_lt_execute(const ib_rule_exec_t *rule_exec,
         ib_float_t value;
         ib_status_t rc;
 
-        /* Get integer representation of the field */
+        /* Get float representation of the field */
         rc = field_to_float(rule_exec, field, &value);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        /* Get the numeric value (including expansion, etc) */
+        /* Get the float value (including expansion, etc) */
         rc = get_float_value(rule_exec, pdata, flags, &param_value);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -1547,7 +1547,7 @@ static ib_status_t op_ge_execute(const ib_rule_exec_t *rule_exec,
         ib_float_t value;
         ib_status_t rc;
 
-        /* Get integer representation of the field */
+        /* Get float representation of the field */
         rc = field_to_float(rule_exec, field, &value);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -1628,7 +1628,7 @@ static ib_status_t op_le_execute(const ib_rule_exec_t *rule_exec,
         ib_float_t value;
         ib_status_t rc;
 
-        /* Get integer representation of the field */
+        /* Get float representation of the field */
         rc = field_to_float(rule_exec, field, &value);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
