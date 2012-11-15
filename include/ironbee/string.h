@@ -553,6 +553,19 @@ const char *ib_unum_to_string(ib_mpool_t *mp,
                               uint64_t value);
 
 /**
+ * Get a string representation of a floating point number.
+ *
+ * This currently uses a fixed length of 10.
+ *
+ * @param[in] mp The memory pool to use for allocations.
+ * @param[in] value The floating point to print.
+ *
+ * @returns The buffer or NULL if allocation fails
+ */
+const char *ib_float_to_string(ib_mpool_t *mp,
+                               long double value);
+
+/**
  * @} IronBeeUtil
  */
 

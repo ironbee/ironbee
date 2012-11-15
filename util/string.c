@@ -296,10 +296,10 @@ size_t ib_num_buf_size(int64_t num)
     IB_FTRACE_RET_UINT(digits + 1);
 }
 
-size_t ib_unum_buf_size(uint64_t num)
+size_t ib_unum_buf_size(uint64_t unum)
 {
     IB_FTRACE_INIT();
-    size_t digits = ib_unum_digits(num);
+    size_t digits = ib_unum_digits(unum);
     IB_FTRACE_RET_UINT(digits + 1);
 }
 
@@ -323,6 +323,17 @@ const char *ib_unum_to_string(ib_mpool_t *mp,
     char *buf = ib_mpool_alloc(mp, size);
     if (buf != NULL) {
         snprintf(buf, size, "%"PRIu64, value);
+    }
+    IB_FTRACE_RET_CONSTSTR(buf);
+}
+
+const char *ib_float_to_string(ib_mpool_t *mp,
+                               long double value)
+{
+    IB_FTRACE_INIT();
+    char *buf = ib_mpool_alloc(mp, 10);
+    if (buf != NULL) {
+        snprintf(buf, 10, "%Lf", value);
     }
     IB_FTRACE_RET_CONSTSTR(buf);
 }
