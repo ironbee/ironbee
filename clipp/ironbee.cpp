@@ -359,15 +359,12 @@ private:
 
 void load_configuration(IronBee::Engine engine, const std::string& path)
 {
-    engine.notify().configuration_started();
-
     IronBee::ConfigurationParser parser
         = IronBee::ConfigurationParser::create(engine);
 
     parser.parse_file(path);
 
     parser.destroy();
-    engine.notify().configuration_finished();
 }
 
 enum action_e {
