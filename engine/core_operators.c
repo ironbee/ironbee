@@ -777,7 +777,9 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
     ib_field_t *f;
     ib_status_t rc;
     bool expandable;
-    ib_num_t value;
+    ib_num_t num_value;
+    ib_float_t float_value;
+    ib_ftype_t ftype;
 
     char *params_unesc;
     size_t params_unesc_len;
@@ -801,8 +803,19 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
         op_inst->flags |= IB_OPINST_FLAG_EXPAND;
     }
     else {
-        rc = ib_string_to_num_ex(params_unesc, params_unesc_len, 0, &value);
-        if (rc != IB_OK) {
+        ib_status_t num_rc;
+        ib_status_t float_rc;
+        num_rc = ib_string_to_num_ex(params_unesc, params_unesc_len,
+                                     0, &num_value);
+        float_rc = ib_string_to_float_ex(params_unesc, params_unesc_len,
+                                         &float_value);
+        if (num_rc == IB_OK) {
+            ftype = IB_FTYPE_NUM;
+        }
+        else if (float_rc == IB_OK) {
+            ftype = IB_FTYPE_FLOAT;
+        }
+        else {
             ib_log_error(ib, "Parameter \"%s\" for operator %s "
                          "is not a valid number",
                          params_unesc, op_inst->op->name);
@@ -812,11 +825,16 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
 
     if (expandable) {
         rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
-                             IB_FTYPE_NULSTR, ib_ftype_nulstr_in(params_unesc));
+                             IB_FTYPE_NULSTR,
+                             ib_ftype_nulstr_in(params_unesc));
+    }
+    else if (ftype == IB_FTYPE_NUM) {
+        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
+                             ftype, ib_ftype_num_in(&num_value));
     }
     else {
         rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
-                             IB_FTYPE_NUM, ib_ftype_num_in(&value));
+                             ftype, ib_ftype_float_in(&float_value));
     }
 
     if (rc != IB_OK) {
