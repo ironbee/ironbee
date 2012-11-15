@@ -19,11 +19,15 @@
  * @file
  * @brief IronBee++ --- Site
  *
- * This file defines (Const)Site, a wrapper for ib_site_t and (Const)Location,
- * a wrapper for ib_loc_t..
+ * This file defines (Const)Site, (Const)SiteHost, (Const)SiteService, and
+ * (Const)SiteLocation, wrapper of ib_site_t, ib_site_host_t,
+ * ib_site_service_t, and ib_site_location_t, respectively.
+ *
+ * Provided functionality is currently minimal.  It may be expanded once the
+ * C site code matures.
  *
  * @remark Developers should be familiar with @ref ironbeepp to understand
- * aspects of this code, e.g., the public/non-virtual inheritance.
+ * aspects of this code, e.g., the public/non-virtual inheritance
  *
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
@@ -34,7 +38,6 @@
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/engine.hpp>
-#include <ironbeepp/list.hpp>
 #include <ironbeepp/memory_pool.hpp>
 
 #include <boost/uuid/uuid.hpp>
@@ -43,41 +46,288 @@
 
 // IronBee C
 typedef struct ib_site_t ib_site_t;
+typedef struct ib_site_host_t ib_site_host_t;
+typedef struct ib_site_service_t ib_site_service_t;
 typedef struct ib_site_location_t ib_site_location_t;
 
 namespace IronBee {
 
-class Site;
+class ConstSite;
 
 /**
- * Const Location; equivalent to a const pointer to ib_site_location_t.
+ * Const SiteHost; equivalent to a const pointer to ib_site_host_t.
  *
  * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for
  * singularity via CommonSemantics.
  *
- * See Location for discussion of locations.
+ * @sa SiteHost
+ * @sa ironbeepp
+ * @sa ib_site_host_t
+ * @nosubgrouping
+ **/
+class ConstSiteHost :
+    public CommonSemantics<ConstSiteHost>
+{
+public:
+    //! C Type.
+    typedef const ib_site_host_t* ib_type;
+
+    /**
+     * Construct singular ConstSiteHost.
+     *
+     * All behavior of a singular ConstSiteHost is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    ConstSiteHost();
+
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! const ib_site_host_t accessor.
+    // Intentionally inlined.
+    ib_type ib() const
+    {
+        return m_ib;
+    }
+
+    //! Construct SiteHost from ib_site_host_t.
+    explicit
+    ConstSiteHost(ib_type ib_site_host);
+
+    ///@}
+
+    //! Site accessor.
+    ConstSite site() const;
+
+    //! Hostname accessor.
+    const char* hostname() const;
+
+    //! Suffix accessor.
+    const char* suffix() const;
+
+private:
+    ib_type m_ib;
+};
+
+/**
+ * SiteHost; equivalent to a pointer to ib_site_host_t.
+ *
+ * SiteHost can be treated as ConstSiteHost.  See @ref ironbeepp for
+ * details on IronBee++ object semantics.
+ *
+ * Provides no functionality besides non-const ib() access.
+ *
+ * @sa ConstSiteHost
+ * @sa ironbeepp
+ * @sa ib_site_host_t
+ * @nosubgrouping
+ **/
+class SiteHost :
+    public ConstSiteHost
+{
+public:
+    //! C Type.
+    typedef ib_site_host_t* ib_type;
+
+    /**
+     * Remove the constness of a ConstSiteHost.
+     *
+     * @warning This is as dangerous as a @c const_cast, use carefully.
+     *
+     * @param[in] site_host ConstSiteHost to remove const from.
+     * @returns SiteHost pointing to same underlying sitehost as @a site_host.
+     **/
+    static SiteHost remove_const(ConstSiteHost site_host);
+
+    /**
+     * Construct singular SiteHost.
+     *
+     * All behavior of a singular SiteHost is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    SiteHost();
+
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! ib_site_host_t accessor.
+    ib_type ib() const
+    {
+        return m_ib;
+    }
+
+    //! Construct SiteHost from ib_site_host_t.
+    explicit
+    SiteHost(ib_type ib_site_host);
+
+    ///@}
+
+private:
+    ib_type m_ib;
+};
+
+/**
+ * Output operator for SiteHost.
+ *
+ * Output IronBee::SiteHost[@e value] where @e value is the hostname.
+ *
+ * @param[in] o Ostream to output to.
+ * @param[in] site_host SiteHost to output.
+ * @return @a o
+ **/
+std::ostream& operator<<(std::ostream& o, const ConstSiteHost& site_host);
+
+/**
+ * Const SiteService; equivalent to a const pointer to ib_site_service_t.
+ *
+ * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for
+ * singularity via CommonSemantics.
+ *
+ * @sa SiteService
+ * @sa ironbeepp
+ * @sa ib_site_service_t
+ * @nosubgrouping
+ **/
+class ConstSiteService :
+    public CommonSemantics<ConstSiteService>
+{
+public:
+    //! C Type.
+    typedef const ib_site_service_t* ib_type;
+
+    /**
+     * Construct singular ConstSiteService.
+     *
+     * All behavior of a singular ConstSiteService is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    ConstSiteService();
+
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! const ib_site_service_t accessor.
+    // Intentionally inlined.
+    ib_type ib() const
+    {
+        return m_ib;
+    }
+
+    //! Construct SiteService from ib_site_service_t.
+    explicit
+    ConstSiteService(ib_type ib_site_service);
+
+    ///@}
+
+    //! Site accessor.
+    ConstSite site() const;
+
+    //! IP address accessor.
+    const char* ip_as_s() const;
+
+    //! Port accessor.
+    int port() const;
+
+private:
+    ib_type m_ib;
+};
+
+/**
+ * SiteService; equivalent to a pointer to ib_site_service_t.
+ *
+ * SiteService can be treated as ConstSiteService.  See @ref ironbeepp for
+ * details on IronBee++ object semantics.
+ *
+ * Provides no functionality besides non-const ib() access.
+ *
+ * @sa ConstSiteService
+ * @sa ironbeepp
+ * @sa ib_site_service_t
+ * @nosubgrouping
+ **/
+class SiteService :
+    public ConstSiteService
+{
+public:
+    //! C Type.
+    typedef ib_site_service_t* ib_type;
+
+    /**
+     * Remove the constness of a ConstSiteService.
+     *
+     * @warning This is as dangerous as a @c const_cast, use carefully.
+     *
+     * @param[in] site_service ConstSiteService to remove const from.
+     * @returns SiteService pointing to same underlying siteservice as @a site_service.
+     **/
+    static SiteService remove_const(ConstSiteService site_service);
+
+    /**
+     * Construct singular SiteService.
+     *
+     * All behavior of a singular SiteService is undefined except for
+     * assignment, copying, comparison, and evaluate-as-bool.
+     **/
+    SiteService();
+
+    /**
+     * @name C Interoperability
+     * Methods to access underlying C types.
+     **/
+    ///@{
+
+    //! ib_site_service_t accessor.
+    ib_type ib() const
+    {
+        return m_ib;
+    }
+
+    //! Construct SiteService from ib_site_service_t.
+    explicit
+    SiteService(ib_type ib_site_service);
+
+    ///@}
+
+private:
+    ib_type m_ib;
+};
+
+/**
+ * Const SiteLocation; equivalent to a const pointer to ib_site_location_t.
+ *
+ * Provides operators ==, !=, <, >, <=, >= and evaluation as a boolean for
+ * singularity via CommonSemantics.
  *
  * @tparam T Value type for location.
  *
- * @sa Location
+ * @sa SiteLocation
  * @sa ironbeepp
  * @sa ib_site_location_t
  * @nosubgrouping
  **/
-class ConstLocation :
-    public CommonSemantics<ConstLocation>
+class ConstSiteLocation :
+    public CommonSemantics<ConstSiteLocation>
 {
 public:
     //! C Type.
     typedef const ib_site_location_t* ib_type;
 
     /**
-     * Construct singular ConstLocation.
+     * Construct singular ConstSiteLocation.
      *
-     * All behavior of a singular ConstLocation is undefined except for
+     * All behavior of a singular ConstSiteLocation is undefined except for
      * assignment, copying, comparison, and evaluate-as-bool.
      **/
-    ConstLocation();
+    ConstSiteLocation();
 
     /**
      * @name C Interoperability
@@ -92,60 +342,62 @@ public:
         return m_ib;
     }
 
-    //! Construct Location from ib_site_location_t.
+    //! Construct SiteLocation from ib_site_location_t.
     explicit
-    ConstLocation(ib_type ib_location);
+    ConstSiteLocation(ib_type ib_location);
 
     ///@}
 
     //! Site accessor.
-    Site site() const;
+    ConstSite site() const;
 
     //! Path accessor.
     const char* path() const;
+
+    //! Context accessor.
+    Context context() const;
 
 private:
     ib_type m_ib;
 };
 
 /**
- * Location; equivalent to a pointer to ib_site_location_t.
+ * SiteLocation; equivalent to a pointer to ib_site_location_t.
  *
- * Location can be treated as ConstLocation.  See @ref ironbeepp for
+ * SiteLocation can be treated as ConstSiteLocation.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
  *
- * Every Site has a default location and one or more additional locations.
- * Locations store the Site they belong to and a path.
+ * Provides no functionality besides non-const ib() access.
  *
- * @sa ConstLocation
+ * @sa ConstSiteLocation
  * @sa ironbeepp
  * @sa ib_site_location_t
  * @nosubgrouping
  **/
-class Location :
-    public ConstLocation
+class SiteLocation :
+    public ConstSiteLocation
 {
 public:
     //! C Type.
     typedef ib_site_location_t* ib_type;
 
     /**
-     * Remove the constness of a ConstLocation.
+     * Remove the constness of a ConstSiteLocation.
      *
      * @warning This is as dangerous as a @c const_cast, use carefully.
      *
-     * @param[in] location ConstLocation to remove const from.
-     * @returns Location pointing to same underlying location as @a location.
+     * @param[in] location ConstSiteLocation to remove const from.
+     * @returns SiteLocation pointing to same underlying location as @a location.
      **/
-    static Location remove_const(ConstLocation location);
+    static SiteLocation remove_const(ConstSiteLocation location);
 
     /**
-     * Construct singular Location.
+     * Construct singular SiteLocation.
      *
-     * All behavior of a singular Location is undefined except for
+     * All behavior of a singular SiteLocation is undefined except for
      * assignment, copying, comparison, and evaluate-as-bool.
      **/
-    Location();
+    SiteLocation();
 
     /**
      * @name C Interoperability
@@ -159,30 +411,38 @@ public:
         return m_ib;
     }
 
-    //! Construct Location from ib_site_location_t.
+    //! Construct SiteLocation from ib_site_location_t.
     explicit
-    Location(ib_type ib_location);
+    SiteLocation(ib_type ib_location);
 
     ///@}
-
-    //! Set path to @a new_path.
-    void set_path(const char* new_path) const;
 
 private:
     ib_type m_ib;
 };
 
 /**
- * Output operator for Location.
+ * Output operator for SiteLocation.
  *
- * Outputs Location[@e value] to @a o where @e value is replaced with
+ * Outputs SiteLocation[@e value] to @a o where @e value is replaced with
  * the path of the location.
  *
  * @param[in] o        Ostream to output to.
- * @param[in] location Location to output.
+ * @param[in] location SiteLocation to output.
  * @return @a o
  **/
-std::ostream& operator<<(std::ostream& o, const ConstLocation& location);
+std::ostream& operator<<(std::ostream& o, const ConstSiteLocation& location);
+
+/**
+ * Output operator for SiteService.
+ *
+ * Output IronBee::SiteService[@e value] where @e value is XXX.
+ *
+ * @param[in] o Ostream to output to.
+ * @param[in] site_service SiteService to output.
+ * @return @a o
+ **/
+std::ostream& operator<<(std::ostream& o, const ConstSiteService& site_service);
 
 /**
  * Const Site; equivalent to a const pointer to ib_site_t.
@@ -239,26 +499,14 @@ public:
     //! ID as string.
     const char* id_as_s() const;
 
-    //! Associated engine.
-    Engine engine() const;
-
     //! Associated memory pool.
     MemoryPool memory_pool() const;
 
     //! Name.
     const char* name() const;
 
-    //! IPs of site.
-    List<const char*> ips() const;
-
-    //! Hosts of site.
-    List<const char*> hosts() const;
-
-    //! Locations of site.
-    List<Location> locations() const;
-
-    //! Default location.
-    Location default_location() const;
+    //! Context.
+    Context context() const;
 
 private:
     ib_type m_ib;
@@ -270,8 +518,7 @@ private:
  * Site can be treated as ConstSite.  See @ref ironbeepp for
  * details on IronBee++ object semantics.
  *
- * Sites are a fundamental unit of configuration.  They contain a variety of
- * information used to identify them and one or more locations.
+ * Provides no functionality besides non-const ib() access.
  *
  * @sa ConstSite
  * @sa ironbeepp
@@ -320,30 +567,6 @@ public:
     Site(ib_type ib_site);
 
     ///@}
-
-    /**
-     * Create a new site with name @a name.
-     *
-     * @param[in] engine Engine of site.
-     * @param[in] name   Name of site.
-     * @return Site.
-     * @throw IronBee++ exception on failure.
-     **/
-    static Site create(
-        Engine      engine,
-        const char* name
-    );
-
-    //! Add @a ip as address.
-    void add_ip(const char* ip) const;
-    //! Add @a hostname as hostname.
-    void add_host(const char* hostname) const;
-
-    //! Create location @a path for site.
-    Location create_location(const char* path) const;
-
-    //! Create default location for site.
-    Location create_default_location() const;
 
 private:
     ib_type m_ib;

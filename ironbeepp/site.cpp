@@ -1,64 +1,184 @@
 #include <ironbeepp/site.hpp>
+#include <ironbeepp/context.hpp>
 #include <ironbeepp/internal/throw.hpp>
 
-#include <ironbee/engine.h>
+#include <ironbee/site.h>
 
 namespace IronBee {
 
-// ConstLocation
-ConstLocation::ConstLocation() :
+// ConstSiteHost
+
+ConstSiteHost::ConstSiteHost() :
     m_ib(NULL)
 {
     // nop
 }
 
-ConstLocation::ConstLocation(ib_type ib_location) :
+ConstSiteHost::ConstSiteHost(ib_type ib_site_host) :
+    m_ib(ib_site_host)
+{
+    // nop
+}
+
+ConstSite ConstSiteHost::site() const
+{
+    return ConstSite(ib()->site);
+}
+
+const char* ConstSiteHost::hostname() const
+{
+    return ib()->hostname;
+}
+
+const char* ConstSiteHost::suffix() const
+{
+    return ib()->suffix;
+}
+
+// SiteHost
+
+SiteHost SiteHost::remove_const(ConstSiteHost site_host)
+{
+    return SiteHost(const_cast<ib_type>(site_host.ib()));
+}
+
+SiteHost::SiteHost() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+SiteHost::SiteHost(ib_type ib_site_host) :
+    ConstSiteHost(ib_site_host),
+    m_ib(ib_site_host)
+{
+    // nop
+}
+
+std::ostream& operator<<(std::ostream& o, const ConstSiteHost& site_host)
+{
+    if (! site_host) {
+        o << "IronBee::SiteHost[!singular!]";
+    } else {
+        o << "IronBee::SiteHost[" << site_host.hostname() << "]";
+    }
+    return o;
+}
+
+// ConstSiteService
+
+ConstSiteService::ConstSiteService() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+ConstSiteService::ConstSiteService(ib_type ib_site_service) :
+    m_ib(ib_site_service)
+{
+    // nop
+}
+
+ConstSite ConstSiteService::site() const
+{
+    return ConstSite(ib()->site);
+}
+
+const char* ConstSiteService::ip_as_s() const
+{
+    return ib()->ipstr;
+}
+
+int ConstSiteService::port() const
+{
+    return ib()->port;
+}
+
+// SiteService
+
+SiteService SiteService::remove_const(ConstSiteService site_service)
+{
+    return SiteService(const_cast<ib_type>(site_service.ib()));
+}
+
+SiteService::SiteService() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+SiteService::SiteService(ib_type ib_site_service) :
+    ConstSiteService(ib_site_service),
+    m_ib(ib_site_service)
+{
+    // nop
+}
+
+std::ostream& operator<<(std::ostream& o, const ConstSiteService& site_service)
+{
+    if (! site_service) {
+        o << "IronBee::SiteService[!singular!]";
+    } else {
+        o << "IronBee::SiteService[" << site_service.ip_as_s() << ":"
+          << site_service.port() << "]";
+    }
+    return o;
+}
+
+// ConstSiteLocation
+ConstSiteLocation::ConstSiteLocation() :
+    m_ib(NULL)
+{
+    // nop
+}
+
+ConstSiteLocation::ConstSiteLocation(ib_type ib_location) :
     m_ib(ib_location)
 {
     // nop
 }
 
-Site ConstLocation::site() const
+ConstSite ConstSiteLocation::site() const
 {
-    return Site(ib()->site);
+    return ConstSite(ib()->site);
 }
 
-const char* ConstLocation::path() const
+const char* ConstSiteLocation::path() const
 {
     return ib()->path;
 }
 
-// Location
-Location Location::remove_const(ConstLocation location)
+Context ConstSiteLocation::context() const
 {
-    return Location(const_cast<ib_type>(location.ib()));
+    return Context(ib()->context);
 }
 
-Location::Location() :
+// SiteLocation
+SiteLocation SiteLocation::remove_const(ConstSiteLocation location)
+{
+    return SiteLocation(const_cast<ib_type>(location.ib()));
+}
+
+SiteLocation::SiteLocation() :
     m_ib(NULL)
 {
     // nop
 }
 
-Location::Location(ib_type ib_location) :
-    ConstLocation(ib_location),
+SiteLocation::SiteLocation(ib_type ib_location) :
+    ConstSiteLocation(ib_location),
     m_ib(ib_location)
 {
     // nop
 }
 
-void Location::set_path(const char* new_path) const
-{
-    m_ib->path = new_path;
-}
-
-std::ostream& operator<<(std::ostream& o, const ConstLocation& location)
+std::ostream& operator<<(std::ostream& o, const ConstSiteLocation& location)
 {
     if (! location) {
-        o << "IronBee::Location[!singular!]";
+        o << "IronBee::SiteLocation[!singular!]";
     }
     else {
-        o << "IronBee::Location[" << location.path() << "]";
+        o << "IronBee::SiteLocation[" << location.path() << "]";
     }
     return o;
 }
@@ -87,11 +207,6 @@ const char* ConstSite::id_as_s() const
     return ib()->id_str;
 }
 
-Engine ConstSite::engine() const
-{
-    return Engine(ib()->ib);
-}
-
 MemoryPool ConstSite::memory_pool() const
 {
     return MemoryPool(ib()->mp);
@@ -102,24 +217,9 @@ const char* ConstSite::name() const
     return ib()->name;
 }
 
-List<const char*> ConstSite::ips() const
+Context ConstSite::context() const
 {
-    return List<const char*>(m_ib->ips);
-}
-
-List<const char*> ConstSite::hosts() const
-{
-    return List<const char*>(m_ib->hosts);
-}
-
-List<Location> ConstSite::locations() const
-{
-    return List<Location>(m_ib->locations);
-}
-
-Location ConstSite::default_location() const
-{
-    return Location(m_ib->default_loc);
+    return Context(ib()->context);
 }
 
 // Site
@@ -140,40 +240,6 @@ Site::Site(ib_type ib_site) :
     m_ib(ib_site)
 {
     // nop
-}
-
-Site Site::create(
-    Engine      engine,
-    const char* name
-)
-{
-    ib_site_t* ib_site = NULL;
-    Internal::throw_if_error(ib_site_create(&ib_site, engine.ib(), name));
-    return Site(ib_site);
-}
-
-void Site::add_ip(const char* ip) const
-{
-    Internal::throw_if_error(ib_site_address_add(m_ib, ip));
-}
-
-void Site::add_host(const char* hostname) const
-{
-    Internal::throw_if_error(ib_site_hostname_add(m_ib, hostname));
-}
-
-Location Site::create_location(const char* path) const
-{
-    ib_site_location_t* ib_loc = NULL;
-    Internal::throw_if_error(ib_site_loc_create(m_ib, &ib_loc, path));
-    return Location(ib_loc);
-}
-
-Location Site::create_default_location() const
-{
-    ib_site_location_t* ib_loc = NULL;
-    Internal::throw_if_error(ib_site_loc_create_default(m_ib, &ib_loc));
-    return Location(ib_loc);
 }
 
 std::ostream& operator<<(std::ostream& o, const ConstSite& site)

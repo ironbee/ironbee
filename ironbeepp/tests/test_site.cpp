@@ -28,52 +28,124 @@
 #include "gtest/gtest.h"
 
 #include <ironbee/engine.h>
+#include <ironbee/site.h>
+
+#include <ironbeepp/context.hpp>
+#include <ironbeepp/internal/throw.hpp>
 
 using namespace std;
 using namespace IronBee;
 
 class TestSite : public ::testing::Test, public IBPPTestFixture
 {
+public:
+    TestSite()
+    {
+        ib_status_t rc;
+
+        ib_context_t* ib_context = NULL;
+
+        rc = ib_context_create(
+            m_engine.ib(),
+            NULL,
+            IB_CTYPE_LOCATION,
+            "Location",
+            "IBPPTestFixtureContext",
+            &ib_context
+        );
+        Internal::throw_if_error(rc);
+        m_location_context = Context(ib_context);
+
+        ib_context = NULL;
+        rc = ib_context_create(
+            m_engine.ib(),
+            NULL,
+            IB_CTYPE_SITE,
+            "Site",
+            "IBPPTestFixtureContext",
+            &ib_context
+        );
+        Internal::throw_if_error(rc);
+        m_site_context = Context(ib_context);
+
+        ib_site_t* ib_site;
+        rc = ib_site_create(
+            m_site_context.ib(),
+            "TestSite",
+            NULL,
+            NULL,
+            &ib_site
+        );
+        Internal::throw_if_error(rc);
+        m_site = Site(ib_site);
+
+        ib_site_location_t* ib_site_location;
+        rc = ib_site_location_create(
+            m_site.ib(),
+            m_location_context.ib(),
+            "TestSiteLocation",
+            NULL,
+            NULL,
+            &ib_site_location
+        );
+        Internal::throw_if_error(rc);
+        m_site_location = SiteLocation(ib_site_location);
+
+        ib_site_service_t* ib_site_service;
+        rc = ib_site_service_create(
+            m_site.ib(),
+            "1.2.3.4:1234",
+            NULL,
+            NULL,
+            &ib_site_service
+        );
+        Internal::throw_if_error(rc);
+        m_site_service = SiteService(ib_site_service);
+
+        ib_site_host_t* ib_site_host;
+        rc = ib_site_host_create(
+            m_site.ib(),
+            "TestSiteHost",
+            NULL,
+            NULL,
+            &ib_site_host
+        );
+        Internal::throw_if_error(rc);
+        m_site_host = SiteHost(ib_site_host);
+    }
+
+protected:
+    Context m_site_context;
+    Context m_location_context;
+    Site m_site;
+    SiteLocation m_site_location;
+    SiteService m_site_service;
+    SiteHost m_site_host;
 };
 
 TEST_F(TestSite, Location)
 {
-    Site s = Site::create(m_engine, "test");
-    ASSERT_TRUE(s);
-
-    Location l = s.create_location("foo");
-    ASSERT_TRUE(l);
-    EXPECT_EQ(s, l.site());
-    EXPECT_EQ(string("foo"), l.path());
-
-    l.set_path("bar");
-    EXPECT_EQ(string("bar"), l.path());
-
-    l = s.create_default_location();
-    EXPECT_EQ(s, l.site());
+    EXPECT_EQ(m_site, m_site_location.site());
+    EXPECT_EQ(string("TestSiteLocation"), m_site_location.path());
+    EXPECT_EQ(m_location_context, m_site_location.context());
 }
 
 TEST_F(TestSite, Site)
 {
-    Site s = Site::create(m_engine, "test");
-    ASSERT_TRUE(s);
+    EXPECT_EQ(string("TestSite"), m_site.name());
+    EXPECT_TRUE(m_site.memory_pool());
+    EXPECT_EQ(m_site_context, m_site.context());
+}
 
-    EXPECT_EQ(string("test"), s.name());
-    EXPECT_EQ(m_engine, s.engine());
-    EXPECT_TRUE(s.memory_pool());
+TEST_F(TestSite, Host)
+{
+    EXPECT_EQ(m_site, m_site_host.site());
+    EXPECT_EQ(string("TestSiteHost"), m_site_host.hostname());
+}
 
-    Location l = s.create_default_location();
-    EXPECT_EQ(l, s.default_location());
-
-    s.add_ip("1.2.3.4");
-    EXPECT_EQ(1UL, s.ips().size());
-    EXPECT_EQ(string("1.2.3.4"), s.ips().front());
-
-    s.add_host("foo");
-    EXPECT_EQ(1UL, s.hosts().size());
-    EXPECT_EQ(string("foo"), s.hosts().front());
-
-    l = s.create_location("/foo");
-    EXPECT_EQ(1UL, s.locations().size());
-    EXPECT_EQ(l, s.locations().front());
+TEST_F(TestSite, Service)
+{
+    EXPECT_EQ(m_site, m_site_service.site());
+    EXPECT_EQ(string("1.2.3.4"), m_site_service.ip_as_s());
+    EXPECT_EQ(1234, m_site_service.port());
 }
