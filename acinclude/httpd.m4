@@ -23,7 +23,7 @@ if test "${with_httpd_server}" != "no"; then
         else 
             AC_MSG_ERROR([No APXS found!  Either specify it or configure --without-httpd])
         fi
-    elif test -z "${APU_VERSION}"; then
+    elif test "${APR_REQUIRES_APU}" = "yes" -a -z "${APU_VERSION}"; then
         if test -z "${with_httpd}"; then
             AC_MSG_NOTICE([Not building HTTPD server module.])
         else 
@@ -33,7 +33,7 @@ if test "${with_httpd_server}" != "no"; then
         if test -z "${with_httpd}"; then
             AC_MSG_NOTICE([Not building HTTPD server module.])
         else 
-            AC_MSG_ERROR([No APU found!  Either specify it or configure --without-httpd])
+            AC_MSG_ERROR([No APR found!  Either specify it or configure --without-httpd])
         fi
     else
         AC_MSG_NOTICE([Building HTTPD server module])

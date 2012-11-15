@@ -384,7 +384,10 @@ fi
 dnl TODO: These need to be optional (only if building apache httpd server module)
 CHECK_APXS()
 CHECK_APR()
-CHECK_APU()
+
+if test "${APR_REQUIRES_APU}" = "yes" ; then
+    CHECK_APU()
+fi
 CHECK_HTTPD()
 CHECK_TS()
 CHECK_GEOIP()

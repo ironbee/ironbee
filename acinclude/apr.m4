@@ -11,6 +11,7 @@ APR_CFLAGS=""
 APR_CPPFLAGS=""
 APR_LDFLAGS=""
 APR_LDADD=""
+APR_REQUIRES_APU=""
 
 AC_DEFUN([CHECK_APR],
 [dnl
@@ -32,7 +33,7 @@ for x in ${test_paths}; do
     fi
 
     dnl # Try known config script names/locations
-    for APR_CONFIG in apr-1-mt-config apr-1-config apr-config-1 apr-mt-config-1 apr-mt-config apr-config; do
+    for APR_CONFIG in apr-2-config apr-1-mt-config apr-1-config apr-config-1 apr-mt-config-1 apr-mt-config apr-config; do
         if test -e "${x}/bin/${APR_CONFIG}"; then
             apr_path="${x}/bin"
             break
@@ -63,6 +64,13 @@ if test -n "${apr_path}"; then
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(apr LDFLAGS: $APR_LDFLAGS); fi
     APR_LDADD="`${APR_CONFIG} --link-libtool`"
     if test "$verbose_output" -eq 1; then AC_MSG_NOTICE(apr LDADD: $APR_LDADD); fi
+
+    APR_TOPLEVEL_VERSION=`echo $APR_VERSION | cut -c1`
+    if test $APR_TOPLEVEL_VERSION -ge 2 ; then
+        APR_REQUIRES_APU="no"
+    else
+        APR_REQUIRES_APU="yes"
+    fi
 else
     AC_MSG_RESULT([no])
 fi
@@ -73,6 +81,7 @@ AC_SUBST(APR_CFLAGS)
 AC_SUBST(APR_CPPFLAGS)
 AC_SUBST(APR_LDFLAGS)
 AC_SUBST(APR_LDADD)
+AC_SUBST(APR_REQUIRES_APU)
 
 if test -z "${APR_VERSION}"; then
     AC_MSG_NOTICE([*** apr library not found.])
