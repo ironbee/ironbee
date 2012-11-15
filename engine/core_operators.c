@@ -42,6 +42,7 @@
 #include <ctype.h>
 #include <inttypes.h>
 
+
 /**
  * Allocate a buffer and unescape operator arguments.
  * @param[in] ib IronBee engine used for logging.
@@ -755,98 +756,6 @@ ib_status_t op_ipmatch6_execute(
 }
 
 /**
- * Create function for the numeric comparison operators
- *
- * @param[in] ib The IronBee engine (unused)
- * @param[in] ctx The current IronBee context (unused)
- * @param[in] rule Parent rule to the operator
- * @param[in,out] mp Memory pool to use for allocation
- * @param[in] params Constant parameters
- * @param[in,out] op_inst Instance operator
- *
- * @returns Status code
- */
-static ib_status_t op_numcmp_create(ib_engine_t *ib,
-                                    ib_context_t *ctx,
-                                    const ib_rule_t *rule,
-                                    ib_mpool_t *mp,
-                                    const char *params,
-                                    ib_operator_inst_t *op_inst)
-{
-    IB_FTRACE_INIT();
-    ib_field_t *f;
-    ib_status_t rc;
-    bool expandable;
-    ib_num_t num_value;
-    ib_float_t float_value;
-    ib_ftype_t ftype;
-
-    char *params_unesc;
-    size_t params_unesc_len;
-
-    rc = unescape_op_args(ib, mp, &params_unesc, &params_unesc_len, params);
-    if (rc != IB_OK) {
-        ib_log_debug(ib, "Unable to unescape parameter: %s", params);
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (params_unesc == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    /* Is the string expandable? */
-    rc = ib_data_expand_test_str(params_unesc, &expandable);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    if (expandable) {
-        op_inst->flags |= IB_OPINST_FLAG_EXPAND;
-    }
-    else {
-        ib_status_t num_rc;
-        ib_status_t float_rc;
-        num_rc = ib_string_to_num_ex(params_unesc, params_unesc_len,
-                                     0, &num_value);
-        float_rc = ib_string_to_float_ex(params_unesc, params_unesc_len,
-                                         &float_value);
-        if (num_rc == IB_OK) {
-            ftype = IB_FTYPE_NUM;
-        }
-        else if (float_rc == IB_OK) {
-            ftype = IB_FTYPE_FLOAT;
-        }
-        else {
-            ib_log_error(ib, "Parameter \"%s\" for operator %s "
-                         "is not a valid number",
-                         params_unesc, op_inst->op->name);
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-
-    if (expandable) {
-        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
-                             IB_FTYPE_NULSTR,
-                             ib_ftype_nulstr_in(params_unesc));
-    }
-    else if (ftype == IB_FTYPE_NUM) {
-        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
-                             ftype, ib_ftype_num_in(&num_value));
-    }
-    else {
-        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
-                             ftype, ib_ftype_float_in(&float_value));
-    }
-
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    op_inst->data = f;
-    op_inst->fparam = f;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
  * Get expanded numeric value of a string
  *
  * @param[in] rule_exec Rule execution object
@@ -1209,6 +1118,7 @@ static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(data != NULL);
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
@@ -1285,6 +1195,7 @@ static ib_status_t op_ne_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(data != NULL);
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
@@ -1369,6 +1280,7 @@ static ib_status_t op_gt_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(data != NULL);
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
@@ -1451,6 +1363,7 @@ static ib_status_t op_lt_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(data != NULL);
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
@@ -1536,6 +1449,7 @@ static ib_status_t op_ge_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(data != NULL);
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
@@ -1619,6 +1533,7 @@ static ib_status_t op_le_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
+    assert(data != NULL);
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
@@ -1681,6 +1596,117 @@ static ib_status_t op_le_execute(const ib_rule_exec_t *rule_exec,
             }
         }
     }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Create function for the numeric comparison operators
+ *
+ * @param[in] ib The IronBee engine (unused)
+ * @param[in] ctx The current IronBee context (unused)
+ * @param[in] rule Parent rule to the operator
+ * @param[in,out] mp Memory pool to use for allocation
+ * @param[in] params Constant parameters
+ * @param[in,out] op_inst Instance operator
+ *
+ * @returns Status code
+ */
+static ib_status_t op_numcmp_create(ib_engine_t *ib,
+                                    ib_context_t *ctx,
+                                    const ib_rule_t *rule,
+                                    ib_mpool_t *mp,
+                                    const char *params,
+                                    ib_operator_inst_t *op_inst)
+{
+    IB_FTRACE_INIT();
+    ib_field_t *f;
+    ib_status_t rc;
+    bool expandable;
+    ib_num_t num_value;
+    ib_float_t float_value;
+    ib_ftype_t ftype;
+
+    char *params_unesc;
+    size_t params_unesc_len;
+
+    rc = unescape_op_args(ib, mp, &params_unesc, &params_unesc_len, params);
+    if (rc != IB_OK) {
+        ib_log_debug(ib, "Unable to unescape parameter: %s", params);
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (params_unesc == NULL) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Is the string expandable? */
+    rc = ib_data_expand_test_str(params_unesc, &expandable);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    if (expandable) {
+        op_inst->flags |= IB_OPINST_FLAG_EXPAND;
+    }
+    else {
+        ib_status_t num_rc;
+        ib_status_t float_rc = IB_EINVAL;
+        num_rc = ib_string_to_num_ex(params_unesc,
+                                     params_unesc_len,
+                                     0, &num_value);
+        if (num_rc != IB_OK) {
+            float_rc = ib_string_to_float_ex(params_unesc,
+                                             params_unesc_len,
+                                             &float_value);
+        }
+
+        /* If it's a valid int, all good, use it */
+        if (num_rc == IB_OK) {
+            ftype = IB_FTYPE_NUM;
+        }
+        /* If it's a valid float, don't use it for eq and ne operators */
+        else if (float_rc == IB_OK) {
+            if ( (op_inst->op->fn_execute == op_eq_execute) ||
+                 (op_inst->op->fn_execute == op_ne_execute) )
+            {
+                ib_log_error(ib,
+                             "Floating point parameter \"%s\" "
+                             "is not supported for operator \"%s\"",
+                             params_unesc, op_inst->op->name);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+            else {
+                ftype = IB_FTYPE_FLOAT;
+            }
+        }
+        else {
+            ib_log_error(ib,
+                         "Parameter \"%s\" for operator \"%s\" "
+                         "is not a valid number",
+                         params_unesc, op_inst->op->name);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+    }
+
+    if (expandable) {
+        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
+                             IB_FTYPE_NULSTR,
+                             ib_ftype_nulstr_in(params_unesc));
+    }
+    else if (ftype == IB_FTYPE_NUM) {
+        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
+                             ftype, ib_ftype_num_in(&num_value));
+    }
+    else {
+        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
+                             ftype, ib_ftype_float_in(&float_value));
+    }
+
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    op_inst->data = f;
+    op_inst->fparam = f;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
