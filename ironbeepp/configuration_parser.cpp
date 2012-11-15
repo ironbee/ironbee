@@ -39,14 +39,9 @@ Context ConstConfigurationParser::current_context() const
     return Context(ib()->cur_ctx);
 }
 
-Site ConstConfigurationParser::current_site() const
+const char* ConstConfigurationParser::current_file() const
 {
-    return Site(ib()->cur_site);
-}
-
-Location ConstConfigurationParser::current_location() const
-{
-    return Location(ib()->cur_loc);
+    return ib()->cur_file;
 }
 
 const char* ConstConfigurationParser::current_block_name() const
@@ -134,7 +129,7 @@ ostream& operator<<(
     }
     else {
         o << "IronBee::ConfigurationParser["
-          << configuration_parser.current_location().path() << ":"
+          << configuration_parser.current_file() << ":"
           << configuration_parser.current_block_name()
           << "]";
     }

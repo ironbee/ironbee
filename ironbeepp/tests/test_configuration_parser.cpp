@@ -56,17 +56,13 @@ TEST_F(TestConfigurationParser, ConfigurationParser)
 
     ib_context_t ctx;
     parser.cur_ctx = &ctx;
-    ib_site_t site;
-    parser.cur_site = &site;
-    ib_loc_t loc;
-    parser.cur_loc = &loc;
+    parser.cur_file = "testfile";
     parser.cur_blkname = "foobar";
 
     EXPECT_EQ(parser.ib, P.engine().ib());
     EXPECT_EQ(parser.mp, P.memory_pool().ib());
     EXPECT_EQ(parser.cur_ctx, P.current_context().ib());
-    EXPECT_EQ(parser.cur_site, P.current_site().ib());
-    EXPECT_EQ(parser.cur_loc, P.current_location().ib());
+    EXPECT_EQ(parser.cur_file, P.current_file());
     EXPECT_EQ(parser.cur_blkname, P.current_block_name());
 
     // Parse routines tested in test_configuration_directives.

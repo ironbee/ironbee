@@ -44,7 +44,6 @@ typedef struct ib_cfgparser_t ib_cfgparser_t;
 namespace IronBee {
 
 class MemoryPool;
-class Site;
 class Location;
 class Context;
 class Engine;
@@ -107,11 +106,8 @@ public:
     //! Current configuration context.
     Context current_context() const;
 
-    //! Current configuration site.
-    Site current_site() const;
-
-    //! Current configuration location.
-    Location current_location() const;
+    //! Current configuration file.
+    const char* current_file() const;
 
     //! Current configuration block name.
     const char* current_block_name() const;
@@ -231,7 +227,7 @@ private:
 /**
  * Output operator for ConfigurationParser.
  *
- * Outputs ConfigurationParser[@e value] where value is the current location
+ * Outputs ConfigurationParser[@e value] where value is the current file
  * and current block name separated by :.
  *
  * @param[in] o Ostream to output to.
