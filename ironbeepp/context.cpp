@@ -51,7 +51,7 @@ ConstSite ConstContext::site() const
     const ib_site_t *ctx;
     ib_status_t rc;
 
-    rc = ib_core_context_site_get(ib(), &ctx);
+    rc = ib_context_site_get(ib(), &ctx);
     if (rc != IB_OK) {
         // TODO
     }
