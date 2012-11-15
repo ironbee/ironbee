@@ -872,7 +872,7 @@ static ib_status_t core_ctxsel_site_close(
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
-    rc = ib_context_site_set(ib, ctx, site);
+    rc = ib_context_site_set(ctx, site);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -900,7 +900,7 @@ static ib_status_t core_ctxsel_site_close(
     }
 
     /* Store the location in the context */
-    rc = ib_context_location_set(ib, ctx, location);
+    rc = ib_context_location_set(ctx, location);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

@@ -1407,7 +1407,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     setact.dir = ibd->dir;
 
     /* Add the ironbee site id to an internal header. */
-    ib_rc = ib_context_site_get(ironbee, data->tx->ctx, &site);
+    ib_rc = ib_context_site_get(data->tx->ctx, &site);
     if (ib_rc != IB_OK) {
         TSDebug("ironbee", "Error getting site for context: %s",
                 ib_status_to_string(ib_rc));

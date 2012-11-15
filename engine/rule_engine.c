@@ -3628,7 +3628,7 @@ static ib_status_t gen_full_id(ib_engine_t *ib,
         switch(ctx->ctype) {
         case IB_CTYPE_LOCATION :
         case IB_CTYPE_SITE :
-            rc = ib_context_site_get(ib, ctx, &site);
+            rc = ib_context_site_get(ctx, &site);
             if (rc != IB_OK) {
                 IB_FTRACE_RET_STATUS(rc);
             }

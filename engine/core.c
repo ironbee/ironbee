@@ -1684,7 +1684,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                                   strlen(ib->sensor_hostname));
     ib_list_push(list, f);
 
-    rc = ib_context_site_get(ib, log->ctx, &site);
+    rc = ib_context_site_get(log->ctx, &site);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -3350,7 +3350,7 @@ static ib_status_t core_site_create(
     }
 
     /* Store the site in the context */
-    rc = ib_context_site_set(ib, ctx, *psite);
+    rc = ib_context_site_set(ctx, *psite);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to set site for site context \"%s\": %s",
                          site_name, ib_status_to_string(rc));
@@ -3493,7 +3493,7 @@ static ib_status_t core_location_create(
     }
 
     /* Store the site in the context */
-    rc = ib_context_site_set(cp->ib, ctx, site);
+    rc = ib_context_site_set(ctx, site);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to set site for context \"%s\": %s",
                          ib_context_full_get(ctx), ib_status_to_string(rc));
@@ -3530,7 +3530,7 @@ static ib_status_t core_location_create(
     }
 
     /* Store the site in the context */
-    rc = ib_context_location_set(cp->ib, ctx, *plocation);
+    rc = ib_context_location_set(ctx, *plocation);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Failed to set location for context \"%s\": %s",

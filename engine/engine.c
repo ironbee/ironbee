@@ -1819,13 +1819,11 @@ ib_status_t ib_context_close(ib_context_t *ctx)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_context_site_set(const ib_engine_t *ib,
-                                ib_context_t *ctx,
+ib_status_t ib_context_site_set(ib_context_t *ctx,
                                 const ib_site_t *site)
 {
     IB_FTRACE_INIT();
 
-    assert(ib != NULL);
     assert(ctx != NULL);
 
     if (ctx->state == CTX_CLOSED) {
@@ -1839,13 +1837,10 @@ ib_status_t ib_context_site_set(const ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_context_site_get(const ib_engine_t *ib,
-                                const ib_context_t *ctx,
+ib_status_t ib_context_site_get(const ib_context_t *ctx,
                                 const ib_site_t **psite)
 {
     IB_FTRACE_INIT();
-
-    assert(ib != NULL);
     assert(ctx != NULL);
     assert(psite != NULL);
 
@@ -1857,13 +1852,10 @@ ib_status_t ib_context_site_get(const ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_context_location_set(const ib_engine_t *ib,
-                                    ib_context_t *ctx,
+ib_status_t ib_context_location_set(ib_context_t *ctx,
                                     const ib_site_location_t *location)
 {
     IB_FTRACE_INIT();
-
-    assert(ib != NULL);
     assert(ctx != NULL);
 
     if (ctx->state == CTX_CLOSED) {
@@ -1877,13 +1869,10 @@ ib_status_t ib_context_location_set(const ib_engine_t *ib,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_context_location_get(const ib_engine_t *ib,
-                                    const ib_context_t *ctx,
+ib_status_t ib_context_location_get(const ib_context_t *ctx,
                                     const ib_site_location_t **plocation)
 {
     IB_FTRACE_INIT();
-
-    assert(ib != NULL);
     assert(ctx != NULL);
     assert(plocation != NULL);
 

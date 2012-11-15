@@ -127,7 +127,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     }
 
     /* Get the site */
-    ib_rc = ib_context_site_get(log->ib, log->ctx, &site);
+    ib_rc = ib_context_site_get(log->ctx, &site);
     if (ib_rc != IB_OK) {
         IB_FTRACE_RET_STATUS(ib_rc);
     }
@@ -626,7 +626,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
     auditlog_callback_data_t cbdata;
 
     /* Get the site */
-    rc = ib_context_site_get(log->ib, log->ctx, &site);
+    rc = ib_context_site_get(log->ctx, &site);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

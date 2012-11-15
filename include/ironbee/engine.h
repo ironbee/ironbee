@@ -248,56 +248,50 @@ ib_status_t DLL_PUBLIC ib_context_create(ib_engine_t *ib,
 /**
  * Set the site associated with the current context
  *
- * @param[in] ib Engine
  * @param[in,out] ctx Context to set the site for
  * @param[in] site Site object to store in context / NULL
  *
  * @returns Status code
  */
 ib_status_t ib_context_site_set(
-    const ib_engine_t *ib,
     ib_context_t *ctx,
     const ib_site_t *site);
 
 /**
  * Get the site associated with the current context
  *
- * @param[in] ib Engine
  * @param[in] ctx Context to query
  * @param[out] psite Pointer to the site object / NULL
  *
  * @returns Status code
  */
-ib_status_t ib_context_site_get(const ib_engine_t *ib,
-                                const ib_context_t *ctx,
-                                const ib_site_t **psite);
+ib_status_t ib_context_site_get(
+    const ib_context_t *ctx,
+    const ib_site_t **psite);
 
 /**
  * Set the location associated with the current context
  *
- * @param[in] ib Engine
  * @param[in,out] ctx Context to set the location for
  * @param[in] location Location object to store in context / NULL
  *
  * @returns Status code
  */
 ib_status_t ib_context_location_set(
-    const ib_engine_t *ib,
     ib_context_t *ctx,
     const ib_site_location_t *location);
 
 /**
  * Get the location associated with the current context
  *
- * @param[in] ib Engine
  * @param[in] ctx Context to query
  * @param[out] plocation Pointer to the location object / NULL
  *
  * @returns Status code
  */
-ib_status_t ib_context_location_get(const ib_engine_t *ib,
-                                    const ib_context_t *ctx,
-                                    const ib_site_location_t **plocation);
+ib_status_t ib_context_location_get(
+    const ib_context_t *ctx,
+    const ib_site_location_t **plocation);
 
 /**
  * Open a configuration context.
