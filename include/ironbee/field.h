@@ -1032,6 +1032,29 @@ const char DLL_PUBLIC *ib_field_type_name(
 );
 
 /**
+ * Attempt to convert a single field.
+ *
+ * If the desired type matches the in_field type, out_field is set to NULL
+ * and IB_OK is returned.
+ *
+ * @param[in,out] mp Memory pool to use.
+ * @param[in] desired_type The type to try to convert this to.
+ * @param[in] in_field The input field.
+ * @param[out] out_field The output field to write to.
+ *
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If a string cannot be converted to a number type
+ *               or some other invalid type conversion is requested.
+ *   - IB_EALLOC Memory allocation error.
+ */
+ib_status_t ib_field_convert(
+    ib_mpool_t *mp,
+    const ib_ftype_t desired_type,
+    const ib_field_t *in_field,
+    ib_field_t **out_field);
+
+/**
  * @} IronBeeUtilField
  */
 
