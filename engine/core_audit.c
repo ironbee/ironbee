@@ -129,6 +129,8 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     /* Get the site */
     ib_rc = ib_context_site_get(log->ctx, &site);
     if (ib_rc != IB_OK) {
+        free(dtmp);
+        free(dn);
         IB_FTRACE_RET_STATUS(ib_rc);
     }
 
