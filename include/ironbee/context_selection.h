@@ -83,7 +83,6 @@ typedef ib_status_t (* ib_ctxsel_select_fn_t)(
  * This function is normally invoked by the core module in the processing of a
  * site directive.
  *
- * @param[in] ib Engine
  * @param[in] ctx Site's configuration context
  * @param[in] name Site name
  * @param[in] common_cb_data Callback data passed to all registered fns
@@ -93,7 +92,6 @@ typedef ib_status_t (* ib_ctxsel_select_fn_t)(
  * @returns Status code
  */
 typedef ib_status_t (* ib_ctxsel_site_create_fn_t) (
-    const ib_engine_t *ib,
     ib_context_t *ctx,
     const char *name,
     void *common_cb_data,
@@ -555,7 +553,6 @@ ib_status_t ib_ctxsel_select_context(
  * This function is normally invoked by the core module in the processing of a
  * site directive.
  *
- * @param[in] ib Engine
  * @param[in,out] ctx Site's configuration context
  * @param[in] name Site name
  * @param[out] psite Address where site will be written / NULL
@@ -563,7 +560,6 @@ ib_status_t ib_ctxsel_select_context(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_ctxsel_site_create(
-    const ib_engine_t *ib,
     ib_context_t *ctx,
     const char *name,
     ib_site_t **psite);

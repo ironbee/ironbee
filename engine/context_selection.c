@@ -45,8 +45,7 @@
 
 bool ib_ctxsel_module_is_active(
     const ib_engine_t *ib,
-    const ib_module_t *module
-)
+    const ib_module_t *module)
 {
     IB_FTRACE_INIT();
 
@@ -57,25 +56,23 @@ bool ib_ctxsel_module_is_active(
 }
 
 ib_status_t ib_ctxsel_site_create(
-    const ib_engine_t *ib,
     ib_context_t *ctx,
     const char *name,
     ib_site_t **psite)
 {
     IB_FTRACE_INIT();
-    assert(ib != NULL);
     assert(ctx != NULL);
     assert(ctx->ctype == IB_CTYPE_SITE);
     assert(name != NULL);
 
     ib_status_t rc;
-    const ib_ctxsel_registration_t *ctxsel = &ib->act_ctxsel;
+    const ib_ctxsel_registration_t *ctxsel = &ctx->ib->act_ctxsel;
 
     if (ctxsel->site_create_fn == NULL) {
-        rc = ib_site_create(ib, ctx, name, NULL, NULL, psite);
+        rc = ib_site_create(ctx, name, NULL, NULL, psite);
     }
     else {
-        rc = ctxsel->site_create_fn(ib, ctx, name,
+        rc = ctxsel->site_create_fn(ctx, name,
                                     ctxsel->common_cb_data,
                                     ctxsel->site_create_cb_data,
                                     psite);
@@ -94,7 +91,7 @@ ib_status_t ib_ctxsel_location_create(
     assert(location_str != NULL);
 
     ib_status_t rc;
-    const ib_ctxsel_registration_t *ctxsel = &site->ib->act_ctxsel;
+    const ib_ctxsel_registration_t *ctxsel = &ctx->ib->act_ctxsel;
 
     if (ctxsel->location_create_fn == NULL) {
         rc = ib_site_location_create(site, ctx, location_str, NULL,
@@ -119,7 +116,7 @@ ib_status_t ib_ctxsel_host_create(
     assert(host_str != NULL);
 
     ib_status_t rc;
-    const ib_ctxsel_registration_t *ctxsel = &site->ib->act_ctxsel;
+    const ib_ctxsel_registration_t *ctxsel = &site->context->ib->act_ctxsel;
 
     if (ctxsel->host_create_fn == NULL) {
         rc = ib_site_host_create(site, host_str, NULL, NULL, phost);
@@ -143,7 +140,7 @@ ib_status_t ib_ctxsel_service_create(
     assert(service_str != NULL);
 
     ib_status_t rc;
-    const ib_ctxsel_registration_t *ctxsel = &site->ib->act_ctxsel;
+    const ib_ctxsel_registration_t *ctxsel = &site->context->ib->act_ctxsel;
 
     if (ctxsel->service_create_fn == NULL) {
         rc = ib_site_service_create(site, service_str, NULL, NULL, pservice);

@@ -50,7 +50,6 @@ extern "C" {
 struct ib_site_t {
     ib_uuid_t           id;              /**< Site UUID */
     const char         *id_str;          /**< ascii format, for logging */
-    const ib_engine_t  *ib;              /**< Engine */
     ib_mpool_t         *mp;              /**< Memory pool */
     const char         *name;            /**< Site name */
     ib_context_t       *context;         /**< Site's configuration context */
@@ -84,7 +83,6 @@ struct ib_site_location_t {
 /**
  * Create a site and add it to the context's site list
  *
- * @param[in] ib Engine
  * @param[in,out] ctx Site's configuration context
  * @param[in] name Site name
  * @param[in] ctxsel_site Context selection site info
@@ -94,7 +92,6 @@ struct ib_site_location_t {
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_site_create(
-    const ib_engine_t *ib,
     ib_context_t *ctx,
     const char *name,
     void *ctxsel_site,

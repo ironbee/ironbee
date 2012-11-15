@@ -44,7 +44,6 @@
 
 
 ib_status_t ib_site_create(
-    const ib_engine_t *ib,
     ib_context_t *ctx,
     const char *name,
     void *ctxsel_site,
@@ -52,7 +51,6 @@ ib_status_t ib_site_create(
     ib_site_t **psite)
 {
     IB_FTRACE_INIT();
-    assert(ib != NULL);
     assert(ctx != NULL);
     assert(ctx->ctype == IB_CTYPE_SITE);
     assert(name != NULL);
@@ -70,7 +68,6 @@ ib_status_t ib_site_create(
             IB_FTRACE_RET_STATUS(IB_EALLOC);
         }
     }
-    site->ib = ib;
     site->mp = pool;
     site->name = ib_mpool_strdup(pool, name);
     site->context = ctx;

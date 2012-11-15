@@ -535,7 +535,6 @@ select_main_context:
 /**
  * Core context selection: Create Site Function 
  *
- * @param[in] ib Engine
  * @param[in] ctx Site's configuration context
  * @param[in] name Site name
  * @param[in] common_cb_data Callback data passed to all registered fns
@@ -545,7 +544,6 @@ select_main_context:
  * @returns Status code
  */
 static ib_status_t core_ctxsel_site_create(
-    const ib_engine_t *ib,
     ib_context_t *ctx,
     const char *name,
     void *common_cb_data,
@@ -553,7 +551,6 @@ static ib_status_t core_ctxsel_site_create(
     ib_site_t **psite)
 {
     IB_FTRACE_INIT();
-    assert(ib != NULL);
     assert(ctx != NULL);
     assert(ctx->ctype == IB_CTYPE_SITE);
     assert(name != NULL);
@@ -572,7 +569,7 @@ static ib_status_t core_ctxsel_site_create(
         IB_FTRACE_RET_STATUS(IB_EALLOC);
     }
     site = &(core_site->site);
-    rc = ib_site_create(ib, ctx, name, core_site, site, NULL);
+    rc = ib_site_create(ctx, name, core_site, site, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

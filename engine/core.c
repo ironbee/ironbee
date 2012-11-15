@@ -3342,7 +3342,7 @@ static ib_status_t core_site_create(
     }
 
     /* Create the site */
-    rc = ib_ctxsel_site_create(ib, ctx, site_name, psite);
+    rc = ib_ctxsel_site_create(ctx, site_name, psite);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error creating site \"%s\": %s",
                          site_name, ib_status_to_string(rc));
