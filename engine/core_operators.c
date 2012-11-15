@@ -1194,7 +1194,9 @@ static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
-    if ( pdata->type == IB_FTYPE_NUM && field->type == IB_FTYPE_NUM ) {
+    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
+         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
+    {
         ib_num_t param_value;
         ib_num_t value;
         ib_status_t rc;
@@ -1268,7 +1270,9 @@ static ib_status_t op_ne_execute(const ib_rule_exec_t *rule_exec,
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
-    if ( pdata->type == IB_FTYPE_NUM && field->type == IB_FTYPE_NUM ) {
+    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
+         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
+    {
         ib_num_t param_value;
         ib_num_t value;
         ib_status_t rc;
@@ -1349,7 +1353,9 @@ static ib_status_t op_gt_execute(const ib_rule_exec_t *rule_exec,
     IB_FTRACE_INIT();
     const ib_field_t *pdata = (const ib_field_t *)data;
 
-    if ( pdata->type == IB_FTYPE_NUM && field->type == IB_FTYPE_NUM ) {
+    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
+         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
+    {
         ib_num_t param_value;
         ib_num_t value;
         ib_status_t rc;
@@ -1430,7 +1436,9 @@ static ib_status_t op_lt_execute(const ib_rule_exec_t *rule_exec,
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
-    if ( pdata->type == IB_FTYPE_NUM && field->type == IB_FTYPE_NUM ) {
+    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
+         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
+    {
         ib_num_t param_value;
         ib_num_t value;
         ib_status_t rc;
@@ -1513,7 +1521,9 @@ static ib_status_t op_ge_execute(const ib_rule_exec_t *rule_exec,
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
-    if ( pdata->type == IB_FTYPE_NUM && field->type == IB_FTYPE_NUM ) {
+    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
+         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
+    {
         ib_num_t param_value;
         ib_num_t value;
         ib_status_t rc;
@@ -1594,7 +1604,9 @@ static ib_status_t op_le_execute(const ib_rule_exec_t *rule_exec,
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
-    if ( pdata->type == IB_FTYPE_NUM && field->type == IB_FTYPE_NUM ) {
+    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
+         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
+    {
         ib_num_t param_value;
         ib_num_t value;
         ib_status_t rc;
