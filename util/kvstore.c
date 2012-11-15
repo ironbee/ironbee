@@ -104,7 +104,7 @@ static ib_kvstore_value_t * kvstore_value_dup(
 
     if (!new_value->value) {
         kvstore->free(kvstore, new_value, kvstore->free_cbdata);
-        IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
+        IB_FTRACE_RET_PTR((kvstore_value_t *), NULL);
     }
 
     new_value->type = kvstore->malloc(
@@ -115,7 +115,7 @@ static ib_kvstore_value_t * kvstore_value_dup(
     if (!new_value->type) {
         kvstore->free(kvstore, new_value->value, kvstore->free_cbdata);
         kvstore->free(kvstore, new_value, kvstore->free_cbdata);
-        IB_FTRACE_RET_PTR((kvstore_value_t*), NULL);
+        IB_FTRACE_RET_PTR((kvstore_value_t *), NULL);
     }
 
     /* Copy in all data. */
