@@ -901,7 +901,7 @@ ib_status_t ib_kvstore_filesystem_init(
     assert(kvstore);
     assert(directory);
 
-    /* There is no callback data used for this implimentation. */
+    /* There is no callback data used for this implementation. */
     ib_kvstore_init(kvstore);
 
     ib_kvstore_filesystem_server_t *server = malloc(sizeof(*server));
