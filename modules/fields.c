@@ -52,6 +52,7 @@
 #include <ironbee/core.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
+#include <ironbee/string.h>
 #include <ironbee/field.h>
 #include <ironbee/list.h>
 #include <ironbee/module.h>
@@ -110,6 +111,9 @@ static ib_status_t parse_type(ib_cfgparser_t *cp,
     else if (strcasecmp(str, "UNUM") == 0) {
         *type = (ib_ftype_t)IB_FTYPE_UNUM;
     }
+    else if (strcasecmp(str, "FLOAT") == 0) {
+        *type = (ib_ftype_t)IB_FTYPE_FLOAT;
+    }
     else if (strcasecmp(str, "NULSTR") == 0) {
         *type = (ib_ftype_t)IB_FTYPE_NULSTR;
     }
@@ -164,30 +168,60 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
     ib_status_t rc;
 
     /* Parse the type name */
-    if (type == IB_FTYPE_NUM) {
-        ib_num_t val = (ib_num_t) strtol(str, NULL, 0);
+    switch(type) {
+    case IB_FTYPE_NUM :
+    case IB_FTYPE_UNUM :
+    {
+        ib_num_t val;
+        rc = ib_string_to_num(str, 0, &val);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        if (type == IB_FTYPE_NUM) {
+            rc = ib_field_create(pfield,
+                                 mp,
+                                 IB_FIELD_NAME(name),
+                                 type,
+                                 ib_ftype_num_in(&val));
+        }
+        else {
+            ib_unum_t uval = (ib_unum_t)val;
+            rc = ib_field_create(pfield,
+                                 mp,
+                                 IB_FIELD_NAME(name),
+                                 type,
+                                 ib_ftype_unum_in(&uval));
+        }
+        break;
+    }
+
+    case IB_FTYPE_FLOAT :
+    {
+        ib_float_t val;
+        rc = ib_string_to_float(str, &val);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
         rc = ib_field_create(pfield,
                              mp,
                              IB_FIELD_NAME(name),
                              type,
-                             ib_ftype_num_in(&val));
+                             ib_ftype_float_in(&val));
+        break;
     }
-    else if (type == IB_FTYPE_UNUM) {
-        ib_unum_t val = (ib_unum_t) strtol(str, NULL, 0);
-        rc = ib_field_create(pfield,
-                             mp,
-                             IB_FIELD_NAME(name),
-                             type,
-                             ib_ftype_unum_in(&val));
-    }
-    else if (type == IB_FTYPE_NULSTR) {
+
+    case IB_FTYPE_NULSTR :
+    {
         rc = ib_field_create(pfield,
                              mp,
                              IB_FIELD_NAME(name),
                              type,
                              ib_ftype_nulstr_in(str));
+        break;
     }
-    else if (type == IB_FTYPE_BYTESTR) {
+
+    case IB_FTYPE_BYTESTR :
+    {
         ib_bytestr_t *bs;
         rc = ib_bytestr_dup_nulstr(&bs, mp, str);
         if (rc != IB_OK) {
@@ -200,8 +234,10 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
                              IB_FIELD_NAME(name),
                              type,
                              ib_ftype_bytestr_in(bs));
+        break;
     }
-    else {
+
+    default :
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
