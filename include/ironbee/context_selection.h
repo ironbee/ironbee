@@ -78,7 +78,7 @@ typedef ib_status_t (* ib_ctxsel_select_fn_t)(
     ib_context_t **pctx);
 
 /**
- * Configuration Context Create Site Function 
+ * Configuration Context Create Site Function
  *
  * This function is normally invoked by the core module in the processing of a
  * site directive.
@@ -99,7 +99,7 @@ typedef ib_status_t (* ib_ctxsel_site_create_fn_t) (
     ib_site_t **psite);
 
 /**
- * Configuration Context Create Location Function 
+ * Configuration Context Create Location Function
  *
  * This function is normally invoked by the core module in the processing of a
  * location directive.
@@ -122,7 +122,7 @@ typedef ib_status_t (* ib_ctxsel_location_create_fn_t) (
     ib_site_location_t **plocation);
 
 /**
- * Configuration Context Create Host Function 
+ * Configuration Context Create Host Function
  *
  * This function is normally invoked by the core module in the processing of a
  * host directive.
@@ -143,7 +143,7 @@ typedef ib_status_t (* ib_ctxsel_host_create_fn_t) (
     ib_site_host_t **phost);
 
 /**
- * Configuration Context Create Service Function 
+ * Configuration Context Create Service Function
  *
  * This function is normally invoked by the core module in the processing of a
  * host directive.

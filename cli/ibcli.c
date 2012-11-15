@@ -1945,7 +1945,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
                                  handle_context_tx_event,
                                  print_context_tx,
                                  NULL);
-        if (rc != IB_OK) { 
+        if (rc != IB_OK) {
             fatal_error("Failed to register tx context handler: %s\n",
                         ib_status_to_string(rc));
         }

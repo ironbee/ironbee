@@ -533,7 +533,7 @@ select_main_context:
 }
 
 /**
- * Core context selection: Create Site Function 
+ * Core context selection: Create Site Function
  *
  * @param[in] ctx Site's configuration context
  * @param[in] name Site name
@@ -594,7 +594,7 @@ static ib_status_t core_ctxsel_site_create(
 }
 
 /**
- * Core context selection: Create location function 
+ * Core context selection: Create location function
  *
  * @param[in] site Parent site
  * @param[in] ctx Locations's configuration context
@@ -661,7 +661,7 @@ static ib_status_t core_ctxsel_location_create(
 }
 
 /**
- * Core context selection: Host create function 
+ * Core context selection: Host create function
  *
  * @param[in] site Parent site
  * @param[in] host_str Host string (host name)
@@ -735,7 +735,7 @@ static ib_status_t core_ctxsel_host_create(
 }
 
 /**
- * Core context selection: Service create function 
+ * Core context selection: Service create function
  *
  * @param[in] site Parent site
  * @param[in] service_str Service string
