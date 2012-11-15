@@ -1100,6 +1100,214 @@ static ib_status_t capture_num(const ib_rule_exec_t *rule_exec,
     IB_FTRACE_RET_STATUS(rc);
 }
 
+#define IB_FTYPE_NUM_FLAG     (1<<0)
+#define IB_FTYPE_UNUM_FLAG    (1<<1)
+#define IB_FTYPE_FLOAT_FLAG   (1<<2)
+#define IB_FTYPE_NULSTR_FLAG  (1<<3)
+#define IB_FTYPE_BYTESTR_FLAG (1<<4)
+#define IB_FTYPE_LIST_FLAG    (1<<5)
+#define IB_FTYPE_SBUFFER_FLAG (1<<6)
+
+/**
+ * Map the two input types to a set of types that they should be converted to.
+ *
+ * Below is conversion table with the two input types on the left,
+ * an arrow (->) and the resultant flags on the right.
+ *
+ * - float, float   -> float
+ * - float, string  -> float
+ * - float, int     -> float
+ * - float, uint    -> float
+ * - string, string -> int, float
+ * - string, int    -> int, float
+ * - string, uint   -> uint, int, float
+ * - int, int       -> int
+ * - int, uint      -> int
+ * - uint, uint     -> uint
+ *
+ * The caller should try to convert the types in the given order
+ * until both values can be converted successfully to an acceptable type
+ * for the operator.
+ *
+ * @param[in] lh_field The field on the left-hand side of the operation.
+ * @param[in] rh_field The field on the right-hand side of the operation.
+ *            In the current Rule Language this is the parameter.
+ *            Eg: @@eq "%LH_FIELD"
+ *
+ * @param[out] type_flags This outputs the valid type conversions. Valid
+ *             flags are:
+ *             - IB_FTYPE_NUM_FLAG
+ *             - IB_FTYPE_UNUM_FLAG
+ *             - IB_FTYPE_FLOAT_FLAG
+ *             - IB_FTYPE_NULSTR_FLAG
+ *             - IB_FTYPE_BYTESTR_FLAG
+ *             - IB_FTYPE_LIST_FLAG
+ *             - IB_FTYPE_SBUFFER_FLAG
+ * @returns
+ *   - IB_OK Success. type_flags is set.
+ *   - IB_EINVAL An invalid type of @a lh_field or @a rh_field was observed.
+ *   - IB_EOTHER The type of @a lh_field and @a rh_field are valid but
+ *               somehow they caused an invalid flag configuration
+ *               and did not cause the expected IB_EINVAL. This indicates
+ *               a logic error inside of this function.
+ */
+static ib_status_t select_math_type_conversion(
+    const ib_field_t *lh_field,
+    const ib_field_t *rh_field,
+    ib_flags_t *type_flags)
+{
+    IB_FTRACE_INIT();
+
+    ib_flags_t arg_types = 0;
+
+    if (lh_field->type == IB_FTYPE_FLOAT && rh_field->type == IB_FTYPE_FLOAT)
+    {
+        arg_types |= IB_FTYPE_FLOAT_FLAG;
+    }
+    if (lh_field->type == IB_FTYPE_NULSTR && rh_field->type == IB_FTYPE_NULSTR)
+    {
+        arg_types |= IB_FTYPE_NULSTR_FLAG;
+    }
+    if (lh_field->type == IB_FTYPE_BYTESTR &&
+        rh_field->type == IB_FTYPE_BYTESTR)
+    {
+        arg_types |= IB_FTYPE_BYTESTR_FLAG;
+    }
+    if (lh_field->type == IB_FTYPE_NUM && rh_field->type == IB_FTYPE_NUM) {
+        arg_types |= IB_FTYPE_NUM_FLAG;
+    }
+    if (lh_field->type == IB_FTYPE_UNUM && rh_field->type == IB_FTYPE_UNUM) {
+        arg_types |= IB_FTYPE_UNUM_FLAG;
+    }
+    if (lh_field->type == IB_FTYPE_LIST && rh_field->type == IB_FTYPE_LIST) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    if (lh_field->type == IB_FTYPE_SBUFFER &&
+        rh_field->type == IB_FTYPE_SBUFFER)
+    {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    /* Implementation of this table in if-elses:
+     * - float, float   -> float
+     * - float, string  -> float
+     * - float, int     -> float
+     * - float, uint    -> float
+     * - string, string -> int, float
+     * - string, int    -> int, float
+     * - string, uint   -> uint, int, float
+     * - int, int       -> int
+     * - int, uint      -> int
+     * - uint, uint     -> uint */
+    if (arg_types & IB_FTYPE_FLOAT_FLAG) {
+        /* All conversions for float are float.
+         * NOTE: Invalid types like LIST and SBUFFER have already failed-out
+         *       of this function. */
+        *type_flags = IB_FTYPE_FLOAT_FLAG;
+    }
+    else if (arg_types & (IB_FTYPE_NULSTR_FLAG | IB_FTYPE_BYTESTR_FLAG)) {
+        /* Guarantee at least to convert to num and float. */
+        *type_flags = IB_FTYPE_NUM_FLAG | IB_FTYPE_FLOAT_FLAG;
+
+        /* Unum forces another possible conversion. */
+        if (arg_types & IB_FTYPE_UNUM_FLAG) {
+            *type_flags |= IB_FTYPE_UNUM_FLAG;
+        }
+    }
+    else if (arg_types & IB_FTYPE_NUM_FLAG) {
+        *type_flags = IB_FTYPE_NUM_FLAG;
+    }
+    /* We do a == check here because all other flags have been checked above.
+     * If this fails there is some unexpected corruption in the flags
+     * and we should error-out in the else-block. */
+    else if (arg_types == IB_FTYPE_UNUM_FLAG) {
+        *type_flags = IB_FTYPE_UNUM_FLAG;
+    }
+    /* Corrupt flags. */
+    else {
+        IB_FTRACE_RET_STATUS(IB_EOTHER);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
+ * Try to convert two input fields to one of the possible @a valid_types.
+ *
+ * If a field does not need to be converted, it's corresponding output field
+ * will be set to NULL.
+ *
+ * @param[in,out] mp The memory pool to use.
+ * @param[in] in_field1 The first input field.
+ * @param[in] in_field2 The second input field.
+ * @param[in] valid_types A set of types to try to convert these fields to.
+ *             Valid flags are:
+ *             - IB_FTYPE_NUM_FLAG
+ *             - IB_FTYPE_UNUM_FLAG
+ *             - IB_FTYPE_FLOAT_FLAG
+ * @param[out] out_field1 The output field. Null if no conversion of in_field1
+ *             is performed.
+ * @param[out] out_field2 The output field. Null if no conversion of in_field2
+ *             is performed.
+ * @param[out] out_type The type that was chosen for out_field1 and out_field2.
+ */
+static ib_status_t perform_math_type_conversion(
+    ib_mpool_t *mp,
+    const ib_field_t *in_field1,
+    const ib_field_t *in_field2,
+    const ib_flags_t valid_types,
+    ib_field_t **out_field1,
+    ib_field_t **out_field2,
+    ib_ftype_t *out_type)
+{
+    IB_FTRACE_INIT();
+
+    ib_status_t rc;
+
+    ib_ftype_t try_type;
+
+    /* NOTE - Follwing are 3 almost-identical if-if-if blocks. */
+
+    /* Try to convert to UNUM. */
+    if (valid_types & IB_FTYPE_UNUM_FLAG) {
+        try_type = IB_FTYPE_UNUM;
+        rc = ib_field_convert(mp, try_type, in_field1, out_field1);
+        if (rc == IB_OK) {
+            rc = ib_field_convert(mp, try_type, in_field2, out_field2);
+            if (rc == IB_OK){
+                IB_FTRACE_RET_STATUS(IB_OK);
+            }
+        }
+    }
+
+    /* Try to convert to NUM. */
+    if (valid_types & IB_FTYPE_NUM_FLAG) {
+        try_type = IB_FTYPE_NUM;
+        rc = ib_field_convert(mp, try_type, in_field1, out_field1);
+        if (rc == IB_OK) {
+            rc = ib_field_convert(mp, try_type, in_field2, out_field2);
+            if (rc == IB_OK){
+                IB_FTRACE_RET_STATUS(IB_OK);
+            }
+        }
+    }
+
+    /* Try to convert to FLOAT. */
+    if (valid_types & IB_FTYPE_FLOAT_FLAG) {
+        try_type = IB_FTYPE_FLOAT;
+        rc = ib_field_convert(mp, try_type, in_field1, out_field1);
+        if (rc == IB_OK) {
+            rc = ib_field_convert(mp, try_type, in_field2, out_field2);
+            if (rc == IB_OK){
+                IB_FTRACE_RET_STATUS(IB_OK);
+            }
+        }
+    }
+
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
+}
+
+
 /**
  * Execute function for the numeric "equal" operator
  *
@@ -1109,7 +1317,10 @@ static ib_status_t capture_num(const ib_rule_exec_t *rule_exec,
  * @param[in] field Field value
  * @param[out] result Pointer to number in which to store the result
  *
- * @returns Status code
+ * @returns
+ *   - IB_OK Success.
+ *   - IB_EINVAL Invalid conversion, such as float, or invalid input field.
+ *   - IB_EOTHER Unexpected internal error.
  */
 static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
                                  void *data,
@@ -1121,57 +1332,57 @@ static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
     assert(data != NULL);
     const ib_field_t *pdata = (const ib_field_t *)data;
 
-    /* If both operands are nums, use numeric eq. Otherwise use float. */
-    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
-         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
-    {
-        ib_num_t param_value;
-        ib_num_t value;
-        ib_status_t rc;
+    ib_status_t rc;
+    ib_flags_t valid_types = 0;
+    ib_ftype_t final_type = 0;  /* Set by perform_math_type_conversion. */
+    ib_field_t *rh_field;       /* Set by perform_math_type_conversion. */
+    ib_field_t *lh_field;       /* Set by perform_math_type_conversion. */
+    ib_num_t param_value;
+    ib_num_t value;
 
-        /* Get integer representation of the field */
-        rc = field_to_num(rule_exec, field, &value);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
+    rc = select_math_type_conversion(field, pdata, &valid_types);
 
-        /* Get the num value from the param data (including expansion, etc) */
-        rc = get_num_value(rule_exec, pdata, flags, &param_value);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Do the comparison */
-        *result = (value == param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            capture_num(rule_exec, 0, value);
-        }
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    else {
-        ib_float_t param_value;
-        ib_float_t value;
-        ib_status_t rc;
+    /* Ensure the the foat flag is always off. */
+    valid_types &= !IB_FTYPE_FLOAT_FLAG;
 
-        /* Get float representation of the field */
-        rc = field_to_float(rule_exec, field, &value);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
+    /* Convert types for math operation. */
+    rc = perform_math_type_conversion(
+        rule_exec->tx->mp,
+        field,
+        pdata,
+        valid_types,
+        &lh_field,
+        &rh_field,
+        &final_type);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    if (lh_field == NULL) {
+        lh_field = (ib_field_t *) field;
+    }
+    if (rh_field == NULL) {
+        rh_field = (ib_field_t *) pdata;
+    }
 
-        /* Get the num value from the param data (including expansion, etc) */
-        rc = get_float_value(rule_exec, pdata, flags, &param_value);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
 
-        /* Do the comparison */
-        *result = (value == param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            capture_num(rule_exec, 0, value);
-        }
+    rc = ib_field_value(rh_field, ib_ftype_num_out(&param_value));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_field_value(lh_field, ib_ftype_num_out(&value));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Do the comparison */
+    *result = (value == param_value);
+    if (ib_rule_should_capture(rule_exec, *result)) {
+        ib_data_capture_clear(rule_exec->tx);
+        capture_num(rule_exec, 0, value);
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -1195,69 +1406,17 @@ static ib_status_t op_ne_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    assert(data != NULL);
-    const ib_field_t *pdata = (const ib_field_t *)data;
 
-    /* If both operands are nums, use numeric eq. Otherwise use float. */
-    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
-         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
-    {
-        ib_num_t param_value;
-        ib_num_t value;
-        ib_status_t rc;
-
-        /* Get integer representation of the field */
-        rc = field_to_num(rule_exec, field, &value);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Get the numeric value (including expansion, etc) */
-        rc = get_num_value(rule_exec, pdata, flags, &param_value);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Do the comparison */
-        *result = (value != param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            rc = capture_num(rule_exec, 0, value);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
-            }
-        }
+    ib_status_t rc = op_eq_execute(rule_exec,
+                                 data,
+                                 flags,
+                                 field,
+                                 result);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
     }
 
-    else {
-        ib_float_t param_value;
-        ib_float_t value;
-        ib_status_t rc;
-
-        /* Get float representation of the field */
-        rc = field_to_float(rule_exec, field, &value);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Get the float value (including expansion, etc) */
-        rc = get_float_value(rule_exec, pdata, flags, &param_value);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Do the comparison */
-        *result = (value != param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            rc = capture_num(rule_exec, 0, value);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
-            }
-        }
-    }
+    *result = !(*result);
 
     IB_FTRACE_RET_STATUS(IB_OK);
 }
