@@ -30,7 +30,7 @@ else
 endif
 endif
 
-EXTRA_DIST = luajit-2.0-ironbee/*
+EXTRA_DIST = luajit-2.0-ironbee
 
 dist-hook:
 	find $(distdir) -name '.git*' -exec rm -rf {} \;

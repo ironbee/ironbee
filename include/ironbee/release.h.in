@@ -50,7 +50,7 @@ extern "C" {
 /* Version definitions */
 #define IB_VERSION_MAJOR        @MAJOR_VERSION@ /**< Major version */
 #define IB_VERSION_MINOR        @MINOR_VERSION@ /**< Minor version */
-#define IB_VERSION_MAINT        @PATCH_VERSION@ /**< Maintenance version */
+#define IB_VERSION_MICRO        @MICRO_VERSION@ /**< Micro version */
 #define IB_VERSION_BUILD_EXTRA  0 /**< Extra build number (normally 0) */
 
 /* Handle tacking on a build number */
@@ -66,7 +66,7 @@ extern "C" {
 #define IB_VERSION \
     IB_XSTRINGIFY(IB_VERSION_MAJOR) "." \
     IB_XSTRINGIFY(IB_VERSION_MINOR) "." \
-    IB_XSTRINGIFY(IB_VERSION_MAINT) IB_VERSION_EXTRA
+    IB_XSTRINGIFY(IB_VERSION_MICRO) IB_VERSION_EXTRA
 
 /** Package email address */
 #define IB_EMAIL "ironbee-devel@lists.sourceforge.net"
@@ -86,7 +86,7 @@ extern "C" {
  */
 #define IB_VERNUM    (uint32_t)(((IB_VERSION_MAJOR) * 1000000) + \
                                 ((IB_VERSION_MAJOR) * 1000) + \
-                                (IB_VERSION_MAINT))
+                                (IB_VERSION_MICRO))
 
 /**
  * ABI version number.
