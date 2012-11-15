@@ -570,7 +570,6 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
         }
 
         /* Determine whether we're configured to buffer */
-        ctx = f->ctx = apr_palloc(f->r->pool, sizeof(ironbee_filter_ctx));
         rc = ib_context_get(rctx->tx->ctx, "buffer_res",
                             ib_ftype_num_out(&num), NULL);
         if (rc != IB_OK)
