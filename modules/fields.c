@@ -228,7 +228,7 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -255,7 +255,7 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
     const char *name_str;
     const char *type_str;
     ib_ftype_t type_num;
-    ib_ftype_t element_type;
+    ib_ftype_t element_type = IB_FTYPE_GENERIC;
     ib_num_t element_num;
 
     if (cbdata != NULL) {
