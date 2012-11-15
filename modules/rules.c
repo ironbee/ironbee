@@ -1711,6 +1711,7 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
 {
     IB_FTRACE_INIT();
     ib_status_t rc;
+    ib_status_t rc2;
     ib_module_t  *mod;
     rules_context_cfg_t *cfg;
     ib_mpool_t *mp = ib_engine_pool_main_get(cp->ib);
@@ -1719,6 +1720,7 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
     const char *name;
     const char *value;
     ib_num_t num_val;
+    ib_float_t float_val;
 
     /* Get my module object */
     rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &mod);
@@ -1764,9 +1766,14 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
 
     /* Create the field based on whether the value looks like a number or not */
     rc = ib_string_to_num(value, 0, &num_val);
+    rc2 = ib_string_to_float(value, &float_val);
     if (rc == IB_OK) {
         rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
                              IB_FTYPE_NUM, ib_ftype_num_in(&num_val));
+    }
+    else if (rc2 == IB_OK) {
+        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
+                             IB_FTYPE_FLOAT, ib_ftype_float_in(&float_val));
     }
     else {
         rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
@@ -1790,6 +1797,13 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
                          "InitVar: Created numeric field \"%s\" %ld "
                          "for context \"%s\"",
                          name, (long int)num_val,
+                         ib_context_full_get(cp->cur_ctx));
+    }
+    else if (field->type == IB_FTYPE_FLOAT) {
+        ib_cfg_log_debug(cp,
+                         "InitVar: Created float field \"%s\" %f "
+                         "for context \"%s\"",
+                         name, (double)num_val,
                          ib_context_full_get(cp->cur_ctx));
     }
     else {
