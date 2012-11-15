@@ -31,6 +31,9 @@
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
 
+// For ugly workaround.
+#include "engine/engine_private.h"
+
 #include "fixture.hpp"
 #include "gtest/gtest.h"
 
@@ -147,5 +150,9 @@ TEST_F(TestTransaction, create)
     ASSERT_TRUE(tx);
     EXPECT_EQ(c, tx.connection());
 
+    // State transition logic is currently stored in transaction destruction
+    // logic (!).  This is considered a known bug.  The following line is a
+    // work around.
+    m_engine.ib()->cfg_state = CFG_FINISHED;
     tx.destroy();
 }
