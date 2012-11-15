@@ -47,6 +47,9 @@ typedef struct ib_action_inst_t ib_action_inst_t;
 /**
  * Action instance creation callback type.
  *
+ * When this function is invoked, the @a act_inst action instance has been
+ * created and the actions, flags, and params fields have been initialized.
+ *
  * @param[in] ib IronBee engine.
  * @param[in] ctx Current context.
  * @param[in] pool Memory pool to be used for allocating needed memory.

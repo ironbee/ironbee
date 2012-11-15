@@ -50,6 +50,9 @@ typedef struct ib_operator_inst_t ib_operator_inst_t;
 /**
  * Operator instance creation callback type.
  *
+ * When this function is invoked, the @a op_inst operator instance has been
+ * created and the op, flags, and params fields have been initialized.
+ *
  * @param[in] ib IronBee engine.
  * @param[in] ctx Current context.
  * @param[in] rule The rule that owns the operator instance being executed.
