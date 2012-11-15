@@ -52,11 +52,11 @@
 #include <ironbee/core.h>
 #include <ironbee/debug.h>
 #include <ironbee/engine.h>
-#include <ironbee/string.h>
 #include <ironbee/field.h>
 #include <ironbee/list.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
+#include <ironbee/string.h>
 #include <ironbee/util.h>
 
 #include <assert.h>
