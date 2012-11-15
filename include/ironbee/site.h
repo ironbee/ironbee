@@ -59,15 +59,15 @@ struct ib_site_t {
 
 /** Site host name entity */
 struct ib_site_host_t {
-    const ib_site_t    *site;            /** Parent site object */
-    const char         *hostname;        /** The full hostname */
-    const char         *suffix;          /** Suffix of a wildcarded host name */
+    const ib_site_t    *site;            /**< Parent site object */
+    const char         *hostname;        /**< The full hostname */
+    const char         *suffix;          /**< Suffix of wildcarded host name */
     void               *ctxsel_host;     /**< Context selection host info */
 };
 
 /** Site service entry */
 struct ib_site_service_t {
-    const ib_site_t    *site;            /** Parent site object */
+    const ib_site_t    *site;            /**< Parent site object */
     const char         *ipstr;           /**< IP address / NULL */
     int                 port;            /**< Port number / -1 */
     void               *ctxsel_service;  /**< Context selection service info */
