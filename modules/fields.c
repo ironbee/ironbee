@@ -29,7 +29,8 @@
  *
  *   FieldTx Num1      NUM      1
  *   FieldTx Num2      NUM      5
- *   FieldTx UNum1     UNUM     1
+ *   FieldTx Float1    FLOAT    1
+ *   FieldTx Float2    FLOAT    5.5
  *   FieldTx Str1      NULSTR   "abc"
  *   FieldTx Str2      NULSTR   "ABC"
  *   FieldTx BStr1     BYTESTR  "ABC"
@@ -79,7 +80,6 @@ const char *g_type_names [ ] =
 {
     "GENERIC",
     "NUM",
-    "UNUM",
     "NULSTR",
     "BYTESTR",
     "LIST",
@@ -107,9 +107,6 @@ static ib_status_t parse_type(ib_cfgparser_t *cp,
     /* Parse the type name */
     if (strcasecmp(str, "NUM") == 0) {
         *type = (ib_ftype_t)IB_FTYPE_NUM;
-    }
-    else if (strcasecmp(str, "UNUM") == 0) {
-        *type = (ib_ftype_t)IB_FTYPE_UNUM;
     }
     else if (strcasecmp(str, "FLOAT") == 0) {
         *type = (ib_ftype_t)IB_FTYPE_FLOAT;
@@ -170,28 +167,17 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
     /* Parse the type name */
     switch(type) {
     case IB_FTYPE_NUM :
-    case IB_FTYPE_UNUM :
     {
         ib_num_t val;
         rc = ib_string_to_num(str, 0, &val);
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
-        if (type == IB_FTYPE_NUM) {
-            rc = ib_field_create(pfield,
-                                 mp,
-                                 IB_FIELD_NAME(name),
-                                 type,
-                                 ib_ftype_num_in(&val));
-        }
-        else {
-            ib_unum_t uval = (ib_unum_t)val;
-            rc = ib_field_create(pfield,
-                                 mp,
-                                 IB_FIELD_NAME(name),
-                                 type,
-                                 ib_ftype_unum_in(&uval));
-        }
+        rc = ib_field_create(pfield,
+                             mp,
+                             IB_FIELD_NAME(name),
+                             type,
+                             ib_ftype_num_in(&val));
         break;
     }
 

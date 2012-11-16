@@ -238,8 +238,8 @@ typedef enum
     IsTypeNulStr,
     IsTypeByteStr,
     IsTypeNum,
-    IsTypeUnum,
-    IsTypeSnum,
+    IsTypeInt,
+    IsTypeFloat,
 } istype_t;
 
 /* IsType operator data */
@@ -255,9 +255,9 @@ static istype_params_t istype_params[] = {
     { IsTypeStr,     2, { IB_FTYPE_NULSTR, IB_FTYPE_BYTESTR } },
     { IsTypeNulStr,  1, { IB_FTYPE_NULSTR } },
     { IsTypeByteStr, 1, { IB_FTYPE_BYTESTR } },
-    { IsTypeNum,     2, { IB_FTYPE_NUM, IB_FTYPE_UNUM } },
-    { IsTypeUnum,    1, { IB_FTYPE_UNUM } },
-    { IsTypeSnum,    1, { IB_FTYPE_NUM } },
+    { IsTypeNum,     2, { IB_FTYPE_NUM, IB_FTYPE_FLOAT } },
+    { IsTypeInt,     1, { IB_FTYPE_NUM } },
+    { IsTypeFloat,   1, { IB_FTYPE_FLOAT } },
 };
 
 /**
@@ -600,26 +600,26 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the IsUnum operator */
+    /* Register the IsInt operator */
     rc = ib_operator_register(ib,
-                              "IsUnum",
+                              "IsInt",
                               ( IB_OP_FLAG_PHASE |
                                 IB_OP_FLAG_STREAM ),
                               NULL, NULL, /* no create function */
                               NULL, NULL, /* no destroy function */
-                              op_istype_execute, &istype_params[IsTypeUnum]);
+                              op_istype_execute, &istype_params[IsTypeInt]);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Register the IsSnum operator */
+    /* Register the IsFloat operator */
     rc = ib_operator_register(ib,
-                              "IsSnum",
+                              "IsFloat",
                               ( IB_OP_FLAG_PHASE |
                                 IB_OP_FLAG_STREAM ),
                               NULL, NULL, /* no create function */
                               NULL, NULL, /* no destroy function */
-                              op_istype_execute, &istype_params[IsTypeSnum]);
+                              op_istype_execute, &istype_params[IsTypeFloat]);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
