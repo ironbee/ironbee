@@ -371,10 +371,9 @@ static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
  */
 static int ironbee_sethdr(void *data, const char *key, const char *value)
 {
-    ib_status_t rc;
-    rc = ib_parsed_name_value_pair_list_add((ib_parsed_header_wrapper_t*)data,
-                                            key, strlen(key),
-                                            value, strlen(value));
+    ib_parsed_name_value_pair_list_add((ib_parsed_header_wrapper_t*)data,
+                                       key, strlen(key),
+                                       value, strlen(value));
     return 1;
 }
 
@@ -461,14 +460,26 @@ static int ironbee_headers_in(request_rec *r)
                                        r->method, strlen(r->method),
                                        r->unparsed_uri, strlen(r->unparsed_uri),
                                        r->protocol, strlen(r->protocol));
-        ib_state_notify_request_started(ironbee, ctx->tx, rline);
+        if (rc == IB_OK) {
+            ib_state_notify_request_started(ironbee, ctx->tx, rline);
 
-        /* Now the request headers */
-        rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
-        apr_table_do(ironbee_sethdr, ibhdrs, r->headers_in, NULL);
+            /* Now the request headers */
+            rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
+            apr_table_do(ironbee_sethdr, ibhdrs, r->headers_in, NULL);
 
-        rc = ib_state_notify_request_header_data(ironbee, ctx->tx, ibhdrs);
-        rc = ib_state_notify_request_header_finished(ironbee, ctx->tx);
+            rc = ib_state_notify_request_header_data(ironbee, ctx->tx, ibhdrs);
+            if (rc != IB_OK)
+                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+                              "ib_state_notify_request_header_data failed with %d", rc);
+            rc = ib_state_notify_request_header_finished(ironbee, ctx->tx);
+            if (rc != IB_OK)
+                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+                              "ib_state_notify_request_header_finished failed with %d", rc);
+        }
+        else {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
+                          "ib_parsed_req_line_create failed with %d", rc);
+        }
     }
 
     /* Regardless of whether we process early or late, it's not too
@@ -526,17 +537,41 @@ static apr_status_t ironbee_header_filter(ap_filter_t *f,
                                     "HTTP/1.1", 8,
                                     cstatus, strlen(cstatus),
                                     reason, strlen(reason));
+    if (rc != IB_OK) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                      "ib_parsed_resp_line_create failed with %d", rc);
+        goto header_filter_cleanup;
+    }
     rc = ib_state_notify_response_started(ironbee, ctx->tx, rline);
+    if (rc != IB_OK) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                      "ib_state_notify_response_started failed with %d", rc);
+        goto header_filter_cleanup;
+    }
 
     /* Notify Ironbee of output headers */
     rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
+    if (rc != IB_OK) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                      "ib_parsed_name_value_pair_list_wrapper_create failed with %d", rc);
+        goto header_filter_cleanup;
+    }
     apr_table_do(ironbee_sethdr, ibhdrs, f->r->headers_out, NULL);
     apr_table_do(ironbee_sethdr, ibhdrs, f->r->err_headers_out, NULL);
     rc = ib_state_notify_response_header_data(ironbee, ctx->tx, ibhdrs);
+    if (rc != IB_OK) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                      "ib_state_notify_response_header_data failed with %d", rc);
+    }
     rc = ib_state_notify_response_header_finished(ironbee, ctx->tx);
+    if (rc != IB_OK) {
+        ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                      "ib_state_notify_response_header_finished failed with %d", rc);
+    }
 
     /* TODO: If Ironbee signals an error, deal with it here */
 
+header_filter_cleanup:
     /* At this point we've burned our boats for setting output headers,
      * and started the response
      */
