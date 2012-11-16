@@ -47,6 +47,43 @@ Generate a patch:
   git format-patch origin/master
 
 
+LuaJIT Code
+===========
+
+LuaJIT is currently distributed with IronBee as it is not widely available.  The
+source is in libs/luajit-2.0-ironbee and is included using git-subtree with full
+history to allow the tree to later be removed.  The tree is a for of the upstream
+LuaJIT with minor build changes (git://github.com/ironbee/luajit-2.0-ironbee.git).
+
+To update the LuaJIT source, you will need a git with subtree support.  You will
+need to add the remote:
+
+git remote add -t ironbee luajit git://github.com/ironbee/luajit-2.0-ironbee.git
+
+Then you can merge in the source with:
+
+git subtree pull --squash --prefix=libs/luajit-2.0-ironbee luajit
+
+
+To update the LuaJIT fork with code from upstream, first setup the repo:
+
+git clone git://github.com/ironbee/luajit-2.0-ironbee.git
+git checkout -t master
+git remote add upstream http://luajit.org/git/luajit-2.0.git
+
+Then pull from upstream (this example is master, but could be v2.0.0):
+
+git checkout master
+git pull --rebase upstream master
+
+And merge into the ironbee branch:
+
+git checkout ironbee
+git merge master
+
+Then you can use git-subtee within ironbee's repo as outlined above.
+
+
 Coding Style
 ============
 
