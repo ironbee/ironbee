@@ -76,6 +76,8 @@ typedef struct ironbee_svr_conf {
 } ironbee_svr_conf;
 
 typedef struct ironbee_dir_conf {
+    int filter_input;
+    int filter_output;
 } ironbee_dir_conf;
 
 /*************    GENERAL GLOBALS        *************************/
@@ -377,13 +379,26 @@ static int ironbee_sethdr(void *data, const char *key, const char *value)
 }
 
 /**
- * APR cleanup function to destroy Ironbee Transaction.
- * @param[in] tx - the transaction
+ * APR cleanup function to notify end-of-tx and destroy Ironbee Transaction.
+ * @param[in] data - the request
  * @return SUCCESS
  */
-static apr_status_t ib_tx_cleanup(void *tx)
+static apr_status_t ib_req_cleanup(void *data)
 {
-    ib_tx_destroy((ib_tx_t*)tx);
+    request_rec *r = data;
+    ironbee_req_ctx *ctx = ap_get_module_config(r->request_config,
+                                                &ironbee_module);
+    ironbee_dir_conf *cfg = ap_get_module_config(r->per_dir_config,
+                                                 &ironbee_module);
+    if (!cfg->filter_input) {
+        /* the input filter was omitted, so we have to notify req end */
+        ib_state_notify_request_finished(ironbee, ctx->tx);
+    }
+    if (!cfg->filter_output) {
+        /* the output filter was omitted, so we have to notify resp end */
+        ib_state_notify_response_finished(ironbee, ctx->tx);
+    }
+    ib_tx_destroy(ctx->tx);
     return APR_SUCCESS;
 }
 
@@ -425,7 +440,7 @@ static int ironbee_headers_in(request_rec *r)
         ctx = apr_pcalloc(r->pool, sizeof(ironbee_req_ctx));
         ib_tx_create(&ctx->tx, iconn, ctx);
         /* Tie the tx lifetime to the Request */
-        apr_pool_cleanup_register(r->pool, ctx->tx, ib_tx_cleanup,
+        apr_pool_cleanup_register(r->pool, r, ib_req_cleanup,
                                   apr_pool_cleanup_null);
         ap_set_module_config(r->request_config, &ironbee_module, ctx);
         ctx->r = r;
@@ -785,9 +800,12 @@ setaside_input:
  */
 static void ironbee_filter_insert(request_rec *r)
 {
-    /* FIXME: config options to make these conditional */
-    ap_add_input_filter("ironbee", NULL, r, r->connection);
-    ap_add_output_filter("ironbee", NULL, r, r->connection);
+    ironbee_dir_conf *cfg = ap_get_module_config(r->per_dir_config,
+                                                 &ironbee_module);
+    if (cfg->filter_input)
+        ap_add_input_filter("ironbee", NULL, r, r->connection);
+    if (cfg->filter_output)
+        ap_add_output_filter("ironbee", NULL, r, r->connection);
     ap_add_output_filter("ironbee-headers", NULL, r, r->connection);
 }
 
@@ -1072,6 +1090,7 @@ static void *ironbee_svr_merge(apr_pool_t *p, void *BASE, void *ADD)
 static void *ironbee_dir_config(apr_pool_t *p, char *dummy)
 {
     ironbee_dir_conf *cfg = apr_palloc(p, sizeof(ironbee_dir_conf));
+    cfg->filter_input = cfg->filter_output = -1;
     return cfg;
 }
 /**
@@ -1083,7 +1102,13 @@ static void *ironbee_dir_config(apr_pool_t *p, char *dummy)
  */
 static void *ironbee_dir_merge(apr_pool_t *p, void *BASE, void *ADD)
 {
-    ironbee_svr_conf *cfg = apr_palloc(p, sizeof(ironbee_dir_conf));
+    ironbee_dir_conf *base = BASE;
+    ironbee_dir_conf *add = ADD;
+    ironbee_dir_conf *cfg = apr_palloc(p, sizeof(ironbee_dir_conf));
+    cfg->filter_input = (add->filter_input == -1)
+                                    ? base->filter_input : add->filter_input;
+    cfg->filter_output = (add->filter_output == -1)
+                                    ? base->filter_output : add->filter_output;
     return cfg;
 }
 
@@ -1128,6 +1153,12 @@ static const command_rec ironbee_cmds[] = {
                  "Ironbee configuration file"),
     AP_INIT_FLAG("IronbeeRawHeaders", reqheaders_early, NULL, RSRC_CONF,
                  "Report incoming request headers or backend headers"),
+    AP_INIT_FLAG("IronbeeFilterInput", ap_set_flag_slot,
+                 (void*)APR_OFFSETOF(ironbee_dir_conf, filter_input),
+                 ACCESS_CONF, "Filter Input Data through Ironbee"),
+    AP_INIT_FLAG("IronbeeFilterOutput", ap_set_flag_slot,
+                 (void*)APR_OFFSETOF(ironbee_dir_conf, filter_output),
+                 ACCESS_CONF, "Filter Output Data through Ironbee"),
     {NULL}
 };
 
