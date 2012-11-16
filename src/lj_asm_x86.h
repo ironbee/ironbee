@@ -337,7 +337,7 @@ static Reg asm_fuseload(ASMState *as, IRRef ref, RegSet allow)
       }
     } else if (ir->o == IR_FLOAD) {
       /* Generic fusion is only ok for 32 bit operand (but see asm_comp). */
-      if ((irt_isint(ir->t) || irt_isaddr(ir->t)) &&
+      if ((irt_isint(ir->t) || irt_isu32(ir->t) || irt_isaddr(ir->t)) &&
 	  noconflict(as, ref, IR_FSTORE, 0)) {
 	asm_fusefref(as, ir, xallow);
 	return RID_MRM;
@@ -510,10 +510,13 @@ static void asm_gencall(ASMState *as, const CCallInfo *ci, IRRef *args)
 static void asm_setupresult(ASMState *as, IRIns *ir, const CCallInfo *ci)
 {
   RegSet drop = RSET_SCRATCH;
+  int hiop = (LJ_32 && (ir+1)->o == IR_HIOP);
   if ((ci->flags & CCI_NOFPRCLOBBER))
     drop &= ~RSET_FPR;
   if (ra_hasreg(ir->r))
     rset_clear(drop, ir->r);  /* Dest reg handled below. */
+  if (hiop && ra_hasreg((ir+1)->r))
+    rset_clear(drop, (ir+1)->r);  /* Dest reg handled below. */
   ra_evictset(as, drop);  /* Evictions must be performed first. */
   if (ra_used(ir)) {
     if (irt_isfp(ir->t)) {
@@ -546,6 +549,10 @@ static void asm_setupresult(ASMState *as, IRIns *ir, const CCallInfo *ci)
 	emit_rmro(as, irt_isnum(ir->t) ? XO_FSTPq : XO_FSTPd,
 		  irt_isnum(ir->t) ? XOg_FSTPq : XOg_FSTPd, RID_ESP, ofs);
       }
+#endif
+#if LJ_32
+    } else if (hiop) {
+      ra_destpair(as, ir);
 #endif
     } else {
       lua_assert(!irt_ispri(ir->t));
@@ -882,7 +889,7 @@ static void asm_conv_int64_fp(ASMState *as, IRIns *ir)
 static void asm_strto(ASMState *as, IRIns *ir)
 {
   /* Force a spill slot for the destination register (if any). */
-  const CCallInfo *ci = &lj_ir_callinfo[IRCALL_lj_str_tonum];
+  const CCallInfo *ci = &lj_ir_callinfo[IRCALL_lj_strscan_num];
   IRRef args[2];
   RegSet drop = RSET_SCRATCH;
   if ((drop & RSET_FPR) != RSET_FPR && ra_hasreg(ir->r))
@@ -1808,7 +1815,7 @@ static void asm_intarith(ASMState *as, IRIns *ir, x86Arith xa)
   int32_t k = 0;
   if (as->flagmcp == as->mcp) {  /* Drop test r,r instruction. */
     as->flagmcp = NULL;
-    as->mcp += (LJ_64 && *as->mcp != XI_TEST) ? 3 : 2;
+    as->mcp += (LJ_64 && *as->mcp < XI_TESTb) ? 3 : 2;
   }
   right = IR(rref)->r;
   if (ra_hasreg(right)) {
@@ -2064,11 +2071,12 @@ static void asm_comp(ASMState *as, IRIns *ir, uint32_t cc)
     IROp leftop = (IROp)(IR(lref)->o);
     Reg r64 = REX_64IR(ir, 0);
     int32_t imm = 0;
-    lua_assert(irt_is64(ir->t) || irt_isint(ir->t) || irt_isaddr(ir->t));
+    lua_assert(irt_is64(ir->t) || irt_isint(ir->t) ||
+	       irt_isu32(ir->t) || irt_isaddr(ir->t));
     /* Swap constants (only for ABC) and fusable loads to the right. */
     if (irref_isk(lref) || (!irref_isk(rref) && opisfusableload(leftop))) {
-      if ((cc & 0xc) == 0xc) cc ^= 3;  /* L <-> G, LE <-> GE */
-      else if ((cc & 0xa) == 0x2) cc ^= 5;  /* A <-> B, AE <-> BE */
+      if ((cc & 0xc) == 0xc) cc ^= 0x53;  /* L <-> G, LE <-> GE */
+      else if ((cc & 0xa) == 0x2) cc ^= 0x55;  /* A <-> B, AE <-> BE */
       lref = ir->op2; rref = ir->op1;
     }
     if (asm_isk32(as, rref, &imm)) {
@@ -2143,7 +2151,7 @@ static void asm_comp(ASMState *as, IRIns *ir, uint32_t cc)
 	asm_guardcc(as, cc);
 	if (usetest && left != RID_MRM) {
 	  /* Use test r,r instead of cmp r,0. */
-	  emit_rr(as, XO_TEST, r64 + left, left);
+	  emit_rr(as, irt_isu8(ir->t) ? XO_TESTb : XO_TEST, r64 + left, left);
 	  if (irl+1 == ir)  /* Referencing previous ins? */
 	    as->flagmcp = as->mcp;  /* Set flag to drop test r,r if possible. */
 	} else {
@@ -2287,9 +2295,8 @@ static void asm_hiop(ASMState *as, IRIns *ir)
     }
   case IR_CALLN:
   case IR_CALLXS:
-    ra_destreg(as, ir, RID_RETHI);
     if (!uselo)
-      ra_allocref(as, ir->op1, RID2RSET(RID_RETLO));  /* Mark call as used. */
+      ra_allocref(as, ir->op1, RID2RSET(RID_RETLO));  /* Mark lo op as used. */
     break;
   case IR_CNEWI:
     /* Nothing to do here. Handled by CNEWI itself. */

@@ -294,10 +294,13 @@ static void build_subroutines(BuildCtx *ctx)
   |   stwu TMP1, FRAME_PC(RA)		// Prepend true to results.
   |
   |->vm_returnc:
-  |  andi. TMP0, PC, FRAME_TYPE
-  |   addi RD, RD, 8			// RD = (nresults+1)*8.
-  |   mr MULTRES, RD
-  |  beq ->BC_RET_Z			// Handle regular return to Lua.
+  |  addi RD, RD, 8			// RD = (nresults+1)*8.
+  |   andi. TMP0, PC, FRAME_TYPE
+  |  cmpwi cr1, RD, 0
+  |  li CRET1, LUA_YIELD
+  |  beq cr1, ->vm_unwind_c_eh
+  |  mr MULTRES, RD
+  |   beq ->BC_RET_Z			// Handle regular return to Lua.
   |
   |->vm_return:
   |  // BASE = base, RA = resultptr, RD/MULTRES = (nresults+1)*8, PC = return
@@ -811,7 +814,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  b ->vm_call_dispatch
   |
   |->vmeta_len:
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#if LJ_52
   |  mr SAVE0, CARG1
 #endif
   |  add CARG2, BASE, RD
@@ -820,7 +823,7 @@ static void build_subroutines(BuildCtx *ctx)
   |   stw PC, SAVE_PC
   |  bl extern lj_meta_len		// (lua_State *L, TValue *o)
   |  // Returns NULL (retry) or TValue * (metamethod base).
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#if LJ_52
   |  cmplwi CRET1, 0
   |  bne ->vmeta_binop			// Binop call for compatibility.
   |  mr CARG1, SAVE0
@@ -1103,7 +1106,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  checktab TAB:CARG1
   |   lwz PC, FRAME_PC(BASE)
   |  checkfail ->fff_fallback
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#if LJ_52
   |   lwz TAB:TMP2, TAB:CARG1->metatable
   |  evldd CFUNC:TMP0, CFUNC:RB->upvalue[0]
   |   cmplwi TAB:TMP2, 0
@@ -1162,7 +1165,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  checktab TAB:CARG1
   |   lwz PC, FRAME_PC(BASE)
   |  checkfail ->fff_fallback
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#if LJ_52
   |   lwz TAB:TMP2, TAB:CARG1->metatable
   |  evldd CFUNC:TMP0, CFUNC:RB->upvalue[0]
   |   cmplwi TAB:TMP2, 0
@@ -1426,7 +1429,18 @@ static void build_subroutines(BuildCtx *ctx)
   |  math_round ceil
   |
   |  math_extern sqrt
-  |  math_extern log
+  |
+  |.ffunc math_log
+  |  cmplwi NARGS8:RC, 8
+  |   evldd CARG2, 0(BASE)
+  |  bne ->fff_fallback                 // Need exactly 1 argument.
+  |  checknum CARG2
+  |   evmergehi CARG1, CARG2, CARG2
+  |  checkfail ->fff_fallback
+  |  bl extern log
+  |  evmergelo CRET1, CRET1, CRET2
+  |  b ->fff_restv
+  |
   |  math_extern log10
   |  math_extern exp
   |  math_extern sin
@@ -1619,7 +1633,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  cmplwi NARGS8:RC, 16
   |   evldd CARG1, 0(BASE)
   |   evldd CARG2, 8(BASE)
-  |  blt ->fff_fallback
+  |  bne ->fff_fallback			// Exactly 2 arguments.
   |  checknum CARG2
   |  checkfail ->fff_fallback
   |  checkstr STR:CARG1
@@ -2327,7 +2341,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |2:
     |  checktab CARG1
     |  checkfail ->vmeta_len
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#if LJ_52
     |  lwz TAB:TMP2, TAB:CARG1->metatable
     |  cmplwi TAB:TMP2, 0
     |  bne >9
@@ -2337,7 +2351,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  bl extern lj_tab_len		// (GCtab *t)
     |  // Returns uint32_t (but less than 2^31).
     |  b <1
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#if LJ_52
     |9:
     |  lbz TMP0, TAB:TMP2->nomm
     |  andi. TMP0, TMP0, 1<<MM_len
@@ -3188,7 +3202,10 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  crand 4*cr0+eq, 4*cr0+eq, 4*cr7+eq
     |    add TMP3, PC, TMP0
     |  bne cr0, >5
+    |  lus TMP1, 0xfffe
+    |  ori TMP1, TMP1, 0x7fff
     |  stw ZERO, -4(RA)			// Initialize control var.
+    |  stw TMP1, -8(RA)
     |    addis PC, TMP3, -(BCBIAS_J*4 >> 16)
     |1:
     |  ins_next

@@ -321,6 +321,10 @@ typedef struct GCproto {
 /* Top bits used for counting created closures. */
 #define PROTO_CLCOUNT		0x20	/* Base of saturating 3 bit counter. */
 #define PROTO_CLC_BITS		3
+#define PROTO_CLC_POLY		(3*PROTO_CLCOUNT)  /* Polymorphic threshold. */
+
+#define PROTO_UV_LOCAL		0x8000	/* Upvalue for local slot. */
+#define PROTO_UV_IMMUTABLE	0x4000	/* Immutable upvalue. */
 
 #define proto_kgc(pt, idx) \
   check_exp((uintptr_t)(intptr_t)(idx) >= (uintptr_t)-(intptr_t)(pt)->sizekgc, \
@@ -342,7 +346,7 @@ typedef struct GCproto {
 typedef struct GCupval {
   GCHeader;
   uint8_t closed;	/* Set if closed (i.e. uv->v == &uv->u.value). */
-  uint8_t unused;
+  uint8_t immutable;	/* Immutable value. */
   union {
     TValue tv;		/* If closed: the value itself. */
     struct {		/* If open: double linked list, anchored at thread. */
@@ -443,10 +447,12 @@ enum {
 #define MMDEF_FFI(_)
 #endif
 
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
-#define MMDEF_52(_) _(pairs) _(ipairs)
+#if LJ_52 || LJ_HASFFI
+#define MMDEF_PAIRS(_) _(pairs) _(ipairs)
 #else
-#define MMDEF_52(_)
+#define MMDEF_PAIRS(_)
+#define MM_pairs	255
+#define MM_ipairs	255
 #endif
 
 #define MMDEF(_) \
@@ -456,7 +462,7 @@ enum {
   /* The following must be in ORDER ARITH. */ \
   _(add) _(sub) _(mul) _(div) _(mod) _(pow) _(unm) \
   /* The following are used in the standard libraries. */ \
-  _(metatable) _(tostring) MMDEF_FFI(_) MMDEF_52(_)
+  _(metatable) _(tostring) MMDEF_FFI(_) MMDEF_PAIRS(_)
 
 typedef enum {
 #define MMENUM(name)	MM_##name,

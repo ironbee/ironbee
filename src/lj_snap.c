@@ -147,8 +147,7 @@ void lj_snap_add(jit_State *J)
   /* Merge if no ins. inbetween or if requested and no guard inbetween. */
   if (J->mergesnap ? !irt_isguard(J->guardemit) :
       (nsnap > 0 && J->cur.snap[nsnap-1].ref == J->cur.nins)) {
-    if (nsnap == 1 && J->parent == 0) {
-      /* But preserve snap #0 PC for root traces. */
+    if (nsnap == 1) {  /* But preserve snap #0 PC. */
       emitir_raw(IRT(IR_NOP, IRT_NIL), 0, 0);
       goto nomerge;
     }
@@ -384,7 +383,7 @@ static TRef snap_dedup(jit_State *J, SnapEntry *map, MSize nmax, IRRef ref)
   MSize j;
   for (j = 0; j < nmax; j++)
     if (snap_ref(map[j]) == ref)
-      return J->slot[snap_slot(map[j])];
+      return J->slot[snap_slot(map[j])] & ~(SNAP_CONT|SNAP_FRAME);
   return 0;
 }
 
@@ -464,8 +463,7 @@ void lj_snap_replay(jit_State *J, GCtrace *T)
       J->baseslot = s+1;
   }
   if (pass23) {
-    IRIns *irlast = &T->ir[(snap+1)->ref];
-    lua_assert(J->exitno+1 < T->nsnap);
+    IRIns *irlast = &T->ir[snap->ref];
     pass23 = 0;
     /* Emit dependent PVALs. */
     for (n = 0; n < nent; n++) {
@@ -662,6 +660,10 @@ static void snap_restoredata(GCtrace *T, ExitState *ex,
       rs = snap_renameref(T, snapno, ref, rs);
     if (ra_hasspill(regsp_spill(rs))) {
       src = &ex->spill[regsp_spill(rs)];
+      if (sz == 8 && !irt_is64(ir->t)) {
+	tmp = (uint64_t)(uint32_t)*src;
+	src = (int32_t *)&tmp;
+      }
     } else {
       Reg r = regsp_reg(rs);
       if (ra_noreg(r)) {

@@ -112,10 +112,14 @@ static int ffi_index_meta(lua_State *L, CTState *cts, CType *ct, MMS mm)
     const char *s;
   err_index:
     s = strdata(lj_ctype_repr(L, id, NULL));
-    if (tvisstr(L->base+1))
+    if (tvisstr(L->base+1)) {
       lj_err_callerv(L, LJ_ERR_FFI_BADMEMBER, s, strVdata(L->base+1));
-    else
-      lj_err_callerv(L, LJ_ERR_FFI_BADIDX, s);
+    } else {
+      const char *key = tviscdata(L->base+1) ?
+	strdata(lj_ctype_repr(L, cdataV(L->base+1)->ctypeid, NULL)) :
+	lj_typename(L->base+1);
+      lj_err_callerv(L, LJ_ERR_FFI_BADIDXW, s, key);
+    }
   }
   if (!tvisfunc(tv)) {
     if (mm == MM_index) {
@@ -284,7 +288,10 @@ LJLIB_CF(ffi_meta___tostring)
   } else {
     CTState *cts = ctype_cts(L);
     CType *ct = ctype_raw(cts, id);
-    if (ctype_isref(ct->info)) ct = ctype_rawchild(cts, ct);
+    if (ctype_isref(ct->info)) {
+      p = *(void **)p;
+      ct = ctype_rawchild(cts, ct);
+    }
     if (ctype_iscomplex(ct->info)) {
       setstrV(L, L->top-1, lj_ctype_repr_complex(L, cdataptr(cd), ct->size));
       goto checkgc;
@@ -294,6 +301,9 @@ LJLIB_CF(ffi_meta___tostring)
       goto checkgc;
     } else if (ctype_isfunc(ct->info)) {
       p = *(void **)p;
+    } else if (ctype_isenum(ct->info)) {
+      msg = "cdata<%s>: %d";
+      p = (void *)(uintptr_t)*(uint32_t **)p;
     } else {
       if (ctype_isptr(ct->info)) {
 	p = cdata_getptr(p, ct->size);
@@ -311,6 +321,30 @@ LJLIB_CF(ffi_meta___tostring)
 checkgc:
   lj_gc_check(L);
   return 1;
+}
+
+static int ffi_pairs(lua_State *L, MMS mm)
+{
+  CTState *cts = ctype_cts(L);
+  CTypeID id = ffi_checkcdata(L, 1)->ctypeid;
+  CType *ct = ctype_raw(cts, id);
+  cTValue *tv;
+  if (ctype_isptr(ct->info)) id = ctype_cid(ct->info);
+  tv = lj_ctype_meta(cts, id, mm);
+  if (!tv)
+    lj_err_callerv(L, LJ_ERR_FFI_BADMM, strdata(lj_ctype_repr(L, id, NULL)),
+		   strdata(mmname_str(G(L), mm)));
+  return lj_meta_tailcall(L, tv);
+}
+
+LJLIB_CF(ffi_meta___pairs)
+{
+  return ffi_pairs(L, MM_pairs);
+}
+
+LJLIB_CF(ffi_meta___ipairs)
+{
+  return ffi_pairs(L, MM_ipairs);
 }
 
 LJLIB_PUSH("ffi") LJLIB_SET(__metatable)
@@ -345,7 +379,6 @@ LJLIB_CF(ffi_clib___index)	LJLIB_REC(clib_index 1)
       CTypeID sid = ctype_cid(s->info);
       void *sp = *(void **)cdataptr(cd);
       CType *ct = ctype_raw(cts, sid);
-      if (ctype_isenum(ct->info)) ct = ctype_child(cts, ct);
       if (lj_cconv_tv_ct(cts, ct, sid, L->top-1, sp))
 	lj_gc_check(L);
       return 1;
@@ -513,7 +546,7 @@ LJLIB_CF(ffi_cast)	LJLIB_REC(ffi_new)
   return 1;
 }
 
-LJLIB_CF(ffi_typeof)
+LJLIB_CF(ffi_typeof)	LJLIB_REC(.)
 {
   CTState *cts = ctype_cts(L);
   CTypeID id = ffi_checkctype(L, cts, L->base+1);
@@ -524,7 +557,7 @@ LJLIB_CF(ffi_typeof)
   return 1;
 }
 
-LJLIB_CF(ffi_istype)	LJLIB_REC(ffi_istype)
+LJLIB_CF(ffi_istype)	LJLIB_REC(.)
 {
   CTState *cts = ctype_cts(L);
   CTypeID id1 = ffi_checkctype(L, cts, NULL);
@@ -554,7 +587,7 @@ LJLIB_CF(ffi_istype)	LJLIB_REC(ffi_istype)
   return 1;
 }
 
-LJLIB_CF(ffi_sizeof)
+LJLIB_CF(ffi_sizeof)	LJLIB_REC(ffi_xof FF_ffi_sizeof)
 {
   CTState *cts = ctype_cts(L);
   CTypeID id = ffi_checkctype(L, cts, NULL);
@@ -576,7 +609,7 @@ LJLIB_CF(ffi_sizeof)
   return 1;
 }
 
-LJLIB_CF(ffi_alignof)
+LJLIB_CF(ffi_alignof)	LJLIB_REC(ffi_xof FF_ffi_alignof)
 {
   CTState *cts = ctype_cts(L);
   CTypeID id = ffi_checkctype(L, cts, NULL);
@@ -586,7 +619,7 @@ LJLIB_CF(ffi_alignof)
   return 1;
 }
 
-LJLIB_CF(ffi_offsetof)
+LJLIB_CF(ffi_offsetof)	LJLIB_REC(ffi_xof FF_ffi_offsetof)
 {
   CTState *cts = ctype_cts(L);
   CTypeID id = ffi_checkctype(L, cts, NULL);
@@ -729,7 +762,7 @@ LJLIB_CF(ffi_metatype)
 
 LJLIB_PUSH(top-7) LJLIB_SET(!)  /* Store reference to finalizer table. */
 
-LJLIB_CF(ffi_gc)
+LJLIB_CF(ffi_gc)	LJLIB_REC(.)
 {
   GCcdata *cd = ffi_checkcdata(L, 1);
   TValue *fin = lj_lib_checkany(L, 2);

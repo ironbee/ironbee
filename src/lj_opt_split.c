@@ -184,6 +184,8 @@ static IRRef split_ptr(jit_State *J, IRIns *oir, IRRef ref)
   IRRef nref = oir[ref].prev;
   IRIns *ir = IR(nref);
   int32_t ofs = 4;
+  if (ir->o == IR_KPTR)
+    return lj_ir_kptr(J, (char *)ir_kptr(ir) + ofs);
   if (ir->o == IR_ADD && irref_isk(ir->op2) && !irt_isphi(oir[ref].t)) {
     /* Reassociate address. */
     ofs += IR(ir->op2)->i;
@@ -683,6 +685,8 @@ static int split_needsplit(jit_State *J)
     for (ref = J->chain[IR_SLOAD]; ref; ref = IR(ref)->prev)
       if ((IR(ref)->op2 & IRSLOAD_CONVERT))
 	return 1;
+    if (J->chain[IR_TOBIT])
+      return 1;
   }
   for (ref = J->chain[IR_CONV]; ref; ref = IR(ref)->prev) {
     IRType st = (IR(ref)->op2 & IRCONV_SRCMASK);

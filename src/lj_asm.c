@@ -451,7 +451,7 @@ static void ra_evictset(ASMState *as, RegSet drop)
     checkmclim(as);
   }
 #endif
-  work = (drop & ~as->freeset) & RSET_GPR;
+  work = (drop & ~as->freeset);
   while (work) {
     Reg r = rset_pickbot(work);
     ra_restore(as, regcost_ref(as->cost[r]));
@@ -644,7 +644,8 @@ static void ra_destreg(ASMState *as, IRIns *ir, Reg r)
 {
   Reg dest = ra_dest(as, ir, RID2RSET(r));
   if (dest != r) {
-    ra_scratch(as, RID2RSET(r));
+    lua_assert(rset_test(as->freeset, r));
+    ra_modified(as, r);
     emit_movrr(as, ir, dest, r);
   }
 }
@@ -718,7 +719,7 @@ static void ra_leftov(ASMState *as, Reg dest, IRRef lref)
 }
 #endif
 
-#if !LJ_TARGET_X86ORX64
+#if !LJ_64
 /* Force a RID_RETLO/RID_RETHI destination register pair (marked as free). */
 static void ra_destpair(ASMState *as, IRIns *ir)
 {
@@ -746,9 +747,13 @@ static void ra_destpair(ASMState *as, IRIns *ir)
   /* Check for conflicts and shuffle the registers as needed. */
   if (destlo == RID_RETHI) {
     if (desthi == RID_RETLO) {
+#if LJ_TARGET_X86
+      *--as->mcp = XI_XCHGa + RID_RETHI;
+#else
       emit_movrr(as, ir, RID_RETHI, RID_TMP);
       emit_movrr(as, ir, RID_RETLO, RID_RETHI);
       emit_movrr(as, ir, RID_TMP, RID_RETLO);
+#endif
     } else {
       emit_movrr(as, ir, RID_RETHI, RID_RETLO);
       if (desthi != RID_RETHI) emit_movrr(as, ir, desthi, RID_RETHI);
@@ -807,9 +812,9 @@ static void asm_snap_alloc1(ASMState *as, IRRef ref)
 	asm_snap_alloc1(as, ir->op2);
 	if (LJ_32 && (ir+1)->o == IR_HIOP)
 	  asm_snap_alloc1(as, (ir+1)->op2);
-      }
+      } else
 #endif
-      else {  /* Allocate stored values for TNEW, TDUP and CNEW. */
+      {  /* Allocate stored values for TNEW, TDUP and CNEW. */
 	IRIns *irs;
 	lua_assert(ir->o == IR_TNEW || ir->o == IR_TDUP || ir->o == IR_CNEW);
 	for (irs = IR(as->snapref-1); irs > ir; irs--)
@@ -821,10 +826,19 @@ static void asm_snap_alloc1(ASMState *as, IRRef ref)
 	      asm_snap_alloc1(as, (irs+1)->op2);
 	  }
       }
-    } else if (ir->o == IR_CONV && ir->op2 == IRCONV_NUM_INT) {
-      asm_snap_alloc1(as, ir->op1);
     } else {
-      RegSet allow = (!LJ_SOFTFP && irt_isfp(ir->t)) ? RSET_FPR : RSET_GPR;
+      RegSet allow;
+      if (ir->o == IR_CONV && ir->op2 == IRCONV_NUM_INT) {
+	IRIns *irc;
+	for (irc = IR(as->curins); irc > ir; irc--)
+	  if ((irc->op1 == ref || irc->op2 == ref) &&
+	      !(irc->r == RID_SINK || irc->r == RID_SUNK))
+	    goto nosink;  /* Don't sink conversion if result is used. */
+	asm_snap_alloc1(as, ir->op1);
+	return;
+      }
+    nosink:
+      allow = (!LJ_SOFTFP && irt_isfp(ir->t)) ? RSET_FPR : RSET_GPR;
       if ((as->freeset & allow) ||
 	       (allow == RSET_FPR && asm_snap_canremat(as))) {
 	/* Get a weak register if we have a free one or can rematerialize. */
@@ -1110,6 +1124,15 @@ static void asm_phi_shuffle(ASMState *as)
   }
 
   /* Restore/remat invariants whose registers are modified inside the loop. */
+#if !LJ_SOFTFP
+  work = as->modset & ~(as->freeset | as->phiset) & RSET_FPR;
+  while (work) {
+    Reg r = rset_pickbot(work);
+    ra_restore(as, regcost_ref(as->cost[r]));
+    rset_clear(work, r);
+    checkmclim(as);
+  }
+#endif
   work = as->modset & ~(as->freeset | as->phiset);
   while (work) {
     Reg r = rset_pickbot(work);
@@ -1377,7 +1400,7 @@ static void asm_head_side(ASMState *as)
 	  ra_sethint(ir->r, rs);  /* Hint may be gone, set it again. */
 	else if (sps_scale(regsp_spill(rs))+spdelta == sps_scale(ir->s))
 	  continue;  /* Same spill slot, do nothing. */
-	mask = ((!LJ_SOFTFP && irt_isnum(ir->t)) ? RSET_FPR : RSET_GPR) & allow;
+	mask = ((!LJ_SOFTFP && irt_isfp(ir->t)) ? RSET_FPR : RSET_GPR) & allow;
 	if (mask == RSET_EMPTY)
 	  lj_trace_err(as->J, LJ_TRERR_NYICOAL);
 	r = ra_allocref(as, i, mask);
@@ -1610,6 +1633,7 @@ static void asm_setup_regsp(ASMState *as)
 	break;
       /* fallthrough */
     case IR_ALOAD: case IR_HLOAD: case IR_ULOAD: case IR_VLOAD:
+      if (!LJ_SOFTFP && irt_isnum(ir->t)) break;
       ir->prev = (uint16_t)REGSP_HINT((rload & 15));
       rload = lj_ror(rload, 4);
       continue;
@@ -1641,7 +1665,7 @@ static void asm_setup_regsp(ASMState *as)
 	}
 	break;
 #endif
-#if LJ_NEED_FP64
+#if !LJ_SOFTFP && LJ_NEED_FP64
       case IR_CONV:
 	if (irt_isfp((ir-1)->t)) {
 	  ir->prev = REGSP_HINT(RID_FPRET);
@@ -1738,8 +1762,12 @@ static void asm_setup_regsp(ASMState *as)
       }
       break;
 #endif
-    /* Do not propagate hints across type conversions. */
+    /* Do not propagate hints across type conversions or loads. */
     case IR_TOBIT:
+    case IR_XLOAD:
+#if !LJ_TARGET_ARM
+    case IR_ALOAD: case IR_HLOAD: case IR_ULOAD: case IR_VLOAD:
+#endif
       break;
     case IR_CONV:
       if (irt_isfp(ir->t) || (ir->op2 & IRCONV_SRCMASK) == IRT_NUM ||

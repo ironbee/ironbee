@@ -15,6 +15,7 @@
 #include "lj_frame.h"
 #include "lj_vm.h"
 #include "lj_char.h"
+#include "lj_strscan.h"
 
 /*
 ** Important note: this is NOT a validating C parser! This is a minimal
@@ -156,40 +157,19 @@ LJ_NORET LJ_NOINLINE static void cp_err(CPState *cp, ErrMsg em)
 
 /* -- Main lexical scanner ------------------------------------------------ */
 
-/* Parse integer literal. */
-static CPToken cp_integer(CPState *cp)
+/* Parse number literal. Only handles int32_t/uint32_t right now. */
+static CPToken cp_number(CPState *cp)
 {
-  uint32_t n = 0;
-  cp->val.id = CTID_INT32;
-  if (cp->c != '0') {  /* Decimal. */
-    do {
-      n = n*10 + (cp->c - '0');
-    } while (lj_char_isdigit(cp_get(cp)));
-  } else if ((cp_get(cp)& ~0x20) == 'X') {  /* Hexadecimal. */
-    if (!lj_char_isxdigit(cp_get(cp)))
-      cp_err(cp, LJ_ERR_XNUMBER);
-    do {
-      n = n*16 + (cp->c & 15);
-      if (!lj_char_isdigit(cp->c)) n += 9;
-    } while (lj_char_isxdigit(cp_get(cp)));
-    if (n >= 0x80000000u) cp->val.id = CTID_UINT32;
-  } else {  /* Octal. */
-    while (cp->c >= '0' && cp->c <= '7') {
-      n = n*8 + (cp->c - '0');
-      cp_get(cp);
-    }
-    if (n >= 0x80000000u) cp->val.id = CTID_UINT32;
-  }
-  cp->val.u32 = n;
-  for (;;) {  /* Parse suffixes. */
-    if ((cp->c & ~0x20) == 'U')
-      cp->val.id = CTID_UINT32;
-    else if ((cp->c & ~0x20) != 'L')
-      break;
-    cp_get(cp);
-  }
-  if (lj_char_isident(cp->c) && !(cp->mode & CPARSE_MODE_SKIP))
-    cp_errmsg(cp, cp->c, LJ_ERR_XNUMBER);
+  StrScanFmt fmt;
+  TValue o;
+  do { cp_save(cp, cp->c); } while (lj_char_isident(cp_get(cp)));
+  cp_save(cp, '\0');
+  fmt = lj_strscan_scan((const uint8_t *)cp->sb.buf, &o, STRSCAN_OPT_C);
+  if (fmt == STRSCAN_INT) cp->val.id = CTID_INT32;
+  else if (fmt == STRSCAN_U32) cp->val.id = CTID_UINT32;
+  else if (!(cp->mode & CPARSE_MODE_SKIP))
+    cp_errmsg(cp, CTOK_INTEGER, LJ_ERR_XNUMBER);
+  cp->val.u32 = (uint32_t)o.i;
   return CTOK_INTEGER;
 }
 
@@ -319,37 +299,34 @@ static CPToken cp_next_(CPState *cp)
   lj_str_resetbuf(&cp->sb);
   for (;;) {
     if (lj_char_isident(cp->c))
-      return lj_char_isdigit(cp->c) ? cp_integer(cp) : cp_ident(cp);
+      return lj_char_isdigit(cp->c) ? cp_number(cp) : cp_ident(cp);
     switch (cp->c) {
     case '\n': case '\r': cp_newline(cp);  /* fallthrough. */
     case ' ': case '\t': case '\v': case '\f': cp_get(cp); break;
     case '"': case '\'': return cp_string(cp);
     case '/':
-      cp_get(cp);
-      if (cp->c == '*') cp_comment_c(cp);
+      if (cp_get(cp) == '*') cp_comment_c(cp);
       else if (cp->c == '/') cp_comment_cpp(cp);
       else return '/';
       break;
     case '|':
-      cp_get(cp); if (cp->c != '|') return '|'; cp_get(cp); return CTOK_OROR;
+      if (cp_get(cp) != '|') return '|'; cp_get(cp); return CTOK_OROR;
     case '&':
-      cp_get(cp); if (cp->c != '&') return '&'; cp_get(cp); return CTOK_ANDAND;
+      if (cp_get(cp) != '&') return '&'; cp_get(cp); return CTOK_ANDAND;
     case '=':
-      cp_get(cp); if (cp->c != '=') return '='; cp_get(cp); return CTOK_EQ;
+      if (cp_get(cp) != '=') return '='; cp_get(cp); return CTOK_EQ;
     case '!':
-      cp_get(cp); if (cp->c != '=') return '!'; cp_get(cp); return CTOK_NE;
+      if (cp_get(cp) != '=') return '!'; cp_get(cp); return CTOK_NE;
     case '<':
-      cp_get(cp);
-      if (cp->c == '=') { cp_get(cp); return CTOK_LE; }
+      if (cp_get(cp) == '=') { cp_get(cp); return CTOK_LE; }
       else if (cp->c == '<') { cp_get(cp); return CTOK_SHL; }
       return '<';
     case '>':
-      cp_get(cp);
-      if (cp->c == '=') { cp_get(cp); return CTOK_GE; }
+      if (cp_get(cp) == '=') { cp_get(cp); return CTOK_GE; }
       else if (cp->c == '>') { cp_get(cp); return CTOK_SHR; }
       return '>';
     case '-':
-      cp_get(cp); if (cp->c != '>') return '-'; cp_get(cp); return CTOK_DEREF;
+      if (cp_get(cp) != '>') return '-'; cp_get(cp); return CTOK_DEREF;
     case '$':
       return cp_param(cp);
     case '\0': return CTOK_EOF;
@@ -941,7 +918,9 @@ static CTypeID cp_decl_intern(CPState *cp, CPDecl *decl)
 	    size = (CTSize)xsz;
 	  }
 	}
-	info |= (cinfo & (CTF_QUAL|CTF_ALIGN));  /* Inherit qual and align. */
+	if ((cinfo & CTF_ALIGN) > (info & CTF_ALIGN))  /* Find max. align. */
+	  info = (info & ~CTF_ALIGN) | (cinfo & CTF_ALIGN);
+	info |= (cinfo & CTF_QUAL);  /* Inherit qual. */
       } else {
 	lua_assert(ctype_isvoid(info));
       }
@@ -1545,8 +1524,8 @@ end_decl:
       if ((cds & ~(CDF_SCL|CDF_BOOL|CDF_INT|CDF_SIGNED|CDF_UNSIGNED)))
 	cp_errmsg(cp, 0, LJ_ERR_FFI_INVTYPE);
       info |= CTF_BOOL;
+      if (!(cds & CDF_SIGNED)) info |= CTF_UNSIGNED;
       if (!sz) {
-	if (!(cds & CDF_SIGNED)) info |= CTF_UNSIGNED;
 	sz = 1;
       }
     } else if ((cds & CDF_FP)) {

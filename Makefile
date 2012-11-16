@@ -16,9 +16,8 @@
 MAJVER=  2
 MINVER=  0
 RELVER=  0
-PREREL=  -beta10
 EXNAME=  -ironbee
-VERSION= $(MAJVER).$(MINVER).$(RELVER)$(PREREL)$(EXNAME)
+VERSION= $(MAJVER).$(MINVER).$(RELVER)$(EXNAME)
 ABIVER=  5.1
 
 ##############################################################################
@@ -109,7 +108,7 @@ install: $(INSTALL_DEP)
 	$(MKDIR) $(INSTALL_DIRS)
 	cd src && $(INSTALL_X) $(FILE_T) $(INSTALL_T)
 	cd src && test -f $(FILE_A) && $(INSTALL_F) $(FILE_A) $(INSTALL_STATIC) || :
-	$(RM) $(INSTALL_DYN) $(INSTALL_SHORT1) $(INSTALL_SHORT2)
+	$(RM) $(INSTALL_TSYM) $(INSTALL_DYN) $(INSTALL_SHORT1) $(INSTALL_SHORT2)
 	cd src && test -f $(FILE_SO) && \
 	  $(INSTALL_X) $(FILE_SO) $(INSTALL_DYN) && \
 	  $(LDCONFIG) $(INSTALL_LIB) && \
@@ -120,17 +119,13 @@ install: $(INSTALL_DEP)
 	  $(INSTALL_F) $(FILE_PC).tmp $(INSTALL_PC) && \
 	  $(RM) $(FILE_PC).tmp
 	cd src && $(INSTALL_F) $(FILES_INC) $(INSTALL_INC)
+	cd src/jit && $(INSTALL_F) $(FILES_JITLIB) $(INSTALL_JITLIB)
+	$(SYMLINK) $(INSTALL_TNAME) $(INSTALL_TSYM)
 	@echo "==== Successfully installed LuaJIT$(EXNAME) $(VERSION) to $(PREFIX) ===="
-	@echo ""
-	@echo "Note: the beta releases deliberately do NOT install a symlink for luajit$(EXNAME)"
-	@echo "You can do this now by running this command (with sudo):"
-	@echo ""
-	@echo "  $(SYMLINK) $(INSTALL_TNAME) $(INSTALL_TSYM)"
-	@echo ""
 
 uninstall:
 	@echo "==== Uninstalling LuaJIT $(VERSION) from $(PREFIX) ===="
-	$(UNINSTALL) $(INSTALL_T) $(INSTALL_STATIC) $(INSTALL_DYN) $(INSTALL_SHORT1) $(INSTALL_SHORT2) $(INSTALL_MAN)/$(FILE_MAN) $(INSTALL_PC)
+	$(UNINSTALL) $(INSTALL_TSYM) $(INSTALL_T) $(INSTALL_STATIC) $(INSTALL_DYN) $(INSTALL_SHORT1) $(INSTALL_SHORT2) $(INSTALL_MAN)/$(FILE_MAN) $(INSTALL_PC)
 	for file in $(FILES_JITLIB); do \
 	  $(UNINSTALL) $(INSTALL_JITLIB)/$$file; \
 	  done
@@ -138,7 +133,6 @@ uninstall:
 	  $(UNINSTALL) $(INSTALL_INC)/$$file; \
 	  done
 	$(LDCONFIG) $(INSTALL_LIB)
-	test -f $(INSTALL_TSYM) || $(UNINSTALL) $(INSTALL_TSYM)
 	$(RMDIR) $(UNINSTALL_DIRS) || :
 	@echo "==== Successfully uninstalled LuaJIT $(VERSION) from $(PREFIX) ===="
 
@@ -151,9 +145,6 @@ amalg:
 clean:
 	$(MAKE) -C src clean
 
-cleaner:
-	$(MAKE) -C src cleaner
-
-.PHONY: all install amalg clean cleaner
+.PHONY: all install amalg clean
 
 ##############################################################################

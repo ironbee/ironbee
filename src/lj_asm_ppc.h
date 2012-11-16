@@ -166,7 +166,7 @@ static void asm_fusexref(ASMState *as, PPCIns pi, Reg rt, IRRef ref,
 {
   IRIns *ir = IR(ref);
   Reg base;
-  if (ra_noreg(ir->r) && mayfuse(as, ref)) {
+  if (ra_noreg(ir->r) && canfuse(as, ir)) {
     if (ir->o == IR_ADD) {
       int32_t ofs2;
       if (irref_isk(ir->op2) && (ofs2 = ofs + IR(ir->op2)->i, checki16(ofs2))) {
@@ -214,7 +214,7 @@ static void asm_fusexrefx(ASMState *as, PPCIns pi, Reg rt, IRRef ref,
 {
   IRIns *ira = IR(ref);
   Reg right, left;
-  if (mayfuse(as, ref) && ira->o == IR_ADD && ra_noreg(ira->r)) {
+  if (canfuse(as, ira) && ira->o == IR_ADD && ra_noreg(ira->r)) {
     left = ra_alloc2(as, ira, allow);
     right = (left >> 8); left &= 255;
   } else {
@@ -533,7 +533,7 @@ static void asm_conv64(ASMState *as, IRIns *ir)
 
 static void asm_strto(ASMState *as, IRIns *ir)
 {
-  const CCallInfo *ci = &lj_ir_callinfo[IRCALL_lj_str_tonum];
+  const CCallInfo *ci = &lj_ir_callinfo[IRCALL_lj_strscan_num];
   IRRef args[2];
   int32_t ofs;
   RegSet drop = RSET_SCRATCH;
@@ -2026,7 +2026,10 @@ static void asm_ir(ASMState *as, IRIns *ir)
   case IR_FPMATH:
     if (ir->op2 == IRFPM_EXP2 && asm_fpjoin_pow(as, ir))
       break;
-    asm_callid(as, ir, IRCALL_lj_vm_floor + ir->op2);
+    if (ir->op2 == IRFPM_SQRT && (as->flags & JIT_F_SQRT))
+      asm_fpunary(as, ir, PPCI_FSQRT);
+    else
+      asm_callid(as, ir, IRCALL_lj_vm_floor + ir->op2);
     break;
 
   /* Overflow-checking arithmetic ops. */
