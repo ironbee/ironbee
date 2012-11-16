@@ -43,6 +43,12 @@
 #include <ironbee/regex.h>
 #include <ironbee/debug.h>
 
+/* Hack to detect 2.2 vs 2.4 server versions.
+ * This is a 2.3.x version shortly after the module declaration syntax changed
+ * and might leave some 2.3.x in limbo, but should hopefully do the job
+ * of reliably distinguishing 2.2 vs 2.4.
+ */
+#define NEWVERSION AP_MODULE_MAGIC_AT_LEAST(20100919,1)
 
 /* vacuous hack to pretend Apache's OK and Ironbee's IB_OK might be nonzero */
 #define IB2AP(rc) (OK - IB_OK + (rc))
@@ -809,6 +815,12 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     ib_status_t rc;
     conn_rec *conn = iconn->server_ctx;
 
+/* These fields differ between 2.2 and 2.4 because the latter
+ * introduces the distinction between the HTTP Client (end user)
+ * and TCP client (next hop - may be a downstream proxy).
+ * The 2.4 conn_rec gives us the latter.
+ */
+#if NEWVERSION
     iconn->remote_ipstr = conn->client_ip;
     iconn->remote_port = conn->client_addr->port;
     iconn->local_ipstr = conn->local_ip;
@@ -819,6 +831,18 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
                              (uint8_t *)iconn->remote_ipstr,
                              strlen(conn->client_ip),
                              NULL);
+#else
+    iconn->remote_ipstr = conn->remote_ip;
+    iconn->remote_port = conn->remote_addr->port;
+    iconn->local_ipstr = conn->local_ip;
+    iconn->local_port = conn->local_addr->port;
+
+    rc = ib_data_add_bytestr(iconn->dpi,
+                             "remote_ip",
+                             (uint8_t *)iconn->remote_ipstr,
+                             strlen(conn->remote_ip),
+                             NULL);
+#endif
     if (rc != IB_OK)
         return rc;
 
@@ -1110,7 +1134,12 @@ static const command_rec ironbee_cmds[] = {
 /**
  * Declare the module.
  */
-AP_DECLARE_MODULE(ironbee) = {
+#if NEWVERSION
+AP_DECLARE_MODULE(ironbee)
+#else
+module AP_MODULE_DECLARE_DATA ironbee_module
+#endif
+= {
     STANDARD20_MODULE_STUFF,
     ironbee_dir_config,
     ironbee_dir_merge,
