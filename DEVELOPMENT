@@ -52,7 +52,7 @@ LuaJIT Code
 
 LuaJIT is currently distributed with IronBee as it is not widely available.  The
 source is in libs/luajit-2.0-ironbee and is included using git-subtree with full
-history to allow the tree to later be removed.  The tree is a for of the upstream
+history to allow the tree to later be removed.  The tree is a fork of the upstream
 LuaJIT with minor build changes (git://github.com/ironbee/luajit-2.0-ironbee.git).
 
 To update the LuaJIT source, you will need a git with subtree support.  You will
