@@ -1137,20 +1137,20 @@ ib_status_t ib_field_convert(
                     if (rc!=IB_OK){
                         IB_FTRACE_RET_STATUS(rc);
                     }
-                    new_field_value = (void *)bstr;
+                    new_field_value = ib_ftype_bytestr_in(bstr);
                     break;
                 case IB_FTYPE_UNUM:
                     rc = ib_string_to_num(str, 0, &num);
                     unum = (ib_unum_t)num;
-                    new_field_value = (void *)&unum;
+                    new_field_value = ib_ftype_unum_in(&unum);
                     break;
                 case IB_FTYPE_NUM:
                     rc = ib_string_to_num(str, 0, &num);
-                    new_field_value = (void *)&num;
+                    new_field_value = ib_ftype_num_in(&num);
                     break;
                 case IB_FTYPE_FLOAT:
                     rc = ib_string_to_float(str, &flt);
-                    new_field_value = (void *)&flt;
+                    new_field_value = ib_ftype_float_in(&flt);
                     break;
                 default:
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1172,20 +1172,20 @@ ib_status_t ib_field_convert(
                     if (!str) {
                         IB_FTRACE_RET_STATUS(rc);
                     }
-                    new_field_value = (void *) str;
+                    new_field_value = ib_ftype_nulstr_in(str);
                     break;
                 case IB_FTYPE_UNUM:
                     rc = ib_string_to_num_ex((char *)bstr, sz, 0, &num);
                     unum = (ib_unum_t)num;
-                    new_field_value = (void *)&unum;
+                    new_field_value = ib_ftype_unum_in(&unum);
                     break;
                 case IB_FTYPE_NUM:
                     rc = ib_string_to_num_ex((char *)bstr, sz, 0, &num);
-                    new_field_value = (void *)&num;
+                    new_field_value = ib_ftype_num_in(&num);
                     break;
                 case IB_FTYPE_FLOAT:
                     rc = ib_string_to_float_ex((char *)bstr, sz, &flt);
-                    new_field_value = (void *)&flt;
+                    new_field_value = ib_ftype_float_in(&flt);
                     break;
                 default:
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1205,7 +1205,7 @@ ib_status_t ib_field_convert(
                     if (!str) {
                         IB_FTRACE_RET_STATUS(IB_EINVAL);
                     }
-                    new_field_value = (void *)str;
+                    new_field_value = ib_ftype_nulstr_in(str);
                     break;
                 case IB_FTYPE_BYTESTR:
                     str = ib_unum_to_string(mp, unum);
@@ -1216,15 +1216,15 @@ ib_status_t ib_field_convert(
                     if (rc!=IB_OK){
                         IB_FTRACE_RET_STATUS(rc);
                     }
-                    new_field_value = (void *)bstr;
+                    new_field_value = ib_ftype_bytestr_in(bstr);
                     break;
                 case IB_FTYPE_NUM:
                     num = (ib_num_t)unum;
-                    new_field_value = (void *)&num;
+                    new_field_value = ib_ftype_num_in(&num);
                     break;
                 case IB_FTYPE_FLOAT:
                     flt = (ib_num_t)unum;
-                    new_field_value = (void *)&flt;
+                    new_field_value = ib_ftype_float_in(&flt);
                     break;
                 default:
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1244,7 +1244,7 @@ ib_status_t ib_field_convert(
                     if (!str) {
                         IB_FTRACE_RET_STATUS(IB_EINVAL);
                     }
-                    new_field_value = (void *)str;
+                    new_field_value = ib_ftype_nulstr_in(str);
                     break;
                 case IB_FTYPE_BYTESTR:
                     str = ib_num_to_string(mp, num);
@@ -1255,15 +1255,15 @@ ib_status_t ib_field_convert(
                     if (rc!=IB_OK){
                         IB_FTRACE_RET_STATUS(rc);
                     }
-                    new_field_value = (void *)bstr;
+                    new_field_value = ib_ftype_bytestr_in(bstr);
                     break;
                 case IB_FTYPE_UNUM:
                     unum = (ib_num_t)num;
-                    new_field_value = (void *)&unum;
+                    new_field_value = ib_ftype_unum_in(&unum);
                     break;
                 case IB_FTYPE_FLOAT:
                     flt = (ib_float_t)num;
-                    new_field_value = (void *)&flt;
+                    new_field_value = ib_ftype_float_in(&flt);
                     break;
                 default:
                     IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1283,7 +1283,7 @@ ib_status_t ib_field_convert(
                     if (!str) {
                         IB_FTRACE_RET_STATUS(IB_EINVAL);
                     }
-                    new_field_value = (void *)str;
+                    new_field_value = ib_ftype_nulstr_in(str);
                     break;
                 case IB_FTYPE_BYTESTR:
                     str = ib_float_to_string(mp, flt);
@@ -1294,15 +1294,15 @@ ib_status_t ib_field_convert(
                     if (rc!=IB_OK){
                         IB_FTRACE_RET_STATUS(rc);
                     }
-                    new_field_value = (void *)bstr;
+                    new_field_value = ib_ftype_bytestr_in(bstr);
                     break;
                 case IB_FTYPE_UNUM:
                     unum = (ib_unum_t)flt;
-                    new_field_value = (void *)&unum;
+                    new_field_value = ib_ftype_unum_in(&unum);
                     break;
                 case IB_FTYPE_NUM:
                     num = (ib_unum_t)flt;
-                    new_field_value = (void *)&num;
+                    new_field_value = ib_ftype_num_in(&num);
                     break;
                 default:
                     IB_FTRACE_RET_STATUS(IB_EINVAL);

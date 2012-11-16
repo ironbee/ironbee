@@ -756,6 +756,101 @@ ib_status_t op_ipmatch6_execute(
 }
 
 /**
+ * Convert @a in_field from a string by expanding it to an expanded
+ * string and then convert that string to a number-type if 
+ * possible. Otherwise, leave it as a string.
+ *
+ * If no conversion is performed because none is necessary,
+ * IB_OK is returned and @a out_field is set to NULL.
+ *
+ * @param[in] rule_exec Rule execution.
+ * @param[in] flags Execution flags. If IB_OPINST_FLAG_EXPAND is not set,
+ *            then no expansion will be attempted.
+ * @param[in] in_field The field to expand and attempt to convert.
+ * @param[out] out_field The field that the in_field is converted to.
+ *             If no conversion is performed, this is set to NULL.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EALLOC On memory failure.
+ *   - IB_EINVAL If an expandable value cannot be expanded.
+ *   - Other returned by ib_data_expand_str.
+ */
+static ib_status_t expand_field(
+    const ib_rule_exec_t *rule_exec,
+    const ib_flags_t flags,
+    const ib_field_t *in_field,
+    ib_field_t **out_field)
+{
+    IB_FTRACE_INIT();
+
+    assert(rule_exec);
+    assert(rule_exec->tx);
+    assert(rule_exec->tx->mp);
+    assert(in_field);
+
+    const char *original;
+    char *expanded;
+    ib_field_t *tmp_field;
+    ib_status_t rc;
+
+    /* No conversion required. */
+    if ( ! (flags & IB_OPINST_FLAG_EXPAND) ) {
+        *out_field = NULL;
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Get the string from the field */
+    rc = ib_field_value(in_field, ib_ftype_nulstr_out(&original));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Expand the string */
+    rc = ib_data_expand_str(rule_exec->tx->dpi, original, false, &expanded);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Wrap the string into a field and set it to the tmp_field.
+     * We will not try to expand tmp_field into a number. If we
+     * fail, we return tmp_field in *out_field. */
+    rc = ib_field_create_alias(
+        &tmp_field,
+        rule_exec->tx->mp, 
+        in_field->name,
+        in_field->nlen,
+        IB_FTYPE_NULSTR,
+        ib_ftype_nulstr_in(expanded));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Attempt a num. */
+    rc = ib_field_convert(
+        rule_exec->tx->mp,
+        IB_FTYPE_NUM,
+        tmp_field,
+        out_field);
+    if (rc == IB_OK) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* Attempt a float. */
+    rc = ib_field_convert(
+        rule_exec->tx->mp,
+        IB_FTYPE_FLOAT,
+        tmp_field,
+        out_field);
+    if (rc == IB_OK) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
+    /* We cannot convert the expanded string. Return the string. */
+    *out_field = tmp_field;
+    IB_FTRACE_RET_STATUS(rc);
+}
+
+/**
  * Get expanded numeric value of a string
  *
  * @param[in] rule_exec Rule execution object
@@ -1331,6 +1426,7 @@ static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
     IB_FTRACE_INIT();
     assert(data != NULL);
     const ib_field_t *pdata = (const ib_field_t *)data;
+    ib_field_t *expanded_field;
 
     ib_status_t rc;
     ib_flags_t valid_types = 0;
@@ -1340,8 +1436,16 @@ static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
     ib_num_t param_value;
     ib_num_t value;
 
-    rc = select_math_type_conversion(field, pdata, &valid_types);
+    /* First, expand the input. */
+    rc = expand_field(rule_exec, flags, pdata, &expanded_field);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    if (expanded_field) {
+        pdata = (const ib_field_t *)expand_field;
+    }
 
+    rc = select_math_type_conversion(field, pdata, &valid_types);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -1587,6 +1691,7 @@ static ib_status_t op_lt_execute(const ib_rule_exec_t *rule_exec,
             }
         }
     }
+
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
