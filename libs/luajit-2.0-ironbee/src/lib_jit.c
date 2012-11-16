@@ -412,30 +412,16 @@ LJLIB_CF(jit_util_ircalladdr)
   return 0;
 }
 
-#else
-
-static int trace_nojit(lua_State *L)
-{
-  UNUSED(L);
-  return 0;
-}
-#define lj_cf_jit_util_traceinfo	trace_nojit
-#define lj_cf_jit_util_traceir		trace_nojit
-#define lj_cf_jit_util_tracek		trace_nojit
-#define lj_cf_jit_util_tracesnap	trace_nojit
-#define lj_cf_jit_util_tracemc		trace_nojit
-#define lj_cf_jit_util_traceexitstub	trace_nojit
-#define lj_cf_jit_util_ircalladdr	trace_nojit
-
 #endif
 
 #include "lj_libdef.h"
 
 /* -- jit.opt module ------------------------------------------------------ */
 
+#if LJ_HASJIT
+
 #define LJLIB_MODULE_jit_opt
 
-#if LJ_HASJIT
 /* Parse optimization level. */
 static int jitopt_level(jit_State *J, const char *str)
 {
@@ -502,12 +488,10 @@ static int jitopt_param(jit_State *J, const char *str)
   }
   return 0;  /* No match. */
 }
-#endif
 
 /* jit.opt.start(flags...) */
 LJLIB_CF(jit_opt_start)
 {
-#if LJ_HASJIT
   jit_State *J = L2J(L);
   int nargs = (int)(L->top - L->base);
   if (nargs == 0) {
@@ -522,13 +506,12 @@ LJLIB_CF(jit_opt_start)
 	lj_err_callerv(L, LJ_ERR_JITOPT, str);
     }
   }
-#else
-  lj_err_caller(L, LJ_ERR_NOJIT);
-#endif
   return 0;
 }
 
 #include "lj_libdef.h"
+
+#endif
 
 /* -- JIT compiler initialization ----------------------------------------- */
 
@@ -581,7 +564,7 @@ static uint32_t jit_cpudetect(lua_State *L)
 #if LJ_TARGET_X86
 #if !defined(LUAJIT_CPU_NOCMOV)
   if (!(flags & JIT_F_CMOV))
-    luaL_error(L, "Ancient CPU lacks CMOV support (recompile with -DLUAJIT_CPU_NOCMOV)");
+    luaL_error(L, "CPU not supported");
 #endif
 #if defined(LUAJIT_CPU_SSE2)
   if (!(flags & JIT_F_SSE2))
@@ -670,7 +653,9 @@ LUALIB_API int luaopen_jit(lua_State *L)
 #ifndef LUAJIT_DISABLE_JITUTIL
   LJ_LIB_REG(L, "jit.util", jit_util);
 #endif
+#if LJ_HASJIT
   LJ_LIB_REG(L, "jit.opt", jit_opt);
+#endif
   L->top -= 2;
   jit_init(L);
   return 1;

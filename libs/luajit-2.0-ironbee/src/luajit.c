@@ -71,6 +71,7 @@ static void print_usage(void)
   "  -O[opt]   Control LuaJIT optimizations.\n"
   "  -i        Enter interactive mode after executing " LUA_QL("script") ".\n"
   "  -v        Show version information.\n"
+  "  -E        Ignore environment variables.\n"
   "  --        Stop handling options.\n"
   "  -         Execute stdin and stop handling options.\n"
   ,
@@ -105,19 +106,7 @@ static int traceback(lua_State *L)
       return 1;  /* Return non-string error object. */
     lua_remove(L, 1);  /* Replace object by result of __tostring metamethod. */
   }
-  lua_getfield(L, LUA_GLOBALSINDEX, "debug");
-  if (!lua_istable(L, -1)) {
-    lua_pop(L, 1);
-    return 1;
-  }
-  lua_getfield(L, -1, "traceback");
-  if (!lua_isfunction(L, -1)) {
-    lua_pop(L, 2);
-    return 1;
-  }
-  lua_pushvalue(L, 1);  /* Push error message. */
-  lua_pushinteger(L, 2);  /* Skip this function and debug.traceback(). */
-  lua_call(L, 2, 1);  /* Call debug.traceback(). */
+  luaL_traceback(L, L, lua_tostring(L, 1), 1);
   return 1;
 }
 
@@ -406,6 +395,7 @@ static int dobytecode(lua_State *L, char **argv)
 #define FLAGS_VERSION		2
 #define FLAGS_EXEC		4
 #define FLAGS_OPTION		8
+#define FLAGS_NOENV		16
 
 static int collectargs(char **argv, int *flags)
 {
@@ -442,6 +432,9 @@ static int collectargs(char **argv, int *flags)
       if (*flags) return -1;
       *flags |= FLAGS_EXEC;
       return 0;
+    case 'E':
+      *flags |= FLAGS_NOENV;
+      break;
     default: return -1;  /* invalid option */
     }
   }
@@ -521,23 +514,30 @@ static int pmain(lua_State *L)
   globalL = L;
   if (argv[0] && argv[0][0]) progname = argv[0];
   LUAJIT_VERSION_SYM();  /* linker-enforced version check */
-  lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
-  luaL_openlibs(L);  /* open libraries */
-  lua_gc(L, LUA_GCRESTART, -1);
-  s->status = handle_luainit(L);
-  if (s->status != 0) return 0;
   script = collectargs(argv, &flags);
   if (script < 0) {  /* invalid args? */
     print_usage();
     s->status = 1;
     return 0;
   }
+  if ((flags & FLAGS_NOENV)) {
+    lua_pushboolean(L, 1);
+    lua_setfield(L, LUA_REGISTRYINDEX, "LUA_NOENV");
+  }
+  lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
+  luaL_openlibs(L);  /* open libraries */
+  lua_gc(L, LUA_GCRESTART, -1);
+  if (!(flags & FLAGS_NOENV)) {
+    s->status = handle_luainit(L);
+    if (s->status != 0) return 0;
+  }
   if ((flags & FLAGS_VERSION)) print_version();
   s->status = runargs(L, argv, (script > 0) ? script : s->argc);
   if (s->status != 0) return 0;
-  if (script)
+  if (script) {
     s->status = handle_script(L, argv, script);
-  if (s->status != 0) return 0;
+    if (s->status != 0) return 0;
+  }
   if ((flags & FLAGS_INTERACTIVE)) {
     print_jit_status(L);
     dotty(L);

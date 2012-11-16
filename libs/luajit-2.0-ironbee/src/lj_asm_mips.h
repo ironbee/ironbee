@@ -187,7 +187,7 @@ static void asm_fusexref(ASMState *as, MIPSIns mi, Reg rt, IRRef ref,
 {
   IRIns *ir = IR(ref);
   Reg base;
-  if (ra_noreg(ir->r) && mayfuse(as, ref)) {
+  if (ra_noreg(ir->r) && canfuse(as, ir)) {
     if (ir->o == IR_ADD) {
       int32_t ofs2;
       if (irref_isk(ir->op2) && (ofs2 = ofs + IR(ir->op2)->i, checki16(ofs2))) {
@@ -227,9 +227,12 @@ static void asm_gencall(ASMState *as, const CCallInfo *ci, IRRef *args)
 {
   uint32_t n, nargs = CCI_NARGS(ci);
   int32_t ofs = 16;
-  Reg gpr = REGARG_FIRSTGPR, fpr = REGARG_FIRSTFPR;
+  Reg gpr, fpr = REGARG_FIRSTFPR;
   if ((void *)ci->func)
     emit_call(as, (void *)ci->func);
+  for (gpr = REGARG_FIRSTGPR; gpr <= REGARG_LASTGPR; gpr++)
+    as->cost[gpr] = REGCOST(~0u, ASMREF_L);
+  gpr = REGARG_FIRSTGPR;
   for (n = 0; n < nargs; n++) {  /* Setup args. */
     IRRef ref = args[n];
     if (ref) {
@@ -245,16 +248,22 @@ static void asm_gencall(ASMState *as, const CCallInfo *ci, IRRef *args)
 	if (irt_isnum(ir->t)) gpr = (gpr+1) & ~1;
 	if (gpr <= REGARG_LASTGPR) {
 	  lua_assert(rset_test(as->freeset, gpr));  /* Already evicted. */
-	  if (irt_isnum(ir->t)) {
-	    Reg r = ra_alloc1(as, ref, RSET_FPR);
-	    emit_tg(as, MIPSI_MFC1, gpr+(LJ_BE?0:1), r+1);
-	    emit_tg(as, MIPSI_MFC1, gpr+(LJ_BE?1:0), r);
-	    lua_assert(rset_test(as->freeset, gpr+1));  /* Already evicted. */
-	    gpr += 2;
-	  } else if (irt_isfloat(ir->t)) {
-	    Reg r = ra_alloc1(as, ref, RSET_FPR);
-	    emit_tg(as, MIPSI_MFC1, gpr, r);
-	    gpr++;
+	  if (irt_isfp(ir->t)) {
+	    RegSet of = as->freeset;
+	    Reg r;
+	    /* Workaround to protect argument GPRs from being used for remat. */
+	    as->freeset &= ~RSET_RANGE(REGARG_FIRSTGPR, REGARG_LASTGPR+1);
+	    r = ra_alloc1(as, ref, RSET_FPR);
+	    as->freeset |= (of & RSET_RANGE(REGARG_FIRSTGPR, REGARG_LASTGPR+1));
+	    if (irt_isnum(ir->t)) {
+	      emit_tg(as, MIPSI_MFC1, gpr+(LJ_BE?0:1), r+1);
+	      emit_tg(as, MIPSI_MFC1, gpr+(LJ_BE?1:0), r);
+	      lua_assert(rset_test(as->freeset, gpr+1));  /* Already evicted. */
+	      gpr += 2;
+	    } else if (irt_isfloat(ir->t)) {
+	      emit_tg(as, MIPSI_MFC1, gpr, r);
+	      gpr++;
+	    }
 	  } else {
 	    ra_leftov(as, gpr, ref);
 	    gpr++;
@@ -364,15 +373,13 @@ static void asm_callid(ASMState *as, IRIns *ir, IRCallID id)
 static void asm_callround(ASMState *as, IRIns *ir, IRCallID id)
 {
   /* The modified regs must match with the *.dasc implementation. */
-  RegSet drop = RID2RSET(RID_R1)|RID2RSET(RID_R12)|RID2RSET(RID_F2)|
-		RID2RSET(RID_F4)|RID2RSET(RID_F12)|RID2RSET(RID_F14);
-  const CCallInfo *ci = &lj_ir_callinfo[id];
-  IRRef args[2];
-  args[0] = ir->op1;
-  args[1] = ir->op2;
+  RegSet drop = RID2RSET(RID_R1)|RID2RSET(RID_R12)|RID2RSET(RID_FPRET)|
+		RID2RSET(RID_F2)|RID2RSET(RID_F4)|RID2RSET(REGARG_FIRSTFPR);
+  if (ra_hasreg(ir->r)) rset_clear(drop, ir->r);
   ra_evictset(as, drop);
   ra_destreg(as, ir, RID_FPRET);
-  asm_gencall(as, ci, args);
+  emit_call(as, (void *)lj_ir_callinfo[id].func);
+  ra_leftov(as, REGARG_FIRSTFPR, ir->op1);
 }
 
 /* -- Returns ------------------------------------------------------------- */
@@ -534,7 +541,7 @@ static void asm_conv64(ASMState *as, IRIns *ir)
 
 static void asm_strto(ASMState *as, IRIns *ir)
 {
-  const CCallInfo *ci = &lj_ir_callinfo[IRCALL_lj_str_tonum];
+  const CCallInfo *ci = &lj_ir_callinfo[IRCALL_lj_strscan_num];
   IRRef args[2];
   RegSet drop = RSET_SCRATCH;
   if (ra_hasreg(ir->r)) rset_set(drop, ir->r);  /* Spill dest reg (if any). */
@@ -1820,6 +1827,8 @@ static void asm_ir(ASMState *as, IRIns *ir)
       break;
     if (ir->op2 <= IRFPM_TRUNC)
       asm_callround(as, ir, IRCALL_lj_vm_floor + ir->op2);
+    else if (ir->op2 == IRFPM_SQRT)
+      asm_fpunary(as, ir, MIPSI_SQRT_D);
     else
       asm_callid(as, ir, IRCALL_lj_vm_floor + ir->op2);
     break;

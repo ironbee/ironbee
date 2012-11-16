@@ -121,7 +121,6 @@
 #define LJ_ARCH_NAME		"x86"
 #define LJ_ARCH_BITS		32
 #define LJ_ARCH_ENDIAN		LUAJIT_LE
-#define LJ_ARCH_HASFPU		1
 #if LJ_TARGET_WINDOWS || __CYGWIN__
 #define LJ_ABI_WIN		1
 #else
@@ -132,6 +131,7 @@
 #define LJ_TARGET_EHRETREG	0
 #define LJ_TARGET_MASKSHIFT	1
 #define LJ_TARGET_MASKROT	1
+#define LJ_TARGET_UNALIGNED	1
 #define LJ_ARCH_NUMMODE		LJ_NUMMODE_SINGLE_DUAL
 
 #elif LUAJIT_TARGET == LUAJIT_ARCH_X64
@@ -139,7 +139,6 @@
 #define LJ_ARCH_NAME		"x64"
 #define LJ_ARCH_BITS		64
 #define LJ_ARCH_ENDIAN		LUAJIT_LE
-#define LJ_ARCH_HASFPU		1
 #define LJ_ABI_WIN		LJ_TARGET_WINDOWS
 #define LJ_TARGET_X64		1
 #define LJ_TARGET_X86ORX64	1
@@ -147,6 +146,7 @@
 #define LJ_TARGET_JUMPRANGE	31	/* +-2^31 = +-2GB */
 #define LJ_TARGET_MASKSHIFT	1
 #define LJ_TARGET_MASKROT	1
+#define LJ_TARGET_UNALIGNED	1
 #define LJ_ARCH_NUMMODE		LJ_NUMMODE_SINGLE_DUAL
 
 #elif LUAJIT_TARGET == LUAJIT_ARCH_ARM
@@ -154,8 +154,12 @@
 #define LJ_ARCH_NAME		"arm"
 #define LJ_ARCH_BITS		32
 #define LJ_ARCH_ENDIAN		LUAJIT_LE
+#if !defined(LJ_ARCH_HASFPU) && __SOFTFP__
 #define LJ_ARCH_HASFPU		0
+#endif
+#if !defined(LJ_ABI_SOFTFP) && !__ARM_PCS_VFP
 #define LJ_ABI_SOFTFP		1
+#endif
 #define LJ_ABI_EABI		1
 #define LJ_TARGET_ARM		1
 #define LJ_TARGET_EHRETREG	0
@@ -184,7 +188,6 @@
 #define LJ_ARCH_BITS		32
 #endif
 #define LJ_ARCH_ENDIAN		LUAJIT_BE
-#define LJ_ARCH_HASFPU		1
 #define LJ_TARGET_PPC		1
 #define LJ_TARGET_EHRETREG	3
 #define LJ_TARGET_JUMPRANGE	25	/* +-2^25 = +-32MB */
@@ -228,8 +231,9 @@
 #define LJ_ARCH_NAME		"ppcspe"
 #define LJ_ARCH_BITS		32
 #define LJ_ARCH_ENDIAN		LUAJIT_BE
-#define LJ_ARCH_HASFPU		1
+#ifndef LJ_ABI_SOFTFP
 #define LJ_ABI_SOFTFP		1
+#endif
 #define LJ_ABI_EABI		1
 #define LJ_TARGET_PPCSPE	1
 #define LJ_TARGET_EHRETREG	3
@@ -251,7 +255,6 @@
 #define LJ_ARCH_ENDIAN		LUAJIT_BE
 #endif
 #define LJ_ARCH_BITS		32
-#define LJ_ARCH_HASFPU		1
 #define LJ_TARGET_MIPS		1
 #define LJ_TARGET_EHRETREG	4
 #define LJ_TARGET_JUMPRANGE	27	/* 2*2^27 = 256MB-aligned region */
@@ -301,9 +304,6 @@
 #if defined(__ARMEB__)
 #error "No support for big-endian ARM"
 #endif
-#if defined(__ARM_PCS_VFP)
-#error "No support for ARM hard-float ABI (yet)"
-#endif
 #if __ARM_ARCH_6M__ || __ARM_ARCH_7M__ || __ARM_ARCH_7EM__
 #error "No support for Cortex-M CPUs"
 #endif
@@ -319,6 +319,10 @@
 #endif
 #if defined(_LP64)
 #error "No support for PowerPC 64 bit mode"
+#endif
+#elif LJ_TARGET_MIPS
+#if defined(__mips_soft_float)
+#error "No support for MIPS CPUs without FPU"
 #endif
 #endif
 #endif
@@ -358,6 +362,12 @@
 #define LJ_HASFFI		1
 #endif
 
+#ifndef LJ_ARCH_HASFPU
+#define LJ_ARCH_HASFPU		1
+#endif
+#ifndef LJ_ABI_SOFTFP
+#define LJ_ABI_SOFTFP		0
+#endif
 #define LJ_SOFTFP		(!LJ_ARCH_HASFPU)
 
 #if LJ_ARCH_ENDIAN == LUAJIT_BE
@@ -380,8 +390,12 @@
 #define LJ_64			1
 #endif
 
+#ifndef LJ_TARGET_UNALIGNED
+#define LJ_TARGET_UNALIGNED	0
+#endif
+
 /* Various workarounds for embedded operating systems. */
-#if defined(__ANDROID__) || defined(__symbian__)
+#if (defined(__ANDROID__) && !defined(LJ_TARGET_X86ORX64)) || defined(__symbian__)
 #define LUAJIT_NO_LOG2
 #endif
 #if defined(__symbian__)
@@ -390,6 +404,13 @@
 
 #if defined(LUAJIT_NO_UNWIND) || defined(__symbian__) || LJ_TARGET_IOS || LJ_TARGET_PS3
 #define LJ_NO_UNWIND		1
+#endif
+
+/* Compatibility with Lua 5.1 vs. 5.2. */
+#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#define LJ_52			1
+#else
+#define LJ_52			0
 #endif
 
 #endif

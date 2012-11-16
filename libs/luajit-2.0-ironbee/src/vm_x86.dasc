@@ -443,6 +443,7 @@ static void build_subroutines(BuildCtx *ctx)
   |
   |->vm_returnc:
   |  add RD, 1				// RD = nresults+1
+  |  jz ->vm_unwind_yield
   |  mov MULTRES, RD
   |  test PC, FRAME_TYPE
   |  jz ->BC_RET_Z			// Handle regular return to Lua.
@@ -525,6 +526,10 @@ static void build_subroutines(BuildCtx *ctx)
   |  call extern lj_state_growstack@8	// (lua_State *L, int n)
   |  mov BASE, L:RB->top		// Need the (realloced) L->top in BASE.
   |  jmp <3
+  |
+  |->vm_unwind_yield:
+  |  mov al, LUA_YIELD
+  |  jmp ->vm_unwind_c_eh
   |
   |->vm_unwind_c@8:			// Unwind C stack, return from vm_pcall.
   |  // (void *cframe, int errcode)
@@ -1184,7 +1189,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  call extern lj_meta_len@8		// (lua_State *L, TValue *o)
   |  // NULL (retry) or TValue * (metamethod) returned in eax (RC).
   |  mov BASE, L:RB->base
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#if LJ_52
   |  test RC, RC
   |  jne ->vmeta_binop			// Binop call for compatibility.
   |  movzx RD, PC_RD
@@ -1566,7 +1571,7 @@ static void build_subroutines(BuildCtx *ctx)
   |  add BASE, 8
   |  mov ARG3, BASE
   |.endif
-  |  mov SAVE_PC, PC			// Redundant (but a defined value).
+  |  mov SAVE_PC, PC			// Needed for ITERN fallback.
   |  call extern lj_tab_next	// (lua_State *L, GCtab *t, TValue *key)
   |  // Flag returned in eax (RD).
   |  mov BASE, L:RB->base
@@ -1600,7 +1605,7 @@ static void build_subroutines(BuildCtx *ctx)
   |.ffunc_1 pairs
   |  mov TAB:RB, [BASE]
   |  cmp dword [BASE+4], LJ_TTAB;  jne ->fff_fallback
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#if LJ_52
   |  cmp dword TAB:RB->metatable, 0; jne ->fff_fallback
 #endif
   |  mov CFUNC:RB, [BASE-8]
@@ -1674,7 +1679,7 @@ static void build_subroutines(BuildCtx *ctx)
   |.ffunc_1 ipairs
   |  mov TAB:RB, [BASE]
   |  cmp dword [BASE+4], LJ_TTAB;  jne ->fff_fallback
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#if LJ_52
   |  cmp dword TAB:RB->metatable, 0; jne ->fff_fallback
 #endif
   |  mov CFUNC:RB, [BASE-8]
@@ -2045,7 +2050,12 @@ static void build_subroutines(BuildCtx *ctx)
   |.else
   |.ffunc_n math_sqrt; fsqrt; jmp ->fff_resn
   |.endif
-  |.ffunc_n math_log, fldln2;	fyl2x;		jmp ->fff_resn
+  |
+  |.ffunc math_log
+  |  cmp NARGS:RD, 1+1; jne ->fff_fallback	// Exactly one argument.
+  |  cmp dword [BASE+4], LJ_TISNUM; jae ->fff_fallback
+  |  fldln2; fld qword [BASE]; fyl2x; jmp ->fff_resn
+  |
   |.ffunc_n math_log10, fldlg2;	fyl2x;		jmp ->fff_resn
   |.ffunc_n math_exp;	call ->vm_exp_x87;	jmp ->fff_resn
   |
@@ -2432,8 +2442,9 @@ static void build_subroutines(BuildCtx *ctx)
   |  xor RC, RC				// Zero length. Any ptr in RB is ok.
   |  jmp <4
   |
-  |.ffunc_2 string_rep			// Only handle the 1-char case inline.
+  |.ffunc string_rep			// Only handle the 1-char case inline.
   |  ffgccheck
+  |  cmp NARGS:RD, 2+1; jne ->fff_fallback	// Exactly 2 arguments.
   |  cmp dword [BASE+4], LJ_TSTR;  jne ->fff_fallback
   |  cmp dword [BASE+12], LJ_TISNUM
   |  mov STR:RB, [BASE]
@@ -3156,6 +3167,29 @@ static void build_subroutines(BuildCtx *ctx)
   |  fsubp st1
   |  ret
   |.endif
+  |
+  |// FP log2(x). Called by math.log(x, base).
+  |->vm_log2:
+  |.if X64WIN
+  |  movsd qword [rsp+8], xmm0		// Use scratch area.
+  |  fld1
+  |  fld qword [rsp+8]
+  |  fyl2x
+  |  fstp qword [rsp+8]
+  |  movsd xmm0, qword [rsp+8]
+  |.elif X64
+  |  movsd qword [rsp-8], xmm0		// Use red zone.
+  |  fld1
+  |  fld qword [rsp-8]
+  |  fyl2x
+  |  fstp qword [rsp-8]
+  |  movsd xmm0, qword [rsp-8]
+  |.else
+  |  fld1
+  |  fld qword [esp+4]
+  |  fyl2x
+  |.endif
+  |  ret
   |
   |// FP exponentiation e^x and 2^x. Called by math.exp fast function and
   |// from JIT code. Arg/ret on x87 stack. No int/xmm regs modified.
@@ -4315,7 +4349,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |2:
     |  checktab RD, ->vmeta_len
     |  mov TAB:FCARG1, [BASE+RD*8]
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#if LJ_52
     |  mov TAB:RB, TAB:FCARG1->metatable
     |  cmp TAB:RB, 0
     |  jnz >9
@@ -4336,7 +4370,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  mov BASE, RB			// Restore BASE.
     |  movzx RA, PC_RA
     |  jmp <1
-#ifdef LUAJIT_ENABLE_LUA52COMPAT
+#if LJ_52
     |9:  // Check for __len.
     |  test byte TAB:RB->nomm, 1<<MM_len
     |  jnz <3
@@ -5433,6 +5467,7 @@ static void build_ins(BuildCtx *ctx, BCOp op, int defop)
     |  cmp byte CFUNC:RB->ffid, FF_next_N; jne >5
     |  branchPC RD
     |  mov dword [BASE+RA*8-8], 0	// Initialize control var.
+    |  mov dword [BASE+RA*8-4], 0xfffe7fff
     |1:
     |  ins_next
     |5:  // Despecialize bytecode if any of the checks fail.
@@ -6200,51 +6235,6 @@ static void emit_asm_debug(BuildCtx *ctx)
 	"\t.align " SZPTR "\n"
 	".LEFDE3:\n\n", (int)ctx->codesz - fcofs);
 #endif
-    break;
-  case BUILD_coffasm:
-    fprintf(ctx->fp, "\t.section .eh_frame,\"dr\"\n");
-    fprintf(ctx->fp,
-      "\t.def %slj_err_unwind_dwarf; .scl 2; .type 32; .endef\n",
-      LJ_32 ? "_" : "");
-    fprintf(ctx->fp,
-	"Lframe1:\n"
-	"\t.long LECIE1-LSCIE1\n"
-	"LSCIE1:\n"
-	"\t.long 0\n"
-	"\t.byte 0x1\n"
-	"\t.string \"zP\"\n"
-	"\t.uleb128 0x1\n"
-	"\t.sleb128 -" SZPTR "\n"
-	"\t.byte " REG_RA "\n"
-	"\t.uleb128 5\n"			/* augmentation length */
-	"\t.byte 0x00\n"			/* absptr */
-	"\t.long %slj_err_unwind_dwarf\n"
-	"\t.byte 0xc\n\t.uleb128 " REG_SP "\n\t.uleb128 " SZPTR "\n"
-	"\t.byte 0x80+" REG_RA "\n\t.uleb128 0x1\n"
-	"\t.align " SZPTR "\n"
-	"LECIE1:\n\n", LJ_32 ? "_" : "");
-    fprintf(ctx->fp,
-	"LSFDE1:\n"
-	"\t.long LEFDE1-LASFDE1\n"
-	"LASFDE1:\n"
-	"\t.long LASFDE1-Lframe1\n"
-	"\t.long %slj_vm_asm_begin\n"
-	"\t.long %d\n"
-	"\t.uleb128 0\n"			/* augmentation length */
-	"\t.byte 0xe\n\t.uleb128 %d\n"		/* def_cfa_offset */
-#if LJ_64
-	"\t.byte 0x86\n\t.uleb128 0x2\n"	/* offset rbp */
-	"\t.byte 0x83\n\t.uleb128 0x3\n"	/* offset rbx */
-	"\t.byte 0x8f\n\t.uleb128 0x4\n"	/* offset r15 */
-	"\t.byte 0x8e\n\t.uleb128 0x5\n"	/* offset r14 */
-#else
-	"\t.byte 0x85\n\t.uleb128 0x2\n"	/* offset ebp */
-	"\t.byte 0x87\n\t.uleb128 0x3\n"	/* offset edi */
-	"\t.byte 0x86\n\t.uleb128 0x4\n"	/* offset esi */
-	"\t.byte 0x83\n\t.uleb128 0x5\n"	/* offset ebx */
-#endif
-	"\t.align " SZPTR "\n"
-	"LEFDE1:\n\n", LJ_32 ? "_" : "", (int)ctx->codesz, CFRAME_SIZE);
     break;
   /* Mental note: never let Apple design an assembler.
   ** Or a linker. Or a plastic case. But I digress.
