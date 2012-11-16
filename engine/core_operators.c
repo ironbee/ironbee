@@ -151,7 +151,7 @@ static ib_status_t num_eq(ib_num_t n1, ib_num_t n2, ib_num_t *result)
 static ib_status_t num_ne(ib_num_t n1, ib_num_t n2, ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    *result = ( n1 == n2 );
+    *result = ( n1 != n2 );
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 /**
