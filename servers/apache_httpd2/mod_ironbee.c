@@ -17,227 +17,290 @@
 
 /**
  * @file
- * @brief IronBee --- Apache 2.x Plugin
+ * @brief IronBee --- Apache 2.4 Module
  *
- * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Nick Kew <nkew@qualys.com>
  */
 
-#include <apr.h>
+#include <httpd.h>
+#include <http_protocol.h>
+#include <http_request.h>
+#include <http_connection.h>
+#include <http_config.h>
+#include <http_log.h>
+#include <util_filter.h>
 #include <apr_strings.h>
 
-#include <string.h>
-
-#include <sys/un.h>
-#include <arpa/inet.h>
-
-#if defined(__cplusplus) && !defined(__STDC_CONSTANT_MACROS)
-/* C99 requires that stdint.h only exposes constant macros
- * for C++ implementations if this is defined: */
-#define __STDC_CONSTANT_MACROS
-#endif
-
-
-#if APR_HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-
-#include <assert.h>
 
 #include <ironbee/engine.h>
-#include <ironbee/server.h>
 #include <ironbee/config.h>
 #include <ironbee/module.h> /* Only needed while config is in here. */
-#include <ironbee/core.h>   /* Only needed while config is in here. */
 #include <ironbee/provider.h>
-#include <ironbee/debug.h>
-#include <ironbee/util.h>
+#include <ironbee/server.h>
+#include <ironbee/core.h>
 #include <ironbee/state_notify.h>
+#include <ironbee/util.h>
+#include <ironbee/regex.h>
+#include <ironbee/debug.h>
 
-#include <apache_httpd2.h>
+/* Hack to detect 2.2 vs 2.4 server versions.
+ * This is a 2.3.x version shortly after the module declaration syntax changed
+ * and might leave some 2.3.x in limbo, but should hopefully do the job
+ * of reliably distinguishing 2.2 vs 2.4.
+ */
+#define NEWVERSION AP_MODULE_MAGIC_AT_LEAST(20100919,1)
 
-#include <http_main.h>
-#include <http_connection.h>
-#include <http_request.h>
+/* vacuous hack to pretend Apache's OK and Ironbee's IB_OK might be nonzero */
+#define IB2AP(rc) (OK - IB_OK + (rc))
 
-#include <apr_pools.h>
-
-#define MODULE_NAME                mod_ironbee
-#define MODULE_NAME_STR            IB_XSTRINGIFY(MODULE_NAME)
-#define MODULE_RELEASE             IB_VERSION
-#define MODULE_NAME_FULL           MODULE_NAME_STR " " \
-                                   IB_PRODUCT_VERSION_NAME \
-                                   " (ABI " IB_XSTRINGIFY(IB_ABINUM) ")"
-
-/// @todo Fix this:
-#ifndef X_MODULE_BASE_PATH
-#define X_MODULE_BASE_PATH IB_XSTRINGIFY(MODULE_BASE_PATH) "/"
-#endif
-
-#define IRONBEE_DEFAULT_BUFLEN       8192
-#define IRONBEE_DEFAULT_FLUSHLEN     1024
-#define IRONBEE_IP_MAXSIZE           40
-
-#define IRONBEE_UNSET                ((int)(UINT_MAX))
-#define IRONBEE_UNSET_P              ((void *)UINTPTR_MAX)
-
-#define IRONBEE_CONNECT              0
-#define IRONBEE_REQUEST              1
-#define IRONBEE_RESPONSE             2
-#define IRONBEE_DISCONNECT           3
-#define IRONBEE_ABORT                4
-
-// APR uses char* instead of void* for it's generic pointer type.  This
-// causes some false warnings.  We're okay, because the values we put in to
-// APR are properly aligned.
-#ifdef __clang__
-#pragma clang diagnostic ignored "-Wcast-align"
-#endif
-
-/* -- Data Structures -- */
-
+/*************    APACHE MODULE AND TYPES   *****************/
 module AP_MODULE_DECLARE_DATA ironbee_module;
 
-typedef struct ironbee_conn_context ironbee_conn_context;
-typedef struct ironbee_tx_context ironbee_tx_context;
+#define HDRS_IN IB_SERVER_REQUEST
+#define HDRS_OUT IB_SERVER_RESPONSE
+#define START_RESPONSE 0x04
 
-/**
- * Context used for connection buffering/inspecting data.
- */
-struct ironbee_conn_context {
-    int                      direction;
-    ib_conn_t               *iconn;
-    int                      status;
-};
-typedef struct mod_ib_conn_ctx mod_ib_conn_ctx;
-struct mod_ib_conn_ctx {
+typedef struct ironbee_req_ctx {
+    ib_tx_t *tx;
     int status;
-    const char *errordoc;
-};
+    int state;
+    request_rec *r;
+} ironbee_req_ctx;
+typedef struct ironbee_filter_ctx {
+    enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER } buffering;
+    apr_bucket_brigade *buffer;
+} ironbee_filter_ctx;
+
+typedef struct ironbee_svr_conf {
+    int early;
+} ironbee_svr_conf;
+
+typedef struct ironbee_dir_conf {
+} ironbee_dir_conf;
+
+/*************    GENERAL GLOBALS        *************************/
+static const char *ironbee_config_file = NULL;
+static ib_engine_t *ironbee = NULL;
+static int log_level_is_startup = APLOG_STARTUP;
+
+/*************    IRONBEE-DRIVEN PROVIDERS/CALLBACKS/ETC ***********/
+
+/* Application data for apr_table_do to apply regexp to a header */
+typedef struct {
+    ib_mpool_t *mp;
+    apr_table_t *t;
+    ib_rx_t *rx;
+} edit_do;
 
 /**
- * Context used for transaction processing.
+ * APR callback function to process one header according to a regexp
+ *
+ * @param[in] v - Application Data Pointer
+ * @param[in] key - Header
+ * @param[in] val - Header Value
+ * @return 1 (continue iterating over APR table)
  */
-struct ironbee_tx_context {
-    ib_tx_t                 *itx;
-};
+static int edit_header(void *v, const char *key, const char *val)
+{
+    edit_do *ed = (edit_do *)v;
+    char *repl;
 
-#ifndef ap_is_HTTP_VALID_RESPONSE
-/* Pulled from apache source. */
-#define ap_is_HTTP_VALID_RESPONSE(x) (((x) >= 100)&&((x) < 600))
-#endif
+    /* Note - Since we were passed an Ironbee regexp, we pass it an
+     * ironbee tx pool from which repl gets allocated.  Everything else
+     * uses apache's request pool.  That's OK, both have the same lifetime.
+     */
+    ib_rx_exec(ed->mp, ed->rx, val, &repl, NULL);
+    if (repl == NULL) /* FIXME: do something? */
+        return 1;
 
+    apr_table_addn(ed->t, key, repl);
+    return 1;
+}
+
+/**
+ * Ironbee callback function to manipulate an HTTP header
+ *
+ * @param[in] tx - Ironbee transaction
+ * @param[in] dir - Request/Response
+ * @param[in] action - Requested header manipulation
+ * @param[in] hdr - Header
+ * @param[in] value - Header Value
+ * @param[in] rx - Compiled regexp of value (if applicable)
+ * @return status (OK, Declined if called too late, Error if called with
+ *                 invalid data).  NOTIMPL should never happen.
+ */
+static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
+                                      ib_server_header_action_t action,
+                                      const char *hdr, const char *value,
+                                      ib_rx_t *rx, void *cbdata)
+{
+    ironbee_req_ctx *ctx = tx->sctx;
+    apr_table_t *headers = (dir == IB_SERVER_REQUEST)
+                                ? ctx->r->headers_in : ctx->r->headers_out;
+
+    if (ctx->state & HDRS_OUT ||
+        (ctx->state & HDRS_IN && dir == IB_SERVER_REQUEST))
+        return IB_DECLINED;  /* too late for requested op */
+
+    switch (action) {
+      case IB_HDR_SET:
+        apr_table_set(headers, hdr, value);
+        return IB_OK;
+      case IB_HDR_UNSET:
+        apr_table_unset(headers, hdr);
+        return IB_OK;
+      case IB_HDR_ADD:
+        apr_table_add(headers, hdr, value);
+        return IB_OK;
+      case IB_HDR_MERGE:
+      case IB_HDR_APPEND:
+        apr_table_merge(headers, hdr, value);
+        return IB_OK;
+      case IB_HDR_EDIT:
+        if (apr_table_get(headers, hdr)) {
+            edit_do ed;
+
+            /* Check we were passed something valid */
+            if (rx == NULL) {
+                if (rx = ib_rx_compile(tx->mp, value), rx == NULL) {
+                    ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, ctx->r,
+                                  "Failed to compile %s as regexp", value);
+                    return IB_EINVAL;
+                }
+            }
+
+            ed.mp = tx->mp;
+            ed.rx = rx;
+            ed.t = apr_table_make(ctx->r->pool, 5);
+            if (!apr_table_do(edit_header, (void *) &ed, headers, hdr, NULL))
+                return IB_EINVAL;
+            apr_table_unset(headers, hdr);
+            if (dir == IB_SERVER_REQUEST)
+                ctx->r->headers_in = apr_table_overlay(ctx->r->pool,
+                                                       headers, ed.t);
+            else
+                ctx->r->headers_out = apr_table_overlay(ctx->r->pool,
+                                                        headers, ed.t);
+        }
+        return IB_OK;
+    }
+    return IB_ENOTIMPL;
+}
+/**
+ * Ironbee callback function to set an HTTP error status.
+ * This will divert processing into an ErrorDocument for the status.
+ *
+ * @param[in] tx - Ironbee transaction
+ * @param[in] status - Status to set
+ * @return OK, or Declined if called too late.  NOTIMPL should never happen.
+ */
 static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 {
-#if 0
-    /* We're being called from a connection filter here.
-     * So on input we have to anticipate the Request
-     * while on output we're too late to do anything very interesting.
-     */
-    ap_filter_t *f = vf;
-    mod_ib_conn_ctx *ctx = ap_get_module_config(f->c->conn_config,
-                                                &ironbee_module);
-    if (ctx == NULL) {
-        ctx = apr_pcalloc(f->c->pool, sizeof(mod_ib_conn_ctx));
-        ap_set_module_config(f->c->conn_config, &ironbee_module, ctx);
-    }
-    if (ap_is_HTTP_VALID_RESPONSE(status)) {
-        /* Ironbee wants us to return an HTTP error */
+    ironbee_req_ctx *ctx = tx->sctx;
+    if (status >= 200 && status < 600) {
+        if (ctx->status >= 200 && ctx->status < 600) {
+            ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, ctx->r,
+                          "Ignoring: status already set to %d", ctx->status);
+            return IB_OK;
+        }
+        if (ctx->state & START_RESPONSE) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, ctx->r,
+                          "Too late to change status=%d", status);
+            return IB_DECLINED;
+        }
         ctx->status = status;
+        return IB_OK;
     }
-    else if (status == DONE) {
-        /* Ironbee wants us to return an HTTP error */
-        ctx->status = status;
-    }
-    else {
-        ap_log_cerror(APLOG_MARK, APLOG_DEBUG, 0, f->c,
-                     IB_PRODUCT_NAME ": requested unsupported action %d",
-                     status);
-        return IB_ENOTIMPL;
-    }
-#endif
     return IB_ENOTIMPL;
 }
-static ib_status_t ib_errdata_callback(ib_tx_t *tx,
-                                       const char *data,
-                                       void *cbdata)
-{
-    return IB_ENOTIMPL;
-}
-static ib_status_t ib_errhdr_callback(ib_tx_t *tx,
-                                      const char *hdr,
-                                      const char *val,
-                                      void *cbdata)
-{
-    return IB_ENOTIMPL;
-}
-static ib_status_t ib_header_callback(
-    ib_tx_t *ctx,
-    ib_server_direction_t dir,
-    ib_server_header_action_t action,
-    const char *hdr,
-    const char *value,
-    ib_rx_t *rx,
-    void *cbdata)
-{
-    //ap_filter_t *f = ctx;
-    return IB_ENOTIMPL;
-}
-#ifdef HAVE_FILTER_DATA_API
-static ib_status_t ib_filter_init_callback(
-    ib_tx_t *ctx,
-    ib_server_direction_t dir,
-    void *cbdata)
-{
-    return IB_OK;
-}
-static ib_status_t ib_filter_data_callback(ib_tx_t *ctx,
-                                           ib_server_direction_t dir,
-                                           const char *block,
-                                           size_t len,
-                                           void *cbdata)
-{
-    return IB_OK;
-}
-#endif
 
-/* Plugin Structure with placeholders */
-ib_server_t DLL_LOCAL ibplugin = {
+/**
+ * Ironbee callback function to set an HTTP header for an ErrorDocument.
+ *
+ * @param[in] tx - Ironbee transaction
+ * @param[in] hdr - Header to set
+ * @param[in] val - Value to set
+ * @return OK, or Declined if called too late, or EINVAL.
+ */
+static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *val, void *cbdata)
+{
+    ironbee_req_ctx *ctx = tx->sctx;
+    if (ctx->state & START_RESPONSE)
+        return IB_DECLINED;
+    if (!hdr || !val)
+        return IB_EINVAL;
+
+    apr_table_set(ctx->r->err_headers_out, hdr, val);
+    return IB_OK;
+}
+
+/**
+ * Ironbee callback function to set an errordocument
+ * Since httpd has its own internal ErrorDocument mechanism,
+ * we use that for the time being and leave this NOTIMPL
+ *
+ * TODO: think about something along the lines of mod_choices's errordoc.
+ *
+ * @param[in] tx - Ironbee transaction
+ * @param[in] data - Data to set
+ * @return NOTIMPL, or Declined if called too late, or EINVAL.
+ */
+static ib_status_t ib_errdata_callback(ib_tx_t *tx, const char *data, void *cbdata)
+{
+    ironbee_req_ctx *ctx = tx->sctx;
+    if (ctx->state & START_RESPONSE)
+        return IB_DECLINED;
+    if (!data)
+        return IB_EINVAL;
+
+/* Maybe implement something here?
+    ctx->errdata = apr_pstrdup(ctx->r->pool, data);
+    return IB_OK;
+*/
+    return IB_ENOTIMPL;
+}
+
+/**
+ * The ironbee plugin
+ */
+static ib_server_t ibplugin = {
     IB_SERVER_HEADER_DEFAULTS,
-    "apache_2",
-    &ib_header_callback,
+    "httpd-ironbee",
+    ib_header_callback,
     NULL,
-    &ib_error_callback,
+    ib_error_callback,
     NULL,
-    &ib_errhdr_callback,
+    ib_errhdr_callback,
     NULL,
-    &ib_errdata_callback,
+    ib_errdata_callback,
     NULL,
-#ifdef HAVE_FILTER_DATA_API
-    &ib_filter_init_callback,
-    NULL,
-    &ib_filter_data_callback,
-    NULL,
-#endif
 };
 
-/* IronBee Handle */
-ib_engine_t DLL_LOCAL *ironbee = NULL;
-
-
-/* -- Logging -- */
-
-/// @todo Change to use ib_provider_inst_t
-static void ironbee_logger(void *data, ib_log_level_t level,
+/* BOOTSTRAP: lift logger straight from the old mod_ironbee */
+/**
+ * IronBee callback: logger function.
+ *
+ * Performs IronBee logging for the ATS plugin.
+ *
+ * @param[in] data Dummy pointer
+ * @param[in] level Debug level
+ * @param[in] ib IronBee engine
+ * @param[in] file File name
+ * @param[in] line Line number
+ * @param[in] fmt Format string
+ * @param[in] ap Var args list to match the format
+ */
+static void ironbee_logger(void *data,
+                           ib_log_level_t level,
                            const ib_engine_t *ib,
                            const char *file,
                            int line,
                            const char *fmt,
                            va_list ap)
 {
-    server_rec *s = (server_rec *)data;
     char buf[8192 + 1];
     int limit = 7000;
-    int ap_level;
+    int ap_level = APLOG_WARNING | log_level_is_startup;
     int ec;
 
     /* Buffer the log line. */
@@ -247,7 +310,7 @@ static void ironbee_logger(void *data, ib_log_level_t level,
         memcpy(buf + (limit - 5), " ...", 5);
 
         /// @todo Do something about it
-        ap_log_error(APLOG_MARK, APLOG_WARNING, 0, s,
+        ap_log_error(APLOG_MARK, ap_level, 0, NULL,
                      IB_PRODUCT_NAME ": Log format truncated: limit (%d/%d)",
                      (int)ec, limit);
     }
@@ -277,849 +340,811 @@ static void ironbee_logger(void *data, ib_log_level_t level,
     }
 
     /// @todo Make configurable
-    if ((s == NULL) && (ap_level > APLOG_NOTICE)) {
+    if (ap_level > APLOG_NOTICE) {
         ap_level = APLOG_NOTICE;
     }
 
+    ap_level |= log_level_is_startup;
+
     /* Write it to the error log. */
-    ap_log_error(APLOG_MARK, ap_level, 0, s, IB_PRODUCT_NAME ": %s", buf);
+    ap_log_error(APLOG_MARK, ap_level, 0, NULL, "ironbee: %s", buf);
 }
 
+/* The logger provider struct */
 static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
     IB_PROVIDER_IFACE_HEADER_DEFAULTS,
     ironbee_logger
 };
 
 
-/* -- Private Functions -- */
+/***********   APACHE PER-REQUEST FILTERS AND HOOKS  ************/
 
 /**
- * Sends bucket data to ironbee for processing.
+ * APR Callback function to set a header in ib_parsed_header_wrapper
+ *
+ * @param[in] data - the header wrapper
+ * @param[in] key - the header
+ * @param[in] value - the value
+ * @return 1 (continue)
  */
-static void process_bucket(ap_filter_t *f, apr_bucket *b)
+static int ironbee_sethdr(void *data, const char *key, const char *value)
 {
-    conn_rec *c = f->c;
-    ironbee_conn_context *ctx = f->ctx;
-    ib_conndata_t icdata;
-    const char *bdata;
-    apr_size_t nbytes;
-    apr_status_t rc;
+    ib_status_t rc;
+    rc = ib_parsed_name_value_pair_list_add((ib_parsed_header_wrapper_t*)data,
+                                            key, strlen(key),
+                                            value, strlen(value));
+    return 1;
+}
 
-    if (APR_BUCKET_IS_METADATA(b)) {
-        return;
+/**
+ * APR cleanup function to destroy Ironbee Transaction.
+ * @param[in] tx - the transaction
+ * @return SUCCESS
+ */
+static apr_status_t ib_tx_cleanup(void *tx)
+{
+    ib_tx_destroy((ib_tx_t*)tx);
+    return APR_SUCCESS;
+}
+
+/**
+ * HTTPD callback function to notify Ironbee of Request start and headers.
+ * NOTE: This is called both in post_read_request and fixups hooks
+ *       and will notify Ironbee in one but not both, according
+ *       to the IronbeeRawHeaders configuration setting.
+ * @param[in] r - The Request.
+ * @return DECLINED (leave no footprint), or HTTP error set by Ironbee
+ */
+static int ironbee_headers_in(request_rec *r)
+{
+    int early;
+    ib_status_t rc;
+    ironbee_req_ctx *ctx = ap_get_module_config(r->request_config,
+                                                &ironbee_module);
+    ib_conn_t *iconn = ap_get_module_config(r->connection->conn_config,
+                                            &ironbee_module);
+    ironbee_svr_conf *scfg = ap_get_module_config(r->server->module_config,
+                                                  &ironbee_module);
+
+    /* Don't act in a subrequest or internal redirect */
+    /* FIXME: this means 'clever' things like content aggregation
+     * through SSI/ESI/mod_publisher could slip under the radar.
+     * That's not a concern, but we do need to think through how
+     * we're treating ErrorDocuments here.  Also test with mod_rewrite.
+     */
+    if (r->main || r->prev) {
+        return DECLINED;
     }
 
-    /* Translate a bucket to a ib_conndata_t structure to be passed
-     * to IronBee. */
-    rc = apr_bucket_read(b, &bdata, &nbytes, APR_BLOCK_READ);
-    if (rc != APR_SUCCESS) {
-        ap_log_error(APLOG_MARK, APLOG_ERR, 0, c->base_server,
-                     IB_PRODUCT_NAME ": %s (%s): error reading %s data",
-                     f->frec->name, b->type->name,
-                     ((ctx->direction == IRONBEE_REQUEST) ? "request" : "response"));
-            return;
-    }
-    icdata.conn = ctx->iconn;
-    icdata.dlen = nbytes;
-    icdata.data = (uint8_t *)bdata;
-
-
-    if (ctx->direction == IRONBEE_REQUEST) {
-        ctx->status = ib_state_notify_conn_data_in(ironbee, &icdata);
+    if (ctx) {
+        early = 0;
     }
     else {
-        ctx->status = ib_state_notify_conn_data_out(ironbee, &icdata);
-    }
-    if (ctx->status != IB_OK) {
-        ap_log_cerror(APLOG_MARK, APLOG_DEBUG, 0, c,
-                     IB_PRODUCT_NAME ": signaled error in %s",
-                     ((ctx->direction == IRONBEE_REQUEST) ? "request" : "response"));
-    }
-}
-
-/**
- * Called by the connection cleanup routine, handling a disconnect.
- */
-static apr_status_t ironbee_disconnection(void *data)
-{
-    conn_rec *c= (conn_rec *)data;
-    ironbee_conn_context *ctx_in;
-
-    if (data == NULL) {
-        return OK;
+        early = 1;
+        /* Create ironbee tx data and save it to Request ctx */
+        ctx = apr_pcalloc(r->pool, sizeof(ironbee_req_ctx));
+        ib_tx_create(&ctx->tx, iconn, ctx);
+        /* Tie the tx lifetime to the Request */
+        apr_pool_cleanup_register(r->pool, ctx->tx, ib_tx_cleanup,
+                                  apr_pool_cleanup_null);
+        ap_set_module_config(r->request_config, &ironbee_module, ctx);
+        ctx->r = r;
     }
 
-    ctx_in = (ironbee_conn_context *)apr_table_get(c->notes, "IRONBEE_CTX_IN");
-    ib_state_notify_conn_closed(ironbee, ctx_in->iconn);
+    /* We act either early or late, according to config.
+     * So don't try to do both!
+     */
+    if ((scfg->early && early) || (!scfg->early && !early)) {
+        /* Notify Ironbee of request line and headers */
 
-    ib_conn_destroy(ctx_in->iconn);
-    ctx_in->iconn = NULL;
+        /* First construct and notify the request line */
+        ib_parsed_req_line_t *rline;
+        ib_parsed_header_wrapper_t *ibhdrs;
 
-    return OK;
-}
+        rc = ib_parsed_req_line_create(ctx->tx, &rline,
+                                       r->the_request, strlen(r->the_request),
+                                       r->method, strlen(r->method),
+                                       r->unparsed_uri, strlen(r->unparsed_uri),
+                                       r->protocol, strlen(r->protocol));
+        ib_state_notify_request_started(ironbee, ctx->tx, rline);
 
-/**
- * Cleanup.
- */
-static apr_status_t ironbee_module_cleanup(void *data)
-{
-    ib_engine_destroy(ironbee);
+        /* Now the request headers */
+        rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
+        apr_table_do(ironbee_sethdr, ibhdrs, r->headers_in, NULL);
 
-    return APR_SUCCESS;
-}
-
-/**
- * Called when the child process exits.
- */
-static apr_status_t ironbee_child_exit(void *data)
-{
-    server_rec *s = (server_rec *)data;
-
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                 IB_PRODUCT_NAME ": Child exit pid=%d",
-                 (int)getpid());
-
-    return APR_SUCCESS;
-}
-
-/**
- * Called when the child process is created.
- */
-static void ironbee_child_init(apr_pool_t *p, server_rec *s)
-{
-    ironbee_config_t *modcfg =
-        (ironbee_config_t *)ap_get_module_config(s->module_config,
-                                               &ironbee_module);
-
-    if (!modcfg->enabled) {
-        return;
+        rc = ib_state_notify_request_header_data(ironbee, ctx->tx, ibhdrs);
+        rc = ib_state_notify_request_header_finished(ironbee, ctx->tx);
     }
 
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                 IB_PRODUCT_NAME ": Child init pid=%d",
-                 (int)getpid());
+    /* Regardless of whether we process early or late, it's not too
+     * late to set request headers until after the second call to us
+     */
+    if (!early)
+        ctx->state |= HDRS_IN;
 
-    /* Register callback when child exits. */
-    apr_pool_cleanup_register(p, s, ironbee_child_exit, apr_pool_cleanup_null);
+    /* If Ironbee has signalled an error, we can just return it now
+     * to divert into the appropriate errordocument.
+     */
+    if (ctx->status >= 200 && ctx->status < 600) {
+        return ctx->status;
+    }
+
+    /* Continue ... */
+    return DECLINED;
 }
 
 /**
- * Setup the connection structures, filters and a disconnect handler.
+ * HTTPD filter function to notify Ironbee of Response headers
+ * Removes itself from filter chain after the first call.
+ *
+ * @param[in] f - the filter struct
+ * @param[in] bb - the bucket brigade (data)
+ * @return status propagated from next filter in chain
  */
-static int ironbee_pre_connection(conn_rec *c, void *csd)
+static apr_status_t ironbee_header_filter(ap_filter_t *f,
+                                          apr_bucket_brigade *bb)
 {
-    ib_conn_t *iconn = NULL;
+    ap_filter_t *nextf = f->next;
     ib_status_t rc;
-    ironbee_conn_context *ctx_in;
-    ironbee_conn_context *ctx_out;
-    ironbee_config_t *modcfg =
-        (ironbee_config_t *)ap_get_module_config(c->base_server->module_config,
-                                               &ironbee_module);
+    ib_parsed_resp_line_t *rline;
+    ib_parsed_header_wrapper_t *ibhdrs;
+    const char *cstatus;
+    const char *reason;
+    ironbee_req_ctx *ctx = ap_get_module_config(f->r->request_config,
+                                                &ironbee_module);
 
-    if (!modcfg->enabled) {
-        return DECLINED;
+    /* Notify Ironbee of start of output */
+    cstatus = apr_psprintf(f->r->pool, "%d", f->r->status);
+
+    /* Status line may be set explicitly. If not, use default for code.  */
+    reason = f->r->status_line;
+    if (!reason) {
+        reason = ap_get_status_line(f->r->status);
+        if (reason)
+            /* ap_get_status_line returned "nnn Reason", so skip 4 chars */
+            reason += 4;
+        else
+            reason = "Other";
     }
 
-    /* Ignore backend connections. The backend connection does not have
-     * a handle to the scoreboard. */
-    if (c->sbh == NULL) {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                     IB_PRODUCT_NAME ": Skipping proxy connect");
-        return DECLINED;
-    }
+    rc = ib_parsed_resp_line_create(ctx->tx, &rline, NULL, 0,
+                                    "HTTP/1.1", 8,
+                                    cstatus, strlen(cstatus),
+                                    reason, strlen(reason));
+    rc = ib_state_notify_response_started(ironbee, ctx->tx, rline);
 
-    ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                 IB_PRODUCT_NAME ": ironbee_pre_connection remote=%pI local=%pI",
-                 (void *)c->remote_addr, (void *)c->local_addr);
+    /* Notify Ironbee of output headers */
+    rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
+    apr_table_do(ironbee_sethdr, ibhdrs, f->r->headers_out, NULL);
+    apr_table_do(ironbee_sethdr, ibhdrs, f->r->err_headers_out, NULL);
+    rc = ib_state_notify_response_header_data(ironbee, ctx->tx, ibhdrs);
+    rc = ib_state_notify_response_header_finished(ironbee, ctx->tx);
 
-    /* Create the connection structure. */
-    /// @todo Perhaps the engine should do this instead via an event???
-    ib_log_debug3(ironbee, "Creating connection structure");
-    rc = ib_conn_create(ironbee, &iconn, c);
-    if (rc != IB_OK) {
-        return DECLINED;
-    }
+    /* TODO: If Ironbee signals an error, deal with it here */
 
-    /* Tell the engine a connection has started. */
-    ib_state_notify_conn_opened(ironbee, iconn);
+    /* At this point we've burned our boats for setting output headers,
+     * and started the response
+     */
+    ctx->state |= HDRS_OUT|START_RESPONSE;
 
-    /* Create the incoming context. */
-    ctx_in = apr_pcalloc(c->pool, sizeof(*ctx_in));
-    ctx_in->iconn = iconn;
-    ctx_in->direction = IRONBEE_REQUEST;
-    apr_table_setn(c->notes, "IRONBEE_CTX_IN", (void *)ctx_in);
-
-    /* Create the outgoing context. */
-    ctx_out = apr_pcalloc(c->pool, sizeof(*ctx_out));
-    ctx_out->iconn = iconn;
-    ctx_out->direction = IRONBEE_RESPONSE;
-    apr_table_setn(c->notes, "IRONBEE_CTX_OUT", (void *)ctx_out);
-
-    /* Register callback on disconnect. */
-    /// @todo use apr_pool_pre_cleanup_register() when APR >= 1.3
-    apr_pool_cleanup_register(c->pool, c, ironbee_disconnection, NULL);
-
-    /* Add the connection level filters which generate I/O events. */
-    ap_add_input_filter("IRONBEE_IN", ctx_in, NULL, c);
-#ifdef IB_DEBUG
-    ap_add_input_filter("IRONBEE_DBG_IN", ctx_in, NULL, c);
-#endif
-    ap_add_output_filter("IRONBEE_OUT", ctx_out, NULL, c);
-
-    return OK;
+    /* Remove ourself from filter chain and pass the buck */
+    ap_remove_output_filter(f);
+    return ap_pass_brigade(nextf, bb);
 }
 
+/**
+ * HTTPD filter function to notify Ironbee of Response data,
+ * and buffer data if required by Ironbee
+ *
+ * @param[in] f - the filter struct
+ * @param[in] bb - the bucket brigade (data)
+ * @return status propagated from next filter in chain
+ */
+static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
+{
+    ib_status_t rc;
+    apr_status_t rv = APR_SUCCESS;
+    ironbee_filter_ctx *ctx = f->ctx;
+    apr_size_t bytecount = 0;
+    int eos_seen = 0;
+    int growing = 0;
+    apr_bucket *b;
+    apr_bucket *bnext;
+    ib_txdata_t itxdata;
+    const char *buf;
+    ironbee_req_ctx *rctx = ap_get_module_config(f->r->request_config,
+                                                 &ironbee_module);
 
-/* -- IronBee Hooks -- */
+    if (ctx == NULL) {
+        ib_num_t num;
+        /* First call: initialise data out */
+
+        /* But first of all, send a flush down the chain to trigger
+         * the header filter and notify ironbee of the headers,
+         * as well as tell the client we're alive.
+         */
+        f->ctx = ctx = apr_pcalloc(f->r->pool, sizeof(ironbee_filter_ctx));
+        ctx->buffer = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
+        APR_BRIGADE_INSERT_TAIL(ctx->buffer,
+                                apr_bucket_flush_create(f->c->bucket_alloc));
+        rv = ap_pass_brigade(f->next, ctx->buffer);
+        apr_brigade_cleanup(ctx->buffer);
+        if (rv != APR_SUCCESS) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, f->r,
+                          "Filter error before Ironbee response body filter");
+            return rv;
+        }
+
+        /* Determine whether we're configured to buffer */
+        rc = ib_context_get(rctx->tx->ctx, "buffer_res",
+                            ib_ftype_num_out(&num), NULL);
+        if (rc != IB_OK)
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                          "Can't determine output buffer configuration!");
+        if (num == 0) {
+            ctx->buffering = IOBUF_NOBUF;
+        }
+        else {
+            /* If we're buffering, initialise the buffer */
+            ctx->buffering = IOBUF_BUFFER;
+        }
+    }
+
+    for (b = APR_BRIGADE_FIRST(bb); b != APR_BRIGADE_SENTINEL(bb); b = bnext) {
+        /* save pointer to next buxket, in case we clobber b */
+        bnext = APR_BUCKET_NEXT(b);
+
+        if (APR_BUCKET_IS_METADATA(b)) {
+            if (APR_BUCKET_IS_EOS(b))
+                eos_seen = 1;
+            /* Skip the data reading on non-data bucket
+             * We don't use a simple 'continue', because we still want to
+             * preserve buckets and ordering if we're buffering below.
+             */
+            goto setaside_output;
+        }
+
+        /* Now read the bucket and feed to ironbee */
+        growing = (b->length == (apr_size_t)-1) ? 1 : growing;
+        apr_bucket_read(b, &buf, &itxdata.dlen, APR_BLOCK_READ);
+        itxdata.data = (uint8_t*) buf;
+        bytecount += itxdata.dlen;
+        ib_state_notify_response_body_data(ironbee, rctx->tx, &itxdata);
+
+        /* If Ironbee just signalled an error, switch to discard data mode,
+         * dump anything we already have buffered,
+         * and pass EOS down the chain immediately.
+         */
+        if (rctx->status >= 200 && rctx->status < 600
+                        && ctx->buffering != IOBUF_DISCARD) {
+            if (ctx->buffering == IOBUF_BUFFER) {
+                apr_brigade_cleanup(ctx->buffer);
+            }
+            ctx->buffering = IOBUF_DISCARD;
+            APR_BRIGADE_INSERT_TAIL(ctx->buffer,
+                                    apr_bucket_eos_create(f->c->bucket_alloc));
+            rv = ap_pass_brigade(f->next, ctx->buffer);
+        }
+
+setaside_output:
+        /* If we're buffering this, move it to our buffer and ensure
+         * its lifetime is sufficient.  If we're discarding it then do.
+         */
+        if (ctx->buffering == IOBUF_BUFFER) {
+            apr_bucket_setaside(b, f->r->pool);
+            APR_BUCKET_REMOVE(b);
+            APR_BRIGADE_INSERT_TAIL(ctx->buffer, b);
+        }
+        else if (ctx->buffering == IOBUF_DISCARD) {
+            apr_bucket_destroy(b);
+        }
+    }
+
+    if (ctx->buffering == IOBUF_NOBUF) {
+        /* Normal operation - pass it down the chain */
+        rv = ap_pass_brigade(f->next, bb);
+    }
+    else if (ctx->buffering == IOBUF_BUFFER && eos_seen) {
+        /* We can pass on the buffered data all at once */
+        rv = ap_pass_brigade(f->next, ctx->buffer);
+    }
+    else {
+        /* We currently have nothing we can pass.  Just clean up any
+         * data that got orphaned if we switched from NOBUF to DISCARD mode
+         * FIXME: If buffering, should we also FLUSH to maintain activity to client?
+         */
+        apr_brigade_cleanup(bb);
+    }
+
+    if (eos_seen) {
+        ib_state_notify_response_finished(ironbee, rctx->tx);
+    }
+    return rv;
+}
 
 /**
- * Called to initialize data in a new connection.
+ * HTTPD filter function to notify Ironbee of Request data,
+ * and buffer data if required by Ironbee
+ *
+ * @param[in] f - the filter struct
+ * @param[in] bb - the bucket brigade (data)
+ * @return status propagated from next filter in chain
+ */
+static apr_status_t ironbee_filter_in(ap_filter_t *f,
+                                      apr_bucket_brigade *bb,
+                                      ap_input_mode_t mode,
+                                      apr_read_type_e block,
+                                      apr_off_t readbytes)
+{
+    apr_status_t rv = APR_SUCCESS;
+    int eos_seen = 0;
+    ib_status_t rc;
+    ironbee_filter_ctx *ctx = f->ctx;
+    ironbee_req_ctx *rctx = ap_get_module_config(f->r->request_config,
+                                                 &ironbee_module);
+    apr_bucket *b;
+    apr_bucket *bnext;
+    int growing = 0;
+    const char *buf;
+    ib_txdata_t itxdata;
+    apr_status_t bytecount = 0;
+
+    if (ctx == NULL) {
+        ib_num_t num;
+        /* First call: initialise data out */
+
+        /* Determine whether we're configured to buffer */
+        ctx = f->ctx = apr_palloc(f->r->pool, sizeof(ironbee_filter_ctx));
+        rc = ib_context_get(rctx->tx->ctx, "buffer_req",
+                            ib_ftype_num_out(&num), NULL);
+        if (rc != IB_OK)
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                          "Can't determine output buffer configuration!");
+        ctx->buffering = (num == 0) ? IOBUF_NOBUF : IOBUF_BUFFER;
+        /* If we're buffering, initialise the buffer */
+        ctx->buffer = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
+    }
+
+    /* If we're buffering, loop over all data before returning.
+     * Else just take whatever one get_brigade gives us and return it
+     */
+    do {
+        rv = ap_get_brigade(f->next, bb, mode, block, readbytes);
+
+        for (b = APR_BRIGADE_FIRST(bb);
+             b != APR_BRIGADE_SENTINEL(bb);
+             b = bnext) {
+            /* save pointer to next buxket, in case we clobber b */
+            bnext = APR_BUCKET_NEXT(b);
+
+            if (APR_BUCKET_IS_METADATA(b)) {
+                if (APR_BUCKET_IS_EOS(b))
+                    eos_seen = 1;
+                /* Skip the data reading on non-data bucket
+                 * We don't use a simple 'continue', because we still want to
+                 * preserve buckets and ordering if we're buffering below.
+                 */
+                goto setaside_input;
+            }
+
+            /* Now read the bucket and feed to ironbee */
+            growing = (b->length == (apr_size_t)-1) ? 1 : growing;
+            apr_bucket_read(b, &buf, &itxdata.dlen, APR_BLOCK_READ);
+            itxdata.data = (uint8_t*) buf;
+            bytecount += itxdata.dlen;
+            ib_state_notify_request_body_data(ironbee, rctx->tx, &itxdata);
+
+            /* If Ironbee just signalled an error, switch to discard data mode,
+             * and dump anything we already have buffered,
+             */
+            if (rctx->status >= 200 && rctx->status < 600
+                            && ctx->buffering != IOBUF_DISCARD) {
+                apr_brigade_cleanup(ctx->buffer);
+                ctx->buffering = IOBUF_DISCARD;
+            }
+
+setaside_input:
+            /* If we're buffering this, move it to our buffer
+             * If we're discarding it then do.
+             */
+            if (ctx->buffering == IOBUF_BUFFER) {
+                APR_BUCKET_REMOVE(b);
+                APR_BRIGADE_INSERT_TAIL(ctx->buffer, b);
+            }
+            else if (ctx->buffering == IOBUF_DISCARD) {
+                apr_bucket_destroy(b);
+            }
+        }
+    } while (!eos_seen && ctx->buffering == IOBUF_BUFFER);
+
+    if (eos_seen) {
+        ib_state_notify_request_finished(ironbee, rctx->tx);
+    }
+
+    if (ctx->buffering == IOBUF_NOBUF) {
+        /* Normal operation - return status from get_data */
+        return rv;
+    }
+    else if (ctx->buffering == IOBUF_BUFFER) {
+        /* Return the data from our buffer to caller's brigade before return */
+        APR_BRIGADE_CONCAT(bb, ctx->buffer);
+        return rv;
+    }
+    else {
+        /* Discarding input - return with nothing except EOS */
+        apr_brigade_cleanup(bb);
+        if (eos_seen) {
+            APR_BRIGADE_INSERT_TAIL(bb, apr_bucket_eos_create(f->c->bucket_alloc));
+        }
+        return APR_EGENERAL; /* FIXME - is there a better error? */
+    }
+}
+/**
+ * HTTPD callback function to insert filters
+ * @param[in] r - the Request
+ */
+static void ironbee_filter_insert(request_rec *r)
+{
+    /* FIXME: config options to make these conditional */
+    ap_add_input_filter("ironbee", NULL, r, r->connection);
+    ap_add_output_filter("ironbee", NULL, r, r->connection);
+    ap_add_output_filter("ironbee-headers", NULL, r, r->connection);
+}
+
+/*****************  PER-CONNECTION STUFF *********************/
+
+/**
+ * Ironbee callback function to populate iconn struct
+ * @param[in] ib - the ironbee engine
+ * @param[in] event - the ironbee event
+ * @param[in] conn - the ironbee connection
+ * @return OK, or propagated error
  */
 static ib_status_t ironbee_conn_init(ib_engine_t *ib,
                                      ib_state_event_type_t event,
                                      ib_conn_t *iconn,
                                      void *cbdata)
 {
-    assert(event == conn_opened_event);
-
-    //server_rec *s = cbdata;
-    conn_rec *c = (conn_rec *)iconn->server_ctx;
-    ib_status_t rc;
-
-    ib_log_debug3(ib, "Initializing connection remote=%s:%d local=%s:%d",
-                 c->remote_ip, c->remote_addr->port,
-                 c->local_ip, c->local_addr->port);
-
-    /*
-     * Create connection fields
+    /* Set connection parameters in ironbee */
+    /* iconn->remote_ipstr
+     * iconn->remote_port
+     * iconn->local_ipstr
+     * iconn->local_port
+     * iconn->dpi fields for local and remote ip
      */
+    ib_status_t rc;
+    conn_rec *conn = iconn->server_ctx;
 
-    /* remote_ip */
-    iconn->remote_ipstr = c->remote_ip;
+/* These fields differ between 2.2 and 2.4 because the latter
+ * introduces the distinction between the HTTP Client (end user)
+ * and TCP client (next hop - may be a downstream proxy).
+ * The 2.4 conn_rec gives us the latter.
+ */
+#if NEWVERSION
+    iconn->remote_ipstr = conn->client_ip;
+    iconn->remote_port = conn->client_addr->port;
+    iconn->local_ipstr = conn->local_ip;
+    iconn->local_port = conn->local_addr->port;
+
     rc = ib_data_add_bytestr(iconn->dpi,
                              "remote_ip",
-                             (uint8_t *)c->remote_ip,
-                             strlen(c->remote_ip),
+                             (uint8_t *)iconn->remote_ipstr,
+                             strlen(conn->client_ip),
                              NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
+#else
+    iconn->remote_ipstr = conn->remote_ip;
+    iconn->remote_port = conn->remote_addr->port;
+    iconn->local_ipstr = conn->local_ip;
+    iconn->local_port = conn->local_addr->port;
 
-    /* remote_port */
-    iconn->remote_port = c->remote_addr->port;
-    rc = ib_data_add_num(iconn->dpi,
-                         "remote_port",
-                         c->remote_addr->port,
-                         NULL);
-    if (rc != IB_OK) {
+    rc = ib_data_add_bytestr(iconn->dpi,
+                             "remote_ip",
+                             (uint8_t *)iconn->remote_ipstr,
+                             strlen(conn->remote_ip),
+                             NULL);
+#endif
+    if (rc != IB_OK)
         return rc;
-    }
 
-    /* local_ip */
-    iconn->local_ipstr = c->local_ip;
     rc = ib_data_add_bytestr(iconn->dpi,
                              "local_ip",
-                             (uint8_t *)c->remote_ip,
-                             strlen(c->remote_ip),
+                             (uint8_t *)iconn->local_ipstr,
+                             strlen(conn->local_ip),
                              NULL);
-    if (rc != IB_OK) {
+    if (rc != IB_OK)
         return rc;
-    }
-
-    /* local_port */
-    iconn->local_port = c->local_addr->port;
-    rc = ib_data_add_num(iconn->dpi,
-                         "local_port",
-                         c->local_addr->port,
-                         NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
 
     return IB_OK;
 }
 
-
-
-/* -- Filters -- */
-
-#ifdef IB_DEBUG
 /**
- * Just logs data that comes from the primary input filter.
+ * APR callback function to notify Ironbee of connection closed
+ * and destroy the ib_conn struct
  *
- * Anything this filter sees should be what Apache sees.
+ * @param[in] arg - the ib_conn struct
+ * @return APR_SUCCESS
  */
-static int ironbee_dbg_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
-                                ap_input_mode_t mode, apr_read_type_e block,
-                                apr_off_t readbytes)
+static apr_status_t ironbee_conn_cleanup(void *arg)
 {
-    conn_rec *c = f->c;
-    apr_bucket *b;
-    apr_status_t rc;
-
-#if 0
-    ap_filter_t *xf = f;
-    do {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                     "DBGFILTER: type=%d mode=%d block=%d readbytes=%d %s", xf->frec->ftype, mode, block, (int)readbytes, xf->frec->name);
-    } while((xf = xf->next) != NULL);
-#endif
-
-    rc = ap_get_brigade(f->next, bb, mode, block, readbytes);
-    if (rc == APR_SUCCESS) {
-
-        /* Process data. */
-        for (b = APR_BRIGADE_FIRST(bb); b != APR_BRIGADE_SENTINEL(bb); b = APR_BUCKET_NEXT(b)) {
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                         IB_PRODUCT_NAME ": DBG bucket f=%s, b=%s len=%d",
-                         f->frec->name, b->type->name, (int)b->length);
-        }
-    }
-
-    return APR_SUCCESS;
-}
-#endif
-
-/**
- * "Sniffs" the input (request) data from the connection stream and tries
- * to determine who closed a connection and why.
- */
-static int ironbee_input_filter(ap_filter_t *f, apr_bucket_brigade *bb,
-                                ap_input_mode_t mode, apr_read_type_e block,
-                                apr_off_t readbytes)
-{
-    conn_rec *c = f->c;
-    ironbee_conn_context *ctx = f->ctx;
-    ib_conn_t *iconn = ctx->iconn;
-    ib_core_cfg_t *corecfg;
-    ib_stream_t *istream;
-    apr_bucket *b;
-    apr_status_t rc;
-    int buffering = 0;
-
-    /* Any mode not handled just gets passed through. */
-    if ((mode != AP_MODE_GETLINE) && (mode != AP_MODE_READBYTES)) {
-        return ap_get_brigade(f->next, bb, mode, block, readbytes);
-    }
-
-    /* Configure. */
-    ib_context_module_config(iconn->ctx, ib_core_module(), (void *)&corecfg);
-    if (corecfg != NULL) {
-        buffering = (int)corecfg->buffer_req;
-    }
-
-    /* When buffering, data is removed from the brigade and handed
-     * to IronBee. The filter must not return an empty brigade in this
-     * case and keeps reading until there is processed data that comes
-     * back from IronBee.
-     */
-    do {
-        ib_tx_t *itx = iconn->tx;
-
-        /* If there is any processed data, then send it now. */
-        if (buffering && (itx != NULL)) {
-            ib_sdata_t *sdata;
-
-            /* Take any data from the drain (processed data) and
-             * inject it back into the filter brigade.
-             */
-            ib_fctl_drain(itx->fctl, &istream);
-            if ((istream != NULL) && (istream->nelts > 0)) {
-                int done = 0;
-
-                while (!done) {
-                    apr_bucket *ibucket = NULL;
-
-                    /// @todo Handle multi-bucket lines
-                    if (mode == AP_MODE_GETLINE) {
-                        done = 1;
-                    }
-
-                    ib_stream_pull(istream, &sdata);
-                    if (sdata == NULL) {
-                        /* No more data left. */
-                        break;
-                    }
-
-                    switch (sdata->type) {
-                        case IB_STREAM_DATA:
-#ifdef IB_DEBUG
-                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                                         IB_PRODUCT_NAME ": DATA[%d]: %.*s", (int)sdata->dlen, (int)sdata->dlen, (char *)sdata->data);
-#endif
-
-                            /// @todo Is this creating a copy?  Just need a reference.
-                            ibucket = apr_bucket_heap_create(sdata->data,
-                                                             sdata->dlen,
-                                                             NULL,
-                                                             bb->bucket_alloc);
-                            break;
-                        case IB_STREAM_FLUSH:
-#ifdef IB_DEBUG
-                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                                         IB_PRODUCT_NAME ": FLUSH");
-#endif
-                            ibucket = apr_bucket_flush_create(bb->bucket_alloc);
-                            break;
-                        case IB_STREAM_EOH:
-#ifdef IB_DEBUG
-                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                                         IB_PRODUCT_NAME ": EOH");
-#endif
-                            /// @todo Do something here???
-                            break;
-                        case IB_STREAM_EOB:
-#ifdef IB_DEBUG
-                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                                         IB_PRODUCT_NAME ": EOB");
-#endif
-                            /// @todo Do something here???
-                            break;
-                        case IB_STREAM_EOS:
-#ifdef IB_DEBUG
-                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                                         IB_PRODUCT_NAME ": EOS");
-#endif
-                            ibucket = apr_bucket_eos_create(bb->bucket_alloc);
-                            break;
-                        default:
-                            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                                         IB_PRODUCT_NAME ": UNKNOWN stream data type %d", sdata->type);
-                    }
-
-                    if (ibucket != NULL) {
-                        APR_BRIGADE_INSERT_TAIL(bb, ibucket);
-                    }
-                }
-
-                /* Need to send any processed data to avoid deadlock. */
-                if (!APR_BRIGADE_EMPTY(bb)) {
-                    return APR_SUCCESS;
-                }
-            }
-        }
-
-        /* Fetch data from the next filter. */
-        if (buffering) {
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                         "FETCH BRIGADE (buffering)");
-
-            /* Normally Apache will request the headers line-by-line, but
-             * IronBee does not require this.  So, here the request is
-             * fetched with READBYTES and IronBee will then break
-             * it back up into lines when it is injected back into
-             * the brigade after the data is processed.
-             */
-            rc = ap_get_brigade(f->next,
-                                bb,
-                                AP_MODE_READBYTES,
-                                block,
-                                HUGE_STRING_LEN);
-        }
-        else {
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                         "FETCH BRIGADE (non-buffering)");
-            rc = ap_get_brigade(f->next, bb, mode, block, readbytes);
-        }
-
-        /* Check for any timeouts/disconnects/errors. */
-        if (APR_STATUS_IS_TIMEUP(rc)) {
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                         IB_PRODUCT_NAME ": %s server closed connection (%d)",
-                         f->frec->name, rc);
-
-            ap_remove_input_filter(f);
-            return rc;
-        }
-        else if (APR_STATUS_IS_EOF(rc) || apr_get_os_error() == ECONNRESET) {
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                         IB_PRODUCT_NAME ": %s client closed connection (%d)",
-                         f->frec->name, rc);
-
-            ap_remove_input_filter(f);
-            return rc;
-        }
-        else if (rc != APR_SUCCESS) {
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, c->base_server,
-                         IB_PRODUCT_NAME ": %s returned %s (0x%08x) - %s",
-                         f->frec->name, ib_status_to_string(rc), rc, strerror(apr_get_os_error()));
-
-            return rc;
-        }
-
-        /* Process data. */
-        for (b = APR_BRIGADE_FIRST(bb);
-             b != APR_BRIGADE_SENTINEL(bb);
-             b = APR_BUCKET_NEXT(b))
-        {
-            if (buffering) {
-                /// @todo setaside into our own pool to destroy later???
-                apr_bucket_setaside(b, c->pool);
-                process_bucket(f, b);
-                APR_BUCKET_REMOVE(b);
-            }
-            else {
-                process_bucket(f, b);
-            }
-        }
-    } while (buffering);
-
+    ib_state_notify_conn_closed(ironbee, (ib_conn_t*)arg);
+    ib_conn_destroy((ib_conn_t*)arg);
     return APR_SUCCESS;
 }
 
-
 /**
- * "Sniffs" the output (response) data from the connection stream.
+ * HTTPD callback function to notify Ironbee of new connection
+ * @param[in] conn - the new connection
+ * @param[in] csd - unused
+ * @return DECLINED (leave no footprint in HTTPD)
  */
-static int ironbee_output_filter (ap_filter_t *f, apr_bucket_brigade *bb)
+static int ironbee_pre_conn(conn_rec *conn, void *csd)
 {
-    apr_bucket *b;
-#if 0
-    conn_rec *c = f->c;
-    ironbee_conn_context *ctx = f->ctx;
-    ib_conn_t *iconn = ctx->iconn;
-    ib_core_cfg_t *corecfg;
-    int buffering = 0;
-
-    /* Configure. */
-    ib_context_module_config(iconn->ctx, ib_core_module(), (void *)&corecfg);
-    if (corecfg != NULL) {
-        buffering = (int)corecfg->buffer_res;
-    }
-#endif
-
-
-    for (b = APR_BRIGADE_FIRST(bb); b != APR_BRIGADE_SENTINEL(bb); b = APR_BUCKET_NEXT(b)) {
-#if 0
-        /// @todo Should this be done?  Maybe only for proxy?
-        if (APR_BUCKET_IS_EOS(b)) {
-            /// @todo Do we need to do this? Maybe only for proxy.
-            apr_bucket *flush = apr_bucket_flush_create(f->c->bucket_alloc);
-            APR_BUCKET_INSERT_BEFORE(b, flush);
-        }
-
-        if (buffering) {
-            /// @todo setaside into our own pool to destroy later???
-            apr_bucket_setaside(b, c->pool);
-            process_bucket(f, b);
-            APR_BUCKET_REMOVE(b);
-        }
-        else {
-#endif
-            process_bucket(f, b);
-#if 0
-        }
-#endif
-    }
-
-    return ap_pass_brigade(f->next, bb);
-}
-
-
-/* -- Configuration -- */
-
-/**
- * Called to create a configuration context.
- */
-static void *ironbee_create_config(apr_pool_t *p, server_rec *s)
-{
-    ironbee_config_t *modcfg =
-        (ironbee_config_t *)apr_pcalloc(p, sizeof(ironbee_config_t));
-
-    if (modcfg == NULL) {
-        return NULL;
-    }
-
-    modcfg->enabled = 0;
-    modcfg->buf_size = IRONBEE_DEFAULT_BUFLEN;
-    modcfg->flush_size = IRONBEE_DEFAULT_FLUSHLEN;
-
-    return modcfg;
-}
-
-/**
- * Called to merge the parent and child configuration contexts.
- */
-static void *ironbee_merge_config(apr_pool_t *p, void *parent, void *child)
-{
-    ironbee_config_t *modcfgp = (ironbee_config_t *)parent;
-    ironbee_config_t *modcfgc = (ironbee_config_t *)child;
-    ironbee_config_t *modcfg = ironbee_create_config(p, NULL);
-
-    if (modcfg == NULL) {
-        return NULL;
-    }
-
-    modcfg->enabled = (modcfgc->enabled == IRONBEE_UNSET) ? modcfgp->enabled
-                                                        : modcfgc->enabled;
-
-    return modcfg;
-}
-
-/**
- * Initializes and configures the ironbee engine.
- */
-static int ironbee_post_config(apr_pool_t *p, apr_pool_t *plog, apr_pool_t *ptmp,
-                             server_rec *s)
-{
-    ironbee_config_t *modcfg =
-        (ironbee_config_t *)ap_get_module_config(s->module_config,
-                                                 &ironbee_module);
-    ib_cfgparser_t *cp;
-    ib_provider_t *lpr;
-    void *init = NULL;
+    ib_conn_t *iconn;
     ib_status_t rc;
 
-
-    /* Init IB library. */
-    rc = ib_initialize();
+    /* Create the Ironbee conn, with HTTPD conn in its app data */
+    rc = ib_conn_create(ironbee, &iconn, conn);
     if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     IB_PRODUCT_NAME ": Error initializing ib library");
-        return OK;
+        return IB2AP(rc); // FIXME - figure out what to do
     }
+    /* Save it */
+    ap_set_module_config(conn->conn_config, &ironbee_module, iconn);
+    /* Tie the ib_conn lifetime to the conn */
+    apr_pool_cleanup_register(conn->pool, iconn, ironbee_conn_cleanup,
+                              apr_pool_cleanup_null);
+    ib_state_notify_conn_opened(ironbee, iconn);
+    return DECLINED;
+}
+
+/*****************  STARTUP / END  ***************************/
+
+/**
+ * APR callback function to destroy Ironbee engine
+ * @param[in] data - the Ironbee engine
+ * @return APR_SUCCESS
+ */
+static apr_status_t ironbee_engine_cleanup(void *data)
+{
+    ib_engine_destroy(ironbee);
+    return APR_SUCCESS;
+}
+
+/* Bootstrap: copy initialisation from trafficserver plugin */
+/**
+ * HTTPD callback to initialise Ironbee
+ * @param[in] pool - Process pool
+ * @param[in] ptmp - Temp pool
+ * @param[in] plog - Log pool
+ * @param[in] s - Base server
+ */
+static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
+                        server_rec *s)
+{
+    ib_status_t rc;
+    ib_context_t *ctx;
+    ib_cfgparser_t *cp;
+
+    if (ironbee_config_file == NULL) {
+        ap_log_error(APLOG_MARK, APLOG_STARTUP|APLOG_NOTICE, 0, s,
+                     "Ironbee is loaded but not configured!");
+        return OK ^ (-1);
+    }
+
+    rc = ib_initialize();
+    if (rc != IB_OK)
+        return IB2AP(rc);
 
     ib_util_log_level(4);
 
-    /* Detect first (validation) run vs real config run. */
-    apr_pool_userdata_get(&init, "ironbee-init", s->process->pool);
-    if (init == NULL) {
-        ap_log_error(APLOG_MARK, APLOG_INFO, 0, s,
-                     MODULE_NAME_FULL " loading.");
-
-        apr_pool_userdata_set((const void *)1, "ironbee-init",
-                              apr_pool_cleanup_null, s->process->pool);
-
-        return OK;
-    }
-
-    /// @todo Tracefile needs removed
-    //ib_trace_init("/tmp/ironbee.trace");
-    ib_trace_init(NULL);
-
-    /* Create the engine handle. */
     rc = ib_engine_create(&ironbee, &ibplugin);
-    if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     IB_PRODUCT_NAME ": Error creating engine: %s", ib_status_to_string(rc));
-        return OK;
-    }
+    if (rc != IB_OK)
+        return IB2AP(rc);
 
-    /* Register the logger. */
-    rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER,
-                              MODULE_NAME_STR, &lpr,
-                              &ironbee_logger_iface,
-                              NULL);
-    if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     IB_PRODUCT_NAME ": Error registering log provider: %s", ib_status_to_string(rc));
-        return OK;
-    }
-    ib_provider_data_set(lpr, (void *)s);
+    rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER, "ironbee-httpd",
+                              NULL, &ironbee_logger_iface, NULL);
+    if (rc != IB_OK)
+        return IB2AP(rc);
 
-    /* Default logger */
-    /// @todo Need to add a post set hook in core for this to work correctly
     ib_context_set_string(ib_context_engine(ironbee),
-                          IB_PROVIDER_TYPE_LOGGER,
-                          MODULE_NAME_STR);
+                          IB_PROVIDER_TYPE_LOGGER, "ironbee-httpd");
     ib_context_set_num(ib_context_engine(ironbee),
-                       IB_PROVIDER_TYPE_LOGGER ".log_level",
-                       4);
-
+                       IB_PROVIDER_TYPE_LOGGER ".log_level", 4);
 
     rc = ib_engine_init(ironbee);
-    if (rc != IB_OK) {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     IB_PRODUCT_NAME ": Error initializing engine: %s", ib_status_to_string(rc));
-        return OK;
-    }
-
-    /* Register module cleanup. */
-    apr_pool_cleanup_register(p, (void *)s, ironbee_module_cleanup,
+    if (rc != IB_OK)
+        return IB2AP(rc);
+    /* Tie the Ironbee lifetime to the server */
+    apr_pool_cleanup_register(pool, NULL, ironbee_engine_cleanup,
                               apr_pool_cleanup_null);
 
-    /* Register conn/tx init hooks. */
-    ib_hook_conn_register(ironbee, conn_opened_event,
-                          ironbee_conn_init, s);
+    /* TODO: TS creates logfile at this point */
 
-    /* Configure the engine. */
-    if (modcfg->config != NULL) {
-        ib_context_t *ctx;
+    ib_hook_conn_register(ironbee, conn_opened_event, ironbee_conn_init, NULL);
 
-        /* Parse the config file.  This creates the main context. */
-        rc = ib_cfgparser_create(&cp, ironbee);
-        if ( (rc != IB_OK) || (cp == NULL) ) {
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                         IB_PRODUCT_NAME ": Failed to create IB config parser");
-        }
+    ib_state_notify_cfg_started(ironbee);
+    ctx = ib_context_main(ironbee);
 
-        /* Get the main configuration context. */
-        ctx = ib_context_main(ironbee);
+    ib_context_set_string(ctx, IB_PROVIDER_TYPE_LOGGER, "ironbee-httpd");
+    ib_context_set_num(ctx, "logger.log_level", 4);
 
-        /* Set some defaults */
-        ib_context_set_string(ctx, IB_PROVIDER_TYPE_LOGGER, MODULE_NAME_STR);
-        ib_context_set_num(ctx, "logger.log_level", 4);
+    rc = ib_cfgparser_create(&cp, ironbee);
+    if (rc != IB_OK)
+        return IB2AP(rc);
 
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     IB_PRODUCT_NAME ": Parsing IB config: %s", modcfg->config);
-        rc = ib_cfgparser_parse(cp, modcfg->config);
-        if (rc != IB_OK) {
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                         IB_PRODUCT_NAME ": Destroying IB config parser");
-        }
-        rc = ib_cfgparser_destroy(cp);
-        if (rc != IB_OK) {
-            ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                         IB_PRODUCT_NAME ": Error destroying IB config parser");
-        }
+    if (cp != NULL) {   // huh?
+        ib_cfgparser_parse(cp, ironbee_config_file);
+        ib_cfgparser_destroy(cp);
     }
-    else {
-        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
-                     IB_PRODUCT_NAME ": No config specified with IronBeeConfig directive");
-    }
+    ib_state_notify_cfg_finished(ironbee);
 
-    ap_log_error(APLOG_MARK, APLOG_NOTICE, 0, s,
-                 MODULE_NAME_FULL " configured.");
-
+    /* any more logging is no longer happening at startup */
+    /* This will trigger after the first config pass.
+     * But that's fine, we have the message.
+     */
+    log_level_is_startup = 0;
     return OK;
 }
 
 /**
- * Called to handle the "IronBeeEnable" configuration directive.
+ * HTTPD module function to insert hooks and declare filters
+ * @param[in] pool - APR pool
  */
-static const char *ironbee_cmd_ibenable(cmd_parms *cmd,
-                                        void *dummy,
-                                        int flag)
+static void ironbee_hooks(apr_pool_t *pool)
 {
-    if (cmd->server->is_virtual) {
-        return MODULE_NAME_STR ": IronBeeEnable not allowed in VirtualHost";
-    }
-    dummy = ap_get_module_config(cmd->server->module_config, &ironbee_module);
-    return ap_set_flag_slot(cmd, dummy, flag);
+    /* Our header processing uses the same hooks as mod_headers and
+     * needs to order itself with reference to that module if loaded
+     */
+    static const char * const mod_headers[] = { "mod_headers.c", NULL };
+
+    /* Ironbee needs its own initialisation and configuration */
+    ap_hook_post_config(ironbee_init, NULL, NULL, APR_HOOK_MIDDLE);
+
+    /* Connection hook to set up conn stuff for ironbee */
+    ap_hook_pre_connection(ironbee_pre_conn, NULL, NULL, APR_HOOK_MIDDLE);
+
+    /* Main input and output filters */
+    /* Set filter level between resource and content_set */
+    ap_register_input_filter("ironbee", ironbee_filter_in, NULL,
+                             AP_FTYPE_CONTENT_SET-1);
+    ap_register_output_filter("ironbee", ironbee_filter_out, NULL,
+                              AP_FTYPE_CONTENT_SET-1);
+
+    /* Inspect request headers either early or late as config option.
+     *
+     * Early: AFTER early phase of mod_headers.  but before anything else.
+     * Thus mod_headers can be used to simulate stuff for debugging,
+     * but we'll ignore any other modules playing with our headers
+     * (including normal operation of mod_headers).
+     *
+     * Late: immediately before request processing, so we record
+     * exactly what's going to the app/backend, including anything
+     * set internally by Apache.
+     */
+    ap_hook_post_read_request(ironbee_headers_in, mod_headers, NULL, APR_HOOK_FIRST);
+    ap_hook_fixups(ironbee_headers_in, mod_headers, NULL, APR_HOOK_LAST);
+
+    /* We also need a mod_headers-like hack to inspect outgoing headers */
+    ap_register_output_filter("ironbee-headers", ironbee_header_filter,
+                              NULL, AP_FTYPE_CONTENT_SET+1);
+
+    /* Use our own insert filter hook.  This is best going last so anything
+     * 'clever' happening elsewhere isn't troubled with ordering it.
+     * And after even mod_headers, so we record anything it sets too.
+     */
+    ap_hook_insert_filter(ironbee_filter_insert, mod_headers, NULL, APR_HOOK_LAST);
+}
+
+/******************** CONFIG STUFF *******************************/
+
+/**
+ * Function to initialise HTTPD server configuration for Ironbee module
+ * @param[in] p - The Pool
+ * @param[in] s - The Server
+ * @return The created configuration struct
+ */
+static void *ironbee_svr_config(apr_pool_t *p, server_rec *s)
+{
+    ironbee_svr_conf *cfg = apr_palloc(p, sizeof(ironbee_svr_conf));
+    cfg->early = -1;   /* unset */
+    return cfg;
+}
+/**
+ * Function to merge HTTPD server configurations for Ironbee module
+ * @param[in] p - The Pool
+ * @param[in] BASE - The base config
+ * @param[in] ADD - The config to merge in
+ * @return The new merged configuration struct
+ */
+static void *ironbee_svr_merge(apr_pool_t *p, void *BASE, void *ADD)
+{
+    ironbee_svr_conf *base = BASE;
+    ironbee_svr_conf *add = ADD;
+    ironbee_svr_conf *cfg = apr_palloc(p, sizeof(ironbee_svr_conf));
+    cfg->early = (add->early == -1) ? base->early : add->early;
+    return cfg;
+}
+/**
+ * Function to initialise HTTPD per-dir configuration for Ironbee module
+ * @param[in] p - The Pool
+ * @param[in] dummy - unused
+ * @return The created configuration struct
+ */
+static void *ironbee_dir_config(apr_pool_t *p, char *dummy)
+{
+    ironbee_dir_conf *cfg = apr_palloc(p, sizeof(ironbee_dir_conf));
+    return cfg;
+}
+/**
+ * Function to merge HTTPD per-dir configurations for Ironbee module
+ * @param[in] p - The Pool
+ * @param[in] BASE - The base config
+ * @param[in] ADD - The config to merge in
+ * @return The new merged configuration struct
+ */
+static void *ironbee_dir_merge(apr_pool_t *p, void *BASE, void *ADD)
+{
+    ironbee_svr_conf *cfg = apr_palloc(p, sizeof(ironbee_dir_conf));
+    return cfg;
 }
 
 /**
- * Called to handle the "IronBeeConfig" configuration directive.
+ * HTTPD configuration callback to implement IronbeeRawHeaders
+ * @param[in] cmd - the cmd_parms struct
+ * @param[in] x - unused
+ * @param[in] flag - The value set in configuration
+ * @return NULL (success)
  */
-static const char *ironbee_cmd_ibconfig(cmd_parms *cmd,
-                                        void *dummy,
-                                        const char *p1)
+static const char *reqheaders_early(cmd_parms *cmd, void *x, int flag)
 {
-    if (cmd->server->is_virtual) {
-        return MODULE_NAME_STR ": IronBeeConfig not allowed in VirtualHost";
-    }
-    dummy = ap_get_module_config(cmd->server->module_config, &ironbee_module);
-    return ap_set_file_slot(cmd, dummy, p1);
+    ironbee_svr_conf *cfg = ap_get_module_config(cmd->server->module_config,
+                                                 &ironbee_module);
+    cfg->early = flag;
+    return NULL;
+}
+/**
+ * HTTPD configuration callback to specify Ironbee config file
+ * @param[in] cmd - the cmd_parms struct
+ * @param[in] x - unused
+ * @param[in] fname - The filename
+ * @return NULL (success)
+ */
+static const char *ironbee_configfile(cmd_parms *cmd, void *x, const char *fname)
+{
+    const char *errmsg = ap_check_cmd_context(cmd, GLOBAL_ONLY);
+    if (errmsg)
+        return errmsg;
+
+    // TODO: check the file here (for robustness against typos/etc)
+    ironbee_config_file = fname;
+
+    return NULL;
 }
 
 /**
- * "IronBeeBufferSize" and "IronBeeBufferFlushSize" configuration directives.
- */
-static const char *ironbee_cmd_sz(cmd_parms *cmd, void *dummy, const char *p1)
-{
-    if (cmd->server->is_virtual) {
-        return MODULE_NAME_STR ": IronBee directive not allowed in VirtualHost";
-    }
-    dummy = ap_get_module_config(cmd->server->module_config, &ironbee_module);
-    return ap_set_int_slot(cmd, dummy, p1);
-}
-
-/**
- * Declares all configuration directives.
+ * Module Directives
  */
 static const command_rec ironbee_cmds[] = {
-    AP_INIT_FLAG(
-      "IronBeeEnable",
-      ironbee_cmd_ibenable,
-      (void *)APR_OFFSETOF(ironbee_config_t, enabled),
-      RSRC_CONF,
-      "enable ironbee module"
-    ),
-    AP_INIT_TAKE1(
-      "IronBeeConfig",
-      ironbee_cmd_ibconfig,
-      (void *)APR_OFFSETOF(ironbee_config_t, config),
-      RSRC_CONF,
-      "specify ironbee configuration file"
-    ),
-    AP_INIT_TAKE1(
-      "IronBeeBufferSize",
-      ironbee_cmd_sz,
-      (void *)APR_OFFSETOF(ironbee_config_t, buf_size),
-      RSRC_CONF,
-      "specify buffer size (bytes)"
-    ),
-    AP_INIT_TAKE1(
-      "IronBeeBufferFlushSize",
-      ironbee_cmd_sz,
-      (void *)APR_OFFSETOF(ironbee_config_t, flush_size),
-      RSRC_CONF,
-      "specify buffer size (bytes) to trigger a flush"
-    ),
-    { NULL }
+    AP_INIT_TAKE1("IronbeeConfigFile", ironbee_configfile, NULL, RSRC_CONF,
+                 "Ironbee configuration file"),
+    AP_INIT_FLAG("IronbeeRawHeaders", reqheaders_early, NULL, RSRC_CONF,
+                 "Report incoming request headers or backend headers"),
+    {NULL}
 };
-
-
-/* -- Misc Modules Stuff -- */
-
-/**
- * Register functions to handle filters and hooks.
- */
-static void ironbee_register_hooks(apr_pool_t *p)
-{
-    /* Other modules:
-     *   mod_ssl       = AP_FTYPE_CONNECTION + 5
-     *   mod_expires   = AP_FTYPE_CONTENT_SET - 2
-     *   mod_cache     = AP_FTYPE_CONTENT_SET - 1
-     *   mod_deflate   = AP_FTYPE_CONTENT_SET - 1
-     *   mod_headers   = AP_FTYPE_CONTENT_SET
-     */
-
-    ap_register_input_filter(
-        "IRONBEE_IN",
-        ironbee_input_filter,
-        NULL,
-        AP_FTYPE_CONNECTION + 1
-    );
-
-#ifdef IB_DEBUG
-    ap_register_input_filter(
-        "IRONBEE_DBG_IN",
-        ironbee_dbg_input_filter,
-        NULL,
-        AP_FTYPE_CONNECTION
-    );
-#endif
-
-    ap_register_output_filter(
-        "IRONBEE_OUT",
-        ironbee_output_filter,
-        NULL,
-        AP_FTYPE_CONNECTION
-    );
-
-    ap_hook_child_init(ironbee_child_init,
-                       NULL, NULL,
-                       APR_HOOK_FIRST);
-
-    ap_hook_post_config(ironbee_post_config,
-                        NULL, NULL,
-                        APR_HOOK_MIDDLE);
-
-    ap_hook_pre_connection(ironbee_pre_connection,
-                           NULL, NULL,
-                           APR_HOOK_LAST);
-}
 
 /**
  * Declare the module.
  */
-module AP_MODULE_DECLARE_DATA ironbee_module = {
+#if NEWVERSION
+AP_DECLARE_MODULE(ironbee)
+#else
+module AP_MODULE_DECLARE_DATA ironbee_module
+#endif
+= {
     STANDARD20_MODULE_STUFF,
-    NULL,                       /* per-directory config creator */
-    NULL,                       /* dir config merger */
-    ironbee_create_config,      /* server config creator */
-    ironbee_merge_config,       /* server config merger */
-    ironbee_cmds,               /* command table */
-    ironbee_register_hooks      /* set up other request processing hooks */
+    ironbee_dir_config,
+    ironbee_dir_merge,
+    ironbee_svr_config,
+    ironbee_svr_merge,
+    ironbee_cmds,
+    ironbee_hooks
 };
