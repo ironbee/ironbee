@@ -918,16 +918,6 @@ static ib_status_t act_setvar_execute(
             num += setvar_data->value.num;
             ib_field_setv(cur_field, ib_ftype_num_in(&num));
         }
-        else if (cur_field->type == IB_FTYPE_UNUM) {
-            ib_unum_t num;
-            rc = ib_field_setv(cur_field, ib_ftype_unum_out(&num));
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
-
-            num += (ib_unum_t)setvar_data->value.num;
-            ib_field_setv(cur_field, ib_ftype_unum_in(&num));
-        }
         else {
             ib_rule_log_error(rule_exec,
                               "setvar: field \"%.*s\" type %d "

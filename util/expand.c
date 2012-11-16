@@ -235,24 +235,6 @@ static ib_status_t join_parts(ib_mpool_t *mp,
         break;
     }
 
-    case IB_FTYPE_UNUM:
-    {
-        /* Field is an unsigned number; convert it to a string */
-        ib_unum_t n;
-        rc = ib_field_value(f, ib_ftype_unum_out(&n));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-        snprintf(numbuf, NUM_BUF_LEN, "%"PRIu64, n);
-        rc = join3(mp,
-                   iptr, ilen,
-                   numbuf, strlen(numbuf),
-                   fptr, flen,
-                   nul,
-                   out, olen);
-        break;
-    }
-
     case IB_FTYPE_LIST:
     {
         /* Field is a list: use the first element in the list */

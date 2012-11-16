@@ -248,7 +248,6 @@ TEST_F(TestIBUtilField, test_field_format_num)
     ib_status_t rc;
     char fmtbuf[32];
     ib_num_t num;
-    ib_unum_t unum;
     const char *tname;
     const char *buf;
 
@@ -266,22 +265,6 @@ TEST_F(TestIBUtilField, test_field_format_num)
     buf = ib_field_format(f, true, true, &tname, fmtbuf, sizeof(fmtbuf));
     ASSERT_STREQ("-10", fmtbuf);
     ASSERT_STREQ("NUM", tname);
-    ASSERT_EQ(buf, fmtbuf);
-
-    unum = 1;
-    rc = ib_field_create(&f, MemPool(), IB_FIELD_NAME("test_unum"),
-                         IB_FTYPE_UNUM, ib_ftype_unum_in(&unum));
-    ASSERT_EQ(IB_OK, rc);
-    ASSERT_TRUE(f);
-
-    buf = ib_field_format(f, false, false, &tname, fmtbuf, sizeof(fmtbuf));
-    ASSERT_STREQ("1", fmtbuf);
-    ASSERT_STREQ("UNUM", tname);
-    ASSERT_EQ(buf, fmtbuf);
-
-    buf = ib_field_format(f, true, true, &tname, fmtbuf, sizeof(fmtbuf));
-    ASSERT_STREQ("1", fmtbuf);
-    ASSERT_STREQ("UNUM", tname);
     ASSERT_EQ(buf, fmtbuf);
 }
 

@@ -106,7 +106,6 @@ public:
  * @code
  * module.set_configuration_data_pod(global_data)
  *   .number         ("my_number",          &my_data::number)
- *   .unsigned_number("my_unsigned_number", &my_data::unsigned_number)
  *   ;
  * @endcode
  *
@@ -210,7 +209,7 @@ public:
      *
      * The following methods allow creation of entries for various field
      * types.  Except for the specific value types involved, they are
-     * identical across number, unsigned number, null string, and byte string.
+     * identical across number, null string, and byte string.
      *
      * @sa Field
      **/
@@ -279,72 +278,6 @@ public:
         const char*     name,
         number_getter_t getter,
         number_setter_t setter
-    );
-
-    // Unsigned Number
-
-    //! Unsigned Number Getter Functional
-    typedef boost::function<
-        uint64_t(const configuration_data_t& data, const std::string&)
-    > unsigned_number_getter_t;
-    //! Unsigned Number Setter Functional
-    typedef boost::function<
-        void(configuration_data_t& data, const std::string&, uint64_t value)
-    > unsigned_number_setter_t;
-
-    // Unsigned Number Getter Member
-    typedef uint64_t (configuration_data_t::*unsigned_number_member_getter_t)(
-        const std::string&
-    ) const;
-    // Unsigned Number Setter Member
-    typedef void (configuration_data_t::*unsigned_number_member_setter_t)(
-        const std::string&,
-        uint64_t
-    );
-
-    /**
-     * Create unsigned number entry --- data member.
-     *
-     * @a FieldType must be convertible to uint64_t.
-     *
-     * @tparam FieldType Type of field.
-     * @param[in] name   Name of entry.
-     * @param[in] member Member pointer.
-     *
-     * @return @c *this for call chaining.
-     **/
-    template <typename FieldType>
-    this_t& unsigned_number(
-        const char*                       name,
-        FieldType configuration_data_t::* member
-    );
-
-    /**
-     * Create unsigned number entry --- function member.
-     *
-     * @param[in] name   Name of entry.
-     * @param[in] getter Getter member.
-     * @param[in] setter Setter member.
-     * @returns @c *this for call chaining.
-     **/
-     this_t& unsigned_number(
-         const char*                     name,
-         unsigned_number_member_getter_t getter,
-         unsigned_number_member_setter_t setter
-     );
-
-    /**
-     * Create unsigned number entry.
-     *
-     * @param[in] name   Name of entry.
-     * @param[in] getter Getter functional.
-     * @param[in] setter Setter functional.
-     * @returns @c *this for call chaining.
-     **/
-    this_t& unsigned_number(
-        const char*              name,
-        unsigned_number_getter_t getter,
-        unsigned_number_setter_t setter
     );
 
     // Null String
@@ -943,108 +876,6 @@ private:
  * @tparam ConfigurationData Type of configuration data.
  **/
 template <typename ConfigurationData>
-class cfgmap_unsigned_number_getter_translator
-{
-public:
-    //! Getter type.
-    typedef typename ConfigurationMapInit<
-        ConfigurationData
-    >::unsigned_number_getter_t getter_t;
-
-    /**
-     * Constructor.
-     *
-     * @param[in] getter Getter functional.
-     **/
-    explicit
-    cfgmap_unsigned_number_getter_translator(getter_t getter) :
-        m_getter(getter)
-    {
-        // nop
-    }
-
-    //! Translate parameters and call getter.
-    void operator()(
-        const void*       base,
-        void*             out_value,
-        const ib_field_t* field
-    ) const
-    {
-        assert(base != NULL);
-        assert(field != NULL);
-        assert(field->type == IB_FTYPE_UNUM);
-        assert(out_value != NULL);
-
-        ib_unum_t* n = reinterpret_cast<ib_unum_t*>(out_value);
-        *n = m_getter(
-            *reinterpret_cast<const ConfigurationData*>(base),
-            std::string(field->name, field->nlen)
-        );
-    }
-
-private:
-    getter_t m_getter;
-};
-
-/**
- * Setter translator.
- *
- * See cfgmap_number_getter_translator for discussion.
- *
- * @tparam ConfigurationData Type of configuration data.
- **/
-template <typename ConfigurationData>
-class cfgmap_unsigned_number_setter_translator
-{
-public:
-    //! Getter type.
-    typedef typename ConfigurationMapInit<
-        ConfigurationData
-    >::unsigned_number_setter_t setter_t;
-
-    /**
-     * Constructor.
-     *
-     * @param[in] setter Setter functional.
-     **/
-    explicit
-    cfgmap_unsigned_number_setter_translator(setter_t setter) :
-        m_setter(setter)
-    {
-        // nop
-    }
-
-    //! Translate parameters and call setter.
-    void operator()(
-        void*       base,
-        ib_field_t* field,
-        const void* value
-    ) const
-    {
-        assert(base != NULL);
-        assert(field != NULL);
-        assert(value != NULL);
-        assert(field->type == IB_FTYPE_UNUM);
-
-        m_setter(
-            *reinterpret_cast<ConfigurationData*>(base),
-            std::string(field->name, field->nlen),
-            *reinterpret_cast<const uint64_t*>(value)
-        );
-    }
-
-private:
-    setter_t m_setter;
-};
-
-/**
- * Getter translator.
- *
- * See cfgmap_number_getter_translator for discussion.
- *
- * @tparam ConfigurationData Type of configuration data.
- **/
-template <typename ConfigurationData>
 class cfgmap_null_string_getter_translator
 {
 public:
@@ -1469,91 +1300,6 @@ ConfigurationMapInit<
             ConfigurationData
         >(setter),
         Field::NUMBER
-    );
-
-    return *this;
-}
-
-template <typename ConfigurationData>
-template <typename FieldType>
-typename ConfigurationMapInit<
-    ConfigurationData,
-    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
->::this_t&
-ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::unsigned_number(
-    const char*                       name,
-    FieldType configuration_data_t::* member
-)
-{
-    BOOST_STATIC_ASSERT((
-        boost::is_convertible<FieldType, uint64_t>::value
-    ));
-    return unsigned_number(
-        name,
-        Internal::configuration_map_member_get<
-            ConfigurationData, FieldType
-        >(
-            member
-        ),
-        Internal::configuration_map_member_set<
-            ConfigurationData, FieldType
-        >(
-            member
-        )
-    );
-}
-
-template <typename ConfigurationData>
-typename ConfigurationMapInit<
-    ConfigurationData,
-    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
->::this_t&
-ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::unsigned_number(
-    const char*                     name,
-    unsigned_number_member_getter_t getter,
-    unsigned_number_member_setter_t setter
-)
-{
-    return unsigned_number(
-        name,
-        Internal::configuration_map_internal_get<
-            ConfigurationData, uint64_t
-        >(getter),
-        Internal::configuration_map_internal_set<
-            ConfigurationData, uint64_t
-        >(setter)
-    );
-}
-
-template <typename ConfigurationData>
-typename ConfigurationMapInit<
-    ConfigurationData,
-    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
->::this_t&
-ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::unsigned_number(
-    const char*              name,
-    unsigned_number_getter_t getter,
-    unsigned_number_setter_t setter
-)
-{
-    add_init(
-        name,
-        Internal::cfgmap_unsigned_number_getter_translator<
-            ConfigurationData
-        >(getter),
-        Internal::cfgmap_unsigned_number_setter_translator<
-            ConfigurationData
-        >(setter),
-        Field::UNSIGNED_NUMBER
     );
 
     return *this;

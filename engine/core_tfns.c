@@ -359,12 +359,12 @@ static ib_status_t tfn_length(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        const ib_unum_t len = strlen(fval);
+        const ib_num_t len = strlen(fval);
         rc = ib_field_create(
             fout, mp,
             IB_FIELD_NAME("Length"),
-            IB_FTYPE_UNUM,
-            ib_ftype_unum_in(&len)
+            IB_FTYPE_NUM,
+            ib_ftype_num_in(&len)
         );
     }
     else if (fin->type == IB_FTYPE_BYTESTR) {
@@ -374,12 +374,12 @@ static ib_status_t tfn_length(ib_engine_t *ib,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        const ib_unum_t len = ib_bytestr_length(value);
+        const ib_num_t len = ib_bytestr_length(value);
         rc = ib_field_create(
             fout, mp,
             IB_FIELD_NAME("Length"),
-            IB_FTYPE_UNUM,
-            ib_ftype_unum_in(&len)
+            IB_FTYPE_NUM,
+            ib_ftype_num_in(&len)
         );
     }
     else if (fin->type == IB_FTYPE_LIST) {
@@ -424,10 +424,10 @@ static ib_status_t tfn_length(ib_engine_t *ib,
         }
     }
     else {
-        const ib_unum_t len = 1;
+        const ib_num_t len = 1;
         rc = ib_field_create(
-            fout, mp, fin->name, fin->nlen, IB_FTYPE_UNUM,
-            ib_ftype_unum_in(&len)
+            fout, mp, fin->name, fin->nlen, IB_FTYPE_NUM,
+            ib_ftype_num_in(&len)
         );
     }
 
@@ -542,21 +542,6 @@ static ib_status_t list_minmax(bool is_max,
             break;
         }
 
-        case IB_FTYPE_UNUM:
-        {
-            ib_unum_t fval;
-            rc = ib_field_value(ifield, ib_ftype_unum_out(&fval));
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
-
-            if (fval > INT64_MAX) {
-                IB_FTRACE_RET_STATUS(IB_EOTHER);
-            }
-            value = (ib_num_t)fval;
-            break;
-        }
-
         case IB_FTYPE_NULSTR:
         {
             const char *fval;
@@ -648,7 +633,6 @@ static ib_status_t tfn_max(ib_engine_t *ib,
 
     switch (fin->type) {
         case IB_FTYPE_NUM:
-        case IB_FTYPE_UNUM:
             *fout = (ib_field_t *)fin;
             break;
 
@@ -693,7 +677,6 @@ static ib_status_t tfn_min(ib_engine_t *ib,
 
     switch (fin->type) {
         case IB_FTYPE_NUM:
-        case IB_FTYPE_UNUM:
             *fout = (ib_field_t *)fin;
             rc = IB_OK;
             break;

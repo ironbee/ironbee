@@ -45,7 +45,6 @@ typedef struct
     ib_ftype_t      type;
     const char     *vstr;
     ib_num_t        vnum;
-    ib_unum_t       vunum;
 } field_def_t;
 
 class TestIBUtilExpand : public SimpleFixture
@@ -65,17 +64,15 @@ public:
     virtual void SetUp()
     {
         static const field_def_t field_defs [] = {
-            { "Key1", IB_FTYPE_NULSTR,  "Value1",  0,  0 },
-            { "Key2", IB_FTYPE_NULSTR,  "Value2",  0,  0 },
-            { "Key3", IB_FTYPE_BYTESTR, "Value3",  0,  0 },
-            { "Key4", IB_FTYPE_NUM,     NULL,      0,  0 },
-            { "Key5", IB_FTYPE_NUM,     NULL,      1,  0 },
-            { "Key6", IB_FTYPE_NUM,     NULL,     -1,  0 },
-            { "Key7", IB_FTYPE_UNUM,    NULL,      0,  0 },
-            { "Key8", IB_FTYPE_UNUM,    NULL,      0,  1 },
-            { "Ref1", IB_FTYPE_NULSTR,  "Key1",    0,  0 },
-            { "Ref2", IB_FTYPE_NULSTR,  "Key",     0,  0 },
-            { NULL,   IB_FTYPE_GENERIC, NULL,      0,  0 },
+            { "Key1", IB_FTYPE_NULSTR,  "Value1",  0 },
+            { "Key2", IB_FTYPE_NULSTR,  "Value2",  0 },
+            { "Key3", IB_FTYPE_BYTESTR, "Value3",  0 },
+            { "Key4", IB_FTYPE_NUM,     NULL,      0 },
+            { "Key5", IB_FTYPE_NUM,     NULL,      1 },
+            { "Key6", IB_FTYPE_NUM,     NULL,     -1 },
+            { "Ref1", IB_FTYPE_NULSTR,  "Key1",    0 },
+            { "Ref2", IB_FTYPE_NULSTR,  "Key",     0 },
+            { NULL,   IB_FTYPE_GENERIC, NULL,      0 },
         };
         ib_status_t rc;
 
@@ -136,15 +133,6 @@ public:
                         IB_FIELD_NAME(fdef->key),
                         fdef->type,
                         ib_ftype_num_in(&(fdef->vnum))
-                    );
-                    break;
-                case IB_FTYPE_UNUM:
-                    rc = ib_field_create(
-                        &field,
-                        MemPool(),
-                        IB_FIELD_NAME(fdef->key),
-                        fdef->type,
-                        ib_ftype_unum_in(&(fdef->vunum))
                     );
                     break;
                 default:
@@ -446,21 +434,13 @@ TEST_F(TestIBUtilExpandStr, test_expand_numbers)
     RunTest(__LINE__, "%{Key4}",          "%{", "}",  "0");
     RunTest(__LINE__, "%{Key5}",          "%{", "}",  "1");
     RunTest(__LINE__, "%{Key6}",          "%{", "}",  "-1");
-    RunTest(__LINE__, "%{Key7}",          "%{", "}",  "0");
-    RunTest(__LINE__, "%{Key8}",          "%{", "}",  "1");
-    RunTest(__LINE__, "%{Key4}-%{Key8}",  "%{", "}",  "0-1");
     RunTest(__LINE__, "%{Key4}-%{Key6}",  "%{", "}",  "0--1");
-    RunTest(__LINE__, "%{Key4}+%{Key8}",  "%{", "}",  "0+1");
 
     SetRecurse(false);
     RunTest(__LINE__, "%{Key4}",          "%{", "}",  "0");
     RunTest(__LINE__, "%{Key5}",          "%{", "}",  "1");
     RunTest(__LINE__, "%{Key6}",          "%{", "}",  "-1");
-    RunTest(__LINE__, "%{Key7}",          "%{", "}",  "0");
-    RunTest(__LINE__, "%{Key8}",          "%{", "}",  "1");
-    RunTest(__LINE__, "%{Key4}-%{Key8}",  "%{", "}",  "0-1");
     RunTest(__LINE__, "%{Key4}-%{Key6}",  "%{", "}",  "0--1");
-    RunTest(__LINE__, "%{Key4}+%{Key8}",  "%{", "}",  "0+1");
 }
 
 TEST_F(TestIBUtilExpandTestStr, test_expand_test_errors)

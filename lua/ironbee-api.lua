@@ -265,12 +265,6 @@ ibapi_private.fieldToLua = function(self, field)
         ffi.C.ib_field_value(field, value)
         return tonumber(value[0])
 
-    -- Unsigned Number
-    elseif field.type == ffi.C.IB_FTYPE_UNUM then
-        local value = ffi.new("ib_unum_t[1]")
-        ffi.C.ib_field_value(field, value)
-        return tonumber(value[0])
-
     -- Float Number
     elseif field.type == ffi.C.IB_FTYPE_FLOAT then
         local value = ffi.new("ib_float_t[1]")

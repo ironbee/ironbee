@@ -56,7 +56,6 @@ struct ib_field_val_t {
     void              *pval;          /**< Address where value is stored */
     union {
         ib_num_t       num;           /**< Generic numeric value */
-        ib_unum_t      unum;          /**< Generic unsigned numeric value */
         ib_float_t     fnum;          /**< Floating type value. */
         ib_bytestr_t  *bytestr;       /**< Byte string value */
         char          *nulstr;        /**< NUL string value */
@@ -77,8 +76,6 @@ const char *ib_field_type_name(
         IB_FTRACE_RET_CONSTSTR("GENERIC");
     case IB_FTYPE_NUM:
         IB_FTRACE_RET_CONSTSTR("NUM");
-    case IB_FTYPE_UNUM:
-        IB_FTRACE_RET_CONSTSTR("UNUM");
     case IB_FTYPE_FLOAT:
         IB_FTRACE_RET_CONSTSTR("FLOAT");
     case IB_FTYPE_NULSTR:
@@ -188,18 +185,6 @@ const char *ib_field_format(
                 break;
             }
             snprintf(buf, bufsize, "%"PRId64, n);
-            break;
-        }
-
-        case IB_FTYPE_UNUM :         /**< Unsigned numeric value */
-        {
-            ib_unum_t u;
-            tname = "UNUM";
-            rc = ib_field_value(field, ib_ftype_unum_out(&u));
-            if (rc != IB_OK) {
-                break;
-            }
-            snprintf(buf, bufsize, "%"PRIu64, u);
             break;
         }
 
@@ -318,15 +303,6 @@ void ib_field_util_log_debug(
             rc = ib_field_value(f, ib_ftype_num_out(&v));
             if (rc == IB_OK) {
                 ib_util_log_debug("%s value=%"PRId64, prefix, v);
-            }
-            break;
-        }
-        case IB_FTYPE_UNUM:
-        {
-            ib_unum_t v;
-            rc = ib_field_value(f, ib_ftype_unum_out(&v));
-            if (rc == IB_OK) {
-                ib_util_log_debug("%s value=%"PRIu64, prefix, v);
             }
             break;
         }
@@ -610,20 +586,6 @@ ib_status_t ib_field_copy(
             );
             break;
         }
-        case IB_FTYPE_UNUM:
-        {
-            ib_unum_t v;
-            rc = ib_field_value(src, ib_ftype_unum_out(&v));
-            if (rc != IB_OK) {
-                goto failed;
-            }
-            rc = ib_field_create(
-                pf, mp, name, nlen,
-                src->type,
-                ib_ftype_unum_in(&v)
-            );
-            break;
-        }
         case IB_FTYPE_FLOAT:
         {
             ib_float_t v;
@@ -780,10 +742,7 @@ ib_status_t ib_field_setv_no_copy(
 {
     IB_FTRACE_INIT();
 
-    if (
-      f->type == IB_FTYPE_NUM || f->type == IB_FTYPE_UNUM ||
-      ib_field_is_dynamic(f)
-    ) {
+    if (f->type == IB_FTYPE_NUM || ib_field_is_dynamic(f)) {
         IB_FTRACE_RET_STATUS(ib_field_setv(f, mutable_in_pval));
     }
 
@@ -893,12 +852,6 @@ ib_status_t ib_field_setv_ex(
         *(ib_num_t *)(f->val->pval) = n;
         break;
     }
-    case IB_FTYPE_UNUM:
-    {
-        ib_unum_t u = (in_pval != NULL) ? *(ib_num_t *)in_pval : 0;
-        *(ib_unum_t *)(f->val->pval) = u;
-        break;
-    }
     case IB_FTYPE_FLOAT:
     {
         ib_float_t fl = (in_pval != NULL) ? *(ib_float_t *)in_pval : 0;
@@ -952,12 +905,6 @@ ib_status_t ib_field_value_ex(
     {
         ib_num_t *n = (ib_num_t *)out_pval;
         *n = *(ib_num_t *)(f->val->pval);
-        break;
-    }
-    case IB_FTYPE_UNUM:
-    {
-        ib_unum_t *u = (ib_unum_t *)out_pval;
-        *u = *(ib_unum_t *)(f->val->pval);
         break;
     }
     case IB_FTYPE_FLOAT:
@@ -1037,9 +984,7 @@ ib_status_t ib_field_mutable_value(
         IB_FTRACE_RET_STATUS(IB_ENOENT);
     }
 
-    if (f->type == IB_FTYPE_NUM ||
-        f->type == IB_FTYPE_UNUM ||
-        f->type == IB_FTYPE_FLOAT)
+    if (f->type == IB_FTYPE_NUM || f->type == IB_FTYPE_FLOAT)
     {
         *(void**)mutable_out_pval = f->val->pval;
     }
@@ -1113,7 +1058,6 @@ ib_status_t ib_field_convert(
     const char *str;
     const ib_bytestr_t *bstr;
     ib_num_t num;
-    ib_unum_t unum;
     ib_float_t flt;
     void *new_field_value;
 
@@ -1138,11 +1082,6 @@ ib_status_t ib_field_convert(
                         IB_FTRACE_RET_STATUS(rc);
                     }
                     new_field_value = ib_ftype_bytestr_in(bstr);
-                    break;
-                case IB_FTYPE_UNUM:
-                    rc = ib_string_to_num(str, 0, &num);
-                    unum = (ib_unum_t)num;
-                    new_field_value = ib_ftype_unum_in(&unum);
                     break;
                 case IB_FTYPE_NUM:
                     rc = ib_string_to_num(str, 0, &num);
@@ -1174,56 +1113,12 @@ ib_status_t ib_field_convert(
                     }
                     new_field_value = ib_ftype_nulstr_in(str);
                     break;
-                case IB_FTYPE_UNUM:
-                    rc = ib_string_to_num_ex((char *)bstr, sz, 0, &num);
-                    unum = (ib_unum_t)num;
-                    new_field_value = ib_ftype_unum_in(&unum);
-                    break;
                 case IB_FTYPE_NUM:
                     rc = ib_string_to_num_ex((char *)bstr, sz, 0, &num);
                     new_field_value = ib_ftype_num_in(&num);
                     break;
                 case IB_FTYPE_FLOAT:
                     rc = ib_string_to_float_ex((char *)bstr, sz, &flt);
-                    new_field_value = ib_ftype_float_in(&flt);
-                    break;
-                default:
-                    IB_FTRACE_RET_STATUS(IB_EINVAL);
-            }
-            break;
-        case IB_FTYPE_UNUM:
-            
-            /* Extract unum. */
-            rc = ib_field_value(in_field, ib_ftype_unum_out(&unum));
-            if (rc!=IB_OK){
-                IB_FTRACE_RET_STATUS(rc);
-            }
-
-            switch(desired_type) {
-                case IB_FTYPE_NULSTR:
-                    str = ib_unum_to_string(mp, unum);
-                    if (!str) {
-                        IB_FTRACE_RET_STATUS(IB_EINVAL);
-                    }
-                    new_field_value = ib_ftype_nulstr_in(str);
-                    break;
-                case IB_FTYPE_BYTESTR:
-                    str = ib_unum_to_string(mp, unum);
-                    if (!str) {
-                        IB_FTRACE_RET_STATUS(IB_EINVAL);
-                    }
-                    rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mp, str);
-                    if (rc!=IB_OK){
-                        IB_FTRACE_RET_STATUS(rc);
-                    }
-                    new_field_value = ib_ftype_bytestr_in(bstr);
-                    break;
-                case IB_FTYPE_NUM:
-                    num = (ib_num_t)unum;
-                    new_field_value = ib_ftype_num_in(&num);
-                    break;
-                case IB_FTYPE_FLOAT:
-                    flt = (ib_num_t)unum;
                     new_field_value = ib_ftype_float_in(&flt);
                     break;
                 default:
@@ -1256,10 +1151,6 @@ ib_status_t ib_field_convert(
                         IB_FTRACE_RET_STATUS(rc);
                     }
                     new_field_value = ib_ftype_bytestr_in(bstr);
-                    break;
-                case IB_FTYPE_UNUM:
-                    unum = (ib_num_t)num;
-                    new_field_value = ib_ftype_unum_in(&unum);
                     break;
                 case IB_FTYPE_FLOAT:
                     flt = (ib_float_t)num;
@@ -1296,12 +1187,8 @@ ib_status_t ib_field_convert(
                     }
                     new_field_value = ib_ftype_bytestr_in(bstr);
                     break;
-                case IB_FTYPE_UNUM:
-                    unum = (ib_unum_t)flt;
-                    new_field_value = ib_ftype_unum_in(&unum);
-                    break;
                 case IB_FTYPE_NUM:
-                    num = (ib_unum_t)flt;
+                    num = (ib_float_t)flt;
                     new_field_value = ib_ftype_num_in(&num);
                     break;
                 default:

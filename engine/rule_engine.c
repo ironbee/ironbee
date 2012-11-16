@@ -1199,18 +1199,6 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
                               target->field_name,
                               num);
         }
-        else if (value->type == IB_FTYPE_UNUM) {
-            ib_unum_t unum;
-            rc = ib_field_value(value, ib_ftype_unum_out(&unum));
-            if ( rc != IB_OK ) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
-            ib_rule_log_trace(rule_exec,
-                              "Exec of op %s on field %s = %" PRIu64,
-                              opinst->op->name,
-                              target->field_name,
-                              unum);
-        }
         else if ( value->type == IB_FTYPE_NULSTR ) {
             const char* nulstr;
             rc = ib_field_value(value, ib_ftype_nulstr_out(&nulstr));

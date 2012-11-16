@@ -811,15 +811,6 @@ static void print_field(const char *label,
         break;
     }
 
-    case IB_FTYPE_UNUM :         /**< Unsigned numeric value */
-    {
-        ib_unum_t u;
-        ib_field_value(field, ib_ftype_unum_out(&u));
-        printf( "  %s = %"PRIu64"\n",
-                label, u );
-        break;
-    }
-
     case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
     {
         const char *s;
@@ -974,7 +965,6 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
         switch (field->type) {
             case IB_FTYPE_GENERIC:
             case IB_FTYPE_NUM:
-            case IB_FTYPE_UNUM:
             case IB_FTYPE_NULSTR:
             case IB_FTYPE_BYTESTR:
                 fullpath = build_path(path, field);

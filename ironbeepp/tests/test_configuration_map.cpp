@@ -80,7 +80,6 @@ void cfgmap_set(
 struct test_data_t
 {
     int                 s;
-    unsigned int        u;
     const char*         n;
     IronBee::ByteString b;
     string              ss;
@@ -96,7 +95,6 @@ TEST_F(TestConfigurationMap, DataMember)
     IronBee::ConfigurationMapInit<test_data_t> cmi(m.ib()->cm_init, mpool);
 
     cmi.number("s", &test_data_t::s);
-    cmi.unsigned_number("u", &test_data_t::u);
     cmi.null_string("n", &test_data_t::n);
     cmi.byte_string("b", &test_data_t::b);
     cmi.byte_string_s("ss", &test_data_t::ss);
@@ -110,11 +108,6 @@ TEST_F(TestConfigurationMap, DataMember)
     EXPECT_EQ(data.s, cfgmap_get<ib_num_t>(cm, "s", IB_FTYPE_NUM));
     cfgmap_set<ib_num_t>(cm, "s", 19);
     EXPECT_EQ(19, data.s);
-
-    data.u = 13;
-    EXPECT_EQ(data.u, cfgmap_get<ib_unum_t>(cm, "u", IB_FTYPE_UNUM));
-    cfgmap_set<ib_unum_t>(cm, "u", 19);
-    EXPECT_EQ(19UL, data.u);
 
     const char* s1 = "Hello World";
     const char* s2 = "Foobar";
@@ -170,20 +163,6 @@ struct test_data2_t
         s_which = 1;
         s_name = name;
         s_data.s = v;
-    }
-
-    uint64_t get_unsigned_number(const string& name) const
-    {
-        s_which = 2;
-        s_name = name;
-        return s_data.u;
-    }
-
-    void set_unsigned_number(const string& name, uint64_t v) const
-    {
-        s_which = 2;
-        s_name = name;
-        s_data.u = v;
     }
 
     const char* get_null_string(const string& name) const
@@ -251,11 +230,6 @@ TEST_F(TestConfigurationMap, FunctionMember)
         &test_data2_t::get_number,
         &test_data2_t::set_number
     );
-    cmi.unsigned_number(
-        "u",
-        &test_data2_t::get_unsigned_number,
-        &test_data2_t::set_unsigned_number
-    );
     cmi.null_string(
         "n",
         &test_data2_t::get_null_string,
@@ -290,20 +264,6 @@ TEST_F(TestConfigurationMap, FunctionMember)
     EXPECT_EQ(19,  test_data2_t::s_data.s);
     EXPECT_EQ(1,   test_data2_t::s_which);
     EXPECT_EQ("s", test_data2_t::s_name);
-
-    test_data2_t::s_data.u = 13;
-    test_data2_t::reset();
-    EXPECT_EQ(
-        test_data2_t::s_data.u,
-        cfgmap_get<ib_unum_t>(cm, "u", IB_FTYPE_UNUM)
-    );
-    EXPECT_EQ(2,   test_data2_t::s_which);
-    EXPECT_EQ("u", test_data2_t::s_name);
-    test_data2_t::reset();
-    cfgmap_set<ib_unum_t>(cm, "u", 19);
-    EXPECT_EQ(19UL, test_data2_t::s_data.u);
-    EXPECT_EQ(2,   test_data2_t::s_which);
-    EXPECT_EQ("u", test_data2_t::s_name);
 
     const char* s1 = "Hello World";
     const char* s2 = "Foobar";
@@ -371,11 +331,6 @@ TEST_F(TestConfigurationMap, Functional)
         boost::bind(&test_data2_t::get_number, _1, _2),
         boost::bind(&test_data2_t::set_number, _1, _2, _3)
     );
-    cmi.unsigned_number(
-        "u",
-        boost::bind(&test_data2_t::get_unsigned_number, _1, _2),
-        boost::bind(&test_data2_t::set_unsigned_number, _1, _2, _3)
-    );
     cmi.null_string(
         "n",
         boost::bind(&test_data2_t::get_null_string, _1, _2),
@@ -409,20 +364,6 @@ TEST_F(TestConfigurationMap, Functional)
     EXPECT_EQ(19,  test_data2_t::s_data.s);
     EXPECT_EQ(1,   test_data2_t::s_which);
     EXPECT_EQ("s", test_data2_t::s_name);
-
-    test_data2_t::s_data.u = 13;
-    test_data2_t::reset();
-    EXPECT_EQ(
-        test_data2_t::s_data.u,
-        cfgmap_get<ib_unum_t>(cm, "u", IB_FTYPE_UNUM)
-    );
-    EXPECT_EQ(2,   test_data2_t::s_which);
-    EXPECT_EQ("u", test_data2_t::s_name);
-    test_data2_t::reset();
-    cfgmap_set<ib_unum_t>(cm, "u", 19);
-    EXPECT_EQ(19UL, test_data2_t::s_data.u);
-    EXPECT_EQ(2,   test_data2_t::s_which);
-    EXPECT_EQ("u", test_data2_t::s_name);
 
     const char* s1 = "Hello World";
     const char* s2 = "Foobar";

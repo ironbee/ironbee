@@ -117,16 +117,6 @@ extern "C" {
  *     </tr>
  *
  *     <tr>
- *         <td>@c IB_FTYPE_UNUM</td>
- *         <td>@c ib_unum_t</td>
- *         <td>@c const @c ib_unum_t*</td>
- *         <td>@c ib_unum_t*</td>
- *         <td>@c const @c ib_unum_t*</td>
- *         <td>@c ib_unum_t**</td>
- *         <td>@c ib_unum_t*</td>
- *     </tr>
- *
- *     <tr>
  *         <td>@c IB_FTYPE_FLOAT</td>
  *         <td>@c ib_float_t</td>
  *         <td>@c const @c ib_float_t*</td>
@@ -180,11 +170,9 @@ extern "C" {
  * Notes:
  * - The in type for IB_FTYPE_NUM is @c ib_num_t* instead of ib_num_t because
  *   an ib_num_t will not fit in a @c void *parameter on 32 bit architectures.
- *   The same applies to IB_FTYPE_UNUM.
  * - The mutable out types for IB_FTYPE_NUM is @c ib_num_t** so that a pointer
  *   to the value can be passed out.  This allows the caller to mutate the
  *   actual number as expected for a mutable value.  The same applies to
- *   IB_FTYPE_UNUM.
  *
  * @{
  */
@@ -195,7 +183,6 @@ extern "C" {
 typedef enum {
     IB_FTYPE_GENERIC = 0, /**< Generic pointer value */
     IB_FTYPE_NUM,         /**< Numeric value */
-    IB_FTYPE_UNUM,        /**< Unsigned numeric value */
     IB_FTYPE_FLOAT,       /**< Floating point value. */
     IB_FTYPE_NULSTR,      /**< NUL terminated string value */
     IB_FTYPE_BYTESTR,     /**< Binary data value */
@@ -223,10 +210,6 @@ struct ib_field_t {
  * Field numerical signed value type
  */
 typedef int64_t ib_num_t;
-/**
- * Field numerical unsigned value type
- */
-typedef uint64_t ib_unum_t;
 /**
  * Field float unsigned value type
  */
@@ -346,46 +329,6 @@ static inline void *ib_ftype_num_mutable_out(ib_num_t **v)
  * Assert @a v is proper type.
  */
 static inline void *ib_ftype_num_storage(ib_num_t *v)
-{
-    return (void *)(v);
-}
-
-/**
- * Assert @a v is proper type.
- */
-static inline void *ib_ftype_unum_mutable_in(ib_unum_t *v)
-{
-    return (void *)(v);
-}
-
-/**
- * Assert @a v is proper type.
- */
-static inline void *ib_ftype_unum_in(const ib_unum_t *v)
-{
-    return (void *)(v);
-}
-
-/**
- * Assert @a v is proper type.
- */
-static inline void *ib_ftype_unum_out(ib_unum_t *v)
-{
-    return (void *)(v);
-}
-
-/**
- * Assert @a v is proper type.
- */
-static inline void *ib_ftype_unum_mutable_out(ib_unum_t **v)
-{
-    return (void *)(v);
-}
-
-/**
- * Assert @a v is proper type.
- */
-static inline void *ib_ftype_unum_storage(ib_unum_t *v)
 {
     return (void *)(v);
 }

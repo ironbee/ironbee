@@ -976,24 +976,6 @@ static ib_status_t field_to_num(const ib_rule_exec_t *rule_exec,
             }
             break;
 
-        case IB_FTYPE_UNUM :
-            {
-                ib_unum_t n;
-                rc = ib_field_value(field, ib_ftype_unum_out(&n));
-                if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
-                }
-
-                if (n > INT64_MAX) {
-                    ib_rule_log_error(rule_exec,
-                                      "Overflow in converting number %"PRIu64,
-                                      n);
-                    IB_FTRACE_RET_STATUS(IB_EINVAL);
-                }
-
-                *result = (ib_num_t)n;
-                break;
-            }
         case IB_FTYPE_FLOAT :
             {
                 ib_float_t f;
@@ -1092,18 +1074,6 @@ static ib_status_t field_to_float(const ib_rule_exec_t *rule_exec,
                 }
 
                 *result = (ib_float_t)n;
-            }
-            break;
-
-        case IB_FTYPE_UNUM :
-            {
-                ib_unum_t n;
-                rc = ib_field_value(field, ib_ftype_unum_out(&n));
-                if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
-                }
-
-                *result = (ib_num_t)n;
             }
             break;
 
@@ -1271,9 +1241,6 @@ static ib_status_t select_math_type_conversion(
     if (lh_field->type == IB_FTYPE_NUM && rh_field->type == IB_FTYPE_NUM) {
         arg_types |= IB_FTYPE_NUM_FLAG;
     }
-    if (lh_field->type == IB_FTYPE_UNUM && rh_field->type == IB_FTYPE_UNUM) {
-        arg_types |= IB_FTYPE_UNUM_FLAG;
-    }
     if (lh_field->type == IB_FTYPE_LIST && rh_field->type == IB_FTYPE_LIST) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
@@ -1362,18 +1329,6 @@ static ib_status_t perform_math_type_conversion(
     ib_ftype_t try_type;
 
     /* NOTE - Follwing are 3 almost-identical if-if-if blocks. */
-
-    /* Try to convert to UNUM. */
-    if (valid_types & IB_FTYPE_UNUM_FLAG) {
-        try_type = IB_FTYPE_UNUM;
-        rc = ib_field_convert(mp, try_type, in_field1, out_field1);
-        if (rc == IB_OK) {
-            rc = ib_field_convert(mp, try_type, in_field2, out_field2);
-            if (rc == IB_OK){
-                IB_FTRACE_RET_STATUS(IB_OK);
-            }
-        }
-    }
 
     /* Try to convert to NUM. */
     if (valid_types & IB_FTYPE_NUM_FLAG) {
@@ -1472,7 +1427,6 @@ static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
         rh_field = (ib_field_t *) pdata;
     }
 
-
     rc = ib_field_value(rh_field, ib_ftype_num_out(&param_value));
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -1546,8 +1500,7 @@ static ib_status_t op_gt_execute(const ib_rule_exec_t *rule_exec,
     assert(data != NULL);
     const ib_field_t *pdata = (const ib_field_t *)data;
 
-    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
-         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
+    if ( (pdata->type == IB_FTYPE_NUM) && (field->type == IB_FTYPE_NUM))
     {
         ib_num_t param_value;
         ib_num_t value;
@@ -1630,8 +1583,7 @@ static ib_status_t op_lt_execute(const ib_rule_exec_t *rule_exec,
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
-    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
-         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
+    if ( (pdata->type == IB_FTYPE_NUM) && (field->type == IB_FTYPE_NUM) )
     {
         ib_num_t param_value;
         ib_num_t value;
@@ -1717,8 +1669,7 @@ static ib_status_t op_ge_execute(const ib_rule_exec_t *rule_exec,
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
-    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
-         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
+    if ((pdata->type == IB_FTYPE_NUM) && (field->type == IB_FTYPE_NUM))
     {
         ib_num_t param_value;
         ib_num_t value;
@@ -1801,8 +1752,7 @@ static ib_status_t op_le_execute(const ib_rule_exec_t *rule_exec,
     const ib_field_t *pdata = (const ib_field_t *)data;
 
     /* If both operands are nums, use numeric eq. Otherwise use float. */
-    if ( ((pdata->type == IB_FTYPE_NUM) || (pdata->type == IB_FTYPE_UNUM)) &&
-         ((field->type == IB_FTYPE_NUM) || (field->type == IB_FTYPE_UNUM)) )
+    if ((pdata->type == IB_FTYPE_NUM) && (field->type == IB_FTYPE_NUM))
     {
         ib_num_t param_value;
         ib_num_t value;

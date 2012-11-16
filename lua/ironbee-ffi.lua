@@ -56,7 +56,6 @@ ffi.cdef [[
     typedef uint32_t ib_flags_t;
     typedef uint64_t ib_flags64_t;
     typedef int64_t ib_num_t;
-    typedef uint64_t ib_unum_t;
     typedef long double ib_float_t;
     typedef struct ib_cfgmap_t ib_cfgmap_t;
     typedef struct ib_cfgmap_init_t ib_cfgmap_init_t;
@@ -82,7 +81,6 @@ ffi.cdef [[
     typedef enum {
         IB_FTYPE_GENERIC,
         IB_FTYPE_NUM,
-        IB_FTYPE_UNUM,
         IB_FTYPE_FLOAT,
         IB_FTYPE_NULSTR,
         IB_FTYPE_BYTESTR,
@@ -949,7 +947,6 @@ IB_EEXIST        = ffi.cast("int", c.IB_EEXIST)
 -- ===============================================
 IB_FTYPE_GENERIC = ffi.cast("int", c.IB_FTYPE_GENERIC)
 IB_FTYPE_NUM     = ffi.cast("int", c.IB_FTYPE_NUM)
-IB_FTYPE_UNUM    = ffi.cast("int", c.IB_FTYPE_UNUM)
 IB_FTYPE_FLOAT   = ffi.cast("int", c.IB_FTYPE_FLOAT)
 IB_FTYPE_NULSTR  = ffi.cast("int", c.IB_FTYPE_NULSTR)
 IB_FTYPE_BYTESTR = ffi.cast("int", c.IB_FTYPE_BYTESTR)

@@ -76,8 +76,6 @@ public:
         GENERIC         = IB_FTYPE_GENERIC,
         //! Signed Number
         NUMBER          = IB_FTYPE_NUM,
-        //! Unsigned Number
-        UNSIGNED_NUMBER = IB_FTYPE_UNUM,
         //! Floating Point
         FLOAT           = IB_FTYPE_FLOAT,
         //! Null terminated string
@@ -97,7 +95,6 @@ public:
      * type, @a T.  If no value is appropriate, a compiler error results.
      *
      * - Signed integral types result in NUMBER.
-     * - Unsigned integral types result in UNSIGNED_NUMBER.
      * - Float types result in FLOAT.
      * - Types convertible to @c const @c char* result in NULL_STRING.
      * - Types convertible to ConstByteString result in BYTE_STRING.
@@ -115,10 +112,7 @@ public:
         BOOST_STATIC_ASSERT((
             boost::mpl::or_<
                 boost::is_float<T>,
-                boost::mpl::or_<
-                    boost::is_signed<T>,
-                    boost::is_unsigned<T>
-                >,
+                boost::is_signed<T>,
                 boost::is_convertible<T,const char*>,
                 boost::is_convertible<T,ConstByteString>,
                 is_list<T>
@@ -129,9 +123,6 @@ public:
         }
         if (boost::is_signed<T>::value) {
             return NUMBER;
-        }
-        else if (boost::is_unsigned<T>::value) {
-            return UNSIGNED_NUMBER;
         }
         else if (boost::is_convertible<T,const char*>::value) {
             return NULL_STRING;
@@ -254,17 +245,6 @@ public:
         size_t      arg_length
     ) const;
 
-    //! Unsigned number value accessor.
-    uint64_t value_as_unsigned_number() const;
-    //! Unsigned number value accessor -- dynamic.
-    uint64_t value_as_unsigned_number(const std::string& arg) const;
-    //! Unsigned number value accessor -- dynamic.
-    uint64_t value_as_unsigned_number(
-        const char* arg,
-        size_t      arg_length
-    ) const;
-
-
     //! Float value accessor.
     long double value_as_float() const;
     //! Float value accessor -- dynamic.
@@ -342,7 +322,7 @@ private:
  * can be one of a preset set of types and the key is a string literal.
  *
  * The C API supports seven types (see type_e).  The C++ API provides full
- * support for four of these (NUMBER, UNSIGNED_NUMBER, NULL_STRING, and
+ * support for three of these (NUMBER, NULL_STRING, and
  * BYTE_STRING).  Support for other types may come in the future.
  *
  * Fields can also be dynamic where set and get operations are forwarded to

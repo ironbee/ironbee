@@ -422,7 +422,6 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
     ib_field_t *f;
     ib_status_t rc;
     ib_num_t num;
-    ib_unum_t unum;
 
     rc = ib_hash_get_ex(
         (ib_hash_t *)dpi->data,
@@ -443,16 +442,6 @@ static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
             }
             num += adjval;
             rc = ib_field_setv(f, ib_ftype_num_in(&num));
-            break;
-        case IB_FTYPE_UNUM:
-            /// @todo Make sure this is atomic
-            /// @todo Check for overflow
-            rc = ib_field_value(f, ib_ftype_unum_out(&unum));
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
-            }
-            unum += adjval;
-            rc = ib_field_setv(f, ib_ftype_unum_in(&unum));
             break;
         default:
             IB_FTRACE_RET_STATUS(IB_EINVAL);
@@ -1181,22 +1170,6 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
                             comma);
             break;
         }
-        case IB_FTYPE_UNUM:
-        {
-            ib_unum_t u;
-            rc = ib_field_value(f, ib_ftype_unum_out(&u));
-            if (rc != IB_OK) {
-                IB_FTRACE_RET_SIZET(0);
-            }
-
-            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                            "  \"%" IB_BYTESTR_FMT "\": "
-                            "%" PRIu64 "%s\r\n",
-                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            u,
-                            comma);
-            break;
-        }
         case IB_FTYPE_LIST:
             rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
                             "  \"%" IB_BYTESTR_FMT "\": [ \"TODO: Handle lists in json conversion\" ]%s\r\n",
@@ -1740,7 +1713,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 {
     IB_FTRACE_INIT();
     ib_tx_t *tx = log->tx;
-    ib_unum_t tx_num = tx ? tx->conn->tx_count : 0;
+    ib_num_t tx_num = tx ? tx->conn->tx_count : 0;
     ib_mpool_t *pool = log->mp;
     ib_field_t *f;
     ib_list_t *list;
@@ -1755,12 +1728,12 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 
     ib_field_create(&f, pool,
                     IB_FIELD_NAME("tx-num"),
-                    IB_FTYPE_UNUM,
-                    ib_ftype_unum_in(&tx_num));
+                    IB_FTYPE_NUM,
+                    ib_ftype_num_in(&tx_num));
     ib_list_push(list, f);
 
     if (tx != NULL) {
-        ib_unum_t unum;
+        ib_num_t num;
 
         /* Timestamp */
         tstamp = (char *)ib_mpool_alloc(pool, 30);
@@ -1788,11 +1761,11 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                                       strlen(tx->er_ipstr));
         ib_list_push(list, f);
 
-        unum = tx->conn->remote_port;
+        num = tx->conn->remote_port;
         ib_field_create(&f, pool,
                         IB_FIELD_NAME("remote-port"),
-                        IB_FTYPE_UNUM,
-                        ib_ftype_unum_in(&unum));
+                        IB_FTYPE_NUM,
+                        ib_ftype_num_in(&num));
         ib_list_push(list, f);
 
         ib_field_create_bytestr_alias(&f, pool,
@@ -1801,11 +1774,11 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                                       strlen(tx->conn->local_ipstr));
         ib_list_push(list, f);
 
-        unum = tx->conn->local_port;
+        num = tx->conn->local_port;
         ib_field_create(&f, pool,
                         IB_FIELD_NAME("local-port"),
-                        IB_FTYPE_UNUM,
-                        ib_ftype_unum_in(&unum));
+                        IB_FTYPE_NUM,
+                        ib_ftype_num_in(&num));
         ib_list_push(list, f);
 
         /// @todo If this is NULL, parser failed - what to do???
