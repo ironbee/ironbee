@@ -152,6 +152,31 @@ TEST_F(OperatorTest, OperatorCallTest)
 
 
 class CoreOperatorsTest : public BaseFixture {
+    protected:
+    ib_conn_t *ib_conn;
+    ib_tx_t *ib_tx;
+
+    virtual void SetUp()
+    {
+        BaseFixture::SetUp();
+        configureIronBee();
+        ib_conn = buildIronBeeConnection();
+        // Create the transaction.
+        sendDataIn(ib_conn,
+                   "GET / HTTP/1.1\r\n"
+                   "Host: UnitTest\r\n"
+                   "X-MyHeader: header1\r\n"
+                   "X-MyHeader: header2\r\n"
+                   "\r\n");
+
+        sendDataOut(ib_conn,
+                    "HTTP/1.1 200 OK\r\n"
+                    "Content-Type: text/html\r\n"
+                    "X-MyHeader: header3\r\n"
+                    "X-MyHeader: header4\r\n"
+                    "\r\n");
+        ib_tx = ib_conn->tx;
+    }
 };
 
 TEST_F(CoreOperatorsTest, ContainsTest)
@@ -194,6 +219,98 @@ TEST_F(CoreOperatorsTest, ContainsTest)
     EXPECT_EQ(1, call_result);
 
     ib_field_setv(field, ib_ftype_nulstr_in(nonmatching));
+    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    ASSERT_EQ(IB_OK, status);
+    EXPECT_EQ(0, call_result);
+}
+
+TEST_F(CoreOperatorsTest, EqTest)
+{
+    ib_status_t status;
+    ib_num_t call_result;
+    ib_operator_inst_t *op;
+    ib_rule_t *rule = NULL; /* Not used by this operator. */
+
+    status = ib_operator_inst_create(ib_engine,
+                                     NULL,
+                                     rule,
+                                     IB_OP_FLAG_PHASE,
+                                     "eq",
+                                     "1",
+                                     IB_OPINST_FLAG_NONE,
+                                     &op);
+    ASSERT_EQ(IB_OK, status);
+
+    // call contains
+    ib_field_t *field;
+    const ib_num_t matching = 1;
+    const ib_num_t nonmatching = 2;
+    ib_field_create(
+        &field,
+        ib_engine_pool_main_get(ib_engine),
+        IB_FIELD_NAME("testfield"),
+        IB_FTYPE_NUM,
+        ib_ftype_num_in(&matching)
+    );
+
+    ib_rule_exec_t rule_exec;
+    memset(&rule_exec, 0, sizeof(rule_exec));
+    rule_exec.ib = ib_engine;
+    rule_exec.tx = ib_tx;
+    rule_exec.rule = rule;
+
+    ib_field_setv(field, ib_ftype_num_in(&matching));
+    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    ASSERT_EQ(IB_OK, status);
+    EXPECT_EQ(1, call_result);
+
+    ib_field_setv(field, ib_ftype_num_in(&nonmatching));
+    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    ASSERT_EQ(IB_OK, status);
+    EXPECT_EQ(0, call_result);
+}
+
+TEST_F(CoreOperatorsTest, NeTest)
+{
+    ib_status_t status;
+    ib_num_t call_result;
+    ib_operator_inst_t *op;
+    ib_rule_t *rule = NULL; /* Not used by this operator. */
+
+    status = ib_operator_inst_create(ib_engine,
+                                     NULL,
+                                     rule,
+                                     IB_OP_FLAG_PHASE,
+                                     "ne",
+                                     "1",
+                                     IB_OPINST_FLAG_NONE,
+                                     &op);
+    ASSERT_EQ(IB_OK, status);
+
+    // call contains
+    ib_field_t *field;
+    const ib_num_t matching = 2;
+    const ib_num_t nonmatching = 1;
+    ib_field_create(
+        &field,
+        ib_engine_pool_main_get(ib_engine),
+        IB_FIELD_NAME("testfield"),
+        IB_FTYPE_NUM,
+        ib_ftype_num_in(&matching)
+    );
+
+    ib_rule_exec_t rule_exec;
+    memset(&rule_exec, 0, sizeof(rule_exec));
+    rule_exec.ib = ib_engine;
+    rule_exec.tx = ib_tx;
+    rule_exec.rule = rule;
+
+    ib_field_setv(field, ib_ftype_num_in(&matching));
+    status = ib_operator_execute(&rule_exec, op, field, &call_result);
+    ASSERT_EQ(IB_OK, status);
+    EXPECT_EQ(1, call_result);
+
+    ib_field_setv(field, ib_ftype_num_in(&nonmatching));
     status = ib_operator_execute(&rule_exec, op, field, &call_result);
     ASSERT_EQ(IB_OK, status);
     EXPECT_EQ(0, call_result);
