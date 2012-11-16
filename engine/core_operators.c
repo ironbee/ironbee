@@ -42,6 +42,206 @@
 #include <ctype.h>
 #include <inttypes.h>
 
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+typedef ib_status_t (*num_compare_fn_t)(ib_num_t n1, ib_num_t n2, ib_num_t *result);
+
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+typedef ib_status_t (*float_compare_fn_t)(ib_float_t n1, ib_float_t n2, ib_num_t *result);
+
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t num_gt(ib_num_t n1, ib_num_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    *result = ( n1 > n2 );
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t num_lt(ib_num_t n1, ib_num_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    *result = ( n1 < n2 );
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t num_ge(ib_num_t n1, ib_num_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    *result = ( n1 >= n2 );
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t num_le(ib_num_t n1, ib_num_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    *result = ( n1 <= n2 );
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t num_eq(ib_num_t n1, ib_num_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    *result = ( n1 == n2 );
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t num_ne(ib_num_t n1, ib_num_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    *result = ( n1 == n2 );
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t float_gt(ib_float_t n1, ib_float_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    *result = ( n1 > n2 );
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t float_lt(ib_float_t n1, ib_float_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    *result = ( n1 < n2 );
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t float_ge(ib_float_t n1, ib_float_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    *result = ( n1 >= n2 );
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t float_le(ib_float_t n1, ib_float_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    *result = ( n1 <= n2 );
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t float_eq(ib_float_t n1, ib_float_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
+}
+/**
+ * Perform a comparison of two inputs and store the boolean result in @result.
+ * @param[in] n1 Input number 1.
+ * @param[in] n2 Input number 2.
+ * @param[out] result The result.
+ * @returns
+ *   - IB_OK On success.
+ *   - IB_EINVAL If the operation is not supported for the input types.
+ */
+static ib_status_t float_ne(ib_float_t n1, ib_float_t n2, ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    IB_FTRACE_RET_STATUS(IB_EINVAL);
+}
 
 /**
  * Allocate a buffer and unescape operator arguments.
@@ -1025,7 +1225,7 @@ static ib_status_t prepare_math_operands(
     /* An intermediate holding place for produced fields. */
     ib_field_t *tmp_field = NULL;
 
-    /* First, expand the input. */
+    /* First, expand the right hand input. */
     rc = expand_field(rule_exec, flags, rh_in, &tmp_field);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -1080,6 +1280,114 @@ static ib_status_t prepare_math_operands(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+/**
+ * param[in] rule_exec Rule execution.
+ * param[in] data Parameter field.
+ * param[in] flags Flags to influence @a data expansion.
+ * param[in] field The field used.
+ * param[in] num_compare If this is an ib_num_t, use this to compare.
+ * param[in] float_compare If this is an ib_float_t, use this to compare.
+ * param[out] result The result is store here.
+ */
+static ib_status_t execute_compare(
+    const ib_rule_exec_t *rule_exec,
+    void *data,
+    ib_flags_t flags,
+    ib_field_t *field,
+    num_compare_fn_t num_compare,
+    float_compare_fn_t float_compare,
+    ib_num_t *result)
+{
+    IB_FTRACE_INIT();
+    assert(data);
+    assert(result);
+    assert(rule_exec);
+    assert(rule_exec->tx);
+    assert(rule_exec->tx->mp);
+
+    const ib_field_t *pdata = (const ib_field_t *)data;
+    ib_status_t rc;
+    ib_field_t *rh_field = NULL;
+    ib_field_t *lh_field = NULL;
+
+    rc = prepare_math_operands(
+        rule_exec,
+        flags,
+        field,
+        pdata,
+        true,
+        &lh_field,
+        &rh_field);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    if (rh_field->type == IB_FTYPE_NUM) {
+        ib_num_t param_value;
+        ib_num_t value;
+
+        /* Pull out param value for comparision. */
+        rc = ib_field_value(rh_field, ib_ftype_num_out(&param_value));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Pull out param value for comparision. */
+        rc = ib_field_value(lh_field, ib_ftype_num_out(&value));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        rc = num_compare(value, param_value, result);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        if (ib_rule_should_capture(rule_exec, *result)) {
+            ib_data_capture_clear(rule_exec->tx);
+            rc = capture_num(rule_exec, 0, value);
+            if (rc != IB_OK) {
+                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
+                                  ib_status_to_string(rc));
+            }
+        }
+    }
+    else if (rh_field->type == IB_FTYPE_FLOAT) {
+        ib_float_t param_value;
+        ib_float_t value;
+
+        /* Pull out param value for comparision. */
+        rc = ib_field_value(rh_field, ib_ftype_float_out(&param_value));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Pull out param value for comparision. */
+        rc = ib_field_value(lh_field, ib_ftype_float_out(&value));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Do the comparison */
+        rc = float_compare(value, param_value, result);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        if (ib_rule_should_capture(rule_exec, *result)) {
+            ib_data_capture_clear(rule_exec->tx);
+            rc = capture_float(rule_exec, 0, value);
+            if (rc != IB_OK) {
+                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
+                                  ib_status_to_string(rc));
+            }
+        }
+    }
+    else {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 
 /**
  * Try to convert two input fields to one of the possible @a valid_types.
@@ -1122,53 +1430,19 @@ static ib_status_t op_eq_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    assert(data);
-    assert(result);
-    assert(rule_exec);
-    assert(rule_exec->tx);
-    assert(rule_exec->tx->mp);
 
-    const ib_field_t *pdata = (const ib_field_t *)data;
     ib_status_t rc;
-    ib_field_t *rh_field = NULL;
-    ib_field_t *lh_field = NULL;
-    ib_num_t param_value;
-    ib_num_t value;
 
-    rc = prepare_math_operands(
+    rc = execute_compare(
         rule_exec,
+        data,
         flags,
         field,
-        pdata,
-        false,
-        &lh_field,
-        &rh_field);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+        &num_eq,
+        &float_eq,
+        result);
 
-    /* Pull out param value for comparision. */
-    rc = ib_field_value(rh_field, ib_ftype_num_out(&param_value));
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Pull out param value for comparision. */
-    rc = ib_field_value(lh_field, ib_ftype_num_out(&value));
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Do the comparison */
-    *result = (value == param_value);
-
-    /* Report result. */
-    if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_data_capture_clear(rule_exec->tx);
-        capture_num(rule_exec, 0, value);
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -1190,18 +1464,18 @@ static ib_status_t op_ne_execute(const ib_rule_exec_t *rule_exec,
 {
     IB_FTRACE_INIT();
 
-    ib_status_t rc = op_eq_execute(rule_exec,
-                                 data,
-                                 flags,
-                                 field,
-                                 result);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+    ib_status_t rc;
 
-    *result = !(*result);
+    rc = execute_compare(
+        rule_exec,
+        data,
+        flags,
+        field,
+        &num_ne,
+        &float_ne,
+        result);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -1222,88 +1496,19 @@ static ib_status_t op_gt_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    assert(data);
-    assert(result);
-    assert(rule_exec);
-    assert(rule_exec->tx);
-    assert(rule_exec->tx->mp);
 
-    const ib_field_t *pdata = (const ib_field_t *)data;
     ib_status_t rc;
-    ib_field_t *rh_field = NULL;
-    ib_field_t *lh_field = NULL;
 
-    rc = prepare_math_operands(
+    rc = execute_compare(
         rule_exec,
+        data,
         flags,
         field,
-        pdata,
-        true,
-        &lh_field,
-        &rh_field);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+        &num_gt,
+        &float_gt,
+        result);
 
-    if (rh_field->type == IB_FTYPE_NUM) {
-        ib_num_t param_value;
-        ib_num_t value;
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(rh_field, ib_ftype_num_out(&param_value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(lh_field, ib_ftype_num_out(&value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Do the comparison */
-        *result = (value > param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            rc = capture_num(rule_exec, 0, value);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
-            }
-        }
-    }
-    else if (rh_field->type == IB_FTYPE_FLOAT) {
-        ib_float_t param_value;
-        ib_float_t value;
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(rh_field, ib_ftype_float_out(&param_value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(lh_field, ib_ftype_float_out(&value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Do the comparison */
-        *result = (value > param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            rc = capture_float(rule_exec, 0, value);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
-            }
-        }
-    }
-    else {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -1324,88 +1529,19 @@ static ib_status_t op_lt_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    assert(data);
-    assert(result);
-    assert(rule_exec);
-    assert(rule_exec->tx);
-    assert(rule_exec->tx->mp);
 
-    const ib_field_t *pdata = (const ib_field_t *)data;
     ib_status_t rc;
-    ib_field_t *rh_field = NULL;
-    ib_field_t *lh_field = NULL;
 
-    rc = prepare_math_operands(
+    rc = execute_compare(
         rule_exec,
+        data,
         flags,
         field,
-        pdata,
-        true,
-        &lh_field,
-        &rh_field);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+        &num_lt,
+        &float_lt,
+        result);
 
-    if (rh_field->type == IB_FTYPE_NUM) {
-        ib_num_t param_value;
-        ib_num_t value;
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(rh_field, ib_ftype_num_out(&param_value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(lh_field, ib_ftype_num_out(&value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Do the comparison */
-        *result = (value < param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            rc = capture_num(rule_exec, 0, value);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
-            }
-        }
-    }
-    else if (rh_field->type == IB_FTYPE_FLOAT) {
-        ib_float_t param_value;
-        ib_float_t value;
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(rh_field, ib_ftype_float_out(&param_value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(lh_field, ib_ftype_float_out(&value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Do the comparison */
-        *result = (value < param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            rc = capture_float(rule_exec, 0, value);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
-            }
-        }
-    }
-    else {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -1426,88 +1562,19 @@ static ib_status_t op_ge_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    assert(data);
-    assert(result);
-    assert(rule_exec);
-    assert(rule_exec->tx);
-    assert(rule_exec->tx->mp);
 
-    const ib_field_t *pdata = (const ib_field_t *)data;
     ib_status_t rc;
-    ib_field_t *rh_field = NULL;
-    ib_field_t *lh_field = NULL;
 
-    rc = prepare_math_operands(
+    rc = execute_compare(
         rule_exec,
+        data,
         flags,
         field,
-        pdata,
-        true,
-        &lh_field,
-        &rh_field);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+        &num_ge,
+        &float_ge,
+        result);
 
-    if (rh_field->type == IB_FTYPE_NUM) {
-        ib_num_t param_value;
-        ib_num_t value;
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(rh_field, ib_ftype_num_out(&param_value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(lh_field, ib_ftype_num_out(&value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Do the comparison */
-        *result = (value >= param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            rc = capture_num(rule_exec, 0, value);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
-            }
-        }
-    }
-    else if (rh_field->type == IB_FTYPE_FLOAT) {
-        ib_float_t param_value;
-        ib_float_t value;
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(rh_field, ib_ftype_float_out(&param_value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(lh_field, ib_ftype_float_out(&value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Do the comparison */
-        *result = (value >= param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            rc = capture_float(rule_exec, 0, value);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
-            }
-        }
-    }
-    else {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
@@ -1528,88 +1595,19 @@ static ib_status_t op_le_execute(const ib_rule_exec_t *rule_exec,
                                  ib_num_t *result)
 {
     IB_FTRACE_INIT();
-    assert(data);
-    assert(result);
-    assert(rule_exec);
-    assert(rule_exec->tx);
-    assert(rule_exec->tx->mp);
 
-    const ib_field_t *pdata = (const ib_field_t *)data;
     ib_status_t rc;
-    ib_field_t *rh_field = NULL;
-    ib_field_t *lh_field = NULL;
 
-    rc = prepare_math_operands(
+    rc = execute_compare(
         rule_exec,
+        data,
         flags,
         field,
-        pdata,
-        true,
-        &lh_field,
-        &rh_field);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
+        &num_le,
+        &float_le,
+        result);
 
-    if (rh_field->type == IB_FTYPE_NUM) {
-        ib_num_t param_value;
-        ib_num_t value;
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(rh_field, ib_ftype_num_out(&param_value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(lh_field, ib_ftype_num_out(&value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Do the comparison */
-        *result = (value <= param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            rc = capture_num(rule_exec, 0, value);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
-            }
-        }
-    }
-    else if (rh_field->type == IB_FTYPE_FLOAT) {
-        ib_float_t param_value;
-        ib_float_t value;
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(rh_field, ib_ftype_float_out(&param_value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Pull out param value for comparision. */
-        rc = ib_field_value(lh_field, ib_ftype_float_out(&value));
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-
-        /* Do the comparison */
-        *result = (value <= param_value);
-        if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            rc = capture_float(rule_exec, 0, value);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
-                                  ib_status_to_string(rc));
-            }
-        }
-    }
-    else {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**
