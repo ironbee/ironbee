@@ -384,6 +384,7 @@ static int ironbee_sethdr(void *data, const char *key, const char *value)
  */
 static apr_status_t ib_req_cleanup(void *data)
 {
+    ib_status_t rc;
     request_rec *r = data;
     ironbee_req_ctx *ctx = ap_get_module_config(r->request_config,
                                                 &ironbee_module);
@@ -391,11 +392,21 @@ static apr_status_t ib_req_cleanup(void *data)
                                                  &ironbee_module);
     if (!cfg->filter_input) {
         /* the input filter was omitted, so we have to notify req end */
-        ib_state_notify_request_finished(ironbee, ctx->tx);
+        rc = ib_state_notify_request_finished(ironbee, ctx->tx);
+        if (rc != IB_OK) {
+            return IB2AP(rc);
+        }
     }
     if (!cfg->filter_output) {
         /* the output filter was omitted, so we have to notify resp end */
-        ib_state_notify_response_finished(ironbee, ctx->tx);
+        rc = ib_state_notify_response_finished(ironbee, ctx->tx);
+        if (rc != IB_OK) {
+            return IB2AP(rc);
+        }
+    }
+    rc = ib_state_notify_postprocess(ctx->tx->ib, ctx->tx);
+    if (rc != IB_OK) {
+        return IB2AP(rc);
     }
     ib_tx_destroy(ctx->tx);
     return APR_SUCCESS;
@@ -984,19 +995,22 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
     }
 
     rc = ib_initialize();
-    if (rc != IB_OK)
+    if (rc != IB_OK) {
         return IB2AP(rc);
+    }
 
     ib_util_log_level(4);
 
     rc = ib_engine_create(&ironbee, &ibplugin);
-    if (rc != IB_OK)
+    if (rc != IB_OK) {
         return IB2AP(rc);
+    }
 
     rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER, "ironbee-httpd",
                               NULL, &ironbee_logger_iface, NULL);
-    if (rc != IB_OK)
+    if (rc != IB_OK) {
         return IB2AP(rc);
+    }
 
     ib_context_set_string(ib_context_engine(ironbee),
                           IB_PROVIDER_TYPE_LOGGER, "ironbee-httpd");
@@ -1014,7 +1028,12 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
 
     ib_hook_conn_register(ironbee, conn_opened_event, ironbee_conn_init, NULL);
 
+    /* Parse the config file. */
     rc = ib_cfgparser_create(&cp, ironbee);
+    if ( (rc != IB_OK) || (cp == NULL) ) {
+        return IB2AP(rc);
+    }
+    rc = ib_engine_config_started(ironbee, cp);
     if (rc != IB_OK) {
         return IB2AP(rc);
     }
@@ -1023,11 +1042,23 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
     ib_context_set_string(ctx, IB_PROVIDER_TYPE_LOGGER, "ironbee-httpd");
     ib_context_set_num(ctx, "logger.log_level", 4);
 
+    if (ironbee_config_file == NULL) {
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                     IB_PRODUCT_NAME ": No config specified with IronBeeConfig directive");
+    }
     rc = ib_cfgparser_parse(cp, ironbee_config_file);
+    if (rc != IB_OK) {
+        ib_engine_config_finished(ironbee);
+        ib_cfgparser_destroy(cp);
+        return IB2AP(rc);
+    }
+
+    rc = ib_engine_config_finished(ironbee);
     if (rc != IB_OK) {
         ib_cfgparser_destroy(cp);
         return IB2AP(rc);
     }
+
     rc = ib_cfgparser_destroy(cp);
     if (rc != IB_OK) {
         return IB2AP(rc);

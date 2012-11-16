@@ -110,32 +110,33 @@ struct ib_ctxsel_registration_t {
  * Engine handle.
  */
 struct ib_engine_t {
-    ib_mpool_t         *mp;               /**< Primary memory pool */
-    ib_mpool_t         *config_mp;        /**< Config memory pool */
-    ib_mpool_t         *temp_mp;          /**< Temp memory pool for config */
-    ib_provider_inst_t *dpi;              /**< Data provider instance */
-    ib_context_t       *ectx;             /**< Engine configuration context */
-    ib_context_t       *ctx;              /**< Main configuration context */
-    ib_engine_cfg_state_t cfg_state;      /**< Engine configuration state */
-    ib_uuid_t           sensor_id;        /**< Sensor UUID */
-    uint32_t            sensor_id_hash;   /**< Sensor UUID hash (4 bytes) */
-    const char         *sensor_id_str;    /**< ascii format, for logging */
-    const char         *sensor_name;      /**< Sensor name */
-    const char         *sensor_version;   /**< Sensor version string */
-    const char         *sensor_hostname;  /**< Sensor hostname */
+    ib_mpool_t            *mp;              /**< Primary memory pool */
+    ib_mpool_t            *config_mp;       /**< Config memory pool */
+    ib_mpool_t            *temp_mp;         /**< Temp memory pool for config */
+    ib_provider_inst_t    *dpi;             /**< Data provider instance */
+    ib_context_t          *ectx;            /**< Engine configuration context */
+    ib_context_t          *ctx;             /**< Main configuration context */
+    ib_engine_cfg_state_t  cfg_state;       /**< Engine configuration state */
+    ib_uuid_t              sensor_id;       /**< Sensor UUID */
+    uint32_t               sensor_id_hash;  /**< Sensor UUID hash (4 bytes) */
+    const char            *sensor_id_str;   /**< ascii format, for logging */
+    const char            *sensor_name;     /**< Sensor name */
+    const char            *sensor_version;  /**< Sensor version string */
+    const char            *sensor_hostname; /**< Sensor hostname */
+    ib_cfgparser_t        *cfgparser;       /**< Our configuration parser */
 
     /// @todo Only these should be private
-    ib_server_t        *server;           /**< Info about the server */
-    ib_array_t         *modules;          /**< Array tracking modules */
-    ib_array_t         *filters;          /**< Array tracking filters */
-    ib_list_t          *contexts;         /**< Configuration contexts */
-    ib_hash_t          *dirmap;           /**< Hash tracking directive map */
-    ib_hash_t          *apis;             /**< Hash tracking provider APIs */
-    ib_hash_t          *providers;        /**< Hash tracking providers */
-    ib_hash_t          *tfns;             /**< Hash tracking transforms */
-    ib_hash_t          *operators;        /**< Hash tracking operators */
-    ib_hash_t          *actions;          /**< Hash tracking rules */
-    ib_rule_engine_t   *rule_engine;      /**< Rule engine data */
+    ib_server_t           *server;          /**< Info about the server */
+    ib_array_t            *modules;         /**< Array tracking modules */
+    ib_array_t            *filters;         /**< Array tracking filters */
+    ib_list_t             *contexts;        /**< Configuration contexts */
+    ib_hash_t             *dirmap;          /**< Hash tracking directive map */
+    ib_hash_t             *apis;            /**< Hash tracking provider APIs */
+    ib_hash_t             *providers;       /**< Hash tracking providers */
+    ib_hash_t             *tfns;            /**< Hash tracking transforms */
+    ib_hash_t             *operators;       /**< Hash tracking operators */
+    ib_hash_t             *actions;         /**< Hash tracking rules */
+    ib_rule_engine_t      *rule_engine;     /**< Rule engine data */
 
     /* Hooks */
     ib_hook_t *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */
@@ -179,7 +180,6 @@ struct ib_context_t {
     const char           *ctx_full;    /**< Full name of context */
     const char           *ctx_cwd;     /**< Context's current directory */
     ib_auditlog_cfg_t    *auditlog;    /**< Per-context audit log cfgs. */
-    const ib_cfgparser_t *cfgparser;   /**< Our configuration parser */
     ib_context_state_t    state;       /**< Context state */
 
     /* Data specific to the selector for this context */

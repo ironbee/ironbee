@@ -998,39 +998,6 @@ static ib_status_t modlua_init_lua_runtime_cfg(ib_engine_t *ib,
 }
 
 /**
- * Destroy the lua runtime for the configuration.
- *
- * @param ib Engine.
- * @param event Event type.
- * @param cbdata Unused.
- *
- * @return Status code.
- */
-static ib_status_t modlua_destroy_lua_runtime_cfg(ib_engine_t *ib,
-                                                  ib_state_event_type_t event,
-                                                  void *cbdata)
-{
-    IB_FTRACE_INIT();
-    modlua_cfg_t *modcfg;
-    ib_status_t rc;
-
-    /* Get the module config. */
-    rc = ib_context_module_config(ib_context_main(ib),
-                                  IB_MODULE_STRUCT_PTR, (void *)&modcfg);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch module %s config: %s",
-                     MODULE_NAME_STR, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    ib_log_debug2(ib, "Destroying lua runtime for configuration.");
-    lua_close(modcfg->Lconfig);
-    modcfg->Lconfig = NULL;
-
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-/**
  * Initialize the lua runtime for this connection.
  *
  * @param ib Engine.
@@ -1790,15 +1757,6 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         IB_FTRACE_RET_STATUS(rc);
     }
 
-    /* Hooks to initialize/destroy the lua runtime for configuration. */
-    rc = ib_hook_null_register(ib, cfg_finished_event,
-                               modlua_destroy_lua_runtime_cfg,
-                               NULL);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Failed to register hook: %s",
-                     ib_status_to_string(rc));
-    }
-
     /* Hook to initialize the lua runtime with the connection. */
     rc = ib_hook_conn_register(ib, conn_started_event,
                                modlua_init_lua_runtime,
@@ -2033,11 +1991,19 @@ static ib_status_t modlua_context_close(ib_engine_t  *ib,
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    /* Init the lua modules that were loaded */
-    /// @todo Need a directive for this instead of loading all per context
-    IB_LIST_LOOP(mlist, node) {
-        ib_module_t *mlua = (ib_module_t *)ib_list_node_data(node);
-        modlua_lua_module_init(ib, ctx, mlua->name);
+    /* Close of the main context signifies configuration finished. */
+    if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
+        ib_log_debug2(ib, "Destroying lua runtime for configuration.");
+        lua_close(modcfg->Lconfig);
+        modcfg->Lconfig = NULL;
+    }
+    else {
+        /* Init the lua modules that were loaded */
+        /// @todo Need a directive for this instead of loading all per context
+        IB_LIST_LOOP(mlist, node) {
+            ib_module_t *mlua = (ib_module_t *)ib_list_node_data(node);
+            modlua_lua_module_init(ib, ctx, mlua->name);
+        }
     }
 
     IB_FTRACE_RET_STATUS(IB_OK);

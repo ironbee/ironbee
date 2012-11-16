@@ -40,24 +40,6 @@ extern "C" {
  */
 
 /**
- * Notify the state machine that the configuration process has started.
- *
- * @param ib Engine handle
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_state_notify_cfg_started(ib_engine_t *ib);
-
-/**
- * Notify the state machine that the configuration process has finished.
- *
- * @param ib Engine handle
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_state_notify_cfg_finished(ib_engine_t *ib);
-
-/**
  * Notify the state machine that a connection started.
  *
  * @param ib Engine handle

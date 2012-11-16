@@ -108,8 +108,6 @@ static int ib_state_event_name_cbdata_type_list[] = {
     IB_CBDATA_TX_T,        /**< handle_postprocess_event */
 
     /* Plugin States */
-    IB_CBDATA_NONE,        /**< cfg_started_event */
-    IB_CBDATA_NONE,        /**< cfg_finished_event */
     IB_CBDATA_CONN_T,      /**< conn_opened_event */
     IB_CBDATA_CONN_DATA_T, /**< conn_data_in_event */
     IB_CBDATA_CONN_DATA_T, /**< conn_data_out_event */

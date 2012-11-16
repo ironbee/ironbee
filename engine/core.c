@@ -3265,7 +3265,6 @@ static ib_status_t core_abs_module_path(ib_engine_t *ib,
  * - IB_OK
  * - Errors from ib_context_create()
  * - Errors from ib_context_data_set()
- * - Errors from ib_context_config_set_parser()
  * - Errors from ib_cfgparser_context_push()
  */
 static ib_status_t core_site_create(
@@ -3364,14 +3363,6 @@ static ib_status_t core_site_open(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
-    rc = ib_context_config_set_parser(ctx, cp);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    rc = ib_cfgparser_context_push(cp, ctx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
     rc = ib_ctxsel_site_open(cp->ib, site);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
@@ -3403,24 +3394,39 @@ static ib_status_t core_site_close(
     assert(site != NULL);
     ib_status_t rc;
     ib_context_t *ctx;
-    ib_context_t *pctx;
 
     if (core_data->cur_site == NULL) {
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
-    /* Pop the current items off the stack */
-    rc = ib_cfgparser_context_pop(cp, &ctx, &pctx);
+    /* Verify that the current context matches the site context */
+    rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
-        core_data->cur_site = NULL;
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        goto done;
     }
-    assert(core_data->cur_ctx == ctx);
-    core_data->cur_ctx = pctx;
+    if (core_data->cur_ctx != ctx) {
+        rc = IB_EUNKNOWN;
+        goto done;
+    }
 
+    /* Close the site */
     rc = ib_ctxsel_site_close(cp->ib, site);
+    if (rc != IB_OK) {
+        goto done;
+    }
+
+    /* Close the context */
+    ib_cfg_log_debug2(cp, "Closing context %p for site \"%s\"",
+                      ctx, site->name);
+    rc = ib_context_close(ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error closing context for site \"%s\" end: %s",
+                         site->name, ib_status_to_string(rc));
+        goto done;
+    }
 
     /* NULL the site pointer *after* closing the site */
+done :
     core_data->cur_site = NULL;
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -3470,16 +3476,6 @@ static ib_status_t core_location_create(
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to set site for context \"%s\": %s",
                          ib_context_full_get(ctx), ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Tell the config parser about the new context */
-    ib_context_config_set_parser(ctx, cp);
-    rc = ib_cfgparser_context_push(cp, ctx);
-    if (rc != IB_OK) {
-        ib_cfg_log_debug2(cp,
-                          "Failed to push context for \"%s:%s\": %s",
-                          site->name, path, ib_status_to_string(rc));
         IB_FTRACE_RET_STATUS(rc);
     }
 
@@ -3570,35 +3566,42 @@ static ib_status_t core_location_close(ib_cfgparser_t *cp,
 
     ib_status_t rc;
     ib_context_t *ctx;
-    ib_context_t *pctx;
 
     if (core_data->cur_location == NULL) {
         IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
-    /* Pop the current items off the stack */
-    rc = ib_cfgparser_context_pop(cp, &ctx, &pctx);
+    /* Verify that the context matches */
+    rc = ib_cfgparser_context_current(cp, &ctx);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to pop context for location: %s",
-                         ib_status_to_string(rc));
-        core_data->cur_location = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        goto done;
     }
-    assert(core_data->cur_ctx == ctx);
-    core_data->cur_ctx = pctx;
+    if (core_data->cur_ctx != ctx) {
+        rc = IB_EUNKNOWN;
+        goto done;
+    }
 
+    /* Close the context */
     ib_cfg_log_debug2(cp, "Closing location context \"%s\"",
                       ib_context_full_get(ctx));
-
     rc = ib_context_close(ctx);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error closing context \"%s\": %s",
                          ib_context_full_get(ctx), ib_status_to_string(rc));
-        core_data->cur_location = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        goto done;
     }
 
+    /* After closing the context, store the current one */
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        goto done;
+    }
+    core_data->cur_ctx = ctx;
+
+    /* Close the location */
     rc = ib_ctxsel_location_close(cp->ib, location);
+
+done:
     core_data->cur_location = NULL;
     IB_FTRACE_RET_STATUS(rc);
 }
@@ -3694,8 +3697,6 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
     assert( cp->ib != NULL );
     assert( dir_name != NULL );
 
-    ib_engine_t *ib = cp->ib;
-    ib_context_t *ctx;
     ib_status_t rc;
     ib_core_module_data_t *core_data;
     const char *site_name;
@@ -3712,16 +3713,7 @@ static ib_status_t core_dir_site_end(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp, "Site end with no open site");
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
-    ctx = core_data->cur_ctx;
     site_name = core_data->cur_site->name;
-
-    ib_log_debug2(ib, "Closing context %p for site \"%s\"", ctx, site_name);
-    rc = ib_context_close(ctx);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error closing context for site \"%s\" end: %s",
-                         site_name, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
 
     rc = core_site_close(cp, core_data, core_data->cur_site);
     if (rc != IB_OK) {
@@ -5295,7 +5287,7 @@ ib_module_t *ib_core_module(void)
 }
 
 /**
- * Initialize the core module context
+ * Handle context open events for the core module
  *
  * @param ib Engine
  * @param mod Module
@@ -5332,7 +5324,7 @@ static ib_status_t core_ctx_open(ib_engine_t  *ib,
 }
 
 /**
- * Initialize the core module context
+ * Handle context close events for the core module
  *
  * @param ib Engine
  * @param mod Module
@@ -5389,7 +5381,7 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
     }
 
     /* Build the site selection list at the close of the main context */
-    if (ctx->ctype == IB_CTYPE_MAIN) {
+    if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
         rc = ib_ctxsel_finalize( ib );
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);

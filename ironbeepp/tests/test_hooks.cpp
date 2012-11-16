@@ -404,11 +404,6 @@ TEST_F(TestHooks, Basic)
     handler_info_t info;
     Handler handler(info);
 
-    H.configuration_started(handler);
-    test_null(Engine::configuration_started, info);
-    H.configuration_finished(handler);
-    test_null(Engine::configuration_finished, info);
-
 
     H.request_header_data(handler);
     test_header_data(Engine::request_header_data, info);

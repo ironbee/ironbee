@@ -157,6 +157,8 @@ TEST_F(TestConfigurationDirectives, Registrar)
     rc = ib_cfgparser_create(&parser, m_engine.ib());
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(parser);
+    rc = ib_engine_config_started(m_engine.ib(), parser);
+    ASSERT_EQ(IB_OK, rc);
     ConfigurationParser P(parser);
 
     Info info;
@@ -234,4 +236,9 @@ TEST_F(TestConfigurationDirectives, Registrar)
     EXPECT_EQ(value_map["a"] | value_map["b"], info.mask);
     EXPECT_EQ(value_map["a"], info.value & info.mask);
     EXPECT_EQ(value_map["b"], ~info.value & info.mask);
+
+    rc = ib_engine_config_finished(m_engine.ib());
+    ASSERT_EQ(IB_OK, rc);
+    rc = ib_cfgparser_destroy(parser);
+    ASSERT_EQ(IB_OK, rc);
 }

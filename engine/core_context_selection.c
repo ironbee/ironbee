@@ -855,7 +855,6 @@ static ib_status_t core_ctxsel_site_close(
     ib_site_location_t *location;
     ib_context_t *ctx;
     const char *path = "/";
-    const ib_cfgparser_t *cp;
     ib_status_t rc;
 
     /* If there's already match-any location for this site, do nothing. */
@@ -870,16 +869,6 @@ static ib_status_t core_ctxsel_site_close(
         IB_FTRACE_RET_STATUS(rc);
     }
     rc = ib_context_site_set(ctx, site);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Set it's configuration parser */
-    rc = ib_context_config_get_parser(site->context, &cp);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-    rc = ib_context_config_set_parser(ctx, cp);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }

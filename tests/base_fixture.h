@@ -182,10 +182,26 @@ public:
             );
         }
 
+        rc = ib_engine_config_started(ib_engine, cp);
+        if (rc != IB_OK) {
+            throw std::runtime_error(
+                std::string("Failed to start configuration: ") +
+                    boost::lexical_cast<std::string>(rc)
+            );
+        }
+
         rc = ib_cfgparser_parse(cp, configFile.c_str());
         if (rc != IB_OK) {
             throw std::runtime_error(
                 std::string("Failed to parse configuration file."));
+        }
+
+        rc = ib_engine_config_finished(ib_engine);
+        if (rc != IB_OK) {
+            throw std::runtime_error(
+                std::string("Failed to start configuration: ") +
+                    boost::lexical_cast<std::string>(rc)
+            );
         }
 
         rc = ib_cfgparser_destroy(cp);

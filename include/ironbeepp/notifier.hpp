@@ -81,11 +81,6 @@ public:
     explicit
     Notifier(Engine engine);
 
-    //! Notify configuration_started event.
-    Notifier configuration_started();
-    //! Notify configuration_finished event.
-    Notifier configuration_finished();
-
     //! Notify connection_opened event.
     Notifier connection_opened(Connection connection);
     //! Notify connection_data_in event.

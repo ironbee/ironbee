@@ -78,14 +78,16 @@ extern ib_server_t ibt_ibserver;
  * @param e Engine handle
  * @param fn Config file name
  */
-#define ibtest_engine_config_file(e,fn)                         \
-    do {                                                        \
-        ib_engine_t *ibt_ib = (e);                              \
-        ib_cfgparser_t *ibt_cp;                                 \
-        ASSERT_EQ(IB_OK, ib_cfgparser_create(&ibt_cp, ibt_ib)); \
-        ASSERT_TRUE(ibt_cp);                                    \
-        ASSERT_EQ(IB_OK, ib_cfgparser_parse(ibt_cp, (fn)));     \
-        ASSERT_EQ(IB_OK, ib_cfgparser_destroy(ibt_cp));         \
+#define ibtest_engine_config_file(e,fn)                             \
+    do {                                                            \
+        ib_engine_t *ibt_ib = (e);                                  \
+        ib_cfgparser_t *ibt_cp;                                     \
+        ASSERT_EQ(IB_OK, ib_cfgparser_create(&ibt_cp, ibt_ib));     \
+        ASSERT_TRUE(ibt_cp);                                        \
+        ASSERT_EQ(IB_OK, ib_engine_config_started(ibt_ib, ibt_cp)); \
+        ASSERT_EQ(IB_OK, ib_cfgparser_parse(ibt_cp, (fn)));         \
+        ASSERT_EQ(IB_OK, ib_engine_config_finished(ibt_ib));        \
+        ASSERT_EQ(IB_OK, ib_cfgparser_destroy(ibt_cp));             \
     } while(0)
 
 /**
@@ -95,14 +97,16 @@ extern ib_server_t ibt_ibserver;
  * @param buf String buffer containing config data
  * @param len Buffer length
  */
-#define ibtest_engine_config_buf(e,buf,len,file,lineno)         \
-    do {                                                        \
-        ib_engine_t *ibt_ib = (e);                              \
-        ib_cfgparser_t *ibt_cp;                                 \
-        ASSERT_EQ(IB_OK, ib_cfgparser_create(&ibt_cp, ibt_ib)); \
-        ASSERT_TRUE(ibt_cp);                                    \
+#define ibtest_engine_config_buf(e,buf,len,file,lineno)             \
+    do {                                                            \
+        ib_engine_t *ibt_ib = (e);                                  \
+        ib_cfgparser_t *ibt_cp;                                     \
+        ASSERT_EQ(IB_OK, ib_cfgparser_create(&ibt_cp, ibt_ib));     \
+        ASSERT_TRUE(ibt_cp);                                        \
+        ASSERT_EQ(IB_OK, ib_engine_config_started(ibt_ib, ibt_cp)); \
         ASSERT_EQ(IB_OK, ib_cfgparser_ragel_parse_chunk(ibt_cp,(buf),(len),file,lineno,1)); \
-        ASSERT_EQ(IB_OK, ib_cfgparser_destroy(ibt_cp));                 \
+        ASSERT_EQ(IB_OK, ib_engine_config_finished(ibt_ib));       \
+        ASSERT_EQ(IB_OK, ib_cfgparser_destroy(ibt_cp));            \
     } while(0)
 
 /**

@@ -86,8 +86,6 @@ public:
         handle_response            = handle_response_event,
         handle_disconnect          = handle_disconnect_event,
         handle_postprocess         = handle_postprocess_event,
-        configuration_started      = cfg_started_event,
-        configuration_finished     = cfg_finished_event,
         request_started            = request_started_event,
         request_header_finished    = request_header_finished_event,
         request_header_data        = request_header_data_event,

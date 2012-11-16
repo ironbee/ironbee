@@ -180,6 +180,7 @@ typedef struct {
     ib_status_t (*ib_notify_header_finished)(ib_engine_t*, ib_tx_t*);
     ib_status_t (*ib_notify_body)(ib_engine_t*, ib_tx_t*, ib_txdata_t*);
     ib_status_t (*ib_notify_end)(ib_engine_t*, ib_tx_t*);
+    ib_status_t (*ib_notify_post)(ib_engine_t*, ib_tx_t*);
 } ib_direction_data_t;
 
 #if 0  /* Currently unused */
@@ -190,7 +191,8 @@ static ib_direction_data_t ib_direction_server_req = {
     ib_state_notify_request_header_data,
     ib_state_notify_request_header_finished,
     ib_state_notify_request_body_data,
-    ib_state_notify_request_finished
+    ib_state_notify_request_finished,
+    NULL
 };
 #endif
 static ib_direction_data_t ib_direction_client_req = {
@@ -200,7 +202,8 @@ static ib_direction_data_t ib_direction_client_req = {
     ib_state_notify_request_header_data,
     ib_state_notify_request_header_finished,
     ib_state_notify_request_body_data,
-    ib_state_notify_request_finished
+    ib_state_notify_request_finished,
+    NULL
 };
 static ib_direction_data_t ib_direction_server_resp = {
     IBD_RESP,
@@ -209,7 +212,8 @@ static ib_direction_data_t ib_direction_server_resp = {
     ib_state_notify_response_header_data,
     ib_state_notify_response_header_finished,
     ib_state_notify_response_body_data,
-    ib_state_notify_response_finished
+    ib_state_notify_response_finished,
+    ib_state_notify_postprocess
 };
 static ib_direction_data_t ib_direction_client_resp = {
     IBD_RESP,
@@ -218,7 +222,8 @@ static ib_direction_data_t ib_direction_client_resp = {
     ib_state_notify_response_header_data,
     ib_state_notify_response_header_finished,
     ib_state_notify_response_body_data,
-    ib_state_notify_response_finished
+    ib_state_notify_response_finished,
+    ib_state_notify_postprocess
 };
 
 typedef struct {
@@ -874,6 +879,9 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
             data = TSContDataGet(contp);
             TSDebug("ironbee", "data_event: calling ib_state_notify_%s_finished()", ((ibd->ibd->dir == IBD_REQ)?"request":"response"));
             (*ibd->ibd->ib_notify_end)(ironbee, data->tx);
+            if (ibd->ibd->ib_notify_post != NULL) {
+                (*ibd->ibd->ib_notify_post)(ironbee, data->tx);
+            }
             break;
         case TS_EVENT_VCONN_WRITE_READY:
             TSDebug("ironbee", "\tEvent is TS_EVENT_VCONN_WRITE_READY");
@@ -1994,6 +2002,10 @@ static int ironbee_init(const char *configfile, const char *logfile)
     if (rc != IB_OK) {
         return rc;
     }
+    rc = ib_engine_config_started(ironbee, cp);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     /* Get the main context, set some defaults */
     ctx = ib_context_main(ironbee);
@@ -2002,7 +2014,12 @@ static int ironbee_init(const char *configfile, const char *logfile)
 
     rc = ib_cfgparser_parse(cp, configfile);
     if (rc != IB_OK) {
+        ib_engine_config_finished(ironbee);
         ib_cfgparser_destroy(cp);
+        return rc;
+    }
+    rc = ib_engine_config_finished(ironbee);
+    if (rc != IB_OK) {
         return rc;
     }
     rc = ib_cfgparser_destroy(cp);

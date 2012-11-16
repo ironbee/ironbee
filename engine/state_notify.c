@@ -346,65 +346,6 @@ ib_status_t ib_state_notify_request_started(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-ib_status_t ib_state_notify_cfg_started(ib_engine_t *ib)
-{
-    IB_FTRACE_INIT();
-    assert(ib != NULL);
-    assert(ib->cfg_state == CFG_NOT_STARTED);
-    ib_status_t rc;
-
-    /* Ignore extraneous config started events */
-    if (ib->cfg_state == CFG_STARTED) {
-        IB_FTRACE_RET_STATUS(IB_OK);
-    }
-
-    /* Create and configure the main configuration context. */
-    rc = ib_engine_context_create_main(ib);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    rc = ib_context_open(ib->ctx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /// @todo Create a temp mem pool???
-    CALL_NULL_HOOKS(&rc, ib->hook[cfg_started_event], cfg_started_event, ib);
-
-    ib->cfg_state = CFG_STARTED;
-    IB_FTRACE_RET_STATUS(rc);
-}
-
-ib_status_t ib_state_notify_cfg_finished(ib_engine_t *ib)
-{
-    IB_FTRACE_INIT();
-    assert(ib != NULL);
-    assert(ib->cfg_state == CFG_STARTED);
-    ib_status_t rc;
-
-    /* Initialize (and close) the main configuration context. */
-    rc = ib_context_close(ib->ctx);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Run the engine's configuration finished function */
-    rc = ib_engine_cfg_finished(ib);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Run the hooks. */
-    CALL_NULL_HOOKS(&rc, ib->hook[cfg_finished_event], cfg_finished_event, ib);
-
-    /* Destroy the temporary memory pool. */
-    ib_engine_pool_temp_destroy(ib);
-
-    ib->cfg_state = CFG_FINISHED;
-    IB_FTRACE_RET_STATUS(rc);
-}
-
 ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
                                         ib_conn_t *conn)
 {

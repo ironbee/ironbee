@@ -534,22 +534,6 @@ HooksRegistrar& HooksRegistrar::transaction_data(
     return *this;
 }
 
-HooksRegistrar& HooksRegistrar::configuration_started(null_t f)
-{
-    return null(
-        Engine::configuration_started,
-        f
-    );
-}
-
-HooksRegistrar& HooksRegistrar::configuration_finished(null_t f)
-{
-    return null(
-        Engine::configuration_finished,
-        f
-    );
-}
-
 HooksRegistrar& HooksRegistrar::request_header_data(header_data_t f)
 {
     return header_data(

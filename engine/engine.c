@@ -98,8 +98,6 @@ static const ib_state_hook_type_t ib_state_event_hook_types[] = {
     IB_STATE_HOOK_TX,       /**< handle_postprocess_event */
 
     /* Server States */
-    IB_STATE_HOOK_NULL,     /**< cfg_started_event */
-    IB_STATE_HOOK_NULL,     /**< cfg_finished_event */
     IB_STATE_HOOK_CONN,     /**< conn_opened_event */
     IB_STATE_HOOK_CONNDATA, /**< conn_data_in_event */
     IB_STATE_HOOK_CONNDATA, /**< conn_data_out_event */
@@ -402,6 +400,60 @@ ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+ib_status_t ib_engine_config_started(ib_engine_t *ib,
+                                     ib_cfgparser_t *cp)
+{
+    IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(cp != NULL);
+    assert(ib->cfg_state == CFG_NOT_STARTED);
+    ib_status_t rc;
+
+    /* Store the configuration parser in the engine */
+    ib->cfgparser = cp;
+    ib->cfg_state = CFG_STARTED;
+
+    /* Create and configure the main configuration context. */
+    rc = ib_engine_context_create_main(ib);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Open the main context */
+    rc = ib_context_open(ib->ctx);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_engine_config_finished(ib_engine_t *ib)
+{
+    IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(ib->cfg_state == CFG_STARTED);
+    ib_status_t rc;
+
+    /* Initialize (and close) the main configuration context.
+     * Note: The context can be NULL for unit tests. */
+    if (ib->ctx != NULL) {
+        rc = ib_context_close(ib->ctx);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Clear config parser pointer */
+    ib->cfgparser = NULL;
+    ib->cfg_state = CFG_FINISHED;
+
+    /* Destroy the temporary memory pool. */
+    ib_engine_pool_temp_destroy(ib);
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 ib_status_t ib_engine_module_get(ib_engine_t *ib,
                                  const char * name,
                                  ib_module_t **pm)
@@ -422,6 +474,17 @@ ib_status_t ib_engine_module_get(ib_engine_t *ib,
     *pm = NULL;
 
     IB_FTRACE_RET_STATUS(IB_ENOENT);
+}
+
+ib_status_t ib_engine_cfgparser_get(const ib_engine_t *ib,
+                                    const ib_cfgparser_t **pparser)
+{
+    IB_FTRACE_INIT();
+    assert(ib != NULL);
+    assert(pparser != NULL);
+
+    *pparser = ib->cfgparser;
+    IB_FTRACE_RET_STATUS(IB_OK);
 }
 
 ib_mpool_t *ib_engine_pool_main_get(ib_engine_t *ib)
@@ -873,21 +936,16 @@ void ib_tx_destroy(ib_tx_t *tx)
     ///       so this should not be needed and should cause an error
     ///       or maybe for us to throw a flag???
     assert(tx != NULL);
-    assert(tx->ib != NULL);
     assert(tx->conn != NULL);
     assert(tx->conn->tx_first == tx);
-
-    ib_engine_t *ib = tx->ib;
     ib_tx_t *curr;
 
     ib_log_debug3_tx(tx, "TX DESTROY p=%p id=%s", tx, tx->id);
 
     /* Make sure that the post processing state was notified. */
     if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
-        ib_log_info_tx(tx,
-                       "Forcing engine to run post processing "
-                       "prior to destroying transaction.");
-        ib_state_notify_postprocess(ib, tx);
+        ib_log_warning_tx(tx,
+                          "Post processing not run on transaction!");
     }
 
     /* Keep track of the first/current tx. */
@@ -938,8 +996,6 @@ static const char *ib_state_event_name_list[] = {
     IB_STRINGIFY(handle_postprocess_event),
 
     /* Server States */
-    IB_STRINGIFY(cfg_started_event),
-    IB_STRINGIFY(cfg_finished_event),
     IB_STRINGIFY(conn_opened_event),
     IB_STRINGIFY(conn_data_in_event),
     IB_STRINGIFY(conn_data_out_event),
@@ -1550,6 +1606,17 @@ ib_status_t ib_context_open(ib_context_t *ctx)
     }
     ib_log_debug3(ib, "Opening context ctx=%p '%s'", ctx, ctx->ctx_full);
 
+    if (ctx->ctype != IB_CTYPE_ENGINE) {
+        rc = ib_cfgparser_context_push(ib->cfgparser, ctx);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        rc = ib_context_set_cwd(ctx, ib->cfgparser->cur_cwd);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
     IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
         if (cfgdata == NULL) {
             continue;
@@ -1568,6 +1635,50 @@ ib_status_t ib_context_open(ib_context_t *ctx)
     }
 
     ctx->state = CTX_OPEN;
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+ib_status_t ib_context_close(ib_context_t *ctx)
+{
+    IB_FTRACE_INIT();
+    ib_engine_t *ib = ctx->ib;
+    ib_context_data_t *cfgdata;
+    ib_status_t rc;
+    size_t ncfgdata;
+    size_t i;
+
+    if (ctx->state != CTX_OPEN) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    ib_log_debug3(ib, "Closing context ctx=%p '%s'", ctx, ctx->ctx_full);
+
+    IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
+        if (cfgdata == NULL) {
+            continue;
+        }
+        ib_module_t *m = cfgdata->module;
+
+        if (m->fn_ctx_close != NULL) {
+            rc = m->fn_ctx_close(ib, m, ctx, m->cbdata_ctx_close);
+            if (rc != IB_OK) {
+                /// @todo Log the error???  Fail???
+                ib_log_error(ib,
+                             "Failed to call context close: %s",
+                             ib_status_to_string(rc)
+                );
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+    }
+
+    if (ctx->ctype != IB_CTYPE_ENGINE) {
+        rc = ib_cfgparser_context_pop(ib->cfgparser, NULL, NULL);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    ctx->state = CTX_CLOSED;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
@@ -1597,40 +1708,16 @@ ib_status_t ib_context_set_cwd(ib_context_t *ctx, const char *dir)
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-ib_status_t ib_context_config_set_parser(ib_context_t *ctx,
-                                         const ib_cfgparser_t *parser)
-{
-    IB_FTRACE_INIT();
-    assert(ctx != NULL);
-
-    ctx->cfgparser = parser;
-    if (parser == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
-    }
-    IB_FTRACE_RET_STATUS(ib_context_set_cwd(ctx, parser->cur_cwd));
-}
-
-ib_status_t ib_context_config_get_parser(const ib_context_t *ctx,
-                                         const ib_cfgparser_t **pparser)
-{
-    IB_FTRACE_INIT();
-    assert(ctx != NULL);
-    assert(pparser != NULL);
-
-    *pparser = ctx->cfgparser;
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
 const char *ib_context_config_cwd(const ib_context_t *ctx)
 {
     IB_FTRACE_INIT();
     assert(ctx != NULL);
 
-    if (ctx->cfgparser == NULL) {
+    if (ctx->ib->cfgparser == NULL) {
         IB_FTRACE_RET_CONSTSTR(ctx->ctx_cwd);
     }
     else {
-        IB_FTRACE_RET_CONSTSTR(ctx->cfgparser->cur_cwd);
+        IB_FTRACE_RET_CONSTSTR(ctx->ib->cfgparser->cur_cwd);
     }
 }
 
@@ -1760,62 +1847,6 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t ib_engine_cfg_finished(ib_engine_t *ib)
-{
-    IB_FTRACE_INIT();
-    ib_status_t rc;
-    ib_list_node_t *node;
-
-    /* Clear the configuration parsers for all contexts */
-    IB_LIST_LOOP(ib->contexts, node) {
-        ib_context_t *ctx = (ib_context_t *)node->data;
-        assert(ctx != NULL);
-
-        rc = ib_context_config_set_parser(ctx, NULL);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-
-ib_status_t ib_context_close(ib_context_t *ctx)
-{
-    IB_FTRACE_INIT();
-    ib_engine_t *ib = ctx->ib;
-    ib_context_data_t *cfgdata;
-    ib_status_t rc;
-    size_t ncfgdata;
-    size_t i;
-
-    if (ctx->state != CTX_OPEN) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
-    }
-    ib_log_debug3(ib, "Closing context ctx=%p '%s'", ctx, ctx->ctx_full);
-
-    IB_ARRAY_LOOP(ctx->cfgdata, ncfgdata, i, cfgdata) {
-        if (cfgdata == NULL) {
-            continue;
-        }
-        ib_module_t *m = cfgdata->module;
-
-        if (m->fn_ctx_close != NULL) {
-            rc = m->fn_ctx_close(ib, m, ctx, m->cbdata_ctx_close);
-            if (rc != IB_OK) {
-                /// @todo Log the error???  Fail???
-                ib_log_error(ib,
-                             "Failed to call context close: %s",
-                             ib_status_to_string(rc)
-                );
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-    }
-
-    ctx->state = CTX_CLOSED;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 

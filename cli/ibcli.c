@@ -2460,9 +2460,19 @@ int main(int argc, char* argv[])
                     ib_status_to_string(rc));
     }
     assert(cp != NULL);
+    rc = ib_engine_config_started(ironbee, cp);
+    if (rc != IB_OK) {
+        fatal_error("Error starting configuration: %s\n",
+                    ib_status_to_string(rc));
+    }
     rc = ib_cfgparser_parse(cp, settings.config_file);
     if (rc != IB_OK) {
         fatal_error("Error parsing configuration: %s\n",
+                    ib_status_to_string(rc));
+    }
+    rc = ib_engine_config_finished(ironbee);
+    if (rc != IB_OK) {
+        fatal_error("Error finishing configuration: %s\n",
                     ib_status_to_string(rc));
     }
     rc = ib_cfgparser_destroy(cp);

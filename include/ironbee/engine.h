@@ -116,13 +116,35 @@ ib_status_t DLL_PUBLIC ib_engine_create(ib_engine_t **pib,
 ib_status_t DLL_PUBLIC ib_engine_init(ib_engine_t *ib);
 
 /**
+ * Inform the engine that the configuration phase is starting
+ *
+ * @param[in] ib Engine handle
+ * @param[in] cp The configuration parser
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_engine_config_started(ib_engine_t *ib,
+                                                ib_cfgparser_t *cp);
+
+/**
  * Inform the engine that the configuration phase is complete
  *
  * @param ib Engine handle
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_engine_cfg_finished(ib_engine_t *ib);
+ib_status_t DLL_PUBLIC ib_engine_config_finished(ib_engine_t *ib);
+
+/**
+ * Get the configuration parser
+ *
+ * @param[in] ib Engine handle
+ * @param[out] pparser Pointer to the configuration parser.
+ *
+ * @returns IB_OK
+ */
+ib_status_t ib_engine_cfgparser_get(const ib_engine_t *ib,
+                                    const ib_cfgparser_t **pparser);
 
 /**
  * Create a main context to operate in.
@@ -401,29 +423,6 @@ ib_status_t DLL_PUBLIC ib_context_set_cwd(ib_context_t *ctx,
  * @returns Pointer to the context's CWD, or NULL if none available
  */
 const char DLL_PUBLIC *ib_context_config_cwd(const ib_context_t *ctx);
-
-/**
- * Set the configuration parser for a context, and the context's CWD from
- * the parser's CWD (if available)
- *
- * @param[in,out] ctx The context to operate on
- * @param[in] parser The configuration parser
- *
- * @returns IB_OK, or errors returned by @sa ib_context_set_cwd().
- */
-ib_status_t ib_context_config_set_parser(ib_context_t *ctx,
-                                         const ib_cfgparser_t *parser);
-
-/**
- * Get the configuration parser for a context
- *
- * @param[in] ctx The context to operate on
- * @param[out] pparser Pointer to the configuration parser.
- *
- * @returns IB_OK
- */
-ib_status_t ib_context_config_get_parser(const ib_context_t *ctx,
-                                         const ib_cfgparser_t **pparser);
 
 /**
  * Destroy a configuration context.
@@ -917,8 +916,6 @@ typedef enum {
     handle_postprocess_event,      /**< Handle transaction post processing */
 
     /* Server States */
-    cfg_started_event,             /**< Server notified config started */
-    cfg_finished_event,            /**< Server notified config finished */
     conn_opened_event,             /**< Server notified connection opened */
     conn_data_in_event,            /**< Server notified of incoming data */
     conn_data_out_event,           /**< Server notified of outgoing data */

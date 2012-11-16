@@ -37,28 +37,6 @@ Notifier::Notifier(Engine engine) :
     // nop
 }
 
-
-Notifier Notifier::configuration_started()
-{
-    Internal::throw_if_error(
-        ib_state_notify_cfg_started(
-            m_engine.ib()
-        )
-    );
-    return *this;
-}
-
-Notifier Notifier::configuration_finished()
-{
-    Internal::throw_if_error(
-        ib_state_notify_cfg_finished(
-            m_engine.ib()
-        )
-    );
-    return *this;
-}
-
-
 Notifier Notifier::connection_opened(Connection connection)
 {
     Internal::throw_if_error(

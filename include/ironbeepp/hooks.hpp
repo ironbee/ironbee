@@ -355,28 +355,6 @@ public:
     ///@{
 
     /**
-     * Register callback for configuration_started.
-     *
-     * @sa Engine::state_event_e
-     *
-     * @param[in] f Callback to register.
-     * @returns @c *this for call chaining.
-     * @throw IronBee++ exception on failure.
-     **/
-    HooksRegistrar& configuration_started(null_t f);
-
-    /**
-     * Register callback for configuration_finished.
-     *
-     * @sa Engine::state_event_e
-     *
-     * @param[in] f Callback to register.
-     * @returns @c *this for call chaining.
-     * @throw IronBee++ exception on failure.
-     **/
-    HooksRegistrar& configuration_finished(null_t f);
-
-    /**
      * Register callback for request_header_data.
      *
      * @sa Engine::state_event_e
