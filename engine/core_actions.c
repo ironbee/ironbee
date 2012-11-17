@@ -50,6 +50,7 @@ typedef enum {
     SETVAR_STRSET,                /**< Set to a constant string */
     SETVAR_NUMSET,                /**< Set to a constant number */
     SETVAR_NUMADD,                /**< Add to a value (counter) */
+    SETVAR_NUMSUB,                /**< Subtract from a value (counter) */
     SETVAR_NUMMULT,               /**< Multiply to a value (counter) */
 } setvar_op_t;
 
@@ -434,7 +435,12 @@ static ib_status_t act_setvar_create(
     }
 
     /* Calculate name length */
-    nlen = (eq - params);
+    if (*(eq-1) == '*' || *(eq-1) == '-' || *(eq-1) == '+') {
+        nlen = (eq - 1 - params);
+    }
+    else {
+        nlen = (eq - params);
+    }
 
     /* Determine the type of the value */
     value = (eq + 1);
@@ -462,10 +468,13 @@ static ib_status_t act_setvar_create(
     rc = ib_string_to_num_ex(value, vlen, 0, &(data->value.num));
     if (rc == IB_OK) {
         data->type = IB_FTYPE_NUM;
-        if ( (*value == '+') || (*value == '-') ) {
+        if (eq - strchr(params, '+') == 1) {
             data->op = SETVAR_NUMADD;
         }
-        else if ( *value == '*' ) {
+        else if (eq - strchr(params, '-') == 1) {
+            data->op = SETVAR_NUMSUB;
+        }
+        else if (eq - strchr(params, '*') == 1) {
             data->op = SETVAR_NUMMULT;
         }
         else {
@@ -920,6 +929,45 @@ static ib_status_t act_setvar_execute(
             }
 
             num += setvar_data->value.num;
+            ib_field_setv(cur_field, ib_ftype_num_in(&num));
+        }
+        else {
+            ib_rule_log_error(rule_exec,
+                              "setvar: field \"%.*s\" type %d "
+                              "invalid for NUMADD",
+                              (int)nlen, name, cur_field->type);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
+        break;
+
+    /* Numerical operation : Add */
+    case SETVAR_NUMSUB:
+        assert(setvar_data->type == IB_FTYPE_NUM);
+
+        /* If it doesn't exist, create the variable with a value of zero */
+        if (cur_field == NULL) {
+
+            /* Create the new_field field */
+            rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur_field);
+            if (rc != IB_OK) {
+                ib_rule_log_error(rule_exec,
+                                  "setvar: Failed to add field "
+                                  "\"%.*s\": %s",
+                                  (int)nlen, name,
+                                  ib_status_to_string(rc));
+                IB_FTRACE_RET_STATUS(rc);
+            }
+        }
+
+        /* Handle num and unum types */
+        if (cur_field->type == IB_FTYPE_NUM) {
+            ib_num_t num;
+            rc = ib_field_value(cur_field, ib_ftype_num_out(&num));
+            if (rc != IB_OK) {
+                    IB_FTRACE_RET_STATUS(rc);
+            }
+
+            num -= setvar_data->value.num;
             ib_field_setv(cur_field, ib_ftype_num_in(&num));
         }
         else {

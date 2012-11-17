@@ -170,10 +170,15 @@ public:
 
         if ( boost::filesystem::exists(boost::filesystem::path(configFile)) )
         {
+            std::cout << "Using " << configFile << "." << std::endl;
             configureIronBee(configFile);
         }
         else
         {
+            std::cout << "Could not open config "
+                      << configFile
+                      << ". Using default BasicIronBee.config."
+                      << std::endl;
             configureIronBee("BasicIronBee.config");
         }
     }

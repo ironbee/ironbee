@@ -105,6 +105,9 @@ TEST_EXTRAS = \
        PcreModuleTest.test_match_capture.config \
        test_ironbee_lua_api.conf \
        TestIronBeeModuleRulesLua.operator_test.config \
+       CoreActionTest.setVarMult.config \
+       CoreActionTest.setVarAdd.config \
+       CoreActionTest.setVarSub.config \
        test_module_rules_lua.lua
 
 EXTRA_DIST = \
@@ -241,7 +244,7 @@ test_module_ahocorasick_CPPFLAGS = $(CPPFLAGS) \
 test_operator_SOURCES = test_operator.cc test_main.cc
 test_operator_LDADD = $(MODULE_TEST_LDADD)
 
-test_action_SOURCES = test_action.cc test_main.cc
+test_action_SOURCES = test_action.cc test_core_actions.cc test_main.cc
 test_action_LDADD = $(MODULE_TEST_LDADD)
 
 test_module_pcre_SOURCES = test_module_pcre.cc \
