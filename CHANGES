@@ -1,0 +1,37 @@
+IronBee Changes
+===============
+
+IronBee v0.6.0
+--------------
+
+* Enhanced rule engine diagnostics logging (RuleEngineLogData,
+  RuleEngineLogLevel).
+
+* Simplified Hostname directive by moving IP/Port to a new
+  Service directive.
+
+* Enhanced configuration context selection, which now takes Site,
+  Service, Hostname and Location into account.
+
+* Rewrote Apache httpd server module for httpd 2.4.
+
+* Updated luajit code to v2.0.0.
+
+* Enhanced support for buffering request/response data, including
+  runtime support via the setflag action.
+
+* Enhanced PCRE matching to support setting limits.
+
+* Added an InitVar directive to set custom fields at config time.
+
+* Enhanced Lua rule API with more access to internals.
+
+* Enhanced GeoIP module to use O1/O01 country codes when
+  lookups fail.
+
+* Fixed pmf operator so that relative filenames are based on
+  config file location vs CWD.
+
+* Added IronAutomata framework for building automata
+  (see: automata/doc/example.md).
+
