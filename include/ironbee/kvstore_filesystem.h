@@ -18,8 +18,6 @@
 #ifndef __IRONBEE__KVSTORE_FILESYSTEM_H
 #define __IRONBEE__KVSTORE_FILESYSTEM_H
 
-#include "ironbee_config_auto.h"
-
 #include <ironbee/kvstore.h>
 #include <ironbee/types.h>
 
