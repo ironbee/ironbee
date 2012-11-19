@@ -25,53 +25,43 @@
 
 #include <ironbee/lock.h>
 
-#include <ironbee/debug.h>
-
 ib_status_t ib_lock_init(ib_lock_t *lock)
 {
-    IB_FTRACE_INIT();
-
     int rc = pthread_mutex_init(lock, NULL);
     if (rc != 0) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_lock_lock(ib_lock_t *lock)
 {
-    IB_FTRACE_INIT();
-
     int rc = pthread_mutex_lock(lock);
     if (rc != 0) {
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_lock_unlock(ib_lock_t *lock)
 {
-    IB_FTRACE_INIT();
-
     int rc = pthread_mutex_unlock(lock);
     if (rc != 0) {
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_lock_destroy(ib_lock_t *lock)
 {
-    IB_FTRACE_INIT();
-
     int rc = pthread_mutex_destroy(lock);
     if (rc != 0) {
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

@@ -50,9 +50,6 @@
 #include <ironbee/state_notify.h>
 #include <ironbee/util.h>
 #include <ironbee/regex.h>
-#include <ironbee/debug.h>
-
-
 static void addr2str(const struct sockaddr *addr, char *str, int *port);
 
 #define ADDRSIZE 48 /* what's the longest IPV6 addr ? */
@@ -1956,8 +1953,6 @@ static int ironbee_init(const char *configfile, const char *logfile)
     }
 
     ib_util_log_level(4);
-
-    ib_trace_init(TRACEFILE);
 
     rc = ib_engine_create(&ironbee, &ibplugin);
     if (rc != IB_OK) {

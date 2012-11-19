@@ -28,7 +28,6 @@
 #include <ironbee/field.h>
 
 #include <ironbee/bytestr.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/stream.h>
@@ -68,25 +67,23 @@ const char *ib_field_type_name(
     ib_ftype_t ftype
 )
 {
-    IB_FTRACE_INIT();
-
     switch(ftype) {
     case IB_FTYPE_GENERIC:
-        IB_FTRACE_RET_CONSTSTR("GENERIC");
+        return "GENERIC";
     case IB_FTYPE_NUM:
-        IB_FTRACE_RET_CONSTSTR("NUM");
+        return "NUM";
     case IB_FTYPE_FLOAT:
-        IB_FTRACE_RET_CONSTSTR("FLOAT");
+        return "FLOAT";
     case IB_FTYPE_NULSTR:
-        IB_FTRACE_RET_CONSTSTR("NULSTR");
+        return "NULSTR";
     case IB_FTYPE_BYTESTR:
-        IB_FTRACE_RET_CONSTSTR("BYTESTR");
+        return "BYTESTR";
     case IB_FTYPE_LIST:
-        IB_FTRACE_RET_CONSTSTR("LIST");
+        return "LIST";
     case IB_FTYPE_SBUFFER:
-        IB_FTRACE_RET_CONSTSTR("SBUFFER");
+        return "SBUFFER";
     default:
-        IB_FTRACE_RET_CONSTSTR("UNKNOWN");
+        return "UNKNOWN";
     }
 }
 
@@ -99,7 +96,6 @@ const char *ib_field_format(
     size_t             bufsize
 )
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     const char *tname = NULL;
 
@@ -241,7 +237,7 @@ const char *ib_field_format(
     }
 
     /* Return the buffer */
-    IB_FTRACE_RET_CONSTSTR(buf);
+    return buf;
 }
 
 void ib_field_util_log_debug(
@@ -249,14 +245,13 @@ void ib_field_util_log_debug(
     const ib_field_t *f
 )
 {
-    IB_FTRACE_INIT();
     assert(prefix != NULL);
     assert(f != NULL);
 
     ib_status_t rc;
 
     if (ib_util_get_log_level() < IB_LOG_DEBUG) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     if (ib_field_is_dynamic(f)) {
@@ -274,7 +269,7 @@ void ib_field_util_log_debug(
     );
 
     if (ib_field_is_dynamic(f)) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     assert(f->val->pval);
@@ -368,7 +363,6 @@ ib_status_t ib_field_create(
     void        *in_pval
 )
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_field_create_alias(pf, mp, name, nlen, type, NULL);
@@ -386,13 +380,13 @@ ib_status_t ib_field_create(
 
     ib_field_util_log_debug("FIELD_CREATE", (*pf));
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     /* Make sure everything is cleaned up on failure. */
     *pf = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_field_create_no_copy(
@@ -404,7 +398,6 @@ ib_status_t ib_field_create_no_copy(
     void        *mutable_in_pval
 )
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_field_create_alias(pf, mp, name, nlen, type, NULL);
@@ -422,13 +415,13 @@ ib_status_t ib_field_create_no_copy(
 
     ib_field_util_log_debug("FIELD_CREATE_NO_COPY", (*pf));
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     /* Make sure everything is cleaned up on failure. */
     *pf = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_field_create_alias(
@@ -440,7 +433,6 @@ ib_status_t ib_field_create_alias(
     void        *storage_pval
 )
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     char *name_copy;
 
@@ -475,13 +467,13 @@ ib_status_t ib_field_create_alias(
     (*pf)->val->pval = storage_pval;
 
     ib_field_util_log_debug("FIELD_CREATE_ALIAS", (*pf));
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     /* Make sure everything is cleaned up on failure. */
     *pf = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_field_create_dynamic(
@@ -496,12 +488,11 @@ ib_status_t ib_field_create_dynamic(
     void               *cbdata_set
 )
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_field_create_alias(pf, mp, name, nlen, type, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     (*pf)->val->fn_get     = fn_get;
@@ -510,7 +501,7 @@ ib_status_t ib_field_create_dynamic(
     (*pf)->val->cbdata_set = cbdata_set;
 
     ib_field_util_log_debug("FIELD_CREATE_DYNAMIC", (*pf));
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_field_alias(
@@ -521,12 +512,10 @@ ib_status_t ib_field_alias(
     ib_field_t  *src
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     if (ib_field_is_dynamic(src)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     rc = ib_field_create_alias(
@@ -540,11 +529,11 @@ ib_status_t ib_field_alias(
 
     ib_field_util_log_debug("FIELD_ALIAS", (*pf));
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     *pf = NULL;
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_field_copy(
@@ -555,8 +544,6 @@ ib_status_t ib_field_copy(
     const ib_field_t  *src
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     if (ib_field_is_dynamic(src)) {
@@ -621,11 +608,11 @@ ib_status_t ib_field_copy(
 
     ib_field_util_log_debug("FIELD_COPY", (*pf));
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 
 failed:
     *pf = NULL;
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_field_create_bytestr_alias(
@@ -637,7 +624,6 @@ ib_status_t ib_field_create_bytestr_alias(
     size_t       vlen
 )
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_bytestr_t *bs;
 
@@ -657,13 +643,13 @@ ib_status_t ib_field_create_bytestr_alias(
 
     ib_field_util_log_debug("FIELD_CREATE_BYTESTR_ALIAS", (*pf));
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     /* Make sure everything is cleaned up on failure. */
     *pf = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_field_list_add(
@@ -671,7 +657,6 @@ ib_status_t ib_field_list_add(
     ib_field_t *fval
 )
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_list_t *l = NULL;
 
@@ -681,11 +666,11 @@ ib_status_t ib_field_list_add(
         IB_FTYPE_LIST
     );
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_list_push(l, (void *)fval);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_field_buf_add(
@@ -695,7 +680,6 @@ ib_status_t ib_field_buf_add(
     size_t      blen
 )
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_stream_t *s = NULL;
 
@@ -705,21 +689,19 @@ ib_status_t ib_field_buf_add(
         IB_FTYPE_SBUFFER
     );
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_stream_push(s, IB_STREAM_DATA, buf, blen);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_field_make_static(
     ib_field_t* f
 )
 {
-    IB_FTRACE_INIT();
-
     if (! ib_field_is_dynamic(f)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     f->val->pval       = &(f->val->u);
@@ -731,7 +713,7 @@ ib_status_t ib_field_make_static(
 
     ib_field_util_log_debug("FIELD_MAKE_STATIC", f);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_field_setv_no_copy(
@@ -739,16 +721,14 @@ ib_status_t ib_field_setv_no_copy(
     void *mutable_in_pval
 )
 {
-    IB_FTRACE_INIT();
-
     if (f->type == IB_FTYPE_NUM || ib_field_is_dynamic(f)) {
-        IB_FTRACE_RET_STATUS(ib_field_setv(f, mutable_in_pval));
+        return ib_field_setv(f, mutable_in_pval);
     }
 
     *(void **)(f->val->pval) = mutable_in_pval;
 
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_field_setv(
@@ -756,11 +736,9 @@ ib_status_t ib_field_setv(
     void *in_pval
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc = ib_field_setv_ex(f, in_pval, NULL, 0);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_field_setv_ex(
@@ -770,22 +748,18 @@ ib_status_t ib_field_setv_ex(
     size_t      alen
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     if (ib_field_is_dynamic(f)) {
         if (f->val->fn_set == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
-        IB_FTRACE_RET_STATUS(
-            f->val->fn_set(f, arg, alen, in_pval, f->val->cbdata_set)
-        );
+        return f->val->fn_set(f, arg, alen, in_pval, f->val->cbdata_set);
     }
 
     /* No dynamic setter */
     if (arg != NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* What and how it is stored depends on the field type. */
@@ -868,10 +842,10 @@ ib_status_t ib_field_setv_ex(
 
     ib_field_util_log_debug("FIELD_SETV", f);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_field_value_ex(
@@ -881,22 +855,18 @@ ib_status_t ib_field_value_ex(
     size_t            alen
 )
 {
-    IB_FTRACE_INIT();
-
     /* If there is not a stored value, then attempt to use the
      * fn_get call to retrieve the value.
      */
     if (ib_field_is_dynamic(f)) {
         if (f->val->fn_get == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
-        IB_FTRACE_RET_STATUS(
-            f->val->fn_get(f, out_pval, arg, alen, f->val->cbdata_get)
-        );
+        return f->val->fn_get(f, out_pval, arg, alen, f->val->cbdata_get);
     }
 
     if (arg != NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     switch (f->type) {
@@ -916,7 +886,7 @@ ib_status_t ib_field_value_ex(
         *(void **)out_pval = *(void **)(f->val->pval);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_field_value_type_ex(
@@ -927,15 +897,13 @@ ib_status_t ib_field_value_type_ex(
     size_t            alen
 )
 {
-    IB_FTRACE_INIT();
-
     /* Compare the types */
     if (f->type != t) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Return the value as normal. */
-    IB_FTRACE_RET_STATUS(ib_field_value_ex(f, out_pval, arg, alen));
+    return ib_field_value_ex(f, out_pval, arg, alen);
 }
 
 ib_status_t ib_field_value(
@@ -943,8 +911,7 @@ ib_status_t ib_field_value(
     void             *out_pval
 )
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_STATUS(ib_field_value_ex(f, out_pval, NULL, 0));
+    return ib_field_value_ex(f, out_pval, NULL, 0);
 }
 
 ib_status_t ib_field_value_type(
@@ -953,19 +920,17 @@ ib_status_t ib_field_value_type(
     ib_ftype_t        t
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     /* Compare the types */
     if (f->type != t) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Return the value as normal. */
     rc = ib_field_value(f, out_pval);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_field_mutable_value(
@@ -973,14 +938,12 @@ ib_status_t ib_field_mutable_value(
     void       *mutable_out_pval
 )
 {
-    IB_FTRACE_INIT();
-
     if (ib_field_is_dynamic(f)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (f->val->pval == NULL) {
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
 
     if (f->type == IB_FTYPE_NUM || f->type == IB_FTYPE_FLOAT)
@@ -991,7 +954,7 @@ ib_status_t ib_field_mutable_value(
         *(void**)mutable_out_pval = *(void **)f->val->pval;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_field_mutable_value_type(
@@ -1000,26 +963,22 @@ ib_status_t ib_field_mutable_value_type(
     ib_ftype_t  t
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     /* Compare the types */
     if (f->type != t) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Return the value as normal. */
     rc = ib_field_mutable_value(f, mutable_out_pval);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 int ib_field_is_dynamic(const ib_field_t *f)
 {
-    IB_FTRACE_INIT();
-
-    IB_FTRACE_RET_INT(f->val->pval == NULL ? 1 : 0);
+    return f->val->pval == NULL ? 1 : 0;
 }
 
 /**
@@ -1045,8 +1004,6 @@ ib_status_t ib_field_convert(
     const ib_field_t *in_field,
     ib_field_t **out_field)
 {
-    IB_FTRACE_INIT();
-
     assert(mp);
     assert(in_field);
 
@@ -1063,7 +1020,7 @@ ib_status_t ib_field_convert(
 
     if (in_field->type == desired_type) {
         *out_field = NULL;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     switch (in_field->type) {
@@ -1072,14 +1029,14 @@ ib_status_t ib_field_convert(
             /* Extract string. */
             rc = ib_field_value(in_field, ib_ftype_nulstr_out(&str));
             if (rc!=IB_OK){
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             switch(desired_type) {
                 case IB_FTYPE_BYTESTR:
                     rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mp, str);
                     if (rc!=IB_OK){
-                        IB_FTRACE_RET_STATUS(rc);
+                        return rc;
                     }
                     new_field_value = ib_ftype_bytestr_in(bstr);
                     break;
@@ -1092,7 +1049,7 @@ ib_status_t ib_field_convert(
                     new_field_value = ib_ftype_float_in(&flt);
                     break;
                 default:
-                    IB_FTRACE_RET_STATUS(IB_EINVAL);
+                    return IB_EINVAL;
             }
             break;
         case IB_FTYPE_BYTESTR:
@@ -1100,7 +1057,7 @@ ib_status_t ib_field_convert(
             /* Extract bytestr. */
             rc = ib_field_value(in_field, ib_ftype_bytestr_out(&bstr));
             if (rc!=IB_OK){
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
             sz = ib_bytestr_length(bstr);
 
@@ -1109,7 +1066,7 @@ ib_status_t ib_field_convert(
                 case IB_FTYPE_NULSTR:
                     str = ib_mpool_memdup_to_str(mp, bstr, sz);
                     if (!str) {
-                        IB_FTRACE_RET_STATUS(rc);
+                        return rc;
                     }
                     new_field_value = ib_ftype_nulstr_in(str);
                     break;
@@ -1122,7 +1079,7 @@ ib_status_t ib_field_convert(
                     new_field_value = ib_ftype_float_in(&flt);
                     break;
                 default:
-                    IB_FTRACE_RET_STATUS(IB_EINVAL);
+                    return IB_EINVAL;
             }
             break;
         case IB_FTYPE_NUM:
@@ -1130,25 +1087,25 @@ ib_status_t ib_field_convert(
             /* Extract unum. */
             rc = ib_field_value(in_field, ib_ftype_num_out(&num));
             if (rc!=IB_OK){
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             switch(desired_type) {
                 case IB_FTYPE_NULSTR:
                     str = ib_num_to_string(mp, num);
                     if (!str) {
-                        IB_FTRACE_RET_STATUS(IB_EINVAL);
+                        return IB_EINVAL;
                     }
                     new_field_value = ib_ftype_nulstr_in(str);
                     break;
                 case IB_FTYPE_BYTESTR:
                     str = ib_num_to_string(mp, num);
                     if (!str) {
-                        IB_FTRACE_RET_STATUS(IB_EINVAL);
+                        return IB_EINVAL;
                     }
                     rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mp, str);
                     if (rc!=IB_OK){
-                        IB_FTRACE_RET_STATUS(rc);
+                        return rc;
                     }
                     new_field_value = ib_ftype_bytestr_in(bstr);
                     break;
@@ -1157,7 +1114,7 @@ ib_status_t ib_field_convert(
                     new_field_value = ib_ftype_float_in(&flt);
                     break;
                 default:
-                    IB_FTRACE_RET_STATUS(IB_EINVAL);
+                    return IB_EINVAL;
             }
             break;
         case IB_FTYPE_FLOAT:
@@ -1165,25 +1122,25 @@ ib_status_t ib_field_convert(
             /* Extract unum. */
             rc = ib_field_value(in_field, ib_ftype_float_out(&flt));
             if (rc!=IB_OK){
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             switch(desired_type) {
                 case IB_FTYPE_NULSTR:
                     str = ib_float_to_string(mp, flt);
                     if (!str) {
-                        IB_FTRACE_RET_STATUS(IB_EINVAL);
+                        return IB_EINVAL;
                     }
                     new_field_value = ib_ftype_nulstr_in(str);
                     break;
                 case IB_FTYPE_BYTESTR:
                     str = ib_float_to_string(mp, flt);
                     if (!str) {
-                        IB_FTRACE_RET_STATUS(IB_EINVAL);
+                        return IB_EINVAL;
                     }
                     rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mp, str);
                     if (rc!=IB_OK){
-                        IB_FTRACE_RET_STATUS(rc);
+                        return rc;
                     }
                     new_field_value = ib_ftype_bytestr_in(bstr);
                     break;
@@ -1192,11 +1149,11 @@ ib_status_t ib_field_convert(
                     new_field_value = ib_ftype_num_in(&num);
                     break;
                 default:
-                    IB_FTRACE_RET_STATUS(IB_EINVAL);
+                    return IB_EINVAL;
             }
             break;
         default:
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
     }
 
     rc = ib_field_create(
@@ -1206,5 +1163,5 @@ ib_status_t ib_field_convert(
         in_field->nlen,
         desired_type,
         new_field_value);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

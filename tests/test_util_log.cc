@@ -22,8 +22,6 @@
 /// @author Nick LeRoy <nleroy@qualys.com>
 //////////////////////////////////////////////////////////////////////////////
 
-#include <ironbee/debug.h>
-
 #include "ironbee_config_auto.h"
 
 #include "gtest/gtest.h"

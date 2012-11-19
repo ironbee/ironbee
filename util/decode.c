@@ -25,7 +25,6 @@
 
 #include <ironbee/decode.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
@@ -38,14 +37,13 @@
 ib_status_t ib_util_decode_url(char *data,
                                ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     size_t len;
     rc = ib_util_decode_url_ex((uint8_t *)data, strlen(data), &len, result);
     if (rc == IB_OK) {
         *(data+len) = '\0';
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_util_decode_url_cow(ib_mpool_t *mp,
@@ -53,7 +51,6 @@ ib_status_t ib_util_decode_url_cow(ib_mpool_t *mp,
                                    char **data_out,
                                    ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     size_t len;
     uint8_t *out;
@@ -63,13 +60,12 @@ ib_status_t ib_util_decode_url_cow(ib_mpool_t *mp,
         *(out+len) = '\0';
         *data_out = (char *)out;
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_util_decode_html_entity(char *data,
                                        ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     size_t len;
     rc = ib_util_decode_html_entity_ex((uint8_t *)data,
@@ -79,7 +75,7 @@ ib_status_t ib_util_decode_html_entity(char *data,
     if (rc == IB_OK) {
         *(data+len) = '\0';
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_util_decode_html_entity_cow(ib_mpool_t *mp,
@@ -87,7 +83,6 @@ ib_status_t ib_util_decode_html_entity_cow(ib_mpool_t *mp,
                                            char **data_out,
                                            ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     size_t len;
     uint8_t *out;
@@ -100,5 +95,5 @@ ib_status_t ib_util_decode_html_entity_cow(ib_mpool_t *mp,
         *(out+len) = '\0';
         *data_out = (char *)out;
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

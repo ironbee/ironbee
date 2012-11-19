@@ -24,8 +24,6 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/kvstore.h>
-#include <ironbee/debug.h>
-
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,13 +42,11 @@ static void* kvstore_malloc(
     size_t size,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
 
     void *r = malloc(size);
 
-    IB_FTRACE_RET_PTR((void *), r);
+    return r;
 }
 
 /**
@@ -65,13 +61,11 @@ static void kvstore_free(
     void *ptr,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
 
     free(ptr);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -83,8 +77,6 @@ static ib_kvstore_value_t * kvstore_value_dup(
     ib_kvstore_t *kvstore,
     ib_kvstore_value_t *value)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(value);
 
@@ -94,7 +86,7 @@ static ib_kvstore_value_t * kvstore_value_dup(
         kvstore->malloc_cbdata);
 
     if (!new_value) {
-        IB_FTRACE_RET_PTR((kvstore_value_t *), NULL);
+        return NULL;
     }
 
     new_value->value = kvstore->malloc(
@@ -104,7 +96,7 @@ static ib_kvstore_value_t * kvstore_value_dup(
 
     if (!new_value->value) {
         kvstore->free(kvstore, new_value, kvstore->free_cbdata);
-        IB_FTRACE_RET_PTR((kvstore_value_t *), NULL);
+        return NULL;
     }
 
     new_value->type = kvstore->malloc(
@@ -115,7 +107,7 @@ static ib_kvstore_value_t * kvstore_value_dup(
     if (!new_value->type) {
         kvstore->free(kvstore, new_value->value, kvstore->free_cbdata);
         kvstore->free(kvstore, new_value, kvstore->free_cbdata);
-        IB_FTRACE_RET_PTR((kvstore_value_t *), NULL);
+        return NULL;
     }
 
     /* Copy in all data. */
@@ -125,7 +117,7 @@ static ib_kvstore_value_t * kvstore_value_dup(
     memcpy(new_value->value, value->value, value->value_length);
     memcpy(new_value->type, value->type, value->type_length);
 
-    IB_FTRACE_RET_PTR((kvstore_value_t *), new_value);
+    return new_value;
 }
 
 /**
@@ -148,8 +140,6 @@ static ib_status_t default_merge_policy(
     ib_kvstore_value_t **resultant_value,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(values);
 
@@ -157,40 +147,34 @@ static ib_status_t default_merge_policy(
         *resultant_value = values[0];
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_kvstore_init(ib_kvstore_t *kvstore)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
 
     kvstore->malloc = &kvstore_malloc;
     kvstore->free = &kvstore_free;
     kvstore->default_merge_policy = &default_merge_policy;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_kvstore_connect(ib_kvstore_t *kvstore) {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
 
     ib_status_t rc =  kvstore->connect(kvstore, kvstore->connect_cbdata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_kvstore_disconnect(ib_kvstore_t *kvstore) {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
 
     ib_status_t rc = kvstore->disconnect(kvstore, kvstore->disconnect_cbdata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_kvstore_get(
@@ -199,8 +183,6 @@ ib_status_t ib_kvstore_get(
     const ib_kvstore_key_t *key,
     ib_kvstore_value_t **val)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(key);
 
@@ -223,7 +205,7 @@ ib_status_t ib_kvstore_get(
 
     if (rc) {
         *val = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Merge any values. */
@@ -267,7 +249,7 @@ exit_get:
         ib_kvstore_free_value(kvstore, merged_value);
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_kvstore_set(
@@ -276,8 +258,6 @@ ib_status_t ib_kvstore_set(
     const ib_kvstore_key_t *key,
     ib_kvstore_value_t *val)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(key);
     assert(val);
@@ -290,27 +270,23 @@ ib_status_t ib_kvstore_set(
 
     rc = kvstore->set(kvstore, merge_policy, key, val, kvstore->set_cbdata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_kvstore_remove(
     ib_kvstore_t *kvstore,
     const ib_kvstore_key_t *key)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(key);
 
     ib_status_t rc = kvstore->remove(kvstore, key, kvstore->remove_cbdata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 
 void ib_kvstore_free_value(ib_kvstore_t *kvstore, ib_kvstore_value_t *value) {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(value);
 
@@ -324,12 +300,10 @@ void ib_kvstore_free_value(ib_kvstore_t *kvstore, ib_kvstore_value_t *value) {
 
     kvstore->free(kvstore, value, kvstore->free_cbdata);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key) {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(key);
 
@@ -339,7 +313,7 @@ void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key) {
 
     kvstore->free(kvstore, key, kvstore->free_cbdata);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void ib_kvstore_destroy(ib_kvstore_t *kvstore) {

@@ -28,7 +28,6 @@
 
 #include "engine_private.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
 #include <string.h>
@@ -45,7 +44,6 @@ ib_status_t ib_action_register(
     void                   *cbdata_execute
 )
 {
-    IB_FTRACE_INIT();
     ib_hash_t *action_hash = ib->actions;
     ib_mpool_t *pool = ib_engine_pool_main_get(ib);
     ib_status_t rc;
@@ -55,17 +53,17 @@ ib_status_t ib_action_register(
     rc = ib_hash_get(action_hash, &act, name);
     if (rc == IB_OK) {
         /* name already is registered */
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     name_copy = ib_mpool_strdup(pool, name);
     if (name_copy == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     act = (ib_action_t *)ib_mpool_alloc(pool, sizeof(*act));
     if (act == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     act->name           = name_copy;
     act->flags          = flags;
@@ -78,7 +76,7 @@ ib_status_t ib_action_register(
 
     rc = ib_hash_set(action_hash, name_copy, act);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_action_inst_create(ib_engine_t *ib,
@@ -88,7 +86,6 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
                                   ib_flags_t flags,
                                   ib_action_inst_t **act_inst)
 {
-    IB_FTRACE_INIT();
     ib_hash_t *action_hash = ib->actions;
     ib_mpool_t *pool = ib_engine_pool_main_get(ib);
     ib_action_t *action;
@@ -97,13 +94,13 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
     rc = ib_hash_get(action_hash, &action, name);
     if (rc != IB_OK) {
         /* name is not registered */
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     *act_inst = (ib_action_inst_t *)ib_mpool_alloc(pool,
                                                    sizeof(ib_action_inst_t));
     if (*act_inst == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     (*act_inst)->action = action;
     (*act_inst)->flags = flags;
@@ -132,12 +129,11 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
                              ib_ftype_nulstr_in(parameters));
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     if (act_inst != NULL && act_inst->action != NULL
@@ -151,13 +147,12 @@ ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst)
         rc = IB_OK;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_action_execute(const ib_rule_exec_t *rule_exec,
                               const ib_action_inst_t *act_inst)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     if (act_inst != NULL && act_inst->action != NULL
@@ -173,5 +168,5 @@ ib_status_t ib_action_execute(const ib_rule_exec_t *rule_exec,
         rc = IB_OK;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

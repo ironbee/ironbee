@@ -29,8 +29,6 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>
-#include <ironbee/debug.h>
-
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
 
@@ -42,17 +40,15 @@ ib_status_t test_create_fn(ib_engine_t *ib,
                            const char *data,
                            ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
-
     char *str;
     str = ib_mpool_strdup(pool, data);
     if (str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     op_inst->data = str;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t test_destroy_fn(ib_operator_inst_t *op_inst)

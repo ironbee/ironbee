@@ -17,7 +17,6 @@
 
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
@@ -50,13 +49,11 @@ static ib_status_t geoip_lookup(
     void *data
 )
 {
-    IB_FTRACE_INIT();
-
     const char *ip = tx->er_ipstr;
 
     if (ip == NULL) {
         ib_log_alert_tx(tx, "Trying to lookup NULL IP in GEOIP");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
 #ifdef GEOIP_HAVE_VERSION
@@ -92,7 +89,7 @@ static ib_status_t geoip_lookup(
     if (rc != IB_OK)
     {
         ib_log_alert_tx(tx, "Unable to add GEOIP list to DPI.");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (geoip_db == NULL) {
@@ -100,7 +97,7 @@ static ib_status_t geoip_lookup(
                         "GeoIP database was never opened. Perhaps the "
                         "configuration file needs a GeoIPDatabaseFile "
                         "\"/usr/share/geoip/GeoLite.dat\" line?");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     geoip_id = GeoIP_id_by_addr(geoip_db, ip);
@@ -187,7 +184,7 @@ static ib_status_t geoip_lookup(
         ib_field_list_add(geoip_lst, tmp_field);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
@@ -195,8 +192,6 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
                                                   const char *p1,
                                                   void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(cp!=NULL);
     assert(name!=NULL);
     assert(p1!=NULL);
@@ -207,7 +202,7 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
     char *p1_unescaped = malloc(p1_len+1);
 
     if ( p1_unescaped == NULL ) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     rc = ib_util_unescape_string(p1_unescaped,
@@ -224,7 +219,7 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
 
         ib_log_debug(cp->ib, msg, p1);
         free(p1_unescaped);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (geoip_db != NULL)
@@ -233,20 +228,16 @@ static ib_status_t geoip_database_file_dir_param1(ib_cfgparser_t *cp,
         geoip_db = NULL;
     }
 
-    IB_FTRACE_MSG("Initializing custom GeoIP database...");
-    IB_FTRACE_MSG(p1_unescaped);
-
-    geoip_db = GeoIP_open(p1_unescaped, GEOIP_MMAP_CACHE);
+            geoip_db = GeoIP_open(p1_unescaped, GEOIP_MMAP_CACHE);
 
     free(p1_unescaped);
 
     if (geoip_db == NULL)
     {
-        IB_FTRACE_MSG("Failed to initialize GeoIP database.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+                return IB_EUNKNOWN;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static IB_DIRMAP_INIT_STRUCTURE(geoip_directive_map) = {
@@ -265,8 +256,6 @@ static IB_DIRMAP_INIT_STRUCTURE(geoip_directive_map) = {
 /* Called when module is loaded. */
 static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     if (geoip_db == NULL)
@@ -278,7 +267,7 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     if (geoip_db == NULL)
     {
         ib_log_debug(ib, "Failed to initialize GeoIP database.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     ib_log_debug(ib, "Initializing GeoIP database complete.");
@@ -295,23 +284,22 @@ static ib_status_t geoip_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     if (rc != IB_OK)
     {
         ib_log_debug(ib, "Failed to load GeoIP module.");
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_log_debug(ib, "GeoIP module loaded.");
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Called when module is unloaded. */
 static ib_status_t geoip_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    IB_FTRACE_INIT();
     if (geoip_db!=NULL)
     {
         GeoIP_delete(geoip_db);
     }
     ib_log_debug(ib, "GeoIP module unloaded.");
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Initialize the module structure. */

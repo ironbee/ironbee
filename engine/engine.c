@@ -33,7 +33,6 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/core.h>
-#include <ironbee/debug.h>
 #include <ironbee/hash.h>
 #include <ironbee/ip.h>
 #include <ironbee/module.h>
@@ -123,7 +122,6 @@ ib_status_t ib_check_hook(
     ib_state_event_type_t event,
     ib_state_hook_type_t hook_type
 ) {
-    IB_FTRACE_INIT();
     static const size_t num_events =
         sizeof(ib_state_event_hook_types) / sizeof(ib_state_hook_type_t);
     ib_state_hook_type_t expected_hook_type;
@@ -132,7 +130,7 @@ ib_status_t ib_check_hook(
         ib_log_error( ib,
             "Event/hook mismatch: Unknown event type: %d", event
         );
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     expected_hook_type = ib_state_event_hook_types[event];
@@ -142,10 +140,10 @@ ib_status_t ib_check_hook(
                      "Event type %s expected %d but received %d",
                      ib_state_event_name(event),
                      expected_hook_type, hook_type);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t ib_register_hook(
@@ -153,8 +151,6 @@ static ib_status_t ib_register_hook(
     ib_state_event_type_t event,
     ib_hook_t* hook
 ) {
-    IB_FTRACE_INIT();
-
     ib_hook_t *last = ib->hook[event];
 
     /* Insert the hook at the end of the list */
@@ -165,7 +161,7 @@ static ib_status_t ib_register_hook(
 
         ib->hook[event] = hook;
 
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     while (last->next != NULL) {
         last = last->next;
@@ -177,7 +173,7 @@ static ib_status_t ib_register_hook(
                   ib_state_event_name(event), last->callback.as_void,
                   hook->callback.as_void);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t ib_unregister_hook(
@@ -185,7 +181,6 @@ static ib_status_t ib_unregister_hook(
     ib_state_event_type_t event,
     ib_void_fn_t cb
 ) {
-    IB_FTRACE_INIT();
     ib_hook_t *prev = NULL;
     ib_hook_t *hook = ib->hook[event];
 
@@ -198,20 +193,19 @@ static ib_status_t ib_unregister_hook(
             else {
                 prev->next = hook->next;
             }
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
         prev = hook;
         hook = hook->next;
     }
 
-    IB_FTRACE_RET_STATUS(IB_ENOENT);
+    return IB_ENOENT;
 }
 
 /* -- Main Engine Routines -- */
 
 ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
 {
-    IB_FTRACE_INIT();
     ib_mpool_t *pool;
     ib_status_t rc;
 
@@ -351,7 +345,7 @@ ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
         goto failed;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 
 failed:
     /* Make sure everything is cleaned up on failure */
@@ -360,51 +354,48 @@ failed:
     }
     *pib = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_engine_init(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_context_open(ib->ectx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_context_close(ib->ectx);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Create a main context to operate in. */
 ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
     ib_context_t *ctx;
     ib_status_t rc;
 
     rc = ib_context_create(ib, ib->ectx, IB_CTYPE_MAIN, "main", "main", &ctx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Set the context's CWD */
     rc = ib_context_set_cwd(ctx, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib->ctx = ctx;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_engine_config_started(ib_engine_t *ib,
                                      ib_cfgparser_t *cp)
 {
-    IB_FTRACE_INIT();
-    assert(ib != NULL);
+        assert(ib != NULL);
     assert(cp != NULL);
     assert(ib->cfg_state == CFG_NOT_STARTED);
     ib_status_t rc;
@@ -416,22 +407,21 @@ ib_status_t ib_engine_config_started(ib_engine_t *ib,
     /* Create and configure the main configuration context. */
     rc = ib_engine_context_create_main(ib);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Open the main context */
     rc = ib_context_open(ib->ctx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_engine_config_finished(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
-    assert(ib != NULL);
+        assert(ib != NULL);
     assert(ib->cfg_state == CFG_STARTED);
     ib_status_t rc;
 
@@ -440,7 +430,7 @@ ib_status_t ib_engine_config_finished(ib_engine_t *ib)
     if (ib->ctx != NULL) {
         rc = ib_context_close(ib->ctx);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -451,14 +441,13 @@ ib_status_t ib_engine_config_finished(ib_engine_t *ib)
     /* Destroy the temporary memory pool. */
     ib_engine_pool_temp_destroy(ib);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_engine_module_get(ib_engine_t *ib,
                                  const char * name,
                                  ib_module_t **pm)
 {
-    IB_FTRACE_INIT();
     size_t n;
     size_t i;
     ib_module_t *m;
@@ -467,61 +456,54 @@ ib_status_t ib_engine_module_get(ib_engine_t *ib,
     IB_ARRAY_LOOP(ib->modules, n, i, m) {
         if (strcmp(name, m->name) == 0) {
             *pm = m;
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
     }
 
     *pm = NULL;
 
-    IB_FTRACE_RET_STATUS(IB_ENOENT);
+    return IB_ENOENT;
 }
 
 ib_status_t ib_engine_cfgparser_get(const ib_engine_t *ib,
                                     const ib_cfgparser_t **pparser)
 {
-    IB_FTRACE_INIT();
-    assert(ib != NULL);
+        assert(ib != NULL);
     assert(pparser != NULL);
 
     *pparser = ib->cfgparser;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_mpool_t *ib_engine_pool_main_get(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_PTR(ib_mpool_t, ib->mp);
+    return ib->mp;
 }
 
 ib_mpool_t *ib_engine_pool_config_get(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_PTR(ib_mpool_t, ib->mp);
+    return ib->mp;
 }
 
 ib_mpool_t *ib_engine_pool_temp_get(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_PTR(ib_mpool_t, ib->temp_mp);
+    return ib->temp_mp;
 }
 
 void ib_engine_pool_temp_destroy(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
     ib_engine_pool_destroy(ib, ib->temp_mp);
     ib->temp_mp = NULL;
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
 
 
     if (mp == NULL) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
 #ifdef IB_DEBUG_MEMORY
@@ -571,13 +553,12 @@ void ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp)
 
     ib_mpool_release(mp);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 
 void ib_engine_destroy(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
     if (ib) {
         size_t ne;
         size_t idx;
@@ -632,13 +613,12 @@ void ib_engine_destroy(ib_engine_t *ib)
 #endif
         ib_mpool_destroy(ib->mp);
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_status_t ib_conn_create(ib_engine_t *ib,
                            ib_conn_t **pconn, void *server_ctx)
 {
-    IB_FTRACE_INIT();
     ib_mpool_t *pool;
     ib_status_t rc;
     char namebuf[64];
@@ -680,7 +660,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
         goto failed;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     /* Make sure everything is cleaned up on failure */
@@ -689,26 +669,24 @@ failed:
     }
     *pconn = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 void ib_conn_parser_context_set(ib_conn_t *conn,
                                 void *parser_ctx)
 {
-    IB_FTRACE_INIT();
     assert(conn != NULL);
 
     conn->parser_ctx = parser_ctx;
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void *ib_conn_parser_context_get(ib_conn_t *conn)
 {
-    IB_FTRACE_INIT();
     assert(conn != NULL);
 
-    IB_FTRACE_RET_PTR(void, conn->parser_ctx);
+    return conn->parser_ctx;
 }
 
 
@@ -716,7 +694,6 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
                                 ib_conndata_t **pconndata,
                                 size_t dalloc)
 {
-    IB_FTRACE_INIT();
     ib_engine_t *ib = conn->ib;
     ib_mpool_t *pool;
     ib_status_t rc;
@@ -751,13 +728,13 @@ ib_status_t ib_conn_data_create(ib_conn_t *conn,
         goto failed;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     /* Make sure everything is cleaned up on failure */
     *pconndata = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 void ib_conn_destroy(ib_conn_t *conn)
@@ -772,37 +749,34 @@ void ib_conn_destroy(ib_conn_t *conn)
 ib_status_t ib_tx_generate_id(ib_tx_t *tx,
                               ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT();
-
     ib_uuid_t uuid;
     ib_status_t rc;
     char *str;
 
     rc = ib_uuid_create_v4(&uuid);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Convert to a hex-string representation */
     str = (char *)ib_mpool_alloc(mp, IB_UUID_HEX_SIZE);
     if (str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     tx->id = str;
 
     rc = ib_uuid_bin_to_ascii(str, &uuid);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_tx_create(ib_tx_t **ptx,
                          ib_conn_t *conn,
                          void *sctx)
 {
-    IB_FTRACE_INIT();
     ib_mpool_t *pool;
     ib_status_t rc;
     char namebuf[64];
@@ -918,7 +892,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     *ptx = tx;
     ib_log_debug3_tx(tx, "TX CREATE p=%p id=%s", tx, tx->id);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     /* Make sure everything is cleaned up on failure */
@@ -927,7 +901,7 @@ failed:
     }
     tx = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 void ib_tx_destroy(ib_tx_t *tx)
@@ -1018,8 +992,7 @@ static const char *ib_state_event_name_list[] = {
 
 const char *ib_state_event_name(ib_state_event_type_t event)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_CONSTSTR(ib_state_event_name_list[event]);
+    return ib_state_event_name_list[event];
 }
 /* -- Hook Routines -- */
 
@@ -1041,18 +1014,17 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
     ib_state_null_hook_fn_t cb,
     void *cdata
 ) {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     hook->callback.null = cb;
@@ -1061,7 +1033,7 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
 
     rc = ib_register_hook(ib, event, hook);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_null_hook_unregister(
@@ -1069,17 +1041,16 @@ ib_status_t DLL_PUBLIC ib_null_hook_unregister(
     ib_state_event_type_t event,
     ib_state_null_hook_fn_t cb
 ) {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_hook_conn_register(
@@ -1088,18 +1059,17 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
     ib_state_conn_hook_fn_t cb,
     void *cdata
 ) {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     hook->callback.conn = cb;
@@ -1108,7 +1078,7 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
 
     rc = ib_register_hook(ib, event, hook);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
@@ -1116,17 +1086,16 @@ ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb
 ) {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_hook_conndata_register(
@@ -1135,18 +1104,17 @@ ib_status_t DLL_PUBLIC ib_hook_conndata_register(
     ib_state_conndata_hook_fn_t cb,
     void *cdata
 ) {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     hook->callback.conndata = cb;
@@ -1155,7 +1123,7 @@ ib_status_t DLL_PUBLIC ib_hook_conndata_register(
 
     rc = ib_register_hook(ib, event, hook);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
@@ -1163,17 +1131,16 @@ ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
     ib_state_event_type_t event,
     ib_state_conndata_hook_fn_t cb
 ) {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_hook_tx_register(
@@ -1182,18 +1149,17 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
     ib_state_tx_hook_fn_t cb,
     void *cdata
 ) {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     hook->callback.tx = cb;
@@ -1202,7 +1168,7 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
 
     rc = ib_register_hook(ib, event, hook);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
@@ -1210,18 +1176,16 @@ ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
     ib_state_event_type_t event,
     ib_state_tx_hook_fn_t cb
 ) {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_hook_txdata_register(
@@ -1230,18 +1194,17 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
     ib_state_txdata_hook_fn_t cb,
     void *cdata
 ) {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     hook->callback.txdata = cb;
@@ -1250,7 +1213,7 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
 
     rc = ib_register_hook(ib, event, hook);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
@@ -1258,17 +1221,16 @@ ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb
 ) {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
@@ -1277,18 +1239,17 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
     ib_state_header_data_fn_t cb,
     void *cdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     hook->callback.headerdata = cb;
@@ -1297,7 +1258,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
 
     rc = ib_register_hook(ib, event, hook);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
@@ -1305,17 +1266,16 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
     ib_state_event_type_t event,
     ib_state_header_data_fn_t cb)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
@@ -1324,18 +1284,17 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
     ib_state_request_line_fn_t cb,
     void *cdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     hook->callback.requestline = cb;
@@ -1344,7 +1303,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
 
     rc = ib_register_hook(ib, event, hook);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_unregister(
@@ -1352,17 +1311,16 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_unregister(
     ib_state_event_type_t event,
     ib_state_request_line_fn_t cb)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
@@ -1371,19 +1329,17 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
     ib_state_response_line_fn_t cb,
     void *cdata)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
     if (hook == NULL) {
         ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     hook->callback.responseline = cb;
@@ -1392,7 +1348,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
 
     rc = ib_register_hook(ib, event, hook);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
@@ -1400,18 +1356,16 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
     ib_state_event_type_t event,
     ib_state_response_line_fn_t cb)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 
@@ -1423,10 +1377,9 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
 
 const ib_list_t *ib_context_get_all(const ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
 
-    IB_FTRACE_RET_PTR(const ib_list_t, ib->contexts);
+    return ib->contexts;
 }
 
 ib_status_t ib_context_create(ib_engine_t *ib,
@@ -1436,7 +1389,6 @@ ib_status_t ib_context_create(ib_engine_t *ib,
                               const char *ctx_name,
                               ib_context_t **pctx)
 {
-    IB_FTRACE_INIT();
     ib_mpool_t *ppool;
     ib_mpool_t *pool;
     ib_status_t rc;
@@ -1580,7 +1532,7 @@ ib_status_t ib_context_create(ib_engine_t *ib,
     /* Commit the new ctx to pctx. */
     *pctx = ctx;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 
 failed:
@@ -1589,12 +1541,11 @@ failed:
         ib_engine_pool_destroy(ib, ctx->mp);
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_context_open(ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     ib_engine_t *ib = ctx->ib;
     ib_context_data_t *cfgdata;
     ib_status_t rc;
@@ -1602,18 +1553,18 @@ ib_status_t ib_context_open(ib_context_t *ctx)
     size_t i;
 
     if (ctx->state != CTX_CREATED) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     ib_log_debug3(ib, "Opening context ctx=%p '%s'", ctx, ctx->ctx_full);
 
     if (ctx->ctype != IB_CTYPE_ENGINE) {
         rc = ib_cfgparser_context_push(ib->cfgparser, ctx);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_context_set_cwd(ctx, ib->cfgparser->cur_cwd);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -1629,26 +1580,25 @@ ib_status_t ib_context_open(ib_context_t *ctx)
                 /// @todo Log the error???  Fail???
                 ib_log_error(ib, "Failed to call context open: %s",
                              ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
     }
 
     ctx->state = CTX_OPEN;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_context_close(ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
-    ib_engine_t *ib = ctx->ib;
+        ib_engine_t *ib = ctx->ib;
     ib_context_data_t *cfgdata;
     ib_status_t rc;
     size_t ncfgdata;
     size_t i;
 
     if (ctx->state != CTX_OPEN) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     ib_log_debug3(ib, "Closing context ctx=%p '%s'", ctx, ctx->ctx_full);
 
@@ -1666,7 +1616,7 @@ ib_status_t ib_context_close(ib_context_t *ctx)
                              "Failed to call context close: %s",
                              ib_status_to_string(rc)
                 );
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
     }
@@ -1674,50 +1624,48 @@ ib_status_t ib_context_close(ib_context_t *ctx)
     if (ctx->ctype != IB_CTYPE_ENGINE) {
         rc = ib_cfgparser_context_pop(ib->cfgparser, NULL, NULL);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     ctx->state = CTX_CLOSED;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_context_set_cwd(ib_context_t *ctx, const char *dir)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
 
     /* For special cases (i.e. tests), allow handle NULL directory */
     if (dir == NULL) {
         char *buf = (char *)ib_mpool_alloc(ctx->mp, maxpath);
         if (buf == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         ctx->ctx_cwd = getcwd(buf, maxpath);
         if (ctx->ctx_cwd == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Copy it */
     ctx->ctx_cwd = ib_mpool_strdup(ctx->mp, dir);
     if (ctx->ctx_cwd == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 const char *ib_context_config_cwd(const ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
 
     if (ctx->ib->cfgparser == NULL) {
-        IB_FTRACE_RET_CONSTSTR(ctx->ctx_cwd);
+         return ctx->ctx_cwd;
     }
     else {
-        IB_FTRACE_RET_CONSTSTR(ctx->ib->cfgparser->cur_cwd);
+         return ctx->ib->cfgparser->cur_cwd;
     }
 }
 
@@ -1725,8 +1673,6 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
                                           bool enable,
                                           const char *idx)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     assert(ctx != NULL);
@@ -1745,7 +1691,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
             ib_mpool_calloc(ctx->mp, 1, sizeof(*ctx->auditlog));
 
         if (ctx->auditlog == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         /* Set owner. */
@@ -1759,7 +1705,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
                               "Failed to initialize lock "
                               "for audit index %s: %s",
                               idx, ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             /* Set index. */
@@ -1772,7 +1718,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
             }
             ctx->auditlog->index = ib_mpool_strdup(ctx->mp, idx);
             if (ctx->auditlog->index == NULL) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
             ctx->auditlog->index_enabled = true;
         }
@@ -1791,7 +1737,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
             if (rc != IB_OK) {
                 ib_log_debug2(ctx->ib, "Failed lock to audit index %s",
                               ctx->auditlog->index);
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
             unlock = true;
 
@@ -1808,7 +1754,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
                               "Re-setting log same value. No action: %s",
                               idx);
 
-                IB_FTRACE_RET_STATUS(IB_OK);
+                return IB_OK;
             }
         }
 
@@ -1831,7 +1777,7 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
                 if (unlock) {
                     ib_lock_unlock(&ctx->auditlog->index_fp_lock);
                 }
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
             ctx->auditlog->index_enabled = true;
         }
@@ -1847,148 +1793,135 @@ ib_status_t ib_context_set_auditlog_index(ib_context_t *ctx,
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_context_site_set(ib_context_t *ctx,
                                 const ib_site_t *site)
 {
-    IB_FTRACE_INIT();
-
     assert(ctx != NULL);
 
     if (ctx->state == CTX_CLOSED) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     if ( (ctx->ctype != IB_CTYPE_SITE) && (ctx->ctype != IB_CTYPE_LOCATION) ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ctx->site = site;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_context_site_get(const ib_context_t *ctx,
                                 const ib_site_t **psite)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
     assert(psite != NULL);
 
     if ( (ctx->ctype != IB_CTYPE_SITE) && (ctx->ctype != IB_CTYPE_LOCATION) ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     *psite = ctx->site;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_context_location_set(ib_context_t *ctx,
                                     const ib_site_location_t *location)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
 
     if (ctx->state == CTX_CLOSED) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     if (ctx->ctype != IB_CTYPE_LOCATION) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ctx->location = location;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_context_location_get(const ib_context_t *ctx,
                                     const ib_site_location_t **plocation)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
     assert(plocation != NULL);
 
     if (ctx->ctype != IB_CTYPE_LOCATION) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     *plocation = ctx->location;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_context_t *ib_context_parent_get(const ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_PTR(ib_context_t, ctx->parent);
+    return ctx->parent;
 }
 
 void ib_context_parent_set(ib_context_t *ctx,
                            ib_context_t *parent)
 {
-    IB_FTRACE_INIT();
     ctx->parent = parent;
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_ctype_t ib_context_type(const ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
 
-    IB_FTRACE_RET_UINT(ctx->ctype);
+    return ctx->ctype;
 }
 
 bool ib_context_type_check(const ib_context_t *ctx, ib_ctype_t ctype)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
 
-    IB_FTRACE_RET_BOOL(ctx->ctype == ctype);
+    return ctx->ctype == ctype;
 }
 
 const char *ib_context_type_get(const ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
 
     if (ctx->ctx_type == NULL) {
-        IB_FTRACE_RET_CONSTSTR("");
+        return "";
     }
     else {
-        IB_FTRACE_RET_CONSTSTR(ctx->ctx_type);
+        return ctx->ctx_type;
     }
 }
 
 const char *ib_context_name_get(const ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
 
     if (ctx->ctx_name == NULL) {
-        IB_FTRACE_RET_CONSTSTR("");
+        return "";
     }
     else {
-        IB_FTRACE_RET_CONSTSTR(ctx->ctx_name);
+        return ctx->ctx_name;
     }
 }
 
 const char *ib_context_full_get(const ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
 
-    IB_FTRACE_RET_CONSTSTR(ctx->ctx_full);
+    return ctx->ctx_full;
 }
 
 void ib_context_destroy(ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     ib_engine_t *ib;
     ib_context_data_t *cfgdata;
     ib_status_t rc;
     size_t ncfgdata, i;
 
     if (ctx == NULL) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     ib = ctx->ib;
@@ -2020,7 +1953,7 @@ void ib_context_destroy(ib_context_t *ctx)
 
     ib_engine_pool_destroy(ib, ctx->mp);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_context_t *ib_context_engine(const ib_engine_t *ib)
@@ -2042,70 +1975,65 @@ ib_status_t ib_context_init_cfg(ib_context_t *ctx,
                                 void *base,
                                 const ib_cfgmap_init_t *init)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     ib_log_debug3(ctx->ib, "Initializing context %s base=%p",
                   ib_context_full_get(ctx), base);
 
     if (init == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     rc = ib_cfgmap_init(ctx->cfg, base, init);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_context_module_config(ib_context_t *ctx,
                                      ib_module_t *m,
                                      void *pcfg)
 {
-    IB_FTRACE_INIT();
     ib_context_data_t *cfgdata;
     ib_status_t rc;
 
     rc = ib_array_get(ctx->cfgdata, m->idx, (void *)&cfgdata);
     if (rc != IB_OK) {
         *(void **)pcfg = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (cfgdata == NULL) {
         *(void **)pcfg = NULL;
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     *(void **)pcfg = cfgdata->data;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_context_set(ib_context_t *ctx,
                            const char *name,
                            void *val)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = ib_cfgmap_set(ctx->cfg, name, val);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_context_set_num(ib_context_t *ctx,
                                const char *name,
                                ib_num_t val)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = ib_cfgmap_set(ctx->cfg, name, ib_ftype_num_in(&val));
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_context_set_string(ib_context_t *ctx,
                                   const char *name,
                                   const char *val)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = ib_cfgmap_set(ctx->cfg, name, ib_ftype_nulstr_in(val));
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 
@@ -2113,7 +2041,6 @@ ib_status_t ib_context_get(ib_context_t *ctx,
                            const char *name,
                            void *pval, ib_ftype_t *ptype)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = ib_cfgmap_get(ctx->cfg, name, pval, ptype);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

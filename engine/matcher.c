@@ -25,7 +25,6 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/bytestr.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>
@@ -50,19 +49,18 @@ ib_status_t ib_matcher_create(ib_engine_t *ib,
                               const char *key,
                               ib_matcher_t **pm)
 {
-    IB_FTRACE_INIT();
     ib_provider_t *mpr;
     ib_status_t rc;
 
     *pm = (ib_matcher_t *)ib_mpool_alloc(pool, sizeof(**pm));
     if (*pm == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     rc = ib_provider_lookup(ib, IB_PROVIDER_TYPE_MATCHER, key, &mpr);
     if (rc != IB_OK) {
         *pm = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     (*pm)->ib = ib;
@@ -71,7 +69,7 @@ ib_status_t ib_matcher_create(ib_engine_t *ib,
     (*pm)->mpi = NULL;
     (*pm)->key = ib_mpool_strdup(pool, key);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_matcher_instance_create(ib_engine_t *ib,
@@ -79,19 +77,18 @@ ib_status_t ib_matcher_instance_create(ib_engine_t *ib,
                                        const char *key,
                                        ib_matcher_t **pm)
 {
-    IB_FTRACE_INIT();
     ib_provider_t *mpr;
     ib_status_t rc;
 
     *pm = (ib_matcher_t *)ib_mpool_alloc(pool, sizeof(**pm));
     if (*pm == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     rc = ib_provider_lookup(ib, IB_PROVIDER_TYPE_MATCHER, key, &mpr);
     if (rc != IB_OK) {
         *pm = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     (*pm)->ib = ib;
@@ -104,10 +101,10 @@ ib_status_t ib_matcher_instance_create(ib_engine_t *ib,
                                         NULL);
     if (rc != IB_OK) {
         *pm = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 void *ib_matcher_compile(ib_matcher_t *m,
@@ -115,7 +112,6 @@ void *ib_matcher_compile(ib_matcher_t *m,
                          const char **errptr,
                          int *erroffset)
 {
-    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(matcher) *mapi;
     void *cpatt;
     ib_status_t rc;
@@ -127,10 +123,10 @@ void *ib_matcher_compile(ib_matcher_t *m,
         ib_log_debug(m->ib, "Failed to compile %s patt: (%s) "
                      "%s at offset %d",
                      patt, ib_status_to_string(rc), *errptr, *erroffset);
-        IB_FTRACE_RET_PTR(void, NULL);
+        return NULL;
     }
 
-    IB_FTRACE_RET_PTR(void, cpatt);
+    return cpatt;
 }
 
 ib_status_t ib_matcher_match_buf(ib_matcher_t *m,
@@ -140,14 +136,13 @@ ib_status_t ib_matcher_match_buf(ib_matcher_t *m,
                                  size_t dlen,
                                  void *ctx)
 {
-    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(matcher) *mapi;
     ib_status_t rc;
 
     mapi = (IB_PROVIDER_API_TYPE(matcher) *)m->mpr->api;
     rc = mapi->match_compiled(m->mpr, cpatt, 0, data, dlen, ctx);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_matcher_match_field(ib_matcher_t *m,
@@ -156,7 +151,6 @@ ib_status_t ib_matcher_match_field(ib_matcher_t *m,
                                    ib_field_t *f,
                                    void *ctx)
 {
-    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(matcher) *iface;
     const ib_bytestr_t *bs;
     const char *cs;
@@ -168,7 +162,7 @@ ib_status_t ib_matcher_match_field(ib_matcher_t *m,
     case IB_FTYPE_BYTESTR:
         rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         rc = iface->match_compiled(m->mpr, cpatt, flags,
@@ -178,7 +172,7 @@ ib_status_t ib_matcher_match_field(ib_matcher_t *m,
     case IB_FTYPE_NULSTR:
         rc = ib_field_value(f, ib_ftype_nulstr_out(&cs));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         rc = iface->match_compiled(m->mpr, cpatt, flags,
@@ -193,14 +187,13 @@ ib_status_t ib_matcher_match_field(ib_matcher_t *m,
         break;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_matcher_add_pattern(ib_matcher_t *m,
                                    const char *patt)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    return IB_ENOTIMPL;
 }
 
 ib_status_t ib_matcher_add_pattern_ex(ib_matcher_t *m,
@@ -210,7 +203,6 @@ ib_status_t ib_matcher_add_pattern_ex(ib_matcher_t *m,
                                       const char **errptr,
                                       int *erroffset)
 {
-    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(matcher) *mapi;
     ib_status_t rc;
 
@@ -224,7 +216,7 @@ ib_status_t ib_matcher_add_pattern_ex(ib_matcher_t *m,
                      "offset %d",
                      patt, ib_status_to_string(rc), *errptr, *erroffset);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 
 }
 
@@ -234,13 +226,12 @@ ib_status_t ib_matcher_exec_buf(ib_matcher_t *m,
                                 size_t dlen,
                                 void *ctx)
 {
-    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(matcher) *mapi;
     ib_status_t rc;
 
     mapi = (IB_PROVIDER_API_TYPE(matcher) *)m->mpr->api;
     rc = mapi->match(m->mpi, 0, data, dlen, ctx);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_matcher_exec_field(ib_matcher_t *m,
@@ -248,7 +239,6 @@ ib_status_t ib_matcher_exec_field(ib_matcher_t *m,
                                   ib_field_t *f,
                                   void *ctx)
 {
-    IB_FTRACE_INIT();
     IB_PROVIDER_IFACE_TYPE(matcher) *iface;
     const ib_bytestr_t *bs;
     const char *cs;
@@ -260,7 +250,7 @@ ib_status_t ib_matcher_exec_field(ib_matcher_t *m,
     case IB_FTYPE_BYTESTR:
         rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         rc = iface->match(m->mpi, flags,
@@ -270,7 +260,7 @@ ib_status_t ib_matcher_exec_field(ib_matcher_t *m,
     case IB_FTYPE_NULSTR:
         rc = ib_field_value(f, ib_ftype_nulstr_out(&cs));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         rc = iface->match(m->mpi, flags,
@@ -285,5 +275,5 @@ ib_status_t ib_matcher_exec_field(ib_matcher_t *m,
         break;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

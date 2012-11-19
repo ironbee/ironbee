@@ -30,7 +30,6 @@
 #include "rule_engine_private.h"
 
 #include <ironbee/core.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine_types.h>
 #include <ironbee/path.h>
 #include <ironbee/provider.h>
@@ -67,8 +66,6 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
                                       core_audit_cfg_t *cfg,
                                       ib_core_cfg_t *corecfg)
 {
-    IB_FTRACE_INIT();
-
     const int dtmp_sz = 64;
     const int dn_sz = 512;
     char *dtmp = (char *)malloc(dtmp_sz);
@@ -92,7 +89,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
         if (dn != NULL) {
             free(dn);
         }
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     gmtime_r(&log_seconds, &gmtime_result);
@@ -123,7 +120,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
                      "Could not create audit log directory: too long");
         free(dtmp);
         free(dn);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Get the site */
@@ -131,7 +128,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     if (ib_rc != IB_OK) {
         free(dtmp);
         free(dn);
-        IB_FTRACE_RET_STATUS(ib_rc);
+        return ib_rc;
     }
 
     /* Generate the full audit log filename. */
@@ -156,7 +153,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
                      "Could not create audit log filename: too long");
         free(dtmp);
         free(dn);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_rc = ib_util_mkpath(dn, corecfg->auditlog_dmode);
@@ -165,7 +162,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
                      "Could not create audit log dir: %s", dn);
         free(dtmp);
         free(dn);
-        IB_FTRACE_RET_STATUS(ib_rc);
+        return ib_rc;
     }
 
     // Create temporary filename to use while writing the audit log
@@ -180,7 +177,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
                      "Could not create temporary audit log filename: too long");
         free(dtmp);
         free(dn);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Open the file.  Use open() & fdopen() to avoid chmod() */
@@ -200,7 +197,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
                      temp_filename, strerror(sys_rc), sys_rc);
         free(dtmp);
         free(dn);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Track the relative audit log filename. */
@@ -214,7 +211,7 @@ ib_status_t core_audit_open_auditfile(ib_provider_inst_t *lpi,
     free(dtmp);
     free(dn);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
@@ -222,15 +219,13 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
                                            core_audit_cfg_t *cfg,
                                            ib_core_cfg_t *corecfg)
 {
-    IB_FTRACE_INIT();
-
     char* index_file;
     int index_file_sz;
     ib_status_t ib_rc;
     int sys_rc;
 
     if (log->ctx->auditlog->index == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Lock the auditlog configuration for the context.
@@ -245,7 +240,7 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
         index_file = (char *)ib_mpool_alloc(cfg->tx->mp, index_file_sz);
         if (index_file == NULL) {
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         memcpy(index_file, log->ctx->auditlog->index, index_file_sz);
@@ -257,7 +252,7 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
         index_file = (char *)ib_mpool_alloc(cfg->tx->mp, index_file_sz);
         if (index_file == NULL) {
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         memcpy(index_file, log->ctx->auditlog->index + 1, index_file_sz);
@@ -269,7 +264,7 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
                          "Could not create audit log dir: %s",
                          corecfg->auditlog_dir);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            IB_FTRACE_RET_STATUS(ib_rc);
+            return ib_rc;
         }
 
         index_file_sz = strlen(corecfg->auditlog_dir) +
@@ -278,7 +273,7 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
         index_file = (char *)ib_mpool_alloc(cfg->tx->mp, index_file_sz);
         if (index_file == NULL) {
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         sys_rc = snprintf(index_file, index_file_sz, "%s/%s",
@@ -291,7 +286,7 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
                          corecfg->auditlog_dir,
                          log->ctx->auditlog->index);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
     }
 
@@ -307,7 +302,7 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
                          "Could not create piped audit log index: %s (%d)",
                          strerror(sys_rc), sys_rc);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
 
         /* Create a new process for executing the piped command. */
@@ -347,7 +342,7 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
                          "%s (%d)",
                          strerror(sys_rc), sys_rc);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
 
         /* Parent - IronBee process */
@@ -361,7 +356,7 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
                          "Could not open piped audit log index: %s (%d)",
                          strerror(sys_rc), sys_rc);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
     }
     else {
@@ -373,20 +368,19 @@ ib_status_t core_audit_open_auditindexfile(ib_provider_inst_t *lpi,
                          "Could not open audit log index \"%s\": %s (%d)",
                          index_file, strerror(sys_rc), sys_rc);
             ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
     }
 
     log->ctx->auditlog->index_fp = cfg->index_fp;
     ib_lock_unlock(&log->ctx->auditlog->index_fp_lock);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                             ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
@@ -404,7 +398,7 @@ ib_status_t core_audit_open(ib_provider_inst_t *lpi,
                                   (void *)&corecfg);
     if (rc != IB_OK) {
         ib_log_error(log->ib,  "Could not fetch core configuration: %s", ib_status_to_string(rc) );
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     assert(NULL != corecfg);
@@ -425,7 +419,7 @@ ib_status_t core_audit_open(ib_provider_inst_t *lpi,
 
         if (rc != IB_OK) {
             ib_log_error(log->ib,  "Could not open auditlog index.");
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -436,7 +430,7 @@ ib_status_t core_audit_open(ib_provider_inst_t *lpi,
 
         if (rc!=IB_OK) {
             ib_log_error(log->ib,  "Failed to open audit log file.");
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -444,7 +438,7 @@ ib_status_t core_audit_open(ib_provider_inst_t *lpi,
     if (corecfg->auditlog_index_hp == NULL) {
         rc = ib_logformat_create(log->ib->mp, &auditlog_index_hp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (corecfg->auditlog_index_fmt != NULL) {
             rc = ib_logformat_parse(auditlog_index_hp,
@@ -454,20 +448,19 @@ ib_status_t core_audit_open(ib_provider_inst_t *lpi,
             rc = ib_logformat_parse(auditlog_index_hp, IB_LOGFORMAT_DEFAULT);
         }
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Commit built struct. */
         corecfg->auditlog_index_hp = auditlog_index_hp;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
                                     ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     char header[256];
     size_t hlen;
@@ -488,17 +481,16 @@ ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
     hlen = strlen(header);
     if (fwrite(header, hlen, 1, cfg->fp) != 1) {
         ib_log_error(lpi->pr->ib,  "Failed to write audit log header");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
     fflush(cfg->fp);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
                                   ib_auditlog_part_t *part)
 {
-    IB_FTRACE_INIT();
     ib_auditlog_t *log = part->log;
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     const uint8_t *chunk;
@@ -520,7 +512,7 @@ ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
         if (fwrite(chunk, chunk_size, 1, cfg->fp) != 1) {
             ib_log_error(lpi->pr->ib,  "Failed to write audit log part");
             fflush(cfg->fp);
-            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+            return IB_EUNKNOWN;
         }
         cfg->parts_written++;
     }
@@ -528,20 +520,19 @@ ib_status_t core_audit_write_part(ib_provider_inst_t *lpi,
     /* Finish the part. */
     fflush(cfg->fp);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t core_audit_write_footer(ib_provider_inst_t *lpi,
                                     ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
 
     if (cfg->parts_written > 0) {
         fprintf(cfg->fp, "\r\n--%s--\r\n", cfg->boundary);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t audit_add_line_item(const ib_logformat_t *lf,
@@ -549,8 +540,6 @@ static ib_status_t audit_add_line_item(const ib_logformat_t *lf,
                                        const void *cbdata,
                                        const char **str)
 {
-    IB_FTRACE_INIT();
-
     const auditlog_callback_data_t *logdata =
         (const auditlog_callback_data_t *)cbdata;
 
@@ -585,7 +574,7 @@ static ib_status_t audit_add_line_item(const ib_logformat_t *lf,
         /* Prepare timestamp (only if needed) */
         tstamp = (char *)ib_mpool_alloc(logdata->log->mp, 30);
         if (tstamp == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         ib_clock_timestamp(tstamp, &logdata->tx->tv_created);
@@ -598,10 +587,10 @@ static ib_status_t audit_add_line_item(const ib_logformat_t *lf,
     default:
         *str = "\n";
         /* Not understood */
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
         break;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
@@ -610,7 +599,6 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                                              size_t line_size,
                                              size_t *line_len)
 {
-    IB_FTRACE_INIT();
     assert(lpi != NULL);
     assert(log != NULL);
     assert(line != NULL);
@@ -630,7 +618,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
     /* Get the site */
     rc = ib_context_site_get(log->ctx, &site);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Retrieve corecfg to get the AuditLogIndexFormat */
@@ -638,7 +626,7 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
                                   (void *)&corecfg);
 
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     lf = corecfg->auditlog_index_hp;
@@ -651,12 +639,11 @@ static ib_status_t core_audit_get_index_line(ib_provider_inst_t *lpi,
     rc = ib_logformat_format(lf, line, line_size, line_len,
                              audit_add_line_item, &cbdata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log)
 {
-    IB_FTRACE_INIT();
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_core_cfg_t *corecfg;
     ib_status_t ib_rc = IB_OK;
@@ -666,7 +653,7 @@ ib_status_t core_audit_close(ib_provider_inst_t *lpi, ib_auditlog_t *log)
 
     line = malloc(LOGFORMAT_MAX_LINE_LENGTH + 2);
     if (line == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Retrieve corecfg to get the AuditLogIndexFormat */
@@ -738,5 +725,5 @@ cleanup:
     if (line != NULL) {
         free(line);
     }
-    IB_FTRACE_RET_STATUS(ib_rc);
+    return ib_rc;
 }

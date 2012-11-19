@@ -25,8 +25,6 @@
 #include <ironbeepp/internal/data.hpp>
 #include <ironbeepp/internal/catch.hpp>
 
-#include <ironbee/debug.h>
-
 namespace IronBee {
 namespace Internal {
 
@@ -34,12 +32,10 @@ extern "C" {
 
 void data_cleanup(void* data)
 {
-    IB_FTRACE_INIT();
-
     boost::any* data_any = reinterpret_cast<boost::any*>(data);
     delete data_any;
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 } // extern "C"

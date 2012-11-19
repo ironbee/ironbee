@@ -28,7 +28,6 @@
 
 #include "engine_private.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
 ib_status_t ib_provider_define(ib_engine_t *ib,
@@ -36,7 +35,6 @@ ib_status_t ib_provider_define(ib_engine_t *ib,
                                ib_provider_register_fn_t fn_reg,
                                void *api)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_provider_def_t *prd;
     char *type_copy;
@@ -46,7 +44,7 @@ ib_status_t ib_provider_define(ib_engine_t *ib,
         1, sizeof(*prd)
     );
     if (prd == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     prd->mp = ib->config_mp;
     prd->fn_reg = fn_reg;
@@ -55,17 +53,17 @@ ib_status_t ib_provider_define(ib_engine_t *ib,
     /* Copy the type. */
     type_copy = (char *)ib_mpool_alloc(prd->mp, strlen(type) + 1);
     if (type_copy == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     strcpy(type_copy, type);
     prd->type = (const char *)type_copy;
 
     rc = ib_hash_set(ib->apis, type, prd);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_provider_register(ib_engine_t *ib,
@@ -75,7 +73,6 @@ ib_status_t ib_provider_register(ib_engine_t *ib,
                                  void *iface,
                                  ib_provider_inst_init_fn_t fn_init)
 {
-    IB_FTRACE_INIT();
     char *pr_key;
     ib_status_t rc;
     ib_provider_def_t *prd;
@@ -92,13 +89,13 @@ ib_status_t ib_provider_register(ib_engine_t *ib,
                      "Error registering provider \"%s\": "
                      "Unknown provider type \"%s\"",
                      key, type);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Create the provider. */
     pr = (ib_provider_t *)ib_mpool_calloc(prd->mp, 1, sizeof(*pr));
     if (pr == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     pr->ib = ib;
     pr->mp = prd->mp;
@@ -120,7 +117,7 @@ ib_status_t ib_provider_register(ib_engine_t *ib,
     pr_key[strlen(type) + strlen(key) + 1] = '\0';
     rc = ib_hash_set(ib->providers, pr_key, pr);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* If available, call the registration callback,
@@ -131,10 +128,10 @@ ib_status_t ib_provider_register(ib_engine_t *ib,
         if (rc != IB_OK) {
             ib_hash_remove(ib->providers, NULL, pr_key);
         }
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_provider_lookup(ib_engine_t *ib,
@@ -142,7 +139,6 @@ ib_status_t ib_provider_lookup(ib_engine_t *ib,
                                const char *key,
                                ib_provider_t **ppr)
 {
-    IB_FTRACE_INIT();
     char *pr_key;
     ib_status_t rc;
 
@@ -155,10 +151,10 @@ ib_status_t ib_provider_lookup(ib_engine_t *ib,
     rc = ib_hash_get(ib->providers, ppr, pr_key);
     if (rc != IB_OK) {
         *ppr = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_provider_instance_create_ex(ib_engine_t *ib,
@@ -167,13 +163,12 @@ ib_status_t ib_provider_instance_create_ex(ib_engine_t *ib,
                                            ib_mpool_t *pool,
                                            void *data)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Create the provider instance. */
     *ppi = (ib_provider_inst_t *)ib_mpool_calloc(pool, 1, sizeof(**ppi));
     if (*ppi == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     (*ppi)->mp = pool;
     (*ppi)->pr = pr;
@@ -183,14 +178,14 @@ ib_status_t ib_provider_instance_create_ex(ib_engine_t *ib,
     if (pr->fn_init != NULL) {
         rc = pr->fn_init(*ppi, data);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else {
         (*ppi)->data = data;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_provider_instance_create(ib_engine_t *ib,
@@ -200,7 +195,6 @@ ib_status_t ib_provider_instance_create(ib_engine_t *ib,
                                         ib_mpool_t *pool,
                                         void *data)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_provider_t *pr;
 
@@ -209,23 +203,21 @@ ib_status_t ib_provider_instance_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         /// @todo no provider registered
         *ppi = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_provider_instance_create_ex(ib, pr, ppi, pool, data);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 void *ib_provider_data_get(ib_provider_t *pr)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_PTR(void, pr->data);
+    return pr->data;
 }
 
 void ib_provider_data_set(ib_provider_t *pr, void *data)
 {
-    IB_FTRACE_INIT();
     pr->data = data;
-    IB_FTRACE_RET_VOID();
+    return;
 }

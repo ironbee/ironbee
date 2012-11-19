@@ -25,7 +25,6 @@
 
 #include <ironbee/util.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/uuid.h>
 
 #include <assert.h>
@@ -137,7 +136,6 @@ uint8_t *ib_util_copy_on_write(ib_mpool_t *mp,
                                uint8_t **data_out,
                                const uint8_t **end_out)
 {
-    IB_FTRACE_INIT();
     assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
@@ -164,7 +162,7 @@ uint8_t *ib_util_copy_on_write(ib_mpool_t *mp,
         }
     }
 
-    IB_FTRACE_RET_PTR(uint8_t, cur_out);
+    return cur_out;
 }
 
 void *ib_util_memdup(ib_mpool_t *mp,
@@ -172,7 +170,6 @@ void *ib_util_memdup(ib_mpool_t *mp,
                      size_t len,
                      bool nul)
 {
-    IB_FTRACE_INIT();
     assert(in != NULL);
 
     void *p;
@@ -182,7 +179,7 @@ void *ib_util_memdup(ib_mpool_t *mp,
     }
 
     if (len <= 0) {
-        IB_FTRACE_RET_PTR(void, NULL);
+        return NULL;
     }
     if (mp != NULL) {
         p = ib_mpool_alloc(mp, size);
@@ -191,14 +188,14 @@ void *ib_util_memdup(ib_mpool_t *mp,
         p = malloc(size);
     }
     if (p == NULL) {
-        IB_FTRACE_RET_PTR(void, NULL);
+        return NULL;
     }
     memcpy(p, in, len);
     if (nul) {
         *((char *)p + len) = '\0';
     }
 
-    IB_FTRACE_RET_PTR(void, p);
+    return p;
 }
 
 FILE *ib_util_fdup(FILE *fh, const char *mode)

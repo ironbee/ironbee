@@ -26,7 +26,6 @@
 
 #include <ironbee/uuid.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/lock.h>
 
 #include <uuid.h>
@@ -45,29 +44,25 @@ uuid_t           *g_ossp_uuid;
 
 ib_status_t ib_uuid_initialize(void)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     if (uuid_create(&g_ossp_uuid) != UUID_RC_OK) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
     rc = ib_lock_init(&g_uuid_lock);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_uuid_shutdown(void)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     rc = ib_lock_destroy(&g_uuid_lock);
     uuid_destroy(g_ossp_uuid);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_uuid_ascii_to_bin(
@@ -75,26 +70,24 @@ ib_status_t ib_uuid_ascii_to_bin(
      const char *str
 )
 {
-    IB_FTRACE_INIT();
-
     uuid_rc_t uuid_rc;
     size_t uuid_len = UUID_LEN_BIN;
     size_t str_len;
     ib_status_t rc = IB_OK;
 
     if (uuid == NULL || str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     str_len = strlen(str);
     if (str_len != UUID_LEN_STR) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     assert(str_len == UUID_LEN_STR);
 
     rc = ib_lock_lock(&g_uuid_lock);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     uuid_rc = uuid_import(g_ossp_uuid, UUID_FMT_STR, str, str_len);
@@ -121,10 +114,10 @@ ib_status_t ib_uuid_ascii_to_bin(
 
 finish:
     if (ib_lock_unlock(&g_uuid_lock) != IB_OK) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_uuid_bin_to_ascii(
@@ -132,19 +125,17 @@ ib_status_t ib_uuid_bin_to_ascii(
     const ib_uuid_t *uuid
 )
 {
-    IB_FTRACE_INIT();
-
     uuid_rc_t uuid_rc;
     size_t uuid_len = UUID_LEN_STR+1;
     ib_status_t rc = IB_OK;
 
     if (uuid == NULL || str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     rc = ib_lock_lock(&g_uuid_lock);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     uuid_rc = uuid_import(g_ossp_uuid, UUID_FMT_BIN, uuid, UUID_LEN_BIN);
@@ -169,23 +160,21 @@ ib_status_t ib_uuid_bin_to_ascii(
 
 finish:
     if (ib_lock_unlock(&g_uuid_lock) != IB_OK) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_uuid_create_v4(ib_uuid_t *uuid)
 {
-    IB_FTRACE_INIT();
-
     uuid_rc_t uuid_rc;
     size_t uuid_len = UUID_LEN_BIN;
     ib_status_t rc = IB_OK;
 
     rc = ib_lock_lock(&g_uuid_lock);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     uuid_rc = uuid_make(g_ossp_uuid, UUID_MAKE_V4);
@@ -212,8 +201,8 @@ ib_status_t ib_uuid_create_v4(ib_uuid_t *uuid)
 
 finish:
     if (ib_lock_unlock(&g_uuid_lock) != IB_OK) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

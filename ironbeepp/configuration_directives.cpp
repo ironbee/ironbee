@@ -8,8 +8,6 @@
 #include <ironbeepp/internal/catch.hpp>
 
 #include <ironbee/config.h>
-#include <ironbee/debug.h>
-
 #include <boost/foreach.hpp>
 
 using namespace std;
@@ -28,8 +26,6 @@ ib_status_t config_start_block(
     void*           cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::start_block_t
@@ -40,9 +36,9 @@ ib_status_t config_start_block(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+        return Internal::convert_exception(cfgparser->ib);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t config_end_block(
@@ -51,8 +47,6 @@ ib_status_t config_end_block(
     void*           cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::end_block_t
@@ -62,9 +56,9 @@ ib_status_t config_end_block(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+        return Internal::convert_exception(cfgparser->ib);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t config_param1(
@@ -74,8 +68,6 @@ ib_status_t config_param1(
     void*           cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::param1_t
@@ -86,9 +78,9 @@ ib_status_t config_param1(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+        return Internal::convert_exception(cfgparser->ib);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t config_param2(
@@ -99,8 +91,6 @@ ib_status_t config_param2(
     void*           cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::param2_t
@@ -112,9 +102,9 @@ ib_status_t config_param2(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+        return Internal::convert_exception(cfgparser->ib);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t config_list(
@@ -124,8 +114,6 @@ ib_status_t config_list(
     void*           cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::list_t
@@ -136,9 +124,9 @@ ib_status_t config_list(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+        return Internal::convert_exception(cfgparser->ib);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t config_on_off(
@@ -148,8 +136,6 @@ ib_status_t config_on_off(
     void*           cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::on_off_t
@@ -160,9 +146,9 @@ ib_status_t config_on_off(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+        return Internal::convert_exception(cfgparser->ib);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t config_op_flags(
@@ -173,8 +159,6 @@ ib_status_t config_op_flags(
     void*           cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     try {
         Internal::data_to_value<
             ConfigurationDirectivesRegistrar::op_flags_t
@@ -186,9 +170,9 @@ ib_status_t config_op_flags(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(cfgparser->ib));
+        return Internal::convert_exception(cfgparser->ib);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 }

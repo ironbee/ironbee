@@ -29,8 +29,6 @@
 
 #include "gtest/gtest.h"
 
-#include <ironbee/debug.h>
-
 struct other_boost_exception : public boost::exception, std::exception {};
 
 namespace {

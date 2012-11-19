@@ -26,7 +26,6 @@
 
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
@@ -158,7 +157,6 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
                                          const char **errptr,
                                          int *erroffset)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(pool != NULL);
     assert(config != NULL);
@@ -202,7 +200,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     if (*errptr != NULL) {
         ib_log_error(ib, "PCRE compile error for \"%s\": %s at offset %d",
                      patt, *errptr, *erroffset);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (config->study) {
@@ -275,7 +273,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         ib_log_error(ib,
                      "Failed to allocate cpdata of size: %zd",
                      sizeof(*cpdata));
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     cpdata->is_dfa = is_dfa;
@@ -289,7 +287,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         pcre_free(cpatt);
         pcre_free(edata);
         ib_log_error(ib, "Failed to duplicate pattern string: %s", patt);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Copy compiled pattern. */
@@ -298,7 +296,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
     if (cpdata->cpatt == NULL) {
         pcre_free(edata);
         ib_log_error(ib, "Failed to duplicate pattern of size: %zd", cpatt_sz);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     ib_log_debug(ib, "PCRE copied cpatt @ %p -> %p (%zd bytes)",
                  (void *)cpatt, (void *)cpdata->cpatt, cpatt_sz);
@@ -311,7 +309,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         if (cpdata->edata == NULL) {
             pcre_free(edata);
             ib_log_error(ib, "Failed to duplicate edata.");
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         /* Copy edata->study_data. */
@@ -323,7 +321,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
                 ib_log_error(ib, "Failed to study data of size: %zd",
                              study_data_sz);
                 pcre_free(edata);
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
         }
         pcre_free(edata);
@@ -333,7 +331,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         if (cpdata->edata == NULL) {
             pcre_free(edata);
             ib_log_error(ib, "Failed to allocate edata.");
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
     }
 
@@ -395,7 +393,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
                  cpdata->jit_stack_max);
     *pcpdata = cpdata;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
@@ -420,7 +418,6 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
                                    const char **errptr,
                                    int *erroffset)
 {
-    IB_FTRACE_INIT();
     assert(mpr != NULL);
     assert(pool != NULL);
     assert(pcpatt != NULL);
@@ -437,7 +434,7 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
     if (rc != IB_OK) {
         ib_log_error(mpr->ib, "Failed to get pcre module object: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* All we have available is the main configuration */
@@ -449,7 +446,7 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
     if (rc != IB_OK) {
         ib_log_error(mpr->ib, "Failed to get pcre module configuration: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = pcre_compile_internal(mpr->ib,
@@ -466,7 +463,7 @@ static ib_status_t modpcre_compile(ib_provider_t *mpr,
     else {
         *(modpcre_cpat_data_t **)pcpatt = NULL;
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 
 }
 
@@ -493,7 +490,6 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
                                           size_t dlen,
                                           void *ctx)
 {
-    IB_FTRACE_INIT();
     assert(mpr != NULL);
     assert(cpatt != NULL);
     assert(data != NULL);
@@ -508,7 +504,7 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
 
     ovector = (int *)malloc(ovector_sz*sizeof(*ovector));
     if (ovector == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     ec = pcre_exec(cpdata->cpatt, cpdata->edata,
@@ -518,22 +514,21 @@ static ib_status_t modpcre_match_compiled(ib_provider_t *mpr,
     free(ovector);
 
     if (ec >= 0) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     else if (ec == PCRE_ERROR_NOMATCH) {
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
 
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
+    return IB_EINVAL;
 }
 
 static ib_status_t modpcre_add_pattern(ib_provider_inst_t *pi,
                                        void *cpatt)
 {
-    IB_FTRACE_INIT();
     assert(pi != NULL);
     assert(cpatt != NULL);
-    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    return IB_ENOTIMPL;
 }
 
 static ib_status_t modpcre_add_pattern_ex(ib_provider_inst_t *mpi,
@@ -544,9 +539,8 @@ static ib_status_t modpcre_add_pattern_ex(ib_provider_inst_t *mpi,
                                           const char **errptr,
                                           int *erroffset)
 {
-    IB_FTRACE_INIT();
     assert(mpi != NULL);
-    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    return IB_ENOTIMPL;
 }
 
 static ib_status_t modpcre_match(ib_provider_inst_t *mpi,
@@ -554,9 +548,8 @@ static ib_status_t modpcre_match(ib_provider_inst_t *mpi,
                                  const uint8_t *data,
                                  size_t dlen, void *ctx)
 {
-    IB_FTRACE_INIT();
     assert(mpi != NULL);
-    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    return IB_ENOTIMPL;
 }
 
 static IB_PROVIDER_IFACE_TYPE(matcher) modpcre_matcher_iface = {
@@ -592,7 +585,6 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
                                         const char *pattern,
                                         ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(rule != NULL);
@@ -609,7 +601,7 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
 
     if (pattern == NULL) {
         ib_log_error(ib, "No pattern for %s operator", op_inst->op->name);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Get my module object */
@@ -617,7 +609,7 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to get pcre module object: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Get the context configuration */
@@ -625,7 +617,7 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to get pcre module configuration: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Compile the pattern.  Note that the rule data is an alias for
@@ -639,13 +631,13 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
                                &errptr,
                                &erroffset);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Allocate a rule data object, populate it */
     rule_data = ib_mpool_alloc(pool, sizeof(*rule_data));
     if (rule_data == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     rule_data->cpdata = cpdata;
     rule_data->id = NULL;           /* Not needed for rx rules */
@@ -653,7 +645,7 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
     /* Rule data is an alias for the compiled pattern data */
     op_inst->data = rule_data;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -666,10 +658,9 @@ static ib_status_t pcre_operator_create(ib_engine_t *ib,
  */
 static ib_status_t pcre_operator_destroy(ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
     assert(op_inst != NULL);
     /* Nop */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -687,8 +678,6 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
                                     int matches,
                                     const char *subject)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec != NULL);
     assert(rule_exec->ib != NULL);
     assert(rule_exec->tx != NULL);
@@ -739,7 +728,7 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
                                 (const uint8_t*)match_start,
                                 match_len);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Create a field to hold the byte-string */
@@ -747,17 +736,17 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
         rc = ib_field_create(&field, tx->mp, name, strlen(name),
                              IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Add it to the capture collection */
         rc = ib_data_capture_set_item(tx, i, field);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -777,8 +766,6 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
                                          ib_field_t *field,
                                          ib_num_t *result)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec != NULL);
     assert(rule_exec->ib != NULL);
     assert(rule_exec->tx != NULL);
@@ -801,14 +788,14 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
     assert(rule_data->cpdata->is_dfa == false);
 
     if (ovector==NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     if (field->type == IB_FTYPE_NULSTR) {
         ib_rc = ib_field_value(field, ib_ftype_nulstr_out(&subject));
         if (ib_rc != IB_OK) {
             free(ovector);
-            IB_FTRACE_RET_STATUS(ib_rc);
+            return ib_rc;
         }
 
         if (subject != NULL) {
@@ -819,7 +806,7 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
         ib_rc = ib_field_value(field, ib_ftype_bytestr_out(&bytestr));
         if (ib_rc != IB_OK) {
             free(ovector);
-            IB_FTRACE_RET_STATUS(ib_rc);
+            return ib_rc;
         }
 
         if (bytestr != NULL) {
@@ -829,7 +816,7 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
     }
     else {
         free(ovector);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (subject == NULL) {
@@ -929,7 +916,7 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
     }
 
     free(ovector);
-    IB_FTRACE_RET_STATUS(ib_rc);
+    return ib_rc;
 }
 
 /**
@@ -949,7 +936,6 @@ static ib_status_t dfa_id_set(const ib_rule_t *rule,
                               ib_mpool_t *mp,
                               modpcre_rule_data_t *rule_data)
 {
-    IB_FTRACE_INIT();
     assert(rule != NULL);
     assert(op_inst != NULL);
     assert(mp != NULL);
@@ -959,7 +945,7 @@ static ib_status_t dfa_id_set(const ib_rule_t *rule,
     rule_id = ib_rule_id(rule);
     if (rule_id != NULL) {
         rule_data->id = rule_id;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* We compute the length of the string buffer as such:
@@ -971,13 +957,13 @@ static ib_status_t dfa_id_set(const ib_rule_t *rule,
     char *id;
     id = ib_mpool_alloc(mp, id_sz+1);
     if (id == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     snprintf(id, id_sz, "%p", op_inst);
     rule_data->id = id;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1000,7 +986,6 @@ static ib_status_t dfa_operator_create(ib_engine_t *ib,
                                        const char *pattern,
                                        ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(rule != NULL);
@@ -1020,7 +1005,7 @@ static ib_status_t dfa_operator_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to get pcre module object: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Get the context configuration */
@@ -1028,7 +1013,7 @@ static ib_status_t dfa_operator_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to get pcre module configuration: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = pcre_compile_internal(ib,
@@ -1043,26 +1028,26 @@ static ib_status_t dfa_operator_create(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to parse DFA operator pattern \"%s\":%s",
                      pattern, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Allocate a rule data object, populate it */
     rule_data = ib_mpool_alloc(pool, sizeof(*rule_data));
     if (rule_data == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     rule_data->cpdata = cpdata;
     rc = dfa_id_set(rule, op_inst, pool, rule_data);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating ID for DFA: %s",
                      ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     ib_log_debug(ib, "Compiled DFA id=\"%s\" operator pattern \"%s\" @ %p",
                  rule_data->id, pattern, (void *)cpdata->cpatt);
 
     op_inst->data = (void *)rule_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1082,7 +1067,6 @@ static ib_status_t dfa_operator_create(ib_engine_t *ib,
 static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
                                                 ib_hash_t **hash)
 {
-    IB_FTRACE_INIT();
     assert(tx);
     assert(tx->mp);
 
@@ -1093,7 +1077,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
     if ( (rc == IB_OK) && (*hash != NULL) ) {
         ib_log_debug2_tx(tx, "Found rule data hash in tx data named "
                          "\""HASH_NAME_STR "\"");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug2_tx(tx, "Rule data hash did not exist in tx data.");
@@ -1103,7 +1087,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
     if (rc != IB_OK) {
         ib_log_debug2_tx(tx, "Failed to create hash \""HASH_NAME_STR"\": %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_hash_set(tx->data, HASH_NAME_STR, *hash);
@@ -1116,7 +1100,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
     ib_log_debug2_tx(tx, "Returning rule hash \""HASH_NAME_STR"\" at %p.",
                      *hash);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 
 }
 
@@ -1143,8 +1127,6 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
                                      const char *id,
                                      dfa_workspace_t **workspace)
 {
-    IB_FTRACE_INIT();
-
     assert(tx);
     assert(tx->mp);
     assert(id);
@@ -1158,19 +1140,19 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
     *workspace = NULL;
     rc = get_or_create_rule_data_hash(tx, &hash);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ws = (dfa_workspace_t *)ib_mpool_alloc(tx->mp, sizeof(*ws));
     if (ws == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     ws->wscount = cpatt_data->dfa_ws_size;
     size = sizeof(*(ws->workspace)) * (ws->wscount);
     ws->workspace = (int *)ib_mpool_alloc(tx->mp, size);
     if (ws->workspace == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     rc = ib_hash_set(hash, id, ws);
@@ -1178,7 +1160,7 @@ static ib_status_t alloc_dfa_tx_data(ib_tx_t *tx,
         *workspace = ws;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1197,8 +1179,6 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
                                    const char *id,
                                    dfa_workspace_t **workspace)
 {
-    IB_FTRACE_INIT();
-
     assert(tx);
     assert(tx->mp);
     assert(id);
@@ -1209,7 +1189,7 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
 
     rc = get_or_create_rule_data_hash(tx, &hash);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_hash_get(hash, workspace, id);
@@ -1217,7 +1197,7 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
         *workspace = NULL;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1237,7 +1217,6 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
                                         ib_field_t *field,
                                         ib_num_t *result)
 {
-    IB_FTRACE_INIT();
     assert(rule_exec);
     assert(rule_exec->tx != NULL);
     assert(rule_exec->ib != NULL);
@@ -1261,14 +1240,14 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
 
     ovector = (int *)malloc(ovecsize*sizeof(*ovector));
     if (ovector==NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     if (field->type == IB_FTYPE_NULSTR) {
         ib_rc = ib_field_value(field, ib_ftype_nulstr_out(&subject));
         if (ib_rc != IB_OK) {
             free(ovector);
-            IB_FTRACE_RET_STATUS(ib_rc);
+            return ib_rc;
         }
 
         subject_len = strlen(subject);
@@ -1277,7 +1256,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
         ib_rc = ib_field_value(field, ib_ftype_bytestr_out(&bytestr));
         if (ib_rc != IB_OK) {
             free(ovector);
-            IB_FTRACE_RET_STATUS(ib_rc);
+            return ib_rc;
         }
 
         subject_len = ib_bytestr_length(bytestr);
@@ -1285,7 +1264,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
     }
     else {
         free(ovector);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Debug block. Escapes a string and prints it to the log.
@@ -1315,7 +1294,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
             ib_rule_log_error(rule_exec,
                               "Error creating tx storage for dfa operator: %s",
                               ib_status_to_string(ib_rc));
-            IB_FTRACE_RET_STATUS(ib_rc);
+            return ib_rc;
         }
 
         ib_rule_log_debug(rule_exec, "Created DFA workspace at %p.",
@@ -1331,7 +1310,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
         ib_rule_log_error(rule_exec,
                           "Error fetching dfa data for dfa operator: %s",
                           ib_status_to_string(ib_rc));
-        IB_FTRACE_RET_STATUS(ib_rc);
+        return ib_rc;
     }
 
     /* Actually do the DFA match. */
@@ -1382,7 +1361,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
     }
 
     free(ovector);
-    IB_FTRACE_RET_STATUS(ib_rc);
+    return ib_rc;
 }
 
 /**
@@ -1394,12 +1373,11 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
  */
 static ib_status_t dfa_operator_destroy(ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
     assert(op_inst != NULL);
 
     /* Nop - Memory released by mpool. */
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* -- Module Routines -- */
@@ -1465,7 +1443,6 @@ static ib_status_t handle_directive_onoff(ib_cfgparser_t *cp,
                                           int onoff,
                                           void *cbdata)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     assert(name != NULL);
     assert(cp->ib != NULL);
@@ -1482,7 +1459,7 @@ static ib_status_t handle_directive_onoff(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to get %s module object: %s",
                          MODULE_NAME_STR, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Get my module configuration */
@@ -1490,7 +1467,7 @@ static ib_status_t handle_directive_onoff(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to get %s module configuration: %s",
                          MODULE_NAME_STR, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (strcasecmp("PcreStudy", name) == 0) {
@@ -1501,7 +1478,7 @@ static ib_status_t handle_directive_onoff(ib_cfgparser_t *cp,
     }
     else {
         ib_cfg_log_error(cp, "Unhandled directive \"%s\"", name);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     rc = ib_context_set_num(ctx, pname, onoff);
     if (rc != IB_OK) {
@@ -1509,7 +1486,7 @@ static ib_status_t handle_directive_onoff(ib_cfgparser_t *cp,
                          pname, onoff ? "true" : "false", name,
                          ib_status_to_string(rc));
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1527,7 +1504,6 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
                                           const char *p1,
                                           void *cbdata)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     assert(name != NULL);
     assert(p1 != NULL);
@@ -1546,7 +1522,7 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to get %s module object: %s",
                          MODULE_NAME_STR, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Get my module configuration */
@@ -1554,7 +1530,7 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to get %s module configuration: %s",
                          MODULE_NAME_STR, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* p1 should be a number */
@@ -1563,7 +1539,7 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp,
                          "Failed to convert \"%s\" to a number for \"%s\": %s",
                          p1, name, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (strcasecmp("PcreMatchLimit", name) == 0) {
@@ -1583,14 +1559,14 @@ static ib_status_t handle_directive_param(ib_cfgparser_t *cp,
     }
     else {
         ib_cfg_log_error(cp, "Unhandled directive \"%s\"", name);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     rc = ib_context_set_num(ctx, pname, value);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to set \"%s\" to %ld for \"%s\": %s",
                          pname, (long int)value, name, ib_status_to_string(rc));
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static IB_DIRMAP_INIT_STRUCTURE(directive_map) = {
@@ -1636,7 +1612,6 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
                                 ib_module_t *m,
                                 void        *cbdata)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(m != NULL);
     ib_status_t rc;
@@ -1653,7 +1628,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
                      MODULE_NAME_STR
                      ": Error registering pcre matcher provider: "
                      "%s", ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug(ib, "PCRE Status: compiled=\"%d.%d %s\" loaded=\"%s\"",
@@ -1692,7 +1667,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
                          dfa_operator_execute,
                          NULL);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**

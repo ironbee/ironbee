@@ -31,13 +31,10 @@
 
 #include <iostream>
 
-#include <ironbee/debug.h>
-
 // Common main() to reset tracing and execute all tests
 int main(int argc, char **argv)
 {
     std::cout << "\n" << argv[0] << ":\n";
     ::testing::InitGoogleTest(&argc, argv);
-    ib_trace_init(NULL);
     return RUN_ALL_TESTS();
 }

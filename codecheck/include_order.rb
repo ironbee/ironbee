@@ -92,7 +92,6 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/config.h>',
   '<ironbee/context_selection.h>',
   '<ironbee/core.h>',
-  '<ironbee/debug.h>',
   '<ironbee/decode.h>',
   '<ironbee/dso.h>',
   '<ironbee/engine.h>',

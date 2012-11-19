@@ -10,8 +10,6 @@
 #include <ironbeepp/internal/throw.hpp>
 #include <ironbeepp/internal/data.hpp>
 
-#include <ironbee/debug.h>
-
 namespace IronBee {
 
 namespace Internal {
@@ -32,8 +30,6 @@ ib_status_t null(
     void*                 cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine != NULL);
     assert(cbdata != NULL);
 
@@ -44,9 +40,9 @@ ib_status_t null(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -67,8 +63,6 @@ ib_status_t header_data(
     void*                 cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine != NULL);
     /* ib_tx may be NULL */
     assert(ib_header != NULL);
@@ -83,9 +77,9 @@ ib_status_t header_data(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -107,8 +101,6 @@ ib_status_t request_line(
     void*                 cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine != NULL);
     /* ib_tx may be NULL */
     assert(ib_request_line != NULL);
@@ -123,9 +115,9 @@ ib_status_t request_line(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -147,8 +139,6 @@ ib_status_t response_line(
     void*                  cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine != NULL);
     /* ib_tx may be NULL. */
     assert(ib_response_line != NULL);
@@ -163,9 +153,9 @@ ib_status_t response_line(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -185,8 +175,6 @@ ib_status_t connection(
     void*                 cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine != NULL);
     assert(ib_connection != NULL);
     assert(cbdata != NULL);
@@ -199,9 +187,9 @@ ib_status_t connection(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -221,8 +209,6 @@ ib_status_t connection_data(
     void*                 cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine != NULL);
     assert(ib_connection_data != NULL);
     assert(cbdata != NULL);
@@ -235,9 +221,9 @@ ib_status_t connection_data(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -257,8 +243,6 @@ ib_status_t transaction(
     void*                 cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine != NULL);
     assert(ib_transaction != NULL);
     assert(cbdata != NULL);
@@ -271,9 +255,9 @@ ib_status_t transaction(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -295,8 +279,6 @@ ib_status_t transaction_data(
     void*                 cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine != NULL);
     assert(ib_tx != NULL);
     assert(ib_transaction_data != NULL);
@@ -311,9 +293,9 @@ ib_status_t transaction_data(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 } // Hooks

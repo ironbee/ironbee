@@ -26,7 +26,6 @@
 #include <ironbee/expand.h>
 
 #include <ironbee/bytestr.h>
-#include <ironbee/debug.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
@@ -65,7 +64,6 @@ static ib_status_t join2(ib_mpool_t *mp,
                          char **out,
                          size_t *olen)
 {
-    IB_FTRACE_INIT();
     size_t slen = l1 + l2;
     size_t buflen = slen + (nul ? 1 : 0);
     char *buf;
@@ -74,7 +72,7 @@ static ib_status_t join2(ib_mpool_t *mp,
     /* Allocate the buffer */
     buf = (char *)ib_mpool_alloc(mp, buflen);
     if (buf == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Copy the blocks in */
@@ -90,7 +88,7 @@ static ib_status_t join2(ib_mpool_t *mp,
     /* Done */
     *out = buf;
     *olen = slen;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -120,7 +118,6 @@ static ib_status_t join3(ib_mpool_t *mp,
                          char **out,
                          size_t *olen)
 {
-    IB_FTRACE_INIT();
     size_t slen = l1 + l2 + l3;
     size_t buflen = slen + (nul ? 1 : 0);
     char *buf;
@@ -129,7 +126,7 @@ static ib_status_t join3(ib_mpool_t *mp,
     /* Allocate the buffer */
     buf = (char *)ib_mpool_alloc(mp, buflen);
     if (buf == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Copy the blocks in */
@@ -147,7 +144,7 @@ static ib_status_t join3(ib_mpool_t *mp,
     /* Done */
     *out = buf;
     *olen = slen;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -175,7 +172,6 @@ static ib_status_t join_parts(ib_mpool_t *mp,
                               char **out,
                               size_t *olen)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     char numbuf[NUM_BUF_LEN+1]; /* Buffer used to convert number to str */
     assert(NUM_BUF_LEN <= 256);
@@ -187,7 +183,7 @@ static ib_status_t join_parts(ib_mpool_t *mp,
         const char *s;
         rc = ib_field_value(f, ib_ftype_nulstr_out(&s));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         size_t slen = strlen(s);
         rc = join3(mp,
@@ -205,7 +201,7 @@ static ib_status_t join_parts(ib_mpool_t *mp,
         const ib_bytestr_t *bs;
         rc = ib_field_value(f, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = join3(mp,
                    iptr, ilen,
@@ -223,7 +219,7 @@ static ib_status_t join_parts(ib_mpool_t *mp,
         ib_num_t n;
         rc = ib_field_value(f, ib_ftype_num_out(&n));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         snprintf(numbuf, NUM_BUF_LEN, "%"PRId64, n);
         rc = join3(mp,
@@ -244,7 +240,7 @@ static ib_status_t join_parts(ib_mpool_t *mp,
 
         rc = ib_field_value(f, ib_ftype_list_out(&list));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         node = ib_list_first_const(list);
@@ -264,7 +260,7 @@ static ib_status_t join_parts(ib_mpool_t *mp,
         break;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /*
@@ -278,7 +274,6 @@ ib_status_t ib_expand_str(ib_mpool_t *mp,
                           ib_hash_t *hash,
                           char **result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     size_t len;
 
@@ -296,7 +291,7 @@ ib_status_t ib_expand_str(ib_mpool_t *mp,
                           hash,
                           result, &len);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /*
@@ -311,7 +306,6 @@ ib_status_t ib_expand_str_gen(ib_mpool_t *mp,
                               const void *lookup_data,
                               char **result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     size_t len;
 
@@ -327,7 +321,7 @@ ib_status_t ib_expand_str_gen(ib_mpool_t *mp,
                               true, recurse,
                               lookup_fn, lookup_data, result, &len);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -345,7 +339,6 @@ static ib_status_t hash_lookup(const void *data,
                                size_t keylen,
                                ib_field_t **pf)
 {
-    IB_FTRACE_INIT();
     assert(data != NULL);
     assert(key != NULL);
     assert(pf != NULL);
@@ -354,7 +347,7 @@ static ib_status_t hash_lookup(const void *data,
     ib_hash_t *hash = (ib_hash_t *)data;
 
     rc = ib_hash_get_ex(hash, pf, key, keylen);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /*
@@ -371,7 +364,6 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
                              char **result,
                              size_t *result_len)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_expand_str_gen_ex(mp, str, str_len,
@@ -379,7 +371,7 @@ ib_status_t ib_expand_str_ex(ib_mpool_t *mp,
                               nul, recurse,
                               hash_lookup, hash,
                               result, result_len);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 };
 
 /*
@@ -397,7 +389,6 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
                                  char **result,
                                  size_t *result_len)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     size_t pre_len;             /* Prefix string length */
     size_t suf_len = SIZE_MAX;  /* Suffix string length */
@@ -419,7 +410,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
 
     /* Validate prefix and suffix */
     if ( (*prefix == '\0') || (*suffix == '\0') ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Compute prefix length */
@@ -430,7 +421,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
     if (str_len < (pre_len+1) ) {
         *result = (char *)ib_mpool_memdup(mp, str, str_len);
         *result_len = str_len;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Loop until there is nothing more to find. */
@@ -505,7 +496,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
                        true,
                        &new, &newlen);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
             buf = new;
             buflen = newlen;
@@ -522,14 +513,14 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
                        true,
                        &new, &newlen);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
             buf = new;
             buflen = newlen;
             continue;
         }
         else if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /*
@@ -537,7 +528,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
          */
         rc = join_parts(mp, f, iptr, ilen, fptr, flen, nul, &new, &newlen);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         buf = new;
         buflen = newlen;
@@ -545,7 +536,7 @@ ib_status_t ib_expand_str_gen_ex(ib_mpool_t *mp,
 
     *result = (char *)buf;
     *result_len = buflen;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /*
@@ -556,12 +547,11 @@ ib_status_t ib_expand_test_str(const char *str,
                                const char *suffix,
                                bool *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_expand_test_str_ex(str, strlen(str), prefix, suffix, result);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /*
@@ -573,7 +563,6 @@ ib_status_t ib_expand_test_str_ex(const char *str,
                                   const char *suffix,
                                   bool *result)
 {
-    IB_FTRACE_INIT();
     const char *pre;      /* Pointer to found prefix pattern */
     const char *suf;      /* Pointer to found suffix pattern */
     size_t pre_off;       /* Offset of prefix */
@@ -590,14 +579,14 @@ ib_status_t ib_expand_test_str_ex(const char *str,
 
     /* Validate prefix and suffix */
     if ( (*prefix == '\0') || (*suffix == '\0') ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Look for the prefix pattern */
     pre_len = strlen(prefix);
     pre = ib_strstr_ex(str, str_len, prefix, pre_len);
     if (pre == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* And a next matching suffix pattern. */
@@ -607,10 +596,10 @@ ib_status_t ib_expand_test_str_ex(const char *str,
                        suffix,
                        strlen(suffix));
     if (suf == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Yes, it looks expandable.  Done */
     *result = true;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

@@ -30,7 +30,6 @@
 
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
-#include <ironbee/debug.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>
@@ -81,33 +80,30 @@ static ib_status_t setvar_num_sub_op(
     const ib_num_t n2,
     ib_num_t *out)
 {
-    IB_FTRACE_INIT();
-
+    
     *out = n1 - n2;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 static ib_status_t setvar_num_mult_op(
     const ib_num_t n1,
     const ib_num_t n2,
     ib_num_t *out)
 {
-    IB_FTRACE_INIT();
-
+    
     *out = n1 * n2;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 static ib_status_t setvar_num_add_op(
     const ib_num_t n1,
     const ib_num_t n2,
     ib_num_t *out)
 {
-    IB_FTRACE_INIT();
-
+    
     *out = n1 + n2;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t setvar_float_sub_op(
@@ -115,33 +111,30 @@ static ib_status_t setvar_float_sub_op(
     const ib_float_t f2,
     ib_float_t *out)
 {
-    IB_FTRACE_INIT();
-
+    
     *out = f1 - f2;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 static ib_status_t setvar_float_mult_op(
     const ib_float_t f1,
     const ib_float_t f2,
     ib_float_t *out)
 {
-    IB_FTRACE_INIT();
-
+    
     *out = f1 * f2;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 static ib_status_t setvar_float_add_op(
     const ib_float_t f1,
     const ib_float_t f2,
     ib_float_t *out)
 {
-    IB_FTRACE_INIT();
-
+    
     *out = f1 + f2;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 typedef union {
@@ -208,8 +201,7 @@ static ib_status_t setvar_float_op(
     size_t nlen,
     setvar_float_op_fn_t op)
 {
-    IB_FTRACE_INIT();
-
+    
     assert(setvar_data->type == IB_FTYPE_FLOAT);
 
     ib_status_t rc;
@@ -225,7 +217,7 @@ static ib_status_t setvar_float_op(
                               "\"%.*s\": %s",
                               (int)nlen, name,
                               ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -234,7 +226,7 @@ static ib_status_t setvar_float_op(
         ib_float_t flt;
         rc = ib_field_value(cur_field, ib_ftype_float_out(&flt));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         op(flt, setvar_data->value.flt, &flt);
@@ -246,9 +238,9 @@ static ib_status_t setvar_float_op(
                           "setvar: field \"%.*s\" type %d "
                           "invalid for NUMADD",
                           (int)nlen, name, cur_field->type);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 /**
  * Unwrap two fields, perform the operation, and write the result.
@@ -277,8 +269,7 @@ static ib_status_t setvar_num_op(
     size_t nlen,
     setvar_num_op_fn_t op)
 {
-    IB_FTRACE_INIT();
-
+    
     assert(setvar_data->type == IB_FTYPE_NUM);
 
     ib_status_t rc;
@@ -294,7 +285,7 @@ static ib_status_t setvar_num_op(
                               "\"%.*s\": %s",
                               (int)nlen, name,
                               ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -303,7 +294,7 @@ static ib_status_t setvar_num_op(
         ib_num_t num;
         rc = ib_field_value(cur_field, ib_ftype_num_out(&num));
         if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
         }
 
         op(num, setvar_data->value.num, &num);
@@ -315,9 +306,9 @@ static ib_status_t setvar_num_op(
                           "setvar: field \"%.*s\" type %d "
                           "invalid for NUMADD",
                           (int)nlen, name, cur_field->type);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
@@ -341,12 +332,11 @@ static ib_status_t act_setflags_create(
     ib_action_inst_t *inst,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
     const ib_tx_flag_map_t *flag;
     setflag_op_t op;
 
     if (parameters == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (*parameters == '!') {
@@ -362,19 +352,19 @@ static ib_status_t act_setflags_create(
             setflag_data_t *data;
 
             if (flag->read_only) {
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
             }
             data = ib_mpool_alloc(mp, sizeof(*data));
             if (data == NULL) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
             data->op = op;
             data->flag = flag;
             inst->data = (void *)data;
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
     }
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
+    return IB_EINVAL;
 }
 
 /**
@@ -393,8 +383,6 @@ static ib_status_t act_setflag_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     /* Data will be a setflag_data_t */
     const setflag_data_t *opdata = (const setflag_data_t *)data;
     ib_num_t value;
@@ -413,7 +401,7 @@ static ib_status_t act_setflag_execute(
         break;
 
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* This fails because ib_data_remove() doesn't handle fields within
@@ -426,10 +414,10 @@ static ib_status_t act_setflag_execute(
     rc = ib_data_add_num(rule_exec->tx->dpi, opdata->flag->tx_name,
                          value, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -452,7 +440,6 @@ static ib_status_t act_event_create(
     ib_action_inst_t *inst,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(mp != NULL);
@@ -471,18 +458,18 @@ static ib_status_t act_event_create(
         event_type = IB_LEVENT_TYPE_ALERT;
     }
     else {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Allocate an event data object, populate it */
     event_data = ib_mpool_alloc(mp, sizeof(*event_data));
     if (event_data == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     event_data->event_type = event_type;
     inst->data = (void *)event_data;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -503,7 +490,6 @@ static ib_status_t act_event_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
     assert(rule_exec != NULL);
     assert(data != NULL);
 
@@ -525,7 +511,7 @@ static ib_status_t act_event_execute(
             ib_rule_log_error(rule_exec,
                               "event: Failed to expand string '%s': %s",
                               rule->meta.msg, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         expanded = tmp;
     }
@@ -549,7 +535,7 @@ static ib_status_t act_event_execute(
         expanded
     );
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Set the data */
@@ -561,7 +547,7 @@ static ib_status_t act_event_execute(
                 ib_rule_log_error(rule_exec,
                                   "event: Failed to expand data '%s': %s",
                                   rule->meta.data, ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
             expanded = tmp;
         }
@@ -572,7 +558,7 @@ static ib_status_t act_event_execute(
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec, "event: Failed to set data: %s",
                               ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -618,7 +604,7 @@ static ib_status_t act_event_execute(
     /* Log the event. */
     rc = ib_event_add(tx->epi, event);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Add the event to the rule execution */
@@ -627,7 +613,7 @@ static ib_status_t act_event_execute(
         /* todo: Ignore this? */
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -650,7 +636,6 @@ static ib_status_t act_setvar_create(
     ib_action_inst_t *inst,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
     size_t nlen;                 /* Name length */
     const char *eq;              /* '=' character in @a params */
     const char *value;           /* Value in params */
@@ -659,13 +644,13 @@ static ib_status_t act_setvar_create(
     ib_status_t rc;              /* Status code */
 
     if (params == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Simple checks; params should look like '<name>=[<value>]' */
     eq = strchr(params, '=');
     if ( (eq == NULL) || (eq == params) ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Calculate name length */
@@ -683,19 +668,19 @@ static ib_status_t act_setvar_create(
     /* Create the data structure for the execute function */
     data = ib_mpool_alloc(mp, sizeof(*data) );
     if (data == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Does the name need to be expanded? */
     rc = ib_data_expand_test_str_ex(params, nlen, &(data->name_expand));
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Copy the name */
     data->name = ib_mpool_memdup_to_str(mp, params, nlen);
     if (data->name == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Create the value */
@@ -741,7 +726,7 @@ static ib_status_t act_setvar_create(
 
         rc = ib_data_expand_test_str_ex(value, vlen, &expand);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         else if (expand) {
             inst->flags |= IB_ACTINST_FLAG_EXPAND;
@@ -749,7 +734,7 @@ static ib_status_t act_setvar_create(
 
         rc = ib_bytestr_dup_nulstr(&(data->value.bstr), mp, value);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         data->type = IB_FTYPE_BYTESTR;
         data->op = SETVAR_STRSET;
@@ -757,7 +742,7 @@ static ib_status_t act_setvar_create(
 
 success:
     inst->data = data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -777,7 +762,6 @@ static ib_status_t expand_name(const ib_rule_exec_t *rule_exec,
                                const char **exname,
                                size_t *exnlen)
 {
-    IB_FTRACE_INIT();
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(label);
@@ -803,7 +787,7 @@ static ib_status_t expand_name(const ib_rule_exec_t *rule_exec,
             ib_rule_log_error(rule_exec,
                               "%s: Failed to expand name \"%s\": %s",
                               label, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         *exname = tmp;
         *exnlen = len;
@@ -819,7 +803,7 @@ static ib_status_t expand_name(const ib_rule_exec_t *rule_exec,
     }
 
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -837,8 +821,6 @@ static ib_status_t get_data_value(const ib_rule_exec_t *rule_exec,
                                   size_t namelen,
                                   ib_field_t **field)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec != NULL);
     assert(name != NULL);
     assert(field != NULL);
@@ -853,11 +835,11 @@ static ib_status_t get_data_value(const ib_rule_exec_t *rule_exec,
     rc = ib_data_get_ex(tx->dpi, name, namelen, &cur);
     if ( (rc == IB_ENOENT) || (cur == NULL) ) {
         *field = NULL;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     else if (rc != IB_OK) {
         *field = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* If we got back something other than a list, or it's name matches
@@ -866,7 +848,7 @@ static ib_status_t get_data_value(const ib_rule_exec_t *rule_exec,
          ((cur->nlen == namelen) && (memcmp(name, cur->name, namelen) == 0)) )
     {
         *field = cur;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /*
@@ -878,20 +860,20 @@ static ib_status_t get_data_value(const ib_rule_exec_t *rule_exec,
         ib_rule_log_error(rule_exec,
                           "setvar: Failed to get list from \"%.*s\": %s",
                           (int)namelen, name, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* No elements?  Filtered list with no values.  Return NULL. */
     elements = ib_list_elements(list);
     if (elements == 0) {
         *field = NULL;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     if (elements != 1) {
         ib_rule_log_notice(rule_exec,
                            "setvar:Got back list with %zd elements", elements);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Use the first (only) element in the list as our field */
@@ -901,12 +883,12 @@ static ib_status_t get_data_value(const ib_rule_exec_t *rule_exec,
                           "setvar: Failed to get first list element "
                           "from \"%.*s\": %s",
                           (int)namelen, name, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Finally, take the data from the first node.  Check and mate. */
     *field = (ib_field_t *)first->data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -935,8 +917,6 @@ static ib_status_t expand_data(
     char **expanded,
     size_t *exlen)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(label);
@@ -965,7 +945,7 @@ static ib_status_t expand_data(
                     rule_exec,
                     "%s: Failed to expand string \"%.*s\": %s",
                     label, (int) bslen, bsdata, ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             ib_rule_log_debug(
@@ -1009,7 +989,7 @@ static ib_status_t expand_data(
                     label,
                     (int)bslen,
                     bsdata);
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
             *exlen = bslen;
         }
@@ -1024,7 +1004,7 @@ static ib_status_t expand_data(
 
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1046,8 +1026,6 @@ static ib_status_t act_setvar_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(data != NULL);
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
@@ -1067,19 +1045,19 @@ static ib_status_t act_setvar_execute(
     /* Expand the name (if required) */
     rc = expand_name(rule_exec, "setvar", setvar_data, &name, &nlen);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Get the current value */
     rc = get_data_value(rule_exec, name, nlen, &cur_field);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* If setvar_data contains a byte string, we might expand it. */
     rc = expand_data(rule_exec, "setvar", setvar_data, flags, &value, &vlen);
     if ( rc != IB_OK ) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     switch(setvar_data->op) {
@@ -1100,7 +1078,7 @@ static ib_status_t act_setvar_execute(
                               "setvar: Failed to create bytestring "
                               "for field \"%.*s\": %s",
                               (int)nlen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Create the new_field field */
@@ -1113,7 +1091,7 @@ static ib_status_t act_setvar_execute(
             ib_rule_log_error(rule_exec,
                               "setvar: Failed to create field \"%.*s\": %s",
                               (int)nlen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Add the field to the DPI */
@@ -1122,7 +1100,7 @@ static ib_status_t act_setvar_execute(
             ib_rule_log_error(rule_exec,
                               "setvar: Failed to add field \"%.*s\": %s",
                               (int)nlen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         break;
 
@@ -1144,7 +1122,7 @@ static ib_status_t act_setvar_execute(
             ib_rule_log_error(rule_exec,
                               "setvar: Failed to create field \"%.*s\": %s",
                               (int)nlen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Add the field to the DPI */
@@ -1153,7 +1131,7 @@ static ib_status_t act_setvar_execute(
             ib_rule_log_error(rule_exec,
                               "setvar: Failed to add field \"%.*s\": %s",
                               (int)nlen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         break;
 
@@ -1175,7 +1153,7 @@ static ib_status_t act_setvar_execute(
             ib_rule_log_error(rule_exec,
                               "setvar: Failed to create field \"%.*s\": %s",
                               (int)nlen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Add the field to the DPI */
@@ -1184,7 +1162,7 @@ static ib_status_t act_setvar_execute(
             ib_rule_log_error(rule_exec,
                               "setvar: Failed to add field \"%.*s\": %s",
                               (int)nlen, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         break;
 
@@ -1261,7 +1239,7 @@ static ib_status_t act_setvar_execute(
         break;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1278,8 +1256,6 @@ static ib_status_t act_setvar_execute(
 static ib_status_t get_event(const ib_rule_exec_t *rule_exec,
                              ib_logevent_t **event)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec != NULL);
 
     ib_status_t rc;
@@ -1289,19 +1265,19 @@ static ib_status_t get_event(const ib_rule_exec_t *rule_exec,
 
     rc = ib_event_get_all(tx->epi, &event_list);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     event_node = ib_list_last(event_list);
     if (event_node == NULL) {
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
     ib_logevent_t *e = (ib_logevent_t *)event_node->data;
     if (strcmp(e->rule_id, ib_rule_id(rule_exec->rule)) == 0) {
         *event = e;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
-    IB_FTRACE_RET_STATUS(IB_ENOENT);
+    return IB_ENOENT;
 }
 
 /**
@@ -1319,8 +1295,6 @@ static ib_status_t get_event(const ib_rule_exec_t *rule_exec,
 static ib_status_t act_block_advisory_execute(
     const ib_rule_exec_t *rule_exec)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec != NULL);
 
     ib_tx_t *tx = rule_exec->tx;
@@ -1342,7 +1316,7 @@ static ib_status_t act_block_advisory_execute(
                 rule_exec,
                 "Could not set value FLAGS:BLOCK=1: %s",
                 ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Update the event (if required) */
@@ -1355,13 +1329,13 @@ static ib_status_t act_block_advisory_execute(
                               "Failed to fetch event "
                               "associated with this action: %s",
                               ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     ib_rule_log_debug(rule_exec, "Advisory block.");
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1376,8 +1350,6 @@ static ib_status_t act_block_advisory_execute(
 static ib_status_t act_block_phase_execute(
     const ib_rule_exec_t *rule_exec)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
     ib_logevent_t *event;
     ib_tx_t *tx = rule_exec->tx;
@@ -1393,12 +1365,12 @@ static ib_status_t act_block_phase_execute(
     else if (rc != IB_ENOENT) {
         ib_rule_log_error(rule_exec,
                           "Failed phase block: %s.", ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_rule_log_trace(rule_exec, "Phase block.");
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1413,7 +1385,6 @@ static ib_status_t act_block_phase_execute(
 static ib_status_t act_block_immediate_execute(
     const ib_rule_exec_t *rule_exec)
 {
-    IB_FTRACE_INIT();
     assert(rule_exec != NULL);
 
     ib_status_t rc;
@@ -1431,12 +1402,12 @@ static ib_status_t act_block_immediate_execute(
         ib_rule_log_error(rule_exec,
                           "Failed immediate block: %s.",
                           ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_rule_log_debug(rule_exec, "Immediate block.");
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1475,14 +1446,12 @@ static ib_status_t act_block_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec);
     assert(data);
 
     ib_status_t rc = ((const act_block_t *)data)->execute(rule_exec);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1511,12 +1480,10 @@ static ib_status_t act_block_create(
     ib_action_inst_t *inst,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     act_block_t *act_block =
         (act_block_t *)ib_mpool_alloc(mp, sizeof(*act_block));
     if ( act_block == NULL ) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* When params are NULL, use advisory blocking by default. */
@@ -1547,7 +1514,7 @@ static ib_status_t act_block_create(
     /* Assign the built up context object. */
     inst->data = act_block;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1575,15 +1542,13 @@ static ib_status_t act_status_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec != NULL);
     assert(data != NULL);
 
     /* NOTE: Range validation of block_status is done in act_status_create. */
     rule_exec->tx->block_status = ((act_status_t *)data)->block_status;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1613,8 +1578,6 @@ static ib_status_t act_status_create(
     ib_action_inst_t *inst,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(inst);
     assert(mp);
 
@@ -1624,13 +1587,13 @@ static ib_status_t act_status_create(
 
     act_status = (act_status_t *) ib_mpool_alloc(mp, sizeof(*act_status));
     if (act_status == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     if (params == NULL) {
         ib_log_error(ib, "Action status must be given a parameter "
                      "x where 200 <= x < 600.");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     block_status = atoi(params);
@@ -1640,7 +1603,7 @@ static ib_status_t act_status_create(
                      "Action status must be given a parameter "
                      "x where 200 <= x < 600. It was given %s.",
                      params);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     act_status->block_status = block_status;
@@ -1653,7 +1616,7 @@ static ib_status_t act_status_create(
 
     inst->data = act_status;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1677,7 +1640,6 @@ static ib_status_t expand_name_hdr(const ib_rule_exec_t *rule_exec,
                                    const char **exname,
                                    size_t *exnlen)
 {
-    IB_FTRACE_INIT();
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
     assert(label != NULL);
@@ -1696,7 +1658,7 @@ static ib_status_t expand_name_hdr(const ib_rule_exec_t *rule_exec,
             ib_rule_log_error(rule_exec,
                               "%s: Failed to expand name \"%s\": %s",
                               label, name, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         len = strlen(tmp);
         *exname = tmp;
@@ -1711,7 +1673,7 @@ static ib_status_t expand_name_hdr(const ib_rule_exec_t *rule_exec,
         *exnlen = strlen(name);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1735,7 +1697,6 @@ static ib_status_t expand_str(const ib_rule_exec_t *rule_exec,
                               const char **expanded,
                               size_t *exlen)
 {
-    IB_FTRACE_INIT();
     assert(rule_exec != NULL);
     assert(label != NULL);
     assert(str != NULL);
@@ -1754,7 +1715,7 @@ static ib_status_t expand_str(const ib_rule_exec_t *rule_exec,
             ib_rule_log_error(rule_exec,
                               "%s: Failed to expand \"%s\": %s",
                               label, str, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         len = strlen(tmp);
         *expanded = tmp;
@@ -1767,7 +1728,7 @@ static ib_status_t expand_str(const ib_rule_exec_t *rule_exec,
         *expanded = str;
         *exlen = strlen(str);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1802,8 +1763,6 @@ static ib_status_t act_del_header_create(
     ib_action_inst_t *inst,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(mp != NULL);
@@ -1815,30 +1774,30 @@ static ib_status_t act_del_header_create(
     ib_status_t rc;
 
     if (act_data == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     if ( (params == NULL) || (strlen(params) == 0) ) {
         ib_log_error(ib, "Operation requires a parameter.");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     act_data->name = ib_mpool_strdup(mp, params);
 
     if (act_data->name == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Does the name need to be expanded? */
     rc = ib_data_expand_test_str_ex(params, strlen(params),
                                     &(act_data->name_expand));
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     inst->data = act_data;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1861,8 +1820,6 @@ static ib_status_t act_set_header_create(
     ib_action_inst_t *inst,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ctx != NULL);
     assert(mp != NULL);
@@ -1880,12 +1837,12 @@ static ib_status_t act_set_header_create(
     size_t value_offs = 1;
 
     if (act_data == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     if ( (params == NULL) || (strlen(params) == 0) ) {
         ib_log_error(ib, "Operation requires a parameter");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     equals_idx = index(params, '=');
@@ -1893,7 +1850,7 @@ static ib_status_t act_set_header_create(
     /* If the returned value was NULL it is an error. */
     if (equals_idx == NULL) {
         ib_log_error(ib, "Format for parameter is name=value: %s", params);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     else if (equals_idx[1] == '~') {
         value_offs = 2;    /* =~ for a regexp substitution arg */
@@ -1906,7 +1863,7 @@ static ib_status_t act_set_header_create(
 
     act_data->name = (const char *)ib_mpool_memdup(mp, params, name_len+1);
     if (act_data->name == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Terminate name with '\0'. This replaces the '=' that was copied.
@@ -1918,19 +1875,19 @@ static ib_status_t act_set_header_create(
     rc = ib_data_expand_test_str_ex(act_data->name, name_len,
                                     &(act_data->name_expand));
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     act_data->value = (value_len == 0)?
         ib_mpool_strdup(mp, ""):
         ib_mpool_strdup(mp, equals_idx+value_offs);
     if (act_data->value == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     rc = ib_data_expand_test_str_ex(act_data->value, value_len, &expand);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     else if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
@@ -1945,7 +1902,7 @@ static ib_status_t act_set_header_create(
     }
 
     inst->data = act_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1965,8 +1922,6 @@ static ib_status_t act_set_request_header_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
@@ -1986,13 +1941,13 @@ static ib_status_t act_set_request_header_execute(
                          act_data->name, act_data->name_expand,
                          &name, &name_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = expand_str(rule_exec, "setRequestHeader",
                     act_data->value, flags, &value, &value_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_rule_log_debug(rule_exec, "Setting request header \"%.*s\"=\"%.*s\"",
@@ -2003,7 +1958,7 @@ static ib_status_t act_set_request_header_execute(
                           IB_SERVER_REQUEST, IB_HDR_SET,
                           name, value, NULL);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -2020,8 +1975,6 @@ static ib_status_t act_edit_request_header_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
@@ -2041,13 +1994,13 @@ static ib_status_t act_edit_request_header_execute(
                          act_data->name, act_data->name_expand,
                          &name, &name_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = expand_str(rule_exec, "editRequestHeader",
                     act_data->value, flags, &value, &value_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_rule_log_debug(rule_exec,
@@ -2058,7 +2011,7 @@ static ib_status_t act_edit_request_header_execute(
     rc = ib_server_header(tx->ib->server, tx, IB_SERVER_REQUEST, IB_HDR_EDIT,
                           name, value, act_data->rx);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -2076,8 +2029,6 @@ static ib_status_t act_del_request_header_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
@@ -2094,7 +2045,7 @@ static ib_status_t act_del_request_header_execute(
                          act_data->name, act_data->name_expand,
                          &name, &name_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_rule_log_debug(rule_exec, "Deleting request header \"%.*s\"",
@@ -2107,7 +2058,7 @@ static ib_status_t act_del_request_header_execute(
                           name,
                           "", NULL);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -2124,8 +2075,6 @@ static ib_status_t act_set_response_header_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
@@ -2145,13 +2094,13 @@ static ib_status_t act_set_response_header_execute(
                          act_data->name, act_data->name_expand,
                          &name, &name_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = expand_str(rule_exec, "setResponseHeader", act_data->value, flags,
                     &value, &value_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_rule_log_debug(rule_exec, "Setting response header \"%.*s\"=\"%.*s\"",
@@ -2162,7 +2111,7 @@ static ib_status_t act_set_response_header_execute(
                           IB_SERVER_RESPONSE, IB_HDR_SET,
                           name, value, NULL);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -2182,8 +2131,6 @@ static ib_status_t act_edit_response_header_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
@@ -2203,14 +2150,14 @@ static ib_status_t act_edit_response_header_execute(
                          act_data->name, act_data->name_expand,
                          &name, &name_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = expand_str(rule_exec, "editResponseHeader",
                     act_data->value, flags,
                     &value, &value_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_log_debug_tx(tx, "Applying regexp to response header \"%.*s\"=~\"%.*s\"",
@@ -2221,7 +2168,7 @@ static ib_status_t act_edit_response_header_execute(
                           IB_SERVER_RESPONSE, IB_HDR_EDIT,
                           name, value, act_data->rx);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -2240,8 +2187,6 @@ static ib_status_t act_del_response_header_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec);
     assert(rule_exec->tx);
     assert(rule_exec->ib);
@@ -2258,7 +2203,7 @@ static ib_status_t act_del_response_header_execute(
                          act_data->name, act_data->name_expand,
                          &name, &name_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_rule_log_debug(rule_exec, "Deleting response header \"%.*s\"",
@@ -2272,7 +2217,7 @@ static ib_status_t act_del_response_header_execute(
                           name,
                           "", NULL);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -2295,7 +2240,6 @@ static ib_status_t act_allow_create(
     ib_action_inst_t *inst,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_flags_t flags = IB_TX_FNONE;
     ib_flags_t *idata;
 
@@ -2309,18 +2253,18 @@ static ib_status_t act_allow_create(
         flags |= IB_TX_ALLOW_REQUEST;
     }
     else {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     idata = ib_mpool_alloc(mp, sizeof(*idata));
     if (idata == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     *idata = flags;
     inst->data = idata;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -2337,8 +2281,6 @@ static ib_status_t act_allow_execute(
     ib_flags_t flags,
     void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(data != NULL);
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
@@ -2361,12 +2303,11 @@ static ib_status_t act_allow_execute(
         rule_exec->tx->allow_phase = rule_exec->rule->meta.phase;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
 {
-    IB_FTRACE_INIT();
     ib_status_t  rc;
 
     /* Register the set flag action. */
@@ -2377,7 +2318,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, /* no destroy function */ NULL,
                             act_setflag_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the set variable action. */
@@ -2388,7 +2329,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, /* no destroy function */ NULL,
                             act_setvar_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the event action. */
@@ -2399,7 +2340,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, /* no destroy function */ NULL,
                             act_event_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the block action. */
@@ -2410,7 +2351,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, NULL,
                             act_block_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the allow actions. */
@@ -2421,7 +2362,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, NULL,
                             act_allow_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the status action to modify how block is performed. */
@@ -2432,7 +2373,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, NULL,
                             act_status_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_action_register(ib,
@@ -2442,7 +2383,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, NULL,
                             act_set_request_header_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_action_register(ib,
@@ -2452,7 +2393,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, NULL,
                             act_edit_request_header_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_action_register(ib,
@@ -2462,7 +2403,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, NULL,
                             act_del_request_header_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_action_register(ib,
@@ -2472,7 +2413,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, NULL,
                             act_set_response_header_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_action_register(ib,
@@ -2482,7 +2423,7 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, NULL,
                             act_edit_response_header_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_action_register(ib,
@@ -2492,8 +2433,8 @@ ib_status_t ib_core_actions_init(ib_engine_t *ib, ib_module_t *mod)
                             NULL, NULL,
                             act_del_response_header_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

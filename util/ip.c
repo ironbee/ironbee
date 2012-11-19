@@ -26,8 +26,6 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/ip.h>
-#include <ironbee/debug.h>
-
 #include <assert.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -40,10 +38,8 @@ ib_status_t ib_ip4_str_to_ip(
     ib_ip4_t   *ip
 )
 {
-    IB_FTRACE_INIT();
-
     if (s == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_ip4_t local_ip;
@@ -53,11 +49,11 @@ ib_status_t ib_ip4_str_to_ip(
     int r = 0;
     r = inet_pton(AF_INET, s, ip);
     if (r != 1) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     *ip = htonl(*ip);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ip4_str_to_net(
@@ -65,14 +61,12 @@ ib_status_t ib_ip4_str_to_net(
     ib_ip4_network_t *net
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc = IB_OK;
     ib_ip4_network_t local_net;
 
 
     if (s == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     if (net == NULL) {
         net = &local_net;
@@ -82,7 +76,7 @@ ib_status_t ib_ip4_str_to_net(
     const char *slash = strchr(s, '/');
 
     if (slash == NULL || (slash - s) > 17) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     memcpy(buffer, s, slash - s);
@@ -90,7 +84,7 @@ ib_status_t ib_ip4_str_to_net(
 
     rc = ib_ip4_str_to_ip(buffer, &(net->ip));
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     int size = 0;
@@ -101,12 +95,12 @@ ib_status_t ib_ip4_str_to_net(
         size < 0 || size > 32 ||
         slash[consumed] != '\0'
     ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     net->size = size;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ip6_str_to_ip(
@@ -114,10 +108,8 @@ ib_status_t ib_ip6_str_to_ip(
     ib_ip6_t   *ip
 )
 {
-    IB_FTRACE_INIT();
-
     if (s == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_ip6_t local_ip;
@@ -126,13 +118,13 @@ ib_status_t ib_ip6_str_to_ip(
     }
     int r = inet_pton(AF_INET6, s, ip);
     if (r != 1) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     for (int i = 0; i < 4; ++i) {
         ip->ip[i] = ntohl(ip->ip[i]);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
@@ -141,13 +133,11 @@ ib_status_t ib_ip6_str_to_net(
     ib_ip6_network_t *net
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc = IB_OK;
     ib_ip6_network_t local_net;
 
     if (s == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     if (net == NULL) {
         net = &local_net;
@@ -157,7 +147,7 @@ ib_status_t ib_ip6_str_to_net(
     const char *slash = strchr(s, '/');
 
     if (slash == NULL || (slash - s) > 40) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     strncpy(buffer, s, slash - s);
@@ -165,7 +155,7 @@ ib_status_t ib_ip6_str_to_net(
 
     rc = ib_ip6_str_to_ip(buffer, &(net->ip));
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     int size = 0;
@@ -176,12 +166,12 @@ ib_status_t ib_ip6_str_to_net(
         size < 0 || size > 128 ||
         slash[consumed] != '\0'
     ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     net->size = size;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ip_validate_ex(
@@ -189,42 +179,34 @@ ib_status_t ib_ip_validate_ex(
     size_t      len
 )
 {
-    IB_FTRACE_INIT();
-
     char buffer[40];
 
     if (len >= 40) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     strncpy(buffer, s, len);
     buffer[len] = '\0';
 
-    IB_FTRACE_RET_STATUS(ib_ip_validate(buffer));
+    return ib_ip_validate(buffer);
 }
 
 ib_status_t ib_ip_validate(
     const char *s
 )
 {
-    IB_FTRACE_INIT();
-
     const char *colon = NULL;
     const char *period = NULL;
 
     colon = strchr(s, ':');
     if (colon == NULL) {
-        IB_FTRACE_RET_STATUS(
-            ib_ip4_str_to_ip(s, NULL)
-        );
+        return ib_ip4_str_to_ip(s, NULL);
     }
     else {
         period = strchr(s, '.');
         if (period != NULL && period < colon) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
-        IB_FTRACE_RET_STATUS(
-            ib_ip6_str_to_ip(s, NULL)
-        );
+        return ib_ip6_str_to_ip(s, NULL);
     }
 }

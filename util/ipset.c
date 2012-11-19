@@ -28,8 +28,6 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/ipset.h>
-#include <ironbee/debug.h>
-
 #include <assert.h>
 #include <stdbool.h>
 #include <stdlib.h>
@@ -48,13 +46,11 @@ typedef int (*ib_ipset_compare_fn)(const void *, const void *);
 static
 uint32_t ib_ipset4_mask(size_t bits)
 {
-    IB_FTRACE_INIT();
-
     /* Special case. */
     if (bits >= 32) {
-        IB_FTRACE_RET_UINT(0xffffffff);
+        return 0xffffffff;
     }
-    IB_FTRACE_RET_UINT(~(0xffffffff >> bits));
+    return ~(0xffffffff >> bits);
 }
 
 /**
@@ -68,11 +64,7 @@ ib_ip4_t ib_ipset4_canonical(
     ib_ip4_network_t net
 )
 {
-    IB_FTRACE_INIT();
-
-    IB_FTRACE_RET_UINT(
-        net.ip & ib_ipset4_mask(net.size)
-    );
+    return net.ip & ib_ipset4_mask(net.size);
 }
 
 /**
@@ -112,12 +104,10 @@ bool ib_ipset4_is_prefix(
     ib_ip4_network_t b_net
 )
 {
-    IB_FTRACE_INIT();
-
-    IB_FTRACE_RET_BOOL(
+    return
         (b_net.ip & ib_ipset4_mask(a_net.size)) ==
         (a_net.ip & ib_ipset4_mask(a_net.size))
-    );
+        ;
 }
 
 /**
@@ -133,21 +123,19 @@ bool ib_ipset6_is_prefix(
     const ib_ip6_network_t b_net
 )
 {
-    IB_FTRACE_INIT();
-
     int initial_bytes  = a_net.size / 32;
     int remaining_bits = a_net.size % 32;
 
     for (int i = 0; i < initial_bytes; ++i) {
         if (a_net.ip.ip[i] != b_net.ip.ip[i]) {
-            IB_FTRACE_RET_BOOL(false);
+            return false;
         }
     }
 
-    IB_FTRACE_RET_BOOL(
+    return
         (a_net.ip.ip[initial_bytes] & ib_ipset4_mask(remaining_bits)) ==
         (b_net.ip.ip[initial_bytes] & ib_ipset4_mask(remaining_bits))
-    );
+        ;
 }
 
 /**
@@ -172,8 +160,6 @@ int ib_ipset4_compare_strict(
   const void *b
 )
 {
-    IB_FTRACE_INIT();
-
     const ib_ip4_network_t *a_net = (const ib_ip4_network_t *)a;
     const ib_ip4_network_t *b_net = (const ib_ip4_network_t *)b;
 
@@ -182,18 +168,18 @@ int ib_ipset4_compare_strict(
 
     if (a_net->ip == b_net->ip) {
         if (a_net->size < b_net->size) {
-            IB_FTRACE_RET_INT(-1);
+            return -1;
         }
         if (a_net->size > b_net->size) {
-            IB_FTRACE_RET_INT(-1);
+            return -1;
         }
-        IB_FTRACE_RET_INT(0);
+        return 0;
     }
 
     if (a_net->ip < b_net->ip) {
-        IB_FTRACE_RET_INT(-1);
+        return -1;
     }
-    IB_FTRACE_RET_INT(1);
+    return 1;
 }
 
 /**
@@ -219,8 +205,6 @@ int ib_ipset4_compare(
     const void *b
 )
 {
-    IB_FTRACE_INIT();
-
     const ib_ip4_network_t *a_net = (const ib_ip4_network_t *)a;
     const ib_ip4_network_t *b_net = (const ib_ip4_network_t *)b;
 
@@ -231,10 +215,10 @@ int ib_ipset4_compare(
         ib_ipset4_is_prefix(*a_net, *b_net) ||
         ib_ipset4_is_prefix(*b_net, *a_net)
     ) {
-        IB_FTRACE_RET_INT(0);
+        return 0;
     }
 
-    IB_FTRACE_RET_INT(ib_ipset4_compare_strict(a, b));
+    return ib_ipset4_compare_strict(a, b);
 }
 
 /**
@@ -260,28 +244,26 @@ int ib_ipset6_compare_strict(
     const void *b
 )
 {
-    IB_FTRACE_INIT();
-
     const ib_ip6_network_t *a_net = (const ib_ip6_network_t *)a;
     const ib_ip6_network_t *b_net = (const ib_ip6_network_t *)b;
 
     for (int i = 0; i < 4; ++i) {
         if (a_net->ip.ip[i] < b_net->ip.ip[i]) {
-            IB_FTRACE_RET_INT(-1);
+            return -1;
         }
         else if (a_net->ip.ip[i] > b_net->ip.ip[i]) {
-            IB_FTRACE_RET_INT(1);
+            return 1;
         }
     }
 
     if (a_net->size < b_net->size) {
-        IB_FTRACE_RET_INT(-1);
+        return -1;
     }
     if (a_net->size > b_net->size) {
-        IB_FTRACE_RET_INT(1);
+        return 1;
     }
 
-    IB_FTRACE_RET_INT(0);
+    return 0;
 }
 
 /**
@@ -309,8 +291,6 @@ int ib_ipset6_compare(
     const void *b
 )
 {
-    IB_FTRACE_INIT();
-
     const ib_ip6_network_t *a_net = (const ib_ip6_network_t *)a;
     const ib_ip6_network_t *b_net = (const ib_ip6_network_t *)b;
 
@@ -318,10 +298,10 @@ int ib_ipset6_compare(
         ib_ipset6_is_prefix(*a_net, *b_net) ||
         ib_ipset6_is_prefix(*b_net, *a_net)
     ) {
-        IB_FTRACE_RET_INT(0);
+        return 0;
     }
 
-    IB_FTRACE_RET_INT(ib_ipset6_compare_strict(a, b));
+    return ib_ipset6_compare_strict(a, b);
 }
 
 /**
@@ -355,8 +335,6 @@ ib_status_t ib_ipset_set_query(
     const void          **out_entry
 )
 {
-    IB_FTRACE_INIT();
-
     if (out_entry != NULL) {
         *out_entry = NULL;
     }
@@ -367,11 +345,11 @@ ib_status_t ib_ipset_set_query(
         (entries == NULL && num_entries > 0) ||
         (entry_size == 0)
     ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (num_entries == 0) {
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
 
     void *result = bsearch(
@@ -383,13 +361,13 @@ ib_status_t ib_ipset_set_query(
     );
 
     if (result == NULL) {
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
     if (out_entry != NULL) {
         *out_entry = result;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -434,8 +412,6 @@ ib_status_t ib_ipset_query(
     const void          **out_general_entry
 )
 {
-    IB_FTRACE_INIT();
-
     const void *entry = NULL;
 
     if (out_entry != NULL) {
@@ -455,7 +431,7 @@ ib_status_t ib_ipset_query(
         (positive == NULL && num_positive > 0) ||
         (entry_size == 0)
     ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_status_t rc = ib_ipset_set_query(
@@ -467,7 +443,7 @@ ib_status_t ib_ipset_query(
         NULL
     );
     if (rc != IB_ENOENT) {
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
 
     rc = ib_ipset_set_query(
@@ -480,7 +456,7 @@ ib_status_t ib_ipset_query(
     );
 
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     if (out_entry != NULL) {
         *out_entry = entry;
@@ -508,7 +484,7 @@ ib_status_t ib_ipset_query(
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Public API */
@@ -521,27 +497,23 @@ ib_status_t ib_ipset4_query(
     const ib_ipset4_entry_t **out_general_entry
 )
 {
-    IB_FTRACE_INIT();
-
     ib_ip4_network_t net = {ip, 32};
 
     if (set == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
-    IB_FTRACE_RET_STATUS(
-        ib_ipset_query(
-            &net,
-            set->negative,
-            set->num_negative,
-            set->positive,
-            set->num_positive,
-            sizeof(ib_ipset4_entry_t),
-            &ib_ipset4_compare,
-            (const void **)out_entry,
-            (const void **)out_specific_entry,
-            (const void **)out_general_entry
-        )
+    return ib_ipset_query(
+        &net,
+        set->negative,
+        set->num_negative,
+        set->positive,
+        set->num_positive,
+        sizeof(ib_ipset4_entry_t),
+        &ib_ipset4_compare,
+        (const void **)out_entry,
+        (const void **)out_specific_entry,
+        (const void **)out_general_entry
     );
 }
 
@@ -553,27 +525,23 @@ ib_status_t ib_ipset6_query(
     const ib_ipset6_entry_t **out_general_entry
 )
 {
-    IB_FTRACE_INIT();
-
     ib_ip6_network_t net = {ip, 128};
 
     if (set == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
-    IB_FTRACE_RET_STATUS(
-        ib_ipset_query(
-            &net,
-            set->negative,
-            set->num_negative,
-            set->positive,
-            set->num_positive,
-            sizeof(ib_ipset6_entry_t),
-            &ib_ipset6_compare,
-            (const void **)out_entry,
-            (const void **)out_specific_entry,
-            (const void **)out_general_entry
-        )
+    return ib_ipset_query(
+        &net,
+        set->negative,
+        set->num_negative,
+        set->positive,
+        set->num_positive,
+        sizeof(ib_ipset6_entry_t),
+        &ib_ipset6_compare,
+        (const void **)out_entry,
+        (const void **)out_specific_entry,
+        (const void **)out_general_entry
     );
 }
 
@@ -585,14 +553,12 @@ ib_status_t ib_ipset4_init(
     size_t             num_positive
 )
 {
-    IB_FTRACE_INIT();
-
     if (
         set == NULL ||
         (negative == NULL && num_negative > 0) ||
         (positive == NULL && num_positive > 0)
     ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     set->negative     = negative;
@@ -623,7 +589,7 @@ ib_status_t ib_ipset4_init(
               &ib_ipset4_compare_strict);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ipset6_init(
@@ -634,14 +600,12 @@ ib_status_t ib_ipset6_init(
     size_t             num_positive
 )
 {
-    IB_FTRACE_INIT();
-
     if (
         set == NULL ||
         (negative == NULL && num_negative > 0) ||
         (positive == NULL && num_positive > 0)
     ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     set->negative     = negative;
@@ -672,5 +636,5 @@ ib_status_t ib_ipset6_init(
               &ib_ipset6_compare_strict);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

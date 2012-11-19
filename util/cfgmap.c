@@ -26,13 +26,11 @@
 #include <ironbee/cfgmap.h>
 
 #include <ironbee/bytestr.h>
-#include <ironbee/debug.h>
 #include <ironbee/util.h>
 
 ib_status_t ib_cfgmap_create(ib_cfgmap_t **pcm,
                              ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT();
     ib_hash_t *hash;
     ib_status_t rc;
 
@@ -55,13 +53,13 @@ ib_status_t ib_cfgmap_create(ib_cfgmap_t **pcm,
     /* Set by ib_cfgmap_init() */
     (*pcm)->base = NULL;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     /* Make sure everything is cleaned up on failure. */
     *pcm = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -87,21 +85,17 @@ static ib_status_t ib_cfgmap_handle_get(
     void             *cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     if (arg != NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_cfgmap_handlers_data_t *data = (ib_cfgmap_handlers_data_t *)cbdata;
 
-    IB_FTRACE_RET_STATUS(
-        data->init->fn_get(
-            data->base,
-            out_val,
-            field,
-            data->init->cbdata_get
-        )
+    return data->init->fn_get(
+        data->base,
+        out_val,
+        field,
+        data->init->cbdata_get
     );
 }
 
@@ -118,21 +112,17 @@ static ib_status_t ib_cfgmap_handle_set(
     void       *cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     if (arg != NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_cfgmap_handlers_data_t *data = (ib_cfgmap_handlers_data_t *)cbdata;
 
-    IB_FTRACE_RET_STATUS(
-        data->init->fn_set(
-            data->base,
-            field,
-            in_val,
-            data->init->cbdata_set
-        )
+    return data->init->fn_set(
+        data->base,
+        field,
+        in_val,
+        data->init->cbdata_set
     );
 }
 
@@ -140,7 +130,6 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                            void *base,
                            const ib_cfgmap_init_t *init)
 {
-    IB_FTRACE_INIT();
     ib_cfgmap_init_t *rec = (ib_cfgmap_init_t *)init;
     ib_field_t *f;
     ib_status_t rc;
@@ -161,7 +150,7 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                     sizeof(*data)
                 );
             if (data == NULL) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
             data->base = base;
             data->init = rec;
@@ -175,12 +164,12 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                 ib_cfgmap_handle_set, data
             );
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
         else {
             if (rec->fn_get != NULL || rec->fn_set != NULL) {
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
             }
 
             void *val = (void *)(((uint8_t *)base) + rec->offset);
@@ -198,45 +187,43 @@ ib_status_t ib_cfgmap_init(ib_cfgmap_t *cm,
                 val
             );
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
 
         /* Add the field. */
         rc = ib_hash_set(cm->hash, rec->name, (void *)f);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         ++rec;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_cfgmap_set(ib_cfgmap_t *cm,
                           const char *name,
                           void *in_val)
 {
-    IB_FTRACE_INIT();
     ib_field_t *f;
     ib_status_t rc;
 
     rc = ib_hash_get(cm->hash, &f, name);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_field_setv(f, in_val);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_cfgmap_get(const ib_cfgmap_t *cm,
                           const char *name,
                           void *out_val, ib_ftype_t *ptype)
 {
-    IB_FTRACE_INIT();
     ib_field_t *f;
     ib_status_t rc;
 
@@ -245,7 +232,7 @@ ib_status_t ib_cfgmap_get(const ib_cfgmap_t *cm,
         if (ptype != NULL) {
             *ptype = IB_FTYPE_GENERIC;
         }
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (ptype != NULL) {
@@ -253,5 +240,5 @@ ib_status_t ib_cfgmap_get(const ib_cfgmap_t *cm,
     }
 
     rc = ib_field_value(f, out_val);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

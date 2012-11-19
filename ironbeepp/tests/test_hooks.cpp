@@ -36,7 +36,6 @@
 
 #include "gtest/gtest.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 
 #include "state_notify_private.h"

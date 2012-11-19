@@ -39,8 +39,6 @@
 
 #include "ironbee_config_auto.h"
 #include <ironbee/array.h>
-#include <ironbee/debug.h>
-
 #include <string.h>
 
 /**
@@ -81,12 +79,11 @@ struct ib_array_t {
 ib_status_t ib_array_create(ib_array_t **parr, ib_mpool_t *pool,
                             size_t ninit, size_t nextents)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Validate. */
     if ((ninit == 0) || (nextents == 0)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Create the structure. */
@@ -118,24 +115,23 @@ ib_status_t ib_array_create(ib_array_t **parr, ib_mpool_t *pool,
         goto failed;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     /* Make sure everything is cleaned up on failure. */
     *parr = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_array_get(ib_array_t *arr, size_t idx, void *pval)
 {
-    IB_FTRACE_INIT();
     size_t r, c;
     void **data;
 
     if (idx >= arr->nelts) {
         *(void **)pval = NULL;
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Calculate the row/column where the data resides. */
@@ -145,12 +141,11 @@ ib_status_t ib_array_get(ib_array_t *arr, size_t idx, void *pval)
     data = ((void ***)arr->extents)[r];
     *(void **)pval = data[c];
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_array_setn(ib_array_t *arr, size_t idx, void *val)
 {
-    IB_FTRACE_INIT();
     size_t r, c;
     void **data;
 
@@ -166,7 +161,7 @@ ib_status_t ib_array_setn(ib_array_t *arr, size_t idx, void *val)
                                                         arr->nextents * 2,
                                                         sizeof(void *));
             if (new_extents == NULL) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
             memcpy(new_extents, arr->extents, sizeof(void *) * arr->nextents);
             arr->extents = new_extents;
@@ -191,24 +186,21 @@ ib_status_t ib_array_setn(ib_array_t *arr, size_t idx, void *val)
         arr->nelts = idx + 1;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_array_appendn(ib_array_t *arr, void *val)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = ib_array_setn(arr, arr->nelts, val);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 size_t ib_array_elements(ib_array_t *arr)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_SIZET(arr->nelts);
+    return arr->nelts;
 }
 
 size_t ib_array_size(ib_array_t *arr)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_SIZET(arr->size);
+    return arr->size;
 }

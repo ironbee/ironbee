@@ -23,7 +23,6 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
@@ -51,7 +50,6 @@ static ib_status_t inplace(ib_flags_t inflags,
                            size_t dlen,
                            ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     size_t i = 0;
     int modcount = 0;
 
@@ -75,7 +73,7 @@ static ib_status_t inplace(ib_flags_t inflags,
         *result = inflags;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -97,7 +95,6 @@ static ib_status_t copy_on_write(ib_mpool_t *mp,
                                  size_t *dlen_out,
                                  ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     const uint8_t *iptr;
     const uint8_t *iend;
     uint8_t *optr;
@@ -131,7 +128,7 @@ static ib_status_t copy_on_write(ib_mpool_t *mp,
                 size_t off;
                 obuf = ib_mpool_alloc(mp, dlen_in);
                 if (obuf == NULL) {
-                    IB_FTRACE_RET_STATUS(IB_EALLOC);
+                    return IB_EALLOC;
                 }
                 *data_out = obuf;
                 *result = (IB_STRFLAG_NEWBUF|IB_STRFLAG_MODIFIED);
@@ -154,7 +151,7 @@ static ib_status_t copy_on_write(ib_mpool_t *mp,
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Simple ASCII lowercase function (ex version); see string.h */
@@ -166,7 +163,6 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
                            size_t *dlen_out,
                            ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
 
     assert(mp != NULL);
@@ -185,7 +181,7 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
     case IB_STROP_COPY:
         *data_out = ib_mpool_memdup(mp, data_in, dlen_in);
         if (*data_out == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         *dlen_out = dlen_in;
         rc = inplace(IB_STRFLAG_NEWBUF, *data_out, dlen_in, result);
@@ -196,10 +192,10 @@ ib_status_t ib_strlower_ex(ib_strop_t op,
         break;
 
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* ASCII lowercase function (string version); See string.h */
@@ -209,7 +205,6 @@ ib_status_t ib_strlower(ib_strop_t op,
                         char **str_out,
                         ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     size_t len;
     ib_status_t rc = IB_OK;
     char *out = NULL;
@@ -229,7 +224,7 @@ ib_status_t ib_strlower(ib_strop_t op,
     case IB_STROP_COPY:
         out = ib_mpool_strdup(mp, str_in);
         if (out == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         rc = inplace(IB_STRFLAG_NEWBUF, (uint8_t*)out, len, result);
         break;
@@ -251,7 +246,7 @@ ib_status_t ib_strlower(ib_strop_t op,
     }
 
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (rc == IB_OK) {
@@ -260,5 +255,5 @@ ib_status_t ib_strlower(ib_strop_t op,
         }
         *str_out = out;
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

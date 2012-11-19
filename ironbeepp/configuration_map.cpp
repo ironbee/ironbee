@@ -28,8 +28,6 @@
 #include <ironbeepp/internal/catch.hpp>
 #include <ironbeepp/internal/data.hpp>
 
-#include <ironbee/debug.h>
-
 namespace IronBee {
 
 namespace Internal {
@@ -45,8 +43,6 @@ ib_status_t cfgmap_get(
     void*             cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(base != NULL);
 
     try {
@@ -57,9 +53,9 @@ ib_status_t cfgmap_get(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception());
+        return Internal::convert_exception();
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t cfgmap_set(
@@ -69,8 +65,6 @@ ib_status_t cfgmap_set(
     void*       cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(base != NULL);
 
     try {
@@ -81,9 +75,9 @@ ib_status_t cfgmap_set(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception());
+        return Internal::convert_exception();
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t cfgmap_handle_get(
@@ -93,17 +87,13 @@ ib_status_t cfgmap_handle_get(
     void*             cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(handle != NULL);
 
-    IB_FTRACE_RET_STATUS(
-        cfgmap_get(
-            *reinterpret_cast<const void* const*>(handle),
-            out_value,
-            field,
-            cbdata
-        )
+    return cfgmap_get(
+        *reinterpret_cast<const void* const*>(handle),
+        out_value,
+        field,
+        cbdata
     );
 }
 

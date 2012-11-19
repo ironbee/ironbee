@@ -23,7 +23,6 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
@@ -99,7 +98,6 @@ static void ws_count(bool force_other_zero,
                      size_t *count,
                      size_t *other)
 {
-    IB_FTRACE_INIT();
     const uint8_t *end;
     size_t icount = 0;     /* Internal count */
     size_t iother = 0;     /* Internal other */
@@ -126,7 +124,7 @@ static void ws_count(bool force_other_zero,
 
     *count = icount;
     *other = (force_other_zero) ? 0 : iother;
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -144,9 +142,8 @@ static void ws_remove_count(size_t minlen,
                             size_t *count,
                             size_t *other)
 {
-    IB_FTRACE_INIT();
     ws_count(true, minlen, data, dlen, count, other);
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -164,7 +161,6 @@ static ib_status_t ws_remove_inplace(uint8_t *buf,
                                      size_t *dlen_out,
                                      ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     const uint8_t *iend;
     const uint8_t *iptr;
     uint8_t *optr;
@@ -178,7 +174,7 @@ static ib_status_t ws_remove_inplace(uint8_t *buf,
     /* Special case zero length string */
     if (dlen_in == 0) {
         *dlen_out = 0;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Loop through all of the input */
@@ -199,7 +195,7 @@ static ib_status_t ws_remove_inplace(uint8_t *buf,
     if (*dlen_out != dlen_in) {
         *result |= IB_STRFLAG_MODIFIED;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -217,7 +213,6 @@ static ib_status_t ws_remove(const uint8_t *data_in,
                              uint8_t *data_out,
                              size_t dlen_out)
 {
-    IB_FTRACE_INIT();
     const uint8_t *iend;
     const uint8_t *oend;
     uint8_t *optr;
@@ -228,7 +223,7 @@ static ib_status_t ws_remove(const uint8_t *data_in,
 
     /* Special case zero length string */
     if (dlen_in == 0) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Loop through all of the input */
@@ -245,7 +240,7 @@ static ib_status_t ws_remove(const uint8_t *data_in,
         ++data_in;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -263,9 +258,8 @@ static void ws_compress_count(size_t minlen,
                               size_t *count,
                               size_t *other)
 {
-    IB_FTRACE_INIT();
     ws_count(false, minlen, data, dlen, count, other);
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -283,7 +277,6 @@ static ib_status_t ws_compress_inplace(uint8_t *buf,
                                        size_t *dlen_out,
                                        ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     const uint8_t *iend;
     const uint8_t *iptr;
     uint8_t *optr;
@@ -299,7 +292,7 @@ static ib_status_t ws_compress_inplace(uint8_t *buf,
     /* Special case zero length string */
     if (dlen_in == 0) {
         *dlen_out = 0;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Loop through all of the input */
@@ -332,7 +325,7 @@ static ib_status_t ws_compress_inplace(uint8_t *buf,
     if (modified) {
         *result |= IB_STRFLAG_MODIFIED;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -350,7 +343,6 @@ static ib_status_t ws_compress(const uint8_t *data_in,
                                uint8_t *data_out,
                                size_t dlen_out)
 {
-    IB_FTRACE_INIT();
     const uint8_t *iend;
     const uint8_t *oend;
     uint8_t *optr;
@@ -362,7 +354,7 @@ static ib_status_t ws_compress(const uint8_t *data_in,
 
     /* Special case zero length string */
     if (dlen_in == 0) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Loop through all of the input */
@@ -386,7 +378,7 @@ static ib_status_t ws_compress(const uint8_t *data_in,
         ++data_in;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -420,7 +412,6 @@ static ib_status_t ws_op(ib_strop_t op,
                          size_t *dlen_out,
                          ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     size_t count;
     size_t other;
     size_t olen;
@@ -445,7 +436,7 @@ static ib_status_t ws_op(ib_strop_t op,
         olen = dlen_in - count;
         *data_out = ib_mpool_alloc(mp, olen + (nul ? 1 : 0));
         if (*data_out == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         if ( (count == 0) && (other == 0) ) {
             *result = (IB_STRFLAG_NEWBUF);
@@ -469,7 +460,7 @@ static ib_status_t ws_op(ib_strop_t op,
             olen = dlen_in - count;
             *data_out = ib_mpool_alloc(mp, olen + (nul ? 1 : 0));
             if (*data_out == NULL) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
             *result = (IB_STRFLAG_MODIFIED | IB_STRFLAG_NEWBUF);
             rc = fn_outplace(data_in, dlen_in, *data_out, olen);
@@ -478,13 +469,13 @@ static ib_status_t ws_op(ib_strop_t op,
         break;
 
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (nul) {
         *(*data_out + (*dlen_out)) = '\0';
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Delete all whitespace from a string (extended version) */
@@ -496,7 +487,6 @@ ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
                                   size_t *dlen_out,
                                   ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
 
     assert(mp != NULL);
@@ -511,7 +501,7 @@ ib_status_t ib_str_wspc_remove_ex(ib_strop_t op,
                data_in, dlen_in,
                data_out, dlen_out, result);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Delete all whitespace from a string (NUL terminated string version) */
@@ -521,7 +511,6 @@ ib_status_t ib_str_wspc_remove(ib_strop_t op,
                                char **data_out,
                                ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     size_t len;
     ib_status_t rc;
 
@@ -535,7 +524,7 @@ ib_status_t ib_str_wspc_remove(ib_strop_t op,
                (uint8_t *)data_in, strlen(data_in),
                (uint8_t **)data_out, &len, result);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Compress whitespace in a string (extended version) */
@@ -547,7 +536,6 @@ ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
                                     size_t *dlen_out,
                                     ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
 
     assert(mp != NULL);
@@ -562,7 +550,7 @@ ib_status_t ib_str_wspc_compress_ex(ib_strop_t op,
                data_in, dlen_in,
                data_out, dlen_out, result);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Compress whitespace in a string (NUL terminated string version) */
@@ -572,7 +560,6 @@ ib_status_t ib_str_wspc_compress(ib_strop_t op,
                                  char **data_out,
                                  ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     size_t len;
     ib_status_t rc;
 
@@ -586,5 +573,5 @@ ib_status_t ib_str_wspc_compress(ib_strop_t op,
                (uint8_t *)data_in, strlen(data_in),
                (uint8_t **)data_out, &len, result);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

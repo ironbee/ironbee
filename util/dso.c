@@ -27,7 +27,6 @@
 
 #include <ironbee/dso.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/util.h>
 
 #include <dlfcn.h>
@@ -46,7 +45,6 @@ ib_status_t ib_dso_open(
     ib_mpool_t  *pool
 )
 {
-    IB_FTRACE_INIT();
     void *handle;
 
     /// @todo Probably need to do this portably someday
@@ -54,19 +52,19 @@ ib_status_t ib_dso_open(
     handle = dlopen(file, RTLD_LAZY);
     if (handle == NULL) {
         ib_util_log_error("%s", dlerror());
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     *dso = ib_mpool_alloc(pool, sizeof(**dso));
     if (*dso == NULL) {
         dlclose(handle);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     (*dso)->mp = pool;
     (*dso)->handle = handle;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
@@ -74,15 +72,14 @@ ib_status_t ib_dso_close(
     ib_dso_t *dso
 )
 {
-    IB_FTRACE_INIT();
     if (dso == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (dlclose(dso->handle) != 0) {
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
@@ -92,11 +89,10 @@ ib_status_t DLL_PUBLIC ib_dso_sym_find(
     const char    *name
 )
 {
-    IB_FTRACE_INIT();
     char *err;
 
     if (dso == NULL || psym == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     dlerror(); /* Clear any errors */
@@ -105,8 +101,8 @@ ib_status_t DLL_PUBLIC ib_dso_sym_find(
     err = dlerror();
     if (err != NULL) {
         ib_util_log_error("%s", err);
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

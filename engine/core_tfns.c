@@ -27,7 +27,6 @@
 #include "core_private.h"
 
 #include <ironbee/bytestr.h>
-#include <ironbee/debug.h>
 #include <ironbee/decode.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
@@ -62,7 +61,6 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
                               ib_field_t **fout,
                               ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_flags_t result;
 
@@ -84,21 +82,21 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
         char *out;
         rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (in == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         rc = str_fn(IB_STROP_COW, mp, (char *)in, &out, &result);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_field_create(fout, mp,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         break;
     }
@@ -111,14 +109,14 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
         size_t dlen;
         rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (bs == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         din = ib_bytestr_const_ptr(bs);
         if (din == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
         rc = ex_fn(IB_STROP_COW, mp,
@@ -126,19 +124,19 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
                    &dout, &dlen,
                    &result);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_field_create_bytestr_alias(fout, mp,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         break;
     }
 
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     } /* switch(fin->type) */
 
     /* Check the flags */
@@ -149,7 +147,7 @@ static ib_status_t tfn_strmod(ib_engine_t *ib,
         *pflags = IB_TFN_NONE;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -171,13 +169,11 @@ static ib_status_t tfn_lowercase(ib_engine_t *ib,
                                  ib_field_t **fout,
                                  ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_strlower, ib_strlower_ex,
                                 fin, fout, pflags);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -199,13 +195,11 @@ static ib_status_t tfn_trim_left(ib_engine_t *ib,
                                  ib_field_t **fout,
                                  ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_strtrim_left, ib_strtrim_left_ex,
                                 fin, fout, pflags);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -227,13 +221,11 @@ static ib_status_t tfn_trim_right(ib_engine_t *ib,
                                   ib_field_t **fout,
                                   ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_strtrim_right, ib_strtrim_right_ex,
                                 fin, fout, pflags);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -255,13 +247,11 @@ static ib_status_t tfn_trim(ib_engine_t *ib,
                             ib_field_t **fout,
                             ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_strtrim_lr, ib_strtrim_lr_ex,
                                 fin, fout, pflags);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -283,13 +273,11 @@ static ib_status_t tfn_wspc_remove(ib_engine_t *ib,
                                    ib_field_t **fout,
                                    ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_str_wspc_remove, ib_str_wspc_remove_ex,
                                 fin, fout, pflags);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -311,13 +299,11 @@ static ib_status_t tfn_wspc_compress(ib_engine_t *ib,
                                      ib_field_t **fout,
                                      ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc = tfn_strmod(ib, mp,
                                 ib_str_wspc_compress, ib_str_wspc_compress_ex,
                                 fin, fout, pflags);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -339,7 +325,6 @@ static ib_status_t tfn_length(ib_engine_t *ib,
                               ib_field_t **fout,
                               ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
 
     assert(mp != NULL);
@@ -356,7 +341,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
         const char *fval;
         rc = ib_field_value(fin, ib_ftype_nulstr_out(&fval));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         const ib_num_t len = strlen(fval);
@@ -371,7 +356,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
         const ib_bytestr_t *value;
         rc = ib_field_value(fin, ib_ftype_bytestr_out(&value));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         const ib_num_t len = ib_bytestr_length(value);
@@ -390,11 +375,11 @@ static ib_status_t tfn_length(ib_engine_t *ib,
         // @todo Remove mutable once list is const correct.
         rc = ib_field_value(fin, ib_ftype_list_out(&ilist));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         if (ilist == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+            return IB_EUNKNOWN;
         }
 
         /* Create the outgoing list field */
@@ -404,7 +389,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
             IB_FTYPE_LIST, NULL
         );
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Walk through the incoming fields */
@@ -415,11 +400,11 @@ static ib_status_t tfn_length(ib_engine_t *ib,
 
             rc = tfn_length(ib, mp, NULL, ifield, &ofield, &flags);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
             rc = ib_field_list_add(*fout, ofield);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
     }
@@ -432,7 +417,7 @@ static ib_status_t tfn_length(ib_engine_t *ib,
     }
 
     (*pflags) |= IB_TFN_FMODIFIED;
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -454,7 +439,6 @@ static ib_status_t tfn_count(ib_engine_t *ib,
                              ib_field_t **fout,
                              ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     ib_num_t value = 0;
 
@@ -468,7 +452,7 @@ static ib_status_t tfn_count(ib_engine_t *ib,
         const ib_list_t *lst;
         rc = ib_field_value(fin, ib_ftype_list_out(&lst));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         value = IB_LIST_ELEMENTS(lst);
@@ -484,7 +468,7 @@ static ib_status_t tfn_count(ib_engine_t *ib,
     );
 
     (*pflags) |= IB_TFN_FMODIFIED;
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -502,7 +486,6 @@ static ib_status_t list_minmax(bool is_max,
                                const ib_field_t *fin,
                                ib_field_t **fout)
 {
-    IB_FTRACE_INIT();
     ib_status_t           rc = IB_OK;
     const ib_list_t      *lst;
     const ib_list_node_t *node = NULL;
@@ -517,11 +500,11 @@ static ib_status_t list_minmax(bool is_max,
     // @todo Remove mutable once list is const correct.
     rc = ib_field_value(fin, ib_ftype_list_out(&lst));
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (lst == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Walk through the incoming fields */
@@ -535,7 +518,7 @@ static ib_status_t list_minmax(bool is_max,
             ib_num_t fval;
             rc = ib_field_value(ifield, ib_ftype_num_out(&fval));
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             value = fval;
@@ -547,7 +530,7 @@ static ib_status_t list_minmax(bool is_max,
             const char *fval;
             rc = ib_field_value(ifield, ib_ftype_nulstr_out(&fval));
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             value = (ib_num_t)strlen(fval);
@@ -559,7 +542,7 @@ static ib_status_t list_minmax(bool is_max,
             const ib_bytestr_t *fval;
             rc = ib_field_value(ifield, ib_ftype_bytestr_out(&fval));
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             value = (ib_num_t)ib_bytestr_length(fval);
@@ -573,18 +556,18 @@ static ib_status_t list_minmax(bool is_max,
 
             rc = list_minmax(is_max, mp, fin, &tmp);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
             rc = ib_field_value(tmp, ib_ftype_num_out(&v));
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
             value = v;
             break;
         }
 
         default:
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
 
         if ( first ||
@@ -601,7 +584,7 @@ static ib_status_t list_minmax(bool is_max,
                          fin->name, fin->nlen,
                          IB_FTYPE_NUM, ib_ftype_num_in(&mmvalue));
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -623,7 +606,6 @@ static ib_status_t tfn_max(ib_engine_t *ib,
                            ib_field_t **fout,
                            ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
 
     assert(mp != NULL);
@@ -645,7 +627,7 @@ static ib_status_t tfn_max(ib_engine_t *ib,
             rc = IB_EINVAL;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -667,7 +649,6 @@ static ib_status_t tfn_min(ib_engine_t *ib,
                            ib_field_t **fout,
                            ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
 
     assert(mp != NULL);
@@ -690,7 +671,7 @@ static ib_status_t tfn_min(ib_engine_t *ib,
             rc = IB_EINVAL;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -712,7 +693,6 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
                                   ib_field_t **fout,
                                   ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_flags_t result;
 
@@ -732,21 +712,21 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
         char *out;
         rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (in == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         rc = ib_util_decode_url_cow(mp, (char *)in, &out, &result);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_field_create(fout, mp,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         break;
     }
@@ -759,14 +739,14 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
         size_t dlen;
         rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (bs == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         din = ib_bytestr_const_ptr(bs);
         if (din == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
         rc = ib_util_decode_url_cow_ex(mp,
@@ -774,18 +754,18 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
                                        &dout, &dlen,
                                        &result);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_field_create_bytestr_alias(fout, mp,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         break;
     }
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     } /* switch(fin->type) */
 
     /* Check the flags */
@@ -796,7 +776,7 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
         *pflags = IB_TFN_NONE;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -818,7 +798,6 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
                                           ib_field_t **fout,
                                           ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_flags_t result;
 
@@ -838,21 +817,21 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
         char *out;
         rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (in == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         rc = ib_util_decode_html_entity_cow(mp, (char *)in, &out, &result);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_field_create(fout, mp,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         break;
     }
@@ -865,14 +844,14 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
         size_t dlen;
         rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (bs == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         din = ib_bytestr_const_ptr(bs);
         if (din == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
         rc = ib_util_decode_html_entity_cow_ex(mp,
@@ -880,18 +859,18 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
                                                &dout, &dlen,
                                                &result);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_field_create_bytestr_alias(fout, mp,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         break;
     }
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     } /* switch(fin->type) */
 
     /* Check the flags */
@@ -902,7 +881,7 @@ static ib_status_t tfn_html_entity_decode(ib_engine_t *ib,
         *pflags = IB_TFN_NONE;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -924,7 +903,6 @@ static ib_status_t normalize_path(ib_engine_t *ib,
                                   ib_field_t **fout,
                                   ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_flags_t result;
 
@@ -944,21 +922,21 @@ static ib_status_t normalize_path(ib_engine_t *ib,
         char *out;
         rc = ib_field_value(fin, ib_ftype_nulstr_out(&in));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (in == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         rc = ib_util_normalize_path_cow(mp, in, win, &out, &result);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_field_create(fout, mp,
                              fin->name, fin->nlen,
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(out));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         break;
     }
@@ -971,14 +949,14 @@ static ib_status_t normalize_path(ib_engine_t *ib,
         size_t dlen;
         rc = ib_field_value(fin, ib_ftype_bytestr_out(&bs));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (bs == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         din = ib_bytestr_const_ptr(bs);
         if (din == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         dlen = ib_bytestr_length(bs);
         rc = ib_util_normalize_path_cow_ex(mp,
@@ -986,18 +964,18 @@ static ib_status_t normalize_path(ib_engine_t *ib,
                                            &dout, &dlen,
                                            &result);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_field_create_bytestr_alias(fout, mp,
                                            fin->name, fin->nlen,
                                            dout, dlen);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         break;
     }
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     } /* switch(fin->type) */
 
     /* Check the flags */
@@ -1008,7 +986,7 @@ static ib_status_t normalize_path(ib_engine_t *ib,
         *pflags = IB_TFN_NONE;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1030,7 +1008,6 @@ static ib_status_t tfn_normalize_path(ib_engine_t *ib,
                                       ib_field_t **fout,
                                       ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     assert(ib != NULL);
@@ -1040,7 +1017,7 @@ static ib_status_t tfn_normalize_path(ib_engine_t *ib,
     assert(pflags != NULL);
 
     rc = normalize_path(ib, mp, fin, false, fout, pflags);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1062,7 +1039,6 @@ static ib_status_t tfn_normalize_path_win(ib_engine_t *ib,
                                           ib_field_t **fout,
                                           ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     assert(ib != NULL);
@@ -1072,7 +1048,7 @@ static ib_status_t tfn_normalize_path_win(ib_engine_t *ib,
     assert(pflags != NULL);
 
     rc = normalize_path(ib, mp, fin, true, fout, pflags);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1080,98 +1056,97 @@ static ib_status_t tfn_normalize_path_win(ib_engine_t *ib,
  **/
 ib_status_t ib_core_transformations_init(ib_engine_t *ib, ib_module_t *mod)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Define transformations. */
     rc = ib_tfn_register(ib, "lowercase", tfn_lowercase,
                          IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     rc = ib_tfn_register(ib, "lc", tfn_lowercase,
                          IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "trimLeft", tfn_trim_left,
                          IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "trimRight", tfn_trim_right,
                          IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "trim", tfn_trim,
                          IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "removeWhitespace", tfn_wspc_remove,
                          IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "compressWhitespace", tfn_wspc_compress,
                          IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "length", tfn_length,
                          IB_TFN_FLAG_HANDLE_LIST, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "count", tfn_count,
                          IB_TFN_FLAG_HANDLE_LIST, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "max", tfn_max,
                          IB_TFN_FLAG_HANDLE_LIST, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "min", tfn_min,
                          IB_TFN_FLAG_HANDLE_LIST, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "urlDecode", tfn_url_decode,
                          IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "htmlEntityDecode", tfn_html_entity_decode,
                          IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "normalizePath", tfn_normalize_path,
                          IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_tfn_register(ib, "normalizePathWin", tfn_normalize_path_win,
                          IB_TFN_FLAG_NONE, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

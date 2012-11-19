@@ -28,7 +28,6 @@
 
 #include <ironbee/bytestr.h>
 #include <ironbee/config.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/module.h>
@@ -708,7 +707,6 @@ static ib_status_t trace_tx_request(
      void *cbdata
 )
 {
-    IB_FTRACE_INIT();
     trace_context_t *trace_ctx = (trace_context_t *)cbdata;
 
     ib_log_debug(ib, "trace_tx_request");
@@ -721,7 +719,7 @@ static ib_status_t trace_tx_request(
             (int)ib_bytestr_length(tx->request_line->raw),
             (char *)ib_bytestr_const_ptr(tx->request_line->raw));
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -741,7 +739,6 @@ static ib_status_t trace_tx_response(
     void *cbdata
 )
 {
-    IB_FTRACE_INIT();
     trace_context_t *trace_ctx = (trace_context_t *)cbdata;
 
     ib_log_debug(ib, "trace_tx_response");
@@ -764,7 +761,7 @@ static ib_status_t trace_tx_response(
                 (char *)ib_bytestr_const_ptr(tx->response_line->raw));
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -782,13 +779,11 @@ static void print_field(const char *label,
                         ib_field_t *field,
                         size_t maxlen)
 {
-    IB_FTRACE_INIT();
-
     /* Check the field name
      * Note: field->name is not always a null ('\0') terminated string */
     if (field == NULL) {
         printf( "  %s = <NULL>\n", label );
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     switch (field->type) {
@@ -953,7 +948,6 @@ static const char *build_path(const char *path, ib_field_t *field)
  */
 static ib_status_t print_list(const char *path, ib_list_t *lst)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_list_node_t *node = NULL;
 
@@ -977,7 +971,7 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
                 rc = ib_field_mutable_value(field,
                                             ib_ftype_list_mutable_out(&v));
                 if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
+                    return rc;
                 }
 
                 fullpath = build_path(path, field);
@@ -992,7 +986,7 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
@@ -1049,7 +1043,6 @@ static ib_status_t print_tx( ib_engine_t *ib,
                              ib_state_event_type_t event,
                              void *data )
 {
-    IB_FTRACE_INIT();
     ib_list_t *lst;
     ib_field_t *field = NULL;
     const ib_strval_t *rec;
@@ -1069,13 +1062,13 @@ static ib_status_t print_tx( ib_engine_t *ib,
             // @todo Remove mutable once list is const correct.
             rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&lst));
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             if (lst == NULL) {
                 printf("print_tx: Failed ARGS is not a list\n");
                 ib_log_debug(ib, "print_tx: ARGS is not a list");
-                IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+                return IB_EUNKNOWN;
             }
             print_list("ARGS", lst);
         }
@@ -1103,7 +1096,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
         if (rc != IB_OK) {
             ib_log_debug_tx(tx, "print_tx: Failed to create tx list: %s",
                             ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+            return IB_EUNKNOWN;
         }
 
         /* Extract the request headers field from the provider instance */
@@ -1111,7 +1104,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
         if (rc != IB_OK) {
             ib_log_debug_tx(tx, "print_tx: Failed to get all headers: %s",
                             ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+            return IB_EUNKNOWN;
         }
 
         /* Print it all */
@@ -1119,12 +1112,12 @@ static ib_status_t print_tx( ib_engine_t *ib,
         if (rc != IB_OK) {
             ib_log_debug_tx(tx, "print_tx: Failed printing headers: %s",
                             ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+            return IB_EUNKNOWN;
         }
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1138,14 +1131,12 @@ static ib_status_t print_context(
     const ib_context_t *ctx
 )
 {
-    IB_FTRACE_INIT();
-
     printf("  Context Type: %d (\"%s\")\n", ctx->ctype, ctx->ctx_type);
     printf("  Context Name: \"%s\"\n", ctx->ctx_name);
     printf("  Context Full Name: \"%s\"\n", ctx->ctx_full);
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1167,8 +1158,6 @@ static ib_status_t print_context_conn(
     void *data
 )
 {
-    IB_FTRACE_INIT();
-
     printf("[Connection Context Selected]\n");
     printf("  Remote: %s/%u\n",
            conn->remote_ipstr, (unsigned int)conn->remote_port);
@@ -1177,7 +1166,7 @@ static ib_status_t print_context_conn(
     print_context(conn->ctx);
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1199,8 +1188,6 @@ static ib_status_t print_context_tx(
     void *data
 )
 {
-    IB_FTRACE_INIT();
-
     printf("[TX Context Selected]\n");
     printf("  Hostname: \"%s\"\n", tx->hostname);
     printf("  Effective remote IP: %s\n", tx->er_ipstr);
@@ -1208,7 +1195,7 @@ static ib_status_t print_context_tx(
     print_context(tx->ctx);
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1233,7 +1220,6 @@ static ib_status_t print_user_agent(
     void *data
 )
 {
-    IB_FTRACE_INIT();
     ib_field_t *req = NULL;
     ib_status_t rc = IB_OK;
     ib_list_t *lst = NULL;
@@ -1244,21 +1230,21 @@ static ib_status_t print_user_agent(
     if ( (req == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx,
                      "print_user_agent: No user agent info available" );
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* The field value *should* be a list, extract it as such */
     // @todo Remove mutable once list is const correct.
     rc = ib_field_mutable_value(req, ib_ftype_list_mutable_out(&lst));
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (lst == NULL) {
         ib_log_debug_tx(tx,
                      "print_user_agent: "
                      "Field list missing / incorrect type" );
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Loop through the list & print everything */
@@ -1270,7 +1256,7 @@ static ib_status_t print_user_agent(
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1295,7 +1281,6 @@ static ib_status_t print_geoip(
      void *data
 )
 {
-    IB_FTRACE_INIT();
     ib_field_t *req = NULL;
     ib_status_t rc = IB_OK;
     ib_list_t *lst = NULL;
@@ -1306,20 +1291,20 @@ static ib_status_t print_geoip(
     rc = ib_data_get(tx->dpi, "GEOIP", &req);
     if ( (req == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx, "print_geoip: No GeoIP info available" );
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* The field value *should* be a list, extract it as such */
     // @todo Remove mutable once list is const correct.
     rc = ib_field_mutable_value(req, ib_ftype_list_mutable_out(&lst));
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (lst == NULL) {
         ib_log_debug_tx(tx,
                      "print_geoip: Field list missing / incorrect type" );
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Loop through the list & print everything */
@@ -1338,7 +1323,7 @@ static ib_status_t print_geoip(
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1360,31 +1345,30 @@ static ib_status_t action_print_create(ib_engine_t *ib,
                                        ib_action_inst_t *inst,
                                        void *cbdata)
 {
-    IB_FTRACE_INIT();
     char *str;
     ib_status_t rc;
     bool expand;
 
     if (parameters == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     str = ib_mpool_strdup(mp, parameters);
     if (str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Do we need expansion? */
     rc = ib_data_expand_test_str(str, &expand);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     else if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
     inst->data = str;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1402,7 +1386,6 @@ static ib_status_t action_print_execute(const ib_rule_exec_t *rule_exec,
                                         ib_flags_t flags,
                                         void *cbdata)
 {
-    IB_FTRACE_INIT();
     const char *cstr = (const char *)data;
     char *expanded = NULL;
     ib_status_t rc;
@@ -1421,7 +1404,7 @@ static ib_status_t action_print_execute(const ib_rule_exec_t *rule_exec,
     }
 
     printf( "Rule %s => %s\n", ib_rule_id(rule_exec->rule), expanded);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1443,31 +1426,30 @@ static ib_status_t action_printvar_create(ib_engine_t *ib,
                                           ib_action_inst_t *inst,
                                           void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     char *varname;
     bool expand;
 
     if (parameters == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     varname = ib_mpool_strdup(mp, parameters);
     if (varname == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Do we need expansion? */
     rc = ib_data_expand_test_str(varname, &expand);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     else if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
     inst->data = varname;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1485,8 +1467,6 @@ static ib_status_t get_data_value(ib_tx_t *tx,
                                   size_t namelen,
                                   ib_field_t **field)
 {
-    IB_FTRACE_INIT();
-
     assert(tx != NULL);
     assert(name != NULL);
     assert(field != NULL);
@@ -1500,11 +1480,11 @@ static ib_status_t get_data_value(ib_tx_t *tx,
     rc = ib_data_get_ex(tx->dpi, name, namelen, &cur);
     if ( (rc == IB_ENOENT) || (cur == NULL) ) {
         *field = NULL;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     else if (rc != IB_OK) {
         *field = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* If we got back something other than a list, or it's name matches
@@ -1513,7 +1493,7 @@ static ib_status_t get_data_value(ib_tx_t *tx,
          ((cur->nlen == namelen) && (memcmp(name, cur->name, namelen) == 0)) )
     {
         *field = cur;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /*
@@ -1525,20 +1505,20 @@ static ib_status_t get_data_value(ib_tx_t *tx,
         ib_log_error_tx(tx,
                         "printvar: Failed to get list from \"%.*s\": %s",
                         (int)namelen, name, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* No elements?  Filtered list with no values.  Return NULL. */
     elements = ib_list_elements(list);
     if (elements == 0) {
         *field = NULL;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     if (elements != 1) {
         ib_log_notice_tx(tx,
                          "printvar:Got back list with %zd elements", elements);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Use the first (only) element in the list as our field */
@@ -1548,12 +1528,12 @@ static ib_status_t get_data_value(ib_tx_t *tx,
                         "printvar: Failed to get first list element "
                         "from \"%.*s\": %s",
                         (int)namelen, name, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Finally, take the data from the first node.  Check and mate. */
     *field = (ib_field_t *)first->data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1571,7 +1551,6 @@ static ib_status_t action_printvar_execute(const ib_rule_exec_t *rule_exec,
                                            ib_flags_t flags,
                                            void *cbdata)
 {
-    IB_FTRACE_INIT();
     assert(data != NULL);
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
@@ -1617,7 +1596,7 @@ static ib_status_t action_printvar_execute(const ib_rule_exec_t *rule_exec,
     snprintf(buf, sizeof(buf), "%s: Var %.*s",
              rule_exec->rule->meta.id, (int)namelen, varname);
     print_field(buf, field, 0);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1638,7 +1617,6 @@ static ib_status_t op_print_create(ib_engine_t *ib,
                                    const char *params,
                                    ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
     printop_params_t *vptr;
     const char *space;
     ib_num_t result;
@@ -1686,7 +1664,7 @@ static ib_status_t op_print_create(ib_engine_t *ib,
         ib_status_t rc;
         rc = ib_data_expand_test_str(text, &expand);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         else if (expand) {
             op_inst->flags |= IB_OPINST_FLAG_EXPAND;
@@ -1696,7 +1674,7 @@ static ib_status_t op_print_create(ib_engine_t *ib,
     /* Allocate storage for the value */
     vptr = (printop_params_t *)ib_mpool_alloc(mp, sizeof(*vptr));
     if (vptr == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Fill in the parameters */
@@ -1705,7 +1683,7 @@ static ib_status_t op_print_create(ib_engine_t *ib,
     vptr->text   = text;
 
     op_inst->data = vptr;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1725,7 +1703,6 @@ static ib_status_t op_print_execute(const ib_rule_exec_t *rule_exec,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
-    IB_FTRACE_INIT();
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
 
@@ -1739,19 +1716,19 @@ static ib_status_t op_print_execute(const ib_rule_exec_t *rule_exec,
 
         char *fncopy = (char *)ib_mpool_alloc(tx->mp, field->nlen + 1);
         if (fncopy == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         strncpy(fncopy, field->name, field->nlen);
         rc = ib_data_add_bytestr(tx->dpi,
                                  label, (uint8_t *)fncopy, field->nlen,
                                  NULL);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         rc = ib_data_expand_str(tx->dpi, pdata->text, false, (char **)&text);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         ib_data_remove(tx->dpi, label, NULL);
     }
@@ -1764,7 +1741,7 @@ static ib_status_t op_print_execute(const ib_rule_exec_t *rule_exec,
 
     print_field(text, field, pdata->maxlen);
     *result = pdata->result;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1779,7 +1756,6 @@ static ib_status_t op_print_execute(const ib_rule_exec_t *rule_exec,
  */
 static ib_status_t register_handlers(ib_engine_t* ib)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Register a connection open event handler */
@@ -1791,7 +1767,7 @@ static ib_status_t register_handlers(ib_engine_t* ib)
     );
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to register connection opened event: %d\n", rc);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the print action */
@@ -1803,7 +1779,7 @@ static ib_status_t register_handlers(ib_engine_t* ib)
                             action_print_execute, NULL);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to register print action: %d\n", rc);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the print action */
@@ -1815,7 +1791,7 @@ static ib_status_t register_handlers(ib_engine_t* ib)
                             action_printvar_execute, NULL);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to register printvar action: %d\n", rc);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the print operator */
@@ -1831,10 +1807,10 @@ static ib_status_t register_handlers(ib_engine_t* ib)
                               op_print_execute,
                               NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1850,7 +1826,6 @@ static ib_status_t register_handlers(ib_engine_t* ib)
  */
 static ib_status_t register_late_handlers(ib_engine_t* ib)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Register the trace handlers */
@@ -1960,7 +1935,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -2024,7 +1999,6 @@ static ib_status_t send_header(ib_engine_t* ib,
                                ib_conndata_t *icdata,
                                FILE *fp)
 {
-    IB_FTRACE_INIT();
     ib_status_t  rc;
     reqhdr_buf_t rbuf;              /* Request header buffer for I/O */
     int          fnum;              /* Request header field number */
@@ -2095,7 +2069,7 @@ static ib_status_t send_header(ib_engine_t* ib,
         if (lineptr != NULL) {
             rc = append_req_hdr_buf(&rbuf, lineptr, linelen);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
     }
@@ -2116,7 +2090,7 @@ static ib_status_t send_header(ib_engine_t* ib,
         if (rhf->buf != NULL) {
             rc = append_req_hdr_buf(&rbuf, rhf->buf, rhf->buf_len);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
     }
@@ -2124,14 +2098,14 @@ static ib_status_t send_header(ib_engine_t* ib,
     /* No buffer means no header => bad */
     if (rbuf.buf == NULL) {
         fprintf(stderr, "WARNING: No request header found in file\n");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Add a empty line */
     if (http_version >= 10) {
         rc = append_req_hdr_buf(&rbuf, "\r\n", 2);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -2147,7 +2121,7 @@ static ib_status_t send_header(ib_engine_t* ib,
     free(rbuf.buf);
 
     /* Done */
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -2172,7 +2146,6 @@ static ib_status_t send_file(ib_engine_t* ib,
                              FILE *fp,
                              data_direction_t direction)
 {
-    IB_FTRACE_INIT();
     size_t      nbytes = 0;     /* # bytes currently in the buffer */
     ib_status_t rc;
     const char *ioname = (direction == DATA_IN) ? "input" : "output";
@@ -2191,11 +2164,11 @@ static ib_status_t send_file(ib_engine_t* ib,
         if (rc != IB_OK) {
             fprintf(stderr,
                     "Failed to send %s data to IronBee: %d\n", ioname, rc);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -2215,7 +2188,6 @@ static ib_status_t run_transaction(ib_engine_t* ib,
                                    const char *req_file,
                                    const char *rsp_file)
 {
-    IB_FTRACE_INIT();
     FILE          *reqfp  = NULL;
     FILE          *rspfp = NULL;
     ib_conndata_t  conn_data;
@@ -2289,7 +2261,7 @@ end:
         fclose(rspfp);
 
     /* Done */
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -2303,7 +2275,6 @@ end:
  */
 static void run_connection(ib_engine_t* ib)
 {
-    IB_FTRACE_INIT();
     ib_status_t    rc;
     ib_conn_t     *conn = NULL;
     char          *buf = NULL;      /* I/O buffer */
@@ -2368,7 +2339,7 @@ end:
                 settings.trace_request_cnt, settings.trace_response_cnt);
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 
@@ -2410,8 +2381,6 @@ int main(int argc, char* argv[])
     ib_engine_t *ironbee = NULL;
     ib_context_t *ctx;
     ib_cfgparser_t *cp;
-
-    ib_trace_init(NULL);
 
     /* Process the command line */
     rc = command_line(argc, argv);

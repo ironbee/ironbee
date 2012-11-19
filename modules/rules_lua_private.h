@@ -28,7 +28,6 @@
 
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/list.h>
 #include <ironbee/module.h>

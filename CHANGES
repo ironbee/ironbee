@@ -3,6 +3,11 @@ Title:  IronBee Changes
 IronBee Changes
 ===============
 
+IronBee v0.7.0
+--------------
+
+* Removed FTRACE code.
+
 IronBee v0.6.0
 --------------
 

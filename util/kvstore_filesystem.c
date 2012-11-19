@@ -20,7 +20,6 @@
 #include <ironbee/kvstore_filesystem.h>
 
 #include <ironbee/clock.h>
-#include <ironbee/debug.h>
 #include <ironbee/kvstore.h>
 
 #include <assert.h>
@@ -82,8 +81,6 @@ static ib_status_t build_key_path(
     size_t type_len,
     char **path)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(key);
 
@@ -118,7 +115,7 @@ static ib_status_t build_key_path(
         kvstore->malloc_cbdata);
 
     if ( ! path_tmp ) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Push allocated path back to user. We now populate it. */
@@ -173,38 +170,34 @@ static ib_status_t build_key_path(
 
     *path_tmp = '\0';
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 eother_failure:
     kvstore->free(kvstore, *path, kvstore->free_cbdata);
     *path = NULL;
-    IB_FTRACE_RET_STATUS(IB_EOTHER);
+    return IB_EOTHER;
 }
 
 static ib_status_t kvconnect(
     ib_kvstore_server_t *server,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(server);
 
     /* Nop. */
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t kvdisconnect(
     ib_kvstore_server_t *server,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(server);
 
     /* Nop. */
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -226,8 +219,6 @@ static ib_status_t read_whole_file(
     void **data,
     size_t *len)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(path);
 
@@ -239,7 +230,7 @@ static ib_status_t read_whole_file(
 
     sys_rc = stat(path, &sb);
     if (sys_rc) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
     dataptr = (char *)kvstore->malloc(
@@ -247,7 +238,7 @@ static ib_status_t read_whole_file(
         sb.st_size,
         kvstore->malloc_cbdata);
     if (!dataptr) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     *len = sb.st_size;
     *data = dataptr;
@@ -270,7 +261,7 @@ static ib_status_t read_whole_file(
 
     close(fd);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 eother_failure:
     if (fd >= 0) {
@@ -279,7 +270,7 @@ eother_failure:
     kvstore->free(kvstore, *data, kvstore->free_cbdata);
     *data = NULL;
     *len = 0;
-    IB_FTRACE_RET_STATUS(IB_EOTHER);
+    return IB_EOTHER;
 }
 
 static ib_status_t extract_type(
@@ -288,8 +279,6 @@ static ib_status_t extract_type(
     char **type,
     size_t *type_length)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(path);
 
@@ -298,7 +287,7 @@ static ib_status_t extract_type(
 
     start = rindex(path, '.')+1;
     if (!start) {
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
 
     len = strlen(start);
@@ -307,12 +296,12 @@ static ib_status_t extract_type(
         len+1,
         kvstore->malloc_cbdata);
     if (!*type) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     strncpy(*type, start, len);
     *type_length = len;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -327,8 +316,6 @@ static ib_status_t extract_expiration(
     const char *path,
     uint32_t *expiration)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(path);
 
@@ -338,22 +325,22 @@ static ib_status_t extract_expiration(
 
     start = rindex(path, '/')+1;
     if (!start) {
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
     stop = index(start, '.');
     if (!stop) {
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
     substr = strndup(start, stop-start);
     if (!substr) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     *expiration = atoll(substr);
 
     free(substr);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -371,8 +358,6 @@ static ib_status_t load_kv_value(
     const char *file,
     ib_kvstore_value_t **value)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(file);
 
@@ -387,7 +372,7 @@ static ib_status_t load_kv_value(
         sizeof(**value),
         kvstore->malloc_cbdata);
     if (!*value) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Populate expiration. */
@@ -395,7 +380,7 @@ static ib_status_t load_kv_value(
     if (rc) {
         kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
     /* Remove expired file and signal there is no entry for that file. */
@@ -409,7 +394,7 @@ static ib_status_t load_kv_value(
         rmdir(file);
         kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
 
     /* Populate type and type_length. */
@@ -422,7 +407,7 @@ static ib_status_t load_kv_value(
     if (rc) {
         kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
     /* Populate value and value_length. */
@@ -436,10 +421,10 @@ static ib_status_t load_kv_value(
         kvstore->free(kvstore, (*value)->type, kvstore->free_cbdata);
         kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 typedef ib_status_t(*each_dir_t)(const char *path, const char *dirent, void*);
@@ -458,8 +443,6 @@ static ib_status_t count_dirent(
     const char *dirent,
     void *data)
 {
-    IB_FTRACE_INIT();
-
     assert(path);
     assert(dirent);
 
@@ -469,7 +452,7 @@ static ib_status_t count_dirent(
         ++(*i);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -481,8 +464,6 @@ static ib_status_t count_dirent(
  */
 static ib_status_t each_dir(const char *path, each_dir_t f, void* data)
 {
-    IB_FTRACE_INIT();
-
     assert(path);
     assert(f);
 
@@ -534,7 +515,7 @@ static ib_status_t each_dir(const char *path, each_dir_t f, void* data)
     /* Clean exit. */
     closedir(dir);
     free(entry);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 rc_failure:
     tmp_errno = errno;
@@ -545,7 +526,7 @@ rc_failure:
         free(entry);
     }
     errno = tmp_errno;
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -572,8 +553,6 @@ typedef struct build_value_t build_value_t;
  */
 static ib_status_t build_value(const char *path, const char *file, void *data)
 {
-    IB_FTRACE_INIT();
-
     assert(path);
     assert(file);
     assert(data);
@@ -586,14 +565,14 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
      * Partial results are not an error as an asynchronous write may
      * create a new file. */
     if (bv->values_idx >= bv->values_len) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     if (strncmp(".", file, 1)) {
         /* Build full path. */
         full_path = malloc(bv->path_len + strlen(file) + 2);
         if (!full_path) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         sprintf(full_path, "%s/%s", path, file);
 
@@ -610,7 +589,7 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
         free(full_path);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -629,8 +608,6 @@ static ib_status_t kvget(
     size_t *values_length,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(key);
 
@@ -679,7 +656,7 @@ static ib_status_t kvget(
 
     /* Clean exit. */
     free(path);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
     /**
      * Reverse initialization error labels.
@@ -690,7 +667,7 @@ failure1:
     if (path) {
         free(path);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -713,8 +690,6 @@ static ib_status_t kvset(
     ib_kvstore_value_t *value,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(key);
     assert(value);
@@ -780,7 +755,7 @@ error_2:
     free(tmp_path);
 error_1:
     free(path);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -800,8 +775,6 @@ static ib_status_t remove_file(
     const char *file,
     void *data)
 {
-    IB_FTRACE_INIT();
-
     assert(path);
     assert(file);
     assert(data);
@@ -814,7 +787,7 @@ static ib_status_t remove_file(
         full_path = malloc(path_len + strlen(file) + 2);
 
         if (!full_path) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         sprintf(full_path, "%s/%s", path, file);
@@ -824,7 +797,7 @@ static ib_status_t remove_file(
         free(full_path);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -843,8 +816,6 @@ static ib_status_t kvremove(
     const ib_kvstore_key_t *key,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(key);
 
@@ -855,7 +826,7 @@ static ib_status_t kvremove(
     /* Build a path with no expiration value on it. */
     rc = build_key_path(kvstore, key, -1, NULL, 0, &path);
     if (rc) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     path_len = strlen(path);
@@ -869,7 +840,7 @@ static ib_status_t kvremove(
 
     free(path);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -881,8 +852,6 @@ static ib_status_t kvremove(
  */
 static void kvdestroy (ib_kvstore_t* kvstore, ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
 
     ib_kvstore_filesystem_server_t *server =
@@ -891,15 +860,13 @@ static void kvdestroy (ib_kvstore_t* kvstore, ib_kvstore_cbdata_t *cbdata)
     free(server);
     kvstore->server = NULL;
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_status_t ib_kvstore_filesystem_init(
     ib_kvstore_t* kvstore,
     const char* directory)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(directory);
 
@@ -909,7 +876,7 @@ ib_status_t ib_kvstore_filesystem_init(
     ib_kvstore_filesystem_server_t *server = malloc(sizeof(*server));
 
     if ( server == NULL ) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     server->directory = strdup(directory);
@@ -917,7 +884,7 @@ ib_status_t ib_kvstore_filesystem_init(
 
     if ( server->directory == NULL ) {
         free(server);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     kvstore->server = (ib_kvstore_server_t *) server;
@@ -938,5 +905,5 @@ ib_status_t ib_kvstore_filesystem_init(
     kvstore->merge_policy_cbdata = NULL;
     kvstore->destroy_cbdata = NULL;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

@@ -27,7 +27,6 @@
 #include "engine_private.h"
 
 #include <ironbee/context_selection.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/hash.h>
 #include <ironbee/ip.h>
@@ -50,7 +49,6 @@ ib_status_t ib_site_create(
     ib_site_t *site,
     ib_site_t **psite)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
     assert(ctx->ctype == IB_CTYPE_SITE);
     assert(name != NULL);
@@ -65,7 +63,7 @@ ib_status_t ib_site_create(
     if (site == NULL) {
         site = (ib_site_t *)ib_mpool_calloc(pool, 1, sizeof(*site));
         if (site == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
     }
     site->mp = pool;
@@ -77,7 +75,7 @@ ib_status_t ib_site_create(
         *psite = site;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_site_host_create(
@@ -87,7 +85,6 @@ ib_status_t ib_site_host_create(
     ib_site_host_t *host,
     ib_site_host_t **phost)
 {
-    IB_FTRACE_INIT();
     assert(site != NULL);
     assert(hostname != NULL);
 
@@ -107,19 +104,19 @@ ib_status_t ib_site_host_create(
         }
     }
     else if (star != NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Create a host object */
     if (host == NULL) {
         host = ib_mpool_alloc(site->mp, sizeof(*host));
         if (host == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
     }
     host->hostname = ib_mpool_strdup(site->mp, hostname);
     if (host->hostname == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     if (is_wild) {
         host->suffix = host->hostname + 1;
@@ -133,7 +130,7 @@ ib_status_t ib_site_host_create(
     if (phost != NULL) {
         *phost = host;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_site_service_create(
@@ -143,7 +140,6 @@ ib_status_t ib_site_service_create(
     ib_site_service_t *service,
     ib_site_service_t **pservice)
 {
-    IB_FTRACE_INIT();
     assert(site != NULL);
     assert(service_str != NULL);
 
@@ -164,7 +160,7 @@ ib_status_t ib_site_service_create(
         else {
             rc = ib_string_to_num(colon+1, 10, &port);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
     }
@@ -181,7 +177,7 @@ ib_status_t ib_site_service_create(
     if (service == NULL) {
         service = ib_mpool_alloc(site->mp, sizeof(*service));
         if (service == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
     }
 
@@ -193,12 +189,12 @@ ib_status_t ib_site_service_create(
     else {
         rc = ib_ip_validate_ex(service_str, ip_len);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         service->ipstr = ib_mpool_memdup_to_str(site->mp, service_str, ip_len);
         if (service->ipstr == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
     }
     service->ctxsel_service = ctxsel_service;
@@ -208,7 +204,7 @@ ib_status_t ib_site_service_create(
         *pservice = service;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_site_location_create(
@@ -219,7 +215,6 @@ ib_status_t ib_site_location_create(
     ib_site_location_t *location,
     ib_site_location_t **plocation)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
     assert(ctx->ctype == IB_CTYPE_LOCATION);
     assert(site != NULL);
@@ -234,7 +229,7 @@ ib_status_t ib_site_location_create(
         location = (ib_site_location_t *)
             ib_mpool_alloc(site->mp, sizeof(*location));
         if (location == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
     }
     location->site = site;
@@ -246,14 +241,13 @@ ib_status_t ib_site_location_create(
         *plocation = location;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_site_close(
     ib_site_t *site)
 {
-    IB_FTRACE_INIT();
     assert(site != NULL);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

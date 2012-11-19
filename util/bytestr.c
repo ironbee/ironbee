@@ -26,7 +26,6 @@
 
 #include <ironbee/bytestr.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 
@@ -44,51 +43,42 @@ struct ib_bytestr_t {
 size_t ib_bytestr_length(
     const ib_bytestr_t *bs
 ) {
-    IB_FTRACE_INIT();
-
     assert(bs != NULL);
 
-    IB_FTRACE_RET_SIZET(bs->length);
+    return bs->length;
 }
 
 size_t ib_bytestr_size(
     const ib_bytestr_t *bs
 ) {
-    IB_FTRACE_INIT();
-
     assert(bs != NULL);
 
-    IB_FTRACE_RET_SIZET(bs->size);
+    return bs->size;
 }
 
 ib_mpool_t* ib_bytestr_mpool(const ib_bytestr_t *bs)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_PTR(ib_mpool_t, bs->mp);
+    return bs->mp;
 }
 
 uint8_t *ib_bytestr_ptr(
     ib_bytestr_t *bs
 ) {
-    IB_FTRACE_INIT();
-
     if (bs == NULL || IB_BYTESTR_CHECK_FREADONLY(bs->flags)) {
-        IB_FTRACE_RET_PTR(uint8_t, NULL);
+        return NULL;
     }
 
-    IB_FTRACE_RET_PTR(uint8_t, bs->data);
+    return bs->data;
 }
 
 const uint8_t DLL_PUBLIC *ib_bytestr_const_ptr(
     const ib_bytestr_t *bs
 ) {
-    IB_FTRACE_INIT();
-
     if (bs == NULL) {
-        IB_FTRACE_RET_PTR(const uint8_t, NULL);
+        return NULL;
     }
 
-    IB_FTRACE_RET_PTR(const uint8_t, bs->data);
+    return bs->data;
 }
 
 ib_status_t ib_bytestr_create(
@@ -96,8 +86,6 @@ ib_status_t ib_bytestr_create(
     ib_mpool_t    *pool,
     size_t         size
 ) {
-    IB_FTRACE_INIT();
-
     assert(pdst != NULL);
     assert(pool != NULL);
 
@@ -124,12 +112,12 @@ ib_status_t ib_bytestr_create(
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     *pdst = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_bytestr_dup(
@@ -137,8 +125,6 @@ ib_status_t ib_bytestr_dup(
     ib_mpool_t          *pool,
     const ib_bytestr_t  *src
 ) {
-    IB_FTRACE_INIT();
-
     assert(pdst != NULL);
     assert(pool != NULL);
 
@@ -150,7 +136,7 @@ ib_status_t ib_bytestr_dup(
         ib_bytestr_length(src)
     );
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_bytestr_dup_mem(
@@ -159,18 +145,16 @@ ib_status_t ib_bytestr_dup_mem(
     const uint8_t  *data,
     size_t          data_length
 ) {
-    IB_FTRACE_INIT();
-
     assert(pdst != NULL);
     assert(pool != NULL);
 
     if (data == NULL && data_length != 0) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_status_t rc = ib_bytestr_create(pdst, pool, data_length);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (data != NULL) {
@@ -179,7 +163,7 @@ ib_status_t ib_bytestr_dup_mem(
         memcpy(ib_bytestr_ptr(*pdst), data, data_length);
         (*pdst)->length = data_length;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_bytestr_dup_nulstr(
@@ -187,8 +171,6 @@ ib_status_t ib_bytestr_dup_nulstr(
     ib_mpool_t *pool,
     const char *data
 ) {
-    IB_FTRACE_INIT();
-
     assert(pdst != NULL);
     assert(pool != NULL);
     assert(data != NULL);
@@ -200,7 +182,7 @@ ib_status_t ib_bytestr_dup_nulstr(
         strlen(data)
     );
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_bytestr_alias(
@@ -209,15 +191,13 @@ ib_status_t ib_bytestr_alias(
     const ib_bytestr_t  *src
 )
 {
-    IB_FTRACE_INIT();
-
     assert(pdst != NULL);
     assert(pool != NULL);
 
     ib_status_t rc;
 
     if ((src == NULL) || (src->data == NULL)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     rc = ib_bytestr_alias_mem(
@@ -227,7 +207,7 @@ ib_status_t ib_bytestr_alias(
         src->length
     );
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_bytestr_alias_mem(
@@ -237,15 +217,13 @@ ib_status_t ib_bytestr_alias_mem(
     size_t           data_length
 )
 {
-    IB_FTRACE_INIT();
-
     if (data == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_status_t rc = ib_bytestr_create(pdst, pool, 0);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* We use flags to enforce that the user can not recover an non-const
@@ -256,22 +234,20 @@ ib_status_t ib_bytestr_alias_mem(
     (*pdst)->size   = data_length;
     (*pdst)->flags |= IB_BYTESTR_FREADONLY;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_bytestr_alias_nulstr(ib_bytestr_t **pdst,
                                     ib_mpool_t *pool,
                                     const char *data)
 {
-    IB_FTRACE_INIT();
-
     assert(pdst != NULL);
     assert(pool != NULL);
 
     ib_status_t rc;
     rc = ib_bytestr_alias_mem(pdst, pool, (uint8_t *)data, strlen(data));
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_bytestr_setv(
@@ -279,13 +255,11 @@ ib_status_t ib_bytestr_setv(
     uint8_t      *data,
     size_t        data_length
 ) {
-    IB_FTRACE_INIT();
-
     if (dst == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     if (data == NULL && data_length != 0) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     dst->data   = data;
@@ -293,7 +267,7 @@ ib_status_t ib_bytestr_setv(
     dst->size   = data_length;
     dst->flags  = 0;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t DLL_PUBLIC ib_bytestr_setv_const(
@@ -302,19 +276,17 @@ ib_status_t DLL_PUBLIC ib_bytestr_setv_const(
     size_t         data_length
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     /* Use flags to enforce const. */
     rc = ib_bytestr_setv(dst, (uint8_t*)data, data_length);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     dst->flags |= IB_BYTESTR_FREADONLY;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_bytestr_append(
@@ -322,12 +294,10 @@ ib_status_t ib_bytestr_append(
     const ib_bytestr_t *src
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     if ( src == NULL ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     rc = ib_bytestr_append_mem(
@@ -336,7 +306,7 @@ ib_status_t ib_bytestr_append(
         ib_bytestr_length(src)
     );
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_bytestr_append_mem(
@@ -345,17 +315,15 @@ ib_status_t ib_bytestr_append_mem(
     size_t         data_length
 )
 {
-    IB_FTRACE_INIT();
-
     size_t dst_length = ib_bytestr_length(dst);
     size_t new_length;
     uint8_t *new_data = NULL;
 
     if (dst == NULL || IB_BYTESTR_CHECK_FREADONLY(dst->flags)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     if (data == NULL && data_length != 0) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     new_length = dst_length + data_length;
@@ -363,7 +331,7 @@ ib_status_t ib_bytestr_append_mem(
     if (new_length > dst->size) {
         new_data = (uint8_t *)ib_mpool_alloc(dst->mp, new_length);
         if (new_data == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         if (dst_length > 0) {
             memcpy(
@@ -382,7 +350,7 @@ ib_status_t ib_bytestr_append_mem(
         dst->length = new_length;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_bytestr_append_nulstr(
@@ -390,35 +358,29 @@ ib_status_t ib_bytestr_append_nulstr(
     const char *data
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     if (data == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     rc = ib_bytestr_append_mem(dst, (const uint8_t*)data, strlen(data));
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 int ib_bytestr_read_only( const ib_bytestr_t *bs )
 {
-    IB_FTRACE_INIT();
-
     assert(bs != NULL);
 
-    IB_FTRACE_RET_BOOL(IB_BYTESTR_CHECK_FREADONLY(bs->flags));
+    return IB_BYTESTR_CHECK_FREADONLY(bs->flags);
 }
 
 void ib_bytestr_make_read_only( ib_bytestr_t *bs )
 {
-    IB_FTRACE_INIT();
-
     bs->flags |= IB_BYTESTR_FREADONLY;
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 int ib_bytestr_index_of_c(
@@ -426,8 +388,6 @@ int ib_bytestr_index_of_c(
     const char   *needle
 )
 {
-    IB_FTRACE_INIT();
-
     const uint8_t* haystack_data = ib_bytestr_const_ptr(haystack);
     const char *found;
 
@@ -439,9 +399,9 @@ int ib_bytestr_index_of_c(
 
     /* Return the offset (or -1) */
     if (found != NULL) {
-        IB_FTRACE_RET_INT(found - (const char *)haystack_data);
+        return found - (const char *)haystack_data;
     }
     else {
-        IB_FTRACE_RET_INT(-1);
+        return -1;
     }
 }

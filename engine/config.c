@@ -29,7 +29,6 @@
 #include "config-parser.h"
 #include "engine_private.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
 #include <assert.h>
@@ -65,7 +64,6 @@ static ib_status_t cfgp_opval(const char *opname,
                               const ib_strval_t *map,
                               ib_num_t *pval)
 {
-    IB_FTRACE_INIT();
     assert(opname != NULL);
     assert(map != NULL);
     assert(pval != NULL);
@@ -75,13 +73,13 @@ static ib_status_t cfgp_opval(const char *opname,
     while (rec->str != NULL) {
         if (strcasecmp(opname, rec->str) == 0) {
             *pval = rec->val;
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
         ++rec;
     }
 
     *pval = 0;
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
+    return IB_EINVAL;
 }
 
 
@@ -91,7 +89,6 @@ static ib_status_t cfgp_opval(const char *opname,
 ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
                                 ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
     assert(pcp != NULL);
     assert(ib != NULL);
 
@@ -137,19 +134,17 @@ ib_status_t ib_cfgparser_create(ib_cfgparser_t **pcp,
 
     /* Other fields are NULLed via calloc */
     *pcp = cp;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failed:
     /* Make sure everything is cleaned up on failure */
     ib_engine_pool_destroy(ib, pool);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static char *find_eol(char *buf, size_t len, size_t *skip)
 {
-    IB_FTRACE_INIT();
-
     char *cr;
     char *lf;
 
@@ -160,15 +155,15 @@ static char *find_eol(char *buf, size_t len, size_t *skip)
         *skip = 1;
         *cr = '\n';
         *lf = ' ';
-        IB_FTRACE_RET_STR(cr);
+        return cr;
     }
     else if (lf != NULL) {
         *skip = 1;
-        IB_FTRACE_RET_STR(lf);
+        return lf;
     }
     else {
         *skip = 0;
-        IB_FTRACE_RET_STR(NULL);
+        return NULL;
     }
 }
 
@@ -177,8 +172,6 @@ static char *find_eol(char *buf, size_t len, size_t *skip)
 ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                                const char *file)
 {
-    IB_FTRACE_INIT();
-
     int ec             = 0;    /* Error code for sys calls. */
     int fd             = 0;    /* File to read. */
     unsigned lineno    = 1;    /* Current line number */
@@ -198,7 +191,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
         ec = errno;
         ib_cfg_log_error(cp, "Could not open config file \"%s\": (%d) %s",
                          file, ec, strerror(ec));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     buf = (char *)malloc(sizeof(*buf)*bufsz);
@@ -207,7 +200,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp,
                          "Unable to allocate buffer for configuration file.");
         close(fd);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Fill the buffer, parse each line. Conditionally read another line. */
@@ -255,7 +248,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                                  buflen, file);
                     free(buf);
                     close(fd);
-                    IB_FTRACE_RET_STATUS(IB_EINVAL);
+                    return IB_EINVAL;
                 }
             }
             else {
@@ -301,7 +294,7 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                              file, strerror(errno));
             free(buf);
             close(fd);
-            IB_FTRACE_RET_STATUS(IB_ETRUNC);
+            return IB_ETRUNC;
         }
     } while (nbytes > 0);
 
@@ -312,14 +305,14 @@ ib_status_t ib_cfgparser_parse(ib_cfgparser_t *cp,
                       file, fd, errno);
 
     if ( (error_count == 0) && (rc == IB_OK) ) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     else if (rc == IB_OK) {
         rc = error_rc;
     }
     ib_cfg_log_error(cp, "%u Error(s) parsing config file: %s",
                      error_count, ib_status_to_string(rc));
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
@@ -329,7 +322,6 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                       unsigned        lineno,
                                       bool            more)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     const char *end;
 
@@ -365,7 +357,7 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
             ib_cfg_log_error(cp,
                 "Unable to allocate line continuation buffer"
             );
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         strcpy(newbuf, cp->linebuf);
         strcat(newbuf, " ");
@@ -377,20 +369,20 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
     }
 
     if (length == 0) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Handle lines that end with a backslash */
     end = buffer + (length - 1);
     if (*end == '\n') {
         if (end == buffer) {
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
         --end;
     }
     if (*end == '\r') {
         if (end == buffer) {
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
         --end;
     }
@@ -401,14 +393,14 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
             ib_cfg_log_error(cp,
                 "Unable to allocate line continuation buffer"
             );
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         if (len > 0) {
             memcpy(newbuf, buffer, len);
         }
         *(newbuf+len) = '\0';
         cp->linebuf = newbuf;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_cfg_log_debug(cp, "Passing \"%.*s\" to Ragel", (int)length, buffer);
@@ -418,20 +410,18 @@ ib_status_t ib_cfgparser_parse_buffer(ib_cfgparser_t *cp,
                                         file,
                                         lineno,
                                         (more ? 1 : 0) );
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static void cfgp_set_current(ib_cfgparser_t *cp, ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     cp->cur_ctx = ctx;
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
                                       ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     assert(ctx != NULL);
     ib_status_t rc;
@@ -441,7 +431,7 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp, "Failed to push context %p(%s): %s",
                          ctx, ib_context_full_get(ctx),
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     cfgp_set_current(cp, ctx);
 
@@ -449,14 +439,13 @@ ib_status_t ib_cfgparser_context_push(ib_cfgparser_t *cp,
                       cp->cur_ctx,
                       ib_context_full_get(cp->cur_ctx));
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
                                      ib_context_t **pctx,
                                      ib_context_t **pcctx)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     ib_context_t *ctx;
     ib_status_t rc;
@@ -471,7 +460,7 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp,
                          "Failed to pop context: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (pctx != NULL) {
@@ -494,25 +483,23 @@ ib_status_t ib_cfgparser_context_pop(ib_cfgparser_t *cp,
                           "Stack: ctx=%p(%s)",
                           cp->cur_ctx, ib_context_full_get(cp->cur_ctx));
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_cfgparser_context_current(const ib_cfgparser_t *cp,
                                          ib_context_t **pctx)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     assert(pctx != NULL);
 
     *pctx = cp->cur_ctx;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
                                                const char *name)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     assert(name != NULL);
     ib_status_t rc;
@@ -522,17 +509,16 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_push(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp,
                          "Failed to push block %p: %s",
                          name, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     cp->cur_blkname = name;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
                                               const char **pname)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     const char *name;
     ib_status_t rc;
@@ -547,7 +533,7 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
                          "Failed to pop block: %s",
                          ib_status_to_string(rc));
         cp->cur_blkname = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (pname != NULL) {
@@ -557,25 +543,23 @@ ib_status_t DLL_PUBLIC ib_cfgparser_block_pop(ib_cfgparser_t *cp,
     /* The last in the list is now the current. */
     cp->cur_blkname = (const char *)ib_list_node_data(ib_list_last(cp->block));
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_cfgparser_destroy(ib_cfgparser_t *cp)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
 
     if (cp != NULL) {
         ib_engine_pool_destroy(cp->ib, cp->mp);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_config_register_directives(ib_engine_t *ib,
                                           const ib_dirmap_init_t *init)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(init != NULL);
     const ib_dirmap_init_t *rec = init;
@@ -584,13 +568,13 @@ ib_status_t ib_config_register_directives(ib_engine_t *ib,
     while ((rec != NULL) && (rec->name != NULL)) {
         rc = ib_hash_set(ib->dirmap, rec->name, (void *)rec);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         ++rec;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_config_register_directive(
@@ -604,13 +588,12 @@ ib_status_t ib_config_register_directive(
     ib_strval_t              *valmap
 )
 {
-    IB_FTRACE_INIT();
     ib_dirmap_init_t *rec;
     ib_status_t rc;
 
     rec = (ib_dirmap_init_t *)ib_mpool_alloc(ib->config_mp, sizeof(*rec));
     if (rec == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     rec->name = name;
     rec->type = type;
@@ -622,14 +605,13 @@ ib_status_t ib_config_register_directive(
 
     rc = ib_hash_set(ib->dirmap, rec->name, (void *)rec);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                                         const char *name,
                                         ib_list_t *args)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     assert(cp->ib != NULL);
     assert(name != NULL);
@@ -648,7 +630,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
 
     rc = ib_hash_get(ib->dirmap, &rec, name);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     switch (rec->type) {
@@ -734,7 +716,7 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
                     ib_cfg_log_error(cp,
                         "Invalid %s option: %s", name, opname
                     );
-                    IB_FTRACE_RET_STATUS(rc);
+                    return rc;
                 }
 
                 /* Mark which bit(s) we are setting. */
@@ -769,28 +751,26 @@ ib_status_t ib_config_directive_process(ib_cfgparser_t *cp,
             rc = IB_EINVAL;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_config_block_start(ib_cfgparser_t *cp,
                                   const char *name,
                                   ib_list_t *args)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     assert(name != NULL);
 
     ib_status_t rc = ib_cfgparser_block_push(cp, name);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
-    IB_FTRACE_RET_STATUS(ib_config_directive_process(cp, name, args));
+    return ib_config_directive_process(cp, name, args);
 }
 
 ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
                                     const char *name)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     assert(name != NULL);
 
@@ -801,12 +781,12 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
     /* Finished with this block. */
     rc = ib_cfgparser_block_pop(cp, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_hash_get(ib->dirmap, &rec, name);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = IB_OK;
@@ -820,14 +800,13 @@ ib_status_t ib_config_block_process(ib_cfgparser_t *cp,
         rc = IB_EINVAL;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_config_strval_pair_lookup(const char *str,
                                          const ib_strval_t *map,
                                          ib_num_t *pval)
 {
-    IB_FTRACE_INIT();
     assert(str != NULL);
     assert(map != NULL);
     assert(pval != NULL);
@@ -837,13 +816,13 @@ ib_status_t ib_config_strval_pair_lookup(const char *str,
     while (rec->str != NULL) {
         if (strcasecmp(str, rec->str) == 0) {
             *pval = rec->val;
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
         ++rec;
     }
 
     *pval = 0;
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
+    return IB_EINVAL;
 }
 
 
@@ -851,7 +830,6 @@ void ib_cfg_log_f(ib_cfgparser_t *cp, ib_log_level_t level,
                   const char *file, int line,
                   const char *fmt, ...)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     assert(fmt != NULL);
 
@@ -862,7 +840,7 @@ void ib_cfg_log_f(ib_cfgparser_t *cp, ib_log_level_t level,
 
     va_end(ap);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void ib_cfg_log_ex_f(const ib_engine_t *ib,
@@ -871,7 +849,6 @@ void ib_cfg_log_ex_f(const ib_engine_t *ib,
                      const char *file, int line,
                      const char *fmt, ...)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(fmt != NULL);
 
@@ -882,7 +859,7 @@ void ib_cfg_log_ex_f(const ib_engine_t *ib,
 
     va_end(ap);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void ib_cfg_vlog_ex(const ib_engine_t *ib,
@@ -891,7 +868,6 @@ void ib_cfg_vlog_ex(const ib_engine_t *ib,
                     const char *file, int line,
                     const char *fmt, va_list ap)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(fmt != NULL);
 
@@ -931,19 +907,18 @@ void ib_cfg_vlog_ex(const ib_engine_t *ib,
         free(new_fmt);
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void ib_cfg_vlog(ib_cfgparser_t *cp, ib_log_level_t level,
                  const char *file, int line,
                  const char *fmt, va_list ap)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     assert(fmt != NULL);
 
     ib_cfg_vlog_ex(cp->ib, cp->cur_file, cp->cur_lineno,
                    level, file, line, fmt, ap);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }

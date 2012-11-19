@@ -28,8 +28,6 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/logformat.h>
-#include <ironbee/debug.h>
-
 #include <assert.h>
 #include <stdlib.h>
 
@@ -42,8 +40,6 @@ typedef enum {
 ib_status_t ib_logformat_create(ib_mpool_t *mp,
                                 ib_logformat_t **lf)
 {
-    IB_FTRACE_INIT();
-
     assert(mp != NULL);
     assert(lf != NULL);
 
@@ -52,16 +48,16 @@ ib_status_t ib_logformat_create(ib_mpool_t *mp,
 
     new = (ib_logformat_t *)ib_mpool_calloc(mp, 1, sizeof(*new));
     if (new == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     new->mp = mp;
     rc = ib_list_create(&new->items, mp);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     *lf = new;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t create_item(ib_logformat_t *lf,
@@ -69,7 +65,6 @@ static ib_status_t create_item(ib_logformat_t *lf,
                                ib_logformat_item_t **iptr,
                                bool push)
 {
-    IB_FTRACE_INIT();
     assert(lf != NULL);
     assert(lf->mp != NULL);
     assert(iptr != NULL);
@@ -79,7 +74,7 @@ static ib_status_t create_item(ib_logformat_t *lf,
         (ib_logformat_item_t *)ib_mpool_alloc(lf->mp, sizeof(*item));
     if (item == NULL) {
         *iptr = NULL;
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     item->itype = itype;
     *iptr = item;
@@ -88,14 +83,13 @@ static ib_status_t create_item(ib_logformat_t *lf,
         rc = ib_list_push(lf->items, item);
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t create_item_literal(ib_logformat_t *lf,
                                        const char *start,
                                        const char *end)
 {
-    IB_FTRACE_INIT();
     assert(lf != NULL);
     assert(lf->mp != NULL);
     assert(start != NULL);
@@ -108,42 +102,41 @@ static ib_status_t create_item_literal(ib_logformat_t *lf,
 
     /* Special case: Zero length string, do nothing */
     if (len == 0) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     if (len <= IB_LOGFORMAT_MAX_SHORT_LITERAL) {
         rc = create_item(lf, item_type_literal, &item, true);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         memcpy(item->item.literal.buf.short_str, start, len);
         item->item.literal.buf.short_str[len] = '\0';
         item->item.literal.len = len;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Long string; we'll manually push the item after we're done */
     rc = create_item(lf, item_type_literal, &item, false);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     item->item.literal.buf.str = (char *)ib_mpool_alloc(lf->mp, len+1);
     if (item->item.literal.buf.str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     memcpy(item->item.literal.buf.str, start, len);
     item->item.literal.buf.str[len] = '\0';
     item->item.literal.len = len;
 
     rc = ib_list_push(lf->items, item);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t create_item_field(ib_logformat_t *lf,
                                      char c)
 {
-    IB_FTRACE_INIT();
     assert(lf != NULL);
     assert(lf->mp != NULL);
 
@@ -152,16 +145,15 @@ static ib_status_t create_item_field(ib_logformat_t *lf,
 
     rc = create_item(lf, item_type_format, &item, true);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     item->item.field.fchar = c;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_logformat_parse(ib_logformat_t *lf,
                                const char *format)
 {
-    IB_FTRACE_INIT();
     assert(lf != NULL);
     assert(lf->mp != NULL);
     assert(format != NULL);
@@ -175,7 +167,7 @@ ib_status_t ib_logformat_parse(ib_logformat_t *lf,
 
     literal_buf = malloc(len + 1);
     if (literal_buf == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     literal_cur = literal_buf;
 
@@ -282,7 +274,7 @@ cleanup:
     if (literal_buf != NULL) {
         free(literal_buf);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_logformat_format(const ib_logformat_t *lf,
@@ -292,7 +284,6 @@ ib_status_t ib_logformat_format(const ib_logformat_t *lf,
                                 ib_logformat_fn_t fn,
                                 void *fndata)
 {
-    IB_FTRACE_INIT();
     assert(lf != NULL);
     assert(line != NULL);
     assert(line_len != NULL);
@@ -324,7 +315,7 @@ ib_status_t ib_logformat_format(const ib_logformat_t *lf,
         case item_type_format:
             rc = fn(lf, &(item->item.field), fndata, &str);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
             len = strlen(str);
             break;
@@ -353,5 +344,5 @@ ib_status_t ib_logformat_format(const ib_logformat_t *lf,
     *line_cur = '\0';
     *line_len = (line_cur - line);
 
-    IB_FTRACE_RET_STATUS(truncated ? IB_ETRUNC : IB_OK);
+    return truncated ? IB_ETRUNC : IB_OK;
 }

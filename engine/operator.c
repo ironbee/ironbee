@@ -28,7 +28,6 @@
 
 #include "engine_private.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
 ib_status_t ib_operator_register(ib_engine_t *ib,
@@ -41,7 +40,6 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
                                  ib_operator_execute_fn_t fn_execute,
                                  void *cd_execute)
 {
-    IB_FTRACE_INIT();
     ib_hash_t *operator_hash = ib->operators;
     ib_mpool_t *pool = ib_engine_pool_main_get(ib);
     ib_status_t rc;
@@ -50,23 +48,23 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
 
     /* Verify that it doesn't start with '@' */
     if (*name == '@') {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     rc = ib_hash_get(operator_hash, &op, name);
     if (rc == IB_OK) {
         /* name already is registered */
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     name_copy = ib_mpool_strdup(pool, name);
     if (name_copy == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     op = (ib_operator_t *)ib_mpool_alloc(pool, sizeof(*op));
     if (op == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     op->name = name_copy;
     op->flags = flags;
@@ -79,7 +77,7 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
 
     rc = ib_hash_set(operator_hash, name_copy, op);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_operator_inst_create(ib_engine_t *ib,
@@ -91,7 +89,6 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
                                     ib_flags_t flags,
                                     ib_operator_inst_t **op_inst)
 {
-    IB_FTRACE_INIT();
     ib_hash_t *operator_hash = ib->operators;
     ib_mpool_t *pool = ib_engine_pool_main_get(ib);
     ib_operator_t *op;
@@ -100,18 +97,18 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
     rc = ib_hash_get(operator_hash, &op, name);
     if (rc != IB_OK) {
         /* name is not registered */
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Verify that this operator is valid for this rule type */
     if ( (op->flags & required_op_flags) != required_op_flags) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     *op_inst = (ib_operator_inst_t *)
         ib_mpool_alloc(pool, sizeof(ib_operator_inst_t));
     if (*op_inst == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     (*op_inst)->op = op;
     (*op_inst)->flags = flags;
@@ -125,7 +122,7 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
         rc = IB_OK;
     }
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if ((*op_inst)->fparam == NULL) {
@@ -136,12 +133,11 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
                              ib_ftype_nulstr_in(parameters));
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_operator_inst_destroy(ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     if ((op_inst != NULL) && (op_inst->op != NULL)
@@ -152,7 +148,7 @@ ib_status_t ib_operator_inst_destroy(ib_operator_inst_t *op_inst)
         rc = IB_OK;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_operator_execute(const ib_rule_exec_t *rule_exec,
@@ -160,7 +156,6 @@ ib_status_t ib_operator_execute(const ib_rule_exec_t *rule_exec,
                                 ib_field_t *field,
                                 ib_num_t *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     if ((op_inst != NULL) && (op_inst->op != NULL)
@@ -174,5 +169,5 @@ ib_status_t ib_operator_execute(const ib_rule_exec_t *rule_exec,
         rc = IB_OK;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

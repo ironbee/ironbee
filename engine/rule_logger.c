@@ -29,7 +29,6 @@
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/core.h>
-#include <ironbee/debug.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>
@@ -164,7 +163,6 @@ static void rule_vlog_tx(
     va_list ap
 )
 {
-    IB_FTRACE_INIT();
     char *fmtbuf = NULL;
     size_t fmtlen;
     void *freeptr = NULL;
@@ -173,7 +171,7 @@ static void rule_vlog_tx(
 
     /* Ignore this message? */
     if (rule_log_level > dlog_level) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     /* Allocate new format buffer */
@@ -205,7 +203,7 @@ static void rule_vlog_tx(
         free(freeptr);
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /* Generic Logger for rules. */
@@ -217,8 +215,6 @@ void ib_rule_log_tx(
     const char *fmt, ...
 )
 {
-    IB_FTRACE_INIT();
-
     va_list ap;
     ib_core_cfg_t *corecfg = NULL;
     ib_log_level_t ib_log_level;
@@ -255,7 +251,7 @@ void ib_rule_log_tx(
                  tx, NULL, NULL, file, line, fmt, ap);
     va_end(ap);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void ib_rule_log_exec(
@@ -266,8 +262,6 @@ void ib_rule_log_exec(
     const char *fmt, ...
 )
 {
-    IB_FTRACE_INIT();
-
     va_list ap;
     ib_log_level_t log_level =
         (rule_exec->tx_log == NULL) ? IB_LOG_INFO : rule_exec->tx_log->level;
@@ -278,7 +272,7 @@ void ib_rule_log_exec(
                  file, line, fmt, ap);
     va_end(ap);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -295,8 +289,6 @@ static void rule_log_exec(
     const char *fmt, ...
 )
 {
-    IB_FTRACE_INIT();
-
     va_list ap;
 
     va_start(ap, fmt);
@@ -305,18 +297,17 @@ static void rule_log_exec(
                  NULL, 0, fmt, ap);
     va_end(ap);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void ib_rule_log_flags_dump(ib_engine_t *ib,
                             ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     const ib_strval_t *rec;
     ib_flags_t flags;
 
     if (ib_rule_dlog_level(ctx) < IB_RULE_DLOG_DEBUG) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
     flags = ib_rule_log_flags(ctx);
     if (ib_flags_all(flags, IB_RULE_LOG_FILT_ALL)) {
@@ -334,31 +325,28 @@ void ib_rule_log_flags_dump(ib_engine_t *ib,
                      (unsigned long)rec->val,
                      enabled ? "enabled" : "disabled");
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_flags_t ib_rule_log_flags(ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg = NULL;
     ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
-    IB_FTRACE_RET_UINT(corecfg->rule_log_flags);
+    return corecfg->rule_log_flags;
 }
 
 ib_log_level_t ib_rule_log_level(ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg = NULL;
     ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
-    IB_FTRACE_RET_INT(corecfg->rule_log_level);
+    return corecfg->rule_log_level;
 }
 
 ib_rule_dlog_level_t ib_rule_dlog_level(ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg = NULL;
     ib_context_module_config(ctx, ib_core_module(), (void *)&corecfg);
-    IB_FTRACE_RET_INT(corecfg->rule_debug_level);
+    return corecfg->rule_debug_level;
 }
 
 /* Log TX start */
@@ -367,7 +355,6 @@ ib_status_t ib_rule_log_tx_create(
     ib_rule_log_tx_t **tx_log
 )
 {
-    IB_FTRACE_INIT();
     ib_flags_t          flags;
     ib_rule_log_tx_t   *object;
 
@@ -381,7 +368,7 @@ ib_status_t ib_rule_log_tx_create(
     /* Allocate the object */
     object = ib_mpool_calloc(rule_exec->tx->mp, sizeof(*object), 1);
     if (object == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Get the start time */
@@ -406,13 +393,12 @@ ib_status_t ib_rule_log_tx_create(
     object->mp = rule_exec->tx->mp;
     *tx_log = object;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
                                     ib_rule_log_exec_t **exec_log)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_rule_log_exec_t *new;
     ib_rule_log_tx_t *tx_log;
@@ -425,25 +411,25 @@ ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
 
     /* If no transaction, nothing to do */
     if (tx_log == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Flag check */
     if (ib_flags_any(tx_log->flags, RULE_LOG_FLAG_RULE_ENABLE) == false) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Allocate the object */
     new = ib_mpool_calloc(tx_log->mp, sizeof(*new), 1);
     if (new == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Create the list of target fields */
     if (ib_flags_any(tx_log->flags, RULE_LOG_FLAG_TARGET_ENABLE)) {
         rc = ib_list_create(&(new->tgt_list), tx_log->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -451,7 +437,7 @@ ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_AUDIT)) {
         rc = ib_list_create(&(new->audit_list), tx_log->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -468,7 +454,7 @@ ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
     /* Don't need to initialize xxx_count because we use calloc() above */
     *exec_log = new;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 void ib_rule_log_fatal_ex(
@@ -478,8 +464,7 @@ void ib_rule_log_fatal_ex(
     const char *fmt, ...
 )
 {
-    IB_FTRACE_INIT();
-
+    
     va_list ap;
     ib_rule_log_exec_t *exec_log = rule_exec->exec_log;
     ib_log_level_t log_level =
@@ -493,7 +478,7 @@ void ib_rule_log_fatal_ex(
                  file, line, fmt, ap);
     va_end(ap);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_status_t ib_rule_log_exec_add_target(
@@ -502,22 +487,21 @@ ib_status_t ib_rule_log_exec_add_target(
     const ib_field_t *original
 )
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     ib_rule_log_tgt_t *tgt;
 
     if (exec_log == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     ++(exec_log->tgt_count);
     if (exec_log->tgt_list == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     tgt = (ib_rule_log_tgt_t *)
         ib_mpool_calloc(exec_log->tx_log->mp, sizeof(*tgt), 1);
     if (tgt == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     tgt->target = target;
     tgt->original = original;
@@ -527,7 +511,7 @@ ib_status_t ib_rule_log_exec_add_target(
     if (ib_flags_any(exec_log->tx_log->flags, RULE_LOG_FLAG_RESULT_ENABLE) ) {
         rc = ib_list_create(&tgt->rslt_list, exec_log->tx_log->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     tgt->rslt_count = 0;
@@ -536,56 +520,53 @@ ib_status_t ib_rule_log_exec_add_target(
     if (ib_flags_any(exec_log->tx_log->flags, IB_RULE_LOG_FLAG_TFN) ) {
         rc = ib_list_create(&tgt->tfn_list, exec_log->tx_log->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     tgt->tfn_count = 0;
 
     rc = ib_list_push(exec_log->tgt_list, tgt);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     exec_log->tgt_cur = tgt;
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_rule_log_exec_set_tgt_final(ib_rule_log_exec_t *exec_log,
                                            const ib_field_t *final)
 {
-    IB_FTRACE_INIT();
-
     if ( (exec_log == NULL) || (exec_log->tgt_cur == NULL) ) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     exec_log->tgt_cur->transformed = final;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_rule_log_exec_add_stream_tgt(ib_rule_log_exec_t *exec_log,
                                             const ib_field_t *field)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     ib_rule_target_t *target;
     char *fname;
 
     if (exec_log == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     if (exec_log->tgt_list == NULL) {
         ++(exec_log->tgt_count);  /* Normally done by add_target() call below */
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     target = ib_mpool_alloc(exec_log->tx_log->mp, sizeof(*target));
     if (target == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     fname = ib_mpool_alloc(exec_log->tx_log->mp, field->nlen+1);
     if (fname == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     strncpy(fname, field->name, field->nlen);
     *(fname + field->nlen) = '\0';
@@ -595,45 +576,44 @@ ib_status_t ib_rule_log_exec_add_stream_tgt(ib_rule_log_exec_t *exec_log,
 
     rc = ib_rule_log_exec_add_target(exec_log, target, field);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_rule_log_exec_tfn_add(ib_rule_log_exec_t *exec_log,
                                      const ib_tfn_t *tfn)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     ib_rule_log_tfn_t *object;
     ib_rule_log_tgt_t *tgt;
     ib_list_t *value_list;
 
     if (exec_log == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     tgt = exec_log->tgt_cur;
     if ( (tgt == NULL) || (tgt->tfn_list == NULL) ) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     rc = ib_list_create(&value_list, exec_log->tx_log->mp);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     object = (ib_rule_log_tfn_t *)
         ib_mpool_alloc(exec_log->tx_log->mp, sizeof(*object));
     if (object == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     object->tfn = tfn;
     object->value_list = value_list;
     tgt->tfn_cur = object;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_rule_log_exec_tfn_value(ib_rule_log_exec_t *exec_log,
@@ -641,35 +621,34 @@ ib_status_t ib_rule_log_exec_tfn_value(ib_rule_log_exec_t *exec_log,
                                        const ib_field_t *out,
                                        ib_status_t status)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     ib_rule_log_tgt_t *tgt;
     ib_rule_log_tfn_t *tfn;
     ib_rule_log_tfn_val_t *object;
 
     if (exec_log == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     tgt = exec_log->tgt_cur;
     if (tgt == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     tfn = tgt->tfn_cur;
     if ( (tfn == NULL) || (tfn->value_list == NULL) ) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     object = (ib_rule_log_tfn_val_t *)
         ib_mpool_alloc(exec_log->tx_log->mp, sizeof(*object));
     if (object == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     object->in = in;
     object->out = out;
     object->status = status;
 
     rc = ib_list_push(tfn->value_list, object);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_rule_log_exec_tfn_fin(ib_rule_log_exec_t *exec_log,
@@ -678,21 +657,20 @@ ib_status_t ib_rule_log_exec_tfn_fin(ib_rule_log_exec_t *exec_log,
                                      const ib_field_t *out,
                                      ib_status_t status)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     ib_rule_log_tfn_t *tfn_log;
     ib_rule_log_tgt_t *tgt;
 
     if (exec_log == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     tgt = exec_log->tgt_cur;
     if ( (tgt == NULL) || (tgt->tfn_list == NULL) ) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     tfn_log = tgt->tfn_cur;
     if ( (tfn_log == NULL) || (tfn_log->tfn != tfn) ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     tfn_log->value.in = in;
     tfn_log->value.out = out;
@@ -700,15 +678,13 @@ ib_status_t ib_rule_log_exec_tfn_fin(ib_rule_log_exec_t *exec_log,
 
     rc = ib_list_push(tgt->tfn_list, tfn_log);
     tgt->tfn_cur = NULL;
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static void count_result(ib_rule_log_count_t *counts,
                          ib_num_t result,
                          ib_status_t status)
 {
-    IB_FTRACE_INIT();
-
     if (status != IB_OK) {
         ++counts->error_count;
     }
@@ -719,39 +695,38 @@ static void count_result(ib_rule_log_count_t *counts,
         ++counts->false_count;
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *exec_log,
                                         const ib_field_t *value,
                                         ib_num_t result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     ib_rule_log_rslt_t *object;
     ib_rule_log_tgt_t *tgt;
     ib_status_t status;
 
     if (exec_log == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     status = exec_log->op_status;
     count_result(&exec_log->counts, result, status);
 
     tgt = exec_log->tgt_cur;
     if (tgt == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     count_result(&(tgt->counts), result, status);
 
     if (tgt->rslt_list == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     object = (ib_rule_log_rslt_t *)
         ib_mpool_calloc(exec_log->tx_log->mp, sizeof(*object), 1);
     if (object == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     object->value = value;
     object->result = result;
@@ -760,7 +735,7 @@ ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *exec_log,
     if (ib_flags_all(exec_log->tx_log->flags, IB_RULE_LOG_FLAG_ACTION) ) {
         rc = ib_list_create(&(object->act_list), exec_log->tx_log->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else {
@@ -770,7 +745,7 @@ ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *exec_log,
     if (ib_flags_all(exec_log->tx_log->flags, IB_RULE_LOG_FLAG_EVENT) ) {
         rc = ib_list_create(&(object->event_list), exec_log->tx_log->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else {
@@ -779,87 +754,85 @@ ib_status_t ib_rule_log_exec_add_result(ib_rule_log_exec_t *exec_log,
 
     tgt->rslt_cur = object;
     rc = ib_list_push(tgt->rslt_list, object);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_rule_log_exec_add_action(ib_rule_log_exec_t *exec_log,
                                         const ib_action_inst_t *act_inst,
                                         ib_status_t status)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     ib_rule_log_tgt_t *tgt;
     ib_rule_log_rslt_t *rslt;
     ib_rule_log_act_t *object;
 
     if (exec_log == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     ++(exec_log->counts.act_count);
 
     tgt = exec_log->tgt_cur;
     if (tgt == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     ++(tgt->counts.act_count);
 
     if (tgt->rslt_list == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     rslt = tgt->rslt_cur;
     if (rslt == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     ++(rslt->act_count);
 
     if (rslt->act_list == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     object = (ib_rule_log_act_t *)
         ib_mpool_calloc(exec_log->tx_log->mp, sizeof(*object), 1);
     if (object == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     object->status = status;
     object->act_inst = act_inst;
 
     rc = ib_list_push(rslt->act_list, object);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_rule_log_exec_add_event(ib_rule_log_exec_t *exec_log,
                                        const ib_logevent_t *event)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     ib_rule_log_tgt_t *tgt;
     ib_rule_log_rslt_t *rslt;
 
     if (exec_log == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     ++(exec_log->counts.event_count);
 
     tgt = exec_log->tgt_cur;
     if (tgt == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     ++(tgt->counts.event_count);
 
     rslt = tgt->rslt_cur;
     if (rslt == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     ++(rslt->event_count);
 
     if (rslt->event_list == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     rc = ib_list_push(rslt->event_list, (ib_logevent_t *)event);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Log audit log file */
@@ -868,27 +841,24 @@ void ib_rule_log_add_audit(
     const const char *audit_log
 )
 {
-    IB_FTRACE_INIT();
     assert(rule_exec != NULL);
     assert(audit_log != NULL);
 
     if ( (rule_exec->exec_log == NULL) ||
          (rule_exec->exec_log->audit_list == NULL) )
     {
-        IB_FTRACE_RET_VOID();
+        return;
     }
     ib_list_push(rule_exec->exec_log->audit_list, (void *)audit_log);
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_status_t ib_rule_log_exec_op(ib_rule_log_exec_t *exec_log,
                                 const ib_operator_inst_t *opinst,
                                 ib_status_t status)
 {
-    IB_FTRACE_INIT();
-
     if (exec_log == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     ++(exec_log->counts.exec_count);
     exec_log->op_status = status;
@@ -897,14 +867,13 @@ ib_status_t ib_rule_log_exec_op(ib_rule_log_exec_t *exec_log,
         ++(exec_log->tgt_cur->counts.exec_count);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static void log_tx_start(
     const ib_rule_exec_t *rule_exec
 )
 {
-    IB_FTRACE_INIT();
     ib_tx_t *tx = rule_exec->tx;
 
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_TX)) {
@@ -914,25 +883,23 @@ static void log_tx_start(
                       tx->conn->remote_port,
                       tx->hostname);
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 static void log_tx_end(
     const ib_rule_exec_t *rule_exec
 )
 {
-    IB_FTRACE_INIT();
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_TX)) {
         rule_log_exec(rule_exec, "TX_END");
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 static void log_tx_request_line(
     const ib_rule_exec_t *rule_exec
 )
 {
-    IB_FTRACE_INIT();
     ib_tx_t *tx = rule_exec->tx;
 
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_REQ_LINE)) {
@@ -950,14 +917,13 @@ static void log_tx_request_line(
                           IB_BYTESTR_FMT_PARAM(tx->request_line->protocol));
         }
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 static void log_tx_response_line(
     const ib_rule_exec_t *rule_exec
 )
 {
-    IB_FTRACE_INIT();
     ib_tx_t *tx = rule_exec->tx;
 
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_RSP_LINE)) {
@@ -967,7 +933,7 @@ static void log_tx_response_line(
                       IB_BYTESTR_FMT_PARAM(tx->response_line->status),
                       IB_BYTESTR_FMT_PARAM(tx->response_line->msg));
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 static void log_tx_header(
@@ -976,7 +942,6 @@ static void log_tx_header(
     const ib_parsed_name_value_pair_list_wrapper_t *wrap
 )
 {
-    IB_FTRACE_INIT();
     ib_parsed_name_value_pair_list_t *nvpair;
 
     for (nvpair = wrap->head;  nvpair != NULL;  nvpair = nvpair->next) {
@@ -992,30 +957,26 @@ static void log_tx_request_header(
     const ib_rule_exec_t *rule_exec
 )
 {
-    IB_FTRACE_INIT();
-
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_REQ_HEADER)) {
         if (rule_exec->tx->request_header != NULL) {
             log_tx_header(rule_exec, "REQ_HEADER",
                           rule_exec->tx->request_header);
         }
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 static void log_tx_response_header(
     const ib_rule_exec_t *rule_exec
 )
 {
-    IB_FTRACE_INIT();
-
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_RSP_HEADER)) {
         if (rule_exec->tx->response_header != NULL) {
             log_tx_header(rule_exec, "RES_HEADER",
                           rule_exec->tx->response_header);
         }
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 static void log_tx_body(
@@ -1024,16 +985,15 @@ static void log_tx_body(
     const ib_stream_t *body
 )
 {
-    IB_FTRACE_INIT();
     ib_sdata_t *sdata;
     ib_status_t rc;
 
     if (body == NULL) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
     rc = ib_stream_peek(body, &sdata);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
     if (sdata->type == IB_STREAM_DATA) {
         char *buf;
@@ -1047,31 +1007,27 @@ static void log_tx_body(
                           label, sdata->dlen, buf);
         }
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 static void log_tx_request_body(
     const ib_rule_exec_t *rule_exec
 )
 {
-    IB_FTRACE_INIT();
-
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_REQ_BODY)) {
         log_tx_body(rule_exec, "REQ_BODY", rule_exec->tx->request_body);
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 static void log_tx_response_body(
     const ib_rule_exec_t *rule_exec
 )
 {
-    IB_FTRACE_INIT();
-
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_RSP_BODY)) {
         log_tx_body(rule_exec, "RES_BODY", rule_exec->tx->response_body);
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /* Log TX events (start of phase) */
@@ -1080,12 +1036,11 @@ void ib_rule_log_tx_event_start(
     ib_state_event_type_t event
 )
 {
-    IB_FTRACE_INIT();
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
 
     if (rule_exec->tx_log == NULL) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     switch(event) {
@@ -1112,7 +1067,7 @@ void ib_rule_log_tx_event_start(
     default :
         break;       /* Do nothing */
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /* Log TX events (end of phase) */
@@ -1121,10 +1076,8 @@ void ib_rule_log_tx_event_end(
     ib_state_event_type_t event
 )
 {
-    IB_FTRACE_INIT();
-
     if (rule_exec->tx_log == NULL) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     switch(event) {
@@ -1135,7 +1088,7 @@ void ib_rule_log_tx_event_end(
     default:
         break;       /* Do nothing */
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /* Log audit log file */
@@ -1143,20 +1096,19 @@ static void log_audit(
     const ib_rule_exec_t *rule_exec
 )
 {
-    IB_FTRACE_INIT();
     assert(rule_exec != NULL);
     const ib_list_node_t *node;
 
     if ( (rule_exec->exec_log == NULL) ||
          (rule_exec->exec_log->audit_list == NULL) ) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     IB_LIST_LOOP_CONST(rule_exec->exec_log->audit_list, node) {
         const char *path = (const char *)node->data;
         rule_log_exec(rule_exec, "AUDIT %s", path);
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /* Log phase start */
@@ -1166,11 +1118,10 @@ void ib_rule_log_phase(
     const char *phase_name
 )
 {
-    IB_FTRACE_INIT();
     ib_flags_t flags;
 
     if (rule_exec->tx_log == NULL) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
     flags = rule_exec->tx_log->flags;
 
@@ -1189,7 +1140,7 @@ void ib_rule_log_phase(
             }
         }
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -1205,8 +1156,6 @@ static void log_tfns(
     const ib_field_t *rslt
 )
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec != NULL);
     assert(rule_exec->exec_log != NULL);
     assert(tgt != NULL);
@@ -1217,7 +1166,7 @@ static void log_tfns(
     char buf[MAX_FIELD_BUF+1];
 
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_TFN) == false) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     IB_LIST_LOOP_CONST(tgt->tfn_list, tfn_node) {
@@ -1262,7 +1211,7 @@ static void log_tfns(
         }
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -1276,7 +1225,6 @@ static void log_actions(
     const ib_rule_log_rslt_t *rslt
 )
 {
-    IB_FTRACE_INIT();
     const ib_list_node_t *act_node;
     ib_rule_log_tx_t *tx_log;
 
@@ -1288,7 +1236,7 @@ static void log_actions(
     tx_log = rule_exec->tx_log;
 
     if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_ACTION) == false) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     IB_LIST_LOOP_CONST(rslt->act_list, act_node) {
@@ -1306,7 +1254,7 @@ static void log_actions(
                       status);
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -1320,7 +1268,6 @@ static void log_events(
     const ib_rule_log_rslt_t *rslt
 )
 {
-    IB_FTRACE_INIT();
     const ib_list_node_t *event_node;
     ib_rule_log_tx_t *tx_log;
 
@@ -1332,7 +1279,7 @@ static void log_events(
     tx_log = rule_exec->tx_log;
 
     if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_EVENT) == false) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     IB_LIST_LOOP_CONST(rslt->event_list, event_node) {
@@ -1357,7 +1304,7 @@ static void log_events(
         }
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -1373,8 +1320,6 @@ static void log_result(
     const ib_rule_log_rslt_t *rslt
 )
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
     assert(rule_exec->tx_log != NULL);
@@ -1465,7 +1410,7 @@ static void log_result(
         log_events(rule_exec, rslt);
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 static bool filter(
@@ -1473,38 +1418,36 @@ static bool filter(
     const ib_rule_log_count_t *counts
 )
 {
-    IB_FTRACE_INIT();
-
     if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_ALL) ) {
-        IB_FTRACE_RET_BOOL(true);
+        return true;
     }
 
     if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_ACTIONABLE) ) {
         if (counts->act_count != 0) {
-            IB_FTRACE_RET_BOOL(true);
+            return true;
         }
     }
     if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_OPEXEC) ) {
         if (counts->exec_count != 0) {
-            IB_FTRACE_RET_BOOL(true);
+            return true;
         }
     }
     if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_ERROR) ) {
         if (counts->error_count != 0) {
-            IB_FTRACE_RET_BOOL(true);
+            return true;
         }
     }
     if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_TRUE) ) {
         if (counts->true_count != 0) {
-            IB_FTRACE_RET_BOOL(true);
+            return true;
         }
     }
     if (ib_flags_all(exec_log->filter, IB_RULE_LOG_FILT_FALSE) ) {
         if (counts->false_count != 0) {
-            IB_FTRACE_RET_BOOL(true);
+            return true;
         }
     }
-    IB_FTRACE_RET_BOOL(false);
+    return false;
 }
 
 /* Log rule execution: exec. */
@@ -1512,7 +1455,6 @@ void ib_rule_log_execution(
     const ib_rule_exec_t *rule_exec
 )
 {
-    IB_FTRACE_INIT();
     assert(rule_exec != NULL);
     const ib_list_node_t *tgt_node;
     const ib_rule_log_exec_t *exec_log = rule_exec->exec_log;
@@ -1520,12 +1462,12 @@ void ib_rule_log_execution(
     const ib_rule_t *rule;
 
     if ( (exec_log == NULL) || (exec_log->rule == NULL) ) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     tx_log = rule_exec->tx_log;
     if (filter(exec_log, &exec_log->counts) == false) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     rule = exec_log->rule;
@@ -1591,5 +1533,5 @@ void ib_rule_log_execution(
         assert(0 && "Fatal rule execution error");
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }

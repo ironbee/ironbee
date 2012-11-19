@@ -29,7 +29,6 @@
 
 #include "engine_private.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/dso.h>
 #include <ironbee/mpool.h>
 
@@ -38,7 +37,6 @@
 /// @todo Probably need to load into a given context???
 ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Keep track of the module index. */
@@ -59,7 +57,7 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
             "Failed to register module %s: %s",
             m->name, ib_status_to_string(rc)
         );
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (ib->ctx != NULL) {
@@ -80,24 +78,22 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
                          m->name, ib_status_to_string(rc));
             /// @todo Need to be able to delete the entry???
             ib_array_setn(ib->modules, m->idx, NULL);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_module_create(ib_module_t **pm,
                              ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
-
     *pm = (ib_module_t *)ib_mpool_calloc(ib->config_mp, 1, sizeof(**pm));
     if (*pm == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
@@ -113,7 +109,6 @@ ib_status_t ib_module_load(ib_module_t **pm,
                            ib_engine_t *ib,
                            const char *file)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_dso_t *dso;
     union {
@@ -123,7 +118,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
     } sym;
 
     if (ib == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Load module and fetch the module symbol. */
@@ -133,14 +128,14 @@ ib_status_t ib_module_load(ib_module_t **pm,
         ib_log_error(ib,
             "Failed to load module %s: %s", file, ib_status_to_string(rc)
         );
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_dso_sym_find(&sym.dso, dso, IB_MODULE_SYM_NAME);
     if (rc != IB_OK || &IB_MODULE_SYM == sym.fn_sym) {
         ib_log_error(ib, "Failed to load module %s: no symbol named %s",
                      file, IB_MODULE_SYM_NAME);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Fetch the module structure. */
@@ -148,7 +143,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
     if (*pm == NULL) {
         ib_log_error(ib, "Failed to load module %s: no module structure",
                      file);
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Check module for ABI compatibility with this engine */
@@ -159,7 +154,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
                      "ABI %d > %d",
                      file, (*pm)->version, IB_VERSION, (*pm)->abinum,
                      IB_ABINUM);
-        IB_FTRACE_RET_STATUS(IB_EINCOMPAT);
+        return IB_EINCOMPAT;
     }
 
     ib_log_debug3(ib,
@@ -170,17 +165,16 @@ ib_status_t ib_module_load(ib_module_t **pm,
                   (*pm)->idx, (*pm)->filename);
 
     rc = ib_module_init(*pm, ib);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_module_unload(ib_module_t *m)
 {
-    IB_FTRACE_INIT();
     ib_engine_t *ib;
     ib_status_t rc;
 
     if (m == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib = m->ib;
@@ -206,13 +200,12 @@ ib_status_t ib_module_unload(ib_module_t *m)
 
     /* Unregister directives */
 
-    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    return IB_ENOTIMPL;
 }
 
 ib_status_t ib_module_register_context(ib_module_t *m,
                                        ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     ib_context_data_t *cfgdata;
     ib_status_t rc;
 
@@ -220,7 +213,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
     cfgdata =
         (ib_context_data_t *)ib_mpool_calloc(ctx->mp, 1, sizeof(*cfgdata));
     if (cfgdata == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     cfgdata->module = m;
 
@@ -235,7 +228,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
 
         cfgdata->data = ib_mpool_alloc(ctx->mp, m->gclen);
         if (cfgdata->data == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         /* Copy values from parent context if available, otherwise
@@ -253,7 +246,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
                         m->cbdata_cfg_copy
                     );
                     if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
+                        return rc;
                     }
                 }
                 else {
@@ -271,7 +264,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
                         m->cbdata_cfg_copy
                     );
                     if (rc != IB_OK) {
-                        IB_FTRACE_RET_STATUS(rc);
+                        return rc;
                     }
                 }
                 else {
@@ -290,7 +283,7 @@ ib_status_t ib_module_register_context(ib_module_t *m,
                     m->cbdata_cfg_copy
                 );
                 if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
+                    return rc;
                 }
             }
             else {
@@ -304,5 +297,5 @@ ib_status_t ib_module_register_context(ib_module_t *m,
      * module index as the key so that the location is deterministic.
      */
     rc = ib_array_setn(ctx->cfgdata, m->idx, cfgdata);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

@@ -25,38 +25,34 @@
 
 #include <ironbee/stream.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
 ib_status_t ib_stream_create(ib_stream_t **pstream, ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT();
     /* Create the structure. */
     *pstream = (ib_stream_t *)ib_mpool_calloc(pool, 1, sizeof(**pstream));
     if (*pstream == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     (*pstream)->mp = pool;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
 ib_status_t ib_stream_push_sdata(ib_stream_t *s,
                                  ib_sdata_t *sdata)
 {
-    IB_FTRACE_INIT();
-
     s->slen += sdata->dlen;
 
     if (IB_LIST_ELEMENTS(s) == 0) {
         IB_LIST_NODE_INSERT_INITIAL(s, sdata);
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     IB_LIST_NODE_INSERT_LAST(s, sdata, ib_sdata_t);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_stream_push(ib_stream_t *s,
@@ -64,12 +60,11 @@ ib_status_t ib_stream_push(ib_stream_t *s,
                            void *data,
                            size_t dlen)
 {
-    IB_FTRACE_INIT();
     /// @todo take from a resource pool, if available
     ib_sdata_t *node = (ib_sdata_t *)ib_mpool_calloc(s->mp,
                                                      1, sizeof(*node));
     if (node == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     node->type = type;
@@ -78,19 +73,17 @@ ib_status_t ib_stream_push(ib_stream_t *s,
 
     ib_stream_push_sdata(s, node);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_stream_pull(ib_stream_t *s,
                            ib_sdata_t **psdata)
 {
-    IB_FTRACE_INIT();
-
     if (s->nelts == 0) {
         if (psdata != NULL) {
             *psdata = NULL;
         }
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
 
     s->slen -= s->head->dlen;
@@ -100,24 +93,22 @@ ib_status_t ib_stream_pull(ib_stream_t *s,
 
     IB_LIST_NODE_REMOVE_FIRST(s);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_stream_peek(const ib_stream_t *s,
                            ib_sdata_t **psdata)
 {
-    IB_FTRACE_INIT();
-
     if (s->nelts == 0) {
         if (psdata != NULL) {
             *psdata = NULL;
         }
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
 
     if (psdata != NULL) {
         *psdata = s->head;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

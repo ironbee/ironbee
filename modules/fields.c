@@ -51,7 +51,6 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
 #include <ironbee/core.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/list.h>
@@ -102,8 +101,6 @@ static ib_status_t parse_type(ib_cfgparser_t *cp,
                               ib_ftype_t *type,
                               ib_ftype_t *element_type)
 {
-    IB_FTRACE_INIT();
-
     /* Parse the type name */
     if (strcasecmp(str, "NUM") == 0) {
         *type = (ib_ftype_t)IB_FTYPE_NUM;
@@ -135,13 +132,13 @@ static ib_status_t parse_type(ib_cfgparser_t *cp,
     }
     else {
         ib_cfg_log_error(cp, "Invalid type '%s'", str);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_cfg_log_debug2(cp, "Parsed type '%s' -> %d", str, (int)(*type) );
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -161,7 +158,6 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
                                const char *name,
                                ib_field_t **pfield)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Parse the type name */
@@ -171,7 +167,7 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
         ib_num_t val;
         rc = ib_string_to_num(str, 0, &val);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_field_create(pfield,
                              mp,
@@ -186,7 +182,7 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
         ib_float_t val;
         rc = ib_string_to_float(str, &val);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_field_create(pfield,
                              mp,
@@ -213,7 +209,7 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
                              "Failed to create bytestr for '%s': %d", str, rc);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         rc = ib_field_create(pfield,
                              mp,
@@ -224,11 +220,11 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
     }
 
     default :
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -245,7 +241,6 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
                                     const ib_list_t *vars,
                                     void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_mpool_t *mp = ib_engine_pool_main_get(cp->ib);
     const ib_list_node_t *name_node;
@@ -259,15 +254,14 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
     ib_num_t element_num;
 
     if (cbdata != NULL) {
-        IB_FTRACE_MSG("Callback data is not null.");
-    }
+            }
 
 
     /* Get the field name string */
     name_node = ib_list_first_const(vars);
     if ( (name_node == NULL) || (name_node->data == NULL) ) {
         ib_cfg_log_error(cp, "No name specified for field");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     name_str = (const char *)(name_node->data);
 
@@ -275,7 +269,7 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
     type_node = ib_list_node_next_const(name_node);
     if ( (type_node == NULL) || (type_node->data == NULL) ) {
         ib_cfg_log_error(cp, "No type specified for field");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     type_str = (const char *)(type_node->data);
 
@@ -284,7 +278,7 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Error parsing type string '%s': %d", type_str, rc);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Find the next value node */
@@ -297,19 +291,19 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
         if (element_type == IB_FTYPE_LIST) {
             if (value_node != NULL) {
                 ib_cfg_log_error(cp, "Value(s) not for LIST:LIST field");
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
             }
         }
         else if (element_type == IB_FTYPE_GENERIC) {
             if (value_node != NULL) {
                 ib_cfg_log_error(cp, "Values but no type for LIST field");
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
             }
         }
         else {
             if (value_node == NULL) {
                 ib_cfg_log_error(cp, "LIST type specified, but not values");
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
             }
         }
 
@@ -321,7 +315,7 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
                              NULL);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Error creating field: %d", rc);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         ib_cfg_log_debug(cp,
@@ -348,14 +342,14 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
                                  (char *)value_node->data,
                                  g_type_names[element_type],
                                  rc);
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             /* Add the field to the list */
             rc = ib_field_list_add(field, vfield);
             if (rc != IB_OK) {
                 ib_cfg_log_error(cp, "Error pushing value on list: %d", rc);
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             /* Next value */
@@ -368,26 +362,26 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Error parsing value \"%s\": %d",
                              (char *)value_node->data, rc);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else {
         ib_cfg_log_error(cp, "No value specified for field \"%s\"", name_str);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Add the field to the list */
     rc = ib_list_push(g_field_list, field);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error pushing value on list: %d", rc);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     ib_cfg_log_debug(cp,
                      "Created field %p \"%s\" of type %d \"%s\"",
                      (void *)field, name_str, (int)type_num, type_str);
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -407,8 +401,6 @@ static ib_status_t fields_tx_header_finished(ib_engine_t *ib,
                                              ib_state_event_type_t event,
                                              void *data)
 {
-    IB_FTRACE_INIT();
-
     assert(event == request_header_finished_event);
 
     ib_list_node_t *node;
@@ -447,7 +439,7 @@ static ib_status_t fields_tx_header_finished(ib_engine_t *ib,
                         g_type_names[field->type]);
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 
@@ -466,7 +458,6 @@ static IB_DIRMAP_INIT_STRUCTURE(fields_directive_map) = {
 
 static ib_status_t fields_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_mpool_t *mp;
 
@@ -476,14 +467,14 @@ static ib_status_t fields_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     mp = ib_engine_pool_config_get(ib);
     if (mp == NULL) {
         ib_log_error(ib, "Error getting memory pool");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Create the list */
     rc = ib_list_create(&g_field_list, mp);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating global field list: %d", rc);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the TX header_finished callback */
@@ -495,15 +486,14 @@ static ib_status_t fields_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         ib_log_error(ib, "Hook register returned %d", rc);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t fields_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_log_debug(ib, "Fields module unloading.");
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Initialize the module structure. */

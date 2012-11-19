@@ -30,7 +30,6 @@
 
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/module.h>
@@ -73,14 +72,13 @@ static ib_status_t op_true_execute(const ib_rule_exec_t *rule_exec,
                                    ib_field_t *field,
                                    ib_num_t *result)
 {
-    IB_FTRACE_INIT();
     *result = 1;
 
     if (ib_rule_should_capture(rule_exec, *result)) {
         ib_data_capture_clear(rule_exec->tx);
         ib_data_capture_set_item(rule_exec->tx, 0, field);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -103,11 +101,10 @@ static ib_status_t op_false_execute(const ib_rule_exec_t *rule_exec,
                                     ib_field_t *field,
                                     ib_num_t *result)
 {
-    IB_FTRACE_INIT();
     *result = 0;
     /* Don't check for capture, because we always return zero */
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -129,31 +126,30 @@ static ib_status_t op_assert_create(ib_engine_t *ib,
                                     const char *parameters,
                                     ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     bool expand;
     char *str;
 
     if (parameters == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     str = ib_mpool_strdup(mp, parameters);
     if (str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Do we need expansion? */
     rc = ib_data_expand_test_str(str, &expand);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     else if (expand) {
         op_inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
     op_inst->data = str;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -176,8 +172,6 @@ static ib_status_t op_assert_execute(const ib_rule_exec_t *rule_exec,
                                      ib_field_t *field,
                                      ib_num_t *result)
 {
-    IB_FTRACE_INIT();
-
     /* This works on C-style (NUL terminated) strings */
     const char *cstr = (const char *)data;
     char *expanded = NULL;
@@ -198,7 +192,7 @@ static ib_status_t op_assert_execute(const ib_rule_exec_t *rule_exec,
 
     ib_rule_log_error(rule_exec, "ASSERT: %s", expanded);
     assert(0 && expanded);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -218,8 +212,6 @@ static ib_status_t op_exists_execute(const ib_rule_exec_t *rule_exec,
                                      ib_field_t *field,
                                      ib_num_t *result)
 {
-    IB_FTRACE_INIT();
-
     /* Return true of field is not NULL */
     *result = (field != NULL);
 
@@ -228,7 +220,7 @@ static ib_status_t op_exists_execute(const ib_rule_exec_t *rule_exec,
         ib_data_capture_set_item(rule_exec->tx, 0, field);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* IsType operators */
@@ -280,7 +272,6 @@ static ib_status_t op_istype_execute(const ib_rule_exec_t *rule_exec,
                                      ib_field_t *field,
                                      ib_num_t *result)
 {
-    IB_FTRACE_INIT();
     assert(field != NULL);
 
     /* Ignore data */
@@ -296,7 +287,7 @@ static ib_status_t op_istype_execute(const ib_rule_exec_t *rule_exec,
             *result = true;
         }
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -318,31 +309,30 @@ static ib_status_t act_log_create(ib_engine_t *ib,
                                   ib_action_inst_t *inst,
                                   void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     bool expand;
     char *str;
 
     if (parameters == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     str = ib_mpool_strdup(mp, parameters);
     if (str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Do we need expansion? */
     rc = ib_data_expand_test_str(str, &expand);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     else if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
     inst->data = str;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -360,8 +350,6 @@ static ib_status_t act_debuglog_execute(const ib_rule_exec_t *rule_exec,
                                         ib_flags_t flags,
                                         void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     /* This works on C-style (NUL terminated) strings */
     const char *cstr = (const char *)data;
     char *expanded = NULL;
@@ -381,7 +369,7 @@ static ib_status_t act_debuglog_execute(const ib_rule_exec_t *rule_exec,
     }
 
     ib_rule_log_trace(rule_exec, "LOG: %s", expanded);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -403,7 +391,6 @@ static ib_status_t act_assert_create(ib_engine_t *ib,
                                      ib_action_inst_t *inst,
                                      void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     bool expand;
     char *str;
@@ -414,20 +401,20 @@ static ib_status_t act_assert_create(ib_engine_t *ib,
 
     str = ib_mpool_strdup(mp, parameters);
     if (str == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Do we need expansion? */
     rc = ib_data_expand_test_str(str, &expand);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     else if (expand) {
         inst->flags |= IB_ACTINST_FLAG_EXPAND;
     }
 
     inst->data = str;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -445,8 +432,6 @@ static ib_status_t act_assert_execute(const ib_rule_exec_t *rule_exec,
                                       ib_flags_t flags,
                                       void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     /* This works on C-style (NUL terminated) strings */
     const char *cstr = (const char *)data;
     char *expanded = NULL;
@@ -466,7 +451,7 @@ static ib_status_t act_assert_execute(const ib_rule_exec_t *rule_exec,
     }
 
     ib_rule_log_fatal(rule_exec, "ASSERT \"%s\"", expanded);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -482,7 +467,6 @@ static ib_status_t act_assert_execute(const ib_rule_exec_t *rule_exec,
  */
 static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /**
@@ -501,7 +485,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               NULL, NULL, /* no destroy function */
                               op_true_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the false operator */
@@ -514,7 +498,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               NULL, NULL, /* no destroy function */
                               op_false_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the field exists operator */
@@ -530,7 +514,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               op_exists_execute,
                               NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the false operator */
@@ -543,7 +527,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               NULL, NULL, /* no destroy function */
                               op_assert_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /**
@@ -559,7 +543,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               NULL, NULL, /* no destroy function */
                               op_istype_execute, &istype_params[IsTypeStr]);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the IsNulStr operator */
@@ -571,7 +555,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               NULL, NULL, /* no destroy function */
                               op_istype_execute, &istype_params[IsTypeNulStr]);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the IsByteStr operator */
@@ -583,7 +567,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               NULL, NULL, /* no destroy function */
                               op_istype_execute, &istype_params[IsTypeByteStr]);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the IsNum operator */
@@ -595,7 +579,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               NULL, NULL, /* no destroy function */
                               op_istype_execute, &istype_params[IsTypeNum]);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the IsInt operator */
@@ -607,7 +591,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               NULL, NULL, /* no destroy function */
                               op_istype_execute, &istype_params[IsTypeInt]);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the IsFloat operator */
@@ -619,7 +603,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                               NULL, NULL, /* no destroy function */
                               op_istype_execute, &istype_params[IsTypeFloat]);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /**
@@ -634,7 +618,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                             NULL, NULL, /* no destroy function */
                             act_debuglog_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* dlog is an alias for debuglog */
@@ -645,7 +629,7 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                             NULL, NULL, /* no destroy function */
                             act_debuglog_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the assert action */
@@ -656,10 +640,10 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                             NULL, NULL, /* no destroy function */
                             act_assert_execute, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 IB_MODULE_INIT(

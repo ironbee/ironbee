@@ -25,7 +25,6 @@
 
 #include <ironbee/path.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
@@ -40,8 +39,6 @@
 
 ib_status_t ib_util_mkpath(const char *path, mode_t mode)
 {
-    IB_FTRACE_INIT();
-
     /* Mutable copy of path. */
     char *path_work = NULL;
 
@@ -55,7 +52,7 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
     ib_status_t rc = IB_OK;
 
     if (strcmp(path, ".") == 0 || strcmp(path, "/") == 0) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Could save one pass by using malloc and memcpy instead of strdup.
@@ -64,7 +61,7 @@ ib_status_t ib_util_mkpath(const char *path, mode_t mode)
     path_work = strdup(path);
     path_end = path_work + strlen(path_work);
     if (path_work == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Find portion of path that already exists. */
@@ -134,14 +131,13 @@ finish:
         free(path_work);
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 char *ib_util_path_join(ib_mpool_t *mp,
                         const char *parent,
                         const char *file_path)
 {
-    IB_FTRACE_INIT();
     size_t len;
     size_t plen;  /* Length of parent */
     size_t flen;  /* Length of file_path */
@@ -173,7 +169,7 @@ char *ib_util_path_join(ib_mpool_t *mp,
 
     out = (char *)ib_mpool_calloc(mp, len, 1);
     if (out == NULL) {
-        IB_FTRACE_RET_STR(NULL);
+        return NULL;
     }
 
     strncpy(out, parent, plen);
@@ -182,14 +178,13 @@ char *ib_util_path_join(ib_mpool_t *mp,
     }
     strncat(out, file_path, flen);
 
-    IB_FTRACE_RET_STR(out);
+    return out;
 }
 
 char *ib_util_relative_file(ib_mpool_t *mp,
                             const char *ref_file,
                             const char *file_path)
 {
-    IB_FTRACE_INIT();
     char *refcopy;       /* Copy of reference file */
     const char *ref_dir; /* Reference directory */
     char *tmp;
@@ -197,27 +192,26 @@ char *ib_util_relative_file(ib_mpool_t *mp,
     /* If file_path is absolute, just use it */
     if (*file_path == '/') {
         tmp = ib_mpool_strdup(mp, file_path);
-        IB_FTRACE_RET_STR(tmp);
+        return tmp;
     }
 
     /* Make a copy of cur_file because dirname() modifies it's input */
     refcopy = (char *)ib_mpool_strdup(mp, ref_file);
     if (refcopy == NULL) {
-        IB_FTRACE_RET_STR(NULL);
+        return NULL;
     }
 
     /* Finally, extract the directory portion of the copy, use it to
      * build the final path. */
     ref_dir = dirname(refcopy);
     tmp = ib_util_path_join(mp, ref_dir, file_path);
-    IB_FTRACE_RET_STR(tmp);
+    return tmp;
 }
 
 ib_status_t ib_util_normalize_path(char *data,
                                    bool win,
                                    ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     size_t len;
     rc = ib_util_normalize_path_ex((uint8_t *)data,
@@ -228,7 +222,7 @@ ib_status_t ib_util_normalize_path(char *data,
     if (rc == IB_OK) {
         *(data+len) = '\0';
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_util_normalize_path_cow(
@@ -238,7 +232,6 @@ ib_status_t ib_util_normalize_path_cow(
     char **data_out,
     ib_flags_t *result)
 {
-   IB_FTRACE_INIT();
     assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
@@ -251,7 +244,7 @@ ib_status_t ib_util_normalize_path_cow(
     /* Make a copy of the original */
     buf = ib_mpool_strdup(mp, data_in);
     if (buf == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Let normalize_path_ex() do the real work. */
@@ -261,7 +254,7 @@ ib_status_t ib_util_normalize_path_cow(
                                    &len,
                                    result);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* If it's modified, point at the newly allocated buffer. */
@@ -274,7 +267,7 @@ ib_status_t ib_util_normalize_path_cow(
         *data_out = (char *)data_in;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_util_normalize_path_cow_ex(ib_mpool_t *mp,
@@ -285,7 +278,6 @@ ib_status_t ib_util_normalize_path_cow_ex(ib_mpool_t *mp,
                                           size_t *dlen_out,
                                           ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
@@ -298,14 +290,14 @@ ib_status_t ib_util_normalize_path_cow_ex(ib_mpool_t *mp,
     /* Make a copy of the original */
     buf = ib_mpool_alloc(mp, dlen_in);
     if (buf == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     memcpy(buf, data_in, dlen_in);
 
     /* Let normalize_path_ex() do the real work. */
     rc = ib_util_normalize_path_ex(buf, dlen_in, win, dlen_out, result);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* If it's modified, point at the newly allocated buffer. */
@@ -317,5 +309,5 @@ ib_status_t ib_util_normalize_path_cow_ex(ib_mpool_t *mp,
         *data_out = (uint8_t *)data_in;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

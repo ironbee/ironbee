@@ -29,7 +29,6 @@
 #include "engine_private.h"
 
 #include <ironbee/bytestr.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
@@ -46,8 +45,6 @@ ib_status_t ib_tfn_register(ib_engine_t *ib,
                             ib_flags_t flags,
                             void *fndata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(name != NULL);
     assert(fn_execute != NULL);
@@ -59,12 +56,12 @@ ib_status_t ib_tfn_register(ib_engine_t *ib,
 
     name_copy = ib_mpool_strdup(ib->mp, name);
     if (name_copy == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     tfn = (ib_tfn_t *)ib_mpool_alloc(ib->mp, sizeof(*tfn));
     if (tfn == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     tfn->name = name_copy;
     tfn->fn_execute = fn_execute;
@@ -73,10 +70,10 @@ ib_status_t ib_tfn_register(ib_engine_t *ib,
 
     rc = ib_hash_set(tfn_hash, name_copy, tfn);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_tfn_lookup_ex(ib_engine_t *ib,
@@ -84,15 +81,13 @@ ib_status_t ib_tfn_lookup_ex(ib_engine_t *ib,
                              size_t nlen,
                              ib_tfn_t **ptfn)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(name != NULL);
     assert(ptfn != NULL);
 
     ib_hash_t *tfn_hash = ib->tfns;
     ib_status_t rc = ib_hash_get(tfn_hash, ptfn, name);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_tfn_transform(ib_engine_t *ib,
@@ -102,8 +97,6 @@ ib_status_t ib_tfn_transform(ib_engine_t *ib,
                              ib_field_t **fout,
                              ib_flags_t *pflags)
 {
-    IB_FTRACE_INIT();
-
     assert(tfn != NULL);
     assert(mp != NULL);
     assert(fin != NULL);
@@ -112,5 +105,5 @@ ib_status_t ib_tfn_transform(ib_engine_t *ib,
 
     ib_status_t rc = tfn->fn_execute(ib, mp, tfn->fndata, fin, fout, pflags);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

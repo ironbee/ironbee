@@ -27,7 +27,6 @@
 
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
@@ -116,28 +115,26 @@ static const modhtp_nameval_t modhtp_personalities[] = {
 /* Lookup a numeric personality from a name. */
 static int modhtp_personality(const char *name)
 {
-    IB_FTRACE_INIT();
     const modhtp_nameval_t *rec = modhtp_personalities;
 
     if (name == NULL) {
-        IB_FTRACE_RET_INT(-1);
+        return -1;
     }
 
     while (rec->name != NULL) {
         if (strcasecmp(name, rec->name) == 0) {
-            IB_FTRACE_RET_INT(rec->val);
+            return rec->val;
         }
 
         ++rec;
     }
 
-    IB_FTRACE_RET_INT(-1);
+    return -1;
 }
 
 /* Log htp data via ironbee logging. */
 static int modhtp_callback_log(htp_log_t *log)
 {
-    IB_FTRACE_INIT();
     modhtp_context_t *modctx =
         (modhtp_context_t *)htp_connp_get_user_data(log->connp);
     int level;
@@ -170,7 +167,7 @@ static int modhtp_callback_log(htp_log_t *log)
                   log->msg);
     }
 
-    IB_FTRACE_RET_INT(0);
+    return 0;
 }
 
 
@@ -233,7 +230,6 @@ static ib_status_t modhtp_add_flag_to_collection(
     const char *flag
 )
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_field_t *f;
 
@@ -260,14 +256,13 @@ static ib_status_t modhtp_add_flag_to_collection(
                          collection_name);
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
                                           const char *collection_name,
                                           unsigned int flags)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
 
     if (flags & HTP_AMBIGUOUS_HOST) {
@@ -375,14 +370,13 @@ static ib_status_t modhtp_set_parser_flag(ib_tx_t *itx,
         rc = IB_EUNKNOWN;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* -- LibHTP Callbacks -- */
 
 static int modhtp_htp_tx_start(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     ib_conn_t *iconn = modctx->iconn;
     ib_engine_t *ib = iconn->ib;
@@ -397,7 +391,7 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
         itx = iconn->tx;
         if (itx == NULL) {
             ib_log_error(ib, "No ironbee transaction available.");
-            IB_FTRACE_RET_INT(HTP_ERROR);
+            return HTP_ERROR;
         }
         ib_log_debug3(ib, "PARSED TX p=%p id=%s", itx, itx->id);
     }
@@ -407,7 +401,7 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
         rc = ib_tx_create(&itx, iconn, NULL);
         if (rc != IB_OK) {
             /// @todo Set error.
-            IB_FTRACE_RET_INT(HTP_ERROR);
+            return HTP_ERROR;
         }
     }
 
@@ -419,18 +413,17 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     tx = connp->in_tx;
     if (tx == NULL) {
         /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Associate the ironbee transaction with the libhtp transaction. */
     htp_tx_set_user_data(tx, itx);
 
-    IB_FTRACE_RET_INT(HTP_OK);
+    return HTP_OK;
 }
 
 static int modhtp_htp_request_line(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -445,7 +438,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     }
     if (tx == NULL) {
         /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Fetch the ironbee transaction and notify the engine
@@ -454,7 +447,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
         ib_log_error(ib, "No ironbee transaction available.");
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Store the transaction URI path. */
@@ -492,7 +485,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
      * must not be notified again and instead return.
      */
     if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
-        IB_FTRACE_RET_INT(HTP_OK);
+        return HTP_OK;
     }
 
     /* Allocate and fill the parsed request line object */
@@ -523,19 +516,18 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
         ib_log_error_tx(itx,
                         "Error notifying request started: %s",
                         ib_status_to_string(rc));
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
     else if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_REQUEST_FLAGS", tx->flags);
         // TODO: Check flags for those that make further parsing impossible?
     }
 
-    IB_FTRACE_RET_INT(HTP_OK);
+    return HTP_OK;
 }
 
 static int modhtp_htp_request_headers(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -550,7 +542,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     }
     if (tx == NULL) {
         /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Fetch the ironbee transaction and notify the engine
@@ -559,7 +551,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
         ib_log_error(ib, "No ironbee transaction available.");
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     if (tx->flags) {
@@ -587,7 +579,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
      * must not be notified again and instead return.
      */
     if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
-        IB_FTRACE_RET_INT(HTP_OK);
+        return HTP_OK;
     }
 
     /* Copy the request fields into a parse name value pair list object */
@@ -627,12 +619,11 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
                         ib_status_to_string(rc));
     }
 
-    IB_FTRACE_RET_INT(HTP_OK);
+    return HTP_OK;
 }
 
 static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
 {
-    IB_FTRACE_INIT();
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
@@ -647,7 +638,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     }
     if (tx == NULL) {
         /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Fetch the ironbee transaction and notify the engine
@@ -656,7 +647,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
         ib_log_error(ib, "No ironbee transaction available.");
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     if (tx->flags) {
@@ -668,7 +659,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
      * must not be notified again and instead return.
      */
     if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
-        IB_FTRACE_RET_INT(HTP_OK);
+        return HTP_OK;
     }
 
     /* Notify the engine of any request body data. */
@@ -684,12 +675,11 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
         }
     }
 
-    IB_FTRACE_RET_INT(HTP_OK);
+    return HTP_OK;
 }
 
 static int modhtp_htp_request_trailer(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -702,7 +692,7 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
     }
     if (tx == NULL) {
         /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Fetch the ironbee transaction and notify the engine
@@ -711,7 +701,7 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
         ib_log_error(ib, "No ironbee transaction available.");
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     if (tx->flags) {
@@ -723,19 +713,18 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
      * must not be notified again and instead return.
      */
     if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
-        IB_FTRACE_RET_INT(HTP_OK);
+        return HTP_OK;
     }
 
     /// @todo Notify tx_datain_event w/request trailer
     ib_log_debug_tx(itx,
         "TODO: tx_datain_event w/request trailer: tx=%p", itx);
 
-    IB_FTRACE_RET_INT(HTP_OK);
+    return HTP_OK;
 }
 
 static int modhtp_htp_request(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->in_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -748,7 +737,7 @@ static int modhtp_htp_request(htp_connp_t *connp)
     }
     if (tx == NULL) {
         /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Fetch the ironbee transaction, determine if this is a no-body
@@ -758,7 +747,7 @@ static int modhtp_htp_request(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
         ib_log_error(ib, "No ironbee transaction available.");
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     if (tx->flags) {
@@ -770,17 +759,16 @@ static int modhtp_htp_request(htp_connp_t *connp)
      * must not be notified again and instead return.
      */
     if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
-        IB_FTRACE_RET_INT(HTP_OK);
+        return HTP_OK;
     }
 
     ib_state_notify_request_finished(ib, itx);
 
-    IB_FTRACE_RET_INT(HTP_OK);
+    return HTP_OK;
 }
 
 static int modhtp_htp_response_line(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -795,7 +783,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     }
     if (tx == NULL) {
         /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Fetch the ironbee transaction and notify the engine
@@ -804,7 +792,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
         ib_log_error(ib, "No ironbee transaction available.");
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     if (tx->flags) {
@@ -816,7 +804,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
      * must not be notified again and instead return.
      */
     if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
-        IB_FTRACE_RET_INT(HTP_OK);
+        return HTP_OK;
     }
 
     /* Allocate and fill the parsed response line object */
@@ -838,7 +826,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     if (rc != IB_OK) {
         ib_log_error_tx(itx, "Error creating parsed response line: %s",
                         ib_status_to_string(rc));
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Tell the engine that the response started. */
@@ -847,23 +835,22 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
         ib_log_error_tx(itx,
                         "Error notifying response started: %s",
                         ib_status_to_string(rc));
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
     else if (tx->flags) {
         modhtp_set_parser_flag(itx, "HTP_RESPONSE_FLAGS", tx->flags);
         if (tx->flags & HTP_STATUS_LINE_INVALID) {
             // FIXME: Why is this not an error???
             ib_log_error_tx(itx, "Error parsing response line.");
-            IB_FTRACE_RET_INT(HTP_ERROR);
+            return HTP_ERROR;
         }
     }
 
-    IB_FTRACE_RET_INT(HTP_OK);
+    return HTP_OK;
 }
 
 static int modhtp_htp_response_headers(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -878,7 +865,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     }
     if (tx == NULL) {
         /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Fetch the ironbee transaction and notify the engine
@@ -887,7 +874,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
         ib_log_error(ib, "No ironbee transaction available.");
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     if (tx->flags) {
@@ -899,7 +886,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
      * must not be notified again and instead return.
      */
     if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
-        IB_FTRACE_RET_INT(HTP_OK);
+        return HTP_OK;
     }
 
     /* Copy the response fields into a parse name value pair list object */
@@ -942,12 +929,11 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
                         ib_status_to_string(rc));
     }
 
-    IB_FTRACE_RET_INT(HTP_OK);
+    return HTP_OK;
 }
 
 static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
 {
-    IB_FTRACE_INIT();
     htp_connp_t *connp = txdata->tx->connp;
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->out_tx;
@@ -962,7 +948,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     }
     if (tx == NULL) {
         /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Fetch the ironbee transaction and notify the engine
@@ -971,7 +957,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
         ib_log_error(ib, "No ironbee transaction available.");
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     if (tx->flags) {
@@ -983,7 +969,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
      * must not be notified again and instead return.
      */
     if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
-        IB_FTRACE_RET_INT(HTP_OK);
+        return HTP_OK;
     }
 
     /* If this is connection data and the response has not yet
@@ -994,7 +980,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
         ib_log_info_tx(itx,
                        "LibHTP parsing error: "
                        "found response data instead of a response line");
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Notify the engine of any response body data. */
@@ -1010,12 +996,11 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
         }
     }
 
-    IB_FTRACE_RET_INT(HTP_OK);
+    return HTP_OK;
 }
 
 static int modhtp_htp_response(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -1028,7 +1013,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
     }
     if (tx == NULL) {
         /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Fetch the ironbee transaction and notify the engine
@@ -1038,7 +1023,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
         ib_log_error(ib, "No ironbee transaction available.");
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     if (tx->flags) {
@@ -1050,7 +1035,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
      * must not be notified again and instead return.
      */
     if (ib_tx_flags_isset(itx, IB_TX_FPARSED_DATA)) {
-        IB_FTRACE_RET_INT(HTP_OK);
+        return HTP_OK;
     }
 
     ib_state_notify_response_finished(ib, itx);
@@ -1061,12 +1046,11 @@ static int modhtp_htp_response(htp_connp_t *connp)
 
     /* NOTE: The htp transaction is destroyed in modhtp_tx_cleanup() */
 
-    IB_FTRACE_RET_INT(HTP_OK);
+    return HTP_OK;
 }
 
 static int modhtp_htp_response_trailer(htp_connp_t *connp)
 {
-    IB_FTRACE_INIT();
     modhtp_context_t *modctx = htp_connp_get_user_data(connp);
     htp_tx_t *tx = connp->out_tx;
     ib_conn_t *iconn = modctx->iconn;
@@ -1080,7 +1064,7 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
     }
     if (tx == NULL) {
         /// @todo Set error.
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     /* Fetch the ironbee transaction and notify the engine
@@ -1089,7 +1073,7 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
         ib_log_error(ib, "No ironbee transaction available.");
-        IB_FTRACE_RET_INT(HTP_ERROR);
+        return HTP_ERROR;
     }
 
     if (tx->flags) {
@@ -1103,14 +1087,13 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
         itx
     );
 
-    IB_FTRACE_RET_INT(HTP_OK);
+    return HTP_OK;
 }
 
 
 static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
                                                     ib_tx_t *itx)
 {
-    IB_FTRACE_INIT();
     ib_context_t *ctx = itx->ctx;
     ib_conn_t *iconn = itx->conn;
     ib_field_t *f;
@@ -1124,7 +1107,7 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
     if (rc != IB_OK) {
         ib_log_alert_tx(itx, "Failed to fetch module %s config: %s",
                         MODULE_NAME_STR, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Fetch context from the connection. */
@@ -1274,13 +1257,12 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t modhtp_gen_request_fields(ib_provider_inst_t *pi,
                                              ib_tx_t *itx)
 {
-    IB_FTRACE_INIT();
     ib_context_t *ctx = itx->ctx;
     ib_conn_t *iconn = itx->conn;
     ib_field_t *f;
@@ -1296,7 +1278,7 @@ static ib_status_t modhtp_gen_request_fields(ib_provider_inst_t *pi,
     if (rc != IB_OK) {
         ib_log_alert_tx(itx, "Failed to fetch module %s config: %s",
                         MODULE_NAME_STR, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Fetch context from the connection. */
@@ -1355,23 +1337,19 @@ static ib_status_t modhtp_gen_request_fields(ib_provider_inst_t *pi,
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t modhtp_gen_response_header_fields(ib_provider_inst_t *pi,
                                                      ib_tx_t *itx)
 {
-    IB_FTRACE_INIT();
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t modhtp_gen_response_fields(ib_provider_inst_t *pi,
                                               ib_tx_t *itx)
 {
-    IB_FTRACE_INIT();
-
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* -- Parser Provider Interface Implementation -- */
@@ -1406,7 +1384,6 @@ static ib_status_t modhtp_gen_response_fields(ib_provider_inst_t *pi,
 static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
                                      ib_conn_t *iconn)
 {
-    IB_FTRACE_INIT();
     ib_engine_t *ib = iconn->ib;
     ib_context_t *ctx = iconn->ctx;
     modhtp_cfg_t *modcfg;
@@ -1420,7 +1397,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to fetch module %s config: %s",
                      MODULE_NAME_STR, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_log_debug3(ib, "Creating LibHTP parser");
@@ -1428,7 +1405,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     /* Create a context. */
     modctx = ib_mpool_calloc(iconn->mp, 1, sizeof(*modctx));
     if (modctx == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Figure out the personality to use. */
@@ -1440,7 +1417,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     /* Configure parser. */
     modctx->htp_cfg = htp_config_create();
     if (modctx->htp_cfg == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     htp_config_set_server_personality(modctx->htp_cfg, personality);
     /// @todo Make all these configurable???
@@ -1461,7 +1438,7 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     modctx->modcfg = modcfg;
     modctx->htp = htp_connp_create(modctx->htp_cfg);
     if (modctx->htp == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Open the connection */
@@ -1498,13 +1475,12 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     htp_config_register_response(modctx->htp_cfg,
                                  modhtp_htp_response);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t modhtp_iface_disconnect(ib_provider_inst_t *pi,
                                            ib_conn_t *iconn)
 {
-    IB_FTRACE_INIT();
     ib_engine_t *ib = iconn->ib;
     modhtp_context_t *modctx;
 
@@ -1519,13 +1495,12 @@ static ib_status_t modhtp_iface_disconnect(ib_provider_inst_t *pi,
     /* Destroy the configuration. */
     htp_config_destroy(modctx->htp_cfg);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
                                         ib_conndata_t *qcdata)
 {
-    IB_FTRACE_INIT();
     ib_engine_t *ib = pi->pr->ib;
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
@@ -1538,7 +1513,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
     /* Ignore any zero length data. */
     if (qcdata->dlen == 0) {
         ib_log_debug3(ib, "Ignoring zero length incoming data.");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     gettimeofday(&tv, NULL);
@@ -1590,13 +1565,12 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
                          htp->in_status);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
                                          ib_conndata_t *qcdata)
 {
-    IB_FTRACE_INIT();
     ib_engine_t *ib = pi->pr->ib;
     ib_conn_t *iconn = qcdata->conn;
     modhtp_context_t *modctx;
@@ -1609,7 +1583,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
     /* Ignore any zero length data. */
     if (qcdata->dlen == 0) {
         ib_log_debug3(ib, "Ignoring zero length outgoing data.");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     gettimeofday(&tv, NULL);
@@ -1661,20 +1635,18 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
                          htp->out_status);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t modhtp_iface_tx_init(ib_provider_inst_t *pi,
                                         ib_tx_t *itx)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t modhtp_iface_tx_cleanup(ib_provider_inst_t *pi,
                                            ib_tx_t *itx)
 {
-    IB_FTRACE_INIT();
     ib_conn_t *iconn = itx->conn;
     modhtp_context_t *modctx;
     htp_tx_t *in_tx;
@@ -1720,15 +1692,13 @@ static ib_status_t modhtp_iface_tx_cleanup(ib_provider_inst_t *pi,
     }
 
     htp_connp_clear_error(modctx->htp);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t modhtp_iface_request_line(ib_provider_inst_t *pi,
                                              ib_tx_t *itx,
                                              ib_parsed_req_line_t *line)
 {
-    IB_FTRACE_INIT();
-
     assert(pi != NULL);
     assert(itx != NULL);
     assert(line != NULL);
@@ -1739,7 +1709,7 @@ static ib_status_t modhtp_iface_request_line(ib_provider_inst_t *pi,
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug_tx(itx, "SEND REQUEST LINE TO LIBHTP: modhtp_iface_request_line");
@@ -1756,7 +1726,7 @@ static ib_status_t modhtp_iface_request_line(ib_provider_inst_t *pi,
     conndata.data = ib_bytestr_ptr(line->raw);
     rc = modhtp_iface_data_in(pi, &conndata);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Write request line end-of-line to libhtp. */
@@ -1764,10 +1734,10 @@ static ib_status_t modhtp_iface_request_line(ib_provider_inst_t *pi,
     conndata.data = (uint8_t *)"\r\n";
     rc = modhtp_iface_data_in(pi, &conndata);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* User data structure for header iteration. */
@@ -1830,8 +1800,6 @@ static ib_status_t modhtp_iface_request_header_data(ib_provider_inst_t *pi,
                                                     ib_tx_t *itx,
                                                     ib_parsed_header_wrapper_t *header)
 {
-    IB_FTRACE_INIT();
-
     assert(pi != NULL);
     assert(itx != NULL);
     assert(header != NULL);
@@ -1842,7 +1810,7 @@ static ib_status_t modhtp_iface_request_header_data(ib_provider_inst_t *pi,
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug_tx(itx, "SEND REQUEST HEADER DATA TO LIBHTP: modhtp_iface_request_header_data");
@@ -1856,14 +1824,12 @@ static ib_status_t modhtp_iface_request_header_data(ib_provider_inst_t *pi,
                                   modhtp_send_header_data,
                                   &cbdata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t modhtp_iface_request_header_finished(ib_provider_inst_t *pi,
                                                         ib_tx_t *itx)
 {
-    IB_FTRACE_INIT();
-
     assert(pi != NULL);
     assert(itx != NULL);
 
@@ -1873,12 +1839,12 @@ static ib_status_t modhtp_iface_request_header_finished(ib_provider_inst_t *pi,
     /* Generate header fields. */
     rc = modhtp_gen_request_header_fields(pi, itx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug_tx(itx, "SEND REQUEST HEADER FINISHED TO LIBHTP: modhtp_iface_request_header_finished");
@@ -1890,15 +1856,13 @@ static ib_status_t modhtp_iface_request_header_finished(ib_provider_inst_t *pi,
     conndata.data = (uint8_t *)"\r\n";
     rc = modhtp_iface_data_in(pi, &conndata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t modhtp_iface_request_body_data(ib_provider_inst_t *pi,
                                                   ib_tx_t *itx,
                                                   ib_txdata_t *txdata)
 {
-    IB_FTRACE_INIT();
-
     assert(pi != NULL);
     assert(itx != NULL);
     assert(txdata != NULL);
@@ -1908,7 +1872,7 @@ static ib_status_t modhtp_iface_request_body_data(ib_provider_inst_t *pi,
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug_tx(itx, "SEND REQUEST BODY DATA TO LIBHTP: modhtp_iface_request_body_data");
@@ -1920,14 +1884,12 @@ static ib_status_t modhtp_iface_request_body_data(ib_provider_inst_t *pi,
     conndata.data = txdata->data;
     rc = modhtp_iface_data_in(pi, &conndata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t modhtp_iface_request_finished(ib_provider_inst_t *pi,
                                                  ib_tx_t *itx)
 {
-    IB_FTRACE_INIT();
-
     assert(pi != NULL);
     assert(itx != NULL);
 
@@ -1936,15 +1898,13 @@ static ib_status_t modhtp_iface_request_finished(ib_provider_inst_t *pi,
     /* Generate fields. */
     rc = modhtp_gen_request_fields(pi, itx);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t modhtp_iface_response_line(ib_provider_inst_t *pi,
                                               ib_tx_t *itx,
                                               ib_parsed_resp_line_t *line)
 {
-    IB_FTRACE_INIT();
-
     assert(pi != NULL);
     assert(itx != NULL);
 
@@ -1954,12 +1914,12 @@ static ib_status_t modhtp_iface_response_line(ib_provider_inst_t *pi,
 
     /* This is not valid for HTTP/0.9 requests. */
     if (line == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug_tx(itx, "SEND RESPONSE LINE TO LIBHTP: modhtp_iface_response_line");
@@ -1976,7 +1936,7 @@ static ib_status_t modhtp_iface_response_line(ib_provider_inst_t *pi,
     conndata.data = ib_bytestr_ptr(line->raw);
     rc = modhtp_iface_data_out(pi, &conndata);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Write response line end-of-line to libhtp. */
@@ -1984,15 +1944,13 @@ static ib_status_t modhtp_iface_response_line(ib_provider_inst_t *pi,
     conndata.data = (uint8_t *)"\r\n";
     rc = modhtp_iface_data_out(pi, &conndata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t modhtp_iface_response_header_data(ib_provider_inst_t *pi,
                                                      ib_tx_t *itx,
                                                      ib_parsed_header_wrapper_t *header)
 {
-    IB_FTRACE_INIT();
-
     assert(pi != NULL);
     assert(itx != NULL);
     assert(header != NULL);
@@ -2003,7 +1961,7 @@ static ib_status_t modhtp_iface_response_header_data(ib_provider_inst_t *pi,
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug_tx(itx, "SEND RESPONSE HEADER DATA TO LIBHTP: modhtp_iface_response_header_data");
@@ -2017,7 +1975,7 @@ static ib_status_t modhtp_iface_response_header_data(ib_provider_inst_t *pi,
                                   modhtp_send_header_data,
                                   &cbdata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t modhtp_iface_response_header_finished(
@@ -2025,8 +1983,6 @@ static ib_status_t modhtp_iface_response_header_finished(
     ib_tx_t *itx
 )
 {
-    IB_FTRACE_INIT();
-
     assert(pi != NULL);
     assert(itx != NULL);
 
@@ -2035,7 +1991,7 @@ static ib_status_t modhtp_iface_response_header_finished(
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug_tx(itx, "SEND RESPONSE HEADER FINISHED TO LIBHTP: modhtp_iface_response_header_finished");
@@ -2047,21 +2003,19 @@ static ib_status_t modhtp_iface_response_header_finished(
     conndata.data = (uint8_t *)"\r\n";
     rc = modhtp_iface_data_out(pi, &conndata);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Generate header fields. */
     rc = modhtp_gen_response_header_fields(pi, itx);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t modhtp_iface_response_body_data(ib_provider_inst_t *pi,
                                                    ib_tx_t *itx,
                                                    ib_txdata_t *txdata)
 {
-    IB_FTRACE_INIT();
-
     assert(pi != NULL);
     assert(itx != NULL);
     assert(txdata != NULL);
@@ -2071,7 +2025,7 @@ static ib_status_t modhtp_iface_response_body_data(ib_provider_inst_t *pi,
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug_tx(itx, "SEND RESPONSE BODY DATA TO LIBHTP: modhtp_iface_response_body_data");
@@ -2083,14 +2037,12 @@ static ib_status_t modhtp_iface_response_body_data(ib_provider_inst_t *pi,
     conndata.data = txdata->data;
     rc = modhtp_iface_data_out(pi, &conndata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t modhtp_iface_response_finished(ib_provider_inst_t *pi,
                                                   ib_tx_t *itx)
 {
-    IB_FTRACE_INIT();
-
     assert(pi != NULL);
     assert(itx != NULL);
 
@@ -2099,7 +2051,7 @@ static ib_status_t modhtp_iface_response_finished(ib_provider_inst_t *pi,
     /* Generate fields. */
     rc = modhtp_gen_response_fields(pi, itx);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static IB_PROVIDER_IFACE_TYPE(parser) modhtp_parser_iface = {
@@ -2143,7 +2095,6 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
                                ib_module_t *m,
                                void        *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Register as a parser provider. */
@@ -2155,10 +2106,10 @@ static ib_status_t modhtp_init(ib_engine_t *ib,
         ib_log_error(ib,
                      MODULE_NAME_STR ": Error registering htp parser provider: "
                      "%s", ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t modhtp_context_close(ib_engine_t *ib,
@@ -2166,7 +2117,6 @@ static ib_status_t modhtp_context_close(ib_engine_t *ib,
                                         ib_context_t *ctx,
                                         void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_provider_inst_t *pi;
 
@@ -2183,19 +2133,19 @@ static ib_status_t modhtp_context_close(ib_engine_t *ib,
         if (rc != IB_OK) {
             ib_log_alert(ib, "Failed to create %s parser instance: %s",
                          MODULE_NAME_STR, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         rc = ib_parser_provider_set_instance(ctx, pi);
         if (rc != IB_OK) {
             ib_log_alert(ib, "Failed to set %s as default parser: %s",
                          MODULE_NAME_STR, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         pi = ib_parser_provider_get_instance(ctx);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static IB_CFGMAP_INIT_STRUCTURE(modhtp_config_map) = {

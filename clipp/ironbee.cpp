@@ -27,8 +27,6 @@
 
 #include <ironbeepp/all.hpp>
 #include <ironbee/action.h>
-#include <ironbee/debug.h>
-
 #include <boost/make_shared.hpp>
 #include <boost/thread.hpp>
 
@@ -390,8 +388,6 @@ ib_status_t clipp_action_create(
     void*             cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     static const string allow_arg("allow");
     static const string block_arg("block");
     static const string break_arg("break");
@@ -408,10 +404,10 @@ ib_status_t clipp_action_create(
     }
     else {
         ib_log_error(ib, "Unknown argument for clipp: %s", params);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t clipp_action_execute(
@@ -421,14 +417,12 @@ ib_status_t clipp_action_execute(
     void*                 cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     action_e action      = *reinterpret_cast<action_e*>(data);
     action_e* out_action = reinterpret_cast<action_e*>(cbdata);
 
     *out_action = action;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t clipp_announce_action_create(
@@ -440,11 +434,9 @@ ib_status_t clipp_announce_action_create(
     void*             cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     inst->data = ib_mpool_strdup(mp, params);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t clipp_announce_action_execute(
@@ -454,11 +446,9 @@ ib_status_t clipp_announce_action_execute(
     void*                 cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     cout << "CLIPP ANNOUNCE: " << reinterpret_cast<const char*>(data) << endl;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t clipp_error(
@@ -467,11 +457,9 @@ ib_status_t clipp_error(
     void*
 )
 {
-    IB_FTRACE_INIT();
-
     ib_log_error_tx(tx, "clipp_error: %d", status);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t clipp_header(
@@ -484,8 +472,6 @@ ib_status_t clipp_header(
     void*
 )
 {
-    IB_FTRACE_INIT();
-
     static const char* c_header_actions[] = {
         "set",
         "append",
@@ -502,7 +488,7 @@ ib_status_t clipp_header(
         hdr, value
     );
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 } // extern "C"

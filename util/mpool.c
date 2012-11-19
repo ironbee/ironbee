@@ -29,7 +29,6 @@
 
 #include <ironbee/mpool.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/lock.h>
 
 #ifdef IB_MPOOL_VALGRIND
@@ -505,10 +504,8 @@ struct ib_mpool_t
 static
 size_t ib_mpool_track_number(size_t size)
 {
-    IB_FTRACE_INIT();
-
     if (size > IB_MPOOL_MINIMUM_PAGESIZE) {
-        IB_FTRACE_RET_UINT(IB_MPOOL_NUM_TRACKS);
+        return IB_MPOOL_NUM_TRACKS;
     }
 
     /* Subtract 1 from size so that the most significant bit can tell us the
@@ -522,7 +519,7 @@ size_t ib_mpool_track_number(size_t size)
     uint32_t r = 0;
 
     if (v == 0) {
-        IB_FTRACE_RET_UINT(0);
+        return 0;
     }
 
     /* Special thanks to Sean Anderson for this code (public domain):
@@ -552,7 +549,7 @@ size_t ib_mpool_track_number(size_t size)
         }
     }
 
-    IB_FTRACE_RET_UINT(r);
+    return r;
 }
 
 /**
@@ -565,8 +562,6 @@ size_t ib_mpool_track_number(size_t size)
 static
 void ib_mpool_remove_child_from_parent(const ib_mpool_t *child)
 {
-    IB_FTRACE_INIT();
-
     assert(child         != NULL);
     assert(child->parent != NULL);
 
@@ -588,7 +583,7 @@ void ib_mpool_remove_child_from_parent(const ib_mpool_t *child)
         }
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**@}*/
@@ -612,8 +607,6 @@ ib_mpool_page_t *ib_mpool_acquire_page(
     ib_mpool_t *mp
 )
 {
-    IB_FTRACE_INIT();
-
     assert(mp != NULL);
 
     ib_mpool_page_t *mpage = NULL;
@@ -633,7 +626,7 @@ ib_mpool_page_t *ib_mpool_acquire_page(
     }
 #endif
 
-    IB_FTRACE_RET_PTR(ib_mpool_page_t, mpage);
+    return mpage;
 }
 
 /**
@@ -651,8 +644,6 @@ ib_mpool_pointer_page_t *ib_mpool_acquire_pointer_page(
     ib_mpool_t *mp
 )
 {
-    IB_FTRACE_INIT();
-
     assert(mp != NULL);
 
     ib_mpool_pointer_page_t *ppage = NULL;
@@ -665,7 +656,7 @@ ib_mpool_pointer_page_t *ib_mpool_acquire_pointer_page(
         ppage = mp->malloc_fn(sizeof(*ppage));
     }
 
-    IB_FTRACE_RET_PTR(void, ppage);
+    return ppage;
 }
 
 /**
@@ -683,8 +674,6 @@ ib_mpool_cleanup_t *ib_mpool_acquire_cleanup(
     ib_mpool_t *mp
 )
 {
-    IB_FTRACE_INIT();
-
     assert(mp != NULL);
 
     ib_mpool_cleanup_t *cleanup = NULL;
@@ -697,7 +686,7 @@ ib_mpool_cleanup_t *ib_mpool_acquire_cleanup(
         cleanup = mp->malloc_fn(sizeof(*cleanup));
     }
 
-    IB_FTRACE_RET_PTR(void, cleanup);
+    return cleanup;
 }
 
 /**@}*/
@@ -715,8 +704,6 @@ ib_mpool_cleanup_t *ib_mpool_acquire_cleanup(
 static
 void ib_mpool_free_large_allocations(ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT();
-
     assert(mp != NULL);
 
     IB_MPOOL_FOREACH(ib_mpool_pointer_page_t, ppage, mp->large_allocations) {
@@ -729,7 +716,7 @@ void ib_mpool_free_large_allocations(ib_mpool_t *mp)
         }
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -740,8 +727,6 @@ void ib_mpool_free_large_allocations(ib_mpool_t *mp)
 static
 void ib_mpool_call_cleanups(const ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT();
-
     assert(mp != NULL);
 
     IB_MPOOL_FOREACH(ib_mpool_cleanup_t, cleanup, mp->cleanups)
@@ -749,7 +734,7 @@ void ib_mpool_call_cleanups(const ib_mpool_t *mp)
         cleanup->function(cleanup->function_data);
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**@}*/
@@ -808,15 +793,13 @@ void ib_mpool_report_init(
      ib_mpool_report_t *report
 )
 {
-    IB_FTRACE_INIT();
-
     assert(report != NULL);
 
     report->first      = NULL;
     report->last       = NULL;
     report->total_size = 0;
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -841,8 +824,6 @@ bool ib_mpool_report_printf(
     ...
 )
 {
-    IB_FTRACE_INIT();
-
     assert(report != NULL);
     assert(fmt    != NULL);
 
@@ -850,14 +831,14 @@ bool ib_mpool_report_printf(
 
     char *page = (char *)malloc(IB_MPOOL_REPORT_MAX_LINE);
     if (page == NULL) {
-        IB_FTRACE_RET_BOOL(false);
+        return false;
     }
 
     ib_mpool_report_line_t *new_line =
         (ib_mpool_report_line_t *)malloc(sizeof(*new_line));
     if (new_line == NULL) {
         free(page);
-        IB_FTRACE_RET_BOOL(false);
+        return false;
     }
     new_line->next = NULL;
     new_line->line = page;
@@ -878,7 +859,7 @@ bool ib_mpool_report_printf(
 
     report->total_size += n;
 
-    IB_FTRACE_RET_BOOL(true);
+    return true;
 }
 
 /**
@@ -893,17 +874,15 @@ char *ib_mpool_report_convert(
     ib_mpool_report_t *report
 )
 {
-    IB_FTRACE_INIT();
-
     assert(report != NULL);
 
     if (report->total_size == 0) {
-        IB_FTRACE_RET_STR(NULL);
+        return NULL;
     }
 
     char *page = (char *)malloc(report->total_size + 1);
     if (page == NULL) {
-        IB_FTRACE_RET_STR(NULL);
+        return NULL;
     }
     *page = '\0';
 
@@ -911,7 +890,7 @@ char *ib_mpool_report_convert(
         strcat(page, line->line);
     }
 
-    IB_FTRACE_RET_STR(page);
+    return page;
 }
 
 /**
@@ -926,8 +905,6 @@ void ib_mpool_report_destroy(
     ib_mpool_report_t *report
 )
 {
-    IB_FTRACE_INIT();
-
     assert(report != NULL);
 
     IB_MPOOL_FOREACH(ib_mpool_report_line_t, line, report->first) {
@@ -935,7 +912,7 @@ void ib_mpool_report_destroy(
         free(line);
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**@}*/
@@ -971,8 +948,6 @@ bool ib_mpool_debug_report_helper(
     ib_mpool_report_t *report
 )
 {
-    IB_FTRACE_INIT();
-
     assert(mp     != NULL);
     assert(report != NULL);
 
@@ -1090,10 +1065,10 @@ bool ib_mpool_debug_report_helper(
         }
     }
 
-    IB_FTRACE_RET_BOOL(true);
+    return true;
 
 failure:
-    IB_FTRACE_RET_BOOL(false);
+    return false;
 }
 
 /**
@@ -1113,8 +1088,6 @@ bool ib_mpool_analyze_free_child(
      size_t           *free_child_use
 )
 {
-    IB_FTRACE_INIT();
-
     assert(free_child != NULL);
     assert(report     != NULL);
 
@@ -1172,11 +1145,11 @@ bool ib_mpool_analyze_free_child(
     }
 
     *free_child_use = total_used;
-    IB_FTRACE_RET_BOOL(true);
+    return true;
 
 failure:
     *free_child_use = 0;
-    IB_FTRACE_RET_BOOL(false);
+    return false;
 }
 
 /**
@@ -1194,8 +1167,6 @@ bool ib_mpool_analyze_helper(
     ib_mpool_report_t *report
 )
 {
-    IB_FTRACE_INIT();
-
     assert(mp     != NULL);
     assert(report != NULL);
 
@@ -1362,10 +1333,10 @@ bool ib_mpool_analyze_helper(
         }
     }
 
-    IB_FTRACE_RET_BOOL(true);
+    return true;
 
 failure:
-    IB_FTRACE_RET_BOOL(false);
+    return false;
 }
 
 #undef IMR_PRINTF
@@ -1385,12 +1356,10 @@ ib_status_t ib_mpool_create(
     ib_mpool_t  *parent
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     if (pmp == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     rc = ib_mpool_create_ex(
@@ -1402,7 +1371,7 @@ ib_status_t ib_mpool_create(
         NULL
     );
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_mpool_create_ex(
@@ -1414,13 +1383,11 @@ ib_status_t ib_mpool_create_ex(
     ib_mpool_free_fn_t     free_fn
 )
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
     ib_mpool_t *mp = NULL;
 
     if (pmp == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (pagesize == 0) {
@@ -1475,7 +1442,7 @@ ib_status_t ib_mpool_create_ex(
     else {
         mp = (ib_mpool_t *)malloc_fn(sizeof(**pmp));
         if (mp == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         memset(mp, 0, sizeof(**pmp));
     }
@@ -1495,7 +1462,7 @@ ib_status_t ib_mpool_create_ex(
 
     rc = ib_mpool_setname(mp, name);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (parent != NULL) {
@@ -1515,7 +1482,7 @@ ib_status_t ib_mpool_create_ex(
     VALGRIND_CREATE_MEMPOOL(mp, IB_MPOOL_REDZONE_SIZE, 0);
 #endif
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 failure:
     if (mp != NULL) {
@@ -1526,7 +1493,7 @@ failure:
     }
     *pmp = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_mpool_setname(
@@ -1534,10 +1501,8 @@ ib_status_t ib_mpool_setname(
     const char *name
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (mp->name != NULL) {
@@ -1549,39 +1514,35 @@ ib_status_t ib_mpool_setname(
         size_t len = strlen(name);
         mp->name = (char *)mp->malloc_fn(len+1);
         if (mp->name == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         memcpy(mp->name, name, len);
         mp->name[len] = '\0';
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 const char *ib_mpool_name(
     const ib_mpool_t* mp
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL) {
-        IB_FTRACE_RET_STR(NULL);
+        return NULL;
     }
 
-    IB_FTRACE_RET_STR(mp->name);
+    return mp->name;
 }
 
 size_t ib_mpool_inuse(
     const ib_mpool_t* mp
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL) {
-        IB_FTRACE_RET_UINT(0);
+        return 0;
     }
 
-    IB_FTRACE_RET_UINT(mp->inuse);
+    return mp->inuse;
 }
 
 void *ib_mpool_alloc(
@@ -1589,16 +1550,14 @@ void *ib_mpool_alloc(
     size_t      size
 )
 {
-    IB_FTRACE_INIT();
-
     void *ptr = NULL;
 
     if (mp == NULL) {
-        IB_FTRACE_RET_PTR(void, NULL);
+        return NULL;
     }
 
     if (size == 0) {
-        IB_FTRACE_RET_PTR(void, &s_zero_length_buffer);
+        return &s_zero_length_buffer;
     }
 
     /* Actual size: will add redzone if small allocation. */
@@ -1617,7 +1576,7 @@ void *ib_mpool_alloc(
         ) {
             ib_mpool_page_t *mpage = ib_mpool_acquire_page(mp);
             if (mpage == NULL) {
-                IB_FTRACE_RET_PTR(void, NULL);
+                return NULL;
             }
             mpage->next = mp->tracks[track_number];
             mpage->used = 0;
@@ -1651,7 +1610,7 @@ void *ib_mpool_alloc(
             ib_mpool_pointer_page_t *pointers =
                 ib_mpool_acquire_pointer_page(mp);
             if (pointers == NULL) {
-                IB_FTRACE_RET_PTR(void, NULL);
+                return NULL;
             }
             memset(
                 pointers->pointers, 0,
@@ -1667,7 +1626,7 @@ void *ib_mpool_alloc(
 
         ptr = mp->malloc_fn(size);
         if (ptr == NULL) {
-            IB_FTRACE_RET_PTR(void, NULL);
+            return NULL;
         }
 
         mp->large_allocations->pointers[mp->large_allocations->next_pointer] =
@@ -1679,17 +1638,15 @@ void *ib_mpool_alloc(
 
     mp->inuse += actual_size;
 
-    IB_FTRACE_RET_PTR(void, ptr);
+    return ptr;
 }
 
 void ib_mpool_clear(
     ib_mpool_t *mp
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     ib_mpool_call_cleanups(mp);
@@ -1744,15 +1701,13 @@ void ib_mpool_clear(
     VALGRIND_CREATE_MEMPOOL(mp, IB_MPOOL_REDZONE_SIZE, 0);
 #endif
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void ib_mpool_destroy(
     ib_mpool_t *mp
 )
 {
-    IB_FTRACE_INIT();
-
     ib_mpool_call_cleanups(mp);
     ib_mpool_free_large_allocations(mp);
 
@@ -1817,22 +1772,20 @@ void ib_mpool_destroy(
     }
 #endif
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void ib_mpool_release(
     ib_mpool_t *mp
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     if (mp->parent == NULL) {
         ib_mpool_destroy(mp);
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     /* Clear pool and all subpools. */
@@ -1858,7 +1811,7 @@ void ib_mpool_release(
     VALGRIND_DESTROY_MEMPOOL(mp);
 #endif
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_status_t ib_mpool_cleanup_register(
@@ -1867,16 +1820,14 @@ ib_status_t ib_mpool_cleanup_register(
     void                  *function_data
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL || cleanup_function == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_mpool_cleanup_t *cleanup = ib_mpool_acquire_cleanup(mp);
 
     if (cleanup == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     cleanup->next          = mp->cleanups;
@@ -1888,15 +1839,13 @@ ib_status_t ib_mpool_cleanup_register(
     }
     mp->cleanups = cleanup;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 char DLL_PUBLIC *ib_mpool_path(
     const ib_mpool_t *mp
 )
 {
-    IB_FTRACE_INIT();
-
     static const char* c_null_name = "null";
 
 /**@cond DoNotDocument*/
@@ -1920,7 +1869,7 @@ char DLL_PUBLIC *ib_mpool_path(
 
     path_buffer = (char *)malloc(path_length + 1);
     if (path_buffer == NULL) {
-        IB_FTRACE_RET_STR(NULL);
+        return NULL;
     }
     path_i = path_buffer + path_length;
     *path_i = '\0';
@@ -1940,7 +1889,7 @@ char DLL_PUBLIC *ib_mpool_path(
 
     assert(path_i == path_buffer);
 
-    IB_FTRACE_RET_STR(path_buffer);
+    return path_buffer;
 #undef NAME_OF
 }
 
@@ -1960,12 +1909,10 @@ ib_status_t ib_mpool_validate(
     } while (0);
 /**@endcond*/
 
-    IB_FTRACE_INIT();
-
     static const size_t c_message_size = 1024;
 
     if (mp == NULL || message == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     char *error_message = NULL;
@@ -2134,7 +2081,7 @@ ib_status_t ib_mpool_validate(
             goto child_error;
         }
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -2194,12 +2141,12 @@ ib_status_t ib_mpool_validate(
             goto child_error;
         }
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     /* Normal exit */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 error:
     {
@@ -2222,7 +2169,7 @@ error:
     /* Fall through */
 
 child_error:
-    IB_FTRACE_RET_STATUS(IB_EOTHER);
+    return IB_EOTHER;
 
 #undef VALIDATE_ERROR
 }
@@ -2231,10 +2178,8 @@ char *ib_mpool_analyze(
     const ib_mpool_t *mp
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL) {
-        IB_FTRACE_RET_STR(NULL);
+        return NULL;
     }
 
     ib_mpool_report_t report;
@@ -2249,17 +2194,15 @@ char *ib_mpool_analyze(
     }
 
     ib_mpool_report_destroy(&report);
-    IB_FTRACE_RET_STR(report_text);
+    return report_text;
 }
 
 char *ib_mpool_debug_report(
     const ib_mpool_t *mp
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL) {
-        IB_FTRACE_RET_STR(NULL);
+        return NULL;
     }
 
     ib_mpool_report_t report;
@@ -2274,7 +2217,7 @@ char *ib_mpool_debug_report(
     }
 
     ib_mpool_report_destroy(&report);
-    IB_FTRACE_RET_STR(report_text);
+    return report_text;
 }
 
 /* All of the following routines are written in terms of the previous and
@@ -2287,14 +2230,12 @@ void *ib_mpool_calloc(
     size_t      size
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL) {
-        IB_FTRACE_RET_PTR(void, NULL);
+        return NULL;
     }
 
     if (nelem == 0 || size == 0) {
-        IB_FTRACE_RET_PTR(void, &s_zero_length_buffer);
+        return &s_zero_length_buffer;
     }
 
 
@@ -2304,7 +2245,7 @@ void *ib_mpool_calloc(
         memset(ptr, 0, nelem * size);
     }
 
-    IB_FTRACE_RET_PTR(void, ptr);
+    return ptr;
 }
 
 char *ib_mpool_strdup(
@@ -2312,16 +2253,14 @@ char *ib_mpool_strdup(
     const char *src
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL || src == NULL) {
-        IB_FTRACE_RET_STR(NULL);
+        return NULL;
     }
 
     size_t size = strlen(src);
     char *ptr = ib_mpool_memdup_to_str(mp, src, size);
 
-    IB_FTRACE_RET_STR(ptr);
+    return ptr;
 }
 
 char *ib_mpool_memdup_to_str(
@@ -2330,10 +2269,8 @@ char *ib_mpool_memdup_to_str(
     size_t      size
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL || src == NULL) {
-        IB_FTRACE_RET_STR(NULL);
+        return NULL;
     }
 
     char *str = (char *)ib_mpool_alloc(mp, size + 1);
@@ -2345,7 +2282,7 @@ char *ib_mpool_memdup_to_str(
         *(str + size) = '\0';
     }
 
-    IB_FTRACE_RET_PTR(char, str);
+    return str;
 }
 
 void *ib_mpool_memdup(
@@ -2354,14 +2291,12 @@ void *ib_mpool_memdup(
     size_t      size
 )
 {
-    IB_FTRACE_INIT();
-
     if (mp == NULL || src == NULL) {
-        IB_FTRACE_RET_PTR(void, NULL);
+        return NULL;
     }
 
     if (size == 0) {
-        IB_FTRACE_RET_PTR(void, &s_zero_length_buffer);
+        return &s_zero_length_buffer;
     }
 
     void *ptr = ib_mpool_alloc(mp, size);
@@ -2370,7 +2305,7 @@ void *ib_mpool_memdup(
         memcpy(ptr, src, size);
     }
 
-    IB_FTRACE_RET_PTR(void, ptr);
+    return ptr;
 }
 
 /**@}*/

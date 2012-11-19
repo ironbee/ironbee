@@ -35,7 +35,6 @@
 #include "rule_engine_private.h"
 
 #include <ironbee/context_selection.h>
-#include <ironbee/debug.h>
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
@@ -123,22 +122,21 @@ typedef struct core_site_selector_t {
 static const core_location_t *core_ctxsel_matchany_location(
     const core_site_t *site)
 {
-    IB_FTRACE_INIT();
     assert(site != NULL);
     const ib_list_node_t *node;
 
     if (site->locations == NULL) {
-        IB_FTRACE_RET_PTR(const ib_ctxsel_location_t, NULL);
+        return NULL;
     }
 
     IB_LIST_LOOP_CONST(site->locations, node) {
         const core_location_t *location = (const core_location_t *)node->data;
         if (location->match_any) {
-            IB_FTRACE_RET_PTR(const ib_ctxsel_location_t, location);
+            return location;
         }
     }
 
-    IB_FTRACE_RET_PTR(const ib_ctxsel_location_t, NULL);
+    return NULL;
 }
 
 /**
@@ -162,7 +160,6 @@ static ib_status_t core_ctxsel_match_host(
     const ib_list_t *hosts,
     bool *match)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(tx != NULL);
     assert(match != NULL);
@@ -173,7 +170,7 @@ static ib_status_t core_ctxsel_match_host(
     /* If no hosts in the list, we have an automatic match */
     if (hosts == NULL) {
         *match = true;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Now, loop through the list of hostnames */
@@ -185,7 +182,7 @@ static ib_status_t core_ctxsel_match_host(
         /* If this is a "match any" host entry? */
         if (core_host->match_any) {
             *match = true;
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
 
         /* Check the suffix */
@@ -193,7 +190,7 @@ static ib_status_t core_ctxsel_match_host(
             const char *suffix = tx->hostname + len - core_host->suffix_len;
             if (strcasecmp(host->suffix, suffix) == 0) {
                 *match = true;
-                IB_FTRACE_RET_STATUS(IB_OK);
+                return IB_OK;
             }
         }
 
@@ -202,13 +199,13 @@ static ib_status_t core_ctxsel_match_host(
              (strcasecmp(host->hostname, tx->hostname) == 0) )
         {
             *match = true;
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
     }
 
     /* No matches */
     *match = false;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -232,7 +229,6 @@ static ib_status_t core_ctxsel_match_location(
     const ib_list_t *locations,
     const core_location_t **match)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(tx != NULL);
     assert(locations != NULL);
@@ -251,7 +247,7 @@ static ib_status_t core_ctxsel_match_location(
         /* Is this a "match any" location? */
         if (core_location->match_any) {
             *match = core_location;
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
 
         /* Check the path */
@@ -259,13 +255,13 @@ static ib_status_t core_ctxsel_match_location(
              (strncmp(location->path, tx->path, core_location->path_len) == 0) )
         {
             *match = core_location;
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
     }
 
     /* No matches */
     *match = NULL;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -284,7 +280,6 @@ static ib_status_t core_create_site_selector(
     const core_service_t *service,
     core_site_selector_t **selector)
 {
-    IB_FTRACE_INIT();
     assert(core_data != NULL);
     assert(site != NULL);
 
@@ -294,7 +289,7 @@ static ib_status_t core_create_site_selector(
     /* Create & populate a site selector object */
     object = ib_mpool_alloc(site->site.mp, sizeof(*object));
     if (object == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     object->service = service;
     object->hosts = site->hosts;
@@ -304,13 +299,13 @@ static ib_status_t core_create_site_selector(
     /* Add it to the site selector list */
     rc = ib_list_push(core_data->selector_list, object);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (selector != NULL) {
         *selector = object;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -333,7 +328,6 @@ static ib_status_t core_ctxsel_finalize(
     void *common_cb_data,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
 
     const ib_list_node_t *site_node;
@@ -342,17 +336,17 @@ static ib_status_t core_ctxsel_finalize(
 
     /* Do nothing if we're not the current site selector */
     if (ib_ctxsel_module_is_active(ib, ib_core_module()) == false) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* If there are no sites, do nothing */
     if (core_data->site_list == NULL) {
         ib_log_alert(ib, "No site list");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     else if (ib_list_elements(core_data->site_list) == 0) {
         ib_log_alert(ib, "No sites in core site list");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Create the site selector list */
@@ -361,7 +355,7 @@ static ib_status_t core_ctxsel_finalize(
         if (rc != IB_OK) {
             ib_log_error(ib, "Failed to create core site selector list: %s",
                          ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else {
@@ -380,7 +374,7 @@ static ib_status_t core_ctxsel_finalize(
         if (site->services == NULL) {
             rc = core_create_site_selector(core_data, site, NULL, NULL);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
             continue;
         }
@@ -392,12 +386,12 @@ static ib_status_t core_ctxsel_finalize(
                 (const core_service_t *)service_node->data;
             rc = core_create_site_selector(core_data, site, service, NULL);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -420,7 +414,6 @@ static ib_status_t core_ctxsel_select(
     void *fn_cb_data,
     ib_context_t **pctx)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(conn != NULL);
     assert(common_cb_data != NULL);
@@ -433,7 +426,7 @@ static ib_status_t core_ctxsel_select(
 
     /* Verify that we're the current selector */
     if (ib_ctxsel_module_is_active(ib, ib_core_module()) == false) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (core_data->selector_list == NULL) {
@@ -517,7 +510,7 @@ static ib_status_t core_ctxsel_select(
                       (site ? site->site.id_str : "none"),
                       (site ? site->site.name : "none"));
         *pctx = ctx;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /*
@@ -529,7 +522,7 @@ static ib_status_t core_ctxsel_select(
 select_main_context:
     *pctx = ib_context_main(ib);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -550,7 +543,6 @@ static ib_status_t core_ctxsel_site_create(
     void *fn_cb_data,
     ib_site_t **psite)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
     assert(ctx->ctype == IB_CTYPE_SITE);
     assert(name != NULL);
@@ -566,31 +558,31 @@ static ib_status_t core_ctxsel_site_create(
 
     core_site = ib_mpool_calloc(ctx->mp, sizeof(*core_site), 1);
     if (core_site == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     site = &(core_site->site);
     rc = ib_site_create(ctx, name, core_site, site, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Create the locations list
      * The host and service lists are created as required */
     rc = ib_list_create(&(core_site->locations), site->mp);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Add the context selection site struct to the core site list */
     rc = ib_list_push(core_data->site_list, core_site);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (psite != NULL) {
         *psite = site;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -613,7 +605,6 @@ static ib_status_t core_ctxsel_location_create(
     void *fn_cb_data,
     ib_site_location_t **plocation)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
     assert(ctx->ctype == IB_CTYPE_LOCATION);
     assert(site != NULL);
@@ -632,7 +623,7 @@ static ib_status_t core_ctxsel_location_create(
     core_location = (core_location_t *)
         ib_mpool_alloc(site->mp, sizeof(*core_location));
     if (core_location == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     site_location = (ib_site_location_t *)&(core_location->location);
 
@@ -640,7 +631,7 @@ static ib_status_t core_ctxsel_location_create(
     rc = ib_site_location_create(site, ctx, location_str, core_location,
                                  site_location, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Fill in the context selection specific parts */
@@ -650,14 +641,14 @@ static ib_status_t core_ctxsel_location_create(
     /* And, add it to the locations list */
     rc = ib_list_push(core_site->locations, core_location);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Done */
     if (plocation != NULL) {
         *plocation = site_location;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -678,7 +669,6 @@ static ib_status_t core_ctxsel_host_create(
     void *fn_cb_data,
     ib_site_host_t **phost)
 {
-    IB_FTRACE_INIT();
     assert(site != NULL);
     assert(host_str != NULL);
 
@@ -694,14 +684,14 @@ static ib_status_t core_ctxsel_host_create(
     /* Create a host object */
     core_host = ib_mpool_alloc(site->mp, sizeof(*core_host));
     if (core_host == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     site_host = (ib_site_host_t *)&(core_host->host);
 
     /* Initialize the site host object */
     rc = ib_site_host_create(site, host_str, core_host, site_host, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Fill in the core context selection specific parts */
@@ -718,20 +708,20 @@ static ib_status_t core_ctxsel_host_create(
     if (core_site->hosts == NULL) {
         rc = ib_list_create(&(core_site->hosts), site->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     /* Add the host to the list */
     rc = ib_list_push(core_site->hosts, core_host);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (phost != NULL) {
         *phost = site_host;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -752,7 +742,6 @@ static ib_status_t core_ctxsel_service_create(
     void *fn_cb_data,
     ib_site_service_t **pservice)
 {
-    IB_FTRACE_INIT();
     assert(site != NULL);
     assert(service_str != NULL);
 
@@ -763,7 +752,7 @@ static ib_status_t core_ctxsel_service_create(
 
     core_service = ib_mpool_alloc(site->mp, sizeof(*core_service));
     if (core_service == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     service = &(core_service->service);
 
@@ -771,7 +760,7 @@ static ib_status_t core_ctxsel_service_create(
     rc = ib_site_service_create(site, service_str, core_service,
                                 service, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Fill in our pieces of it */
@@ -788,21 +777,21 @@ static ib_status_t core_ctxsel_service_create(
     if (core_site->services == NULL) {
         rc = ib_list_create(&(core_site->services), site->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     /* Finally, push the new service onto the core site service list */
     rc = ib_list_push(core_site->services, core_service);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Done */
     if (pservice != NULL) {
         *pservice = service;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -823,11 +812,10 @@ static ib_status_t core_ctxsel_site_open(
     void *common_cb_data,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(common_cb_data != NULL);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -847,7 +835,6 @@ static ib_status_t core_ctxsel_site_close(
     void *common_cb_data,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(common_cb_data != NULL);
 
@@ -859,57 +846,57 @@ static ib_status_t core_ctxsel_site_close(
 
     /* If there's already match-any location for this site, do nothing. */
     if (core_ctxsel_matchany_location(core_site) != NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Create the match-any location's context */
     rc = ib_context_create((ib_engine_t *)ib, site->context,
                            IB_CTYPE_LOCATION, "location", "/", &ctx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     rc = ib_context_site_set(ctx, site);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Open the location context */
     rc = ib_context_open(ctx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Create the location */
     rc = ib_ctxsel_location_create(site, ctx, path, &location);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Store the location in the context */
     rc = ib_context_location_set(ctx, location);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Open the location object */
     rc = ib_ctxsel_location_open(ib, location);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Close the location object */
     rc = ib_ctxsel_location_close(ib, location);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Close the location context */
     rc = ib_context_close(ctx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -929,11 +916,10 @@ static ib_status_t core_ctxsel_location_open(
     void *common_cb_data,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(common_cb_data != NULL);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -953,17 +939,15 @@ static ib_status_t core_ctxsel_location_close(
     void *common_cb_data,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(common_cb_data != NULL);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_core_ctxsel_init(ib_engine_t *ib,
                                 ib_module_t *module)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(module != NULL);
     ib_status_t rc;
@@ -974,7 +958,7 @@ ib_status_t ib_core_ctxsel_init(ib_engine_t *ib,
     /* Get core module data */
     rc = ib_core_module_data(NULL, &core_data);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     if (core_data == NULL) {
         failed = "NULL data";
@@ -1088,5 +1072,5 @@ cleanup:
     if (registration != NULL) {
         free(registration);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

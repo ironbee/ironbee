@@ -27,7 +27,6 @@
 #include "core_private.h"
 
 #include <ironbee/core.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/provider.h>
@@ -89,7 +88,6 @@ static const ib_tx_flag_map_t core_tx_flag_map[] = {
 static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
                                                   const char *name)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = ib_data_add_bytestr_ex(dpi,
                                             (const char *)name,
                                             strlen(name),
@@ -102,7 +100,7 @@ static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
                      name, ib_status_to_string(rc));
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static void core_gen_tx_bytestr_alias_field(ib_tx_t *tx,
@@ -171,8 +169,6 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
                                                ib_state_event_type_t event,
                                                void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->dpi != NULL);
@@ -184,118 +180,118 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     /* Core Request Fields */
     rc = core_field_placeholder_bytestr(tx->dpi, "request_line");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_method");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_protocol");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_uri");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_raw");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_scheme");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_username");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_password");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_host");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_host");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_port");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_path");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_query");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_fragment");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_content_type");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "request_filename");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "auth_type");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "auth_username");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "auth_password");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Core Request Collections */
     rc = ib_data_add_list(tx->dpi, "request_headers", NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_list(tx->dpi, "request_cookies", NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_list(tx->dpi, "request_uri_params", NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_list(tx->dpi, "request_body_params", NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* ARGS collection */
@@ -303,11 +299,11 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     if (rc == IB_ENOENT) {
         rc = ib_data_add_list(tx->dpi, "ARGS", NULL);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Flags collection */
@@ -315,63 +311,63 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     if (rc == IB_ENOENT) {
         rc = ib_data_add_list(tx->dpi, "FLAGS", NULL);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Initialize CAPTURE */
     rc = ib_data_capture_clear(tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Core Response Fields */
     rc = core_field_placeholder_bytestr(tx->dpi, "response_line");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "response_protocol");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "response_status");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "response_message");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "response_content_type");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Core Response Collections */
     rc = ib_data_add_list(tx->dpi, "response_headers", NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = core_field_placeholder_bytestr(tx->dpi, "FIELD_NAME");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     rc = core_field_placeholder_bytestr(tx->dpi, "FIELD_NAME_FULL");
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_list(tx->dpi, "response_cookies", NULL);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /*
@@ -382,7 +378,6 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
                                            ib_conn_t *conn,
                                            void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     assert(ib != NULL);
@@ -395,7 +390,7 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
                              strlen(conn->local_ipstr),
                              NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_num(conn->dpi,
@@ -403,7 +398,7 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
                          conn->local_port,
                          NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_bytestr(conn->dpi,
@@ -412,7 +407,7 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
                              strlen(conn->remote_ipstr),
                              NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_num(conn->dpi,
@@ -420,11 +415,11 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
                          conn->remote_port,
                          NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
@@ -432,8 +427,6 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
                                              ib_state_event_type_t event,
                                              void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->dpi != NULL);
@@ -445,7 +438,7 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
     for (flag = ib_core_fields_tx_flags();  flag->name != NULL;  ++flag) {
         rc = ib_data_add_num(tx->dpi, flag->tx_name, flag->default_value, NULL);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (flag->default_value) {
             ib_tx_flags_set(tx, flag->tx_flag);
@@ -455,7 +448,7 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -474,7 +467,6 @@ static ib_status_t create_header_alias_list(
     const char *name,
     ib_parsed_header_wrapper_t *header)
 {
-    IB_FTRACE_INIT();
     ib_field_t *f;
     ib_list_t *header_list;
     ib_status_t rc;
@@ -490,15 +482,15 @@ static ib_status_t create_header_alias_list(
     if (rc == IB_ENOENT) {
         rc = ib_data_add_list(tx->dpi, name, &f);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&header_list));
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Loop through the list & alias everything */
@@ -526,7 +518,7 @@ static ib_status_t create_header_alias_list(
                 name,
                 ib_status_to_string(rc)
             );
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Create a byte string field */
@@ -545,7 +537,7 @@ static ib_status_t create_header_alias_list(
                             (const char *)ib_bytestr_ptr(nvpair->name),
                             name,
                             ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Add the field to the list */
@@ -556,11 +548,11 @@ static ib_status_t create_header_alias_list(
                             (const char *)ib_bytestr_ptr(nvpair->name),
                             name,
                             ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /*
@@ -571,7 +563,6 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                                                   ib_state_event_type_t event,
                                                   void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_field_t *f;
     ib_status_t rc;
 
@@ -585,38 +576,38 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
 
     rc = ib_data_get(tx->conn->dpi, "server_addr", &f);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     rc = ib_data_add(tx->dpi, f);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_get(tx->conn->dpi, "server_port", &f);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     rc = ib_data_add(tx->dpi, f);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_get(tx->conn->dpi, "remote_addr", &f);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     rc = ib_data_add(tx->dpi, f);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_get(tx->conn->dpi, "remote_port", &f);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     rc = ib_data_add(tx->dpi, f);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     core_gen_tx_numeric_field(tx, "conn_tx_count",
@@ -650,7 +641,7 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                 ib_ftype_list_mutable_out(&field_list)
             );
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             IB_LIST_LOOP(field_list, node) {
@@ -675,11 +666,11 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                                       "request_headers",
                                       tx->request_header);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /*
@@ -690,7 +681,6 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
                                                 ib_state_event_type_t event,
                                                 void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_field_t *f;
     ib_status_t rc;
 
@@ -714,7 +704,7 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
                 ib_ftype_list_mutable_out(&field_list)
             );
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             IB_LIST_LOOP(field_list, node) {
@@ -732,7 +722,7 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /*
@@ -745,7 +735,6 @@ static ib_status_t core_gen_response_header_fields(
     void                  *cbdata
 )
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     assert(ib != NULL);
@@ -773,11 +762,11 @@ static ib_status_t core_gen_response_header_fields(
                                       "response_headers",
                                       tx->response_header);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /*
@@ -788,13 +777,11 @@ static ib_status_t core_gen_response_body_fields(ib_engine_t *ib,
                                                  ib_state_event_type_t event,
                                                  void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(tx != NULL);
     assert(event == response_finished_event);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
@@ -806,7 +793,6 @@ ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
                                     ib_context_t *ctx,
                                     void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
@@ -821,18 +807,16 @@ ib_status_t ib_core_fields_ctx_init(ib_engine_t *ib,
             "Failed to fetch core module context config: %s",
             ib_status_to_string(rc)
         );
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Initialize core field generation callbacks. */
 ib_status_t ib_core_fields_init(ib_engine_t *ib,
                                 ib_module_t *mod)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(mod != NULL);
 
@@ -858,12 +842,11 @@ ib_status_t ib_core_fields_init(ib_engine_t *ib,
     ib_hook_tx_register(ib, response_finished_event,
                         core_gen_response_body_fields, NULL);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Get the core TX flags */
 const ib_tx_flag_map_t *ib_core_fields_tx_flags( )
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_PTR(const ib_tx_flag_map_t, core_tx_flag_map);
+    return core_tx_flag_map;
 }

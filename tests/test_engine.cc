@@ -30,7 +30,6 @@
 #include <ironbee/state_notify.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/transformation.h>
-#include <ironbee/debug.h>
 #include <ironbee/provider.h>
 
 #include "config-parser.h"

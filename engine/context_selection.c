@@ -34,7 +34,6 @@
 #include "engine_private.h"
 #include "rule_engine_private.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
@@ -47,12 +46,10 @@ bool ib_ctxsel_module_is_active(
     const ib_engine_t *ib,
     const ib_module_t *module)
 {
-    IB_FTRACE_INIT();
-
     if (ib == NULL) {
-        IB_FTRACE_RET_BOOL(false);
+        return false;
     }
-    IB_FTRACE_RET_BOOL(ib->act_ctxsel.module == module);
+    return ib->act_ctxsel.module == module;
 }
 
 ib_status_t ib_ctxsel_site_create(
@@ -60,7 +57,6 @@ ib_status_t ib_ctxsel_site_create(
     const char *name,
     ib_site_t **psite)
 {
-    IB_FTRACE_INIT();
     assert(ctx != NULL);
     assert(ctx->ctype == IB_CTYPE_SITE);
     assert(name != NULL);
@@ -77,7 +73,7 @@ ib_status_t ib_ctxsel_site_create(
                                     ctxsel->site_create_cb_data,
                                     psite);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_ctxsel_location_create(
@@ -86,7 +82,6 @@ ib_status_t ib_ctxsel_location_create(
     const char *location_str,
     ib_site_location_t **plocation)
 {
-    IB_FTRACE_INIT();
     assert(site != NULL);
     assert(location_str != NULL);
 
@@ -103,7 +98,7 @@ ib_status_t ib_ctxsel_location_create(
                                         ctxsel->location_create_cb_data,
                                         plocation);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_ctxsel_host_create(
@@ -111,7 +106,6 @@ ib_status_t ib_ctxsel_host_create(
     const char *host_str,
     ib_site_host_t **phost)
 {
-    IB_FTRACE_INIT();
     assert(site != NULL);
     assert(host_str != NULL);
 
@@ -127,7 +121,7 @@ ib_status_t ib_ctxsel_host_create(
                                     ctxsel->host_create_cb_data,
                                     phost);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_ctxsel_service_create(
@@ -135,7 +129,6 @@ ib_status_t ib_ctxsel_service_create(
     const char *service_str,
     ib_site_service_t **pservice)
 {
-    IB_FTRACE_INIT();
     assert(site != NULL);
     assert(service_str != NULL);
 
@@ -151,14 +144,13 @@ ib_status_t ib_ctxsel_service_create(
                                        ctxsel->service_create_cb_data,
                                        pservice);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_ctxsel_site_open(
     const ib_engine_t *ib,
     ib_site_t *site)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(site != NULL);
 
@@ -170,14 +162,13 @@ ib_status_t ib_ctxsel_site_open(
                                   ctxsel->common_cb_data,
                                   ctxsel->site_open_cb_data);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_ctxsel_location_open(
     const ib_engine_t *ib,
     ib_site_location_t *location)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(location != NULL);
 
@@ -188,14 +179,13 @@ ib_status_t ib_ctxsel_location_open(
         rc = ctxsel->location_open_fn(ib, location, ctxsel->common_cb_data,
                                       ctxsel->location_open_cb_data);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_ctxsel_site_close(
     const ib_engine_t *ib,
     ib_site_t *site)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(site != NULL);
 
@@ -207,14 +197,13 @@ ib_status_t ib_ctxsel_site_close(
                                    ctxsel->common_cb_data,
                                    ctxsel->site_close_cb_data);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_ctxsel_location_close(
     const ib_engine_t *ib,
     ib_site_location_t *location)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(location != NULL);
 
@@ -226,13 +215,12 @@ ib_status_t ib_ctxsel_location_close(
                                        ctxsel->common_cb_data,
                                        ctxsel->location_close_cb_data);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_ctxsel_finalize(
     const ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
 
     ib_status_t rc = IB_OK;
@@ -243,7 +231,7 @@ ib_status_t ib_ctxsel_finalize(
                                  ctxsel->common_cb_data,
                                  ctxsel->finalize_cb_data);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_ctxsel_registration_create(
@@ -252,7 +240,6 @@ ib_status_t ib_ctxsel_registration_create(
     void *common_cb_data,
     ib_ctxsel_registration_t **pregistration)
 {
-    IB_FTRACE_INIT();
     assert(module != NULL);
     assert(pregistration != NULL);
     ib_ctxsel_registration_t *registration;
@@ -264,13 +251,13 @@ ib_status_t ib_ctxsel_registration_create(
         registration = ib_mpool_calloc(mp, sizeof(*registration), 1);
     }
     if (registration == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     registration->mp = mp;
     registration->module = module;
     registration->common_cb_data = common_cb_data;
     *pregistration = registration;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_registration_store_select(
@@ -278,14 +265,13 @@ ib_status_t ib_ctxsel_registration_store_select(
     ib_ctxsel_select_fn_t select_fn,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(registration != NULL);
     assert(registration->module != NULL);
     assert(select_fn != NULL);
 
     registration->select_fn      = select_fn;
     registration->select_cb_data = fn_cb_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_registration_store_site_create(
@@ -293,14 +279,13 @@ ib_status_t ib_ctxsel_registration_store_site_create(
     ib_ctxsel_site_create_fn_t site_create_fn,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(registration != NULL);
     assert(registration->module != NULL);
     assert(site_create_fn != NULL);
 
     registration->site_create_fn      = site_create_fn;
     registration->site_create_cb_data = fn_cb_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_registration_store_location_create(
@@ -308,14 +293,13 @@ ib_status_t ib_ctxsel_registration_store_location_create(
     ib_ctxsel_location_create_fn_t location_create_fn,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(registration != NULL);
     assert(registration->module != NULL);
     assert(location_create_fn != NULL);
 
     registration->location_create_fn      = location_create_fn;
     registration->location_create_cb_data = fn_cb_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_registration_store_host_create(
@@ -323,14 +307,13 @@ ib_status_t ib_ctxsel_registration_store_host_create(
     ib_ctxsel_host_create_fn_t host_create_fn,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(registration != NULL);
     assert(registration->module != NULL);
     assert(host_create_fn != NULL);
 
     registration->host_create_fn      = host_create_fn;
     registration->host_create_cb_data = fn_cb_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_registration_store_service_create(
@@ -338,14 +321,13 @@ ib_status_t ib_ctxsel_registration_store_service_create(
     ib_ctxsel_service_create_fn_t service_create_fn,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(registration != NULL);
     assert(registration->module != NULL);
     assert(service_create_fn != NULL);
 
     registration->service_create_fn      = service_create_fn;
     registration->service_create_cb_data = fn_cb_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_registration_store_site_open(
@@ -353,13 +335,12 @@ ib_status_t ib_ctxsel_registration_store_site_open(
     ib_ctxsel_site_open_fn_t site_open_fn,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(registration != NULL);
     assert(registration->module != NULL);
 
     registration->site_open_fn      = site_open_fn;
     registration->site_open_cb_data = fn_cb_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_registration_store_location_open(
@@ -367,13 +348,12 @@ ib_status_t ib_ctxsel_registration_store_location_open(
     ib_ctxsel_location_open_fn_t location_open_fn,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(registration != NULL);
     assert(registration->module != NULL);
 
     registration->location_open_fn      = location_open_fn;
     registration->location_open_cb_data = fn_cb_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_registration_store_site_close(
@@ -381,13 +361,12 @@ ib_status_t ib_ctxsel_registration_store_site_close(
     ib_ctxsel_site_close_fn_t site_close_fn,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(registration != NULL);
     assert(registration->module != NULL);
 
     registration->site_close_fn      = site_close_fn;
     registration->site_close_cb_data = fn_cb_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_registration_store_location_close(
@@ -395,13 +374,12 @@ ib_status_t ib_ctxsel_registration_store_location_close(
     ib_ctxsel_location_close_fn_t location_close_fn,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(registration != NULL);
     assert(registration->module != NULL);
 
     registration->location_close_fn      = location_close_fn;
     registration->location_close_cb_data = fn_cb_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_registration_store_finalize(
@@ -409,13 +387,12 @@ ib_status_t ib_ctxsel_registration_store_finalize(
     ib_ctxsel_finalize_fn_t finalize_fn,
     void *fn_cb_data)
 {
-    IB_FTRACE_INIT();
     assert(registration != NULL);
     assert(registration->module != NULL);
 
     registration->finalize_fn      = finalize_fn;
     registration->finalize_cb_data = fn_cb_data;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -431,42 +408,39 @@ static ib_status_t ctxsel_store(
     ib_ctxsel_registration_t *dest,
     const ib_ctxsel_registration_t *source)
 {
-    IB_FTRACE_INIT();
     assert(dest != NULL);
     assert(source != NULL);
 
     memcpy(dest, source, sizeof(*dest));
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_registration_register(
     ib_engine_t                    *ib,
     const ib_ctxsel_registration_t *registration)
 {
-    IB_FTRACE_INIT();
-
     if ( (ib == NULL) ||
          (registration == NULL) ||
          (registration->module == NULL) ||
          (registration->select_fn == NULL) )
     {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (registration->module == ib_core_module()) {
         if (ib->core_ctxsel.module != NULL) {
-            IB_FTRACE_RET_STATUS(IB_DECLINED);
+            return IB_DECLINED;
         }
         ctxsel_store(&ib->core_ctxsel, registration);
     }
 
     /* If it's not the core module, don't allow a second registrant */
     else if (ib->act_ctxsel.module != ib_core_module()) {
-        IB_FTRACE_RET_STATUS(IB_DECLINED);
+        return IB_DECLINED;
     }
 
     ctxsel_store(&ib->act_ctxsel, registration);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 
 }
 
@@ -474,24 +448,22 @@ ib_status_t ib_ctxsel_unregister(
     ib_engine_t *ib,
     const ib_module_t *module)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->core_ctxsel.module == ib_core_module());
 
     /* Don't allow core to unregister. */
     if (module == ib_core_module()) {
-        IB_FTRACE_RET_STATUS(IB_DECLINED);
+        return IB_DECLINED;
     }
     /* Verify that this is the current module */
     else if (module != ib->act_ctxsel.module) {
-        IB_FTRACE_RET_STATUS(IB_DECLINED);
+        return IB_DECLINED;
     }
 
     /* Revert to the the core's functions */
     ctxsel_store(&ib->act_ctxsel, &ib->core_ctxsel);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_ctxsel_select_context(
@@ -500,8 +472,6 @@ ib_status_t ib_ctxsel_select_context(
     const ib_tx_t *tx,
     ib_context_t **pctx)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(pctx != NULL);
 
@@ -511,5 +481,5 @@ ib_status_t ib_ctxsel_select_context(
 
     rc = ctxsel->select_fn(ib, conn, tx, ctxsel->common_cb_data,
                            ctxsel->select_cb_data, pctx);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

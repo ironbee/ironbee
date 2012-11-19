@@ -29,8 +29,6 @@
 #include <ironbeepp/internal/throw.hpp>
 
 #include <ironbee/field.h>
-#include <ironbee/debug.h>
-
 #include <boost/lexical_cast.hpp>
 
 #include <cstring>
@@ -114,8 +112,6 @@ ib_status_t field_dynamic_get(
     void*             cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     // We will only pass this as as a const reference.
     ConstField fieldpp(field);
 
@@ -130,7 +126,7 @@ ib_status_t field_dynamic_get(
                 *n = Internal::data_to_value<Field::number_get_t>(cbdata)(
                     fieldpp, carg, arg_length
                 );
-                IB_FTRACE_RET_STATUS(IB_OK);
+                return IB_OK;
             }
             case IB_FTYPE_FLOAT: {
                 ib_float_t* u = reinterpret_cast<ib_float_t*>(out_val);
@@ -139,7 +135,7 @@ ib_status_t field_dynamic_get(
                 >(cbdata)(
                     fieldpp, carg, arg_length
                 );
-                IB_FTRACE_RET_STATUS(IB_OK);
+                return IB_OK;
             }
             case IB_FTYPE_NULSTR:
             {
@@ -149,7 +145,7 @@ ib_status_t field_dynamic_get(
                 >(cbdata)(
                     fieldpp, carg, arg_length
                 );
-                IB_FTRACE_RET_STATUS(IB_OK);
+                return IB_OK;
             }
             case IB_FTYPE_BYTESTR:
             {
@@ -160,7 +156,7 @@ ib_status_t field_dynamic_get(
                 >(cbdata)(
                     fieldpp, carg, arg_length
                 ).ib();
-                IB_FTRACE_RET_STATUS(IB_OK);
+                return IB_OK;
             }
             case IB_FTYPE_LIST:
             {
@@ -171,7 +167,7 @@ ib_status_t field_dynamic_get(
                 >(cbdata)(
                     fieldpp, carg, arg_length
                 );
-                IB_FTRACE_RET_STATUS(IB_OK);
+                return IB_OK;
             }
             default:
                 BOOST_THROW_EXCEPTION(
@@ -182,12 +178,12 @@ ib_status_t field_dynamic_get(
         }
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception());
+        return Internal::convert_exception();
     }
 
     // If we got here, it is in error.
     assert(rc != IB_OK);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t field_dynamic_set(
@@ -198,8 +194,6 @@ ib_status_t field_dynamic_set(
     void*       cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     const char* carg = reinterpret_cast<const char*>(arg);
 
     // No engine available.
@@ -259,9 +253,9 @@ ib_status_t field_dynamic_set(
         }
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception());
+        return Internal::convert_exception();
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 } // extern "C"

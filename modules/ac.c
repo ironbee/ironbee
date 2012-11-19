@@ -27,7 +27,6 @@
 #include <ironbee/ahocorasick.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
@@ -114,8 +113,6 @@ typedef struct modac_workspace_t modac_workspace_t;
 static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
                                                 ib_hash_t **rule_data)
 {
-    IB_FTRACE_INIT();
-
     assert(tx);
     assert(tx->mp);
 
@@ -128,7 +125,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
         ib_log_debug2_tx(tx,
                          "Found rule data hash in tx data named "
                          MODULE_DATA_STR);
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug2_tx(tx, "Rule data hash did not exist in tx data.");
@@ -138,7 +135,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
     if (rc != IB_OK) {
         ib_log_debug2_tx(tx,
                          "Failed to create hash " MODULE_DATA_STR ": %d", rc);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_hash_set(tx->data, MODULE_DATA_STR, *rule_data);
@@ -152,7 +149,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
                      "Returning rule hash " MODULE_DATA_STR " at %p.",
                      *rule_data);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 
 }
 
@@ -173,8 +170,6 @@ static ib_status_t alloc_ac_tx_data(ib_tx_t *tx,
                                     const char *id,
                                     modac_workspace_t **workspace)
 {
-    IB_FTRACE_INIT();
-
     assert(tx);
     assert(tx->mp);
     assert(id);
@@ -185,20 +180,20 @@ static ib_status_t alloc_ac_tx_data(ib_tx_t *tx,
 
     rc = get_or_create_rule_data_hash(tx, &rule_data);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     *workspace = (modac_workspace_t *)ib_mpool_alloc(tx->mp,
                                                      sizeof(**workspace));
 
     if (*workspace == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     (*workspace)->ctx =
         (ib_ac_context_t *)ib_mpool_alloc(tx->mp, sizeof(*(*workspace)->ctx));
     if ((*workspace)->ctx == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     ib_ac_init_ctx((*workspace)->ctx, ac);
@@ -208,7 +203,7 @@ static ib_status_t alloc_ac_tx_data(ib_tx_t *tx,
         *workspace = NULL;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -227,8 +222,6 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
                                    const char *id,
                                    modac_workspace_t **workspace)
 {
-    IB_FTRACE_INIT();
-
     assert(tx);
     assert(tx->mp);
     assert(id);
@@ -239,7 +232,7 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
 
     rc = get_or_create_rule_data_hash(tx, &rule_data);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_hash_get(rule_data, workspace, id);
@@ -247,7 +240,7 @@ static ib_status_t get_dfa_tx_data(ib_tx_t *tx,
         *workspace = NULL;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* -- Matcher Interface -- */
@@ -274,7 +267,6 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
                                         const char **errptr,
                                         int *erroffset)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_ac_t *ac_tree = (ib_ac_t *)((modac_provider_data_t *)mpi->data)->ac_tree;
 
@@ -284,7 +276,7 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
         if (rc != IB_OK || ac_tree == NULL) {
             ib_log_error(mpi->pr->ib,
                          "Unable to create the AC tree at modac");
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         ((modac_provider_data_t *)mpi->data)->ac_tree = ac_tree;
     }
@@ -300,7 +292,7 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
                      patt, ac_tree);
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -314,7 +306,6 @@ static ib_status_t modac_add_pattern_ex(ib_provider_inst_t *mpi,
 static ib_status_t modac_provider_instance_init(ib_provider_inst_t *mpi,
                                                 void *data)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     modac_provider_data_t *dt;
 
@@ -323,7 +314,7 @@ static ib_status_t modac_provider_instance_init(ib_provider_inst_t *mpi,
         sizeof(modac_provider_data_t)
     );
     if (dt == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     mpi->data = (void *)dt;
@@ -333,7 +324,7 @@ static ib_status_t modac_provider_instance_init(ib_provider_inst_t *mpi,
         ib_log_error(mpi->pr->ib,  "Unable to create the AC tree at modac");
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -353,11 +344,10 @@ static ib_status_t modac_match(ib_provider_inst_t *mpi,
                                size_t dlen,
                                void *ctx)
 {
-    IB_FTRACE_INIT();
     modac_provider_data_t *dt = mpi->data;
 
     if (dt == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_log_debug(mpi->pr->ib, "Matching AGAINST AC tree %p",
@@ -379,7 +369,7 @@ static ib_status_t modac_match(ib_provider_inst_t *mpi,
                                    IB_AC_FLAG_CONSUME_DOCALLBACK,
                                    mpi->mp);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t modac_compile(ib_provider_t *mpr,
@@ -389,8 +379,7 @@ static ib_status_t modac_compile(ib_provider_t *mpr,
                                  const char **errptr,
                                  int *erroffset)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    return IB_ENOTIMPL;
 }
 
 static ib_status_t modac_match_compiled(ib_provider_t *mpr,
@@ -399,15 +388,13 @@ static ib_status_t modac_match_compiled(ib_provider_t *mpr,
                                         const uint8_t *data,
                                         size_t dlen, void *ctx)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    return IB_ENOTIMPL;
 }
 
 static ib_status_t modac_add_pattern(ib_provider_inst_t *pi,
                                      void *cpatt)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_STATUS(IB_ENOTIMPL);
+    return IB_ENOTIMPL;
 }
 
 static IB_PROVIDER_IFACE_TYPE(matcher) modac_matcher_iface = {
@@ -449,8 +436,6 @@ static ib_status_t readfile(const ib_engine_t *ib,
                             const char *filename,
                             char **buffer)
 {
-    IB_FTRACE_INIT();
-
     int fd;
     int rc;
     struct stat fd_stat;
@@ -463,19 +448,19 @@ static ib_status_t readfile(const ib_engine_t *ib,
         const char *filepath;
         const char *path = ib_context_config_cwd(ctx);
         if (path == NULL) {
-            IB_FTRACE_RET_STATUS(IB_ENOENT);
+            return IB_ENOENT;
         }
         filepath = ib_util_path_join(mp, path, filename);
         if (filepath == NULL) {
             ib_log_error(ib, "Failed to create file path for \"%s\"", filename);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         fd = open(filepath, O_RDONLY);
         if (fd < 0) {
             ib_log_error(ib,
                          "Failed to open pattern file \"%s\" or \"%s\": %s",
                          filename, filepath, strerror(errno));
-            IB_FTRACE_RET_STATUS(IB_ENOENT);
+            return IB_ENOENT;
         }
         filename = filepath;
     }
@@ -485,7 +470,7 @@ static ib_status_t readfile(const ib_engine_t *ib,
     if (rc == -1) {
         ib_log_error(ib,
                      "Failed to stat file %s: %s", filename, strerror(errno));
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Protect the user from building a tree from a 1GB file of patterns. */
@@ -493,7 +478,7 @@ static ib_status_t readfile(const ib_engine_t *ib,
         ib_log_error(ib,
                      "Refusing to parse file %s because it is too large.",
                      filename);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* If conversion from off_t to ssize_t is required, it happens here. */
@@ -503,7 +488,7 @@ static ib_status_t readfile(const ib_engine_t *ib,
 
     if (*buffer == NULL) {
         close(fd);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     total_bytes_read = 0;
@@ -517,7 +502,7 @@ static ib_status_t readfile(const ib_engine_t *ib,
             free(*buffer);
             *buffer = NULL;
             close(fd);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         total_bytes_read += bytes_read;
@@ -529,7 +514,7 @@ static ib_status_t readfile(const ib_engine_t *ib,
     (*buffer)[total_bytes_read] = '\0';
 
     ib_log_debug(ib, "Read AC pattern file \"%s\"", filename);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t pmf_operator_create(ib_engine_t *ib,
@@ -539,8 +524,6 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
                                        const char *pattern_file,
                                        ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     ib_ac_t *ac;
@@ -556,7 +539,7 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
     pattern_file_unescaped = malloc(pattern_file_len+1);
 
     if ( pattern_file_unescaped == NULL ) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     rc = ib_util_unescape_string(pattern_file_unescaped,
@@ -571,7 +554,7 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
             "Cannot unescape file \"%s\".";
         free(pattern_file_unescaped);
         ib_log_debug(ib, msg, pattern_file);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Populate file. This data must be free'ed. */
@@ -584,14 +567,14 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
             free(file);
         }
 
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_ac_create(&ac, 0, pool);
 
     if (rc != IB_OK) {
         free(file);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Iterate through the file contents, one line at a time.
@@ -607,7 +590,7 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
             if ( line_unescaped == NULL ) {
                 free(file);
                 free(line_unescaped);
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
 
             /* Escape a pattern, allowing nulls in the line. */
@@ -623,7 +606,7 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
 
             if (rc != IB_OK) {
                 free(file);
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
     }
@@ -632,13 +615,13 @@ static ib_status_t pmf_operator_create(ib_engine_t *ib,
 
     if (rc != IB_OK) {
         free(file);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     op_inst->data = ac;
 
     free(file);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t pm_operator_create(ib_engine_t *ib,
@@ -648,8 +631,6 @@ static ib_status_t pm_operator_create(ib_engine_t *ib,
                                       const char *pattern,
                                       ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     ib_ac_t *ac;
@@ -660,7 +641,7 @@ static ib_status_t pm_operator_create(ib_engine_t *ib,
     char* tok;
 
     if (tok_buffer == NULL ) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     ib_util_unescape_string(tok_buffer,
@@ -676,7 +657,7 @@ static ib_status_t pm_operator_create(ib_engine_t *ib,
 
     if (rc != IB_OK) {
         free(tok_buffer);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     for (tok = strtok(tok_buffer, " "); tok != NULL; tok = strtok(NULL, " "))
@@ -686,7 +667,7 @@ static ib_status_t pm_operator_create(ib_engine_t *ib,
 
             if (rc != IB_OK) {
                 free(tok_buffer);
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
     }
@@ -695,13 +676,13 @@ static ib_status_t pm_operator_create(ib_engine_t *ib,
 
     if (rc != IB_OK) {
         free(tok_buffer);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     op_inst->data = ac;
 
     free(tok_buffer);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
@@ -709,8 +690,6 @@ static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
                                      const ib_rule_t *rule,
                                      ib_ac_context_t **ac_ctx)
 {
-    IB_FTRACE_INIT();
-
     assert(tx);
     assert(ac);
     assert(ac_ctx);
@@ -733,12 +712,12 @@ static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
                 ib_log_error_tx(tx,
                                 "Unexpected error creating tx data: %d",
                                 rc);
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
         else if (rc != IB_OK) {
             ib_log_error_tx(tx, "Unexpected error retrieving tx data: %d", rc);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         *ac_ctx = workspace->ctx;
@@ -748,13 +727,13 @@ static ib_status_t initialize_ac_ctx(ib_tx_t *tx,
     else {
         *ac_ctx = (ib_ac_context_t *)ib_mpool_alloc(tx->mp, sizeof(**ac_ctx));
         if (*ac_ctx == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         ib_ac_init_ctx(*ac_ctx, ac);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t pm_operator_execute(const ib_rule_exec_t *rule_exec,
@@ -763,8 +742,6 @@ static ib_status_t pm_operator_execute(const ib_rule_exec_t *rule_exec,
                                        ib_field_t *field,
                                        ib_num_t *result)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec);
     assert(data);
 
@@ -780,7 +757,7 @@ static ib_status_t pm_operator_execute(const ib_rule_exec_t *rule_exec,
     if (field->type == IB_FTYPE_NULSTR) {
         rc = ib_field_value(field, ib_ftype_nulstr_out(&subject));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         subject_len = strlen(subject);
@@ -788,27 +765,27 @@ static ib_status_t pm_operator_execute(const ib_rule_exec_t *rule_exec,
     else if (field->type == IB_FTYPE_BYTESTR) {
         rc = ib_field_value(field, ib_ftype_bytestr_out(&bytestr));
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         subject_len = ib_bytestr_length(bytestr);
         subject = (const char *)ib_bytestr_const_ptr(bytestr);
     }
     else {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     rc = initialize_ac_ctx(tx, ac, rule_exec->rule, &ac_ctx);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Cannot initialize AhoCorasic context: %d", rc);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_ac_consume(ac_ctx, subject, subject_len, 0, tx->mp);
 
     if (rc == IB_ENOENT) {
         *result = 0;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     else if (rc == IB_OK) {
         *result = (ac_ctx->match_cnt > 0) ? 1 : 0;
@@ -833,21 +810,19 @@ static ib_status_t pm_operator_execute(const ib_rule_exec_t *rule_exec,
             }
         }
 
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t pm_operator_destroy(ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
-
     /* Nop. */
 
     /* No callback required. Allocations are out of the IB memory pool. */
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* -- Module Routines -- */
@@ -856,7 +831,6 @@ static ib_status_t modac_init(ib_engine_t *ib,
                               ib_module_t *m,
                               void        *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     /* Register as a matcher provider. */
@@ -870,7 +844,7 @@ static ib_status_t modac_init(ib_engine_t *ib,
         ib_log_error(ib,
                      MODULE_NAME_STR ": Error registering ac matcher provider: "
                      "%s", ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_operator_register(ib,
@@ -900,7 +874,7 @@ static ib_status_t modac_init(ib_engine_t *ib,
                  "AC Status: compiled=\"%d.%d %s\" AC Matcher registered",
                  AC_MAJOR, AC_MINOR, IB_XSTRINGIFY(AC_DATE));
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**

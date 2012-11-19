@@ -28,7 +28,6 @@
 
 #include "gtest/gtest.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/util.h>
 
 #include <string>

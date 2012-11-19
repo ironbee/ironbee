@@ -28,8 +28,6 @@
 
 #include "gtest/gtest.h"
 
-#include <ironbee/debug.h>
-
 #include <boost/bind.hpp>
 
 using namespace std;

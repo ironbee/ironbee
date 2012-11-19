@@ -25,7 +25,6 @@
 
 #include <ironbee/escape.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
@@ -51,7 +50,6 @@ ib_status_t ib_string_escape_json_buf_ex(
     ib_flags_t *result
 )
 {
-    IB_FTRACE_INIT();
     assert(data_in != NULL);
     assert(data_out != NULL);
 
@@ -175,7 +173,7 @@ ib_status_t ib_string_escape_json_buf_ex(
     if (dlen_out != NULL) {
         *dlen_out = optr - data_out;
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Convert a c-string to a json string with escaping */
@@ -186,7 +184,6 @@ ib_status_t ib_string_escape_json_buf(const char *data_in,
                                       size_t *dlen_out,
                                       ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     assert(data_in != NULL);
     assert(data_out != NULL);
 
@@ -200,7 +197,7 @@ ib_status_t ib_string_escape_json_buf(const char *data_in,
     if (dlen_out != NULL) {
         --(*dlen_out);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
@@ -211,7 +208,6 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
                                        size_t *dlen_out,
                                        ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     assert(data_out != NULL);
     assert(join != NULL);
 
@@ -238,7 +234,7 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
     }
     if (elements == 0) {
         *data_out = '\0';
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     IB_LIST_LOOP_CONST(items, node) {
@@ -250,7 +246,7 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
         /* First one? */
         if (! first) {
             if (remain < (joinlen + 1) ) {
-                IB_FTRACE_RET_STATUS(IB_ETRUNC);
+                return IB_ETRUNC;
             }
             strcpy(cur, join);
             cur += joinlen;
@@ -273,7 +269,7 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
         }
 
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         if ( (result != NULL) && (ib_flags_all(rslt, IB_STRFLAG_MODIFIED)) ) {
@@ -282,11 +278,11 @@ ib_status_t ib_strlist_escape_json_buf(const ib_list_t *items,
 
         /* Quit if we're out of space */
         if (remain == 0) {
-            IB_FTRACE_RET_STATUS(IB_ETRUNC);
+            return IB_ETRUNC;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Convert a bytestring to a json string with escaping, ex version */
@@ -299,7 +295,6 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
                                      size_t *dlen_out,
                                      ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
@@ -316,7 +311,7 @@ allocate:
     bufsize = buflen + (add_nul ? 1 : 0) + (quote ? 2 : 0);
     buf = ib_mpool_alloc(mp, bufsize);
     if (buf == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     rc = ib_string_escape_json_buf_ex(data_in, dlen_in, add_nul, quote,
@@ -329,7 +324,7 @@ allocate:
     *result |= IB_STRFLAG_NEWBUF;
     *data_out = buf;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Convert a c-string to a json string with escaping */
@@ -339,7 +334,6 @@ ib_status_t ib_string_escape_json(ib_mpool_t *mp,
                                   char **data_out,
                                   ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
@@ -351,7 +345,7 @@ ib_status_t ib_string_escape_json(ib_mpool_t *mp,
                                   true, quote,
                                   data_out, NULL,
                                   result);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**

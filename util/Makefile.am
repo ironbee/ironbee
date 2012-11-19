@@ -8,7 +8,6 @@ libibutil_la_SOURCES = ahocorasick.c \
                        bytestr.c \
                        cfgmap.c \
                        clock.c \
-                       debug.c \
                        decode.c \
                        dso.c \
                        escape.c \

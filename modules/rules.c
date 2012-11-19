@@ -26,7 +26,6 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
 #include <ironbee/core.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/list.h>
 #include <ironbee/lock.h>
@@ -120,16 +119,15 @@ static ib_status_t lookup_phase(const char *str,
                                 bool is_stream,
                                 ib_rule_phase_num_t *phase)
 {
-    IB_FTRACE_INIT();
     const phase_lookup_t *item;
 
     for (item = phase_lookup_table;  item->str != NULL;  ++item) {
          if (strcasecmp(str, item->str) == 0) {
              *phase = item->phase;
-             IB_FTRACE_RET_STATUS(IB_OK);
+             return IB_OK;
          }
     }
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
+    return IB_EINVAL;
 }
 
 #ifdef ENABLE_LUA
@@ -163,7 +161,6 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
                                   const char *operator,
                                   const char *operand)
 {
-    IB_FTRACE_INIT();
     assert(cp != NULL);
     assert(rule != NULL);
     assert(operator != NULL);
@@ -183,7 +180,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
     /* Better be an '@' next... */
     if ( (*cptr != '@') || (isalpha(*(cptr+1)) == 0) ) {
         ib_cfg_log_error(cp, "Invalid rule syntax \"%s\"", operator);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     opname = cptr + 1;
 
@@ -203,7 +200,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
                          opname,
                          operand == NULL ? "" : operand,
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Set the operator */
@@ -212,7 +209,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp,
                          "Failed to set operator for rule: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     ib_cfg_log_debug3(cp,
                       "Rule: operator=\"%s\" operand=\"%s\" "
@@ -221,7 +218,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
                       (operand == NULL) ? "" : operand,
                       flags);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -243,7 +240,6 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
                                          const char **rewritten,
                                          int *rewrites)
 {
-    IB_FTRACE_INIT();
     char const *ops[MAX_TFN_TOKENS];
     const char *cur = target_str;
     char *new;
@@ -275,7 +271,7 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
     *rewrites = count;
     if (count == 0) {
         *rewritten = target_str;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /**
@@ -286,7 +282,7 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp,
                          "Failed to duplicate target field string \"%s\"",
                          target_str);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Add the functions in reverse order */
@@ -300,7 +296,7 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
 
     /* Done */
     *rewritten = new;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -318,7 +314,6 @@ static ib_status_t parse_target_string(ib_cfgparser_t *cp,
                                        const char **target,
                                        ib_list_t **tfns)
 {
-    IB_FTRACE_INIT();
     ib_status_t  rc;
     char        *cur;                /* Current position */
     char        *dup_str;            /* Duplicate string */
@@ -334,14 +329,14 @@ static ib_status_t parse_target_string(ib_cfgparser_t *cp,
     /* No parens?  Just store the target string as the field name & return. */
     if (strstr(str, "()") == NULL) {
         *target = str;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Make a duplicate of the target string to work on */
     dup_str = ib_mpool_strdup(ib_rule_mpool(cp->ib), str);
     if (dup_str == NULL) {
         ib_cfg_log_error(cp, "Error duplicating target string \"%s\"", str);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Walk through the string */
@@ -399,7 +394,7 @@ static ib_status_t parse_target_string(ib_cfgparser_t *cp,
                 ib_cfg_log_error(cp,
                                  "Error creating transformation list: %s",
                                  ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
 
@@ -409,7 +404,7 @@ static ib_status_t parse_target_string(ib_cfgparser_t *cp,
             ib_cfg_log_error(cp,
                              "Error adding transformation \"%s\" to list: %s",
                              tfn, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -420,7 +415,7 @@ static ib_status_t parse_target_string(ib_cfgparser_t *cp,
     *target = dup_str;
     ib_cfg_log_debug3(cp, "Final target field name is \"%s\"", *target);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -442,7 +437,6 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
                                 ib_rule_t *rule,
                                 const char *target_str)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     const char *rewritten_target_str = NULL;
     const char *final_target_str; /* Holder for the final target name. */
@@ -456,7 +450,7 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
                                &rewritten_target_str, &rewrites);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error rewriting target \"%s\"", target_str);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Parse the rewritten string into the final_target_str. */
@@ -467,7 +461,7 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error parsing target string \"%s\": %s",
                          target_str, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Create the target object */
@@ -481,25 +475,25 @@ static ib_status_t parse_target(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp,
                          "Error creating rule target \"%s\": %s",
                          final_target_str, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     else if (not_found != 0) {
         ib_cfg_log_error(cp,
             "Rule target \"%s\": %d transformations not found",
             final_target_str, not_found
         );
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Add the target to the rule */
     rc = ib_rule_add_target(cp->ib, rule, ib_rule_target);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to add rule target \"%s\"", target_str);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     ib_cfg_log_debug3(cp, "Added rule target \"%s\" to rule", target_str);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -520,7 +514,6 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
                                             const char *name,
                                             const char *params)
 {
-    IB_FTRACE_INIT();
     ib_status_t        rc = IB_OK;
     ib_action_inst_t  *action;
     ib_rule_action_t   atype = RULE_ACTION_TRUE;
@@ -538,13 +531,13 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
                                &action);
     if (rc == IB_ENOENT) {
         ib_cfg_log_notice(cp, "Ignoring unknown modifier \"%s\"", name);
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     else if (rc != IB_OK) {
         ib_cfg_log_error(cp,
                          "Failed to create action instance \"%s\": %s",
                          name, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Add the action to the rule */
@@ -553,10 +546,10 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp,
                          "Failed to add action \"%s\" to rule \"%s\": %s",
                          name, ib_rule_id(rule), ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -570,14 +563,13 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
 static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp,
                                         ib_rule_t *rule)
 {
-    IB_FTRACE_INIT();
     bool child = ib_flags_all(rule->flags, IB_RULE_FLAG_CHCHILD);
 
     if ( (! child) && (ib_rule_id(rule) == NULL) )
     {
         ib_cfg_log_error(cp, "No rule id specified (flags=0x%04x)",
                          rule->flags);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if ( (! child) &&
@@ -585,10 +577,10 @@ static ib_status_t check_rule_modifiers(ib_cfgparser_t *cp,
           (rule->meta.phase == PHASE_NONE)) )
     {
         ib_cfg_log_error(cp, "Phase invalid or not specified.");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 /**
  * Parse a rule's modifier string.
@@ -606,7 +598,6 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
                                   ib_rule_t *rule,
                                   const char *modifier_str)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
     const char *name;
     char *colon;
@@ -622,7 +613,7 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     if (copy == NULL) {
         ib_cfg_log_error(cp,
                          "Failed to copy rule modifier \"%s\"", modifier_str);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Modifier name */
@@ -643,10 +634,10 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     if (strcasecmp(name, "id") == 0) {
         if (value == NULL) {
             ib_cfg_log_error(cp, "Modifier ID with no value");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         rc = ib_rule_set_id(cp->ib, rule, value);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Message modifier */
@@ -656,12 +647,12 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         rc = ib_data_expand_test_str(value, &expand);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Expansion test failed: %d", rc);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (expand) {
             rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_MSG;
         }
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* LogData modifier */
@@ -671,18 +662,18 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         rc = ib_data_expand_test_str(value, &expand);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Expansion test failed: %d", rc);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         if (expand) {
             rule->meta.flags |= IB_RULEMD_FLAG_EXPAND_DATA;
         }
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Tag modifier */
     if (strcasecmp(name, "tag") == 0) {
         rc = ib_list_push(rule->meta.tags, (void *)value);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Severity modifier */
@@ -691,10 +682,10 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
         if (severity > UINT8_MAX) {
             ib_cfg_log_error(cp, "Invalid severity: %s", value);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         rule->meta.severity = (uint8_t)severity;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Confidence modifier */
@@ -703,10 +694,10 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
         if (confidence > UINT8_MAX) {
             ib_cfg_log_error(cp, "Invalid confidence: %s", value);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         rule->meta.confidence = (uint8_t)confidence;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Revision modifier */
@@ -715,10 +706,10 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
 
         if ( (rev < 0) || (rev > UINT16_MAX) ) {
             ib_cfg_log_error(cp, "Invalid revision: %s", value);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         rule->meta.revision = (uint16_t)rev;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Phase modifiers (Not valid for stream rules) */
@@ -727,12 +718,12 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         if (strcasecmp(name, "phase") == 0) {
             if (value == NULL) {
                 ib_cfg_log_error(cp, "Modifier PHASE with no value");
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
             }
             rc = lookup_phase(value, false, &phase);
             if (rc != IB_OK) {
                 ib_cfg_log_error(cp, "Invalid phase: %s", value);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
             }
         }
         else {
@@ -749,9 +740,9 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             if (rc != IB_OK) {
                 ib_cfg_log_error(cp, "Error setting rule phase: %s",
                                  ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
 
         /* Not a phase modifier, so don't return */
@@ -762,19 +753,19 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
          (strcasecmp(name, "chain") == 0) )
     {
         rc = ib_rule_set_chain(cp->ib, rule);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Capture modifier */
     if (strcasecmp(name, "capture") == 0) {
         if (ib_flags_any(rule->opinst->op->flags, IB_OP_FLAG_CAPTURE)) {
             rule->flags |= IB_RULE_FLAG_CAPTURE;
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
         else {
             ib_cfg_log_error(cp, "Capture not supported by operator %s",
                              rule->opinst->op->name);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
     }
 
@@ -784,24 +775,24 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
             ib_cfg_log_error(cp,
                 "Transformations not supported for this rule"
             );
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
 
         if (value == NULL) {
             ib_cfg_log_error(cp, "Modifier transformation with no value");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         rc = ib_rule_add_tfn(cp->ib, rule, value);
         if (rc == IB_ENOENT) {
             ib_cfg_log_error(cp, "Unknown transformation: \"%s\"", value);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         else if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Error adding transformation \"%s\": %s",
                              value, ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Finally, try to match it to an action */
@@ -809,10 +800,10 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error registering action \"%s\": %s",
                          name, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 #ifdef ENABLE_LUA
@@ -833,8 +824,6 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
                                             critical_section_fn_t fn,
                                             lua_State **L)
 {
-    IB_FTRACE_INIT();
-
     /* Return code from IronBee calls. */
     ib_status_t ib_rc;
     /* Return code form critical call. */
@@ -845,7 +834,7 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
     /* Report semop error and return. */
     if (ib_rc != IB_OK) {
         ib_log_error(ib, "Failed to lock Lua context.");
-        IB_FTRACE_RET_STATUS(ib_rc);
+        return ib_rc;
     }
 
     /* Execute lua call in critical section. */
@@ -861,10 +850,10 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
     /* Report semop error and return. */
     if (ib_rc != IB_OK) {
         ib_log_error(ib, "Failed to unlock Lua context.");
-        IB_FTRACE_RET_STATUS(ib_rc);
+        return ib_rc;
     }
 
-    IB_FTRACE_RET_STATUS(critical_rc);
+    return critical_rc;
 }
 
 /**
@@ -884,8 +873,6 @@ static ib_status_t ib_lua_func_eval_r(const ib_rule_exec_t *rule_exec,
                                       const char *func_name,
                                       ib_num_t *result)
 {
-    IB_FTRACE_INIT();
-
     assert(rule_exec);
 
     ib_engine_t *ib = rule_exec->ib;
@@ -898,7 +885,7 @@ static ib_status_t ib_lua_func_eval_r(const ib_rule_exec_t *rule_exec,
     ib_rc = call_in_critical_section(ib, &ib_lua_new_thread, &L);
 
     if (ib_rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(ib_rc);
+        return ib_rc;
     }
 
     /* Call the rule in isolation. */
@@ -908,13 +895,13 @@ static ib_status_t ib_lua_func_eval_r(const ib_rule_exec_t *rule_exec,
     *result = result_int;
 
     if (ib_rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(ib_rc);
+        return ib_rc;
     }
 
     /* Atomically destroy the Lua stack */
     ib_rc = call_in_critical_section(ib, &ib_lua_join_thread, &L);
 
-    IB_FTRACE_RET_STATUS(ib_rc);
+    return ib_rc;
 }
 
 static ib_status_t lua_operator_create(ib_engine_t *ib,
@@ -924,8 +911,7 @@ static ib_status_t lua_operator_create(ib_engine_t *ib,
                                        const char *parameters,
                                        ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t lua_operator_execute(const ib_rule_exec_t *rule_exec,
@@ -934,7 +920,6 @@ static ib_status_t lua_operator_execute(const ib_rule_exec_t *rule_exec,
                                         ib_field_t *field,
                                         ib_num_t *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t ib_rc;
     const char *func_name = (char *) data;
 
@@ -945,13 +930,12 @@ static ib_status_t lua_operator_execute(const ib_rule_exec_t *rule_exec,
     ib_rule_log_trace(rule_exec,
                       "Lua function %s=%"PRIu64".", func_name, *result);
 
-    IB_FTRACE_RET_STATUS(ib_rc);
+    return ib_rc;
 }
 
 static ib_status_t lua_operator_destroy(ib_operator_inst_t *op_inst)
 {
-    IB_FTRACE_INIT();
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 #endif
 
@@ -969,8 +953,6 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
                                         const ib_list_t *vars,
                                         void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
     const ib_list_node_t *targets;
     const ib_list_node_t *mod;
@@ -983,7 +965,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     /* Check if lua is available. */
     if (g_ironbee_rules_lua == NULL) {
         ib_cfg_log_error(cp, "Lua is not available");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 #endif
 
@@ -994,7 +976,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
 
     if ( file_name == NULL ) {
         ib_cfg_log_error(cp, "No targets for rule");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_cfg_log_debug3(cp, "Processing external rule: %s", file_name);
@@ -1006,7 +988,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to create rule: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     ib_flags_set(rule->flags, (IB_RULE_FLAG_EXTERNAL | IB_RULE_FLAG_NO_TGT));
 
@@ -1021,14 +1003,14 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
                 (const char *)mod->data,
                 ib_status_to_string(rc)
             );
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     /* Check the rule modifiers. */
     rc = check_rule_modifiers(cp, rule);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Using the rule->meta and file_name, load and stage the ext rule. */
@@ -1041,7 +1023,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
 
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Failed to load lua file %s", file_name+4);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         ib_cfg_log_debug3(cp, "Loaded lua file %s", file_name+4);
@@ -1059,7 +1041,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
             ib_cfg_log_error(cp,
                              "Failed to register lua operator: %s",
                              file_name);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         rc = ib_operator_inst_create(cp->ib,
@@ -1075,7 +1057,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
             ib_cfg_log_error(cp,
                              "Failed to instantiate lua operator for rule %s",
                              file_name+4);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* The data is then name of the function. */
@@ -1088,7 +1070,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
                              "Failed to associate lua operator "
                              "with rule %s: %s",
                              ib_rule_id(rule), file_name+4);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         ib_cfg_log_debug3(cp, "Set operator %s for rule %s",
@@ -1101,19 +1083,19 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     else {
         ib_cfg_log_error(cp, "RuleExt does not support rule type %s.",
                          file_name);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Finally, register the rule */
     rc = ib_rule_register(cp->ib, cp->cur_ctx, rule);
     if (rc == IB_EEXIST) {
         ib_cfg_log_warning(cp, "Not overwriting existing rule");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     else if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error registering rule: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Disable the entire chain if this rule is invalid */
@@ -1122,7 +1104,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Error invalidating rule chain: %s",
                              ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -1131,7 +1113,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
                      ib_rule_id(rule), rule->meta.phase, cp->cur_ctx);
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1148,7 +1130,6 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
                                      const ib_list_t *vars,
                                      void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     const ib_list_node_t *node;
     const char *nodestr;
@@ -1158,8 +1139,7 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
     int targets = 0;
 
     if (cbdata != NULL) {
-        IB_FTRACE_MSG("Callback data is not null.");
-    }
+            }
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
@@ -1243,7 +1223,7 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
     /* Check the rule modifiers. */
     rc = check_rule_modifiers(cp, rule);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Finally, register the rule */
@@ -1265,7 +1245,7 @@ cleanup:
         if (irc != IB_OK) {
             ib_cfg_log_error(cp, "Error invalidating rule chain: %s",
                              ib_status_to_string(irc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         else {
             const char *chain = \
@@ -1277,7 +1257,7 @@ cleanup:
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1295,7 +1275,6 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
                                               const ib_list_t *vars,
                                               void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     const ib_list_node_t *node;
     ib_rule_phase_num_t phase = PHASE_INVALID;
@@ -1305,14 +1284,13 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     ib_rule_t *rule;
 
     if (cbdata != NULL) {
-        IB_FTRACE_MSG("Callback data is not null.");
-    }
+            }
 
     /* Get the phase string */
     node = ib_list_first_const(vars);
     if ( (node == NULL) || (node->data == NULL) ) {
         ib_cfg_log_error(cp, "No stream for StreamInspect");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     str = node->data;
 
@@ -1320,14 +1298,14 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     rc = lookup_phase(str, true, &phase);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Invalid phase: %s", str);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Get the operator string */
     node = ib_list_node_next_const(node);
     if ( (node == NULL) || (node->data == NULL) ) {
         ib_cfg_log_error(cp, "No operator for rule");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     operator = (const char *)node->data;
 
@@ -1338,7 +1316,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to create rule: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     ib_flags_set(rule->flags, IB_RULE_FLAG_NO_TGT);
 
@@ -1347,14 +1325,14 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error setting rule phase: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Verify that we have an operand */
     node = ib_list_node_next_const(node);
     if ( (node == NULL) || (node-> data == NULL) ) {
         ib_cfg_log_error(cp, "No rule operand found");
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     operand = (const char *)node->data;
 
@@ -1364,7 +1342,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp,
                          "Error parsing rule operator \"%s\": %s",
                          operator, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Parse all of the modifiers */
@@ -1375,7 +1353,7 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
                              "Error parsing stream rule modifier \"%s\": %s",
                              (const char *)node->data,
                              ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -1383,16 +1361,16 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     rc = ib_rule_register(cp->ib, cp->cur_ctx, rule);
     if (rc == IB_EEXIST) {
         ib_cfg_log_warning(cp, "Not overwriting existing rule");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     else if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error registering rule: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1410,13 +1388,11 @@ static ib_status_t parse_ruleenable_params(ib_cfgparser_t *cp,
                                            const ib_list_t *vars,
                                            void *cbdata)
 {
-    IB_FTRACE_INIT();
     const ib_list_node_t *node;
     ib_status_t rc = IB_OK;
 
     if (cbdata != NULL) {
-        IB_FTRACE_MSG("Callback data is not null.");
-    }
+            }
 
     /* Loop through all of the parameters in the list */
     IB_LIST_LOOP_CONST(vars, node) {
@@ -1446,7 +1422,7 @@ static ib_status_t parse_ruleenable_params(ib_cfgparser_t *cp,
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1464,13 +1440,11 @@ static ib_status_t parse_ruledisable_params(ib_cfgparser_t *cp,
                                             const ib_list_t *vars,
                                             void *cbdata)
 {
-    IB_FTRACE_INIT();
     const ib_list_node_t *node;
     ib_status_t rc = IB_OK;
 
     if (cbdata != NULL) {
-        IB_FTRACE_MSG("Callback data is not null.");
-    }
+            }
 
     /* Loop through all of the parameters in the list */
     IB_LIST_LOOP_CONST(vars, node) {
@@ -1500,7 +1474,7 @@ static ib_status_t parse_ruledisable_params(ib_cfgparser_t *cp,
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1517,14 +1491,12 @@ static ib_status_t parse_rulemarker_params(ib_cfgparser_t *cp,
                                            const ib_list_t *vars,
                                            void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     const ib_list_node_t *node;
     ib_rule_t *rule = NULL;
 
     if (cbdata != NULL) {
-        IB_FTRACE_MSG("Callback data is not null.");
-    }
+            }
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
@@ -1533,7 +1505,7 @@ static ib_status_t parse_rulemarker_params(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to allocate rule: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     ib_flags_set(rule->flags, IB_RULE_FLAG_ACTION);
 
@@ -1543,7 +1515,7 @@ static ib_status_t parse_rulemarker_params(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp,
                          "Error parsing rule operator \"nop\": %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Parse all of the modifiers, only allowing id and phase. */
@@ -1560,12 +1532,12 @@ static ib_status_t parse_rulemarker_params(ib_cfgparser_t *cp,
                                  name,
                                  (const char *)node->data,
                                  ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
         else {
             ib_cfg_log_error(cp, "Invalid %s parameter \"%s\"", name, param);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
     }
 
@@ -1576,13 +1548,13 @@ static ib_status_t parse_rulemarker_params(ib_cfgparser_t *cp,
                          "Error parsing %s modifier \"rev:0\": %s",
                          name,
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Check the rule modifiers. */
     rc = check_rule_modifiers(cp, rule);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Finally, register the rule. */
@@ -1596,7 +1568,7 @@ static ib_status_t parse_rulemarker_params(ib_cfgparser_t *cp,
                          ib_status_to_string(rc));
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1613,14 +1585,12 @@ static ib_status_t parse_action_params(ib_cfgparser_t *cp,
                                        const ib_list_t *vars,
                                        void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     const ib_list_node_t *node;
     ib_rule_t *rule = NULL;
 
     if (cbdata != NULL) {
-        IB_FTRACE_MSG("Callback data is not null.");
-    }
+            }
 
     /* Allocate a rule */
     rc = ib_rule_create(cp->ib, cp->cur_ctx,
@@ -1657,7 +1627,7 @@ static ib_status_t parse_action_params(ib_cfgparser_t *cp,
     /* Check the rule modifiers. */
     rc = check_rule_modifiers(cp, rule);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Finally, register the rule */
@@ -1679,7 +1649,7 @@ cleanup:
         if (irc != IB_OK) {
             ib_cfg_log_error(cp, "Error invalidating rule chain: %s",
                              ib_status_to_string(irc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         else {
             const char *chain = \
@@ -1691,7 +1661,7 @@ cleanup:
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -1709,7 +1679,6 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
                                         const ib_list_t *vars,
                                         void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_status_t rc2;
     ib_module_t  *mod;
@@ -1727,7 +1696,7 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to get rule module: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Get the context configuration */
@@ -1735,7 +1704,7 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Failed to get rule module configuration: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Initialize the fields list */
@@ -1744,7 +1713,7 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "Failed to create InitVar directive list: %s",
                              ib_status_to_string(rc));
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -1752,7 +1721,7 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
     node = ib_list_first_const(vars);
     if ( (node == NULL) || (node->data == NULL) ) {
         ib_cfg_log_error(cp, "No name specified for InitVar directive");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     name = (const char *)(node->data);
 
@@ -1760,7 +1729,7 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
     node = ib_list_node_next_const(node);
     if ( (node == NULL) || (node->data == NULL) ) {
         ib_cfg_log_error(cp, "No value specified for InitVar directive");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     value = (const char *)(node->data);
 
@@ -1782,7 +1751,7 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error creating field for InitVar: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Add the field to the list */
@@ -1790,7 +1759,7 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "InitVar: Error pushing value on list: %s",
                          ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     if (field->type == IB_FTYPE_NUM) {
         ib_cfg_log_debug(cp,
@@ -1814,7 +1783,7 @@ static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -1835,8 +1804,6 @@ static ib_status_t initvar_event_handler(ib_engine_t *ib,
                                          ib_state_event_type_t event,
                                          void *data)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(tx != NULL);
     assert(event == handle_context_tx_event);
@@ -1851,7 +1818,7 @@ static ib_status_t initvar_event_handler(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Failed to get rule module: %s",
                         ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Get the context configuration */
@@ -1859,14 +1826,14 @@ static ib_status_t initvar_event_handler(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Failed to get rule module configuration: %s",
                         ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* If list is NULL, we're done */
     if (cfg->initvar_list == NULL) {
         ib_log_debug_tx(tx, "No InitVars for defined for context \"%s\"",
                         ib_context_full_get(tx->ctx));
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Loop through the list */
@@ -1893,7 +1860,7 @@ static ib_status_t initvar_event_handler(ib_engine_t *ib,
                         ib_field_type_name(field->type));
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
@@ -1960,7 +1927,6 @@ static void clean_up_ipc_mem(void)
 
 static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(m != NULL);
 
@@ -1996,16 +1962,15 @@ static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     atexit(&clean_up_ipc_mem);
 
     if (m == NULL) {
-        IB_FTRACE_MSG("Module is null.");
-        clean_up_ipc_mem();
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+                clean_up_ipc_mem();
+        return IB_EINVAL;
     }
 
     g_ironbee_rules_lua = luaL_newstate();
 
     if (g_ironbee_rules_lua == NULL) {
         ib_log_notice(ib, "Failed to create LuaJIT state.");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     luaL_openlibs(g_ironbee_rules_lua);
@@ -2016,7 +1981,7 @@ static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 
     if (ib_rc != IB_OK) {
         ib_log_error(ib, "Could not retrieve core module configuration.");
-        IB_FTRACE_RET_STATUS(ib_rc);
+        return ib_rc;
     }
 
     /* Initialize the search paths list. */
@@ -2038,7 +2003,7 @@ static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         if (tmp == NULL) {
             ib_log_error(ib, "Could allocate buffer for string append.");
             free(path);
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         path = tmp;
 
@@ -2069,16 +2034,15 @@ static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
                 lua_preloads[i][1],
                 lua_preloads[i][0]);
             clean_up_ipc_mem();
-            IB_FTRACE_RET_STATUS(ib_rc);
+            return ib_rc;
         }
     }
 #endif
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    IB_FTRACE_INIT();
     assert(ib != NULL);
     assert(m != NULL);
 
@@ -2087,7 +2051,7 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     /* Initialize the LUA logic */
     rc = rules_lua_init(ib, m, cbdata);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Register the rules header_finished callback */
@@ -2099,13 +2063,11 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         ib_log_error(ib, "Hook register returned %d", rc);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    IB_FTRACE_INIT();
-
 #ifdef ENABLE_LUA
     ib_lock_destroy(&g_lua_lock);
 
@@ -2115,7 +2077,7 @@ static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     }
 #endif
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Initialize the module structure. */

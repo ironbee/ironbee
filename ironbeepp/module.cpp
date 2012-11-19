@@ -32,8 +32,6 @@
 
 #include <ironbee/module.h>
 #include <ironbee/engine.h>
-#include <ironbee/debug.h>
-
 #include <cassert>
 
 namespace IronBee {
@@ -147,8 +145,6 @@ ib_status_t initialize(
     void*        cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine = ib_module->ib);
 
     try {
@@ -157,9 +153,9 @@ ib_status_t initialize(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t finalize(
@@ -169,8 +165,6 @@ ib_status_t finalize(
 )
 
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine = ib_module->ib);
 
     try {
@@ -179,9 +173,9 @@ ib_status_t finalize(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t context_open(
@@ -191,8 +185,6 @@ ib_status_t context_open(
     void*         cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine = ib_module->ib);
 
     try {
@@ -202,9 +194,9 @@ ib_status_t context_open(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t context_close(
@@ -214,8 +206,6 @@ ib_status_t context_close(
     void*         cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine = ib_module->ib);
 
     try {
@@ -225,9 +215,9 @@ ib_status_t context_close(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t context_destroy(
@@ -237,8 +227,6 @@ ib_status_t context_destroy(
     void*         cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine = ib_module->ib);
 
     try {
@@ -248,9 +236,9 @@ ib_status_t context_destroy(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t configuration_copy(
@@ -262,8 +250,6 @@ ib_status_t configuration_copy(
     void*        cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     assert(ib_engine = ib_module->ib);
     assert(dst != NULL);
     assert(src != NULL);
@@ -281,9 +267,9 @@ ib_status_t configuration_copy(
         );
     }
     catch (...) {
-        IB_FTRACE_RET_STATUS(Internal::convert_exception(ib_engine));
+        return Internal::convert_exception(ib_engine);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 };
 
 } // extern "C"

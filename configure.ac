@@ -186,22 +186,6 @@ AC_ARG_ENABLE(verbose-output,
   verbose_output=0
 ])
 
-### Debug
-AC_ARG_ENABLE(debug,
-              AS_HELP_STRING([--enable-debug],
-                             [Enable debugging (development use only).]),
-[
-  debug=$enableval
-],
-[
-  debug="no"
-])
-if test "$debug" != "no"; then
-    IB_DEBUG="-DIB_DEBUG"
-else
-    IB_DEBUG=
-fi
-
 ### Development-only features
 AC_ARG_ENABLE(devel,
               AS_HELP_STRING([--enable-devel],

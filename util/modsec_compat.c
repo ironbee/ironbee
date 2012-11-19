@@ -23,7 +23,6 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/decode.h>
 #include <ironbee/path.h>
 #include <ironbee/string.h>
@@ -66,7 +65,6 @@
  */
 static uint8_t x2c(const uint8_t *ptr)
 {
-    IB_FTRACE_INIT();
     uint8_t digit;
     uint8_t c;
 
@@ -78,7 +76,7 @@ static uint8_t x2c(const uint8_t *ptr)
     c = *(ptr + 1);
     digit += ( (c >= 'A') ? ((c & 0xdf) - 'A') + 10 : (c - '0') );
 
-    IB_FTRACE_RET_UINT(digit);
+    return digit;
 }
 
 ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
@@ -86,8 +84,6 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
                                   size_t *dlen_out,
                                   ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
-
     assert(data_in != NULL);
     assert(dlen_out != NULL);
     assert(result != NULL);
@@ -156,7 +152,7 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
     *result = ( modified ?
                 (IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED) : IB_STRFLAG_ALIAS );
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
@@ -166,8 +162,6 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                                       size_t *dlen_out,
                                       ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
-
     assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
@@ -193,7 +187,7 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                     out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
                                                 out, data_out, NULL);
                     if (out == NULL) {
-                        IB_FTRACE_RET_STATUS(IB_EALLOC);
+                        return IB_EALLOC;
                     }
                     *out++ = x2c(in + 1);
                     in += 3;
@@ -224,7 +218,7 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                 out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
                                             out, data_out, NULL);
                 if (out == NULL) {
-                    IB_FTRACE_RET_STATUS(IB_EALLOC);
+                    return IB_EALLOC;
                 }
                 *out++ = ' ';
             }
@@ -245,7 +239,7 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
         *dlen_out = out - *data_out;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
@@ -253,7 +247,6 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                                           size_t *dlen_out,
                                           ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     assert(data != NULL);
     assert(dlen_out != NULL);
     assert(result != NULL);
@@ -301,7 +294,7 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                         /* Decode the entity. */
                         char *tmp = ib_util_memdup(NULL, t2, t1 - t2, true);
                         if (tmp == NULL) {
-                            IB_FTRACE_RET_STATUS(IB_EALLOC);
+                            return IB_EALLOC;
                         }
                         *out++ = (uint8_t)strtol(tmp, NULL, 16);
                         modified = true;
@@ -332,7 +325,7 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                         /* Decode the entity. */
                         char *tmp = ib_util_memdup(NULL, t2, t1 - t2, true);
                         if (tmp == NULL) {
-                            IB_FTRACE_RET_STATUS(IB_EALLOC);
+                            return IB_EALLOC;
                         }
                         *out++ = (uint8_t)strtol(tmp, NULL, 10);
                         modified = true;
@@ -364,7 +357,7 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
                     size_t tlen = t1 - t2;
                     char *tmp = ib_util_memdup(NULL, t2, tlen, true);
                     if (tmp == NULL) {
-                        IB_FTRACE_RET_STATUS(IB_EALLOC);
+                        return IB_EALLOC;
                     }
 
                     /* Decode the entity. */
@@ -422,7 +415,7 @@ ib_status_t ib_util_decode_html_entity_ex(uint8_t *data,
     *dlen_out = (out - data);
     *result = ( modified ?
                 (IB_STRFLAG_ALIAS | IB_STRFLAG_MODIFIED) : IB_STRFLAG_ALIAS );
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
@@ -433,7 +426,6 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                                               size_t *dlen_out,
                                               ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     assert(mp != NULL);
     assert(data_in != NULL);
     assert(data_out != NULL);
@@ -483,13 +475,13 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                         /* Decode the entity. */
                         char *tmp = ib_util_memdup(NULL, t2, t1 - t2, true);
                         if (tmp == NULL) {
-                            IB_FTRACE_RET_STATUS(IB_EALLOC);
+                            return IB_EALLOC;
                         }
                         out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
                                                     out, data_out, &end_out);
                         if (out == NULL) {
                             free(tmp);
-                            IB_FTRACE_RET_STATUS(IB_EALLOC);
+                            return IB_EALLOC;
                         }
                         *out++ = (uint8_t)strtol(tmp, NULL, 16);
                         free(tmp);
@@ -519,13 +511,13 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                         /* Decode the entity. */
                         char *tmp = ib_util_memdup(NULL, t2, t1 - t2, true);
                         if (tmp == NULL) {
-                            IB_FTRACE_RET_STATUS(IB_EALLOC);
+                            return IB_EALLOC;
                         }
                         out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
                                                     out, data_out, &end_out);
                         if (out == NULL) {
                             free(tmp);
-                            IB_FTRACE_RET_STATUS(IB_EALLOC);
+                            return IB_EALLOC;
                         }
                         *out++ = (uint8_t)strtol(tmp, NULL, 10);
                         free(tmp);
@@ -557,7 +549,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                     size_t tlen = t1 - t2;
                     char *tmp = ib_util_memdup(NULL, t2, tlen, true);
                     if (tmp == NULL) {
-                        IB_FTRACE_RET_STATUS(IB_EALLOC);
+                        return IB_EALLOC;
                     }
 
                     /* Decode the entity. */
@@ -589,7 +581,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
                     out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
                                                 out, data_out, &end_out);
                     if (out == NULL) {
-                        IB_FTRACE_RET_STATUS(IB_EALLOC);
+                        return IB_EALLOC;
                     }
                     *out++ = c;
 
@@ -627,7 +619,7 @@ ib_status_t ib_util_decode_html_entity_cow_ex(ib_mpool_t *mp,
         *dlen_out = out - *data_out;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_util_normalize_path_ex(uint8_t *data,
@@ -636,7 +628,6 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
                                       size_t *dlen_out,
                                       ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     assert(data != NULL);
     assert(dlen_out != NULL);
     assert(result != NULL);
@@ -824,5 +815,5 @@ finish:
         *result = IB_STRFLAG_ALIAS;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

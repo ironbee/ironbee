@@ -25,8 +25,6 @@
 
 ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
 {
-    IB_FTRACE_INIT();
-
     int lua_rc;
 
     lua_rc = luaL_loadfile(L, file);
@@ -37,7 +35,7 @@ ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
                      lua_tostring(L, -1),
                      lua_rc);
         lua_pop(L, -1);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Evaluate the loaded ffi file. */
@@ -46,34 +44,34 @@ ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
     /* Only check errors if ec is not 0 (LUA_OK). */
     switch(lua_rc) {
         case 0:
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         case LUA_ERRRUN:
             ib_log_error(ib, "Error evaluating file %s - %s",
                          file,
                          lua_tostring(L, -1));
             /* Get error string off of the stack. */
             lua_pop(L, 1);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         case LUA_ERRMEM:
             ib_log_error(ib,
                 "Failed to allocate memory during FFI evaluation.");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         case LUA_ERRERR:
             ib_log_error(ib,
                 "Error fetching error message during FFI evaluation.");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
 #if LUA_VERSION_NUM > 501
         /* If LUA_ERRGCMM is defined, include a custom error for it as well.
           This was introduced in Lua 5.2. */
         case LUA_ERRGCMM:
             ib_log_error(ib,
                 "Garbage collection error during FFI evaluation.");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
 #endif
         default:
             ib_log_error(ib, "Unexpected error(%d) during FFI evaluation.",
                          lua_rc);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
     }
 }
 
@@ -82,7 +80,6 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
                              const char *file,
                              const char *func_name)
 {
-    IB_FTRACE_INIT();
     ib_status_t ib_rc;
 
     /* Load (compile) the lua module. */
@@ -94,12 +91,12 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
 
         /* Get error string off the stack. */
         lua_pop(L, 1);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     lua_setglobal(L, func_name);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
@@ -109,14 +106,12 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
                                  const char *func_name,
                                  int *return_value)
 {
-    IB_FTRACE_INIT();
-
     int lua_rc;
 
     if (!lua_checkstack(L, 5)) {
         ib_log_error_tx(tx,
             "Not enough stack space to call Lua rule %s.", func_name);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Push the function on the stack. Preparation to call. */
@@ -128,7 +123,7 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
 
         /* Remove wrong parameter from stack. */
         lua_pop(L, 1);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Create a table for the coming function call. */
@@ -162,7 +157,7 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
             "Error running Lua Rule %s - %s", func_name, lua_tostring(L, -1));
         /* Pop (1) error string, (2) string "ib", and (3) new table, (4) func */
         lua_pop(L, 5);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* At this point the stack is:
@@ -195,27 +190,27 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
 
                 /* Get error string off of the stack. */
                 lua_pop(L, 1);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
             case LUA_ERRMEM:
                 ib_log_error_tx(tx,
                     "Failed to allocate memory during Lua rule.");
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
             case LUA_ERRERR:
                 ib_log_error_tx(tx,
                     "Error fetching error message during Lua rule.");
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
 #if LUA_VERSION_NUM > 501
             /* If LUA_ERRGCMM is defined, include a custom error for it as
                well. This was introduced in Lua 5.2. */
             case LUA_ERRGCMM:
                 ib_log_error_tx(tx,
                     "Garbage collection error during Lua rule.");
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
 #endif
             default:
                 ib_log_error_tx(tx,
                     "Unexpected error (%d) during Lua rule.", lua_rc);
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
         }
     }
 
@@ -223,7 +218,7 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
     *return_value = lua_tointeger(L, -1);
     lua_pop(L, -1);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -242,7 +237,6 @@ ib_status_t ib_lua_new_thread(ib_engine_t *ib,
                               lua_State *L,
                               lua_State **thread)
 {
-    IB_FTRACE_INIT();
     char *thread_name = (char *)malloc(THREAD_NAME_BUFFER_SZ);
 
     ib_log_debug(ib, "Setting up new Lua thread.");
@@ -252,7 +246,7 @@ ib_status_t ib_lua_new_thread(ib_engine_t *ib,
     if (*thread == NULL) {
         ib_log_error(ib, "Failed to allocate new Lua execution stack.");
         free(thread_name);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     sprint_threadname(thread_name, *thread);
@@ -263,14 +257,13 @@ ib_status_t ib_lua_new_thread(ib_engine_t *ib,
     lua_setglobal(L, thread_name);
 
     free(thread_name);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_lua_join_thread(ib_engine_t *ib,
                                lua_State* L,
                                lua_State **thread)
 {
-    IB_FTRACE_INIT();
     char *thread_name = (char *)malloc(THREAD_NAME_BUFFER_SZ);
     sprint_threadname(thread_name, *thread);
 
@@ -283,7 +276,7 @@ ib_status_t ib_lua_join_thread(ib_engine_t *ib,
     lua_setglobal(L, thread_name);
 
     free(thread_name);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_lua_require(ib_engine_t *ib,
@@ -291,8 +284,6 @@ ib_status_t ib_lua_require(ib_engine_t *ib,
                            const char* module_name,
                            const char* required_name)
 {
-    IB_FTRACE_INIT();
-
     int lua_rc;
 
     lua_getglobal(L, "require");
@@ -307,21 +298,19 @@ ib_status_t ib_lua_require(ib_engine_t *ib,
                      lua_tostring(L, -1),
                      lua_rc);
         lua_pop(L, -1);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Take the result of require(required_name) on the stack and assign it. */
     lua_setglobal(L, module_name);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 void ib_lua_add_require_path(ib_engine_t *ib_engine,
                              lua_State *L,
                              const char *path)
 {
-    IB_FTRACE_INIT();
-
     lua_getglobal(L, "package");
     lua_pushstring(L, "path");
     lua_pushstring(L, "path");
@@ -331,5 +320,5 @@ void ib_lua_add_require_path(ib_engine_t *ib_engine,
     lua_concat(L, 3);
     lua_settable(L, -3);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }

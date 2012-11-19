@@ -26,7 +26,6 @@
 
 #include <ironbee/clock.h>
 #include <ironbee/core.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
@@ -60,14 +59,13 @@ static void default_logger(FILE *fp, int level,
                            const char *file, int line,
                            const char *fmt, va_list ap)
 {
-    IB_FTRACE_INIT();
     char *new_fmt;
     char time_info[32 + 1];
     struct tm *tminfo;
     time_t timet;
 
     if (level > 4) {
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     timet = time(NULL);
@@ -109,7 +107,7 @@ static void default_logger(FILE *fp, int level,
 
     free(new_fmt);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 
@@ -161,8 +159,6 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
                                           const char *fmt,
                                           ...)
 {
-    IB_FTRACE_INIT();
-
     /*
      * Defined so that size_t to int cast is avoided
      * checking the result of vsnprintf below.
@@ -178,7 +174,7 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
 
     *ple = (ib_logevent_t *)ib_mpool_calloc(pool, 1, sizeof(**ple));
     if (*ple == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     (*ple)->event_id = (uint32_t)ib_clock_get_time(); /* truncated */
@@ -205,13 +201,12 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
     /* Copy the formatted message. */
     (*ple)->msg = ib_mpool_strdup(pool, buf);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t DLL_PUBLIC ib_logevent_tag_add(ib_logevent_t *le,
                                            const char *tag)
 {
-    IB_FTRACE_INIT();
     char *tag_copy;
     ib_status_t rc;
 
@@ -220,20 +215,19 @@ ib_status_t DLL_PUBLIC ib_logevent_tag_add(ib_logevent_t *le,
     if (le->tags == NULL) {
         rc = ib_list_create(&le->tags, le->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     tag_copy = ib_mpool_memdup(le->mp, tag, strlen(tag) + 1);
     rc = ib_list_push(le->tags, tag_copy);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
                                              const char *name)
 {
-    IB_FTRACE_INIT();
     char *name_copy;
     ib_status_t rc;
 
@@ -242,21 +236,20 @@ ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
     if (le->fields == NULL) {
         rc = ib_list_create(&le->fields, le->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     name_copy = ib_mpool_memdup(le->mp, name, strlen(name) + 1);
     rc = ib_list_push(le->fields, name_copy);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_logevent_field_add_ex(ib_logevent_t *le,
                                                 const char *name,
                                                 size_t nlen)
 {
-    IB_FTRACE_INIT();
     char *name_copy;
     ib_status_t rc;
 
@@ -265,29 +258,27 @@ ib_status_t DLL_PUBLIC ib_logevent_field_add_ex(ib_logevent_t *le,
     if (le->fields == NULL) {
         rc = ib_list_create(&le->fields, le->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     name_copy = ib_mpool_memdup_to_str(le->mp, name, nlen);
     rc = ib_list_push(le->fields, name_copy);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
                                             const void *data,
                                             size_t dlen)
 {
-    IB_FTRACE_INIT();
-
     assert(le != NULL);
 
     // TODO Copy the data???
     le->data = data;
     le->data_len = dlen;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
@@ -335,22 +326,20 @@ const char *ib_log_level_to_string(ib_log_level_t level)
 
 ib_provider_inst_t *ib_log_provider_get_instance(ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
     rc = ib_context_module_config(ctx, ib_core_module(),
                                   (void *)&corecfg);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_PTR(ib_provider_inst_t, NULL);
+        return NULL;
     }
 
-    IB_FTRACE_RET_PTR(ib_provider_inst_t, corecfg->pi.logger);
+    return corecfg->pi.logger;
 }
 
 void ib_log_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
 {
-    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
 
@@ -358,12 +347,12 @@ void ib_log_provider_set_instance(ib_context_t *ctx, ib_provider_inst_t *pi)
                                   (void *)&corecfg);
     if (rc != IB_OK) {
         /// @todo This func should return ib_status_t now
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     corecfg->pi.logger = pi;
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void DLL_PUBLIC ib_log_ex(
@@ -375,8 +364,6 @@ void DLL_PUBLIC ib_log_ex(
     ...
 )
 {
-    IB_FTRACE_INIT();
-
     va_list ap;
     va_start(ap, fmt);
 
@@ -384,7 +371,7 @@ void DLL_PUBLIC ib_log_ex(
 
     va_end(ap);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void DLL_PUBLIC ib_log_tx_ex(
@@ -396,8 +383,6 @@ void DLL_PUBLIC ib_log_tx_ex(
      ...
 )
 {
-    IB_FTRACE_INIT();
-
     va_list ap;
     va_start(ap, fmt);
 
@@ -405,7 +390,7 @@ void DLL_PUBLIC ib_log_tx_ex(
 
     va_end(ap);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void DLL_PUBLIC ib_vlog_tx_ex(
@@ -417,8 +402,6 @@ void DLL_PUBLIC ib_vlog_tx_ex(
      va_list         ap
 )
 {
-    IB_FTRACE_INIT();
-
     char *new_fmt = malloc(strlen(fmt) + 45);
     const char *which_fmt = new_fmt;
     if (! new_fmt) {
@@ -434,7 +417,7 @@ void DLL_PUBLIC ib_vlog_tx_ex(
 
     free(new_fmt);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 void DLL_PUBLIC ib_vlog_ex(
@@ -446,8 +429,6 @@ void DLL_PUBLIC ib_vlog_ex(
     va_list            ap
 )
 {
-    IB_FTRACE_INIT();
-
     IB_PROVIDER_API_TYPE(logger) *api;
     ib_core_cfg_t *corecfg;
     ib_provider_inst_t *pi = NULL;
@@ -468,115 +449,108 @@ void DLL_PUBLIC ib_vlog_ex(
 
             api->vlogmsg(pi, level, ib, file, line, fmt, ap);
 
-            IB_FTRACE_RET_VOID();
+            return;
         }
     }
 
     default_logger(stderr, level, ib, file, line, fmt, ap);
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_log_level_t DLL_PUBLIC ib_log_get_level(ib_engine_t *ib)
 {
-    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg = NULL;
     ib_context_module_config(ib_context_main(ib),
                              ib_core_module(),
                              (void *)&corecfg);
-    IB_FTRACE_RET_INT(corecfg->log_level);
+    return corecfg->log_level;
 }
 
 void DLL_PUBLIC ib_log_set_level(ib_engine_t *ib, ib_log_level_t level)
 {
-    IB_FTRACE_INIT();
     ib_core_cfg_t *corecfg = NULL;
     ib_context_module_config(ib_context_main(ib),
                              ib_core_module(),
                              (void *)&corecfg);
     corecfg->log_level = level;
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_status_t ib_event_add(ib_provider_inst_t *pi,
                          ib_logevent_t *e)
 {
-    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(logevent) *api;
     ib_status_t rc;
 
     if (pi == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
 
     rc = api->add_event(pi, e);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_event_remove(ib_provider_inst_t *pi,
                             uint32_t id)
 {
-    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(logevent) *api;
     ib_status_t rc;
 
     if (pi == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
 
     rc = api->remove_event(pi, id);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_event_get_all(ib_provider_inst_t *pi,
                              ib_list_t **pevents)
 {
-    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(logevent) *api;
     ib_status_t rc;
 
     if (pi == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
 
     rc = api->fetch_events(pi, pevents);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_event_write_all(ib_provider_inst_t *pi)
 {
-    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(logevent) *api;
     ib_status_t rc;
 
     if (pi == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
 
     rc = api->write_events(pi);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_auditlog_write(ib_provider_inst_t *pi)
 {
-    IB_FTRACE_INIT();
     IB_PROVIDER_API_TYPE(audit) *api;
     ib_status_t rc;
 
     if (pi == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     api = (IB_PROVIDER_API_TYPE(audit) *)pi->pr->api;
 
     rc = api->write_log(pi);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

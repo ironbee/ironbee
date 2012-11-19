@@ -25,7 +25,6 @@
 
 #include <ironbee/string.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 #include <ironbee/types.h>
 
@@ -52,7 +51,6 @@ ib_status_t ib_string_to_num_ex(const char *s,
                                 int base,
                                 ib_num_t *result)
 {
-    IB_FTRACE_INIT();
     assert(result != NULL);
 
     char buf[NUM_BUF_LEN+1];
@@ -60,14 +58,14 @@ ib_status_t ib_string_to_num_ex(const char *s,
 
     /* Check for zero length string */
     if ( (s == NULL) || (slen > NUM_BUF_LEN) || (slen == 0) ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Copy the string to a buffer, let string_to_num() do the real work */
     memcpy(buf, s, slen);
     buf[slen] = '\0';
     rc = ib_string_to_num(buf, base, result);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -77,7 +75,6 @@ ib_status_t ib_string_to_num(const char *s,
                              int base,
                              ib_num_t *result)
 {
-    IB_FTRACE_INIT();
     assert(result != NULL);
 
     size_t slen = strlen(s);
@@ -87,23 +84,23 @@ ib_status_t ib_string_to_num(const char *s,
 
     /* Check for zero length string */
     if ( (s == NULL) || (*s == '\0') ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Do the conversion, check for errors */
     value = strtol(s, &end, base);
     vlen = (end - s);
     if (vlen != slen) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     else if ( ((value == LONG_MIN) || (value == LONG_MAX)) &&
               (errno == ERANGE) )
     {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     else {
         *result = value;
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 }
 
@@ -114,19 +111,17 @@ ib_status_t ib_string_to_float_ex(const char *s,
                                   size_t slen,
                                   ib_float_t *result)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     /* Check for zero length string */
     if ( (s == NULL) || (*s == '\0') ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     char *sdup = strndup(s, slen);
 
     if ( ! sdup ) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* In this case the _ex function calls out to the no-length function. */
@@ -134,18 +129,16 @@ ib_status_t ib_string_to_float_ex(const char *s,
 
     free(sdup);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_string_to_float(const char *s, ib_float_t *result)
 {
-    IB_FTRACE_INIT();
-
     char *endptr;
 
     /* Check for zero length string */
     if ( (s == NULL) || (*s == '\0') ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     *result = strtold(s, &endptr);
@@ -153,22 +146,22 @@ ib_status_t ib_string_to_float(const char *s, ib_float_t *result)
     if ( *result == 0 ) {
         /* No conversion possible. */
         if ( endptr == s ) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
 
         /* Underflow would occur. */
         if ( errno == ERANGE ) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
     }
 
     /* Overflow would occur. */
     if ( ( *result == HUGE_VALL || *result == -HUGE_VALL ) && errno == ERANGE) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 
@@ -180,7 +173,6 @@ const char *ib_strstr_ex(const char *haystack,
                          const char *needle,
                          size_t      needle_len)
 {
-    IB_FTRACE_INIT();
     size_t i = 0;
     size_t imax;
 
@@ -188,7 +180,7 @@ const char *ib_strstr_ex(const char *haystack,
     if ( (haystack == NULL) || (haystack_len == 0) ||
          (needle == NULL) || (needle_len == 0) )
     {
-        IB_FTRACE_RET_CONSTSTR(NULL);
+        return NULL;
     }
 
     /* Search for the needle */
@@ -205,11 +197,11 @@ const char *ib_strstr_ex(const char *haystack,
             }
         }
         if (found) {
-            IB_FTRACE_RET_CONSTSTR(hp);
+            return hp;
         }
     }
 
-    IB_FTRACE_RET_CONSTSTR(NULL);
+    return NULL;
 }
 
 /**
@@ -220,7 +212,6 @@ const char *ib_strrstr_ex(const char *haystack,
                           const char *needle,
                           size_t      needle_len)
 {
-    IB_FTRACE_INIT();
     size_t imax;
     const char *hp;
 
@@ -228,7 +219,7 @@ const char *ib_strrstr_ex(const char *haystack,
     if ( (haystack == NULL) || (haystack_len == 0) ||
          (needle == NULL) || (needle_len == 0) )
     {
-        IB_FTRACE_RET_CONSTSTR(NULL);
+        return NULL;
     }
 
     /* Search for the needle */
@@ -244,11 +235,11 @@ const char *ib_strrstr_ex(const char *haystack,
             }
         }
         if (found) {
-            IB_FTRACE_RET_CONSTSTR(hp);
+            return hp;
         }
     }
 
-    IB_FTRACE_RET_CONSTSTR(NULL);
+    return NULL;
 }
 
 const int64_t  P10_INT64_LIMIT  = (INT64_MAX  / 10);
@@ -291,51 +282,46 @@ size_t ib_unum_digits(uint64_t num)
 
 size_t ib_num_buf_size(int64_t num)
 {
-    IB_FTRACE_INIT();
     size_t digits = ib_num_digits(num);
-    IB_FTRACE_RET_UINT(digits + 1);
+    return digits + 1;
 }
 
 size_t ib_unum_buf_size(uint64_t unum)
 {
-    IB_FTRACE_INIT();
     size_t digits = ib_unum_digits(unum);
-    IB_FTRACE_RET_UINT(digits + 1);
+    return digits + 1;
 }
 
 const char *ib_num_to_string(ib_mpool_t *mp,
                              int64_t value)
 {
-    IB_FTRACE_INIT();
     size_t size = ib_num_buf_size(value);
     char *buf = ib_mpool_alloc(mp, size);
     if (buf != NULL) {
         snprintf(buf, size, "%"PRId64, value);
     }
-    IB_FTRACE_RET_CONSTSTR(buf);
+    return buf;
 }
 
 const char *ib_unum_to_string(ib_mpool_t *mp,
                               uint64_t value)
 {
-    IB_FTRACE_INIT();
     size_t size = ib_unum_buf_size(value);
     char *buf = ib_mpool_alloc(mp, size);
     if (buf != NULL) {
         snprintf(buf, size, "%"PRIu64, value);
     }
-    IB_FTRACE_RET_CONSTSTR(buf);
+    return buf;
 }
 
 const char *ib_float_to_string(ib_mpool_t *mp,
                                long double value)
 {
-    IB_FTRACE_INIT();
     char *buf = ib_mpool_alloc(mp, 10);
     if (buf != NULL) {
         snprintf(buf, 10, "%Lf", value);
     }
-    IB_FTRACE_RET_CONSTSTR(buf);
+    return buf;
 }
 
 /**
@@ -347,17 +333,16 @@ ib_status_t ib_strchr_nul_ignore(const char *str,
                                  int c,
                                  ssize_t *offset)
 {
-    IB_FTRACE_INIT();
     const char *p;
 
     for ( p=str;  len > 0;  ++p, --len) {
         if (*p == c) {
             *offset = (p - str);
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
     }
     *offset = -1;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_strchr_nul_error(const char *str,
@@ -365,19 +350,18 @@ ib_status_t ib_strchr_nul_error(const char *str,
                                 int c,
                                 ssize_t *offset)
 {
-    IB_FTRACE_INIT();
     const char *p;
 
     for ( p=str;  len > 0;  ++p, --len) {
         if (*p == c) {
             *offset = (p - str);
-            IB_FTRACE_RET_STATUS(IB_OK);
+            return IB_OK;
         }
         else if (*p == '\0') {
             *offset = -1;
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
     }
     *offset = -1;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

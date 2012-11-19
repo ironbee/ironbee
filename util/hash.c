@@ -27,7 +27,6 @@
 
 #include <ironbee/hash.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 
 #include <assert.h>
@@ -236,8 +235,6 @@ ib_hash_entry_t *ib_hash_find_htentry(
     size_t           key_length,
     uint32_t         hash_value
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash != NULL);
     assert(key  != NULL);
 
@@ -254,10 +251,10 @@ ib_hash_entry_t *ib_hash_find_htentry(
                 current_entry->key, current_entry->key_length
             )
         ) {
-            IB_FTRACE_RET_PTR(ib_hash_entry_t, current_entry);
+            return current_entry;
         }
     }
-    IB_FTRACE_RET_PTR(ib_hash_entry_t, NULL);
+    return NULL;
 }
 
 ib_status_t ib_hash_find_entry(
@@ -266,8 +263,6 @@ ib_status_t ib_hash_find_entry(
      const void       *key,
      size_t            key_length
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash_entry != NULL);
     assert(hash       != NULL);
     assert(key        != NULL);
@@ -276,7 +271,7 @@ ib_status_t ib_hash_find_entry(
     ib_hash_entry_t *current_entry = NULL;
     uint32_t         hash_value    = 0;
     if (hash_entry == NULL || hash == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     hash_value = hash->hash_function(key, key_length, hash->randomizer);
@@ -292,11 +287,11 @@ ib_status_t ib_hash_find_entry(
     );
     if (current_entry == NULL) {
         *hash_entry = NULL;
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
     *hash_entry = current_entry;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_hash_iterator_t ib_hash_first(
@@ -318,28 +313,24 @@ ib_hash_iterator_t ib_hash_first(
 void ib_hash_next(
     ib_hash_iterator_t *iterator
 ) {
-    IB_FTRACE_INIT();
-
     assert(iterator != NULL);
 
     iterator->current_entry = iterator->next_entry;
     while (! iterator->current_entry) {
         if (iterator->slot_index > iterator->hash->max_slot) {
-            IB_FTRACE_RET_VOID();
+            return;
         }
         iterator->current_entry = iterator->hash->slots[iterator->slot_index];
         ++iterator->slot_index;
     }
     iterator->next_entry = iterator->current_entry->next_entry;
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_status_t ib_hash_resize_slots(
     ib_hash_t *hash
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash != NULL);
 
     ib_hash_entry_t **new_slots     = NULL;
@@ -354,7 +345,7 @@ ib_status_t ib_hash_resize_slots(
         sizeof(*new_slots)
     );
     if (new_slots == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     IB_HASH_LOOP(current_entry, hash) {
@@ -365,7 +356,7 @@ ib_status_t ib_hash_resize_slots(
     hash->max_slot = new_max_slot;
     hash->slots     = new_slots;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 inline
@@ -418,8 +409,6 @@ uint32_t ib_hashfunc_djb2(
     size_t      key_length,
     uint32_t    randomizer
 ) {
-    IB_FTRACE_INIT();
-
     assert(key != NULL);
 
     uint32_t      hash  = randomizer;
@@ -429,7 +418,7 @@ uint32_t ib_hashfunc_djb2(
         hash = ((hash << 5) + hash) + key_s[i];
     }
 
-    IB_FTRACE_RET_UINT(hash);
+    return hash;
 }
 
 uint32_t ib_hashfunc_djb2_nocase(
@@ -437,8 +426,6 @@ uint32_t ib_hashfunc_djb2_nocase(
     size_t      key_length,
     uint32_t    randomizer
 ) {
-    IB_FTRACE_INIT();
-
     assert(key != NULL);
 
     uint32_t             hash  = randomizer;
@@ -448,7 +435,7 @@ uint32_t ib_hashfunc_djb2_nocase(
         hash = ((hash << 5) + hash) + ib_hash_tolower(key_s[i]);
     }
 
-    IB_FTRACE_RET_UINT(hash);
+    return hash;
 }
 
 int ib_hashequal_default(
@@ -457,15 +444,10 @@ int ib_hashequal_default(
     const void *b,
     size_t      b_length
 ) {
-    IB_FTRACE_INIT();
-
     assert(a != NULL);
     assert(b != NULL);
 
-    IB_FTRACE_RET_INT(
-        (a_length == b_length) &&
-        (memcmp(a, b, a_length) == 0)
-   );
+    return (a_length == b_length) && (memcmp(a, b, a_length) == 0);
 }
 
 int ib_hashequal_nocase(
@@ -474,8 +456,6 @@ int ib_hashequal_nocase(
     const void *b,
     size_t      b_length
 ) {
-    IB_FTRACE_INIT();
-
     assert(a != NULL);
     assert(b != NULL);
 
@@ -483,16 +463,16 @@ int ib_hashequal_nocase(
     const unsigned char *b_s = (const unsigned char *)b;
 
     if (a_length != b_length) {
-        IB_FTRACE_RET_INT(0);
+        return 0;
     }
 
     for (size_t i = 0; i < a_length; ++i) {
         if (ib_hash_tolower(a_s[i]) != ib_hash_tolower(b_s[i])) {
-            IB_FTRACE_RET_INT(0);
+            return 0;
         }
     }
 
-    IB_FTRACE_RET_INT(1);
+    return 1;
 }
 
 ib_status_t ib_hash_create_ex(
@@ -502,8 +482,6 @@ ib_status_t ib_hash_create_ex(
     ib_hash_function_t   hash_function,
     ib_hash_equal_t      equal_predicate
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash != NULL);
     assert(pool != NULL);
     assert(size > 0);
@@ -511,7 +489,7 @@ ib_status_t ib_hash_create_ex(
     ib_hash_t *new_hash = NULL;
 
     if (hash == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     {
@@ -526,14 +504,14 @@ ib_status_t ib_hash_create_ex(
             }
         }
         if (num_ones != 1) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
     }
 
     new_hash = (ib_hash_t *)ib_mpool_alloc(pool, sizeof(*new_hash));
     if (new_hash == NULL) {
         *hash = NULL;
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     ib_hash_entry_t **slots = (ib_hash_entry_t **)ib_mpool_calloc(
@@ -543,7 +521,7 @@ ib_status_t ib_hash_create_ex(
     );
     if (slots == NULL) {
         *hash = NULL;
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     new_hash->hash_function   = hash_function;
@@ -557,63 +535,55 @@ ib_status_t ib_hash_create_ex(
 
     *hash = new_hash;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_hash_create(
     ib_hash_t  **hash,
     ib_mpool_t  *pool
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash != NULL);
     assert(pool != NULL);
 
-    IB_FTRACE_RET_STATUS(ib_hash_create_ex(
+    return ib_hash_create_ex(
         hash,
         pool,
         IB_HASH_INITIAL_SIZE,
         ib_hashfunc_djb2,
         ib_hashequal_default
-    ));
+    );
 }
 
 ib_status_t ib_hash_create_nocase(
     ib_hash_t  **hash,
     ib_mpool_t  *pool
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash != NULL);
     assert(pool != NULL);
 
-    IB_FTRACE_RET_STATUS(ib_hash_create_ex(
+    return ib_hash_create_ex(
         hash,
         pool,
         IB_HASH_INITIAL_SIZE,
         ib_hashfunc_djb2_nocase,
         ib_hashequal_nocase
-    ));
+    );
 }
 
 ib_mpool_t *ib_hash_pool(
     ib_hash_t *hash
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash != NULL);
 
-    IB_FTRACE_RET_PTR(ib_mpool_t, hash->pool);
+    return hash->pool;
 }
 
 size_t ib_hash_size(
     ib_hash_t* hash
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash != NULL);
 
-    IB_FTRACE_RET_UINT(hash->size);
+    return hash->size;
 }
 
 ib_status_t ib_hash_get_ex(
@@ -622,8 +592,6 @@ ib_status_t ib_hash_get_ex(
     const void       *key,
     size_t            key_length
 ) {
-    IB_FTRACE_INIT();
-
     assert(value != NULL);
     assert(hash  != NULL);
 
@@ -632,7 +600,7 @@ ib_status_t ib_hash_get_ex(
 
     if (key == NULL) {
         *(void **)value = NULL;
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     rc = ib_hash_find_entry(
@@ -650,7 +618,7 @@ ib_status_t ib_hash_get_ex(
         *(void **)value = NULL;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_hash_get(
@@ -658,30 +626,26 @@ ib_status_t ib_hash_get(
     void              *value,
     const char        *key
 ) {
-    IB_FTRACE_INIT();
-
     assert(value != NULL);
     assert(hash  != NULL);
 
     if (key == NULL) {
         *(void **)value = NULL;
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
-    IB_FTRACE_RET_STATUS(ib_hash_get_ex(
+    return ib_hash_get_ex(
         hash,
         value,
         key,
         strlen(key)
-    ));
+    );
 }
 
 ib_status_t ib_hash_get_all(
     const ib_hash_t *hash,
     ib_list_t       *list
 ) {
-    IB_FTRACE_INIT();
-
     assert(list != NULL);
     assert(hash != NULL);
 
@@ -692,10 +656,10 @@ ib_status_t ib_hash_get_all(
     }
 
     if (ib_list_elements(list) <= 0) {
-        IB_FTRACE_RET_STATUS(IB_ENOENT);
+        return IB_ENOENT;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_hash_set_ex(
@@ -704,8 +668,6 @@ ib_status_t ib_hash_set_ex(
     size_t      key_length,
     void       *value
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash != NULL);
     assert(key  != NULL);
 
@@ -774,7 +736,7 @@ ib_status_t ib_hash_set_ex(
                     sizeof(*entry)
                 );
                 if (entry == NULL) {
-                    IB_FTRACE_RET_STATUS(IB_EALLOC);
+                    return IB_EALLOC;
                 }
             }
 
@@ -790,13 +752,13 @@ ib_status_t ib_hash_set_ex(
 
             /* If we have more elements that slots, resize. */
             if (hash->size > hash->max_slot+1) {
-                IB_FTRACE_RET_STATUS(ib_hash_resize_slots(hash));
+                return ib_hash_resize_slots(hash);
             }
         }
         /* Else value == NULL and no changes are needed. */
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_hash_set(
@@ -804,22 +766,18 @@ ib_status_t ib_hash_set(
     const char *key,
     void       *value
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash != NULL);
     assert(key  != NULL);
 
-    IB_FTRACE_RET_STATUS(ib_hash_set_ex(
+    return ib_hash_set_ex(
         hash,
         (void *)key,
         strlen(key),
         value
-    ));
+    );
 }
 
 void ib_hash_clear(ib_hash_t *hash) {
-    IB_FTRACE_INIT();
-
     assert(hash != NULL);
 
     for (size_t i = 0; i <= hash->max_slot; ++i) {
@@ -840,7 +798,7 @@ void ib_hash_clear(ib_hash_t *hash) {
     }
     hash->size = 0;
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 ib_status_t ib_hash_remove_ex(
@@ -849,8 +807,6 @@ ib_status_t ib_hash_remove_ex(
     void      *key,
     size_t     key_length
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash  != NULL);
     assert(key   != NULL);
 
@@ -859,7 +815,7 @@ ib_status_t ib_hash_remove_ex(
 
     rc = ib_hash_get_ex(hash, &local_value, key, key_length);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if ((value != NULL) && (local_value != NULL)) {
@@ -867,7 +823,7 @@ ib_status_t ib_hash_remove_ex(
     }
     rc = ib_hash_set_ex(hash, key, key_length, NULL);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_hash_remove(
@@ -875,14 +831,10 @@ ib_status_t ib_hash_remove(
     void        *value,
     const char  *key
 ) {
-    IB_FTRACE_INIT();
-
     assert(hash != NULL);
     assert(key  != NULL);
 
-    IB_FTRACE_RET_STATUS(
-        ib_hash_remove_ex(hash, value, (void *)key, strlen(key))
-    );
+    return ib_hash_remove_ex(hash, value, (void *)key, strlen(key));
 }
 
 /** @} IronBeeUtilHash */

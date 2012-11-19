@@ -36,7 +36,7 @@
  * Of particular interest:
  * - Module writers: module.h, module_sym.h
  * - Server writers: server.h, state_notify.h
- * - Everyone: types.h, mpool.h, debug.h
+ * - Everyone: types.h, mpool.h
  *
  * If you are interested in developing the above in C++, see @ref
  * ironbeepp page.

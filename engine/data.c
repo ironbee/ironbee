@@ -25,7 +25,6 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/bytestr.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/expand.h>
 #include <ironbee/field.h>
@@ -90,8 +89,6 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
                                          size_t name_len,
                                          ib_field_t **result_field)
 {
-    IB_FTRACE_INIT();
-
     assert(api);
     assert(dpi);
     assert(parent_field);
@@ -103,7 +100,7 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
     ib_list_node_t *list_node; /* List node in list. */
 
     if( name_len == 0 ) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Pull a value from a dynamic field. */
@@ -112,7 +109,7 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
                                result_field,
                                name,
                                name_len);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Check that our input field is a list type. */
@@ -122,13 +119,13 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
         /* Make the result list */
         rc = ib_list_create(&result_list, dpi->mp);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Fetch the parent list. */
         rc = ib_field_value(parent_field, &list);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         IB_LIST_LOOP(list, list_node) {
@@ -140,7 +137,7 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
             {
                 rc = ib_list_push(result_list, list_field);
                 if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
+                    return rc;
                 }
             }
         }
@@ -153,11 +150,11 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
                              IB_FTYPE_LIST,
                              result_list);
 
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* We don't know what input type this is. Return IB_EINVAL. */
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
+    return IB_EINVAL;
 }
 
 /**
@@ -191,8 +188,6 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
                                              size_t pattern_len,
                                              ib_field_t **result_field)
 {
-    IB_FTRACE_INIT();
-
     assert(api);
     assert(dpi);
     assert(pattern);
@@ -281,7 +276,7 @@ exit_label:
     if (pcre_pattern) {
         pcre_free(pcre_pattern);
     }
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -317,8 +312,6 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
                                         const char *name,
                                         size_t nlen)
 {
-    IB_FTRACE_INIT();
-
     assert(api);
     assert(dpi);
     assert(field);
@@ -328,7 +321,7 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
     char *filter_marker;
 
     if (nlen == 0) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     filter_marker = memchr(name, DPI_LIST_FILTER_MARKER, nlen);
@@ -349,16 +342,16 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
             /* Try to add the list that does not exist. */
             rc = ib_data_add_list_ex(dpi, parent_name, parent_nlen, &parent);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
         else if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Ensure that the parent field is a list type. */
         if (parent->type != IB_FTYPE_LIST) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
 
         /* If the child and the field do not have the same name,
@@ -370,7 +363,7 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
             field->nlen = child_nlen;
             field->name = ib_mpool_memdup(dpi->mp, child_name, child_nlen);
             if (field->name == NULL) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
         }
 
@@ -381,10 +374,10 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
     /* Normal add. */
     else {
         rc = api->add(dpi, field, name, nlen);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* -- Exported Data Access Routines -- */
@@ -392,8 +385,6 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
 ib_status_t ib_data_add(ib_provider_inst_t *dpi,
                         ib_field_t *f)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -403,7 +394,7 @@ ib_status_t ib_data_add(ib_provider_inst_t *dpi,
     ib_status_t rc;
 
     rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_add_named(ib_provider_inst_t *dpi,
@@ -411,8 +402,6 @@ ib_status_t ib_data_add_named(ib_provider_inst_t *dpi,
                               const char *key,
                               size_t klen)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -422,7 +411,7 @@ ib_status_t ib_data_add_named(ib_provider_inst_t *dpi,
     ib_status_t rc;
 
     rc = ib_data_add_internal(api, dpi, f, key, klen);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
@@ -431,8 +420,6 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
                                ib_num_t val,
                                ib_field_t **pf)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -454,7 +441,7 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
         ib_ftype_num_in(&val)
     );
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
@@ -462,7 +449,7 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
         *pf = f;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
@@ -471,8 +458,6 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
                                   const char *val,
                                   ib_field_t **pf)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -494,7 +479,7 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
         ib_ftype_nulstr_in(val)
     );
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
@@ -502,7 +487,7 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
         *pf = f;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
@@ -512,8 +497,6 @@ ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
                                    size_t vlen,
                                    ib_field_t **pf)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -529,7 +512,7 @@ ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
 
     rc = ib_field_create_bytestr_alias(&f, dpi->mp, name, nlen, val, vlen);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
@@ -537,7 +520,7 @@ ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
         *pf = f;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
@@ -545,8 +528,6 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
                                 size_t nlen,
                                 ib_field_t **pf)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -562,7 +543,7 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
 
     rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_LIST, NULL);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
@@ -570,7 +551,7 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
         *pf = f;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
@@ -578,8 +559,6 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
                                   size_t nlen,
                                   ib_field_t **pf)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -598,7 +577,7 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
         ib_util_log_debug(
             "SBUFFER field creation failed: %s", ib_status_to_string(rc)
         );
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
@@ -609,7 +588,7 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
         *pf = f;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_get_ex(const ib_provider_inst_t *dpi,
@@ -617,8 +596,6 @@ ib_status_t ib_data_get_ex(const ib_provider_inst_t *dpi,
                            size_t name_len,
                            ib_field_t **pf)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -650,7 +627,7 @@ ib_status_t ib_data_get_ex(const ib_provider_inst_t *dpi,
          * That is, the string before the ':' we found. */
         rc = api->get(dpi, name, filter_marker - name, &parent_field);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         if ( filter_start && filter_start + 1 < name + name_len ) {
@@ -711,27 +688,25 @@ ib_status_t ib_data_get_ex(const ib_provider_inst_t *dpi,
         rc = api->get(dpi, name, name_len, pf);
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 
     /* Error handling routine. */
 error_handler:
     name_str = malloc(name_len+1);
     if ( name_str == NULL ) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     memcpy(name_str, name, name_len);
     name_str[name_len] = '\0';
     free(name_str);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_get_all(const ib_provider_inst_t *dpi,
                             ib_list_t *list)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -741,7 +716,7 @@ ib_status_t ib_data_get_all(const ib_provider_inst_t *dpi,
     ib_status_t rc;
 
     rc = api->get_all(dpi, list);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
@@ -750,8 +725,6 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                                ib_field_t **pf,
                                const char *tfn)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -768,7 +741,7 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
     /* No tfn just means a normal get. */
     if (tfn == NULL) {
         rc = ib_data_get_ex(dpi, name, nlen, pf);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Build the full name with tfn: "name.t(tfn)" */
@@ -795,7 +768,7 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                 "Failed to fetch field: %p (%s)",
                 *pf, ib_status_to_string(rc)
             );
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Currently this only works for string type fields. */
@@ -805,14 +778,14 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
             ib_log_error(ib,
                          "Cannot transform a non-string based field type=%d",
                          (int)(*pf)->type);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
 
 
         /* Copy the field, noting the tfn. */
         rc = ib_field_copy(pf, dpi->mp, fullname, fnlen, *pf);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
         (*pf)->tfn = (char *)ib_mpool_memdup(dpi->mp, tfn, tlen + 1);
 
@@ -862,11 +835,11 @@ ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
                          (int)(*pf)->type,
                          ib_status_to_string(rc));
 
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
@@ -874,8 +847,6 @@ ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
                               size_t nlen,
                               ib_field_t **pf)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -886,7 +857,7 @@ ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
 
     rc = api->remove(dpi, name, nlen, pf);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t expand_lookup_fn(const void *data,
@@ -894,8 +865,6 @@ static ib_status_t expand_lookup_fn(const void *data,
                                     size_t nlen,
                                     ib_field_t **pf)
 {
-    IB_FTRACE_INIT();
-
     assert(data != NULL);
     assert(name != NULL);
     assert(pf != NULL);
@@ -904,7 +873,7 @@ static ib_status_t expand_lookup_fn(const void *data,
     ib_provider_inst_t *dpi = (ib_provider_inst_t *)data;
 
     rc = ib_data_get_ex(dpi, name, nlen, pf);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_expand_str(const ib_provider_inst_t *dpi,
@@ -912,8 +881,6 @@ ib_status_t ib_data_expand_str(const ib_provider_inst_t *dpi,
                                bool recurse,
                                char **result)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -928,7 +895,7 @@ ib_status_t ib_data_expand_str(const ib_provider_inst_t *dpi,
                            dpi,
                            result);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_expand_str_ex(const ib_provider_inst_t *dpi,
@@ -939,8 +906,6 @@ ib_status_t ib_data_expand_str_ex(const ib_provider_inst_t *dpi,
                                   char **result,
                                   size_t *result_len)
 {
-    IB_FTRACE_INIT();
-
     assert(dpi != NULL);
     assert(dpi->pr != NULL);
     assert(dpi->pr->api != NULL);
@@ -958,13 +923,12 @@ ib_status_t ib_data_expand_str_ex(const ib_provider_inst_t *dpi,
                               result,
                               result_len);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_expand_test_str(const char *str,
                                     bool *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     rc = ib_expand_test_str(
@@ -972,21 +936,20 @@ ib_status_t ib_data_expand_test_str(const char *str,
         IB_VARIABLE_EXPANSION_PREFIX,
         IB_VARIABLE_EXPANSION_POSTFIX,
         result);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_expand_test_str_ex(const char *str,
                                        size_t slen,
                                        bool *result)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = ib_expand_test_str_ex(
         str,
         slen,
         IB_VARIABLE_EXPANSION_PREFIX,
         IB_VARIABLE_EXPANSION_POSTFIX,
         result);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static const int MAX_CAPTURE_NUM = 9;
@@ -1009,26 +972,24 @@ static const capture_names_t names[] =
 };
 const char *ib_data_capture_name(int num)
 {
-    IB_FTRACE_INIT();
     assert(num >= 0);
 
     if (num <= MAX_CAPTURE_NUM) {
-        IB_FTRACE_RET_CONSTSTR(names[num].name);
+        return names[num].name;
     }
     else {
-        IB_FTRACE_RET_CONSTSTR("??");
+        return "??";
     }
 }
 const char *ib_data_capture_fullname(int num)
 {
-    IB_FTRACE_INIT();
     assert(num >= 0);
 
     if (num <= MAX_CAPTURE_NUM) {
-        IB_FTRACE_RET_CONSTSTR(names[num].full);
+        return names[num].full;
     }
     else {
-        IB_FTRACE_RET_CONSTSTR(IB_TX_CAPTURE":??");
+        return IB_TX_CAPTURE":??";
     }
 }
 
@@ -1047,7 +1008,6 @@ const char *ib_data_capture_fullname(int num)
 static ib_status_t get_capture_list(ib_tx_t *tx,
                                     ib_list_t **olist)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_field_t *field = NULL;
     ib_list_t *list = NULL;
@@ -1068,7 +1028,7 @@ static ib_status_t get_capture_list(ib_tx_t *tx,
         rc = ib_data_add_list(dpi, IB_TX_CAPTURE, &field);
     }
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (field->type != IB_FTYPE_LIST) {
@@ -1076,19 +1036,18 @@ static ib_status_t get_capture_list(ib_tx_t *tx,
     }
     rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&list));
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (olist != NULL) {
         *olist = list;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_data_capture_clear(ib_tx_t *tx)
 {
-    IB_FTRACE_INIT();
     assert(tx != NULL);
 
     ib_status_t rc;
@@ -1096,22 +1055,21 @@ ib_status_t ib_data_capture_clear(ib_tx_t *tx)
 
     rc = get_capture_list(tx, &list);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     ib_list_clear(list);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_data_capture_set_item(ib_tx_t *tx,
                                      int num,
                                      ib_field_t *in_field)
 {
-    IB_FTRACE_INIT();
     assert(tx != NULL);
     assert(num >= 0);
 
     if (num > MAX_CAPTURE_NUM) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_status_t rc;
@@ -1125,7 +1083,7 @@ ib_status_t ib_data_capture_set_item(ib_tx_t *tx,
 
     rc = get_capture_list(tx, &list);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Remove any nodes with the same name */
@@ -1138,7 +1096,7 @@ ib_status_t ib_data_capture_set_item(ib_tx_t *tx,
     field = NULL;
 
     if(in_field == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Make sure we have the correct name */
@@ -1148,7 +1106,7 @@ ib_status_t ib_data_capture_set_item(ib_tx_t *tx,
     else {
         rc = ib_field_alias(&field, tx->mp, name, strlen(name), in_field);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
     }
@@ -1157,5 +1115,5 @@ ib_status_t ib_data_capture_set_item(ib_tx_t *tx,
     /* Add the node to the list */
     rc = ib_list_push(list, field);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

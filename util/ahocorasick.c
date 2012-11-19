@@ -31,8 +31,6 @@
 
 #include "ahocorasick_private.h"
 
-#include <ironbee/debug.h>
-
 #include <ctype.h>
 
 /*------ Aho - Corasick ------*/
@@ -50,16 +48,14 @@ ib_status_t ib_ac_create(ib_ac_t **ac_tree,
                          uint8_t flags,
                          ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT();
-
     if (ac_tree == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     *ac_tree = (ib_ac_t *)ib_mpool_calloc(pool, 1,
                                           sizeof(ib_ac_t));
     if (*ac_tree == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     (*ac_tree)->mp = pool;
@@ -68,10 +64,10 @@ ib_status_t ib_ac_create(ib_ac_t **ac_tree,
                                                  sizeof(ib_ac_state_t));
 
     if ( (*ac_tree)->root == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -87,13 +83,11 @@ static ib_ac_state_t*
 ib_ac_child_for_code(ib_ac_state_t *parent_state,
                      ib_ac_char_t char_state)
 {
-    IB_FTRACE_INIT();
-
     ib_ac_state_t *state = NULL;
 
     if (parent_state == NULL || parent_state->child == NULL)
     {
-        IB_FTRACE_RET_PTR(ib_ac_state_t, NULL);
+        return NULL;
     }
 
     for (state = parent_state->child;
@@ -101,11 +95,11 @@ ib_ac_child_for_code(ib_ac_state_t *parent_state,
          state = state->sibling)
     {
         if (state->letter == char_state) {
-            IB_FTRACE_RET_PTR(ib_ac_state_t, state);
+            return state;
         }
     }
 
-    IB_FTRACE_RET_PTR(ib_ac_state_t, NULL);
+    return NULL;
 }
 
 /**
@@ -118,15 +112,13 @@ ib_ac_child_for_code(ib_ac_state_t *parent_state,
 static void ib_ac_add_child(ib_ac_state_t *parent,
                             ib_ac_state_t *child)
 {
-    IB_FTRACE_INIT();
-
     ib_ac_state_t *state = NULL;
 
     child->parent = parent;
 
     if (parent->child == NULL) {
         parent->child = child;
-        IB_FTRACE_RET_VOID();
+        return;
     }
 
     for (state = parent->child;
@@ -134,7 +126,7 @@ static void ib_ac_add_child(ib_ac_state_t *parent,
          state = state->sibling)
     {
         if (state == child) {
-            IB_FTRACE_RET_VOID();
+            return;
         }
     }
 
@@ -143,7 +135,7 @@ static void ib_ac_add_child(ib_ac_state_t *parent,
         state->sibling = child;
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -163,8 +155,6 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
                               void *data,
                               size_t len)
 {
-    IB_FTRACE_INIT();
-
     ib_ac_state_t *parent = NULL;
     ib_ac_state_t *child = NULL;
 
@@ -174,7 +164,7 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
     size_t j = 0;
 
     if (ac_tree->flags & IB_AC_FLAG_PARSER_READY) {
-        IB_FTRACE_RET_STATUS(IB_DECLINED);
+        return IB_DECLINED;
     }
 
     length = (len == 0) ? strlen(pattern) : len;
@@ -193,7 +183,7 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
             child = (ib_ac_state_t *)ib_mpool_calloc(ac_tree->mp, 1,
                                                  sizeof(ib_ac_state_t));
             if (child== NULL) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
 
             child->letter = letter;
@@ -201,7 +191,7 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
 
             child->pattern = (char *)ib_mpool_calloc(ac_tree->mp, 1, i + 2);
             if (child->pattern == NULL) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
 
             /* Copy the content it should match to reach this state.
@@ -231,7 +221,7 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
     /* It needs to be compiled */
     ac_tree->flags &= ~IB_AC_FLAG_PARSER_COMPILED;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -244,7 +234,6 @@ ib_status_t ib_ac_add_pattern(ib_ac_t *ac_tree,
 static void ib_ac_link_outputs(ib_ac_t *ac_tree,
                                ib_ac_state_t *state)
 {
-    IB_FTRACE_INIT();
     ib_ac_state_t *child = NULL;
     ib_ac_state_t *outs = NULL;
 
@@ -275,7 +264,7 @@ static void ib_ac_link_outputs(ib_ac_t *ac_tree,
             ib_ac_link_outputs(ac_tree, child);
         }
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -288,7 +277,6 @@ static void ib_ac_link_outputs(ib_ac_t *ac_tree,
 static void ib_ac_unlink_unuseful(ib_ac_t *ac_tree,
                                ib_ac_state_t *state)
 {
-    IB_FTRACE_INIT();
     ib_ac_state_t *child = NULL;
     ib_ac_state_t *fail_state = NULL;
     ib_ac_state_t *found = NULL;
@@ -335,7 +323,7 @@ static void ib_ac_unlink_unuseful(ib_ac_t *ac_tree,
         }
     }
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -357,7 +345,6 @@ static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
                                             int rb,
                                             ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT();
     ib_status_t st;
     int left = 0;
     int right = 0;
@@ -367,7 +354,7 @@ static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
         state->left = (ib_ac_bintree_t *)
             ib_mpool_calloc(pool, 1, sizeof(ib_ac_bintree_t));
         if (state->left == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         state->left->state = states[left];
@@ -379,7 +366,7 @@ static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
         state->right = (ib_ac_bintree_t *)
             ib_mpool_calloc(pool, 1, sizeof(ib_ac_bintree_t));
         if (state->right == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
 
         state->right->state = states[right];
@@ -390,7 +377,7 @@ static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
         st = ib_ac_add_bintree_sorted(state->right, states, right,
                                       pos, rb, pool);
         if (st != IB_OK) {
-            IB_FTRACE_RET_STATUS(st);
+            return st;
         }
 
     }
@@ -399,11 +386,11 @@ static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
         st = ib_ac_add_bintree_sorted(state->left, states, left, lb,
                                       pos, pool);
         if (st != IB_OK) {
-            IB_FTRACE_RET_STATUS(st);
+            return st;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -417,8 +404,6 @@ static ib_status_t ib_ac_add_bintree_sorted(ib_ac_bintree_t *state,
 static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
                                        ib_ac_state_t *state)
 {
-    IB_FTRACE_INIT();
-
     ib_ac_state_t *child = state->child;
     ib_ac_state_t **states = NULL;
 
@@ -439,7 +424,7 @@ static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
                                              sizeof(ib_ac_state_t *));
 
     if (states == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     child = state->child;
@@ -466,7 +451,7 @@ static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
                                                 1, sizeof(ib_ac_bintree_t));
 
     if (state->bintree == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     pos = count / 2;
@@ -481,7 +466,7 @@ static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -493,8 +478,6 @@ static ib_status_t ib_ac_build_bintree(ib_ac_t *ac_tree,
  */
 static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t rc;
 
     ib_ac_state_t *child = NULL;
@@ -504,14 +487,14 @@ static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
     ib_list_t *iter_queue = NULL;
 
     if (ac_tree->flags & IB_AC_FLAG_PARSER_COMPILED) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ac_tree->root->pattern = 0;
 
     rc = ib_list_create(&iter_queue, ac_tree->mp);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ac_tree->root->fail = ac_tree->root;
@@ -524,14 +507,14 @@ static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
         child->fail = ac_tree->root;
         rc = ib_list_enqueue(iter_queue, (void *) child);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     while (ib_list_elements(iter_queue) > 0) {
         rc = ib_list_dequeue(iter_queue, (void *) &state);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         state->fail = ac_tree->root;
@@ -550,7 +533,7 @@ static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
         {
             rc = ib_list_enqueue(iter_queue, (void *) child);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
     }
@@ -568,7 +551,7 @@ static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
 
     ac_tree->flags |= IB_AC_FLAG_PARSER_COMPILED;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -584,12 +567,10 @@ static ib_status_t ib_ac_link_fail_states(ib_ac_t *ac_tree)
 static inline ib_ac_state_t *ib_ac_bintree_goto(ib_ac_state_t *state,
                                                 ib_ac_char_t letter)
 {
-    IB_FTRACE_INIT();
-
     ib_ac_bintree_t *bin_state = NULL;
 
     if (state == NULL) {
-        IB_FTRACE_RET_PTR(ib_ac_state_t, NULL);
+        return NULL;
     }
 
     for (bin_state = state->bintree;
@@ -598,11 +579,11 @@ static inline ib_ac_state_t *ib_ac_bintree_goto(ib_ac_state_t *state,
                     bin_state->left : bin_state->right )
     {
         if (bin_state->letter == letter) {
-            IB_FTRACE_RET_PTR(ib_ac_state_t, bin_state->state);
+            return bin_state->state;
         }
     }
 
-    IB_FTRACE_RET_PTR(ib_ac_state_t, NULL);
+    return NULL;
 }
 
 /**
@@ -617,19 +598,17 @@ static inline ib_ac_state_t *ib_ac_bintree_goto(ib_ac_state_t *state,
  */
 ib_status_t ib_ac_build_links(ib_ac_t *ac_tree)
 {
-    IB_FTRACE_INIT();
-
     ib_status_t st;
 
     st = ib_ac_link_fail_states(ac_tree);
 
     if (st != IB_OK) {
-        IB_FTRACE_RET_STATUS(st);
+        return st;
     }
 
     ac_tree->flags |= IB_AC_FLAG_PARSER_READY;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -642,8 +621,6 @@ ib_status_t ib_ac_build_links(ib_ac_t *ac_tree)
 static void ib_ac_do_callback(ib_ac_context_t *ac_ctx,
                               ib_ac_state_t *state)
 {
-    IB_FTRACE_INIT();
-
     ib_ac_t *ac_tree = ac_ctx->ac_tree;
 
     if (state->callback != NULL) {
@@ -655,7 +632,7 @@ static void ib_ac_do_callback(ib_ac_context_t *ac_ctx,
 
     ++state->match_cnt;
 
-    IB_FTRACE_RET_VOID();
+    return;
 }
 
 /**
@@ -680,8 +657,6 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
                           uint8_t flags,
                           ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT();
-
     const char *end;
 
     ib_ac_state_t *state = NULL;
@@ -742,7 +717,7 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
                             ib_status_t rc;
                             rc = ib_list_create(&ac_ctx->match_list, mp);
                             if (rc != IB_OK) {
-                                IB_FTRACE_RET_STATUS(rc);
+                                return rc;
                             }
                         }
 
@@ -750,7 +725,7 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
                         mt = (ib_ac_match_t *)ib_mpool_calloc(mp,
                                           1, sizeof(ib_ac_match_t));
                         if (mt == NULL) {
-                            IB_FTRACE_RET_STATUS(IB_EALLOC);
+                            return IB_EALLOC;
                         }
 
                         mt->pattern = state->pattern;
@@ -765,7 +740,7 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
 
                     if ( !(flags & IB_AC_FLAG_CONSUME_MATCHALL))
                     {
-                        IB_FTRACE_RET_STATUS(IB_OK);
+                        return IB_OK;
                     }
 
                     ib_ac_state_t *outs = NULL;
@@ -794,7 +769,7 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
                                 ib_status_t rc;
                                 rc = ib_list_create(&ac_ctx->match_list, mp);
                                 if (rc != IB_OK) {
-                                    IB_FTRACE_RET_STATUS(rc);
+                                    return rc;
                                 }
                             }
 
@@ -802,7 +777,7 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
                             mt = (ib_ac_match_t *)ib_mpool_calloc(mp,
                                               1, sizeof(ib_ac_match_t));
                             if (mt == NULL) {
-                                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                                return IB_EALLOC;
                             }
 
                             mt->pattern = outs->pattern;
@@ -844,8 +819,8 @@ ib_status_t ib_ac_consume(ib_ac_context_t *ac_ctx,
 
     /* If we have a match, return ok. Otherwise return IB_ENOENT */
     if (flag_match == 1) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
-    IB_FTRACE_RET_STATUS(IB_ENOENT);
+    return IB_ENOENT;
 }

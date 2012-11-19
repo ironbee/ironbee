@@ -26,7 +26,6 @@
 
 #include <ironbee/parsed_content.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/engine_types.h>
 #include <ironbee/mpool.h>
@@ -37,8 +36,6 @@ ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
     ib_parsed_name_value_pair_list_wrapper_t **headers,
     ib_tx_t *tx)
 {
-    IB_FTRACE_INIT();
-
     assert(headers != NULL);
     assert(tx != NULL);
 
@@ -47,7 +44,7 @@ ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
 
     if ( headers_tmp == NULL ) {
         *headers = NULL;
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     headers_tmp->mpool = tx->mp;
@@ -58,7 +55,7 @@ ib_status_t ib_parsed_name_value_pair_list_wrapper_create(
     /* Commit back successful object. */
     *headers = headers_tmp;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_parsed_name_value_pair_list_add(
@@ -68,7 +65,6 @@ ib_status_t ib_parsed_name_value_pair_list_add(
     const char *value,
     size_t value_len)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     assert(headers != NULL);
@@ -80,7 +76,7 @@ ib_status_t ib_parsed_name_value_pair_list_add(
 
     ele = ib_mpool_alloc(headers->mpool, sizeof(*ele));
     if (ele == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     rc = ib_bytestr_dup_mem(&ele->name,
@@ -88,7 +84,7 @@ ib_status_t ib_parsed_name_value_pair_list_add(
                             (const uint8_t *)name,
                             name_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_bytestr_dup_mem(&ele->value,
@@ -96,7 +92,7 @@ ib_status_t ib_parsed_name_value_pair_list_add(
                             (const uint8_t *)value,
                             value_len);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ele->next = NULL;
@@ -115,7 +111,7 @@ ib_status_t ib_parsed_name_value_pair_list_add(
         ++(headers->size);
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_parsed_tx_each_header(
@@ -123,8 +119,6 @@ ib_status_t ib_parsed_tx_each_header(
     ib_parsed_tx_each_header_callback callback,
     void* user_data)
 {
-    IB_FTRACE_INIT();
-
     assert(headers!=NULL);
 
     ib_status_t rc = IB_OK;
@@ -142,7 +136,7 @@ ib_status_t ib_parsed_tx_each_header(
                       user_data);
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
@@ -156,7 +150,6 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                        const char *msg,
                                        size_t msg_len)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
 
     assert(tx != NULL);
@@ -168,7 +161,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
 
     if (line_tmp == NULL) {
         *line = NULL;
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     if (protocol != NULL) {
@@ -177,7 +170,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                 (const uint8_t *)protocol,
                                 protocol_len);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else {
@@ -186,7 +179,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                 (const uint8_t *)"",
                                 0);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -197,7 +190,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                 (const uint8_t *)status,
                                 status_len);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else {
@@ -206,7 +199,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                 (const uint8_t *)"",
                                 0);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -216,7 +209,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                 (const uint8_t *)msg,
                                 msg_len);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else {
@@ -225,7 +218,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                 (const uint8_t *)"",
                                 0);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -240,7 +233,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                     (const uint8_t *)"",
                                     0);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
         else {
@@ -252,7 +245,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                    protocol_len + 1 + status_len +
                                    (msg == NULL ? 0 : 1 + msg_len));
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             ib_bytestr_append_mem(line_tmp->raw,
@@ -280,7 +273,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                 (const uint8_t *)raw,
                                 raw_len);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Now, if all components are missing, then parse them out
@@ -310,7 +303,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                     parsed_field,
                                     (ptr - parsed_field));
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             /* Parse the status. */
@@ -326,7 +319,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                     parsed_field,
                                     (ptr - parsed_field));
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             /* Parse the message. */
@@ -337,7 +330,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                         parsed_field,
                                         (raw_end - parsed_field) + 1);
                 if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
+                    return rc;
                 }
             }
             else {
@@ -346,7 +339,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
                                         (const uint8_t *)"",
                                         0);
                 if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
+                    return rc;
                 }
             }
         }
@@ -355,7 +348,7 @@ ib_status_t ib_parsed_resp_line_create(ib_tx_t *tx,
     /* Commit back successfully created line. */
     *line = line_tmp;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
@@ -369,7 +362,6 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                       const char *protocol,
                                       size_t protocol_len)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc = IB_OK;
 
     assert(tx != NULL);
@@ -381,7 +373,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
 
     if ( line_tmp == NULL ) {
         *line = NULL;
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Record the components if available. If the components are
@@ -395,7 +387,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                 (const uint8_t *)method,
                                 method_len);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else {
@@ -404,7 +396,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                 (const uint8_t *)"",
                                 0);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -414,7 +406,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                 (const uint8_t *)uri,
                                 uri_len);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else {
@@ -423,7 +415,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                 (const uint8_t *)"",
                                 0);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -433,7 +425,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                 (const uint8_t *)protocol,
                                 protocol_len);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
     else {
@@ -442,7 +434,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                 (const uint8_t *)"",
                                 0);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -459,7 +451,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                     (const uint8_t *)"",
                                     0);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
         else {
@@ -475,7 +467,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                            (protocol == NULL ? 0 : 1 + protocol_len);
             rc = ib_bytestr_create(&line_tmp->raw, tx->mp, raw_line_len);
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             ib_log_debug_tx(tx,
@@ -507,7 +499,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                 (const uint8_t *)raw,
                                 raw_len);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
 
         /* Now, if all components are missing, then parse them out
@@ -537,7 +529,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                     parsed_field,
                                     (ptr - parsed_field));
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             /* Parse the uri. */
@@ -553,7 +545,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                     parsed_field,
                                     (ptr - parsed_field));
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
 
             /* Parse the protocol. */
@@ -564,7 +556,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                         parsed_field,
                                         (raw_end - parsed_field) + 1);
                 if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
+                    return rc;
                 }
             }
             else {
@@ -573,7 +565,7 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
                                         (const uint8_t *)"",
                                         0);
                 if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
+                    return rc;
                 }
             }
         }
@@ -582,15 +574,13 @@ ib_status_t ib_parsed_req_line_create(ib_tx_t *tx,
     /* Commit back successfully created line. */
     *line = line_tmp;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_parsed_name_value_pair_list_append(
     ib_parsed_name_value_pair_list_wrapper_t *head,
     const ib_parsed_name_value_pair_list_wrapper_t *tail)
 {
-    IB_FTRACE_INIT();
-
     assert(head != NULL);
     assert(tail != NULL);
 
@@ -605,5 +595,5 @@ ib_status_t ib_parsed_name_value_pair_list_append(
         head->size += tail->size;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

@@ -22,7 +22,6 @@
 
 #include "engine_private.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/provider.h>
@@ -90,15 +89,13 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
                                         ib_state_event_type_t event,
                                         ib_conn_t *conn)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(conn != NULL);
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_log_debug3(ib, "CONN EVENT: %s", ib_state_event_name(event));
@@ -106,18 +103,16 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
     CALL_NOTX_HOOKS(&rc, ib->hook[event], event, conn, ib, conn);
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
                                              ib_state_event_type_t event,
                                              ib_conndata_t *conndata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(conndata != NULL);
@@ -126,7 +121,7 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_log_debug3(ib, "CONN DATA EVENT: %s", ib_state_event_name(event));
@@ -134,10 +129,10 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
     CALL_NOTX_HOOKS(&rc, ib->hook[event], event, conndata, ib, conndata);
 
     if ((rc != IB_OK) || (conn->ctx == NULL)) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
@@ -145,8 +140,6 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
                                             ib_state_event_type_t event,
                                             ib_parsed_req_line_t *line)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -163,14 +156,14 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "ib_check_hook() failed: %s",
                         ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Is this a HTTP/0.9 request (has no protocol specification)? */
@@ -184,17 +177,17 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
     if (iface->request_line != NULL) {
         rc = iface->request_line(pi, tx, line);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     CALL_HOOKS(&rc, ib->hook[event], event, requestline, ib, tx, line);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
@@ -202,8 +195,6 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
                                              ib_state_event_type_t event,
                                              ib_parsed_resp_line_t *line)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -219,14 +210,14 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "ib_check_hook() failed: %s",
                         ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Validate response line data.
@@ -236,7 +227,7 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
      */
     if ((line == NULL) && !ib_tx_flags_isset(tx, IB_TX_FHTTP09)) {
         ib_log_notice_tx(tx, "Invalid response line");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     tx->response_line = line;
@@ -245,32 +236,30 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
     if (iface->response_line != NULL) {
         rc = iface->response_line(pi, tx, line);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     CALL_HOOKS(&rc, ib->hook[event], event, responseline, ib, tx, line);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
                                       ib_state_event_type_t event,
                                       ib_tx_t *tx)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_log_debug3_tx(tx, "TX EVENT: %s", ib_state_event_name(event));
@@ -281,10 +270,10 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     CALL_TX_HOOKS(&rc, ib->hook[event], event, tx, ib, tx);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_request_started(
@@ -292,8 +281,6 @@ ib_status_t ib_state_notify_request_started(
     ib_tx_t *tx,
     ib_parsed_req_line_t *line)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(tx != NULL);
     assert(line != NULL);
@@ -312,7 +299,7 @@ ib_status_t ib_state_notify_request_started(
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(request_started_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Mark the time. */
@@ -324,7 +311,7 @@ ib_status_t ib_state_notify_request_started(
     if (iface->tx_init != NULL) {
         rc = iface->tx_init(pi, tx);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -338,19 +325,17 @@ ib_status_t ib_state_notify_request_started(
 
     rc = ib_state_notify_tx(ib, tx_started_event, tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_state_notify_req_line(ib, tx, request_started_event, line);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
                                         ib_conn_t *conn)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(conn != NULL);
@@ -362,13 +347,13 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     if (ib_conn_flags_isset(conn, IB_CONN_FOPENED)) {
         ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(conn_opened_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_conn_flags_set(conn, IB_CONN_FOPENED);
@@ -377,48 +362,46 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
     if (iface->conn_init != NULL) {
         rc = iface->conn_init(pi, conn);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     rc = ib_state_notify_conn(ib, conn_started_event, conn);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_state_notify_conn(ib, conn_opened_event, conn);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Select the connection context to use. */
     rc = ib_ctxsel_select_context(ib, conn, NULL, &conn->ctx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_state_notify_conn(ib, handle_context_conn_event, conn);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Notify the parser a connection was made. */
     if (iface->connect != NULL) {
         rc = iface->connect(pi, conn);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     rc = ib_state_notify_conn(ib, handle_connect_event, conn);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
                                          ib_conndata_t *conndata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(conndata != NULL);
@@ -431,7 +414,7 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     if (!ib_conn_flags_isset(conndata->conn, IB_CONN_FSEENDATAIN)) {
@@ -441,20 +424,18 @@ ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
     /* Notify data handlers before the parser. */
     rc = ib_state_notify_conn_data(ib, conn_data_in_event, conndata);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Notify the parser there is incoming data. */
     rc = iface->conn_data_in(pi, conndata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
                                           ib_conndata_t *conndata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(conndata != NULL);
 
@@ -466,7 +447,7 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     if (!ib_conn_flags_isset(conndata->conn, IB_CONN_FSEENDATAOUT)) {
@@ -476,20 +457,18 @@ ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
     /* Notify data handlers before the parser. */
     rc = ib_state_notify_conn_data(ib, conn_data_out_event, conndata);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Notify the parser there is outgoing data. */
     rc = iface->conn_data_out(pi, conndata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
                                         ib_conn_t *conn)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(conn != NULL);
@@ -501,14 +480,14 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Validate. */
     if (ib_conn_flags_isset(conn, IB_CONN_FCLOSED)) {
         ib_log_error(ib, "Attempted to notify previously notified event: %s",
                      ib_state_event_name(conn_closed_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Notify any pending transaction events on connection close event. */
@@ -539,28 +518,28 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
 
     rc = ib_state_notify_conn(ib, conn_closed_event, conn);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_state_notify_conn(ib, handle_disconnect_event, conn);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_state_notify_conn(ib, conn_finished_event, conn);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Notify the parser a disconnect was performed. */
     if (iface->disconnect != NULL) {
         rc = iface->disconnect(pi, conn);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
@@ -568,8 +547,6 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
                                                ib_state_event_type_t event,
                                                ib_parsed_header_wrapper_t *header)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -579,7 +556,7 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "ib_check_hook() failed: %s",
                         ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_log_debug3_tx(tx, "HEADER EVENT: %s", ib_state_event_name(event));
@@ -593,10 +570,10 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
                header->head);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
@@ -604,8 +581,6 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
                                           ib_state_event_type_t event,
                                           ib_txdata_t *txdata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -613,7 +588,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
 
     ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (ib_log_get_level(ib) >= 9) {
@@ -626,18 +601,16 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     CALL_HOOKS(&rc, ib->hook[event], event, txdata, ib, tx, txdata);
 
     if ((rc != IB_OK) || (tx->ctx == NULL)) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
                                                 ib_tx_t *tx,
                                                 ib_parsed_header_wrapper_t *header)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(tx != NULL);
     assert(header != NULL);
@@ -649,7 +622,7 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Mark the time. */
@@ -665,7 +638,7 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
                                                    header);
 
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -673,21 +646,19 @@ ib_status_t ib_state_notify_request_header_data(ib_engine_t *ib,
     if (iface->request_header_data != NULL) {
         rc = iface->request_header_data(pi, tx, header);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_header_data(ib, tx, request_header_data_event, header);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 
 ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
                                                     ib_tx_t *tx)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -699,7 +670,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Validate. */
@@ -707,7 +678,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(request_header_finished_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (!ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)) {
@@ -715,7 +686,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
             ib_log_notice_tx(tx,
                              "Attempted to notify request header finished"
                              " before request started.");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         ib_log_debug_tx(tx, "Automatically triggering %s",
                         ib_state_event_name(request_started_event));
@@ -728,7 +699,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     /// @todo Seems this gets there too late.
     rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOH);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_tx_flags_set(tx, IB_TX_FREQ_SEENHEADER);
@@ -736,36 +707,34 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
     /* Notify the request header is finished. */
     rc = iface->request_header_finished(pi, tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_state_notify_tx(ib, request_header_finished_event, tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Select the transaction context to use. */
     rc = ib_ctxsel_select_context(ib, tx->conn, tx, &tx->ctx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_state_notify_tx(ib, handle_context_tx_event, tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_tx(ib, handle_request_header_event, tx);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
                                               ib_tx_t *tx,
                                               ib_txdata_t *txdata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -778,7 +747,7 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Validate. */
@@ -798,24 +767,22 @@ ib_status_t ib_state_notify_request_body_data(ib_engine_t *ib,
     if (iface->request_body_data != NULL) {
         rc = iface->request_body_data(pi, tx, txdata);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_txdata(ib, tx, request_body_data_event, txdata);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
                                              ib_tx_t *tx)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -827,7 +794,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Validate. */
@@ -835,7 +802,7 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(request_finished_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (!ib_tx_flags_isset(tx, IB_TX_FREQ_SEENHEADER)) {
@@ -851,14 +818,14 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     if (ib_tx_flags_isset(tx, IB_TX_FREQ_SEENBODY) != 0) {
         rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOB);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     /* Notify filters of the end-of-stream (EOS). */
     rc = ib_fctl_meta_add(tx->fctl, IB_STREAM_EOS);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_tx_flags_set(tx, IB_TX_FREQ_FINISHED);
@@ -867,30 +834,28 @@ ib_status_t ib_state_notify_request_finished(ib_engine_t *ib,
     if (iface->request_finished != NULL) {
         rc = iface->request_finished(pi, tx);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     rc = ib_state_notify_tx(ib, request_finished_event, tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_state_notify_tx(ib, handle_request_event, tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_state_notify_tx(ib, tx_process_event, tx);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
                                              ib_tx_t *tx,
                                              ib_parsed_resp_line_t *line)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -904,7 +869,7 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(response_started_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (    ib_tx_flags_isset(tx, IB_TX_FREQ_STARTED)
@@ -922,15 +887,13 @@ ib_status_t ib_state_notify_response_started(ib_engine_t *ib,
 
     rc = ib_state_notify_resp_line(ib, tx, response_started_event, line);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
                                                  ib_tx_t *tx,
                                                  ib_parsed_header_wrapper_t *header)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -943,7 +906,7 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Mark the time. */
@@ -959,7 +922,7 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
                                                    header);
 
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -967,20 +930,18 @@ ib_status_t ib_state_notify_response_header_data(ib_engine_t *ib,
     if (iface->response_header_data != NULL) {
         rc = iface->response_header_data(pi, tx, header);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_header_data(ib, tx, response_header_data_event, header);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
                                                      ib_tx_t *tx)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -992,7 +953,7 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Validate. */
@@ -1000,7 +961,7 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(response_header_finished_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (!ib_tx_flags_isset(tx, IB_TX_FHTTP09|IB_TX_FRES_STARTED)) {
@@ -1008,7 +969,7 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
             ib_log_notice_tx(tx,
                              "Attempted to notify response header finished"
                              " before response started.");
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
         ib_log_debug_tx(tx, "Automatically triggering %s",
                         ib_state_event_name(response_started_event));
@@ -1024,26 +985,24 @@ ib_status_t ib_state_notify_response_header_finished(ib_engine_t *ib,
     if (iface->response_header_finished != NULL) {
         rc = iface->response_header_finished(pi, tx);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     rc = ib_state_notify_tx(ib, response_header_finished_event, tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_tx(ib, handle_response_header_event, tx);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
                                                ib_tx_t *tx,
                                                ib_txdata_t *txdata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -1056,7 +1015,7 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     /* Validate the header has already been seen. */
@@ -1071,12 +1030,12 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
                 ib_log_notice_tx(tx,
                                  "Attempted to notify response body data"
                                  " before response started.");
-                IB_FTRACE_RET_STATUS(IB_EINVAL);
+                return IB_EINVAL;
             }
         }
         rc = ib_state_notify_response_header_finished(ib, tx);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -1090,21 +1049,19 @@ ib_status_t ib_state_notify_response_body_data(ib_engine_t *ib,
     if (iface->response_body_data != NULL) {
         rc = iface->response_body_data(pi, tx, txdata);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     /* Notify the engine and any callbacks of the data. */
     rc = ib_state_notify_txdata(ib, tx, response_body_data_event, txdata);
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
                                               ib_tx_t *tx)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -1116,14 +1073,14 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
 
     if (iface == NULL) {
         ib_log_alert(ib, "Failed to fetch parser interface.");
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        return IB_EUNKNOWN;
     }
 
     if (ib_tx_flags_isset(tx, IB_TX_FRES_FINISHED)) {
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(response_finished_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (!ib_tx_flags_isset(tx, IB_TX_FRES_SEENHEADER)) {
@@ -1141,24 +1098,24 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
     if (iface->response_finished != NULL) {
         rc = iface->response_finished(pi, tx);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
     rc = ib_state_notify_tx(ib, response_finished_event, tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_state_notify_tx(ib, handle_response_event, tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
         rc = ib_state_notify_postprocess(ib, tx);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -1167,25 +1124,23 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
 
     rc = ib_state_notify_tx(ib, tx_finished_event, tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Notify the parser to cleanup the transaction. */
     if (iface->tx_cleanup != NULL) {
         rc = iface->tx_cleanup(pi, tx);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_state_notify_postprocess(ib_engine_t *ib,
                                         ib_tx_t *tx)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
@@ -1196,7 +1151,7 @@ ib_status_t ib_state_notify_postprocess(ib_engine_t *ib,
         ib_log_error_tx(tx,
                         "Attempted to notify previously notified event: %s",
                         ib_state_event_name(handle_postprocess_event));
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Mark time. */
@@ -1206,8 +1161,8 @@ ib_status_t ib_state_notify_postprocess(ib_engine_t *ib,
 
     rc = ib_state_notify_tx(ib, handle_postprocess_event, tx);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

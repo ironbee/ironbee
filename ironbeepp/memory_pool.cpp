@@ -30,7 +30,6 @@
 #include <ironbeepp/internal/throw.hpp>
 
 #include <ironbee/mpool.h>
-#include <ironbee/debug.h>
 #include <ironbee/util.h>
 
 #include <cassert>
@@ -46,8 +45,6 @@ void cleanup(
     void* cbdata
 )
 {
-    IB_FTRACE_INIT();
-
     MemoryPool::cleanup_t callback =
         Internal::data_to_value<MemoryPool::cleanup_t>(cbdata);
 

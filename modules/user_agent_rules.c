@@ -26,7 +26,6 @@
 
 #include "user_agent_private.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/types.h>
 
 #include <ctype.h>
@@ -999,18 +998,16 @@ static modua_match_ruleset_t modua_match_ruleset =
  */
 static ib_status_t modua_field_rule_init(modua_field_rule_t *rule)
 {
-    IB_FTRACE_INIT();
     if (rule->string != NULL) {
         rule->slen = strlen(rule->string);
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Initialize the static rules */
 ib_status_t modua_ruleset_init(modua_match_rule_t **failed_rule,
                                unsigned int *failed_field_rule_num)
 {
-    IB_FTRACE_INIT();
     modua_match_rule_t  *match_rule;
     unsigned int         match_rule_num;
     ib_status_t          rc;
@@ -1033,12 +1030,12 @@ ib_status_t modua_ruleset_init(modua_match_rule_t **failed_rule,
             if (rc != IB_OK) {
                 *failed_rule           = match_rule;
                 *failed_field_rule_num = field_rule_num;
-                IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+                return IB_EUNKNOWN;
             }
             if (field_rule_num > MODUA_MAX_FIELD_RULES) {
                 *failed_rule           = match_rule;
                 *failed_field_rule_num = field_rule_num;
-                IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+                return IB_EUNKNOWN;
             }
             ++match_rule->num_rules;
         }
@@ -1052,15 +1049,14 @@ ib_status_t modua_ruleset_init(modua_match_rule_t **failed_rule,
     *failed_field_rule_num = 0;
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Get the match rule set */
 const modua_match_ruleset_t *modua_ruleset_get( void )
 {
-    IB_FTRACE_INIT();
     if (modua_match_ruleset.num_rules == 0) {
-        IB_FTRACE_RET_PTR(modua_match_ruleset_t, NULL);
+        return NULL;
     }
-    IB_FTRACE_RET_PTR(modua_match_ruleset_t, &modua_match_ruleset);
+    return &modua_match_ruleset;
 }

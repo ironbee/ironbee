@@ -26,7 +26,6 @@
 
 #include "engine_private.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/mpool.h>
 
@@ -37,7 +36,6 @@ ib_status_t ib_fctl_tx_create(ib_fctl_t **pfc,
                               ib_tx_t *tx,
                               ib_mpool_t *pool)
 {
-    IB_FTRACE_INIT();
 //    ib_engine_t *ib = tx->ib;
     ib_status_t rc = IB_OK;
 
@@ -61,19 +59,18 @@ ib_status_t ib_fctl_tx_create(ib_fctl_t **pfc,
         goto failed;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 
 failed:
     /* Make sure everything is cleaned up on failure */
     *pfc = NULL;
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_fctl_config(ib_fctl_t *fc,
                            ib_context_t *ctx)
 {
-    IB_FTRACE_INIT();
 //    ib_engine_t *ib = fc->ib;
     ib_status_t rc;
 
@@ -81,13 +78,12 @@ ib_status_t ib_fctl_config(ib_fctl_t *fc,
     fc->filters = ctx->filters;
 
     rc = ib_fctl_process(fc);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t filter_exec(ib_filter_t *f,
                                ib_fdata_t *fdata)
 {
-    IB_FTRACE_INIT();
 //    ib_engine_t *ib = f->ib;
     ib_context_t *ctx;
     ib_mpool_t *pool;
@@ -104,28 +100,27 @@ static ib_status_t filter_exec(ib_filter_t *f,
             pool = fdata->udata.conn->mp;
             break;
         default:
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
     }
 
     rc = f->fn_filter(f, fdata, ctx, pool, &flags);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /// @todo Handle flags
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_fctl_process(ib_fctl_t *fc)
 {
-    IB_FTRACE_INIT();
     ib_engine_t *ib = fc->ib;
     ib_list_node_t *node;
     ib_status_t rc = IB_OK;
 
     if (fc->filters == NULL) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Prepare data for filtering. */
@@ -150,7 +145,7 @@ ib_status_t ib_fctl_process(ib_fctl_t *fc)
     if (fc->fbuffer) {
         rc = filter_exec(fc->fbuffer, &fc->fdata);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -167,57 +162,53 @@ ib_status_t ib_fctl_process(ib_fctl_t *fc)
             }
         }
         if (rc != IB_ENOENT) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_fctl_data_add(ib_fctl_t *fc,
                              void *data,
                              size_t dlen)
 {
-    IB_FTRACE_INIT();
 //    ib_engine_t *ib = fc->ib;
     ib_status_t rc;
 
     rc = ib_stream_push(fc->source, IB_STREAM_DATA, data, dlen);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_fctl_process(fc);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_fctl_meta_add(ib_fctl_t *fc,
                              ib_sdata_type_t stype)
 {
-    IB_FTRACE_INIT();
 //    ib_engine_t *ib = fc->ib;
     ib_status_t rc;
 
     rc = ib_stream_push(fc->source, stype, NULL, 0);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     rc = ib_fctl_process(fc);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 ib_status_t ib_fctl_drain(ib_fctl_t *fc,
                           ib_stream_t **pstream)
 {
-    IB_FTRACE_INIT();
-
     if (pstream != NULL) {
         *pstream = fc->sink;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 ib_status_t ib_filter_register(ib_filter_t **pf,
@@ -228,12 +219,11 @@ ib_status_t ib_filter_register(ib_filter_t **pf,
                                ib_filter_fn_t fn_filter,
                                void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
 
     *pf = (ib_filter_t *)ib_mpool_calloc(ib->mp, 1, sizeof(**pf));
     if (*pf == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     (*pf)->ib = ib;
@@ -251,8 +241,8 @@ ib_status_t ib_filter_register(ib_filter_t **pf,
             (*pf)->name, ib_status_to_string(rc)
         );
         *pf = NULL;
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

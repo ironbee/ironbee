@@ -23,7 +23,6 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
@@ -52,25 +51,24 @@
 static size_t find_nonws_left(const uint8_t *str,
                               size_t len)
 {
-    IB_FTRACE_INIT();
     assert (str != NULL);
     const uint8_t *cur;
     const uint8_t *end = (str + len);
 
     /* Special case: length of zero */
     if (len == 0) {
-        IB_FTRACE_RET_SIZET(0);
+        return 0;
     }
 
     /* Loop through all of the input until we find the first non-space */
     for (cur = str;  cur < end;  ++cur) {
         if (isspace(*cur) == 0) {
-            IB_FTRACE_RET_SIZET(cur - str);
+            return cur - str;
         }
     }
 
     /* No non-whitespace found */
-    IB_FTRACE_RET_SIZET(ALL_WHITESPACE);
+    return ALL_WHITESPACE;
 }
 
 /**
@@ -97,8 +95,6 @@ static ib_status_t zero_len_ex(ib_strop_t op,
                                size_t *dlen_out,
                                ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
-
     if ( copy_on_cow && (op == IB_STROP_COW) ) {
         op = IB_STROP_COPY;
     }
@@ -113,17 +109,17 @@ static ib_status_t zero_len_ex(ib_strop_t op,
     case IB_STROP_COPY:
         *data_out = ib_mpool_alloc(mp, 0);
         if (*data_out == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         flags |= IB_STRFLAG_NEWBUF;
         break;
 
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     *dlen_out = 0;
     *result = flags;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -150,8 +146,6 @@ static ib_status_t zero_len(ib_strop_t op,
                             char **str_out,
                             ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
-
     if ( copy_on_cow && (op == IB_STROP_COW) ) {
         op = IB_STROP_COPY;
     }
@@ -166,16 +160,16 @@ static ib_status_t zero_len(ib_strop_t op,
     case IB_STROP_COPY:
         *str_out = ib_mpool_strdup(mp, "");
         if (*str_out == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         flags |= IB_STRFLAG_NEWBUF;
         break;
 
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     *result = flags;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -197,7 +191,6 @@ static ib_status_t trim_left(ib_strop_t op,
                              char **str_out,
                              ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     ib_flags_t flags;
 
     /* Set the base result flags */
@@ -219,18 +212,18 @@ static ib_status_t trim_left(ib_strop_t op,
     case IB_STROP_COPY:
         *str_out = ib_mpool_strdup(mp, str_in + offset);
         if (*str_out == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         flags |= IB_STRFLAG_NEWBUF;
         break;
 
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Done */
     *result = flags;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -244,24 +237,23 @@ static ib_status_t trim_left(ib_strop_t op,
 static size_t find_nonws_right(const uint8_t *str,
                                size_t len)
 {
-    IB_FTRACE_INIT();
     assert (str != NULL);
     const uint8_t *cur;
 
     /* Special case: length of zero */
     if (len == 0) {
-        IB_FTRACE_RET_SIZET(0);
+        return 0;
     }
 
     /* Loop through all of the input until we find the first non-space */
     for (cur = str + len - 1;  cur >= str;  --cur) {
         if (isspace(*cur) == 0) {
-            IB_FTRACE_RET_SIZET(cur - str);
+            return cur - str;
         }
     }
 
     /* No non-whitespace found */
-    IB_FTRACE_RET_SIZET(ALL_WHITESPACE);
+    return ALL_WHITESPACE;
 }
 
 /**
@@ -290,8 +282,6 @@ static ib_status_t trim_right_ex(ib_strop_t op,
                                  size_t *dlen_out,
                                  ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
-
     /* Set the base result flags */
     *dlen_out = offset + 1;
     if (dlen_in != offset +1) {
@@ -309,19 +299,19 @@ static ib_status_t trim_right_ex(ib_strop_t op,
     case IB_STROP_COPY:
         *data_out = ib_mpool_alloc(mp, *dlen_out);
         if (*data_out == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         memcpy(data_out, data_in, *dlen_out);
         flags |= IB_STRFLAG_NEWBUF;
         break;
 
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Done */
     *result = flags;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -347,7 +337,6 @@ static ib_status_t trim_right(ib_strop_t op,
                               char **str_out,
                               ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     char *out = NULL;
 
     /* Set the base result flags */
@@ -369,20 +358,20 @@ static ib_status_t trim_right(ib_strop_t op,
     case IB_STROP_COPY:
         out = ib_mpool_alloc(mp, len + 1);
         if (out == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         memcpy(out, str_in, len);
         flags |= IB_STRFLAG_NEWBUF;
         break;
 
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     *(out + offset + 1) = '\0';
     *str_out = out;
     *result = flags;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Simple ASCII trimLeft function (see string.h). */
@@ -394,7 +383,6 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
                                size_t *dlen_out,
                                ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     size_t offset;
     ib_flags_t flags;
 
@@ -409,7 +397,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
             zero_len_ex(op, mp,
                         false, IB_STRFLAG_NONE,
                         data_in, data_out, dlen_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Find the first non-space */
@@ -421,7 +409,7 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
             zero_len_ex(op, mp,
                         false, IB_STRFLAG_MODIFIED,
                         data_in, data_out, dlen_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Set the base result flags */
@@ -445,19 +433,19 @@ ib_status_t ib_strtrim_left_ex(ib_strop_t op,
     case IB_STROP_COPY:
         *data_out = ib_mpool_alloc(mp, *dlen_out);
         if (*data_out == NULL) {
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
         }
         memcpy(data_out, data_in + offset, *dlen_out);
         flags |= IB_STRFLAG_NEWBUF;
         break;
 
     default:
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Done */
     *result = flags;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Simple ASCII trimLeft function (see string.h). */
@@ -467,7 +455,6 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
                             char **str_out,
                             ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     size_t len;
     size_t offset;
     ib_status_t rc;
@@ -483,7 +470,7 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
                       false, IB_STRFLAG_NONE,
                       str_in, len,
                       str_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Find the first non-space */
@@ -495,12 +482,12 @@ ib_status_t ib_strtrim_left(ib_strop_t op,
                       false, IB_STRFLAG_MODIFIED,
                       str_in, len,
                       str_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Perform the actual trim */
     rc = trim_left(op, mp, str_in, offset, str_out, result);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Simple ASCII trimRight function (see string.h). */
@@ -512,7 +499,6 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
                                 size_t *dlen_out,
                                 ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     size_t offset;
     ib_status_t rc;
 
@@ -525,7 +511,7 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
     if (dlen_in == 0) {
         rc = zero_len_ex(op, mp, false, IB_STRFLAG_NONE,
                          data_in, data_out, dlen_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Find the right-most non-space */
@@ -535,7 +521,7 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
     if (offset == ALL_WHITESPACE) {
         rc = zero_len_ex(op, mp, false, IB_STRFLAG_MODIFIED,
                          data_in, data_out, dlen_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Handle the normal case */
@@ -543,7 +529,7 @@ ib_status_t ib_strtrim_right_ex(ib_strop_t op,
                        IB_STRFLAG_NONE,
                        data_in, dlen_in, offset,
                        data_out, dlen_out, result);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Simple ASCII trimRight function (see string.h). */
@@ -553,7 +539,6 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
                              char **str_out,
                              ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     size_t offset;
     size_t len;
     ib_status_t rc;
@@ -570,7 +555,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
                       false, IB_STRFLAG_NONE,
                       str_in, len,
                       str_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     offset = find_nonws_right((uint8_t *)str_in, len);
 
@@ -580,7 +565,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
                       false, IB_STRFLAG_MODIFIED,
                       str_in, len,
                       str_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Handle normal case */
@@ -588,7 +573,7 @@ ib_status_t ib_strtrim_right(ib_strop_t op,
                     IB_STRFLAG_NONE,
                     str_in, len, offset,
                     str_out, result);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Simple ASCII trim function (see string.h). */
@@ -600,7 +585,6 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
                              size_t *dlen_out,
                              ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     size_t loffset;
     size_t roffset;
     ib_flags_t flags = IB_STRFLAG_NONE;
@@ -616,7 +600,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
         rc = zero_len_ex(op, mp,
                          false, IB_STRFLAG_NONE,
                          data_in, data_out, dlen_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Find the first non-space */
@@ -627,7 +611,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
         rc = zero_len_ex(op, mp,
                          false, IB_STRFLAG_MODIFIED,
                          data_in, data_out, dlen_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Adjust inputs to account for the skipped whitespace */
@@ -645,7 +629,7 @@ ib_status_t ib_strtrim_lr_ex(ib_strop_t op,
                        flags,
                        data_in, dlen_in, roffset,
                        data_out, dlen_out, result);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /* Simple ASCII trim function (see string.h) */
@@ -655,7 +639,6 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
                           char **str_out,
                           ib_flags_t *result)
 {
-    IB_FTRACE_INIT();
     size_t len;
     size_t loffset;
     size_t roffset;
@@ -673,7 +656,7 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
                       false, IB_STRFLAG_NONE,
                       str_in, len,
                       str_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Find the first non-space */
@@ -685,7 +668,7 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
                       false, IB_STRFLAG_MODIFIED,
                       str_in, len,
                       str_out, result);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     else if (loffset == 0) {
         flags = IB_STRFLAG_NONE;
@@ -702,5 +685,5 @@ ib_status_t ib_strtrim_lr(ib_strop_t op,
                     flags,
                     str_in, len, roffset,
                     str_out, result);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }

@@ -26,7 +26,6 @@
 
 #include <ironbee/regex.h>
 
-#include <ironbee/debug.h>
 #include <ironbee/mpool.h>
 #include <ironbee/types.h>
 
@@ -84,7 +83,6 @@
 
 ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
 {
-    IB_FTRACE_INIT();
     assert(pool != NULL);
     assert(pattern != NULL);
 
@@ -127,10 +125,10 @@ ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
         if (regcomp(&ret->rx, pattern, 0) == 0) {
             ib_mpool_cleanup_register(pool, (ib_mpool_cleanup_fn_t)regfree,
                                       &ret->rx);
-            IB_FTRACE_RET_PTR(ib_rx_t, ret);
+            return ret;
         }
         else {
-            IB_FTRACE_RET_PTR(ib_rx_t, NULL);
+            return NULL;
         }
     }
 
@@ -145,7 +143,7 @@ ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
         str = endp+1;
         if (!*str || (endp = strchr(str, delim), !endp)) {
             /* missing replacement string is an error */
-            IB_FTRACE_RET_PTR(ib_rx_t, NULL);
+            return NULL;
         }
         ret->subs = ib_mpool_memdup_to_str(pool, str, (endp-str));
     }
@@ -169,7 +167,7 @@ ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
                                   &ret->rx);
     }
     else {
-        IB_FTRACE_RET_PTR(ib_rx_t, NULL);
+        return NULL;
     }
     if (!(ret->flags & IB_REG_NOMEM)) {
         /* count size of memory required, starting at 1 for the whole-match
@@ -191,7 +189,7 @@ ib_rx_t *ib_rx_compile(ib_mpool_t *pool, const char *pattern)
             }
         }
     }
-    IB_FTRACE_RET_PTR(ib_rx_t, ret);
+    return ret;
 }
 
 /* This function substitutes for $0-$9, filling in regular expression
@@ -214,7 +212,6 @@ static ib_status_t regsub_core(ib_mpool_t *p, char **result, const char *input,
                                const char *source, size_t nmatch,
                                regmatch_t pmatch[])
 {
-    IB_FTRACE_INIT();
     assert(p != NULL);
     assert(result != NULL);
     assert(input != NULL);
@@ -228,14 +225,14 @@ static ib_status_t regsub_core(ib_mpool_t *p, char **result, const char *input,
     size_t len = 0;
 
     if (!source || nmatch>IB_MAX_REG_MATCH)
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     if (!nmatch) {
         len = strlen(src);
         if (IB_PREGSUB_MAXLEN > 0 && len >= IB_PREGSUB_MAXLEN)
-            IB_FTRACE_RET_STATUS(IB_EALLOC);
+            return IB_EALLOC;
 
         *result = ib_mpool_memdup_to_str(p, src, len);
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* First pass, find the size */
@@ -254,14 +251,14 @@ static ib_status_t regsub_core(ib_mpool_t *p, char **result, const char *input,
             if (IB_SIZE_MAX - len <=
                 (size_t)(pmatch[no].rm_eo - pmatch[no].rm_so)
             ) {
-                IB_FTRACE_RET_STATUS(IB_EALLOC);
+                return IB_EALLOC;
             }
             len += pmatch[no].rm_eo - pmatch[no].rm_so;
         }
     }
 
     if (len >= IB_PREGSUB_MAXLEN && IB_PREGSUB_MAXLEN > 0) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     *result = dst = ib_mpool_alloc(p, len + 1);
@@ -290,13 +287,12 @@ static ib_status_t regsub_core(ib_mpool_t *p, char **result, const char *input,
     }
     *dst = '\0';
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 int ib_rx_exec(ib_mpool_t *pool, ib_rx_t *rx, const char *pattern,
                char **newpattern, ib_rxmatch_t *match)
 {
-    IB_FTRACE_INIT();
     assert(pool != NULL);
     assert(rx != NULL);
     assert(pattern != NULL);
@@ -327,7 +323,7 @@ int ib_rx_exec(ib_mpool_t *pool, ib_rx_t *rx, const char *pattern,
     if (regexec(&rx->rx, pattern, match->nmatch, match->pmatch,
                 REGEXEC_FLAGS(rx->flags)) != 0) {
         match->match = NULL;
-        IB_FTRACE_RET_INT(0); /* no match, nothing to do */
+        return 0; /* no match, nothing to do */
     }
     if (rx->subs) {
         const char *remainder;
@@ -335,7 +331,7 @@ int ib_rx_exec(ib_mpool_t *pool, ib_rx_t *rx, const char *pattern,
                                      match->nmatch, match->pmatch);
         if (rc != IB_OK) {
              /* FIXME - should we do more to handle error? */
-            IB_FTRACE_RET_INT(0);
+            return 0;
         }
         startl = match->pmatch[0].rm_so;
         oldl = match->pmatch[0].rm_eo - startl;
@@ -358,12 +354,11 @@ int ib_rx_exec(ib_mpool_t *pool, ib_rx_t *rx, const char *pattern,
         strcpy(subs+startl+newl, remainder);
         *newpattern = subs;
     }
-    IB_FTRACE_RET_INT(ret);
+    return ret;
 }
 
 void ib_rx_match(ib_rxmatch_t *match, int n, int *len, const char **pattern)
 {
-    IB_FTRACE_INIT();
     assert(match != NULL);
     assert(len != NULL);
     assert(pattern != NULL);
@@ -376,5 +371,5 @@ void ib_rx_match(ib_rxmatch_t *match, int n, int *len, const char **pattern)
         *len = -1;
         *pattern = NULL;
     }
-    IB_FTRACE_RET_VOID();
+    return;
 }

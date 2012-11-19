@@ -27,7 +27,6 @@
 #include "user_agent_private.h"
 
 #include <ironbee/bytestr.h>
-#include <ironbee/debug.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
@@ -91,7 +90,6 @@ static ib_status_t modua_parse_uastring(char *str,
                                         char **p_platform,
                                         char **p_extra)
 {
-    IB_FTRACE_INIT();
     char *lp = NULL;            /* lp: Left parent */
     char *extra = NULL;
 
@@ -106,7 +104,7 @@ static ib_status_t modua_parse_uastring(char *str,
     if ( (str == NULL) || (isalnum(*str) == 0) ) {
         *p_product = NULL;
         *p_extra = str;
-        IB_FTRACE_RET_STATUS( (str == NULL) ? IB_EUNKNOWN : IB_OK );
+        return  (str == NULL) ? IB_EUNKNOWN : IB_OK ;
     }
 
     /* The product is the first field. */
@@ -168,7 +166,7 @@ static ib_status_t modua_parse_uastring(char *str,
      * Note: p_product is filled in above. */
     *p_platform = lp;
     *p_extra = extra;
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Macros used to return the correct value based on a value and an
@@ -193,31 +191,29 @@ static ib_status_t modua_parse_uastring(char *str,
 static modua_matchresult_t modua_frule_match(const char *str,
                                              const modua_field_rule_t *rule)
 {
-    IB_FTRACE_INIT();
-
     /* First, handle the simple NULL string case */
     if (str == NULL) {
-        IB_FTRACE_RET_INT(NO);
+        return NO;
     }
 
     /* Match using the rule's match type */
     switch (rule->match_type) {
         case EXISTS:         /* Note: NULL/NO handled above */
-            IB_FTRACE_RET_INT(YES);
+            return YES;
         case MATCHES:
-            IB_FTRACE_RET_INT(RESULT_EQ(strcmp(str, rule->string), 0));
+            return RESULT_EQ(strcmp(str, rule->string), 0);
         case STARTSWITH:
-            IB_FTRACE_RET_INT(RESULT_EQ(strncmp(str, rule->string, rule->slen), 0));
+            return RESULT_EQ(strncmp(str, rule->string, rule->slen), 0);
         case CONTAINS:
-            IB_FTRACE_RET_INT(RESULT_NE(strstr(str, rule->string), NULL));
+            return RESULT_NE(strstr(str, rule->string), NULL);
         case ENDSWITH: {
             size_t slen = strlen(str);
             size_t offset;
             if (slen < rule->slen) {
-                IB_FTRACE_RET_INT(0);
+                return 0;
             }
             offset = (slen - rule->slen);
-            IB_FTRACE_RET_INT(RESULT_EQ(strcmp(str+offset, rule->string), 0));
+            return RESULT_EQ(strcmp(str+offset, rule->string), 0);
         }
         default :
             fprintf(stderr,
@@ -226,7 +222,7 @@ static modua_matchresult_t modua_frule_match(const char *str,
     }
 
     /* Should never get here! */
-    IB_FTRACE_RET_INT(NO);
+    return NO;
 }
 
 /**
@@ -243,7 +239,6 @@ static modua_matchresult_t modua_frule_match(const char *str,
 static int modua_mrule_match(const char *fields[],
                              const modua_match_rule_t *rule)
 {
-    IB_FTRACE_INIT();
     const modua_field_rule_t *fr;
     unsigned int ruleno;
 
@@ -258,13 +253,13 @@ static int modua_mrule_match(const char *fields[],
 
         /* If it doesn't match the expect results, we're done, return 0 */
         if (result != fr->match_result) {
-            IB_FTRACE_RET_INT( 0 );
+            return  0 ;
         }
     }
 
     /* If we've applied all of the field rules, and all have passed,
      * return the 1 to signify a match */
-    IB_FTRACE_RET_INT( 1 );
+    return  1 ;
 }
 
 /**
@@ -287,7 +282,6 @@ static const modua_match_rule_t *modua_match_cat_rules(const char *product,
                                                        const char *platform,
                                                        const char *extra)
 {
-    IB_FTRACE_INIT();
     const char *fields[3] = { product, platform, extra };
     const modua_match_rule_t *rule;
     unsigned int ruleno;
@@ -305,12 +299,12 @@ static const modua_match_rule_t *modua_match_cat_rules(const char *product,
 
         /* If the entire rule set matches, return the matching rule */
         if (result != 0) {
-            IB_FTRACE_RET_PTR( const modua_match_rule_t, rule );
+            return rule ;
         }
     }
 
     /* If we've applied all rules, and have had success, return NULL */
-    IB_FTRACE_RET_PTR( const modua_match_rule_t, NULL );
+    return NULL ;
 }
 
 /**
@@ -332,14 +326,13 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
                                      const char *name,
                                      const char *value)
 {
-    IB_FTRACE_INIT();
     ib_field_t *tmp_field = NULL;
     ib_status_t rc = IB_OK;
 
     /* No value?  Do nothing */
     if (value == NULL) {
         ib_log_debug3(ib, "No %s field in user agent", name);
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Create the field */
@@ -353,7 +346,7 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_alert(ib,
                      "Error creating user agent %s field: %s", name, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Add the field to the list */
@@ -361,12 +354,12 @@ static ib_status_t modua_store_field(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_alert(ib,
                      "Error adding user agent %s field: %s", name, ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_log_debug3(ib, "Stored user agent %s '%s'", name, value);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -385,7 +378,6 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
                                       ib_tx_t *tx,
                                       const ib_bytestr_t *bs)
 {
-    IB_FTRACE_INIT();
     const modua_match_rule_t *rule = NULL;
     ib_field_t               *agent_list = NULL;
     char                     *product = NULL;
@@ -405,7 +397,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
         ib_log_error_tx(tx,
                         "Failed to allocate %zd bytes for agent string",
                         len+1);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Copy the string out */
@@ -417,14 +409,14 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     agent = (char *)ib_mpool_strdup(tx->mp, buf);
     if (agent == NULL) {
         ib_log_error_tx(tx, "Failed to allocate copy of agent string");
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Parse the user agent string */
     rc = modua_parse_uastring(buf, &product, &platform, &extra);
     if (rc != IB_OK) {
         ib_log_debug_tx(tx, "Failed to parse User Agent string '%s'", agent);
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Categorize the parsed string */
@@ -442,31 +434,31 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     if (rc != IB_OK)
     {
         ib_log_alert_tx(tx, "Unable to add UserAgent list to DPI.");
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Store Agent */
     rc = modua_store_field(ib, tx->mp, agent_list, "agent", agent);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Store product */
     rc = modua_store_field(ib, tx->mp, agent_list, "PRODUCT", product);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Store Platform */
     rc = modua_store_field(ib, tx->mp, agent_list, "OS", platform);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Store Extra */
     rc = modua_store_field(ib, tx->mp, agent_list, "extra", extra);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Store Extra */
@@ -478,11 +470,11 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
         rc = modua_store_field(ib, tx->mp, agent_list, "category", NULL );
     }
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Done */
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -505,8 +497,6 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
                                     ib_state_event_type_t event,
                                     void *data)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->dpi != NULL);
@@ -521,14 +511,14 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     rc = ib_data_get(tx->dpi, "request_headers:User-Agent", &req_agent);
     if ( (req_agent == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx, "request_header_finished_event: No user agent");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     if (req_agent->type != IB_FTYPE_LIST) {
         ib_log_error_tx(tx,
             "Expected request_headers:User-Agent to "
             "return list of values.");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     rc = ib_field_value_type(req_agent,
@@ -538,12 +528,12 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
         ib_log_error_tx(tx,
                         "Cannot retrieve request_headers:User-Agent: %d",
                         rc);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (IB_LIST_ELEMENTS(bs_list) == 0) {
         ib_log_debug_tx(tx, "request_header_finished_event: No user agent");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     req_agent = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(bs_list));
@@ -555,12 +545,12 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Request user agent is not a BYTESTR: %s",
                         ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Finally, split it up & store the components */
     rc = modua_agent_fields(ib, tx, bs);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 /**
@@ -584,8 +574,6 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
                                   ib_state_event_type_t event,
                                   void *cbdata)
 {
-    IB_FTRACE_INIT();
-
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->dpi != NULL);
@@ -611,29 +599,29 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     rc = ib_data_get(tx->dpi, "request_headers:X-Forwarded-For", &field);
     if ( (field == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx, "No X-Forwarded-For field");
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Because we asked for a filtered item, what we get back is a list */
     rc = ib_field_value(field, ib_ftype_list_out(&list));
     if (rc != IB_OK) {
         ib_log_debug_tx(tx, "No request header collection");
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     num = ib_list_elements(list);
     if (num == 0) {
         ib_log_debug_tx(tx, "No X-Forwarded-For header found");
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     else if (num != 1) {
         ib_log_debug_tx(tx, "%zd X-Forwarded-For headers found: ignoring", num);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     node = ib_list_last_const(list);
     if ( (node == NULL) || (node->data == NULL) ) {
         ib_log_notice_tx(tx, "Invalid X-Forwarded-For header found");
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     forwarded = (const ib_field_t *)node->data;
 
@@ -643,12 +631,12 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
                              IB_FTYPE_BYTESTR);
     if (rc != IB_OK) {
         ib_log_notice_tx(tx, "Invalid X-Forwarded-For header value");
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     if (bs == NULL) {
         ib_log_notice_tx(tx, "X-Forwarded-For header not a bytestr");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     len = ib_bytestr_length(bs);
     data = ib_bytestr_const_ptr(bs);
@@ -665,7 +653,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
                           stripped, len,
                           &stripped, &len, &flags);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Verify that it looks like a valid IP v4/6 address */
@@ -675,7 +663,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
             "X-Forwarded-For \"%.*s\" is not a valid IP address",
             (int)len, stripped
         );
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     /* Allocate memory for copy of stripped string */
@@ -684,7 +672,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
         ib_log_error_tx(tx,
                         "Failed to allocate %zd bytes for remote address",
                         len+1);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     /* Copy the string out */
@@ -704,10 +692,10 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
         ib_log_error_tx(tx,
                         "Failed to create remote address TX field: %s",
                         ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -723,7 +711,6 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
  */
 static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t  rc;
     modua_match_rule_t *failed_rule;
     unsigned int failed_frule_num;
@@ -757,13 +744,13 @@ static ib_status_t modua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     modua_match_ruleset = modua_ruleset_get( );
     if (modua_match_ruleset == NULL) {
         ib_log_error(ib, "Failed to get user agent rule list: %s", ib_status_to_string(rc));
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     ib_log_debug(ib,
                  "Found %d match rules",
                  modua_match_ruleset->num_rules);
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 IB_MODULE_INIT(
