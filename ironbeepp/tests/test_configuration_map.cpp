@@ -80,6 +80,7 @@ void cfgmap_set(
 struct test_data_t
 {
     int                 s;
+    long double         r;
     const char*         n;
     IronBee::ByteString b;
     string              ss;
@@ -95,6 +96,7 @@ TEST_F(TestConfigurationMap, DataMember)
     IronBee::ConfigurationMapInit<test_data_t> cmi(m.ib()->cm_init, mpool);
 
     cmi.number("s", &test_data_t::s);
+    cmi.real("r", &test_data_t::r);
     cmi.null_string("n", &test_data_t::n);
     cmi.byte_string("b", &test_data_t::b);
     cmi.byte_string_s("ss", &test_data_t::ss);
@@ -108,6 +110,11 @@ TEST_F(TestConfigurationMap, DataMember)
     EXPECT_EQ(data.s, cfgmap_get<ib_num_t>(cm, "s", IB_FTYPE_NUM));
     cfgmap_set<ib_num_t>(cm, "s", 19);
     EXPECT_EQ(19, data.s);
+
+    data.r = 13.2;
+    EXPECT_EQ(data.r, cfgmap_get<ib_float_t>(cm, "r", IB_FTYPE_FLOAT));
+    cfgmap_set<ib_float_t>(cm, "r", 19.2);
+    EXPECT_EQ(19.2, data.r);
 
     const char* s1 = "Hello World";
     const char* s2 = "Foobar";
@@ -163,6 +170,20 @@ struct test_data2_t
         s_which = 1;
         s_name = name;
         s_data.s = v;
+    }
+
+    long double get_real(const string& name) const
+    {
+        s_which = 2;
+        s_name = name;
+        return s_data.r;
+    }
+
+    void set_real(const string& name, long double v) const
+    {
+        s_which = 2;
+        s_name = name;
+        s_data.r = v;
     }
 
     const char* get_null_string(const string& name) const
@@ -230,6 +251,11 @@ TEST_F(TestConfigurationMap, FunctionMember)
         &test_data2_t::get_number,
         &test_data2_t::set_number
     );
+    cmi.real(
+        "r",
+        &test_data2_t::get_real,
+        &test_data2_t::set_real
+    );
     cmi.null_string(
         "n",
         &test_data2_t::get_null_string,
@@ -264,6 +290,20 @@ TEST_F(TestConfigurationMap, FunctionMember)
     EXPECT_EQ(19,  test_data2_t::s_data.s);
     EXPECT_EQ(1,   test_data2_t::s_which);
     EXPECT_EQ("s", test_data2_t::s_name);
+
+    test_data2_t::s_data.r = 13.1;
+    test_data2_t::reset();
+    EXPECT_EQ(
+        test_data2_t::s_data.r,
+        cfgmap_get<ib_float_t>(cm, "r", IB_FTYPE_FLOAT)
+    );
+    EXPECT_EQ(2,    test_data2_t::s_which);
+    EXPECT_EQ("r",  test_data2_t::s_name);
+    test_data2_t::reset();
+    cfgmap_set<ib_float_t>(cm, "r", 19.1);
+    EXPECT_EQ(19.1, test_data2_t::s_data.r);
+    EXPECT_EQ(2,    test_data2_t::s_which);
+    EXPECT_EQ("r",  test_data2_t::s_name);
 
     const char* s1 = "Hello World";
     const char* s2 = "Foobar";
@@ -331,6 +371,11 @@ TEST_F(TestConfigurationMap, Functional)
         boost::bind(&test_data2_t::get_number, _1, _2),
         boost::bind(&test_data2_t::set_number, _1, _2, _3)
     );
+    cmi.real(
+        "r",
+        boost::bind(&test_data2_t::get_real, _1, _2),
+        boost::bind(&test_data2_t::set_real, _1, _2, _3)
+    );
     cmi.null_string(
         "n",
         boost::bind(&test_data2_t::get_null_string, _1, _2),
@@ -364,6 +409,20 @@ TEST_F(TestConfigurationMap, Functional)
     EXPECT_EQ(19,  test_data2_t::s_data.s);
     EXPECT_EQ(1,   test_data2_t::s_which);
     EXPECT_EQ("s", test_data2_t::s_name);
+
+    test_data2_t::s_data.r = 13.1;
+    test_data2_t::reset();
+    EXPECT_EQ(
+        test_data2_t::s_data.r,
+        cfgmap_get<ib_float_t>(cm, "r", IB_FTYPE_FLOAT)
+    );
+    EXPECT_EQ(2,    test_data2_t::s_which);
+    EXPECT_EQ("r",  test_data2_t::s_name);
+    test_data2_t::reset();
+    cfgmap_set<ib_float_t>(cm, "r", 19.1);
+    EXPECT_EQ(19.1, test_data2_t::s_data.r);
+    EXPECT_EQ(2,    test_data2_t::s_which);
+    EXPECT_EQ("r",  test_data2_t::s_name);
 
     const char* s1 = "Hello World";
     const char* s2 = "Foobar";

@@ -280,6 +280,72 @@ public:
         number_setter_t setter
     );
 
+    // real (float)
+
+    //! real Getter Functional
+    typedef boost::function<
+        long double(const configuration_data_t& data, const std::string&)
+    > real_getter_t;
+    //! real Setter Functional
+    typedef boost::function<
+        void(configuration_data_t& data, const std::string&, long double value)
+    > real_setter_t;
+
+    // real Getter Member
+    typedef long double (configuration_data_t::*real_member_getter_t)(
+        const std::string&
+    ) const;
+    // real Setter Member
+    typedef void (configuration_data_t::*real_member_setter_t)(
+        const std::string&,
+        long double
+    );
+
+    /**
+     * Create real entry --- data member.
+     *
+     * @a FieldType must be convertible to long double.
+     *
+     * @tparam FieldType Type of field.
+     * @param[in] name   Name of entry.
+     * @param[in] member Member pointer.
+     *
+     * @return @c *this for call chaining.
+     **/
+    template <typename FieldType>
+    this_t& real(
+        const char*                       name,
+        FieldType configuration_data_t::* member
+    );
+
+    /**
+     * Create real entry --- function member.
+     *
+     * @param[in] name   Name of entry.
+     * @param[in] getter Getter member.
+     * @param[in] setter Setter member.
+     * @returns @c *this for call chaining.
+     **/
+     this_t& real(
+         const char*            name,
+         real_member_getter_t getter,
+         real_member_setter_t setter
+     );
+
+    /**
+     * Create real entry.
+     *
+     * @param[in] name   Name of entry.
+     * @param[in] getter Getter functional.
+     * @param[in] setter Setter functional.
+     * @returns @c *this for call chaining.
+     **/
+    this_t& real(
+        const char*     name,
+        real_getter_t getter,
+        real_setter_t setter
+    );
+
     // Null String
 
     //! Null String Getter Functional
@@ -871,6 +937,114 @@ private:
 /**
  * Getter translator.
  *
+ * This template facilitates storing type information for the C API callbacks.
+ * It provides a generic interface suitable for being called from the C
+ * engine, applies the type information, and calls the C++ functional.
+ *
+ * @tparam ConfigurationData Type of configuration data.
+ **/
+template <typename ConfigurationData>
+class cfgmap_real_getter_translator
+{
+public:
+    //! Getter type.
+    typedef typename
+        ConfigurationMapInit<
+            ConfigurationData,
+            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+        >::real_getter_t getter_t;
+
+    /**
+     * Constructor.
+     *
+     * @param[in] getter Getter functional.
+     **/
+    explicit
+    cfgmap_real_getter_translator(getter_t getter) :
+        m_getter(getter)
+    {
+        // nop
+    }
+
+    //! Translate parameters and call getter.
+    void operator()(
+        const void*       base,
+        void*             out_value,
+        const ib_field_t* field
+    ) const
+    {
+        assert(base != NULL);
+        assert(field != NULL);
+        assert(field->type == IB_FTYPE_FLOAT);
+        assert(out_value != NULL);
+
+        ib_float_t* n = reinterpret_cast<ib_float_t*>(out_value);
+        *n = m_getter(
+            *reinterpret_cast<const ConfigurationData*>(base),
+            std::string(field->name, field->nlen)
+        );
+    }
+
+private:
+    getter_t m_getter;
+};
+
+/**
+ * Setter translator.
+ *
+ * See cfgmap_real_getter_translator for discussion.
+ *
+ * @tparam ConfigurationData Type of configuration data.
+ **/
+template <typename ConfigurationData>
+class cfgmap_real_setter_translator
+{
+public:
+    //! Getter type.
+    typedef typename
+        ConfigurationMapInit<
+            ConfigurationData,
+            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+        >::real_setter_t setter_t;
+
+    /**
+     * Constructor.
+     *
+     * @param[in] setter Setter functional.
+     **/
+    explicit
+    cfgmap_real_setter_translator(setter_t setter) :
+        m_setter(setter)
+    {
+        // nop
+    }
+
+    //! Translate parameters and call setter.
+    void operator()(
+        void*       base,
+        ib_field_t* field,
+        const void* value
+    ) const
+    {
+        assert(base != NULL);
+        assert(field != NULL);
+        assert(value != NULL);
+        assert(field->type == IB_FTYPE_FLOAT);
+
+        m_setter(
+            *reinterpret_cast<ConfigurationData*>(base),
+            std::string(field->name, field->nlen),
+            *reinterpret_cast<const long double*>(value)
+        );
+    }
+
+private:
+    setter_t m_setter;
+};
+
+/**
+ * Getter translator.
+ *
  * See cfgmap_number_getter_translator for discussion.
  *
  * @tparam ConfigurationData Type of configuration data.
@@ -1227,9 +1401,9 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::number(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::number(
     const char*                       name,
     FieldType configuration_data_t::* member
 )
@@ -1258,9 +1432,9 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::number(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::number(
     const char*            name,
     number_member_getter_t getter,
     number_member_setter_t setter
@@ -1283,9 +1457,9 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::number(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::number(
     const char*     name,
     number_getter_t getter,
     number_setter_t setter
@@ -1312,9 +1486,94 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::null_string(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::real(
+    const char*                       name,
+    FieldType configuration_data_t::* member
+)
+{
+    BOOST_STATIC_ASSERT((
+        boost::is_convertible<FieldType, long double>::value
+    ));
+    return real(
+        name,
+        Internal::configuration_map_member_get<
+            ConfigurationData, FieldType
+        >(
+            member
+        ),
+        Internal::configuration_map_member_set<
+            ConfigurationData, FieldType
+        >(
+            member
+        )
+    );
+}
+
+template <typename ConfigurationData>
+typename ConfigurationMapInit<
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::this_t&
+ConfigurationMapInit<
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::real(
+    const char*            name,
+    real_member_getter_t getter,
+    real_member_setter_t setter
+)
+{
+    return real(
+        name,
+        Internal::configuration_map_internal_get<
+            ConfigurationData, long double
+        >(getter),
+        Internal::configuration_map_internal_set<
+            ConfigurationData, long double
+        >(setter)
+    );
+}
+
+template <typename ConfigurationData>
+typename ConfigurationMapInit<
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::this_t&
+ConfigurationMapInit<
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::real(
+    const char*     name,
+    real_getter_t getter,
+    real_setter_t setter
+)
+{
+    add_init(
+        name,
+        Internal::cfgmap_real_getter_translator<
+            ConfigurationData
+        >(getter),
+        Internal::cfgmap_real_setter_translator<
+            ConfigurationData
+        >(setter),
+        Field::FLOAT
+    );
+
+    return *this;
+}
+
+template <typename ConfigurationData>
+template <typename FieldType>
+typename ConfigurationMapInit<
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::this_t&
+ConfigurationMapInit<
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::null_string(
     const char*                       name,
     FieldType configuration_data_t::* member
 )
@@ -1343,9 +1602,9 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::null_string(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::null_string(
     const char*            name,
     null_string_member_getter_t getter,
     null_string_member_setter_t setter
@@ -1368,9 +1627,9 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::null_string(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::null_string(
     const char*          name,
     null_string_getter_t getter,
     null_string_setter_t setter
@@ -1397,9 +1656,9 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::byte_string(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::byte_string(
     const char*                       name,
     FieldType configuration_data_t::* member
 )
@@ -1428,9 +1687,9 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::byte_string(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::byte_string(
     const char*                 name,
     byte_string_member_getter_t getter,
     byte_string_member_setter_t setter
@@ -1453,9 +1712,9 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::byte_string(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::byte_string(
     const char*          name,
     byte_string_getter_t getter,
     byte_string_setter_t setter
@@ -1483,9 +1742,9 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::byte_string_s(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::byte_string_s(
     const char*                       name,
     FieldType configuration_data_t::* member
 )
@@ -1514,9 +1773,9 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::byte_string_s(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::byte_string_s(
     const char*                   name,
     byte_string_member_getter_s_t getter,
     byte_string_member_setter_s_t setter
@@ -1539,9 +1798,9 @@ typename ConfigurationMapInit<
     typename boost::enable_if<boost::is_class<ConfigurationData> >::type
 >::this_t&
 ConfigurationMapInit<
-        ConfigurationData,
-            typename boost::enable_if<boost::is_class<ConfigurationData> >::type
-            >::byte_string_s(
+    ConfigurationData,
+    typename boost::enable_if<boost::is_class<ConfigurationData> >::type
+>::byte_string_s(
     const char*            name,
     byte_string_getter_s_t getter,
     byte_string_setter_s_t setter
