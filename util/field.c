@@ -1126,7 +1126,7 @@ ib_status_t ib_field_convert(
             }
             break;
         case IB_FTYPE_NUM:
-            
+
             /* Extract unum. */
             rc = ib_field_value(in_field, ib_ftype_num_out(&num));
             if (rc!=IB_OK){
@@ -1161,7 +1161,7 @@ ib_status_t ib_field_convert(
             }
             break;
         case IB_FTYPE_FLOAT:
-            
+
             /* Extract unum. */
             rc = ib_field_value(in_field, ib_ftype_float_out(&flt));
             if (rc!=IB_OK){

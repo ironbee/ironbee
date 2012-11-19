@@ -326,4 +326,3 @@ TEST_F(IronBeeLuaApi, DISABLED_read_event)
          "    end\n"
          "end)");
 }
-

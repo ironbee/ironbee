@@ -140,4 +140,3 @@ TEST_F(ActionTest, ExecuteAction) {
     EXPECT_STREQ(action_str, params);
     EXPECT_EQ(action_flags, flags);
 }
-

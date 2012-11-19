@@ -957,7 +957,7 @@ ib_status_t op_ipmatch6_execute(
 
 /**
  * Convert @a in_field from a string by expanding it to an expanded
- * string and then convert that string to a number-type if 
+ * string and then convert that string to a number-type if
  * possible. Otherwise, leave it as a string.
  *
  * If no conversion is performed because none is necessary,
@@ -1016,7 +1016,7 @@ static ib_status_t expand_field(
      * fail, we return tmp_field in *out_field. */
     rc = ib_field_create_alias(
         &tmp_field,
-        rule_exec->tx->mp, 
+        rule_exec->tx->mp,
         in_field->name,
         in_field->nlen,
         IB_FTYPE_NULSTR,
@@ -1185,7 +1185,7 @@ static ib_status_t select_math_type_conversion(
  *     NOTE: If conversion is NOT necessary, then the original
  *           rh_in or lh_in will be placed in the output variables.
  *           This will strip the const-ness of the value.
- *           This is not relevant to how math operations 
+ *           This is not relevant to how math operations
  *           use these fields, so user-beware.
  *
  * @param rule_exec The rule execution environment.
