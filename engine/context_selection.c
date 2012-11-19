@@ -246,66 +246,6 @@ ib_status_t ib_ctxsel_finalize(
     IB_FTRACE_RET_STATUS(rc);
 }
 
-#if 0
-ib_status_t ib_ctxsel_host_create(
-    ib_ctxsel_site_t *site,
-    const char *hostname,
-    ib_site_host_t **phost)
-{
-    IB_FTRACE_INIT();
-    assert(site != NULL);
-    assert(hostname != NULL);
-
-    ib_status_t rc;
-    ib_ctxsel_host_t *host;
-
-    if (phost != NULL) {
-        *phost = NULL;
-    }
-
-    /* Create a host object */
-    host = ib_mpool_alloc(site->site.mp, sizeof(*host));
-    if (host == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
-    }
-
-    /* Add the 'normal' host object */
-    rc = ib_site_add_host(&site->site, hostname, &host->host, NULL);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Fill in the context-selection specific parts */
-    host->hostname_len = strlen(hostname);
-    if (host->host.suffix != NULL) {
-        host->suffix_len = strlen(host->host.suffix);
-    }
-    else {
-        host->suffix_len = 0;
-    }
-    host->match_any = (strcmp(hostname, "*") == 0);
-
-    /* Create the hostname list if this is the first service. */
-    if (site->hosts == NULL) {
-        rc = ib_list_create(&(site->hosts), site->site.mp);
-        if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
-        }
-    }
-
-    /* Add the host to the list */
-    rc = ib_list_push(site->hosts, (void *)host);
-    if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
-    }
-
-    if (phost != NULL) {
-        *phost = host;
-    }
-    IB_FTRACE_RET_STATUS(IB_OK);
-}
-#endif
-
 ib_status_t ib_ctxsel_registration_create(
     ib_mpool_t *mp,
     ib_module_t *module,
