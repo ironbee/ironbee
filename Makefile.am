@@ -4,6 +4,8 @@ SUBDIRS = @TOPLEVEL_SUBDIRS@
 include $(top_srcdir)/build/common.mk
 EXTRA_DIST = include ironbee_config_auto.h
 
+RPM_RELEASE ?= 1
+
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ironbee.pc
 pkginclude_HEADERS = $(top_srcdir)/include/ironbee/*.h
@@ -26,7 +28,7 @@ rpm-package: dist
 		cd SOURCES ; \
 		ln -s ../../../$(distdir).tar.gz ; \
 		cd .. ; \
-		rpmbuild --define "_topdir `cd . && pwd`" -ba ironbee.spec && \
+		rpmbuild --define "_topdir `cd . && pwd`" --define "_release $(RPM_RELEASE)" -ba ironbee.spec && \
 		echo "Package successfully built in `pwd`/RPMS." ; \
 	else \
 		echo "Error: RPM executable and/or source directory not found." ; \
