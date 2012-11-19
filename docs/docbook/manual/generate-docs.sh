@@ -4,10 +4,13 @@ set -x
 HOME=${1:-.}
 OBJDIR=${2:-.}
 
+# Pull in the environment from VERSION
+. $HOME/../../../VERSION
+
 FOP=$HOME/fop-1.0/fop
 XMLINPUT=$HOME/ironbee-reference-manual.xml
 OUTPUT=$OBJDIR/output
-VERSION="0.6.0"
+VERSION=$PKG_VERSION
 
 # Generate a clean directory structure
 rm -rf $OUTPUT
