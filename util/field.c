@@ -26,7 +26,6 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/field.h>
-#include <ironbee/bytestr.h>
 
 #include <ironbee/bytestr.h>
 #include <ironbee/debug.h>

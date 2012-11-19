@@ -24,15 +24,15 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/engine.h>
 #include "engine_private.h"
 
-#include <ironbee/debug.h>
-#include <ironbee/string.h>
-#include <ironbee/ip.h>
-#include <ironbee/hash.h>
-#include <ironbee/mpool.h>
 #include <ironbee/context_selection.h>
+#include <ironbee/debug.h>
+#include <ironbee/engine.h>
+#include <ironbee/hash.h>
+#include <ironbee/ip.h>
+#include <ironbee/mpool.h>
+#include <ironbee/string.h>
 
 #include <assert.h>
 #include <inttypes.h>

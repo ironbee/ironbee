@@ -28,8 +28,8 @@
 #include "state_notify_private.h"
 
 #include <ironbee/array.h>
-#include <ironbee/lock.h>
 #include <ironbee/context_selection.h>
+#include <ironbee/lock.h>
 
 #include <stdio.h>
 

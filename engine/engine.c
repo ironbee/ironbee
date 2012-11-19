@@ -31,16 +31,16 @@
 #include "state_notify_private.h"
 
 #include <ironbee/cfgmap.h>
+#include <ironbee/context_selection.h>
 #include <ironbee/core.h>
 #include <ironbee/debug.h>
-#include <ironbee/string.h>
-#include <ironbee/ip.h>
 #include <ironbee/hash.h>
+#include <ironbee/ip.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/server.h>
 #include <ironbee/state_notify.h>
-#include <ironbee/context_selection.h>
+#include <ironbee/string.h>
 
 #include <assert.h>
 #include <inttypes.h>

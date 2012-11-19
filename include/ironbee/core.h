@@ -28,9 +28,9 @@
  */
 
 #include <ironbee/build.h>
+#include <ironbee/engine_types.h>
 #include <ironbee/logformat.h>
 #include <ironbee/module.h>
-#include <ironbee/engine_types.h>
 #include <ironbee/rule_defs.h>
 #include <ironbee/types.h>
 

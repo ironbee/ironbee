@@ -27,9 +27,9 @@
 
 #include "core_audit_private.h"
 
+#include <ironbee/context_selection.h>
 #include <ironbee/engine.h>
 #include <ironbee/types.h>
-#include <ironbee/context_selection.h>
 
 typedef struct {
     const char      *name;          /**< Flag name */

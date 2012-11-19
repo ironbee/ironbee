@@ -28,12 +28,12 @@
 #include "rule_engine_private.h"
 #include "engine_private.h"
 
-#include <ironbee/engine.h>
-#include <ironbee/core.h>
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
 #include <ironbee/config.h>
+#include <ironbee/core.h>
 #include <ironbee/debug.h>
+#include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>

@@ -29,15 +29,15 @@
 #define _POSIX_SOURCE
 #endif
 
-#include "core_private.h"
 #include "core_audit_private.h"
+#include "core_private.h"
 #include "engine_private.h"
 #include "rule_engine_private.h"
 
+#include <ironbee/context_selection.h>
 #include <ironbee/debug.h>
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>
-#include <ironbee/context_selection.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
