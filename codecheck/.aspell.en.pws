@@ -1,9 +1,9 @@
-personal_ws-1.1 en 1759 
+personal_ws-1.1 en 1785 
 malloced
 malloc'ed
 libnet
 endpat
-CTYPE
+ctype
 Wundef
 cfg
 fbuffer
@@ -56,6 +56,7 @@ ffi
 DNS
 FDs
 fds
+pregistration
 cdef
 HandleResponseHeaders
 cfgfile
@@ -63,6 +64,7 @@ gcc
 DoS
 cwd
 RequestStarted
+ctxsel
 typecheck
 ctx
 EOB
@@ -96,6 +98,7 @@ strval
 hdr
 dyn
 ibd
+fns
 IronBeeUtilIP
 LuaLoadModule
 opflags
@@ -112,6 +115,7 @@ dbar
 DebugLogHandler
 matchers
 dsize
+IsInt
 iff
 strstr
 cfgs
@@ -181,6 +185,7 @@ responsebody
 responseBody
 protobuf
 leq
+IronBeeSite
 fillcolor
 itx
 xxxx
@@ -189,9 +194,10 @@ randomizers
 Hashtable
 configfile
 StreamInspect
-SetVar
 setvar
+SetVar
 redeclare
+phost
 autogen
 defs
 LHS
@@ -574,6 +580,7 @@ xXX
 lf
 onEventHandleConnect
 nused
+lh
 SCLASS
 ju
 na
@@ -619,6 +626,7 @@ sa
 SÃ
 mbols
 sb
+rh
 dtor
 enum
 DSTR
@@ -882,6 +890,8 @@ BaseModuleFixture
 modula
 testval
 corasick
+SiteHost
+sitehost
 DebugLog
 debuglog
 enoent
@@ -1003,6 +1013,7 @@ omgilibot
 exmin
 pconndata
 ConfigurationDirectivesRegistrar
+ConstSiteService
 cvalue
 other's
 toplevel
@@ -1039,7 +1050,9 @@ dolist
 proto
 abcdefxxx
 frule
+pparser
 Deinitialize
+unregistration
 logevent
 rindex
 xyzzy
@@ -1107,6 +1120,8 @@ ConnDataOut
 ParsedNameValues
 ironbee
 IronBee
+psitehost
+ConstSiteLocation
 compat
 Alfeld
 subnet
@@ -1280,6 +1295,7 @@ Automake
 cpart
 Cardinality
 cpatt
+SiteLocation
 dalloc
 PartialValid
 inspectRequestHeader
@@ -1318,6 +1334,7 @@ Googlebot
 checkflag
 ahocorasic
 AhoCorasic
+NUMMULT
 eventp
 ftrace
 createn
@@ -1364,6 +1381,7 @@ bytestr's
 dequeue
 connp
 fabcdefghijk
+serv
 psym
 SESS
 setn
@@ -1391,6 +1409,8 @@ ThaSstf
 DOTALL
 Shsf
 ovector
+ConstSiteHost
+plocation
 geolocation
 IronAutomataIntermediate
 inttypes
@@ -1410,6 +1430,7 @@ sive
 metadata
 errinfo
 lookup
+IsFloat
 inspectRequestBody
 Javascript
 ResponseBodyBufferLimit
@@ -1451,6 +1472,7 @@ fieldrently
 IronBeeModule
 sprintf
 mkdtemp
+pcctx
 UnitTest
 kvserver
 tlen
@@ -1545,6 +1567,7 @@ IronBeeUtilUUID
 ResponseHeadersData
 setflag
 allocs
+wildcarded
 opname
 ResponseBuffering
 RequestFinished
@@ -1590,6 +1613,7 @@ rsize
 IOBuffer
 teashark
 getter
+SiteService
 PcreDfaWorkspaceSize
 SubPool
 subpool
@@ -1611,6 +1635,7 @@ onEventHandleResponse
 realloc'ed
 noKey
 boolean
+pservice
 EBADVAL
 ConstTransaction
 Mediapartners
@@ -1746,6 +1771,7 @@ RSPBDYS
 olist
 params
 NEWBUF
+IronBeeContextSelection
 IPSet
 ipset
 requestmetadata

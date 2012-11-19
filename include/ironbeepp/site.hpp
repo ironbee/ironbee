@@ -267,7 +267,7 @@ public:
      * @warning This is as dangerous as a @c const_cast, use carefully.
      *
      * @param[in] site_service ConstSiteService to remove const from.
-     * @returns SiteService pointing to same underlying siteservice as @a site_service.
+     * @returns SiteService pointing to same underlying site service as @a site_service.
      **/
     static SiteService remove_const(ConstSiteService site_service);
 

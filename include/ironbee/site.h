@@ -37,7 +37,7 @@ extern "C" {
 #endif
 
 /**
- * @defgroup IronBeeSite IronBee Site Fucntions
+ * @defgroup IronBeeSite IronBee Site Functions
  * @ingroup IronBee
  *
  * This is the API for the IronBee site functions.
@@ -132,7 +132,7 @@ ib_status_t DLL_PUBLIC ib_site_location_create(
  * Create a service object
  *
  * @param[in] site Parent site
- * @param[in] service_str Serivce string in the form of ip[:port]
+ * @param[in] service_str Service string in the form of ip[:port]
  * @param[in] ctxsel_service Context-selection specific service
  * @param[in] service Pre-allocated service structure to use / NULL
  * @param[out] pservice Pointer to new service object / NULL

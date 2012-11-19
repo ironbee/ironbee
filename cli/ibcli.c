@@ -1921,7 +1921,7 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
         }
     }
 
-    /* Register context hanlders */
+    /* Register context handlers */
     if (test_dump_flags(DUMP_CONTEXT)) {
         rc = ib_hook_conn_register(ib,
                                    handle_context_conn_event,

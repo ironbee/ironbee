@@ -101,7 +101,7 @@ struct ib_ctxsel_registration_t {
     ib_ctxsel_site_close_fn_t      site_close_fn;      /**< Site-close fn */
     void                          *site_close_cb_data; /**< Callback data*/
     ib_ctxsel_location_close_fn_t  location_close_fn;  /**< Location-close fn */
-    void                          *location_close_cb_data; /**< Calblack data*/
+    void                          *location_close_cb_data; /**< Callback data*/
     ib_ctxsel_finalize_fn_t        finalize_fn;        /**< Finalize fn */
     void                          *finalize_cb_data;   /**< Callback data*/
 };

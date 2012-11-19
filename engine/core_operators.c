@@ -1326,13 +1326,13 @@ static ib_status_t execute_compare(
         ib_num_t param_value;
         ib_num_t value;
 
-        /* Pull out param value for comparision. */
+        /* Pull out param value for comparison. */
         rc = ib_field_value(rh_field, ib_ftype_num_out(&param_value));
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        /* Pull out param value for comparision. */
+        /* Pull out param value for comparison. */
         rc = ib_field_value(lh_field, ib_ftype_num_out(&value));
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
@@ -1355,13 +1355,13 @@ static ib_status_t execute_compare(
         ib_float_t param_value;
         ib_float_t value;
 
-        /* Pull out param value for comparision. */
+        /* Pull out param value for comparison. */
         rc = ib_field_value(rh_field, ib_ftype_float_out(&param_value));
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        /* Pull out param value for comparision. */
+        /* Pull out param value for comparison. */
         rc = ib_field_value(lh_field, ib_ftype_float_out(&value));
         if (rc != IB_OK) {
             IB_FTRACE_RET_STATUS(rc);

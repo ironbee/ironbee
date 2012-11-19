@@ -479,7 +479,7 @@ ib_status_t ib_ctxsel_registration_store_finalize(
 }
 
 /**
- * Store a context registration data to a destionation
+ * Store a context registration data to a destination
  *
  * @param[out] dest Destination registration
  * @param[in] source Source registration

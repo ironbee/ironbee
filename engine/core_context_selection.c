@@ -144,7 +144,7 @@ static const core_location_t *core_ctxsel_matchany_location(
 /**
  * Check for a matching host within a host list
  *
- * This funtion takes a list of hosts, and attempts to find the first
+ * This function takes a list of hosts, and attempts to find the first
  * host that matches the transaction.  This function is intended to aid in
  * the development of context selection functions, but it's use is optional.
  * It is used by the core site selector.
@@ -214,7 +214,7 @@ static ib_status_t core_ctxsel_match_host(
 /**
  * Check for a matching location within a location list
  *
- * This funtion takes a list of locations, and attempts to find the first
+ * This function takes a list of locations, and attempts to find the first
  * location that matches the transaction.  This function is intended to aid in
  * the development of context selection functions, but it's use is optional.
  * It is used by the core site selector.
@@ -326,7 +326,7 @@ static ib_status_t core_create_site_selector(
  *
  * @returns Return status:
  *     IB_OK
- *     Errors retuned by the various functions
+ *     Errors returned by the various functions
  */
 static ib_status_t core_ctxsel_finalize(
     const ib_engine_t *ib,
@@ -597,7 +597,7 @@ static ib_status_t core_ctxsel_site_create(
  * Core context selection: Create location function
  *
  * @param[in] site Parent site
- * @param[in] ctx Locations's configuration context
+ * @param[in] ctx Locations' configuration context
  * @param[in] location_str Location string (path)
  * @param[in] common_cb_data Callback data passed to all registered fns
  * @param[in] fn_cb_data Function-specific callback data
@@ -698,7 +698,7 @@ static ib_status_t core_ctxsel_host_create(
     }
     site_host = (ib_site_host_t *)&(core_host->host);
 
-    /* Iniitalize the site host obect */
+    /* Initialize the site host object */
     rc = ib_site_host_create(site, host_str, core_host, site_host, NULL);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);

@@ -105,7 +105,7 @@ typedef ib_status_t (* ib_ctxsel_site_create_fn_t) (
  * location directive.
  *
  * @param[in] site Parent site
- * @param[in] ctx Locations's configuration context
+ * @param[in] ctx Locations' configuration context
  * @param[in] location_str Location string (path)
  * @param[in] common_cb_data Callback data passed to all registered fns
  * @param[in] fn_cb_data Function-specific callback data
@@ -486,7 +486,7 @@ ib_status_t ib_ctxsel_registration_store_finalize(
  *
  * @returns Status code
  *  - IB_OK on success
- *  - IB_DECLIDED if a module attempts to register while another is active.
+ *  - IB_DECLINED if a module attempts to register while another is active.
  */
 ib_status_t DLL_PUBLIC ib_ctxsel_registration_register(
     ib_engine_t                    *ib,
@@ -504,7 +504,7 @@ ib_status_t DLL_PUBLIC ib_ctxsel_registration_register(
  *   not the active module, the request is denied and IB_DECLINED is
  *   returned.  It is also invalid for the core module to attempt to
  *   unregister itself.  If the unregistration of the active module is
- *   successfun, the core module's functions will become active.
+ *   successful, the core module's functions will become active.
  *
  * @returns Status code
  */
@@ -571,7 +571,7 @@ ib_status_t DLL_PUBLIC ib_ctxsel_site_create(
  * location directive.
  *
  * @param[in] site Parent site
- * @param[in,out] ctx Locations's configuration context
+ * @param[in,out] ctx Locations' configuration context
  * @param[in] location_str Location string (path)
  * @param[out] plocation Address where location will be written / NULL
  *
