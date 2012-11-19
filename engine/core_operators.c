@@ -1388,27 +1388,6 @@ static ib_status_t execute_compare(
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
-
-/**
- * Try to convert two input fields to one of the possible @a valid_types.
- *
- * If a field does not need to be converted, it's corresponding output field
- * will be set to NULL.
- *
- * @param[in,out] mp The memory pool to use.
- * @param[in] in_field1 The first input field.
- * @param[in] in_field2 The second input field.
- * @param[in] valid_types A set of types to try to convert these fields to.
- *             Valid flags are:
- *             - IB_FTYPE_NUM_FLAG
- *             - IB_FTYPE_UNUM_FLAG
- *             - IB_FTYPE_FLOAT_FLAG
- * @param[out] out_field1 The output field. Null if no conversion of in_field1
- *             is performed.
- * @param[out] out_field2 The output field. Null if no conversion of in_field2
- *             is performed.
- * @param[out] out_type The type that was chosen for out_field1 and out_field2.
- */
 /**
  * Execute function for the numeric "equal" operator
  *
