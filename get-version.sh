@@ -19,8 +19,8 @@ else
   exit 1
 fi
 
-if test -z $VERSION; then
+if test -z $PKG_VERSION; then
   echo "No version found in $version_file"
   exit 1
 fi
-echo -n "$VERSION"
+echo -n "$PKG_VERSION"
