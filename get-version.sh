@@ -1,5 +1,9 @@
 #!/bin/sh
 
+# Needed to remove the new line when echoing the version
+nl='
+'
+
 VERSION=
 
 usage="\
@@ -23,4 +27,6 @@ if test -z $PKG_VERSION; then
   echo "No version found in $version_file"
   exit 1
 fi
-echo -n "$PKG_VERSION"
+
+# Omit the trailing newline
+echo "$PKG_VERSION" | tr -d "$nl"
