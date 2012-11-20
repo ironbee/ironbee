@@ -1,11 +1,40 @@
+Title:  IronBee Changes
+
 IronBee Changes
 ===============
 
 IronBee v0.6.0
 --------------
 
-* Enhanced rule engine diagnostics logging (RuleEngineLogData,
-  RuleEngineLogLevel).
+**Build**
+
+* IronBee++ and CLIPP are now built by default.  Use `--disable-cpp` to
+  prevent.
+
+* Build system now handles boost and libnids libraries better.  New 
+  `--with-boost-suffix` configuration option.
+
+* Removed a number of unnecessary checks in configure.
+
+**Engine**
+
+* Enhanced support for buffering request/response data, including
+  runtime support via the setflag action.
+  
+* Added initial support for persistent data. (see: 
+  `include/ironbee/kvstore.h`)
+
+* Partial progress towards rework of configuration state transitions.  
+  Currently implicit.  Next version should be gone completely.  
+
+* Events can now be suppressed by setting the `suppress` field.
+
+* Directory creation (`ib_util_mkpath`) rewritten.
+
+**Rules and Configuration**
+
+* Enhanced rule engine diagnostics logging (`RuleEngineLogData`,
+  `RuleEngineLogLevel`).
 
 * Simplified Hostname directive by moving IP/Port to a new
   Service directive.
@@ -13,25 +42,77 @@ IronBee v0.6.0
 * Enhanced configuration context selection, which now takes Site,
   Service, Hostname and Location into account.
 
-* Rewrote Apache httpd server module for httpd 2.4.
+* Added an `InitVar` directive to set custom fields at config time.  
+
+* `SetVar` `=+` operator changed to `+=`.  Also added `-=` and `*=`.
+
+* Added floating point field type; removed unsigned field type.  Note that
+  floating point values do not support eq and ne.
+
+* The `ne` operator now correctly compares numbers.
+
+* Initial support for implicit type conversions in operators.
+
+* Fixed `pmf` operator so that relative filenames are based on
+  config file location vs CWD.
+  
+* Enhanced PCRE matching to support setting limits.
+  
+* `AuditLogFileMode` now works.
+
+* Default of `AuditEngine` is now `RelevantOnly`.
+
+**Lua**
 
 * Updated luajit code to v2.0.0.
 
-* Enhanced support for buffering request/response data, including
-  runtime support via the setflag action.
-
-* Enhanced PCRE matching to support setting limits.
-
-* Added an InitVar directive to set custom fields at config time.
-
 * Enhanced Lua rule API with more access to internals.
+
+**Modules**
 
 * Enhanced GeoIP module to use O1/O01 country codes when
   lookups fail.
 
-* Fixed pmf operator so that relative filenames are based on
-  config file location vs CWD.
+**Servers**
 
-* Added IronAutomata framework for building automata
-  (see: automata/doc/example.md).
+* Added support for regexp based header editing.
+
+* Rewrote Apache httpd server module for httpd 2.4.
+
+**Automata**
+
+* Added IronAutomata framework for building, modifying, and executing automata
+  (see: `automata/doc/example.md`).  Currently works as stand alone library 
+  but is not integrated into IronBee.
+
+**CLIPP**
+
+* CLIPP manual updated. (see: `clipp/clipp.md`)
+
+* CLIPP tests now provide more information about failures.
+
+**IronBee++**
+
+* Support for new site API.
+
+* Support for new float field type.
+
+**Documentation**
+
+* Added CHANGES file.
+
+* Many manual updates.
+
+* Doxygen dependency calculation fixed.  `make doxygen` in `docs` should now
+  run only if files have changed.
+  
+* Removed long deprecated `fulldocs` doxygen.  Use `external` or `internal` 
+  instead.
+  
+* Updated to doxygen 1.8.1.
+  
+**Other**
+
+* Various bug fixes and code cleanup.
+
 
