@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I../acinclude
 
 EXTRA_DIST = gtest_executor.sh
 
-AM_CPPFLAGS = $(BOOST_CPPFLAGS) 
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_builddir)/include
 LDADD = \
     $(top_builddir)/tests/libgtest.a \
     $(top_builddir)/tests/test_main.o \
