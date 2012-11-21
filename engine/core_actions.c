@@ -52,19 +52,113 @@ typedef enum {
     SETVAR_NUMADD,                /**< Add to a value (counter) */
     SETVAR_NUMSUB,                /**< Subtract from a value (counter) */
     SETVAR_NUMMULT,               /**< Multiply to a value (counter) */
+    SETVAR_FLOATSET,              /**< Set to a constant float. */
+    SETVAR_FLOATADD,              /**< Add to a float. */
+    SETVAR_FLOATSUB,              /**< Subtract from a float. */
+    SETVAR_FLOATMULT,             /**< Multiply to a float. */
 } setvar_op_t;
+
+
+/**
+ * Actual implementation of setvar operators for numbers.
+ */
+typedef ib_status_t (*setvar_num_op_fn_t)(
+    const ib_num_t n1,
+    const ib_num_t n2,
+    ib_num_t *out);
+
+/**
+ * Actual implementation of setvar operators for floats.
+ */
+typedef ib_status_t (*setvar_float_op_fn_t)(
+    const ib_float_t f1,
+    const ib_float_t f2,
+    ib_float_t *out
+);
+
+static ib_status_t setvar_num_sub_op(
+    const ib_num_t n1,
+    const ib_num_t n2,
+    ib_num_t *out)
+{
+    IB_FTRACE_INIT();
+
+    *out = n1 - n2;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+static ib_status_t setvar_num_mult_op(
+    const ib_num_t n1,
+    const ib_num_t n2,
+    ib_num_t *out)
+{
+    IB_FTRACE_INIT();
+
+    *out = n1 * n2;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+static ib_status_t setvar_num_add_op(
+    const ib_num_t n1,
+    const ib_num_t n2,
+    ib_num_t *out)
+{
+    IB_FTRACE_INIT();
+
+    *out = n1 + n2;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+static ib_status_t setvar_float_sub_op(
+    const ib_float_t f1,
+    const ib_float_t f2,
+    ib_float_t *out)
+{
+    IB_FTRACE_INIT();
+
+    *out = f1 - f2;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+static ib_status_t setvar_float_mult_op(
+    const ib_float_t f1,
+    const ib_float_t f2,
+    ib_float_t *out)
+{
+    IB_FTRACE_INIT();
+
+    *out = f1 * f2;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+static ib_status_t setvar_float_add_op(
+    const ib_float_t f1,
+    const ib_float_t f2,
+    ib_float_t *out)
+{
+    IB_FTRACE_INIT();
+
+    *out = f1 + f2;
+
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
 
 typedef union {
     ib_num_t         num;         /**< Numeric value */
+    ib_float_t       flt;         /**< Float value. */
     ib_bytestr_t    *bstr;        /**< String value */
 } setvar_value_t;
 
+/**
+ * Structure storing setvar instance data.
+ */
 typedef struct {
     setvar_op_t      op;          /**< Setvar operation */
     char            *name;        /**< Field name */
     bool             name_expand; /**< Field name should be expanded */
     ib_ftype_t       type;        /**< Data type */
-    setvar_value_t   value;       /**< Value */
+    setvar_value_t   value;       /**< Value. value.num, flt, or bstr. */
 } setvar_data_t;
 
 /**
@@ -86,6 +180,146 @@ typedef struct {
 typedef struct {
     ib_logevent_type_t      event_type; /**< Type of the event */
 } event_data_t;
+
+/**
+ * Unwrap two fields, perform the operation, and write the result.
+ *
+ * @param[in,out] tx Transaction object. tx->dpi is updated with the result.
+ * @param[in] rule_exec Rule execution environment.
+ * @param[in] setvar_data SetVar data.
+ * @param[in] cur_field The current field being used for the left hand side.
+ *            If curr_field == NULL a value of zero is substituted.
+ * @param[in] name The name of the new field to create and add to tx->dpi.
+ * @param[in] nlen The length of name.
+ * @param[in] op The operator to perform on the two fields.
+ *            The value in cur_field is passed as the first argument
+ *            to @a op. The second argument to @a op is the
+ *            parameter presented at configuration time.
+ *
+ * @returns
+ *   - IB_OK
+ */
+static ib_status_t setvar_float_op(
+    ib_tx_t *tx,
+    const ib_rule_exec_t *rule_exec,
+    const setvar_data_t *setvar_data,
+    ib_field_t *cur_field,
+    const char *name,
+    size_t nlen,
+    setvar_float_op_fn_t op)
+{
+    IB_FTRACE_INIT();
+
+    assert(setvar_data->type == IB_FTYPE_FLOAT);
+
+    ib_status_t rc;
+
+    /* If it doesn't exist, create the variable with a value of zero */
+    if (cur_field == NULL) {
+
+        /* Create the new_field field */
+        rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur_field);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "setvar: Failed to add field "
+                              "\"%.*s\": %s",
+                              (int)nlen, name,
+                              ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Handle float types. */
+    if (cur_field->type == IB_FTYPE_FLOAT) {
+        ib_float_t flt;
+        rc = ib_field_value(cur_field, ib_ftype_float_out(&flt));
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        op(flt, setvar_data->value.flt, &flt);
+
+        ib_field_setv(cur_field, ib_ftype_float_in(&flt));
+    }
+    else {
+        ib_rule_log_error(rule_exec,
+                          "setvar: field \"%.*s\" type %d "
+                          "invalid for NUMADD",
+                          (int)nlen, name, cur_field->type);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+/**
+ * Unwrap two fields, perform the operation, and write the result.
+ *
+ * @param[in,out] tx Transaction object. tx->dpi is updated with the result.
+ * @param[in] rule_exec Rule execution environment.
+ * @param[in] setvar_data SetVar data.
+ * @param[in] cur_field The current field being used for the left hand side.
+ *            If curr_field == NULL a value of zero is substituted.
+ * @param[in] name The name of the new field to create and add to tx->dpi.
+ * @param[in] nlen The length of name.
+ * @param[in] op The operator to perform on the two fields.
+ *            The value in cur_field is passed as the first argument
+ *            to @a op. The second argument to @a op is the
+ *            parameter presented at configuration time.
+ *
+ * @returns
+ *   - IB_OK
+ */
+static ib_status_t setvar_num_op(
+    ib_tx_t *tx,
+    const ib_rule_exec_t *rule_exec,
+    const setvar_data_t *setvar_data,
+    ib_field_t *cur_field,
+    const char *name,
+    size_t nlen,
+    setvar_num_op_fn_t op)
+{
+    IB_FTRACE_INIT();
+
+    assert(setvar_data->type == IB_FTYPE_NUM);
+
+    ib_status_t rc;
+
+    /* If it doesn't exist, create the variable with a value of zero */
+    if (cur_field == NULL) {
+
+        /* Create the new_field field */
+        rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur_field);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "setvar: Failed to add field "
+                              "\"%.*s\": %s",
+                              (int)nlen, name,
+                              ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+
+    /* Handle num and unum types */
+    if (cur_field->type == IB_FTYPE_NUM) {
+        ib_num_t num;
+        rc = ib_field_value(cur_field, ib_ftype_num_out(&num));
+        if (rc != IB_OK) {
+                IB_FTRACE_RET_STATUS(rc);
+        }
+
+        op(num, setvar_data->value.num, &num);
+
+        ib_field_setv(cur_field, ib_ftype_num_in(&num));
+    }
+    else {
+        ib_rule_log_error(rule_exec,
+                          "setvar: field \"%.*s\" type %d "
+                          "invalid for NUMADD",
+                          (int)nlen, name, cur_field->type);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
 
 /**
  * Create function for the setflags action.
@@ -480,6 +714,27 @@ static ib_status_t act_setvar_create(
         else {
             data->op = SETVAR_NUMSET;
         }
+
+        goto success;
+    }
+
+    rc = ib_string_to_float(value, &(data->value.flt));
+    if (rc == IB_OK) {
+        data->type = IB_FTYPE_FLOAT;
+        if (eq - strchr(params, '+') == 1) {
+            data->op = SETVAR_FLOATADD;
+        }
+        else if (eq - strchr(params, '-') == 1) {
+            data->op = SETVAR_FLOATSUB;
+        }
+        else if (eq - strchr(params, '*') == 1) {
+            data->op = SETVAR_FLOATMULT;
+        }
+        else {
+            data->op = SETVAR_FLOATSET;
+        }
+
+        goto success;
     }
     else {
         bool expand = false;
@@ -500,6 +755,7 @@ static ib_status_t act_setvar_create(
         data->op = SETVAR_STRSET;
     }
 
+success:
     inst->data = data;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
@@ -871,6 +1127,37 @@ static ib_status_t act_setvar_execute(
         break;
 
     /* Numerical operation : Set */
+    case SETVAR_FLOATSET:
+        assert(setvar_data->type == IB_FTYPE_FLOAT);
+
+        if (cur_field != NULL) {
+            ib_data_remove_ex(tx->dpi, name, nlen, NULL);
+        }
+
+        /* Create the new_field field */
+        rc = ib_field_create(&new_field,
+                             tx->mp,
+                             name, nlen,
+                             setvar_data->type,
+                             ib_ftype_float_in(&setvar_data->value.flt));
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "setvar: Failed to create field \"%.*s\": %s",
+                              (int)nlen, name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+
+        /* Add the field to the DPI */
+        rc = ib_data_add(tx->dpi, new_field);
+        if (rc != IB_OK) {
+            ib_rule_log_error(rule_exec,
+                              "setvar: Failed to add field \"%.*s\": %s",
+                              (int)nlen, name, ib_status_to_string(rc));
+            IB_FTRACE_RET_STATUS(rc);
+        }
+        break;
+
+    /* Numerical operation : Set */
     case SETVAR_NUMSET:
         assert(setvar_data->type == IB_FTYPE_NUM);
 
@@ -902,124 +1189,79 @@ static ib_status_t act_setvar_execute(
         break;
 
     /* Numerical operation : Add */
+    case SETVAR_FLOATADD:
+        rc = setvar_float_op(
+            tx,
+            rule_exec,
+            setvar_data,
+            cur_field,
+            name,
+            nlen,
+            &setvar_float_add_op);
+        break;
+
+    /* Numerical operation : Sub */
+    case SETVAR_FLOATSUB:
+        rc = setvar_float_op(
+            tx,
+            rule_exec,
+            setvar_data,
+            cur_field,
+            name,
+            nlen,
+            &setvar_float_sub_op);
+        break;
+
+    /* Numerical operation : Mult */
+    case SETVAR_FLOATMULT:
+        rc = setvar_float_op(
+            tx,
+            rule_exec,
+            setvar_data,
+            cur_field,
+            name,
+            nlen,
+            &setvar_float_mult_op);
+        break;
+
+    /* Numerical operation : Add */
     case SETVAR_NUMADD:
-        assert(setvar_data->type == IB_FTYPE_NUM);
-
-        /* If it doesn't exist, create the variable with a value of zero */
-        if (cur_field == NULL) {
-
-            /* Create the new_field field */
-            rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur_field);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec,
-                                  "setvar: Failed to add field "
-                                  "\"%.*s\": %s",
-                                  (int)nlen, name,
-                                  ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-
-        /* Handle num and unum types */
-        if (cur_field->type == IB_FTYPE_NUM) {
-            ib_num_t num;
-            rc = ib_field_value(cur_field, ib_ftype_num_out(&num));
-            if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
-            }
-
-            num += setvar_data->value.num;
-            ib_field_setv(cur_field, ib_ftype_num_in(&num));
-        }
-        else {
-            ib_rule_log_error(rule_exec,
-                              "setvar: field \"%.*s\" type %d "
-                              "invalid for NUMADD",
-                              (int)nlen, name, cur_field->type);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
+        rc = setvar_num_op(
+            tx,
+            rule_exec,
+            setvar_data,
+            cur_field,
+            name,
+            nlen,
+            &setvar_num_add_op);
         break;
 
-    /* Numerical operation : Add */
+    /* Numerical operation : Sub */
     case SETVAR_NUMSUB:
-        assert(setvar_data->type == IB_FTYPE_NUM);
-
-        /* If it doesn't exist, create the variable with a value of zero */
-        if (cur_field == NULL) {
-
-            /* Create the new_field field */
-            rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur_field);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec,
-                                  "setvar: Failed to add field "
-                                  "\"%.*s\": %s",
-                                  (int)nlen, name,
-                                  ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-
-        /* Handle num and unum types */
-        if (cur_field->type == IB_FTYPE_NUM) {
-            ib_num_t num;
-            rc = ib_field_value(cur_field, ib_ftype_num_out(&num));
-            if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
-            }
-
-            num -= setvar_data->value.num;
-            ib_field_setv(cur_field, ib_ftype_num_in(&num));
-        }
-        else {
-            ib_rule_log_error(rule_exec,
-                              "setvar: field \"%.*s\" type %d "
-                              "invalid for NUMADD",
-                              (int)nlen, name, cur_field->type);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
+        rc = setvar_num_op(
+            tx,
+            rule_exec,
+            setvar_data,
+            cur_field,
+            name,
+            nlen,
+            &setvar_num_sub_op);
         break;
 
-    /* Numerical operation : Add */
+    /* Numerical operation : Mult */
     case SETVAR_NUMMULT:
-        assert(setvar_data->type == IB_FTYPE_NUM);
-
-        /* If it doesn't exist, create the variable with a value of zero */
-        if (cur_field == NULL) {
-
-            /* Create the new_field field */
-            rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur_field);
-            if (rc != IB_OK) {
-                ib_rule_log_error(rule_exec,
-                                  "setvar: Failed to add field "
-                                  "\"%.*s\": %s",
-                                  (int)nlen, name,
-                                  ib_status_to_string(rc));
-                IB_FTRACE_RET_STATUS(rc);
-            }
-        }
-
-        /* Handle num and unum types */
-        if (cur_field->type == IB_FTYPE_NUM) {
-            ib_num_t num;
-            rc = ib_field_value(cur_field, ib_ftype_num_out(&num));
-            if (rc != IB_OK) {
-                    IB_FTRACE_RET_STATUS(rc);
-            }
-
-            num *= setvar_data->value.num;
-            ib_field_setv(cur_field, ib_ftype_num_in(&num));
-        }
-        else {
-            ib_rule_log_error(rule_exec,
-                              "setvar: field \"%.*s\" type %d "
-                              "invalid for NUMMULT",
-                              (int)nlen, name, cur_field->type);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
+        rc = setvar_num_op(
+            tx,
+            rule_exec,
+            setvar_data,
+            cur_field,
+            name,
+            nlen,
+            &setvar_num_mult_op);
         break;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    IB_FTRACE_RET_STATUS(rc);
 }
 
 /**

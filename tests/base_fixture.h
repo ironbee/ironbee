@@ -46,12 +46,15 @@ public:
     void SetUp() {
         ib_status_t rc;
         char buf[EXCEPTION_BUF_SIZE+1];
+
+        /* Setup IronBee server object. */
         ibt_ibserver.vernum = IB_VERNUM;
         ibt_ibserver.abinum = IB_ABINUM;
         ibt_ibserver.version = IB_VERSION;
         ibt_ibserver.filename = __FILE__;
         ibt_ibserver.name = "unit_tests";
 
+        /* Call global initialization routine. */
         rc = ib_initialize();
         if (rc != IB_OK) {
             snprintf(buf, EXCEPTION_BUF_SIZE,
@@ -59,6 +62,8 @@ public:
                      ib_status_to_string(rc));
             throw std::runtime_error(buf);
         }
+
+        /* Create the engine. */
         rc = ib_engine_create(&ib_engine, &ibt_ibserver);
         if (rc != IB_OK) {
             snprintf(buf, EXCEPTION_BUF_SIZE,
@@ -66,6 +71,8 @@ public:
                      ib_status_to_string(rc));
             throw std::runtime_error(buf);
         }
+
+        /* Initialize the engine. */
         rc = ib_engine_init(ib_engine);
         if (rc != IB_OK) {
             snprintf(buf, EXCEPTION_BUF_SIZE,
@@ -74,15 +81,23 @@ public:
             throw std::runtime_error(buf);
         }
 
+        /* Set/reset the rules base path and modules base path.*/
         resetRuleBasePath();
         resetModuleBasePath();
     }
 
+    /**
+     * Reset the rule base path configuration in this IronBee engine to a default for testing.
+     */
     void resetRuleBasePath()
     {
         setRuleBasePath(IB_XSTRINGIFY(RULE_BASE_PATH));
     }
 
+    /**
+     * Set the rules base path in ib_engine to be @a path.
+     * @param[in] path The path to the rules.
+     */
     void setRuleBasePath(const char* path)
     {
         ib_core_cfg_t *corecfg = NULL;
@@ -92,11 +107,18 @@ public:
         corecfg->rule_base_path = path;
     }
 
+    /**
+     * Reset the module base path configuration in this IronBee engine to a default for testing.
+     */
     void resetModuleBasePath()
     {
         setModuleBasePath(IB_XSTRINGIFY(MODULE_BASE_PATH));
     }
 
+    /**
+     * Set the module bae path in ib_engine to be @a path.
+     * @param[in] path The path to the modules.
+     */
     void setModuleBasePath(const char* path)
     {
         ib_core_cfg_t *corecfg = NULL;
@@ -104,6 +126,34 @@ public:
                                  ib_core_module(),
                                  static_cast<void*>(&corecfg));
         corecfg->module_base_path = path;
+    }
+
+    std::string getBasicIronBeeConfig()
+    {
+        return std::string(
+            "# A basic ironbee configuration\n"
+            "# for getting an engine up-and-running.\n"
+            "LogLevel 9\n"
+
+            "LoadModule \"ibmod_htp.so\"\n"
+            "LoadModule \"ibmod_pcre.so\"\n"
+            "LoadModule \"ibmod_ac.so\"\n"
+            "LoadModule \"ibmod_rules.so\"\n"
+            "LoadModule \"ibmod_user_agent.so\"\n"
+
+            "SensorId B9C1B52B-C24A-4309-B9F9-0EF4CD577A3E\n"
+            "SensorName UnitTesting\n"
+            "SensorHostname unit-testing.sensor.tld\n"
+
+            "# Disable audit logs\n"
+            "AuditEngine Off\n"
+
+            "Set parser \"htp\"\n"
+
+            "<Site test-site>\n"
+            "SiteId AAAABBBB-1111-2222-3333-000000000000\n"
+            "Hostname somesite.com\n"
+            "</Site>\n");
     }
 
     /**

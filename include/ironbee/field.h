@@ -187,7 +187,7 @@ typedef enum {
     IB_FTYPE_NULSTR,      /**< NUL terminated string value */
     IB_FTYPE_BYTESTR,     /**< Binary data value */
     IB_FTYPE_LIST,        /**< List of fields */
-    IB_FTYPE_SBUFFER      /**< Stream buffer */
+    IB_FTYPE_SBUFFER,     /**< Stream buffer */
 } ib_ftype_t;
 
 /**
