@@ -6,29 +6,35 @@ EXTRA_DIST =  config-parser.rl run-ragel.py \
               engine_private.h state_notify_private.h rule_engine_private.h \
               core_private.h core_audit_private.h
 
+noinst_LTLIBRARIES = libironbee-c.la
+libironbee_c_la_CPPFLAGS = $(PCRE_CPPFLAGS)
+libironbee_c_la_CFLAGS = $(PCRE_CFLAGS)
+libironbee_c_la_LDFLAGS = $(AM_LDFLAGS)
+libironbee_c_la_LIBADD = $(PCRE_LDADD)
+libironbee_c_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
+                          context_selection.c site.c \
+                          config.c config-parser.c config-parser.h \
+                          matcher.c filter.c \
+                          operator.c action.c transformation.c \
+                          module.c \
+                          parsed_content.c \
+                          core.c \
+                          core_context_selection.c \
+                          core_fields.c \
+                          core_tfns.c \
+                          core_operators.c \
+                          core_actions.c \
+                          core_audit.c \
+                          rule_logger.c \
+                          rule_engine.c \
+                          state_notify.c \
+                          config-parser.h \
+                          $(top_builddir)/lua/ironbee.h
+
 lib_LTLIBRARIES = libironbee.la
-libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
-                        context_selection.c site.c \
-                        config.c config-parser.c config-parser.h \
-                        matcher.c filter.c \
-                        operator.c action.c transformation.c \
-                        module.c \
-                        parsed_content.c \
-                        core.c \
-                        core_context_selection.c \
-                        core_fields.c \
-                        core_tfns.c \
-                        core_operators.c \
-                        core_actions.c \
-			core_audit.c \
-                        rule_logger.c \
-                        rule_engine.c \
-                        state_notify.c \
-                        config-parser.h \
-                        $(top_builddir)/lua/ironbee.h
-libironbee_la_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS) $(PCRE_CFLAGS)
-libironbee_la_LIBADD = $(top_builddir)/util/libibutil.la $(PCRE_LDADD)
-libironbee_la_LDFLAGS = $(AM_LDFLAGS) $(HTP_LDFLAGS) 
+libironbee_la_SOURCES =
+libironbee_la_LIBADD = $(top_builddir)/util/libibutil-c.la \
+                       libironbee-c.la
 
 if DARWIN
 install-exec-hook: $(lib_LTLIBRARIES)
