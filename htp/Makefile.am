@@ -10,7 +10,11 @@ AM_CFLAGS = -D_GNU_SOURCE -g -O2 -Wall -Wextra -std=gnu99 -pedantic \
     -Wextra -Wno-missing-field-initializers -Wshadow -Wpointer-arith \
     -Wstrict-prototypes -Wmissing-prototypes -Wno-unused-parameter
 
-lib_LTLIBRARIES= libhtp.la
-libhtp_la_SOURCES= $(h_sources) $(c_sources)
-libhtp_la_LDFLAGS= -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
+noinst_LTLIBRARIES = libhtp-c.la
+libhtp_c_la_SOURCES = $(h_sources) $(c_sources)
+
+lib_LTLIBRARIES = libhtp.la
+libhtp_la_SOURCES =
+libhtp_la_LIBADD = libhtp-c.la
+libhtp_la_LDFLAGS = -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
 
