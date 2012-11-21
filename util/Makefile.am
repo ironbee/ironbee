@@ -3,19 +3,37 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 include $(top_srcdir)/build/common.mk
 
 lib_LTLIBRARIES = libibutil.la
-libibutil_la_SOURCES = lock.c util.c logformat.c \
-                       debug.c mpool.c dso.c uuid.c \
-                       array.c list.c stream.c hash.c bytestr.c field.c \
-                       cfgmap.c ahocorasick.c expand.c \
-                       string.c strlower.c strtrim.c strwspc.c \
+libibutil_la_SOURCES = ahocorasick.c \
+                       array.c \
+                       bytestr.c \
+                       cfgmap.c \
+                       clock.c \
+                       debug.c \
+                       decode.c \
+                       dso.c \
+                       escape.c \
+                       expand.c \
+                       field.c \
+                       hash.c \
+                       ip.c \
+                       ipset.c \
+                       kvstore.c \
+                       kvstore_filesystem.c \
+                       list.c \
+                       lock.c \
+                       logformat.c \
+                       modsec_compat.c \
+                       mpool.c \
                        path.c \
                        regex.c \
-                       decode.c \
-                       escape.c \
-		       kvstore.c \
-		       kvstore_filesystem.c \
-                       modsec_compat.c \
-                       clock.c types.c ipset.c ip.c
+                       stream.c \
+                       string.c \
+                       strlower.c \
+                       strtrim.c \
+                       strwspc.c \
+                       types.c \
+                       util.c \
+                       uuid.c
 
 EXTRA_DIST = ahocorasick_private.h
 
