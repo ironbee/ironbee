@@ -188,7 +188,7 @@ typedef struct {
  * @param[in] rule_exec Rule execution environment.
  * @param[in] setvar_data SetVar data.
  * @param[in] cur_field The current field being used for the left hand side.
- *            If curr_field == NULL a value of zero is substituted.
+ *            If cur_field == NULL a value of zero is substituted.
  * @param[in] name The name of the new field to create and add to tx->dpi.
  * @param[in] nlen The length of name.
  * @param[in] op The operator to perform on the two fields.
@@ -257,7 +257,7 @@ static ib_status_t setvar_float_op(
  * @param[in] rule_exec Rule execution environment.
  * @param[in] setvar_data SetVar data.
  * @param[in] cur_field The current field being used for the left hand side.
- *            If curr_field == NULL a value of zero is substituted.
+ *            If cur_field == NULL a value of zero is substituted.
  * @param[in] name The name of the new field to create and add to tx->dpi.
  * @param[in] nlen The length of name.
  * @param[in] op The operator to perform on the two fields.

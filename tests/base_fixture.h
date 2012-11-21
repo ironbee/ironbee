@@ -116,7 +116,7 @@ public:
     }
 
     /**
-     * Set the module bae path in ib_engine to be @a path.
+     * Set the module base path in ib_engine to be @a path.
      * @param[in] path The path to the modules.
      */
     void setModuleBasePath(const char* path)
