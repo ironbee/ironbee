@@ -13,8 +13,8 @@ else
   ibcli_LDADD_extra = -lrt
 endif
 
-ibcli_LDADD = $(top_builddir)/util/libibutil-c.la \
-              $(top_builddir)/engine/libironbee-c.la \
+ibcli_LDADD = $(top_builddir)/util/libibutil.la \
+              $(top_builddir)/engine/libironbee.la \
               $(ibcli_LDADD_extra) $(PCRE_LDADD)
 ibcli_LDFLAGS = $(AM_LDFLAGS) $(PCRE_LDFLAGS)
 ibcli_CFLAGS = $(AM_CFLAGS) $(PCRE_CFLAGS)
