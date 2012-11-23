@@ -167,6 +167,7 @@ libtest_util_dso_lib_la_SOURCES = test_util_dso_lib.c
 libtest_util_dso_lib_la_LDFLAGS = \
 	$(LDFLAGS) @GCC_CHARACTERISTICS_LDFLAGS@ \
 	-shared -version-info 0:0:0 -rpath $(PWD)
+libtest_util_dso_lib_la_LIBADD = $(top_builddir)/util/libibutil-c.la
 
 test_util_list_SOURCES = test_util_list.cc test_main.cc
 
