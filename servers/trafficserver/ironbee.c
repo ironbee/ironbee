@@ -2002,6 +2002,7 @@ static int ironbee_init(const char *configfile, const char *logfile)
 
     rc = ib_cfgparser_parse(cp, configfile);
     if (rc != IB_OK) {
+        ib_cfgparser_destroy(cp);
         return rc;
     }
     rc = ib_cfgparser_destroy(cp);
