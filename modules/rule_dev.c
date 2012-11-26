@@ -465,9 +465,7 @@ static ib_status_t act_assert_execute(const ib_rule_exec_t *rule_exec,
         expanded = (char *)cstr;
     }
 
-    ib_rule_log_error(rule_exec, "ASSERT \"%s\"", expanded);
-    ib_rule_log_execution(rule_exec);
-    assert(0 && expanded);
+    ib_rule_log_fatal(rule_exec, "ASSERT \"%s\"", expanded);
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
