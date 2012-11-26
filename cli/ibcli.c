@@ -1324,12 +1324,14 @@ static ib_status_t print_geoip(
 
     /* Loop through the list & print everything */
     IB_LIST_LOOP(lst, node) {
+        const char *fullpath = NULL;
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
         if (count == 0) {
             printf("GeoIP data:\n");
         }
         ++count;
-        print_field("", field, 0);
+        fullpath = build_path("GeoIP", field);
+        print_field(fullpath, field, 0);
     }
     if (count == 0) {
         printf("No GeoIP data found\n");
