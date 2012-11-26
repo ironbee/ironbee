@@ -16,6 +16,9 @@ IronBee v0.6.0
 
 * Removed a number of unnecessary checks in configure.
 
+* Changed how linking is done.  Among other things, libironbee now contains
+  libibutil: do not link to both.
+
 **Engine**
 
 * Enhanced support for buffering request/response data, including
