@@ -1021,14 +1021,18 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
     ib_context_set_num(ctx, "logger.log_level", 4);
 
     rc = ib_cfgparser_create(&cp, ironbee);
-    if (rc != IB_OK)
+    if (rc != IB_OK) {
         return IB2AP(rc);
-
-    if (cp != NULL) {   // huh?
-        ib_cfgparser_parse(cp, ironbee_config_file);
-        ib_cfgparser_destroy(cp);
     }
-    ib_state_notify_cfg_finished(ironbee);
+    rc = ib_cfgparser_parse(cp, ironbee_config_file);
+    if (rc != IB_OK) {
+        ib_cfgparser_destroy(cp);
+        return IB2AP(rc);
+    }
+    rc = ib_cfgparser_destroy(cp);
+    if (rc != IB_OK) {
+        return IB2AP(rc);
+    }
 
     /* any more logging is no longer happening at startup */
     /* This will trigger after the first config pass.
