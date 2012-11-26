@@ -146,7 +146,7 @@ calfeld@qualys.com<br>
 <p>The follow diagrams show splitting an edge with values <span class="math">\( \{a, b, c \} \)</span> on <span class="math">\( \{ b, c \} \)</span>.</p>
 
 <figure>
-<img src="file:internal_split_edge.png" alt="Deep Split Edge" id="split_edge" />
+<img src="internal_split_edge.png" alt="Deep Split Edge" id="split_edge" />
 <figcaption>Deep Split Edge</figcaption></figure>
 
 
@@ -158,7 +158,7 @@ calfeld@qualys.com<br>
 <p>As with the normal add algorithm, the add pattern algorithm will consider each element of the sequence in turn. In the normal case, at each element there is a single corresponding node in the AC Tree. In the pattern case, there may be multiple nodes. E.g., in</p>
 
 <figure>
-<img src="file:internal_add_pattern1.png" alt="Multiple nodes for a pattern." id="add_pattern1" />
+<img src="internal_add_pattern1.png" alt="Multiple nodes for a pattern." id="add_pattern1" />
 <figcaption>Multiple nodes for a pattern.</figcaption></figure>
 
 
@@ -198,7 +198,7 @@ calfeld@qualys.com<br>
 <p>In the follow diagram, we have a tree for the pattern <span class="math">\( \backslash l \backslash w = \{a\ldots z\}\{a\ldots zA\ldots Z0 \ldots 9\} \)</span> and are adding the pattern <span class="math">\( \backslash w \backslash w = \{a\ldots zA\ldots Z0 \ldots 9\}\{a\ldots zA\ldots Z0 \ldots 9\} \)</span>.</p>
 
 <figure>
-<img src="file:internal_add_pattern2.png" alt="Adding \w\w to \l\w" id="add_pattern2" />
+<img src="internal_add_pattern2.png" alt="Adding \w\w to \l\w" id="add_pattern2" />
 <figcaption>Adding \w\w to \l\w</figcaption></figure>
 
 
@@ -276,7 +276,7 @@ calfeld@qualys.com<br>
 <p>In the following diagram, <code>\l\w\d</code> has been added to the automata and then process failures called. The diagram illustrates <code>ProcessFailuresInner</code> for node 2 and the edge from 2 to 3.</p>
 
 <figure>
-<img src="file:internal_add_pattern3.png" alt="Processing Failures" id="add_pattern3" />
+<img src="internal_add_pattern3.png" alt="Processing Failures" id="add_pattern3" />
 <figcaption>Processing Failures</figcaption></figure>
 
 
@@ -284,7 +284,7 @@ calfeld@qualys.com<br>
 <p>Below is the completed automata. Note the added outputs.</p>
 
 <figure>
-<img src="file:internal_add_pattern4.png" alt="Final Automata" id="add_pattern4" />
+<img src="internal_add_pattern4.png" alt="Final Automata" id="add_pattern4" />
 <figcaption>Final Automata</figcaption></figure>
 
 
@@ -294,7 +294,7 @@ calfeld@qualys.com<br>
 <p>Further improvements over the current algorithms are possible, both for normal and pattern. The insight from the pattern algorithm is that the automata only needs to distinguish inputs in so far as it matters for determining distinct outputs. That is, a node in the AC tree needs to represent potential outputs and future failures; it is fine if it represents multiple inputs so long as those inputs are, in some sense, equivalent. In the following tree, node 2 represents 10 different inputs, but this is fine as all 10 inputs have the same output and failure behavior:</p>
 
 <figure>
-<img src="file:internal_ac_improve1.png" alt="One node, many inputs" id="ac_improve1" />
+<img src="internal_ac_improve1.png" alt="One node, many inputs" id="ac_improve1" />
 <figcaption>One node, many inputs</figcaption></figure>
 
 
@@ -302,7 +302,7 @@ calfeld@qualys.com<br>
 <p>This role of nodes suggests that nodes that are equivalent in terms of future outputs and failure behavior could be merged. As a concrete example, consider, the following modification of the final automata from the previous section:</p>
 
 <figure>
-<img src="file:internal_ac_improve2.png" alt="Final Automata, Improved" id="ac_improve2" />
+<img src="internal_ac_improve2.png" alt="Final Automata, Improved" id="ac_improve2" />
 <figcaption>Final Automata, Improved</figcaption></figure>
 
 
@@ -352,7 +352,7 @@ calfeld@qualys.com<br>
 <p>There is significant room for improvement if the order of outputs can be modified. Consider the following output structure:</p>
 
 <figure>
-<img src="file:internal_dedup1.png" alt="Output Deduplication, Initial" id="dedup1" />
+<img src="internal_dedup1.png" alt="Output Deduplication, Initial" id="dedup1" />
 <figcaption>Output Deduplication, Initial</figcaption></figure>
 
 
@@ -360,7 +360,7 @@ calfeld@qualys.com<br>
 <p>The existing deduplicate outputs algorithm can reduce this to:</p>
 
 <figure>
-<img src="file:internal_dedup2.png" alt="Output Deduplication, Current" id="dedup2" />
+<img src="internal_dedup2.png" alt="Output Deduplication, Current" id="dedup2" />
 <figcaption>Output Deduplication, Current</figcaption></figure>
 
 
@@ -368,7 +368,7 @@ calfeld@qualys.com<br>
 <p>However, if the outputs are reordered, it could be reduced further to:</p>
 
 <figure>
-<img src="file:internal_dedup3.png" alt="Output Deduplication, Improved" id="dedup3" />
+<img src="internal_dedup3.png" alt="Output Deduplication, Improved" id="dedup3" />
 <figcaption>Output Deduplication, Improved</figcaption></figure>
 
 

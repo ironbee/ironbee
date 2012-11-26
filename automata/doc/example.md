@@ -71,7 +71,7 @@ Any automata in intermediate format can be drawn via GraphViz.  In practice, Gra
     
 ![Aho-Corasick of he, she, his, hers][example1]
 
-[example1]: file:example_example1.png
+[example1]: example_example1.png
 
 The diamond is the *start node* of the automata.  Solid arrows point to elipses representing other nodes and are labeled by the input.  The dashed arrows represent *default* edges.  These edges are taken when no other edge from a node matches the input.  Black edges advance to the next input; red edges do not.  Dotted black arrows point to outputs which are generated when the node is entered.  The outputs in this example are four byte integers in network byte order.  Unprintable output bytes are rendered as decimals in angle brackets.  For example, when node 7 is entered, the outputs 3 and 2 will be emitted.
 
@@ -92,7 +92,7 @@ IronAutomata comes with a small but growing set of automata optimizations.  Some
      
 ![Result of Translate Nonadvancing Conservative][example2]
 
-[example2]: file:example_example2.png
+[example2]: example_example2.png
 
 The result is a more complicated automata.  But notice the lack of red edges.  That means that every edge advances the input and, thus, only one edge will be traveled for every byte of input.  In contrast, the original automata might traverse multiple edges for each byte.
 
@@ -260,7 +260,7 @@ This example uses a contrived automata to demonstrate the translate nonadvancing
     
 ![Aho-Corasick of a, aa, aaa, aaaa][aaaa]
 
-[aaaa]: file:example_aaaa.png
+[aaaa]: example_aaaa.png
 
     > bin/optimize --translate-nonadvancing-conservative < aaaa.a > aaaa_conservative.a
     Translate Nonadvancing [conservative]: 1021
@@ -268,7 +268,7 @@ This example uses a contrived automata to demonstrate the translate nonadvancing
 
 ![Result of applying Translate Nonadvancing Conservative][aaaa_conservative]
 
-[aaaa_conservative]: file:example_aaaa_conservative.png
+[aaaa_conservative]: example_aaaa_conservative.png
 
 Note that node 8 now has two edges (including the default) instead of one and that no edges are non-advancing.
 
@@ -278,7 +278,7 @@ Note that node 8 now has two edges (including the default) instead of one and th
 
 ![Result of applying Translate Nonadvancing Structural][aaaa_structural]
 
-[aaaa_structural]: file:example_aaaa_structural.png
+[aaaa_structural]: example_aaaa_structural.png
 
 Note that node 8 retains its single (default) edge which is non-advancing, thus, no edges are added to the automata.
 
@@ -309,7 +309,7 @@ The best way to use these options is to prepare a sample of the type of input yo
 
 ![English Dictionary applied to Pride and Prejudice][example_pp]
 
-[example_pp]: file:example_pp.png
+[example_pp]: example_pp.png
 
 This graph suggests a high node weight between 0.35 and 0.65 will yield significant performance benefits at low space costs.  E.g., a value of 0.5 will, compared to a high node weight of 1, run 22% faster and use only 4% more bytes.
 

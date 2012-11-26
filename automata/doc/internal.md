@@ -152,7 +152,7 @@ The follow diagrams show splitting an edge with values \\( \{a, b, c \} \\) on \
 
 ![Deep Split Edge][split_edge]
 
-[split_edge]: file:internal_split_edge.png
+[split_edge]: internal_split_edge.png
 
 Add Pattern
 -----------
@@ -163,7 +163,7 @@ As with the normal add algorithm, the add pattern algorithm will consider each e
 
 ![Multiple nodes for a pattern.][add_pattern1]
 
-[add_pattern1]: file:internal_add_pattern1.png
+[add_pattern1]: internal_add_pattern1.png
 
 The pattern \\( \{ 1, 2, 3, 4, 5, 6 \} \\) would have two nodes, 2 and 3, at the second level of three.
 
@@ -199,7 +199,7 @@ In the follow diagram, we have a tree for the pattern \\( \backslash l \backslas
 
 ![Adding \w\w to \l\w][add_pattern2]
 
-[add_pattern2]: file:internal_add_pattern2.png
+[add_pattern2]: internal_add_pattern2.png
 
 The add algorithm stores all edge values as *sorted* vectors.  Doing so allows easy set operations, e.g., `std::set_difference`.
 
@@ -273,13 +273,13 @@ In the following diagram, `\l\w\d` has been added to the automata and then proce
 
 ![Processing Failures][add_pattern3]
 
-[add_pattern3]: file:internal_add_pattern3.png
+[add_pattern3]: internal_add_pattern3.png
 
 Below is the completed automata.  Note the added outputs.
 
 ![Final Automata][add_pattern4]
 
-[add_pattern4]: file:internal_add_pattern4.png
+[add_pattern4]: internal_add_pattern4.png
 
 
 Further Improvements
@@ -289,13 +289,13 @@ Further improvements over the current algorithms are possible, both for normal a
 
 ![One node, many inputs][ac_improve1]
 
-[ac_improve1]: file:internal_ac_improve1.png
+[ac_improve1]: internal_ac_improve1.png
 
 This role of nodes suggests that nodes that are equivalent in terms of future outputs and failure behavior could be merged.  As a concrete example, consider, the following modification of the final automata from the previous section:
 
 ![Final Automata, Improved][ac_improve2]
 
-[ac_improve2]: file:internal_ac_improve2.png
+[ac_improve2]: internal_ac_improve2.png
 
 Nodes 5 and 5' were identical to nodes 4 and 4' and merged together.
 
@@ -342,19 +342,19 @@ There is significant room for improvement if the order of outputs can be modifie
 
 ![Output Deduplication, Initial][dedup1]
 
-[dedup1]: file:internal_dedup1.png
+[dedup1]: internal_dedup1.png
 
 The existing deduplicate outputs algorithm can reduce this to:
 
 ![Output Deduplication, Current][dedup2]
 
-[dedup2]: file:internal_dedup2.png
+[dedup2]: internal_dedup2.png
 
 However, if the outputs are reordered, it could be reduced further to:
 
 ![Output Deduplication, Improved][dedup3]
 
-[dedup3]: file:internal_dedup3.png
+[dedup3]: internal_dedup3.png
 
 Implementing such an algorithm is future work.
 
