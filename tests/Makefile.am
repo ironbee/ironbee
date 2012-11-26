@@ -8,8 +8,12 @@ libgtest_a_SOURCES = gtest/gtest-all.cc
 libgtest_main_a_SOURCES = gtest/gtest_main.cc
 
 TESTS_ENVIRONMENT = $(srcdir)/gtest_executor.sh
-LIBUTIL_LDADD = $(top_builddir)/util/libibutil-c.la
-LDADD = $(LIBUTIL_LDADD) libgtest.a
+LDADD = $(HTP_LDADD) \
+        $(PCRE_LDADD) \
+        -lboost_filesystem$(BOOST_SUFFIX) \
+        -lboost_system$(BOOST_SUFFIX) \
+        $(top_builddir)/engine/libironbee.la \
+        libgtest.a
 
 #This is simply broken in FreeBSD 8, but still builds okay on FreeBSD 7.
 if FREEBSD
@@ -31,14 +35,6 @@ endif
 endif
 
 LDFLAGS += $(HTP_LDFLAGS) $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
-
-# This is a common set of files for runnign tests of modules.
-MODULE_TEST_LDADD = $(LDADD) \
-                    $(HTP_LDADD) \
-                    $(PCRE_LDADD) \
-                    -lboost_filesystem$(BOOST_SUFFIX) \
-                    -lboost_system$(BOOST_SUFFIX) \
-                    $(top_builddir)/engine/libironbee.la
 
 # Point the module base path to the modules build dir
 CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
@@ -82,7 +78,7 @@ check_PROGRAMS = test_gtest \
                  test_config \
                  test_util_ipset \
                  test_util_ip \
-		 test_kvstore
+                 test_kvstore
 if ENABLE_LUA
 check_PROGRAMS += test_module_rules_lua \
                   test_luajit
@@ -203,7 +199,7 @@ test_util_log_LDADD = $(LDADD) -lboost_regex$(BOOST_SUFFIX)
 
 test_util_uuid_SOURCES = test_util_uuid.cc test_main.cc
 test_util_uuid_CPPFLAGS = $(CPPFLAGS) $(OSSP_UUID_CFLAGS)
-test_util_uuid_LDADD = $(MODULE_TEST_LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIBS)
+test_util_uuid_LDADD = $(LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIBS)
 
 test_util_ahocorasick_SOURCES = test_util_ahocorasick.cc test_main.cc
 
@@ -213,11 +209,8 @@ test_util_mpool_LDADD = $(LDADD) -lboost_thread-mt -lboost_system$(BOOST_SUFFIX)
 test_engine_SOURCES = test_engine.cc test_main.cc \
                       test_parsed_content.cc \
                       ibtest_util.cc
-test_engine_LDADD = $(MODULE_TEST_LDADD)
 
 test_config_SOURCES = test_config.cc test_main.cc
-test_config_LDADD = $(MODULE_TEST_LDADD)
-
 
 test_module_rules_lua_SOURCES = test_module_rules_lua.cc \
                                 test_main.cc ibtest_util.cc
@@ -229,7 +222,6 @@ test_module_rules_lua_CPPFLAGS = $(CPPFLAGS) \
                                  -DTEST_LUA_FILE=\"$(abs_top_srcdir)/tests/test_module_rules_lua.lua\" \
                                  -DTEST_FFI_FILE=\"$(abs_top_srcdir)/lua/ironbee-ffi.lua\"
 test_module_rules_lua_LDADD = $(LDADD) \
-                              $(MODULE_TEST_LDADD) \
                               $(top_builddir)/lua/libironbee-lua.la \
                               $(top_builddir)/modules/ibmod_rules_la-rules_lua.o \
                               -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
@@ -237,20 +229,16 @@ test_module_rules_lua_LDADD = $(LDADD) \
                               -lm
 
 test_module_ahocorasick_SOURCES = test_module_ahocorasick.cc test_main.cc
-test_module_ahocorasick_LDADD = $(MODULE_TEST_LDADD)
 test_module_ahocorasick_CPPFLAGS = $(CPPFLAGS) \
                                    -I$(top_srcdir)/modules
 
 test_operator_SOURCES = test_operator.cc test_main.cc
-test_operator_LDADD = $(MODULE_TEST_LDADD)
 
 test_action_SOURCES = test_action.cc test_core_actions.cc test_main.cc
-test_action_LDADD = $(MODULE_TEST_LDADD)
 
 test_module_pcre_SOURCES = test_module_pcre.cc \
                            test_module_dfa.cc \
-			   test_main.cc
-test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
+			               test_main.cc
 
 test_luajit_SOURCES = test_main.cc \
                       test_luajit.cc \
@@ -260,15 +248,12 @@ test_luajit_CPPFLAGS = $(CPPFLAGS) \
                        -I$(top_srcdir)
 test_luajit_LDFLAGS = $(LDFLAGS)
 test_luajit_LDADD = $(LDADD) \
-                    $(MODULE_TEST_LDADD) \
                     $(top_builddir)/lua/libironbee-lua.la \
                     -lm
 
 test_kvstore_SOURCES = test_main.cc \
 		       test_kvstore.cc
 test_kvstore_CPPFLAGS = $(CPPFLAGS)
-test_kvstore_LDADD = $(LDADD) \
-		     $(MODULE_TEST_LDADD) \
-		     -lm
+test_kvstore_LDADD = $(LDADD) -lm
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml
