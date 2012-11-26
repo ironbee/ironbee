@@ -1014,16 +1014,15 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
 
     ib_hook_conn_register(ironbee, conn_opened_event, ironbee_conn_init, NULL);
 
-    ib_state_notify_cfg_started(ironbee);
+    rc = ib_cfgparser_create(&cp, ironbee);
+    if (rc != IB_OK) {
+        return IB2AP(rc);
+    }
     ctx = ib_context_main(ironbee);
 
     ib_context_set_string(ctx, IB_PROVIDER_TYPE_LOGGER, "ironbee-httpd");
     ib_context_set_num(ctx, "logger.log_level", 4);
 
-    rc = ib_cfgparser_create(&cp, ironbee);
-    if (rc != IB_OK) {
-        return IB2AP(rc);
-    }
     rc = ib_cfgparser_parse(cp, ironbee_config_file);
     if (rc != IB_OK) {
         ib_cfgparser_destroy(cp);
