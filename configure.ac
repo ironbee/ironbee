@@ -452,7 +452,7 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="libs util engine servers lua modules etc docs automata tests packaging"
+TOPLEVEL_SUBDIRS="libs util engine servers lua automata modules etc docs tests packaging"
 LIBS_SUBDIRS=""
 SERVERS_SUBDIRS="apache_httpd2 trafficserver"
 
