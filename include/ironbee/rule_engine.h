@@ -690,6 +690,28 @@ void ib_rule_log_exec(ib_rule_dlog_level_t level,
                       const char *fmt, ...)
     PRINTF_ATTRIBUTE(5, 6);
 
+/**
+ * Log a fatal rule execution error
+ *
+ * This will cause @sa ib_rule_log_execution() to @sa assert(), and thus
+ * should be used only in development environments.
+ *
+ * @param[in] rule_exec Rule execution object
+ * @param[in] file Filename (or NULL)
+ * @param[in] line Line number (or 0)
+ * @param[in] fmt Printf-like format string
+ */
+void ib_rule_log_fatal_ex(const ib_rule_exec_t *rule_exec,
+                          const char *file,
+                          int line,
+                          const char *fmt, ...
+                          )
+    PRINTF_ATTRIBUTE(4, 5);
+
+/** Rule execution fatal error logging */
+#define ib_rule_log_fatal(rule_exec, ...) \
+    ib_rule_log_fatal_ex(rule_exec, __FILE__, __LINE__, __VA_ARGS__)
+
 /** Rule execution error logging */
 #define ib_rule_log_error(rule_exec, ...) \
     ib_rule_log_exec(IB_RULE_DLOG_ERROR, rule_exec, \

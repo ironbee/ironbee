@@ -74,6 +74,12 @@ typedef enum {
 #define IB_RULE_FLAG_ACTION   (IB_RULE_FLAG_FORCE_EN|IB_RULE_FLAG_NO_TGT)
 
 /**
+ * Rule execution flags
+ */
+#define IB_RULE_EXEC_NONE     (0x0)     /**< No flags */
+#define IB_RULE_EXEC_FATAL    (1 << 0)  /**< Fatal error in rule exec. */
+
+/**
  * Rule meta-data flags
  */
 #define IB_RULEMD_FLAG_NONE        (0x0)     /**< No flags */

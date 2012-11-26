@@ -112,6 +112,7 @@ struct ib_rule_log_exec_t {
     ib_timeval_t            start_time;  /**< Time of start of rule execution */
     ib_timeval_t            end_time;    /**< Time of end of rule execution */
     ib_flags_t              enable;      /**< Enable flags */
+    ib_flags_t              flags;       /**< Execution flags */
     ib_rule_log_tx_t       *tx_log;      /**< Rule transaction log */
     const ib_rule_t        *rule;        /**< Rule being executed */
     ib_list_t              *tgt_list;    /**< List of ib_rule_log_tgt_t */

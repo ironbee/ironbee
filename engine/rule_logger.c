@@ -471,6 +471,31 @@ ib_status_t ib_rule_log_exec_create(const ib_rule_exec_t *rule_exec,
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
+void ib_rule_log_fatal_ex(
+    const ib_rule_exec_t *rule_exec,
+    const char *file,
+    int line,
+    const char *fmt, ...
+)
+{
+    IB_FTRACE_INIT();
+
+    va_list ap;
+    ib_rule_log_exec_t *exec_log = rule_exec->exec_log;
+    ib_log_level_t log_level =
+        (rule_exec->tx_log == NULL) ? IB_LOG_INFO : rule_exec->tx_log->level;
+
+    ib_flags_set(exec_log->flags, IB_RULE_EXEC_FATAL);
+
+    va_start(ap, fmt);
+    rule_vlog_tx(IB_RULE_DLOG_ERROR, log_level,
+                 rule_exec->tx, rule_exec->rule, rule_exec->target,
+                 file, line, fmt, ap);
+    va_end(ap);
+
+    IB_FTRACE_RET_VOID();
+}
+
 ib_status_t ib_rule_log_exec_add_target(
     ib_rule_log_exec_t *exec_log,
     const ib_rule_target_t *target,
@@ -1559,6 +1584,11 @@ void ib_rule_log_execution(
 
     if (ib_flags_all(tx_log->flags, IB_RULE_LOG_FLAG_RULE)) {
         rule_log_exec(rule_exec, "RULE_END");
+    }
+
+    if (ib_flags_all(exec_log->flags, IB_RULE_EXEC_FATAL)) {
+        ib_rule_log_error(rule_exec, "Fatal rule execution error");
+        assert(0 && "Fatal rule execution error");
     }
 
     IB_FTRACE_RET_VOID();
