@@ -33,6 +33,9 @@ libibutil_la_SOURCES = ahocorasick.c \
                        types.c \
                        util.c \
                        uuid.c
+if BUILD_RIAK
+libibutil_la_SOURCES += kvstore_riak.c
+endif
 
 EXTRA_DIST = ahocorasick_private.h
 
