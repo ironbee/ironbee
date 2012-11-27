@@ -101,3 +101,31 @@ TEST_F(CoreActionTest, setVarMult) {
 
     ASSERT_EQ(2, n);
 }
+
+/**
+ * Do a larger integration test.
+ */
+TEST_F(CoreActionTest, integration) {
+    ib_field_t *f;
+    ib_num_t n;
+
+    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->dpi, "r1", &f));
+    ASSERT_EQ(IB_FTYPE_NUM, f->type);
+    ib_field_value(f, ib_ftype_num_out(&n));
+    ASSERT_EQ(1, n);
+
+    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->dpi, "r2", &f));
+    ASSERT_EQ(IB_FTYPE_NUM, f->type);
+    ib_field_value(f, ib_ftype_num_out(&n));
+    ASSERT_EQ(1, n);
+
+    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->dpi, "r3", &f));
+    ASSERT_EQ(IB_FTYPE_NUM, f->type);
+    ib_field_value(f, ib_ftype_num_out(&n));
+    ASSERT_EQ(1, n);
+
+    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->dpi, "r4", &f));
+    ASSERT_EQ(IB_FTYPE_NUM, f->type);
+    ib_field_value(f, ib_ftype_num_out(&n));
+    ASSERT_EQ(1, n);
+}

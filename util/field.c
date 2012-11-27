@@ -1062,6 +1062,7 @@ ib_status_t ib_field_convert(
 
 
     if (in_field->type == desired_type) {
+        *out_field = NULL;
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
