@@ -381,6 +381,18 @@ CHECK_PROTOBUF()
 CHECK_NIDS()
 CHECK_NET()
 CHECK_MODP()
+CHECK_LIBCURL()
+CHECK_YAJL()
+
+if test "${HAVE_LIBCURL}" != "no" && test "${HAVE_YAJL}" != "no" ; then
+    dnl # We use "BUILD" and not "HAVE" because we are not using any riak libs.
+    dnl # If we import a riak client library, it should define "HAVE."
+    AC_DEFINE([BUILD_RIAK], [1], [Build riak libraries.])
+    BUILD_RIAK="yes"
+else
+    BUILD_RIAK="no"
+fi
+AM_CONDITIONAL(BUILD_RIAK, test "${BUILD_RIAK}" != "no")
 
 if test "${HAVE_NIDS}" != "no" ; then
     AC_DEFINE([HAVE_NIDS], [1], [Have libnids library.])
