@@ -1192,8 +1192,6 @@ static ib_status_t select_math_type_conversion(
  * @param flags Rule flags used for @a rh_in expansion.
  * @param lh_in Left-hand operand input.
  * @param rh_in Right-hand operand input.
- * @param allow_float If false, this will return IB_EINVAL
- *        if the type to convert the input fields to is float.
  * @param lh_out Left-hand operand out. This may equal @a lh_in.
  * @param rh_out Right-hand operand out. This may equal @a rh_in.
  * @returns
@@ -1205,7 +1203,6 @@ static ib_status_t prepare_math_operands(
     const ib_flags_t flags,
     const ib_field_t *lh_in,
     const ib_field_t *rh_in,
-    const bool allow_float,
     ib_field_t **lh_out,
     ib_field_t **rh_out)
 {
@@ -1243,13 +1240,6 @@ static ib_status_t prepare_math_operands(
         *rh_out = NULL;
         *lh_out = NULL;
         IB_FTRACE_RET_STATUS(rc);
-    }
-
-    /* Apply our float rule. If it is not allowed, fail. */
-    if (! allow_float && type == IB_FTYPE_FLOAT) {
-        *rh_out = NULL;
-        *lh_out = NULL;
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
     /* Convert rh_field. */
@@ -1315,7 +1305,6 @@ static ib_status_t execute_compare(
         flags,
         field,
         pdata,
-        true,
         &lh_field,
         &rh_field);
     if (rc != IB_OK) {
