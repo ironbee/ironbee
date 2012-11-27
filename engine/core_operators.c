@@ -1151,6 +1151,10 @@ static ib_status_t select_math_type_conversion(
 {
     IB_FTRACE_INIT();
 
+    assert(lh_field);
+    assert(rh_field);
+    assert(type);
+
     if (lh_field->type == IB_FTYPE_FLOAT && rh_field->type == IB_FTYPE_FLOAT) {
         *type = IB_FTYPE_FLOAT;
         IB_FTRACE_RET_STATUS(IB_OK);
