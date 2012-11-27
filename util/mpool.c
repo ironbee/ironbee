@@ -627,7 +627,10 @@ ib_mpool_page_t *ib_mpool_acquire_page(
     }
 
 #ifdef IB_MPOOL_VALGRIND
-    VALGRIND_MAKE_MEM_NOACCESS(&(mpage->page), mp->pagesize);
+    {
+      int rc = VALGRIND_MAKE_MEM_NOACCESS(&(mpage->page), mp->pagesize);
+      assert(rc == 0);
+    }
 #endif
 
     IB_FTRACE_RET_PTR(ib_mpool_page_t, mpage);
@@ -1701,7 +1704,9 @@ void ib_mpool_clear(
                 const ib_mpool_page_t, mpage,
                 mp->tracks[track_num]
             ) {
-                VALGRIND_MAKE_MEM_NOACCESS(&(mpage->page), mp->pagesize);
+                int rc =
+                  VALGRIND_MAKE_MEM_NOACCESS(&(mpage->page), mp->pagesize);
+                assert(rc == 0);
             }
 #endif
             mp->tracks_end[track_num]->next = mp->free_pages;
