@@ -1,12 +1,13 @@
-dnl Check for Lib CURL library.
-dnl CHECK_YAJL(ACTION-IF-FOUND [, Action-IF-NOT-FOUND])
+dnl Check for YAJL.
+dnl CHECK_YAJL()
 dnl Sets:
 dnl YAJL_CFLAGS
-dnl YAJL_LDADD
+dnl YAJL_LDFLAGS
+dnl HAVE_YAJL
 
 HAVE_YAJL=no
 YAJL_CFlAGS=
-YAJL_LDADD=
+YAJL_LDFLAGS=
 
 AC_DEFUN([CHECK_YAJL],
 [dnl
