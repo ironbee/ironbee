@@ -51,7 +51,7 @@ ib_status_t ib_dso_open(
 
     /// @todo Probably need to do this portably someday
 
-    handle = dlopen(file, RTLD_NOW);
+    handle = dlopen(file, RTLD_LAZY);
     if (handle == NULL) {
         ib_util_log_error("%s", dlerror());
         IB_FTRACE_RET_STATUS(IB_EINVAL);
