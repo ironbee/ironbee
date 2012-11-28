@@ -4,9 +4,13 @@ include $(top_srcdir)/build/common.mk
 
 SUBDIRS = @LIBS_SUBDIRS@
 
+BUILT_SOURCES =
+
 if ENABLE_LUA
-BUILT_SOURCES = .build-luajit
+BUILT_SOURCES += .build-luajit
 endif
+
+BUILT_SOURCES += .build-libhtp
 
 clean-local:
 if ENABLE_LUA
@@ -16,6 +20,7 @@ else
 	(rm -f .build-luajit && cd luajit-2.0-ironbee && $(MAKE) clean)
 endif
 endif
+	(rm -f .build-libhtp)
 
 .build-luajit: $(srcdir)/luajit-2.0-ironbee/* $(srcdir)/luajit-2.0-ironbee/src/*
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
@@ -30,7 +35,12 @@ else
 endif
 endif
 
-EXTRA_DIST = luajit-2.0-ironbee
+.build-libhtp: $(srcdir)/libhtp/htp/*.[ch]
+	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
+		cp -rp $(srcdir)/libhtp $(builddir); \
+		chmod -R u+w $(builddir)/libhtp; \
+	fi; \
+	(cd $(builddir)/libhtp && ./autogen.sh && ./configure --prefix=$(prefix) CC=$(CC) CXX=$(CXX)); \
+	touch .build-libhtp
 
-dist-hook:
-	find $(distdir) -name '.git*' -exec rm -rf {} \;
+EXTRA_DIST = luajit-2.0-ironbee libhtp

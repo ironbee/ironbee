@@ -2,9 +2,10 @@ ACLOCAL_AMFLAGS = -I../acinclude
 
 include $(top_srcdir)/build/tests.mk
 
+noinst_LIBRARIES = libgtest.a libgtest_main.a
+
 LIBUTIL_LDADD = $(top_builddir)/util/libibutil.la
 LIBENGINE_LDADD = $(top_builddir)/engine/libironbee.la
-noinst_LIBRARIES = libgtest.a libgtest_main.a
 
 libgtest_a_SOURCES = gtest/gtest-all.cc
 libgtest_main_a_SOURCES = gtest/gtest_main.cc
@@ -12,6 +13,9 @@ libgtest_main_a_SOURCES = gtest/gtest_main.cc
 TESTS_ENVIRONMENT = $(srcdir)/gtest_executor.sh
 
 LDADD = $(LIBUTIL_LDADD) $(LIBENGINE_LDADD) libgtest.a
+
+LDFLAGS += -weak $(top_builddir)/engine/libironbee.la \
+           -weak $(top_builddir)/libs/libhtp/htp/libhtp.la
 
 #This is simply broken in FreeBSD 8, but still builds okay on FreeBSD 7.
 if FREEBSD
@@ -32,11 +36,10 @@ LDFLAGS += -lpthread
 endif
 endif
 
-LDFLAGS += $(HTP_LDFLAGS) $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
+LDFLAGS += $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
 
 # This is a common set of files for runnign tests of modules.
 MODULE_TEST_LDADD = $(LDADD) \
-                    $(HTP_LDADD) \
                     $(PCRE_LDADD) \
                     -lboost_filesystem$(BOOST_SUFFIX) \
                     -lboost_system$(BOOST_SUFFIX) \
@@ -45,6 +48,7 @@ MODULE_TEST_LDADD = $(LDADD) \
 # Point the module base path to the modules build dir
 CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
           -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
+          -I$(top_srcdir)/libs/libhtp/htp \
           $(BOOST_CPPFLAGS) -I$(top_builddir)/include
 
 check_PROGRAMS = test_gtest \

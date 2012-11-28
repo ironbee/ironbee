@@ -4,6 +4,8 @@ include $(top_srcdir)/build/common.mk
 
 pkglibdir = $(libdir)
 
+AM_LIBADD = $(top_builddir)/engine/libironbee.la
+
 if FREEBSD
 AM_LDFLAGS = -L/usr/local/lib -module -avoid-version -lssp_nonshared
 else
@@ -23,23 +25,25 @@ endif
 if BUILD_GEOIP
 pkglib_LTLIBRARIES += ibmod_geoip.la 
 ibmod_geoip_la_SOURCES = geoip.c
-ibmod_geoip_la_LIBADD = -lGeoIP -lm
+ibmod_geoip_la_LIBADD = $(AM_LIBADD) -lGeoIP -lm
 ibmod_geoip_la_LDFLAGS = $(AM_LDFLAGS) $(GEOIP_LDFLAGS)
 ibmod_geoip_la_CFLAGS = $(AM_CFLAGS) $(GEOIP_CFLAGS)
 ibmod_geoip_la_CPPFLAGS = $(AM_CFLAGS) $(GEOIP_CPPFLAGS)
 endif
 
 ibmod_htp_la_SOURCES = modhtp.c
-ibmod_htp_la_LIBADD = -lhtp
-ibmod_htp_la_LDFLAGS = $(AM_LDFLAGS) $(HTP_LDFLAGS)
-ibmod_htp_la_CFLAGS = $(AM_CFLAGS) $(HTP_CFLAGS)
+ibmod_htp_la_LDFLAGS = $(AM_LDFLAGS)
+ibmod_htp_la_LIBADD = $(AM_LIBADD) \
+                      $(top_builddir)/libs/libhtp/htp/libhtp.la
+ibmod_htp_la_CPPFLAGS = -I$(top_srcdir)/libs/libhtp/htp
+ibmod_htp_la_CFLAGS = $(AM_CFLAGS)
 
 ibmod_pcre_la_SOURCES = pcre.c
 ibmod_pcre_la_CPPFLAGS = @PCRE_CPPFLAGS@
 ibmod_pcre_la_CFLAGS = @PCRE_CFLAGS@
 ibmod_pcre_la_LDFLAGS = $(AM_LDFLAGS) \
                         @PCRE_LDFLAGS@
-ibmod_pcre_la_LIBADD = @PCRE_LDADD@
+ibmod_pcre_la_LIBADD = $(AM_LIBADD) @PCRE_LDADD@
 
 ibmod_ac_la_SOURCES = ac.c
 ibmod_ac_la_CFLAGS = ${AM_CFLAGS}
@@ -48,7 +52,8 @@ ibmod_ac_la_LDFLAGS = $(AM_LDFLAGS)
 ibmod_lua_la_SOURCES = lua.c 
 ibmod_lua_la_CPPFLAGS = $(CPPFLAGS) \
                         -I$(top_srcdir)/libs/luajit-2.0-ironbee/src -I$(top_srcdir)
-ibmod_lua_la_LIBADD = $(top_builddir)/lua/libironbee-lua.la \
+ibmod_lua_la_LIBADD = $(AM_LIBADD) \
+                      $(top_builddir)/lua/libironbee-lua.la \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
                       -lm
@@ -58,7 +63,7 @@ ibmod_rules_la_CPPFLAGS = $(CPPFLAGS) \
                         -I$(top_srcdir) \
                         -D_XOPEN_SOURCE=1
 
-ibmod_rules_la_LIBADD = -lm
+ibmod_rules_la_LIBADD = $(AM_LIBADD) -lm
 
 if ENABLE_LUA
 ibmod_rules_la_SOURCES += \
@@ -100,7 +105,7 @@ ibmod_user_agent_la_SOURCES = user_agent.c \
 ibmod_user_agent_la_CFLAGS = ${AM_CFLAGS}
 ibmod_user_agent_la_LDFLAGS = $(AM_LDFLAGS)
 if FREEBSD
-ibmod_user_agent_la_LIBADD = -liconv
+ibmod_user_agent_la_LIBADD = $(AM_LIBADD) -liconv
 endif
 
 install-exec-hook: $(pkglib_LTLIBRARIES)

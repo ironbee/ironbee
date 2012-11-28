@@ -20,7 +20,6 @@ URL:            http://www.ironbee.com
 
 BuildRequires: autoconf, automake, libtool, gcc, gcc-c++ 
 BuildRequires: pcre-devel, zlib-devel, libxml2-devel, httpd-devel 
-BuildRequires: libhtp-devel
 BuildRequires: trafficserver-devel >= 3.1.4
 
 %description
@@ -88,6 +87,10 @@ rm -rf $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_ROOT
 
 %files
+%attr(0755,root,root) %{_libdir}/libhtp-*.so.*
+%attr(0755,root,root) %{_libdir}/libhtp.so
+%attr(0755,root,root) %{_libdir}/libhtp.la
+%attr(0755,root,root) %{_libdir}/libhtp.a
 %attr(0755,root,root) %{_libdir}/libironbee.so.*
 %attr(0755,root,root) %{_libdir}/libironbee.so
 %attr(0755,root,root) %{_libdir}/libironbee.la
@@ -129,6 +132,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_bindir}/trie_generator
 
 %attr(0644,root,root) %{_includedir}/ironbee/*
+%attr(0644,root,root) %{_includedir}/htp/*
 %attr(0644,root,root) %{_includedir}/ironautomata/*
 %attr(0644,root,root) %{_includedir}/ironbeepp/*
 

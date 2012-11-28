@@ -131,7 +131,7 @@ case "$OS" in
         FreeBSD*)
                 AC_MSG_RESULT(FreeBSD) 
                 OS_FREEBSD="true"
-                CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/usr/local/include/htp"
+                CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
                 LDFLAGS="${LDFLAGS} -L/usr/local/lib"
         ;;
         Darwin*)
@@ -341,7 +341,6 @@ if test "$valgrind" != "no"; then
 fi
 
 dnl Checks for various external dependencies
-sinclude(acinclude/htp.m4)
 sinclude(acinclude/pcre.m4)
 sinclude(acinclude/apxs.m4)
 sinclude(acinclude/apr.m4)
@@ -355,7 +354,6 @@ sinclude(acinclude/ax_boost_base.m4)
 sinclude(acinclude/protobuf.m4)
 
 # Required libs
-CHECK_HTP()
 CHECK_PCRE()
 AX_BOOST_BASE(1.40,
               [have_boost_low=yes], 
@@ -453,7 +451,7 @@ dnl
 dnl TODO: Make these configure opts
 dnl
 TOPLEVEL_SUBDIRS="libs util engine servers lua automata modules etc docs tests packaging"
-LIBS_SUBDIRS=""
+LIBS_SUBDIRS="libhtp"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver"
 
 dnl Enable cli subdir if enabled
@@ -525,6 +523,7 @@ AC_SUBST(BOOST_SUFFIX)
 AC_SUBST(MAJOR_VERSION, [$AX_MAJOR_VERSION])
 AC_SUBST(MINOR_VERSION, [$AX_MINOR_VERSION])
 AC_SUBST(MICRO_VERSION, [$AX_POINT_VERSION])
+AC_SUBST(LIBRARY_VERSION, [$MAJOR_VERSION:$MINOR_VERSION:$MICRO_VERSION])
 
 dnl Generate files
 AC_CONFIG_FILES([Makefile])
