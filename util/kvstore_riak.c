@@ -109,9 +109,13 @@ static void kvdestroy(
     ib_kvstore_cbdata_t *cbdata)
 {
     IB_FTRACE_INIT();
-    //ib_kvstore_riak_server_t *riak =
-        //(ib_kvstore_riak_server_t *)kvstore->server; 
-    // FIXME
+    ib_kvstore_riak_server_t *riak =
+        (ib_kvstore_riak_server_t *)kvstore->server; 
+
+    kvstore->free(kvstore, riak->riak_url, kvstore->free_cbdata);
+    kvstore->free(kvstore, riak->bucket, kvstore->free_cbdata);
+    kvstore->free(kvstore, riak->bucket_url, kvstore->free_cbdata);
+
     IB_FTRACE_RET_VOID();
 }
 
