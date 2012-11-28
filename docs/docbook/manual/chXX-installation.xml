@@ -109,12 +109,6 @@
                 <td>http://www.pcre.org/</td>
             </tr>
             <tr>
-                <td>LibHTP</td>
-                <td>0.3.0+</td>
-                <td>Security-aware parser for the HTTP protocol.</td>
-                <td>https://github.com/ironbee/libhtp</td>
-            </tr>
-            <tr>
                 <td>PThread</td>
                 <td>NA</td>
                 <td>POSIX threads</td>
@@ -203,26 +197,6 @@
                 <td>http://trafficserver.apache.org/</td>
             </tr>
         </table>       
-    </section>
-    <section>
-    <title>Resolving Dependencies</title>
-      <section><title>Installing LibHTP</title>
-            <para>In the future LibHTP will be integrated into the ironbee build process but until
-                that time you will have to download, build and install LibHTP from it's public git
-                repository.</para>
-            <programlisting># Clone the repository
-git clone git://github.com/ironbee/libhtp.git
-cd libhtp
-
-# Generate the autotools utilities
-./autogen.sh
-
-# Configure the build for the current platform
-./configure
-
-# Build and Install
-make
-sudo make install</programlisting></section>
     </section>
     <section>
         <title>Building, Testing and Installing IronBee</title>

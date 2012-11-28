@@ -3,20 +3,13 @@ preview.  To build this code:
 
 Before you install:
 
-You will need a few dependencies. ossp-uuid (uuid), apache2, and
-libhtp. You can install uuid and apache2 through your operating
-systems package manager. For libhtp, do the following:
+You will need a few dependencies. ossp-uuid (uuid), and at least one of the
+following servers:
 
-Install libhtp
+* Apache TrafficServer 3.2
+* Apache httpd 2.4
 
-  git clone git://github.com/ironbee/libhtp.git
-  cd libhtp
-  ./autogen.sh
-  ./configure
-  make
-  sudo make install
-
-Get the code:
+Get the ironbee code:
 
   git clone git://github.com/ironbee/ironbee.git
 

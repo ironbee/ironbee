@@ -16,6 +16,8 @@ IronBee v0.6.0
 
 * Removed a number of unnecessary checks in configure.
 
+* Included libhtp source, so this is no longer required.
+
 **Engine**
 
 * Enhanced support for buffering request/response data, including
