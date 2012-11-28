@@ -14,9 +14,6 @@ TESTS_ENVIRONMENT = $(srcdir)/gtest_executor.sh
 
 LDADD = $(LIBUTIL_LDADD) $(LIBENGINE_LDADD) libgtest.a
 
-LDFLAGS += -weak $(top_builddir)/engine/libironbee.la \
-           -weak $(top_builddir)/libs/libhtp/htp/libhtp.la
-
 #This is simply broken in FreeBSD 8, but still builds okay on FreeBSD 7.
 if FREEBSD
 LDFLAGS+=-fstack-protector
@@ -43,7 +40,7 @@ MODULE_TEST_LDADD = $(LDADD) \
                     $(PCRE_LDADD) \
                     -lboost_filesystem$(BOOST_SUFFIX) \
                     -lboost_system$(BOOST_SUFFIX) \
-                    $(top_builddir)/engine/libironbee.la
+                    $(top_builddir)/libs/libhtp/htp/libhtp.la
 
 # Point the module base path to the modules build dir
 CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
