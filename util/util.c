@@ -35,6 +35,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#ifdef HAVE_LIBCURL
+#include <curl/curl.h>
+#endif
+
 /* -- Logging -- */
 
 static struct _ibutil_logger_t {
@@ -246,10 +250,21 @@ ib_status_t ib_initialize(void)
         return rc;
     }
 
+#ifdef HAVE_LIBCURL
+    rc = curl_global_init(CURL_GLOBAL_ALL);
+    if (rc) {
+        return IB_EOTHER;
+    }
+#endif
+
     return IB_OK;
 }
 
 void ib_shutdown(void)
 {
     ib_uuid_shutdown();
+
+#ifdef HAVE_LIBCURL
+    curl_global_cleanup();
+#endif
 }

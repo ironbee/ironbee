@@ -34,6 +34,7 @@ AC_COMPILE_IFELSE(
         [[curl_global_init(0);]]
     )],
     [dnl
+        AC_DEFINE([HAVE_LIBCURL], [1], [Is libcurl included in ironbee.])
         HAVE_LIBCURL=yes
         LDFLAGS="$save_LDFLAGS $LIBCURL_LDFLAGS"
         CFLAGS="$save_CFLAGS $LIBCURL_CFLAGS"
