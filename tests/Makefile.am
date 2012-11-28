@@ -5,14 +5,14 @@ include $(top_srcdir)/build/tests.mk
 noinst_LIBRARIES = libgtest.a libgtest_main.a
 
 LIBUTIL_LDADD = $(top_builddir)/util/libibutil.la
-LIBENGINE_LDADD = $(top_builddir)/engine/libironbee.la
+LIBENGINE_LDADD = $(LIBUTIL_LDADD) $(top_builddir)/engine/libironbee.la
 
 libgtest_a_SOURCES = gtest/gtest-all.cc
 libgtest_main_a_SOURCES = gtest/gtest_main.cc
 
 TESTS_ENVIRONMENT = $(srcdir)/gtest_executor.sh
 
-LDADD = $(LIBUTIL_LDADD) $(LIBENGINE_LDADD) libgtest.a
+LDADD = $(LIBENGINE_LDADD) libgtest.a
 
 #This is simply broken in FreeBSD 8, but still builds okay on FreeBSD 7.
 if FREEBSD
