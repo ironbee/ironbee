@@ -40,49 +40,48 @@
 
 
 /* -- mkpath() Tests -- */
+const size_t  pathsize_base = 64;
+const size_t  pathsize_full = (pathsize_base + 16);
 class TestIBUtilMkPath : public SimpleFixture
 {
 public:
-    TestIBUtilMkPath() : m_basedir(NULL) { };
-
     virtual void SetUp(void)
     {
+        m_basedir[0] = '\0';
         SimpleFixture::SetUp();
     }
     virtual void TearDown()
     {
-        const size_t pathsize = 1024;
         SimpleFixture::TearDown();
-        if (m_basedir != NULL) {
-            char buf[pathsize + 1];
-            snprintf(buf, pathsize, "/bin/rm -fr %s", m_basedir);
+        if (m_basedir[0] != '\0') {
+            char buf[pathsize_full+1];
+            snprintf(buf, pathsize_full, "/bin/rm -fr %s", m_basedir);
             if (system(buf) != 0) {
                 std::string error = "Failed to cleanup ";
                 error += m_basedir;
                 throw std::runtime_error(error);
             }
-            m_basedir = NULL;
+            m_basedir[0] = '\0';
         }
     }
 
-    char        *m_basedir;
+    char  m_basedir[pathsize_base+1];
 };
 
 /// @test Test util path functions - ib_util_mkpath()
 TEST_F(TestIBUtilMkPath, mkpath)
 {
-    const size_t pathsize = 1024;
     ib_status_t  rc;
-    char         tmpl[pathsize + 1];
-    char         path[pathsize + 1];
+    char        *tmp;
+    char         path[pathsize_full+1];
     struct stat  sbuf;
 
-    strcpy(tmpl, "/tmp/XXXXXX");
-    m_basedir = mkdtemp(tmpl);
-    ASSERT_STRNE(NULL, m_basedir)
+    strcpy(m_basedir, "/tmp/XXXXXX");
+    tmp = mkdtemp(m_basedir);
+    ASSERT_STRNE(NULL, tmp)
         << "mkdtemp() returned " << strerror(errno) << std::endl;
 
-    snprintf(path, pathsize, "%s/a", m_basedir);
+    snprintf(path, pathsize_full, "%s/a", m_basedir);
     rc = ib_util_mkpath(path, 0700);
     ASSERT_EQ(IB_OK, rc);
 
@@ -90,7 +89,7 @@ TEST_F(TestIBUtilMkPath, mkpath)
     ASSERT_TRUE(S_ISDIR(sbuf.st_mode));
     ASSERT_EQ((mode_t)0700, (sbuf.st_mode & 0777));
 
-    snprintf(path, pathsize, "%s/a/b", m_basedir);
+    snprintf(path, pathsize_full, "%s/a/b", m_basedir);
     rc = ib_util_mkpath(path, 0750);
     ASSERT_EQ(IB_OK, rc);
 
@@ -98,7 +97,7 @@ TEST_F(TestIBUtilMkPath, mkpath)
     ASSERT_TRUE(S_ISDIR(sbuf.st_mode));
     ASSERT_EQ((mode_t)0750, (sbuf.st_mode & 0777));
 
-    snprintf(path, pathsize, "%s/b/c/d/e", m_basedir);
+    snprintf(path, pathsize_full, "%s/b/c/d/e", m_basedir);
     rc = ib_util_mkpath(path, 0755);
     ASSERT_EQ(IB_OK, rc);
 
