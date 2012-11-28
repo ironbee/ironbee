@@ -1,5 +1,5 @@
 dnl Check for Lib CURL library.
-dnl CHECK_LIBCURL()
+dnl CHECK_LIBCURL([CALL-ON-SUCCESS [, CALL-ON-FAILURE]])
 dnl Sets:
 dnl LIBCURL_CFLAGS
 dnl LIBCURL_LDFLAGS
@@ -37,11 +37,13 @@ AC_COMPILE_IFELSE(
         HAVE_LIBCURL=yes
         LDFLAGS="$save_LDFLAGS $LIBCURL_LDFLAGS"
         CFLAGS="$save_CFLAGS $LIBCURL_CFLAGS"
+        $1
     ],
     [dnl
         dnl # Replace the original values.
         LDFLAGS="$save_LDFLAGS"
         CFLAGS="$save_CFLAGS"
+        $2
     ])
 
 AC_SUBST(HAVE_CURL_H)
