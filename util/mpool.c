@@ -629,7 +629,7 @@ ib_mpool_page_t *ib_mpool_acquire_page(
 #ifdef IB_MPOOL_VALGRIND
     {
       int rc = VALGRIND_MAKE_MEM_NOACCESS(&(mpage->page), mp->pagesize);
-      assert(rc == 0);
+      assert(rc < 2);
     }
 #endif
 
@@ -1706,7 +1706,7 @@ void ib_mpool_clear(
             ) {
                 int rc =
                   VALGRIND_MAKE_MEM_NOACCESS(&(mpage->page), mp->pagesize);
-                assert(rc == 0);
+                assert(rc < 2);
             }
 #endif
             mp->tracks_end[track_num]->next = mp->free_pages;
