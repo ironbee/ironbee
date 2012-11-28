@@ -3,7 +3,7 @@ ACLOCAL_AMFLAGS = -I ../acinclude
 include $(top_srcdir)/build/common.mk
 
 SUBDIRS = @LIBS_SUBDIRS@
-
+DIST_SUBDIRS =
 BUILT_SOURCES =
 
 if ENABLE_LUA
