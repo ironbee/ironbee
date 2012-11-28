@@ -4,6 +4,9 @@ include $(top_srcdir)/build/common.mk
 # If CPP is not defined, we do very litte.
 lib_LTLIBRARIES = libiaeudoxus.la
 libiaeudoxus_la_SOURCES = eudoxus.c eudoxus_automata.c
+libiaeudoxus_la_LDFLAGS = $(AM_LDFLAGS) \
+    -version-info @LIBRARY_VERSION@ \
+    -release @MAJOR_VERSION@.@MINOR_VERSION@
 ironautomata_include_HEADERS = \
     $(srcdir)/include/ironautomata/apidoc.h \
     $(srcdir)/include/ironautomata/bits.h \
@@ -33,6 +36,9 @@ libironautomata_la_SOURCES = \
     optimize_edges.cpp \
     translate_nonadvancing.cpp \
     aho_corasick.cpp
+libironautomata_la_LDFLAGS = $(AM_LDFLAGS) \
+    -version-info @LIBRARY_VERSION@ \
+    -release @MAJOR_VERSION@.@MINOR_VERSION@
     
 ironautomata_include_HEADERS += \
     $(srcdir)/include/ironautomata/buffer.hpp \
