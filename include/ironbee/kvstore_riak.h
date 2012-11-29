@@ -26,6 +26,7 @@
 #include <ironbee/types.h>
 
 #include <assert.h>
+#include <curl/curl.h>
 
 /**
  * @file
@@ -44,10 +45,16 @@
  * The riak server object.
  */
 struct ib_kvstore_riak_server_t {
-    char *riak_url;    /**< Riak URL. */
-    char *bucket;      /**< The name of the bucket. */
-    char *bucket_url;  /**< riak_url with the bucket appended. */
-    ib_mpool_t *mp;    /**< Memory pool. */
+    char *riak_url;        /**< Riak URL. */
+    size_t riak_url_len;   /**< Length of riak URL. */
+    char *bucket;          /**< The name of the bucket. */
+    size_t bucket_len;     /**< Length of bucket. */
+    char *bucket_url;      /**< riak_url with the bucket appended. */
+    size_t bucket_url_len; /**< Length of bucket_url. */
+    ib_mpool_t *mp;        /**< Memory pool. */
+    CURL *curl;            /**< Curl context for web requests. */
+    const char *vclock;    /**< NULL or vector clock for queries to riak. */
+    const char *etag;      /**< NULL or etag for queries to riak. */
 };
 typedef struct ib_kvstore_riak_server_t ib_kvstore_riak_server_t;
 
@@ -67,6 +74,42 @@ ib_status_t ib_kvstore_riak_init(
     const char *base_url,
     const char *bucket,
     ib_mpool_t *mp);
+
+/**
+ * Set (not copy) vclock in @a kvstore.
+ *
+ * This field is not freed when the riak server is destroyed. The
+ * user should free and null them when they are done with the transaction.
+ *
+ * @param[in] kvstore Key-value store.
+ * @param[in] vclock The vector clock.
+ */
+void ib_kvstore_riak_set_vlcock(ib_kvstore_t *kvstore, const char *vclock);
+
+/**
+ * Set (not copy) vclock in @a kvstore.
+ *
+ * This field is not freed when the riak server is destroyed. The
+ * user should free and null them when they are done with the transaction.
+ *
+ * @param[in] kvstore Key-value store.
+ * @param[in] etag The etag.
+ */
+void ib_kvstore_riak_set_etag(ib_kvstore_t *kvstore, const char *etag);
+
+/**
+ * Get vclock from @a kvstore.
+ *
+ * @returns The current value of kvstore->vclock.
+ */
+const char * ib_kvstore_riak_get_vlcock(ib_kvstore_t *kvstore);
+
+/**
+ * Get vclock from @a kvstore.
+ *
+ * @returns The current value of kvstore->etag.
+ */
+const char * ib_kvstore_riak_get_etag(ib_kvstore_t *kvstore);
 
  /**
   * @}
