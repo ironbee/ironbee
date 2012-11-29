@@ -49,16 +49,19 @@ char *home = NULL;
 
 int callback_transaction_start(htp_connp_t *connp) {
     printf("-- Callback: transaction_start\n");
+    return 0;
 }
 
 int callback_request_line(htp_connp_t *connp) {
     printf("-- Callback: request_line\n");
+    return 0;
 }
 
 int callback_request_headers(htp_connp_t *connp) {
     printf("-- Callback: request_headers\n");
     bstr *raw = htp_tx_get_request_headers_raw(connp->in_tx);
-    fprint_raw_data(stdout, "REQUEST HEADERS RAW 1", bstr_ptr(raw), bstr_len(raw));
+    fprint_raw_data(stdout, "REQUEST HEADERS RAW 1", (unsigned char*)bstr_ptr(raw), bstr_len(raw));
+    return 0;
 }
 
 int callback_request_body_data(htp_tx_data_t *d) {
@@ -70,22 +73,27 @@ int callback_request_body_data(htp_tx_data_t *d) {
         printf("-- Callback: request_body_data (LAST)\n");
     }
     */
+    return 0;
 }
 
 int callback_request_trailer(htp_connp_t *connp) {
     printf("-- Callback: request_trailer\n");
+    return 0;
 }
 
 int callback_request(htp_connp_t *connp) {
     printf("-- Callback: request\n");
+    return 0;
 }
 
 int callback_response_line(htp_connp_t *connp) {
     printf("-- Callback: response_line\n");
+    return 0;
 }
 
 int callback_response_headers(htp_connp_t *connp) {
     printf("-- Callback: response_headers\n");
+    return 0;
 }
 
 int callback_response_body_data(htp_tx_data_t *d) {
@@ -95,6 +103,7 @@ int callback_response_body_data(htp_tx_data_t *d) {
     } else {
         printf("-- Callback: response_body_data (LAST)\n");
     }
+    return 0;
 }
 
 int callback_request_file_data(htp_file_data_t *file_data) {
@@ -104,23 +113,28 @@ int callback_request_file_data(htp_file_data_t *file_data) {
     } else {
         printf("-- Callback: request_file_data (LAST)\n");
     }
+    return 0;
 }
 
 int callback_response_trailer(htp_connp_t *connp) {
     printf("-- Callback: response_trailer\n");
+    return 0;
 }
 
 int callback_response(htp_connp_t *connp) {
     printf("-- Callback: response\n");
+    return 0;
 }
 
 int callback_response_destroy(htp_connp_t *connp) {
     htp_tx_destroy(connp->out_tx);
     printf("-- Destroyed transaction\n");
+    return 0;
 }
 
 int callback_log(htp_log_t *log) {
     htp_print_log(stdout, log);
+    return 0;
 }
 
 static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
@@ -214,6 +228,8 @@ int main_dir(int argc, char** argv) {
     //run_directory("/home/ivanr/work/traces/run3/", cfg);
 
     htp_config_destroy(cfg);
+    
+    return 0;
 }
 
 #define RUN_TEST(X, Y) \
@@ -351,6 +367,8 @@ int main_path_decoding_tests(int argc, char** argv) {
     printf("After: %s\n\n", str);
     free(str);
     bstr_free(&path);
+    
+    return 0;
 }
 
 void encode_utf8_2(uint8_t *data, uint32_t i) {
@@ -381,7 +399,7 @@ int main_utf8_decoder_tests(int argc, char** argv) {
     bstr *path = NULL;
 
     path = bstr_dup_c("//////////");
-    uint8_t *data = bstr_ptr(path);
+    uint8_t *data = (uint8_t *)bstr_ptr(path);
 
     int i = 0;
 
@@ -422,6 +440,8 @@ int main_utf8_decoder_tests(int argc, char** argv) {
     }
 
     bstr_free(&path);
+    
+    return 0;
 }
 
 #define PATH_DECODE_TEST_BEFORE(NAME) \
@@ -789,6 +809,8 @@ int main_path_tests(int argc, char** argv) {
 
     printf("\n");
     printf("Total tests: %i, %i failure(s).\n", tests, failures);
+    
+    return 0;
 }
 
 int main_multipart1(int argc, char** argv) {
@@ -798,21 +820,21 @@ int main_multipart1(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
     mpartp = htp_mpartp_create(cfg, "BBB");
 
-    unsigned char *i1 = "x0000x\n--BBB\nx1111x\n--\nx2222x\n--";
-    unsigned char *i2 = "BBB\nx3333x\n--B";
-    unsigned char *i3 = "B\nx4444x\n--B";
-    unsigned char *i4 = "B\n--BBB\n\nx5555x\r";
-    unsigned char *i5 = "\n--x6666x\r";
-    unsigned char *i6 = "-";
-    unsigned char *i7 = "-";
+    const char *i1 = "x0000x\n--BBB\nx1111x\n--\nx2222x\n--";
+    const char *i2 = "BBB\nx3333x\n--B";
+    const char *i3 = "B\nx4444x\n--B";
+    const char *i4 = "B\n--BBB\n\nx5555x\r";
+    const char *i5 = "\n--x6666x\r";
+    const char *i6 = "-";
+    const char *i7 = "-";
 
-    htp_mpartp_parse(mpartp, i1, strlen(i1));
-    htp_mpartp_parse(mpartp, i2, strlen(i2));
-    htp_mpartp_parse(mpartp, i3, strlen(i3));
-    htp_mpartp_parse(mpartp, i4, strlen(i4));
-    htp_mpartp_parse(mpartp, i5, strlen(i5));
-    htp_mpartp_parse(mpartp, i6, strlen(i6));
-    htp_mpartp_parse(mpartp, i7, strlen(i7));
+    htp_mpartp_parse(mpartp, (unsigned char *)i1, strlen(i1));
+    htp_mpartp_parse(mpartp, (unsigned char *)i2, strlen(i2));
+    htp_mpartp_parse(mpartp, (unsigned char *)i3, strlen(i3));
+    htp_mpartp_parse(mpartp, (unsigned char *)i4, strlen(i4));
+    htp_mpartp_parse(mpartp, (unsigned char *)i5, strlen(i5));
+    htp_mpartp_parse(mpartp, (unsigned char *)i6, strlen(i6));
+    htp_mpartp_parse(mpartp, (unsigned char *)i7, strlen(i7));
     htp_mpartp_finalize(mpartp);
 
     htp_mpart_part_t *part = NULL;
@@ -834,6 +856,8 @@ int main_multipart1(int argc, char** argv) {
     // "\nx5555x"
     // "\r"
     // "\n--x6666x"
+    
+    return 0;
 }
 
 int main_multipart2(int argc, char** argv) {
@@ -853,7 +877,7 @@ int main_multipart2(int argc, char** argv) {
     mpartp->extract_files = 1;
     mpartp->extract_dir = "c:/temp";
 
-    unsigned char *parts[999];
+    const char *parts[999];
     int i = 1;
     parts[i++] = "-----------------------------41184676334\r\n";
     parts[i++] = "Content-Disposition: form-data;\n name=\"field1\"\r\n";
@@ -889,7 +913,7 @@ int main_multipart2(int argc, char** argv) {
     i = 1;
     for (;;) {
         if (parts[i] == NULL) break;
-        htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
+        htp_mpartp_parse(mpartp, (unsigned char *)parts[i], strlen(parts[i]));
         i++;
     }
 
@@ -918,12 +942,12 @@ int main_multipart2(int argc, char** argv) {
 
     close(fd);
 
-    htp_mpartp_parse(mpartp, buf, buflen);
+    htp_mpartp_parse(mpartp, (unsigned char *)buf, buflen);
 
     free(buf);
 
     char *final = "\r\n-----------------------------41184676334--";
-    htp_mpartp_parse(mpartp, final, strlen(final));
+    htp_mpartp_parse(mpartp, (unsigned char *)final, strlen(final));
 
     htp_mpartp_finalize(mpartp);
 
