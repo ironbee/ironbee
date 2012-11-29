@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -229,7 +229,7 @@ int htp_is_line_empty(unsigned char *data, size_t len) {
 
 /**
  * Does line consist entirely of whitespace characters?
- * 
+ *
  * @param data
  * @param len
  * @return 0 or 1
@@ -272,7 +272,7 @@ int htp_parse_chunked_length(unsigned char *data, size_t len) {
 /**
  * A forgiving parser for a positive integer in a given base.
  * White space is allowed before and after the number.
- * 
+ *
  * @param data
  * @param len
  * @param base
@@ -304,7 +304,7 @@ int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int b
 
 /**
  * Prints one log message to stderr.
- * 
+ *
  * @param log
  */
 void htp_print_log(FILE *stream, htp_log_t *log) {
@@ -319,7 +319,7 @@ void htp_print_log(FILE *stream, htp_log_t *log) {
 
 /**
  * Records one log message.
- * 
+ *
  * @param connp
  * @param file
  * @param line
@@ -463,7 +463,7 @@ int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
             // Failed to parse port
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid server port information in request");
         } else if ((port > 0) && (port < 65536)) {
-            // Valid port            
+            // Valid port
             (*uri)->port_number = port;
         } else {
             htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid authority port");
@@ -475,7 +475,7 @@ int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
 
 /**
  * Parses request URI, making no attempt to validate the contents.
- * 
+ *
  * @param input
  * @param uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
@@ -504,7 +504,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     // Scheme test: if it doesn't start with a forward slash character (which it must
     // for the contents to be a path or an authority, then it must be the scheme part
     if (data[0] != '/') {
-        // Parse scheme        
+        // Parse scheme
 
         // Find the colon, which marks the end of the scheme part
         start = pos;
@@ -1312,7 +1312,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                 }
                             } else {
                                 // XXX
-                                // Invalid %u encoding                                
+                                // Invalid %u encoding
                                 //tx->flags |= HTP_PATH_INVALID_ENCODING;
 
                                 switch (cfg->params_invalid_encoding_handling) {
@@ -1463,7 +1463,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
             rpos++;
         }
 
-        // Place the character into output               
+        // Place the character into output
         data[wpos++] = c;
     }
 
@@ -1571,7 +1571,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
  */
 bstr *htp_normalize_hostname_inplace(bstr *hostname) {
     if (hostname == NULL) return NULL;
-    
+
     bstr_to_lowercase(hostname);
 
     char *data = bstr_ptr(hostname);
@@ -1597,7 +1597,7 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
  */
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname) {
     if (hostname == NULL) return;
-    
+
     bstr *new_hostname = NULL;
 
     int colon = bstr_chr(hostname, ':');
@@ -1664,7 +1664,7 @@ int htp_is_uri_unreserved(unsigned char c) {
  */
 void htp_uriencoding_normalize_inplace(bstr *s) {
     if (s == NULL) return;
-    
+
     unsigned char *data = (unsigned char *) bstr_ptr(s);
     size_t len = bstr_len(s);
 
@@ -1721,7 +1721,7 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
  */
 void htp_normalize_uri_path_inplace(bstr *s) {
     if (s == NULL) return;
-    
+
     char *data = bstr_ptr(s);
     size_t len = bstr_len(s);
 

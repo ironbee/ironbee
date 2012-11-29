@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -71,7 +71,7 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
             }
 
             htp_transcode_params(d->tx->connp, &d->tx->request_params_body, 1);
-        }       
+        }
     }
 
     return HOOK_OK;
@@ -90,7 +90,7 @@ int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
 
         return HOOK_OK;
     }
-    
+
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_ch_urlencoded_callback_request_headers: Parsing URLENCODED body\n");
     #endif
@@ -113,22 +113,22 @@ int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
  *
  * @param connp
  */
-int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {    
+int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
     // Parse query string, when available
     if ((connp->in_tx->parsed_uri->query != NULL) && (bstr_len(connp->in_tx->parsed_uri->query) > 0)) {
         connp->in_tx->request_urlenp_query = htp_urlenp_create(connp->in_tx);
         if (connp->in_tx->request_urlenp_query == NULL) {
             return HOOK_ERROR;
-        }       
+        }
 
         htp_urlenp_parse_complete(connp->in_tx->request_urlenp_query,
             (unsigned char *) bstr_ptr(connp->in_tx->parsed_uri->query),
-            bstr_len(connp->in_tx->parsed_uri->query));       
+            bstr_len(connp->in_tx->parsed_uri->query));
 
         // Is there a parameter processor?
         if (connp->cfg->parameter_processor == NULL) {
             // There's no parameter processor
-            
+
             if (connp->cfg->internal_encoding == NULL) {
                 // No transcoding; use the parser table directly
                 connp->in_tx->request_params_query = connp->in_tx->request_urlenp_query->params;
@@ -138,10 +138,10 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
                 connp->in_tx->request_params_query = connp->in_tx->request_urlenp_query->params;
                 htp_transcode_params(connp, &connp->in_tx->request_params_query, 0);
             }
-        } else {            
-            // We have a parameter processor defined, which 
+        } else {
+            // We have a parameter processor defined, which
             // means we'll need to create a new table
-            
+
             connp->in_tx->request_params_query =
                 connp->cfg->create_table(table_size(connp->in_tx->request_urlenp_query->params));
 
@@ -157,7 +157,7 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
 
             // Transcode as necessary
             htp_transcode_params(connp, &connp->in_tx->request_params_query, 1);
-        }       
+        }
     }
 
     return HOOK_OK;
@@ -165,7 +165,7 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
 
 /**
  * Finalize MULTIPART processing.
- * 
+ *
  * @param d
  */
 int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
@@ -182,12 +182,12 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
 
         // Extract parameters
         d->tx->request_params_body_reused = 1;
-        
+
         htp_mpart_part_t *part = NULL;
         list_iterator_reset(d->tx->request_mpartp->parts);
         while ((part = (htp_mpart_part_t *) list_iterator_next(d->tx->request_mpartp->parts)) != NULL) {
             // Only use text parameters
-            if (part->type == MULTIPART_PART_TEXT) {                
+            if (part->type == MULTIPART_PART_TEXT) {
                 if (d->tx->connp->cfg->parameter_processor == NULL) {
                     table_add(d->tx->request_params_body, part->name, part->value);
                 } else {
@@ -215,7 +215,7 @@ int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
 
         return HOOK_OK;
     }
-    
+
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_ch_multipart_callback_request_headers: Parsing MULTIPART body\n");
     #endif

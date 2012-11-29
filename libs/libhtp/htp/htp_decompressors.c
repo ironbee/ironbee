@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -154,7 +154,7 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
             d2.tx = d->tx;
             d2.data = drec->buffer;
             d2.len = len;
-            
+
             // Send decompressed data to callback
             if (drec->super.callback(&d2) < 0) {
                 inflateEnd(&drec->stream);
@@ -162,7 +162,7 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
                 return -1;
             }
 
-            // TODO Handle trailer           
+            // TODO Handle trailer
 
             return 1;
         }

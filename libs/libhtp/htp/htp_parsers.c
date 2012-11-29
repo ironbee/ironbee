@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -41,7 +41,7 @@
  * Determines protocol number from a textual representation (i.e., "HTTP/1.1"). This
  * function will only understand a properly formatted protocol information. It does
  * not try to be flexible.
- * 
+ *
  * @param protocol
  * @return Protocol version or PROTOCOL_UNKNOWN.
  */
@@ -49,7 +49,7 @@ int htp_parse_protocol(bstr *protocol) {
     if (protocol == NULL) {
         return PROTOCOL_UNKNOWN;
     }
-    
+
     // TODO This function uses a very strict approach to parsing, whereas
     //      browsers will typically be more flexible, allowing whitespace
     //      before and after the forward slash, as well as allowing leading
@@ -93,30 +93,30 @@ int htp_parse_status(bstr *status) {
  * @param connp
  * @param auth_header
  */
-int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header) {    
+int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header) {
     // Extract the username
     int i = bstr_index_of_c(auth_header->value, "username=");
-    if (i == -1) return HTP_ERROR;   
+    if (i == -1) return HTP_ERROR;
 
     char *data = bstr_ptr(auth_header->value);
     size_t len = bstr_len(auth_header->value);
     size_t pos = i + 9;
 
     // Ignore whitespace
-    while ((pos < len) && (isspace((int) data[pos]))) pos++;   
+    while ((pos < len) && (isspace((int) data[pos]))) pos++;
 
     if (data[pos] == '"') {
-        connp->in_tx->request_auth_username = htp_extract_quoted_string_as_bstr(data + pos, len - pos, NULL);        
+        connp->in_tx->request_auth_username = htp_extract_quoted_string_as_bstr(data + pos, len - pos, NULL);
     } else {
         return HTP_ERROR;
-    }   
+    }
 
     return HTP_OK;
 }
 
 /**
  * Parses Basic Authorization request header.
- * 
+ *
  * @param connp
  * @param auth_header
  */
@@ -136,7 +136,7 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
     // Now extract the username and password
     int i = bstr_index_of_c(decoded, ":");
     if (i == -1) {
-        bstr_free(&decoded);    
+        bstr_free(&decoded);
         return HTP_ERROR;
     }
 
@@ -145,7 +145,7 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
         bstr_free(&decoded);
         return HTP_ERROR;
     }
-    
+
     connp->in_tx->request_auth_password = bstr_dup_ex(decoded, i + 1, bstr_len(decoded) - i - 1);
     if (connp->in_tx->request_auth_password) {
         bstr_free(&decoded);

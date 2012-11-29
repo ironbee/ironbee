@@ -80,7 +80,7 @@ static ib_status_t setvar_num_sub_op(
     const ib_num_t n2,
     ib_num_t *out)
 {
-    
+
     *out = n1 - n2;
 
     return IB_OK;
@@ -90,7 +90,7 @@ static ib_status_t setvar_num_mult_op(
     const ib_num_t n2,
     ib_num_t *out)
 {
-    
+
     *out = n1 * n2;
 
     return IB_OK;
@@ -100,7 +100,7 @@ static ib_status_t setvar_num_add_op(
     const ib_num_t n2,
     ib_num_t *out)
 {
-    
+
     *out = n1 + n2;
 
     return IB_OK;
@@ -111,7 +111,7 @@ static ib_status_t setvar_float_sub_op(
     const ib_float_t f2,
     ib_float_t *out)
 {
-    
+
     *out = f1 - f2;
 
     return IB_OK;
@@ -121,7 +121,7 @@ static ib_status_t setvar_float_mult_op(
     const ib_float_t f2,
     ib_float_t *out)
 {
-    
+
     *out = f1 * f2;
 
     return IB_OK;
@@ -131,7 +131,7 @@ static ib_status_t setvar_float_add_op(
     const ib_float_t f2,
     ib_float_t *out)
 {
-    
+
     *out = f1 + f2;
 
     return IB_OK;
@@ -201,7 +201,7 @@ static ib_status_t setvar_float_op(
     size_t nlen,
     setvar_float_op_fn_t op)
 {
-    
+
     assert(setvar_data->type == IB_FTYPE_FLOAT);
 
     ib_status_t rc;
@@ -269,7 +269,7 @@ static ib_status_t setvar_num_op(
     size_t nlen,
     setvar_num_op_fn_t op)
 {
-    
+
     assert(setvar_data->type == IB_FTYPE_NUM);
 
     ib_status_t rc;

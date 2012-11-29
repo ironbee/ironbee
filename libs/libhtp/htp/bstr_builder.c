@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -61,7 +61,7 @@ void bstr_builder_clear(bstr_builder_t *bb) {
 
     // Do nothing if the list is empty
     if (list_size(bb->pieces) == 0) return;
-    
+
     // Destroy any pieces we might have
     bstr *b = NULL;
     list_iterator_reset(bb->pieces);
@@ -71,7 +71,7 @@ void bstr_builder_clear(bstr_builder_t *bb) {
 
     list_destroy(&bb->pieces);
 
-    bb->pieces = list_array_create(BSTR_BUILDER_DEFAULT_SIZE);    
+    bb->pieces = list_array_create(BSTR_BUILDER_DEFAULT_SIZE);
 }
 
 /**
@@ -95,7 +95,7 @@ bstr_builder_t * bstr_builder_create() {
 /**
  * Destroys an existing string builder, also destroying all
  * the pieces stored within.
- * 
+ *
  * @param bb
  */
 void bstr_builder_destroy(bstr_builder_t *bb) {
@@ -109,7 +109,7 @@ void bstr_builder_destroy(bstr_builder_t *bb) {
     }
 
     list_destroy(&bb->pieces);
-    
+
     free(bb);
 }
 

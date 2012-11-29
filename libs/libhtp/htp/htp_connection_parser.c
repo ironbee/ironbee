@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -56,7 +56,7 @@ void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp) {
     if (timestamp != NULL) {
         memcpy(&connp->conn->close_timestamp, timestamp, sizeof(*timestamp));
     }
-    
+
     // Update internal flags
     connp->in_status = STREAM_STATE_CLOSED;
     connp->out_status = STREAM_STATE_CLOSED;
@@ -144,7 +144,7 @@ htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg) {
         htp_connp_destroy(connp);
         return NULL;
     }
-    
+
     connp->is_cfg_private = 1;
 
     return connp;
@@ -158,7 +158,7 @@ htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg) {
  */
 void htp_connp_destroy(htp_connp_t *connp) {
     if (connp == NULL) return;
-        
+
     if (connp->out_decompressor != NULL) {
         connp->out_decompressor->destroy(connp->out_decompressor);
         connp->out_decompressor = NULL;
@@ -216,7 +216,7 @@ void htp_connp_destroy_all(htp_connp_t *connp) {
 
 /**
  * Retrieve the user data associated with this connection parser.
- * 
+ *
  * @param connp
  * @return User data, or NULL if there isn't any.
  */
@@ -275,12 +275,12 @@ void htp_connp_open(htp_connp_t *connp,
     }
 
     connp->conn->local_port = local_port;
-    
+
     // Remember when the connection was opened.
     if (timestamp != NULL) {
         memcpy(&connp->conn->open_timestamp, timestamp, sizeof(*timestamp));
     }
-    
+
     connp->in_status = STREAM_STATE_OPEN;
     connp->out_status = STREAM_STATE_OPEN;
 }

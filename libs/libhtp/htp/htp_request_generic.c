@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -123,7 +123,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
 
         // Add to existing header
         bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
-            + 2 + bstr_len(h->value));        
+            + 2 + bstr_len(h->value));
         if (new_value == NULL) {
             bstr_free(&h->name);
             bstr_free(&h->value);
@@ -147,7 +147,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         bstr_free(&h->value);
         free(h);
 
-        // Keep track of same-name headers        
+        // Keep track of same-name headers
         h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
         // Add as a new header
@@ -178,9 +178,9 @@ int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsign
 
     // Look for the colon
     size_t colon_pos = 0;
-    
+
     while ((colon_pos < len) && (data[colon_pos] != ':')) colon_pos++;
-    
+
     if (colon_pos == len) {
         // Missing colon
         h->flags |= HTP_FIELD_UNPARSEABLE;
@@ -206,9 +206,9 @@ int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsign
     }
 
     name_end = colon_pos;
-        
+
     // Ignore LWS after field-name
-    size_t prev = name_end;    
+    size_t prev = name_end;
     while ((prev > name_start) && (htp_is_lws(data[prev - 1]))) {
         prev--;
         name_end--;
@@ -237,7 +237,7 @@ int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsign
 
     // Look for the end of field-content
     value_end = value_start;
-    
+
     while (value_end < len) value_end++;
 
     // Ignore LWS after field-content

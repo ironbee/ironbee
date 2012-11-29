@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -331,11 +331,11 @@ struct htp_cfg_t {
      *  a header can end up being longer than the line limit.
      */
     size_t field_limit_hard;
-    
+
     /** Soft field limit length. If this limit is reached the parser will issue
      *  a warning but continue to run.
      */
-    size_t field_limit_soft;              
+    size_t field_limit_soft;
 
     /** Log level, which will be used when deciding whether to store or
      *  ignore the messages issued by the parser.
@@ -367,12 +367,12 @@ struct htp_cfg_t {
     /** The function to use to transform parameters after parsing. */
     int (*parameter_processor)(table_t *params, bstr *name, bstr *value);
 
-    
+
     // Path handling
 
     /** Should we treat backslash characters as path segment separators? */
     int path_backslash_separators;
-    
+
     /** Should we treat paths as case insensitive? */
     int path_case_insensitive;
 
@@ -414,12 +414,12 @@ struct htp_cfg_t {
     unsigned char bestfit_replacement_char;
 
     int params_decode_u_encoding;
-    int params_invalid_encoding_handling;    
+    int params_invalid_encoding_handling;
     int params_nul_encoded_handling;
-    int params_nul_raw_handling;    
+    int params_nul_raw_handling;
 
     /** How will the server handle UCS-2 characters? */
-    int path_unicode_mapping;      
+    int path_unicode_mapping;
 
     /** TODO Unused */
     int path_utf8_overlong_handling;
@@ -441,7 +441,7 @@ struct htp_cfg_t {
     int parse_request_http_authentication;
     int extract_request_files;
     char *tmpdir;
-    
+
     /** Whether the local port should be used as the outgoing connection port,
      *  usually when the local machine is the target of a firewall redirect
      *  (without dport alteration)
@@ -466,7 +466,7 @@ struct htp_cfg_t {
     htp_hook_t *hook_request_uri_normalize;
 
     /** Request headers hook, invoked after all request headers are seen. */
-    htp_hook_t *hook_request_headers;   
+    htp_hook_t *hook_request_headers;
 
     /** Request body data hook, invoked every time body data is available. Each
      *  invocation will provide a htp_tx_data_t instance. Chunked data
@@ -564,17 +564,17 @@ struct htp_conn_t {
     list_t *transactions;
 
     /** Log messages associated with this connection. */
-    list_t *messages;   
+    list_t *messages;
 
     /** Parsing flags: PIPELINED_CONNECTION. */
-    unsigned int flags;   
+    unsigned int flags;
 
     /** When was this connection opened? Can be NULL. */
     htp_time_t open_timestamp;
 
     /** When was this connection closed? Can be NULL. */
     htp_time_t close_timestamp;
-    
+
     /** Inbound data counter. */
     size_t in_data_counter;
 
@@ -590,7 +590,7 @@ struct htp_conn_t {
 
 struct htp_connp_t {
     // General fields
-    
+
     /** Current parser configuration structure. */
     htp_cfg_t *cfg;
 
@@ -604,7 +604,7 @@ struct htp_connp_t {
     htp_conn_t *conn;
 
     /** Opaque user data associated with this parser. */
-    void *user_data;   
+    void *user_data;
 
     /** On parser failure, this field will contain the error information. Do note, however,
      *  that the value in this field will only be valid immediately after an error condition,
@@ -619,7 +619,7 @@ struct htp_connp_t {
 
     /** Parser output status. Starts as HTP_OK, but may turn into HTP_ERROR. */
     unsigned int out_status;
-    
+
     unsigned int out_data_other_at_tx_end;
 
     /** The time when the last request data chunk was received. Can be NULL. */
@@ -653,10 +653,10 @@ struct htp_connp_t {
     size_t in_line_size;
 
     /** Length of the current request line. */
-    size_t in_line_len;    
+    size_t in_line_len;
 
     /** Ongoing inbound transaction. */
-    htp_tx_t *in_tx;   
+    htp_tx_t *in_tx;
 
     /** The request header line currently being processed. */
     htp_header_line_t *in_header_line;
@@ -724,8 +724,8 @@ struct htp_connp_t {
     size_t out_line_size;
 
     /** Length of the current response line. */
-    size_t out_line_len;       
-        
+    size_t out_line_len;
+
     /** Ongoing outbound transaction */
     htp_tx_t *out_tx;
 
@@ -769,7 +769,7 @@ struct htp_file_t {
     int source;
 
     /** File name. */
-    bstr *filename;   
+    bstr *filename;
 
     /** Current file length. */
     size_t len;
@@ -840,7 +840,7 @@ struct htp_header_line_t {
     /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_LONG, HTP_FIELD_NUL_BYTE,
      *                 HTP_FIELD_REPEATED, HTP_FIELD_FOLDED */
     unsigned int flags;
-    
+
     /** Header that uses this line. */
     htp_header_t *header;
 };
@@ -850,7 +850,7 @@ struct htp_header_t {
     bstr *name;
 
     /** Header value. */
-    bstr *value;   
+    bstr *value;
 
     /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED */
     unsigned int flags;
@@ -876,7 +876,7 @@ struct htp_tx_t {
 
     /** The user data associated with this transaction. */
     void *user_data;
-    
+
     // Request
     unsigned int request_ignored_lines;
 
@@ -917,7 +917,7 @@ struct htp_tx_t {
     int request_protocol_number;
 
     /** Is this request using a short-style HTTP/0.9 request? */
-    int protocol_is_simple;   
+    int protocol_is_simple;
 
     /** This structure holds a parsed request_uri, with the missing information
      *  added (e.g., adding port number from the TCP information) and the fields
@@ -933,11 +933,11 @@ struct htp_tx_t {
      *  will never have the port as a number.
      */
     htp_uri_t *parsed_uri_incomplete;
-    
+
     /* HTTP 1.1 RFC
-     * 
+     *
      * 4.3 Message Body
-     * 
+     *
      * The message-body (if any) of an HTTP message is used to carry the
      * entity-body associated with the request or response. The message-body
      * differs from the entity-body only when a transfer-coding has been
@@ -979,7 +979,7 @@ struct htp_tx_t {
      *  request that uses PUT (in which case this field will be equal to the
      *  entity length field). This field will be zero in all other cases.
      */
-    size_t request_filedata_len;        
+    size_t request_filedata_len;
 
     /** Original request header lines. This list stores instances of htp_header_line_t. */
     list_t *request_header_lines;
@@ -1093,7 +1093,7 @@ struct htp_tx_t {
     bstr *response_message;
 
     /** Have we seen the server respond with a 100 response? */
-    int seen_100continue;   
+    int seen_100continue;
 
     /** Original response header lines. */
     list_t *response_header_lines;
@@ -1115,9 +1115,9 @@ struct htp_tx_t {
     bstr *response_headers_sep;
 
     /* HTTP 1.1 RFC
-     * 
+     *
      * 4.3 Message Body
-     * 
+     *
      * The message-body (if any) of an HTTP message is used to carry the
      * entity-body associated with the request or response. The message-body
      * differs from the entity-body only when a transfer-coding has been
@@ -1145,13 +1145,13 @@ struct htp_tx_t {
      *  de-chunking and decompression.
      */
     size_t response_entity_len;
-    
+
     /** Response transfer coding: IDENTITY or CHUNKED. Only available on responses that have bodies. */
     int response_transfer_coding;
 
     /** Compression; currently COMPRESSION_NONE or COMPRESSION_GZIP. */
-    int response_content_encoding;   
-    
+    int response_content_encoding;
+
     /** This field will contain the response content type when that information
      *  is available in response headers. The contents of the field will be converted
      *  to lowercase and any parameters (e.g., character set information) removed.
@@ -1220,7 +1220,7 @@ const char *htp_get_version(void);
 
 htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
 htp_cfg_t *htp_config_create(void);
-      void htp_config_destroy(htp_cfg_t *cfg); 
+      void htp_config_destroy(htp_cfg_t *cfg);
 
 void htp_config_register_list_linked_create(htp_cfg_t *cfg, list_t *(*callback_fn)(void));
 void htp_config_register_list_array_create(htp_cfg_t *cfg, list_t *(*callback_fn)(size_t size));
@@ -1304,7 +1304,7 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn);
 
      void htp_tx_set_user_data(htp_tx_t *tx, void *user_data);
     void *htp_tx_get_user_data(htp_tx_t *tx);
-    
+
 
 // Parsing functions
 

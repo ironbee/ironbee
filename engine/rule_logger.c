@@ -464,7 +464,7 @@ void ib_rule_log_fatal_ex(
     const char *fmt, ...
 )
 {
-    
+
     va_list ap;
     ib_rule_log_exec_t *exec_log = rule_exec->exec_log;
     ib_log_level_t log_level =

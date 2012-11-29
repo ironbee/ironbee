@@ -278,13 +278,13 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, uns
     // Now extract the name and the value
     h->name = bstr_dup_mem((char *) data + name_start, name_end - name_start);
     if (h->name == NULL) return HTP_ERROR;
-    
+
     h->value = bstr_dup_mem((char *) data + value_start, value_end - value_start);
     if (h->value == NULL) {
         bstr_free(&h->name);
         return HTP_ERROR;
     }
-    
+
     return HTP_OK;
 }
 

@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -59,7 +59,7 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
     if (output_params == NULL) {
         return HTP_ERROR;
     }
-    
+
     // Initialize iconv
     iconv_t cd = iconv_open(connp->cfg->internal_encoding, connp->cfg->request_encoding);
     if (cd == (iconv_t) -1) {
@@ -74,7 +74,7 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
     iconv_param = 1;
     iconvctl(cd, ICONV_SET_DISCARD_ILSEQ, &iconv_param);
     #endif
-    
+
     // Convert the parameters, one by one
     bstr *name;
     void *tvalue;
@@ -82,42 +82,42 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
     while ((name = table_iterator_next(input_params, &tvalue)) != NULL) {
         bstr *new_name = NULL, *new_value = NULL;
         bstr *value = (bstr *)tvalue;
-        
+
         // Convert name
         htp_transcode_bstr(cd, name, &new_name);
         if (new_name == NULL) {
             iconv_close(cd);
-            
+
             table_iterator_reset(output_params);
             while(table_iterator_next(output_params, &tvalue) != NULL) {
                 bstr *b = (bstr *)tvalue;
                 bstr_free(&b);
             }
-            
+
             table_destroy(&output_params);
             return HTP_ERROR;
         }
-        
-        // Convert value        
+
+        // Convert value
         htp_transcode_bstr(cd, value, &new_value);
         if (new_value == NULL) {
             bstr_free(&new_name);
             iconv_close(cd);
-            
+
             table_iterator_reset(output_params);
             while(table_iterator_next(output_params, &tvalue) != NULL) {
                 bstr *b = (bstr *)tvalue;
                 bstr_free(&b);
             }
-            
+
             table_destroy(&output_params);
             return HTP_ERROR;
         }
-        
+
         // Add to new table
         table_addn(output_params, new_name, new_value);
     }
-    
+
     // Replace the old parameter table
     *params = output_params;
 
@@ -127,11 +127,11 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
         while(table_iterator_next(input_params, &tvalue) != NULL) {
             bstr *b = (bstr *)tvalue;
             bstr_free(&b);
-        }      
-    
+        }
+
         table_destroy(&input_params);
     }
-    
+
     iconv_close(cd);
 
     return HTP_OK;
@@ -192,7 +192,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
             }
         }
     }
-    
+
     if (bb != NULL) {
         bstr_builder_append_mem(bb, buf, buflen - outleft);
         *output = bstr_builder_to_str(bb);
@@ -208,7 +208,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
             return HTP_ERROR;
         }
     }
-    
+
     free(buf);
 
     return HTP_OK;

@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -122,7 +122,7 @@ static int test_init(test_t *test, const char *filename) {
     test->pos = 0;
 
     int bytes_read = 0;
-    while ((bytes_read = read(fd, test->buf + test->len, buf.st_size - test->len)) > 0) {        
+    while ((bytes_read = read(fd, test->buf + test->len, buf.st_size - test->len)) > 0) {
         test->len += bytes_read;
     }
 
@@ -131,7 +131,7 @@ static int test_init(test_t *test, const char *filename) {
         return -2;
     }
 
-    close(fd);   
+    close(fd);
 
     return 1;
 }
@@ -324,7 +324,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
                 fprintf(stderr, "Unable to buffer more than one inbound chunk.\n");
                 return -1;
             }
-            
+
             int rc = htp_connp_req_data(*connp, &tv_start, test.chunk, test.chunk_len);
             if (rc == STREAM_STATE_ERROR) {
                 test_destroy(&test);
@@ -336,7 +336,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
                 in_data_other = 1;
                 in_data = test.chunk;
                 in_data_len = test.chunk_len;
-                in_data_offset = htp_connp_req_data_consumed(*connp);                
+                in_data_offset = htp_connp_req_data_consumed(*connp);
             }
         } else {
             if (out_data_other) {

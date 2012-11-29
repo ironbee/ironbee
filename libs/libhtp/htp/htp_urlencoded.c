@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -88,11 +88,11 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
                 bstr *name = urlenp->_name;
                 bstr *value = bstr_dup_c("");
 
-                if (urlenp->decode_url_encoding) {                    
+                if (urlenp->decode_url_encoding) {
                     // htp_uriencoding_normalize_inplace(name);
                     htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, name);
                 }
-                
+
                 table_addn(urlenp->params, name, value);
                 urlenp->_name = NULL;
 
@@ -102,11 +102,11 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
                 #endif
             }
         } else {
-            // Param with key and value                        
+            // Param with key and value
             bstr *name = urlenp->_name;
             bstr *value = field;
-            
-            if (urlenp->decode_url_encoding) {                
+
+            if (urlenp->decode_url_encoding) {
                 htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, name);
                 htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, value);
             }
@@ -160,28 +160,28 @@ htp_urlenp_t *htp_urlenp_create(htp_tx_t *tx) {
 
 /**
  * Destroys an existing URLENCODED parser.
- * 
+ *
  * @param urlenp
  */
 void htp_urlenp_destroy(htp_urlenp_t **_urlenp) {
     if ((_urlenp == NULL)||(*_urlenp == NULL)) return;
-    htp_urlenp_t *urlenp = *_urlenp;    
+    htp_urlenp_t *urlenp = *_urlenp;
 
     if (urlenp->_name != NULL) {
         bstr_free(&urlenp->_name);
     }
 
-    bstr_builder_destroy(urlenp->_bb);   
+    bstr_builder_destroy(urlenp->_bb);
 
-    if (urlenp->params != NULL) {        
-        // Destroy parameters        
+    if (urlenp->params != NULL) {
+        // Destroy parameters
         void *tvalue = NULL;
         table_iterator_reset(urlenp->params);
         while (table_iterator_next(urlenp->params, &tvalue) != NULL) {
             bstr *b = (bstr *)tvalue;
             bstr_free(&b);
-        }       
-        
+        }
+
         table_destroy(&urlenp->params);
     }
 
@@ -223,7 +223,7 @@ int htp_urlenp_parse_complete(htp_urlenp_t *urlenp, unsigned char *data, size_t 
  * Parses the provided data chunk, keeping state to allow streaming parsing, i.e., the
  * parsing where only partial information is available at any one time. The method
  * htp_urlenp_finalize() must be invoked at the end to finalize parsing.
- * 
+ *
  * @param urlenp
  * @param data
  * @param len
@@ -246,7 +246,7 @@ int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t l
             case HTP_URLENP_STATE_KEY:
                 // Look for =, argument separator, or end of input
                 if ((c == '=') || (c == urlenp->argument_separator) || (c == -1)) {
-                    // Data from startpos to pos                    
+                    // Data from startpos to pos
                     htp_urlenp_add_field_piece(urlenp, data, startpos, pos, c);
 
                     if (c != -1) {
@@ -261,7 +261,7 @@ int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t l
             case HTP_URLENP_STATE_VALUE:
                 // Look for argument separator or end of input
                 if ((c == urlenp->argument_separator) || (c == -1)) {
-                    // Data from startpos to pos                    
+                    // Data from startpos to pos
                     htp_urlenp_add_field_piece(urlenp, data, startpos, pos, c);
 
                     if (c != -1) {

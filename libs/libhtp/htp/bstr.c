@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -516,9 +516,9 @@ bstr *bstr_dup_lower(const bstr *b) {
 int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *lastlen) {
     int64_t rval = 0, tval = 0, tflag = 0;
     size_t i = 0;
-    
+
     *lastlen = i;
-    
+
     for (i = 0; i < len; i++) {
         int d = data[i];
 
@@ -637,9 +637,9 @@ int bstr_index_of_mem(const bstr *haystack, const char *data2, size_t len2) {
     //      http://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm
 
     for (i = 0; i < len; i++) {
-        size_t k = i;       
+        size_t k = i;
 
-        for (j = 0; ((j < len2) && (k < len)); j++) {        
+        for (j = 0; ((j < len2) && (k < len)); j++) {
             if (data[k++] != data2[j]) break;
         }
 
@@ -759,9 +759,9 @@ int bstr_begins_with_mem(const bstr *haystack, const char *data, size_t len) {
 int bstr_begins_with_mem_nocase(const bstr *haystack, const char *data, size_t len) {
     char *hdata = bstr_ptr(haystack);
     size_t hlen = bstr_len(haystack);
-    size_t pos = 0;   
+    size_t pos = 0;
 
-    while ((pos < len) && (pos < hlen)) {        
+    while ((pos < len) && (pos < hlen)) {
         if (tolower((int)hdata[pos]) != tolower((int)data[pos])) {
             return 0;
         }
@@ -778,7 +778,7 @@ int bstr_begins_with_mem_nocase(const bstr *haystack, const char *data, size_t l
 
 /**
  * Checks whether bstring begins with another bstring. Case sensitive.
- * 
+ *
  * @param haystack
  * @param needle
  * @return 1 if true, otherwise

@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -38,7 +38,7 @@
 
 /**
  * Generic response line parser.
- * 
+ *
  * @param connp
  * @return HTP status
  */
@@ -47,7 +47,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
     unsigned char *data = (unsigned char *) bstr_ptr(tx->response_line);
     size_t len = bstr_len(tx->response_line);
     size_t pos = 0;
-    
+
     // Ignore whitespace at the beginning of the line
     while ((pos < len) && (htp_is_space(data[pos]))) {
         pos++;
@@ -65,7 +65,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
         return HTP_ERROR;
     }
 
-    tx->response_protocol_number = htp_parse_protocol(tx->response_protocol);        
+    tx->response_protocol_number = htp_parse_protocol(tx->response_protocol);
 
     #ifdef HTP_DEBUG
     fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->response_protocol), bstr_len(tx->response_protocol));
@@ -89,7 +89,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
         return HTP_ERROR;
     }
 
-    tx->response_status_number = htp_parse_status(tx->response_status);    
+    tx->response_status_number = htp_parse_status(tx->response_status);
 
     #ifdef HTP_DEBUG
     fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->response_status), bstr_len(tx->response_status));
@@ -114,7 +114,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
 
 /**
  * Generic response header parser.
- * 
+ *
  * @param connp
  * @param h
  * @param data
@@ -230,7 +230,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char 
 /**
  * Generic response header line(s) processor, which assembles folded lines
  * into a single buffer before invoking the parsing function.
- * 
+ *
  * @param connp
  * @return HTP status
  */
@@ -298,7 +298,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
     if (htp_parse_response_header_generic(connp, h, data, len) != HTP_OK) {
         // Note: downstream responsible for error logging
         bstr_free(&tempstr);
-        free(h);        
+        free(h);
         return HTP_ERROR;
     }
 
@@ -317,7 +317,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
         if (new_value == NULL) {
             bstr_free(&h->name);
             bstr_free(&h->value);
-            free(h);            
+            free(h);
             bstr_free(&tempstr);
             return HTP_ERROR;
         }

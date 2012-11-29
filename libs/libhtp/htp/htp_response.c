@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -51,7 +51,7 @@ static int htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK(htp_tx_data_t *d) {
     // Keep track of actual response body length
     d->tx->response_entity_len += d->len;
 
-    // Invoke all callbacks    
+    // Invoke all callbacks
     int rc = htp_res_run_hook_body_data(d->tx->connp, d);
     if (rc != HOOK_OK) {
         switch (rc) {
@@ -114,8 +114,8 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
             } else {
                 // Keep track of actual response body length
                 d.tx->response_entity_len += d.len;
-    
-                // Send data to callbacks                
+
+                // Send data to callbacks
                 int rc = htp_res_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
                     switch (rc) {
@@ -146,8 +146,8 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
                 } else {
                     // Keep track of actual response body length
                     d.tx->response_entity_len += d.len;
-    
-                    // Send data to callbacks                    
+
+                    // Send data to callbacks
                     int rc = htp_res_run_hook_body_data(connp, &d);
                     if (rc != HOOK_OK) {
                         switch (rc) {
@@ -225,7 +225,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
 
     d.tx = connp->out_tx;
     d.data = &connp->out_current_data[connp->out_current_offset];
-    d.len = 0;   
+    d.len = 0;
 
     for (;;) {
         OUT_NEXT_BYTE(connp);
@@ -237,10 +237,10 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
             if (d.len != 0) {
                 if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                     connp->out_decompressor->decompress(connp->out_decompressor, &d);
-                } else {                    
+                } else {
                     // Keep track of actual response body length
                     d.tx->response_entity_len += d.len;
-                    
+
                     int rc = htp_res_run_hook_body_data(connp, &d);
                     if (rc != HOOK_OK) {
                         switch (rc) {
@@ -285,10 +285,10 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                     if (d.len != 0) {
                         if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
                             connp->out_decompressor->decompress(connp->out_decompressor, &d);
-                        } else {                            
+                        } else {
                             // Keep track of actual response body length
                             d.tx->response_entity_len += d.len;
-                            
+
                             int rc = htp_res_run_hook_body_data(connp, &d);
                             if (rc != HOOK_OK) {
                                 switch (rc) {
@@ -346,12 +346,12 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             // This is a failed CONNECT stream, which means that
             // we can unblock request parsing
             connp->in_status = STREAM_STATE_DATA;
-            
+
             // We are going to continue processing this transaction,
             // adding a note for ourselves to stop at the end (because
             // we don't want to see the beginning of a new transaction).
             connp->out_data_other_at_tx_end = 1;
-        }       
+        }
     }
 
     // Check for an interim "100 Continue"
@@ -392,7 +392,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     if (((connp->out_tx->response_status_number >= 100) && (connp->out_tx->response_status_number <= 199))
         || (connp->out_tx->response_status_number == 204) || (connp->out_tx->response_status_number == 304)
         || (connp->out_tx->request_method_number == M_HEAD)) {
-        // There's no response body        
+        // There's no response body
         connp->out_state = htp_connp_RES_IDLE;
     } else {
         // We have a response body
@@ -507,7 +507,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
                 connp->out_decompressor->destroy(connp->out_decompressor);
                 connp->out_decompressor = NULL;
             }
-                
+
             connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp,
                 connp->out_tx->response_content_encoding);
             if (connp->out_decompressor != NULL) {
@@ -740,12 +740,12 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
                 d.tx = connp->out_tx;
                 d.data = connp->out_line;
                 d.len = connp->out_line_len + chomp_result;
-                
+
                 d.tx->response_message_len += d.len;
-                
+
                 // Keep track of actual response body length
                 d.tx->response_entity_len += d.len;
-                
+
                 int rc = htp_res_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
@@ -806,11 +806,11 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
         // only if there was a response body
         if (connp->out_tx->response_transfer_coding != -1) {
             htp_tx_data_t d;
-            
+
             d.tx = connp->out_tx;
             d.data = NULL;
             d.len = 0;
-            
+
             htp_res_run_hook_body_data(connp, &d);
         }
 
@@ -832,7 +832,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
 
         // Start afresh
         connp->out_tx = NULL;
-        
+
         // Do we have a signal to yield to inbound processing at
         // the end of the next transaction?
         if (connp->out_data_other_at_tx_end) {
@@ -940,7 +940,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
     if (timestamp != NULL) {
         memcpy(&connp->out_timestamp, timestamp, sizeof(*timestamp));
     }
-    
+
     // Store the current chunk information
     connp->out_current_data = data;
     connp->out_current_len = len;

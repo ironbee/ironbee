@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -192,9 +192,9 @@ htp_cfg_t *htp_config_create(void) {
 htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     htp_cfg_t *copy = malloc(sizeof(htp_cfg_t));
     if (copy == NULL) return NULL;
-    
+
     *copy = *cfg;
-    
+
     // Create copies of the hooks' structures
     if (cfg->hook_transaction_start != NULL) {
         copy->hook_transaction_start = hook_copy(cfg->hook_transaction_start);
@@ -259,7 +259,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
             return NULL;
         }
     }
-    
+
     if (cfg->hook_response_start != NULL) {
         copy->hook_response_start = hook_copy(cfg->hook_response_start);
         if (copy->hook_response_start == NULL) {
@@ -282,7 +282,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
             htp_config_destroy(copy);
             return NULL;
         }
-    }   
+    }
 
     if (cfg->hook_response_body_data != NULL) {
         copy->hook_response_body_data = hook_copy(cfg->hook_response_body_data);
@@ -321,7 +321,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
 
 /**
  * Destroy a configuration structure.
- * 
+ *
  * @param cfg
  */
 void htp_config_destroy(htp_cfg_t *cfg) {
@@ -396,7 +396,7 @@ void htp_config_register_request(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t 
  * Registers a request_body_data callback.
  *
  * @param cfg
- * @param callback_fn 
+ * @param callback_fn
  */
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
     hook_register(&cfg->hook_request_body_data, (htp_callback_fn_t)callback_fn);
@@ -418,7 +418,7 @@ void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(ht
  * Registers a request_uri_normalize callback.
  *
  * @param cfg
- * @param callback_fn 
+ * @param callback_fn
  */
 void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_request_uri_normalize, (htp_callback_fn_t)callback_fn);
@@ -458,7 +458,7 @@ void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_
  * Registers a response callback.
  *
  * @param cfg
- * @param callback_fn 
+ * @param callback_fn
  */
 void htp_config_register_response(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_response, (htp_callback_fn_t)callback_fn);
@@ -509,7 +509,7 @@ void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_co
  * Registers a request_trailer callback.
  *
  * @param cfg
- * @param callback_fn 
+ * @param callback_fn
  */
 void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     hook_register(&cfg->hook_response_trailer, (htp_callback_fn_t)callback_fn);
@@ -641,7 +641,7 @@ void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int decode_separators
 
 /**
  * Configures whether %u-encoded sequences in path will be decoded. Such sequences
- * will be treated as invalid URL encoding if decoding is not desirable. 
+ * will be treated as invalid URL encoding if decoding is not desirable.
  *
  * @param cfg
  * @param decode_u_encoding
@@ -794,11 +794,11 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->process_request_header = htp_process_request_header_apache_2_2;
             cfg->parse_response_line = htp_parse_response_line_generic;
             cfg->process_response_header = htp_process_response_header_generic;
-            
+
             cfg->path_backslash_separators = NO;
             cfg->path_decode_separators = NO;
             cfg->path_compress_separators = YES;
-            cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;            
+            cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
             cfg->path_control_char_handling = NONE;
             break;
 
@@ -845,13 +845,13 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
             cfg->path_control_char_handling = STATUS_400;
             break;
-            
+
         default:
             return HTP_ERROR;
     }
 
     // Remember the personality
-    cfg->spersonality = personality;   
+    cfg->spersonality = personality;
 
     return HTP_OK;
 }
@@ -859,7 +859,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
 /**
  * Configures whether transactions will be automatically destroyed once they
  * are no longer needed.
- * 
+ *
  * @param cfg
  * @param tx_auto_destroy
  */

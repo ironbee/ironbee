@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -60,7 +60,7 @@ int htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
         return HTP_DATA_OTHER;
     }
 
-    // Continue to the next step to determine 
+    // Continue to the next step to determine
     // the presence of request body
     connp->in_state = htp_connp_REQ_BODY_DETERMINE;
 
@@ -142,8 +142,8 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
         if (connp->in_next_byte == -1) {
             // Keep track of actual data length
             connp->in_tx->request_entity_len += d.len;
-            
-            // Send data to callbacks            
+
+            // Send data to callbacks
             int rc = htp_req_run_hook_body_data(connp, &d);
             if (rc != HOOK_OK) {
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
@@ -160,11 +160,11 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
             if (connp->in_chunked_length == 0) {
                 // End of data chunk
-                
+
                 // Keep track of actual data length
                 connp->in_tx->request_entity_len += d.len;
 
-                // Send data to callbacks               
+                // Send data to callbacks
                 int rc = htp_req_run_hook_body_data(connp, &d);
                 if (rc != HOOK_OK) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
@@ -241,7 +241,7 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 
         if (connp->in_next_byte == -1) {
             // End of chunk
-            
+
             // Keep track of actual data length
             connp->in_tx->request_entity_len += d.len;
 
@@ -261,7 +261,7 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 
             if (connp->in_body_data_left == 0) {
                 // End of body
-                
+
                 // Keep track of actual data length
                 connp->in_tx->request_entity_len += d.len;
 
@@ -381,7 +381,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         return HTP_OK;
     }
 
-    // Host resolution    
+    // Host resolution
     htp_header_t *h = table_get_c(connp->in_tx->request_headers, "host");
     if (h == NULL) {
         // No host information in the headers
@@ -416,8 +416,8 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
         if (connp->in_tx->request_content_type == NULL) {
             return HTP_ERROR;
         }
-        
-        // Ignore parameters        
+
+        // Ignore parameters
         char *data = bstr_ptr(connp->in_tx->request_content_type);
         size_t len = bstr_len(ct->value);
         size_t newlen = 0;
@@ -526,7 +526,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     //        connp->in_tx->request_header_lines_no_trailers);
                     //}
 
-                    // Determine if this request has a body                    
+                    // Determine if this request has a body
                     connp->in_state = htp_connp_REQ_CONNECT_CHECK;
                 } else {
                     // Run hook REQUEST_HEADERS_RAW
@@ -585,7 +585,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             if (connp->in_header_line->line == NULL) {
                 return HTP_ERROR;
             }
-            
+
             list_add(connp->in_tx->request_header_lines, connp->in_header_line);
             connp->in_header_line = NULL;
 
@@ -812,11 +812,11 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
         // only if there was a request body
         if (connp->in_tx->request_transfer_coding != -1) {
             htp_tx_data_t d;
-            
+
             d.data = NULL;
             d.len = 0;
             d.tx = connp->in_tx;
-            
+
             htp_req_run_hook_body_data(connp, &d);
         }
 
@@ -884,7 +884,7 @@ size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
 
 /**
  * Process a chunk of inbound (client or request) data.
- * 
+ *
  * @param connp
  * @param timestamp Optional.
  * @param data
@@ -933,8 +933,8 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
     if (timestamp != NULL) {
         memcpy(&connp->in_timestamp, timestamp, sizeof(*timestamp));
     }
-    
-    // Store the current chunk information    
+
+    // Store the current chunk information
     connp->in_current_data = data;
     connp->in_current_len = len;
     connp->in_current_offset = 0;

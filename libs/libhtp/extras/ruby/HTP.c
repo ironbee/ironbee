@@ -2,11 +2,11 @@
  * Copyright (c) 2009-2010, Open Information Security Foundation
  * Copyright (c) 2009-2012, Qualys, Inc.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
  * met:
- * 
+ *
  * * Redistributions of source code must retain the above copyright
  * notice, this list of conditions and the following disclaimer.
  * * Redistributions in binary form must reproduce the above copyright
@@ -15,7 +15,7 @@
  * * Neither the name of the Qualys, Inc. nor the names of its
  * contributors may be used to endorse or promote products derived from
  * this software without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
@@ -158,17 +158,17 @@ static VALUE rbhtp_r_string_table( table_t* table )
 // We don't push the keys as they are duplicated in the header.
 static VALUE rbhtp_r_header_table( table_t* table )
 {
-	if ( table == NULL ) return Qnil; 
-	bstr k; 
-	htp_header_t* v; 
-	VALUE r = rb_ary_new(); 
-	table_iterator_reset( table ); 
-	while ( ( k = table_iterator_next( table, (void**)&v ) ) != NULL ) { 
-		rb_ary_push( r, 
-			rb_funcall( cHeader, rb_intern( "new" ), 1, 
-				Data_Wrap_Struct( rb_cObject, 0, 0, v ) ) ); 
-	} 
-	return r; 
+	if ( table == NULL ) return Qnil;
+	bstr k;
+	htp_header_t* v;
+	VALUE r = rb_ary_new();
+	table_iterator_reset( table );
+	while ( ( k = table_iterator_next( table, (void**)&v ) ) != NULL ) {
+		rb_ary_push( r,
+			rb_funcall( cHeader, rb_intern( "new" ), 1,
+				Data_Wrap_Struct( rb_cObject, 0, 0, v ) ) );
+	}
+	return r;
 }	
 
 #define RBHTP_R_HEADER_TABLE( T, N ) \
@@ -186,7 +186,7 @@ static VALUE rbhtp_r_header_line_list( list_t* list )
 	VALUE r = rb_ary_new();
 	list_iterator_reset( list );
 	while ( ( v = list_iterator_next( list ) ) != NULL ) {
-		rb_ary_push( r, 
+		rb_ary_push( r,
 			rb_funcall( cHeaderLine, rb_intern( "new" ), 1,
 				Data_Wrap_Struct( rb_cObject, 0, 0, v ) ) );
 	}
@@ -240,7 +240,7 @@ VALUE rbhtp_parse_uri( VALUE self, VALUE input )
 
 // Terminate list with "".
 static char* const rbhtp_config_pvars[] = {
-	"@request_proc", 
+	"@request_proc",
 	"@request_proc",
 	"@transaction_start",
 	"@request_line",
@@ -268,8 +268,8 @@ VALUE rbhtp_config_initialize( VALUE self )
 	
 	htp_cfg_t* cfg = htp_config_create();
 
-	rb_iv_set( self, "@cfg", 
-		Data_Wrap_Struct( rb_cObject, 0, rbhtp_config_free, cfg ) 
+	rb_iv_set( self, "@cfg",
+		Data_Wrap_Struct( rb_cObject, 0, rbhtp_config_free, cfg )
 	);
 	
 	return Qnil;
@@ -282,11 +282,11 @@ VALUE rbhtp_config_copy( VALUE self )
 	htp_cfg_t* cfg = NULL;
 	Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg );
 
-	// Note that the existing new_config @cfg will be garbage collected as a 
+	// Note that the existing new_config @cfg will be garbage collected as a
 	// result of this set.
 	
-	rb_iv_set( new_config, "@cfg", 
-		Data_Wrap_Struct( rb_cObject, 0, rbhtp_config_free, 
+	rb_iv_set( new_config, "@cfg",
+		Data_Wrap_Struct( rb_cObject, 0, rbhtp_config_free,
 			htp_config_copy( cfg ) ) );
 			
 	// Now copy over all our callbacks.
@@ -306,8 +306,8 @@ VALUE rbhtp_config_set_server_personality( VALUE self, VALUE personality )
 	htp_cfg_t* cfg = NULL;
 	Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg );
 
-	return INT2FIX( 
-		htp_config_set_server_personality( cfg, FIX2INT( personality ) ) 
+	return INT2FIX(
+		htp_config_set_server_personality( cfg, FIX2INT( personality ) )
 	);
 }
 
@@ -353,7 +353,7 @@ VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
 	} \
 	RBHTP_CALLBACK_SUB( N )
 	
-// Tx data is a tx and a data block.  For *_body_data callbacks we pass 
+// Tx data is a tx and a data block.  For *_body_data callbacks we pass
 // in the tx as first argument and the data as a string as the second argument.
 #define RBHTP_TXDATA_CALLBACK( N ) \
 	int rbhtp_config_callback_ ##N( htp_tx_data_t* txdata ) \
@@ -412,10 +412,10 @@ int rbhtp_config_callback_request_file_data( htp_file_data_t* filedata )
 			data = rb_str_new( (char*)filedata->data, filedata->len );
 		return INT2FIX(
 			rb_funcall( proc, rb_intern( "call" ), 2,
-				rb_funcall( cTx, rb_intern( "new" ), 1, 
+				rb_funcall( cTx, rb_intern( "new" ), 1,
 					Data_Wrap_Struct( rb_cObject, 0, 0, filedata->tx )
 				),
-				rb_funcall( cFile, rb_intern( "new" ), 1, 
+				rb_funcall( cFile, rb_intern( "new" ), 1,
 					Data_Wrap_Struct( rb_cObject, 0, 0, filedata->file )
 				),
 				data
@@ -444,8 +444,8 @@ VALUE rbhtp_connp_initialize( VALUE self, VALUE config )
 	
 	htp_connp_t* connp = htp_connp_create( cfg );
 	htp_connp_set_user_data( connp, (void*)self );
-	rb_iv_set( self, "@connp", 
-		Data_Wrap_Struct( rb_cObject, 0, rbhtp_connp_free, connp ) 
+	rb_iv_set( self, "@connp",
+		Data_Wrap_Struct( rb_cObject, 0, rbhtp_connp_free, connp )
 	);
 	
 	return Qnil;
@@ -465,16 +465,16 @@ VALUE rbhtp_connp_req_data( VALUE self, VALUE timestamp, VALUE data )
 	char* data_c = RSTRING_PTR( data );
 
 	htp_time_t timestamp_c;
-	timestamp_c.tv_sec = 
+	timestamp_c.tv_sec =
 		FIX2INT( rb_funcall( timestamp, rb_intern( "tv_sec" ), 0 ) );
-	timestamp_c.tv_usec = 
+	timestamp_c.tv_usec =
 		FIX2INT( rb_funcall( timestamp, rb_intern( "tv_usec" ), 0 ) );
 
 	VALUE connp_r = rb_iv_get( self, "@connp" );
 	htp_connp_t* connp = NULL;
 	Data_Get_Struct( connp_r, htp_connp_t, connp );
 		
-	int result = 
+	int result =
 		htp_connp_req_data( connp, &timestamp_c, (unsigned char*)data_c, len );
 	
 	return INT2FIX( result );
@@ -490,9 +490,9 @@ VALUE rbhtp_connp_in_tx( VALUE self )
 	if ( connp->in_tx == NULL )
 		return Qnil;
 	
-	return rb_funcall( cTx, rb_intern( "new" ), 3, 
+	return rb_funcall( cTx, rb_intern( "new" ), 3,
 		Data_Wrap_Struct( rb_cObject, 0, 0, connp->in_tx ),
-		config, 
+		config,
 		self
 	);
 }
@@ -535,7 +535,7 @@ VALUE rbhtp_header_line_header( VALUE self )
 	htp_header_line_t* hline = NULL;
 	Data_Get_Struct( rb_iv_get( self, "@header_line" ), htp_header_line_t, hline );
 	
-	if ( hline->header == NULL ) 
+	if ( hline->header == NULL )
 		return Qnil;
 		
 	return rb_funcall( cHeader, rb_intern( "new" ), 1,
@@ -571,9 +571,9 @@ RBHTP_R_STRING( uri, fragment );
 
 //---- Tx ----
 
-VALUE rbhtp_tx_initialize( 
-	VALUE self, 
-	VALUE raw_txn, 
+VALUE rbhtp_tx_initialize(
+	VALUE self,
+	VALUE raw_txn,
 	VALUE cfg,
 	VALUE connp )
 {
