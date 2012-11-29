@@ -89,6 +89,7 @@ struct ib_auditlog_part_t {
     ib_auditlog_part_gen_fn_t fn_gen;    /**< Data generator function */
 };
 
+
 /// @todo Maybe a ib_create_ex() that takes a config?
 
 /**
@@ -178,7 +179,7 @@ ib_status_t DLL_PUBLIC ib_engine_module_get(ib_engine_t *ib,
  *
  * @returns Memory pool
  */
-ib_mpool_t DLL_PUBLIC *ib_engine_pool_main_get(ib_engine_t *ib);
+ib_mpool_t DLL_PUBLIC *ib_engine_pool_main_get(const ib_engine_t *ib);
 
 /**
  * Get the engine configuration memory pool.
@@ -189,7 +190,7 @@ ib_mpool_t DLL_PUBLIC *ib_engine_pool_main_get(ib_engine_t *ib);
  *
  * @returns Memory pool
  */
-ib_mpool_t DLL_PUBLIC *ib_engine_pool_config_get(ib_engine_t *ib);
+ib_mpool_t DLL_PUBLIC *ib_engine_pool_config_get(const ib_engine_t *ib);
 
 /**
  * Get the engine temporary memory pool.
@@ -203,7 +204,7 @@ ib_mpool_t DLL_PUBLIC *ib_engine_pool_config_get(ib_engine_t *ib);
  *
  * @returns Memory pool
  */
-ib_mpool_t DLL_PUBLIC *ib_engine_pool_temp_get(ib_engine_t *ib);
+ib_mpool_t DLL_PUBLIC *ib_engine_pool_temp_get(const ib_engine_t *ib);
 
 /**
  * Destroy the engine temporary memory pool.

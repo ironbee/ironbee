@@ -238,6 +238,7 @@ struct ib_tx_t {
     int                 block_status;    /**< TX specific block status to use.*/
     ib_rule_phase_num_t allow_phase;     /**< Phase to allow (skip) */
     ib_rule_exec_t     *rule_exec;       /**< Rule engine execution object */
+    ib_list_t          *managed_collections;/**< ib_managed_collection_t list*/
 
     /* Request */
     ib_parsed_req_line_t *request_line;  /**< Request line */

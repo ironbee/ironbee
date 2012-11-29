@@ -39,6 +39,7 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/clock.h>
 #include <ironbee/context_selection.h>
+#include <ironbee/managed_collection.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>
@@ -47,6 +48,8 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
+
+#include <pcre.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -67,6 +70,25 @@ typedef struct {
     FILE               *fp;                /**< Current file pointer */
     const char         *log_uri;           /**< Current log URI */
 } core_lpi_data_t;
+
+/** Core InitCollection parameter parsing data */
+typedef struct {
+    pcre       *nvpair_compiled;
+} core_initcoll_data_t;
+static core_initcoll_data_t core_initcoll_data = { NULL };
+
+/** Core InitCollection name/value parameter data */
+typedef struct {
+    const char *name;
+    const char *value;
+} core_initcoll_nvpair_t;
+
+/** Value returned by core_string_to_field */
+typedef union {
+    ib_num_t      as_num;
+    ib_float_t    as_float;
+    const char   *as_str;
+} core_field_value_t;
 
 #define MODULE_NAME        core
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
@@ -99,6 +121,7 @@ static const char * const ib_uuid_default_str = "00000000-0000-0000-0000-0000000
 
 /* Instantiate a module global configuration. */
 static ib_core_cfg_t core_global_cfg;
+
 
 #define IB_ALPART_HEADER                  (1<< 0)
 #define IB_ALPART_EVENTS                  (1<< 1)
@@ -220,6 +243,84 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
     *dst = dst_tmp;
 
     return IB_OK;
+}
+
+/**
+ * Convert a string to a field, trying to treat the string as a number if
+ * possible.
+ *
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] name Field name
+ * @param[in] vstr Value string
+ * @param[out] pfield Pointer to newly created field
+ * @param[out] pvalue Pointer to value (or NULL)
+ *
+ * @returns Status code:
+ *  - IB_OK All OK
+ *  - Errors from @sa ib_field_create().
+ */
+static ib_status_t core_string_to_field(ib_mpool_t *mp,
+                                        const char *name,
+                                        const char *vstr,
+                                        ib_field_t **pfield,
+                                        core_field_value_t *pvalue)
+{
+    assert(mp != NULL);
+    assert(name != NULL);
+    assert(vstr != NULL);
+    assert(pfield != NULL);
+
+    ib_status_t conv;
+    ib_status_t rc = IB_OK;
+    ib_field_t *field;
+
+    *pfield = NULL;
+
+    /* Try to convert to an integer */
+    if (*pfield == NULL) {
+        ib_num_t num_val;
+        conv = ib_string_to_num(vstr, 0, &num_val);
+        if (conv == IB_OK) {
+            rc = ib_field_create(&field, mp,
+                                 IB_FIELD_NAME(name),
+                                 IB_FTYPE_NUM,
+                                 ib_ftype_num_in(&num_val));
+            if (pvalue != NULL) {
+                pvalue->as_num = num_val;
+            }
+            *pfield = field;
+        }
+    }
+
+    /* Try to convert to a float */
+    if (*pfield == NULL) {
+        ib_float_t float_val;
+        conv = ib_string_to_float(vstr, &float_val);
+        if (conv == IB_OK) {
+            rc = ib_field_create(&field, mp,
+                                 IB_FIELD_NAME(name),
+                                 IB_FTYPE_FLOAT,
+                                 ib_ftype_float_in(&float_val));
+            if (pvalue != NULL) {
+                pvalue->as_float = float_val;
+            }
+            *pfield = field;
+        }
+    }
+
+    /* Finally, assume that it's a string */
+    if (*pfield == NULL) {
+        rc = ib_field_create(&field, mp,
+                             IB_FIELD_NAME(name),
+                             IB_FTYPE_NULSTR,
+                             ib_ftype_nulstr_in(vstr));
+        if (pvalue != NULL) {
+            pvalue->as_str = vstr;
+        }
+        *pfield = field;
+    }
+
+    return rc;
 }
 
 
@@ -2974,6 +3075,351 @@ static ib_status_t dpi_default_init(ib_engine_t *ib, ib_tx_t *tx)
 /* -- Core Hook Handlers -- */
 
 /**
+ * Execute the InitVar directive to initialize field in a transaction's DPI
+ *
+ * @param[in] ib Engine.
+ * @param[in] tx Transaction.
+ * @param[in] initvar_list List of the initvar fields
+ *
+ * @returns Status code.
+ */
+static ib_status_t core_initvar(ib_engine_t *ib,
+                                ib_tx_t *tx,
+                                const ib_list_t *initvar_list)
+{
+    const ib_list_node_t *node;
+    ib_status_t rc = IB_OK;
+
+    if (initvar_list == NULL) {
+        ib_log_debug_tx(tx, "No InitVars defined for context \"%s\"",
+                        ib_context_full_get(tx->ctx));
+        return IB_OK;
+    }
+
+    IB_LIST_LOOP_CONST(initvar_list, node) {
+        ib_status_t trc; /* Temp RC */
+        const ib_field_t *field =
+            (const ib_field_t *)ib_list_node_data_const(node);
+        ib_field_t *newf;
+
+        trc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
+        if (trc != IB_OK) {
+            ib_log_debug_tx(tx, "Failed to copy field: %s",
+                            ib_status_to_string(trc));
+            if (rc == IB_OK) {
+                rc = trc;
+            }
+            continue;
+        }
+
+        trc = ib_data_add(tx->dpi, newf);
+        if (trc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI: %s",
+                            (int)field->nlen, field->name,
+                            ib_status_to_string(trc));
+            if (rc == IB_OK) {
+                rc = trc;
+            }
+        }
+        else {
+            ib_log_trace_tx(tx, "InitVar: Created field \"%.*s\" (type %s)",
+                            (int)field->nlen, field->name,
+                            ib_field_type_name(field->type));
+        }
+    }
+    ib_log_debug_tx(tx, "Created %zd InitVar fields for context \"%s\"",
+                    ib_list_elements(initvar_list),
+                    ib_context_full_get(tx->ctx));
+
+    return rc;
+}
+
+/**
+ * Execute the InitVar directive to initialize field in a transaction's DPI
+ *
+ * @param[in] ib Engine.
+ * @param[in] tx Transaction.
+ * @param[in] mancoll_list List of the managed collections
+ *
+ * @returns Status code.
+ */
+static ib_status_t core_managed_collection_populate_all(
+    ib_engine_t *ib,
+    ib_tx_t *tx,
+    const ib_list_t *mancoll_list)
+{
+    const ib_list_node_t *node;
+    ib_status_t rc = IB_OK;
+    size_t count;
+
+    /* If there are no managed collections, done */
+    count = (mancoll_list == NULL) ? 0 : ib_list_elements(mancoll_list);
+    if (count == 0) {
+        ib_log_debug_tx(tx,
+                        "No managed collections defined for context \"%s\"",
+                        ib_context_full_get(tx->ctx));
+        return IB_OK;
+    }
+
+    /* Walk through the list of collections & populate them. */
+    IB_LIST_LOOP_CONST(mancoll_list, node) {
+        const ib_managed_collection_t *collection =
+            (const ib_managed_collection_t *)node->data;
+
+        rc = ib_managed_collection_populate(ib, tx, collection);
+        if (rc != IB_OK) {
+            ib_log_warning_tx(tx,
+                              "Error creating managed collection \"%s\": %s",
+                              collection->name,
+                              ib_status_to_string(rc));
+            return rc;
+        }
+        ib_log_trace_tx(tx, "Created managed collection \"%s\"",
+                        collection->name);
+    }
+    ib_log_debug_tx(tx,
+                    "Created %zd managed collections for context \"%s\"",
+                    count, ib_context_full_get(tx->ctx));
+    return IB_OK;
+}
+
+/**
+ * Handle managed collection selection for simple name=value parameter
+ *
+ * Examines the incoming parameters; if if it looks like simple
+ * attr=value pairs, take it; otherwise do nothing
+ *
+ * @param[in] ib Engine
+ * @param[in] module Collection manager's module object
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] collection_name Name of the collection
+ * @param[in] params List of parameter strings
+ * @param[in] data Selection callback data
+ * @param[out] pcollection_data Pointer to manager specific collection data
+ *
+ * @returns Status code:
+ *   - IB_DECLINED Parameters not recognized
+ *   - IB_OK All OK, parameters recognized
+ *   - IB_Exxx Other error
+ */
+static ib_status_t core_managed_collection_nvpair_selection_fn(
+    const ib_engine_t  *ib,
+    const ib_module_t  *module,
+    ib_mpool_t         *mp,
+    const char         *collection_name,
+    const ib_list_t    *params,
+    void               *data,
+    void              **pcollection_data)
+{
+    assert(ib != NULL);
+    assert(module != NULL);
+    assert(mp != NULL);
+    assert(collection_name != NULL);
+    assert(params != NULL);
+    assert(pcollection_data != NULL);
+
+    const ib_list_node_t *node;
+    const int ovecsize = 9;
+    ib_list_t *nvpair_list;
+    ib_list_t *field_list;
+    ib_mpool_t *tmp = ib_engine_pool_temp_get(ib);
+    ib_status_t rc;
+
+    if (ib_list_elements(params) == 0) {
+        return IB_DECLINED;
+    }
+
+    /* Create a temporary list */
+    rc = ib_list_create(&nvpair_list, tmp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* First pass; walk through all params, look for "a=b" type syntax */
+    IB_LIST_LOOP_CONST(params, node) {
+        int ovector[ovecsize];
+        const char *param = (const char *)node->data;
+        core_initcoll_nvpair_t *nvpair;
+        int pcre_rc;
+
+        pcre_rc = pcre_exec(core_initcoll_data.nvpair_compiled, NULL,
+                            param, strlen(param),
+                            0, 0, ovector, ovecsize);
+        if (pcre_rc < 0) {
+            return IB_DECLINED;
+        }
+
+        nvpair = ib_mpool_alloc(tmp, sizeof(*nvpair));
+        if (nvpair == NULL) {
+            return IB_EALLOC;
+        }
+        nvpair->name  = ib_mpool_memdup_to_str(tmp,
+                                               param + ovector[2],
+                                               ovector[3] - ovector[2]);
+        nvpair->value = ib_mpool_memdup_to_str(tmp,
+                                               param + ovector[4],
+                                               ovector[5] - ovector[4]);
+        if ((nvpair->name == NULL) || (nvpair->value == NULL)) {
+            return IB_EALLOC;
+        }
+        rc = ib_list_push(nvpair_list, nvpair);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    /* Build the list of fields */
+    rc = ib_list_create(&field_list, mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Now walk though the list, creating a field for each one */
+    IB_LIST_LOOP_CONST(nvpair_list, node) {
+        const core_initcoll_nvpair_t *nvpair =
+            (const core_initcoll_nvpair_t *)node->data;
+        ib_field_t *field;
+        core_field_value_t fval;
+
+        rc = core_string_to_field(mp, nvpair->name, nvpair->value,
+                                  &field, &fval);
+        if (rc != IB_OK) {
+            ib_log_error(ib, "Error creating field (\"%s\", \"%s\"): %s",
+                         nvpair->name, nvpair->value,
+                         ib_status_to_string(rc));
+            return rc;
+        }
+        rc = ib_list_push(field_list, field);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        if (field->type == IB_FTYPE_NUM) {
+            ib_log_debug(ib, "Created numeric field \"%s\" %ld in \"%s\"",
+                         nvpair->name, fval.as_num, collection_name);
+        }
+
+        else if (field->type == IB_FTYPE_FLOAT) {
+            ib_log_debug(ib, "Created float field \"%s\" %f in \"%s\"",
+                         nvpair->name, (double)fval.as_float, collection_name);
+        }
+        else {
+            ib_log_debug(ib, "Created string field \"%s\" \"%s\" in \"%s\"",
+                         nvpair->name, fval.as_str, collection_name);
+        }
+    }
+
+    /* Finally, store the list as the manager specific collection data */
+    *pcollection_data = field_list;
+
+    return IB_OK;
+}
+
+/**
+ * Handle managed collection nvpair populate function
+ *
+ * @param[in] ib Engine
+ * @param[in] tx Transaction to populate
+ * @param[in] module Collection manager's module object
+ * @param[in,out] collection Collection to populate
+ * @param[in] managed_collection Managed collection data
+ * @param[in] data Callback data
+ *
+ * @returns Status code
+ */
+static ib_status_t core_managed_collection_nvpair_populate_fn(
+    const ib_engine_t *ib,
+    const ib_tx_t *tx,
+    const ib_module_t *module,
+    const char *collection_name,
+    void *collection_data,
+    ib_list_t *collection,
+    void *data)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(module != NULL);
+    assert(collection_name != NULL);
+    assert(collection_data != NULL);
+    assert(collection != NULL);
+
+    const ib_list_node_t *node;
+    const ib_list_t *field_list = (const ib_list_t *)collection_data;
+    ib_status_t rc = IB_OK;
+
+    /* First pass; walk through all params, look for "a=b" type syntax */
+    IB_LIST_LOOP_CONST(field_list, node) {
+        ib_status_t trc;
+        const ib_field_t *field = (const ib_field_t *)node->data;
+        ib_field_t *newf;
+
+        trc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
+        if (trc != IB_OK) {
+            ib_log_debug_tx(tx, "Failed to copy field: %s",
+                            ib_status_to_string(trc));
+            if (rc == IB_OK) {
+                rc = trc;
+            }
+            continue;
+        }
+
+        trc = ib_list_push(collection, newf);
+        if ( (trc != IB_OK) && (rc == IB_OK) ) {
+            rc = trc;
+        }
+    }
+
+    return rc;
+}
+
+/**
+ * Initialize managed collection for simple name=value parameters
+ *
+ * @param[in] ib Engine
+ * @param[in] module Collection manager's module object
+ *
+ * @returns Status code:
+ *   - IB_OK All OK, parameters recognized
+ *   - IB_Exxx Other error
+ */
+static ib_status_t core_managed_collection_nvpair_init(
+    ib_engine_t  *ib,
+    const ib_module_t *module)
+{
+    assert(ib != NULL);
+    assert(module != NULL);
+
+    const char *pattern = "^(\\w+)=(.*)$";
+    const int compile_flags = PCRE_DOTALL | PCRE_DOLLAR_ENDONLY;
+    pcre *compiled;
+    const char *error;
+    int eoff;
+    ib_status_t rc;
+
+    /* Register the name/value pair InitCollection handler */
+    rc = ib_managed_collection_register_handler(
+        ib, module, "core name/value pair",
+        core_managed_collection_nvpair_selection_fn, NULL,
+        core_managed_collection_nvpair_populate_fn, NULL,
+        NULL, NULL);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to register core name/value pair handler: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Compile the pattern */
+    compiled = pcre_compile(pattern, compile_flags, &error, &eoff, NULL);
+    if (compiled == NULL) {
+        ib_log_error(ib, "Failed to compile pattern \"%s\"", pattern);
+        return IB_EUNKNOWN;
+    }
+    core_initcoll_data.nvpair_compiled = compiled;
+
+    return IB_OK;
+}
+
+/**
  * Handle the transaction context selected
  *
  * @param ib Engine.
@@ -3003,36 +3449,19 @@ static ib_status_t core_hook_context_tx(ib_engine_t *ib,
     }
 
     /* Handle InitVar list */
-    if (corecfg->initvar_list == NULL) {
-        ib_log_debug_tx(tx, "No InitVars for defined for context \"%s\"",
-                        ib_context_full_get(tx->ctx));
+    rc = core_initvar(ib, tx, corecfg->initvar_list);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(tx, "Failure executing InitVar(s): %s",
+                        ib_status_to_string(rc));
+        return rc;
     }
-    else {
-        const ib_list_node_t *node;
-        IB_LIST_LOOP_CONST(corecfg->initvar_list, node) {
-            const ib_field_t *field =
-                (const ib_field_t *)ib_list_node_data_const(node);
-            ib_field_t *newf;
 
-            rc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
-            if (rc != IB_OK) {
-                ib_log_debug_tx(tx, "Failed to copy field: %d", rc);
-                continue;
-            }
-            rc = ib_data_add(tx->dpi, newf);
-            if (rc != IB_OK) {
-                ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI",
-                                (int)field->nlen, field->name);
-            }
-            else {
-                ib_log_trace_tx(tx, "InitVar: Created field \"%.*s\" (type %s)",
-                                (int)field->nlen, field->name,
-                                ib_field_type_name(field->type));
-            }
-        }
-        ib_log_debug_tx(tx, "Created %zd InitVar fields for context \"%s\"",
-                        ib_list_elements(corecfg->initvar_list),
-                        ib_context_full_get(tx->ctx));
+    /* Handle InitCollection list */
+    rc = core_managed_collection_populate_all(ib, tx, corecfg->mancoll_list);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(tx, "Failure executing InitCollection(s): %s",
+                        ib_status_to_string(rc));
+        return rc;
     }
 
     return IB_OK;
@@ -3098,6 +3527,28 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     }
 
     return IB_OK;
+}
+
+/**
+ * Handle the transaction finish.
+ *
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param cbdata Callback data.
+ *
+ * @returns Status code.
+ */
+static ib_status_t core_hook_tx_finished(ib_engine_t *ib,
+                                         ib_tx_t *tx,
+                                         ib_state_event_type_t event,
+                                         void *cbdata)
+{
+    assert(event == tx_finished_event);
+    ib_status_t rc;
+
+    rc = ib_managed_collection_persist_all(ib, tx);
+    return rc;
 }
 
 static ib_status_t core_hook_request_body_data(ib_engine_t *ib,
@@ -4384,6 +4835,115 @@ static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
 }
 
 /**
+ * @brief Parse a InitCollection directive.
+ *
+ * @details Register a InitCollection directive to the engine.
+ *
+ * @param[in] cp Configuration parser
+ * @param[in] directive The directive name.
+ * @param[in] vars The list of variables passed to @c name.
+ * @param[in] cbdata User data. Unused.
+ */
+static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
+                                           const char *directive,
+                                           const ib_list_t *vars,
+                                           void *cbdata)
+{
+    assert(cp != NULL);
+    assert(directive != NULL);
+    assert(vars != NULL);
+
+    ib_status_t                    rc;
+    const ib_managed_collection_t *managed_collection;
+    ib_mpool_t                    *mp;
+    const ib_list_node_t          *node;
+    const char                    *collection_name;
+    ib_core_cfg_t                 *cfg;
+    ib_list_t                     *params;
+
+    mp = ib_engine_pool_main_get(cp->ib);
+
+    /* Get the configuration */
+    rc = ib_context_module_config(cp->cur_ctx, ib_core_module(), (void *)&cfg);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to get core module configuration: %s",
+                         ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Initialize the context's managed collection list on the first run */
+    if (cfg->mancoll_list == NULL) {
+        rc = ib_list_create(&(cfg->mancoll_list), mp);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp, "%s: Failed to create list: %s",
+                             directive, ib_status_to_string(rc));
+            return rc;
+        }
+    }
+
+    /* Get the collection name string */
+    node = ib_list_first_const(vars);
+    if ( (node == NULL) || (node->data == NULL) ) {
+        ib_cfg_log_error(cp, " %s: No collection name specified", directive);
+        return IB_EINVAL;
+    }
+    collection_name = (const char *)(node->data);
+
+    /* Parameters */
+    rc = ib_list_create(&params, cp->mp);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, " %s: Error allocation parameter list", directive);
+        return IB_EINVAL;
+    }
+    while( (node = ib_list_node_next_const(node)) != NULL) {
+        const char *nodestr = (const char *)node->data;
+        rc = ib_list_push(params, (char *)nodestr);
+        if (rc != IB_OK) {
+            break;
+        }
+    }
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, " %s: Error allocation parameter list", directive);
+        return IB_EINVAL;
+    }
+
+    /* Select a collection manager */
+    rc = ib_managed_collection_select(cp->ib, cp->mp,
+                                      collection_name,
+                                      params,
+                                      &managed_collection);
+    if (rc == IB_ENOENT) {
+        ib_cfg_log_error(cp,
+                         "%s: No matching collection manager found for \"%s\"",
+                         directive, collection_name);
+        return IB_EINVAL;
+    }
+    else if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "%s: Failed to create managed collection \"%s\": %s",
+                         directive, collection_name, ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Add the field to the list */
+    rc = ib_list_push(cfg->mancoll_list,
+                      (ib_managed_collection_t *)managed_collection);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "%s: Error pushing value on list: %s",
+                         directive, ib_status_to_string(rc));
+        return rc;
+    }
+
+    ib_cfg_log_debug(cp,
+                     "%s: Added managed collection \"%s\" for context \"%s\"",
+                     directive, collection_name,
+                     ib_context_full_get(cp->cur_ctx));
+
+    /* Done */
+    return IB_OK;
+}
+
+/**
  * Perform any extra duties when certain config parameters are "Set".
  *
  * @param cp Config parser
@@ -4558,12 +5118,10 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     assert(value != NULL);
 
     ib_status_t rc;
-    ib_status_t rc2;
     ib_mpool_t *mp = cp->cur_ctx->mp;
     ib_core_cfg_t *corecfg;
-    ib_num_t num_val;
-    ib_float_t float_val;
     ib_field_t *field;
+    core_field_value_t fval;
 
     /* Get the core module config. */
     rc = ib_context_module_config(cp->cur_ctx, ib_core_module(),
@@ -4583,20 +5141,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     }
 
     /* Create the field based on whether the value looks like a number or not */
-    rc = ib_string_to_num(value, 0, &num_val);
-    rc2 = ib_string_to_float(value, &float_val);
-    if (rc == IB_OK) {
-        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
-                             IB_FTYPE_NUM, ib_ftype_num_in(&num_val));
-    }
-    else if (rc2 == IB_OK) {
-        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
-                             IB_FTYPE_FLOAT, ib_ftype_float_in(&float_val));
-    }
-    else {
-        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
-                             IB_FTYPE_NULSTR, ib_ftype_nulstr_in(value));
-    }
+    rc = core_string_to_field(mp, name, value, &field, &fval);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error creating field for InitVar: %s",
                          ib_status_to_string(rc));
@@ -4614,21 +5159,21 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
         ib_cfg_log_debug(cp,
                          "InitVar: Created numeric field \"%s\" %ld "
                          "for context \"%s\"",
-                         name, (long int)num_val,
+                         name, fval.as_num,
                          ib_context_full_get(cp->cur_ctx));
     }
     else if (field->type == IB_FTYPE_FLOAT) {
         ib_cfg_log_debug(cp,
                          "InitVar: Created float field \"%s\" %f "
                          "for context \"%s\"",
-                         name, (double)num_val,
+                         name, (double)fval.as_float,
                          ib_context_full_get(cp->cur_ctx));
     }
     else {
         ib_cfg_log_debug(cp,
                          "InitVar:Created string field \"%s\" \"%s\" "
                          "for context \"%s\"",
-                         name, value, ib_context_full_get(cp->cur_ctx));
+                         name, fval.as_str, ib_context_full_get(cp->cur_ctx));
     }
 
     /* Done */
@@ -4924,6 +5469,13 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL
     ),
 
+    /* TX Initialized Collection */
+    IB_DIRMAP_INIT_LIST(
+        "InitCollection",
+        core_dir_initcollection,
+        NULL
+    ),
+
     /* End */
     IB_DIRMAP_INIT_LAST
 };
@@ -5082,10 +5634,9 @@ static ib_status_t core_init(ib_engine_t *ib,
     /* Register hooks. */
     ib_hook_tx_register(ib, handle_context_tx_event,
                         core_hook_context_tx, NULL);
-    ib_hook_conn_register(ib, conn_started_event,
-                          core_hook_conn_started, NULL);
-    ib_hook_tx_register(ib, tx_started_event,
-                        core_hook_tx_started, NULL);
+    ib_hook_conn_register(ib, conn_started_event, core_hook_conn_started, NULL);
+    ib_hook_tx_register(ib, tx_started_event, core_hook_tx_started, NULL);
+    ib_hook_tx_register(ib, tx_finished_event, core_hook_tx_finished, NULL);
     /*
      * @todo Need the parser to parse the header before context, but others
      * after context so that the personality can change based on the header
@@ -5235,6 +5786,15 @@ static ib_status_t core_init(ib_engine_t *ib,
     rc = ib_core_actions_init(ib, m);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to initialize core actions: %s", ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Initialize the core name/value pair managed collection */
+    rc = core_managed_collection_nvpair_init(ib, m);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to initialize core name/value pair "
+                     "collection manager: %s",
+                     ib_status_to_string(rc));
         return rc;
     }
 
