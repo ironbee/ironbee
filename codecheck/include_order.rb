@@ -6,7 +6,8 @@ require 'set'
 
 EXCEPTION_INCLUDES = Set.new [
   '<ironautomata/eudoxus_subautomata.h>',
-  '"eudoxus_subengine.c"'
+  '"eudoxus_subengine.c"',
+  '<boost/preprocessor/iteration/local.hpp>'
 ]
 
 CANONICAL_INCLUDE_ORDER = [
@@ -147,6 +148,11 @@ CANONICAL_INCLUDE_ORDER = [
   '<boost/mpl/or.hpp>',
   '<boost/noncopyable.hpp>',
   '<boost/operators.hpp>',
+  '<boost/preprocessor/arithmetic/add.hpp>',
+  '<boost/preprocessor/arithmetic/sub.hpp>',
+  '<boost/preprocessor/cat.hpp>',
+  '<boost/preprocessor/iteration/local.hpp>',
+  '<boost/preprocessor/repetition.hpp>',
   '<boost/program_options.hpp>',
   '<boost/scoped_array.hpp>',
   '<boost/scoped_ptr.hpp>',

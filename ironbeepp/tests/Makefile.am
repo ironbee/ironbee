@@ -19,6 +19,7 @@ TESTS_ENVIRONMENT = $(top_srcdir)/tests/gtest_executor.sh
 
 check_PROGRAMS = \
     test_catch \
+    test_c_trampoline \
     test_data \
     test_module \
     test_module_bootstrap_a \
@@ -50,6 +51,7 @@ TESTS=$(check_PROGRAMS)
 CLEANFILES=*.xml *.log
 
 test_catch_SOURCES                = test_catch.cpp
+test_c_trampoline_SOURCES         = test_c_trampoline.cpp
 test_data_SOURCES                 = test_data.cpp
 test_module_SOURCES               = test_module.cpp fixture.cpp
 test_module_bootstrap_a_SOURCES   = test_module_bootstrap_a.cpp fixture.cpp
