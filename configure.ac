@@ -399,6 +399,9 @@ if test "${cpp_code}" = 1 ; then
     if test "${HAVE_PROTOBUF}" != "yes" ; then
         AC_MSG_ERROR([protobuf is required for C++ code])
     fi
+    CHECK_RUBY(1.8)
+    CHECK_GEM(1.3)
+    CHECK_RUBY_GEM(ruby_protobuf, 0.4.11)
     if test "${HAVE_NIDS}" != "yes" ; then
         echo "*******************************************************"
         echo "* Warning: libnids missing; no pcap support in clipp. *"
