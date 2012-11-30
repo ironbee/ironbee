@@ -77,6 +77,7 @@ struct ib_core_cfg_t {
     const char      *log_uri;           /**< Log URI */
     const char      *log_handler;       /**< Active logger provider key */
     const char      *logevent;          /**< Active logevent provider key */
+    ib_list_t       *initvar_list;      /**< List of ib_field_t for InitVar */
     ib_num_t         buffer_req;        /**< Request buffering options */
     ib_num_t         buffer_res;        /**< Response buffering options */
     ib_num_t         audit_engine;      /**< Audit engine status */
