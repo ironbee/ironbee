@@ -3,7 +3,6 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
                                       ib_tx_t *tx,
                                       void *cbdata)
 {
-    IB_FTRACE_INIT();
     pocsig_cfg_t *cfg;
     pocsig_phase_t phase = (pocsig_phase_t)(uintptr_t)cbdata;
     ib_list_t *sigs;
@@ -26,7 +25,7 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
     if (sigs == NULL) {
         ib_log_debug(ib, dbglvl, "No signatures for phase=%d ctx=%p",
                      phase, tx->ctx);
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
 
     ib_log_debug(ib, dbglvl, "Executing %d signatures for phase=%d ctx=%p",
@@ -82,5 +81,5 @@ static ib_status_t pocsig_handle_sigs(ib_engine_t *ib,
         }
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }

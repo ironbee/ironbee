@@ -8,17 +8,15 @@ IB_MODULE_DECLARE();
 /* Called when module is loaded. */
 static ib_status_t exmin_init(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Example minimal module loaded.");
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Called when module is unloaded. */
 static ib_status_t exmin_fini(ib_engine_t *ib, ib_module_t *m)
 {
-    IB_FTRACE_INIT();
     ib_log_debug(ib, 4, "Example minimal module unloaded.");
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /* Initialize the module structure. */

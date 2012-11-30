@@ -4,7 +4,6 @@ static ib_status_t pocsig_dir_trace(ib_cfgparser_t *cp,
                                     const char *p1,
                                     void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
     ib_status_t rc;
@@ -12,15 +11,15 @@ static ib_status_t pocsig_dir_trace(ib_cfgparser_t *cp,
     ib_log_debug(ib, 7, "%s: \"%s\" ctx=%p", name, p1, ctx);
     if (strcasecmp("On", p1) == 0) {
         rc = ib_context_set_num(ctx, MODULE_NAME_STR ".trace", 1);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     else if (strcasecmp("Off", p1) == 0) {
         rc = ib_context_set_num(ctx, MODULE_NAME_STR ".trace", 0);
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     ib_log_error(ib, 1, "Failed to parse directive: %s \"%s\"", name, p1);
-    IB_FTRACE_RET_STATUS(IB_EINVAL);
+    return IB_EINVAL;
 }
 
 /* Handle all PocSig* signature directives. */
@@ -29,7 +28,6 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
                                         ib_list_t *args,
                                         void *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_engine_t *ib = cp->ib;
     ib_context_t *ctx = cp->cur_ctx ? cp->cur_ctx : ib_context_main(ib);
     const char *target;
@@ -55,7 +53,7 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
                                "pcre", &cfg->pcre);
         if (rc != IB_OK) {
             ib_log_error(ib, 2, "Could not create a PCRE matcher: %d", rc);
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
 
@@ -66,7 +64,7 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
             rc = ib_list_create(cfg->phase + POCSIG_PRE,
                                 ib_engine_pool_config_get(ib));
             if (rc != IB_OK) {
-                IB_FTRACE_RET_STATUS(rc);
+                return rc;
             }
         }
     }
@@ -77,21 +75,21 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
     /* ... PocSigPostTx removed for brevity ... */
     else {
         ib_log_error(ib, 2, "Invalid signature: %s", name);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Target */
     rc = ib_list_shift(args, &target);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "No PocSig target");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Operator */
     rc = ib_list_shift(args, &op);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "No PocSig operator");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     /* Action */
@@ -105,7 +103,7 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
     sig = (pocsig_sig_t *)ib_mpool_alloc(ib_engine_pool_config_get(ib),
                                          sizeof(*sig));
     if (sig == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     sig->target = ib_mpool_memdup(ib_engine_pool_config_get(ib),
@@ -118,13 +116,13 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
     /* Compile the PCRE patt. */
     if (cfg->pcre == NULL) {
         ib_log_error(ib, 2, "No PCRE matcher available (load the pcre module?)");
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
     sig->cpatt = ib_matcher_compile(cfg->pcre, sig->patt, &errptr, &erroff);
     if (sig->cpatt == NULL) {
         ib_log_error(ib, 2, "Error at offset=%d of PCRE patt=\"%s\": %s",
                      erroff, sig->patt, errptr);
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     ib_log_debug(ib, 4, "POCSIG: \"%s\" \"%s\" \"%s\" phase=%d ctx=%p",
@@ -134,8 +132,8 @@ static ib_status_t pocsig_dir_signature(ib_cfgparser_t *cp,
     rc = ib_list_push(cfg->phase[phase], sig);
     if (rc != IB_OK) {
         ib_log_error(ib, 1, "Failed to add signature");
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
