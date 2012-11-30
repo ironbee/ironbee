@@ -58,9 +58,6 @@
 #define MODULE_NAME        ac
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
-/* Name that a hash of tx-specific data is stored under in @c tx->data. */
-#define MODULE_DATA_STR    MODULE_NAME_STR "_DATA"
-
 /* Informational extra data.. version of this module (should be better to
  * register it with the module itself) */
 #define AC_MAJOR           0
@@ -84,10 +81,10 @@ struct modac_provider_data_t {
 typedef struct modac_provider_data_t modac_provider_data_t;
 
 /**
- * Workspace data stored per rule per transaction in tx->data.
+ * Workspace data stored per rule per transaction in tx.
  *
- * This is not directly stored in tx->data but in an ib_hash_t that is
- * stored in tx->data at the key MODULE_DATA_STR.
+ * This is not directly stored in tx but in an ib_hash_t that is
+ * stored in tx.
  */
 struct modac_workspace_t {
     ib_ac_context_t *ctx; /**< Context. */
@@ -97,11 +94,9 @@ typedef struct modac_workspace_t modac_workspace_t;
 /* -- Helper Internal Functions -- */
 
 /**
- * Get or create an ib_hash_t inside of @c tx->data for storing tx rule data.
+ * Get or create an ib_hash_t inside tx for storing tx rule data..
  *
- * The hash is stored at the key @c MODULE_DATA_STR.
- *
- * @param[in] tx The transaction containing @c tx->data which holds
+ * @param[in] tx The transaction containing the data which holds
  *            the @a rule_data object.
  * @param[out] rule_data The fetched or created rule data hash. This is set
  *             to NULL on failure.
@@ -119,34 +114,32 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
     ib_status_t rc;
 
     /* Get or create the hash that contains the rule data. */
-    rc = ib_hash_get(tx->data, rule_data, MODULE_DATA_STR);
+    rc = ib_tx_get_data(tx, IB_MODULE_STRUCT_PTR, (void **)rule_data);
 
     if (rc == IB_OK && *rule_data != NULL) {
-        ib_log_debug2_tx(tx,
-                         "Found rule data hash in tx data named "
-                         MODULE_DATA_STR);
+        ib_log_debug2_tx(tx, "Found rule data hash in tx.");
         return IB_OK;
     }
 
-    ib_log_debug2_tx(tx, "Rule data hash did not exist in tx data.");
-    ib_log_debug2_tx(tx, "Creating rule data hash " MODULE_DATA_STR);
+    ib_log_debug2_tx(tx, "Rule data hash did not exist in tx.");
+    ib_log_debug2_tx(tx, "Creating rule data hash.");
 
     rc = ib_hash_create(rule_data, tx->mp);
     if (rc != IB_OK) {
         ib_log_debug2_tx(tx,
-                         "Failed to create hash " MODULE_DATA_STR ": %d", rc);
+                         "Failed to create hash: %d", rc);
         return rc;
     }
 
-    rc = ib_hash_set(tx->data, MODULE_DATA_STR, *rule_data);
+    rc = ib_tx_set_data(tx, IB_MODULE_STRUCT_PTR, *rule_data);
     if (rc != IB_OK) {
         ib_log_debug2_tx(tx,
-                         "Failed to store hash " MODULE_DATA_STR ": %d", rc);
+                         "Failed to store hash: %d", rc);
         *rule_data = NULL;
     }
 
     ib_log_debug2_tx(tx,
-                     "Returning rule hash " MODULE_DATA_STR " at %p.",
+                     "Returning rule hash at %p.",
                      *rule_data);
 
     return rc;

@@ -6,6 +6,19 @@ IronBee Changes
 IronBee v0.7.0
 --------------
 
+**Engine**
+
+* `ib_tx_t::data` has changed from a generic hash to an array indexed by   
+  module index.  This change puts it in line with per-module engine data and 
+  per-module context data.  `ib_tx_data_set()` and `ib_tx_data_get()` can be
+  used by modules to read/write this data.  
+
+**Modules**
+
+* ac and pcre have been updated to use the new tx data API.
+
+**Other**
+
 * Removed FTRACE code.
 
 IronBee v0.6.0

@@ -25,6 +25,7 @@
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
 
+#include <ironbee/array.h>
 #include <ironbee/clock.h>
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
@@ -213,7 +214,7 @@ struct ib_tx_t {
     void               *sctx;            /**< Server context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
     ib_provider_inst_t *epi;             /**< Log event provider instance */
-    ib_hash_t          *data;            /**< Generic data store */
+    ib_array_t         *data;            /**< Per-module data */
     ib_fctl_t          *fctl;            /**< Transaction filter controller */
     ib_timeval_t       tv_created;       /**< Tx created time value */
     struct {

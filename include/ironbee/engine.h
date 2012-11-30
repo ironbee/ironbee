@@ -671,6 +671,34 @@ ib_status_t DLL_PUBLIC ib_tx_create(ib_tx_t **ptx,
                                     void *sctx);
 
 /**
+ * Get per-module per-transaction data.
+ *
+ * @param[in]  tx     Transaction.
+ * @param[in]  module Module.
+ * @param[out] data Data.
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_tx_get_data(
+    const ib_tx_t *tx,
+    const ib_module_t *m,
+    void **data
+);
+
+/**
+ * Set per-module per-transaction data.
+ *
+ * @param[in] tx     Transaction.
+ * @param[in] module Module.
+ * @param[in] data Data.
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_tx_set_data(
+    const ib_tx_t *tx,
+    const ib_module_t *m,
+    void *data
+);
+
+/**
  * Set transaction flags.
  *
  * @param tx Transaction structure

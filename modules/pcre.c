@@ -51,9 +51,6 @@
 #define MODULE_NAME        pcre
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
-/* Name that a hash of tx-specific data is stored under in @c tx->data. */
-#define HASH_NAME_STR      MODULE_NAME_STR "_HASH"
-
 /* How many matches will PCRE find and populate. */
 #define MATCH_MAX 10
 
@@ -1051,7 +1048,7 @@ static ib_status_t dfa_operator_create(ib_engine_t *ib,
 }
 
 /**
- * Get or create an ib_hash_t inside of @c tx->data for storing dfa rule data.
+ * Get or create an ib_hash_t inside of @c tx for storing dfa rule data.
  *
  * The hash is stored at the key @c HASH_NAME_STR.
  *
@@ -1073,32 +1070,29 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
     ib_status_t rc;
 
     /* Get or create the hash that contains the rule data. */
-    rc = ib_hash_get(tx->data, hash, HASH_NAME_STR);
+    rc = ib_tx_get_data(tx, IB_MODULE_STRUCT_PTR, (void **)hash);
     if ( (rc == IB_OK) && (*hash != NULL) ) {
-        ib_log_debug2_tx(tx, "Found rule data hash in tx data named "
-                         "\""HASH_NAME_STR "\"");
+        ib_log_debug2_tx(tx, "Found rule data hash in tx.");
         return IB_OK;
     }
 
-    ib_log_debug2_tx(tx, "Rule data hash did not exist in tx data.");
-    ib_log_debug2_tx(tx, "Creating rule data hash \""HASH_NAME_STR"\"");
+    ib_log_debug2_tx(tx, "Rule data hash did not exist in tx.");
 
     rc = ib_hash_create(hash, tx->mp);
     if (rc != IB_OK) {
-        ib_log_debug2_tx(tx, "Failed to create hash \""HASH_NAME_STR"\": %s",
+        ib_log_debug2_tx(tx, "Failed to create hash: %s",
                          ib_status_to_string(rc));
         return rc;
     }
 
-    rc = ib_hash_set(tx->data, HASH_NAME_STR, *hash);
+    rc = ib_tx_set_data(tx, IB_MODULE_STRUCT_PTR, *hash);
     if (rc != IB_OK) {
-        ib_log_debug2_tx(tx, "Failed to store hash \""HASH_NAME_STR"\": %s",
+        ib_log_debug2_tx(tx, "Failed to store hash: %s",
                          ib_status_to_string(rc));
         *hash = NULL;
     }
 
-    ib_log_debug2_tx(tx, "Returning rule hash \""HASH_NAME_STR"\" at %p.",
-                     *hash);
+    ib_log_debug2_tx(tx, "Returning rule hash at %p.", *hash);
 
     return rc;
 

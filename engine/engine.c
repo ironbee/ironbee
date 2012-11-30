@@ -30,6 +30,7 @@
 
 #include "state_notify_private.h"
 
+#include <ironbee/array.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/core.h>
@@ -837,8 +838,8 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     ++conn->tx_count;
     ib_tx_generate_id(tx, tx->mp);
 
-    /* Create the generic data store. */
-    rc = ib_hash_create_nocase(&(tx->data), tx->mp);
+    /* Create the per-module data data store. */
+    rc = ib_array_create(&(tx->data), tx->mp, 16, 8);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
@@ -902,6 +903,33 @@ failed:
     tx = NULL;
 
     return rc;
+}
+
+ib_status_t ib_tx_get_data(
+    const ib_tx_t *tx,
+    const ib_module_t *m,
+    void **data
+)
+{
+  assert(tx != NULL);
+  assert(m != NULL);
+  assert(data != NULL);
+
+  ib_status_t rc = ib_array_get(tx->data, m->idx, data);
+  return rc;
+}
+
+ib_status_t DLL_PUBLIC ib_tx_set_data(
+    const ib_tx_t *tx,
+    const ib_module_t *m,
+    void *data
+)
+{
+  assert(tx != NULL);
+  assert(m != NULL);
+
+  ib_status_t rc = ib_array_setn(tx->data, m->idx, data);
+  return rc;
 }
 
 void ib_tx_destroy(ib_tx_t *tx)
