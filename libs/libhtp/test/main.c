@@ -228,7 +228,7 @@ int main_dir(int argc, char** argv) {
     //run_directory("/home/ivanr/work/traces/run3/", cfg);
 
     htp_config_destroy(cfg);
-    
+
     return 0;
 }
 
@@ -367,7 +367,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     printf("After: %s\n\n", str);
     free(str);
     bstr_free(&path);
-    
+
     return 0;
 }
 
@@ -440,7 +440,7 @@ int main_utf8_decoder_tests(int argc, char** argv) {
     }
 
     bstr_free(&path);
-    
+
     return 0;
 }
 
@@ -809,7 +809,7 @@ int main_path_tests(int argc, char** argv) {
 
     printf("\n");
     printf("Total tests: %i, %i failure(s).\n", tests, failures);
-    
+
     return 0;
 }
 
@@ -856,7 +856,7 @@ int main_multipart1(int argc, char** argv) {
     // "\nx5555x"
     // "\r"
     // "\n--x6666x"
-    
+
     return 0;
 }
 
