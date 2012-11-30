@@ -811,6 +811,14 @@ static void print_field(const char *label,
         break;
     }
 
+    case IB_FTYPE_FLOAT :        /**< Floating point value */
+    {
+        ib_float_t n;
+        ib_field_value(field, ib_ftype_float_out(&n));
+        printf( "  %s = %LG\n", label, (long double)n );
+        break;
+    }
+
     case IB_FTYPE_NULSTR :       /**< NUL terminated string value */
     {
         const char *s;
@@ -965,6 +973,7 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
         switch (field->type) {
             case IB_FTYPE_GENERIC:
             case IB_FTYPE_NUM:
+            case IB_FTYPE_FLOAT:
             case IB_FTYPE_NULSTR:
             case IB_FTYPE_BYTESTR:
                 fullpath = build_path(path, field);
