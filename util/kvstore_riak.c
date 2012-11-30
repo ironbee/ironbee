@@ -15,6 +15,8 @@
  * limitations under the License.
  ****************************************************************************/
 
+#include "ironbee_config_auto.h"
+
 #include <ironbee/kvstore_riak.h>
 
 #include <ctype.h>
