@@ -344,7 +344,7 @@ static size_t membuffer_writefunction(
             return 0;
         }
 
-        /* Avoid situtations where buffer is null. */
+        /* Avoid situations where buffer is null. */
         if (mb->buffer) {
             if (mb->read > 0) {
                 memcpy(buffer_tmp, mb->buffer, mb->read);
@@ -410,7 +410,7 @@ static size_t membuffer_readfunction(
 }
 
 /**
- * Allocates new string using kvstore->malloc represending a riak key url.
+ * Allocates new string using kvstore->malloc representing a riak key url.
  *
  * Caller should free this with kvstore->free.
  *
@@ -623,7 +623,7 @@ static ib_status_t kvget(
 
         /* Count the siblings returned in the buffer. */
         for (size_t i = 0; resp_buffer.buffer[i] != '\0'; ++i) {
-            /* Every sibling etag is preceeded by a '\n' */
+            /* Every sibling etag is preceded by a '\n' */
             if (resp_buffer.buffer[i] == '\n' &&
                 i + 1 < resp_buffer.read &&
                 isalpha(resp_buffer.buffer[i+1]))
