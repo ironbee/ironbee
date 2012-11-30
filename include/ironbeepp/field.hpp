@@ -42,7 +42,6 @@
 #include <boost/type_traits/is_convertible.hpp>
 #include <boost/type_traits/is_float.hpp>
 #include <boost/type_traits/is_signed.hpp>
-#include <boost/type_traits/is_unsigned.hpp>
 
 #include <ostream>
 
@@ -397,22 +396,6 @@ public:
     );
 
     /**
-     * Create unsigned number field.
-     *
-     * @param[in] pool        Pool to use for memory allocation.
-     * @param[in] name        Name of key.
-     * @param[in] name_length Length of @a name.
-     * @param[in] value       Value of field.
-     * @throws IronBee++ exception on any error.
-     **/
-    static Field create_unsigned_number(
-        MemoryPool  pool,
-        const char* name,
-        size_t      name_length,
-        uint64_t    value
-    );
-
-    /**
      * Create float field.
      *
      * @param[in] pool        Pool to use for memory allocation.
@@ -529,21 +512,6 @@ public:
     );
 
     /**
-     * Create Unsigned Number alias.
-     *
-     * @param[in] pool        Pool to use for memory allocation.
-     * @param[in] name        Name of key.
-     * @param[in] name_length Length of @a name.
-     * @param[in] value       Where to store value.
-     **/
-    static Field create_alias_unsigned_number(
-         MemoryPool  pool,
-         const char* name,
-         size_t      name_length,
-         uint64_t&   value
-    );
-
-    /**
      * Create Float alias.
      *
      * @param[in] pool        Pool to use for memory allocation.
@@ -623,10 +591,6 @@ public:
     typedef boost::function<
         int64_t(ConstField, const char*, size_t)
     > number_get_t;
-    //! Unsigned Number field getter.
-    typedef boost::function<
-        uint64_t(ConstField, const char*, size_t)
-    > unsigned_number_get_t;
     //! Float field getter.
     typedef boost::function<
         long double(ConstField, const char*, size_t)
@@ -644,10 +608,6 @@ public:
     typedef boost::function<
         void(Field, const char*, size_t, int64_t)
     > number_set_t;
-    //! Unsigned Number field setter.
-    typedef boost::function<
-        void(Field, const char*, size_t, uint64_t)
-    > unsigned_number_set_t;
     //! Float field setter.
     typedef boost::function<
         void(Field, const char*, size_t, long double)
@@ -668,15 +628,6 @@ public:
         size_t       name_length,
         number_get_t get,
         number_set_t set
-    );
-
-    //! As create_unsigned_number() but with dynamic setter/getter.
-    static Field create_dynamic_unsigned_number(
-        MemoryPool            pool,
-        const char*           name,
-        size_t                name_length,
-        unsigned_number_get_t get,
-        unsigned_number_set_t set
     );
 
     //! As create_float() but with dynamic setter/getter.
@@ -747,16 +698,6 @@ public:
     //! Set (signed) number value -- dynamic.
     void set_number(int64_t value, const char* arg, size_t arg_length) const;
 
-    //! Set unsigned number value.
-    void set_unsigned_number(uint64_t value) const;
-    //! Set unsigned number value -- dynamic.
-    void set_unsigned_number(uint64_t value, const std::string& arg) const;
-    //! Set unsigned number value -- dynamic.
-    void set_unsigned_number(
-        uint64_t value,
-        const char* arg, size_t arg_length
-    ) const;
-
     //! Set float value.
     void set_float(long double value) const;
     //! Set float value -- dynamic.
@@ -821,8 +762,6 @@ public:
 
     //! Number mutable value accessor.
     int64_t& mutable_value_as_number() const;
-    //! Unsigned number mutable value accessor.
-    uint64_t& mutable_value_as_unsigned_number() const;
     //! Unsigned number mutable value accessor.
     long double& mutable_value_as_float() const;
     //! Null string mutable value accessor.
