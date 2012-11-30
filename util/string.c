@@ -142,32 +142,40 @@ ib_status_t ib_string_to_float(const char *s, ib_float_t *result)
     IB_FTRACE_INIT();
 
     char *endptr;
+    const char *send;
+    ib_float_t val;
+    size_t len;
+
+    *result = 0.0;
 
     /* Check for zero length string */
     if ( (s == NULL) || (*s == '\0') ) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
-    *result = strtold(s, &endptr);
+    /* Get the length */
+    len = strlen(s);
+    send = s + len;
 
-    if ( *result == 0 ) {
-        /* No conversion possible. */
-        if ( endptr == s ) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
+    errno = 0;
+    val = strtold(s, &endptr);
 
-        /* Underflow would occur. */
-        if ( errno == ERANGE ) {
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
-        }
-    }
-
-    /* Overflow would occur. */
-    if ( ( *result == HUGE_VALL || *result == -HUGE_VALL ) && errno == ERANGE) {
+    /* Conversion failed */
+    if (endptr != send) {
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
 
+    /* Check for Underflow would occur. */
+    if ( (val == 0.0) && (errno == ERANGE) ) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
 
+    /* Overflow would occur. */
+    if ( ((val == HUGE_VALL) || (val == -HUGE_VALL)) && (errno == ERANGE)) {
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+
+    *result = val;
     IB_FTRACE_RET_STATUS(IB_OK);
 }
 
