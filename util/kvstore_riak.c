@@ -44,8 +44,6 @@ typedef struct membuffer_t membuffer_t;
  */
 static void cleanup_membuffer(membuffer_t *membuffer)
 {
-    IB_FTRACE_INIT();
-
     membuffer->size = 0;
     membuffer->read = 0;
 
@@ -55,8 +53,6 @@ static void cleanup_membuffer(membuffer_t *membuffer)
             membuffer->buffer,
             membuffer->kvstore->free_cbdata);
     }
-
-    IB_FTRACE_RET_VOID();
 }
 
 /**
@@ -80,8 +76,6 @@ typedef struct riak_headers_t riak_headers_t;
  */
 static void cleanup_riak_headers(riak_headers_t *riak_headers)
 {
-    IB_FTRACE_INIT();
-
     riak_headers->status = 0;
 
     if (riak_headers->content_type) {
@@ -102,8 +96,6 @@ static void cleanup_riak_headers(riak_headers_t *riak_headers)
             riak_headers->x_riak_vclock,
             riak_headers->kvstore->free_cbdata);
     }
-
-    IB_FTRACE_RET_VOID();
 }
 
 /**
@@ -129,8 +121,6 @@ static ib_status_t http_to_kvstore_value(
     riak_headers_t *headers,
     ib_kvstore_value_t *value)
 {
-    IB_FTRACE_INIT();
-
     assert(kvstore);
     assert(riak);
     assert(response);
@@ -143,7 +133,7 @@ static ib_status_t http_to_kvstore_value(
         response->read,
         kvstore->malloc_cbdata);
     if (!value->value) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     memcpy(value->value, response->buffer, response->read);
     value->value_length = response->read;
@@ -158,14 +148,14 @@ static ib_status_t http_to_kvstore_value(
             kvstore,
             value->value,
             kvstore->free_cbdata);
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     strcpy(value->type, headers->content_type);
 
     /* Copy Expiration */
     // TODO - sam
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -188,17 +178,16 @@ static ib_status_t cond_copy_header(
     size_t ptr_len,
     char **dest)
 {
-    IB_FTRACE_INIT();
 
     size_t header_len = strlen(header);
     size_t value_len;
 
     if (ptr_len <= header_len) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     if (strncmp(ptr, header, header_len)) {
-        IB_FTRACE_RET_STATUS(IB_EINVAL);
+        return IB_EINVAL;
     }
 
     value_len = ptr_len - header_len;
@@ -208,13 +197,13 @@ static ib_status_t cond_copy_header(
         value_len + 1,
         kvstore->malloc_cbdata);
     if (dest == NULL) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     memcpy(*dest, ptr, value_len);
     dest[value_len] = '\0';
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -234,7 +223,6 @@ static struct curl_slist* build_custom_headers(
     ib_kvstore_riak_server_t *riak,
     ib_kvstore_value_t *value)
 {
-    IB_FTRACE_INIT();
 
     assert(kvstore);
     assert(riak);
@@ -258,7 +246,7 @@ static struct curl_slist* build_custom_headers(
         slist = curl_slist_append(slist, header);
     }
 
-    IB_FTRACE_RET_PTR((struct curl_slist *), (slist));
+    return slist;
 }
 
 /**
@@ -270,7 +258,6 @@ static size_t riak_header_capture(
     size_t nmemb,
     void *userdata)
 {
-    IB_FTRACE_INIT();
 
     char *cptr = ptr;
     ib_status_t rc;
@@ -319,7 +306,7 @@ static size_t riak_header_capture(
     }
 
 exit:
-    IB_FTRACE_RET_SIZET(size * nmemb);
+    return size * nmemb;
 }
 
 /**
@@ -339,7 +326,6 @@ static size_t membuffer_writefunction(
     size_t nmemb,
     void *userdata)
 {
-    IB_FTRACE_INIT();
 
     membuffer_t *mb = (membuffer_t *)userdata;
     ib_kvstore_t *kvstore = mb->kvstore;
@@ -353,7 +339,7 @@ static size_t membuffer_writefunction(
             new_size,
             kvstore->malloc_cbdata);
         if (!buffer_tmp) {
-            IB_FTRACE_RET_SIZET(0);
+            return 0;
         }
 
         /* Avoid situtations where buffer is null. */
@@ -372,7 +358,7 @@ static size_t membuffer_writefunction(
     memcpy(mb->buffer + mb->read, ptr, size * nmemb);
     mb->read += size * nmemb;
 
-    IB_FTRACE_RET_SIZET(size * nmemb);
+    return size * nmemb;
 }
 
 /**
@@ -398,7 +384,6 @@ static size_t membuffer_readfunction(
     size_t nmemb,
     void *userdata)
 {
-    IB_FTRACE_INIT();
 
     assert(ptr);
     assert(userdata);
@@ -419,7 +404,7 @@ static size_t membuffer_readfunction(
         mb->read += len;
     }
 
-    IB_FTRACE_RET_SIZET(len);
+    return len;
 }
 
 /**
@@ -438,7 +423,6 @@ static char * build_key_url(
     ib_kvstore_riak_server_t *riak,
     const ib_kvstore_key_t *key)
 {
-    IB_FTRACE_INIT();
 
     assert(kvstore);
     assert(riak);
@@ -454,37 +438,33 @@ static char * build_key_url(
         url_len + 1,
         kvstore->malloc_cbdata);
     if (!url) {
-        IB_FTRACE_RET_PTR((char *), NULL);
+        return NULL;
     }
 
     snprintf(url, url_len, "%s/keys/%s", riak->bucket_url, (char *)key->key);
 
-    IB_FTRACE_RET_PTR((char *), url);
+    return url;
 }
 
 static void * mp_malloc(ib_kvstore_t *kvstore,
                         size_t size,
                         ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
 
     assert(kvstore);
 
     ib_kvstore_riak_server_t *riak =
         (ib_kvstore_riak_server_t *)kvstore->server; 
 
-    IB_FTRACE_RET_PTR((void *), ib_mpool_alloc(riak->mp, size));
+    return ib_mpool_alloc(riak->mp, size);
 }
 
 static void mp_free(ib_kvstore_t *kvstore,
                     void *ptr,
                     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
 
     /* Nop - the memory pool is released by the user. */
-
-    IB_FTRACE_RET_VOID();
 }
 
 /**
@@ -497,7 +477,6 @@ static ib_status_t riak_get(
     membuffer_t *resp_buffer,
     riak_headers_t *riak_headers)
 {
-    IB_FTRACE_INIT();
 
     CURLcode curl_rc;
 
@@ -519,13 +498,13 @@ static ib_status_t riak_get(
     /* Set url. */
     curl_rc = curl_easy_setopt(riak->curl, CURLOPT_URL, url);
     if (curl_rc) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
     /* Use HTTP GET. */
     curl_rc = curl_easy_setopt(riak->curl, CURLOPT_HTTPGET, 1);
     if (curl_rc) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
     curl_rc = curl_easy_setopt(
@@ -533,12 +512,12 @@ static ib_status_t riak_get(
         CURLOPT_WRITEFUNCTION,
         membuffer_writefunction);
     if (curl_rc) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
     curl_rc = curl_easy_setopt(riak->curl, CURLOPT_WRITEDATA, resp_buffer);
     if (curl_rc) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
     curl_rc = curl_easy_setopt(
@@ -546,12 +525,12 @@ static ib_status_t riak_get(
         CURLOPT_HEADERFUNCTION,
         &riak_header_capture);
     if (curl_rc) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
     curl_rc = curl_easy_setopt(riak->curl, CURLOPT_WRITEHEADER, riak_headers);
     if (curl_rc) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
     header_list = build_custom_headers(kvstore, riak, NULL);
@@ -561,7 +540,7 @@ static ib_status_t riak_get(
             CURLOPT_HTTPHEADER,
             header_list);
         if (curl_rc) {
-            IB_FTRACE_RET_STATUS(IB_EOTHER);
+            return IB_EOTHER;
         }
     }
 
@@ -574,10 +553,10 @@ static ib_status_t riak_get(
     }
 
     if (curl_rc) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 static ib_status_t kvget(
@@ -587,7 +566,6 @@ static ib_status_t kvget(
     size_t *values_length,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_status_t rc;
     ib_kvstore_riak_server_t *riak;
     char *url;
@@ -721,7 +699,7 @@ exit:
     
     curl_easy_reset(riak->curl);
     kvstore->free(kvstore, url, kvstore->free_cbdata);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t kvset(
@@ -731,7 +709,6 @@ static ib_status_t kvset(
     ib_kvstore_value_t *value,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
 
     char *url;
     ib_status_t rc;
@@ -872,7 +849,7 @@ exit:
     
     curl_easy_reset(riak->curl);
     kvstore->free(kvstore, url, kvstore->free_cbdata);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 
 static ib_status_t kvremove(
@@ -880,7 +857,6 @@ static ib_status_t kvremove(
     const ib_kvstore_key_t *key,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
 
     assert(kvstore);
     assert(key);
@@ -915,44 +891,39 @@ static ib_status_t kvremove(
 exit:
     curl_easy_reset(riak->curl);
     kvstore->free(kvstore, url, kvstore->free_cbdata);
-    IB_FTRACE_RET_STATUS(rc);
+    return rc;
 }
 static ib_status_t kvconnect(
     ib_kvstore_server_t *server,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_kvstore_riak_server_t *riak =
         (ib_kvstore_riak_server_t *)server; 
     riak->curl = curl_easy_init();
     if (!riak->curl) {
-        IB_FTRACE_RET_STATUS(IB_EOTHER);
+        return IB_EOTHER;
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 static ib_status_t kvdisconnect(
     ib_kvstore_server_t *server,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_kvstore_riak_server_t *riak =
         (ib_kvstore_riak_server_t *)server; 
     curl_easy_cleanup(riak->curl);
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 static void kvdestroy(
     ib_kvstore_t *kvstore,
     ib_kvstore_cbdata_t *cbdata)
 {
-    IB_FTRACE_INIT();
     ib_kvstore_riak_server_t *riak =
         (ib_kvstore_riak_server_t *)kvstore->server; 
 
     kvstore->free(kvstore, riak->riak_url, kvstore->free_cbdata);
     kvstore->free(kvstore, riak->bucket_url, kvstore->free_cbdata);
     kvstore->free(kvstore, riak->bucket, kvstore->free_cbdata);
-
-    IB_FTRACE_RET_VOID();
 }
 
 ib_status_t ib_kvstore_riak_init(
@@ -961,7 +932,6 @@ ib_status_t ib_kvstore_riak_init(
     const char *bucket,
     ib_mpool_t *mp)
 {
-    IB_FTRACE_INIT();
 
     assert(kvstore);
     assert(riak_url);
@@ -972,7 +942,7 @@ ib_status_t ib_kvstore_riak_init(
 
     rc = ib_kvstore_init(kvstore);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* If the user gave us a memory pool, use memory pools allocator. */
@@ -996,7 +966,7 @@ ib_status_t ib_kvstore_riak_init(
        server->riak_url_len + 1,
        kvstore->malloc_cbdata);
     if (!server->riak_url) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
     snprintf(server->riak_url, server->riak_url_len, "%s", riak_url);
 
@@ -1005,7 +975,7 @@ ib_status_t ib_kvstore_riak_init(
        server->bucket_len + 1,
        kvstore->malloc_cbdata);
     if (!server->bucket) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
         kvstore->free(kvstore, server->riak_url, kvstore->free_cbdata);
     }
     snprintf(server->bucket, server->bucket_len, "%s", bucket);
@@ -1015,7 +985,7 @@ ib_status_t ib_kvstore_riak_init(
        server->riak_url_len + server->bucket_len + 2,
        kvstore->malloc_cbdata);
     if (!server->bucket_url) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
         kvstore->free(kvstore, server->riak_url, kvstore->free_cbdata);
         kvstore->free(kvstore, server->bucket, kvstore->free_cbdata);
     }
@@ -1027,7 +997,7 @@ ib_status_t ib_kvstore_riak_init(
         bucket);
 
     if (!server) {
-        IB_FTRACE_RET_STATUS(IB_EALLOC);
+        return IB_EALLOC;
     }
 
     kvstore->server = (ib_kvstore_server_t *)server;
@@ -1049,29 +1019,23 @@ ib_status_t ib_kvstore_riak_init(
     kvstore->merge_policy_cbdata = NULL;
     kvstore->destroy_cbdata = NULL;
 
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 void ib_kvstore_riak_set_vlcock(ib_kvstore_t *kvstore, const char *vclock) {
-    IB_FTRACE_INIT();
     ((ib_kvstore_riak_server_t *)kvstore->server)->vclock = vclock;
-    IB_FTRACE_RET_VOID();
 }
 
 void ib_kvstore_riak_set_etag(ib_kvstore_t *kvstore, const char *etag) {
-    IB_FTRACE_INIT();
     ((ib_kvstore_riak_server_t *)kvstore->server)->etag = etag;
-    IB_FTRACE_RET_VOID();
 }
 
 const char * ib_kvstore_riak_get_vlcock(ib_kvstore_t *kvstore) {
-    IB_FTRACE_INIT();
     const char *c = ((ib_kvstore_riak_server_t *)kvstore->server)->vclock;
-    IB_FTRACE_RET_PTR((const char *), c);
+    return c;
 }
 
 const char * ib_kvstore_riak_get_etag(ib_kvstore_t *kvstore) {
-    IB_FTRACE_INIT();
     const char *c = ((ib_kvstore_riak_server_t *)kvstore->server)->etag;
-    IB_FTRACE_RET_PTR((const char *), c);
+    return c;
 }

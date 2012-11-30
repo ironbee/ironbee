@@ -20,7 +20,6 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/debug.h>
 #include <ironbee/kvstore.h>
 #include <ironbee/mpool.h>
 #include <ironbee/types.h>
