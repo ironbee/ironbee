@@ -235,7 +235,7 @@ static struct curl_slist* build_custom_headers(
         snprintf(header, buffer_len, VCLOCK ": %s", riak->vclock);
         slist = curl_slist_append(slist, header);
     }
-        
+
     if (riak->etag) {
         snprintf(header, buffer_len, ETAG ": %s", riak->etag);
         slist = curl_slist_append(slist, header);
@@ -372,7 +372,7 @@ static size_t membuffer_writefunction(
  * @param userdata This is the user callback data set. This must be a
  *        membuffer_t *.
  *
- * @returns 
+ * @returns
  *   - 0 Signals that there is no more data to send.
  *   - CURL_READFUNC_PAUSE - This is not used.
  *   - CURL_READFUNC_ABORT - This is not used.
@@ -430,11 +430,11 @@ static char * build_key_url(
 
     char *url;
     size_t url_len;
-    
+
     /* bucket + /keys/ + key */
     url_len = riak->bucket_url_len + 6 + key->length;
     url = kvstore->malloc(
-        kvstore, 
+        kvstore,
         url_len + 1,
         kvstore->malloc_cbdata);
     if (!url) {
@@ -454,7 +454,7 @@ static void * mp_malloc(ib_kvstore_t *kvstore,
     assert(kvstore);
 
     ib_kvstore_riak_server_t *riak =
-        (ib_kvstore_riak_server_t *)kvstore->server; 
+        (ib_kvstore_riak_server_t *)kvstore->server;
 
     return ib_mpool_alloc(riak->mp, size);
 }
@@ -487,7 +487,7 @@ static ib_status_t riak_get(
     resp_buffer->read = 0;
     resp_buffer->size = 0;
     resp_buffer->buffer = NULL;
-    
+
     /* Callback data for storing the CURL headers. */
     riak_headers->kvstore = kvstore;
     riak_headers->status = 0;
@@ -572,7 +572,7 @@ static ib_status_t kvget(
     membuffer_t resp_buffer;
     riak_headers_t riak_headers;
 
-    riak = (ib_kvstore_riak_server_t *)kvstore->server; 
+    riak = (ib_kvstore_riak_server_t *)kvstore->server;
 
     url = build_key_url(kvstore, riak, key);
 
@@ -696,7 +696,7 @@ exit:
 
     cleanup_membuffer(&resp_buffer);
     cleanup_riak_headers(&riak_headers);
-    
+
     curl_easy_reset(riak->curl);
     kvstore->free(kvstore, url, kvstore->free_cbdata);
     return rc;
@@ -731,15 +731,15 @@ static ib_status_t kvset(
     resp_buffer.size = 0;
     resp_buffer.buffer = NULL;
     resp_buffer.kvstore = kvstore;
-    
+
     /* Callback data for storing the CURL headers. */
     riak_headers.kvstore = kvstore;
     riak_headers.status = 0;
     riak_headers.x_riak_vclock = NULL;
     riak_headers.content_type = NULL;
     riak_headers.etag = NULL;
-    
-    riak = (ib_kvstore_riak_server_t *)kvstore->server; 
+
+    riak = (ib_kvstore_riak_server_t *)kvstore->server;
     rc = IB_OK;
     url = build_key_url(kvstore, riak, key);
 
@@ -846,7 +846,7 @@ exit:
     }
 
     cleanup_riak_headers(&riak_headers);
-    
+
     curl_easy_reset(riak->curl);
     kvstore->free(kvstore, url, kvstore->free_cbdata);
     return rc;
@@ -865,9 +865,9 @@ static ib_status_t kvremove(
     ib_status_t rc;
     CURLcode curl_rc;
     ib_kvstore_riak_server_t *riak;
-    
+
     rc = IB_OK;
-    riak = (ib_kvstore_riak_server_t *)kvstore->server; 
+    riak = (ib_kvstore_riak_server_t *)kvstore->server;
     url = build_key_url(kvstore, riak, key);
 
     curl_rc = curl_easy_setopt(riak->curl, CURLOPT_URL, url);
@@ -898,7 +898,7 @@ static ib_status_t kvconnect(
     ib_kvstore_cbdata_t *cbdata)
 {
     ib_kvstore_riak_server_t *riak =
-        (ib_kvstore_riak_server_t *)server; 
+        (ib_kvstore_riak_server_t *)server;
     riak->curl = curl_easy_init();
     if (!riak->curl) {
         return IB_EOTHER;
@@ -910,7 +910,7 @@ static ib_status_t kvdisconnect(
     ib_kvstore_cbdata_t *cbdata)
 {
     ib_kvstore_riak_server_t *riak =
-        (ib_kvstore_riak_server_t *)server; 
+        (ib_kvstore_riak_server_t *)server;
     curl_easy_cleanup(riak->curl);
     return IB_OK;
 }
@@ -919,7 +919,7 @@ static void kvdestroy(
     ib_kvstore_cbdata_t *cbdata)
 {
     ib_kvstore_riak_server_t *riak =
-        (ib_kvstore_riak_server_t *)kvstore->server; 
+        (ib_kvstore_riak_server_t *)kvstore->server;
 
     kvstore->free(kvstore, riak->riak_url, kvstore->free_cbdata);
     kvstore->free(kvstore, riak->bucket_url, kvstore->free_cbdata);
