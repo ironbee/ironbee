@@ -24,8 +24,9 @@
 #include <ironbee/mpool.h>
 #include <ironbee/types.h>
 
-#include <assert.h>
 #include <curl/curl.h>
+
+#include <assert.h>
 
 /**
  * @file

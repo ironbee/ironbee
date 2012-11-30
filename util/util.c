@@ -27,6 +27,10 @@
 
 #include <ironbee/uuid.h>
 
+#ifdef HAVE_LIBCURL
+#include <curl/curl.h>
+#endif
+
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -34,10 +38,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
-
-#ifdef HAVE_LIBCURL
-#include <curl/curl.h>
-#endif
 
 /* -- Logging -- */
 

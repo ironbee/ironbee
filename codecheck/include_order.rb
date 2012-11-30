@@ -173,6 +173,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<google/protobuf/io/gzip_stream.h>',
   '<google/protobuf/io/zero_copy_stream_impl_lite.h>',
 
+  '<curl/curl.h>',
   '<dslib.h>',
   '<GeoIP.h>',
   '<htp.h>',
