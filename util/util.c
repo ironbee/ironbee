@@ -251,8 +251,8 @@ ib_status_t ib_initialize(void)
     }
 
 #ifdef HAVE_LIBCURL
-    rc = curl_global_init(CURL_GLOBAL_ALL);
-    if (rc) {
+    CURLcode crc = curl_global_init(CURL_GLOBAL_ALL);
+    if (crc) {
         return IB_EOTHER;
     }
 #endif
