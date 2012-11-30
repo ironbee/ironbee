@@ -1315,7 +1315,7 @@ static ib_status_t print_geoip(
     rc = ib_data_get(tx->dpi, "GEOIP", &req);
     if ( (req == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx, "print_geoip: No GeoIP info available" );
-        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
+        IB_FTRACE_RET_STATUS(IB_OK);
     }
 
     /* The field value *should* be a list, extract it as such */
