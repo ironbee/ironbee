@@ -7,6 +7,12 @@
 %define _release 1
 %endif
 
+# Default: DO NOT build the httpd module
+%bcond_with httpd
+
+# Default: DO build the trafficserver module
+%bcond_without trafficserver
+
 %define prefix   /usr
 
 Summary:        IronBee WAF Base files and cli tool
@@ -19,8 +25,15 @@ Source0:        %{name}-%{version}.tar.gz
 URL:            http://www.ironbee.com
 
 BuildRequires: autoconf, automake, libtool, gcc, gcc-c++ 
-BuildRequires: pcre-devel, zlib-devel, libxml2-devel, httpd-devel 
+BuildRequires: pcre-devel, zlib-devel, libxml2-devel
+
+%if %{with trafficserver}
 BuildRequires: trafficserver-devel >= 3.1.4
+%endif
+
+%if %{with httpd}
+BuildRequires: httpd-devel 
+%endif
 
 %description
 Universal web application security sensor intended for real-time
@@ -33,6 +46,7 @@ Group: Development/Libraries
 %description devel
 Ironbee Development files.
 
+%if %{with trafficserver}
 %package trafficserver 
 Summary: IronBee Apache Trafficserver Plugin 
 Group: Applications/Internet
@@ -40,7 +54,9 @@ Requires: %{name} = %{version}-%{release}, trafficserver
 
 %description trafficserver 
 Ironbee Apache Trafficserver Plugin
+%endif
 
+%if %{with httpd}
 %package httpd
 Summary: IronBee Apache HTTPD Plugin
 Group: Applications/Internet
@@ -48,6 +64,7 @@ Requires: %{name} = %{version}-%{release}, httpd
 
 %description httpd 
 Ironbee Apache HTTPD Plugin
+%endif
 
 %prep
 %setup -q
@@ -59,7 +76,20 @@ Ironbee Apache HTTPD Plugin
 unset CFLAGS
 unset CXXFLAGS
 unset FFLAGS
-%{_configure} --host=%{_host} --build=%{_build} \
+%if %{with trafficserver}
+%define ts_flags --with-trafficserver
+%else
+%define ts_flags --without-trafficserver
+%endif
+
+%if %{with httpd}
+%define httpd_flags --with-httpd
+%else
+%define httpd_flags --without-httpd
+%endif
+
+%{_configure} %{ts_flags} %{httpd_flags} \
+	--host=%{_host} --build=%{_build} \
         --program-prefix=%{?_program_prefix} \
         --prefix=%{_prefix} \
         --exec-prefix=%{_exec_prefix} \
@@ -77,14 +107,11 @@ unset FFLAGS
 make %{?_smp_mflags}
 
 %install
-echo $RPM_BUILD_ROOT
 rm -rf $RPM_BUILD_ROOT
 %makeinstall
 
-# The clean section  is only needed for EPEL and Fedora < 13
-# http://fedoraproject.org/wiki/PackagingGuidelines#.25clean
 %clean
-rm -rf $RPM_BUILD_ROOT
+
 
 %files
 %attr(0755,root,root) %{_libdir}/libhtp-*.so.*
@@ -136,12 +163,16 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644,root,root) %{_includedir}/ironautomata/*
 %attr(0644,root,root) %{_includedir}/ironbeepp/*
 
+%if %{with trafficserver}
 %files trafficserver
 %attr(0644,root,root) %{_sysconfdir}/ironbee-trafficserver.conf.example
 %attr(0755,root,root) %{_libdir}/ts_ironbee.so
 %attr(0755,root,root) %{_libdir}/libloader.so
+%endif
 
+%if %{with httpd}
 %files httpd
 %attr(0644,root,root) %{_sysconfdir}/ironbee-httpd.conf.example
 %attr(0755,root,root) %{_libdir}/mod_ironbee.so
+%endif
 

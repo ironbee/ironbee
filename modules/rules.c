@@ -62,14 +62,6 @@
 IB_MODULE_DECLARE();
 
 /**
- * Per-context data
- */
-typedef struct {
-    ib_list_t        *initvar_list;  /**< List of fields declared via InitVar */
-} rules_context_cfg_t;
-static rules_context_cfg_t rules_global_cfg = { NULL };
-
-/**
  * Phase lookup table.
  */
 typedef struct {
@@ -1664,205 +1656,6 @@ cleanup:
     return rc;
 }
 
-/**
- * @brief Parse a InitVar directive.
- *
- * @details Register a InitVar directive to the engine.
- *
- * @param[in] cp Configuration parser
- * @param[in] directive The directive name.
- * @param[in] vars The list of variables passed to @c name.
- * @param[in] cbdata User data. Unused.
- */
-static ib_status_t parse_initvar_params(ib_cfgparser_t *cp,
-                                        const char *directive,
-                                        const ib_list_t *vars,
-                                        void *cbdata)
-{
-    ib_status_t rc;
-    ib_status_t rc2;
-    ib_module_t  *mod;
-    rules_context_cfg_t *cfg;
-    ib_mpool_t *mp = ib_engine_pool_main_get(cp->ib);
-    const ib_list_node_t *node;
-    ib_field_t *field = NULL;
-    const char *name;
-    const char *value;
-    ib_num_t num_val;
-    ib_float_t float_val;
-
-    /* Get my module object */
-    rc = ib_engine_module_get(cp->ib, MODULE_NAME_STR, &mod);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to get rule module: %s",
-                         ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Get the context configuration */
-    rc = ib_context_module_config(cp->cur_ctx, mod, &cfg);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to get rule module configuration: %s",
-                         ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Initialize the fields list */
-    if (cfg->initvar_list == NULL) {
-        rc = ib_list_create(&(cfg->initvar_list), mp);
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Failed to create InitVar directive list: %s",
-                             ib_status_to_string(rc));
-            return rc;
-        }
-    }
-
-    /* Get the field name string */
-    node = ib_list_first_const(vars);
-    if ( (node == NULL) || (node->data == NULL) ) {
-        ib_cfg_log_error(cp, "No name specified for InitVar directive");
-        return IB_EINVAL;
-    }
-    name = (const char *)(node->data);
-
-    /* Get the value node */
-    node = ib_list_node_next_const(node);
-    if ( (node == NULL) || (node->data == NULL) ) {
-        ib_cfg_log_error(cp, "No value specified for InitVar directive");
-        return IB_EINVAL;
-    }
-    value = (const char *)(node->data);
-
-    /* Create the field based on whether the value looks like a number or not */
-    rc = ib_string_to_num(value, 0, &num_val);
-    rc2 = ib_string_to_float(value, &float_val);
-    if (rc == IB_OK) {
-        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
-                             IB_FTYPE_NUM, ib_ftype_num_in(&num_val));
-    }
-    else if (rc2 == IB_OK) {
-        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
-                             IB_FTYPE_FLOAT, ib_ftype_float_in(&float_val));
-    }
-    else {
-        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
-                             IB_FTYPE_NULSTR, ib_ftype_nulstr_in(value));
-    }
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Error creating field for InitVar: %s",
-                         ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Add the field to the list */
-    rc = ib_list_push(cfg->initvar_list, field);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "InitVar: Error pushing value on list: %s",
-                         ib_status_to_string(rc));
-        return rc;
-    }
-    if (field->type == IB_FTYPE_NUM) {
-        ib_cfg_log_debug(cp,
-                         "InitVar: Created numeric field \"%s\" %ld "
-                         "for context \"%s\"",
-                         name, (long int)num_val,
-                         ib_context_full_get(cp->cur_ctx));
-    }
-    else if (field->type == IB_FTYPE_FLOAT) {
-        ib_cfg_log_debug(cp,
-                         "InitVar: Created float field \"%s\" %f "
-                         "for context \"%s\"",
-                         name, (double)num_val,
-                         ib_context_full_get(cp->cur_ctx));
-    }
-    else {
-        ib_cfg_log_debug(cp,
-                         "InitVar:Created string field \"%s\" \"%s\" "
-                         "for context \"%s\"",
-                         name, value, ib_context_full_get(cp->cur_ctx));
-    }
-
-    /* Done */
-    return IB_OK;
-}
-
-/**
- * Handle events for the InitVar directive
- *
- * Walks through the list of fields defined for this context by the InitVar
- * directives, and populates the transaction's DPI with copies.
- *
- * @param[in] ib IronBee object
- * @param[in] event Event type
- * @param[in,out] tx Transaction object
- * @param[in] data Callback data (not used)
- *
- * @returns Status code
- */
-static ib_status_t initvar_event_handler(ib_engine_t *ib,
-                                         ib_tx_t *tx,
-                                         ib_state_event_type_t event,
-                                         void *data)
-{
-    assert(ib != NULL);
-    assert(tx != NULL);
-    assert(event == handle_context_tx_event);
-
-    ib_module_t  *mod;
-    rules_context_cfg_t *cfg;
-    const ib_list_node_t *node;
-    ib_status_t rc = IB_OK;
-
-    /* Get my module object */
-    rc = ib_engine_module_get(ib, MODULE_NAME_STR, &mod);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to get rule module: %s",
-                        ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Get the context configuration */
-    rc = ib_context_module_config(tx->ctx, mod, &cfg);
-    if (rc != IB_OK) {
-        ib_log_error_tx(tx, "Failed to get rule module configuration: %s",
-                        ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* If list is NULL, we're done */
-    if (cfg->initvar_list == NULL) {
-        ib_log_debug_tx(tx, "No InitVars for defined for context \"%s\"",
-                        ib_context_full_get(tx->ctx));
-        return IB_OK;
-    }
-
-    /* Loop through the list */
-    ib_log_debug_tx(tx, "Creating %zd InitVar fields for context \"%s\"",
-                    ib_list_elements(cfg->initvar_list),
-                    ib_context_full_get(tx->ctx));
-    IB_LIST_LOOP_CONST(cfg->initvar_list, node) {
-        const ib_field_t *field =
-            (const ib_field_t *)ib_list_node_data_const(node);
-        ib_field_t *newf;
-
-        rc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
-        if (rc != IB_OK) {
-            ib_log_debug_tx(tx, "Failed to copy field: %d", rc);
-            continue;
-        }
-        rc = ib_data_add(tx->dpi, newf);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI",
-                            (int)field->nlen, field->name);
-        }
-        ib_log_trace_tx(tx, "InitVar: Created field \"%.*s\" (type %s)",
-                        (int)field->nlen, field->name,
-                        ib_field_type_name(field->type));
-    }
-
-    return rc;
-}
-
 static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
 
     /* Give the config parser a callback for the Rule and RuleExt directive */
@@ -1905,12 +1698,6 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
     IB_DIRMAP_INIT_LIST(
         "Action",
         parse_action_params,
-        NULL
-    ),
-
-    IB_DIRMAP_INIT_LIST(
-        "InitVar",
-        parse_initvar_params,
         NULL
     ),
 
@@ -2054,15 +1841,6 @@ static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         return rc;
     }
 
-    /* Register the rules header_finished callback */
-    rc = ib_hook_tx_register(ib,
-                             handle_context_tx_event,
-                             initvar_event_handler,
-                             NULL);
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Hook register returned %d", rc);
-    }
-
     return IB_OK;
 }
 
@@ -2084,7 +1862,7 @@ static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,           /* Default metadata */
     MODULE_NAME_STR,                     /* Module name */
-    IB_MODULE_CONFIG(&rules_global_cfg), /* Global config data */
+    IB_MODULE_CONFIG_NULL,               /* Global config data */
     NULL,                                /* Configuration field map */
     rules_directive_map,                 /* Config directive map */
     rules_init,                          /* Initialize function */

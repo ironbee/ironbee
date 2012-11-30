@@ -2974,6 +2974,71 @@ static ib_status_t dpi_default_init(ib_engine_t *ib, ib_tx_t *tx)
 /* -- Core Hook Handlers -- */
 
 /**
+ * Handle the transaction context selected
+ *
+ * @param ib Engine.
+ * @param tx Transaction.
+ * @param event Event type.
+ * @param cbdata Callback data.
+ *
+ * @returns Status code.
+ */
+static ib_status_t core_hook_context_tx(ib_engine_t *ib,
+                                        ib_tx_t *tx,
+                                        ib_state_event_type_t event,
+                                        void *cbdata)
+{
+    assert(event == handle_context_tx_event);
+
+    ib_core_cfg_t *corecfg;
+    ib_status_t rc;
+
+    rc = ib_context_module_config(tx->ctx, ib_core_module(),
+                                  (void *)&corecfg);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(tx,
+                        "Failure accessing core module: %s",
+                        ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Handle InitVar list */
+    if (corecfg->initvar_list == NULL) {
+        ib_log_debug_tx(tx, "No InitVars for defined for context \"%s\"",
+                        ib_context_full_get(tx->ctx));
+    }
+    else {
+        const ib_list_node_t *node;
+        IB_LIST_LOOP_CONST(corecfg->initvar_list, node) {
+            const ib_field_t *field =
+                (const ib_field_t *)ib_list_node_data_const(node);
+            ib_field_t *newf;
+
+            rc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
+            if (rc != IB_OK) {
+                ib_log_debug_tx(tx, "Failed to copy field: %d", rc);
+                continue;
+            }
+            rc = ib_data_add(tx->dpi, newf);
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI",
+                                (int)field->nlen, field->name);
+            }
+            else {
+                ib_log_trace_tx(tx, "InitVar: Created field \"%.*s\" (type %s)",
+                                (int)field->nlen, field->name,
+                                ib_field_type_name(field->type));
+            }
+        }
+        ib_log_debug_tx(tx, "Created %zd InitVar fields for context \"%s\"",
+                        ib_list_elements(corecfg->initvar_list),
+                        ib_context_full_get(tx->ctx));
+    }
+
+    return IB_OK;
+}
+
+/**
  * Handle the transaction starting.
  *
  * Create the transaction provider instances.  And setup placeholders
@@ -3451,7 +3516,10 @@ static ib_status_t core_location_open(ib_cfgparser_t *cp,
 {
     assert(cp != NULL);
     assert(location != NULL);
+
     ib_status_t rc;
+    ib_core_cfg_t *site_cfg;
+    ib_core_cfg_t *location_cfg;
 
     if (core_data->cur_location != NULL) {
         return IB_EUNKNOWN;
@@ -3459,6 +3527,39 @@ static ib_status_t core_location_open(ib_cfgparser_t *cp,
 
     rc = ib_ctxsel_location_open(cp->ib, location);
     core_data->cur_location = location;
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_context_module_config(location->site->context, ib_core_module(),
+                                  (void *)&site_cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_context_module_config(location->context, ib_core_module(),
+                                  (void *)&location_cfg);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Copy the InitVar list from the site context */
+    if (site_cfg->initvar_list != NULL) {
+        const ib_list_node_t *node;
+
+        rc = ib_list_create(&(location_cfg->initvar_list),
+                            location->context->mp);
+        if (rc != IB_OK) {
+            return rc;
+        }
+        IB_LIST_LOOP_CONST(site_cfg->initvar_list, node) {
+            assert(node->data != NULL);
+            rc = ib_list_push(location_cfg->initvar_list, node->data);
+            if (rc != IB_OK) {
+                return rc;
+            }
+        }
+    }
+
     return rc;
 }
 
@@ -4434,6 +4535,106 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
     return IB_EINVAL;
 }
 
+/**
+ * @brief Parse a InitVar directive.
+ *
+ * @details Register a InitVar directive to the engine.
+ *
+ * @param[in] cp Configuration parser
+ * @param[in] directive The directive name.
+ * @param[in] name 1st parameter to InitVar
+ * @param[in] value 2nd parameter to InitVar
+ * @param[in] cbdata User data. Unused.
+ */
+static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
+                                    const char *directive,
+                                    const char *name,
+                                    const char *value,
+                                    void *cbdata)
+{
+    assert(cp != NULL);
+    assert(directive != NULL);
+    assert(name != NULL);
+    assert(value != NULL);
+
+    ib_status_t rc;
+    ib_status_t rc2;
+    ib_mpool_t *mp = cp->cur_ctx->mp;
+    ib_core_cfg_t *corecfg;
+    ib_num_t num_val;
+    ib_float_t float_val;
+    ib_field_t *field;
+
+    /* Get the core module config. */
+    rc = ib_context_module_config(cp->cur_ctx, ib_core_module(),
+                                  (void *)&corecfg);
+    if (rc != IB_OK) {
+        corecfg = &core_global_cfg;
+    }
+
+    /* Initialize the fields list */
+    if (corecfg->initvar_list == NULL) {
+        rc = ib_list_create(&(corecfg->initvar_list), mp);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp, "Failed to create InitVar directive list: %s",
+                             ib_status_to_string(rc));
+            return rc;
+        }
+    }
+
+    /* Create the field based on whether the value looks like a number or not */
+    rc = ib_string_to_num(value, 0, &num_val);
+    rc2 = ib_string_to_float(value, &float_val);
+    if (rc == IB_OK) {
+        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
+                             IB_FTYPE_NUM, ib_ftype_num_in(&num_val));
+    }
+    else if (rc2 == IB_OK) {
+        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
+                             IB_FTYPE_FLOAT, ib_ftype_float_in(&float_val));
+    }
+    else {
+        rc = ib_field_create(&field, mp, IB_FIELD_NAME(name),
+                             IB_FTYPE_NULSTR, ib_ftype_nulstr_in(value));
+    }
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Error creating field for InitVar: %s",
+                         ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Add the field to the list */
+    rc = ib_list_push(corecfg->initvar_list, field);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "InitVar: Error pushing value on list: %s",
+                         ib_status_to_string(rc));
+        return rc;
+    }
+    if (field->type == IB_FTYPE_NUM) {
+        ib_cfg_log_debug(cp,
+                         "InitVar: Created numeric field \"%s\" %ld "
+                         "for context \"%s\"",
+                         name, (long int)num_val,
+                         ib_context_full_get(cp->cur_ctx));
+    }
+    else if (field->type == IB_FTYPE_FLOAT) {
+        ib_cfg_log_debug(cp,
+                         "InitVar: Created float field \"%s\" %f "
+                         "for context \"%s\"",
+                         name, (double)num_val,
+                         ib_context_full_get(cp->cur_ctx));
+    }
+    else {
+        ib_cfg_log_debug(cp,
+                         "InitVar:Created string field \"%s\" \"%s\" "
+                         "for context \"%s\"",
+                         name, value, ib_context_full_get(cp->cur_ctx));
+    }
+
+    /* Done */
+    return IB_OK;
+}
+
 
 /**
  * Mapping of valid debug log levels to numerical value
@@ -4716,6 +4917,13 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         core_debuglog_levels_map
     ),
 
+    /* TX DPI Initializers */
+    IB_DIRMAP_INIT_PARAM2(
+        "InitVar",
+        core_dir_initvar,
+        NULL
+    ),
+
     /* End */
     IB_DIRMAP_INIT_LAST
 };
@@ -4872,6 +5080,8 @@ static ib_status_t core_init(ib_engine_t *ib,
                         filter_ctl_config, fbuffer);
 
     /* Register hooks. */
+    ib_hook_tx_register(ib, handle_context_tx_event,
+                        core_hook_context_tx, NULL);
     ib_hook_conn_register(ib, conn_started_event,
                           core_hook_conn_started, NULL);
     ib_hook_tx_register(ib, tx_started_event,

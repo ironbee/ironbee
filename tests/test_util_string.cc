@@ -31,6 +31,7 @@
 #include "gtest/gtest-spi.h"
 
 #include <stdexcept>
+#include <math.h>
 
 class TestIBUtilStringToNum : public ::testing::Test
 {
@@ -60,7 +61,8 @@ public:
         EXPECT_EQ(rc, estatus)
             << "Line " << line << ": Conversion of '" << s
             << "' base10=" << base
-            << " failed; rc=" << rc;
+            << " failed; rc=" << rc
+            << " (" << ib_status_to_string(rc) << ")";
     }
 
     void RunTest(int line,
@@ -77,13 +79,15 @@ public:
             EXPECT_EQ(rc, IB_OK)
                 << "Line " << line << ": "
                 << "Conversion of '" << s << "' base10="<< base
-                << " failed; rc=" << rc;
+                << " failed; rc=" << rc
+                << " (" << ib_status_to_string(rc) << ")";
         }
         else {
             EXPECT_EQ(rc, estatus)
                 << "Line " << line << ": "
                 << "Conversion of '" << s << "' base=" << base
-                << " expected status " << estatus << " returned "<< rc;
+                << " expected status " << estatus << " returned "<< rc
+                << " (" << ib_status_to_string(rc) << ")";
         }
 
         if (rc == IB_OK) {
@@ -93,6 +97,45 @@ public:
                 << " expected value=" << expected << " result="<< result;
         }
     }
+
+    void RunTest(int line,
+                 const char *s,
+                 ib_status_t estatus)
+    {
+        ib_status_t rc;
+        ib_float_t result;
+        rc = ::ib_string_to_float(s, &result);
+        EXPECT_EQ(rc, estatus)
+            << "Line " << line << ": Conversion of '" << s << "'"
+            << " failed; rc=" << rc
+            << " (" << ib_status_to_string(rc) << ")";
+    }
+
+    void RunTest(int line,
+                 const char *s,
+                 ib_float_t expected)
+    {
+        ib_status_t rc;
+        ib_float_t result;
+
+        rc = ::ib_string_to_float(s, &result);
+        if (result != IB_OK) {
+            EXPECT_EQ(rc, IB_OK)
+                << "Line " << line << ": "
+                << "Conversion of '" << s << "' failed; rc=" << rc
+                << " (" << ib_status_to_string(rc) << ")";
+        }
+        else {
+            ib_num_t range = fabs(expected * 0.001);
+            bool iseq = ( (result >= expected - range) &&
+                          (result <= expected + range) );
+            EXPECT_TRUE(iseq)
+                << "Line " << line << ": "
+                << "Conversion of '" << s
+                << "' expected value=" << expected << " result="<< result;
+        }
+    }
+
 };
 
 /* -- Tests -- */
@@ -242,7 +285,7 @@ TEST_F(TestIBUtilStringToNum, test_string_to_num_overflow)
 #endif
 }
 
-/// @test Test util string library - convert string to number : error detection
+/// @test Test util string library - convert string to number : normal
 TEST_F(TestIBUtilStringToNum, test_string_to_num)
 {
     RunTest(__LINE__, "0",       0,   0);
@@ -359,6 +402,78 @@ TEST_F(TestIBUtilStringToNum, test_string_to_num)
     RunTest(__LINE__, "+99999",  8,   IB_EINVAL);
     RunTest(__LINE__, "+99999",  10,  99999);
     RunTest(__LINE__, "+99999",  16,  0x99999);
+}
+
+/// @test Test util string library - convert string to float : error detection
+TEST_F(TestIBUtilStringToNum, test_string_to_float_errors)
+{
+    RunTest(__LINE__, " ",           IB_EINVAL);
+    RunTest(__LINE__, "",            IB_EINVAL);
+    RunTest(__LINE__, ":",           IB_EINVAL);
+    RunTest(__LINE__, "x",           IB_EINVAL);
+    RunTest(__LINE__, "-",           IB_EINVAL);
+    RunTest(__LINE__, "+",           IB_EINVAL);
+    RunTest(__LINE__, "0x",          IB_EINVAL);
+    RunTest(__LINE__, "0",           IB_OK);
+    RunTest(__LINE__, "8",           IB_OK);
+    RunTest(__LINE__, "0x0",         IB_OK);
+    RunTest(__LINE__, "08",          IB_OK);
+    RunTest(__LINE__, "-1",          IB_OK);
+    RunTest(__LINE__, "+1",          IB_OK);
+    RunTest(__LINE__, "01",          IB_OK);
+    RunTest(__LINE__, "0x100",       IB_OK);
+    RunTest(__LINE__, "-0x1",        IB_OK);
+    RunTest(__LINE__, "+0x1",        IB_OK);
+    RunTest(__LINE__, "0.0",         IB_OK);
+    RunTest(__LINE__, "0.1",         IB_OK);
+    RunTest(__LINE__, "1.0",         IB_OK);
+    RunTest(__LINE__, "1000.0",      IB_OK);
+    RunTest(__LINE__, "-0.0",        IB_OK);
+    RunTest(__LINE__, "-0.1",        IB_OK);
+    RunTest(__LINE__, "-1.0",        IB_OK);
+    RunTest(__LINE__, "-1000.0",     IB_OK);
+    RunTest(__LINE__, "+0.0",        IB_OK);
+    RunTest(__LINE__, "+0.1",        IB_OK);
+    RunTest(__LINE__, "+1.0",        IB_OK);
+    RunTest(__LINE__, "+1000.0",     IB_OK);
+    RunTest(__LINE__, "0.0.0",       IB_EINVAL);
+    RunTest(__LINE__, "0.0.1",       IB_EINVAL);
+    RunTest(__LINE__, "192.168.1.2", IB_EINVAL);
+    RunTest(__LINE__, "-0.0.0",      IB_EINVAL);
+    RunTest(__LINE__, "+0.0.0",      IB_EINVAL);
+}
+
+/// @test Test util string library - convert string to float - normal
+TEST_F(TestIBUtilStringToNum, test_string_to_float)
+{
+    RunTest(__LINE__, "0",        0.0);
+    RunTest(__LINE__, "0.0",      0.0);
+    RunTest(__LINE__, "0.1",      0.1);
+    RunTest(__LINE__, "0.0001",   0.0001);
+    RunTest(__LINE__, "1",        1.0);
+    RunTest(__LINE__, "10",       10.0);
+    RunTest(__LINE__, "100",      100.0);
+
+    RunTest(__LINE__, "07",       7.0);
+    RunTest(__LINE__, "0377",     377.0);
+    RunTest(__LINE__, "0177777",  177777.0);
+
+    RunTest(__LINE__, "0x100",    0x100.0p0);
+    RunTest(__LINE__, "0xf",      0xf.0p0);
+    RunTest(__LINE__, "0xff",     0xff.0p0);
+    RunTest(__LINE__, "0xffff",   0xffff.0p0);
+
+    RunTest(__LINE__, "+1",       1.0);
+    RunTest(__LINE__, "-1",      -1.0);
+    RunTest(__LINE__, "+0",       0.0);
+    RunTest(__LINE__, "-0",       0.0);
+    RunTest(__LINE__, "9",        9.0);
+    RunTest(__LINE__, "-10",     -10.0);
+    RunTest(__LINE__, "+10",      10.0);
+
+    RunTest(__LINE__, "99999",    99999.0);
+    RunTest(__LINE__, "-99999",  -99999.0);
+    RunTest(__LINE__, "+99999",   99999.0);
 }
 
 class TestIBUtilStrEx : public ::testing::Test
