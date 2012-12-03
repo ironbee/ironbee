@@ -247,6 +247,12 @@ if test "$enable_lua" != "no" ; then
     AC_DEFINE([ENABLE_LUA], [1], [Lua rules enabled.])
 fi
 
+### Integration Tests
+integration_tests="no"
+AC_ARG_WITH([integration-tests],
+            [  --with-integration-tests],
+            [integration_tests="yes"],[integration_tests="no"])
+
 ### Ragel
 AC_ARG_WITH([ragel],
             [  --with-ragel=PROG ragel executable],
@@ -561,6 +567,10 @@ AC_CONFIG_FILES([docs/docbook/manual/fop.xconf])
 
 # TODO: Conditional on unit testing
 AC_CONFIG_FILES([tests/Makefile])
+
+if test "$integration_tests" != "no"; then
+AC_CONFIG_FILES([tests/integration/Makefile])
+fi
 
 # pkg-config
 AC_CONFIG_FILES([ironbee.pc])
