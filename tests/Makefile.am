@@ -34,8 +34,10 @@ endif
 endif
 
 SUBDIRS =
+DIST_SUBDIRS  =
 if INTEGRATION_TESTS
 SUBDIRS += integration
+DIST_SUBDIRS += integration
 endif
 
 LDFLAGS += $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
