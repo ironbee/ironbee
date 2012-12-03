@@ -1,5 +1,4 @@
 <IfModule ironbee_module>
-    LogLevel debug
-    IronBeeEnable on
-    IronBeeConfig /usr/local/ironbee/etc/ironbee.conf
+    IronbeeConfigFile /usr/local/ironbee/etc/ironbee-httpd.conf
+    IronbeeRawHeaders On
 </IfModule>
