@@ -1070,7 +1070,7 @@ int ib_kvstore_riak_ping(ib_kvstore_t *kvstore) {
         return 0;
     }
     sprintf(url, "%s/ping", riak->riak_url);
-    
+
     rc = riak_get(kvstore, riak, url, &resp, &headers);
     if (rc != IB_OK) {
         result = 0;
