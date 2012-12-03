@@ -17,7 +17,7 @@ if test -z "$version_file"; then
   exit 1
 fi
 if test -f $version_file; then
-  source ./$version_file
+  . ./$version_file
 else
   echo "Version file $version_file not found"
   exit 1
