@@ -281,8 +281,8 @@ fi
 DOXYGEN=$doxygen
 
 DOXYGEN_DIRS="include util engine modules automata"
-EXTERNAL_DOXYGEN_FILES=`cd $srcdir;find -E $DOXYGEN_DIRS -type f -regex '.*\.(h|hpp|hh)'`
-INTERNAL_DOXYGEN_FILES=`cd $srcdir;find -E $DOXYGEN_DIRS -type f -regex '.*\.(h|hpp|c|cpp|cc)'`
+EXTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp'`
+INTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' -o -name '*.cc'`
 DOXYGEN_INPUT=""
 DOXYGEN_TOP=`cd $srcdir;pwd`
 for dir in $DOXYGEN_DIRS; do
