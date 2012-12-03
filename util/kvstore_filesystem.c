@@ -77,7 +77,7 @@ static ib_status_t build_key_path(
     ib_kvstore_t *kvstore,
     const ib_kvstore_key_t *key,
     uint32_t expiration,
-    char *type,
+    const char *type,
     size_t type_len,
     char **path)
 {
@@ -109,7 +109,7 @@ static ib_status_t build_key_path(
         + type_len               /* type. */
         + 1                      /* '\0' */;
 
-    char *path_tmp = (char *) kvstore->malloc(
+    char *path_tmp = kvstore->malloc(
         kvstore,
         path_size+1,
         kvstore->malloc_cbdata);
@@ -233,7 +233,7 @@ static ib_status_t read_whole_file(
         return IB_EOTHER;
     }
 
-    dataptr = (char *)kvstore->malloc(
+    dataptr = kvstore->malloc(
         kvstore,
         sb.st_size,
         kvstore->malloc_cbdata);
@@ -291,7 +291,7 @@ static ib_status_t extract_type(
     }
 
     len = strlen(start);
-    *type = (char *) kvstore->malloc(
+    *type = kvstore->malloc(
         kvstore,
         len+1,
         kvstore->malloc_cbdata);
@@ -427,7 +427,7 @@ static ib_status_t load_kv_value(
     return IB_OK;
 }
 
-typedef ib_status_t(*each_dir_t)(const char *path, const char *dirent, void*);
+typedef ib_status_t(*each_dir_t)(const char *path, const char *dirent, void *);
 
 /**
  * Count the entries that do not begin with a dot.

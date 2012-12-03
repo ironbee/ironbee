@@ -201,8 +201,8 @@ struct ib_kvstore_value_t {
  * Key type.
  */
 struct ib_kvstore_key_t {
+    const void *key;
     size_t length;
-    void *key;
 };
 
 /**

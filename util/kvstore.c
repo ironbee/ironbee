@@ -308,7 +308,7 @@ void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key) {
     assert(key);
 
     if (key->key) {
-        kvstore->free(kvstore, key->key, kvstore->free_cbdata);
+        kvstore->free(kvstore, (char *)key->key, kvstore->free_cbdata);
     }
 
     kvstore->free(kvstore, key, kvstore->free_cbdata);
