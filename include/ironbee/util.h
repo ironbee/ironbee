@@ -73,7 +73,7 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  *
  * @internal
  * Implemented in: (self)
- * Tested in: tests/test_util_log.cc
+ * Tested in: tests/test_util_log.cpp
  */
 #define ib_util_log(lvl, ...) \
   ib_util_log_ex((lvl), __FILE__, __LINE__, __VA_ARGS__)
@@ -83,7 +83,7 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  *
  * @internal
  * Implemented in: (self)
- * Tested in: tests/test_util_log.cc
+ * Tested in: tests/test_util_log.cpp
  */
 #define ib_util_log_error(...) \
   ib_util_log_ex(3, __FILE__, __LINE__, __VA_ARGS__)
@@ -94,7 +94,7 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  *
  * @internal
  * Implemented in: (self)
- * Tested in: tests/test_util_log.cc
+ * Tested in: tests/test_util_log.cpp
  */
 #define ib_util_log_debug(...) \
   ib_util_log_ex(7, __FILE__, __LINE__, __VA_ARGS__)
@@ -109,7 +109,7 @@ typedef void (*ib_util_fn_logger_t)(void *cbdata, int level,
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in: tests/test_util_log.cc
+ * Tested in: tests/test_util_log.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_log_level(int level);
 
@@ -120,7 +120,7 @@ ib_status_t DLL_PUBLIC ib_util_log_level(int level);
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in: tests/test_util_log.cc
+ * Tested in: tests/test_util_log.cpp
  */
 int DLL_PUBLIC ib_util_get_log_level(void);
 
@@ -137,7 +137,7 @@ int DLL_PUBLIC ib_util_get_log_level(void);
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in: tests/test_util_log.cc
+ * Tested in: tests/test_util_log.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_log_logger(ib_util_fn_logger_t callback,
                                           void *cbdata);
@@ -149,7 +149,7 @@ ib_status_t DLL_PUBLIC ib_util_log_logger(ib_util_fn_logger_t callback,
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in: tests/test_util_log.cc
+ * Tested in: tests/test_util_log.cpp
  */
 ib_util_fn_logger_t DLL_PUBLIC ib_util_get_log_logger(void);
 
@@ -163,7 +163,7 @@ ib_util_fn_logger_t DLL_PUBLIC ib_util_get_log_logger(void);
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in: tests/test_util_log.cc
+ * Tested in: tests/test_util_log.cpp
  */
 void DLL_PUBLIC ib_util_log_ex(int level,
                                const char *file, int line,
@@ -192,7 +192,7 @@ void DLL_PUBLIC ib_util_log_ex(int level,
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in: tests/test_util_misc.cc
+ * Tested in: tests/test_util_misc.cpp
  */
 uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
                                           const uint8_t *data_in,
@@ -214,7 +214,7 @@ uint8_t DLL_PUBLIC *ib_util_copy_on_write(ib_mpool_t *mp,
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in: tests/test_util_misc.cc
+ * Tested in: tests/test_util_misc.cpp
  */
 void DLL_PUBLIC *ib_util_memdup(ib_mpool_t *mp,
                                 const void *in,
@@ -235,7 +235,7 @@ void DLL_PUBLIC *ib_util_memdup(ib_mpool_t *mp,
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in: tests/test_util_misc.cc
+ * Tested in: tests/test_util_misc.cpp
  */
 FILE DLL_PUBLIC *ib_util_fdup(FILE *fh, const char *mode);
 
@@ -269,7 +269,7 @@ void DLL_PUBLIC ib_shutdown(void);
  *
  * @internal
  * Implemented in: (self)
- * Tested in: tests/test_util_flags.cc
+ * Tested in: tests/test_util_flags.cpp
  */
 bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_any(flags, check) \
@@ -285,7 +285,7 @@ bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
  *
  * @internal
  * Implemented in: (self)
- * Tested in: tests/test_util_flags.cc
+ * Tested in: tests/test_util_flags.cpp
  */
 bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_all(flags, check) \
@@ -301,7 +301,7 @@ bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
  *
  * @internal
  * Implemented in: (self)
- * Tested in: tests/test_util_flags.cc
+ * Tested in: tests/test_util_flags.cpp
  */
 bool ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
 #define ib_flags_set(flags, flags_set) \
@@ -317,7 +317,7 @@ bool ib_flags_set(ib_flags_t flags, ib_flags_t flags_set);
  *
  * @internal
  * Implemented in: (self)
- * Tested in: tests/test_util_flags.cc
+ * Tested in: tests/test_util_flags.cpp
  */
 bool ib_flags_clear(ib_flags_t flags, ib_flags_t flags_clear);
 #define ib_flags_clear(flags, flags_clear) \

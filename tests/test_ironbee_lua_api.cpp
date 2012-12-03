@@ -37,7 +37,7 @@ extern "C" {
 using namespace std;
 
 /**
- * @class IronBeeLuaApi test_ironbee_lua_api.cc test_ironbee_lua_api.cc
+ * @class IronBeeLuaApi test_ironbee_lua_api.cpp test_ironbee_lua_api.cpp
  *
  * Test the IronBee Lua Api.
  *

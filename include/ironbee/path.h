@@ -58,7 +58,7 @@ extern "C" {
  *
  * @internal
  * Implemented in: util/path.c
- * Tested in: tests/test_util_path.cc
+ * Tested in: tests/test_util_path.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_mkpath(
     const char   *path,
@@ -80,7 +80,7 @@ ib_status_t DLL_PUBLIC ib_util_mkpath(
  *
  * @internal
  * Implemented in: util/path.c
- * Tested in: tests/test_util_path.cc
+ * Tested in: tests/test_util_path.cpp
  */
 char DLL_PUBLIC *ib_util_relative_file(
     ib_mpool_t   *mp,
@@ -98,7 +98,7 @@ char DLL_PUBLIC *ib_util_relative_file(
  *
  * @internal
  * Implemented in: util/path.c
- * Tested in: tests/test_util_path.cc
+ * Tested in: tests/test_util_path.cpp
  */
 char DLL_PUBLIC *ib_util_path_join(
     ib_mpool_t   *mp,
@@ -118,7 +118,7 @@ char DLL_PUBLIC *ib_util_path_join(
  *
  * @internal
  * Implemented in: util/path.c
- * Tested in: tests/test_util_path.cc
+ * Tested in: tests/test_util_path.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_normalize_path(
     char         *data,
@@ -140,7 +140,7 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path(
  *
  * @internal
  * Implemented in: util/path.c
- * Tested in: tests/test_util_path.cc
+ * Tested in: tests/test_util_path.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_normalize_path_ex(
     uint8_t      *data,
@@ -164,7 +164,7 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path_ex(
  *
  * @internal
  * Implemented in: util/path.c
- * Tested in: tests/test_util_path.cc
+ * Tested in: tests/test_util_path.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_normalize_path_cow(
     ib_mpool_t     *mp,
@@ -190,7 +190,7 @@ ib_status_t DLL_PUBLIC ib_util_normalize_path_cow(
  *
  * @internal
  * Implemented in: util/path.c
- * Tested in: tests/test_util_path.cc
+ * Tested in: tests/test_util_path.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_normalize_path_cow_ex(
     ib_mpool_t     *mp,

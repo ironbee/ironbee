@@ -29,7 +29,7 @@ extern "C" {
 #include "rules_lua_private.h"
 }
 
-#include "ibtest_util.hh"
+#include "ibtest_util.hpp"
 #include "engine_private.h"
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>

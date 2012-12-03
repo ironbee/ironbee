@@ -693,7 +693,6 @@ INPUT_ENCODING         = UTF-8
 # *.f90 *.f *.for *.vhd *.vhdl
 
 FILE_PATTERNS          = *.h \
-                         *.hh \
                          *.hpp
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories

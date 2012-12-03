@@ -23,7 +23,7 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include "ibtest_util.hh"
+#include "ibtest_util.hpp"
 
 ib_server_t ibt_ibserver = {
    IB_SERVER_HEADER_DEFAULTS,

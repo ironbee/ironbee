@@ -7,7 +7,7 @@ EXCLUDE = [
 
 def all_ironbee_code
   ironbee_dir = File.dirname(File.expand_path(File.dirname(__FILE__)))
-  extensions  = ['.h','.c','.hh','.cc','.hpp','.cpp']
+  extensions  = ['.h','.c','.hpp','.cpp']
 
   raise "Missing block." if ! block_given?
 

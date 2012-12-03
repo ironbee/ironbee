@@ -25,7 +25,7 @@
 #include <ironbee/hash.h>
 
 #include "ironbee_config_auto.h"
-#include "simple_fixture.hh"
+#include "simple_fixture.hpp"
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"

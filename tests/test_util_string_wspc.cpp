@@ -27,8 +27,8 @@
 #include <ironbee/types.h>
 #include <ironbee/string.h>
 
-#include "ibtest_textbuf.hh"
-#include "ibtest_strbase.hh"
+#include "ibtest_textbuf.hpp"
+#include "ibtest_strbase.hpp"
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"

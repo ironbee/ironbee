@@ -60,7 +60,7 @@ $(abs_builddir)/%: $(srcdir)/%
 	fi
 
 if BUILD_RIAK
-test_kvstore_riak_SOURCES = ../test_main.cc test_kvstore_riak.cc
+test_kvstore_riak_SOURCES = ../test_main.cpp test_kvstore_riak.cpp
 test_kvstore_riak_LDADD = $(LDADD)
 endif
 

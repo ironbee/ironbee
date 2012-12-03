@@ -31,7 +31,7 @@
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"
-#include "simple_fixture.hh"
+#include "simple_fixture.hpp"
 
 #include <stdexcept>
 

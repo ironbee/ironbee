@@ -33,7 +33,7 @@
 #include <ironbee/provider.h>
 
 #include "config-parser.h"
-#include "ibtest_util.hh"
+#include "ibtest_util.hpp"
 #include "engine_private.h"
 
 /// @test Test ironbee library - ib_engine_create()

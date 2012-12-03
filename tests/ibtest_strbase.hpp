@@ -30,7 +30,7 @@
 #include <ironbee/types.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
-#include "ibtest_textbuf.hh"
+#include "ibtest_textbuf.hpp"
 
 #include "gtest/gtest.h"
 

@@ -31,9 +31,9 @@
 #include <ironbee/list.h>
 #include <ironbee/escape.h>
 
-#include "ibtest_textbuf.hh"
-#include "ibtest_strbase.hh"
-#include "simple_fixture.hh"
+#include "ibtest_textbuf.hpp"
+#include "ibtest_strbase.hpp"
+#include "simple_fixture.hpp"
 
 #include "gtest/gtest.h"
 #include "gtest/gtest-spi.h"

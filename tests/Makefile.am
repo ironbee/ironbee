@@ -137,37 +137,37 @@ $(abs_builddir)/%: $(srcdir)/%
 	  cp -f $< $@; \
 	fi
 
-test_util_hex_escape_SOURCES = test_util_hex_escape.cc \
-                               test_gtest.cc \
-			       test_main.cc
+test_util_hex_escape_SOURCES = test_util_hex_escape.cpp \
+                               test_gtest.cpp \
+			                   test_main.cpp
 
 # TODO: Get libhtp working w/C++
 # test_util_bytestr
-test_util_unescape_string_SOURCES = test_util_unescape_string.cc \
-                                    test_gtest.cc \
-                                    test_main.cc
+test_util_unescape_string_SOURCES = test_util_unescape_string.cpp \
+                                    test_gtest.cpp \
+                                    test_main.cpp
 
-test_gtest_SOURCES = test_gtest.cc test_main.cc
+test_gtest_SOURCES = test_gtest.cpp test_main.cpp
 
-test_util_types_SOURCES = test_util_types.cc test_main.cc
+test_util_types_SOURCES = test_util_types.cpp test_main.cpp
 
-test_util_flags_SOURCES = test_util_flags.cc test_main.cc
+test_util_flags_SOURCES = test_util_flags.cpp test_main.cpp
 
-test_util_array_SOURCES = test_util_array.cc test_main.cc
+test_util_array_SOURCES = test_util_array.cpp test_main.cpp
 
-test_util_logformat_SOURCES = test_util_logformat.cc test_main.cc
+test_util_logformat_SOURCES = test_util_logformat.cpp test_main.cpp
 
-test_util_hash_SOURCES = test_util_hash.cc test_main.cc
+test_util_hash_SOURCES = test_util_hash.cpp test_main.cpp
 
-test_util_cfgmap_SOURCES = test_util_cfgmap.cc test_main.cc
+test_util_cfgmap_SOURCES = test_util_cfgmap.cpp test_main.cpp
 
-test_util_clock_SOURCES = test_util_clock.cc test_main.cc
+test_util_clock_SOURCES = test_util_clock.cpp test_main.cpp
 
-test_util_lock_SOURCES = test_util_lock.cc test_main.cc
+test_util_lock_SOURCES = test_util_lock.cpp test_main.cpp
 
-test_util_misc_SOURCES = test_util_misc.cc test_main.cc
+test_util_misc_SOURCES = test_util_misc.cpp test_main.cpp
 
-test_util_dso_SOURCES = test_util_dso.cc test_main.cc
+test_util_dso_SOURCES = test_util_dso.cpp test_main.cpp
 test_util_dso_CFLAGS = -rpath $(PWD)
 
 test_util_dso_lib_CFLAGS = \
@@ -178,55 +178,55 @@ libtest_util_dso_lib_la_LDFLAGS = \
 	$(LDFLAGS) @GCC_CHARACTERISTICS_LDFLAGS@ \
 	-shared -version-info 0:0:0 -rpath $(PWD)
 
-test_util_list_SOURCES = test_util_list.cc test_main.cc
+test_util_list_SOURCES = test_util_list.cpp test_main.cpp
 
-test_util_ipset_SOURCES = test_util_ipset.cc test_main.cc
+test_util_ipset_SOURCES = test_util_ipset.cpp test_main.cpp
 
-test_util_ip_SOURCES = test_util_ip.cc test_main.cc
+test_util_ip_SOURCES = test_util_ip.cpp test_main.cpp
 
-test_util_field_SOURCES = test_util_field.cc test_main.cc
+test_util_field_SOURCES = test_util_field.cpp test_main.cpp
 
-test_util_path_SOURCES = test_util_path.cc test_main.cc
+test_util_path_SOURCES = test_util_path.cpp test_main.cpp
 
-test_util_string_SOURCES = test_util_string.cc test_main.cc
+test_util_string_SOURCES = test_util_string.cpp test_main.cpp
 
-test_util_string_lower_SOURCES = test_util_string_lower.cc test_main.cc
+test_util_string_lower_SOURCES = test_util_string_lower.cpp test_main.cpp
 
-test_util_string_trim_SOURCES = test_util_string_trim.cc test_main.cc
+test_util_string_trim_SOURCES = test_util_string_trim.cpp test_main.cpp
 
-test_util_string_wspc_SOURCES = test_util_string_wspc.cc test_main.cc
+test_util_string_wspc_SOURCES = test_util_string_wspc.cpp test_main.cpp
 
-test_util_expand_SOURCES = test_util_expand.cc test_main.cc
+test_util_expand_SOURCES = test_util_expand.cpp test_main.cpp
 
-test_util_escape_SOURCES = test_util_escape.cc test_main.cc
+test_util_escape_SOURCES = test_util_escape.cpp test_main.cpp
 
-test_util_decode_SOURCES = test_util_decode.cc test_main.cc
+test_util_decode_SOURCES = test_util_decode.cpp test_main.cpp
 
-test_util_stream_SOURCES = test_util_stream.cc test_main.cc
+test_util_stream_SOURCES = test_util_stream.cpp test_main.cpp
 
-test_util_log_SOURCES = test_util_log.cc test_main.cc
+test_util_log_SOURCES = test_util_log.cpp test_main.cpp
 test_util_log_LDADD = $(LDADD) -lboost_regex$(BOOST_SUFFIX)
 
-test_util_uuid_SOURCES = test_util_uuid.cc test_main.cc
+test_util_uuid_SOURCES = test_util_uuid.cpp test_main.cpp
 test_util_uuid_CPPFLAGS = $(CPPFLAGS) $(OSSP_UUID_CFLAGS)
 test_util_uuid_LDADD = $(MODULE_TEST_LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIBS)
 
-test_util_ahocorasick_SOURCES = test_util_ahocorasick.cc test_main.cc
+test_util_ahocorasick_SOURCES = test_util_ahocorasick.cpp test_main.cpp
 
-test_util_mpool_SOURCES = test_util_mpool.cc test_main.cc
+test_util_mpool_SOURCES = test_util_mpool.cpp test_main.cpp
 test_util_mpool_LDADD = $(LDADD) -lboost_thread-mt -lboost_system$(BOOST_SUFFIX)
 
-test_engine_SOURCES = test_engine.cc test_main.cc \
-                      test_parsed_content.cc \
-                      ibtest_util.cc
+test_engine_SOURCES = test_engine.cpp test_main.cpp \
+                      test_parsed_content.cpp \
+                      ibtest_util.cpp
 test_engine_LDADD = $(MODULE_TEST_LDADD)
 
-test_config_SOURCES = test_config.cc test_main.cc
+test_config_SOURCES = test_config.cpp test_main.cpp
 test_config_LDADD = $(MODULE_TEST_LDADD)
 
 
-test_module_rules_lua_SOURCES = test_module_rules_lua.cc \
-                                test_main.cc ibtest_util.cc
+test_module_rules_lua_SOURCES = test_module_rules_lua.cpp \
+                                test_main.cpp ibtest_util.cpp
 test_module_rules_lua_CPPFLAGS = $(CPPFLAGS) \
                                  -I$(top_srcdir)/modules \
                                  -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
@@ -242,25 +242,25 @@ test_module_rules_lua_LDADD = $(LDADD) \
                               -lluajit-ironbee \
                               -lm
 
-test_module_ahocorasick_SOURCES = test_module_ahocorasick.cc test_main.cc
+test_module_ahocorasick_SOURCES = test_module_ahocorasick.cpp test_main.cpp
 test_module_ahocorasick_LDADD = $(MODULE_TEST_LDADD)
 test_module_ahocorasick_CPPFLAGS = $(CPPFLAGS) \
                                    -I$(top_srcdir)/modules
 
-test_operator_SOURCES = test_operator.cc test_main.cc
+test_operator_SOURCES = test_operator.cpp test_main.cpp
 test_operator_LDADD = $(MODULE_TEST_LDADD)
 
-test_action_SOURCES = test_action.cc test_core_actions.cc test_main.cc
+test_action_SOURCES = test_action.cpp test_core_actions.cpp test_main.cpp
 test_action_LDADD = $(MODULE_TEST_LDADD)
 
-test_module_pcre_SOURCES = test_module_pcre.cc \
-                           test_module_dfa.cc \
-			   test_main.cc
+test_module_pcre_SOURCES = test_module_pcre.cpp \
+                           test_module_dfa.cpp \
+			   test_main.cpp
 test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
 
-test_luajit_SOURCES = test_main.cc \
-                      test_luajit.cc \
-                      test_ironbee_lua_api.cc
+test_luajit_SOURCES = test_main.cpp \
+                      test_luajit.cpp \
+                      test_ironbee_lua_api.cpp
 test_luajit_CPPFLAGS = $(CPPFLAGS) \
                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                        -I$(top_srcdir)
@@ -270,8 +270,8 @@ test_luajit_LDADD = $(LDADD) \
                     $(top_builddir)/lua/libironbee-lua.la \
                     -lm
 
-test_kvstore_SOURCES = test_main.cc \
-		       test_kvstore.cc
+test_kvstore_SOURCES = test_main.cpp \
+		       test_kvstore.cpp
 test_kvstore_CPPFLAGS = $(CPPFLAGS)
 test_kvstore_LDADD = $(LDADD) \
 		     $(MODULE_TEST_LDADD) \

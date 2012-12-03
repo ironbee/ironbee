@@ -65,7 +65,7 @@ extern "C" {
  *
  * @internal
  * Implemented in: util/escape.c
- * Tested in: tests/test_util_escape.cc
+ * Tested in: tests/test_util_escape.cpp
  */
 ib_status_t ib_string_escape_json_buf_ex(
     const uint8_t *data_in,
@@ -95,7 +95,7 @@ ib_status_t ib_string_escape_json_buf_ex(
  *
  * @internal
  * Implemented in: util/escape.c
- * Tested in: tests/test_util_escape.cc
+ * Tested in: tests/test_util_escape.cpp
  */
 ib_status_t ib_string_escape_json_buf(
     const char *data_in,
@@ -124,7 +124,7 @@ ib_status_t ib_string_escape_json_buf(
  *
  * @internal
  * Implemented in: util/escape.c
- * Tested in: tests/test_util_escape.cc
+ * Tested in: tests/test_util_escape.cpp
  */
 ib_status_t ib_strlist_escape_json_buf(
     const ib_list_t *items,
@@ -153,7 +153,7 @@ ib_status_t ib_strlist_escape_json_buf(
  *
  * @internal
  * Implemented in: util/escape.c
- * Tested in: tests/test_util_escape.cc
+ * Tested in: tests/test_util_escape.cpp
  */
 ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
                                      const uint8_t *data_in,
@@ -178,7 +178,7 @@ ib_status_t ib_string_escape_json_ex(ib_mpool_t *mp,
  *
  * @internal
  * Implemented in: util/escape.c
- * Tested in: tests/test_util_escape.cc
+ * Tested in: tests/test_util_escape.cpp
  */
 ib_status_t ib_string_escape_json(ib_mpool_t *mp,
                                   const char *data_in,
@@ -209,7 +209,7 @@ ib_status_t ib_string_escape_json(ib_mpool_t *mp,
  *
  * @internal
  * Implemented in: util/escape.c
- * Tested in: tests/test_util_hex_escape.cc
+ * Tested in: tests/test_util_hex_escape.cpp
  */
 char DLL_PUBLIC * ib_util_hex_escape(const char *src,
                                      size_t src_len);
@@ -237,7 +237,7 @@ char DLL_PUBLIC * ib_util_hex_escape(const char *src,
  *
  * @internal
  * Implemented in: util/escape.c
- * Tested in: tests/test_util_hex_escape.cc
+ * Tested in: tests/test_util_hex_escape.cpp
  */
 char DLL_PUBLIC * ib_util_hex_escape(const char *src,
                                      size_t src_len);
@@ -289,7 +289,7 @@ char DLL_PUBLIC * ib_util_hex_escape(const char *src,
  *
  * @internal
  * Implemented in: util/util.c
- * Tested in: tests/test_util_unescape_string.cc
+ * Tested in: tests/test_util_unescape_string.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_unescape_string(char *dst,
                                                size_t *dst_len,

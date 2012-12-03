@@ -59,7 +59,7 @@ extern "C" {
  *
  * @internal
  * Implemented in: util/decode.c
- * Tested in: tests/test_util_decode.cc
+ * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url(
     char         *data,
@@ -78,7 +78,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url(
  *
  * @internal
  * Implemented in: util/decode.c
- * Tested in: tests/test_util_decode.cc
+ * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url_ex(
     uint8_t      *data_in,
@@ -100,7 +100,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_ex(
  *
  * @internal
  * Implemented in: util/decode.c
- * Tested in: tests/test_util_decode.cc
+ * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url_cow(
     ib_mpool_t   *mp,
@@ -124,7 +124,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow(
  *
  * @internal
  * Implemented in: util/decode.c
- * Tested in: tests/test_util_decode.cc
+ * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_url_cow_ex(
     ib_mpool_t     *mp,
@@ -145,7 +145,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow_ex(
  *
  * @internal
  * Implemented in: util/decode.c
- * Tested in: tests/test_util_decode.cc
+ * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity(
     char           *data,
@@ -163,7 +163,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity(
  *
  * @internal
  * Implemented in: util/decode.c
- * Tested in: tests/test_util_decode.cc
+ * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity_ex(
     uint8_t        *data,
@@ -184,7 +184,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity_ex(
  *
  * @internal
  * Implemented in: util/decode.c
- * Tested in: tests/test_util_decode.cc
+ * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow(
     ib_mpool_t     *mp,
@@ -208,7 +208,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow(
  *
  * @internal
  * Implemented in: util/decode.c
- * Tested in: tests/test_util_decode.cc
+ * Tested in: tests/test_util_decode.cpp
  */
 ib_status_t DLL_PUBLIC ib_util_decode_html_entity_cow_ex(
     ib_mpool_t     *mp,
