@@ -33,6 +33,11 @@ LDFLAGS += -lpthread
 endif
 endif
 
+SUBDIRS =
+if INTEGRATION_TESTS
+SUBDIRS += integration
+endif
+
 LDFLAGS += $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
 
 # This is a common set of files for runnign tests of modules.

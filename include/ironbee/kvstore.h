@@ -65,14 +65,14 @@ typedef struct ib_kvstore_key_t ib_kvstore_key_t;
  * Connect to the server defined in the kvstore_server_t.
  */
 typedef ib_status_t (*ib_kvstore_connect_fn_t)(
-    ib_kvstore_server_t *,
+    ib_kvstore_t *kvstore,
     ib_kvstore_cbdata_t *cbdata);
 
 /**
  * Disconnect from the server defined in the kvstore_server_t.
  */
 typedef ib_status_t (*ib_kvstore_disconnect_fn_t)(
-    ib_kvstore_server_t *,
+    ib_kvstore_t *kvstore,
     ib_kvstore_cbdata_t *cbdata);
 
 /**

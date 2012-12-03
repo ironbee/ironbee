@@ -33,7 +33,7 @@ LDFLAGS += -lpthread
 endif
 endif
 
-LDFLAGS += $(PCRE_LDFLAGS) $(BOOST_LDFLAGS)
+LDFLAGS += $(BOOST_LDFLAGS)
 
 # Point the module base path to the modules build dir
 CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \

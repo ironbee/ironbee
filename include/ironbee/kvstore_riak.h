@@ -36,7 +36,7 @@
  */
 
 /**
- * @ingroup IronBeeKeyValueStore Key-Value Filesystem Store
+ * @addtogroup IronBeeKeyValueStore
  * @ingroup IronBeeUtil
  * @{
  */
@@ -110,6 +110,13 @@ const char * ib_kvstore_riak_get_vlcock(ib_kvstore_t *kvstore);
  * @returns The current value of kvstore->etag.
  */
 const char * ib_kvstore_riak_get_etag(ib_kvstore_t *kvstore);
+
+/**
+ * Check if the server is reachable.
+ * @param[in] kvstore The Key-Value store.
+ * @returns True if the server is reachable, False if it is not for any reason.
+ */
+int ib_kvstore_riak_ping(ib_kvstore_t *kvstore);
 
  /**
   * @}

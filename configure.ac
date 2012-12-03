@@ -252,6 +252,7 @@ integration_tests="no"
 AC_ARG_WITH([integration-tests],
             [  --with-integration-tests],
             [integration_tests="yes"],[integration_tests="no"])
+AM_CONDITIONAL([INTEGRATION_TESTS], test "${integration_test}" = "yes"])
 
 ### Ragel
 AC_ARG_WITH([ragel],

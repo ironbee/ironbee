@@ -29,7 +29,7 @@
  */
 
 /**
- * @ingroup IronBeeKeyValueStore Key-Value Filesystem Store
+ * @addtogroup IronBeeKeyValueStore
  * @ingroup IronBeeUtil
  * @{
  */

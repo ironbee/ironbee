@@ -179,10 +179,10 @@ eother_failure:
 }
 
 static ib_status_t kvconnect(
-    ib_kvstore_server_t *server,
+    ib_kvstore_t *kvstore,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(server);
+    assert(kvstore);
 
     /* Nop. */
 
@@ -190,10 +190,10 @@ static ib_status_t kvconnect(
 }
 
 static ib_status_t kvdisconnect(
-    ib_kvstore_server_t *server,
+    ib_kvstore_t *kvstore,
     ib_kvstore_cbdata_t *cbdata)
 {
-    assert(server);
+    assert(kvstore);
 
     /* Nop. */
 
