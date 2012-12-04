@@ -693,7 +693,7 @@ ib_status_t DLL_PUBLIC ib_tx_get_data(
  * @returns Status code.
  */
 ib_status_t DLL_PUBLIC ib_tx_set_data(
-    const ib_tx_t *tx,
+    ib_tx_t *tx,
     const ib_module_t *m,
     void *data
 );
