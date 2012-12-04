@@ -31,11 +31,11 @@
 #ifndef __IBPP__PARSED_NAME_VALUE__
 #define __IBPP__PARSED_NAME_VALUE__
 
-#include <ironbeepp/throw.hpp>
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/byte_string.hpp>
 #include <ironbeepp/common_semantics.hpp>
+#include <ironbeepp/throw.hpp>
 #include <ironbeepp/transaction.hpp>
 
 #include <ironbee/parsed_content.h>

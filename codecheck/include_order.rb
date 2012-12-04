@@ -33,6 +33,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/connection.hpp>',
   '<ironbeepp/connection_data.hpp>',
   '<ironbeepp/context.hpp>',
+  '<ironbeepp/c_trampoline.hpp>',
   '<ironbeepp/data.hpp>',
   '<ironbeepp/engine.hpp>',
   '<ironbeepp/exception.hpp>',

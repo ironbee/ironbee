@@ -99,9 +99,9 @@
 #ifndef __IBPP__MODULE_BOOTSTRAP__
 #define __IBPP__MODULE_BOOTSTRAP__
 
-#include <ironbeepp/catch.hpp>
 
 #include <ironbeepp/abi_compatibility.hpp>
+#include <ironbeepp/catch.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/module.hpp>

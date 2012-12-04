@@ -27,16 +27,16 @@
 #ifndef __IBPP__MODULE__
 #define __IBPP__MODULE__
 
-#include <ironbeepp/data.hpp>
-#include <ironbeepp/throw.hpp>
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
 #include <ironbeepp/configuration_map.hpp>
 #include <ironbeepp/context.hpp>
+#include <ironbeepp/data.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/memory_pool.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
