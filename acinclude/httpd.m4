@@ -11,7 +11,7 @@ AC_DEFUN([CHECK_HTTPD],
 
 AC_ARG_WITH(
     httpd,
-    [AC_HELP_STRING([--with-httpd],[enable support for Apache HTTPD module])],
+    [AC_HELP_STRING([--with-httpd],[enable support for Apache HTTPD module, use --with-apxs to specify location])],
     [with_httpd_server="${with_httpd}"],
     [with_httpd_server="yes"])
     
