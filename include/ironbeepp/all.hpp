@@ -27,6 +27,7 @@
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/byte_string.hpp>
+#include <ironbeepp/catch.hpp>
 #include <ironbeepp/clock.hpp>
 #include <ironbeepp/configuration_directives.hpp>
 #include <ironbeepp/configuration_map.hpp>
@@ -35,6 +36,7 @@
 #include <ironbeepp/connection_data.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/c_trampoline.hpp>
+#include <ironbeepp/data.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/field.hpp>
@@ -53,5 +55,6 @@
 #include <ironbeepp/site.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/transaction_data.hpp>
+#include <ironbeepp/throw.hpp>
 
 #endif
