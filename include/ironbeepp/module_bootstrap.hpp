@@ -99,7 +99,7 @@
 #ifndef __IBPP__MODULE_BOOTSTRAP__
 #define __IBPP__MODULE_BOOTSTRAP__
 
-#include <ironbeepp/internal/catch.hpp>
+#include <ironbeepp/catch.hpp>
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/context.hpp>
@@ -311,7 +311,7 @@ ib_module_t* IB_MODULE_SYM(ib_engine_t* ib) \
         on_load(::IronBee::Module(&ib_module)); \
     } \
     catch (...) { \
-        ::IronBee::Internal::convert_exception(); \
+        ::IronBee::convert_exception(); \
         return NULL; \
     } \
     return &ib_module; \

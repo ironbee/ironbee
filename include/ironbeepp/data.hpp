@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ Internals -- Data
+ * @brief IronBee++ -- Data
  *
  * This file provides data_to_value() and value_to_data(), functions that
  * enable the storage of C++ data in void*'s with appropriate destructors
@@ -34,8 +34,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP__INTERNAL__DATA__
-#define __IBPP__INTERNAL__DATA__
+#ifndef __IBPP__DATA__
+#define __IBPP__DATA__
 
 #include <ironbeepp/exception.hpp>
 
@@ -44,6 +44,7 @@
 #include <boost/any.hpp>
 
 namespace IronBee {
+
 namespace Internal {
 
 extern "C" {
@@ -57,6 +58,8 @@ extern "C" {
 void data_cleanup(void* data);
 
 } // extern "C"
+
+} // Internal
 
 /**
  * Convert a @c void* generated with value_to_data() to a @a ValueType.
@@ -113,7 +116,7 @@ void* value_to_data(
     if (mpool) {
         ib_mpool_cleanup_register(
             mpool,
-            data_cleanup,
+            Internal::data_cleanup,
             reinterpret_cast<void*>(value_any)
         );
     }
@@ -121,7 +124,6 @@ void* value_to_data(
     return reinterpret_cast<void*>(value_any);
 }
 
-} // Internal
 } // IronBee
 
 #endif

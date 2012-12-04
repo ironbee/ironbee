@@ -6,9 +6,9 @@
 #include <ironbeepp/parsed_name_value.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_response_line.hpp>
-#include <ironbeepp/internal/catch.hpp>
-#include <ironbeepp/internal/throw.hpp>
-#include <ironbeepp/internal/data.hpp>
+#include <ironbeepp/catch.hpp>
+#include <ironbeepp/throw.hpp>
+#include <ironbeepp/data.hpp>
 
 namespace IronBee {
 
@@ -34,13 +34,13 @@ ib_status_t null(
     assert(cbdata != NULL);
 
     try {
-        Internal::data_to_value<HooksRegistrar::null_t>(cbdata)(
+        data_to_value<HooksRegistrar::null_t>(cbdata)(
             Engine(ib_engine),
             static_cast<Engine::state_event_e>(event)
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -69,7 +69,7 @@ ib_status_t header_data(
     assert(cbdata != NULL);
 
     try {
-        Internal::data_to_value<HooksRegistrar::header_data_t>(cbdata)(
+        data_to_value<HooksRegistrar::header_data_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
@@ -77,7 +77,7 @@ ib_status_t header_data(
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -107,7 +107,7 @@ ib_status_t request_line(
     assert(cbdata != NULL);
 
     try {
-        Internal::data_to_value<HooksRegistrar::request_line_t>(cbdata)(
+        data_to_value<HooksRegistrar::request_line_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
@@ -115,7 +115,7 @@ ib_status_t request_line(
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -145,7 +145,7 @@ ib_status_t response_line(
     assert(cbdata != NULL);
 
     try {
-        Internal::data_to_value<HooksRegistrar::response_line_t>(cbdata)(
+        data_to_value<HooksRegistrar::response_line_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
@@ -153,7 +153,7 @@ ib_status_t response_line(
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -180,14 +180,14 @@ ib_status_t connection(
     assert(cbdata != NULL);
 
     try {
-        Internal::data_to_value<HooksRegistrar::connection_t>(cbdata)(
+        data_to_value<HooksRegistrar::connection_t>(cbdata)(
             Engine(ib_engine),
             static_cast<Engine::state_event_e>(event),
             Connection(ib_connection)
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -214,14 +214,14 @@ ib_status_t connection_data(
     assert(cbdata != NULL);
 
     try {
-        Internal::data_to_value<HooksRegistrar::connection_data_t>(cbdata)(
+        data_to_value<HooksRegistrar::connection_data_t>(cbdata)(
             Engine(ib_engine),
             static_cast<Engine::state_event_e>(event),
             ConnectionData(ib_connection_data)
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -248,14 +248,14 @@ ib_status_t transaction(
     assert(cbdata != NULL);
 
     try {
-        Internal::data_to_value<HooksRegistrar::transaction_t>(cbdata)(
+        data_to_value<HooksRegistrar::transaction_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_transaction),
             static_cast<Engine::state_event_e>(event)
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -285,7 +285,7 @@ ib_status_t transaction_data(
     assert(cbdata != NULL);
 
     try {
-        Internal::data_to_value<HooksRegistrar::transaction_data_t>(cbdata)(
+        data_to_value<HooksRegistrar::transaction_data_t>(cbdata)(
             Engine(ib_engine),
             Transaction(ib_tx),
             static_cast<Engine::state_event_e>(event),
@@ -293,7 +293,7 @@ ib_status_t transaction_data(
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -319,12 +319,12 @@ HooksRegistrar& HooksRegistrar::null(
         ));
     }
 
-    Internal::throw_if_error(
+    throw_if_error(
         ib_hook_null_register(
             m_engine.ib(),
             static_cast<ib_state_event_type_t>(event),
             &Internal::Hooks::null,
-            Internal::value_to_data<null_t>(
+            value_to_data<null_t>(
                 f,
                 m_engine.main_memory_pool().ib()
             )
@@ -345,12 +345,12 @@ HooksRegistrar& HooksRegistrar::header_data(
         ));
     }
 
-    Internal::throw_if_error(
+    throw_if_error(
         ib_hook_parsed_header_data_register(
             m_engine.ib(),
             static_cast<ib_state_event_type_t>(event),
             &Internal::Hooks::header_data,
-            Internal::value_to_data<header_data_t>(
+            value_to_data<header_data_t>(
                 f,
                 m_engine.main_memory_pool().ib()
             )
@@ -371,12 +371,12 @@ HooksRegistrar& HooksRegistrar::request_line(
         ));
     }
 
-    Internal::throw_if_error(
+    throw_if_error(
         ib_hook_parsed_req_line_register(
             m_engine.ib(),
             static_cast<ib_state_event_type_t>(event),
             &Internal::Hooks::request_line,
-            Internal::value_to_data<request_line_t>(
+            value_to_data<request_line_t>(
                 f,
                 m_engine.main_memory_pool().ib()
             )
@@ -397,12 +397,12 @@ HooksRegistrar& HooksRegistrar::response_line(
         ));
     }
 
-    Internal::throw_if_error(
+    throw_if_error(
         ib_hook_parsed_resp_line_register(
             m_engine.ib(),
             static_cast<ib_state_event_type_t>(event),
             &Internal::Hooks::response_line,
-            Internal::value_to_data<response_line_t>(
+            value_to_data<response_line_t>(
                 f,
                 m_engine.main_memory_pool().ib()
             )
@@ -423,12 +423,12 @@ HooksRegistrar& HooksRegistrar::connection(
         ));
     }
 
-    Internal::throw_if_error(
+    throw_if_error(
         ib_hook_conn_register(
             m_engine.ib(),
             static_cast<ib_state_event_type_t>(event),
             &Internal::Hooks::connection,
-            Internal::value_to_data<connection_t>(
+            value_to_data<connection_t>(
                 f,
                 m_engine.main_memory_pool().ib()
             )
@@ -449,12 +449,12 @@ HooksRegistrar& HooksRegistrar::connection_data(
         ));
     }
 
-    Internal::throw_if_error(
+    throw_if_error(
         ib_hook_conndata_register(
             m_engine.ib(),
             static_cast<ib_state_event_type_t>(event),
             &Internal::Hooks::connection_data,
-            Internal::value_to_data<connection_data_t>(
+            value_to_data<connection_data_t>(
                 f,
                 m_engine.main_memory_pool().ib()
             )
@@ -475,12 +475,12 @@ HooksRegistrar& HooksRegistrar::transaction(
         ));
     }
 
-    Internal::throw_if_error(
+    throw_if_error(
         ib_hook_tx_register(
             m_engine.ib(),
             static_cast<ib_state_event_type_t>(event),
             &Internal::Hooks::transaction,
-            Internal::value_to_data<transaction_t>(
+            value_to_data<transaction_t>(
                 f,
                 m_engine.main_memory_pool().ib()
             )
@@ -501,12 +501,12 @@ HooksRegistrar& HooksRegistrar::transaction_data(
         ));
     }
 
-    Internal::throw_if_error(
+    throw_if_error(
         ib_hook_txdata_register(
             m_engine.ib(),
             static_cast<ib_state_event_type_t>(event),
             &Internal::Hooks::transaction_data,
-            Internal::value_to_data<transaction_data_t>(
+            value_to_data<transaction_data_t>(
                 f,
                 m_engine.main_memory_pool().ib()
             )

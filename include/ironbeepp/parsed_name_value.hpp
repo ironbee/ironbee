@@ -31,7 +31,7 @@
 #ifndef __IBPP__PARSED_NAME_VALUE__
 #define __IBPP__PARSED_NAME_VALUE__
 
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/byte_string.hpp>
@@ -233,7 +233,7 @@ ib_parsed_name_value_pair_list_wrapper_t* make_pnv_list(
 )
 {
     ib_parsed_name_value_pair_list_wrapper_t* ib_pnv_list;
-    Internal::throw_if_error(
+    throw_if_error(
         ib_parsed_name_value_pair_list_wrapper_create(
             &ib_pnv_list,
             transaction.ib()
@@ -248,7 +248,7 @@ ib_parsed_name_value_pair_list_wrapper_t* make_pnv_list(
         // The C API is currently asymmetric: named values are consumed as
         // structures but added to list as members.  IronBee++ hides that
         // asymmetry.
-        Internal::throw_if_error(
+        throw_if_error(
             ib_parsed_name_value_pair_list_add(
                 ib_pnv_list,
                 pnv.name().const_data(),

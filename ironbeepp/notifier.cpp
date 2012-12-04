@@ -39,7 +39,7 @@ Notifier::Notifier(Engine engine) :
 
 Notifier Notifier::connection_opened(Connection connection)
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_conn_opened(
             m_engine.ib(),
             connection.ib()
@@ -50,7 +50,7 @@ Notifier Notifier::connection_opened(Connection connection)
 
 Notifier Notifier::connection_data_in(ConnectionData connection_data)
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_conn_data_in(
             m_engine.ib(),
             connection_data.ib()
@@ -61,7 +61,7 @@ Notifier Notifier::connection_data_in(ConnectionData connection_data)
 
 Notifier Notifier::connection_data_out(ConnectionData connection_data)
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_conn_data_out(
             m_engine.ib(),
             connection_data.ib()
@@ -72,7 +72,7 @@ Notifier Notifier::connection_data_out(ConnectionData connection_data)
 
 Notifier Notifier::connection_closed(Connection connection)
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_conn_closed(
             m_engine.ib(),
             connection.ib()
@@ -87,7 +87,7 @@ Notifier Notifier::request_started(
     ParsedRequestLine parsed_request_line
 )
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_request_started(
             m_engine.ib(),
             transaction.ib(),
@@ -109,7 +109,7 @@ Notifier Notifier::request_header_finished(
     Transaction transaction
 )
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_request_header_finished(
             m_engine.ib(),
             transaction.ib()
@@ -123,7 +123,7 @@ Notifier Notifier::request_body_data(
     TransactionData transaction_data
 )
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_request_body_data(
             m_engine.ib(),
             transaction.ib(),
@@ -137,7 +137,7 @@ Notifier Notifier::request_finished(
     Transaction transaction
 )
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_request_finished(
             m_engine.ib(),
             transaction.ib()
@@ -151,7 +151,7 @@ Notifier Notifier::response_started(
     ParsedResponseLine parsed_response_line
 )
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_response_started(
             m_engine.ib(),
             transaction.ib(),
@@ -173,7 +173,7 @@ Notifier Notifier::response_header_finished(
     Transaction transaction
 )
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_response_header_finished(
             m_engine.ib(),
             transaction.ib()
@@ -187,7 +187,7 @@ Notifier Notifier::response_body_data(
     TransactionData transaction_data
 )
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_response_body_data(
             m_engine.ib(),
             transaction.ib(),
@@ -201,7 +201,7 @@ Notifier Notifier::response_finished(
     Transaction transaction
 )
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_response_finished(
             m_engine.ib(),
             transaction.ib()

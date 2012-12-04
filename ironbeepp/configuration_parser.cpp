@@ -54,10 +54,10 @@ const char* ConstConfigurationParser::current_block_name() const
 ConfigurationParser ConfigurationParser::create(Engine engine)
 {
     ib_cfgparser_t* ib_cp = NULL;
-    Internal::throw_if_error(
+    throw_if_error(
         ib_cfgparser_create(&ib_cp, engine.ib())
     );
-    Internal::throw_if_error(
+    throw_if_error(
         ib_engine_config_started(engine.ib(), ib_cp)
     );
     return ConfigurationParser(ib_cp);
@@ -87,7 +87,7 @@ ConfigurationParser::ConfigurationParser(ib_type ib_configuration_parser) :
 
 void ConfigurationParser::parse_file(const string& path) const
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_cfgparser_parse(ib(), path.c_str())
     );
 }
@@ -99,7 +99,7 @@ void ConfigurationParser::parse_buffer(
     bool        more
 ) const
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_cfgparser_parse_buffer(
             ib(),
             buffer, length,

@@ -25,7 +25,7 @@
  */
 
 #include <ironbeepp/ironbee.hpp>
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbee/util.h>
 
@@ -33,7 +33,7 @@ namespace IronBee {
 
 void initialize()
 {
-    Internal::throw_if_error(ib_initialize());
+    throw_if_error(ib_initialize());
 }
 
 void shutdown()

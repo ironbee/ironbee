@@ -1,6 +1,6 @@
 #include <ironbeepp/site.hpp>
 #include <ironbeepp/context.hpp>
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbee/site.h>
 

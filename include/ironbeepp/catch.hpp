@@ -25,8 +25,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
-#ifndef __IBPP__INTERNAL__CATCH__
-#define __IBPP__INTERNAL__CATCH__
+#ifndef __IBPP__CATCH__
+#define __IBPP__CATCH__
 
 #include <ironbee/types.h>
 
@@ -37,9 +37,6 @@ struct ib_engine_t;
 namespace IronBee {
 
 class Engine;
-
-namespace Internal {
-
 
 /**
  * Handle any exception and translate into an IronBee status code.
@@ -53,7 +50,7 @@ namespace Internal {
  *   my_cpp_func();
  * }
  * catch (...) {
- *   return Internal::convert_exception(ib_engine);
+ *   return convert_exception(ib_engine);
  * }
  * @endcode
  *
@@ -97,7 +94,6 @@ ib_status_t convert_exception(
     bool   logging = true
 );
 
-} // Internal
 } // IronBee
 
 #endif

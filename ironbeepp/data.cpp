@@ -22,8 +22,8 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <ironbeepp/internal/data.hpp>
-#include <ironbeepp/internal/catch.hpp>
+#include <ironbeepp/data.hpp>
+#include <ironbeepp/catch.hpp>
 
 namespace IronBee {
 namespace Internal {

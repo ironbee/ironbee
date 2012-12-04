@@ -27,8 +27,8 @@
 #ifndef __IBPP__MODULE__
 #define __IBPP__MODULE__
 
-#include <ironbeepp/internal/data.hpp>
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/data.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
@@ -648,7 +648,7 @@ template <typename DataType>
 DataType& Module::configuration_data_pod(Context context) const
 {
     DataType* config;
-    Internal::throw_if_error(
+    throw_if_error(
         ib_context_module_config(context.ib(), ib(), &config)
     );
     return *config;

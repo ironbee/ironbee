@@ -37,6 +37,4 @@ rpm-package: dist
 if CPP
 ironbeepp_include_HEADERS = \
     $(top_srcdir)/include/ironbeepp/*.hpp
-ironbeepp_internal_include_HEADERS = \
-    $(top_srcdir)/include/ironbeepp/internal/*.hpp
 endif

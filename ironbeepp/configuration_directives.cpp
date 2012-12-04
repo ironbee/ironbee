@@ -4,8 +4,8 @@
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/site.hpp>
 
-#include <ironbeepp/internal/data.hpp>
-#include <ironbeepp/internal/catch.hpp>
+#include <ironbeepp/data.hpp>
+#include <ironbeepp/catch.hpp>
 
 #include <ironbee/config.h>
 #include <boost/foreach.hpp>
@@ -27,7 +27,7 @@ ib_status_t config_start_block(
 )
 {
     try {
-        Internal::data_to_value<
+        data_to_value<
             ConfigurationDirectivesRegistrar::start_block_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
@@ -36,7 +36,7 @@ ib_status_t config_start_block(
         );
     }
     catch (...) {
-        return Internal::convert_exception(cfgparser->ib);
+        return convert_exception(cfgparser->ib);
     }
     return IB_OK;
 }
@@ -48,7 +48,7 @@ ib_status_t config_end_block(
 )
 {
     try {
-        Internal::data_to_value<
+        data_to_value<
             ConfigurationDirectivesRegistrar::end_block_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
@@ -56,7 +56,7 @@ ib_status_t config_end_block(
         );
     }
     catch (...) {
-        return Internal::convert_exception(cfgparser->ib);
+        return convert_exception(cfgparser->ib);
     }
     return IB_OK;
 }
@@ -69,7 +69,7 @@ ib_status_t config_param1(
 )
 {
     try {
-        Internal::data_to_value<
+        data_to_value<
             ConfigurationDirectivesRegistrar::param1_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
@@ -78,7 +78,7 @@ ib_status_t config_param1(
         );
     }
     catch (...) {
-        return Internal::convert_exception(cfgparser->ib);
+        return convert_exception(cfgparser->ib);
     }
     return IB_OK;
 }
@@ -92,7 +92,7 @@ ib_status_t config_param2(
 )
 {
     try {
-        Internal::data_to_value<
+        data_to_value<
             ConfigurationDirectivesRegistrar::param2_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
@@ -102,7 +102,7 @@ ib_status_t config_param2(
         );
     }
     catch (...) {
-        return Internal::convert_exception(cfgparser->ib);
+        return convert_exception(cfgparser->ib);
     }
     return IB_OK;
 }
@@ -115,7 +115,7 @@ ib_status_t config_list(
 )
 {
     try {
-        Internal::data_to_value<
+        data_to_value<
             ConfigurationDirectivesRegistrar::list_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
@@ -124,7 +124,7 @@ ib_status_t config_list(
         );
     }
     catch (...) {
-        return Internal::convert_exception(cfgparser->ib);
+        return convert_exception(cfgparser->ib);
     }
     return IB_OK;
 }
@@ -137,7 +137,7 @@ ib_status_t config_on_off(
 )
 {
     try {
-        Internal::data_to_value<
+        data_to_value<
             ConfigurationDirectivesRegistrar::on_off_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
@@ -146,7 +146,7 @@ ib_status_t config_on_off(
         );
     }
     catch (...) {
-        return Internal::convert_exception(cfgparser->ib);
+        return convert_exception(cfgparser->ib);
     }
     return IB_OK;
 }
@@ -160,7 +160,7 @@ ib_status_t config_op_flags(
 )
 {
     try {
-        Internal::data_to_value<
+        data_to_value<
             ConfigurationDirectivesRegistrar::op_flags_t
         >(cbdata)(
             ConfigurationParser(cfgparser),
@@ -170,7 +170,7 @@ ib_status_t config_op_flags(
         );
     }
     catch (...) {
-        return Internal::convert_exception(cfgparser->ib);
+        return convert_exception(cfgparser->ib);
     }
     return IB_OK;
 }
@@ -193,17 +193,17 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::block(
     end_block_t   end_function
 )
 {
-    Internal::throw_if_error(ib_config_register_directive(
+    throw_if_error(ib_config_register_directive(
         m_engine.ib(),
         name,
         IB_DIRTYPE_SBLK1,
         reinterpret_cast<ib_void_fn_t>(&Internal::Hooks::config_start_block),
         &Internal::Hooks::config_end_block,
-        Internal::value_to_data(
+        value_to_data(
             start_function,
             m_engine.main_memory_pool().ib()
         ),
-        Internal::value_to_data(
+        value_to_data(
             end_function,
             m_engine.main_memory_pool().ib()
         ),
@@ -218,13 +218,13 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::on_off(
     on_off_t    function
 )
 {
-    Internal::throw_if_error(ib_config_register_directive(
+    throw_if_error(ib_config_register_directive(
         m_engine.ib(),
         name,
         IB_DIRTYPE_ONOFF,
         reinterpret_cast<ib_void_fn_t>(&Internal::Hooks::config_on_off),
         NULL,
-        Internal::value_to_data(
+        value_to_data(
             function,
             m_engine.main_memory_pool().ib()
         ),
@@ -240,13 +240,13 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::param1(
     param1_t    function
 )
 {
-    Internal::throw_if_error(ib_config_register_directive(
+    throw_if_error(ib_config_register_directive(
         m_engine.ib(),
         name,
         IB_DIRTYPE_PARAM1,
         reinterpret_cast<ib_void_fn_t>(&Internal::Hooks::config_param1),
         NULL,
-        Internal::value_to_data(
+        value_to_data(
             function,
             m_engine.main_memory_pool().ib()
         ),
@@ -262,13 +262,13 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::param2(
     param2_t    function
 )
 {
-    Internal::throw_if_error(ib_config_register_directive(
+    throw_if_error(ib_config_register_directive(
         m_engine.ib(),
         name,
         IB_DIRTYPE_PARAM2,
         reinterpret_cast<ib_void_fn_t>(&Internal::Hooks::config_param2),
         NULL,
-        Internal::value_to_data(
+        value_to_data(
             function,
             m_engine.main_memory_pool().ib()
         ),
@@ -284,13 +284,13 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::list(
     list_t      function
 )
 {
-    Internal::throw_if_error(ib_config_register_directive(
+    throw_if_error(ib_config_register_directive(
         m_engine.ib(),
         name,
         IB_DIRTYPE_LIST,
         reinterpret_cast<ib_void_fn_t>(&Internal::Hooks::config_list),
         NULL,
-        Internal::value_to_data(
+        value_to_data(
             function,
             m_engine.main_memory_pool().ib()
         ),
@@ -324,13 +324,13 @@ ConfigurationDirectivesRegistrar& ConfigurationDirectivesRegistrar::op_flags(
     valmap[i].str = NULL;
     valmap[i].val = 0;
 
-    Internal::throw_if_error(ib_config_register_directive(
+    throw_if_error(ib_config_register_directive(
         m_engine.ib(),
         name,
         IB_DIRTYPE_OPFLAGS,
         reinterpret_cast<ib_void_fn_t>(&Internal::Hooks::config_op_flags),
         NULL,
-        Internal::value_to_data(
+        value_to_data(
             function,
             mp.ib()
         ),

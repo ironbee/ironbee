@@ -25,9 +25,9 @@
  */
 
 #include <ironbeepp/memory_pool.hpp>
-#include <ironbeepp/internal/catch.hpp>
-#include <ironbeepp/internal/data.hpp>
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/catch.hpp>
+#include <ironbeepp/data.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbee/mpool.h>
 #include <ironbee/util.h>
@@ -46,7 +46,7 @@ void cleanup(
 )
 {
     MemoryPool::cleanup_t callback =
-        Internal::data_to_value<MemoryPool::cleanup_t>(cbdata);
+        data_to_value<MemoryPool::cleanup_t>(cbdata);
 
     // Now we need to clear our own callback data.
     delete reinterpret_cast<boost::any*>(cbdata);
@@ -56,7 +56,7 @@ void cleanup(
         callback();
     }
     catch (...) {
-        rc = Internal::convert_exception();
+        rc = convert_exception();
     }
     if (rc != IB_OK) {
         // Could we do something better.
@@ -83,7 +83,7 @@ MemoryPool create_memory_pool(
         parent
     );
 
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
     assert(ib_mpool != NULL);
 
     return MemoryPool(ib_mpool);
@@ -216,12 +216,12 @@ void MemoryPool::register_cleanup(cleanup_t f) const
     ib_status_t rc = ib_mpool_cleanup_register(
         ib(),
         Hooks::cleanup,
-        Internal::value_to_data(
+        value_to_data(
             f,
             NULL // See above
         )
     );
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 }
 
 MemoryPool::MemoryPool(ib_mpool_t* ib_mpool) :

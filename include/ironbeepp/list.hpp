@@ -30,7 +30,7 @@
 #ifndef __IBPP__LIST__
 #define __IBPP__LIST__
 
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/common_semantics.hpp>
@@ -592,7 +592,7 @@ public:
     static List create(MemoryPool memory_pool)
     {
         ib_list_t* ib_list;
-        Internal::throw_if_error(ib_list_create(&ib_list, memory_pool.ib()));
+        throw_if_error(ib_list_create(&ib_list, memory_pool.ib()));
         return List(ib_list);
     }
 
@@ -626,7 +626,7 @@ public:
      **/
     void push_back(T value) const
     {
-        Internal::throw_if_error(
+        throw_if_error(
             ib_list_push(m_ib, Internal::value_as_void(value))
         );
     }
@@ -638,7 +638,7 @@ public:
      **/
     void push_front(T value) const
     {
-        Internal::throw_if_error(
+        throw_if_error(
             ib_list_enqueue(m_ib, Internal::value_as_void(value))
         );
     }
@@ -647,13 +647,13 @@ public:
     //! Pop last element off list.
     void pop_back() const
     {
-        Internal::throw_if_error(ib_list_pop(m_ib, NULL));
+        throw_if_error(ib_list_pop(m_ib, NULL));
     }
 
     //! Pop first element off list.
     void pop_front() const
     {
-        Internal::throw_if_error(ib_list_shift(m_ib, NULL));
+        throw_if_error(ib_list_shift(m_ib, NULL));
     }
 
     //! Clear list.

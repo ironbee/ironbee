@@ -28,7 +28,7 @@
 #include <ironbee/engine.h> // ib_log_*
 #include <ironbee/util.h> // ib_util_log_*
 
-#include <ironbeepp/internal/catch.hpp>
+#include <ironbeepp/catch.hpp>
 
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/exception.hpp>
@@ -36,7 +36,6 @@
 using namespace std;
 
 namespace IronBee {
-namespace Internal {
 
 ib_status_t convert_exception(
     ib_engine_t* engine,
@@ -164,5 +163,4 @@ ib_status_t convert_exception(
     return convert_exception(engine.ib(), logging);
 }
 
-} // Internal
 } // IronBee

@@ -27,7 +27,7 @@
 #ifndef __IBPP__FIELD__
 #define __IBPP__FIELD__
 
-#include <ironbeepp/internal/data.hpp>
+#include <ironbeepp/data.hpp>
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/byte_string.hpp>
@@ -911,7 +911,7 @@ ConstList<T> ConstField::value_as_list() const
 {
     Internal::check_type(LIST, type());
     const ib_list_t* v;
-    Internal::throw_if_error(ib_field_value(ib(), ib_ftype_list_out(&v)));
+    throw_if_error(ib_field_value(ib(), ib_ftype_list_out(&v)));
     return ConstList<T>(v);
 }
 
@@ -929,7 +929,7 @@ ConstList<T> ConstField::value_as_list(
 {
     Internal::check_type(LIST, type());
     const ib_list_t* v;
-    Internal::throw_if_error(ib_field_value_ex(
+    throw_if_error(ib_field_value_ex(
         ib(), ib_ftype_list_out(&v),
         arg, arg_length
     ));
@@ -995,8 +995,8 @@ Field Field::create_dynamic_list(
         pool,
         name, name_length,
         Field::LIST,
-        Internal::value_to_data(getter, pool.ib()),
-        Internal::value_to_data(setter, pool.ib())
+        value_to_data(getter, pool.ib()),
+        value_to_data(setter, pool.ib())
     );
 }
 
@@ -1005,7 +1005,7 @@ List<T> Field::mutable_value_as_list() const
 {
     Internal::check_type(LIST, type());
     ib_list_t* l;
-    Internal::throw_if_error(ib_field_mutable_value(ib(),
+    throw_if_error(ib_field_mutable_value(ib(),
         ib_ftype_list_mutable_out(&l)
     ));
     return List<T>(l);;

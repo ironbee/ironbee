@@ -28,7 +28,7 @@
 #ifndef __IBPP__NOTIFIER__
 #define __IBPP__NOTIFIER__
 
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbeepp/abi_compatibility.hpp>
 #include <ironbeepp/byte_string.hpp>
@@ -173,7 +173,7 @@ Notifier Notifier::request_header_data(
     Iterator          header_end
 )
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_request_header_data(
             m_engine.ib(),
             transaction.ib(),
@@ -191,7 +191,7 @@ Notifier Notifier::response_header_data(
     Iterator          header_end
 )
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_state_notify_response_header_data(
             m_engine.ib(),
             transaction.ib(),

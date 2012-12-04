@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <ironbeepp/internal/catch.hpp>
+#include <ironbeepp/catch.hpp>
 #include <ironbeepp/exception.hpp>
 
 #include <ironbee/types.h>
@@ -40,7 +40,7 @@ ib_status_t ibpp_test()
         throw ExceptionType();
     }
     catch (...) {
-        return IronBee::Internal::convert_exception();
+        return IronBee::convert_exception();
     }
 }
 
@@ -51,7 +51,7 @@ ib_status_t ibpp_test_std()
         throw ExceptionType("");
     }
     catch (...) {
-        return IronBee::Internal::convert_exception();
+        return IronBee::convert_exception();
     }
 }
 

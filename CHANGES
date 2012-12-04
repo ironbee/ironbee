@@ -27,6 +27,12 @@ IronBee v0.7.0
 
 * ac and pcre have been updated to use the new tx data API.
 
+**IronBee++**
+
+* Moved catch, throw, and data support from internals to public.  These 
+  routines are not needed if you only use IronBee++ APIs but are very useful
+  when accessing the IronBee C API from C++.
+
 **Other**
 
 * Removed FTRACE code.

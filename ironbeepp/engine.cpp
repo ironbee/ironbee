@@ -72,7 +72,7 @@ Engine::Engine(ib_engine_t* ib_engine) :
 Engine Engine::create(Server server)
 {
     ib_engine_t* ib_engine;
-    Internal::throw_if_error(
+    throw_if_error(
         ib_engine_create(
             &ib_engine,
             server.ib()
@@ -89,7 +89,7 @@ Engine Engine::remove_const(ConstEngine engine)
 
 void Engine::initialize()
 {
-    Internal::throw_if_error(ib_engine_init(ib()));
+    throw_if_error(ib_engine_init(ib()));
 }
 
 void Engine::destroy()

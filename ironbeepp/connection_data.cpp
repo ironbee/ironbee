@@ -2,7 +2,7 @@
 #include <ironbeepp/connection.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/memory_pool.hpp>
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbee/engine.h>
 
@@ -75,7 +75,7 @@ ConnectionData ConnectionData::create(Connection connection, size_t size)
 {
     ib_conndata_t* ib_conndata;
 
-    Internal::throw_if_error(
+    throw_if_error(
         ib_conn_data_create(connection.ib(), &ib_conndata, size)
     );
 

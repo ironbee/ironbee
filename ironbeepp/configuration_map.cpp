@@ -25,8 +25,8 @@
  */
 
 #include <ironbeepp/configuration_map.hpp>
-#include <ironbeepp/internal/catch.hpp>
-#include <ironbeepp/internal/data.hpp>
+#include <ironbeepp/catch.hpp>
+#include <ironbeepp/data.hpp>
 
 namespace IronBee {
 
@@ -46,14 +46,14 @@ ib_status_t cfgmap_get(
     assert(base != NULL);
 
     try {
-        Internal::data_to_value<
+        data_to_value<
             configuration_map_init_getter_translator_t
         >(cbdata)(
             base, out_value, field
         );
     }
     catch (...) {
-        return Internal::convert_exception();
+        return convert_exception();
     }
     return IB_OK;
 }
@@ -68,14 +68,14 @@ ib_status_t cfgmap_set(
     assert(base != NULL);
 
     try {
-        Internal::data_to_value<
+        data_to_value<
             configuration_map_init_setter_translator_t
         >(cbdata)(
             base, field, in_value
         );
     }
     catch (...) {
-        return Internal::convert_exception();
+        return convert_exception();
     }
     return IB_OK;
 }
@@ -134,11 +134,11 @@ void set_configuration_map_init_translators(
         init.fn_get = Hooks::cfgmap_get;
         init.fn_set = Hooks::cfgmap_set;
     }
-    init.cbdata_get = Internal::value_to_data(
+    init.cbdata_get = value_to_data(
         getter_translator,
         mpool
     );
-    init.cbdata_set = Internal::value_to_data(
+    init.cbdata_set = value_to_data(
         setter_translator,
         mpool
     );

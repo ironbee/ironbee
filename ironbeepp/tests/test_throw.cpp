@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/throw.hpp>
 #include <ironbeepp/exception.hpp>
 
 #include <ironbee/types.h>
@@ -30,7 +30,7 @@
 #include "gtest/gtest.h"
 
 using namespace IronBee;
-using IronBee::Internal::throw_if_error;
+using IronBee::throw_if_error;
 
 TEST(TestThrow, basic)
 {

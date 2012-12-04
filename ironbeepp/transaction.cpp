@@ -6,7 +6,7 @@
 #include <ironbeepp/clock.hpp>
 #include <ironbeepp/parsed_request_line.hpp>
 #include <ironbeepp/parsed_name_value.hpp>
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/throw.hpp>
 
 namespace IronBee {
 
@@ -178,7 +178,7 @@ Transaction::Transaction(ib_type ib_transaction) :
 Transaction Transaction::create(Connection connection)
 {
     ib_tx_t* ib_tx;
-    Internal::throw_if_error(
+    throw_if_error(
         ib_tx_create(&ib_tx, connection.ib(), NULL)
     );
 

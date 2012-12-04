@@ -22,12 +22,9 @@ CANONICAL_INCLUDE_ORDER = [
   '"user_agent_private.h"',
   '<ironbee/module_sym.h>',
 
-  '<ironbeepp/internal/catch.hpp>',
-  '<ironbeepp/internal/data.hpp>',
-  '<ironbeepp/internal/throw.hpp>',
-
   '<ironbeepp/abi_compatibility.hpp>',
   '<ironbeepp/byte_string.hpp>',
+  '<ironbeepp/catch.hpp>',
   '<ironbeepp/clock.hpp>',
   '<ironbeepp/common_semantics.hpp>',
   '<ironbeepp/configuration_directives.hpp>',
@@ -36,6 +33,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/connection.hpp>',
   '<ironbeepp/connection_data.hpp>',
   '<ironbeepp/context.hpp>',
+  '<ironbeepp/data.hpp>',
   '<ironbeepp/engine.hpp>',
   '<ironbeepp/exception.hpp>',
   '<ironbeepp/field.hpp>',
@@ -52,6 +50,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbeepp/parsed_response_line.hpp>',
   '<ironbeepp/server.hpp>',
   '<ironbeepp/site.hpp>',
+  '<ironbeepp/throw.hpp>',
   '<ironbeepp/transaction.hpp>',
   '<ironbeepp/transaction_data.hpp>',
 

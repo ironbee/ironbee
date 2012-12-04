@@ -1,7 +1,7 @@
 #include <ironbeepp/parsed_response_line.hpp>
 #include <ironbeepp/transaction.hpp>
 #include <ironbeepp/byte_string.hpp>
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbee/parsed_content.h>
 
@@ -78,7 +78,7 @@ ParsedResponseLine ParsedResponseLine::create_alias(
 )
 {
     ib_parsed_resp_line_t *ib_prl;
-    Internal::throw_if_error(
+    throw_if_error(
         ib_parsed_resp_line_create(
             transaction.ib(),
             &ib_prl,

@@ -27,8 +27,8 @@
 #include <ironbeepp/module.hpp>
 #include <ironbeepp/context.hpp>
 #include <ironbeepp/engine.hpp>
-#include <ironbeepp/internal/catch.hpp>
-#include <ironbeepp/internal/data.hpp>
+#include <ironbeepp/catch.hpp>
+#include <ironbeepp/data.hpp>
 
 #include <ironbee/module.h>
 #include <ironbee/engine.h>
@@ -148,12 +148,12 @@ ib_status_t initialize(
     assert(ib_engine = ib_module->ib);
 
     try {
-        Internal::data_to_value<Module::initialize_t>(cbdata)(
+        data_to_value<Module::initialize_t>(cbdata)(
             Module(ib_module)
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -168,12 +168,12 @@ ib_status_t finalize(
     assert(ib_engine = ib_module->ib);
 
     try {
-        Internal::data_to_value<Module::finalize_t>(cbdata)(
+        data_to_value<Module::finalize_t>(cbdata)(
             Module(ib_module)
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -188,13 +188,13 @@ ib_status_t context_open(
     assert(ib_engine = ib_module->ib);
 
     try {
-        Internal::data_to_value<Module::context_open_t>(cbdata)(
+        data_to_value<Module::context_open_t>(cbdata)(
             Module(ib_module),
             Context(ib_context)
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -209,13 +209,13 @@ ib_status_t context_close(
     assert(ib_engine = ib_module->ib);
 
     try {
-        Internal::data_to_value<Module::context_close_t>(cbdata)(
+        data_to_value<Module::context_close_t>(cbdata)(
             Module(ib_module),
             Context(ib_context)
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -230,13 +230,13 @@ ib_status_t context_destroy(
     assert(ib_engine = ib_module->ib);
 
     try {
-        Internal::data_to_value<Module::context_destroy_t>(cbdata)(
+        data_to_value<Module::context_destroy_t>(cbdata)(
             Module(ib_module),
             Context(ib_context)
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 }
@@ -255,7 +255,7 @@ ib_status_t configuration_copy(
     assert(src != NULL);
 
     try {
-        Internal::data_to_value<
+        data_to_value<
             boost::function<
                 void(ib_module_t*, void*, const void*, size_t)
             >
@@ -267,7 +267,7 @@ ib_status_t configuration_copy(
         );
     }
     catch (...) {
-        return Internal::convert_exception(ib_engine);
+        return convert_exception(ib_engine);
     }
     return IB_OK;
 };
@@ -356,7 +356,7 @@ void Module::chain_initialize(initialize_t f) const
     else {
         set_initialize( Internal::ModuleHookChainModule(
             f,
-            Internal::data_to_value<Module::initialize_t>(
+            data_to_value<Module::initialize_t>(
                 ib()->cbdata_init
             )
         ) );
@@ -371,7 +371,7 @@ void Module::prechain_initialize(initialize_t f) const
     else {
         set_initialize( Internal::ModuleHookPreChainModule(
             f,
-            Internal::data_to_value<Module::initialize_t>(
+            data_to_value<Module::initialize_t>(
                 ib()->cbdata_init
             )
         ) );
@@ -385,7 +385,7 @@ void Module::set_initialize(initialize_t f) const
         ib()->fn_init     = NULL;
     }
     else {
-        ib()->cbdata_init = Internal::value_to_data(
+        ib()->cbdata_init = value_to_data(
             f,
             engine().main_memory_pool().ib()
         );
@@ -401,7 +401,7 @@ void Module::chain_finalize(finalize_t f) const
     else {
         set_finalize( Internal::ModuleHookChainModule(
             f,
-            Internal::data_to_value<Module::finalize_t>(
+            data_to_value<Module::finalize_t>(
                 ib()->cbdata_fini
             )
         ) );
@@ -416,7 +416,7 @@ void Module::prechain_finalize(finalize_t f) const
     else {
         set_finalize( Internal::ModuleHookPreChainModule(
             f,
-            Internal::data_to_value<Module::finalize_t>(
+            data_to_value<Module::finalize_t>(
                 ib()->cbdata_fini
             )
         ) );
@@ -430,7 +430,7 @@ void Module::set_finalize(finalize_t f) const
         ib()->fn_fini     = NULL;
     }
     else {
-        ib()->cbdata_fini = Internal::value_to_data(
+        ib()->cbdata_fini = value_to_data(
             f,
             engine().main_memory_pool().ib()
         );
@@ -446,7 +446,7 @@ void Module::chain_context_open(context_open_t f) const
     else {
         set_context_open( Internal::ModuleHookChainContext(
             f,
-            Internal::data_to_value<Module::context_open_t>(
+            data_to_value<Module::context_open_t>(
                 ib()->cbdata_ctx_open
             )
         ) );
@@ -461,7 +461,7 @@ void Module::prechain_context_open(context_open_t f) const
     else {
         set_context_open( Internal::ModuleHookPreChainContext(
             f,
-            Internal::data_to_value<Module::context_open_t>(
+            data_to_value<Module::context_open_t>(
                 ib()->cbdata_ctx_open
             )
         ) );
@@ -475,7 +475,7 @@ void Module::set_context_open(context_open_t f) const
         ib()->fn_ctx_open     = NULL;
     }
     else {
-        ib()->cbdata_ctx_open = Internal::value_to_data(
+        ib()->cbdata_ctx_open = value_to_data(
             f,
             engine().main_memory_pool().ib()
         );
@@ -491,7 +491,7 @@ void Module::chain_context_close(context_close_t f) const
     else {
         set_context_close( Internal::ModuleHookChainContext(
             f,
-            Internal::data_to_value<Module::context_close_t>(
+            data_to_value<Module::context_close_t>(
                 ib()->cbdata_ctx_close
             )
         ) );
@@ -506,7 +506,7 @@ void Module::prechain_context_close(context_close_t f) const
     else {
         set_context_close( Internal::ModuleHookPreChainContext(
             f,
-            Internal::data_to_value<Module::context_close_t>(
+            data_to_value<Module::context_close_t>(
                 ib()->cbdata_ctx_close
             )
         ) );
@@ -520,7 +520,7 @@ void Module::set_context_close(context_close_t f) const
         ib()->fn_ctx_close     = NULL;
     }
     else {
-        ib()->cbdata_ctx_close = Internal::value_to_data(
+        ib()->cbdata_ctx_close = value_to_data(
             f,
             engine().main_memory_pool().ib()
         );
@@ -536,7 +536,7 @@ void Module::chain_context_destroy(context_destroy_t f) const
     else {
         set_context_destroy( Internal::ModuleHookChainContext(
             f,
-            Internal::data_to_value<Module::context_destroy_t>(
+            data_to_value<Module::context_destroy_t>(
                 ib()->cbdata_ctx_destroy
             )
         ) );
@@ -551,7 +551,7 @@ void Module::prechain_context_destroy(context_destroy_t f) const
     else {
         set_context_destroy( Internal::ModuleHookPreChainContext(
             f,
-            Internal::data_to_value<Module::context_destroy_t>(
+            data_to_value<Module::context_destroy_t>(
                 ib()->cbdata_ctx_destroy
             )
         ) );
@@ -565,7 +565,7 @@ void Module::set_context_destroy(context_destroy_t f) const
         ib()->fn_ctx_destroy     = NULL;
     }
     else {
-        ib()->cbdata_ctx_destroy = Internal::value_to_data(
+        ib()->cbdata_ctx_destroy = value_to_data(
             f,
             engine().main_memory_pool().ib()
         );
@@ -577,7 +577,7 @@ void Module::set_configuration_copier_translator(
     configuration_copier_translator_t f
 ) const
 {
-    ib()->cbdata_cfg_copy = Internal::value_to_data(
+    ib()->cbdata_cfg_copy = value_to_data(
         f,
         engine().main_memory_pool().ib()
     );

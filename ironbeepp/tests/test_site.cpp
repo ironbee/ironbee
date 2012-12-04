@@ -31,7 +31,7 @@
 #include <ironbee/site.h>
 
 #include <ironbeepp/context.hpp>
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/throw.hpp>
 
 using namespace std;
 using namespace IronBee;
@@ -53,7 +53,7 @@ public:
             "IBPPTestFixtureContext",
             &ib_context
         );
-        Internal::throw_if_error(rc);
+        throw_if_error(rc);
         m_location_context = Context(ib_context);
 
         ib_context = NULL;
@@ -65,7 +65,7 @@ public:
             "IBPPTestFixtureContext",
             &ib_context
         );
-        Internal::throw_if_error(rc);
+        throw_if_error(rc);
         m_site_context = Context(ib_context);
 
         ib_site_t* ib_site;
@@ -76,7 +76,7 @@ public:
             NULL,
             &ib_site
         );
-        Internal::throw_if_error(rc);
+        throw_if_error(rc);
         m_site = Site(ib_site);
 
         ib_site_location_t* ib_site_location;
@@ -88,7 +88,7 @@ public:
             NULL,
             &ib_site_location
         );
-        Internal::throw_if_error(rc);
+        throw_if_error(rc);
         m_site_location = SiteLocation(ib_site_location);
 
         ib_site_service_t* ib_site_service;
@@ -99,7 +99,7 @@ public:
             NULL,
             &ib_site_service
         );
-        Internal::throw_if_error(rc);
+        throw_if_error(rc);
         m_site_service = SiteService(ib_site_service);
 
         ib_site_host_t* ib_site_host;
@@ -110,7 +110,7 @@ public:
             NULL,
             &ib_site_host
         );
-        Internal::throw_if_error(rc);
+        throw_if_error(rc);
         m_site_host = SiteHost(ib_site_host);
     }
 

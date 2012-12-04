@@ -22,7 +22,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  **/
 
-#include <ironbeepp/internal/data.hpp>
+#include <ironbeepp/data.hpp>
 
 #include <ironbee/types.h>
 
@@ -43,7 +43,7 @@ typedef boost::shared_ptr<destruction_registerer> destruction_registerer_p;
 
 TEST(TestData, basic)
 {
-    using namespace IronBee::Internal;
+    using namespace IronBee;
 
     ib_mpool_t* mp;
 
@@ -83,7 +83,7 @@ TEST(TestData, basic)
 
 TEST(TestData, NoPool)
 {
-    using namespace IronBee::Internal;
+    using namespace IronBee;
 
     bool flag = false;
     destruction_registerer_p it =

@@ -25,8 +25,8 @@
  */
 
 #include <ironbeepp/byte_string.hpp>
-#include <ironbeepp/internal/catch.hpp>
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/catch.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbee/bytestr.h>
 
@@ -54,7 +54,7 @@ ByteString ConstByteString::alias(MemoryPool pool) const
     ib_bytestr_t* bs = NULL;
 
     ib_status_t rc = ib_bytestr_alias(&bs, pool.ib(), ib());
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return ByteString(bs);
 }
@@ -69,7 +69,7 @@ ByteString ConstByteString::dup(MemoryPool pool) const
     ib_bytestr_t* bs = NULL;
 
     ib_status_t rc = ib_bytestr_dup(&bs, pool.ib(), ib());
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return ByteString(bs);
 }
@@ -145,7 +145,7 @@ ByteString ByteString::create(MemoryPool pool)
     ib_bytestr_t* bs = NULL;
 
     ib_status_t rc = ib_bytestr_create(&bs, pool.ib(), 0);
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return ByteString(bs);
 }
@@ -164,7 +164,7 @@ ByteString ByteString::create(
         reinterpret_cast<const uint8_t*>(data),
         length
     );
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return ByteString(bs);
 }
@@ -174,7 +174,7 @@ ByteString ByteString::create(MemoryPool pool, const char *cstring)
     ib_bytestr_t* bs = NULL;
 
     ib_status_t rc = ib_bytestr_dup_nulstr(&bs, pool.ib(), cstring);
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return ByteString(bs);
 }
@@ -198,7 +198,7 @@ ByteString ByteString::create_alias(
         reinterpret_cast<const uint8_t*>(data),
         length
     );
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return ByteString(bs);
 }
@@ -211,7 +211,7 @@ ByteString ByteString::create_alias(
     ib_bytestr_t* bs = NULL;
 
     ib_status_t rc = ib_bytestr_alias_nulstr(&bs, pool.ib(), cstring);
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return ByteString(bs);
 }
@@ -241,7 +241,7 @@ void ByteString::clear() const
 
 void ByteString::set(char* new_data, size_t new_length) const
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_bytestr_setv(
             ib(),
             reinterpret_cast<uint8_t*>(new_data),
@@ -252,7 +252,7 @@ void ByteString::set(char* new_data, size_t new_length) const
 
 void ByteString::set(const char* new_data, size_t new_length) const
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_bytestr_setv_const(
             ib(),
             reinterpret_cast<const uint8_t*>(new_data),
@@ -278,12 +278,12 @@ void ByteString::set(const std::string& s) const
 
 void ByteString::append(const ConstByteString& tail) const
 {
-    Internal::throw_if_error(ib_bytestr_append(ib(), tail.ib()));
+    throw_if_error(ib_bytestr_append(ib(), tail.ib()));
 }
 
 void ByteString::append(const char* new_data, size_t new_length) const
 {
-    Internal::throw_if_error(
+    throw_if_error(
         ib_bytestr_append_mem(
             ib(),
             reinterpret_cast<const uint8_t*>(new_data),
@@ -294,7 +294,7 @@ void ByteString::append(const char* new_data, size_t new_length) const
 
 void ByteString::append(const char* cstring) const
 {
-    Internal::throw_if_error(ib_bytestr_append_nulstr(ib(), cstring));
+    throw_if_error(ib_bytestr_append_nulstr(ib(), cstring));
 }
 
 void ByteString::append(const std::string& s) const

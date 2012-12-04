@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee++ --- Internal Throw
+ * @brief IronBee++ --- Throw
  *
  * This is the opposite of catch.hpp.  It converts status codes into
  * exceptions.
@@ -31,7 +31,6 @@
 #define __IBPP__THROW__
 
 namespace IronBee {
-namespace Internal {
 
 /**
  * Throw exception if @a status != IB_OK.
@@ -42,7 +41,6 @@ namespace Internal {
  **/
 void throw_if_error(ib_status_t status);
 
-} // Internal
 } // IronBee
 
 #endif

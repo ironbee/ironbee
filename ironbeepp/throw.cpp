@@ -1,8 +1,7 @@
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/throw.hpp>
 #include <ironbeepp/exception.hpp>
 
 namespace IronBee {
-namespace Internal {
 
 void throw_if_error(ib_status_t status)
 {
@@ -47,5 +46,4 @@ void throw_if_error(ib_status_t status)
     }
 }
 
-} // Internal
 } // IronBee

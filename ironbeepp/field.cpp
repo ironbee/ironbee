@@ -25,8 +25,8 @@
  */
 
 #include <ironbeepp/field.hpp>
-#include <ironbeepp/internal/catch.hpp>
-#include <ironbeepp/internal/throw.hpp>
+#include <ironbeepp/catch.hpp>
+#include <ironbeepp/throw.hpp>
 
 #include <ironbee/field.h>
 #include <boost/lexical_cast.hpp>
@@ -81,7 +81,7 @@ void check_type(Field::type_e expected, Field::type_e actual)
 void set_value(ib_field_t* f, void* in_value)
 {
     ib_status_t rc = ib_field_setv(f, in_value);
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 }
 
 void set_value(
@@ -92,13 +92,13 @@ void set_value(
 )
 {
     ib_status_t rc = ib_field_setv_ex(f, in_value, arg, arg_length);
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 }
 
 void set_value_no_copy(ib_field_t* f, void* mutable_in_value)
 {
     ib_status_t rc = ib_field_setv_no_copy(f, mutable_in_value);
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 }
 
 namespace Hooks {
@@ -123,14 +123,14 @@ ib_status_t field_dynamic_get(
         switch (field->type) {
             case IB_FTYPE_NUM: {
                 ib_num_t* n = reinterpret_cast<ib_num_t*>(out_val);
-                *n = Internal::data_to_value<Field::number_get_t>(cbdata)(
+                *n = data_to_value<Field::number_get_t>(cbdata)(
                     fieldpp, carg, arg_length
                 );
                 return IB_OK;
             }
             case IB_FTYPE_FLOAT: {
                 ib_float_t* u = reinterpret_cast<ib_float_t*>(out_val);
-                *u = Internal::data_to_value<
+                *u = data_to_value<
                     Field::float_get_t
                 >(cbdata)(
                     fieldpp, carg, arg_length
@@ -140,7 +140,7 @@ ib_status_t field_dynamic_get(
             case IB_FTYPE_NULSTR:
             {
                 const char** ns = reinterpret_cast<const char**>(out_val);
-                *ns = Internal::data_to_value<
+                *ns = data_to_value<
                     Field::null_string_get_t
                 >(cbdata)(
                     fieldpp, carg, arg_length
@@ -151,7 +151,7 @@ ib_status_t field_dynamic_get(
             {
                 const ib_bytestr_t** bs
                     = reinterpret_cast<const ib_bytestr_t**>(out_val);
-                *bs = Internal::data_to_value<
+                *bs = data_to_value<
                     Field::byte_string_get_t
                 >(cbdata)(
                     fieldpp, carg, arg_length
@@ -162,7 +162,7 @@ ib_status_t field_dynamic_get(
             {
                 const ib_list_t** l
                     = reinterpret_cast<const ib_list_t**>(out_val);
-                *l = Internal::data_to_value<
+                *l = data_to_value<
                     Internal::dynamic_list_getter_translator_t
                 >(cbdata)(
                     fieldpp, carg, arg_length
@@ -178,7 +178,7 @@ ib_status_t field_dynamic_get(
         }
     }
     catch (...) {
-        return Internal::convert_exception();
+        return convert_exception();
     }
 
     // If we got here, it is in error.
@@ -200,21 +200,21 @@ ib_status_t field_dynamic_set(
     try {
         switch (field->type) {
             case IB_FTYPE_NUM:
-                Internal::data_to_value<Field::number_set_t>(cbdata)(
+                data_to_value<Field::number_set_t>(cbdata)(
                     Field(field),
                     carg, arg_length,
                     *reinterpret_cast<const int64_t*>(in_value)
                 );
                 break;
             case IB_FTYPE_FLOAT:
-                Internal::data_to_value<Field::float_set_t>(cbdata)(
+                data_to_value<Field::float_set_t>(cbdata)(
                     Field(field),
                     carg, arg_length,
                     *reinterpret_cast<const long double*>(in_value)
                 );
                 break;
             case IB_FTYPE_NULSTR:
-                Internal::data_to_value<Field::null_string_set_t>(cbdata)(
+                data_to_value<Field::null_string_set_t>(cbdata)(
                     Field(field),
                     carg, arg_length,
                     reinterpret_cast<const char*>(in_value)
@@ -225,7 +225,7 @@ ib_status_t field_dynamic_set(
                 const ConstByteString value(
                     reinterpret_cast<const ib_bytestr_t*>(in_value)
                 );
-                Internal::data_to_value<Field::byte_string_set_t>(cbdata)(
+                data_to_value<Field::byte_string_set_t>(cbdata)(
                     Field(field),
                     carg, arg_length,
                     value
@@ -235,7 +235,7 @@ ib_status_t field_dynamic_set(
             case IB_FTYPE_LIST: {
                 const ib_list_t* value =
                     reinterpret_cast<const ib_list_t*>(in_value);
-                Internal::data_to_value<
+                data_to_value<
                     Internal::dynamic_list_setter_translator_t
                 >(cbdata)(
                     Field(field),
@@ -253,7 +253,7 @@ ib_status_t field_dynamic_set(
         }
     }
     catch (...) {
-        return Internal::convert_exception();
+        return convert_exception();
     }
     return IB_OK;
 }
@@ -278,7 +278,7 @@ Field create_field(
         static_cast<ib_ftype_t>(type),
         in_value
     );
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return Field(f);
 }
@@ -300,7 +300,7 @@ Field create_no_copy(
         static_cast<ib_ftype_t>(type),
         mutable_in_value
     );
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return Field(f);
 }
@@ -322,7 +322,7 @@ Field create_alias(
         static_cast<ib_ftype_t>(type),
         mutable_out_value
     );
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return Field(f);
 }
@@ -348,7 +348,7 @@ Field create_dynamic_field(
         Hooks::field_dynamic_set,
         cbdata_set
     );
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return Field(f);
 }
@@ -393,7 +393,7 @@ Field ConstField::dup(
         new_name, new_name_length,
         ib()
     );
-    Internal::throw_if_error(rc);
+    throw_if_error(rc);
 
     return Field(f);
 }
@@ -459,7 +459,7 @@ int64_t ConstField::value_as_number() const
 {
     Internal::check_type(NUMBER, type());
     int64_t v;
-    Internal::throw_if_error(ib_field_value(ib(), ib_ftype_num_out(&v)));
+    throw_if_error(ib_field_value(ib(), ib_ftype_num_out(&v)));
     return v;
 }
 
@@ -475,7 +475,7 @@ int64_t ConstField::value_as_number(
 {
     Internal::check_type(NUMBER, type());
     int64_t v;
-    Internal::throw_if_error(ib_field_value_ex(
+    throw_if_error(ib_field_value_ex(
         ib(), ib_ftype_num_out(&v),
         arg, arg_length
     ));
@@ -486,7 +486,7 @@ long double ConstField::value_as_float() const
 {
     Internal::check_type(FLOAT, type());
     long double v;
-    Internal::throw_if_error(ib_field_value(ib(), ib_ftype_float_out(&v)));
+    throw_if_error(ib_field_value(ib(), ib_ftype_float_out(&v)));
     return v;
 }
 
@@ -502,7 +502,7 @@ long double ConstField::value_as_float(
 {
     Internal::check_type(FLOAT, type());
     long double v;
-    Internal::throw_if_error(ib_field_value_ex(
+    throw_if_error(ib_field_value_ex(
         ib(), ib_ftype_float_out(&v),
         arg, arg_length
     ));
@@ -513,7 +513,7 @@ const char* ConstField::value_as_null_string() const
 {
     Internal::check_type(NULL_STRING, type());
     const char* v;
-    Internal::throw_if_error(ib_field_value(
+    throw_if_error(ib_field_value(
         ib(), ib_ftype_nulstr_out(&v)
     ));
     return v;
@@ -531,7 +531,7 @@ const char* ConstField::value_as_null_string(
 {
     Internal::check_type(NULL_STRING, type());
     const char* v;
-    Internal::throw_if_error(ib_field_value_ex(
+    throw_if_error(ib_field_value_ex(
         ib(), ib_ftype_nulstr_out(&v),
         arg, arg_length
     ));
@@ -542,7 +542,7 @@ ConstByteString ConstField::value_as_byte_string() const
 {
     Internal::check_type(BYTE_STRING, type());
     const ib_bytestr_t* v;
-    Internal::throw_if_error(ib_field_value(
+    throw_if_error(ib_field_value(
         ib(), ib_ftype_bytestr_out(&v)
     ));
     return ConstByteString(v);
@@ -560,7 +560,7 @@ ConstByteString ConstField::value_as_byte_string(
 {
     Internal::check_type(BYTE_STRING, type());
     const ib_bytestr_t* v;
-    Internal::throw_if_error(ib_field_value_ex(
+    throw_if_error(ib_field_value_ex(
         ib(), ib_ftype_bytestr_out(&v),
         arg, arg_length
     ));
@@ -761,8 +761,8 @@ Field Field::create_dynamic_number(
         pool,
         name, name_length,
         Field::NUMBER,
-        Internal::value_to_data(get, pool.ib()),
-        Internal::value_to_data(set, pool.ib())
+        value_to_data(get, pool.ib()),
+        value_to_data(set, pool.ib())
     );
 }
 
@@ -778,8 +778,8 @@ Field Field::create_dynamic_float(
         pool,
         name, name_length,
         Field::FLOAT,
-        Internal::value_to_data(get, pool.ib()),
-        Internal::value_to_data(set, pool.ib())
+        value_to_data(get, pool.ib()),
+        value_to_data(set, pool.ib())
     );
 }
 
@@ -795,8 +795,8 @@ Field Field::create_dynamic_null_string(
         pool,
         name, name_length,
         Field::NULL_STRING,
-        Internal::value_to_data(get, pool.ib()),
-        Internal::value_to_data(set, pool.ib())
+        value_to_data(get, pool.ib()),
+        value_to_data(set, pool.ib())
     );
 }
 
@@ -812,8 +812,8 @@ Field Field::create_dynamic_byte_string(
         pool,
         name, name_length,
         Field::BYTE_STRING,
-        Internal::value_to_data(get, pool.ib()),
-        Internal::value_to_data(set, pool.ib())
+        value_to_data(get, pool.ib()),
+        value_to_data(set, pool.ib())
     );
 }
 
@@ -922,7 +922,7 @@ int64_t& Field::mutable_value_as_number() const
 {
     Internal::check_type(NUMBER, type());
     ib_num_t* n;
-    Internal::throw_if_error(ib_field_mutable_value(ib(),
+    throw_if_error(ib_field_mutable_value(ib(),
         ib_ftype_num_mutable_out(&n)
     ));
     return *n;
@@ -932,7 +932,7 @@ long double& Field::mutable_value_as_float() const
 {
     Internal::check_type(FLOAT, type());
     ib_float_t* n;
-    Internal::throw_if_error(ib_field_mutable_value(ib(),
+    throw_if_error(ib_field_mutable_value(ib(),
         ib_ftype_float_mutable_out(&n)
     ));
     return *n;
@@ -942,7 +942,7 @@ char* Field::mutable_value_as_null_string() const
 {
     Internal::check_type(NULL_STRING, type());
     char* cs;
-    Internal::throw_if_error(ib_field_mutable_value(ib(),
+    throw_if_error(ib_field_mutable_value(ib(),
         ib_ftype_nulstr_mutable_out(&cs)
     ));
     return cs;
@@ -952,7 +952,7 @@ ByteString Field::mutable_value_as_byte_string() const
 {
     Internal::check_type(BYTE_STRING, type());
     ib_bytestr_t* bs;
-    Internal::throw_if_error(ib_field_mutable_value(ib(),
+    throw_if_error(ib_field_mutable_value(ib(),
         ib_ftype_bytestr_mutable_out(&bs)
     ));
     return ByteString(bs);
@@ -960,7 +960,7 @@ ByteString Field::mutable_value_as_byte_string() const
 
 void Field::make_static() const
 {
-    Internal::throw_if_error(ib_field_make_static(ib()));
+    throw_if_error(ib_field_make_static(ib()));
 }
 
 Field::Field(ib_field_t* ib_field) :
