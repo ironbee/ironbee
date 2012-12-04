@@ -34,6 +34,7 @@
 #include <ironbeepp/connection.hpp>
 #include <ironbeepp/connection_data.hpp>
 #include <ironbeepp/context.hpp>
+#include <ironbeepp/c_trampoline.hpp>
 #include <ironbeepp/engine.hpp>
 #include <ironbeepp/exception.hpp>
 #include <ironbeepp/field.hpp>
