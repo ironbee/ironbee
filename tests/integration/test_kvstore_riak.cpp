@@ -123,5 +123,7 @@ TEST_F(RiakFixture, Read) {
             reinterpret_cast<const char *>(val.value),
             reinterpret_cast<const char *>(val2->value),
             val.value_length));
+
+    ib_kvstore_free_value(&kvstore, val2);
 }
 

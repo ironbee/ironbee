@@ -190,9 +190,9 @@ typedef void (*ib_kvstore_destroy_fn_t)(
  * Value type.
  */
 struct ib_kvstore_value_t {
-    void *value;         /**< The value pointer. */
+    void *value;         /**< The value pointer. A byte array. */
     size_t value_length; /**< The length of value. */
-    char *type;          /**< The name of the type. */
+    char *type;          /**< A \0 terminated name of the type. */
     size_t type_length;  /**< The type name length. */
     uint32_t expiration; /**< The expiration in seconds relative to now. */
 };

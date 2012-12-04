@@ -89,35 +89,59 @@ static ib_kvstore_value_t * kvstore_value_dup(
         return NULL;
     }
 
-    new_value->value = kvstore->malloc(
-        kvstore,
-        value->value_length,
-        kvstore->malloc_cbdata);
+    if (value->value) {
+        new_value->value = kvstore->malloc(
+            kvstore,
+            value->value_length,
+            kvstore->malloc_cbdata);
+        if (!new_value->value) {
+            goto failure;
+        }
 
-    if (!new_value->value) {
-        kvstore->free(kvstore, new_value, kvstore->free_cbdata);
-        return NULL;
+        new_value->value_length = value->value_length;
+        memcpy(new_value->value, value->value, value->value_length);
+    }
+    else {
+        new_value->value = NULL;
+        new_value->value_length = 0;
     }
 
-    new_value->type = kvstore->malloc(
-        kvstore,
-        value->type_length,
-        kvstore->malloc_cbdata);
+    if (value->type) {
+        new_value->type = kvstore->malloc(
+            kvstore,
+            value->type_length+1,
+            kvstore->malloc_cbdata);
+        if (!new_value->type) {
+            goto failure;
+        }
 
-    if (!new_value->type) {
-        kvstore->free(kvstore, new_value->value, kvstore->free_cbdata);
-        kvstore->free(kvstore, new_value, kvstore->free_cbdata);
-        return NULL;
+        new_value->type_length = value->type_length;
+        memcpy(new_value->type, value->type, value->type_length);
+        new_value->type[new_value->type_length] = '\0';
+    }
+    else {
+        new_value->type = NULL;
+        new_value->type_length = 0;
     }
 
     /* Copy in all data. */
     new_value->expiration = value->expiration;
-    new_value->value_length = value->value_length;
-    new_value->type_length = value->type_length;
-    memcpy(new_value->value, value->value, value->value_length);
-    memcpy(new_value->type, value->type, value->type_length);
 
     return new_value;
+
+failure:
+    if (new_value) {
+        if (new_value->value) {
+            kvstore->free(kvstore, new_value->value, kvstore->free_cbdata);
+        }
+
+        if (new_value->type) {
+            kvstore->free(kvstore, new_value->type, kvstore->free_cbdata);
+        }
+
+        kvstore->free(kvstore, new_value, kvstore->free_cbdata);
+    }
+    return NULL;
 }
 
 /**
@@ -244,7 +268,7 @@ exit_get:
         kvstore->free(kvstore, values, kvstore->free_cbdata);
     }
 
-    /* Never free the user's value. Only free we allocated. */
+    /* Never free the user's value. Only free what we allocated. */
     if (merged_value) {
         ib_kvstore_free_value(kvstore, merged_value);
     }
@@ -319,3 +343,4 @@ void ib_kvstore_free_key(ib_kvstore_t *kvstore, ib_kvstore_key_t *key) {
 void ib_kvstore_destroy(ib_kvstore_t *kvstore) {
     kvstore->destroy(kvstore, kvstore->destroy_cbdata);
 }
+

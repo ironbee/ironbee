@@ -25,7 +25,21 @@
 
 #define VCLOCK "X-Riak-Vclock"
 #define ETAG "ETag"
+#define CONTENT_TYPE "Content-Type"
 
+/**
+ * Convenience function.
+ */
+static inline void * kvmalloc(ib_kvstore_t *kvstore, size_t size) {
+    return kvstore->malloc(kvstore, size, kvstore->malloc_cbdata);
+}
+
+/**
+ * Convenience function.
+ */
+static inline void kvfree(ib_kvstore_t *kvstore, void *ptr) {
+    kvstore->free(kvstore, ptr, kvstore->free_cbdata);
+}
 /**
  * Memory buffer.
  */
@@ -50,11 +64,21 @@ static void cleanup_membuffer(membuffer_t *membuffer)
     membuffer->read = 0;
 
     if (membuffer->buffer) {
-        membuffer->kvstore->free(
-            membuffer->kvstore,
-            membuffer->buffer,
-            membuffer->kvstore->free_cbdata);
+        kvfree(membuffer->kvstore, membuffer->buffer);
     }
+}
+
+/**
+ * Null all member values and set kvstore = @a kvstore.
+ * @param[in] kvstore The Key Value store.
+ * @param[out] buf The initialized object.
+ */
+static void membuffer_init(ib_kvstore_t *kvstore, membuffer_t *buf)
+{
+    buf->kvstore = kvstore;
+    buf->read = 0;
+    buf->size = 0;
+    buf->buffer = NULL;
 }
 
 /**
@@ -70,6 +94,20 @@ struct riak_headers_t {
 typedef struct riak_headers_t riak_headers_t;
 
 /**
+ * Null all member values and set kvstore = @a kvstore.
+ * @param[in] kvstore The Key Value store.
+ * @param[out] headers The initialized object.
+ */
+static void riak_headers_init(ib_kvstore_t *kvstore, riak_headers_t *headers)
+{
+    headers->kvstore = kvstore;
+    headers->status = 0;
+    headers->x_riak_vclock = NULL;
+    headers->content_type = NULL;
+    headers->etag = NULL;
+}
+
+/**
  * This does not free @a riak_headers but frees all not-null fields.
  *
  * Also numeric fields are zero'ed.
@@ -81,22 +119,13 @@ static void cleanup_riak_headers(riak_headers_t *riak_headers)
     riak_headers->status = 0;
 
     if (riak_headers->content_type) {
-        riak_headers->kvstore->free(
-            riak_headers->kvstore,
-            riak_headers->content_type,
-            riak_headers->kvstore->free_cbdata);
+        kvfree(riak_headers->kvstore, riak_headers->content_type);
     }
     if (riak_headers->etag) {
-        riak_headers->kvstore->free(
-            riak_headers->kvstore,
-            riak_headers->etag,
-            riak_headers->kvstore->free_cbdata);
+        kvfree(riak_headers->kvstore, riak_headers->etag);
     }
     if (riak_headers->x_riak_vclock) {
-        riak_headers->kvstore->free(
-            riak_headers->kvstore,
-            riak_headers->x_riak_vclock,
-            riak_headers->kvstore->free_cbdata);
+        kvfree(riak_headers->kvstore, riak_headers->x_riak_vclock);
     }
 }
 
@@ -130,26 +159,18 @@ static ib_status_t http_to_kvstore_value(
     assert(value);
 
     /* Copy value. */
-    value->value = kvstore->malloc(
-        kvstore,
-        response->read,
-        kvstore->malloc_cbdata);
+    value->value = kvmalloc(kvstore, response->read);
     if (value->value == NULL) {
         return IB_EALLOC;
     }
     memcpy(value->value, response->buffer, response->read);
     value->value_length = response->read;
 
-    /* Copy Content-Type */
-    value->type = kvstore->malloc(
-        kvstore,
-        strlen(headers->content_type) + 1,
-        kvstore->malloc_cbdata);
+    /* Copy Content-Type as a string. */
+    value->type_length = strlen(headers->content_type);
+    value->type = kvmalloc(kvstore, value->type_length + 1);
     if (value->type == NULL) {
-        kvstore->free(
-            kvstore,
-            value->value,
-            kvstore->free_cbdata);
+        kvfree(kvstore, value->value);
         return IB_EALLOC;
     }
     strcpy(value->type, headers->content_type);
@@ -182,28 +203,32 @@ static ib_status_t cond_copy_header(
 {
 
     size_t header_len = strlen(header);
-    size_t value_len;
+    size_t value_sz;
 
+    /* If header cannot prefix ptr (because header is too long)... */
     if (ptr_len <= header_len) {
         return IB_EINVAL;
     }
 
+    /* If header is not prefixed by ptr... */
     if (strncmp(ptr, header, header_len)) {
         return IB_EINVAL;
     }
 
-    value_len = ptr_len - header_len;
+    value_sz = ptr_len - header_len + 1;
 
-    *dest = kvstore->malloc(
-        kvstore,
-        value_len + 1,
-        kvstore->malloc_cbdata);
-    if (dest == NULL) {
+    *dest = kvmalloc(kvstore, value_sz);
+    if (*dest == NULL) {
         return IB_EALLOC;
     }
 
-    memcpy(*dest, ptr, value_len);
-    dest[value_len] = '\0';
+    strncpy(*dest, ptr + header_len, value_sz);
+
+    /* If we are given a header with \r\n at the end of it, terminate the 
+     * string early. This is always the case with Curl. */
+    if (value_sz >= 3 && (*dest)[value_sz-3] == '\r') {
+        (*dest)[value_sz-3] = '\0';
+    }
 
     return IB_OK;
 }
@@ -251,6 +276,8 @@ static struct curl_slist* build_custom_headers(
         snprintf(header, buffer_len, "Content-Type: %s", value->type);
         slist = curl_slist_append(slist, header);
     }
+
+    free(header);
 
     return slist;
 }
@@ -303,7 +330,7 @@ static size_t riak_header_capture(
 
     rc = cond_copy_header(
         riak_headers->kvstore,
-        "Content-Type: ",
+        CONTENT_TYPE ": ",
         ptr,
         size * nmemb,
         &riak_headers->content_type);
@@ -340,10 +367,7 @@ static size_t membuffer_writefunction(
     if (size * nmemb > mb->size - mb->read) {
         size_t new_size = size * nmemb + mb->size + 4096;
 
-        char *buffer_tmp = kvstore->malloc(
-            kvstore,
-            new_size,
-            kvstore->malloc_cbdata);
+        char *buffer_tmp = kvmalloc(kvstore, new_size);
         if (!buffer_tmp) {
             return 0;
         }
@@ -354,7 +378,7 @@ static size_t membuffer_writefunction(
                 memcpy(buffer_tmp, mb->buffer, mb->read);
             }
 
-            kvstore->free(kvstore, mb->buffer, kvstore->free_cbdata);
+            kvfree(kvstore, mb->buffer);
         }
 
         mb->buffer = buffer_tmp;
@@ -439,10 +463,7 @@ static char * build_key_url(
 
     /* bucket + /keys/ + key */
     url_len = riak->bucket_url_len + 6 + key->length;
-    url = kvstore->malloc(
-        kvstore,
-        url_len + 1,
-        kvstore->malloc_cbdata);
+    url = kvmalloc(kvstore, url_len + 1);
     if (!url) {
         return NULL;
     }
@@ -475,6 +496,10 @@ static void mp_free(ib_kvstore_t *kvstore,
 
 /**
  * Does a simple get of a Riak object.
+ *
+ * This will call riak_headers_init and membuffer_init on 
+ * @a riak_headers and @a resp_buffer.
+ *
  */
 static ib_status_t riak_get(
     ib_kvstore_t *kvstore,
@@ -489,17 +514,10 @@ static ib_status_t riak_get(
     struct curl_slist *header_list = NULL;
 
     /* Callback data for reading in the body. */
-    resp_buffer->kvstore = kvstore;
-    resp_buffer->read = 0;
-    resp_buffer->size = 0;
-    resp_buffer->buffer = NULL;
+    membuffer_init(kvstore, resp_buffer);
 
     /* Callback data for storing the CURL headers. */
-    riak_headers->kvstore = kvstore;
-    riak_headers->status = 0;
-    riak_headers->x_riak_vclock = NULL;
-    riak_headers->content_type = NULL;
-    riak_headers->etag = NULL;
+    riak_headers_init(kvstore, riak_headers);
 
     /* Set url. */
     curl_rc = curl_easy_setopt(riak->curl, CURLOPT_URL, url);
@@ -591,21 +609,14 @@ static ib_status_t kvget(
         *values_length = 1;
 
         /* Build 1-element array. */
-        *values = kvstore->malloc(
-            kvstore,
-            sizeof(**values),
-            kvstore->malloc_cbdata
-        );
+        *values = kvmalloc(kvstore, sizeof(**values));
         if (*values == NULL) {
             rc = IB_EALLOC;
             goto exit;
         }
 
         /* Allocate kvstore value. */
-        *values[0] = kvstore->malloc(
-            kvstore,
-            sizeof(*(*values[0])),
-            kvstore->malloc_cbdata);
+        *values[0] = kvmalloc(kvstore, sizeof(*(*values[0])));
         if (*values[0] == NULL) {
             rc = IB_EALLOC;
             goto exit;
@@ -637,11 +648,7 @@ static ib_status_t kvget(
         }
 
         /* Build a *values_length element array. */
-        *values = kvstore->malloc(
-            kvstore,
-            sizeof(**values) * *values_length,
-            kvstore->malloc_cbdata
-        );
+        *values = kvmalloc(kvstore, sizeof(**values) * *values_length);
         if (*values == NULL) {
             rc = IB_EALLOC;
             goto exit;
@@ -652,10 +659,7 @@ static ib_status_t kvget(
         for (size_t i = 0; i < *values_length; ++i) {
             membuffer_t tmp_buf;
 
-            tmp_buf.kvstore = kvstore;
-            tmp_buf.read = 0;
-            tmp_buf.size = 0;
-            tmp_buf.buffer = NULL;
+            membuffer_init(kvstore, &tmp_buf);
 
             /* Find the first character after the \n. */
             cur = index(cur, '\n') + 1;
@@ -673,10 +677,7 @@ static ib_status_t kvget(
                 cleanup_membuffer(&tmp_buf);
             }
 
-            *values[i] = kvstore->malloc(
-                kvstore,
-                sizeof(**values[i]),
-                kvstore->malloc_cbdata);
+            *values[i] = kvmalloc(kvstore, sizeof(**values[i]));
             if (*values[i] == NULL) {
                 /* On failure, free allocated keys. */
                 for(size_t j = 0; j < i; j++) {
@@ -704,7 +705,7 @@ exit:
     cleanup_riak_headers(&riak_headers);
 
     curl_easy_reset(riak->curl);
-    kvstore->free(kvstore, url, kvstore->free_cbdata);
+    kvfree(kvstore, url);
     return rc;
 }
 
@@ -727,23 +728,15 @@ static ib_status_t kvset(
     riak_headers_t riak_headers;
 
     /* Callback data for the value we are setting. */
-    value_buffer.read = 0;
+    membuffer_init(kvstore, &value_buffer);
     value_buffer.size = value->value_length;
     value_buffer.buffer = value->value;
-    value_buffer.kvstore = kvstore;
 
     /* Callback data for reading in the body. */
-    resp_buffer.read = 0;
-    resp_buffer.size = 0;
-    resp_buffer.buffer = NULL;
-    resp_buffer.kvstore = kvstore;
+    membuffer_init(kvstore, &resp_buffer);
 
     /* Callback data for storing the CURL headers. */
-    riak_headers.kvstore = kvstore;
-    riak_headers.status = 0;
-    riak_headers.x_riak_vclock = NULL;
-    riak_headers.content_type = NULL;
-    riak_headers.etag = NULL;
+    riak_headers_init(kvstore, &riak_headers);
 
     riak = (ib_kvstore_riak_server_t *)kvstore->server;
     rc = IB_OK;
@@ -848,13 +841,13 @@ exit:
     }
 
     if (resp_buffer.buffer) {
-        kvstore->free(kvstore, resp_buffer.buffer, kvstore->free_cbdata);
+        kvfree(kvstore, resp_buffer.buffer);
     }
 
     cleanup_riak_headers(&riak_headers);
 
     curl_easy_reset(riak->curl);
-    kvstore->free(kvstore, url, kvstore->free_cbdata);
+    kvfree(kvstore, url);
     return rc;
 }
 
@@ -896,7 +889,7 @@ static ib_status_t kvremove(
 
 exit:
     curl_easy_reset(riak->curl);
-    kvstore->free(kvstore, url, kvstore->free_cbdata);
+    kvfree(kvstore, url);
     return rc;
 }
 static ib_status_t kvconnect(
@@ -931,9 +924,16 @@ static void kvdestroy(
     ib_kvstore_riak_server_t *riak =
         (ib_kvstore_riak_server_t *)kvstore->server;
 
-    kvstore->free(kvstore, riak->riak_url, kvstore->free_cbdata);
-    kvstore->free(kvstore, riak->bucket_url, kvstore->free_cbdata);
-    kvstore->free(kvstore, riak->bucket, kvstore->free_cbdata);
+    kvfree(kvstore, riak->riak_url);
+    kvfree(kvstore, riak->bucket_url);
+    kvfree(kvstore, riak->bucket);
+    if (riak->etag) {
+        kvfree(kvstore, riak->etag);
+    }
+    if (riak->vclock) {
+        kvfree(kvstore, riak->vclock);
+    }
+    kvfree(kvstore, riak);
 }
 
 ib_status_t ib_kvstore_riak_init(
@@ -961,10 +961,7 @@ ib_status_t ib_kvstore_riak_init(
         kvstore->free = mp_free;
     }
 
-    server = kvstore->malloc(
-        kvstore,
-        sizeof(*server),
-        kvstore->malloc_cbdata);
+    server = kvmalloc(kvstore, sizeof(*server));
     if (!server) {
         return IB_EALLOC;
     }
@@ -976,32 +973,25 @@ ib_status_t ib_kvstore_riak_init(
     /* +10 for the intermediate string constant "/buckets/" in the url. */
     server->bucket_url_len = server->riak_url_len + 10 + server->bucket_len;
 
-    server->riak_url = kvstore->malloc(
-       kvstore,
-       server->riak_url_len + 1,
-       kvstore->malloc_cbdata);
+    server->riak_url = kvmalloc(kvstore, server->riak_url_len + 1);
     if (server->riak_url == NULL) {
         return IB_EALLOC;
     }
     sprintf(server->riak_url, "%s", riak_url);
 
-    server->bucket = kvstore->malloc(
-       kvstore,
-       server->bucket_len + 1,
-       kvstore->malloc_cbdata);
+    server->bucket = kvmalloc(kvstore, server->bucket_len + 1);
     if (server->bucket == NULL) {
-        kvstore->free(kvstore, server->riak_url, kvstore->free_cbdata);
+        kvfree(kvstore, server->riak_url);
         return IB_EALLOC;
     }
     sprintf(server->bucket, "%s", bucket);
 
-    server->bucket_url = kvstore->malloc(
-       kvstore,
-       server->riak_url_len + server->bucket_len + 10,
-       kvstore->malloc_cbdata);
+    server->bucket_url = kvmalloc(
+        kvstore,
+        server->riak_url_len + server->bucket_len + 10);
     if (server->bucket_url == NULL) {
-        kvstore->free(kvstore, server->riak_url, kvstore->free_cbdata);
-        kvstore->free(kvstore, server->bucket, kvstore->free_cbdata);
+        kvfree(kvstore, server->riak_url);
+        kvfree(kvstore, server->bucket);
         return IB_EALLOC;
     }
     sprintf(
@@ -1032,21 +1022,21 @@ ib_status_t ib_kvstore_riak_init(
     return IB_OK;
 }
 
-void ib_kvstore_riak_set_vlcock(ib_kvstore_t *kvstore, const char *vclock) {
+void ib_kvstore_riak_set_vlcock(ib_kvstore_t *kvstore, char *vclock) {
     ((ib_kvstore_riak_server_t *)kvstore->server)->vclock = vclock;
 }
 
-void ib_kvstore_riak_set_etag(ib_kvstore_t *kvstore, const char *etag) {
+void ib_kvstore_riak_set_etag(ib_kvstore_t *kvstore, char *etag) {
     ((ib_kvstore_riak_server_t *)kvstore->server)->etag = etag;
 }
 
-const char * ib_kvstore_riak_get_vlcock(ib_kvstore_t *kvstore) {
-    const char *c = ((ib_kvstore_riak_server_t *)kvstore->server)->vclock;
+char * ib_kvstore_riak_get_vlcock(ib_kvstore_t *kvstore) {
+    char *c = ((ib_kvstore_riak_server_t *)kvstore->server)->vclock;
     return c;
 }
 
-const char * ib_kvstore_riak_get_etag(ib_kvstore_t *kvstore) {
-    const char *c = ((ib_kvstore_riak_server_t *)kvstore->server)->etag;
+char * ib_kvstore_riak_get_etag(ib_kvstore_t *kvstore) {
+    char *c = ((ib_kvstore_riak_server_t *)kvstore->server)->etag;
     return c;
 }
 
@@ -1062,10 +1052,7 @@ int ib_kvstore_riak_ping(ib_kvstore_t *kvstore) {
     riak = (ib_kvstore_riak_server_t *)kvstore->server;
     int result;
 
-    url = kvstore->malloc(
-        kvstore,
-        riak->riak_url_len + 7,
-        kvstore->malloc_cbdata);
+    url = kvmalloc(kvstore, riak->riak_url_len + 7);
     if (!url) {
         return 0;
     }
@@ -1079,9 +1066,10 @@ int ib_kvstore_riak_ping(ib_kvstore_t *kvstore) {
         result =
             (resp.read == 2 && resp.buffer[0] == 'O' && resp.buffer[1] == 'K');
     }
-    kvstore->free(kvstore, url, kvstore->free_cbdata);
+    kvfree(kvstore, url);
     cleanup_membuffer(&resp);
     cleanup_riak_headers(&headers);
 
     return result;
 }
+

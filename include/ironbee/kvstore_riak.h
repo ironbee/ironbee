@@ -53,8 +53,8 @@ struct ib_kvstore_riak_server_t {
     size_t bucket_url_len; /**< Length of bucket_url. */
     ib_mpool_t *mp;        /**< Memory pool. */
     CURL *curl;            /**< Curl context for web requests. */
-    const char *vclock;    /**< NULL or vector clock for queries to riak. */
-    const char *etag;      /**< NULL or etag for queries to riak. */
+    char *vclock;          /**< NULL or vector clock for queries to riak. */
+    char *etag;            /**< NULL or etag for queries to riak. */
 };
 typedef struct ib_kvstore_riak_server_t ib_kvstore_riak_server_t;
 
@@ -84,7 +84,7 @@ ib_status_t ib_kvstore_riak_init(
  * @param[in] kvstore Key-value store.
  * @param[in] vclock The vector clock.
  */
-void ib_kvstore_riak_set_vlcock(ib_kvstore_t *kvstore, const char *vclock);
+void ib_kvstore_riak_set_vlcock(ib_kvstore_t *kvstore, char *vclock);
 
 /**
  * Set (not copy) vclock in @a kvstore.
@@ -95,21 +95,21 @@ void ib_kvstore_riak_set_vlcock(ib_kvstore_t *kvstore, const char *vclock);
  * @param[in] kvstore Key-value store.
  * @param[in] etag The etag.
  */
-void ib_kvstore_riak_set_etag(ib_kvstore_t *kvstore, const char *etag);
+void ib_kvstore_riak_set_etag(ib_kvstore_t *kvstore, char *etag);
 
 /**
  * Get vclock from @a kvstore.
  *
  * @returns The current value of kvstore->vclock.
  */
-const char * ib_kvstore_riak_get_vlcock(ib_kvstore_t *kvstore);
+char * ib_kvstore_riak_get_vlcock(ib_kvstore_t *kvstore);
 
 /**
  * Get vclock from @a kvstore.
  *
  * @returns The current value of kvstore->etag.
  */
-const char * ib_kvstore_riak_get_etag(ib_kvstore_t *kvstore);
+char * ib_kvstore_riak_get_etag(ib_kvstore_t *kvstore);
 
 /**
  * Check if the server is reachable.
