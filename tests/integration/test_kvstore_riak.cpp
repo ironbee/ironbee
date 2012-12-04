@@ -62,7 +62,7 @@ class RiakFixture : public ::testing::Test {
         ib_kvstore_disconnect(&kvstore);
         ib_kvstore_destroy(&kvstore);
         ib_shutdown();
-        free((void*)bucket);
+        free(const_cast<char *>(bucket));
     }
 };
 
@@ -92,7 +92,36 @@ TEST_F(RiakFixture, PING_FAIL){
 
 TEST_F(RiakFixture, Write) {
     ib_kvstore_key_t key = { "key1", 4 };
-    ib_kvstore_value_t val = { (char *)"val1", 4, (char *)"text/plain", 10, 0 };
+    ib_kvstore_value_t val = {
+        const_cast<char *>("val1"), 4,
+        const_cast<char *>("text/plain"),
+        10,
+        0
+    };
 
     ib_kvstore_set(&kvstore, NULL, &key, &val);
 }
+
+TEST_F(RiakFixture, Read) {
+    ib_kvstore_key_t key = { "key1", 4 };
+    ib_kvstore_value_t val = {
+        const_cast<char *>("val1"), 4,
+        const_cast<char *>("text/plain"),
+        10,
+        0
+    };
+    ib_kvstore_value_t *val2;
+
+    ib_kvstore_set(&kvstore, NULL, &key, &val);
+    ib_kvstore_get(&kvstore, NULL, &key, &val2);
+
+    ASSERT_TRUE(val2);
+    ASSERT_EQ(val.value_length, val2->value_length);
+    ASSERT_EQ(
+        0,
+        strncmp(
+            reinterpret_cast<const char *>(val.value),
+            reinterpret_cast<const char *>(val2->value),
+            val.value_length));
+}
+

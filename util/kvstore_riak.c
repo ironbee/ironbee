@@ -306,7 +306,7 @@ static size_t riak_header_capture(
         "Content-Type: ",
         ptr,
         size * nmemb,
-        &riak_headers->etag);
+        &riak_headers->content_type);
     if (rc == IB_OK) {
         goto exit;
     }
