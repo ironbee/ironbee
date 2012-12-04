@@ -269,7 +269,7 @@ TEST(TestIronBee, test_dpi_dynf)
             &dynf,
             ib_engine_pool_main_get(ib),
             IB_FIELD_NAME("test_dynf"),
-            IB_FTYPE_GENERIC,
+            IB_FTYPE_LIST,
             dyn_get, (void *)ib_engine_pool_main_get(ib),
             NULL, NULL
         )

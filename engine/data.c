@@ -99,58 +99,60 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
     ib_list_t *list; /* List of values to check stored in parent_field. */
     ib_list_node_t *list_node; /* List node in list. */
 
-    if( name_len == 0 ) {
+    if (name_len == 0) {
         return IB_EINVAL;
     }
 
-    /* Pull a value from a dynamic field. */
-    if(ib_field_is_dynamic(parent_field)) {
-        rc = ib_field_value_ex(parent_field,
-                               result_field,
-                               name,
-                               name_len);
-        return rc;
-    }
-
     /* Check that our input field is a list type. */
-    else if (parent_field->type == IB_FTYPE_LIST) {
-        ib_list_t *result_list;
-
-        /* Make the result list */
-        rc = ib_list_create(&result_list, dpi->mp);
-        if (rc != IB_OK) {
+    if (parent_field->type == IB_FTYPE_LIST) {
+        /* Pull a value from a dynamic field. */
+        /* TODO: Make all of this const correct. */
+        if (ib_field_is_dynamic(parent_field)) {
+            rc = ib_field_value_ex(parent_field,
+                                   result_field,
+                                   name,
+                                   name_len);
             return rc;
         }
+        else {
+            ib_list_t *result_list;
 
-        /* Fetch the parent list. */
-        rc = ib_field_value(parent_field, &list);
-        if (rc != IB_OK) {
-            return rc;
-        }
+            /* Make the result list */
+            rc = ib_list_create(&result_list, dpi->mp);
+            if (rc != IB_OK) {
+                return rc;
+            }
 
-        IB_LIST_LOOP(list, list_node) {
-            ib_field_t *list_field =
-                (ib_field_t *) IB_LIST_NODE_DATA(list_node);
+            /* Fetch the parent list. */
+            rc = ib_field_value(parent_field, &list);
+            if (rc != IB_OK) {
+                return rc;
+            }
 
-            if (list_field->nlen == name_len &&
-                strncasecmp(list_field->name, name, name_len) == 0)
-            {
-                rc = ib_list_push(result_list, list_field);
-                if (rc != IB_OK) {
-                    return rc;
+            IB_LIST_LOOP(list, list_node) {
+                ib_field_t *list_field =
+                    (ib_field_t *) IB_LIST_NODE_DATA(list_node);
+
+                if (list_field->nlen == name_len &&
+                    strncasecmp(list_field->name, name, name_len) == 0)
+                {
+                    rc = ib_list_push(result_list, list_field);
+                    if (rc != IB_OK) {
+                        return rc;
+                    }
                 }
             }
+
+            /* Send back the result_list inside of result_field. */
+            rc = ib_field_create(result_field,
+                                 dpi->mp,
+                                 parent_field->name,
+                                 parent_field->nlen,
+                                 IB_FTYPE_LIST,
+                                 result_list);
+
+            return rc;
         }
-
-        /* Send back the result_list inside of result_field. */
-        rc = ib_field_create(result_field,
-                             dpi->mp,
-                             parent_field->name,
-                             parent_field->nlen,
-                             IB_FTYPE_LIST,
-                             result_list);
-
-        return rc;
     }
 
     /* We don't know what input type this is. Return IB_EINVAL. */
