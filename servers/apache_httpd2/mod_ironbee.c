@@ -69,6 +69,7 @@ typedef struct ironbee_req_ctx {
 typedef struct ironbee_filter_ctx {
     enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER } buffering;
     apr_bucket_brigade *buffer;
+    int eos_sent;
 } ironbee_filter_ctx;
 
 typedef struct ironbee_svr_conf {
@@ -388,23 +389,8 @@ static apr_status_t ib_req_cleanup(void *data)
     request_rec *r = data;
     ironbee_req_ctx *ctx = ap_get_module_config(r->request_config,
                                                 &ironbee_module);
-    ironbee_dir_conf *cfg = ap_get_module_config(r->per_dir_config,
-                                                 &ironbee_module);
-    if (!cfg->filter_input) {
-        /* the input filter was omitted, so we have to notify req end */
-        rc = ib_state_notify_request_finished(ironbee, ctx->tx);
-        if (rc != IB_OK) {
-            return IB2AP(rc);
-        }
-    }
-    if (!cfg->filter_output) {
-        /* the output filter was omitted, so we have to notify resp end */
-        rc = ib_state_notify_response_finished(ironbee, ctx->tx);
-        if (rc != IB_OK) {
-            return IB2AP(rc);
-        }
-    }
-    rc = ib_state_notify_postprocess(ctx->tx->ib, ctx->tx);
+
+    rc = ib_state_notify_postprocess(ironbee, ctx->tx);
     if (rc != IB_OK) {
         return IB2AP(rc);
     }
@@ -717,9 +703,6 @@ setaside_output:
         apr_brigade_cleanup(bb);
     }
 
-    if (eos_seen) {
-        ib_state_notify_response_finished(ironbee, rctx->tx);
-    }
     return rv;
 }
 
@@ -743,6 +726,8 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
     ironbee_filter_ctx *ctx = f->ctx;
     ironbee_req_ctx *rctx = ap_get_module_config(f->r->request_config,
                                                  &ironbee_module);
+    ironbee_dir_conf *dconf = ap_get_module_config(f->r->per_dir_config,
+                                                   &ironbee_module);
     apr_bucket *b;
     apr_bucket *bnext;
     int growing = 0;
@@ -764,6 +749,7 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
         ctx->buffering = (num == 0) ? IOBUF_NOBUF : IOBUF_BUFFER;
         /* If we're buffering, initialise the buffer */
         ctx->buffer = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
+        ctx->eos_sent = 0;
     }
 
     /* If we're buffering, loop over all data before returning.
@@ -778,6 +764,14 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
             /* save pointer to next buxket, in case we clobber b */
             bnext = APR_BUCKET_NEXT(b);
 
+            /* If we're not feeding the data to Ironbee,
+             * all we need do is just check for EOS here
+             */
+            if (!dconf->filter_input) {
+                if (APR_BUCKET_IS_EOS(b))
+                    eos_seen = 1;
+                continue;
+            }
             if (APR_BUCKET_IS_METADATA(b)) {
                 if (APR_BUCKET_IS_EOS(b))
                     eos_seen = 1;
@@ -818,11 +812,12 @@ setaside_input:
         }
     } while (!eos_seen && ctx->buffering == IOBUF_BUFFER);
 
-    if (eos_seen) {
+    if (eos_seen && !ctx->eos_sent) {
         ib_state_notify_request_finished(ironbee, rctx->tx);
+        ctx->eos_sent = 1;
     }
 
-    if (ctx->buffering == IOBUF_NOBUF) {
+    if ((dconf->filter_input == 0) || (ctx->buffering == IOBUF_NOBUF)) {
         /* Normal operation - return status from get_data */
         return rv;
     }
@@ -848,8 +843,11 @@ static void ironbee_filter_insert(request_rec *r)
 {
     ironbee_dir_conf *cfg = ap_get_module_config(r->per_dir_config,
                                                  &ironbee_module);
-    if (cfg->filter_input)
-        ap_add_input_filter("ironbee", NULL, r, r->connection);
+    /* Insert input filter unconditionally.
+     * Even if we're not feeding the data to Ironbee, we need to notify
+     * it end-of-request before proceeding.
+     */
+    ap_add_input_filter("ironbee", NULL, r, r->connection);
     if (cfg->filter_output)
         ap_add_output_filter("ironbee", NULL, r, r->connection);
     ap_add_output_filter("ironbee-headers", NULL, r, r->connection);
