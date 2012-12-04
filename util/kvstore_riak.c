@@ -224,7 +224,7 @@ static ib_status_t cond_copy_header(
 
     strncpy(*dest, ptr + header_len, value_sz);
 
-    /* If we are given a header with \r\n at the end of it, terminate the 
+    /* If we are given a header with \r\n at the end of it, terminate the
      * string early. This is always the case with Curl. */
     if (value_sz >= 3 && (*dest)[value_sz-3] == '\r') {
         (*dest)[value_sz-3] = '\0';
@@ -497,7 +497,7 @@ static void mp_free(ib_kvstore_t *kvstore,
 /**
  * Does a simple get of a Riak object.
  *
- * This will call riak_headers_init and membuffer_init on 
+ * This will call riak_headers_init and membuffer_init on
  * @a riak_headers and @a resp_buffer.
  *
  */
@@ -1072,4 +1072,3 @@ int ib_kvstore_riak_ping(ib_kvstore_t *kvstore) {
 
     return result;
 }
-
