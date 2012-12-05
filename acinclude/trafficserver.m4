@@ -1,8 +1,7 @@
 dnl Check for trafficserver
 dnl CHECK_TS(ACTION-IF-FOUND [, ACTION-IF-NOT-FOUND])
 dnl Sets:
-dnl  HAVE_TS
-dnl  BUILD_TS_SERVER
+dnl  TS
 dnl  TS_CFLAGS
 
 HAVE_TS="no"
@@ -22,13 +21,14 @@ AC_ARG_WITH(
 
 AC_MSG_CHECKING([for trafficserver])
 
+SAVE_CPPFLAGS="${CPPFLAGS}"
+
 if test "${test_paths}" != "no"; then
     ts_path=""
     for x in ${test_paths}; do
-        SAVE_CFLAGS="${CFLAGS}"
-        CFLAGS="${CPPFLAGS} -I${x}/include"
+        CPPFLAGS="${CPPFLAGS} -I${x}/include"
+
         AC_CHECK_HEADER(ts/ts.h,HAVE_TS="yes",HAVE_TS="no")
-        CFLAGS="${SAVE_CCFLAGS}"
 
         if test "$HAVE_TS" != "no"; then
             ts_path="${x}"
@@ -38,7 +38,7 @@ if test "${test_paths}" != "no"; then
 
     if test -n "${ts_path}"; then
         AC_MSG_NOTICE([Building trafficserver server plugin for ${ts_path}])
-        TS_CFLAGS="-I${ts_path}/include"
+        TS_CPPFLAGS="-I${ts_path}/include"
     else
         if test -z "${with_trafficserver}"; then
             AC_MSG_NOTICE([Not building trafficserver server plugin.])
@@ -51,6 +51,8 @@ else
 fi
 
 AM_CONDITIONAL([BUILD_TS_SERVER], [test "$HAVE_TS" != "no"])
+
+CPPFLAGS="${SAVE_CPPCFLAGS}"
 
 AC_SUBST(HAVE_TS)
 AC_SUBST(TS_CFLAGS)
