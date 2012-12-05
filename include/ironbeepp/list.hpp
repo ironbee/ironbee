@@ -306,13 +306,6 @@ struct make_list_const_iterator<Base*>
 /**
  * Converts pointers to themselves and IronBee objects to their ib().
  **/
-template <typename T>
-void* value_as_void(T v)
-{
-    return v.ib();
-}
-
-//! Overload of previous to make it work for pointers.
 template <typename Base>
 void* value_as_void(Base* v)
 {
@@ -320,6 +313,13 @@ void* value_as_void(Base* v)
         const_cast<typename boost::remove_const<Base>::type*>(v)
     );
 }
+//! Overload of previous.
+template <typename T>
+void* value_as_void(T v)
+{
+    return value_as_void(v.ib());
+}
+
 
 } // Internal
 /// @endcond

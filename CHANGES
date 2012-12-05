@@ -32,6 +32,8 @@ IronBee v0.7.0
 * Moved catch, throw, and data support from internals to public.  These 
   routines are not needed if you only use IronBee++ APIs but are very useful
   when accessing the IronBee C API from C++.
+  
+* Fixed bug with adding to List<T> where T was a ConstX IronBee++ class.
 
 **Other**
 

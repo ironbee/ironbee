@@ -252,3 +252,10 @@ TEST_F(TestList, is_list)
     EXPECT_FALSE(is_list<int>::value);
     EXPECT_TRUE(is_list<ConstList<int> >::value);
 }
+
+TEST_F(TestList, PushToListOfConst)
+{
+    List<ConstField> L = List<ConstField>::create(m_pool);
+    Field f = Field::create_number(m_pool, "foo", 3, 5);
+    L.push_back(f);
+}
