@@ -67,7 +67,7 @@ typedef struct ironbee_req_ctx {
 typedef struct ironbee_filter_ctx {
     enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER } buffering;
     apr_bucket_brigade *buffer;
-    int eos_sent;
+    bool eos_sent;
 } ironbee_filter_ctx;
 
 typedef struct ironbee_svr_conf {
@@ -198,8 +198,8 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
 static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 {
     ironbee_req_ctx *ctx = tx->sctx;
-    if (status >= 200 && status < 600) {
-        if (ctx->status >= 200 && ctx->status < 600) {
+    if ( (status >= 200) && (status < 600) ) {
+        if ( (ctx->status >= 200) && (ctx->status < 600) ) {
             ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, ctx->r,
                           "Ignoring: status already set to %d", ctx->status);
             return IB_OK;
@@ -486,7 +486,7 @@ static int ironbee_headers_in(request_rec *r)
     /* If Ironbee has signalled an error, we can just return it now
      * to divert into the appropriate errordocument.
      */
-    if (ctx->status >= 200 && ctx->status < 600) {
+    if ( (ctx->status >= 200) && (ctx->status < 600) ) {
         return ctx->status;
     }
 
@@ -660,8 +660,9 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
          * dump anything we already have buffered,
          * and pass EOS down the chain immediately.
          */
-        if (rctx->status >= 200 && rctx->status < 600
-                        && ctx->buffering != IOBUF_DISCARD) {
+        if ( ((rctx->status >= 200) && (rctx->status < 600)) &&
+             (ctx->buffering != IOBUF_DISCARD) )
+        {
             if (ctx->buffering == IOBUF_BUFFER) {
                 apr_brigade_cleanup(ctx->buffer);
             }
@@ -747,7 +748,7 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
         ctx->buffering = (num == 0) ? IOBUF_NOBUF : IOBUF_BUFFER;
         /* If we're buffering, initialise the buffer */
         ctx->buffer = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
-        ctx->eos_sent = 0;
+        ctx->eos_sent = false;
     }
 
     /* If we're buffering, loop over all data before returning.
@@ -790,10 +791,13 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
             /* If Ironbee just signalled an error, switch to discard data mode,
              * and dump anything we already have buffered,
              */
-            if (rctx->status >= 200 && rctx->status < 600
-                            && ctx->buffering != IOBUF_DISCARD) {
+            if ( ((rctx->status >= 200) && (rctx->status < 600)) &&
+                 (ctx->buffering != IOBUF_DISCARD) )
+            {
                 apr_brigade_cleanup(ctx->buffer);
                 ctx->buffering = IOBUF_DISCARD;
+                f->r->status = rctx->status;
+                ap_send_error_response(f->r, rctx->status);
             }
 
 setaside_input:
@@ -812,7 +816,19 @@ setaside_input:
 
     if (eos_seen && !ctx->eos_sent) {
         ib_state_notify_request_finished(ironbee, rctx->tx);
-        ctx->eos_sent = 1;
+        ctx->eos_sent = true;
+    }
+
+    /* If Ironbee just signalled an error, switch to discard data mode,
+     * and dump anything we already have buffered,
+     */
+    if ( ((rctx->status >= 200) && (rctx->status < 600)) &&
+         (ctx->buffering != IOBUF_DISCARD) )
+    {
+        apr_brigade_cleanup(ctx->buffer);
+        ctx->buffering = IOBUF_DISCARD;
+        f->r->status = rctx->status;
+        ap_send_error_response(f->r, rctx->status);
     }
 
     if ((dconf->filter_input == 0) || (ctx->buffering == IOBUF_NOBUF)) {
