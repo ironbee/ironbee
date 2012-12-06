@@ -51,10 +51,8 @@ typedef bstr_t bstr;
 extern "C" {
 #endif
 
-// IMPORTANT This binary string library is used internally by the parser and you should
-//           not rely on it in your code. The interface and the implementation may change
-//           without warning.
-
+// Data structures
+    
 struct bstr_t {
     /** The length of the string stored in the buffer. */
     size_t len;
@@ -82,61 +80,425 @@ struct bstr_t {
 
 // Functions
 
-bstr *bstr_alloc(size_t newsize);
- void bstr_free(bstr **s);
-bstr *bstr_expand(bstr *s, size_t newsize);
+/**
+ * Append source bstring to destination bstring, growing destination if
+ * necessary. If the destination bstring is expanded, the pointer will change.
+ * You must replace the original destination pointer with the returned one.
+ * Destination is not changed on memory allocation failure.
+ *
+ * @param[in] bdestination
+ * @param[in] bsource
+ * @return Updated bstring, or NULL on memory allocation failure.
+ */
+bstr *bstr_add(bstr *bdestination, const bstr *bsource);
 
-bstr *bstr_dup(const bstr *b);
-bstr *bstr_dup_ex(const bstr *b, size_t offset, size_t len);
-bstr *bstr_dup_c(const char *);
-bstr *bstr_dup_mem(const char *data, size_t len);
+/**
+ * Append a NUL-terminated source to destination, growing destination if
+ * necessary. If the string is expanded, the pointer will change. You must 
+ * replace the original destination pointer with the returned one. Destination
+ * is not changed on memory allocation failure.
+ *
+ * @param[in] b
+ * @param[in] cstr
+ * @return Updated bstring, or NULL on memory allocation failure.
+ */
+bstr *bstr_add_c(bstr *b, const char *cstr);
 
-bstr *bstr_dup_lower(const bstr *);
+/**
+ * Append as many bytes from the source to destination bstring. The
+ * destination storage will not be expanded if there is not enough space in it
+ * already to accommodate all of the data.
+ *
+ * @param[in] b
+ * @param[in] cstr
+ * @return The destination bstring.
+ */
+bstr *bstr_add_c_noex(bstr *b, const char *cstr);
 
-  int bstr_chr(const bstr *, int);
-  int bstr_rchr(const bstr *, int);
-
-  int bstr_cmp(const bstr *, const bstr *);
-  int bstr_cmp_nocase(const bstr *, const bstr *);
-  int bstr_cmp_c(const bstr *, const char *);
-  int bstr_cmp_c_nocase(const bstr *, const char *);
-  int bstr_cmp_ex(const char *, size_t, const char *, size_t);
-  int bstr_cmp_nocase_ex(const char *, size_t, const char *, size_t);
-
-
-bstr *bstr_to_lowercase(bstr *);
-
-bstr *bstr_add(bstr *, const bstr *);
-bstr *bstr_add_c(bstr *, const char *);
+/**
+ * Append a memory region to destination, growing destination if necessary. If
+ * the string is expanded, the pointer will change. You must replace the
+ * original destination pointer with the returned one. Destination is not
+ * changed on memory allocation failure.
+ *
+ * @param[in] b
+ * @param[in] data
+ * @param[in] len
+ * @return Updated bstring, or NULL on memory allocation failure.
+ */
 bstr *bstr_add_mem(bstr *, const char *, size_t);
 
-bstr *bstr_add_noex(bstr *, const bstr *);
-bstr *bstr_add_c_noex(bstr *, const char *);
-bstr *bstr_add_mem_noex(bstr *, const char *, size_t);
+/**
+ * Append as many bytes from the source to destination bstring. The
+ * destination storage will not be expanded if there is not enough space in it
+ * already to accommodate all of the data.
+ *
+ * @param[in] b
+ * @param[in] data
+ * @param[in] len
+ * @return The destination bstring.
+ */
+bstr *bstr_add_mem_noex(bstr *b, const char *data, size_t len);
 
-  int bstr_index_of(const bstr *haystack, const bstr *needle);
-  int bstr_index_of_nocase(const bstr *haystack, const bstr *needle);
-  int bstr_index_of_c(const bstr *haystack, const char *needle);
-  int bstr_index_of_c_nocase(const bstr *haystack, const char *needle);
-  int bstr_index_of_mem(const bstr *haystack, const char *data, size_t len);
-  int bstr_index_of_mem_nocase(const bstr *haystack, const char *data, size_t len);
+/**
+ * Append as many bytes from the source bstring to destination bstring. The
+ * destination storage will not be expanded if there is not enough space in it
+ * already to accommodate all of the data.
+ *
+ * @param[in] bdestination
+ * @param[in] bsource
+ * @return The destination bstring.
+ */
+bstr *bstr_add_noex(bstr *bdestination, const bstr *bsource);
 
-  int bstr_begins_with_mem(const bstr *haystack, const char *data, size_t len);
-  int bstr_begins_with_mem_nocase(const bstr *haystack, const char *data, size_t len);
-  int bstr_begins_with(const bstr *haystack, const bstr *needle);
-  int bstr_begins_with_c(const bstr *haystack, const char *needle);
-  int bstr_begins_with_nocase(const bstr *haystack, const bstr *needle);
-  int bstr_begins_withc_nocase(const bstr *haystack, const char *needle);
+/**
+ * Allocate a zero-length bstring, reserving space for at least size bytes.
+ *
+ * @param[in] size
+ * @return New string instance
+ */
+bstr *bstr_alloc(size_t size);
 
-unsigned char bstr_char_at(const bstr *s, size_t pos);
+/**
+ * Checks whether bstring begins with another bstring. Case sensitive.
+ * 
+ * @param[in] bhaystack
+ * @param[in] bneedle
+ * @return 1 if true, otherwise 0.
+ */
+int bstr_begins_with(const bstr *bhaystack, const bstr *bneedle);
 
-   void bstr_chop(bstr *b);
-   void bstr_util_adjust_len(bstr *s, size_t newlen);
-int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *lastlen);
-  char *bstr_util_memdup_to_c(const char *data, size_t len);
-  char *bstr_util_strdup_to_c(const bstr *);
+/**
+ * Checks whether bstring begins with NUL-terminated string. Case sensitive.
+ *
+ * @param[in] bhaystack
+ * @param[in] cneedle
+ * @return
+ */
+int bstr_begins_with_c(const bstr *bhaystack, const char *cneedle);
+
+/**
+ * Checks whether bstring begins with NUL-terminated string. Case insensitive.
+ *
+ * @param[in] bhaystack
+ * @param[in] cneedle
+ * @return 1 if true, otherwise 0.
+ */
+int bstr_begins_with_c_nocase(const bstr *bhaystack, const char *cneedle);
+
+/**
+ * Checks whether the bstring begins with the given memory block. Case sensitive.
+ *
+ * @param[in] bhaystack
+ * @param[in] data
+ * @param[in] len
+ * @return 1 if true, otherwise 0.
+ */
+int bstr_begins_with_mem(const bstr *bhaystack, const char *data, size_t len);
+/**
+ * Checks whether bstring begins with memory block. Case insensitive.
+ *
+ * @param[in] bhaystack
+ * @param[in] data
+ * @param[in] len
+ * @return 1 if true, otherwise 0.
+ */
+int bstr_begins_with_mem_nocase(const bstr *bhaystack, const char *data, size_t len);
+
+/**
+ * Checks whether bstring begins with another bstring. Case insensitive.
+ *
+ * @param[in] bhaystack
+ * @param[in] cneedle
+ * @return 1 if true, otherwise 0.
+ */
+int bstr_begins_with_nocase(const bstr *bhaystack, const bstr *cneedle);
+
+/**
+ * Return the byte at the given position.
+ *
+ * @param[in] b
+ * @param[in] pos
+ * @return The character at the given location, or -1 if the position is out
+ *         of range.
+ */
+int bstr_char_at(const bstr *b, size_t pos);
+
+/**
+ * Remove the last byte from bstring, assuming it contains at least one byte.
+ *
+ * @param[in] b
+ */
+void bstr_chop(bstr *b);
+
+/**
+ * Return the first position of the provided character (byte).
+ *
+ * @param[in] b
+ * @param[in] c
+ * @return The first position of the character, or -1 if it could not be found
+ */
+int bstr_chr(const bstr *b, int c);
+
+/**
+ * Case-sensitive comparison of two bstrings.
+ *
+ * @param[in] b1
+ * @param[in] b2
+ * @return Zero on string match, 1 if b1 is greater than b2, and -1 if b2 is
+ *         greater than b1.
+ */
+int bstr_cmp(const bstr *b1, const bstr *b2);
+
+/**
+ * Case-insensitive comparison two bstrings.
+ *
+ * @param[in] b1
+ * @param[in] b2
+ * @return Zero on string match, 1 if b1 is greater than b2, and -1 if b2 is
+ *         greater than b1.
+ */
+int bstr_cmp_nocase(const bstr *b1, const bstr *b2);
   
-  bstr *bstr_wrap_c(const char *input);
+/**
+ * Case-sensitive comparison of a bstring and a NUL-terminated string.
+ *
+ * @param[in] b
+ * @param[in] cstr
+ * @return Zero on string match, 1 if b is greater than cstr, and -1 if cstr is
+ *         greater than b.
+ */
+int bstr_cmp_c(const bstr *b, const char *cstr);
+
+/**
+ * Case-insensitive comparison of a bstring with a NUL-terminated string.
+ *
+ * @param[in] b
+ * @param[in] cstr
+ * @return Zero on string match, 1 if b is greater than cstr, and -1 if cstr is
+ *         greater than b.
+ */
+int bstr_cmp_c_nocase(const bstr *b, const char *cstr);
+ 
+/**
+ * Case-sensitive comparison of two memory regions.
+ *
+ * @param[in] data1
+ * @param[in] len1
+ * @param[in] data2
+ * @param[in] len2
+ * @return Zero if the memory regions are identical, 1 if data1 is greater than
+ *         data2, and -1 if data2 is greater than data1.
+ */
+int bstr_cmp_ex(const char *data1, size_t len1, const char *data2, size_t len2);
+ 
+/**
+ * Case-insensitive comparison of two memory regions.
+ *
+ * @param[in] data1
+ * @param[in] len1
+ * @param[in] data2
+ * @param[in] len2
+ * @return Zero if the memory regions are identical, 1 if data1 is greater than
+ *         data2, and -1 if data2 is greater than data1.
+ */
+ int bstr_cmp_nocase_ex(const char *data1, size_t len1, const char *data2, size_t len2);
+
+/**
+ * Create a new bstring by copying the provided bstring.
+ *
+ * @param[in] b
+ * @return New bstring, or NULL if memory allocation failed
+ */
+bstr *bstr_dup(const bstr *b);
+
+/**
+ * Create a new bstring by copying the provided NUL-terminated string.
+ *
+ * @param[in] cstr
+ * @return New bstring, or NULL if memory allocation failed
+ */
+bstr *bstr_dup_c(const char *cstr);
+
+/**
+ * Create a new bstring by copying a part of the provided bstring.
+ *
+ * @param[in] b
+ * @param[in] offset
+ * @param[in] len
+ * @return New bstring, or NULL if memory allocation failed
+ */
+bstr *bstr_dup_ex(const bstr *b, size_t offset, size_t len);
+
+/**
+ * Create a copy of the provided bstring, then convert it to lowercase.
+ *
+ * @param[in] b
+ * @return New bstring, or NULL if memory allocation failed
+ */
+bstr *bstr_dup_lower(const bstr *b);
+
+/**
+ * Create a new bstring by copying the provided memory region.
+ *
+ * @param[in] data
+ * @param[in] len
+ * @return New bstring, or NULL if memory allocation failed
+ */
+bstr *bstr_dup_mem(const char *data, size_t len);
+
+/**
+ * Expand internal bstring storage to support at least newsize bytes. The input
+ * string is not changed if it is already big enough to accommodate the desired
+ * size. If the input string is smaller, however, it is expanded. The pointer to
+ * the string may change. If the expansion fails, the original string
+ * is left untouched.
+ *
+ * @param[in] b
+ * @param[in] newsize
+ * @return Updated string instance, or NULL if memory allocation failed
+ */
+bstr *bstr_expand(bstr *b, size_t newsize);
+
+/**
+ * Deallocate the supplied bstring instance and set it to NULL. Allows NULL on
+ * input.
+ *
+ * @param[in] b
+ */
+void bstr_free(bstr **b);
+
+
+
+/**
+ * Find the needle in the haystack.
+ *
+ * @param[in] bhaystack
+ * @param[in] bneedle
+ * @return Position of the match, or -1 if the needle could not be found.
+ */
+int bstr_index_of(const bstr *bhaystack, const bstr *bneedle);
+
+/**
+ * Find the needle in the haystack, ignoring case differences.
+ *
+ * @param[in] bhaystack
+ * @param[in] bneedle
+ * @return Position of the match, or -1 if the needle could not be found.
+ */
+int bstr_index_of_nocase(const bstr *bhaystack, const bstr *bneedle);
+
+/**
+ * Find the needle in the haystack, with the needle being a NUL-terminated
+ * string.
+ *
+ * @param[in] bhaystack
+ * @param[in] cneedle
+ * @return Position of the match, or -1 if the needle could not be found.
+ */
+int bstr_index_of_c(const bstr *bhaystack, const char *cneedle);
+
+/**
+ * Find the needle in the haystack, with the needle being a NUL-terminated
+ * string. Ignore case differences.
+ *
+ * @param[in] bhaystack
+ * @param[in] cneedle
+ * @return Position of the match, or -1 if the needle could not be found.
+ */
+int bstr_index_of_c_nocase(const bstr *bhaystack, const char *cneedle);
+
+/**
+ * Find the needle in the haystack, with the needle being a memory region.
+ *
+ * @param[in] bhaystack
+ * @param[in] data
+ * @param[in] len
+ * @return Position of the match, or -1 if the needle could not be found.
+ */
+int bstr_index_of_mem(const bstr *bhaystack, const char *data, size_t len);
+
+/**
+ * Find the needle in the haystack, with the needle being a memory region.
+ * Ignore case differences.
+ *
+ * @param[in] bhaystack
+ * @param[in] data
+ * @param[in] len
+ * @return Position of the match, or -1 if the needle could not be found.
+ */
+int bstr_index_of_mem_nocase(const bstr *bhaystack, const char *data, size_t len);
+
+/**
+ * Return the last position of a character (byte).
+ *
+ * @param[in] b
+ * @param[in] c
+ * @return The last position of the character, or -1 if it could not be found.
+ */
+int bstr_rchr(const bstr *b, int c);
+
+/**
+ * Convert bstring to lowercase.
+ *
+ * @param[in] b
+ * @return The same bstring received on input
+ */
+bstr *bstr_to_lowercase(bstr *b);
+
+/**
+ * Adjust bstring length. You will need to use this method whenever
+ * you work directly with the string contents, and end up changing
+ * its length by direct structure manipulation.
+ *
+ * @param[in] b
+ * @param[in] newlen
+ */
+void bstr_util_adjust_len(bstr *b, size_t newlen);
+
+/**
+ * Convert contents of a memory region to a positive integer.
+ *
+ * @param[in] data.
+ * @param[in] len
+ * @param[in] base The desired number base.
+ * @param[in] lastlen Points to the first unused byte in the region
+ * @return If the conversion was successful, this function returns the
+ *         number. When the conversion fails, -1 will be returned when not
+ *         one valid digit was found, and -2 will be returned if an overflow
+ *         ocurred.
+ */   
+int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *lastlen);
+
+/**
+ * Take the provided memory region, allocate a new memory buffer, and construct
+ * a NUL-terminated string, replacing each NUL byte with "\0".
+ *
+ * @param[in] data
+ * @param[in] len
+ * @return The newly created NUL-terminated string, or NULL in case of memory
+ *         allocation failure.
+ */
+char *bstr_util_memdup_to_c(const char *data, size_t len);
+
+/**
+ * Create a new NUL-terminated string out of the provided bstring.
+ *
+ * @param[in] b
+ * @return The newly created NUL-terminated string, or NULL in case of memory
+ *         allocation failure.
+ */
+char *bstr_util_strdup_to_c(const bstr *b);
+  
+/**
+ * Create a new bstring from the provided NUL-terminated string and without
+ * copying the data. The caller must ensure that the input string continues
+ * to point to a valid memory location for as long as the bstring is used.
+ * 
+ * @param[in] cstr
+ * @return New bstring, or NULL on memory allocation failure.
+ */
+bstr *bstr_wrap_c(const char *cstr);
 
 #ifdef __cplusplus
 }

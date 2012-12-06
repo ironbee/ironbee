@@ -167,11 +167,11 @@ int htp_parse_authorization(htp_connp_t *connp) {
     htp_header_t *auth_header = table_get_c(connp->in_tx->request_headers, "authorization");
     if (auth_header == NULL) return HTP_OK;
 
-    if (bstr_begins_withc_nocase(auth_header->value, "basic")) {
+    if (bstr_begins_with_c_nocase(auth_header->value, "basic")) {
         // Basic authentication
         connp->in_tx->request_auth_type = HTP_AUTH_BASIC;
         return htp_parse_authorization_basic(connp, auth_header);
-    } else if (bstr_begins_withc_nocase(auth_header->value, "digest")) {
+    } else if (bstr_begins_with_c_nocase(auth_header->value, "digest")) {
         // Digest authentication
         connp->in_tx->request_auth_type = HTP_AUTH_DIGEST;
         return htp_parse_authorization_digest(connp, auth_header);
