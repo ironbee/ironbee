@@ -1,10 +1,11 @@
 .libs
+*~
+*.exe
 *.la
 *.lo
 *.o
 *.slo
-*.exe
-*~
+*.stackdump
 /a.out.dSYM
 /Makefile
 /Makefile.in
