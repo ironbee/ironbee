@@ -25,3 +25,6 @@ libgtest_la_SOURCES = $(srcdir)/gtest/gtest-all.cc $(srcdir)/gtest/gtest_main.cc
 TESTS_ENVIRONMENT = srcdir=$(srcdir)
 TESTS = run-tests.sh test_bstr test_main test_utils test_hybrid
 
+check-compile-only: all-am
+	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
+
