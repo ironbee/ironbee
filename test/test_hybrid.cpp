@@ -41,8 +41,7 @@
 #include "test.h"
 
 class HybridParsingTest : public testing::Test {
-
-    protected:
+protected:
 
     virtual void SetUp() {
         cfg = htp_config_create();
@@ -67,7 +66,7 @@ TEST_F(HybridParsingTest, Get) {
     // Create a new LibHTP transaction
     htp_tx_t *tx = htp_txh_create(connp);
     ASSERT_TRUE(tx != NULL);
-    
+
     // Request begins
     htp_txh_state_request_start(tx);
 
@@ -79,14 +78,44 @@ TEST_F(HybridParsingTest, Get) {
     htp_txh_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
     htp_txh_req_set_protocol_number(tx, HTTP_1_1);
     htp_txh_req_set_protocol_http_0_9(tx, 0);
-     
+
     // Request line complete
     htp_txh_state_request_line(tx);
+
+    // Check request line
+    ASSERT_EQ(bstr_cmp_c(tx->request_method, "GET"), 0);
+    ASSERT_EQ(bstr_cmp_c(tx->request_uri, "/"), 0);
+    ASSERT_EQ(bstr_cmp_c(tx->request_protocol, "HTTP/1.1"), 0);
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    ASSERT_EQ(bstr_cmp_c(tx->parsed_uri->query, "p=1&q=2"), 0);
+
+    // Check parameters
+    bstr *param_p = (bstr *)table_get_c(tx->request_params_query, "p");
+    ASSERT_TRUE(param_p != NULL);
+    ASSERT_EQ(bstr_cmp_c(param_p, "1"), 0);
+
+    bstr *param_q = (bstr *)table_get_c(tx->request_params_query, "q");
+    ASSERT_TRUE(param_q != NULL);
+    ASSERT_EQ(bstr_cmp_c(param_q, "2"), 0);
 
     // Request headers
     htp_txh_req_set_header_c(tx, "Host", "www.example.com", ALLOC_COPY);
     htp_txh_req_set_header_c(tx, "Connection", "keep-alive", ALLOC_COPY);
     htp_txh_req_set_header_c(tx, "User-Agent", "Mozilla/5.0", ALLOC_COPY);
+
+    // Check headers
+    htp_header_t *h_host = (htp_header_t *)table_get_c(tx->request_headers, "host");
+    ASSERT_TRUE(h_host != NULL);
+    ASSERT_EQ(bstr_cmp_c(h_host->value, "www.example.com"), 0);
+
+    htp_header_t *h_connection = (htp_header_t *)table_get_c(tx->request_headers, "connection");
+    ASSERT_TRUE(h_connection != NULL);
+    ASSERT_EQ(bstr_cmp_c(h_connection->value, "keep-alive"), 0);
+
+    htp_header_t *h_ua = (htp_header_t *)table_get_c(tx->request_headers, "user-agent");
+    ASSERT_TRUE(h_ua != NULL);
+    ASSERT_EQ(bstr_cmp_c(h_ua->value, "Mozilla/5.0"), 0);
 
     // Request headers complete
     htp_txh_state_request_headers(tx);
