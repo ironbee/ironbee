@@ -214,7 +214,7 @@ int htp_txh_state_request_line(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-int htp_txh_state_transaction_start(htp_tx_t *tx) {
+int htp_txh_state_request_start(htp_tx_t *tx) {
     // Run hook TRANSACTION_START
     int rc = hook_run_all(tx->connp->cfg->hook_transaction_start, tx->connp);
     if (rc != HOOK_OK) return rc;

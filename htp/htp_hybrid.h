@@ -68,7 +68,7 @@ htp_tx_t *htp_txh_create(htp_connp_t *connp);
  * 
  * @param[in] tx
  */
-int htp_txh_state_transaction_start(htp_tx_t *tx);
+int htp_txh_state_request_start(htp_tx_t *tx);
      
 /**
  * Set transaction request method.
@@ -217,7 +217,7 @@ void htp_txh_req_process_body_data(htp_tx_t *tx, const char *data, size_t len);
  *
  * @param[in] tx
  */
-void htp_txh_state_request(htp_tx_t *tx);
+void htp_txh_state_request_complete(htp_tx_t *tx);
 
 /**
  * Change transaction state to RESPONSE_START and invoke all
@@ -330,7 +330,7 @@ void htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len);
  *
  * @param[in] tx
  */
-void htp_txh_state_response(htp_tx_t *tx);
+void htp_txh_state_response_complete(htp_tx_t *tx);
 
 
 #ifdef	__cplusplus

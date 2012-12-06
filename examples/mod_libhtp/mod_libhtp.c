@@ -42,8 +42,8 @@ static int libhtp_post_read_request(request_rec *r) {
     htp_tx_t *tx = htp_txh_create(connp);
     if (tx == NULL) return DECLINED;
 
-    // Transaction lifecycle begins
-    htp_txh_state_transaction_start(tx);
+    // Request begins
+    htp_txh_state_request_start(tx);
 
     // Populate request line
     htp_txh_req_set_method_c(tx, r->method, ALLOC_REUSE);

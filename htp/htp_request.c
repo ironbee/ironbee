@@ -756,7 +756,7 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     if (connp->in_tx == NULL) return HTP_ERROR;
 
     // Change state to TRANSACTION_START
-    htp_txh_state_transaction_start(connp->in_tx);
+    htp_txh_state_request_start(connp->in_tx);
 
     return HTP_OK;
 }
