@@ -35,12 +35,12 @@
  * @author Craig Forbes <cforbes@qualys.com>
  */
 
-#include<iostream>
+#include <iostream>
 
-#include<gtest/gtest.h>
+#include <gtest/gtest.h>
 
-#include<htp/bstr.h>
-#include<htp/bstr_builder.h>
+#include <htp/bstr.h>
+#include <htp/bstr_builder.h>
 
 TEST(BstrTest, Alloc) {
     bstr *p1;
@@ -377,7 +377,7 @@ TEST(BstrTest, BeginsWith) {
 
     EXPECT_EQ(1, bstr_begins_with_c(haystack, "AB"));
     EXPECT_NE(1, bstr_begins_with_c(haystack, "ab"));
-    EXPECT_EQ(1, bstr_begins_withc_nocase(haystack, "ab"));
+    EXPECT_EQ(1, bstr_begins_with_c_nocase(haystack, "ab"));
 
     EXPECT_EQ(1, bstr_begins_with_mem(haystack, "ABq",2));
     EXPECT_NE(1, bstr_begins_with_mem(haystack, "abq",2));
@@ -391,7 +391,7 @@ TEST(BstrTest, BeginsWith) {
 TEST(BstrTest, CharAt) {
     bstr *str = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
     EXPECT_EQ('\000', bstr_char_at(str, 12));
-    EXPECT_EQ((unsigned char)-1, bstr_char_at(str, 45));
+    EXPECT_EQ(-1, bstr_char_at(str, 45));
 
     bstr_free(&str);
 }
