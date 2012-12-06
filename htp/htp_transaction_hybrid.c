@@ -59,6 +59,7 @@ htp_tx_t *htp_txh_create(htp_connp_t *connp) {
     if (tx == NULL) return NULL;
 
     tx->connp = connp;
+    tx->connp->in_tx = tx;
 
     list_add(connp->conn->transactions, tx);
 
@@ -70,12 +71,25 @@ htp_tx_t *htp_txh_create(htp_connp_t *connp) {
 void htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
     if ((name == NULL) || (value == NULL)) return;
 
-    bstr *header_name = copy_or_wrap_c(name, alloc);
-    if (header_name == NULL) return;
-    bstr *header_value = copy_or_wrap_c(value, alloc);
-    if (header_value == NULL) return;
-
-    table_addn(tx->request_headers, header_name, header_value);
+    htp_header_t *h = calloc(1, sizeof(htp_header_t));
+    if (h == NULL) {
+        return;
+    }
+    
+    h->name = copy_or_wrap_c(name, alloc);
+    if (h->name == NULL) {
+        free(h);
+        return;
+    }
+    
+    h->value = copy_or_wrap_c(value, alloc);
+    if (h->value == NULL) {
+        bstr_free(&h->name);
+        free(h);
+        return;
+    }
+    
+    table_add(tx->request_headers, h->name, h);
 }
 
 void htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc) {

@@ -71,7 +71,6 @@ TEST_F(HybridParsingTest, Get) {
     // Request begins
     htp_txh_state_request_start(tx);
 
-    /*
     // Request line data
     htp_txh_req_set_method_c(tx, "GET", ALLOC_COPY);
     htp_txh_req_set_method_number(tx, HTP_M_GET);
@@ -80,7 +79,7 @@ TEST_F(HybridParsingTest, Get) {
     htp_txh_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
     htp_txh_req_set_protocol_number(tx, HTTP_1_1);
     htp_txh_req_set_protocol_http_0_9(tx, 0);
-
+     
     // Request line complete
     htp_txh_state_request_line(tx);
 
@@ -91,5 +90,4 @@ TEST_F(HybridParsingTest, Get) {
 
     // Request headers complete
     htp_txh_state_request_headers(tx);
-    */
 }
