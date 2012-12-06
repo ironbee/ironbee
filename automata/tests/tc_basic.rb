@@ -125,4 +125,10 @@ class TestBasic < Test::Unit::TestCase
     text = "foobar"
     ac_test(words, text, "foobar")
   end
+
+  def test_end_in_pc
+    words = ["tesx"]
+    text = "te"
+    ac_test( words, text, "end_in_pc")
+  end
 end

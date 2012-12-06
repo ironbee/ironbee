@@ -68,6 +68,7 @@ ia_eudoxus_result_t IA_EUDOXUS(next_low)(
     assert(state->input_location != NULL);
 
     const uint8_t c = *(state->input_location);
+
     bool has_output         = IA_EUDOXUS_FLAG(state->node->header, 0);
     bool has_nonadvancing   = IA_EUDOXUS_FLAG(state->node->header, 1);
     bool has_default        = IA_EUDOXUS_FLAG(state->node->header, 2);
@@ -440,6 +441,11 @@ ia_eudoxus_result_t IA_EUDOXUS(output)(
 {
     if (state == NULL) {
         return IA_EUDOXUS_EINVAL;
+    }
+
+    /* Input may have run out inside a PC chain, in which case, no output. */
+    if (state->node == NULL) {
+      return IA_EUDOXUS_OK;
     }
 
     assert(state->eudoxus  != NULL);
