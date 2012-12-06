@@ -182,7 +182,7 @@ void htp_txh_req_headers_clear(htp_tx_t *tx);
  * 
  * @param[in] tx
  */
-void htp_txh_state_request_headers(htp_tx_t *tx);    
+int htp_txh_state_request_headers(htp_tx_t *tx);
      
 /**
  * Sets desired (de)compression method for the request body. The

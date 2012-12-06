@@ -67,6 +67,17 @@ htp_tx_t *htp_txh_create(htp_connp_t *connp) {
     return tx;
 }
 
+void htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
+    if ((name == NULL) || (value == NULL)) return;
+
+    bstr *header_name = copy_or_wrap_c(name, alloc);
+    if (header_name == NULL) return;
+    bstr *header_value = copy_or_wrap_c(value, alloc);
+    if (header_value == NULL) return;
+
+    table_addn(tx->request_headers, header_name, header_value);
+}
+
 void htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc) {
     tx->request_method = copy_or_wrap_c(method, alloc);
 }
@@ -105,7 +116,7 @@ void htp_txh_req_set_protocol_http_0_9(htp_tx_t *tx, int is_http_0_9) {
 
 int htp_txh_state_request_line(htp_tx_t *tx) {
     htp_connp_t *connp = tx->connp;
-    
+
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
         // Parse authority
         if (htp_parse_authority(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
@@ -141,11 +152,11 @@ int htp_txh_state_request_line(htp_tx_t *tx) {
                 return HTP_ERROR;
             }
 
-            #ifdef HTP_DEBUG
+#ifdef HTP_DEBUG
             fprint_raw_data(stderr, "request_uri_normalized",
                     (unsigned char *) bstr_ptr(connp->in_tx->request_uri_normalized),
                     bstr_len(connp->in_tx->request_uri_normalized));
-            #endif
+#endif
         }
 
         // Finalize parsed_uri
@@ -184,7 +195,7 @@ int htp_txh_state_request_line(htp_tx_t *tx) {
                 } else {
                     connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
                 }
-                
+
                 // TODO Log
             }
         } else {
@@ -203,13 +214,40 @@ int htp_txh_state_request_line(htp_tx_t *tx) {
             }
         }
     }
-    
+
     // Run hook REQUEST_LINE
     int rc = hook_run_all(connp->cfg->hook_request_line, connp);
     if (rc != HOOK_OK) return rc;
-    
+
     // Move on to the next phase.
     connp->in_state = htp_connp_REQ_PROTOCOL;
+
+    return HTP_OK;
+}
+
+int htp_txh_state_request_headers(htp_tx_t *tx) {
+    // Did this request arrive in multiple chunks?
+    if (tx->connp->in_chunk_count != tx->connp->in_chunk_request_index) {
+        tx->connp->in_tx->flags |= HTP_MULTI_PACKET_HEAD;
+    }
+
+    // Move onto the next processing phase; if we're in TX_PROGRESS_REQ_HEADERS
+    // that means that this is the first time we're processing headers in
+    // a request. Otherwise, we're dealing with trailing headers.
+    if (tx->connp->in_tx->progress == TX_PROGRESS_REQ_HEADERS) {
+        // Remember how many header lines there were before trailers
+        tx->connp->in_tx->request_header_lines_no_trailers = list_size(tx->connp->in_tx->request_header_lines);
+
+        // Determine if this request has a body
+        tx->connp->in_state = htp_connp_REQ_CONNECT_CHECK;
+    } else {
+        // Run hook REQUEST_TRAILER
+        int rc = hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
+        if (rc != HOOK_OK) return rc;
+
+        // We've completed parsing this request
+        tx->connp->in_state = htp_connp_REQ_FINALIZE;
+    }
 
     return HTP_OK;
 }

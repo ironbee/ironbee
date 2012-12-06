@@ -508,43 +508,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 connp->in_header_line = NULL;
 
                 // We've seen all request headers
-
-                // Did this request arrive in multiple chunks?
-                if (connp->in_chunk_count != connp->in_chunk_request_index) {
-                    connp->in_tx->flags |= HTP_MULTI_PACKET_HEAD;
-                }
-
-                // Move onto the next processing phase
-                if (connp->in_tx->progress == TX_PROGRESS_REQ_HEADERS) {
-                    // Remember how many header lines there were before trailers
-                    connp->in_tx->request_header_lines_no_trailers = list_size(connp->in_tx->request_header_lines);
-
-                    // Run hook REQUEST_HEADERS_RAW
-                    //if (connp->cfg->hook_request_headers_raw != NULL) {
-                    //    htp_req_run_hook_request_headers_raw(connp, 0,
-                    //        connp->in_tx->request_header_lines_no_trailers);
-                    //}
-
-                    // Determine if this request has a body                    
-                    connp->in_state = htp_connp_REQ_CONNECT_CHECK;
-                } else {
-                    // Run hook REQUEST_HEADERS_RAW
-                    //if ((connp->cfg->hook_request_headers_raw != NULL)
-                    //    && (list_size(connp->in_tx->request_header_lines) > connp->in_tx->request_header_lines_no_trailers)) {
-                    //    htp_req_run_hook_request_headers_raw(connp,
-                    //        connp->in_tx->request_header_lines_no_trailers,
-                    //        list_size(connp->in_tx->request_header_lines));
-                    //}
-
-                    // Run hook REQUEST_TRAILER
-                    int rc = hook_run_all(connp->cfg->hook_request_trailer, connp);
-                    if (rc != HOOK_OK) return rc;
-
-                    // We've completed parsing this request
-                    connp->in_state = htp_connp_REQ_FINALIZE;
-                }
-
-                return HTP_OK;
+                return htp_txh_state_request_headers(connp->in_tx);
             }
 
             // Prepare line for consumption
