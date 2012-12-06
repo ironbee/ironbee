@@ -6,7 +6,7 @@
 *.o
 *.slo
 *.stackdump
-/a.out.dSYM
+*.dSYM
 /Makefile
 /Makefile.in
 /aclocal.m4
@@ -38,7 +38,8 @@
 /test/Makefile
 /test/Makefile.in
 /test/main*
-/test/test_bstr*
+/test/test_bstr
+/test/test_hybrid
 /test/test_utils
 extras/ruby/*.gem
 /docs/Makefile
