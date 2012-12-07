@@ -160,6 +160,7 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
                 // TODO Unquote quoted characters
                 part->file = calloc(1, sizeof (htp_file_t));
                 if (part->file == NULL) return -1;
+                part->file->fd = -1;
                 part->file->filename = bstr_dup_mem((char *) data + start, pos - start);
                 if (part->file->filename == NULL) return -1;
                 part->file->source = HTP_FILE_MULTIPART;
