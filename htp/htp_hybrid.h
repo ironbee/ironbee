@@ -209,7 +209,7 @@ void htp_txh_req_set_compression(htp_tx_t *tx, int compression_method);
  * 
  * @param[in] tx
  */
-void htp_txh_req_process_body_data(htp_tx_t *tx, const char *data, size_t len);
+int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len);
 
 /**
  * Change transaction state to REQUEST and invoke all

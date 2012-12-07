@@ -413,7 +413,7 @@ int htp_txh_state_request_headers(htp_tx_t *tx) {
     // Did this request arrive in multiple chunks?
     if (tx->connp->in_chunk_count != tx->connp->in_chunk_request_index) {
         tx->flags |= HTP_MULTI_PACKET_HEAD;
-    }   
+    }
 
     // If we're in TX_PROGRESS_REQ_HEADERS that means that this is the
     // first time we're processing headers in/ a request. Otherwise,
@@ -433,7 +433,7 @@ int htp_txh_state_request_headers(htp_tx_t *tx) {
         tx->connp->in_state = htp_connp_REQ_CONNECT_CHECK;
     } else {
         htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "[Internal Error] Invalid tx progress: %d", tx->progress);
-        
+
         return HTP_ERROR;
     }
 
@@ -452,4 +452,22 @@ int htp_txh_state_request_start(htp_tx_t *tx) {
     return HTP_OK;
 }
 
+int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len) {          
+    // Keep track of actual data length
+    tx->request_entity_len += len;
 
+    // Send data to callbacks
+    htp_tx_data_t d;
+    d.tx = tx;
+    d.data = (unsigned char *)data;
+    d.len = len;
+
+    int rc = htp_req_run_hook_body_data(tx->connp, &d);
+    if (rc != HOOK_OK) {
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                "Request body data callback returned error (%d)", rc);
+        return HTP_ERROR;
+    }   
+
+    return HTP_OK;
+}

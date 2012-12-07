@@ -132,47 +132,27 @@ int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
-    htp_tx_data_t d;
-
-    d.tx = connp->in_tx;
-    d.data = &connp->in_current_data[connp->in_current_offset];
-    d.len = 0;
+    unsigned char *data = connp->in_current_data + connp->in_current_offset;
+    size_t len = 0;
 
     for (;;) {
         IN_NEXT_BYTE(connp);
 
         if (connp->in_next_byte == -1) {
-            // Keep track of actual data length
-            connp->in_tx->request_entity_len += d.len;
-
-            // Send data to callbacks            
-            int rc = htp_req_run_hook_body_data(connp, &d);
-            if (rc != HOOK_OK) {
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Request body data callback returned error (%d)", rc);
-                return HTP_ERROR;
-            }
+            int rc = htp_txh_req_process_body_data(connp->in_tx, data, len);
+            if (rc != HTP_OK) return rc;
 
             // Ask for more data
             return HTP_DATA;
         } else {
             connp->in_tx->request_message_len++;
             connp->in_chunked_length--;
-            d.len++;
+            len++;
 
             if (connp->in_chunked_length == 0) {
                 // End of data chunk
-
-                // Keep track of actual data length
-                connp->in_tx->request_entity_len += d.len;
-
-                // Send data to callbacks               
-                int rc = htp_req_run_hook_body_data(connp, &d);
-                if (rc != HOOK_OK) {
-                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                            "Request body data callback returned error (%d)", rc);
-                    return HTP_ERROR;
-                }
+                int rc = htp_txh_req_process_body_data(connp->in_tx, data, len);
+                if (rc != HTP_OK) return rc;
 
                 connp->in_state = htp_connp_REQ_BODY_CHUNKED_DATA_END;
 
@@ -232,11 +212,8 @@ int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
-    htp_tx_data_t d;
-
-    d.tx = connp->in_tx;
-    d.data = &connp->in_current_data[connp->in_current_offset];
-    d.len = 0;
+    unsigned char *data = connp->in_current_data + connp->in_current_offset;
+    size_t len = 0;
 
     for (;;) {
         IN_NEXT_BYTE(connp);
@@ -244,35 +221,21 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
         if (connp->in_next_byte == -1) {
             // End of chunk
 
-            // Keep track of actual data length
-            connp->in_tx->request_entity_len += d.len;
-
-            int rc = htp_req_run_hook_body_data(connp, &d);
-            if (rc != HOOK_OK) {
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Request body data callback returned error (%d)", rc);
-                return HTP_ERROR;
-            }
+            int rc = htp_txh_req_process_body_data(connp->in_tx, data, len);
+            if (rc != HTP_OK) return rc;
 
             // Ask for more data
             return HTP_DATA;
         } else {
             connp->in_tx->request_message_len++;
             connp->in_body_data_left--;
-            d.len++;
+            len++;
 
             if (connp->in_body_data_left == 0) {
                 // End of body
 
-                // Keep track of actual data length
-                connp->in_tx->request_entity_len += d.len;
-
-                int rc = htp_req_run_hook_body_data(connp, &d);
-                if (rc != HOOK_OK) {
-                    htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                            "Request body data callback returned error (%d)", rc);
-                    return HTP_ERROR;
-                }
+                int rc = htp_txh_req_process_body_data(connp->in_tx, data, len);
+                if (rc != HTP_OK) return rc;
 
                 // Move to finalize the request
                 connp->in_state = htp_connp_REQ_FINALIZE;
@@ -525,16 +488,10 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 }
 
 int htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
-    // Run the last REQUEST_BODY_DATA HOOK, but
-    // only if there was a request body.
+    // Finalize request body
     if (htp_tx_req_has_body(connp->in_tx)) {
-        htp_tx_data_t d;
-
-        d.data = NULL;
-        d.len = 0;
-        d.tx = connp->in_tx;
-
-        htp_req_run_hook_body_data(connp, &d);
+        int rc = htp_txh_req_process_body_data(connp->in_tx, NULL, 0);
+        if (rc != HTP_OK) return rc;
     }
 
     return htp_txh_state_request_complete(connp->in_tx);
