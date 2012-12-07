@@ -488,13 +488,14 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 }
 
 int htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
-    // Finalize request body
-    if (htp_tx_req_has_body(connp->in_tx)) {
-        int rc = htp_txh_req_process_body_data(connp->in_tx, NULL, 0);
-        if (rc != HTP_OK) return rc;
-    }
+    int rc = htp_txh_state_request_complete(connp->in_tx);
+    if (rc != HTP_OK) return rc;
 
-    return htp_txh_state_request_complete(connp->in_tx);
+    // We're done with this request
+    connp->in_state = htp_connp_REQ_IDLE;
+    connp->in_tx = NULL;
+
+    return HTP_OK;
 }
 
 /**
