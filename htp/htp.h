@@ -924,6 +924,10 @@ struct htp_tx_t {
      */
     bstr *request_content_type;
 
+    /** Contains the value specified in the Content-Length header. Will be NULL
+     *  if the header was not supplied.
+     */
+    size_t request_content_length;
 
     /** Transaction-specific REQUEST_BODY_DATA hook. Behaves as
      *  the configuration hook with the same name.

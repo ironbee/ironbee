@@ -71,24 +71,24 @@ htp_tx_t *htp_txh_create(htp_connp_t *connp) {
 void htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
     if ((name == NULL) || (value == NULL)) return;
 
-    htp_header_t *h = calloc(1, sizeof(htp_header_t));
+    htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) {
         return;
     }
-    
+
     h->name = copy_or_wrap_c(name, alloc);
     if (h->name == NULL) {
         free(h);
         return;
     }
-    
+
     h->value = copy_or_wrap_c(value, alloc);
     if (h->value == NULL) {
         bstr_free(&h->name);
         free(h);
         return;
     }
-    
+
     table_add(tx->request_headers, h->name, h);
 }
 
@@ -166,11 +166,11 @@ int htp_txh_state_request_line(htp_tx_t *tx) {
                 return HTP_ERROR;
             }
 
-#ifdef HTP_DEBUG
+            #ifdef HTP_DEBUG
             fprint_raw_data(stderr, "request_uri_normalized",
                     (unsigned char *) bstr_ptr(connp->in_tx->request_uri_normalized),
                     bstr_len(connp->in_tx->request_uri_normalized));
-#endif
+            #endif
         }
 
         // Finalize parsed_uri
@@ -239,28 +239,174 @@ int htp_txh_state_request_line(htp_tx_t *tx) {
     return HTP_OK;
 }
 
+static int htp_txh_process_request_headers(htp_tx_t *tx) {
+    // Remember how many header lines there were before trailers
+    tx->request_header_lines_no_trailers = list_size(tx->request_header_lines);
+
+    // Determine if we have a request body, and how it is packaged
+    htp_header_t *cl = table_get_c(tx->request_headers, "content-length");
+    htp_header_t *te = table_get_c(tx->request_headers, "transfer-encoding");
+
+    // Check for the Transfer-Encoding header, which would indicate a chunked request body
+    if (te != NULL) {
+        // Make sure it contains "chunked" only
+        if (bstr_cmp_c(te->value, "chunked") != 0) {
+            // Invalid T-E header value
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                    "Invalid T-E value in request");
+        }
+
+        // Chunked encoding is a HTTP/1.1 feature. Check that some other protocol is not
+        // used. The flag will also be set if the protocol could not be parsed.
+        //
+        // TODO IIS 7.0, for example, would ignore the T-E header when it
+        //      it is used with a protocol below HTTP 1.1.
+        if (tx->request_protocol_number < HTTP_1_1) {
+            tx->flags |= HTP_INVALID_CHUNKING;
+            // TODO Log
+        }
+
+        // If the T-E header is present we are going to use it.
+        tx->request_transfer_coding = HTP_CODING_CHUNKED;
+
+        // We are still going to check for the presence of C-L
+        if (cl != NULL) {
+            // This is a violation of the RFC
+            tx->flags |= HTP_REQUEST_SMUGGLING;
+            // TODO Log
+        }
+    } else if (cl != NULL) {
+        // It seems that we have a request body of a known length
+        tx->request_transfer_coding = HTP_CODING_IDENTITY;
+
+        // Check for a folded C-L header
+        if (cl->flags & HTP_FIELD_FOLDED) {
+            tx->flags |= HTP_REQUEST_SMUGGLING;
+            // TODO Log
+        }
+
+        // Check for multiple C-L headers
+        if (cl->flags & HTP_FIELD_REPEATED) {
+            tx->flags |= HTP_REQUEST_SMUGGLING;
+            // TODO Log
+        }
+
+        // Get body length
+        int i = htp_parse_content_length(cl->value);
+        if (i < 0) {
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in request");
+            return HTP_ERROR;
+        }
+
+        tx->request_content_length = i;
+    }
+
+    // Check for PUT requests, which we need to treat as file uploads
+    if (tx->request_method_number == HTP_M_PUT) {
+        if (tx->connp->in_tx->request_transfer_coding != 0) {
+            // Prepare to treat PUT request body as a file
+            tx->connp->put_file = calloc(1, sizeof (htp_file_t));
+            if (tx->connp->put_file == NULL) return HTP_ERROR;
+            tx->connp->put_file->source = HTP_FILE_PUT;
+        } else {
+            // TODO Warn about PUT request without a body
+        }
+
+        return HTP_OK;
+    }
+
+    // Host resolution
+    htp_header_t *h = table_get_c(tx->request_headers, "host");
+    if (h == NULL) {
+        // No host information in the headers
+
+        // HTTP/1.1 requires host information in the headers
+        if (tx->request_protocol_number >= HTTP_1_1) {
+            tx->flags |= HTP_HOST_MISSING;
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
+                    "Host information in request headers required by HTTP/1.1");
+        }
+    } else {
+        // Host information available in the headers
+
+        // Is there host information in the URI?
+        if (tx->parsed_uri->hostname == NULL) {
+            // There is no host information in the URI. Place the
+            // hostname from the headers into the parsed_uri structure.
+            htp_replace_hostname(tx->connp, tx->parsed_uri, h->value);
+        } else if (bstr_cmp_nocase(h->value, tx->parsed_uri->hostname) != 0) {
+            // The host information is different in the
+            // headers and the URI. The HTTP RFC states that
+            // we should ignore the headers copy.
+            tx->flags |= HTP_AMBIGUOUS_HOST;
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information ambiguous");
+        }
+    }
+
+    // Parse Content-Type
+    htp_header_t *ct = table_get_c(tx->request_headers, "content-type");
+    if (ct != NULL) {
+        tx->request_content_type = bstr_dup_lower(ct->value);
+        if (tx->request_content_type == NULL) return HTP_ERROR;
+
+        // Ignore parameters
+        char *data = bstr_ptr(tx->request_content_type);
+        size_t len = bstr_len(ct->value);
+        size_t newlen = 0;
+        while (newlen < len) {
+            // TODO Some platforms may do things differently here
+            if (htp_is_space(data[newlen]) || (data[newlen] == ';')) {
+                bstr_util_adjust_len(tx->request_content_type, newlen);
+                break;
+            }
+
+            newlen++;
+        }
+    }
+
+    // Parse cookies
+    if (tx->connp->cfg->parse_request_cookies) {
+        htp_parse_cookies_v0(tx->connp);
+    }
+
+    // Parse authentication information
+    if (tx->connp->cfg->parse_request_http_authentication) {
+        htp_parse_authorization(tx->connp);
+    }
+
+    // Run hook REQUEST_HEADERS
+    int rc = hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp);
+    if (rc != HOOK_OK) return rc;
+
+    return HTP_OK;
+}
+
 int htp_txh_state_request_headers(htp_tx_t *tx) {
     // Did this request arrive in multiple chunks?
     if (tx->connp->in_chunk_count != tx->connp->in_chunk_request_index) {
-        tx->connp->in_tx->flags |= HTP_MULTI_PACKET_HEAD;
-    }
+        tx->flags |= HTP_MULTI_PACKET_HEAD;
+    }   
 
-    // Move onto the next processing phase; if we're in TX_PROGRESS_REQ_HEADERS
-    // that means that this is the first time we're processing headers in
-    // a request. Otherwise, we're dealing with trailing headers.
-    if (tx->connp->in_tx->progress == TX_PROGRESS_REQ_HEADERS) {
-        // Remember how many header lines there were before trailers
-        tx->connp->in_tx->request_header_lines_no_trailers = list_size(tx->connp->in_tx->request_header_lines);
-
-        // Determine if this request has a body
-        tx->connp->in_state = htp_connp_REQ_CONNECT_CHECK;
-    } else {
+    // If we're in TX_PROGRESS_REQ_HEADERS that means that this is the
+    // first time we're processing headers in/ a request. Otherwise,
+    // we're dealing with trailing headers.
+    if (tx->progress > TX_PROGRESS_REQ_HEADERS) {
         // Run hook REQUEST_TRAILER
         int rc = hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
         if (rc != HOOK_OK) return rc;
 
-        // We've completed parsing this request
+        // Completed parsing this request; finalize it now
         tx->connp->in_state = htp_connp_REQ_FINALIZE;
+    } else if (tx->progress >= TX_PROGRESS_REQ_LINE) {
+        // Process request headers
+        int rc = htp_txh_process_request_headers(tx);
+        if (rc != HOOK_OK) return rc;
+
+        tx->connp->in_state = htp_connp_REQ_CONNECT_CHECK;
+    } else {
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "[Internal Error] Invalid tx progress: %d", tx->progress);
+        
+        return HTP_ERROR;
     }
 
     return HTP_OK;
