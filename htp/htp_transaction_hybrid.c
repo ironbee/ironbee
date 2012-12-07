@@ -144,7 +144,7 @@ int htp_txh_state_request_complete(htp_tx_t *tx) {
         bstr_free(&tx->connp->put_file->filename);
         free(tx->connp->put_file);
         tx->connp->put_file = NULL;
-    }   
+    }
 
     // Update the transaction status, but only if it did already
     // move on. This may happen when we're processing a CONNECT
@@ -152,7 +152,7 @@ int htp_txh_state_request_complete(htp_tx_t *tx) {
     // to continue to treat the rest of the TCP stream.
     if (tx->progress < TX_PROGRESS_WAIT) {
         tx->progress = TX_PROGRESS_WAIT;
-    }   
+    }
 
     return HTP_OK;
 }
@@ -453,14 +453,14 @@ int htp_txh_state_request_start(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len) {          
+int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len) {
     // Keep track of actual data length
     tx->request_entity_len += len;
 
     // Send data to callbacks
     htp_tx_data_t d;
     d.tx = tx;
-    d.data = (unsigned char *)data;
+    d.data = (unsigned char *) data;
     d.len = len;
 
     int rc = htp_req_run_hook_body_data(tx->connp, &d);
@@ -468,7 +468,26 @@ int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_
         htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                 "Request body data callback returned error (%d)", rc);
         return HTP_ERROR;
-    }   
+    }
 
     return HTP_OK;
 }
+
+void htp_txh_req_headers_clear(htp_tx_t *tx) {
+    if (tx->request_headers == NULL) return;
+
+    void *tvalue;
+    table_iterator_reset(tx->request_headers);
+    while (table_iterator_next(tx->request_headers, &tvalue) != NULL) {
+        htp_header_t *h = (htp_header_t *) tvalue;
+        bstr_free(&h->name);
+        bstr_free(&h->value);
+        free(h);
+    }
+
+    table_destroy(&tx->request_headers);
+
+    tx->request_headers = tx->cfg->create_table(32);
+}
+
+

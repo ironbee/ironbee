@@ -118,7 +118,10 @@ TEST_F(HybridParsing, Post) {
     htp_txh_state_request_headers(tx);
 
     // Send request body
-    htp_txh_req_process_body_data(tx, (const unsigned char *)"p=1&q=2", 7);    
+    htp_txh_req_process_body_data(tx, (const unsigned char *)"p=1&q=2", 7);
+
+    htp_txh_req_headers_clear(tx);
+    ASSERT_EQ(list_size(tx->request_headers), 0);
 
     // Request complete
     htp_txh_state_request_complete(tx);
