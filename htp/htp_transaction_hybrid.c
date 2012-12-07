@@ -128,6 +128,34 @@ void htp_txh_req_set_protocol_http_0_9(htp_tx_t *tx, int is_http_0_9) {
     }
 }
 
+int htp_txh_state_request_complete(htp_tx_t *tx) {
+    // Run hook REQUEST
+    int rc = hook_run_all(tx->connp->cfg->hook_request_done, tx->connp);
+    if (rc != HOOK_OK) return rc;
+
+    // Clean-up
+    if (tx->connp->put_file != NULL) {
+        bstr_free(&tx->connp->put_file->filename);
+        free(tx->connp->put_file);
+        tx->connp->put_file = NULL;
+    }
+
+    // We're done with this request
+    tx->connp->in_state = htp_connp_REQ_IDLE;
+
+    // Update the transaction status, but only if it did already
+    // move on. This may happen when we're processing a CONNECT
+    // request and need to wait for the response to determine how
+    // to continue to treat the rest of the TCP stream.
+    if (tx->progress < TX_PROGRESS_WAIT) {
+        tx->progress = TX_PROGRESS_WAIT;
+    }
+
+    tx->connp->in_tx = NULL;
+
+    return HTP_OK;
+}
+
 int htp_txh_state_request_line(htp_tx_t *tx) {
     htp_connp_t *connp = tx->connp;
 

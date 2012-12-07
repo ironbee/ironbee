@@ -66,6 +66,7 @@ struct HybridParsing_Get_User_Data {
     int callback_TRANSACTION_START_invoked;
     int callback_REQUEST_LINE_invoked;
     int callback_REQUEST_HEADERS_invoked;
+    int callback_REQUEST_COMPLETE_invoked;
 };
 
 static int HybridParsing_Get_Callback_TRANSACTION_START(htp_connp_t *connp) {
@@ -86,6 +87,12 @@ static int HybridParsing_Get_Callback_REQUEST_HEADERS(htp_connp_t *connp) {
     return HTP_OK;
 }
 
+static int HybridParsing_Get_Callback_REQUEST_COMPLETE(htp_connp_t *connp) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *)htp_tx_get_user_data(connp->in_tx);
+    user_data->callback_REQUEST_COMPLETE_invoked = 1;
+    return HTP_OK;
+}
+
 TEST_F(HybridParsing, Get) {
     // Create a new LibHTP transaction
     htp_tx_t *tx = htp_txh_create(connp);
@@ -96,11 +103,13 @@ TEST_F(HybridParsing, Get) {
     user_data.callback_TRANSACTION_START_invoked = 0;
     user_data.callback_REQUEST_LINE_invoked = 0;
     user_data.callback_REQUEST_HEADERS_invoked = 0;
+    user_data.callback_REQUEST_COMPLETE_invoked = 0;
     htp_tx_set_user_data(tx, &user_data);
 
     htp_config_register_transaction_start(cfg, HybridParsing_Get_Callback_TRANSACTION_START);
     htp_config_register_request_line(cfg, HybridParsing_Get_Callback_REQUEST_LINE);
     htp_config_register_request_headers(cfg, HybridParsing_Get_Callback_REQUEST_HEADERS);
+    htp_config_register_request_done(cfg, HybridParsing_Get_Callback_REQUEST_COMPLETE);
 
     // Request begins
     htp_txh_state_request_start(tx);
@@ -158,5 +167,10 @@ TEST_F(HybridParsing, Get) {
 
     htp_header_t *h_ua = (htp_header_t *)table_get_c(tx->request_headers, "user-agent");
     ASSERT_TRUE(h_ua != NULL);
-    ASSERT_EQ(bstr_cmp_c(h_ua->value, "Mozilla/5.0"), 0);   
+    ASSERT_EQ(bstr_cmp_c(h_ua->value, "Mozilla/5.0"), 0);
+
+    // Request complete
+    htp_txh_state_request_complete(tx);
+
+    ASSERT_EQ(user_data.callback_REQUEST_COMPLETE_invoked, 1);
 }

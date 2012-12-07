@@ -537,31 +537,7 @@ int htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
         htp_req_run_hook_body_data(connp, &d);
     }
 
-    // Run hook REQUEST
-    int rc = hook_run_all(connp->cfg->hook_request_done, connp);
-    if (rc != HOOK_OK) return rc;
-
-    // Clean-up
-    if (connp->put_file != NULL) {
-        bstr_free(&connp->put_file->filename);
-        free(connp->put_file);
-        connp->put_file = NULL;
-    }
-
-    // We're done with this request
-    connp->in_state = htp_connp_REQ_IDLE;
-
-    // Update the transaction status, but only if it did already
-    // move on. This may happen when we're processing a CONNECT
-    // request and need to wait for the response to determine how
-    // to continue to treat the rest of the TCP stream.
-    if (connp->in_tx->progress < TX_PROGRESS_WAIT) {
-        connp->in_tx->progress = TX_PROGRESS_WAIT;
-    }
-
-    connp->in_tx = NULL;
-
-    return HTP_OK;
+    return htp_txh_state_request_complete(connp->in_tx);
 }
 
 /**

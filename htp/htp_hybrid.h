@@ -217,7 +217,7 @@ void htp_txh_req_process_body_data(htp_tx_t *tx, const char *data, size_t len);
  *
  * @param[in] tx
  */
-void htp_txh_state_request_complete(htp_tx_t *tx);
+int htp_txh_state_request_complete(htp_tx_t *tx);
 
 /**
  * Change transaction state to RESPONSE_START and invoke all
