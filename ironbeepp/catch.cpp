@@ -94,22 +94,6 @@ ib_status_t convert_exception(
                 ib_util_log_debug("%s", diagnostic_information(e).c_str());
             }
         }
-        catch (const exception& e) {
-            string message;
-            if (status == IB_EINVAL) {
-                message = "Invalid argument: ";
-            }
-            else {
-                message = "Unknown exception thrown: ";
-            }
-            message += e.what();
-
-            if (engine) {
-                ib_log_error(engine,  "%s", message.c_str());
-            } else {
-                ib_util_log_error("%s", message.c_str());
-            }
-        }
         catch (const boost::exception& e) {
             string message;
             int level = 1;
@@ -135,6 +119,22 @@ ib_status_t convert_exception(
             } else {
                 ib_util_log_error("%s", message.c_str());
                 ib_util_log_debug("%s", diagnostic_information(e).c_str());
+            }
+        }
+        catch (const exception& e) {
+            string message;
+            if (status == IB_EINVAL) {
+                message = "Invalid argument: ";
+            }
+            else {
+                message = "Unknown exception thrown: ";
+            }
+            message += e.what();
+
+            if (engine) {
+                ib_log_error(engine,  "%s", message.c_str());
+            } else {
+                ib_util_log_error("%s", message.c_str());
             }
         }
         catch(...) {
