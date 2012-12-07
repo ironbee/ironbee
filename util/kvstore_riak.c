@@ -699,7 +699,7 @@ static ib_status_t kvget(
             /* Init and Re-init. */
             membuffer_init(kvstore, &tmp_buf);
             riak_headers_init(kvstore, &tmp_headers);
-            
+
             vtag_url = kvmalloc(
                 kvstore,
                 strlen(url) + strlen(vtag) + strlen(cur) + 1);
@@ -1093,13 +1093,13 @@ ib_status_t ib_kvstore_riak_init(
 
 void ib_kvstore_riak_set_vclock(ib_kvstore_t *kvstore, char *vclock) {
     ib_kvstore_riak_server_t *riak;
-    
+
     riak = (ib_kvstore_riak_server_t *)kvstore->server;
 
     if (riak->vclock) {
         kvfree(kvstore, riak->vclock);
     }
-    
+
     if (vclock) {
         riak->vclock = kvmalloc(kvstore, strlen(vclock)+1);
 
@@ -1114,13 +1114,13 @@ void ib_kvstore_riak_set_vclock(ib_kvstore_t *kvstore, char *vclock) {
 
 void ib_kvstore_riak_set_etag(ib_kvstore_t *kvstore, char *etag) {
     ib_kvstore_riak_server_t *riak;
-    
+
     riak = (ib_kvstore_riak_server_t *)kvstore->server;
 
     if (riak->etag) {
         kvfree(kvstore, riak->etag);
     }
-    
+
     if (etag) {
         riak->etag = kvmalloc(kvstore, strlen(etag)+1);
 
@@ -1177,8 +1177,8 @@ int ib_kvstore_riak_ping(ib_kvstore_t *kvstore) {
 }
 
 /**
- * Internal helper function to do the work for 
- * ib_kvstore_riak_set_bucket_property_int and 
+ * Internal helper function to do the work for
+ * ib_kvstore_riak_set_bucket_property_int and
  * ib_kvstore_riak_set_bucket_property_str.
  */
 static ib_status_t ib_kvstore_riak_set_bucket_property(
@@ -1201,7 +1201,7 @@ static ib_status_t ib_kvstore_riak_set_bucket_property(
     membuffer_t response;
     riak_headers_t headers;
     ib_status_t rc = IB_OK;
-    
+
     riak_headers_init(kvstore, &headers);
 
     membuffer_init(kvstore, &response);
@@ -1215,7 +1215,7 @@ static ib_status_t ib_kvstore_riak_set_bucket_property(
         rc = IB_EALLOC;
         goto exit;
     }
-    
+
     snprintf(url, url_length+1, "%s%s", riak->bucket_url, props_path);
 
     /* Set url. */
