@@ -53,6 +53,7 @@ struct ib_kvstore_riak_server_t {
     size_t bucket_url_len; /**< Length of bucket_url. */
     ib_mpool_t *mp;        /**< Memory pool. */
     CURL *curl;            /**< Curl context for web requests. */
+    char *client_id;       /**< The Riak client id. */
     char *vclock;          /**< NULL or vector clock for queries to riak. */
     char *etag;            /**< NULL or etag for queries to riak. */
 };
@@ -60,6 +61,7 @@ typedef struct ib_kvstore_riak_server_t ib_kvstore_riak_server_t;
 
 /**
  * @param[out] kvstore The key-value store object to initialize.
+ * @param[in] client_id A unique identifier of this client.
  * @param[in] base_url The base URL where the Riak HTTP interface is rooted.
  * @param[in] bucket The riak bucket that keys are stored in.
  * @param[in,out] mp The memory pool allocations will be made out of.
@@ -71,6 +73,7 @@ typedef struct ib_kvstore_riak_server_t ib_kvstore_riak_server_t;
  */
 ib_status_t ib_kvstore_riak_init(
     ib_kvstore_t *kvstore,
+    const char *client_id,
     const char *base_url,
     const char *bucket,
     ib_mpool_t *mp);
@@ -84,7 +87,7 @@ ib_status_t ib_kvstore_riak_init(
  * @param[in] kvstore Key-value store.
  * @param[in] vclock The vector clock.
  */
-void ib_kvstore_riak_set_vlcock(ib_kvstore_t *kvstore, char *vclock);
+void ib_kvstore_riak_set_vclock(ib_kvstore_t *kvstore, char *vclock);
 
 /**
  * Set (not copy) vclock in @a kvstore.
@@ -102,7 +105,7 @@ void ib_kvstore_riak_set_etag(ib_kvstore_t *kvstore, char *etag);
  *
  * @returns The current value of kvstore->vclock.
  */
-char * ib_kvstore_riak_get_vlcock(ib_kvstore_t *kvstore);
+char * ib_kvstore_riak_get_vclock(ib_kvstore_t *kvstore);
 
 /**
  * Get vclock from @a kvstore.
@@ -118,7 +121,39 @@ char * ib_kvstore_riak_get_etag(ib_kvstore_t *kvstore);
  */
 int ib_kvstore_riak_ping(ib_kvstore_t *kvstore);
 
- /**
-  * @}
-  */
+/**
+ * Allows for setting a bucket property on an existing bucket.
+ *
+ * @param[in] kvstore Key-value store.
+ * @param[in] property The name of the property to set.
+ * @param[in] value The value of the property. Must be greater than 0 and
+ *            less than 999999.
+ *
+ * @returns
+ *   - IB_OK On Scucess.
+ *   - IB_EALLOC On a memory allocation error.
+ */
+ib_status_t ib_kvstore_riak_set_bucket_property_int(
+    ib_kvstore_t *kvstore,
+    const char *property,
+    int value);
+
+/**
+ * Allows for setting a bucket property on an existing bucket.
+ *
+ * @param[in] kvstore Key-value store.
+ * @param[in] property The name of the property to set.
+ * @param[in] value The value of the property
+ *
+ * @returns
+ *   - IB_OK On Scucess.
+ *   - IB_EALLOC On a memory allocation error.
+ */
+ib_status_t ib_kvstore_riak_set_bucket_property_str(
+    ib_kvstore_t *kvstore,
+    const char *property,
+    const char *value);
+/**
+ * @}
+ */
 #endif // __KVSTORE_RIAK_H

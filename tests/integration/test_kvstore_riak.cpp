@@ -33,6 +33,8 @@ class RiakFixture : public ::testing::Test {
     const char *base_url;
     const char *bucket;
     ib_kvstore_t kvstore;
+    ib_kvstore_key_t key;
+    ib_kvstore_value_t val;
 
     virtual void SetUp(){
         using ::testing::TestInfo;
@@ -52,10 +54,24 @@ class RiakFixture : public ::testing::Test {
 
         ib_kvstore_riak_init(
             &kvstore,
+            "myTestClient",
             base_url,
             bucket,
             NULL);
         ib_kvstore_connect(&kvstore);
+
+        /* Initialize the key. */
+        key.key = reinterpret_cast<const void *>("key1");
+        key.length = 4;
+
+        val.value = const_cast<char *>("val1");
+        val.value_length = 4;
+        val.type = const_cast<char *>("text/plain");
+        val.type_length = 10;
+        val.expiration = 0;
+
+        /* Delete it from whatever test we are in. */
+        ib_kvstore_remove(&kvstore, &key);
     }
 
     virtual void TearDown(){
@@ -81,6 +97,7 @@ TEST_F(RiakFixture, PING_FAIL){
     /* Re-init with invalid URL. */
     ib_kvstore_riak_init(
         &kvstore,
+        "myTestClient",
         "http://localhost:1025",
         bucket,
         NULL);
@@ -91,25 +108,69 @@ TEST_F(RiakFixture, PING_FAIL){
 }
 
 TEST_F(RiakFixture, Write) {
-    ib_kvstore_key_t key = { "key1", 4 };
-    ib_kvstore_value_t val = {
-        const_cast<char *>("val1"), 4,
-        const_cast<char *>("text/plain"),
-        10,
-        0
-    };
-
     ib_kvstore_set(&kvstore, NULL, &key, &val);
 }
 
+extern "C" {
+    static ib_status_t counting_merge_policy(
+        ib_kvstore_t *kvstore,
+        ib_kvstore_value_t **values,
+        size_t value_length,
+        ib_kvstore_value_t **resultant_value,
+        ib_kvstore_cbdata_t *cbdata)
+    {
+        int *i = reinterpret_cast<int *>(cbdata);
+
+        *i = value_length;
+
+        if ( value_length > 0 ) {
+            *resultant_value = values[0];
+        }
+
+        return IB_OK;
+    }
+}
+
+TEST_F(RiakFixture, WriteWithVectorClock) {
+    int count;
+    ib_kvstore_value_t *val2;
+
+    /* Allow multiple versions. */
+    ib_kvstore_riak_set_bucket_property_str(&kvstore, "allow_mult", "true");
+
+    ib_kvstore_get(&kvstore, &counting_merge_policy, &key, &val2);
+    if (val2) {
+        ib_kvstore_free_value(&kvstore, val2);
+    }
+
+    /* We should not get multiples back. */
+    ib_kvstore_set(&kvstore, NULL, &key, &val);
+    ib_kvstore_set(&kvstore, NULL, &key, &val);
+
+    kvstore.merge_policy_cbdata = reinterpret_cast<void*>(&count);
+
+    /* Fetching will set the vclock. */
+    ib_kvstore_get(&kvstore, &counting_merge_policy, &key, &val2);
+    if (val2) {
+        ib_kvstore_free_value(&kvstore, val2);
+    }
+
+    /* Set with VClock set should wipe out value. */
+    ib_kvstore_set(&kvstore, NULL, &key, &val);
+
+    /* Reset count to 1. The merge policy is not called on single responses. */
+    count = 1;
+
+    /* Fetching will set the vclock. */
+    ib_kvstore_get(&kvstore, &counting_merge_policy, &key, &val2);
+    if (val2) {
+        ib_kvstore_free_value(&kvstore, val2);
+    }
+
+    ASSERT_EQ(1, count);
+}
+
 TEST_F(RiakFixture, Read) {
-    ib_kvstore_key_t key = { "key1", 4 };
-    ib_kvstore_value_t val = {
-        const_cast<char *>("val1"), 4,
-        const_cast<char *>("text/plain"),
-        10,
-        0
-    };
     ib_kvstore_value_t *val2;
 
     ib_kvstore_set(&kvstore, NULL, &key, &val);
@@ -127,3 +188,90 @@ TEST_F(RiakFixture, Read) {
     ib_kvstore_free_value(&kvstore, val2);
 }
 
+TEST_F(RiakFixture, Remove) {
+    ib_kvstore_value_t *val2;
+
+    ib_kvstore_set(&kvstore, NULL, &key, &val);
+    ib_kvstore_remove(&kvstore, &key);
+    ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, &key, &val2));
+
+    ASSERT_FALSE(val2);
+}
+
+TEST_F(RiakFixture, Multi) {
+    ib_kvstore_value_t *val2;
+
+    /* Turn off last-write-wins semantics. */
+    ASSERT_EQ(
+        IB_OK,
+        ib_kvstore_riak_set_bucket_property_str(
+            &kvstore,
+            "last_write_wins",
+            "false"));
+
+    /* Allow multiple versions. */
+    ASSERT_EQ(
+        IB_OK,
+        ib_kvstore_riak_set_bucket_property_str(
+            &kvstore,
+            "allow_mult",
+            "true"));
+
+    /* Number of replicas. */
+    ASSERT_EQ(
+        IB_OK,
+        ib_kvstore_riak_set_bucket_property_int(&kvstore, "n_val", 3));
+    /* Set read-write requirement. */
+    ASSERT_EQ(
+        IB_OK,
+        ib_kvstore_riak_set_bucket_property_str(&kvstore, "rw", "quorum"));
+    /* Set durable write requirement. */
+    ASSERT_EQ(
+        IB_OK,
+        ib_kvstore_riak_set_bucket_property_str(&kvstore, "dw", "quorum"));
+    ASSERT_EQ(
+        IB_OK,
+        ib_kvstore_riak_set_bucket_property_str(&kvstore, "r", "quorum"));
+    ASSERT_EQ(
+        IB_OK,
+        ib_kvstore_riak_set_bucket_property_str(&kvstore, "w", "quorum"));
+
+    /* Ensure that there is nothing in riak when starting out. */
+    val2 = NULL;
+    ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, &key, &val2));
+    ASSERT_FALSE(val2);
+
+    /* Write an initial value, and fetch it. */
+    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, &val));
+    ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, &key, &val2));
+
+    /* Check that a single write works. */
+    ASSERT_TRUE(val2);
+    ASSERT_EQ(val.value_length, val2->value_length);
+    ASSERT_EQ(
+        0,
+        strncmp(
+            reinterpret_cast<const char *>(val.value),
+            reinterpret_cast<const char *>(val2->value),
+            val.value_length));
+    ib_kvstore_free_value(&kvstore, val2);
+    val2 = NULL;
+
+    /* Clear kvstore vclock and etag to force a duplicate entry. */
+    ib_kvstore_riak_set_vclock(&kvstore, NULL);
+    ib_kvstore_riak_set_etag(&kvstore, NULL);
+
+    ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, &val));
+    ASSERT_EQ(IB_OK, ib_kvstore_get(&kvstore, NULL, &key, &val2));
+
+    ASSERT_TRUE(val2);
+    ASSERT_EQ(val.value_length, val2->value_length);
+    ASSERT_EQ(
+        0,
+        strncmp(
+            reinterpret_cast<const char *>(val.value),
+            reinterpret_cast<const char *>(val2->value),
+            val.value_length));
+
+    ib_kvstore_free_value(&kvstore, val2);
+}
