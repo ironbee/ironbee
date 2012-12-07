@@ -39,7 +39,7 @@
 #include <htp/htp.h>
 #include "test.h"
 
-class ConnectionParsingTest : public testing::Test {
+class ConnectionParsing : public testing::Test {
     
 protected:
     
@@ -75,7 +75,7 @@ protected:
     char *home;
 };
 
-TEST_F(ConnectionParsingTest, Get) {
+TEST_F(ConnectionParsing, Get) {
     int rc = test_run(home, "01-get.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -102,7 +102,7 @@ TEST_F(ConnectionParsingTest, Get) {
     ASSERT_EQ(bstr_cmp_c(p, " "), 0);
 }
 
-TEST_F(ConnectionParsingTest, ApacheHeaderParsing) {
+TEST_F(ConnectionParsing, ApacheHeaderParsing) {
     int rc = test_run(home, "02-header-test-apache2.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -167,7 +167,7 @@ TEST_F(ConnectionParsingTest, ApacheHeaderParsing) {
     }
 }
 
-TEST_F(ConnectionParsingTest, PostUrlencoded) {
+TEST_F(ConnectionParsing, PostUrlencoded) {
     int rc = test_run(home, "03-post-urlencoded.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -184,7 +184,7 @@ TEST_F(ConnectionParsingTest, PostUrlencoded) {
     ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
 }
 
-TEST_F(ConnectionParsingTest, PostUrlencodedChunked) {
+TEST_F(ConnectionParsing, PostUrlencodedChunked) {
     int rc = test_run(home, "04-post-urlencoded-chunked.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -205,7 +205,7 @@ TEST_F(ConnectionParsingTest, PostUrlencodedChunked) {
     ASSERT_EQ(tx->request_entity_len, 12);
 }
 
-TEST_F(ConnectionParsingTest, Expect) {
+TEST_F(ConnectionParsing, Expect) {
     int rc = test_run(home, "05-expect.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -215,7 +215,7 @@ TEST_F(ConnectionParsingTest, Expect) {
     ASSERT_TRUE(tx != NULL);
 }
 
-TEST_F(ConnectionParsingTest, UriNormal) {
+TEST_F(ConnectionParsing, UriNormal) {
     int rc = test_run(home, "06-uri-normal.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -225,7 +225,7 @@ TEST_F(ConnectionParsingTest, UriNormal) {
     ASSERT_TRUE(tx != NULL);
 }
 
-TEST_F(ConnectionParsingTest, PipelinedConn) {
+TEST_F(ConnectionParsing, PipelinedConn) {
     int rc = test_run(home, "07-pipelined-connection.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -237,7 +237,7 @@ TEST_F(ConnectionParsingTest, PipelinedConn) {
     ASSERT_TRUE(tx != NULL);
 }
 
-TEST_F(ConnectionParsingTest, NotPipelinedConn) {
+TEST_F(ConnectionParsing, NotPipelinedConn) {
     int rc = test_run(home, "08-not-pipelined-connection.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -251,7 +251,7 @@ TEST_F(ConnectionParsingTest, NotPipelinedConn) {
     ASSERT_FALSE(tx->flags & HTP_MULTI_PACKET_HEAD);
 }
 
-TEST_F(ConnectionParsingTest, MultiPacketRequest) {
+TEST_F(ConnectionParsing, MultiPacketRequest) {
     int rc = test_run(home, "09-multi-packet-request-head.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -263,7 +263,7 @@ TEST_F(ConnectionParsingTest, MultiPacketRequest) {
     ASSERT_TRUE(tx->flags & HTP_MULTI_PACKET_HEAD);
 }
 
-TEST_F(ConnectionParsingTest, HeaderHostParsing) {
+TEST_F(ConnectionParsing, HeaderHostParsing) {
     int rc = test_run(home, "10-host-in-headers.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -290,7 +290,7 @@ TEST_F(ConnectionParsingTest, HeaderHostParsing) {
     ASSERT_EQ(bstr_cmp_c(tx4->parsed_uri->hostname, "www.example.com"), 0);
 }
 
-TEST_F(ConnectionParsingTest, ResponseWithoutContentLength) {
+TEST_F(ConnectionParsing, ResponseWithoutContentLength) {
     int rc = test_run(home, "11-response-stream-closure.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -302,7 +302,7 @@ TEST_F(ConnectionParsingTest, ResponseWithoutContentLength) {
     ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
 }
 
-TEST_F(ConnectionParsingTest, FailedConnectRequest) {
+TEST_F(ConnectionParsing, FailedConnectRequest) {
     int rc = test_run(home, "12-connect-request.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -318,7 +318,7 @@ TEST_F(ConnectionParsingTest, FailedConnectRequest) {
     ASSERT_EQ(tx->response_status_number, 405);
 }
 
-TEST_F(ConnectionParsingTest, CompressedResponseContentType) {
+TEST_F(ConnectionParsing, CompressedResponseContentType) {
     int rc = test_run(home, "13-compressed-response-gzip-ct.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -334,7 +334,7 @@ TEST_F(ConnectionParsingTest, CompressedResponseContentType) {
     ASSERT_EQ(tx->response_entity_len, 225);
 }
 
-TEST_F(ConnectionParsingTest, CompressedResponseChunked) {
+TEST_F(ConnectionParsing, CompressedResponseChunked) {
     int rc = test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -350,7 +350,7 @@ TEST_F(ConnectionParsingTest, CompressedResponseChunked) {
     ASSERT_EQ(tx->response_entity_len, 159590);
 }
 
-TEST_F(ConnectionParsingTest, SuccessfulConnectRequest) {
+TEST_F(ConnectionParsing, SuccessfulConnectRequest) {
     int rc = test_run(home, "15-connect-complete.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -366,7 +366,7 @@ TEST_F(ConnectionParsingTest, SuccessfulConnectRequest) {
     ASSERT_EQ(tx->response_status_number, 200);
 }
 
-TEST_F(ConnectionParsingTest, ConnectRequestWithExtraData) {
+TEST_F(ConnectionParsing, ConnectRequestWithExtraData) {
     int rc = test_run(home, "16-connect-extra.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -383,7 +383,7 @@ TEST_F(ConnectionParsingTest, ConnectRequestWithExtraData) {
     ASSERT_TRUE(tx2->progress == TX_PROGRESS_DONE);
 }
 
-TEST_F(ConnectionParsingTest, Multipart) {
+TEST_F(ConnectionParsing, Multipart) {
     int rc = test_run(home, "17-multipart-1.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -405,7 +405,7 @@ TEST_F(ConnectionParsingTest, Multipart) {
     ASSERT_EQ(bstr_cmp_c(field2, "9876543210"), 0);
 }
 
-TEST_F(ConnectionParsingTest, CompressedResponseDeflate) {
+TEST_F(ConnectionParsing, CompressedResponseDeflate) {
     int rc = test_run(home, "18-compressed-response-deflate.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -421,7 +421,7 @@ TEST_F(ConnectionParsingTest, CompressedResponseDeflate) {
     ASSERT_EQ(tx->response_entity_len, 1433);
 }
 
-TEST_F(ConnectionParsingTest, UrlEncoded) {
+TEST_F(ConnectionParsing, UrlEncoded) {
     int rc = test_run(home, "19-urlencoded-test.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -450,7 +450,7 @@ TEST_F(ConnectionParsingTest, UrlEncoded) {
     ASSERT_EQ(bstr_cmp_c(body_z, "5"), 0);
 }
 
-TEST_F(ConnectionParsingTest, AmbiguousHost) {
+TEST_F(ConnectionParsing, AmbiguousHost) {
     int rc = test_run(home, "20-ambiguous-host.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
@@ -467,7 +467,7 @@ TEST_F(ConnectionParsingTest, AmbiguousHost) {
     ASSERT_TRUE(tx2->flags & HTP_AMBIGUOUS_HOST);
 }
 
-TEST_F(ConnectionParsingTest, Http_0_9) {
+TEST_F(ConnectionParsing, Http_0_9) {
     int rc = test_run(home, "21-http09.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     

@@ -40,7 +40,7 @@
 #include <htp/htp_hybrid.h>
 #include "test.h"
 
-class HybridParsingTest : public testing::Test {
+class HybridParsing : public testing::Test {
 protected:
 
     virtual void SetUp() {
@@ -62,7 +62,7 @@ protected:
     htp_cfg_t *cfg;
 };
 
-TEST_F(HybridParsingTest, Get) {
+TEST_F(HybridParsing, Get) {
     // Create a new LibHTP transaction
     htp_tx_t *tx = htp_txh_create(connp);
     ASSERT_TRUE(tx != NULL);
