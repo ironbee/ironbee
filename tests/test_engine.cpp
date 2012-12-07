@@ -225,8 +225,14 @@ static ib_status_t dyn_get(
     ib_num_t numval = 5;
     ib_field_t *newf;
     ib_status_t rc;
+    ib_list_t *l;
 
     const char* carg = (const char *)arg;
+
+    rc = ib_list_create(&l, mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     rc = ib_field_create(&newf, mp, carg, alen, IB_FTYPE_NUM,
         ib_ftype_num_in(&numval));
@@ -234,7 +240,9 @@ static ib_status_t dyn_get(
         return rc;
     }
 
-    *(void**)out_value = newf;
+    rc = ib_list_push(l, newf);
+
+    *(void**)out_value = l;
 
     return IB_OK;
 }
@@ -246,8 +254,10 @@ TEST(TestIronBee, test_dpi_dynf)
     ib_provider_inst_t *dpi;
     ib_field_t *dynf;
     ib_field_t *f;
+    ib_field_t *f2;
     ib_status_t rc;
     ib_num_t n;
+    ib_list_t* l;
 
     ibtest_engine_create(&ib);
 
@@ -289,21 +299,36 @@ TEST(TestIronBee, test_dpi_dynf)
     /* Fetch a dynamic field from the data store */
     ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf:dyn_subkey", &f));
     ASSERT_TRUE(f);
-    ASSERT_EQ(10UL, f->nlen);
+    ASSERT_EQ(9UL, f->nlen);
 
-    /* Get the value from the dynamic field. */
-    rc = ib_field_value(f, ib_ftype_num_out(&n));
+    /* Get the list value from the dynamic field. */
+    rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&l));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(1UL, ib_list_elements(l));
+
+    /* Get the single value from the list. */
+    f2 = (ib_field_t *)ib_list_node_data(ib_list_first(l));
+    ASSERT_TRUE(f2);
+    ASSERT_EQ(10UL, f2->nlen);
+    rc = ib_field_value(f2, ib_ftype_num_out(&n));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(5, n);
 
-    /* Fetch another dynamic field from the data store */
+    /* Fetch a anohter subkey */
     ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf:dyn_subkey2", &f));
     ASSERT_TRUE(f);
-    ASSERT_EQ(11UL, f->nlen);
-    ASSERT_MEMEQ("dyn_subkey2", f->name, 11);
+    ASSERT_EQ(9UL, f->nlen);
 
-    /* Get the value from the dynamic field. */
-    rc = ib_field_value(f, ib_ftype_num_out(&n));
+    /* Get the list value from the dynamic field. */
+    rc = ib_field_mutable_value(f, ib_ftype_list_mutable_out(&l));
+    ASSERT_EQ(IB_OK, rc);
+    ASSERT_EQ(1UL, ib_list_elements(l));
+
+    /* Get the single value from the list. */
+    f2 = (ib_field_t *)ib_list_node_data(ib_list_first(l));
+    ASSERT_TRUE(f2);
+    ASSERT_EQ(11UL, f2->nlen);
+    rc = ib_field_value(f2, ib_ftype_num_out(&n));
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(5, n);
 

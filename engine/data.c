@@ -105,18 +105,19 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
 
     /* Check that our input field is a list type. */
     if (parent_field->type == IB_FTYPE_LIST) {
+        ib_list_t *result_list;
         /* Pull a value from a dynamic field. */
         /* TODO: Make all of this const correct. */
         if (ib_field_is_dynamic(parent_field)) {
             rc = ib_field_value_ex(parent_field,
-                                   result_field,
+                                   &result_list,
                                    name,
                                    name_len);
-            return rc;
+            if (rc != IB_OK) {
+              return rc;
+            }
         }
         else {
-            ib_list_t *result_list;
-
             /* Make the result list */
             rc = ib_list_create(&result_list, dpi->mp);
             if (rc != IB_OK) {
@@ -142,17 +143,16 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
                     }
                 }
             }
+          }
+          /* Send back the result_list inside of result_field. */
+          rc = ib_field_create(result_field,
+                               dpi->mp,
+                               parent_field->name,
+                               parent_field->nlen,
+                               IB_FTYPE_LIST,
+                               result_list);
 
-            /* Send back the result_list inside of result_field. */
-            rc = ib_field_create(result_field,
-                                 dpi->mp,
-                                 parent_field->name,
-                                 parent_field->nlen,
-                                 IB_FTYPE_LIST,
-                                 result_list);
-
-            return rc;
-        }
+          return rc;
     }
 
     /* We don't know what input type this is. Return IB_EINVAL. */
