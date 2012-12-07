@@ -23,6 +23,8 @@ IronBee v0.7.0
 
 * Added RIAK kvstore.
 
+* Several fixes to dynamic collections in the DPI.
+
 **Modules**
 
 * ac and pcre have been updated to use the new tx data API.
