@@ -179,7 +179,8 @@ typedef struct htp_uri_t htp_uri_t;
 #define HTP_SERVER_APACHE           11
 #define HTP_SERVER_APACHE_2_2       12
 
-#define HTP_CODING_NONE             0
+#define HTP_CODING_NO_BODY          -1
+#define HTP_CODING_UNKNOWN          0
 #define HTP_CODING_IDENTITY         1
 #define HTP_CODING_CHUNKED          2
 
@@ -910,8 +911,8 @@ struct htp_tx_t {
     /** Contains request header separator. */
     bstr *request_headers_sep;
 
-    /** Request transfer coding: IDENTITY or CHUNKED. Only available
-     *  on requests that have bodies (-1 otherwise).
+    /** Request transfer coding. Can be one of HTP_CODING_UNKNOWN (body presence not
+     *  determined yet), HTP_CODING_IDENTITY, HTP_CODING_CHUNKED, or HTP_CODING_NO_BODY.
      */
     int request_transfer_coding;
 
@@ -1296,6 +1297,8 @@ bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
 
 bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx);
 bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx);
+
+int htp_tx_req_has_body(htp_tx_t *tx);
 
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);

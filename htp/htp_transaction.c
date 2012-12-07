@@ -204,7 +204,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
             bstr *b = (bstr *) tvalue;
             bstr_free(&b);
         }
-        
+
         table_destroy(&tx->request_params_query);
     }
 
@@ -215,7 +215,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
             bstr *b = (bstr *) tvalue;
             bstr_free(&b);
         }
-        
+
         table_destroy(&tx->request_params_body);
     }
 
@@ -226,7 +226,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
             bstr *b = (bstr *) tvalue;
             bstr_free(&b);
         }
-        
+
         table_destroy(&tx->request_cookies);
     }
 
@@ -285,4 +285,18 @@ void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_d
  */
 void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *)) {
     hook_register(&tx->hook_response_body_data, (htp_callback_fn_t) callback_fn);
+}
+
+/**
+ * Determine if the request has a body.
+ *
+ * @param tx
+ * @return 1 if there is a body, 0 otherwise.
+ */
+int htp_tx_req_has_body(htp_tx_t *tx) {
+    if ((tx->request_transfer_coding == HTP_CODING_IDENTITY) || (tx->request_transfer_coding == HTP_CODING_CHUNKED)) {
+        return 1;
+    }
+
+    return 0;
 }

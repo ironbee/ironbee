@@ -331,7 +331,7 @@ static int htp_txh_process_request_headers(htp_tx_t *tx) {
 
     // Check for PUT requests, which we need to treat as file uploads
     if (tx->request_method_number == HTP_M_PUT) {
-        if (tx->connp->in_tx->request_transfer_coding != 0) {
+        if (htp_tx_req_has_body(tx)) {
             // Prepare to treat PUT request body as a file
             tx->connp->put_file = calloc(1, sizeof (htp_file_t));
             if (tx->connp->put_file == NULL) return HTP_ERROR;

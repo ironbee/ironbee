@@ -527,7 +527,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 int htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
     // Run the last REQUEST_BODY_DATA HOOK, but
     // only if there was a request body.
-    if (connp->in_tx->request_transfer_coding != -1) {
+    if (htp_tx_req_has_body(connp->in_tx)) {
         htp_tx_data_t d;
 
         d.data = NULL;
