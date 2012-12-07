@@ -86,6 +86,7 @@ check_PROGRAMS = test_gtest \
                  test_engine \
                  test_module_ahocorasick \
                  test_module_pcre \
+                 test_module_ee_oper \
                  test_operator \
                  test_action \
                  test_config \
@@ -105,6 +106,8 @@ TEST_EXTRAS = \
        AhoCorasickModuleTest.config \
        ahocorasick.patterns \
        DfaModuleTest.matches.config \
+       EeOperModuleTest.config \
+       eudoxus_pattern1.e \
        gtest_executor.sh \
        BasicIronBee.config \
        PcreModuleTest.test_load_module.config \
@@ -261,6 +264,11 @@ test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
 test_luajit_SOURCES = test_main.cpp \
                       test_luajit.cpp \
                       test_ironbee_lua_api.cpp
+
+test_module_ee_oper_SOURCES = test_module_ee_oper.cpp \
+                              test_main.cpp
+test_module_ee_oper_LDADD = $(MODULE_TEST_LDADD)
+
 test_luajit_CPPFLAGS = $(CPPFLAGS) \
                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                        -I$(top_srcdir)

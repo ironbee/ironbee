@@ -16,6 +16,7 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_pcre.la \
                      ibmod_ac.la \
                      ibmod_rules.la \
+                     ibmod_ee.la \
                      ibmod_user_agent.la
 
 if ENABLE_LUA
@@ -48,6 +49,12 @@ ibmod_pcre_la_LIBADD = $(AM_LIBADD) @PCRE_LDADD@
 ibmod_ac_la_SOURCES = ac.c
 ibmod_ac_la_CFLAGS = ${AM_CFLAGS}
 ibmod_ac_la_LDFLAGS = $(AM_LDFLAGS)
+
+ibmod_ee_la_SOURCES = ee_oper.c
+ibmod_ee_la_LIBADD = $(top_builddir)/automata/libiaeudoxus.la \
+                     $(top_builddir)/automata/libironautomata.la
+ibmod_ee_la_CFLAGS = ${AM_CFLAGS} -I$(top_srcdir)/automata/include
+ibmod_ee_la_LDFLAGS = $(AM_LDFLAGS)
 
 ibmod_lua_la_SOURCES = lua.c 
 ibmod_lua_la_CPPFLAGS = $(CPPFLAGS) \
