@@ -1,7 +1,7 @@
 ### Logging
 #Log /var/log/ironbee/debug.log
 LogLevel 4
-LogHandler mod_ironbee
+LogHandler ironbee-httpd
 
 ### Sensor Info
 # Sensor ID, must follow UUID format
