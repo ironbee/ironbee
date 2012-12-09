@@ -91,7 +91,10 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
     automata_file = ib_util_relative_file(mp_tmp, cp->cur_file, filename);
     ib_log_debug(cp->ib, "pattern %s: path=%s", pattern_name, automata_file);
 
-    getcwd(pwd, 1999);
+    if (getcwd(pwd, 1999) == NULL) {
+        ib_log_error(cp->ib, MODULE_NAME_STR ": Error calling getcwd.");
+        return IB_EOTHER;
+    }
     ib_log_debug(cp->ib, "checking in %s", pwd);
     if (access(automata_file, R_OK) != 0) {
         ib_log_error(cp->ib,
@@ -253,18 +256,13 @@ static ib_status_t ee_match_any_operator_execute(
     ia_eudoxus_result_t ia_rc;
     ia_eudoxus_t* eudoxus = data;
     ia_eudoxus_state_t* state;
-    ib_mpool_t *mp;
     const char *input;
     size_t input_len;
-    ib_tx_t *tx;
 
     assert(rule_exec);
     assert(data);
 
-    tx = rule_exec->tx;
     *result = 0;
-
-    mp = tx->mp;
 
     if (field->type == IB_FTYPE_NULSTR) {
         rc = ib_field_value(field, ib_ftype_nulstr_out(&input));
