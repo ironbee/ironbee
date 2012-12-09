@@ -54,7 +54,7 @@ AC_DEFUN([CHECK_RUBY_GEM],
   rubyGem=[$1]
 	minRubyGemVersion=[$2]
 	
-	AC_CACHE_CHECK([for ruby gem $rubyGem],[acl_cv_gem_[$3]],[
+	AC_CACHE_CHECK([for ruby gem $rubyGem],[$rubyGem],[
 	  acl_cv_gem_[$3]=`$GEM list --local [$1] | egrep "^[$1]" | awk '{print $ 2}'| sed -e 's/@<:@(),@:>@//g'`
 	])
 	rubyGemVersion=$acl_cv_gem_[$3]
