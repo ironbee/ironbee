@@ -693,11 +693,6 @@ int htp_txh_state_response_headers(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-int htp_txh_res_set_compression(htp_tx_t *tx, int compression) {
-    // XXX
-    return HTP_OK;
-}
-
 int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len) {    
     htp_tx_data_t d;
 

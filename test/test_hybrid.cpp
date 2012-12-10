@@ -38,6 +38,7 @@
 #include <gtest/gtest.h>
 #include <htp/htp.h>
 #include <htp/htp_hybrid.h>
+#include <htp/htp_base64.h>
 #include "test.h"
 
 class HybridParsing : public testing::Test {
@@ -394,4 +395,47 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     bstr *param_q = (bstr *) table_get_c(tx->request_params_body, "q");
     ASSERT_TRUE(param_q != NULL);
     ASSERT_EQ(bstr_cmp_c(param_q, "2"), 0);
+}
+
+static char HybridParsing_CompressedResponse[] =
+"H4sIAAAAAAAAAG2PwQ6CMBBE73xFU++tXk2pASliAiEhPegRYUOJYEktEP5eqB6dy2ZnJ5O3LJFZ"
+"yj2WiCBah7zKVPBMT1AjCf2gTWnabmH0e/AY/QXDPLqj8HLO07zw8S52wkiKm1zXvRPeeg//2lbX"
+"kwpQrauxh5dFqnyj3uVYgJJCxD5W1g5HSud5Jo3WTQek0mR8UgNlDYZOLcz0ZMuH3y+YKzDAaMDJ"
+"SrihOVL32QceVXUy4QAAAA==";
+
+TEST_F(HybridParsing, CompressedResponseTest) {
+    // Create a new LibHTP transaction
+    htp_tx_t *tx = htp_txh_create(connp);
+    ASSERT_TRUE(tx != NULL);
+
+    htp_txh_state_request_start(tx);
+
+    htp_txh_req_set_method_c(tx, "GET", ALLOC_COPY);
+    htp_txh_req_set_method_number(tx, HTP_M_GET);
+    htp_txh_req_set_uri_c(tx, "/", ALLOC_COPY);
+    htp_txh_req_set_query_string_c(tx, "p=1&q=2", ALLOC_COPY);
+    htp_txh_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
+    htp_txh_req_set_protocol_number(tx, HTTP_1_1);
+    htp_txh_req_set_protocol_http_0_9(tx, 0);
+
+    htp_txh_state_request_headers(tx);
+    htp_txh_state_request_complete(tx);
+
+    htp_txh_state_response_start(tx);
+
+    htp_txh_res_set_status_line_c(tx, "HTTP/1.1 200 OK", ALLOC_COPY);
+    htp_txh_res_set_header_c(tx, "Content-Encoding", "gzip", ALLOC_COPY);
+    htp_txh_res_set_header_c(tx, "Content-Length", "187", ALLOC_COPY);
+
+    htp_txh_state_response_headers(tx);
+
+    bstr *body = htp_base64_decode_mem(HybridParsing_CompressedResponse, strlen(HybridParsing_CompressedResponse));
+    ASSERT_TRUE(body != NULL);
+
+    htp_txh_res_process_body_data(tx, bstr_ptr(body), bstr_len(body));
+    htp_txh_state_response_complete(tx);
+
+    ASSERT_EQ(tx->response_message_len, 187);
+    
+    ASSERT_EQ(tx->response_entity_len, 225);
 }
