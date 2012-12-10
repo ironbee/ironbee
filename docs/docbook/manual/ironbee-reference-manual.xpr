@@ -460,13 +460,10 @@
     <projectTree name="ironbee-reference-manual.xpr">
         <file name="ch00-preface.xml"/>
         <file name="ch01-introduction.xml"/>
-        <file name="ch02-directives.xml"/>
-        <file name="ch03-fields.xml"/>
-        <file name="ch04-operators.xml"/>
-        <file name="ch05-modifiers.xml"/>
-        <file name="ch06-transformation-functions.xml"/>
+        <file name="ch02-configuration.xml"/>
+        <file name="ch03-rule-reference.xml"/>
         <file name="chXX-extending-ironbee.xml"/>
-        <file name="chXX-installation.xml"/>
+        <file name="chXX-installation-guide.xml"/>
         <file name="html.xsl"/>
         <file name="html-chunked.xsl"/>
         <file name="ironbee-reference-manual.xml"/>

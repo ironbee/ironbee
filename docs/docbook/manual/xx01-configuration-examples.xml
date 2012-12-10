@@ -6,8 +6,8 @@
     <title>Configuration Examples</title>
     <para>...</para>
     <section>
-        <title>Example IronBee Configuration</title>
-        <programlisting><xi:include parse="text" href="config-examples/ironbee-config.txt"/></programlisting>
+        <title>Example Trafficserver Configuration</title>
+        <programlisting><xi:include parse="text" href="config-examples/trafficserver-config.txt"/></programlisting>
     </section>
     <section>
         <title>Example Apache Configuration</title>
@@ -15,7 +15,7 @@
         <programlisting><xi:include parse="text" href="config-examples/apache-config.txt"/></programlisting>
     </section>
     <section>
-        <title>Example Trafficserver Configuration</title>
-        <programlisting><xi:include parse="text" href="config-examples/trafficserver-config.txt"/></programlisting>
+        <title>Example IronBee Configuration</title>
+        <programlisting><xi:include parse="text" href="config-examples/ironbee-config.txt"/></programlisting>
     </section>
 </appendix>
