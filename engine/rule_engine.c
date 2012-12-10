@@ -1082,7 +1082,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     if (namelen > 0) {
         --namelen;
     }
-    name = ib_mpool_alloc(tx->mp, namelen);
+    name = ib_mpool_alloc(tx->mp, namelen + 1);
     if (name == NULL) {
         return IB_EALLOC;
     }
