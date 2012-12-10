@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <chapter version="5.0" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:html="http://www.w3.org/1999/xhtml" xml:id="installation">
-    <title>Installation</title>
-    <para>...</para>
+    <title>Installation Guide</title>
+    <para>...<note>
+            <para>This chapter is very much out-of-date and needs to be updated.</para>
+        </note></para>
     <section>
         <title>Tested Operating Systems</title>
         <para>We have provided a table below of the operating systems that are officially supported

@@ -877,7 +877,7 @@ typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
                       int line,
                       const char* fmt,
                       ...);
-    void ib_util_log_ex(int level, const char *prefix,
+    void ib_util_log_ex(int level,
                         const char *file, int line,
                         const char *fmt, ...);
 
@@ -1012,23 +1012,22 @@ end
 function ib_util_log_debug(fmt, ...)
     local dinfo = debug.getinfo(2)
 
-    c.ib_util_log_ex(7, "LuaFFI - ",
+    c.ib_util_log_ex(7,
                      dinfo.source, dinfo.linedefined, fmt, ...)
 end
 
 function ib_log_debug(ib, fmt, ...)
     local dinfo = debug.getinfo(2)
-
-    c.ib_log_ex(ib.cvalue(), 7, nil, "LuaFFI - ",
-                 dinfo.source, dinfo.linedefined, fmt, ...)
+    c.ib_log_ex(ib.cvalue(), 7,
+                dinfo.source, dinfo.linedefined, fmt, ...)
 end
 
 function ib_log(ib, lvl, fmt, ...)
-    c.ib_log_ex(ib.cvalue(), lvl, nil, "LuaFFI -", nil, 0, fmt, ...)
+    c.ib_log_ex(ib.cvalue(), lvl, nil, 0, fmt, ...)
 end
 
 function ib_log_error(ib, fmt, ...)
-    c.ib_log_ex(ib.cvalue(), 3, nil, "LuaFFI - ", nil, 0, fmt, ...)
+    c.ib_log_ex(ib.cvalue(), 3, nil, 0, fmt, ...)
 end
 
 -- ===============================================
@@ -1218,8 +1217,8 @@ function ib_data_get(dpi, name)
         local c_ctx = c.ib_context_main(c_dpi.pr.ib)
         local dinfo = debug.getinfo(2)
 
-        c.ib_log_ex(c_dpi.pr.ib, 4, nil, "LuaFFI - ",
-                     dinfo.source, dinfo.linedefined, "Failed to get field \"" .. name .. "\": " .. rc)
+        c.ib_log_ex(c_dpi.pr.ib, 4,
+                    dinfo.source, dinfo.linedefined, "Failed to get field \"" .. name .. "\": " .. rc)
         return nil
     end
 
