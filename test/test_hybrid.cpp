@@ -93,51 +93,7 @@ static int HybridParsing_Get_Callback_REQUEST_COMPLETE(htp_connp_t *connp) {
     return HTP_OK;
 }
 
-TEST_F(HybridParsing, PostUrlecoded) {
-    // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_txh_create(connp);
-    ASSERT_TRUE(tx != NULL);
-
-    // Request begins
-    htp_txh_state_request_start(tx);
-
-    // Request line data
-    htp_txh_req_set_method_c(tx, "POST", ALLOC_COPY);
-    htp_txh_req_set_method_number(tx, HTP_M_GET);
-    htp_txh_req_set_uri_c(tx, "/", ALLOC_COPY);    
-    htp_txh_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
-    htp_txh_req_set_protocol_number(tx, HTTP_1_1);
-    htp_txh_req_set_protocol_http_0_9(tx, 0);
-
-    // Configure headers to trigger the URLENCODED parser
-    htp_txh_req_set_header_c(tx, "Content-Type", HTP_URLENCODED_MIME_TYPE, ALLOC_COPY);
-    htp_txh_req_set_header_c(tx, "Content-Length", "7", ALLOC_COPY);
-
-    // Request headers complete
-    htp_txh_state_request_headers(tx);
-
-    // Send request body
-    htp_txh_req_process_body_data(tx, (const unsigned char *)"p=1&q=2", 7);
-
-    htp_txh_req_headers_clear(tx);
-    ASSERT_EQ(list_size(tx->request_headers), 0);
-
-    // Request complete
-    htp_txh_state_request_complete(tx);
-
-    // Check parameters
-    ASSERT_TRUE(tx->request_params_body != NULL);
-    
-    bstr *param_p = (bstr *)table_get_c(tx->request_params_body, "p");
-    ASSERT_TRUE(param_p != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_p, "1"), 0);
-
-    bstr *param_q = (bstr *)table_get_c(tx->request_params_body, "q");
-    ASSERT_TRUE(param_q != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_q, "2"), 0);
-}
-
-TEST_F(HybridParsing, Get) {
+TEST_F(HybridParsing, GetTest) {
     // Create a new LibHTP transaction
     htp_tx_t *tx = htp_txh_create(connp);
     ASSERT_TRUE(tx != NULL);
@@ -219,4 +175,46 @@ TEST_F(HybridParsing, Get) {
     ASSERT_EQ(user_data.callback_REQUEST_COMPLETE_invoked, 1);
 }
 
+TEST_F(HybridParsing, PostUrlecodedTest) {
+    // Create a new LibHTP transaction
+    htp_tx_t *tx = htp_txh_create(connp);
+    ASSERT_TRUE(tx != NULL);
 
+    // Request begins
+    htp_txh_state_request_start(tx);
+
+    // Request line data
+    htp_txh_req_set_method_c(tx, "POST", ALLOC_COPY);
+    htp_txh_req_set_method_number(tx, HTP_M_GET);
+    htp_txh_req_set_uri_c(tx, "/", ALLOC_COPY);
+    htp_txh_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
+    htp_txh_req_set_protocol_number(tx, HTTP_1_1);
+    htp_txh_req_set_protocol_http_0_9(tx, 0);
+
+    // Configure headers to trigger the URLENCODED parser
+    htp_txh_req_set_header_c(tx, "Content-Type", HTP_URLENCODED_MIME_TYPE, ALLOC_COPY);
+    htp_txh_req_set_header_c(tx, "Content-Length", "7", ALLOC_COPY);
+
+    // Request headers complete
+    htp_txh_state_request_headers(tx);
+
+    // Send request body
+    htp_txh_req_process_body_data(tx, (const unsigned char *)"p=1&q=2", 7);
+
+    htp_txh_req_headers_clear(tx);
+    ASSERT_EQ(list_size(tx->request_headers), 0);
+
+    // Request complete
+    htp_txh_state_request_complete(tx);
+
+    // Check parameters
+    ASSERT_TRUE(tx->request_params_body != NULL);
+
+    bstr *param_p = (bstr *)table_get_c(tx->request_params_body, "p");
+    ASSERT_TRUE(param_p != NULL);
+    ASSERT_EQ(bstr_cmp_c(param_p, "1"), 0);
+
+    bstr *param_q = (bstr *)table_get_c(tx->request_params_body, "q");
+    ASSERT_TRUE(param_q != NULL);
+    ASSERT_EQ(bstr_cmp_c(param_q, "2"), 0);
+}
