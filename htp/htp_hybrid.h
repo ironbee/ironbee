@@ -182,19 +182,7 @@ int htp_txh_req_headers_clear(htp_tx_t *tx);
  * 
  * @param[in] tx
  */
-int htp_txh_state_request_headers(htp_tx_t *tx);
-     
-/**
- * Sets desired (de)compression method for the request body. The
- * default for hybrid parsing is COMPRESSION_DISABLED, which assumes that
- * the container will decompress if necessary. Set to COMPRESSION_AUTO to
- * instruct LibHTP to attempt decompress if the headers indicate that
- * compression was used by the client.
- * 
- * @param[in] tx
- * @param[in] compression_method
- */
-void htp_txh_req_set_compression(htp_tx_t *tx, int compression_method);
+int htp_txh_state_request_headers(htp_tx_t *tx);     
 
 /**
  * Process a chunk of request body data. This function assumes that
@@ -297,18 +285,6 @@ int htp_txh_res_headers_clear(htp_tx_t *tx);
  * registered callbacks.
  */
 int htp_txh_state_response_headers(htp_tx_t *tx);
-
-/**
- * Sets desired (de)compression method for the response body. The
- * default for hybrid parsing is COMPRESSION_DISABLED, which assumes that
- * the container will decompress if necessary. Set to COMPRESSION_AUTO to
- * instruct LibHTP to attempt decompress if the headers indicate that
- * compression was used by the client.
- * 
- * @param[in] tx
- * @param[in] compression
- */
-int htp_txh_res_set_compression(htp_tx_t *tx, int compression);
 
 /**
  * Process a chunk of response body data. This function assumes that
