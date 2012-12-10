@@ -213,9 +213,19 @@ TEST_F(HybridParsing, GetTest) {
 
     // Response line data
     htp_txh_res_set_status_line_c(tx, "HTTP/1.1 200 OK", ALLOC_COPY);
-    // htp_txh_res_set_protocol_number(tx, HTTP_1_1);
-    // htp_txh_res_set_status_code(tx, 200);
-    // htp_txh_res_set_status_message(tx, "OK", ALLOC_COPY);
+    ASSERT_EQ(bstr_cmp_c(tx->response_protocol, "HTTP/1.1"), 0);
+    ASSERT_EQ(tx->response_protocol_number, HTTP_1_1);
+    ASSERT_EQ(tx->response_status_number, 200);
+    ASSERT_EQ(bstr_cmp_c(tx->response_message, "OK"), 0);
+
+    htp_txh_res_set_protocol_number(tx, HTTP_1_0);
+    ASSERT_EQ(tx->response_protocol_number, HTTP_1_0);
+
+    htp_txh_res_set_status_code(tx, 500);
+    ASSERT_EQ(tx->response_status_number, 500);
+
+    htp_txh_res_set_status_message(tx, "Internal Server Error", ALLOC_COPY);
+    ASSERT_EQ(bstr_cmp_c(tx->response_message, "Internal Server Error"), 0);
 
     // Check response line data
     // XXX

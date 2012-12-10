@@ -713,13 +713,12 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
             if (connp->cfg->parse_response_line(connp) != HTP_OK) {
                 // Note: downstream responsible for error logging
                 return HTP_ERROR;
-            }
+            }           
 
-            
-
-            // Even when the response line is invalid, determine if it looks like
-            // a response line (which is what browsers do).
-            if (htp_resembles_response_line(connp->out_tx) == 0) {
+            // If the response line is invalid, determine if it _looks_ like
+            // a response line. If it does not look like a line, process the
+            // data as a response body because that is what browsers do.
+            if (htp_treat_response_line_as_body(connp->out_tx)) {
                 // Process this line as response body data
                 htp_tx_data_t d;
 

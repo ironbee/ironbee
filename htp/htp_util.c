@@ -2087,7 +2087,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
  * @param tx
  * @return 1 for good enough or 0 for not good enough
  */
-int htp_resembles_response_line(htp_tx_t *tx) {
+int htp_treat_response_line_as_body(htp_tx_t *tx) {
     // TODO This function should be replaced with several implementations,
     //      one for every different browser handling. For example:
     //
@@ -2095,17 +2095,17 @@ int htp_resembles_response_line(htp_tx_t *tx) {
     //      IE: (?i)^\s*http\s*/
     //      Safari: ^HTTP/\d+\.\d+\s+\d{3}
 
-    if (tx->response_protocol == NULL) return 0;
-    if (bstr_len(tx->response_protocol) < 4) return 0;
+    if (tx->response_protocol == NULL) return 1;
+    if (bstr_len(tx->response_protocol) < 4) return 1;
 
     char *data = bstr_ptr(tx->response_protocol);
 
-    if ((data[0] != 'H') && (data[0] != 'h')) return 0;
-    if ((data[1] != 'T') && (data[1] != 't')) return 0;
-    if ((data[2] != 'T') && (data[2] != 't')) return 0;
-    if ((data[3] != 'P') && (data[3] != 'p')) return 0;
+    if ((data[0] != 'H') && (data[0] != 'h')) return 1;
+    if ((data[1] != 'T') && (data[1] != 't')) return 1;
+    if ((data[2] != 'T') && (data[2] != 't')) return 1;
+    if ((data[3] != 'P') && (data[3] != 'p')) return 1;
 
-    return 1;
+    return 0;
 }
 
 /**

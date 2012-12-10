@@ -506,6 +506,8 @@ int htp_txh_req_headers_clear(htp_tx_t *tx) {
 }
 
 int htp_txh_state_response_start(htp_tx_t *tx) {
+    tx->connp->out_tx = tx;
+
     // Run hook RESPONSE_START
     int rc = hook_run_all(tx->connp->cfg->hook_response_start, tx->connp);
     if (rc != HOOK_OK) return rc;
@@ -530,7 +532,7 @@ int htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_str
     if (tx->response_line == NULL) return HTP_ERROR;
 
     // Parse response line
-    // XXx
+    if (tx->connp->cfg->parse_response_line(tx->connp) != HTP_OK) return HTP_ERROR;
 
     return HTP_OK;
 }
@@ -554,12 +556,29 @@ int htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc
 }
 
 int htp_txh_state_response_line(htp_tx_t *tx) {
+    #if 0
+    // Commented out until we determine which fields can be
+    // unavailable in real-life
+
     // Unless we're dealing with HTTP/0.9, check that
     // the minimum amount of data has been provided.
     if (tx->protocol_is_simple != 0) {
         if ((tx->response_protocol == NULL) || (tx->response_status_number == -1) || (tx->response_message == NULL)) {
             return HTP_ERROR;
         }
+    }
+    #endif
+
+    // Is the response line valid?
+    if ((tx->response_protocol_number < 0)
+            || (tx->response_status_number < 0)
+            || (tx->response_status_number < HTP_VALID_STATUS_MIN)
+            || (tx->response_status_number > HTP_VALID_STATUS_MAX)) {
+        // TODO This should be STATUS_CODE_INVALID
+        // Response line is invalid
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line");
+
+        tx->flags |= HTP_STATUS_LINE_INVALID;
     }
 
     // Run hook RESPONSE_LINE

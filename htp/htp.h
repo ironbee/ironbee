@@ -1290,7 +1290,7 @@ char *htp_tx_progress_as_string(htp_tx_t *tx);
 
 bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 
-int htp_resembles_response_line(htp_tx_t *tx);
+int htp_treat_response_line_as_body(htp_tx_t *tx);
 
 bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx);
 bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
