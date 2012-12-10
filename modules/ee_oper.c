@@ -202,11 +202,11 @@ static ia_eudoxus_command_t ee_first_match_callback(const char *output,
  * @param[in,out] op_inst The operator instance being created.
  */
 static ib_status_t ee_match_any_operator_create(ib_engine_t *ib,
-                                      ib_context_t *ctx,
-                                      const ib_rule_t *rule,
-                                      ib_mpool_t *pool,
-                                      const char *automata_name,
-                                      ib_operator_inst_t *op_inst)
+                                                ib_context_t *ctx,
+                                                const ib_rule_t *rule,
+                                                ib_mpool_t *pool,
+                                                const char *automata_name,
+                                                ib_operator_inst_t *op_inst)
 {
 
     ib_status_t rc;
