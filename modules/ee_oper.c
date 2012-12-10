@@ -24,16 +24,17 @@
  * @author Craig Forbes <cforbes@qualys.com>
  */
 
-#include <assert.h>
-#include <unistd.h>
+#include <ironautomata/eudoxus.h>
 
-#include <ironbee/util.h>
+#include <ironbee/hash.h>
 #include <ironbee/module.h>
 #include <ironbee/operator.h>
 #include <ironbee/path.h>
-#include <ironbee/hash.h>
-#include <ironautomata/eudoxus.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/util.h>
+
+#include <assert.h>
+#include <unistd.h>
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        eudoxus_operators
