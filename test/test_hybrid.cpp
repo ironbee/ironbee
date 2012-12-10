@@ -93,7 +93,7 @@ static int HybridParsing_Get_Callback_REQUEST_COMPLETE(htp_connp_t *connp) {
     return HTP_OK;
 }
 
-TEST_F(HybridParsing, Post) {
+TEST_F(HybridParsing, PostUrlecoded) {
     // Create a new LibHTP transaction
     htp_tx_t *tx = htp_txh_create(connp);
     ASSERT_TRUE(tx != NULL);
@@ -104,8 +104,7 @@ TEST_F(HybridParsing, Post) {
     // Request line data
     htp_txh_req_set_method_c(tx, "POST", ALLOC_COPY);
     htp_txh_req_set_method_number(tx, HTP_M_GET);
-    htp_txh_req_set_uri_c(tx, "/", ALLOC_COPY);
-    //htp_txh_req_set_query_string_c(tx, "p=1&q=2", ALLOC_COPY);
+    htp_txh_req_set_uri_c(tx, "/", ALLOC_COPY);    
     htp_txh_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
     htp_txh_req_set_protocol_number(tx, HTTP_1_1);
     htp_txh_req_set_protocol_http_0_9(tx, 0);
