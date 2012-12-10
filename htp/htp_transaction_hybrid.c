@@ -490,4 +490,22 @@ void htp_txh_req_headers_clear(htp_tx_t *tx) {
     tx->request_headers = tx->cfg->create_table(32);
 }
 
+int htp_txh_state_response_start(htp_tx_t *tx) {
+    // Run hook RESPONSE_START
+    int rc = hook_run_all(tx->connp->cfg->hook_response_start, tx->connp);
+    if (rc != HOOK_OK) return rc;
+
+    // Change state into response line parsing, except if we're following
+    // a HTTP/0.9 request (no status line or response headers).
+    if (tx->protocol_is_simple) {
+        tx->response_transfer_coding = HTP_CODING_IDENTITY;
+        tx->progress = TX_PROGRESS_RES_BODY;
+        tx->connp->out_state = htp_connp_RES_BODY_IDENTITY;
+    } else {
+        tx->connp->out_state = htp_connp_RES_LINE;
+        tx->progress = TX_PROGRESS_RES_LINE;
+    }
+
+    return HTP_OK;
+}
 

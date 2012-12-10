@@ -872,21 +872,8 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     connp->out_header_line_index = -1;
     connp->out_header_line_counter = 0;
 
-    // Run hook RESPONSE_START
-    int rc = hook_run_all(connp->cfg->hook_response_start, connp);
-    if (rc != HOOK_OK) return rc;
-
-    // Change state into response line parsing, except if we're following
-    // a short HTTP/0.9 request, because such requests to not have a
-    // response line and headers.
-    if (connp->out_tx->protocol_is_simple) {
-        connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
-        connp->out_state = htp_connp_RES_BODY_IDENTITY;
-        connp->out_tx->progress = TX_PROGRESS_RES_BODY;
-    } else {
-        connp->out_state = htp_connp_RES_LINE;
-        connp->out_tx->progress = TX_PROGRESS_RES_LINE;
-    }
+    int rc = htp_txh_state_response_start(connp->out_tx);
+    if (rc != HTP_OK) return rc;
 
     return HTP_OK;
 }

@@ -63,10 +63,17 @@ protected:
 };
 
 struct HybridParsing_Get_User_Data {
+    // Request callback indicators
     int callback_TRANSACTION_START_invoked;
     int callback_REQUEST_LINE_invoked;
     int callback_REQUEST_HEADERS_invoked;
     int callback_REQUEST_COMPLETE_invoked;
+
+    // Response callback indicators
+    int callback_RESPONSE_START_invoked;
+    int callback_RESPONSE_LINE_invoked;
+    int callback_RESPONSE_HEADERS_invoked;
+    int callback_RESPONSE_COMPLETE_invoked;
 };
 
 static int HybridParsing_Get_Callback_TRANSACTION_START(htp_connp_t *connp) {
@@ -93,6 +100,12 @@ static int HybridParsing_Get_Callback_REQUEST_COMPLETE(htp_connp_t *connp) {
     return HTP_OK;
 }
 
+static int HybridParsing_Get_Callback_RESPONSE_START(htp_connp_t *connp) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *)htp_tx_get_user_data(connp->in_tx);
+    user_data->callback_RESPONSE_START_invoked = 1;
+    return HTP_OK;
+}
+
 TEST_F(HybridParsing, GetTest) {
     // Create a new LibHTP transaction
     htp_tx_t *tx = htp_txh_create(connp);
@@ -106,14 +119,17 @@ TEST_F(HybridParsing, GetTest) {
     user_data.callback_REQUEST_COMPLETE_invoked = 0;
     htp_tx_set_user_data(tx, &user_data);
 
+    // Request callbacks
     htp_config_register_transaction_start(cfg, HybridParsing_Get_Callback_TRANSACTION_START);
     htp_config_register_request_line(cfg, HybridParsing_Get_Callback_REQUEST_LINE);
     htp_config_register_request_headers(cfg, HybridParsing_Get_Callback_REQUEST_HEADERS);
     htp_config_register_request_done(cfg, HybridParsing_Get_Callback_REQUEST_COMPLETE);
 
+    // Response callbacks
+    htp_config_register_transaction_start(cfg, HybridParsing_Get_Callback_RESPONSE_START);
+
     // Request begins
     htp_txh_state_request_start(tx);
-
     ASSERT_EQ(user_data.callback_TRANSACTION_START_invoked, 1);
 
     // Request line data
@@ -173,6 +189,10 @@ TEST_F(HybridParsing, GetTest) {
     htp_txh_state_request_complete(tx);
 
     ASSERT_EQ(user_data.callback_REQUEST_COMPLETE_invoked, 1);
+
+    // Response begins
+    htp_txh_state_response_start(tx);
+    ASSERT_EQ(user_data.callback_RESPONSE_START_invoked, 1);
 }
 
 TEST_F(HybridParsing, PostUrlecodedTest) {

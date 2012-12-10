@@ -225,7 +225,7 @@ int htp_txh_state_request_complete(htp_tx_t *tx);
  *
  * @param[in] tx
  */
-void htp_txh_state_response_start(htp_tx_t *tx);
+int htp_txh_state_response_start(htp_tx_t *tx);
      
 /**
  * Set response line.
