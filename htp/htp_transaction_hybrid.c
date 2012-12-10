@@ -634,10 +634,49 @@ int htp_txh_res_headers_clear(htp_tx_t *tx) {
     return HTP_OK;
 }
 
+static int htp_txh_res_process_body_data_decompressor_callback(htp_tx_data_t *d) {
+    #if HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, d->data, d->len);
+    #endif
+
+    // Keep track of actual response body length
+    d->tx->response_entity_len += d->len;
+
+    // Invoke all callbacks
+    int rc = htp_res_run_hook_body_data(d->tx->connp, d);
+    if (rc != HOOK_OK) return HTP_ERROR;
+
+    return HTP_OK;
+}
+
 int htp_txh_state_response_headers(htp_tx_t *tx) {
     // Run hook RESPONSE_HEADERS_COMPLETE
     int rc = hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
     if (rc != HOOK_OK) return rc;
+
+    // Start decompression engines if decompression is still enabled (the user
+    // may have turned it off in the RESPONSE_HEADERS_COMPLETE hook).
+    if (tx->connp->cfg->response_decompression_enabled) {
+        if (tx->response_content_encoding != COMPRESSION_NONE) {
+            if (tx->connp->out_decompressor != NULL) {
+                tx->connp->out_decompressor->destroy(tx->connp->out_decompressor);
+                tx->connp->out_decompressor = NULL;
+            }
+
+            tx->connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(tx->connp,
+                    tx->response_content_encoding);
+            if (tx->connp->out_decompressor != NULL) {
+                tx->connp->out_decompressor->callback = htp_txh_res_process_body_data_decompressor_callback;
+            } else {
+                // No need to do anything; the error will have already
+                // been reported by the failed decompressor.
+            }
+        }
+    } else {
+        // Reset the content encoding flag to indicate
+        // that there is no decompression taking place.
+        tx->response_content_encoding = COMPRESSION_NONE;
+    }
 
     return HTP_OK;
 }

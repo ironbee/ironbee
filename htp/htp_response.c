@@ -41,27 +41,6 @@
 #include "htp_private.h"
 
 /**
- * Invoked whenever decompressed response body data becomes available.
- *
- * @param d
- * @return HTP_OK on state change, HTP_ERROR on error.
- */
-static int htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK(htp_tx_data_t *d) {
-    #if HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, d->data, d->len);
-    #endif
-
-    // Keep track of actual response body length
-    d->tx->response_entity_len += d->len;
-
-    // Invoke all callbacks    
-    int rc = htp_res_run_hook_body_data(d->tx->connp, d);
-    if (rc != HOOK_OK) return HTP_ERROR;
-
-    return HTP_OK;
-}
-
-/**
  * Consumes bytes until the end of the current line.
  *
  * @param connp
@@ -401,29 +380,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     int rc = htp_txh_state_response_headers(connp->out_tx);
     if (rc != HTP_OK) return rc;
 
-    // Start decompression engines if decompression is still enabled (the user
-    // may have turned it off in the RESPONSE_HEADERS_COMPLETE hook).
-    if (connp->cfg->response_decompression_enabled) {
-        if (connp->out_tx->response_content_encoding != COMPRESSION_NONE) {
-            if (connp->out_decompressor != NULL) {
-                connp->out_decompressor->destroy(connp->out_decompressor);
-                connp->out_decompressor = NULL;
-            }
-
-            connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(connp,
-                    connp->out_tx->response_content_encoding);
-            if (connp->out_decompressor != NULL) {
-                connp->out_decompressor->callback = htp_connp_RES_BODY_DECOMPRESSOR_CALLBACK;
-            } else {
-                // No need to do anything; the error will have already
-                // been reported by the failed decompressor.
-            }
-        }
-    } else {
-        // Reset the content encoding flag to indicate
-        // that there is no decompression taking place.
-        connp->out_tx->response_content_encoding = COMPRESSION_NONE;
-    }
+    
 
     return HTP_OK;
 }
