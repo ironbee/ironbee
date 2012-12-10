@@ -106,7 +106,7 @@ typedef enum {
 #define IB_UUID_HEX_SIZE 37
 
 /* Connection Flags */
-/// @todo Do we need anymore???
+// @todo Do we need anymore???
 #define IB_CONN_FNONE           (0)
 #define IB_CONN_FERROR          (1 << 0) /**< Connection had an error */
 #define IB_CONN_FSEENTX         (1 << 1) /**< Connection had transaction */
@@ -180,12 +180,11 @@ struct ib_conn_t {
     void               *parser_ctx;      /**< Parser context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
     ib_hash_t          *data;            /**< Generic data store */
-//    ib_filter_ctl_t    *fctl;            /**< Connection filter controller */
 
     ib_timeval_t       tv_created;       /**< Connection created time value */
     struct {
         ib_time_t       started;         /**< Connection started base time */
-        // TODO: Is opened/closed different than started/finished?
+        // @todo Is opened/closed different than started/finished?
         ib_time_t       finished;        /**< Connection finished time */
     } t;
 
@@ -235,7 +234,6 @@ struct ib_tx_t {
     const char         *hostname;        /**< Hostname used in the request */
     const char         *er_ipstr;        /**< Effective remote IP as string */
     const char         *path;            /**< Path used in the request */
-    //struct sockaddr_storage er_addr;   /**< Effective remote address */
     ib_flags_t          flags;           /**< Transaction flags */
     int                 block_status;    /**< TX specific block status to use.*/
     ib_rule_phase_num_t allow_phase;     /**< Phase to allow (skip) */
@@ -247,8 +245,8 @@ struct ib_tx_t {
     ib_stream_t        *request_body;    /**< Request body (up to a limit) */
 
     /* Response */
-    ib_parsed_resp_line_t *response_line;/**< Response line */
-    ib_parsed_header_wrapper_t *response_header;/**< Response header */
+    ib_parsed_resp_line_t *response_line; /**< Response line */
+    ib_parsed_header_wrapper_t *response_header; /**< Response header */
     ib_stream_t        *response_body;   /**< Response body (up to a limit) */
 };
 
