@@ -557,7 +557,7 @@ int htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc
 
 int htp_txh_state_response_line(htp_tx_t *tx) {
     #if 0
-    // Commented out until we determine which fields can be
+    // Commented-out until we determine which fields can be
     // unavailable in real-life
 
     // Unless we're dealing with HTTP/0.9, check that
