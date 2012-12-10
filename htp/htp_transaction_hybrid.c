@@ -647,8 +647,34 @@ int htp_txh_res_set_compression(htp_tx_t *tx, int compression) {
     return HTP_OK;
 }
 
-int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len) {
-    // XXX
+int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len) {    
+    htp_tx_data_t d;
+
+    d.tx = tx;
+    d.data = (unsigned char *) data;
+    d.len = len;
+
+    // Keep track of body size before decompression
+    tx->response_message_len += d.len;
+
+    if (tx->response_content_encoding != COMPRESSION_NONE) {
+        // Send data buffer to the decompressor
+        tx->connp->out_decompressor->decompress(tx->connp->out_decompressor, &d);
+
+        if (data == NULL) {
+            // Shut down the decompressor, if we used one
+            tx->connp->out_decompressor->destroy(tx->connp->out_decompressor);
+            tx->connp->out_decompressor = NULL;
+        }
+    } else {
+        // When there's no decompression, response_entity_len
+        // is identical to response_message_len.
+        tx->response_entity_len += d.len;
+
+        int rc = htp_res_run_hook_body_data(tx->connp, &d);
+        if (rc != HOOK_OK) return HTP_ERROR;
+    }
+
     return HTP_OK;
 }
 

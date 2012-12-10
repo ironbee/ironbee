@@ -123,9 +123,7 @@ static int HybridParsing_Get_Callback_RESPONSE_HEADERS(htp_connp_t *connp) {
 }
 
 static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(d->tx);
-
-    printf("# HERE\n");
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(d->tx);   
 
     // Don't do anything if in errored state
     if (user_data->response_body_correctly_received == -1) return HTP_ERROR;
@@ -135,6 +133,7 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
             if ((d->len == 9)&&(memcmp(d->data, "<h1>Hello", 9) == 0)) {
                 user_data->response_body_chunks_seen++;
             } else {
+                // TODO Error message
                 user_data->response_body_correctly_received = -1;
             }
             break;
@@ -142,6 +141,7 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
             if ((d->len == 1)&&(memcmp(d->data, " ", 1) == 0)) {
                 user_data->response_body_chunks_seen++;
             } else {
+                // TODO Error message
                 user_data->response_body_correctly_received = -1;
             }
             break;
@@ -150,10 +150,12 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
                 user_data->response_body_chunks_seen++;
                 user_data->response_body_correctly_received = 1;
             } else {
+                // TODO Error message
                 user_data->response_body_correctly_received = -1;
             }
             break;
         default:
+            // TODO Error message
             user_data->response_body_correctly_received = -1;
             break;
     }
