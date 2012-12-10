@@ -2096,15 +2096,15 @@ int htp_treat_response_line_as_body(htp_tx_t *tx) {
     //      Safari: ^HTTP/\d+\.\d+\s+\d{3}
 
     if (tx->response_protocol == NULL) return 1;
-    if (bstr_len(tx->response_protocol) < 4) return 1;
+    if (bstr_len(tx->response_protocol) < 4) return 1;    
 
     char *data = bstr_ptr(tx->response_protocol);
 
-    if ((data[0] != 'H') && (data[0] != 'h')) return 1;
+    if ((data[0] != 'H') && (data[0] != 'h')) return 1;    
     if ((data[1] != 'T') && (data[1] != 't')) return 1;
     if ((data[2] != 'T') && (data[2] != 't')) return 1;
     if ((data[3] != 'P') && (data[3] != 'p')) return 1;
-
+    
     return 0;
 }
 

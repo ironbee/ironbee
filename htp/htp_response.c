@@ -560,7 +560,7 @@ int htp_connp_RES_HEADERS(htp_connp_t * connp) {
  * @param connp
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_LINE(htp_connp_t * connp) {
+int htp_connp_RES_LINE(htp_connp_t * connp) {    
     for (;;) {
         // Get one byte
         OUT_COPY_BYTE_OR_RETURN(connp);
@@ -624,7 +624,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
             // a response line. If it does not look like a line, process the
             // data as a response body because that is what browsers do.
             if (htp_treat_response_line_as_body(connp->out_tx)) {
-                int rc = htp_txh_req_process_body_data(connp->out_tx, connp->out_line, connp->out_line_len + chomp_result);
+                int rc = htp_txh_res_process_body_data(connp->out_tx, connp->out_line, connp->out_line_len + chomp_result);
                 if (rc != HTP_OK) return rc;
 
                 // Continue to process response body
@@ -654,7 +654,7 @@ size_t htp_connp_res_data_consumed(htp_connp_t * connp) {
     return connp->out_current_offset;
 }
 
-int htp_connp_RES_FINALIZE(htp_connp_t * connp) {    
+int htp_connp_RES_FINALIZE(htp_connp_t * connp) {
     if (connp->out_tx->progress != TX_PROGRESS_DONE) {
         connp->out_tx->progress = TX_PROGRESS_DONE;
 
