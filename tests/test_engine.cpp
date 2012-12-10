@@ -314,7 +314,7 @@ TEST(TestIronBee, test_dpi_dynf)
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(5, n);
 
-    /* Fetch a anohter subkey */
+    /* Fetch a another subkey */
     ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf:dyn_subkey2", &f));
     ASSERT_TRUE(f);
     ASSERT_EQ(9UL, f->nlen);

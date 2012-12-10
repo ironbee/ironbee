@@ -1266,7 +1266,7 @@ static ib_status_t ib_kvstore_riak_set_bucket_property(
         goto exit;
     }
 
-    /* Set the reseponse buffer. */
+    /* Set the response buffer. */
     curl_rc = curl_easy_setopt(riak->curl, CURLOPT_WRITEDATA, &response);
     if (curl_rc) {
         rc = IB_EOTHER;

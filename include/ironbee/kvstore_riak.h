@@ -130,7 +130,7 @@ int ib_kvstore_riak_ping(ib_kvstore_t *kvstore);
  *            less than 999999.
  *
  * @returns
- *   - IB_OK On Scucess.
+ *   - IB_OK On Success.
  *   - IB_EALLOC On a memory allocation error.
  */
 ib_status_t ib_kvstore_riak_set_bucket_property_int(
@@ -146,7 +146,7 @@ ib_status_t ib_kvstore_riak_set_bucket_property_int(
  * @param[in] value The value of the property
  *
  * @returns
- *   - IB_OK On Scucess.
+ *   - IB_OK On Success.
  *   - IB_EALLOC On a memory allocation error.
  */
 ib_status_t ib_kvstore_riak_set_bucket_property_str(
