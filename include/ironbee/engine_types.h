@@ -179,7 +179,7 @@ struct ib_conn_t {
     void               *server_ctx;      /**< Server context */
     void               *parser_ctx;      /**< Parser context */
     ib_provider_inst_t *dpi;             /**< Data provider instance */
-    ib_hash_t          *data;            /**< Generic data store */
+    ib_array_t         *data;            /**< Per module data. */
 
     ib_timeval_t       tv_created;       /**< Connection created time value */
     struct {

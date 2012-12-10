@@ -655,7 +655,8 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     (*pconn)->ctx = ib->ctx;
     (*pconn)->server_ctx = server_ctx;
 
-    rc = ib_hash_create_nocase(&((*pconn)->data), (*pconn)->mp);
+    /* Create the per-module data data store. */
+    rc = ib_array_create(&((*pconn)->data), pool, 16, 8);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
@@ -671,6 +672,33 @@ failed:
     *pconn = NULL;
 
     return rc;
+}
+
+ib_status_t ib_conn_get_data(
+    const ib_conn_t    *conn,
+    const ib_module_t  *m,
+    void              **data
+)
+{
+  assert(conn != NULL);
+  assert(m != NULL);
+  assert(data != NULL);
+
+  ib_status_t rc = ib_array_get(conn->data, m->idx, data);
+  return rc;
+}
+
+ib_status_t DLL_PUBLIC ib_conn_set_data(
+    ib_conn_t         *conn,
+    const ib_module_t *m,
+    void              *data
+)
+{
+  assert(conn != NULL);
+  assert(m != NULL);
+
+  ib_status_t rc = ib_array_setn(conn->data, m->idx, data);
+  return rc;
 }
 
 void ib_conn_parser_context_set(ib_conn_t *conn,

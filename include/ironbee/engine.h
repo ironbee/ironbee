@@ -579,6 +579,34 @@ ib_status_t DLL_PUBLIC ib_conn_create(ib_engine_t *ib,
                                       void *server_ctx);
 
 /**
+ * Get per-module per-connection data.
+ *
+ * @param[in]  conn   Connection
+ * @param[in]  module Module.
+ * @param[out] data   Data.
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_conn_get_data(
+    const ib_conn_t    *conn,
+    const ib_module_t  *m,
+    void              **data
+);
+
+/**
+ * Set per-module per-connection data.
+ *
+ * @param[in] conn   Connection
+ * @param[in] module Module.
+ * @param[in] data Data.
+ * @returns Status code.
+ */
+ib_status_t DLL_PUBLIC ib_conn_set_data(
+    ib_conn_t         *conn,
+    const ib_module_t *m,
+    void              *data
+);
+
+/**
  * Set the connection parser context.
  *
  * @param conn Connection structure
