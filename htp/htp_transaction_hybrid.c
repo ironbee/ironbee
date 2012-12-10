@@ -650,6 +650,18 @@ static int htp_txh_res_process_body_data_decompressor_callback(htp_tx_data_t *d)
 }
 
 int htp_txh_state_response_headers(htp_tx_t *tx) {
+    // Check for compression
+    if (tx->connp->cfg->response_decompression_enabled) {
+        htp_header_t *ce = table_get_c(tx->response_headers, "content-encoding");
+        if (ce != NULL) {
+            if ((bstr_cmp_c(ce->value, "gzip") == 0) || (bstr_cmp_c(ce->value, "x-gzip") == 0)) {
+                tx->response_content_encoding = COMPRESSION_GZIP;
+            } else if ((bstr_cmp_c(ce->value, "deflate") == 0) || (bstr_cmp_c(ce->value, "x-deflate") == 0)) {
+                tx->response_content_encoding = COMPRESSION_DEFLATE;
+            }
+        }
+    }
+
     // Run hook RESPONSE_HEADERS_COMPLETE
     int rc = hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
     if (rc != HOOK_OK) return rc;

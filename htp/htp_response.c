@@ -254,19 +254,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         connp->out_tx->seen_100continue++;
 
         return HTP_OK;
-    }
-
-    // Check for compression
-    if (connp->cfg->response_decompression_enabled) {
-        htp_header_t *ce = table_get_c(connp->out_tx->response_headers, "content-encoding");
-        if (ce != NULL) {
-            if ((bstr_cmp_c(ce->value, "gzip") == 0) || (bstr_cmp_c(ce->value, "x-gzip") == 0)) {
-                connp->out_tx->response_content_encoding = COMPRESSION_GZIP;
-            } else if ((bstr_cmp_c(ce->value, "deflate") == 0) || (bstr_cmp_c(ce->value, "x-deflate") == 0)) {
-                connp->out_tx->response_content_encoding = COMPRESSION_DEFLATE;
-            }
-        }
-    }
+    }   
 
     // 1. Any response message which MUST NOT include a message-body
     //  (such as the 1xx, 204, and 304 responses and any response to a HEAD
