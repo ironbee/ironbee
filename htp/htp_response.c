@@ -246,6 +246,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         }
 
         // Ignore any response headers set
+        // XXX Is all the memory correctly freed here?
         table_clear(connp->out_tx->response_headers);
 
         connp->out_state = htp_connp_RES_LINE;
@@ -378,9 +379,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     //      that is done earlier, before response line parsing begins
 
     int rc = htp_txh_state_response_headers(connp->out_tx);
-    if (rc != HTP_OK) return rc;
-
-    
+    if (rc != HTP_OK) return rc;    
 
     return HTP_OK;
 }
