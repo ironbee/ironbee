@@ -210,7 +210,6 @@ static ib_status_t ee_match_any_operator_create(ib_engine_t *ib,
 {
 
     ib_status_t rc;
-    //ia_eudoxus_result_t ia_rc;
     ia_eudoxus_t* eudoxus;
 
     rc = ib_hash_get(eudoxus_pattern_hash, &eudoxus, automata_name);
