@@ -24,14 +24,14 @@
 
     <xi:include href="ch00-preface.xml"/>
     <xi:include href="ch01-introduction.xml"/>
-    <xi:include href="chXX-installation.xml"/>    
     <xi:include href="ch02-directives.xml"/>
     <xi:include href="ch03-fields.xml"/>
     <xi:include href="ch04-operators.xml"/>     
     <xi:include href="ch05-modifiers.xml"/>
     <xi:include href="ch06-transformation-functions.xml"/>
-    <xi:include href="chXX-extending-ironbee.xml"/>
+    <xi:include href="chXX-installation.xml"/>    
     <xi:include href="xx01-configuration-examples.xml"/>    
     <xi:include href="xx02-todo.xml"/>
+    <xi:include href="chXX-extending-ironbee.xml"/>
     <xi:include href="xx03-changes-from-modsecurity.xml"/>
 </book>
