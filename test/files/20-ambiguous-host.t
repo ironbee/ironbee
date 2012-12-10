@@ -6,7 +6,7 @@ Host: example.com
 <<<
 HTTP/1.1 200 OK
 Date: Mon, 26 Apr 2010 13:56:31 GMT
-Content-Length: 10
+Content-Length: 9
 
 12345678
 >>>
@@ -17,6 +17,6 @@ Host: foo.com
 <<<
 HTTP/1.1 200 OK
 Date: Mon, 26 Apr 2010 13:56:31 GMT
-Content-Length: 10
+Content-Length: 9
 
 12345678
