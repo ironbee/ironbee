@@ -101,13 +101,6 @@ ibmod_rule_dev_la_CFLAGS = ${AM_CFLAGS}
 ibmod_rule_dev_la_LDFLAGS = $(AM_LDFLAGS)
 endif
 
-if BUILD_DEV_MODULES
-pkglib_LTLIBRARIES += ibmod_perf_stats.la 
-ibmod_perf_stats_la_SOURCES = perf_stats.c
-ibmod_perf_stats_la_CFLAGS = ${AM_CFLAGS}
-ibmod_perf_stats_la_LDFLAGS = $(AM_LDFLAGS)
-endif
-
 ibmod_user_agent_la_SOURCES = user_agent.c \
                               user_agent_rules.c \
                               user_agent_private.h 
