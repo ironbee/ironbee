@@ -300,7 +300,7 @@ TEST_F(HybridParsing, GetTest) {
 
     // Request body data
 
-    // TODO
+    // TODO Request body compression not currently implemented.
     // htp_txh_res_set_compression(htp_tx_t *tx, int compression);
 
     htp_txh_res_process_body_data(tx, "<h1>Hello", 9);
