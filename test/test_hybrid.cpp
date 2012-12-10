@@ -201,8 +201,25 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     // Send request body
     htp_txh_req_process_body_data(tx, (const unsigned char *)"p=1&q=2", 7);
 
+    // Trailing request headers
     htp_txh_req_headers_clear(tx);
     ASSERT_EQ(list_size(tx->request_headers), 0);
+
+    htp_txh_req_set_header_c(tx, "Host", "www.example.com", ALLOC_COPY);
+    htp_txh_req_set_header_c(tx, "Connection", "keep-alive", ALLOC_COPY);
+    htp_txh_req_set_header_c(tx, "User-Agent", "Mozilla/5.0", ALLOC_COPY);
+
+    htp_header_t *h_host = (htp_header_t *)table_get_c(tx->request_headers, "host");
+    ASSERT_TRUE(h_host != NULL);
+    ASSERT_EQ(bstr_cmp_c(h_host->value, "www.example.com"), 0);
+
+    htp_header_t *h_connection = (htp_header_t *)table_get_c(tx->request_headers, "connection");
+    ASSERT_TRUE(h_connection != NULL);
+    ASSERT_EQ(bstr_cmp_c(h_connection->value, "keep-alive"), 0);
+
+    htp_header_t *h_ua = (htp_header_t *)table_get_c(tx->request_headers, "user-agent");
+    ASSERT_TRUE(h_ua != NULL);
+    ASSERT_EQ(bstr_cmp_c(h_ua->value, "Mozilla/5.0"), 0);
 
     // Request complete
     htp_txh_state_request_complete(tx);
