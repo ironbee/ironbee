@@ -45,24 +45,8 @@ sudo make install</programlisting>Various
         <para>First, the server component must be configured to load the IronBee library and its
             configuration. This is done through the server's native configuration and differs for
             each server. See the Configuration Examples section for examples of the server
-            configuration.</para>
-        <para>Once loaded, IronBee configuration consists of one or more configuration files which
-            IronBee will load. The following rules apply:</para>
-        <para>
-            <itemizedlist>
-                <listitem>
-                    <para>Escape sequences are as in JavaScript (section 7.8.4 in ECMA-262), except
-                        within PCRE regular expression patterns, where PCRE escaping is used</para>
-                </listitem>
-                <listitem>
-                    <para>Lines that begin with <literal>#</literal> are comments</para>
-                </listitem>
-                <listitem>
-                    <para>Lines are continued on the next line when <literal>\</literal> is the last
-                        character on a line</para>
-                </listitem>
-            </itemizedlist>
-        </para>
+            configuration. Once loaded, IronBee configuration consists of one or more configuration
+            files which IronBee will load.</para>
         <para>IronBee configuration file examples are listed in the Configuration Examples
             section.</para>
     </section>
