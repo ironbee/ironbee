@@ -219,7 +219,9 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     htp_txh_state_request_headers(tx);
 
     // Send request body
-    htp_txh_req_process_body_data(tx, (const unsigned char *)"p=1&q=2", 7);
+    htp_txh_req_process_body_data(tx, (const unsigned char *)"p=1", 3);
+    htp_txh_req_process_body_data(tx, (const unsigned char *)"&", 1);
+    htp_txh_req_process_body_data(tx, (const unsigned char *)"q=2", 3);
 
     // Trailing request headers
     htp_txh_req_headers_clear(tx);
