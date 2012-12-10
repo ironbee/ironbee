@@ -68,51 +68,63 @@ htp_tx_t *htp_txh_create(htp_connp_t *connp) {
     return tx;
 }
 
-void htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
-    if ((name == NULL) || (value == NULL)) return;
+int htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
+    if ((name == NULL) || (value == NULL)) return HTP_ERROR;
 
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) {
-        return;
+        return HTP_ERROR;
     }
 
     h->name = copy_or_wrap_c(name, alloc);
     if (h->name == NULL) {
         free(h);
-        return;
+        return HTP_ERROR;
     }
 
     h->value = copy_or_wrap_c(value, alloc);
     if (h->value == NULL) {
         bstr_free(&h->name);
         free(h);
-        return;
+        return HTP_ERROR;
     }
 
+    // XXX Check return code
     table_add(tx->request_headers, h->name, h);
+
+    return HTP_OK;
 }
 
-void htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc) {
+int htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc) {
+    if (method == NULL) return HTP_ERROR;
     tx->request_method = copy_or_wrap_c(method, alloc);
+    if (tx->request_method == NULL) return HTP_ERROR;
+    return HTP_OK;
 }
 
 void htp_txh_req_set_method_number(htp_tx_t *tx, int method_number) {
     tx->request_method_number = method_number;
 }
 
-void htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy alloc) {
+int htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy alloc) {
+    if (uri == NULL) return HTP_ERROR;
     tx->request_uri = copy_or_wrap_c(uri, alloc);
-    // XXX Create parsed_uri
+    if (tx->request_uri == NULL) return HTP_ERROR;
+    return HTP_OK;
 }
 
-void htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum alloc_strategy alloc) {
-    if (tx->parsed_uri == NULL) return;
-
+int htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum alloc_strategy alloc) {
+    if (tx->parsed_uri == NULL) return HTP_ERROR;
     tx->parsed_uri->query = copy_or_wrap_c(query_string, alloc);
+    if (tx->parsed_uri->query == NULL) return HTP_ERROR;
+    return HTP_OK;
 }
 
-void htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_strategy alloc) {
+int htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_strategy alloc) {
+    if (protocol == NULL) return HTP_ERROR;
     tx->request_protocol = copy_or_wrap_c(protocol, alloc);
+    if (tx->request_protocol == NULL) return HTP_ERROR;
+    return HTP_OK;
 }
 
 void htp_txh_req_set_protocol_number(htp_tx_t *tx, int protocol_number) {
@@ -473,8 +485,8 @@ int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_
     return HTP_OK;
 }
 
-void htp_txh_req_headers_clear(htp_tx_t *tx) {
-    if (tx->request_headers == NULL) return;
+int htp_txh_req_headers_clear(htp_tx_t *tx) {
+    if (tx->request_headers == NULL) return HTP_ERROR;
 
     void *tvalue;
     table_iterator_reset(tx->request_headers);
@@ -488,6 +500,9 @@ void htp_txh_req_headers_clear(htp_tx_t *tx) {
     table_destroy(&tx->request_headers);
 
     tx->request_headers = tx->cfg->create_table(32);
+    if (tx->request_headers == NULL) return HTP_ERROR;
+
+    return HTP_OK;
 }
 
 int htp_txh_state_response_start(htp_tx_t *tx) {
@@ -509,3 +524,116 @@ int htp_txh_state_response_start(htp_tx_t *tx) {
     return HTP_OK;
 }
 
+int htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_strategy alloc) {
+    if (line == NULL) return HTP_ERROR;
+    tx->response_line = copy_or_wrap_c(line, alloc);
+    if (tx->response_line == NULL) return HTP_ERROR;
+
+    // Parse response line
+    // XXx
+
+    return HTP_OK;
+}
+
+void htp_txh_res_set_protocol_number(htp_tx_t *tx, int protocol_number) {
+    // TODO Check valid protocol number
+    tx->response_protocol_number = protocol_number;
+}
+
+int htp_txh_res_set_status_code(htp_tx_t *tx, int status_code) {
+    // TODO Check valid status code
+    tx->response_status_number = status_code;
+    return HTP_OK;
+}
+
+int htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc_strategy alloc) {
+    if (message == NULL) return HTP_ERROR;
+    tx->response_message = copy_or_wrap_c(message, alloc);
+    if (tx->response_message == NULL) return HTP_ERROR;
+    return HTP_OK;
+}
+
+int htp_txh_state_response_line(htp_tx_t *tx) {
+    // Unless we're dealing with HTTP/0.9, check that
+    // the minimum amount of data has been provided.
+    if (tx->protocol_is_simple != 0) {
+        if ((tx->response_protocol == NULL) || (tx->response_status_number == -1) || (tx->response_message == NULL)) {
+            return HTP_ERROR;
+        }
+    }
+
+    // Run hook RESPONSE_LINE
+    int rc = hook_run_all(tx->connp->cfg->hook_response_line, tx->connp);
+    if (rc != HOOK_OK) return rc;
+
+    return HTP_OK;
+}
+
+int htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
+    if ((name == NULL) || (value == NULL)) return HTP_ERROR;
+    ;
+
+    htp_header_t *h = calloc(1, sizeof (htp_header_t));
+    if (h == NULL) return HTP_ERROR;
+
+    h->name = copy_or_wrap_c(name, alloc);
+    if (h->name == NULL) {
+        free(h);
+        return HTP_ERROR;
+    }
+
+    h->value = copy_or_wrap_c(value, alloc);
+    if (h->value == NULL) {
+        bstr_free(&h->name);
+        free(h);
+        return HTP_ERROR;
+    }
+
+    // XXX Check return code
+    table_add(tx->response_headers, h->name, h);
+
+    return HTP_OK;
+}
+
+int htp_txh_res_headers_clear(htp_tx_t *tx) {
+    if (tx->response_headers == NULL) return HTP_ERROR;
+
+    void *tvalue;
+    table_iterator_reset(tx->response_headers);
+    while (table_iterator_next(tx->response_headers, &tvalue) != NULL) {
+        htp_header_t *h = (htp_header_t *) tvalue;
+        bstr_free(&h->name);
+        bstr_free(&h->value);
+        free(h);
+    }
+
+    table_destroy(&tx->response_headers);
+
+    tx->response_headers = tx->cfg->create_table(32);
+    if (tx->response_headers == NULL) return HTP_ERROR;
+
+    return HTP_OK;
+}
+
+int htp_txh_state_response_headers(htp_tx_t *tx) {
+    // Run hook RESPONSE_HEADERS_COMPLETE
+    int rc = hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
+    if (rc != HOOK_OK) return rc;
+
+    return HTP_OK;
+}
+
+int htp_txh_res_set_compression(htp_tx_t *tx, int compression) {
+    // XXX
+    return HTP_OK;
+}
+
+int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len) {
+    // XXX
+    return HTP_OK;
+}
+
+int htp_txh_state_response_complete(htp_tx_t *tx) {
+    // XXX
+    return HTP_OK;
+}

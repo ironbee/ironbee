@@ -37,6 +37,7 @@
 #include <stdlib.h>
 
 #include "htp.h"
+#include "htp_hybrid.h"
 #include "htp_private.h"
 
 /**
@@ -492,9 +493,8 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // NOTE We do not need to check for short-style HTTP/0.9 requests here because
     //      that is done earlier, before response line parsing begins
 
-    // Run hook RESPONSE_HEADERS_COMPLETE
-    int rc = hook_run_all(connp->cfg->hook_response_headers, connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_txh_state_response_headers(connp->out_tx);
+    if (rc != HTP_OK) return rc;
 
     // Start decompression engines if decompression is still enabled (the user
     // may have turned it off in the RESPONSE_HEADERS_COMPLETE hook).
@@ -681,8 +681,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
 
             // Process response line
 
-            // Deallocate previous response line allocations, which we would have on a 100 response
-            // TODO Consider moving elsewhere; no need to make these checks on every response
+            // Deallocate previous response line allocations, which we would have on a 100 response            
             if (connp->out_tx->response_line != NULL) {
                 bstr_free(&connp->out_tx->response_line);
             }
@@ -703,8 +702,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
             if (connp->out_tx->response_line_raw == NULL) {
                 return HTP_ERROR;
             }
-
-            /// @todo Would be nice to reference response_line_raw data
+            
             int chomp_result = htp_chomp(connp->out_line, &connp->out_line_len);
             connp->out_tx->response_line = bstr_dup_ex(connp->out_tx->response_line_raw, 0, connp->out_line_len);
             if (connp->out_tx->response_line == NULL) {
@@ -717,16 +715,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
                 return HTP_ERROR;
             }
 
-            // Is the response line valid?
-            if ((connp->out_tx->response_protocol_number < 0)
-                    || (connp->out_tx->response_status_number < 0)
-                    || (connp->out_tx->response_status_number < HTP_VALID_STATUS_MIN)
-                    || (connp->out_tx->response_status_number > HTP_VALID_STATUS_MAX)) {
-                // Response line is invalid
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line");
-
-                connp->out_tx->flags |= HTP_STATUS_LINE_INVALID;
-            }
+            
 
             // Even when the response line is invalid, determine if it looks like
             // a response line (which is what browsers do).
@@ -758,9 +747,8 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
                 return HTP_OK;
             }
 
-            // Run hook RESPONSE_LINE
-            int rc = hook_run_all(connp->cfg->hook_response_line, connp);
-            if (rc != HOOK_OK) return rc;
+            int rc = htp_txh_state_response_line(connp->out_tx);
+            if (rc != HTP_OK) return rc;
 
             // Clean up.
             connp->out_line_len = 0;

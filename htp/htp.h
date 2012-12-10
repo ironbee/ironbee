@@ -825,7 +825,7 @@ struct htp_tx_t {
     int request_protocol_number;
 
     /** Is this request using a short-style HTTP/0.9 request? */
-    int protocol_is_simple;   
+    int protocol_is_simple;
 
     /** This structure holds a parsed request_uri, with the missing information
      *  added (e.g., adding port number from the TCP information) and the fields

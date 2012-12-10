@@ -106,6 +106,18 @@ static int HybridParsing_Get_Callback_RESPONSE_START(htp_connp_t *connp) {
     return HTP_OK;
 }
 
+static int HybridParsing_Get_Callback_RESPONSE_LINE(htp_connp_t *connp) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *)htp_tx_get_user_data(connp->in_tx);
+    user_data->callback_RESPONSE_LINE_invoked = 1;
+    return HTP_OK;
+}
+
+static int HybridParsing_Get_Callback_RESPONSE_HEADERS(htp_connp_t *connp) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *)htp_tx_get_user_data(connp->in_tx);
+    user_data->callback_RESPONSE_HEADERS_invoked = 1;
+    return HTP_OK;
+}
+
 TEST_F(HybridParsing, GetTest) {
     // Create a new LibHTP transaction
     htp_tx_t *tx = htp_txh_create(connp);
@@ -117,6 +129,10 @@ TEST_F(HybridParsing, GetTest) {
     user_data.callback_REQUEST_LINE_invoked = 0;
     user_data.callback_REQUEST_HEADERS_invoked = 0;
     user_data.callback_REQUEST_COMPLETE_invoked = 0;
+    user_data.callback_RESPONSE_START_invoked = 0;
+    user_data.callback_RESPONSE_LINE_invoked = 0;
+    user_data.callback_RESPONSE_HEADERS_invoked = 0;
+    user_data.callback_RESPONSE_COMPLETE_invoked = 0;
     htp_tx_set_user_data(tx, &user_data);
 
     // Request callbacks
@@ -126,7 +142,9 @@ TEST_F(HybridParsing, GetTest) {
     htp_config_register_request_done(cfg, HybridParsing_Get_Callback_REQUEST_COMPLETE);
 
     // Response callbacks
-    htp_config_register_transaction_start(cfg, HybridParsing_Get_Callback_RESPONSE_START);
+    htp_config_register_response_start(cfg, HybridParsing_Get_Callback_RESPONSE_START);
+    htp_config_register_response_line(cfg, HybridParsing_Get_Callback_RESPONSE_LINE);
+    htp_config_register_response_headers(cfg, HybridParsing_Get_Callback_RESPONSE_HEADERS);
 
     // Request begins
     htp_txh_state_request_start(tx);
@@ -143,9 +161,9 @@ TEST_F(HybridParsing, GetTest) {
 
     // Request line complete
     htp_txh_state_request_line(tx);
-
-    // Check request line
     ASSERT_EQ(user_data.callback_REQUEST_LINE_invoked, 1);
+
+    // Check request line data
     ASSERT_EQ(bstr_cmp_c(tx->request_method, "GET"), 0);
     ASSERT_EQ(bstr_cmp_c(tx->request_uri, "/"), 0);
     ASSERT_EQ(bstr_cmp_c(tx->request_protocol, "HTTP/1.1"), 0);
@@ -187,12 +205,66 @@ TEST_F(HybridParsing, GetTest) {
 
     // Request complete
     htp_txh_state_request_complete(tx);
-
     ASSERT_EQ(user_data.callback_REQUEST_COMPLETE_invoked, 1);
 
     // Response begins
     htp_txh_state_response_start(tx);
     ASSERT_EQ(user_data.callback_RESPONSE_START_invoked, 1);
+
+    // Response line data
+    htp_txh_res_set_status_line_c(tx, "HTTP/1.1 200 OK", ALLOC_COPY);
+    // htp_txh_res_set_protocol_number(tx, HTTP_1_1);
+    // htp_txh_res_set_status_code(tx, 200);
+    // htp_txh_res_set_status_message(tx, "OK", ALLOC_COPY);
+
+    // Check response line data
+    // XXX
+
+    // Response line complete
+    htp_txh_state_response_line(tx);
+    ASSERT_EQ(user_data.callback_RESPONSE_LINE_invoked, 1);
+
+    // Response header data
+    htp_txh_res_set_header_c(tx, "Content-Type", "text/html", ALLOC_COPY);
+    htp_txh_res_set_header_c(tx, "Server", "Apache", ALLOC_COPY);
+
+    // Response headers complete
+    htp_txh_state_response_headers(tx);
+    ASSERT_EQ(user_data.callback_RESPONSE_HEADERS_invoked, 1);
+
+    // Check response headers
+    htp_header_t *h_content_type = (htp_header_t *)table_get_c(tx->response_headers, "content-type");
+    ASSERT_TRUE(h_content_type != NULL);
+    ASSERT_EQ(bstr_cmp_c(h_content_type->value, "text/html"), 0);
+
+    htp_header_t *h_server = (htp_header_t *)table_get_c(tx->response_headers, "server");
+    ASSERT_TRUE(h_server != NULL);
+    ASSERT_EQ(bstr_cmp_c(h_server->value, "Apache"), 0);
+
+    // htp_txh_res_set_compression(htp_tx_t *tx, int compression);
+
+    htp_txh_res_process_body_data(tx, "<h1>Hello", 9);
+    htp_txh_res_process_body_data(tx, " ", 1);
+    htp_txh_res_process_body_data(tx, "World!</h1>", 11);
+
+
+    // Trailing response headers
+    htp_txh_res_headers_clear(tx);
+    ASSERT_EQ(list_size(tx->response_headers), 0);
+
+    htp_txh_res_set_header_c(tx, "Content-Type", "text/html", ALLOC_COPY);
+    htp_txh_res_set_header_c(tx, "Server", "Apache", ALLOC_COPY);
+
+    // Check trailing response headers
+    h_content_type = (htp_header_t *)table_get_c(tx->response_headers, "content-type");
+    ASSERT_TRUE(h_content_type != NULL);
+    ASSERT_EQ(bstr_cmp_c(h_content_type->value, "text/html"), 0);
+
+    h_server = (htp_header_t *)table_get_c(tx->response_headers, "server");
+    ASSERT_TRUE(h_server != NULL);
+    ASSERT_EQ(bstr_cmp_c(h_server->value, "Apache"), 0);
+
+    htp_txh_state_response_complete(tx);
 }
 
 TEST_F(HybridParsing, PostUrlecodedTest) {

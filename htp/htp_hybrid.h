@@ -77,7 +77,7 @@ int htp_txh_state_request_start(htp_tx_t *tx);
  * @param[in] method
  * @param[in] alloc
  */
-void htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc);
+int htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc);
 
 /**
  * Set transaction request method. This additional function is used to
@@ -97,7 +97,7 @@ void htp_txh_req_set_method_number(htp_tx_t *tx, int method_numer);
  * @param[in] uri
  * @param[in] alloc
  */
-void htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy alloc);
+int htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy alloc);
 
 /**
  * Sets transaction query string. Any available parameters will be parsed
@@ -107,7 +107,7 @@ void htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy al
  * @param[in] query_string
  * @param[in] alloc
  */
-void htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum alloc_strategy alloc);
+int htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum alloc_strategy alloc);
 
 /**
  * Set request protocol string (e.g., "HTTP/1.0"), which will then be parsed
@@ -119,7 +119,7 @@ void htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum
  * @param[in] protocol
  * @param[in] alloc
  */
-void htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_strategy alloc);
+int htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_strategy alloc);
 
 /**
  * Set request protocol version number. Must be invoked after
@@ -161,7 +161,7 @@ int htp_txh_state_request_line(htp_tx_t *tx);
  * @param[in] value
  * @param[in] alloc
  */
-void htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
+int htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
 
 /**
  * Removes all request headers associated with this transaction. This
@@ -174,7 +174,7 @@ void htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value,
  * 
  * @param[in] tx
  */
-void htp_txh_req_headers_clear(htp_tx_t *tx);
+int htp_txh_req_headers_clear(htp_tx_t *tx);
      
 /**
  * Change transaction state to REQUEST_HEADERS and invoke all
@@ -234,7 +234,7 @@ int htp_txh_state_response_start(htp_tx_t *tx);
  * @param[in] line
  * @param[in] alloc
  */     
-void htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_strategy alloc);
+int htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_strategy alloc);
 
 /**
  * Set response protocol string.
@@ -242,7 +242,7 @@ void htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_st
  * @param[in] tx
  * @param[in] protocol
  */
-void htp_txh_res_set_status_protocol(htp_tx_t *tx, const char *protocol);
+void htp_txh_res_set_protocol_number(htp_tx_t *tx, int protocol_number);
 
 /**
  * Set response status code, as seen by the container.
@@ -250,7 +250,7 @@ void htp_txh_res_set_status_protocol(htp_tx_t *tx, const char *protocol);
  * @param[in] tx
  * @param[in] status
  */
-void htp_txh_res_set_status_code(htp_tx_t *tx, int status);
+int htp_txh_res_set_status_code(htp_tx_t *tx, int status_code);
 
 /**
  * Set response status message, which is the part of the response
@@ -259,13 +259,13 @@ void htp_txh_res_set_status_code(htp_tx_t *tx, int status);
  * @param[in] tx
  * @param[in] message
  */
-void htp_txh_res_set_status_message(htp_tx_t *tx, const char *message);
+int htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc_strategy alloc);
 
 /**
  * Change transaction state to RESPONSE_LINE and invoke all
  * registered callbacks.
  */
-void htp_txh_state_response_line(htp_tx_t *tx);
+int htp_txh_state_response_line(htp_tx_t *tx);
 
 /**
  * Set one response header. This function should be invoked once for
@@ -277,7 +277,7 @@ void htp_txh_state_response_line(htp_tx_t *tx);
  * @param[in] value
  * @param[in] alloc
  */     
-void htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
+int htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
 
 /**
  * Removes all response headers associated with this transaction. This
@@ -290,13 +290,13 @@ void htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value,
  * 
  * @param[in] tx
  */
-void htp_txh_res_headers_clear(htp_tx_t *tx);
+int htp_txh_res_headers_clear(htp_tx_t *tx);
 
 /**
  * Change transaction state to RESPONSE_HEADERS and invoke all
  * registered callbacks.
  */
-void htp_txh_state_response_headers(htp_tx_t *tx);
+int htp_txh_state_response_headers(htp_tx_t *tx);
 
 /**
  * Sets desired (de)compression method for the response body. The
@@ -308,7 +308,7 @@ void htp_txh_state_response_headers(htp_tx_t *tx);
  * @param[in] tx
  * @param[in] compression
  */
-void htp_txh_res_set_compression(htp_tx_t *tx, int compression);
+int htp_txh_res_set_compression(htp_tx_t *tx, int compression);
 
 /**
  * Process a chunk of response body data. This function assumes that
@@ -322,7 +322,7 @@ void htp_txh_res_set_compression(htp_tx_t *tx, int compression);
  * @param[in] data
  * @param[in] len
  */
-void htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len);
+int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len);
 
 /**
  * Change transaction state to RESPONSE and invoke all
@@ -330,7 +330,7 @@ void htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len);
  *
  * @param[in] tx
  */
-void htp_txh_state_response_complete(htp_tx_t *tx);
+int htp_txh_state_response_complete(htp_tx_t *tx);
 
 
 #ifdef	__cplusplus
