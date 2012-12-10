@@ -624,7 +624,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
             // a response line. If it does not look like a line, process the
             // data as a response body because that is what browsers do.
             if (htp_treat_response_line_as_body(connp->out_tx)) {
-                int rc = htp_txh_res_process_body_data(connp->out_tx, connp->out_line, connp->out_line_len + chomp_result);
+                int rc = htp_txh_res_process_body_data(connp->out_tx, (const char *)connp->out_line, connp->out_line_len + chomp_result);
                 if (rc != HTP_OK) return rc;
 
                 // Continue to process response body
@@ -655,19 +655,8 @@ size_t htp_connp_res_data_consumed(htp_connp_t * connp) {
 }
 
 int htp_connp_RES_FINALIZE(htp_connp_t * connp) {
-    if (connp->out_tx->progress != TX_PROGRESS_DONE) {
-        connp->out_tx->progress = TX_PROGRESS_DONE;
-
-        // Run the last RESPONSE_BODY_DATA HOOK, but
-        // only if there was a response body present.
-        if (connp->out_tx->response_transfer_coding != -1) {
-            htp_txh_res_process_body_data(connp->out_tx, NULL, 0);
-        }
-
-        // Run hook RESPONSE
-        int rc = hook_run_all(connp->cfg->hook_response_done, connp);
-        if (rc != HOOK_OK) return rc;
-    }
+    int rc = htp_txh_state_response_complete(connp->out_tx);
+    if (rc != HTP_OK) return rc;
 
     // XXX Document when the response parser needs to yield to the request
     //     parser.

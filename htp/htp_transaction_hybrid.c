@@ -679,6 +679,19 @@ int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len) {
 }
 
 int htp_txh_state_response_complete(htp_tx_t *tx) {
-    // XXX
+    if (tx->connp->out_tx->progress != TX_PROGRESS_DONE) {
+        tx->progress = TX_PROGRESS_DONE;
+
+        // Run the last RESPONSE_BODY_DATA HOOK, but
+        // only if there was a response body present.
+        // TODO Use constant instead of -1
+        if (tx->response_transfer_coding != -1) {
+            htp_txh_res_process_body_data(tx, NULL, 0);
+        }
+
+        // Run hook RESPONSE
+        return hook_run_all(tx->connp->cfg->hook_response_done, tx->connp);
+    }
+
     return HTP_OK;
 }

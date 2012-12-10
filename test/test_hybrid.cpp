@@ -160,8 +160,12 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
             break;
     }
 
+    return HTP_OK;
+}
 
-
+static int HybridParsing_Get_Callback_RESPONSE_COMPLETE(htp_connp_t *connp) {
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
+    user_data->callback_RESPONSE_COMPLETE_invoked = 1;
     return HTP_OK;
 }
 
@@ -195,6 +199,7 @@ TEST_F(HybridParsing, GetTest) {
     htp_config_register_response_line(cfg, HybridParsing_Get_Callback_RESPONSE_LINE);
     htp_config_register_response_headers(cfg, HybridParsing_Get_Callback_RESPONSE_HEADERS);
     htp_config_register_response_body_data(cfg, HybridParsing_Get_Callback_RESPONSE_BODY_DATA);
+    htp_config_register_response_done(cfg, HybridParsing_Get_Callback_RESPONSE_COMPLETE);
 
     // Request begins
     htp_txh_state_request_start(tx);
@@ -325,6 +330,7 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(bstr_cmp_c(h_server->value, "Apache"), 0);
 
     htp_txh_state_response_complete(tx);
+    ASSERT_EQ(user_data.callback_RESPONSE_COMPLETE_invoked, 1);
 }
 
 TEST_F(HybridParsing, PostUrlecodedTest) {
