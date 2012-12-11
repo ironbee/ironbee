@@ -50,7 +50,6 @@ ib_status_t ib_string_escape_json_buf_ex(
     ib_flags_t *result
 )
 {
-    assert(data_in != NULL);
     assert(data_out != NULL);
 
     const uint8_t *iptr;
@@ -62,6 +61,11 @@ ib_status_t ib_string_escape_json_buf_ex(
 
     if (result != NULL) {
         *result = IB_STRFLAG_NONE;
+    }
+
+    if (data_in == NULL) {
+        assert(dlen_in == 0);
+        data_in = (const uint8_t *)"";
     }
 
     oend = data_out + dsize_out;
