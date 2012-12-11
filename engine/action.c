@@ -119,6 +119,9 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
             *act_inst,
             action->cbdata_create
         );
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
     else {
         rc = IB_OK;
