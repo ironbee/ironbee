@@ -117,12 +117,12 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
 
     if (op->fn_create != NULL) {
         rc = op->fn_create(ib, ctx, rule, pool, parameters, *op_inst);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
     else {
         rc = IB_OK;
-    }
-    if (rc != IB_OK) {
-        return rc;
     }
 
     if ((*op_inst)->fparam == NULL) {

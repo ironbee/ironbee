@@ -41,6 +41,10 @@ ib_status_t test_create_fn(ib_engine_t *ib,
                            ib_operator_inst_t *op_inst)
 {
     char *str;
+
+    if (strcmp(data, "INVALID") == 0) {
+        return IB_EINVAL;
+    }
     str = ib_mpool_strdup(pool, data);
     if (str == NULL) {
         return IB_EALLOC;
@@ -93,6 +97,7 @@ TEST_F(OperatorTest, OperatorCallTest)
     ib_status_t status;
     ib_num_t call_result;
     ib_rule_t *rule = NULL; /* Unused by this operator. */
+    ib_operator_inst_t *op;
 
     status = ib_operator_register(ib_engine,
                                   "test_op",
@@ -105,7 +110,16 @@ TEST_F(OperatorTest, OperatorCallTest)
                                   NULL);
     ASSERT_EQ(IB_OK, status);
 
-    ib_operator_inst_t *op;
+    status = ib_operator_inst_create(ib_engine,
+                                     NULL,
+                                     rule,
+                                     IB_OP_FLAG_PHASE,
+                                     "test_op",
+                                     "INVALID",
+                                     IB_OPINST_FLAG_NONE,
+                                     &op);
+    ASSERT_EQ(IB_EINVAL, status);
+
     status = ib_operator_inst_create(ib_engine,
                                      NULL,
                                      rule,
