@@ -924,17 +924,57 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
 /**
  * Get the lua runtime from the connection.
  *
- * @param conn Connection
+ * @param[in] conn Connection
+ * @param[out] lua Lua runtime struct.
  *
  * @returns Lua runtime
  */
-static modlua_runtime_t *modlua_runtime_get(ib_conn_t *conn)
+static ib_status_t modlua_runtime_get(
+    ib_conn_t *conn,
+    modlua_runtime_t **lua)
 {
-    modlua_runtime_t *lua;
+    assert(conn);
+    assert(conn->ib);
 
-    ib_hash_get(conn->data, &lua, MODLUA_CONN_KEY);
+    ib_status_t rc;
+    ib_module_t *module;
 
-    return lua;
+    rc = ib_engine_module_get(conn->ib, MODULE_NAME_STR, &module);
+    if (rc!=IB_OK) {
+        return rc;
+    }
+
+    ib_conn_get_data(conn, module, (void **)lua);
+
+    return IB_OK;
+}
+
+/**
+ * Set the lua runtime from the connection.
+ *
+ * @param[in] conn Connection
+ * @param[in] lua Lua runtime struct.
+ *
+ * @returns Lua runtime
+ */
+static ib_status_t modlua_runtime_set(
+    ib_conn_t *conn,
+    modlua_runtime_t *lua)
+{
+    assert(conn);
+    assert(conn->ib);
+
+    ib_status_t rc;
+    ib_module_t *module;
+
+    rc = ib_engine_module_get(conn->ib, MODULE_NAME_STR, &module);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    ib_conn_set_data(conn, module, lua);
+
+    return IB_OK;
 }
 
 
@@ -1027,7 +1067,7 @@ static ib_status_t modlua_init_lua_runtime(ib_engine_t *ib,
         return IB_EALLOC;
     }
     lua->L = L;
-    rc = ib_hash_set(conn->data, MODLUA_CONN_KEY, lua);
+    rc = modlua_runtime_set(conn, lua);
     ib_log_debug2(ib, "Setting lua runtime for conn=%p lua=%p L=%p", conn, lua, L);
     if (rc != IB_OK) {
         ib_log_debug(ib, "Failed to set lua runtime: %s", ib_status_to_string(rc));
@@ -1088,12 +1128,10 @@ static ib_status_t modlua_destroy_lua_runtime(ib_engine_t *ib,
 
     ib_log_debug3(ib, "Destroying lua runtime for conn=%p", conn);
 
-    lua = modlua_runtime_get(conn);
-    if (lua != NULL) {
+    rc = modlua_runtime_get(conn, &lua);
+    if (rc == IB_OK && lua != NULL) {
         lua_close(lua->L);
     }
-
-    rc = ib_hash_remove(conn->data, NULL, MODLUA_CONN_KEY);
 
     return rc;
 }
@@ -1302,10 +1340,10 @@ static ib_status_t modlua_handle_conndata_event(ib_engine_t *ib,                
     }
 
     /* Get the lua runtime. */
-    lua = modlua_runtime_get(conn);
-    if (lua == NULL) {
+    rc = modlua_runtime_get(conn, &lua);
+    if (rc !=  IB_OK) {
         ib_log_error(ib, "Failed to fetch lua runtime for conn=%p", conn);
-        return IB_EUNKNOWN;
+        return rc;
     }
 
     /* Run through the luaevents list, which is a list of loaded
@@ -1377,10 +1415,10 @@ static ib_status_t modlua_handle_txdata_event(ib_engine_t *ib,
     }
 
     /* Get the lua runtime. */
-    lua = modlua_runtime_get(conn);
-    if (lua == NULL) {
+    rc = modlua_runtime_get(conn, &lua);
+    if (rc != IB_OK) {
         ib_log_error_tx(tx, "Failed to fetch lua runtime for tx=%p", tx);
-        return IB_EUNKNOWN;
+        return rc;
     }
 
     /* Run through the luaevents list, which is a list of loaded
@@ -1450,10 +1488,10 @@ static ib_status_t modlua_handle_conn_event(ib_engine_t *ib,
     }
 
     /* Get the lua runtime. */
-    lua = modlua_runtime_get(conn);
-    if (lua == NULL) {
+    rc = modlua_runtime_get(conn, &lua);
+    if (rc != IB_OK) {
         ib_log_error(ib, "Failed to fetch lua runtime for conn=%p", conn);
-        return IB_EUNKNOWN;
+        return rc;
     }
 
     /* Run through the luaevents list, which is a list of loaded
@@ -1523,10 +1561,10 @@ static ib_status_t modlua_handle_tx_event(ib_engine_t *ib,
     }
 
     /* Get the lua runtime. */
-    lua = modlua_runtime_get(tx->conn);
-    if (lua == NULL) {
+    rc = modlua_runtime_get(tx->conn, &lua);
+    if (rc != IB_OK) {
         ib_log_error_tx(tx, "Failed to fetch lua runtime for tx=%p conn=%p", tx, tx->conn);
-        return IB_EUNKNOWN;
+        return rc;
     }
 
     /* Run through the luaevents list, which is a list of loaded
@@ -1598,11 +1636,11 @@ static ib_status_t modlua_handle_reqline_event(ib_engine_t *ib,
     }
 
     /* Get the lua runtime. */
-    lua = modlua_runtime_get(tx->conn);
-    if (lua == NULL) {
+    rc = modlua_runtime_get(tx->conn, &lua);
+    if (rc != IB_OK) {
         ib_log_error_tx(tx, "Failed to fetch lua runtime for tx=%p conn=%p",
                         tx, tx->conn);
-        return IB_EUNKNOWN;
+        return rc;
     }
 
     /* Run through the luaevents list, which is a list of loaded
@@ -1672,11 +1710,11 @@ static ib_status_t modlua_handle_respline_event(ib_engine_t *ib,
     }
 
     /* Get the lua runtime. */
-    lua = modlua_runtime_get(tx->conn);
-    if (lua == NULL) {
+    rc = modlua_runtime_get(tx->conn, &lua);
+    if (rc != IB_OK) {
         ib_log_error_tx(tx, "Failed to fetch lua runtime for tx=%p conn=%p",
                         tx, tx->conn);
-        return IB_EUNKNOWN;
+        return rc;
     }
 
     /* Run through the luaevents list, which is a list of loaded
