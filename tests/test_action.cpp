@@ -97,6 +97,9 @@ static ib_status_t create_fn(ib_engine_t *ib,
                              ib_action_inst_t *inst,
                              void *cbdata)
 {
+    if (strcmp(params, "INVALID") == 0) {
+        return IB_EINVAL;
+    }
     inst->data = ib_mpool_strdup(mp, params);
     return IB_OK;
 }
@@ -115,8 +118,9 @@ static ib_status_t execute_fn(const ib_rule_exec_t *rule_exec,
 TEST_F(ActionTest, ExecuteAction) {
     ib_status_t status;
     ib_action_inst_t *act;
-    const char *params = "parameters";
     ib_flags_t flags = (1 << 10);
+    const char *params = "parameters";
+
     status = ib_action_register(ib_engine,
                                 "test_action",
                                 IB_ACT_FLAG_NONE,
@@ -124,6 +128,14 @@ TEST_F(ActionTest, ExecuteAction) {
                                 NULL, NULL,
                                 execute_fn, NULL);
     ASSERT_EQ(IB_OK, status);
+
+    status = ib_action_inst_create(ib_engine,
+                                   NULL,
+                                   "test_action",
+                                   "INVALID",
+                                   flags,
+                                   &act);
+    ASSERT_EQ(IB_EINVAL, status);
 
     status = ib_action_inst_create(ib_engine,
                                    NULL,
