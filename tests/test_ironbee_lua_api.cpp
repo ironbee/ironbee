@@ -311,7 +311,7 @@ TEST_F(IronBeeLuaApi, add_event)
     eval("ib:addEvent(\"Saw some failure\", { system = \"public\" } )");
 }
 
-TEST_F(IronBeeLuaApi, DISABLED_read_event)
+TEST_F(IronBeeLuaApi, read_event)
 {
     eval("ib:addEvent(\"Saw some failure\")");
     eval("ib:addEvent(\"Saw some failure\", { system = \"public\" } )");

@@ -76,12 +76,12 @@ ib_event.new = function(self, event)
 end
 -- String mapping table.
 ib_event.suppressMap = {
-    none           = ffi.C.IB_LEVENT_SUPPRESS_NONE,
-    false_positive = ffi.C.IB_LEVENT_SUPPRESS_FPOS,
-    replaced       = ffi.C.IB_LEVENT_SUPPRESS_REPLACED,
-    incomplete     = ffi.C.IB_LEVENT_SUPPRESS_INC,
-    partial        = ffi.C.IB_LEVENT_SUPPRESS_INC,
-    other          = ffi.C.IB_LEVENT_SUPPRESS_OTHER
+    none           = tonumber(ffi.C.IB_LEVENT_SUPPRESS_NONE),
+    false_positive = tonumber(ffi.C.IB_LEVENT_SUPPRESS_FPOS),
+    replaced       = tonumber(ffi.C.IB_LEVENT_SUPPRESS_REPLACED),
+    incomplete     = tonumber(ffi.C.IB_LEVENT_SUPPRESS_INC),
+    partial        = tonumber(ffi.C.IB_LEVENT_SUPPRESS_INC),
+    other          = tonumber(ffi.C.IB_LEVENT_SUPPRESS_OTHER)
 }
 ib_event.suppressRmap = {}
 -- Build reverse map.
@@ -104,7 +104,7 @@ ib_event.getMsg = function(self)
     return ffi.string(self.raw.msg)
 end
 ib_event.getSuppress = function(self)
-    return ib_event.suppressRmap[self.raw.suppress]
+    return ib_event.suppressRmap[tonumber(self.raw.suppress)]
 end
 -- On an event object set the suppression value using a number or name.
 -- value - may be none, false_positive, replaced, incomplete, partial or other.
