@@ -127,8 +127,7 @@ int htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_st
     return HTP_OK;
 }
 
-void htp_txh_req_set_protocol_number(htp_tx_t *tx, int protocol_number) {
-    // TODO Check that the number is valid
+void htp_txh_req_set_protocol_number(htp_tx_t *tx, int protocol_number) {    
     tx->request_protocol_number = protocol_number;
 }
 
@@ -537,15 +536,12 @@ int htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_str
     return HTP_OK;
 }
 
-void htp_txh_res_set_protocol_number(htp_tx_t *tx, int protocol_number) {
-    // TODO Check valid protocol number
+void htp_txh_res_set_protocol_number(htp_tx_t *tx, int protocol_number) {    
     tx->response_protocol_number = protocol_number;
 }
 
-int htp_txh_res_set_status_code(htp_tx_t *tx, int status_code) {
-    // TODO Check valid status code
-    tx->response_status_number = status_code;
-    return HTP_OK;
+void htp_txh_res_set_status_code(htp_tx_t *tx, int status_code) {
+    tx->response_status_number = status_code;    
 }
 
 int htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc_strategy alloc) {

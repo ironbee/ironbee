@@ -44,7 +44,9 @@ extern "C" {
 #endif
     
 /**
- * 
+ * Enumerate possible data handling strategies in hybrid parsing
+ * mode. The two possibilities are to make copies of all data and
+ * use bstr instances to wrap already available data.
  */
 enum alloc_strategy {
     /** Make copies of all data. This strategy should be used when
@@ -60,6 +62,12 @@ enum alloc_strategy {
     ALLOC_REUSE = 2
 };
 
+/**
+ * Create a new transaction using the connection parser provided.
+ *
+ * @param[in] connp
+ * @return Transaction instance on success, NULL on failure.
+ */
 htp_tx_t *htp_txh_create(htp_connp_t *connp);
     
 /**
@@ -67,45 +75,53 @@ htp_tx_t *htp_txh_create(htp_connp_t *connp);
  * and invoke all registered callbacks.
  * 
  * @param[in] tx
+ * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
+ *         callbacks does not want to follow the transaction any more.
  */
 int htp_txh_state_request_start(htp_tx_t *tx);
      
 /**
- * Set transaction request method.
+ * Set transaction request method. This function will enable you to keep
+ * track of the text representation of the method.
  * 
  * @param[in] tx
  * @param[in] method
  * @param[in] alloc
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 int htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc);
 
 /**
- * Set transaction request method. This additional function is used to
- * account for any differences in method interpretation between LibHTP and
- * the container.
+ * Set transaction request method number. This function enables you to
+ * keep track how a particular method string is interpreted. This function
+ * is useful with web servers that ignore invalid methods; for example, some
+ * web servers will treat them as a GET.
  * 
  * @param[in] tx
  * @param[in] method_number
  */
-void htp_txh_req_set_method_number(htp_tx_t *tx, int method_numer);
+void htp_txh_req_set_method_number(htp_tx_t *tx, int method_number);
      
 /**
- * Set transaction request URI. If the URI contains a query string, it will
- * be extracted from it and the parameter parsed.
+ * Set transaction request URI. The value provided here must not include any
+ * query string data. Use a separate call to htp_txh_req_set_query_string_c() for that.
  * 
  * @param[in] tx
  * @param[in] uri
  * @param[in] alloc
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 int htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy alloc);
 
 /**
- * Sets transaction query string. Any available parameters will be parsed
- * and processed.
+ * Sets transaction query string. If there are any query string processors
+ * configured, they will be called to parse the provided data (although that
+ * may not happen until the transaction state is changed to REQUEST_LINE).
  * 
  * @param[in] tx
  * @param[in] query_string
  * @param[in] alloc
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 int htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum alloc_strategy alloc);
 
@@ -118,6 +134,7 @@ int htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum 
  * @param[in] tx
  * @param[in] protocol
  * @param[in] alloc
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 int htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_strategy alloc);
 
@@ -136,7 +153,7 @@ void htp_txh_req_set_protocol_number(htp_tx_t *tx, int protocol);
 /**
  * Forces HTTP/0.9 as the transaction protocol. This method exists to ensure
  * that both LibHTP and the container treat the transaction as HTTP/0.9, despite
- * potential differences in how protocol version is determined.
+ * potential differences in how the protocol version is determined.
  *
  * @param[in] tx
  * @param[in] is_http_0_9
@@ -148,7 +165,9 @@ void htp_txh_req_set_protocol_http_0_9(htp_tx_t *tx, int is_http_0_9);
  * registered callbacks.
  * 
  * @param[in] tx
-*/
+ * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
+ *         callbacks does not want to follow the transaction any more.
+ */
 int htp_txh_state_request_line(htp_tx_t *tx);
      
 /**
@@ -160,6 +179,7 @@ int htp_txh_state_request_line(htp_tx_t *tx);
  * @param[in] name
  * @param[in] value
  * @param[in] alloc
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 int htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
 
@@ -168,11 +188,12 @@ int htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, 
  * function is needed because in some cases the container does not
  * differentiate between standard and trailing headers. In that case,
  * you set request headers once at the beginning of the transaction,
- * read the body, clear all headers, and then set them all again. After
- * the headers are set for the second time, they will potentially contain
- * a mixture of standard and trailing headers.
+ * read the body (at this point the request headers should contain the
+ * mix of regular and trailing headers), clear all headers, and then set
+ * them all again.
  * 
  * @param[in] tx
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 int htp_txh_req_headers_clear(htp_tx_t *tx);
      
@@ -181,64 +202,74 @@ int htp_txh_req_headers_clear(htp_tx_t *tx);
  * registered callbacks.
  * 
  * @param[in] tx
+ * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
+ *         callbacks does not want to follow the transaction any more.
  */
 int htp_txh_state_request_headers(htp_tx_t *tx);     
 
 /**
  * Process a chunk of request body data. This function assumes that
- * handling of chunked encoding is implemented by the container. The
- * supplied body will be decompressed if instructed by a previous
- * invocation of htp_txh_req_set_compression(). When you're done
- * submitting body data, invoke a state change (to REQUEST) to
- * finalize any processing that might be pending. The supplied data is
+ * handling of chunked encoding is implemented by the container. When
+ * you're done submitting body data, invoke a state change (to REQUEST)
+ * to finalize any processing that might be pending. The supplied data is
  * fully consumed and there is no expectation that it will be available
  * afterwards. The protocol parsing code makes no copies of the data,
  * but some parsers might.
  * 
  * @param[in] tx
+ * @param[in] data
+ * @param[in] len
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len);
 
 /**
- * Change transaction state to REQUEST and invoke all
- * registered callbacks.
+ * Change transaction state to REQUEST and invoke registered callbacks.
  *
  * @param[in] tx
+ * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
+ *         callbacks does not want to follow the transaction any more.
  */
 int htp_txh_state_request_complete(htp_tx_t *tx);
 
 /**
- * Change transaction state to RESPONSE_START and invoke all
- * registered callbacks.
+ * Change transaction state to RESPONSE_START and invoke registered callbacks.
  *
  * @param[in] tx
+ * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
+ *         callbacks does not want to follow the transaction any more.
  */
 int htp_txh_state_response_start(htp_tx_t *tx);
      
 /**
- * Set response line.
+ * Set response line. Use this function is you have a single buffer containing
+ * the entire line. If you have individual request line pieces, use the other
+ * available functions.
  * 
  * @param[in] tx
  * @param[in] line
  * @param[in] alloc
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */     
 int htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_strategy alloc);
 
 /**
- * Set response protocol string.
+ * Set response protocol number.
  *
  * @param[in] tx
  * @param[in] protocol
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 void htp_txh_res_set_protocol_number(htp_tx_t *tx, int protocol_number);
 
 /**
- * Set response status code, as seen by the container.
+ * Set response status code.
  * 
  * @param[in] tx
  * @param[in] status
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_txh_res_set_status_code(htp_tx_t *tx, int status_code);
+void htp_txh_res_set_status_code(htp_tx_t *tx, int status_code);
 
 /**
  * Set response status message, which is the part of the response
@@ -246,12 +277,16 @@ int htp_txh_res_set_status_code(htp_tx_t *tx, int status_code);
  *
  * @param[in] tx
  * @param[in] message
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 int htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc_strategy alloc);
 
 /**
- * Change transaction state to RESPONSE_LINE and invoke all
- * registered callbacks.
+ * Change transaction state to RESPONSE_LINE and invoke registered callbacks.
+ *
+ * @param[in] tx
+ * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
+ *         callbacks does not want to follow the transaction any more.
  */
 int htp_txh_state_response_line(htp_tx_t *tx);
 
@@ -264,6 +299,7 @@ int htp_txh_state_response_line(htp_tx_t *tx);
  * @param[in] name
  * @param[in] value
  * @param[in] alloc
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */     
 int htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
 
@@ -277,34 +313,41 @@ int htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, 
  * a mixture of standard and trailing headers.
  * 
  * @param[in] tx
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 int htp_txh_res_headers_clear(htp_tx_t *tx);
 
 /**
- * Change transaction state to RESPONSE_HEADERS and invoke all
- * registered callbacks.
+ * Change transaction state to RESPONSE_HEADERS and invoke registered callbacks.
+ *
+ * @param[in] tx
+ * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
+ *         callbacks does not want to follow the transaction any more.
  */
 int htp_txh_state_response_headers(htp_tx_t *tx);
 
 /**
  * Process a chunk of response body data. This function assumes that
- * handling of chunked encoding is implemented by the container. The
- * supplied body will be decompressed if instructed by a previous
- * invocation of htp_txh_res_set_compression(). When you're done
- * submitting body data, invoking a state change (to RESPONSE) will
- * finalize any processing that might be pending.
+ * handling of chunked encoding is implemented by the container. When
+ * you're done submitting body data, invoking a state change (to RESPONSE)
+ * will finalize any processing that might be pending. The response body
+ * data will be decompressed if two conditions are met: one, decompression
+ * is enabled in configuration and two, if the response headers indicate
+ * compression.
  * 
  * @param[in] tx
  * @param[in] data
  * @param[in] len
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len);
 
 /**
- * Change transaction state to RESPONSE and invoke all
- * registered callbacks.
+ * Change transaction state to RESPONSE and invoke registered callbacks.
  *
  * @param[in] tx
+ * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
+ *         callbacks does not want to follow the transaction any more.
  */
 int htp_txh_state_response_complete(htp_tx_t *tx);
 
@@ -314,4 +357,3 @@ int htp_txh_state_response_complete(htp_tx_t *tx);
 #endif
 
 #endif	/* HTP_HYBRID_H */
-
