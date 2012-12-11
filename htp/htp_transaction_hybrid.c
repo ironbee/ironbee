@@ -127,7 +127,7 @@ int htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_st
     return HTP_OK;
 }
 
-void htp_txh_req_set_protocol_number(htp_tx_t *tx, int protocol_number) {    
+void htp_txh_req_set_protocol_number(htp_tx_t *tx, int protocol_number) {
     tx->request_protocol_number = protocol_number;
 }
 
@@ -536,12 +536,12 @@ int htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_str
     return HTP_OK;
 }
 
-void htp_txh_res_set_protocol_number(htp_tx_t *tx, int protocol_number) {    
+void htp_txh_res_set_protocol_number(htp_tx_t *tx, int protocol_number) {
     tx->response_protocol_number = protocol_number;
 }
 
 void htp_txh_res_set_status_code(htp_tx_t *tx, int status_code) {
-    tx->response_status_number = status_code;    
+    tx->response_status_number = status_code;
 }
 
 int htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc_strategy alloc) {
@@ -662,34 +662,36 @@ int htp_txh_state_response_headers(htp_tx_t *tx) {
     int rc = hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
     if (rc != HOOK_OK) return rc;
 
-    // Start decompression engines if decompression is still enabled (the user
-    // may have turned it off in the RESPONSE_HEADERS_COMPLETE hook).
-    if (tx->connp->cfg->response_decompression_enabled) {
-        if (tx->response_content_encoding != COMPRESSION_NONE) {
-            if (tx->connp->out_decompressor != NULL) {
-                tx->connp->out_decompressor->destroy(tx->connp->out_decompressor);
-                tx->connp->out_decompressor = NULL;
-            }
-
-            tx->connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(tx->connp,
-                    tx->response_content_encoding);
-            if (tx->connp->out_decompressor != NULL) {
-                tx->connp->out_decompressor->callback = htp_txh_res_process_body_data_decompressor_callback;
-            } else {
-                // No need to do anything; the error will have already
-                // been reported by the failed decompressor.
-            }
+    // Initialize the decompression engine as necessary. We can deal with three
+    // scenarios:
+    //
+    // 1. Decompression is enabled, compression indicated in headers, and we decompress.
+    //
+    // 2. As above, but the user disables decompression by setting response_content_encoding
+    //    to COMPRESSION_NONE.
+    // 
+    // 3. Decompression is disabled and we do not attempt to enable it, but the user
+    //    forces decompression by setting response_content_encoding to one of the
+    //    supported algorithms.
+    if ((tx->response_content_encoding == COMPRESSION_GZIP)||(tx->response_content_encoding == COMPRESSION_DEFLATE)) {
+        if (tx->connp->out_decompressor != NULL) {
+            tx->connp->out_decompressor->destroy(tx->connp->out_decompressor);
+            tx->connp->out_decompressor = NULL;
         }
-    } else {
-        // Reset the content encoding flag to indicate
-        // that there is no decompression taking place.
-        tx->response_content_encoding = COMPRESSION_NONE;
+
+        tx->connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(tx->connp,
+                tx->response_content_encoding);
+        if (tx->connp->out_decompressor == NULL) return HTP_ERROR;
+        tx->connp->out_decompressor->callback = htp_txh_res_process_body_data_decompressor_callback;
+    } else if (tx->response_content_encoding != COMPRESSION_NONE) {
+        // TODO Error message
+        return HTP_ERROR;
     }
 
     return HTP_OK;
 }
 
-int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len) {    
+int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len) {
     htp_tx_data_t d;
 
     d.tx = tx;

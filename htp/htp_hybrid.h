@@ -330,11 +330,15 @@ int htp_txh_state_response_headers(htp_tx_t *tx);
  * Process a chunk of response body data. This function assumes that
  * handling of chunked encoding is implemented by the container. When
  * you're done submitting body data, invoking a state change (to RESPONSE)
- * will finalize any processing that might be pending. The response body
- * data will be decompressed if two conditions are met: one, decompression
- * is enabled in configuration and two, if the response headers indicate
- * compression.
+ * will finalize any processing that might be pending.
  * 
+ * The response body data will be decompressed if two conditions are met: one,
+ * decompression is enabled in configuration and two, if the response headers
+ * indicate compression. Alternatively, you can control decompression from
+ * a RESPONSE_HEADERS callback, by setting tx->response_content_encoding either
+ * to COMPRESSION_NONE (to disable compression), or to one of the supported
+ * decompression algorithms.
+ *
  * @param[in] tx
  * @param[in] data
  * @param[in] len
