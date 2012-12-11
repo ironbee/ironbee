@@ -927,7 +927,9 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
  * @param[in] conn Connection
  * @param[out] lua Lua runtime struct.
  *
- * @returns Lua runtime
+ * @returns 
+ *   - IB_OK on success.
+ *   - Result of ib_engine_module_get on error.
  */
 static ib_status_t modlua_runtime_get(
     ib_conn_t *conn,
@@ -955,7 +957,9 @@ static ib_status_t modlua_runtime_get(
  * @param[in] conn Connection
  * @param[in] lua Lua runtime struct.
  *
- * @returns Lua runtime
+ * @returns
+ *   - IB_OK on success.
+ *   - Result of ib_engine_module_get on error.
  */
 static ib_status_t modlua_runtime_set(
     ib_conn_t *conn,
