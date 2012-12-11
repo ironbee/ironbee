@@ -927,7 +927,7 @@ static ib_status_t modlua_load_ironbee_module(ib_engine_t *ib,
  * @param[in] conn Connection
  * @param[out] lua Lua runtime struct.
  *
- * @returns 
+ * @returns
  *   - IB_OK on success.
  *   - Result of ib_engine_module_get on error.
  */
