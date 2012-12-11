@@ -76,7 +76,7 @@ struct HybridParsing_Get_User_Data {
     int callback_RESPONSE_HEADERS_invoked;
     int callback_RESPONSE_COMPLETE_invoked;
 
-    // Response body
+    // Response body handling fields
     int response_body_chunks_seen;
     int response_body_correctly_received;
 };
@@ -170,6 +170,10 @@ static int HybridParsing_Get_Callback_RESPONSE_COMPLETE(htp_connp_t *connp) {
     return HTP_OK;
 }
 
+/**
+ * Test hybrid mode with one complete GET transaction; request then response
+ * with a body. Most features are tested, including query string parameters and callbacks.
+ */
 TEST_F(HybridParsing, GetTest) {
     // Create a new LibHTP transaction
     htp_tx_t *tx = htp_txh_create(connp);
@@ -304,11 +308,7 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_TRUE(h_server != NULL);
     ASSERT_EQ(bstr_cmp_c(h_server->value, "Apache"), 0);
 
-    // Request body data
-
-    // TODO Request body compression not currently implemented.
-    // htp_txh_res_set_compression(htp_tx_t *tx, int compression);
-
+    // Request body data   
     htp_txh_res_process_body_data(tx, "<h1>Hello", 9);
     htp_txh_res_process_body_data(tx, " ", 1);
     htp_txh_res_process_body_data(tx, "World!</h1>", 11);
@@ -334,6 +334,9 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(user_data.callback_RESPONSE_COMPLETE_invoked, 1);
 }
 
+/**
+ * Use a POST request in order to test request body processing and parameter parsing.
+ */
 TEST_F(HybridParsing, PostUrlecodedTest) {
     // Create a new LibHTP transaction
     htp_tx_t *tx = htp_txh_create(connp);
@@ -403,11 +406,7 @@ static char HybridParsing_CompressedResponse[] =
 "kwpQrauxh5dFqnyj3uVYgJJCxD5W1g5HSud5Jo3WTQek0mR8UgNlDYZOLcz0ZMuH3y+YKzDAaMDJ"
 "SrihOVL32QceVXUy4QAAAA==";
 
-TEST_F(HybridParsing, CompressedResponseTest) {
-    // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_txh_create(connp);
-    ASSERT_TRUE(tx != NULL);
-
+static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
     htp_txh_state_request_start(tx);
 
     htp_txh_req_set_method_c(tx, "GET", ALLOC_COPY);
@@ -434,8 +433,35 @@ TEST_F(HybridParsing, CompressedResponseTest) {
 
     htp_txh_res_process_body_data(tx, bstr_ptr(body), bstr_len(body));
     htp_txh_state_response_complete(tx);
+}
+
+/**
+ * Test with a compressed response body and decompression enabled.
+ */
+TEST_F(HybridParsing, CompressedResponseTest) {
+    // Create a new LibHTP transaction
+    htp_tx_t *tx = htp_txh_create(connp);
+    ASSERT_TRUE(tx != NULL);
+
+    HybridParsing_CompressedResponse_Setup(tx);
+
+    ASSERT_EQ(tx->response_message_len, 187);    
+    ASSERT_EQ(tx->response_entity_len, 225);
+}
+
+/**
+ * Test with a compressed response body and decompression disabled.
+ */
+TEST_F(HybridParsing, CompressedResponseNoDecompressionTest) {
+    // Disable compression
+    htp_config_set_response_decompression(cfg, 0);
+
+    // Create a new LibHTP transaction
+    htp_tx_t *tx = htp_txh_create(connp);
+    ASSERT_TRUE(tx != NULL);
+
+    HybridParsing_CompressedResponse_Setup(tx);
 
     ASSERT_EQ(tx->response_message_len, 187);
-    
-    ASSERT_EQ(tx->response_entity_len, 225);
+    ASSERT_EQ(tx->response_entity_len, 187);
 }
