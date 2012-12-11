@@ -10,7 +10,7 @@ This document can be rendered to HTML (or many other formats) with [MultiMarkdow
 
 Christopher Alfeld<br>
 calfeld@qualys.com<br>
-11/2012
+12/2012
 
 This document provides notes on the internal workings of IronAutomata.  It is written for developers intending to develop for IronAutomata.  Developers interesting in using IronAutomata in their own code should see the doxygen documentation.  Also see `example.md`.
 
@@ -40,6 +40,11 @@ No-Advance-No-Output
 --------------------
 
 An automata as a whole can declare No-Advance-No-Output which means that output should never be emitted unless the input was advanced on the last transition.
+
+Metadata
+--------
+
+Automata can have arbitrary key-value pairs associated with them.
 
 Varying Requirements
 --------------------
@@ -439,6 +444,8 @@ The automata begins with a header containing:
 - Index of the first output list.  This index is used to determine whether an ID refers to an output or an output list, allowing the elimination of an output list object for an output with no next output.
 
 Following the header are sections for node, output, and output list objects, in that order.  It is not required that objects be perfectly packed.  Padding may be inserted between objects, e.g., to align objects to certain byte boundaries.
+
+Finally, any automata metadata as appended as a sequence of pairs of outputs representing keys and values, respectively.  No ID ever refers to these outputs, so the space they consume is not considered for determining id width.
 
 An output object is length and content.  An output list object is the ID of an output object and the ID of the next object.  The next object may either be an output object or an output list object.  Which is determined by comparing it to the index of the first output list stored in the header.
 

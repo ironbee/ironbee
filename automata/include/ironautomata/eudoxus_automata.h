@@ -54,7 +54,7 @@ extern "C" {
  * This is checked by @c ia_eudoxus_create_ methods to insure that an automata
  * was generated for the current engine.
  */
-#define IA_EUDOXUS_VERSION 8
+#define IA_EUDOXUS_VERSION 9
 
 /**
  * A Eudoxus Automata.
@@ -125,6 +125,11 @@ struct ia_eudoxus_automata_t
     uint64_t num_output_lists;
 
     /**
+     * Number of metadata key-values.
+     */
+    uint64_t num_metadata;
+
+    /**
      * Number of bytes defining automata including this structure.
      */
     uint64_t data_length;
@@ -138,6 +143,11 @@ struct ia_eudoxus_automata_t
      * Index of first output_list, i.e., where output list elements begin.
      */
     uint64_t first_output_list;
+
+    /**
+     * Index of first metadata output object.
+     */
+    uint64_t metadata_index;
 
     /** @} */
 

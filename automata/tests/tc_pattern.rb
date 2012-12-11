@@ -15,7 +15,7 @@ class TestPattern < Test::Unit::TestCase
     words = ['\u']
     text = "ABCdefGHI"
     automata_test(words, [ACGEN, '-p'], "simple") do |dir, eudoxus_path|
-      output_substrings = ee(eudoxus_path, dir, text, "input", "output", "string")
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
       assert_equal(1, output_substrings.size)
       assert_equal([1 , 2, 3, 7, 8, 9].to_set, output_substrings['\u'])
     end
@@ -26,7 +26,7 @@ class TestPattern < Test::Unit::TestCase
     text = "foobar fooabar fooAbar fooAbaz hello world"
 
     automata_test(words, [ACGEN, '-p'], "foobar") do |dir, eudoxus_path|
-      output_substrings = ee(eudoxus_path, dir, text, "input", "output", "string")
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
       assert_equal(3, output_substrings.size)
       assert_equal([22, 14].to_set, output_substrings['foo\abar'])
       assert_equal([14].to_set, output_substrings['foo\lbar'])
@@ -38,7 +38,7 @@ class TestPattern < Test::Unit::TestCase
     words = ['\a\u\l', '\l\u\a']
     text = "Foo FOO foo fOo foO"
     automata_test(words, [ACGEN, '-p'], "easy_dense") do |dir, eudoxus_path|
-      output_substrings = ee(eudoxus_path, dir, text, "input", "output", "string")
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
       assert_equal(2, output_substrings.size)
       assert_equal([15].to_set, output_substrings['\l\u\a'])
       assert_equal([15].to_set, output_substrings['\a\u\l'])
@@ -49,7 +49,7 @@ class TestPattern < Test::Unit::TestCase
     words = ['\u\a', 'aa']
     text = "aa AA"
     automata_test(words, [ACGEN, '-p'], "easy_dense") do |dir, eudoxus_path|
-      output_substrings = ee(eudoxus_path, dir, text, "input", "output", "string")
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
       assert_equal(2, output_substrings.size)
       assert_equal([5].to_set, output_substrings['\u\a'])
       assert_equal([2].to_set, output_substrings['aa'])
@@ -65,7 +65,7 @@ class TestPattern < Test::Unit::TestCase
     # fOo = 15
     # foO = 19
     automata_test(words, [ACGEN, '-p'], "hard_dense") do |dir, eudoxus_path|
-      output_substrings = ee(eudoxus_path, dir, text, "input", "output", "string")
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
       assert_equal(7, output_substrings.size)
       assert_equal([3].to_set, output_substrings['\u\a\l'])
       assert_equal([3].to_set, output_substrings['\u\l\a'])
@@ -81,7 +81,7 @@ class TestPattern < Test::Unit::TestCase
     words = ['\\\\', '\t', '\v', '\n', '\r', '\f', '\0', '\e']
     text = "\\\t\v\n\r\f\0\e"
     automata_test(words, [ACGEN, '-p'], "test_singles") do |dir, eudoxus_path|
-      output_substrings = ee(eudoxus_path, dir, text, "input", "output", "string")
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
       assert_equal(words.size, output_substrings.size)
       words.each_with_index do |w, i|
         assert_equal([i+1].to_set, output_substrings[w])
@@ -93,7 +93,7 @@ class TestPattern < Test::Unit::TestCase
     words = ['\x46\x6f\x6f', '\^J']
     text = "Foo\n"
     automata_test(words, [ACGEN, '-p'], "test_params") do |dir, eudoxus_path|
-      output_substrings = ee(eudoxus_path, dir, text, "input", "output", "string")
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
       assert_equal(words.size, output_substrings.size)
       assert_equal([3].to_set, output_substrings[words[0]])
       assert_equal([4].to_set, output_substrings[words[1]])
@@ -116,7 +116,7 @@ class TestPattern < Test::Unit::TestCase
     # 11: .
     # 12: .
     automata_test(words, [ACGEN, '-p'], "test_multiple") do |dir, eudoxus_path|
-      output_substrings = ee(eudoxus_path, dir, text, "input", "output", "string")
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
       assert_equal(words.size, output_substrings.size)
       assert_equal([1].to_set, output_substrings[words[0]])
       assert_equal([2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].to_set, output_substrings[words[1]])
@@ -143,7 +143,7 @@ class TestPattern < Test::Unit::TestCase
     # 5: a
     # 6: 9
     automata_test(words, [ACGEN, '-p'], "test_overlap") do |dir, eudoxus_path|
-      output_substrings = ee(eudoxus_path, dir, text, "input", "output", "string")
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
       assert_equal(words.size, output_substrings.size)
       assert_equal([3, 6].to_set, output_substrings[words[0]])
       assert_equal([5, 6].to_set, output_substrings[words[1]])

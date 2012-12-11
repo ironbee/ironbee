@@ -508,7 +508,7 @@ public:
             PB::Graph* pb_graph = m_pb_chunk.mutable_graph();
             pb_graph->set_no_advance_no_output(true);
         }
-        
+
         typedef map<string, string> map_t;
         BOOST_FOREACH(const map_t::value_type& value, automata.metadata()) {
           PB::Graph* pb_graph = m_pb_chunk.mutable_graph();
@@ -941,7 +941,7 @@ void AutomataReader::AutomataReaderImpl::process_graph(
     if (pb_graph.has_no_advance_no_output()) {
         m_automata.no_advance_no_output() = pb_graph.no_advance_no_output();
     }
-    
+
     BOOST_FOREACH(const PB::KeyValue& pb_kv, pb_graph.metadata()) {
         m_automata.metadata()[pb_kv.key()] = pb_kv.value();
     }

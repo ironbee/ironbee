@@ -326,10 +326,12 @@ int main(int argc, char **argv)
 {
     namespace po = boost::program_options;
 
+    const static string c_output_type_key("Output-Type");
+
     string output_s;
     string input_s;
     string automata_s;
-    string output_type_s("string");
+    string output_type_s("auto");
     string record_s("list");
     size_t block_size = 1024;
     size_t overlap_size = 128;
@@ -350,7 +352,7 @@ int main(int argc, char **argv)
             "where to read automata from; required, but -a is optional"
         )
         ("type,t", po::value<string>(&output_type_s),
-            "output type: string, length, integer, nop; default is string"
+            "output type: auto, string, length, integer, nop; default is auto"
         )
         ("record,r", po::value<string>(&record_s),
             "output record: list, count, nop; default is list"
@@ -396,7 +398,59 @@ int main(int argc, char **argv)
         return 1;
     }
 
+    // for memory management only
+    boost::scoped_ptr<istream> input_mem;
+    boost::scoped_ptr<ostream> output_mem;
+
+    ostream* output   = &cout;
+
+    if (! output_s.empty()) {
+        output_mem.reset(new ofstream(output_s.c_str()));
+        output = output_mem.get();
+        if (! *output) {
+            cout << "Error: Could not open " << output_s << " for writing."
+                 << endl;
+            return 1;
+        }
+    }
+
+    // Load automata
+    ia_eudoxus_result_t rc;
+    ia_eudoxus_t* eudoxus;
+
+    TimingInfo ti;
+    rc = ia_eudoxus_create_from_path(&eudoxus, automata_s.c_str());
+    if (rc != IA_EUDOXUS_OK) {
+        output_eudoxus_result(NULL, rc);
+        return 1;
+    }
+    cout << "Loaded automata in " << ti.elapsed_ms() << endl;
+
+    // Figure out output.
     output_transform_t output_transform;
+    if (output_type_s == "auto") {
+        const uint8_t* value = NULL;
+        size_t length = 0;
+        rc = ia_eudoxus_metadata_with_key(
+            eudoxus,
+            reinterpret_cast<const uint8_t*>(c_output_type_key.data()),
+            c_output_type_key.length(),
+            &value, &length
+        );
+        if (rc == IA_EUDOXUS_END) {
+            cerr << "Error: Automata does not contain "
+                 << c_output_type_key << ".  "
+                 << "Must specify explicitly with --type."
+                 << endl;
+            return 1;
+        }
+        if (rc != IA_EUDOXUS_OK) {
+            cerr << "Error: Could not read metadata." << endl;
+            return 1;
+        }
+        output_type_s = string(reinterpret_cast<const char*>(value), length);
+        cout << "Read Output-Type of " << output_type_s << endl;
+    }
 
     if (output_type_s == "string") {
         output_transform = output_transform_string;
@@ -415,35 +469,6 @@ int main(int argc, char **argv)
         cout << "Error: Unknown output type: " << output_type_s << endl;
         return 1;
     }
-
-    // for memory management only
-    boost::scoped_ptr<istream> input_mem;
-    boost::scoped_ptr<ostream> output_mem;
-
-    ostream* output   = &cout;
-
-    if (! output_s.empty()) {
-        output_mem.reset(new ofstream(output_s.c_str()));
-        output = output_mem.get();
-        if (! *output) {
-            cout << "Error: Could not open " << output_s << " for writing."
-                 << endl;
-            return 1;
-        }
-    }
-
-
-    // Load automata
-    ia_eudoxus_result_t rc;
-    ia_eudoxus_t* eudoxus;
-
-    TimingInfo ti;
-    rc = ia_eudoxus_create_from_path(&eudoxus, automata_s.c_str());
-    if (rc != IA_EUDOXUS_OK) {
-        output_eudoxus_result(NULL, rc);
-        return 1;
-    }
-    cout << "Loaded automata in " << ti.elapsed_ms() << endl;
 
     // Construct callback.
     vector<uint8_t> input_buffer(block_size);

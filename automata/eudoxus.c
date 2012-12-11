@@ -49,6 +49,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 struct ia_eudoxus_t
@@ -464,4 +465,118 @@ ia_eudoxus_result_t ia_eudoxus_execute_without_output(
 )
 {
     return ia_eudoxus_execute_impl(state, input, input_length, false);
+}
+
+ia_eudoxus_result_t ia_eudoxus_metadata(
+    const ia_eudoxus_t             *eudoxus,
+    ia_eudoxus_metadata_callback_t  callback,
+    void                           *callback_data
+)
+{
+    if (eudoxus == NULL || callback == NULL || eudoxus->automata == NULL) {
+        return IA_EUDOXUS_EINVAL;
+    }
+
+    if (eudoxus->automata->metadata_index == 0) {
+        return IA_EUDOXUS_END;
+    }
+
+    if (eudoxus->automata->num_metadata == 0) {
+        return IA_EUDOXUS_EINVAL;
+    }
+
+    const char *automata_limit = (const char *)(eudoxus->automata) +
+        eudoxus->automata->data_length;
+    const ia_eudoxus_output_t *key = (const ia_eudoxus_output_t *)(
+        (const char *)(eudoxus->automata) + eudoxus->automata->metadata_index
+    );
+    while (key != NULL) {
+        if ((const char *)key > automata_limit) {
+            return IA_EUDOXUS_EINVAL;
+        }
+        const ia_eudoxus_output_t *value = (const ia_eudoxus_output_t *)(
+            (const char *)(key) + sizeof(*key) + key->length
+        );
+        if ((const char *)value > automata_limit) {
+            return IA_EUDOXUS_EINVAL;
+        }
+
+        bool result = callback(
+            (const uint8_t *)key->data,   key->length,
+            (const uint8_t *)value->data, value->length,
+            callback_data
+        );
+
+        if (! result) {
+            return IA_EUDOXUS_STOP;
+        }
+
+        key = (const ia_eudoxus_output_t *)(
+            (const char *)(value) + sizeof(*value) + value->length
+        );
+    }
+
+    return IA_EUDOXUS_END;
+}
+
+typedef struct {
+    const uint8_t  *search_key;
+    size_t          search_key_length;
+    const uint8_t **out_value;
+    size_t         *out_value_length;
+} ia_eudoxus_metadata_with_key_data_t;
+
+static bool ia_eudoxus_metadata_with_key_function(
+    const uint8_t *key,
+    size_t         key_length,
+    const uint8_t *value,
+    size_t         value_length,
+    void          *data
+)
+{
+    assert(key != NULL);
+    assert(value != NULL);
+    assert(data != NULL);
+
+    const ia_eudoxus_metadata_with_key_data_t *params =
+        (const ia_eudoxus_metadata_with_key_data_t *)data;
+    if (
+        params->search_key_length == key_length &&
+        memcmp(params->search_key, key, key_length) == 0
+    ) {
+        *params->out_value = value;
+        *params->out_value_length = value_length;
+
+        return false;
+    }
+
+    return true;
+}
+
+ia_eudoxus_result_t ia_eudoxus_metadata_with_key(
+    const ia_eudoxus_t  *eudoxus,
+    const uint8_t       *key,
+    size_t               key_length,
+    const uint8_t      **value,
+    size_t              *value_length
+)
+{
+    if (eudoxus == NULL || key == NULL) {
+        return IA_EUDOXUS_EINVAL;
+    }
+
+    ia_eudoxus_metadata_with_key_data_t data = {
+        key, key_length,
+        value, value_length
+    };
+
+    ia_eudoxus_result_t rc = ia_eudoxus_metadata(
+        eudoxus,
+        &ia_eudoxus_metadata_with_key_function,
+        &data
+    );
+    if (rc == IA_EUDOXUS_STOP) {
+        return IA_EUDOXUS_OK;
+    }
+    return rc;
 }

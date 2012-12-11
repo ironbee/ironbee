@@ -518,7 +518,7 @@ private:
 
     //! If true, no output for targets of non-advancing edges.
     bool m_no_advance_no_output;
-    
+
     //! Metadata map.
     std::map<std::string, std::string> m_metadata;
 };

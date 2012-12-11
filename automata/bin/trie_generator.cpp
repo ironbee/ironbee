@@ -130,5 +130,7 @@ int main(int argc, char** argv)
     breadth_first(a, optimize_edges);
     deduplicate_outputs(a);
 
+    a.metadata()["Output-Type"] = "string";
+
     write_automata(a, cout, chunk_size);
 }

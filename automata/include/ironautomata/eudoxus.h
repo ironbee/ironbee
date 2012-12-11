@@ -25,6 +25,7 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/types.h>
@@ -440,6 +441,70 @@ void ia_eudoxus_set_error_printf(
     const char   *format,
     ...
 ) __attribute__((__format__ (printf, 2, 3)));
+
+/**
+ * Callback type for ia_eudoxus_metadata().
+ *
+ * @param[in] key           Key.
+ * @param[in] key_length    Key length.
+ * @param[in] value_length  Value.
+ * @param[in] value         Value length.
+ * @param[in] callback_data Callback data as passed to ia_eudoxus_metadata().
+ * @return true to continue iteration, false to stop.
+ */
+typedef bool (*ia_eudoxus_metadata_callback_t)(
+    const uint8_t *key,
+    size_t         key_length,
+    const uint8_t *value,
+    size_t         value_length,
+    void          *callback_data
+);
+
+/**
+ * Call @a callback for every metadata field of @a eudoxus.
+ *
+ * @sa ia_eudoxus_metadata_with_key()
+ *
+ * @param[in] eudoxus       Engine to extract metadata for.
+ * @param[in] callback      Callback to call with each key value.
+ * @param[in] callback_data Callback data.
+ * @return
+ * - IA_EUDOXUS_END if end of list reached.
+ * - IA_EUDOXUS_STOP if callback ever returns false.
+ * - IA_EUDOXUS_EINVAL if @a eudoxus is NULL @a callback is NULL or
+ *   @a eudoxus is found to be corrupt.
+ */
+ia_eudoxus_result_t ia_eudoxus_metadata(
+    const ia_eudoxus_t             *eudoxus,
+    ia_eudoxus_metadata_callback_t  callback,
+    void                           *callback_data
+);
+
+/**
+ * Read a metadata field for @a eudoxus with name @a name.
+ *
+ * @note O(n).
+ *
+ * @sa ia_eudoxus_metadata()
+ *
+ * @param[in]  eudoxus      Engine to extract metadata for.
+ * @param[in]  key          Metadata key to extract.
+ * @param[in]  key_length   Length of @a key.
+ * @param[out] value        Where to store value.
+ * @param[out] value_length Where to store value length.
+ * @return
+ * - IA_EUDOXUS_OK on success.
+ * - IA_EUDOXUS_END if key not found.
+ * - IA_EUDOXUS_EINVAL if @a eudoxus or @a key is NULL or @a eudoxus is found
+ *   to be corrupt.
+ */
+ia_eudoxus_result_t ia_eudoxus_metadata_with_key(
+    const ia_eudoxus_t  *eudoxus,
+    const uint8_t       *key,
+    size_t               key_length,
+    const uint8_t      **value,
+    size_t              *value_length
+);
 
 /**
  * @} IronAutomataEudoxus

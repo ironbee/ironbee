@@ -77,6 +77,10 @@ int main(int argc, char** argv)
     namespace po = boost::program_options;
     namespace ia = IronAutomata;
 
+    const static string c_output_type_key("Output-Type");
+    const static string c_output_type_string("string");
+    const static string c_output_type_length("length");
+
     size_t chunk_size = 0;
     bool pattern = false;
 
@@ -128,6 +132,14 @@ int main(int argc, char** argv)
 
     ia::Intermediate::breadth_first(a, ia::Intermediate::optimize_edges);
     ia::Intermediate::deduplicate_outputs(a);
+
+    if (pattern) {
+        a.metadata()[c_output_type_key] = c_output_type_string;
+    }
+    else {
+        a.metadata()[c_output_type_key] = c_output_type_length;
+    }
+
 
     ia::Intermediate::write_automata(a, cout, chunk_size);
 }

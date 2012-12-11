@@ -69,7 +69,7 @@ module AutomataTest
     assert($?.success?)
   end
 
-  def ee(eudoxus_path, dir, text, input_name = "input", output_name = "output", output_type = "length", extra_args = [])
+  def ee(eudoxus_path, dir, text, input_name = "input", output_name = "output", output_type = "auto", extra_args = [])
     input_path = File.join(dir, input_name)
     output_path = File.join(dir, output_name)
 

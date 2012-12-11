@@ -38,7 +38,7 @@ using namespace std;
 namespace IronAutomata {
 namespace EudoxusCompiler {
 
-#define CPP_EUDOXUS_VERSION 8
+#define CPP_EUDOXUS_VERSION 9
 #if CPP_EUDOXUS_VERSION != IA_EUDOXUS_VERSION
 #error "Mismatch between compiler version and automata version."
 #endif
@@ -931,11 +931,31 @@ void Compiler<id_width>::compile(
     fill_in_ids(m_node_id_map, m_node_map);
     fill_in_ids(m_output_id_map, m_output_map);
 
+    // Append metadata.
+    typedef map<string, string> map_t;
+    size_t metadata_index = m_assembler.size();
+    BOOST_FOREACH(const map_t::value_type& v, automata.metadata()) {
+        ia_eudoxus_output_t* e_output =
+            m_assembler.append_object(ia_eudoxus_output_t());
+        e_output->length = v.first.size();
+        m_assembler.append_bytes(
+            reinterpret_cast<const uint8_t*>(v.first.data()), v.first.size()
+        );
+
+        e_output = m_assembler.append_object(ia_eudoxus_output_t());
+        e_output->length = v.second.size();
+        m_assembler.append_bytes(
+            reinterpret_cast<const uint8_t*>(v.second.data()), v.second.size()
+        );
+    }
+
     // Recover pointer.
     e_automata = m_assembler.ptr<ia_eudoxus_automata_t>(m_e_automata_index);
-    e_automata->num_nodes   = m_node_map.size();
-    e_automata->num_outputs = m_output_map.size();
-    e_automata->data_length = m_result.buffer.size();
+    e_automata->num_nodes      = m_node_map.size();
+    e_automata->num_outputs    = m_output_map.size();
+    e_automata->num_metadata   = automata.metadata().size();
+    e_automata->metadata_index = metadata_index;
+    e_automata->data_length    = m_result.buffer.size();
     assert(m_node_map[automata.start_node()] < 256);
     e_automata->start_index = m_node_map[automata.start_node()];
 
