@@ -50,6 +50,12 @@ message Output
     optional uint64 next    = 3;
 };
 
+message KeyValue
+{
+    required bytes key   = 1;
+    required bytes value = 2;
+};
+
 // Multiple graph messages in a single automata will result in undefined
 // behavior.
 message Graph
@@ -57,7 +63,8 @@ message Graph
     /* If present and true, then outputs will not be emitted if the input
      * was not advanced.
      */
-    optional bool no_advance_no_output = 1;
+    optional bool     no_advance_no_output = 1;
+    repeated KeyValue metadata             = 2;
 };
 
 message Chunk

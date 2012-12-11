@@ -502,12 +502,25 @@ public:
         return m_no_advance_no_output;
     }
 
+    //! Metadata map accessor.
+    const std::map<std::string, std::string>& metadata() const
+    {
+        return m_metadata;
+    }
+    //! Metadata map accessor.
+    std::map<std::string, std::string>& metadata()
+    {
+        return m_metadata;
+    }
 private:
     //! Starting node.
     node_p m_start_node;
 
     //! If true, no output for targets of non-advancing edges.
     bool m_no_advance_no_output;
+    
+    //! Metadata map.
+    std::map<std::string, std::string> m_metadata;
 };
 
 /**
