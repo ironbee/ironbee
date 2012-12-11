@@ -86,6 +86,7 @@ check_PROGRAMS = test_gtest \
                  test_engine \
                  test_module_ahocorasick \
                  test_module_pcre \
+                 test_module_ee_oper \
                  test_operator \
                  test_action \
                  test_config \
@@ -95,9 +96,6 @@ check_PROGRAMS = test_gtest \
 if ENABLE_LUA
 check_PROGRAMS += test_module_rules_lua \
                   test_luajit
-endif
-if CPP
-check_PROGRAMS += test_module_ee_oper
 endif
 
 check_LTLIBRARIES = libtest_util_dso_lib.la

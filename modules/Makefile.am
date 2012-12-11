@@ -49,14 +49,11 @@ ibmod_ac_la_SOURCES = ac.c
 ibmod_ac_la_CFLAGS = ${AM_CFLAGS}
 ibmod_ac_la_LDFLAGS = $(AM_LDFLAGS)
 
-if CPP
 pkglib_LTLIBRARIES += ibmod_ee.la
 ibmod_ee_la_SOURCES = ee_oper.c
-ibmod_ee_la_LIBADD = $(top_builddir)/automata/libiaeudoxus.la \
-                     $(top_builddir)/automata/libironautomata.la
+ibmod_ee_la_LIBADD = $(top_builddir)/automata/libiaeudoxus.la
 ibmod_ee_la_CFLAGS = ${AM_CFLAGS} -I$(top_srcdir)/automata/include
 ibmod_ee_la_LDFLAGS = $(AM_LDFLAGS)
-endif
 
 ibmod_lua_la_SOURCES = lua.c 
 ibmod_lua_la_CPPFLAGS = $(CPPFLAGS) \
