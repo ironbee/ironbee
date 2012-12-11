@@ -49,7 +49,28 @@ class TestRegression < Test::Unit::TestCase
     request.gsub!(/^\s+/, "")
     clipp(
       :input_hashes => [simple_hash(request)],
-      :input        => "pb:INPUT_PATH @parse @fillbody"
+      :input        => "pb:INPUT_PATH"
+    )
+    assert_no_issues
+  end
+
+  def test_rule_engine_log_with_empty_header
+    request = <<-EOS
+      GET / HTTP/1.1
+      Accept-Encoding:
+
+    EOS
+    request.gsub!(/^\s+/, "")
+    clipp(
+      :input_hashes => [simple_hash(request)],
+      :input        => "pb:INPUT_PATH @parse @fillbody",
+      :config => "
+        RuleEngineLogData +all
+        RuleEngineLogLevel Debug
+      ",
+      :default_site_config => <<-EOS
+        Rule REQUEST_HEADERS @nop "" id:1029 rev:1 phase:REQUEST_HEADER tag:HTTP/RepeatedHeader setvar:REQUEST_HEADERS_COUNTS:%{FIELD_NAME}=+1
+      EOS
     )
     assert_no_issues
   end
