@@ -80,10 +80,9 @@ ibmod_rules_la_SOURCES += \
     rules_lua_private.h
 
 ibmod_rules_la_CPPFLAGS += \
-    $(top_builddir)/lua/libironbee-lua.la \
-    -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
     -I$(top_srcdir)/libs/luajit-2.0-ironbee/src
 ibmod_rules_la_LIBADD += -lluajit-ironbee \
+                        -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                          $(top_builddir)/lua/libironbee-lua.la
 endif
 
