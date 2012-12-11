@@ -355,7 +355,6 @@ int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len);
  */
 int htp_txh_state_response_complete(htp_tx_t *tx);
 
-
 #ifdef	__cplusplus
 }
 #endif
