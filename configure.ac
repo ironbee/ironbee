@@ -397,7 +397,7 @@ if test "${HAVE_LIBCURL}" != "no" && test "${HAVE_YAJL}" != "no" ; then
 else
     BUILD_RIAK="no"
 fi
-AM_CONDITIONAL(BUILD_RIAK, test "${BUILD_RIAK}" != "no")
+AM_CONDITIONAL([BUILD_RIAK], [test "${BUILD_RIAK}" != "no"])
 
 if test "${HAVE_NIDS}" != "no" ; then
     AC_DEFINE([HAVE_NIDS], [1], [Have libnids library.])

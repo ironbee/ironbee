@@ -57,6 +57,7 @@ if test "${test_paths}" != "no"; then
             ],
             [dnl
                 AC_MSG_RESULT([no])
+                HAVE_YAJL=no
                 LDFLAGS="$save_LDFLAGS"
                 CFLAGS="$save_CFLAGS"
                 $2

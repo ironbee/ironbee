@@ -42,6 +42,7 @@ AC_COMPILE_IFELSE(
     ],
     [dnl
         dnl # Replace the original values.
+        HAVE_LIBCURL=no
         LDFLAGS="$save_LDFLAGS"
         CFLAGS="$save_CFLAGS"
         $2
