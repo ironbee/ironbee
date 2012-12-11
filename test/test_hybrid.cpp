@@ -134,7 +134,7 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
             if ((d->len == 9)&&(memcmp(d->data, "<h1>Hello", 9) == 0)) {
                 user_data->response_body_chunks_seen++;
             } else {
-                // TODO Error message
+                SCOPED_TRACE("Mismatch in 1st chunk");
                 user_data->response_body_correctly_received = -1;
             }
             break;
@@ -142,7 +142,7 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
             if ((d->len == 1)&&(memcmp(d->data, " ", 1) == 0)) {
                 user_data->response_body_chunks_seen++;
             } else {
-                // TODO Error message
+                SCOPED_TRACE("Mismatch in 2nd chunk");
                 user_data->response_body_correctly_received = -1;
             }
             break;
@@ -151,12 +151,12 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
                 user_data->response_body_chunks_seen++;
                 user_data->response_body_correctly_received = 1;
             } else {
-                // TODO Error message
+                SCOPED_TRACE("Mismatch in 3rd chunk");
                 user_data->response_body_correctly_received = -1;
             }
             break;
         default:
-            // TODO Error message
+            SCOPED_TRACE("Seen more than 3 chunks");
             user_data->response_body_correctly_received = -1;
             break;
     }
