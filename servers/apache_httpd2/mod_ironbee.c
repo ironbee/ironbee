@@ -41,6 +41,7 @@
 #include <ironbee/state_notify.h>
 #include <ironbee/util.h>
 #include <ironbee/regex.h>
+
 /* Hack to detect 2.2 vs 2.4 server versions.
  * This is a 2.3.x version shortly after the module declaration syntax changed
  * and might leave some 2.3.x in limbo, but should hopefully do the job
@@ -50,6 +51,9 @@
 
 /* vacuous hack to pretend Apache's OK and Ironbee's IB_OK might be nonzero */
 #define IB2AP(rc) (OK - IB_OK + (rc))
+
+#define STATUS_IS_ERROR(code) ( ((code) >= 200) && ((code) <  600) )
+#define STATUS_IS_OK(code)    ( ((code)  < 200) || ((code) >= 600) )
 
 /*************    APACHE MODULE AND TYPES   *****************/
 module AP_MODULE_DECLARE_DATA ironbee_module;
@@ -198,8 +202,8 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
 static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 {
     ironbee_req_ctx *ctx = tx->sctx;
-    if ( (status >= 200) && (status < 600) ) {
-        if ( (ctx->status >= 200) && (ctx->status < 600) ) {
+    if (STATUS_IS_ERROR(status)) {
+        if (STATUS_IS_ERROR(ctx->status)) {
             ap_log_rerror(APLOG_MARK, APLOG_WARNING, 0, ctx->r,
                           "Ignoring: status already set to %d", ctx->status);
             return IB_OK;
@@ -486,7 +490,7 @@ static int ironbee_headers_in(request_rec *r)
     /* If Ironbee has signalled an error, we can just return it now
      * to divert into the appropriate errordocument.
      */
-    if ( (ctx->status >= 200) && (ctx->status < 600) ) {
+    if (STATUS_IS_ERROR(ctx->status)) {
         return ctx->status;
     }
 
@@ -660,9 +664,7 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
          * dump anything we already have buffered,
          * and pass EOS down the chain immediately.
          */
-        if ( ((rctx->status >= 200) && (rctx->status < 600)) &&
-             (ctx->buffering != IOBUF_DISCARD) )
-        {
+        if ( (STATUS_IS_ERROR(rctx->status)) && (ctx->buffering != IOBUF_DISCARD) ) {
             if (ctx->buffering == IOBUF_BUFFER) {
                 apr_brigade_cleanup(ctx->buffer);
             }
@@ -791,9 +793,7 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
             /* If Ironbee just signalled an error, switch to discard data mode,
              * and dump anything we already have buffered,
              */
-            if ( ((rctx->status >= 200) && (rctx->status < 600)) &&
-                 (ctx->buffering != IOBUF_DISCARD) )
-            {
+            if ( (STATUS_IS_ERROR(rctx->status)) && (ctx->buffering != IOBUF_DISCARD) ) {
                 apr_brigade_cleanup(ctx->buffer);
                 ctx->buffering = IOBUF_DISCARD;
                 f->r->status = rctx->status;
@@ -822,9 +822,7 @@ setaside_input:
     /* If Ironbee just signalled an error, switch to discard data mode,
      * and dump anything we already have buffered,
      */
-    if ( ((rctx->status >= 200) && (rctx->status < 600)) &&
-         (ctx->buffering != IOBUF_DISCARD) )
-    {
+    if ( (STATUS_IS_ERROR(rctx->status)) && (ctx->buffering != IOBUF_DISCARD) ) {
         apr_brigade_cleanup(ctx->buffer);
         ctx->buffering = IOBUF_DISCARD;
         f->r->status = rctx->status;
