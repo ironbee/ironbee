@@ -50,8 +50,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <arpa/inet.h> /* htonl */
-#include <sys/types.h> /* getpid */
 
 /* -- Constants -- */
 
