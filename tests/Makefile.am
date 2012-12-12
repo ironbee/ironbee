@@ -267,7 +267,8 @@ test_luajit_SOURCES = test_main.cpp \
 
 test_module_ee_oper_SOURCES = test_module_ee_oper.cpp \
                               test_main.cpp
-test_module_ee_oper_LDADD = $(MODULE_TEST_LDADD)
+test_module_ee_oper_LDADD = $(MODULE_TEST_LDADD) \
+    $(top_builddir)/automata/libiaeudoxus.la
 
 test_luajit_CPPFLAGS = $(CPPFLAGS) \
                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
