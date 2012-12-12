@@ -165,7 +165,7 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
     while (loop) {
         loop = 0;
 
-        if (iconv(cd, (ICONV_CONST char **)&inbuf, &inleft, &outbuf, &outleft) == (size_t) - 1) {
+        if (iconv(cd, (const char **)&inbuf, &inleft, &outbuf, &outleft) == (size_t) - 1) {
             if (errno == E2BIG) {
                 // Create bstr builder on-demand
                 if (bb == NULL) {
