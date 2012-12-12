@@ -7,6 +7,7 @@
 
 - Added the "htp_" prefix to all table structures and functions.
 
+- list_array_replace returns HTP_ERROR (-1) instead of 0 when the index does not exist.
 
 
 

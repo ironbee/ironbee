@@ -39,40 +39,28 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-/**
- * Create new array-based list.
- *
- * @param size
- * @return newly allocated list (list_t)
- */
 list_t *list_array_create(size_t size) {
     // Allocate the list structure
-    list_array_t *q = calloc(1, sizeof (list_array_t));
-    if (q == NULL) return NULL;
+    list_array_t *l = calloc(1, sizeof (list_array_t));
+    if (l == NULL) return NULL;
 
     // Allocate the initial batch of elements
-    q->elements = malloc(size * sizeof (void *));
-    if (q->elements == NULL) {
-        free(q);
+    l->elements = malloc(size * sizeof (void *));
+    if (l->elements == NULL) {
+        free(l);
         return NULL;
     }
 
     // Initialize structure
-    q->first = 0;
-    q->last = 0;
-    q->max_size = size;
+    l->first = 0;
+    l->last = 0;
+    l->max_size = size;
 
-    return (list_t *) q;
+    return (list_t *) l;
 }
 
-/**
- * Free the memory occupied by this list. This function assumes
- * the data elements were freed beforehand.
- *
- * @param l
- */
 void list_array_destroy(list_array_t **_l) {
-    if ((_l == NULL)||(*_l == NULL)) return;
+    if ((_l == NULL) || (*_l == NULL)) return;
 
     list_array_t *l = *_l;
     free(l->elements);
@@ -80,17 +68,8 @@ void list_array_destroy(list_array_t **_l) {
     *_l = NULL;
 }
 
-/**
- * Return the element at the given index.
- *
- * @param list
- * @param index
- * @return the desired element, or NULL if the list is too small, or
- *         if the element at that position carries a NULL
- */
-void *list_array_get(const list_t *_l, size_t idx) {
-    const list_array_t *l = (const list_array_t *) _l;
-    void *r = NULL;
+void *list_array_get(const list_array_t *l, size_t idx) {
+    const void *r = NULL;
 
     if (idx + 1 > l->current_size) return NULL;
 
@@ -105,55 +84,39 @@ void *list_array_get(const list_t *_l, size_t idx) {
         r = l->elements[i];
     }
 
-    return r;
+    return (void *) r;
 }
 
-/**
- * Remove one element from the end of the list.
- *
- * @param list
- * @return the removed element, or NULL if the list is empty
- */
-void *list_array_pop(list_t *_q) {
-    list_array_t *q = (list_array_t *) _q;
-    void *r = NULL;
+void *list_array_pop(list_array_t *l) {
+    const void *r = NULL;
 
-    if (q->current_size == 0) {
+    if (l->current_size == 0) {
         return NULL;
     }
 
-    size_t pos = q->first + q->current_size - 1;
-    if (pos > q->max_size - 1) pos -= q->max_size;
+    size_t pos = l->first + l->current_size - 1;
+    if (pos > l->max_size - 1) pos -= l->max_size;
 
-    r = q->elements[pos];
-    q->last = pos;
+    r = l->elements[pos];
+    l->last = pos;
 
-    q->current_size--;
+    l->current_size--;
 
-    return r;
+    return (void *) r;
 }
 
-/**
- * Add new element to the end of the list, expanding the list
- * as necessary.
- *
- * @param list
- * @param element
- *
- * @return 1 on success or -1 on failure (memory allocation)
- */
-int list_array_push(list_array_t *q, void *element) {
+htp_status_t list_array_push(list_array_t *l, const void *e) {
     // Check whether we're full
-    if (q->current_size >= q->max_size) {
-        size_t new_size = q->max_size * 2;
+    if (l->current_size >= l->max_size) {
+        size_t new_size = l->max_size * 2;
         void *newblock = NULL;
 
-        if (q->first == 0) {
+        if (l->first == 0) {
             // The simple case of expansion is when the first
             // element in the list resides in the first slot. In
             // that case we just add some new space to the end,
             // adjust the max_size and that's that.
-            newblock = realloc(q->elements, new_size * sizeof (void *));
+            newblock = realloc(l->elements, new_size * sizeof (void *));
             if (newblock == NULL) return HTP_ERROR;
         } else {
             // When the first element is not in the first
@@ -163,43 +126,32 @@ int list_array_push(list_array_t *q, void *element) {
             if (newblock == NULL) return HTP_ERROR;
 
             // Copy the beginning of the list to the beginning of the new memory block
-            memcpy((char *)newblock, (char *)q->elements + q->first * sizeof (void *), (q->max_size - q->first) * sizeof (void *));
+            memcpy((char *) newblock, (char *) l->elements + l->first * sizeof (void *), (l->max_size - l->first) * sizeof (void *));
             // Append the second part of the list to the end
-            memcpy((char *)newblock + (q->max_size - q->first) * sizeof (void *), q->elements, q->first * sizeof (void *));
+            memcpy((char *) newblock + (l->max_size - l->first) * sizeof (void *), l->elements, l->first * sizeof (void *));
 
-            free(q->elements);
+            free(l->elements);
         }
 
-        q->first = 0;
-        q->last = q->current_size;
-        q->max_size = new_size;
-        q->elements = newblock;
+        l->first = 0;
+        l->last = l->current_size;
+        l->max_size = new_size;
+        l->elements = newblock;
     }
 
-    q->elements[q->last] = element;
-    q->current_size++;
+    l->elements[l->last] = e;
+    l->current_size++;
 
-    q->last++;
-    if (q->last == q->max_size) {
-        q->last = 0;
+    l->last++;
+    if (l->last == l->max_size) {
+        l->last = 0;
     }
 
     return HTP_OK;
 }
 
-/**
- * Replace the element at the given index with the provided element.
- *
- * @param list
- * @param index
- * @param element
- *
- * @return 1 if the element was replaced, or 0 if the list is too small
- */
-int list_array_replace(list_t *_l, size_t idx, void *element) {
-    list_array_t *l = (list_array_t *) _l;
-
-    if (idx + 1 > l->current_size) return 0;
+htp_status_t list_array_replace(list_array_t *l, size_t idx, const void *e) {
+    if (idx + 1 > l->current_size) return HTP_ERROR;
 
     size_t i = l->first;
 
@@ -209,52 +161,33 @@ int list_array_replace(list_t *_l, size_t idx, void *element) {
         }
     }
 
-    l->elements[i] = element;
+    l->elements[i] = e;
 
-    return 1;
+    return HTP_OK;
 }
 
-/**
- * Returns the size of the list.
- *
- * @param list
- */
-size_t list_array_size(const list_t *_l) {
-    return ((const list_array_t *) _l)->current_size;
+size_t list_array_size(const list_array_t *l) {
+    return l->current_size;
 }
 
-/**
- * Remove one element from the beginning of the list.
- *
- * @param list
- * @return the removed element, or NULL if the list is empty
- */
-void *list_array_shift(list_t *_q) {
-    list_array_t *q = (list_array_t *) _q;
+void *list_array_shift(list_array_t *l) {
     void *r = NULL;
 
-    if (q->current_size == 0) {
+    if (l->current_size == 0) {
         return NULL;
     }
 
-    r = q->elements[q->first];
-    q->first++;
-    if (q->first == q->max_size) {
-        q->first = 0;
+    r = l->elements[l->first];
+    l->first++;
+    if (l->first == l->max_size) {
+        l->first = 0;
     }
 
-    q->current_size--;
+    l->current_size--;
 
     return r;
 }
 
-/**
- * Advance to the next list value.
- *
- * @param l
- * @return the next list value, or NULL if there aren't more elements
- *         left to iterate over or if the element itself is NULL
- */
 void *list_array_int_iterator_next(list_array_t *l) {
     void *r = NULL;
 
@@ -266,11 +199,6 @@ void *list_array_int_iterator_next(list_array_t *l) {
     return r;
 }
 
-/**
- * Reset the list iterator.
- *
- * @param l
- */
 void list_array_int_iterator_reset(list_array_t *l) {
     l->iterator_index = 0;
 }
@@ -342,7 +270,7 @@ void *list_linked_pop(list_t *_q) {
     // Find the last element
     list_linked_element_t *qprev = NULL;
     list_linked_element_t *qe = q->first;
-    while(qe->next != NULL) {
+    while (qe->next != NULL) {
         qprev = qe;
         qe = qe->next;
     }
@@ -411,7 +339,7 @@ int list_linked_empty(const list_t *_q) {
  * @param l
  */
 void list_linked_destroy(list_linked_t **_l) {
-    if ((_l == NULL)||(*_l == NULL)) return;
+    if ((_l == NULL) || (*_l == NULL)) return;
 
     list_linked_t *l = *_l;
     // Free the list structures

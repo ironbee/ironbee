@@ -36,7 +36,7 @@
 
 #include "bstr.h"
 #include "bstr_builder.h"
-#include "dslib.h"
+#include "htp_list.h"
 
 /**
  * Returns the size (the number of pieces) currently in a string builder.

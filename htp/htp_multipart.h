@@ -41,7 +41,7 @@ typedef struct htp_mpartp_t htp_mpartp_t;
 typedef struct htp_mpart_part_t htp_mpart_part_t;
 
 #include "bstr.h"
-#include "dslib.h"
+#include "htp_table.h"
 #include "htp.h"
 
 #define MULTIPART_PART_UNKNOWN                  0

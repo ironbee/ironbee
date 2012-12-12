@@ -66,7 +66,8 @@
 #include <fcntl.h>
 
 #include <htp/htp.h>
-#include <htp/dslib.h>
+#include <htp/htp_list.h>
+#include <htp/htp_table.h>
 
 #define DIRECTION_CLIENT    1
 #define DIRECTION_SERVER    2
