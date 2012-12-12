@@ -39,7 +39,7 @@
 
 typedef struct bstr_builder_t bstr_builder_t;
 
-#include "dslib.h"
+#include "htp_list.h"
 
 #ifdef __cplusplus
 extern "C" {

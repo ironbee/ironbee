@@ -627,7 +627,7 @@ htp_mpartp_t * htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
         return NULL;
     }
 
-    mpartp->parts = cfg->create_list_array(64);
+    mpartp->parts = list_create(64);
     if (mpartp->parts == NULL) {
         htp_mpartp_destroy(&mpartp);
         return NULL;

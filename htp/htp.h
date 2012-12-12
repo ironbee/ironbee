@@ -62,7 +62,7 @@ typedef struct htp_uri_t htp_uri_t;
 #include <sys/time.h>
 
 #include "bstr.h"
-#include "dslib.h"
+#include "htp_list.h"
 #include "htp_table.h"
 #include "hooks.h"
 #include "htp_decompressors.h"
@@ -433,17 +433,7 @@ struct htp_cfg_t {
     /**
      * Log hook, invoked every time the library wants to log.
      */
-    htp_hook_t *hook_log;
-
-    /**
-     * Create linked list callback, invoked to create an application specific linked list
-     */
-    list_t *(*create_list_linked)(void);
-
-    /**
-     * Create array list callback, invoked to create an application specific array list
-     */
-    list_t *(*create_list_array)(size_t size);   
+    htp_hook_t *hook_log;   
 
     /** Opaque user data associated with this configuration structure. */
     void *user_data;

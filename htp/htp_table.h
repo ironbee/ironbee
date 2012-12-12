@@ -37,7 +37,7 @@
 #ifndef HTP_TABLE_H
 #define	HTP_TABLE_H
 
-#include "dslib.h"
+#include "htp_list.h"
 
 #ifdef	__cplusplus
 extern "C" {
