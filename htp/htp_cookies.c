@@ -73,7 +73,7 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len) {
     // Add cookie
     if (connp->cfg->parameter_processor == NULL) {
         // Add cookie directly
-        table_addn(connp->in_tx->request_cookies, name, value);
+        htp_table_addn(connp->in_tx->request_cookies, name, value);
     } else {
         // Add cookie through parameter processor
         connp->cfg->parameter_processor(connp->in_tx->request_cookies, name, value);
@@ -89,12 +89,11 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len) {
  * @return HTP_OK on success, HTP_ERROR on error
  */
 int htp_parse_cookies_v0(htp_connp_t *connp) {
-    htp_header_t *cookie_header = table_get_c(connp->in_tx->request_headers, "cookie");
+    htp_header_t *cookie_header = htp_table_get_c(connp->in_tx->request_headers, "cookie");
     if (cookie_header == NULL) return HTP_OK;
 
     // Create a new table to store cookies
-    connp->in_tx->request_cookies =
-        connp->cfg->create_table(4);
+    connp->in_tx->request_cookies = htp_table_create(4);
     if (connp->in_tx->request_cookies == NULL) return HTP_ERROR;
 
     char *data = bstr_ptr(cookie_header->value);

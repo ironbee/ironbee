@@ -133,14 +133,14 @@ static VALUE cConn;
 
 #define RBHTP_R_URI( T, N ) RBHTP_R_HTP( T, N, cURI )
 	
-static VALUE rbhtp_r_string_table( table_t* table )
+static VALUE rbhtp_r_string_table( htp_table_t* table )
 {
 	if ( table == NULL ) return Qnil;
 	
 	bstr k, v;
 	VALUE r = rb_ary_new();
-	table_iterator_reset( table );
-	while ( ( k = table_iterator_next( table, &v ) ) != NULL ) {
+	htp_table_iterator_reset( table );
+	while ( ( k = htp_table_iterator_next( table, &v ) ) != NULL ) {
 		rb_ary_push( r, rb_ary_new3( 2,
 			BSTR_TO_RSTR( k ), BSTR_TO_RSTR( v ) ) );
 	}
@@ -156,14 +156,14 @@ static VALUE rbhtp_r_string_table( table_t* table )
 	}
 
 // We don't push the keys as they are duplicated in the header.
-static VALUE rbhtp_r_header_table( table_t* table )
+static VALUE rbhtp_r_header_table( htp_table_t* table )
 {
 	if ( table == NULL ) return Qnil; 
 	bstr k; 
 	htp_header_t* v; 
 	VALUE r = rb_ary_new(); 
-	table_iterator_reset( table ); 
-	while ( ( k = table_iterator_next( table, (void**)&v ) ) != NULL ) { 
+	htp_table_iterator_reset( table );
+	while ( ( k = htp_table_iterator_next( table, (void**)&v ) ) != NULL ) {
 		rb_ary_push( r, 
 			rb_funcall( cHeader, rb_intern( "new" ), 1, 
 				Data_Wrap_Struct( rb_cObject, 0, 0, v ) ) ); 

@@ -37,6 +37,8 @@
 #ifndef _HTP_H
 #define	_HTP_H
 
+typedef int htp_status_t;
+
 typedef struct htp_cfg_t htp_cfg_t;
 typedef struct htp_conn_t htp_conn_t;
 typedef struct htp_connp_t htp_connp_t;
@@ -275,7 +277,7 @@ struct htp_cfg_t {
     int (*process_response_header)(htp_connp_t *connp);
 
     /** The function to use to transform parameters after parsing. */
-    int (*parameter_processor)(table_t *params, bstr *name, bstr *value);
+    int (*parameter_processor)(htp_table_t *params, bstr *name, bstr *value);
 
     
     // Path handling
@@ -440,12 +442,7 @@ struct htp_cfg_t {
     /**
      * Create array list callback, invoked to create an application specific array list
      */
-    list_t *(*create_list_array)(size_t size);
-
-    /**
-     * Create table callback, invoked to create an application specific table
-     */
-    table_t *(*create_table)(size_t size);
+    list_t *(*create_list_array)(size_t size);   
 
     /** Opaque user data associated with this configuration structure. */
     void *user_data;
@@ -896,7 +893,7 @@ struct htp_tx_t {
     size_t request_header_lines_no_trailers;
 
     /** Parsed request headers. */
-    table_t *request_headers;
+    htp_table_t *request_headers;
 
     /** Contains raw request headers. This field is generated on demand, use
      *  htp_tx_get_request_headers_raw() to get it.
@@ -957,15 +954,15 @@ struct htp_tx_t {
     htp_mpartp_t *request_mpartp;
 
     /** Parameters from the query string. */
-    table_t *request_params_query;
+    htp_table_t *request_params_query;
     int request_params_query_reused;
 
     /** Parameters from request body. */
-    table_t *request_params_body;
+    htp_table_t *request_params_body;
     int request_params_body_reused;
 
     /** Request cookies */
-    table_t *request_cookies;
+    htp_table_t *request_cookies;
 
     int request_auth_type;
     bstr *request_auth_username;
@@ -1011,7 +1008,7 @@ struct htp_tx_t {
     list_t *response_header_lines;
 
     /** Parsed response headers. */
-    table_t *response_headers;
+    htp_table_t *response_headers;
 
     /** Contains raw response headers. This field is generated on demand, use
      *  htp_tx_get_response_headers_raw() to get it.
@@ -1136,7 +1133,6 @@ htp_cfg_t *htp_config_create(void);
 
 void htp_config_register_list_linked_create(htp_cfg_t *cfg, list_t *(*callback_fn)(void));
 void htp_config_register_list_array_create(htp_cfg_t *cfg, list_t *(*callback_fn)(size_t size));
-void htp_config_register_table_create(htp_cfg_t *cfg, table_t *(*callback_fn)(size_t size));
 
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
@@ -1312,9 +1308,9 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
 int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d);
 int htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
 
-int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value);
+int htp_php_parameter_processor(htp_table_t *params, bstr *name, bstr *value);
 
-int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old);
+int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_old);
 int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output);
 
 int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len);

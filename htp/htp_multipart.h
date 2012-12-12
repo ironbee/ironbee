@@ -92,7 +92,7 @@ struct htp_mpart_part_t {
     bstr *value;
 
     /** Part headers (htp_header_t instances), indexed by name. */
-    table_t *headers;
+    htp_table_t *headers;
 
     htp_file_t *file;
 };

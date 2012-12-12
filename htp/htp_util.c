@@ -371,7 +371,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
         connp->last_error = log;
     }
 
-    hook_run_all(connp->cfg->hook_log, log);
+    htp_hook_run_all(connp->cfg->hook_log, log);
 }
 
 /**
@@ -2249,16 +2249,16 @@ bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx) {
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Do not invoke callbacks with an empty data chunk
     if ((d->data != NULL) && (d->len == 0)) {
-        return HOOK_OK;
+        return HTP_OK;
     }
 
     // Run transaction hooks first
-    int rc = hook_run_all(connp->in_tx->hook_request_body_data, d);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(connp->in_tx->hook_request_body_data, d);
+    if (rc != HTP_OK) return rc;
 
     // Run configuration hooks second
-    rc = hook_run_all(connp->cfg->hook_request_body_data, d);
-    if (rc != HOOK_OK) return rc;
+    rc = htp_hook_run_all(connp->cfg->hook_request_body_data, d);
+    if (rc != HTP_OK) return rc;
 
     // On PUT requests, treat request body as file
     if (connp->put_file != NULL) {
@@ -2269,8 +2269,8 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
         file_data.file = connp->put_file;
         file_data.file->len += d->len;
 
-        hook_run_all(connp->cfg->hook_request_file_data, &file_data);
-        if (rc != HOOK_OK) return rc;
+        htp_hook_run_all(connp->cfg->hook_request_file_data, &file_data);
+        if (rc != HTP_OK) return rc;
     }
 
     return rc;
@@ -2285,18 +2285,18 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Do not invoke callbacks with an empty data chunk
     if ((d->data != NULL) && (d->len == 0)) {
-        return HOOK_OK;
+        return HTP_OK;
     }
 
     // Run transaction hooks first
-    int rc = hook_run_all(connp->out_tx->hook_response_body_data, d);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(connp->out_tx->hook_response_body_data, d);
+    if (rc != HTP_OK) return rc;
 
     // Run configuration hooks second
-    rc = hook_run_all(connp->cfg->hook_response_body_data, d);
-    if (rc != HOOK_OK) return rc;
+    rc = htp_hook_run_all(connp->cfg->hook_response_body_data, d);
+    if (rc != HTP_OK) return rc;
 
-    return HOOK_OK;
+    return HTP_OK;
 }
 
 bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffset) {

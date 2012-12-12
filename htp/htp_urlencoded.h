@@ -70,7 +70,7 @@ struct htp_urlenp_t {
     int decode_url_encoding;        
 
     /** This table contains the list of parameters, indexed by name. */
-    table_t *params;
+    htp_table_t *params;
 
     // Private fields; these are used during the parsing process only
     int _state;

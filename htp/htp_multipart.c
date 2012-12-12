@@ -69,7 +69,7 @@ static int htp_mpartp_cd_param_type(unsigned char *data, size_t startpos, size_t
  */
 int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
     // Find C-D header
-    htp_header_t *h = (htp_header_t *) table_get_c(part->headers, "content-disposition");
+    htp_header_t *h = (htp_header_t *) htp_table_get_c(part->headers, "content-disposition");
     if (h == NULL) {
         // TODO Error message
         return 0;
@@ -270,7 +270,7 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
     h->value = bstr_dup_mem((char *) data + value_start, value_end - value_start);
 
     // Check if the header already exists
-    htp_header_t * h_existing = table_get(part->headers, h->name);
+    htp_header_t * h_existing = htp_table_get(part->headers, h->name);
     if (h_existing != NULL) {
         // Add to existing header
         bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
@@ -295,7 +295,7 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
         h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
         // Add as a new header
-        table_add(part->headers, h->name, h);
+        htp_table_add(part->headers, h->name, h);
     }
 
     return 1;
@@ -310,7 +310,7 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
     htp_mpart_part_t * part = calloc(1, sizeof (htp_mpart_part_t));
     if (part == NULL) return NULL;
 
-    part->headers = mpartp->cfg->create_table(4);
+    part->headers = htp_table_create(4);
     if (part->headers == NULL) {
         free(part);
         return NULL;
@@ -350,15 +350,15 @@ void htp_mpart_part_destroy(htp_mpart_part_t *part) {
     if (part->headers != NULL) {
         // Destroy request_headers
         void *tvalue;
-        table_iterator_reset(part->headers);
-        while (table_iterator_next(part->headers, &tvalue) != NULL) {
+        htp_table_iterator_reset(part->headers);
+        while (htp_table_iterator_next(part->headers, &tvalue) != NULL) {
             htp_header_t *h = (htp_header_t *)tvalue;
             bstr_free(&h->name);
             bstr_free(&h->value);
             free(h);
         }
 
-        table_destroy(&part->headers);
+        htp_table_destroy(&part->headers);
     }
 
     free(part);
@@ -400,8 +400,8 @@ int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, unsigned char 
     file_data.len = len;
 
     // Send data to callbacks
-    int rc = hook_run_all(part->mpartp->cfg->hook_request_file_data, &file_data);
-    if (rc != HOOK_OK) {
+    int rc = htp_hook_run_all(part->mpartp->cfg->hook_request_file_data, &file_data);
+    if (rc != HTP_OK) {
         // TODO
     }
 

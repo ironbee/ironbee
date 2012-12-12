@@ -68,7 +68,7 @@ htp_tx_t *htp_txh_create(htp_connp_t *connp) {
     return tx;
 }
 
-int htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
+htp_status_t htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
     if ((name == NULL) || (value == NULL)) return HTP_ERROR;
 
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
@@ -90,12 +90,12 @@ int htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, 
     }
 
     // XXX Check return code
-    table_add(tx->request_headers, h->name, h);
+    htp_table_add(tx->request_headers, h->name, h);
 
     return HTP_OK;
 }
 
-int htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc) {
+htp_status_t htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc) {
     if (method == NULL) return HTP_ERROR;
     tx->request_method = copy_or_wrap_c(method, alloc);
     if (tx->request_method == NULL) return HTP_ERROR;
@@ -106,21 +106,21 @@ void htp_txh_req_set_method_number(htp_tx_t *tx, int method_number) {
     tx->request_method_number = method_number;
 }
 
-int htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy alloc) {
+htp_status_t htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy alloc) {
     if (uri == NULL) return HTP_ERROR;
     tx->request_uri = copy_or_wrap_c(uri, alloc);
     if (tx->request_uri == NULL) return HTP_ERROR;
     return HTP_OK;
 }
 
-int htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum alloc_strategy alloc) {
+htp_status_t htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum alloc_strategy alloc) {
     if (tx->parsed_uri == NULL) return HTP_ERROR;
     tx->parsed_uri->query = copy_or_wrap_c(query_string, alloc);
     if (tx->parsed_uri->query == NULL) return HTP_ERROR;
     return HTP_OK;
 }
 
-int htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_strategy alloc) {
+htp_status_t htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_strategy alloc) {
     if (protocol == NULL) return HTP_ERROR;
     tx->request_protocol = copy_or_wrap_c(protocol, alloc);
     if (tx->request_protocol == NULL) return HTP_ERROR;
@@ -139,7 +139,7 @@ void htp_txh_req_set_protocol_http_0_9(htp_tx_t *tx, int is_http_0_9) {
     }
 }
 
-int htp_txh_state_request_complete(htp_tx_t *tx) {
+htp_status_t htp_txh_state_request_complete(htp_tx_t *tx) {
     // Finalize request body
     if (htp_tx_req_has_body(tx)) {
         int rc = htp_txh_req_process_body_data(tx, NULL, 0);
@@ -147,8 +147,8 @@ int htp_txh_state_request_complete(htp_tx_t *tx) {
     }
 
     // Run hook REQUEST
-    int rc = hook_run_all(tx->connp->cfg->hook_request_done, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_done, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     // Clean-up
     if (tx->connp->put_file != NULL) {
@@ -168,7 +168,7 @@ int htp_txh_state_request_complete(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-int htp_txh_state_request_line(htp_tx_t *tx) {
+htp_status_t htp_txh_state_request_line(htp_tx_t *tx) {
     htp_connp_t *connp = tx->connp;
 
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
@@ -192,8 +192,8 @@ int htp_txh_state_request_line(htp_tx_t *tx) {
         }
 
         // Run hook REQUEST_URI_NORMALIZE
-        int rc = hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
-        if (rc != HOOK_OK) return rc;
+        int rc = htp_hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
+        if (rc != HTP_OK) return rc;
 
         // Now is a good time to generate request_uri_normalized, before we finalize
         // parsed_uri (and lose the information which parts were provided in the request and
@@ -270,8 +270,8 @@ int htp_txh_state_request_line(htp_tx_t *tx) {
     }
 
     // Run hook REQUEST_LINE
-    int rc = hook_run_all(connp->cfg->hook_request_line, connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(connp->cfg->hook_request_line, connp);
+    if (rc != HTP_OK) return rc;
 
     // Move on to the next phase.
     connp->in_state = htp_connp_REQ_PROTOCOL;
@@ -279,13 +279,13 @@ int htp_txh_state_request_line(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-static int htp_txh_process_request_headers(htp_tx_t *tx) {
+static htp_status_t htp_txh_process_request_headers(htp_tx_t *tx) {
     // Remember how many header lines there were before trailers
     tx->request_header_lines_no_trailers = list_size(tx->request_header_lines);
 
     // Determine if we have a request body, and how it is packaged
-    htp_header_t *cl = table_get_c(tx->request_headers, "content-length");
-    htp_header_t *te = table_get_c(tx->request_headers, "transfer-encoding");
+    htp_header_t *cl = htp_table_get_c(tx->request_headers, "content-length");
+    htp_header_t *te = htp_table_get_c(tx->request_headers, "transfer-encoding");
 
     // Check for the Transfer-Encoding header, which would indicate a chunked request body
     if (te != NULL) {
@@ -356,7 +356,7 @@ static int htp_txh_process_request_headers(htp_tx_t *tx) {
     }
 
     // Host resolution
-    htp_header_t *h = table_get_c(tx->request_headers, "host");
+    htp_header_t *h = htp_table_get_c(tx->request_headers, "host");
     if (h == NULL) {
         // No host information in the headers
 
@@ -384,7 +384,7 @@ static int htp_txh_process_request_headers(htp_tx_t *tx) {
     }
 
     // Parse Content-Type
-    htp_header_t *ct = table_get_c(tx->request_headers, "content-type");
+    htp_header_t *ct = htp_table_get_c(tx->request_headers, "content-type");
     if (ct != NULL) {
         tx->request_content_type = bstr_dup_lower(ct->value);
         if (tx->request_content_type == NULL) return HTP_ERROR;
@@ -415,13 +415,13 @@ static int htp_txh_process_request_headers(htp_tx_t *tx) {
     }
 
     // Run hook REQUEST_HEADERS
-    int rc = hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     return HTP_OK;
 }
 
-int htp_txh_state_request_headers(htp_tx_t *tx) {
+htp_status_t htp_txh_state_request_headers(htp_tx_t *tx) {
     // Did this request arrive in multiple chunks?
     if (tx->connp->in_chunk_count != tx->connp->in_chunk_request_index) {
         tx->flags |= HTP_MULTI_PACKET_HEAD;
@@ -432,15 +432,15 @@ int htp_txh_state_request_headers(htp_tx_t *tx) {
     // we're dealing with trailing headers.
     if (tx->progress > TX_PROGRESS_REQ_HEADERS) {
         // Run hook REQUEST_TRAILER
-        int rc = hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
-        if (rc != HOOK_OK) return rc;
+        int rc = htp_hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
+        if (rc != HTP_OK) return rc;
 
         // Completed parsing this request; finalize it now
         tx->connp->in_state = htp_connp_REQ_FINALIZE;
     } else if (tx->progress >= TX_PROGRESS_REQ_LINE) {
         // Process request headers
         int rc = htp_txh_process_request_headers(tx);
-        if (rc != HOOK_OK) return rc;
+        if (rc != HTP_OK) return rc;
 
         tx->connp->in_state = htp_connp_REQ_CONNECT_CHECK;
     } else {
@@ -452,10 +452,10 @@ int htp_txh_state_request_headers(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-int htp_txh_state_request_start(htp_tx_t *tx) {
+htp_status_t htp_txh_state_request_start(htp_tx_t *tx) {
     // Run hook TRANSACTION_START
-    int rc = hook_run_all(tx->connp->cfg->hook_transaction_start, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_transaction_start, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     // Change state into request line parsing
     tx->connp->in_state = htp_connp_REQ_LINE;
@@ -464,7 +464,7 @@ int htp_txh_state_request_start(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len) {
+htp_status_t htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len) {
     // Keep track of actual data length
     tx->request_entity_len += len;
 
@@ -475,7 +475,7 @@ int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_
     d.len = len;
 
     int rc = htp_req_run_hook_body_data(tx->connp, &d);
-    if (rc != HOOK_OK) {
+    if (rc != HTP_OK) {
         htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                 "Request body data callback returned error (%d)", rc);
         return HTP_ERROR;
@@ -484,32 +484,32 @@ int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_
     return HTP_OK;
 }
 
-int htp_txh_req_headers_clear(htp_tx_t *tx) {
+htp_status_t htp_txh_req_headers_clear(htp_tx_t *tx) {
     if (tx->request_headers == NULL) return HTP_ERROR;
 
     void *tvalue;
-    table_iterator_reset(tx->request_headers);
-    while (table_iterator_next(tx->request_headers, &tvalue) != NULL) {
+    htp_table_iterator_reset(tx->request_headers);
+    while (htp_table_iterator_next(tx->request_headers, &tvalue) != NULL) {
         htp_header_t *h = (htp_header_t *) tvalue;
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
     }
 
-    table_destroy(&tx->request_headers);
+    htp_table_destroy(&tx->request_headers);
 
-    tx->request_headers = tx->cfg->create_table(32);
+    tx->request_headers = htp_table_create(32);
     if (tx->request_headers == NULL) return HTP_ERROR;
 
     return HTP_OK;
 }
 
-int htp_txh_state_response_start(htp_tx_t *tx) {
+htp_status_t htp_txh_state_response_start(htp_tx_t *tx) {
     tx->connp->out_tx = tx;
 
     // Run hook RESPONSE_START
-    int rc = hook_run_all(tx->connp->cfg->hook_response_start, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_response_start, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     // Change state into response line parsing, except if we're following
     // a HTTP/0.9 request (no status line or response headers).
@@ -525,7 +525,7 @@ int htp_txh_state_response_start(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-int htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_strategy alloc) {
+htp_status_t htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_strategy alloc) {
     if (line == NULL) return HTP_ERROR;
     tx->response_line = copy_or_wrap_c(line, alloc);
     if (tx->response_line == NULL) return HTP_ERROR;
@@ -544,14 +544,14 @@ void htp_txh_res_set_status_code(htp_tx_t *tx, int status_code) {
     tx->response_status_number = status_code;
 }
 
-int htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc_strategy alloc) {
+htp_status_t htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc_strategy alloc) {
     if (message == NULL) return HTP_ERROR;
     tx->response_message = copy_or_wrap_c(message, alloc);
     if (tx->response_message == NULL) return HTP_ERROR;
     return HTP_OK;
 }
 
-int htp_txh_state_response_line(htp_tx_t *tx) {
+htp_status_t htp_txh_state_response_line(htp_tx_t *tx) {
     #if 0
     // Commented-out until we determine which fields can be
     // unavailable in real-life
@@ -578,13 +578,13 @@ int htp_txh_state_response_line(htp_tx_t *tx) {
     }
 
     // Run hook RESPONSE_LINE
-    int rc = hook_run_all(tx->connp->cfg->hook_response_line, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_response_line, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     return HTP_OK;
 }
 
-int htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
+htp_status_t htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
     if ((name == NULL) || (value == NULL)) return HTP_ERROR;
     ;
 
@@ -605,32 +605,32 @@ int htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, 
     }
 
     // XXX Check return code
-    table_add(tx->response_headers, h->name, h);
+    htp_table_add(tx->response_headers, h->name, h);
 
     return HTP_OK;
 }
 
-int htp_txh_res_headers_clear(htp_tx_t *tx) {
+htp_status_t htp_txh_res_headers_clear(htp_tx_t *tx) {
     if (tx->response_headers == NULL) return HTP_ERROR;
 
     void *tvalue;
-    table_iterator_reset(tx->response_headers);
-    while (table_iterator_next(tx->response_headers, &tvalue) != NULL) {
+    htp_table_iterator_reset(tx->response_headers);
+    while (htp_table_iterator_next(tx->response_headers, &tvalue) != NULL) {
         htp_header_t *h = (htp_header_t *) tvalue;
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
     }
 
-    table_destroy(&tx->response_headers);
+    htp_table_destroy(&tx->response_headers);
 
-    tx->response_headers = tx->cfg->create_table(32);
+    tx->response_headers = htp_table_create(32);
     if (tx->response_headers == NULL) return HTP_ERROR;
 
     return HTP_OK;
 }
 
-static int htp_txh_res_process_body_data_decompressor_callback(htp_tx_data_t *d) {
+static htp_status_t htp_txh_res_process_body_data_decompressor_callback(htp_tx_data_t *d) {
     #if HTP_DEBUG
     fprint_raw_data(stderr, __FUNCTION__, d->data, d->len);
     #endif
@@ -640,15 +640,15 @@ static int htp_txh_res_process_body_data_decompressor_callback(htp_tx_data_t *d)
 
     // Invoke all callbacks
     int rc = htp_res_run_hook_body_data(d->tx->connp, d);
-    if (rc != HOOK_OK) return HTP_ERROR;
+    if (rc != HTP_OK) return HTP_ERROR;
 
     return HTP_OK;
 }
 
-int htp_txh_state_response_headers(htp_tx_t *tx) {
+htp_status_t htp_txh_state_response_headers(htp_tx_t *tx) {
     // Check for compression
     if (tx->connp->cfg->response_decompression_enabled) {
-        htp_header_t *ce = table_get_c(tx->response_headers, "content-encoding");
+        htp_header_t *ce = htp_table_get_c(tx->response_headers, "content-encoding");
         if (ce != NULL) {
             if ((bstr_cmp_c(ce->value, "gzip") == 0) || (bstr_cmp_c(ce->value, "x-gzip") == 0)) {
                 tx->response_content_encoding = COMPRESSION_GZIP;
@@ -659,8 +659,8 @@ int htp_txh_state_response_headers(htp_tx_t *tx) {
     }
 
     // Run hook RESPONSE_HEADERS_COMPLETE
-    int rc = hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     // Initialize the decompression engine as necessary. We can deal with three
     // scenarios:
@@ -691,7 +691,7 @@ int htp_txh_state_response_headers(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len) {
+htp_status_t htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len) {
     htp_tx_data_t d;
 
     d.tx = tx;
@@ -716,13 +716,13 @@ int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len) {
         tx->response_entity_len += d.len;
 
         int rc = htp_res_run_hook_body_data(tx->connp, &d);
-        if (rc != HOOK_OK) return HTP_ERROR;
+        if (rc != HTP_OK) return HTP_ERROR;
     }
 
     return HTP_OK;
 }
 
-int htp_txh_state_response_complete(htp_tx_t *tx) {
+htp_status_t htp_txh_state_response_complete(htp_tx_t *tx) {
     if (tx->connp->out_tx->progress != TX_PROGRESS_DONE) {
         tx->progress = TX_PROGRESS_DONE;
 
@@ -734,7 +734,7 @@ int htp_txh_state_response_complete(htp_tx_t *tx) {
         }
 
         // Run hook RESPONSE
-        return hook_run_all(tx->connp->cfg->hook_response_done, tx->connp);
+        return htp_hook_run_all(tx->connp->cfg->hook_response_done, tx->connp);
     }
 
     return HTP_OK;

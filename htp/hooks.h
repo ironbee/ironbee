@@ -44,11 +44,6 @@ typedef int (*htp_callback_fn_t) (void *);
 #include "dslib.h"
 #include "htp.h"
 
-#define HOOK_ERROR      HTP_ERROR
-#define HOOK_OK         HTP_OK
-#define HOOK_DECLINED   HTP_DECLINED
-#define HOOK_STOP       HTP_STOP
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -70,14 +65,14 @@ struct htp_callback_t {
  *         or, if it wasn't, if there was a memory allocation problem while
  *         constructing a copy).
  */
-htp_hook_t *hook_copy(const htp_hook_t *hook);
+htp_hook_t *htp_hook_copy(const htp_hook_t *hook);
 
 /**
  * Creates a new hook.
  *
  * @return New htp_hook_t structure on success, NULL on failure.
  */
-htp_hook_t *hook_create(void);
+htp_hook_t *htp_hook_create(void);
 
 /**
  * Destroys an existing hook. It is all right to send a NULL
@@ -85,39 +80,39 @@ htp_hook_t *hook_create(void);
  *
  * @param hook[in]
  */
-void hook_destroy(htp_hook_t *hook);
+void htp_hook_destroy(htp_hook_t *hook);
 
 /**
  * Registers a new callback with the hook.
  *
  * @param[in] hook
  * @param[in] callback_fn
- * @return HOOK_OK on success, HOOK_ERROR on memory allocation error.
+ * @return HTP_OK on success, HTP_ERROR on memory allocation error.
  */
-int hook_register(htp_hook_t **hook, const htp_callback_fn_t callback_fn);
+htp_status_t htp_hook_register(htp_hook_t **hook, const htp_callback_fn_t callback_fn);
 
 /**
  * Runs all the callbacks associated with a given hook. Only stops if
- * one of the callbacks returns an error (HOOK_ERROR) or stop (HOOK_STOP).
+ * one of the callbacks returns an error (HTP_ERROR) or stop (HTP_STOP).
  *
  * @param[in] hook
  * @param[in] user_data
- * @return HOOK_OK if at least one hook ran successfully, HOOK_STOP if there was
- *         no error but processing should stop, and HOOK_ERROR or any other value
+ * @return HTP_OK if at least one hook ran successfully, HTP_STOP if there was
+ *         no error but processing should stop, and HTP_ERROR or any other value
  *         less than zero on error.
  */
-int hook_run_all(htp_hook_t *hook, void *user_data);
+htp_status_t htp_hook_run_all(htp_hook_t *hook, void *user_data);
 
 /**
  * Run callbacks one by one until one of them accepts to service the hook.
  *
  * @param[in] hook
  * @param[in] user_data
- * @return HOOK_OK if a hook was found to process the callback, HOOK_DECLINED if
- *         no hook could be found, HOOK_STOP if a hook signalled the processing
- *         to stop, and HOOK_ERROR or any other value less than zero on error.
+ * @return HTP_OK if a hook was found to process the callback, HTP_DECLINED if
+ *         no hook could be found, HTP_STOP if a hook signalled the processing
+ *         to stop, and HTP_ERROR or any other value less than zero on error.
  */
-int hook_run_one(htp_hook_t *hook, void *user_data);
+htp_status_t htp_hook_run_one(htp_hook_t *hook, void *user_data);
 
 #ifdef __cplusplus
 }

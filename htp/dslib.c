@@ -459,176 +459,63 @@ list_t *list_array_create(size_t size) {
 
 // -- Table --
 
-/**
- * Add a new table element. This function currently makes a copy of
- * the key, which is inefficient.
- *
- * @param table
- * @param key
- * @param element
- */
-static int list_table_add(table_t *table, bstr *key, void *element) {
+htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *element) {
     bstr *dupkey = bstr_dup(key);
-    if (dupkey == NULL) {
-        return -1;
-    }
+    if (dupkey == NULL) return HTP_ERROR;    
 
-    int rc = table_addn(table, dupkey, element);
-    if (rc == -1) {
+    if (htp_table_addn(table, dupkey, element) != HTP_OK) {
         free(dupkey);
+        return HTP_ERROR;
     }
 
-    return rc;
+    return HTP_OK;
 }
 
-static int list_table_addn(table_t *table, bstr *key, void *element) {
+htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *element) {
     // Add key
-    if (list_add(table->list, key) != 1) {    
-        return -1;
-    }
+    if (list_add(table->list, (void *)key) != HTP_OK) return HTP_ERROR;
 
     // Add element
-    if (list_add(table->list, element) != 1) {
+    if (list_add(table->list, (void *)element) != HTP_OK) {
         list_pop(table->list);        
-        return -1;
+        return HTP_ERROR;
     }
 
-    return 1;
+    return HTP_OK;
 }
 
-/**
- * @param table
- * @param key
- */
-/*
-static void *table_get_internal(table_t *table, bstr *key) {
-    // Iterate through the list, comparing
-    // keys with the parameter, return data if found.
-    bstr *ts = NULL;
-    list_iterator_reset(table->list);
-    while ((ts = list_iterator_next(table->list)) != NULL) {
-        void *data = list_iterator_next(table->list);
-        if (bstr_cmp_nocase(ts, key) == 0) {
-            return data;
-        }
-    }
-
-    return NULL;
-}
-*/
-
-/**
- * Retrieve the first element in the table with the given
- * key (as a NUL-terminated string).
- *
- * @param table
- * @param cstr
- * @return table element, or NULL if not found
- */
-static void *list_table_get_c(const table_t *table, const char *cstr) {
-    if ((table == NULL)||(cstr == NULL)) return NULL;
-    
-    // Iterate through the list, comparing
-    // keys with the parameter, return data if found.
-    bstr *ts = NULL;
-    list_iterator_reset(table->list);
-    while ((ts = list_iterator_next(table->list)) != NULL) {
-        void *data = list_iterator_next(table->list);
-        if (bstr_cmp_c_nocase(ts, cstr) == 0) {
-            return data;
-        }
-    }
-
-    return NULL;
-}
-
-/**
- * Retrieve the first element in the table with the given key.
- *
- * @param table
- * @param key
- * @return table element, or NULL if not found
- */
-static void *list_table_get(const table_t *table, const bstr *key) {
-    if ((table == NULL)||(key == NULL)) return NULL;
-    
-    // Iterate through the list, comparing
-    // keys with the parameter, return data if found.
-    bstr *ts = NULL;
-    list_iterator_reset(table->list);
-    while ((ts = list_iterator_next(table->list)) != NULL) {
-        void *data = list_iterator_next(table->list);
-        if (bstr_cmp_nocase(ts, key) == 0) {
-            return data;
-        }
-    }
-
-    return NULL;
-}
-
-/**
- * Reset the table iterator.
- *
- * @param table
- */
-static void list_table_iterator_reset(table_t *table) {
-    list_iterator_reset(table->list);
-}
-
-/**
- * Advance to the next table element.
- *
- * @param t
- * @param data
- * @return pointer to the key and the element if there is a next element, NULL otherwise
- */
-static bstr *list_table_iterator_next(table_t *t, void **data) {
-    bstr *s = list_iterator_next(t->list);
-    if (s != NULL) {
-        *data = list_iterator_next(t->list);
-    }
-
-    return s;
-}
-
-/**
- * Returns the size of the table.
- *
- * @param table
- * @return table size
- */
-static size_t list_table_size(const table_t *table) {
-    return list_size(table->list) / 2;
-}
-
-/**
- * Remove all elements from the table.
- *
- * @param table
- */
-static void list_table_clear(table_t *table) {
+void htp_table_clear(htp_table_t *table) {
     if (table == NULL) return;
-    
+
     size_t size = list_size(table->list);
 
     list_destroy(&table->list);
-    
+
     // Use a list behind the scenes
     table->list = list_array_create(size == 0 ? 10 : size);
     if (table->list == NULL) {
-        free(table);        
-    }    
+        free(table);
+    }
 }
 
-/**
- * Destroy a table.
- *
- * @param table
- */
-static void list_table_destroy(table_t **_table) {
+htp_table_t *htp_table_create(size_t size) {
+    htp_table_t *t = calloc(1, sizeof (htp_table_t));
+    if (t == NULL) return NULL;
+
+    // Use a list behind the scenes
+    t->list = list_array_create(size * 2);
+    if (t->list == NULL) {
+        free(t);
+        return NULL;
+    }
+
+    return t;
+}
+
+void htp_table_destroy(htp_table_t **_table) {
     if ((_table == NULL)||(*_table == NULL)) return;
 
-    table_t *table = *_table;
+    htp_table_t *table = *_table;
     // Free keys only
     int counter = 0;
     void *data = NULL;
@@ -650,38 +537,59 @@ static void list_table_destroy(table_t **_table) {
     *_table = NULL;
 }
 
-/**
- * Create a new table structure.
- *
- * @param size
- * @return newly created table_t
- */
-table_t *table_create(size_t size) {
-    table_t *t = calloc(1, sizeof (table_t));
-    if (t == NULL) return NULL;
+void *htp_table_get(const htp_table_t *table, const bstr *key) {
+    if ((table == NULL)||(key == NULL)) return NULL;
 
-    // Use a list behind the scenes
-    t->list = list_array_create(size * 2);
-    if (t->list == NULL) {
-        free(t);
-        return NULL;
+    // Iterate through the list, comparing
+    // keys with the parameter, return data if found.
+    bstr *ts = NULL;
+    list_iterator_reset(table->list);
+    while ((ts = list_iterator_next(table->list)) != NULL) {
+        void *data = list_iterator_next(table->list);
+        if (bstr_cmp_nocase(ts, key) == 0) {
+            return data;
+        }
     }
 
-    // Initialise structure
-    t->add = list_table_add;
-    t->addn = list_table_addn;
-#if 0
-    t->set = list_table_set;
-#endif
-    t->get = list_table_get;
-    t->get_c = list_table_get_c;
-    t->iterator_reset = list_table_iterator_reset;
-    t->iterator_next = list_table_iterator_next;
-    t->size = list_table_size;
-    t->destroy = list_table_destroy;
-    t->clear = list_table_clear;
+    return NULL;
+}
 
-    return t;
+void *htp_table_get_c(const htp_table_t *table, const char *ckey) {
+    if ((table == NULL)||(ckey == NULL)) return NULL;
+    
+    // Iterate through the list, comparing
+    // keys with the parameter, return data if found.
+    bstr *ts = NULL;
+    list_iterator_reset(table->list);
+    while ((ts = list_iterator_next(table->list)) != NULL) {
+        void *data = list_iterator_next(table->list);
+        if (bstr_cmp_c_nocase(ts, ckey) == 0) {
+            return data;
+        }
+    }
+
+    return NULL;
+}
+
+bstr *htp_table_iterator_next(htp_table_t *t, void **data) {
+    // Get the key
+    bstr *s = list_iterator_next(t->list);
+
+    if (s != NULL) {
+        // Get the value
+        *data = list_iterator_next(t->list);
+    }
+
+    // Return the key
+    return s;
+}
+
+void htp_table_iterator_reset(htp_table_t *table) {
+    list_iterator_reset(table->list);
+}
+
+size_t htp_table_size(const htp_table_t *table) {
+    return list_size(table->list) / 2;
 }
 
 #if 0

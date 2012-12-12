@@ -58,14 +58,13 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
         } else {
             // We have a parameter processor defined, which means we'll
             // need to create a new table
-            d->tx->request_params_body =
-                d->tx->cfg->create_table(table_size(d->tx->request_urlenp_body->params));
+            d->tx->request_params_body = htp_table_create(htp_table_size(d->tx->request_urlenp_body->params));
 
             // Transform parameters and store them into the new table
             bstr *name;
             void *tvalue;
-            table_iterator_reset(d->tx->request_urlenp_body->params);
-            while ((name = table_iterator_next(d->tx->request_urlenp_body->params, & tvalue)) != NULL) {
+            htp_table_iterator_reset(d->tx->request_urlenp_body->params);
+            while ((name = htp_table_iterator_next(d->tx->request_urlenp_body->params, & tvalue)) != NULL) {
                 d->tx->connp->cfg->parameter_processor(d->tx->request_params_body, name, (bstr *)tvalue);
                 // TODO Check return code
             }
@@ -74,7 +73,7 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
         }       
     }
 
-    return HOOK_OK;
+    return HTP_OK;
 }
 
 /**
@@ -88,7 +87,7 @@ int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
         fprintf(stderr, "htp_ch_urlencoded_callback_request_headers: Body not URLENCODED\n");
         #endif
 
-        return HOOK_OK;
+        return HTP_OK;
     }
     
     #ifdef HTP_DEBUG
@@ -98,13 +97,13 @@ int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
     // Create parser instance
     connp->in_tx->request_urlenp_body = htp_urlenp_create(connp->in_tx);
     if (connp->in_tx->request_urlenp_body == NULL) {
-        return HOOK_ERROR;
+        return HTP_ERROR;
     }
 
     // Register request body data callbacks
     htp_tx_register_request_body_data(connp->in_tx, htp_ch_urlencoded_callback_request_body_data);
 
-    return HOOK_OK;
+    return HTP_OK;
 }
 
 /**
@@ -118,7 +117,7 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
     if ((connp->in_tx->parsed_uri->query != NULL) && (bstr_len(connp->in_tx->parsed_uri->query) > 0)) {
         connp->in_tx->request_urlenp_query = htp_urlenp_create(connp->in_tx);
         if (connp->in_tx->request_urlenp_query == NULL) {
-            return HOOK_ERROR;
+            return HTP_ERROR;
         }       
 
         htp_urlenp_parse_complete(connp->in_tx->request_urlenp_query,
@@ -142,15 +141,14 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
             // We have a parameter processor defined, which 
             // means we'll need to create a new table
             
-            connp->in_tx->request_params_query =
-                connp->cfg->create_table(table_size(connp->in_tx->request_urlenp_query->params));
+            connp->in_tx->request_params_query = htp_table_create(htp_table_size(connp->in_tx->request_urlenp_query->params));
 
             // Use the parameter processor on each parameter, storing
             // the results in the newly created table
             bstr *name;
             void *tvalue;
-            table_iterator_reset(connp->in_tx->request_urlenp_query->params);
-            while ((name = table_iterator_next(connp->in_tx->request_urlenp_query->params, & tvalue)) != NULL) {
+            htp_table_iterator_reset(connp->in_tx->request_urlenp_query->params);
+            while ((name = htp_table_iterator_next(connp->in_tx->request_urlenp_query->params, & tvalue)) != NULL) {
                 connp->cfg->parameter_processor(connp->in_tx->request_params_query, name, (bstr *)tvalue);
                 // TODO Check return code
             }
@@ -160,7 +158,7 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
         }       
     }
 
-    return HOOK_OK;
+    return HTP_OK;
 }
 
 /**
@@ -176,8 +174,7 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
         // Finalize parsing
         htp_mpartp_finalize(d->tx->request_mpartp);
 
-        d->tx->request_params_body =
-            d->tx->cfg->create_table(list_size(d->tx->request_mpartp->parts));
+        d->tx->request_params_body = htp_table_create(list_size(d->tx->request_mpartp->parts));
         // TODO RC
 
         // Extract parameters
@@ -189,7 +186,7 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
             // Only use text parameters
             if (part->type == MULTIPART_PART_TEXT) {                
                 if (d->tx->connp->cfg->parameter_processor == NULL) {
-                    table_add(d->tx->request_params_body, part->name, part->value);
+                    htp_table_add(d->tx->request_params_body, part->name, part->value);
                 } else {
                     d->tx->connp->cfg->parameter_processor(d->tx->request_params_body, part->name, part->value);
                 }
@@ -197,7 +194,7 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
         }
     }
 
-    return HOOK_OK;
+    return HTP_OK;
 }
 
 /**
@@ -213,29 +210,29 @@ int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
         fprintf(stderr, "htp_ch_multipart_callback_request_headers: Body not MULTIPART\n");
         #endif
 
-        return HOOK_OK;
+        return HTP_OK;
     }
     
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_ch_multipart_callback_request_headers: Parsing MULTIPART body\n");
     #endif
 
-    htp_header_t *ct = table_get_c(connp->in_tx->request_headers, "content-type");
-    if (ct == NULL) return HOOK_OK;
+    htp_header_t *ct = htp_table_get_c(connp->in_tx->request_headers, "content-type");
+    if (ct == NULL) return HTP_OK;
 
     char *boundary = NULL;
 
     int rc = htp_mpartp_extract_boundary(ct->value, &boundary);
     if (rc != HTP_OK) {
         // TODO Invalid boundary
-        return HOOK_OK;
+        return HTP_OK;
     }
 
     // Create parser instance
     connp->in_tx->request_mpartp = htp_mpartp_create(connp->cfg, boundary);
     if (connp->in_tx->request_mpartp == NULL) {
         free(boundary);
-        return HOOK_ERROR;
+        return HTP_ERROR;
     }
 
     if (connp->cfg->extract_request_files) {
@@ -248,5 +245,5 @@ int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     // Register request body data callbacks
     htp_tx_register_request_body_data(connp->in_tx, htp_ch_multipart_callback_request_body_data);
 
-    return HOOK_OK;
+    return HTP_OK;
 }

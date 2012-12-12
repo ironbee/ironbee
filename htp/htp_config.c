@@ -163,14 +163,14 @@ htp_cfg_t *htp_config_create(void) {
     cfg->params_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     cfg->params_nul_encoded_handling = NONE;
     cfg->params_nul_raw_handling = NONE;
+    // XXX
     cfg->tmpdir = "/tmp";
 
     // No need to create hooks here; they will be created on-demand,
     // during callback registration
 
     cfg->create_list_linked = list_linked_create;
-    cfg->create_list_array = list_array_create;
-    cfg->create_table = table_create;
+    cfg->create_list_array = list_array_create;    
 
     // Set the default personality before we return
     htp_config_set_server_personality(cfg, HTP_SERVER_MINIMAL);
@@ -197,7 +197,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     
     // Create copies of the hooks' structures
     if (cfg->hook_transaction_start != NULL) {
-        copy->hook_transaction_start = hook_copy(cfg->hook_transaction_start);
+        copy->hook_transaction_start = htp_hook_copy(cfg->hook_transaction_start);
         if (copy->hook_transaction_start == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -205,7 +205,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_request_line != NULL) {
-        copy->hook_request_line = hook_copy(cfg->hook_request_line);
+        copy->hook_request_line = htp_hook_copy(cfg->hook_request_line);
         if (copy->hook_request_line == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -213,7 +213,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_request_uri_normalize != NULL) {
-        copy->hook_request_uri_normalize = hook_copy(cfg->hook_request_uri_normalize);
+        copy->hook_request_uri_normalize = htp_hook_copy(cfg->hook_request_uri_normalize);
         if (copy->hook_request_uri_normalize == NULL) {
             free(copy);
             return NULL;
@@ -221,7 +221,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_request_headers != NULL) {
-        copy->hook_request_headers = hook_copy(cfg->hook_request_headers);
+        copy->hook_request_headers = htp_hook_copy(cfg->hook_request_headers);
         if (copy->hook_request_headers == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -229,7 +229,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_request_body_data != NULL) {
-        copy->hook_request_body_data = hook_copy(cfg->hook_request_body_data);
+        copy->hook_request_body_data = htp_hook_copy(cfg->hook_request_body_data);
         if (copy->hook_request_body_data == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -237,7 +237,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_request_file_data != NULL) {
-        copy->hook_request_file_data = hook_copy(cfg->hook_request_file_data);
+        copy->hook_request_file_data = htp_hook_copy(cfg->hook_request_file_data);
         if (copy->hook_request_file_data == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -245,7 +245,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_request_trailer != NULL) {
-        copy->hook_request_trailer = hook_copy(cfg->hook_request_trailer);
+        copy->hook_request_trailer = htp_hook_copy(cfg->hook_request_trailer);
         if (copy->hook_request_trailer == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -253,7 +253,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_request_done != NULL) {
-        copy->hook_request_done = hook_copy(cfg->hook_request_done);
+        copy->hook_request_done = htp_hook_copy(cfg->hook_request_done);
         if (copy->hook_request_done == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -261,7 +261,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
     
     if (cfg->hook_response_start != NULL) {
-        copy->hook_response_start = hook_copy(cfg->hook_response_start);
+        copy->hook_response_start = htp_hook_copy(cfg->hook_response_start);
         if (copy->hook_response_start == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -269,7 +269,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_response_line != NULL) {
-        copy->hook_response_line = hook_copy(cfg->hook_response_line);
+        copy->hook_response_line = htp_hook_copy(cfg->hook_response_line);
         if (copy->hook_response_line == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -277,7 +277,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_response_headers != NULL) {
-        copy->hook_response_headers = hook_copy(cfg->hook_response_headers);
+        copy->hook_response_headers = htp_hook_copy(cfg->hook_response_headers);
         if (copy->hook_response_headers == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -285,7 +285,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }   
 
     if (cfg->hook_response_body_data != NULL) {
-        copy->hook_response_body_data = hook_copy(cfg->hook_response_body_data);
+        copy->hook_response_body_data = htp_hook_copy(cfg->hook_response_body_data);
         if (copy->hook_response_body_data == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -293,7 +293,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_response_trailer != NULL) {
-        copy->hook_response_trailer = hook_copy(cfg->hook_response_trailer);
+        copy->hook_response_trailer = htp_hook_copy(cfg->hook_response_trailer);
         if (copy->hook_response_trailer == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -301,7 +301,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_response_done != NULL) {
-        copy->hook_response_done = hook_copy(cfg->hook_response_done);
+        copy->hook_response_done = htp_hook_copy(cfg->hook_response_done);
         if (copy->hook_response_done == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -309,7 +309,7 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     }
 
     if (cfg->hook_log != NULL) {
-        copy->hook_log = hook_copy(cfg->hook_log);
+        copy->hook_log = htp_hook_copy(cfg->hook_log);
         if (copy->hook_log == NULL) {
             htp_config_destroy(copy);
             return NULL;
@@ -326,25 +326,24 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
  */
 void htp_config_destroy(htp_cfg_t *cfg) {
     // Destroy hooks
-    hook_destroy(cfg->hook_transaction_start);
-    hook_destroy(cfg->hook_request_line);
-    hook_destroy(cfg->hook_request_uri_normalize);
-    hook_destroy(cfg->hook_request_headers);
-    hook_destroy(cfg->hook_request_body_data);
-    hook_destroy(cfg->hook_request_file_data);
-    hook_destroy(cfg->hook_request_trailer);
-    hook_destroy(cfg->hook_request_done);
-    hook_destroy(cfg->hook_response_start);
-    hook_destroy(cfg->hook_response_line);
-    hook_destroy(cfg->hook_response_headers);
-    hook_destroy(cfg->hook_response_body_data);
-    hook_destroy(cfg->hook_response_trailer);
-    hook_destroy(cfg->hook_response_done);
-    hook_destroy(cfg->hook_log);
+    htp_hook_destroy(cfg->hook_transaction_start);
+    htp_hook_destroy(cfg->hook_request_line);
+    htp_hook_destroy(cfg->hook_request_uri_normalize);
+    htp_hook_destroy(cfg->hook_request_headers);
+    htp_hook_destroy(cfg->hook_request_body_data);
+    htp_hook_destroy(cfg->hook_request_file_data);
+    htp_hook_destroy(cfg->hook_request_trailer);
+    htp_hook_destroy(cfg->hook_request_done);
+    htp_hook_destroy(cfg->hook_response_start);
+    htp_hook_destroy(cfg->hook_response_line);
+    htp_hook_destroy(cfg->hook_response_headers);
+    htp_hook_destroy(cfg->hook_response_body_data);
+    htp_hook_destroy(cfg->hook_response_trailer);
+    htp_hook_destroy(cfg->hook_response_done);
+    htp_hook_destroy(cfg->hook_log);
 
     cfg->create_list_linked = NULL;
-    cfg->create_list_array = NULL;
-    cfg->create_table = NULL;
+    cfg->create_list_array = NULL;    
 
     // Free the structure itself
     free(cfg);
@@ -358,10 +357,6 @@ void htp_config_register_list_array_create(htp_cfg_t *cfg, list_t *(*callback_fn
     cfg->create_list_array = callback_fn;
 }
 
-void htp_config_register_table_create(htp_cfg_t *cfg, table_t *(*callback_fn)(size_t size)) {
-    cfg->create_table = callback_fn;
-}
-
 /**
  * Registers a callback that is invoked every time there is a log message.
  *
@@ -369,7 +364,7 @@ void htp_config_register_table_create(htp_cfg_t *cfg, table_t *(*callback_fn)(si
  * @param callback_fn
  */
 void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *)) {
-    hook_register(&cfg->hook_log, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_log, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -389,7 +384,7 @@ void htp_config_register_multipart_parser(htp_cfg_t *cfg) {
  * @param callback_fn
  */
 void htp_config_register_request_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_done, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_request_done, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -399,7 +394,7 @@ void htp_config_register_request_done(htp_cfg_t *cfg, int (*callback_fn)(htp_con
  * @param callback_fn 
  */
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
-    hook_register(&cfg->hook_request_body_data, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_request_body_data, (htp_callback_fn_t)callback_fn);
 }
 
 
@@ -411,7 +406,7 @@ void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(ht
  * @param callback_fn
  */
 void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_file_data_t *)) {
-    hook_register(&cfg->hook_request_file_data, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_request_file_data, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -421,7 +416,7 @@ void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(ht
  * @param callback_fn 
  */
 void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_uri_normalize, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_request_uri_normalize, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -431,7 +426,7 @@ void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn
  * @param callback_fn
  */
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_headers, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_request_headers, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -441,7 +436,7 @@ void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_
  * @param callback_fn
  */
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_line, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_request_line, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -451,7 +446,7 @@ void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_con
  * @param callback_fn
  */
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_request_trailer, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_request_trailer, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -461,7 +456,7 @@ void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_
  * @param callback_fn 
  */
 void htp_config_register_response_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response_done, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_response_done, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -471,7 +466,7 @@ void htp_config_register_response_done(htp_cfg_t *cfg, int (*callback_fn)(htp_co
  * @param callback_fn
  */
 void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
-    hook_register(&cfg->hook_response_body_data, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_response_body_data, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -481,7 +476,7 @@ void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(h
  * @param callback_fn
  */
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response_headers, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_response_headers, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -491,7 +486,7 @@ void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp
  * @param callback_fn
  */
 void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response_start, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_response_start, (htp_callback_fn_t)callback_fn);
 }
 
 
@@ -502,7 +497,7 @@ void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_c
  * @param callback_fn
  */
 void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response_line, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_response_line, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -512,7 +507,7 @@ void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_co
  * @param callback_fn 
  */
 void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_response_trailer, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_response_trailer, (htp_callback_fn_t)callback_fn);
 }
 
 /**
@@ -534,7 +529,7 @@ void htp_config_register_urlencoded_parser(htp_cfg_t *cfg) {
  * @param callback_fn
  */
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
-    hook_register(&cfg->hook_transaction_start, (htp_callback_fn_t)callback_fn);
+    htp_hook_register(&cfg->hook_transaction_start, (htp_callback_fn_t)callback_fn);
 }
 
 /**

@@ -36,7 +36,7 @@
 
 #include "htp.h"
 
-int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value) {
+int htp_php_parameter_processor(htp_table_t *params, bstr *name, bstr *value) {
     // TODO Examine the PHP source code to determine the exact
     //      algorithm it uses to transform parameter names    
 
@@ -66,7 +66,7 @@ int htp_php_parameter_processor(table_t *params, bstr *name, bstr *value) {
     bstr *new_value = bstr_dup(value);
 
     // Add parameter to table
-    table_addn(params, new_name, new_value);
+    htp_table_addn(params, new_name, new_value);
 
     return HTP_OK;
 }

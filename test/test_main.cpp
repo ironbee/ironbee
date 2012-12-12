@@ -96,7 +96,7 @@ TEST_F(ConnectionParsing, Get) {
     
     ASSERT_TRUE(tx->request_params_query != NULL);
     
-    bstr *p = (bstr *)table_get_c(tx->request_params_query, "p");
+    bstr *p = (bstr *)htp_table_get_c(tx->request_params_query, "p");
     ASSERT_TRUE(p != NULL);
     
     ASSERT_EQ(bstr_cmp_c(p, " "), 0);
@@ -111,14 +111,14 @@ TEST_F(ConnectionParsing, ApacheHeaderParsing) {
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(table_size(tx->request_headers), 9);
+    ASSERT_EQ(htp_table_size(tx->request_headers), 9);
 
     // Check every header
     int count = 0;
     bstr *key = NULL;
     htp_header_t *h = NULL;
-    table_iterator_reset(tx->request_headers);
-    while ((key = table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
+    htp_table_iterator_reset(tx->request_headers);
+    while ((key = htp_table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
 
         switch (count) {
             case 0:
@@ -178,7 +178,7 @@ TEST_F(ConnectionParsing, PostUrlencoded) {
     
     ASSERT_TRUE(tx->request_params_body != NULL);
     
-    bstr *p = (bstr *)table_get_c(tx->request_params_body, "p");
+    bstr *p = (bstr *)htp_table_get_c(tx->request_params_body, "p");
     ASSERT_TRUE(p != NULL);
     
     ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
@@ -195,7 +195,7 @@ TEST_F(ConnectionParsing, PostUrlencodedChunked) {
     
     ASSERT_TRUE(tx->request_params_body != NULL);
     
-    bstr *p = (bstr *)table_get_c(tx->request_params_body, "p");
+    bstr *p = (bstr *)htp_table_get_c(tx->request_params_body, "p");
     ASSERT_TRUE(p != NULL);
     
     ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
@@ -396,11 +396,11 @@ TEST_F(ConnectionParsing, Multipart) {
     
     ASSERT_TRUE(tx->request_params_body != NULL);
     
-    bstr *field1 = (bstr *)table_get_c(tx->request_params_body, "field1");
+    bstr *field1 = (bstr *)htp_table_get_c(tx->request_params_body, "field1");
     ASSERT_TRUE(field1 != NULL); 
     ASSERT_EQ(bstr_cmp_c(field1, "0123456789"), 0);
     
-    bstr *field2 = (bstr *)table_get_c(tx->request_params_body, "field2");
+    bstr *field2 = (bstr *)htp_table_get_c(tx->request_params_body, "field2");
     ASSERT_TRUE(field2 != NULL);
     ASSERT_EQ(bstr_cmp_c(field2, "9876543210"), 0);
 }
@@ -437,15 +437,15 @@ TEST_F(ConnectionParsing, UrlEncoded) {
     
     ASSERT_TRUE(tx->request_params_body != NULL);
     
-    bstr *body_p = (bstr *)table_get_c(tx->request_params_body, "p");
+    bstr *body_p = (bstr *)htp_table_get_c(tx->request_params_body, "p");
     ASSERT_TRUE(body_p != NULL);
     ASSERT_EQ(bstr_cmp_c(body_p, "3"), 0);
     
-    bstr *body_q = (bstr *)table_get_c(tx->request_params_body, "q");
+    bstr *body_q = (bstr *)htp_table_get_c(tx->request_params_body, "q");
     ASSERT_TRUE(body_q != NULL);
     ASSERT_EQ(bstr_cmp_c(body_q, "4"), 0);
     
-    bstr *body_z = (bstr *)table_get_c(tx->request_params_body, "z");
+    bstr *body_z = (bstr *)htp_table_get_c(tx->request_params_body, "z");
     ASSERT_TRUE(body_z != NULL);
     ASSERT_EQ(bstr_cmp_c(body_z, "5"), 0);
 }

@@ -303,7 +303,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
     }
 
     // Do we already have a header with the same name?
-    htp_header_t *h_existing = table_get(connp->out_tx->response_headers, h->name);
+    htp_header_t *h_existing = htp_table_get(connp->out_tx->response_headers, h->name);
     if (h_existing != NULL) {
         // repeated header
         int i = 0;
@@ -341,7 +341,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
         h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
         // Add as a new header
-        table_add(connp->out_tx->response_headers, h->name, h);
+        htp_table_add(connp->out_tx->response_headers, h->name, h);
     }
 
     bstr_free(&tempstr);
