@@ -105,7 +105,7 @@ void *list_array_pop(list_array_t *l) {
     return (void *) r;
 }
 
-htp_status_t list_array_push(list_array_t *l, const void *e) {
+htp_status_t list_array_push(list_array_t *l, void *e) {
     // Check whether we're full
     if (l->current_size >= l->max_size) {
         size_t new_size = l->max_size * 2;
@@ -150,7 +150,7 @@ htp_status_t list_array_push(list_array_t *l, const void *e) {
     return HTP_OK;
 }
 
-htp_status_t list_array_replace(list_array_t *l, size_t idx, const void *e) {
+htp_status_t list_array_replace(list_array_t *l, size_t idx, void *e) {
     if (idx + 1 > l->current_size) return HTP_ERROR;
 
     size_t i = l->first;

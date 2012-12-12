@@ -85,7 +85,7 @@ struct list_array_t {
 
     size_t current_size;
 
-    const void ** elements;
+    void ** elements;
 
     size_t iterator_index;
 };
@@ -132,7 +132,7 @@ void *list_array_pop(list_array_t *l);
  * @return HTP_OK on success or HTP_ERROR on failure.
  *
  */
-htp_status_t list_array_push(list_array_t *l, const void *e);
+htp_status_t list_array_push(list_array_t *l, void *e);
 
 /**
  * Replace the element at the given index with the provided element.
@@ -144,7 +144,7 @@ htp_status_t list_array_push(list_array_t *l, const void *e);
  * @return HTTP_OK if an element with the given index was replaced; HTP_ERROR
  *         if the desired index does not exist.
  */
-htp_status_t list_array_replace(list_array_t *l, size_t idx, const void *e);
+htp_status_t list_array_replace(list_array_t *l, size_t idx, void *e);
 
 /**
  * Returns the size of the list.
