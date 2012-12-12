@@ -19,6 +19,6 @@ test_utils_LDADD = libgtest.la -lpthread $(LDADD)
 
 libgtest_la_SOURCES=$(srcdir)/gtest/gtest-all.cc $(srcdir)/gtest/gtest_main.cc $(srcdir)/gtest/gtest.h 
 
-TESTS_ENVIRONMENT= srcdir=$(srcdir)
+TESTS_ENVIRONMENT= srcdir=$(srcdir) TEST_HOME=$(srcdir)/files
 TESTS = run-tests.sh test_bstr test_main test_utils
 
