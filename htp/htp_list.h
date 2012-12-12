@@ -45,7 +45,6 @@ typedef struct list_array_t list_array_t;
 typedef struct list_array_iterator_t list_array_iterator_t;
 typedef struct list_linked_element_t list_linked_element_t;
 typedef struct list_linked_t list_linked_t;
-typedef struct htp_table_t htp_table_t;
 
 #define list_t list_array_t
 #define list_iterator_t list_array_iterator_t

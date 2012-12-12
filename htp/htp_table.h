@@ -37,15 +37,13 @@
 #ifndef HTP_TABLE_H
 #define	HTP_TABLE_H
 
-#include "htp_list.h"
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
-struct htp_table_t {
-    list_t *list;
-};
+typedef struct htp_table_t htp_table_t;
+
+struct htp_table_t;
 
 /**
  * Add a new element to the table. The key will be copied, and the copy
