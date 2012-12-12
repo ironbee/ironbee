@@ -5,7 +5,7 @@ c_sources = bstr.c bstr_builder.c hooks.c htp_config.c htp_connection_parser.c h
 library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
 
-INCLUDES = -I$(top_srcdir)
+AM_CPPFLAGS = -I$(top_srcdir)
 AM_CFLAGS = -D_GNU_SOURCE -g -O2 -Wall -Wextra -std=gnu99 -pedantic \
     -Wextra -Wno-missing-field-initializers -Wshadow -Wpointer-arith \
     -Wstrict-prototypes -Wmissing-prototypes -Wno-unused-parameter
