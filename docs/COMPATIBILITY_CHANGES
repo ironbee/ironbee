@@ -5,5 +5,9 @@
 
 - Added the "htp_" prefix to all hook functions.
 
+- Added the "htp_" prefix to all table structures and functions.
+
+
+
 
 

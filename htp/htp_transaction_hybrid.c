@@ -90,7 +90,7 @@ htp_status_t htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char
     }
 
     // XXX Check return code
-    table_add(tx->request_headers, h->name, h);
+    htp_table_add(tx->request_headers, h->name, h);
 
     return HTP_OK;
 }
@@ -284,8 +284,8 @@ static htp_status_t htp_txh_process_request_headers(htp_tx_t *tx) {
     tx->request_header_lines_no_trailers = list_size(tx->request_header_lines);
 
     // Determine if we have a request body, and how it is packaged
-    htp_header_t *cl = table_get_c(tx->request_headers, "content-length");
-    htp_header_t *te = table_get_c(tx->request_headers, "transfer-encoding");
+    htp_header_t *cl = htp_table_get_c(tx->request_headers, "content-length");
+    htp_header_t *te = htp_table_get_c(tx->request_headers, "transfer-encoding");
 
     // Check for the Transfer-Encoding header, which would indicate a chunked request body
     if (te != NULL) {
@@ -356,7 +356,7 @@ static htp_status_t htp_txh_process_request_headers(htp_tx_t *tx) {
     }
 
     // Host resolution
-    htp_header_t *h = table_get_c(tx->request_headers, "host");
+    htp_header_t *h = htp_table_get_c(tx->request_headers, "host");
     if (h == NULL) {
         // No host information in the headers
 
@@ -384,7 +384,7 @@ static htp_status_t htp_txh_process_request_headers(htp_tx_t *tx) {
     }
 
     // Parse Content-Type
-    htp_header_t *ct = table_get_c(tx->request_headers, "content-type");
+    htp_header_t *ct = htp_table_get_c(tx->request_headers, "content-type");
     if (ct != NULL) {
         tx->request_content_type = bstr_dup_lower(ct->value);
         if (tx->request_content_type == NULL) return HTP_ERROR;
@@ -488,17 +488,17 @@ htp_status_t htp_txh_req_headers_clear(htp_tx_t *tx) {
     if (tx->request_headers == NULL) return HTP_ERROR;
 
     void *tvalue;
-    table_iterator_reset(tx->request_headers);
-    while (table_iterator_next(tx->request_headers, &tvalue) != NULL) {
+    htp_table_iterator_reset(tx->request_headers);
+    while (htp_table_iterator_next(tx->request_headers, &tvalue) != NULL) {
         htp_header_t *h = (htp_header_t *) tvalue;
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
     }
 
-    table_destroy(&tx->request_headers);
+    htp_table_destroy(&tx->request_headers);
 
-    tx->request_headers = tx->cfg->create_table(32);
+    tx->request_headers = htp_table_create(32);
     if (tx->request_headers == NULL) return HTP_ERROR;
 
     return HTP_OK;
@@ -605,7 +605,7 @@ htp_status_t htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char
     }
 
     // XXX Check return code
-    table_add(tx->response_headers, h->name, h);
+    htp_table_add(tx->response_headers, h->name, h);
 
     return HTP_OK;
 }
@@ -614,17 +614,17 @@ htp_status_t htp_txh_res_headers_clear(htp_tx_t *tx) {
     if (tx->response_headers == NULL) return HTP_ERROR;
 
     void *tvalue;
-    table_iterator_reset(tx->response_headers);
-    while (table_iterator_next(tx->response_headers, &tvalue) != NULL) {
+    htp_table_iterator_reset(tx->response_headers);
+    while (htp_table_iterator_next(tx->response_headers, &tvalue) != NULL) {
         htp_header_t *h = (htp_header_t *) tvalue;
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
     }
 
-    table_destroy(&tx->response_headers);
+    htp_table_destroy(&tx->response_headers);
 
-    tx->response_headers = tx->cfg->create_table(32);
+    tx->response_headers = htp_table_create(32);
     if (tx->response_headers == NULL) return HTP_ERROR;
 
     return HTP_OK;
@@ -648,7 +648,7 @@ static htp_status_t htp_txh_res_process_body_data_decompressor_callback(htp_tx_d
 htp_status_t htp_txh_state_response_headers(htp_tx_t *tx) {
     // Check for compression
     if (tx->connp->cfg->response_decompression_enabled) {
-        htp_header_t *ce = table_get_c(tx->response_headers, "content-encoding");
+        htp_header_t *ce = htp_table_get_c(tx->response_headers, "content-encoding");
         if (ce != NULL) {
             if ((bstr_cmp_c(ce->value, "gzip") == 0) || (bstr_cmp_c(ce->value, "x-gzip") == 0)) {
                 tx->response_content_encoding = COMPRESSION_GZIP;

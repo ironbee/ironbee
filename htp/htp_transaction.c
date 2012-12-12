@@ -55,13 +55,13 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
     tx->conn = conn;
 
     tx->request_header_lines = cfg->create_list_array(32);
-    tx->request_headers = cfg->create_table(32);
+    tx->request_headers = htp_table_create(32);
     tx->request_line_nul_offset = -1;
     tx->parsed_uri = calloc(1, sizeof (htp_uri_t));
     tx->parsed_uri_incomplete = calloc(1, sizeof (htp_uri_t));
 
     tx->response_header_lines = cfg->create_list_array(32);
-    tx->response_headers = cfg->create_table(32);
+    tx->response_headers = htp_table_create(32);
 
     tx->request_protocol_number = -1;
 
@@ -124,15 +124,15 @@ void htp_tx_destroy(htp_tx_t *tx) {
     // Destroy request_headers
     if (tx->request_headers != NULL) {
         void *tvalue;
-        table_iterator_reset(tx->request_headers);
-        while (table_iterator_next(tx->request_headers, &tvalue) != NULL) {
+        htp_table_iterator_reset(tx->request_headers);
+        while (htp_table_iterator_next(tx->request_headers, &tvalue) != NULL) {
             htp_header_t *h = (htp_header_t *) tvalue;
             bstr_free(&h->name);
             bstr_free(&h->value);
             free(h);
         }
 
-        table_destroy(&tx->request_headers);
+        htp_table_destroy(&tx->request_headers);
     }
 
     if (tx->request_headers_raw != NULL) {
@@ -166,15 +166,15 @@ void htp_tx_destroy(htp_tx_t *tx) {
     // Destroy response headers
     if (tx->response_headers != NULL) {
         void *tvalue;
-        table_iterator_reset(tx->response_headers);
-        while (table_iterator_next(tx->response_headers, &tvalue) != NULL) {
+        htp_table_iterator_reset(tx->response_headers);
+        while (htp_table_iterator_next(tx->response_headers, &tvalue) != NULL) {
             htp_header_t *h = (htp_header_t *) tvalue;
             bstr_free(&h->name);
             bstr_free(&h->value);
             free(h);
         }
 
-        table_destroy(&tx->response_headers);
+        htp_table_destroy(&tx->response_headers);
     }
 
     // Tell the connection to remove this transaction
@@ -199,35 +199,35 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     if ((tx->request_params_query_reused == 0) && (tx->request_params_query != NULL)) {
         void *tvalue;
-        table_iterator_reset(tx->request_params_query);
-        while (table_iterator_next(tx->request_params_query, &tvalue) != NULL) {
+        htp_table_iterator_reset(tx->request_params_query);
+        while (htp_table_iterator_next(tx->request_params_query, &tvalue) != NULL) {
             bstr *b = (bstr *) tvalue;
             bstr_free(&b);
         }
 
-        table_destroy(&tx->request_params_query);
+        htp_table_destroy(&tx->request_params_query);
     }
 
     if ((tx->request_params_body_reused == 0) && (tx->request_params_body != NULL)) {
         void *tvalue;
-        table_iterator_reset(tx->request_params_body);
-        while (table_iterator_next(tx->request_params_body, &tvalue) != NULL) {
+        htp_table_iterator_reset(tx->request_params_body);
+        while (htp_table_iterator_next(tx->request_params_body, &tvalue) != NULL) {
             bstr *b = (bstr *) tvalue;
             bstr_free(&b);
         }
 
-        table_destroy(&tx->request_params_body);
+        htp_table_destroy(&tx->request_params_body);
     }
 
     if (tx->request_cookies != NULL) {
         void *tvalue;
-        table_iterator_reset(tx->request_cookies);
-        while (table_iterator_next(tx->request_cookies, &tvalue) != NULL) {
+        htp_table_iterator_reset(tx->request_cookies);
+        while (htp_table_iterator_next(tx->request_cookies, &tvalue) != NULL) {
             bstr *b = (bstr *) tvalue;
             bstr_free(&b);
         }
 
-        table_destroy(&tx->request_cookies);
+        htp_table_destroy(&tx->request_cookies);
     }
 
     htp_hook_destroy(tx->hook_request_body_data);

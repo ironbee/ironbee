@@ -163,14 +163,14 @@ htp_cfg_t *htp_config_create(void) {
     cfg->params_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     cfg->params_nul_encoded_handling = NONE;
     cfg->params_nul_raw_handling = NONE;
+    // XXX
     cfg->tmpdir = "/tmp";
 
     // No need to create hooks here; they will be created on-demand,
     // during callback registration
 
     cfg->create_list_linked = list_linked_create;
-    cfg->create_list_array = list_array_create;
-    cfg->create_table = table_create;
+    cfg->create_list_array = list_array_create;    
 
     // Set the default personality before we return
     htp_config_set_server_personality(cfg, HTP_SERVER_MINIMAL);
@@ -343,8 +343,7 @@ void htp_config_destroy(htp_cfg_t *cfg) {
     htp_hook_destroy(cfg->hook_log);
 
     cfg->create_list_linked = NULL;
-    cfg->create_list_array = NULL;
-    cfg->create_table = NULL;
+    cfg->create_list_array = NULL;    
 
     // Free the structure itself
     free(cfg);
@@ -356,10 +355,6 @@ void htp_config_register_list_linked_create(htp_cfg_t *cfg, list_t *(*callback_f
 
 void htp_config_register_list_array_create(htp_cfg_t *cfg, list_t *(*callback_fn)(size_t size)) {
     cfg->create_list_array = callback_fn;
-}
-
-void htp_config_register_table_create(htp_cfg_t *cfg, table_t *(*callback_fn)(size_t size)) {
-    cfg->create_table = callback_fn;
 }
 
 /**

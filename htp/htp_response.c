@@ -247,7 +247,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
         // Ignore any response headers set
         // XXX Is all the memory correctly freed here?
-        table_clear(connp->out_tx->response_headers);
+        htp_table_clear(connp->out_tx->response_headers);
 
         connp->out_state = htp_connp_RES_LINE;
         connp->out_tx->progress = TX_PROGRESS_RES_LINE;
@@ -269,9 +269,9 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     } else {
         // We have a response body
 
-        htp_header_t *ct = table_get_c(connp->out_tx->response_headers, "content-type");
-        htp_header_t *cl = table_get_c(connp->out_tx->response_headers, "content-length");
-        htp_header_t *te = table_get_c(connp->out_tx->response_headers, "transfer-encoding");
+        htp_header_t *ct = htp_table_get_c(connp->out_tx->response_headers, "content-type");
+        htp_header_t *cl = htp_table_get_c(connp->out_tx->response_headers, "content-length");
+        htp_header_t *te = htp_table_get_c(connp->out_tx->response_headers, "transfer-encoding");
 
         if (ct != NULL) {
             connp->out_tx->response_content_type = bstr_dup_lower(ct->value);

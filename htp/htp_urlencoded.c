@@ -93,7 +93,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
                     htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, name);
                 }
                 
-                table_addn(urlenp->params, name, value);
+                htp_table_addn(urlenp->params, name, value);
                 urlenp->_name = NULL;
 
                 #ifdef HTP_DEBUG
@@ -111,7 +111,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
                 htp_decode_urlencoded_inplace(urlenp->tx->connp->cfg, urlenp->tx, value);
             }
 
-            table_addn(urlenp->params, name, value);
+            htp_table_addn(urlenp->params, name, value);
             urlenp->_name = NULL;
 
             #ifdef HTP_DEBUG
@@ -138,7 +138,7 @@ htp_urlenp_t *htp_urlenp_create(htp_tx_t *tx) {
 
     urlenp->tx = tx;
 
-    urlenp->params = tx->cfg->create_table(HTP_URLENP_DEFAULT_PARAMS_SIZE);
+    urlenp->params = htp_table_create(HTP_URLENP_DEFAULT_PARAMS_SIZE);
     if (urlenp->params == NULL) {
         free(urlenp);
         return NULL;
@@ -146,7 +146,7 @@ htp_urlenp_t *htp_urlenp_create(htp_tx_t *tx) {
 
     urlenp->_bb = bstr_builder_create();
     if (urlenp->_bb == NULL) {
-        table_destroy(&urlenp->params);
+        htp_table_destroy(&urlenp->params);
         free(urlenp);
         return NULL;
     }
@@ -176,13 +176,13 @@ void htp_urlenp_destroy(htp_urlenp_t **_urlenp) {
     if (urlenp->params != NULL) {        
         // Destroy parameters        
         void *tvalue = NULL;
-        table_iterator_reset(urlenp->params);
-        while (table_iterator_next(urlenp->params, &tvalue) != NULL) {
+        htp_table_iterator_reset(urlenp->params);
+        while (htp_table_iterator_next(urlenp->params, &tvalue) != NULL) {
             bstr *b = (bstr *)tvalue;
             bstr_free(&b);
         }       
         
-        table_destroy(&urlenp->params);
+        htp_table_destroy(&urlenp->params);
     }
 
     free(urlenp);

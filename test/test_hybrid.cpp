@@ -231,11 +231,11 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(bstr_cmp_c(tx->parsed_uri->query, "p=1&q=2"), 0);
 
     // Check parameters
-    bstr *param_p = (bstr *) table_get_c(tx->request_params_query, "p");
+    bstr *param_p = (bstr *) htp_table_get_c(tx->request_params_query, "p");
     ASSERT_TRUE(param_p != NULL);
     ASSERT_EQ(bstr_cmp_c(param_p, "1"), 0);
 
-    bstr *param_q = (bstr *) table_get_c(tx->request_params_query, "q");
+    bstr *param_q = (bstr *) htp_table_get_c(tx->request_params_query, "q");
     ASSERT_TRUE(param_q != NULL);
     ASSERT_EQ(bstr_cmp_c(param_q, "2"), 0);
 
@@ -250,15 +250,15 @@ TEST_F(HybridParsing, GetTest) {
     // Check headers
     ASSERT_EQ(user_data.callback_REQUEST_HEADERS_invoked, 1);
 
-    htp_header_t *h_host = (htp_header_t *) table_get_c(tx->request_headers, "host");
+    htp_header_t *h_host = (htp_header_t *) htp_table_get_c(tx->request_headers, "host");
     ASSERT_TRUE(h_host != NULL);
     ASSERT_EQ(bstr_cmp_c(h_host->value, "www.example.com"), 0);
 
-    htp_header_t *h_connection = (htp_header_t *) table_get_c(tx->request_headers, "connection");
+    htp_header_t *h_connection = (htp_header_t *) htp_table_get_c(tx->request_headers, "connection");
     ASSERT_TRUE(h_connection != NULL);
     ASSERT_EQ(bstr_cmp_c(h_connection->value, "keep-alive"), 0);
 
-    htp_header_t *h_ua = (htp_header_t *) table_get_c(tx->request_headers, "user-agent");
+    htp_header_t *h_ua = (htp_header_t *) htp_table_get_c(tx->request_headers, "user-agent");
     ASSERT_TRUE(h_ua != NULL);
     ASSERT_EQ(bstr_cmp_c(h_ua->value, "Mozilla/5.0"), 0);
 
@@ -299,11 +299,11 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(user_data.callback_RESPONSE_HEADERS_invoked, 1);
 
     // Check response headers
-    htp_header_t *h_content_type = (htp_header_t *) table_get_c(tx->response_headers, "content-type");
+    htp_header_t *h_content_type = (htp_header_t *) htp_table_get_c(tx->response_headers, "content-type");
     ASSERT_TRUE(h_content_type != NULL);
     ASSERT_EQ(bstr_cmp_c(h_content_type->value, "text/html"), 0);
 
-    htp_header_t *h_server = (htp_header_t *) table_get_c(tx->response_headers, "server");
+    htp_header_t *h_server = (htp_header_t *) htp_table_get_c(tx->response_headers, "server");
     ASSERT_TRUE(h_server != NULL);
     ASSERT_EQ(bstr_cmp_c(h_server->value, "Apache"), 0);
 
@@ -315,17 +315,17 @@ TEST_F(HybridParsing, GetTest) {
 
     // Trailing response headers
     htp_txh_res_headers_clear(tx);
-    ASSERT_EQ(list_size(tx->response_headers), 0);
+    ASSERT_EQ(htp_table_size(tx->response_headers), 0);
 
     htp_txh_res_set_header_c(tx, "Content-Type", "text/html", ALLOC_COPY);
     htp_txh_res_set_header_c(tx, "Server", "Apache", ALLOC_COPY);
 
     // Check trailing response headers
-    h_content_type = (htp_header_t *) table_get_c(tx->response_headers, "content-type");
+    h_content_type = (htp_header_t *) htp_table_get_c(tx->response_headers, "content-type");
     ASSERT_TRUE(h_content_type != NULL);
     ASSERT_EQ(bstr_cmp_c(h_content_type->value, "text/html"), 0);
 
-    h_server = (htp_header_t *) table_get_c(tx->response_headers, "server");
+    h_server = (htp_header_t *) htp_table_get_c(tx->response_headers, "server");
     ASSERT_TRUE(h_server != NULL);
     ASSERT_EQ(bstr_cmp_c(h_server->value, "Apache"), 0);
 
@@ -366,21 +366,21 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
 
     // Trailing request headers
     htp_txh_req_headers_clear(tx);
-    ASSERT_EQ(list_size(tx->request_headers), 0);
+    ASSERT_EQ(htp_table_size(tx->request_headers), 0);
 
     htp_txh_req_set_header_c(tx, "Host", "www.example.com", ALLOC_COPY);
     htp_txh_req_set_header_c(tx, "Connection", "keep-alive", ALLOC_COPY);
     htp_txh_req_set_header_c(tx, "User-Agent", "Mozilla/5.0", ALLOC_COPY);
 
-    htp_header_t *h_host = (htp_header_t *) table_get_c(tx->request_headers, "host");
+    htp_header_t *h_host = (htp_header_t *) htp_table_get_c(tx->request_headers, "host");
     ASSERT_TRUE(h_host != NULL);
     ASSERT_EQ(bstr_cmp_c(h_host->value, "www.example.com"), 0);
 
-    htp_header_t *h_connection = (htp_header_t *) table_get_c(tx->request_headers, "connection");
+    htp_header_t *h_connection = (htp_header_t *) htp_table_get_c(tx->request_headers, "connection");
     ASSERT_TRUE(h_connection != NULL);
     ASSERT_EQ(bstr_cmp_c(h_connection->value, "keep-alive"), 0);
 
-    htp_header_t *h_ua = (htp_header_t *) table_get_c(tx->request_headers, "user-agent");
+    htp_header_t *h_ua = (htp_header_t *) htp_table_get_c(tx->request_headers, "user-agent");
     ASSERT_TRUE(h_ua != NULL);
     ASSERT_EQ(bstr_cmp_c(h_ua->value, "Mozilla/5.0"), 0);
 
@@ -390,11 +390,11 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     // Check parameters
     ASSERT_TRUE(tx->request_params_body != NULL);
 
-    bstr *param_p = (bstr *) table_get_c(tx->request_params_body, "p");
+    bstr *param_p = (bstr *) htp_table_get_c(tx->request_params_body, "p");
     ASSERT_TRUE(param_p != NULL);
     ASSERT_EQ(bstr_cmp_c(param_p, "1"), 0);
 
-    bstr *param_q = (bstr *) table_get_c(tx->request_params_body, "q");
+    bstr *param_q = (bstr *) htp_table_get_c(tx->request_params_body, "q");
     ASSERT_TRUE(param_q != NULL);
     ASSERT_EQ(bstr_cmp_c(param_q, "2"), 0);
 }

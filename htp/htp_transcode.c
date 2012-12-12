@@ -46,8 +46,8 @@
  * @param params
  * @param destroy_old
  */
-int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) {
-    table_t *input_params = *params;
+int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_old) {
+    htp_table_t *input_params = *params;
 
     // No transcoding unless necessary
     if (connp->cfg->internal_encoding == NULL) {
@@ -55,7 +55,7 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
     }
 
     // Create a new table that will hold transcoded parameters
-    table_t *output_params = connp->cfg->create_table(table_size(input_params));
+    htp_table_t *output_params = htp_table_create(htp_table_size(input_params));
     if (output_params == NULL) {
         return HTP_ERROR;
     }
@@ -64,7 +64,7 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
     iconv_t cd = iconv_open(connp->cfg->internal_encoding, connp->cfg->request_encoding);
     if (cd == (iconv_t) -1) {
         // TODO Report iconv initialization error
-        table_destroy(&output_params);
+        htp_table_destroy(&output_params);
         return HTP_ERROR;
     }
 
@@ -78,8 +78,8 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
     // Convert the parameters, one by one
     bstr *name;
     void *tvalue;
-    table_iterator_reset(input_params);
-    while ((name = table_iterator_next(input_params, &tvalue)) != NULL) {
+    htp_table_iterator_reset(input_params);
+    while ((name = htp_table_iterator_next(input_params, &tvalue)) != NULL) {
         bstr *new_name = NULL, *new_value = NULL;
         bstr *value = (bstr *)tvalue;
         
@@ -88,13 +88,13 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
         if (new_name == NULL) {
             iconv_close(cd);
             
-            table_iterator_reset(output_params);
-            while(table_iterator_next(output_params, &tvalue) != NULL) {
+            htp_table_iterator_reset(output_params);
+            while(htp_table_iterator_next(output_params, &tvalue) != NULL) {
                 bstr *b = (bstr *)tvalue;
                 bstr_free(&b);
             }
             
-            table_destroy(&output_params);
+            htp_table_destroy(&output_params);
             return HTP_ERROR;
         }
         
@@ -104,18 +104,18 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
             bstr_free(&new_name);
             iconv_close(cd);
             
-            table_iterator_reset(output_params);
-            while(table_iterator_next(output_params, &tvalue) != NULL) {
+            htp_table_iterator_reset(output_params);
+            while(htp_table_iterator_next(output_params, &tvalue) != NULL) {
                 bstr *b = (bstr *)tvalue;
                 bstr_free(&b);
             }
             
-            table_destroy(&output_params);
+            htp_table_destroy(&output_params);
             return HTP_ERROR;
         }
         
         // Add to new table
-        table_addn(output_params, new_name, new_value);
+        htp_table_addn(output_params, new_name, new_value);
     }
     
     // Replace the old parameter table
@@ -123,13 +123,13 @@ int htp_transcode_params(htp_connp_t *connp, table_t **params, int destroy_old) 
 
     // Destroy the old parameter table if necessary
     if (destroy_old) {
-        table_iterator_reset(input_params);
-        while(table_iterator_next(input_params, &tvalue) != NULL) {
+        htp_table_iterator_reset(input_params);
+        while(htp_table_iterator_next(input_params, &tvalue) != NULL) {
             bstr *b = (bstr *)tvalue;
             bstr_free(&b);
         }      
     
-        table_destroy(&input_params);
+        htp_table_destroy(&input_params);
     }
     
     iconv_close(cd);
