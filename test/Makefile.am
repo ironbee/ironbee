@@ -1,5 +1,5 @@
 LDADD = $(top_builddir)/htp/.libs/libhtp.a -lz @LIBICONV@ 
-AM_CFLAGS = -g -O2
+AM_CFLAGS = -g -O2 -std=gnu99
 AM_CPPFLAGS = -I$(top_srcdir)
 EXTRA_DIST = run-tests.sh files
 check_PROGRAMS = main test_bstr test_main test_utils test_hybrid

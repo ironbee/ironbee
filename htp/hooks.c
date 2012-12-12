@@ -40,18 +40,15 @@ htp_hook_t *htp_hook_copy(const htp_hook_t *hook) {
     if (hook == NULL) return NULL;
 
     htp_hook_t *copy = htp_hook_create();
-    if (copy == NULL) return NULL;
+    if (copy == NULL) return NULL;   
 
-    htp_callback_t *callback = NULL;
-    list_array_iterator_t it;
-    
-    list_array_iterator_init(hook->callbacks, &it);
-    while ((callback = list_array_iterator_next(&it)) != NULL) {
+    for (int i = 0, n = list_size(hook->callbacks); i < n; i++) {
+        htp_callback_t *callback = list_get(hook->callbacks, i);
         if (htp_hook_register(&copy, callback->fn) < 0) {
             htp_hook_destroy(copy);
             return NULL;
         }
-    }
+    }   
 
     return copy;
 }
@@ -72,13 +69,9 @@ htp_hook_t *htp_hook_create(void) {
 void htp_hook_destroy(htp_hook_t *hook) {
     if (hook == NULL) return;
 
-    htp_callback_t *callback = NULL;
-    list_array_iterator_t it;
-    
-    list_array_iterator_init(hook->callbacks, &it);
-    while ((callback = list_array_iterator_next(&it)) != NULL) {
-        free(callback);
-    }
+    for (int i = 0, n = list_size(hook->callbacks); i < n; i++) {
+        free((htp_callback_t *)list_get(hook->callbacks, i));
+    }   
 
     list_array_destroy(&hook->callbacks);
     
@@ -123,17 +116,15 @@ int htp_hook_run_all(htp_hook_t *hook, void *user_data) {
 
     // Loop through registered callbacks,
     // giving each a chance to run.
-    htp_callback_t *callback = NULL;
-    list_array_iterator_t it;
-    
-    list_array_iterator_init(hook->callbacks, &it);
-    while ((callback = list_array_iterator_next(&it)) != NULL) {
+    for (int i = 0, n = list_size(hook->callbacks); i < n; i++) {
+        htp_callback_t *callback = list_get(hook->callbacks, i);
+
         int rc = callback->fn(user_data);
         if ((rc != HTP_OK)&&(rc != HTP_DECLINED)) {
             // Return HTP_STOP or error.
             return rc;
         }
-    }
+    }        
 
     return HTP_OK;
 }
@@ -141,19 +132,15 @@ int htp_hook_run_all(htp_hook_t *hook, void *user_data) {
 int htp_hook_run_one(htp_hook_t *hook, void *user_data) {
     if (hook == NULL) return HTP_DECLINED;
 
-    // Look through registered callbacks
-    // until one accepts to process the hook.
-    htp_callback_t *callback = NULL;
-    list_array_iterator_t it;
-    
-    list_array_iterator_init(hook->callbacks, &it);
-    while ((callback = list_array_iterator_next(&it)) != NULL) {
+    for (int i = 0, n = list_size(hook->callbacks); i < n; i++) {
+        htp_callback_t *callback = list_get(hook->callbacks, i);
+
         int rc = callback->fn(user_data);
         if (rc != HTP_DECLINED) {
             // Return HTP_OK, HTP_STOP, or error.
             return rc;
         }
-    }
+    }   
 
     // No hook wanted to process the callback.
     return HTP_DECLINED;

@@ -185,9 +185,9 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
             } else {
                 printf(" -- %zu transaction(s)\n", list_size(connp->conn->transactions));
 
-                htp_tx_t *tx = NULL;
-                list_iterator_reset(connp->conn->transactions);
-                while ((tx = list_iterator_next(connp->conn->transactions)) != NULL) {
+                for (int i = 0, n = list_size(connp->conn->transactions); i < n; i++) {
+                    htp_tx_t *tx = list_get(connp->conn->transactions, i);
+
                     printf("    ");
                     print_tx(connp, tx);
                 }
@@ -815,9 +815,9 @@ int main_multipart1(int argc, char** argv) {
     htp_mpartp_parse(mpartp, i7, strlen(i7));
     htp_mpartp_finalize(mpartp);
 
-    htp_mpart_part_t *part = NULL;
-    list_iterator_reset(mpartp->parts);
-    while ((part = (htp_mpart_part_t *) list_iterator_next(mpartp->parts)) != NULL) {
+    for (int i = 0, n = list_size(mpartp->parts); i < n; i++) {
+        htp_mpart_part_t *part = list_get(mpartp->parts, i);
+
         if (part->name != NULL) fprint_bstr(stdout, "NAME", part->name);
         if (part->value != NULL) fprint_bstr(stdout, "VALUE", part->value);
     }
@@ -926,15 +926,6 @@ int main_multipart2(int argc, char** argv) {
     htp_mpartp_parse(mpartp, final, strlen(final));
 
     htp_mpartp_finalize(mpartp);
-
-    /*
-    htp_mpart_part_t *part = NULL;
-    list_iterator_reset(mpartp->parts);
-    while ((part = (htp_mpart_part_t *) list_iterator_next(mpartp->parts)) != NULL) {
-        if (part->name != NULL) fprint_bstr(stdout, "NAME", part->name);
-        if (part->value != NULL) fprint_bstr(stdout, "VALUE", part->value);
-    }
-    */
 
     htp_mpartp_destroy(&mpartp);
 

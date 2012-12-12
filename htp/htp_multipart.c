@@ -679,9 +679,8 @@ void htp_mpartp_destroy(htp_mpartp_t ** _mpartp) {
 
     // Free parts
     if (mpartp->parts != NULL) {
-        htp_mpart_part_t * part = NULL;
-        list_iterator_reset(mpartp->parts);
-        while ((part = list_iterator_next(mpartp->parts)) != NULL) {
+        for (int i = 0, n = list_size(mpartp->parts); i < n; i++) {
+            htp_mpart_part_t * part = list_get(mpartp->parts, i);
             htp_mpart_part_destroy(part);
         }
 
@@ -724,11 +723,12 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
         // or in the first stored chunk.
         if (bstr_builder_size(mpartp->boundary_pieces) > 0) {
             // We have stored chunks
-
-            bstr *b = NULL;
+            
             int first = 1;
-            list_iterator_reset(mpartp->boundary_pieces->pieces);
-            while ((b = list_iterator_next(mpartp->boundary_pieces->pieces)) != NULL) {
+
+            for (int i = 0, n = list_size(mpartp->boundary_pieces->pieces); i < n; i++) {
+                bstr *b = list_get(mpartp->boundary_pieces->pieces, i);
+            
                 if (first) {
                     // Split the first chunk
 
@@ -782,9 +782,8 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
 
         // We then process any pieces that we might have stored, also as data
         if (bstr_builder_size(mpartp->boundary_pieces) > 0) {
-            bstr *b = NULL;
-            list_iterator_reset(mpartp->boundary_pieces->pieces);
-            while ((b = list_iterator_next(mpartp->boundary_pieces->pieces)) != NULL) {                
+            for (int i = 0, n = list_size(mpartp->boundary_pieces->pieces); i < n; i++) {
+                bstr *b = list_get(mpartp->boundary_pieces->pieces, i);
                 mpartp->handle_data(mpartp, (unsigned char *) bstr_ptr(b), bstr_len(b), 0);
             }
 

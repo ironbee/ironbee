@@ -109,9 +109,8 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     // Destroy request_header_lines
     if (tx->request_header_lines != NULL) {
-        htp_header_line_t *hl = NULL;
-        list_iterator_reset(tx->request_header_lines);
-        while ((hl = list_iterator_next(tx->request_header_lines)) != NULL) {
+        for (int i = 0, n = list_size(tx->request_header_lines); i < n; i++) {
+            htp_header_line_t *hl = list_get(tx->request_header_lines, i);
             bstr_free(&hl->line);
             // No need to destroy hl->header because
             // htp_header_line_t does not own it.
@@ -151,9 +150,8 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     // Destroy response_header_lines
     if (tx->response_header_lines != NULL) {
-        htp_header_line_t *hl = NULL;
-        list_iterator_reset(tx->response_header_lines);
-        while ((hl = list_iterator_next(tx->response_header_lines)) != NULL) {
+        for (int i = 0, n = list_size(tx->response_header_lines); i < n; i++) {
+            htp_header_line_t *hl = list_get(tx->response_header_lines, i);
             bstr_free(&hl->line);
             // No need to destroy hl->header because
             // htp_header_line_t does not own it.

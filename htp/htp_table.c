@@ -93,19 +93,11 @@ void htp_table_destroy(htp_table_t **_table) {
     if ((_table == NULL)||(*_table == NULL)) return;
 
     htp_table_t *table = *_table;
-    // Free keys only
-    int counter = 0;
-    void *data = NULL;
 
-    list_iterator_reset(table->list);
-
-    while ((data = list_iterator_next(table->list)) != NULL) {
-        // Free key
-        if ((counter % 2) == 0) {
-            free(data);
-        }
-
-        counter++;
+    // Free table keys only
+    for (int i = 0, n = list_size(table->list); i < n; i += 2) {
+        bstr *key = list_get(table->list, i);
+        bstr_free(&key);
     }
 
     list_destroy(&table->list);
@@ -118,13 +110,12 @@ void *htp_table_get(const htp_table_t *table, const bstr *key) {
     if ((table == NULL)||(key == NULL)) return NULL;
 
     // Iterate through the list, comparing
-    // keys with the parameter, return data if found.
-    bstr *ts = NULL;
-    list_iterator_reset(table->list);
-    while ((ts = list_iterator_next(table->list)) != NULL) {
-        void *data = list_iterator_next(table->list);
-        if (bstr_cmp_nocase(ts, key) == 0) {
-            return data;
+    // keys with the parameter, return data if found.    
+    for (int i = 0, n = list_size(table->list); i < n; i += 2) {
+        bstr *key_candidate = list_get(table->list, i);        
+        void *element = list_get(table->list, i + 1);
+        if (bstr_cmp_nocase(key_candidate, key) == 0) {
+            return element;
         }
     }
 
@@ -135,13 +126,12 @@ void *htp_table_get_c(const htp_table_t *table, const char *ckey) {
     if ((table == NULL)||(ckey == NULL)) return NULL;
 
     // Iterate through the list, comparing
-    // keys with the parameter, return data if found.
-    bstr *ts = NULL;
-    list_iterator_reset(table->list);
-    while ((ts = list_iterator_next(table->list)) != NULL) {
-        void *data = list_iterator_next(table->list);
-        if (bstr_cmp_c_nocase(ts, ckey) == 0) {
-            return data;
+    // keys with the parameter, return data if found.    
+    for (int i = 0, n = list_size(table->list); i < n; i += 2) {
+        bstr *key_candidate = list_get(table->list, i);
+        void *element = list_get(table->list, i + 1);
+        if (bstr_cmp_c_nocase(key_candidate, ckey) == 0) {
+            return element;
         }
     }
 

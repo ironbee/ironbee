@@ -113,10 +113,8 @@ void free_stream_data(stream_data *sd) {
     
     // Free stream chunks, if any
     if (sd->chunks != NULL) {
-        chunk_t *chunk = NULL;
-        
-        list_iterator_reset(sd->chunks);
-        while((chunk = list_iterator_next(sd->chunks)) != NULL) {
+        for (int i = 0, n = list_size(sd->chunks); i < n; i++) {
+            chunk_t *chunk = list_get(sd->chunks, i);
             free(chunk->data);
             free(chunk);
         }
@@ -126,10 +124,8 @@ void free_stream_data(stream_data *sd) {
     
     // Free inbound chunks, if any
     if (sd->inbound_chunks != NULL) {
-        chunk_t *chunk = NULL;
-        
-        list_iterator_reset(sd->inbound_chunks);
-        while((chunk = list_iterator_next(sd->inbound_chunks)) != NULL) {
+        for (int i = 0, n = list_size(sd->inbound_chunks); i < n; i++) {
+            chunk_t *chunk = list_get(sd->inbound_chunkds, i);
             free(chunk->data);
             free(chunk);
         }
@@ -139,10 +135,8 @@ void free_stream_data(stream_data *sd) {
     
     // Free outbound chunks, if any
     if (sd->outbound_chunks != NULL) {
-        chunk_t *chunk = NULL;
-        
-        list_iterator_reset(sd->outbound_chunks);
-        while((chunk = list_iterator_next(sd->outbound_chunks)) != NULL) {
+        for (int i = 0, n = list_size(sd->outbound_chunks); i < n; i++) {
+            chunk_t *chunk = list_get(sd->outbound_chunkds, i);
             free(chunk->data);
             free(chunk);
         }
@@ -477,8 +471,7 @@ int callback_log(htp_log_t *log) {
     // If this is the first time a log message was generated for this connection,
     // start writing the entire thing to a file on disk.
     if (sd->fd == -1) {
-        char filename[256];
-        chunk_t *chunk;
+        char filename[256];        
         
         // TODO Use IP addresses and ports in filename
         snprintf(filename, 255, "conn-%d.t", sd->id);
@@ -489,9 +482,10 @@ int callback_log(htp_log_t *log) {
             exit(1);
         }
 
-        // Write to disk the data we have in memory        
-        list_iterator_reset(sd->chunks);
-        while((chunk = list_iterator_next(sd->chunks)) != NULL) {
+        // Write to disk the data we have in memory                
+        for (int i = 0, n = list_size(sd->chunks); i < n; i++) {
+            chunk_t *chunk = list_get(sd->chunks, i);
+
             if (sd->chunk_counter != 0) {
                 write(sd->fd, "\r\n", 2);
             }

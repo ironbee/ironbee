@@ -61,11 +61,9 @@ void bstr_builder_clear(bstr_builder_t *bb) {
 
     // Do nothing if the list is empty
     if (list_size(bb->pieces) == 0) return;
-    
-    // Destroy any pieces we might have
-    bstr *b = NULL;
-    list_iterator_reset(bb->pieces);
-    while ((b = list_iterator_next(bb->pieces)) != NULL) {
+
+    for (int i = 0, n = list_size(bb->pieces); i < n; i++) {
+        bstr *b = list_get(bb->pieces, i);
         bstr_free(&b);
     }
 
@@ -102,9 +100,8 @@ void bstr_builder_destroy(bstr_builder_t *bb) {
     if (bb == NULL) return;
 
     // Destroy any pieces we might have
-    bstr *b = NULL;
-    list_iterator_reset(bb->pieces);
-    while ((b = list_iterator_next(bb->pieces)) != NULL) {
+    for (int i = 0, n = list_size(bb->pieces); i < n; i++) {
+        bstr *b = list_get(bb->pieces, i);
         bstr_free(&b);
     }
 
@@ -160,13 +157,12 @@ int bstr_builder_append_c(bstr_builder_t *bb, const char *cstr) {
  * @param bb
  * @return New string
  */
-bstr * bstr_builder_to_str(bstr_builder_t *bb) {
-    bstr *b = NULL;
+bstr * bstr_builder_to_str(bstr_builder_t *bb) {    
     size_t len = 0;
 
     // Determine the size of the string
-    list_iterator_reset(bb->pieces);
-    while ((b = list_iterator_next(bb->pieces)) != NULL) {
+    for (int i = 0, n = list_size(bb->pieces); i < n; i++) {
+        bstr *b = list_get(bb->pieces, i);
         len += bstr_len(b);
     }
 
@@ -175,8 +171,8 @@ bstr * bstr_builder_to_str(bstr_builder_t *bb) {
     if (bnew == NULL) return NULL;
 
     // Determine the size of the string
-    list_iterator_reset(bb->pieces);
-    while ((b = list_iterator_next(bb->pieces)) != NULL) {
+    for (int i = 0, n = list_size(bb->pieces); i < n; i++) {
+        bstr *b = list_get(bb->pieces, i);
         bstr_add_noex(bnew, b);
     }
 

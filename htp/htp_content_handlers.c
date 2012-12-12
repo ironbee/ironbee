@@ -179,10 +179,10 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
 
         // Extract parameters
         d->tx->request_params_body_reused = 1;
-        
-        htp_mpart_part_t *part = NULL;
-        list_iterator_reset(d->tx->request_mpartp->parts);
-        while ((part = (htp_mpart_part_t *) list_iterator_next(d->tx->request_mpartp->parts)) != NULL) {
+                
+        for (int i = 0, n = list_size(d->tx->request_mpartp->parts); i < n; i++) {
+            htp_mpart_part_t *part = list_get(d->tx->request_mpartp->parts, i);
+
             // Only use text parameters
             if (part->type == MULTIPART_PART_TEXT) {                
                 if (d->tx->connp->cfg->parameter_processor == NULL) {

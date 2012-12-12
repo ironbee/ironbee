@@ -95,10 +95,8 @@ void htp_conn_destroy(htp_conn_t *conn) {
 
     if (conn->messages != NULL) {
         // Destroy individual messages
-        htp_log_t *l = NULL;
-
-        list_iterator_reset(conn->messages);
-        while ((l = list_iterator_next(conn->messages)) != NULL) {
+        for (int i = 0, n = list_size(conn->messages); i < n; i++) {
+            htp_log_t *l = list_get(conn->messages, i);
             free((void *) l->msg);
             free(l);
         }
