@@ -108,6 +108,9 @@ sinclude(m4/lib-ld.m4)
 sinclude(m4/lib-link.m4)
 sinclude(m4/lib-prefix.m4)
 AM_ICONV
+if test x"$LIBICONV" = x""; then
+	AC_MSG_ERROR("Could not find libiconv.")
+fi
 
 dnl -----------------------------------------------
 dnl Check and enable the GCC opts we want to use.
