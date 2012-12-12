@@ -38,7 +38,7 @@ endif
 .build-libhtp:
 	mkdir -p libhtp
 	(cd $(srcdir)/libhtp && ./autogen.sh)
-	(cd libhtp && $(abs_srcdir)/libhtp/configure --prefix=$(prefix) CC=$(CC) CXX=$(CXX) CXXFLAGS="$(CXXFLAGS)" LDFLAGS="$(LDFLAGS)" CPPFLAGS="$(CPPFLAGS)" CFLAGS="$(CFLAGS)");
+	(cd libhtp && $(abs_srcdir)/libhtp/configure --prefix=$(prefix) CC=$(CC) CXX=$(CXX));
 	touch .build-libhtp
 
 EXTRA_DIST = luajit-2.0-ironbee libhtp
