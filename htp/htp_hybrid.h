@@ -78,7 +78,7 @@ htp_tx_t *htp_txh_create(htp_connp_t *connp);
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
-int htp_txh_state_request_start(htp_tx_t *tx);
+htp_status_t htp_txh_state_request_start(htp_tx_t *tx);
      
 /**
  * Set transaction request method. This function will enable you to keep
@@ -89,7 +89,7 @@ int htp_txh_state_request_start(htp_tx_t *tx);
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc);
+htp_status_t htp_txh_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc);
 
 /**
  * Set transaction request method number. This function enables you to
@@ -111,7 +111,7 @@ void htp_txh_req_set_method_number(htp_tx_t *tx, int method_number);
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy alloc);
+htp_status_t htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy alloc);
 
 /**
  * Sets transaction query string. If there are any query string processors
@@ -123,7 +123,7 @@ int htp_txh_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy all
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum alloc_strategy alloc);
+htp_status_t htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum alloc_strategy alloc);
 
 /**
  * Set request protocol string (e.g., "HTTP/1.0"), which will then be parsed
@@ -136,7 +136,7 @@ int htp_txh_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum 
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_strategy alloc);
+htp_status_t htp_txh_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_strategy alloc);
 
 /**
  * Set request protocol version number. Must be invoked after
@@ -168,7 +168,7 @@ void htp_txh_req_set_protocol_http_0_9(htp_tx_t *tx, int is_http_0_9);
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
-int htp_txh_state_request_line(htp_tx_t *tx);
+htp_status_t htp_txh_state_request_line(htp_tx_t *tx);
      
 /**
  * Set one request header. This function should be invoked once for
@@ -181,7 +181,7 @@ int htp_txh_state_request_line(htp_tx_t *tx);
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
+htp_status_t htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
 
 /**
  * Removes all request headers associated with this transaction. This
@@ -195,7 +195,7 @@ int htp_txh_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, 
  * @param[in] tx
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_txh_req_headers_clear(htp_tx_t *tx);
+htp_status_t htp_txh_req_headers_clear(htp_tx_t *tx);
      
 /**
  * Change transaction state to REQUEST_HEADERS and invoke all
@@ -205,7 +205,7 @@ int htp_txh_req_headers_clear(htp_tx_t *tx);
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
-int htp_txh_state_request_headers(htp_tx_t *tx);     
+htp_status_t htp_txh_state_request_headers(htp_tx_t *tx);
 
 /**
  * Process a chunk of request body data. This function assumes that
@@ -221,7 +221,7 @@ int htp_txh_state_request_headers(htp_tx_t *tx);
  * @param[in] len
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len);
+htp_status_t htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len);
 
 /**
  * Change transaction state to REQUEST and invoke registered callbacks.
@@ -230,7 +230,7 @@ int htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
-int htp_txh_state_request_complete(htp_tx_t *tx);
+htp_status_t htp_txh_state_request_complete(htp_tx_t *tx);
 
 /**
  * Change transaction state to RESPONSE_START and invoke registered callbacks.
@@ -239,7 +239,7 @@ int htp_txh_state_request_complete(htp_tx_t *tx);
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
-int htp_txh_state_response_start(htp_tx_t *tx);
+htp_status_t htp_txh_state_response_start(htp_tx_t *tx);
      
 /**
  * Set response line. Use this function is you have a single buffer containing
@@ -251,7 +251,7 @@ int htp_txh_state_response_start(htp_tx_t *tx);
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */     
-int htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_strategy alloc);
+htp_status_t htp_txh_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_strategy alloc);
 
 /**
  * Set response protocol number.
@@ -279,7 +279,7 @@ void htp_txh_res_set_status_code(htp_tx_t *tx, int status_code);
  * @param[in] message
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc_strategy alloc);
+htp_status_t htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc_strategy alloc);
 
 /**
  * Change transaction state to RESPONSE_LINE and invoke registered callbacks.
@@ -288,7 +288,7 @@ int htp_txh_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
-int htp_txh_state_response_line(htp_tx_t *tx);
+htp_status_t htp_txh_state_response_line(htp_tx_t *tx);
 
 /**
  * Set one response header. This function should be invoked once for
@@ -301,7 +301,7 @@ int htp_txh_state_response_line(htp_tx_t *tx);
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */     
-int htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
+htp_status_t htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc);
 
 /**
  * Removes all response headers associated with this transaction. This
@@ -315,7 +315,7 @@ int htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, 
  * @param[in] tx
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_txh_res_headers_clear(htp_tx_t *tx);
+htp_status_t htp_txh_res_headers_clear(htp_tx_t *tx);
 
 /**
  * Change transaction state to RESPONSE_HEADERS and invoke registered callbacks.
@@ -324,7 +324,7 @@ int htp_txh_res_headers_clear(htp_tx_t *tx);
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
-int htp_txh_state_response_headers(htp_tx_t *tx);
+htp_status_t htp_txh_state_response_headers(htp_tx_t *tx);
 
 /**
  * Process a chunk of response body data. This function assumes that
@@ -344,7 +344,7 @@ int htp_txh_state_response_headers(htp_tx_t *tx);
  * @param[in] len
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len);
+htp_status_t htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len);
 
 /**
  * Change transaction state to RESPONSE and invoke registered callbacks.
@@ -353,7 +353,7 @@ int htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len);
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the
  *         callbacks does not want to follow the transaction any more.
  */
-int htp_txh_state_response_complete(htp_tx_t *tx);
+htp_status_t htp_txh_state_response_complete(htp_tx_t *tx);
 
 #ifdef	__cplusplus
 }

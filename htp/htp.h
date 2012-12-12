@@ -37,6 +37,8 @@
 #ifndef _HTP_H
 #define	_HTP_H
 
+typedef int htp_status_t;
+
 typedef struct htp_cfg_t htp_cfg_t;
 typedef struct htp_conn_t htp_conn_t;
 typedef struct htp_connp_t htp_connp_t;
