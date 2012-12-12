@@ -400,8 +400,8 @@ int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, unsigned char 
     file_data.len = len;
 
     // Send data to callbacks
-    int rc = hook_run_all(part->mpartp->cfg->hook_request_file_data, &file_data);
-    if (rc != HOOK_OK) {
+    int rc = htp_hook_run_all(part->mpartp->cfg->hook_request_file_data, &file_data);
+    if (rc != HTP_OK) {
         // TODO
     }
 

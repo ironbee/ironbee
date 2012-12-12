@@ -230,7 +230,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         table_destroy(&tx->request_cookies);
     }
 
-    hook_destroy(tx->hook_request_body_data);
+    htp_hook_destroy(tx->hook_request_body_data);
 
     free(tx);
 }
@@ -274,7 +274,7 @@ void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
  * @pram callback_fn
  */
 void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *)) {
-    hook_register(&tx->hook_request_body_data, (htp_callback_fn_t) callback_fn);
+    htp_hook_register(&tx->hook_request_body_data, (htp_callback_fn_t) callback_fn);
 }
 
 /**
@@ -284,7 +284,7 @@ void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_d
  * @pram callback_fn
  */
 void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *)) {
-    hook_register(&tx->hook_response_body_data, (htp_callback_fn_t) callback_fn);
+    htp_hook_register(&tx->hook_response_body_data, (htp_callback_fn_t) callback_fn);
 }
 
 /**

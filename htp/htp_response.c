@@ -438,8 +438,8 @@ int htp_connp_RES_HEADERS(htp_connp_t * connp) {
                     connp->out_state = htp_connp_RES_BODY_DETERMINE;
                 } else {
                     // Run hook response_TRAILER
-                    int rc = hook_run_all(connp->cfg->hook_response_trailer, connp);
-                    if (rc != HOOK_OK) return rc;
+                    int rc = htp_hook_run_all(connp->cfg->hook_response_trailer, connp);
+                    if (rc != HTP_OK) return rc;
 
                     // We've completed parsing this response
                     connp->out_state = htp_connp_RES_FINALIZE;

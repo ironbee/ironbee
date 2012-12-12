@@ -74,7 +74,7 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
         }       
     }
 
-    return HOOK_OK;
+    return HTP_OK;
 }
 
 /**
@@ -88,7 +88,7 @@ int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
         fprintf(stderr, "htp_ch_urlencoded_callback_request_headers: Body not URLENCODED\n");
         #endif
 
-        return HOOK_OK;
+        return HTP_OK;
     }
     
     #ifdef HTP_DEBUG
@@ -98,13 +98,13 @@ int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
     // Create parser instance
     connp->in_tx->request_urlenp_body = htp_urlenp_create(connp->in_tx);
     if (connp->in_tx->request_urlenp_body == NULL) {
-        return HOOK_ERROR;
+        return HTP_ERROR;
     }
 
     // Register request body data callbacks
     htp_tx_register_request_body_data(connp->in_tx, htp_ch_urlencoded_callback_request_body_data);
 
-    return HOOK_OK;
+    return HTP_OK;
 }
 
 /**
@@ -118,7 +118,7 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
     if ((connp->in_tx->parsed_uri->query != NULL) && (bstr_len(connp->in_tx->parsed_uri->query) > 0)) {
         connp->in_tx->request_urlenp_query = htp_urlenp_create(connp->in_tx);
         if (connp->in_tx->request_urlenp_query == NULL) {
-            return HOOK_ERROR;
+            return HTP_ERROR;
         }       
 
         htp_urlenp_parse_complete(connp->in_tx->request_urlenp_query,
@@ -160,7 +160,7 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
         }       
     }
 
-    return HOOK_OK;
+    return HTP_OK;
 }
 
 /**
@@ -197,7 +197,7 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
         }
     }
 
-    return HOOK_OK;
+    return HTP_OK;
 }
 
 /**
@@ -213,7 +213,7 @@ int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
         fprintf(stderr, "htp_ch_multipart_callback_request_headers: Body not MULTIPART\n");
         #endif
 
-        return HOOK_OK;
+        return HTP_OK;
     }
     
     #ifdef HTP_DEBUG
@@ -221,21 +221,21 @@ int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     #endif
 
     htp_header_t *ct = table_get_c(connp->in_tx->request_headers, "content-type");
-    if (ct == NULL) return HOOK_OK;
+    if (ct == NULL) return HTP_OK;
 
     char *boundary = NULL;
 
     int rc = htp_mpartp_extract_boundary(ct->value, &boundary);
     if (rc != HTP_OK) {
         // TODO Invalid boundary
-        return HOOK_OK;
+        return HTP_OK;
     }
 
     // Create parser instance
     connp->in_tx->request_mpartp = htp_mpartp_create(connp->cfg, boundary);
     if (connp->in_tx->request_mpartp == NULL) {
         free(boundary);
-        return HOOK_ERROR;
+        return HTP_ERROR;
     }
 
     if (connp->cfg->extract_request_files) {
@@ -248,5 +248,5 @@ int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     // Register request body data callbacks
     htp_tx_register_request_body_data(connp->in_tx, htp_ch_multipart_callback_request_body_data);
 
-    return HOOK_OK;
+    return HTP_OK;
 }

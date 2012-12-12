@@ -147,8 +147,8 @@ htp_status_t htp_txh_state_request_complete(htp_tx_t *tx) {
     }
 
     // Run hook REQUEST
-    int rc = hook_run_all(tx->connp->cfg->hook_request_done, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_done, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     // Clean-up
     if (tx->connp->put_file != NULL) {
@@ -192,8 +192,8 @@ htp_status_t htp_txh_state_request_line(htp_tx_t *tx) {
         }
 
         // Run hook REQUEST_URI_NORMALIZE
-        int rc = hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
-        if (rc != HOOK_OK) return rc;
+        int rc = htp_hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
+        if (rc != HTP_OK) return rc;
 
         // Now is a good time to generate request_uri_normalized, before we finalize
         // parsed_uri (and lose the information which parts were provided in the request and
@@ -270,8 +270,8 @@ htp_status_t htp_txh_state_request_line(htp_tx_t *tx) {
     }
 
     // Run hook REQUEST_LINE
-    int rc = hook_run_all(connp->cfg->hook_request_line, connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(connp->cfg->hook_request_line, connp);
+    if (rc != HTP_OK) return rc;
 
     // Move on to the next phase.
     connp->in_state = htp_connp_REQ_PROTOCOL;
@@ -415,8 +415,8 @@ static htp_status_t htp_txh_process_request_headers(htp_tx_t *tx) {
     }
 
     // Run hook REQUEST_HEADERS
-    int rc = hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     return HTP_OK;
 }
@@ -432,15 +432,15 @@ htp_status_t htp_txh_state_request_headers(htp_tx_t *tx) {
     // we're dealing with trailing headers.
     if (tx->progress > TX_PROGRESS_REQ_HEADERS) {
         // Run hook REQUEST_TRAILER
-        int rc = hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
-        if (rc != HOOK_OK) return rc;
+        int rc = htp_hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
+        if (rc != HTP_OK) return rc;
 
         // Completed parsing this request; finalize it now
         tx->connp->in_state = htp_connp_REQ_FINALIZE;
     } else if (tx->progress >= TX_PROGRESS_REQ_LINE) {
         // Process request headers
         int rc = htp_txh_process_request_headers(tx);
-        if (rc != HOOK_OK) return rc;
+        if (rc != HTP_OK) return rc;
 
         tx->connp->in_state = htp_connp_REQ_CONNECT_CHECK;
     } else {
@@ -454,8 +454,8 @@ htp_status_t htp_txh_state_request_headers(htp_tx_t *tx) {
 
 htp_status_t htp_txh_state_request_start(htp_tx_t *tx) {
     // Run hook TRANSACTION_START
-    int rc = hook_run_all(tx->connp->cfg->hook_transaction_start, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_transaction_start, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     // Change state into request line parsing
     tx->connp->in_state = htp_connp_REQ_LINE;
@@ -475,7 +475,7 @@ htp_status_t htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *da
     d.len = len;
 
     int rc = htp_req_run_hook_body_data(tx->connp, &d);
-    if (rc != HOOK_OK) {
+    if (rc != HTP_OK) {
         htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                 "Request body data callback returned error (%d)", rc);
         return HTP_ERROR;
@@ -508,8 +508,8 @@ htp_status_t htp_txh_state_response_start(htp_tx_t *tx) {
     tx->connp->out_tx = tx;
 
     // Run hook RESPONSE_START
-    int rc = hook_run_all(tx->connp->cfg->hook_response_start, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_response_start, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     // Change state into response line parsing, except if we're following
     // a HTTP/0.9 request (no status line or response headers).
@@ -578,8 +578,8 @@ htp_status_t htp_txh_state_response_line(htp_tx_t *tx) {
     }
 
     // Run hook RESPONSE_LINE
-    int rc = hook_run_all(tx->connp->cfg->hook_response_line, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_response_line, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     return HTP_OK;
 }
@@ -640,7 +640,7 @@ static htp_status_t htp_txh_res_process_body_data_decompressor_callback(htp_tx_d
 
     // Invoke all callbacks
     int rc = htp_res_run_hook_body_data(d->tx->connp, d);
-    if (rc != HOOK_OK) return HTP_ERROR;
+    if (rc != HTP_OK) return HTP_ERROR;
 
     return HTP_OK;
 }
@@ -659,8 +659,8 @@ htp_status_t htp_txh_state_response_headers(htp_tx_t *tx) {
     }
 
     // Run hook RESPONSE_HEADERS_COMPLETE
-    int rc = hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
-    if (rc != HOOK_OK) return rc;
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
+    if (rc != HTP_OK) return rc;
 
     // Initialize the decompression engine as necessary. We can deal with three
     // scenarios:
@@ -716,7 +716,7 @@ htp_status_t htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_
         tx->response_entity_len += d.len;
 
         int rc = htp_res_run_hook_body_data(tx->connp, &d);
-        if (rc != HOOK_OK) return HTP_ERROR;
+        if (rc != HTP_OK) return HTP_ERROR;
     }
 
     return HTP_OK;
@@ -734,7 +734,7 @@ htp_status_t htp_txh_state_response_complete(htp_tx_t *tx) {
         }
 
         // Run hook RESPONSE
-        return hook_run_all(tx->connp->cfg->hook_response_done, tx->connp);
+        return htp_hook_run_all(tx->connp->cfg->hook_response_done, tx->connp);
     }
 
     return HTP_OK;
