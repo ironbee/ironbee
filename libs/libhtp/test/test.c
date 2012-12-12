@@ -254,7 +254,7 @@ static int parse_filename(const char *filename, char **remote_addr, int *remote_
  *         the test, or NULL if the test failed for some reason.
  */
 int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_connp_t **connp) {
-    char filename[1025];
+    char *filename = (char *)malloc(1025);
     test_t test;
     struct timeval tv_start, tv_end;
     int rc;
@@ -290,8 +290,10 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     // Does the filename contain connection metdata?
     if (strncmp(testname, "stream", 6) == 0) {
         // It does; use it
-        char *remote_addr, *local_addr;
-        int remote_port, local_port;
+        char *remote_addr = NULL;
+        char *local_addr = NULL;
+        int remote_port = 0;
+        int local_port = 0;
 
         parse_filename(testname, &remote_addr, &remote_port, &local_addr, &local_port);
         htp_connp_open(*connp, (const char *) remote_addr, remote_port, (const char *) local_addr, local_port, &tv_start);
@@ -304,14 +306,14 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
 
     // Find all chunks and feed them to the parser
     int in_data_other = 0;
-    char *in_data;
-    size_t in_data_len;
-    size_t in_data_offset;
+    unsigned char *in_data = NULL;
+    size_t in_data_len = 0;
+    size_t in_data_offset = 0;
 
     int out_data_other = 0;
-    char *out_data;
-    size_t out_data_len;
-    size_t out_data_offset;
+    unsigned char *out_data = NULL;
+    int out_data_len = 0;
+    int out_data_offset = 0;
 
     for (;;) {
         if (test_next_chunk(&test) <= 0) {
@@ -325,7 +327,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
                 return -1;
             }
 
-            int rc = htp_connp_req_data(*connp, &tv_start, test.chunk, test.chunk_len);
+            rc = htp_connp_req_data(*connp, &tv_start, test.chunk, test.chunk_len);
             if (rc == STREAM_STATE_ERROR) {
                 test_destroy(&test);
                 return -101;
@@ -340,7 +342,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
             }
         } else {
             if (out_data_other) {
-                int rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
+                rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
                 if (rc == STREAM_STATE_ERROR) {
                     test_destroy(&test);
                     return -104;
@@ -348,7 +350,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
                 out_data_other = 0;
             }
 
-            int rc = htp_connp_res_data(*connp, &tv_start, test.chunk, test.chunk_len);
+            rc = htp_connp_res_data(*connp, &tv_start, test.chunk, test.chunk_len);
             if (rc == STREAM_STATE_ERROR) {
                 test_destroy(&test);
                 return -102;
@@ -364,7 +366,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
             }
 
             if (in_data_other) {
-                int rc = htp_connp_req_data(*connp, &tv_start, in_data + in_data_offset, in_data_len - in_data_offset);
+                rc = htp_connp_req_data(*connp, &tv_start, in_data + in_data_offset, in_data_len - in_data_offset);
                 if (rc == STREAM_STATE_ERROR) {
                     test_destroy(&test);
                     return -103;
@@ -375,7 +377,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
     }
 
     if (out_data_other) {
-        int rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
+        rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
         if (rc == STREAM_STATE_ERROR) {
             test_destroy(&test);
             return -104;
@@ -390,6 +392,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
 
     // Clean up
     test_destroy(&test);
-
+    free(filename);
+    
     return 1;
 }

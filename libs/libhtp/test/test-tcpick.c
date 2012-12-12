@@ -105,14 +105,15 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
     struct timeval tv;
     char buf[1025];
     int first = -1, current = -1;
-    char *remote_addr, *local_addr;
+    char *remote_addr = NULL;
+    char *local_addr = NULL;
 
-    char *request_last_chunk = NULL;
-    char *response_last_chunk = NULL;
+    unsigned char *request_last_chunk = NULL;
+    unsigned char *response_last_chunk = NULL;
     size_t request_offset, request_len;
-    size_t request_last_offset = 0, request_last_len = 0;
+    size_t request_last_len = 0;
     size_t response_offset, response_len;
-    size_t response_last_offset = 0, response_last_len = 0;
+    size_t response_last_len = 0;
 
     if (parse_filename(filename, &remote_addr, &local_addr) < 0) {
         printf("Failed to parse filename: %s\n", filename);
@@ -191,7 +192,7 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
             return -1;
         }
 
-        char *data = malloc(len);
+        unsigned char *data = malloc(len);
         if (data == NULL) {
             printf("Failed to allocate %i bytes\n", len);
             fclose(f);
@@ -218,7 +219,6 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
                 }
             }
 
-            request_last_offset = request_offset;
             request_last_len = request_len;
             if (request_last_chunk != NULL) {
                 free(request_last_chunk);
@@ -233,7 +233,6 @@ static int tcpick_run_file(const char *filename, htp_cfg_t *cfg, htp_connp_t **c
                 }
             }
 
-            response_last_offset = response_offset;
             response_last_len = response_len;
             if (response_last_chunk != NULL) {
                 free(response_last_chunk);
@@ -281,7 +280,7 @@ static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
 }
 
 static int run_file(char *filename, htp_cfg_t *cfg) {
-    htp_connp_t *connp;
+    htp_connp_t *connp = NULL;
 
     fprintf(stdout, "Running file %s", filename);
 

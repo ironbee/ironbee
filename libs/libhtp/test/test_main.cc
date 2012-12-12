@@ -72,14 +72,14 @@ protected:
 
     htp_cfg_t *cfg;
 
-    char *home;
+    const char *home;
 };
 
 TEST_F(ConnectionParsingTest, Get) {
     int rc = test_run(home, "01-get.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -106,12 +106,12 @@ TEST_F(ConnectionParsingTest, ApacheHeaderParsing) {
     int rc = test_run(home, "02-header-test-apache2.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    ASSERT_EQ(table_size(tx->request_headers), 9);
+    ASSERT_EQ(table_size(tx->request_headers), 9UL);
 
     // Check every header
     int count = 0;
@@ -171,7 +171,7 @@ TEST_F(ConnectionParsingTest, PostUrlencoded) {
     int rc = test_run(home, "03-post-urlencoded.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 2);
+    ASSERT_EQ(list_size(connp->conn->transactions), 2UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -188,7 +188,7 @@ TEST_F(ConnectionParsingTest, PostUrlencodedChunked) {
     int rc = test_run(home, "04-post-urlencoded-chunked.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -200,16 +200,16 @@ TEST_F(ConnectionParsingTest, PostUrlencodedChunked) {
 
     ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
 
-    ASSERT_EQ(tx->request_message_len, 25);
+    ASSERT_EQ(tx->request_message_len, 25UL);
 
-    ASSERT_EQ(tx->request_entity_len, 12);
+    ASSERT_EQ(tx->request_entity_len, 12UL);
 }
 
 TEST_F(ConnectionParsingTest, Expect) {
     int rc = test_run(home, "05-expect.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -219,7 +219,7 @@ TEST_F(ConnectionParsingTest, UriNormal) {
     int rc = test_run(home, "06-uri-normal.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -229,7 +229,7 @@ TEST_F(ConnectionParsingTest, PipelinedConn) {
     int rc = test_run(home, "07-pipelined-connection.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 2);
+    ASSERT_EQ(list_size(connp->conn->transactions), 2UL);
 
     ASSERT_TRUE(connp->conn->flags & PIPELINED_CONNECTION);
 
@@ -241,7 +241,7 @@ TEST_F(ConnectionParsingTest, NotPipelinedConn) {
     int rc = test_run(home, "08-not-pipelined-connection.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 2);
+    ASSERT_EQ(list_size(connp->conn->transactions), 2UL);
 
     ASSERT_FALSE(connp->conn->flags & PIPELINED_CONNECTION);
 
@@ -255,7 +255,7 @@ TEST_F(ConnectionParsingTest, MultiPacketRequest) {
     int rc = test_run(home, "09-multi-packet-request-head.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -267,7 +267,7 @@ TEST_F(ConnectionParsingTest, HeaderHostParsing) {
     int rc = test_run(home, "10-host-in-headers.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 4);
+    ASSERT_EQ(list_size(connp->conn->transactions), 4UL);
 
     htp_tx_t *tx1 = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx1 != NULL);
@@ -294,7 +294,7 @@ TEST_F(ConnectionParsingTest, ResponseWithoutContentLength) {
     int rc = test_run(home, "11-response-stream-closure.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -306,7 +306,7 @@ TEST_F(ConnectionParsingTest, FailedConnectRequest) {
     int rc = test_run(home, "12-connect-request.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -322,39 +322,39 @@ TEST_F(ConnectionParsingTest, CompressedResponseContentType) {
     int rc = test_run(home, "13-compressed-response-gzip-ct.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
     ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
 
-    ASSERT_EQ(tx->response_message_len, 187);
+    ASSERT_EQ(tx->response_message_len, 187UL);
 
-    ASSERT_EQ(tx->response_entity_len, 225);
+    ASSERT_EQ(tx->response_entity_len, 225UL);
 }
 
 TEST_F(ConnectionParsingTest, CompressedResponseChunked) {
     int rc = test_run(home, "14-compressed-response-gzip-chunked.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
     ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
 
-    ASSERT_EQ(tx->response_message_len, 28261);
+    ASSERT_EQ(tx->response_message_len, 28261UL);
 
-    ASSERT_EQ(tx->response_entity_len, 159590);
+    ASSERT_EQ(tx->response_entity_len, 159590UL);
 }
 
 TEST_F(ConnectionParsingTest, SuccessfulConnectRequest) {
     int rc = test_run(home, "15-connect-complete.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -370,7 +370,7 @@ TEST_F(ConnectionParsingTest, ConnectRequestWithExtraData) {
     int rc = test_run(home, "16-connect-extra.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 2);
+    ASSERT_EQ(list_size(connp->conn->transactions), 2UL);
 
     htp_tx_t *tx1 = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx1 != NULL);
@@ -387,7 +387,7 @@ TEST_F(ConnectionParsingTest, Multipart) {
     int rc = test_run(home, "17-multipart-1.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -409,23 +409,23 @@ TEST_F(ConnectionParsingTest, CompressedResponseDeflate) {
     int rc = test_run(home, "18-compressed-response-deflate.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
     ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
 
-    ASSERT_EQ(tx->response_message_len, 755);
+    ASSERT_EQ(tx->response_message_len, 755UL);
 
-    ASSERT_EQ(tx->response_entity_len, 1433);
+    ASSERT_EQ(tx->response_entity_len, 1433UL);
 }
 
 TEST_F(ConnectionParsingTest, UrlEncoded) {
     int rc = test_run(home, "19-urlencoded-test.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -454,7 +454,7 @@ TEST_F(ConnectionParsingTest, AmbiguousHost) {
     int rc = test_run(home, "20-ambiguous-host.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 2);
+    ASSERT_EQ(list_size(connp->conn->transactions), 2UL);
 
     htp_tx_t *tx1 = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx1 != NULL);
@@ -471,7 +471,7 @@ TEST_F(ConnectionParsingTest, Http_0_9) {
     int rc = test_run(home, "21-http09.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(list_size(connp->conn->transactions), 1);
+    ASSERT_EQ(list_size(connp->conn->transactions), 1UL);
 
     htp_tx_t *tx = (htp_tx_t *)list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);

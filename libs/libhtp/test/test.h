@@ -58,13 +58,13 @@ extern "C" {
 typedef struct test_t test_t;
 
 struct test_t {
-    char *buf;
-    size_t pos;
-    size_t len;
+    unsigned char *buf;
+    int pos;
+    int len;
 
-    char *chunk;
-    size_t chunk_offset;
-    size_t chunk_len;
+    unsigned char *chunk;
+    int chunk_offset;
+    int chunk_len;
     int chunk_direction;
 };
 

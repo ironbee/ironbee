@@ -170,7 +170,6 @@ static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
 
 static int run_directory(char *dirname, htp_cfg_t *cfg) {
     struct dirent *entry;
-    char buf[1025];
     DIR *d = opendir(dirname);
     htp_connp_t *connp;
 
@@ -871,7 +870,7 @@ int main_multipart2(int argc, char** argv) {
     htp_config_register_urlencoded_parser(cfg);
     htp_config_register_multipart_parser(cfg);
 
-    htp_connp_t *connp = htp_connp_create(cfg);
+    htp_connp_create(cfg);
     mpartp = htp_mpartp_create(cfg, boundary);
 
     mpartp->extract_files = 1;
@@ -927,8 +926,7 @@ int main_multipart2(int argc, char** argv) {
     }
 
     char *buf = malloc(statbuf.st_size);
-    size_t buflen;
-    size_t pos = 0;
+    int buflen = 0;
 
     int bytes_read = 0;
     while ((bytes_read = read(fd, buf + buflen, statbuf.st_size - buflen)) > 0) {

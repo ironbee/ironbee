@@ -50,9 +50,9 @@ TEST(Utf8, SingleByte) {
     uint32_t result;
 
     result = htp_utf8_decode(&state, &codep, 0x00);
-    EXPECT_EQ(0, result);
-    EXPECT_EQ(HTP_UTF8_ACCEPT, state);
-    EXPECT_EQ(0, codep);
+    EXPECT_EQ(0UL, result);
+    EXPECT_EQ((uint32_t)HTP_UTF8_ACCEPT, state);
+    EXPECT_EQ(0UL, codep);
 }
 
 TEST(Base64, Single) {
@@ -113,19 +113,19 @@ TEST(UtilTest, Chomp) {
     len = strlen(data);
     result = htp_chomp((unsigned char*)data, &len);
     EXPECT_EQ(2, result);
-    EXPECT_EQ(4, len);
+    EXPECT_EQ(4UL, len);
 
     strcpy(data, "foo\n");
     len = strlen(data);
     result = htp_chomp((unsigned char*)data, &len);
     EXPECT_EQ(1, result);
-    EXPECT_EQ(3, len);
+    EXPECT_EQ(3UL, len);
 
     strcpy(data, "arfarf");
     len = strlen(data);
     result = htp_chomp((unsigned char*)data, &len);
     EXPECT_EQ(0, result);
-    EXPECT_EQ(6, len);
+    EXPECT_EQ(6UL, len);
 }
 
 TEST(UtilTest, Space) {

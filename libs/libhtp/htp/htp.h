@@ -440,7 +440,7 @@ struct htp_cfg_t {
     int parse_request_cookies;
     int parse_request_http_authentication;
     int extract_request_files;
-    char *tmpdir;
+    const char *tmpdir;
 
     /** Whether the local port should be used as the outgoing connection port,
      *  usually when the local machine is the target of a firewall redirect

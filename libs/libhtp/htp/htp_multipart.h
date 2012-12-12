@@ -117,7 +117,7 @@ struct htp_mpartp_t {
 
     int extract_files;
     int extract_limit;
-    char *extract_dir;
+    const char *extract_dir;
     int file_count;
 
     // Parsing callbacks
