@@ -117,8 +117,9 @@ TEST_F(ConnectionParsing, ApacheHeaderParsing) {
     int count = 0;
     bstr *key = NULL;
     htp_header_t *h = NULL;
-    htp_table_iterator_reset(tx->request_headers);
-    while ((key = htp_table_iterator_next(tx->request_headers, (void **) & h)) != NULL) {
+        
+    for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
+        htp_table_get_index(tx->request_headers, i, &key, (void **)&h);
 
         switch (count) {
             case 0:

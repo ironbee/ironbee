@@ -122,10 +122,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     // Destroy request_headers
     if (tx->request_headers != NULL) {
-        void *tvalue;
-        htp_table_iterator_reset(tx->request_headers);
-        while (htp_table_iterator_next(tx->request_headers, &tvalue) != NULL) {
-            htp_header_t *h = (htp_header_t *) tvalue;
+        htp_header_t *h = NULL;
+        for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
+            htp_table_get_index(tx->request_headers, i, NULL, (void **)&h);
             bstr_free(&h->name);
             bstr_free(&h->value);
             free(h);
@@ -163,10 +162,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     // Destroy response headers
     if (tx->response_headers != NULL) {
-        void *tvalue;
-        htp_table_iterator_reset(tx->response_headers);
-        while (htp_table_iterator_next(tx->response_headers, &tvalue) != NULL) {
-            htp_header_t *h = (htp_header_t *) tvalue;
+        htp_header_t *h = NULL;
+        for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
+            htp_table_get_index(tx->response_headers, i, NULL, (void **)&h);
             bstr_free(&h->name);
             bstr_free(&h->value);
             free(h);
@@ -196,10 +194,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
     htp_mpartp_destroy(&tx->request_mpartp);
 
     if ((tx->request_params_query_reused == 0) && (tx->request_params_query != NULL)) {
-        void *tvalue;
-        htp_table_iterator_reset(tx->request_params_query);
-        while (htp_table_iterator_next(tx->request_params_query, &tvalue) != NULL) {
-            bstr *b = (bstr *) tvalue;
+        bstr *b = NULL;
+        for (int i = 0, n = htp_table_size(tx->request_params_query); i < n; i++) {
+            htp_table_get_index(tx->request_params_query, i, NULL, (void **)&b);
             bstr_free(&b);
         }
 
@@ -207,10 +204,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
     }
 
     if ((tx->request_params_body_reused == 0) && (tx->request_params_body != NULL)) {
-        void *tvalue;
-        htp_table_iterator_reset(tx->request_params_body);
-        while (htp_table_iterator_next(tx->request_params_body, &tvalue) != NULL) {
-            bstr *b = (bstr *) tvalue;
+        bstr *b = NULL;
+        for (int i = 0, n = htp_table_size(tx->request_params_body); i < n; i++) {
+            htp_table_get_index(tx->request_params_body, i, NULL, (void **)&b);
             bstr_free(&b);
         }
 
@@ -218,10 +214,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
     }
 
     if (tx->request_cookies != NULL) {
-        void *tvalue;
-        htp_table_iterator_reset(tx->request_cookies);
-        while (htp_table_iterator_next(tx->request_cookies, &tvalue) != NULL) {
-            bstr *b = (bstr *) tvalue;
+        bstr *b = NULL;
+        for (int i = 0, n = htp_table_size(tx->request_cookies); i < n; i++) {
+            htp_table_get_index(tx->request_cookies, i, NULL, (void **)&b);
             bstr_free(&b);
         }
 

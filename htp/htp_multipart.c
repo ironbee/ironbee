@@ -349,10 +349,9 @@ void htp_mpart_part_destroy(htp_mpart_part_t *part) {
 
     if (part->headers != NULL) {
         // Destroy request_headers
-        void *tvalue;
-        htp_table_iterator_reset(part->headers);
-        while (htp_table_iterator_next(part->headers, &tvalue) != NULL) {
-            htp_header_t *h = (htp_header_t *)tvalue;
+        htp_header_t *h = NULL;
+        for (int i = 0, n = htp_table_size(part->headers); i < n; i++) {            
+            htp_table_get_index(part->headers, i, NULL, (void **)&h);
             bstr_free(&h->name);
             bstr_free(&h->value);
             free(h);

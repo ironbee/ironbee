@@ -137,12 +137,12 @@ static VALUE rbhtp_r_string_table( htp_table_t* table )
 {
 	if ( table == NULL ) return Qnil;
 	
-	bstr k, v;
-	VALUE r = rb_ary_new();
-	htp_table_iterator_reset( table );
-	while ( ( k = htp_table_iterator_next( table, &v ) ) != NULL ) {
+	bstr *k, *v;
+	VALUE r = rb_ary_new();	
+    for (int i = 0, n = htp_table_size(table); i < n; i++) {
+        htp_table_get_index(table, i, &k, (void **)&v);
 		rb_ary_push( r, rb_ary_new3( 2,
-			BSTR_TO_RSTR( k ), BSTR_TO_RSTR( v ) ) );
+			BSTR_TO_RSTR( *k ), BSTR_TO_RSTR( *v ) ) );
 	}
 	return r;
 }
@@ -158,16 +158,17 @@ static VALUE rbhtp_r_string_table( htp_table_t* table )
 // We don't push the keys as they are duplicated in the header.
 static VALUE rbhtp_r_header_table( htp_table_t* table )
 {
-	if ( table == NULL ) return Qnil; 
-	bstr k; 
+	if ( table == NULL ) return Qnil; 	
 	htp_header_t* v; 
 	VALUE r = rb_ary_new(); 
-	htp_table_iterator_reset( table );
-	while ( ( k = htp_table_iterator_next( table, (void**)&v ) ) != NULL ) {
-		rb_ary_push( r, 
-			rb_funcall( cHeader, rb_intern( "new" ), 1, 
-				Data_Wrap_Struct( rb_cObject, 0, 0, v ) ) ); 
-	} 
+
+    for (int i = 0, n = htp_table_size(table); i < n; i++) {
+        htp_table_get_index(table, i, NULL, (void **)&v);
+        rb_ary_push( r,
+			rb_funcall( cHeader, rb_intern( "new" ), 1,
+				Data_Wrap_Struct( rb_cObject, 0, 0, v ) ) );
+    }
+
 	return r; 
 }	
 

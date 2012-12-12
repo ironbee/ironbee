@@ -115,20 +115,14 @@ void *htp_table_get(const htp_table_t *table, const bstr *key);
 void *htp_table_get_c(const htp_table_t *table, const char *ckey);
 
 /**
- * Advance iterator to the next table element.
+ * Retrieve key and element at the given index.
  *
  * @param[in] table
- * @param[out] data A pointer to the pointer that will be set to the value of the next element.
- * @return Pointer to the key of the next element if there is one, NULL otherwise.
+ * @param[out] key Pointer in which the key will be returned.
+ * @param[out] value Pointer in which the value will be returned;
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
-bstr *htp_table_iterator_next(htp_table_t *table, void **data);
-
-/**
- * Reset the table iterator.
- *
- * @param[in] table
- */
-void htp_table_iterator_reset(htp_table_t *table);
+htp_status_t htp_table_get_index(const htp_table_t *table, size_t idx, bstr **key, void **value);
 
 /**
  * Return the size of the table.

@@ -138,21 +138,19 @@ void *htp_table_get_c(const htp_table_t *table, const char *ckey) {
     return NULL;
 }
 
-bstr *htp_table_iterator_next(htp_table_t *t, void **data) {
-    // Get the key
-    bstr *s = list_iterator_next(t->list);
+htp_status_t htp_table_get_index(const htp_table_t *table, size_t idx, bstr **key, void **value) {
+    if ((key == NULL)&&(value == NULL)) return HTP_ERROR;
+    if (idx >= list_size(table->list)) return HTP_ERROR;
 
-    if (s != NULL) {
-        // Get the value
-        *data = list_iterator_next(t->list);
+    if (key != NULL) {
+        *key = list_get(table->list, idx * 2);
     }
 
-    // Return the key
-    return s;
-}
+    if (value != NULL) {
+        *value = list_get(table->list, (idx * 2) + 1);
+    }
 
-void htp_table_iterator_reset(htp_table_t *table) {
-    list_iterator_reset(table->list);
+    return HTP_OK;
 }
 
 size_t htp_table_size(const htp_table_t *table) {

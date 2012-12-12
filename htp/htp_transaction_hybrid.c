@@ -487,10 +487,9 @@ htp_status_t htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *da
 htp_status_t htp_txh_req_headers_clear(htp_tx_t *tx) {
     if (tx->request_headers == NULL) return HTP_ERROR;
 
-    void *tvalue;
-    htp_table_iterator_reset(tx->request_headers);
-    while (htp_table_iterator_next(tx->request_headers, &tvalue) != NULL) {
-        htp_header_t *h = (htp_header_t *) tvalue;
+    htp_header_t *h = NULL;
+    for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
+        htp_table_get_index(tx->request_headers, i, NULL, (void **)&h);
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
@@ -613,10 +612,9 @@ htp_status_t htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char
 htp_status_t htp_txh_res_headers_clear(htp_tx_t *tx) {
     if (tx->response_headers == NULL) return HTP_ERROR;
 
-    void *tvalue;
-    htp_table_iterator_reset(tx->response_headers);
-    while (htp_table_iterator_next(tx->response_headers, &tvalue) != NULL) {
-        htp_header_t *h = (htp_header_t *) tvalue;
+    htp_header_t *h = NULL;
+    for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
+        htp_table_get_index(tx->response_headers, i, NULL, (void **)&h);
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
