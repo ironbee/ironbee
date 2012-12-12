@@ -63,6 +63,7 @@ typedef struct htp_uri_t htp_uri_t;
 
 #include "bstr.h"
 #include "dslib.h"
+#include "htp_table.h"
 #include "hooks.h"
 #include "htp_decompressors.h"
 #include "htp_urlencoded.h"

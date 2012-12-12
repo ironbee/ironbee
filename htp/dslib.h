@@ -52,12 +52,6 @@ typedef struct htp_table_t htp_table_t;
 extern "C" {
 #endif
 
-// IMPORTANT This library is used internally by the parser and you should
-//           not rely on it in your code. The implementation may change at
-//           any time.
-
-// Lists
-
 #define list_push(L, E) (L)->push(L, E)
 #define list_pop(L) (L)->pop(L)
 #define list_empty(L) (L)->empty(L)
@@ -140,105 +134,6 @@ void list_array_iterator_init(list_array_t *l, list_array_iterator_t *it);
  * @return Pointer to the next element, or NULL if no more elements are available.
  */
 void *list_array_iterator_next(list_array_iterator_t *it);
-
-// Table
-
-struct htp_table_t {
-    list_t *list;
-};
-
-/**
- * Add a new element to the table. The key will be copied, and the copy
- * managed by the table. The point of the element will be stored, but the
- * element itself will not be managed by the table.
- *
- * @param[in] table
- * @param[in] key
- * @param[in] element
- * @return HTP_OK on success, HTP_ERROR on failure.
- */
-htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *element);
-
-/**
- * Add a new element to the table. The key provided will be adopted and managed
- * by the table. You should not keep a copy of the pointer to the key unless you're
- * certain that the table will live longer thant the copy. The table will make a
- * copy of the element pointer, but will not manage it.
- *
- * @param[in] table
- * @param[in] key
- * @param[in] element
- * @return
- */
-htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *element);
-
-/**
- * Remove all elements from the table. This function will free the keys,
- * but will do nothing about the elements in the table. If the elements need
- * freeing, you need to free them before invoking this function.
- *
- * @param[in] table
- */
-void htp_table_clear(htp_table_t *table);
-
-/**
- * Create a new table structure.
- *
- * @param[in] size
- * @return Newly created table instance, or NULL on failure.
- */
-htp_table_t *htp_table_create(size_t size);
-
-/**
- * Destroy a table. This function first frees the keys and then destroys the
- * table itself, but does nothing with the elements. If the elements need
- * freeing, you need to free them before invoking this function.
- *
- * @param[in]   table
- */
-void htp_table_destroy(htp_table_t **_table);
-
-/**
- * Retrieve the first element that matches the given bstr key.
- *
- * @param[in] table
- * @param[in] key
- * @return Matched element, or NULL if no elements match the key.
- */
-void *htp_table_get(const htp_table_t *table, const bstr *key);
-
-/**
- * Retrieve the first element that matches the given NUL-terminated key.
- *
- * @param[in] table
- * @param[in] ckey
- * @return Matched element, or NULL if no elements match the key.
- */
-void *htp_table_get_c(const htp_table_t *table, const char *ckey);
-
-/**
- * Advance iterator to the next table element.
- *
- * @param[in] table
- * @param[out] data A pointer to the pointer that will be set to the value of the next element.
- * @return Pointer to the key of the next element if there is one, NULL otherwise.
- */
-bstr *htp_table_iterator_next(htp_table_t *table, void **data);
-
-/**
- * Reset the table iterator.
- *
- * @param[in] table
- */
-void htp_table_iterator_reset(htp_table_t *table);
-
-/**
- * Return the size of the table.
- *
- * @param[in] table
- * @return table size
- */
-size_t htp_table_size(const htp_table_t *table);
 
 #ifdef __cplusplus
 }
