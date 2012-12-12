@@ -39,28 +39,36 @@
 #include <htp/htp.h>
 #include "test.h"
 
+#include <stdexcept>
+     
 class ConnectionParsingTest : public testing::Test {
 
 protected:
 
     virtual void SetUp() {
-        // Try the current working directory first
-        int fd = open("./files/anchor.empty", 0, O_RDONLY);
-        if (fd != -1) {
-            close(fd);
-            home = (char *)"./files";
-        } else {
-            int fd = open("./test/files/anchor.empty", 0, O_RDONLY);
-            if (fd != -1) {
-                close(fd);
-                home = (char *)"./test/files";
-            }
-        }
-
         cfg = htp_config_create();
         htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2_2);
         htp_config_register_urlencoded_parser(cfg);
         htp_config_register_multipart_parser(cfg);
+
+        // Try the current working directory first
+        home = getenv("TEST_HOME");
+        if (! home) {
+            int fd = open("./files/anchor.empty", 0, O_RDONLY);
+            if (fd != -1) {
+                close(fd);
+                home = (char *)"./files";
+            } else {
+                fd = open("./test/files/anchor.empty", 0, O_RDONLY);
+                if (fd != -1) {
+                    close(fd);
+                    home = (char *)"./test/files";
+                }
+                else {
+                    throw std::runtime_error("Could not find a home.");
+                }
+            }
+        }
     }
 
     virtual void TearDown() {
