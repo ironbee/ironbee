@@ -51,7 +51,7 @@ ibmod_ac_la_LDFLAGS = $(AM_LDFLAGS)
 
 pkglib_LTLIBRARIES += ibmod_ee.la
 ibmod_ee_la_SOURCES = ee_oper.c
-ibmod_ee_la_LIBADD = $(top_builddir)/automata/libiaeudoxus.la
+ibmod_ee_la_LIBADD = $(AM_LIBADD) $(top_builddir)/automata/libiaeudoxus.la
 ibmod_ee_la_CFLAGS = ${AM_CFLAGS} -I$(top_srcdir)/automata/include
 ibmod_ee_la_LDFLAGS = $(AM_LDFLAGS)
 
