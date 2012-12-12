@@ -42,7 +42,6 @@ extern "C" {
 #endif
 
 typedef struct list_array_t list_array_t;
-typedef struct list_array_iterator_t list_array_iterator_t;
 typedef struct list_linked_element_t list_linked_element_t;
 typedef struct list_linked_t list_linked_t;
 
@@ -53,10 +52,6 @@ typedef struct list_linked_t list_linked_t;
 #define list_create list_array_create
 #define list_destroy list_array_destroy
 #define list_get list_array_get
-#define list_iterator_next list_array_int_iterator_next
-#define list_iterator_reset list_array_int_iterator_reset
-#define iterator_init list_array_iterator_init
-#define iterator_next list_array_iterator_next
 #define list_pop list_array_pop
 #define list_push list_array_push
 #define list_replace list_array_replace
@@ -94,14 +89,6 @@ struct list_array_t {
 
     size_t iterator_index;
 };
-
-struct list_array_iterator_t {
-
-    list_array_t *l;
-
-    size_t index;
-};
-
 
 /**
  * Create new array-backed list.
@@ -175,38 +162,6 @@ size_t list_array_size(const list_array_t *l);
  */
 void *list_array_shift(list_array_t *l);
 
-/**
- * Advance the iterator to the next value.
- *
- * @param[in] l
- * @return The next list value, or NULL if there aren't more elements
- *         left to iterate over or if the element itself is NULL.
- */
-void list_array_int_iterator_reset(list_array_t *l);
-
-/**
- * Reset the list iterator.
- *
- * @param[in] l
- */
-void *list_array_int_iterator_next(list_array_t *l);
-
-/**
- * Initialize iterator for the given list. After this, repeatedly
- * invoking list_array_iterator_next() will walk the entire list.
- *
- * @param[in] l
- * @param[in] it
- */
-void list_array_iterator_init(list_array_t *l, list_array_iterator_t *it);
-
-/**
- * Move the iterator to the next element in the list.
- *
- * @param[in] it
- * @return Pointer to the next element, or NULL if no more elements are available.
- */
-void *list_array_iterator_next(list_array_iterator_t *it);
 
 
 

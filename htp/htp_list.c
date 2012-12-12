@@ -188,36 +188,8 @@ void *list_array_shift(list_array_t *l) {
     return r;
 }
 
-void *list_array_int_iterator_next(list_array_t *l) {
-    void *r = NULL;
 
-    if (l->iterator_index < l->current_size) {
-        r = list_array_get(l, l->iterator_index);
-        l->iterator_index++;
-    }
 
-    return r;
-}
-
-void list_array_int_iterator_reset(list_array_t *l) {
-    l->iterator_index = 0;
-}
-
-void list_array_iterator_init(list_array_t *l, list_array_iterator_t *it) {
-    it->l = l;
-    it->index = 0;
-}
-
-void *list_array_iterator_next(list_array_iterator_t *it) {
-    void *r = NULL;
-
-    if (it->index < it->l->current_size) {
-        r = list_array_get(it->l, it->index);
-        it->index++;
-    }
-
-    return r;
-}
 
 
 
