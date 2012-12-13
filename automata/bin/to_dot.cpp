@@ -92,18 +92,18 @@ void output_content(ostream& o, const string& v)
 {
     BOOST_FOREACH(char c, v) {
         switch (c) {
-        case '&': cout << "&amp;"; break;
-        case '"': cout << "&quot;"; break;
-        case '\'': cout << "&apos;"; break;
-        case '<': cout << "&lt;"; break;
-        case '>': cout << "&gt;"; break;
-        case '\\': cout << "\\\\"; break;
+        case '&': o << "&amp;"; break;
+        case '"': o << "&quot;"; break;
+        case '\'': o << "&apos;"; break;
+        case '<': o << "&lt;"; break;
+        case '>': o << "&gt;"; break;
+        case '\\': o << "\\\\"; break;
         default:
             if (c < 32 || c > 126) {
-                cout << boost::format("&lang;%d&rang;") % uint32_t(c);
+                o << boost::format("&lang;%d&rang;") % uint32_t(c);
             }
             else {
-                cout << boost::format("%c") % c;
+                o << boost::format("%c") % c;
             }
         }
     }
