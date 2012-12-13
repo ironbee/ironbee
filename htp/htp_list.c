@@ -29,7 +29,7 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "htp_list.h"
+#include "htp_list_private.h"
 
 #include <stdlib.h>
 #include <stdio.h>

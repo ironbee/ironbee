@@ -62,34 +62,13 @@ typedef struct list_linked_t list_linked_t;
 #include "htp.h"
 #include "bstr.h"
 
-struct list_linked_element_t {
+// Data structures
 
-    void *data;
+struct list_array_t;
+struct list_linked_t;
 
-    list_linked_element_t *next;
-};
 
-struct list_linked_t {
-
-    list_linked_element_t *first;
-
-    list_linked_element_t *last;
-};
-
-struct list_array_t {
-
-    size_t first;
-
-    size_t last;
-
-    size_t max_size;
-
-    size_t current_size;
-
-    void ** elements;
-
-    size_t iterator_index;
-};
+// Functions
 
 /**
  * Create new array-backed list.
