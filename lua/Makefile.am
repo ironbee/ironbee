@@ -5,9 +5,9 @@ include $(top_srcdir)/build/common.mk
 luadir = $(libdir)
 
 if FREEBSD
-AM_LDFLAGS = -L/usr/local/lib -no-undefined -static-libtool-libs
+AM_LDFLAGS += -L/usr/local/lib -no-undefined -static-libtool-libs
 else
-AM_LDFLAGS = -no-undefined -static-libtool-libs
+AM_LDFLAGS += -no-undefined -static-libtool-libs
 endif
 EXTRA_DIST = ironbee-ffi.lua \
 	     ironbee-api.lua \

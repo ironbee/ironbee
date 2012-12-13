@@ -3,7 +3,7 @@ include $(top_srcdir)/build/common.mk
 bin_PROGRAMS = ibcli
 
 if DARWIN
-AM_LDFLAGS = -image_base 100000000
+AM_LDFLAGS+ = -image_base 100000000
 endif
 
 ibcli_SOURCES = ibcli.c

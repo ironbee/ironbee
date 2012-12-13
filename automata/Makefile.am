@@ -16,7 +16,7 @@ ironautomata_include_HEADERS = \
     $(srcdir)/include/ironautomata/vls.h
 EXTRA_libiaeudoxus_la_SOURCES = eudoxus_subengine.c
 
-AM_CPPFLAGS = -I$(srcdir)/include
+AM_CPPFLAGS += -I$(srcdir)/include
 CFLAGS += -Wno-inline
 
 if CPP
@@ -67,7 +67,7 @@ AM_CPPFLAGS += \
     -I$(builddir)/include \
 	$(PROTOBUF_CPPFLAGS) \
 	$(BOOST_CPPFLAGS)
-AM_LDFLAGS = \
+AM_LDFLAGS += \
     $(PROTOBUF_LDFLAGS) \
 	$(BOOST_LDFLAGS) \
     -lprotobuf \

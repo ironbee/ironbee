@@ -7,9 +7,9 @@ pkglibdir = $(libdir)
 AM_LIBADD = $(top_builddir)/engine/libironbee.la
 
 if FREEBSD
-AM_LDFLAGS = -L/usr/local/lib -module -avoid-version -lssp_nonshared
+AM_LDFLAGS += -L/usr/local/lib -module -avoid-version -lssp_nonshared
 else
-AM_LDFLAGS = -module -avoid-version
+AM_LDFLAGS += -module -avoid-version
 endif
 
 pkglib_LTLIBRARIES = ibmod_htp.la \

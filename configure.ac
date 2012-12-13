@@ -30,17 +30,17 @@ case "$OS" in
                     CC="gcc45"
                     CPP="cpp45"
                     CXX="g++45"
-                    LDFLAGS="${LDFLAGS} -Wl,-R/usr/local/lib/gcc45"
+                    AM_LDFLAGS="${AM_LDFLAGS} -Wl,-R/usr/local/lib/gcc45"
                 elif test "$GCC46BIN" != "no"; then
                     CC="gcc46"
                     CPP="cpp46"
                     CXX="g++46"
-                    LDFLAGS="${LDFLAGS} -Wl,-R/usr/local/lib/gcc46"
+                    AM_LDFLAGS="${AM_LDFLAGS} -Wl,-R/usr/local/lib/gcc46"
                 elif test "$GCC47BIN" != "no"; then
                     CC="gcc47"
                     CPP="cpp47"
                     CXX="g++47"
-                    LDFLAGS="${LDFLAGS} -Wl,-R/usr/local/lib/gcc47"
+                    AM_LDFLAGS="${AM_LDFLAGS} -Wl,-R/usr/local/lib/gcc47"
                 else
                     echo
                     echo "   You must have gcc45/gcc46/gcc47 to compile on FreeBSD 7/8/9"
@@ -137,16 +137,16 @@ case "$OS" in
         FreeBSD*)
                 AC_MSG_RESULT(FreeBSD) 
                 OS_FREEBSD="true"
-                CPPFLAGS="${CPPFLAGS} -I/usr/local/include"
-                LDFLAGS="${LDFLAGS} -L/usr/local/lib"
+                AM_CPPFLAGS="${AM_CPPFLAGS} -I/usr/local/include"
+                AM_LDFLAGS="${AM_LDFLAGS} -L/usr/local/lib"
         ;;
         Darwin*)
                 AC_MSG_RESULT(Darwin) 
                 OS_DARWIN="true"
                 AC_DEFINE(_POSIX_C_SOURCE, [1], [Enable POSIX C source feature test macro])
                 AC_DEFINE(_DARWIN_C_SOURCE, [1], [Enable full C features on OSX])
-                CPPFLAGS="${CPPFLAGS} -I/usr/local/include -I/opt/local/include"
-                LDFLAGS="${LDFLAGS} -L/usr/local/lib -L/opt/local/lib"
+                AM_CPPFLAGS="${AM_CPPFLAGS} -I/usr/local/include -I/opt/local/include"
+                AM_LDFLAGS="${AM_LDFLAGS} -L/usr/local/lib -L/opt/local/lib"
                 AC_CHECK_LIB(iconv, libiconv_open, LIBS="$LIBS -liconv")
         ;;
         Linux*)
@@ -546,7 +546,8 @@ AC_SUBST(SERVERS_SUBDIRS)
 AC_SUBST(RAGEL)
 AC_SUBST(JAVA)
 AC_SUBST(VALGRIND)
-AC_SUBST(LDFLAGS)
+AC_SUBST(AM_CPPFLAGS)
+AC_SUBST(AM_LDFLAGS)
 AC_SUBST(IB_DEBUG)
 AC_SUBST(DOXYGEN)
 AC_SUBST(DOXYGEN_EXTERNAL_DEPS)
