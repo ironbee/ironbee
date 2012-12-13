@@ -37,6 +37,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/scope_exit.hpp>
 
 #define ASSERT_IB_OK(x) ASSERT_EQ(IB_OK, (x))
 const size_t EXCEPTION_BUF_SIZE = 128;
@@ -154,6 +155,44 @@ public:
             "SiteId AAAABBBB-1111-2222-3333-000000000000\n"
             "Hostname somesite.com\n"
             "</Site>\n");
+    }
+
+    /**
+     * Create a temporary configuration file and have IronBee read it in.
+     */
+    void configureIronBeeByString(const std::string& configurationText) {
+        const char *fileNameTemplate = "ironbee_gtest.conf_XXXXXX";
+        char *configFile;
+        int fileFd;
+        ssize_t writeSize;
+
+        configFile = strdup(fileNameTemplate);
+
+        if (!configFile) {
+            throw std::runtime_error("Could not strdup tmp conf file string.");
+        }
+
+        fileFd = mkstemp(configFile);
+
+        if (fileFd < 0) {
+            free(configFile);
+            throw std::runtime_error("Failed to open tmp ironbee conf file.");
+        }
+
+        writeSize = write(
+            fileFd,
+            configurationText.c_str(),
+            configurationText.size());
+        close(fileFd);
+        if (writeSize < 0) {
+            free(configFile);
+            throw std::runtime_error("Failed to write whole config file.");
+        }
+
+        configureIronBee(std::string(configFile));
+
+        unlink(configFile);
+
     }
 
     /**
