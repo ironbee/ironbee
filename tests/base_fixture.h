@@ -37,10 +37,9 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/scope_exit.hpp>
 
 #define ASSERT_IB_OK(x) ASSERT_EQ(IB_OK, (x))
-const size_t EXCEPTION_BUF_SIZE = 128;
+static const size_t EXCEPTION_BUF_SIZE = 128;
 
 class BaseFixture : public ::testing::Test {
 public:
