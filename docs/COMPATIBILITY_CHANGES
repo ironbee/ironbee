@@ -5,9 +5,29 @@
 
 - Added the "htp_" prefix to all hook functions.
 
+- Renamed hooks.h to htp_hooks.h and hooks.c to htp_hooks.c.
+
 - Added the "htp_" prefix to all table structures and functions.
 
 - list_array_replace returns HTP_ERROR (-1) instead of 0 when the index does not exist.
+
+- Removed list iterators. Use this instead:
+
+  bstr *b = NULL;
+  for (int i = 0, n = htp_list_size(l); i < n; i++) {
+      htp_list_get_index(l, i, (void **)&b);
+      bstr_free(&b);
+  }
+
+- Removed table iterators. Use this instead:
+
+  bstr *key = NULL;
+  bstr *value = NULL;
+  for (int i = 0, n = htp_table_size(t); i < n; i++) {
+      htp_table_get_index(l, i, &key, (void **)&value);
+      // key is managed by the table and does not need freeing
+      bstr_free(&value);
+  }
 
 
 
