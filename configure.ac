@@ -102,34 +102,6 @@ dnl Checks for libraries.
 
 AC_CHECK_HEADERS(arpa/inet.h netinet/in.h)
 
-# Check for -Wno-null-dereference
-AC_MSG_CHECKING(for -Wno-null-dereference support)    
-save_CPPFLAGS="${CPPFLAGS}"
-CPPFLAGS="${CPPFLAGS} -Werror -Wno-null-dereference"
-AC_TRY_COMPILE(,,
-  [have_no_warn_null_deref=yes],[have_no_warn_null_deref=no])
-CPPFLAGS="${save_CPPFLAGS}"
-if test "$have_no_warn_null_deref" == "yes"; then
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
-fi
-AM_CONDITIONAL([HAVE_NO_WARN_NULL_DEREF], [test "$have_no_warn_null_deref" = "yes"])
-
-# Check for -Wunused-but-set-variable
-AC_MSG_CHECKING(for -Wunused-but-set-variable)    
-save_CPPFLAGS="${CPPFLAGS}"
-CPPFLAGS="${CPPFLAGS} -Werror -Wunused-but-set-variable"
-AC_TRY_COMPILE(,,
-  [have_no_unused_but_set_variable=yes],[have_no_unused_but_set_variable=no])
-CPPFLAGS="${save_CPPFLAGS}"
-if test "$have_no_unused_but_set_variable" == "yes"; then
-  AC_MSG_RESULT(yes)
-else
-  AC_MSG_RESULT(no)
-fi
-AM_CONDITIONAL([HAVE_NO_UNUSED_BUT_SET_VARIABLE], [test "$have_no_unused_but_set_variable" = "yes"])
-
 AC_MSG_CHECKING([OS])
 case "$OS" in
         FreeBSD*)
