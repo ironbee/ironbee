@@ -34,7 +34,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "hooks.h"
+#include "htp_hooks.h"
 
 htp_hook_t *htp_hook_copy(const htp_hook_t *hook) {
     if (hook == NULL) return NULL;
