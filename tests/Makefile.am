@@ -174,11 +174,11 @@ test_util_dso_SOURCES = test_util_dso.cpp test_main.cpp
 test_util_dso_CFLAGS = -rpath $(PWD)
 
 test_util_dso_lib_CFLAGS = \
-	$(CFLAGS) @GCC_CHARACTERISTICS_CFLAGS@ -prefer-pic -shared
+	$(CFLAGS) -prefer-pic -shared
 
 libtest_util_dso_lib_la_SOURCES = test_util_dso_lib.c
 libtest_util_dso_lib_la_LDFLAGS = \
-	$(LDFLAGS) @GCC_CHARACTERISTICS_LDFLAGS@ \
+	$(LDFLAGS) \
 	-shared -version-info 0:0:0 -rpath $(PWD)
 
 test_util_list_SOURCES = test_util_list.cpp test_main.cpp

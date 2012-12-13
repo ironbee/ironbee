@@ -50,13 +50,6 @@ case "$OS" in
         ;;
 esac
 
-
-dnl do gcc-characteristics
-AC_ARG_ENABLE(gcc-characteristics,
-              AS_HELP_STRING([--disable-gcc-characteristics],
-                             [Disable gcc feature and optimization macro (enabled by default).]),[enable_gcc_characteristics="$enableval"],[enable_gcc_characteristics=yes])
-save_CFLAGS="${CFLAGS}"
-save_CXXFLAGS="${CXXFLAGS}"
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_LIBTOOL
@@ -71,21 +64,17 @@ fi
 dnl if we have clang use the CFLAGS set by autoconf macros.
 dnl if not clang assume gcc and use the CFLAGS set by our macro.
 if test "$GCC" = "yes"; then
+	AC_MSG_CHECKING([if compiler is c clang])
     AC_TRY_COMPILE(,
                    [#ifndef __clang__
                        something invalid
                     #endif
                   return 0;],
-                [ cc_is_clang=yes ], [:]
+                [ AC_MSG_RESULT([yes]); cc_is_clang=yes ], [AC_MSG_RESULT([no]); cc_is_clang=no]
                 )
     if test "$cc_is_clang" == "yes"; then
-        CFLAGS="${CFLAGS} -Wall -fPIC" 
-        CXXFLAGS="${CXXFLAGS} -Wall -fPIC" 
-    elif test "$cc_is_clang" != "yes" && test "$enable_gcc_characteristics" = "yes"; then
-        CFLAGS="${save_CFLAGS}"
-        CXXFLAGS="${save_CXXFLAGS}"
-        sinclude(acinclude/gcc_characteristics.m4)
-        GCC_CHARACTERISTICS()
+        CFLAGS="${CFLAGS} -fPIC" 
+        CXXFLAGS="${CXXFLAGS} -fPIC" 
     else
         CFLAGS="${CFLAGS} -std=c99"
     fi
