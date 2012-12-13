@@ -135,14 +135,6 @@ AM_CONDITIONAL([FREEBSD], [test "$OS_FREEBSD" = "true"])
 AM_CONDITIONAL([DARWIN], [test "$OS_DARWIN" = "true"])
 AM_CONDITIONAL([LINUX], [test "$OS_LINUX" = "true"])
 
-#We need to call the iconv macro after OS detection for FreeBSD to work properly
-sinclude(acinclude/iconv.m4)
-sinclude(acinclude/lib-ld.m4)
-sinclude(acinclude/lib-link.m4)
-sinclude(acinclude/lib-prefix.m4)
-AM_ICONV
-dnl Checks for library functions.
-
 dnl Configure options
 ### Dmalloc (dmalloc.com)
 AM_WITH_DMALLOC
