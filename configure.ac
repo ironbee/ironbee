@@ -56,9 +56,6 @@ AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AC_MSG_CHECKING(XXXXXXXXXXXXXXXXXXXXXXXXXXXXX)
-AC_MSG_RESULT(XXXXXXXXXXXXXXXXXXXXXXXXXXXXX)
-
 AC_ARG_ENABLE(debug, [  --enable-debug  Enable debug mode], [ enable_debug=yes ])
 if test "$enable_debug" = "yes"; then
     CFLAGS="${CFLAGS} -DHTP_DEBUG"
