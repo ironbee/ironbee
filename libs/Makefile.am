@@ -10,8 +10,6 @@ if ENABLE_LUA
 BUILT_SOURCES += .build-luajit
 endif
 
-BUILT_SOURCES += .build-libhtp
-
 clean-local:
 if ENABLE_LUA
 if FREEBSD
@@ -20,7 +18,6 @@ else
 	(rm -f .build-luajit && cd luajit-2.0-ironbee && $(MAKE) clean)
 endif
 endif
-	(rm -f .build-libhtp)
 
 .build-luajit: $(srcdir)/luajit-2.0-ironbee/* $(srcdir)/luajit-2.0-ironbee/src/*
 	if [ "$(builddir)" != "" -a "$(builddir)" != "$(srcdir)" ]; then \
@@ -34,11 +31,5 @@ else
 	(cd luajit-2.0-ironbee && $(MAKE) amalg TARGET_STRIP=@: CCDEBUG=-g XCFLAGS=-DLUAJIT_USE_GDBJIT && touch ../.build-luajit)
 endif
 endif
-
-.build-libhtp:
-	mkdir -p libhtp
-	(cd $(srcdir)/libhtp && ./autogen.sh)
-	(cd libhtp && $(abs_srcdir)/libhtp/configure --prefix=$(prefix) CC=$(CC) CXX=$(CXX));
-	touch .build-libhtp
 
 EXTRA_DIST = luajit-2.0-ironbee libhtp

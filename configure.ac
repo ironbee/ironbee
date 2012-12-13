@@ -612,9 +612,12 @@ AC_CONFIG_FILES([docs/external.doxy])
 # version file
 AC_CONFIG_FILES([include/ironbee/release.h])
 
-#packaging
+# packaging
 AC_CONFIG_FILES([packaging/Makefile])
 AC_CONFIG_FILES([packaging/rpm/Makefile])
 AC_CONFIG_FILES([packaging/rpm/ironbee.spec])
+
+# HTP
+AC_CONFIG_SUBDIRS([libs/libhtp])
 
 AC_OUTPUT
