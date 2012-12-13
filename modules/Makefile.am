@@ -28,18 +28,18 @@ ibmod_geoip_la_SOURCES = geoip.c
 ibmod_geoip_la_LIBADD = $(AM_LIBADD) -lGeoIP -lm
 ibmod_geoip_la_LDFLAGS = $(AM_LDFLAGS) $(GEOIP_LDFLAGS)
 ibmod_geoip_la_CFLAGS = $(AM_CFLAGS) $(GEOIP_CFLAGS)
-ibmod_geoip_la_CPPFLAGS = $(AM_CFLAGS) $(GEOIP_CPPFLAGS)
+ibmod_geoip_la_CPPFLAGS = $(AM_CPPFLAGS) $(GEOIP_CPPFLAGS)
 endif
 
 ibmod_htp_la_SOURCES = modhtp.c
 ibmod_htp_la_LDFLAGS = $(AM_LDFLAGS)
 ibmod_htp_la_LIBADD = $(AM_LIBADD) \
                       $(top_builddir)/libs/libhtp/htp/libhtp.la
-ibmod_htp_la_CPPFLAGS = -I$(top_srcdir)/libs/libhtp/htp
+ibmod_htp_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/libs/libhtp/htp
 ibmod_htp_la_CFLAGS = $(AM_CFLAGS)
 
 ibmod_pcre_la_SOURCES = pcre.c
-ibmod_pcre_la_CPPFLAGS = @PCRE_CPPFLAGS@
+ibmod_pcre_la_CPPFLAGS = $(AM_CPPFLAGS) @PCRE_CPPFLAGS@
 ibmod_pcre_la_CFLAGS = @PCRE_CFLAGS@
 ibmod_pcre_la_LDFLAGS = $(AM_LDFLAGS) \
                         @PCRE_LDFLAGS@
@@ -69,7 +69,7 @@ ibmod_lua_la_LIBADD = $(AM_LIBADD) \
 endif
 
 ibmod_rules_la_SOURCES = rules.c 
-ibmod_rules_la_CPPFLAGS = $(CPPFLAGS) \
+ibmod_rules_la_CPPFLAGS = $(AM_CPPFLAGS) \
                         -I$(top_srcdir) \
                         -D_XOPEN_SOURCE=1
 

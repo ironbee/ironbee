@@ -22,7 +22,7 @@ lua_DATA = ironbee-ffi.lua \
 
 noinst_LTLIBRARIES = libironbee-lua.la
 libironbee_lua_la_SOURCES = ironbee.c ironbee.h 
-libironbee_lua_la_CPPFLAGS = $(CPPFLAGS) \
+libironbee_lua_la_CPPFLAGS = $(AM_CPPFLAGS) \
                              -I$(top_srcdir)/libs/luajit-2.0-ironbee/src
 libironbee_lua_la_CFLAGS = -fPIC
 libironbee_lua_la_LIBADD = -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \

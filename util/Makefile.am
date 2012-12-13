@@ -3,9 +3,11 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 include $(top_srcdir)/build/common.mk
 
 lib_LTLIBRARIES = libibutil.la
+libibutil_la_CPPFLAGS = $(AM_CPPFLAGS)
 if HAVE_NO_UNUSED_BUT_SET_VARIABLE
-libibutil_la_CPPFLAGS = -Wno-unused-but-set-variable
+libibutil_la_CPPFLAGS += -Wno-unused-but-set-variable
 endif
+
 libibutil_la_SOURCES = ahocorasick.c \
                        array.c \
                        bytestr.c \
