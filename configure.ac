@@ -80,6 +80,23 @@ if test "$GCC" = "yes"; then
     fi
 fi
 AM_CONDITIONAL([CC_IS_CLANG], [test "$cc_is_clang" = "yes"])
+
+dnl if using gcc, determine version.
+if test "$GCC" = "yes" && test "$cc_is_clang" != "yes"; then
+	AC_MSG_NOTICE([Detected gcc (not clang); looking for version.])
+	AX_GCC_VERSION
+fi
+
+dnl turn on lots of warnings with modern compilers
+MODERN_COMPILER="no"
+if test "$cc_is_clang" == "yes"; then
+    MODERN_COMPILER="yes"
+else
+	AX_COMPARE_VERSION([$GCC_VERSION],[gt],[4.6],
+		[MODERN_COMPILER="yes"])
+fi
+dnl After all other tests, we will turn on errors.
+
 AC_PROG_INSTALL
 AC_PROG_LN_S
 
@@ -495,6 +512,30 @@ AM_CONDITIONAL([OUT_OF_TREE],[test "$out_of_tree" = "yes"])
 
 AC_RPM_CHECK
 AC_SUBST(HAVE_RPM)
+
+# Check for -Wunused-but-set-variable
+AC_MSG_CHECKING(for -Wunused-but-set-variable)    
+save_CPPFLAGS="${CPPFLAGS}"
+CPPFLAGS="${CPPFLAGS} -Werror -Wunused-but-set-variable"
+AC_TRY_COMPILE(,,
+  [have_no_unused_but_set_variable=yes],[have_no_unused_but_set_variable=no])
+CPPFLAGS="${save_CPPFLAGS}"
+if test "$have_no_unused_but_set_variable" == "yes"; then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL([HAVE_NO_UNUSED_BUT_SET_VARIABLE], [test "$have_no_unused_but_set_variable" = "yes"])
+	
+dnl Done testing, turn on errors.
+dnl Make sure this is after any autoconf tests, which tend not to be 
+dnl warningless.
+if test "$MODERN_COMPILER" == "yes"; then
+	AC_MSG_NOTICE([Modern compiler detected; turning on warnings and errors.])
+	AM_CPPFLAGS="${AM_CPPFLAGS} -Wall -Wextra -Werror"
+else
+	AC_MSG_NOTICE([Old or unknown compiler detected; warningless build not supported.])
+fi
 
 dnl Substitutions
 AC_SUBST(AM_CPPFLAGS)
