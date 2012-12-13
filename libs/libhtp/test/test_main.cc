@@ -40,7 +40,7 @@
 #include "test.h"
 
 #include <stdexcept>
-     
+
 class ConnectionParsingTest : public testing::Test {
 
 protected:
