@@ -45,9 +45,10 @@ typedef struct list_array_t list_array_t;
 typedef struct list_linked_element_t list_linked_element_t;
 typedef struct list_linked_t list_linked_t;
 
+// The default list implementation is array-based. The
+//  linked list is not fully implemented yet.
 #define list_t list_array_t
 #define list_iterator_t list_array_iterator_t
-
 #define list_add list_array_push
 #define list_create list_array_create
 #define list_destroy list_array_destroy
@@ -110,7 +111,7 @@ void list_array_destroy(list_array_t **l);
  * Find the element at the given index.
  *
  * @param[in] l
- * @param index
+ * @param idx
  * @return the desired element, or NULL if the list is too small, or
  *         if the element at that position carries a NULL
  */
@@ -163,22 +164,55 @@ size_t list_array_size(const list_array_t *l);
 void *list_array_shift(list_array_t *l);
 
 
+// Linked list
 
-
-
-
+/**
+ * Create a new linked list.
+ *
+ * @return The newly created list, or NULL on memory allocation failure
+ */
 list_t *list_linked_create(void);
 
-void list_linked_destroy(list_linked_t **_l);
+/**
+ * Destroy list. This function will not destroy any of the
+ * data stored in it. You'll have to do that manually beforehand.
+ *
+ * @param[in] l
+ */
+void list_linked_destroy(list_linked_t **l);
 
-int list_linked_push(list_t *_q, void *element);
+/**
+ * Is the list empty?
+ *
+ * @param[in] l
+ * @return 1 if the list is empty, 0 if it is not
+ */
+int list_linked_empty(const list_linked_t *l);
 
-void *list_linked_pop(list_t *_q);
+/**
+ * Remove one element from the end of the list.
+ *
+ * @param[in] list
+ * @return Pointer to the removed element, or NULL if the list is empty.
+ */
+void *list_linked_pop(list_linked_t *l);
 
-void *list_linked_shift(list_t *_q);
+/**
+ * Add element to list.
+ *
+ * @param[in] l
+ * @param[in] element
+ * @return HTP_OK on success, HTP_ERROR on error.
+ */
+htp_status_t list_linked_push(list_linked_t *l, void *e);
 
-int list_linked_empty(const list_t *_q);
-
+/**
+ * Remove one element from the beginning of the list.
+ *
+ * @param[in] l
+ * @return Pointer to the removed element, or NULL if the list is empty.
+ */
+void *list_linked_shift(list_linked_t *l);
 
 #ifdef	__cplusplus
 }

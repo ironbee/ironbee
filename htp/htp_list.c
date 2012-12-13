@@ -39,6 +39,8 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+// Array-backed list
+
 list_t *list_array_create(size_t size) {
     // Allocate the list structure
     list_array_t *l = calloc(1, sizeof (list_array_t));
@@ -189,127 +191,15 @@ void *list_array_shift(list_array_t *l) {
 }
 
 
+// Linked list
 
+list_t *list_linked_create(void) {
+    list_linked_t *l = calloc(1, sizeof (list_linked_t));
+    if (l == NULL) return NULL;
 
-
-
-
-// -- Queue List --
-
-/**
- * Add element to list.
- *
- * @param list
- * @param element
- * @return 1 on success, -1 on error (memory allocation failure)
- */
-int list_linked_push(list_t *_q, void *element) {
-    list_linked_t *q = (list_linked_t *) _q;
-    list_linked_element_t *qe = calloc(1, sizeof (list_linked_element_t));
-    if (qe == NULL) return -1;
-
-    // Remember the element
-    qe->data = element;
-
-    // If the queue is empty, make this element first
-    if (!q->first) {
-        q->first = qe;
-    }
-
-    if (q->last) {
-        q->last->next = qe;
-    }
-
-    q->last = qe;
-
-    return 1;
+    return (list_t *) l;
 }
 
-/**
- * Remove one element from the end of the list.
- *
- * @param list
- * @return a pointer to the removed element, or NULL if the list is empty.
- */
-void *list_linked_pop(list_t *_q) {
-    list_linked_t *q = (list_linked_t *) _q;
-    void *r = NULL;
-
-    if (!q->first) {
-        return NULL;
-    }
-
-    // Find the last element
-    list_linked_element_t *qprev = NULL;
-    list_linked_element_t *qe = q->first;
-    while (qe->next != NULL) {
-        qprev = qe;
-        qe = qe->next;
-    }
-
-    r = qe->data;
-    free(qe);
-
-    if (qprev != NULL) {
-        qprev->next = NULL;
-        q->last = qprev;
-    } else {
-        q->first = NULL;
-        q->last = NULL;
-    }
-
-    return r;
-}
-
-/**
- * Remove one element from the beginning of the list.
- *
- * @param list
- * @return a pointer to the removed element, or NULL if the list is empty.
- */
-void *list_linked_shift(list_t *_q) {
-    list_linked_t *q = (list_linked_t *) _q;
-    void *r = NULL;
-
-    if (!q->first) {
-        return NULL;
-    }
-
-    list_linked_element_t *qe = q->first;
-    q->first = qe->next;
-    r = qe->data;
-
-    if (!q->first) {
-        q->last = NULL;
-    }
-
-    free(qe);
-
-    return r;
-}
-
-/**
- * Is the list empty?
- *
- * @param list
- * @return 1 if the list is empty, 0 if it is not
- */
-int list_linked_empty(const list_t *_q) {
-    const list_linked_t *q = (const list_linked_t *) _q;
-
-    if (!q->first) {
-        return 1;
-    } else {
-        return 0;
-    }
-}
-
-/**
- * Destroy list. This function will not destroy any of the
- * data stored in it. You'll have to do that manually beforehand.
- *
- * @param l
- */
 void list_linked_destroy(list_linked_t **_l) {
     if ((_l == NULL) || (*_l == NULL)) return;
 
@@ -329,21 +219,83 @@ void list_linked_destroy(list_linked_t **_l) {
     *_l = NULL;
 }
 
-/**
- * Create a new linked list.
- *
- * @return a pointer to the newly created list (list_t), or NULL on memory allocation failure
- */
-list_t *list_linked_create(void) {
-    list_linked_t *q = calloc(1, sizeof (list_linked_t));
-    if (q == NULL) return NULL;
-
-    return (list_t *) q;
+int list_linked_empty(const list_linked_t *l) {
+    if (!l->first) {
+        return 1;
+    } else {
+        return 0;
+    }
 }
 
-// -- Queue Array --
+void *list_linked_pop(list_linked_t *l) {
+    void *r = NULL;
 
+    if (!l->first) {
+        return NULL;
+    }
 
+    // Find the last element
+    list_linked_element_t *qprev = NULL;
+    list_linked_element_t *qe = l->first;
+    while (qe->next != NULL) {
+        qprev = qe;
+        qe = qe->next;
+    }
+
+    r = qe->data;
+    free(qe);
+
+    if (qprev != NULL) {
+        qprev->next = NULL;
+        l->last = qprev;
+    } else {
+        l->first = NULL;
+        l->last = NULL;
+    }
+
+    return r;
+}
+
+int list_linked_push(list_linked_t *l, void *e) {
+    list_linked_element_t *le = calloc(1, sizeof (list_linked_element_t));
+    if (le == NULL) return -1;
+
+    // Remember the element
+    le->data = e;
+
+    // If the queue is empty, make this element first
+    if (!l->first) {
+        l->first = le;
+    }
+
+    if (l->last) {
+        l->last->next = le;
+    }
+
+    l->last = le;
+
+    return 1;
+}
+
+void *list_linked_shift(list_linked_t *l) {
+    void *r = NULL;
+
+    if (!l->first) {
+        return NULL;
+    }
+
+    list_linked_element_t *le = l->first;
+    l->first = le->next;
+    r = le->data;
+
+    if (!l->first) {
+        l->last = NULL;
+    }
+
+    free(le);
+
+    return r;
+}
 
 #if 0
 
@@ -380,6 +332,3 @@ int main(int argc, char **argv) {
     return 0;
 }
 #endif
-
-
-
