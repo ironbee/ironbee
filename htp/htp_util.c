@@ -365,7 +365,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
     log->code = code;
     log->msg = strdup(buf);
 
-    list_add(connp->conn->messages, log);
+    htp_list_add(connp->conn->messages, log);
 
     if (level == HTP_LOG_ERROR) {
         connp->last_error = log;
@@ -2118,8 +2118,8 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
     bstr *request_headers_raw = NULL;
     size_t i, len = 0;
 
-    for (i = 0; i < list_size(tx->request_header_lines); i++) {
-        htp_header_line_t *hl = list_get(tx->request_header_lines, i);
+    for (i = 0; i < htp_list_size(tx->request_header_lines); i++) {
+        htp_header_line_t *hl = htp_list_get(tx->request_header_lines, i);
         len += bstr_len(hl->line);
     }
 
@@ -2131,8 +2131,8 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
         return NULL;
     }
 
-    for (i = 0; i < list_size(tx->request_header_lines); i++) {
-        htp_header_line_t *hl = list_get(tx->request_header_lines, i);
+    for (i = 0; i < htp_list_size(tx->request_header_lines); i++) {
+        htp_header_line_t *hl = htp_list_get(tx->request_header_lines, i);
         bstr_add_noex(request_headers_raw, hl->line);
     }
 
@@ -2160,14 +2160,14 @@ bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
 
     if (tx->request_headers_raw == NULL) {
         tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
-        tx->request_headers_raw_lines = list_size(tx->request_header_lines);
+        tx->request_headers_raw_lines = htp_list_size(tx->request_header_lines);
     } else {
         // Check that the buffer we have is not obsolete
-        if (tx->request_headers_raw_lines < list_size(tx->request_header_lines)) {
+        if (tx->request_headers_raw_lines < htp_list_size(tx->request_header_lines)) {
             // Rebuild raw buffer
             bstr_free(&tx->request_headers_raw);
             tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
-            tx->request_headers_raw_lines = list_size(tx->request_header_lines);
+            tx->request_headers_raw_lines = htp_list_size(tx->request_header_lines);
         }
     }
 
@@ -2184,8 +2184,8 @@ bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx) {
     bstr *response_headers_raw = NULL;
     size_t i, len = 0;
 
-    for (i = 0; i < list_size(tx->response_header_lines); i++) {
-        htp_header_line_t *hl = list_get(tx->response_header_lines, i);
+    for (i = 0; i < htp_list_size(tx->response_header_lines); i++) {
+        htp_header_line_t *hl = htp_list_get(tx->response_header_lines, i);
         len += bstr_len(hl->line);
     }
 
@@ -2197,8 +2197,8 @@ bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx) {
         return NULL;
     }
 
-    for (i = 0; i < list_size(tx->response_header_lines); i++) {
-        htp_header_line_t *hl = list_get(tx->response_header_lines, i);
+    for (i = 0; i < htp_list_size(tx->response_header_lines); i++) {
+        htp_header_line_t *hl = htp_list_get(tx->response_header_lines, i);
         bstr_add_noex(response_headers_raw, hl->line);
     }
 
@@ -2226,14 +2226,14 @@ bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx) {
 
     if (tx->response_headers_raw == NULL) {
         tx->response_headers_raw = htp_tx_generate_response_headers_raw(tx);
-        tx->response_headers_raw_lines = list_size(tx->response_header_lines);
+        tx->response_headers_raw_lines = htp_list_size(tx->response_header_lines);
     } else {
         // Check that the buffer we have is not obsolete
-        if (tx->response_headers_raw_lines < list_size(tx->response_header_lines)) {
+        if (tx->response_headers_raw_lines < htp_list_size(tx->response_header_lines)) {
             // Rebuild raw buffer
             bstr_free(&tx->response_headers_raw);
             tx->response_headers_raw = htp_tx_generate_response_headers_raw(tx);
-            tx->response_headers_raw_lines = list_size(tx->response_header_lines);
+            tx->response_headers_raw_lines = htp_list_size(tx->response_header_lines);
         }
     }
 

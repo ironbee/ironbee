@@ -246,7 +246,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
     // Ensure we have the necessary header data in a single buffer
     if (connp->out_header_line_index + 1 == connp->out_header_line_counter) {
         // Single line
-        htp_header_line_t *hl = list_get(connp->out_tx->response_header_lines,
+        htp_header_line_t *hl = htp_list_get(connp->out_tx->response_header_lines,
             connp->out_header_line_index);
         if (hl == NULL) {
             // Internal error
@@ -264,7 +264,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
         int i = 0;
 
         for (i = connp->out_header_line_index; i < connp->out_header_line_counter; i++) {
-            htp_header_line_t *hl = list_get(connp->out_tx->response_header_lines, i);
+            htp_header_line_t *hl = htp_list_get(connp->out_tx->response_header_lines, i);
             len += bstr_len(hl->line);
         }
 
@@ -277,7 +277,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
         }
 
         for (i = connp->out_header_line_index; i < connp->out_header_line_counter; i++) {
-            htp_header_line_t *hl = list_get(connp->out_tx->response_header_lines, i);
+            htp_header_line_t *hl = htp_list_get(connp->out_tx->response_header_lines, i);
             char *line = bstr_ptr(hl->line);
             size_t llen = bstr_len(hl->line);
             htp_chomp((unsigned char *)line, &llen);
@@ -328,7 +328,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
 
         // replace the header references in all lines
         for (i = connp->out_header_line_index; i < connp->out_header_line_counter; i++) {
-          htp_header_line_t *hl = list_get(connp->out_tx->response_header_lines, i);
+          htp_header_line_t *hl = htp_list_get(connp->out_tx->response_header_lines, i);
           hl->header = h_existing;
         }
 

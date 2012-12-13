@@ -76,21 +76,21 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
     #endif
     
     // Convert the parameters, one by one
-    bstr *name;
-    void *tvalue;
-    htp_table_iterator_reset(input_params);
-    while ((name = htp_table_iterator_next(input_params, &tvalue)) != NULL) {
-        bstr *new_name = NULL, *new_value = NULL;
-        bstr *value = (bstr *)tvalue;
+    bstr *name = NULL;
+    bstr *value = NULL;    
+    for (int i = 0, n = htp_table_size(input_params); i < n; i++) {
+        htp_table_get_index(input_params, i, &name, (void **)&value);
+        
+        bstr *new_name = NULL, *new_value = NULL;        
         
         // Convert name
         htp_transcode_bstr(cd, name, &new_name);
         if (new_name == NULL) {
             iconv_close(cd);
-            
-            htp_table_iterator_reset(output_params);
-            while(htp_table_iterator_next(output_params, &tvalue) != NULL) {
-                bstr *b = (bstr *)tvalue;
+
+            bstr *b = NULL;
+            for (int j = 0, k = htp_table_size(output_params); j < k; j++) {
+                htp_table_get_index(output_params, j, NULL, (void **)&b);
                 bstr_free(&b);
             }
             
@@ -103,10 +103,10 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
         if (new_value == NULL) {
             bstr_free(&new_name);
             iconv_close(cd);
-            
-            htp_table_iterator_reset(output_params);
-            while(htp_table_iterator_next(output_params, &tvalue) != NULL) {
-                bstr *b = (bstr *)tvalue;
+
+            bstr *b = NULL;
+            for (int j = 0, k = htp_table_size(output_params); j < k; j++) {
+                htp_table_get_index(output_params, j, NULL, (void **)&b);
                 bstr_free(&b);
             }
             
@@ -123,9 +123,9 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
 
     // Destroy the old parameter table if necessary
     if (destroy_old) {
-        htp_table_iterator_reset(input_params);
-        while(htp_table_iterator_next(input_params, &tvalue) != NULL) {
-            bstr *b = (bstr *)tvalue;
+        bstr *b = NULL;
+        for (int i = 0, n = htp_table_size(input_params); i < n; i++) {
+            htp_table_get_index(input_params, i, NULL, (void **)&b);
             bstr_free(&b);
         }      
     

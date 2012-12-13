@@ -174,11 +174,10 @@ void htp_urlenp_destroy(htp_urlenp_t **_urlenp) {
     bstr_builder_destroy(urlenp->_bb);   
 
     if (urlenp->params != NULL) {        
-        // Destroy parameters        
-        void *tvalue = NULL;
-        htp_table_iterator_reset(urlenp->params);
-        while (htp_table_iterator_next(urlenp->params, &tvalue) != NULL) {
-            bstr *b = (bstr *)tvalue;
+        // Destroy parameters
+        bstr *b = NULL;
+        for (int i = 0, n = htp_table_size(urlenp->params); i < n; i++) {
+            htp_table_get_index(urlenp->params, i, NULL, (void **)b);
             bstr_free(&b);
         }       
         

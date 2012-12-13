@@ -41,15 +41,16 @@ typedef struct htp_hook_t htp_hook_t;
 typedef struct htp_callback_t htp_callback_t;
 typedef int (*htp_callback_fn_t) (void *);
 
-#include "dslib.h"
 #include "htp.h"
+#include "htp_list.h"
+
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct htp_hook_t {
-    list_array_t *callbacks;
+    htp_list_array_t *callbacks;
 };
 
 struct htp_callback_t {

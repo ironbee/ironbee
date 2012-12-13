@@ -55,7 +55,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
     // Ensure we have the necessary header data in a single buffer
     if (connp->in_header_line_index + 1 == connp->in_header_line_counter) {
         // Single line
-        htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines,
+        htp_header_line_t *hl = htp_list_get(connp->in_tx->request_header_lines,
                 connp->in_header_line_index);
         if (hl == NULL) {
             free(h);
@@ -70,7 +70,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
         int i = 0;
 
         for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
-            htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
+            htp_header_line_t *hl = htp_list_get(connp->in_tx->request_header_lines, i);
             if (hl == NULL) {
                 free(h);
                 return HTP_ERROR;
@@ -86,7 +86,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
         }
 
         for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
-            htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
+            htp_header_line_t *hl = htp_list_get(connp->in_tx->request_header_lines, i);
             if (hl == NULL) {
                 free(h);
                 return HTP_ERROR;
@@ -143,7 +143,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
 
         // replace the header references in all lines
         for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
-            htp_header_line_t *hl = list_get(connp->in_tx->request_header_lines, i);
+            htp_header_line_t *hl = htp_list_get(connp->in_tx->request_header_lines, i);
             if (hl == NULL) {
                 bstr_free(&h->name);
                 bstr_free(&h->value);

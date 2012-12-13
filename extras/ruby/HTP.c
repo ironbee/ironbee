@@ -137,12 +137,12 @@ static VALUE rbhtp_r_string_table( htp_table_t* table )
 {
 	if ( table == NULL ) return Qnil;
 	
-	bstr k, v;
-	VALUE r = rb_ary_new();
-	htp_table_iterator_reset( table );
-	while ( ( k = htp_table_iterator_next( table, &v ) ) != NULL ) {
+	bstr *k, *v;
+	VALUE r = rb_ary_new();	
+    for (int i = 0, n = htp_table_size(table); i < n; i++) {
+        htp_table_get_index(table, i, &k, (void **)&v);
 		rb_ary_push( r, rb_ary_new3( 2,
-			BSTR_TO_RSTR( k ), BSTR_TO_RSTR( v ) ) );
+			BSTR_TO_RSTR( *k ), BSTR_TO_RSTR( *v ) ) );
 	}
 	return r;
 }
@@ -158,16 +158,17 @@ static VALUE rbhtp_r_string_table( htp_table_t* table )
 // We don't push the keys as they are duplicated in the header.
 static VALUE rbhtp_r_header_table( htp_table_t* table )
 {
-	if ( table == NULL ) return Qnil; 
-	bstr k; 
+	if ( table == NULL ) return Qnil; 	
 	htp_header_t* v; 
 	VALUE r = rb_ary_new(); 
-	htp_table_iterator_reset( table );
-	while ( ( k = htp_table_iterator_next( table, (void**)&v ) ) != NULL ) {
-		rb_ary_push( r, 
-			rb_funcall( cHeader, rb_intern( "new" ), 1, 
-				Data_Wrap_Struct( rb_cObject, 0, 0, v ) ) ); 
-	} 
+
+    for (int i = 0, n = htp_table_size(table); i < n; i++) {
+        htp_table_get_index(table, i, NULL, (void **)&v);
+        rb_ary_push( r,
+			rb_funcall( cHeader, rb_intern( "new" ), 1,
+				Data_Wrap_Struct( rb_cObject, 0, 0, v ) ) );
+    }
+
 	return r; 
 }	
 
@@ -179,13 +180,13 @@ static VALUE rbhtp_r_header_table( htp_table_t* table )
 		return rbhtp_r_header_table( x->N ); \
 	}
 
-static VALUE rbhtp_r_header_line_list( list_t* list )
+static VALUE rbhtp_r_header_line_list( htp_list_t* list )
 {
-	if ( list == NULL ) return Qnil;
-	htp_header_line_t* v;
-	VALUE r = rb_ary_new();
-	list_iterator_reset( list );
-	while ( ( v = list_iterator_next( list ) ) != NULL ) {
+	if ( list == NULL ) return Qnil;	
+	VALUE r = rb_ary_new();	
+    for (int i = 0, n = htp_list_size(list); i < n; i++) {
+        htp_header_line_t *v = htp_list_get(list, i);
+        
 		rb_ary_push( r, 
 			rb_funcall( cHeaderLine, rb_intern( "new" ), 1,
 				Data_Wrap_Struct( rb_cObject, 0, 0, v ) ) );
@@ -695,11 +696,12 @@ VALUE rbhtp_conn_transactions( VALUE self )
 	
 	VALUE connp = rb_iv_get( self, "@connp" );
 	VALUE cfg = rb_iv_get( connp, "@cfg" );
-	
-	htp_tx_t* v;
+		
 	VALUE r = rb_ary_new();
-	list_iterator_reset( conn->transactions );
-	while ( ( v = list_iterator_next( conn->transactions ) ) != NULL ) {
+	
+    for (int i = 0, n = htp_list_size(conn->transactions); i < n; i++) {
+        htp_tx_t *v = htp_list_get(conn->transactions, i);
+        
 		rb_ary_push( r,
 			rb_funcall( cTx, rb_intern( "new" ), 3,
 				Data_Wrap_Struct( rb_cObject, 0, 0, v ),

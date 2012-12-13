@@ -300,11 +300,11 @@ static int run_file(char *filename, htp_cfg_t *cfg) {
             return -1;
         }
     } else {
-        printf(" -- %zu transaction(s)\n", list_size(connp->conn->transactions));
+        printf(" -- %zu transaction(s)\n", htp_list_size(connp->conn->transactions));
 
-        htp_tx_t *tx = NULL;
-        list_iterator_reset(connp->conn->transactions);
-        while ((tx = list_iterator_next(connp->conn->transactions)) != NULL) {
+        for (int i = 0, n = htp_list_size(connp->conn->transactions); i < n; i++) {
+            htp_tx_t *tx = htp_list_get(connp->conn->transactions, i);
+
             printf("    ");
             print_tx(connp, tx);
         }

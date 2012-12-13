@@ -56,10 +56,17 @@ AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
 AC_CONFIG_MACRO_DIR([m4])
 
-AC_ARG_ENABLE(debug, [ --enable-debug  Enable debug output], [ enable_debug=yes ])
+AC_ARG_ENABLE(debug, [  --enable-debug  Enable debug mode], [ enable_debug=yes ])
 if test "$enable_debug" = "yes"; then
     CFLAGS="${CFLAGS} -DHTP_DEBUG"
     echo "Debug mode enabled"
+fi
+
+AC_ARG_ENABLE(devmode, [  --enable-devmode  Enable development mode], [ enable_devmode=yes ])
+if test "$enable_devmode" = "yes"; then
+    CFLAGS="${CFLAGS} -Werror -Wfatal-errors"
+    CPPFLAGS="${CPPFLAGS} -Werror -Wfatal-errors"
+    echo "Development mode enabled"
 fi
 
 dnl -----------------------------------------------
@@ -125,7 +132,7 @@ dnl Check for GCC signed overflow warning support
 dnl -----------------------------------------------
 AC_MSG_CHECKING(for gcc support of -Wstrict-overflow=1)
 TMPCFLAGS="${CFLAGS}"
-CFLAGS="${CFLAGS} -Wstrict-overflow=1 -Wfatal-errors"
+CFLAGS="${CFLAGS} -Wstrict-overflow=1"
 AC_TRY_COMPILE(,,[gcc_have_strict_overflow=yes],[gcc_have_strict_overflow=no])
 AC_MSG_RESULT($gcc_have_strict_overflow)
 if test "$gcc_have_strict_overflow" != "yes"; then

@@ -51,7 +51,7 @@ static bstr *copy_or_wrap_c(const char *input, enum alloc_strategy alloc) {
 
 htp_tx_t *htp_txh_create(htp_connp_t *connp) {
     // Detect pipelining
-    if (list_size(connp->conn->transactions) > connp->out_next_tx_index) {
+    if (htp_list_size(connp->conn->transactions) > connp->out_next_tx_index) {
         connp->conn->flags |= HTP_PIPELINED_CONNECTION;
     }
 
@@ -61,7 +61,7 @@ htp_tx_t *htp_txh_create(htp_connp_t *connp) {
     tx->connp = connp;
     tx->connp->in_tx = tx;
 
-    list_add(connp->conn->transactions, tx);
+    htp_list_add(connp->conn->transactions, tx);
 
     htp_connp_in_reset(connp);
 
@@ -281,7 +281,7 @@ htp_status_t htp_txh_state_request_line(htp_tx_t *tx) {
 
 static htp_status_t htp_txh_process_request_headers(htp_tx_t *tx) {
     // Remember how many header lines there were before trailers
-    tx->request_header_lines_no_trailers = list_size(tx->request_header_lines);
+    tx->request_header_lines_no_trailers = htp_list_size(tx->request_header_lines);
 
     // Determine if we have a request body, and how it is packaged
     htp_header_t *cl = htp_table_get_c(tx->request_headers, "content-length");
@@ -487,10 +487,9 @@ htp_status_t htp_txh_req_process_body_data(htp_tx_t *tx, const unsigned char *da
 htp_status_t htp_txh_req_headers_clear(htp_tx_t *tx) {
     if (tx->request_headers == NULL) return HTP_ERROR;
 
-    void *tvalue;
-    htp_table_iterator_reset(tx->request_headers);
-    while (htp_table_iterator_next(tx->request_headers, &tvalue) != NULL) {
-        htp_header_t *h = (htp_header_t *) tvalue;
+    htp_header_t *h = NULL;
+    for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
+        htp_table_get_index(tx->request_headers, i, NULL, (void **)&h);
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
@@ -613,10 +612,9 @@ htp_status_t htp_txh_res_set_header_c(htp_tx_t *tx, const char *name, const char
 htp_status_t htp_txh_res_headers_clear(htp_tx_t *tx) {
     if (tx->response_headers == NULL) return HTP_ERROR;
 
-    void *tvalue;
-    htp_table_iterator_reset(tx->response_headers);
-    while (htp_table_iterator_next(tx->response_headers, &tvalue) != NULL) {
-        htp_header_t *h = (htp_header_t *) tvalue;
+    htp_header_t *h = NULL;
+    for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
+        htp_table_get_index(tx->response_headers, i, NULL, (void **)&h);
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);

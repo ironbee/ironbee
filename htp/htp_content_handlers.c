@@ -61,13 +61,13 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
             d->tx->request_params_body = htp_table_create(htp_table_size(d->tx->request_urlenp_body->params));
 
             // Transform parameters and store them into the new table
-            bstr *name;
-            void *tvalue;
-            htp_table_iterator_reset(d->tx->request_urlenp_body->params);
-            while ((name = htp_table_iterator_next(d->tx->request_urlenp_body->params, & tvalue)) != NULL) {
-                d->tx->connp->cfg->parameter_processor(d->tx->request_params_body, name, (bstr *)tvalue);
+            bstr *name = NULL;
+            bstr *value = NULL;
+            for (int i = 0, n = htp_table_size(d->tx->request_urlenp_body->params); i < n; i++) {
+                htp_table_get_index(d->tx->request_urlenp_body->params, i, &name, (void **)&value);
+                d->tx->connp->cfg->parameter_processor(d->tx->request_params_body, name, value);
                 // TODO Check return code
-            }
+            }  
 
             htp_transcode_params(d->tx->connp, &d->tx->request_params_body, 1);
         }       
@@ -144,14 +144,14 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
             connp->in_tx->request_params_query = htp_table_create(htp_table_size(connp->in_tx->request_urlenp_query->params));
 
             // Use the parameter processor on each parameter, storing
-            // the results in the newly created table
-            bstr *name;
-            void *tvalue;
-            htp_table_iterator_reset(connp->in_tx->request_urlenp_query->params);
-            while ((name = htp_table_iterator_next(connp->in_tx->request_urlenp_query->params, & tvalue)) != NULL) {
-                connp->cfg->parameter_processor(connp->in_tx->request_params_query, name, (bstr *)tvalue);
+            // the results in the newly created table            
+            bstr *name = NULL;
+            bstr *value = NULL;            
+            for (int i = 0, n = htp_table_size(connp->in_tx->request_params_query); i < n; i++) {
+                htp_table_get_index(connp->in_tx->request_params_query, i, &name, (void **)&value);
+                connp->cfg->parameter_processor(connp->in_tx->request_params_query, name, value);
                 // TODO Check return code
-            }
+            }            
 
             // Transcode as necessary
             htp_transcode_params(connp, &connp->in_tx->request_params_query, 1);
@@ -174,15 +174,15 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
         // Finalize parsing
         htp_mpartp_finalize(d->tx->request_mpartp);
 
-        d->tx->request_params_body = htp_table_create(list_size(d->tx->request_mpartp->parts));
+        d->tx->request_params_body = htp_table_create(htp_list_size(d->tx->request_mpartp->parts));
         // TODO RC
 
         // Extract parameters
         d->tx->request_params_body_reused = 1;
-        
-        htp_mpart_part_t *part = NULL;
-        list_iterator_reset(d->tx->request_mpartp->parts);
-        while ((part = (htp_mpart_part_t *) list_iterator_next(d->tx->request_mpartp->parts)) != NULL) {
+                
+        for (int i = 0, n = htp_list_size(d->tx->request_mpartp->parts); i < n; i++) {
+            htp_mpart_part_t *part = htp_list_get(d->tx->request_mpartp->parts, i);
+
             // Only use text parameters
             if (part->type == MULTIPART_PART_TEXT) {                
                 if (d->tx->connp->cfg->parameter_processor == NULL) {

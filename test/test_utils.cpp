@@ -40,7 +40,7 @@
 #include<gtest/gtest.h>
 
 #include<htp/htp.h>
-#include<htp/dslib.h>
+#include<htp/htp_list.h>
 #include<htp/utf8_decoder.h>
 #include<htp/htp_base64.h>
 

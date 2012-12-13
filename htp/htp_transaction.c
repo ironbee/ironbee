@@ -54,13 +54,13 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
 
     tx->conn = conn;
 
-    tx->request_header_lines = cfg->create_list_array(32);
+    tx->request_header_lines = htp_list_create(32);
     tx->request_headers = htp_table_create(32);
     tx->request_line_nul_offset = -1;
     tx->parsed_uri = calloc(1, sizeof (htp_uri_t));
     tx->parsed_uri_incomplete = calloc(1, sizeof (htp_uri_t));
 
-    tx->response_header_lines = cfg->create_list_array(32);
+    tx->response_header_lines = htp_list_create(32);
     tx->response_headers = htp_table_create(32);
 
     tx->request_protocol_number = -1;
@@ -109,24 +109,22 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     // Destroy request_header_lines
     if (tx->request_header_lines != NULL) {
-        htp_header_line_t *hl = NULL;
-        list_iterator_reset(tx->request_header_lines);
-        while ((hl = list_iterator_next(tx->request_header_lines)) != NULL) {
+        for (int i = 0, n = htp_list_size(tx->request_header_lines); i < n; i++) {
+            htp_header_line_t *hl = htp_list_get(tx->request_header_lines, i);
             bstr_free(&hl->line);
             // No need to destroy hl->header because
             // htp_header_line_t does not own it.
             free(hl);
         }
 
-        list_destroy(&tx->request_header_lines);
+        htp_list_destroy(&tx->request_header_lines);
     }
 
     // Destroy request_headers
     if (tx->request_headers != NULL) {
-        void *tvalue;
-        htp_table_iterator_reset(tx->request_headers);
-        while (htp_table_iterator_next(tx->request_headers, &tvalue) != NULL) {
-            htp_header_t *h = (htp_header_t *) tvalue;
+        htp_header_t *h = NULL;
+        for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
+            htp_table_get_index(tx->request_headers, i, NULL, (void **)&h);
             bstr_free(&h->name);
             bstr_free(&h->value);
             free(h);
@@ -151,24 +149,22 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     // Destroy response_header_lines
     if (tx->response_header_lines != NULL) {
-        htp_header_line_t *hl = NULL;
-        list_iterator_reset(tx->response_header_lines);
-        while ((hl = list_iterator_next(tx->response_header_lines)) != NULL) {
+        for (int i = 0, n = htp_list_size(tx->response_header_lines); i < n; i++) {
+            htp_header_line_t *hl = htp_list_get(tx->response_header_lines, i);
             bstr_free(&hl->line);
             // No need to destroy hl->header because
             // htp_header_line_t does not own it.
             free(hl);
         }
 
-        list_destroy(&tx->response_header_lines);
+        htp_list_destroy(&tx->response_header_lines);
     }
 
     // Destroy response headers
     if (tx->response_headers != NULL) {
-        void *tvalue;
-        htp_table_iterator_reset(tx->response_headers);
-        while (htp_table_iterator_next(tx->response_headers, &tvalue) != NULL) {
-            htp_header_t *h = (htp_header_t *) tvalue;
+        htp_header_t *h = NULL;
+        for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
+            htp_table_get_index(tx->response_headers, i, NULL, (void **)&h);
             bstr_free(&h->name);
             bstr_free(&h->value);
             free(h);
@@ -198,10 +194,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
     htp_mpartp_destroy(&tx->request_mpartp);
 
     if ((tx->request_params_query_reused == 0) && (tx->request_params_query != NULL)) {
-        void *tvalue;
-        htp_table_iterator_reset(tx->request_params_query);
-        while (htp_table_iterator_next(tx->request_params_query, &tvalue) != NULL) {
-            bstr *b = (bstr *) tvalue;
+        bstr *b = NULL;
+        for (int i = 0, n = htp_table_size(tx->request_params_query); i < n; i++) {
+            htp_table_get_index(tx->request_params_query, i, NULL, (void **)&b);
             bstr_free(&b);
         }
 
@@ -209,10 +204,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
     }
 
     if ((tx->request_params_body_reused == 0) && (tx->request_params_body != NULL)) {
-        void *tvalue;
-        htp_table_iterator_reset(tx->request_params_body);
-        while (htp_table_iterator_next(tx->request_params_body, &tvalue) != NULL) {
-            bstr *b = (bstr *) tvalue;
+        bstr *b = NULL;
+        for (int i = 0, n = htp_table_size(tx->request_params_body); i < n; i++) {
+            htp_table_get_index(tx->request_params_body, i, NULL, (void **)&b);
             bstr_free(&b);
         }
 
@@ -220,10 +214,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
     }
 
     if (tx->request_cookies != NULL) {
-        void *tvalue;
-        htp_table_iterator_reset(tx->request_cookies);
-        while (htp_table_iterator_next(tx->request_cookies, &tvalue) != NULL) {
-            bstr *b = (bstr *) tvalue;
+        bstr *b = NULL;
+        for (int i = 0, n = htp_table_size(tx->request_cookies); i < n; i++) {
+            htp_table_get_index(tx->request_cookies, i, NULL, (void **)&b);
             bstr_free(&b);
         }
 

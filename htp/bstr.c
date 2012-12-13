@@ -38,10 +38,10 @@
 #include <ctype.h>
 
 bstr *bstr_alloc(size_t len) {
-    unsigned char *s = malloc(sizeof (bstr_t) + len);
+    unsigned char *s = malloc(sizeof (bstr) + len);
     if (s == NULL) return NULL;
 
-    bstr_t *b = (bstr_t *) s;
+    bstr *b = (bstr *) s;
     b->len = 0;
     b->size = len;
     b->ptr = NULL;
@@ -69,7 +69,7 @@ bstr *bstr_add_mem(bstr *destination, const char *data, size_t len) {
     }
 
     // Add source to destination
-    bstr_t *b = (bstr_t *) destination;
+    bstr *b = (bstr *) destination;
     memcpy(bstr_ptr(destination) + b->len, data, len);
     b->len = b->len + len;
 
@@ -86,7 +86,7 @@ bstr *bstr_add_mem_noex(bstr *destination, const char *data, size_t len) {
     }
 
     // Copy over the bytes
-    bstr_t *b = (bstr_t *) destination;
+    bstr *b = (bstr *) destination;
     memcpy(bstr_ptr(destination) + b->len, data, copylen);
     b->len = b->len + copylen;
 
@@ -162,7 +162,7 @@ int bstr_char_at(const bstr *s, size_t pos) {
 }
 
 void bstr_chop(bstr *s) {
-    bstr_t *b = (bstr_t *) s;
+    bstr *b = (bstr *) s;
     if (b->len > 0) {
         b->len--;
     }
@@ -258,7 +258,7 @@ bstr *bstr_dup_ex(const bstr *b, size_t offset, size_t len) {
     bstr *bnew = bstr_alloc(len);
     if (bnew == NULL) return NULL;
     memcpy(bstr_ptr(bnew), bstr_ptr(b) + offset, len);
-    ((bstr_t *) bnew)->len = len;
+    ((bstr *) bnew)->len = len;
     return bnew;
 }
 
@@ -270,20 +270,20 @@ bstr *bstr_dup_mem(const char *data, size_t len) {
     bstr *b = bstr_alloc(len);
     if (b == NULL) return NULL;
     memcpy(bstr_ptr(b), data, len);
-    ((bstr_t *) b)->len = len;
+    ((bstr *) b)->len = len;
     return b;
 }
 
 bstr *bstr_expand(bstr *s, size_t newsize) {
-    if (((bstr_t *) s)->ptr != NULL) {
-        void * newblock = realloc(((bstr_t *) s)->ptr, newsize);
+    if (((bstr *) s)->ptr != NULL) {
+        void * newblock = realloc(((bstr *) s)->ptr, newsize);
         if (newblock == NULL) {
             return NULL;
         } else {
-            ((bstr_t *) s)->ptr = newblock;
+            ((bstr *) s)->ptr = newblock;
         }
     } else {
-        void *newblock = realloc(s, sizeof (bstr_t) + newsize);
+        void *newblock = realloc(s, sizeof (bstr) + newsize);
         if (newblock == NULL) {
             return NULL;
         } else {
@@ -291,7 +291,7 @@ bstr *bstr_expand(bstr *s, size_t newsize) {
         }
     }
 
-    ((bstr_t *) s)->size = newsize;
+    ((bstr *) s)->size = newsize;
 
     return s;
 }
@@ -456,7 +456,7 @@ int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *la
 }
 
 void bstr_util_adjust_len(bstr *s, size_t newlen) {
-    bstr_t *b = (bstr_t *) s;
+    bstr *b = (bstr *) s;
     b->len = newlen;
 }
 
@@ -498,10 +498,10 @@ char *bstr_util_strdup_to_c(const bstr *b) {
 }
 
 bstr *bstr_wrap_c(const char *input) {
-    unsigned char *s = malloc(sizeof (bstr_t));
+    unsigned char *s = malloc(sizeof (bstr));
     if (s == NULL) return NULL;
 
-    bstr_t *b = (bstr_t *) s;
+    bstr *b = (bstr *) s;
     b->len = strlen(input);
     b->size = 0;
     b->ptr = (char *) input;

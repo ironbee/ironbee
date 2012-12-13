@@ -39,28 +39,93 @@
 
 typedef struct bstr_builder_t bstr_builder_t;
 
-#include "dslib.h"
+
+#include "htp_list.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 struct bstr_builder_t {
-    list_t *pieces;
+    htp_list_t *pieces;
 };
 
 #define BSTR_BUILDER_DEFAULT_SIZE 16
 
-bstr_builder_t * bstr_builder_create(void);
-void bstr_builder_destroy(bstr_builder_t *bb);
+/**
+ * Adds one new string to the builder. This function will adopt the
+ * string and destroy it when the builder itself is destroyed.
+ *
+ * @param[in] bb
+ * @param[in] b
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t bstr_builder_append(bstr_builder_t *bb, bstr *b);
 
-size_t bstr_builder_size(bstr_builder_t *bb);
+/**
+ * Adds one new piece, in the form of a NUL-terminated string, to
+ * the builder. This function will make a copy of the provided string.
+ *
+ * @param[in] bb
+ * @param[in] cstr
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t bstr_builder_append_c(bstr_builder_t *bb, const char *cstr);
+
+/**
+ * Adds one new piece, defined with the supplied pointer and
+ * length, to the builder. This function will make a copy of the
+ * provided data region.
+ *
+ * @param[in] bb
+ * @param[in] data
+ * @param[in] len
+ * @return @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t bstr_builder_append_mem(bstr_builder_t *bb, const char *data, size_t len);
+
+/**
+ * Clears this string builder, destroying all existing pieces. You may
+ * want to clear a builder once you've either read all the pieces and
+ * done something with them, or after you've converted the builder into
+ * a single string.
+ *
+ * @param[in] bb
+ */
 void bstr_builder_clear(bstr_builder_t *bb);
 
-int bstr_builder_append(bstr_builder_t *bb, bstr *b);
-int bstr_builder_append_mem(bstr_builder_t *bb, const char *data, size_t len);
-int bstr_builder_append_c(bstr_builder_t *bb, const char *str);
-bstr * bstr_builder_to_str(bstr_builder_t *bb);
+/**
+ * Creates a new string builder.
+ *
+ * @return New string builder, or NULL on error.
+ */
+bstr_builder_t *bstr_builder_create(void);
+
+/**
+ * Destroys an existing string builder, also destroying all
+ * the pieces stored within.
+ *
+ * @param[in] bb
+ */
+void bstr_builder_destroy(bstr_builder_t *bb);
+
+/**
+ * Returns the size (the number of pieces) currently in a string builder.
+ *
+ * @param[in] bb
+ * @return size
+ */
+size_t bstr_builder_size(const bstr_builder_t *bb);
+
+/**
+ * Creates a single string out of all the pieces held in a
+ * string builder. This method will not destroy any of the pieces.
+ *
+ * @param[in] bb
+ * @return New string, or NULL on error.
+ */
+bstr *bstr_builder_to_str(const bstr_builder_t *bb);
+
 
 #ifdef __cplusplus
 }
