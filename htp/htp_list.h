@@ -120,7 +120,7 @@ void *list_array_get(const list_array_t *l, size_t idx);
 /**
  * Remove one element from the end of the list.
  *
- * @param[in] ;
+ * @param[in] l
  * @return The removed element, or NULL if the list is empty.
  */
 void *list_array_pop(list_array_t *l);
@@ -150,7 +150,7 @@ htp_status_t list_array_replace(list_array_t *l, size_t idx, void *e);
 /**
  * Returns the size of the list.
  *
- * @param[in] list
+ * @param[in] l
  * @return List size.
  */
 size_t list_array_size(const list_array_t *l);
@@ -201,7 +201,7 @@ void *list_linked_pop(list_linked_t *l);
  * Add element to list.
  *
  * @param[in] l
- * @param[in] element
+ * @param[in] e
  * @return HTP_OK on success, HTP_ERROR on error.
  */
 htp_status_t list_linked_push(list_linked_t *l, void *e);
