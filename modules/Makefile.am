@@ -55,7 +55,10 @@ ibmod_ee_la_LIBADD = $(AM_LIBADD) $(top_builddir)/automata/libiaeudoxus.la
 ibmod_ee_la_CFLAGS = ${AM_CFLAGS} -I$(top_srcdir)/automata/include
 ibmod_ee_la_LDFLAGS = $(AM_LDFLAGS)
 
-ibmod_lua_la_SOURCES = lua.c 
+if ENABLE_LUA
+ibmod_lua_la_SOURCES = lua.c \
+                       lua_common.c \
+                       lua_common_private.h
 ibmod_lua_la_CPPFLAGS = $(CPPFLAGS) \
                         -I$(top_srcdir)/libs/luajit-2.0-ironbee/src -I$(top_srcdir)
 ibmod_lua_la_LIBADD = $(AM_LIBADD) \
@@ -63,6 +66,7 @@ ibmod_lua_la_LIBADD = $(AM_LIBADD) \
                       -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                       -lluajit-ironbee \
                       -lm
+endif
 
 ibmod_rules_la_SOURCES = rules.c 
 ibmod_rules_la_CPPFLAGS = $(CPPFLAGS) \
@@ -73,8 +77,8 @@ ibmod_rules_la_LIBADD = $(AM_LIBADD) -lm
 
 if ENABLE_LUA
 ibmod_rules_la_SOURCES += \
-    rules_lua.c \
-    rules_lua_private.h
+    lua_common.c \
+    lua_common_private.h
 
 ibmod_rules_la_CPPFLAGS += \
     -I$(top_srcdir)/libs/luajit-2.0-ironbee/src
@@ -120,7 +124,7 @@ uninstall-local: $(pkglib_LTLIBRARIES)
 	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
 	done
 
-all-local: $(abs_top_srcdir)/lua/ironbee-ffi.lua $(abs_top_srcdir)/lua/ironbee-api.lua
+all-local: $(abs_top_srcdir)/lua/ironbee-ffi.lua $(abs_top_srcdir)/lua/ironbee-api.lua $(abs_top_srcdir)/lua/ironbee-modlua.lua
 	mkdir -p $(abs_top_builddir)/modules/.libs
 	for f in $(+); do \
 		cp "$$f" $(abs_top_builddir)/modules/.libs/`basename "$$f"` ; \

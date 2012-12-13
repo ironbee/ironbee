@@ -43,7 +43,7 @@ static const size_t EXCEPTION_BUF_SIZE = 128;
 
 class BaseFixture : public ::testing::Test {
 public:
-    void SetUp() {
+    virtual void SetUp() {
         ib_status_t rc;
         char buf[EXCEPTION_BUF_SIZE+1];
 
@@ -283,7 +283,7 @@ public:
                       << configFile
                       << ". Using default BasicIronBee.config."
                       << std::endl;
-            configureIronBee("BasicIronBee.config");
+            configureIronBeeByString(getBasicIronBeeConfig());
         }
     }
 
@@ -373,10 +373,12 @@ public:
         }
     }
 
-    void TearDown() {
+    virtual void TearDown() {
         ib_engine_destroy(ib_engine);
         ib_shutdown();
     }
+
+    virtual ~BaseFixture(){}
 
     ib_engine_t *ib_engine;
     ib_server_t ibt_ibserver;
@@ -414,14 +416,14 @@ public:
         ib_module(NULL)
     {}
 
-    void SetUp()
+    virtual void SetUp()
     {
         BaseFixture::SetUp();
 
         loadModule(&ib_module, m_module_file);
     }
 
-    void TearDown() {
+    virtual void TearDown() {
         ib_status_t rc;
         rc = ib_module_unload(ib_module);
 
@@ -435,6 +437,8 @@ public:
 
         BaseFixture::TearDown();
     }
+
+    virtual ~BaseModuleFixture(){}
 };
 
 #endif /* __BASE_FIXTURE_H__ */

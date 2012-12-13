@@ -18,7 +18,7 @@
 #include "ironbee_config_auto.h"
 
 #ifdef ENABLE_LUA
-#include "rules_lua_private.h"
+#include "lua_common_private.h"
 #include "lua/ironbee.h"
 #endif
 
@@ -1749,7 +1749,7 @@ static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
     atexit(&clean_up_ipc_mem);
 
     if (m == NULL) {
-                clean_up_ipc_mem();
+        clean_up_ipc_mem();
         return IB_EINVAL;
     }
 

@@ -114,12 +114,12 @@ TEST_EXTRAS = \
        PcreModuleTest.test_pcre_operator.config \
        PcreModuleTest.test_match_basic.config \
        PcreModuleTest.test_match_capture.config \
-       test_ironbee_lua_api.conf \
        TestIronBeeModuleRulesLua.operator_test.config \
        CoreActionTest.setVarMult.config \
        CoreActionTest.setVarAdd.config \
        CoreActionTest.setVarSub.config \
        CoreActionTest.integration.config \
+       test_ironbee_lua_modules.lua \
        test_module_rules_lua.lua
 
 EXTRA_DIST = \
@@ -240,7 +240,7 @@ test_module_rules_lua_CPPFLAGS = $(CPPFLAGS) \
 test_module_rules_lua_LDADD = $(LDADD) \
                               $(MODULE_TEST_LDADD) \
                               $(top_builddir)/lua/libironbee-lua.la \
-                              $(top_builddir)/modules/ibmod_rules_la-rules_lua.o \
+                              $(top_builddir)/modules/ibmod_rules_la-lua_common.o \
                               -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                               -lluajit-ironbee \
                               -lm
@@ -263,7 +263,8 @@ test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
 
 test_luajit_SOURCES = test_main.cpp \
                       test_luajit.cpp \
-                      test_ironbee_lua_api.cpp
+                      test_ironbee_lua_api.cpp \
+                      test_ironbee_lua_modules.cpp
 
 test_module_ee_oper_SOURCES = test_module_ee_oper.cpp \
                               test_main.cpp
@@ -277,6 +278,10 @@ test_luajit_LDFLAGS = $(LDFLAGS)
 test_luajit_LDADD = $(LDADD) \
                     $(MODULE_TEST_LDADD) \
                     $(top_builddir)/lua/libironbee-lua.la \
+                    $(top_builddir)/modules/ibmod_lua_la-lua.o \
+                    $(top_builddir)/modules/ibmod_lua_la-lua_common.o \
+		    -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
+                    -lluajit-ironbee \
                     -lm
 
 test_kvstore_SOURCES = test_main.cpp \

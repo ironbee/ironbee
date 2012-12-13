@@ -840,26 +840,6 @@ typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
                                                    const char *p1,
                                                    void *cbdata);
 
-    ib_status_t ib_config_register_directive(ib_engine_t *ib,
-                                             const char *name,
-                                             ib_dirtype_t type,
-                                             ib_void_fn_t fn_config,
-                                             ib_config_cb_blkend_fn_t fn_blkend,
-                                             void *cbdata);
-
-    /* Lua Specific API */
-    typedef struct modlua_wrapper_cbdata_t modlua_wrapper_cbdata_t;
-    struct modlua_wrapper_cbdata_t {
-        const char         *fn_config_modname;
-        const char         *fn_config_name;
-        const char         *fn_blkend_modname;
-        const char         *fn_blkend_name;
-        const char         *cbdata_type;
-        void               *cbdata;
-    };
-    ib_void_fn_t modlua_config_wrapper(void);
-    ib_config_cb_blkend_fn_t modlua_blkend_wrapper(void);
-
     /* Misc */
     ib_status_t ib_engine_create(ib_engine_t **pib, void *server);
     ib_status_t ib_context_create_main(ib_engine_t *ib);
@@ -1429,51 +1409,6 @@ function ib_events_write_all(pi)
     local c_pi = pi.cvalue()
 
     return c.ib_event_write_all(c_pi)
-end
-
-function ib_config_register_directive(ib,
-                                      name, dirtype,
-                                      fn_config_name, fn_blkend_name,
-                                      cbdata)
-    local c_ib = ib.cvalue()
-    local c_cbdata = ffi.new("modlua_wrapper_cbdata_t")
-    local c_dirtype
-    local cbdata_type = base.type(cbdata);
-    local c_dirtype
-    local dot_idx
-
-    c_cbdata.cbdata = cbdata;
-    c_cbdata.cbdata_type = cbdata_type;
-
-    if dirtype == 1 then
-        c_dirtype = IB_DIRTYPE_SBLK;
-    else
-        c_dirtype = IB_DIRTYPE_LIST;
-    end
-
-    if fn_config_name ~= nil then
-        dot_idx = string.find(fn_config_name, ".", 1, true)
-        c_cbdata.fn_config_modname = string.sub(fn_config_name, 1, dot_idx - 1)
-        c_cbdata.fn_config_name = string.sub(fn_config_name, (string.len(fn_config_name) - dot_idx) * -1)
-    else
-        c_cbdata.fn_config_modname = nil;
-        c_cbdata.fn_config_name = nil;
-    end
-
-    if fn_blkend_name ~= nil then
-        dot_idx = string.find(fn_blkend_name, ".", 1, true)
-        c_cbdata.fn_blkend_modname = string.sub(fn_blkend_name, 1, dot_idx - 1)
-        c_cbdata.fn_blkend_name = string.sub(fn_blkend_name, (string.len(fn_blkend_name) - dot_idx) * -1)
-    else
-        c_cbdata.fn_blkend_modname = nil;
-        c_cbdata.fn_blkend_name = nil;
-    end
-
-    return c.ib_config_register_directive(c_ib,
-                                          name, c_dirtype,
-                                          c.modlua_config_wrapper(),
-                                          c.modlua_blkend_wrapper(),
-                                          c_cbdata)
 end
 
 -- ===============================================

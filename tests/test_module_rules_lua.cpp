@@ -26,7 +26,7 @@
 #include "base_fixture.h"
 
 extern "C" {
-#include "rules_lua_private.h"
+#include "lua_common_private.h"
 }
 
 #include "ibtest_util.hpp"

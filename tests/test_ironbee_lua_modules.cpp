@@ -43,7 +43,7 @@ using namespace std;
  *
  * For Lua Rule testing see @c test_module_rules_lua.cc.
  */
-class IronBeeLuaApi : public BaseFixture {
+class IronBeeLuaModules : public BaseFixture {
 public:
 
     lua_State* L;
@@ -65,6 +65,13 @@ public:
     {
         BaseFixture::SetUp();
 
+        /* Initialize a new lua state. */
+        L = luaL_newstate();
+
+        /* Open standard libraries. */
+        luaL_openlibs(L);
+
+
         ASSERT_IB_OK(ib_rule_create(ib_engine,
                                     ib_engine->ectx,
                                     __FILE__,
@@ -76,6 +83,7 @@ public:
 
         /* We need the ibmod_htp to initialize the ib_tx. */
         configureIronBeeByString(ib_conf);
+
         ib_conn = buildIronBeeConnection();
 
         sendDataIn("GET / HTTP/1.1\r\nHost: UnitTest\r\n\r\n");
@@ -89,12 +97,6 @@ public:
         ib_rule_exec.ib = ib_engine;
         ib_rule_exec.tx = ib_tx;
         ib_rule_exec.rule = ib_rule;
-
-        /* Initialize a new lua state. */
-        L = luaL_newstate();
-
-        /* Open standard libraries. */
-        luaL_openlibs(L);
 
         appendToSearchPath(IB_XSTRINGIFY(RULE_BASE_PATH));
         appendToSearchPath(IB_XSTRINGIFY(MODULE_BASE_PATH));
@@ -180,171 +182,27 @@ public:
 
         BaseFixture::TearDown();
     }
-    
-    virtual ~IronBeeLuaApi() {
+
+    virtual ~IronBeeLuaModules() {
     }
 };
 
-const char * IronBeeLuaApi::ib_conf = 
+const char * IronBeeLuaModules::ib_conf = 
     "LogLevel 9\n"
     "SensorId AAAABBBB-1111-2222-3333-FFFF00000023\n"
     "SensorName ExampleSensorName\n"
     "SensorHostname example.sensor.tld\n"
     "LoadModule \"ibmod_htp.so\"\n"
-    "LoadModule \"ibmod_pcre.so\"\n"
-    "LoadModule \"ibmod_ac.so\"\n"
     "LoadModule \"ibmod_rules.so\"\n"
     "LoadModule \"ibmod_lua.so\"\n"
-    "LoadModule \"ibmod_user_agent.so\"\n"
+    "ModuleBasePath \".\"\n"
+    "LuaLoadModule \"test_ironbee_lua_modules.lua\"\n"
     "Set parser \"htp\"\n"
     "<Site default>\n"
         "SiteId AAAABBBB-1111-2222-3333-000000000000\n"
         "Hostname *\n"
     "</Site>\n" ;
 
-TEST_F(IronBeeLuaApi, logError)
-{
-    eval("ib:logError(\"======== Test Log Message %d ========\", 100)");
-}
-
-TEST_F(IronBeeLuaApi, logDebug)
-{
-    eval("ib:logDebug(\"======== Test Log Message %d ========\", 100)");
-}
-
-TEST_F(IronBeeLuaApi, add_and_get)
-{
-    const char* val = "myStringValue";
-
-    // Call ib:setString("key1", "myStringValue")
-    eval("ib:add(\"key1\", \"myStringValue\")");
-    eval("ib:add(\"key2\", 4)");
-
-    eval("return ib:get(\"key1\")");
-    eval("return ib:get(\"key2\")");
-
-    ASSERT_STREQ(val, lua_tostring(L, -2));
-    ASSERT_EQ(4, lua_tonumber(L, -1));
-
-    lua_pop(L, 2);
-
-}
-
-TEST_F(IronBeeLuaApi, get)
-{
-    eval("t = ib:get(\"request_headers\")");
-
-    eval("for k,v in pairs(t) do\n"
-         "  ib:logDebug(\"IronBeeLuaApi.get: %s=%s\", v[1], v[2])"
-         "end");
-}
-
-TEST_F(IronBeeLuaApi, getFieldList)
-{
-  eval("t = ib:getFieldList()");
-
-  eval("for k,v in pairs(t) do\n"
-       "  print(string.format(\"%s=%s\", k, v))\n"
-       "end");
-}
-
-TEST_F(IronBeeLuaApi, request_headers)
-{
-  eval("return ib:get(\"request_headers\")[1][2]");
-
-  ASSERT_STREQ("UnitTest", lua_tostring(L, -1));
-
-  lua_pop(L, 1);
-}
-
-TEST_F(IronBeeLuaApi, get_names_request_headers)
-{
-  eval("return ib:getNames(\"request_headers\")[1]");
-
-  ASSERT_STREQ("Host", lua_tostring(L, -1));
-
-  lua_pop(L, 1);
-}
-
-TEST_F(IronBeeLuaApi, get_values_request_headers)
-{
-  eval("return ib:getValues(\"request_headers\")[1]");
-
-  ASSERT_STREQ("UnitTest", lua_tostring(L, -1));
-
-  lua_pop(L, 1);
-}
-
-
-TEST_F(IronBeeLuaApi, add_list)
-{
-  ib_field_t* list_field;
-
-  eval("ib:add(\"MyList1\", {})");
-
-  ib_data_get(ib_tx->dpi, "MyList1", &list_field);
-  ASSERT_TRUE(NULL!=list_field);
-
-  eval("ib:add(\"MyList1\", { { \"a\", \"b\" }, { \"c\", 21 } } )");
-  eval("return ib:get(\"MyList1\")[1][1]");
-  eval("return ib:get(\"MyList1\")[1][2]");
-  eval("return ib:get(\"MyList1\")[2][1]");
-  eval("return ib:get(\"MyList1\")[2][2]");
-
-  ASSERT_STREQ("a", lua_tostring(L, -4));
-  ASSERT_STREQ("b", lua_tostring(L, -3));
-  ASSERT_STREQ("c", lua_tostring(L, -2));
-  ASSERT_EQ(21, lua_tonumber(L, -1));
-  lua_pop(L, 2);
-}
-
-TEST_F(IronBeeLuaApi, set)
-{
-    eval("ib:add(\"MyInt\", 4)");
-    eval("ib:add(\"MyString\", \"my string\")");
-    eval("ib:add(\"MyTable\", { { \"a\", \"b\" } })");
-
-    eval("ib:logInfo(ib:get(\"MyInt\")+1)");
-    eval("ib:set(\"MyInt\", ib:get(\"MyInt\")+1)");
-    eval("ib:set(\"MyString\", \"my other string\")");
-    eval("ib:set(\"MyTable\", { { \"c\", \"d\" } })");
-
-    eval("return ib:get(\"MyInt\")");
-    eval("return ib:get(\"MyString\")");
-    eval("return ib:get(\"MyTable\")[1][1]");
-    eval("return ib:get(\"MyTable\")[1][2]");
-
-    ASSERT_EQ(5, lua_tonumber(L, -4));
-    ASSERT_STREQ("my other string", lua_tostring(L, -3));
-    ASSERT_STREQ("c", lua_tostring(L, -2));
-    ASSERT_STREQ("d", lua_tostring(L, -1));
-    lua_pop(L, 4);
-
-    eval("return ib:getValues(\"MyInt\")[1]");
-    eval("return ib:getNames(\"MyInt\")[1]");
-    ASSERT_EQ(5, lua_tonumber(L, -2));
-    ASSERT_STREQ("MyInt", lua_tostring(L, -1));
-    lua_pop(L, 2);
-}
-
-TEST_F(IronBeeLuaApi, add_event)
-{
-    eval("ib:addEvent(\"Saw some failure\")");
-    eval("ib:addEvent(\"Saw some failure\", { system = \"public\" } )");
-}
-
-TEST_F(IronBeeLuaApi, read_event)
-{
-    eval("ib:addEvent(\"Saw some failure\")");
-    eval("ib:addEvent(\"Saw some failure\", { system = \"public\" } )");
-    eval("ib:forEachEvent(function(e)\n"
-         "    if e:getSuppress() ~= \"none\" then\n"
-         "        cause_a_crash()\n"
-         "    end\n"
-         "    print(e:getRuleId())\n"
-         "    e:setSuppress(\"incomplete\")\n"
-         "    if e:getSuppress() ~= \"incomplete\" then\n"
-         "        cause_a_crash()\n"
-         "    end\n"
-         "end)");
+TEST_F(IronBeeLuaModules, test01){
+    ASSERT_TRUE(L);
 }

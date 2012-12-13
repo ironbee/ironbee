@@ -15,7 +15,7 @@
  * limitations under the License.
  ****************************************************************************/
 
-#include "rules_lua_private.h"
+#include "lua_common_private.h"
 
 #include <ironbee/types.h>
 
@@ -222,9 +222,10 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
 }
 
 /**
- * @brief Print a thread name of @a L into the character buffer @a thread_name.
- * @details @a thread_name should be about 20 characters long
- *          to store a %p formatted pointer of @a L prefixed with @c t_.
+ * Print a thread name of @a L into the character buffer @a thread_name.
+ * @a thread_name should be about 20 characters long
+ * to store a %p formatted pointer of @a L prefixed with @c t_.
+ *
  * @param[out] thread_name The buffer the thread name is printed into.
  * @param[in] L The lua_State* whose pointer we will use as the thread name.
  */

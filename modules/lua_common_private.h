@@ -17,12 +17,12 @@
 
 /**
  * @file
- * @brief IronBee --- Lua Rule Integration.
+ * @brief IronBee --- Lua Integration.
  *
  * @author Sam Baskinger <basking2@yahoo.com>
  */
-#ifndef __MODULES__RULES_LUA_H
-#define __MODULES__RULES_LUA_H
+#ifndef __MODULES__LUA_COMMON_H
+#define __MODULES__LUA_COMMON_H
 
 #include "lua/ironbee.h"
 
@@ -38,7 +38,7 @@
 #include <lua.h>
 
 /**
- * Load the ironbee-ffi.lua file into the given Lua state.
+ * Load the lua file into the given Lua state and execute it with no args.
  *
  * @param[in] ib IronBee engine used to log.
  * @param[out] L The Lua state to load the file into.
@@ -147,4 +147,4 @@ void ib_lua_add_require_path(ib_engine_t *ib_engine,
                              lua_State *L,
                              const char *path);
 
-#endif // __MODULES__RULES_LUA_H
+#endif // __MODULES__LUA_COMMON_H

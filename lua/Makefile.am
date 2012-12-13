@@ -15,6 +15,7 @@ EXTRA_DIST = ironbee-ffi.lua \
              qa.lua
 lua_DATA = ironbee-ffi.lua \
 	   ironbee-api.lua \
+	   ironbee-modlua.lua \
            example.lua \
            qa.lua
 
