@@ -37,8 +37,7 @@
 #ifndef _BSTR_H
 #define	_BSTR_H
 
-typedef struct bstr_t bstr_t;
-typedef bstr_t bstr;
+typedef struct bstr_t bstr;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -57,15 +56,15 @@ struct bstr_t {
     /** The length of the string stored in the buffer. */
     size_t len;
 
-    /** The current size of the buffer. If the buffer is bigger than the
-     *  string then it will be able to expand without having to reallocate.
+    /** The current size of the buffer. If there is extra room in the
+     *  buffer the string will be able to expand without reallocation.
      */
     size_t size;
 
-    /** Optional buffer pointer. If this pointer is NULL (as it currently is
-     *  in virtually all cases) the string buffer will immediately follow
-     *  this structure. If the pointer is not NUL, it points to the actual
-     *  buffer used, and there's no data following this structure.
+    /** Optional buffer pointer. If this pointer is NULL the string buffer
+     *  will immediately follow this structure. If the pointer is not NUL,
+     *  it points to the actual buffer used, and there's no data following
+     *  this structure.
      */
     char *ptr;
 };
@@ -73,9 +72,9 @@ struct bstr_t {
 
 // Defines
 
-#define bstr_len(X) ((*(bstr_t *)(X)).len)
-#define bstr_size(X) ((*(bstr_t *)(X)).size)
-#define bstr_ptr(X) ( ((*(bstr_t *)(X)).ptr == NULL) ? ((char *)(X) + sizeof(bstr_t)) : (char *)(*(bstr_t *)(X)).ptr )
+#define bstr_len(X) ((*(bstr *)(X)).len)
+#define bstr_size(X) ((*(bstr *)(X)).size)
+#define bstr_ptr(X) ( ((*(bstr *)(X)).ptr == NULL) ? ((char *)(X) + sizeof(bstr)) : (char *)(*(bstr *)(X)).ptr )
 
 
 // Functions
