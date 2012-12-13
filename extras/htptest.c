@@ -92,9 +92,9 @@ struct stream_data {
     int chunk_counter;
     int log_level;
     int req_count;
-    list_t *chunks;
-    list_t *inbound_chunks;
-    list_t *outbound_chunks;
+    htp_list_t *chunks;
+    htp_list_t *inbound_chunks;
+    htp_list_t *outbound_chunks;
 };
 
 /** LibHTP parser configuration */
@@ -113,35 +113,35 @@ void free_stream_data(stream_data *sd) {
     
     // Free stream chunks, if any
     if (sd->chunks != NULL) {
-        for (int i = 0, n = list_size(sd->chunks); i < n; i++) {
-            chunk_t *chunk = list_get(sd->chunks, i);
+        for (int i = 0, n = htp_list_size(sd->chunks); i < n; i++) {
+            chunk_t *chunk = htp_list_get(sd->chunks, i);
             free(chunk->data);
             free(chunk);
         }
         
-        list_destroy(&sd->chunks);
+        htp_list_destroy(&sd->chunks);
     }
     
     // Free inbound chunks, if any
     if (sd->inbound_chunks != NULL) {
-        for (int i = 0, n = list_size(sd->inbound_chunks); i < n; i++) {
-            chunk_t *chunk = list_get(sd->inbound_chunkds, i);
+        for (int i = 0, n = htp_list_size(sd->inbound_chunks); i < n; i++) {
+            chunk_t *chunk = htp_list_get(sd->inbound_chunkds, i);
             free(chunk->data);
             free(chunk);
         }
         
-        list_destroy(&sd->inbound_chunks);
+        htp_list_destroy(&sd->inbound_chunks);
     }
     
     // Free outbound chunks, if any
     if (sd->outbound_chunks != NULL) {
-        for (int i = 0, n = list_size(sd->outbound_chunks); i < n; i++) {
-            chunk_t *chunk = list_get(sd->outbound_chunkds, i);
+        for (int i = 0, n = htp_list_size(sd->outbound_chunks); i < n; i++) {
+            chunk_t *chunk = htp_list_get(sd->outbound_chunkds, i);
             free(chunk->data);
             free(chunk);
         }
         
-        list_destroy(&sd->outbound_chunks);
+        htp_list_destroy(&sd->outbound_chunks);
     }
 
     // Close the stream file, if we have it open    
@@ -166,13 +166,13 @@ void process_stored_stream_data(stream_data *sd) {
         loop = 0;
         
         // Send as much inbound data as possible    
-        while((sd->connp->in_status == STREAM_STATE_DATA)&&(list_size(sd->inbound_chunks) > 0)) {
-            chunk_t *chunk = (chunk_t *)list_get(sd->inbound_chunks, 0);
+        while((sd->connp->in_status == STREAM_STATE_DATA)&&(htp_list_size(sd->inbound_chunks) > 0)) {
+            chunk_t *chunk = (chunk_t *)htp_list_get(sd->inbound_chunks, 0);
                 
             int rc = htp_connp_req_data(sd->connp, 0, chunk->data + chunk->consumed, chunk->len - chunk->consumed);
             if (rc == STREAM_STATE_DATA) {
                 // The entire chunk was consumed
-                list_shift(sd->inbound_chunks);
+                htp_list_shift(sd->inbound_chunks);
                 free(chunk->data);
                 free(chunk);
             } else {
@@ -182,13 +182,13 @@ void process_stored_stream_data(stream_data *sd) {
         }
    
         // Send as much outbound data as possible          
-        while((sd->connp->out_status == STREAM_STATE_DATA)&&(list_size(sd->outbound_chunks) > 0)) {
-            chunk_t *chunk = (chunk_t *)list_get(sd->outbound_chunks, 0);
+        while((sd->connp->out_status == STREAM_STATE_DATA)&&(htp_list_size(sd->outbound_chunks) > 0)) {
+            chunk_t *chunk = (chunk_t *)htp_list_get(sd->outbound_chunks, 0);
                 
             int rc = htp_connp_res_data(sd->connp, 0, chunk->data + chunk->consumed, chunk->len - chunk->consumed);
             if (rc == STREAM_STATE_DATA) {
                 // The entire chunk was consumed
-                list_shift(sd->outbound_chunks);
+                htp_list_shift(sd->outbound_chunks);
                 free(chunk->data);
                 free(chunk);
             } else {
@@ -236,7 +236,7 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
                     chunk->data = malloc(chunk->len);
                     // TODO
                     memcpy(chunk->data, hlf->data + htp_connp_req_data_consumed(sd->connp), chunk->len);
-                    list_add(sd->inbound_chunks, chunk);
+                    htp_list_add(sd->inbound_chunks, chunk);
                 } else
                 if (rc != STREAM_STATE_DATA) {
                     // Inbound parsing error
@@ -258,7 +258,7 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
                 chunk->data = malloc(chunk->len);
                 // TODO
                 memcpy(chunk->data, hlf->data, chunk->len);
-                list_add(sd->inbound_chunks, chunk);
+                htp_list_add(sd->inbound_chunks, chunk);
                 break;
         }
     } else {
@@ -279,7 +279,7 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
                     chunk->data = malloc(chunk->len);
                     // TODO
                     memcpy(chunk->data, hlf->data + htp_connp_res_data_consumed(sd->connp), chunk->len);
-                    list_add(sd->outbound_chunks, chunk);
+                    htp_list_add(sd->outbound_chunks, chunk);
                 } else
                 if (rc != STREAM_STATE_DATA) {
                     // Outbound parsing error
@@ -300,7 +300,7 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
                 chunk->data = malloc(chunk->len);
                 // TODO
                 memcpy(chunk->data, hlf->data, chunk->len);
-                list_add(sd->outbound_chunks, chunk);
+                htp_list_add(sd->outbound_chunks, chunk);
                 break;
         }
     }
@@ -331,9 +331,9 @@ void tcp_callback (struct tcp_stream *tcp, void **user_data) {
         sd->direction = -1;
         sd->fd = -1;
         sd->log_level = -1;
-        sd->chunks = list_array_create(16);
-        sd->inbound_chunks = list_array_create(16);
-        sd->outbound_chunks = list_array_create(16);
+        sd->chunks = htp_list_array_create(16);
+        sd->inbound_chunks = htp_list_array_create(16);
+        sd->outbound_chunks = htp_list_array_create(16);
         sd->req_count = 1;
         
         // Init LibHTP parser
@@ -407,7 +407,7 @@ void tcp_callback (struct tcp_stream *tcp, void **user_data) {
             chunk->len = hlf->count_new;
             memcpy(chunk->data, hlf->data, chunk->len);
             
-            list_add(sd->chunks, chunk);
+            htp_list_add(sd->chunks, chunk);
         } else {        
             // No need to store, write directly to file
             
@@ -483,8 +483,8 @@ int callback_log(htp_log_t *log) {
         }
 
         // Write to disk the data we have in memory                
-        for (int i = 0, n = list_size(sd->chunks); i < n; i++) {
-            chunk_t *chunk = list_get(sd->chunks, i);
+        for (int i = 0, n = htp_list_size(sd->chunks); i < n; i++) {
+            chunk_t *chunk = htp_list_get(sd->chunks, i);
 
             if (sd->chunk_counter != 0) {
                 write(sd->fd, "\r\n", 2);

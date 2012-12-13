@@ -180,12 +180,12 @@ static VALUE rbhtp_r_header_table( htp_table_t* table )
 		return rbhtp_r_header_table( x->N ); \
 	}
 
-static VALUE rbhtp_r_header_line_list( list_t* list )
+static VALUE rbhtp_r_header_line_list( htp_list_t* list )
 {
 	if ( list == NULL ) return Qnil;	
 	VALUE r = rb_ary_new();	
-    for (int i = 0, n = list_size(list); i < n; i++) {
-        htp_header_line_t *v = list_get(list, i);
+    for (int i = 0, n = htp_list_size(list); i < n; i++) {
+        htp_header_line_t *v = htp_list_get(list, i);
         
 		rb_ary_push( r, 
 			rb_funcall( cHeaderLine, rb_intern( "new" ), 1,
@@ -699,8 +699,8 @@ VALUE rbhtp_conn_transactions( VALUE self )
 		
 	VALUE r = rb_ary_new();
 	
-    for (int i = 0, n = list_size(conn->transactions); i < n; i++) {
-        htp_tx_t *v = list_get(conn->transactions, i);
+    for (int i = 0, n = htp_list_size(conn->transactions); i < n; i++) {
+        htp_tx_t *v = htp_list_get(conn->transactions, i);
         
 		rb_ary_push( r,
 			rb_funcall( cTx, rb_intern( "new" ), 3,

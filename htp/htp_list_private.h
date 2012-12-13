@@ -43,7 +43,9 @@
 extern "C" {
 #endif
 
-struct list_array_t {
+typedef struct htp_list_linked_element_t htp_list_linked_element_t;
+
+struct htp_list_array_t {
     size_t first;
     size_t last;
     size_t max_size;
@@ -52,14 +54,14 @@ struct list_array_t {
     size_t iterator_index;
 };
 
-struct list_linked_element_t {
+struct htp_list_linked_element_t {
     void *data;
-    list_linked_element_t *next;
+    htp_list_linked_element_t *next;
 };
 
-struct list_linked_t {
-    list_linked_element_t *first;
-    list_linked_element_t *last;
+struct htp_list_linked_t {
+    htp_list_linked_element_t *first;
+    htp_list_linked_element_t *last;
 };
 
 #ifdef	__cplusplus

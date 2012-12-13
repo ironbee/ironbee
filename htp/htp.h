@@ -459,10 +459,10 @@ struct htp_conn_t {
      *  NULL elements when some of the transactions are deleted (and then
      *  removed from a connection by calling htp_conn_remove_tx().
      */
-    list_t *transactions;
+    htp_list_t *transactions;
 
     /** Log messages associated with this connection. */
-    list_t *messages;   
+    htp_list_t *messages;
 
     /** Parsing flags: PIPELINED_CONNECTION. */
     unsigned int flags;   
@@ -878,7 +878,7 @@ struct htp_tx_t {
     size_t request_filedata_len;        
 
     /** Original request header lines. This list stores instances of htp_header_line_t. */
-    list_t *request_header_lines;
+    htp_list_t *request_header_lines;
 
     /** How many request headers were there before trailers? */
     size_t request_header_lines_no_trailers;
@@ -996,7 +996,7 @@ struct htp_tx_t {
     int seen_100continue;   
 
     /** Original response header lines. */
-    list_t *response_header_lines;
+    htp_list_t *response_header_lines;
 
     /** Parsed response headers. */
     htp_table_t *response_headers;
@@ -1122,8 +1122,8 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
 htp_cfg_t *htp_config_create(void);
       void htp_config_destroy(htp_cfg_t *cfg); 
 
-void htp_config_register_list_linked_create(htp_cfg_t *cfg, list_t *(*callback_fn)(void));
-void htp_config_register_list_array_create(htp_cfg_t *cfg, list_t *(*callback_fn)(size_t size));
+void htp_config_register_list_linked_create(htp_cfg_t *cfg, htp_list_t *(*callback_fn)(void));
+void htp_config_register_list_array_create(htp_cfg_t *cfg, htp_list_t *(*callback_fn)(size_t size));
 
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));

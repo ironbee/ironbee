@@ -113,7 +113,7 @@ struct htp_mpartp_t {
     int seen_last_boundary;
 
     /** List of parts. */
-    list_t *parts;
+    htp_list_t *parts;
 
     int extract_files;
     int extract_limit;

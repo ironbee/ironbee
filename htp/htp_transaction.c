@@ -54,13 +54,13 @@ htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn) {
 
     tx->conn = conn;
 
-    tx->request_header_lines = list_create(32);
+    tx->request_header_lines = htp_list_create(32);
     tx->request_headers = htp_table_create(32);
     tx->request_line_nul_offset = -1;
     tx->parsed_uri = calloc(1, sizeof (htp_uri_t));
     tx->parsed_uri_incomplete = calloc(1, sizeof (htp_uri_t));
 
-    tx->response_header_lines = list_create(32);
+    tx->response_header_lines = htp_list_create(32);
     tx->response_headers = htp_table_create(32);
 
     tx->request_protocol_number = -1;
@@ -109,15 +109,15 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     // Destroy request_header_lines
     if (tx->request_header_lines != NULL) {
-        for (int i = 0, n = list_size(tx->request_header_lines); i < n; i++) {
-            htp_header_line_t *hl = list_get(tx->request_header_lines, i);
+        for (int i = 0, n = htp_list_size(tx->request_header_lines); i < n; i++) {
+            htp_header_line_t *hl = htp_list_get(tx->request_header_lines, i);
             bstr_free(&hl->line);
             // No need to destroy hl->header because
             // htp_header_line_t does not own it.
             free(hl);
         }
 
-        list_destroy(&tx->request_header_lines);
+        htp_list_destroy(&tx->request_header_lines);
     }
 
     // Destroy request_headers
@@ -149,15 +149,15 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     // Destroy response_header_lines
     if (tx->response_header_lines != NULL) {
-        for (int i = 0, n = list_size(tx->response_header_lines); i < n; i++) {
-            htp_header_line_t *hl = list_get(tx->response_header_lines, i);
+        for (int i = 0, n = htp_list_size(tx->response_header_lines); i < n; i++) {
+            htp_header_line_t *hl = htp_list_get(tx->response_header_lines, i);
             bstr_free(&hl->line);
             // No need to destroy hl->header because
             // htp_header_line_t does not own it.
             free(hl);
         }
 
-        list_destroy(&tx->response_header_lines);
+        htp_list_destroy(&tx->response_header_lines);
     }
 
     // Destroy response headers

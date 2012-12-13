@@ -50,7 +50,7 @@ extern "C" {
 #endif
 
 struct htp_hook_t {
-    list_array_t *callbacks;
+    htp_list_array_t *callbacks;
 };
 
 struct htp_callback_t {

@@ -41,32 +41,26 @@
 extern "C" {
 #endif
 
-typedef struct list_array_t list_array_t;
-typedef struct list_linked_element_t list_linked_element_t;
-typedef struct list_linked_t list_linked_t;
-
 // The default list implementation is array-based. The
-//  linked list is not fully implemented yet.
-#define list_t list_array_t
-#define list_iterator_t list_array_iterator_t
-#define list_add list_array_push
-#define list_create list_array_create
-#define list_destroy list_array_destroy
-#define list_get list_array_get
-#define list_pop list_array_pop
-#define list_push list_array_push
-#define list_replace list_array_replace
-#define list_size list_array_size
-#define list_shift list_array_shift
-
-#include "htp.h"
-#include "bstr.h"
+// linked list version is not fully implemented yet.
+#define htp_list_t htp_list_array_t
+#define htp_list_add htp_list_array_push
+#define htp_list_create htp_list_array_create
+#define htp_list_destroy htp_list_array_destroy
+#define htp_list_get htp_list_array_get
+#define htp_list_pop htp_list_array_pop
+#define htp_list_push htp_list_array_push
+#define htp_list_replace htp_list_array_replace
+#define htp_list_size htp_list_array_size
+#define htp_list_shift htp_list_array_shift
 
 // Data structures
 
-struct list_array_t;
-struct list_linked_t;
+typedef struct htp_list_array_t htp_list_array_t;
+typedef struct htp_list_linked_t htp_list_linked_t;
 
+#include "htp.h"
+#include "bstr.h"
 
 // Functions
 
@@ -76,7 +70,7 @@ struct list_linked_t;
  * @param[in] size
  * @return Newly created list.
  */
-list_t *list_array_create(size_t size);
+htp_list_t *htp_list_array_create(size_t size);
 
 /**
  * Free the memory occupied by this list. This function assumes
@@ -84,7 +78,7 @@ list_t *list_array_create(size_t size);
  *
  * @param[in] l
  */
-void list_array_destroy(list_array_t **l);
+void htp_list_array_destroy(htp_list_array_t **l);
 
 /**
  * Find the element at the given index.
@@ -94,7 +88,7 @@ void list_array_destroy(list_array_t **l);
  * @return the desired element, or NULL if the list is too small, or
  *         if the element at that position carries a NULL
  */
-void *list_array_get(const list_array_t *l, size_t idx);
+void *htp_list_array_get(const htp_list_array_t *l, size_t idx);
 
 /**
  * Remove one element from the end of the list.
@@ -102,7 +96,7 @@ void *list_array_get(const list_array_t *l, size_t idx);
  * @param[in] l
  * @return The removed element, or NULL if the list is empty.
  */
-void *list_array_pop(list_array_t *l);
+void *htp_list_array_pop(htp_list_array_t *l);
 
 /**
  * Add new element to the end of the list, expanding the list as necessary.
@@ -112,7 +106,7 @@ void *list_array_pop(list_array_t *l);
  * @return HTP_OK on success or HTP_ERROR on failure.
  *
  */
-htp_status_t list_array_push(list_array_t *l, void *e);
+htp_status_t htp_list_array_push(htp_list_array_t *l, void *e);
 
 /**
  * Replace the element at the given index with the provided element.
@@ -124,7 +118,7 @@ htp_status_t list_array_push(list_array_t *l, void *e);
  * @return HTTP_OK if an element with the given index was replaced; HTP_ERROR
  *         if the desired index does not exist.
  */
-htp_status_t list_array_replace(list_array_t *l, size_t idx, void *e);
+htp_status_t htp_list_array_replace(htp_list_array_t *l, size_t idx, void *e);
 
 /**
  * Returns the size of the list.
@@ -132,7 +126,7 @@ htp_status_t list_array_replace(list_array_t *l, size_t idx, void *e);
  * @param[in] l
  * @return List size.
  */
-size_t list_array_size(const list_array_t *l);
+size_t htp_list_array_size(const htp_list_array_t *l);
 
 /**
  * Remove one element from the beginning of the list.
@@ -140,7 +134,7 @@ size_t list_array_size(const list_array_t *l);
  * @param[in] l
  * @return The removed element, or NULL if the list is empty.
  */
-void *list_array_shift(list_array_t *l);
+void *htp_list_array_shift(htp_list_array_t *l);
 
 
 // Linked list
@@ -150,7 +144,7 @@ void *list_array_shift(list_array_t *l);
  *
  * @return The newly created list, or NULL on memory allocation failure
  */
-list_t *list_linked_create(void);
+htp_list_t *htp_list_linked_create(void);
 
 /**
  * Destroy list. This function will not destroy any of the
@@ -158,7 +152,7 @@ list_t *list_linked_create(void);
  *
  * @param[in] l
  */
-void list_linked_destroy(list_linked_t **l);
+void htp_list_linked_destroy(htp_list_linked_t **l);
 
 /**
  * Is the list empty?
@@ -166,7 +160,7 @@ void list_linked_destroy(list_linked_t **l);
  * @param[in] l
  * @return 1 if the list is empty, 0 if it is not
  */
-int list_linked_empty(const list_linked_t *l);
+int htp_list_linked_empty(const htp_list_linked_t *l);
 
 /**
  * Remove one element from the end of the list.
@@ -174,7 +168,7 @@ int list_linked_empty(const list_linked_t *l);
  * @param[in] list
  * @return Pointer to the removed element, or NULL if the list is empty.
  */
-void *list_linked_pop(list_linked_t *l);
+void *htp_list_linked_pop(htp_list_linked_t *l);
 
 /**
  * Add element to list.
@@ -183,7 +177,7 @@ void *list_linked_pop(list_linked_t *l);
  * @param[in] e
  * @return HTP_OK on success, HTP_ERROR on error.
  */
-htp_status_t list_linked_push(list_linked_t *l, void *e);
+htp_status_t htp_list_linked_push(htp_list_linked_t *l, void *e);
 
 /**
  * Remove one element from the beginning of the list.
@@ -191,7 +185,7 @@ htp_status_t list_linked_push(list_linked_t *l, void *e);
  * @param[in] l
  * @return Pointer to the removed element, or NULL if the list is empty.
  */
-void *list_linked_shift(list_linked_t *l);
+void *htp_list_linked_shift(htp_list_linked_t *l);
 
 #ifdef	__cplusplus
 }

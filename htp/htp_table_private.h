@@ -46,7 +46,7 @@ extern "C" {
 #include "htp_table.h"
 
 struct htp_table_t {
-    list_t *list;
+    htp_list_t *list;
 };
 
 

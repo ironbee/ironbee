@@ -375,7 +375,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 return HTP_ERROR;
             }
 
-            list_add(connp->in_tx->request_header_lines, connp->in_header_line);
+            htp_list_add(connp->in_tx->request_header_lines, connp->in_header_line);
             connp->in_header_line = NULL;
 
             // Cleanup for the next line

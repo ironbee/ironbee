@@ -50,11 +50,11 @@ htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *elem
 
 htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *element) {
     // Add key
-    if (list_add(table->list, (void *)key) != HTP_OK) return HTP_ERROR;
+    if (htp_list_add(table->list, (void *)key) != HTP_OK) return HTP_ERROR;
 
     // Add element
-    if (list_add(table->list, (void *)element) != HTP_OK) {
-        list_pop(table->list);
+    if (htp_list_add(table->list, (void *)element) != HTP_OK) {
+        htp_list_pop(table->list);
         return HTP_ERROR;
     }
 
@@ -64,12 +64,12 @@ htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *ele
 void htp_table_clear(htp_table_t *table) {
     if (table == NULL) return;
 
-    size_t size = list_size(table->list);
+    size_t size = htp_list_size(table->list);
 
-    list_destroy(&table->list);
+    htp_list_destroy(&table->list);
 
     // Use a list behind the scenes
-    table->list = list_array_create(size == 0 ? 10 : size);
+    table->list = htp_list_array_create(size == 0 ? 10 : size);
     if (table->list == NULL) {
         free(table);
     }
@@ -80,7 +80,7 @@ htp_table_t *htp_table_create(size_t size) {
     if (t == NULL) return NULL;
 
     // Use a list behind the scenes
-    t->list = list_array_create(size * 2);
+    t->list = htp_list_array_create(size * 2);
     if (t->list == NULL) {
         free(t);
         return NULL;
@@ -95,12 +95,12 @@ void htp_table_destroy(htp_table_t **_table) {
     htp_table_t *table = *_table;
 
     // Free table keys only
-    for (int i = 0, n = list_size(table->list); i < n; i += 2) {
-        bstr *key = list_get(table->list, i);
+    for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
+        bstr *key = htp_list_get(table->list, i);
         bstr_free(&key);
     }
 
-    list_destroy(&table->list);
+    htp_list_destroy(&table->list);
 
     free(table);
     *_table = NULL;
@@ -111,9 +111,9 @@ void *htp_table_get(const htp_table_t *table, const bstr *key) {
 
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.    
-    for (int i = 0, n = list_size(table->list); i < n; i += 2) {
-        bstr *key_candidate = list_get(table->list, i);        
-        void *element = list_get(table->list, i + 1);
+    for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
+        bstr *key_candidate = htp_list_get(table->list, i);
+        void *element = htp_list_get(table->list, i + 1);
         if (bstr_cmp_nocase(key_candidate, key) == 0) {
             return element;
         }
@@ -127,9 +127,9 @@ void *htp_table_get_c(const htp_table_t *table, const char *ckey) {
 
     // Iterate through the list, comparing
     // keys with the parameter, return data if found.    
-    for (int i = 0, n = list_size(table->list); i < n; i += 2) {
-        bstr *key_candidate = list_get(table->list, i);
-        void *element = list_get(table->list, i + 1);
+    for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
+        bstr *key_candidate = htp_list_get(table->list, i);
+        void *element = htp_list_get(table->list, i + 1);
         if (bstr_cmp_c_nocase(key_candidate, ckey) == 0) {
             return element;
         }
@@ -140,20 +140,20 @@ void *htp_table_get_c(const htp_table_t *table, const char *ckey) {
 
 htp_status_t htp_table_get_index(const htp_table_t *table, size_t idx, bstr **key, void **value) {
     if ((key == NULL)&&(value == NULL)) return HTP_ERROR;
-    if (idx >= list_size(table->list)) return HTP_ERROR;
+    if (idx >= htp_list_size(table->list)) return HTP_ERROR;
 
     if (key != NULL) {
-        *key = list_get(table->list, idx * 2);
+        *key = htp_list_get(table->list, idx * 2);
     }
 
     if (value != NULL) {
-        *value = list_get(table->list, (idx * 2) + 1);
+        *value = htp_list_get(table->list, (idx * 2) + 1);
     }
 
     return HTP_OK;
 }
 
 size_t htp_table_size(const htp_table_t *table) {
-    return list_size(table->list) / 2;
+    return htp_list_size(table->list) / 2;
 }
 

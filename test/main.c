@@ -183,10 +183,10 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
                     return -1;
                 }
             } else {
-                printf(" -- %zu transaction(s)\n", list_size(connp->conn->transactions));
+                printf(" -- %zu transaction(s)\n", htp_list_size(connp->conn->transactions));
 
-                for (int i = 0, n = list_size(connp->conn->transactions); i < n; i++) {
-                    htp_tx_t *tx = list_get(connp->conn->transactions, i);
+                for (int i = 0, n = htp_list_size(connp->conn->transactions); i < n; i++) {
+                    htp_tx_t *tx = htp_list_get(connp->conn->transactions, i);
 
                     printf("    ");
                     print_tx(connp, tx);
@@ -815,8 +815,8 @@ int main_multipart1(int argc, char** argv) {
     htp_mpartp_parse(mpartp, i7, strlen(i7));
     htp_mpartp_finalize(mpartp);
 
-    for (int i = 0, n = list_size(mpartp->parts); i < n; i++) {
-        htp_mpart_part_t *part = list_get(mpartp->parts, i);
+    for (int i = 0, n = htp_list_size(mpartp->parts); i < n; i++) {
+        htp_mpart_part_t *part = htp_list_get(mpartp->parts, i);
 
         if (part->name != NULL) fprint_bstr(stdout, "NAME", part->name);
         if (part->value != NULL) fprint_bstr(stdout, "VALUE", part->value);

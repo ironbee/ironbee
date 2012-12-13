@@ -174,14 +174,14 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
         // Finalize parsing
         htp_mpartp_finalize(d->tx->request_mpartp);
 
-        d->tx->request_params_body = htp_table_create(list_size(d->tx->request_mpartp->parts));
+        d->tx->request_params_body = htp_table_create(htp_list_size(d->tx->request_mpartp->parts));
         // TODO RC
 
         // Extract parameters
         d->tx->request_params_body_reused = 1;
                 
-        for (int i = 0, n = list_size(d->tx->request_mpartp->parts); i < n; i++) {
-            htp_mpart_part_t *part = list_get(d->tx->request_mpartp->parts, i);
+        for (int i = 0, n = htp_list_size(d->tx->request_mpartp->parts); i < n; i++) {
+            htp_mpart_part_t *part = htp_list_get(d->tx->request_mpartp->parts, i);
 
             // Only use text parameters
             if (part->type == MULTIPART_PART_TEXT) {                

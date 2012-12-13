@@ -483,7 +483,7 @@ int htp_connp_RES_HEADERS(htp_connp_t * connp) {
                 return HTP_ERROR;
             }
 
-            list_add(connp->out_tx->response_header_lines, connp->out_header_line);
+            htp_list_add(connp->out_tx->response_header_lines, connp->out_header_line);
             connp->out_header_line = NULL;
 
             // Cleanup for the next line
@@ -652,7 +652,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     // Parsing a new response
 
     // Find the next outgoing transaction
-    connp->out_tx = list_get(connp->conn->transactions, connp->out_next_tx_index);
+    connp->out_tx = htp_list_get(connp->conn->transactions, connp->out_next_tx_index);
     if (connp->out_tx == NULL) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                 "Unable to match response to request");

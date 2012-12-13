@@ -41,9 +41,9 @@
 
 // Array-backed list
 
-list_t *list_array_create(size_t size) {
+htp_list_t *htp_list_array_create(size_t size) {
     // Allocate the list structure
-    list_array_t *l = calloc(1, sizeof (list_array_t));
+    htp_list_array_t *l = calloc(1, sizeof (htp_list_array_t));
     if (l == NULL) return NULL;
 
     // Allocate the initial batch of elements
@@ -58,19 +58,19 @@ list_t *list_array_create(size_t size) {
     l->last = 0;
     l->max_size = size;
 
-    return (list_t *) l;
+    return (htp_list_t *) l;
 }
 
-void list_array_destroy(list_array_t **_l) {
+void htp_list_array_destroy(htp_list_array_t **_l) {
     if ((_l == NULL) || (*_l == NULL)) return;
 
-    list_array_t *l = *_l;
+    htp_list_array_t *l = *_l;
     free(l->elements);
     free(l);
     *_l = NULL;
 }
 
-void *list_array_get(const list_array_t *l, size_t idx) {
+void *htp_list_array_get(const htp_list_array_t *l, size_t idx) {
     const void *r = NULL;
 
     if (idx + 1 > l->current_size) return NULL;
@@ -89,7 +89,7 @@ void *list_array_get(const list_array_t *l, size_t idx) {
     return (void *) r;
 }
 
-void *list_array_pop(list_array_t *l) {
+void *htp_list_array_pop(htp_list_array_t *l) {
     const void *r = NULL;
 
     if (l->current_size == 0) {
@@ -107,7 +107,7 @@ void *list_array_pop(list_array_t *l) {
     return (void *) r;
 }
 
-htp_status_t list_array_push(list_array_t *l, void *e) {
+htp_status_t htp_list_array_push(htp_list_array_t *l, void *e) {
     // Check whether we're full
     if (l->current_size >= l->max_size) {
         size_t new_size = l->max_size * 2;
@@ -152,7 +152,7 @@ htp_status_t list_array_push(list_array_t *l, void *e) {
     return HTP_OK;
 }
 
-htp_status_t list_array_replace(list_array_t *l, size_t idx, void *e) {
+htp_status_t htp_list_array_replace(htp_list_array_t *l, size_t idx, void *e) {
     if (idx + 1 > l->current_size) return HTP_ERROR;
 
     size_t i = l->first;
@@ -168,11 +168,11 @@ htp_status_t list_array_replace(list_array_t *l, size_t idx, void *e) {
     return HTP_OK;
 }
 
-size_t list_array_size(const list_array_t *l) {
+size_t htp_list_array_size(const htp_list_array_t *l) {
     return l->current_size;
 }
 
-void *list_array_shift(list_array_t *l) {
+void *htp_list_array_shift(htp_list_array_t *l) {
     void *r = NULL;
 
     if (l->current_size == 0) {
@@ -193,20 +193,20 @@ void *list_array_shift(list_array_t *l) {
 
 // Linked list
 
-list_t *list_linked_create(void) {
-    list_linked_t *l = calloc(1, sizeof (list_linked_t));
+htp_list_t *htp_list_linked_create(void) {
+    htp_list_linked_t *l = calloc(1, sizeof (htp_list_linked_t));
     if (l == NULL) return NULL;
 
-    return (list_t *) l;
+    return (htp_list_t *) l;
 }
 
-void list_linked_destroy(list_linked_t **_l) {
+void htp_list_linked_destroy(htp_list_linked_t **_l) {
     if ((_l == NULL) || (*_l == NULL)) return;
 
-    list_linked_t *l = *_l;
+    htp_list_linked_t *l = *_l;
     // Free the list structures
-    list_linked_element_t *temp = l->first;
-    list_linked_element_t *prev = NULL;
+    htp_list_linked_element_t *temp = l->first;
+    htp_list_linked_element_t *prev = NULL;
     while (temp != NULL) {
         free(temp->data);
         prev = temp;
@@ -219,7 +219,7 @@ void list_linked_destroy(list_linked_t **_l) {
     *_l = NULL;
 }
 
-int list_linked_empty(const list_linked_t *l) {
+int htp_list_linked_empty(const htp_list_linked_t *l) {
     if (!l->first) {
         return 1;
     } else {
@@ -227,7 +227,7 @@ int list_linked_empty(const list_linked_t *l) {
     }
 }
 
-void *list_linked_pop(list_linked_t *l) {
+void *htp_list_linked_pop(htp_list_linked_t *l) {
     void *r = NULL;
 
     if (!l->first) {
@@ -235,8 +235,8 @@ void *list_linked_pop(list_linked_t *l) {
     }
 
     // Find the last element
-    list_linked_element_t *qprev = NULL;
-    list_linked_element_t *qe = l->first;
+    htp_list_linked_element_t *qprev = NULL;
+    htp_list_linked_element_t *qe = l->first;
     while (qe->next != NULL) {
         qprev = qe;
         qe = qe->next;
@@ -256,8 +256,8 @@ void *list_linked_pop(list_linked_t *l) {
     return r;
 }
 
-int list_linked_push(list_linked_t *l, void *e) {
-    list_linked_element_t *le = calloc(1, sizeof (list_linked_element_t));
+int htp_list_linked_push(htp_list_linked_t *l, void *e) {
+    htp_list_linked_element_t *le = calloc(1, sizeof (htp_list_linked_element_t));
     if (le == NULL) return -1;
 
     // Remember the element
@@ -277,14 +277,14 @@ int list_linked_push(list_linked_t *l, void *e) {
     return 1;
 }
 
-void *list_linked_shift(list_linked_t *l) {
+void *htp_list_linked_shift(htp_list_linked_t *l) {
     void *r = NULL;
 
     if (!l->first) {
         return NULL;
     }
 
-    list_linked_element_t *le = l->first;
+    htp_list_linked_element_t *le = l->first;
     l->first = le->next;
     r = le->data;
 
@@ -300,30 +300,30 @@ void *list_linked_shift(list_linked_t *l) {
 #if 0
 
 int main(int argc, char **argv) {
-    list_t *q = list_array_create(4);
+    htp_list_t *q = htp_list_array_create(4);
 
-    list_push(q, "1");
-    list_push(q, "2");
-    list_push(q, "3");
-    list_push(q, "4");
+    htp_list_push(q, "1");
+    htp_list_push(q, "2");
+    htp_list_push(q, "3");
+    htp_list_push(q, "4");
 
-    list_shift(q);
-    list_push(q, "5");
-    list_push(q, "6");
+    htp_list_shift(q);
+    htp_list_push(q, "5");
+    htp_list_push(q, "6");
 
     char *s = NULL;
-    while ((s = (char *) list_pop(q)) != NULL) {
+    while ((s = (char *) htp_list_pop(q)) != NULL) {
         printf("Got: %s\n", s);
     }
 
     printf("---\n");
 
-    list_push(q, "1");
-    list_push(q, "2");
-    list_push(q, "3");
-    list_push(q, "4");
+    htp_list_push(q, "1");
+    htp_list_push(q, "2");
+    htp_list_push(q, "3");
+    htp_list_push(q, "4");
 
-    while ((s = (char *) list_shift(q)) != NULL) {
+    while ((s = (char *) htp_list_shift(q)) != NULL) {
         printf("Got: %s\n", s);
     }
 

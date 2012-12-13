@@ -564,7 +564,7 @@ static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, unsigned char *data, siz
         }
 
         // Add part to the list.        
-        list_push(mpartp->parts, mpartp->current_part);
+        htp_list_push(mpartp->parts, mpartp->current_part);
     }
 
     // Send data to part
@@ -626,7 +626,7 @@ htp_mpartp_t * htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
         return NULL;
     }
 
-    mpartp->parts = list_create(64);
+    mpartp->parts = htp_list_create(64);
     if (mpartp->parts == NULL) {
         htp_mpartp_destroy(&mpartp);
         return NULL;
@@ -678,12 +678,12 @@ void htp_mpartp_destroy(htp_mpartp_t ** _mpartp) {
 
     // Free parts
     if (mpartp->parts != NULL) {
-        for (int i = 0, n = list_size(mpartp->parts); i < n; i++) {
-            htp_mpart_part_t * part = list_get(mpartp->parts, i);
+        for (int i = 0, n = htp_list_size(mpartp->parts); i < n; i++) {
+            htp_mpart_part_t * part = htp_list_get(mpartp->parts, i);
             htp_mpart_part_destroy(part);
         }
 
-        list_destroy(&mpartp->parts);
+        htp_list_destroy(&mpartp->parts);
     }
 
     free(mpartp);
@@ -725,8 +725,8 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
             
             int first = 1;
 
-            for (int i = 0, n = list_size(mpartp->boundary_pieces->pieces); i < n; i++) {
-                bstr *b = list_get(mpartp->boundary_pieces->pieces, i);
+            for (int i = 0, n = htp_list_size(mpartp->boundary_pieces->pieces); i < n; i++) {
+                bstr *b = htp_list_get(mpartp->boundary_pieces->pieces, i);
             
                 if (first) {
                     // Split the first chunk
@@ -781,8 +781,8 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
 
         // We then process any pieces that we might have stored, also as data
         if (bstr_builder_size(mpartp->boundary_pieces) > 0) {
-            for (int i = 0, n = list_size(mpartp->boundary_pieces->pieces); i < n; i++) {
-                bstr *b = list_get(mpartp->boundary_pieces->pieces, i);
+            for (int i = 0, n = htp_list_size(mpartp->boundary_pieces->pieces); i < n; i++) {
+                bstr *b = htp_list_get(mpartp->boundary_pieces->pieces, i);
                 mpartp->handle_data(mpartp, (unsigned char *) bstr_ptr(b), bstr_len(b), 0);
             }
 

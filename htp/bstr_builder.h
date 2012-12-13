@@ -46,7 +46,7 @@ extern "C" {
 #endif
 
 struct bstr_builder_t {
-    list_t *pieces;
+    htp_list_t *pieces;
 };
 
 #define BSTR_BUILDER_DEFAULT_SIZE 16

@@ -45,7 +45,7 @@
  * @return size
  */
 size_t bstr_builder_size(bstr_builder_t *bb) {
-    return list_size(bb->pieces);
+    return htp_list_size(bb->pieces);
 }
 
 /**
@@ -60,16 +60,16 @@ void bstr_builder_clear(bstr_builder_t *bb) {
     // TODO Need list_clear() here.
 
     // Do nothing if the list is empty
-    if (list_size(bb->pieces) == 0) return;
+    if (htp_list_size(bb->pieces) == 0) return;
 
-    for (int i = 0, n = list_size(bb->pieces); i < n; i++) {
-        bstr *b = list_get(bb->pieces, i);
+    for (int i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
+        bstr *b = htp_list_get(bb->pieces, i);
         bstr_free(&b);
     }
 
-    list_destroy(&bb->pieces);
+    htp_list_destroy(&bb->pieces);
 
-    bb->pieces = list_array_create(BSTR_BUILDER_DEFAULT_SIZE);    
+    bb->pieces = htp_list_array_create(BSTR_BUILDER_DEFAULT_SIZE);
 }
 
 /**
@@ -81,7 +81,7 @@ bstr_builder_t * bstr_builder_create() {
     bstr_builder_t *bb = calloc(1, sizeof(bstr_builder_t));
     if (bb == NULL) return NULL;
 
-    bb->pieces = list_array_create(BSTR_BUILDER_DEFAULT_SIZE);
+    bb->pieces = htp_list_array_create(BSTR_BUILDER_DEFAULT_SIZE);
     if (bb->pieces == NULL) {
         free(bb);
         return NULL;
@@ -100,12 +100,12 @@ void bstr_builder_destroy(bstr_builder_t *bb) {
     if (bb == NULL) return;
 
     // Destroy any pieces we might have
-    for (int i = 0, n = list_size(bb->pieces); i < n; i++) {
-        bstr *b = list_get(bb->pieces, i);
+    for (int i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
+        bstr *b = htp_list_get(bb->pieces, i);
         bstr_free(&b);
     }
 
-    list_destroy(&bb->pieces);
+    htp_list_destroy(&bb->pieces);
     
     free(bb);
 }
@@ -118,7 +118,7 @@ void bstr_builder_destroy(bstr_builder_t *bb) {
  * @return Success indication
  */
 int bstr_builder_append(bstr_builder_t *bb, bstr *b) {
-    return list_push(bb->pieces, b);
+    return htp_list_push(bb->pieces, b);
 }
 
 /**
@@ -133,7 +133,7 @@ int bstr_builder_append(bstr_builder_t *bb, bstr *b) {
 int bstr_builder_append_mem(bstr_builder_t *bb, const char *data, size_t len) {
     bstr *b = bstr_dup_mem(data, len);
     if (b == NULL) return -1;
-    return list_push(bb->pieces, b);
+    return htp_list_push(bb->pieces, b);
 }
 
 /**
@@ -147,7 +147,7 @@ int bstr_builder_append_mem(bstr_builder_t *bb, const char *data, size_t len) {
 int bstr_builder_append_c(bstr_builder_t *bb, const char *cstr) {
     bstr *b = bstr_dup_c(cstr);
     if (b == NULL) return -1;
-    return list_push(bb->pieces, b);
+    return htp_list_push(bb->pieces, b);
 }
 
 /**
@@ -161,8 +161,8 @@ bstr * bstr_builder_to_str(bstr_builder_t *bb) {
     size_t len = 0;
 
     // Determine the size of the string
-    for (int i = 0, n = list_size(bb->pieces); i < n; i++) {
-        bstr *b = list_get(bb->pieces, i);
+    for (int i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
+        bstr *b = htp_list_get(bb->pieces, i);
         len += bstr_len(b);
     }
 
@@ -171,8 +171,8 @@ bstr * bstr_builder_to_str(bstr_builder_t *bb) {
     if (bnew == NULL) return NULL;
 
     // Determine the size of the string
-    for (int i = 0, n = list_size(bb->pieces); i < n; i++) {
-        bstr *b = list_get(bb->pieces, i);
+    for (int i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
+        bstr *b = htp_list_get(bb->pieces, i);
         bstr_add_noex(bnew, b);
     }
 
