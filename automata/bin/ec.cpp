@@ -33,7 +33,14 @@
 #include <boost/exception/all.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
 #include <boost/program_options.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 using namespace std;
 using namespace IronAutomata;

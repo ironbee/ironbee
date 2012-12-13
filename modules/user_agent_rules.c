@@ -53,930 +53,930 @@ static modua_match_ruleset_t modua_match_ruleset =
     /* aggregators from "../../data/user-agent-rules/aggregators.txt" */
     {
         /* aggregators.txt line 3 */
-        "ag01",
-        "aggregators/simplepie",
-        {
-            { PRODUCT, STARTSWITH, "SimplePie", YES },
-            { PLATFORM, CONTAINS, "Feed Parser", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "ag01",
+        .category = "aggregators/simplepie",
+        .rules = {
+            { PRODUCT, STARTSWITH, "SimplePie", YES, 0 },
+            { PLATFORM, CONTAINS, "Feed Parser", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
 
     /* bots from "../../data/user-agent-rules/bots.txt" */
     {
         /* bots.txt line 3 */
-        "bots01",
-        "crawler/yahoo",
-        {
-            { PRODUCT, STARTSWITH, "YahooSeeker-Testing", YES },
-            { PLATFORM, MATCHES, "(compatible; Mozilla 4.0; MSIE 5.5; http://search.yahoo.com/)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots01",
+        .category = "crawler/yahoo",
+        .rules = {
+            { PRODUCT, STARTSWITH, "YahooSeeker-Testing", YES, 0 },
+            { PLATFORM, MATCHES, "(compatible; Mozilla 4.0; MSIE 5.5; http://search.yahoo.com/)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 9 */
-        "bots02",
-        "crawler/yahoo",
-        {
-            { PRODUCT, MATCHES, "YahooSeeker/1.2", YES },
-            { PLATFORM, MATCHES, "(compatible; Mozilla 4.0; MSIE 5.5; yahooseeker at yahoo-inc dot com ; http://help.yahoo.com/help/us/shop/merchant/)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots02",
+        .category = "crawler/yahoo",
+        .rules = {
+            { PRODUCT, MATCHES, "YahooSeeker/1.2", YES, 0 },
+            { PLATFORM, MATCHES, "(compatible; Mozilla 4.0; MSIE 5.5; yahooseeker at yahoo-inc dot com ; http://help.yahoo.com/help/us/shop/merchant/)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 15 */
-        "bots03",
-        "crawler/yahoo",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, MATCHES, "(compatible; Yahoo! Slurp China; http://misc.yahoo.com.cn/help.html)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots03",
+        .category = "crawler/yahoo",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, MATCHES, "(compatible; Yahoo! Slurp China; http://misc.yahoo.com.cn/help.html)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 21 */
-        "bots04",
-        "crawler/yahoo",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, MATCHES, "(compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots04",
+        .category = "crawler/yahoo",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, MATCHES, "(compatible; Yahoo! Slurp; http://help.yahoo.com/help/us/ysearch/slurp)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 27 */
-        "bots05",
-        "crawler/newsgator",
-        {
-            { PRODUCT, MATCHES, "NewsGator/2.5", YES },
-            { PLATFORM, MATCHES, "(http://www.newsgator.com; Microsoft Windows NT 5.1.2600.0; .NET CLR 1.1.4322.2032)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots05",
+        .category = "crawler/newsgator",
+        .rules = {
+            { PRODUCT, MATCHES, "NewsGator/2.5", YES, 0 },
+            { PLATFORM, MATCHES, "(http://www.newsgator.com; Microsoft Windows NT 5.1.2600.0; .NET CLR 1.1.4322.2032)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 33 */
-        "bots06",
-        "crawler/newsgator",
-        {
-            { PRODUCT, MATCHES, "NewsGator/2.0 Bot", YES },
-            { PLATFORM, MATCHES, "(http://www.newsgator.com)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots06",
+        .category = "crawler/newsgator",
+        .rules = {
+            { PRODUCT, MATCHES, "NewsGator/2.0 Bot", YES, 0 },
+            { PLATFORM, MATCHES, "(http://www.newsgator.com)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 39 */
-        "bots07",
-        "crawler/netseer",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, MATCHES, "(compatible; NetSeer crawler/2.0; +http://www.netseer.com/crawler.html; crawler@netseer.com)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots07",
+        .category = "crawler/netseer",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, MATCHES, "(compatible; NetSeer crawler/2.0; +http://www.netseer.com/crawler.html; crawler@netseer.com)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 45 */
-        "bots09",
-        "crawler/msnbot",
-        {
-            { PRODUCT, MATCHES, "msnbot/", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots09",
+        .category = "crawler/msnbot",
+        .rules = {
+            { PRODUCT, MATCHES, "msnbot/", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 50 */
-        "bots10",
-        "crawler/msnbot",
-        {
-            { PRODUCT, MATCHES, "msnbot/", YES },
-            { PLATFORM, MATCHES, "(+http://search.msn.com/msnbot.htm)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots10",
+        .category = "crawler/msnbot",
+        .rules = {
+            { PRODUCT, MATCHES, "msnbot/", YES, 0 },
+            { PLATFORM, MATCHES, "(+http://search.msn.com/msnbot.htm)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 56 */
-        "bots11",
-        "crawler/msnbot",
-        {
-            { PRODUCT, MATCHES, "msnbot/0.11", YES },
-            { PLATFORM, MATCHES, "( http://search.msn.com/msnbot.htm)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots11",
+        .category = "crawler/msnbot",
+        .rules = {
+            { PRODUCT, MATCHES, "msnbot/0.11", YES, 0 },
+            { PLATFORM, MATCHES, "( http://search.msn.com/msnbot.htm)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 62 */
-        "bots12",
-        "crawler/msnbot",
-        {
-            { PRODUCT, MATCHES, "MSNBOT/0.1", YES },
-            { PLATFORM, MATCHES, "(http://search.msn.com/msnbot.htm)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots12",
+        .category = "crawler/msnbot",
+        .rules = {
+            { PRODUCT, MATCHES, "MSNBOT/0.1", YES, 0 },
+            { PLATFORM, MATCHES, "(http://search.msn.com/msnbot.htm)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 68 */
-        "bots13",
-        "crawler/alexia",
-        {
-            { PRODUCT, STARTSWITH, "ia_archiver", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots13",
+        .category = "crawler/alexia",
+        .rules = {
+            { PRODUCT, STARTSWITH, "ia_archiver", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 73 */
-        "bots14",
-        "crawler/google",
-        {
-            { PRODUCT, MATCHES, "Googlebot-Image/1.0", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots14",
+        .category = "crawler/google",
+        .rules = {
+            { PRODUCT, MATCHES, "Googlebot-Image/1.0", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 78 */
-        "bots15",
-        "crawler/google",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, MATCHES, "(compatible; Googlebot/2.1; +http://www.google.com/bot.html)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots15",
+        .category = "crawler/google",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, MATCHES, "(compatible; Googlebot/2.1; +http://www.google.com/bot.html)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 84 */
-        "bots16",
-        "crawler/google",
-        {
-            { PRODUCT, MATCHES, "Googlebot/2.1", YES },
-            { PLATFORM, MATCHES, "(+http://www.googlebot.com/bot.html)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots16",
+        .category = "crawler/google",
+        .rules = {
+            { PRODUCT, MATCHES, "Googlebot/2.1", YES, 0 },
+            { PLATFORM, MATCHES, "(+http://www.googlebot.com/bot.html)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 90 */
-        "bots17",
-        "crawler/google",
-        {
-            { PRODUCT, MATCHES, "Googlebot/2.1", YES },
-            { PLATFORM, MATCHES, "(+http://www.google.com/bot.html)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots17",
+        .category = "crawler/google",
+        .rules = {
+            { PRODUCT, MATCHES, "Googlebot/2.1", YES, 0 },
+            { PLATFORM, MATCHES, "(+http://www.google.com/bot.html)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 96 */
-        "bots18",
-        "crawler/bing",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, MATCHES, "(compatible; bingbot/2.0; +http://www.bing.com/bingbot.html)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots18",
+        .category = "crawler/bing",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, MATCHES, "(compatible; bingbot/2.0; +http://www.bing.com/bingbot.html)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 102 */
-        "bots19",
-        "crawler/bing",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, MATCHES, "(compatible; bingbot/2.0 +http://www.bing.com/bingbot.html)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots19",
+        .category = "crawler/bing",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, MATCHES, "(compatible; bingbot/2.0 +http://www.bing.com/bingbot.html)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 108 */
-        "bots20",
-        "crawler/baidu",
-        {
-            { PRODUCT, MATCHES, "Baiduspider+(+http://www.baidu.com/search/spider_jp.html)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots20",
+        .category = "crawler/baidu",
+        .rules = {
+            { PRODUCT, MATCHES, "Baiduspider+(+http://www.baidu.com/search/spider_jp.html)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 113 */
-        "bots21",
-        "crawler/baidu",
-        {
-            { PRODUCT, MATCHES, "Baiduspider+(+http://www.baidu.com/search/spider.html)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots21",
+        .category = "crawler/baidu",
+        .rules = {
+            { PRODUCT, MATCHES, "Baiduspider+(+http://www.baidu.com/search/spider.html)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 118 */
-        "bots22",
-        "crawler/baidu",
-        {
-            { PRODUCT, MATCHES, "BaiDuSpider", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots22",
+        .category = "crawler/baidu",
+        .rules = {
+            { PRODUCT, MATCHES, "BaiDuSpider", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 123 */
-        "bots23",
-        "crawler/uptimemonkey",
-        {
-            { PRODUCT, STARTSWITH, "UptimeMonkey", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots23",
+        .category = "crawler/uptimemonkey",
+        .rules = {
+            { PRODUCT, STARTSWITH, "UptimeMonkey", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 128 */
-        "bots24",
-        "crawler/nagios",
-        {
-            { PRODUCT, STARTSWITH, "check_http", YES },
-            { PLATFORM, CONTAINS, "nagios-plugins", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots24",
+        .category = "crawler/nagios",
+        .rules = {
+            { PRODUCT, STARTSWITH, "check_http", YES, 0 },
+            { PLATFORM, CONTAINS, "nagios-plugins", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 134 */
-        "bots25",
-        "crawler/pingdom",
-        {
-            { PRODUCT, STARTSWITH, "Pingdom.com_bot", YES },
-            { PLATFORM, MATCHES, "(http://www.pingdom.com)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots25",
+        .category = "crawler/pingdom",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Pingdom.com_bot", YES, 0 },
+            { PLATFORM, MATCHES, "(http://www.pingdom.com)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 140 */
-        "bots26",
-        "crawler/google",
-        {
-            { PLATFORM, CONTAINS, "+http://google.com/bot.html", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots26",
+        .category = "crawler/google",
+        .rules = {
+            { PLATFORM, CONTAINS, "+http://google.com/bot.html", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 145 */
-        "bots27",
-        "crawler/ahrefs",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, STARTSWITH, "(compatible; AhrefsBot", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots27",
+        .category = "crawler/ahrefs",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, STARTSWITH, "(compatible; AhrefsBot", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 151 */
-        "bots28",
-        "crawler/aboundex",
-        {
-            { PRODUCT, STARTSWITH, "Aboundex", YES },
-            { PLATFORM, CONTAINS, "http://www.aboundex.com/crawler/", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots28",
+        .category = "crawler/aboundex",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Aboundex", YES, 0 },
+            { PLATFORM, CONTAINS, "http://www.aboundex.com/crawler/", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 157 */
-        "bots29",
-        "crawler/baidu",
-        {
-            { PRODUCT, STARTSWITH, "Baiduspider-image", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots29",
+        .category = "crawler/baidu",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Baiduspider-image", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 162 */
-        "bots30",
-        "crawler/omgilibot",
-        {
-            { PRODUCT, STARTSWITH, "omgilibot", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots30",
+        .category = "crawler/omgilibot",
+        .rules = {
+            { PRODUCT, STARTSWITH, "omgilibot", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 167 */
-        "bots31",
-        "crawler/msn",
-        {
-            { PRODUCT, STARTSWITH, "msnbot-media", YES },
-            { PLATFORM, MATCHES, "(+http://search.msn.com/msnbot.htm)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots31",
+        .category = "crawler/msn",
+        .rules = {
+            { PRODUCT, STARTSWITH, "msnbot-media", YES, 0 },
+            { PLATFORM, MATCHES, "(+http://search.msn.com/msnbot.htm)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 173 */
-        "bots32",
-        "crawler/google",
-        {
-            { PRODUCT, MATCHES, "Googlebot-News", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots32",
+        .category = "crawler/google",
+        .rules = {
+            { PRODUCT, MATCHES, "Googlebot-News", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 178 */
-        "bots33",
-        "crawler/google",
-        {
-            { PRODUCT, MATCHES, "Googlebot-Video", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots33",
+        .category = "crawler/google",
+        .rules = {
+            { PRODUCT, MATCHES, "Googlebot-Video", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 183 */
-        "bots34",
-        "crawler/google",
-        {
-            { PRODUCT, MATCHES, "Mediapartners-Google", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots34",
+        .category = "crawler/google",
+        .rules = {
+            { PRODUCT, MATCHES, "Mediapartners-Google", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 188 */
-        "bots35",
-        "crawler/google",
-        {
-            { PRODUCT, MATCHES, "AdsBot-Google", YES },
-            { PLATFORM, MATCHES, "(+http://www.google.com/adsbot.html)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots35",
+        .category = "crawler/google",
+        .rules = {
+            { PRODUCT, MATCHES, "AdsBot-Google", YES, 0 },
+            { PLATFORM, MATCHES, "(+http://www.google.com/adsbot.html)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 194 */
-        "bots36",
-        "crawler/soso",
-        {
-            { PRODUCT, STARTSWITH, "Sosospider", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots36",
+        .category = "crawler/soso",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Sosospider", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 199 */
-        "bots37",
-        "crawler/sogou",
-        {
-            { PRODUCT, STARTSWITH, "Sogou web spider", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots37",
+        .category = "crawler/sogou",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Sogou web spider", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* bots.txt line 204 */
-        "bots38",
-        "crawler/mj12",
-        {
-            { PLATFORM, CONTAINS, "MJ12bot/", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "bots38",
+        .category = "crawler/mj12",
+        .rules = {
+            { PLATFORM, CONTAINS, "MJ12bot/", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
 
     /* browsers from "../../data/user-agent-rules/desktop-browsers.txt" */
     {
         /* desktop-browsers.txt line 3 */
-        "br01",
-        "browser/chrome",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { EXTRA, STARTSWITH, "AppleWebKit", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "br01",
+        .category = "browser/chrome",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { EXTRA, STARTSWITH, "AppleWebKit", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* desktop-browsers.txt line 9 */
-        "br02",
-        "browser/firefox",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { EXTRA, STARTSWITH, "Gecko", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "br02",
+        .category = "browser/firefox",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { EXTRA, STARTSWITH, "Gecko", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* desktop-browsers.txt line 15 */
-        "br03",
-        "browser/msie",
-        {
-            { PRODUCT, STARTSWITH, "Mozilla", YES },
-            { PLATFORM, CONTAINS, "MSIE", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "br03",
+        .category = "browser/msie",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Mozilla", YES, 0 },
+            { PLATFORM, CONTAINS, "MSIE", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* desktop-browsers.txt line 21 */
-        "br04",
-        "browser/opera",
-        {
-            { PRODUCT, STARTSWITH, "Opera", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "br04",
+        .category = "browser/opera",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Opera", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* desktop-browsers.txt line 26 */
-        "br05",
-        "browser/opera",
-        {
-            { PRODUCT, STARTSWITH, "Mozilla", YES },
-            { EXTRA, STARTSWITH, "Opera", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "br05",
+        .category = "browser/opera",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Mozilla", YES, 0 },
+            { EXTRA, STARTSWITH, "Opera", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* desktop-browsers.txt line 32 */
-        "br06",
-        "browser/safari",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { EXTRA, CONTAINS, "Safari", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "br06",
+        .category = "browser/safari",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { EXTRA, CONTAINS, "Safari", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* desktop-browsers.txt line 38 */
-        "br07",
-        "browser/lynx",
-        {
-            { PRODUCT, STARTSWITH, "Lynx/", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "br07",
+        .category = "browser/lynx",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Lynx/", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
 
     /* libraries from "../../data/user-agent-rules/libraries.txt" */
     {
         /* libraries.txt line 3 */
-        "lib01",
-        "library/binget",
-        {
-            { PRODUCT, STARTSWITH, "BinGet", YES },
-            { PLATFORM, MATCHES, "(http://www.bin-co.com/php/scripts/load/)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib01",
+        .category = "library/binget",
+        .rules = {
+            { PRODUCT, STARTSWITH, "BinGet", YES, 0 },
+            { PLATFORM, MATCHES, "(http://www.bin-co.com/php/scripts/load/)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 9 */
-        "lib02",
-        "library/curl",
-        {
-            { PRODUCT, STARTSWITH, "curl", YES },
-            { PLATFORM, EXISTS, "", YES },
-            { EXTRA, STARTSWITH, "libcurl", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib02",
+        .category = "library/curl",
+        .rules = {
+            { PRODUCT, STARTSWITH, "curl", YES, 0 },
+            { PLATFORM, EXISTS, "", YES, 0 },
+            { EXTRA, STARTSWITH, "libcurl", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 16 */
-        "lib03",
-        "library/java",
-        {
-            { PRODUCT, STARTSWITH, "java", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib03",
+        .category = "library/java",
+        .rules = {
+            { PRODUCT, STARTSWITH, "java", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 21 */
-        "lib04",
-        "library/libwww-perl",
-        {
-            { PRODUCT, STARTSWITH, "libwww-perl", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib04",
+        .category = "library/libwww-perl",
+        .rules = {
+            { PRODUCT, STARTSWITH, "libwww-perl", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 26 */
-        "lib05",
-        "library/MS URL Control",
-        {
-            { PRODUCT, STARTSWITH, "Microsoft URL Control", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib05",
+        .category = "library/MS URL Control",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Microsoft URL Control", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 31 */
-        "lib06",
-        "library/peach",
-        {
-            { PRODUCT, STARTSWITH, "Peach", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib06",
+        .category = "library/peach",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Peach", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 36 */
-        "lib07",
-        "library/php",
-        {
-            { PRODUCT, STARTSWITH, "PHP", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib07",
+        .category = "library/php",
+        .rules = {
+            { PRODUCT, STARTSWITH, "PHP", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 41 */
-        "lib08",
-        "library/pxyscand",
-        {
-            { PRODUCT, STARTSWITH, "pxyscand", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib08",
+        .category = "library/pxyscand",
+        .rules = {
+            { PRODUCT, STARTSWITH, "pxyscand", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 46 */
-        "lib09",
-        "library/PycURL",
-        {
-            { PRODUCT, STARTSWITH, "PycURL", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib09",
+        .category = "library/PycURL",
+        .rules = {
+            { PRODUCT, STARTSWITH, "PycURL", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 51 */
-        "lib10",
-        "library/python-urllib",
-        {
-            { PRODUCT, STARTSWITH, "Python-urllib", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib10",
+        .category = "library/python-urllib",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Python-urllib", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 56 */
-        "lib11",
-        "library/lwp-trivial",
-        {
-            { PRODUCT, STARTSWITH, "lwp-trivial", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib11",
+        .category = "library/lwp-trivial",
+        .rules = {
+            { PRODUCT, STARTSWITH, "lwp-trivial", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 61 */
-        "lib12",
-        "library/wget",
-        {
-            { PRODUCT, STARTSWITH, "Wget", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib12",
+        .category = "library/wget",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Wget", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 66 */
-        "lib13",
-        "library/urlgrabber",
-        {
-            { PRODUCT, STARTSWITH, "urlgrabber", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib13",
+        .category = "library/urlgrabber",
+        .rules = {
+            { PRODUCT, STARTSWITH, "urlgrabber", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* libraries.txt line 71 */
-        "lib14",
-        "library/incutio",
-        {
-            { PRODUCT, STARTSWITH, "The Incutio XML-RPC", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "lib14",
+        .category = "library/incutio",
+        .rules = {
+            { PRODUCT, STARTSWITH, "The Incutio XML-RPC", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
 
     /* mobile from "../../data/user-agent-rules/mobile.txt" */
     {
         /* mobile.txt line 3 */
-        "mob01",
-        "mobile/uzard",
-        {
-            { PRODUCT, MATCHES, "Mozilla/4.0", YES },
-            { PLATFORM, CONTAINS, "uZardWeb/1.0", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob01",
+        .category = "mobile/uzard",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/4.0", YES, 0 },
+            { PLATFORM, CONTAINS, "uZardWeb/1.0", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 9 */
-        "mob02",
-        "mobile/teleca",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, MATCHES, "(compatible; Teleca Q7; U; en)", YES },
-            { EXTRA, MATCHES, "480X800 LGE VX11000", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob02",
+        .category = "mobile/teleca",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, MATCHES, "(compatible; Teleca Q7; U; en)", YES, 0 },
+            { EXTRA, MATCHES, "480X800 LGE VX11000", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 16 */
-        "mob03",
-        "mobile/teashark",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, MATCHES, "Macintosh; U; Intel Mac OS X; en)", YES },
-            { EXTRA, CONTAINS, "Shark", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob03",
+        .category = "mobile/teashark",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, MATCHES, "Macintosh; U; Intel Mac OS X; en)", YES, 0 },
+            { EXTRA, CONTAINS, "Shark", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 23 */
-        "mob04",
-        "mobile/skyfire",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, MATCHES, "(Macintosh; U; Intel Mac OS X 10_5_7; en-us)", YES },
-            { EXTRA, CONTAINS, "Skyfire", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob04",
+        .category = "mobile/skyfire",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, MATCHES, "(Macintosh; U; Intel Mac OS X 10_5_7; en-us)", YES, 0 },
+            { EXTRA, CONTAINS, "Skyfire", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 30 */
-        "mob05",
-        "mobile/semc",
-        {
-            { PRODUCT, STARTSWITH, "SonyEricsson", YES },
-            { EXTRA, CONTAINS, "SEMC-Browser", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob05",
+        .category = "mobile/semc",
+        .rules = {
+            { PRODUCT, STARTSWITH, "SonyEricsson", YES, 0 },
+            { EXTRA, CONTAINS, "SEMC-Browser", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 36 */
-        "mob06",
-        "mobile/opera",
-        {
-            { PRODUCT, STARTSWITH, "Opera", YES },
-            { PLATFORM, CONTAINS, "Opera Mobi", YES },
-            { EXTRA, STARTSWITH, "Presto", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob06",
+        .category = "mobile/opera",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Opera", YES, 0 },
+            { PLATFORM, CONTAINS, "Opera Mobi", YES, 0 },
+            { EXTRA, STARTSWITH, "Presto", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 43 */
-        "mob07",
-        "mobile/opera",
-        {
-            { PRODUCT, STARTSWITH, "Mozilla", YES },
-            { PLATFORM, CONTAINS, "Opera Mobi", YES },
-            { EXTRA, CONTAINS, "Opera", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob07",
+        .category = "mobile/opera",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Mozilla", YES, 0 },
+            { PLATFORM, CONTAINS, "Opera Mobi", YES, 0 },
+            { EXTRA, CONTAINS, "Opera", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 50 */
-        "mob08",
-        "mobile/netfront",
-        {
-            { EXTRA, CONTAINS, "NetFront", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob08",
+        .category = "mobile/netfront",
+        .rules = {
+            { EXTRA, CONTAINS, "NetFront", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 55 */
-        "mob09",
-        "mobile/minimo",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { EXTRA, CONTAINS, "Minimo", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob09",
+        .category = "mobile/minimo",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { EXTRA, CONTAINS, "Minimo", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 61 */
-        "mob10",
-        "mobile/maemo",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { EXTRA, CONTAINS, "Maemo Browser", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob10",
+        .category = "mobile/maemo",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { EXTRA, CONTAINS, "Maemo Browser", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 67 */
-        "mob11",
-        "mobile/iris",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { EXTRA, CONTAINS, "Iris", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob11",
+        .category = "mobile/iris",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { EXTRA, CONTAINS, "Iris", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 73 */
-        "mob12",
-        "mobile/msie mobile",
-        {
-            { PLATFORM, CONTAINS, "IEMobile", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob12",
+        .category = "mobile/msie mobile",
+        .rules = {
+            { PLATFORM, CONTAINS, "IEMobile", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 78 */
-        "mob13",
-        "mobile/symbian",
-        {
-            { PRODUCT, CONTAINS, "GoBrowser", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob13",
+        .category = "mobile/symbian",
+        .rules = {
+            { PRODUCT, CONTAINS, "GoBrowser", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 83 */
-        "mob14",
-        "mobile/fennec",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { EXTRA, CONTAINS, "Fennec", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob14",
+        .category = "mobile/fennec",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { EXTRA, CONTAINS, "Fennec", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 89 */
-        "mob15",
-        "mobile/dorothy",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { EXTRA, CONTAINS, "Dorothy", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob15",
+        .category = "mobile/dorothy",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { EXTRA, CONTAINS, "Dorothy", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 95 */
-        "mob16",
-        "mobile/symbian",
-        {
-            { PRODUCT, STARTSWITH, "Doris/", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob16",
+        .category = "mobile/symbian",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Doris/", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 100 */
-        "mob17",
-        "mobile/symbian",
-        {
-            { PRODUCT, CONTAINS, "SymbianOS", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob17",
+        .category = "mobile/symbian",
+        .rules = {
+            { PRODUCT, CONTAINS, "SymbianOS", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 105 */
-        "mob18",
-        "mobile/symbian",
-        {
-            { PLATFORM, CONTAINS, "SymbianOS", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob18",
+        .category = "mobile/symbian",
+        .rules = {
+            { PLATFORM, CONTAINS, "SymbianOS", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 110 */
-        "mob19",
-        "mobile/bolt",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, CONTAINS, "BOLT/", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob19",
+        .category = "mobile/bolt",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, CONTAINS, "BOLT/", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 116 */
-        "mob20",
-        "mobile/blackberry",
-        {
-            { PRODUCT, STARTSWITH, "Mozilla", YES },
-            { PLATFORM, STARTSWITH, "BlackBerry", YES },
-            { EXTRA, STARTSWITH, "AppleWebKit", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob20",
+        .category = "mobile/blackberry",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Mozilla", YES, 0 },
+            { PLATFORM, STARTSWITH, "BlackBerry", YES, 0 },
+            { EXTRA, STARTSWITH, "AppleWebKit", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 123 */
-        "mob21",
-        "mobile/blackberry",
-        {
-            { PRODUCT, STARTSWITH, "BlackBerry", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob21",
+        .category = "mobile/blackberry",
+        .rules = {
+            { PRODUCT, STARTSWITH, "BlackBerry", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 128 */
-        "mob22",
-        "mobile/android",
-        {
-            { PRODUCT, STARTSWITH, "Mozilla/5.0", YES },
-            { PLATFORM, CONTAINS, "Android", YES },
-            { EXTRA, STARTSWITH, "AppleWebKit", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob22",
+        .category = "mobile/android",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, CONTAINS, "Android", YES, 0 },
+            { EXTRA, STARTSWITH, "AppleWebKit", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 135 */
-        "mob23",
-        "mobile/obigo",
-        {
-            { PRODUCT, CONTAINS, "Obigo", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob23",
+        .category = "mobile/obigo",
+        .rules = {
+            { PRODUCT, CONTAINS, "Obigo", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 140 */
-        "mob24",
-        "mobile/iphone",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, STARTSWITH, "(iPhone;", YES },
-            { EXTRA, STARTSWITH, "AppleWebKit", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob24",
+        .category = "mobile/iphone",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, STARTSWITH, "(iPhone;", YES, 0 },
+            { EXTRA, STARTSWITH, "AppleWebKit", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 147 */
-        "mob25",
-        "mobile/ipad",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, STARTSWITH, "(iPad;", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob25",
+        .category = "mobile/ipad",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, STARTSWITH, "(iPad;", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 153 */
-        "mob26",
-        "mobile/qnx",
-        {
-            { PRODUCT, MATCHES, "Mozilla/5.0", YES },
-            { PLATFORM, STARTSWITH, "(Photon", YES },
-            { EXTRA, STARTSWITH, "Gecko", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob26",
+        .category = "mobile/qnx",
+        .rules = {
+            { PRODUCT, MATCHES, "Mozilla/5.0", YES, 0 },
+            { PLATFORM, STARTSWITH, "(Photon", YES, 0 },
+            { EXTRA, STARTSWITH, "Gecko", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 160 */
-        "mob27",
-        "mobile/ucweb",
-        {
-            { PRODUCT, MATCHES, "IUC", YES },
-            { EXTRA, CONTAINS, "UCWEB", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob27",
+        .category = "mobile/ucweb",
+        .rules = {
+            { PRODUCT, MATCHES, "IUC", YES, 0 },
+            { EXTRA, CONTAINS, "UCWEB", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 166 */
-        "mob28",
-        "mobile/jasmine",
-        {
-            { PRODUCT, CONTAINS, "Jasmine", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob28",
+        .category = "mobile/jasmine",
+        .rules = {
+            { PRODUCT, CONTAINS, "Jasmine", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 171 */
-        "mob29",
-        "mobile/maui",
-        {
-            { PRODUCT, MATCHES, "MAUI WAP Browser", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob29",
+        .category = "mobile/maui",
+        .rules = {
+            { PRODUCT, MATCHES, "MAUI WAP Browser", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* mobile.txt line 176 */
-        "mob30",
-        "mobile/generic",
-        {
-            { PRODUCT, CONTAINS, "Profile/MIDP", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "mob30",
+        .category = "mobile/generic",
+        .rules = {
+            { PRODUCT, CONTAINS, "Profile/MIDP", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
 
     /* social from "../../data/user-agent-rules/social.txt" */
     {
         /* social.txt line 3 */
-        "soc01",
-        "social/secondlife",
-        {
-            { PRODUCT, STARTSWITH, "Second Life", YES },
-            { PLATFORM, MATCHES, "(http://secondlife.com)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "soc01",
+        .category = "social/secondlife",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Second Life", YES, 0 },
+            { PLATFORM, MATCHES, "(http://secondlife.com)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* social.txt line 9 */
-        "soc02",
-        "social/secondlife",
-        {
-            { PRODUCT, MATCHES, "LSL Script", YES },
-            { PLATFORM, MATCHES, "(Mozilla Compatible)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "soc02",
+        .category = "social/secondlife",
+        .rules = {
+            { PRODUCT, MATCHES, "LSL Script", YES, 0 },
+            { PLATFORM, MATCHES, "(Mozilla Compatible)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* social.txt line 15 */
-        "soc03",
-        "social/facebook",
-        {
-            { PRODUCT, STARTSWITH, "facebookexternalhit", YES },
-            { PLATFORM, MATCHES, "(+http://www.facebook.com/externalhit_uatext.php)", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "soc03",
+        .category = "social/facebook",
+        .rules = {
+            { PRODUCT, STARTSWITH, "facebookexternalhit", YES, 0 },
+            { PLATFORM, MATCHES, "(+http://www.facebook.com/externalhit_uatext.php)", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
 
     /* torrent from "../../data/user-agent-rules/torrent.txt" */
     {
         /* torrent.txt line 3 */
-        "tor01",
-        "torrent/transmission",
-        {
-            { PRODUCT, STARTSWITH, "Transmission", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "tor01",
+        .category = "torrent/transmission",
+        .rules = {
+            { PRODUCT, STARTSWITH, "Transmission", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* torrent.txt line 8 */
-        "tor02",
-        "torrent/uTorrent",
-        {
-            { PRODUCT, STARTSWITH, "uTorrent", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "tor02",
+        .category = "torrent/uTorrent",
+        .rules = {
+            { PRODUCT, STARTSWITH, "uTorrent", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     {
         /* torrent.txt line 13 */
-        "tor03",
-        "torrent/rtorrent",
-        {
-            { PRODUCT, STARTSWITH, "rtorrent", YES },
-            { NONE, TERMINATE, "NULL", NO },
+        .label = "tor03",
+        .category = "torrent/rtorrent",
+        .rules = {
+            { PRODUCT, STARTSWITH, "rtorrent", YES, 0 },
+            { NONE, TERMINATE, "NULL", NO, 0 },
         },
     },
     /*

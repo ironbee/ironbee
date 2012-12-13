@@ -1347,7 +1347,7 @@ static const command_rec ironbee_cmds[] = {
     AP_INIT_FLAG("IronbeeFilterOutput", ap_set_flag_slot,
                  (void*)APR_OFFSETOF(ironbee_dir_conf, filter_output),
                  ACCESS_CONF, "Filter Output Data through Ironbee"),
-    {NULL}
+    {NULL, {NULL}, NULL, 0, 0, NULL}
 };
 
 /**

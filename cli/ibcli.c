@@ -148,30 +148,25 @@ typedef struct {
 
 static runtime_settings_t settings =
 {
-    NULL,                  /* config_file */
-    { 0 },                 /* req_files */
-    { 0 },                 /* rsp_files */
     /* Address / port settings */
-    "192.168.1.1",         /* local_ip */
-    8080,                  /* local_port */
-    "10.10.10.10",         /* remote_ip */
-    23424,                 /* remote_port */
+    .local_ip = "192.168.1.1",
+    .local_port = 8080,
+    .remote_ip = "10.10.10.10",
+    .remote_port = 23424,
     /* Trace settings */
-    0,                     /* trace */
-    0,                     /* trace_request_count */
-    0,                     /* trace_response_count */
+    .trace = 0,
+    .trace_request_cnt = 0,
+    .trace_response_cnt = 0,
     /* Dump settings */
-    0,                     /* dump_flags */
-    /* Request headers */
-    { 0 },                 /* request_headers */
+    .dump_flags = 0,
     /* Max # of transactions */
-    -1,                    /* Max # of transactions to run */
+    .max_transactions = -1,
     /* Verbose */
-    0,                     /* Verbose level */
+    .verbose = 0,
     /* Debug settings */
 #if DEBUG_ARGS_ENABLE
-    NULL,                  /* debug_uri */
-    -1                     /* debug_level */
+    .debug_uri = NULL,
+    .debug_level = -1
 #endif
 };
 

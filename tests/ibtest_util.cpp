@@ -27,7 +27,15 @@
 
 ib_server_t ibt_ibserver = {
    IB_SERVER_HEADER_DEFAULTS,
-   "unit_tests"
+   "unit_tests",
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL,
+   NULL
 };
 
 bool ibtest_memeq(const void *v1, const void *v2, size_t n)

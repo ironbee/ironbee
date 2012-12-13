@@ -1714,7 +1714,7 @@ static ib_status_t modhtp_iface_request_line(ib_provider_inst_t *pi,
     assert(itx != NULL);
     assert(line != NULL);
 
-    ib_conndata_t conndata = {0};
+    ib_conndata_t conndata = {0, 0, 0};
     modhtp_context_t *modctx;
     ib_status_t rc;
 
@@ -1815,7 +1815,7 @@ static ib_status_t modhtp_iface_request_header_data(ib_provider_inst_t *pi,
     assert(itx != NULL);
     assert(header != NULL);
 
-    ib_conndata_t conndata = {0};
+    ib_conndata_t conndata = {0, 0, 0};
     modhtp_header_data cbdata;
     ib_status_t rc;
 
@@ -1844,7 +1844,7 @@ static ib_status_t modhtp_iface_request_header_finished(ib_provider_inst_t *pi,
     assert(pi != NULL);
     assert(itx != NULL);
 
-    ib_conndata_t conndata = {0};
+    ib_conndata_t conndata = {0, 0, 0};
     ib_status_t rc;
 
     /* Generate header fields. */
@@ -1878,7 +1878,7 @@ static ib_status_t modhtp_iface_request_body_data(ib_provider_inst_t *pi,
     assert(itx != NULL);
     assert(txdata != NULL);
 
-    ib_conndata_t conndata = {0};
+    ib_conndata_t conndata = {0, 0, 0};
     ib_status_t rc;
 
     /* This is required for parsed data only. */
@@ -1919,7 +1919,7 @@ static ib_status_t modhtp_iface_response_line(ib_provider_inst_t *pi,
     assert(pi != NULL);
     assert(itx != NULL);
 
-    ib_conndata_t conndata = {0};
+    ib_conndata_t conndata = {0, 0, 0};
     modhtp_context_t *modctx;
     ib_status_t rc;
 
@@ -1966,7 +1966,7 @@ static ib_status_t modhtp_iface_response_header_data(ib_provider_inst_t *pi,
     assert(itx != NULL);
     assert(header != NULL);
 
-    ib_conndata_t conndata = {0};
+    ib_conndata_t conndata = {0, 0, 0};
     modhtp_header_data cbdata;
     ib_status_t rc;
 
@@ -1997,7 +1997,7 @@ static ib_status_t modhtp_iface_response_header_finished(
     assert(pi != NULL);
     assert(itx != NULL);
 
-    ib_conndata_t conndata = {0};
+    ib_conndata_t conndata = {0, 0, 0};
     ib_status_t rc;
 
     /* This is required for parsed data only. */
@@ -2031,7 +2031,7 @@ static ib_status_t modhtp_iface_response_body_data(ib_provider_inst_t *pi,
     assert(itx != NULL);
     assert(txdata != NULL);
 
-    ib_conndata_t conndata = {0};
+    ib_conndata_t conndata = {0, 0, 0};
     ib_status_t rc;
 
     /* This is required for parsed data only. */

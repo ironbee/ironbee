@@ -31,7 +31,15 @@
 #include <ironautomata/optimize_edges.hpp>
 
 #include <boost/lexical_cast.hpp>
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
 #include <boost/program_options.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 using namespace std;
 

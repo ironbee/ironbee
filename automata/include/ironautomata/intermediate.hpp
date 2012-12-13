@@ -27,7 +27,15 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
 #include <ironautomata/intermediate.pb.h>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
 #include <ironautomata/logger.hpp>
 
 #include <boost/iterator/iterator_facade.hpp>

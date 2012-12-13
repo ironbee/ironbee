@@ -175,13 +175,14 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
         (name), \
         (type), \
         (set), (set_data), \
-        (get), (get_data) \
+        (get), (get_data), \
+        0, 0 \
     }
 
 /**
  * Required as the last entry.
  */
-#define IB_CFGMAP_INIT_LAST { NULL }
+#define IB_CFGMAP_INIT_LAST { .name = NULL }
 
 
 /**

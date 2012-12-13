@@ -252,7 +252,7 @@ struct ib_dirmap_init_t {
     { (name), IB_DIRTYPE_SBLK1, IB_DIRMAP_INIT_CB_HELPER(fn_sblk1, (cb)), (blkend), (cbdata), (blkenddata), NULL }
 
 /** Required last entry. */
-#define IB_DIRMAP_INIT_LAST { NULL }
+#define IB_DIRMAP_INIT_LAST { .name = NULL }
 
 
 /**
