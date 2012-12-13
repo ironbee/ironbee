@@ -61,8 +61,6 @@ if test "$ruby" = ""; then
     AC_MSG_WARN("Ruby required for codecheck.")
 fi
 
-dnl if we have clang use the CFLAGS set by autoconf macros.
-dnl if not clang assume gcc and use the CFLAGS set by our macro.
 if test "$GCC" = "yes"; then
 	AC_MSG_CHECKING([if compiler is c clang])
     AC_TRY_COMPILE(,
@@ -448,14 +446,6 @@ if test "$OS_DARWIN" = true; then
     APR_CPPFLAGS=`echo "$APR_CPPFLAGS" | sed -e 's/-no-cpp-precomp//'`
 fi
 
-#If we are not building servers bail
-if test "$HAVE_HTTPD" = "no" && test "$HAVE_TS" = "no"; then
-    echo "**********************************************"
-    echo "* Warning! No servers enabled!               *"
-    echo "* We will only be building the cli test tool.*"
-    echo "**********************************************"
-fi
-  
 dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
