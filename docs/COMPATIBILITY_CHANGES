@@ -25,7 +25,7 @@
   bstr *value = NULL;
   for (int i = 0, n = htp_table_size(t); i < n; i++) {
       htp_table_get_index(l, i, &key, (void **)&value);
-      // key is managed by the table and does not need freeing
+      // the key is managed by the table and does not need freeing
       bstr_free(&value);
   }
 
