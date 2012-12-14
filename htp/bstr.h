@@ -455,7 +455,7 @@ bstr *bstr_to_lowercase(bstr *b);
  * @param[in] b
  * @param[in] newlen
  */
-void bstr_util_adjust_len(bstr *b, size_t newlen);
+void bstr_adjust_len(bstr *b, size_t newlen);
 
 /**
  * Convert contents of a memory region to a positive integer.

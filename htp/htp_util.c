@@ -797,7 +797,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
     // Adjust the length of the string, because
     // we're doing in-place decoding.
-    bstr_util_adjust_len(path, wpos);
+    bstr_adjust_len(path, wpos);
 }
 
 /**
@@ -1114,7 +1114,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
                             switch (cfg->path_nul_encoded_handling) {
                                 case TERMINATE:
-                                    bstr_util_adjust_len(path, wpos);
+                                    bstr_adjust_len(path, wpos);
                                     return 1;
                                     break;
                                 case STATUS_400:
@@ -1207,7 +1207,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                 switch (cfg->path_nul_raw_handling) {
                     case TERMINATE:
                         // Terminate path with a raw NUL byte
-                        bstr_util_adjust_len(path, wpos);
+                        bstr_adjust_len(path, wpos);
                         return 1;
                         break;
                     case STATUS_400:
@@ -1263,7 +1263,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
         }
     }
 
-    bstr_util_adjust_len(path, wpos);
+    bstr_adjust_len(path, wpos);
 
     return 1;
 }
@@ -1374,7 +1374,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
                             switch (cfg->params_nul_encoded_handling) {
                                 case TERMINATE:
-                                    bstr_util_adjust_len(input, wpos);
+                                    bstr_adjust_len(input, wpos);
                                     return 1;
                                     break;
                                 case STATUS_400:
@@ -1445,7 +1445,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                 switch (cfg->params_nul_raw_handling) {
                     case TERMINATE:
                         // Terminate path with a raw NUL byte
-                        bstr_util_adjust_len(input, wpos);
+                        bstr_adjust_len(input, wpos);
                         return 1;
                         break;
                     case STATUS_400:
@@ -1468,7 +1468,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
         data[wpos++] = c;
     }
 
-    bstr_util_adjust_len(input, wpos);
+    bstr_adjust_len(input, wpos);
 
     return 1;
 }
@@ -1711,7 +1711,7 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
         }
     }
 
-    bstr_util_adjust_len(s, wpos);
+    bstr_adjust_len(s, wpos);
 }
 
 /**
@@ -1814,7 +1814,7 @@ void htp_normalize_uri_path_inplace(bstr *s) {
         c = -1;
     }
 
-    bstr_util_adjust_len(s, wpos);
+    bstr_adjust_len(s, wpos);
 }
 
 /**
@@ -2352,7 +2352,7 @@ bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t 
         outptr[outpos++] = data[pos++];
     }
 
-    bstr_util_adjust_len(result, outlen);
+    bstr_adjust_len(result, outlen);
 
     if (endoffset != NULL) {
         *endoffset = pos;

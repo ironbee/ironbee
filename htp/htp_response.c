@@ -286,7 +286,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             while (newlen < len) {
                 // TODO Some platforms may do things differently here
                 if (htp_is_space(data[newlen]) || (data[newlen] == ';')) {
-                    bstr_util_adjust_len(connp->out_tx->response_content_type, newlen);
+                    bstr_adjust_len(connp->out_tx->response_content_type, newlen);
                     break;
                 }
 

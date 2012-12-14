@@ -396,7 +396,7 @@ static htp_status_t htp_txh_process_request_headers(htp_tx_t *tx) {
         while (newlen < len) {
             // TODO Some platforms may do things differently here
             if (htp_is_space(data[newlen]) || (data[newlen] == ';')) {
-                bstr_util_adjust_len(tx->request_content_type, newlen);
+                bstr_adjust_len(tx->request_content_type, newlen);
                 break;
             }
 

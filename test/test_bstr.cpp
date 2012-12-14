@@ -412,7 +412,7 @@ TEST(BstrTest, Chop) {
 TEST(BstrTest, AdjustLen) {
     bstr *p1 = bstr_dup_c("abcdef");
 
-    bstr_util_adjust_len(p1, 3);
+    bstr_adjust_len(p1, 3);
     EXPECT_EQ(3, bstr_len(p1));
     EXPECT_EQ(0, bstr_cmp_c(p1,"abc"));
 
