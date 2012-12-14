@@ -38,8 +38,8 @@
 #include "bstr.h"
 #include "htp_list.h"
 
-htp_status_t bstr_builder_append(bstr_builder_t *bb, bstr *b) {
-    return htp_list_push(bb->pieces, (void *)b);
+htp_status_t bstr_builder_appendn(bstr_builder_t *bb, bstr *b) {
+    return htp_list_push(bb->pieces, b);
 }
 
 htp_status_t bstr_builder_append_c(bstr_builder_t *bb, const char *cstr) {

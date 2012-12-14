@@ -60,7 +60,7 @@ struct bstr_builder_t {
  * @param[in] b
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t bstr_builder_append(bstr_builder_t *bb, bstr *b);
+htp_status_t bstr_builder_appendn(bstr_builder_t *bb, bstr *b);
 
 /**
  * Adds one new piece, in the form of a NUL-terminated string, to

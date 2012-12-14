@@ -500,9 +500,9 @@ TEST(BstrBuilder, Append) {
 
     EXPECT_EQ(0, bstr_builder_size(bb));
 
-    bstr_builder_append(bb, str1);
+    bstr_builder_appendn(bb, str1);
     bstr_builder_append_c(bb, "#");
-    bstr_builder_append(bb, str2);
+    bstr_builder_appendn(bb, str2);
     bstr_builder_append_c(bb, "#");
     bstr_builder_append_mem(bb, "!@#$%^&*()", 4);
 
