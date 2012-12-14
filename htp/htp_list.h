@@ -73,6 +73,15 @@ typedef struct htp_list_linked_t htp_list_linked_t;
 htp_list_t *htp_list_array_create(size_t size);
 
 /**
+ * Remove all elements from the list. It is the responsibility of the caller
+ * to iterate over list elements and deallocate them if necessary, prior to
+ * invoking this function.
+ *
+ * @param[in] l
+ */
+void htp_list_array_clear(htp_list_array_t *l);
+
+/**
  * Free the memory occupied by this list. This function assumes
  * the elements held by the list were freed beforehand.
  *

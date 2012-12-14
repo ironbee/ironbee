@@ -56,9 +56,17 @@ htp_list_t *htp_list_array_create(size_t size) {
     // Initialize structure
     l->first = 0;
     l->last = 0;
+    l->current_size = 0;
     l->max_size = size;
 
     return (htp_list_t *) l;
+}
+
+void htp_list_array_clear(htp_list_array_t *l) {
+    // Continue using already allocate memory; just reset the fields.
+    l->first = 0;
+    l->last = 0;
+    l->current_size = 0;
 }
 
 void htp_list_array_destroy(htp_list_array_t **_l) {
