@@ -72,10 +72,10 @@ struct bstr_t {
 
 // Defines
 
-#define bstr_len(X) ((*(bstr *)(X)).len)
-#define bstr_size(X) ((*(bstr *)(X)).size)
-#define bstr_ptr(X) ( ((*(bstr *)(X)).realptr == NULL) ? ((unsigned char *)(X) + sizeof(bstr)) : (unsigned char *)(*(bstr *)(X)).realptr )
-#define bstr_realptr(X) ((*(bstr *)(X)).realptr)
+#define bstr_len(X) ((*(X)).len)
+#define bstr_size(X) ((*(X)).size)
+#define bstr_ptr(X) ( ((*(X)).realptr == NULL) ? ((unsigned char *)(X) + sizeof(bstr)) : (unsigned char *)(*(X)).realptr )
+#define bstr_realptr(X) ((*(X)).realptr)
 
 
 // Functions
