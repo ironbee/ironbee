@@ -43,7 +43,7 @@ bstr *bstr_alloc(size_t len) {
 
     b->len = 0;
     b->size = len;
-    b->ptr = NULL;
+    b->realptr = NULL;
 
     return b;
 }
@@ -94,6 +94,18 @@ bstr *bstr_add_mem_noex(bstr *destination, const void *data, size_t len) {
 
 bstr *bstr_add_noex(bstr *destination, const bstr *source) {
     return bstr_add_mem_noex(destination, bstr_ptr(source), bstr_len(source));
+}
+
+void bstr_adjust_len(bstr *b, size_t newlen) {
+    b->len = newlen;
+}
+
+void bstr_adjust_realptr(bstr *b, void *newrealptr) {
+    b->realptr = newrealptr;
+}
+
+void bstr_adjust_size(bstr *b, size_t newsize) {
+    b->size = newsize;
 }
 
 int bstr_begins_with(const bstr *haystack, const bstr *needle) {
@@ -162,10 +174,9 @@ int bstr_char_at(const bstr *s, size_t pos) {
     return data[pos];
 }
 
-void bstr_chop(bstr *s) {
-    bstr *b = (bstr *) s;
-    if (b->len > 0) {
-        b->len--;
+void bstr_chop(bstr *b) {
+    if (bstr_len(b) > 0) {
+        bstr_adjust_len(b, bstr_len(b) - 1);
     }
 }
 
@@ -263,7 +274,7 @@ bstr *bstr_dup_ex(const bstr *b, size_t offset, size_t len) {
     bstr *bnew = bstr_alloc(len);
     if (bnew == NULL) return NULL;
     memcpy(bstr_ptr(bnew), bstr_ptr(b) + offset, len);
-    bnew->len = len;
+    bstr_adjust_len(bnew, len);
     return bnew;
 }
 
@@ -275,7 +286,7 @@ bstr *bstr_dup_mem(const void *data, size_t len) {
     bstr *bnew = bstr_alloc(len);
     if (bnew == NULL) return NULL;
     memcpy(bstr_ptr(bnew), data, len);
-    bnew->len = len;
+    bstr_adjust_len(bnew, len);
     return bnew;
 }
 
@@ -290,7 +301,7 @@ bstr *bstr_expand(bstr *b, size_t newsize) {
     bstr *bnew = realloc(b, sizeof (bstr) + newsize);
     if (bnew == NULL) return NULL;
 
-    bnew->size = newsize;
+    bstr_adjust_size(bnew, newsize);
 
     return bnew;
 }
@@ -456,10 +467,6 @@ int64_t bstr_util_mem_to_pint(const void *_data, size_t len, int base, size_t *l
     return rval;
 }
 
-void bstr_adjust_len(bstr *b, size_t newlen) {
-    b->len = newlen;
-}
-
 char *bstr_util_memdup_to_c(const void *_data, size_t len) {
     const unsigned char *data = (unsigned char *) _data;
 
@@ -499,13 +506,13 @@ char *bstr_util_strdup_to_c(const bstr *b) {
     return bstr_util_memdup_to_c(bstr_ptr(b), bstr_len(b));
 }
 
-bstr *bstr_wrap_c(const char *input) {
+bstr *bstr_wrap_c(const char *cstr) {
     bstr *b = (bstr *) malloc(sizeof (bstr));
     if (b == NULL) return NULL;
 
-    b->len = strlen(input);
+    b->len = strlen(cstr);
     b->size = b->len;
-    b->ptr = (unsigned char *) input;
+    b->realptr = (unsigned char *) cstr;
 
     return b;
 }

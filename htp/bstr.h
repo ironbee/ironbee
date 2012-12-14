@@ -66,7 +66,7 @@ struct bstr_t {
      *  it points to the actual buffer used, and there's no data following
      *  this structure.
      */
-    unsigned char *ptr;
+    unsigned char *realptr;
 };
 
 
@@ -74,8 +74,8 @@ struct bstr_t {
 
 #define bstr_len(X) ((*(bstr *)(X)).len)
 #define bstr_size(X) ((*(bstr *)(X)).size)
-#define bstr_ptr(X) ( ((*(bstr *)(X)).ptr == NULL) ? ((unsigned char *)(X) + sizeof(bstr)) : (unsigned char *)(*(bstr *)(X)).ptr )
-#define bstr_realptr(X) ((*(bstr *)(X)).ptr)
+#define bstr_ptr(X) ( ((*(bstr *)(X)).realptr == NULL) ? ((unsigned char *)(X) + sizeof(bstr)) : (unsigned char *)(*(bstr *)(X)).realptr )
+#define bstr_realptr(X) ((*(bstr *)(X)).realptr)
 
 
 // Functions
@@ -150,6 +150,20 @@ bstr *bstr_add_mem_noex(bstr *b, const void *data, size_t len);
  * @return The destination bstring.
  */
 bstr *bstr_add_noex(bstr *bdestination, const bstr *bsource);
+
+/**
+ * Adjust bstring length. You will need to use this method whenever
+ * you work directly with the string contents, and end up changing
+ * its length by direct structure manipulation.
+ *
+ * @param[in] b
+ * @param[in] newlen
+ */
+void bstr_adjust_len(bstr *b, size_t newlen);
+
+void bstr_adjust_realptr(bstr *b, void *newrealptr);
+
+void bstr_adjust_size(bstr *b, size_t newsize);
 
 /**
  * Allocate a zero-length bstring, reserving space for at least size bytes.
@@ -447,16 +461,6 @@ int bstr_rchr(const bstr *b, int c);
  * @return The same bstring received on input
  */
 bstr *bstr_to_lowercase(bstr *b);
-
-/**
- * Adjust bstring length. You will need to use this method whenever
- * you work directly with the string contents, and end up changing
- * its length by direct structure manipulation.
- *
- * @param[in] b
- * @param[in] newlen
- */
-void bstr_adjust_len(bstr *b, size_t newlen);
 
 /**
  * Convert contents of a memory region to a positive integer.

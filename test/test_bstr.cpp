@@ -68,7 +68,7 @@ TEST(BstrTest, ExpandPtr) {
     bstr *b;
     b = (bstr*) malloc(sizeof(bstr));
     ASSERT_NE((bstr*)NULL, b);
-    b->ptr = (unsigned char*) malloc(10);
+    b->realptr = (unsigned char*) malloc(10);
     b->len = 0;
     b->size = 10;
     ASSERT_NE((unsigned char*)NULL, bstr_ptr(b));
@@ -76,7 +76,7 @@ TEST(BstrTest, ExpandPtr) {
     bstr *p2 = bstr_expand(b, 100);
     EXPECT_TRUE(p2 == NULL);
 
-    free(b->ptr);
+    free(b->realptr);
     bstr_free(&b);
 }
 
