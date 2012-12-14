@@ -50,8 +50,7 @@ struct htp_list_array_t {
     size_t last;
     size_t max_size;
     size_t current_size;
-    void **elements;
-    size_t iterator_index;
+    void **elements;    
 };
 
 struct htp_list_linked_element_t {

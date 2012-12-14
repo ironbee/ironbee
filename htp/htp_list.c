@@ -201,11 +201,11 @@ void *htp_list_array_shift(htp_list_array_t *l) {
 
 // Linked list
 
-htp_list_t *htp_list_linked_create(void) {
+htp_list_linked_t *htp_list_linked_create(void) {
     htp_list_linked_t *l = calloc(1, sizeof (htp_list_linked_t));
     if (l == NULL) return NULL;
 
-    return (htp_list_t *) l;
+    return l;
 }
 
 void htp_list_linked_destroy(htp_list_linked_t **_l) {
