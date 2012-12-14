@@ -58,7 +58,7 @@ htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *elem
 /**
  * Add a new element to the table. The key provided will be adopted and managed
  * by the table. You should not keep a copy of the pointer to the key unless you're
- * certain that the table will live longer thant the copy. The table will make a
+ * certain that the table will live longer that the copy. The table will make a
  * copy of the element pointer, but will not manage it.
  *
  * @param[in] table
