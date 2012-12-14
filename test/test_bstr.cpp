@@ -64,6 +64,17 @@ TEST(BstrTest, ExpandLocal) {
     bstr_free(&p2);
 }
 
+TEST(BstrTest, ExpandSmaller) {
+    bstr *p1;
+    bstr *p2;
+
+    p1 = bstr_alloc(100);
+    p2 = bstr_expand(p1, 10);
+    ASSERT_TRUE(p2 == NULL);
+
+    bstr_free(&p1);
+}
+
 TEST(BstrTest, ExpandPtr) {
     bstr *b;
     b = (bstr*) malloc(sizeof(bstr));
