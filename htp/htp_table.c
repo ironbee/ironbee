@@ -63,16 +63,7 @@ htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *ele
 
 void htp_table_clear(htp_table_t *table) {
     if (table == NULL) return;
-
-    size_t size = htp_list_size(table->list);
-
-    htp_list_destroy(&table->list);
-
-    // Use a list behind the scenes
-    table->list = htp_list_array_create(size == 0 ? 10 : size);
-    if (table->list == NULL) {
-        free(table);
-    }
+    htp_list_clear(table->list);
 }
 
 htp_table_t *htp_table_create(size_t size) {

@@ -63,9 +63,7 @@ void bstr_builder_clear(bstr_builder_t *bb) {
         bstr_free(&b);
     }
 
-    // TODO Need htp_list_clear() here.
-    htp_list_destroy(&bb->pieces);
-    bb->pieces = htp_list_create(BSTR_BUILDER_DEFAULT_SIZE);
+    htp_list_clear(bb->pieces);
 }
 
 bstr_builder_t *bstr_builder_create() {
