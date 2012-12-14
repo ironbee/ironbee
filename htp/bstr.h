@@ -161,8 +161,24 @@ bstr *bstr_add_noex(bstr *bdestination, const bstr *bsource);
  */
 void bstr_adjust_len(bstr *b, size_t newlen);
 
+/**
+ * Change the external pointer used by bstring. You will need to use this
+ * function only if you're messing with bstr internals. Use with caution.
+ *
+ * @param[in] b
+ * @param[in] newrealptr
+ */
 void bstr_adjust_realptr(bstr *b, void *newrealptr);
 
+/**
+ * Adjust bstring size. This does not change the size of the storage behind
+ * the bstring, just changes the field that keeps track of how many bytes
+ * there are in the storage. You will need to use this function only if
+ * you're messing with bstr internals. Use with caution.
+ *
+ * @param[in] b
+ * @param[in] newsize
+ */
 void bstr_adjust_size(bstr *b, size_t newsize);
 
 /**
