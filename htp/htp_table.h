@@ -45,7 +45,7 @@ typedef struct htp_table_t htp_table_t;
 
 /**
  * Add a new element to the table. The key will be copied, and the copy
- * managed by the table. The point of the element will be stored, but the
+ * managed by the table. The pointer of the element will be stored, but the
  * element itself will not be managed by the table.
  *
  * @param[in] table
