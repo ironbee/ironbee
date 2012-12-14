@@ -64,6 +64,11 @@ TEST(BstrTest, ExpandLocal) {
     bstr_free(&p2);
 }
 
+/*
+// For the time being, expansion is not allowed
+// when data is externally stored. This feature
+// is currently only used when wrapping existing
+// memory areas.
 TEST(BstrTest, ExpandPtr) {
     bstr *b;
     b = (bstr*) malloc(sizeof(bstr));
@@ -75,12 +80,14 @@ TEST(BstrTest, ExpandPtr) {
 
     bstr *p2;
     p2 = bstr_expand(b, 100);
+    EXPECT_TRUE(p2 != NULL);
     EXPECT_EQ(100, bstr_size(p2));
     EXPECT_EQ(0, bstr_len(p2));
 
     free(p2->ptr);
     bstr_free(&p2);
 }
+*/
 
 TEST(BstrTest, DupC) {
     bstr *p1;

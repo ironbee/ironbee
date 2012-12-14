@@ -75,6 +75,7 @@ struct bstr_t {
 #define bstr_len(X) ((*(bstr *)(X)).len)
 #define bstr_size(X) ((*(bstr *)(X)).size)
 #define bstr_ptr(X) ( ((*(bstr *)(X)).ptr == NULL) ? ((unsigned char *)(X) + sizeof(bstr)) : (unsigned char *)(*(bstr *)(X)).ptr )
+#define bstr_realptr(X) ((*(bstr *)(X)).ptr)
 
 
 // Functions

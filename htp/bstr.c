@@ -280,10 +280,11 @@ bstr *bstr_dup_mem(const void *data, size_t len) {
 }
 
 bstr *bstr_expand(bstr *b, size_t newsize) {
-    if (bstr_ptr(b) != NULL) {
+    if (bstr_realptr(b) != NULL) {
         // Refuse to expand a wrapped bstring. In the future,
         // we can change this to make a copy of the data, thus
         // leaving the original memory area intact.
+        return NULL;
     }
 
     bstr *bnew = realloc(b, sizeof (bstr) + newsize);
