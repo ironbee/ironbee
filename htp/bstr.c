@@ -298,6 +298,9 @@ bstr *bstr_expand(bstr *b, size_t newsize) {
         return NULL;
     }
 
+    // Catch attempts to "expand" to a smaller size
+    if (bstr_size(b) > newsize) return NULL;
+
     bstr *bnew = realloc(b, sizeof (bstr) + newsize);
     if (bnew == NULL) return NULL;
 

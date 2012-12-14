@@ -365,15 +365,15 @@ bstr *bstr_dup_lower(const bstr *b);
 bstr *bstr_dup_mem(const void *data, size_t len);
 
 /**
- * Expand internal bstring storage to support at least newsize bytes. The input
- * string is not changed if it is already big enough to accommodate the desired
- * size. If the input string is smaller, however, it is expanded. The pointer to
- * the string may change. If the expansion fails, the original string
- * is left untouched.
+ * Expand internal bstring storage to support at least newsize bytes. The storage
+ * is not expanded if the current size is equal or greater to newsize. Because
+ * realloc is used underneath, the old pointer to bstring may no longer be valid
+ * after this function completes successfully.
  *
  * @param[in] b
  * @param[in] newsize
- * @return Updated string instance, or NULL if memory allocation failed.
+ * @return Updated string instance, or NULL if memory allocation failed or if
+ *         attempt was made to "expand" the bstring to a smaller size.
  */
 bstr *bstr_expand(bstr *b, size_t newsize);
 
