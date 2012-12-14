@@ -60,7 +60,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
         pos++;
     }
 
-    tx->response_protocol = bstr_dup_mem((char *) data + start, pos - start);
+    tx->response_protocol = bstr_dup_mem(data + start, pos - start);
     if (tx->response_protocol == NULL) {
         return HTP_ERROR;
     }
@@ -84,7 +84,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
         pos++;
     }
 
-    tx->response_status = bstr_dup_mem((char *) data + start, pos - start);
+    tx->response_status = bstr_dup_mem(data + start, pos - start);
     if (tx->response_status == NULL) {
         return HTP_ERROR;
     }
@@ -100,7 +100,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
         pos++;
     }
 
-    tx->response_message = bstr_dup_mem((char *) data + pos, len - pos);
+    tx->response_message = bstr_dup_mem(data + pos, len - pos);
     if (tx->response_message == NULL) {
         return HTP_ERROR;
     }
@@ -121,7 +121,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
  * @param len
  * @return HTP status
  */
-int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char *data, size_t len) {
+int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len) {
     size_t name_start, name_end;
     size_t value_start, value_end;
 
@@ -236,7 +236,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char 
  */
 int htp_process_response_header_generic(htp_connp_t *connp) {
     bstr *tempstr = NULL;
-    char *data = NULL;
+    unsigned char *data = NULL;
     size_t len = 0;
 
     // Parse header
@@ -278,7 +278,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
 
         for (i = connp->out_header_line_index; i < connp->out_header_line_counter; i++) {
             htp_header_line_t *hl = htp_list_get(connp->out_tx->response_header_lines, i);
-            char *line = bstr_ptr(hl->line);
+            unsigned char *line = bstr_ptr(hl->line);
             size_t llen = bstr_len(hl->line);
             htp_chomp((unsigned char *)line, &llen);
             bstr_add_mem_noex(tempstr, line, llen);
@@ -323,7 +323,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
         }
 
         h_existing->value = new_value;
-        bstr_add_mem_noex(h_existing->value, ", ", 2);
+        bstr_add_mem_noex(h_existing->value, (unsigned char *)", ", 2);
         bstr_add_noex(h_existing->value, h->value);
 
         // replace the header references in all lines

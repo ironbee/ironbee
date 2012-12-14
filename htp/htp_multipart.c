@@ -153,7 +153,7 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
         switch (param_type) {
             case PARAM_NAME:
                 // TODO Unquote quoted characters
-                part->name = bstr_dup_mem((char *) data + start, pos - start);
+                part->name = bstr_dup_mem(data + start, pos - start);
                 if (part->name == NULL) return -1;
                 break;
             case PARAM_FILENAME:
@@ -161,7 +161,7 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
                 part->file = calloc(1, sizeof (htp_file_t));
                 if (part->file == NULL) return -1;
                 part->file->fd = -1;
-                part->file->filename = bstr_dup_mem((char *) data + start, pos - start);
+                part->file->filename = bstr_dup_mem(data + start, pos - start);
                 if (part->file->filename == NULL) return -1;
                 part->file->source = HTP_FILE_MULTIPART;
                 break;
@@ -189,7 +189,7 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
  * @param len
  * @param Success indication
  */
-int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t len) {
+int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, size_t len) {
     size_t name_start, name_end;
     size_t value_start, value_end;
 
@@ -266,8 +266,8 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) return -1;
 
-    h->name = bstr_dup_mem((char *) data + name_start, name_end - name_start);
-    h->value = bstr_dup_mem((char *) data + value_start, value_end - value_start);
+    h->name = bstr_dup_mem(data + name_start, name_end - name_start);
+    h->value = bstr_dup_mem(data + value_start, value_end - value_start);
 
     // Check if the header already exists
     htp_header_t * h_existing = htp_table_get(part->headers, h->name);
@@ -283,7 +283,7 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t 
         }
 
         h_existing->value = new_value;
-        bstr_add_mem_noex(h_existing->value, ", ", 2);
+        bstr_add_mem_noex(h_existing->value, (unsigned char *)", ", 2);
         bstr_add_noex(h_existing->value, h->value);
 
         // The header is no longer needed
@@ -388,7 +388,7 @@ int htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
     return 1;
 }
 
-int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, unsigned char *data, size_t len) {
+int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, const unsigned char *data, size_t len) {
     if (part->mpartp->cfg == NULL) return HTP_OK;
 
     htp_file_data_t file_data;
@@ -415,7 +415,7 @@ int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, unsigned char 
  * @param len
  * @param is_line
  */
-int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size_t len, int is_line) {
+int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int is_line) {
     #if HTP_DEBUG
     fprint_raw_data(stderr, "htp_mpart_part_handle_data: data chunk", (unsigned char *)data, len);
     fprintf(stderr, "Part type: %d\n", part->type);
@@ -481,7 +481,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
                     if (bstr_builder_size(part->mpartp->part_pieces) > 0) {
                         // Line in pieces
 
-                        bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
+                        bstr_builder_append_mem(part->mpartp->part_pieces, data, len);
 
                         bstr *line = bstr_builder_to_str(part->mpartp->part_pieces);
                         if (line == NULL) return -1;
@@ -499,20 +499,20 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
                     part->mpartp->pieces_form_line = 0;
                 } else {
                     // Folded line, just store this piece for later
-                    bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
+                    bstr_builder_append_mem(part->mpartp->part_pieces, data, len);
                     part->mpartp->pieces_form_line = 1;
                 }
             }
         } else {
             // Not end of line; keep the data chunk for later
-            bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
+            bstr_builder_append_mem(part->mpartp->part_pieces, data, len);
             part->mpartp->pieces_form_line = 0;
         }
     } else {
         // Data mode; keep the data chunk for later (but not if it is a file)
         switch (part->type) {
             case MULTIPART_PART_TEXT:
-                bstr_builder_append_mem(part->mpartp->part_pieces, (char *) data, len);
+                bstr_builder_append_mem(part->mpartp->part_pieces, data, len);
                 break;
             case MULTIPART_PART_FILE:
                 htp_mpartp_run_request_file_data_hook(part, data, len);
@@ -538,7 +538,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size
  * @param len
  * @param is_line
  */
-static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, unsigned char *data, size_t len, int is_line) {
+static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, const unsigned char *data, size_t len, int is_line) {
     #if HTP_DEBUG
     fprint_raw_data(stderr, "htp_mpartp_handle_data: data chunk", (unsigned char *)data, len);
     #endif
@@ -819,7 +819,7 @@ int htp_mpartp_finalize(htp_mpartp_t * mpartp) {
  * @param len
  * @return Status indicator
  */
-int htp_mpartp_parse(htp_mpartp_t *mpartp, unsigned char *data, size_t len) {
+int htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, size_t len) {
     size_t pos = 0; // Current position in the input chunk.
     size_t startpos = 0; // The starting position of data.
     size_t data_return_pos = 0; // The position of the (possible) boundary.
@@ -958,7 +958,7 @@ STATE_SWITCH:
                 } // while
 
                 // No more data in the local chunk; store the unprocessed part for later
-                bstr_builder_append_mem(mpartp->boundary_pieces, (char *) data + startpos, len - startpos);
+                bstr_builder_append_mem(mpartp->boundary_pieces, data + startpos, len - startpos);
 
                 break;
 
@@ -1047,8 +1047,8 @@ int htp_mpartp_is_boundary_character(int c) {
  * @param boundary
  * @return rc
  */
-int htp_mpartp_extract_boundary(bstr * content_type, char **boundary) {
-    char *data = bstr_ptr(content_type);
+int htp_mpartp_extract_boundary(bstr *content_type, char **boundary) {
+    unsigned char *data = bstr_ptr(content_type);
     size_t len = bstr_len(content_type);
     size_t pos, start;
 

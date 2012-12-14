@@ -44,7 +44,7 @@
  * @param len
  * @return HTP_OK on success, HTP_ERROR on error.
  */
-int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len) {
+int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t len) {
     if (len == 0) return HTP_OK;
     
     size_t pos = 0;
@@ -96,7 +96,7 @@ int htp_parse_cookies_v0(htp_connp_t *connp) {
     connp->in_tx->request_cookies = htp_table_create(4);
     if (connp->in_tx->request_cookies == NULL) return HTP_ERROR;
 
-    char *data = bstr_ptr(cookie_header->value);
+    unsigned char *data = bstr_ptr(cookie_header->value);
     size_t len = bstr_len(cookie_header->value);
     size_t pos = 0;
 

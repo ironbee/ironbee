@@ -48,7 +48,7 @@ htp_status_t bstr_builder_append_c(bstr_builder_t *bb, const char *cstr) {
     return htp_list_push(bb->pieces, b);
 }
 
-htp_status_t bstr_builder_append_mem(bstr_builder_t *bb, const char *data, size_t len) {
+htp_status_t bstr_builder_append_mem(bstr_builder_t *bb, const void *data, size_t len) {
     bstr *b = bstr_dup_mem(data, len);
     if (b == NULL) return HTP_ERROR;
     return htp_list_push(bb->pieces, b);

@@ -53,15 +53,15 @@ bstr *bstr_add(bstr *destination, const bstr *source) {
     return bstr_add_mem(destination, bstr_ptr(source), bstr_len(source));
 }
 
-bstr *bstr_add_c(bstr *destination, const char *source) {
-    return bstr_add_mem(destination, source, strlen(source));
+bstr *bstr_add_c(bstr *bdestination, const char *csource) {
+    return bstr_add_mem(bdestination, (unsigned char *)csource, strlen(csource));
 }
 
 bstr *bstr_add_c_noex(bstr *destination, const char *source) {
-    return bstr_add_mem_noex(destination, source, strlen(source));
+    return bstr_add_mem_noex(destination, (const unsigned char *)source, strlen(source));
 }
 
-bstr *bstr_add_mem(bstr *destination, const char *data, size_t len) {
+bstr *bstr_add_mem(bstr *destination, const void *data, size_t len) {
     // Expand the destination if necessary
     if (bstr_size(destination) < bstr_len(destination) + len) {
         destination = bstr_expand(destination, bstr_len(destination) + len);
@@ -76,7 +76,7 @@ bstr *bstr_add_mem(bstr *destination, const char *data, size_t len) {
     return destination;
 }
 
-bstr *bstr_add_mem_noex(bstr *destination, const char *data, size_t len) {
+bstr *bstr_add_mem_noex(bstr *destination, const void *data, size_t len) {
     size_t copylen = len;
 
     // Is there enough room in the destination?
@@ -102,19 +102,20 @@ int bstr_begins_with(const bstr *haystack, const bstr *needle) {
 }
 
 int bstr_begins_with_c(const bstr *haystack, const char *needle) {
-    return bstr_begins_with_mem(haystack, needle, strlen(needle));
+    return bstr_begins_with_mem(haystack, (const unsigned char *)needle, strlen(needle));
 }
 
 int bstr_begins_with_c_nocase(const bstr *haystack, const char *needle) {
-    return bstr_begins_with_mem_nocase(haystack, needle, strlen(needle));
+    return bstr_begins_with_mem_nocase(haystack, (const unsigned char *)needle, strlen(needle));
 }
 
 int bstr_begins_with_nocase(const bstr *haystack, const bstr *needle) {
     return bstr_begins_with_mem_nocase(haystack, bstr_ptr(needle), bstr_len(needle));
 }
 
-int bstr_begins_with_mem(const bstr *haystack, const char *data, size_t len) {
-    char *hdata = bstr_ptr(haystack);
+int bstr_begins_with_mem(const bstr *haystack, const void *_data, size_t len) {
+    const unsigned char *data = (unsigned char *)_data;
+    const unsigned char *hdata = (unsigned char *)bstr_ptr(haystack);
     size_t hlen = bstr_len(haystack);
     size_t pos = 0;
 
@@ -133,8 +134,9 @@ int bstr_begins_with_mem(const bstr *haystack, const char *data, size_t len) {
     }
 }
 
-int bstr_begins_with_mem_nocase(const bstr *haystack, const char *data, size_t len) {
-    char *hdata = bstr_ptr(haystack);
+int bstr_begins_with_mem_nocase(const bstr *haystack, const void *_data, size_t len) {
+    const unsigned char *data = (unsigned char *)_data;
+    const unsigned char *hdata = bstr_ptr(haystack);
     size_t hlen = bstr_len(haystack);
     size_t pos = 0;
 
@@ -169,7 +171,7 @@ void bstr_chop(bstr *s) {
 }
 
 int bstr_chr(const bstr *b, int c) {
-    char *data = bstr_ptr(b);
+    unsigned char *data = bstr_ptr(b);
     size_t len = bstr_len(b);
 
     size_t i = 0;
@@ -189,32 +191,34 @@ int bstr_cmp(const bstr *b1, const bstr *b2) {
 }
 
 int bstr_cmp_c(const bstr *b, const char *c) {
-    return bstr_cmp_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
+    return bstr_cmp_ex(bstr_ptr(b), bstr_len(b), (const unsigned char *)c, strlen(c));
 }
 
 int bstr_cmp_c_nocase(const bstr *b, const char *c) {
-    return bstr_cmp_nocase_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
+    return bstr_cmp_nocase_ex(bstr_ptr(b), bstr_len(b), (const unsigned char *)c, strlen(c));
 }
 
-int bstr_cmp_ex(const char *s1, size_t l1, const char *s2, size_t l2) {
+int bstr_cmp_ex(const void *_data1, size_t len1, const void *_data2, size_t len2) {
+    const unsigned char *data1 = (const unsigned char *)_data1;
+    const unsigned char *data2 = (const unsigned char *)_data2;
     size_t p1 = 0, p2 = 0;
 
-    while ((p1 < l1) && (p2 < l2)) {
-        if (s1[p1] != s2[p2]) {
+    while ((p1 < len1) && (p2 < len2)) {
+        if (data1[p1] != data2[p2]) {
             // Difference
-            return (s1[p1] < s2[p2]) ? -1 : 1;
+            return (data1[p1] < data2[p2]) ? -1 : 1;
         }
 
         p1++;
         p2++;
     }
 
-    if ((p1 == l2) && (p2 == l1)) {
+    if ((p1 == len2) && (p2 == len1)) {
         // They're identical
         return 0;
     } else {
         // One string is shorter
-        if (p1 == l1) return -1;
+        if (p1 == len1) return -1;
         else return 1;
     }
 }
@@ -223,25 +227,27 @@ int bstr_cmp_nocase(const bstr *b1, const bstr *b2) {
     return bstr_cmp_nocase_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
 }
 
-int bstr_cmp_nocase_ex(const char *s1, size_t l1, const char *s2, size_t l2) {
+int bstr_cmp_nocase_ex(const void *_data1, size_t len1, const void *_data2, size_t len2) {
+    const unsigned char *data1 = (const unsigned char *)_data1;
+    const unsigned char *data2 = (const unsigned char *)_data2;
     size_t p1 = 0, p2 = 0;
 
-    while ((p1 < l1) && (p2 < l2)) {
-        if (tolower((int) s1[p1]) != tolower((int) s2[p2])) {
+    while ((p1 < len1) && (p2 < len2)) {
+        if (tolower(data1[p1]) != tolower(data2[p2])) {
             // Difference
-            return (tolower((int) s1[p1]) < tolower((int) s2[p2])) ? -1 : 1;
+            return (tolower(data1[p1]) < tolower(data2[p2])) ? -1 : 1;
         }
 
         p1++;
         p2++;
     }
 
-    if ((p1 == l2) && (p2 == l1)) {
+    if ((p1 == len2) && (p2 == len1)) {
         // They're identical
         return 0;
     } else {
         // One string is shorter
-        if (p1 == l1) return -1;
+        if (p1 == len1) return -1;
         else return 1;
     }
 }
@@ -251,7 +257,7 @@ bstr *bstr_dup(const bstr *b) {
 }
 
 bstr *bstr_dup_c(const char *data) {
-    return bstr_dup_mem(data, strlen(data));
+    return bstr_dup_mem((const unsigned char *)data, strlen(data));
 }
 
 bstr *bstr_dup_ex(const bstr *b, size_t offset, size_t len) {
@@ -266,7 +272,7 @@ bstr *bstr_dup_lower(const bstr *b) {
     return bstr_to_lowercase(bstr_dup(b));
 }
 
-bstr *bstr_dup_mem(const char *data, size_t len) {
+bstr *bstr_dup_mem(const void *data, size_t len) {
     bstr *b = bstr_alloc(len);
     if (b == NULL) return NULL;
     memcpy(bstr_ptr(b), data, len);
@@ -274,26 +280,26 @@ bstr *bstr_dup_mem(const char *data, size_t len) {
     return b;
 }
 
-bstr *bstr_expand(bstr *s, size_t newsize) {
-    if (((bstr *) s)->ptr != NULL) {
-        void * newblock = realloc(((bstr *) s)->ptr, newsize);
+bstr *bstr_expand(bstr *b, size_t newsize) {
+    if (b->ptr != NULL) {
+        void * newblock = realloc(b->ptr, newsize);
         if (newblock == NULL) {
             return NULL;
         } else {
-            ((bstr *) s)->ptr = newblock;
+            b->ptr = newblock;
         }
     } else {
-        void *newblock = realloc(s, sizeof (bstr) + newsize);
+        void *newblock = realloc(b, sizeof (bstr) + newsize);
         if (newblock == NULL) {
             return NULL;
         } else {
-            s = newblock;
+            b = newblock;
         }
     }
 
-    ((bstr *) s)->size = newsize;
+    b->size = newsize;
 
-    return s;
+    return b;
 }
 
 void bstr_free(bstr **b) {
@@ -307,14 +313,15 @@ int bstr_index_of(const bstr *haystack, const bstr *needle) {
 }
 
 int bstr_index_of_c(const bstr *haystack, const char *needle) {
-    return bstr_index_of_mem(haystack, needle, strlen(needle));
+    return bstr_index_of_mem(haystack, (const unsigned char *)needle, strlen(needle));
 }
 
 int bstr_index_of_c_nocase(const bstr *haystack, const char *needle) {
-    return bstr_index_of_mem_nocase(haystack, needle, strlen(needle));
+    return bstr_index_of_mem_nocase(haystack, (const unsigned char *)needle, strlen(needle));
 }
 
-int bstr_index_of_mem(const bstr *haystack, const char *data2, size_t len2) {
+int bstr_index_of_mem(const bstr *haystack, const void *_data2, size_t len2) {
+    const unsigned char *data2 = (unsigned char *)_data2;
     unsigned char *data = (unsigned char *) bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
     size_t i, j;
@@ -337,7 +344,8 @@ int bstr_index_of_mem(const bstr *haystack, const char *data2, size_t len2) {
     return -1;
 }
 
-int bstr_index_of_mem_nocase(const bstr *haystack, const char *data2, size_t len2) {
+int bstr_index_of_mem_nocase(const bstr *haystack, const void *_data2, size_t len2) {
+    const unsigned char *data2 = (unsigned char *)_data2;
     unsigned char *data = (unsigned char *) bstr_ptr(haystack);
     size_t len = bstr_len(haystack);
     size_t i, j;
@@ -363,7 +371,7 @@ int bstr_index_of_nocase(const bstr *haystack, const bstr *needle) {
 }
 
 int bstr_rchr(const bstr *b, int c) {
-    char *data = bstr_ptr(b);
+    unsigned char *data = bstr_ptr(b);
     size_t len = bstr_len(b);
 
     int i = len;
@@ -393,7 +401,8 @@ bstr *bstr_to_lowercase(bstr *b) {
     return b;
 }
 
-int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *lastlen) {
+int64_t bstr_util_mem_to_pint(const void *_data, size_t len, int base, size_t *lastlen) {
+    const unsigned char *data = (unsigned char *)_data;
     int64_t rval = 0, tval = 0, tflag = 0;
     size_t i = 0;
 
@@ -460,7 +469,9 @@ void bstr_util_adjust_len(bstr *s, size_t newlen) {
     b->len = newlen;
 }
 
-char *bstr_util_memdup_to_c(const char *data, size_t len) {
+char *bstr_util_memdup_to_c(const void *_data, size_t len) {
+    const unsigned char *data = (unsigned char *)_data;
+
     // Count how many NUL bytes we have in the string.
     size_t i, nulls = 0;
     for (i = 0; i < len; i++) {
@@ -504,7 +515,7 @@ bstr *bstr_wrap_c(const char *input) {
     bstr *b = (bstr *) s;
     b->len = strlen(input);
     b->size = 0;
-    b->ptr = (char *) input;
+    b->ptr = (unsigned char *) input;
 
     return (bstr *) s;
 }

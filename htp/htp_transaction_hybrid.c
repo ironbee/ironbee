@@ -390,7 +390,7 @@ static htp_status_t htp_txh_process_request_headers(htp_tx_t *tx) {
         if (tx->request_content_type == NULL) return HTP_ERROR;
 
         // Ignore parameters
-        char *data = bstr_ptr(tx->request_content_type);
+        unsigned char *data = bstr_ptr(tx->request_content_type);
         size_t len = bstr_len(ct->value);
         size_t newlen = 0;
         while (newlen < len) {
@@ -689,11 +689,11 @@ htp_status_t htp_txh_state_response_headers(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len) {
+htp_status_t htp_txh_res_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len) {
     htp_tx_data_t d;
 
     d.tx = tx;
-    d.data = (unsigned char *) data;
+    d.data = data;
     d.len = len;
 
     // Keep track of body size before decompression

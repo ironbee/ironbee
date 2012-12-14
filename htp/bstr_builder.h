@@ -82,7 +82,7 @@ htp_status_t bstr_builder_append_c(bstr_builder_t *bb, const char *cstr);
  * @param[in] len
  * @return @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t bstr_builder_append_mem(bstr_builder_t *bb, const char *data, size_t len);
+htp_status_t bstr_builder_append_mem(bstr_builder_t *bb, const void *data, size_t len);
 
 /**
  * Clears this string builder, destroying all existing pieces. You may

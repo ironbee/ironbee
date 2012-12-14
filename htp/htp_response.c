@@ -70,7 +70,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
-    const char *data = (const char *)(connp->out_current_data + connp->out_current_offset);
+    const unsigned char *data = connp->out_current_data + connp->out_current_offset;
     size_t len = 0;
 
     for (;;) {
@@ -149,7 +149,7 @@ int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
-    const char *data = (const char *)(connp->out_current_data + connp->out_current_offset);
+    unsigned char *data = connp->out_current_data + connp->out_current_offset;
     size_t len = 0;
 
     for (;;) {
@@ -280,7 +280,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             }
 
             // Ignore parameters
-            char *data = bstr_ptr(connp->out_tx->response_content_type);
+            unsigned char *data = bstr_ptr(connp->out_tx->response_content_type);
             size_t len = bstr_len(ct->value);
             size_t newlen = 0;
             while (newlen < len) {
@@ -410,8 +410,7 @@ int htp_connp_RES_HEADERS(htp_connp_t * connp) {
             if (htp_connp_is_line_terminator(connp, connp->out_line, connp->out_line_len)) {
                 // Terminator line
                 if (connp->out_tx->response_headers_sep == NULL) {
-                    connp->out_tx->response_headers_sep =
-                            bstr_dup_mem((char *) connp->out_line, connp->out_line_len);
+                    connp->out_tx->response_headers_sep = bstr_dup_mem(connp->out_line, connp->out_line_len);
                     if (connp->out_tx->response_headers_sep == NULL) {
                         return HTP_ERROR;
                     }
@@ -478,7 +477,7 @@ int htp_connp_RES_HEADERS(htp_connp_t * connp) {
             }
 
             // Add the raw header line to the list
-            connp->out_header_line->line = bstr_dup_mem((char *) connp->out_line, connp->out_line_len + chomp_result);
+            connp->out_header_line->line = bstr_dup_mem(connp->out_line, connp->out_line_len + chomp_result);
             if (connp->out_header_line->line == NULL) {
                 return HTP_ERROR;
             }
@@ -547,7 +546,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
                 bstr_free(&connp->out_tx->response_message);
             }
 
-            connp->out_tx->response_line_raw = bstr_dup_mem((char *) connp->out_line, connp->out_line_len);
+            connp->out_tx->response_line_raw = bstr_dup_mem(connp->out_line, connp->out_line_len);
             if (connp->out_tx->response_line_raw == NULL) {
                 return HTP_ERROR;
             }
@@ -568,7 +567,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
             // a response line. If it does not look like a line, process the
             // data as a response body because that is what browsers do.
             if (htp_treat_response_line_as_body(connp->out_tx)) {
-                int rc = htp_txh_res_process_body_data(connp->out_tx, (const char *)connp->out_line, connp->out_line_len + chomp_result);
+                int rc = htp_txh_res_process_body_data(connp->out_tx, connp->out_line, connp->out_line_len + chomp_result);
                 if (rc != HTP_OK) return rc;
 
                 // Continue to process response body

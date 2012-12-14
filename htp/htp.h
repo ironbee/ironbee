@@ -684,7 +684,7 @@ struct htp_file_data_t {
     htp_file_t *file;
 
     /** Pointer to the data buffer. */
-    unsigned char *data;
+    const unsigned char *data;
 
     /** Buffer length. */
     size_t len;
@@ -1075,7 +1075,7 @@ struct htp_tx_data_t {
     htp_tx_t *tx;
 
     /** Pointer to the data buffer. */
-    unsigned char *data;
+    const unsigned char *data;
 
     /** Buffer length. */
     size_t len;
@@ -1217,7 +1217,7 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp);
 int htp_process_request_header_apache_2_2(htp_connp_t *);
 
 int htp_parse_response_line_generic(htp_connp_t *connp);
-int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, char *data, size_t len);
+int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
 int htp_process_response_header_generic(htp_connp_t *connp);
 
 
@@ -1268,8 +1268,8 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
 void htp_print_log(FILE *stream, htp_log_t *log);
 
 void fprint_bstr(FILE *stream, const char *name, bstr *b);
-void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t len);
-void fprint_raw_data_ex(FILE *stream, const char *name, unsigned char *data, size_t offset, size_t len);
+void fprint_raw_data(FILE *stream, const char *name, const void *data, size_t len);
+void fprint_raw_data_ex(FILE *stream, const char *name, const void *data, size_t offset, size_t len);
 
 char *htp_connp_in_state_as_string(htp_connp_t *connp);
 char *htp_connp_out_state_as_string(htp_connp_t *connp);
@@ -1304,17 +1304,17 @@ int htp_php_parameter_processor(htp_table_t *params, bstr *name, bstr *value);
 int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_old);
 int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output);
 
-int htp_parse_single_cookie_v0(htp_connp_t *connp, char *data, size_t len);
+int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t len);
 int htp_parse_cookies_v0(htp_connp_t *connp);
 int htp_parse_authorization(htp_connp_t *connp);
 
 int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input);
 
-bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffset);
+bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t *endoffset);
 
 int htp_mpart_part_process_headers(htp_mpart_part_t *part);
-int htp_mpartp_parse_header(htp_mpart_part_t *part, unsigned char *data, size_t len);
-int htp_mpart_part_handle_data(htp_mpart_part_t *part, unsigned char *data, size_t len, int is_line);
+int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, size_t len);
+int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int is_line);
 int htp_mpartp_is_boundary_character(int c);
 
 #ifdef __cplusplus

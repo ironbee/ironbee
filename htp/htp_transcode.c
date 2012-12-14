@@ -151,21 +151,21 @@ int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
     bstr_builder_t *bb = NULL;
 
     size_t buflen = 10;
-    char *buf = malloc(buflen);
+    unsigned char *buf = malloc(buflen);
     if (buf == NULL) {
         return HTP_ERROR;
     }
 
-    const char *inbuf = bstr_ptr(input);
+    unsigned const char *inbuf = bstr_ptr(input);
     size_t inleft = bstr_len(input);
-    char *outbuf = buf;
+    unsigned char *outbuf = buf;
     size_t outleft = buflen;
 
     int loop = 1;
     while (loop) {
         loop = 0;
 
-        if (iconv(cd, (ICONV_CONST char **)&inbuf, &inleft, &outbuf, &outleft) == (size_t) - 1) {
+        if (iconv(cd, (ICONV_CONST char **)&inbuf, &inleft, (char **)&outbuf, &outleft) == (size_t) - 1) {
             if (errno == E2BIG) {
                 // Create bstr builder on-demand
                 if (bb == NULL) {

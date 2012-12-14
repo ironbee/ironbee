@@ -66,7 +66,7 @@ struct bstr_t {
      *  it points to the actual buffer used, and there's no data following
      *  this structure.
      */
-    char *ptr;
+    unsigned char *ptr;
 };
 
 
@@ -74,7 +74,7 @@ struct bstr_t {
 
 #define bstr_len(X) ((*(bstr *)(X)).len)
 #define bstr_size(X) ((*(bstr *)(X)).size)
-#define bstr_ptr(X) ( ((*(bstr *)(X)).ptr == NULL) ? ((char *)(X) + sizeof(bstr)) : (char *)(*(bstr *)(X)).ptr )
+#define bstr_ptr(X) ( ((*(bstr *)(X)).ptr == NULL) ? ((unsigned char *)(X) + sizeof(bstr)) : (unsigned char *)(*(bstr *)(X)).ptr )
 
 
 // Functions
@@ -125,7 +125,7 @@ bstr *bstr_add_c_noex(bstr *b, const char *cstr);
  * @param[in] len
  * @return Updated bstring, or NULL on memory allocation failure.
  */
-bstr *bstr_add_mem(bstr *, const char *, size_t);
+bstr *bstr_add_mem(bstr *b, const void *data, size_t);
 
 /**
  * Append as many bytes from the source to destination bstring. The
@@ -137,7 +137,7 @@ bstr *bstr_add_mem(bstr *, const char *, size_t);
  * @param[in] len
  * @return The destination bstring.
  */
-bstr *bstr_add_mem_noex(bstr *b, const char *data, size_t len);
+bstr *bstr_add_mem_noex(bstr *b, const void *data, size_t len);
 
 /**
  * Append as many bytes from the source bstring to destination bstring. The
@@ -193,7 +193,7 @@ int bstr_begins_with_c_nocase(const bstr *bhaystack, const char *cneedle);
  * @param[in] len
  * @return 1 if true, otherwise 0.
  */
-int bstr_begins_with_mem(const bstr *bhaystack, const char *data, size_t len);
+int bstr_begins_with_mem(const bstr *bhaystack, const void *data, size_t len);
 
 /**
  * Checks whether bstring begins with memory block. Case insensitive.
@@ -203,7 +203,7 @@ int bstr_begins_with_mem(const bstr *bhaystack, const char *data, size_t len);
  * @param[in] len
  * @return 1 if true, otherwise 0.
  */
-int bstr_begins_with_mem_nocase(const bstr *bhaystack, const char *data, size_t len);
+int bstr_begins_with_mem_nocase(const bstr *bhaystack, const void *data, size_t len);
 
 /**
  * Checks whether bstring begins with another bstring. Case insensitive.
@@ -290,7 +290,7 @@ int bstr_cmp_c_nocase(const bstr *b, const char *cstr);
  * @return Zero if the memory regions are identical, 1 if data1 is greater than
  *         data2, and -1 if data2 is greater than data1.
  */
-int bstr_cmp_ex(const char *data1, size_t len1, const char *data2, size_t len2);
+int bstr_cmp_ex(const void *data1, size_t len1, const void *data2, size_t len2);
  
 /**
  * Case-insensitive comparison of two memory regions.
@@ -302,7 +302,7 @@ int bstr_cmp_ex(const char *data1, size_t len1, const char *data2, size_t len2);
  * @return Zero if the memory regions are identical, 1 if data1 is greater than
  *         data2, and -1 if data2 is greater than data1.
  */
- int bstr_cmp_nocase_ex(const char *data1, size_t len1, const char *data2, size_t len2);
+ int bstr_cmp_nocase_ex(const void *data1, size_t len1, const void *data2, size_t len2);
 
 /**
  * Create a new bstring by copying the provided bstring.
@@ -345,7 +345,7 @@ bstr *bstr_dup_lower(const bstr *b);
  * @param[in] len
  * @return New bstring, or NULL if memory allocation failed
  */
-bstr *bstr_dup_mem(const char *data, size_t len);
+bstr *bstr_dup_mem(const void *data, size_t len);
 
 /**
  * Expand internal bstring storage to support at least newsize bytes. The input
@@ -414,7 +414,7 @@ int bstr_index_of_c_nocase(const bstr *bhaystack, const char *cneedle);
  * @param[in] len
  * @return Position of the match, or -1 if the needle could not be found.
  */
-int bstr_index_of_mem(const bstr *bhaystack, const char *data, size_t len);
+int bstr_index_of_mem(const bstr *bhaystack, const void *data, size_t len);
 
 /**
  * Find the needle in the haystack, with the needle being a memory region.
@@ -425,7 +425,7 @@ int bstr_index_of_mem(const bstr *bhaystack, const char *data, size_t len);
  * @param[in] len
  * @return Position of the match, or -1 if the needle could not be found.
  */
-int bstr_index_of_mem_nocase(const bstr *bhaystack, const char *data, size_t len);
+int bstr_index_of_mem_nocase(const bstr *bhaystack, const void *data, size_t len);
 
 /**
  * Return the last position of a character (byte).
@@ -466,7 +466,7 @@ void bstr_util_adjust_len(bstr *b, size_t newlen);
  *         one valid digit was found, and -2 will be returned if an overflow
  *         occurred.
  */   
-int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *lastlen);
+int64_t bstr_util_mem_to_pint(const void *data, size_t len, int base, size_t *lastlen);
 
 /**
  * Take the provided memory region, allocate a new memory buffer, and construct
@@ -479,7 +479,7 @@ int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *la
  * @return The newly created NUL-terminated string, or NULL in case of memory
  *         allocation failure.
  */
-char *bstr_util_memdup_to_c(const char *data, size_t len);
+char *bstr_util_memdup_to_c(const void *data, size_t len);
 
 /**
  * Create a new NUL-terminated string out of the provided bstring. The

@@ -68,10 +68,10 @@ TEST(BstrTest, ExpandPtr) {
     bstr *b;
     b = (bstr*) malloc(sizeof(bstr));
     ASSERT_NE((bstr*)NULL, b);
-    b->ptr = (char*) malloc(10);
+    b->ptr = (unsigned char*) malloc(10);
     b->len = 0;
     b->size = 10;
-    ASSERT_NE((char*)NULL, bstr_ptr(b));
+    ASSERT_NE((unsigned char*)NULL, bstr_ptr(b));
 
     bstr *p2;
     p2 = bstr_expand(b, 100);
