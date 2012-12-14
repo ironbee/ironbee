@@ -125,7 +125,7 @@ bstr *bstr_add_c_noex(bstr *b, const char *cstr);
  * @param[in] len
  * @return Updated bstring, or NULL on memory allocation failure.
  */
-bstr *bstr_add_mem(bstr *b, const void *data, size_t);
+bstr *bstr_add_mem(bstr *b, const void *data, size_t len);
 
 /**
  * Append as many bytes from the source to destination bstring. The
@@ -225,7 +225,9 @@ int bstr_begins_with_nocase(const bstr *bhaystack, const bstr *cneedle);
 int bstr_char_at(const bstr *b, size_t pos);
 
 /**
- * Remove the last byte from bstring, assuming it contains at least one byte.
+ * Remove the last byte from bstring, assuming it contains at least one byte. This
+ * function will not reduce the storage that backs the string, only the amount
+ * of data consumed.
  *
  * @param[in] b
  */
@@ -437,7 +439,8 @@ int bstr_index_of_mem_nocase(const bstr *bhaystack, const void *data, size_t len
 int bstr_rchr(const bstr *b, int c);
 
 /**
- * Convert bstring to lowercase.
+ * Convert bstring to lowercase. This function converts the supplied string,
+ * it does not create a new string.
  *
  * @param[in] b
  * @return The same bstring received on input
@@ -482,8 +485,9 @@ int64_t bstr_util_mem_to_pint(const void *data, size_t len, int base, size_t *la
 char *bstr_util_memdup_to_c(const void *data, size_t len);
 
 /**
- * Create a new NUL-terminated string out of the provided bstring. The
- * caller is responsible to keep track of the allocated memory area and free
+ * Create a new NUL-terminated string out of the provided bstring. If NUL bytes
+ * are contained in the bstring, each will be replaced with "\0" (two characters).
+ * The caller is responsible to keep track of the allocated memory area and free
  * it once it is no longer needed.
  *
  * @param[in] b
