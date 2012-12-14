@@ -114,7 +114,7 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
 
     // Decompress data
     int rc = 0;
-    drec->stream.next_in = d->data + consumed;
+    drec->stream.next_in = (unsigned char *)(d->data + consumed);
     drec->stream.avail_in = d->len - consumed;
 
     while (drec->stream.avail_in != 0) {

@@ -56,7 +56,7 @@ int htp_parse_protocol(bstr *protocol) {
     //      zeroes in the numbers. We should be able to parse such malformed
     //      content correctly (but emit a warning).
     if (bstr_len(protocol) == 8) {
-        char *ptr = bstr_ptr(protocol);
+        unsigned char *ptr = bstr_ptr(protocol);
         if ((ptr[0] == 'H') && (ptr[1] == 'T') && (ptr[2] == 'T') && (ptr[3] == 'P')
             && (ptr[4] == '/') && (ptr[6] == '.')) {
             // Check the version numbers
@@ -98,7 +98,7 @@ int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header
     int i = bstr_index_of_c(auth_header->value, "username=");
     if (i == -1) return HTP_ERROR;   
 
-    char *data = bstr_ptr(auth_header->value);
+    unsigned char *data = bstr_ptr(auth_header->value);
     size_t len = bstr_len(auth_header->value);
     size_t pos = i + 9;
 
@@ -121,7 +121,7 @@ int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header
  * @param auth_header
  */
 int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header) {
-    char *data = bstr_ptr(auth_header->value);
+    unsigned char *data = bstr_ptr(auth_header->value);
     size_t len = bstr_len(auth_header->value);
     size_t pos = 5;
 

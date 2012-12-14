@@ -66,15 +66,16 @@ struct bstr_t {
      *  it points to the actual buffer used, and there's no data following
      *  this structure.
      */
-    char *ptr;
+    unsigned char *realptr;
 };
 
 
 // Defines
 
-#define bstr_len(X) ((*(bstr *)(X)).len)
-#define bstr_size(X) ((*(bstr *)(X)).size)
-#define bstr_ptr(X) ( ((*(bstr *)(X)).ptr == NULL) ? ((char *)(X) + sizeof(bstr)) : (char *)(*(bstr *)(X)).ptr )
+#define bstr_len(X) ((*(X)).len)
+#define bstr_size(X) ((*(X)).size)
+#define bstr_ptr(X) ( ((*(X)).realptr == NULL) ? ((unsigned char *)(X) + sizeof(bstr)) : (unsigned char *)(*(X)).realptr )
+#define bstr_realptr(X) ((*(X)).realptr)
 
 
 // Functions
@@ -125,7 +126,7 @@ bstr *bstr_add_c_noex(bstr *b, const char *cstr);
  * @param[in] len
  * @return Updated bstring, or NULL on memory allocation failure.
  */
-bstr *bstr_add_mem(bstr *, const char *, size_t);
+bstr *bstr_add_mem(bstr *b, const void *data, size_t len);
 
 /**
  * Append as many bytes from the source to destination bstring. The
@@ -137,7 +138,7 @@ bstr *bstr_add_mem(bstr *, const char *, size_t);
  * @param[in] len
  * @return The destination bstring.
  */
-bstr *bstr_add_mem_noex(bstr *b, const char *data, size_t len);
+bstr *bstr_add_mem_noex(bstr *b, const void *data, size_t len);
 
 /**
  * Append as many bytes from the source bstring to destination bstring. The
@@ -149,6 +150,36 @@ bstr *bstr_add_mem_noex(bstr *b, const char *data, size_t len);
  * @return The destination bstring.
  */
 bstr *bstr_add_noex(bstr *bdestination, const bstr *bsource);
+
+/**
+ * Adjust bstring length. You will need to use this method whenever
+ * you work directly with the string contents, and end up changing
+ * its length by direct structure manipulation.
+ *
+ * @param[in] b
+ * @param[in] newlen
+ */
+void bstr_adjust_len(bstr *b, size_t newlen);
+
+/**
+ * Change the external pointer used by bstring. You will need to use this
+ * function only if you're messing with bstr internals. Use with caution.
+ *
+ * @param[in] b
+ * @param[in] newrealptr
+ */
+void bstr_adjust_realptr(bstr *b, void *newrealptr);
+
+/**
+ * Adjust bstring size. This does not change the size of the storage behind
+ * the bstring, just changes the field that keeps track of how many bytes
+ * there are in the storage. You will need to use this function only if
+ * you're messing with bstr internals. Use with caution.
+ *
+ * @param[in] b
+ * @param[in] newsize
+ */
+void bstr_adjust_size(bstr *b, size_t newsize);
 
 /**
  * Allocate a zero-length bstring, reserving space for at least size bytes.
@@ -193,7 +224,7 @@ int bstr_begins_with_c_nocase(const bstr *bhaystack, const char *cneedle);
  * @param[in] len
  * @return 1 if true, otherwise 0.
  */
-int bstr_begins_with_mem(const bstr *bhaystack, const char *data, size_t len);
+int bstr_begins_with_mem(const bstr *bhaystack, const void *data, size_t len);
 
 /**
  * Checks whether bstring begins with memory block. Case insensitive.
@@ -203,7 +234,7 @@ int bstr_begins_with_mem(const bstr *bhaystack, const char *data, size_t len);
  * @param[in] len
  * @return 1 if true, otherwise 0.
  */
-int bstr_begins_with_mem_nocase(const bstr *bhaystack, const char *data, size_t len);
+int bstr_begins_with_mem_nocase(const bstr *bhaystack, const void *data, size_t len);
 
 /**
  * Checks whether bstring begins with another bstring. Case insensitive.
@@ -225,7 +256,9 @@ int bstr_begins_with_nocase(const bstr *bhaystack, const bstr *cneedle);
 int bstr_char_at(const bstr *b, size_t pos);
 
 /**
- * Remove the last byte from bstring, assuming it contains at least one byte.
+ * Remove the last byte from bstring, assuming it contains at least one byte. This
+ * function will not reduce the storage that backs the string, only the amount
+ * of data consumed.
  *
  * @param[in] b
  */
@@ -290,7 +323,7 @@ int bstr_cmp_c_nocase(const bstr *b, const char *cstr);
  * @return Zero if the memory regions are identical, 1 if data1 is greater than
  *         data2, and -1 if data2 is greater than data1.
  */
-int bstr_cmp_ex(const char *data1, size_t len1, const char *data2, size_t len2);
+int bstr_cmp_ex(const void *data1, size_t len1, const void *data2, size_t len2);
  
 /**
  * Case-insensitive comparison of two memory regions.
@@ -302,7 +335,7 @@ int bstr_cmp_ex(const char *data1, size_t len1, const char *data2, size_t len2);
  * @return Zero if the memory regions are identical, 1 if data1 is greater than
  *         data2, and -1 if data2 is greater than data1.
  */
- int bstr_cmp_nocase_ex(const char *data1, size_t len1, const char *data2, size_t len2);
+ int bstr_cmp_nocase_ex(const void *data1, size_t len1, const void *data2, size_t len2);
 
 /**
  * Create a new bstring by copying the provided bstring.
@@ -345,18 +378,18 @@ bstr *bstr_dup_lower(const bstr *b);
  * @param[in] len
  * @return New bstring, or NULL if memory allocation failed
  */
-bstr *bstr_dup_mem(const char *data, size_t len);
+bstr *bstr_dup_mem(const void *data, size_t len);
 
 /**
- * Expand internal bstring storage to support at least newsize bytes. The input
- * string is not changed if it is already big enough to accommodate the desired
- * size. If the input string is smaller, however, it is expanded. The pointer to
- * the string may change. If the expansion fails, the original string
- * is left untouched.
+ * Expand internal bstring storage to support at least newsize bytes. The storage
+ * is not expanded if the current size is equal or greater to newsize. Because
+ * realloc is used underneath, the old pointer to bstring may no longer be valid
+ * after this function completes successfully.
  *
  * @param[in] b
  * @param[in] newsize
- * @return Updated string instance, or NULL if memory allocation failed.
+ * @return Updated string instance, or NULL if memory allocation failed or if
+ *         attempt was made to "expand" the bstring to a smaller size.
  */
 bstr *bstr_expand(bstr *b, size_t newsize);
 
@@ -414,7 +447,7 @@ int bstr_index_of_c_nocase(const bstr *bhaystack, const char *cneedle);
  * @param[in] len
  * @return Position of the match, or -1 if the needle could not be found.
  */
-int bstr_index_of_mem(const bstr *bhaystack, const char *data, size_t len);
+int bstr_index_of_mem(const bstr *bhaystack, const void *data, size_t len);
 
 /**
  * Find the needle in the haystack, with the needle being a memory region.
@@ -425,7 +458,7 @@ int bstr_index_of_mem(const bstr *bhaystack, const char *data, size_t len);
  * @param[in] len
  * @return Position of the match, or -1 if the needle could not be found.
  */
-int bstr_index_of_mem_nocase(const bstr *bhaystack, const char *data, size_t len);
+int bstr_index_of_mem_nocase(const bstr *bhaystack, const void *data, size_t len);
 
 /**
  * Return the last position of a character (byte).
@@ -437,22 +470,13 @@ int bstr_index_of_mem_nocase(const bstr *bhaystack, const char *data, size_t len
 int bstr_rchr(const bstr *b, int c);
 
 /**
- * Convert bstring to lowercase.
+ * Convert bstring to lowercase. This function converts the supplied string,
+ * it does not create a new string.
  *
  * @param[in] b
  * @return The same bstring received on input
  */
 bstr *bstr_to_lowercase(bstr *b);
-
-/**
- * Adjust bstring length. You will need to use this method whenever
- * you work directly with the string contents, and end up changing
- * its length by direct structure manipulation.
- *
- * @param[in] b
- * @param[in] newlen
- */
-void bstr_util_adjust_len(bstr *b, size_t newlen);
 
 /**
  * Convert contents of a memory region to a positive integer.
@@ -466,7 +490,7 @@ void bstr_util_adjust_len(bstr *b, size_t newlen);
  *         one valid digit was found, and -2 will be returned if an overflow
  *         occurred.
  */   
-int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *lastlen);
+int64_t bstr_util_mem_to_pint(const void *data, size_t len, int base, size_t *lastlen);
 
 /**
  * Take the provided memory region, allocate a new memory buffer, and construct
@@ -479,11 +503,12 @@ int64_t bstr_util_mem_to_pint(const char *data, size_t len, int base, size_t *la
  * @return The newly created NUL-terminated string, or NULL in case of memory
  *         allocation failure.
  */
-char *bstr_util_memdup_to_c(const char *data, size_t len);
+char *bstr_util_memdup_to_c(const void *data, size_t len);
 
 /**
- * Create a new NUL-terminated string out of the provided bstring. The
- * caller is responsible to keep track of the allocated memory area and free
+ * Create a new NUL-terminated string out of the provided bstring. If NUL bytes
+ * are contained in the bstring, each will be replaced with "\0" (two characters).
+ * The caller is responsible to keep track of the allocated memory area and free
  * it once it is no longer needed.
  *
  * @param[in] b

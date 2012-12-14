@@ -64,23 +64,57 @@ TEST(BstrTest, ExpandLocal) {
     bstr_free(&p2);
 }
 
+TEST(BstrTest, ExpandSmaller) {
+    bstr *p1;
+    bstr *p2;
+
+    p1 = bstr_alloc(100);
+    p2 = bstr_expand(p1, 10);
+    ASSERT_TRUE(p2 == NULL);
+
+    bstr_free(&p1);
+}
+
 TEST(BstrTest, ExpandPtr) {
     bstr *b;
     b = (bstr*) malloc(sizeof(bstr));
     ASSERT_NE((bstr*)NULL, b);
-    b->ptr = (char*) malloc(10);
+    b->realptr = (unsigned char*) malloc(10);
     b->len = 0;
     b->size = 10;
-    ASSERT_NE((char*)NULL, bstr_ptr(b));
+    ASSERT_NE((unsigned char*)NULL, bstr_ptr(b));
+
+    bstr *p2 = bstr_expand(b, 100);
+    EXPECT_TRUE(p2 == NULL);
+
+    free(b->realptr);
+    bstr_free(&b);
+}
+
+/*
+// For the time being, expansion is not allowed
+// when data is externally stored. This feature
+// is currently only used when wrapping existing
+// memory areas.
+TEST(BstrTest, ExpandPtr) {
+    bstr *b;
+    b = (bstr*) malloc(sizeof(bstr));
+    ASSERT_NE((bstr*)NULL, b);
+    b->ptr = (unsigned char*) malloc(10);
+    b->len = 0;
+    b->size = 10;
+    ASSERT_NE((unsigned char*)NULL, bstr_ptr(b));
 
     bstr *p2;
     p2 = bstr_expand(b, 100);
+    EXPECT_TRUE(p2 != NULL);
     EXPECT_EQ(100, bstr_size(p2));
     EXPECT_EQ(0, bstr_len(p2));
 
     free(p2->ptr);
     bstr_free(&p2);
 }
+*/
 
 TEST(BstrTest, DupC) {
     bstr *p1;
@@ -412,7 +446,7 @@ TEST(BstrTest, Chop) {
 TEST(BstrTest, AdjustLen) {
     bstr *p1 = bstr_dup_c("abcdef");
 
-    bstr_util_adjust_len(p1, 3);
+    bstr_adjust_len(p1, 3);
     EXPECT_EQ(3, bstr_len(p1));
     EXPECT_EQ(0, bstr_cmp_c(p1,"abc"));
 
@@ -466,9 +500,9 @@ TEST(BstrBuilder, Append) {
 
     EXPECT_EQ(0, bstr_builder_size(bb));
 
-    bstr_builder_append(bb, str1);
+    bstr_builder_appendn(bb, str1);
     bstr_builder_append_c(bb, "#");
-    bstr_builder_append(bb, str2);
+    bstr_builder_appendn(bb, str2);
     bstr_builder_append_c(bb, "#");
     bstr_builder_append_mem(bb, "!@#$%^&*()", 4);
 

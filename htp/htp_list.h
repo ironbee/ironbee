@@ -46,6 +46,7 @@ extern "C" {
 #define htp_list_t htp_list_array_t
 #define htp_list_add htp_list_array_push
 #define htp_list_create htp_list_array_create
+#define htp_list_clear htp_list_array_clear
 #define htp_list_destroy htp_list_array_destroy
 #define htp_list_get htp_list_array_get
 #define htp_list_pop htp_list_array_pop
@@ -70,7 +71,16 @@ typedef struct htp_list_linked_t htp_list_linked_t;
  * @param[in] size
  * @return Newly created list.
  */
-htp_list_t *htp_list_array_create(size_t size);
+htp_list_array_t *htp_list_array_create(size_t size);
+
+/**
+ * Remove all elements from the list. It is the responsibility of the caller
+ * to iterate over list elements and deallocate them if necessary, prior to
+ * invoking this function.
+ *
+ * @param[in] l
+ */
+void htp_list_array_clear(htp_list_array_t *l);
 
 /**
  * Free the memory occupied by this list. This function assumes
@@ -144,7 +154,7 @@ void *htp_list_array_shift(htp_list_array_t *l);
  *
  * @return The newly created list, or NULL on memory allocation failure
  */
-htp_list_t *htp_list_linked_create(void);
+htp_list_linked_t *htp_list_linked_create(void);
 
 /**
  * Destroy list. This function will not destroy any of the

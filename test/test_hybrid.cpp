@@ -308,9 +308,9 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(bstr_cmp_c(h_server->value, "Apache"), 0);
 
     // Request body data   
-    htp_txh_res_process_body_data(tx, "<h1>Hello", 9);
-    htp_txh_res_process_body_data(tx, " ", 1);
-    htp_txh_res_process_body_data(tx, "World!</h1>", 11);
+    htp_txh_res_process_body_data(tx, (const unsigned char *)"<h1>Hello", 9);
+    htp_txh_res_process_body_data(tx, (const unsigned char *)" ", 1);
+    htp_txh_res_process_body_data(tx, (const unsigned char *)"World!</h1>", 11);
     ASSERT_EQ(user_data.response_body_correctly_received, 1);
 
     // Trailing response headers

@@ -64,7 +64,7 @@ int htp_base64_decode_single(char value_in) {
  *
  * @param decoder
  */
-void htp_base64_decoder_init(htp_base64_decoder* decoder) {
+void htp_base64_decoder_init(htp_base64_decoder *decoder) {
     decoder->step = step_a;
     decoder->plainchar = 0;
 }
@@ -79,10 +79,11 @@ void htp_base64_decoder_init(htp_base64_decoder* decoder) {
  * @param length_out
  * @return how many bytes were placed into plaintext output
  */
-int htp_base64_decode(htp_base64_decoder* decoder, const char* code_in, const int length_in,
-    char* plaintext_out, int length_out) {
-    const char* codechar = code_in;
-    char* plainchar = plaintext_out;
+int htp_base64_decode(htp_base64_decoder *decoder, const void *_code_in, int length_in, void *_plaintext_out, int length_out) {
+    const unsigned char *code_in = (const unsigned char *)_code_in;
+    unsigned char *plaintext_out = (unsigned char *)_plaintext_out;
+    const unsigned char *codechar = code_in;
+    unsigned char *plainchar = plaintext_out;
     char fragment;
 
     if (length_out <= 0) return 0;
@@ -169,13 +170,13 @@ bstr *htp_base64_decode_bstr(bstr *input) {
  * @param len
  * @return new base64-decoded bstring
  */
-bstr *htp_base64_decode_mem(const char *data, size_t len) {
+bstr *htp_base64_decode_mem(const void *data, size_t len) {
     htp_base64_decoder decoder;
     bstr *r = NULL;
 
     htp_base64_decoder_init(&decoder);
 
-    char *tmpstr = malloc(len);
+    unsigned char *tmpstr = malloc(len);
     if (tmpstr == NULL) return NULL;
 
     int resulting_len = htp_base64_decode(&decoder, data, len, tmpstr, len);

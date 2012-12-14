@@ -45,7 +45,7 @@ typedef struct htp_table_t htp_table_t;
 
 /**
  * Add a new element to the table. The key will be copied, and the copy
- * managed by the table. The point of the element will be stored, but the
+ * managed by the table. The pointer of the element will be stored, but the
  * element itself will not be managed by the table.
  *
  * @param[in] table
@@ -58,7 +58,7 @@ htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *elem
 /**
  * Add a new element to the table. The key provided will be adopted and managed
  * by the table. You should not keep a copy of the pointer to the key unless you're
- * certain that the table will live longer thant the copy. The table will make a
+ * certain that the table will live longer that the copy. The table will make a
  * copy of the element pointer, but will not manage it.
  *
  * @param[in] table

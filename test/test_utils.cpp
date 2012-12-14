@@ -266,7 +266,7 @@ void append_message(std::ostream & o,
     o << " != ";
     if (actual != NULL) {
         o << "'";
-        o.write(bstr_ptr(actual), bstr_len(actual));
+        o.write((const char *)bstr_ptr(actual), bstr_len(actual));
         o << "'";
     } else {
         o << "<NULL>";

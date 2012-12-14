@@ -50,7 +50,7 @@
  * @param c Should contain -1 if the reason this function is called is because the end of
  *          the current data chunk is reached.
  */
-static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data, size_t startpos, size_t endpos, int c) {
+static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char *data, size_t startpos, size_t endpos, int c) {
     // Add field if we know it ended or if we know that
     // we've used all of the input data
     if ((c != -1) || (urlenp->_complete)) {
@@ -64,7 +64,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
 
             // Add current piece to string builder
             if (endpos - startpos > 0) {
-                bstr_builder_append_mem(urlenp->_bb, (char *) data + startpos, endpos - startpos);
+                bstr_builder_append_mem(urlenp->_bb, data + startpos, endpos - startpos);
             }
 
             // Generate the field and clear the string builder
@@ -74,7 +74,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
         } else {
             // We only have the current piece to work with, so
             // no need to involve the string builder
-            field = bstr_dup_mem((char *) data + startpos, endpos - startpos);
+            field = bstr_dup_mem(data + startpos, endpos - startpos);
             if (field == NULL) return;
         }
 
@@ -122,7 +122,7 @@ static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, unsigned char *data
     } else {
         // Make a copy of the data and store it in an array for later
         if (endpos - startpos > 0) {
-            bstr_builder_append_mem(urlenp->_bb, (char *) data + startpos, endpos - startpos);
+            bstr_builder_append_mem(urlenp->_bb, data + startpos, endpos - startpos);
         }
     }
 }
@@ -213,7 +213,7 @@ int htp_urlenp_finalize(htp_urlenp_t *urlenp) {
  * @param len
  * @return
  */
-int htp_urlenp_parse_complete(htp_urlenp_t *urlenp, unsigned char *data, size_t len) {
+int htp_urlenp_parse_complete(htp_urlenp_t *urlenp, const unsigned char *data, size_t len) {
     htp_urlenp_parse_partial(urlenp, data, len);
     return htp_urlenp_finalize(urlenp);
 }
@@ -228,7 +228,7 @@ int htp_urlenp_parse_complete(htp_urlenp_t *urlenp, unsigned char *data, size_t 
  * @param len
  * @return
  */
-int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, unsigned char *data, size_t len) {
+int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, const unsigned char *data, size_t len) {
     size_t startpos = 0;
     size_t pos = 0;
     int c;

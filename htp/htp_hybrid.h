@@ -344,7 +344,7 @@ htp_status_t htp_txh_state_response_headers(htp_tx_t *tx);
  * @param[in] len
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_txh_res_process_body_data(htp_tx_t *tx, const char *data, size_t len);
+htp_status_t htp_txh_res_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len);
 
 /**
  * Change transaction state to RESPONSE and invoke registered callbacks.

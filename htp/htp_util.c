@@ -287,7 +287,7 @@ int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int b
     while ((pos < len) && (htp_is_lws(data[pos]))) pos++;
     if (pos == len) return -1001;
 
-    int r = bstr_util_mem_to_pint((char *) data + pos, len - pos, base, &last_pos);
+    int r = bstr_util_mem_to_pint(data + pos, len - pos, base, &last_pos);
     if (r < 0) return r;
 
     pos += last_pos;
@@ -484,7 +484,7 @@ int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
 int htp_parse_uri(bstr *input, htp_uri_t **uri) {
     if (input == NULL) return HTP_ERROR;
 
-    char *data = bstr_ptr(input);
+    unsigned char *data = bstr_ptr(input);
     size_t len = bstr_len(input);
     size_t start, pos;
 
@@ -539,14 +539,14 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
             // Authority ends with a question mark, forward slash or hash
             while ((pos < len) && (data[pos] != '?') && (data[pos] != '/') && (data[pos] != '#')) pos++;
 
-            char *hostname_start;
+            unsigned char *hostname_start;
             size_t hostname_len;
 
             // Are the credentials included in the authority?
-            char *m = memchr(data + start, '@', pos - start);
+            unsigned char *m = memchr(data + start, '@', pos - start);
             if (m != NULL) {
                 // Credentials present
-                char *credentials_start = data + start;
+                unsigned char *credentials_start = data + start;
                 size_t credentials_len = m - data - start;
 
                 // Figure out just the hostname part
@@ -797,7 +797,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
     // Adjust the length of the string, because
     // we're doing in-place decoding.
-    bstr_util_adjust_len(path, wpos);
+    bstr_adjust_len(path, wpos);
 }
 
 /**
@@ -1114,7 +1114,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
                             switch (cfg->path_nul_encoded_handling) {
                                 case TERMINATE:
-                                    bstr_util_adjust_len(path, wpos);
+                                    bstr_adjust_len(path, wpos);
                                     return 1;
                                     break;
                                 case STATUS_400:
@@ -1207,7 +1207,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                 switch (cfg->path_nul_raw_handling) {
                     case TERMINATE:
                         // Terminate path with a raw NUL byte
-                        bstr_util_adjust_len(path, wpos);
+                        bstr_adjust_len(path, wpos);
                         return 1;
                         break;
                     case STATUS_400:
@@ -1263,7 +1263,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
         }
     }
 
-    bstr_util_adjust_len(path, wpos);
+    bstr_adjust_len(path, wpos);
 
     return 1;
 }
@@ -1374,7 +1374,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
                             switch (cfg->params_nul_encoded_handling) {
                                 case TERMINATE:
-                                    bstr_util_adjust_len(input, wpos);
+                                    bstr_adjust_len(input, wpos);
                                     return 1;
                                     break;
                                 case STATUS_400:
@@ -1445,7 +1445,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                 switch (cfg->params_nul_raw_handling) {
                     case TERMINATE:
                         // Terminate path with a raw NUL byte
-                        bstr_util_adjust_len(input, wpos);
+                        bstr_adjust_len(input, wpos);
                         return 1;
                         break;
                     case STATUS_400:
@@ -1468,7 +1468,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
         data[wpos++] = c;
     }
 
-    bstr_util_adjust_len(input, wpos);
+    bstr_adjust_len(input, wpos);
 
     return 1;
 }
@@ -1575,7 +1575,7 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
     
     bstr_to_lowercase(hostname);
 
-    char *data = bstr_ptr(hostname);
+    unsigned char *data = bstr_ptr(hostname);
     size_t len = bstr_len(hostname);
 
     while (len > 0) {
@@ -1711,7 +1711,7 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
         }
     }
 
-    bstr_util_adjust_len(s, wpos);
+    bstr_adjust_len(s, wpos);
 }
 
 /**
@@ -1723,7 +1723,7 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
 void htp_normalize_uri_path_inplace(bstr *s) {
     if (s == NULL) return;
     
-    char *data = bstr_ptr(s);
+    unsigned char *data = bstr_ptr(s);
     size_t len = bstr_len(s);
 
     size_t rpos = 0;
@@ -1814,7 +1814,7 @@ void htp_normalize_uri_path_inplace(bstr *s) {
         c = -1;
     }
 
-    bstr_util_adjust_len(s, wpos);
+    bstr_adjust_len(s, wpos);
 }
 
 /**
@@ -1827,14 +1827,15 @@ void fprint_bstr(FILE *stream, const char *name, bstr *b) {
 /**
  *
  */
-void fprint_raw_data(FILE *stream, const char *name, unsigned char *data, size_t len) {
+void fprint_raw_data(FILE *stream, const char *name, const void *data, size_t len) {
     fprint_raw_data_ex(stream, name, data, 0, len);
 }
 
 /**
  *
  */
-void fprint_raw_data_ex(FILE *stream, const char *name, unsigned char *data, size_t offset, size_t printlen) {
+void fprint_raw_data_ex(FILE *stream, const char *name, const void *_data, size_t offset, size_t printlen) {
+    const unsigned char *data = (const unsigned char *)_data;
     char buf[160];
     size_t len = offset + printlen;
 
@@ -2098,7 +2099,7 @@ int htp_treat_response_line_as_body(htp_tx_t *tx) {
     if (tx->response_protocol == NULL) return 1;
     if (bstr_len(tx->response_protocol) < 4) return 1;    
 
-    char *data = bstr_ptr(tx->response_protocol);
+    unsigned char *data = bstr_ptr(tx->response_protocol);
 
     if ((data[0] != 'H') && (data[0] != 'h')) return 1;    
     if ((data[1] != 'T') && (data[1] != 't')) return 1;
@@ -2299,7 +2300,7 @@ int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     return HTP_OK;
 }
 
-bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffset) {
+bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t *endoffset) {
     size_t pos = 0;
     size_t escaped_chars = 0;
 
@@ -2333,7 +2334,7 @@ bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffse
     size_t outlen = pos - 1 - escaped_chars;
     bstr *result = bstr_alloc(outlen);
     if (result == NULL) return NULL;
-    char *outptr = bstr_ptr(result);
+    unsigned char *outptr = bstr_ptr(result);
     size_t outpos = 0;
 
     pos = 1;
@@ -2351,7 +2352,7 @@ bstr *htp_extract_quoted_string_as_bstr(char *data, size_t len, size_t *endoffse
         outptr[outpos++] = data[pos++];
     }
 
-    bstr_util_adjust_len(result, outlen);
+    bstr_adjust_len(result, outlen);
 
     if (endoffset != NULL) {
         *endoffset = pos;

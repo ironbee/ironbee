@@ -88,7 +88,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
 
         for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
             htp_header_line_t *hl = htp_list_get(connp->in_tx->request_header_lines, i);
-            char *line = bstr_ptr(hl->line);
+            unsigned char *line = bstr_ptr(hl->line);
             size_t llen = bstr_len(hl->line);
             htp_chomp((unsigned char *)line, &llen);
             bstr_add_mem_noex(tempstr, line, llen);
@@ -133,7 +133,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         }
 
         h_existing->value = new_value;
-        bstr_add_mem_noex(h_existing->value, ", ", 2);
+        bstr_add_mem_noex(h_existing->value, (unsigned char *)", ", 2);
         bstr_add_noex(h_existing->value, h->value);
 
         // replace the header references in all lines
@@ -265,8 +265,8 @@ int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsign
     }
 
     // Now extract the name and the value
-    h->name = bstr_dup_mem((char *)data + name_start, name_end - name_start);
-    h->value = bstr_dup_mem((char *)data + value_start, value_end - value_start);
+    h->name = bstr_dup_mem(data + name_start, name_end - name_start);
+    h->value = bstr_dup_mem(data + value_start, value_end - value_start);
     if ((h->name == NULL)||(h->value == NULL)) {
         return HTP_ERROR;
     }
@@ -294,7 +294,7 @@ int htp_parse_request_line_generic(htp_connp_t *connp) {
 
     // No, we don't care if the method is empty.
 
-    tx->request_method = bstr_dup_mem((char *)data, pos);
+    tx->request_method = bstr_dup_mem(data, pos);
     if (tx->request_method == NULL) {
         return HTP_ERROR;
     }
@@ -315,7 +315,7 @@ int htp_parse_request_line_generic(htp_connp_t *connp) {
         pos++;
     }
 
-    tx->request_uri = bstr_dup_mem((char *)data + start, pos - start);
+    tx->request_uri = bstr_dup_mem(data + start, pos - start);
     if (tx->request_uri == NULL) {
         return HTP_ERROR;
     }
@@ -333,7 +333,7 @@ int htp_parse_request_line_generic(htp_connp_t *connp) {
     }
 
     // The protocol information spreads until the end of the line.
-    tx->request_protocol = bstr_dup_mem((char *)data + pos, len - pos);
+    tx->request_protocol = bstr_dup_mem(data + pos, len - pos);
     if (tx->request_protocol == NULL) {
         return HTP_ERROR;
     }

@@ -43,7 +43,7 @@ int htp_php_parameter_processor(htp_table_t *params, bstr *name, bstr *value) {
     // Name transformation
 
     // Ignore whitespace at the beginning
-    char *data = bstr_ptr(name);
+    unsigned char *data = bstr_ptr(name);
     size_t len = bstr_len(name);
     size_t pos = 0;
 

@@ -92,7 +92,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
                 return HTP_ERROR;
             }
 
-            char *line = bstr_ptr(hl->line);
+            unsigned char *line = bstr_ptr(hl->line);
             size_t llen = bstr_len(hl->line);
             htp_chomp((unsigned char *) line, &llen);
             bstr_add_mem_noex(tempstr, line, llen);
@@ -138,7 +138,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
         }
 
         h_existing->value = new_value;
-        bstr_add_mem_noex(h_existing->value, ", ", 2);
+        bstr_add_mem_noex(h_existing->value, (unsigned char *)", ", 2);
         bstr_add_noex(h_existing->value, h->value);
 
         // replace the header references in all lines
@@ -276,10 +276,10 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, uns
     }
 
     // Now extract the name and the value
-    h->name = bstr_dup_mem((char *) data + name_start, name_end - name_start);
+    h->name = bstr_dup_mem(data + name_start, name_end - name_start);
     if (h->name == NULL) return HTP_ERROR;
     
-    h->value = bstr_dup_mem((char *) data + value_start, value_end - value_start);
+    h->value = bstr_dup_mem(data + value_start, value_end - value_start);
     if (h->value == NULL) {
         bstr_free(&h->name);
         return HTP_ERROR;
@@ -314,7 +314,7 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
 
     // No, we don't care if the method is empty.
 
-    tx->request_method = bstr_dup_mem((char *) data, pos);
+    tx->request_method = bstr_dup_mem(data, pos);
     if (tx->request_method == NULL) return HTP_ERROR;
 
     #ifdef HTP_DEBUG
@@ -338,7 +338,7 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
         pos++;
     }
 
-    tx->request_uri = bstr_dup_mem((char *) data + start, pos - start);
+    tx->request_uri = bstr_dup_mem(data + start, pos - start);
     if (tx->request_uri == NULL) return HTP_ERROR;
 
     #ifdef HTP_DEBUG
@@ -358,7 +358,7 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     }
 
     // The protocol information spreads until the end of the line.
-    tx->request_protocol = bstr_dup_mem((char *) data + pos, len - pos);
+    tx->request_protocol = bstr_dup_mem(data + pos, len - pos);
     if (tx->request_protocol == NULL) return HTP_ERROR;
     tx->request_protocol_number = htp_parse_protocol(tx->request_protocol);
 

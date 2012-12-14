@@ -38,8 +38,8 @@
 #include "bstr.h"
 #include "htp_list.h"
 
-htp_status_t bstr_builder_append(bstr_builder_t *bb, bstr *b) {
-    return htp_list_push(bb->pieces, (void *)b);
+htp_status_t bstr_builder_appendn(bstr_builder_t *bb, bstr *b) {
+    return htp_list_push(bb->pieces, b);
 }
 
 htp_status_t bstr_builder_append_c(bstr_builder_t *bb, const char *cstr) {
@@ -48,26 +48,22 @@ htp_status_t bstr_builder_append_c(bstr_builder_t *bb, const char *cstr) {
     return htp_list_push(bb->pieces, b);
 }
 
-htp_status_t bstr_builder_append_mem(bstr_builder_t *bb, const char *data, size_t len) {
+htp_status_t bstr_builder_append_mem(bstr_builder_t *bb, const void *data, size_t len) {
     bstr *b = bstr_dup_mem(data, len);
     if (b == NULL) return HTP_ERROR;
     return htp_list_push(bb->pieces, b);
 }
 
-void bstr_builder_clear(bstr_builder_t *bb) {
-    // TODO Need list_clear() here.
-
+void bstr_builder_clear(bstr_builder_t *bb) {    
     // Do nothing if the list is empty
     if (htp_list_size(bb->pieces) == 0) return;
 
-    for (int i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
+    for (size_t i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
         bstr *b = htp_list_get(bb->pieces, i);
         bstr_free(&b);
     }
 
-    htp_list_destroy(&bb->pieces);
-
-    bb->pieces = htp_list_create(BSTR_BUILDER_DEFAULT_SIZE);
+    htp_list_clear(bb->pieces);
 }
 
 bstr_builder_t *bstr_builder_create() {
@@ -87,7 +83,7 @@ void bstr_builder_destroy(bstr_builder_t *bb) {
     if (bb == NULL) return;
 
     // Destroy any pieces we might have
-    for (int i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
+    for (size_t i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
         bstr *b = htp_list_get(bb->pieces, i);
         bstr_free(&b);
     }
@@ -105,7 +101,7 @@ bstr *bstr_builder_to_str(const bstr_builder_t *bb) {
     size_t len = 0;
 
     // Determine the size of the string
-    for (int i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
+    for (size_t i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
         bstr *b = htp_list_get(bb->pieces, i);
         len += bstr_len(b);
     }
@@ -115,7 +111,7 @@ bstr *bstr_builder_to_str(const bstr_builder_t *bb) {
     if (bnew == NULL) return NULL;
 
     // Determine the size of the string
-    for (int i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
+    for (size_t i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
         bstr *b = htp_list_get(bb->pieces, i);
         bstr_add_noex(bnew, b);
     }
