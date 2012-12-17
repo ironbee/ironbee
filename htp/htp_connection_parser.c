@@ -34,7 +34,6 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "htp.h"
 #include "htp_private.h"
 
 /**
@@ -85,7 +84,7 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
     // Use the supplied configuration structure
     connp->cfg = cfg;
 
-    // Create a new connection object
+    // Create a new connection.
     connp->conn = htp_conn_create(connp);
     if (connp->conn == NULL) {
         free(connp);

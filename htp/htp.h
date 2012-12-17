@@ -860,6 +860,7 @@ const char *htp_get_version(void);
 
 
 #include "htp_config.h"
+#include "htp_connection.h"
 
 
 // Connection parser
@@ -874,9 +875,6 @@ void htp_connp_in_reset(htp_connp_t *connp);
  void htp_connp_set_user_data(htp_connp_t *connp, void *user_data);
 void *htp_connp_get_user_data(htp_connp_t *connp);
 
-htp_conn_t *htp_conn_create(htp_connp_t *connp);
-       void htp_conn_destroy(htp_conn_t *conn);
-        int htp_conn_remove_tx(htp_conn_t *conn, htp_tx_t *tx);
 
    int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len);
 size_t htp_connp_req_data_consumed(htp_connp_t *connp);

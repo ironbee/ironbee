@@ -1,6 +1,7 @@
 
-h_sources = bstr.h bstr_builder.h htp.h htp_base64.h htp_config.h htp_decompressors.h htp_hooks.h htp_hybrid.h \
-    htp_list.h htp_list_private.h htp_multipart.h htp_table.h htp_table_private.h htp_urlencoded.h utf8_decoder.h
+h_sources = bstr.h bstr_builder.h htp.h htp_base64.h htp_config.h htp_connection.h htp_decompressors.h htp_hooks.h \
+    htp_hybrid.h htp_list.h htp_list_private.h htp_multipart.h htp_table.h htp_table_private.h htp_urlencoded.h \
+    utf8_decoder.h
 
 c_sources = bstr.c bstr_builder.c htp.c htp_base64.c htp_config.c htp_connection.c htp_connection_parser.c \
     htp_content_handlers.c htp_cookies.c htp_decompressors.c htp_hooks.c  htp_list.c htp_multipart.c htp_parsers.c \
