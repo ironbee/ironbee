@@ -858,31 +858,8 @@ struct htp_uri_t {
 
 const char *htp_get_version(void);
 
-
 #include "htp_config.h"
-
-
-// Connection parser
-
-htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
-void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp);
-void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp);
-void htp_connp_destroy(htp_connp_t *connp);
-void htp_connp_destroy_all(htp_connp_t *connp);
-void htp_connp_in_reset(htp_connp_t *connp);
-
- void htp_connp_set_user_data(htp_connp_t *connp, void *user_data);
-void *htp_connp_get_user_data(htp_connp_t *connp);
-
-
-   int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len);
-size_t htp_connp_req_data_consumed(htp_connp_t *connp);
-   int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len);
-size_t htp_connp_res_data_consumed(htp_connp_t *connp);
-
-      void htp_connp_clear_error(htp_connp_t *connp);
-htp_log_t *htp_connp_get_last_error(htp_connp_t *connp);
-
+#include "htp_connection_parser.h"
 
 // Transaction
 

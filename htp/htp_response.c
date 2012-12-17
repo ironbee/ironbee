@@ -674,15 +674,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     return HTP_OK;
 }
 
-/**
- * Process a chunk of outbound (server or response) data.
- *
- * @param connp
- * @param timestamp Optional.
- * @param data
- * @param len
- * @return HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed
- */
+
 int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len) {
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_connp_res_data(connp->out_status %x)\n", connp->out_status);

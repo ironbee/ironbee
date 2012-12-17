@@ -36,21 +36,10 @@
 
 #include "htp_private.h"
 
-/**
- * Clears an existing parser error, if any.
- *
- * @param connp
- */
 void htp_connp_clear_error(htp_connp_t *connp) {
     connp->last_error = NULL;
 }
 
-/**
- * Closes the connection associated with the supplied parser.
- *
- * @param connp
- * @param timestamp Optional.
- */
 void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp) {
     // Close the underlying connection.
     htp_conn_close(connp->conn, timestamp);
@@ -65,16 +54,6 @@ void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp) {
     htp_connp_res_data(connp, timestamp, NULL, 0);   
 }
 
-/**
- * Creates a new connection parser using the provided configuration. Because
- * the configuration structure is used directly, in a multithreaded environment
- * you are not allowed to change the structure, ever. If you have a need to
- * change configuration on per-connection basis, make a copy of the configuration
- * structure to go along with every connection parser.
- *
- * @param cfg
- * @return A pointer to a newly created htp_connp_t instance.
- */
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
     htp_connp_t *connp = calloc(1, sizeof (htp_connp_t));
     if (connp == NULL) return NULL;
@@ -126,12 +105,6 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
     return connp;
 }
 
-/**
- * Destroys the connection parser and its data structures, leaving
- * the connection data intact.
- *
- * @param connp
- */
 void htp_connp_destroy(htp_connp_t *connp) {
     if (connp == NULL) return;
         
@@ -167,12 +140,6 @@ void htp_connp_destroy(htp_connp_t *connp) {
     free(connp);
 }
 
-/**
- * Destroys the connection parser, its data structures, as well
- * as the connection and its transactions.
- *
- * @param connp
- */
 void htp_connp_destroy_all(htp_connp_t *connp) {
     if (connp == NULL) return;
 
@@ -184,27 +151,12 @@ void htp_connp_destroy_all(htp_connp_t *connp) {
     htp_connp_destroy(connp);
 }
 
-/**
- * Retrieve the user data associated with this connection parser.
- * 
- * @param connp
- * @return User data, or NULL if there isn't any.
- */
-void *htp_connp_get_user_data(htp_connp_t *connp) {
-    return connp->user_data;
+htp_log_t *htp_connp_get_last_error(const htp_connp_t *connp) {
+    return connp->last_error;
 }
 
-/**
- * Returns the last error that occurred with this connection parser. Do note, however,
- * that the value in this field will only be valid immediately after an error condition,
- * but it is not guaranteed to remain valid if the parser is invoked again.
- *
- * @param connp
- * @return A pointer to an htp_log_t instance if there is an error, or NULL
- *         if there isn't.
- */
-htp_log_t *htp_connp_get_last_error(htp_connp_t *connp) {
-    return connp->last_error;
+void *htp_connp_get_user_data(const htp_connp_t *connp) {
+    return connp->user_data;
 }
 
 void htp_connp_in_reset(htp_connp_t *connp) {
@@ -215,17 +167,6 @@ void htp_connp_in_reset(htp_connp_t *connp) {
     connp->in_chunk_request_index = connp->in_chunk_count;
 }
 
-/**
- * Opens connection.
- *
- * @param connp
- * @param remote_addr Remote address
- * @param remote_port Remote port
- * @param local_addr Local address
- * @param local_port Local port
- * @param use_local_port Use local port for connection port
- * @param timestamp Optional
- */
 void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr,
         int local_port, htp_time_t *timestamp)
 {
@@ -243,12 +184,6 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
     connp->out_status = STREAM_STATE_OPEN;
 }
 
-/**
- * Associate user data with the supplied parser.
- *
- * @param connp
- * @param user_data
- */
 void htp_connp_set_user_data(htp_connp_t *connp, void *user_data) {
     connp->user_data = user_data;
 }
