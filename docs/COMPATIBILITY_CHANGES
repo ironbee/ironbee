@@ -15,7 +15,7 @@
 
   bstr *b = NULL;
   for (int i = 0, n = htp_list_size(l); i < n; i++) {
-      htp_list_get_index(l, i, (void **)&b);
+      bstr *b = htp_list_get(l, i);
       bstr_free(&b);
   }
 
