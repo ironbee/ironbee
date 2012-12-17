@@ -506,6 +506,7 @@ ia_eudoxus_result_t IA_EUDOXUS(output)(
             output_list = output_list_obj->next_output;
         }
         ia_eudoxus_command_t command = state->callback(
+            state->eudoxus,
             output_obj->data,
             output_obj->length,
             state->input_location,

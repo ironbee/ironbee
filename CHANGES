@@ -45,6 +45,8 @@ IronBee v0.7.0
   `ee`.  `ee` now defaults to using this metadata to determine output type.
   This changes increments the Eudoxus format version and, as such, is not
   compatible with compiled automata from earlier versions.
+  
+* Eudoxus output callbacks are now passed the engine.
 
 **Other**
 

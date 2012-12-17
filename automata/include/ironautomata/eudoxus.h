@@ -239,6 +239,7 @@ typedef enum ia_eudoxus_command_t ia_eudoxus_command_t;
  * This user provided function will be called for every output of every
  * entered node.
  *
+ * @param[in] engine         Engine involved.
  * @param[in] output         Output defined by automata.
  * @param[in] output_length  Length of @a output.
  * @param[in] input_location Location in input.
@@ -247,10 +248,11 @@ typedef enum ia_eudoxus_command_t ia_eudoxus_command_t;
  * @return ia_eudoxus_command_t
  */
 typedef ia_eudoxus_command_t (*ia_eudoxus_callback_t)(
-    const char    *output,
-    size_t         output_length,
-    const uint8_t *input_location,
-    void          *callback_data
+    const ia_eudoxus_t *engine,
+    const char         *output,
+    size_t              output_length,
+    const uint8_t      *input_location,
+    void               *callback_data
 );
 
 /**

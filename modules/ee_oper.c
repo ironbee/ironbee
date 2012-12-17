@@ -137,6 +137,7 @@ static IB_DIRMAP_INIT_STRUCTURE(eudoxus_directive_map) = {
  * error occurs).If capture is enabled the matched text will be stored in the
  * capture variable
  *
+ * @param[in] engine Eudoxus engine.
  * @param[in] output Output defined by automata.
  * @param[in] output_length Length of output.
  * @param[in] input Current location in the input (first character
@@ -145,7 +146,8 @@ static IB_DIRMAP_INIT_STRUCTURE(eudoxus_directive_map) = {
  *                       handling. This is needed for handling capture
  *                       of the match.
  */
-static ia_eudoxus_command_t ee_first_match_callback(const char *output,
+static ia_eudoxus_command_t ee_first_match_callback(const ia_eudoxus_t* engine,
+                                                    const char *output,
                                                     size_t output_length,
                                                     const uint8_t *input,
                                                     void *cbdata)

@@ -195,6 +195,7 @@ extern "C" {
 
 //! Eudoxus callback.  Just forwards to OutputHandler.
 ia_eudoxus_command_t c_output_callback(
+    const ia_eudoxus_t*, // unused
     const char* output,
     size_t output_length,
     const uint8_t* input,
