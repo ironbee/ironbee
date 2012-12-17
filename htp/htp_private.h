@@ -133,10 +133,7 @@ if ((X)->out_line_len < (X)->out_line_size) { \
     
 // Data structures
 
-struct htp_conn_t {
-    /** Connection parser associated with this connection. */
-    htp_connp_t *connp;
-
+struct htp_conn_t {    
     /** Remote IP address. */
     char *remote_addr;
 

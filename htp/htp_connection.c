@@ -36,11 +36,9 @@
 
 #include "htp.h"
 
-htp_conn_t *htp_conn_create(const htp_connp_t *connp) {
+htp_conn_t *htp_conn_create(void) {
     htp_conn_t *conn = calloc(1, sizeof (htp_conn_t));
-    if (conn == NULL) return NULL;
-
-    conn->connp = connp;
+    if (conn == NULL) return NULL;   
 
     conn->transactions = htp_list_create(16);
     if (conn->transactions == NULL) {
@@ -98,6 +96,35 @@ void htp_conn_destroy(htp_conn_t *conn) {
     // Finally, destroy the connection
     // structure itself.
     free(conn);
+}
+
+htp_status_t htp_conn_open(htp_conn_t *conn, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp) {
+    if (remote_addr != NULL) {
+        conn->remote_addr = strdup(remote_addr);
+        if (conn->remote_addr == NULL) return HTP_ERROR;
+    }
+
+    conn->remote_port = remote_port;
+
+    if (local_addr != NULL) {
+        conn->local_addr = strdup(local_addr);
+        if (conn->local_addr == NULL) {
+            if (conn->remote_addr != NULL) {
+                free(conn->remote_addr);
+            }
+
+            return HTP_ERROR;
+        }
+    }
+
+    conn->local_port = local_port;
+
+    // Remember when the connection was opened.
+    if (timestamp != NULL) {
+        memcpy(&(conn->open_timestamp), timestamp, sizeof(*timestamp));
+    }
+
+    return HTP_OK;
 }
 
 htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx) {

@@ -85,7 +85,7 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
     connp->cfg = cfg;
 
     // Create a new connection.
-    connp->conn = htp_conn_create(connp);
+    connp->conn = htp_conn_create();
     if (connp->conn == NULL) {
         free(connp);
         return NULL;
@@ -228,37 +228,15 @@ void htp_connp_in_reset(htp_connp_t *connp) {
  * @param use_local_port Use local port for connection port
  * @param timestamp Optional
  */
-void htp_connp_open(htp_connp_t *connp,
-      const char *remote_addr, int remote_port,
-      const char *local_addr, int local_port,
-      htp_time_t *timestamp) {
+void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp) {
+    // Check connection parser state first.
     if ((connp->in_status != STREAM_STATE_NEW) || (connp->out_status != STREAM_STATE_NEW)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Connection is already open");
         return;
     }
 
-    if (remote_addr != NULL) {
-        connp->conn->remote_addr = strdup(remote_addr);
-        if (connp->conn->remote_addr == NULL) return;
-    }
-
-    connp->conn->remote_port = remote_port;
-
-    if (local_addr != NULL) {
-        connp->conn->local_addr = strdup(local_addr);
-        if (connp->conn->local_addr == NULL) {
-            if (connp->conn->remote_addr != NULL) {
-                free(connp->conn->remote_addr);
-            }
-            return;
-        }
-    }
-
-    connp->conn->local_port = local_port;
-    
-    // Remember when the connection was opened.
-    if (timestamp != NULL) {
-        memcpy(&connp->conn->open_timestamp, timestamp, sizeof(*timestamp));
+    if (htp_conn_open(connp->conn, remote_addr, remote_port, local_addr, local_port, timestamp) != HTP_OK) {
+        return;
     }
     
     connp->in_status = STREAM_STATE_OPEN;

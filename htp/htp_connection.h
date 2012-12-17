@@ -47,7 +47,7 @@ extern "C" {
  * @param[in] connp
  * @return A new connection structure on success, NULL on memory allocation failure.
  */
-htp_conn_t *htp_conn_create(const htp_connp_t *connp);
+htp_conn_t *htp_conn_create(void);
 
 /**
  * Destroys a connection, as well as all the transactions it contains. It is
@@ -59,6 +59,19 @@ htp_conn_t *htp_conn_create(const htp_connp_t *connp);
  * @param[in] conn
  */
 void htp_conn_destroy(htp_conn_t *conn);
+
+/**
+ * Blah.
+ * 
+ * @param[in] conn
+ * @param[in] remote_addr
+ * @param[in] remote_port
+ * @param[in] local_addr
+ * @param[in] local_port
+ * @param[in] timestamp
+ * @return
+ */
+htp_status_t htp_conn_open(htp_conn_t *conn, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp);
 
 /**
  * Removes the given transaction structure, which makes it possible to
