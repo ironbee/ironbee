@@ -1058,6 +1058,8 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
     }
     rc = ib_cfgparser_parse(cp, ironbee_config_file);
     if (rc != IB_OK) {
+        ap_log_error(APLOG_MARK, APLOG_DEBUG, 0, s,
+                     IB_PRODUCT_NAME ": Failed to parse IronBee configuration");
         ib_engine_config_finished(ironbee);
         ib_cfgparser_destroy(cp);
         return IB2AP(rc);
