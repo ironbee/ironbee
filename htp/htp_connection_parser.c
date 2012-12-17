@@ -130,28 +130,6 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
 }
 
 /**
- * Creates a new configuration parser, making a copy of the supplied
- * configuration structure.
- *
- * @param cfg
- * @return A pointer to a newly created htp_connp_t instance.
- */
-htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg) {
-    htp_connp_t *connp = htp_connp_create(cfg);
-    if (connp == NULL) return NULL;
-
-    connp->cfg = htp_config_copy(cfg);
-    if (connp->cfg == NULL) {
-        htp_connp_destroy(connp);
-        return NULL;
-    }
-    
-    connp->is_cfg_private = 1;
-
-    return connp;
-}
-
-/**
  * Destroys the connection parser and its data structures, leaving
  * the connection data intact.
  *
@@ -187,12 +165,6 @@ void htp_connp_destroy(htp_connp_t *connp) {
 
     if (connp->out_line != NULL) {
         free(connp->out_line);
-    }
-
-    // Destroy the configuration structure, but only
-    // if it is our private copy
-    if ((connp->is_cfg_private)&&(connp->cfg != NULL)) {
-        htp_config_destroy(connp->cfg);
     }
 
     free(connp);

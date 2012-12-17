@@ -29,6 +29,10 @@
       bstr_free(&value);
   }
 
+- Removed htp_connp_create_copycfg(), along with the ability of connection parsers to
+  have private configurations.
+
+
 
 
 

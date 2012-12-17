@@ -291,13 +291,7 @@ struct htp_connp_t {
     // General fields
     
     /** Current parser configuration structure. */
-    htp_cfg_t *cfg;
-
-    /** Is the configuration structure only used with this connection
-     *  parser? If it is, then it can be changed as parsing goes on,
-     *  and destroyed along with the parser in the end.
-     */
-    int is_cfg_private;
+    htp_cfg_t *cfg;   
 
     /** The connection structure associated with this parser. */
     htp_conn_t *conn;
@@ -926,7 +920,6 @@ const char *htp_get_version(void);
 // Connection parser
 
 htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
-htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg);
 void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp);
 void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp);
 void htp_connp_destroy(htp_connp_t *connp);
