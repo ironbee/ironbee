@@ -5623,6 +5623,10 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     else if (  (main_ctx == ctx) && (ib_context_engine(ib) == ctx)  ) {
         return IB_OK;
     }
+    else if (lpi->data == NULL) {
+        ib_log_error(ib, "LPI data is NULL!");
+        return IB_EUNKNOWN;
+    }
 
     /* Close our file handle */
     lpi_data = (core_lpi_data_t *)lpi->data;

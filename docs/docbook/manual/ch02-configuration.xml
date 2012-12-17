@@ -392,7 +392,7 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
             <para><emphasis role="bold">Context:</emphasis> Any</para>
             <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.5</para>
             <para>Allows inclusion of another file into the current configuration file. The following
                 line will include the contents of the file <filename>sites.conf</filename> into
                 configuration:</para>

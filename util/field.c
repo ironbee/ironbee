@@ -124,6 +124,11 @@ const char *ib_field_format(
             if (rc != IB_OK) {
                 break;
             }
+
+            if (s == NULL) {
+                break;
+            }
+
             if (escape) {
                 ib_string_escape_json_buf(s, quote, buf, bufsize, NULL, NULL);
             }
@@ -144,6 +149,10 @@ const char *ib_field_format(
             tname = "BYTESTR";
             rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
             if (rc != IB_OK) {
+                break;
+            }
+
+            if (ib_bytestr_const_ptr(bs) == NULL) {
                 break;
             }
 
