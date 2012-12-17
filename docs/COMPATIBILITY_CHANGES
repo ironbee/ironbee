@@ -1,7 +1,7 @@
 0.4
 ---
 
-- Removed the HOOK_* constants. Use the HTP_* constants instead.
+- Removed the HOOK_* constants. Use the equivalent HTP_* constants instead.
 
 - Added the "htp_" prefix to all hook functions.
 
