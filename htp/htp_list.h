@@ -60,7 +60,7 @@ extern "C" {
 typedef struct htp_list_array_t htp_list_array_t;
 typedef struct htp_list_linked_t htp_list_linked_t;
 
-#include "htp.h"
+#include "htp_definitions.h"
 #include "bstr.h"
 
 // Functions

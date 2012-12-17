@@ -37,7 +37,7 @@
 #ifndef _HTP_H
 #define	_HTP_H
 
-typedef int htp_status_t;
+#include "htp_definitions.h"
 
 typedef struct htp_cfg_t htp_cfg_t;
 typedef struct htp_conn_t htp_conn_t;
@@ -50,6 +50,7 @@ typedef struct htp_log_t htp_log_t;
 typedef struct htp_tx_data_t htp_tx_data_t;
 typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
+typedef struct timeval htp_time_t;
 
 #include <ctype.h>
 #include <iconv.h>
@@ -72,13 +73,6 @@ typedef struct htp_uri_t htp_uri_t;
 // -- Defines -------------------------------------------------------------------------------------
 
 #define HTP_BASE_VERSION_TEXT	"master"
-
-#define HTP_ERROR              -1
-#define HTP_DECLINED            0
-#define HTP_OK                  1
-#define HTP_DATA                2
-#define HTP_DATA_OTHER          3
-#define HTP_STOP                4
 
 #define HTP_PROTOCOL_UNKNOWN    -1
 #define HTTP_0_9                9
@@ -236,56 +230,7 @@ typedef struct htp_uri_t htp_uri_t;
 extern "C" {
 #endif
 
-typedef struct timeval htp_time_t;
-
 // -- Data structures -----------------------------------------------------------------------------
-
-struct htp_conn_t {
-    /** Connection parser associated with this connection. */
-    htp_connp_t *connp;
-
-    /** Remote IP address. */
-    char *remote_addr;
-
-    /** Remote port. */
-    int remote_port;
-
-    /** Local IP address. */
-    char *local_addr;
-
-    /** Local port. */
-    int local_port;
-
-    /** Transactions carried out on this connection. The list may contain
-     *  NULL elements when some of the transactions are deleted (and then
-     *  removed from a connection by calling htp_conn_remove_tx().
-     */
-    htp_list_t *transactions;
-
-    /** Log messages associated with this connection. */
-    htp_list_t *messages;
-
-    /** Parsing flags: PIPELINED_CONNECTION. */
-    unsigned int flags;   
-
-    /** When was this connection opened? Can be NULL. */
-    htp_time_t open_timestamp;
-
-    /** When was this connection closed? Can be NULL. */
-    htp_time_t close_timestamp;
-    
-    /** Inbound data counter. */
-    size_t in_data_counter;
-
-    /** Outbound data counter. */
-    size_t out_data_counter;
-
-    /** Inbound packet counter. */
-    size_t in_packet_counter;
-
-    /** Outbound packet counter. */
-    size_t out_packet_counter;
-};
 
 struct htp_connp_t {
     // General fields
