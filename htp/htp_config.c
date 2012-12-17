@@ -156,6 +156,7 @@ htp_cfg_t *htp_config_create(void) {
     cfg->params_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     cfg->params_nul_encoded_handling = NONE;
     cfg->params_nul_raw_handling = NONE;
+    cfg->parse_request_cookies = 1;
 
     // TODO Try to determine the correct location for the storage
     //      of temporary files, based on the operating system.
