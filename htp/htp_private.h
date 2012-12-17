@@ -492,8 +492,6 @@ bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
 bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx);
 bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx);
 
-int htp_tx_req_has_body(htp_tx_t *tx);
-
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 

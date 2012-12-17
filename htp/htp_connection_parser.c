@@ -187,3 +187,19 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
 void htp_connp_set_user_data(htp_connp_t *connp, void *user_data) {
     connp->user_data = user_data;
 }
+
+htp_tx_t *htp_connp_tx_create(htp_connp_t *connp) {    
+    // Detect pipelining
+    if (htp_list_size(connp->conn->transactions) > connp->out_next_tx_index) {
+        connp->conn->flags |= HTP_PIPELINED_CONNECTION;
+    }
+
+    htp_tx_t *tx = htp_tx_create(connp);
+    if (tx == NULL) return NULL;
+
+    connp->in_tx = tx;
+    htp_list_add(connp->conn->transactions, tx);
+    htp_connp_in_reset(connp);
+
+    return tx;
+}

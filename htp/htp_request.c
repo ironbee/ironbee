@@ -38,7 +38,7 @@
 
 #include "htp.h"
 #include "htp_private.h"
-#include "htp_hybrid.h"
+#include "htp_transaction.h"
 
 /**
  * Performs check for a CONNECT transaction to decide whether inbound
@@ -139,7 +139,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
         IN_NEXT_BYTE(connp);
 
         if (connp->in_next_byte == -1) {
-            int rc = htp_txh_req_process_body_data(connp->in_tx, data, len);
+            int rc = htp_tx_req_process_body_data(connp->in_tx, data, len);
             if (rc != HTP_OK) return rc;
 
             // Ask for more data
@@ -151,7 +151,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
             if (connp->in_chunked_length == 0) {
                 // End of data chunk
-                int rc = htp_txh_req_process_body_data(connp->in_tx, data, len);
+                int rc = htp_tx_req_process_body_data(connp->in_tx, data, len);
                 if (rc != HTP_OK) return rc;
 
                 connp->in_state = htp_connp_REQ_BODY_CHUNKED_DATA_END;
@@ -221,7 +221,7 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
         if (connp->in_next_byte == -1) {
             // End of chunk
 
-            int rc = htp_txh_req_process_body_data(connp->in_tx, data, len);
+            int rc = htp_tx_req_process_body_data(connp->in_tx, data, len);
             if (rc != HTP_OK) return rc;
 
             // Ask for more data
@@ -234,7 +234,7 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
             if (connp->in_body_data_left == 0) {
                 // End of body
 
-                int rc = htp_txh_req_process_body_data(connp->in_tx, data, len);
+                int rc = htp_tx_req_process_body_data(connp->in_tx, data, len);
                 if (rc != HTP_OK) return rc;
 
                 // Move to finalize the request
@@ -335,7 +335,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 connp->in_header_line = NULL;
 
                 // We've seen all request headers
-                return htp_txh_state_request_headers(connp->in_tx);
+                return htp_tx_state_request_headers(connp->in_tx);
             }
 
             // Prepare line for consumption
@@ -473,7 +473,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 
             // Finalize request line parsing
 
-            if (htp_txh_state_request_line(connp->in_tx) != HTP_OK) {
+            if (htp_tx_state_request_line(connp->in_tx) != HTP_OK) {
                 return HTP_ERROR;
             }
 
@@ -488,7 +488,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
 }
 
 int htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
-    int rc = htp_txh_state_request_complete(connp->in_tx);
+    int rc = htp_tx_state_request_complete(connp->in_tx);
     if (rc != HTP_OK) return rc;
 
     // We're done with this request
@@ -514,11 +514,11 @@ int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     // connection.
     IN_TEST_NEXT_BYTE_OR_RETURN(connp);
 
-    connp->in_tx = htp_txh_create(connp);
+    connp->in_tx = htp_connp_tx_create(connp);
     if (connp->in_tx == NULL) return HTP_ERROR;
 
     // Change state to TRANSACTION_START
-    htp_txh_state_request_start(connp->in_tx);
+    htp_tx_state_request_start(connp->in_tx);
 
     return HTP_OK;
 }

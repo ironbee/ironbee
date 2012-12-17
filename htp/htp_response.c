@@ -37,7 +37,7 @@
 #include <stdlib.h>
 
 #include "htp.h"
-#include "htp_hybrid.h"
+#include "htp_transaction.h"
 #include "htp_private.h"
 
 /**
@@ -77,7 +77,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
         OUT_NEXT_BYTE(connp);
 
         if (connp->out_next_byte == -1) {
-            int rc = htp_txh_res_process_body_data(connp->out_tx, data, len);
+            int rc = htp_tx_res_process_body_data(connp->out_tx, data, len);
             if (rc != HTP_OK) return rc;
 
             // Ask for more data
@@ -88,7 +88,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
             if (connp->out_chunked_length == 0) {
                 // End of data chunk
-                int rc = htp_txh_res_process_body_data(connp->out_tx, data, len);
+                int rc = htp_tx_res_process_body_data(connp->out_tx, data, len);
                 if (rc != HTP_OK) return rc;
 
                 connp->out_state = htp_connp_RES_BODY_CHUNKED_DATA_END;
@@ -160,7 +160,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
 
             // Send data to callbacks
             if (len != 0) {
-                int rc = htp_txh_res_process_body_data(connp->out_tx, data, len);
+                int rc = htp_tx_res_process_body_data(connp->out_tx, data, len);
                 if (rc != HTP_OK) return rc;
             }
 
@@ -187,7 +187,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
 
                     // Send data to callbacks
                     if (len != 0) {
-                        int rc = htp_txh_res_process_body_data(connp->out_tx, data, len);
+                        int rc = htp_tx_res_process_body_data(connp->out_tx, data, len);
                         if (rc != HTP_OK) return rc;                        
                     }
 
@@ -366,7 +366,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // NOTE We do not need to check for short-style HTTP/0.9 requests here because
     //      that is done earlier, before response line parsing begins
 
-    int rc = htp_txh_state_response_headers(connp->out_tx);
+    int rc = htp_tx_state_response_headers(connp->out_tx);
     if (rc != HTP_OK) return rc;    
 
     return HTP_OK;
@@ -567,7 +567,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
             // a response line. If it does not look like a line, process the
             // data as a response body because that is what browsers do.
             if (htp_treat_response_line_as_body(connp->out_tx)) {
-                int rc = htp_txh_res_process_body_data(connp->out_tx, connp->out_line, connp->out_line_len + chomp_result);
+                int rc = htp_tx_res_process_body_data(connp->out_tx, connp->out_line, connp->out_line_len + chomp_result);
                 if (rc != HTP_OK) return rc;
 
                 // Continue to process response body
@@ -578,7 +578,7 @@ int htp_connp_RES_LINE(htp_connp_t * connp) {
                 return HTP_OK;
             }
 
-            int rc = htp_txh_state_response_line(connp->out_tx);
+            int rc = htp_tx_state_response_line(connp->out_tx);
             if (rc != HTP_OK) return rc;
 
             // Clean up.
@@ -598,7 +598,7 @@ size_t htp_connp_res_data_consumed(htp_connp_t * connp) {
 }
 
 int htp_connp_RES_FINALIZE(htp_connp_t * connp) {
-    int rc = htp_txh_state_response_complete(connp->out_tx);
+    int rc = htp_tx_state_response_complete(connp->out_tx);
     if (rc != HTP_OK) return rc;
 
     // XXX Document when the response parser needs to yield to the request
@@ -668,7 +668,7 @@ int htp_connp_RES_IDLE(htp_connp_t * connp) {
     connp->out_header_line_index = -1;
     connp->out_header_line_counter = 0;
 
-    int rc = htp_txh_state_response_start(connp->out_tx);
+    int rc = htp_tx_state_response_start(connp->out_tx);
     if (rc != HTP_OK) return rc;
 
     return HTP_OK;

@@ -177,6 +177,14 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
  */
 size_t htp_connp_res_data_consumed(htp_connp_t *connp);
 
+/**
+ * Create a new transaction using the connection parser provided.
+ *
+ * @param[in] connp
+ * @return Transaction instance on success, NULL on failure.
+ */
+htp_tx_t *htp_connp_tx_create(htp_connp_t *connp);
+
 #ifdef	__cplusplus
 }
 #endif
