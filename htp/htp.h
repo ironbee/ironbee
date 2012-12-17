@@ -856,6 +856,11 @@ struct htp_uri_t {
 
 // -- Functions -----------------------------------------------------------------------------------
 
+/**
+ * Returns the library name and version number as a string.
+ * 
+ * @return LibHTP name and version number.
+ */
 const char *htp_get_version(void);
 
 #include "htp_config.h"
