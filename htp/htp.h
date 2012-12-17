@@ -1128,9 +1128,6 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
 htp_cfg_t *htp_config_create(void);
       void htp_config_destroy(htp_cfg_t *cfg); 
 
-void htp_config_register_list_linked_create(htp_cfg_t *cfg, htp_list_t *(*callback_fn)(void));
-void htp_config_register_list_array_create(htp_cfg_t *cfg, htp_list_t *(*callback_fn)(size_t size));
-
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
