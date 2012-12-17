@@ -237,6 +237,13 @@ static ib_status_t modhtp_add_flag_to_collection(
     ib_status_t rc;
     ib_field_t *f;
 
+    if ( (itx == NULL) || (itx->dpi == NULL) ) {
+        ib_log_error_tx(itx,
+                        "Not adding flag %s field %s to NULL transaction",
+                        collection_name, flag);
+        return IB_EUNKNOWN;
+    }
+
     rc = ib_data_get(itx->dpi, collection_name, &f);
     if (f == NULL) {
         rc = ib_data_add_list(itx->dpi, collection_name, &f);
@@ -251,13 +258,13 @@ static ib_status_t modhtp_add_flag_to_collection(
                         ib_ftype_num_in(&value));
         rc = ib_field_list_add(f, lf);
         if (rc != IB_OK) {
-            ib_log_debug3_tx(itx, "Failed to add %s field: %s",
-                             collection_name, flag);
+            ib_log_warning_tx(itx, "Failed to add %s field: %s",
+                              collection_name, flag);
         }
     }
     else {
-        ib_log_debug3_tx(itx, "Failed to add flag collection: %s",
-                         collection_name);
+        ib_log_warning_tx(itx, "Failed to add flag collection: %s",
+                          collection_name);
     }
 
     IB_FTRACE_RET_STATUS(rc);
@@ -396,19 +403,22 @@ static int modhtp_htp_tx_start(htp_connp_t *connp)
     if (modctx->parsed_data != 0) {
         itx = iconn->tx;
         if (itx == NULL) {
-            ib_log_error(ib, "No ironbee transaction available.");
+            ib_log_error(ib, "TX Start: No ironbee transaction available.");
             IB_FTRACE_RET_INT(HTP_ERROR);
         }
         ib_log_debug3(ib, "PARSED TX p=%p id=%s", itx, itx->id);
     }
     else {
         /* Create the transaction structure. */
-        ib_log_debug3(ib, "Creating ironbee transaction structure");
         rc = ib_tx_create(&itx, iconn, NULL);
         if (rc != IB_OK) {
             /// @todo Set error.
+            ib_log_debug3(ib, "Failed to create IronBee transaction for %p",
+                          (void *)connp->in_tx);
             IB_FTRACE_RET_INT(HTP_ERROR);
         }
+        ib_log_debug3(ib, "Created ironbee transaction %p structure for %p",
+                      (void *)itx, (void *)connp->in_tx);
     }
 
     /* Store this as the current transaction. */
@@ -453,7 +463,7 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
      */
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
-        ib_log_error(ib, "No ironbee transaction available.");
+        ib_log_error(ib, "Request Line: No ironbee transaction available.");
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
@@ -558,7 +568,7 @@ static int modhtp_htp_request_headers(htp_connp_t *connp)
      */
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
-        ib_log_error(ib, "No ironbee transaction available.");
+        ib_log_error(ib, "Request Headers: No ironbee transaction available.");
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
@@ -655,7 +665,7 @@ static int modhtp_htp_request_body_data(htp_tx_data_t *txdata)
      */
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
-        ib_log_error(ib, "No ironbee transaction available.");
+        ib_log_error(ib, "Request Body: No ironbee transaction available.");
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
@@ -710,7 +720,7 @@ static int modhtp_htp_request_trailer(htp_connp_t *connp)
      */
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
-        ib_log_error(ib, "No ironbee transaction available.");
+        ib_log_error(ib, "Request Trailer: No ironbee transaction available.");
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
@@ -757,7 +767,7 @@ static int modhtp_htp_request(htp_connp_t *connp)
      */
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
-        ib_log_error(ib, "No ironbee transaction available.");
+        ib_log_error(ib, "Request: No ironbee transaction available.");
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
@@ -803,7 +813,7 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
      */
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
-        ib_log_error(ib, "No ironbee transaction available.");
+        ib_log_error(ib, "Response Line: No ironbee transaction available.");
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
@@ -886,7 +896,7 @@ static int modhtp_htp_response_headers(htp_connp_t *connp)
      */
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
-        ib_log_error(ib, "No ironbee transaction available.");
+        ib_log_error(ib, "Response Headers: No ironbee transaction available.");
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
@@ -970,7 +980,7 @@ static int modhtp_htp_response_body_data(htp_tx_data_t *txdata)
      */
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
-        ib_log_error(ib, "No ironbee transaction available.");
+        ib_log_error(ib, "Response Body: No ironbee transaction available.");
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
@@ -1037,7 +1047,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
      */
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
-        ib_log_error(ib, "No ironbee transaction available.");
+        ib_log_error(ib, "Response: No ironbee transaction available.");
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
@@ -1058,6 +1068,7 @@ static int modhtp_htp_response(htp_connp_t *connp)
     /* Destroy the transaction. */
     ib_log_debug3_tx(itx, "Destroying transaction structure");
     ib_tx_destroy(itx);
+    htp_tx_set_user_data(tx, NULL);
 
     /* NOTE: The htp transaction is destroyed in modhtp_tx_cleanup() */
 
@@ -1088,7 +1099,7 @@ static int modhtp_htp_response_trailer(htp_connp_t *connp)
      */
     itx = htp_tx_get_user_data(tx);
     if (itx == NULL) {
-        ib_log_error(ib, "No ironbee transaction available.");
+        ib_log_error(ib, "Response Trailer: No ironbee transaction available.");
         IB_FTRACE_RET_INT(HTP_ERROR);
     }
 
@@ -1562,7 +1573,7 @@ static ib_status_t modhtp_iface_data_in(ib_provider_inst_t *pi,
     }
 
     if (itx == NULL) {
-        ib_log_debug3(ib, "No IronBee transaction available.");
+        ib_log_debug3(ib, "Data In: No IronBee transaction available.");
     }
 
     switch(htp->in_status) {
@@ -1633,7 +1644,7 @@ static ib_status_t modhtp_iface_data_out(ib_provider_inst_t *pi,
     }
 
     if (itx == NULL) {
-        ib_log_debug3(ib, "No IronBee transaction available.");
+        ib_log_debug3(ib, "Data Out: No IronBee transaction available.");
     }
 
     switch(htp->out_status) {
