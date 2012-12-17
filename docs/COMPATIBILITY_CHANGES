@@ -32,6 +32,7 @@
 - Removed htp_connp_create_copycfg(), along with the ability of connection parsers to
   have private configurations.
 
+- htp_conn_remove_tx() now returns HTP_ERROR on error (was 0).
 
 
 

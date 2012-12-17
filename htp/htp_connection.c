@@ -36,7 +36,7 @@
 
 #include "htp.h"
 
-htp_conn_t *htp_conn_create(htp_connp_t *connp) {
+htp_conn_t *htp_conn_create(const htp_connp_t *connp) {
     htp_conn_t *conn = calloc(1, sizeof (htp_conn_t));
     if (conn == NULL) return NULL;
 
@@ -65,11 +65,9 @@ void htp_conn_destroy(htp_conn_t *conn) {
         // Destroy individual transactions. Do note that iterating
         // using the iterator does not work here because some of the
         // list element may be NULL (and with the iterator it is impossible
-        // to distinguish a NULL element from the end of the list).
-        size_t i;
-
-        for (i = 0; i < htp_list_size(conn->transactions); i++) {
-            htp_tx_t *tx = (htp_tx_t *) htp_list_get(conn->transactions, i);
+        // to distinguish a NULL element from the end of the list).        
+        for (size_t i = 0, n = htp_list_size(conn->transactions); i < n; i++) {
+            htp_tx_t *tx = htp_list_get(conn->transactions, i);
             if (tx != NULL) {
                 htp_tx_destroy(tx);
             }
@@ -80,7 +78,7 @@ void htp_conn_destroy(htp_conn_t *conn) {
 
     if (conn->messages != NULL) {
         // Destroy individual messages
-        for (int i = 0, n = htp_list_size(conn->messages); i < n; i++) {
+        for (size_t i = 0, n = htp_list_size(conn->messages); i < n; i++) {
             htp_log_t *l = htp_list_get(conn->messages, i);
             free((void *) l->msg);
             free(l);
@@ -102,20 +100,17 @@ void htp_conn_destroy(htp_conn_t *conn) {
     free(conn);
 }
 
+htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx) {
+    if ((tx == NULL) || (conn == NULL)) return HTP_ERROR;
+    if (conn->transactions == NULL) return HTP_ERROR;
 
-int htp_conn_remove_tx(htp_conn_t *conn, htp_tx_t *tx) {
-    if ((tx == NULL) || (conn == NULL)) return 0;
-
-    if (conn->transactions != NULL) {
-        unsigned int i = 0;
-        for (i = 0; i < htp_list_size(conn->transactions); i++) {
-            htp_tx_t *etx = htp_list_get(conn->transactions, i);
-            if (tx == etx) {
-                htp_list_replace(conn->transactions, i, NULL);
-                return 1;
-            }
+    for (size_t i = 0, n = htp_list_size(conn->transactions); i < n; i++) {
+        htp_tx_t *candidate_tx = htp_list_get(conn->transactions, i);
+        if (tx == candidate_tx) {
+            htp_list_replace(conn->transactions, i, NULL);
+            return HTP_OK;
         }
     }
 
-    return 0;
+    return HTP_ERROR;
 }
