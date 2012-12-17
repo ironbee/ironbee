@@ -34,7 +34,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "htp.h"
+#include "htp_private.h"
 
 /**
  * Extract one request header. A header can span multiple lines, in

@@ -42,6 +42,11 @@
 #define PARAM_NAME      1
 #define PARAM_FILENAME  2
 
+int htp_mpart_part_process_headers(htp_mpart_part_t *part);
+int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, size_t len);
+int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int is_line);
+int htp_mpartp_is_boundary_character(int c);
+
 /**
  * Determines the type of a Content-Disposition parameter.
  *

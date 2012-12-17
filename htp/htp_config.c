@@ -34,7 +34,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "htp.h"
+#include "htp_private.h"
 
 /**
  * This map is used by default for best-fit mapping from the Unicode

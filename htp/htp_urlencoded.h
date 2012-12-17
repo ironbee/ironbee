@@ -40,8 +40,6 @@
 typedef struct htp_urlenp_t htp_urlenp_t;
 typedef struct htp_urlen_param_t htp_urlen_param_t;
 
-#include "htp.h"
-
 #define HTP_URLENP_DEFAULT_PARAMS_SIZE  32
 
 #define HTP_URLENP_STATE_KEY            1
@@ -52,6 +50,8 @@ typedef struct htp_urlen_param_t htp_urlen_param_t;
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "htp_private.h"
 
 /**
  * This is the main URLENCODED parser structure. It is used to store

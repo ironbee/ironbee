@@ -34,7 +34,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "htp.h"
+#include "htp_private.h"
 
 /**
  * Invoked to process a part of request body data.
