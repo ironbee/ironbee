@@ -396,7 +396,7 @@ ib_status_t ib_engine_context_create_main(ib_engine_t *ib)
 ib_status_t ib_engine_config_started(ib_engine_t *ib,
                                      ib_cfgparser_t *cp)
 {
-        assert(ib != NULL);
+    assert(ib != NULL);
     assert(cp != NULL);
     assert(ib->cfg_state == CFG_NOT_STARTED);
     ib_status_t rc;
@@ -422,7 +422,7 @@ ib_status_t ib_engine_config_started(ib_engine_t *ib,
 
 ib_status_t ib_engine_config_finished(ib_engine_t *ib)
 {
-        assert(ib != NULL);
+    assert(ib != NULL);
     assert(ib->cfg_state == CFG_STARTED);
     ib_status_t rc;
 
@@ -469,7 +469,7 @@ ib_status_t ib_engine_module_get(ib_engine_t *ib,
 ib_status_t ib_engine_cfgparser_get(const ib_engine_t *ib,
                                     const ib_cfgparser_t **pparser)
 {
-        assert(ib != NULL);
+    assert(ib != NULL);
     assert(pparser != NULL);
 
     *pparser = ib->cfgparser;
