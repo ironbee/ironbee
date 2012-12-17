@@ -1122,55 +1122,7 @@ struct htp_uri_t {
 const char *htp_get_version(void);
 
 
-// Configuration
-
-htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
-htp_cfg_t *htp_config_create(void);
-      void htp_config_destroy(htp_cfg_t *cfg); 
-
-void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
-void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_file_data_t *));
-void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-
-void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
-void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_response_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-
-void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *));
-
-void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy);
-
- int htp_config_set_server_personality(htp_cfg_t *cfg, int personality);
-void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled);
-
-void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
-void htp_config_set_path_backslash_separators(htp_cfg_t *cfg, int backslash_separators);
-void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
-void htp_config_set_path_compress_separators(htp_cfg_t *cfg, int compress_separators);
-void htp_config_set_path_control_char_handling(htp_cfg_t *cfg, int control_char_handling);
-void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8);
-void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int backslash_separators);
-void htp_config_set_path_decode_u_encoding(htp_cfg_t *cfg, int decode_u_encoding);
-void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_encoding_handling);
-void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, int invalid_utf8_handling);
-void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_handling);
-void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, int nul_raw_handling);
-void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char);
-void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping);
-void htp_config_set_path_utf8_overlong_handling(htp_cfg_t *cfg, int utf8_overlong_handling);
-
-void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate);
-
-void htp_config_register_urlencoded_parser(htp_cfg_t *cfg);
-void htp_config_register_multipart_parser(htp_cfg_t *cfg);
+#include "htp_config.h"
 
 
 // Connection parser
