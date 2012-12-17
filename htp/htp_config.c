@@ -154,11 +154,13 @@ htp_cfg_t *htp_config_create(void) {
     cfg->params_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
     cfg->params_nul_encoded_handling = NONE;
     cfg->params_nul_raw_handling = NONE;
-    // XXX
+    
+    // TODO Try to determine the correct location for the storage
+    //      of temporary files, based on the operating system.
     cfg->tmpdir = "/tmp";
 
-    // No need to create hooks here; they will be created on-demand,
-    // during callback registration   
+    // The hooks do not need to be initialized here -- that will
+    // be done on-demand, as callbacks are registered.
 
     // Set the default personality before we return
     htp_config_set_server_personality(cfg, HTP_SERVER_MINIMAL);
@@ -167,12 +169,16 @@ htp_cfg_t *htp_config_create(void) {
 }
 
 htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
+    if (cfg == NULL) return NULL;
+
+    // Start by making a copy of the entire structure,
+    // which is essentially a shallow copy.
     htp_cfg_t *copy = malloc(sizeof (htp_cfg_t));
-    if (copy == NULL) return NULL;
+    if (copy == NULL) return NULL;   
+    memcpy(copy, cfg, sizeof(htp_cfg_t));
 
-    *copy = *cfg;
+    // Now create copies of the hooks' structures.
 
-    // Create copies of the hooks' structures
     if (cfg->hook_transaction_start != NULL) {
         copy->hook_transaction_start = htp_hook_copy(cfg->hook_transaction_start);
         if (copy->hook_transaction_start == NULL) {
@@ -297,6 +303,8 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
 }
 
 void htp_config_destroy(htp_cfg_t *cfg) {
+    if (cfg == NULL) return;
+    
     // Destroy hooks
     htp_hook_destroy(cfg->hook_transaction_start);
     htp_hook_destroy(cfg->hook_request_line);
@@ -319,143 +327,179 @@ void htp_config_destroy(htp_cfg_t *cfg) {
 }
 
 void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_log, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_multipart_parser(htp_cfg_t *cfg) {
+    if (cfg == NULL) return;
     htp_config_register_request_headers(cfg, htp_ch_multipart_callback_request_headers);
 }
 
 void htp_config_register_request_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_request_done, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_request_body_data, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_file_data_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_request_file_data, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_request_uri_normalize, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_request_headers, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_request_line, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_request_trailer, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_response_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_response_done, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_response_body_data, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_response_headers, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_response_start, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_response_line, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_response_trailer, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_urlencoded_parser(htp_cfg_t *cfg) {
+    if (cfg == NULL) return;
     htp_config_register_request_line(cfg, htp_ch_urlencoded_callback_request_line);
     htp_config_register_request_headers(cfg, htp_ch_urlencoded_callback_request_headers);
 }
 
 void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
+    if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_transaction_start, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map) {
+    if (cfg == NULL) return;
     cfg->bestfit_map = map;
 }
 
 void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate) {
+    if (cfg == NULL) return;
     cfg->generate_request_uri_normalized = generate;
 }
 
 void htp_config_set_path_backslash_separators(htp_cfg_t *cfg, int backslash_separators) {
+    if (cfg == NULL) return;
     cfg->path_backslash_separators = backslash_separators;
 }
 
 void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int case_insensitive) {
+    if (cfg == NULL) return;
     cfg->path_case_insensitive = case_insensitive;
 }
 
 void htp_config_set_path_compress_separators(htp_cfg_t *cfg, int compress_separators) {
+    if (cfg == NULL) return;
     cfg->path_compress_separators = compress_separators;
 }
 
 void htp_config_set_path_control_char_handling(htp_cfg_t *cfg, int control_char_handling) {
+    if (cfg == NULL) return;
     cfg->path_control_char_handling = control_char_handling;
 }
 
 void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8) {
+    if (cfg == NULL) return;
     cfg->path_convert_utf8 = convert_utf8;
 }
 
 void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int decode_separators) {
+    if (cfg == NULL) return;
     cfg->path_decode_separators = decode_separators;
 }
 
 void htp_config_set_path_decode_u_encoding(htp_cfg_t *cfg, int decode_u_encoding) {
+    if (cfg == NULL) return;
     cfg->path_decode_u_encoding = decode_u_encoding;
 }
 
 void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_encoding_handling) {
+    if (cfg == NULL) return;
     cfg->path_invalid_encoding_handling = invalid_encoding_handling;
 }
 
 void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, int invalid_utf8_handling) {
+    if (cfg == NULL) return;
     cfg->path_invalid_utf8_handling = invalid_utf8_handling;
 }
 
 void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_handling) {
+    if (cfg == NULL) return;
     cfg->path_nul_encoded_handling = nul_encoded_handling;
 }
 
 void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, int nul_raw_handling) {
+    if (cfg == NULL) return;
     cfg->path_nul_raw_handling = nul_raw_handling;
 }
 
 void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char) {
+    if (cfg == NULL) return;
     cfg->bestfit_replacement_char = replacement_char;
 }
 
 void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping) {
+    if (cfg == NULL) return;
     cfg->path_unicode_mapping = unicode_mapping;
 }
 
 void htp_config_set_path_utf8_overlong_handling(htp_cfg_t *cfg, int utf8_overlong_handling) {
+    if (cfg == NULL) return;
     cfg->path_utf8_overlong_handling = utf8_overlong_handling;
 }
 
 void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled) {
+    if (cfg == NULL) return;
     cfg->response_decompression_enabled = enabled;
 }
 
 int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
+    if (cfg == NULL) return HTP_ERROR;
+
     switch (personality) {
         case HTP_SERVER_MINIMAL:
             cfg->parse_request_line = htp_parse_request_line_generic;
@@ -559,5 +603,6 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
 }
 
 void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy) {
+    if (cfg == NULL) return;
     cfg->tx_auto_destroy = tx_auto_destroy;
 }
