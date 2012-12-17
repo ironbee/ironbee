@@ -94,6 +94,24 @@ htp_status_t htp_conn_open(htp_conn_t *conn, const char *remote_addr, int remote
  */
 htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx);
 
+/**
+ * Keeps track of inbound packets and data.
+ *
+ * @param[in] conn
+ * @param[in] len
+ * @param[in] timestamp
+ */
+void htp_conn_track_inbound_data(htp_conn_t *conn, size_t len, htp_time_t *timestamp);
+
+/**
+ * Keeps track of outbound packets and data.
+ * 
+ * @param[in] conn
+ * @param[in] len
+ * @param[in] timestamp
+ */
+void htp_conn_track_outbound_data(htp_conn_t *conn, size_t len, htp_time_t *timestamp);
+
 #ifdef	__cplusplus
 }
 #endif

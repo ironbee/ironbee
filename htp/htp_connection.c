@@ -148,3 +148,13 @@ htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx) {
 
     return HTP_ERROR;
 }
+
+void htp_conn_track_inbound_data(htp_conn_t *conn, size_t len, htp_time_t *timestamp) {
+    conn->in_data_counter += len;
+    conn->in_packet_counter++;
+}
+
+void htp_conn_track_outbound_data(htp_conn_t *conn, size_t len, htp_time_t *timestamp) {
+    conn->out_data_counter += len;
+    conn->out_packet_counter++;
+}
