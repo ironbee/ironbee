@@ -42,6 +42,7 @@ extern "C" {
 #endif
 
 #include "htp.h"
+#include "htp_connection_private.h"
 
 #define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->in_current_offset >= (X)->in_current_len) { \

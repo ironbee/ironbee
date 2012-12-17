@@ -860,7 +860,7 @@ const char *htp_get_version(void);
 
 
 #include "htp_config.h"
-#include "htp_connection.h"
+#include "htp_connection_private.h"
 
 
 // Connection parser
