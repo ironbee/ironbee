@@ -50,6 +50,14 @@ extern "C" {
 htp_conn_t *htp_conn_create(void);
 
 /**
+ * Closes the connection.
+ *
+ * @param[in] conn
+ * @param[in] timesamp
+ */
+void htp_conn_close(htp_conn_t *conn, htp_time_t *timestamp);
+
+/**
  * Destroys a connection, as well as all the transactions it contains. It is
  * not possible to destroy a connection structure yet leave any of its
  * transactions intact. This is because transactions need its connection and

@@ -56,6 +56,13 @@ htp_conn_t *htp_conn_create(void) {
     return conn;
 }
 
+void htp_conn_close(htp_conn_t *conn, htp_time_t *timestamp) {
+    // Update timestamp
+    if (timestamp != NULL) {
+        memcpy(&(conn->close_timestamp), timestamp, sizeof(htp_time_t));
+    }
+}
+
 void htp_conn_destroy(htp_conn_t *conn) {
     if (conn == NULL) return;
 

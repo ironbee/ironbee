@@ -52,11 +52,9 @@ void htp_connp_clear_error(htp_connp_t *connp) {
  * @param timestamp Optional.
  */
 void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp) {
-    // Update timestamp
-    if (timestamp != NULL) {
-        memcpy(&connp->conn->close_timestamp, timestamp, sizeof(*timestamp));
-    }
-    
+    // Close the underlying connection.
+    htp_conn_close(connp->conn, timestamp);
+
     // Update internal flags
     connp->in_status = STREAM_STATE_CLOSED;
     connp->out_status = STREAM_STATE_CLOSED;
@@ -64,7 +62,7 @@ void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp) {
     // Call the parsers one last time, which will allow them
     // to process the events that depend on stream closure
     htp_connp_req_data(connp, timestamp, NULL, 0);
-    htp_connp_res_data(connp, timestamp, NULL, 0);
+    htp_connp_res_data(connp, timestamp, NULL, 0);   
 }
 
 /**
