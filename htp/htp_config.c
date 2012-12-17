@@ -424,6 +424,11 @@ void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate
     cfg->generate_request_uri_normalized = generate;
 }
 
+void htp_config_set_parse_request_cookies(htp_cfg_t *cfg, int parse_request_cookies) {
+    if (cfg == NULL) return;
+    cfg->parse_request_cookies = parse_request_cookies;
+}
+
 void htp_config_set_path_backslash_separators(htp_cfg_t *cfg, int backslash_separators) {
     if (cfg == NULL) return;
     cfg->path_backslash_separators = backslash_separators;

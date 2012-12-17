@@ -228,6 +228,14 @@ void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
 void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate);
 
 /**
+ * Enable or disable the parsing of request cookies.
+ *
+ * @param[in] cfg
+ * @param[in] parse_request_cookies
+ */
+void htp_config_set_parse_request_cookies(htp_cfg_t *cfg, int parse_request_cookies);
+
+/**
  * Configures whether backslash characters are treated as path segment separators. They
  * are not on Unix systems, but are on Windows systems. If this setting is enabled, a path
  * such as "/one\two/three" will be converted to "/one/two/three".
