@@ -37,6 +37,8 @@
 #ifndef _HTP_H
 #define	_HTP_H
 
+#include <sys/time.h>
+
 #include "htp_definitions.h"
 
 typedef struct htp_cfg_t htp_cfg_t;
@@ -51,16 +53,6 @@ typedef struct htp_tx_data_t htp_tx_data_t;
 typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
 typedef struct timeval htp_time_t;
-
-#include <ctype.h>
-#include <iconv.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/time.h>
 
 #include "bstr.h"
 #include "htp_list.h"

@@ -34,6 +34,8 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include <ctype.h>
+
 #include "htp.h"
 
 int htp_php_parameter_processor(htp_table_t *params, bstr *name, bstr *value) {

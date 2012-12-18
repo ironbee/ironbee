@@ -41,6 +41,8 @@
 extern "C" {
 #endif
 
+#include <iconv.h>
+
 #include "htp.h"
 #include "htp_connection_private.h"
 

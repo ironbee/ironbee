@@ -34,6 +34,8 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include <ctype.h>
+
 #include "htp.h"
 
 /**

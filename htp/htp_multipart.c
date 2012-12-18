@@ -34,9 +34,12 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include <ctype.h>
+#include <unistd.h>
+
 #include "htp.h"
 #include "htp_multipart.h"
-#include "unistd.h"
+
 
 #define PARAM_OTHER     0
 #define PARAM_NAME      1
