@@ -44,7 +44,7 @@
  * Consumes bytes until the end of the current line.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     // TODO We shouldn't really see anything apart from CR and LF,
@@ -67,7 +67,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
  * Processes a chunk of data.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     const unsigned char *data = connp->out_current_data + connp->out_current_offset;
@@ -103,7 +103,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
  * Extracts chunk length.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
     for (;;) {
@@ -146,7 +146,7 @@ int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
  * Processes identity response body.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
     unsigned char *data = connp->out_current_data + connp->out_current_offset;
@@ -210,7 +210,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
  * Determines presence (and encoding) of a response body.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // If the request uses the CONNECT method, then not only are we
@@ -376,7 +376,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
  * Parses response headers.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_HEADERS(htp_connp_t * connp) {
     for (;;) {
@@ -501,7 +501,7 @@ int htp_connp_RES_HEADERS(htp_connp_t * connp) {
  * Parses response line.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_LINE(htp_connp_t * connp) {    
     for (;;) {
@@ -638,7 +638,7 @@ int htp_connp_RES_FINALIZE(htp_connp_t * connp) {
  * finalize each transactions after we are done with it.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_RES_IDLE(htp_connp_t * connp) {
     // We want to start parsing the next response (and change
