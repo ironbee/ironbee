@@ -62,6 +62,15 @@ module AP_MODULE_DECLARE_DATA ironbee_module;
 #define HDRS_OUT IB_SERVER_RESPONSE
 #define START_RESPONSE 0x04
 
+/* Flags to keep track of what's been notified, for functions that
+ * could be called more than once in the event of a subrequest or
+ * internal redirect, or in ap_discard_request_body
+ */
+#define NOTIFY_REQ_START   0x100
+#define NOTIFY_REQ_END     0x200
+#define NOTIFY_RESP_START  0x400
+#define NOTIFY_RESP_END    0x800
+
 typedef struct ironbee_req_ctx {
     ib_tx_t *tx;
     int status;
@@ -447,12 +456,15 @@ static int ironbee_headers_in(request_rec *r)
     /* We act either early or late, according to config.
      * So don't try to do both!
      */
-    if ((scfg->early && early) || (!scfg->early && !early)) {
+    if (((scfg->early && early) || (!scfg->early && !early))
+        && !(ctx->state & NOTIFY_REQ_START)) {
         /* Notify Ironbee of request line and headers */
 
         /* First construct and notify the request line */
         ib_parsed_req_line_t *rline;
         ib_parsed_header_wrapper_t *ibhdrs;
+
+        ctx->state |= NOTIFY_REQ_START;
 
         rc = ib_parsed_req_line_create(ctx->tx, &rline,
                                        r->the_request, strlen(r->the_request),
@@ -517,6 +529,15 @@ static apr_status_t ironbee_header_filter(ap_filter_t *f,
     const char *reason;
     ironbee_req_ctx *ctx = ap_get_module_config(f->r->request_config,
                                                 &ironbee_module);
+
+    /* Shouldn't happen, but in case of multi-request wierdness ... */
+    if (ctx->state & NOTIFY_RESP_START) {
+        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, f->r,
+                      "Ignoring extra call to ironbee_header_filter!");
+        ap_remove_output_filter(f);
+        return ap_pass_brigade(nextf, bb);
+    }
+    ctx->state |= NOTIFY_RESP_START;
 
     /* Notify Ironbee of start of output */
     cstatus = apr_psprintf(f->r->pool, "%d", f->r->status);
@@ -752,6 +773,13 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
         ctx->buffer = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
         ctx->eos_sent = false;
     }
+    /* If this is a dummy call, bail out */
+    if (rctx->state & NOTIFY_REQ_END) {
+        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, f->r,
+                      "Extra call to ironbee_filter_in ignored");
+        ap_remove_input_filter(f);
+        return ap_get_brigade(f->next, bb, mode, block, readbytes);
+    }
 
     /* If we're buffering, loop over all data before returning.
      * Else just take whatever one get_brigade gives us and return it
@@ -817,6 +845,9 @@ setaside_input:
     if (eos_seen && !ctx->eos_sent) {
         ib_state_notify_request_finished(ironbee, rctx->tx);
         ctx->eos_sent = true;
+        /* We're done with the data.  Avoid risk of getting called again */
+        ap_remove_input_filter(f);
+        rctx->state |= NOTIFY_REQ_END;
     }
 
     /* If Ironbee just signalled an error, switch to discard data mode,
@@ -855,11 +886,43 @@ static void ironbee_filter_insert(request_rec *r)
 {
     ironbee_dir_conf *cfg = ap_get_module_config(r->per_dir_config,
                                                  &ironbee_module);
-    /* Insert input filter unconditionally.
-     * Even if we're not feeding the data to Ironbee, we need to notify
-     * it end-of-request before proceeding.
-     */
-    ap_add_input_filter("ironbee", NULL, r, r->connection);
+    ironbee_req_ctx *rctx = ap_get_module_config(r->request_config,
+                                                 &ironbee_module);
+    request_rec *rr = r;
+    while (!rctx) {
+        /* Oops, are we in a subrequest or internal redirect?
+         * Find main config and set it here
+         */
+        if (rr->prev)
+            rr = rr->prev;
+        else if (rr->main)
+            rr = rr->main;
+        else {
+            /* Whoops!  Even the head request has no ctx!
+             * Something bad happened
+             */
+            ap_log_rerror(APLOG_MARK, APLOG_CRIT, 0, r,
+                          "No request context found - Ironbee disabled!");
+            return;
+        }
+        rctx = ap_get_module_config(rr->request_config, &ironbee_module);
+    }
+    /* Set ctx for this request, so we don't have to re-run checks in filters */
+    if (rr != r) {
+        ap_set_module_config(r->request_config, &ironbee_module, rctx);
+    }
+    if (cfg->filter_input)
+        ap_add_input_filter("ironbee", NULL, r, r->connection);
+    else {
+        /* We already fed Ironbee the headers.  If we're not
+         * filtering input, we can notify Ironbee end-of-request
+         * right here and now.
+         */
+        if (!(rctx->state & NOTIFY_REQ_END)) {
+            ib_state_notify_request_finished(ironbee, rctx->tx);
+            rctx->state |= NOTIFY_REQ_END;
+        }
+    }
     if (cfg->filter_output)
         ap_add_output_filter("ironbee", NULL, r, r->connection);
     ap_add_output_filter("ironbee-headers", NULL, r, r->connection);
