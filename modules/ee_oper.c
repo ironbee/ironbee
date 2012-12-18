@@ -44,7 +44,7 @@
 IB_MODULE_DECLARE();
 
 /* Global hash to store patterns */
-static ib_hash_t *eudoxus_pattern_hash = NULL;
+static ib_hash_t *g_eudoxus_pattern_hash = NULL;
 
 /**
  * Load a eudoxus pattern so it can be used in rules.
@@ -62,7 +62,7 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
                                                const char *name,
                                                const char *pattern_name,
                                                const char *filename,
-                                               void * cbdata)
+                                               void *cbdata)
 {
     ib_status_t rc;
     const char *automata_file;
@@ -70,16 +70,17 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
     ia_eudoxus_t *eudoxus;
     ib_mpool_t *mp_tmp;
     void *tmp;
-    char pwd[2000];
 
     assert(cp != NULL);
     assert(cp->ib != NULL);
-    assert(eudoxus_pattern_hash != NULL);
+    assert(g_eudoxus_pattern_hash != NULL);
+    assert(pattern_name != NULL);
+    assert(filename != NULL);
 
     mp_tmp = ib_engine_pool_temp_get(cp->ib);
 
     /* Check if the pattern name is already in use */
-    rc = ib_hash_get(eudoxus_pattern_hash, &tmp, pattern_name);
+    rc = ib_hash_get(g_eudoxus_pattern_hash, &tmp, pattern_name);
     if (rc == IB_OK) {
         ib_log_error(cp->ib,
                      MODULE_NAME_STR ": Pattern named \"%s\" already defined",
@@ -92,11 +93,6 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
     automata_file = ib_util_relative_file(mp_tmp, cp->cur_file, filename);
     ib_log_debug(cp->ib, "pattern %s: path=%s", pattern_name, automata_file);
 
-    if (getcwd(pwd, 1999) == NULL) {
-        ib_log_error(cp->ib, MODULE_NAME_STR ": Error calling getcwd.");
-        return IB_EOTHER;
-    }
-    ib_log_debug(cp->ib, "checking in %s", pwd);
     if (access(automata_file, R_OK) != 0) {
         ib_log_error(cp->ib,
                      MODULE_NAME_STR ": Error accessing eudoxus automata file: %s.",
@@ -113,7 +109,11 @@ static ib_status_t load_eudoxus_pattern_param2(ib_cfgparser_t *cp,
         return IB_EINVAL;
     }
 
-    ib_hash_set(eudoxus_pattern_hash, pattern_name, eudoxus);
+    rc = ib_hash_set(g_eudoxus_pattern_hash, pattern_name, eudoxus);
+    if (rc != IB_OK) {
+        ia_eudoxus_destroy(eudoxus);
+        return rc;
+    }
 
     return IB_OK;
 }
@@ -127,15 +127,14 @@ static IB_DIRMAP_INIT_STRUCTURE(eudoxus_directive_map) = {
 
     /* signal the end of the list */
     IB_DIRMAP_INIT_LAST
-
 };
 
 /**
  * Eudoxus first match callback function.  Called when a match occurs.
  *
  * Always returns IA_EUDOXUS_CMD_STOP to stop matching (unless an
- * error occurs).If capture is enabled the matched text will be stored in the
- * capture variable
+ * error occurs). If capture is enabled the matched text will be stored in the
+ * capture variable.
  *
  * @param[in] engine Eudoxus engine.
  * @param[in] output Output defined by automata.
@@ -160,7 +159,15 @@ static ia_eudoxus_command_t ee_first_match_callback(const ia_eudoxus_t* engine,
     ib_field_t *field;
     const char *name;
 
+    assert(cbdata != NULL);
+    assert(rule_exec->rule != NULL);
+    assert(tx != NULL);
+    assert(output != NULL);
+
     if (ib_flags_all(rule_exec->rule->flags, IB_RULE_FLAG_CAPTURE)) {
+        if (output_length != sizeof(uint32_t)) {
+            return IA_EUDOXUS_CMD_ERROR;
+        }
         match_len = *(uint32_t *)(output);
         rc = ib_data_capture_clear(tx);
         if (rc != IB_OK) {
@@ -190,8 +197,9 @@ static ia_eudoxus_command_t ee_first_match_callback(const ia_eudoxus_t* engine,
 
     return IA_EUDOXUS_CMD_STOP;
 }
+
 /**
- * Create an instance of the ee_match_any operator.
+ * Create an instance of the @c ee_match_any operator.
  *
  * Looks up the automata name and adds the automata to the operator instance.
  *
@@ -214,7 +222,12 @@ static ib_status_t ee_match_any_operator_create(ib_engine_t *ib,
     ib_status_t rc;
     ia_eudoxus_t* eudoxus;
 
-    rc = ib_hash_get(eudoxus_pattern_hash, &eudoxus, automata_name);
+    assert(ib != NULL);
+    assert(g_eudoxus_pattern_hash != NULL);
+    assert(automata_name != NULL);
+    assert(op_inst != NULL);
+
+    rc = ib_hash_get(g_eudoxus_pattern_hash, &eudoxus, automata_name);
     if (rc == IB_ENOENT ) {
         ib_log_error(ib,
                      MODULE_NAME_STR ": No eudoxus automata named %s found.",
@@ -233,7 +246,7 @@ static ib_status_t ee_match_any_operator_create(ib_engine_t *ib,
 }
 
 /**
- * Execute the ee_match_any operator.
+ * Execute the @c ee_match_any operator.
  *
  * At first match the operator will stop searching and return true.
  *
@@ -242,7 +255,7 @@ static ib_status_t ee_match_any_operator_create(ib_engine_t *ib,
  *
  * @param[in] rule_exec The rule being executed.
  * @param[in] data Callback data -- This is the initialized eudoxus engine
- *                 set by ee_match_any_operator_create(..).
+ *                 set by ee_match_any_operator_create().
  * @param[in] flags
  * @param[in] field The field to match.
  * @param[out] result Set to 1 if a match is found 0 otherwise.
@@ -261,8 +274,8 @@ static ib_status_t ee_match_any_operator_execute(
     const char *input;
     size_t input_len;
 
-    assert(rule_exec);
-    assert(data);
+    assert(rule_exec != NULL);
+    assert(data != NULL);
 
     *result = 0;
 
@@ -335,8 +348,8 @@ static ib_status_t ee_module_init(ib_engine_t *ib,
     ib_mpool_t *mp;
 
     ib_mpool_create(&mp, "ee_module", ib_engine_pool_main_get(ib));
-    if (eudoxus_pattern_hash == NULL) {
-        rc = ib_hash_create_nocase(&eudoxus_pattern_hash, mp);
+    if (g_eudoxus_pattern_hash == NULL) {
+        rc = ib_hash_create_nocase(&g_eudoxus_pattern_hash, mp);
         if (rc != IB_OK ) {
             ib_log_error(ib, MODULE_NAME_STR ": Error initializing module.");
             return rc;
@@ -378,17 +391,17 @@ static ib_status_t ee_module_finish(ib_engine_t *ib,
     ib_mpool_t *pool;
 
     /* Destroy all eudoxus automata */
-    if (eudoxus_pattern_hash != NULL) {
-        pool = ib_hash_pool(eudoxus_pattern_hash);
+    if (g_eudoxus_pattern_hash != NULL) {
+        pool = ib_hash_pool(g_eudoxus_pattern_hash);
 
         /* The only way to iterate over a hash is to covert it into a list. */
         rc = ib_list_create(&list, pool);
-        if ( rc != IB_OK) {
+        if (rc != IB_OK) {
             ib_log_error(ib, MODULE_NAME_STR ": Error unloading module.");
             return rc;
         }
-        rc = ib_hash_get_all(eudoxus_pattern_hash, list);
-        if ( rc != IB_OK) {
+        rc = ib_hash_get_all(g_eudoxus_pattern_hash, list);
+        if (rc != IB_OK) {
             return rc;
         }
         IB_LIST_LOOP_SAFE(list, node, next) {
@@ -398,9 +411,9 @@ static ib_status_t ee_module_finish(ib_engine_t *ib,
             }
             ib_list_node_remove(list, node);
         }
-        ib_hash_clear(eudoxus_pattern_hash);
+        ib_hash_clear(g_eudoxus_pattern_hash);
         ib_mpool_release(pool);
-        eudoxus_pattern_hash = NULL;
+        g_eudoxus_pattern_hash = NULL;
     }
 
     return IB_OK;

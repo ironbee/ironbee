@@ -48,7 +48,8 @@ TEST_F(EeOperModuleTest, test_load_module)
 {
     ib_operator_t op;
     // Ensure that the operator exists.
-    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators, (void**)&op,
+    ASSERT_EQ(IB_OK, ib_hash_get(ib_engine->operators,
+                                 reinterpret_cast<void**>(&op),
                                  "ee_match_any"));
 }
 
@@ -90,12 +91,12 @@ TEST_F(EeOperModuleTest, test_ee_match_any_success)
     const ib_list_t *ib_list;
     const ib_bytestr_t *bs;
     ASSERT_EQ(IB_OK, ib_data_get(ib_tx->dpi, IB_TX_CAPTURE":0", &ib_field));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_TRUE(ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_LIST), ib_field->type);
     ib_field_value(ib_field, ib_ftype_list_out(&ib_list));
     ASSERT_EQ(1U, IB_LIST_ELEMENTS(ib_list));
     ib_field = (ib_field_t *)IB_LIST_NODE_DATA(IB_LIST_LAST(ib_list));
-    ASSERT_NE(static_cast<ib_field_t*>(NULL), ib_field);
+    ASSERT_TRUE(ib_field);
     ASSERT_EQ(static_cast<ib_ftype_t>(IB_FTYPE_BYTESTR), ib_field->type);
     ASSERT_EQ(IB_OK, ib_field_value(ib_field, ib_ftype_bytestr_out(&bs)));
     ASSERT_EQ(15UL, ib_bytestr_length(bs));
@@ -133,5 +134,4 @@ TEST_F(EeOperModuleTest, test_ee_match_any_fail)
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     EXPECT_EQ(0, n);
-
 }
