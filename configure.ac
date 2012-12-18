@@ -191,21 +191,10 @@ else
 fi
 
 DOXYGEN=$doxygen
-
-dnl TODO: Use these to gen doxygen configs
-DOXYGEN_INPUT="htp extras test"
-DOXYGEN_FILES=`find $DOXYGEN_INPUT -type f -regex '.*\.\(h\|c\|cc\)$'`
-DOXYGEN_DEPS=""
-dnl Make deps into a single line with relative path from docs dir
-for f in $DOXYGEN_FILES; do
-    DOXYGEN_DEPS="$DOXYGEN_DEPS ../$f"
-done
 AC_SUBST(DOXYGEN)
-AC_SUBST(DOXYGEN_INPUT)
-AC_SUBST(DOXYGEN_DEPS)
 
 dnl -----------------------------------------------
-dnl Generates Makefile's, configuration files and scripts
+dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------
 
 AC_PREFIX_DEFAULT(/usr/local)
