@@ -72,7 +72,10 @@ typedef struct timeval htp_time_t;
 
 // -- Defines -------------------------------------------------------------------------------------
 
-#define HTP_BASE_VERSION_TEXT	"master"
+#define HTP_VERSION_STRING          "master"
+
+// In the form of x.y.z, with two positions for each component; for example, 400 means 0.4.0
+#define HTP_VERSION_NUMBER          400
 
 #define HTP_PROTOCOL_UNKNOWN        -1
 #define HTP_PROTOCOL_0_9             9
@@ -853,13 +856,6 @@ struct htp_uri_t {
 };
 
 // -- Functions -----------------------------------------------------------------------------------
-
-/**
- * Returns the library name and version number as a string.
- * 
- * @return LibHTP name and version number.
- */
-const char *htp_get_version(void);
 
 #include "htp_config.h"
 #include "htp_connection_parser.h"
