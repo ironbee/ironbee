@@ -39,9 +39,9 @@
 /**
  * Parses a single v0 request cookie and places the results into tx->request_cookies.
  *
- * @param connp
- * @param data
- * @param len
+ * @param[in] connp
+ * @param[in] data
+ * @param[in] len
  * @return HTP_OK on success, HTP_ERROR on error.
  */
 int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t len) {
@@ -85,7 +85,7 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t l
 /**
  * Parses Cookie request header in v0 format.
  *
- * @param connp
+ * @param[in] connp
  * @return HTP_OK on success, HTP_ERROR on error
  */
 int htp_parse_cookies_v0(htp_connp_t *connp) {

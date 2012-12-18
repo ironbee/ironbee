@@ -39,7 +39,7 @@
 /**
  * Generic response line parser.
  * 
- * @param connp
+ * @param[in] connp
  * @return HTP status
  */
 int htp_parse_response_line_generic(htp_connp_t *connp) {
@@ -115,10 +115,10 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
 /**
  * Generic response header parser.
  * 
- * @param connp
- * @param h
- * @param data
- * @param len
+ * @param[in] connp
+ * @param[in] h
+ * @param[in] data
+ * @param[in] len
  * @return HTP status
  */
 int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len) {
@@ -231,7 +231,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
  * Generic response header line(s) processor, which assembles folded lines
  * into a single buffer before invoking the parsing function.
  * 
- * @param connp
+ * @param[in] connp
  * @return HTP status
  */
 int htp_process_response_header_generic(htp_connp_t *connp) {

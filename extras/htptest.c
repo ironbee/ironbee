@@ -106,7 +106,7 @@ int counter = 1000;
 /**
  * Free stream data.
  *
- * @param sd
+ * @param[in] sd
  */
 void free_stream_data(stream_data *sd) {
     if (sd == NULL) return;
@@ -156,7 +156,7 @@ void free_stream_data(stream_data *sd) {
  * Process as much buffered inbound and outbound data as possible
  * (in that order)
  *
- * @param sd
+ * @param[in] sd
  */
 void process_stored_stream_data(stream_data *sd) {
     int loop = 0;
@@ -207,9 +207,9 @@ void process_stored_stream_data(stream_data *sd) {
 /**
  * Process a chunk of the connection stream.
  *
- * @param sd
- * @param direction
- * @param hlf
+ * @param[in] sd
+ * @param[in] direction
+ * @param[in] hlf
  */
 void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf) {
     chunk_t *chunk = NULL;
@@ -312,8 +312,8 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
 /**
  * Called by libnids whenever it has an event we have to handle.
  *
- * @param tcp
- * @param user_data
+ * @param[in] tcp
+ * @param[in] user_data
  */
 void tcp_callback (struct tcp_stream *tcp, void **user_data) {	
     stream_data *sd = *user_data;
@@ -436,7 +436,7 @@ void tcp_callback (struct tcp_stream *tcp, void **user_data) {
 /**
  * Invoked at the end of every transaction. 
  *
- * @param connp
+ * @param[in] connp
  */
 int callback_response(htp_connp_t *connp) {
     stream_data *sd = (stream_data *)htp_connp_get_user_data(connp);
@@ -451,7 +451,7 @@ int callback_response(htp_connp_t *connp) {
 /**
  * Invoked every time LibHTP wants to log. 
  *
- * @param log
+ * @param[in] log
  */
 int callback_log(htp_log_t *log) {
     stream_data *sd = (stream_data *)htp_connp_get_user_data(log->connp);
@@ -513,8 +513,8 @@ void print_usage() {
 /**
  * Main entry point for this program.
  *
- * @param argc
- * @param argv
+ * @param[in] argc
+ * @param[in] argv
  */
 int main(int argc, char *argv[]) {
     // Check parameters

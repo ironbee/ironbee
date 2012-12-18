@@ -356,7 +356,7 @@ htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *message, en
  *
  * @param[in] tx
  * @param[in] cfg
- * @param is_cfg_shared HTP_CFG_SHARED or HTP_CFG_PRIVATE
+ * @param[in] is_cfg_shared HTP_CFG_SHARED or HTP_CFG_PRIVATE
  */
 void htp_tx_set_config(htp_tx_t *tx, htp_cfg_t *cfg, int is_cfg_shared);
 

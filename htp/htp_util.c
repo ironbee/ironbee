@@ -48,7 +48,7 @@
 /**
  * Is character a linear white space character?
  *
- * @param c
+ * @param[in] c
  * @return 0 or 1
  */
 int htp_is_lws(int c) {
@@ -59,7 +59,7 @@ int htp_is_lws(int c) {
 /**
  * Is character a separator character?
  *
- * @param c
+ * @param[in] c
  * @return 0 or 1
  */
 int htp_is_separator(int c) {
@@ -97,7 +97,7 @@ int htp_is_separator(int c) {
 /**
  * Is character a text character?
  *
- * @param c
+ * @param[in] c
  * @return 0 or 1
  */
 int htp_is_text(int c) {
@@ -109,7 +109,7 @@ int htp_is_text(int c) {
 /**
  * Is character a token character?
  *
- * @param c
+ * @param[in] c
  * @return 0 or 1
  */
 int htp_is_token(int c) {
@@ -153,7 +153,7 @@ int htp_chomp(unsigned char *data, size_t *len) {
 /**
  * Is character a white space character?
  *
- * @param c
+ * @param[in] c
  * @return 0 or 1
  */
 int htp_is_space(int c) {
@@ -173,7 +173,7 @@ int htp_is_space(int c) {
 /**
  * Converts request method, given as a string, into a number.
  *
- * @param method
+ * @param[in] method
  * @return Method number of M_UNKNOWN
  */
 int htp_convert_method_to_number(bstr *method) {
@@ -216,8 +216,8 @@ int htp_convert_method_to_number(bstr *method) {
  * Is the given line empty? This function expects the line to have
  * a terminating LF.
  *
- * @param data
- * @param len
+ * @param[in] data
+ * @param[in] len
  * @return 0 or 1
  */
 int htp_is_line_empty(unsigned char *data, size_t len) {
@@ -231,8 +231,8 @@ int htp_is_line_empty(unsigned char *data, size_t len) {
 /**
  * Does line consist entirely of whitespace characters?
  * 
- * @param data
- * @param len
+ * @param[in] data
+ * @param[in] len
  * @return 0 or 1
  */
 int htp_is_line_whitespace(unsigned char *data, size_t len) {
@@ -251,7 +251,7 @@ int htp_is_line_whitespace(unsigned char *data, size_t len) {
  * Parses Content-Length string (positive decimal number).
  * White space is allowed before and after the number.
  *
- * @param b
+ * @param[in] b
  * @return Content-Length as a number, or -1 on error.
  */
 int htp_parse_content_length(bstr *b) {
@@ -262,8 +262,8 @@ int htp_parse_content_length(bstr *b) {
  * Parses chunk length (positive hexadecimal number).
  * White space is allowed before and after the number.
  *
- * @param data
- * @param len
+ * @param[in] data
+ * @param[in] len
  * @return Chunk length, or -1 on error.
  */
 int htp_parse_chunked_length(unsigned char *data, size_t len) {
@@ -274,9 +274,9 @@ int htp_parse_chunked_length(unsigned char *data, size_t len) {
  * A forgiving parser for a positive integer in a given base.
  * White space is allowed before and after the number.
  * 
- * @param data
- * @param len
- * @param base
+ * @param[in] data
+ * @param[in] len
+ * @param[in] base
  * @return The parsed number, or -1 on error.
  */
 int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base) {
@@ -306,7 +306,7 @@ int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int b
 /**
  * Prints one log message to stderr.
  * 
- * @param log
+ * @param[in] log
  */
 void htp_print_log(FILE *stream, htp_log_t *log) {
     if (log->code != 0) {
@@ -321,12 +321,12 @@ void htp_print_log(FILE *stream, htp_log_t *log) {
 /**
  * Records one log message.
  * 
- * @param connp
- * @param file
- * @param line
- * @param level
- * @param code
- * @param fmt
+ * @param[in] connp
+ * @param[in] file
+ * @param[in] line
+ * @param[in] level
+ * @param[in] code
+ * @param[in] fmt
  */
 void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code, const char *fmt, ...) {
     char buf[1024];
@@ -377,9 +377,9 @@ void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code
 /**
  * Determines if the given line is a continuation (of some previous line).
  *
- * @param connp
- * @param data
- * @param len
+ * @param[in] connp
+ * @param[in] data
+ * @param[in] len
  * @return 0 or 1
  */
 int htp_connp_is_line_folded(unsigned char *data, size_t len) {
@@ -395,9 +395,9 @@ int htp_connp_is_line_folded(unsigned char *data, size_t len) {
 /**
  * Determines if the given line is a request terminator.
  *
- * @param connp
- * @param data
- * @param len
+ * @param[in] connp
+ * @param[in] data
+ * @param[in] len
  * @return 0 or 1
  */
 int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t len) {
@@ -424,9 +424,9 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t
 /**
  * Determines if the given line can be ignored when it appears before a request.
  *
- * @param connp
- * @param data
- * @param len
+ * @param[in] connp
+ * @param[in] data
+ * @param[in] len
  * @return 0 or 1
  */
 int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t len) {
@@ -436,9 +436,9 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
 /**
  * Parses request URI, making no attempt to validate the contents.
  *
- * @param connp
- * @param authority
- * @param uri
+ * @param[in] connp
+ * @param[in] authority
+ * @param[in] uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
 int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
@@ -477,8 +477,8 @@ int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
 /**
  * Parses request URI, making no attempt to validate the contents.
  * 
- * @param input
- * @param uri
+ * @param[in] input
+ * @param[in] uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
 int htp_parse_uri(bstr *input, htp_uri_t **uri) {
@@ -631,7 +631,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
  * into a single byte by assuming the input consists of hexadecimal
  * characters. This function will happily convert invalid input.
  *
- * @param what
+ * @param[in] what
  * @return hex-decoded byte
  */
 static unsigned char x2c(unsigned char *what) {
@@ -648,8 +648,8 @@ static unsigned char x2c(unsigned char *what) {
  * Convert a Unicode codepoint into a single-byte, using best-fit
  * mapping (as specified in the provided configuration structure).
  *
- * @param cfg
- * @param codepoint
+ * @param[in] cfg
+ * @param[in] codepoint
  * @return converted single byte
  */
 static uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
@@ -689,9 +689,9 @@ static uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
  * characters will be left as-is. Best-fit mapping will be used to convert
  * UTF-8 into a single-byte stream.
  *
- * @param cfg
- * @param tx
- * @param path
+ * @param[in] cfg
+ * @param[in] tx
+ * @param[in] path
  */
 void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     if (path == NULL) return;
@@ -803,9 +803,9 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 /**
  * Validate a path that is quite possibly UTF-8 encoded.
  *
- * @param cfg
- * @param tx
- * @param path
+ * @param[in] cfg
+ * @param[in] tx
+ * @param[in] path
  */
 void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
     unsigned char *data = (unsigned char *) bstr_ptr(path);
@@ -893,9 +893,9 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
 /**
  * Decode a %u-encoded character, using best-fit mapping as necessary. Path version.
  *
- * @param cfg
- * @param tx
- * @param data
+ * @param[in] cfg
+ * @param[in] tx
+ * @param[in] data
  * @return decoded byte
  */
 static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
@@ -954,9 +954,9 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
 /**
  * Decode a %u-encoded character, using best-fit mapping as necessary. Params version.
  *
- * @param cfg
- * @param tx
- * @param data
+ * @param[in] cfg
+ * @param[in] tx
+ * @param[in] data
  * @return decoded byte
  */
 static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
@@ -1004,9 +1004,9 @@ static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char 
  * Decode a request path according to the settings in the
  * provided configuration structure.
  *
- * @param cfg
- * @param tx
- * @param path
+ * @param[in] cfg
+ * @param[in] tx
+ * @param[in] path
  */
 int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
     unsigned char *data = (unsigned char *) bstr_ptr(path);
@@ -1476,9 +1476,9 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 /**
  * Normalize a previously-parsed request URI.
  *
- * @param connp
- * @param incomplete
- * @param normalized
+ * @param[in] connp
+ * @param[in] incomplete
+ * @param[in] normalized
  * @return HTP_OK or HTP_ERROR
  */
 int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_t *normalized) {
@@ -1567,7 +1567,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
  * Normalize request hostname. Convert all characters to lowercase and
  * remove trailing dots from the end, if present.
  *
- * @param hostname
+ * @param[in] hostname
  * @return normalized hostnanme
  */
 bstr *htp_normalize_hostname_inplace(bstr *hostname) {
@@ -1592,9 +1592,9 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
  * Replace the URI in the structure with the one provided as the parameter
  * to this function (which will typically be supplied in a Host header).
  *
- * @param connp
- * @param parsed_uri
- * @param hostname
+ * @param[in] connp
+ * @param[in] parsed_uri
+ * @param[in] hostname
  */
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname) {
     if (hostname == NULL) return;
@@ -1642,7 +1642,7 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
 /**
  * Is URI character reserved?
  *
- * @param c
+ * @param[in] c
  * @return 1 if it is, 0 if it isn't
  */
 int htp_is_uri_unreserved(unsigned char c) {
@@ -1661,7 +1661,7 @@ int htp_is_uri_unreserved(unsigned char c) {
  * Decode a URL-encoded string, leaving the reserved
  * characters and invalid encodings alone.
  *
- * @param s
+ * @param[in] s
  */
 void htp_uriencoding_normalize_inplace(bstr *s) {
     if (s == NULL) return;
@@ -1718,7 +1718,7 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
  * Normalize URL path. This function implements the remove dot segments algorithm
  * specified in RFC 3986, section 5.2.4.
  *
- * @param s
+ * @param[in] s
  */
 void htp_normalize_uri_path_inplace(bstr *s) {
     if (s == NULL) return;
@@ -2085,7 +2085,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
  * line parsing. In most cases they will only look for the
  * words "http" at the beginning.
  *
- * @param tx
+ * @param[in] tx
  * @return 1 for good enough or 0 for not good enough
  */
 int htp_treat_response_line_as_body(htp_tx_t *tx) {
@@ -2112,7 +2112,7 @@ int htp_treat_response_line_as_body(htp_tx_t *tx) {
 /**
  * Construct a bstr that contains the raw request headers.
  *
- * @param tx
+ * @param[in] tx
  * @return
  */
 bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
@@ -2152,7 +2152,7 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
  * request header structure, only one buffer will be constructed and used. (Multiple
  * invocations of this method will not cause multiple buffers to be created.)
  *
- * @param tx
+ * @param[in] tx
  * @return
  */
 bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
@@ -2178,7 +2178,7 @@ bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
 /**
  * Construct a bstr that contains the raw response headers.
  *
- * @param tx
+ * @param[in] tx
  * @return
  */
 bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx) {
@@ -2218,7 +2218,7 @@ bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx) {
  * response header structure, only one buffer will be constructed and used. (Multiple
  * invocations of this method will not cause multiple buffers to be created.)
  *
- * @param tx
+ * @param[in] tx
  * @return
  */
 bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx) {
@@ -2244,8 +2244,8 @@ bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx) {
 /**
  * Run the REQUEST_BODY_DATA hook.
  *
- * @param connp
- * @param d
+ * @param[in] connp
+ * @param[in] d
  */
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Do not invoke callbacks with an empty data chunk
@@ -2280,8 +2280,8 @@ int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
 /**
  * Run the RESPONSE_BODY_DATA hook.
  *
- * @param connp
- * @param d
+ * @param[in] connp
+ * @param[in] d
  */
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d) {
     // Do not invoke callbacks with an empty data chunk

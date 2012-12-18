@@ -42,7 +42,7 @@
  * function will only understand a properly formatted protocol information. It does
  * not try to be flexible.
  * 
- * @param protocol
+ * @param[in] protocol
  * @return Protocol version or PROTOCOL_UNKNOWN.
  */
 int htp_parse_protocol(bstr *protocol) {
@@ -80,7 +80,7 @@ int htp_parse_protocol(bstr *protocol) {
 /**
  * Determines the numerical value of a response status given as a string.
  *
- * @param status
+ * @param[in] status
  * @return Status code on success, or -1 on error.
  */
 int htp_parse_status(bstr *status) {
@@ -90,8 +90,8 @@ int htp_parse_status(bstr *status) {
 /**
  * Parses Digest Authorization request header.
  *
- * @param connp
- * @param auth_header
+ * @param[in] connp
+ * @param[in] auth_header
  */
 int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header) {    
     // Extract the username
@@ -117,8 +117,8 @@ int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header
 /**
  * Parses Basic Authorization request header.
  * 
- * @param connp
- * @param auth_header
+ * @param[in] connp
+ * @param[in] auth_header
  */
 int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header) {
     unsigned char *data = bstr_ptr(auth_header->value);
@@ -161,7 +161,7 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
 /**
  * Parses Authorization request header.
  *
- * @param connp
+ * @param[in] connp
  */
 int htp_parse_authorization(htp_connp_t *connp) {
     htp_header_t *auth_header = htp_table_get_c(connp->in_tx->request_headers, "authorization");

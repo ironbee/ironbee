@@ -935,7 +935,7 @@ htp_status_t htp_tx_state_response_start(htp_tx_t *tx) {
 /**
  * Register callback for the transaction-specific REQUEST_BODY_DATA hook.
  *
- * @param tx
+ * @param[in] tx
  * @pram callback_fn
  */
 void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *)) {
@@ -945,7 +945,7 @@ void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_d
 /**
  * Register callback for the transaction-specific RESPONSE_BODY_DATA hook.
  *
- * @param tx
+ * @param[in] tx
  * @pram callback_fn
  */
 void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *)) {

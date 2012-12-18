@@ -40,7 +40,7 @@
  * Extract one request header. A header can span multiple lines, in
  * which case they will be folded into one before parsing is attempted.
  *
- * @param connp
+ * @param[in] connp
  * @return HTP_OK or HTP_ERROR
  */
 int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
@@ -175,10 +175,10 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
 /**
  * Parses a message header line as Apache 2.2 does.
  *
- * @param connp
- * @param h
- * @param data
- * @param len
+ * @param[in] connp
+ * @param[in] h
+ * @param[in] data
+ * @param[in] len
  * @return HTP_OK or HTP_ERROR
  */
 int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len) {
@@ -291,7 +291,7 @@ int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, uns
 /**
  * Parse request line as Apache 2.2 does.
  *
- * @param connp
+ * @param[in] connp
  * @return HTP_OK or HTP_ERROR
  */
 int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {

@@ -94,7 +94,7 @@ void htp_list_array_destroy(htp_list_array_t **l);
  * Find the element at the given index.
  *
  * @param[in] l
- * @param idx
+ * @param[in] idx
  * @return the desired element, or NULL if the list is too small, or
  *         if the element at that position carries a NULL
  */

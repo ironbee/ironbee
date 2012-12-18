@@ -48,7 +48,7 @@
 /**
  * Destroys a test.
  *
- * @param test
+ * @param[in] test
  */
 static void test_destroy(test_t *test) {
     if (test->buf != NULL) {
@@ -60,8 +60,8 @@ static void test_destroy(test_t *test) {
 /**
  * Checks if there's a chunk boundary at the given position.
  *
- * @param test
- * @param pos
+ * @param[in] test
+ * @param[in] pos
  * @return Zero if there is no boundary, SERVER or CLIENT if a boundary
  *         was found, and a negative value on error (e.g., not enough data
  *         to determine if a boundary is present).
@@ -102,8 +102,8 @@ static int test_is_boundary(test_t *test, int pos) {
 /**
  * Initializes test by loading the entire data file into a memory block.
  *
- * @param test
- * @param filename
+ * @param[in] test
+ * @param[in] filename
  * @return Non-negative value on success, negative value on error.
  */
 static int test_init(test_t *test, const char *filename) {
@@ -143,7 +143,7 @@ void test_start(test_t *test) {
 /**
  * Finds the next data chunk in the given test.
  *
- * @param test
+ * @param[in] test
  * @return One if a chunk is found or zero if there are no more chunks in the test. On
  *         success, test->chunk will point to the beginning of the chunk, while
  *         test->chunk_len will contain its length.
@@ -248,8 +248,8 @@ static int parse_filename(const char *filename, char **remote_addr, int *remote_
 /**
  * Runs a single test.
  *
- * @param filename
- * @param cfg
+ * @param[in] filename
+ * @param[in] cfg
  * @return A pointer to the instance of htp_connp_t created during
  *         the test, or NULL if the test failed for some reason.
  */

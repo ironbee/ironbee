@@ -40,8 +40,8 @@
 /**
  * Decompress a chunk of gzip-compressed data.
  *
- * @param drec
- * @param d
+ * @param[in] drec
+ * @param[in] d
  */
 static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *d) {
     size_t consumed = 0;
@@ -184,7 +184,7 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
 /**
  * Shut down gzip decompressor.
  *
- * @param drec
+ * @param[in] drec
  */
 static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t * drec) {
     if (drec == NULL) return;
@@ -201,7 +201,7 @@ static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t * drec) {
 /**
  * Initialize gzip decompressor.
  *
- * @param connp
+ * @param[in] connp
  */
 htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp, int format) {
     htp_decompressor_gzip_t *drec = calloc(1, sizeof (htp_decompressor_gzip_t));

@@ -43,7 +43,7 @@
 /**
  * Consumes bytes until the end of the current line.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
@@ -66,7 +66,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
 /**
  * Processes a chunk of data.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
@@ -102,7 +102,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 /**
  * Extracts chunk length.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
@@ -145,7 +145,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
 /**
  * Processes identity response body.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
@@ -209,7 +209,7 @@ htp_status_t htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
 /**
  * Determines presence (and encoding) of a response body.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
@@ -375,7 +375,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 /**
  * Parses response headers.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_HEADERS(htp_connp_t * connp) {
@@ -500,7 +500,7 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t * connp) {
 /**
  * Parses response line.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_LINE(htp_connp_t * connp) {
@@ -637,7 +637,7 @@ htp_status_t htp_connp_RES_FINALIZE(htp_connp_t * connp) {
  * The response idle state will initialize response processing, as well as
  * finalize each transactions after we are done with it.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_IDLE(htp_connp_t * connp) {

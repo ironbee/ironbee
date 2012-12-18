@@ -44,7 +44,7 @@
  * Performs check for a CONNECT transaction to decide whether inbound
  * parsing needs to be suspended.
  *
- * @param connp
+ * @param[in] connp
  * @return HTP_OK if the request does not use CONNECT, HTP_DATA_OTHER if
  *          inbound parsing needs to be suspended until we hear from the
  *          other side
@@ -74,7 +74,7 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
  * encountering a CONNECT transaction, can proceed (after receiving
  * the response).
  *
- * @param connp
+ * @param[in] connp
  * @return HTP_OK if the parser can resume parsing, HTP_DATA_OTHER if
  *         it needs to continue waiting.
  */
@@ -106,7 +106,7 @@ htp_status_t htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
 /**
  * Consumes bytes until the end of the current line.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
@@ -128,7 +128,7 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
 /**
  * Processes a chunk of data.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
@@ -165,7 +165,7 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 /**
  * Extracts chunk length.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
@@ -208,7 +208,7 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
 /**
  * Processes identity request body.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
@@ -249,7 +249,7 @@ htp_status_t htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 /**
  * Determines presence (and encoding) of a request body.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
@@ -278,7 +278,7 @@ htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
 /**
  * Parses request headers.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
@@ -392,7 +392,7 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
 /**
  * Determines request protocol.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
@@ -413,7 +413,7 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
 /**
  * Parses request line.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
@@ -503,7 +503,7 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
  * it will start a new transaction when data is available and finalise a transaction
  * which has been processed.
  *
- * @param connp
+ * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_IDLE(htp_connp_t * connp) {
@@ -526,7 +526,7 @@ htp_status_t htp_connp_REQ_IDLE(htp_connp_t * connp) {
 /**
  * Returns how many bytes from the current data chunks were consumed so far.
  *
- * @param connp
+ * @param[in] connp
  * @return The number of bytes consumed.
  */
 size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
