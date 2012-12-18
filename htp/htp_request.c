@@ -56,7 +56,7 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
     // was a success.
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
         connp->in_state = htp_connp_REQ_CONNECT_WAIT_RESPONSE;
-        connp->in_status = STREAM_STATE_DATA_OTHER;
+        connp->in_status = HTP_STREAM_DATA_OTHER;
         connp->in_tx->progress = TX_PROGRESS_WAIT;
 
         return HTP_DATA_OTHER;
@@ -93,7 +93,7 @@ htp_status_t htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
 
         // The requested tunnel was established: we are going
         // to ignore the remaining data on this stream
-        connp->in_status = STREAM_STATE_TUNNEL;
+        connp->in_status = HTP_STREAM_TUNNEL;
         connp->in_state = htp_connp_REQ_FINALIZE;
     } else {
         // No tunnel; continue to the next transaction
@@ -533,42 +533,42 @@ size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
     return connp->in_current_offset;
 }
 
-htp_status_t htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len) {
+int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len) {
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_connp_req_data(connp->in_status %x)\n", connp->in_status);
     fprint_raw_data(stderr, __FUNCTION__, data, len);
     #endif
 
     // Return if the connection is in stop state.
-    if (connp->in_status == STREAM_STATE_STOP) {
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_INFO, 0, "Inbound parser is in STREAM_STATE_STOP");
+    if (connp->in_status == HTP_STREAM_STOP) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_INFO, 0, "Inbound parser is in HTP_STREAM_STOP");
 
-        return STREAM_STATE_STOP;
+        return HTP_STREAM_STOP;
     }
 
     // Return if the connection had a fatal error earlier
-    if (connp->in_status == STREAM_STATE_ERROR) {
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Inbound parser is in STREAM_STATE_ERROR");
+    if (connp->in_status == HTP_STREAM_ERROR) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Inbound parser is in HTP_STREAM_ERROR");
 
         #ifdef HTP_DEBUG
-        fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA (previous error)\n");
+        fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_DATA (previous error)\n");
         #endif
 
-        return STREAM_STATE_ERROR;
+        return HTP_STREAM_ERROR;
     }
 
     // If the length of the supplied data chunk is zero, proceed
     // only if the stream has been closed. We do not allow zero-sized
     // chunks in the API, but we use them internally to force the parsers
     // to finalize parsing.
-    if ((len == 0) && (connp->in_status != STREAM_STATE_CLOSED)) {
+    if ((len == 0) && (connp->in_status != HTP_STREAM_CLOSED)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Zero-length data chunks are not allowed");
 
         #ifdef HTP_DEBUG
-        fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA (zero-length chunk)\n");
+        fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_DATA (zero-length chunk)\n");
         #endif
 
-        return STREAM_STATE_CLOSED;
+        return HTP_STREAM_CLOSED;
     }
 
     // Remember the timestamp of the current request data chunk
@@ -587,16 +587,16 @@ htp_status_t htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsig
 
     // Return without processing any data if the stream is in tunneling
     // mode (which it would be after an initial CONNECT transaction).
-    if (connp->in_status == STREAM_STATE_TUNNEL) {
+    if (connp->in_status == HTP_STREAM_TUNNEL) {
         #ifdef HTP_DEBUG
-        fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_TUNNEL\n");
+        fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_TUNNEL\n");
         #endif
 
-        return STREAM_STATE_TUNNEL;
+        return HTP_STREAM_TUNNEL;
     }
 
-    if (connp->out_status == STREAM_STATE_DATA_OTHER) {
-        connp->out_status = STREAM_STATE_DATA;
+    if (connp->out_status == HTP_STREAM_DATA_OTHER) {
+        connp->out_status = HTP_STREAM_DATA;
     }
 
     // Invoke a processor, in a loop, until an error
@@ -616,23 +616,23 @@ htp_status_t htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsig
         // keep quiet here.
         int rc = connp->in_state(connp);
         if (rc == HTP_OK) {
-            if (connp->in_status == STREAM_STATE_TUNNEL) {
+            if (connp->in_status == HTP_STREAM_TUNNEL) {
                 #ifdef HTP_DEBUG
-                fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_TUNNEL\n");
+                fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_TUNNEL\n");
                 #endif
 
-                return STREAM_STATE_TUNNEL;
+                return HTP_STREAM_TUNNEL;
             }
         } else {
             // Do we need more data?
             if (rc == HTP_DATA) {
                 #ifdef HTP_DEBUG
-                fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA\n");
+                fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_DATA\n");
                 #endif
 
-                connp->in_status = STREAM_STATE_DATA;
+                connp->in_status = HTP_STREAM_DATA;
 
-                return STREAM_STATE_DATA;
+                return HTP_STREAM_DATA;
             }
 
             // Check for suspended parsing
@@ -642,43 +642,43 @@ htp_status_t htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsig
                     // Do not send STREAM_DATE_DATA_OTHER if we've
                     // consumed the entire chunk
                     #ifdef HTP_DEBUG
-                    fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA (suspended parsing)\n");
+                    fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_DATA (suspended parsing)\n");
                     #endif
 
-                    connp->in_status = STREAM_STATE_DATA;
+                    connp->in_status = HTP_STREAM_DATA;
 
-                    return STREAM_STATE_DATA;
+                    return HTP_STREAM_DATA;
                 } else {
                     // Partial chunk consumption
                     #ifdef HTP_DEBUG
-                    fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_DATA_OTHER\n");
+                    fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_DATA_OTHER\n");
                     #endif
 
-                    connp->in_status = STREAM_STATE_DATA_OTHER;
+                    connp->in_status = HTP_STREAM_DATA_OTHER;
 
-                    return STREAM_STATE_DATA_OTHER;
+                    return HTP_STREAM_DATA_OTHER;
                 }
             }
 
             // Check for stop
             if (rc == HTP_STOP) {
                 #ifdef HTP_DEBUG
-                fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_STOP\n");
+                fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_STOP\n");
                 #endif
 
-                connp->in_status = STREAM_STATE_STOP;
+                connp->in_status = HTP_STREAM_STOP;
 
-                return STREAM_STATE_STOP;
+                return HTP_STREAM_STOP;
             }
 
             // If we're here that means we've encountered an error.
-            connp->in_status = STREAM_STATE_ERROR;
+            connp->in_status = HTP_STREAM_ERROR;
 
             #ifdef HTP_DEBUG
-            fprintf(stderr, "htp_connp_req_data: returning STREAM_STATE_ERROR (state response)\n");
+            fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_ERROR (state response)\n");
             #endif
 
-            return STREAM_STATE_ERROR;
+            return HTP_STREAM_ERROR;
         }
     }
 }

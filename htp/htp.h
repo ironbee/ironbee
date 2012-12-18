@@ -196,14 +196,14 @@ typedef struct timeval htp_time_t;
 #define TX_PROGRESS_RES_TRAILER     9
 #define TX_PROGRESS_DONE            10
 
-#define STREAM_STATE_NEW            0
-#define STREAM_STATE_OPEN           1
-#define STREAM_STATE_CLOSED         2
-#define STREAM_STATE_ERROR          3
-#define STREAM_STATE_TUNNEL         4
-#define STREAM_STATE_DATA_OTHER     5
-#define STREAM_STATE_STOP           6
-#define STREAM_STATE_DATA           9
+#define HTP_STREAM_NEW              0
+#define HTP_STREAM_OPEN             1
+#define HTP_STREAM_CLOSED           2
+#define HTP_STREAM_ERROR            3
+#define HTP_STREAM_TUNNEL           4
+#define HTP_STREAM_DATA_OTHER       5
+#define HTP_STREAM_STOP             6
+#define HTP_STREAM_DATA             9
 
 #define URL_DECODER_PRESERVE_PERCENT            0
 #define URL_DECODER_REMOVE_PERCENT              1

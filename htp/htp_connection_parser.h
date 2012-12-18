@@ -137,15 +137,15 @@ void htp_connp_set_user_data(htp_connp_t *connp, void *user_data);
  * @param[in] timestamp
  * @param[in] data
  * @param[in] len
- * @return STREAM_STATE_DATA, STREAM_STATE_ERROR or STEAM_STATE_DATA_OTHER (see QUICK_START).
- *         STREAM_STATE_CLOSED and STREAM_STATE_TUNNEL are also possible.
+ * @return HTP_STREAM_DATA, HTP_STREAM_ERROR or STEAM_STATE_DATA_OTHER (see QUICK_START).
+ *         HTP_STREAM_CLOSED and HTP_STREAM_TUNNEL are also possible.
  */
 int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len);
 
 /**
  * Returns the number of bytes consumed from the most recent inbound data chunk. Normally, an invocation
  * of htp_connp_req_data() will consume all data from the supplied buffer, but there are circumstances
- * where only partial consumption is possible. In such cases STREAM_STATE_DATA_OTHER will be returned.
+ * where only partial consumption is possible. In such cases HTP_STREAM_DATA_OTHER will be returned.
  * Consumed bytes are no longer necessary, but the remainder of the buffer will be need to be saved
  * for later.
  *
@@ -168,7 +168,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
 /**
  * Returns the number of bytes consumed from the most recent outbound data chunk. Normally, an invocation
  * of htp_connp_res_data() will consume all data from the supplied buffer, but there are circumstances
- * where only partial consumption is possible. In such cases STREAM_STATE_DATA_OTHER will be returned.
+ * where only partial consumption is possible. In such cases HTP_STREAM_DATA_OTHER will be returned.
  * Consumed bytes are no longer necessary, but the remainder of the buffer will be need to be saved
  * for later.
  *

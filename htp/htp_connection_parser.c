@@ -45,8 +45,8 @@ void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp) {
     htp_conn_close(connp->conn, timestamp);
 
     // Update internal flags
-    connp->in_status = STREAM_STATE_CLOSED;
-    connp->out_status = STREAM_STATE_CLOSED;
+    connp->in_status = HTP_STREAM_CLOSED;
+    connp->out_status = HTP_STREAM_CLOSED;
 
     // Call the parsers one last time, which will allow them
     // to process the events that depend on stream closure
@@ -99,8 +99,8 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
     connp->out_header_line_index = -1;
     connp->out_state = htp_connp_RES_IDLE;
 
-    connp->in_status = STREAM_STATE_NEW;
-    connp->out_status = STREAM_STATE_NEW;
+    connp->in_status = HTP_STREAM_NEW;
+    connp->out_status = HTP_STREAM_NEW;
 
     return connp;
 }
@@ -171,7 +171,7 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
         int local_port, htp_time_t *timestamp)
 {
     // Check connection parser state first.
-    if ((connp->in_status != STREAM_STATE_NEW) || (connp->out_status != STREAM_STATE_NEW)) {
+    if ((connp->in_status != HTP_STREAM_NEW) || (connp->out_status != HTP_STREAM_NEW)) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Connection is already open");
         return;
     }
@@ -180,8 +180,8 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
         return;
     }
     
-    connp->in_status = STREAM_STATE_OPEN;
-    connp->out_status = STREAM_STATE_OPEN;
+    connp->in_status = HTP_STREAM_OPEN;
+    connp->out_status = HTP_STREAM_OPEN;
 }
 
 void htp_connp_set_user_data(htp_connp_t *connp, void *user_data) {

@@ -34,6 +34,10 @@
 
 - htp_conn_remove_tx() now returns HTP_ERROR on error (was 0).
 
+- Renamed STREAM_STATE_* constants to HTP_STREAM_*
+
+
+
 
 
 
