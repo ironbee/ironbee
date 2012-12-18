@@ -223,9 +223,6 @@ typedef struct timeval htp_time_t;
 #define HTP_FILE_MULTIPART  1
 #define HTP_FILE_PUT        2
 
-#define CFG_NOT_SHARED  0
-#define CFG_SHARED      1
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -508,7 +505,7 @@ struct htp_tx_t {
      *  a rule of thumb transactions will initially share their configuration structure, but
      *  copy-on-write may be used when an attempt to modify configuration is detected.
      */
-    int is_cfg_shared;
+    int is_config_shared;
 
     /** The user data associated with this transaction. */
     void *user_data;

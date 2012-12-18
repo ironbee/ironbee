@@ -42,6 +42,9 @@
 #ifdef	__cplusplus
 extern "C" {
 #endif
+
+#define HTP_CONFIG_PRIVATE      0
+#define HTP_CONFIG_SHARED       1
   
 /**
  * Enumerate possible data handling strategies in hybrid parsing
@@ -80,6 +83,16 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp);
 void htp_tx_destroy(htp_tx_t *tx);
 
 /**
+ * Determines if the transaction used a shared configuration structure. See the
+ * documentation for htp_tx_set_config() for more information why you might want
+ * to know that.
+ *
+ * @param[in] tx
+ * @return HTP_CFG_SHARED or HTP_CFG_PRIVATE.
+ */
+int htp_tx_get_is_config_shared(const htp_tx_t *tx);
+
+/**
  * Returns the user data associated with this transaction.
  *
  * @param[in] tx
@@ -96,11 +109,19 @@ void *htp_tx_get_user_data(const htp_tx_t *tx);
 int htp_tx_req_has_body(const htp_tx_t *tx);
 
 /**
- * Sets the configuration that is to be used for this transaction.
+ * Sets the configuration that is to be used for this transaction. If the
+ * second parameter is set to HTP_CFG_PRIVATE, the transaction will adopt
+ * the configuration structure and destroy it when appropriate. This function is
+ * useful if you need to make changes to configuration on per-transaction basis.
+ * Initially, all transactions will share the configuration with that of the
+ * connection; if you were to make changes on it, they would affect all
+ * current and future connections. To work around that, you make a copy of the
+ * configuration object, call this function with the second parameter set to
+ * HTP_CFG_PRIVATE, and modify configuration at will.
  *
  * @param[in] tx
  * @param[in] cfg
- * @param is_cfg_shared
+ * @param is_cfg_shared HTP_CFG_SHARED or HTP_CFG_PRIVATE
  */
 void htp_tx_set_config(htp_tx_t *tx, htp_cfg_t *cfg, int is_cfg_shared);
 

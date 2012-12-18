@@ -52,7 +52,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->connp = connp;
     tx->conn = connp->conn;
     tx->cfg = connp->cfg;
-    tx->is_cfg_shared = CFG_SHARED;
+    tx->is_config_shared = HTP_CONFIG_SHARED;
 
     tx->request_header_lines = htp_list_create(32);
     tx->request_headers = htp_table_create(32);
@@ -220,7 +220,16 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     htp_hook_destroy(tx->hook_request_body_data);
 
+    // If we're using a private configuration, destroy it.
+    if (tx->is_config_shared == HTP_CONFIG_PRIVATE) {
+        htp_config_destroy(tx->cfg);
+    }
+
     free(tx);
+}
+
+int htp_tx_get_is_config_shared(const htp_tx_t *tx) {
+    return tx->is_config_shared;
 }
 
 void *htp_tx_get_user_data(const htp_tx_t *tx) {
@@ -228,8 +237,15 @@ void *htp_tx_get_user_data(const htp_tx_t *tx) {
 }
 
 void htp_tx_set_config(htp_tx_t *tx, htp_cfg_t *cfg, int is_cfg_shared) {
+    if ((is_cfg_shared != HTP_CONFIG_PRIVATE)&&(is_cfg_shared != HTP_CONFIG_SHARED)) return;
+
+    // If we're using a private configuration, destroy it.
+    if (tx->is_config_shared == HTP_CONFIG_PRIVATE) {
+        htp_config_destroy(tx->cfg);
+    }
+
     tx->cfg = cfg;
-    tx->is_cfg_shared = is_cfg_shared;
+    tx->is_config_shared = is_cfg_shared;
 }
 
 void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
