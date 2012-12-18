@@ -107,7 +107,7 @@ int htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
  * Consumes bytes until the end of the current line.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     // TODO We shouldn't really see anything apart from CR and LF,
@@ -129,7 +129,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
  * Processes a chunk of data.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     unsigned char *data = connp->in_current_data + connp->in_current_offset;
@@ -166,7 +166,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
  * Extracts chunk length.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
     for (;;) {
@@ -209,7 +209,7 @@ int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
  * Processes identity request body.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
     unsigned char *data = connp->in_current_data + connp->in_current_offset;
@@ -250,7 +250,7 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
  * Determines presence (and encoding) of a request body.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     if (connp->in_tx->request_transfer_coding == HTP_CODING_CHUNKED) {
@@ -279,7 +279,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
  * Parses request headers.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
     for (;;) {
@@ -393,12 +393,12 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
  * Determines request protocol.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
     // Is this a short-style HTTP/0.9 request? If it is,
     // we will not want to parse request headers.
-    if (connp->in_tx->protocol_is_simple == 0) {
+    if (connp->in_tx->is_protocol_0_9 == 0) {
         // Switch to request header parsing.
         connp->in_state = htp_connp_REQ_HEADERS;
         connp->in_tx->progress = TX_PROGRESS_REQ_HEADERS;
@@ -414,7 +414,7 @@ int htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
  * Parses request line.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_LINE(htp_connp_t *connp) {
     for (;;) {
@@ -504,7 +504,7 @@ int htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
  * which has been processed.
  *
  * @param connp
- * @returns HTP_OK on state change, HTTP_ERROR on error, or HTP_DATA when more data is needed.
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 int htp_connp_REQ_IDLE(htp_connp_t * connp) {
     // We want to start parsing the next request (and change
