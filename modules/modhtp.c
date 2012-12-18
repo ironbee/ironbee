@@ -241,7 +241,7 @@ static ib_status_t modhtp_add_flag_to_collection(
         ib_log_error_tx(itx,
                         "Not adding flag %s field %s to NULL transaction",
                         collection_name, flag);
-        return IB_EUNKNOWN;
+        IB_FTRACE_RET_STATUS(IB_EUNKNOWN);
     }
 
     rc = ib_data_get(itx->dpi, collection_name, &f);
