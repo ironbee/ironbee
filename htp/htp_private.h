@@ -486,17 +486,12 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 
 int htp_treat_response_line_as_body(htp_tx_t *tx);
 
-bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx);
-bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
 
-bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx);
-bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx);
+
+
 
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
-
-void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
-void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
 int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d);
 int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);

@@ -314,7 +314,7 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(user_data.response_body_correctly_received, 1);
 
     // Trailing response headers
-    htp_tx_res_headers_clear(tx);
+    htp_tx_res_set_headers_clear(tx);
     ASSERT_EQ(htp_table_size(tx->response_headers), 0);
 
     htp_tx_res_set_header_c(tx, "Content-Type", "text/html", ALLOC_COPY);
@@ -365,7 +365,7 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     htp_tx_req_process_body_data(tx, (const unsigned char *) "q=2", 3);
 
     // Trailing request headers
-    htp_tx_req_headers_clear(tx);
+    htp_tx_req_set_headers_clear(tx);
     ASSERT_EQ(htp_table_size(tx->request_headers), 0);
 
     htp_tx_req_set_header_c(tx, "Host", "www.example.com", ALLOC_COPY);

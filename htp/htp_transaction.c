@@ -495,7 +495,7 @@ htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const unsigned char *dat
     return HTP_OK;
 }
 
-htp_status_t htp_tx_req_headers_clear(htp_tx_t *tx) {
+htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx) {
     if (tx->request_headers == NULL) return HTP_ERROR;
 
     htp_header_t *h = NULL;
@@ -599,7 +599,7 @@ htp_status_t htp_tx_res_set_header_c(htp_tx_t *tx, const char *name, const char 
     return HTP_OK;
 }
 
-htp_status_t htp_tx_res_headers_clear(htp_tx_t *tx) {
+htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx) {
     if (tx->response_headers == NULL) return HTP_ERROR;
 
     htp_header_t *h = NULL;
