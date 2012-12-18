@@ -9,6 +9,9 @@ EXTRA_DIST = LICENSE NOTICE docs/doxygen.conf docs/QUICK_START
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = htp.pc
 
+test: check
+	@(cd test && $(MAKE) $@)
+
 check-compile-only: all
 	@(cd test && $(MAKE) $@)
 
