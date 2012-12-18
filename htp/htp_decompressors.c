@@ -34,8 +34,9 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "htp_private.h"
+#include "htp.h"
 #include "htp_decompressors.h"
+#include "htp_private.h"
 
 /**
  * Decompress a chunk of gzip-compressed data.

@@ -37,12 +37,11 @@
 #ifndef HTP_HYBRID_H
 #define	HTP_HYBRID_H
 
-#include "htp.h"
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
+#include "htp.h"
 
 // XXX Refactor these away during the implementation of the improved
 //     version of the connection parser.

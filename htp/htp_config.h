@@ -41,6 +41,8 @@
 extern "C" {
 #endif
 
+#include "htp.h"
+
 /**
  * Creates a new configuration structure. Configuration structures created at
  * configuration time must not be changed afterwards in order to support lock-less

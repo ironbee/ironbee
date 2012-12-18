@@ -37,6 +37,10 @@
 #ifndef _HTP_URLENCODED_H
 #define	_HTP_URLENCODED_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct htp_urlenp_t htp_urlenp_t;
 typedef struct htp_urlen_param_t htp_urlen_param_t;
 
@@ -46,10 +50,6 @@ typedef struct htp_urlen_param_t htp_urlen_param_t;
 #define HTP_URLENP_STATE_VALUE          2
 
 #define HTP_URLENCODED_MIME_TYPE        "application/x-www-form-urlencoded"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include "htp_private.h"
 

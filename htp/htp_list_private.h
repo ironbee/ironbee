@@ -37,11 +37,11 @@
 #ifndef HTP_LIST_PRIVATE_H
 #define	HTP_LIST_PRIVATE_H
 
-#include "htp_list.h"
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
+
+#include "htp_list.h"
 
 typedef struct htp_list_linked_element_t htp_list_linked_element_t;
 

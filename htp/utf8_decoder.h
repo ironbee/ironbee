@@ -34,11 +34,8 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#ifndef _UTF8_DECODER_H
-#define	_UTF8_DECODER_H
-
-/* HTP changes:
- * 
+/* LibHTP changes:
+ *
  *     - Changed the name of the function from "decode" to "utf8_decode"
  *     - Created a separate header file
  *     - Copied the license from the web page
@@ -65,14 +62,17 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include <stdint.h>
-
-#define HTP_UTF8_ACCEPT 0
-#define HTP_UTF8_REJECT 1
+#ifndef _UTF8_DECODER_H
+#define	_UTF8_DECODER_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include <stdint.h>
+
+#define HTP_UTF8_ACCEPT 0
+#define HTP_UTF8_REJECT 1
 
 uint32_t htp_utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte);
 uint32_t htp_utf8_decode_allow_overlong(uint32_t* state, uint32_t* codep, uint32_t byte);
@@ -82,4 +82,3 @@ uint32_t htp_utf8_decode_allow_overlong(uint32_t* state, uint32_t* codep, uint32
 #endif
 
 #endif	/* _UTF8_DECODER_H */
-

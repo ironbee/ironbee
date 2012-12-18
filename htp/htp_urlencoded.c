@@ -34,7 +34,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "stdlib.h"
+#include <stdlib.h>
 
 #include "htp_urlencoded.h"
 

@@ -29,12 +29,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  ***************************************************************************/
 
-#include "htp_table_private.h"
-
 /**
  * @file
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
+
+#include "htp_table_private.h"
 
 htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *element) {
     bstr *dupkey = bstr_dup(key);

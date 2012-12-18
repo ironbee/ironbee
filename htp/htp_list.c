@@ -31,8 +31,8 @@
 
 #include "htp_list_private.h"
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /**
  * @file

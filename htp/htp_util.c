@@ -35,19 +35,19 @@
  */
 
 #include <ctype.h>
-#include <stdarg.h>
-
-#include "htp.h"
-#include "htp_private.h"
-#include "utf8_decoder.h"
-
 
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
 /* C99 requires that inttypes.h only exposes PRI* macros
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
+
 #include <inttypes.h>
+#include <stdarg.h>
+
+#include "htp.h"
+#include "htp_private.h"
+#include "utf8_decoder.h"
 
 /**
  * Is character a linear white space character?

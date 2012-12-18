@@ -37,8 +37,8 @@
 #include <stdlib.h>
 
 #include "htp.h"
-#include "htp_transaction.h"
 #include "htp_private.h"
+#include "htp_transaction.h"
 
 /**
  * Consumes bytes until the end of the current line.

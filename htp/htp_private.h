@@ -133,6 +133,14 @@ if ((X)->out_line_len < (X)->out_line_size) { \
     htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_HARD, "Response field over hard limit"); \
     return HTP_ERROR; \
 }
+
+#ifndef CR
+#define CR '\r'
+#endif
+
+#ifndef LF
+#define LF '\n'
+#endif
     
 // Data structures
 

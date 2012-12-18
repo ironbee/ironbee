@@ -39,28 +39,15 @@
 
 #include <sys/time.h>
 
-#include "htp_definitions.h"
-
-typedef struct htp_cfg_t htp_cfg_t;
-typedef struct htp_conn_t htp_conn_t;
-typedef struct htp_connp_t htp_connp_t;
-typedef struct htp_file_t htp_file_t;
-typedef struct htp_file_data_t htp_file_data_t;
-typedef struct htp_header_t htp_header_t;
-typedef struct htp_header_line_t htp_header_line_t;
-typedef struct htp_log_t htp_log_t;
-typedef struct htp_tx_data_t htp_tx_data_t;
-typedef struct htp_tx_t htp_tx_t;
-typedef struct htp_uri_t htp_uri_t;
-typedef struct timeval htp_time_t;
+#include "htp_core.h"
 
 #include "bstr.h"
-#include "htp_list.h"
-#include "htp_table.h"
-#include "htp_hooks.h"
 #include "htp_decompressors.h"
-#include "htp_urlencoded.h"
+#include "htp_hooks.h"
+#include "htp_list.h"
 #include "htp_multipart.h"
+#include "htp_urlencoded.h"
+#include "htp_table.h"
 
 // -- Defines -------------------------------------------------------------------------------------
 

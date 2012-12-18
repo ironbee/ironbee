@@ -34,8 +34,8 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "htp_transaction.h"
 #include "htp_private.h"
+#include "htp_transaction.h"
 
 static bstr *copy_or_wrap_c(const char *input, enum alloc_strategy alloc) {
     if (alloc == ALLOC_REUSE) {

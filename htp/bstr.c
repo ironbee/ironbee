@@ -34,8 +34,9 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "bstr.h"
 #include <ctype.h>
+
+#include "bstr.h"
 
 bstr *bstr_alloc(size_t len) {    
     bstr *b = malloc(sizeof (bstr) + len);

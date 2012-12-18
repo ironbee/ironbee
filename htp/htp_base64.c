@@ -36,8 +36,8 @@
 
 /* Adapted from the libb64 project (http://sourceforge.net/projects/libb64), which is in public domain. */
 
-#include "htp_base64.h"
 #include "bstr.h"
+#include "htp_base64.h"
 
 /**
  * Decode single base64-encoded character.

@@ -37,17 +37,16 @@
 #ifndef _HOOKS_H
 #define	_HOOKS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct htp_hook_t htp_hook_t;
 typedef struct htp_callback_t htp_callback_t;
 typedef int (*htp_callback_fn_t) (void *);
 
 #include "htp.h"
 #include "htp_list.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct htp_hook_t {
     htp_list_array_t *callbacks;

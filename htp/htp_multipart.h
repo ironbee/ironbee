@@ -37,12 +37,16 @@
 #ifndef _HTP_MULTIPART_H
 #define	_HTP_MULTIPART_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct htp_mpartp_t htp_mpartp_t;
 typedef struct htp_mpart_part_t htp_mpart_part_t;
 
 #include "bstr.h"
-#include "htp_table.h"
 #include "htp.h"
+#include "htp_table.h"
 
 #define MULTIPART_PART_UNKNOWN                  0
 #define MULTIPART_PART_TEXT                     1
@@ -61,19 +65,7 @@ typedef struct htp_mpart_part_t htp_mpart_part_t;
 
 #define MULTIPART_DEFAULT_FILE_EXTRACT_LIMIT    16
 
-#define HTP_MULTIPART_MIME_TYPE             "multipart/form-data"
-
-#ifndef CR
-#define CR '\r'
-#endif
-
-#ifndef LF
-#define LF '\n'
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#define HTP_MULTIPART_MIME_TYPE                 "multipart/form-data"
 
 struct htp_mpart_part_t {
     /** Pointer to the parser. */
