@@ -125,7 +125,7 @@ htp_status_t htp_list_array_push(htp_list_array_t *l, void *e);
  * @param[in] idx
  * @param[in] e
  *
- * @return HTTP_OK if an element with the given index was replaced; HTP_ERROR
+ * @return HTP_OK if an element with the given index was replaced; HTP_ERROR
  *         if the desired index does not exist.
  */
 htp_status_t htp_list_array_replace(htp_list_array_t *l, size_t idx, void *e);
