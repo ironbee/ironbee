@@ -62,13 +62,13 @@ int htp_parse_protocol(bstr *protocol) {
             // Check the version numbers
             if (ptr[5] == '0') {
                 if (ptr[7] == '9') {
-                    return HTTP_0_9;
+                    return HTP_PROTOCOL_0_9;
                 }
             } else if (ptr[5] == '1') {
                 if (ptr[7] == '0') {
-                    return HTTP_1_0;
+                    return HTP_PROTOCOL_1_0;
                 } else if (ptr[7] == '1') {
-                    return HTTP_1_1;
+                    return HTP_PROTOCOL_1_1;
                 }
             }
         }

@@ -74,10 +74,10 @@ typedef struct timeval htp_time_t;
 
 #define HTP_BASE_VERSION_TEXT	"master"
 
-#define HTP_PROTOCOL_UNKNOWN    -1
-#define HTTP_0_9                9
-#define HTTP_1_0                100
-#define HTTP_1_1                101
+#define HTP_PROTOCOL_UNKNOWN        -1
+#define HTP_PROTOCOL_0_9             9
+#define HTP_PROTOCOL_1_0             100
+#define HTP_PROTOCOL_1_1             101
 
 #define HTP_LOG_MARK                __FILE__,__LINE__
 
@@ -544,13 +544,14 @@ struct htp_tx_t {
     /** Request protocol, as text. */
     bstr *request_protocol;
 
-    /** Protocol version as a number: -1 means unknown, 9 (HTTP_0_9) means 0.9,
-     *  100 (HTTP_1_0) means 1.0 and 101 (HTTP_1_1) means 1.1.
+    /**
+     * Protocol version as a number. Multiply the high version number by 100, then add the low
+     * version number. You should prefer to work the pre-defined HTP_PROTOCOL_* constants.
      */
     int request_protocol_number;
 
-    /** Is this request using a short-style HTTP/0.9 request? */
-    int protocol_is_simple;
+    /** Is this request using HTTP/0.9? */
+    int is_protocol_0_9;
 
     /** This structure holds a parsed request_uri, with the missing information
      *  added (e.g., adding port number from the TCP information) and the fields

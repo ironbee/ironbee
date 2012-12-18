@@ -63,7 +63,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->response_header_lines = htp_list_create(32);
     tx->response_headers = htp_table_create(32);
 
-    tx->request_protocol_number = -1;
+    tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;
 
     return tx;
 }
@@ -323,11 +323,11 @@ void htp_tx_req_set_protocol_number(htp_tx_t *tx, int protocol_number) {
     tx->request_protocol_number = protocol_number;
 }
 
-void htp_tx_req_set_protocol_http_0_9(htp_tx_t *tx, int is_http_0_9) {
-    if (is_http_0_9) {
-        tx->protocol_is_simple = 1;
+void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9) {
+    if (is_protocol_0_9) {
+        tx->is_protocol_0_9 = 1;
     } else {
-        tx->protocol_is_simple = 0;
+        tx->is_protocol_0_9 = 0;
     }
 }
 
@@ -355,7 +355,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         //
         // TODO IIS 7.0, for example, would ignore the T-E header when it
         //      it is used with a protocol below HTTP 1.1.
-        if (tx->request_protocol_number < HTTP_1_1) {
+        if (tx->request_protocol_number < HTP_PROTOCOL_1_1) {
             tx->flags |= HTP_INVALID_CHUNKING;
             // TODO Log
         }
@@ -415,7 +415,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         // No host information in the headers
 
         // HTTP/1.1 requires host information in the headers
-        if (tx->request_protocol_number >= HTTP_1_1) {
+        if (tx->request_protocol_number >= HTP_PROTOCOL_1_1) {
             tx->flags |= HTP_HOST_MISSING;
             htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
                     "Host information in request headers required by HTTP/1.1");
@@ -547,7 +547,7 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
 
     // Unless we're dealing with HTTP/0.9, check that
     // the minimum amount of data has been provided.
-    if (tx->protocol_is_simple != 0) {
+    if (tx->is_protocol_0_9 != 0) {
         if ((tx->response_protocol == NULL) || (tx->response_status_number == -1) || (tx->response_message == NULL)) {
             return HTP_ERROR;
         }
@@ -920,7 +920,7 @@ htp_status_t htp_tx_state_response_start(htp_tx_t *tx) {
 
     // Change state into response line parsing, except if we're following
     // a HTTP/0.9 request (no status line or response headers).
-    if (tx->protocol_is_simple) {
+    if (tx->is_protocol_0_9) {
         tx->response_transfer_coding = HTP_CODING_IDENTITY;
         tx->progress = TX_PROGRESS_RES_BODY;
         tx->connp->out_state = htp_connp_RES_BODY_IDENTITY;

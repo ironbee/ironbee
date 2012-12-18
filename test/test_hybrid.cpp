@@ -215,8 +215,8 @@ TEST_F(HybridParsing, GetTest) {
     htp_tx_req_set_uri_c(tx, "/", ALLOC_COPY);
     htp_tx_req_set_query_string_c(tx, "p=1&q=2", ALLOC_COPY);
     htp_tx_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
-    htp_tx_req_set_protocol_number(tx, HTTP_1_1);
-    htp_tx_req_set_protocol_http_0_9(tx, 0);
+    htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
+    htp_tx_req_set_protocol_0_9(tx, 0);
 
     // Request line complete
     htp_tx_state_request_line(tx);
@@ -273,12 +273,12 @@ TEST_F(HybridParsing, GetTest) {
     // Response line data
     htp_tx_res_set_status_line_c(tx, "HTTP/1.1 200 OK", ALLOC_COPY);
     ASSERT_EQ(bstr_cmp_c(tx->response_protocol, "HTTP/1.1"), 0);
-    ASSERT_EQ(tx->response_protocol_number, HTTP_1_1);
+    ASSERT_EQ(tx->response_protocol_number, HTP_PROTOCOL_1_1);
     ASSERT_EQ(tx->response_status_number, 200);
     ASSERT_EQ(bstr_cmp_c(tx->response_message, "OK"), 0);
 
-    htp_tx_res_set_protocol_number(tx, HTTP_1_0);
-    ASSERT_EQ(tx->response_protocol_number, HTTP_1_0);
+    htp_tx_res_set_protocol_number(tx, HTP_PROTOCOL_1_0);
+    ASSERT_EQ(tx->response_protocol_number, HTP_PROTOCOL_1_0);
 
     htp_tx_res_set_status_code(tx, 500);
     ASSERT_EQ(tx->response_status_number, 500);
@@ -349,8 +349,8 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     htp_tx_req_set_method_number(tx, HTP_M_GET);
     htp_tx_req_set_uri_c(tx, "/", ALLOC_COPY);
     htp_tx_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
-    htp_tx_req_set_protocol_number(tx, HTTP_1_1);
-    htp_tx_req_set_protocol_http_0_9(tx, 0);
+    htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
+    htp_tx_req_set_protocol_0_9(tx, 0);
 
     // Configure headers to trigger the URLENCODED parser
     htp_tx_req_set_header_c(tx, "Content-Type", HTP_URLENCODED_MIME_TYPE, ALLOC_COPY);
@@ -413,8 +413,8 @@ static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
     htp_tx_req_set_uri_c(tx, "/", ALLOC_COPY);
     htp_tx_req_set_query_string_c(tx, "p=1&q=2", ALLOC_COPY);
     htp_tx_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
-    htp_tx_req_set_protocol_number(tx, HTTP_1_1);
-    htp_tx_req_set_protocol_http_0_9(tx, 0);
+    htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
+    htp_tx_req_set_protocol_0_9(tx, 0);
 
     htp_tx_state_request_headers(tx);
     htp_tx_state_request_complete(tx);

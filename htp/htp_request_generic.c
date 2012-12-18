@@ -328,7 +328,7 @@ int htp_parse_request_line_generic(htp_connp_t *connp) {
     // Is there protocol information available?
     if (pos == len) {
         // No, this looks like a HTTP/0.9 request.
-        tx->protocol_is_simple = 1;
+        tx->is_protocol_0_9 = 1;
         return HTP_OK;
     }
 

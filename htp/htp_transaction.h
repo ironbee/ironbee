@@ -206,7 +206,7 @@ htp_status_t htp_tx_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum 
  * htp_txh_set_req_protocol_c(), because it will overwrite the previously
  * extracted version number. Convert the protocol version number to an integer
  * by multiplying it with 100. For example, 1.1 becomes 110. Alternatively,
- * use the HTTP_0_9, HTTP_1_0, and HTTP_1_1 constants.
+ * use the HTP_PROTOCOL_0_9, HTP_PROTOCOL_1_0, and HTP_PROTOCOL_1_1 constants.
  * 
  * @param[in] tx
  * @param[in] protocol
@@ -219,9 +219,9 @@ void htp_tx_req_set_protocol_number(htp_tx_t *tx, int protocol);
  * potential differences in how the protocol version is determined.
  *
  * @param[in] tx
- * @param[in] is_http_0_9
+ * @param[in] is_protocol_0_9
  */
-void htp_tx_req_set_protocol_http_0_9(htp_tx_t *tx, int is_http_0_9);
+void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9);
      
 /**
  * Change transaction state to REQUEST_LINE and invoke all

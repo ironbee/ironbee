@@ -52,7 +52,7 @@ static int libhtp_post_read_request(request_rec *r) {
     htp_tx_req_set_query_string_c(tx, r->args, ALLOC_REUSE);
     htp_tx_req_set_protocol_c(tx, r->protocol, ALLOC_REUSE);
     htp_tx_req_set_protocol_number(tx, convert_protocol_number(r->proto_num));
-    htp_tx_req_set_protocol_http_0_9(tx, r->assbackwards);
+    htp_tx_req_set_protocol_0_9(tx, r->assbackwards);
 
     // Request line available
     htp_tx_state_request_line(tx);
