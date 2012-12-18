@@ -25,7 +25,8 @@ TESTS_ENVIRONMENT = srcdir=$(srcdir)/files
 TESTS = test_bstr test_main test_utils test_hybrid
 
 test: check
+	@echo
 
 check-compile-only: all-am
-	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
+	@echo
 
