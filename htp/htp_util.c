@@ -47,7 +47,7 @@
 
 #include "htp.h"
 #include "htp_private.h"
-#include "utf8_decoder.h"
+#include "htp_utf8_decoder.h"
 
 /**
  * Is character a linear white space character?

@@ -41,7 +41,7 @@
 
 #include<htp/htp.h>
 #include<htp/htp_list.h>
-#include<htp/utf8_decoder.h>
+#include<htp/htp_utf8_decoder.h>
 #include<htp/htp_base64.h>
 
 TEST(Utf8, SingleByte) {
