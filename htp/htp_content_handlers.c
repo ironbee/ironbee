@@ -35,11 +35,12 @@
  */
 
 #include "htp.h"
+#include "htp_private.h"
 
 /**
  * Invoked to process a part of request body data.
  *
- * @param d
+ * @param[in] d
  */
 int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
     if (d->data != NULL) {
@@ -110,7 +111,7 @@ int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
  * Parse query string, if available. This method is invoked after the
  * request line has been processed.
  *
- * @param connp
+ * @param[in] connp
  */
 int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {    
     // Parse query string, when available
@@ -164,7 +165,7 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
 /**
  * Finalize MULTIPART processing.
  * 
- * @param d
+ * @param[in] d
  */
 int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
     if (d->data != NULL) {
@@ -201,7 +202,7 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
  * Inspect request headers and register the MULTIPART request data hook
  * if it contains a multipart/form-data body.
  *
- * @param connp
+ * @param[in] connp
  */
 int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     // Check the request content type to see if it matches our MIME type

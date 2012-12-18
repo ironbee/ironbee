@@ -36,17 +36,9 @@
 
 #include "htp.h"
 
-/**
- * Creates a new connection structure.
- *
- * @param connp
- * @return A new htp_connp_t structure on success, NULL on memory allocation failure.
- */
-htp_conn_t *htp_conn_create(htp_connp_t *connp) {
+htp_conn_t *htp_conn_create(void) {
     htp_conn_t *conn = calloc(1, sizeof (htp_conn_t));
-    if (conn == NULL) return NULL;
-
-    conn->connp = connp;
+    if (conn == NULL) return NULL;   
 
     conn->transactions = htp_list_create(16);
     if (conn->transactions == NULL) {
@@ -64,15 +56,13 @@ htp_conn_t *htp_conn_create(htp_connp_t *connp) {
     return conn;
 }
 
-/**
- * Destroys a connection, as well as all the transactions it contains. It is
- * not possible to destroy a connection structure yet leave any of its
- * transactions intact. This is because transactions need its connection and
- * connection structures hold little data anyway. The opposite is true, though
- * it is possible to delete a transaction but leave its connection alive.
- *
- * @param conn
- */
+void htp_conn_close(htp_conn_t *conn, htp_time_t *timestamp) {
+    // Update timestamp
+    if (timestamp != NULL) {
+        memcpy(&(conn->close_timestamp), timestamp, sizeof(htp_time_t));
+    }
+}
+
 void htp_conn_destroy(htp_conn_t *conn) {
     if (conn == NULL) return;
 
@@ -80,11 +70,9 @@ void htp_conn_destroy(htp_conn_t *conn) {
         // Destroy individual transactions. Do note that iterating
         // using the iterator does not work here because some of the
         // list element may be NULL (and with the iterator it is impossible
-        // to distinguish a NULL element from the end of the list).
-        size_t i;
-
-        for (i = 0; i < htp_list_size(conn->transactions); i++) {
-            htp_tx_t *tx = (htp_tx_t *) htp_list_get(conn->transactions, i);
+        // to distinguish a NULL element from the end of the list).        
+        for (size_t i = 0, n = htp_list_size(conn->transactions); i < n; i++) {
+            htp_tx_t *tx = htp_list_get(conn->transactions, i);
             if (tx != NULL) {
                 htp_tx_destroy(tx);
             }
@@ -95,7 +83,7 @@ void htp_conn_destroy(htp_conn_t *conn) {
 
     if (conn->messages != NULL) {
         // Destroy individual messages
-        for (int i = 0, n = htp_list_size(conn->messages); i < n; i++) {
+        for (size_t i = 0, n = htp_list_size(conn->messages); i < n; i++) {
             htp_log_t *l = htp_list_get(conn->messages, i);
             free((void *) l->msg);
             free(l);
@@ -117,28 +105,56 @@ void htp_conn_destroy(htp_conn_t *conn) {
     free(conn);
 }
 
-/**
- * Removes the given transaction structure, which makes it possible to
- * safely destroy it. It is safe to destroy transactions in this way
- * because the index of the transactions (in a connection) is preserved.
- *
- * @param conn
- * @param tx
- * @return 1 if transaction was removed or 0 if it wasn't found
- */
-int htp_conn_remove_tx(htp_conn_t *conn, htp_tx_t *tx) {
-    if ((tx == NULL) || (conn == NULL)) return 0;
+htp_status_t htp_conn_open(htp_conn_t *conn, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp) {
+    if (remote_addr != NULL) {
+        conn->remote_addr = strdup(remote_addr);
+        if (conn->remote_addr == NULL) return HTP_ERROR;
+    }
 
-    if (conn->transactions != NULL) {
-        unsigned int i = 0;
-        for (i = 0; i < htp_list_size(conn->transactions); i++) {
-            htp_tx_t *etx = htp_list_get(conn->transactions, i);
-            if (tx == etx) {
-                htp_list_replace(conn->transactions, i, NULL);
-                return 1;
+    conn->remote_port = remote_port;
+
+    if (local_addr != NULL) {
+        conn->local_addr = strdup(local_addr);
+        if (conn->local_addr == NULL) {
+            if (conn->remote_addr != NULL) {
+                free(conn->remote_addr);
             }
+
+            return HTP_ERROR;
         }
     }
 
-    return 0;
+    conn->local_port = local_port;
+
+    // Remember when the connection was opened.
+    if (timestamp != NULL) {
+        memcpy(&(conn->open_timestamp), timestamp, sizeof(*timestamp));
+    }
+
+    return HTP_OK;
+}
+
+htp_status_t htp_conn_remove_tx(htp_conn_t *conn, const htp_tx_t *tx) {
+    if ((tx == NULL) || (conn == NULL)) return HTP_ERROR;
+    if (conn->transactions == NULL) return HTP_ERROR;
+
+    for (size_t i = 0, n = htp_list_size(conn->transactions); i < n; i++) {
+        htp_tx_t *candidate_tx = htp_list_get(conn->transactions, i);
+        if (tx == candidate_tx) {
+            htp_list_replace(conn->transactions, i, NULL);
+            return HTP_OK;
+        }
+    }
+
+    return HTP_ERROR;
+}
+
+void htp_conn_track_inbound_data(htp_conn_t *conn, size_t len, htp_time_t *timestamp) {
+    conn->in_data_counter += len;
+    conn->in_packet_counter++;
+}
+
+void htp_conn_track_outbound_data(htp_conn_t *conn, size_t len, htp_time_t *timestamp) {
+    conn->out_data_counter += len;
+    conn->out_packet_counter++;
 }

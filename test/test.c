@@ -48,7 +48,7 @@
 /**
  * Destroys a test.
  *
- * @param test
+ * @param[in] test
  */
 static void test_destroy(test_t *test) {
     if (test->buf != NULL) {
@@ -60,8 +60,8 @@ static void test_destroy(test_t *test) {
 /**
  * Checks if there's a chunk boundary at the given position.
  *
- * @param test
- * @param pos
+ * @param[in] test
+ * @param[in] pos
  * @return Zero if there is no boundary, SERVER or CLIENT if a boundary
  *         was found, and a negative value on error (e.g., not enough data
  *         to determine if a boundary is present).
@@ -102,8 +102,8 @@ static int test_is_boundary(test_t *test, int pos) {
 /**
  * Initializes test by loading the entire data file into a memory block.
  *
- * @param test
- * @param filename
+ * @param[in] test
+ * @param[in] filename
  * @return Non-negative value on success, negative value on error.
  */
 static int test_init(test_t *test, const char *filename) {
@@ -143,7 +143,7 @@ void test_start(test_t *test) {
 /**
  * Finds the next data chunk in the given test.
  *
- * @param test
+ * @param[in] test
  * @return One if a chunk is found or zero if there are no more chunks in the test. On
  *         success, test->chunk will point to the beginning of the chunk, while
  *         test->chunk_len will contain its length.
@@ -248,8 +248,8 @@ static int parse_filename(const char *filename, char **remote_addr, int *remote_
 /**
  * Runs a single test.
  *
- * @param filename
- * @param cfg
+ * @param[in] filename
+ * @param[in] cfg
  * @return A pointer to the instance of htp_connp_t created during
  *         the test, or NULL if the test failed for some reason.
  */
@@ -326,11 +326,11 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
             }
             
             int rc = htp_connp_req_data(*connp, &tv_start, test.chunk, test.chunk_len);
-            if (rc == STREAM_STATE_ERROR) {
+            if (rc == HTP_STREAM_ERROR) {
                 test_destroy(&test);
                 return -101;
             }
-            if (rc == STREAM_STATE_DATA_OTHER) {
+            if (rc == HTP_STREAM_DATA_OTHER) {
                 // Parser needs to see the outbound stream in order to continue
                 // parsing the inbound stream.
                 in_data_other = 1;
@@ -341,7 +341,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
         } else {
             if (out_data_other) {
                 int rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
-                if (rc == STREAM_STATE_ERROR) {
+                if (rc == HTP_STREAM_ERROR) {
                     test_destroy(&test);
                     return -104;
                 }
@@ -349,11 +349,11 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
             }
 
             int rc = htp_connp_res_data(*connp, &tv_start, test.chunk, test.chunk_len);
-            if (rc == STREAM_STATE_ERROR) {
+            if (rc == HTP_STREAM_ERROR) {
                 test_destroy(&test);
                 return -102;
             }
-            if (rc == STREAM_STATE_DATA_OTHER) {
+            if (rc == HTP_STREAM_DATA_OTHER) {
                 // Parser needs to see the outbound stream in order to continue
                 // parsing the inbound stream.
                 out_data_other = 1;
@@ -365,7 +365,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
 
             if (in_data_other) {
                 int rc = htp_connp_req_data(*connp, &tv_start, in_data + in_data_offset, in_data_len - in_data_offset);
-                if (rc == STREAM_STATE_ERROR) {
+                if (rc == HTP_STREAM_ERROR) {
                     test_destroy(&test);
                     return -103;
                 }
@@ -376,7 +376,7 @@ int test_run(const char *testsdir, const char *testname, htp_cfg_t *cfg, htp_con
 
     if (out_data_other) {
         int rc = htp_connp_res_data(*connp, &tv_start, out_data + out_data_offset, out_data_len - out_data_offset);
-        if (rc == STREAM_STATE_ERROR) {
+        if (rc == HTP_STREAM_ERROR) {
             test_destroy(&test);
             return -104;
         }

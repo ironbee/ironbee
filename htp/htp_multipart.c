@@ -34,20 +34,27 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include <ctype.h>
+#include <unistd.h>
+
 #include "htp.h"
 #include "htp_multipart.h"
-#include "unistd.h"
 
 #define PARAM_OTHER     0
 #define PARAM_NAME      1
 #define PARAM_FILENAME  2
 
+int htp_mpart_part_process_headers(htp_mpart_part_t *part);
+int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, size_t len);
+int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int is_line);
+int htp_mpartp_is_boundary_character(int c);
+
 /**
  * Determines the type of a Content-Disposition parameter.
  *
- * @param data
- * @param startpos
- * @param pos
+ * @param[in] data
+ * @param[in] startpos
+ * @param[in] pos
  * @return PARAM_OTHER, PARAM_NAME or PARAM_FILENAME
  */
 static int htp_mpartp_cd_param_type(unsigned char *data, size_t startpos, size_t pos) {
@@ -64,7 +71,7 @@ static int htp_mpartp_cd_param_type(unsigned char *data, size_t startpos, size_t
  * Process part headers. In the current implementation, we only parse the
  * Content-Disposition header if it is present.
  *
- * @param part
+ * @param[in] part
  * @return Success indication
  */
 int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
@@ -185,9 +192,9 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
 /**
  * Parses one part header.
  *
- * @param data
- * @param len
- * @param Success indication
+ * @param[in] data
+ * @param[in] len
+ * @param[in] Success indication
  */
 int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, size_t len) {
     size_t name_start, name_end;
@@ -304,7 +311,7 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, s
 /**
  * Creates new multipart part.
  *
- * @param mpartp
+ * @param[in] mpartp
  */
 htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
     htp_mpart_part_t * part = calloc(1, sizeof (htp_mpart_part_t));
@@ -327,7 +334,7 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
 /**
  * Destroys multipart part.
  *
- * @param part
+ * @param[in] part
  */
 void htp_mpart_part_destroy(htp_mpart_part_t *part) {
     if (part == NULL) return;
@@ -366,7 +373,7 @@ void htp_mpart_part_destroy(htp_mpart_part_t *part) {
 /**
  * Finalizes part processing.
  *
- * @param part
+ * @param[in] part
  */
 int htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
     // We currently do not process the preamble and epilogue parts
@@ -410,10 +417,10 @@ int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, const unsigned
 /**
  * Handles part data.
  *
- * @param part
- * @param data
- * @param len
- * @param is_line
+ * @param[in] part
+ * @param[in] data
+ * @param[in] len
+ * @param[in] is_line
  */
 int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int is_line) {
     #if HTP_DEBUG
@@ -533,10 +540,10 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data
 /**
  * Handles data, creating new parts as necessary.
  *
- * @param mpartp
- * @param data
- * @param len
- * @param is_line
+ * @param[in] mpartp
+ * @param[in] data
+ * @param[in] len
+ * @param[in] is_line
  */
 static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, const unsigned char *data, size_t len, int is_line) {
     #if HTP_DEBUG
@@ -578,7 +585,7 @@ static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, const unsigned char *dat
  * Handles a boundary event, which means that it will finalize a part
  * if one exists.
  *
- * @param mpartp
+ * @param[in] mpartp
  */
 static int htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
     #if HTP_DEBUG
@@ -604,7 +611,7 @@ static int htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
 /**
  * Creates a new multipart/form-data parser.
  *
- * @param boundary
+ * @param[in] boundary
  * @return New parser, or NULL on memory allocation failure.
  */
 htp_mpartp_t * htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
@@ -663,7 +670,7 @@ htp_mpartp_t * htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
 /**
  * Destroys a multipart/form-data parser.
  *
- * @param mpartp
+ * @param[in] mpartp
  */
 void htp_mpartp_destroy(htp_mpartp_t ** _mpartp) {
     if ((_mpartp == NULL) || (*_mpartp == NULL)) return;
@@ -694,12 +701,12 @@ void htp_mpartp_destroy(htp_mpartp_t ** _mpartp) {
 /**
  * Processes set-aside data.
  *
- * @param mpartp
- * @param data
- * @param pos
- * @param startpos
- * @param return_pos
- * @param matched
+ * @param[in] mpartp
+ * @param[in] data
+ * @param[in] pos
+ * @param[in] startpos
+ * @param[in] return_pos
+ * @param[in] matched
  */
 static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
     // The stored data pieces can contain up to one line. If we're in data mode and there
@@ -796,7 +803,7 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
 /**
  * Finalize parsing.
  *
- * @param mpartp
+ * @param[in] mpartp
  */
 int htp_mpartp_finalize(htp_mpartp_t * mpartp) {        
     if (mpartp->current_part != NULL) {
@@ -814,9 +821,9 @@ int htp_mpartp_finalize(htp_mpartp_t * mpartp) {
  * Parses a chunk of multipart/form-data data. This function should be called
  * as many times as necessary until all data has been consumed.
  *
- * @param mpartp
+ * @param[in] mpartp
  * @parma data
- * @param len
+ * @param[in] len
  * @return Status indicator
  */
 int htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, size_t len) {
@@ -1010,7 +1017,7 @@ STATE_SWITCH:
 /**
  * Determine if the supplied character is allowed in boundary.
  *
- * @param c
+ * @param[in] c
  */
 int htp_mpartp_is_boundary_character(int c) {
     if ((c < 32) || (c > 126)) {
@@ -1043,8 +1050,8 @@ int htp_mpartp_is_boundary_character(int c) {
  * Extract boundary from the supplied Content-Type request header. The extracted
  * boundary will be allocated on heap.
  *
- * @param content_type
- * @param boundary
+ * @param[in] content_type
+ * @param[in] boundary
  * @return rc
  */
 int htp_mpartp_extract_boundary(bstr *content_type, char **boundary) {

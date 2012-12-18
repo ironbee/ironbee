@@ -238,7 +238,8 @@ int main(int argc, char** argv) {
 
 int main_path_decoding_tests(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
-    htp_tx_t *tx = htp_tx_create(cfg, 0, NULL);
+    htp_connp_t *connp = htp_connp_create(cfg);
+    htp_tx_t *tx = htp_tx_create(connp);
     char *str;
     bstr *path = NULL;
 
@@ -376,7 +377,8 @@ void encode_utf8_4(uint8_t *data, uint32_t i) {
 
 int main_utf8_decoder_tests(int argc, char** argv) {
     htp_cfg_t *cfg = htp_config_create();
-    htp_tx_t *tx = htp_tx_create(cfg, 0, NULL);
+    htp_connp_t *connp = htp_connp_create(cfg);
+    htp_tx_t *tx = htp_tx_create(connp);
 
     bstr *path = NULL;
 
@@ -431,7 +433,8 @@ int main_utf8_decoder_tests(int argc, char** argv) {
     expected_flags = -1; \
     success = 0; \
     cfg = htp_config_create(); \
-    tx = htp_tx_create(cfg, 0, NULL);
+    connp = htp_connp_create(cfg); \
+    tx = htp_tx_create(connp);
 
 #define PATH_DECODE_TEST_AFTER() \
     htp_decode_path_inplace(cfg, tx, input); \
@@ -460,6 +463,7 @@ int main_utf8_decoder_tests(int argc, char** argv) {
 
 int main_path_tests(int argc, char** argv) {
     htp_cfg_t *cfg = NULL;
+    htp_connp_t *connp = NULL;
     htp_tx_t *tx = NULL;
     bstr *input = NULL;
     bstr *expected = NULL;

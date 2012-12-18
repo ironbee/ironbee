@@ -56,7 +56,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SO
 // Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
 
-#include "utf8_decoder.h"
+#include "htp_utf8_decoder.h"
 
 static const uint8_t utf8d[] = {
   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
@@ -95,9 +95,9 @@ static const uint8_t utf8d_allow_overlong[] = {
 /**
  * Process one byte of UTF-8 data and return a code point if one is available.
  *
- * @param state
- * @param codep
- * @param byte
+ * @param[in] state
+ * @param[in] codep
+ * @param[in] byte
  * @return HTP_UTF8_ACCEPT for a valid character, HTP_UTF8_REJECT for an invalid character,
  *         or something else if the character has not yet been formed
  */
@@ -116,9 +116,9 @@ inline uint32_t htp_utf8_decode(uint32_t* state, uint32_t* codep, uint32_t byte)
  * Process one byte of UTF-8 data and return a code point if one is available. Allows
  * overlong characters in input.
  *
- * @param state
- * @param codep
- * @param byte
+ * @param[in] state
+ * @param[in] codep
+ * @param[in] byte
  * @return HTP_UTF8_ACCEPT for a valid character, HTP_UTF8_REJECT for an invalid character,
  *         or something else if the character has not yet been formed
  */

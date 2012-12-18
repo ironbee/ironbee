@@ -34,13 +34,16 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include <ctype.h>
+
 #include "htp.h"
+#include "htp_private.h"
 
 /**
  * Extract one request header. A header can span multiple lines, in
  * which case they will be folded into one before parsing is attempted.
  *
- * @param connp
+ * @param[in] connp
  * @return HTP_OK or HTP_ERROR
  */
 int htp_process_request_header_generic(htp_connp_t *connp) {
@@ -162,10 +165,10 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
 /**
  * Generic request header parser.
  *
- * @param connp
- * @param h
- * @param data
- * @param len
+ * @param[in] connp
+ * @param[in] h
+ * @param[in] data
+ * @param[in] len
  * @return HTP_OK or HTP_ERROR
  */
 int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len) {
@@ -277,7 +280,7 @@ int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsign
 /**
  * Generic request line parser.
  *
- * @param connp
+ * @param[in] connp
  * @return HTP_OK or HTP_ERROR
  */
 int htp_parse_request_line_generic(htp_connp_t *connp) {
@@ -328,7 +331,7 @@ int htp_parse_request_line_generic(htp_connp_t *connp) {
     // Is there protocol information available?
     if (pos == len) {
         // No, this looks like a HTTP/0.9 request.
-        tx->protocol_is_simple = 1;
+        tx->is_protocol_0_9 = 1;
         return HTP_OK;
     }
 

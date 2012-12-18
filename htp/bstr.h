@@ -37,6 +37,10 @@
 #ifndef _BSTR_H
 #define	_BSTR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct bstr_t bstr;
 
 #include <stdio.h>
@@ -45,10 +49,6 @@ typedef struct bstr_t bstr;
 #include <string.h>
 
 #include "bstr_builder.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // Data structures
     

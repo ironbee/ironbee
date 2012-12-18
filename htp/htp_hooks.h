@@ -37,17 +37,16 @@
 #ifndef _HOOKS_H
 #define	_HOOKS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct htp_hook_t htp_hook_t;
 typedef struct htp_callback_t htp_callback_t;
 typedef int (*htp_callback_fn_t) (void *);
 
 #include "htp.h"
 #include "htp_list.h"
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct htp_hook_t {
     htp_list_array_t *callbacks;
@@ -79,7 +78,7 @@ htp_hook_t *htp_hook_create(void);
  * Destroys an existing hook. It is all right to send a NULL
  * to this method because it will simply return straight away.
  *
- * @param hook[in]
+ * @param[in] hook[in]
  */
 void htp_hook_destroy(htp_hook_t *hook);
 

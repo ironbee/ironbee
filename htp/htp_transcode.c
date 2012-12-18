@@ -36,15 +36,15 @@
 
 #include <errno.h>
 
+#include "../config.h"
 #include "htp.h"
-#include "config.h"
 
 /**
  * Transcode all parameters supplied in the table.
  *
- * @param connp
- * @param params
- * @param destroy_old
+ * @param[in] connp
+ * @param[in] params
+ * @param[in] destroy_old
  */
 int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_old) {
     htp_table_t *input_params = *params;
@@ -140,9 +140,9 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
 /**
  * Transcode one bstr.
  *
- * @param cd
- * @param input
- * @param output
+ * @param[in] cd
+ * @param[in] input
+ * @param[in] output
  */
 int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output) {
     // Reset conversion state for every new string

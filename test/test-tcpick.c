@@ -34,6 +34,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
+#include <ctype.h>
 #include <dirent.h>
 #include <sys/time.h>
 #include <sys/types.h>

@@ -106,7 +106,7 @@ int counter = 1000;
 /**
  * Free stream data.
  *
- * @param sd
+ * @param[in] sd
  */
 void free_stream_data(stream_data *sd) {
     if (sd == NULL) return;
@@ -156,7 +156,7 @@ void free_stream_data(stream_data *sd) {
  * Process as much buffered inbound and outbound data as possible
  * (in that order)
  *
- * @param sd
+ * @param[in] sd
  */
 void process_stored_stream_data(stream_data *sd) {
     int loop = 0;
@@ -166,11 +166,11 @@ void process_stored_stream_data(stream_data *sd) {
         loop = 0;
         
         // Send as much inbound data as possible    
-        while((sd->connp->in_status == STREAM_STATE_DATA)&&(htp_list_size(sd->inbound_chunks) > 0)) {
+        while((sd->connp->in_status == HTP_STREAM_DATA)&&(htp_list_size(sd->inbound_chunks) > 0)) {
             chunk_t *chunk = (chunk_t *)htp_list_get(sd->inbound_chunks, 0);
                 
             int rc = htp_connp_req_data(sd->connp, 0, chunk->data + chunk->consumed, chunk->len - chunk->consumed);
-            if (rc == STREAM_STATE_DATA) {
+            if (rc == HTP_STREAM_DATA) {
                 // The entire chunk was consumed
                 htp_list_shift(sd->inbound_chunks);
                 free(chunk->data);
@@ -182,11 +182,11 @@ void process_stored_stream_data(stream_data *sd) {
         }
    
         // Send as much outbound data as possible          
-        while((sd->connp->out_status == STREAM_STATE_DATA)&&(htp_list_size(sd->outbound_chunks) > 0)) {
+        while((sd->connp->out_status == HTP_STREAM_DATA)&&(htp_list_size(sd->outbound_chunks) > 0)) {
             chunk_t *chunk = (chunk_t *)htp_list_get(sd->outbound_chunks, 0);
                 
             int rc = htp_connp_res_data(sd->connp, 0, chunk->data + chunk->consumed, chunk->len - chunk->consumed);
-            if (rc == STREAM_STATE_DATA) {
+            if (rc == HTP_STREAM_DATA) {
                 // The entire chunk was consumed
                 htp_list_shift(sd->outbound_chunks);
                 free(chunk->data);
@@ -207,9 +207,9 @@ void process_stored_stream_data(stream_data *sd) {
 /**
  * Process a chunk of the connection stream.
  *
- * @param sd
- * @param direction
- * @param hlf
+ * @param[in] sd
+ * @param[in] direction
+ * @param[in] hlf
  */
 void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf) {
     chunk_t *chunk = NULL;
@@ -221,12 +221,12 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
         // Inbound data
         
         switch(sd->connp->in_status) {
-            case STREAM_STATE_NEW :
-            case STREAM_STATE_DATA :
+            case HTP_STREAM_NEW :
+            case HTP_STREAM_DATA :
                 // Send data to parser
                 
                 rc = htp_connp_req_data(sd->connp, 0, hlf->data, hlf->count_new);
-                if (rc == STREAM_STATE_DATA_OTHER) {
+                if (rc == HTP_STREAM_DATA_OTHER) {
                     // Encountered inbound parsing block
                     
                     // Store partial chunk for later
@@ -238,7 +238,7 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
                     memcpy(chunk->data, hlf->data + htp_connp_req_data_consumed(sd->connp), chunk->len);
                     htp_list_add(sd->inbound_chunks, chunk);
                 } else
-                if (rc != STREAM_STATE_DATA) {
+                if (rc != HTP_STREAM_DATA) {
                     // Inbound parsing error
                     sd->log_level = 0;
                     fprintf(stderr, "[#%d] Inbound parsing error: %d\n", sd->id, rc);
@@ -246,11 +246,11 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
                 }
                 break;
                 
-            case STREAM_STATE_ERROR :
+            case HTP_STREAM_ERROR :
                 // Do nothing
                 break;
                 
-            case STREAM_STATE_DATA_OTHER :
+            case HTP_STREAM_DATA_OTHER :
                 // Store data for later
                 chunk = calloc(1, sizeof(chunk_t));
                 // TODO
@@ -264,12 +264,12 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
     } else {
         // Outbound data
         switch(sd->connp->out_status) {
-            case STREAM_STATE_NEW :
-            case STREAM_STATE_DATA :
+            case HTP_STREAM_NEW :
+            case HTP_STREAM_DATA :
                 // Send data to parser
                 
                 rc = htp_connp_res_data(sd->connp, 0, hlf->data, hlf->count_new);
-                if (rc == STREAM_STATE_DATA_OTHER) {
+                if (rc == HTP_STREAM_DATA_OTHER) {
                     // Encountered outbound parsing block
                     
                     // Store partial chunk for later
@@ -281,18 +281,18 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
                     memcpy(chunk->data, hlf->data + htp_connp_res_data_consumed(sd->connp), chunk->len);
                     htp_list_add(sd->outbound_chunks, chunk);
                 } else
-                if (rc != STREAM_STATE_DATA) {
+                if (rc != HTP_STREAM_DATA) {
                     // Outbound parsing error
                     sd->log_level = 0;
                     fprintf(stderr, "[#%d] Outbound parsing error: %d\n", sd->id, rc);
                 }
                 break;
                 
-            case STREAM_STATE_ERROR :
+            case HTP_STREAM_ERROR :
                 // Do nothing
                 break;
                 
-            case STREAM_STATE_DATA_OTHER :
+            case HTP_STREAM_DATA_OTHER :
                 // Store data for later
                 chunk = calloc(1, sizeof(chunk_t));
                 // TODO
@@ -312,8 +312,8 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
 /**
  * Called by libnids whenever it has an event we have to handle.
  *
- * @param tcp
- * @param user_data
+ * @param[in] tcp
+ * @param[in] user_data
  */
 void tcp_callback (struct tcp_stream *tcp, void **user_data) {	
     stream_data *sd = *user_data;
@@ -436,7 +436,7 @@ void tcp_callback (struct tcp_stream *tcp, void **user_data) {
 /**
  * Invoked at the end of every transaction. 
  *
- * @param connp
+ * @param[in] connp
  */
 int callback_response(htp_connp_t *connp) {
     stream_data *sd = (stream_data *)htp_connp_get_user_data(connp);
@@ -451,7 +451,7 @@ int callback_response(htp_connp_t *connp) {
 /**
  * Invoked every time LibHTP wants to log. 
  *
- * @param log
+ * @param[in] log
  */
 int callback_log(htp_log_t *log) {
     stream_data *sd = (stream_data *)htp_connp_get_user_data(log->connp);
@@ -513,8 +513,8 @@ void print_usage() {
 /**
  * Main entry point for this program.
  *
- * @param argc
- * @param argv
+ * @param[in] argc
+ * @param[in] argv
  */
 int main(int argc, char *argv[]) {
     // Check parameters

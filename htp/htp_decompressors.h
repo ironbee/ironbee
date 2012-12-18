@@ -37,26 +37,26 @@
 #ifndef _HTP_DECOMPRESSORS_H
 #define	_HTP_DECOMPRESSORS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#include <zlib.h>
+
 typedef struct htp_decompressor_gzip_t htp_decompressor_gzip_t;
 typedef struct htp_decompressor_t htp_decompressor_t;
 
-#include "zlib.h"
+#define GZIP_BUF_SIZE           8192
+#define GZIP_WINDOW_SIZE        -15
 
-#define GZIP_BUF_SIZE       8192
-#define GZIP_WINDOW_SIZE    -15
-
-#define DEFLATE_MAGIC_1     0x1f
-#define DEFLATE_MAGIC_2     0x8b
+#define DEFLATE_MAGIC_1         0x1f
+#define DEFLATE_MAGIC_2         0x8b
 
 #define COMPRESSION_NONE        0
 #define COMPRESSION_GZIP        1
 #define COMPRESSION_DEFLATE     2
 #define COMPRESSION_AUTO        98
 #define COMPRESSION_DISABLED    99
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 struct htp_decompressor_t {
     int (*decompress)(htp_decompressor_t *, htp_tx_data_t *);

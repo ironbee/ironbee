@@ -37,14 +37,13 @@
 #ifndef _BSTR_BUILDER_H
 #define	_BSTR_BUILDER_H
 
-typedef struct bstr_builder_t bstr_builder_t;
-
-
-#include "htp_list.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+typedef struct bstr_builder_t bstr_builder_t;
+
+#include "htp_list.h"
 
 struct bstr_builder_t {
     htp_list_t *pieces;

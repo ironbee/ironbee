@@ -37,53 +37,29 @@
 #ifndef _HTP_H
 #define	_HTP_H
 
-typedef int htp_status_t;
-
-typedef struct htp_cfg_t htp_cfg_t;
-typedef struct htp_conn_t htp_conn_t;
-typedef struct htp_connp_t htp_connp_t;
-typedef struct htp_file_t htp_file_t;
-typedef struct htp_file_data_t htp_file_data_t;
-typedef struct htp_header_t htp_header_t;
-typedef struct htp_header_line_t htp_header_line_t;
-typedef struct htp_log_t htp_log_t;
-typedef struct htp_tx_data_t htp_tx_data_t;
-typedef struct htp_tx_t htp_tx_t;
-typedef struct htp_uri_t htp_uri_t;
-
-#include <ctype.h>
-#include <iconv.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 #include <sys/time.h>
 
+#include "htp_core.h"
+
 #include "bstr.h"
-#include "htp_list.h"
-#include "htp_table.h"
-#include "htp_hooks.h"
 #include "htp_decompressors.h"
-#include "htp_urlencoded.h"
+#include "htp_hooks.h"
+#include "htp_list.h"
 #include "htp_multipart.h"
+#include "htp_urlencoded.h"
+#include "htp_table.h"
 
 // -- Defines -------------------------------------------------------------------------------------
 
-#define HTP_BASE_VERSION_TEXT	"master"
+#define HTP_VERSION_STRING          "master"
 
-#define HTP_ERROR              -1
-#define HTP_DECLINED            0
-#define HTP_OK                  1
-#define HTP_DATA                2
-#define HTP_DATA_OTHER          3
-#define HTP_STOP                4
+// In the form of x.y.z, with two positions for each component; for example, 400 means 0.4.0
+#define HTP_VERSION_NUMBER          400
 
-#define HTP_PROTOCOL_UNKNOWN    -1
-#define HTTP_0_9                9
-#define HTTP_1_0                100
-#define HTTP_1_1                101
+#define HTP_PROTOCOL_UNKNOWN        -1
+#define HTP_PROTOCOL_0_9             9
+#define HTP_PROTOCOL_1_0             100
+#define HTP_PROTOCOL_1_1             101
 
 #define HTP_LOG_MARK                __FILE__,__LINE__
 
@@ -199,14 +175,14 @@ typedef struct htp_uri_t htp_uri_t;
 #define TX_PROGRESS_RES_TRAILER     9
 #define TX_PROGRESS_DONE            10
 
-#define STREAM_STATE_NEW            0
-#define STREAM_STATE_OPEN           1
-#define STREAM_STATE_CLOSED         2
-#define STREAM_STATE_ERROR          3
-#define STREAM_STATE_TUNNEL         4
-#define STREAM_STATE_DATA_OTHER     5
-#define STREAM_STATE_STOP           6
-#define STREAM_STATE_DATA           9
+#define HTP_STREAM_NEW              0
+#define HTP_STREAM_OPEN             1
+#define HTP_STREAM_CLOSED           2
+#define HTP_STREAM_ERROR            3
+#define HTP_STREAM_TUNNEL           4
+#define HTP_STREAM_DATA_OTHER       5
+#define HTP_STREAM_STOP             6
+#define HTP_STREAM_DATA             9
 
 #define URL_DECODER_PRESERVE_PERCENT            0
 #define URL_DECODER_REMOVE_PERCENT              1
@@ -233,270 +209,13 @@ typedef struct htp_uri_t htp_uri_t;
 extern "C" {
 #endif
 
-typedef struct timeval htp_time_t;
-
 // -- Data structures -----------------------------------------------------------------------------
-
-struct htp_cfg_t {
-    /** Hard field limit length. If the parser encounters a line that's longer
-     *  than this value it will give up parsing. Do note that the line limit
-     *  is not the same thing as header length limit. Because of header folding,
-     *  a header can end up being longer than the line limit.
-     */
-    size_t field_limit_hard;
-    
-    /** Soft field limit length. If this limit is reached the parser will issue
-     *  a warning but continue to run.
-     */
-    size_t field_limit_soft;              
-
-    /** Log level, which will be used when deciding whether to store or
-     *  ignore the messages issued by the parser.
-     */
-    int log_level;
-
-    /** Whether to delete each transaction after the last hook is invoked. This
-     *  feature should be used when parsing traffic streams in real time.
-     */
-    int tx_auto_destroy;
-
-    /**
-     * Server personality ID.
-     */
-    int spersonality;
-
-    /** The function used for request line parsing. Depends on the personality. */
-    int (*parse_request_line)(htp_connp_t *connp);
-
-    /** The function used for response line parsing. Depends on the personality. */
-    int (*parse_response_line)(htp_connp_t *connp);
-
-    /** The function used for request header parsing. Depends on the personality. */
-    int (*process_request_header)(htp_connp_t *connp);
-
-    /** The function used for response header parsing. Depends on the personality. */
-    int (*process_response_header)(htp_connp_t *connp);
-
-    /** The function to use to transform parameters after parsing. */
-    int (*parameter_processor)(htp_table_t *params, bstr *name, bstr *value);
-
-    
-    // Path handling
-
-    /** Should we treat backslash characters as path segment separators? */
-    int path_backslash_separators;
-    
-    /** Should we treat paths as case insensitive? */
-    int path_case_insensitive;
-
-    /** Should we compress multiple path segment separators into one? */
-    int path_compress_separators;
-
-    /** This parameter is used to predict how a server will react when control
-     *  characters are present in a request path, but does not affect path
-     *  normalization.
-     */
-    int path_control_char_handling;
-
-    /** Should the parser convert UTF-8 into a single-byte stream, using
-     *  best-fit?
-     */
-    int path_convert_utf8;
-
-    /** Should we URL-decode encoded path segment separators? */
-    int path_decode_separators;
-
-    /** Should we decode %u-encoded characters? */
-    int path_decode_u_encoding;
-
-    /** How do handle invalid encodings: URL_DECODER_LEAVE_PERCENT,
-     *  URL_DECODER_REMOVE_PERCENT or URL_DECODER_DECODE_INVALID.
-     */
-    int path_invalid_encoding_handling;
-
-    /** Controls how invalid UTF-8 characters are handled. */
-    int path_invalid_utf8_handling;
-
-    /** Controls how encoded NUL bytes are handled. */
-    int path_nul_encoded_handling;
-
-    /** Controls how raw NUL bytes are handled. */
-    int path_nul_raw_handling;
-
-    /** The replacement character used when there is no best-fit mapping. */
-    unsigned char bestfit_replacement_char;
-
-    int params_decode_u_encoding;
-    int params_invalid_encoding_handling;    
-    int params_nul_encoded_handling;
-    int params_nul_raw_handling;    
-
-    /** How will the server handle UCS-2 characters? */
-    int path_unicode_mapping;      
-
-    /** TODO Unused */
-    int path_utf8_overlong_handling;
-
-    /** The best-fit map to use to decode %u-encoded characters. */
-    unsigned char *bestfit_map;
-
-    /** Whether to generate the request_uri_normalized field. */
-    int generate_request_uri_normalized;
-
-    /** Whether to automatically decompress compressed response bodies. */
-    int response_decompression_enabled;
-
-    char *request_encoding;
-
-    char *internal_encoding;
-
-    int parse_request_cookies;
-    int parse_request_http_authentication;
-    int extract_request_files;
-    char *tmpdir;
-    
-    /** Whether the local port should be used as the outgoing connection port,
-     *  usually when the local machine is the target of a firewall redirect
-     *  (without dport alteration)
-     *  This will be false (0) in cases where the local machine is:
-     *  - explicitly set as the browser proxy
-     *  - operating as a transparent proxy (eg using linux TRPOXY)
-     *  - using a firewall redirect but with dport altered
-     *  In cases where this is false, the remote port is used */
-    int use_local_port;
-
-    // Hooks
-
-    /** Transaction start hook, invoked when the parser receives the first
-     *  byte of a new transaction.
-     */
-    htp_hook_t *hook_transaction_start;
-
-    /** Request line hook, invoked after a request line has been parsed. */
-    htp_hook_t *hook_request_line;
-
-    /** Request URI normalization hook, for overriding default normalization of URI. */
-    htp_hook_t *hook_request_uri_normalize;
-
-    /** Request headers hook, invoked after all request headers are seen. */
-    htp_hook_t *hook_request_headers;   
-
-    /** Request body data hook, invoked every time body data is available. Each
-     *  invocation will provide a htp_tx_data_t instance. Chunked data
-     *  will be dechunked before the data is passed to this hook. Decompression
-     *  is not currently implemented. At the end of the request body
-     *  there will be a call with the data pointer set to NULL.
-     */
-    htp_hook_t *hook_request_body_data;
-
-    htp_hook_t *hook_request_file_data;
-
-    /** Request trailer hook, invoked after all trailer headers are seen,
-     *  and if they are seen (not invoked otherwise).
-     */
-    htp_hook_t *hook_request_trailer;
-
-    /** Request hook, invoked after a complete request is seen. */
-    htp_hook_t *hook_request_done;
-
-    /** Response startup hook, invoked when a response transaction is found and
-     *  processing started.
-     */
-    htp_hook_t *hook_response_start;
-
-    /** Response line hook, invoked after a response line has been parsed. */
-    htp_hook_t *hook_response_line;
-
-    /** Response headers book, invoked after all response headers have been seen. */
-    htp_hook_t *hook_response_headers;
-
-    /** Response body data hook, invoked every time body data is available. Each
-     *  invocation will provide a htp_tx_data_t instance. Chunked data
-     *  will be dechunked before the data is passed to this hook. By default,
-     *  compressed data will be decompressed, but decompression can be disabled
-     *  in configuration. At the end of the response body there will be a call
-     *  with the data pointer set to NULL.
-     */
-    htp_hook_t *hook_response_body_data;
-
-    /** Response trailer hook, invoked after all trailer headers have been processed,
-     *  and only if the trailer exists.
-     */
-    htp_hook_t *hook_response_trailer;
-
-    /** Response hook, invoked after a response has been seen. There isn't a separate
-     *  transaction hook, use this hook to do something whenever a transaction is
-     *  complete.
-     */
-    htp_hook_t *hook_response_done;
-
-    /**
-     * Log hook, invoked every time the library wants to log.
-     */
-    htp_hook_t *hook_log;   
-
-    /** Opaque user data associated with this configuration structure. */
-    void *user_data;
-};
-
-struct htp_conn_t {
-    /** Connection parser associated with this connection. */
-    htp_connp_t *connp;
-
-    /** Remote IP address. */
-    char *remote_addr;
-
-    /** Remote port. */
-    int remote_port;
-
-    /** Local IP address. */
-    char *local_addr;
-
-    /** Local port. */
-    int local_port;
-
-    /** Transactions carried out on this connection. The list may contain
-     *  NULL elements when some of the transactions are deleted (and then
-     *  removed from a connection by calling htp_conn_remove_tx().
-     */
-    htp_list_t *transactions;
-
-    /** Log messages associated with this connection. */
-    htp_list_t *messages;
-
-    /** Parsing flags: PIPELINED_CONNECTION. */
-    unsigned int flags;   
-
-    /** When was this connection opened? Can be NULL. */
-    htp_time_t open_timestamp;
-
-    /** When was this connection closed? Can be NULL. */
-    htp_time_t close_timestamp;
-    
-    /** Inbound data counter. */
-    size_t in_data_counter;
-
-    /** Outbound data counter. */
-    size_t out_data_counter;
-
-    /** Inbound packet counter. */
-    size_t in_packet_counter;
-
-    /** Outbound packet counter. */
-    size_t out_packet_counter;
-};
 
 struct htp_connp_t {
     // General fields
     
     /** Current parser configuration structure. */
-    htp_cfg_t *cfg;
-
-    /** Is the configuration structure only used with this connection
-     *  parser? If it is, then it can be changed as parsing goes on,
-     *  and destroyed along with the parser in the end.
-     */
-    int is_cfg_private;
+    htp_cfg_t *cfg;   
 
     /** The connection structure associated with this parser. */
     htp_conn_t *conn;
@@ -768,7 +487,7 @@ struct htp_tx_t {
      *  a rule of thumb transactions will initially share their configuration structure, but
      *  copy-on-write may be used when an attempt to modify configuration is detected.
      */
-    int is_cfg_shared;
+    int is_config_shared;
 
     /** The user data associated with this transaction. */
     void *user_data;
@@ -807,13 +526,14 @@ struct htp_tx_t {
     /** Request protocol, as text. */
     bstr *request_protocol;
 
-    /** Protocol version as a number: -1 means unknown, 9 (HTTP_0_9) means 0.9,
-     *  100 (HTTP_1_0) means 1.0 and 101 (HTTP_1_1) means 1.1.
+    /**
+     * Protocol version as a number. Multiply the high version number by 100, then add the low
+     * version number. You should prefer to work the pre-defined HTP_PROTOCOL_* constants.
      */
     int request_protocol_number;
 
-    /** Is this request using a short-style HTTP/0.9 request? */
-    int protocol_is_simple;
+    /** Is this request using HTTP/0.9? */
+    int is_protocol_0_9;
 
     /** This structure holds a parsed request_uri, with the missing information
      *  added (e.g., adding port number from the TCP information) and the fields
@@ -1116,211 +836,12 @@ struct htp_uri_t {
 
 // -- Functions -----------------------------------------------------------------------------------
 
-const char *htp_get_version(void);
-
-htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
-htp_cfg_t *htp_config_create(void);
-      void htp_config_destroy(htp_cfg_t *cfg); 
-
-void htp_config_register_list_linked_create(htp_cfg_t *cfg, htp_list_t *(*callback_fn)(void));
-void htp_config_register_list_array_create(htp_cfg_t *cfg, htp_list_t *(*callback_fn)(size_t size));
-
-void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
-void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_file_data_t *));
-void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_request_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-
-void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
-void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-void htp_config_register_response_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
-
-void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *));
-
-void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy);
-
- int htp_config_set_server_personality(htp_cfg_t *cfg, int personality);
-void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled);
-
-void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
-void htp_config_set_path_backslash_separators(htp_cfg_t *cfg, int backslash_separators);
-void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
-void htp_config_set_path_compress_separators(htp_cfg_t *cfg, int compress_separators);
-void htp_config_set_path_control_char_handling(htp_cfg_t *cfg, int control_char_handling);
-void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8);
-void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int backslash_separators);
-void htp_config_set_path_decode_u_encoding(htp_cfg_t *cfg, int decode_u_encoding);
-void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_encoding_handling);
-void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, int invalid_utf8_handling);
-void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_handling);
-void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, int nul_raw_handling);
-void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char);
-void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping);
-void htp_config_set_path_utf8_overlong_handling(htp_cfg_t *cfg, int utf8_overlong_handling);
-
-void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate);
-
-void htp_config_register_urlencoded_parser(htp_cfg_t *cfg);
-void htp_config_register_multipart_parser(htp_cfg_t *cfg);
-
-
-htp_connp_t *htp_connp_create(htp_cfg_t *cfg);
-htp_connp_t *htp_connp_create_copycfg(htp_cfg_t *cfg);
-void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp);
-void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp);
-void htp_connp_destroy(htp_connp_t *connp);
-void htp_connp_destroy_all(htp_connp_t *connp);
-void htp_connp_in_reset(htp_connp_t *connp);
-
- void htp_connp_set_user_data(htp_connp_t *connp, void *user_data);
-void *htp_connp_get_user_data(htp_connp_t *connp);
-
-htp_conn_t *htp_conn_create(htp_connp_t *connp);
-       void htp_conn_destroy(htp_conn_t *conn);
-        int htp_conn_remove_tx(htp_conn_t *conn, htp_tx_t *tx);
-
-   int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len);
-size_t htp_connp_req_data_consumed(htp_connp_t *connp);
-   int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len);
-size_t htp_connp_res_data_consumed(htp_connp_t *connp);
-
-      void htp_connp_clear_error(htp_connp_t *connp);
-htp_log_t *htp_connp_get_last_error(htp_connp_t *connp);
-
-htp_header_t *htp_connp_header_parse(htp_connp_t *, unsigned char *, size_t);
-
-#define CFG_NOT_SHARED  0
-#define CFG_SHARED      1
-
-htp_tx_t *htp_tx_create(htp_cfg_t *cfg, int is_cfg_shared, htp_conn_t *conn);
-     void htp_tx_destroy(htp_tx_t *tx);
-     void htp_tx_set_config(htp_tx_t *tx, htp_cfg_t *cfg, int is_cfg_shared);
-
-     void htp_tx_set_user_data(htp_tx_t *tx, void *user_data);
-    void *htp_tx_get_user_data(htp_tx_t *tx);
+#include "htp_config.h"
+#include "htp_connection_parser.h"
+#include "htp_transaction.h"
     
-
-// Parsing functions
-
-int htp_parse_request_line_generic(htp_connp_t *connp);
-int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
-int htp_process_request_header_generic(htp_connp_t *);
-
-int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
-int htp_parse_request_line_apache_2_2(htp_connp_t *connp);
-int htp_process_request_header_apache_2_2(htp_connp_t *);
-
-int htp_parse_response_line_generic(htp_connp_t *connp);
-int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
-int htp_process_response_header_generic(htp_connp_t *connp);
-
-
-// Utility functions
-
-int htp_convert_method_to_number(bstr *);
-int htp_is_lws(int c);
-int htp_is_separator(int c);
-int htp_is_text(int c);
-int htp_is_token(int c);
-int htp_chomp(unsigned char *data, size_t *len);
-int htp_is_space(int c);
-
-int htp_parse_protocol(bstr *protocol);
-
-int htp_is_line_empty(unsigned char *data, size_t len);
-int htp_is_line_whitespace(unsigned char *data, size_t len);
-
-int htp_connp_is_line_folded(unsigned char *data, size_t len);
-int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t len);
-int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t len);
-
-int htp_parse_uri(bstr *input, htp_uri_t **uri);
-int htp_parse_authority(htp_connp_t *connp, bstr *input, htp_uri_t **uri);
-int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *parsed_uri_incomplete, htp_uri_t *parsed_uri);
-bstr *htp_normalize_hostname_inplace(bstr *input);
-void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname);
-int htp_is_uri_unreserved(unsigned char c);
-
-int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
-
-void htp_uriencoding_normalize_inplace(bstr *s);
-
- int htp_prenormalize_uri_path_inplace(bstr *s, int *flags, int case_insensitive, int backslash, int decode_separators, int remove_consecutive);
-void htp_normalize_uri_path_inplace(bstr *s);
-
-void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path);
-void htp_utf8_validate_path(htp_tx_t *tx, bstr *path);
-
-int htp_parse_content_length(bstr *b);
-int htp_parse_chunked_length(unsigned char *data, size_t len);
-int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base);
-int htp_parse_status(bstr *status);
-int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header);
-int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header);
-
-void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code, const char *fmt, ...);
-void htp_print_log(FILE *stream, htp_log_t *log);
-
-void fprint_bstr(FILE *stream, const char *name, bstr *b);
-void fprint_raw_data(FILE *stream, const char *name, const void *data, size_t len);
-void fprint_raw_data_ex(FILE *stream, const char *name, const void *data, size_t offset, size_t len);
-
-char *htp_connp_in_state_as_string(htp_connp_t *connp);
-char *htp_connp_out_state_as_string(htp_connp_t *connp);
-char *htp_tx_progress_as_string(htp_tx_t *tx);
-
-bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
-
-int htp_treat_response_line_as_body(htp_tx_t *tx);
-
-bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx);
-bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
-
-bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx);
-bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx);
-
-int htp_tx_req_has_body(htp_tx_t *tx);
-
-int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
-int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
-
-void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
-void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
-
-int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d);
-int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
-int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
-int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d);
-int htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
-
-int htp_php_parameter_processor(htp_table_t *params, bstr *name, bstr *value);
-
-int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_old);
-int htp_transcode_bstr(iconv_t cd, bstr *input, bstr **output);
-
-int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t len);
-int htp_parse_cookies_v0(htp_connp_t *connp);
-int htp_parse_authorization(htp_connp_t *connp);
-
-int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input);
-
-bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t *endoffset);
-
-int htp_mpart_part_process_headers(htp_mpart_part_t *part);
-int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, size_t len);
-int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int is_line);
-int htp_mpartp_is_boundary_character(int c);
-
 #ifdef __cplusplus
 }
 #endif
 
 #endif	/* _HTP_H */
-
-

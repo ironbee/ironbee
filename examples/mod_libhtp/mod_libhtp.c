@@ -5,7 +5,7 @@
 #include "ap_config.h"
 
 #include "htp.h"
-#include "htp_hybrid.h"
+#include "htp_transaction.h"
 
 module AP_MODULE_DECLARE_DATA libhtp_module;
 
@@ -39,34 +39,34 @@ static int libhtp_post_read_request(request_rec *r) {
     if (connp == NULL) return DECLINED;
 
     // Create a new LibHTP transaction
-    htp_tx_t *tx = htp_txh_create(connp);
+    htp_tx_t *tx = htp_connp_tx_create(connp);
     if (tx == NULL) return DECLINED;
 
     // Request begins
-    htp_txh_state_request_start(tx);
+    htp_tx_state_request_start(tx);
 
     // Populate request line
-    htp_txh_req_set_method_c(tx, r->method, ALLOC_REUSE);
-    htp_txh_req_set_method_number(tx, convert_method_number(r->method_number));
-    htp_txh_req_set_uri_c(tx, r->uri, ALLOC_REUSE);
-    htp_txh_req_set_query_string_c(tx, r->args, ALLOC_REUSE);
-    htp_txh_req_set_protocol_c(tx, r->protocol, ALLOC_REUSE);
-    htp_txh_req_set_protocol_number(tx, convert_protocol_number(r->proto_num));
-    htp_txh_req_set_protocol_http_0_9(tx, r->assbackwards);
+    htp_tx_req_set_method_c(tx, r->method, ALLOC_REUSE);
+    htp_tx_req_set_method_number(tx, convert_method_number(r->method_number));
+    htp_tx_req_set_uri_c(tx, r->uri, ALLOC_REUSE);
+    htp_tx_req_set_query_string_c(tx, r->args, ALLOC_REUSE);
+    htp_tx_req_set_protocol_c(tx, r->protocol, ALLOC_REUSE);
+    htp_tx_req_set_protocol_number(tx, convert_protocol_number(r->proto_num));
+    htp_tx_req_set_protocol_0_9(tx, r->assbackwards);
 
     // Request line available
-    htp_txh_state_request_line(tx);
+    htp_tx_state_request_line(tx);
 
     // Populate request headers
     size_t i;
     const apr_array_header_t *arr = apr_table_elts(r->headers_in);
     const apr_table_entry_t *te = (apr_table_entry_t *) arr->elts;
     for (i = 0; i < arr->nelts; i++) {
-        htp_txh_req_set_header_c(tx, te[i].key, te[i].val, ALLOC_REUSE);
+        htp_tx_req_set_header_c(tx, te[i].key, te[i].val, ALLOC_REUSE);
     }
 
     // Request headers available
-    htp_txh_state_request_headers(tx);
+    htp_tx_state_request_headers(tx);
 
     // Attach LibHTP's transaction to Apache's request
     ap_set_module_config(r->request_config, &libhtp_module, tx);

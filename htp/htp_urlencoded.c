@@ -34,7 +34,7 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#include "stdlib.h"
+#include <stdlib.h>
 
 #include "htp_urlencoded.h"
 
@@ -43,11 +43,11 @@
  * becomes available. It will either create a new parameter or store the transient information
  * until a parameter can be created.
  *
- * @param urlenp
- * @param data
- * @param startpos
- * @param endpos
- * @param c Should contain -1 if the reason this function is called is because the end of
+ * @param[in] urlenp
+ * @param[in] data
+ * @param[in] startpos
+ * @param[in] endpos
+ * @param[in] c Should contain -1 if the reason this function is called is because the end of
  *          the current data chunk is reached.
  */
 static void htp_urlenp_add_field_piece(htp_urlenp_t *urlenp, const unsigned char *data, size_t startpos, size_t endpos, int c) {
@@ -161,7 +161,7 @@ htp_urlenp_t *htp_urlenp_create(htp_tx_t *tx) {
 /**
  * Destroys an existing URLENCODED parser.
  * 
- * @param urlenp
+ * @param[in] urlenp
  */
 void htp_urlenp_destroy(htp_urlenp_t **_urlenp) {
     if ((_urlenp == NULL)||(*_urlenp == NULL)) return;
@@ -194,7 +194,7 @@ void htp_urlenp_destroy(htp_urlenp_t **_urlenp) {
  * data into parameters. This method should be invoked at the end
  * of a parsing operation that used htp_urlenp_parse_partial().
  *
- * @param urlenp
+ * @param[in] urlenp
  * @return Success indication
  */
 int htp_urlenp_finalize(htp_urlenp_t *urlenp) {
@@ -208,9 +208,9 @@ int htp_urlenp_finalize(htp_urlenp_t *urlenp) {
  * method is used for parsing the finalization method should not
  * be invoked.
  *
- * @param urlenp
- * @param data
- * @param len
+ * @param[in] urlenp
+ * @param[in] data
+ * @param[in] len
  * @return
  */
 int htp_urlenp_parse_complete(htp_urlenp_t *urlenp, const unsigned char *data, size_t len) {
@@ -223,9 +223,9 @@ int htp_urlenp_parse_complete(htp_urlenp_t *urlenp, const unsigned char *data, s
  * parsing where only partial information is available at any one time. The method
  * htp_urlenp_finalize() must be invoked at the end to finalize parsing.
  * 
- * @param urlenp
- * @param data
- * @param len
+ * @param[in] urlenp
+ * @param[in] data
+ * @param[in] len
  * @return
  */
 int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, const unsigned char *data, size_t len) {

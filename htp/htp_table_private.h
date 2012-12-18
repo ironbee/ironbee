@@ -37,18 +37,16 @@
 #ifndef HTP_TABLE_PRIVATE_H
 #define	HTP_TABLE_PRIVATE_H
 
-#include "htp_list.h"
-
 #ifdef	__cplusplus
 extern "C" {
 #endif
 
+#include "htp_list.h"
 #include "htp_table.h"
 
 struct htp_table_t {
     htp_list_t *list;
 };
-
 
 #ifdef	__cplusplus
 }

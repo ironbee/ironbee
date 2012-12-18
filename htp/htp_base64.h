@@ -39,11 +39,11 @@
 #ifndef _HTP_BASE64_H
 #define	_HTP_BASE64_H
 
-#include "bstr.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#include "bstr.h"
 
 typedef enum {
     step_a, step_b, step_c, step_d

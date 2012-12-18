@@ -60,7 +60,7 @@ extern "C" {
 typedef struct htp_list_array_t htp_list_array_t;
 typedef struct htp_list_linked_t htp_list_linked_t;
 
-#include "htp.h"
+#include "htp_core.h"
 #include "bstr.h"
 
 // Functions
@@ -94,7 +94,7 @@ void htp_list_array_destroy(htp_list_array_t **l);
  * Find the element at the given index.
  *
  * @param[in] l
- * @param idx
+ * @param[in] idx
  * @return the desired element, or NULL if the list is too small, or
  *         if the element at that position carries a NULL
  */
@@ -125,7 +125,7 @@ htp_status_t htp_list_array_push(htp_list_array_t *l, void *e);
  * @param[in] idx
  * @param[in] e
  *
- * @return HTTP_OK if an element with the given index was replaced; HTP_ERROR
+ * @return HTP_OK if an element with the given index was replaced; HTP_ERROR
  *         if the desired index does not exist.
  */
 htp_status_t htp_list_array_replace(htp_list_array_t *l, size_t idx, void *e);
