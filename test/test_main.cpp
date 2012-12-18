@@ -44,6 +44,9 @@ class ConnectionParsing : public testing::Test {
 protected:
     
     virtual void SetUp() {
+        home = getenv("srcdir");
+
+        /*
         // Try the current working directory first
         int fd = open("./files/anchor.empty", 0, O_RDONLY);
         if (fd != -1) {
@@ -56,6 +59,7 @@ protected:
                 home = (char *)"./test/files";
             }
         }
+        */
         
         cfg = htp_config_create();
         htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2_2);

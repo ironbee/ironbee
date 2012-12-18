@@ -2,7 +2,7 @@ LDADD = $(top_builddir)/htp/.libs/libhtp.a -lz @LIBICONV@
 AM_CFLAGS = -g -O2 -std=gnu99
 AM_CPPFLAGS = -I$(top_srcdir)
 EXTRA_DIST = run-tests.sh files
-check_PROGRAMS = test_bstr test_main test_utils test_hybrid
+check_PROGRAMS = main test_bstr test_main test_utils test_hybrid
 check_LIBRARIES = libgtest.a
 
 main_SOURCES = main.c test.c test.h test-tcpick.c
@@ -21,8 +21,8 @@ test_hybrid_LDADD = libgtest.a -lpthread $(LDADD)
 
 libgtest_a_SOURCES = $(srcdir)/gtest/gtest-all.cc $(srcdir)/gtest/gtest_main.cc $(srcdir)/gtest/gtest.h
 
-TESTS_ENVIRONMENT = srcdir=$(srcdir)
-TESTS = $(check_PROGRAMS)
+TESTS_ENVIRONMENT = srcdir=$(srcdir)/files
+TESTS = test_bstr test_main test_utils test_hybrid
 
 test: check
 
