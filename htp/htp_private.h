@@ -486,10 +486,6 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri);
 
 int htp_treat_response_line_as_body(htp_tx_t *tx);
 
-
-
-
-
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 
@@ -511,8 +507,6 @@ int htp_parse_authorization(htp_connp_t *connp);
 int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input);
 
 bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t *endoffset);
-
-
 
 htp_header_t *htp_connp_header_parse(htp_connp_t *, unsigned char *, size_t);
 
