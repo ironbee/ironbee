@@ -46,7 +46,7 @@
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
+htp_status_t htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     // TODO We shouldn't really see anything apart from CR and LF,
     // so we should warn about anything else.
 
@@ -69,7 +69,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
+htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     const unsigned char *data = connp->out_current_data + connp->out_current_offset;
     size_t len = 0;
 
@@ -105,7 +105,7 @@ int htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
+htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
     for (;;) {
         OUT_COPY_BYTE_OR_RETURN(connp);
 
@@ -148,7 +148,7 @@ int htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
+htp_status_t htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
     unsigned char *data = connp->out_current_data + connp->out_current_offset;
     size_t len = 0;
 
@@ -212,7 +212,7 @@ int htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
+htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     // If the request uses the CONNECT method, then not only are we
     // to assume there's no body, but we need to ignore all
     // subsequent data in the stream.
@@ -378,7 +378,7 @@ int htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_HEADERS(htp_connp_t * connp) {
+htp_status_t htp_connp_RES_HEADERS(htp_connp_t * connp) {
     for (;;) {
         OUT_COPY_BYTE_OR_RETURN(connp);
 
@@ -503,7 +503,7 @@ int htp_connp_RES_HEADERS(htp_connp_t * connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_LINE(htp_connp_t * connp) {    
+htp_status_t htp_connp_RES_LINE(htp_connp_t * connp) {
     for (;;) {
         // Get one byte
         OUT_COPY_BYTE_OR_RETURN(connp);
@@ -597,7 +597,7 @@ size_t htp_connp_res_data_consumed(htp_connp_t * connp) {
     return connp->out_current_offset;
 }
 
-int htp_connp_RES_FINALIZE(htp_connp_t * connp) {
+htp_status_t htp_connp_RES_FINALIZE(htp_connp_t * connp) {
     int rc = htp_tx_state_response_complete(connp->out_tx);
     if (rc != HTP_OK) return rc;
 
@@ -640,7 +640,7 @@ int htp_connp_RES_FINALIZE(htp_connp_t * connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_RES_IDLE(htp_connp_t * connp) {
+htp_status_t htp_connp_RES_IDLE(htp_connp_t * connp) {
     // We want to start parsing the next response (and change
     // the state from IDLE) only if there's at least one
     // byte of data available. Otherwise we could be creating

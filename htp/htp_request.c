@@ -49,7 +49,7 @@
  *          inbound parsing needs to be suspended until we hear from the
  *          other side
  */
-int htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
     // If the request uses the CONNECT method, then there will
     // not be a request body, but first we need to wait to see the
     // response in order to determine if the tunneling request
@@ -78,7 +78,7 @@ int htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
  * @return HTP_OK if the parser can resume parsing, HTP_DATA_OTHER if
  *         it needs to continue waiting.
  */
-int htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
     // Check that we saw the response line of the current
     // inbound transaction.
     if (connp->in_tx->progress <= TX_PROGRESS_RES_LINE) {
@@ -109,7 +109,7 @@ int htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     // TODO We shouldn't really see anything apart from CR and LF,
     // so we should warn about anything else.
 
@@ -131,7 +131,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     unsigned char *data = connp->in_current_data + connp->in_current_offset;
     size_t len = 0;
 
@@ -168,7 +168,7 @@ int htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
     for (;;) {
         IN_COPY_BYTE_OR_RETURN(connp);
 
@@ -211,7 +211,7 @@ int htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
     unsigned char *data = connp->in_current_data + connp->in_current_offset;
     size_t len = 0;
 
@@ -252,7 +252,7 @@ int htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     if (connp->in_tx->request_transfer_coding == HTP_CODING_CHUNKED) {
         connp->in_state = htp_connp_REQ_BODY_CHUNKED_LENGTH;
         connp->in_tx->progress = TX_PROGRESS_REQ_BODY;
@@ -281,7 +281,7 @@ int htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
     for (;;) {
         IN_COPY_BYTE_OR_RETURN(connp);
 
@@ -395,7 +395,7 @@ int htp_connp_REQ_HEADERS(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
     // Is this a short-style HTTP/0.9 request? If it is,
     // we will not want to parse request headers.
     if (connp->in_tx->is_protocol_0_9 == 0) {
@@ -416,7 +416,7 @@ int htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_REQ_LINE(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
     for (;;) {
         // Get one byte
         IN_COPY_BYTE_OR_RETURN(connp);
@@ -487,7 +487,7 @@ int htp_connp_REQ_LINE(htp_connp_t *connp) {
     }
 }
 
-int htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
+htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
     int rc = htp_tx_state_request_complete(connp->in_tx);
     if (rc != HTP_OK) return rc;
 
@@ -506,7 +506,7 @@ int htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
  * @param connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-int htp_connp_REQ_IDLE(htp_connp_t * connp) {
+htp_status_t htp_connp_REQ_IDLE(htp_connp_t * connp) {
     // We want to start parsing the next request (and change
     // the state from IDLE) only if there's at least one
     // byte of data available. Otherwise we could be creating
@@ -533,7 +533,7 @@ size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
     return connp->in_current_offset;
 }
 
-int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len) {
+htp_status_t htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len) {
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_connp_req_data(connp->in_status %x)\n", connp->in_status);
     fprint_raw_data(stderr, __FUNCTION__, data, len);
