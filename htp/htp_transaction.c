@@ -686,8 +686,8 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
     // move on. This may happen when we're processing a CONNECT
     // request and need to wait for the response to determine how
     // to continue to treat the rest of the TCP stream.
-    if (tx->progress < TX_PROGRESS_WAIT) {
-        tx->progress = TX_PROGRESS_WAIT;
+    if (tx->progress < RESPONSE_WAIT) {
+        tx->progress = RESPONSE_WAIT;
     }
 
     return HTP_OK;
@@ -700,7 +700,7 @@ htp_status_t htp_tx_state_request_start(htp_tx_t *tx) {
 
     // Change state into request line parsing
     tx->connp->in_state = htp_connp_REQ_LINE;
-    tx->connp->in_tx->progress = TX_PROGRESS_REQ_LINE;
+    tx->connp->in_tx->progress = REQUEST_LINE;
 
     return HTP_OK;
 }
@@ -714,14 +714,14 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
     // If we're in TX_PROGRESS_REQ_HEADERS that means that this is the
     // first time we're processing headers in/ a request. Otherwise,
     // we're dealing with trailing headers.
-    if (tx->progress > TX_PROGRESS_REQ_HEADERS) {
+    if (tx->progress > REQUEST_HEADERS) {
         // Run hook REQUEST_TRAILER
         int rc = htp_hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
         if (rc != HTP_OK) return rc;
 
         // Completed parsing this request; finalize it now
         tx->connp->in_state = htp_connp_REQ_FINALIZE;
-    } else if (tx->progress >= TX_PROGRESS_REQ_LINE) {
+    } else if (tx->progress >= REQUEST_LINE) {
         // Process request headers
         int rc = htp_tx_process_request_headers(tx);
         if (rc != HTP_OK) return rc;
@@ -848,8 +848,8 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
 }
 
 htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
-    if (tx->connp->out_tx->progress != TX_PROGRESS_COMPLETE) {
-        tx->progress = TX_PROGRESS_COMPLETE;
+    if (tx->connp->out_tx->progress != COMPLETE) {
+        tx->progress = COMPLETE;
 
         // Run the last RESPONSE_BODY_DATA HOOK, but
         // only if there was a response body present.
@@ -922,11 +922,11 @@ htp_status_t htp_tx_state_response_start(htp_tx_t *tx) {
     // a HTTP/0.9 request (no status line or response headers).
     if (tx->is_protocol_0_9) {
         tx->response_transfer_coding = HTP_CODING_IDENTITY;
-        tx->progress = TX_PROGRESS_RES_BODY;
+        tx->progress = RESPONSE_BODY;
         tx->connp->out_state = htp_connp_RES_BODY_IDENTITY;
     } else {
         tx->connp->out_state = htp_connp_RES_LINE;
-        tx->progress = TX_PROGRESS_RES_LINE;
+        tx->progress = RESPONSE_LINE;
     }
 
     return HTP_OK;

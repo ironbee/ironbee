@@ -43,35 +43,56 @@ extern "C" {
 
 #include "htp.h"
 
-// XXX Refactor these away during the implementation of the improved
-//     version of the connection parser.
-bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx);
-bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
-bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx);
-bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx);
-
+/**
+ * Possible states of a progressing transaction. A transaction reaches
+ * a particular state when all activities associated with that state
+ * have been completed. For example, the state REQUEST_LINE indicates that
+ * the request line has been seen.
+ */
+enum htp_tx_progress_t {
+    NEW = 0,
+    REQUEST_LINE = 1,
+    REQUEST_HEADERS = 2,
+    REQUEST_BODY = 3,
+    REQUEST_TRAILERS = 4,
+    RESPONSE_WAIT = 5,
+    RESPONSE_LINE = 6,
+    RESPONSE_HEADERS = 7,
+    RESPONSE_BODY = 8,
+    RESPONSE_TRAILERS = 9,
+    COMPLETE = 10
+};
 
 #define HTP_CONFIG_PRIVATE      0
 #define HTP_CONFIG_SHARED       1
-  
+
 /**
  * Enumerate possible data handling strategies in hybrid parsing
  * mode. The two possibilities are to make copies of all data and
  * use bstr instances to wrap already available data.
  */
 enum alloc_strategy {
-    /** Make copies of all data. This strategy should be used when
-     *  the supplied buffers are transient and will go away after
-     *  the invoked function returns.
+    /**
+     * Make copies of all data. This strategy should be used when
+     * the supplied buffers are transient and will go away after
+     * the invoked function returns.
      */
     ALLOC_COPY  = 1,
 
-    /** Reuse buffers, without a change of ownership. We assume the
-     *  buffers will continue to be available until the transaction
-     *  is deleted by the container.
+    /**
+     * Reuse buffers, without a change of ownership. We assume the
+     * buffers will continue to be available until the transaction
+     * is deleted by the container.
      */
     ALLOC_REUSE = 2
 };
+
+// XXX Refactor these away during the implementation of the improved
+//     version of the connection parser.
+bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx);
+bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx);
+bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx);
+bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx);
 
 /**
  * Creates a new transaction structure.

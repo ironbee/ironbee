@@ -115,18 +115,6 @@ extern "C" {
 #define HTP_CODING_IDENTITY                 1
 #define HTP_CODING_CHUNKED                  2
 
-#define TX_PROGRESS_NEW                     0
-#define TX_PROGRESS_REQ_LINE                1
-#define TX_PROGRESS_REQ_HEADERS             2
-#define TX_PROGRESS_REQ_BODY                3
-#define TX_PROGRESS_REQ_TRAILER             4
-#define TX_PROGRESS_WAIT                    5
-#define TX_PROGRESS_RES_LINE                6
-#define TX_PROGRESS_RES_HEADERS             7
-#define TX_PROGRESS_RES_BODY                8
-#define TX_PROGRESS_RES_TRAILER             9
-#define TX_PROGRESS_COMPLETE                10
-
 #define HTP_STREAM_NEW                      0
 #define HTP_STREAM_OPEN                     1
 #define HTP_STREAM_CLOSED                   2
@@ -624,8 +612,8 @@ struct htp_tx_t {
      */
     unsigned int flags;
 
-    /** Transaction progress. Look for the TX_PROGRESS_* constants for more information. */
-    unsigned int progress;
+    /** Transaction progress. */
+    enum htp_tx_progress_t progress;
 };
 
 /**

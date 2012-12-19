@@ -1949,27 +1949,27 @@ char *htp_tx_progress_as_string(htp_tx_t *tx) {
     if (tx == NULL) return "NULL";
 
     switch (tx->progress) {
-        case TX_PROGRESS_NEW:
+        case NEW:
             return "NEW";
-        case TX_PROGRESS_REQ_LINE:
+        case REQUEST_LINE:
             return "REQ_LINE";
-        case TX_PROGRESS_REQ_HEADERS:
+        case REQUEST_HEADERS:
             return "REQ_HEADERS";
-        case TX_PROGRESS_REQ_BODY:
+        case REQUEST_BODY:
             return "REQ_BODY";
-        case TX_PROGRESS_REQ_TRAILER:
+        case REQUEST_TRAILERS:
             return "REQ_TRAILER";
-        case TX_PROGRESS_WAIT:
+        case RESPONSE_WAIT:
             return "WAIT";
-        case TX_PROGRESS_RES_LINE:
+        case RESPONSE_LINE:
             return "RES_LINE";
-        case TX_PROGRESS_RES_HEADERS:
+        case RESPONSE_HEADERS:
             return "RES_HEADERS";
-        case TX_PROGRESS_RES_BODY:
+        case RESPONSE_BODY:
             return "RES_BODY";
-        case TX_PROGRESS_RES_TRAILER:
+        case RESPONSE_TRAILERS:
             return "RES_TRAILER";
-        case TX_PROGRESS_COMPLETE:
+        case COMPLETE:
             return "DONE";
     }
 
@@ -2161,7 +2161,7 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
  */
 bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
     // Check that we are not called too early
-    if (tx->progress < TX_PROGRESS_REQ_HEADERS) return NULL;
+    if (tx->progress < REQUEST_HEADERS) return NULL;
 
     if (tx->request_headers_raw == NULL) {
         tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
@@ -2227,7 +2227,7 @@ bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx) {
  */
 bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx) {
     // Check that we are not called too early
-    if (tx->progress < TX_PROGRESS_RES_HEADERS) return NULL;
+    if (tx->progress < RESPONSE_HEADERS) return NULL;
 
     if (tx->response_headers_raw == NULL) {
         tx->response_headers_raw = htp_tx_generate_response_headers_raw(tx);
