@@ -57,7 +57,7 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
         connp->in_state = htp_connp_REQ_CONNECT_WAIT_RESPONSE;
         connp->in_status = HTP_STREAM_DATA_OTHER;
-        connp->in_tx->progress = RESPONSE_WAIT;
+        connp->in_tx->progress = HTP_REQUEST_COMPLETE;
 
         return HTP_DATA_OTHER;
     }
@@ -81,7 +81,7 @@ htp_status_t htp_connp_REQ_CONNECT_CHECK(htp_connp_t *connp) {
 htp_status_t htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
     // Check that we saw the response line of the current
     // inbound transaction.
-    if (connp->in_tx->progress <= RESPONSE_LINE) {
+    if (connp->in_tx->progress <= HTP_RESPONSE_LINE) {
         return HTP_DATA_OTHER;
     }
 
@@ -192,7 +192,7 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             } else if (connp->in_chunked_length == 0) {
                 // End of data
                 connp->in_state = htp_connp_REQ_HEADERS;
-                connp->in_tx->progress = REQUEST_TRAILERS;
+                connp->in_tx->progress = HTP_REQUEST_TRAILER;
             } else {
                 // Invalid chunk length
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
@@ -255,14 +255,14 @@ htp_status_t htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
     if (connp->in_tx->request_transfer_coding == HTP_CODING_CHUNKED) {
         connp->in_state = htp_connp_REQ_BODY_CHUNKED_LENGTH;
-        connp->in_tx->progress = REQUEST_BODY;
+        connp->in_tx->progress = HTP_REQUEST_BODY;
     } else if (connp->in_tx->request_transfer_coding == HTP_CODING_IDENTITY) {
         connp->in_content_length = connp->in_tx->request_content_length;
         connp->in_body_data_left = connp->in_content_length;
 
         if (connp->in_content_length != 0) {
             connp->in_state = htp_connp_REQ_BODY_IDENTITY;
-            connp->in_tx->progress = REQUEST_BODY;
+            connp->in_tx->progress = HTP_REQUEST_BODY;
         } else {
             connp->in_tx->connp->in_state = htp_connp_REQ_FINALIZE;
         }
@@ -401,7 +401,7 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
     if (connp->in_tx->is_protocol_0_9 == 0) {
         // Switch to request header parsing.
         connp->in_state = htp_connp_REQ_HEADERS;
-        connp->in_tx->progress = REQUEST_HEADERS;
+        connp->in_tx->progress = HTP_REQUEST_HEADERS;
     } else {
         // We're done with this request.
         connp->in_state = htp_connp_REQ_FINALIZE;

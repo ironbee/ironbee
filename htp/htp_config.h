@@ -89,15 +89,15 @@ void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *));
 void htp_config_register_multipart_parser(htp_cfg_t *cfg);
 
 /**
- * Registers a transaction_start callback.
+ * Registers a REQUEST_START callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a request_body_data callback.
+ * Registers a REQUEST_BODY_DATA callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -105,12 +105,12 @@ void htp_config_register_transaction_start(htp_cfg_t *cfg, int (*callback_fn)(ht
 void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 
 /**
- * Registers a request_done callback.
+ * Registers a REQUEST_COMPLETE callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_request_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_request_complete(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
  * Registers a request_file_data callback.
@@ -121,7 +121,7 @@ void htp_config_register_request_done(htp_cfg_t *cfg, int (*callback_fn)(htp_con
 void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_file_data_t *));
 
 /**
- * Registers a request_headers callback.
+ * Registers a REQUEST_HEADERS callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -129,7 +129,7 @@ void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(ht
 void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a request_line callback.
+ * Registers a REQUEST_LINE callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -137,7 +137,7 @@ void htp_config_register_request_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_
 void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a request_uri_normalize callback.
+ * Registers a REQUEST_URI_NORMALIZE callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -145,7 +145,7 @@ void htp_config_register_request_line(htp_cfg_t *cfg, int (*callback_fn)(htp_con
 void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a request_trailer callback.
+ * Registers a HTP_REQUEST_TRAILER callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -153,7 +153,7 @@ void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a response_body_data callback.
+ * Registers a RESPONSE_BODY_DATA callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -161,15 +161,15 @@ void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_
 void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 
 /**
- * Registers a response_done callback.
+ * Registers a RESPONSE_DATA callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
  */
-void htp_config_register_response_done(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+void htp_config_register_response_complete(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a response_headers callback.
+ * Registers a RESPONSE_HEADERS callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -177,7 +177,7 @@ void htp_config_register_response_done(htp_cfg_t *cfg, int (*callback_fn)(htp_co
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a response_line callback.
+ * Registers a HTP_RESPONSE_LINE callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -185,7 +185,7 @@ void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp
 void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a response_start callback.
+ * Registers a RESPONSE_START callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -193,7 +193,7 @@ void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_co
 void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a response_trailer callback.
+ * Registers a HTP_RESPONSE_TRAILER callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn

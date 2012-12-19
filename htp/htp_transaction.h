@@ -54,14 +54,14 @@ enum htp_alloc_strategy_t {
      * the supplied buffers are transient and will go away after
      * the invoked function returns.
      */
-    ALLOC_COPY  = 1,
+    HTP_ALLOC_COPY  = 1,
 
     /**
      * Reuse buffers, without a change of ownership. We assume the
      * buffers will continue to be available until the transaction
      * is deleted by the container.
      */
-    ALLOC_REUSE = 2
+    HTP_ALLOC_REUSE = 2
 };
 
 /**
@@ -71,17 +71,17 @@ enum htp_alloc_strategy_t {
  * the request line has been seen.
  */
 enum htp_tx_progress_t {
-    NEW = 0,
-    REQUEST_LINE = 1,
-    REQUEST_HEADERS = 2,
-    REQUEST_BODY = 3,
-    REQUEST_TRAILERS = 4,
-    RESPONSE_WAIT = 5,
-    RESPONSE_LINE = 6,
-    RESPONSE_HEADERS = 7,
-    RESPONSE_BODY = 8,
-    RESPONSE_TRAILERS = 9,
-    COMPLETE = 10
+    HTP_REQUEST_START = 0,
+    HTP_REQUEST_LINE = 1,
+    HTP_REQUEST_HEADERS = 2,
+    HTP_REQUEST_BODY = 3,
+    HTP_REQUEST_TRAILER = 4,
+    HTP_REQUEST_COMPLETE = 5,
+    HTP_RESPONSE_LINE = 6,
+    HTP_RESPONSE_HEADERS = 7,
+    HTP_RESPONSE_BODY = 8,
+    HTP_RESPONSE_TRAILER = 9,
+    HTP_RESPONSE_COMPLETE = 10
 };
 
 #define HTP_CONFIG_PRIVATE      0
@@ -446,7 +446,7 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx);
 htp_status_t htp_tx_state_response_headers(htp_tx_t *tx);
 
 /**
- * Change transaction state to RESPONSE_LINE and invoke registered callbacks.
+ * Change transaction state to HTP_RESPONSE_LINE and invoke registered callbacks.
  *
  * @param[in] tx
  * @return HTP_OK on success; HTP_ERROR on error, HTP_STOP if one of the

@@ -1949,27 +1949,27 @@ char *htp_tx_progress_as_string(htp_tx_t *tx) {
     if (tx == NULL) return "NULL";
 
     switch (tx->progress) {
-        case NEW:
+        case HTP_REQUEST_START:
             return "NEW";
-        case REQUEST_LINE:
+        case HTP_REQUEST_LINE:
             return "REQ_LINE";
-        case REQUEST_HEADERS:
+        case HTP_REQUEST_HEADERS:
             return "REQ_HEADERS";
-        case REQUEST_BODY:
+        case HTP_REQUEST_BODY:
             return "REQ_BODY";
-        case REQUEST_TRAILERS:
+        case HTP_REQUEST_TRAILER:
             return "REQ_TRAILER";
-        case RESPONSE_WAIT:
+        case HTP_REQUEST_COMPLETE:
             return "WAIT";
-        case RESPONSE_LINE:
+        case HTP_RESPONSE_LINE:
             return "RES_LINE";
-        case RESPONSE_HEADERS:
+        case HTP_RESPONSE_HEADERS:
             return "RES_HEADERS";
-        case RESPONSE_BODY:
+        case HTP_RESPONSE_BODY:
             return "RES_BODY";
-        case RESPONSE_TRAILERS:
+        case HTP_RESPONSE_TRAILER:
             return "RES_TRAILER";
-        case COMPLETE:
+        case HTP_RESPONSE_COMPLETE:
             return "DONE";
     }
 
@@ -2150,7 +2150,7 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
  * Get a bstr that contains the raw request headers. This method will always
  * return an up-to-date buffer, containing the last known headers. Thus, if
  * it is called once after REQUEST_HEADERS phase it will return one buffer, but
- * it may return a different buffer if called after REQUEST_TRAILERS phase (but
+ * it may return a different buffer if called after HTP_REQUEST_TRAILERS phase (but
  * only if the request actually contains trailer headers). Do not retain the
  * bstr pointer, as the buffer may change. If there are no changes to the
  * request header structure, only one buffer will be constructed and used. (Multiple
@@ -2161,7 +2161,7 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
  */
 bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
     // Check that we are not called too early
-    if (tx->progress < REQUEST_HEADERS) return NULL;
+    if (tx->progress < HTP_REQUEST_HEADERS) return NULL;
 
     if (tx->request_headers_raw == NULL) {
         tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
@@ -2216,7 +2216,7 @@ bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx) {
  * Get a bstr that contains the raw response headers. This method will always
  * return an up-to-date buffer, containing the last known headers. Thus, if
  * it is called once after RESPONSE_HEADERS phase it will return one buffer, but
- * it may return a different buffer if called after RESPONSE_TRAILERS phase (but
+ * it may return a different buffer if called after HTP_RESPONSE_TRAILERS phase (but
  * only if the response actually contains trailer headers). Do not retain the
  * bstr pointer, as the buffer may change. If there are no changes to the
  * response header structure, only one buffer will be constructed and used. (Multiple
@@ -2227,7 +2227,7 @@ bstr *htp_tx_generate_response_headers_raw(htp_tx_t *tx) {
  */
 bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx) {
     // Check that we are not called too early
-    if (tx->progress < RESPONSE_HEADERS) return NULL;
+    if (tx->progress < HTP_RESPONSE_HEADERS) return NULL;
 
     if (tx->response_headers_raw == NULL) {
         tx->response_headers_raw = htp_tx_generate_response_headers_raw(tx);

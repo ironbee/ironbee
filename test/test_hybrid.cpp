@@ -71,9 +71,9 @@ struct HybridParsing_Get_User_Data {
 
     // Response callback indicators
     int callback_RESPONSE_START_invoked;
-    int callback_RESPONSE_LINE_invoked;
+    int callback_HTP_RESPONSE_LINE_invoked;
     int callback_RESPONSE_HEADERS_invoked;
-    int callback_RESPONSE_COMPLETE_invoked;
+    int callback_HTP_RESPONSE_COMPLETE_invoked;
 
     // Response body handling fields
     int response_body_chunks_seen;
@@ -110,9 +110,9 @@ static int HybridParsing_Get_Callback_RESPONSE_START(htp_connp_t *connp) {
     return HTP_OK;
 }
 
-static int HybridParsing_Get_Callback_RESPONSE_LINE(htp_connp_t *connp) {
+static int HybridParsing_Get_Callback_HTP_RESPONSE_LINE(htp_connp_t *connp) {
     struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
-    user_data->callback_RESPONSE_LINE_invoked = 1;
+    user_data->callback_HTP_RESPONSE_LINE_invoked = 1;
     return HTP_OK;
 }
 
@@ -163,9 +163,9 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
     return HTP_OK;
 }
 
-static int HybridParsing_Get_Callback_RESPONSE_COMPLETE(htp_connp_t *connp) {
+static int HybridParsing_Get_Callback_HTP_RESPONSE_COMPLETE(htp_connp_t *connp) {
     struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(connp->in_tx);
-    user_data->callback_RESPONSE_COMPLETE_invoked = 1;
+    user_data->callback_HTP_RESPONSE_COMPLETE_invoked = 1;
     return HTP_OK;
 }
 
@@ -185,36 +185,36 @@ TEST_F(HybridParsing, GetTest) {
     user_data.callback_REQUEST_HEADERS_invoked = 0;
     user_data.callback_REQUEST_COMPLETE_invoked = 0;
     user_data.callback_RESPONSE_START_invoked = 0;
-    user_data.callback_RESPONSE_LINE_invoked = 0;
+    user_data.callback_HTP_RESPONSE_LINE_invoked = 0;
     user_data.callback_RESPONSE_HEADERS_invoked = 0;
-    user_data.callback_RESPONSE_COMPLETE_invoked = 0;
+    user_data.callback_HTP_RESPONSE_COMPLETE_invoked = 0;
     user_data.response_body_chunks_seen = 0;
     user_data.response_body_correctly_received = 0;
     htp_tx_set_user_data(tx, &user_data);
 
     // Request callbacks
-    htp_config_register_transaction_start(cfg, HybridParsing_Get_Callback_TRANSACTION_START);
+    htp_config_register_request_start(cfg, HybridParsing_Get_Callback_TRANSACTION_START);
     htp_config_register_request_line(cfg, HybridParsing_Get_Callback_REQUEST_LINE);
     htp_config_register_request_headers(cfg, HybridParsing_Get_Callback_REQUEST_HEADERS);
-    htp_config_register_request_done(cfg, HybridParsing_Get_Callback_REQUEST_COMPLETE);
+    htp_config_register_request_complete(cfg, HybridParsing_Get_Callback_REQUEST_COMPLETE);
 
     // Response callbacks
     htp_config_register_response_start(cfg, HybridParsing_Get_Callback_RESPONSE_START);
-    htp_config_register_response_line(cfg, HybridParsing_Get_Callback_RESPONSE_LINE);
+    htp_config_register_response_line(cfg, HybridParsing_Get_Callback_HTP_RESPONSE_LINE);
     htp_config_register_response_headers(cfg, HybridParsing_Get_Callback_RESPONSE_HEADERS);
     htp_config_register_response_body_data(cfg, HybridParsing_Get_Callback_RESPONSE_BODY_DATA);
-    htp_config_register_response_done(cfg, HybridParsing_Get_Callback_RESPONSE_COMPLETE);
+    htp_config_register_response_complete(cfg, HybridParsing_Get_Callback_HTP_RESPONSE_COMPLETE);
 
     // Request begins
     htp_tx_state_request_start(tx);
     ASSERT_EQ(user_data.callback_TRANSACTION_START_invoked, 1);
 
     // Request line data
-    htp_tx_req_set_method_c(tx, "GET", ALLOC_COPY);
+    htp_tx_req_set_method_c(tx, "GET", HTP_ALLOC_COPY);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri_c(tx, "/", ALLOC_COPY);
-    htp_tx_req_set_query_string_c(tx, "p=1&q=2", ALLOC_COPY);
-    htp_tx_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
+    htp_tx_req_set_uri_c(tx, "/", HTP_ALLOC_COPY);
+    htp_tx_req_set_query_string_c(tx, "p=1&q=2", HTP_ALLOC_COPY);
+    htp_tx_req_set_protocol_c(tx, "HTTP/1.1", HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
 
@@ -240,9 +240,9 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(bstr_cmp_c(param_q, "2"), 0);
 
     // Request headers
-    htp_tx_req_set_header_c(tx, "Host", "www.example.com", ALLOC_COPY);
-    htp_tx_req_set_header_c(tx, "Connection", "keep-alive", ALLOC_COPY);
-    htp_tx_req_set_header_c(tx, "User-Agent", "Mozilla/5.0", ALLOC_COPY);
+    htp_tx_req_set_header_c(tx, "Host", "www.example.com", HTP_ALLOC_COPY);
+    htp_tx_req_set_header_c(tx, "Connection", "keep-alive", HTP_ALLOC_COPY);
+    htp_tx_req_set_header_c(tx, "User-Agent", "Mozilla/5.0", HTP_ALLOC_COPY);
 
     // Request headers complete
     htp_tx_state_request_headers(tx);
@@ -271,7 +271,7 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(user_data.callback_RESPONSE_START_invoked, 1);
 
     // Response line data
-    htp_tx_res_set_status_line_c(tx, "HTTP/1.1 200 OK", ALLOC_COPY);
+    htp_tx_res_set_status_line_c(tx, "HTTP/1.1 200 OK", HTP_ALLOC_COPY);
     ASSERT_EQ(bstr_cmp_c(tx->response_protocol, "HTTP/1.1"), 0);
     ASSERT_EQ(tx->response_protocol_number, HTP_PROTOCOL_1_1);
     ASSERT_EQ(tx->response_status_number, 200);
@@ -283,16 +283,16 @@ TEST_F(HybridParsing, GetTest) {
     htp_tx_res_set_status_code(tx, 500);
     ASSERT_EQ(tx->response_status_number, 500);
 
-    htp_tx_res_set_status_message(tx, "Internal Server Error", ALLOC_COPY);
+    htp_tx_res_set_status_message(tx, "Internal Server Error", HTP_ALLOC_COPY);
     ASSERT_EQ(bstr_cmp_c(tx->response_message, "Internal Server Error"), 0);
 
     // Response line complete
     htp_tx_state_response_line(tx);
-    ASSERT_EQ(user_data.callback_RESPONSE_LINE_invoked, 1);
+    ASSERT_EQ(user_data.callback_HTP_RESPONSE_LINE_invoked, 1);
 
     // Response header data
-    htp_tx_res_set_header_c(tx, "Content-Type", "text/html", ALLOC_COPY);
-    htp_tx_res_set_header_c(tx, "Server", "Apache", ALLOC_COPY);
+    htp_tx_res_set_header_c(tx, "Content-Type", "text/html", HTP_ALLOC_COPY);
+    htp_tx_res_set_header_c(tx, "Server", "Apache", HTP_ALLOC_COPY);
 
     // Response headers complete
     htp_tx_state_response_headers(tx);
@@ -317,8 +317,8 @@ TEST_F(HybridParsing, GetTest) {
     htp_tx_res_set_headers_clear(tx);
     ASSERT_EQ(htp_table_size(tx->response_headers), 0);
 
-    htp_tx_res_set_header_c(tx, "Content-Type", "text/html", ALLOC_COPY);
-    htp_tx_res_set_header_c(tx, "Server", "Apache", ALLOC_COPY);
+    htp_tx_res_set_header_c(tx, "Content-Type", "text/html", HTP_ALLOC_COPY);
+    htp_tx_res_set_header_c(tx, "Server", "Apache", HTP_ALLOC_COPY);
 
     // Check trailing response headers
     h_content_type = (htp_header_t *) htp_table_get_c(tx->response_headers, "content-type");
@@ -330,7 +330,7 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(bstr_cmp_c(h_server->value, "Apache"), 0);
 
     htp_tx_state_response_complete(tx);
-    ASSERT_EQ(user_data.callback_RESPONSE_COMPLETE_invoked, 1);
+    ASSERT_EQ(user_data.callback_HTP_RESPONSE_COMPLETE_invoked, 1);
 }
 
 /**
@@ -345,16 +345,16 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     htp_tx_state_request_start(tx);
 
     // Request line data
-    htp_tx_req_set_method_c(tx, "POST", ALLOC_COPY);
+    htp_tx_req_set_method_c(tx, "POST", HTP_ALLOC_COPY);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri_c(tx, "/", ALLOC_COPY);
-    htp_tx_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
+    htp_tx_req_set_uri_c(tx, "/", HTP_ALLOC_COPY);
+    htp_tx_req_set_protocol_c(tx, "HTTP/1.1", HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
 
     // Configure headers to trigger the URLENCODED parser
-    htp_tx_req_set_header_c(tx, "Content-Type", HTP_URLENCODED_MIME_TYPE, ALLOC_COPY);
-    htp_tx_req_set_header_c(tx, "Content-Length", "7", ALLOC_COPY);
+    htp_tx_req_set_header_c(tx, "Content-Type", HTP_URLENCODED_MIME_TYPE, HTP_ALLOC_COPY);
+    htp_tx_req_set_header_c(tx, "Content-Length", "7", HTP_ALLOC_COPY);
 
     // Request headers complete
     htp_tx_state_request_headers(tx);
@@ -368,9 +368,9 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     htp_tx_req_set_headers_clear(tx);
     ASSERT_EQ(htp_table_size(tx->request_headers), 0);
 
-    htp_tx_req_set_header_c(tx, "Host", "www.example.com", ALLOC_COPY);
-    htp_tx_req_set_header_c(tx, "Connection", "keep-alive", ALLOC_COPY);
-    htp_tx_req_set_header_c(tx, "User-Agent", "Mozilla/5.0", ALLOC_COPY);
+    htp_tx_req_set_header_c(tx, "Host", "www.example.com", HTP_ALLOC_COPY);
+    htp_tx_req_set_header_c(tx, "Connection", "keep-alive", HTP_ALLOC_COPY);
+    htp_tx_req_set_header_c(tx, "User-Agent", "Mozilla/5.0", HTP_ALLOC_COPY);
 
     htp_header_t *h_host = (htp_header_t *) htp_table_get_c(tx->request_headers, "host");
     ASSERT_TRUE(h_host != NULL);
@@ -408,11 +408,11 @@ static char HybridParsing_CompressedResponse[] =
 static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
     htp_tx_state_request_start(tx);
 
-    htp_tx_req_set_method_c(tx, "GET", ALLOC_COPY);
+    htp_tx_req_set_method_c(tx, "GET", HTP_ALLOC_COPY);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri_c(tx, "/", ALLOC_COPY);
-    htp_tx_req_set_query_string_c(tx, "p=1&q=2", ALLOC_COPY);
-    htp_tx_req_set_protocol_c(tx, "HTTP/1.1", ALLOC_COPY);
+    htp_tx_req_set_uri_c(tx, "/", HTP_ALLOC_COPY);
+    htp_tx_req_set_query_string_c(tx, "p=1&q=2", HTP_ALLOC_COPY);
+    htp_tx_req_set_protocol_c(tx, "HTTP/1.1", HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
 
@@ -421,9 +421,9 @@ static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
 
     htp_tx_state_response_start(tx);
 
-    htp_tx_res_set_status_line_c(tx, "HTTP/1.1 200 OK", ALLOC_COPY);
-    htp_tx_res_set_header_c(tx, "Content-Encoding", "gzip", ALLOC_COPY);
-    htp_tx_res_set_header_c(tx, "Content-Length", "187", ALLOC_COPY);
+    htp_tx_res_set_status_line_c(tx, "HTTP/1.1 200 OK", HTP_ALLOC_COPY);
+    htp_tx_res_set_header_c(tx, "Content-Encoding", "gzip", HTP_ALLOC_COPY);
+    htp_tx_res_set_header_c(tx, "Content-Length", "187", HTP_ALLOC_COPY);
 
     htp_tx_state_response_headers(tx);
 
