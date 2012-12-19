@@ -34,8 +34,8 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#ifndef HTP_HYBRID_H
-#define	HTP_HYBRID_H
+#ifndef HTP_TRANSACTION_H
+#define	HTP_TRANSACTION_H
 
 #ifdef	__cplusplus
 extern "C" {
