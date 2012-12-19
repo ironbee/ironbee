@@ -62,13 +62,55 @@ typedef struct timeval htp_time_t;
 // In the form of x.y.z, with two positions for each component; for example, 400 means 0.4.0
 #define HTP_VERSION_NUMBER          400
 
-// htp_status_t return codes
+// Below are all htp_status_t return codes used by LibHTP. Enum is not
+// used here to allow applications to define their own codes.
+
+/**
+ * The lowest htp_status_t value LibHTP will use internally.
+ */
+#define HTP_ERROR_RESERVED          -1000
+
+/** General-purpose error code. */
 #define HTP_ERROR                   -1
+
+/**
+ * No processing or work was done. This is typically used by callbacks
+ * to indicate that they were not interested in doing any work in the
+ * given context.
+ */
 #define HTP_DECLINED                0
+
+/** Returned by a function when its work was successfully completed.  */
 #define HTP_OK                      1
+
+/**
+ * Returned when processing a connection stream, after consuming all
+ * provided data. The caller should call again with more data. */
 #define HTP_DATA                    2
+
+/**
+ * Returned when processing a connection stream, after encountering
+ * a situation where processing needs to continue on the alternate
+ * stream (e.g., the inbound parser needs to observe some outbound
+ * data). The data provided was not completely consumed. On the next
+ * invocation the caller should supply only the data that has not
+ * been processed already. Use htp_connp_req_data_consumed() and
+ * htp_connp_res_data_consumed() to determine how much of the most
+ * recent data chunk was consumed.
+ */
 #define HTP_DATA_OTHER              3
+
+/**
+ * Used by callbacks to indicate that the processing should stop. For example,
+ * returning HTP_STOP from a connection callback indicates that LibHTP should
+ * stop following that particular connection.
+ */
 #define HTP_STOP                    4
+
+/**
+ * The highest htp_status_t value LibHTP will use internally.
+ */
+#define HTP_STATUS_RESERVED         1000
 
 
 // Logging-related constants
