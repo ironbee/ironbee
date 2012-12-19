@@ -67,115 +67,123 @@ extern "C" {
 #define HTP_HEADER_LIMIT_HARD               18000
 #define HTP_HEADER_LIMIT_SOFT               9000
 
-#define HTP_VALID_STATUS_MIN    100
-#define HTP_VALID_STATUS_MAX    999
+#define HTP_VALID_STATUS_MIN                100
+#define HTP_VALID_STATUS_MAX                999
 
-#define HTP_FIELD_UNPARSEABLE           0x000001
-#define HTP_FIELD_INVALID               0x000002
-#define HTP_FIELD_FOLDED                0x000004
-#define HTP_FIELD_REPEATED              0x000008
-#define HTP_FIELD_LONG                  0x000010
-#define HTP_FIELD_NUL_BYTE              0x000020
-#define HTP_REQUEST_SMUGGLING           0x000040
-#define HTP_INVALID_FOLDING             0x000080
-#define HTP_INVALID_CHUNKING            0x000100
-#define HTP_MULTI_PACKET_HEAD           0x000200
-#define HTP_HOST_MISSING                0x000400
-#define HTP_AMBIGUOUS_HOST              0x000800
-#define HTP_PATH_ENCODED_NUL            0x001000
-#define HTP_PATH_INVALID_ENCODING       0x002000
-#define HTP_PATH_INVALID                0x004000
-#define HTP_PATH_OVERLONG_U             0x008000
-#define HTP_PATH_ENCODED_SEPARATOR      0x010000
+#define HTP_FIELD_UNPARSEABLE               0x000001
+#define HTP_FIELD_INVALID                   0x000002
+#define HTP_FIELD_FOLDED                    0x000004
+#define HTP_FIELD_REPEATED                  0x000008
+#define HTP_FIELD_LONG                      0x000010
+#define HTP_FIELD_NUL_BYTE                  0x000020
+#define HTP_REQUEST_SMUGGLING               0x000040
+#define HTP_INVALID_FOLDING                 0x000080
+#define HTP_INVALID_CHUNKING                0x000100
+#define HTP_MULTI_PACKET_HEAD               0x000200
+#define HTP_HOST_MISSING                    0x000400
+#define HTP_AMBIGUOUS_HOST                  0x000800
+#define HTP_PATH_ENCODED_NUL                0x001000
+#define HTP_PATH_INVALID_ENCODING           0x002000
+#define HTP_PATH_INVALID                    0x004000
+#define HTP_PATH_OVERLONG_U                 0x008000
+#define HTP_PATH_ENCODED_SEPARATOR          0x010000
 
-#define HTP_PATH_UTF8_VALID             0x020000 /* At least one valid UTF-8 character and no invalid ones */
-#define HTP_PATH_UTF8_INVALID           0x040000
-#define HTP_PATH_UTF8_OVERLONG          0x080000
-#define HTP_PATH_FULLWIDTH_EVASION      0x100000 /* Range U+FF00 - U+FFFF detected */
+#define HTP_PATH_UTF8_VALID                 0x020000 /* At least one valid UTF-8 character and no invalid ones */
+#define HTP_PATH_UTF8_INVALID               0x040000
+#define HTP_PATH_UTF8_OVERLONG              0x080000
+#define HTP_PATH_FULLWIDTH_EVASION          0x100000 /* Range U+FF00 - U+FFFF detected */
 
-#define HTP_STATUS_LINE_INVALID         0x200000
+#define HTP_STATUS_LINE_INVALID             0x200000
 
-#define HTP_PIPELINED_CONNECTION    1
+#define HTP_PIPELINED_CONNECTION            1
 
-#define HTP_SERVER_MINIMAL          0
-#define HTP_SERVER_GENERIC          1
-#define HTP_SERVER_IDS              2
-#define HTP_SERVER_IIS_4_0          4   /* Windows NT 4.0 */
-#define HTP_SERVER_IIS_5_0          5   /* Windows 2000 */
-#define HTP_SERVER_IIS_5_1          6   /* Windows XP Professional */
-#define HTP_SERVER_IIS_6_0          7   /* Windows 2003 */
-#define HTP_SERVER_IIS_7_0          8   /* Windows 2008 */
-#define HTP_SERVER_IIS_7_5          9   /* Windows 7 */
-#define HTP_SERVER_TOMCAT_6_0       10  /* Unused */
-#define HTP_SERVER_APACHE           11
-#define HTP_SERVER_APACHE_2_2       12
+#define HTP_SERVER_MINIMAL                  0
+#define HTP_SERVER_GENERIC                  1
+#define HTP_SERVER_IDS                      2
+#define HTP_SERVER_IIS_4_0                  4   /* Windows NT 4.0 */
+#define HTP_SERVER_IIS_5_0                  5   /* Windows 2000 */
+#define HTP_SERVER_IIS_5_1                  6   /* Windows XP Professional */
+#define HTP_SERVER_IIS_6_0                  7   /* Windows 2003 */
+#define HTP_SERVER_IIS_7_0                  8   /* Windows 2008 */
+#define HTP_SERVER_IIS_7_5                  9   /* Windows 7 */
+#define HTP_SERVER_TOMCAT_6_0               10  /* Unused */
+#define HTP_SERVER_APACHE                   11
+#define HTP_SERVER_APACHE_2_2               12
 
-#define HTP_CODING_NO_BODY          -1
-#define HTP_CODING_UNKNOWN          0
-#define HTP_CODING_IDENTITY         1
-#define HTP_CODING_CHUNKED          2
+#define HTP_CODING_NO_BODY                  -1
+#define HTP_CODING_UNKNOWN                  0
+#define HTP_CODING_IDENTITY                 1
+#define HTP_CODING_CHUNKED                  2
 
-#define TX_PROGRESS_NEW             0
-#define TX_PROGRESS_REQ_LINE        1
-#define TX_PROGRESS_REQ_HEADERS     2
-#define TX_PROGRESS_REQ_BODY        3
-#define TX_PROGRESS_REQ_TRAILER     4
-#define TX_PROGRESS_WAIT            5
-#define TX_PROGRESS_RES_LINE        6
-#define TX_PROGRESS_RES_HEADERS     7
-#define TX_PROGRESS_RES_BODY        8
-#define TX_PROGRESS_RES_TRAILER     9
-#define TX_PROGRESS_COMPLETE        10
+#define TX_PROGRESS_NEW                     0
+#define TX_PROGRESS_REQ_LINE                1
+#define TX_PROGRESS_REQ_HEADERS             2
+#define TX_PROGRESS_REQ_BODY                3
+#define TX_PROGRESS_REQ_TRAILER             4
+#define TX_PROGRESS_WAIT                    5
+#define TX_PROGRESS_RES_LINE                6
+#define TX_PROGRESS_RES_HEADERS             7
+#define TX_PROGRESS_RES_BODY                8
+#define TX_PROGRESS_RES_TRAILER             9
+#define TX_PROGRESS_COMPLETE                10
 
-#define HTP_STREAM_NEW              0
-#define HTP_STREAM_OPEN             1
-#define HTP_STREAM_CLOSED           2
-#define HTP_STREAM_ERROR            3
-#define HTP_STREAM_TUNNEL           4
-#define HTP_STREAM_DATA_OTHER       5
-#define HTP_STREAM_STOP             6
-#define HTP_STREAM_DATA             9
+#define HTP_STREAM_NEW                      0
+#define HTP_STREAM_OPEN                     1
+#define HTP_STREAM_CLOSED                   2
+#define HTP_STREAM_ERROR                    3
+#define HTP_STREAM_TUNNEL                   4
+#define HTP_STREAM_DATA_OTHER               5
+#define HTP_STREAM_STOP                     6
+#define HTP_STREAM_DATA                     9
 
-#define URL_DECODER_PRESERVE_PERCENT            0
-#define URL_DECODER_REMOVE_PERCENT              1
-#define URL_DECODER_DECODE_INVALID              2
-#define URL_DECODER_STATUS_400                  400
+#define URL_DECODER_PRESERVE_PERCENT        0
+#define URL_DECODER_REMOVE_PERCENT          1
+#define URL_DECODER_DECODE_INVALID          2
+#define URL_DECODER_STATUS_400              400
 
-#define NONE        0
-#define NO          0
-#define BESTFIT     0
-#define YES         1
-#define TERMINATE   1
-#define STATUS_400  400
-#define STATUS_404  401
+#define NONE                                0
+#define NO                                  0
+#define BESTFIT                             0
+#define YES                                 1
+#define TERMINATE                           1
+#define STATUS_400                          400
+#define STATUS_404                          401
 
-#define HTP_AUTH_NONE       0
-#define HTP_AUTH_BASIC      1
-#define HTP_AUTH_DIGEST     2
-#define HTP_AUTH_UNKNOWN    9
+#define HTP_AUTH_NONE                       0
+#define HTP_AUTH_BASIC                      1
+#define HTP_AUTH_DIGEST                     2
+#define HTP_AUTH_UNKNOWN                    9
 
 
 // -- Data structures -----------------------------------------------------------------------------
 
-// TODO
+/**
+ * Used to represent files that are seen during the processing of HTTP traffic. Most
+ * commonly this refers to files seen in multipart/form-data payloads. In addition, PUT
+ * request bodies can be treated as files.
+ */
 struct htp_file_t {
-    /** Where did this file come from? */
+    /** Where did this file come from? Possible values: HTP_FILE_MULTIPART and HTP_FILE_PUT. */
     int source;
 
-    /** File name. */
+    /** File name, as provided (e.g., in the Content-Disposition multipart part header. */
     bstr *filename;   
 
-    /** Current file length. */
-    size_t len;
+    /** File length. */
+    int64_t len;
 
-    /** The unique filename in which this file is stored. */
+    // TODO Content type is missing. This information is sometimes available in multipart payloads.
+
+    /** The unique filename in which this file is stored on the filesystem, when applicable.*/
     char *tmpname;
 
-    /** The file descriptor that is used for the external storage. */
+    /** The file descriptor that is used for the external storage, when applicable. */
     int fd;
 };
 
-// TODO
+/**
+ * Represents a chunk of file data.
+ */
 struct htp_file_data_t {
     /** File information. */
     htp_file_t *file;
@@ -187,7 +195,9 @@ struct htp_file_data_t {
     size_t len;
 };
 
-// TODO
+/**
+ * Represents a single log entry.
+ */
 struct htp_log_t {
     /** The connection parser associated with this log message. */
     htp_connp_t *connp;
@@ -211,7 +221,13 @@ struct htp_log_t {
     unsigned int line;
 };
 
-// TODO
+/**
+ * Represents a single request or response header line. One header can span
+ * many lines. Although applications care only about headers, at the moment
+ * we also keep track of individual header lines. This will likely go away in
+ * the near future, because no one really cares about it, yet storage takes
+ * valuable resources.
+ */
 struct htp_header_line_t {
     /** Line contents. */
     bstr *line;
@@ -244,7 +260,9 @@ struct htp_header_line_t {
     htp_header_t *header;
 };
 
-// TODO
+/**
+ * Represents a single request or response header.
+ */
 struct htp_header_t {
     /** Header name. */
     bstr *name;
@@ -256,7 +274,9 @@ struct htp_header_t {
     unsigned int flags;
 };
 
-// TODO
+/**
+ * Represents a single transaction, which is a combination of a request and a response.
+ */
 struct htp_tx_t {
     /** The connection parser associated with this transaction. */
     htp_connp_t *connp;
