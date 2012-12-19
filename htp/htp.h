@@ -244,6 +244,7 @@ struct htp_header_line_t {
     htp_header_t *header;
 };
 
+// TODO
 struct htp_header_t {
     /** Header name. */
     bstr *name;
@@ -275,7 +276,8 @@ struct htp_tx_t {
     /** The user data associated with this transaction. */
     void *user_data;
     
-    // Request
+    
+    // Request fields
 
     /** TODO */
     unsigned int request_ignored_lines;
@@ -486,7 +488,8 @@ struct htp_tx_t {
     /** TODO */
     bstr *request_auth_password;
 
-    // Response
+
+    // Response fields
 
     /** How many empty lines did we ignore before reaching the status line? */
     unsigned int response_ignored_lines;
@@ -592,7 +595,8 @@ struct htp_tx_t {
      */
     bstr *response_content_type;
 
-    // Common
+    
+    // Common fields
 
     /**
      * Parsing flags; a combination of: HTP_INVALID_CHUNKING, HTP_INVALID_FOLDING,
