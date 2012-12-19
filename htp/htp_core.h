@@ -70,11 +70,21 @@ typedef struct timeval htp_time_t;
 #define HTP_DATA_OTHER              3
 #define HTP_STOP                    4
 
-// Protocol version constants
-#define HTP_PROTOCOL_UNKNOWN        -1
-#define HTP_PROTOCOL_0_9             9
-#define HTP_PROTOCOL_1_0             100
-#define HTP_PROTOCOL_1_1             101
+
+// Logging-related constants
+#define HTP_LOG_MARK                 __FILE__,__LINE__
+
+/**
+ * Enumerates all log levels.
+ */
+enum htp_log_level_t {
+    HTP_LOG_ERROR = 1,
+    HTP_LOG_WARNING = 2,
+    HTP_LOG_NOTICE = 3,
+    HTP_LOG_INFO = 4,
+    HTP_LOG_DEBUG = 5,
+    HTP_LOG_DEBUG2 = 6
+};
 
 /**
  * HTTP methods.
@@ -115,20 +125,13 @@ enum htp_method_t {
     HTP_M_INVALID = 28
 };
 
-// Logging-related constants
-#define HTP_LOG_MARK                 __FILE__,__LINE__
-
-/**
- * Enumerates all log levels.
- */
-enum htp_log_level_t {
-    HTP_LOG_ERROR = 1,
-    HTP_LOG_WARNING = 2,
-    HTP_LOG_NOTICE = 3,
-    HTP_LOG_INFO = 4,
-    HTP_LOG_DEBUG = 5,
-    HTP_LOG_DEBUG2 = 6
-};
+// Protocol version constants; an enum cannot be
+// used here because we allow any properly-formatter protocol
+// version (e.g., 1.3), even those that do not actually exist.
+#define HTP_PROTOCOL_UNKNOWN        -1
+#define HTP_PROTOCOL_0_9             9
+#define HTP_PROTOCOL_1_0             100
+#define HTP_PROTOCOL_1_1             101
 
 /**
  * Enumerates all stream states. Each connection has two streams, one
