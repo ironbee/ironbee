@@ -44,6 +44,49 @@ extern "C" {
 #include "htp.h"
 
 /**
+ * Enumerates the possible server personalities.
+ */
+enum htp_server_personality_t {
+
+    /**
+     * Minimal personality that performs at little work as possible. All optional
+     * features are disabled. This personality is a good starting point for customization.
+     */
+    HTP_SERVER_MINIMAL = 0,
+
+    /**
+     * A generic personality that aims to work reasonably well for all server types.
+     */
+    HTP_SERVER_GENERIC = 1,
+
+    /**
+     * The IDS personality tries to perform as much decoding as possible.
+     */
+    HTP_SERVER_IDS = 2,
+
+    /** Mimics the behavior of IIS 4.0, as shipped with Windows NT 4.0. */
+    HTP_SERVER_IIS_4_0 = 3,
+
+    /** Mimics the behavior of IIS 5.0, as shipped with Windows 2000. */
+    HTP_SERVER_IIS_5_0 = 4,
+
+    /** Mimics the behavior of IIS 5.1, as shipped with Windows XP Professional. */
+    HTP_SERVER_IIS_5_1 = 5,
+
+    /** Mimics the behavior of IIS 6.0, as shipped with Windows 2003. */
+    HTP_SERVER_IIS_6_0 = 6,
+
+    /** Mimics the behavior of IIS 7.0, as shipped with Windows 2008. */
+    HTP_SERVER_IIS_7_0 = 7,
+
+    /* Mimics the behavior of IIS 7.5, as shipped with Windows 7. */
+    HTP_SERVER_IIS_7_5 = 8,
+
+    /* Mimics the behavior of Apache 2.x. */
+    HTP_SERVER_APACHE_2 = 9
+};
+
+/**
  * Creates a new configuration structure. Configuration structures created at
  * configuration time must not be changed afterwards in order to support lock-less
  * copying.
@@ -397,7 +440,7 @@ void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled);
  * @param[in] personality
  * @return HTP_OK if the personality is supported, HTP_ERROR if it isn't.
  */
-htp_status_t htp_config_set_server_personality(htp_cfg_t *cfg, int personality);
+htp_status_t htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personality_t personality);
 
 /**
  * Configures whether transactions will be automatically destroyed once they

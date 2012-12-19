@@ -97,19 +97,6 @@ extern "C" {
 
 #define HTP_PIPELINED_CONNECTION            1
 
-#define HTP_SERVER_MINIMAL                  0
-#define HTP_SERVER_GENERIC                  1
-#define HTP_SERVER_IDS                      2
-#define HTP_SERVER_IIS_4_0                  4   /* Windows NT 4.0 */
-#define HTP_SERVER_IIS_5_0                  5   /* Windows 2000 */
-#define HTP_SERVER_IIS_5_1                  6   /* Windows XP Professional */
-#define HTP_SERVER_IIS_6_0                  7   /* Windows 2003 */
-#define HTP_SERVER_IIS_7_0                  8   /* Windows 2008 */
-#define HTP_SERVER_IIS_7_5                  9   /* Windows 7 */
-#define HTP_SERVER_TOMCAT_6_0               10  /* Unused */
-#define HTP_SERVER_APACHE                   11
-#define HTP_SERVER_APACHE_2_2               12
-
 #define HTP_CODING_NO_BODY                  -1
 #define HTP_CODING_UNKNOWN                  0
 #define HTP_CODING_IDENTITY                 1

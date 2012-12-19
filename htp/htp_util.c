@@ -406,7 +406,7 @@ int htp_connp_is_line_folded(unsigned char *data, size_t len) {
  */
 int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t len) {
     // Is this the end of request headers?
-    switch (connp->cfg->spersonality) {
+    switch (connp->cfg->server_personality) {
         case HTP_SERVER_IIS_5_1:
             // IIS 5 will accept a whitespace line as a terminator
             if (htp_is_line_whitespace(data, len)) {

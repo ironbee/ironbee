@@ -215,7 +215,7 @@ struct htp_cfg_t {
     /**
      * Server personality identifier.
      */
-    int spersonality;
+    enum htp_server_personality_t server_personality;
 
     /** The function used for request line parsing. Depends on the personality. */
     int (*parse_request_line)(htp_connp_t *connp);

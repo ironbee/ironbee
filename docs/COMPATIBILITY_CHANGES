@@ -36,6 +36,9 @@
 
 - Renamed STREAM_STATE_* constants to HTP_STREAM_*
 
+- Personality HTP_SERVER_APACHE_2_2 renamed to HTP_SERVER_APACHE_2. Personality HTP_SERVER_APACHE removed.
+
+
 
 
 

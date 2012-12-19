@@ -506,10 +506,11 @@ void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled) {
     cfg->response_decompression_enabled = enabled;
 }
 
-int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
+int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personality_t personality) {
     if (cfg == NULL) return HTP_ERROR;
 
     switch (personality) {
+        
         case HTP_SERVER_MINIMAL:
             cfg->parse_request_line = htp_parse_request_line_generic;
             cfg->process_request_header = htp_process_request_header_generic;
@@ -542,9 +543,8 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_unicode_mapping = BESTFIT;
             cfg->path_convert_utf8 = YES;
             break;
-
-        case HTP_SERVER_APACHE:
-        case HTP_SERVER_APACHE_2_2:
+        
+        case HTP_SERVER_APACHE_2:
             cfg->parse_request_line = htp_parse_request_line_apache_2_2;
             cfg->process_request_header = htp_process_request_header_apache_2_2;
             cfg->parse_response_line = htp_parse_response_line_generic;
@@ -606,7 +606,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
     }
 
     // Remember the personality
-    cfg->spersonality = personality;
+    cfg->server_personality = personality;
 
     return HTP_OK;
 }

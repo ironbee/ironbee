@@ -45,7 +45,7 @@ protected:
 
     virtual void SetUp() {
         cfg = htp_config_create();
-        htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2_2);
+        htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2);
         htp_config_register_urlencoded_parser(cfg);
         htp_config_register_multipart_parser(cfg);
 
