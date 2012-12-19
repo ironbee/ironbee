@@ -11,6 +11,7 @@ AM_LDFLAGS = -no-undefined -static-libtool-libs
 endif
 EXTRA_DIST = ironbee-ffi.lua \
 	     ironbee-api.lua \
+	     ironbee-modlua.lua \
              example.lua \
              qa.lua
 lua_DATA = ironbee-ffi.lua \
