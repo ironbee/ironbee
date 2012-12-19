@@ -316,7 +316,7 @@ struct htp_tx_t {
     bstr *request_method;
 
     /** Request method, as number. Available only if we were able to recognize the request method. */
-    int request_method_number;
+    enum htp_method_t request_method_number;
 
     /** Request URI, raw, as given to us on the request line. */
     bstr *request_uri;

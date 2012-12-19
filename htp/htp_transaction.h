@@ -216,7 +216,7 @@ htp_status_t htp_tx_req_set_method_c(htp_tx_t *tx, const char *method, enum htp_
  * @param[in] tx
  * @param[in] method_number
  */
-void htp_tx_req_set_method_number(htp_tx_t *tx, int method_number);
+void htp_tx_req_set_method_number(htp_tx_t *tx, enum htp_method_t method_number);
 
 /**
  * Forces HTTP/0.9 as the transaction protocol. This method exists to ensure

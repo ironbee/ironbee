@@ -76,36 +76,44 @@ typedef struct timeval htp_time_t;
 #define HTP_PROTOCOL_1_0             100
 #define HTP_PROTOCOL_1_1             101
 
-// HTP method constants
-#define HTP_M_UNKNOWN               -1
-#define HTP_M_GET                    0
-#define HTP_M_PUT                    1
-#define HTP_M_POST                   2
-#define HTP_M_DELETE                 3
-#define HTP_M_CONNECT                4
-#define HTP_M_OPTIONS                5
-#define HTP_M_TRACE                  6
-#define HTP_M_PATCH                  7
-#define HTP_M_PROPFIND               8
-#define HTP_M_PROPPATCH              9
-#define HTP_M_MKCOL                  10
-#define HTP_M_COPY                   11
-#define HTP_M_MOVE                   12
-#define HTP_M_LOCK                   13
-#define HTP_M_UNLOCK                 14
-#define HTP_M_VERSION_CONTROL        15
-#define HTP_M_CHECKOUT               16
-#define HTP_M_UNCHECKOUT             17
-#define HTP_M_CHECKIN                18
-#define HTP_M_UPDATE                 19
-#define HTP_M_LABEL                  20
-#define HTP_M_REPORT                 21
-#define HTP_M_MKWORKSPACE            22
-#define HTP_M_MKACTIVITY             23
-#define HTP_M_BASELINE_CONTROL       24
-#define HTP_M_MERGE                  25
-#define HTP_M_INVALID                26
-#define HTP_M_HEAD                   1000
+/**
+ * HTTP methods.
+ */
+enum htp_method_t {
+    /**
+     * Used by default, until the method is determined (e.g., before
+     * the request line is processed.
+     */
+    HTP_M_UNKNOWN = 0,
+    HTP_M_HEAD = 1,
+    HTP_M_GET = 2,
+    HTP_M_PUT = 3,
+    HTP_M_POST = 4,
+    HTP_M_DELETE = 5,
+    HTP_M_CONNECT = 6,
+    HTP_M_OPTIONS = 7,
+    HTP_M_TRACE = 8,
+    HTP_M_PATCH = 9,
+    HTP_M_PROPFIND = 10,
+    HTP_M_PROPPATCH = 11,
+    HTP_M_MKCOL = 12,
+    HTP_M_COPY = 13,
+    HTP_M_MOVE = 14,
+    HTP_M_LOCK = 15,
+    HTP_M_UNLOCK = 16,
+    HTP_M_VERSION_CONTROL = 17,
+    HTP_M_CHECKOUT = 18,
+    HTP_M_UNCHECKOUT = 19,
+    HTP_M_CHECKIN = 20,
+    HTP_M_UPDATE = 21,
+    HTP_M_LABEL = 22,
+    HTP_M_REPORT = 23,
+    HTP_M_MKWORKSPACE = 24,
+    HTP_M_MKACTIVITY = 25,
+    HTP_M_BASELINE_CONTROL = 26,
+    HTP_M_MERGE = 27,
+    HTP_M_INVALID = 28
+};
 
 // Logging-related constants
 #define HTP_LOG_MARK                 __FILE__,__LINE__
