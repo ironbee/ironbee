@@ -126,7 +126,7 @@ public:
                 << " (" << ib_status_to_string(rc) << ")";
         }
         else {
-            ib_num_t range = fabs(expected * 0.001);
+            ib_num_t range = (ib_num_t)fabs(expected * 0.001);
             bool iseq = ( (result >= expected - range) &&
                           (result <= expected + range) );
             EXPECT_TRUE(iseq)

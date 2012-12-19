@@ -294,7 +294,7 @@ TEST_F(TestIPSet, Complex4)
 
 TEST_F(TestIPSet, Structured4)
 {
-    static const size_t c_num_tests = 1e5;
+    static const size_t c_num_tests = (size_t)1e5;
 
     ib_status_t rc;
     ib_ipset4_t set;
@@ -355,7 +355,7 @@ TEST_F(TestIPSet, Structured4)
 
 TEST_F(TestIPSet, PositiveSet4)
 {
-    static const size_t c_num_tests = 1e5;
+    static const size_t c_num_tests = (size_t)1e5;
     static const size_t c_num_ips   = 1024;
 
     ib_status_t rc;
@@ -497,7 +497,7 @@ TEST_F(TestIPSet, Complex6)
 
 TEST_F(TestIPSet, Structured6)
 {
-    static const size_t c_num_tests = 1e5;
+    static const size_t c_num_tests = (size_t)1e5;
 
     ib_status_t rc;
     ib_ipset6_t set;
@@ -558,7 +558,7 @@ TEST_F(TestIPSet, Structured6)
 
 TEST_F(TestIPSet, PositiveSet6)
 {
-    static const size_t c_num_tests = 1e5;
+    static const size_t c_num_tests = (size_t)1e5;
     static const size_t c_num_ips   = 1024;
 
     ib_status_t rc;

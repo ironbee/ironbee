@@ -139,7 +139,7 @@ TEST(TestMpool, CreateDestroy)
 TEST(TestMpool, OneThousandAllocs)
 {
     static const size_t c_max_size = 1048;
-    static const size_t c_num_allocs = 1e3;
+    static const size_t c_num_allocs = (size_t)1e3;
 
     boost::random::mt19937 rng;
     boost::random::uniform_int_distribution<size_t> g(1, c_max_size);
@@ -572,7 +572,7 @@ namespace {
 
 void muck_with_parent(ib_mpool_t* parent)
 {
-    static const size_t num_mucks = 1e4;
+    static const size_t num_mucks = (size_t)1e4;
     ib_mpool_t* mp;
 
     for (size_t i = 0; i < num_mucks; ++i) {
