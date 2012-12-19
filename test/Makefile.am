@@ -28,5 +28,6 @@ test: check
 	@echo
 
 check-compile-only: all-am
-	@echo
+	$(MAKE) $(AM_MAKEFLAGS) $(check_LIBRARIES)
+	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 
