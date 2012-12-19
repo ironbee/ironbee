@@ -142,6 +142,12 @@ if ((X)->out_line_len < (X)->out_line_size) { \
 #ifndef LF
 #define LF '\n'
 #endif
+
+#define HTP_HEADER_LIMIT_HARD               18000
+#define HTP_HEADER_LIMIT_SOFT               9000
+
+#define HTP_VALID_STATUS_MIN                100
+#define HTP_VALID_STATUS_MAX                999
     
 // Data structures
 

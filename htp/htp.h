@@ -58,17 +58,9 @@ extern "C" {
 
 // -- Defines -------------------------------------------------------------------------------------
 
-#define HTP_HEADER_MISSING_COLON            1
-#define HTP_HEADER_INVALID_NAME             2
-#define HTP_HEADER_LWS_AFTER_FIELD_NAME     3
+// Error codes
 #define HTP_LINE_TOO_LONG_HARD              4
 #define HTP_LINE_TOO_LONG_SOFT              5
-
-#define HTP_HEADER_LIMIT_HARD               18000
-#define HTP_HEADER_LIMIT_SOFT               9000
-
-#define HTP_VALID_STATUS_MIN                100
-#define HTP_VALID_STATUS_MAX                999
 
 #define HTP_FIELD_UNPARSEABLE               0x000001
 #define HTP_FIELD_INVALID                   0x000002
@@ -87,12 +79,10 @@ extern "C" {
 #define HTP_PATH_INVALID                    0x004000
 #define HTP_PATH_OVERLONG_U                 0x008000
 #define HTP_PATH_ENCODED_SEPARATOR          0x010000
-
 #define HTP_PATH_UTF8_VALID                 0x020000 /* At least one valid UTF-8 character and no invalid ones */
 #define HTP_PATH_UTF8_INVALID               0x040000
 #define HTP_PATH_UTF8_OVERLONG              0x080000
 #define HTP_PATH_FULLWIDTH_EVASION          0x100000 /* Range U+FF00 - U+FFFF detected */
-
 #define HTP_STATUS_LINE_INVALID             0x200000
 
 #define HTP_PIPELINED_CONNECTION            1
