@@ -168,7 +168,10 @@ int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header)
  */
 int htp_parse_authorization(htp_connp_t *connp) {
     htp_header_t *auth_header = htp_table_get_c(connp->in_tx->request_headers, "authorization");
-    if (auth_header == NULL) return HTP_OK;
+    if (auth_header == NULL) {
+        connp->in_tx->request_auth_type = HTP_AUTH_NONE;
+        return HTP_OK;
+    }
 
     if (bstr_begins_with_c_nocase(auth_header->value, "basic")) {
         // Basic authentication
@@ -179,8 +182,9 @@ int htp_parse_authorization(htp_connp_t *connp) {
         connp->in_tx->request_auth_type = HTP_AUTH_DIGEST;
         return htp_parse_authorization_digest(connp, auth_header);
     } else {
+        // Unrecognized authentication method
+        connp->in_tx->request_auth_type = HTP_AUTH_UNRECOGNIZED;
         // TODO Report unknown Authorization header
-        connp->in_tx->request_auth_type = HTP_AUTH_UNKNOWN;
     }
 
     return HTP_OK;

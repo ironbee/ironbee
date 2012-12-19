@@ -137,10 +137,29 @@ extern "C" {
 #define STATUS_400                          400
 #define STATUS_404                          401
 
-#define HTP_AUTH_NONE                       0
-#define HTP_AUTH_BASIC                      1
-#define HTP_AUTH_DIGEST                     2
-#define HTP_AUTH_UNKNOWN                    9
+/**
+ * Enumerates the possible values for authentication type.
+ */
+enum htp_auth_type_t {
+    /**
+     * This is the default value that is used before
+     * the presence of authentication is determined (e.g.,
+     * before request headers are seen).
+     */
+    HTP_AUTH_UNKNOWN = 0,
+
+    /** No authentication. */
+    HTP_AUTH_NONE = 1,
+
+    /** HTTP Basic authentication used. */
+    HTP_AUTH_BASIC = 2,
+
+    /** HTTP Digest authentication used. */
+    HTP_AUTH_DIGEST = 3,
+
+    /** Unrecognized authentication method. */
+    HTP_AUTH_UNRECOGNIZED = 9
+};
 
 
 // -- Data structures -----------------------------------------------------------------------------
@@ -488,7 +507,7 @@ struct htp_tx_t {
     htp_table_t *request_cookies;
 
     /** TODO */
-    int request_auth_type;
+    enum htp_auth_type_t request_auth_type;
 
     /** TODO */
     bstr *request_auth_username;

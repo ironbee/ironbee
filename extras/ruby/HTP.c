@@ -810,7 +810,7 @@ void Init_htp( void )
   rb_define_const( mHTP, "HTP_SERVER_TOMCAT_6_0", INT2FIX( HTP_SERVER_TOMCAT_6_0 ) );
   rb_define_const( mHTP, "HTP_SERVER_APACHE", INT2FIX( HTP_SERVER_APACHE ) );
   rb_define_const( mHTP, "HTP_SERVER_APACHE_2_2", INT2FIX( HTP_SERVER_APACHE_2_2 ) );
-  rb_define_const( mHTP, "NONE", INT2FIX( NONE ) );
+  rb_define_const( mHTP, "NONE", INT2FIX( HTP_AUTH_NONE ) );
   rb_define_const( mHTP, "IDENTITY", INT2FIX( HTP_CODING_IDENTITY ) );
   rb_define_const( mHTP, "CHUNKED", INT2FIX( HTP_CODING_CHUNKED ) );
   rb_define_const( mHTP, "TX_PROGRESS_NEW", INT2FIX( NEW ) );
@@ -844,7 +844,7 @@ void Init_htp( void )
   rb_define_const( mHTP, "HTP_AUTH_NONE", INT2FIX( HTP_AUTH_NONE ) );
   rb_define_const( mHTP, "HTP_AUTH_BASIC", INT2FIX( HTP_AUTH_BASIC ) );
   rb_define_const( mHTP, "HTP_AUTH_DIGEST", INT2FIX( HTP_AUTH_DIGEST ) );
-  rb_define_const( mHTP, "HTP_AUTH_UNKNOWN", INT2FIX( HTP_AUTH_UNKNOWN ) );
+  rb_define_const( mHTP, "HTP_AUTH_UNKNOWN", INT2FIX( HTP_AUTH_UNRECOGNIZED ) );
   rb_define_const( mHTP, "HTP_FILE_MULTIPART", INT2FIX( HTP_FILE_MULTIPART ) );
   rb_define_const( mHTP, "HTP_FILE_PUT", INT2FIX( HTP_FILE_PUT ) );
   rb_define_const( mHTP, "CFG_NOT_SHARED", INT2FIX( CFG_NOT_SHARED ) );

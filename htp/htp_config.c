@@ -155,8 +155,8 @@ htp_cfg_t *htp_config_create(void) {
     cfg->response_decompression_enabled = 1;
     cfg->params_decode_u_encoding = NO;
     cfg->params_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
-    cfg->params_nul_encoded_handling = NONE;
-    cfg->params_nul_raw_handling = NONE;
+    cfg->params_nul_encoded_handling = HTP_AUTH_NONE;
+    cfg->params_nul_raw_handling = HTP_AUTH_NONE;
     cfg->parse_request_cookies = 1;
 
     // TODO Try to determine the correct location for the storage
@@ -554,7 +554,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_decode_separators = NO;
             cfg->path_compress_separators = YES;
             cfg->path_invalid_encoding_handling = URL_DECODER_STATUS_400;
-            cfg->path_control_char_handling = NONE;
+            cfg->path_control_char_handling = HTP_AUTH_NONE;
             break;
 
         case HTP_SERVER_IIS_5_1:
@@ -569,7 +569,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, int personality) {
             cfg->path_invalid_encoding_handling = URL_DECODER_PRESERVE_PERCENT;
             cfg->path_decode_u_encoding = YES;
             cfg->path_unicode_mapping = BESTFIT;
-            cfg->path_control_char_handling = NONE;
+            cfg->path_control_char_handling = HTP_AUTH_NONE;
             break;
 
         case HTP_SERVER_IIS_6_0:

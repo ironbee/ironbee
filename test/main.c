@@ -751,13 +751,13 @@ int main_path_tests(int argc, char** argv) {
     PATH_DECODE_TEST_BEFORE("Control char in path, encoded (no effect)");
     input = bstr_dup_c("/%01test");
     expected = bstr_dup_c("/\x01test");
-    cfg->path_control_char_handling = NONE;
+    cfg->path_control_char_handling = HTP_AUTH_NONE;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, raw (no effect)");
     input = bstr_dup_c("/\x01test");
     expected = bstr_dup_c("/\x01test");
-    cfg->path_control_char_handling = NONE;
+    cfg->path_control_char_handling = HTP_AUTH_NONE;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, encoded (400)");
