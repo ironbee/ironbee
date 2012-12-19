@@ -848,8 +848,8 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
 }
 
 htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
-    if (tx->connp->out_tx->progress != TX_PROGRESS_DONE) {
-        tx->progress = TX_PROGRESS_DONE;
+    if (tx->connp->out_tx->progress != TX_PROGRESS_COMPLETE) {
+        tx->progress = TX_PROGRESS_COMPLETE;
 
         // Run the last RESPONSE_BODY_DATA HOOK, but
         // only if there was a response body present.

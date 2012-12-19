@@ -37,38 +37,26 @@
 #ifndef _HTP_H
 #define	_HTP_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <sys/time.h>
 
 #include "htp_core.h"
 
 #include "bstr.h"
+#include "htp_config.h"
+#include "htp_connection_parser.h"
 #include "htp_decompressors.h"
 #include "htp_hooks.h"
 #include "htp_list.h"
 #include "htp_multipart.h"
-#include "htp_urlencoded.h"
 #include "htp_table.h"
+#include "htp_transaction.h"
+#include "htp_urlencoded.h"
 
 // -- Defines -------------------------------------------------------------------------------------
-
-#define HTP_VERSION_STRING          "master"
-
-// In the form of x.y.z, with two positions for each component; for example, 400 means 0.4.0
-#define HTP_VERSION_NUMBER          400
-
-#define HTP_PROTOCOL_UNKNOWN        -1
-#define HTP_PROTOCOL_0_9             9
-#define HTP_PROTOCOL_1_0             100
-#define HTP_PROTOCOL_1_1             101
-
-#define HTP_LOG_MARK                __FILE__,__LINE__
-
-#define HTP_LOG_ERROR               1
-#define HTP_LOG_WARNING             2
-#define HTP_LOG_NOTICE              3
-#define HTP_LOG_INFO                4
-#define HTP_LOG_DEBUG               5
-#define HTP_LOG_DEBUG2              6
 
 #define HTP_HEADER_MISSING_COLON            1
 #define HTP_HEADER_INVALID_NAME             2
@@ -81,42 +69,6 @@
 
 #define HTP_VALID_STATUS_MIN    100
 #define HTP_VALID_STATUS_MAX    999
-
-#define LOG_NO_CODE             0
-
-#define HTP_M_UNKNOWN              -1
-
-// The following request method are defined in Apache 2.2.13, in httpd.h.
-#define HTP_M_GET                   0
-#define HTP_M_PUT                   1
-#define HTP_M_POST                  2
-#define HTP_M_DELETE                3
-#define HTP_M_CONNECT               4
-#define HTP_M_OPTIONS               5
-#define HTP_M_TRACE                 6
-#define HTP_M_PATCH                 7
-#define HTP_M_PROPFIND              8
-#define HTP_M_PROPPATCH             9
-#define HTP_M_MKCOL                 10
-#define HTP_M_COPY                  11
-#define HTP_M_MOVE                  12
-#define HTP_M_LOCK                  13
-#define HTP_M_UNLOCK                14
-#define HTP_M_VERSION_CONTROL       15
-#define HTP_M_CHECKOUT              16
-#define HTP_M_UNCHECKOUT            17
-#define HTP_M_CHECKIN               18
-#define HTP_M_UPDATE                19
-#define HTP_M_LABEL                 20
-#define HTP_M_REPORT                21
-#define HTP_M_MKWORKSPACE           22
-#define HTP_M_MKACTIVITY            23
-#define HTP_M_BASELINE_CONTROL      24
-#define HTP_M_MERGE                 25
-#define HTP_M_INVALID               26
-
-// Interestingly, Apache does not define M_HEAD
-#define HTP_M_HEAD                  1000
 
 #define HTP_FIELD_UNPARSEABLE           0x000001
 #define HTP_FIELD_INVALID               0x000002
@@ -173,7 +125,7 @@
 #define TX_PROGRESS_RES_HEADERS     7
 #define TX_PROGRESS_RES_BODY        8
 #define TX_PROGRESS_RES_TRAILER     9
-#define TX_PROGRESS_DONE            10
+#define TX_PROGRESS_COMPLETE        10
 
 #define HTP_STREAM_NEW              0
 #define HTP_STREAM_OPEN             1
@@ -202,16 +154,12 @@
 #define HTP_AUTH_DIGEST     2
 #define HTP_AUTH_UNKNOWN    9
 
-#define HTP_FILE_MULTIPART  1
-#define HTP_FILE_PUT        2
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // -- Data structures -----------------------------------------------------------------------------
 
+// TODO
 struct htp_connp_t {
+
     // General fields
     
     /** Current parser configuration structure. */
@@ -223,11 +171,13 @@ struct htp_connp_t {
     /** Opaque user data associated with this parser. */
     void *user_data;   
 
-    /** On parser failure, this field will contain the error information. Do note, however,
-     *  that the value in this field will only be valid immediately after an error condition,
-     *  but it is not guaranteed to remain valid if the parser is invoked again.
+    /**
+     * On parser failure, this field will contain the error information. Do note, however,
+     * that the value in this field will only be valid immediately after an error condition,
+     * but it is not guaranteed to remain valid if the parser is invoked again.
      */
     htp_log_t *last_error;
+
 
     // Request parser fields
 
@@ -236,10 +186,14 @@ struct htp_connp_t {
 
     /** Parser output status. Starts as HTP_OK, but may turn into HTP_ERROR. */
     unsigned int out_status;
-    
+
+    // TODO
     unsigned int out_data_other_at_tx_end;
 
-    /** The time when the last request data chunk was received. Can be NULL. */
+    /**
+     * The time when the last request data chunk was received. Can be NULL if
+     * the upstream code is not providing the timestamps when calling us.
+     */
     htp_time_t in_timestamp;
 
     /** Pointer to the current request data chunk. */
@@ -288,20 +242,22 @@ struct htp_connp_t {
     int in_header_line_counter;
 
     /**
-     * The request body length declared in a valid request headers. The key here
-     * is "valid". This field will not be populated if a request contains both
+     * The request body length declared in a valid request header. The key here
+     * is "valid". This field will not be populated if the request contains both
      * a Transfer-Encoding header and a Content-Length header.
      */
     int64_t in_content_length;
 
-    /** Holds the remaining request body length that we expect to read. This
-     *  field will be available only when the length of a request body is known
-     *  in advance, i.e. when request headers contain a Content-Length header.
+    /**
+     * Holds the remaining request body length that we expect to read. This
+     * field will be available only when the length of a request body is known
+     * in advance, i.e. when request headers contain a Content-Length header.
      */
     int64_t in_body_data_left;
 
-    /** Holds the amount of data that needs to be read from the
-     *  current data chunk. Only used with chunked request bodies.
+    /**
+     * Holds the amount of data that needs to be read from the
+     * current data chunk. Only used with chunked request bodies.
      */
     int in_chunked_length;
 
@@ -310,9 +266,10 @@ struct htp_connp_t {
 
     // Response parser fields
 
-    /** Response counter, incremented with every new response. This field is
-     *  used to match responses to requests. The expectation is that for every
-     *  response there will already be a transaction (request) waiting.
+    /**
+     * Response counter, incremented with every new response. This field is
+     * used to match responses to requests. The expectation is that for every
+     * response there will already be a transaction (request) waiting.
      */
     size_t out_next_tx_index;
 
@@ -349,9 +306,10 @@ struct htp_connp_t {
     /** The response header line currently being processed. */
     htp_header_line_t *out_header_line;
 
-    /** The index, in the structure holding all response header lines, of the
-     *  line with which the current header begins. The header lines are
-     *  kept in the transaction structure.
+    /**
+     * The index, in the structure holding all response header lines, of the
+     * line with which the current header begins. The header lines are
+     * kept in the transaction structure.
      */
     int out_header_line_index;
 
@@ -367,8 +325,9 @@ struct htp_connp_t {
     /** The remaining length of the current response body, if known. */
     int64_t out_body_data_left;
 
-    /** Holds the amount of data that needs to be read from the
-     *  current response data chunk. Only used with chunked response bodies.
+    /**
+     * Holds the amount of data that needs to be read from the
+     * current response data chunk. Only used with chunked response bodies.
      */
     int out_chunked_length;
 
@@ -378,9 +337,11 @@ struct htp_connp_t {
     /** Response decompressor used to decompress response body data. */
     htp_decompressor_t *out_decompressor;
 
+    // TODO
     htp_file_t *put_file;
 };
 
+// TODO
 struct htp_file_t {
     /** Where did this file come from? */
     int source;
@@ -398,6 +359,7 @@ struct htp_file_t {
     int fd;
 };
 
+// TODO
 struct htp_file_data_t {
     /** File information. */
     htp_file_t *file;
@@ -409,6 +371,7 @@ struct htp_file_data_t {
     size_t len;
 };
 
+// TODO
 struct htp_log_t {
     /** The connection parser associated with this log message. */
     htp_connp_t *connp;
@@ -432,30 +395,33 @@ struct htp_log_t {
     unsigned int line;
 };
 
+// TODO
 struct htp_header_line_t {
-    /** Header line data. */
+    /** Line contents. */
     bstr *line;
 
-    /** Offset at which header name begins, if applicable. */
+    /** Offset at which header name begins, if the line contains a header name. */
     size_t name_offset;
 
-    /** Header name length, if applicable. */
+    /** Header name length, valid only if the line contains a header name. */
     size_t name_len;
 
-    /** Offset at which header value begins, if applicable. */
+    /** Offset at which header value begins, if the value begins on this line. */
     size_t value_offset;
 
-    /** Value length, if applicable. */
+    /** Header value length. */
     size_t value_len;
 
-    /** How many NUL bytes are there on this header line? */
+    /** How many NUL bytes are there in this header line? */
     unsigned int has_nulls;
 
     /** The offset of the first NUL byte, or -1. */
     int first_nul_offset;
 
-    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_LONG, HTP_FIELD_NUL_BYTE,
-     *                 HTP_FIELD_REPEATED, HTP_FIELD_FOLDED */
+    /**
+     * Parsing flags; a combination of HTP_FIELD_INVALID, HTP_FIELD_LONG,
+     * HTP_FIELD_NUL_BYTE, HTP_FIELD_REPEATED, and HTP_FIELD_FOLDED.
+     */
     unsigned int flags;
     
     /** Header that uses this line. */
@@ -469,12 +435,13 @@ struct htp_header_t {
     /** Header value. */
     bstr *value;   
 
-    /** Parsing flags: HTP_FIELD_INVALID, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED */
+    /** Parsing flags; a combination of: HTP_FIELD_INVALID, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED. */
     unsigned int flags;
 };
 
+// TODO
 struct htp_tx_t {
-    /** The connection parsed associated with this transaction. */
+    /** The connection parser associated with this transaction. */
     htp_connp_t *connp;
 
     /** The connection to which this transaction belongs. */
@@ -483,9 +450,9 @@ struct htp_tx_t {
     /** The configuration structure associated with this transaction. */
     htp_cfg_t *cfg;
 
-    /** Is the configuration structure shared with other transactions or connections? As
-     *  a rule of thumb transactions will initially share their configuration structure, but
-     *  copy-on-write may be used when an attempt to modify configuration is detected.
+    /**
+     * Is the configuration structure shared with other transactions or connections? If
+     * this field is set to HTP_CONFIG_PRIVATE, the transaction owns the configuration.
      */
     int is_config_shared;
 
@@ -493,6 +460,8 @@ struct htp_tx_t {
     void *user_data;
     
     // Request
+
+    /** TODO */
     unsigned int request_ignored_lines;
 
     /** The first line of this request. */
@@ -535,18 +504,20 @@ struct htp_tx_t {
     /** Is this request using HTTP/0.9? */
     int is_protocol_0_9;
 
-    /** This structure holds a parsed request_uri, with the missing information
-     *  added (e.g., adding port number from the TCP information) and the fields
-     *  normalized. This structure should be used to make decisions about a request.
-     *  To inspect raw data, either use request_uri, or parsed_uri_incomplete.
+    /**
+     * This structure holds a parsed request_uri, with the missing information
+     * added (e.g., adding port number from the TCP information) and the fields
+     * normalized. This structure should be used to make decisions about a request.
+     * To inspect raw data, either use request_uri, or parsed_uri_incomplete.
      */
     htp_uri_t *parsed_uri;
 
-    /** This structure holds the individual components parsed out of the request URI. No
-     *  attempt is made to normalize the contents or replace the missing pieces with
-     *  defaults. The purpose of this field is to allow you to look at the data as it
-     *  was supplied. Use parsed_uri when you need to act on data. Note that this field
-     *  will never have the port as a number.
+    /**
+     * This structure holds the individual components parsed out of the request URI. No
+     * attempt is made to normalize the contents or replace the missing pieces with
+     * defaults. The purpose of this field is to allow you to look at the data as it
+     * was supplied. Use parsed_uri when you need to act on data. Note that this field
+     * will never have the port as a number.
      */
     htp_uri_t *parsed_uri_incomplete;
     
@@ -564,36 +535,40 @@ struct htp_tx_t {
      *                  | <entity-body encoded as per Transfer-Encoding>
      */
 
-    /** The length of the request message-body. In most cases, this value
-     *  will be the same as request_entity_len. The values will be different
-     *  if request compression or chunking were applied. In that case,
-     *  request_message_len contains the length of the request body as it
-     *  has been seen over TCP; request_entity_len contains length after
-     *  de-chunking and decompression.
+    /**
+     * The length of the request message-body. In most cases, this value
+     * will be the same as request_entity_len. The values will be different
+     * if request compression or chunking were applied. In that case,
+     * request_message_len contains the length of the request body as it
+     * has been seen over TCP; request_entity_len contains length after
+     * de-chunking and decompression.
      */
     size_t request_message_len;
 
-    /** The length of the request entity-body. In most cases, this value
-     *  will be the same as request_message_len. The values will be different
-     *  if request compression or chunking were applied. In that case,
-     *  request_message_len contains the length of the request body as it
-     *  has been seen over TCP; request_entity_len contains length after
-     *  de-chunking and decompression.
+    /**
+     * The length of the request entity-body. In most cases, this value
+     * will be the same as request_message_len. The values will be different
+     * if request compression or chunking were applied. In that case,
+     * request_message_len contains the length of the request body as it
+     * has been seen over TCP; request_entity_len contains length after
+     * de-chunking and decompression.
      */
     size_t request_entity_len;
 
-    /** TODO The length of the data transmitted in a request body, minus the length
-     *  of the files (if any). At worst, this field will be equal to the entity
-     *  length if the entity encoding is not recognized. If we recognise the encoding
-     *  (e.g., if it is application/x-www-form-urlencoded or multipart/form-data), the
-     *  decoder may be able to separate the data from everything else, in which case
-     *  the value in this field will be lower.
+    /**
+     * TODO The length of the data transmitted in a request body, minus the length
+     * of the files (if any). At worst, this field will be equal to the entity
+     * length if the entity encoding is not recognized. If we recognise the encoding
+     * (e.g., if it is application/x-www-form-urlencoded or multipart/form-data), the
+     * decoder may be able to separate the data from everything else, in which case
+     * the value in this field will be lower.
      */
     size_t request_nonfiledata_len;
 
-    /** TODO The length of the files uploaded using multipart/form-data, or in a
-     *  request that uses PUT (in which case this field will be equal to the
-     *  entity length field). This field will be zero in all other cases.
+    /**
+     * TODO The length of the files uploaded using multipart/form-data, or in a
+     * request that uses PUT (in which case this field will be equal to the
+     * entity length field). This field will be zero in all other cases.
      */
     size_t request_filedata_len;        
 
@@ -619,64 +594,80 @@ struct htp_tx_t {
     /** Contains request header separator. */
     bstr *request_headers_sep;
 
-    /** Request transfer coding. Can be one of HTP_CODING_UNKNOWN (body presence not
-     *  determined yet), HTP_CODING_IDENTITY, HTP_CODING_CHUNKED, or HTP_CODING_NO_BODY.
+    /**
+     * Request transfer coding. Can be one of HTP_CODING_UNKNOWN (body presence not
+     * determined yet), HTP_CODING_IDENTITY, HTP_CODING_CHUNKED, or HTP_CODING_NO_BODY.
      */
     int request_transfer_coding;
 
     /** Compression: COMPRESSION_NONE, COMPRESSION_GZIP or COMPRESSION_DEFLATE. */
     int request_content_encoding;
 
-    /** This field will contain the request content type when that information
-     *  is available in request headers. The contents of the field will be converted
-     *  to lowercase and any parameters (e.g., character set information) removed.
+    /**
+     * This field will contain the request content type when that information
+     * is available in request headers. The contents of the field will be converted
+     * to lowercase and any parameters (e.g., character set information) removed.
      */
     bstr *request_content_type;
 
-    /** Contains the value specified in the Content-Length header. Will be NULL
-     *  if the header was not supplied.
+    /**
+     * Contains the value specified in the Content-Length header. Will be NULL
+     * if the header was not supplied.
      */
     size_t request_content_length;
 
-    /** Transaction-specific REQUEST_BODY_DATA hook. Behaves as
-     *  the configuration hook with the same name.
+    /**
+     * Transaction-specific REQUEST_BODY_DATA hook. Behaves as
+     * the configuration hook with the same name.
      */
     htp_hook_t *hook_request_body_data;
 
-    /** Transaction-specific RESPONSE_BODY_DATA hook. Behaves as
-     *  the configuration hook with the same name.
+    /**
+     * Transaction-specific RESPONSE_BODY_DATA hook. Behaves as
+     * the configuration hook with the same name.
      */
     htp_hook_t *hook_response_body_data;
 
-    /** Query string URLENCODED parser. Available only
-     *  when the query string is not NULL and not empty.
-      */
+    /**
+     * Query string URLENCODED parser. Available only
+     * when the query string is not NULL and not empty.
+     */
     htp_urlenp_t *request_urlenp_query;
 
-    /** Request body URLENCODED parser. Available only when
-     *  the request body is in the application/x-www-form-urlencoded format.
+    /**
+     * Request body URLENCODED parser. Available only when the request body is in the
+     * application/x-www-form-urlencoded format and the parser was configured to run.
      */
     htp_urlenp_t *request_urlenp_body;
 
-    /** Request body MULTIPART parser. Available only when the
-     *  body is in the multipart/form-data format and when the parser
-     *  was invoked in configuration.
+    /**
+     * Request body MULTIPART parser. Available only when the body is in the
+     * multipart/form-data format and the parser was configured to run.
      */
     htp_mpartp_t *request_mpartp;
 
     /** Parameters from the query string. */
     htp_table_t *request_params_query;
+
+    /** TODO */
     int request_params_query_reused;
 
     /** Parameters from request body. */
     htp_table_t *request_params_body;
+
+    /** TODO */
     int request_params_body_reused;
 
     /** Request cookies */
     htp_table_t *request_cookies;
 
+    /** TODO */
     int request_auth_type;
+
+    /** TODO */
     bstr *request_auth_username;
+
+    /** TODO */
     bstr *request_auth_password;
 
     // Response
@@ -693,8 +684,9 @@ struct htp_tx_t {
     /** Response protocol, as text. */
     bstr *response_protocol;
 
-    /** Response protocol as number. Only available if we were
-     *  able to parse the protocol version.
+    /**
+     * Response protocol as number. Only available if we were
+     * able to parse the protocol version.
      */
     int response_protocol_number;
 
@@ -704,8 +696,9 @@ struct htp_tx_t {
     /** Response status code, available only if we were able to parse it. */
     int response_status_number;
 
-    /** This field is set by the protocol decoder with it thinks that the
-     *  backend server will reject a request with a particular status code.
+    /**
+     * This field is set by the protocol decoder with it thinks that the
+     * backend server will reject a request with a particular status code.
      */
     int response_status_expected_number;
 
@@ -721,14 +714,16 @@ struct htp_tx_t {
     /** Parsed response headers. */
     htp_table_t *response_headers;
 
-    /** Contains raw response headers. This field is generated on demand, use
-     *  htp_tx_get_response_headers_raw() to get it.
+    /**
+     * Contains raw response headers. This field is generated on demand, use
+     * htp_tx_get_response_headers_raw() to get it.
      */
     bstr *response_headers_raw;
 
-    /** How many response header lines have been included in the raw
-      * buffer (above).
-      */
+    /**
+     * How many response header lines have been included in the raw
+     * buffer (above).
+     */
     size_t response_headers_raw_lines;
 
     /** Contains response header separator. */
@@ -748,21 +743,23 @@ struct htp_tx_t {
      *                  | <entity-body encoded as per Transfer-Encoding>
      */
 
-    /** The length of the response message-body. In most cases, this value
-     *  will be the same as response_entity_len. The values will be different
-     *  if response compression or chunking were applied. In that case,
-     *  response_message_len contains the length of the response body as it
-     *  has been seen over TCP; response_entity_len contains the length after
-     *  de-chunking and decompression.
+    /**
+     * The length of the response message-body. In most cases, this value
+     * will be the same as response_entity_len. The values will be different
+     * if response compression or chunking were applied. In that case,
+     * response_message_len contains the length of the response body as it
+     * has been seen over TCP; response_entity_len contains the length after
+     * de-chunking and decompression.
      */
     size_t response_message_len;
 
-    /** The length of the response entity-body. In most cases, this value
-     *  will be the same as response_message_len. The values will be different
-     *  if request compression or chunking were applied. In that case,
-     *  response_message_len contains the length of the response body as it
-     *  has been seen over TCP; response_entity_len contains length after
-     *  de-chunking and decompression.
+    /**
+     * The length of the response entity-body. In most cases, this value
+     * will be the same as response_message_len. The values will be different
+     * if request compression or chunking were applied. In that case,
+     * response_message_len contains the length of the response body as it
+     * has been seen over TCP; response_entity_len contains length after
+     * de-chunking and decompression.
      */
     size_t response_entity_len;
     
@@ -772,16 +769,18 @@ struct htp_tx_t {
     /** Compression; currently COMPRESSION_NONE or COMPRESSION_GZIP. */
     int response_content_encoding;   
     
-    /** This field will contain the response content type when that information
-     *  is available in response headers. The contents of the field will be converted
-     *  to lowercase and any parameters (e.g., character set information) removed.
+    /**
+     * This field will contain the response content type when that information
+     * is available in response headers. The contents of the field will be converted
+     * to lowercase and any parameters (e.g., character set information) removed.
      */
     bstr *response_content_type;
 
     // Common
 
-    /** Parsing flags: HTP_INVALID_CHUNKING, HTP_INVALID_FOLDING,
-     *  HTP_REQUEST_SMUGGLING, HTP_MULTI_PACKET_HEAD, HTP_FIELD_UNPARSEABLE.
+    /**
+     * Parsing flags; a combination of: HTP_INVALID_CHUNKING, HTP_INVALID_FOLDING,
+     * HTP_REQUEST_SMUGGLING, HTP_MULTI_PACKET_HEAD, and HTP_FIELD_UNPARSEABLE.
      */
     unsigned int flags;
 
@@ -789,7 +788,10 @@ struct htp_tx_t {
     unsigned int progress;
 };
 
-/** This structure is used to pass transaction data to callbacks. */
+/**
+ * This structure is used to pass transaction data (for example
+ * request and response body buffers) to callbacks.
+ */
 struct htp_tx_data_t {
     /** Transaction pointer. */
     htp_tx_t *tx;
@@ -801,44 +803,46 @@ struct htp_tx_data_t {
     size_t len;
 };
 
-/** URI structure. Each of the fields provides access to a single
- *  URI element. A typical URI will look like this:
- *  http://username:password@hostname.com:8080/path?query#fragment.
+/**
+ * URI structure. Each of the fields provides access to a single
+ * URI element. Where an element is not present in a URI, the
+ * corresponding field will be set to NULL or -1, depending on the
+ * field type.
  */
 struct htp_uri_t {
-    /** Scheme */
+    /** Scheme, e.g., "http". */
     bstr *scheme;
 
-    /** Username */
+    /** Username. */
     bstr *username;
 
-    /** Password */
+    /** Password. */
     bstr *password;
 
-    /** Hostname */
+    /** Hostname. */
     bstr *hostname;
 
-    /** Port, as string */
+    /** Port, as string. */
     bstr *port;
 
-    /** Port, as number, but only if the port is valid. */
+    /**
+     * Port, as number. This field will contain HTP_PORT_NONE if there was
+     * no port information in the URI and HTP_PORT_INVALID if the port information
+     * was invalid (e.g., it's not a number or it falls out of range.
+     */
     int port_number;
 
-    /** The path part of this URI */
+    /** The path part of this URI. */
     bstr *path;
 
-    /** Query string */
+    /** Query string. */
     bstr *query;
 
-    /** Fragment identifier */
+    /**
+     * Fragment identifier. This field will rarely be available in a server-side
+     * setting, but it's not impossible to see it. */
     bstr *fragment;
 };
-
-// -- Functions -----------------------------------------------------------------------------------
-
-#include "htp_config.h"
-#include "htp_connection_parser.h"
-#include "htp_transaction.h"
     
 #ifdef __cplusplus
 }

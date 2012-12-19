@@ -304,7 +304,7 @@ TEST_F(ConnectionParsing, ResponseWithoutContentLength) {
     htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
     
-    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_COMPLETE);
 }
 
 TEST_F(ConnectionParsing, FailedConnectRequest) {
@@ -316,7 +316,7 @@ TEST_F(ConnectionParsing, FailedConnectRequest) {
     htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
     
-    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_COMPLETE);
     
     ASSERT_EQ(bstr_cmp_c(tx->request_method, "CONNECT"), 0);
     
@@ -332,7 +332,7 @@ TEST_F(ConnectionParsing, CompressedResponseContentType) {
     htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
     
-    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_COMPLETE);
     
     ASSERT_EQ(tx->response_message_len, 187);
     
@@ -348,7 +348,7 @@ TEST_F(ConnectionParsing, CompressedResponseChunked) {
     htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
     
-    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_COMPLETE);
     
     ASSERT_EQ(tx->response_message_len, 28261);
     
@@ -364,7 +364,7 @@ TEST_F(ConnectionParsing, SuccessfulConnectRequest) {
     htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
     
-    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_COMPLETE);
     
     ASSERT_EQ(bstr_cmp_c(tx->request_method, "CONNECT"), 0);
     
@@ -380,12 +380,12 @@ TEST_F(ConnectionParsing, ConnectRequestWithExtraData) {
     htp_tx_t *tx1 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx1 != NULL);
     
-    ASSERT_TRUE(tx1->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx1->progress == TX_PROGRESS_COMPLETE);
     
     htp_tx_t *tx2 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 1);
     ASSERT_TRUE(tx2 != NULL);
     
-    ASSERT_TRUE(tx2->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx2->progress == TX_PROGRESS_COMPLETE);
 }
 
 TEST_F(ConnectionParsing, Multipart) {
@@ -397,7 +397,7 @@ TEST_F(ConnectionParsing, Multipart) {
     htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
     
-    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_COMPLETE);
     
     ASSERT_TRUE(tx->request_params_body != NULL);
     
@@ -419,7 +419,7 @@ TEST_F(ConnectionParsing, CompressedResponseDeflate) {
     htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
     
-    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_COMPLETE);
     
     ASSERT_EQ(tx->response_message_len, 755);
     
@@ -435,7 +435,7 @@ TEST_F(ConnectionParsing, UrlEncoded) {
     htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
     
-    ASSERT_TRUE(tx->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx->progress == TX_PROGRESS_COMPLETE);
     
     ASSERT_EQ(bstr_cmp_c(tx->request_method, "POST"), 0);
     ASSERT_EQ(bstr_cmp_c(tx->request_uri, "/?p=1&q=2"), 0);
@@ -463,12 +463,12 @@ TEST_F(ConnectionParsing, AmbiguousHost) {
     
     htp_tx_t *tx1 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx1 != NULL);
-    ASSERT_TRUE(tx1->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx1->progress == TX_PROGRESS_COMPLETE);
     ASSERT_FALSE(tx1->flags & HTP_AMBIGUOUS_HOST);
     
     htp_tx_t *tx2 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 1);
     ASSERT_TRUE(tx2 != NULL);
-    ASSERT_TRUE(tx2->progress == TX_PROGRESS_DONE);
+    ASSERT_TRUE(tx2->progress == TX_PROGRESS_COMPLETE);
     ASSERT_TRUE(tx2->flags & HTP_AMBIGUOUS_HOST);
 }
 

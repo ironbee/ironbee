@@ -1969,7 +1969,7 @@ char *htp_tx_progress_as_string(htp_tx_t *tx) {
             return "RES_BODY";
         case TX_PROGRESS_RES_TRAILER:
             return "RES_TRAILER";
-        case TX_PROGRESS_DONE:
+        case TX_PROGRESS_COMPLETE:
             return "DONE";
     }
 

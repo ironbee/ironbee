@@ -745,8 +745,7 @@ void Init_htp( void )
   rb_define_const( mHTP, "HTP_HEADER_LIMIT_HARD", INT2FIX( HTP_HEADER_LIMIT_HARD ) );
   rb_define_const( mHTP, "HTP_HEADER_LIMIT_SOFT", INT2FIX( HTP_HEADER_LIMIT_SOFT ) );
   rb_define_const( mHTP, "HTP_VALID_STATUS_MIN", INT2FIX( HTP_VALID_STATUS_MIN ) );
-  rb_define_const( mHTP, "HTP_VALID_STATUS_MAX", INT2FIX( HTP_VALID_STATUS_MAX ) );
-  rb_define_const( mHTP, "LOG_NO_CODE", INT2FIX( LOG_NO_CODE ) );
+  rb_define_const( mHTP, "HTP_VALID_STATUS_MAX", INT2FIX( HTP_VALID_STATUS_MAX ) );  
   rb_define_const( mHTP, "M_UNKNOWN", INT2FIX( M_UNKNOWN ) );
   rb_define_const( mHTP, "M_GET", INT2FIX( M_GET ) );
   rb_define_const( mHTP, "M_PUT", INT2FIX( M_PUT ) );
@@ -824,7 +823,7 @@ void Init_htp( void )
   rb_define_const( mHTP, "TX_PROGRESS_RES_HEADERS", INT2FIX( TX_PROGRESS_RES_HEADERS ) );
   rb_define_const( mHTP, "TX_PROGRESS_RES_BODY", INT2FIX( TX_PROGRESS_RES_BODY ) );
   rb_define_const( mHTP, "TX_PROGRESS_RES_TRAILER", INT2FIX( TX_PROGRESS_RES_TRAILER ) );
-  rb_define_const( mHTP, "TX_PROGRESS_DONE", INT2FIX( TX_PROGRESS_DONE ) );
+  rb_define_const( mHTP, "TX_PROGRESS_COMPLETE", INT2FIX( TX_PROGRESS_COMPLETE ) );
   rb_define_const( mHTP, "HTP_STREAM_NEW", INT2FIX( HTP_STREAM_NEW ) );
   rb_define_const( mHTP, "HTP_STREAM_OPEN", INT2FIX( HTP_STREAM_OPEN ) );
   rb_define_const( mHTP, "HTP_STREAM_CLOSED", INT2FIX( HTP_STREAM_CLOSED ) );

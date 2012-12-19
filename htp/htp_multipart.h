@@ -48,6 +48,9 @@ typedef struct htp_mpart_part_t htp_mpart_part_t;
 #include "htp.h"
 #include "htp_table.h"
 
+#define HTP_FILE_MULTIPART                      1
+#define HTP_FILE_PUT                            2
+
 #define MULTIPART_PART_UNKNOWN                  0
 #define MULTIPART_PART_TEXT                     1
 #define MULTIPART_PART_FILE                     2

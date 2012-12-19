@@ -56,12 +56,68 @@ typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
 typedef struct timeval htp_time_t;
 
-#define HTP_ERROR              -1
-#define HTP_DECLINED            0
-#define HTP_OK                  1
-#define HTP_DATA                2
-#define HTP_DATA_OTHER          3
-#define HTP_STOP                4
+// Free-form version string
+#define HTP_VERSION_STRING          "master"
+
+// In the form of x.y.z, with two positions for each component; for example, 400 means 0.4.0
+#define HTP_VERSION_NUMBER          400
+
+// htp_status_t return codes
+#define HTP_ERROR                   -1
+#define HTP_DECLINED                0
+#define HTP_OK                      1
+#define HTP_DATA                    2
+#define HTP_DATA_OTHER              3
+#define HTP_STOP                    4
+
+// Protocol version constants
+#define HTP_PROTOCOL_UNKNOWN        -1
+#define HTP_PROTOCOL_0_9             9
+#define HTP_PROTOCOL_1_0             100
+#define HTP_PROTOCOL_1_1             101
+
+// HTP method constants
+#define HTP_M_UNKNOWN               -1
+#define HTP_M_GET                    0
+#define HTP_M_PUT                    1
+#define HTP_M_POST                   2
+#define HTP_M_DELETE                 3
+#define HTP_M_CONNECT                4
+#define HTP_M_OPTIONS                5
+#define HTP_M_TRACE                  6
+#define HTP_M_PATCH                  7
+#define HTP_M_PROPFIND               8
+#define HTP_M_PROPPATCH              9
+#define HTP_M_MKCOL                  10
+#define HTP_M_COPY                   11
+#define HTP_M_MOVE                   12
+#define HTP_M_LOCK                   13
+#define HTP_M_UNLOCK                 14
+#define HTP_M_VERSION_CONTROL        15
+#define HTP_M_CHECKOUT               16
+#define HTP_M_UNCHECKOUT             17
+#define HTP_M_CHECKIN                18
+#define HTP_M_UPDATE                 19
+#define HTP_M_LABEL                  20
+#define HTP_M_REPORT                 21
+#define HTP_M_MKWORKSPACE            22
+#define HTP_M_MKACTIVITY             23
+#define HTP_M_BASELINE_CONTROL       24
+#define HTP_M_MERGE                  25
+#define HTP_M_INVALID                26
+#define HTP_M_HEAD                   1000
+
+// Logging-related constants
+#define HTP_LOG_MARK                 __FILE__,__LINE__
+
+#define HTP_LOG_ERROR                1
+#define HTP_LOG_WARNING              2
+#define HTP_LOG_NOTICE               3
+#define HTP_LOG_INFO                 4
+#define HTP_LOG_DEBUG                5
+#define HTP_LOG_DEBUG2               6
+
+
 
 #ifdef	__cplusplus
 }
