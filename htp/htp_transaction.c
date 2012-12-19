@@ -37,7 +37,7 @@
 #include "htp_private.h"
 #include "htp_transaction.h"
 
-static bstr *copy_or_wrap_c(const char *input, enum alloc_strategy alloc) {
+static bstr *copy_or_wrap_c(const char *input, enum htp_alloc_strategy alloc) {
     if (alloc == ALLOC_REUSE) {
         return bstr_wrap_c(input);
     } else {
@@ -260,7 +260,7 @@ int htp_tx_req_has_body(const htp_tx_t *tx) {
     return 0;
 }
 
-htp_status_t htp_tx_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
+htp_status_t htp_tx_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum htp_alloc_strategy alloc) {
     if ((name == NULL) || (value == NULL)) return HTP_ERROR;
 
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
@@ -287,7 +287,7 @@ htp_status_t htp_tx_req_set_header_c(htp_tx_t *tx, const char *name, const char 
     return HTP_OK;
 }
 
-htp_status_t htp_tx_req_set_method_c(htp_tx_t *tx, const char *method, enum alloc_strategy alloc) {
+htp_status_t htp_tx_req_set_method_c(htp_tx_t *tx, const char *method, enum htp_alloc_strategy alloc) {
     if (method == NULL) return HTP_ERROR;
     tx->request_method = copy_or_wrap_c(method, alloc);
     if (tx->request_method == NULL) return HTP_ERROR;
@@ -298,21 +298,21 @@ void htp_tx_req_set_method_number(htp_tx_t *tx, int method_number) {
     tx->request_method_number = method_number;
 }
 
-htp_status_t htp_tx_req_set_uri_c(htp_tx_t *tx, const char *uri, enum alloc_strategy alloc) {
+htp_status_t htp_tx_req_set_uri_c(htp_tx_t *tx, const char *uri, enum htp_alloc_strategy alloc) {
     if (uri == NULL) return HTP_ERROR;
     tx->request_uri = copy_or_wrap_c(uri, alloc);
     if (tx->request_uri == NULL) return HTP_ERROR;
     return HTP_OK;
 }
 
-htp_status_t htp_tx_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum alloc_strategy alloc) {
+htp_status_t htp_tx_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum htp_alloc_strategy alloc) {
     if (tx->parsed_uri == NULL) return HTP_ERROR;
     tx->parsed_uri->query = copy_or_wrap_c(query_string, alloc);
     if (tx->parsed_uri->query == NULL) return HTP_ERROR;
     return HTP_OK;
 }
 
-htp_status_t htp_tx_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum alloc_strategy alloc) {
+htp_status_t htp_tx_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum htp_alloc_strategy alloc) {
     if (protocol == NULL) return HTP_ERROR;
     tx->request_protocol = copy_or_wrap_c(protocol, alloc);
     if (tx->request_protocol == NULL) return HTP_ERROR;
@@ -514,7 +514,7 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_res_set_status_line_c(htp_tx_t *tx, const char *line, enum alloc_strategy alloc) {
+htp_status_t htp_tx_res_set_status_line_c(htp_tx_t *tx, const char *line, enum htp_alloc_strategy alloc) {
     if (line == NULL) return HTP_ERROR;
     tx->response_line = copy_or_wrap_c(line, alloc);
     if (tx->response_line == NULL) return HTP_ERROR;
@@ -533,7 +533,7 @@ void htp_tx_res_set_status_code(htp_tx_t *tx, int status_code) {
     tx->response_status_number = status_code;
 }
 
-htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *message, enum alloc_strategy alloc) {
+htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *message, enum htp_alloc_strategy alloc) {
     if (message == NULL) return HTP_ERROR;
     tx->response_message = copy_or_wrap_c(message, alloc);
     if (tx->response_message == NULL) return HTP_ERROR;
@@ -573,7 +573,7 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum alloc_strategy alloc) {
+htp_status_t htp_tx_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum htp_alloc_strategy alloc) {
     if ((name == NULL) || (value == NULL)) return HTP_ERROR;
     ;
 
