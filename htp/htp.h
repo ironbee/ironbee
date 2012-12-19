@@ -613,7 +613,7 @@ struct htp_tx_t {
     unsigned int flags;
 
     /** Transaction progress. */
-    enum htp_tx_progress_t progress;
+    enum htp_tx_progress progress;
 };
 
 /**

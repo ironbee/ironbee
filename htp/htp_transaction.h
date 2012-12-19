@@ -70,7 +70,7 @@ enum htp_alloc_strategy {
  * have been completed. For example, the state REQUEST_LINE indicates that
  * the request line has been seen.
  */
-enum htp_tx_progress_t {
+enum htp_tx_progress {
     NEW = 0,
     REQUEST_LINE = 1,
     REQUEST_HEADERS = 2,
