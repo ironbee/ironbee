@@ -207,7 +207,7 @@ struct htp_log_t {
     const char *msg;
 
     /** Message level. */
-    int level;
+    enum htp_log_level_t level;
 
     /** Message code. */
     int code;

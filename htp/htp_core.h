@@ -110,12 +110,17 @@ typedef struct timeval htp_time_t;
 // Logging-related constants
 #define HTP_LOG_MARK                 __FILE__,__LINE__
 
-#define HTP_LOG_ERROR                1
-#define HTP_LOG_WARNING              2
-#define HTP_LOG_NOTICE               3
-#define HTP_LOG_INFO                 4
-#define HTP_LOG_DEBUG                5
-#define HTP_LOG_DEBUG2               6
+/**
+ * Enumerates all log levels.
+ */
+enum htp_log_level_t {
+    HTP_LOG_ERROR = 1,
+    HTP_LOG_WARNING = 2,
+    HTP_LOG_NOTICE = 3,
+    HTP_LOG_INFO = 4,
+    HTP_LOG_DEBUG = 5,
+    HTP_LOG_DEBUG2 = 6
+};
 
 /**
  * Enumerates all stream states. Each connection has two streams, one

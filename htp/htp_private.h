@@ -205,7 +205,7 @@ struct htp_cfg_t {
     /** Log level, which will be used when deciding whether to store or
      *  ignore the messages issued by the parser.
      */
-    int log_level;
+    enum htp_log_level_t log_level;
 
     /** Whether to delete each transaction after the last hook is invoked. This
      *  feature should be used when parsing traffic streams in real time.
@@ -482,7 +482,7 @@ int htp_parse_status(bstr *status);
 int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header);
 int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header);
 
-void htp_log(htp_connp_t *connp, const char *file, int line, int level, int code, const char *fmt, ...);
+void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_t level, int code, const char *fmt, ...);
 void htp_print_log(FILE *stream, htp_log_t *log);
 
 void fprint_bstr(FILE *stream, const char *name, bstr *b);
