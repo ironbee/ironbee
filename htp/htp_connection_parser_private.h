@@ -41,6 +41,8 @@
 extern "C" {
 #endif
 
+#include "htp_core.h"
+
 // TODO
 struct htp_connp_t {
 
@@ -66,10 +68,10 @@ struct htp_connp_t {
     // Request parser fields
 
     /** Parser inbound status. Starts as HTP_OK, but may turn into HTP_ERROR. */
-    unsigned int in_status;
+    enum htp_stream_state_t in_status;
 
     /** Parser output status. Starts as HTP_OK, but may turn into HTP_ERROR. */
-    unsigned int out_status;
+    enum htp_stream_state_t out_status;
 
     // TODO
     unsigned int out_data_other_at_tx_end;

@@ -117,7 +117,20 @@ typedef struct timeval htp_time_t;
 #define HTP_LOG_DEBUG                5
 #define HTP_LOG_DEBUG2               6
 
-
+/**
+ * Enumerates all stream states. Each connection has two streams, one
+ * inbound and one outbound. Their states are tracked separately.
+ */
+enum htp_stream_state_t {
+    HTP_STREAM_NEW = 0,
+    HTP_STREAM_OPEN = 1,
+    HTP_STREAM_CLOSED = 2,
+    HTP_STREAM_ERROR = 3,
+    HTP_STREAM_TUNNEL = 4,
+    HTP_STREAM_DATA_OTHER = 5,
+    HTP_STREAM_STOP = 6,
+    HTP_STREAM_DATA = 9
+};
 
 #ifdef	__cplusplus
 }

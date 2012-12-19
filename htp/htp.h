@@ -115,15 +115,6 @@ extern "C" {
 #define HTP_CODING_IDENTITY                 1
 #define HTP_CODING_CHUNKED                  2
 
-#define HTP_STREAM_NEW                      0
-#define HTP_STREAM_OPEN                     1
-#define HTP_STREAM_CLOSED                   2
-#define HTP_STREAM_ERROR                    3
-#define HTP_STREAM_TUNNEL                   4
-#define HTP_STREAM_DATA_OTHER               5
-#define HTP_STREAM_STOP                     6
-#define HTP_STREAM_DATA                     9
-
 #define URL_DECODER_PRESERVE_PERCENT        0
 #define URL_DECODER_REMOVE_PERCENT          1
 #define URL_DECODER_DECODE_INVALID          2
