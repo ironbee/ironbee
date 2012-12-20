@@ -531,7 +531,7 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_dup_c("/d");
     expected_status = 400;
     expected_flags = HTP_PATH_OVERLONG_U;
-    cfg->path_u_encoding_decode = STATUS_400;
+    cfg->path_u_encoding_unwanted = HTP_UNWANTED_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding (also overlong)");
@@ -621,7 +621,7 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_dup_c("/one%2ftwo");
     expected_status = 404;
     cfg->path_encoded_separators_decode = 0;
-    cfg->path_encoded_separators_unwanted = STATUS_404;
+    cfg->path_encoded_separators_unwanted = HTP_UNWANTED_404;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Forward slash (%u-encoded), expect to decode");
@@ -683,7 +683,7 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_dup_c("/\xf7test");
     expected_status = 400;
     expected_flags = HTP_PATH_UTF8_INVALID;
-    cfg->path_invalid_utf8_unwanted = STATUS_400;
+    cfg->path_invalid_utf8_unwanted = HTP_UNWANTED_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (raw) in path; leave");
@@ -711,34 +711,34 @@ int main_path_tests(int argc, char** argv) {
     PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; terminate path");
     input = bstr_dup_c("/test%00text");
     expected = bstr_dup_c("/test");
-    cfg->path_nul_encoded_handling = TERMINATE;
+    cfg->path_nul_encoded_terminates = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; 400");
     input = bstr_dup_c("/test%00text");
     expected = bstr_dup_mem("/test\0text", 10);
-    cfg->path_nul_encoded_handling = STATUS_400;
+    cfg->path_nul_encoded_unwanted = HTP_UNWANTED_404;
     expected_status = 400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; 404");
     input = bstr_dup_c("/test%00text");
     expected = bstr_dup_mem("/test\0text", 10);
-    cfg->path_nul_encoded_handling = STATUS_404;
+    cfg->path_nul_encoded_unwanted = HTP_UNWANTED_404;
     expected_status = 404;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (%u-encoded) in path; terminate path");
     input = bstr_dup_c("/test%00text");
     expected = bstr_dup_c("/test");
-    cfg->path_nul_encoded_handling = TERMINATE;
+    cfg->path_nul_encoded_terminates = 1;
     cfg->path_u_encoding_decode = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (%u-encoded) in path; 400");
     input = bstr_dup_c("/test%00text");
     expected = bstr_dup_mem("/test\0text", 10);
-    cfg->path_nul_encoded_handling = STATUS_400;
+    cfg->path_nul_encoded_unwanted = HTP_UNWANTED_404;
     cfg->path_u_encoding_decode = 1;
     expected_status = 400;
     PATH_DECODE_TEST_AFTER();
@@ -746,7 +746,7 @@ int main_path_tests(int argc, char** argv) {
     PATH_DECODE_TEST_BEFORE("NUL byte (%u-encoded) in path; 404");
     input = bstr_dup_c("/test%00text");
     expected = bstr_dup_mem("/test\0text", 10);
-    cfg->path_nul_encoded_handling = STATUS_404;
+    cfg->path_nul_encoded_unwanted = HTP_UNWANTED_404;
     cfg->path_u_encoding_decode = 1;
     expected_status = 404;
     PATH_DECODE_TEST_AFTER();

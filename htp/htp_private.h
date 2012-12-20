@@ -234,7 +234,7 @@ struct htp_cfg_t {
     enum htp_unwanted_t path_invalid_utf8_unwanted;
 
     /** Controls how encoded NUL bytes are handled. */
-    enum htp_nul_encoded_handling_t path_nul_encoded_handling;
+    int path_nul_encoded_terminates;
 
     /** How are we expected to react to an encoded NUL byte? */
     enum htp_unwanted_t path_nul_encoded_unwanted;
@@ -264,7 +264,7 @@ struct htp_cfg_t {
     enum htp_unwanted_t params_invalid_encoding_unwanted;
 
     /** TODO */
-    enum htp_nul_encoded_handling_t params_nul_encoded_handling;
+    int params_nul_encoded_terminates;
 
     /** TODO */
     enum htp_unwanted_t params_nul_encoded_unwanted;

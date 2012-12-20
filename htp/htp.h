@@ -56,11 +56,6 @@ extern "C" {
 #include "htp_transaction.h"
 #include "htp_urlencoded.h"
 
-#define BESTFIT                             0
-#define TERMINATE                           1
-#define STATUS_400                          400
-#define STATUS_404                          401
-
 /**
  * This data structure is used to represent a single TCP connection.
  */

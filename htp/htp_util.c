@@ -1116,14 +1116,9 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                 tx->response_status_expected_number = cfg->path_nul_encoded_unwanted;
                             }
 
-                            switch (cfg->path_nul_encoded_handling) {
-                                case HTP_PATH_NUL_ENCODED_TERMINATE:
-                                    bstr_adjust_len(path, wpos);
-                                    return 1;
-                                    break;
-                                case HTP_PATH_NUL_ENCODED_DECODE:
-                                    // Do nothing; the byte was already decoded
-                                    break;
+                            if (cfg->path_nul_encoded_terminates) {
+                                bstr_adjust_len(path, wpos);
+                                return 1;
                             }
                         }
 
@@ -1230,8 +1225,8 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
         // Check for control characters
         if (c < 0x20) {
-            if (cfg->path_control_chars_unwanted == STATUS_400) {
-                tx->response_status_expected_number = 400;
+            if (cfg->path_control_chars_unwanted != HTP_UNWANTED_IGNORE) {
+                tx->response_status_expected_number = cfg->path_control_chars_unwanted;
             }
         }
 
@@ -1307,10 +1302,8 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                     // XXX
                                     // tx->flags |= HTP_PATH_ENCODED_NUL;
 
-                                    if (cfg->params_nul_encoded_handling == STATUS_400) {
-                                        tx->response_status_expected_number = 400;
-                                    } else if (cfg->params_nul_encoded_handling == STATUS_404) {
-                                        tx->response_status_expected_number = 404;
+                                    if (cfg->params_nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
+                                        tx->response_status_expected_number = cfg->params_nul_encoded_unwanted;
                                     }
                                 }
                             } else {
@@ -1381,14 +1374,9 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                 tx->response_status_expected_number = cfg->params_nul_encoded_unwanted;
                             }
 
-                            switch (cfg->params_nul_encoded_handling) {
-                                case HTP_PATH_NUL_ENCODED_TERMINATE:
-                                    bstr_adjust_len(input, wpos);
-                                    return 1;
-                                    break;
-                                case HTP_PATH_NUL_ENCODED_DECODE:
-                                    // Do nothing; already decoded
-                                    break;
+                            if (cfg->params_nul_encoded_terminates) {
+                                bstr_adjust_len(input, wpos);
+                                return 1;
                             }
                         }
 
