@@ -1291,13 +1291,13 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
             if (rpos + 2 < len) {
                 int handled = 0;
 
-                if (cfg->params_decode_u_encoding) {
+                if (cfg->params_u_encoding_decode) {
                     // Check for the %u encoding
                     if ((data[rpos + 1] == 'u') || (data[rpos + 1] == 'U')) {
                         handled = 1;
 
-                        if (cfg->params_decode_u_encoding == STATUS_400) {
-                            tx->response_status_expected_number = 400;
+                        if (cfg->params_u_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                            tx->response_status_expected_number = cfg->params_u_encoding_unwanted;
                         }
 
                         if (rpos + 5 < len) {

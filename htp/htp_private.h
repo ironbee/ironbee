@@ -251,7 +251,11 @@ struct htp_cfg_t {
     /** The replacement character used when there is no best-fit mapping. */
     unsigned char bestfit_replacement_char;
 
-    int params_decode_u_encoding;
+    /** TODO */
+    int params_u_encoding_decode;
+
+    /** TODO */
+    enum htp_unwanted_t params_u_encoding_unwanted;
 
     int params_invalid_encoding_handling;
 

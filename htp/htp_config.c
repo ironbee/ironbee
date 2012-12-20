@@ -153,7 +153,7 @@ htp_cfg_t *htp_config_create(void) {
     cfg->bestfit_map = bestfit_1252;
     cfg->bestfit_replacement_char = '?';
     cfg->response_decompression_enabled = 1;
-    cfg->params_decode_u_encoding = 0;
+    cfg->params_u_encoding_decode = 0;
     cfg->params_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
     cfg->params_nul_encoded_handling = HTP_AUTH_NONE;
     cfg->params_nul_raw_handling = HTP_AUTH_NONE;
