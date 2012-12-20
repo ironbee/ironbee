@@ -171,13 +171,7 @@ struct htp_conn_t {
     size_t in_data_counter;
 
     /** Outbound data counter. */
-    size_t out_data_counter;
-
-    /** Inbound packet counter. */
-    size_t in_packet_counter;
-
-    /** Outbound packet counter. */
-    size_t out_packet_counter;
+    size_t out_data_counter;   
 };
 
 /**
