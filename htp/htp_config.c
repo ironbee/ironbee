@@ -476,9 +476,9 @@ void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, enum htp_unwanted
     cfg->path_invalid_utf8_unwanted = invalid_utf8_unwanted;
 }
 
-void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, enum htp_nul_encoded_handling_t nul_encoded_handling) {
+void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_terminates) {
     if (cfg == NULL) return;
-    cfg->path_nul_encoded_terminates = nul_encoded_handling;
+    cfg->path_nul_encoded_terminates = nul_encoded_terminates;
 }
 
 void htp_config_set_path_nul_raw_terminates(htp_cfg_t *cfg, int nul_raw_terminates) {

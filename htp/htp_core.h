@@ -34,8 +34,8 @@
  * @author Ivan Ristic <ivanr@webkreator.com>
  */
 
-#ifndef HTP_DEFINITIONS_H
-#define	HTP_DEFINITIONS_H
+#ifndef HTP_CORE_H
+#define	HTP_CORE_H
 
 #ifdef	__cplusplus
 extern "C" {
@@ -201,21 +201,6 @@ enum htp_log_level_t {
 };
 
 /**
- * Enumerates the ways in which servers respond to malformed data.
- */
-enum htp_unwanted_t {
-    
-    /** Ignores problem. */
-    HTP_UNWANTED_IGNORE = 0,
-
-    /** Responds with HTTP 400 status code. */
-    HTP_UNWANTED_400 = 400,
-
-    /** Responds with HTTP 404 status code. */
-    HTP_UNWANTED_404 = 404
-};
-
-/**
  * HTTP methods.
  */
 enum htp_method_t {
@@ -277,9 +262,19 @@ enum htp_stream_state_t {
     HTP_STREAM_DATA = 9
 };
 
-enum htp_nul_encoded_handling_t {
-    HTP_PATH_NUL_ENCODED_DECODE = 0,
-    HTP_PATH_NUL_ENCODED_TERMINATE = 1
+/**
+ * Enumerates the ways in which servers respond to malformed data.
+ */
+enum htp_unwanted_t {
+
+    /** Ignores problem. */
+    HTP_UNWANTED_IGNORE = 0,
+
+    /** Responds with HTTP 400 status code. */
+    HTP_UNWANTED_400 = 400,
+
+    /** Responds with HTTP 404 status code. */
+    HTP_UNWANTED_404 = 404
 };
 
 /**
@@ -301,4 +296,3 @@ enum htp_url_encoding_handling_t {
 #endif
 
 #endif	/* HTP_DEFINITIONS_H */
-

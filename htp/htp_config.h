@@ -383,7 +383,7 @@ void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, enum htp_unwanted
  * @param[in] cfg
  * @para[in]m nul_encoded_handling Possible values: TERMINATE, STATUS_400, STATUS_404
  */
-void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, enum htp_nul_encoded_handling_t nul_encoded_handling);
+void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_terminates);
 
 /**
  * Configures how server reacts to raw NUL bytes. Some servers will terminate
