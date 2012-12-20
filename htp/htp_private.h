@@ -257,7 +257,11 @@ struct htp_cfg_t {
     /** TODO */
     enum htp_unwanted_t params_u_encoding_unwanted;
 
-    int params_invalid_encoding_handling;
+    /** TODO */
+    enum htp_url_encoding_handling_t params_invalid_encoding_handling;
+
+    /** TODO */
+    enum htp_unwanted_t params_invalid_encoding_unwanted;
 
     int params_nul_encoded_handling;
 

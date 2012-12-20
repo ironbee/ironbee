@@ -1322,7 +1322,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                 // Invalid %u encoding                                
                                 //tx->flags |= HTP_PATH_INVALID_ENCODING;
 
-                                if (cfg->path_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                                if (cfg->params_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
                                     tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
                                 }
 
@@ -1342,10 +1342,6 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                         c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
                                         rpos += 6;
                                         break;
-                                    default:
-                                        // Unknown setting
-                                        return -1;
-                                        break;
                                 }
                             }
                         } else {
@@ -1353,12 +1349,24 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                             // Invalid %u encoding (not enough data)
                             // tx->flags |= HTP_PATH_INVALID_ENCODING;
 
-                            if (cfg->params_invalid_encoding_handling == HTP_URL_DECODE_REMOVE_PERCENT) {
-                                // Remove the percent character from output
-                                rpos++;
-                                continue;
-                            } else {
-                                rpos++;
+                            if (cfg->params_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                                tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
+                            }
+
+                            switch (cfg->params_invalid_encoding_handling) {
+                                case HTP_URL_DECODE_REMOVE_PERCENT:
+                                    // Do not place anything in output; eat
+                                    // the percent character
+                                    rpos++;
+                                    continue;
+                                    break;
+                                case HTP_URL_DECODE_PRESERVE_PERCENT:
+                                    // Leave the percent character in output
+                                    rpos++;
+                                    break;
+                                case HTP_URL_DECODE_PROCESS_INVALID:
+                                    // Cannot decode; not enough data
+                                    break;
                             }
                         }
                     }
@@ -1394,7 +1402,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                         // Invalid encoding
                         // tx->flags |= HTP_PATH_INVALID_ENCODING;
 
-                        if (cfg->path_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                        if (cfg->params_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
                             tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
                         }
 
@@ -1414,10 +1422,6 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                 c = x2c(&data[rpos + 1]);
                                 rpos += 3;
                                 break;
-                            default:
-                                // Unknown setting
-                                return -1;
-                                break;
                         }
                     }
                 }
@@ -1426,12 +1430,24 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                 // Invalid encoding (not enough data)
                 // tx->flags |= HTP_PATH_INVALID_ENCODING;
 
-                if (cfg->params_invalid_encoding_handling == HTP_URL_DECODE_REMOVE_PERCENT) {
-                    // Do not place the percent character in output
-                    rpos++;
-                    continue;
-                } else {
-                    rpos++;
+                if (cfg->params_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                    tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
+                }
+
+                switch (cfg->params_invalid_encoding_handling) {
+                    case HTP_URL_DECODE_REMOVE_PERCENT:
+                        // Do not place anything in output; eat
+                        // the percent character
+                        rpos++;
+                        continue;
+                        break;
+                    case HTP_URL_DECODE_PRESERVE_PERCENT:
+                        // Leave the percent character in output
+                        rpos++;
+                        break;
+                    case HTP_URL_DECODE_PROCESS_INVALID:
+                        // Cannot decode; not enough data
+                        break;
                 }
             }
         } else {
