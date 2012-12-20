@@ -112,6 +112,78 @@ typedef struct timeval htp_time_t;
  */
 #define HTP_STATUS_RESERVED         1000
 
+/**
+ * Enumerates the possible values for authentication type.
+ */
+enum htp_auth_type_t {
+    /**
+     * This is the default value that is used before
+     * the presence of authentication is determined (e.g.,
+     * before request headers are seen).
+     */
+    HTP_AUTH_UNKNOWN = 0,
+
+    /** No authentication. */
+    HTP_AUTH_NONE = 1,
+
+    /** HTTP Basic authentication used. */
+    HTP_AUTH_BASIC = 2,
+
+    /** HTTP Digest authentication used. */
+    HTP_AUTH_DIGEST = 3,
+
+    /** Unrecognized authentication method. */
+    HTP_AUTH_UNRECOGNIZED = 9
+};
+
+/**
+ * Enumerates the possible request and response body codings.
+ */
+enum htp_coding_t {
+    /** Body coding not determined yet. */
+    HTP_CODING_UNKNOWN = 0,
+
+    /** No body. */
+    HTP_CODING_NO_BODY = 1,
+
+    /** Identity coding is used, which means that the body was sent as is. */
+    HTP_CODING_IDENTITY = 2,
+
+    /** Chunked encoding. */
+    HTP_CODING_CHUNKED = 3,
+
+    /** We could not recognize the encoding. */
+    HTP_CODING_UNRECOGNIZED = 4
+};
+
+// Various flag bits. Even though we have a flag field in several places
+// (header, transaction, connection), these fields are all in the same namespace
+// because we may want to set the same flag in several locations. For example, we
+// may set HTP_FIELD_FOLDED on the actual folded header, but also on the transaction
+// that contains the header. Both uses are useful.
+#define HTP_FIELD_UNPARSEABLE               0x000001
+#define HTP_FIELD_INVALID                   0x000002
+#define HTP_FIELD_FOLDED                    0x000004
+#define HTP_FIELD_REPEATED                  0x000008
+#define HTP_FIELD_LONG                      0x000010
+#define HTP_FIELD_NUL_BYTE                  0x000020
+#define HTP_REQUEST_SMUGGLING               0x000040
+#define HTP_INVALID_FOLDING                 0x000080
+#define HTP_INVALID_CHUNKING                0x000100
+#define HTP_MULTI_PACKET_HEAD               0x000200
+#define HTP_HOST_MISSING                    0x000400
+#define HTP_AMBIGUOUS_HOST                  0x000800
+#define HTP_PATH_ENCODED_NUL                0x001000
+#define HTP_PATH_INVALID_ENCODING           0x002000
+#define HTP_PATH_INVALID                    0x004000
+#define HTP_PATH_OVERLONG_U                 0x008000
+#define HTP_PATH_ENCODED_SEPARATOR          0x010000
+#define HTP_PATH_UTF8_VALID                 0x020000 /* At least one valid UTF-8 character and no invalid ones */
+#define HTP_PATH_UTF8_INVALID               0x040000
+#define HTP_PATH_UTF8_OVERLONG              0x080000
+#define HTP_PATH_FULLWIDTH_EVASION          0x100000 /* Range U+FF00 - U+FFFF detected */
+#define HTP_STATUS_LINE_INVALID             0x200000
+#define HTP_CONN_PIPELINED                  0x400000
 
 // Logging-related constants
 #define HTP_LOG_MARK                 __FILE__,__LINE__
