@@ -133,6 +133,54 @@ enum htp_auth_type_t {
 // -- Data structures -----------------------------------------------------------------------------
 
 /**
+ * This data structure is used to represent a single TCP connection.
+ */
+struct htp_conn_t {
+    /** Remote IP address. */
+    char *remote_addr;
+
+    /** Remote port. */
+    int remote_port;
+
+    /** Local IP address. */
+    char *local_addr;
+
+    /** Local port. */
+    int local_port;
+
+    /**
+     * Transactions carried out on this connection. The list may contain
+     * NULL elements when some of the transactions are deleted (and then
+     * removed from a connection by calling htp_conn_remove_tx().
+     */
+    htp_list_t *transactions;
+
+    /** Log messages associated with this connection. */
+    htp_list_t *messages;
+
+    /** Parsing flags: PIPELINED_CONNECTION. */
+    unsigned int flags;
+
+    /** When was this connection opened? Can be NULL. */
+    htp_time_t open_timestamp;
+
+    /** When was this connection closed? Can be NULL. */
+    htp_time_t close_timestamp;
+
+    /** Inbound data counter. */
+    size_t in_data_counter;
+
+    /** Outbound data counter. */
+    size_t out_data_counter;
+
+    /** Inbound packet counter. */
+    size_t in_packet_counter;
+
+    /** Outbound packet counter. */
+    size_t out_packet_counter;
+};
+
+/**
  * Used to represent files that are seen during the processing of HTTP traffic. Most
  * commonly this refers to files seen in multipart/form-data payloads. In addition, PUT
  * request bodies can be treated as files.
@@ -658,6 +706,20 @@ struct htp_uri_t {
      * setting, but it's not impossible to see it. */
     bstr *fragment;
 };
+
+/**
+ * Creates a new log entry and stores it with the connection. The file and line
+ * parameters are typically auto-generated using the HTP_LOG_MARK macro.
+*
+ * @param[in] connp
+ * @param[in] file
+ * @param[in] line
+ * @param[in] level
+ * @param[in] code
+ * @param[in] fmt
+ * @param[in] ...
+ */
+void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_t level, int code, const char *fmt, ...);
     
 #ifdef __cplusplus
 }

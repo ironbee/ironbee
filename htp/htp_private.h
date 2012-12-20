@@ -151,50 +151,6 @@ if ((X)->out_line_len < (X)->out_line_size) { \
     
 // Data structures
 
-struct htp_conn_t {    
-    /** Remote IP address. */
-    char *remote_addr;
-
-    /** Remote port. */
-    int remote_port;
-
-    /** Local IP address. */
-    char *local_addr;
-
-    /** Local port. */
-    int local_port;
-
-    /** Transactions carried out on this connection. The list may contain
-     *  NULL elements when some of the transactions are deleted (and then
-     *  removed from a connection by calling htp_conn_remove_tx().
-     */
-    htp_list_t *transactions;
-
-    /** Log messages associated with this connection. */
-    htp_list_t *messages;
-
-    /** Parsing flags: PIPELINED_CONNECTION. */
-    unsigned int flags;
-
-    /** When was this connection opened? Can be NULL. */
-    htp_time_t open_timestamp;
-
-    /** When was this connection closed? Can be NULL. */
-    htp_time_t close_timestamp;
-
-    /** Inbound data counter. */
-    size_t in_data_counter;
-
-    /** Outbound data counter. */
-    size_t out_data_counter;
-
-    /** Inbound packet counter. */
-    size_t in_packet_counter;
-
-    /** Outbound packet counter. */
-    size_t out_packet_counter;
-};
-
 struct htp_cfg_t {
     /** Hard field limit length. If the parser encounters a line that's longer
      *  than this value it will give up parsing. Do note that the line limit
@@ -488,7 +444,7 @@ int htp_parse_status(bstr *status);
 int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header);
 int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header);
 
-void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_t level, int code, const char *fmt, ...);
+
 void htp_print_log(FILE *stream, htp_log_t *log);
 
 void fprint_bstr(FILE *stream, const char *name, bstr *b);
