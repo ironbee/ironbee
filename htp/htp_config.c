@@ -481,7 +481,7 @@ void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, enum htp_path_nul_
     cfg->path_nul_encoded_handling = nul_encoded_handling;
 }
 
-void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, int nul_raw_handling) {
+void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, enum htp_path_nul_raw_handling_t nul_raw_handling) {
     if (cfg == NULL) return;
     cfg->path_nul_raw_handling = nul_raw_handling;
 }
@@ -510,7 +510,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
     if (cfg == NULL) return HTP_ERROR;
 
     switch (personality) {
-        
+
         case HTP_SERVER_MINIMAL:
             cfg->parse_request_line = htp_parse_request_line_generic;
             cfg->process_request_header = htp_process_request_header_generic;
@@ -543,7 +543,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_unicode_mapping = BESTFIT;
             cfg->path_convert_utf8 = 1;
             break;
-        
+
         case HTP_SERVER_APACHE_2:
             cfg->parse_request_line = htp_parse_request_line_apache_2_2;
             cfg->process_request_header = htp_process_request_header_apache_2_2;

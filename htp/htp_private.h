@@ -240,7 +240,10 @@ struct htp_cfg_t {
     enum htp_unwanted_t path_nul_encoded_unwanted;
 
     /** Controls how raw NUL bytes are handled. */
-    int path_nul_raw_handling;
+    enum htp_path_nul_raw_handling_t path_nul_raw_handling;
+
+    /** TODO */
+    enum htp_unwanted_t path_nul_raw_unwanted;
 
     /** The replacement character used when there is no best-fit mapping. */
     unsigned char bestfit_replacement_char;
