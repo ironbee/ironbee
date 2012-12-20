@@ -221,11 +221,14 @@ struct htp_cfg_t {
     /** Should we decode %u-encoded characters? */
     int path_u_encoding_decode;
 
-    /** How are we expected to react to %u encoding in path? */
+    /** How are we expected to react to %u encoding in the path? */
     enum htp_unwanted_t path_u_encoding_unwanted;
 
     /** Handling of invalid URL encodings. */
     enum htp_url_encoding_handling_t path_invalid_encoding_handling;
+
+    /** How are we expected to react to invalid URL encoding in the path? */
+    enum htp_unwanted_t path_invalid_encoding_unwanted;
 
     /** Controls how invalid UTF-8 characters are handled. */
     int path_invalid_utf8_handling;

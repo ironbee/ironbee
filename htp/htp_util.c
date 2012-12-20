@@ -1062,6 +1062,10 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                 // Invalid %u encoding
                                 tx->flags |= HTP_PATH_INVALID_ENCODING;
 
+                                if (cfg->path_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                                    tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
+                                }
+
                                 switch (cfg->path_invalid_encoding_handling) {
                                     case HTP_URL_DECODE_REMOVE_PERCENT:
                                         // Do not place anything in output; eat
@@ -1078,31 +1082,30 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                         c = decode_u_encoding_path(cfg, tx, &data[rpos + 2]);
                                         rpos += 6;
                                         break;
-                                    case HTP_URL_DECODE_STATUS_400:
-                                        // Set expected status to 400
-                                        tx->response_status_expected_number = 400;
-
-                                        // Decode invalid %u encoding
-                                        c = decode_u_encoding_path(cfg, tx, &data[rpos + 2]);
-                                        rpos += 6;
-                                        break;
-                                        break;
-                                    default:
-                                        // Unknown setting
-                                        return -1;
-                                        break;
                                 }
                             }
                         } else {
                             // Invalid %u encoding (not enough data)
                             tx->flags |= HTP_PATH_INVALID_ENCODING;
 
-                            if (cfg->path_invalid_encoding_handling == HTP_URL_DECODE_REMOVE_PERCENT) {
-                                // Remove the percent character from output
-                                rpos++;
-                                continue;
-                            } else {
-                                rpos++;
+                            if (cfg->path_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                                tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
+                            }
+
+                            switch (cfg->path_invalid_encoding_handling) {
+                                case HTP_URL_DECODE_REMOVE_PERCENT:
+                                    // Do not place anything in output; eat
+                                    // the percent character
+                                    rpos++;
+                                    continue;
+                                    break;
+                                case HTP_URL_DECODE_PRESERVE_PERCENT:
+                                    // Leave the percent character in output
+                                    rpos++;
+                                    break;
+                                case HTP_URL_DECODE_PROCESS_INVALID:
+                                    // Cannot decode, because there's not enough data.
+                                    break;
                             }
                         }
                     }
@@ -1153,6 +1156,10 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                         // Invalid encoding
                         tx->flags |= HTP_PATH_INVALID_ENCODING;
 
+                        if (cfg->path_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                            tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
+                        }
+
                         switch (cfg->path_invalid_encoding_handling) {
                             case HTP_URL_DECODE_REMOVE_PERCENT:
                                 // Do not place anything in output; eat
@@ -1174,14 +1181,6 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                 //       Apache, who will also respond with 400 if invalid encoding
                                 //       is encountered. Thus no check for a separator here.
                                 break;
-                            case HTP_URL_DECODE_STATUS_400:
-                                // Backend will reject request with 400, which means
-                                // that it does not matter what we do.
-                                tx->response_status_expected_number = 400;
-
-                                // Preserve the percent character
-                                rpos++;
-                                break;
                             default:
                                 // Unknown setting
                                 return -1;
@@ -1190,15 +1189,27 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     }
                 }
             } else {
-                // Invalid encoding (not enough data)
+                // Invalid %u encoding (not enough data)
                 tx->flags |= HTP_PATH_INVALID_ENCODING;
 
-                if (cfg->path_invalid_encoding_handling == HTP_URL_DECODE_REMOVE_PERCENT) {
-                    // Do not place the percent character in output
-                    rpos++;
-                    continue;
-                } else {
-                    rpos++;
+                if (cfg->path_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                    tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
+                }
+
+                switch (cfg->path_invalid_encoding_handling) {
+                    case HTP_URL_DECODE_REMOVE_PERCENT:
+                        // Do not place anything in output; eat
+                        // the percent character
+                        rpos++;
+                        continue;
+                        break;
+                    case HTP_URL_DECODE_PRESERVE_PERCENT:
+                        // Leave the percent character in output
+                        rpos++;
+                        break;
+                    case HTP_URL_DECODE_PROCESS_INVALID:
+                        // Cannot decode, because there's not enough data.
+                        break;
                 }
             }
         } else {
@@ -1318,6 +1329,10 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                 // Invalid %u encoding                                
                                 //tx->flags |= HTP_PATH_INVALID_ENCODING;
 
+                                if (cfg->path_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                                    tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
+                                }
+
                                 switch (cfg->params_invalid_encoding_handling) {
                                     case HTP_URL_DECODE_REMOVE_PERCENT:
                                         // Do not place anything in output; eat
@@ -1333,15 +1348,6 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                         // Decode invalid %u encoding
                                         c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
                                         rpos += 6;
-                                        break;
-                                    case HTP_URL_DECODE_STATUS_400:
-                                        // Set expected status to 400
-                                        tx->response_status_expected_number = 400;
-
-                                        // Decode invalid %u encoding
-                                        c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
-                                        rpos += 6;
-                                        break;
                                         break;
                                     default:
                                         // Unknown setting
@@ -1395,6 +1401,10 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                         // Invalid encoding
                         // tx->flags |= HTP_PATH_INVALID_ENCODING;
 
+                        if (cfg->path_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+                            tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
+                        }
+
                         switch (cfg->params_invalid_encoding_handling) {
                             case HTP_URL_DECODE_REMOVE_PERCENT:
                                 // Do not place anything in output; eat
@@ -1410,14 +1420,6 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                 // Decode
                                 c = x2c(&data[rpos + 1]);
                                 rpos += 3;
-                                break;
-                            case HTP_URL_DECODE_STATUS_400:
-                                // Backend will reject request with 400, which means
-                                // that it does not matter what we do.
-                                tx->response_status_expected_number = 400;
-
-                                // Preserve the percent character
-                                rpos++;
                                 break;
                             default:
                                 // Unknown setting

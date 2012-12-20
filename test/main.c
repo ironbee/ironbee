@@ -513,7 +513,8 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_dup_c("/%xxest");
     expected_status = 400;
     expected_flags = HTP_PATH_INVALID_ENCODING;
-    cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
+    cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
+    cfg->path_invalid_encoding_unwanted = HTP_UNWANTED_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding (expected not to decode; 400)");
@@ -521,7 +522,8 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_dup_c("/%u0064");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     expected_status = 400;
-    cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
+    cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
+    cfg->path_invalid_encoding_unwanted = HTP_UNWANTED_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding (decode; 400)");
@@ -561,7 +563,8 @@ int main_path_tests(int argc, char** argv) {
     expected_flags = HTP_PATH_INVALID_ENCODING;
     expected_status = 400;
     cfg->path_u_encoding_decode = 1;
-    cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
+    cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
+    cfg->path_invalid_encoding_unwanted = HTP_UNWANTED_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid %u decoding (not enough data 1), preserve percent");

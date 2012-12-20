@@ -553,7 +553,8 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_backslash_separators = 0;
             cfg->path_encoded_separators_decode = 0;
             cfg->path_compress_separators = 1;
-            cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
+            cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
+            cfg->path_invalid_encoding_unwanted = HTP_UNWANTED_400;
             cfg->path_control_chars_unwanted = HTP_UNWANTED_IGNORE;
             break;
 
@@ -581,7 +582,8 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_backslash_separators = 1;
             cfg->path_encoded_separators_decode = 1;
             cfg->path_compress_separators = 1;
-            cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
+            cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
+            cfg->path_invalid_encoding_unwanted = HTP_UNWANTED_400;
             cfg->path_u_encoding_decode = 1;
             cfg->path_unicode_mapping = STATUS_400;
             cfg->path_control_chars_unwanted = HTP_UNWANTED_400;
@@ -597,7 +599,8 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_backslash_separators = 1;
             cfg->path_encoded_separators_decode = 1;
             cfg->path_compress_separators = 1;
-            cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
+            cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
+            cfg->path_invalid_encoding_unwanted = HTP_UNWANTED_400;
             cfg->path_control_chars_unwanted = HTP_UNWANTED_400;
             break;
 

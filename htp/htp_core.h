@@ -288,10 +288,7 @@ enum htp_url_encoding_handling_t {
     HTP_URL_DECODE_REMOVE_PERCENT = 1,
 
     /** Decode invalid URL encodings. */
-    HTP_URL_DECODE_PROCESS_INVALID = 2,
-
-    /** Respond with HTTP status 400 after encountering invalid URL-encoded data. */
-    HTP_URL_DECODE_STATUS_400 = 400
+    HTP_URL_DECODE_PROCESS_INVALID = 2
 };
 
 #ifdef	__cplusplus
