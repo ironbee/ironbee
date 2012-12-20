@@ -87,10 +87,25 @@ extern "C" {
 
 #define HTP_PIPELINED_CONNECTION            1
 
-#define HTP_CODING_NO_BODY                  -1
-#define HTP_CODING_UNKNOWN                  0
-#define HTP_CODING_IDENTITY                 1
-#define HTP_CODING_CHUNKED                  2
+/**
+ * Enumerates the possible request and response body codings.
+ */
+enum htp_coding_t {
+    /** Body coding not determined yet. */
+    HTP_CODING_UNKNOWN = 0,
+
+    /** No body. */
+    HTP_CODING_NO_BODY = 1,
+
+    /** Identity coding is used, which means that the body was sent as is. */
+    HTP_CODING_IDENTITY = 2,
+
+    /** Chunked encoding. */
+    HTP_CODING_CHUNKED = 3,
+
+    /** We could not recognize the encoding. */
+    HTP_CODING_UNRECOGNIZED = 4
+};
 
 #define URL_DECODER_PRESERVE_PERCENT        0
 #define URL_DECODER_REMOVE_PERCENT          1
@@ -451,9 +466,10 @@ struct htp_tx_t {
 
     /**
      * Request transfer coding. Can be one of HTP_CODING_UNKNOWN (body presence not
-     * determined yet), HTP_CODING_IDENTITY, HTP_CODING_CHUNKED, or HTP_CODING_NO_BODY.
+     * determined yet), HTP_CODING_IDENTITY, HTP_CODING_CHUNKED, HTP_CODING_NO_BODY,
+     * and HTP_CODING_UNRECOGNIZED.
      */
-    int request_transfer_coding;
+    enum htp_coding_t request_transfer_coding;
 
     /** Compression: COMPRESSION_NONE, COMPRESSION_GZIP or COMPRESSION_DEFLATE. */
     int request_content_encoding;
@@ -619,8 +635,12 @@ struct htp_tx_t {
      */
     size_t response_entity_len;
     
-    /** Response transfer coding: IDENTITY or CHUNKED. Only available on responses that have bodies. */
-    int response_transfer_coding;
+    /**
+     * Response transfer coding. Can be one of HTP_CODING_UNKNOWN (body presence not
+     * determined yet), HTP_CODING_IDENTITY, HTP_CODING_CHUNKED, HTP_CODING_NO_BODY,
+     * and HTP_CODING_UNRECOGNIZED.
+     */
+    enum htp_coding_t response_transfer_coding;
 
     /** Compression; currently COMPRESSION_NONE or COMPRESSION_GZIP. */
     int response_content_encoding;   

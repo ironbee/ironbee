@@ -348,6 +348,8 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
             // Invalid T-E header value
             htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                     "Invalid T-E value in request");
+
+            // TODO Should this be a fatal error?
         }
 
         // Chunked encoding is a HTTP/1.1 feature. Check that some other protocol is not
@@ -370,7 +372,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
             // TODO Log
         }
     } else if (cl != NULL) {
-        // It seems that we have a request body of a known length
+        // We have a request body of known length
         tx->request_transfer_coding = HTP_CODING_IDENTITY;
 
         // Check for a folded C-L header
@@ -393,6 +395,9 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         }
 
         tx->request_content_length = i;
+    } else {
+        // No body
+        tx->request_transfer_coding = HTP_CODING_NO_BODY;
     }
 
     // Check for PUT requests, which we need to treat as file uploads
@@ -854,7 +859,7 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
         // Run the last RESPONSE_BODY_DATA HOOK, but
         // only if there was a response body present.
         // TODO Use constant instead of -1
-        if (tx->response_transfer_coding != -1) {
+        if (tx->response_transfer_coding != HTP_CODING_NO_BODY) {
             htp_tx_res_process_body_data(tx, NULL, 0);
         }
 

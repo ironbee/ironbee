@@ -264,7 +264,8 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     if (((connp->out_tx->response_status_number >= 100) && (connp->out_tx->response_status_number <= 199))
             || (connp->out_tx->response_status_number == 204) || (connp->out_tx->response_status_number == 304)
             || (connp->out_tx->request_method_number == HTP_M_HEAD)) {
-        // There's no response body        
+        // There's no response body
+        connp->out_tx->response_transfer_coding = HTP_CODING_NO_BODY;
         connp->out_state = htp_connp_RES_FINALIZE;
     } else {
         // We have a response body
@@ -275,9 +276,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
         if (ct != NULL) {
             connp->out_tx->response_content_type = bstr_dup_lower(ct->value);
-            if (connp->out_tx->response_content_type == NULL) {
-                return HTP_ERROR;
-            }
+            if (connp->out_tx->response_content_type == NULL) return HTP_ERROR;
 
             // Ignore parameters
             unsigned char *data = bstr_ptr(connp->out_tx->response_content_type);
@@ -310,8 +309,9 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
             connp->out_tx->progress = HTP_RESPONSE_BODY;
-        }// 3. If a Content-Length header field (section 14.14) is present, its
-            //   value in bytes represents the length of the message-body.
+        }
+        // 3. If a Content-Length header field (section 14.14) is present, its
+        //   value in bytes represents the length of the message-body.
         else if (cl != NULL) {
             // We know the exact length
             connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
@@ -347,18 +347,20 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             //   responses.
             if (ct != NULL) {
                 // TODO Handle multipart/byteranges
-
                 if (bstr_index_of_c_nocase(ct->value, "multipart/byteranges") != -1) {
                     htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                             "C-T multipart/byteranges in responses not supported");
                     return HTP_ERROR;
                 }
+
+                // TODO Set connp->out_tx->response_transfer_coding
             }
 
             // 5. By the server closing the connection. (Closing the connection
             //   cannot be used to indicate the end of a request body, since that
             //   would leave no possibility for the server to send back a response.)
             connp->out_state = htp_connp_RES_BODY_IDENTITY;
+            connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
             connp->out_tx->progress = HTP_RESPONSE_BODY;
         }
     }

@@ -253,23 +253,36 @@ htp_status_t htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
-    if (connp->in_tx->request_transfer_coding == HTP_CODING_CHUNKED) {
-        connp->in_state = htp_connp_REQ_BODY_CHUNKED_LENGTH;
-        connp->in_tx->progress = HTP_REQUEST_BODY;
-    } else if (connp->in_tx->request_transfer_coding == HTP_CODING_IDENTITY) {
-        connp->in_content_length = connp->in_tx->request_content_length;
-        connp->in_body_data_left = connp->in_content_length;
+    // Determine the next state based on the presence of the request
+    // body, and the coding used.
+    switch (connp->in_tx->request_transfer_coding) {
 
-        if (connp->in_content_length != 0) {
-            connp->in_state = htp_connp_REQ_BODY_IDENTITY;
+        case HTP_CODING_CHUNKED:
+            connp->in_state = htp_connp_REQ_BODY_CHUNKED_LENGTH;
             connp->in_tx->progress = HTP_REQUEST_BODY;
-        } else {
-            connp->in_tx->connp->in_state = htp_connp_REQ_FINALIZE;
-        }
-    } else {
-        // This request does not have a body, which
-        // means that we're done with it
-        connp->in_state = htp_connp_REQ_FINALIZE;
+            break;
+
+        case HTP_CODING_IDENTITY:
+            connp->in_content_length = connp->in_tx->request_content_length;
+            connp->in_body_data_left = connp->in_content_length;
+
+            if (connp->in_content_length != 0) {
+                connp->in_state = htp_connp_REQ_BODY_IDENTITY;
+                connp->in_tx->progress = HTP_REQUEST_BODY;
+            } else {
+                connp->in_tx->connp->in_state = htp_connp_REQ_FINALIZE;
+            }
+            break;
+        case HTP_CODING_NO_BODY:
+            // This request does not have a body, which
+            // means that we're done with it
+            connp->in_state = htp_connp_REQ_FINALIZE;
+            break;
+
+        default:
+            // Should not be here
+            // TODO
+            break;
     }
 
     return HTP_OK;
