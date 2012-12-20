@@ -210,7 +210,7 @@ struct htp_cfg_t {
     enum htp_unwanted_t path_control_chars_unwanted;
 
     /** Should the parser convert UTF-8 into a single-byte stream, using best-fit? */
-    int path_convert_utf8;
+    int path_utf8_convert;
 
     /** Should we URL-decode encoded path segment separators? */
     int path_encoded_separators_decode;
@@ -231,7 +231,7 @@ struct htp_cfg_t {
     enum htp_unwanted_t path_invalid_encoding_unwanted;
 
     /** Controls how invalid UTF-8 characters are handled. */
-    enum htp_unwanted_t path_invalid_utf8_unwanted;
+    enum htp_unwanted_t path_utf8_invalid_unwanted;
 
     /** Controls how encoded NUL bytes are handled. */
     int path_nul_encoded_terminates;

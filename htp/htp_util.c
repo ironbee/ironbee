@@ -765,8 +765,8 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
                 // Is the server expected to respond with 400?
-                if (cfg->path_invalid_utf8_unwanted != HTP_UNWANTED_IGNORE) {
-                    tx->response_status_expected_number = cfg->path_invalid_utf8_unwanted;
+                if (cfg->path_utf8_invalid_unwanted != HTP_UNWANTED_IGNORE) {
+                    tx->response_status_expected_number = cfg->path_utf8_invalid_unwanted;
                 }
 
                 // Override the state in the UTF-8 decoder because
@@ -1526,7 +1526,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         htp_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
 
         // Handle UTF-8 in path
-        if (connp->cfg->path_convert_utf8) {
+        if (connp->cfg->path_utf8_convert) {
             // Decode Unicode characters into a single-byte stream, using best-fit mapping
             htp_utf8_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
         } else {

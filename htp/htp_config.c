@@ -453,7 +453,7 @@ void htp_config_set_path_control_char_handling(htp_cfg_t *cfg, int control_char_
 
 void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8) {
     if (cfg == NULL) return;
-    cfg->path_convert_utf8 = convert_utf8;
+    cfg->path_utf8_convert = convert_utf8;
 }
 
 void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int decode_separators) {
@@ -473,7 +473,7 @@ void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_e
 
 void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, enum htp_unwanted_t invalid_utf8_unwanted) {
     if (cfg == NULL) return;
-    cfg->path_invalid_utf8_unwanted = invalid_utf8_unwanted;
+    cfg->path_utf8_invalid_unwanted = invalid_utf8_unwanted;
 }
 
 void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_terminates) {
@@ -530,7 +530,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_encoded_separators_decode = 1;
             cfg->path_compress_separators = 1;
             cfg->path_u_encoding_decode = 1;            
-            cfg->path_convert_utf8 = 1;
+            cfg->path_utf8_convert = 1;
             break;
 
         case HTP_SERVER_APACHE_2:
