@@ -418,14 +418,6 @@ void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char);
 void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping);
 
 /**
- * Controls how server reacts to overlong UTF-8 characters. Not used at the moment.
- *
- * @param[in] cfg
- * @param[in] utf8_overlong_handling
- */
-void htp_config_set_path_utf8_overlong_handling(htp_cfg_t *cfg, int utf8_overlong_handling);
-
-/**
  * Controls whether compressed response bodies will be automatically decompressed.
  *
  * @param[in] cfg

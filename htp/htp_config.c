@@ -496,11 +496,6 @@ void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping) {
     cfg->path_unicode_mapping = unicode_mapping;
 }
 
-void htp_config_set_path_utf8_overlong_handling(htp_cfg_t *cfg, int utf8_overlong_handling) {
-    if (cfg == NULL) return;
-    cfg->path_utf8_overlong_handling = utf8_overlong_handling;
-}
-
 void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled) {
     if (cfg == NULL) return;
     cfg->response_decompression_enabled = enabled;
