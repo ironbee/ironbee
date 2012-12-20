@@ -226,7 +226,7 @@ struct htp_cfg_t {
     /** How do handle invalid encodings: URL_DECODER_LEAVE_PERCENT,
      *  URL_DECODER_REMOVE_PERCENT or URL_DECODER_DECODE_INVALID.
      */
-    int path_invalid_encoding_handling;
+    enum htp_url_encoding_handling_t path_invalid_encoding_handling;
 
     /** Controls how invalid UTF-8 characters are handled. */
     int path_invalid_utf8_handling;

@@ -262,6 +262,23 @@ enum htp_stream_state_t {
     HTP_STREAM_DATA = 9
 };
 
+/**
+ * Enumerates the possible approaches to handling invalid URL-encodings.
+ */
+enum htp_url_encoding_handling_t {
+    /** Ignore invalid URL encodings and leave the % in the data. */
+    HTP_URL_DECODE_PRESERVE_PERCENT = 0,
+
+    /** Ignore invalid URL encodings, but remove the % from the data. */
+    HTP_URL_DECODE_REMOVE_PERCENT = 1,
+
+    /** Decode invalid URL encodings. */
+    HTP_URL_DECODE_PROCESS_INVALID = 2,
+
+    /** Respond with HTTP status 400 after encountering invalid URL-encoded data. */
+    HTP_URL_DECODE_STATUS_400 = 400
+};
+
 #ifdef	__cplusplus
 }
 #endif
