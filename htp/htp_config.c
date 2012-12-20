@@ -554,7 +554,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_decode_separators = NO;
             cfg->path_compress_separators = YES;
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
-            cfg->path_control_char_handling = HTP_AUTH_NONE;
+            cfg->path_control_char_handling = HTP_MALFORMED_IGNORE;
             break;
 
         case HTP_SERVER_IIS_5_1:
@@ -569,7 +569,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
             cfg->path_decode_u_encoding = YES;
             cfg->path_unicode_mapping = BESTFIT;
-            cfg->path_control_char_handling = HTP_AUTH_NONE;
+            cfg->path_control_char_handling = HTP_MALFORMED_IGNORE;
             break;
 
         case HTP_SERVER_IIS_6_0:
@@ -584,7 +584,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
             cfg->path_decode_u_encoding = YES;
             cfg->path_unicode_mapping = STATUS_400;
-            cfg->path_control_char_handling = STATUS_400;
+            cfg->path_control_char_handling = HTP_MALFORMED_400;
             break;
 
         case HTP_SERVER_IIS_7_0:
@@ -598,7 +598,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_decode_separators = YES;
             cfg->path_compress_separators = YES;
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
-            cfg->path_control_char_handling = STATUS_400;
+            cfg->path_control_char_handling = HTP_MALFORMED_400;
             break;
 
         default:

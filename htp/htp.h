@@ -64,8 +64,6 @@ extern "C" {
 #define STATUS_400                          400
 #define STATUS_404                          401
 
-
-
 /**
  * This data structure is used to represent a single TCP connection.
  */

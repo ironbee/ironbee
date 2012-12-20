@@ -751,27 +751,27 @@ int main_path_tests(int argc, char** argv) {
     PATH_DECODE_TEST_BEFORE("Control char in path, encoded (no effect)");
     input = bstr_dup_c("/%01test");
     expected = bstr_dup_c("/\x01test");
-    cfg->path_control_char_handling = HTP_AUTH_NONE;
+    cfg->path_control_char_handling = HTP_MALFORMED_IGNORE;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, raw (no effect)");
     input = bstr_dup_c("/\x01test");
     expected = bstr_dup_c("/\x01test");
-    cfg->path_control_char_handling = HTP_AUTH_NONE;
+    cfg->path_control_char_handling = HTP_MALFORMED_IGNORE;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, encoded (400)");
     input = bstr_dup_c("/%01test");
     expected = bstr_dup_c("/\x01test");
     expected_status = 400;
-    cfg->path_control_char_handling = STATUS_400;
+    cfg->path_control_char_handling = HTP_MALFORMED_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Control char in path, raw (400)");
     input = bstr_dup_c("/\x01test");
     expected = bstr_dup_c("/\x01test");
     expected_status = 400;
-    cfg->path_control_char_handling = STATUS_400;
+    cfg->path_control_char_handling = HTP_MALFORMED_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("UTF-8; overlong 2-byte sequence");
