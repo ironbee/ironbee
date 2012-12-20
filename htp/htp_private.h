@@ -244,6 +244,9 @@ struct htp_cfg_t {
 
     /** TODO */
     enum htp_unwanted_t path_nul_raw_unwanted;
+    
+    /** TODO */
+    enum htp_unwanted_t path_unicode_unwanted;
 
     /** The replacement character used when there is no best-fit mapping. */
     unsigned char bestfit_replacement_char;
@@ -254,10 +257,7 @@ struct htp_cfg_t {
 
     int params_nul_encoded_handling;
 
-    int params_nul_raw_handling;
-
-    /** How will the server handle UCS-2 characters? */
-    int path_unicode_mapping;   
+    int params_nul_raw_handling;   
 
     /** The best-fit map to use to decode %u-encoded characters. */
     unsigned char *bestfit_map;

@@ -916,13 +916,8 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
             tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
         }
 
-        switch (cfg->path_unicode_mapping) {
-            case STATUS_400:
-                tx->response_status_expected_number = 400;
-                break;
-            case STATUS_404:
-                tx->response_status_expected_number = 404;
-                break;
+        if (cfg->path_unicode_unwanted != HTP_UNWANTED_IGNORE) {
+            tx->response_status_expected_number = cfg->path_unicode_unwanted;
         }
 
         // Use best-fit mapping

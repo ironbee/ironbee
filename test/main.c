@@ -594,8 +594,7 @@ int main_path_tests(int argc, char** argv) {
     PATH_DECODE_TEST_BEFORE("%u decoding, best-fit mapping");
     input = bstr_dup_c("/%u0107");
     expected = bstr_dup_c("/c");
-    cfg->path_u_encoding_decode = 1;
-    cfg->path_unicode_mapping = BESTFIT;
+    cfg->path_u_encoding_decode = 1;    
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding, 404 to UCS-2 characters");
@@ -603,7 +602,7 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_dup_c("/c");
     expected_status = 404;
     cfg->path_u_encoding_decode = 1;
-    cfg->path_unicode_mapping = STATUS_404;
+    cfg->path_unicode_unwanted = HTP_UNWANTED_404;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Forward slash (URL-encoded), not expect to decode");

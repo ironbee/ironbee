@@ -406,18 +406,6 @@ void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, enum htp_path_nul_raw_
 void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char);
 
 /**
- * Controls what the library does when it encounters an Unicode character where
- * only a single-byte would do (e.g., the %u-encoded characters). Conversion always
- * takes place; this parameter is used to correctly predict the status code used
- * in response. In the future there will probably be an option to convert such
- * characters to UCS-2 or UTF-8.
- *
- * @param[in] cfg
- * @param[in] unicode_mapping Possible values: BESTFIT, STATUS_400, STATUS_404.
- */
-void htp_config_set_path_unicode_mapping(htp_cfg_t *cfg, int unicode_mapping);
-
-/**
  * Controls whether compressed response bodies will be automatically decompressed.
  *
  * @param[in] cfg
