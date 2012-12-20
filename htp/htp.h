@@ -58,10 +58,6 @@ extern "C" {
 
 // -- Defines -------------------------------------------------------------------------------------
 
-// Error codes
-#define HTP_LINE_TOO_LONG_HARD              4
-#define HTP_LINE_TOO_LONG_SOFT              5
-
 #define HTP_FIELD_UNPARSEABLE               0x000001
 #define HTP_FIELD_INVALID                   0x000002
 #define HTP_FIELD_FOLDED                    0x000004

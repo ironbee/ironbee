@@ -84,10 +84,10 @@ if ((X)->in_line_len < (X)->in_line_size) { \
     (X)->in_line_len++; \
     if (((X)->in_line_len == HTP_HEADER_LIMIT_SOFT)&&(!((X)->in_tx->flags & HTP_FIELD_LONG))) { \
         (X)->in_tx->flags |= HTP_FIELD_LONG; \
-        htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_SOFT, "Request field over soft limit"); \
+        htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request field over soft limit"); \
     } \
 } else { \
-    htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_HARD, "Request field over hard limit"); \
+    htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request field over hard limit"); \
     return HTP_ERROR; \
 }
 
@@ -128,10 +128,10 @@ if ((X)->out_line_len < (X)->out_line_size) { \
     (X)->out_line_len++; \
     if (((X)->out_line_len == HTP_HEADER_LIMIT_SOFT)&&(!((X)->out_tx->flags & HTP_FIELD_LONG))) { \
         (X)->out_tx->flags |= HTP_FIELD_LONG; \
-        htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_SOFT, "Response field over soft limit"); \
+        htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Response field over soft limit"); \
     } \
 } else { \
-    htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, HTP_LINE_TOO_LONG_HARD, "Response field over hard limit"); \
+    htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Response field over hard limit"); \
     return HTP_ERROR; \
 }
 
