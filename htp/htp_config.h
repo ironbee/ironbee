@@ -373,7 +373,7 @@ void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_e
  * @para[in]m cfg
  * @param[in] invalid_utf8_handling Possible values: NONE or STATUS_400.
  */
-void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, int invalid_utf8_handling);
+void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, enum htp_unwanted_t invalid_utf8_unwanted);
 
 /**
  * Configures how server reacts to encoded NUL bytes. Some servers will terminate

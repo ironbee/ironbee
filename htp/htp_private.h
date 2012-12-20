@@ -231,7 +231,7 @@ struct htp_cfg_t {
     enum htp_unwanted_t path_invalid_encoding_unwanted;
 
     /** Controls how invalid UTF-8 characters are handled. */
-    int path_invalid_utf8_handling;
+    enum htp_unwanted_t path_invalid_utf8_unwanted;
 
     /** Controls how encoded NUL bytes are handled. */
     int path_nul_encoded_handling;

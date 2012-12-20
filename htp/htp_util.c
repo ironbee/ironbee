@@ -765,8 +765,8 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                 tx->flags |= HTP_PATH_UTF8_INVALID;
 
                 // Is the server expected to respond with 400?
-                if (cfg->path_invalid_utf8_handling == STATUS_400) {
-                    tx->response_status_expected_number = 400;
+                if (cfg->path_invalid_utf8_unwanted != HTP_UNWANTED_IGNORE) {
+                    tx->response_status_expected_number = cfg->path_invalid_utf8_unwanted;
                 }
 
                 // Override the state in the UTF-8 decoder because

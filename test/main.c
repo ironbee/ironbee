@@ -684,7 +684,7 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_dup_c("/\xf7test");
     expected_status = 400;
     expected_flags = HTP_PATH_UTF8_INVALID;
-    cfg->path_invalid_utf8_handling = STATUS_400;
+    cfg->path_invalid_utf8_unwanted = STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (raw) in path; leave");
