@@ -677,7 +677,7 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
     }
 
     // Run hook REQUEST
-    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_done, tx->connp);
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_complete, tx->connp);
     if (rc != HTP_OK) return rc;
 
     // Clean-up
@@ -700,7 +700,7 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
 
 htp_status_t htp_tx_state_request_start(htp_tx_t *tx) {
     // Run hook TRANSACTION_START
-    int rc = htp_hook_run_all(tx->connp->cfg->hook_transaction_start, tx->connp);
+    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_start, tx->connp);
     if (rc != HTP_OK) return rc;
 
     // Change state into request line parsing
@@ -864,7 +864,7 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
         }
 
         // Run hook RESPONSE
-        return htp_hook_run_all(tx->connp->cfg->hook_response_done, tx->connp);
+        return htp_hook_run_all(tx->connp->cfg->hook_response_complete, tx->connp);
     }
 
     return HTP_OK;

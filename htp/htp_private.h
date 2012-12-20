@@ -311,7 +311,7 @@ struct htp_cfg_t {
     /** Transaction start hook, invoked when the parser receives the first
      *  byte of a new transaction.
      */
-    htp_hook_t *hook_transaction_start;
+    htp_hook_t *hook_request_start;
 
     /** Request line hook, invoked after a request line has been parsed. */
     htp_hook_t *hook_request_line;
@@ -330,6 +330,7 @@ struct htp_cfg_t {
      */
     htp_hook_t *hook_request_body_data;
 
+    /** TODO */
     htp_hook_t *hook_request_file_data;
 
     /** Request trailer hook, invoked after all trailer headers are seen,
@@ -338,7 +339,7 @@ struct htp_cfg_t {
     htp_hook_t *hook_request_trailer;
 
     /** Request hook, invoked after a complete request is seen. */
-    htp_hook_t *hook_request_done;
+    htp_hook_t *hook_request_complete;
 
     /** Response startup hook, invoked when a response transaction is found and
      *  processing started.
@@ -369,7 +370,7 @@ struct htp_cfg_t {
      *  transaction hook, use this hook to do something whenever a transaction is
      *  complete.
      */
-    htp_hook_t *hook_response_done;
+    htp_hook_t *hook_response_complete;
 
     /**
      * Log hook, invoked every time the library wants to log.
