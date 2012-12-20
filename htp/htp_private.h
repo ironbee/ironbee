@@ -236,6 +236,9 @@ struct htp_cfg_t {
     /** Controls how encoded NUL bytes are handled. */
     int path_nul_encoded_handling;
 
+    /** How are we expected to react to an encoded NUL byte? */
+    enum htp_unwanted_t path_nul_encoded_unwanted;
+
     /** Controls how raw NUL bytes are handled. */
     int path_nul_raw_handling;
 

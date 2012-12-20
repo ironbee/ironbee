@@ -1052,10 +1052,8 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                 if (c == 0) {
                                     tx->flags |= HTP_PATH_ENCODED_NUL;
 
-                                    if (cfg->path_nul_encoded_handling == STATUS_400) {
-                                        tx->response_status_expected_number = 400;
-                                    } else if (cfg->path_nul_encoded_handling == STATUS_404) {
-                                        tx->response_status_expected_number = 404;
+                                    if (cfg->path_nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
+                                        tx->response_status_expected_number = cfg->path_nul_encoded_unwanted;
                                     }
                                 }
                             } else {
@@ -1119,16 +1117,14 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                         if (c == 0) {
                             tx->flags |= HTP_PATH_ENCODED_NUL;
 
+                            if (cfg->path_nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
+                                tx->response_status_expected_number = cfg->path_nul_encoded_unwanted;
+                            }
+
                             switch (cfg->path_nul_encoded_handling) {
                                 case TERMINATE:
                                     bstr_adjust_len(path, wpos);
                                     return 1;
-                                    break;
-                                case STATUS_400:
-                                    tx->response_status_expected_number = 400;
-                                    break;
-                                case STATUS_404:
-                                    tx->response_status_expected_number = 404;
                                     break;
                             }
                         }
