@@ -434,6 +434,9 @@ static ib_status_t modlua_push_lua_handler(
  * @param[in] ib IronBee engine.
  * @param[in] module The module to check.
  * @param[in] event The event to check for.
+ * @param[in] L The Lua state that is checked. While it is an "in"
+ *            parameter, it is manipulated and returned to its
+ *            original state before this function returns.
  *
  * @returns
  *   - IB_OK if a handler exists.
@@ -466,6 +469,7 @@ static ib_status_t module_has_callback(
  * @param[in] ib IronBee engine.
  * @param[in] module The module to check.
  * @param[in] event The event to check for.
+ * @param[in,out] L The Lua state to push the dispatcher onto.
  *
  * @returns
  *   - IB_OK if a handler exists.
@@ -517,7 +521,7 @@ static ib_status_t modlua_push_dispatcher(
  *
  * The table at the top of the stack will have defined in it:
  *   - ib_engine
- *   - ib_tx (if @tx is not null)
+ *   - ib_tx (if @a tx is not null)
  *   - ib_conn
  *   - event as an integer
  *

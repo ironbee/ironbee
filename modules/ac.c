@@ -94,7 +94,7 @@ typedef struct modac_workspace_t modac_workspace_t;
 /* -- Helper Internal Functions -- */
 
 /**
- * Get or create an ib_hash_t inside tx for storing tx rule data..
+ * Get or create an ib_hash_t inside tx for storing tx rule data.
  *
  * @param[in] tx The transaction containing the data which holds
  *            the @a rule_data object.

@@ -582,28 +582,28 @@ ib_status_t DLL_PUBLIC ib_conn_create(ib_engine_t *ib,
 /**
  * Get per-module per-connection data.
  *
- * @param[in]  conn   Connection
+ * @param[in]  conn Connection
  * @param[in]  module Module.
- * @param[out] data   Data.
+ * @param[out] data Data.
  * @returns Status code.
  */
 ib_status_t DLL_PUBLIC ib_conn_get_data(
     const ib_conn_t    *conn,
-    const ib_module_t  *m,
+    const ib_module_t  *module,
     void              **data
 );
 
 /**
  * Set per-module per-connection data.
  *
- * @param[in] conn   Connection
+ * @param[in] conn Connection
  * @param[in] module Module.
  * @param[in] data Data.
  * @returns Status code.
  */
 ib_status_t DLL_PUBLIC ib_conn_set_data(
     ib_conn_t         *conn,
-    const ib_module_t *m,
+    const ib_module_t *module,
     void              *data
 );
 
@@ -702,28 +702,28 @@ ib_status_t DLL_PUBLIC ib_tx_create(ib_tx_t **ptx,
 /**
  * Get per-module per-transaction data.
  *
- * @param[in]  tx     Transaction.
+ * @param[in]  tx Transaction.
  * @param[in]  module Module.
  * @param[out] data Data.
  * @returns Status code.
  */
 ib_status_t DLL_PUBLIC ib_tx_get_data(
     const ib_tx_t *tx,
-    const ib_module_t *m,
+    const ib_module_t *module,
     void **data
 );
 
 /**
  * Set per-module per-transaction data.
  *
- * @param[in] tx     Transaction.
+ * @param[in] tx Transaction.
  * @param[in] module Module.
  * @param[in] data Data.
  * @returns Status code.
  */
 ib_status_t DLL_PUBLIC ib_tx_set_data(
     ib_tx_t *tx,
-    const ib_module_t *m,
+    const ib_module_t *module,
     void *data
 );
 
