@@ -234,13 +234,13 @@ struct htp_cfg_t {
     enum htp_unwanted_t path_invalid_utf8_unwanted;
 
     /** Controls how encoded NUL bytes are handled. */
-    enum htp_path_nul_encoded_handling_t path_nul_encoded_handling;
+    enum htp_nul_encoded_handling_t path_nul_encoded_handling;
 
     /** How are we expected to react to an encoded NUL byte? */
     enum htp_unwanted_t path_nul_encoded_unwanted;
 
     /** Controls how raw NUL bytes are handled. */
-    enum htp_path_nul_raw_handling_t path_nul_raw_handling;
+    enum htp_nul_raw_handling_t path_nul_raw_handling;
 
     /** TODO */
     enum htp_unwanted_t path_nul_raw_unwanted;
@@ -263,9 +263,17 @@ struct htp_cfg_t {
     /** TODO */
     enum htp_unwanted_t params_invalid_encoding_unwanted;
 
-    int params_nul_encoded_handling;
+    /** TODO */
+    enum htp_nul_encoded_handling_t params_nul_encoded_handling;
 
-    int params_nul_raw_handling;   
+    /** TODO */
+    enum htp_unwanted_t params_nul_encoded_unwanted;
+
+    /** TODO */
+    int params_nul_raw_terminates;
+
+    /** TODO */
+    enum htp_unwanted_t params_nul_raw_unwanted;
 
     /** The best-fit map to use to decode %u-encoded characters. */
     unsigned char *bestfit_map;

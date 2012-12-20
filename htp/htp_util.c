@@ -1381,16 +1381,17 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                             // XXX
                             // tx->flags |= HTP_PATH_ENCODED_NUL;
 
+                            if (cfg->params_nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
+                                tx->response_status_expected_number = cfg->params_nul_encoded_unwanted;
+                            }
+
                             switch (cfg->params_nul_encoded_handling) {
-                                case TERMINATE:
+                                case HTP_PATH_NUL_ENCODED_TERMINATE:
                                     bstr_adjust_len(input, wpos);
                                     return 1;
                                     break;
-                                case STATUS_400:
-                                    tx->response_status_expected_number = 400;
-                                    break;
-                                case STATUS_404:
-                                    tx->response_status_expected_number = 404;
+                                case HTP_PATH_NUL_ENCODED_DECODE:
+                                    // Do nothing; already decoded
                                     break;
                             }
                         }
@@ -1455,20 +1456,15 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
             // Is it a NUL byte?
             if (c == 0) {
-                switch (cfg->params_nul_raw_handling) {
-                    case TERMINATE:
-                        // Terminate path with a raw NUL byte
-                        bstr_adjust_len(input, wpos);
-                        return 1;
-                        break;
-                    case STATUS_400:
-                        // Leave the NUL byte, but set the expected status
-                        tx->response_status_expected_number = 400;
-                        break;
-                    case STATUS_404:
-                        // Leave the NUL byte, but set the expected status
-                        tx->response_status_expected_number = 404;
-                        break;
+                if (cfg->params_nul_raw_unwanted != HTP_UNWANTED_IGNORE) {
+                    tx->response_status_expected_number = cfg->params_nul_raw_unwanted;
+                }
+
+                if (cfg->params_nul_raw_terminates) {
+                    // Terminate path with a raw NUL byte
+                    bstr_adjust_len(input, wpos);
+                    return 1;
+                    break;
                 }
             } else if (c == '+') {
                 c = 0x20;

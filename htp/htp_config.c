@@ -155,8 +155,8 @@ htp_cfg_t *htp_config_create(void) {
     cfg->response_decompression_enabled = 1;
     cfg->params_u_encoding_decode = 0;
     cfg->params_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
-    cfg->params_nul_encoded_handling = HTP_AUTH_NONE;
-    cfg->params_nul_raw_handling = HTP_AUTH_NONE;
+    cfg->params_nul_encoded_handling = HTP_PATH_NUL_ENCODED_DECODE;
+    cfg->params_nul_raw_terminates = 0;
     cfg->parse_request_cookies = 1;
 
     // TODO Try to determine the correct location for the storage
@@ -476,12 +476,12 @@ void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, enum htp_unwanted
     cfg->path_invalid_utf8_unwanted = invalid_utf8_unwanted;
 }
 
-void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, enum htp_path_nul_encoded_handling_t nul_encoded_handling) {
+void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, enum htp_nul_encoded_handling_t nul_encoded_handling) {
     if (cfg == NULL) return;
     cfg->path_nul_encoded_handling = nul_encoded_handling;
 }
 
-void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, enum htp_path_nul_raw_handling_t nul_raw_handling) {
+void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, enum htp_nul_raw_handling_t nul_raw_handling) {
     if (cfg == NULL) return;
     cfg->path_nul_raw_handling = nul_raw_handling;
 }

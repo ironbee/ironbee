@@ -277,12 +277,12 @@ enum htp_stream_state_t {
     HTP_STREAM_DATA = 9
 };
 
-enum htp_path_nul_raw_handling_t {
+enum htp_nul_raw_handling_t {
     HTP_PATH_NUL_RAW_DECODE = 0,
     HTP_PATH_NUL_RAW_TERMINATE = 1
 };
 
-enum htp_path_nul_encoded_handling_t {
+enum htp_nul_encoded_handling_t {
     HTP_PATH_NUL_ENCODED_DECODE = 0,
     HTP_PATH_NUL_ENCODED_TERMINATE = 1
 };
