@@ -204,6 +204,7 @@ enum htp_log_level_t {
  * Enumerates the ways in which servers respond to malformed data.
  */
 enum htp_malformed_handling_t {
+    
     /** Ignores problem. */
     HTP_MALFORMED_IGNORE = 0,
 

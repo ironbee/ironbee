@@ -1137,12 +1137,12 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                                 case STATUS_404:
                                     tx->response_status_expected_number = 404;
                                     // Fall-through
-                                case NO:
+                                case 0:
                                     // Leave encoded
                                     c = '%';
                                     rpos++;
                                     break;
-                                case YES:
+                                case 1:
                                     // Decode
                                     rpos += 3;
                                     break;

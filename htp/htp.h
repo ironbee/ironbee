@@ -56,10 +56,7 @@ extern "C" {
 #include "htp_transaction.h"
 #include "htp_urlencoded.h"
 
-#define NONE                                0
-#define NO                                  0
 #define BESTFIT                             0
-#define YES                                 1
 #define TERMINATE                           1
 #define STATUS_400                          400
 #define STATUS_404                          401
