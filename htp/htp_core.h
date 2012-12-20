@@ -203,13 +203,16 @@ enum htp_log_level_t {
 /**
  * Enumerates the ways in which servers respond to malformed data.
  */
-enum htp_malformed_handling_t {
+enum htp_unwanted_t {
     
     /** Ignores problem. */
-    HTP_MALFORMED_IGNORE = 0,
+    HTP_UNWANTED_IGNORE = 0,
 
     /** Responds with HTTP 400 status code. */
-    HTP_MALFORMED_400 = 400
+    HTP_UNWANTED_400 = 400,
+
+    /** Responds with HTTP 404 status code. */
+    HTP_UNWANTED_404 = 404
 };
 
 /**

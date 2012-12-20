@@ -1232,7 +1232,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
         // Check for control characters
         if (c < 0x20) {
-            if (cfg->path_control_char_handling == STATUS_400) {
+            if (cfg->path_control_chars_unwanted == STATUS_400) {
                 tx->response_status_expected_number = 400;
             }
         }

@@ -210,7 +210,7 @@ struct htp_cfg_t {
      *  characters are present in a request path, but does not affect path
      *  normalization.
      */
-    enum htp_malformed_handling_t path_control_char_handling;
+    enum htp_unwanted_t path_control_chars_unwanted;
 
     /** Should the parser convert UTF-8 into a single-byte stream, using
      *  best-fit?

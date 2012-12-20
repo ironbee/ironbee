@@ -448,7 +448,7 @@ void htp_config_set_path_compress_separators(htp_cfg_t *cfg, int compress_separa
 
 void htp_config_set_path_control_char_handling(htp_cfg_t *cfg, int control_char_handling) {
     if (cfg == NULL) return;
-    cfg->path_control_char_handling = control_char_handling;
+    cfg->path_control_chars_unwanted = control_char_handling;
 }
 
 void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8) {
@@ -554,7 +554,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_decode_separators = 0;
             cfg->path_compress_separators = 1;
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
-            cfg->path_control_char_handling = HTP_MALFORMED_IGNORE;
+            cfg->path_control_chars_unwanted = HTP_UNWANTED_IGNORE;
             break;
 
         case HTP_SERVER_IIS_5_1:
@@ -569,7 +569,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
             cfg->path_decode_u_encoding = 0;
             cfg->path_unicode_mapping = BESTFIT;
-            cfg->path_control_char_handling = HTP_MALFORMED_IGNORE;
+            cfg->path_control_chars_unwanted = HTP_UNWANTED_IGNORE;
             break;
 
         case HTP_SERVER_IIS_6_0:
@@ -584,7 +584,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
             cfg->path_decode_u_encoding = 1;
             cfg->path_unicode_mapping = STATUS_400;
-            cfg->path_control_char_handling = HTP_MALFORMED_400;
+            cfg->path_control_chars_unwanted = HTP_UNWANTED_400;
             break;
 
         case HTP_SERVER_IIS_7_0:
@@ -598,7 +598,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_decode_separators = 1;
             cfg->path_compress_separators = 1;
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
-            cfg->path_control_char_handling = HTP_MALFORMED_400;
+            cfg->path_control_chars_unwanted = HTP_UNWANTED_400;
             break;
 
         default:
