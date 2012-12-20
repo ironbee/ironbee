@@ -1133,19 +1133,17 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                         if ((c == '/') || ((cfg->path_backslash_separators) && (c == '\\'))) {
                             tx->flags |= HTP_PATH_ENCODED_SEPARATOR;
 
-                            switch (cfg->path_decode_separators) {
-                                case STATUS_404:
-                                    tx->response_status_expected_number = 404;
-                                    // Fall-through
-                                case 0:
-                                    // Leave encoded
-                                    c = '%';
-                                    rpos++;
-                                    break;
-                                case 1:
-                                    // Decode
-                                    rpos += 3;
-                                    break;
+                            if (cfg->path_encoded_separators_unwanted != HTP_UNWANTED_IGNORE) {
+                                tx->response_status_expected_number = cfg->path_encoded_separators_unwanted;
+                            }
+
+                            if (cfg->path_encoded_separators_decode) {
+                                // Decode
+                                rpos += 3;
+                            } else {
+                                // Leave encoded
+                                c = '%';
+                                rpos++;
                             }
                         } else {
                             // Decode
@@ -1576,7 +1574,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
  */
 bstr *htp_normalize_hostname_inplace(bstr *hostname) {
     if (hostname == NULL) return NULL;
-    
+
     bstr_to_lowercase(hostname);
 
     unsigned char *data = bstr_ptr(hostname);
@@ -1602,7 +1600,7 @@ bstr *htp_normalize_hostname_inplace(bstr *hostname) {
  */
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname) {
     if (hostname == NULL) return;
-    
+
     bstr *new_hostname = NULL;
 
     int colon = bstr_chr(hostname, ':');
@@ -1669,7 +1667,7 @@ int htp_is_uri_unreserved(unsigned char c) {
  */
 void htp_uriencoding_normalize_inplace(bstr *s) {
     if (s == NULL) return;
-    
+
     unsigned char *data = (unsigned char *) bstr_ptr(s);
     size_t len = bstr_len(s);
 
@@ -1726,7 +1724,7 @@ void htp_uriencoding_normalize_inplace(bstr *s) {
  */
 void htp_normalize_uri_path_inplace(bstr *s) {
     if (s == NULL) return;
-    
+
     unsigned char *data = bstr_ptr(s);
     size_t len = bstr_len(s);
 
@@ -1839,7 +1837,7 @@ void fprint_raw_data(FILE *stream, const char *name, const void *data, size_t le
  *
  */
 void fprint_raw_data_ex(FILE *stream, const char *name, const void *_data, size_t offset, size_t printlen) {
-    const unsigned char *data = (const unsigned char *)_data;
+    const unsigned char *data = (const unsigned char *) _data;
     char buf[160];
     size_t len = offset + printlen;
 
@@ -2101,15 +2099,15 @@ int htp_treat_response_line_as_body(htp_tx_t *tx) {
     //      Safari: ^HTTP/\d+\.\d+\s+\d{3}
 
     if (tx->response_protocol == NULL) return 1;
-    if (bstr_len(tx->response_protocol) < 4) return 1;    
+    if (bstr_len(tx->response_protocol) < 4) return 1;
 
     unsigned char *data = bstr_ptr(tx->response_protocol);
 
-    if ((data[0] != 'H') && (data[0] != 'h')) return 1;    
+    if ((data[0] != 'H') && (data[0] != 'h')) return 1;
     if ((data[1] != 'T') && (data[1] != 't')) return 1;
     if ((data[2] != 'T') && (data[2] != 't')) return 1;
     if ((data[3] != 'P') && (data[3] != 'p')) return 1;
-    
+
     return 0;
 }
 

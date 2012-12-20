@@ -291,7 +291,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     cfg->path_case_insensitive = 1;
     cfg->path_compress_separators = 1;
     cfg->path_backslash_separators = 1;
-    cfg->path_decode_separators = 1;
+    cfg->path_encoded_separators_decode = 1;
 
     str = bstr_util_strdup_to_c(path);
     printf("Before: %s\n", str);
@@ -307,7 +307,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     cfg->path_case_insensitive = 1;
     cfg->path_compress_separators = 1;
     cfg->path_backslash_separators = 1;
-    cfg->path_decode_separators = 1;
+    cfg->path_encoded_separators_decode = 1;
     cfg->path_invalid_encoding_handling = HTP_URL_DECODE_REMOVE_PERCENT;
 
     str = bstr_util_strdup_to_c(path);
@@ -324,7 +324,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     cfg->path_case_insensitive = 1;
     cfg->path_compress_separators = 1;
     cfg->path_backslash_separators = 1;
-    cfg->path_decode_separators = 1;
+    cfg->path_encoded_separators_decode = 1;
     cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PROCESS_INVALID;
 
     str = bstr_util_strdup_to_c(path);
@@ -341,7 +341,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     cfg->path_case_insensitive = 1;
     cfg->path_compress_separators = 1;
     cfg->path_backslash_separators = 1;
-    cfg->path_decode_separators = 1;
+    cfg->path_encoded_separators_decode = 1;
     cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
     cfg->path_decode_u_encoding = 1;
 
@@ -611,40 +611,41 @@ int main_path_tests(int argc, char** argv) {
     PATH_DECODE_TEST_BEFORE("Forward slash (URL-encoded), expect to decode");
     input = bstr_dup_c("/one%2ftwo");
     expected = bstr_dup_c("/one/two");
-    cfg->path_decode_separators = 1;
+    cfg->path_encoded_separators_decode = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Forward slash (URL-encoded), expect not do decode and 404");
     input = bstr_dup_c("/one%2ftwo");
     expected = bstr_dup_c("/one%2ftwo");
     expected_status = 404;
-    cfg->path_decode_separators = STATUS_404;
+    cfg->path_encoded_separators_decode = 0;
+    cfg->path_encoded_separators_unwanted = STATUS_404;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Forward slash (%u-encoded), expect to decode");
     input = bstr_dup_c("/one%u002ftwo");
     expected = bstr_dup_c("/one/two");
-    cfg->path_decode_separators = 1;
+    cfg->path_encoded_separators_decode = 1;
     cfg->path_decode_u_encoding = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Forward slash (%u-encoded, fullwidth), expect to decode");
     input = bstr_dup_c("/one%uff0ftwo");
     expected = bstr_dup_c("/one/two");
-    cfg->path_decode_separators = 1;
+    cfg->path_encoded_separators_decode = 1;
     cfg->path_decode_u_encoding = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Backslash (URL-encoded), not a separator; expect to decode");
     input = bstr_dup_c("/one%5ctwo");
     expected = bstr_dup_c("/one\\two");
-    cfg->path_decode_separators = 1;
+    cfg->path_encoded_separators_decode = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Backslash (URL-encoded), as path segment separator");
     input = bstr_dup_c("/one%5ctwo");
     expected = bstr_dup_c("/one/two");
-    cfg->path_decode_separators = 1;
+    cfg->path_encoded_separators_decode = 1;
     cfg->path_backslash_separators = 1;
     PATH_DECODE_TEST_AFTER();
 
@@ -657,7 +658,7 @@ int main_path_tests(int argc, char** argv) {
     PATH_DECODE_TEST_BEFORE("Backslash (%u-encoded), as path segment separator");
     input = bstr_dup_c("/one%u005ctwo");
     expected = bstr_dup_c("/one/two");
-    cfg->path_decode_separators = 1;
+    cfg->path_encoded_separators_decode = 1;
     cfg->path_backslash_separators = 1;
     cfg->path_decode_u_encoding = 1;
     PATH_DECODE_TEST_AFTER();
@@ -665,7 +666,7 @@ int main_path_tests(int argc, char** argv) {
     PATH_DECODE_TEST_BEFORE("Backslash (%u-encoded, fullwidth), as path segment separator");
     input = bstr_dup_c("/one%uff3ctwo");
     expected = bstr_dup_c("/one/two");
-    cfg->path_decode_separators = 1;
+    cfg->path_encoded_separators_decode = 1;
     cfg->path_backslash_separators = 1;
     cfg->path_decode_u_encoding = 1;
     PATH_DECODE_TEST_AFTER();

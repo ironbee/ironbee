@@ -206,19 +206,17 @@ struct htp_cfg_t {
     /** Should we compress multiple path segment separators into one? */
     int path_compress_separators;
 
-    /** This parameter is used to predict how a server will react when control
-     *  characters are present in a request path, but does not affect path
-     *  normalization.
-     */
+    /** How are we expected to react to control chars in the path? */
     enum htp_unwanted_t path_control_chars_unwanted;
 
-    /** Should the parser convert UTF-8 into a single-byte stream, using
-     *  best-fit?
-     */
+    /** Should the parser convert UTF-8 into a single-byte stream, using best-fit? */
     int path_convert_utf8;
 
     /** Should we URL-decode encoded path segment separators? */
-    int path_decode_separators;
+    int path_encoded_separators_decode;
+
+    /** How are we expected to react to encoded path separators? */
+    enum htp_unwanted_t path_encoded_separators_unwanted;
 
     /** Should we decode %u-encoded characters? */
     int path_decode_u_encoding;

@@ -458,7 +458,7 @@ void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8) {
 
 void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int decode_separators) {
     if (cfg == NULL) return;
-    cfg->path_decode_separators = decode_separators;
+    cfg->path_encoded_separators_decode = decode_separators;
 }
 
 void htp_config_set_path_decode_u_encoding(htp_cfg_t *cfg, int decode_u_encoding) {
@@ -525,7 +525,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->process_response_header = htp_process_response_header_generic;
 
             cfg->path_backslash_separators = 1;
-            cfg->path_decode_separators = 1;
+            cfg->path_encoded_separators_decode = 1;
             cfg->path_compress_separators = 1;
             break;
 
@@ -537,7 +537,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
 
             cfg->path_backslash_separators = 1;
             cfg->path_case_insensitive = 1;
-            cfg->path_decode_separators = 1;
+            cfg->path_encoded_separators_decode = 1;
             cfg->path_compress_separators = 1;
             cfg->path_decode_u_encoding = 1;
             cfg->path_unicode_mapping = BESTFIT;
@@ -551,7 +551,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->process_response_header = htp_process_response_header_generic;
 
             cfg->path_backslash_separators = 0;
-            cfg->path_decode_separators = 0;
+            cfg->path_encoded_separators_decode = 0;
             cfg->path_compress_separators = 1;
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
             cfg->path_control_chars_unwanted = HTP_UNWANTED_IGNORE;
@@ -564,7 +564,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->process_response_header = htp_process_response_header_generic;
 
             cfg->path_backslash_separators = 1;
-            cfg->path_decode_separators = 0;
+            cfg->path_encoded_separators_decode = 0;
             cfg->path_compress_separators = 1;
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
             cfg->path_decode_u_encoding = 0;
@@ -579,7 +579,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->process_response_header = htp_process_response_header_generic;
 
             cfg->path_backslash_separators = 1;
-            cfg->path_decode_separators = 1;
+            cfg->path_encoded_separators_decode = 1;
             cfg->path_compress_separators = 1;
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
             cfg->path_decode_u_encoding = 1;
@@ -595,7 +595,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->process_response_header = htp_process_response_header_generic;
 
             cfg->path_backslash_separators = 1;
-            cfg->path_decode_separators = 1;
+            cfg->path_encoded_separators_decode = 1;
             cfg->path_compress_separators = 1;
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
             cfg->path_control_chars_unwanted = HTP_UNWANTED_400;
