@@ -1122,9 +1122,12 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                             }
 
                             switch (cfg->path_nul_encoded_handling) {
-                                case TERMINATE:
+                                case HTP_PATH_NUL_ENCODED_TERMINATE:
                                     bstr_adjust_len(path, wpos);
                                     return 1;
+                                    break;
+                                case HTP_PATH_NUL_ENCODED_DECODE:
+                                    // Do nothing; the byte was already decoded
                                     break;
                             }
                         }
