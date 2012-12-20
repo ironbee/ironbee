@@ -219,11 +219,12 @@ struct htp_cfg_t {
     enum htp_unwanted_t path_encoded_separators_unwanted;
 
     /** Should we decode %u-encoded characters? */
-    int path_decode_u_encoding;
+    int path_u_encoding_decode;
 
-    /** How do handle invalid encodings: URL_DECODER_LEAVE_PERCENT,
-     *  URL_DECODER_REMOVE_PERCENT or URL_DECODER_DECODE_INVALID.
-     */
+    /** How are we expected to react to %u encoding in path? */
+    enum htp_unwanted_t path_u_encoding_unwanted;
+
+    /** Handling of invalid URL encodings. */
     enum htp_url_encoding_handling_t path_invalid_encoding_handling;
 
     /** Controls how invalid UTF-8 characters are handled. */

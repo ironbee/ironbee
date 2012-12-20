@@ -343,7 +343,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     cfg->path_backslash_separators = 1;
     cfg->path_encoded_separators_decode = 1;
     cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
 
     str = bstr_util_strdup_to_c(path);
     printf("Before: %s\n", str);
@@ -529,21 +529,21 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_dup_c("/d");
     expected_status = 400;
     expected_flags = HTP_PATH_OVERLONG_U;
-    cfg->path_decode_u_encoding = STATUS_400;
+    cfg->path_u_encoding_decode = STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding (also overlong)");
     input = bstr_dup_c("/%u0064");
     expected = bstr_dup_c("/d");
     expected_flags = HTP_PATH_OVERLONG_U;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid %u decoding, leave; preserve percent");
     input = bstr_dup_c("/%uXXXX---");
     expected = bstr_dup_c("/%uXXXX---");
     expected_flags = HTP_PATH_INVALID_ENCODING;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
@@ -551,7 +551,7 @@ int main_path_tests(int argc, char** argv) {
     input = bstr_dup_c("/%uXXXX---");
     expected = bstr_dup_c("/?---");
     expected_flags = HTP_PATH_INVALID_ENCODING;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PROCESS_INVALID;
     PATH_DECODE_TEST_AFTER();
 
@@ -560,7 +560,7 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_dup_c("/?---");
     expected_flags = HTP_PATH_INVALID_ENCODING;
     expected_status = 400;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     cfg->path_invalid_encoding_handling = HTP_URL_DECODE_STATUS_400;
     PATH_DECODE_TEST_AFTER();
 
@@ -568,7 +568,7 @@ int main_path_tests(int argc, char** argv) {
     input = bstr_dup_c("/%u123");
     expected = bstr_dup_c("/%u123");
     expected_flags = HTP_PATH_INVALID_ENCODING;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
@@ -576,7 +576,7 @@ int main_path_tests(int argc, char** argv) {
     input = bstr_dup_c("/%u12");
     expected = bstr_dup_c("/%u12");
     expected_flags = HTP_PATH_INVALID_ENCODING;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
@@ -584,14 +584,14 @@ int main_path_tests(int argc, char** argv) {
     input = bstr_dup_c("/%u1");
     expected = bstr_dup_c("/%u1");
     expected_flags = HTP_PATH_INVALID_ENCODING;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("%u decoding, best-fit mapping");
     input = bstr_dup_c("/%u0107");
     expected = bstr_dup_c("/c");
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     cfg->path_unicode_mapping = BESTFIT;
     PATH_DECODE_TEST_AFTER();
 
@@ -599,7 +599,7 @@ int main_path_tests(int argc, char** argv) {
     input = bstr_dup_c("/%u0107");
     expected = bstr_dup_c("/c");
     expected_status = 404;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     cfg->path_unicode_mapping = STATUS_404;
     PATH_DECODE_TEST_AFTER();
 
@@ -626,14 +626,14 @@ int main_path_tests(int argc, char** argv) {
     input = bstr_dup_c("/one%u002ftwo");
     expected = bstr_dup_c("/one/two");
     cfg->path_encoded_separators_decode = 1;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Forward slash (%u-encoded, fullwidth), expect to decode");
     input = bstr_dup_c("/one%uff0ftwo");
     expected = bstr_dup_c("/one/two");
     cfg->path_encoded_separators_decode = 1;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Backslash (URL-encoded), not a separator; expect to decode");
@@ -660,7 +660,7 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_dup_c("/one/two");
     cfg->path_encoded_separators_decode = 1;
     cfg->path_backslash_separators = 1;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Backslash (%u-encoded, fullwidth), as path segment separator");
@@ -668,7 +668,7 @@ int main_path_tests(int argc, char** argv) {
     expected = bstr_dup_c("/one/two");
     cfg->path_encoded_separators_decode = 1;
     cfg->path_backslash_separators = 1;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("Invalid UTF-8 encoding, encoded");
@@ -730,14 +730,14 @@ int main_path_tests(int argc, char** argv) {
     input = bstr_dup_c("/test%00text");
     expected = bstr_dup_c("/test");
     cfg->path_nul_encoded_handling = TERMINATE;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (%u-encoded) in path; 400");
     input = bstr_dup_c("/test%00text");
     expected = bstr_dup_mem("/test\0text", 10);
     cfg->path_nul_encoded_handling = STATUS_400;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     expected_status = 400;
     PATH_DECODE_TEST_AFTER();
 
@@ -745,7 +745,7 @@ int main_path_tests(int argc, char** argv) {
     input = bstr_dup_c("/test%00text");
     expected = bstr_dup_mem("/test\0text", 10);
     cfg->path_nul_encoded_handling = STATUS_404;
-    cfg->path_decode_u_encoding = 1;
+    cfg->path_u_encoding_decode = 1;
     expected_status = 404;
     PATH_DECODE_TEST_AFTER();
 
