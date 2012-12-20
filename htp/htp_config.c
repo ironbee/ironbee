@@ -481,9 +481,9 @@ void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, enum htp_nul_encod
     cfg->path_nul_encoded_handling = nul_encoded_handling;
 }
 
-void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, enum htp_nul_raw_handling_t nul_raw_handling) {
+void htp_config_set_path_nul_raw_terminates(htp_cfg_t *cfg, int nul_raw_terminates) {
     if (cfg == NULL) return;
-    cfg->path_nul_raw_handling = nul_raw_handling;
+    cfg->path_nul_raw_terminates = nul_raw_terminates;
 }
 
 void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char) {

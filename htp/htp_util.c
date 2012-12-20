@@ -1215,15 +1215,11 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     tx->response_status_expected_number = cfg->path_nul_raw_unwanted;
                 }
 
-                switch (cfg->path_nul_raw_handling) {
-                    case HTP_PATH_NUL_RAW_DECODE:
-                        // Do nothing; already decoded
-                        break;
-                    case HTP_PATH_NUL_RAW_TERMINATE:
-                        // Terminate path with a raw NUL byte
-                        bstr_adjust_len(path, wpos);
-                        return 1;
-                        break;
+                if (cfg->path_nul_raw_terminates) {
+                    // Terminate path with a raw NUL byte
+                    bstr_adjust_len(path, wpos);
+                    return 1;
+                    break;
                 }
             }
 

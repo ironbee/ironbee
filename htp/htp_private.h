@@ -240,7 +240,7 @@ struct htp_cfg_t {
     enum htp_unwanted_t path_nul_encoded_unwanted;
 
     /** Controls how raw NUL bytes are handled. */
-    enum htp_nul_raw_handling_t path_nul_raw_handling;
+    int path_nul_raw_terminates;
 
     /** TODO */
     enum htp_unwanted_t path_nul_raw_unwanted;

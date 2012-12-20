@@ -694,13 +694,13 @@ int main_path_tests(int argc, char** argv) {
     PATH_DECODE_TEST_BEFORE("NUL byte (raw) in path; terminate path");
     input = bstr_dup_mem("/test\0text", 10);
     expected = bstr_dup_c("/test");
-    cfg->path_nul_raw_handling = TERMINATE;
+    cfg->path_nul_raw_terminates = 1;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (raw) in path; 400");
     input = bstr_dup_mem("/test\0text", 10);
     expected = bstr_dup_mem("/test\0text", 10);
-    cfg->path_nul_raw_handling = STATUS_400;
+    cfg->path_nul_raw_unwanted = HTP_UNWANTED_400;
     PATH_DECODE_TEST_AFTER();
 
     PATH_DECODE_TEST_BEFORE("NUL byte (URL-encoded) in path; leave");

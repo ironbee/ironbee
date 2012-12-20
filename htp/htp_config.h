@@ -393,7 +393,7 @@ void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, enum htp_nul_encod
  * @param[in] cfg
  * @param[in] nul_raw_handling Possible values: TERMINATE, STATUS_400, STATUS_404
  */
-void htp_config_set_path_nul_raw_handling(htp_cfg_t *cfg, enum htp_nul_raw_handling_t nul_raw_handling);
+void htp_config_set_path_nul_raw_terminates(htp_cfg_t *cfg, int nul_raw_terminates);
 
 /**
  * Sets the replacement character that will be used to in the lossy best-fit
