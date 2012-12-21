@@ -2117,7 +2117,9 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
         len += bstr_len(hl->line);
     }
 
-    len += bstr_len(tx->request_headers_sep);
+    if (tx->request_headers_sep != NULL) {
+        len += bstr_len(tx->request_headers_sep);
+    }
 
     request_headers_raw = bstr_alloc(len);
     if (request_headers_raw == NULL) {
@@ -2130,7 +2132,9 @@ bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
         bstr_add_noex(request_headers_raw, hl->line);
     }
 
-    bstr_add_noex(request_headers_raw, tx->request_headers_sep);
+    if (tx->request_headers_sep != NULL) {
+        bstr_add_noex(request_headers_raw, tx->request_headers_sep);
+    }
 
     return request_headers_raw;
 }
