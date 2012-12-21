@@ -70,8 +70,7 @@ ibapi = {}
 local ib_event = {}
 ib_event.new = function(self, event)
     o = { raw = event }
-    setmetatable(o, self)
-    self.__index = self
+    setmetatable(o, { __index = self })
     return o
 end
 -- String mapping table.
@@ -653,12 +652,10 @@ ibapi.new = function(self, ib_rule_exec, ib_engine, ib_tx)
     -- Basic object
     ib_obj = {}
     setmetatable(ib_obj, { __index = self })
-    self.__index = self
 
     -- The private API goes here. Users should not call these functions
     -- directly.
     ib_obj.private = ibapi_private:new(ib_rule_exec, ib_engine, ib_tx)
-
 
     return ib_obj
 end
