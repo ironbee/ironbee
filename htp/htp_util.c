@@ -275,15 +275,15 @@ int htp_parse_chunked_length(unsigned char *data, size_t len) {
 }
 
 /**
- * A forgiving parser for a positive integer in a given base.
+ * A somewhat forgiving parser for a positive integer in a given base.
  * White space is allowed before and after the number.
  * 
  * @param[in] data
  * @param[in] len
  * @param[in] base
- * @return The parsed number, or -1 on error.
+ * @return The parsed number on success; a negative number on error.
  */
-int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base) {
+int64_t htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base) {
     size_t last_pos;
     size_t pos = 0;
 
@@ -291,10 +291,12 @@ int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int b
     while ((pos < len) && (htp_is_lws(data[pos]))) pos++;
     if (pos == len) return -1001;
 
-    int r = bstr_util_mem_to_pint(data + pos, len - pos, base, &last_pos);
+    int64_t r = bstr_util_mem_to_pint(data + pos, len - pos, base, &last_pos);
     if (r < 0) return r;
 
+    // Move after the last digit
     pos += last_pos;
+
     // Ignore LWS after
     while (pos < len) {
         if (!htp_is_lws(data[pos])) {
@@ -438,6 +440,63 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
 }
 
 /**
+ * Parses an authority string, which consists of a hostname with an optional port number. On success,
+ * this function will allocate a new bstring, which the caller will need to manage. If the port
+ * information is not available or if it is invalid, the port variable will contain -1. The flags
+ * variable is not currently used; it's always set to 0.
+ *
+ * @param[in] authority
+ * @param[in,out] hostname
+ * @param[in,out] port
+ * @param[in,out] flags
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_parse_authority(bstr *authority, bstr **hostname, int *port, int *flags) {
+    if ((authority == NULL)||(hostname == NULL)||(port == NULL)||(flags == NULL)) return HTP_ERROR;   
+    
+    *flags = 0; // No errors
+
+    int colon_pos = bstr_chr(authority, ':');
+    if (colon_pos == -1) {        
+        // Hostname alone, no port
+        *hostname = bstr_dup(authority);
+        if (*hostname == NULL) return HTP_ERROR;
+
+        htp_normalize_hostname_inplace(*hostname);
+        // TODO Validate hostname
+        *port = -1; // No port information
+    } else {        
+        // Hostname and port        
+
+        // Hostname
+        *hostname = bstr_dup_ex(authority, 0, colon_pos);
+        if (*hostname == NULL) return HTP_ERROR;       
+
+        htp_normalize_hostname_inplace(*hostname);
+        // TODO Validate hostname       
+
+        // Port
+        int64_t port_parsed = htp_parse_positive_integer_whitespace(
+                bstr_ptr(authority) + colon_pos + 1, bstr_len(authority) - colon_pos - 1, 10);       
+
+        if (port_parsed < 0) {
+            // Failed to parse port
+            *port = -1;
+            // TODO Flag
+        } else if ((port_parsed > 0) && (port_parsed < 65536)) {
+            // Valid port
+            *port = port_parsed;
+        } else {
+            // Port number out of range
+            *port = -1;
+            // TODO Flag
+        }
+    }
+
+    return HTP_OK;
+}
+
+/**
  * Parses request URI, making no attempt to validate the contents.
  *
  * @param[in] connp
@@ -445,7 +504,9 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
  * @param[in] uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
-int htp_parse_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
+int htp_parse_uri_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
+    // TODO Rewrite to use htp_uri_authority (above)
+    
     int colon = bstr_chr(authority, ':');
     if (colon == -1) {
         // Hostname alone; no port
@@ -1506,14 +1567,16 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         htp_normalize_hostname_inplace(normalized->hostname);
     }
 
-    // Port
     if (incomplete->port != NULL) {
-        // Parse provided port
-        normalized->port_number = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(incomplete->port),
-                bstr_len(incomplete->port), 10);
-        // We do not report failed port parsing, but leave
-        // to upstream to detect and act upon it.
-    }
+        normalized->port_number = htp_parse_positive_integer_whitespace(
+                bstr_ptr(incomplete->port), bstr_len(incomplete->port), 10);
+        if (normalized->port_number < 0) {
+            // TODO Flag and report
+
+            // Not available
+            normalized->port_number = -1;
+        }
+    }   
 
     // Path
     if (incomplete->path != NULL) {

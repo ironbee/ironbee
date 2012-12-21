@@ -58,6 +58,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->request_headers = htp_table_create(32);
     tx->request_line_nul_offset = -1;
     tx->parsed_uri = calloc(1, sizeof (htp_uri_t));
+    tx->parsed_uri->port_number = -1;
     tx->parsed_uri_incomplete = calloc(1, sizeof (htp_uri_t));
 
     tx->response_header_lines = htp_list_create(32);
@@ -119,7 +120,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     if (tx->request_headers != NULL) {
         htp_header_t *h = NULL;
         for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
-            htp_table_get_index(tx->request_headers, i, NULL, (void **)&h);
+            htp_table_get_index(tx->request_headers, i, NULL, (void **) &h);
             bstr_free(&h->name);
             bstr_free(&h->value);
             free(h);
@@ -159,7 +160,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     if (tx->response_headers != NULL) {
         htp_header_t *h = NULL;
         for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
-            htp_table_get_index(tx->response_headers, i, NULL, (void **)&h);
+            htp_table_get_index(tx->response_headers, i, NULL, (void **) &h);
             bstr_free(&h->name);
             bstr_free(&h->value);
             free(h);
@@ -191,7 +192,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     if ((tx->request_params_query_reused == 0) && (tx->request_params_query != NULL)) {
         bstr *b = NULL;
         for (int i = 0, n = htp_table_size(tx->request_params_query); i < n; i++) {
-            htp_table_get_index(tx->request_params_query, i, NULL, (void **)&b);
+            htp_table_get_index(tx->request_params_query, i, NULL, (void **) &b);
             bstr_free(&b);
         }
 
@@ -201,7 +202,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     if ((tx->request_params_body_reused == 0) && (tx->request_params_body != NULL)) {
         bstr *b = NULL;
         for (int i = 0, n = htp_table_size(tx->request_params_body); i < n; i++) {
-            htp_table_get_index(tx->request_params_body, i, NULL, (void **)&b);
+            htp_table_get_index(tx->request_params_body, i, NULL, (void **) &b);
             bstr_free(&b);
         }
 
@@ -211,7 +212,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     if (tx->request_cookies != NULL) {
         bstr *b = NULL;
         for (int i = 0, n = htp_table_size(tx->request_cookies); i < n; i++) {
-            htp_table_get_index(tx->request_cookies, i, NULL, (void **)&b);
+            htp_table_get_index(tx->request_cookies, i, NULL, (void **) &b);
             bstr_free(&b);
         }
 
@@ -237,7 +238,7 @@ void *htp_tx_get_user_data(const htp_tx_t *tx) {
 }
 
 void htp_tx_set_config(htp_tx_t *tx, htp_cfg_t *cfg, int is_cfg_shared) {
-    if ((is_cfg_shared != HTP_CONFIG_PRIVATE)&&(is_cfg_shared != HTP_CONFIG_SHARED)) return;
+    if ((is_cfg_shared != HTP_CONFIG_PRIVATE) && (is_cfg_shared != HTP_CONFIG_SHARED)) return;
 
     // If we're using a private configuration, destroy it.
     if (tx->is_config_shared == HTP_CONFIG_PRIVATE) {
@@ -331,9 +332,7 @@ void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9) {
     }
 }
 
-
-
-static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
+static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {   
     // Remember how many header lines there were before trailers
     tx->request_header_lines_no_trailers = htp_list_size(tx->request_header_lines);
 
@@ -428,17 +427,28 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     } else {
         // Host information available in the headers
 
+        bstr *hostname;
+        int port;
+        int flags;              
+
+        if (htp_parse_authority(h->value, &hostname, &port, &flags) != HTP_OK) return HTP_ERROR;
+
         // Is there host information in the URI?
         if (tx->parsed_uri->hostname == NULL) {
             // There is no host information in the URI. Place the
             // hostname from the headers into the parsed_uri structure.
-            htp_replace_hostname(tx->connp, tx->parsed_uri, h->value);
-        } else if (bstr_cmp_nocase(h->value, tx->parsed_uri->hostname) != 0) {
-            // The host information is different in the
-            // headers and the URI. The HTTP RFC states that
-            // we should ignore the headers copy.
-            tx->flags |= HTP_AMBIGUOUS_HOST;
-            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information ambiguous");
+            tx->parsed_uri->hostname = hostname;
+            tx->parsed_uri->port_number = port;
+        } else {            
+            if ((bstr_cmp_nocase(hostname, tx->parsed_uri->hostname) != 0) || (port != tx->parsed_uri->port_number)) {
+                // The host information is different in the
+                // headers and the URI. The HTTP RFC states that
+                // we should ignore the header copy.
+                tx->flags |= HTP_AMBIGUOUS_HOST;
+                htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information ambiguous");
+            }
+            
+            bstr_free(&hostname);
         }
     }
 
@@ -505,7 +515,7 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx) {
 
     htp_header_t *h = NULL;
     for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
-        htp_table_get_index(tx->request_headers, i, NULL, (void **)&h);
+        htp_table_get_index(tx->request_headers, i, NULL, (void **) &h);
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
@@ -609,7 +619,7 @@ htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx) {
 
     htp_header_t *h = NULL;
     for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
-        htp_table_get_index(tx->response_headers, i, NULL, (void **)&h);
+        htp_table_get_index(tx->response_headers, i, NULL, (void **) &h);
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
@@ -710,7 +720,7 @@ htp_status_t htp_tx_state_request_start(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
+htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {        
     // Did this request arrive in multiple chunks?
     if (tx->connp->in_chunk_count != tx->connp->in_chunk_request_index) {
         tx->flags |= HTP_MULTI_PACKET_HEAD;
@@ -741,12 +751,12 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
+htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {        
     htp_connp_t *connp = tx->connp;
 
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
         // Parse authority
-        if (htp_parse_authority(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
+        if (htp_parse_uri_authority(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
             // Note: downstream responsible for error logging
             return HTP_ERROR;
         }
@@ -763,7 +773,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
             // Note: downstream responsible for error logging
             return HTP_ERROR;
         }
-
+        
         // Run hook REQUEST_URI_NORMALIZE
         int rc = htp_hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
         if (rc != HTP_OK) return rc;
@@ -801,6 +811,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
         }
 
         // Port
+        /*
         if (connp->in_tx->parsed_uri->port != NULL) {
             if (connp->in_tx->parsed_uri->port_number != -1) {
                 // Check that the port in the URI is the same
@@ -832,6 +843,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
                 connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
             }
         }
+        */
 
         // Path
         if (connp->in_tx->parsed_uri->path == NULL) {
@@ -898,7 +910,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
     // 3. Decompression is disabled and we do not attempt to enable it, but the user
     //    forces decompression by setting response_content_encoding to one of the
     //    supported algorithms.
-    if ((tx->response_content_encoding == COMPRESSION_GZIP)||(tx->response_content_encoding == COMPRESSION_DEFLATE)) {
+    if ((tx->response_content_encoding == COMPRESSION_GZIP) || (tx->response_content_encoding == COMPRESSION_DEFLATE)) {
         if (tx->connp->out_decompressor != NULL) {
             tx->connp->out_decompressor->destroy(tx->connp->out_decompressor);
             tx->connp->out_decompressor = NULL;

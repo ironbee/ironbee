@@ -443,7 +443,8 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t
 int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t len);
 
 int htp_parse_uri(bstr *input, htp_uri_t **uri);
-int htp_parse_authority(htp_connp_t *connp, bstr *input, htp_uri_t **uri);
+htp_status_t htp_parse_authority(bstr *authority, bstr **hostname, int *port, int *flags);
+int htp_parse_uri_authority(htp_connp_t *connp, bstr *input, htp_uri_t **uri);
 int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *parsed_uri_incomplete, htp_uri_t *parsed_uri);
 bstr *htp_normalize_hostname_inplace(bstr *input);
 void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostname);
@@ -461,7 +462,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path);
 
 int htp_parse_content_length(bstr *b);
 int htp_parse_chunked_length(unsigned char *data, size_t len);
-int htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base);
+int64_t htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base);
 int htp_parse_status(bstr *status);
 int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header);
 int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header);

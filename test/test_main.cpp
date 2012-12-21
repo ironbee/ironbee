@@ -448,7 +448,7 @@ TEST_F(ConnectionParsing, AmbiguousHost) {
     int rc = test_run(home, "20-ambiguous-host.t", cfg, &connp);
     ASSERT_GE(rc, 0);
     
-    ASSERT_EQ(htp_list_size(connp->conn->transactions), 2);
+    ASSERT_EQ(htp_list_size(connp->conn->transactions), 4);
     
     htp_tx_t *tx1 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx1 != NULL);
@@ -459,6 +459,16 @@ TEST_F(ConnectionParsing, AmbiguousHost) {
     ASSERT_TRUE(tx2 != NULL);
     ASSERT_TRUE(tx2->progress == HTP_RESPONSE_COMPLETE);
     ASSERT_TRUE(tx2->flags & HTP_AMBIGUOUS_HOST);
+
+    htp_tx_t *tx3 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 2);
+    ASSERT_TRUE(tx3 != NULL);
+    ASSERT_TRUE(tx3->progress == HTP_RESPONSE_COMPLETE);
+    ASSERT_FALSE(tx3->flags & HTP_AMBIGUOUS_HOST);
+
+    htp_tx_t *tx4 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 3);
+    ASSERT_TRUE(tx4 != NULL);
+    ASSERT_TRUE(tx4->progress == HTP_RESPONSE_COMPLETE);
+    ASSERT_TRUE(tx4->flags & HTP_AMBIGUOUS_HOST);
 }
 
 TEST_F(ConnectionParsing, Http_0_9) {
@@ -470,8 +480,4 @@ TEST_F(ConnectionParsing, Http_0_9) {
     htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 }
-
-
-
-
 
