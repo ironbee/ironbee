@@ -144,13 +144,16 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
     /* Build an ironbee object. */
     lua_getglobal(L, "ibapi");/* Push ib table (module) onto stack. */
     lua_pushstring(L, "ib");  /* Push the key we will store the result at. */
+    lua_pushstring(L, "ruleapi"); /* Push ruleapi. This is the sub-api. */
+    lua_gettable(L, -3);      /* Get ruleapi table out of ibapi. */
     lua_pushstring(L, "new"); /* Push the name of the function. */
-    lua_gettable(L, -3);      /* Get the ib.new function. */
-    lua_getglobal(L, "ibapi");/* Push ib table (module) onto stack for self. */
+    lua_gettable(L, -2);      /* Get the ruleapi.new function. */
+    lua_pushstring(L, "ruleapi"); /* Get ruleapi for self. */
+    lua_gettable(L, -4);      /* Get ruleapi table from ibapi table. */
     lua_pushlightuserdata(L, (ib_rule_exec_t *)ib_rule_exec);
     lua_pushlightuserdata(L, ib); /* Push ib_engine argument to new. */
     lua_pushlightuserdata(L, tx); /* Push ib_tx argument to new. */
-    lua_rc = lua_pcall(L, 4, 1, 0); /* Make new ib api object. */
+    lua_rc = lua_pcall(L, 4, 1, 0); /* Make new ibapi.ruleapi object. */
 
     if (lua_rc != 0) {
         ib_log_error_tx(tx,
@@ -163,16 +166,17 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
     /* At this point the stack is:
      *  |  rule function  |
      *  | anonymous table |
-     *  | ib module table |
+     *  | ib api table    |
      *  |   "ib" string   |
+     *  | ruleapi table   |
      *  |   new ib obj    |
-     * Set the table at -4 the key "ib" = the new ib api object.
+     * Set the table at -5 the key "ib" = the new ib api object.
      */
-    lua_settable(L, -4);
+    lua_settable(L, -5);
 
     /* Pop the ib module table off the stack leaving just the
      * user rule function and the anonymous table we are building. */
-    lua_pop(L, 1);
+    lua_pop(L, 2);
 
     ib_log_debug_tx(tx, "Executing user rule %s", func_name);
 

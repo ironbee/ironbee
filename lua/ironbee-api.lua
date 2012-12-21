@@ -703,8 +703,8 @@ setmetatable(ibapi.ruleapi, ibapi)
 
 ibapi.ruleapi.new = function(self, ib_rule_exec, ib_engine, ib_tx)
     o = {}
-    setmetatable(o, self)
-    ib_obj.private = ibapi_private:new(ib_rule_exec, ib_engine, ib_tx)
+    setmetatable(o, {__index = self})
+    o.private = ibapi_private:new(ib_rule_exec, ib_engine, ib_tx)
     return o
 end
 -- ###########################################################################
