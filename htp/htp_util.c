@@ -740,8 +740,7 @@ static uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
         }
 
         if (x == codepoint) {
-            return p[2];
-            break;
+            return p[2];            
         }
 
         // Move to the next triplet
