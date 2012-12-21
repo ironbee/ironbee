@@ -598,6 +598,43 @@ ibapi.forEachEvent = function(self, func)
         "ib_logevent_t*")
 end
 
+-- Returns next function, table, and nil.
+ibapi.events = function(self)
+    local nextFn = function(t, idx)
+
+        -- Iterate
+        if idx == nil then
+            local list = ffi.new("ib_list_t*[1]")
+            ffi.C.ib_event_get_all(self.private.ib_tx.epi, list)
+
+            if (list[0] == nil) then
+                return nil, nil
+            end
+
+            t.i = 0
+            t.node = ffi.cast("ib_list_node_t*", ffi.C.ib_list_first(list[0]))
+        else
+            t.i = idx + 1
+            t.node = ffi.C.ib_list_node_next(t.node)
+        end
+
+        -- End of list.
+        if t.node == nil then
+            return nil, nil
+        end
+
+        -- Get event and convert it to lua.
+        local event = 
+            ib_event:new(ffi.cast("ib_logevent_t*",
+                ffi.C.ib_list_node_data(t.node)))
+
+        -- Return.
+        return t.i, event
+    end
+
+    return nextFn, {}, nil
+end
+
 -- Append a value to the end of the name list. This may be a string
 -- or a number. This is used by ib_obj.add to append to a list.
 ibapi.appendToList = function(self, listName, fieldName, fieldValue)
@@ -644,7 +681,6 @@ ibapi.appendToList = function(self, listName, fieldName, fieldValue)
     ffi.C.ib_field_list_add(list, field[0])
 end
 
-
 -- Create an new ironbee object using the given engine and transaction.
 ibapi.new = function(self, ib_rule_exec, ib_engine, ib_tx)
     -- Basic object
@@ -658,5 +694,19 @@ ibapi.new = function(self, ib_rule_exec, ib_engine, ib_tx)
     return ib_obj
 end
 
+-- ###########################################################################
+-- # Define ibapi.ruleapi.
+-- ###########################################################################
+-- Define ruleapi object and have it inherit from ibapi.
+ibapi.ruleapi = {}
+setmetatable(ibapi.ruleapi, ibapi)
+
+ibapi.ruleapi.new = function(self, ib_rule_exec, ib_engine, ib_tx)
+    o = {}
+    setmetatable(o, self)
+    ib_obj.private = ibapi_private:new(ib_rule_exec, ib_engine, ib_tx)
+    return o
+end
+-- ###########################################################################
 
 return ibapi
