@@ -31,6 +31,21 @@
 
 /* -- Audit Provider -- */
 
+/**
+ * AuditLog format version number.
+ *
+ * This number must be incremented each time the format changes.
+ *
+ * Format is a decimal number based on date the format changed: @e YYYYMMDDn
+ * - @e YYYY: 4-digit year
+ * - @e   MM: 2-digit month
+ * - @e   DD: 2-digit day
+ * - @e    n: Revision number if changes more than once in a day (default=0)
+ *
+ * @note: Update ironbeepp/abi_compatibility to match
+ */
+#define IB_AUDITLOG_VERSION 201212210
+
 /* Forward define this structure. */
 typedef struct core_audit_cfg_t core_audit_cfg_t;
 

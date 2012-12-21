@@ -315,7 +315,6 @@ function onEventHandleRequestHeaders(ib, tx)
                     "-",
                     IB_LEVENT_TYPE_OBSERVATION,
                     IB_LEVENT_ACTION_BLOCK,
-                    IB_LEVENT_ACTION_IGNORE,
                     90, 80,
                     "[TEST Event] Request Line matches: %s", patt
                 )

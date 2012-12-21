@@ -383,7 +383,6 @@ ffi.cdef [[
         uint32_t                 event_id;
         ib_logevent_type_t       type;
         ib_logevent_action_t     rec_action;
-        ib_logevent_action_t     action;
         ib_logevent_suppress_t   suppress;
         void                    *data;
         size_t                   data_len;
@@ -731,7 +730,6 @@ typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
                                    const char *rule_id,
                                    ib_logevent_type_t type,
                                    ib_logevent_action_t rec_action,
-                                   ib_logevent_action_t action,
                                    uint8_t confidence,
                                    uint8_t severity,
                                    const char *fmt,
@@ -1365,7 +1363,7 @@ end
 -- TODO: Make this accept a table (named parameters)???
 function ib_logevent_create(pool, rule_id, type, activity,
                             pri_class, sec_class,
-                            sys_env, rec_action, action,
+                            sys_env, rec_action,
                             confidence, severity,
                             fmt, ...)
     local c_pool = pool.cvalue()
@@ -1380,7 +1378,6 @@ function ib_logevent_create(pool, rule_id, type, activity,
                               ffi.cast("int", sec_class),
                               ffi.cast("int", sys_env),
                               ffi.cast("int", rec_action),
-                              ffi.cast("int", action),
                               ffi.cast("uint8_t", confidence),
                               ffi.cast("uint8_t", severity),
                               fmt, ...)

@@ -474,10 +474,12 @@ ib_status_t core_audit_write_header(ib_provider_inst_t *lpi,
     int ret = snprintf(header, sizeof(header),
                        "MIME-Version: 1.0\r\n"
                        "Content-Type: multipart/mixed; boundary=%s\r\n"
+                       "X-IronBee-AuditLog: type=multipart; version=%d\r\n"
                        "\r\n"
                        "This is a multi-part message in MIME format.\r\n"
                        "\r\n",
-                       cfg->boundary);
+                       cfg->boundary,
+                       IB_AUDITLOG_VERSION);
     if ((size_t)ret >= sizeof(header)) {
         /* Did not fit in buffer.  Since this is currently a more-or-less
          * fixed size, we abort here as this is a programming error.
