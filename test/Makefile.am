@@ -2,10 +2,8 @@ LDADD = $(top_builddir)/htp/.libs/libhtp.a -lz @LIBICONV@
 AM_CFLAGS = -g -O2 -std=gnu99
 AM_CPPFLAGS = -I$(top_srcdir)
 EXTRA_DIST = files
-check_PROGRAMS = main test_bstr test_main test_utils test_hybrid
+check_PROGRAMS = test_bstr test_main test_utils test_hybrid
 check_LIBRARIES = libgtest.a
-
-main_SOURCES = main.c test.c test.h test-tcpick.c
 
 test_bstr_SOURCES = test_bstr.cpp
 test_bstr_LDADD = libgtest.a -lpthread $(LDADD)
