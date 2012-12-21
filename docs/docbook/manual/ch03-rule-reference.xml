@@ -828,6 +828,14 @@
                 syntax.</para>
         </section>
         <section>
+            <title>ee_match_any</title>
+            <para><emphasis role="bold">Description:</emphasis> Returns true if the target matches any value in the named eudoxus automata.</para>
+            <para><emphasis role="bold">Types:</emphasis> String</para>
+            <para><emphasis role="bold">Module:</emphasis> ee</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
+            <para>The named eudoxus automata must first be laoded with the <literal>LoadEudoxus</literal> directive</para>
+        </section>
+        <section>
             <title>eq</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
                 numerically equal to the given value.</para>
