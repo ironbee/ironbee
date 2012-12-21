@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<chapter version="5.0" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:html="http://www.w3.org/1999/xhtml" xml:id="installation">
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
+    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
+    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
+    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="installation-guide">
     <title>Installation Guide</title>
     <para>...<note>
             <para>This chapter is very much out-of-date and needs to be updated.</para>
@@ -49,7 +52,7 @@
                 <td>http://www.apple.com/</td>
             </tr>
         </table>
-    </section>        
+    </section>
     <section>
         <title>General Dependencies</title>
         <para>...</para>
@@ -95,7 +98,6 @@
                 <td>http://git-scm.com/</td>
             </tr>
         </table>
-        
         <table border="1" width="100%">
             <caption>Libraries for IronBee</caption>
             <tr>
@@ -183,7 +185,6 @@
                 <td>https://code.google.com/p/stringencoders/</td>
             </tr>
         </table>
-        
         <table border="1" width="100%">
             <caption>Server</caption>
             <tr>
@@ -198,7 +199,7 @@
                 <td>Apache foundation's Traffic Server.</td>
                 <td>http://trafficserver.apache.org/</td>
             </tr>
-        </table>       
+        </table>
     </section>
     <section>
         <title>Building, Testing and Installing IronBee</title>
@@ -214,13 +215,13 @@ cd ironbee
         </section>
         <section>
             <title>Build and Install IronBee</title>
-        <programlisting># Configure the build for the current platform
+            <programlisting># Configure the build for the current platform
 ./configure 
 
 # Build and Install
 make
 sudo make install</programlisting>
-            </section>
+        </section>
         <section>
             <title>Build C++ Wrapper and Utilities (Optional)</title>
             <para>...</para>
@@ -231,20 +232,20 @@ sudo make install</programlisting>
 make
 sudo make install</programlisting>
         </section>
-    <section>
-        <title>Build and Run Unit Tests(Optional)</title>
-        <para>...</para>
-        <programlisting>make check</programlisting>
+        <section>
+            <title>Build and Run Unit Tests(Optional)</title>
+            <para>...</para>
+            <programlisting>make check</programlisting>
+        </section>
+        <section>
+            <title>Build Doxygen Documents(Optional)</title>
+            <para>...</para>
+            <programlisting>make doxygen</programlisting>
+        </section>
+        <section>
+            <title>Build Docbook Manual(Optional)</title>
+            <para>...</para>
+            <programlisting>make manual</programlisting>
+        </section>
     </section>
-    <section>
-        <title>Build Doxygen Documents(Optional)</title>
-        <para>...</para>
-        <programlisting>make doxygen</programlisting>
-    </section>
-    <section>
-        <title>Build Docbook Manual(Optional)</title>
-        <para>...</para>
-        <programlisting>make manual</programlisting>
-    </section>
-        </section>   
 </chapter>
