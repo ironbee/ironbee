@@ -61,6 +61,8 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
             return HTP_OK;
         }
     }
+
+    return HTP_ERROR;
 }
 
 /**
@@ -97,6 +99,8 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
             }
         }
     }
+
+    return HTP_ERROR;
 }
 
 /**
@@ -140,6 +144,8 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             return HTP_OK;
         }
     }
+
+    return HTP_ERROR;
 }
 
 /**
@@ -204,6 +210,8 @@ htp_status_t htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
             }
         }
     }
+
+    return HTP_ERROR;
 }
 
 /**
@@ -497,6 +505,8 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t * connp) {
             connp->out_header_line_counter++;
         }
     }
+
+    return HTP_ERROR;
 }
 
 /**
@@ -593,6 +603,8 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t * connp) {
             return HTP_OK;
         }
     }
+
+    return HTP_ERROR;
 }
 
 size_t htp_connp_res_data_consumed(htp_connp_t * connp) {
@@ -819,4 +831,6 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
             return HTP_STREAM_ERROR;
         }
     }
+
+    return HTP_STREAM_ERROR;
 }
