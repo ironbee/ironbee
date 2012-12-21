@@ -126,7 +126,7 @@ const char *ib_logevent_type_str[] = {
 static const char *ib_logevent_action_str[] = {
     "Unknown",
     "Log",
-    "Blocked",
+    "Block",
     "Ignore",
     "Allow",
     NULL
@@ -153,7 +153,6 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
                                           const char *rule_id,
                                           ib_logevent_type_t type,
                                           ib_logevent_action_t rec_action,
-                                          ib_logevent_action_t action,
                                           uint8_t confidence,
                                           uint8_t severity,
                                           const char *fmt,
@@ -182,7 +181,6 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
     (*ple)->rule_id = ib_mpool_strdup(pool, rule_id);
     (*ple)->type = type;
     (*ple)->rec_action = rec_action;
-    (*ple)->action = action;
     (*ple)->confidence = confidence;
     (*ple)->severity = severity;
     (*ple)->suppress = IB_LEVENT_SUPPRESS_NONE;

@@ -1213,7 +1213,7 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
             rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
                             "  \"%" IB_BYTESTR_FMT "\": \"%s\"%s\r\n",
                             IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
-                            ns,
+                            (ns?ns:""),
                             comma);
             break;
         }
@@ -1250,11 +1250,62 @@ static size_t ib_auditlog_gen_json_flist(ib_auditlog_part_t *part,
             break;
         }
         case IB_FTYPE_LIST:
+        /* Iterate over field values, adding the NULSTR values to the json list. */
+        {
+            const ib_list_t* flist;
+            ib_list_t *list;
+            const ib_list_node_t *node;
+            char list_data[128] = "";
+
+            rc = ib_list_create(&list, part->log->mp);
+            if (rc != IB_OK) {
+                goto listerror;
+            }
+
+            rc = ib_field_value(f, ib_ftype_list_out(&flist));
+            if (rc != IB_OK) {
+                goto listerror;
+            }
+
+            IB_LIST_LOOP_CONST(flist, node) {
+                const char *val = NULL;
+                const ib_field_t *field =
+                    (const ib_field_t *)ib_list_node_data_const(node);
+
+                /* NOTE: This currently only works for NULSTR fields. */
+                if ((field == NULL) || (field->type != IB_FTYPE_NULSTR)) {
+                    goto listerror;
+                }
+
+                rc = ib_field_value(field, ib_ftype_nulstr_out(&val));
+                if (rc != IB_OK) {
+                    goto listerror;
+                }
+
+                ib_list_push(list, (void *)val);
+            }
+
+            rc = ib_strlist_escape_json_buf(list, true, ", ",
+                                            list_data, sizeof(list_data),
+                                            NULL, NULL);
+            if (rc != IB_OK) {
+                goto listerror;
+            }
+
             rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
-                            "  \"%" IB_BYTESTR_FMT "\": [ \"TODO: Handle lists in json conversion\" ]%s\r\n",
+                            "  \"%" IB_BYTESTR_FMT "\": [%s]%s\r\n",
+                            IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
+                            list_data, comma);
+            break;
+
+listerror:
+            ib_log_notice(part->log->ib, "Failed to generate JSON list.");
+            rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
+                            "  \"%" IB_BYTESTR_FMT "\": []%s\r\n",
                             IB_BYTESTRSL_FMT_PARAM(f->name, f->nlen),
                             comma);
             break;
+        }
         default:
             rlen = snprintf((char *)rec, CORE_JSON_MAX_FIELD_LEN,
                             "  \"%" IB_BYTESTR_FMT "\": \"-\"%s\r\n",
@@ -1560,7 +1611,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         "      \"rule-id\": %s,\r\n"
                         "      \"type\": \"%s\",\r\n"
                         "      \"rec-action\": \"%s\",\r\n"
-                        "      \"action\": \"%s\",\r\n"
                         "      \"confidence\": %u,\r\n"
                         "      \"severity\": %u,\r\n"
                         "      \"tags\": [%s],\r\n"
@@ -1573,7 +1623,6 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         ruleid,
                         ib_logevent_type_name(e->type),
                         ib_logevent_action_name(e->rec_action),
-                        ib_logevent_action_name(e->action),
                         e->confidence,
                         e->severity,
                         tags,
@@ -1627,11 +1676,12 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_engine_t *ib = log->ib;
     ib_tx_t *tx = log->tx;
+    ib_num_t tx_num = tx ? tx->conn->tx_count : 0;
     const ib_site_t *site;
     ib_mpool_t *pool = log->mp;
     ib_field_t *f;
     ib_list_t *list;
-    ib_num_t txtime = 0;
+    ib_num_t tx_time = 0;
     char *tstamp;
     char *log_format;
     ib_status_t rc;
@@ -1648,28 +1698,28 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
      * Transaction time depends on where processing stopped.
      */
     if (tx->t.response_finished > tx->t.request_started) {
-        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.response_finished - tx->t.request_started);
+        tx_time = IB_CLOCK_USEC_TO_MSEC(tx->t.response_finished - tx->t.request_started);
     }
     else if (tx->t.response_body > tx->t.request_started) {
-        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.response_body - tx->t.request_started);
+        tx_time = IB_CLOCK_USEC_TO_MSEC(tx->t.response_body - tx->t.request_started);
     }
     else if (tx->t.response_header > tx->t.request_started) {
-        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.response_header - tx->t.request_started);
+        tx_time = IB_CLOCK_USEC_TO_MSEC(tx->t.response_header - tx->t.request_started);
     }
     else if (tx->t.response_started > tx->t.request_started) {
-        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.response_started - tx->t.request_started);
+        tx_time = IB_CLOCK_USEC_TO_MSEC(tx->t.response_started - tx->t.request_started);
     }
     else if (tx->t.request_finished > tx->t.request_started) {
-        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.request_finished - tx->t.request_started);
+        tx_time = IB_CLOCK_USEC_TO_MSEC(tx->t.request_finished - tx->t.request_started);
     }
     else if (tx->t.request_body > tx->t.request_started) {
-        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.request_body - tx->t.request_started);
+        tx_time = IB_CLOCK_USEC_TO_MSEC(tx->t.request_body - tx->t.request_started);
     }
     else if (tx->t.request_header > tx->t.request_started) {
-        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.request_header - tx->t.request_started);
+        tx_time = IB_CLOCK_USEC_TO_MSEC(tx->t.request_header - tx->t.request_started);
     }
     else if (tx->t.request_started > tx->t.started) {
-        txtime = IB_CLOCK_USEC_TO_MSEC(tx->t.request_started - tx->t.started);
+        tx_time = IB_CLOCK_USEC_TO_MSEC(tx->t.request_started - tx->t.started);
     }
 
 
@@ -1686,10 +1736,135 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
     }
 
     ib_field_create(&f, pool,
+                    IB_FIELD_NAME("tx-num"),
+                    IB_FTYPE_NUM,
+                    ib_ftype_num_in(&tx_num));
+    ib_list_push(list, f);
+
+    ib_field_create(&f, pool,
                     IB_FIELD_NAME("tx-time"),
                     IB_FTYPE_NUM,
-                    ib_ftype_num_in(&txtime));
+                    ib_ftype_num_in(&tx_time));
     ib_list_push(list, f);
+
+    if (tx != NULL) {
+        ib_list_t *events;
+
+        ib_field_create_bytestr_alias(&f, pool,
+                                      IB_FIELD_NAME("tx-id"),
+                                      (uint8_t *)tx->id,
+                                      strlen(tx->id));
+        ib_list_push(list, f);
+
+        /* Add all unsupressed alert event tags as well
+         * as the last alert message and action. */
+        rc = ib_event_get_all(tx->epi, &events);
+        if (rc == IB_OK) {
+            ib_list_node_t *enode;
+            ib_field_t *tx_action;
+            ib_field_t *tx_msg;
+            ib_field_t *tx_tags;
+            ib_field_t *tx_threat_level;
+            ib_num_t threat_level = 0;
+            int num_events = 0;
+
+            ib_field_create(&tx_action, pool,
+                            IB_FIELD_NAME("tx-action"),
+                            IB_FTYPE_NULSTR,
+                            NULL);
+
+            ib_field_create(&tx_msg, pool,
+                            IB_FIELD_NAME("tx-msg"),
+                            IB_FTYPE_NULSTR,
+                            NULL);
+
+            ib_field_create(&tx_threat_level, pool,
+                            IB_FIELD_NAME("tx-threatlevel"),
+                            IB_FTYPE_NUM,
+                            NULL);
+
+            ib_field_create(&tx_tags, pool,
+                            IB_FIELD_NAME("tx-tags"),
+                            IB_FTYPE_LIST,
+                            NULL);
+
+            /* It is more important to write out what is possible
+             * than to fail here. So, some error codes are ignored.
+             *
+             * TODO: Simplify buy not using collections
+             */
+            IB_LIST_LOOP(events, enode) {
+                ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(enode);
+                ib_list_node_t *tnode;
+
+                /* Only unsuppressed. */
+                if (   (e == NULL)
+                    || (e->suppress != IB_LEVENT_SUPPRESS_NONE))
+                {
+                    continue;
+                }
+
+                /* The threat_level is severity scaled by confidance where
+                 * severity ranges 0-100 and confidance ranges 0-100:
+                 *   - severity is just a number to scale
+                 *   - confidance is the scaling factor
+                 *     0: Not used
+                 *     <50: scale down
+                 *     50: balanced
+                 *     >50: scale up
+                 *   - threat_level is scaled severity fit to 0-100 range
+                 *
+                 *   threat_level =
+                 *     severity * (confidence * scale_factor) / 100
+                 *
+                 * TODO: Make this calculation a module.
+                 */
+#define IB_THREAT_LEVEL_SCALE_FACTOR 4
+                assert(IB_THREAT_LEVEL_SCALE_FACTOR > 0);
+                if (e->severity > 0) {
+                    threat_level += e->severity * (
+                                      (e->confidence == 0 ? 1 : e->confidence) *
+                                      IB_THREAT_LEVEL_SCALE_FACTOR
+                                    );
+                    ++num_events;
+                }
+
+                /* Only alerts. */
+                if (e->type != IB_LEVENT_TYPE_ALERT) {
+                    continue;
+                }
+
+                ib_field_setv(tx_msg, ib_ftype_nulstr_in(e->msg));
+                ib_field_setv(tx_action, ib_ftype_nulstr_in(
+                    ib_logevent_action_name(e->rec_action))
+                );
+
+                IB_LIST_LOOP(e->tags, tnode) {
+                    char *tag = (char *)ib_list_node_data(tnode);
+
+                    if (tag != NULL) {
+                        ib_field_create(&f, pool,
+                                        IB_FIELD_NAME("tag"),
+                                        IB_FTYPE_NULSTR,
+                                        ib_ftype_nulstr_in(tag));
+                        ib_field_list_add(tx_tags, f);
+                    }
+                }
+            }
+
+            /* Use the average threat level scaled to 1-100. */
+            if (num_events > 0) {
+                threat_level /= num_events;
+                threat_level /= 100 * IB_THREAT_LEVEL_SCALE_FACTOR;
+            }
+            ib_field_setv(tx_threat_level, ib_ftype_num_in(&threat_level));
+
+            ib_list_push(list, tx_action);
+            ib_list_push(list, tx_msg);
+            ib_list_push(list, tx_tags);
+            ib_list_push(list, tx_threat_level);
+        }
+    }
 
     ib_field_create_bytestr_alias(&f, pool,
                                   IB_FIELD_NAME("log-timestamp"),
@@ -1697,6 +1872,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                                   strlen(tstamp));
     ib_list_push(list, f);
 
+    /* TODO: This probably will be removed in the near future. */
     ib_field_create_bytestr_alias(&f, pool,
                                   IB_FIELD_NAME("log-format"),
                                   (uint8_t *)log_format,
@@ -1787,7 +1963,6 @@ static ib_status_t ib_auditlog_add_part_events(ib_auditlog_t *log)
 static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
 {
     ib_tx_t *tx = log->tx;
-    ib_num_t tx_num = tx ? tx->conn->tx_count : 0;
     ib_mpool_t *pool = log->mp;
     ib_field_t *f;
     ib_list_t *list;
@@ -1799,12 +1974,6 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
     if (rc != IB_OK) {
         return rc;
     }
-
-    ib_field_create(&f, pool,
-                    IB_FIELD_NAME("tx-num"),
-                    IB_FTYPE_NUM,
-                    ib_ftype_num_in(&tx_num));
-    ib_list_push(list, f);
 
     if (tx != NULL) {
         ib_num_t num;
@@ -1821,12 +1990,6 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                                       IB_FIELD_NAME("request-timestamp"),
                                       (uint8_t *)tstamp,
                                       strlen(tstamp));
-        ib_list_push(list, f);
-
-        ib_field_create_bytestr_alias(&f, pool,
-                                      IB_FIELD_NAME("tx-id"),
-                                      (uint8_t *)tx->id,
-                                      strlen(tx->id));
         ib_list_push(list, f);
 
         ib_field_create_bytestr_alias(&f, pool,

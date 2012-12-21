@@ -84,7 +84,7 @@ IronBee v0.6.0
 
 * Directory creation (`ib_util_mkpath`) rewritten.
 
-**Rules and Configuration**
+**Rules, Configuration and Logging**
 
 * Enhanced rule engine diagnostics logging (`RuleEngineLogData`,
   `RuleEngineLogLevel`).
@@ -114,6 +114,9 @@ IronBee v0.6.0
 * `AuditLogFileMode` now works.
 
 * Default of `AuditEngine` is now `RelevantOnly`.
+
+* Cleaned up audit log format, removing event level action and adding
+  transaction level action, message, tags and threat level.
 
 **Lua**
 

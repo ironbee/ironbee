@@ -1298,7 +1298,7 @@ static void log_events(
                           "EVENT %s %s %s [%u/%u] [%s] \"%s\"",
                           event->rule_id,
                           ib_logevent_type_name(event->type),
-                          ib_logevent_action_name(event->action),
+                          ib_logevent_action_name(event->rec_action),
                           event->confidence, event->severity,
                           tags, event->msg);
         }

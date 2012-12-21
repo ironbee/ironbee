@@ -529,7 +529,6 @@ static ib_status_t act_event_execute(
         ib_rule_id(rule),
         event_data->event_type,
         IB_LEVENT_ACTION_UNKNOWN,
-        IB_LEVENT_ACTION_UNKNOWN,
         rule->meta.confidence,
         rule->meta.severity,
         expanded
@@ -596,9 +595,6 @@ static ib_status_t act_event_execute(
                            IB_TX_BLOCK_IMMEDIATE)) )
     {
         event->rec_action = IB_LEVENT_ACTION_BLOCK;
-    }
-    if (ib_tx_flags_isset(tx, (IB_TX_BLOCK_PHASE | IB_TX_BLOCK_IMMEDIATE)) ) {
-        event->action = IB_LEVENT_ACTION_BLOCK;
     }
 
     /* Log the event. */
@@ -1360,7 +1356,6 @@ static ib_status_t act_block_phase_execute(
     rc = get_event(rule_exec, &event);
     if (rc == IB_OK) {
         event->rec_action = IB_LEVENT_ACTION_BLOCK;
-        event->action = IB_LEVENT_ACTION_BLOCK;
     }
     else if (rc != IB_ENOENT) {
         ib_rule_log_error(rule_exec,
@@ -1396,7 +1391,6 @@ static ib_status_t act_block_immediate_execute(
     rc = get_event(rule_exec, &event);
     if (rc == IB_OK) {
         event->rec_action = IB_LEVENT_ACTION_BLOCK;
-        event->action = IB_LEVENT_ACTION_BLOCK;
     }
     else if (rc != IB_ENOENT) {
         ib_rule_log_error(rule_exec,

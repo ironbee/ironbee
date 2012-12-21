@@ -2265,7 +2265,6 @@ struct ib_logevent_t {
     uint32_t                 event_id;   /**< Event ID */
     ib_logevent_type_t       type;       /**< Event type */
     ib_logevent_action_t     rec_action; /**< Recommended action */
-    ib_logevent_action_t     action;     /**< Action taken */
     ib_logevent_suppress_t   suppress;   /**< Suppress this event. */
     const void              *data;       /**< Event data */
     size_t                   data_len;   /**< Event data size */
@@ -2281,7 +2280,6 @@ struct ib_logevent_t {
  * @param[in]  rule_id Rule ID string
  * @param[in]  type Event type
  * @param[in]  rec_action Event recommended action
- * @param[in]  action Event action taken
  * @param[in]  confidence Event confidence
  * @param[in]  severity Event severity
  * @param[in]  fmt Event message format string
@@ -2293,7 +2291,6 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
                                           const char *rule_id,
                                           ib_logevent_type_t type,
                                           ib_logevent_action_t rec_action,
-                                          ib_logevent_action_t action,
                                           uint8_t confidence,
                                           uint8_t severity,
                                           const char *fmt,

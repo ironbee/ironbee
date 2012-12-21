@@ -187,7 +187,6 @@ ibapi.addEvent = function(self, msg, options)
 
     -- Map options
     local rec_action      = ibapi.actionMap[options.recommended_action]
-    local action          = ibapi.actionMap[options.action]
     local event_type      = ibapi.eventTypeMap[options.type]
     local confidence      = options.confidence or 0
     local severity        = options.severity or 0
@@ -198,7 +197,6 @@ ibapi.addEvent = function(self, msg, options)
                              rulename,
                              event_type,
                              rec_action,
-                             action,
                              confidence,
                              severity,
                              message
