@@ -133,10 +133,6 @@ local log_info = function(ib, msg, ...)
     log(ib, ffi.C.IB_LOG_INFO, msg, ...)
 end
 
-local log_debug = function(ib, msg, ...)
-    log(ib, ffi.C.IB_LOG_DEBUG, msg, ...)
-end
-
 -- ===============================================
 -- Setup some module metadata.
 -- ===============================================
@@ -147,7 +143,9 @@ M._VERSION = "1.0"
 -- @param[in] ib IronBee engine C data.
 M.load_module = function(ib, module_index, name, module_function)
     -- Build callback table to pass to module.
-    local t = { ["events"] = {} }
+    local t = ibapi.engineapi:new(ib)
+    
+    t.events = {}
 
     -- Table t has a list of registration functions. All they do is
     -- force the user to spell the callbacks correctly.
@@ -214,17 +212,26 @@ end
 -- @returns And integer representation of an ib_status_t.
 --   - IB_OK on success.
 --   
-M.dispatch_module = function(handler, args)
+M.dispatch_module = function(handler, ib_engine, ib_module, event, ib_conn, ib_tx)
 
-    -- Set event name.
+    local args
+
+    if ib_tx == nil then
+        args = ibapi.engineapi:new(ib_engine)
+    else
+        args = ibapi.txapi:new(ib_engine, ib_tx)
+    end
+
+    args.event = event
     args.event_name = intToState[tonumber(args.event)]
+    args.ib_conn = ffi.cast("ib_conn_t*", ib_conn)
 
     -- Dispatch
-    log_debug(args.ib_engine, "Running callback for %s.", args.event_name)
+    args:logDebug("Running callback for %s.", args.event_name)
 
     local rc = handler(args)
 
-    log_debug(args.ib_engine, "Ran callback for %s.", args.event_name)
+    args:logDebug("Ran callback for %s.", args.event_name)
 
     -- Ensure that modules that break our return contract don't cause
     -- too much trouble.

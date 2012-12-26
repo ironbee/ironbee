@@ -577,28 +577,15 @@ static ib_status_t modlua_callback_setup(
         return rc;
     }
 
-    lua_createtable(L, 0, 0);
-
-    /* Set ib light data. */
-    lua_pushstring(L, "ib_engine"); /* Push key. */
-    lua_pushlightuserdata(L, ib);   /* Push value. */
-    lua_settable(L, -3);            /* Assign to -3 key -2 and val -1*/
-
-    /* Set conn light data. */
-    lua_pushstring(L, "ib_conn");   /* Push key. */
-    lua_pushlightuserdata(L, conn); /* Push value. */
-    lua_settable(L, -3);          /* Assign to -3 key -2 and val -1. */
-
-    /* Set event. */
-    lua_pushstring(L, "event");   /* Push key. */
-    lua_pushnumber(L, event);     /* Push value. */
-    lua_settable(L, -3);          /* Assign to -3 key -2 and val -1. */
-
+    lua_pushlightuserdata(L, ib);
+    lua_pushlightuserdata(L, module);
+    lua_pushnumber(L, event);
+    lua_pushlightuserdata(L, conn);
     if (tx) {
-        /* Push conn light data. */
-        lua_pushstring(L, "ib_tx");   /* Push key. */
-        lua_pushlightuserdata(L, tx); /* Push value. */
-        lua_settable(L, -3);          /* Assign to -3 key -2 and val -1. */
+        lua_pushlightuserdata(L, tx);
+    }
+    else {
+        lua_pushnil(L);
     }
 
     return IB_OK;
@@ -654,7 +641,7 @@ static ib_status_t modlua_callback_dispatch(
     ib_log_debug(ib, "Calling handler for lua module: %s", module->name);
 
     /* Run dispatcher. */
-    lua_rc = lua_pcall(L, 2, 1, 0);
+    lua_rc = lua_pcall(L, 6, 1, 0);
     switch(lua_rc) {
         case 0:
             /* NOP */
