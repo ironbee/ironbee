@@ -88,6 +88,11 @@ ibmod_rules_la_LIBADD += -lluajit-ironbee \
                          $(top_builddir)/lua/libironbee-lua.la
 endif
 
+if ENABLE_JSON
+pkglib_LTLIBRARIES += ibmod_persist_filesys.la
+ibmod_persist_filesys_la_SOURCES = persist_filesystem.c
+endif
+
 if BUILD_DEV_MODULES
 pkglib_LTLIBRARIES += ibmod_fields.la
 ibmod_fields_la_SOURCES = fields.c
