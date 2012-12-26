@@ -41,34 +41,62 @@ local lua_modules_by_name = {}
 
 -- Transation table of state event strings to integers.
 local stateToInt = {
-    ["conn_started_event"] = tonumber(ffi.C.conn_started_event),
-    ["conn_finished_event"] = tonumber(ffi.C.conn_finished_event),
-    ["tx_started_event"] = tonumber(ffi.C.tx_started_event),
-    ["tx_process_event"] = tonumber(ffi.C.tx_process_event),
-    ["tx_finished_event"] = tonumber(ffi.C.tx_finished_event),
-    ["handle_context_conn_event"] = tonumber(ffi.C.handle_context_conn_event),
-    ["handle_connect_event"] = tonumber(ffi.C.handle_connect_event),
-    ["handle_context_tx_event"] = tonumber(ffi.C.handle_context_tx_event),
-    ["handle_request_header_event"] = tonumber(ffi.C.handle_request_header_event),
-    ["handle_request_event"] = tonumber(ffi.C.handle_request_event),
-    ["handle_response_header_event"] = tonumber(ffi.C.handle_response_header_event),
-    ["handle_response_event"] = tonumber(ffi.C.handle_response_event),
-    ["handle_disconnect_event"] = tonumber(ffi.C.handle_disconnect_event),
-    ["handle_postprocess_event"] = tonumber(ffi.C.handle_postprocess_event),
-    ["conn_opened_event"] = tonumber(ffi.C.conn_opened_event),
-    ["conn_data_in_event"] = tonumber(ffi.C.conn_data_in_event),
-    ["conn_data_out_event"] = tonumber(ffi.C.conn_data_out_event),
-    ["conn_closed_event"] = tonumber(ffi.C.conn_closed_event),
-    ["request_started_event"] = tonumber(ffi.C.request_started_event),
-    ["request_header_data_event"] = tonumber(ffi.C.request_header_data_event),
-    ["request_header_finished_event"] = tonumber(ffi.C.request_header_finished_event),
-    ["request_body_data_event"] = tonumber(ffi.C.request_body_data_event),
-    ["request_finished_event"] = tonumber(ffi.C.request_finished_event),
-    ["response_started_event"] = tonumber(ffi.C.response_started_event),
-    ["response_header_data_event"] = tonumber(ffi.C.response_header_data_event),
-    ["response_header_finished_event"] = tonumber(ffi.C.response_header_finished_event),
-    ["response_body_data_event"] = tonumber(ffi.C.response_body_data_event),
-    ["response_finished_event"] = tonumber(ffi.C.response_finished_event)
+    ["conn_started_event"] =
+        tonumber(ffi.C.conn_started_event),
+    ["conn_finished_event"] =
+        tonumber(ffi.C.conn_finished_event),
+    ["tx_started_event"] =
+        tonumber(ffi.C.tx_started_event),
+    ["tx_process_event"] =
+        tonumber(ffi.C.tx_process_event),
+    ["tx_finished_event"] =
+        tonumber(ffi.C.tx_finished_event),
+    ["handle_context_conn_event"] =
+        tonumber(ffi.C.handle_context_conn_event),
+    ["handle_connect_event"] =
+        tonumber(ffi.C.handle_connect_event),
+    ["handle_context_tx_event"] =
+        tonumber(ffi.C.handle_context_tx_event),
+    ["handle_request_header_event"] =
+        tonumber(ffi.C.handle_request_header_event),
+    ["handle_request_event"] =
+        tonumber(ffi.C.handle_request_event),
+    ["handle_response_header_event"] =
+        tonumber(ffi.C.handle_response_header_event),
+    ["handle_response_event"] =
+        tonumber(ffi.C.handle_response_event),
+    ["handle_disconnect_event"] =
+        tonumber(ffi.C.handle_disconnect_event),
+    ["handle_postprocess_event"] =
+        tonumber(ffi.C.handle_postprocess_event),
+    ["conn_opened_event"] =
+        tonumber(ffi.C.conn_opened_event),
+    ["conn_data_in_event"] =
+        tonumber(ffi.C.conn_data_in_event),
+    ["conn_data_out_event"] =
+        tonumber(ffi.C.conn_data_out_event),
+    ["conn_closed_event"] =
+        tonumber(ffi.C.conn_closed_event),
+    ["request_started_event"] =
+        tonumber(ffi.C.request_started_event),
+    ["request_header_data_event"] =
+        tonumber(ffi.C.request_header_data_event),
+    ["request_header_finished_event"] =
+        tonumber(ffi.C.request_header_finished_event),
+    ["request_body_data_event"] =
+        tonumber(ffi.C.request_body_data_event),
+    ["request_finished_event"] =
+        tonumber(ffi.C.request_finished_event),
+    ["response_started_event"] =
+        tonumber(ffi.C.response_started_event),
+    ["response_header_data_event"] =
+        tonumber(ffi.C.response_header_data_event),
+    ["response_header_finished_event"] =
+        tonumber(ffi.C.response_header_finished_event),
+    ["response_body_data_event"] =
+        tonumber(ffi.C.response_body_data_event),
+    ["response_finished_event"] =
+        tonumber(ffi.C.response_finished_event)
 }
 
 -- Build reverse map of stateToInt.
