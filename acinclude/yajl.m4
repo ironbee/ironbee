@@ -20,16 +20,18 @@ AC_ARG_WITH(
     [test_paths="/usr/local /opt/local /opt /usr"
      require_yajl="no"])
 
+AC_MSG_CHECKING([for yajl])
+
 save_LDFLAGS="$LDFLAGS"
 save_CFLAGS="$CFLAGS"
 
 if test "${test_paths}" != "no"; then
     yajl_path=""
     for x in ${test_paths}; do
-
-        AC_MSG_CHECKING([yajl in ${x}])
-        CFLAGS="-I${x}/include"
-        LDFLAGS="-L${x}/$libsubdir -lyajl"
+	TMP_CFLAGS="-I${x}/include"
+	TMP_LDFLAGS="-L${x}/$libsubdir -lyajl"
+        CFLAGS="${save_CFLAGS} ${TMP_CFLAGS}"
+        LDFLAGS="${save_LDFLAGS} ${TMP_LDFLAGS}"
 
         AC_LANG([C])
         AC_COMPILE_IFELSE(
@@ -50,16 +52,16 @@ if test "${test_paths}" != "no"; then
             [dnl
                 AC_MSG_RESULT([yes])
                 HAVE_YAJL=yes
-                LDFLAGS="$save_LDFLAGS $YAJL_LDFLAGS"
-                CFLAGS="$save_CFLAGS $YAJL_CFLAGS"
+		YAJL_CFLAGS="${TMP_CFLAGS}"
+		YAJL_LDFLAGS="${TMP_LDFLAGS}"
                 $1
                 break
             ],
             [dnl
                 AC_MSG_RESULT([no])
                 HAVE_YAJL=no
-                LDFLAGS="$save_LDFLAGS"
-                CFLAGS="$save_CFLAGS"
+		LDFLAGS="$save_LDFLAGS"
+		CFLAGS="$save_CFLAGS"
                 $2
             ])
     done

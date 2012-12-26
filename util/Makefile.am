@@ -39,17 +39,23 @@ libibutil_la_SOURCES = ahocorasick.c \
                        util.c \
                        uuid.c
 if BUILD_RIAK
-libibutil_la_SOURCES += kvstore_riak.c
+  libibutil_la_SOURCES += kvstore_riak.c
+endif
+
+if BUILD_YAJL
+  libibutil_la_SOURCES += json_yajl_common.c \
+                          json_yajl_decode.c \
+                          json_yajl_encode.c
 endif
 
 EXTRA_DIST = ahocorasick_private.h
 
 libibutil_la_CFLAGS = @OSSP_UUID_CFLAGS@
 if FREEBSD
-libibutil_la_LDFLAGS = $(LDFLAGS) @OSSP_UUID_LDFLAGS@ -lssp_nonshared @OSSP_UUID_LIBS@
+  libibutil_la_LDFLAGS = $(LDFLAGS) @OSSP_UUID_LDFLAGS@ -lssp_nonshared @OSSP_UUID_LIBS@
 else
-libibutil_la_LDFLAGS = $(LDFLAGS) @OSSP_UUID_LDFLAGS@
-libibutil_la_LIBADD = -ldl @OSSP_UUID_LIBS@
+  libibutil_la_LDFLAGS = $(LDFLAGS) @OSSP_UUID_LDFLAGS@
+  libibutil_la_LIBADD = -ldl @OSSP_UUID_LIBS@
 endif
 libibutil_la_LDFLAGS += -version-info @LIBRARY_VERSION@ \
                         -release @MAJOR_VERSION@.@MINOR_VERSION@

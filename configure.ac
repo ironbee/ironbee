@@ -226,6 +226,16 @@ if test "$enable_lua" != "no" ; then
     AC_DEFINE([ENABLE_LUA], [1], [Lua rules enabled.])
 fi
 
+### YAJL / JSON support
+AM_CONDITIONAL([BUILD_YAJL], [test "$HAVE_YAJL" != "no"])
+AM_CONDITIONAL([ENABLE_JSON], [test "$HAVE_YAJL" != "no"])
+if test "$HAVE_YAJL" = "no" ; then
+  AC_DEFINE([ENABLE_JSON], [0], [JSON encode/decode disabled.])
+else
+  AC_DEFINE([ENABLE_JSON], [1], [JSON encode/decode enabled.])
+fi
+
+
 ### Integration Tests
 integration_tests="no"
 AC_ARG_WITH([integration-tests],

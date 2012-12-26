@@ -99,6 +99,10 @@ check_PROGRAMS += test_module_rules_lua \
                   test_luajit
 endif
 
+if ENABLE_JSON
+  check_PROGRAMS += test_util_json
+endif
+
 check_LTLIBRARIES = libtest_util_dso_lib.la
 
 TESTS=$(check_PROGRAMS)
@@ -191,6 +195,8 @@ test_util_ip_SOURCES = test_util_ip.cpp test_main.cpp
 test_util_field_SOURCES = test_util_field.cpp test_main.cpp
 
 test_util_path_SOURCES = test_util_path.cpp test_main.cpp
+
+test_util_json_SOURCES = test_util_json.cpp test_main.cpp
 
 test_util_string_SOURCES = test_util_string.cpp test_main.cpp
 
