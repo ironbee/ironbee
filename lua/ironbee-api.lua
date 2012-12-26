@@ -35,6 +35,8 @@
 -- set(name, value) - set a string, number or table.
 -- forEachEvent(function(event)...) - Call the given function on each event.
 --                                    See the Event Manipulation section.
+-- events() - Returns a next function, an empty table, and nil, used for
+--            iteration. for index,event in ib:events() do ... end.
 --
 -- Event Manipulation
 -- An event object, such as one passed to a callback function by
@@ -66,12 +68,12 @@
 
 -- Lua 5.2 and later style class.
 ibapi = {}
+ibapi.__index = ibapi
 
 local ib_event = {}
 ib_event.new = function(self, event)
     o = { raw = event }
-    setmetatable(o, { __index = self })
-    return o
+    return setmetatable(o, { __index = self })
 end
 -- String mapping table.
 ib_event.suppressMap = {
@@ -137,121 +139,9 @@ ib_event.forEachTag = function(self, func)
     end
 end
 
--- Add an event. 
--- The msg argument is typically a string that is the message to log,
--- followed by a table of options.
---
--- If msg is a table, however, then options is ignored and instead
--- msg is processed as if it were the options argument. Think of this
--- as the argument msg being optional.
---
--- If msg is omitted, then options should contain a key 'msg' that
--- is the message to log.
---
--- The options argument should also specify the following (or they will
--- default to UNKNOWN):
---
--- recommended_action - The recommended action.
---     - block
---     - ignore
---     - log
---     - unknown (default)
--- action - The action to take. Values are the same as recommended_action.
--- type - The rule type that was matched.
---     - observation
---     - unknown (default)
--- confidence - An integer. The default is 0.
--- severity - An integer. The default is 0.
--- msg - If msg is not given, then this should be the alert message.
--- tags - List (table) of tag strings: { 'tag1', 'tag2', ... }
--- fields - List (table) of field name strings: { 'ARGS', ... }
---
-ibapi.addEvent = function(self, msg, options)
-
-    local message
-
-    -- If msg is a table, then options are ignored.
-    if type(msg) == 'table' then
-        options = msg
-        message = ffi.cast("char*", msg['msg'] or '-')
-    else
-        message = ffi.cast("char*", msg)
-    end
-
-    if options == nil then
-        options = {}
-    end
-
-    local event = ffi.new("ib_logevent_t*[1]")
-    local rulename = ffi.cast("char*", options['rulename'] or 'anonymous')
-
-    -- Map options
-    local rec_action      = ibapi.actionMap[options.recommended_action]
-    local event_type      = ibapi.eventTypeMap[options.type]
-    local confidence      = options.confidence or 0
-    local severity        = options.severity or 0
-
-    
-    ffi.C.ib_logevent_create(event,
-                             self.private.ib_tx.mp,
-                             rulename,
-                             event_type,
-                             rec_action,
-                             confidence,
-                             severity,
-                             message
-                            )
-
-    -- Add tags
-    if options.tags ~= nil then
-        if type(options.tags) == 'table' then
-            for k,v in ipairs(options.tags) do
-                ffi.C.ib_logevent_tag_add(event[0], v)
-            end
-        end
-    end
-
-    -- Add field names
-    if options.fields ~= nil then
-        if type(options.fields) == 'table' then
-            for k,v in ipairs(options.fields) do
-                ffi.C.ib_logevent_field_add(event[0], v)
-            end
-        end
-    end
-
-    ffi.C.ib_event_add(self.private.ib_tx.epi, event[0])
-end
-
--- Base Class for private functions in ibapi.
-local ibapi_private = {}
-ibapi_private.new = function(self, ib_rule_exec, ib_engine, ib_tx)
-    o = {}
-    setmetatable(o, self)
-    self.__index = self
-
-    -- Store raw C values.
-    o.ib_rule_exec = ffi.cast("const ib_rule_exec_t*", ib_rule_exec)
-    o.ib_engine = ffi.cast("ib_engine_t*", ib_engine)
-    o.ib_tx = ffi.cast("ib_tx_t*", ib_tx)
-
-    return o
-end
--- Return a ib_field_t* to the field named and stored in the DPI.
--- This is used to quickly pull named fields for setting or getting values.
-ibapi_private.getDpiField = function(self, name)
-    local ib_field = ffi.new("ib_field_t*[1]")
-
-    ffi.C.ib_data_get_ex(self.ib_tx.dpi,
-                         name,
-                         string.len(name),
-                         ib_field)
-    return ib_field[0]
-end
-
 -- Given an ib_field_t*, this will convert the data into a Lua type or
 -- nil if the value is not supported.
-ibapi_private.fieldToLua = function(self, field)
+ibapi.fieldToLua = function(self, field)
 
     -- Nil, guard against undefined fields.
     if field == nil then
@@ -306,31 +196,16 @@ ibapi_private.fieldToLua = function(self, field)
     end
 end
 
-
--- The private logging function. This function should only be called
--- by self:logError(...) or self:logDebug(...) or the file and line
--- number will not be accurage because the call stack will be at an
--- unexpected depth.
-ibapi_private.log = function(self, level, prefix, msg, ...) 
-    local debug_table = debug.getinfo(3, "Sl")
-    local file = debug_table.short_src
-    local line = debug_table.currentline
-
-    -- Msg must not be nil.
+-- Base logger.
+ibapi.log = function(self, level, prefix, msg, ...) 
     if msg == nil then msg = "(nil)" end
-
     if type(msg) ~= 'string' then msg = tostring(msg) end
-
-    -- If we have more arguments, format msg with them.
     if ... ~= nil then msg = string.format(msg, ...) end
 
-    -- Prepend prefix.
-    msg = prefix .. " " .. msg
+    msg = tostring(level) .. " " .. prefix .. " " .. msg
 
-    -- Log the string.
-    ffi.C.ib_rule_log_exec(level, self.ib_rule_exec, file, line, msg);
+    print(msg)
 end
-
 
 local ffi = require("ffi")
 local ironbee = require("ironbee-ffi")
@@ -391,35 +266,94 @@ setmetatable(ibapi.eventTypeMap, { __index = ibutil.returnUnknown })
 
 -- Log an error.
 ibapi.logError = function(self, msg, ...) 
-    self.private:log(ffi.C.IB_RULE_DLOG_ERROR, "LuaAPI - [ERROR]", msg, ...)
+    self:log(ffi.C.IB_RULE_DLOG_ERROR, "LuaAPI - [ERROR]", msg, ...)
 end
 
 -- Log a warning.
 ibapi.logWarn = function(self, msg, ...) 
     -- Note: Extra space after "INFO " is for text alignment.
     -- It should be there.
-    self.private:log(ffi.C.IB_RULE_DLOG_WARNING, "LuaAPI - [WARN ]", msg, ...)
+    self:log(ffi.C.IB_RULE_DLOG_WARNING, "LuaAPI - [WARN ]", msg, ...)
 end
 
 -- Log an info message.
 ibapi.logInfo = function(self, msg, ...) 
     -- Note: Extra space after "INFO " is for text alignment.
     -- It should be there.
-    self.private:log(ffi.C.IB_RULE_DLOG_INFO, "LuaAPI - [INFO ]", msg, ...)
+    self:log(ffi.C.IB_RULE_DLOG_INFO, "LuaAPI - [INFO ]", msg, ...)
 end
 
 -- Log debug information at level 3.
 ibapi.logDebug = function(self, msg, ...) 
-    self.private:log(ffi.C.IB_RULE_DLOG_DEBUG, "LuaAPI - [DEBUG]", msg, ...)
+    self:log(ffi.C.IB_RULE_DLOG_DEBUG, "LuaAPI - [DEBUG]", msg, ...)
+end
+
+-- Create an new ironbee object.
+ibapi.new = function(self)
+    -- Basic object
+    local o = {}
+    return setmetatable(o, self)
+end
+
+-- ###########################################################################
+-- # Define ibapi.engineapi
+-- ###########################################################################
+-- Define the most basic IB api.
+ibapi.engineapi = {}
+ibapi.engineapi.__index = ibapi.engineapi
+setmetatable(ibapi.engineapi, ibapi)
+
+ibapi.engineapi.log = function(self, level, prefix, msg, ...) 
+    local debug_table = debug.getinfo(3, "Sl")
+    local file = debug_table.short_src
+    local line = debug_table.currentline
+
+    -- Msg must not be nil.
+    if msg == nil then msg = "(nil)" end
+
+    if type(msg) ~= 'string' then msg = tostring(msg) end
+
+    -- If we have more arguments, format msg with them.
+    if ... ~= nil then msg = string.format(msg, ...) end
+
+    -- Prepend prefix.
+    msg = prefix .. " " .. msg
+
+    ffi.C.ib_log_ex(ib, level, file, line, msg);
+end
+
+ibapi.engineapi.new = function(self, ib_engine)
+    local o = ibapi:new()
+    -- Store raw C values.
+    o.ib_engine = ffi.cast("ib_engine_t*", ib_engine)
+
+    return setmetatable(o, self)
+end
+-- ###########################################################################
+
+-- ###########################################################################
+-- # Define ibapi.txapi.
+-- ###########################################################################
+ibapi.txapi = {}
+ibapi.txapi.__index = ibapi.txapi
+setmetatable(ibapi.txapi, ibapi.engineapi)
+
+ibapi.txapi.new = function(self, ib_engine, ib_tx)
+    local o = ibapi.engineapi:new(ib_engine)
+
+    -- Store raw C values.
+    o.ib_tx = ffi.cast("ib_tx_t*", ib_tx)
+
+    return setmetatable(o, self)
 end
 
 -- Return a list of all the fields currently defined.
-ibapi.getFieldList = function(self)
+ibapi.txapi.getFieldList = function(self)
     local fields = { }
 
     local ib_list = ffi.new("ib_list_t*[1]")
-    ffi.C.ib_list_create(ib_list, self.private.ib_tx.mp)
-    ffi.C.ib_data_get_all(self.private.ib_tx.dpi, ib_list[0])
+    ffi.C.ib_list_create(ib_list, self.ib_tx.mp)
+    ffi.C.ib_data_get_all(self.ib_tx.dpi, ib_list[0])
 
     ibapi.each_list_node(ib_list[0], function(field)
         fields[#fields+1] = ffi.string(field.name, field.nlen)
@@ -436,24 +370,24 @@ end
 -- If the value is a table, and the table exists in the data provider,
 -- then the values are appended to that table. Otherwise, a new
 -- table is created.
-ibapi.add = function(self, name, value)
+ibapi.txapi.add = function(self, name, value)
     if value == nil then
         -- nop.
     elseif type(value) == 'string' then
-        ffi.C.ib_data_add_nulstr_ex(self.private.ib_tx.dpi,
+        ffi.C.ib_data_add_nulstr_ex(self.ib_tx.dpi,
                                     ffi.cast("char*", name),
                                     string.len(name),
                                     ffi.cast("char*", value),
                                     nil)
     elseif type(value) == 'number' then
-        ffi.C.ib_data_add_num_ex(self.private.ib_tx.dpi,
+        ffi.C.ib_data_add_num_ex(self.ib_tx.dpi,
                                  ffi.cast("char*", name),
                                  #name,
                                  value,
                                  nil)
     elseif type(value) == 'table' then
         local ib_field = ffi.new("ib_field_t*[1]")
-        ffi.C.ib_data_get_ex(self.private.ib_tx.dpi,
+        ffi.C.ib_data_get_ex(self.ib_tx.dpi,
                              name,
                              string.len(name),
                              ib_field)
@@ -461,7 +395,7 @@ ibapi.add = function(self, name, value)
         -- If there is a value, but it is not a list, make a new table.
         if ib_field[0] == nil or 
            ib_field[0].type ~= ffi.C.IB_FTYPE_LIST then
-            ffi.C.ib_data_add_list_ex(self.private.ib_tx.dpi,
+            ffi.C.ib_data_add_list_ex(self.ib_tx.dpi,
                                       ffi.cast("char*", name),
                                       string.len(name),
                                       ib_field)
@@ -475,9 +409,9 @@ ibapi.add = function(self, name, value)
     end
 end
 
-ibapi.set = function(self, name, value)
+ibapi.txapi.set = function(self, name, value)
 
-    local ib_field = self.private:getDpiField(name)
+    local ib_field = self:getDpiField(name)
 
     if ib_field == nil then
         -- If ib_field == nil, then it doesn't exist and we call add(...).
@@ -486,13 +420,13 @@ ibapi.set = function(self, name, value)
         self:add(name, value)
     elseif value == nil then
         -- Delete values when setting a name to nil.
-        ffi.C.ib_data_remove_ex(self.private.ib_tx.dpi,
+        ffi.C.ib_data_remove_ex(self.ib_tx.dpi,
                                 ffi.cast("char*", name),
                                 #name,
                                 nil)
     elseif type(value) == 'string' then
         -- Set a string.
-        local nval = ffi.C.ib_mpool_strdup(self.private.ib_tx.mp,
+        local nval = ffi.C.ib_mpool_strdup(self.ib_tx.mp,
                                            ffi.cast("char*", value))
         ffi.C.ib_field_setv(ib_field, nval)
     elseif type(value) == 'number' then
@@ -500,7 +434,7 @@ ibapi.set = function(self, name, value)
             -- Set a number.
             local src = ffi.new("ib_num_t[1]", value)
             local dst = ffi.cast("ib_num_t*",
-                                ffi.C.ib_mpool_alloc(self.private.ib_tx.mp,
+                                ffi.C.ib_mpool_alloc(self.ib_tx.mp,
                                                     ffi.sizeof("ib_num_t")))
             ffi.copy(dst, src, ffi.sizeof("ib_num_t"))
             ffi.C.ib_field_setv(ib_field, dst)
@@ -508,14 +442,14 @@ ibapi.set = function(self, name, value)
             -- Set a float number.
             local src = ffi.new("ib_float_t[1]", value)
             local dst = ffi.cast("ib_float_t*",
-                                ffi.C.ib_mpool_alloc(self.private.ib_tx.mp,
+                                ffi.C.ib_mpool_alloc(self.ib_tx.mp,
                                                     ffi.sizeof("ib_float_t")))
             ffi.copy(dst, src, ffi.sizeof("ib_float_t"))
             ffi.C.ib_field_setv(ib_field, dst)
         end
     elseif type(value) == 'table' then
         -- Delete a table and add it.
-        ffi.C.ib_data_remove_ex(self.private.ib_tx.dpi,
+        ffi.C.ib_data_remove_ex(self.ib_tx.dpi,
                                 ffi.cast("char*", name),
                                 #name,
                                 nil)
@@ -531,16 +465,16 @@ end
 -- If name points to a number, a number is returned.
 -- If name points to a list of name-value pairs a table is returned
 --    where
-ibapi.get = function(self, name)
-    local ib_field = self.private:getDpiField(name)
-    return self.private:fieldToLua(ib_field)
+ibapi.txapi.get = function(self, name)
+    local ib_field = self:getDpiField(name)
+    return self:fieldToLua(ib_field)
 end
 
 -- Given a field name, this will return a list of the field names
 -- contained in it. If the requested field is a string or an integer, then
 -- a single element list containing name is returned.
-ibapi.getNames = function(self, name)
-    local ib_field = self.private:getDpiField(name)
+ibapi.txapi.getNames = function(self, name)
+    local ib_field = self:getDpiField(name)
 
     -- To speed things up, we handle a list directly
     if ib_field.type == ffi.C.IB_FTYPE_LIST then
@@ -562,8 +496,8 @@ end
 -- Given a field name, this will return a list of the values that are
 -- contained in it. If the requeted field is a string or an integer,
 -- then a single element list containing that value is returned.
-ibapi.getValues = function(self, name)
-    local ib_field = self.private:getDpiField(name)
+ibapi.txapi.getValues = function(self, name)
+    local ib_field = self:getDpiField(name)
 
     -- To speed things up, we handle a list directly
     if ib_field.type == ffi.C.IB_FTYPE_LIST then
@@ -573,22 +507,22 @@ ibapi.getValues = function(self, name)
         local ib_list = value[0]
 
         ibapi.each_list_node(ib_list, function(data)
-            t[#t+1] = self.private:fieldToLua(data)
+            t[#t+1] = self:fieldToLua(data)
         end)
 
         return t
     else
-        return { self.private:fieldToLua(ib_field) }
+        return { self:fieldToLua(ib_field) }
     end
 end
 
 --
 -- Call function func on each event in the current transaction.
 --
-ibapi.forEachEvent = function(self, func)
-    local tx = self.private.ib_tx
+ibapi.txapi.forEachEvent = function(self, func)
+    local tx = self.ib_tx
     local list = ffi.new("ib_list_t*[1]")
-    ffi.C.ib_event_get_all(self.private.ib_tx.epi, list)
+    ffi.C.ib_event_get_all(self.ib_tx.epi, list)
 
     ibapi.each_list_node(
         list[0],
@@ -599,13 +533,13 @@ ibapi.forEachEvent = function(self, func)
 end
 
 -- Returns next function, table, and nil.
-ibapi.events = function(self)
+ibapi.txapi.events = function(self)
     local nextFn = function(t, idx)
 
         -- Iterate
         if idx == nil then
             local list = ffi.new("ib_list_t*[1]")
-            ffi.C.ib_event_get_all(self.private.ib_tx.epi, list)
+            ffi.C.ib_event_get_all(self.ib_tx.epi, list)
 
             if (list[0] == nil) then
                 return nil, nil
@@ -637,14 +571,14 @@ end
 
 -- Append a value to the end of the name list. This may be a string
 -- or a number. This is used by ib_obj.add to append to a list.
-ibapi.appendToList = function(self, listName, fieldName, fieldValue)
+ibapi.txapi.appendToList = function(self, listName, fieldName, fieldValue)
 
     local field = ffi.new("ib_field_t*[1]")
 
     if type(fieldValue) == 'string' then
         -- Create the field
         ffi.C.ib_field_create(field,
-                                 self.private.ib_tx.mp,
+                                 self.ib_tx.mp,
                                  ffi.cast("char*", fieldName),
                                  #fieldName,
                                  ffi.C.IB_FTYPE_NULSTR,
@@ -655,7 +589,7 @@ ibapi.appendToList = function(self, listName, fieldName, fieldValue)
             local fieldValue_p = ffi.new("ib_num_t[1]", fieldValue)
 
             ffi.C.ib_field_create(field,
-                                  self.private.ib_tx.mp,
+                                  self.ib_tx.mp,
                                   ffi.cast("char*", fieldName),
                                   #fieldName,
                                   ffi.C.IB_FTYPE_NUM,
@@ -664,7 +598,7 @@ ibapi.appendToList = function(self, listName, fieldName, fieldValue)
             local fieldValue_p = ffi.new("ib_float_t[1]", fieldValue)
 
             ffi.C.ib_field_create(field,
-                                  self.private.ib_tx.mp,
+                                  self.ib_tx.mp,
                                   ffi.cast("char*", fieldName),
                                   #fieldName,
                                   ffi.C.IB_FTYPE_FLOAT,
@@ -675,37 +609,151 @@ ibapi.appendToList = function(self, listName, fieldName, fieldValue)
     end
 
     -- Fetch the list
-    local list = self.private:getDpiField(listName)
+    local list = self:getDpiField(listName)
 
     -- Append the field
     ffi.C.ib_field_list_add(list, field[0])
 end
 
--- Create an new ironbee object using the given engine and transaction.
-ibapi.new = function(self, ib_rule_exec, ib_engine, ib_tx)
-    -- Basic object
-    ib_obj = {}
-    setmetatable(ib_obj, { __index = self })
+-- Add an event. 
+-- The msg argument is typically a string that is the message to log,
+-- followed by a table of options.
+--
+-- If msg is a table, however, then options is ignored and instead
+-- msg is processed as if it were the options argument. Think of this
+-- as the argument msg being optional.
+--
+-- If msg is omitted, then options should contain a key 'msg' that
+-- is the message to log.
+--
+-- The options argument should also specify the following (or they will
+-- default to UNKNOWN):
+--
+-- recommended_action - The recommended action.
+--     - block
+--     - ignore
+--     - log
+--     - unknown (default)
+-- action - The action to take. Values are the same as recommended_action.
+-- type - The rule type that was matched.
+--     - observation
+--     - unknown (default)
+-- confidence - An integer. The default is 0.
+-- severity - An integer. The default is 0.
+-- msg - If msg is not given, then this should be the alert message.
+-- tags - List (table) of tag strings: { 'tag1', 'tag2', ... }
+-- fields - List (table) of field name strings: { 'ARGS', ... }
+--
+ibapi.txapi.addEvent = function(self, msg, options)
 
-    -- The private API goes here. Users should not call these functions
-    -- directly.
-    ib_obj.private = ibapi_private:new(ib_rule_exec, ib_engine, ib_tx)
+    local message
 
-    return ib_obj
+    -- If msg is a table, then options are ignored.
+    if type(msg) == 'table' then
+        options = msg
+        message = ffi.cast("char*", msg['msg'] or '-')
+    else
+        message = ffi.cast("char*", msg)
+    end
+
+    if options == nil then
+        options = {}
+    end
+
+    local event = ffi.new("ib_logevent_t*[1]")
+    local rulename = ffi.cast("char*", options['rulename'] or 'anonymous')
+
+    -- Map options
+    local rec_action      = ibapi.actionMap[options.recommended_action]
+    local event_type      = ibapi.eventTypeMap[options.type]
+    local confidence      = options.confidence or 0
+    local severity        = options.severity or 0
+    
+    ffi.C.ib_logevent_create(event,
+                             self.ib_tx.mp,
+                             rulename,
+                             event_type,
+                             rec_action,
+                             confidence,
+                             severity,
+                             message
+                            )
+
+    -- Add tags
+    if options.tags ~= nil then
+        if type(options.tags) == 'table' then
+            for k,v in ipairs(options.tags) do
+                ffi.C.ib_logevent_tag_add(event[0], v)
+            end
+        end
+    end
+
+    -- Add field names
+    if options.fields ~= nil then
+        if type(options.fields) == 'table' then
+            for k,v in ipairs(options.fields) do
+                ffi.C.ib_logevent_field_add(event[0], v)
+            end
+        end
+    end
+
+    ffi.C.ib_event_add(self.ib_tx.epi, event[0])
 end
+
+-- Return a ib_field_t* to the field named and stored in the DPI.
+-- This is used to quickly pull named fields for setting or getting values.
+ibapi.txapi.getDpiField = function(self, name)
+    local ib_field = ffi.new("ib_field_t*[1]")
+
+    ffi.C.ib_data_get_ex(self.ib_tx.dpi,
+                         name,
+                         string.len(name),
+                         ib_field)
+    return ib_field[0]
+end
+
+-- ###########################################################################
 
 -- ###########################################################################
 -- # Define ibapi.ruleapi.
 -- ###########################################################################
 -- Define ruleapi object and have it inherit from ibapi.
 ibapi.ruleapi = {}
-setmetatable(ibapi.ruleapi, ibapi)
+ibapi.ruleapi.__index = ibapi.ruleapi
+setmetatable(ibapi.ruleapi, ibapi.txapi)
+
+-- The private logging function. This function should only be called
+-- by self:logError(...) or self:logDebug(...) or the file and line
+-- number will not be accurage because the call stack will be at an
+-- unexpected depth.
+ibapi.ruleapi.log = function(self, level, prefix, msg, ...) 
+    local debug_table = debug.getinfo(3, "Sl")
+    local file = debug_table.short_src
+    local line = debug_table.currentline
+
+    -- Msg must not be nil.
+    if msg == nil then msg = "(nil)" end
+
+    if type(msg) ~= 'string' then msg = tostring(msg) end
+
+    -- If we have more arguments, format msg with them.
+    if ... ~= nil then msg = string.format(msg, ...) end
+
+    -- Prepend prefix.
+    msg = prefix .. " " .. msg
+
+    -- Log the string.
+    ffi.C.ib_rule_log_exec(level, self.ib_rule_exec, file, line, msg);
+end
+
 
 ibapi.ruleapi.new = function(self, ib_rule_exec, ib_engine, ib_tx)
-    o = {}
-    setmetatable(o, {__index = self})
-    o.private = ibapi_private:new(ib_rule_exec, ib_engine, ib_tx)
-    return o
+    local o = ibapi.txapi:new(ib_engine, ib_tx)
+
+    -- Store raw C values.
+    o.ib_rule_exec = ffi.cast("const ib_rule_exec_t*", ib_rule_exec)
+
+    return setmetatable(o, self)
 end
 -- ###########################################################################
 

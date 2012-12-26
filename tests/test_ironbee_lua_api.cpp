@@ -111,7 +111,7 @@ public:
         lua_setglobal(L, "ib_tx");
 
         /* Construct an IB value. */
-        eval("ib = ibapi:new(ib_rule_exec, ib_engine, ib_tx)");
+        eval("ib = ibapi.ruleapi:new(ib_rule_exec, ib_engine, ib_tx)");
     }
 
     void sendDataIn(const string& req) {
