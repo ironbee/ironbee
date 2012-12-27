@@ -798,6 +798,14 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
     ib_txdata_t itxdata;
     apr_status_t bytecount = 0;
 
+    /* If this is a dummy call, bail out */
+    if (rctx->state & NOTIFY_REQ_END) {
+        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, f->r,
+                      "Extra call to ironbee_filter_in ignored");
+        ap_remove_input_filter(f);
+        return ap_get_brigade(f->next, bb, mode, block, readbytes);
+    }
+
     if (ctx == NULL) {
         ib_num_t num;
         /* First call: initialise data out */
@@ -813,13 +821,6 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
         /* If we're buffering, initialise the buffer */
         ctx->buffer = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
         ctx->eos_sent = false;
-    }
-    /* If this is a dummy call, bail out */
-    if (rctx->state & NOTIFY_REQ_END) {
-        ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, f->r,
-                      "Extra call to ironbee_filter_in ignored");
-        ap_remove_input_filter(f);
-        return ap_get_brigade(f->next, bb, mode, block, readbytes);
     }
 
     /* If we're buffering, loop over all data before returning.
