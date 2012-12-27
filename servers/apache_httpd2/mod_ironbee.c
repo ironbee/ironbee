@@ -71,14 +71,19 @@ module AP_MODULE_DECLARE_DATA ironbee_module;
 #define NOTIFY_RESP_START  0x400
 #define NOTIFY_RESP_END    0x800
 
+typedef enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER } iobuf_t;
 typedef struct ironbee_req_ctx {
     ib_tx_t *tx;
     int status;
     int state;
     request_rec *r;
+    /* make buffering info a request ctx field so the output header filter
+     * can access it.
+     */
+    iobuf_t input_buffering;
+    iobuf_t output_buffering;
 } ironbee_req_ctx;
 typedef struct ironbee_filter_ctx {
-    enum { IOBUF_NOBUF, IOBUF_DISCARD, IOBUF_BUFFER } buffering;
     apr_bucket_brigade *buffer;
     bool eos_sent;
 } ironbee_filter_ctx;
@@ -597,8 +602,43 @@ header_filter_cleanup:
      */
     ctx->state |= HDRS_OUT|START_RESPONSE;
 
-    /* Remove ourself from filter chain and pass the buck */
+    /* Our business is done.  Remove ourself from filter chain. */
     ap_remove_output_filter(f);
+
+    if (ctx->output_buffering == IOBUF_BUFFER) {
+        /* We expect to get called when ironbee_filter_out sends us
+         * a lone flush bucket.  If that happens, we can skip passing
+         * it any further, so ironbee output buffering works before
+         * the response has been initiated.
+         *
+         * But we need to check, in case another filter has intervened
+         * and inserted data or different metadata.
+         *
+         * TODO: think about making it a fatal error if someone has
+         * inserted data at this point.  Any data here have skipped
+         * scrutiny by ironbee!  This could make ironbee incompatible
+         * with some module, though such a module would be unconventional
+         * and possibly trojan.
+         */
+        apr_bucket *b;
+        int our_brigade = 1;
+        for (b = APR_BRIGADE_FIRST(bb);
+             b != APR_BRIGADE_SENTINEL(bb);
+             b = APR_BUCKET_NEXT(b)) {
+            if (!APR_BUCKET_IS_FLUSH(b)) {
+                our_brigade = 0;
+                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
+                              "Ironbee: can't hold back response headers");
+                break;
+            }
+        }
+        if (our_brigade) {
+            ap_log_rerror(APLOG_MARK, APLOG_DEBUG, 0, f->r,
+                          "Ironbee: holding back response headers");
+            return APR_SUCCESS;
+        }
+    }
+    /* propagate to next filter unless we held back */
     return ap_pass_brigade(nextf, bb);
 }
 
@@ -629,21 +669,8 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
         ib_num_t num;
         /* First call: initialise data out */
 
-        /* But first of all, send a flush down the chain to trigger
-         * the header filter and notify ironbee of the headers,
-         * as well as tell the client we're alive.
-         */
         f->ctx = ctx = apr_pcalloc(f->r->pool, sizeof(ironbee_filter_ctx));
         ctx->buffer = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
-        APR_BRIGADE_INSERT_TAIL(ctx->buffer,
-                                apr_bucket_flush_create(f->c->bucket_alloc));
-        rv = ap_pass_brigade(f->next, ctx->buffer);
-        apr_brigade_cleanup(ctx->buffer);
-        if (rv != APR_SUCCESS) {
-            ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, f->r,
-                          "Filter error before Ironbee response body filter");
-            return rv;
-        }
 
         /* Determine whether we're configured to buffer */
         rc = ib_context_get(rctx->tx->ctx, "buffer_res",
@@ -652,11 +679,25 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
             ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
                           "Can't determine output buffer configuration!");
         if (num == 0) {
-            ctx->buffering = IOBUF_NOBUF;
+            rctx->output_buffering = IOBUF_NOBUF;
         }
         else {
             /* If we're buffering, initialise the buffer */
-            ctx->buffering = IOBUF_BUFFER;
+            rctx->output_buffering = IOBUF_BUFFER;
+        }
+
+        /* First send a flush down the chain to trigger
+         * the header filter and notify ironbee of the headers,
+         * as well as tell the client we're alive.
+         */
+        APR_BRIGADE_INSERT_TAIL(ctx->buffer,
+                                apr_bucket_flush_create(f->c->bucket_alloc));
+        rv = ap_pass_brigade(f->next, ctx->buffer);
+        apr_brigade_cleanup(ctx->buffer);
+        if (rv != APR_SUCCESS) {
+            ap_log_rerror(APLOG_MARK, APLOG_ERR, rv, f->r,
+                          "Filter error before Ironbee response body filter");
+            return rv;
         }
     }
 
@@ -685,11 +726,12 @@ static apr_status_t ironbee_filter_out(ap_filter_t *f, apr_bucket_brigade *bb)
          * dump anything we already have buffered,
          * and pass EOS down the chain immediately.
          */
-        if ( (STATUS_IS_ERROR(rctx->status)) && (ctx->buffering != IOBUF_DISCARD) ) {
-            if (ctx->buffering == IOBUF_BUFFER) {
+        if ( (STATUS_IS_ERROR(rctx->status)) &&
+             (rctx->output_buffering != IOBUF_DISCARD) ) {
+            if (rctx->output_buffering == IOBUF_BUFFER) {
                 apr_brigade_cleanup(ctx->buffer);
             }
-            ctx->buffering = IOBUF_DISCARD;
+            rctx->output_buffering = IOBUF_DISCARD;
             APR_BRIGADE_INSERT_TAIL(ctx->buffer,
                                     apr_bucket_eos_create(f->c->bucket_alloc));
             rv = ap_pass_brigade(f->next, ctx->buffer);
@@ -699,28 +741,27 @@ setaside_output:
         /* If we're buffering this, move it to our buffer and ensure
          * its lifetime is sufficient.  If we're discarding it then do.
          */
-        if (ctx->buffering == IOBUF_BUFFER) {
+        if (rctx->output_buffering == IOBUF_BUFFER) {
             apr_bucket_setaside(b, f->r->pool);
             APR_BUCKET_REMOVE(b);
             APR_BRIGADE_INSERT_TAIL(ctx->buffer, b);
         }
-        else if (ctx->buffering == IOBUF_DISCARD) {
+        else if (rctx->output_buffering == IOBUF_DISCARD) {
             apr_bucket_destroy(b);
         }
     }
 
-    if (ctx->buffering == IOBUF_NOBUF) {
+    if (rctx->output_buffering == IOBUF_NOBUF) {
         /* Normal operation - pass it down the chain */
         rv = ap_pass_brigade(f->next, bb);
     }
-    else if (ctx->buffering == IOBUF_BUFFER && eos_seen) {
+    else if (rctx->output_buffering == IOBUF_BUFFER && eos_seen) {
         /* We can pass on the buffered data all at once */
         rv = ap_pass_brigade(f->next, ctx->buffer);
     }
     else {
         /* We currently have nothing we can pass.  Just clean up any
          * data that got orphaned if we switched from NOBUF to DISCARD mode
-         * FIXME: If buffering, should we also FLUSH to maintain activity to client?
          */
         apr_brigade_cleanup(bb);
     }
@@ -768,7 +809,7 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
         if (rc != IB_OK)
             ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, f->r,
                           "Can't determine output buffer configuration!");
-        ctx->buffering = (num == 0) ? IOBUF_NOBUF : IOBUF_BUFFER;
+        rctx->input_buffering = (num == 0) ? IOBUF_NOBUF : IOBUF_BUFFER;
         /* If we're buffering, initialise the buffer */
         ctx->buffer = apr_brigade_create(f->r->pool, f->c->bucket_alloc);
         ctx->eos_sent = false;
@@ -821,9 +862,10 @@ static apr_status_t ironbee_filter_in(ap_filter_t *f,
             /* If Ironbee just signalled an error, switch to discard data mode,
              * and dump anything we already have buffered,
              */
-            if ( (STATUS_IS_ERROR(rctx->status)) && (ctx->buffering != IOBUF_DISCARD) ) {
+            if ( (STATUS_IS_ERROR(rctx->status)) &&
+                 (rctx->input_buffering != IOBUF_DISCARD) ) {
                 apr_brigade_cleanup(ctx->buffer);
-                ctx->buffering = IOBUF_DISCARD;
+                rctx->input_buffering = IOBUF_DISCARD;
                 f->r->status = rctx->status;
                 ap_send_error_response(f->r, rctx->status);
             }
@@ -832,15 +874,15 @@ setaside_input:
             /* If we're buffering this, move it to our buffer
              * If we're discarding it then do.
              */
-            if (ctx->buffering == IOBUF_BUFFER) {
+            if (rctx->input_buffering == IOBUF_BUFFER) {
                 APR_BUCKET_REMOVE(b);
                 APR_BRIGADE_INSERT_TAIL(ctx->buffer, b);
             }
-            else if (ctx->buffering == IOBUF_DISCARD) {
+            else if (rctx->input_buffering == IOBUF_DISCARD) {
                 apr_bucket_destroy(b);
             }
         }
-    } while (!eos_seen && ctx->buffering == IOBUF_BUFFER);
+    } while (!eos_seen && rctx->input_buffering == IOBUF_BUFFER);
 
     if (eos_seen && !ctx->eos_sent) {
         ib_state_notify_request_finished(ironbee, rctx->tx);
@@ -853,18 +895,19 @@ setaside_input:
     /* If Ironbee just signalled an error, switch to discard data mode,
      * and dump anything we already have buffered,
      */
-    if ( (STATUS_IS_ERROR(rctx->status)) && (ctx->buffering != IOBUF_DISCARD) ) {
+    if ( (STATUS_IS_ERROR(rctx->status)) &&
+         (rctx->input_buffering != IOBUF_DISCARD) ) {
         apr_brigade_cleanup(ctx->buffer);
-        ctx->buffering = IOBUF_DISCARD;
+        rctx->input_buffering = IOBUF_DISCARD;
         f->r->status = rctx->status;
         ap_send_error_response(f->r, rctx->status);
     }
 
-    if ((dconf->filter_input == 0) || (ctx->buffering == IOBUF_NOBUF)) {
+    if ((dconf->filter_input == 0) || (rctx->input_buffering == IOBUF_NOBUF)) {
         /* Normal operation - return status from get_data */
         return rv;
     }
-    else if (ctx->buffering == IOBUF_BUFFER) {
+    else if (rctx->input_buffering == IOBUF_BUFFER) {
         /* Return the data from our buffer to caller's brigade before return */
         APR_BRIGADE_CONCAT(bb, ctx->buffer);
         return rv;
