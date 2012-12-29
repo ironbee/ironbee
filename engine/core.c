@@ -3580,7 +3580,8 @@ static ib_status_t core_managed_collection_nvpair_init(
     /* Compile the pattern */
     compiled = pcre_compile(pattern, compile_flags, &error, &eoff, NULL);
     if (compiled == NULL) {
-        ib_log_error(ib, "Failed to compile pattern \"%s\"", pattern);
+        ib_log_error(ib, "Failed to compile pattern \"%s\": %s", pattern,
+                     error ? error : "(null)");
         return IB_EUNKNOWN;
     }
     core_initcoll_data.nvpair_compiled = compiled;
