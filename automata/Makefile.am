@@ -37,6 +37,7 @@ libironautomata_la_SOURCES = \
     translate_nonadvancing.cpp \
     aho_corasick.cpp
 libironautomata_la_LDFLAGS = $(AM_LDFLAGS) \
+    -lprotobuf \
     -version-info @LIBRARY_VERSION@ \
     -release @MAJOR_VERSION@.@MINOR_VERSION@
     
@@ -62,7 +63,6 @@ BUILT_SOURCES = intermediate.pb.cc \
     $(builddir)/include/ironautomata/intermediate.pb.h
 EXTRA_DIST = intermediate.proto
 
-LDADD = libironautomata.la libiaeudoxus.la
 AM_CPPFLAGS += \
     -I$(builddir)/include \
 	$(PROTOBUF_CPPFLAGS) \
@@ -70,7 +70,6 @@ AM_CPPFLAGS += \
 AM_LDFLAGS += \
     $(PROTOBUF_LDFLAGS) \
 	$(BOOST_LDFLAGS) \
-    -lprotobuf \
     -lboost_program_options$(BOOST_SUFFIX) \
     -lboost_system$(BOOST_SUFFIX) \
     -lboost_filesystem$(BOOST_SUFFIX) \
