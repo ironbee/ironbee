@@ -34,10 +34,10 @@
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
 #include <ironbee/hash.h>
+#include <ironbee/lock.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
-#include <ironbee/lock.h>
 
 #include <lauxlib.h>
 #include <lua.h>

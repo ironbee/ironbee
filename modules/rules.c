@@ -18,8 +18,8 @@
 #include "ironbee_config_auto.h"
 
 #ifdef ENABLE_LUA
-#include "lua_common_private.h"
 #include "lua/ironbee.h"
+#include "lua_common_private.h"
 #endif
 
 #include <ironbee/action.h>

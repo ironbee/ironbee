@@ -29,8 +29,8 @@
 
 #include <ironbee/array.h>
 #include <ironbee/context_selection.h>
-#include <ironbee/managed_collection.h>
 #include <ironbee/lock.h>
+#include <ironbee/managed_collection.h>
 
 #include <stdio.h>
 

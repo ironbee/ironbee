@@ -39,9 +39,9 @@
 #include <ironbee/cfgmap.h>
 #include <ironbee/clock.h>
 #include <ironbee/context_selection.h>
-#include <ironbee/managed_collection.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
+#include <ironbee/managed_collection.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
 #include <ironbee/rule_defs.h>
