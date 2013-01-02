@@ -3458,7 +3458,7 @@ static ib_status_t core_managed_collection_nvpair_selection_fn(
         }
 
         if (field->type == IB_FTYPE_NUM) {
-            ib_log_debug(ib, "Created numeric field \"%s\" %ld in \"%s\"",
+            ib_log_debug(ib, "Created numeric field \"%s\" %"PRId64" in \"%s\"",
                          nvpair->name, fval.as_num, collection_name);
         }
 
@@ -5327,7 +5327,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     }
     if (field->type == IB_FTYPE_NUM) {
         ib_cfg_log_debug(cp,
-                         "InitVar: Created numeric field \"%s\" %ld "
+                         "InitVar: Created numeric field \"%s\" %"PRId64" "
                          "for context \"%s\"",
                          name, fval.as_num,
                          ib_context_full_get(cp->cur_ctx));
