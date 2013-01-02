@@ -34,17 +34,25 @@ extern "C" {
 #include <lualib.h>
 }
 
+/**
+ * @file
+ * @brief IronBee Tests For Lua Modules
+ *
+ * Tests for IronBee Lua Moudles.
+ *
+ * @author Sam Baskinger <sbaskinger@qualys.com>
+ */
+
 using namespace std;
 
 /**
- * @class IronBeeLuaApi test_ironbee_lua_api.cpp test_ironbee_lua_api.cpp
+ * @class IronBeeLuaModules test_ironbee_lua_modules.cpp test_ironbee_lua_modules.cpp
  *
  * Test the IronBee Lua Api.
  *
- * For Lua Rule testing see @c test_module_rules_lua.cc.
+ * For Lua Rule testing see test_module_rules_lua.cc.
  */
-class IronBeeLuaModules : public BaseFixture {
-public:
+struct IronBeeLuaModules : public BaseFixture {
 
     lua_State* L;
 
@@ -54,7 +62,7 @@ public:
     ib_rule_exec_t ib_rule_exec;
     ib_rule_t *ib_rule;
 
-    static const char *ib_conf;
+    static const char *c_ib_conf;
 
     /**
      * Calls BaseFixture::SetUp(), then creates a new Lua State,
@@ -82,7 +90,7 @@ public:
         ib_rule->meta.full_id = "full_const_rule_id";
 
         /* We need the ibmod_htp to initialize the ib_tx. */
-        configureIronBeeByString(ib_conf);
+        configureIronBeeByString(c_ib_conf);
 
         ib_conn = buildIronBeeConnection();
 
@@ -187,7 +195,7 @@ public:
     }
 };
 
-const char * IronBeeLuaModules::ib_conf =
+const char * IronBeeLuaModules::c_ib_conf =
     "LogLevel 9\n"
     "SensorId AAAABBBB-1111-2222-3333-FFFF00000023\n"
     "SensorName ExampleSensorName\n"

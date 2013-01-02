@@ -17,7 +17,7 @@
 -- =========================================================================
 -- =========================================================================
 --
--- This module is the modlua framekwork code for managing Lua modules in
+-- This module is the modlua framework code for managing Lua modules in
 -- IronBee.
 --
 -- Author: Sam Baskinger <sbaskinger@qualys.com>
@@ -30,6 +30,13 @@ local string = require("string")
 
 -- The module to define.
 local M = {}
+
+-- ===============================================
+-- Setup some module metadata.
+-- ===============================================
+M._COPYRIGHT = "Copyright (C) 2010-2013 Qualys, Inc."
+M._DESCRIPTION = "IronBee Lua Module Framework."
+M._VERSION = "1.0"
 
 -- Table of loaded lua modules objects.
 -- These are stored by lua module index after the lua module
@@ -132,13 +139,6 @@ end
 local log_info = function(ib, msg, ...)
     log(ib, ffi.C.IB_LOG_INFO, msg, ...)
 end
-
--- ===============================================
--- Setup some module metadata.
--- ===============================================
-M._COPYRIGHT = "Copyright (C) 2010-2013 Qualys, Inc."
-M._DESCRIPTION = "IronBee Lua Module Framework."
-M._VERSION = "1.0"
 
 -- @param[in] ib IronBee engine C data.
 M.load_module = function(ib, module_index, name, module_function)

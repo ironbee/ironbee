@@ -83,7 +83,7 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *rule_exec,
                                  int *return_value);
 
 /**
- * Spawn a new Lua thread and place a pointer to it in @a L.
+ * Spawn a new Lua thread and place a pointer to it in @a thread.
  *
  * This will create a new Lua state and store a reference to
  * it in the global state name t_%h where %h is the value of *thread.
@@ -98,7 +98,7 @@ ib_status_t ib_lua_new_thread(ib_engine_t *ib,
                               lua_State **thread);
 
 /**
- * Destroy a new Lua thread pointed to by @a L.
+ * Destroy a new Lua thread pointed to by @a thread.
  *
  * This modifies the global state of L by removing the
  * reference to the thread name t_%h. The result is that
@@ -107,6 +107,10 @@ ib_status_t ib_lua_new_thread(ib_engine_t *ib,
  * @param[out] ib The IronBee engine used to log errors.
  * @param[in,out] L The Lua state off of which to create the new thread.
  * @param[in] thread The pointer to the thread to schedule for GC.
+ *            This is a pointer-pointer not because it is an out-variable,
+ *            but because it is used as a function pointer
+ *            and must match a signature with a lua_State ** being used
+ *            to store the Lua thread.
  * @returns IB_OK on success.
  */
 ib_status_t ib_lua_join_thread(ib_engine_t *ib,
@@ -115,7 +119,7 @@ ib_status_t ib_lua_join_thread(ib_engine_t *ib,
 
 
 /**
- * Load a Lua module into the @a module_name variable.
+ * Load a Lua module into @a L as the module named @a module_name.
  *
  * This is equivalent to module_name = require(required_name)
  * in Lua.

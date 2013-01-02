@@ -75,11 +75,12 @@ typedef struct modlua_cfg_t modlua_cfg_t;
 typedef struct modlua_lua_cbdata_t modlua_lua_cbdata_t;
 
 /**
- * @brief Callback type for functions executed protected by g_lua_lock.
- * @details This callback should take a @c ib_engine_t* which is used
- *          for logging, @c a lua_State* which is used to create the
- *          new thread, and a @c lua_State** which will be assigned a
- *          new @c lua_State*.
+ * Callback type for functions executed protected by g_lua_lock.
+ *
+ * This callback should take a @c ib_engine_t* which is used
+ * for logging, a @c lua_State* which is used to create the
+ * new thread, and a @c lua_State** which will be assigned a
+ * new @c lua_State*.
  */
 typedef ib_status_t(*critical_section_fn_t)(ib_engine_t *ib,
                                             lua_State *parent,
@@ -146,7 +147,7 @@ static modlua_cfg_t modlua_global_cfg = {
  *
  * @returns
  *   - IB_OK on success.
- *   - Result of ib_engine_module_get on error.
+ *   - Result of ib_engine_module_get() on error.
  */
 static ib_status_t modlua_runtime_get(
     ib_conn_t *conn,
@@ -154,12 +155,13 @@ static ib_status_t modlua_runtime_get(
 {
     assert(conn);
     assert(conn->ib);
+    assert(lua);
 
     ib_status_t rc;
     ib_module_t *module;
 
     rc = ib_engine_module_get(conn->ib, MODULE_NAME_STR, &module);
-    if (rc!=IB_OK) {
+    if (rc != IB_OK) {
         return rc;
     }
 
@@ -176,7 +178,7 @@ static ib_status_t modlua_runtime_get(
  *
  * @returns
  *   - IB_OK on success.
- *   - Result of ib_engine_module_get on error.
+ *   - Result of ib_engine_module_get() on error.
  */
 static ib_status_t modlua_runtime_set(
     ib_conn_t *conn,
@@ -184,6 +186,7 @@ static ib_status_t modlua_runtime_set(
 {
     assert(conn);
     assert(conn->ib);
+    assert(lua);
 
     ib_status_t rc;
     ib_module_t *module;
@@ -199,12 +202,11 @@ static ib_status_t modlua_runtime_set(
 }
 
 /**
- * This will use @c g_lua_lock to atomically call @a fn.
+ * This will use g_lua_lock to atomically call @a fn.
  *
  * The argument @a fn will be either
- * ib_lua_new_thread(ib_engine_t*, lua_State**) or
- * ib_lua_join_thread(ib_engine_t*, lua_State**) which will be called
- * only if @c g_lua_lock can be locked using @c semop.
+ * ib_lua_new_thread() or ib_lua_join_thread() which will be called
+ * only if g_lua_lock can be locked using @c semop.
  *
  * @param[in] ib IronBee context. Used for logging.
  * @param[in] fn The function to execute. This is passed @a ib and @a fn.
@@ -217,6 +219,10 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
                                             critical_section_fn_t fn,
                                             lua_State **L)
 {
+    assert(ib);
+    assert(fn);
+    assert(L);
+
     /* Return code from IronBee calls. */
     ib_status_t ib_rc;
     /* Return code form critical call. */
@@ -327,7 +333,7 @@ static ib_status_t build_near_empty_module(
 }
 
 /**
- * Push the specified handler for a lua module on top of the * lua stack L.
+ * Push the specified handler for a lua module on top of the Lua stack L.
  *
  * @returns
  *   - IB_OK on success. The stack is 1 element higher.
@@ -339,6 +345,10 @@ static ib_status_t modlua_push_lua_handler(
     ib_state_event_type_t event,
     lua_State *L)
 {
+    assert(ib);
+    assert(module);
+    assert(L);
+
     int isfunction;
     int lua_rc;
 
@@ -449,6 +459,10 @@ static ib_status_t module_has_callback(
     ib_state_event_type_t event,
     lua_State *L)
 {
+    assert(ib);
+    assert(module);
+    assert(L);
+
     ib_status_t rc;
 
     rc = modlua_push_lua_handler(ib, module, event, L);
@@ -482,6 +496,10 @@ static ib_status_t modlua_push_dispatcher(
     ib_state_event_type_t event,
     lua_State *L)
 {
+    assert(ib);
+    assert(module);
+    assert(L);
+
     lua_getglobal(L, "modlua"); /* Get the package. */
     if (lua_isnil(L, -1)) {
         ib_log_error(ib, "Module modlua is undefined.");
@@ -520,10 +538,10 @@ static ib_status_t modlua_push_dispatcher(
  * arguments and then call @ref modlua_callback_dispatch.
  *
  * The table at the top of the stack will have defined in it:
- *   - ib_engine
- *   - ib_tx (if @a tx is not null)
- *   - ib_conn
- *   - event as an integer
+ *   - @c ib_engine
+ *   - @c ib_tx (if @a tx is not null)
+ *   - @c ib_conn
+ *   - @c event as an integer
  *
  * @param[in] ib The IronBee engine. This may not be null.
  * @param[in] event The event type.
@@ -1286,8 +1304,7 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
 
     ib_core_cfg_t *corecfg = NULL;
 
-    /**
-     * This is the search pattern that is appended to each element of
+    /* This is the search pattern that is appended to each element of
      * lua_search_paths and then added to the Lua runtime package.path
      * global variable. */
     const char *lua_file_pattern = "?.lua";
@@ -1300,12 +1317,12 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
                                       { "ibapi", "ironbee-api" },
                                       { "modlua", "ironbee-modlua" },
                                       { NULL, NULL } };
-    char *path = NULL;           /**< Tmp string to build a search path. */
-    int i = 0; /**< An iterator. */
+    char *path = NULL; /* Tmp string to build a search path. */
+    int i = 0; /* An iterator. */
 
     rc = ib_context_module_config(ib_context_main(ib),
                                   ib_core_module(),
-                                  (void *)&corecfg);
+                                  &corecfg);
 
     if (rc != IB_OK) {
         ib_log_error(ib, "Could not retrieve core module configuration.");

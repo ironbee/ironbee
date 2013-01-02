@@ -19,12 +19,17 @@
 
 #include <ironbee/types.h>
 
+#include <assert.h>
 #include <lua.h>
 
 #define THREAD_NAME_BUFFER_SZ 20
 
 ib_status_t ib_lua_load_eval(ib_engine_t *ib, lua_State *L, const char *file)
 {
+    assert(ib);
+    assert(L);
+    assert(file);
+
     int lua_rc;
 
     lua_rc = luaL_loadfile(L, file);
@@ -80,6 +85,11 @@ ib_status_t ib_lua_load_func(ib_engine_t *ib,
                              const char *file,
                              const char *func_name)
 {
+    assert(ib);
+    assert(L);
+    assert(file);
+    assert(func_name);
+
     ib_status_t ib_rc;
 
     /* Load (compile) the lua module. */
@@ -106,6 +116,13 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
                                  const char *func_name,
                                  int *return_value)
 {
+    assert(ib_rule_exec);
+    assert(ib);
+    assert(tx);
+    assert(L);
+    assert(func_name);
+    assert(return_value);
+
     int lua_rc;
 
     if (!lua_checkstack(L, 5)) {
@@ -227,6 +244,7 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
 
 /**
  * Print a thread name of @a L into the character buffer @a thread_name.
+ *
  * @a thread_name should be about 20 characters long
  * to store a %p formatted pointer of @a L prefixed with @c t_.
  *
@@ -235,13 +253,18 @@ ib_status_t ib_lua_func_eval_int(const ib_rule_exec_t *ib_rule_exec,
  */
 static inline void sprint_threadname(char *thread_name, lua_State *L)
 {
-    sprintf(thread_name, "t_%p", (void *)L);
+    /* No asserts to allow for inlining. */
+    snprintf(thread_name, THREAD_NAME_BUFFER_SZ, "t_%p", (void *)L);
 }
 
 ib_status_t ib_lua_new_thread(ib_engine_t *ib,
                               lua_State *L,
                               lua_State **thread)
 {
+    assert(ib);
+    assert(L);
+    assert(thread);
+
     char *thread_name = (char *)malloc(THREAD_NAME_BUFFER_SZ);
 
     ib_log_debug(ib, "Setting up new Lua thread.");
@@ -269,6 +292,10 @@ ib_status_t ib_lua_join_thread(ib_engine_t *ib,
                                lua_State* L,
                                lua_State **thread)
 {
+    assert(ib);
+    assert(L);
+    assert(thread);
+
     char *thread_name = (char *)malloc(THREAD_NAME_BUFFER_SZ);
     sprint_threadname(thread_name, *thread);
 
@@ -289,6 +316,11 @@ ib_status_t ib_lua_require(ib_engine_t *ib,
                            const char* module_name,
                            const char* required_name)
 {
+    assert(ib);
+    assert(L);
+    assert(module_name);
+    assert(required_name);
+
     int lua_rc;
 
     lua_getglobal(L, "require");
@@ -316,6 +348,10 @@ void ib_lua_add_require_path(ib_engine_t *ib_engine,
                              lua_State *L,
                              const char *path)
 {
+    assert(ib_engine);
+    assert(L);
+    assert(path);
+
     lua_getglobal(L, "package");
     lua_pushstring(L, "path");
     lua_pushstring(L, "path");
