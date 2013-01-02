@@ -1352,9 +1352,9 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
     for (i = 0; lua_preloads[i][0] != NULL; ++i)
     {
         rc = ib_lua_require(ib,
-                               L,
-                               lua_preloads[i][0],
-                               lua_preloads[i][1]);
+                            L,
+                            lua_preloads[i][0],
+                            lua_preloads[i][1]);
         if (rc != IB_OK)
         {
             ib_log_error(ib,
