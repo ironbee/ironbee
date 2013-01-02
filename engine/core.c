@@ -3486,14 +3486,14 @@ static ib_status_t core_managed_collection_nvpair_selection_fn(
  * @param[in] module Collection manager's module object
  * @param[in] collection_name The name of the collection.
  * @param[in] collection_data An ib_list_t of fields copied into @a collection.
- * @param[in,out] collection Collection to populate with fields in @a 
+ * @param[in,out] collection Collection to populate with fields in @a
  *                collection_data.
  * @param[in] data Callback data
  *
- * @returns 
+ * @returns
  *   - IB_OK on success or when @a collection_data is length 0.
  *   - The first error returned by a call to ib_field_copy or ib_list_push.
- *     The first error is returned, but more errors may occur as the 
+ *     The first error is returned, but more errors may occur as the
  *     collection population continues.
  */
 static ib_status_t core_managed_collection_nvpair_populate_fn(

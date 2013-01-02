@@ -99,7 +99,7 @@ struct modlua_runtime_t {
  * All Lua module event handlers are called by a C function, which we here
  * refer to as the dispatcher. The dispatcher receives this struct
  * as its callback data. From it, and other sources, the dispatcher
- * will construct a single table that is passed to the Lua 
+ * will construct a single table that is passed to the Lua
  * event handler, and will then call that Lua event handler.
  */
 struct modlua_lua_cbdata_t {
@@ -251,7 +251,7 @@ static ib_status_t call_in_critical_section(ib_engine_t *ib,
 /**
  * Create a near-empty module structure.
  *
- * @param[in,out] ib Engine with which to initialize and register 
+ * @param[in,out] ib Engine with which to initialize and register
  *                a module structure with no callbacks. Callbacks
  *                are dynamically assigned after the lua file is
  *                evaluated and loaded.
@@ -450,7 +450,7 @@ static ib_status_t module_has_callback(
     lua_State *L)
 {
     ib_status_t rc;
-    
+
     rc = modlua_push_lua_handler(ib, module, event, L);
 
     /* Pop the lua handler off the stack. We're just checking for it. */
@@ -532,7 +532,7 @@ static ib_status_t modlua_push_dispatcher(
  *            at a minimum, find the Lua runtime stack.
  * @param[in] cbdata The callback data. This may not be null.
  *
- * @returns 
+ * @returns
  *   - IB_OK on success.
  *   - IB_EOTHER on a Lua runtime error.
  */
@@ -557,7 +557,7 @@ static ib_status_t modlua_callback_setup(
     module = modlua_lua_cbdata->module;
 
     rc = modlua_runtime_get(conn, &lua);
-    if (rc != IB_OK) { 
+    if (rc != IB_OK) {
         return rc;
     }
 
@@ -565,14 +565,14 @@ static ib_status_t modlua_callback_setup(
 
     /* Push Lua dispatch method to stack. */
     rc = modlua_push_dispatcher(ib, module, event, L);
-    if (rc != IB_OK) { 
+    if (rc != IB_OK) {
         ib_log_error(ib, "Cannot push modlua.dispatch_handler to stack.");
         return rc;
     }
 
     /* Push Lua handler onto the table. */
     rc = modlua_push_lua_handler(ib, module, event, L);
-    if (rc != IB_OK) { 
+    if (rc != IB_OK) {
         ib_log_error(ib, "Cannot push modlua event handler to stack.");
         return rc;
     }
@@ -603,11 +603,11 @@ static ib_status_t modlua_callback_setup(
  *            at a minimum, find the Lua runtime stack.
  * @param[in] cbdata The callback data. This may not be null.
  *
- * @returns 
+ * @returns
  *   - The result of the module dispatch call.
- *   - IB_E* values may be returned as a result of an internal 
- *     module failure. The log file should always be examined 
- *     to determine if a Lua module failure or an internal 
+ *   - IB_E* values may be returned as a result of an internal
+ *     module failure. The log file should always be examined
+ *     to determine if a Lua module failure or an internal
  *     error is to blame.
  */
 static ib_status_t modlua_callback_dispatch(
@@ -632,7 +632,7 @@ static ib_status_t modlua_callback_dispatch(
     module = modlua_lua_cbdata->module;
 
     rc = modlua_runtime_get(conn, &lua);
-    if (rc != IB_OK) { 
+    if (rc != IB_OK) {
         return rc;
     }
 
@@ -724,11 +724,11 @@ static ib_status_t modlua_null(
 {
     /* Cannot implement this until we find a way to get a Lua stack. */
 
-    // FIXME - allocate *L 
+    // FIXME - allocate *L
 
     ib_log_warning(ib, "NULL callback not implemented for Lua modules yet.");
 
-    // FIXME - deallocate *L 
+    // FIXME - deallocate *L
     return IB_OK;
 }
 
@@ -775,7 +775,7 @@ static ib_status_t modlua_conndata(
     assert(conndata);
     assert(conndata->conn);
     assert(cbdata);
-    
+
     ib_status_t rc;
 
     rc = modlua_callback_setup(ib, event, NULL, conndata->conn, cbdata);
@@ -958,7 +958,7 @@ static ib_status_t modlua_respline(
  * @param[in] ib IronBee engine.
  * @param[in] file The file we are loading.
  * @param[in] module The registered module structure.
- * @param[in,out] L The lua context that @a file will be loaded into as 
+ * @param[in,out] L The lua context that @a file will be loaded into as
  *                @a module.
  * @returns
  *   - IB_OK on success.
@@ -1124,7 +1124,7 @@ static ib_status_t modlua_module_load_lua(
  * @param[in] ib IronBee engine.
  * @param[in] file The file we are loading.
  * @param[in] module The registered module structure.
- * @param[in,out] L The lua context that @a file will be loaded into as 
+ * @param[in,out] L The lua context that @a file will be loaded into as
  *                @a module.
  * @returns
  *   - IB_OK on success.
@@ -1222,9 +1222,9 @@ static ib_status_t modlua_module_load_wire_callbacks(
  * This will dynamically create a Lua module that is managed by this
  * module.
  *
- * @param[in,out] ib IronBee Engine. Mostly used for logging, but will also 
+ * @param[in,out] ib IronBee Engine. Mostly used for logging, but will also
  *                receive the constructed module.
- * @param[in] file The file to read off of disk that contains the 
+ * @param[in] file The file to read off of disk that contains the
  *            Lua module definition.
  *
  * @returns
@@ -1399,7 +1399,7 @@ static ib_status_t modlua_conn_init_lua_runtime(ib_engine_t *ib,
     modlua_runtime_t *modlua_runtime;
 
     modlua_runtime = ib_mpool_alloc(conn->mp, sizeof(modlua_runtime));
-    if (!modlua_runtime) { 
+    if (!modlua_runtime) {
         return IB_EALLOC;
     }
 
@@ -1477,7 +1477,7 @@ static ib_status_t modlua_conn_fini_lua_runtime(ib_engine_t *ib,
 /**
  * Initialize the ModLua Module.
  *
- * This will create a common "global" runtime into which various APIs 
+ * This will create a common "global" runtime into which various APIs
  * will be loaded.
  */
 static ib_status_t modlua_init(ib_engine_t *ib,
@@ -1527,7 +1527,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     /* Hook to initialize the lua runtime with the connection.
      * There is a modlua_conn_fini_lua_runtime which is only registered
      * when the main configuration context is being closed. This ensures
-     * that it is the last hook to fire relative to the various 
+     * that it is the last hook to fire relative to the various
      * Lua-implemented modules this module may created and register. */
     rc = ib_hook_conn_register(
         ib,
@@ -1570,7 +1570,7 @@ static ib_status_t modlua_context_close(ib_engine_t  *ib,
     /* Close of the main context signifies configuration finished. */
     if (ib_context_type(ctx) == IB_CTYPE_MAIN) {
 
-        /* Register this callback after the main context is closed. 
+        /* Register this callback after the main context is closed.
          * This allows it to be executed LAST allowing all the Lua
          * modules created during configuration to be executed first. */
         rc = ib_hook_conn_register(

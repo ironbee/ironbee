@@ -187,7 +187,7 @@ public:
     }
 };
 
-const char * IronBeeLuaModules::ib_conf = 
+const char * IronBeeLuaModules::ib_conf =
     "LogLevel 9\n"
     "SensorId AAAABBBB-1111-2222-3333-FFFF00000023\n"
     "SensorName ExampleSensorName\n"
