@@ -59,7 +59,7 @@ if ENABLE_LUA
 ibmod_lua_la_SOURCES = lua.c \
                        lua_common.c \
                        lua_common_private.h
-ibmod_lua_la_CPPFLAGS = $(CPPFLAGS) \
+ibmod_lua_la_CPPFLAGS = $(AM_CPPFLAGS) \
                         -I$(top_srcdir)/libs/luajit-2.0-ironbee/src -I$(top_srcdir)
 ibmod_lua_la_LIBADD = $(AM_LIBADD) \
                       $(top_builddir)/lua/libironbee-lua.la \
@@ -81,6 +81,7 @@ ibmod_rules_la_SOURCES += \
     lua_common_private.h
 
 ibmod_rules_la_CPPFLAGS += \
+	$(AM_CPPFLAGS) \
     -I$(top_srcdir)/libs/luajit-2.0-ironbee/src
 ibmod_rules_la_LIBADD += -lluajit-ironbee \
                         -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
