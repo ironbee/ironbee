@@ -119,7 +119,7 @@ typedef ib_status_t (* ib_managed_collection_persist_fn_t)(
  * Register a managed collection handler
  *
  * @param[in,out] ib Engine
- * @param[in] module Registerring module
+ * @param[in] module Registering module
  * @param[in] name Name of collection manager being registered
  * @param[in] selection_fn Function to use for manager selection
  * @param[in] selection_data Data passed to @sa selection_fn()

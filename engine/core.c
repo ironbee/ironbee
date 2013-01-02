@@ -1756,7 +1756,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                                       strlen(tx->id));
         ib_list_push(list, f);
 
-        /* Add all unsupressed alert event tags as well
+        /* Add all unsuppressed alert event tags as well
          * as the last alert message and action. */
         rc = ib_event_get_all(tx->epi, &events);
         if (rc == IB_OK) {
@@ -1804,10 +1804,10 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                     continue;
                 }
 
-                /* The threat_level is severity scaled by confidance where
-                 * severity ranges 0-100 and confidance ranges 0-100:
+                /* The threat_level is severity scaled by confidence where
+                 * severity ranges 0-100 and confidence ranges 0-100:
                  *   - severity is just a number to scale
-                 *   - confidance is the scaling factor
+                 *   - confidence is the scaling factor
                  *     0: Not used
                  *     <50: scale down
                  *     50: balanced
