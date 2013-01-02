@@ -135,10 +135,6 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libdir}/libibpp.so
 %attr(0755,root,root) %{_libdir}/libibpp.la
 %attr(0755,root,root) %{_libdir}/libibpp.a
-%attr(0755,root,root) %{_libdir}/libironautomata-*.so.*
-%attr(0755,root,root) %{_libdir}/libironautomata.so
-%attr(0755,root,root) %{_libdir}/libironautomata.la
-%attr(0755,root,root) %{_libdir}/libironautomata.a
 
 %attr(0755,root,root) %{_libdir}/*.lua
 %attr(0755,root,root) %{_libdir}/ibmod_*
@@ -162,6 +158,11 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0644,root,root) %{_includedir}/htp/*
 %attr(0644,root,root) %{_includedir}/ironautomata/*
 %attr(0644,root,root) %{_includedir}/ironbeepp/*
+
+%attr(0755,root,root) %{_libdir}/libironautomata-*.so.*
+%attr(0755,root,root) %{_libdir}/libironautomata.so
+%attr(0755,root,root) %{_libdir}/libironautomata.la
+%attr(0755,root,root) %{_libdir}/libironautomata.a
 
 %if %{with trafficserver}
 %files trafficserver
