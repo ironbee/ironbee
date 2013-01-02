@@ -182,8 +182,7 @@ ib_status_t DLL_PUBLIC ib_cfgmap_create(ib_cfgmap_t **pcm,
 /**
  * Required as the last entry.
  */
-#define IB_CFGMAP_INIT_LAST { .name = NULL }
-
+#define IB_CFGMAP_INIT_LAST { NULL, IB_FTYPE_GENERIC, NULL, NULL, NULL, NULL, 0, 0 }
 
 /**
  * Initialize a configuration map with entries.
