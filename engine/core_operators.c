@@ -1561,7 +1561,6 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
     bool expandable;
     ib_num_t num_value;
     ib_float_t float_value;
-    ib_ftype_t ftype;
 
     char *params_unesc;
     size_t params_unesc_len;
@@ -1583,6 +1582,10 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
     }
     if (expandable) {
         op_inst->flags |= IB_OPINST_FLAG_EXPAND;
+
+        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
+                             IB_FTYPE_NULSTR,
+                             ib_ftype_nulstr_in(params_unesc));
     }
     else {
         ib_status_t num_rc;
@@ -1598,7 +1601,12 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
 
         /* If it's a valid int, all good, use it */
         if (num_rc == IB_OK) {
-            ftype = IB_FTYPE_NUM;
+            rc = ib_field_create(
+                &f,
+                mp,
+                IB_FIELD_NAME("param"),
+                IB_FTYPE_NUM,
+                ib_ftype_num_in(&num_value));
         }
         /* If it's a valid float, don't use it for eq and ne operators */
         else if (float_rc == IB_OK) {
@@ -1612,7 +1620,12 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
                 return IB_EINVAL;
             }
             else {
-                ftype = IB_FTYPE_FLOAT;
+                rc = ib_field_create(
+                    &f,
+                    mp,
+                    IB_FIELD_NAME("param"),
+                    IB_FTYPE_FLOAT,
+                    ib_ftype_float_in(&float_value));
             }
         }
         else {
@@ -1624,27 +1637,12 @@ static ib_status_t op_numcmp_create(ib_engine_t *ib,
         }
     }
 
-    if (expandable) {
-        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
-                             IB_FTYPE_NULSTR,
-                             ib_ftype_nulstr_in(params_unesc));
-    }
-    else if (ftype == IB_FTYPE_NUM) {
-        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
-                             ftype, ib_ftype_num_in(&num_value));
-    }
-    else {
-        rc = ib_field_create(&f, mp, IB_FIELD_NAME("param"),
-                             ftype, ib_ftype_float_in(&float_value));
+    if (rc == IB_OK) {
+        op_inst->data = f;
+        op_inst->fparam = f;
     }
 
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    op_inst->data = f;
-    op_inst->fparam = f;
-    return IB_OK;
+    return rc;
 }
 
 /**
