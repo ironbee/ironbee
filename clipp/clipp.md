@@ -213,8 +213,11 @@ first via `writepb`.
 Generators
 ----------
 
-All generators -- except pcap -- that take file system paths, support using `-` to
-indicate stdin.
+All generators -- except pcap -- that take file system paths, support using 
+`-` to indicate stdin.
+
+All generators except pb produce parsed events.  Use @unparse if you want
+data events instead.
 
 **pb**:*path*
 
@@ -226,18 +229,16 @@ Generate events from a pair of raw files.  Bogus IP and ports are used for the
 connection opened event.  You can override those with the `@set_`*X*
 modifiers.
 
-This generator produces a single input with a single transaction.  A
-connection opened and connection closed event are included along with a
-single pair of connection data in and connection data out events in the
-transaction.
+This generator produces a single input with a single transaction.
 
 **modsec**:*path* --- Generate events from ModSecurity audit log.
 
-Serial ModSecurity audit logs -- those that have multiple entries -- are often somewhat corrupted.  CLIPP will emit a
-message, ignore, and continue processing whenever it fails to parse an entry.
+Serial ModSecurity audit logs -- those that have multiple entries -- are often 
+somewhat corrupted.  CLIPP will emit a message, ignore, and continue 
+processing whenever it fails to parse an entry.
 
 This generator produces an Input for each audit log entry.  The Input consists
-of a single transaction with the request and response.
+of a single transaction.
 
 **apache**:*path* --- Generate events from an Apache log.
 
@@ -252,8 +253,8 @@ of a single transaction with the fabricated request and response.
 
 **suricata**:*path* --- Generate events from a Suricata log.
 
-This generator behaves almost identically to `apache` but reads Suricata http log
-format instead.
+This generator behaves almost identically to `apache` but reads Suricata http
+log format instead.
 
 **htp**:*path: --- Generate events from a libHTP test file.
 
@@ -263,8 +264,8 @@ blocks begin with `>>>` on a line by itself and response blocks begin with
 
 This generator produces a single Input from the file.  The Input consists of
 a transaction for every pair of request and response blocks.  The connection
-opened event has bogus information.  Similar to `raw`, the connection information
-can be specified with the `@set_`*X* modifiers.
+opened event has bogus information.  Similar to `raw`, the connection
+information can be specified with the `@set_`*X* modifiers.
 
 You may omit response blocks in which case they default to the empty string.
 You may not omit request blocks.
@@ -281,8 +282,7 @@ Generates inputs based on reassembled PCAP.
 
 The PCAP is reassembled via libNIDS.  It is somewhat fragile and may get
 transaction boundaries wrong if there is a connection that has traffic flowing
-simultaneously in both directions.  It generates connection data events, so
-use `@parse` if you want parsed events.
+simultaneously in both directions.
 
 Note that only complete streams are generated as inputs.  In particular, this
 means that you will need both directions of traffic to get any inputs, e.g.,
@@ -331,12 +331,12 @@ first line on spaces into three values (the request/response line values),
 splits the next lines on : into two values (header key and value), and, when
 it sees a blank line, treats the remainder of the data as the body.
 
-At present, `@parse` does not support repeated connection data in or connection
-data out events.  Handling those properly (also repeat parsed events) would
-require a smarter parser and handling those dumbly (join them and process as
-a single block of text) was deemed more unexpected than useful.  So, if
-repeated events are present, an error will be displayed and the input
-discarded.
+At present, `@parse` does not support repeated connection data in or 
+connection data out events.  Handling those properly (also repeat parsed 
+events) would require a smarter parser and handling those dumbly (join them 
+and process as a single block of text) was deemed more unexpected than 
+useful.  So, if repeated events are present, an error will be displayed and 
+the input discarded.
 
 **@unparse**
 

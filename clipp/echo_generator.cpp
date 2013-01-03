@@ -23,6 +23,7 @@
  */
 
 #include "echo_generator.hpp"
+#include "parse_modifier.hpp"
 
 #include <boost/make_shared.hpp>
 
@@ -74,6 +75,8 @@ bool EchoGenerator::operator()(Input::input_p& out_input)
     out_input->connection.connection_closed();
     out_input->connection.add_transaction()
         .connection_data_in(Input::Buffer(m_state->request));
+
+    ParseModifier()(out_input);
 
     m_state->produced_input = true;
 

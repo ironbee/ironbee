@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include "apache_generator.hpp"
+#include "parse_modifier.hpp"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -178,6 +179,8 @@ bool ApacheGenerator::operator()(Input::input_p& input)
     else {
         throw runtime_error("Unparsed line: " + line);
     }
+
+    ParseModifier()(input);
 
     return true;
 }

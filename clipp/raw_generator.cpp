@@ -23,6 +23,7 @@
  */
 
 #include "raw_generator.hpp"
+#include "parse_modifier.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -127,6 +128,8 @@ bool RawGenerator::operator()(Input::input_p& out_input)
            m_state->response_buffer.size()
        )
     );
+
+    ParseModifier()(out_input);
 
     m_state->produced_input = true;
 

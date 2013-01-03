@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include "pcap_generator.hpp"
+#include "parse_modifier.hpp"
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/make_shared.hpp>
@@ -239,6 +240,8 @@ bool PCAPGenerator::operator()(Input::input_p& input) const
     }
 
     input.swap(s_global_state->input);
+
+    ParseModifier()(input);
 
     return true;
 }

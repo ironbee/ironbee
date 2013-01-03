@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include "htp_generator.hpp"
+#include "parse_modifier.hpp"
 
 #include <boost/make_shared.hpp>
 #include <boost/lexical_cast.hpp>
@@ -174,6 +175,8 @@ bool HTPGenerator::operator()(Input::input_p& input)
     }
 
     input->connection.connection_closed();
+
+    ParseModifier()(input);
 
     return true;
 }

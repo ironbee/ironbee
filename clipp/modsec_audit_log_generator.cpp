@@ -23,6 +23,7 @@
  */
 
 #include "modsec_audit_log_generator.hpp"
+#include "parse_modifier.hpp"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -152,6 +153,8 @@ bool ModSecAuditLogGenerator::operator()(Input::input_p& out_input)
         m_state->parser->recover();
         throw;
     }
+
+    ParseModifier()(out_input);
 
     return true;
 }

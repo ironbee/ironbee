@@ -65,6 +65,11 @@ IronBee v0.7.0
   
 * Eudoxus output callbacks are now passed the engine.
 
+**Clipp**
+
+* All generators except pb now produced parsed events.  Use @unparse to get
+  the previous behavior.
+
 **Other**
 
 * Removed FTRACE code.

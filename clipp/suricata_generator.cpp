@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include "suricata_generator.hpp"
+#include "parse_modifier.hpp"
 
 #ifdef __clang__
 #pragma clang diagnostic push
@@ -195,6 +196,8 @@ bool SuricataGenerator::operator()(Input::input_p& input)
     else {
         throw runtime_error("Unparsed line: " + line);
     }
+
+    ParseModifier()(input);
 
     return true;
 }
