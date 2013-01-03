@@ -16,6 +16,19 @@ AX_SPLIT_VERSION([$PACKAGE_VERSION])
 
 AM_INIT_AUTOMAKE([foreign])
 
+### Determine automake version.
+AC_MSG_CHECKING([for automake > 1.12])
+AX_COMPARE_VERSION([$am__api_version],[gt],[1.12],
+[
+	automake113="yes"
+	AC_MSG_RESULT([yes])
+],
+[
+	automake113="no"
+	AC_MSG_RESULT([no])
+])
+AM_CONDITIONAL([AUTOMAKE113], [test "$automake113" = "yes"])
+
 dnl Checks for programs.
 dnl If CFLAGS and CXXFLAGS are blank these macro's fill in defaults we don't want that
 OS=`uname -s`
