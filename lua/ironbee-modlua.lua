@@ -46,6 +46,18 @@ local lua_modules = {}
 -- Similar to lua_modules, but the keys here are by name.
 local lua_modules_by_name = {}
 
+-- A set of Lua tables that represent module configurations.
+-- The format of this table is that lua_module_configs[module_index]
+-- which returns a table of configuration tables.
+local lua_module_configs = {}
+
+-- A map of Lua module config directives to callback tables.
+-- A callback table, t,contains t.fn which is the actuall
+-- Lua callback function. The table also contains t.type, the
+-- C enum type of the callback. This is not very useful for
+-- Lua directives, though.
+local lua_module_directives = {}
+
 -- Transation table of state event strings to integers.
 local stateToInt = {
     ["conn_started_event"] =
@@ -112,49 +124,199 @@ for k,v in pairs(stateToInt) do
     intToState[v] = k
 end
 
-local log = function(ib, level, msg, ...) 
-    local debug_table = debug.getinfo(2, "Sl")
-    local file = debug_table.short_src
-    local line = debug_table.currentline
+-- ########################################################################
+-- Module API
+-- ########################################################################
+-- API passed to user code building a module.
+local moduleapi = {}
+moduleapi.__index = moduleapi
+setmetatable(moduleapi, ibapi.engineapi)
 
-    -- Msg must not be nil.
-    if msg == nil then msg = "(nil)" end
-
-    if type(msg) ~= 'string' then msg = tostring(msg) end
-
-    -- If we have more arguments, format msg with them.
-    if ... ~= nil then msg = string.format(msg, ...) end
-
-    -- LOG!
-    ffi.C.ib_log_ex(ib, level, file, line, msg);
-end
-
--- This module reports some errors.
--- @param[in] ib IronBee C data.
--- @param[in] msg Message.
-local log_error = function(ib, msg, ...)
-    log(ib, ffi.C.IB_LOG_ERROR, msg, ...)
-end
-
-local log_info = function(ib, msg, ...)
-    log(ib, ffi.C.IB_LOG_INFO, msg, ...)
-end
-
--- @param[in] ib IronBee engine C data.
-M.load_module = function(ib, module_index, name, module_function)
-    -- Build callback table to pass to module.
+-- Make a new moduleapi.
+-- @param[in] self The class table.
+-- @param[in] ib The IronBee engine. Because
+--            a moduleapi object is a descendent of ibapi.engineapi
+--            it needs to run that constructor which takes an ib_engine_t.
+-- @param[in] name The module name. While not required, this is
+--            currently always the Lua module file name.
+-- @param[in] index The module index in the IronBee engine.
+-- @param[in] register_directive A function that will
+--            do the work in C to register a directive with the IronBee 
+--            engine.
+moduleapi.new = function(self, ib, mod, name, index, cregister_directive)
     local t = ibapi.engineapi:new(ib)
-    
+
+    -- The module name.
+    t.name = name
+
+    -- The module index in the IronBee engine.
+    t.index = index
+
+    -- IronBee module structure pointer. Lua need never unpack this.
+    t.ib_module = mod
+
+    -- Where event callbacks are stored.
     t.events = {}
 
-    -- Table t has a list of registration functions. All they do is
-    -- force the user to spell the callbacks correctly.
-    for k,v in pairs(stateToInt) do
-        t[k] = function(self, func)
-            -- Assign the user's function to the callback key integer.
-            self.events[v] = func
-        end
+    -- Directives to register after the module is loaded.
+    t.directives = {}
+
+    -- Store the c register directive callback.
+    t.cregister_directive = cregister_directive
+
+    return setmetatable(t, self);
+end
+
+-- Schedule a directive to be registered after the module is done loading.
+-- @param[in] self The object.
+-- @param[in] name The name of the directive.
+-- @param[in] dirtype The C enum type of the directive.
+-- @param[in] fn The function to call.
+moduleapi.register_directive = function(self, name, dirtype, fn, flagmap)
+    lua_module_directives[name] = { 
+        type = dirtype,
+        fn = fn,
+        mod = self,
+    }
+
+    local rc
+
+    if (flagmap == nil) then
+        rc,msg = self:cregister_directive(name, dirtype)
+    else
+        rc,msg = self:cregister_directive(name, dirtype, flagmap)
     end
+
+    if rc ~= ffi.C.IB_OK then
+        self:logError(
+            "Failed to register directive %s: %d - %s",
+            name,
+            rc,
+            ""--msg)
+            )
+    end
+
+    return rc
+end
+
+-- Register a directive to be handled by a particular Lua function.
+-- @param[in] self The object.
+-- @param[in] name The name of the directive.
+-- @param[in] fn The function to call.
+moduleapi.register_onoff_directive = function(self, name, fn)
+    return self:register_directive(name, ffi.C.IB_DIRTYPE_ONOFF, fn)
+end
+-- Register a directive to be handled by a particular Lua function.
+-- @param[in] self The object.
+-- @param[in] name The name of the directive.
+-- @param[in] fn The function to call.
+moduleapi.register_param1_directive = function(self, name, fn)
+    return self:register_directive(name, ffi.C.IB_DIRTYPE_PARAM1, fn)
+end
+-- Register a directive to be handled by a particular Lua function.
+-- @param[in] self The object.
+-- @param[in] name The name of the directive.
+-- @param[in] fn The function to call.
+moduleapi.register_param2_directive = function(self, name, fn)
+    return self:register_directive(name, ffi.C.IB_DIRTYPE_PARAM2, fn)
+end
+-- Register a directive to be handled by a particular Lua function.
+-- @param[in] self The object.
+-- @param[in] name The name of the directive.
+-- @param[in] fn The function to call.
+moduleapi.register_list_directive = function(self, name, fn)
+    return self:register_directive(name, ffi.C.IB_DIRTYPE_LIST, fn)
+end
+
+-- Register a directive to be handled by a particular Lua function.
+-- @param[in] self The object.
+-- @param[in] name The name of the directive.
+-- @param[in] fn The function to call.
+-- @param[in] flagmap 
+moduleapi.register_opflags_directive = function(self, name, fn, flagmap)
+    return self:register_directive(name, ffi.C.IB_DIRTYPE_OPFLAGS, fn, flagmap)
+end
+-- Register a directive to be handled by a particular Lua function.
+-- @param[in] self The object.
+-- @param[in] name The name of the directive.
+-- @param[in] fn The function to call.
+moduleapi.register_subblock_directive = function(self, name, fn)
+    return self:register_directive(name, ffi.C.IB_DIRTYPE_SBLK1, fn)
+end
+
+-- The module api provides the user functions to register callbacks by.
+for k,v in pairs(stateToInt) do
+    moduleapi[k] = function(self, func)
+        -- Assign the user's function to the callback key integer.
+        self:logDebug("Registering function for event %s=%d", k, v)
+        self.events[v] = func
+    end
+end
+-- ########################################################################
+-- End Module API
+-- ########################################################################
+
+-- This loads a Lua module.
+--
+-- A single argument is passed to the user's script and may be accessed
+-- by: local t = ...
+--
+-- Then the user may register event callbacks by calling something like:
+-- t:tx_finished_event(function(api) api:do_things() end)
+--
+-- Module configurations are available via api.config. This configuration
+-- table is built-up by directives.
+--
+-- @param[in] ib IronBee engine C data.
+-- @param[in] module_index The index of the module in the engine.
+-- @param[in] name The name of the module. Typically the file name.
+-- @param[in] cregister_directive A C function that Lua will call
+--            to register directives.
+-- @param[in] module_function The user's module code as a function.
+--            This is called and passed a new IronBee Engine API 
+--            table with added functions for registering
+--            callback functions. Each callback function takes 
+--            a single argument, the function to callback to when the
+--            event occurs in the IronBee engine.
+--            The callbacks registration functions are:
+--            - conn_started_event
+--            - conn_finished_event
+--            - tx_started_event
+--            - tx_process_event
+--            - tx_finished_event
+--            - handle_context_conn_event
+--            - handle_connect_event
+--            - handle_context_tx_event
+--            - handle_request_header_event
+--            - handle_request_event
+--            - handle_response_header_event
+--            - handle_response_event
+--            - handle_disconnect_event
+--            - handle_postprocess_event
+--            - conn_opened_event
+--            - conn_data_in_event
+--            - conn_data_out_event
+--            - conn_closed_event
+--            - request_started_event
+--            - request_header_data_event
+--            - request_header_finished_event
+--            - request_body_data_event
+--            - request_finished_event
+--            - response_started_event
+--            - response_header_data_event
+--            - response_header_finished_event
+--            - response_body_data_event
+--            - response_finished_event
+M.load_module = function(
+    ib,
+    ib_module,
+    name,
+    index,
+    cregister_directive,
+    module_function)
+
+    -- Build callback table to pass to module.
+    local t = moduleapi:new(ib, ib_module, name, index, cregister_directive)
 
     -- Ask the user to build the module.
     local rc = module_function(t)
@@ -162,13 +324,21 @@ M.load_module = function(ib, module_index, name, module_function)
     -- Ensure that modules that break our return contract don't cause
     -- too much trouble.
     if (type(rc) ~= "number") then
-        log_error(ib, "Non numeric return value from module initialization.")
+        t:logError("Non numeric return value from module initialization.")
         return tonumber(ffi.C.IB_EINVAL)
     end
 
+    -- Create an empty main configuration for every module.
+    M.create_configuration(
+        ib,
+        index,
+        {
+            ffi.string(ffi.C.ib_context_name_get(ffi.C.ib_context_main(ib)))
+        })
+
     -- Register the module to the internal table.
     lua_modules_by_name[name] = t
-    lua_modules[module_index] = t
+    lua_modules[index] = t
 
     return tonumber(rc)
 end
@@ -182,16 +352,20 @@ end
 M.get_callback = function(ib, module_index, event)
     local  t = lua_modules[module_index]
 
+    -- Since we only use the ib argument for logging, we defer 
+    -- creating an ibapi.engineapi table until we detect an error to log.
+
     if t == nil then
-        log_error(ib, "No module for module index %d", module_index)
+        local engineapi = ibapi.engineapi:new(ib)
+        engineapi:logError("No module for module index %d", module_index)
         return nil
     end
 
     local handler = t.events[event]
 
     if handler == nil then
-        log_info(
-            ib,
+        local engineapi = ibapi.engineapi:new(ib)
+        engineapi:logInfo(
             "No handler registered for module %d event %d",
             module_index,
             event)
@@ -201,18 +375,111 @@ M.get_callback = function(ib, module_index, event)
     return handler
 end
 
+-- Create a new, empty module configuration table if it does not exist. 
+--
+-- This is used for fetching configuration during configuration time.
+--
+-- This is where users should store module configurations such as those
+-- provided through configuration directives.
+--
+-- If a parent configuration context is given, it is set as 
+-- the returned configuration table's metatable's __index value. The
+-- returned configuration will then inherit from the parent configuration.
+--
+-- @param[in] ib IronBee engine.
+-- @param[in] module_index The index of the Lua module in the engine.
+-- @param[in] ctxlst The name of the context which the 
+--            configuration should be created for.
+-- @param[in] prev_ctx_name The name of the previous configuration, if any.
+--            This may be nil.
+--
+-- @returns Configuration table.
+M.create_configuration = function(ib, module_index, ctxlst)
+
+    -- If this is the first config, init the table of all configs.
+    if lua_module_configs[module_index] == nil then
+        lua_module_configs[module_index] = {}
+    end
+
+    -- Table of all this module's configurations.
+    local configs = lua_module_configs[module_index]
+    local config = nil
+    local prev_config = nil
+
+    -- Ensure that each configuration exists. Return the most precise.
+    for k, ctx_name in pairs(ctxlst) do
+        config = configs[ctx_name]
+
+        if config == nil then
+            -- New, empty configuration.
+            config = {}
+
+            -- Store this new configuration.
+            configs[ctx_name] = config
+
+            if prev_config ~= nil then
+                setmetatable(config, { __index = prev_config })
+            end
+
+            -- Store prev_config_name for next iteration.
+            prev_config_name = ctx_name
+        end
+
+        prev_config = config
+    end
+
+    return config
+end
+
+-- Return the closest matching configuration context.
+--
+-- This is used for fetching configuration during runtime.
+--
+-- @param[in] ctxlist A list of configuration contexts to check for
+--            from most general to most specific. If a string is
+--            give, then only that configuration is checked for and
+--            nil returned if it does not exist.
+M.get_configuration = function(ib, module_index, ctxlst)
+    -- If ctxlist is a table, iterate DOWN from #ctxlst to find the
+    -- most precise configuration table we can for our user.
+    local i = #ctxlst
+
+    local ibe = ibapi.engineapi:new(ib)
+
+    while (i > 0) do
+        local t = lua_module_configs[module_index][tostring(ctxlst[i])]
+        if t ~= nil then
+            return t
+        end
+        i = i - 1
+    end
+
+    -- Fallback is to treat the input as a string and fetch whatever we
+    -- can find.
+    return lua_module_configs[module_index][tostring(ctxlst)]
+end
+
 -- This function is called by C to dispatch an event to a lua module.
 --
 -- @param[in] handler Function to call. This should take @a args as input.
--- @param[in] args A table of arguments. This will contains, at least,
---            event and ib_engine. Event will be an integer representing
---            the event being dispatched and ib_engine will be the
---            running IronBee Engine.
+-- @param[in] ib_engine The IronBee engine.
+-- @param[in] ib_module The ib_module pointer.
+-- @param[in] event An integer representing the event type enum.
+-- @param[in] ctxlst List of contexts.
+-- @param[in] ib_conn The connection pointer. May be nil for null callbacks.
+-- @param[in] ib_tx The transaction pointer. May be nil.
 --
 -- @returns And integer representation of an ib_status_t.
 --   - IB_OK on success.
 --   
-M.dispatch_module = function(handler, ib_engine, ib_module, event, ib_conn, ib_tx)
+M.dispatch_module = function(
+    handler,
+    ib_engine,
+    module_index,
+    event,
+    ctxlst,
+    ib_conn,
+    ib_tx)
 
     local args
 
@@ -222,13 +489,24 @@ M.dispatch_module = function(handler, ib_engine, ib_module, event, ib_conn, ib_t
         args = ibapi.txapi:new(ib_engine, ib_tx)
     end
 
+    -- Event type.
     args.event = event
+
+    -- Event name.
     args.event_name = intToState[tonumber(args.event)]
-    args.ib_conn = ffi.cast("ib_conn_t*", ib_conn)
+
+    -- Configuration to use.
+    args.config = M.get_configuration(ib_engine, module_index, ctxlst)
+
+    if ib_conn ~= nil then
+        -- Connection.
+        args.ib_conn = ffi.cast("ib_conn_t*", ib_conn)
+    end
 
     -- Dispatch
     args:logDebug("Running callback for %s.", args.event_name)
 
+    -- Do the dispatch.
     local rc = handler(args)
 
     args:logDebug("Ran callback for %s.", args.event_name)
@@ -236,13 +514,91 @@ M.dispatch_module = function(handler, ib_engine, ib_module, event, ib_conn, ib_t
     -- Ensure that modules that break our return contract don't cause
     -- too much trouble.
     if (type(rc) ~= "number") then
-        log_error(
-            args.ib_engine,
-            "Non numeric return value from module. Returning IB_OK.")
+        args:logError("Non numeric return value from module. Returning IB_OK.")
         rc = 0
     end
 
     return tonumber(rc)
 end
+
+-- ########################################################################
+-- modlua API Directive Callbacks.
+-- ########################################################################
+M.modlua_config_cb_blkend = function(ib, modidx, ctxlst, name)
+    local cfg = M.create_configuration(ib, modidx, ctxlst)
+
+    local directive_table = lua_module_directives[name]
+
+    directive_table.fn(lua_modules[modidx], cfg, name)
+
+    return ffi.C.IB_OK
+end
+M.modlua_config_cb_onoff = function(ib, modidx, ctxlst, name, onoff)
+    local cfg = M.create_configuration(ib, modidx, ctxlst)
+
+    local directive_table = lua_module_directives[name]
+
+    directive_table.fn(lua_modules[modidx], cfg, name, onoff)
+
+    return ffi.C.IB_OK
+end
+M.modlua_config_cb_param1 = function(ib, modidx, ctxlst, name, p1)
+    local cfg = M.create_configuration(ib, modidx, ctxlst)
+
+    local directive_table = lua_module_directives[name]
+
+    directive_table.fn(lua_modules[modidx], cfg, name, p1)
+
+    return ffi.C.IB_OK
+end
+M.modlua_config_cb_param2 = function(ib, modidx, name, p1, p2)
+    local cfg = M.create_configuration(ib, modidx, ctxlst)
+
+    local directive_table = lua_module_directives[name]
+
+    directive_table.fn(lua_modules[modidx], cfg, name, p1, p2)
+
+    return ffi.C.IB_OK
+end
+M.modlua_config_cb_list = function(ib, modidx, name, list)
+    local cfg = M.create_configuration(ib, modidx, ctxlst)
+
+    local directive_table = lua_module_directives[name]
+
+    -- Parameter list passed to callback.
+    local plist = {}
+
+    ibapi.each_list_node(
+        ffi.cast("ib_list_t*", list),
+        function(s)
+            table.insert(plist, v)
+        end,
+        "char *")
+
+    directive_table.fn(lua_modules[modidx], cfg, name, plist)
+
+    return ffi.C.IB_OK
+end
+M.modlua_config_cb_opflags = function(ib, modidx, name, flags)
+    local cfg = M.create_configuration(ib, modidx, ctxlst)
+
+    local directive_table = lua_module_directives[name]
+
+    directive_table.fn(lua_modules[modidx], cfg, name, flags)
+
+    return ffi.C.IB_OK
+end
+M.modlua_config_cb_sblk1 = function(ib, modidx, name, p1)
+    local cfg = M.create_configuration(ib, modidx, ctxlst)
+
+    local directive_table = lua_module_directives[name]
+
+    directive_table.fn(lua_modules[modidx], cfg, name, p1)
+
+    return ffi.C.IB_OK
+end
+-- ########################################################################
+-- END modlua API Directive Callbacks.
+-- ########################################################################
 
 return M

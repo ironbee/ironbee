@@ -54,13 +54,9 @@ using namespace std;
  */
 struct IronBeeLuaModules : public BaseFixture {
 
-    lua_State* L;
-
     ib_conn_t *ib_conn;
     ib_tx_t *ib_tx;
     ib_module_t *mod_htp;
-    ib_rule_exec_t ib_rule_exec;
-    ib_rule_t *ib_rule;
 
     static const char *c_ib_conf;
 
@@ -73,22 +69,6 @@ struct IronBeeLuaModules : public BaseFixture {
     {
         BaseFixture::SetUp();
 
-        /* Initialize a new lua state. */
-        L = luaL_newstate();
-
-        /* Open standard libraries. */
-        luaL_openlibs(L);
-
-
-        ASSERT_IB_OK(ib_rule_create(ib_engine,
-                                    ib_engine->ectx,
-                                    __FILE__,
-                                    __LINE__,
-                                    true,
-                                    &ib_rule));
-        ib_rule->meta.id = "const_rule_id";
-        ib_rule->meta.full_id = "full_const_rule_id";
-
         /* We need the ibmod_htp to initialize the ib_tx. */
         configureIronBeeByString(c_ib_conf);
 
@@ -100,28 +80,6 @@ struct IronBeeLuaModules : public BaseFixture {
         /* Lib htp.c does this, so we do this here. */
         assert(ib_conn->tx != NULL);
         ib_tx = ib_conn->tx;
-
-        memset(&ib_rule_exec, 0, sizeof(ib_rule_exec));
-        ib_rule_exec.ib = ib_engine;
-        ib_rule_exec.tx = ib_tx;
-        ib_rule_exec.rule = ib_rule;
-
-        appendToSearchPath(IB_XSTRINGIFY(RULE_BASE_PATH));
-        appendToSearchPath(IB_XSTRINGIFY(MODULE_BASE_PATH));
-
-        require("ffi", "ffi");
-        require("ironbee", "ironbee-ffi");
-        require("ibapi", "ironbee-api");
-
-        lua_pushlightuserdata(L, &ib_rule_exec);
-        lua_setglobal(L, "ib_rule_exec");
-        lua_pushlightuserdata(L, ib_engine);
-        lua_setglobal(L, "ib_engine");
-        lua_pushlightuserdata(L, ib_tx);
-        lua_setglobal(L, "ib_tx");
-
-        /* Construct an IB value. */
-        eval("ib = ibapi:new(ib_rule_exec, ib_engine, ib_tx)");
     }
 
     void sendDataIn(const string& req) {
@@ -132,60 +90,11 @@ struct IronBeeLuaModules : public BaseFixture {
         BaseFixture::sendDataOut(ib_conn, req);
     }
 
-    void require(const string& name, const string& module)
-    {
-        int rc;
-
-        lua_getglobal(L, "require");
-        lua_pushstring(L, module.c_str());
-        rc = lua_pcall(L, 1, 1, 0);
-
-        if (rc!=0) {
-            throw runtime_error("Failed to require "+module+" - "+
-                string(lua_tostring(L, -1)));
-            lua_pop(L, 1);
-        }
-
-        lua_setglobal(L, name.c_str());
-    }
-
-    /**
-     * Append the path do a directory to the Lua search path.
-     *
-     * @param[in] path Path to a directory containing *.lua files.
-     *            The string "/?.lua" is appended to the path before the
-     *            path is appended to Lua's package.path value.
-     */
-    void appendToSearchPath(const string& path)
-    {
-        /* Set lua load path. */
-        lua_getglobal(L, "package");
-        lua_pushstring(L, "path");
-        lua_pushstring(L, "path");
-        lua_gettable(L, -3);
-        lua_pushstring(L, ";");
-        lua_pushstring(L, (path + "/?.lua").c_str());
-        lua_concat(L, 3);
-        lua_settable(L, -3);
-    }
-
-    void eval(const string& luaCode)
-    {
-        if ( luaL_dostring(L, luaCode.c_str()) != 0 ) {
-            string msg("Executing lua code snippet has failed - ");
-            msg.append(lua_tostring(L, -1));
-            lua_pop(L, 1);
-            throw runtime_error(msg);
-        }
-    }
-
     /**
      * Close the lua stack and call BaseFixture::TearDown().
      */
     virtual void TearDown()
     {
-        lua_close(L);
-
         ib_state_notify_conn_closed(ib_engine, ib_conn);
 
         BaseFixture::TearDown();
@@ -206,11 +115,30 @@ const char * IronBeeLuaModules::c_ib_conf =
     "ModuleBasePath \".\"\n"
     "LuaLoadModule \"test_ironbee_lua_modules.lua\"\n"
     "Set parser \"htp\"\n"
+    "MyLuaDirective param1\n"
+    "MyLuaDirective2 param3\n"
     "<Site default>\n"
         "SiteId AAAABBBB-1111-2222-3333-000000000000\n"
         "Hostname *\n"
+        "MyLuaDirective param2\n"
     "</Site>\n" ;
 
-TEST_F(IronBeeLuaModules, test01){
-    ASSERT_TRUE(L);
+TEST_F(IronBeeLuaModules, test_global_directive){
+    ib_field_t *field1;
+    const char *field1_val;
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->dpi, "MyLuaDirective2", &field1));
+    ASSERT_EQ(IB_FTYPE_NULSTR, field1->type);
+    ASSERT_EQ(IB_OK, ib_field_value(field1, ib_ftype_nulstr_out(&field1_val)));
+    ASSERT_TRUE(field1_val);
+    ASSERT_STREQ("param3", field1_val);
+}
+
+TEST_F(IronBeeLuaModules, test_site_directive){
+    ib_field_t *field1;
+    const char *field1_val;
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->dpi, "MyLuaDirective", &field1));
+    ASSERT_EQ(IB_FTYPE_NULSTR, field1->type);
+    ASSERT_EQ(IB_OK, ib_field_value(field1, ib_ftype_nulstr_out(&field1_val)));
+    ASSERT_TRUE(field1_val);
+    ASSERT_STREQ("param2", field1_val);
 }

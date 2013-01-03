@@ -497,53 +497,53 @@ ffi.cdef [[
         ib_operator_execute_fn_t fn_execute;
     };
 
-struct ib_operator_inst_t {
-    struct ib_operator_t *op;      /**< Pointer to the operator type */
-    ib_flags_t            flags;   /**< Operator instance flags */
-    void                 *data;    /**< Data passed to the execute function */
-    char                 *params;  /**< Parameters passed to create */
-    ib_field_t           *fparam;  /**< Parameters as a field */
-};
-ib_status_t ib_operator_register(
-    ib_engine_t              *ib,
-    const char               *name,
-    ib_flags_t                flags,
-    ib_operator_create_fn_t   fn_create,
-    void                     *cd_create,
-    ib_operator_destroy_fn_t  fn_destroy,
-    void                     *cd_destroy,
-    ib_operator_execute_fn_t  fn_execute,
-    void                     *cd_execute
-);
-ib_status_t ib_operator_inst_create(
-    ib_engine_t         *ib,
-    ib_context_t        *ctx,
-    const ib_rule_t     *rule,
-    ib_flags_t           required_op_flags,
-    const char          *name,
-    const char          *parameters,
-    ib_flags_t           flags,
-    ib_operator_inst_t **op_inst
-);
-ib_status_t ib_operator_inst_destroy(
-    ib_operator_inst_t *op_inst
-);
-ib_status_t ib_operator_execute(
-    const ib_rule_exec_t     *rule_exec,
-    const ib_operator_inst_t *op_inst,
-    ib_field_t               *field,
-    ib_num_t                 *result
-);
+    struct ib_operator_inst_t {
+        struct ib_operator_t *op;      /**< Pointer to the operator type */
+        ib_flags_t            flags;   /**< Operator instance flags */
+        void                 *data;    /**< Data passed to the execute function */
+        char                 *params;  /**< Parameters passed to create */
+        ib_field_t           *fparam;  /**< Parameters as a field */
+    };
+    ib_status_t ib_operator_register(
+        ib_engine_t              *ib,
+        const char               *name,
+        ib_flags_t                flags,
+        ib_operator_create_fn_t   fn_create,
+        void                     *cd_create,
+        ib_operator_destroy_fn_t  fn_destroy,
+        void                     *cd_destroy,
+        ib_operator_execute_fn_t  fn_execute,
+        void                     *cd_execute
+    );
+    ib_status_t ib_operator_inst_create(
+        ib_engine_t         *ib,
+        ib_context_t        *ctx,
+        const ib_rule_t     *rule,
+        ib_flags_t           required_op_flags,
+        const char          *name,
+        const char          *parameters,
+        ib_flags_t           flags,
+        ib_operator_inst_t **op_inst
+    );
+    ib_status_t ib_operator_inst_destroy(
+        ib_operator_inst_t *op_inst
+    );
+    ib_status_t ib_operator_execute(
+        const ib_rule_exec_t     *rule_exec,
+        const ib_operator_inst_t *op_inst,
+        ib_field_t               *field,
+        ib_num_t                 *result
+    );
 
     /* Rule Structures and Types. */
 
-typedef struct ib_rule_target_t ib_rule_target_t;
+    typedef struct ib_rule_target_t ib_rule_target_t;
 
-/**
- * Rule execution logging data
- */
-typedef struct ib_rule_log_exec_t ib_rule_log_exec_t;
-typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
+    /**
+    * Rule execution logging data
+    */
+    typedef struct ib_rule_log_exec_t ib_rule_log_exec_t;
+    typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
 
     typedef struct {
         const char            *id;
@@ -857,6 +857,7 @@ typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
     /* Misc */
     ib_status_t ib_engine_create(ib_engine_t **pib, void *server);
     ib_status_t ib_context_create_main(ib_engine_t *ib);
+    const char * ib_context_name_get(const ib_context_t *ctx);
 
     /* Logging */
     void ib_log_ex(ib_engine_t *ib,

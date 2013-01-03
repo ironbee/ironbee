@@ -341,6 +341,664 @@ static ib_status_t build_near_empty_module(
 }
 
 /**
+ * Evaluate the Lua stack and report errors about directive processing.
+ */
+static ib_status_t modlua_config_cb_eval(
+    lua_State *L,
+    ib_engine_t *ib,
+    ib_module_t *module,
+    const char *name,
+    int args_in) 
+{
+    int lua_rc = lua_pcall(L, args_in, 1, 0);
+    ib_status_t rc;
+    switch(lua_rc) {
+        case 0:
+            /* NOP */
+            break;
+        case LUA_ERRRUN:
+            ib_log_error(
+                ib,
+                "Error processing directive for module %s: %s",
+                module->name,
+                lua_tostring(L, -1));
+            lua_pop(L, 1); /* Get error string off of the stack. */
+            return IB_EINVAL;
+        case LUA_ERRMEM:
+            ib_log_error(
+                ib,
+                "Failed to allocate memory processing directive for %s",
+                module->name);
+            return IB_EINVAL;
+        case LUA_ERRERR:
+            ib_log_error(
+                ib,
+                "Error fetching error message during directive for %s",
+                module->name);
+            return IB_EINVAL;
+#if LUA_VERSION_NUM > 501
+        /* If LUA_ERRGCMM is defined, include a custom error for it as well.
+          This was introduced in Lua 5.2. */
+        case LUA_ERRGCMM:
+            ib_log_error(
+                ib,
+                "Garbage collection error during directive for %s.",
+                module->name);
+            return IB_EINVAL;
+#endif
+        default:
+            ib_log_error(
+                ib,
+                "Unexpected error(%d) during directive %s for %s: %s",
+                lua_rc,
+                name,
+                module->name,
+                lua_tostring(L, -1));
+            lua_pop(L, 1); /* Get error string off of the stack. */
+            return IB_EINVAL;
+    }
+
+    if (!lua_isnumber(L, -1)) {
+        ib_log_error(ib, "Directive handler did not return integer.");
+        rc = IB_EINVAL;
+    }
+    else {
+        rc = lua_tonumber(L, -1);
+    }
+
+    lua_pop(L, 1);
+
+    return rc;
+}
+
+/**
+ * Push a Lua table onto the stack that contains a path of configurations.
+ *
+ * IronBee supports nested configuration contexts. Configuration B may
+ * occur in configuration A. This function will push 
+ * the Lua table { "A", "B" } such that t[1] = "A" and t[2] = "B".
+ *
+ * This allows the module to fetch or build the configuration table
+ * required to store any user configurations to be done.
+ *
+ * Lazy configuration table creation is done to avoid a large, unused
+ * memory footprint in situations of simple global Lua module configurations
+ * but hundreds of sites, each of which has no unique configuration.
+ *
+ * This is also used when finding the closest not-null configuration to
+ * pass to a directive handler.
+ *
+ * @param[in] ib IronBee Engine.
+ * @param[in] ctx The current / starting context.
+ * @param[in,out] L Lua stack onto which is pushed the table of configurations.
+ */
+static ib_status_t modlua_push_config_path(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    lua_State *L)
+{
+    assert(ib);
+    assert(ctx);
+    assert(L);
+
+    int table;
+
+    lua_createtable(L, 10, 0); /* Make a list to store our context names in. */
+    table = lua_gettop(L);     /* Store where in the stack it is. */
+
+    /* Until the main context is found, push the name of this ctx and fetch. */
+    while (ctx != ib_context_main(ib)) {
+        lua_pushstring(L, ib_context_name_get(ctx));
+        ctx = ib_context_parent_get(ctx);
+    }
+
+    /* Push the main context's name. */
+    lua_pushstring(L, ib_context_name_get(ctx));
+
+    /* While there is a string on the stack, append it to the table. */
+    for (int i = 1; lua_isstring(L, -1); ++i) {
+        lua_pushinteger(L, i);  /* Insert k. */
+        lua_insert(L, -2);      /* Make the stack [table, ..., k, v]. */
+        lua_settable(L, table); /* Set t[k] = v. */
+    }
+
+    return IB_OK;
+}
+
+/**
+ * @param[in] cp Configuration parser.
+ * @param[in] name Directive name for the block that is being closed.
+ * @param[in,out] cbdata Callback data.
+ */
+static ib_status_t modlua_config_cb_blkend(
+    ib_cfgparser_t *cp,
+    const char *name,
+    void *cbdata)
+{
+    assert(cp);
+    assert(name);
+    assert(cbdata);
+
+    ib_status_t rc;
+    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
+    lua_State *L = modlua_global_cfg.L;
+    ib_module_t *module = modlua_lua_cbdata->module;
+    ib_engine_t *ib = module->ib;
+    ib_context_t *ctx;
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        return rc;
+    }
+
+    /* Push standard module directive arguments. */
+    lua_getglobal(L, "modlua");
+    lua_getfield(L, -1, "modlua_config_cb_blkend");
+    lua_replace(L, -2); /* Effectively remove then modlua table. */
+    lua_pushlightuserdata(L, module->ib);
+    lua_pushinteger(L, module->idx);
+    rc = modlua_push_config_path(ib, ctx, L);
+    if (rc != IB_OK) {
+        lua_pop(L, 3);
+        return rc;
+    }
+
+    /* Push config parameters. */
+    lua_pushstring(L, name);
+
+    rc = modlua_config_cb_eval(L, ib, module, name, 4);
+    return rc;
+}
+
+/**
+ * @param[in] cp Configuration parser.
+ * @param[in] name Configuration directive name.
+ * @param[in] onoff On or off setting.
+ * @param[in] cbdata Callback data.
+ */
+static ib_status_t modlua_config_cb_onoff(
+    ib_cfgparser_t *cp,
+    const char *name,
+    int onoff,
+    void *cbdata)
+{
+    assert(cp);
+    assert(name);
+    assert(cbdata);
+
+    ib_status_t rc;
+    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
+    lua_State *L = modlua_global_cfg.L;
+    ib_module_t *module = modlua_lua_cbdata->module;
+    ib_engine_t *ib = module->ib;
+    ib_context_t *ctx;
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        return rc;
+    }
+
+    /* Push standard module directive arguments. */
+    lua_getglobal(L, "modlua");
+    lua_getfield(L, -1, "modlua_config_cb_onoff");
+    lua_replace(L, -2); /* Effectively remove then modlua table. */
+    lua_pushlightuserdata(L, module->ib);
+    lua_pushinteger(L, module->idx);
+    rc = modlua_push_config_path(ib, ctx, L);
+    if (rc != IB_OK) {
+        lua_pop(L, 3);
+        return rc;
+    }
+
+    /* Push config parameters. */
+    lua_pushstring(L, name);
+    lua_pushinteger(L, onoff);
+
+    rc = modlua_config_cb_eval(L, ib, module, name, 5);
+    return rc;
+}
+/**
+ * @param[in] cp Configuration parser.
+ * @param[in] name Configuration directive name.
+ * @param[in] p1 The only parameter.
+ * @param[in] cbdata Callback data.
+ */
+static ib_status_t modlua_config_cb_param1(
+    ib_cfgparser_t *cp,
+    const char *name,
+    const char *p1,
+    void *cbdata)
+{
+    assert(cp);
+    assert(name);
+    assert(p1);
+    assert(cbdata);
+
+    ib_status_t rc;
+    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
+    lua_State *L = modlua_global_cfg.L;
+    ib_module_t *module = modlua_lua_cbdata->module;
+    ib_engine_t *ib = module->ib;
+    ib_context_t *ctx;
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        return rc;
+    }
+
+    /* Push standard module directive arguments. */
+    lua_getglobal(L, "modlua");
+    lua_getfield(L, -1, "modlua_config_cb_param1");
+    lua_replace(L, -2); /* Effectively remove then modlua table. */
+    lua_pushlightuserdata(L, module->ib);
+    lua_pushinteger(L, module->idx);
+    rc = modlua_push_config_path(ib, ctx, L);
+    if (rc != IB_OK) {
+        lua_pop(L, 3);
+        return rc;
+    }
+
+    /* Push config parameters. */
+    lua_pushstring(L, name);
+    lua_pushstring(L, p1);
+
+    rc = modlua_config_cb_eval(L, ib, module, name, 5);
+    return rc;
+}
+/**
+ * @param[in] cp Configuration parser.
+ * @param[in] name Configuration directive name.
+ * @param[in] p1 The first parameter.
+ * @param[in] p2 The second parameter.
+ * @param[in] cbdata Callback data.
+ */
+static ib_status_t modlua_config_cb_param2(
+    ib_cfgparser_t *cp,
+    const char *name,
+    const char *p1,
+    const char *p2,
+    void *cbdata)
+{
+    assert(cp);
+    assert(name);
+    assert(p1);
+    assert(p2);
+    assert(cbdata);
+
+    ib_status_t rc;
+    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
+    lua_State *L = modlua_global_cfg.L;
+    ib_module_t *module = modlua_lua_cbdata->module;
+    ib_engine_t *ib = module->ib;
+    ib_context_t *ctx;
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        return rc;
+    }
+
+    /* Push standard module directive arguments. */
+    lua_getglobal(L, "modlua");
+    lua_getfield(L, -1, "modlua_config_cb_param2");
+    lua_replace(L, -2); /* Effectively remove then modlua table. */
+    lua_pushlightuserdata(L, module->ib);
+    lua_pushinteger(L, module->idx);
+    rc = modlua_push_config_path(ib, ctx, L);
+    if (rc != IB_OK) {
+        lua_pop(L, 3);
+        return rc;
+    }
+
+    /* Push config parameters. */
+    lua_pushstring(L, name);
+    lua_pushstring(L, p1);
+    lua_pushstring(L, p2);
+
+    rc = modlua_config_cb_eval(L, ib, module, name, 6);
+    return rc;
+}
+/**
+ * @param[in] cp Configuration parser.
+ * @param[in] name Configuration directive name.
+ * @param[in] list List of values.
+ * @param[in] cbdata Callback data.
+ */
+static ib_status_t modlua_config_cb_list(
+    ib_cfgparser_t *cp,
+    const char *name,
+    const ib_list_t *list,
+    void *cbdata)
+{
+    assert(cp);
+    assert(name);
+    assert(list);
+    assert(cbdata);
+
+    ib_status_t rc;
+    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
+    lua_State *L = modlua_global_cfg.L;
+    ib_module_t *module = modlua_lua_cbdata->module;
+    ib_engine_t *ib = module->ib;
+    ib_context_t *ctx;
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        return rc;
+    }
+
+    /* Push standard module directive arguments. */
+    lua_getglobal(L, "modlua");
+    lua_getfield(L, -1, "modlua_config_cb_list");
+    lua_replace(L, -2); /* Effectively remove then modlua table. */
+    lua_pushlightuserdata(L, module->ib);
+    lua_pushinteger(L, module->idx);
+    rc = modlua_push_config_path(ib, ctx, L);
+    if (rc != IB_OK) {
+        lua_pop(L, 3);
+        return rc;
+    }
+
+    /* Push config parameters. */
+    lua_pushstring(L, name);
+    lua_pushlightuserdata(L, (void *)list);
+
+    rc = modlua_config_cb_eval(L, ib, module, name, 5);
+    return rc;
+}
+/**
+ * @param[in] cp Configuration parser.
+ * @param[in] name Configuration directive name.
+ * @param[in] mask The flags we are setting.
+ * @param[in] cbdata Callback data.
+ */
+static ib_status_t modlua_config_cb_opflags(
+    ib_cfgparser_t *cp,
+    const char *name,
+    ib_flags_t mask,
+    void *cbdata)
+{
+    assert(cp);
+    assert(name);
+    assert(cbdata);
+
+    ib_status_t rc;
+    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
+    lua_State *L = modlua_global_cfg.L;
+    ib_module_t *module = modlua_lua_cbdata->module;
+    ib_engine_t *ib = module->ib;
+    ib_context_t *ctx;
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        return rc;
+    }
+
+    /* Push standard module directive arguments. */
+    lua_getglobal(L, "modlua");
+    lua_getfield(L, -1, "modlua_config_cb_opflags");
+    lua_replace(L, -2); /* Effectively remove then modlua table. */
+    lua_pushlightuserdata(L, module->ib);
+    lua_pushinteger(L, module->idx);
+    rc = modlua_push_config_path(ib, ctx, L);
+    if (rc != IB_OK) {
+        lua_pop(L, 3);
+        return rc;
+    }
+
+    /* Push config parameters. */
+    lua_pushstring(L, name);
+    lua_pushinteger(L, mask);
+
+    rc = modlua_config_cb_eval(L, ib, module, name, 5);
+    return rc;
+}
+/**
+ * @param[in] cp Configuration parser.
+ * @param[in] name Configuration directive name.
+ * @param[in] p1 The block name that we are exiting.
+ * @param[in] cbdata Callback data.
+ */
+static ib_status_t modlua_config_cb_sblk1(
+    ib_cfgparser_t *cp,
+    const char *name,
+    const char *p1,
+    void *cbdata)
+{
+    assert(cp);
+    assert(name);
+    assert(p1);
+    assert(cbdata);
+
+    ib_status_t rc;
+    modlua_lua_cbdata_t *modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
+    lua_State *L = modlua_global_cfg.L;
+    ib_module_t *module = modlua_lua_cbdata->module;
+    ib_engine_t *ib = module->ib;
+    ib_context_t *ctx;
+
+    rc = ib_cfgparser_context_current(cp, &ctx);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Could not retrieve current context.");
+        return rc;
+    }
+
+    /* Push standard module directive arguments. */
+    lua_getglobal(L, "modlua");
+    lua_getfield(L, -1, "modlua_config_cb_sblk1");
+    lua_replace(L, -2); /* Effectively remove then modlua table. */
+    lua_pushlightuserdata(L, module->ib);
+    lua_pushinteger(L, module->idx);
+    rc = modlua_push_config_path(ib, ctx, L);
+    if (rc != IB_OK) {
+        lua_pop(L, 3);
+        return rc;
+    }
+
+    /* Push config parameters. */
+    lua_pushstring(L, name);
+    lua_pushstring(L, p1);
+
+    rc = modlua_config_cb_eval(L, ib, module, name, 5);
+    return rc;
+}
+
+
+/**
+ * Proxy function to ib_config_register_directive callable by Lua.
+ *
+ * @param[in] L Lua state. This stack should have on it 3 arguments
+ *            to this function:
+ *            - @c self - The Module API object.
+ *            - @c name - The name of the directive to register.
+ *            - @c type - The type of directive this is.
+ *            - @c strvalmap - Optional string-value table map.
+ */
+static int modlua_config_register_directive(lua_State *L)
+{
+    assert(L);
+
+    ib_status_t rc = IB_OK;
+    const char *rcmsg = "Success.";
+
+    /* Variables pulled from the Lua state. */
+    ib_engine_t *ib;                /* Fetched from self on *L */
+    const char *name;               /* Name of the directive. 2nd arg. */
+    ib_dirtype_t type;              /* Type of directive. 3rd arg. */
+    int args = lua_gettop(L);       /* Arguments passed to this function. */
+    ib_strval_t *strvalmap;         /* Optional 4th arg. Must be converted. */
+    ib_void_fn_t cfg_cb;            /* Configuration callback. */
+    ib_mpool_t *mp;
+    modlua_lua_cbdata_t *modlua_lua_cbdata;
+    ib_module_t *module;
+
+    /* We choose assert here because if this value is incorrect, 
+     * then the lua module code (lua.c and ironbee-modlua.lua) are
+     * inconsistent with each other. */
+    assert(args==3 || args==4);
+
+    if (lua_istable(L, 0-args)) {
+
+        /* Get IB Engine. */
+        lua_getfield(L, 0-args, "ib_engine");
+        if ( !lua_islightuserdata(L, -1) ) {
+            lua_pop(L, 1);
+            rc = IB_EINVAL;
+            rcmsg = "ib_engine is not defined in module.";
+            goto exit;
+        }
+        ib = (ib_engine_t *)lua_topointer(L, -1);
+        assert(ib);
+        lua_pop(L, 1); /* Remove IB. */
+
+        /* Get Module. */
+        lua_getfield(L, 0-args, "ib_module");
+        if ( !lua_islightuserdata(L, -1) ) {
+            lua_pop(L, 1);
+            rc = IB_EINVAL;
+            rcmsg = "ib_engine is not defined in module.";
+            goto exit;
+        }
+        module = (ib_module_t *)lua_topointer(L, -1);
+        assert(module);
+        lua_pop(L, 1); /* Remove Module. */
+
+    }
+    else {
+        rc = IB_EINVAL;
+        rcmsg = "1st argument is not self table.";
+        goto exit;
+    }
+
+    if (lua_isstring(L, 1-args)) {
+        name = lua_tostring(L, 1-args);
+    }
+    else {
+        rc = IB_EINVAL;
+        rcmsg = "2nd argument is not a string.";
+        goto exit;
+    }
+
+    if (lua_isnumber(L, 2-args)) {
+        type = lua_tonumber(L, 2-args);
+    }
+    else {
+        rc = IB_EINVAL;
+        rcmsg = "3rd argument is not a number.";
+        goto exit;
+    }
+
+    if (args==4) {
+        if (lua_istable(L, 3-args)) {
+            int varmapsz = 0;
+
+            /* Iterator. */
+            int i;
+
+            /* Count the size of the table. table.maxn is not sufficient. */
+            while (lua_next(L, 3-args)) { /* Push string, int onto stack. */
+                ++varmapsz;
+                lua_pop(L, 1); /* Pop off value. Leave key. */
+            }
+            
+            if (varmapsz > 0) {
+                /* Allocate space for strvalmap. */
+                strvalmap = malloc(sizeof(*strvalmap) * (varmapsz + 1));
+                if (strvalmap == NULL) {
+                    rc = IB_EALLOC;
+                    rcmsg = "Cannot allocate strval map.";
+                    goto exit;
+                }
+    
+                /* Build map. */
+                i = 0;
+                while (lua_next(L, 3-args)) { /* Push string, int onto stack. */
+                    strvalmap[i].str = lua_tostring(L, -2);
+                    strvalmap[i].val = lua_tointeger(L, -1);
+                    lua_pop(L, 1); /* Pop off value. Leave key. */
+                    ++i;
+                }
+    
+                /* Null terminate the list. */
+                strvalmap[varmapsz].str = NULL;
+                strvalmap[varmapsz].val = 0;
+            }
+            else {
+                strvalmap = NULL;
+            }
+        }
+        else {
+            rc = IB_EINVAL;
+            rcmsg = "4th argument is not a table.";
+            goto exit;
+        }
+    }
+    else {
+        strvalmap = NULL;
+    }
+
+    mp = ib_engine_pool_main_get(ib);
+    modlua_lua_cbdata = ib_mpool_alloc(mp, sizeof(*modlua_lua_cbdata));
+    if (modlua_lua_cbdata == NULL) {
+        rc = IB_EALLOC;
+        rcmsg = "Failed to allocate callback data structure for directive.";
+    }
+    modlua_lua_cbdata->module = module;
+
+    /* Assign the cfg_cb pointer to hand the callback. */
+    switch (type) {
+        case IB_DIRTYPE_ONOFF:
+            cfg_cb = (ib_void_fn_t) &modlua_config_cb_onoff;
+            break;
+        case IB_DIRTYPE_PARAM1:
+            cfg_cb = (ib_void_fn_t) &modlua_config_cb_param1;
+            break;
+        case IB_DIRTYPE_PARAM2:
+            cfg_cb = (ib_void_fn_t) &modlua_config_cb_param2;
+            break;
+        case IB_DIRTYPE_LIST:
+            cfg_cb = (ib_void_fn_t) &modlua_config_cb_list;
+            break;
+        case IB_DIRTYPE_OPFLAGS:
+            cfg_cb = (ib_void_fn_t) &modlua_config_cb_opflags;
+            break;
+        case IB_DIRTYPE_SBLK1:
+            cfg_cb = (ib_void_fn_t) &modlua_config_cb_sblk1;
+            break;
+        default:
+            rc = IB_EINVAL;
+            rcmsg = "Invalid configuration type.";
+            goto exit;
+    }
+
+    rc = ib_config_register_directive(
+        ib,
+        name,
+        type,
+        cfg_cb,
+        &modlua_config_cb_blkend,
+        modlua_lua_cbdata,
+        modlua_lua_cbdata,
+        strvalmap);
+    if (rc != IB_OK) {
+        rcmsg = "Failed to register directive.";
+        goto exit;
+    }
+
+exit:
+    lua_pop(L, args);
+    lua_pushinteger(L, rc);
+    lua_pushstring(L, rcmsg);
+
+    return lua_gettop(L);
+}
+
+/**
  * Push the specified handler for a lua module on top of the Lua stack L.
  *
  * @returns
@@ -371,22 +1029,22 @@ static ib_status_t modlua_push_lua_handler(
         return IB_EINVAL;
     }
 
-    lua_pushstring(L, "get_callback"); /* Push load_module */
-    lua_gettable(L, -2);               /* Pop "load_module" and get func. */
+    lua_pushstring(L, "get_callback"); /* Push get_callback. */
+    lua_gettable(L, -2);               /* Pop get_callback and get func. */
     if (lua_isnil(L, -1)) {
-        ib_log_error(ib, "Module function load_module is undefined.");
+        ib_log_error(ib, "Module function get_callback is undefined.");
         lua_pop(L, 1); /* Pop modlua global off stack. */
         return IB_EINVAL;
     }
     if (! lua_isfunction(L, -1)) {
-        ib_log_error(ib, "Module function load_module is not a function.");
+        ib_log_error(ib, "Module function get_callback is not a function.");
         lua_pop(L, 1); /* Pop modlua global off stack. */
         return IB_EINVAL;
     }
 
     lua_pushlightuserdata(L, ib);
-    lua_pushnumber(L, module->idx);
-    lua_pushnumber(L, event);
+    lua_pushinteger(L, module->idx);
+    lua_pushinteger(L, event);
     lua_rc = lua_pcall(L, 3, 1, 0);
     switch(lua_rc) {
         case 0:
@@ -519,15 +1177,15 @@ static ib_status_t modlua_push_dispatcher(
         return IB_EINVAL;
     }
 
-    lua_pushstring(L, "dispatch_module"); /* Push load_module */
-    lua_gettable(L, -2);               /* Pop "load_module" and get func. */
+    lua_pushstring(L, "dispatch_module"); /* Push dispatch_module */
+    lua_gettable(L, -2);               /* Pop "dispatch_module" and get func. */
     if (lua_isnil(L, -1)) {
-        ib_log_error(ib, "Module function load_module is undefined.");
+        ib_log_error(ib, "Module function dispatch_module is undefined.");
         lua_pop(L, 1); /* Pop modlua global off stack. */
         return IB_EINVAL;
     }
     if (! lua_isfunction(L, -1)) {
-        ib_log_error(ib, "Module function load_module is not a function.");
+        ib_log_error(ib, "Module function dispatch_module is not a function.");
         lua_pop(L, 1); /* Pop modlua global off stack. */
         return IB_EINVAL;
     }
@@ -604,8 +1262,13 @@ static ib_status_t modlua_callback_setup(
     }
 
     lua_pushlightuserdata(L, ib);
-    lua_pushlightuserdata(L, module);
-    lua_pushnumber(L, event);
+    lua_pushinteger(L, module->idx);
+    lua_pushinteger(L, event);
+    rc = modlua_push_config_path(ib, conn->ctx, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to push configuration path onto Lua stack.");
+        return rc;
+    }
     lua_pushlightuserdata(L, conn);
     if (tx) {
         lua_pushlightuserdata(L, tx);
@@ -620,54 +1283,27 @@ static ib_status_t modlua_callback_setup(
 /**
  * Common code to run the module handler.
  *
- * This requires modlua_callback_setup to have been successfully run.
- *
- * @param[in] ib The IronBee engine. This may not be null.
- * @param[in] event The event type.
- * @param[in] tx The transaction. This may be null.
- * @param[in] conn The connection. This may not be null. We require it to,
- *            at a minimum, find the Lua runtime stack.
- * @param[in] cbdata The callback data. This may not be null.
- *
- * @returns
- *   - The result of the module dispatch call.
- *   - IB_E* values may be returned as a result of an internal
- *     module failure. The log file should always be examined
- *     to determine if a Lua module failure or an internal
- *     error is to blame.
+ * This is the basic function. This is almost always
+ * called by a wrapper function that unwraps Lua values from 
+ * the connection or module for us, but in the case of a null event
+ * callback, this is called directly
  */
-static ib_status_t modlua_callback_dispatch(
+static ib_status_t modlua_callback_dispatch_base(
     ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_tx_t *tx,
-    ib_conn_t *conn,
-    void *cbdata)
+    ib_module_t *module,
+    lua_State *L)
 {
     assert(ib);
-    assert(conn);
-    assert(cbdata);
+    assert(module);
+    assert(L);
 
     ib_status_t rc;
-    modlua_lua_cbdata_t *modlua_lua_cbdata;
-    ib_module_t *module;
-    lua_State *L;
-    modlua_runtime_t *lua;
     int lua_rc;
-
-    modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
-    module = modlua_lua_cbdata->module;
-
-    rc = modlua_runtime_get(conn, &lua);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    L = lua->L;
 
     ib_log_debug(ib, "Calling handler for lua module: %s", module->name);
 
     /* Run dispatcher. */
-    lua_rc = lua_pcall(L, 6, 1, 0);
+    lua_rc = lua_pcall(L, 7, 1, 0);
     switch(lua_rc) {
         case 0:
             /* NOP */
@@ -741,6 +1377,55 @@ static ib_status_t modlua_callback_dispatch(
 }
 
 /**
+ * Common code to run the module handler.
+ *
+ * This requires modlua_callback_setup to have been successfully run.
+ *
+ * @param[in] ib The IronBee engine. This may not be null.
+ * @param[in] event The event type.
+ * @param[in] tx The transaction. This may be null.
+ * @param[in] conn The connection. This may not be null. We require it to,
+ *            at a minimum, find the Lua runtime stack.
+ * @param[in] cbdata The callback data. This may not be null.
+ *
+ * @returns
+ *   - The result of the module dispatch call.
+ *   - IB_E* values may be returned as a result of an internal
+ *     module failure. The log file should always be examined
+ *     to determine if a Lua module failure or an internal
+ *     error is to blame.
+ */
+static ib_status_t modlua_callback_dispatch(
+    ib_engine_t *ib,
+    ib_state_event_type_t event,
+    ib_tx_t *tx,
+    ib_conn_t *conn,
+    void *cbdata)
+{
+    assert(ib);
+    assert(conn);
+    assert(cbdata);
+
+    ib_status_t rc;
+    modlua_lua_cbdata_t *modlua_lua_cbdata;
+    ib_module_t *module;
+    lua_State *L;
+    modlua_runtime_t *lua;
+
+    modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
+    module = modlua_lua_cbdata->module;
+
+    rc = modlua_runtime_get(conn, &lua);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    L = lua->L;
+
+    return modlua_callback_dispatch_base(ib, module, L);
+}
+
+/**
  * Null callback hook.
  */
 static ib_status_t modlua_null(
@@ -748,14 +1433,63 @@ static ib_status_t modlua_null(
     ib_state_event_type_t event,
     void *cbdata)
 {
-    /* Cannot implement this until we find a way to get a Lua stack. */
+    assert(ib);
+    assert(cbdata);
 
-    // FIXME - allocate *L
+    ib_status_t rc;
+    ib_status_t join_rc; /* We need a temporary rc value for thread joins. */
+    lua_State *L;
+    modlua_lua_cbdata_t *modlua_lua_cbdata;
+    ib_module_t *module;
+    
+    modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
+    module = modlua_lua_cbdata->module;
 
-    ib_log_warning(ib, "NULL callback not implemented for Lua modules yet.");
+    /* Since there is  no connection Lua stack, we make a new one. */
+    rc = call_in_critical_section(ib, &ib_lua_new_thread, &L);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to allocate new Lua thread.");
+        return rc;
+    }
 
-    // FIXME - deallocate *L
-    return IB_OK;
+    /* Push Lua dispatch method to stack. */
+    rc = modlua_push_dispatcher(ib, module, event, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot push modlua.dispatch_handler to stack.");
+        return rc;
+    }
+
+    /* Push Lua handler onto the table. */
+    rc = modlua_push_lua_handler(ib, module, event, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot push modlua event handler to stack.");
+        return rc;
+    }
+
+    lua_pushlightuserdata(L, ib);
+    lua_pushinteger(L, module->idx);
+    lua_pushinteger(L, event);
+    rc = modlua_push_config_path(ib, ib_context_main(ib), L);
+    lua_pushnil(L); /* Connection (conn) is nil. */
+    lua_pushnil(L); /* Transaction (tx) is nil. */
+    
+    rc = modlua_callback_dispatch_base(ib, module, L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failure while executing callback handler.");
+        /* Do not return. We must join the Lua thread. */
+    }
+
+    join_rc = call_in_critical_section(ib, &ib_lua_join_thread, &L);
+    if (join_rc != IB_OK) {
+        ib_log_alert(ib, "Failed to join created Lua thread.");
+
+        /* If there is no other error, return the join error. */
+        if (rc == IB_OK) {
+            rc = join_rc;
+        }
+    }
+
+    return rc;
 }
 
 /**
@@ -995,6 +1729,11 @@ static ib_status_t modlua_module_load_lua(
     ib_module_t *module,
     lua_State *L)
 {
+    assert(ib);
+    assert(file);
+    assert(module);
+    assert(L);
+
     int lua_rc;
 
     lua_getglobal(L, "modlua"); /* Get the package. */
@@ -1008,8 +1747,7 @@ static ib_status_t modlua_module_load_lua(
         return IB_EINVAL;
     }
 
-    lua_pushstring(L, "load_module"); /* Push load_module */
-    lua_gettable(L, -2);              /* Pop "load_module" and get func. */
+    lua_getfield(L, -1, "load_module"); /* Push load_module */
     if (lua_isnil(L, -1)) {
         ib_log_error(ib, "Module function load_module is undefined.");
         lua_pop(L, 1); /* Pop modlua global off stack. */
@@ -1022,8 +1760,10 @@ static ib_status_t modlua_module_load_lua(
     }
 
     lua_pushlightuserdata(L, ib); /* Push ib engine. */
-    lua_pushinteger(L, module->idx);
+    lua_pushlightuserdata(L, module); /* Push module engine. */
     lua_pushstring(L, file);
+    lua_pushinteger(L, module->idx);
+    lua_pushcfunction(L, &modlua_config_register_directive);
     lua_rc = luaL_loadfile(L, file);
     switch(lua_rc) {
         case 0:
@@ -1077,18 +1817,20 @@ static ib_status_t modlua_module_load_lua(
 
     /**
      * The stack now is...
-     * +------------------------+
-     * | load_module            |
-     * | ib                     |
-     * | module index           |
-     * | module name (file name |
-     * | module script          |
-     * +------------------------+
+     * +----------------------------------+
+     * | load_module                      |
+     * | ib                               |
+     * | ib_module                        |
+     * | module name (file name)          |
+     * | module index                     |
+     * | modlua_config_register_directive |
+     * | module script                    |
+     * +----------------------------------+
      *
      * Next step is to call load_module which will, in turn, execute
      * the module script.
      */
-    lua_rc = lua_pcall(L, 4, 1, 0);
+    lua_rc = lua_pcall(L, 6, 1, 0);
     switch(lua_rc) {
         case 0:
             /* NOP */
