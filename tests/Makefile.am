@@ -7,6 +7,10 @@ noinst_LIBRARIES = libgtest.a libgtest_main.a
 LIBUTIL_LDADD = $(top_builddir)/util/libibutil.la
 LIBENGINE_LDADD = $(LIBUTIL_LDADD) $(top_builddir)/engine/libironbee.la
 
+# Turn off Werror for gtest-all.
+if HAVE_NO_UNUSED_PRIVATE_FIELD
+libgtest_a_CPPFLAGS = $(AM_CPPFLAGS) -Wno-unused-private-field
+endif
 libgtest_a_SOURCES = gtest/gtest-all.cc
 libgtest_main_a_SOURCES = gtest/gtest_main.cc
 

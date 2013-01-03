@@ -493,6 +493,20 @@ else
   AC_MSG_RESULT(no)
 fi
 AM_CONDITIONAL([HAVE_NO_UNUSED_BUT_SET_VARIABLE], [test "$have_no_unused_but_set_variable" = "yes"])
+
+# Check for -Wunused-private-field
+AC_MSG_CHECKING(for -Wno-unused-private-field)    
+save_CPPFLAGS="${CPPFLAGS}"
+CPPFLAGS="${CPPFLAGS} -Werror -Wno-unused-private-field"
+AC_TRY_COMPILE(,,
+  [have_no_unused_private_field=yes],[have_no_unused_private_field=no])
+CPPFLAGS="${save_CPPFLAGS}"
+if test "$have_no_unused_private_field" == "yes"; then
+  AC_MSG_RESULT(yes)
+else
+  AC_MSG_RESULT(no)
+fi
+AM_CONDITIONAL([HAVE_NO_UNUSED_PRIVATE_FIELD], [test "$have_no_unused_private_field" = "yes"])
 	
 dnl Done testing, turn on errors.
 dnl Make sure this is after any autoconf tests, which tend not to be 

@@ -1283,7 +1283,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
 
         status = TSHttpHdrStatusGet(bufp, hdr_loc);
         /* status is an enum.  Do a very minimal sanity check */
-        if ((int)status < 0 || status >= 600) {
+        if ((int)status < 0 || (int)status >= 600) {
            TSError("Bogus HTTP status: %d", status);
            status = 0;
         }

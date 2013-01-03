@@ -134,7 +134,10 @@ static const char *ib_logevent_action_str[] = {
 
 const char *ib_logevent_type_name(ib_logevent_type_t num)
 {
-    if (num >= (sizeof(ib_logevent_type_str) / sizeof(const char *))) {
+    if (
+        (unsigned long)num >=
+        (sizeof(ib_logevent_type_str) / sizeof(const char *))
+    ) {
         return ib_logevent_type_str[0];
     }
     return ib_logevent_type_str[num];
@@ -142,7 +145,10 @@ const char *ib_logevent_type_name(ib_logevent_type_t num)
 
 const char *ib_logevent_action_name(ib_logevent_action_t num)
 {
-    if (num >= (sizeof(ib_logevent_action_str) / sizeof(const char *))) {
+    if (
+        (unsigned long)num >=
+        (sizeof(ib_logevent_action_str) / sizeof(const char *))
+    ) {
         return ib_logevent_action_str[0];
     }
     return ib_logevent_action_str[num];
