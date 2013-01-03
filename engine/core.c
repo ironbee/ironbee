@@ -2361,6 +2361,11 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     char boundary[46];
     ib_status_t rc;
 
+    /* If there's not event provider, do nothing */
+    if (tx->epi == NULL) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+
     rc = ib_context_module_config(tx->ctx, ib_core_module(),
                                   (void *)&corecfg);
     if (rc != IB_OK) {
