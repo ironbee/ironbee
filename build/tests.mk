@@ -15,4 +15,8 @@ AM_CPPFLAGS += @IB_DEBUG@ \
 # Alias for "check"
 test: check
 
+if AUTOMAKE113
+LOG_COMPILER = $(top_srcdir)/tests/gtest_executor.sh
+else
 TESTS_ENVIRONMENT = $(top_srcdir)/tests/gtest_executor.sh
+endif

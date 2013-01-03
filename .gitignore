@@ -88,3 +88,4 @@ Makefile.in
 /ironbeepp/tests/test_throw
 /modules/user_agent
 /tests/test_config
+test-driver
