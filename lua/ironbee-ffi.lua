@@ -807,12 +807,18 @@ typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
     typedef struct ib_site_location_t ib_site_location_t;
     typedef struct ib_site_t ib_site_t;
     typedef enum {
-        IB_DIRTYPE_ONOFF,                    /**< Boolean param directive */
-        IB_DIRTYPE_PARAM1,                   /**< One param directive */
-        IB_DIRTYPE_PARAM2,                   /**< Two param directive */
-        IB_DIRTYPE_LIST,                     /**< List param directive */
-        IB_DIRTYPE_SBLK1,                    /**< One param subblock directive */
+        IB_DIRTYPE_ONOFF,                /**< Boolean param directive */
+        IB_DIRTYPE_PARAM1,               /**< One param directive */
+        IB_DIRTYPE_PARAM2,               /**< Two param directive */
+        IB_DIRTYPE_LIST,                 /**< List param directive */
+        IB_DIRTYPE_OPFLAGS,              /**< Option flags directive. */
+        IB_DIRTYPE_SBLK1,                /**< One param subblock directive */
     } ib_dirtype_t;
+    struct ib_strval_t {
+        const char *str;
+        ib_num_t val;
+    };
+    typedef struct ib_strval_t ib_strval_t;
     typedef ib_status_t (*ib_config_cb_blkend_fn_t)(ib_cfgparser_t *cp,
                                                     const char *name,
                                                     void *cbdata);
@@ -837,6 +843,16 @@ typedef struct ib_rule_log_tx_t ib_rule_log_tx_t;
                                                    const char *name,
                                                    const char *p1,
                                                    void *cbdata);
+    ib_status_t ib_config_register_directive(
+        ib_engine_t              *ib,
+        const char               *name,
+        ib_dirtype_t             type,
+        ib_void_fn_t             fn_config,
+        ib_config_cb_blkend_fn_t fn_blkend,
+        void                     *cbdata_config,
+        void                     *cbdata_blkend,
+        ib_strval_t              *valmap
+    );
 
     /* Misc */
     ib_status_t ib_engine_create(ib_engine_t **pib, void *server);
