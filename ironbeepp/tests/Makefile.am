@@ -1,7 +1,5 @@
 ACLOCAL_AMFLAGS = -I../acinclude
 
-EXTRA_DIST = gtest_executor.sh
-
 AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_builddir)/include
 LDADD = \
     $(top_builddir)/tests/libgtest.a \
@@ -14,8 +12,6 @@ AM_LDFLAGS = \
     -lstdc++
 
 include $(top_srcdir)/build/tests.mk
-
-TESTS_ENVIRONMENT = $(top_srcdir)/tests/gtest_executor.sh
 
 check_PROGRAMS = \
     test_catch \

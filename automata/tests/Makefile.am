@@ -10,13 +10,8 @@ LDADD = $(LIBUTIL_LDADD) \
     $(top_builddir)/tests/libgtest.a \
     $(top_builddir)/tests/gtest_main.o
 
-.PHONY: test
-test: check
-
 # Ignore protobuf warnings.
 CPPFLAGS += -Wno-shadow -Wno-extra
-
-TESTS_ENVIRONMENT = $(top_srcdir)/tests/gtest_executor.sh
 
 check_PROGRAMS = \
     test_bits \

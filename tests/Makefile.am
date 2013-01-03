@@ -10,8 +10,6 @@ LIBENGINE_LDADD = $(LIBUTIL_LDADD) $(top_builddir)/engine/libironbee.la
 libgtest_a_SOURCES = gtest/gtest-all.cc
 libgtest_main_a_SOURCES = gtest/gtest_main.cc
 
-TESTS_ENVIRONMENT = $(srcdir)/gtest_executor.sh
-
 LDADD = $(LIBENGINE_LDADD) libgtest.a
 
 #This is simply broken in FreeBSD 8, but still builds okay on FreeBSD 7.
@@ -50,10 +48,9 @@ MODULE_TEST_LDADD = $(LDADD) \
                     $(top_builddir)/libs/libhtp/htp/libhtp.la
 
 # Point the module base path to the modules build dir
-CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
-          -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
-          -I$(top_srcdir)/libs/libhtp/htp \
-          $(BOOST_CPPFLAGS) -I$(top_builddir)/include
+AM_CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
+              -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
+              $(BOOST_CPPFLAGS) 
 
 check_PROGRAMS = test_gtest \
                  test_util_types \
@@ -211,7 +208,7 @@ test_util_log_SOURCES = test_util_log.cpp test_main.cpp
 test_util_log_LDADD = $(LDADD) -lboost_regex$(BOOST_SUFFIX)
 
 test_util_uuid_SOURCES = test_util_uuid.cpp test_main.cpp
-test_util_uuid_CPPFLAGS = $(CPPFLAGS) $(OSSP_UUID_CFLAGS)
+test_util_uuid_CPPFLAGS = $(AM_CPPFLAGS) $(OSSP_UUID_CFLAGS)
 test_util_uuid_LDADD = $(MODULE_TEST_LDADD) $(OSSP_UUID_LDFLAGS) $(OSSP_UUID_LIBS)
 
 test_util_ahocorasick_SOURCES = test_util_ahocorasick.cpp test_main.cpp
@@ -230,7 +227,7 @@ test_config_LDADD = $(MODULE_TEST_LDADD)
 
 test_module_rules_lua_SOURCES = test_module_rules_lua.cpp \
                                 test_main.cpp ibtest_util.cpp
-test_module_rules_lua_CPPFLAGS = $(CPPFLAGS) \
+test_module_rules_lua_CPPFLAGS = $(AM_CPPFLAGS) \
                                  -I$(top_srcdir)/modules \
                                  -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                                  -I$(top_srcdir) \
@@ -247,7 +244,7 @@ test_module_rules_lua_LDADD = $(LDADD) \
 
 test_module_ahocorasick_SOURCES = test_module_ahocorasick.cpp test_main.cpp
 test_module_ahocorasick_LDADD = $(MODULE_TEST_LDADD)
-test_module_ahocorasick_CPPFLAGS = $(CPPFLAGS) \
+test_module_ahocorasick_CPPFLAGS = $(AM_CPPFLAGS) \
                                    -I$(top_srcdir)/modules
 
 test_operator_SOURCES = test_operator.cpp test_main.cpp
@@ -271,7 +268,7 @@ test_module_ee_oper_SOURCES = test_module_ee_oper.cpp \
 test_module_ee_oper_LDADD = $(MODULE_TEST_LDADD) \
     $(top_builddir)/automata/libiaeudoxus.la
 
-test_luajit_CPPFLAGS = $(CPPFLAGS) \
+test_luajit_CPPFLAGS = $(AM_CPPFLAGS) \
                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                        -I$(top_srcdir)
 test_luajit_LDFLAGS = $(LDFLAGS)
@@ -286,7 +283,7 @@ test_luajit_LDADD = $(LDADD) \
 
 test_kvstore_SOURCES = test_main.cpp \
 		       test_kvstore.cpp
-test_kvstore_CPPFLAGS = $(CPPFLAGS)
+test_kvstore_CPPFLAGS = $(AM_CPPFLAGS)
 test_kvstore_LDADD = $(LDADD) \
 		     $(MODULE_TEST_LDADD) \
 		     -lm

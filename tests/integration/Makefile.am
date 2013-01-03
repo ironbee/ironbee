@@ -10,8 +10,6 @@ LIBENGINE_LDADD = $(LIBUTIL_LDADD) $(top_builddir)/engine/libironbee.la
 libgtest_a_SOURCES = ../gtest/gtest-all.cc
 libgtest_main_a_SOURCES = ../gtest/gtest_main.cc
 
-TESTS_ENVIRONMENT = $(srcdir)/../gtest_executor.sh
-
 LDADD = $(LIBENGINE_LDADD) libgtest.a
 
 #This is simply broken in FreeBSD 8, but still builds okay on FreeBSD 7.
