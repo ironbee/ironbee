@@ -390,9 +390,11 @@ static apr_status_t ib_req_cleanup(void *data)
     ironbee_req_ctx *ctx = ap_get_module_config(r->request_config,
                                                 &ironbee_module);
 
-    rc = ib_state_notify_postprocess(ironbee, ctx->tx);
-    if (rc != IB_OK) {
-        return IB2AP(rc);
+    if (!ib_tx_flags_isset(ctx->tx, IB_TX_FPOSTPROCESS)) {
+        rc = ib_state_notify_postprocess(ironbee, ctx->tx);
+        if (rc != IB_OK) {
+            return IB2AP(rc);
+        }
     }
     ib_tx_destroy(ctx->tx);
     return APR_SUCCESS;

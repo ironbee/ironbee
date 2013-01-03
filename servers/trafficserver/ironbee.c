@@ -879,7 +879,9 @@ static int data_event(TSCont contp, TSEvent event, ibd_ctx *ibd)
             data = TSContDataGet(contp);
             TSDebug("ironbee", "data_event: calling ib_state_notify_%s_finished()", ((ibd->ibd->dir == IBD_REQ)?"request":"response"));
             (*ibd->ibd->ib_notify_end)(ironbee, data->tx);
-            if (ibd->ibd->ib_notify_post != NULL) {
+            if ( (ibd->ibd->ib_notify_post != NULL) &&
+                 (!ib_tx_flags_isset(data->tx, IB_TX_FPOSTPROCESS)) )
+            {
                 (*ibd->ibd->ib_notify_post)(ironbee, data->tx);
             }
             break;
@@ -1701,12 +1703,18 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* CLEANUP EVENTS */
         case TS_EVENT_HTTP_TXN_CLOSE:
+        {
+            ib_txn_ctx *ctx = TSContDataGet(contp);
             TSDebug("ironbee", "TXN Close: %p\n", (void *)contp);
-            ib_txn_ctx_destroy(TSContDataGet(contp));
+            if (!ib_tx_flags_isset(ctx->tx, IB_TX_FPOSTPROCESS)) {
+                ib_state_notify_postprocess(ironbee, ctx->tx);
+            }
+            ib_txn_ctx_destroy(ctx);
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
             break;
+        }
 
         case TS_EVENT_HTTP_SSN_CLOSE:
             TSDebug("ironbee", "SSN Close: %p\n", (void *)contp);
