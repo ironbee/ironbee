@@ -509,6 +509,12 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
                             ib_state_event_name(response_finished_event));
             ib_state_notify_response_finished(ib, tx);
         }
+        
+        if (!ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
+            ib_log_debug_tx(tx, "Automatically triggering %s",
+                            ib_state_event_name(handle_postprocess_event));
+            ib_state_notify_postprocess(ib, tx);
+        }
     }
 
     /* Mark the time. */
