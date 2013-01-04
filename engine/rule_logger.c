@@ -404,6 +404,7 @@ ib_status_t ib_rule_log_tx_create(
     object->cur_phase = PHASE_NONE;
     object->phase_name = NULL;
     object->mp = rule_exec->tx->mp;
+    object->empty_tx = true;
     *tx_log = object;
 
     IB_FTRACE_RET_STATUS(IB_OK);
@@ -922,7 +923,9 @@ static void log_tx_end(
 )
 {
     IB_FTRACE_INIT();
-    if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_TX)) {
+    if ( (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_TX)) &&
+         (!rule_exec->tx_log->empty_tx) )
+    {
         rule_log_exec(rule_exec, "TX_END");
     }
     IB_FTRACE_RET_VOID();
@@ -1094,19 +1097,23 @@ void ib_rule_log_tx_event_start(
         log_tx_start(rule_exec);
         log_tx_request_line(rule_exec);
         log_tx_request_header(rule_exec);
+        rule_exec->tx_log->empty_tx = false;
         break;
 
     case handle_request_event :
         log_tx_request_body(rule_exec);
+        rule_exec->tx_log->empty_tx = false;
         break;
 
     case handle_response_header_event :
         log_tx_response_line(rule_exec);
         log_tx_response_header(rule_exec);
+        rule_exec->tx_log->empty_tx = false;
         break;
 
     case handle_response_event :
         log_tx_response_body(rule_exec);
+        rule_exec->tx_log->empty_tx = false;
         break;
 
     default :
@@ -1163,7 +1170,8 @@ static void log_audit(
 void ib_rule_log_phase(
     const ib_rule_exec_t *rule_exec,
     ib_rule_phase_num_t phase_num,
-    const char *phase_name
+    const char *phase_name,
+    size_t num_rules
 )
 {
     IB_FTRACE_INIT();
@@ -1174,13 +1182,20 @@ void ib_rule_log_phase(
     }
     flags = rule_exec->tx_log->flags;
 
-    if (ib_flags_any(flags, RULE_LOG_FLAG_PHASE_ENABLE)) {
-        if (phase_num != rule_exec->tx_log->cur_phase) {
-            if (ib_flags_any(flags, IB_RULE_LOG_FLAG_PHASE)) {
+    if (phase_num != rule_exec->tx_log->cur_phase) {
+        static const bool phase_flags =
+            (RULE_LOG_FLAG_PHASE_ENABLE | IB_RULE_LOG_FLAG_PHASE);
+
+        if (ib_flags_all(flags, phase_flags)) {
+            bool is_postprocess = (phase_num == PHASE_POSTPROCESS);
+            bool empty_tx = rule_exec->tx_log->empty_tx;
+
+            /* Inhibit logging of "PHASE: postprocess" for empty tx */
+            if ( (!is_postprocess) || (num_rules != 0) || (!empty_tx) ) {
                 rule_log_exec(rule_exec, "PHASE %s", phase_name);
-                rule_exec->tx_log->cur_phase = phase_num;
-                rule_exec->tx_log->phase_name = phase_name;
             }
+            rule_exec->tx_log->cur_phase = phase_num;
+            rule_exec->tx_log->phase_name = phase_name;
 
             if ( (phase_num == PHASE_POSTPROCESS) &&
                  (ib_flags_any(flags, IB_RULE_LOG_FLAG_AUDIT) == true) )

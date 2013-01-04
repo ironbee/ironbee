@@ -1781,7 +1781,9 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
 
     /* Log the transaction event start */
     ib_rule_log_tx_event_start(rule_exec, event);
-    ib_rule_log_phase(rule_exec, meta->phase_num, phase_name(meta));
+    ib_rule_log_phase(rule_exec,
+                      meta->phase_num, phase_name(meta),
+                      ib_list_elements(rules));
 
     /* Allow (skip) this phase? */
     if (rule_allow(tx, meta, NULL, false)) {
@@ -2153,7 +2155,9 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
 
     /* Log the transaction event start */
     ib_rule_log_tx_event_start(rule_exec, event);
-    ib_rule_log_phase(rule_exec, meta->phase_num, phase_name(meta));
+    ib_rule_log_phase(rule_exec,
+                      meta->phase_num, phase_name(meta),
+                      ib_list_elements(rules));
 
     /* Allow (skip) this phase? */
     if (rule_allow(tx, meta, NULL, false)) {

@@ -134,6 +134,7 @@ struct ib_rule_log_tx_t {
     ib_flags_t              flags;       /**< Rule logging flags */
     ib_flags_t              filter;      /**< Rule filter flags */
     ib_log_level_t          level;       /**< Level to log at */
+    bool                    empty_tx;    /**< Is this an empty transaction? */
     ib_rule_phase_num_t     cur_phase;   /**< Current phase # */
     const char             *phase_name;  /**< Name of current phase */
 };
@@ -276,12 +277,14 @@ void ib_rule_log_tx_event_end(const ib_rule_exec_t *rule_exec,
  * @param[in] rule_exec Rule execution object
  * @param[in] phase_num Phase number
  * @param[in] phase_name Name of phase
+ * @param[in] num_rules Number of rules in the phase
  *
  * @returns void
  */
 void ib_rule_log_phase(const ib_rule_exec_t *rule_exec,
                        ib_rule_phase_num_t phase_num,
-                       const char *phase_name);
+                       const char *phase_name,
+                       size_t num_rules);
 
 /**
  * Notify logger that an operator has been executed
