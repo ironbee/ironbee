@@ -4113,26 +4113,28 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
  *
  * @param cp Config parser
  * @param name Directive name
- * @param p1 Parameter 1
+ * @param vars The list of variables passed to @a name.
  * @param cbdata Callback data (from directive registration)
  *
  * @returns Status code
  */
-static ib_status_t core_dir_site_param1(ib_cfgparser_t *cp,
-                                        const char *name,
-                                        const char *p1,
-                                        void *cbdata)
+static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
+                                      const char *directive,
+                                      const ib_list_t *vars,
+                                      void *cbdata)
 {
     IB_FTRACE_INIT();
 
     assert(cp != NULL);
     assert(cp->ib != NULL);
-    assert(name != NULL);
-    assert(p1 != NULL);
+    assert(directive != NULL);
+    assert(vars != NULL);
 
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
-    const char *p1_unescaped;
+    const ib_list_node_t *node;
+    const char *param1;
+    const char *param1u;
     ib_core_module_data_t *core_data;
     ib_site_t *site;
 
@@ -4142,35 +4144,45 @@ static ib_status_t core_dir_site_param1(ib_cfgparser_t *cp,
         IB_FTRACE_RET_STATUS(rc);
     }
 
+    /* Get the first parameter */
+    node = ib_list_first_const(vars);
+    if (node == NULL) {
+        ib_cfg_log_error(cp, "No %s specified for \"%s\" directive",
+                         directive, directive);
+        IB_FTRACE_RET_STATUS(IB_EINVAL);
+    }
+    param1 = (const char *)node->data;
+
     /* Verify that we are in a site */
     if (core_data->cur_site == NULL) {
-        ib_cfg_log_error(cp, "No site for service directive \"%s\"", p1);
+        ib_cfg_log_error(cp, "No site for %s directive", directive);
         IB_FTRACE_RET_STATUS(IB_EINVAL);
     }
     site = core_data->cur_site;
 
     /* We remove constness to populate this buffer. */
-    rc = core_unescape(ib, (char**)&p1_unescaped, p1);
-    if ( rc != IB_OK ) {
-        ib_cfg_log_debug2(cp, "Failed to unescape service %s=\"%s\"", name, p1);
+    rc = core_unescape(ib, (char**)&param1u, param1);
+    if (rc != IB_OK) {
+        ib_cfg_log_debug2(cp, "Failed to unescape %s parameter \"%s\"",
+                          directive, param1);
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Now, look at the parameter name */
-    if (strcasecmp("SiteId", name) == 0) {
+    if (strcasecmp("SiteId", directive) == 0) {
 
         /* Store the ASCII version for logging */
         site->id_str =
-            ib_mpool_strdup(ib_engine_pool_config_get(ib), p1_unescaped);
+            ib_mpool_strdup(ib_engine_pool_config_get(ib), param1u);
 
         /* Calculate the binary version. */
-        rc = ib_uuid_ascii_to_bin(&site->id, (const char *)p1_unescaped);
+        rc = ib_uuid_ascii_to_bin(&site->id, (const char *)param1u);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
                              "Invalid UUID at %s: %s should have UUID format "
                              "(xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx "
                              "where x are hex values)",
-                             name, p1_unescaped);
+                             directive, param1u);
 
             /* Use the default id. */
             site->id_str = (const char *)ib_uuid_default_str;
@@ -4179,33 +4191,100 @@ static ib_status_t core_dir_site_param1(ib_cfgparser_t *cp,
             IB_FTRACE_RET_STATUS(rc);
         }
 
-        ib_cfg_log_debug2(cp, "%s: %s", name, site->id_str);
+        ib_cfg_log_debug2(cp, "%s: %s", directive, site->id_str);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
-    else if (strcasecmp("Hostname", name) == 0) {
-        rc = ib_ctxsel_host_create(site, p1_unescaped, NULL);
+    else if (strcasecmp("Hostname", directive) == 0) {
+        const char *ip = "*";
+        const char *port = NULL;
+        bool service_specified = false;
+
+        rc = ib_ctxsel_host_create(site, param1u, NULL);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "%s: Invalid hostname \"%s\" for site \"%s\"",
-                             name, p1_unescaped, site->id_str);
+                             directive, param1u, site->id_str);
             IB_FTRACE_RET_STATUS(rc);
         }
         ib_cfg_log_debug2(cp, "%s: added hostname %s to site %s",
-                          name, p1_unescaped, site->id_str);
+                          directive, param1u, site->id_str);
+
+        /* Handle ip= and port= for backward compatibility */
+        while( (node = ib_list_node_next_const(node)) != NULL) {
+            const char *param = (const char *)node->data;
+            const char *unescaped;
+
+            rc = core_unescape(ib, (char**)&unescaped, param);
+            if ( rc != IB_OK ) {
+                ib_cfg_log_debug2(cp, "Failed to unescape %s parameter \"%s\"",
+                                  directive, param);
+                IB_FTRACE_RET_STATUS(rc);
+            }
+
+            if (strncasecmp(unescaped, "ip=", 3) == 0) {
+                ip = unescaped+3;
+                if (*ip == '\0') {
+                    ip = "*";
+                }
+            }
+            else if (strncasecmp(unescaped, "port=", 5) == 0) {
+                port = unescaped+5;
+                if (*port == '\0') {
+                    port = NULL;
+                }
+            }
+            else {
+                ib_cfg_log_error(cp, "Unhandled %s parameter: \"%s\"",
+                                 directive, unescaped);
+                IB_FTRACE_RET_STATUS(IB_EINVAL);
+            }
+            service_specified = true;
+        }
+
+        if (! service_specified) {
+            IB_FTRACE_RET_STATUS(IB_OK);
+        }
+
+        if (port == NULL) {
+            rc = ib_ctxsel_service_create(site, ip, NULL);
+        }
+        else {
+            size_t len = strlen(ip) + 1 + strlen(port) + 1;
+            char *service = (char *)ib_mpool_alloc(cp->mp, len);
+            if (service == NULL) {
+                ib_cfg_log_error(cp, "%s: Failed to allocate service buffer",
+                                 directive);
+                IB_FTRACE_RET_STATUS(IB_EALLOC);
+            }
+
+            strcpy(service, ip);
+            strcat(service, ":");
+            strcat(service, port);
+            rc = ib_ctxsel_service_create(site, service, NULL);
+            if (rc != IB_OK) {
+                ib_cfg_log_error(cp,
+                                 "%s: Invalid service \"%s\" for site \"%s\"",
+                                 directive, service, site->id_str);
+                IB_FTRACE_RET_STATUS(rc);
+            }
+            ib_cfg_log_debug2(cp, "%s: added service %s to site %s",
+                              directive, service, site->id_str);
+        }
+
         IB_FTRACE_RET_STATUS(IB_OK);
     }
-    else if (strcasecmp("Service", name) == 0) {
-        rc = ib_ctxsel_service_create(site, p1_unescaped, NULL);
+    else if (strcasecmp("Service", directive) == 0) {
+        rc = ib_ctxsel_service_create(site, param1u, NULL);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp, "%s: Invalid service \"%s\" for site \"%s\"",
-                             name, p1_unescaped, site->id_str);
+                             directive, param1u, site->id_str);
             IB_FTRACE_RET_STATUS(rc);
         }
         ib_cfg_log_debug2(cp, "%s: added service %s to site %s",
-                          name, p1_unescaped, site->id_str);
+                          directive, param1u, site->id_str);
         IB_FTRACE_RET_STATUS(IB_OK);
     }
 
-    ib_cfg_log_error(cp, "Unhandled directive: %s %s", name, p1_unescaped);
+    ib_cfg_log_error(cp, "Unhandled directive: %s \"%s\"", directive, param1u);
     IB_FTRACE_RET_STATUS(IB_EINVAL);
 }
 
@@ -5087,9 +5166,9 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL,
         NULL
     ),
-    IB_DIRMAP_INIT_PARAM1(
+    IB_DIRMAP_INIT_LIST(
         "SiteId",
-        core_dir_site_param1,
+        core_dir_site_list,
         NULL
     ),
     IB_DIRMAP_INIT_SBLK1(
@@ -5099,14 +5178,14 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
         NULL,
         NULL
     ),
-    IB_DIRMAP_INIT_PARAM1(
+    IB_DIRMAP_INIT_LIST(
         "Hostname",
-        core_dir_site_param1,
+        core_dir_site_list,
         NULL
     ),
-    IB_DIRMAP_INIT_PARAM1(
+    IB_DIRMAP_INIT_LIST(
         "Service",
-        core_dir_site_param1,
+        core_dir_site_list,
         NULL
     ),
 
