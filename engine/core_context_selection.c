@@ -636,7 +636,7 @@ static ib_status_t core_ctxsel_location_create(
 
     /* Fill in the context selection specific parts */
     core_location->path_len = strlen(location_str);
-    core_location->match_any = (strcmp(location_str, "/") == 0) ? true : false;
+    core_location->match_any = (strcmp(location_str, "/") == 0);
 
     /* And, add it to the locations list */
     rc = ib_list_push(core_site->locations, core_location);

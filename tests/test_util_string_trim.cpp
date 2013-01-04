@@ -121,7 +121,7 @@ public:
           m_exvalid(false),
           m_exconst(true),
           m_exout(lno, exout),
-          m_exmod(strcmp(in,exout) == 0 ? false : true)
+          m_exmod((strcmp(in,exout) != 0))
     { };
 
     TestDatum(size_t lno, const char *in, size_t skip, size_t cut)
@@ -162,7 +162,7 @@ public:
         }
         if (! m_exvalid) {
             bool mod = m_exout.BuildChopBuf(skip, cut);
-            m_exmod = (mod) ? true : false;
+            m_exmod = mod;
             m_exvalid = true;
         }
         return m_exmod;

@@ -104,7 +104,7 @@ void ConfigurationParser::parse_buffer(
             ib(),
             buffer, length,
             file, lineno,
-            (more ? true : false)
+            more
         )
     );
 }

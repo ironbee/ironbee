@@ -40,5 +40,5 @@ ib_server_t ibt_ibserver = {
 
 bool ibtest_memeq(const void *v1, const void *v2, size_t n)
 {
-    return memcmp(v1, v2, n) ? false : true;
+    return ! memcmp(v1, v2, n);
 }

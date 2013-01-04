@@ -656,8 +656,8 @@ ib_status_t ib_util_normalize_path_ex(uint8_t *data,
      * ENH: Deal with UNC and drive letters?
      */
 
-    relative = ((*data == '/') || (win && (*data == '\\'))) ? false : true;
-    trailing = ((*end == '/') || (win && (*end == '\\'))) ? true : false;
+    relative = ! ((*data == '/') || (win && (*data == '\\')));
+    trailing = ((*end == '/') || (win && (*end == '\\')));
 
     while ( (! done) && (src <= end) && (dst <= end) ) {
 

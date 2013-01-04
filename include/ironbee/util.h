@@ -273,7 +273,7 @@ void DLL_PUBLIC ib_shutdown(void);
  */
 bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_any(flags, check) \
-    ( ( ((flags) & (check)) != 0) ? true : false)
+    ( ((flags) & (check)) != 0)
 
 /**
  * Test if all of a set of flags is set
@@ -289,7 +289,7 @@ bool ib_flags_any(ib_flags_t flags, ib_flags_t check);
  */
 bool ib_flags_all(ib_flags_t flags, ib_flags_t check);
 #define ib_flags_all(flags, check) \
-    ( ( ((flags) & (check)) == (check)) ? true : false)
+    ( ((flags) & (check)) == (check))
 
 /**
  * Set flag bits
