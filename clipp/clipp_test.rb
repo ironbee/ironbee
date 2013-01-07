@@ -114,15 +114,15 @@ module CLIPPTest
       CLIPP, '-c', config_path
     )
 
-    puts "#{CLIPP} -c #{config_path}"
-    puts "== CLIPP Configuration =="
-    puts IO.read(config_path)
-    puts "== OUTPUT =="
-    puts output
-    puts
-    puts "Exit status: #{status.exitstatus}"
-
     if status.exitstatus != 0
+      puts "#{CLIPP} -c #{config_path}"
+      puts "== CLIPP Configuration =="
+      puts IO.read(config_path)
+      puts "== OUTPUT =="
+      puts output
+      puts
+      puts "Exit status: #{status.exitstatus}"
+
       nil
     else
       output
