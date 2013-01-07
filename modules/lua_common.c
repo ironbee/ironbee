@@ -19,8 +19,8 @@
 
 #include <ironbee/types.h>
 
-#include <assert.h>
 #include <lua.h>
+#include <assert.h>
 
 #define THREAD_NAME_BUFFER_SZ 20
 

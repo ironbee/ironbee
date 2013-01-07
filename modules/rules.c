@@ -17,6 +17,8 @@
 
 #include "ironbee_config_auto.h"
 
+#include "engine_private.h"
+
 #include <ironbee/action.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
@@ -44,8 +46,6 @@
 #include <sys/sem.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#include "engine_private.h"
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        rules
