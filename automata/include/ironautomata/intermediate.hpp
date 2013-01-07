@@ -38,8 +38,15 @@
 
 #include <ironautomata/logger.hpp>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdelete-non-virtual-dtor"
+#endif
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/shared_ptr.hpp>
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
 
 #include <iostream>
 #include <list>
