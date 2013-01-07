@@ -1556,6 +1556,7 @@ static ib_status_t modlua_init(ib_engine_t *ib,
             ib,
             "Failed to register conn_started_event hook: %s",
             ib_status_to_string(rc));
+        return rc;
     }
 
     /* Initialize lock to protect making new lua threads. */
@@ -1572,6 +1573,8 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     rc = ib_lock_init(modlua_global_cfg.L_lck);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to initialize lua global lock.");
+        return rc;
+    }
     }
 
     return IB_OK;
