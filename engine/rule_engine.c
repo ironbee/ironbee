@@ -2571,6 +2571,14 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
         return rc;
     }
 
+    rc = ib_hash_create(&(rule_engine->external_drivers), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Rule engine failed to create external rules hash: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
     *p_rule_engine = rule_engine;
     return IB_OK;
 }
@@ -4401,4 +4409,44 @@ ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
     }
 
     return IB_EINVAL;
+}
+
+ib_status_t ib_rule_register_external_driver(
+    ib_engine_t               *ib,
+    const char                *tag,
+    ib_rule_driver_function_t  function,
+    void                      *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(ib->rule_engine != NULL);
+    assert(tag != NULL);
+    assert(function != NULL);
+
+    ib_status_t rc;
+    ib_rule_driver_t *driver;
+
+    if (
+        ib_hash_get(ib->rule_engine->external_drivers, &driver, tag) !=
+        IB_ENOENT
+    ) {
+        return IB_EINVAL;
+    }
+
+    driver = ib_mpool_calloc(ib->mp, 1, sizeof(*driver));
+    if (driver == NULL) {
+        return IB_EALLOC;
+    }
+    driver->function = function;
+    driver->cbdata   = cbdata;
+
+    rc = ib_hash_set(ib->rule_engine->external_drivers, tag, driver);
+    if (rc == IB_EALLOC) {
+        return IB_EALLOC;
+    }
+    else if (rc != IB_OK) {
+        return IB_EOTHER;
+    }
+
+    return IB_OK;
 }

@@ -75,7 +75,7 @@ typedef struct modlua_cfg_t modlua_cfg_t;
 typedef struct modlua_lua_cbdata_t modlua_lua_cbdata_t;
 
 /**
- * Callback type for functions executed protected by g_lua_lock.
+ * Callback type for functions executed protected by global lock.
  *
  * This callback should take a @c ib_engine_t* which is used
  * for logging, a @c lua_State* which is used to create the
@@ -124,6 +124,14 @@ static modlua_cfg_t modlua_global_cfg = {
     NULL,
     NULL
 };
+
+ib_status_t modlua_rule_driver(
+    ib_cfgparser_t *cp,
+    ib_rule_t *rule,
+    const char *tag,
+    const char *location,
+    void *cbdata
+);
 
 /* -- Lua Routines -- */
 
@@ -202,11 +210,11 @@ static ib_status_t modlua_runtime_set(
 }
 
 /**
- * This will use g_lua_lock to atomically call @a fn.
+ * This will use module lock to atomically call @a fn.
  *
  * The argument @a fn will be either
  * ib_lua_new_thread() or ib_lua_join_thread() which will be called
- * only if g_lua_lock can be locked using @c semop.
+ * only if module lock can be locked using @c semop.
  *
  * @param[in] ib IronBee context. Used for logging.
  * @param[in] fn The function to execute. This is passed @a ib and @a fn.
@@ -1489,7 +1497,215 @@ static ib_status_t modlua_conn_fini_lua_runtime(ib_engine_t *ib,
     return rc;
 }
 
+/* -- External Rule Driver -- */
+
+static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
+{
+    assert(ib != NULL);
+    assert(m != NULL);
+    ib_status_t rc;
+
+    /* Register driver. */
+    rc = ib_rule_register_external_driver(
+        ib,
+        "lua",
+        modlua_rule_driver, NULL
+    );
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to register lua rule driver.");
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+/**
+ * @brief Call the rule named @a func_name on a new Lua stack.
+ * @details This will atomically create and destroy a lua_State*
+ *          allowing for concurrent execution of @a func_name
+ *          by a ib_lua_func_eval(ib_engine_t*, ib_txt_t*, const char*).
+ * @param[in] ib IronBee context.
+ * @param[in,out] tx The transaction. The Rule may color this with data.
+ * @param[in] func_name The Lua function name to call.
+ * @param[out] result The result integer value. This should be set to
+ *             1 (true) or 0 (false).
+ * @returns IB_OK on success, IB_EUNKNOWN on semaphore locking error, and
+ *          IB_EALLOC is returned if a new execution stack cannot be created.
+ */
+static ib_status_t ib_lua_func_eval_r(const ib_rule_exec_t *rule_exec,
+                                      const char *func_name,
+                                      ib_num_t *result)
+{
+    assert(rule_exec);
+
+    ib_engine_t *ib = rule_exec->ib;
+    ib_tx_t *tx = rule_exec->tx;
+    int result_int;
+    ib_status_t ib_rc;
+    lua_State *L;
+
+    /* Atomically create a new Lua stack */
+    ib_rc = call_in_critical_section(ib, &ib_lua_new_thread, &L);
+
+    if (ib_rc != IB_OK) {
+        return ib_rc;
+    }
+
+    /* Call the rule in isolation. */
+    ib_rc = ib_lua_func_eval_int(rule_exec, ib, tx, L, func_name, &result_int);
+
+    /* Convert the passed in integer type to an ib_num_t. */
+    *result = result_int;
+
+    if (ib_rc != IB_OK) {
+        return ib_rc;
+    }
+
+    /* Atomically destroy the Lua stack */
+    ib_rc = call_in_critical_section(ib, &ib_lua_join_thread, &L);
+
+    return ib_rc;
+}
+
+static ib_status_t lua_operator_create(ib_engine_t *ib,
+                                       ib_context_t *ctx,
+                                       const ib_rule_t *rule,
+                                       ib_mpool_t *pool,
+                                       const char *parameters,
+                                       ib_operator_inst_t *op_inst)
+{
+    return IB_OK;
+}
+
+static ib_status_t lua_operator_execute(const ib_rule_exec_t *rule_exec,
+                                        void *data,
+                                        ib_flags_t flags,
+                                        ib_field_t *field,
+                                        ib_num_t *result)
+{
+    ib_status_t ib_rc;
+    const char *func_name = (char *) data;
+
+    ib_rule_log_trace(rule_exec, "Calling lua function %s.", func_name);
+
+    ib_rc = ib_lua_func_eval_r(rule_exec, func_name, result);
+
+    ib_rule_log_trace(rule_exec,
+                      "Lua function %s=%"PRIu64".", func_name, *result);
+
+    return ib_rc;
+}
+
+static ib_status_t lua_operator_destroy(ib_operator_inst_t *op_inst)
+{
+    return IB_OK;
+}
+
 /* -- Module Routines -- */
+
+
+/**
+ * Called by RuleExt lua:.
+ *
+ * @param[in] cp       Configuration parser.
+ * @param[in] rule     Rule under construction.
+ * @param[in] tag      Should be "lua".
+ * @param[in] location What comes after "lua:".
+ * @param[in] cbdata   Callback data; unused.
+ * @return
+ * - IB_OK on success.
+ * - IB_EINVAL if Lua not available or not called for "lua" tag.
+ * - Other error code if loading or registration fails.
+ */
+ib_status_t modlua_rule_driver(
+    ib_cfgparser_t *cp,
+    ib_rule_t *rule,
+    const char *tag,
+    const char *location,
+    void *cbdata
+)
+{
+    assert(cp != NULL);
+    assert(tag != NULL);
+    assert(location != NULL);
+
+    ib_status_t rc;
+    ib_operator_inst_t *op_inst;
+
+    if (strncmp(tag, "lua", 3) != 0) {
+        ib_cfg_log_error(cp, "Lua rule driver called for non-lua tag.");
+        return IB_EINVAL;
+    }
+
+    /* Check if lua is available. */
+    if (modlua_global_cfg.L == NULL) {
+        ib_cfg_log_error(cp, "Lua is not available");
+        return IB_EINVAL;
+    }
+
+    rc = ib_lua_load_func(cp->ib,
+                          modlua_global_cfg.L,
+                          location,
+                          ib_rule_id(rule));
+
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, "Failed to load lua file %s", location);
+        return rc;
+    }
+
+    ib_cfg_log_debug3(cp, "Loaded lua file %s", location);
+
+    rc = ib_operator_register(cp->ib,
+                              location,
+                              IB_OP_FLAG_PHASE,
+                              &lua_operator_create,
+                              NULL,
+                              &lua_operator_destroy,
+                              NULL,
+                              &lua_operator_execute,
+                              NULL);
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "Failed to register lua operator: %s",
+                         location);
+        return rc;
+    }
+
+    rc = ib_operator_inst_create(cp->ib,
+                                 cp->cur_ctx,
+                                 rule,
+                                 ib_rule_required_op_flags(rule),
+                                 location,
+                                 NULL,
+                                 IB_OPINST_FLAG_NONE,
+                                 &op_inst);
+
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "Failed to instantiate lua operator for rule %s",
+                         location);
+        return rc;
+    }
+
+    /* The data is then name of the function. */
+    op_inst->data = (void *)ib_rule_id(rule);
+
+    rc = ib_rule_set_operator(cp->ib, rule, op_inst);
+
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp,
+                         "Failed to associate lua operator "
+                         "with rule %s: %s",
+                         ib_rule_id(rule), location);
+        return rc;
+    }
+
+    ib_cfg_log_debug3(cp, "Set operator %s for rule %s",
+                      location,
+                      ib_rule_id(rule));
+
+    return IB_OK;
+}
 
 /**
  * Initialize the ModLua Module.
@@ -1575,6 +1791,11 @@ static ib_status_t modlua_init(ib_engine_t *ib,
         ib_log_error(ib, "Failed to initialize lua global lock.");
         return rc;
     }
+
+    /* Set up rule support. */
+    rc = rules_lua_init(ib, m, cbdata);
+    if (rc != IB_OK) {
+        return rc;
     }
 
     return IB_OK;

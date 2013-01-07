@@ -73,6 +73,27 @@ typedef enum {
 } ib_rule_enable_type_t;
 
 /**
+ * External rule driver function.
+ *
+ * Function is passed configuration parser, tag, location, and callback data.
+ */
+typedef ib_status_t (*ib_rule_driver_function_t)(
+    ib_cfgparser_t *,
+    ib_rule_t *rule,
+    const char *,
+    const char *,
+    void *
+);
+
+/**
+ * A driver is simply a function and its callback data.
+ */
+typedef struct {
+    ib_rule_driver_function_t  function;
+    void                      *cbdata;
+} ib_rule_driver_t;
+
+/**
  * Rule engine: Rule meta data
  */
 typedef struct {
@@ -184,8 +205,9 @@ struct ib_rule_context_t {
  * Rule engine data.
  */
 struct ib_rule_engine_t {
-    ib_list_t             *rule_list; /**< All rules owned by this context */
-    ib_hash_t             *rule_hash; /**< Hash of rules (by rule-id) */
+    ib_list_t *rule_list;        /**< All rules owned by this context */
+    ib_hash_t *rule_hash;        /**< Hash of rules (by rule-id) */
+    ib_hash_t *external_drivers; /**< Drivers for external rules. */
 };
 
 /**
@@ -221,6 +243,23 @@ struct ib_rule_exec_t {
 ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
                                const char *name,
                                const char *value);
+
+/**
+ * Register external rule driver.
+ *
+ * @param ib       Engine.
+ * @param tag      Driver tag; NUL terminated.
+ * @param function Driver function.
+ * @param cbdata   Driver callback data.
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_register_external_driver(
+    ib_engine_t               *ib,
+    const char                *tag,
+    ib_rule_driver_function_t  driver,
+    void                      *cbdata
+);
 
 /**
  * Create a rule.

@@ -164,7 +164,7 @@ TEST_F(TestIronBeeModuleRulesLua, operator_test)
 
     ib_field_t* field1;
 
-    const char* op_name = "lua:test_module_rules_lua.lua";
+    const char* op_name = "test_module_rules_lua.lua";
     const char* rule_name = "luarule001";
 
     char* str1 = (char *) ib_mpool_alloc(ib_engine->mp, (strlen("string 1")+1));

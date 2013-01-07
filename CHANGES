@@ -42,6 +42,11 @@ IronBee v0.7.0
 
 * Several fixes to dynamic collections in the DPI.
 
+* Lua rule support moved from the rule component to the Lua module.  The rules
+  component gained support for modules to register arbitrary external rule 
+  drivers (see `ib_rule_register_external_driver()`), which the Lua module 
+  now uses.
+
 **Modules**
 
 * ac and pcre have been updated to use the new tx data API.

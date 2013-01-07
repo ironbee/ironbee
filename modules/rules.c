@@ -17,11 +17,6 @@
 
 #include "ironbee_config_auto.h"
 
-#ifdef ENABLE_LUA
-#include "lua/ironbee.h"
-#include "lua_common_private.h"
-#endif
-
 #include <ironbee/action.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/config.h>
@@ -37,10 +32,6 @@
 #include <ironbee/string.h>
 #include <ironbee/util.h>
 
-#ifdef ENABLE_LUA
-#include <lua.h>
-#endif
-
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
@@ -53,6 +44,8 @@
 #include <sys/sem.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+
+#include "engine_private.h"
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        rules
@@ -86,18 +79,6 @@ static phase_lookup_t phase_lookup_table[] =
     { NULL,                      false, PHASE_INVALID },
 };
 
-#ifdef ENABLE_LUA
-/**
- * Ironbee's root rule state.
- */
-static lua_State *g_ironbee_rules_lua;
-
-/**
- * @brief Semaphore ID used to protect Lua thread creation and destruction.
- */
-static ib_lock_t g_lua_lock;
-#endif
-
 /**
  * Lookup a phase name in the phase name table.
  *
@@ -121,19 +102,6 @@ static ib_status_t lookup_phase(const char *str,
     }
     return IB_EINVAL;
 }
-
-#ifdef ENABLE_LUA
-/**
- * @brief Callback type for functions executed protected by g_lua_lock.
- * @details This callback should take a @c ib_engine_t* which is used
- *          for logging, @c a lua_State* which is used to create the
- *          new thread, and a @c lua_State** which will be assigned a
- *          new @c lua_State*.
- */
-typedef ib_status_t(*critical_section_fn_t)(ib_engine_t *ib,
-                                            lua_State *parent,
-                                            lua_State **out_new);
-#endif
 
 /**
  * Parse rule's operator.
@@ -798,139 +766,6 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
     return rc;
 }
 
-#ifdef ENABLE_LUA
-/**
- * @brief This will use @c g_lua_lock to atomically call @a fn.
- * @details The argument @a fn will be either
- *          ib_lua_new_thread(ib_engine_t*, lua_State**) or
- *          ib_lua_join_thread(ib_engine_t*, lua_State**) which will be called
- *          only if @c g_lua_lock can be locked using @c semop.
- * @param[in] ib IronBee context. Used for logging.
- * @param[in] fn The function to execute. This is passed @a ib and @a fn.
- * @param[in,out] L The Lua State to create or destroy. Passed to @a fn.
- * @returns If any error locking or unlocking the
- *          semaphore is encountered, the error code is returned.
- *          Otherwise the result of @a fn is returned.
- */
-static ib_status_t call_in_critical_section(ib_engine_t *ib,
-                                            critical_section_fn_t fn,
-                                            lua_State **L)
-{
-    /* Return code from IronBee calls. */
-    ib_status_t ib_rc;
-    /* Return code form critical call. */
-    ib_status_t critical_rc;
-
-    ib_rc  = ib_lock_lock(&g_lua_lock);
-
-    /* Report semop error and return. */
-    if (ib_rc != IB_OK) {
-        ib_log_error(ib, "Failed to lock Lua context.");
-        return ib_rc;
-    }
-
-    /* Execute lua call in critical section. */
-    critical_rc = fn(ib, g_ironbee_rules_lua, L);
-
-    ib_rc = ib_lock_unlock(&g_lua_lock);
-
-    if (critical_rc != IB_OK) {
-        ib_log_error(ib, "Critical call failed: %s",
-                     ib_status_to_string(critical_rc));
-    }
-
-    /* Report semop error and return. */
-    if (ib_rc != IB_OK) {
-        ib_log_error(ib, "Failed to unlock Lua context.");
-        return ib_rc;
-    }
-
-    return critical_rc;
-}
-
-/**
- * @brief Call the rule named @a func_name on a new Lua stack.
- * @details This will atomically create and destroy a lua_State*
- *          allowing for concurrent execution of @a func_name
- *          by a ib_lua_func_eval(ib_engine_t*, ib_txt_t*, const char*).
- * @param[in] ib IronBee context.
- * @param[in,out] tx The transaction. The Rule may color this with data.
- * @param[in] func_name The Lua function name to call.
- * @param[out] result The result integer value. This should be set to
- *             1 (true) or 0 (false).
- * @returns IB_OK on success, IB_EUNKNOWN on semaphore locking error, and
- *          IB_EALLOC is returned if a new execution stack cannot be created.
- */
-static ib_status_t ib_lua_func_eval_r(const ib_rule_exec_t *rule_exec,
-                                      const char *func_name,
-                                      ib_num_t *result)
-{
-    assert(rule_exec);
-
-    ib_engine_t *ib = rule_exec->ib;
-    ib_tx_t *tx = rule_exec->tx;
-    int result_int;
-    ib_status_t ib_rc;
-    lua_State *L;
-
-    /* Atomically create a new Lua stack */
-    ib_rc = call_in_critical_section(ib, &ib_lua_new_thread, &L);
-
-    if (ib_rc != IB_OK) {
-        return ib_rc;
-    }
-
-    /* Call the rule in isolation. */
-    ib_rc = ib_lua_func_eval_int(rule_exec, ib, tx, L, func_name, &result_int);
-
-    /* Convert the passed in integer type to an ib_num_t. */
-    *result = result_int;
-
-    if (ib_rc != IB_OK) {
-        return ib_rc;
-    }
-
-    /* Atomically destroy the Lua stack */
-    ib_rc = call_in_critical_section(ib, &ib_lua_join_thread, &L);
-
-    return ib_rc;
-}
-
-static ib_status_t lua_operator_create(ib_engine_t *ib,
-                                       ib_context_t *ctx,
-                                       const ib_rule_t *rule,
-                                       ib_mpool_t *pool,
-                                       const char *parameters,
-                                       ib_operator_inst_t *op_inst)
-{
-    return IB_OK;
-}
-
-static ib_status_t lua_operator_execute(const ib_rule_exec_t *rule_exec,
-                                        void *data,
-                                        ib_flags_t flags,
-                                        ib_field_t *field,
-                                        ib_num_t *result)
-{
-    ib_status_t ib_rc;
-    const char *func_name = (char *) data;
-
-    ib_rule_log_trace(rule_exec, "Calling lua function %s.", func_name);
-
-    ib_rc = ib_lua_func_eval_r(rule_exec, func_name, result);
-
-    ib_rule_log_trace(rule_exec,
-                      "Lua function %s=%"PRIu64".", func_name, *result);
-
-    return ib_rc;
-}
-
-static ib_status_t lua_operator_destroy(ib_operator_inst_t *op_inst)
-{
-    return IB_OK;
-}
-#endif
-
 /**
  * @brief Parse a RuleExt directive.
  * @details Register lua function. RuleExt lua:/path/to/rule.lua phase:REQUEST
@@ -950,16 +785,9 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     const ib_list_node_t *mod;
     ib_rule_t *rule;
     const char *file_name;
-
-#ifdef ENABLE_LUA
-    ib_operator_inst_t *op_inst;
-
-    /* Check if lua is available. */
-    if (g_ironbee_rules_lua == NULL) {
-        ib_cfg_log_error(cp, "Lua is not available");
-        return IB_EINVAL;
-    }
-#endif
+    const char *colon;
+    const char *tag;
+    const char *location;
 
     /* Get the targets string */
     targets = ib_list_first_const(vars);
@@ -1006,75 +834,36 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     }
 
     /* Using the rule->meta and file_name, load and stage the ext rule. */
-    if (strncasecmp(file_name, "lua:", 4) == 0) {
-#ifdef ENABLE_LUA
-        rc = ib_lua_load_func(cp->ib,
-                              g_ironbee_rules_lua,
-                              file_name+4,
-                              ib_rule_id(rule));
-
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp, "Failed to load lua file %s", file_name+4);
-            return rc;
-        }
-
-        ib_cfg_log_debug3(cp, "Loaded lua file %s", file_name+4);
-
-        rc = ib_operator_register(cp->ib,
-                                  file_name,
-                                  IB_OP_FLAG_PHASE,
-                                  &lua_operator_create,
-                                  NULL,
-                                  &lua_operator_destroy,
-                                  NULL,
-                                  &lua_operator_execute,
-                                  NULL);
+    ib_rule_driver_t *driver;
+    colon = strchr(file_name, ':');
+    if (colon == NULL) {
+        ib_cfg_log_error(cp,
+            "Could not parse external rule location: %s.  No colon found.",
+            file_name
+        );
+        return IB_EINVAL;
+    }
+    tag = ib_mpool_memdup_to_str(cp->mp, file_name, colon - file_name);
+    if (tag == NULL) {
+        return IB_EALLOC;
+    }
+    location = colon + 1;
+    rc = ib_hash_get(cp->ib->rule_engine->external_drivers, &driver, tag);
+    if (rc != IB_ENOENT) {
+        rc = driver->function(cp, rule, tag, location, driver->cbdata);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
-                             "Failed to register lua operator: %s",
-                             file_name);
+                "Error in external rule driver for %s: %s",
+                tag,
+                ib_status_to_string(rc)
+            );
             return rc;
         }
-
-        rc = ib_operator_inst_create(cp->ib,
-                                     cp->cur_ctx,
-                                     rule,
-                                     ib_rule_required_op_flags(rule),
-                                     file_name,
-                                     NULL,
-                                     IB_OPINST_FLAG_NONE,
-                                     &op_inst);
-
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp,
-                             "Failed to instantiate lua operator for rule %s",
-                             file_name+4);
-            return rc;
-        }
-
-        /* The data is then name of the function. */
-        op_inst->data = (void *)ib_rule_id(rule);
-
-        rc = ib_rule_set_operator(cp->ib, rule, op_inst);
-
-        if (rc != IB_OK) {
-            ib_cfg_log_error(cp,
-                             "Failed to associate lua operator "
-                             "with rule %s: %s",
-                             ib_rule_id(rule), file_name+4);
-            return rc;
-        }
-
-        ib_cfg_log_debug3(cp, "Set operator %s for rule %s",
-                          file_name,
-                          ib_rule_id(rule));
-#else
-        ib_cfg_log_error(cp, "IronBee built without Lua support.");
-#endif
     }
     else {
-        ib_cfg_log_error(cp, "RuleExt does not support rule type %s.",
-                         file_name);
+        ib_cfg_log_error(cp,
+            "No external rule driver for %s.\n", tag
+        );
         return IB_EINVAL;
     }
 
@@ -1705,159 +1494,6 @@ static IB_DIRMAP_INIT_STRUCTURE(rules_directive_map) = {
     IB_DIRMAP_INIT_LAST
 };
 
-#ifdef ENABLE_LUA
-static void clean_up_ipc_mem(void)
-{
-    ib_lock_destroy(&g_lua_lock);
-}
-#endif
-
-static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
-{
-    assert(ib != NULL);
-    assert(m != NULL);
-
-#ifdef ENABLE_LUA
-    /* Error code from Iron Bee calls. */
-    ib_status_t ib_rc;
-    ib_core_cfg_t *corecfg = NULL;
-
-    /**
-     * This is the search pattern that is appended to each element of
-     * lua_search_paths and then added to the Lua runtime package.path
-     * global variable. */
-    const char *lua_file_pattern = "?.lua";
-
-    /* Null terminated list of search paths. */
-    const char *lua_search_paths[3];
-
-    const char *lua_preloads[][2] = { { "ffi", "ffi" },
-                                      { "ironbee", "ironbee-ffi" },
-                                      { "ibapi", "ironbee-api" },
-                                      { NULL, NULL } };
-
-    char *path = NULL;           /**< Tmp string to build a search path. */
-
-    int i = 0; /**< An iterator. */
-
-    ib_rc = ib_lock_init(&g_lua_lock);
-
-    if (ib_rc != IB_OK) {
-        ib_log_error(ib, "Failed to initialize lua global lock.");
-    }
-
-    atexit(&clean_up_ipc_mem);
-
-    if (m == NULL) {
-        clean_up_ipc_mem();
-        return IB_EINVAL;
-    }
-
-    g_ironbee_rules_lua = luaL_newstate();
-
-    if (g_ironbee_rules_lua == NULL) {
-        ib_log_notice(ib, "Failed to create LuaJIT state.");
-        return IB_OK;
-    }
-
-    luaL_openlibs(g_ironbee_rules_lua);
-
-    ib_rc = ib_context_module_config(ib_context_main(ib),
-                                     ib_core_module(),
-                                     (void *)&corecfg);
-
-    if (ib_rc != IB_OK) {
-        ib_log_error(ib, "Could not retrieve core module configuration.");
-        return ib_rc;
-    }
-
-    /* Initialize the search paths list. */
-    lua_search_paths[0] = corecfg->module_base_path;
-    lua_search_paths[1] = corecfg->rule_base_path;
-    lua_search_paths[2] = NULL;
-
-    for (i = 0; lua_search_paths[i] != NULL; ++i)
-    {
-        char *tmp;
-        ib_log_debug(ib,
-            "Adding \"%s\" to lua search path.", lua_search_paths[i]);
-
-        /* Strlen + 2. One for \0 and 1 for the path separator. */
-        tmp = realloc(path,
-                      strlen(lua_search_paths[i]) +
-                      strlen(lua_file_pattern) + 2);
-
-        if (tmp == NULL) {
-            ib_log_error(ib, "Could allocate buffer for string append.");
-            free(path);
-            return IB_EALLOC;
-        }
-        path = tmp;
-
-        strcpy(path, lua_search_paths[i]);
-        strcpy(path + strlen(path), "/");
-        strcpy(path + strlen(path), lua_file_pattern);
-
-        ib_lua_add_require_path(ib, g_ironbee_rules_lua, path);
-
-        ib_log_debug(ib, "Added \"%s\" to lua search path.", path);
-    }
-
-    /* We are done with path. To be safe, we NULL it as there is more work
-     * to be done in this function, and we do not want to touch path again. */
-    free(path);
-    path = NULL;
-
-    for (i = 0; lua_preloads[i][0] != NULL; ++i)
-    {
-        ib_rc = ib_lua_require(ib,
-                               g_ironbee_rules_lua,
-                               lua_preloads[i][0],
-                               lua_preloads[i][1]);
-        if (ib_rc != IB_OK)
-        {
-            ib_log_error(ib,
-                "Failed to load mode \"%s\" into \"%s\".",
-                lua_preloads[i][1],
-                lua_preloads[i][0]);
-            clean_up_ipc_mem();
-            return ib_rc;
-        }
-    }
-#endif
-    return IB_OK;
-}
-
-static ib_status_t rules_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
-{
-    assert(ib != NULL);
-    assert(m != NULL);
-
-    ib_status_t rc;
-
-    /* Initialize the LUA logic */
-    rc = rules_lua_init(ib, m, cbdata);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    return IB_OK;
-}
-
-static ib_status_t rules_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
-{
-#ifdef ENABLE_LUA
-    ib_lock_destroy(&g_lua_lock);
-
-    if (g_ironbee_rules_lua != NULL) {
-        lua_close(g_ironbee_rules_lua);
-        g_ironbee_rules_lua = NULL;
-    }
-#endif
-
-    return IB_OK;
-}
-
 /* Initialize the module structure. */
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,           /* Default metadata */
@@ -1865,9 +1501,9 @@ IB_MODULE_INIT(
     IB_MODULE_CONFIG_NULL,               /* Global config data */
     NULL,                                /* Configuration field map */
     rules_directive_map,                 /* Config directive map */
-    rules_init,                          /* Initialize function */
+    NULL,                                /* Initialize function */
     NULL,                                /* Callback data */
-    rules_fini,                          /* Finish function */
+    NULL,                                /* Finish function */
     NULL,                                /* Callback data */
     NULL,                                /* Context open function */
     NULL,                                /* Callback data */
