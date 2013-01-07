@@ -27,20 +27,20 @@
 
 #include <ironautomata/eudoxus.h>
 
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
 #include <boost/bind.hpp>
 #include <boost/chrono.hpp>
 #include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
-#ifdef __clang__
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wunused-parameter"
-#endif
 #include <boost/program_options.hpp>
+#include <boost/scoped_ptr.hpp>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-#include <boost/scoped_ptr.hpp>
 
 #include <fstream>
 
