@@ -38,7 +38,7 @@ extern "C" {
  * @file
  * @brief IronBee Tests For Lua Modules
  *
- * Tests for IronBee Lua Moudles.
+ * Tests for IronBee Lua Modules.
  *
  * @author Sam Baskinger <sbaskinger@qualys.com>
  */
