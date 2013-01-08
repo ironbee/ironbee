@@ -7,6 +7,7 @@
 *.slo
 *.stackdump
 *.dSYM
+*.a
 /Makefile
 /Makefile.in
 /aclocal.m4
