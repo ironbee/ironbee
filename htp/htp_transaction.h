@@ -146,7 +146,8 @@ void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_d
 void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
 /**
- * Adds one parameter to the request.
+ * Adds one parameter to the request. THis function will take over the
+ * responsibility for the provided htp_param_t structure.
  * 
  * @param tx
  * @param param
