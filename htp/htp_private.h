@@ -485,11 +485,11 @@ int htp_treat_response_line_as_body(htp_tx_t *tx);
 int htp_req_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 
-int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d);
-int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
-int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
-int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d);
-int htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
+htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d);
+htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
+htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
+htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d);
+htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
 
 int htp_php_parameter_processor(htp_table_t *params, bstr *name, bstr *value);
 

@@ -42,12 +42,13 @@
  *
  * @param[in] d
  */
-int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
+htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
     if (d->data != NULL) {
         // Process one chunk of data
         htp_urlenp_parse_partial(d->tx->request_urlenp_body, d->data, d->len);
     } else {
         // Finalize parsing
+        
         htp_urlenp_finalize(d->tx->request_urlenp_body);
 
         if (d->tx->connp->cfg->parameter_processor == NULL) {
@@ -81,7 +82,7 @@ int htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
  * Determine if the request has a URLENCODED body, then
  * create and attach the URLENCODED parser if it does.
  */
-int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
+htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
     // Check the request content type to see if it matches our MIME type
     if ((connp->in_tx->request_content_type == NULL) || (bstr_cmp_c(connp->in_tx->request_content_type, HTP_URLENCODED_MIME_TYPE) != 0)) {
         #ifdef HTP_DEBUG
@@ -97,9 +98,7 @@ int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
 
     // Create parser instance
     connp->in_tx->request_urlenp_body = htp_urlenp_create(connp->in_tx);
-    if (connp->in_tx->request_urlenp_body == NULL) {
-        return HTP_ERROR;
-    }
+    if (connp->in_tx->request_urlenp_body == NULL) return HTP_ERROR;
 
     // Register request body data callbacks
     htp_tx_register_request_body_data(connp->in_tx, htp_ch_urlencoded_callback_request_body_data);
@@ -113,13 +112,11 @@ int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
  *
  * @param[in] connp
  */
-int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {    
+htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
     // Parse query string, when available
     if ((connp->in_tx->parsed_uri->query != NULL) && (bstr_len(connp->in_tx->parsed_uri->query) > 0)) {
         connp->in_tx->request_urlenp_query = htp_urlenp_create(connp->in_tx);
-        if (connp->in_tx->request_urlenp_query == NULL) {
-            return HTP_ERROR;
-        }       
+        if (connp->in_tx->request_urlenp_query == NULL) return HTP_ERROR;      
 
         htp_urlenp_parse_complete(connp->in_tx->request_urlenp_query,
             (unsigned char *) bstr_ptr(connp->in_tx->parsed_uri->query),
@@ -167,7 +164,7 @@ int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
  * 
  * @param[in] d
  */
-int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
+htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
     if (d->data != NULL) {
         // Process one chunk of data
         htp_mpartp_parse(d->tx->request_mpartp, d->data, d->len);
@@ -204,7 +201,7 @@ int htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
  *
  * @param[in] connp
  */
-int htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
+htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     // Check the request content type to see if it matches our MIME type
     if ((connp->in_tx->request_content_type == NULL) || (bstr_cmp_c(connp->in_tx->request_content_type, HTP_MULTIPART_MIME_TYPE) != 0)) {
         #ifdef HTP_DEBUG
