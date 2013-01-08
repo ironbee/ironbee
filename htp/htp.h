@@ -216,6 +216,29 @@ struct htp_header_t {
 };
 
 /**
+ * Represents a single request parameter.
+ */
+struct htp_param_t {
+    /** Parameter name. */
+    bstr *name;
+
+    /** Parameter value. */
+    bstr *value;
+
+    /** Source of the parameter, for example HTP_SOURCE_QUERY_STRING. */
+    enum htp_data_source_t source;
+
+    /** Type of the data structure referenced below. */
+    enum htp_parser_id_t parser_id;
+
+    /**
+     * Pointer to the parser data structure that contains
+     * complete information about the parameter.
+     */
+    void *parser_data;
+};
+
+/**
  * Represents a single transaction, which is a combination of a request and a response.
  */
 struct htp_tx_t {
@@ -426,11 +449,8 @@ struct htp_tx_t {
      */
     htp_mpartp_t *request_mpartp;
 
-    /** Parameters from the query string. */
-    htp_table_t *request_params_query;
-
-    /** Parameters from the request body. */
-    htp_table_t *request_params_body;
+    /** Request parameters. */
+    htp_table_t *request_params;
 
     /** Request cookies */
     htp_table_t *request_cookies;

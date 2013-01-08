@@ -336,7 +336,7 @@ htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp) {
  *
  * @param[in] part
  */
-void htp_mpart_part_destroy(htp_mpart_part_t *part) {
+void htp_mpart_part_destroy(htp_mpart_part_t *part, int gave_up_data) {
     if (part == NULL) return;
 
     if (part->file != NULL) {
@@ -351,8 +351,10 @@ void htp_mpart_part_destroy(htp_mpart_part_t *part) {
         part->file = NULL;
     }
 
-    bstr_free(&part->name);
-    bstr_free(&part->value);
+    if ((!gave_up_data)||(part->type != MULTIPART_PART_TEXT)) {
+        bstr_free(&part->name);
+        bstr_free(&part->value);
+    }
 
     if (part->headers != NULL) {
         // Destroy request_headers
@@ -687,7 +689,7 @@ void htp_mpartp_destroy(htp_mpartp_t ** _mpartp) {
     if (mpartp->parts != NULL) {
         for (int i = 0, n = htp_list_size(mpartp->parts); i < n; i++) {
             htp_mpart_part_t * part = htp_list_get(mpartp->parts, i);
-            htp_mpart_part_destroy(part);
+            htp_mpart_part_destroy(part, mpartp->gave_up_data);
         }
 
         htp_list_destroy(&mpartp->parts);

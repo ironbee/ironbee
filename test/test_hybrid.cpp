@@ -231,13 +231,13 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(bstr_cmp_c(tx->parsed_uri->query, "p=1&q=2"), 0);
 
     // Check parameters
-    bstr *param_p = (bstr *) htp_table_get_c(tx->request_params_query, "p");
+    htp_param_t *param_p = htp_tx_req_get_param_c(tx, "p");
     ASSERT_TRUE(param_p != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_p, "1"), 0);
+    ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
 
-    bstr *param_q = (bstr *) htp_table_get_c(tx->request_params_query, "q");
+    htp_param_t *param_q = htp_tx_req_get_param_c(tx, "q");
     ASSERT_TRUE(param_q != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_q, "2"), 0);
+    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
 
     // Request headers
     htp_tx_req_set_header_c(tx, "Host", "www.example.com", HTP_ALLOC_COPY);
@@ -388,15 +388,14 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     htp_tx_state_request_complete(tx);
 
     // Check parameters
-    ASSERT_TRUE(tx->request_params_body != NULL);
 
-    bstr *param_p = (bstr *) htp_table_get_c(tx->request_params_body, "p");
+    htp_param_t *param_p = htp_tx_req_get_param_c(tx, "p");
     ASSERT_TRUE(param_p != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_p, "1"), 0);
+    ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
 
-    bstr *param_q = (bstr *) htp_table_get_c(tx->request_params_body, "q");
+    htp_param_t *param_q = htp_tx_req_get_param_c(tx, "q");
     ASSERT_TRUE(param_q != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_q, "2"), 0);
+    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
 }
 
 static char HybridParsing_CompressedResponse[] =

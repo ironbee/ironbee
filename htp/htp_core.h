@@ -51,6 +51,7 @@ typedef struct htp_file_data_t htp_file_data_t;
 typedef struct htp_header_t htp_header_t;
 typedef struct htp_header_line_t htp_header_line_t;
 typedef struct htp_log_t htp_log_t;
+typedef struct htp_param_t htp_param_t;
 typedef struct htp_tx_data_t htp_tx_data_t;
 typedef struct htp_tx_t htp_tx_t;
 typedef struct htp_uri_t htp_uri_t;
@@ -239,6 +240,15 @@ enum htp_method_t {
     HTP_M_INVALID = 28
 };
 
+// XXX
+enum htp_parser_id_t {
+    /** application/x-www-form-urlencoded parser. */
+    HTP_PARSER_URLENCODED = 0,
+    
+    /** multipart/form-data parser. */
+    HTP_PARSER_MULTIPART = 1
+};
+
 // Protocol version constants; an enum cannot be
 // used here because we allow any properly-formatter protocol
 // version (e.g., 1.3), even those that do not actually exist.
@@ -246,6 +256,21 @@ enum htp_method_t {
 #define HTP_PROTOCOL_0_9             9
 #define HTP_PROTOCOL_1_0             100
 #define HTP_PROTOCOL_1_1             101
+
+// XXX
+enum htp_data_source_t {
+    /** Embedded in the URL. */
+    HTP_SOURCE_URL = 0,
+
+    /** Transported in the query string. */
+    HTP_SOURCE_QUERY_STRING = 1,
+
+    /** Cookies. */
+    HTP_SOURCE_COOKIE = 2,
+
+    /** Transported in the request body. */
+    HTP_SOURCE_BODY = 3
+};
 
 /**
  * Enumerates all stream states. Each connection has two streams, one

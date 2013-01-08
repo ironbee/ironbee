@@ -54,21 +54,19 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->cfg = connp->cfg;
     tx->is_config_shared = HTP_CONFIG_SHARED;
 
+    tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;
     tx->request_header_lines = htp_list_create(32);
     tx->request_headers = htp_table_create(32);
+    tx->request_params = htp_table_create(32);
     tx->request_line_nul_offset = -1;
+
     tx->parsed_uri = calloc(1, sizeof (htp_uri_t));
     tx->parsed_uri->port_number = -1;
     tx->parsed_uri_incomplete = calloc(1, sizeof (htp_uri_t));
 
     tx->response_header_lines = htp_list_create(32);
     tx->response_headers = htp_table_create(32);
-
-    tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;
-
-    tx->request_params_body = htp_table_create(32);
-    tx->request_params_query = htp_table_create(32);
-
+    
     return tx;
 }
 
@@ -188,12 +186,25 @@ void htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(&tx->request_content_type);
     bstr_free(&tx->response_content_type);
 
+    // Parsers
+
     htp_urlenp_destroy(&tx->request_urlenp_query);
     htp_urlenp_destroy(&tx->request_urlenp_body);
     htp_mpartp_destroy(&tx->request_mpartp);
 
-    htp_table_destroy(&tx->request_params_body);
-    htp_table_destroy(&tx->request_params_query);
+    // Request parameters
+
+    htp_param_t *param = NULL;
+    for (int i = 0, n = htp_table_size(tx->request_params); i < n; i++) {
+        htp_table_get_index(tx->request_params, i, NULL, (void **) &param);
+        // param->name will be freed by the table code
+        free(param->value);
+        free(param);
+    }
+
+    htp_table_destroy(&tx->request_params);
+
+    // Request cookies
 
     if (tx->request_cookies != NULL) {
         bstr *b = NULL;
@@ -239,20 +250,31 @@ void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
     tx->user_data = user_data;
 }
 
-htp_status_t htp_tx_req_add_body_param(htp_tx_t *tx, bstr *name, bstr *value) {
+htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param) {
     if (tx->cfg->parameter_processor == NULL) {
-        return htp_table_add(tx->request_params_body, name, value);
+        return htp_table_addn(tx->request_params, param->name, param);
     } else {
-        return tx->cfg->parameter_processor(tx->request_params_body, name, value);
+        // TODO Use parameter processor.
+        //return tx->cfg->parameter_processor(tx->request_params_body, name, value);
+        return HTP_ERROR;
     }
 }
 
-htp_status_t htp_tx_req_add_query_param(htp_tx_t *tx, bstr *name, bstr *value) {
-    if (tx->cfg->parameter_processor == NULL) {
-        return htp_table_add(tx->request_params_query, name, value);
-    } else {
-        return tx->cfg->parameter_processor(tx->request_params_query, name, value);
+htp_param_t *htp_tx_req_get_param_c(htp_tx_t *tx, const char *name) {
+    return (htp_param_t *)htp_table_get_c(tx->request_params, name);
+}
+
+htp_param_t *htp_tx_req_get_param_ex_c(htp_tx_t *tx, enum htp_data_source_t source, const char *name) {
+    htp_param_t *p = NULL;
+
+    for (int i = 0, n = htp_table_size(tx->request_params); i < n; i++) {
+        htp_table_get_index(tx->request_params, i, NULL, (void **)&p);
+        if (p->source != source) continue;
+
+        if (bstr_cmp_c(p->name, name) == 0) return p;
     }
+
+    return NULL;
 }
 
 int htp_tx_req_has_body(const htp_tx_t *tx) {

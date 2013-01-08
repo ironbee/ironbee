@@ -87,12 +87,10 @@ TEST_F(ConnectionParsing, Get) {
     
     ASSERT_TRUE(bstr_cmp_c(tx->parsed_uri->query, "p=%20") == 0);
     
-    ASSERT_TRUE(tx->request_params_query != NULL);
-    
-    bstr *p = (bstr *)htp_table_get_c(tx->request_params_query, "p");
+    htp_param_t *p = htp_tx_req_get_param_c(tx, "p");
     ASSERT_TRUE(p != NULL);
     
-    ASSERT_EQ(bstr_cmp_c(p, " "), 0);
+    ASSERT_EQ(bstr_cmp_c(p->value, " "), 0);
 }
 
 TEST_F(ConnectionParsing, ApacheHeaderParsing) {
@@ -169,13 +167,11 @@ TEST_F(ConnectionParsing, PostUrlencoded) {
     
     htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
-    
-    ASSERT_TRUE(tx->request_params_body != NULL);
-    
-    bstr *p = (bstr *)htp_table_get_c(tx->request_params_body, "p");
+
+    htp_param_t *p = htp_tx_req_get_param_c(tx, "p");
     ASSERT_TRUE(p != NULL);
     
-    ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
+    ASSERT_EQ(bstr_cmp_c(p->value, "0123456789"), 0);
 }
 
 TEST_F(ConnectionParsing, PostUrlencodedChunked) {
@@ -187,12 +183,10 @@ TEST_F(ConnectionParsing, PostUrlencodedChunked) {
     htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
     
-    ASSERT_TRUE(tx->request_params_body != NULL);
-    
-    bstr *p = (bstr *)htp_table_get_c(tx->request_params_body, "p");
+    htp_param_t *p = htp_tx_req_get_param_c(tx, "p");
     ASSERT_TRUE(p != NULL);
     
-    ASSERT_EQ(bstr_cmp_c(p, "0123456789"), 0);
+    ASSERT_EQ(bstr_cmp_c(p->value, "0123456789"), 0);
     
     ASSERT_EQ(tx->request_message_len, 25);
     
@@ -387,16 +381,14 @@ TEST_F(ConnectionParsing, Multipart) {
     ASSERT_TRUE(tx != NULL);
     
     ASSERT_TRUE(tx->progress == HTP_RESPONSE_COMPLETE);
-    
-    ASSERT_TRUE(tx->request_params_body != NULL);
-    
-    bstr *field1 = (bstr *)htp_table_get_c(tx->request_params_body, "field1");
+
+    htp_param_t *field1 = htp_tx_req_get_param_c(tx, "field1");
     ASSERT_TRUE(field1 != NULL); 
-    ASSERT_EQ(bstr_cmp_c(field1, "0123456789"), 0);
+    ASSERT_EQ(bstr_cmp_c(field1->value, "0123456789"), 0);
     
-    bstr *field2 = (bstr *)htp_table_get_c(tx->request_params_body, "field2");
+    htp_param_t *field2 = htp_tx_req_get_param_c(tx, "field2");
     ASSERT_TRUE(field2 != NULL);
-    ASSERT_EQ(bstr_cmp_c(field2, "9876543210"), 0);
+    ASSERT_EQ(bstr_cmp_c(field2->value, "9876543210"), 0);
 }
 
 TEST_F(ConnectionParsing, CompressedResponseDeflate) {
@@ -428,20 +420,18 @@ TEST_F(ConnectionParsing, UrlEncoded) {
     
     ASSERT_EQ(bstr_cmp_c(tx->request_method, "POST"), 0);
     ASSERT_EQ(bstr_cmp_c(tx->request_uri, "/?p=1&q=2"), 0);
-    
-    ASSERT_TRUE(tx->request_params_body != NULL);
-    
-    bstr *body_p = (bstr *)htp_table_get_c(tx->request_params_body, "p");
+
+    htp_param_t *body_p = htp_tx_req_get_param_ex_c(tx, HTP_SOURCE_BODY, "p");
     ASSERT_TRUE(body_p != NULL);
-    ASSERT_EQ(bstr_cmp_c(body_p, "3"), 0);
-    
-    bstr *body_q = (bstr *)htp_table_get_c(tx->request_params_body, "q");
+    ASSERT_EQ(bstr_cmp_c(body_p->value, "3"), 0);
+
+    htp_param_t *body_q = htp_tx_req_get_param_ex_c(tx, HTP_SOURCE_BODY, "q");
     ASSERT_TRUE(body_q != NULL);
-    ASSERT_EQ(bstr_cmp_c(body_q, "4"), 0);
+    ASSERT_EQ(bstr_cmp_c(body_q->value, "4"), 0);
     
-    bstr *body_z = (bstr *)htp_table_get_c(tx->request_params_body, "z");
+    htp_param_t *body_z = htp_tx_req_get_param_ex_c(tx, HTP_SOURCE_BODY, "z");
     ASSERT_TRUE(body_z != NULL);
-    ASSERT_EQ(bstr_cmp_c(body_z, "5"), 0);
+    ASSERT_EQ(bstr_cmp_c(body_z->value, "5"), 0);
 }
 
 TEST_F(ConnectionParsing, AmbiguousHost) {

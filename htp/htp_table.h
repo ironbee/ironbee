@@ -88,11 +88,21 @@ htp_table_t *htp_table_create(size_t size);
 /**
  * Destroy a table. This function first frees the keys and then destroys the
  * table itself, but does nothing with the elements. If the elements need
- * freeing, you need to free them before invoking this function.
+ * freeing, you need to free them before invoking this function. After the
+ * table has been destroyed, the pointer is set to NULL.
  *
- * @param[in]   table
+ * @param[in,out]   table
  */
 void htp_table_destroy(htp_table_t **_table);
+
+/**
+ * Destroy the given table, but do not free its keys. Use this method when
+ * the responsibility for the keys has been transferred elsewhere. After the
+ * table has been destroyed, the pointer is set to NULL.
+ *
+ * @param[in,out] _table
+ */
+void htp_table_destroy_ex(htp_table_t **_table);
 
 /**
  * Retrieve the first element that matches the given bstr key.

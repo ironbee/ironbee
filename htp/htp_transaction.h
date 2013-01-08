@@ -146,23 +146,33 @@ void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_d
 void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
 /**
- * Adds one query string parameter to the request.
- * @param tx
- * @param name
- * @param value
- * @return HTP_OK on success, HTP_ERROR on failure.
- */
-htp_status_t htp_tx_req_add_body_param(htp_tx_t *tx, bstr *name, bstr *value);
-
-/**
- * Adds one body parameter to the request.
+ * Adds one parameter to the request.
  * 
  * @param tx
- * @param name
- * @param value
+ * @param param
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_tx_req_add_query_param(htp_tx_t *tx, bstr *name, bstr *value);
+htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param);
+
+/**
+ * Returns the first request parameter that matches the given name.
+ *
+ * @param[in] tx
+ * @param[in] name
+ * @return htp_param_t instance, or NULL if parameter not found.
+ */
+htp_param_t *htp_tx_req_get_param_c(htp_tx_t *tx, const char *name);
+
+/**
+ * Returns the first request parameter from the given source
+ * that matches the given name.
+ * 
+ * @param[in] tx
+ * @param[in] source
+ * @param[in] name
+ * @return htp_param_t instance, or NULL if parameter not found.
+ */
+htp_param_t *htp_tx_req_get_param_ex_c(htp_tx_t *tx, enum htp_data_source_t source, const char *name);
 
 /**
  * Determine if the request has a body.

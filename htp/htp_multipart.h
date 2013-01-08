@@ -133,6 +133,7 @@ struct htp_mpartp_t {
     unsigned char first_boundary_byte;
     size_t boundarypos;
     int cr_aside;
+    int gave_up_data;
 };
 
 htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary);
@@ -144,7 +145,7 @@ int htp_mpartp_finalize(htp_mpartp_t *mpartp);
 htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp);
 int htp_mpart_part_receive_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int line);
 int htp_mpart_part_finalize_data(htp_mpart_part_t *part);
-void htp_mpart_part_destroy(htp_mpart_part_t *part);
+void htp_mpart_part_destroy(htp_mpart_part_t *part, int gave_up_data);
 
 int htp_mpartp_extract_boundary(bstr *content_type, char **boundary);
 

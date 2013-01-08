@@ -97,6 +97,17 @@ void htp_table_destroy(htp_table_t **_table) {
     *_table = NULL;
 }
 
+void htp_table_destroy_ex(htp_table_t **_table) {
+    if ((_table == NULL)||(*_table == NULL)) return;
+
+    htp_table_t *table = *_table;
+
+    htp_list_destroy(&table->list);
+
+    free(table);
+    *_table = NULL;
+}
+
 void *htp_table_get(const htp_table_t *table, const bstr *key) {
     if ((table == NULL)||(key == NULL)) return NULL;
 
