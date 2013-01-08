@@ -48,31 +48,15 @@ htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
         htp_urlenp_parse_partial(d->tx->request_urlenp_body, d->data, d->len);
     } else {
         // Finalize parsing
-        
         htp_urlenp_finalize(d->tx->request_urlenp_body);
 
-        if (d->tx->connp->cfg->parameter_processor == NULL) {
-            // We are going to use the parser table directly
-            d->tx->request_params_body = d->tx->request_urlenp_body->params;
-            d->tx->request_params_body_reused = 1;
-
-            htp_transcode_params(d->tx->connp, &d->tx->request_params_body, 0);
-        } else {
-            // We have a parameter processor defined, which means we'll
-            // need to create a new table
-            d->tx->request_params_body = htp_table_create(htp_table_size(d->tx->request_urlenp_body->params));
-
-            // Transform parameters and store them into the new table
-            bstr *name = NULL;
-            bstr *value = NULL;
-            for (int i = 0, n = htp_table_size(d->tx->request_urlenp_body->params); i < n; i++) {
-                htp_table_get_index(d->tx->request_urlenp_body->params, i, &name, (void **)&value);
-                d->tx->connp->cfg->parameter_processor(d->tx->request_params_body, name, value);
-                // TODO Check return code
-            }  
-
-            htp_transcode_params(d->tx->connp, &d->tx->request_params_body, 1);
-        }       
+        // Add all parameters to the transaction
+        bstr *name = NULL;
+        bstr *value = NULL;
+        for (int i = 0, n = htp_table_size(d->tx->request_urlenp_body->params); i < n; i++) {
+            htp_table_get_index(d->tx->request_urlenp_body->params, i, &name, (void **)&value);
+            if (htp_tx_req_add_body_param(d->tx, name, value) != HTP_OK) return HTP_ERROR;
+        }
     }
 
     return HTP_OK;
@@ -113,47 +97,22 @@ htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
  * @param[in] connp
  */
 htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
+    htp_tx_t *tx = connp->in_tx;
+
     // Parse query string, when available
-    if ((connp->in_tx->parsed_uri->query != NULL) && (bstr_len(connp->in_tx->parsed_uri->query) > 0)) {
-        connp->in_tx->request_urlenp_query = htp_urlenp_create(connp->in_tx);
-        if (connp->in_tx->request_urlenp_query == NULL) return HTP_ERROR;      
+    if ((tx->parsed_uri->query != NULL) && (bstr_len(tx->parsed_uri->query) > 0)) {
+        tx->request_urlenp_query = htp_urlenp_create(tx);
+        if (tx->request_urlenp_query == NULL) return HTP_ERROR;      
 
-        htp_urlenp_parse_complete(connp->in_tx->request_urlenp_query,
-            (unsigned char *) bstr_ptr(connp->in_tx->parsed_uri->query),
-            bstr_len(connp->in_tx->parsed_uri->query));       
+        htp_urlenp_parse_complete(tx->request_urlenp_query, bstr_ptr(tx->parsed_uri->query), bstr_len(tx->parsed_uri->query));
 
-        // Is there a parameter processor?
-        if (connp->cfg->parameter_processor == NULL) {
-            // There's no parameter processor
-            
-            if (connp->cfg->internal_encoding == NULL) {
-                // No transcoding; use the parser table directly
-                connp->in_tx->request_params_query = connp->in_tx->request_urlenp_query->params;
-                connp->in_tx->request_params_query_reused = 1;
-            } else {
-                // Transcode values
-                connp->in_tx->request_params_query = connp->in_tx->request_urlenp_query->params;
-                htp_transcode_params(connp, &connp->in_tx->request_params_query, 0);
-            }
-        } else {            
-            // We have a parameter processor defined, which 
-            // means we'll need to create a new table
-            
-            connp->in_tx->request_params_query = htp_table_create(htp_table_size(connp->in_tx->request_urlenp_query->params));
-
-            // Use the parameter processor on each parameter, storing
-            // the results in the newly created table            
-            bstr *name = NULL;
-            bstr *value = NULL;            
-            for (int i = 0, n = htp_table_size(connp->in_tx->request_params_query); i < n; i++) {
-                htp_table_get_index(connp->in_tx->request_params_query, i, &name, (void **)&value);
-                connp->cfg->parameter_processor(connp->in_tx->request_params_query, name, value);
-                // TODO Check return code
-            }            
-
-            // Transcode as necessary
-            htp_transcode_params(connp, &connp->in_tx->request_params_query, 1);
-        }       
+        // Add all parameters to the transaction
+        bstr *name = NULL;
+        bstr *value = NULL;
+        for (int i = 0, n = htp_table_size(tx->request_urlenp_query->params); i < n; i++) {
+            htp_table_get_index(tx->request_urlenp_query->params, i, &name, (void **)&value);
+            if (htp_tx_req_add_query_param(tx, name, value) != HTP_OK) return HTP_ERROR;
+        }
     }
 
     return HTP_OK;
@@ -171,23 +130,13 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
     } else {
         // Finalize parsing
         htp_mpartp_finalize(d->tx->request_mpartp);
-
-        d->tx->request_params_body = htp_table_create(htp_list_size(d->tx->request_mpartp->parts));
-        // TODO RC
-
-        // Extract parameters
-        d->tx->request_params_body_reused = 1;
                 
         for (int i = 0, n = htp_list_size(d->tx->request_mpartp->parts); i < n; i++) {
             htp_mpart_part_t *part = htp_list_get(d->tx->request_mpartp->parts, i);
 
-            // Only use text parameters
-            if (part->type == MULTIPART_PART_TEXT) {                
-                if (d->tx->connp->cfg->parameter_processor == NULL) {
-                    htp_table_add(d->tx->request_params_body, part->name, part->value);
-                } else {
-                    d->tx->connp->cfg->parameter_processor(d->tx->request_params_body, part->name, part->value);
-                }
+            // Use text parameters
+            if (part->type == MULTIPART_PART_TEXT) {
+                htp_tx_req_add_body_param(d->tx, part->name, part->value);
             }
         }
     }

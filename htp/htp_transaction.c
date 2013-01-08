@@ -66,6 +66,9 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 
     tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;
 
+    tx->request_params_body = htp_table_create(32);
+    tx->request_params_query = htp_table_create(32);
+
     return tx;
 }
 
@@ -189,25 +192,8 @@ void htp_tx_destroy(htp_tx_t *tx) {
     htp_urlenp_destroy(&tx->request_urlenp_body);
     htp_mpartp_destroy(&tx->request_mpartp);
 
-    if ((tx->request_params_query_reused == 0) && (tx->request_params_query != NULL)) {
-        bstr *b = NULL;
-        for (int i = 0, n = htp_table_size(tx->request_params_query); i < n; i++) {
-            htp_table_get_index(tx->request_params_query, i, NULL, (void **) &b);
-            bstr_free(&b);
-        }
-
-        htp_table_destroy(&tx->request_params_query);
-    }
-
-    if ((tx->request_params_body_reused == 0) && (tx->request_params_body != NULL)) {
-        bstr *b = NULL;
-        for (int i = 0, n = htp_table_size(tx->request_params_body); i < n; i++) {
-            htp_table_get_index(tx->request_params_body, i, NULL, (void **) &b);
-            bstr_free(&b);
-        }
-
-        htp_table_destroy(&tx->request_params_body);
-    }
+    htp_table_destroy(&tx->request_params_body);
+    htp_table_destroy(&tx->request_params_query);
 
     if (tx->request_cookies != NULL) {
         bstr *b = NULL;
@@ -251,6 +237,22 @@ void htp_tx_set_config(htp_tx_t *tx, htp_cfg_t *cfg, int is_cfg_shared) {
 
 void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
     tx->user_data = user_data;
+}
+
+htp_status_t htp_tx_req_add_body_param(htp_tx_t *tx, bstr *name, bstr *value) {
+    if (tx->cfg->parameter_processor == NULL) {
+        return htp_table_add(tx->request_params_body, name, value);
+    } else {
+        return tx->cfg->parameter_processor(tx->request_params_body, name, value);
+    }
+}
+
+htp_status_t htp_tx_req_add_query_param(htp_tx_t *tx, bstr *name, bstr *value) {
+    if (tx->cfg->parameter_processor == NULL) {
+        return htp_table_add(tx->request_params_query, name, value);
+    } else {
+        return tx->cfg->parameter_processor(tx->request_params_query, name, value);
+    }
 }
 
 int htp_tx_req_has_body(const htp_tx_t *tx) {

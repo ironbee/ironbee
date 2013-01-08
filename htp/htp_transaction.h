@@ -146,6 +146,25 @@ void htp_tx_register_request_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_d
 void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_data_t *));
 
 /**
+ * Adds one query string parameter to the request.
+ * @param tx
+ * @param name
+ * @param value
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_tx_req_add_body_param(htp_tx_t *tx, bstr *name, bstr *value);
+
+/**
+ * Adds one body parameter to the request.
+ * 
+ * @param tx
+ * @param name
+ * @param value
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_tx_req_add_query_param(htp_tx_t *tx, bstr *name, bstr *value);
+
+/**
  * Determine if the request has a body.
  *
  * @param[in] tx

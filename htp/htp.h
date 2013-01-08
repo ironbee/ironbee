@@ -429,14 +429,8 @@ struct htp_tx_t {
     /** Parameters from the query string. */
     htp_table_t *request_params_query;
 
-    /** TODO */
-    int request_params_query_reused;
-
-    /** Parameters from request body. */
+    /** Parameters from the request body. */
     htp_table_t *request_params_body;
-
-    /** TODO */
-    int request_params_body_reused;
 
     /** Request cookies */
     htp_table_t *request_cookies;
