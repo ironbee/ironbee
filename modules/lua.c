@@ -348,7 +348,7 @@ static ib_status_t modlua_config_cb_eval(
     ib_engine_t *ib,
     ib_module_t *module,
     const char *name,
-    int args_in) 
+    int args_in)
 {
     int lua_rc = lua_pcall(L, args_in, 1, 0);
     ib_status_t rc;
@@ -415,7 +415,7 @@ static ib_status_t modlua_config_cb_eval(
  * Push a Lua table onto the stack that contains a path of configurations.
  *
  * IronBee supports nested configuration contexts. Configuration B may
- * occur in configuration A. This function will push 
+ * occur in configuration A. This function will push
  * the Lua table { "A", "B" } such that t[1] = "A" and t[2] = "B".
  *
  * This allows the module to fetch or build the configuration table
@@ -837,7 +837,7 @@ static int modlua_config_register_directive(lua_State *L)
     modlua_lua_cbdata_t *modlua_lua_cbdata;
     ib_module_t *module;
 
-    /* We choose assert here because if this value is incorrect, 
+    /* We choose assert here because if this value is incorrect,
      * then the lua module code (lua.c and ironbee-modlua.lua) are
      * inconsistent with each other. */
     assert(args==3 || args==4);
@@ -905,7 +905,7 @@ static int modlua_config_register_directive(lua_State *L)
                 ++varmapsz;
                 lua_pop(L, 1); /* Pop off value. Leave key. */
             }
-            
+
             if (varmapsz > 0) {
                 /* Allocate space for strvalmap. */
                 strvalmap = malloc(sizeof(*strvalmap) * (varmapsz + 1));
@@ -914,7 +914,7 @@ static int modlua_config_register_directive(lua_State *L)
                     rcmsg = "Cannot allocate strval map.";
                     goto exit;
                 }
-    
+
                 /* Build map. */
                 i = 0;
                 while (lua_next(L, 3-args)) { /* Push string, int onto stack. */
@@ -923,7 +923,7 @@ static int modlua_config_register_directive(lua_State *L)
                     lua_pop(L, 1); /* Pop off value. Leave key. */
                     ++i;
                 }
-    
+
                 /* Null terminate the list. */
                 strvalmap[varmapsz].str = NULL;
                 strvalmap[varmapsz].val = 0;
@@ -1284,7 +1284,7 @@ static ib_status_t modlua_callback_setup(
  * Common code to run the module handler.
  *
  * This is the basic function. This is almost always
- * called by a wrapper function that unwraps Lua values from 
+ * called by a wrapper function that unwraps Lua values from
  * the connection or module for us, but in the case of a null event
  * callback, this is called directly
  */
@@ -1441,7 +1441,7 @@ static ib_status_t modlua_null(
     lua_State *L;
     modlua_lua_cbdata_t *modlua_lua_cbdata;
     ib_module_t *module;
-    
+
     modlua_lua_cbdata = (modlua_lua_cbdata_t *)cbdata;
     module = modlua_lua_cbdata->module;
 
@@ -1472,7 +1472,7 @@ static ib_status_t modlua_null(
     rc = modlua_push_config_path(ib, ib_context_main(ib), L);
     lua_pushnil(L); /* Connection (conn) is nil. */
     lua_pushnil(L); /* Transaction (tx) is nil. */
-    
+
     rc = modlua_callback_dispatch_base(ib, module, L);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failure while executing callback handler.");
