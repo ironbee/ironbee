@@ -254,7 +254,7 @@ void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
 
 htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param) {
     if (tx->cfg->parameter_processor == NULL) {
-        return htp_table_addr(tx->request_params, param->name, param);
+        return htp_table_addk(tx->request_params, param->name, param);
         return HTP_OK;
     } else {
         // TODO Use parameter processor.

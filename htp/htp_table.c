@@ -97,7 +97,7 @@ htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *ele
     return _htp_table_add(table, key, element);
 }
 
-htp_status_t htp_table_addr(htp_table_t *table, const bstr *key, const void *element) {
+htp_status_t htp_table_addk(htp_table_t *table, const bstr *key, const void *element) {
     // Keep track of how keys are allocated, and
     // ensure that all invocations are consistent.
     if (table->alloc_type == HTP_TABLE_KEYS_ALLOC_UKNOWN) {

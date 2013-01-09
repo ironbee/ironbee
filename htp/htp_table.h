@@ -82,7 +82,7 @@ htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *ele
  * @param[in] element
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_table_addr(htp_table_t *table, const bstr *key, const void *element);
+htp_status_t htp_table_addk(htp_table_t *table, const bstr *key, const void *element);
 
 /**
  * Remove all elements from the table. This function handles keys
