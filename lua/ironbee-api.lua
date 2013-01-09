@@ -363,10 +363,10 @@ ibapi.txapi.getFieldList = function(self)
     return fields 
 end
 
--- Add a string, number, or table to the transaction data provider.
+-- Add a string, number, or table to the transaction data.
 -- If value is a string or a number, it is appended to the end of the
--- list of values available through the data provider.
--- If the value is a table, and the table exists in the data provider,
+-- list of values available through the data.
+-- If the value is a table, and the table exists in the data,
 -- then the values are appended to that table. Otherwise, a new
 -- table is created.
 ibapi.txapi.add = function(self, name, value)
@@ -411,7 +411,7 @@ end
 
 ibapi.txapi.set = function(self, name, value)
 
-    local ib_field = self:getDpiField(name)
+    local ib_field = self:getDataField(name)
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
 
     if ib_field == nil then
@@ -461,13 +461,13 @@ ibapi.txapi.set = function(self, name, value)
 end
 
 
--- Get a value from the transaction's data provider instance.
+-- Get a value from the transaction's data instance.
 -- If that parameter points to a string, a string is returned.
 -- If name points to a number, a number is returned.
 -- If name points to a list of name-value pairs a table is returned
 --    where
 ibapi.txapi.get = function(self, name)
-    local ib_field = self:getDpiField(name)
+    local ib_field = self:getDataField(name)
     return self:fieldToLua(ib_field)
 end
 
@@ -475,7 +475,7 @@ end
 -- contained in it. If the requested field is a string or an integer, then
 -- a single element list containing name is returned.
 ibapi.txapi.getNames = function(self, name)
-    local ib_field = self:getDpiField(name)
+    local ib_field = self:getDataField(name)
 
     -- To speed things up, we handle a list directly
     if ib_field.type == ffi.C.IB_FTYPE_LIST then
@@ -498,7 +498,7 @@ end
 -- contained in it. If the requeted field is a string or an integer,
 -- then a single element list containing that value is returned.
 ibapi.txapi.getValues = function(self, name)
-    local ib_field = self:getDpiField(name)
+    local ib_field = self:getDataField(name)
 
     -- To speed things up, we handle a list directly
     if ib_field.type == ffi.C.IB_FTYPE_LIST then
@@ -612,7 +612,7 @@ ibapi.txapi.appendToList = function(self, listName, fieldName, fieldValue)
     end
 
     -- Fetch the list
-    local list = self:getDpiField(listName)
+    local list = self:getDataField(listName)
 
     -- Append the field
     ffi.C.ib_field_list_add(list, field[0])
@@ -707,7 +707,7 @@ end
 
 -- Return a ib_field_t* to the field named and stored in the DPI.
 -- This is used to quickly pull named fields for setting or getting values.
-ibapi.txapi.getDpiField = function(self, name)
+ibapi.txapi.getDataField = function(self, name)
     local ib_field = ffi.new("ib_field_t*[1]")
 
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)

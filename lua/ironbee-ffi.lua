@@ -1256,7 +1256,6 @@ end
 -- ===============================================
 IB_PROVIDER_TYPE_LOGGER    = "logger"
 IB_PROVIDER_TYPE_PARSER    = "parser"
-IB_PROVIDER_TYPE_DATA      = "data"
 IB_PROVIDER_TYPE_MATCHER   = "matcher"
 IB_PROVIDER_TYPE_LOGEVENT  = "logevent"
 
