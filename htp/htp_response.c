@@ -556,6 +556,10 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t * connp) {
                 bstr_free(&connp->out_tx->response_line);
             }
 
+            if (connp->out_tx->response_line_raw != NULL) {
+                bstr_free(&connp->out_tx->response_line_raw);
+            }
+
             if (connp->out_tx->response_protocol != NULL) {
                 bstr_free(&connp->out_tx->response_protocol);
             }
