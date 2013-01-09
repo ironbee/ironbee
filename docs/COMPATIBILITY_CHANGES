@@ -12,11 +12,10 @@
 - list_array_replace returns HTP_ERROR (-1) instead of 0 when the index does not exist.
 
 - Removed list iterators. Use this instead:
-
-  bstr *b = NULL;
+  
   for (int i = 0, n = htp_list_size(l); i < n; i++) {
       bstr *b = htp_list_get(l, i);
-      bstr_free(&b);
+      // Do something with b here
   }
 
 - Removed table iterators. Use this instead:
@@ -25,8 +24,7 @@
   bstr *value = NULL;
   for (int i = 0, n = htp_table_size(t); i < n; i++) {
       htp_table_get_index(l, i, &key, (void **)&value);
-      // the key is managed by the table and does not need freeing
-      bstr_free(&value);
+      // Do something with key and value here
   }
 
 - Removed htp_connp_create_copycfg(), along with the ability of connection parsers to
@@ -37,6 +35,11 @@
 - Renamed STREAM_STATE_* constants to HTP_STREAM_*
 
 - Personality HTP_SERVER_APACHE_2_2 renamed to HTP_SERVER_APACHE_2. Personality HTP_SERVER_APACHE removed.
+
+- Request parameters are now stored in a single structure called request_params. Previously, there
+  were 2 structures, one for query string parameters (GET) and another for body parameters (e.g., POST).
+  Further, before LibHTP stored parameter names and values in these structures. Now there is htp_param_t,
+  which stores additional useful information (e.g., allows parameters to be tracked back to the parsers)parsers.
 
 
 
