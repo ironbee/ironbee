@@ -40,37 +40,77 @@
 
 #include "htp.h"
 
-int htp_php_parameter_processor(htp_table_t *params, bstr *name, bstr *value) {
-    // TODO Examine the PHP source code to determine the exact
-    //      algorithm it uses to transform parameter names    
+/**
+ * This is a proof-of-concept processor that processes parameter names in
+ * a way _similar_ to PHP. Whitespace at the beginning is removed, and the
+ * remaining whitespace characters are converted to underscores. Proper
+ * research of PHP's behavior is needed before we can claim to be emulating it.
+ *
+ * @param[in,out] p
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_php_parameter_processor(htp_param_t *p) {
+    if (p == NULL) return HTP_ERROR;
 
     // Name transformation
 
-    // Ignore whitespace at the beginning
-    unsigned char *data = bstr_ptr(name);
-    size_t len = bstr_len(name);
+    bstr *new_name = NULL;
+
+    // Ignore whitespace characters at the beginning of parameter name.
+
+    unsigned char *data = bstr_ptr(p->name);
+    size_t len = bstr_len(p->name);
     size_t pos = 0;
 
-    while ((pos < len) && (isspace((int)data[pos]))) pos++;
+    // Advance over any whitespace characters at the beginning of the name.
+    while ((pos < len) && (isspace(data[pos]))) pos++;
 
-    bstr * new_name = bstr_dup_mem(data + pos, len - pos);
+    // Have we seen any whitespace?
+    if (pos > 0) {
+        // Make a copy of the name, starting with
+        // the first non-whitespace character.
+        new_name = bstr_dup_mem(data + pos, len - pos);
+        if (new_name == NULL) return HTP_ERROR;
+    }
+    
+    // Replace remaining whitespace characters with underscores.
 
-    // Convert the remaining whitespace underscores
-    data = bstr_ptr(new_name);
-    len = bstr_len(new_name);
+    size_t offset = pos;
     pos = 0;
+    
+    // Advance to the end of name or to the first whitespace character.
+    while ((offset + pos < len)&&(!isspace(data[pos]))) pos++;
 
-    while (pos < len) {
-        if (isspace((int)data[pos])) data[pos] = '_';
-        pos++;
+    // Are we at the end of the name?
+    if (offset + pos < len) {
+        // Seen whitespace within the string.
+
+        // Make a copy of the name if needed (which would be the case
+        // with a parameter that does not have any whitespace in front).
+        if (new_name == NULL) {
+            new_name = bstr_dup(p->name);
+            if (new_name == NULL) return HTP_ERROR;
+        }
+        
+        // Change the pointers to the new name and ditch the offset.
+        data = bstr_ptr(new_name);
+        len = bstr_len(new_name);
+
+        // Replace any whitespace characters in the copy with underscores.
+        while (pos < len) {
+            if (isspace(data[pos])) {
+                data[pos] = '_';
+            }
+        
+            pos++;
+        }
     }
 
-    // Value transformation
-    // TODO Support parameter value transformation
-    bstr *new_value = bstr_dup(value);
-
-    // Add parameter to table
-    htp_table_addn(params, new_name, new_value);
+    // If we made any changes, free the old parameter name and put the new one in.
+    if (new_name != NULL) {
+        free(p->name);
+        p->name = new_name;
+    }
 
     return HTP_OK;
 }

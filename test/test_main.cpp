@@ -474,3 +474,23 @@ TEST_F(ConnectionParsing, Http_0_9) {
     ASSERT_TRUE(tx != NULL);
 }
 
+TEST_F(ConnectionParsing, PhpParamProcessing) {
+    cfg->parameter_processor = htp_php_parameter_processor;
+
+    int rc = test_run(home, "22-php-param-processing.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(htp_list_size(connp->conn->transactions), 1);
+
+    htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    htp_param_t *p1 = htp_tx_req_get_param_c(tx, "p_q_");
+    ASSERT_TRUE(p1 != NULL);
+    ASSERT_EQ(bstr_cmp_c(p1->value, "1"), 0);
+
+    htp_param_t *p2 = htp_tx_req_get_param_c(tx, "q");
+    ASSERT_TRUE(p2 != NULL);
+    ASSERT_EQ(bstr_cmp_c(p2->value, "2"), 0);
+}
+

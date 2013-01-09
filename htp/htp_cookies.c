@@ -74,14 +74,8 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t l
         return HTP_ERROR;
     }
 
-    // Add cookie
-    if (connp->cfg->parameter_processor == NULL) {
-        // Add cookie directly
-        htp_table_addn(connp->in_tx->request_cookies, name, value);
-    } else {
-        // Add cookie through parameter processor
-        connp->cfg->parameter_processor(connp->in_tx->request_cookies, name, value);
-    }
+    // Add cookie directly
+    htp_table_addn(connp->in_tx->request_cookies, name, value);
 
     return HTP_OK;
 }
