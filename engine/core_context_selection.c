@@ -525,13 +525,12 @@ static ib_status_t core_ctxsel_select(
      * selector found
      */
     if (tx == NULL) {
-        ib_log_notice(ib,
-                      "No matching site found: Using \"main\" context."
-                      " IP=%s port=%u",
-                      conn->local_ipstr, conn->local_port);
+        ib_log_debug(ib, "No matching site found for connection:"
+                     " IP=%s port=%u",
+                     conn->local_ipstr, conn->local_port);
     }
     else {
-        ib_log_notice(ib, "No matching site found: Using \"main\" context."
+        ib_log_notice(ib, "No matching site found for transaction:"
                       " IP=%s port=%u host=\"%s\"",
                       conn->local_ipstr, conn->local_port, tx->hostname);
     }
