@@ -7,6 +7,7 @@
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -48,6 +49,7 @@
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -81,6 +83,7 @@
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -408,6 +411,7 @@ class GTEST_API_ SingleFailureChecker {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -6209,6 +6213,7 @@ void InitGoogleTest(int* argc, wchar_t** argv) {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -7438,6 +7443,7 @@ InternalRunDeathTestFlag* ParseInternalRunDeathTestFlag() {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -7815,6 +7821,7 @@ void FilePath::Normalize() {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -8555,6 +8562,7 @@ const char* StringFromGTestEnv(const char* flag, const char* default_value) {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -8909,6 +8917,7 @@ void PrintWideStringTo(const ::std::wstring& s, ostream* os) {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -9017,6 +9026,7 @@ void HasNewFatalFailureHelper::ReportTestPartResult(
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the

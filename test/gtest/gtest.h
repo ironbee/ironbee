@@ -7,6 +7,7 @@
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -63,6 +64,7 @@
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -102,6 +104,7 @@
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -570,6 +573,7 @@
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -2858,6 +2862,7 @@ const char* StringFromGTestEnv(const char* flag, const char* default_val);
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -3207,6 +3212,7 @@ String StreamableToString(const T& streamable);
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -3420,6 +3426,7 @@ class GTEST_API_ FilePath {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -7913,6 +7920,7 @@ void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::TestBody()
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -7953,6 +7961,7 @@ void GTEST_TEST_CLASS_NAME_(test_case_name, test_name)::TestBody()
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -8502,6 +8511,7 @@ class GTEST_API_ KilledBySignal {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -8734,6 +8744,7 @@ inline std::ostream& operator <<(std::ostream& os, const Message& sb) {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -8919,6 +8930,7 @@ TEST_P(DerivedTest, DoesBlah) {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -8962,6 +8974,7 @@ TEST_P(DerivedTest, DoesBlah) {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -9194,6 +9207,7 @@ linked_ptr<T> make_linked_ptr(T* ptr) {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -10564,6 +10578,7 @@ class ParameterizedTestCaseRegistry {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -16608,6 +16623,7 @@ internal::CartesianProductHolder10<Generator1, Generator2, Generator3,
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -16666,6 +16682,7 @@ friend class test_case_name##_##test_name##_Test
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -16840,6 +16857,7 @@ class GTEST_API_ HasNewFatalFailureHelper
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
@@ -18829,6 +18847,7 @@ class TestWithParam : public Test, public WithParamInterface<T> {
 //
 //     - Redistributions of source code must retain the above copyright
 //   notice, this list of conditions and the following disclaimer.
+
 //     * Redistributions in binary form must reproduce the above
 // copyright notice, this list of conditions and the following disclaimer
 // in the documentation and/or other materials provided with the
