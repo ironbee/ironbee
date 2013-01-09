@@ -138,7 +138,7 @@ static ib_status_t foo2bar(ib_engine_t *ib,
             return rc;
         }
         if ( (in != NULL) && (strncmp(in, "foo", 3) == 0) ) {
-            out = (char *)ib_mpool_alloc(mp, strlen(in));
+            out = (char *)ib_mpool_alloc(mp, strlen(in) + 1);
             if (out == NULL) {
                 return IB_EINVAL;
             }
@@ -147,6 +147,7 @@ static ib_status_t foo2bar(ib_engine_t *ib,
             *(out+0) = 'b';
             *(out+1) = 'a';
             *(out+2) = 'r';
+            *(out+3) = '\0';
         }
         else {
             out = (char *)in;
