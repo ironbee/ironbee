@@ -419,7 +419,7 @@ ib_status_t ib_data_create(
 
     ib_status_t rc;
 
-    *data = ib_mpool_calloc(mp, 1, sizeof(*data));
+    *data = ib_mpool_calloc(mp, 1, sizeof(**data));
     if (*data == NULL) {
         return IB_EALLOC;
     }
