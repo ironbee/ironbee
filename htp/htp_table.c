@@ -36,19 +36,7 @@
 
 #include "htp_table_private.h"
 
-htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *element) {
-    bstr *dupkey = bstr_dup(key);
-    if (dupkey == NULL) return HTP_ERROR;
-
-    if (htp_table_addn(table, dupkey, element) != HTP_OK) {
-        free(dupkey);
-        return HTP_ERROR;
-    }
-
-    return HTP_OK;
-}
-
-htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *element) {
+static htp_status_t _htp_table_add(htp_table_t *table, const bstr *key, const void *element) {
     // Add key
     if (htp_list_add(table->list, (void *)key) != HTP_OK) return HTP_ERROR;
 
@@ -61,6 +49,71 @@ htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *ele
     return HTP_OK;
 }
 
+htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *element) {    
+    // Keep track of how keys are allocated, and
+    // ensure that all invocations are consistent.
+    if (table->alloc_type == HTP_TABLE_KEYS_ALLOC_UKNOWN) {
+        table->alloc_type = HTP_TABLE_KEYS_COPIED;
+    } else {
+        if (table->alloc_type != HTP_TABLE_KEYS_COPIED) {
+            #ifdef HTP_DEBUG
+            fprintf(stderr, "# Inconsistent key management strategy. Actual %d. Attempted %d.\n",
+                table->alloc_type, HTP_TABLE_KEYS_COPIED);
+            #endif
+            
+            return HTP_ERROR;
+        }
+    }
+
+    bstr *dupkey = bstr_dup(key);
+    if (dupkey == NULL) return HTP_ERROR;
+
+    if (_htp_table_add(table, dupkey, element) != HTP_OK) {
+        free(dupkey);
+        return HTP_ERROR;
+    }
+
+    return HTP_OK;
+}
+
+htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *element) {
+    // Keep track of how keys are allocated, and
+    // ensure that all invocations are consistent.
+    if (table->alloc_type == HTP_TABLE_KEYS_ALLOC_UKNOWN) {
+        table->alloc_type = HTP_TABLE_KEYS_ADOPTED;
+    } else {
+        if (table->alloc_type != HTP_TABLE_KEYS_ADOPTED) {
+            #ifdef HTP_DEBUG
+            fprintf(stderr, "# Inconsistent key management strategy. Actual %d. Attempted %d.\n",
+                table->alloc_type, HTP_TABLE_KEYS_ADOPTED);
+            #endif
+
+            return HTP_ERROR;
+        }
+    }
+
+    return _htp_table_add(table, key, element);
+}
+
+htp_status_t htp_table_addr(htp_table_t *table, const bstr *key, const void *element) {
+    // Keep track of how keys are allocated, and
+    // ensure that all invocations are consistent.
+    if (table->alloc_type == HTP_TABLE_KEYS_ALLOC_UKNOWN) {
+        table->alloc_type = HTP_TABLE_KEYS_REFERENCED;
+    } else {
+        if (table->alloc_type != HTP_TABLE_KEYS_REFERENCED) {
+            #ifdef HTP_DEBUG
+            fprintf(stderr, "# Inconsistent key management strategy. Actual %d. Attempted %d.\n",
+                table->alloc_type, HTP_TABLE_KEYS_REFERENCED);
+            #endif
+
+            return HTP_ERROR;
+        }
+    }
+
+    return _htp_table_add(table, key, element);
+}
+
 void htp_table_clear(htp_table_t *table) {
     if (table == NULL) return;
     htp_list_clear(table->list);
@@ -69,6 +122,8 @@ void htp_table_clear(htp_table_t *table) {
 htp_table_t *htp_table_create(size_t size) {
     htp_table_t *t = calloc(1, sizeof (htp_table_t));
     if (t == NULL) return NULL;
+
+    t->alloc_type = HTP_TABLE_KEYS_ALLOC_UKNOWN;
 
     // Use a list behind the scenes
     t->list = htp_list_array_create(size * 2);
@@ -82,14 +137,16 @@ htp_table_t *htp_table_create(size_t size) {
 
 void htp_table_destroy(htp_table_t **_table) {
     if ((_table == NULL)||(*_table == NULL)) return;
-
     htp_table_t *table = *_table;
 
-    // Free table keys only
-    for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
-        bstr *key = htp_list_get(table->list, i);
-        bstr_free(&key);
-    }
+    // Free the table keys, but only if we're managing them.    
+    if ((table->alloc_type == HTP_TABLE_KEYS_COPIED)||(table->alloc_type == HTP_TABLE_KEYS_ADOPTED)) {
+        bstr *key = NULL;
+        for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
+            key = htp_list_get(table->list, i);
+            bstr_free(&key);
+        }
+    }    
 
     htp_list_destroy(&table->list);
 
@@ -99,13 +156,9 @@ void htp_table_destroy(htp_table_t **_table) {
 
 void htp_table_destroy_ex(htp_table_t **_table) {
     if ((_table == NULL)||(*_table == NULL)) return;
+    (*_table)->alloc_type = HTP_TABLE_KEYS_REFERENCED;
 
-    htp_table_t *table = *_table;
-
-    htp_list_destroy(&table->list);
-
-    free(table);
-    *_table = NULL;
+    htp_table_destroy(_table);
 }
 
 void *htp_table_get(const htp_table_t *table, const bstr *key) {
@@ -158,4 +211,3 @@ htp_status_t htp_table_get_index(const htp_table_t *table, size_t idx, bstr **ke
 size_t htp_table_size(const htp_table_t *table) {
     return htp_list_size(table->list) / 2;
 }
-

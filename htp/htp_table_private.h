@@ -44,8 +44,29 @@ extern "C" {
 #include "htp_list.h"
 #include "htp_table.h"
 
+enum htp_table_alloc_t {
+    /** This is the default value, used only until the first element is added. */
+    HTP_TABLE_KEYS_ALLOC_UKNOWN = 0,
+
+    /** Keys are copied.*/
+    HTP_TABLE_KEYS_COPIED = 1,
+
+    /** Keys are adopted and freed when the table is destroyed. */
+    HTP_TABLE_KEYS_ADOPTED = 2,
+
+    /** Keys are only referenced; the caller is still responsible for freeing them after the table is destroyed. */
+    HTP_TABLE_KEYS_REFERENCED = 3
+};
+
 struct htp_table_t {
+    /** Table key and value pairs are stored in this list; name first, then value. */
     htp_list_t *list;
+
+    /**
+     * Key management strategy. Initially set to HTP_TABLE_KEYS_ALLOC_UKNOWN. The
+     * actual strategy is determined by the first allocation.
+     */
+    enum htp_table_alloc_t alloc_type;
 };
 
 #ifdef	__cplusplus
@@ -53,4 +74,3 @@ struct htp_table_t {
 #endif
 
 #endif	/* HTP_TABLE_PRIVATE_H */
-

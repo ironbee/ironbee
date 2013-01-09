@@ -41,9 +41,6 @@
   Further, before LibHTP stored parameter names and values in these structures. Now there is htp_param_t,
   which stores additional useful information (e.g., allows parameters to be tracked back to the parsers)parsers.
 
-
-
-
-
-
+- Improve the table code to support 3 key management strategies. Strategy is determined when the first add
+  function is invoked, with consistency checks to ensure that approach is always used.
 

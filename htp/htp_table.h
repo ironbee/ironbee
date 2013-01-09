@@ -45,8 +45,8 @@ typedef struct htp_table_t htp_table_t;
 
 /**
  * Add a new element to the table. The key will be copied, and the copy
- * managed by the table. The pointer of the element will be stored, but the
- * element itself will not be managed by the table.
+ * managed by the table. The table keeps a pointer to the element. It is the
+ * callers responsibility to ensure the pointer remains valid.
  *
  * @param[in] table
  * @param[in] key
@@ -58,8 +58,9 @@ htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *elem
 /**
  * Add a new element to the table. The key provided will be adopted and managed
  * by the table. You should not keep a copy of the pointer to the key unless you're
- * certain that the table will live longer that the copy. The table will make a
- * copy of the element pointer, but will not manage it.
+ * certain that the table will live longer that the copy. The table keeps a pointer
+ * to the element. It is the callers responsibility to ensure the pointer remains
+ * valid.
  *
  * @param[in] table
  * @param[in] key
@@ -69,9 +70,22 @@ htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *elem
 htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *element);
 
 /**
- * Remove all elements from the table. This function will free the keys,
- * but will do nothing about the elements in the table. If the elements need
- * freeing, you need to free them before invoking this function.
+ * Add a new element to the table. The key provided will be only referenced and the
+ * caller remains responsible to keep it alive until after the table is destroyed. The
+ * table keeps a pointer to the element. It is the callers responsibility to ensure
+ * the pointer remains valid.
+ *
+ * @param table
+ * @param key
+ * @param element
+ * @return
+ */
+htp_status_t htp_table_addr(htp_table_t *table, const bstr *key, const void *element);
+
+/**
+ * Remove all elements from the table. This function handles the element keys
+ * according to the active allocation strategy. If the elements need freeing,
+ * you need to free them before invoking this function.
  *
  * @param[in] table
  */
@@ -86,19 +100,19 @@ void htp_table_clear(htp_table_t *table);
 htp_table_t *htp_table_create(size_t size);
 
 /**
- * Destroy a table. This function first frees the keys and then destroys the
- * table itself, but does nothing with the elements. If the elements need
- * freeing, you need to free them before invoking this function. After the
- * table has been destroyed, the pointer is set to NULL.
+ * Destroy a table. This function handles the keys according to the active
+ * allocation strategy. If the elements need freeing, you need to free them
+ * before invoking this function. After the table has been destroyed,
+ * the pointer is set to NULL.
  *
  * @param[in,out]   table
  */
 void htp_table_destroy(htp_table_t **_table);
 
 /**
- * Destroy the given table, but do not free its keys. Use this method when
- * the responsibility for the keys has been transferred elsewhere. After the
- * table has been destroyed, the pointer is set to NULL.
+ * Destroy the given table, but don't free the keys. even if they are managed by
+ * the table. Use this method when the responsibility for the keys has been transferred
+ * elsewhere. After the table has been destroyed, the pointer is set to NULL.
  *
  * @param[in,out] _table
  */

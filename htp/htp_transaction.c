@@ -197,7 +197,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     htp_param_t *param = NULL;
     for (int i = 0, n = htp_table_size(tx->request_params); i < n; i++) {
         htp_table_get_index(tx->request_params, i, NULL, (void **) &param);
-        // param->name will be freed by the table code
+        free(param->name);
         free(param->value);
         free(param);
     }
@@ -252,7 +252,8 @@ void htp_tx_set_user_data(htp_tx_t *tx, void *user_data) {
 
 htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param) {
     if (tx->cfg->parameter_processor == NULL) {
-        return htp_table_addn(tx->request_params, param->name, param);
+        return htp_table_addr(tx->request_params, param->name, param);
+        return HTP_OK;
     } else {
         // TODO Use parameter processor.
         //return tx->cfg->parameter_processor(tx->request_params_body, name, value);
