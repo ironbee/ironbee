@@ -1218,11 +1218,6 @@ function ib_data_get(data, name)
     -- Get the named data field.
     rc = c.ib_data_get_ex(c_data, name, string.len(name), c_pf)
     if rc ~= c.IB_OK then
-        local c_ctx = c.ib_context_main(c_data.pr.ib)
-        local dinfo = debug.getinfo(2)
-
-        c.ib_log_ex(c_data.pr.ib, 4,
-                    dinfo.source, dinfo.linedefined, "Failed to get field \"" .. name .. "\": " .. rc)
         return nil
     end
 
