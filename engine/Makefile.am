@@ -15,6 +15,7 @@ libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
                         operator.c action.c transformation.c \
                         module.c \
                         parsed_content.c \
+						capture.c \
                         core.c \
                         core_context_selection.c \
                         core_fields.c \

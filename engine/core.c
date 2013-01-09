@@ -452,194 +452,6 @@ static IB_PROVIDER_IFACE_TYPE(audit) core_audit_iface = {
     core_audit_close
 };
 
-/* -- Core Data Provider -- */
-
-/**
- * Core data provider implementation to add a data field.
- *
- * @param dpi Data provider instance.
- * @param f Field.
- * @param name Name of field.
- * @param nlen Length of @a name.
- *
- * @returns Status code
- */
-static ib_status_t core_data_add(ib_provider_inst_t *dpi,
-                                 ib_field_t *f,
-                                 const char *name,
-                                 size_t nlen)
-{
-    /// @todo Needs to be more field-aware (handle lists, etc)
-    /// @todo Needs to not allow adding if already exists (except list items)
-    ib_status_t rc = ib_hash_set_ex((ib_hash_t *)dpi->data,
-                                    (void *)name, nlen, f);
-    return rc;
-}
-
-/**
- * Core data provider implementation to set a data field.
- *
- * @param dpi Data provider instance.
- * @param f Field.
- * @param name Name of field.
- * @param nlen Length of @a name.
- *
- * @returns Status code
- */
-static ib_status_t core_data_set(ib_provider_inst_t *dpi,
-                                 ib_field_t *f,
-                                 const char *name,
-                                 size_t nlen)
-{
-    /// @todo Needs to be more field-aware (handle lists, etc)
-    ib_status_t rc = ib_hash_set_ex((ib_hash_t *)dpi->data,
-                                    (void *)name, nlen, f);
-    return rc;
-}
-
-/**
- * Core data provider implementation to set a relative data field value.
- *
- * @param dpi Data provider instance
- * @param name Field name
- * @param nlen Field length
- * @param adjval Value to adjust (add or subtract a numeric value)
- *
- * @returns Status code
- */
-static ib_status_t core_data_set_relative(ib_provider_inst_t *dpi,
-                                          const char *name,
-                                          size_t nlen,
-                                          intmax_t adjval)
-{
-    ib_field_t *f;
-    ib_status_t rc;
-    ib_num_t num;
-
-    rc = ib_hash_get_ex(
-        (ib_hash_t *)dpi->data,
-        &f,
-        (void *)name, nlen
-    );
-    if (rc != IB_OK) {
-        return IB_ENOENT;
-    }
-
-    switch (f->type) {
-        case IB_FTYPE_NUM:
-            /// @todo Make sure this is atomic
-            /// @todo Check for overflow
-            rc = ib_field_value(f, ib_ftype_num_out(&num));
-            if (rc != IB_OK) {
-                return rc;
-            }
-            num += adjval;
-            rc = ib_field_setv(f, ib_ftype_num_in(&num));
-            break;
-        default:
-            return IB_EINVAL;
-    }
-
-    return rc;
-}
-
-/**
- * Core data provider implementation to get a data field.
- *
- * @param dpi Data provider instance
- * @param name Field name
- * @param nlen Field name length
- * @param pf Address which field will be written
- *
- * @returns Status code
- */
-static ib_status_t core_data_get(const ib_provider_inst_t *dpi,
-                                 const char *name,
-                                 size_t nlen,
-                                 ib_field_t **pf)
-{
-    ib_status_t rc;
-
-    rc = ib_hash_get_ex(
-        (const ib_hash_t *)dpi->data,
-        pf,
-        (void *)name, nlen
-    );
-
-    return rc;
-}
-
-/**
- * Core data provider implementation to get all data fields.
- *
- * @param dpi Data provider instance
- * @param list List which fields will be pushed
- *
- * @returns Status code
- */
-static ib_status_t core_data_get_all(const ib_provider_inst_t *dpi,
-                                     ib_list_t *list)
-{
-    ib_status_t rc;
-
-    rc = ib_hash_get_all((const ib_hash_t *)dpi->data, list);
-    return rc;
-}
-
-/**
- * Core data provider implementation to remove a data field.
- *
- * The data field which is removed is written to @a pf if it
- * is not NULL.
- *
- * @param dpi Data provider instance
- * @param name Field name
- * @param nlen Field name length
- * @param pf Address which field will be written if not NULL
- *
- * @returns Status code
- */
-static ib_status_t core_data_remove(ib_provider_inst_t *dpi,
-                                    const char *name,
-                                    size_t nlen,
-                                    ib_field_t **pf)
-{
-    ib_status_t rc = ib_hash_remove_ex(
-        (ib_hash_t *)dpi->data,
-        pf,
-        name, nlen
-    );
-    return rc;
-}
-
-/**
- * Core data provider implementation to clear the data store.
- *
- * @param dpi Data provider instance
- *
- * @returns Status code
- */
-static ib_status_t core_data_clear(ib_provider_inst_t *dpi)
-{
-    ib_hash_clear((ib_hash_t *)dpi->data);
-    return IB_OK;
-}
-
-/**
- * Data provider interface mapping for the core module.
- */
-static IB_PROVIDER_IFACE_TYPE(data) core_data_iface = {
-    IB_PROVIDER_IFACE_HEADER_DEFAULTS,
-    core_data_add,
-    core_data_set,
-    core_data_set_relative,
-    core_data_get,
-    core_data_get_all,
-    core_data_remove,
-    core_data_clear
-};
-
-
 /* -- Logger API Implementations -- */
 
 /**
@@ -2027,7 +1839,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
             ib_list_push(list, f);
         }
 
-        rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_protocol"), &f);
+        rc = ib_data_get_ex(tx->data, IB_S2SL("request_protocol"), &f);
         if (rc == IB_OK) {
             ib_list_push(list, f);
         }
@@ -2036,7 +1848,7 @@ static ib_status_t ib_auditlog_add_part_http_request_meta(ib_auditlog_t *log)
                             ib_status_to_string(rc));
         }
 
-        rc = ib_data_get_ex(tx->dpi, IB_S2SL("request_method"), &f);
+        rc = ib_data_get_ex(tx->data, IB_S2SL("request_method"), &f);
         if (rc == IB_OK) {
             ib_list_push(list, f);
         }
@@ -2095,7 +1907,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
                                   strlen(tstamp));
     ib_list_push(list, f);
 
-    rc = ib_data_get_ex(tx->dpi, IB_S2SL("response_status"), &f);
+    rc = ib_data_get_ex(tx->data, IB_S2SL("response_status"), &f);
     if (rc == IB_OK) {
         ib_list_push(list, f);
     }
@@ -2104,7 +1916,7 @@ static ib_status_t ib_auditlog_add_part_http_response_meta(ib_auditlog_t *log)
                         ib_status_to_string(rc));
     }
 
-    rc = ib_data_get_ex(tx->dpi, IB_S2SL("response_protocol"), &f);
+    rc = ib_data_get_ex(tx->data, IB_S2SL("response_protocol"), &f);
     if (rc == IB_OK) {
         ib_list_push(list, f);
     }
@@ -2570,10 +2382,9 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
     }
 
     /* Data Provider Instance */
-    rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &conn->dpi,
-                                        conn->mp, NULL);
+    rc = ib_data_create(conn->mp, &conn->data);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create conn data provider instance: %s",
+        ib_log_alert(ib, "Failed to create conn data: %s",
                      ib_status_to_string(rc));
         return rc;
     }
@@ -2613,310 +2424,6 @@ static ib_status_t parser_register(ib_engine_t *ib,
                      "MUST be implemented by a parser provider");
         return IB_EINVAL;
     }
-
-    return IB_OK;
-}
-
-
-/* -- Data Implementation -- */
-
-/**
- * Calls a registered provider interface to add a data field to a
- * provider instance.
- *
- * @param dpi Data provider instance
- * @param f Field to add
- * @param name Name of field
- * @param nlen Length of @a name
- *
- * @returns Status code
- */
-static ib_status_t data_api_add(ib_provider_inst_t *dpi,
-                                ib_field_t *f,
-                                const char *name,
-                                size_t nlen)
-{
-    assert(dpi != NULL);
-
-    IB_PROVIDER_IFACE_TYPE(data) *iface =
-        (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
-        return IB_EUNKNOWN;
-    }
-
-    /* This function is required, so no NULL check. */
-
-    rc = iface->add(dpi, f, name, nlen);
-    return rc;
-}
-
-/**
- * Calls a registered provider interface to set a data field in a
- * provider instance.
- *
- * @param dpi Data provider instance
- * @param f Field to add
- * @param name Name of field
- * @param nlen Length of @a name
- *
- * @returns Status code
- */
-static ib_status_t data_api_set(ib_provider_inst_t *dpi,
-                                ib_field_t *f,
-                                const char *name,
-                                size_t nlen)
-{
-    assert(dpi != NULL);
-
-    IB_PROVIDER_IFACE_TYPE(data) *iface =
-        (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
-        return IB_EUNKNOWN;
-    }
-
-    /* This function is required, so no NULL check. */
-
-    rc = iface->set(dpi, f, name, nlen);
-    return rc;
-}
-
-/**
- * Calls a registered provider interface to set a relative value for a data
- * field in a provider instance.
- *
- * This can either increment or decrement a value.
- *
- * @param dpi Data provider instance
- * @param name Field name
- * @param nlen Field name length
- * @param adjval Relative value adjustment
- *
- * @returns Status code
- */
-static ib_status_t data_api_set_relative(ib_provider_inst_t *dpi,
-                                         const char *name,
-                                         size_t nlen,
-                                         intmax_t adjval)
-{
-    assert(dpi != NULL);
-
-    IB_PROVIDER_IFACE_TYPE(data) *iface =
-        (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
-        return IB_EUNKNOWN;
-    }
-
-    /* This function is required, so no NULL check. */
-
-    rc = iface->set_relative(dpi, name, nlen, adjval);
-    return rc;
-}
-
-/**
- * Calls a registered provider interface to get a data field in a
- * provider instance.
- *
- * @param dpi Data provider instance
- * @param name Field name
- * @param nlen Field name length
- * @param pf Address which field is written
- *
- * @returns Status code
- */
-static ib_status_t data_api_get(const ib_provider_inst_t *dpi,
-                                const char *name,
-                                size_t nlen,
-                                ib_field_t **pf)
-{
-    assert(dpi != NULL);
-
-    IB_PROVIDER_IFACE_TYPE(data) *iface =
-        (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
-        return IB_EUNKNOWN;
-    }
-
-    /* This function is required, so no NULL check. */
-
-    rc = iface->get(dpi, name, nlen, pf);
-    return rc;
-}
-
-/**
- * Calls a registered provider interface to get all data fields within a
- * provider instance.
- *
- * @param dpi Data provider instance
- * @param list List in which fields are pushed
- *
- * @returns Status code
- */
-static ib_status_t data_api_get_all(const ib_provider_inst_t *dpi,
-                                    ib_list_t *list)
-{
-    assert(dpi != NULL);
-
-    IB_PROVIDER_IFACE_TYPE(data) *iface =
-        (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
-        return IB_EUNKNOWN;
-    }
-
-    /* This function is required, so no NULL check. */
-
-    rc = iface->get_all(dpi, list);
-    return rc;
-}
-
-/**
- * Calls a registered provider interface to remove a data field in a
- * provider instance.
- *
- * @param dpi Data provider instance
- * @param name Field name
- * @param nlen Field name length
- * @param pf Address which removed field is written (if non-NULL)
- *
- * @returns Status code
- */
-static ib_status_t data_api_remove(ib_provider_inst_t *dpi,
-                                   const char *name,
-                                   size_t nlen,
-                                   ib_field_t **pf)
-{
-    assert(dpi != NULL);
-
-    IB_PROVIDER_IFACE_TYPE(data) *iface =
-        (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        /// @todo Probably should not need this check
-        ib_log_alert(dpi->pr->ib,  "Failed to fetch data interface");
-        return IB_EUNKNOWN;
-    }
-
-    /* This function is required, so no NULL check. */
-
-    rc = iface->remove(dpi, name, nlen, pf);
-    return rc;
-}
-
-/**
- * Calls a registered provider interface to clear all fields from a
- * provider instance.
- *
- * @param dpi Data provider instance
- *
- * @returns Status code
- */
-static ib_status_t data_api_clear(ib_provider_inst_t *dpi)
-{
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-
-    IB_PROVIDER_IFACE_TYPE(data) *iface =
-        (IB_PROVIDER_IFACE_TYPE(data) *)dpi->pr->iface;
-    ib_status_t rc;
-
-    /* This function is required, so no NULL check. */
-
-    rc = iface->clear(dpi);
-    return rc;
-}
-
-/**
- * Data access provider API mapping for core module.
- */
-static IB_PROVIDER_API_TYPE(data) data_api = {
-    data_api_add,
-    data_api_set,
-    data_api_set_relative,
-    data_api_get,
-    data_api_get_all,
-    data_api_remove,
-    data_api_clear,
-};
-
-/**
- * Data access provider registration function.
- *
- * This just does a version and sanity check on a registered provider.
- *
- * @param ib Engine
- * @param pr Logger provider
- *
- * @returns Status code
- */
-static ib_status_t data_register(ib_engine_t *ib,
-                                 ib_provider_t *pr)
-{
-    IB_PROVIDER_IFACE_TYPE(data) *iface =
-        (IB_PROVIDER_IFACE_TYPE(data) *)pr->iface;
-
-    /* Check that versions match. */
-    if (iface->version != IB_PROVIDER_VERSION_DATA) {
-        return IB_EINCOMPAT;
-    }
-
-    /* Verify that required interface functions are implemented. */
-    if (   (iface->add == NULL)
-        || (iface->set == NULL)
-        || (iface->set_relative == NULL)
-        || (iface->get == NULL)
-        || (iface->remove == NULL)
-        || (iface->clear == NULL))
-    {
-        ib_log_alert(ib, "All required interface functions "
-                     "MUST be implemented by a data provider");
-        return IB_EINVAL;
-    }
-
-    return IB_OK;
-}
-
-/**
- * Initialize the data access provider instance.
- *
- * @param dpi Data provider instance
- * @param data Initialization data
- *
- * @returns Status code
- */
-static ib_status_t data_init(ib_provider_inst_t *dpi,
-                             void *data)
-{
-    ib_status_t rc;
-    ib_hash_t *ht;
-
-    rc = ib_hash_create_nocase(&ht, dpi->mp);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    dpi->data = (void *)ht;
-
-    ib_log_debug3(dpi->pr->ib,
-                  "Initialized core data provider instance: %p", dpi);
 
     return IB_OK;
 }
@@ -3216,26 +2723,25 @@ static ib_status_t filter_ctl_config(ib_engine_t *ib,
  * Initialize the DPI in the given transaction.
  *
  * @param[in] ib IronBee object.
- * @param[in,out] tx The transaction whose tx->dpi will be populated wit
+ * @param[in,out] tx The transaction whose tx->data will be populated wit
  *                default values.
  *
  * @returns IB_OK on success or the failure of ib_data_add_list(...).
  */
-static ib_status_t dpi_default_init(ib_engine_t *ib, ib_tx_t *tx)
+static ib_status_t data_default_init(ib_engine_t *ib, ib_tx_t *tx)
 {
     ib_status_t rc;
 
     assert(ib!=NULL);
     assert(tx!=NULL);
-    assert(tx->dpi!=NULL);
+    assert(tx->data!=NULL);
 
-    rc = ib_data_add_list_ex(tx->dpi, IB_TX_CAPTURE, 2, NULL);
+    rc = ib_data_add_list_ex(tx->data, IB_TX_CAPTURE, 2, NULL);
 
     if (rc!=IB_OK) {
         ib_log_debug2_tx(tx, "Unable to add list \""IB_TX_CAPTURE"\".");
         return rc;
     }
-
 
     return rc;
 }
@@ -3280,7 +2786,7 @@ static ib_status_t core_initvar(ib_engine_t *ib,
             continue;
         }
 
-        trc = ib_data_add(tx->dpi, newf);
+        trc = ib_data_add(tx->data, newf);
         if (trc != IB_OK) {
             ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI: %s",
                             (int)field->nlen, field->name,
@@ -3676,17 +3182,16 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     }
 
     /* Data Provider Instance */
-    rc = ib_provider_instance_create_ex(ib, corecfg->pr.data, &tx->dpi,
-                                        tx->mp, NULL);
+    rc = ib_data_create(tx->mp, &tx->data);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx,
-                        "Failed to create tx data provider instance: %s",
+                        "Failed to create tx data: %s",
                         ib_status_to_string(rc));
         return rc;
     }
 
-    /* Data Provider Default Initialization */
-    rc = dpi_default_init(ib, tx);
+    /* Data Default Initialization */
+    rc = data_default_init(ib, tx);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Failed to initialize data provider instance.");
         return rc;
@@ -5260,18 +4765,6 @@ static ib_status_t core_set_value(ib_cfgparser_t *cp,
             return rc;
         }
     }
-    else if (strcasecmp("data", name) == 0) {
-        /* Lookup the data provider. */
-        rc = ib_provider_lookup(ib,
-                                IB_PROVIDER_TYPE_DATA,
-                                val,
-                                &corecfg->pr.data);
-        if (rc != IB_OK) {
-            ib_cfg_log_alert(cp, "Failed to lookup %s data provider: %s",
-                             val, ib_status_to_string(rc));
-            return rc;
-        }
-    }
     else if (strcasecmp("logevent", name) == 0) {
         /* Lookup the logevent provider. */
         rc = ib_provider_lookup(ib,
@@ -5767,7 +5260,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     ib_core_cfg_t *corecfg;
     ib_provider_t *core_log_provider;
     ib_provider_t *core_audit_provider;
-    ib_provider_t *core_data_provider;
     ib_core_module_data_t *core_data;
     ib_provider_inst_t *logger;
     ib_provider_inst_t *parser;
@@ -5926,23 +5418,6 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
 
-    /* Define the data field provider API */
-    rc = ib_provider_define(ib, IB_PROVIDER_TYPE_DATA,
-                            data_register, &data_api);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to define data provider: %s", ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Register the core data provider. */
-    rc = ib_provider_register(ib, IB_PROVIDER_TYPE_DATA,
-                              MODULE_NAME_STR, &core_data_provider,
-                              &core_data_iface,
-                              data_init);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
     /* Define the matcher provider API */
     rc = ib_provider_define(ib, IB_PROVIDER_TYPE_MATCHER,
                             matcher_register, &matcher_api);
@@ -5961,17 +5436,6 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
     ib_log_provider_set_instance(ib->ctx, logger);
-
-    /* Lookup the core data provider. */
-    rc = ib_provider_lookup(ib,
-                            IB_PROVIDER_TYPE_DATA,
-                            IB_DSTR_CORE,
-                            &corecfg->pr.data);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to lookup %s data provider: %s",
-                     IB_DSTR_CORE, ib_status_to_string(rc));
-        return rc;
-    }
 
     /* Lookup the core audit log provider. */
     rc = ib_provider_lookup(ib,
@@ -6189,14 +5653,6 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_FTYPE_NULSTR,
         ib_core_cfg_t,
         audit
-    ),
-
-    /* Data Acquisition */
-    IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_TYPE_DATA,
-        IB_FTYPE_NULSTR,
-        ib_core_cfg_t,
-        data
     ),
 
     /* End */

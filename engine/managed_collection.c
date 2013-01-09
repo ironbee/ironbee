@@ -161,7 +161,7 @@ ib_status_t ib_managed_collection_populate(
     ib_status_t rc;
 
     /* Create the collection */
-    rc = ib_data_add_list(tx->dpi, collection->name, &field);
+    rc = ib_data_add_list(tx->data, collection->name, &field);
     if (rc != IB_OK) {
         return rc;
     }

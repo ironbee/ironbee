@@ -27,6 +27,7 @@
 #include "core_private.h"
 
 #include <ironbee/bytestr.h>
+#include <ironbee/capture.h>
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
@@ -369,7 +370,7 @@ static ib_status_t op_streq_execute(const ib_rule_exec_t *rule_exec,
 
     /* Expand the string */
     if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
-        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
+        rc = ib_data_expand_str(tx->data, cstr, false, &expanded);
         if (rc != IB_OK) {
             return rc;
         }
@@ -413,8 +414,8 @@ static ib_status_t op_streq_execute(const ib_rule_exec_t *rule_exec,
     }
 
     if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_data_capture_clear(rule_exec->tx);
-        ib_data_capture_set_item(rule_exec->tx, 0, field);
+        ib_capture_clear(rule_exec->tx);
+        ib_capture_set_item(rule_exec->tx, 0, field);
     }
 
     return IB_OK;
@@ -449,7 +450,7 @@ static ib_status_t op_contains_execute(const ib_rule_exec_t *rule_exec,
 
     /* Expand the string */
     if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
-        rc = ib_data_expand_str(tx->dpi, cstr, false, &expanded);
+        rc = ib_data_expand_str(tx->data, cstr, false, &expanded);
         if (rc != IB_OK) {
             return rc;
         }
@@ -499,14 +500,14 @@ static ib_status_t op_contains_execute(const ib_rule_exec_t *rule_exec,
         ib_field_t *f;
         const char *name;
 
-        ib_data_capture_clear(rule_exec->tx);
+        ib_capture_clear(rule_exec->tx);
 
-        name = ib_data_capture_name(0);
+        name = ib_capture_name(0);
         rc = ib_field_create_bytestr_alias(&f, rule_exec->tx->mp,
                                            name, strlen(name),
                                            (uint8_t *)expanded,
                                            strlen(expanded));
-        ib_data_capture_set_item(rule_exec->tx, 0, f);
+        ib_capture_set_item(rule_exec->tx, 0, f);
     }
 
     return rc;
@@ -707,8 +708,8 @@ ib_status_t op_ipmatch_execute(
     else if (rc == IB_OK) {
         *result = 1;
         if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
-            ib_data_capture_set_item(rule_exec->tx, 0, field);
+            ib_capture_clear(rule_exec->tx);
+            ib_capture_set_item(rule_exec->tx, 0, field);
         }
     }
     else {
@@ -917,8 +918,8 @@ ib_status_t op_ipmatch6_execute(
     else if (rc == IB_OK) {
         *result = 1;
         if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(tx);
-            ib_data_capture_set_item(tx, 0, field);
+            ib_capture_clear(tx);
+            ib_capture_set_item(tx, 0, field);
         }
     }
     else {
@@ -980,7 +981,7 @@ static ib_status_t expand_field(
     }
 
     /* Expand the string */
-    rc = ib_data_expand_str(rule_exec->tx->dpi, original, false, &expanded);
+    rc = ib_data_expand_str(rule_exec->tx->data, original, false, &expanded);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1042,7 +1043,7 @@ static ib_status_t capture_float(const ib_rule_exec_t *rule_exec,
     const char *name;
     const char *str;
 
-    name = ib_data_capture_name(capture);
+    name = ib_capture_name(capture);
 
     str = ib_float_to_string(rule_exec->tx->mp, value);
     if (str == NULL) {
@@ -1054,7 +1055,7 @@ static ib_status_t capture_float(const ib_rule_exec_t *rule_exec,
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_data_capture_set_item(rule_exec->tx, 0, field);
+    rc = ib_capture_set_item(rule_exec->tx, 0, field);
     return rc;
 }
 
@@ -1076,7 +1077,7 @@ static ib_status_t capture_num(const ib_rule_exec_t *rule_exec,
     const char *name;
     const char *str;
 
-    name = ib_data_capture_name(capture);
+    name = ib_capture_name(capture);
 
     str = ib_num_to_string(rule_exec->tx->mp, value);
     if (str == NULL) {
@@ -1088,7 +1089,7 @@ static ib_status_t capture_num(const ib_rule_exec_t *rule_exec,
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_data_capture_set_item(rule_exec->tx, 0, field);
+    rc = ib_capture_set_item(rule_exec->tx, 0, field);
     return rc;
 }
 
@@ -1303,7 +1304,7 @@ static ib_status_t execute_compare(
             return rc;
         }
         if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
+            ib_capture_clear(rule_exec->tx);
             rc = capture_num(rule_exec, 0, value);
             if (rc != IB_OK) {
                 ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
@@ -1333,7 +1334,7 @@ static ib_status_t execute_compare(
             return rc;
         }
         if (ib_rule_should_capture(rule_exec, *result)) {
-            ib_data_capture_clear(rule_exec->tx);
+            ib_capture_clear(rule_exec->tx);
             rc = capture_float(rule_exec, 0, value);
             if (rc != IB_OK) {
                 ib_rule_log_error(rule_exec, "Error storing capture #0: %s",
@@ -1665,8 +1666,8 @@ static ib_status_t op_nop_execute(const ib_rule_exec_t *rule_exec,
     *result = 1;
 
     if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_data_capture_clear(rule_exec->tx);
-        ib_data_capture_set_item(rule_exec->tx, 0, field);
+        ib_capture_clear(rule_exec->tx);
+        ib_capture_set_item(rule_exec->tx, 0, field);
     }
     return IB_OK;
 }

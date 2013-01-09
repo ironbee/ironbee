@@ -75,8 +75,8 @@ static ib_status_t op_true_execute(const ib_rule_exec_t *rule_exec,
     *result = 1;
 
     if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_data_capture_clear(rule_exec->tx);
-        ib_data_capture_set_item(rule_exec->tx, 0, field);
+        ib_capture_clear(rule_exec->tx);
+        ib_capture_set_item(rule_exec->tx, 0, field);
     }
     return IB_OK;
 }
@@ -179,7 +179,7 @@ static ib_status_t op_assert_execute(const ib_rule_exec_t *rule_exec,
 
     /* Expand the string */
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(rule_exec->tx->dpi, cstr, false, &expanded);
+        rc = ib_data_expand_str(rule_exec->tx->data, cstr, false, &expanded);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "log_execute: Failed to expand string '%s': %s",
@@ -216,8 +216,8 @@ static ib_status_t op_exists_execute(const ib_rule_exec_t *rule_exec,
     *result = (field != NULL);
 
     if (ib_rule_should_capture(rule_exec, *result)) {
-        ib_data_capture_clear(rule_exec->tx);
-        ib_data_capture_set_item(rule_exec->tx, 0, field);
+        ib_capture_clear(rule_exec->tx);
+        ib_capture_set_item(rule_exec->tx, 0, field);
     }
 
     return IB_OK;
@@ -357,7 +357,7 @@ static ib_status_t act_debuglog_execute(const ib_rule_exec_t *rule_exec,
 
     /* Expand the string */
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(rule_exec->tx->dpi, cstr, false, &expanded);
+        rc = ib_data_expand_str(rule_exec->tx->data, cstr, false, &expanded);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "log_execute: Failed to expand string '%s': %s",
@@ -439,7 +439,7 @@ static ib_status_t act_assert_execute(const ib_rule_exec_t *rule_exec,
 
     /* Expand the string */
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(rule_exec->tx->dpi, cstr, false, &expanded);
+        rc = ib_data_expand_str(rule_exec->tx->data, cstr, false, &expanded);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "log_execute: Failed to expand string '%s': %s",

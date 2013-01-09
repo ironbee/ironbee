@@ -177,12 +177,12 @@ typedef struct {
 /**
  * Unwrap two fields, perform the operation, and write the result.
  *
- * @param[in,out] tx Transaction object. tx->dpi is updated with the result.
+ * @param[in,out] tx Transaction object. tx->data is updated with the result.
  * @param[in] rule_exec Rule execution environment.
  * @param[in] setvar_data SetVar data.
  * @param[in] cur_field The current field being used for the left hand side.
  *            If cur_field == NULL a value of zero is substituted.
- * @param[in] name The name of the new field to create and add to tx->dpi.
+ * @param[in] name The name of the new field to create and add to tx->data.
  * @param[in] nlen The length of name.
  * @param[in] op The operator to perform on the two fields.
  *            The value in cur_field is passed as the first argument
@@ -210,7 +210,7 @@ static ib_status_t setvar_float_op(
     if (cur_field == NULL) {
 
         /* Create the new_field field */
-        rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur_field);
+        rc = ib_data_add_num_ex(tx->data, name, nlen, 0, &cur_field);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "setvar: Failed to add field "
@@ -245,12 +245,12 @@ static ib_status_t setvar_float_op(
 /**
  * Unwrap two fields, perform the operation, and write the result.
  *
- * @param[in,out] tx Transaction object. tx->dpi is updated with the result.
+ * @param[in,out] tx Transaction object. tx->data is updated with the result.
  * @param[in] rule_exec Rule execution environment.
  * @param[in] setvar_data SetVar data.
  * @param[in] cur_field The current field being used for the left hand side.
  *            If cur_field == NULL a value of zero is substituted.
- * @param[in] name The name of the new field to create and add to tx->dpi.
+ * @param[in] name The name of the new field to create and add to tx->data.
  * @param[in] nlen The length of name.
  * @param[in] op The operator to perform on the two fields.
  *            The value in cur_field is passed as the first argument
@@ -278,7 +278,7 @@ static ib_status_t setvar_num_op(
     if (cur_field == NULL) {
 
         /* Create the new_field field */
-        rc = ib_data_add_num_ex(tx->dpi, name, nlen, 0, &cur_field);
+        rc = ib_data_add_num_ex(tx->data, name, nlen, 0, &cur_field);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "setvar: Failed to add field "
@@ -406,12 +406,12 @@ static ib_status_t act_setflag_execute(
 
     /* This fails because ib_data_remove() doesn't handle fields within
      * collections */
-    rc = ib_data_remove(rule_exec->tx->dpi, opdata->flag->tx_name, NULL);
+    rc = ib_data_remove(rule_exec->tx->data, opdata->flag->tx_name, NULL);
     if (rc != IB_OK) {
         /* Do nothing */
     }
 
-    rc = ib_data_add_num(rule_exec->tx->dpi, opdata->flag->tx_name,
+    rc = ib_data_add_num(rule_exec->tx->data, opdata->flag->tx_name,
                          value, NULL);
     if (rc != IB_OK) {
         return rc;
@@ -506,7 +506,7 @@ static ib_status_t act_event_execute(
     /* Expand the message string */
     if ( (rule->meta.flags & IB_RULEMD_FLAG_EXPAND_MSG) != 0) {
         char *tmp;
-        rc = ib_data_expand_str(tx->dpi, rule->meta.msg, false, &tmp);
+        rc = ib_data_expand_str(tx->data, rule->meta.msg, false, &tmp);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "event: Failed to expand string '%s': %s",
@@ -541,7 +541,7 @@ static ib_status_t act_event_execute(
     if (rule->meta.data != NULL) {
         if ( (rule->meta.flags & IB_RULEMD_FLAG_EXPAND_DATA) != 0) {
             char *tmp;
-            rc = ib_data_expand_str(tx->dpi, rule->meta.data, false, &tmp);
+            rc = ib_data_expand_str(tx->data, rule->meta.data, false, &tmp);
             if (rc != IB_OK) {
                 ib_rule_log_error(rule_exec,
                                   "event: Failed to expand data '%s': %s",
@@ -567,7 +567,7 @@ static ib_status_t act_event_execute(
 
     /* Populate fields */
     if (! ib_flags_any(rule->flags, IB_RULE_FLAG_NO_TGT)) {
-        rc = ib_data_get(tx->dpi, "FIELD_NAME_FULL", &field);
+        rc = ib_data_get(tx->data, "FIELD_NAME_FULL", &field);
         if ( (rc == IB_OK) && (field->type == IB_FTYPE_NULSTR) ) {
             const char *name = NULL;
             rc = ib_field_value(field, ib_ftype_nulstr_out(&name));
@@ -775,7 +775,7 @@ static ib_status_t expand_name(const ib_rule_exec_t *rule_exec,
         size_t len;
         ib_status_t rc;
 
-        rc = ib_data_expand_str_ex(tx->dpi,
+        rc = ib_data_expand_str_ex(tx->data,
                                    name, strlen(name),
                                    false, false,
                                    &tmp, &len);
@@ -828,7 +828,7 @@ static ib_status_t get_data_value(const ib_rule_exec_t *rule_exec,
     size_t elements;
     ib_tx_t *tx = rule_exec->tx;
 
-    rc = ib_data_get_ex(tx->dpi, name, namelen, &cur);
+    rc = ib_data_get_ex(tx->data, name, namelen, &cur);
     if ( (rc == IB_ENOENT) || (cur == NULL) ) {
         *field = NULL;
         return IB_OK;
@@ -935,7 +935,7 @@ static ib_status_t expand_data(
         if (flags & IB_ACTINST_FLAG_EXPAND) {
 
             rc = ib_data_expand_str_ex(
-                tx->dpi, bsdata, bslen, false, false, expanded, exlen);
+                tx->data, bsdata, bslen, false, false, expanded, exlen);
             if (rc != IB_OK) {
                 ib_rule_log_debug(
                     rule_exec,
@@ -1064,7 +1064,7 @@ static ib_status_t act_setvar_execute(
         ib_bytestr_t *bs = NULL;
 
         if (cur_field != NULL) {
-            ib_data_remove_ex(tx->dpi, name, nlen, NULL);
+            ib_data_remove_ex(tx->data, name, nlen, NULL);
         }
 
         /* Create a bytestr to hold it. */
@@ -1091,7 +1091,7 @@ static ib_status_t act_setvar_execute(
         }
 
         /* Add the field to the DPI */
-        rc = ib_data_add(tx->dpi, new_field);
+        rc = ib_data_add(tx->data, new_field);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "setvar: Failed to add field \"%.*s\": %s",
@@ -1105,7 +1105,7 @@ static ib_status_t act_setvar_execute(
         assert(setvar_data->type == IB_FTYPE_FLOAT);
 
         if (cur_field != NULL) {
-            ib_data_remove_ex(tx->dpi, name, nlen, NULL);
+            ib_data_remove_ex(tx->data, name, nlen, NULL);
         }
 
         /* Create the new_field field */
@@ -1122,7 +1122,7 @@ static ib_status_t act_setvar_execute(
         }
 
         /* Add the field to the DPI */
-        rc = ib_data_add(tx->dpi, new_field);
+        rc = ib_data_add(tx->data, new_field);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "setvar: Failed to add field \"%.*s\": %s",
@@ -1136,7 +1136,7 @@ static ib_status_t act_setvar_execute(
         assert(setvar_data->type == IB_FTYPE_NUM);
 
         if (cur_field != NULL) {
-            ib_data_remove_ex(tx->dpi, name, nlen, NULL);
+            ib_data_remove_ex(tx->data, name, nlen, NULL);
         }
 
         /* Create the new_field field */
@@ -1153,7 +1153,7 @@ static ib_status_t act_setvar_execute(
         }
 
         /* Add the field to the DPI */
-        rc = ib_data_add(tx->dpi, new_field);
+        rc = ib_data_add(tx->data, new_field);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "setvar: Failed to add field \"%.*s\": %s",
@@ -1306,7 +1306,7 @@ static ib_status_t act_block_advisory_execute(
         ib_tx_flags_set(tx, IB_TX_BLOCK_ADVISORY);
 
         /* When doing an advisory block, mark the DPI with FLAGS:BLOCK=1. */
-        rc = ib_data_add_num(tx->dpi, "FLAGS:BLOCK", ib_num_one, NULL);
+        rc = ib_data_add_num(tx->data, "FLAGS:BLOCK", ib_num_one, NULL);
         if (rc != IB_OK) {
             ib_rule_log_error(
                 rule_exec,
@@ -1647,7 +1647,7 @@ static ib_status_t expand_name_hdr(const ib_rule_exec_t *rule_exec,
         size_t len;
         ib_status_t rc;
 
-        rc = ib_data_expand_str(rule_exec->tx->dpi, name, false, &tmp);
+        rc = ib_data_expand_str(rule_exec->tx->data, name, false, &tmp);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "%s: Failed to expand name \"%s\": %s",
@@ -1704,7 +1704,7 @@ static ib_status_t expand_str(const ib_rule_exec_t *rule_exec,
         size_t len;
         ib_status_t rc;
 
-        rc = ib_data_expand_str(tx->dpi, str, false, &tmp);
+        rc = ib_data_expand_str(tx->data, str, false, &tmp);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "%s: Failed to expand \"%s\": %s",
@@ -1900,7 +1900,7 @@ static ib_status_t act_set_header_create(
 }
 
 /**
- * Set the request header in @c tx->dpi.
+ * Set the request header in @c tx->data.
  *
  * @param[in] rule_exec The rule execution object
  * @param[in] data Instance data needed for execution.

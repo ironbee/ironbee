@@ -26,6 +26,7 @@
 
 #include <ironautomata/eudoxus.h>
 
+#include <ironbee/capture.h>
 #include <ironbee/hash.h>
 #include <ironbee/module.h>
 #include <ironbee/operator.h>
@@ -169,7 +170,7 @@ static ia_eudoxus_command_t ee_first_match_callback(const ia_eudoxus_t* engine,
             return IA_EUDOXUS_CMD_ERROR;
         }
         match_len = *(uint32_t *)(output);
-        rc = ib_data_capture_clear(tx);
+        rc = ib_capture_clear(tx);
         if (rc != IB_OK) {
             ib_log_error_tx(tx, "Error clearing captures: %s",
                             ib_status_to_string(rc));
@@ -183,13 +184,13 @@ static ia_eudoxus_command_t ee_first_match_callback(const ia_eudoxus_t* engine,
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }
-        name = ib_data_capture_name(0);
+        name = ib_capture_name(0);
         rc = ib_field_create(&field, tx->mp, name, strlen(name),
                              IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }
-        rc = ib_data_capture_set_item(tx, 0, field);
+        rc = ib_capture_set_item(tx, 0, field);
         if (rc != IB_OK) {
             return IA_EUDOXUS_CMD_ERROR;
         }

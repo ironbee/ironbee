@@ -26,6 +26,7 @@
 
 #include <ironbee/ahocorasick.h>
 #include <ironbee/bytestr.h>
+#include <ironbee/capture.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
@@ -114,7 +115,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
     ib_status_t rc;
 
     /* Get or create the hash that contains the rule data. */
-    rc = ib_tx_get_data(tx, IB_MODULE_STRUCT_PTR, (void **)rule_data);
+    rc = ib_tx_get_module_data(tx, IB_MODULE_STRUCT_PTR, (void **)rule_data);
 
     if (rc == IB_OK && *rule_data != NULL) {
         ib_log_debug2_tx(tx, "Found rule data hash in tx.");
@@ -131,7 +132,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
         return rc;
     }
 
-    rc = ib_tx_set_data(tx, IB_MODULE_STRUCT_PTR, *rule_data);
+    rc = ib_tx_set_module_data(tx, IB_MODULE_STRUCT_PTR, *rule_data);
     if (rc != IB_OK) {
         ib_log_debug2_tx(tx,
                          "Failed to store hash: %d", rc);
@@ -788,17 +789,17 @@ static ib_status_t pm_operator_execute(const ib_rule_exec_t *rule_exec,
             const char *name;
             char *scopy;
 
-            ib_data_capture_clear(tx);
+            ib_capture_clear(tx);
             scopy = (char *)ib_mpool_alloc(tx->mp, subject_len);
             if (scopy != NULL) {
                 memcpy(scopy, subject, subject_len);
-                name = ib_data_capture_name(0);
+                name = ib_capture_name(0);
                 rc = ib_field_create_bytestr_alias(&f, tx->mp,
                                                    name, strlen(name),
                                                    (uint8_t *)scopy,
                                                    subject_len);
                 if (rc == IB_OK) {
-                    ib_data_capture_set_item(tx, 0, f);
+                    ib_capture_set_item(tx, 0, f);
                 }
             }
         }

@@ -174,7 +174,7 @@ static int modhtp_callback_log(htp_log_t *log)
 /* -- Field Generation Routines -- */
 
 
-static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
+static ib_status_t modhtp_field_gen_bytestr(ib_data_t *data,
                                             const char *name,
                                             bstr *bs,
                                             ib_field_t **pf)
@@ -193,7 +193,7 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
     /* First lookup the field to see if there is already one
      * that needs the value set.
      */
-    rc = ib_data_get(dpi, name, &f);
+    rc = ib_data_get(data, name, &f);
     if (rc == IB_OK) {
         rc = ib_field_mutable_value(f, ib_ftype_bytestr_mutable_out(&ibs));
         if (rc != IB_OK) {
@@ -208,20 +208,14 @@ static ib_status_t modhtp_field_gen_bytestr(ib_provider_inst_t *dpi,
     }
 
     /* If no field exists, then create one. */
-    rc = ib_data_add_bytestr_ex(dpi, name, strlen(name),
+    rc = ib_data_add_bytestr_ex(data, name, strlen(name),
                                 (uint8_t *)bstr_ptr(bs),
                                 bstr_len(bs), pf);
-    if (rc != IB_OK) {
-        ib_log_error(dpi->pr->ib,
-                     "Failed to generate \"%s\" field: %s",
-                     name, ib_status_to_string(rc));
-    }
-
     return rc;
 }
 
-#define modhtp_field_gen_list(dpi, name, pf) \
-    ib_data_add_list_ex((dpi), (name), strlen((name)), (pf))
+#define modhtp_field_gen_list(data, name, pf) \
+    ib_data_add_list_ex((data), (name), strlen((name)), (pf))
 
 /* -- Utility functions -- */
 static ib_status_t modhtp_add_flag_to_collection(
@@ -233,16 +227,16 @@ static ib_status_t modhtp_add_flag_to_collection(
     ib_status_t rc;
     ib_field_t *f;
 
-    if ( (itx == NULL) || (itx->dpi == NULL) ) {
+    if ( (itx == NULL) || (itx->data == NULL) ) {
         ib_log_error_tx(itx,
                         "Not adding flag %s field %s to NULL transaction",
                         collection_name, flag);
         return IB_EUNKNOWN;
     }
 
-    rc = ib_data_get(itx->dpi, collection_name, &f);
+    rc = ib_data_get(itx->data, collection_name, &f);
     if (f == NULL) {
-        rc = ib_data_add_list(itx->dpi, collection_name, &f);
+        rc = ib_data_add_list(itx->data, collection_name, &f);
     }
     if (rc == IB_OK && f != NULL) {
         ib_field_t *lf;
@@ -1130,52 +1124,52 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
     if (tx != NULL) {
         htp_tx_set_user_data(tx, itx);
 
-        modhtp_field_gen_bytestr(itx->dpi,
+        modhtp_field_gen_bytestr(itx->data,
                                  "request_uri_scheme",
                                  tx->parsed_uri->scheme,
                                  NULL);
 
-        modhtp_field_gen_bytestr(itx->dpi,
+        modhtp_field_gen_bytestr(itx->data,
                                  "request_uri_username",
                                  tx->parsed_uri->username,
                                  NULL);
 
-        modhtp_field_gen_bytestr(itx->dpi,
+        modhtp_field_gen_bytestr(itx->data,
                                  "request_uri_password",
                                  tx->parsed_uri->password,
                                  NULL);
 
-        modhtp_field_gen_bytestr(itx->dpi,
+        modhtp_field_gen_bytestr(itx->data,
                                  "request_uri_host",
                                  tx->parsed_uri->hostname,
                                  NULL);
 
-        modhtp_field_gen_bytestr(itx->dpi,
+        modhtp_field_gen_bytestr(itx->data,
                                  "request_host",
                                  tx->parsed_uri->hostname,
                                  NULL);
 
-        modhtp_field_gen_bytestr(itx->dpi,
+        modhtp_field_gen_bytestr(itx->data,
                                  "request_uri_port",
                                  tx->parsed_uri->port,
                                  NULL);
 
-        modhtp_field_gen_bytestr(itx->dpi,
+        modhtp_field_gen_bytestr(itx->data,
                                  "request_uri_path",
                                  tx->parsed_uri->path,
                                  NULL);
 
-        modhtp_field_gen_bytestr(itx->dpi,
+        modhtp_field_gen_bytestr(itx->data,
                                  "request_uri_query",
                                  tx->parsed_uri->query,
                                  NULL);
 
-        modhtp_field_gen_bytestr(itx->dpi,
+        modhtp_field_gen_bytestr(itx->data,
                                  "request_uri_fragment",
                                  tx->parsed_uri->fragment,
                                  NULL);
 
-        rc = ib_data_add_list(itx->dpi, "request_cookies", &f);
+        rc = ib_data_add_list(itx->data, "request_cookies", &f);
         if (   (tx->request_cookies != NULL)
             && table_size(tx->request_cookies)
             && (rc == IB_OK))
@@ -1221,7 +1215,7 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
                             ib_status_to_string(rc));
         }
 
-        rc = ib_data_add_list(itx->dpi, "request_uri_params", &f);
+        rc = ib_data_add_list(itx->data, "request_uri_params", &f);
         if (   (tx->request_params_query != NULL)
             && table_size(tx->request_params_query)
             && (rc == IB_OK))
@@ -1301,7 +1295,7 @@ static ib_status_t modhtp_gen_request_fields(ib_provider_inst_t *pi,
     if (tx != NULL) {
         htp_tx_set_user_data(tx, itx);
 
-        rc = ib_data_add_list(itx->dpi, "request_body_params", &f);
+        rc = ib_data_add_list(itx->data, "request_body_params", &f);
         if (   (tx->request_params_body != NULL)
             && table_size(tx->request_params_body)
             && (rc == IB_OK))

@@ -25,6 +25,7 @@
  */
 
 #include <ironbee/bytestr.h>
+#include <ironbee/capture.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
@@ -684,13 +685,13 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
     ib_tx_t *tx = rule_exec->tx;
     int i;
 
-    rc = ib_data_capture_clear(tx);
+    rc = ib_capture_clear(tx);
     if (rc != IB_OK) {
         ib_log_error_tx(tx, "Error clearing captures: %s",
                         ib_status_to_string(rc));
     }
 
-    /* We have a match! Now populate TX:0-9 in tx->dpi. */
+    /* We have a match! Now populate TX:0-9 in tx->data. */
     ib_log_debug2_tx(tx, "REGEX populating %d matches", matches);
     for (i = 0; i < matches; ++i)
     {
@@ -729,7 +730,7 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
         }
 
         /* Create a field to hold the byte-string */
-        name = ib_data_capture_name(i);
+        name = ib_capture_name(i);
         rc = ib_field_create(&field, tx->mp, name, strlen(name),
                              IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
         if (rc != IB_OK) {
@@ -737,7 +738,7 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
         }
 
         /* Add it to the capture collection */
-        rc = ib_data_capture_set_item(tx, i, field);
+        rc = ib_capture_set_item(tx, i, field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -766,7 +767,7 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
     assert(rule_exec != NULL);
     assert(rule_exec->ib != NULL);
     assert(rule_exec->tx != NULL);
-    assert(rule_exec->tx->dpi != NULL);
+    assert(rule_exec->tx->data != NULL);
     assert(data != NULL);
 
     int matches;
@@ -1070,7 +1071,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
     ib_status_t rc;
 
     /* Get or create the hash that contains the rule data. */
-    rc = ib_tx_get_data(tx, IB_MODULE_STRUCT_PTR, (void **)hash);
+    rc = ib_tx_get_module_data(tx, IB_MODULE_STRUCT_PTR, (void **)hash);
     if ( (rc == IB_OK) && (*hash != NULL) ) {
         ib_log_debug2_tx(tx, "Found rule data hash in tx.");
         return IB_OK;
@@ -1085,7 +1086,7 @@ static ib_status_t get_or_create_rule_data_hash(ib_tx_t *tx,
         return rc;
     }
 
-    rc = ib_tx_set_data(tx, IB_MODULE_STRUCT_PTR, *hash);
+    rc = ib_tx_set_module_data(tx, IB_MODULE_STRUCT_PTR, *hash);
     if (rc != IB_OK) {
         ib_log_debug2_tx(tx, "Failed to store hash: %s",
                          ib_status_to_string(rc));

@@ -20,9 +20,12 @@
  * @brief IronBee --- Data Access
  *
  * @author Brian Rectanus <brectanus@qualys.com>
+ * @author Christopher Alfeld <calfel@calfeld.net>
  */
 
 #include "ironbee_config_auto.h"
+
+#include <ironbee/data.h>
 
 #include <ironbee/bytestr.h>
 #include <ironbee/engine.h>
@@ -55,10 +58,16 @@ static const char *IB_VARIABLE_EXPANSION_PREFIX = "%{";
 /** Variable postfix */
 static const char *IB_VARIABLE_EXPANSION_POSTFIX = "}";
 
+struct ib_data_t
+{
+    ib_mpool_t *mp;    /**< Memory pool. */
+    ib_hash_t  *hash;  /**< Hash of data fields. */
+};
+
 /* Internal helper functions */
 
 /**
- * Get a subfield from @a dpi by @a api.
+ * Get a subfield from @a data.
  *
  * If @a parent_field is a list (IB_FTYPE_LIST) then a case insensitive
  * string comparison is done to find the first list element that matches.
@@ -66,9 +75,7 @@ static const char *IB_VARIABLE_EXPANSION_POSTFIX = "}";
  * If @a parent_field is a dynamic field, then the field @a name
  * is fetched from it and the return code from that operation is returned.
  *
- * @param[in] api The API to perform the get operation.
- * @param[in] dpi The data provider instance passed to a call to a
- *                function available from @a api.
+ * @param[in] data         Data.
  * @param[in] parent_field The parent field that contains the requested field.
  *                         This must be an IB_FTYPE_LIST.
  * @param[in] name The regex to use to match member field names in
@@ -82,18 +89,19 @@ static const char *IB_VARIABLE_EXPANSION_POSTFIX = "}";
  *              returned if @a name_len is 0.
  *  - Other if a dynamic field fails.
  */
-static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
-                                         const ib_provider_inst_t *dpi,
-                                         const ib_field_t *parent_field,
-                                         const char *name,
-                                         size_t name_len,
-                                         ib_field_t **result_field)
+static
+ib_status_t ib_data_get_subfields(
+    const ib_data_t   *data,
+    const ib_field_t  *parent_field,
+    const char        *name,
+    size_t             name_len,
+    ib_field_t       **result_field
+)
 {
-    assert(api);
-    assert(dpi);
-    assert(parent_field);
-    assert(name);
-    assert(result_field);
+    assert(data != NULL);
+    assert(parent_field != NULL);
+    assert(name != NULL);
+    assert(result_field != NULL);
 
     ib_status_t rc;
     ib_list_t *list; /* List of values to check stored in parent_field. */
@@ -119,7 +127,7 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
         }
         else {
             /* Make the result list */
-            rc = ib_list_create(&result_list, dpi->mp);
+            rc = ib_list_create(&result_list, data->mp);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -146,7 +154,7 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
           }
           /* Send back the result_list inside of result_field. */
           rc = ib_field_create(result_field,
-                               dpi->mp,
+                               data->mp,
                                parent_field->name,
                                parent_field->nlen,
                                IB_FTYPE_LIST,
@@ -162,14 +170,12 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
 /**
  * Return a list of fields whose name matches @a pattern.
  *
- * The list @a field_name is retrieved from the @a dpi using @a api. Its
- * members are iterated through and the names of those fields compared
- * against @a pattern. If the name matches, the field is added to an
- * @c ib_list_t* which will be returned via @a result_field.
+ * The list @a field_name is retrieved from @a data. Its members are iterated
+ * through and the names of those fields compared against @a pattern. If the
+ * name matches, the field is added to an @c ib_list_t* which will be returned
+ * via @a result_field.
  *
- * @param[in] api The API to perform the get operation.
- * @param[in] dpi The data provider instance passed to a call to a
- *                function available from @a api.
+ * @param[in] data         Data.
  * @param[in] parent_field The parent field whose member fields will
  *                         be filtered with @a pattern.
  *                         This must be an IB_FTYPE_LIST.
@@ -183,19 +189,20 @@ static ib_status_t ib_data_get_subfields(IB_PROVIDER_API_TYPE(data) *api,
  *  - IB_EINVAL if field is not a list or the pattern cannot compile.
  *  - IB_ENOENT if the field name is not found.
  */
-static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
-                                             const ib_provider_inst_t *dpi,
-                                             const ib_field_t *parent_field,
-                                             const char *pattern,
-                                             size_t pattern_len,
-                                             ib_field_t **result_field)
+static
+ib_status_t ib_data_get_filtered_list(
+    const ib_data_t           *data,
+    const ib_field_t          *parent_field,
+    const char                *pattern,
+    size_t                     pattern_len,
+    ib_field_t               **result_field
+)
 {
-    assert(api);
-    assert(dpi);
-    assert(pattern);
-    assert(parent_field);
-    assert(pattern_len>0);
-    assert(result_field);
+    assert(data != NULL);
+    assert(pattern != NULL);
+    assert(parent_field != NULL);
+    assert(pattern_len > 0);
+    assert(result_field != NULL);
 
     ib_status_t rc;
     char *pattern_str = NULL; /* NULL terminated string to pass to pcre. */
@@ -238,7 +245,7 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
         goto exit_label;
     }
 
-    rc = ib_list_create(&result_list, dpi->mp);
+    rc = ib_list_create(&result_list, data->mp);
     if (rc != IB_OK) {
         goto exit_label;
     }
@@ -264,7 +271,7 @@ static ib_status_t ib_data_get_filtered_list(IB_PROVIDER_API_TYPE(data) *api,
     }
 
     rc = ib_field_create(result_field,
-                         dpi->mp,
+                         data->mp,
                          parent_field->name,
                          parent_field->nlen,
                          IB_FTYPE_LIST,
@@ -282,20 +289,18 @@ exit_label:
 }
 
 /**
- * Add a field to the @a dpi allowing for subfield notation.
+ * Add a field to the @a data allowing for subfield notation.
  *
  * That is, a field may be stored in a normal field, such as @c FOO.
  * A field may also be stored in a subfield, that is a child field of
  * the list @c FOO. If @a name is @c FOO:BAR then the field @c BAR
- * will be stored in the list @c FOO in the @a dpi.
+ * will be stored in the list @c FOO in @a data.
  *
  * Note that in cases where @a field has a name other than @c BAR,
- * @a field 's name will be set to @c BAR using the @a dpi memory pool
+ * @a field 's name will be set to @c BAR using the @a data memory pool
  * for storage.
  *
- * @param[in] api The API to perform the add operation.
- * @param[in] dpi The data provider instance passed to a call to a
- *                function available from @a api.
+ * @param[in] data Data.
  * @param[in,out] field The field to add to the DPI. This is an out-parameter
  *                in the case where, first, @a name specifies a subfield
  *                that @a field should be stored under and, second,
@@ -308,16 +313,17 @@ exit_label:
  *   - IB_EINVAL if The parent field exists but is not a list.
  *   - IB_EALLOC on memory allocation errors.
  */
-static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
-                                        ib_provider_inst_t *dpi,
-                                        ib_field_t *field,
-                                        const char *name,
-                                        size_t nlen)
+static
+ib_status_t ib_data_add_internal(
+    ib_data_t  *data,
+    ib_field_t *field,
+    const char *name,
+    size_t      nlen
+)
 {
-    assert(api);
-    assert(dpi);
-    assert(field);
-    assert(name);
+    assert(data != NULL);
+    assert(field != NULL);
+    assert(name != NULL);
 
     ib_status_t rc;
     char *filter_marker;
@@ -337,12 +343,13 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
         size_t child_nlen = nlen - parent_nlen - 1;
 
         /* Get or create the parent field. */
-        rc = api->get(dpi, parent_name, parent_nlen, &parent);
+
+        rc = ib_data_get_ex(data, parent_name, parent_nlen, &parent);
         /* If the field does not exist, make one. */
         if (rc == IB_ENOENT) {
 
             /* Try to add the list that does not exist. */
-            rc = ib_data_add_list_ex(dpi, parent_name, parent_nlen, &parent);
+            rc = ib_data_add_list_ex(data, parent_name, parent_nlen, &parent);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -363,7 +370,7 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
                    (child_nlen < field->nlen) ? child_nlen : field->nlen))
         {
             field->nlen = child_nlen;
-            field->name = ib_mpool_memdup(dpi->mp, child_name, child_nlen);
+            field->name = ib_mpool_memdup(data->mp, child_name, child_nlen);
             if (field->name == NULL) {
                 return IB_EALLOC;
             }
@@ -375,59 +382,93 @@ static ib_status_t ib_data_add_internal(IB_PROVIDER_API_TYPE(data) *api,
 
     /* Normal add. */
     else {
-        rc = api->add(dpi, field, name, nlen);
+        return ib_hash_set_ex(data->hash, name, nlen, field);
+    }
+
+    return IB_OK;
+}
+
+static
+ib_status_t expand_lookup_fn(
+    const void  *raw_data,
+    const char  *name,
+    size_t       nlen,
+    ib_field_t **pf
+)
+{
+    assert(raw_data != NULL);
+    assert(name != NULL);
+    assert(pf != NULL);
+
+    ib_status_t rc;
+    const ib_data_t *data = (const ib_data_t *)raw_data;
+
+    rc = ib_data_get_ex(data, name, nlen, pf);
+    return rc;
+}
+
+/* -- Exported Data Access Routines -- */
+
+ib_status_t ib_data_create(
+    ib_mpool_t  *mp,
+    ib_data_t  **data
+)
+{
+    assert(mp != NULL);
+    assert(data != NULL);
+
+    ib_status_t rc;
+
+    *data = ib_mpool_calloc(mp, 1, sizeof(*data));
+    if (*data == NULL) {
+        return IB_EALLOC;
+    }
+
+    (*data)->mp = mp;
+    rc = ib_hash_create_nocase(&(*data)->hash, mp);
+    if (rc != IB_OK) {
+        *data = NULL;
         return rc;
     }
 
     return IB_OK;
 }
 
-/* -- Exported Data Access Routines -- */
-
-ib_status_t ib_data_add(ib_provider_inst_t *dpi,
-                        ib_field_t *f)
+ib_mpool_t *ib_data_pool(
+    const ib_data_t *data
+)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
-
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-    ib_status_t rc;
-
-    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
-    return rc;
+    return data->mp;
 }
 
-ib_status_t ib_data_add_named(ib_provider_inst_t *dpi,
-                              ib_field_t *f,
-                              const char *key,
-                              size_t klen)
+ib_status_t ib_data_add(
+    ib_data_t  *data,
+    ib_field_t *f
+)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
-
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-    ib_status_t rc;
-
-    rc = ib_data_add_internal(api, dpi, f, key, klen);
-    return rc;
+    return ib_data_add_internal(data, f, f->name, f->nlen);
 }
 
-ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
-                               const char *name,
-                               size_t nlen,
-                               ib_num_t val,
-                               ib_field_t **pf)
+ib_status_t ib_data_add_named(
+    ib_data_t  *data,
+    ib_field_t *f,
+    const char *key,
+    size_t      klen
+)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
+    return ib_data_add_internal(data, f, key, klen);
+}
 
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
+ib_status_t ib_data_add_num_ex(
+    ib_data_t   *data,
+    const char  *name,
+    size_t       nlen,
+    ib_num_t     val,
+    ib_field_t **pf
+)
+{
+    assert(data != NULL);
+
     ib_field_t *f;
     ib_status_t rc;
 
@@ -437,7 +478,7 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
 
     rc = ib_field_create(
         &f,
-        dpi->mp,
+        data->mp,
         name, nlen,
         IB_FTYPE_NUM,
         ib_ftype_num_in(&val)
@@ -446,7 +487,7 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
         return rc;
     }
 
-    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
+    rc = ib_data_add_internal(data, f, f->name, f->nlen);
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;
     }
@@ -454,18 +495,16 @@ ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
     return rc;
 }
 
-ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
-                                  const char *name,
-                                  size_t nlen,
-                                  const char *val,
-                                  ib_field_t **pf)
+ib_status_t ib_data_add_nulstr_ex(
+    ib_data_t   *data,
+    const char  *name,
+    size_t       nlen,
+    const char  *val,
+    ib_field_t **pf
+)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
+    assert(data != NULL);
 
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
     ib_status_t rc;
 
@@ -475,7 +514,7 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
 
     rc = ib_field_create(
         &f,
-        dpi->mp,
+        data->mp,
         name, nlen,
         IB_FTYPE_NULSTR,
         ib_ftype_nulstr_in(val)
@@ -484,7 +523,7 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
         return rc;
     }
 
-    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
+    rc = ib_data_add_internal(data, f, f->name, f->nlen);
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;
     }
@@ -492,19 +531,17 @@ ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
     return rc;
 }
 
-ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
-                                   const char *name,
-                                   size_t nlen,
-                                   uint8_t *val,
-                                   size_t vlen,
-                                   ib_field_t **pf)
+ib_status_t ib_data_add_bytestr_ex(
+    ib_data_t   *data,
+    const char  *name,
+    size_t       nlen,
+    uint8_t     *val,
+    size_t       vlen,
+    ib_field_t **pf
+)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
+    assert(data != NULL);
 
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
     ib_status_t rc;
 
@@ -512,12 +549,12 @@ ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
         *pf = NULL;
     }
 
-    rc = ib_field_create_bytestr_alias(&f, dpi->mp, name, nlen, val, vlen);
+    rc = ib_field_create_bytestr_alias(&f, data->mp, name, nlen, val, vlen);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
+    rc = ib_data_add_internal(data, f, f->name, f->nlen);
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;
     }
@@ -525,17 +562,15 @@ ib_status_t ib_data_add_bytestr_ex(ib_provider_inst_t *dpi,
     return rc;
 }
 
-ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
-                                const char *name,
-                                size_t nlen,
-                                ib_field_t **pf)
+ib_status_t ib_data_add_list_ex(
+    ib_data_t   *data,
+    const char  *name,
+    size_t       nlen,
+    ib_field_t **pf
+)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
+    assert(data != NULL);
 
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
     ib_status_t rc;
 
@@ -543,12 +578,12 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
         *pf = NULL;
     }
 
-    rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_LIST, NULL);
+    rc = ib_field_create(&f, data->mp, name, nlen, IB_FTYPE_LIST, NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
+    rc = ib_data_add_internal(data, f, f->name, f->nlen);
     if ((rc == IB_OK) && (pf != NULL)) {
         *pf = f;
     }
@@ -556,17 +591,15 @@ ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
     return rc;
 }
 
-ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
-                                  const char *name,
-                                  size_t nlen,
-                                  ib_field_t **pf)
+ib_status_t ib_data_add_stream_ex(
+    ib_data_t   *data,
+    const char  *name,
+    size_t       nlen,
+    ib_field_t **pf
+)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
+    assert(data != NULL);
 
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
     ib_field_t *f;
     ib_status_t rc;
 
@@ -574,7 +607,7 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
         *pf = NULL;
     }
 
-    rc = ib_field_create(&f, dpi->mp, name, nlen, IB_FTYPE_SBUFFER, NULL);
+    rc = ib_field_create(&f, data->mp, name, nlen, IB_FTYPE_SBUFFER, NULL);
     if (rc != IB_OK) {
         ib_util_log_debug(
             "SBUFFER field creation failed: %s", ib_status_to_string(rc)
@@ -582,7 +615,7 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
         return rc;
     }
 
-    rc = ib_data_add_internal(api, dpi, f, f->name, f->nlen);
+    rc = ib_data_add_internal(data, f, f->name, f->nlen);
     ib_util_log_debug(
         "SBUFFER field creation returned: %s", ib_status_to_string(rc)
     );
@@ -593,19 +626,17 @@ ib_status_t ib_data_add_stream_ex(ib_provider_inst_t *dpi,
     return rc;
 }
 
-ib_status_t ib_data_get_ex(const ib_provider_inst_t *dpi,
-                           const char *name,
-                           size_t name_len,
-                           ib_field_t **pf)
+ib_status_t ib_data_get_ex(
+    const ib_data_t  *data,
+    const char       *name,
+    size_t            name_len,
+    ib_field_t      **pf
+)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
+    assert(data != NULL);
 
     ib_status_t rc;
     char *name_str = NULL;
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
 
     char *filter_marker = memchr(name, DPI_LIST_FILTER_MARKER, name_len);
 
@@ -627,7 +658,7 @@ ib_status_t ib_data_get_ex(const ib_provider_inst_t *dpi,
 
         /* Fetch the field name, but the length is (filter_mark - name).
          * That is, the string before the ':' we found. */
-        rc = api->get(dpi, name, filter_marker - name, &parent_field);
+        rc = ib_hash_get_ex(data->hash, &parent_field, name, filter_marker - name);
         if (rc != IB_OK) {
             return rc;
         }
@@ -664,30 +695,32 @@ ib_status_t ib_data_get_ex(const ib_provider_inst_t *dpi,
             }
 
             /* Validated that filter_start and filter_end are sane. */
-            rc = ib_data_get_filtered_list(api,
-                                           dpi,
-                                           parent_field,
-                                           filter_start+1,
-                                           filter_end - filter_start - 1,
-                                           pf);
+            rc = ib_data_get_filtered_list(
+                data,
+                parent_field,
+                filter_start+1,
+                filter_end - filter_start - 1,
+                pf
+            );
         }
 
         /* No pattern match. Just extract the sub-field. */
         else {
 
             /* Handle extracting a subfield for a list of a dynamic field. */
-            rc = ib_data_get_subfields(api,
-                                       dpi,
-                                       parent_field,
-                                       filter_marker+1,
-                                       name_len - (filter_marker+1-name),
-                                       pf);
+            rc = ib_data_get_subfields(
+                data,
+                parent_field,
+                filter_marker+1,
+                name_len - (filter_marker+1-name),
+                pf
+            );
         }
     }
 
     /* Typical no-expansion fetch of a value. */
     else {
-        rc = api->get(dpi, name, name_len, pf);
+        rc = ib_hash_get_ex(data->hash, pf, name, name_len);
     }
 
     return rc;
@@ -706,416 +739,211 @@ error_handler:
     return rc;
 }
 
-ib_status_t ib_data_get_all(const ib_provider_inst_t *dpi,
-                            ib_list_t *list)
+ib_status_t ib_data_get_all(
+    const ib_data_t *data,
+    ib_list_t       *list
+)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
+    assert(data != NULL);
+    assert(data->hash != NULL);
 
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-    ib_status_t rc;
-
-    rc = api->get_all(dpi, list);
-    return rc;
+    return ib_hash_get_all(data->hash, list);
 }
 
-ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
-                               const char *name,
-                               size_t nlen,
-                               ib_field_t **pf,
-                               const char *tfn)
+ib_status_t ib_data_add_num(
+    ib_data_t   *data,
+    const char  *name,
+    ib_num_t     val,
+    ib_field_t **pf
+)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
-
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-
-    ib_engine_t *ib = dpi->pr->ib;
-    char *fullname;
-    size_t fnlen;
-    size_t tlen;
-    ib_status_t rc;
-
-    /* No tfn just means a normal get. */
-    if (tfn == NULL) {
-        rc = ib_data_get_ex(dpi, name, nlen, pf);
-        return rc;
-    }
-
-    /* Build the full name with tfn: "name.t(tfn)" */
-    tlen = strlen(tfn);
-    fnlen = nlen + tlen + 4; /* Additional ".t()" bytes */
-    fullname = (char *)ib_mpool_alloc(dpi->mp, fnlen);
-    memcpy(fullname, name, nlen);
-    memcpy(fullname + nlen, ".t(", fnlen - nlen);
-    memcpy(fullname + nlen + 3, tfn, fnlen - nlen - 3);
-    fullname[fnlen - 1] = ')';
-
-    /* See if there is already a transformed version, otherwise
-     * one needs to be created.
-     */
-    rc = api->get(dpi, fullname, fnlen, pf);
-    if (rc == IB_ENOENT) {
-        const char *tname;
-        size_t i;
-
-        /* Get the non-tfn field. */
-        rc = api->get(dpi, name, nlen, pf);
-        if (rc != IB_OK) {
-            ib_log_debug(ib,
-                "Failed to fetch field: %p (%s)",
-                *pf, ib_status_to_string(rc)
-            );
-            return rc;
-        }
-
-        /* Currently this only works for string type fields. */
-        if (   ((*pf)->type != IB_FTYPE_NULSTR)
-            && ((*pf)->type != IB_FTYPE_BYTESTR))
-        {
-            ib_log_error(ib,
-                         "Cannot transform a non-string based field type=%d",
-                         (int)(*pf)->type);
-            return IB_EINVAL;
-        }
-
-
-        /* Copy the field, noting the tfn. */
-        rc = ib_field_copy(pf, dpi->mp, fullname, fnlen, *pf);
-        if (rc != IB_OK) {
-            return rc;
-        }
-        (*pf)->tfn = (char *)ib_mpool_memdup(dpi->mp, tfn, tlen + 1);
-
-
-        /* Transform. */
-        tname = tfn;
-        for (i = 0; i <= tlen; ++i) {
-            ib_tfn_t *t;
-            ib_flags_t flags;
-
-            if ((tfn[i] == ',') || (i == tlen)) {
-                size_t len = (tfn + i) - tname;
-
-                rc = ib_tfn_lookup_ex(ib, tname, len, &t);
-                if (rc == IB_OK) {
-                    ib_log_debug2(ib,
-                                  "TFN: %" IB_BYTESTR_FMT ".%" IB_BYTESTR_FMT,
-                                  IB_BYTESTRSL_FMT_PARAM(name, nlen),
-                                  IB_BYTESTRSL_FMT_PARAM(tname, len));
-
-                    rc = ib_tfn_transform(ib, dpi->mp, t, *pf, pf, &flags);
-                    if (rc != IB_OK) {
-                        /// @todo What to do here?  Fail or ignore?
-                        ib_log_error(ib,
-                            "Transformation failed: %" IB_BYTESTR_FMT,
-                            IB_BYTESTRSL_FMT_PARAM(tname, len)
-                        );
-                    }
-                }
-                else {
-                    /// @todo What to do here?  Fail or ignore?
-                    ib_log_error(ib,
-                                 "Unknown transformation: %" IB_BYTESTR_FMT,
-                                 IB_BYTESTRSL_FMT_PARAM(tname, len));
-                }
-                tname = tfn + i + 1;
-
-            }
-        }
-
-        /* Store the transformed field. */
-        rc = ib_data_add_named(dpi, *pf, fullname, fnlen);
-        if (rc != IB_OK) {
-            ib_log_error(ib,
-                         "Cannot store field \"%.*s\" type=%d: %s",
-                         (int)fnlen, fullname,
-                         (int)(*pf)->type,
-                         ib_status_to_string(rc));
-
-            return rc;
-        }
-    }
-
-    return rc;
+    return ib_data_add_num_ex(data, name, strlen(name), val, pf);
 }
 
-ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
+ib_status_t ib_data_add_nulstr(
+    ib_data_t   *data,
+    const char  *name,
+    const char  *val,
+    ib_field_t **pf
+)
+{
+    return ib_data_add_nulstr_ex(data, name, strlen(name), val, pf);
+}
+
+ib_status_t ib_data_add_bytestr(
+    ib_data_t   *data,
+    const char  *name,
+    uint8_t     *val,
+    size_t       vlen,
+    ib_field_t **pf
+)
+{
+    return ib_data_add_bytestr_ex(data, name, strlen(name), val, vlen, pf);
+}
+
+ib_status_t ib_data_add_list(
+    ib_data_t   *data,
+    const char  *name,
+    ib_field_t **pf
+)
+{
+    return ib_data_add_list_ex(data, name, strlen(name), pf);
+}
+
+ib_status_t ib_data_add_stream(
+    ib_data_t   *data,
+    const char  *name,
+    ib_field_t **pf
+)
+{
+    return ib_data_add_stream_ex(data, name, strlen(name), pf);
+}
+
+ib_status_t ib_data_get(
+    ib_data_t   *data,
+    const char  *name,
+    ib_field_t **pf
+)
+{
+    return ib_data_get_ex(data, name, strlen(name), pf);
+}
+
+ib_status_t ib_data_remove(
+    ib_data_t   *data,
+    const char  *name,
+    ib_field_t **pf
+)
+{
+    return ib_data_remove_ex(data, name, strlen(name), pf);
+}
+
+ib_status_t ib_data_remove_ex(ib_data_t *data,
                               const char *name,
                               size_t nlen,
                               ib_field_t **pf)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
+    assert(data != NULL);
 
-    ib_status_t rc;
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-
-    rc = api->remove(dpi, name, nlen, pf);
-
-    return rc;
+    return ib_hash_remove_ex(data->hash, pf, name, nlen);
 }
 
-static ib_status_t expand_lookup_fn(const void *data,
-                                    const char *name,
-                                    size_t nlen,
-                                    ib_field_t **pf)
+ib_status_t ib_data_set(
+    ib_data_t  *data,
+    ib_field_t *f,
+    const char *name,
+    size_t      nlen
+)
 {
     assert(data != NULL);
-    assert(name != NULL);
-    assert(pf != NULL);
-
-    ib_status_t rc;
-    ib_provider_inst_t *dpi = (ib_provider_inst_t *)data;
-
-    rc = ib_data_get_ex(dpi, name, nlen, pf);
-    return rc;
+    return ib_hash_set_ex(data->hash, name, nlen, f);
 }
 
-ib_status_t ib_data_expand_str(const ib_provider_inst_t *dpi,
-                               const char *str,
-                               bool recurse,
-                               char **result)
+ib_status_t ib_data_set_relative(
+    ib_data_t  *data,
+    const char *name,
+    size_t      nlen,
+    intmax_t    adjval
+)
 {
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
-
+    ib_field_t *f;
     ib_status_t rc;
-    rc = ib_expand_str_gen(dpi->mp,
-                           str,
-                           IB_VARIABLE_EXPANSION_PREFIX,
-                           IB_VARIABLE_EXPANSION_POSTFIX,
-                           recurse,
-                           expand_lookup_fn,
-                           dpi,
-                           result);
+    ib_num_t num;
 
-    return rc;
-}
+    rc = ib_data_get_ex(data, name, nlen, &f);
+    if (rc != IB_OK) {
+        return IB_ENOENT;
+    }
 
-ib_status_t ib_data_expand_str_ex(const ib_provider_inst_t *dpi,
-                                  const char *str,
-                                  size_t slen,
-                                  bool nul,
-                                  bool recurse,
-                                  char **result,
-                                  size_t *result_len)
-{
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
-
-    ib_status_t rc;
-    rc = ib_expand_str_gen_ex(dpi->mp,
-                              str,
-                              slen,
-                              IB_VARIABLE_EXPANSION_PREFIX,
-                              IB_VARIABLE_EXPANSION_POSTFIX,
-                              nul,
-                              recurse,
-                              expand_lookup_fn,
-                              dpi,
-                              result,
-                              result_len);
+    switch (f->type) {
+        case IB_FTYPE_NUM:
+            /// @todo Make sure this is atomic
+            /// @todo Check for overflow
+            rc = ib_field_value(f, ib_ftype_num_out(&num));
+            if (rc != IB_OK) {
+                return rc;
+            }
+            num += adjval;
+            rc = ib_field_setv(f, ib_ftype_num_in(&num));
+            break;
+        default:
+            return IB_EINVAL;
+    }
 
     return rc;
 }
 
-ib_status_t ib_data_expand_test_str(const char *str,
-                                    bool *result)
+ib_status_t ib_data_expand_str(
+    const ib_data_t  *data,
+    const char       *str,
+    bool              recurse,
+    char            **result
+)
 {
-    ib_status_t rc;
+    assert(data != NULL);
 
-    rc = ib_expand_test_str(
+    return ib_expand_str_gen(
+        data->mp,
         str,
         IB_VARIABLE_EXPANSION_PREFIX,
         IB_VARIABLE_EXPANSION_POSTFIX,
-        result);
-    return rc;
+        recurse,
+        expand_lookup_fn,
+        data,
+        result
+    );
 }
 
-ib_status_t ib_data_expand_test_str_ex(const char *str,
-                                       size_t slen,
-                                       bool *result)
+ib_status_t ib_data_expand_str_ex(
+    const ib_data_t  *data,
+    const char       *str,
+    size_t            slen,
+    bool              nul,
+    bool              recurse,
+    char            **result,
+    size_t           *result_len
+)
 {
-    ib_status_t rc = ib_expand_test_str_ex(
+    assert(data != NULL);
+
+    return ib_expand_str_gen_ex(
+        data->mp,
         str,
         slen,
         IB_VARIABLE_EXPANSION_PREFIX,
         IB_VARIABLE_EXPANSION_POSTFIX,
-        result);
-    return rc;
+        nul,
+        recurse,
+        expand_lookup_fn,
+        data,
+        result,
+        result_len
+    );
 }
 
-static const int MAX_CAPTURE_NUM = 9;
-typedef struct {
-    const char *full;
-    const char *name;
-} capture_names_t;
-static const capture_names_t names[] =
+ib_status_t ib_data_expand_test_str(
+    const char *str,
+    bool       *result
+)
 {
-    { IB_TX_CAPTURE":0", "0" },
-    { IB_TX_CAPTURE":1", "1" },
-    { IB_TX_CAPTURE":2", "2" },
-    { IB_TX_CAPTURE":3", "3" },
-    { IB_TX_CAPTURE":4", "4" },
-    { IB_TX_CAPTURE":5", "5" },
-    { IB_TX_CAPTURE":6", "6" },
-    { IB_TX_CAPTURE":7", "7" },
-    { IB_TX_CAPTURE":8", "8" },
-    { IB_TX_CAPTURE":9", "9" },
-};
-const char *ib_data_capture_name(int num)
-{
-    assert(num >= 0);
-
-    if (num <= MAX_CAPTURE_NUM) {
-        return names[num].name;
-    }
-    else {
-        return "??";
-    }
-}
-const char *ib_data_capture_fullname(int num)
-{
-    assert(num >= 0);
-
-    if (num <= MAX_CAPTURE_NUM) {
-        return names[num].full;
-    }
-    else {
-        return IB_TX_CAPTURE":??";
-    }
+    return ib_expand_test_str(
+        str,
+        IB_VARIABLE_EXPANSION_PREFIX,
+        IB_VARIABLE_EXPANSION_POSTFIX,
+        result
+    );
 }
 
-/**
- * Get the capture list, create if required.
- *
- * @param[in] tx Transaction
- * @param[out] olist If not NULL, pointer to the capture item's list
- *
- * @returns IB_OK: All OK
- *          IB_EINVAL: @a num is too large
- *          Error status from: ib_data_get()
- *                             ib_data_add_list()
- *                             ib_field_value()
- */
-static ib_status_t get_capture_list(ib_tx_t *tx,
-                                    ib_list_t **olist)
+ib_status_t ib_data_expand_test_str_ex(
+    const char *str,
+    size_t      slen,
+    bool       *result
+)
 {
-    ib_status_t rc;
-    ib_field_t *field = NULL;
-    ib_list_t *list = NULL;
-    ib_provider_inst_t *dpi;
-
-    assert(tx != NULL);
-    dpi = tx->dpi;
-    assert(dpi != NULL);
-    assert(dpi->pr != NULL);
-    assert(dpi->pr->api != NULL);
-
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)tx->dpi->pr->api;
-
-    /* Look up the capture list */
-    rc = api->get(tx->dpi, IB_TX_CAPTURE, strlen(IB_TX_CAPTURE), &field);
-    if (rc == IB_ENOENT) {
-        rc = ib_data_add_list(dpi, IB_TX_CAPTURE, &field);
-    }
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    if (field->type != IB_FTYPE_LIST) {
-        ib_data_remove(dpi, IB_TX_CAPTURE, NULL);
-    }
-    rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&list));
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    if (olist != NULL) {
-        *olist = list;
-    }
-
-    return rc;
-}
-
-ib_status_t ib_data_capture_clear(ib_tx_t *tx)
-{
-    assert(tx != NULL);
-
-    ib_status_t rc;
-    ib_list_t *list;
-
-    rc = get_capture_list(tx, &list);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    ib_list_clear(list);
-    return IB_OK;
-}
-
-ib_status_t ib_data_capture_set_item(ib_tx_t *tx,
-                                     int num,
-                                     ib_field_t *in_field)
-{
-    assert(tx != NULL);
-    assert(num >= 0);
-
-    if (num > MAX_CAPTURE_NUM) {
-        return IB_EINVAL;
-    }
-
-    ib_status_t rc;
-    ib_list_t *list;
-    ib_field_t *field;
-    ib_list_node_t *node;
-    ib_list_node_t *next;
-    const char *name;
-
-    name = ib_data_capture_name(num);
-
-    rc = get_capture_list(tx, &list);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Remove any nodes with the same name */
-    IB_LIST_LOOP_SAFE(list, node, next) {
-        field = (ib_field_t *)node->data;
-        if (strncmp(name, field->name, field->nlen) == 0) {
-            ib_list_node_remove(list, node);
-        }
-    }
-    field = NULL;
-
-    if(in_field == NULL) {
-        return IB_OK;
-    }
-
-    /* Make sure we have the correct name */
-    if (strncmp(name, in_field->name, in_field->nlen) == 0) {
-        field = in_field;
-    }
-    else {
-        rc = ib_field_alias(&field, tx->mp, name, strlen(name), in_field);
-        if (rc != IB_OK) {
-            return rc;
-        }
-
-    }
-    assert(field != NULL);
-
-    /* Add the node to the list */
-    rc = ib_list_push(list, field);
-
-    return rc;
+    return ib_expand_test_str_ex(
+        str,
+        slen,
+        IB_VARIABLE_EXPANSION_PREFIX,
+        IB_VARIABLE_EXPANSION_POSTFIX,
+        result
+    );
 }

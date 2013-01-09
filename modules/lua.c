@@ -173,7 +173,7 @@ static ib_status_t modlua_runtime_get(
         return rc;
     }
 
-    ib_conn_get_data(conn, module, (void **)lua);
+    ib_conn_get_module_data(conn, module, (void **)lua);
 
     return IB_OK;
 }
@@ -204,7 +204,7 @@ static ib_status_t modlua_runtime_set(
         return rc;
     }
 
-    ib_conn_set_data(conn, module, lua);
+    ib_conn_set_module_data(conn, module, lua);
 
     return IB_OK;
 }

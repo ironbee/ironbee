@@ -46,6 +46,18 @@ IronBee v0.7.0
   component gained support for modules to register arbitrary external rule 
   drivers (see `ib_rule_register_external_driver()`), which the Lua module 
   now uses.
+  
+* Data fields were cleaned up and refactored.  Notable changes to the public
+  API include:
+
+  * All capture related data routines have been moved to capture.h and begin
+    `ib_capture` instead of `ib_data`.
+  * Several transformation functions have been moved to transformation.h and
+	to `ib_tfn` from `ib_data`.
+  * All remaining data routines are now in `data.h` instead of `engine.h`.
+  * All public `dpi` fields are now `data`.
+  * To disambiguate, previous module data code has moved from `data` to
+    `module_data`.
 
 **Modules**
 

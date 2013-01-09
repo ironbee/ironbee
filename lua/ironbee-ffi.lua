@@ -37,7 +37,7 @@ base.package.preload["ironbee-ffi"] = _M
 -- ===============================================
 -- Setup some module metadata.
 -- ===============================================
-_COPYRIGHT = "Copyright (C) 2010-2011 Qualys, Inc."
+_COPYRIGHT = "Copyright (C) 2010-2013 Qualys, Inc."
 _DESCRIPTION = "IronBee API via luajit FFI"
 _VERSION = "0.2"
 
@@ -47,6 +47,7 @@ _VERSION = "0.2"
 ffi.cdef [[
     /* Util Types */
     typedef void (*ib_void_fn_t)(void);
+    typedef struct ib_array_t ib_array_t;
     typedef struct ib_mpool_t ib_mpool_t;
     typedef struct ib_dso_t ib_dso_t;
     typedef void ib_dso_sym_t;
@@ -156,6 +157,7 @@ ffi.cdef [[
     typedef struct ib_context_t ib_context_t;
     typedef struct ib_conn_t ib_conn_t;
     typedef struct ib_conndata_t ib_conndata_t;
+    typedef struct ib_data_t ib_data_t;
     typedef struct ib_tx_t ib_tx_t;
     typedef struct ib_txdata_t ib_txdata_t;
     typedef struct ib_tfn_t ib_tfn_t;
@@ -231,8 +233,8 @@ ffi.cdef [[
         ib_context_t       *ctx;
         void               *server_ctx;
         void               *parser_ctx;
-        ib_provider_inst_t *dpi;
-        ib_hash_t          *data;
+        ib_data_t          *data;
+        ib_array_t         *module_data;
         ib_timeval_t        tv_created;
         struct {
             ib_time_t       started;
@@ -277,9 +279,9 @@ ffi.cdef [[
         ib_conn_t          *conn;
         ib_context_t       *ctx;
         void               *pctx;
-        ib_provider_inst_t *dpi;
+        ib_data_t          *data;
         ib_provider_inst_t *epi;
-        ib_hash_t          *data;
+        ib_array_t         *module_data;
         ib_fctl_t          *fctl;
         ib_timeval_t        tv_created;
         struct {
@@ -757,34 +759,35 @@ ffi.cdef [[
     const uint8_t *ib_bytestr_const_ptr(const ib_bytestr_t *bs);
 
     /* Data Access */
-    ib_status_t ib_data_get_all(ib_provider_inst_t *dpi, ib_list_t* ib_list);
-    ib_status_t ib_data_get_ex(ib_provider_inst_t *dpi,
+    ib_status_t ib_data_get_all(ib_data_t *data, ib_list_t* ib_list);
+    ib_status_t ib_data_get_ex(ib_data_t *data,
                                const char *name,
                                size_t nlen,
                                ib_field_t **pf);
-    ib_status_t ib_data_tfn_get_ex(ib_provider_inst_t *dpi,
+    ib_status_t ib_tfn_data_get_ex(ib_engine_t *engine,
+                                   ib_data_t *data,
                                    const char *name,
                                    size_t nlen,
                                    ib_field_t **pf,
                                    const char *tfn);
 
-    ib_status_t ib_data_add_nulstr_ex(ib_provider_inst_t *dpi,
+    ib_status_t ib_data_add_nulstr_ex(ib_data_t *data,
                                       const char *name,
                                       size_t nlen,
                                       char *val,
                                       ib_field_t **pf);
 
-    ib_status_t ib_data_add_num_ex(ib_provider_inst_t *dpi,
+    ib_status_t ib_data_add_num_ex(ib_data_t *data,
                                    const char *name,
                                    size_t nlen,
                                    ib_num_t val,
                                    ib_field_t **pf);
 
-    ib_status_t ib_data_add_list_ex(ib_provider_inst_t *dpi,
+    ib_status_t ib_data_add_list_ex(ib_data_t *data,
                                  const char *name,
                                  size_t nlen,
                                  ib_field_t **pf);
-    ib_status_t ib_data_remove_ex(ib_provider_inst_t *dpi,
+    ib_status_t ib_data_remove_ex(ib_data_t *data,
                                   const char *name,
                                   size_t nlen,
                                   ib_field_t **pf);
@@ -1049,6 +1052,13 @@ function newProviderInst(val)
     }
 end
 
+function newData(val)
+    local c_val = ffi.cast("ib_data_t *", val)
+    return {
+        cvalue = function() return c_val end,
+    }
+end
+
 function newContext(val)
     local c_val = ffi.cast("ib_context_t *", val)
     return {
@@ -1165,7 +1175,7 @@ function newConn(val)
         mp = function() return newMpool(c_val.mp) end,
         ib = function() return newEngine(c_val.ib) end,
         ctx = function() return newContext(c_val.ctx) end,
-        dpi = function() return newProviderInst(c_val.dpi) end,
+        data = function() return newData(c_val.data) end,
         tx_count = function() return ffi.cast("size_t", c_val.tx_count) end,
     }
 end
@@ -1187,7 +1197,7 @@ function newTx(val)
         mp = function() return newMpool(c_val.mp) end,
         ib = function() return newEngine(c_val.ib) end,
         ctx = function() return newContext(c_val.ctx) end,
-        dpi = function() return newProviderInst(c_val.dpi) end,
+        data = function() return newData(c_val.data) end,
         epi = function() return newProviderInst(c_val.epi) end,
         conn = function() return newConn(c_val.conn) end,
         id = function() return ffi.cast("const char *", c_val.id) end,
@@ -1197,22 +1207,21 @@ end
 -- ===============================================
 -- Get a data field by name.
 --
--- dpi: Data Provider Interface (i.e. conn.dpi() or tx.dpi())
+-- data: Data Provider Interface (i.e. conn.data() or tx.data())
 -- name: Name of data field
 -- ===============================================
-function ib_data_get(dpi, name)
-    local c_dpi = dpi.cvalue()
---    local c_ib = c_dpi.pr.ib
+function ib_data_get(data, name)
+    local c_data = data.cvalue()
     local c_pf = ffi.new("ib_field_t*[1]")
     local rc
 
     -- Get the named data field.
-    rc = c.ib_data_get_ex(c_dpi, name, string.len(name), c_pf)
+    rc = c.ib_data_get_ex(c_data, name, string.len(name), c_pf)
     if rc ~= c.IB_OK then
-        local c_ctx = c.ib_context_main(c_dpi.pr.ib)
+        local c_ctx = c.ib_context_main(c_data.pr.ib)
         local dinfo = debug.getinfo(2)
 
-        c.ib_log_ex(c_dpi.pr.ib, 4,
+        c.ib_log_ex(c_data.pr.ib, 4,
                     dinfo.source, dinfo.linedefined, "Failed to get field \"" .. name .. "\": " .. rc)
         return nil
     end
@@ -1223,18 +1232,17 @@ end
 -- ===============================================
 -- Get a data field by name with a transformation.
 --
--- dpi: Data Provider Interface (i.e. conn.dpi() or tx.dpi())
+-- data: Data Provider Interface (i.e. conn.data() or tx.data())
 -- name: Name of data field
 -- tfn: Comma separated tfn name string
 -- ===============================================
-function ib_data_tfn_get(dpi, name, tfn)
-    local c_dpi = dpi.cvalue()
---    local c_ib = c_dpi.pr.ib
+function ib_data_tfn_get(data, name, tfn)
+    local c_data = data.cvalue()
     local c_pf = ffi.new("ib_field_t*[1]")
     local rc
 
     -- Get the named data field.
-    rc = c.ib_data_tfn_get_ex(c_dpi, name, string.len(name), c_pf, tfn)
+    rc = c.ib_tfn_data_get_ex(c_data, name, string.len(name), c_pf, tfn)
     if rc ~= c.IB_OK then
         return nil
     end

@@ -248,10 +248,10 @@ static ib_status_t dyn_get(
 }
 
 /// @test Test ironbee library - data provider
-TEST(TestIronBee, test_dpi_dynf)
+TEST(TestIronBee, test_data_dynf)
 {
     ib_engine_t *ib;
-    ib_provider_inst_t *dpi;
+    ib_data_t *data;
     ib_field_t *dynf;
     ib_field_t *f;
     ib_field_t *f2;
@@ -261,16 +261,8 @@ TEST(TestIronBee, test_dpi_dynf)
 
     ibtest_engine_create(&ib);
 
-    ASSERT_EQ(
-        IB_OK,
-        ib_provider_instance_create(ib,
-                                    IB_PROVIDER_TYPE_DATA,
-                                    IB_DSTR_CORE,
-                                    &dpi,
-                                    ib_engine_pool_main_get(ib),
-                                    NULL)
-    );
-    ASSERT_TRUE(dpi);
+    ASSERT_EQ(IB_OK, ib_data_create(ib_engine_pool_main_get(ib), &data));
+    ASSERT_TRUE(data);
 
     /* Create a field with no initial value. */
     ASSERT_EQ(
@@ -289,15 +281,15 @@ TEST(TestIronBee, test_dpi_dynf)
     ASSERT_MEMEQ("test_dynf", dynf->name, 9);
 
     /* Add the field to the data store. */
-    ASSERT_EQ(IB_OK, ib_data_add(dpi, dynf));
+    ASSERT_EQ(IB_OK, ib_data_add(data, dynf));
 
     /* Fetch the field from the data store */
-    ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(data, "test_dynf", &f));
     ASSERT_TRUE(f);
     ASSERT_EQ(dynf, f);
 
     /* Fetch a dynamic field from the data store */
-    ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf:dyn_subkey", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(data, "test_dynf:dyn_subkey", &f));
     ASSERT_TRUE(f);
     ASSERT_EQ(9UL, f->nlen);
 
@@ -315,7 +307,7 @@ TEST(TestIronBee, test_dpi_dynf)
     ASSERT_EQ(5, n);
 
     /* Fetch a another subkey */
-    ASSERT_EQ(IB_OK, ib_data_get(dpi, "test_dynf:dyn_subkey2", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(data, "test_dynf:dyn_subkey2", &f));
     ASSERT_TRUE(f);
     ASSERT_EQ(9UL, f->nlen);
 
@@ -335,44 +327,32 @@ TEST(TestIronBee, test_dpi_dynf)
     ibtest_engine_destroy(ib);
 }
 
-TEST(TestIronBee, test_dpi_name)
+TEST(TestIronBee, test_data_name)
 {
     ib_engine_t *ib = NULL;
-    ib_provider_inst_t *dpi = NULL;
+    ib_data_t *data = NULL;
     ib_field_t *list_field = NULL;
     ib_field_t *out_field = NULL;
 
     ibtest_engine_create(&ib);
 
-    ASSERT_EQ(
-        IB_OK,
-        ib_provider_instance_create(ib,
-                                    IB_PROVIDER_TYPE_DATA,
-                                    IB_DSTR_CORE,
-                                    &dpi,
-                                    ib_engine_pool_main_get(ib),
-                                    NULL)
-    );
-    ASSERT_TRUE(dpi);
+    ASSERT_EQ(IB_OK, ib_data_create(ib_engine_pool_main_get(ib), &data));
+    ASSERT_TRUE(data);
 
-    ASSERT_IB_OK(ib_data_add_list(dpi, "ARGV", &list_field));
-    ASSERT_IB_OK(ib_data_get(dpi, "ARGV", &out_field));
-    IB_PROVIDER_API_TYPE(data) *api =
-        (IB_PROVIDER_API_TYPE(data) *)dpi->pr->api;
-
-    ASSERT_IB_OK(api->get(dpi, "ARGV", 4, &out_field));
+    ASSERT_IB_OK(ib_data_add_list(data, "ARGV", &list_field));
+    ASSERT_IB_OK(ib_data_get(data, "ARGV", &out_field));
     ASSERT_TRUE(out_field);
     out_field = NULL;
-    ASSERT_IB_OK(api->get(dpi, "ARGV:/.*(1|3)/", 4, &out_field));
+    ASSERT_IB_OK(ib_data_get_ex(data, "ARGV:/.*(1|3)/", 4, &out_field));
     ASSERT_TRUE(out_field);
     ibtest_engine_destroy(ib);
 }
 
 // Test pattern matching a field.
-TEST(TestIronBee, test_dpi_pcre)
+TEST(TestIronBee, test_data_pcre)
 {
     ib_engine_t *ib;
-    ib_provider_inst_t *dpi;
+    ib_data_t *data;
     ib_field_t *list_field;
     ib_field_t *out_field;
     ib_list_t *list;
@@ -386,32 +366,24 @@ TEST(TestIronBee, test_dpi_pcre)
 
     ibtest_engine_create(&ib);
 
-    ASSERT_EQ(
-        IB_OK,
-        ib_provider_instance_create(ib,
-                                    IB_PROVIDER_TYPE_DATA,
-                                    IB_DSTR_CORE,
-                                    &dpi,
-                                    ib_engine_pool_main_get(ib),
-                                    NULL)
-    );
-    ASSERT_TRUE(dpi);
+    ASSERT_EQ(IB_OK, ib_data_create(ib_engine_pool_main_get(ib), &data));
+    ASSERT_TRUE(data);
 
     ASSERT_IB_OK(
-        ib_field_create(&field1, dpi->mp, "field1", 6, IB_FTYPE_NUM, &num1));
+        ib_field_create(&field1, ib_data_pool(data), "field1", 6, IB_FTYPE_NUM, &num1));
     ASSERT_IB_OK(
-        ib_field_create(&field2, dpi->mp, "field2", 6, IB_FTYPE_NUM, &num2));
+        ib_field_create(&field2, ib_data_pool(data), "field2", 6, IB_FTYPE_NUM, &num2));
     ASSERT_IB_OK(
-        ib_field_create(&field3, dpi->mp, "field3", 6, IB_FTYPE_NUM, &num3));
-    ASSERT_IB_OK(ib_data_add_list(dpi, "ARGV", &list_field));
-    ASSERT_IB_OK(ib_data_get(dpi, "ARGV", &out_field));
+        ib_field_create(&field3, ib_data_pool(data), "field3", 6, IB_FTYPE_NUM, &num3));
+    ASSERT_IB_OK(ib_data_add_list(data, "ARGV", &list_field));
+    ASSERT_IB_OK(ib_data_get(data, "ARGV", &out_field));
 
     ASSERT_IB_OK(ib_field_value(list_field, &list));
     ASSERT_IB_OK(ib_list_push(list, field1));
     ASSERT_IB_OK(ib_list_push(list, field2));
     ASSERT_IB_OK(ib_list_push(list, field3));
 
-    ASSERT_IB_OK(ib_data_get(dpi, "ARGV:/.*(1|3)/", &out_field));
+    ASSERT_IB_OK(ib_data_get(data, "ARGV:/.*(1|3)/", &out_field));
 
     ASSERT_IB_OK(ib_field_value(out_field, &out_list));
     ASSERT_NE(list, out_list); /* Make sure it's a different list. */

@@ -82,7 +82,7 @@ static ib_status_t geoip_lookup(
     ib_log_debug_tx(tx, "GeoIP Lookup '%s'", ip);
 
     /* Build a new list. */
-    rc = ib_data_add_list(tx->dpi, "GEOIP", &geoip_lst);
+    rc = ib_data_add_list(tx->data, "GEOIP", &geoip_lst);
 
     /* NOTICE: Called before GeoIP_record_by_addr allocates a
      * GeoIPRecord. */

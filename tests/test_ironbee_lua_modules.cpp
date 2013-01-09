@@ -126,7 +126,7 @@ const char * IronBeeLuaModules::c_ib_conf =
 TEST_F(IronBeeLuaModules, test_global_directive){
     ib_field_t *field1;
     const char *field1_val;
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->dpi, "MyLuaDirective2", &field1));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "MyLuaDirective2", &field1));
     ASSERT_EQ(IB_FTYPE_NULSTR, field1->type);
     ASSERT_EQ(IB_OK, ib_field_value(field1, ib_ftype_nulstr_out(&field1_val)));
     ASSERT_TRUE(field1_val);
@@ -136,7 +136,7 @@ TEST_F(IronBeeLuaModules, test_global_directive){
 TEST_F(IronBeeLuaModules, test_site_directive){
     ib_field_t *field1;
     const char *field1_val;
-    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->dpi, "MyLuaDirective", &field1));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "MyLuaDirective", &field1));
     ASSERT_EQ(IB_FTYPE_NULSTR, field1->type);
     ASSERT_EQ(IB_OK, ib_field_value(field1, ib_ftype_nulstr_out(&field1_val)));
     ASSERT_TRUE(field1_val);

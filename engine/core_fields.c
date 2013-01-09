@@ -26,6 +26,7 @@
 
 #include "core_private.h"
 
+#include <ironbee/capture.h>
 #include <ironbee/core.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
@@ -85,21 +86,15 @@ static const ib_tx_flag_map_t core_tx_flag_map[] = {
     { NULL, NULL, IB_TX_FNONE, true, false },
 };
 
-static ib_status_t core_field_placeholder_bytestr(ib_provider_inst_t *dpi,
+static ib_status_t core_field_placeholder_bytestr(ib_data_t *data,
                                                   const char *name)
 {
-    ib_status_t rc = ib_data_add_bytestr_ex(dpi,
+    ib_status_t rc = ib_data_add_bytestr_ex(data,
                                             (const char *)name,
                                             strlen(name),
                                             (uint8_t *)core_placeholder_value,
                                             0,
                                             NULL);
-    if (rc != IB_OK) {
-        ib_log_error(dpi->pr->ib,
-                     "Failed to generate \"%s\" placeholder field: %s",
-                     name, ib_status_to_string(rc));
-    }
-
     return rc;
 }
 
@@ -123,7 +118,7 @@ static void core_gen_tx_bytestr_alias_field(ib_tx_t *tx,
         return;
     }
 
-    rc = ib_data_add(tx->dpi, f);
+    rc = ib_data_add(tx->data, f);
     if (rc != IB_OK) {
         ib_log_warning_tx(tx,
             "Failed add \"%s\" field to transaction data store: %s",
@@ -152,7 +147,7 @@ static void core_gen_tx_numeric_field(ib_tx_t *tx,
         return;
     }
 
-    rc = ib_data_add(tx->dpi, f);
+    rc = ib_data_add(tx->data, f);
     if (rc != IB_OK) {
         ib_log_warning_tx(tx,
             "Failed add \"%s\" field to transaction data store: %s",
@@ -171,133 +166,133 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(tx->dpi != NULL);
+    assert(tx->data != NULL);
     assert(event == tx_started_event);
 
     ib_status_t rc;
     ib_field_t *tmp;
 
     /* Core Request Fields */
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_line");
+    rc = core_field_placeholder_bytestr(tx->data, "request_line");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_method");
+    rc = core_field_placeholder_bytestr(tx->data, "request_method");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_protocol");
+    rc = core_field_placeholder_bytestr(tx->data, "request_protocol");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri");
+    rc = core_field_placeholder_bytestr(tx->data, "request_uri");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_raw");
+    rc = core_field_placeholder_bytestr(tx->data, "request_uri_raw");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_scheme");
+    rc = core_field_placeholder_bytestr(tx->data, "request_uri_scheme");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_username");
+    rc = core_field_placeholder_bytestr(tx->data, "request_uri_username");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_password");
+    rc = core_field_placeholder_bytestr(tx->data, "request_uri_password");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_host");
+    rc = core_field_placeholder_bytestr(tx->data, "request_uri_host");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_host");
+    rc = core_field_placeholder_bytestr(tx->data, "request_host");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_port");
+    rc = core_field_placeholder_bytestr(tx->data, "request_uri_port");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_path");
+    rc = core_field_placeholder_bytestr(tx->data, "request_uri_path");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_query");
+    rc = core_field_placeholder_bytestr(tx->data, "request_uri_query");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_uri_fragment");
+    rc = core_field_placeholder_bytestr(tx->data, "request_uri_fragment");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_content_type");
+    rc = core_field_placeholder_bytestr(tx->data, "request_content_type");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "request_filename");
+    rc = core_field_placeholder_bytestr(tx->data, "request_filename");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "auth_type");
+    rc = core_field_placeholder_bytestr(tx->data, "auth_type");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "auth_username");
+    rc = core_field_placeholder_bytestr(tx->data, "auth_username");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "auth_password");
+    rc = core_field_placeholder_bytestr(tx->data, "auth_password");
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Core Request Collections */
-    rc = ib_data_add_list(tx->dpi, "request_headers", NULL);
+    rc = ib_data_add_list(tx->data, "request_headers", NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_data_add_list(tx->dpi, "request_cookies", NULL);
+    rc = ib_data_add_list(tx->data, "request_cookies", NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_data_add_list(tx->dpi, "request_uri_params", NULL);
+    rc = ib_data_add_list(tx->data, "request_uri_params", NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_data_add_list(tx->dpi, "request_body_params", NULL);
+    rc = ib_data_add_list(tx->data, "request_body_params", NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* ARGS collection */
-    rc = ib_data_get(tx->dpi, "ARGS", &tmp);
+    rc = ib_data_get(tx->data, "ARGS", &tmp);
     if (rc == IB_ENOENT) {
-        rc = ib_data_add_list(tx->dpi, "ARGS", NULL);
+        rc = ib_data_add_list(tx->data, "ARGS", NULL);
         if (rc != IB_OK) {
             return rc;
         }
@@ -307,9 +302,9 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     }
 
     /* Flags collection */
-    rc = ib_data_get(tx->dpi, "FLAGS", &tmp);
+    rc = ib_data_get(tx->data, "FLAGS", &tmp);
     if (rc == IB_ENOENT) {
-        rc = ib_data_add_list(tx->dpi, "FLAGS", NULL);
+        rc = ib_data_add_list(tx->data, "FLAGS", NULL);
         if (rc != IB_OK) {
             return rc;
         }
@@ -319,53 +314,53 @@ static ib_status_t core_gen_placeholder_fields(ib_engine_t *ib,
     }
 
     /* Initialize CAPTURE */
-    rc = ib_data_capture_clear(tx);
+    rc = ib_capture_clear(tx);
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Core Response Fields */
-    rc = core_field_placeholder_bytestr(tx->dpi, "response_line");
+    rc = core_field_placeholder_bytestr(tx->data, "response_line");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "response_protocol");
+    rc = core_field_placeholder_bytestr(tx->data, "response_protocol");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "response_status");
+    rc = core_field_placeholder_bytestr(tx->data, "response_status");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "response_message");
+    rc = core_field_placeholder_bytestr(tx->data, "response_message");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "response_content_type");
+    rc = core_field_placeholder_bytestr(tx->data, "response_content_type");
     if (rc != IB_OK) {
         return rc;
     }
 
     /* Core Response Collections */
-    rc = ib_data_add_list(tx->dpi, "response_headers", NULL);
+    rc = ib_data_add_list(tx->data, "response_headers", NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = core_field_placeholder_bytestr(tx->dpi, "FIELD_NAME");
+    rc = core_field_placeholder_bytestr(tx->data, "FIELD_NAME");
     if (rc != IB_OK) {
         return rc;
     }
-    rc = core_field_placeholder_bytestr(tx->dpi, "FIELD_NAME_FULL");
+    rc = core_field_placeholder_bytestr(tx->data, "FIELD_NAME_FULL");
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_data_add_list(tx->dpi, "response_cookies", NULL);
+    rc = ib_data_add_list(tx->data, "response_cookies", NULL);
 
     return rc;
 }
@@ -384,7 +379,7 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
     assert(conn != NULL);
     assert(event == handle_connect_event);
 
-    rc = ib_data_add_bytestr(conn->dpi,
+    rc = ib_data_add_bytestr(conn->data,
                              "server_addr",
                              (uint8_t *)conn->local_ipstr,
                              strlen(conn->local_ipstr),
@@ -393,7 +388,7 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_data_add_num(conn->dpi,
+    rc = ib_data_add_num(conn->data,
                          "server_port",
                          conn->local_port,
                          NULL);
@@ -401,7 +396,7 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_data_add_bytestr(conn->dpi,
+    rc = ib_data_add_bytestr(conn->data,
                              "remote_addr",
                              (uint8_t *)conn->remote_ipstr,
                              strlen(conn->remote_ipstr),
@@ -410,7 +405,7 @@ static ib_status_t core_gen_connect_fields(ib_engine_t *ib,
         return rc;
     }
 
-    rc = ib_data_add_num(conn->dpi,
+    rc = ib_data_add_num(conn->data,
                          "remote_port",
                          conn->remote_port,
                          NULL);
@@ -429,14 +424,14 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(tx->dpi != NULL);
+    assert(tx->data != NULL);
     assert(event == tx_started_event);
 
     ib_status_t rc;
     const ib_tx_flag_map_t *flag;
 
     for (flag = ib_core_fields_tx_flags();  flag->name != NULL;  ++flag) {
-        rc = ib_data_add_num(tx->dpi, flag->tx_name, flag->default_value, NULL);
+        rc = ib_data_add_num(tx->data, flag->tx_name, flag->default_value, NULL);
         if (rc != IB_OK) {
             return rc;
         }
@@ -478,9 +473,9 @@ static ib_status_t create_header_alias_list(
     assert(header != NULL);
 
     /* Create the list */
-    rc = ib_data_get(tx->dpi, name, &f);
+    rc = ib_data_get(tx->data, name, &f);
     if (rc == IB_ENOENT) {
-        rc = ib_data_add_list(tx->dpi, name, &f);
+        rc = ib_data_add_list(tx->data, name, &f);
         if (rc != IB_OK) {
             return rc;
         }
@@ -574,38 +569,38 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
      * Alias connection remote and server addresses
      */
 
-    rc = ib_data_get(tx->conn->dpi, "server_addr", &f);
+    rc = ib_data_get(tx->conn->data, "server_addr", &f);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_data_add(tx->dpi, f);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_data_get(tx->conn->dpi, "server_port", &f);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    rc = ib_data_add(tx->dpi, f);
+    rc = ib_data_add(tx->data, f);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_data_get(tx->conn->dpi, "remote_addr", &f);
+    rc = ib_data_get(tx->conn->data, "server_port", &f);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_data_add(tx->dpi, f);
+    rc = ib_data_add(tx->data, f);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_data_get(tx->conn->dpi, "remote_port", &f);
+    rc = ib_data_get(tx->conn->data, "remote_addr", &f);
     if (rc != IB_OK) {
         return rc;
     }
-    rc = ib_data_add(tx->dpi, f);
+    rc = ib_data_add(tx->data, f);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_data_get(tx->conn->data, "remote_port", &f);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_data_add(tx->data, f);
     if (rc != IB_OK) {
         return rc;
     }
@@ -626,12 +621,12 @@ static ib_status_t core_gen_request_header_fields(ib_engine_t *ib,
                                     tx->request_line->protocol);
 
     /* Populate the ARGS collection. */
-    rc = ib_data_get(tx->dpi, "ARGS", &f);
+    rc = ib_data_get(tx->data, "ARGS", &f);
     if (rc == IB_OK) {
         ib_field_t *param_list;
 
         /* Add request URI parameters to ARGS collection. */
-        rc = ib_data_get(tx->dpi, "request_uri_params", &param_list);
+        rc = ib_data_get(tx->data, "request_uri_params", &param_list);
         if (rc == IB_OK) {
             ib_list_t *field_list;
             ib_list_node_t *node = NULL;
@@ -689,12 +684,12 @@ static ib_status_t core_gen_request_body_fields(ib_engine_t *ib,
     assert(event == request_finished_event);
 
     /* Populate the ARGS collection. */
-    rc = ib_data_get(tx->dpi, "ARGS", &f);
+    rc = ib_data_get(tx->data, "ARGS", &f);
     if (rc == IB_OK) {
         ib_field_t *param_list;
 
         /* Add request body parameters to ARGS collection. */
-        rc = ib_data_get(tx->dpi, "request_body_params", &param_list);
+        rc = ib_data_get(tx->data, "request_body_params", &param_list);
         if (rc == IB_OK) {
             ib_list_t *field_list;
             ib_list_node_t *node = NULL;

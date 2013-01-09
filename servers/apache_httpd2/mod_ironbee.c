@@ -993,7 +993,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
      * iconn->remote_port
      * iconn->local_ipstr
      * iconn->local_port
-     * iconn->dpi fields for local and remote ip
+     * iconn->data fields for local and remote ip
      */
     ib_status_t rc;
     conn_rec *conn = iconn->server_ctx;
@@ -1009,7 +1009,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     iconn->local_ipstr = conn->local_ip;
     iconn->local_port = conn->local_addr->port;
 
-    rc = ib_data_add_bytestr(iconn->dpi,
+    rc = ib_data_add_bytestr(iconn->data,
                              "remote_ip",
                              (uint8_t *)iconn->remote_ipstr,
                              strlen(conn->client_ip),
@@ -1020,7 +1020,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     iconn->local_ipstr = conn->local_ip;
     iconn->local_port = conn->local_addr->port;
 
-    rc = ib_data_add_bytestr(iconn->dpi,
+    rc = ib_data_add_bytestr(iconn->data,
                              "remote_ip",
                              (uint8_t *)iconn->remote_ipstr,
                              strlen(conn->remote_ip),
@@ -1029,7 +1029,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     if (rc != IB_OK)
         return rc;
 
-    rc = ib_data_add_bytestr(iconn->dpi,
+    rc = ib_data_add_bytestr(iconn->data,
                              "local_ip",
                              (uint8_t *)iconn->local_ipstr,
                              strlen(conn->local_ip),

@@ -430,7 +430,7 @@ static ib_status_t modua_agent_fields(ib_engine_t *ib,
     }
 
     /* Build a new list. */
-    rc = ib_data_add_list(tx->dpi, "UA", &agent_list);
+    rc = ib_data_add_list(tx->data, "UA", &agent_list);
     if (rc != IB_OK)
     {
         ib_log_alert_tx(tx, "Unable to add UserAgent list to DPI.");
@@ -499,7 +499,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(tx->dpi != NULL);
+    assert(tx->data != NULL);
     assert(event == request_header_finished_event);
 
     ib_field_t         *req_agent = NULL;
@@ -508,7 +508,7 @@ static ib_status_t modua_user_agent(ib_engine_t *ib,
     const ib_bytestr_t *bs;
 
     /* Extract the User-Agent header field from the provider instance */
-    rc = ib_data_get(tx->dpi, "request_headers:User-Agent", &req_agent);
+    rc = ib_data_get(tx->data, "request_headers:User-Agent", &req_agent);
     if ( (req_agent == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx, "request_header_finished_event: No user agent");
         return IB_OK;
@@ -576,7 +576,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
 {
     assert(ib != NULL);
     assert(tx != NULL);
-    assert(tx->dpi != NULL);
+    assert(tx->data != NULL);
     assert(event == request_header_finished_event);
 
     ib_field_t           *field = NULL;
@@ -596,7 +596,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     ib_log_debug3_tx(tx, "Checking for alternate remote address");
 
     /* Extract the X-Forwarded-For from the provider instance */
-    rc = ib_data_get(tx->dpi, "request_headers:X-Forwarded-For", &field);
+    rc = ib_data_get(tx->data, "request_headers:X-Forwarded-For", &field);
     if ( (field == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx, "No X-Forwarded-For field");
         return IB_OK;
@@ -687,7 +687,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     tx->er_ipstr = buf;
 
     /* Update the remote address field in the tx collection */
-    rc = ib_data_add_bytestr(tx->dpi, "remote_addr", (uint8_t*)buf, len, NULL);
+    rc = ib_data_add_bytestr(tx->data, "remote_addr", (uint8_t*)buf, len, NULL);
     if (rc != IB_OK) {
         ib_log_error_tx(tx,
                         "Failed to create remote address TX field: %s",

@@ -280,7 +280,7 @@ static void help(void)
     print_option("remote-port", "num", "Specify remote port", 0, NULL );
     print_option("trace", NULL, "Enable tracing", 0, NULL );
     print_option("dump", "name", "Dump specified field", 0,
-                 "tx, tx-{args,flags,dpi,all}, user-agent, geoip, all");
+                 "tx, tx-{args,flags,data,all}, user-agent, geoip, all");
     print_option("request-header", "name: value",
                  "Specify request field & value", 0, NULL );
     print_option("request-header", "-name:",
@@ -488,7 +488,7 @@ static ib_status_t command_line(int argc, char *argv[])
             else if (strcasecmp(optarg, "tx-args") == 0) {
                 settings.dump_flags |= DUMP_TX_ARGS;
             }
-            else if (strcasecmp(optarg, "tx-dpi") == 0) {
+            else if (strcasecmp(optarg, "tx-data") == 0) {
                 settings.dump_flags |= DUMP_TX_DPI;
             }
             else if (strcasecmp(optarg, "tx-flags") == 0) {
@@ -1059,7 +1059,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
     /* ARGS */
     if (test_dump_flags(DUMP_TX_ARGS)) {
         printf("[TX ARGS]:\n");
-        rc = ib_data_get(tx->dpi, "ARGS", &field);
+        rc = ib_data_get(tx->data, "ARGS", &field);
         if (rc == IB_OK) {
             print_field("ARGS", field, 0);
 
@@ -1093,7 +1093,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
     }
 
     if (test_dump_flags(DUMP_TX_DPI)) {
-        printf("[TX DPI @ %p]\n", (void *)tx->dpi);
+        printf("[TX DATA @ %p]\n", (void *)tx->data);
 
         /* Build the list */
         rc = ib_list_create(&lst, ib->mp);
@@ -1104,7 +1104,7 @@ static ib_status_t print_tx( ib_engine_t *ib,
         }
 
         /* Extract the request headers field from the provider instance */
-        rc = ib_data_get_all(tx->dpi, lst);
+        rc = ib_data_get_all(tx->data, lst);
         if (rc != IB_OK) {
             ib_log_debug_tx(tx, "print_tx: Failed to get all headers: %s",
                             ib_status_to_string(rc));
@@ -1230,7 +1230,7 @@ static ib_status_t print_user_agent(
     ib_list_node_t *node = NULL;
 
     /* Extract the request headers field from the provider instance */
-    rc = ib_data_get(tx->dpi, "UA", &req);
+    rc = ib_data_get(tx->data, "UA", &req);
     if ( (req == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx,
                      "print_user_agent: No user agent info available" );
@@ -1292,7 +1292,7 @@ static ib_status_t print_geoip(
     int count = 0;
 
     /* Extract the request headers field from the provider instance */
-    rc = ib_data_get(tx->dpi, "GEOIP", &req);
+    rc = ib_data_get(tx->data, "GEOIP", &req);
     if ( (req == NULL) || (rc != IB_OK) ) {
         ib_log_debug_tx(tx, "print_geoip: No GeoIP info available" );
         return IB_OK;
@@ -1396,7 +1396,7 @@ static ib_status_t action_print_execute(const ib_rule_exec_t *rule_exec,
 
     /* Expand the string */
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
-        rc = ib_data_expand_str(rule_exec->tx->dpi, cstr, false, &expanded);
+        rc = ib_data_expand_str(rule_exec->tx->data, cstr, false, &expanded);
         if (rc != IB_OK) {
             ib_rule_log_error(rule_exec,
                               "print: Failed to expand string '%s': %d",
@@ -1481,7 +1481,7 @@ static ib_status_t get_data_value(ib_tx_t *tx,
     ib_list_node_t *first;
     size_t elements;
 
-    rc = ib_data_get_ex(tx->dpi, name, namelen, &cur);
+    rc = ib_data_get_ex(tx->data, name, namelen, &cur);
     if ( (rc == IB_ENOENT) || (cur == NULL) ) {
         *field = NULL;
         return IB_OK;
@@ -1570,7 +1570,7 @@ static ib_status_t action_printvar_execute(const ib_rule_exec_t *rule_exec,
     if ((flags & IB_ACTINST_FLAG_EXPAND) != 0) {
         char *tmp;
         size_t len;
-        rc = ib_data_expand_str_ex(tx->dpi,
+        rc = ib_data_expand_str_ex(tx->data,
                                    varname, strlen(varname),
                                    false, false,
                                    &tmp, &len);
@@ -1723,18 +1723,18 @@ static ib_status_t op_print_execute(const ib_rule_exec_t *rule_exec,
             return IB_EALLOC;
         }
         strncpy(fncopy, field->name, field->nlen);
-        rc = ib_data_add_bytestr(tx->dpi,
+        rc = ib_data_add_bytestr(tx->data,
                                  label, (uint8_t *)fncopy, field->nlen,
                                  NULL);
         if (rc != IB_OK) {
             return rc;
         }
 
-        rc = ib_data_expand_str(tx->dpi, pdata->text, false, (char **)&text);
+        rc = ib_data_expand_str(tx->data, pdata->text, false, (char **)&text);
         if (rc != IB_OK) {
             return rc;
         }
-        ib_data_remove(tx->dpi, label, NULL);
+        ib_data_remove(tx->data, label, NULL);
     }
     else if (pdata->text != NULL) {
         text = pdata->text;

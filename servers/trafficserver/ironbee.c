@@ -1872,7 +1872,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     addr2str(addr, data->remote_ip, &port);
 
     iconn->remote_ipstr = data->remote_ip;
-    rc = ib_data_add_bytestr(iconn->dpi,
+    rc = ib_data_add_bytestr(iconn->data,
                              "remote_ip",
                              (uint8_t *)iconn->remote_ipstr,
                              strlen(data->remote_ip),
@@ -1883,7 +1883,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
 
     /* remote port */
     iconn->remote_port = port;
-    rc = ib_data_add_num(iconn->dpi, "remote_port", port, NULL);
+    rc = ib_data_add_num(iconn->data, "remote_port", port, NULL);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1894,7 +1894,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     addr2str(addr, data->local_ip, &port);
 
     iconn->local_ipstr = data->local_ip;
-    rc = ib_data_add_bytestr(iconn->dpi,
+    rc = ib_data_add_bytestr(iconn->data,
                              "local_ip",
                              (uint8_t *)iconn->local_ipstr,
                              strlen(data->local_ip),
@@ -1905,7 +1905,7 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
 
     /* local_port */
     iconn->local_port = port;
-    rc = ib_data_add_num(iconn->dpi, "local_port", port, NULL);
+    rc = ib_data_add_num(iconn->data, "local_port", port, NULL);
     if (rc != IB_OK) {
         return rc;
     }

@@ -152,7 +152,7 @@ struct ib_engine_t {
     ib_mpool_t            *mp;              /**< Primary memory pool */
     ib_mpool_t            *config_mp;       /**< Config memory pool */
     ib_mpool_t            *temp_mp;         /**< Temp memory pool for config */
-    ib_provider_inst_t    *dpi;             /**< Data provider instance */
+    ib_data_t             *data;            /**< Data fields */
     ib_context_t          *ectx;            /**< Engine configuration context */
     ib_context_t          *ctx;             /**< Main configuration context */
     ib_engine_cfg_state_t  cfg_state;       /**< Engine configuration state */

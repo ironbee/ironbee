@@ -27,6 +27,7 @@
 
 #include <ironbee/array.h>
 #include <ironbee/clock.h>
+#include <ironbee/data.h>
 #include <ironbee/hash.h>
 #include <ironbee/mpool.h>
 #include <ironbee/parsed_content.h>
@@ -178,8 +179,8 @@ struct ib_conn_t {
     ib_context_t       *ctx;             /**< Config context */
     void               *server_ctx;      /**< Server context */
     void               *parser_ctx;      /**< Parser context */
-    ib_provider_inst_t *dpi;             /**< Data provider instance */
-    ib_array_t         *data;            /**< Per module data. */
+    ib_data_t          *data;            /**< Data provider instance */
+    ib_array_t         *module_data;     /**< Per module data. */
 
     ib_timeval_t       tv_created;       /**< Connection created time value */
     struct {
@@ -211,9 +212,9 @@ struct ib_tx_t {
     ib_conn_t          *conn;            /**< Connection */
     ib_context_t       *ctx;             /**< Config context */
     void               *sctx;            /**< Server context */
-    ib_provider_inst_t *dpi;             /**< Data provider instance */
+    ib_data_t          *data;            /**< Data fields*/
     ib_provider_inst_t *epi;             /**< Log event provider instance */
-    ib_array_t         *data;            /**< Per-module data */
+    ib_array_t         *module_data;     /**< Per-module data */
     ib_fctl_t          *fctl;            /**< Transaction filter controller */
     ib_timeval_t       tv_created;       /**< Tx created time value */
     struct {

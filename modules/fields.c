@@ -429,7 +429,7 @@ static ib_status_t fields_tx_header_finished(ib_engine_t *ib,
             ib_log_debug_tx(tx, "Failed to copy field: %d", rc);
             continue;
         }
-        rc = ib_data_add(tx->dpi, newf);
+        rc = ib_data_add(tx->data, newf);
         if (rc != IB_OK) {
             ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI",
                             (int)field->nlen, field->name);

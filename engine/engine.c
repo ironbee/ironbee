@@ -654,7 +654,7 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     (*pconn)->server_ctx = server_ctx;
 
     /* Create the per-module data data store. */
-    rc = ib_array_create(&((*pconn)->data), pool, 16, 8);
+    rc = ib_array_create(&((*pconn)->module_data), pool, 16, 8);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
@@ -672,7 +672,7 @@ failed:
     return rc;
 }
 
-ib_status_t ib_conn_get_data(
+ib_status_t ib_conn_get_module_data(
     const ib_conn_t    *conn,
     const ib_module_t  *m,
     void              **data
@@ -682,11 +682,11 @@ ib_status_t ib_conn_get_data(
   assert(m != NULL);
   assert(data != NULL);
 
-  ib_status_t rc = ib_array_get(conn->data, m->idx, data);
+  ib_status_t rc = ib_array_get(conn->module_data, m->idx, data);
   return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_conn_set_data(
+ib_status_t DLL_PUBLIC ib_conn_set_module_data(
     ib_conn_t         *conn,
     const ib_module_t *m,
     void              *data
@@ -695,7 +695,7 @@ ib_status_t DLL_PUBLIC ib_conn_set_data(
   assert(conn != NULL);
   assert(m != NULL);
 
-  ib_status_t rc = ib_array_setn(conn->data, m->idx, data);
+  ib_status_t rc = ib_array_setn(conn->module_data, m->idx, data);
   return rc;
 }
 
@@ -865,7 +865,7 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
     ib_tx_generate_id(tx, tx->mp);
 
     /* Create the per-module data data store. */
-    rc = ib_array_create(&(tx->data), tx->mp, 16, 8);
+    rc = ib_array_create(&(tx->module_data), tx->mp, 16, 8);
     if (rc != IB_OK) {
         rc = IB_EALLOC;
         goto failed;
@@ -931,7 +931,7 @@ failed:
     return rc;
 }
 
-ib_status_t ib_tx_get_data(
+ib_status_t ib_tx_get_module_data(
     const ib_tx_t *tx,
     const ib_module_t *m,
     void **data
@@ -941,11 +941,11 @@ ib_status_t ib_tx_get_data(
   assert(m != NULL);
   assert(data != NULL);
 
-  ib_status_t rc = ib_array_get(tx->data, m->idx, data);
+  ib_status_t rc = ib_array_get(tx->module_data, m->idx, data);
   return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_tx_set_data(
+ib_status_t DLL_PUBLIC ib_tx_set_module_data(
     ib_tx_t *tx,
     const ib_module_t *m,
     void *data
@@ -954,7 +954,7 @@ ib_status_t DLL_PUBLIC ib_tx_set_data(
   assert(tx != NULL);
   assert(m != NULL);
 
-  ib_status_t rc = ib_array_setn(tx->data, m->idx, data);
+  ib_status_t rc = ib_array_setn(tx->module_data, m->idx, data);
   return rc;
 }
 

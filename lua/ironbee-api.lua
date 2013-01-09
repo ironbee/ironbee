@@ -352,7 +352,7 @@ ibapi.txapi.getFieldList = function(self)
     local ib_list = ffi.new("ib_list_t*[1]")
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
     ffi.C.ib_list_create(ib_list, tx.mp)
-    ffi.C.ib_data_get_all(tx.dpi, ib_list[0])
+    ffi.C.ib_data_get_all(tx.data, ib_list[0])
 
     ibapi.each_list_node(ib_list[0], function(field)
         fields[#fields+1] = ffi.string(field.name, field.nlen)
@@ -374,20 +374,20 @@ ibapi.txapi.add = function(self, name, value)
     if value == nil then
         -- nop.
     elseif type(value) == 'string' then
-        ffi.C.ib_data_add_nulstr_ex(tx.dpi,
+        ffi.C.ib_data_add_nulstr_ex(tx.data,
                                     ffi.cast("char*", name),
                                     string.len(name),
                                     ffi.cast("char*", value),
                                     nil)
     elseif type(value) == 'number' then
-        ffi.C.ib_data_add_num_ex(tx.dpi,
+        ffi.C.ib_data_add_num_ex(tx.data,
                                  ffi.cast("char*", name),
                                  #name,
                                  value,
                                  nil)
     elseif type(value) == 'table' then
         local ib_field = ffi.new("ib_field_t*[1]")
-        ffi.C.ib_data_get_ex(tx.dpi,
+        ffi.C.ib_data_get_ex(tx.data,
                              name,
                              string.len(name),
                              ib_field)
@@ -395,7 +395,7 @@ ibapi.txapi.add = function(self, name, value)
         -- If there is a value, but it is not a list, make a new table.
         if ib_field[0] == nil or 
            ib_field[0].type ~= ffi.C.IB_FTYPE_LIST then
-            ffi.C.ib_data_add_list_ex(tx.dpi,
+            ffi.C.ib_data_add_list_ex(tx.data,
                                       ffi.cast("char*", name),
                                       string.len(name),
                                       ib_field)
@@ -421,7 +421,7 @@ ibapi.txapi.set = function(self, name, value)
         self:add(name, value)
     elseif value == nil then
         -- Delete values when setting a name to nil.
-        ffi.C.ib_data_remove_ex(tx.dpi,
+        ffi.C.ib_data_remove_ex(tx.data,
                                 ffi.cast("char*", name),
                                 #name,
                                 nil)
@@ -450,7 +450,7 @@ ibapi.txapi.set = function(self, name, value)
         end
     elseif type(value) == 'table' then
         -- Delete a table and add it.
-        ffi.C.ib_data_remove_ex(tx.dpi,
+        ffi.C.ib_data_remove_ex(tx.data,
                                 ffi.cast("char*", name),
                                 #name,
                                 nil)
@@ -712,7 +712,7 @@ ibapi.txapi.getDpiField = function(self, name)
 
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
 
-    ffi.C.ib_data_get_ex(tx.dpi,
+    ffi.C.ib_data_get_ex(tx.data,
                          name,
                          string.len(name),
                          ib_field)

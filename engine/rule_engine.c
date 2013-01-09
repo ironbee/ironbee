@@ -944,14 +944,14 @@ static void clear_target_fields(ib_rule_exec_t *rule_exec)
 {
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
-    assert(rule_exec->tx->dpi != NULL);
+    assert(rule_exec->tx->data != NULL);
 
     /* Create FIELD */
-    ib_data_remove(rule_exec->tx->dpi, "FIELD", NULL);
-    ib_data_remove(rule_exec->tx->dpi, "FIELD_TARGET", NULL);
-    ib_data_remove(rule_exec->tx->dpi, "FIELD_TFN", NULL);
-    ib_data_remove(rule_exec->tx->dpi, "FIELD_NAME", NULL);
-    ib_data_remove(rule_exec->tx->dpi, "FIELD_NAME_FULL", NULL);
+    ib_data_remove(rule_exec->tx->data, "FIELD", NULL);
+    ib_data_remove(rule_exec->tx->data, "FIELD_TARGET", NULL);
+    ib_data_remove(rule_exec->tx->data, "FIELD_TFN", NULL);
+    ib_data_remove(rule_exec->tx->data, "FIELD_NAME", NULL);
+    ib_data_remove(rule_exec->tx->data, "FIELD_NAME_FULL", NULL);
 
     return;
 }
@@ -969,7 +969,7 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
 {
     assert(rule_exec != NULL);
     assert(rule_exec->tx != NULL);
-    assert(rule_exec->tx->dpi != NULL);
+    assert(rule_exec->tx->data != NULL);
     assert(rule_exec->value_stack != NULL);
 
     ib_status_t           rc = IB_OK;
@@ -995,8 +995,8 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     value = (const ib_field_t *)node->data;
 
     /* Create FIELD */
-    (void)ib_data_remove(tx->dpi, "FIELD", NULL);
-    trc = ib_data_add_named(tx->dpi,
+    (void)ib_data_remove(tx->data, "FIELD", NULL);
+    trc = ib_data_add_named(tx->data,
                             (ib_field_t *)value,
                             IB_FIELD_NAME("FIELD"));
     if (trc != IB_OK) {
@@ -1008,8 +1008,8 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
 
     /* Create FIELD_TFN */
     if (transformed != NULL) {
-        (void)ib_data_remove(tx->dpi, "FIELD_TFN", NULL);
-        trc = ib_data_add_named(tx->dpi,
+        (void)ib_data_remove(tx->data, "FIELD_TFN", NULL);
+        trc = ib_data_add_named(tx->data,
                                 (ib_field_t *)value,
                                 IB_FIELD_NAME("FIELD_TFN"));
         if (trc != IB_OK) {
@@ -1022,9 +1022,9 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
 
     /* Create FIELD_TARGET */
     if (target != NULL) {
-        trc = ib_data_get(tx->dpi, "FIELD_TARGET", &f);
+        trc = ib_data_get(tx->data, "FIELD_TARGET", &f);
         if (trc == IB_ENOENT) {
-            trc = ib_data_add_nulstr_ex(tx->dpi,
+            trc = ib_data_add_nulstr_ex(tx->data,
                                         IB_FIELD_NAME("FIELD_TARGET"),
                                         target->target_str,
                                         NULL);
@@ -1041,9 +1041,9 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     }
 
     /* Create FIELD_NAME */
-    trc = ib_data_get(tx->dpi, "FIELD_NAME", &f);
+    trc = ib_data_get(tx->data, "FIELD_NAME", &f);
     if (trc == IB_ENOENT) {
-        trc = ib_data_add_bytestr_ex(tx->dpi,
+        trc = ib_data_add_bytestr_ex(tx->data,
                                      IB_FIELD_NAME("FIELD_NAME"),
                                      (uint8_t *)value->name,
                                      value->nlen,
@@ -1106,9 +1106,9 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     }
 
     /* Step 3: Update the FIELD_NAME_FULL field. */
-    trc = ib_data_get(tx->dpi, "FIELD_NAME_FULL", &f);
+    trc = ib_data_get(tx->data, "FIELD_NAME_FULL", &f);
     if (trc == IB_ENOENT) {
-        trc = ib_data_add_bytestr_ex(tx->dpi,
+        trc = ib_data_add_bytestr_ex(tx->data,
                                      IB_FIELD_NAME("FIELD_NAME_FULL"),
                                      (uint8_t *)name, namelen,
                                      NULL);
@@ -1414,7 +1414,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
         rule_exec_set_target(rule_exec, target);
 
         /* Get the field value */
-        getrc = ib_data_get(tx->dpi, fname, &value);
+        getrc = ib_data_get(tx->data, fname, &value);
         if (getrc == IB_ENOENT) {
             bool allow  =
                 ib_flags_all(opinst->op->flags, IB_OP_FLAG_ALLOW_NULL);
