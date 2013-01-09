@@ -150,11 +150,7 @@ TEST_F(ConnectionParsing, ApacheHeaderParsing) {
                 break;
             case 8:
                 ASSERT_EQ(bstr_cmp_c(h->name, "Header-With-NUL"), 0);
-                bstr *b = bstr_dup_mem("BEFORE", 6);
-                if (bstr_cmp(h->value, b) != 0)  {
-                    bstr_free(&b);
-                    FAIL() << "Incorrect value for Header-With-NUL";
-                }
+                ASSERT_EQ(bstr_cmp_c(h->value, "BEFORE"), 0);
                 break;
         }
 
