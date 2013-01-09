@@ -653,6 +653,14 @@ ib_status_t ib_conn_create(ib_engine_t *ib,
     (*pconn)->ctx = ib->ctx;
     (*pconn)->server_ctx = server_ctx;
 
+    /* Data */
+    rc = ib_data_create((*pconn)->mp, &(*pconn)->data);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to create conn data: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
     /* Create the per-module data data store. */
     rc = ib_array_create(&((*pconn)->module_data), pool, 16, 8);
     if (rc != IB_OK) {
@@ -863,6 +871,15 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
 
     ++conn->tx_count;
     ib_tx_generate_id(tx, tx->mp);
+
+    /* Create data */
+    rc = ib_data_create(tx->mp, &tx->data);
+    if (rc != IB_OK) {
+        ib_log_alert_tx(tx,
+                        "Failed to create tx data: %s",
+                        ib_status_to_string(rc));
+        return rc;
+    }
 
     /* Create the per-module data data store. */
     rc = ib_array_create(&(tx->module_data), tx->mp, 16, 8);

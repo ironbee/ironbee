@@ -2381,14 +2381,6 @@ static ib_status_t core_hook_conn_started(ib_engine_t *ib,
         return rc;
     }
 
-    /* Data Provider Instance */
-    rc = ib_data_create(conn->mp, &conn->data);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create conn data: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
     return IB_OK;
 }
 
@@ -3177,15 +3169,6 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     if (rc != IB_OK) {
         ib_log_alert_tx(tx,
                         "Failure accessing core module: %s",
-                        ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Data Provider Instance */
-    rc = ib_data_create(tx->mp, &tx->data);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(tx,
-                        "Failed to create tx data: %s",
                         ib_status_to_string(rc));
         return rc;
     }
