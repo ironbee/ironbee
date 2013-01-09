@@ -1,7 +1,7 @@
 LibHTP
 ============================================================================
 Copyright 2009-2010 Open Information Security Foundation
-Copyright 2010-2012 Qualys, Inc.
+Copyright 2010-2013 Qualys, Inc.
 ============================================================================
 
 LibHTP is a security-aware parser for the HTTP protocol and the related bits
@@ -20,7 +20,7 @@ follows:
     server processing the same traffic stream.
 
  4. Performance; The performance must be adequate for the desired tasks.
-    Completeness and security are often detremental to performance. Our
+    Completeness and security are often detrimental to performance. Our
     idea of handling the conflicting requirements is to put the library
     user in control, allowing him to choose the most desired library
     characteristic.
@@ -54,7 +54,7 @@ to perform the following steps first:
 
  2. Update the version number in htp.pc.in and configure.ac
 
- 3. Run autoreconf -i --force, which will update the build system
+ 3. Run autogen.sh, which will update the build system
 
  4. Run doxygen to generate the API documentation
 
@@ -69,25 +69,9 @@ should be all right). There's also a quick start guide in the doc/ folder, which
 should give you enough information to get going.
 
 
-NO WARRANTY
------------
+LICENSE
+-------
 
-  BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
-FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
-OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
-PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
-OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.  THE ENTIRE RISK AS
-TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE
-PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,
-REPAIR OR CORRECTION.
+LibHTP is licensed under the BSD 3-Clause license (also known as "BSD New" and
+"BSD Simplified".) The complete text of the license is enclosed in the file LICENSE.
 
-  IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
-WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
-REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
-INCLUDING ANY GENERAL, SPECIAL, INCIDENTAL OR CONSEQUENTIAL DAMAGES ARISING
-OUT OF THE USE OR INABILITY TO USE THE PROGRAM (INCLUDING BUT NOT LIMITED
-TO LOSS OF DATA OR DATA BEING RENDERED INACCURATE OR LOSSES SUSTAINED BY
-YOU OR THIRD PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER
-PROGRAMS), EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGES.
