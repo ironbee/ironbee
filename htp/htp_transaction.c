@@ -574,6 +574,11 @@ void htp_tx_res_set_status_code(htp_tx_t *tx, int status_code) {
 
 htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *message, enum htp_alloc_strategy_t alloc) {
     if (message == NULL) return HTP_ERROR;
+
+    if (tx->response_message != NULL) {
+        bstr_free(&tx->response_message);
+    }
+
     tx->response_message = copy_or_wrap_c(message, alloc);
     if (tx->response_message == NULL) return HTP_ERROR;
     return HTP_OK;
