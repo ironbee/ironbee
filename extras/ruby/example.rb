@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 
-# Copyright (c) 2009-2010, Open Information Security Foundation
-# Copyright (c) 2009-2012, Qualys, Inc.
+# Copyright (c) 2009-2010 Open Information Security Foundation
+# Copyright (c) 2010-2013 Qualys, Inc.
 # All rights reserved.
 # 
 # Redistribution and use in source and binary forms, with or without
