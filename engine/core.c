@@ -607,7 +607,7 @@ static ib_status_t core_data_remove(ib_provider_inst_t *dpi,
     ib_status_t rc = ib_hash_remove_ex(
         (ib_hash_t *)dpi->data,
         pf,
-        (void *)name, nlen
+        name, nlen
     );
     return rc;
 }

@@ -802,10 +802,10 @@ void ib_hash_clear(ib_hash_t *hash) {
 }
 
 ib_status_t ib_hash_remove_ex(
-    ib_hash_t *hash,
-    void      *value,
-    void      *key,
-    size_t     key_length
+    ib_hash_t  *hash,
+    void       *value,
+    const char *key,
+    size_t      key_length
 ) {
     assert(hash  != NULL);
     assert(key   != NULL);

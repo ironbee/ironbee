@@ -455,7 +455,7 @@ void DLL_PUBLIC ib_hash_clear(
 ib_status_t DLL_PUBLIC ib_hash_remove_ex(
     ib_hash_t  *hash,
     void       *value,
-    void       *key,
+    const char *key,
     size_t      key_length
 );
 

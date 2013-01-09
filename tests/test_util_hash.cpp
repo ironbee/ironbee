@@ -421,7 +421,7 @@ TEST_F(TestIBUtilHash, test_hash_remove)
 
     EXPECT_EQ(
         IB_OK,
-        ib_hash_remove_ex(hash, &value, (void *)b, 3)
+        ib_hash_remove_ex(hash, &value, b, 3)
     );
     EXPECT_EQ(b, value);
     EXPECT_EQ(1UL, ib_hash_size(hash));
