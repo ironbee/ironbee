@@ -255,10 +255,18 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             return HTP_ERROR;
         }
 
-        // Ignore any response headers set
-        // XXX Is all the memory correctly freed here?
+        // Ignore any response headers seen so far.
+        htp_header_t *h = NULL;
+        for (int i = 0, n = htp_table_size(connp->out_tx->response_headers); i < n; i++) {
+            htp_table_get_index(connp->out_tx->response_headers, i, NULL, (void **) &h);
+            bstr_free(&h->name);
+            bstr_free(&h->value);
+            free(h);
+        }
+
         htp_table_clear(connp->out_tx->response_headers);
 
+        // Expecting to see another response line next.
         connp->out_state = htp_connp_RES_LINE;
         connp->out_tx->progress = HTP_RESPONSE_LINE;
         connp->out_tx->seen_100continue++;
