@@ -67,7 +67,7 @@ htp_status_t htp_table_add(htp_table_t *table, const bstr *key, const void *elem
  * @param[in] table
  * @param[in] key
  * @param[in] element
- * @return
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *element);
 
@@ -77,15 +77,15 @@ htp_status_t htp_table_addn(htp_table_t *table, const bstr *key, const void *ele
  * table keeps a pointer to the element. It is the callers responsibility to ensure
  * the pointer remains valid.
  *
- * @param table
- * @param key
- * @param element
- * @return
+ * @param[in] table
+ * @param[in] key
+ * @param[in] element
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_table_addr(htp_table_t *table, const bstr *key, const void *element);
 
 /**
- * Remove all elements from the table. This function handles the element keys
+ * Remove all elements from the table. This function handles keys
  * according to the active allocation strategy. If the elements need freeing,
  * you need to free them before invoking this function.
  *
@@ -94,9 +94,19 @@ htp_status_t htp_table_addr(htp_table_t *table, const bstr *key, const void *ele
 void htp_table_clear(htp_table_t *table);
 
 /**
- * Create a new table structure.
+ * Remove all elements from the table without freeing any of the keys, even
+ * if the table is using an allocation strategy where keys belong to it. This
+ * function is useful if all the keys have been adopted by some other structure.
  *
- * @param[in] size
+ * @param[in] table
+ */
+void htp_table_clear_ex(htp_table_t *table);
+
+/**
+ * Create a new table structure. The table will grow automatically as needed,
+ * but you are required to provide a starting size.
+ *
+ * @param[in] size The starting size.
  * @return Newly created table instance, or NULL on failure.
  */
 htp_table_t *htp_table_create(size_t size);
@@ -109,7 +119,7 @@ htp_table_t *htp_table_create(size_t size);
  *
  * @param[in,out]   table
  */
-void htp_table_destroy(htp_table_t **_table);
+void htp_table_destroy(htp_table_t **table);
 
 /**
  * Destroy the given table, but don't free the keys. even if they are managed by
@@ -139,11 +149,12 @@ void *htp_table_get(const htp_table_t *table, const bstr *key);
 void *htp_table_get_c(const htp_table_t *table, const char *ckey);
 
 /**
- * Retrieve key and element at the given index.
+ * Retrieve key and element at the given index. At least one of the key
+ * and value must not be NULL, in case you do not wish to retrieve both.
  *
  * @param[in] table
- * @param[out] key Pointer in which the key will be returned.
- * @param[out] value Pointer in which the value will be returned;
+ * @param[in,out] key Pointer in which the key will be returned. Can be NULL if the other field is not NULL.
+ * @param[in,out] value Pointer in which the value will be returned. Can be NULL if the other field is not NULL.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_table_get_index(const htp_table_t *table, size_t idx, bstr **key, void **value);

@@ -118,37 +118,48 @@ htp_status_t htp_table_addr(htp_table_t *table, const bstr *key, const void *ele
 
 void htp_table_clear(htp_table_t *table) {
     if (table == NULL) return;
-    htp_list_clear(table->list);
-}
 
-htp_table_t *htp_table_create(size_t size) {
-    htp_table_t *t = calloc(1, sizeof (htp_table_t));
-    if (t == NULL) return NULL;
-
-    t->alloc_type = HTP_TABLE_KEYS_ALLOC_UKNOWN;
-
-    // Use a list behind the scenes
-    t->list = htp_list_array_create(size * 2);
-    if (t->list == NULL) {
-        free(t);
-        return NULL;
-    }
-
-    return t;
-}
-
-void htp_table_destroy(htp_table_t **_table) {
-    if ((_table == NULL)||(*_table == NULL)) return;
-    htp_table_t *table = *_table;
-
-    // Free the table keys, but only if we're managing them.    
+    // Free the table keys, but only if we're managing them.
     if ((table->alloc_type == HTP_TABLE_KEYS_COPIED)||(table->alloc_type == HTP_TABLE_KEYS_ADOPTED)) {
         bstr *key = NULL;
         for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
             key = htp_list_get(table->list, i);
             bstr_free(&key);
         }
-    }    
+    }
+
+    htp_list_clear(table->list);
+}
+
+void htp_table_clear_ex(htp_table_t *table) {
+    if (table == NULL) return;
+
+    // This function does not free table keys.
+
+    htp_list_clear(table->list);
+}
+
+htp_table_t *htp_table_create(size_t size) {
+    htp_table_t *table = calloc(1, sizeof (htp_table_t));
+    if (table == NULL) return NULL;
+
+    table->alloc_type = HTP_TABLE_KEYS_ALLOC_UKNOWN;
+
+    // Use a list behind the scenes.
+    table->list = htp_list_array_create(size * 2);
+    if (table->list == NULL) {
+        free(table);
+        return NULL;
+    }
+
+    return table;
+}
+
+void htp_table_destroy(htp_table_t **_table) {
+    if ((_table == NULL)||(*_table == NULL)) return;
+    htp_table_t *table = *_table;
+
+    htp_table_clear(table);
 
     htp_list_destroy(&table->list);
 
@@ -158,6 +169,9 @@ void htp_table_destroy(htp_table_t **_table) {
 
 void htp_table_destroy_ex(htp_table_t **_table) {
     if ((_table == NULL)||(*_table == NULL)) return;
+
+    // Change allocation strategy in order to
+    // prevent the keys from being freed.
     (*_table)->alloc_type = HTP_TABLE_KEYS_REFERENCED;
 
     htp_table_destroy(_table);
