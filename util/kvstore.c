@@ -227,7 +227,7 @@ ib_status_t ib_kvstore_get(
         &values_length,
         kvstore->get_cbdata);
 
-    if (rc) {
+    if (rc != IB_OK) {
         *val = NULL;
         return rc;
     }
@@ -252,6 +252,7 @@ ib_status_t ib_kvstore_get(
     }
     else {
         *val = NULL;
+        rc = IB_ENOENT;
     }
 
 exit_get:
