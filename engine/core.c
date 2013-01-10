@@ -78,13 +78,6 @@ typedef struct {
     const char *value;
 } core_initcoll_nvpair_t;
 
-/** Value returned by core_string_to_field */
-typedef union {
-    ib_num_t      as_num;
-    ib_float_t    as_float;
-    const char   *as_str;
-} core_field_value_t;
-
 #define MODULE_NAME        core
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
@@ -238,84 +231,6 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
     *dst = dst_tmp;
 
     return IB_OK;
-}
-
-/**
- * Convert a string to a field, trying to treat the string as a number if
- * possible.
- *
- * @param[in] mp Memory pool to use for allocations
- * @param[in] name Field name
- * @param[in] vstr Value string
- * @param[out] pfield Pointer to newly created field
- * @param[out] pvalue Pointer to value (or NULL)
- *
- * @returns Status code:
- *  - IB_OK All OK
- *  - Errors from @sa ib_field_create().
- */
-static ib_status_t core_string_to_field(ib_mpool_t *mp,
-                                        const char *name,
-                                        const char *vstr,
-                                        ib_field_t **pfield,
-                                        core_field_value_t *pvalue)
-{
-    assert(mp != NULL);
-    assert(name != NULL);
-    assert(vstr != NULL);
-    assert(pfield != NULL);
-
-    ib_status_t conv;
-    ib_status_t rc = IB_OK;
-    ib_field_t *field;
-
-    *pfield = NULL;
-
-    /* Try to convert to an integer */
-    if (*pfield == NULL) {
-        ib_num_t num_val;
-        conv = ib_string_to_num(vstr, 0, &num_val);
-        if (conv == IB_OK) {
-            rc = ib_field_create(&field, mp,
-                                 IB_FIELD_NAME(name),
-                                 IB_FTYPE_NUM,
-                                 ib_ftype_num_in(&num_val));
-            if (pvalue != NULL) {
-                pvalue->as_num = num_val;
-            }
-            *pfield = field;
-        }
-    }
-
-    /* Try to convert to a float */
-    if (*pfield == NULL) {
-        ib_float_t float_val;
-        conv = ib_string_to_float(vstr, &float_val);
-        if (conv == IB_OK) {
-            rc = ib_field_create(&field, mp,
-                                 IB_FIELD_NAME(name),
-                                 IB_FTYPE_FLOAT,
-                                 ib_ftype_float_in(&float_val));
-            if (pvalue != NULL) {
-                pvalue->as_float = float_val;
-            }
-            *pfield = field;
-        }
-    }
-
-    /* Finally, assume that it's a string */
-    if (*pfield == NULL) {
-        rc = ib_field_create(&field, mp,
-                             IB_FIELD_NAME(name),
-                             IB_FTYPE_NULSTR,
-                             ib_ftype_nulstr_in(vstr));
-        if (pvalue != NULL) {
-            pvalue->as_str = vstr;
-        }
-        *pfield = field;
-    }
-
-    return rc;
 }
 
 /* -- Core Log Event Provider -- */
@@ -4704,7 +4619,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     ib_mpool_t *mp = cp->cur_ctx->mp;
     ib_core_cfg_t *corecfg;
     ib_field_t *field;
-    core_field_value_t fval;
+    ib_field_val_union_t fval;
 
     /* Get the core module config. */
     rc = ib_context_module_config(cp->cur_ctx, ib_core_module(),
@@ -4724,7 +4639,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     }
 
     /* Create the field based on whether the value looks like a number or not */
-    rc = core_string_to_field(mp, name, value, &field, &fval);
+    rc = ib_field_from_string(mp, IB_FIELD_NAME(name), value, &field, &fval);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error creating field for InitVar: %s",
                          ib_status_to_string(rc));
@@ -4742,21 +4657,21 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
         ib_cfg_log_debug(cp,
                          "InitVar: Created numeric field \"%s\" %"PRId64" "
                          "for context \"%s\"",
-                         name, fval.as_num,
+                         name, (long int)fval.num,
                          ib_context_full_get(cp->cur_ctx));
     }
     else if (field->type == IB_FTYPE_FLOAT) {
         ib_cfg_log_debug(cp,
                          "InitVar: Created float field \"%s\" %f "
                          "for context \"%s\"",
-                         name, (double)fval.as_float,
+                         name, (double)fval.fnum,
                          ib_context_full_get(cp->cur_ctx));
     }
     else {
         ib_cfg_log_debug(cp,
                          "InitVar:Created string field \"%s\" \"%s\" "
                          "for context \"%s\"",
-                         name, fval.as_str, ib_context_full_get(cp->cur_ctx));
+                         name, fval.nulstr, ib_context_full_get(cp->cur_ctx));
     }
 
     /* Done */

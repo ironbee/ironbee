@@ -48,20 +48,12 @@
  * This allows for multiple types of values to be stored within a field.
  */
 struct ib_field_val_t {
-    ib_field_get_fn_t  fn_get;        /**< Function to get a value. */
-    ib_field_set_fn_t  fn_set;        /**< Function to set a value. */
-    void              *cbdata_get;    /**< Data passed to fn_get. */
-    void              *cbdata_set;    /**< Data passed to fn_get. */
-    void              *pval;          /**< Address where value is stored */
-    union {
-        ib_num_t       num;           /**< Generic numeric value */
-        ib_float_t     fnum;          /**< Floating type value. */
-        ib_bytestr_t  *bytestr;       /**< Byte string value */
-        char          *nulstr;        /**< NUL string value */
-        ib_list_t     *list;          /**< List of fields */
-        ib_stream_t   *stream;        /**< Stream buffer */
-        void          *ptr;           /**< Pointer value */
-    } u;
+    ib_field_get_fn_t     fn_get;        /**< Function to get a value. */
+    ib_field_set_fn_t     fn_set;        /**< Function to set a value. */
+    void                 *cbdata_get;    /**< Data passed to fn_get. */
+    void                 *cbdata_set;    /**< Data passed to fn_get. */
+    void                 *pval;          /**< Address where value is stored */
+    ib_field_val_union_t  u;             /**< Union of value types */
 };
 
 const char *ib_field_type_name(
@@ -239,6 +231,126 @@ const char *ib_field_format(
 
     /* Return the buffer */
     return buf;
+}
+
+static ib_status_t field_from_string_internal(
+    ib_mpool_t *mp,
+    const char *name,
+    size_t nlen,
+    const char *vstr,
+    size_t vlen,
+    bool vstr_is_nulstr,
+    ib_field_t **pfield,
+    ib_field_val_union_t *pvalue)
+{
+    assert(mp != NULL);
+    assert(name != NULL);
+    assert(vstr != NULL);
+    assert(pfield != NULL);
+
+    ib_status_t conv;
+    ib_status_t rc = IB_OK;
+    ib_field_t *field;
+
+    *pfield = NULL;
+
+    /* Try to convert to an integer */
+    if (*pfield == NULL) {
+        ib_num_t num_val;
+        if (vstr_is_nulstr) {
+            conv = ib_string_to_num(vstr, 0, &num_val);
+        }
+        else {
+            conv = ib_string_to_num_ex(vstr, vlen, 0, &num_val);
+        }
+        if (conv == IB_OK) {
+            rc = ib_field_create(&field, mp,
+                                 name, nlen,
+                                 IB_FTYPE_NUM,
+                                 ib_ftype_num_in(&num_val));
+            if (pvalue != NULL) {
+                pvalue->num = num_val;
+            }
+            *pfield = field;
+        }
+    }
+
+    /* Try to convert to a float */
+    if (*pfield == NULL) {
+        ib_float_t float_val;
+        if (vstr_is_nulstr) {
+            conv = ib_string_to_float(vstr, &float_val);
+        }
+        else {
+            conv = ib_string_to_float_ex(vstr, vlen, &float_val);
+        }
+        if (conv == IB_OK) {
+            rc = ib_field_create(&field, mp,
+                                 name, nlen,
+                                 IB_FTYPE_FLOAT,
+                                 ib_ftype_float_in(&float_val));
+            if (pvalue != NULL) {
+                pvalue->fnum = float_val;
+            }
+            *pfield = field;
+        }
+    }
+
+    /* Finally, assume that it's a string */
+    if (*pfield == NULL) {
+        if (vstr_is_nulstr) {
+            rc = ib_field_create(&field, mp,
+                                 name, nlen,
+                                 IB_FTYPE_NULSTR,
+                                 ib_ftype_nulstr_in(vstr));
+        }
+        else {
+            ib_bytestr_t *bs;
+            rc = ib_bytestr_dup_mem(&bs, mp, (const uint8_t *)vstr, vlen);
+            if (rc != IB_OK) {
+                return rc;
+            }
+            rc = ib_field_create(&field, mp,
+                                 name, nlen,
+                                 IB_FTYPE_BYTESTR,
+                                 ib_ftype_bytestr_in(bs));
+        }
+        if (pvalue != NULL) {
+            pvalue->nulstr = (char *)vstr;
+        }
+        *pfield = field;
+    }
+
+    return rc;
+}
+
+ib_status_t ib_field_from_string(
+    ib_mpool_t *mp,
+    const char *name,
+    size_t nlen,
+    const char *vstr,
+    ib_field_t **pfield,
+    ib_field_val_union_t *pvalue)
+{
+    return field_from_string_internal(mp,
+                                      name, nlen,
+                                      vstr, 0, true,
+                                      pfield, pvalue);
+}
+
+ib_status_t ib_field_from_string_ex(
+    ib_mpool_t *mp,
+    const char *name,
+    size_t nlen,
+    const char *vstr,
+    size_t vlen,
+    ib_field_t **pfield,
+    ib_field_val_union_t *pvalue)
+{
+    return field_from_string_internal(mp,
+                                      name, nlen,
+                                      vstr, vlen, false,
+                                      pfield, pvalue);
 }
 
 void ib_field_util_log_debug(

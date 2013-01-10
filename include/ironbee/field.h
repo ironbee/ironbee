@@ -1010,6 +1010,55 @@ ib_status_t DLL_PUBLIC ib_field_convert(
 );
 
 /**
+ * Convert a string to a field, trying to treat the string as a number if
+ * possible.
+ *
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] name Field name
+ * @param[in] nlen Length of @a name
+ * @param[in] vstr Value string
+ * @param[out] pfield Pointer to newly created field
+ * @param[out] pvalue Pointer to value (or NULL)
+ *
+ * @returns Status code:
+ *  - IB_OK All OK
+ *  - Errors from @sa ib_field_create().
+ */
+ib_status_t DLL_PUBLIC ib_field_from_string(
+    ib_mpool_t *mp,
+    const char *name,
+    size_t nlen,
+    const char *vstr,
+    ib_field_t **pfield,
+    ib_field_val_union_t *pvalue);
+
+/**
+ * Convert a string to a field, trying to treat the string as a number if
+ * possible (Extended version).
+ *
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] name Field name
+ * @param[in] nlen Length of @a name
+ * @param[in] vstr Value string
+ * @param[in] vlen Length of @a vstr
+ * @param[out] pfield Pointer to newly created field
+ * @param[out] pvalue Pointer to value (or NULL)
+ *
+ * @returns Status code:
+ *  - IB_OK All OK
+ *  - Errors from @sa ib_field_create().
+ */
+ib_status_t DLL_PUBLIC ib_field_from_string_ex(
+    ib_mpool_t *mp,
+    const char *name,
+    size_t nlen,
+    const char *vstr,
+    size_t vlen,
+    ib_field_t **pfield,
+    ib_field_val_union_t *pvalue);
+
+
+/**
  * @} IronBeeUtilField
  */
 
