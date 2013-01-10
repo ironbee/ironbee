@@ -4,17 +4,26 @@ include $(top_srcdir)/build/common.mk
 
 luadir = $(libdir)
 
+FFI_FILES = $(top_srcdir)/include/ironbee/engine.h \
+	    $(top_srcdir)/include/ironbee/core.h \
+	    $(top_srcdir)/include/ironbee/rule_defs.h \
+	    $(top_srcdir)/include/ironbee/rule_engine.h
+BUILT_SOURCES = ironbee-ffi.h \
+		ironbee-ffi-h.lua
+
 if FREEBSD
 AM_LDFLAGS += -L/usr/local/lib -no-undefined -static-libtool-libs
 else
 AM_LDFLAGS += -no-undefined -static-libtool-libs
 endif
-EXTRA_DIST = ironbee-ffi.lua \
+EXTRA_DIST = ironbee-ffi-h.lua \
+	     ironbee-ffi.lua \
 	     ironbee-api.lua \
 	     ironbee-modlua.lua \
              example.lua \
              qa.lua
-lua_DATA = ironbee-ffi.lua \
+lua_DATA = ironbee-ffi-h.lua \
+	   ironbee-ffi.lua \
 	   ironbee-api.lua \
 	   ironbee-modlua.lua \
            example.lua \
@@ -28,3 +37,31 @@ libironbee_lua_la_CFLAGS = -fPIC
 libironbee_lua_la_LIBADD = -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                            -lluajit-ironbee \
                            -lm
+
+ironbee-ffi.h: $(FFI_FILES)
+	> tmp.h
+	for i in $+; do \
+		echo "#include \"$$i\"" >> tmp.h; \
+	done
+	$(CPP) -I$(top_srcdir)/include -I$(top_builddir)/include $(CPP_FLAGS) tmp.h > "$@"
+	rm tmp.h
+
+ironbee-ffi-h.lua: ironbee-ffi.h
+	echo "#!/usr/bin/lua"              > $@
+	echo "local ffi = require('ffi')" >> $@
+	echo "ffi.cdef [["                >> $@
+	cat $< | grep -v -e '^# '         >> $@
+	echo "]]"                         >> $@
+
+check_PROGRAMS    = test_lua
+TESTS             = $(check_PROGRAMS)
+test_lua_SOURCES  = test_lua.cpp \
+		    $(top_srcdir)/tests/gtest/gtest_main.cc \
+		    $(top_srcdir)/tests/gtest/gtest-all.cc
+test_lua_CPPFLAGS = -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
+		    -I$(top_srcdir)/tests \
+		    -DFFI_FILE=$(top_srcdir)/lua/ironbee-ffi.lua
+test_lua_LDFLAGS  = -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src 
+test_lua_LDADD    = -lluajit-ironbee
+
+CLEANFILES = ironbee-ffi.h ironbee-ffi-h.lua
