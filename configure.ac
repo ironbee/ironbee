@@ -427,13 +427,13 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="libs util engine servers automata modules etc docs tests packaging"
+TOPLEVEL_SUBDIRS="util engine servers automata modules etc docs tests packaging"
 LIBS_SUBDIRS="libhtp"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver"
 
 dnl Enable lua subdir if enabled
 if test "$enable_lua" != "no"; then
-    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} lua"
+    TOPLEVEL_SUBDIRS="lua ${TOPLEVEL_SUBDIRS}"
 fi
  
 dnl Enable cli subdir if enabled
@@ -481,6 +481,9 @@ else
    out_of_tree=no
 fi
 AM_CONDITIONAL([OUT_OF_TREE],[test "$out_of_tree" = "yes"])
+
+# Prepend libs
+TOPLEVEL_SUBDIRS="libs ${TOPLEVEL_SUBDIRS}"
 
 AC_RPM_CHECK
 AC_SUBST(HAVE_RPM)
