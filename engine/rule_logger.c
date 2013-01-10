@@ -41,11 +41,6 @@
 #include <inttypes.h>
 
 /**
- * Prefix used for all rule engine log entries.
- */
-//static const char *LOG_PREFIX = "RULE_ENG";
-
-/**
  * Length of buffer used for formatting fields
  */
 static const size_t MAX_FIELD_BUF = 64;
