@@ -931,7 +931,7 @@ ib_status_t DLL_PUBLIC ib_field_mutable_value_type(
  *
  * @return true iff field is dynamic
  */
-int ib_field_is_dynamic(
+int DLL_PUBLIC ib_field_is_dynamic(
      const ib_field_t *f
 );
 
@@ -948,7 +948,7 @@ int ib_field_is_dynamic(
  * @param[in] prefix Prefix message.
  * @param[in] f      Field to output.
  */
-void ib_field_util_log_debug(
+void DLL_PUBLIC ib_field_util_log_debug(
     const char       *prefix,
     const ib_field_t *f
 );
