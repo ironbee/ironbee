@@ -981,28 +981,12 @@ int ib_field_is_dynamic(const ib_field_t *f)
     return f->val->pval == NULL ? 1 : 0;
 }
 
-/**
- * Attempt to convert a single field.
- *
- * If the desired type matches the in_field type, out_field is set to NULL
- * and IB_OK is returned.
- *
- * @param[in,out] mp Memory pool to use.
- * @param[in] desired_type The type to try to convert this to.
- * @param[in] in_field The input field.
- * @param[out] out_field The output field to write to.
- *
- * @returns
- *   - IB_OK On success.
- *   - IB_EINVAL If a string cannot be converted to a number type
- *               or some other invalid type conversion is requested.
- *   - IB_EALLOC Memory allocation error.
- */
 ib_status_t ib_field_convert(
-    ib_mpool_t *mp,
-    const ib_ftype_t desired_type,
-    const ib_field_t *in_field,
-    ib_field_t **out_field)
+    ib_mpool_t        *mp,
+    const ib_ftype_t   desired_type,
+    const ib_field_t  *in_field,
+    ib_field_t       **out_field
+)
 {
     assert(mp);
     assert(in_field);
@@ -1017,7 +1001,6 @@ ib_status_t ib_field_convert(
     ib_float_t flt;
     void *new_field_value;
 
-
     if (in_field->type == desired_type) {
         *out_field = NULL;
         return IB_OK;
@@ -1028,24 +1011,30 @@ ib_status_t ib_field_convert(
 
             /* Extract string. */
             rc = ib_field_value(in_field, ib_ftype_nulstr_out(&str));
-            if (rc!=IB_OK){
+            if (rc != IB_OK){
                 return rc;
             }
 
-            switch(desired_type) {
+            switch (desired_type) {
                 case IB_FTYPE_BYTESTR:
                     rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mp, str);
-                    if (rc!=IB_OK){
+                    if (rc != IB_OK) {
                         return rc;
                     }
                     new_field_value = ib_ftype_bytestr_in(bstr);
                     break;
                 case IB_FTYPE_NUM:
                     rc = ib_string_to_num(str, 0, &num);
+                    if (rc != IB_OK) {
+                        return rc;
+                    }
                     new_field_value = ib_ftype_num_in(&num);
                     break;
                 case IB_FTYPE_FLOAT:
                     rc = ib_string_to_float(str, &flt);
+                    if (rc != IB_OK) {
+                        return rc;
+                    }
                     new_field_value = ib_ftype_float_in(&flt);
                     break;
                 default:
@@ -1056,7 +1045,7 @@ ib_status_t ib_field_convert(
 
             /* Extract bytestr. */
             rc = ib_field_value(in_field, ib_ftype_bytestr_out(&bstr));
-            if (rc!=IB_OK){
+            if (rc != IB_OK){
                 return rc;
             }
             sz = ib_bytestr_length(bstr);
@@ -1072,10 +1061,16 @@ ib_status_t ib_field_convert(
                     break;
                 case IB_FTYPE_NUM:
                     rc = ib_string_to_num_ex((char *)bstr, sz, 0, &num);
+                    if (rc != IB_OK) {
+                        return rc;
+                    }
                     new_field_value = ib_ftype_num_in(&num);
                     break;
                 case IB_FTYPE_FLOAT:
                     rc = ib_string_to_float_ex((char *)bstr, sz, &flt);
+                    if (rc != IB_OK) {
+                        return rc;
+                    }
                     new_field_value = ib_ftype_float_in(&flt);
                     break;
                 default:
@@ -1086,25 +1081,25 @@ ib_status_t ib_field_convert(
 
             /* Extract unum. */
             rc = ib_field_value(in_field, ib_ftype_num_out(&num));
-            if (rc!=IB_OK){
+            if (rc != IB_OK){
                 return rc;
             }
 
-            switch(desired_type) {
+            switch (desired_type) {
                 case IB_FTYPE_NULSTR:
                     str = ib_num_to_string(mp, num);
-                    if (!str) {
+                    if (! str) {
                         return IB_EINVAL;
                     }
                     new_field_value = ib_ftype_nulstr_in(str);
                     break;
                 case IB_FTYPE_BYTESTR:
                     str = ib_num_to_string(mp, num);
-                    if (!str) {
+                    if (! str) {
                         return IB_EINVAL;
                     }
                     rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mp, str);
-                    if (rc!=IB_OK){
+                    if (rc != IB_OK){
                         return rc;
                     }
                     new_field_value = ib_ftype_bytestr_in(bstr);
@@ -1121,11 +1116,11 @@ ib_status_t ib_field_convert(
 
             /* Extract unum. */
             rc = ib_field_value(in_field, ib_ftype_float_out(&flt));
-            if (rc!=IB_OK){
+            if (rc != IB_OK){
                 return rc;
             }
 
-            switch(desired_type) {
+            switch (desired_type) {
                 case IB_FTYPE_NULSTR:
                     str = ib_float_to_string(mp, flt);
                     if (!str) {
@@ -1139,7 +1134,7 @@ ib_status_t ib_field_convert(
                         return IB_EINVAL;
                     }
                     rc = ib_bytestr_dup_nulstr((ib_bytestr_t **)&bstr, mp, str);
-                    if (rc!=IB_OK){
+                    if (rc != IB_OK){
                         return rc;
                     }
                     new_field_value = ib_ftype_bytestr_in(bstr);
@@ -1162,6 +1157,7 @@ ib_status_t ib_field_convert(
         in_field->name,
         in_field->nlen,
         desired_type,
-        new_field_value);
+        new_field_value
+    );
     return rc;
 }

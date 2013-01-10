@@ -971,7 +971,7 @@ const char DLL_PUBLIC *ib_field_format(
  * @returns String representation of the type
  */
 const char DLL_PUBLIC *ib_field_type_name(
-    ib_ftype_t        ftype
+    ib_ftype_t ftype
 );
 
 /**
@@ -980,9 +980,9 @@ const char DLL_PUBLIC *ib_field_type_name(
  * If the desired type matches the in_field type, out_field is set to NULL
  * and IB_OK is returned.
  *
- * @param[in,out] mp Memory pool to use.
- * @param[in] desired_type The type to try to convert this to.
- * @param[in] in_field The input field.
+ * @param[in]  mp Memory pool to use.
+ * @param[in]  desired_type The type to try to convert this to.
+ * @param[in]  in_field The input field.
  * @param[out] out_field The output field to write to.
  *
  * @returns
@@ -991,11 +991,12 @@ const char DLL_PUBLIC *ib_field_type_name(
  *               or some other invalid type conversion is requested.
  *   - IB_EALLOC Memory allocation error.
  */
-ib_status_t ib_field_convert(
-    ib_mpool_t *mp,
-    const ib_ftype_t desired_type,
-    const ib_field_t *in_field,
-    ib_field_t **out_field);
+ib_status_t DLL_PUBLIC ib_field_convert(
+    ib_mpool_t        *mp,
+    const ib_ftype_t   desired_type,
+    const ib_field_t  *in_field,
+    ib_field_t       **out_field
+);
 
 /**
  * @} IronBeeUtilField
