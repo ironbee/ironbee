@@ -1485,10 +1485,13 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
 
 static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 {
+    assert(log != NULL);
+    assert(log->tx != NULL);
+    
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_engine_t *ib = log->ib;
     ib_tx_t *tx = log->tx;
-    ib_num_t tx_num = tx ? tx->conn->tx_count : 0;
+    ib_num_t tx_num = tx->conn->tx_count;
     const ib_site_t *site;
     ib_mpool_t *pool = log->mp;
     ib_field_t *f;
