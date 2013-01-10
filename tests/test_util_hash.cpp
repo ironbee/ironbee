@@ -206,7 +206,7 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
                 c[0] = combs[i];
                 c[1] = combs[j];
                 c[2] = combs[k];
-                c[4] = '\0';
+                c[3] = '\0';
                 ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
 
                 // Check now (pre-resizing) and later (after resizing).
@@ -229,7 +229,7 @@ TEST_F(TestIBUtilHash, test_hash_resizing)
                 c[0] = combs[i];
                 c[1] = combs[j];
                 c[2] = combs[k];
-                c[4] = '\0';
+                c[3] = '\0';
                 char *val = NULL;
                 EXPECT_EQ(IB_OK, ib_hash_get_ex(hash, &val, c, 3));
                 EXPECT_STREQ(c, val);
@@ -260,7 +260,7 @@ TEST_F(TestIBUtilHash, test_hash_getall)
                 c[0] = combs[i];
                 c[1] = combs[j];
                 c[2] = combs[k];
-                c[4] = '\0';
+                c[3] = '\0';
 
                 ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
                 ASSERT_EQ(IB_OK, ib_list_push(list, (void *)c));
@@ -308,7 +308,7 @@ TEST_F(TestIBUtilHash, test_hash_clear)
                 c[0] = combs[i];
                 c[1] = combs[j];
                 c[2] = combs[k];
-                c[4] = '\0';
+                c[3] = '\0';
 
                 ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
                 EXPECT_EQ(IB_OK, ib_hash_get_ex(hash, &v, c, 3));
@@ -330,7 +330,7 @@ TEST_F(TestIBUtilHash, test_hash_clear)
                 c[0] = combs[i];
                 c[1] = combs[j];
                 c[2] = combs[k];
-                c[4] = '\0';
+                c[3] = '\0';
 
                 ASSERT_EQ(IB_OK, ib_hash_set_ex(hash, c, 3, (void *)c));
                 EXPECT_EQ(IB_OK, ib_hash_get_ex(hash, &v, c, 3));
