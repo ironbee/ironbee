@@ -427,7 +427,8 @@ static apr_status_t ib_req_cleanup(void *data)
 static int ironbee_headers_in(request_rec *r)
 {
     int early;
-    ib_status_t rc;
+    ib_status_t rc = IB_OK;
+    const char *rc_what = "no message set";
     ironbee_req_ctx *ctx = ap_get_module_config(r->request_config,
                                                 &ironbee_module);
     ib_conn_t *iconn = ap_get_module_config(r->connection->conn_config,
@@ -478,27 +479,48 @@ static int ironbee_headers_in(request_rec *r)
                                        r->method, strlen(r->method),
                                        r->unparsed_uri, strlen(r->unparsed_uri),
                                        r->protocol, strlen(r->protocol));
-        if (rc == IB_OK) {
-            ib_state_notify_request_started(ironbee, ctx->tx, rline);
-
-            /* Now the request headers */
-            rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
-            apr_table_do(ironbee_sethdr, ibhdrs, r->headers_in, NULL);
-
-            rc = ib_state_notify_request_header_data(ironbee, ctx->tx, ibhdrs);
-            if (rc != IB_OK)
-                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                              "ib_state_notify_request_header_data failed with %d", rc);
-            rc = ib_state_notify_request_header_finished(ironbee, ctx->tx);
-            if (rc != IB_OK)
-                ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                              "ib_state_notify_request_header_finished failed with %d", rc);
+        if (rc != IB_OK) {
+            rc_what = "ib_parsed_req_line_create";
+            goto finished;
         }
-        else {
-            ap_log_rerror(APLOG_MARK, APLOG_ERR, 0, r,
-                          "ib_parsed_req_line_create failed with %d", rc);
+
+        rc = ib_state_notify_request_started(ironbee, ctx->tx, rline);
+        if (rc != IB_OK) {
+            rc_what = "ib_state_notify_request_started";
+            goto finished;
+        }
+
+        /* Now the request headers */
+        rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, ctx->tx);
+        if (rc != IB_OK) {
+            rc_what = "ib_parsed_name_value_pair_list_wrapper_create";
+            goto finished;
+        }
+
+        apr_table_do(ironbee_sethdr, ibhdrs, r->headers_in, NULL);
+
+        rc = ib_state_notify_request_header_data(ironbee, ctx->tx, ibhdrs);
+        if (rc != IB_OK) {
+            rc_what = "ib_state_notify_request_header_data";
+            goto finished;
+        }
+
+        rc = ib_state_notify_request_header_finished(ironbee, ctx->tx);
+        if (rc != IB_OK) {
+            rc_what = "ib_state_notify_request_header_finished";
+            goto finished;
+        }
+
+finished:
+        if (rc != IB_OK) {
+            ap_log_rerror(
+                APLOG_MARK, APLOG_ERR, 0, r,
+                "%s failed with %d",
+                rc_what, rc
+            );
         }
     }
+
 
     /* Regardless of whether we process early or late, it's not too
      * late to set request headers until after the second call to us
