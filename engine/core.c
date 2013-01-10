@@ -4099,6 +4099,12 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
 
         if (port == NULL) {
             rc = ib_ctxsel_service_create(site, ip, NULL);
+            if (rc != IB_OK) {
+                ib_cfg_log_error(cp,
+                                 "%s: Failed to create service.",
+                                 directive);
+                return rc;
+            }
         }
         else {
             size_t len = strlen(ip) + 1 + strlen(port) + 1;
