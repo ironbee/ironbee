@@ -143,4 +143,21 @@ ib_status_t ib_core_ctxsel_init(ib_engine_t *ib,
                                 ib_module_t *module);
 
 
+/** Core collection managers functions */
+
+/**
+ * Register core collections managers
+ *
+ * @param[in] ib Engine
+ * @param[in] module Collection manager's module object
+ *
+ * @returns Status code:
+ *   - IB_OK All OK, parameters recognized
+ *   - IB_Exxx Other error
+ */
+ib_status_t ib_core_collection_managers_register(
+    ib_engine_t  *ib,
+    const ib_module_t *module);
+
+
 #endif /* _IB_CORE_PRIVATE_H_ */

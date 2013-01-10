@@ -34,12 +34,14 @@
 #include "core_audit_private.h"
 #include "engine_private.h"
 #include "rule_engine_private.h"
+#include "managed_collection_private.h"
 
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
 #include <ironbee/clock.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/escape.h>
+#include <ironbee/json.h>
 #include <ironbee/field.h>
 #include <ironbee/logevent.h>
 #include <ironbee/managed_collection.h>
@@ -49,8 +51,6 @@
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
-
-#include <pcre.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -64,19 +64,10 @@
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <sys/time.h>
-
-/** Core InitCollection parameter parsing data */
-typedef struct {
-    pcre       *nvpair_compiled;
-} core_initcoll_data_t;
-static core_initcoll_data_t core_initcoll_data = { NULL };
-
-/** Core InitCollection name/value parameter data */
-typedef struct {
-    const char *name;
-    const char *value;
-} core_initcoll_nvpair_t;
+#include <fcntl.h>
 
 #define MODULE_NAME        core
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
@@ -2563,7 +2554,8 @@ static ib_status_t core_initvar(ib_engine_t *ib,
 }
 
 /**
- * Execute the InitVar directive to initialize field in a transaction's DPI
+ * Execute the InitCollection directive to initialize a collection in a
+ * transaction's DPI
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
@@ -2598,259 +2590,16 @@ static ib_status_t core_managed_collection_populate_all(
         if (rc != IB_OK) {
             ib_log_warning_tx(tx,
                               "Error creating managed collection \"%s\": %s",
-                              collection->name,
+                              collection->collection_name,
                               ib_status_to_string(rc));
             return rc;
         }
         ib_log_trace_tx(tx, "Created managed collection \"%s\"",
-                        collection->name);
+                        collection->collection_name);
     }
     ib_log_debug_tx(tx,
                     "Created %zd managed collections for context \"%s\"",
                     count, ib_context_full_get(tx->ctx));
-    return IB_OK;
-}
-
-/**
- * Handle managed collection selection for simple name=value parameter
- *
- * Examines the incoming parameters; if if it looks like simple
- * attr=value pairs, take it; otherwise do nothing
- *
- * @param[in] ib Engine
- * @param[in] module Collection manager's module object
- * @param[in] mp Memory pool to use for allocations
- * @param[in] collection_name Name of the collection
- * @param[in] params List of parameter strings
- * @param[in] data Selection callback data
- * @param[out] pcollection_data Pointer to manager specific collection data
- *
- * @returns Status code:
- *   - IB_DECLINED Parameters not recognized
- *   - IB_OK All OK, parameters recognized
- *   - IB_Exxx Other error
- */
-static ib_status_t core_managed_collection_nvpair_selection_fn(
-    const ib_engine_t  *ib,
-    const ib_module_t  *module,
-    ib_mpool_t         *mp,
-    const char         *collection_name,
-    const ib_list_t    *params,
-    void               *data,
-    void              **pcollection_data)
-{
-    assert(ib != NULL);
-    assert(module != NULL);
-    assert(mp != NULL);
-    assert(collection_name != NULL);
-    assert(params != NULL);
-    assert(pcollection_data != NULL);
-
-    const ib_list_node_t *node;
-    const int ovecsize = 9;
-    ib_list_t *nvpair_list;
-    ib_list_t *field_list;
-    ib_mpool_t *tmp = ib_engine_pool_temp_get(ib);
-    ib_status_t rc;
-
-    if (ib_list_elements(params) == 0) {
-        return IB_DECLINED;
-    }
-
-    /* Create a temporary list */
-    rc = ib_list_create(&nvpair_list, tmp);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* First pass; walk through all params, look for "a=b" type syntax */
-    IB_LIST_LOOP_CONST(params, node) {
-        int ovector[ovecsize];
-        const char *param = (const char *)node->data;
-        core_initcoll_nvpair_t *nvpair;
-        int pcre_rc;
-
-        pcre_rc = pcre_exec(core_initcoll_data.nvpair_compiled, NULL,
-                            param, strlen(param),
-                            0, 0, ovector, ovecsize);
-        if (pcre_rc < 0) {
-            return IB_DECLINED;
-        }
-
-        nvpair = ib_mpool_alloc(tmp, sizeof(*nvpair));
-        if (nvpair == NULL) {
-            return IB_EALLOC;
-        }
-        nvpair->name  = ib_mpool_memdup_to_str(tmp,
-                                               param + ovector[2],
-                                               ovector[3] - ovector[2]);
-        nvpair->value = ib_mpool_memdup_to_str(tmp,
-                                               param + ovector[4],
-                                               ovector[5] - ovector[4]);
-        if ((nvpair->name == NULL) || (nvpair->value == NULL)) {
-            return IB_EALLOC;
-        }
-        rc = ib_list_push(nvpair_list, nvpair);
-        if (rc != IB_OK) {
-            return rc;
-        }
-    }
-
-    /* Build the list of fields */
-    rc = ib_list_create(&field_list, mp);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Now walk though the list, creating a field for each one */
-    IB_LIST_LOOP_CONST(nvpair_list, node) {
-        const core_initcoll_nvpair_t *nvpair =
-            (const core_initcoll_nvpair_t *)node->data;
-        ib_field_t *field;
-        core_field_value_t fval;
-
-        rc = core_string_to_field(mp, nvpair->name, nvpair->value,
-                                  &field, &fval);
-        if (rc != IB_OK) {
-            ib_log_error(ib, "Error creating field (\"%s\", \"%s\"): %s",
-                         nvpair->name, nvpair->value,
-                         ib_status_to_string(rc));
-            return rc;
-        }
-        rc = ib_list_push(field_list, field);
-        if (rc != IB_OK) {
-            return rc;
-        }
-
-        if (field->type == IB_FTYPE_NUM) {
-            ib_log_debug(ib, "Created numeric field \"%s\" %"PRId64" in \"%s\"",
-                         nvpair->name, fval.as_num, collection_name);
-        }
-
-        else if (field->type == IB_FTYPE_FLOAT) {
-            ib_log_debug(ib, "Created float field \"%s\" %f in \"%s\"",
-                         nvpair->name, (double)fval.as_float, collection_name);
-        }
-        else {
-            ib_log_debug(ib, "Created string field \"%s\" \"%s\" in \"%s\"",
-                         nvpair->name, fval.as_str, collection_name);
-        }
-    }
-
-    /* Finally, store the list as the manager specific collection data */
-    *pcollection_data = field_list;
-
-    return IB_OK;
-}
-
-/**
- * Handle managed collection nvpair populate function
- *
- * @param[in] ib Engine
- * @param[in] tx Transaction to populate
- * @param[in] module Collection manager's module object
- * @param[in] collection_name The name of the collection.
- * @param[in] collection_data An ib_list_t of fields copied into @a collection.
- * @param[in,out] collection Collection to populate with fields in @a
- *                collection_data.
- * @param[in] data Callback data
- *
- * @returns
- *   - IB_OK on success or when @a collection_data is length 0.
- *   - The first error returned by a call to ib_field_copy or ib_list_push.
- *     The first error is returned, but more errors may occur as the
- *     collection population continues.
- */
-static ib_status_t core_managed_collection_nvpair_populate_fn(
-    const ib_engine_t *ib,
-    const ib_tx_t *tx,
-    const ib_module_t *module,
-    const char *collection_name,
-    void *collection_data,
-    ib_list_t *collection,
-    void *data)
-{
-    assert(ib != NULL);
-    assert(tx != NULL);
-    assert(module != NULL);
-    assert(collection_name != NULL);
-    assert(collection_data != NULL);
-    assert(collection != NULL);
-
-    const ib_list_node_t *node;
-    const ib_list_t *field_list = (const ib_list_t *)collection_data;
-    ib_status_t rc = IB_OK;
-
-    /* First pass; walk through all params, look for "a=b" type syntax */
-    IB_LIST_LOOP_CONST(field_list, node) {
-        ib_status_t trc;
-        const ib_field_t *field = (const ib_field_t *)node->data;
-        ib_field_t *newf;
-
-        trc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
-        if (trc != IB_OK) {
-            ib_log_debug_tx(tx, "Failed to copy field: %s",
-                            ib_status_to_string(trc));
-            if (rc == IB_OK) {
-                rc = trc;
-            }
-            continue;
-        }
-
-        trc = ib_list_push(collection, newf);
-        if ( (trc != IB_OK) && (rc == IB_OK) ) {
-            rc = trc;
-        }
-    }
-
-    return rc;
-}
-
-/**
- * Initialize managed collection for simple name=value parameters
- *
- * @param[in] ib Engine
- * @param[in] module Collection manager's module object
- *
- * @returns Status code:
- *   - IB_OK All OK, parameters recognized
- *   - IB_Exxx Other error
- */
-static ib_status_t core_managed_collection_nvpair_init(
-    ib_engine_t  *ib,
-    const ib_module_t *module)
-{
-    assert(ib != NULL);
-    assert(module != NULL);
-
-    const char *pattern = "^(\\w+)=(.*)$";
-    const int compile_flags = PCRE_DOTALL | PCRE_DOLLAR_ENDONLY;
-    pcre *compiled;
-    const char *error;
-    int eoff;
-    ib_status_t rc;
-
-    /* Register the name/value pair InitCollection handler */
-    rc = ib_managed_collection_register_handler(
-        ib, module, "core name/value pair",
-        core_managed_collection_nvpair_selection_fn, NULL,
-        core_managed_collection_nvpair_populate_fn, NULL,
-        NULL, NULL);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to register core name/value pair handler: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Compile the pattern */
-    compiled = pcre_compile(pattern, compile_flags, &error, &eoff, NULL);
-    if (compiled == NULL) {
-        ib_log_error(ib, "Failed to compile pattern \"%s\": %s", pattern,
-                     error ? error : "(null)");
-        return IB_EUNKNOWN;
-    }
-    core_initcoll_data.nvpair_compiled = compiled;
-
     return IB_OK;
 }
 
@@ -4363,14 +4112,18 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
     assert(directive != NULL);
     assert(vars != NULL);
 
-    ib_status_t                    rc;
-    const ib_managed_collection_t *managed_collection;
-    ib_mpool_t                    *mp;
-    const ib_list_node_t          *node;
-    const char                    *collection_name;
-    ib_core_cfg_t                 *cfg;
-    ib_list_t                     *params;
+    ib_status_t              rc;
+    ib_mpool_t              *mp;
+    const ib_list_node_t    *node;
+    ib_list_node_t          *mcnode;
+    ib_list_t               *params;
+    const char              *collection_name;
+    const char              *collection_uri;
+    ib_core_cfg_t           *cfg;
+    ib_managed_collection_t *collection = NULL;
+    ib_list_t               *managers = NULL;
 
+    //mp = ib_engine_pool_main_get(cp->ib);
     mp = ib_engine_pool_config_get(cp->ib);
 
     /* Get the configuration */
@@ -5228,7 +4981,7 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
 
-    /* Initialize the core rule engine */
+    /* Initialize the rule engine */
     rc = ib_rule_engine_init(ib, m);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to initialize rule engine: %s", ib_status_to_string(rc));
@@ -5265,9 +5018,9 @@ static ib_status_t core_init(ib_engine_t *ib,
     }
 
     /* Initialize the collection manager logic */
-    rc = core_managed_collection_init(ib, m);
+    rc = ib_core_collection_managers_register(ib, m);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize managed collections: %s",
+        ib_log_alert(ib, "Failed to register core collection managers: %s",
                      ib_status_to_string(rc));
         return rc;
     }
@@ -5276,7 +5029,7 @@ static ib_status_t core_init(ib_engine_t *ib,
 }
 
 /**
- * Finish core module.
+ * Shutdown the core module on exit.
  *
  * @param[in] ib Engine
  * @param[in] m Module
@@ -5304,6 +5057,13 @@ ib_status_t core_finish(
 
     if (corecfg->log_fp != NULL && strcmp(corecfg->log_uri, "stderr") != 0) {
         fclose(corecfg->log_fp);
+    }
+
+    /* Shut down the managed collection logic */
+    rc = ib_managed_collection_finish(ib);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to initialize managed collections: %s",
+                     ib_status_to_string(rc));
     }
 
     return IB_OK;
@@ -5524,6 +5284,47 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
     return IB_OK;
 }
 
+static ib_status_t core_ctx_managed_collection_destroy(
+    ib_engine_t *ib,
+    ib_module_t *mod,
+    ib_context_t *ctx,
+    ib_core_cfg_t *corecfg)
+{
+    assert(ib != NULL);
+    assert(mod != NULL);
+    assert(ctx != NULL);
+    assert(corecfg != NULL);
+
+    const ib_list_node_t *node;
+    ib_status_t rc = IB_OK;
+
+    /* Walk through the list of collections & populate them. */
+    if (corecfg->mancoll_list == NULL) {
+        return IB_OK;
+    }
+    IB_LIST_LOOP_CONST(corecfg->mancoll_list, node) {
+        const ib_managed_collection_t *collection =
+            (const ib_managed_collection_t *)node->data;
+        ib_status_t tmprc;
+
+        tmprc = ib_managed_collection_unregister(ib, mod, collection);
+        if (tmprc != IB_OK) {
+            ib_log_warning(ib,
+                           "Error creating managed collection \"%s\": %s",
+                           collection->collection_name,
+                           ib_status_to_string(tmprc));
+            if (rc == IB_OK) {
+                rc = tmprc;
+            }
+        }
+        else {
+            ib_log_trace(ib, "Unregistered managed collection \"%s\"",
+                         collection->collection_name);
+        }
+    }
+    return rc;
+}
+
 /**
  * Close the core module context
  *
@@ -5569,6 +5370,14 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
                      "Failed to fetch core module context config: %s",
                      ib_status_to_string(rc));
         return rc;
+    }
+
+    /* Tell the collection manager about this context going away */
+    rc = core_ctx_managed_collection_destroy(ib, mod, ctx, corecfg);
+    if (rc != IB_OK) {
+        ib_log_alert(ib,
+                     "Failed to shut down managed collections for \"%s\": %s",
+                     ib_context_full_get(ctx), ib_status_to_string(rc));
     }
 
     return IB_OK;
