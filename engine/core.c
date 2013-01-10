@@ -41,6 +41,7 @@
 #include <ironbee/context_selection.h>
 #include <ironbee/escape.h>
 #include <ironbee/field.h>
+#include <ironbee/logevent.h>
 #include <ironbee/managed_collection.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>

@@ -7,7 +7,7 @@ EXTRA_DIST =  config-parser.rl run-ragel.py \
               core_private.h core_audit_private.h
 
 lib_LTLIBRARIES = libironbee.la
-libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
+libironbee_la_SOURCES = engine.c provider.c parser.c data.c \
                         context_selection.c site.c \
                         managed_collection.c \
                         config.c config-parser.c config-parser.h \
@@ -23,6 +23,8 @@ libironbee_la_SOURCES = engine.c provider.c logger.c parser.c data.c \
                         core_operators.c \
                         core_actions.c \
                         core_audit.c \
+						logger.c \
+						logevent.c \
                         rule_logger.c \
                         rule_engine.c \
                         state_notify.c \

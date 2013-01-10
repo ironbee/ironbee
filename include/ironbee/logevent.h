@@ -1,0 +1,230 @@
+/*****************************************************************************
+ * Licensed to Qualys, Inc. (QUALYS) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * QUALYS licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ ****************************************************************************/
+
+#ifndef _IB_LOGEVENT_H_
+#define _IB_LOGEVENT_H_
+
+/**
+ * @file
+ * @brief IronBee --- Event Logger
+ *
+ * @author Brian Rectanus <brectanus@qualys.com>
+ */
+
+#include <ironbee/build.h>
+#include <ironbee/provider.h>
+#include <ironbee/types.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * @defgroup IronBeeEngineLogEvent Event Logging
+ * @ingroup IronBee
+ * @{
+ */
+
+/**
+ * Add an event to be logged.
+ *
+ * @param pi Provider instance
+ * @param e Event
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_event_add(ib_provider_inst_t *pi,
+                                    ib_logevent_t *e);
+
+/**
+ * Remove an event from the queue before it is logged.
+ *
+ * @param pi Provider instance
+ * @param id Event id
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_event_remove(ib_provider_inst_t *pi,
+                                       uint32_t id);
+
+/**
+ * Get a list of pending events to be logged.
+ *
+ * @note The list can be modified directly.
+ *
+ * @param pi Provider instance
+ * @param pevents Address where list of events is written
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_event_get_all(ib_provider_inst_t *pi,
+                                        ib_list_t **pevents);
+
+/**
+ * Write out any pending events to the log.
+ *
+ * @param pi Provider instance
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_event_write_all(ib_provider_inst_t *pi);
+
+/** Log Event Type */
+typedef enum {
+    IB_LEVENT_TYPE_UNKNOWN,          /**< Unknown type */
+    IB_LEVENT_TYPE_OBSERVATION,      /**< Observation event */
+    IB_LEVENT_TYPE_ALERT             /**< Alert event */
+} ib_logevent_type_t;
+
+/** Log Event Action */
+typedef enum {
+    IB_LEVENT_ACTION_UNKNOWN,
+    IB_LEVENT_ACTION_LOG,
+    IB_LEVENT_ACTION_BLOCK,
+    IB_LEVENT_ACTION_IGNORE,
+    IB_LEVENT_ACTION_ALLOW,
+} ib_logevent_action_t;
+
+/**
+ * Log Event suppression states.
+ *
+ * Events may be suppressed for different reasons.
+ */
+typedef enum {
+    IB_LEVENT_SUPPRESS_NONE,         /**< Not suppressed. */
+    IB_LEVENT_SUPPRESS_FPOS,         /**< False positive. */
+    IB_LEVENT_SUPPRESS_REPLACED,     /**< Replaced by later event. */
+    IB_LEVENT_SUPPRESS_INC,          /**< Event is partial/incomplete. */
+    IB_LEVENT_SUPPRESS_OTHER         /**< Other reason. */
+} ib_logevent_suppress_t;
+
+/**
+ * Lookup log event type name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
+const DLL_PUBLIC char *ib_logevent_type_name(ib_logevent_type_t num);
+
+/**
+ * Lookup log event action name.
+ *
+ * @param num Numeric ID
+ *
+ * @returns String name
+ */
+const DLL_PUBLIC char *ib_logevent_action_name(ib_logevent_action_t num);
+
+/** Log Event Structure */
+struct ib_logevent_t {
+    ib_mpool_t              *mp;         /**< Memory pool */
+    const char              *rule_id;    /**< Formatted rule ID */
+    const char              *msg;        /**< Event message */
+    ib_list_t               *tags;       /**< List of tag strings */
+    ib_list_t               *fields;     /**< List of field name strings */
+    uint32_t                 event_id;   /**< Event ID */
+    ib_logevent_type_t       type;       /**< Event type */
+    ib_logevent_action_t     rec_action; /**< Recommended action */
+    ib_logevent_suppress_t   suppress;   /**< Suppress this event. */
+    const void              *data;       /**< Event data */
+    size_t                   data_len;   /**< Event data size */
+    uint8_t                  confidence; /**< Event confidence (percent) */
+    uint8_t                  severity;   /**< Event severity (0-100?) */
+};
+
+/**
+ * Create a logevent.
+ *
+ * @param[out] ple Address which new logevent is written
+ * @param[in]  pool Memory pool to allocate from
+ * @param[in]  rule_id Rule ID string
+ * @param[in]  type Event type
+ * @param[in]  rec_action Event recommended action
+ * @param[in]  confidence Event confidence
+ * @param[in]  severity Event severity
+ * @param[in]  fmt Event message format string
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
+                                          ib_mpool_t *pool,
+                                          const char *rule_id,
+                                          ib_logevent_type_t type,
+                                          ib_logevent_action_t rec_action,
+                                          uint8_t confidence,
+                                          uint8_t severity,
+                                          const char *fmt,
+                                          ...);
+
+/**
+ * Add a tag to the event.
+ *
+ * @param[in] le Log event
+ * @param[in] tag Tag to add (string will be copied)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_tag_add(ib_logevent_t *le,
+                                           const char *tag);
+
+/**
+ * Add a field name to the event.
+ *
+ * @param[in] le Log event
+ * @param[in] name Field name to add (string will be copied)
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
+                                             const char *name);
+
+/**
+ * Add a field name to the event (ex version).
+ *
+ * @param[in] le Log event
+ * @param[in] name Field name to add (string will be copied)
+ * @param[in] nlen Length of @a name
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_field_add_ex(ib_logevent_t *le,
+                                                const char *name,
+                                                size_t nlen);
+
+/**
+ * Set data for the event.
+ *
+ * @param[in] le Log event
+ * @param[in] data Arbitrary binary data
+ * @param[in] dlen Data length
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
+                                            const void *data,
+                                            size_t dlen);
+
+/**
+ * @} IronBeeEngineLogEvent
+ */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
