@@ -377,7 +377,7 @@ static ib_status_t load_kv_value(
 
     /* Populate expiration. */
     rc = extract_expiration(kvstore, file, &((*value)->expiration));
-    if (rc) {
+    if (rc != IB_OK) {
         kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
         return IB_EOTHER;
@@ -404,7 +404,7 @@ static ib_status_t load_kv_value(
         &((*value)->type),
         &((*value)->type_length));
 
-    if (rc) {
+    if (rc != IB_OK) {
         kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
         return IB_EOTHER;
@@ -417,7 +417,7 @@ static ib_status_t load_kv_value(
         &((*value)->value),
         &((*value)->value_length));
 
-    if (rc) {
+    if (rc != IB_OK) {
         kvstore->free(kvstore, (*value)->type, kvstore->free_cbdata);
         kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
@@ -507,7 +507,7 @@ static ib_status_t each_dir(const char *path, each_dir_t f, void* data)
             break;
         }
         rc = f(path, result->d_name, data);
-        if (rc) {
+        if (rc != IB_OK) {
             goto rc_failure;
         }
     }
@@ -618,13 +618,13 @@ static ib_status_t kvget(
 
     /* Build a path with no expiration value on it. */
     rc = build_key_path(kvstore, key, -1, NULL, 0, &path);
-    if (rc) {
+    if (rc != IB_OK) {
         goto failure1;
     }
 
     /* Count entries. */
     rc = each_dir(path, &count_dirent, &dirent_count);
-    if (rc) {
+    if (rc != IB_OK) {
         goto failure1;
     }
     if (dirent_count==0){
@@ -641,10 +641,14 @@ static ib_status_t kvget(
         kvstore,
         sizeof(*build_val.values) * dirent_count,
         kvstore->malloc_cbdata);
+    if (build_val.values == NULL) {
+        rc = IB_EALLOC;
+        goto failure1;
+    }
 
     /* Build value array. */
     rc = each_dir(path, &build_value, &build_val);
-    if (rc) {
+    if (rc != IB_OK) {
         goto failure2;
     }
 
@@ -709,7 +713,7 @@ static ib_status_t kvset(
         value->type,
         value->type_length,
         &path);
-    if (rc) {
+    if (rc != IB_OK) {
         goto error_1;
     }
 
@@ -720,7 +724,7 @@ static ib_status_t kvset(
         NULL,
         0,
         &tmp_path);
-    if (rc) {
+    if (rc != IB_OK) {
         goto error_2;
     }
 
@@ -825,7 +829,7 @@ static ib_status_t kvremove(
 
     /* Build a path with no expiration value on it. */
     rc = build_key_path(kvstore, key, -1, NULL, 0, &path);
-    if (rc) {
+    if (rc != IB_OK) {
         return rc;
     }
 
