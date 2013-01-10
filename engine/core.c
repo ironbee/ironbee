@@ -1487,7 +1487,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 {
     assert(log != NULL);
     assert(log->tx != NULL);
-    
+
     core_audit_cfg_t *cfg = (core_audit_cfg_t *)log->cfg_data;
     ib_engine_t *ib = log->ib;
     ib_tx_t *tx = log->tx;
