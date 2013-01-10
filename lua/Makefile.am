@@ -68,7 +68,8 @@ test_lua_SOURCES  = test_lua.cpp \
 test_lua_CPPFLAGS = -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
 		    -I$(top_srcdir)/tests \
 		    -DFFI_FILE=$(top_srcdir)/lua/ironbee-ffi.lua
-test_lua_LDFLAGS  = -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src 
+test_lua_LDFLAGS  = $(LDFLAGS) \
+		    -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src 
 test_lua_LDADD    = -lluajit-ironbee
 
 CLEANFILES = ironbee-ffi.h ironbee-ffi-h.lua
