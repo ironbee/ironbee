@@ -325,7 +325,7 @@ static ib_status_t pcre_compile_internal(ib_engine_t *ib,
         pcre_free(edata);
     }
     else {
-        cpdata->edata = ib_mpool_alloc(pool, sizeof(*edata));
+        cpdata->edata = ib_mpool_calloc(pool, 1, sizeof(*edata));
         if (cpdata->edata == NULL) {
             pcre_free(edata);
             ib_log_error(ib, "Failed to allocate edata.");
