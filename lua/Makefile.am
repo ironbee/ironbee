@@ -11,6 +11,13 @@ FFI_FILES = $(top_srcdir)/include/ironbee/engine.h \
 BUILT_SOURCES = ironbee-ffi.h \
 		ironbee-ffi-h.lua
 
+if DARWIN
+if ENABLE_LUA
+# On Darwin (OSX) this is necessary for LuaJIT to run properly.
+LDFLAGS += -pagezero_size 10000 -image_base 100000000
+endif
+endif
+
 if FREEBSD
 AM_LDFLAGS += -L/usr/local/lib -no-undefined -static-libtool-libs
 else
