@@ -215,6 +215,17 @@ typedef int64_t ib_num_t;
  */
 typedef long double ib_float_t;
 
+/** The union of values; only used externally by ib_field_from_string() */
+typedef union {
+    ib_num_t       num;           /**< Generic numeric value */
+    ib_float_t     fnum;          /**< Floating type value. */
+    ib_bytestr_t  *bytestr;       /**< Byte string value */
+    char          *nulstr;        /**< NUL string value */
+    ib_list_t     *list;          /**< List of fields */
+    ib_stream_t   *stream;        /**< Stream buffer */
+    void          *ptr;           /**< Pointer value */
+} ib_field_val_union_t;
+
 /**
  * Assert @a v is proper type.
  */
