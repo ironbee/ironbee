@@ -43,15 +43,15 @@ ironbee-ffi.h: $(FFI_FILES)
 	for i in $+; do \
 		echo "#include \"$$i\"" >> tmp.h; \
 	done
-	$(CPP) -I$(top_srcdir)/include -I$(top_builddir)/include $(CPP_FLAGS) tmp.h > "$@"
+	$(CPP) -I$(top_srcdir)/include -I$(top_builddir)/include $(CPPFLAGS) tmp.h > "$@"
 	rm tmp.h
 
 ironbee-ffi-h.lua: ironbee-ffi.h
-	echo "#!/usr/bin/lua"              > $@
-	echo "local ffi = require('ffi')" >> $@
-	echo "ffi.cdef [["                >> $@
-	cat $< | grep -v -e '^# '         >> $@
-	echo "]]"                         >> $@
+	echo "#!/usr/bin/lua"                           > $@
+	echo "local ffi = require('ffi')"              >> $@
+	echo "ffi.cdef [["                             >> $@
+	cat $< | grep -v -e '^# ' | grep -v __typeof__ >> $@
+	echo "]]"                                      >> $@
 
 check_PROGRAMS    = test_lua
 TESTS             = $(check_PROGRAMS)
