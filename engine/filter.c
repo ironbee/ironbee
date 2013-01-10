@@ -27,6 +27,7 @@
 #include "engine_private.h"
 
 #include <ironbee/engine.h>
+#include <ironbee/logger.h>
 #include <ironbee/mpool.h>
 
 #include <inttypes.h>
