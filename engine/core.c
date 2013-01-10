@@ -4371,7 +4371,7 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
     ib_core_cfg_t                 *cfg;
     ib_list_t                     *params;
 
-    mp = ib_engine_pool_main_get(cp->ib);
+    mp = ib_engine_pool_config_get(cp->ib);
 
     /* Get the configuration */
     rc = ib_context_module_config(cp->cur_ctx, ib_core_module(), (void *)&cfg);
@@ -4399,12 +4399,26 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
     }
     collection_name = (const char *)(node->data);
 
+    /* The next node is the URI */
+    node = ib_list_node_next_const(node);
+    if ( (node == NULL) || (node->data == NULL) ) {
+        ib_cfg_log_error(cp, " %s: No collection URI specified", directive);
+        return IB_EINVAL;
+    }
+    collection_uri = (const char *)(node->data);
+
     /* Parameters */
-    rc = ib_list_create(&params, cp->mp);
+    rc = ib_list_create(&params, mp);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, " %s: Error allocation parameter list", directive);
         return IB_EINVAL;
     }
+    if (rc != IB_OK) {
+        ib_cfg_log_error(cp, " %s: Error allocation parameter list", directive);
+        return IB_EINVAL;
+    }
+
+    /* Loop through the remaining parameters */
     while( (node = ib_list_node_next_const(node)) != NULL) {
         const char *nodestr = (const char *)node->data;
         rc = ib_list_push(params, (char *)nodestr);
@@ -4412,16 +4426,38 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
             break;
         }
     }
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, " %s: Error allocation parameter list", directive);
-        return IB_EINVAL;
+
+    /* Check if this collection name is already registered */
+    IB_LIST_LOOP(cfg->mancoll_list, mcnode) {
+        ib_managed_collection_t *mc = (ib_managed_collection_t *)mcnode->data;
+        if (strcmp(mc->collection_name, collection_name) == 0) {
+            collection = mc;
+            break;
+        }
+    }
+
+    /* Create and populate a new collection if required */
+    if (collection == NULL) {
+        rc = ib_managed_collection_create(cp->ib, mp,
+                                          collection_name,
+                                          &collection);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    /* For logging, create a list of manager objects */
+    if (ib_log_get_level(cp->ib) >= IB_LOG_DEBUG) {
+        ib_list_create(&managers, mp);
     }
 
     /* Select a collection manager */
-    rc = ib_managed_collection_select(cp->ib, cp->mp,
+    rc = ib_managed_collection_select(cp->ib, mp,
                                       collection_name,
+                                      collection_uri,
                                       params,
-                                      &managed_collection);
+                                      collection,
+                                      managers);
     if (rc == IB_ENOENT) {
         ib_cfg_log_error(cp,
                          "%s: No matching collection manager found for \"%s\"",
@@ -4436,18 +4472,26 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
     }
 
     /* Add the field to the list */
-    rc = ib_list_push(cfg->mancoll_list,
-                      (ib_managed_collection_t *)managed_collection);
+    rc = ib_list_push(cfg->mancoll_list, collection);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "%s: Error pushing value on list: %s",
+        ib_cfg_log_error(cp, "%s: Error adding managed collection to list: %s",
                          directive, ib_status_to_string(rc));
         return rc;
     }
 
-    ib_cfg_log_debug(cp,
-                     "%s: Added managed collection \"%s\" for context \"%s\"",
-                     directive, collection_name,
-                     ib_context_full_get(cp->cur_ctx));
+    if (managers != NULL) {
+        IB_LIST_LOOP_CONST(managers, node) {
+            const ib_collection_manager_t *manager =
+                (const ib_collection_manager_t *)node->data;
+            ib_cfg_log_debug(cp,
+                             "%s: Collection \"%s\" managed by \"%s\" "
+                             "for context \"%s\"",
+                             directive,
+                             collection_name,
+                             ib_managed_collection_manager_name(manager),
+                             ib_context_full_get(cp->cur_ctx));
+        }
+    }
 
     /* Done */
     return IB_OK;
@@ -5212,11 +5256,18 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
 
-    /* Initialize the core name/value pair managed collection */
-    rc = core_managed_collection_nvpair_init(ib, m);
+    /* Initialize the managed collection logic */
+    rc = ib_managed_collection_init(ib);
     if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to initialize core name/value pair "
-                     "collection manager: %s",
+        ib_log_alert(ib, "Failed to initialize managed collections: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Initialize the collection manager logic */
+    rc = core_managed_collection_init(ib, m);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to initialize managed collections: %s",
                      ib_status_to_string(rc));
         return rc;
     }

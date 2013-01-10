@@ -26,6 +26,7 @@
  */
 
 #include "state_notify_private.h"
+#include "managed_collection_private.h"
 
 #include <ironbee/array.h>
 #include <ironbee/context_selection.h>
@@ -107,44 +108,6 @@ struct ib_ctxsel_registration_t {
     ib_ctxsel_finalize_fn_t        finalize_fn;        /**< Finalize fn */
     void                          *finalize_cb_data;   /**< Callback data*/
 };
-
-/**
- * Managed collection typedefs that aren't in managed_collection.h
- */
-typedef struct ib_collection_manager_t ib_collection_manager_t;
-typedef struct ib_managed_collection_inst_t ib_managed_collection_inst_t;
-
-/**
- * Managed collection
- */
-struct ib_managed_collection_t {
-    const char                    *name;     /**< Collection name */
-    const ib_collection_manager_t *manager;  /**< Collection Manager */
-    void                          *data;     /**< Manager specific data */
-};
-
-/**
- * Managed collection handler data
- */
-struct ib_collection_manager_t {
-    const char                *name;           /**< Collection manager name */
-    const ib_module_t         *module;         /**< The registering module */
-    ib_managed_collection_selection_fn_t selection_fn;/**< Selection fn */
-    void                              *selection_data;/**< Selection fn data */
-    ib_managed_collection_populate_fn_t populate_fn;  /**< Populate function */
-    void                              *populate_data; /**< Populate fn data */
-    ib_managed_collection_persist_fn_t  persist_fn;   /**< Persist function */
-    void                              *persist_data;  /**< Persist fn data */
-};
-
-/**
- * Managed collection instance
- */
-struct ib_managed_collection_inst_t {
-    ib_list_t                     *collection_list; /**< DPI collection */
-    const ib_managed_collection_t *collection;      /**< Collection object */
-};
-
 
 /**
  * Engine handle.
