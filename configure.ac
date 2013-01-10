@@ -427,10 +427,15 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="libs util engine servers lua automata modules etc docs tests packaging"
+TOPLEVEL_SUBDIRS="libs util engine servers automata modules etc docs tests packaging"
 LIBS_SUBDIRS="libhtp"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver"
 
+dnl Enable lua subdir if enabled
+if test "$enable_lua" != "no"; then
+    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} lua"
+fi
+ 
 dnl Enable cli subdir if enabled
 if test "$util_cli" != 0; then
     TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} cli"
