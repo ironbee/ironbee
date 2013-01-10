@@ -304,18 +304,3 @@ void DLL_PUBLIC ib_log_set_level(ib_engine_t *ib, ib_log_level_t level)
     corecfg->log_level = level;
     return;
 }
-
-ib_status_t ib_auditlog_write(ib_provider_inst_t *pi)
-{
-    IB_PROVIDER_API_TYPE(audit) *api;
-    ib_status_t rc;
-
-    if (pi == NULL) {
-        return IB_EINVAL;
-    }
-
-    api = (IB_PROVIDER_API_TYPE(audit) *)pi->pr->api;
-
-    rc = api->write_log(pi);
-    return rc;
-}

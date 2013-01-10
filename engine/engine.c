@@ -38,6 +38,7 @@
 #include <ironbee/ip.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
+#include <ironbee/provider.h>
 #include <ironbee/server.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>
@@ -2113,5 +2114,20 @@ ib_status_t ib_context_get(ib_context_t *ctx,
                            void *pval, ib_ftype_t *ptype)
 {
     ib_status_t rc = ib_cfgmap_get(ctx->cfg, name, pval, ptype);
+    return rc;
+}
+
+ib_status_t ib_auditlog_write(ib_provider_inst_t *pi)
+{
+    IB_PROVIDER_API_TYPE(audit) *api;
+    ib_status_t rc;
+
+    if (pi == NULL) {
+        return IB_EINVAL;
+    }
+
+    api = (IB_PROVIDER_API_TYPE(audit) *)pi->pr->api;
+
+    rc = api->write_log(pi);
     return rc;
 }
