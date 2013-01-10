@@ -196,7 +196,7 @@ protected:
     )
     {
         ib_hook_t* hook;
-        ib_state_event_type_t ib_event =
+        ib_state_event_type_t ib_logevent =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
         hook = m_engine.ib()->hook[event];
@@ -206,7 +206,7 @@ protected:
         EXPECT_EQ(IB_OK,
             hook->callback.tx(
                 m_engine.ib(), m_transaction.ib(),
-                ib_event, hook->cdata)
+                ib_logevent, hook->cdata)
         );
         EXPECT_EQ(CB_TRANSACTION, info.which);
         EXPECT_EQ(m_engine, info.engine);
@@ -219,7 +219,7 @@ protected:
     )
     {
         ib_hook_t* hook;
-        ib_state_event_type_t ib_event =
+        ib_state_event_type_t ib_logevent =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
         hook = m_engine.ib()->hook[event];
@@ -227,7 +227,7 @@ protected:
             hook = hook->next;
         }
         EXPECT_EQ(IB_OK,
-            hook->callback.null(m_engine.ib(), ib_event, hook->cdata)
+            hook->callback.null(m_engine.ib(), ib_logevent, hook->cdata)
         );
         EXPECT_EQ(CB_NULL, info.which);
         EXPECT_EQ(m_engine, info.engine);
@@ -251,7 +251,7 @@ protected:
         );
 
         ib_hook_t* hook;
-        ib_state_event_type_t ib_event =
+        ib_state_event_type_t ib_logevent =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
         hook = m_engine.ib()->hook[event];
@@ -262,7 +262,7 @@ protected:
         ib_status_t rc =
             reinterpret_cast<ib_callback_t>(hook->callback.as_void)(
                 m_engine.ib(), m_transaction.ib(),
-                ib_event, &ib_data, hook->cdata
+                ib_logevent, &ib_data, hook->cdata
             );
         EXPECT_EQ(IB_OK, rc);
         EXPECT_EQ(which_cb, info.which);
@@ -288,7 +288,7 @@ protected:
         );
 
         ib_hook_t* hook;
-        ib_state_event_type_t ib_event =
+        ib_state_event_type_t ib_logevent =
             static_cast<ib_state_event_type_t>(event);
         info = handler_info_t();
         hook = m_engine.ib()->hook[event];
@@ -298,7 +298,7 @@ protected:
         DataType ib_data;
         ib_status_t rc =
             reinterpret_cast<ib_callback_t>(hook->callback.as_void)(
-                m_engine.ib(), ib_event, &ib_data, hook->cdata
+                m_engine.ib(), ib_logevent, &ib_data, hook->cdata
             );
         EXPECT_EQ(IB_OK, rc);
         EXPECT_EQ(which_cb, info.which);

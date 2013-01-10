@@ -201,7 +201,7 @@ ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
 }
 
 
-ib_status_t ib_event_add(ib_provider_inst_t *pi,
+ib_status_t ib_logevent_add(ib_provider_inst_t *pi,
                          ib_logevent_t *e)
 {
     IB_PROVIDER_API_TYPE(logevent) *api;
@@ -217,7 +217,7 @@ ib_status_t ib_event_add(ib_provider_inst_t *pi,
     return rc;
 }
 
-ib_status_t ib_event_remove(ib_provider_inst_t *pi,
+ib_status_t ib_logevent_remove(ib_provider_inst_t *pi,
                             uint32_t id)
 {
     IB_PROVIDER_API_TYPE(logevent) *api;
@@ -233,7 +233,7 @@ ib_status_t ib_event_remove(ib_provider_inst_t *pi,
     return rc;
 }
 
-ib_status_t ib_event_get_all(ib_provider_inst_t *pi,
+ib_status_t ib_logevent_get_all(ib_provider_inst_t *pi,
                              ib_list_t **pevents)
 {
     IB_PROVIDER_API_TYPE(logevent) *api;
@@ -249,7 +249,7 @@ ib_status_t ib_event_get_all(ib_provider_inst_t *pi,
     return rc;
 }
 
-ib_status_t ib_event_write_all(ib_provider_inst_t *pi)
+ib_status_t ib_logevent_write_all(ib_provider_inst_t *pi)
 {
     IB_PROVIDER_API_TYPE(logevent) *api;
     ib_status_t rc;

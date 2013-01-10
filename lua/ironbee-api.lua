@@ -70,13 +70,13 @@
 ibapi = {}
 ibapi.__index = ibapi
 
-local ib_event = {}
-ib_event.new = function(self, event)
+local ib_logevent = {}
+ib_logevent.new = function(self, event)
     o = { raw = event }
     return setmetatable(o, { __index = self })
 end
 -- String mapping table.
-ib_event.suppressMap = {
+ib_logevent.suppressMap = {
     none           = tonumber(ffi.C.IB_LEVENT_SUPPRESS_NONE),
     false_positive = tonumber(ffi.C.IB_LEVENT_SUPPRESS_FPOS),
     replaced       = tonumber(ffi.C.IB_LEVENT_SUPPRESS_REPLACED),
@@ -84,41 +84,41 @@ ib_event.suppressMap = {
     partial        = tonumber(ffi.C.IB_LEVENT_SUPPRESS_INC),
     other          = tonumber(ffi.C.IB_LEVENT_SUPPRESS_OTHER)
 }
-ib_event.suppressRmap = {}
+ib_logevent.suppressRmap = {}
 -- Build reverse map.
-for k,v in pairs(ib_event.suppressMap) do
-    ib_event.suppressRmap[v] = k
+for k,v in pairs(ib_logevent.suppressMap) do
+    ib_logevent.suppressRmap[v] = k
 end
-ib_event.getSeverity = function(self)
+ib_logevent.getSeverity = function(self)
     return self.raw.confidence
 end
-ib_event.getConfidence = function(self)
+ib_logevent.getConfidence = function(self)
     return self.raw.confidence
 end
-ib_event.getAction = function(self)
+ib_logevent.getAction = function(self)
     return self.raw.action
 end
-ib_event.getRuleId = function(self)
+ib_logevent.getRuleId = function(self)
     return ffi.string(self.raw.rule_id)
 end
-ib_event.getMsg = function(self)
+ib_logevent.getMsg = function(self)
     return ffi.string(self.raw.msg)
 end
-ib_event.getSuppress = function(self)
-    return ib_event.suppressRmap[tonumber(self.raw.suppress)]
+ib_logevent.getSuppress = function(self)
+    return ib_logevent.suppressRmap[tonumber(self.raw.suppress)]
 end
 -- On an event object set the suppression value using a number or name.
 -- value - may be none, false_positive, replaced, incomplete, partial or other.
 --         The value of none indicates that there is no suppression of the event.
-ib_event.setSuppress = function(self, value)
+ib_logevent.setSuppress = function(self, value)
     if type(value) == "number" then
             print("Setting number")
         self.raw.suppress = value
     else
-        self.raw.suppress = ib_event.suppressMap[string.lower(value)] or 0
+        self.raw.suppress = ib_logevent.suppressMap[string.lower(value)] or 0
     end
 end
-ib_event.forEachField = function(self, func)
+ib_logevent.forEachField = function(self, func)
     if self.raw.fields ~= nil then
         ibapi.each_list_node(
             self.raw.fields,
@@ -128,7 +128,7 @@ ib_event.forEachField = function(self, func)
             "char*")
     end
 end
-ib_event.forEachTag = function(self, func)
+ib_logevent.forEachTag = function(self, func)
     if self.raw.tags ~= nil then
         ibapi.each_list_node(
             self.raw.tags,
@@ -523,12 +523,12 @@ end
 ibapi.txapi.forEachEvent = function(self, func)
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
     local list = ffi.new("ib_list_t*[1]")
-    ffi.C.ib_event_get_all(tx.epi, list)
+    ffi.C.ib_logevent_get_all(tx.epi, list)
 
     ibapi.each_list_node(
         list[0],
         function(event)
-            func(ib_event:new(event))
+            func(ib_logevent:new(event))
         end ,
         "ib_logevent_t*")
 end
@@ -541,7 +541,7 @@ ibapi.txapi.events = function(self)
         -- Iterate
         if idx == nil then
             local list = ffi.new("ib_list_t*[1]")
-            ffi.C.ib_event_get_all(tx.epi, list)
+            ffi.C.ib_logevent_get_all(tx.epi, list)
 
             if (list[0] == nil) then
                 return nil, nil
@@ -561,7 +561,7 @@ ibapi.txapi.events = function(self)
 
         -- Get event and convert it to lua.
         local event = 
-            ib_event:new(ffi.cast("ib_logevent_t*",
+            ib_logevent:new(ffi.cast("ib_logevent_t*",
                 ffi.C.ib_list_node_data(t.node)))
 
         -- Return.
@@ -702,7 +702,7 @@ ibapi.txapi.addEvent = function(self, msg, options)
         end
     end
 
-    ffi.C.ib_event_add(tx.epi, event[0])
+    ffi.C.ib_logevent_add(tx.epi, event[0])
 end
 
 -- Return a ib_field_t* to the field named and stored in the DPI.

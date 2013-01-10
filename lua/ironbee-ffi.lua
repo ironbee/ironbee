@@ -549,26 +549,26 @@ function ib_logevent_create(pool, rule_id, type, activity,
     return newLogevent(c_le[0])
 end
 
-function ib_event_add(pi, e)
+function ib_logevent_add(pi, e)
     local c_pi = pi.cvalue()
     local c_e = e.cvalue()
 
-    return c.ib_event_add(c_pi, c_e)
+    return c.ib_logevent_add(c_pi, c_e)
 end
 
-function ib_event_remove(pi, id)
+function ib_logevent_remove(pi, id)
     local c_pi = pi.cvalue()
     local c_id = ffi.cast("uint64_t", id)
 
-    return c.ib_event_remove(c_pi, c_id)
+    return c.ib_logevent_remove(c_pi, c_id)
 end
 
-function ib_events_get_all(pi)
+function ib_logevents_get_all(pi)
     local c_pi = pi.cvalue()
     local c_events = ffi.new("ib_list_t*[1]")
     local rc
 
-    rc = c.ib_event_get_all(c_pi, c_events)
+    rc = c.ib_logevent_get_all(c_pi, c_events)
 
     -- Loop through and create a list of logevents to return
     local l_vals = {}
@@ -583,10 +583,10 @@ function ib_events_get_all(pi)
     return l_vals
 end
 
-function ib_events_write_all(pi)
+function ib_logevents_write_all(pi)
     local c_pi = pi.cvalue()
 
-    return c.ib_event_write_all(c_pi)
+    return c.ib_logevent_write_all(c_pi)
 end
 
 -- ===============================================

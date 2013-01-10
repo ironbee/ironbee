@@ -1574,7 +1574,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 
         /* Add all unsuppressed alert event tags as well
          * as the last alert message and action. */
-        rc = ib_event_get_all(tx->epi, &events);
+        rc = ib_logevent_get_all(tx->epi, &events);
         if (rc == IB_OK) {
             ib_list_node_t *enode;
             ib_field_t *tx_action;
@@ -1760,7 +1760,7 @@ static ib_status_t ib_auditlog_add_part_events(ib_auditlog_t *log)
     ib_status_t rc;
 
     /* Get the list of events. */
-    rc = ib_event_get_all(log->tx->epi, &list);
+    rc = ib_logevent_get_all(log->tx->epi, &list);
     if (rc != IB_OK) {
         return rc;
     }
@@ -2194,7 +2194,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
             break;
         /* Only if events are present */
         case 2:
-            rc = ib_event_get_all(tx->epi, &events);
+            rc = ib_logevent_get_all(tx->epi, &events);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -2281,7 +2281,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     ib_auditlog_write(audit);
 
     /* Events */
-    ib_event_write_all(tx->epi);
+    ib_logevent_write_all(tx->epi);
 
     return IB_OK;
 }
