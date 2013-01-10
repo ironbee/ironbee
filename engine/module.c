@@ -32,6 +32,7 @@
 #include <ironbee/dso.h>
 #include <ironbee/mpool.h>
 
+#include <assert.h>
 #include <inttypes.h>
 
 /// @todo Probably need to load into a given context???
@@ -109,6 +110,10 @@ ib_status_t ib_module_load(ib_module_t **pm,
                            ib_engine_t *ib,
                            const char *file)
 {
+    assert(pm != NULL);
+    assert(ib != NULL);
+    assert(file != NULL);
+
     ib_status_t rc;
     ib_dso_t *dso;
     union {
@@ -123,6 +128,7 @@ ib_status_t ib_module_load(ib_module_t **pm,
 
     /* Load module and fetch the module symbol. */
     ib_log_debug2(ib, "Loading module: %s", file);
+
     rc = ib_dso_open(&dso, file, ib->config_mp);
     if (rc != IB_OK) {
         ib_log_error(ib,

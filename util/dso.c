@@ -29,6 +29,7 @@
 
 #include <ironbee/util.h>
 
+#include <assert.h>
 #include <dlfcn.h>
 
 /**
@@ -45,6 +46,10 @@ ib_status_t ib_dso_open(
     ib_mpool_t  *pool
 )
 {
+    assert(dso != NULL);
+    assert(file != NULL);
+    assert(pool != NULL);
+
     void *handle;
 
     /// @todo Probably need to do this portably someday
