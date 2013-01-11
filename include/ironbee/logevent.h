@@ -48,7 +48,7 @@ extern "C" {
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_logevent_add(ib_provider_inst_t *pi,
-                                    ib_logevent_t *e);
+                                       ib_logevent_t *e);
 
 /**
  * Remove an event from the queue before it is logged.
@@ -59,7 +59,7 @@ ib_status_t DLL_PUBLIC ib_logevent_add(ib_provider_inst_t *pi,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_logevent_remove(ib_provider_inst_t *pi,
-                                       uint32_t id);
+                                          uint32_t id);
 
 /**
  * Get a list of pending events to be logged.
@@ -72,7 +72,7 @@ ib_status_t DLL_PUBLIC ib_logevent_remove(ib_provider_inst_t *pi,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_logevent_get_all(ib_provider_inst_t *pi,
-                                        ib_list_t **pevents);
+                                           ib_list_t **pevents);
 
 /**
  * Write out any pending events to the log.
