@@ -45,18 +45,19 @@
  *
  * @param[in] drec
  * @param[in] d
+ * @return HTP_OK on success, HTP_ERROR or some other negative integer on failure.
  */
 static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *d) {
     size_t consumed = 0;
 
-    // Return if we've previously had an error
+    // Return if we've previously had an error.
     if (drec->initialized < 0) return HTP_ERROR;
 
     // Do we need to initialize?
     if (drec->initialized == 0) {
         // Check the header
         if ((drec->header_len == 0) && (d->len >= 10)) {
-            // We have received enough data initialize; use the input buffer directly
+            // We have received enough data initialize; use the input buffer directly.
             if ((d->data[0] != DEFLATE_MAGIC_1) || (d->data[1] != DEFLATE_MAGIC_2)) {
                 htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
                         "GZip decompressor: Magic bytes mismatch");
@@ -83,7 +84,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             // Is there enough in input?
             if (copylen > d->len) copylen = d->len;
 
-            // Copy the bytes
+            // Copy the bytes.
             memcpy(drec->header + drec->header_len, d->data, copylen);
             drec->header_len += copylen;
             consumed = copylen;
@@ -107,34 +108,35 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
 
                 drec->initialized = 1;
             } else {
-                // Need more data
+                // Need more data.
                 return HTP_OK;
             }
         }
     }
 
-    // Decompress data
+    // Decompress data.
     int rc = 0;
     drec->stream.next_in = (unsigned char *) (d->data + consumed);
     drec->stream.avail_in = d->len - consumed;
 
     while (drec->stream.avail_in != 0) {
         // If there's no more data left in the
-        // buffer, send that information out
+        // buffer, send that information out.
         if (drec->stream.avail_out == 0) {
             drec->crc = crc32(drec->crc, drec->buffer, GZIP_BUF_SIZE);
 
-            // Prepare data for callback
+            // Prepare data for callback.
             htp_tx_data_t d2;
             d2.tx = d->tx;
             d2.data = drec->buffer;
             d2.len = GZIP_BUF_SIZE;
 
-            // Send decompressed data to callback
+            // Send decompressed data to callback.
             htp_status_t callback_rc = drec->super.callback(&d2);
             if (callback_rc != HTP_OK) {
                 inflateEnd(&drec->stream);
                 drec->zlib_initialized = 0;
+                
                 return callback_rc;
             }
 
@@ -151,28 +153,28 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             // Update CRC
             drec->crc = crc32(drec->crc, drec->buffer, len);
 
-            // Prepare data for callback
+            // Prepare data for the callback.
             htp_tx_data_t d2;
             d2.tx = d->tx;
             d2.data = drec->buffer;
             d2.len = len;
 
-            // Send decompressed data to callback
+            // Send decompressed data to the callback.
             htp_status_t callback_rc = drec->super.callback(&d2);
             if (callback_rc != HTP_OK) {
                 inflateEnd(&drec->stream);
                 drec->zlib_initialized = 0;
+                
                 return callback_rc;
             }
 
-            // TODO Handle trailer
+            // TODO Handle trailer.
 
             return HTP_OK;
         }
 
         if (rc != Z_OK) {
-            htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                    "GZip decompressor: inflate failed with %d", rc);
+            htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "GZip decompressor: inflate failed with %d", rc);
 
             inflateEnd(&drec->stream);
             drec->zlib_initialized = 0;
@@ -189,7 +191,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
  *
  * @param[in] drec
  */
-static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t * drec) {
+static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t *drec) {
     if (drec == NULL) return;
 
     if (drec->zlib_initialized) {
@@ -205,6 +207,7 @@ static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t * drec) {
  * Initialize gzip decompressor.
  *
  * @param[in] connp
+ * @return New htp_decompressor_t instance on success, or NULL on failure.
  */
 htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, int format) {
     htp_decompressor_gzip_t *drec = calloc(1, sizeof (htp_decompressor_gzip_t));
@@ -221,8 +224,7 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, int format)
 
     int rc = inflateInit2(&drec->stream, GZIP_WINDOW_SIZE);
     if (rc != Z_OK) {
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                "GZip decompressor: inflateInit2 failed with code %d", rc);
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "GZip decompressor: inflateInit2 failed with code %d", rc);
 
         inflateEnd(&drec->stream);
         free(drec->buffer);
