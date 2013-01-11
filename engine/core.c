@@ -3970,7 +3970,7 @@ static ib_status_t core_dir_loc_end(ib_cfgparser_t *cp,
  * Handle the site-specific directives
  *
  * @param cp Config parser
- * @param name Directive name
+ * @param directive Directive name
  * @param vars The list of variables passed to @a name.
  * @param cbdata Callback data (from directive registration)
  *

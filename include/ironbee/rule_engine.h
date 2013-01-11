@@ -249,7 +249,7 @@ ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
  *
  * @param ib       Engine.
  * @param tag      Driver tag; NUL terminated.
- * @param function Driver function.
+ * @param driver   Driver function.
  * @param cbdata   Driver callback data.
  *
  * @returns Status code

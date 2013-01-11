@@ -2266,11 +2266,12 @@ static ib_status_t rules_lua_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
  * @details This will atomically create and destroy a lua_State*
  *          allowing for concurrent execution of @a func_name
  *          by a ib_lua_func_eval(ib_engine_t*, ib_txt_t*, const char*).
- * @param[in] ib IronBee context.
- * @param[in,out] tx The transaction. The Rule may color this with data.
+ *
+ * @param[in,out] rule_exec Rule execution environment
  * @param[in] func_name The Lua function name to call.
  * @param[out] result The result integer value. This should be set to
  *             1 (true) or 0 (false).
+ *
  * @returns IB_OK on success, IB_EUNKNOWN on semaphore locking error, and
  *          IB_EALLOC is returned if a new execution stack cannot be created.
  */
