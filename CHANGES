@@ -59,6 +59,16 @@ IronBee v0.7.0
   * To disambiguate, previous module data code has moved from `data` to
     `module_data`.
 
+* Logging overhaul.
+
+  * For servers, use `ib_log_set_logger` and `ib_log_set_loglevel` to setup
+    custom loggers.  Provider interface is gone.
+  * For configuration writers, use `Log` and `LogLevel`; `DebugLog` and 
+    `DebugLogLevel` are gone`.  `LogHandler` is also gone.
+  * For module writers, use `ib_log_vex` instead of `ib_log_vex_ex`.  Include
+    `log.h` for logging routines.
+  * For engine developers, logging code is now in `log.c` and `log.h`.
+
 **Modules**
 
 * ac and pcre have been updated to use the new tx data API.
