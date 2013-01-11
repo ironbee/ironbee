@@ -1792,6 +1792,9 @@ void ironbee_logger(
 
     /* 100 is more than sufficient. */
     new_fmt = (char *)malloc(strlen(fmt) + 100);
+    if (new_fmt == NULL) {
+        return;
+    }
     sprintf(new_fmt, "%-10s- ", ib_log_level_to_string(level));
 
     if ( (file != NULL) && (line > 0) && (logger_level >= IB_LOG_DEBUG)) {
@@ -1812,7 +1815,7 @@ void ironbee_logger(
     }
     strcat(new_fmt, fmt);
 
-    vsnprintf(buf, sizeof(buf), new_fmt, ap);
+    vsnprintf(buf, c_buf_size, new_fmt, ap);
     free(new_fmt);
 
     /* Write it to the ironbee log. */
@@ -1826,7 +1829,7 @@ void ironbee_logger(
         TSError("[ts-ironbee] %s\n", errmsg);
     }
 
-    if (buf) {
+    if (buf != NULL) {
         free(buf);
     }
 }
@@ -1963,6 +1966,15 @@ static int ironbee_init(const char *configfile, const char *logfile)
         return rc;
     }
 
+    /* success is documented as TS_LOG_ERROR_NO_ERROR but that's undefined.
+     * It's actually a TS_SUCCESS (proxy/InkAPI.cc line 6641).
+     */
+    rv = TSTextLogObjectCreate(logfile, TS_LOG_MODE_ADD_TIMESTAMP,
+                               &ironbee_log);
+    if (rv != TS_SUCCESS) {
+        return IB_OK + rv;
+    }
+
     ib_util_log_level(4);
 
     rc = ib_engine_create(&ironbee, &ibplugin);
@@ -1979,15 +1991,6 @@ static int ironbee_init(const char *configfile, const char *logfile)
     if (rc != IB_OK) {
         return rc;
     }
-
-    /* success is documented as TS_LOG_ERROR_NO_ERROR but that's undefined.
-     * It's actually a TS_SUCCESS (proxy/InkAPI.cc line 6641).
-     */
-    rv = TSTextLogObjectCreate(logfile, TS_LOG_MODE_ADD_TIMESTAMP, &ironbee_log);
-    if (rv != TS_SUCCESS) {
-        return IB_OK + rv;
-    }
-
     rc = atexit(ibexit);
     if (rc != 0) {
         return IB_OK + rv;
