@@ -61,7 +61,7 @@ typedef struct htp_decompressor_t htp_decompressor_t;
 #define COMPRESSION_DISABLED    99
 
 struct htp_decompressor_t {
-    int (*decompress)(htp_decompressor_t *, htp_tx_data_t *);
+    htp_status_t (*decompress)(htp_decompressor_t *, htp_tx_data_t *);
     int (*callback)(htp_tx_data_t *);
     void (*destroy)(htp_decompressor_t *);
 };
@@ -77,7 +77,7 @@ struct htp_decompressor_gzip_t {
     unsigned long crc;    
 };
 
-htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp, int format);
+htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, int format);
 
 #ifdef __cplusplus
 }

@@ -46,13 +46,11 @@
  * @param[in] drec
  * @param[in] d
  */
-static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *d) {
+static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *d) {
     size_t consumed = 0;
 
     // Return if we've previously had an error
-    if (drec->initialized < 0) {
-        return drec->initialized;
-    }
+    if (drec->initialized < 0) return HTP_ERROR;
 
     // Do we need to initialize?
     if (drec->initialized == 0) {
@@ -61,16 +59,16 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
             // We have received enough data initialize; use the input buffer directly
             if ((d->data[0] != DEFLATE_MAGIC_1) || (d->data[1] != DEFLATE_MAGIC_2)) {
                 htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                    "GZip decompressor: Magic bytes mismatch");
+                        "GZip decompressor: Magic bytes mismatch");
                 drec->initialized = -1;
-                return -1;
+                return HTP_ERROR;
             }
 
             if (d->data[3] != 0) {
                 htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                    "GZip decompressor: Unable to handle flags: %d", d->data[3]);
+                        "GZip decompressor: Unable to handle flags: %d", d->data[3]);
                 drec->initialized = -1;
-                return -1;
+                return HTP_ERROR;
             }
 
             drec->initialized = 1;
@@ -95,29 +93,29 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
                 // We do!
                 if ((drec->header[0] != DEFLATE_MAGIC_1) || (drec->header[1] != DEFLATE_MAGIC_2)) {
                     htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                        "GZip decompressor: Magic bytes mismatch");
+                            "GZip decompressor: Magic bytes mismatch");
                     drec->initialized = -1;
-                    return -1;
+                    return HTP_ERROR;
                 }
 
                 if (drec->header[3] != 0) {
                     htp_log(d->tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                        "GZip decompressor: Unable to handle flags: %d", d->data[3]);
+                            "GZip decompressor: Unable to handle flags: %d", d->data[3]);
                     drec->initialized = -1;
-                    return -1;
+                    return HTP_ERROR;
                 }
 
                 drec->initialized = 1;
             } else {
                 // Need more data
-                return 1;
+                return HTP_OK;
             }
         }
     }
 
     // Decompress data
     int rc = 0;
-    drec->stream.next_in = (unsigned char *)(d->data + consumed);
+    drec->stream.next_in = (unsigned char *) (d->data + consumed);
     drec->stream.avail_in = d->len - consumed;
 
     while (drec->stream.avail_in != 0) {
@@ -136,7 +134,7 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
             if (drec->super.callback(&d2) < 0) {
                 inflateEnd(&drec->stream);
                 drec->zlib_initialized = 0;
-                return -1;
+                return HTP_ERROR;
             }
 
             drec->stream.next_out = drec->buffer;
@@ -157,17 +155,17 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
             d2.tx = d->tx;
             d2.data = drec->buffer;
             d2.len = len;
-            
+
             // Send decompressed data to callback
             if (drec->super.callback(&d2) < 0) {
                 inflateEnd(&drec->stream);
                 drec->zlib_initialized = 0;
-                return -1;
+                return HTP_ERROR;
             }
 
-            // TODO Handle trailer           
+            // TODO Handle trailer
 
-            return 1;
+            return HTP_OK;
         }
 
         if (rc != Z_OK) {
@@ -177,11 +175,11 @@ static int htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_t
             inflateEnd(&drec->stream);
             drec->zlib_initialized = 0;
 
-            return -1;
+            return HTP_ERROR;
         }
     }
 
-    return 1;
+    return HTP_OK;
 }
 
 /**
@@ -206,11 +204,11 @@ static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t * drec) {
  *
  * @param[in] connp
  */
-htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp, int format) {
+htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, int format) {
     htp_decompressor_gzip_t *drec = calloc(1, sizeof (htp_decompressor_gzip_t));
     if (drec == NULL) return NULL;
 
-    drec->super.decompress = (int (*)(htp_decompressor_t *, htp_tx_data_t *)) htp_gzip_decompressor_decompress;
+    drec->super.decompress = (int (*)(htp_decompressor_t *, htp_tx_data_t *))htp_gzip_decompressor_decompress;
     drec->super.destroy = (void (*)(htp_decompressor_t *))htp_gzip_decompressor_destroy;
 
     drec->buffer = malloc(GZIP_BUF_SIZE);
@@ -222,7 +220,7 @@ htp_decompressor_t * htp_gzip_decompressor_create(htp_connp_t *connp, int format
     int rc = inflateInit2(&drec->stream, GZIP_WINDOW_SIZE);
     if (rc != Z_OK) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-            "GZip decompressor: inflateInit2 failed with code %d", rc);
+                "GZip decompressor: inflateInit2 failed with code %d", rc);
 
         inflateEnd(&drec->stream);
         free(drec->buffer);
