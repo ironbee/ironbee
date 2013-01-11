@@ -320,7 +320,7 @@ void process_stream_data(stream_data *sd, int direction, struct half_stream *hlf
  * @param tcp
  * @param user_data
  */
-void tcp_callback (struct tcp_stream *tcp, void **user_data) {	
+void tcp_callback (struct tcp_stream *tcp, void **user_data) {
     stream_data *sd = *user_data;
 
     // New connection

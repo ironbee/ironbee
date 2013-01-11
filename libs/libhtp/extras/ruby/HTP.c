@@ -97,7 +97,7 @@ static VALUE cConn;
 		x->N = FIX2INT( v ); \
 		return Qnil; \
 	}
-	
+
 #define RBHTP_RW_INT( T, N ) \
 	RBHTP_R_INT( T, N ) \
 	RBHTP_W_INT( T, N )
@@ -119,7 +119,7 @@ static VALUE cConn;
 			return Qnil; \
 		return BSTR_TO_RSTR( x->N ); \
 	}
-	
+
 #define RBHTP_R_HTP( T, N, H ) \
 	VALUE rbhtp_ ## T ## _ ## N( VALUE self ) \
 	{ \
@@ -132,11 +132,11 @@ static VALUE cConn;
 	}
 
 #define RBHTP_R_URI( T, N ) RBHTP_R_HTP( T, N, cURI )
-	
+
 static VALUE rbhtp_r_string_table( table_t* table )
 {
 	if ( table == NULL ) return Qnil;
-	
+
 	bstr k, v;
 	VALUE r = rb_ary_new();
 	table_iterator_reset( table );
@@ -146,7 +146,7 @@ static VALUE rbhtp_r_string_table( table_t* table )
 	}
 	return r;
 }
-	
+
 #define RBHTP_R_STRING_TABLE( T, N ) \
 	VALUE rbhtp_ ## T ## _ ## N( VALUE self ) \
 	{ \
@@ -169,7 +169,7 @@ static VALUE rbhtp_r_header_table( table_t* table )
 				Data_Wrap_Struct( rb_cObject, 0, 0, v ) ) );
 	}
 	return r;
-}	
+}
 
 #define RBHTP_R_HEADER_TABLE( T, N ) \
 	VALUE rbhtp_ ## T ## _ ## N( VALUE self ) \
@@ -220,7 +220,7 @@ VALUE rbhtp_parse_uri( VALUE self, VALUE input )
 	Check_Type( input, T_STRING );
 	bstr* input_b = bstr_dup_mem( RSTRING_PTR( input ), RSTRING_LEN( input ) );
 	htp_uri_t* uri = NULL; // htp_parse_uri will alloc.
-	
+
 	int result = htp_parse_uri( input_b, &uri );
 	if ( result != HTP_OK ) {
 		bstr_free( &input_b );
@@ -265,13 +265,13 @@ VALUE rbhtp_config_initialize( VALUE self )
 		rb_iv_set( self, *v, Qnil );
 		++v;
 	}
-	
+
 	htp_cfg_t* cfg = htp_config_create();
 
 	rb_iv_set( self, "@cfg",
 		Data_Wrap_Struct( rb_cObject, 0, rbhtp_config_free, cfg )
 	);
-	
+
 	return Qnil;
 }
 
@@ -284,11 +284,11 @@ VALUE rbhtp_config_copy( VALUE self )
 
 	// Note that the existing new_config @cfg will be garbage collected as a
 	// result of this set.
-	
+
 	rb_iv_set( new_config, "@cfg",
 		Data_Wrap_Struct( rb_cObject, 0, rbhtp_config_free,
 			htp_config_copy( cfg ) ) );
-			
+
 	// Now copy over all our callbacks.
 	char* const* v = &rbhtp_config_pvars[0];
 	while ( *v[0] != '\0' ) {
@@ -302,7 +302,7 @@ VALUE rbhtp_config_copy( VALUE self )
 VALUE rbhtp_config_set_server_personality( VALUE self, VALUE personality )
 {
 	Check_Type( personality, T_FIXNUM );
-	
+
 	htp_cfg_t* cfg = NULL;
 	Data_Get_Struct( rb_iv_get( self, "@cfg" ), htp_cfg_t, cfg );
 
@@ -319,7 +319,7 @@ VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
 	htp_config_register_urlencoded_parser( cfg );
 
 	return Qnil;
-}	
+}
 
 #define RBHTP_CALLBACK_SUB( N ) \
 	VALUE rbhtp_config_register_ ## N( VALUE self ) \
@@ -337,7 +337,7 @@ VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
 		rb_iv_set( self, "@" #N "_proc", rb_block_proc() ); \
 		return self; \
 	}
-	
+
 #define RBHTP_CONNP_CALLBACK( N ) \
 	int rbhtp_config_callback_ ## N( htp_connp_t* connp ) \
 	{ \
@@ -352,7 +352,7 @@ VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
 		return 1; \
 	} \
 	RBHTP_CALLBACK_SUB( N )
-	
+
 // Tx data is a tx and a data block.  For *_body_data callbacks we pass
 // in the tx as first argument and the data as a string as the second argument.
 #define RBHTP_TXDATA_CALLBACK( N ) \
@@ -380,8 +380,8 @@ VALUE rbhtp_config_register_urlencoded_parser( VALUE self )
 		return 1; \
 	} \
 	RBHTP_CALLBACK_SUB( N )
-		
-		
+
+
 RBHTP_CONNP_CALLBACK( request )
 RBHTP_CONNP_CALLBACK( response )
 RBHTP_CONNP_CALLBACK( transaction_start )
@@ -438,16 +438,16 @@ void rbhtp_connp_free( void* p )
 VALUE rbhtp_connp_initialize( VALUE self, VALUE config )
 {
 	rb_iv_set( self, "@cfg", config );
-	
+
 	htp_cfg_t* cfg = NULL;
 	Data_Get_Struct( rb_iv_get( config, "@cfg" ), htp_cfg_t, cfg );
-	
+
 	htp_connp_t* connp = htp_connp_create( cfg );
 	htp_connp_set_user_data( connp, (void*)self );
 	rb_iv_set( self, "@connp",
 		Data_Wrap_Struct( rb_cObject, 0, rbhtp_connp_free, connp )
 	);
-	
+
 	return Qnil;
 }
 
@@ -458,9 +458,9 @@ VALUE rbhtp_connp_req_data( VALUE self, VALUE timestamp, VALUE data )
 		return Qnil;
 	}
 
-	StringValue( data ); // try to make data a string.	
+	StringValue( data ); // try to make data a string.
 	Check_Type( data, T_STRING );
-	
+
 	size_t len = RSTRING_LEN( data );
 	char* data_c = RSTRING_PTR( data );
 
@@ -473,10 +473,10 @@ VALUE rbhtp_connp_req_data( VALUE self, VALUE timestamp, VALUE data )
 	VALUE connp_r = rb_iv_get( self, "@connp" );
 	htp_connp_t* connp = NULL;
 	Data_Get_Struct( connp_r, htp_connp_t, connp );
-		
+
 	int result =
 		htp_connp_req_data( connp, &timestamp_c, (unsigned char*)data_c, len );
-	
+
 	return INT2FIX( result );
 }
 
@@ -486,10 +486,10 @@ VALUE rbhtp_connp_in_tx( VALUE self )
 	VALUE config = rb_iv_get( self, "@cfg" );
 	htp_connp_t* connp = NULL;
 	Data_Get_Struct( connp_r, htp_connp_t, connp );
-	
+
 	if ( connp->in_tx == NULL )
 		return Qnil;
-	
+
 	return rb_funcall( cTx, rb_intern( "new" ), 3,
 		Data_Wrap_Struct( rb_cObject, 0, 0, connp->in_tx ),
 		config,
@@ -534,13 +534,13 @@ VALUE rbhtp_header_line_header( VALUE self )
 {
 	htp_header_line_t* hline = NULL;
 	Data_Get_Struct( rb_iv_get( self, "@header_line" ), htp_header_line_t, hline );
-	
+
 	if ( hline->header == NULL )
 		return Qnil;
-		
+
 	return rb_funcall( cHeader, rb_intern( "new" ), 1,
 		Data_Wrap_Struct( rb_cObject, 0, 0, hline->header )
-	);	
+	);
 }
 
 RBHTP_R_STRING( header_line, line );
@@ -580,7 +580,7 @@ VALUE rbhtp_tx_initialize(
 	rb_iv_set( self, "@tx", raw_txn );
 	rb_iv_set( self, "@cfg", cfg );
 	rb_iv_set( self, "@connp", connp );
-	
+
 	return Qnil;
 }
 
@@ -690,12 +690,12 @@ VALUE rbhtp_conn_transactions( VALUE self )
 {
 	htp_conn_t* conn = NULL;
 	Data_Get_Struct( rb_iv_get( self, "@conn" ), htp_conn_t, conn );
-	
+
 	if ( conn->transactions == NULL ) return Qnil;
-	
+
 	VALUE connp = rb_iv_get( self, "@connp" );
 	VALUE cfg = rb_iv_get( connp, "@cfg" );
-	
+
 	htp_tx_t* v;
 	VALUE r = rb_ary_new();
 	list_iterator_reset( conn->transactions );
@@ -715,10 +715,10 @@ VALUE rbhtp_conn_transactions( VALUE self )
 void Init_htp( void )
 {
 	mHTP = rb_define_module( "HTP" );
-	
+
 	rb_define_singleton_method( mHTP, "get_version", rbhtp_get_version, 0 );
 	rb_define_singleton_method( mHTP, "parse_uri", rbhtp_parse_uri, 1 );
-	
+
 	// All numeric constants from htp.h.
   rb_define_const( mHTP, "HTP_ERROR", INT2FIX( HTP_ERROR ) );
   rb_define_const( mHTP, "HTP_OK", INT2FIX( HTP_OK ) );
@@ -862,33 +862,33 @@ void Init_htp( void )
 	rb_define_method( cCfg, "register_response_line", rbhtp_config_register_response_line, 0 );
 	rb_define_method( cCfg, "register_response_headers", rbhtp_config_register_response_headers, 0 );
 	rb_define_method( cCfg, "register_response_trailer", rbhtp_config_register_response_trailer, 0 );
-	
+
 	rb_define_method( cCfg, "register_urlencoded_parser", rbhtp_config_register_urlencoded_parser, 0 );
 	rb_define_method( cCfg, "register_request_body_data", rbhtp_config_register_request_body_data, 0 );
 	rb_define_method( cCfg, "register_response_body_data", rbhtp_config_register_request_body_data, 0 );
 	rb_define_method( cCfg, "register_request_file_data", rbhtp_config_register_request_file_data, 0 );
-	
-	// server_personality= and server_personality are defined in htp_ruby.rb	
+
+	// server_personality= and server_personality are defined in htp_ruby.rb
 	rb_define_method( cCfg, "set_server_personality", rbhtp_config_set_server_personality, 1 );
 	rb_define_method( cCfg, "spersonality", rbhtp_cfg_spersonality, 0 );
-	
+
 	rb_define_method( cCfg, "parse_request_cookies", rbhtp_cfg_parse_request_cookies, 0 );
 	rb_define_method( cCfg, "parse_request_cookies=", rbhtp_cfg_parse_request_cookies_set, 1 );
 	// TODO: Much more to add.
-		
+
 	cConnp = rb_define_class_under( mHTP, "Connp", rb_cObject );
 	rb_define_method( cConnp, "initialize", rbhtp_connp_initialize, 1 );
-	rb_define_method( cConnp, "req_data", rbhtp_connp_req_data, 2 );	
-	rb_define_method( cConnp, "in_tx", rbhtp_connp_in_tx, 0 );	
+	rb_define_method( cConnp, "req_data", rbhtp_connp_req_data, 2 );
+	rb_define_method( cConnp, "in_tx", rbhtp_connp_in_tx, 0 );
 	rb_define_method( cConnp, "conn", rbhtp_connp_conn, 0 );
 	// TODO: Much more to Add.
-	
+
 	cHeader = rb_define_class_under( mHTP, "Header", rb_cObject );
 	rb_define_method( cHeader, "initialize", rbhtp_header_initialize, 1 );
 	rb_define_method( cHeader, "name", rbhtp_header_name, 0 );
 	rb_define_method( cHeader, "value", rbhtp_header_value, 0 );
 	rb_define_method( cHeader, "flags", rbhtp_header_flags, 0 );
-	
+
 	cHeaderLine = rb_define_class_under( mHTP, "HeaderLine", rb_cObject );
 	rb_define_method( cHeaderLine, "initialize", rbhtp_header_line_initialize, 1 );
 	rb_define_method( cHeaderLine, "header", rbhtp_header_line_header, 0 );
@@ -900,10 +900,10 @@ void Init_htp( void )
 	rb_define_method( cHeaderLine, "has_nulls", rbhtp_header_line_has_nulls, 0 );
 	rb_define_method( cHeaderLine, "first_nul_offset", rbhtp_header_line_first_nul_offset, 0 );
 	rb_define_method( cHeaderLine, "flags", rbhtp_header_line_flags, 0 );
-	
+
 	cURI = rb_define_class_under( mHTP, "URI", rb_cObject );
 	rb_define_method( cURI, "initialize", rbhtp_uri_initialize, 1 );
-	
+
 	rb_define_method( cURI, "scheme", rbhtp_uri_scheme, 0 );
 	rb_define_method( cURI, "username", rbhtp_uri_username, 0 );
 	rb_define_method( cURI, "password", rbhtp_uri_password, 0 );
@@ -913,7 +913,7 @@ void Init_htp( void )
 	rb_define_method( cURI, "path", rbhtp_uri_path, 0 );
 	rb_define_method( cURI, "query", rbhtp_uri_query, 0 );
 	rb_define_method( cURI, "fragment", rbhtp_uri_fragment, 0 );
-	
+
 	cTx = rb_define_class_under( mHTP, "Tx", rb_cObject );
 	rb_define_method( cTx, "initialize", rbhtp_tx_initialize, 3 );
 
@@ -922,7 +922,7 @@ void Init_htp( void )
 	rb_define_method( cTx, "request_line_nul_offset", rbhtp_tx_request_line_nul_offset, 0 );
 	rb_define_method( cTx, "request_method_number", rbhtp_tx_request_method_number, 0 );
 	rb_define_method( cTx, "request_line", rbhtp_tx_request_line, 0 );
-	rb_define_method( cTx, "request_method", rbhtp_tx_request_method, 0 );	
+	rb_define_method( cTx, "request_method", rbhtp_tx_request_method, 0 );
 	rb_define_method( cTx, "request_uri", rbhtp_tx_request_uri, 0 );
 	rb_define_method( cTx, "request_uri_normalized", rbhtp_tx_request_uri_normalized, 0 );
   rb_define_method( cTx, "request_protocol", rbhtp_tx_request_protocol, 0 );
@@ -966,27 +966,27 @@ void Init_htp( void )
 	rb_define_method( cTx, "request_cookies", rbhtp_tx_request_cookies, 0 );
 	rb_define_method( cTx, "request_headers", rbhtp_tx_request_headers, 0 );
 	rb_define_method( cTx, "response_headers", rbhtp_tx_response_headers, 0 );
-	
+
 	rb_define_method( cTx, "request_header_lines", rbhtp_tx_request_header_lines, 0 );
 	rb_define_method( cTx, "response_header_lines", rbhtp_tx_response_header_lines, 0 );
-	
+
 	rb_define_method( cTx, "parsed_uri", rbhtp_tx_parsed_uri, 0 );
 	rb_define_method( cTx, "parsed_uri_incomplete", rbhtp_tx_parsed_uri_incomplete, 0 );
-	
+
 	rb_define_method( cTx, "conn", rbhtp_tx_conn, 0 );
-	
+
 	cFile = rb_define_class_under( mHTP, "File", rb_cObject );
 	rb_define_method( cFile, "initialize", rbhtp_file_initialize, 1 );
-	
+
 	rb_define_method( cFile, "source", rbhtp_file_source, 0 );
 	rb_define_method( cFile, "filename", rbhtp_file_filename, 0 );
 	rb_define_method( cFile, "len", rbhtp_file_len, 0 );
 	rb_define_method( cFile, "tmpname", rbhtp_file_tmpname, 0 );
 	rb_define_method( cFile, "fd", rbhtp_file_fd, 0 );
-	
+
 	cConn = rb_define_class_under( mHTP, "Conn", rb_cObject );
 	rb_define_method( cConn, "initialize", rbhtp_conn_initialize, 2 );
-	
+
 	rb_define_method( cConn, "remote_addr", rbhtp_conn_remote_addr, 0 );
 	rb_define_method( cConn, "remote_port", rbhtp_conn_remote_port, 0 );
 	rb_define_method( cConn, "local_addr", rbhtp_conn_local_addr, 0 );
@@ -999,7 +999,7 @@ void Init_htp( void )
 	rb_define_method( cConn, "transactions", rbhtp_conn_transactions, 0 );
 	rb_define_method( cConn, "open_timestamp", rbhtp_conn_open_timestamp, 0 );
 	rb_define_method( cConn, "close_timestamp", rbhtp_conn_close_timestamp, 0 );
-	
+
 	// Load ruby code.
 	rb_require( "htp_ruby" );
 }
