@@ -62,7 +62,6 @@ typedef struct ib_core_cfg_t ib_core_cfg_t;
 struct ib_core_cfg_t {
     /** Provider instances */
     struct {
-        ib_provider_inst_t *logger;     /**< Log provider instance */
         ib_provider_inst_t *parser;     /**< Parser provider instance */
     } pi;
 
@@ -75,7 +74,7 @@ struct ib_core_cfg_t {
 
     ib_num_t         log_level;         /**< Log level */
     const char      *log_uri;           /**< Log URI */
-    const char      *log_handler;       /**< Active logger provider key */
+    FILE            *log_fp;            /**< File pointer for log. */
     const char      *logevent;          /**< Active logevent provider key */
     ib_list_t       *initvar_list;      /**< List of ib_field_t for InitVar */
     ib_list_t       *mancoll_list;      /**< List of ib_managed_collection_t */

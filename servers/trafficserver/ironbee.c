@@ -1759,52 +1759,56 @@ static int check_ts_version(void)
  *
  * Performs IronBee logging for the ATS plugin.
  *
- * @param[in] dummy Dummy pointer
- * @param[in] level Debug level
  * @param[in] ib IronBee engine
+ * @param[in] level Debug level
  * @param[in] file File name
  * @param[in] line Line number
  * @param[in] fmt Format string
  * @param[in] ap Var args list to match the format
+ * @param[in] cbdata Callback data.
  */
-static void ironbee_logger(void *dummy,
-                           ib_log_level_t level,
-                           const ib_engine_t *ib,
-                           const char *file,
-                           int line,
-                           const char *fmt,
-                           va_list ap)
+static
+void ironbee_logger(
+    const ib_engine_t *ib,
+    ib_log_level_t     level,
+    const char        *file,
+    int                line,
+    const char        *fmt,
+    va_list            ap,
+    void              *cbdata
+)
 {
-    char buf[7000];
+    char *buf = NULL;
+    static size_t c_buf_size = 7000;
     char *new_fmt;
     const char *errmsg = NULL;
+    ib_log_level_t logger_level = ib_log_get_level(ib);
     TSReturnCode rc;
+
+    buf = (char *)malloc(c_buf_size);
+    if (buf == NULL) {
+        return;
+    }
 
     /* 100 is more than sufficient. */
     new_fmt = (char *)malloc(strlen(fmt) + 100);
     sprintf(new_fmt, "%-10s- ", ib_log_level_to_string(level));
 
-    if ( (file != NULL) && (line > 0) ) {
-        ib_core_cfg_t *corecfg = NULL;
-        ib_status_t ibrc = ib_context_module_config(ib_context_main(ib),
-                                                    ib_core_module(),
-                                                    (void *)&corecfg);
-        if ( (ibrc == IB_OK) && ((int)corecfg->log_level >= IB_LOG_DEBUG) ) {
-            while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
-                file += 3;
-            }
-
-            static const size_t c_line_info_length = 35;
-            char line_info[c_line_info_length];
-            snprintf(
-                line_info,
-                c_line_info_length,
-                "(%23s:%-5d) ",
-                file,
-                line
-            );
-            strcat(new_fmt, line_info);
+    if ( (file != NULL) && (line > 0) && (logger_level >= IB_LOG_DEBUG)) {
+        while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
+            file += 3;
         }
+
+        static const size_t c_line_info_length = 35;
+        char line_info[c_line_info_length];
+        snprintf(
+            line_info,
+            c_line_info_length,
+            "(%23s:%-5d) ",
+            file,
+            line
+        );
+        strcat(new_fmt, line_info);
     }
     strcat(new_fmt, fmt);
 
@@ -1820,6 +1824,10 @@ static void ironbee_logger(void *dummy,
 
     if (errmsg != NULL) {
         TSError("[ts-ironbee] %s\n", errmsg);
+    }
+
+    if (buf) {
+        free(buf);
     }
 }
 
@@ -1912,11 +1920,6 @@ static ib_status_t ironbee_conn_init(ib_engine_t *ib,
     return IB_OK;
 }
 
-static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
-    IB_PROVIDER_IFACE_HEADER_DEFAULTS,
-    ironbee_logger
-};
-
 
 /* this can presumably be global since it's only setup on init */
 //static ironbee_config_t ibconfig;
@@ -1967,16 +1970,10 @@ static int ironbee_init(const char *configfile, const char *logfile)
         return rc;
     }
 
-    rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER, "ironbee-ts",
-                              NULL, &ironbee_logger_iface, NULL);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    ib_context_set_string(ib_context_engine(ironbee),
-                          IB_PROVIDER_TYPE_LOGGER, "ironbee-ts");
+    ib_log_set_logger(ironbee, ironbee_logger, NULL);
+    /* Using default log level function. */
     ib_context_set_num(ib_context_engine(ironbee),
-                       IB_PROVIDER_TYPE_LOGGER ".log_level", 4);
+                       "logger.log_level", 4);
 
     rc = ib_engine_init(ironbee);
     if (rc != IB_OK) {
@@ -2012,7 +2009,6 @@ static int ironbee_init(const char *configfile, const char *logfile)
 
     /* Get the main context, set some defaults */
     ctx = ib_context_main(ironbee);
-    ib_context_set_string(ctx, IB_PROVIDER_TYPE_LOGGER, "ironbee-ts");
     ib_context_set_num(ctx, "logger.log_level", 4);
 
     rc = ib_cfgparser_parse(cp, configfile);

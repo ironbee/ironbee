@@ -301,29 +301,38 @@ static ib_server_t ibplugin = {
  *
  * Performs IronBee logging for the ATS plugin.
  *
- * @param[in] data Dummy pointer
- * @param[in] level Debug level
+ * @param[in] ib IronBee engine.
+ * @param[in] level Log level
  * @param[in] ib IronBee engine
  * @param[in] file File name
  * @param[in] line Line number
  * @param[in] fmt Format string
  * @param[in] ap Var args list to match the format
+ * @param[in] cbdata Callback data.
  */
-static void ironbee_logger(void *data,
-                           ib_log_level_t level,
-                           const ib_engine_t *ib,
-                           const char *file,
-                           int line,
-                           const char *fmt,
-                           va_list ap)
+static
+void ironbee_logger(
+    const ib_engine_t *ib,
+    ib_log_level_t     level,
+    const char        *file,
+    int                line,
+    const char        *fmt,
+    va_list            ap,
+    void              *cbdata
+)
 {
-    char buf[8192 + 1];
+    char *buf = NULL;
     int limit = 7000;
     int ap_level = APLOG_WARNING | log_level_is_startup;
     int ec;
+    const size_t c_buf_size = 8192 + 1;
+    buf = (char *)malloc(c_buf_size);
+    if (buf == NULL) {
+        return;
+    }
 
     /* Buffer the log line. */
-    ec = vsnprintf(buf, sizeof(buf), fmt, ap);
+    ec = vsnprintf(buf, c_buf_size, fmt, ap);
     if (ec >= limit) {
         /* Mark as truncated, with a " ...". */
         memcpy(buf + (limit - 5), " ...", 5);
@@ -367,14 +376,24 @@ static void ironbee_logger(void *data,
 
     /* Write it to the error log. */
     ap_log_error(APLOG_MARK, ap_level, 0, NULL, "ironbee: %s", buf);
+
+    if (buf) {
+        free(buf);
+    }
 }
 
-/* The logger provider struct */
-static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
-    IB_PROVIDER_IFACE_HEADER_DEFAULTS,
-    ironbee_logger
-};
-
+/**
+ * Log level callback.  Currently fixed.  See @todo above.
+ *
+ * @param[in] ib     IronBee engine.
+ * @param[in] cbdata Callback data.
+ * @returns log level.
+ */
+static
+ib_log_level_t ironbee_loglevel(const ib_engine_t *ib, void *cbdata)
+{
+    return IB_LOG_WARNING;
+}
 
 /***********   APACHE PER-REQUEST FILTERS AND HOOKS  ************/
 
@@ -1147,16 +1166,10 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
         return IB2AP(rc);
     }
 
-    rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER, "ironbee-httpd",
-                              NULL, &ironbee_logger_iface, NULL);
-    if (rc != IB_OK) {
-        return IB2AP(rc);
-    }
-
-    ib_context_set_string(ib_context_engine(ironbee),
-                          IB_PROVIDER_TYPE_LOGGER, "ironbee-httpd");
+    ib_log_set_logger(ironbee, ironbee_logger, NULL);
+    ib_log_set_loglevel(ironbee, ironbee_loglevel, NULL);
     ib_context_set_num(ib_context_engine(ironbee),
-                       IB_PROVIDER_TYPE_LOGGER ".log_level", 4);
+                       "logger.log_level", 4);
 
     rc = ib_engine_init(ironbee);
     if (rc != IB_OK)
@@ -1180,7 +1193,6 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
     }
     ctx = ib_context_main(ironbee);
 
-    ib_context_set_string(ctx, IB_PROVIDER_TYPE_LOGGER, "ironbee-httpd");
     ib_context_set_num(ctx, "logger.log_level", 4);
 
     if (ironbee_config_file == NULL) {

@@ -66,12 +66,6 @@
 #include <unistd.h>
 #include <sys/time.h>
 
-/** Core logger data */
-typedef struct {
-    FILE               *fp;                /**< Current file pointer */
-    const char         *log_uri;           /**< Current log URI */
-} core_lpi_data_t;
-
 /** Core InitCollection parameter parsing data */
 typedef struct {
     pcre       *nvpair_compiled;
@@ -324,82 +318,6 @@ static ib_status_t core_string_to_field(ib_mpool_t *mp,
     return rc;
 }
 
-
-/* -- Core Logger Provider -- */
-
-/**
- * Core debug logger.
- *
- * This is just a simple default logger that prints to stderr. Typically
- * a plugin will register a more elaborate logger and this will not be used,
- * except during startup prior to the registration of another logger.
- *
- * @param data Logger data (FILE *)
- * @param level Log level
- * @param ib IronBee engine
- * @param file Source code filename (typically __FILE__) or NULL
- * @param line Source code line number (typically __LINE__) or NULL
- * @param fmt Printf like format string
- * @param ap Variable length parameter list
- */
-static void core_logger(void *data, ib_log_level_t level,
-                        const ib_engine_t *ib,
-                        const char *file, int line,
-                        const char *fmt, va_list ap)
-{
-    char *new_fmt;
-    char time_info[30];
-    FILE *fp = (FILE *)data;
-
-    ib_clock_timestamp(time_info, NULL);
-
-    /* 100 is more than sufficient. */
-    new_fmt = (char *)malloc(strlen(time_info) + strlen(fmt) + 100);
-    sprintf(new_fmt, "%s %-10s- ", time_info, ib_log_level_to_string(level));
-
-    if ( (file != NULL) && (line > 0) ) {
-        ib_core_cfg_t *corecfg = NULL;
-        ib_status_t rc = ib_context_module_config(ib_context_main(ib),
-                                                  ib_core_module(),
-                                                  (void *)&corecfg);
-        if ( (rc == IB_OK) && ((int)corecfg->log_level >= IB_LOG_DEBUG) ) {
-            while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
-                file += 3;
-            }
-
-            static const size_t c_line_info_length = 35;
-            char line_info[c_line_info_length];
-            snprintf(
-                line_info,
-                c_line_info_length,
-                "(%23s:%-5d) ",
-                file,
-                line
-            );
-            strcat(new_fmt, line_info);
-        }
-    }
-
-    strcat(new_fmt, fmt);
-    strcat(new_fmt, "\n");
-
-    vfprintf(fp, new_fmt, ap);
-    fflush(fp);
-
-    free(new_fmt);
-
-    return;
-}
-
-/**
- * Logger provider interface mapping for the core module.
- */
-static IB_PROVIDER_IFACE_TYPE(logger) core_logger_iface = {
-    IB_PROVIDER_IFACE_HEADER_DEFAULTS,
-    core_logger
-};
-
-
 /* -- Core Log Event Provider -- */
 
 static ib_status_t core_logevent_write(ib_provider_inst_t *epi, ib_logevent_t *e)
@@ -458,49 +376,85 @@ static IB_PROVIDER_IFACE_TYPE(audit) core_audit_iface = {
 /**
  * Core data provider API implementation to log data via va_list args.
  *
- * @param lpi Logger provider instance
- * @param level Log level
  * @param ib IronBee engine
+ * @param level Log level
  * @param file Source code filename (typically __FILE__)
  * @param line Source code line number (typically __LINE__)
  * @param fmt Printf like format string
  * @param ap Variable length parameter list
+ * @param cbdata Callback data.
  *
  * @returns Status code
  */
-static void logger_api_vlogmsg(ib_provider_inst_t *lpi,
-                               int level,
-                               const ib_engine_t *ib,
-                               const char *file, int line,
-                               const char *fmt, va_list ap)
+static
+void logger_vlogmsg(
+    const ib_engine_t *ib,
+    ib_log_level_t     level,
+    const char        *file,
+    int                line,
+    const char        *fmt,
+    va_list            ap,
+    void              *cbdata
+)
 {
-    IB_PROVIDER_IFACE_TYPE(logger) *iface;
     ib_core_cfg_t *main_core_config = NULL;
-    ib_context_t  *main_ctx = ib_context_main(ib);
-    ib_provider_t *main_lp;
-    core_lpi_data_t *lpi_data;
+    ib_context_t  *main_ctx = NULL;
     ib_status_t rc;
-    const char *uri = NULL;
     size_t new_fmt_length = 0;
     char *new_fmt = NULL;
     const char *which_fmt = NULL;
+    char time_info[30];
+    ib_log_level_t logger_level = ib_log_get_level(ib);
 
     /* Get the core context core configuration. */
-    rc = ib_context_module_config(main_ctx,
-                                  ib_core_module(),
-                                  (void *)&main_core_config);
+    main_ctx = ib_context_main(ib);
+    if (main_ctx != NULL) {
+        rc = ib_context_module_config(main_ctx,
+                                      ib_core_module(),
+                                      (void *)&main_core_config);
+    }
 
     /* If not available, fall back to the core global configuration. */
-    if (rc != IB_OK) {
+    if (main_ctx == NULL || rc != IB_OK) {
         main_core_config = &core_global_cfg;
     }
 
     /* Check the log level, return if we're not interested. */
-    if (level > (int)main_core_config->log_level) {
+    if (level > logger_level) {
         return;
     }
 
-    /* Prefix pid.*/
+    /* Do we need to open the file? */
+    if (
+        main_core_config->log_fp == NULL &&
+        main_core_config->log_uri != NULL &&
+        *main_core_config->log_uri != '\0'
+    ) {
+        /* If the URI looks like a file, try to open it. */
+        if (strncmp(main_core_config->log_uri, "file://", 7) == 0) {
+            const char *path = main_core_config->log_uri + 7;
+            main_core_config->log_fp = fopen(path, "a");
+            if (main_core_config->log_fp == NULL) {
+                fprintf(stderr,
+                        "Failed to open log file '%s' for writing: %s\n",
+                        path, strerror(errno));
+            }
+        }
+        else {
+            fprintf(
+                stderr,
+                "Only file:// log URIs current supported."
+            );
+        }
+    }
+
+    /* Finally, use stderr as a fallback. */
+    if (main_core_config->log_fp == NULL) {
+        main_core_config->log_fp = ib_util_fdup(stderr, "a");
+        main_core_config->log_uri = "stderr";
+    }
+
+    /* Compose message */
     new_fmt_length = strlen(fmt) + 10;
     new_fmt = NULL;
     which_fmt = NULL;
@@ -514,186 +468,73 @@ static void logger_api_vlogmsg(ib_provider_inst_t *lpi,
         snprintf(new_fmt, new_fmt_length, "[%d] %s", getpid(), fmt);
     }
 
-    /* Get the current 'logger' provider interface. */
-    iface = (IB_PROVIDER_IFACE_TYPE(logger) *)lpi->pr->iface;
+    ib_clock_timestamp(time_info, NULL);
 
-    /* If it's not the core log provider, we're done: we know nothing
-     * about it's data, so don't try to treat it as a file handle! */
-    main_lp = main_core_config->pi.logger->pr;
-    if ( (main_lp != lpi->pr) || (iface->logger != core_logger) ) {
-        iface->logger(lpi->data, level, ib, file, line, which_fmt, ap);
-        goto done;
-    }
+    /* 100 is more than sufficient. */
+    new_fmt = (char *)malloc(strlen(time_info) + strlen(fmt) + 100);
+    sprintf(new_fmt, "%s %-10s- ", time_info, ib_log_level_to_string(level));
 
-    /* If no interface, do *something*.
-     *  Note that this should be the same as the default case. */
-    if (iface == NULL) {
-        core_logger(stderr, level, ib, file, line, which_fmt, ap);
-        goto done;
-    }
-
-    /* Get the LPI data, check to see if the URI has changed. */
-    lpi_data = (core_lpi_data_t *)lpi->data;
-    if (lpi_data == NULL) {
-        lpi_data = ib_mpool_calloc(ib->mp, sizeof(*lpi_data), 1);
-        if (lpi_data == NULL) {
-            fprintf(stderr, "Failed to allocate core LPI object\n");
-            goto done;
+    if ( (file != NULL) && (line > 0) && (logger_level >= IB_LOG_DEBUG)) {
+        while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
+            file += 3;
         }
-        lpi->data = (void *)lpi_data;
+
+        static const size_t c_line_info_length = 35;
+        char line_info[c_line_info_length];
+        snprintf(
+            line_info,
+            c_line_info_length,
+            "(%23s:%-5d) ",
+            file,
+            line
+        );
+        strcat(new_fmt, line_info);
     }
 
-    uri = main_core_config->log_uri;
-    if ( (lpi_data->fp != NULL) && (lpi_data->log_uri != uri) ) {
-        if ( (lpi_data->log_uri == NULL) || (uri == NULL) ) {
-            fclose(lpi_data->fp);
-            lpi_data->fp = NULL;
-        }
-        else if (strcmp(lpi_data->log_uri, uri) == 0) {
-            lpi_data->log_uri = uri;
-        }
-        else {
-            fclose(lpi_data->fp);
-            lpi_data->fp = NULL;
-        }
-    }
+    strcat(new_fmt, fmt);
+    strcat(new_fmt, "\n");
 
-    /* Do we need to open the file? */
-    if (lpi_data->fp == NULL) {
+    vfprintf(main_core_config->log_fp, new_fmt, ap);
+    fflush(main_core_config->log_fp);
 
-        /* If the URI looks like a file, try to open it. */
-        if ((uri != NULL) && (strncmp(uri, "file://", 7) == 0)) {
-            const char *path = uri + 7;
-            lpi_data->fp = fopen(path, "a");
-            if (lpi_data->fp == NULL) {
-                fprintf(stderr,
-                        "Failed to open log file '%s' for writing: %s\n",
-                        path, strerror(errno));
-            }
-            lpi_data->log_uri = uri;
-        }
-        /* Else no log URI specified.  Will use stderr below. */
-    }
-
-    /* Finally, use stderr as a fallback. */
-    if (lpi_data->fp == NULL) {
-        lpi_data->fp = ib_util_fdup(stderr, "a");
-        lpi_data->log_uri = "stderr";
-    }
-
-    /* Just calls the interface logger with the provider instance data as
-     * the first parameter (if the interface is implemented and not
-     * just abstract).
-     */
-    iface->logger(lpi_data->fp, level, ib, file,  line, which_fmt, ap);
-
-done:
     if (new_fmt) {
         free(new_fmt);
     }
 }
 
 /**
- * Core data provider API implementation to log data via variable args.
+ * Fetch the log level.
  *
- * @param lpi Logger provider instance
- * @param level Log level
- * @param ib IronBee engine
- * @param file Source code filename (typically __FILE__)
- * @param line Source code line number (typically __LINE__)
- * @param fmt Printf like format string
- *
- * @returns Status code
+ * @param[in] ib     IronBee engine.
+ * @param[in] cbdata Callback data; ignored.
+ * @returns Log level.
  */
-static void logger_api_logmsg(ib_provider_inst_t *lpi,
-                              int level,
-                              const ib_engine_t *ib,
-                              const char *file, int line,
-                              const char *fmt, ...)
+static
+ib_log_level_t logger_loglevel(
+    const ib_engine_t *ib,
+    void              *cbdata
+)
 {
-    IB_PROVIDER_IFACE_TYPE(logger) *iface;
-    ib_core_cfg_t *corecfg;
-    ib_status_t rc;
-    va_list ap;
+    ib_core_cfg_t *main_core_config = NULL;
+    ib_context_t  *main_ctx = NULL;
+    ib_status_t    rc = IB_OK;
 
-    rc = ib_context_module_config(
-        ib_context_main(lpi->pr->ib),
-        ib_core_module(),
-        (void *)&corecfg
-    );
-    if (rc != IB_OK) {
-        corecfg = &core_global_cfg;
+    main_ctx = ib_context_main(ib);
+    if (main_ctx != NULL) {
+        rc = ib_context_module_config(
+            main_ctx,
+            ib_core_module(),
+            (void *)&main_core_config
+        );
     }
 
-    if (level > (int)corecfg->log_level) {
-        return;
+    /* If not available, fall back to the core global configuration. */
+    if (main_ctx == NULL || rc != IB_OK) {
+        main_core_config = &core_global_cfg;
     }
 
-    iface = (IB_PROVIDER_IFACE_TYPE(logger) *)lpi->pr->iface;
-
-    va_start(ap, fmt);
-
-    /* Just calls the interface logger with the provider instance data as
-     * the first parameter (if the interface is implemented and not
-     * just abstract).
-     */
-    /// @todo Probably should not need this check
-    if (iface != NULL) {
-        iface->logger((lpi->pr->data ? lpi->pr->data : lpi->data),
-                      level, ib, file, line, fmt, ap);
-    }
-
-    va_end(ap);
+    return main_core_config->log_level;
 }
-
-/**
- * Logger provider registration function.
- *
- * This just does a version and sanity check on a registered provider.
- *
- * @param ib Engine
- * @param lpr Logger provider
- *
- * @returns Status code
- */
-static ib_status_t logger_register(ib_engine_t *ib,
-                                   ib_provider_t *lpr)
-{
-    IB_PROVIDER_IFACE_TYPE(logger) *iface =
-        (IB_PROVIDER_IFACE_TYPE(logger) *)lpr->iface;
-
-    /* Check that versions match. */
-    if (iface->version != IB_PROVIDER_VERSION_LOGGER) {
-        return IB_EINCOMPAT;
-    }
-
-    return IB_OK;
-}
-
-/**
- * Logger provider initialization function.
- *
- * @warning Not yet doing anything.
- *
- * @param lpi Logger provider instance
- * @param data User data
- *
- * @returns Status code
- */
-static ib_status_t logger_init(ib_provider_inst_t *lpi,
-                               void *data)
-{
-    return IB_OK;
-}
-
-/**
- * Logger provider API mapping for core module.
- */
-static IB_PROVIDER_API_TYPE(logger) logger_api = {
-    logger_api_vlogmsg,
-    logger_api_logmsg
-};
-
 
 /* -- Audit API Implementations -- */
 
@@ -4288,8 +4129,7 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         ib_log_debug2(ib, "DefaultBlockStatus: %d", status);
         return IB_OK;
     }
-    else if ( (strcasecmp("DebugLog", name) == 0) ||
-              (strcasecmp("Log", name) == 0) )
+    else if (strcasecmp("Log", name) == 0)
     {
         ib_mpool_t   *mp  = ib_engine_pool_main_get(ib);
         const char   *uri = NULL;
@@ -4315,13 +4155,6 @@ static ib_status_t core_dir_param1(ib_cfgparser_t *cp,
         }
         ib_log_debug2(ib, "%s: URI=\"%s\"", name, uri);
         rc = ib_context_set_string(ctx, "logger.log_uri", uri);
-        return rc;
-    }
-    else if ( (strcasecmp("DebugLogHandler", name) == 0) ||
-              (strcasecmp("LogHandler", name) == 0) )
-    {
-        ib_log_debug2(ib, "%s: \"%s\" ctx=%p", name, p1_unescaped, ctx);
-        rc = ib_context_set_string(ctx, "logger.log_handler", p1_unescaped);
         return rc;
     }
     else if (strcasecmp("LoadModule", name) == 0) {
@@ -4494,8 +4327,7 @@ static ib_status_t core_dir_loglevel(ib_cfgparser_t *cp,
         }
     }
 
-    if ( (strcasecmp("DebugLogLevel", name) == 0) ||
-         (strcasecmp("LogLevel", name) == 0) )
+    if (strcasecmp("LogLevel", name) == 0)
     {
         ib_log_debug2(ib, "%s: %u", name, (unsigned int)level);
         rc = ib_context_set_num(ctx, "logger.log_level", level);
@@ -4924,7 +4756,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
 /**
  * Mapping of valid debug log levels to numerical value
  */
-static IB_STRVAL_MAP(core_debuglog_levels_map) = {
+static IB_STRVAL_MAP(core_loglevels_map) = {
     IB_STRVAL_PAIR("emergency", IB_LOG_EMERGENCY),
     IB_STRVAL_PAIR("alert", IB_LOG_ALERT),
     IB_STRVAL_PAIR("critical", IB_LOG_CRITICAL),
@@ -5064,32 +4896,12 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
 
     /* Logging */
     IB_DIRMAP_INIT_PARAM1(
-        "DebugLogLevel",
-        core_dir_loglevel,
-        core_debuglog_levels_map
-    ),
-    IB_DIRMAP_INIT_PARAM1(
-        "DebugLog",
-        core_dir_param1,
-        NULL
-    ),
-    IB_DIRMAP_INIT_PARAM1(
-        "DebugLogHandler",
-        core_dir_param1,
-        NULL
-    ),
-    IB_DIRMAP_INIT_PARAM1(
         "LogLevel",
         core_dir_loglevel,
-        core_debuglog_levels_map
+        core_loglevels_map
     ),
     IB_DIRMAP_INIT_PARAM1(
         "Log",
-        core_dir_param1,
-        NULL
-    ),
-    IB_DIRMAP_INIT_PARAM1(
-        "LogHandler",
         core_dir_param1,
         NULL
     ),
@@ -5199,7 +5011,7 @@ static IB_DIRMAP_INIT_STRUCTURE(core_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "RuleEngineLogLevel",
         core_dir_loglevel,
-        core_debuglog_levels_map
+        core_loglevels_map
     ),
 
     /* TX DPI Initializers */
@@ -5251,10 +5063,8 @@ static ib_status_t core_init(ib_engine_t *ib,
                              void        *cbdata)
 {
     ib_core_cfg_t *corecfg;
-    ib_provider_t *core_log_provider;
     ib_provider_t *core_audit_provider;
     ib_core_module_data_t *core_data;
-    ib_provider_inst_t *logger;
     ib_provider_inst_t *parser;
     ib_filter_t *fbuffer;
     ib_status_t rc;
@@ -5270,7 +5080,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     /* Set defaults */
     corecfg->log_level            = 4;
     corecfg->log_uri              = "";
-    corecfg->log_handler          = MODULE_NAME_STR;
     corecfg->logevent             = MODULE_NAME_STR;
     corecfg->parser               = MODULE_NAME_STR;
     corecfg->buffer_req           = 0;
@@ -5292,21 +5101,9 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->rule_debug_level     = IB_RULE_DLOG_ERROR;
     corecfg->block_status         = 403;
 
-    /* Define the logger provider API. */
-    rc = ib_provider_define(ib, IB_PROVIDER_TYPE_LOGGER,
-                            logger_register, &logger_api);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Register the core logger provider. */
-    rc = ib_provider_register(ib, IB_PROVIDER_TYPE_LOGGER,
-                              MODULE_NAME_STR, &core_log_provider,
-                              &core_logger_iface,
-                              logger_init);
-    if (rc != IB_OK) {
-        return rc;
-    }
+    /* Register logger functions. */
+    ib_log_set_logger(ib, logger_vlogmsg, NULL);
+    ib_log_set_loglevel(ib, logger_loglevel, NULL);
 
     /* Force any IBUtil calls to use the default logger */
     rc = ib_util_log_logger(core_util_logger, ib);
@@ -5419,17 +5216,6 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
 
-    /* Lookup/set default logger provider. */
-    rc = ib_provider_instance_create(ib, IB_PROVIDER_TYPE_LOGGER,
-                                     corecfg->log_handler, &logger,
-                                     ib->mp, NULL);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create %s provider instance '%s': %s",
-                     IB_PROVIDER_TYPE_LOGGER, corecfg->log_handler, ib_status_to_string(rc));
-        return rc;
-    }
-    ib_log_provider_set_instance(ib->ctx, logger);
-
     /* Lookup the core audit log provider. */
     rc = ib_provider_lookup(ib,
                             IB_PROVIDER_TYPE_AUDIT,
@@ -5513,33 +5299,55 @@ static ib_status_t core_init(ib_engine_t *ib,
 }
 
 /**
+ * Finish core module.
+ *
+ * @param[in] ib Engine
+ * @param[in] m Module
+ * @param[in] cbdata Callback data (unused)
+ *
+ * @returns Status code
+ */
+static
+ib_status_t core_finish(
+    ib_engine_t *ib,
+    ib_module_t *m,
+    void        *cbdata
+)
+{
+    ib_core_cfg_t *corecfg;
+    ib_status_t rc;
+
+    /* Get the core module config. */
+    rc = ib_context_module_config(ib->ctx, m, (void *)&corecfg);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to fetch core module config: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
+    if (corecfg->log_fp != NULL && strcmp(corecfg->log_uri, "stderr") != 0) {
+        fclose(corecfg->log_fp);
+    }
+
+    return IB_OK;
+}
+
+/**
  * Core module configuration parameter initialization structure.
  */
 static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
     /* Logger */
     IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_TYPE_LOGGER,
-        IB_FTYPE_NULSTR,
-        ib_core_cfg_t,
-        log_handler
-    ),
-    IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_TYPE_LOGGER ".log_level",
+        "logger.log_level",
         IB_FTYPE_NUM,
         ib_core_cfg_t,
         log_level
     ),
     IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_TYPE_LOGGER ".log_uri",
+        "logger.log_uri",
         IB_FTYPE_NULSTR,
         ib_core_cfg_t,
         log_uri
-    ),
-    IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_TYPE_LOGGER ".log_handler",
-        IB_FTYPE_NULSTR,
-        ib_core_cfg_t,
-        log_handler
     ),
 
     /* Logevent */
@@ -5709,15 +5517,9 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
                                   void         *cbdata)
 {
     ib_core_cfg_t *corecfg;
-    ib_provider_t *lp;
-    ib_provider_inst_t *lpi;
-    const char *handler;
     ib_status_t rc;
     ib_context_t *main_ctx;
     ib_core_cfg_t *main_core_config;
-    ib_provider_t *main_lp;
-    core_lpi_data_t *lpi_data;
-    FILE *orig_fp;
 
     /* Initialize the rule engine for the context */
     rc = ib_rule_engine_ctx_close(ib, mod, ctx);
@@ -5737,8 +5539,6 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
                      ib_status_to_string(rc));
         return rc;
     }
-    main_lp = main_core_config->pi.logger->pr;
-
 
     /* Get the current context config. */
     rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
@@ -5754,65 +5554,6 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
         rc = ib_ctxsel_finalize( ib );
         if (rc != IB_OK) {
             return rc;
-        }
-    }
-
-    /* Lookup/set logger provider. */
-    handler = corecfg->log_handler;
-    rc = ib_provider_instance_create(ib,
-                                     IB_PROVIDER_TYPE_LOGGER,
-                                     handler,
-                                     &lpi,
-                                     ib->mp,
-                                     NULL);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to create %s provider instance '%s': %s",
-                     IB_PROVIDER_TYPE_LOGGER, handler, ib_status_to_string(rc));
-        return rc;
-    }
-    ib_log_provider_set_instance(ctx, lpi);
-
-    /* Get the log provider. */
-    lp  = lpi->pr;
-
-    /* If it's not the core log provider, we're done: we know nothing
-     * about it's data, so don't try to treat it as a file handle! */
-    if (main_lp != lp) {
-        return IB_OK;
-    }
-
-    /* Now, copy the parent's file handle (which was copied in for us
-       when the context was created) */
-    lpi_data = (core_lpi_data_t *)lpi->data;
-    if (lpi_data == NULL) {
-        lpi_data = ib_mpool_calloc(ib->mp, sizeof(*lpi_data), 1);
-        if (lpi_data == NULL) {
-            fprintf(stderr, "Failed to allocate core LPI object\n");
-            return IB_EALLOC;
-        }
-        lpi->data = (void *)lpi_data;
-    }
-
-    if (ctx->ctype == IB_CTYPE_ENGINE) {
-        orig_fp = stderr;
-        lpi_data->log_uri = "stderr";
-    }
-    else {
-        orig_fp = lpi_data->fp;
-        if (lpi_data->log_uri == NULL) {
-            lpi_data->log_uri = "?";
-        }
-    }
-    if (orig_fp != NULL) {
-        FILE *new_fp = ib_util_fdup(orig_fp, "a");
-        if (new_fp != NULL) {
-            lpi_data->fp = new_fp;
-        }
-        else {
-            lpi_data->log_uri = NULL;
-            fprintf(stderr,
-                    "core_ctx_close:failed to duplicate file handle: %s\n",
-                    strerror(errno));
         }
     }
 
@@ -5835,13 +5576,9 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
                                     void *cbdata)
 {
     ib_core_cfg_t *corecfg;
-    ib_provider_t *lp;
-    ib_provider_inst_t *lpi;
     ib_status_t rc;
     ib_context_t *main_ctx;
     ib_core_cfg_t *main_core_config;
-    ib_provider_t *main_lp;
-    core_lpi_data_t *lpi_data;
 
     /* Get the main context config, it's config, and it's logger. */
     main_ctx = ib_context_main(ib);
@@ -5860,7 +5597,6 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
                      ib_status_to_string(rc));
         return rc;
     }
-    main_lp = main_core_config->pi.logger->pr;
 
     /* Get the current context config. */
     rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
@@ -5869,38 +5605,6 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
                      "Failed to fetch core module context config: %s",
                      ib_status_to_string(rc));
         return rc;
-    }
-
-    /* Get the current logger. */
-    lpi = corecfg->pi.logger;
-    if (lpi == NULL) {
-        return IB_OK;
-    }
-    lp  = lpi->pr;
-
-    /* If it's not the core log provider, we're done: we know nothing
-     * about it's data, so don't try to treat it as a file handle! */
-    if (main_lp != lp) {
-        return IB_OK;
-    }
-    else if (  (main_ctx == ctx) && (ib_context_engine(ib) == ctx)  ) {
-        return IB_OK;
-    }
-    else if (lpi->data == NULL) {
-        ib_log_error(ib, "LPI data is NULL!");
-        return IB_EUNKNOWN;
-    }
-
-    /* Close our file handle */
-    lpi_data = (core_lpi_data_t *)lpi->data;
-    if (lpi_data->fp != NULL) {
-        if (fclose(lpi_data->fp) < 0) {
-            fprintf(stderr,
-                    "core_ctx_destroy:Failed closing our fp %p: %s\n",
-                    (void *)lpi_data->fp, strerror(errno) );
-        }
-        lpi_data->fp = NULL;
-        lpi_data->log_uri = NULL;
     }
 
     return IB_OK;
@@ -5917,7 +5621,7 @@ IB_MODULE_INIT(
     core_directive_map,                  /**< Config directive map */
     core_init,                           /**< Initialize function */
     NULL,                                /**< Callback data */
-    NULL,                                /**< Finish function */
+    core_finish,                         /**< Finish function */
     NULL,                                /**< Callback data */
     core_ctx_open,                       /**< Context open function */
     NULL,                                /**< Callback data */

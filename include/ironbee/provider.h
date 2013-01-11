@@ -231,59 +231,6 @@ void DLL_PUBLIC ib_provider_data_set(ib_provider_t *pr, void *data);
 
 /* -- Builtin Provider Interface/API Definitions -- */
 
-/* Logger */
-#define IB_PROVIDER_TYPE_LOGGER     IB_XSTRINGIFY(logger)
-#define IB_PROVIDER_VERSION_LOGGER  0
-
-/** Logger Interface Definition. */
-IB_PROVIDER_DECLARE_IFACE(logger) {
-    IB_PROVIDER_IFACE_HEADER;
-    IB_PROVIDER_MEMBER(ib_log_logger_fn_t, logger);
-};
-
-/** Logger API Definition. */
-IB_PROVIDER_DECLARE_API(logger) {
-    /* void vlogmsg(pi, ctx, level, ib, tx, prefix, file, line, fmt, ap) */
-    IB_PROVIDER_FUNC(
-        void,
-        vlogmsg,
-        (ib_provider_inst_t *pi, int level,
-         const ib_engine_t *ib,
-         const char *file, int line,
-         const char *fmt, va_list ap)
-         VPRINTF_ATTRIBUTE(6)
-    );
-    /* void logmsg(pi, ctx, level, ib, tx, prefix, file, line, fmt, ...) */
-    IB_PROVIDER_FUNC(
-        void,
-        logmsg,
-        (ib_provider_inst_t *pi, int level,
-         const ib_engine_t *ib,
-         const char *file, int line,
-         const char *fmt, ...)
-         PRINTF_ATTRIBUTE(6, 7)
-    );
-};
-
-/**
- * Get the log provider instance within a configuration context.
- *
- * @param ctx Config context
- *
- * @returns The log provider within the given context
- */
-ib_provider_inst_t DLL_PUBLIC *ib_log_provider_get_instance(ib_context_t *ctx);
-
-/**
- * Set the log provider instance within a configuration context.
- *
- * @param ctx Config context
- * @param lpi Log provider instance
- */
-void DLL_PUBLIC ib_log_provider_set_instance(ib_context_t *ctx,
-                                             ib_provider_inst_t *lpi);
-
-
 /* Audit */
 #define IB_PROVIDER_TYPE_AUDIT     IB_XSTRINGIFY(audit)
 #define IB_PROVIDER_VERSION_AUDIT  0
