@@ -5520,24 +5520,11 @@ static ib_status_t core_ctx_close(ib_engine_t  *ib,
 {
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
-    ib_context_t *main_ctx;
-    ib_core_cfg_t *main_core_config;
 
     /* Initialize the rule engine for the context */
     rc = ib_rule_engine_ctx_close(ib, mod, ctx);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to close rule engine context: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Get the main context config, it's config, and it's logger. */
-    main_ctx = ib_context_main(ib);
-    rc = ib_context_module_config(main_ctx, ib_core_module(),
-                                  (void *)&main_core_config);
-    if (rc != IB_OK) {
-        ib_log_alert(ib,
-                     "Failed to fetch main core module context config: %s",
                      ib_status_to_string(rc));
         return rc;
     }
