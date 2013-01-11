@@ -54,7 +54,7 @@
 
 namespace IronBee {
 
-// @cond internal
+/// @cond Internal
 namespace c_trampoline_implementation {
 
 //! Generates member of boost::function that contains type of argument @a n.
@@ -113,17 +113,19 @@ struct make_c_trampoline_helper
     // Error case.
 };
 
+#ifndef DOXYGEN_SKIP
 #include <boost/preprocessor/iteration/local.hpp>
 #define BOOST_PP_LOCAL_MACRO(n) CT_TOP(BOOST_PP_ADD(n, 1))
 #define BOOST_PP_LOCAL_LIMITS   (1, IRONBEEPP_C_TRAMPOLINE_MAX_ARGS)
 #include BOOST_PP_LOCAL_ITERATE()
+#endif
 
 #undef CT_ARG
 #undef CT_ARG_USING
 #undef CT_TOP
 
 } // c_trampoline_impl
-// @endcond
+/// @endcond
 
 /**
  * Convert a C++ functional of signature @a F into a C trampoline.
