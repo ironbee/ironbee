@@ -17,7 +17,7 @@ doxygen_external: external.doxy $(DOXYGEN_DEPS)
 	else \
 		echo "You need doxygen installed to build the docs."; \
 	fi;
-    
+
 doxygen_internal.pdf: doxygen_internal
 	(cd doxygen_internal/latex && make refman.pdf) && cp doxygen/latex/refman.pdf doxygen_internal.pdf
 

@@ -46,9 +46,9 @@ EXTRA_DIST = ahocorasick_private.h
 
 libibutil_la_CFLAGS = @OSSP_UUID_CFLAGS@
 if FREEBSD
-libibutil_la_LDFLAGS = $(LDFLAGS) @OSSP_UUID_LDFLAGS@ -lssp_nonshared @OSSP_UUID_LIBS@ 
+libibutil_la_LDFLAGS = $(LDFLAGS) @OSSP_UUID_LDFLAGS@ -lssp_nonshared @OSSP_UUID_LIBS@
 else
-libibutil_la_LDFLAGS = $(LDFLAGS) @OSSP_UUID_LDFLAGS@ 
+libibutil_la_LDFLAGS = $(LDFLAGS) @OSSP_UUID_LDFLAGS@
 libibutil_la_LIBADD = -ldl @OSSP_UUID_LIBS@
 endif
 libibutil_la_LDFLAGS += -version-info @LIBRARY_VERSION@ \

@@ -42,7 +42,7 @@ check_PROGRAMS = \
     test_ironbee \
     test_server \
     test_engine
-    
+
 TESTS=$(check_PROGRAMS)
 CLEANFILES=*.xml *.log
 

@@ -23,7 +23,7 @@ pkglib_LTLIBRARIES += ibmod_lua.la
 endif
 
 if BUILD_GEOIP
-pkglib_LTLIBRARIES += ibmod_geoip.la 
+pkglib_LTLIBRARIES += ibmod_geoip.la
 ibmod_geoip_la_SOURCES = geoip.c
 ibmod_geoip_la_LIBADD = $(AM_LIBADD) -lGeoIP -lm
 ibmod_geoip_la_LDFLAGS = $(AM_LDFLAGS) $(GEOIP_LDFLAGS)
@@ -68,7 +68,7 @@ ibmod_lua_la_LIBADD = $(AM_LIBADD) \
                       -lm
 endif
 
-ibmod_rules_la_SOURCES = rules.c 
+ibmod_rules_la_SOURCES = rules.c
 ibmod_rules_la_CPPFLAGS = $(AM_CPPFLAGS) \
                         -I$(top_srcdir) \
                         -D_XOPEN_SOURCE=1
@@ -89,14 +89,14 @@ ibmod_rules_la_LIBADD += -lluajit-ironbee \
 endif
 
 if BUILD_DEV_MODULES
-pkglib_LTLIBRARIES += ibmod_fields.la 
+pkglib_LTLIBRARIES += ibmod_fields.la
 ibmod_fields_la_SOURCES = fields.c
 ibmod_fields_la_CFLAGS = ${AM_CFLAGS}
 ibmod_fields_la_LDFLAGS = $(AM_LDFLAGS)
 endif
 
 if BUILD_DEV_MODULES
-pkglib_LTLIBRARIES += ibmod_rule_dev.la 
+pkglib_LTLIBRARIES += ibmod_rule_dev.la
 ibmod_rule_dev_la_SOURCES = rule_dev.c
 ibmod_rule_dev_la_CFLAGS = ${AM_CFLAGS}
 ibmod_rule_dev_la_LDFLAGS = $(AM_LDFLAGS)
@@ -104,7 +104,7 @@ endif
 
 ibmod_user_agent_la_SOURCES = user_agent.c \
                               user_agent_rules.c \
-                              user_agent_private.h 
+                              user_agent_private.h
 ibmod_user_agent_la_CFLAGS = ${AM_CFLAGS}
 ibmod_user_agent_la_LDFLAGS = $(AM_LDFLAGS)
 if FREEBSD

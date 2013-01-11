@@ -111,7 +111,7 @@ clipp_LDFLAGS += $(MODP_LDFLAGS) -lmodpbase64
 endif
 
 if HAVE_NIDS
-clipp_LDFLAGS += $(NIDS_LDFLAGS) $(NET_LDFLAGS) -lnids -lnet -lpcap 
+clipp_LDFLAGS += $(NIDS_LDFLAGS) $(NET_LDFLAGS) -lnids -lnet -lpcap
 endif
 
 clipp_LDADD = \

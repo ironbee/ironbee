@@ -54,7 +54,7 @@ MODULE_TEST_LDADD = $(LDADD) \
 # Point the module base path to the modules build dir
 AM_CPPFLAGS+=-DMODULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
               -DRULE_BASE_PATH=$(abs_top_builddir)/modules/.libs \
-              $(BOOST_CPPFLAGS) 
+              $(BOOST_CPPFLAGS)
 
 check_PROGRAMS = test_gtest \
                  test_util_types \

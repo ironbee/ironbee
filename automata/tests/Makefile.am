@@ -19,7 +19,7 @@ check_PROGRAMS = \
     test_intermediate \
     test_optimize_edges \
     test_vls
-    
+
 test_bits_SOURCES = test_bits.cpp
 test_buffer_SOURCES = test_buffer.cpp
 test_intermediate_SOURCES = test_intermediate.cpp

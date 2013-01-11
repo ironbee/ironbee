@@ -40,7 +40,7 @@ libironautomata_la_LDFLAGS = $(AM_LDFLAGS) \
     -lprotobuf \
     -version-info @LIBRARY_VERSION@ \
     -release @MAJOR_VERSION@.@MINOR_VERSION@
-    
+
 ironautomata_include_HEADERS += \
     $(srcdir)/include/ironautomata/buffer.hpp \
     $(srcdir)/include/ironautomata/deduplicate_outputs.hpp \
@@ -50,10 +50,10 @@ ironautomata_include_HEADERS += \
     $(srcdir)/include/ironautomata/logger.hpp \
     $(srcdir)/include/ironautomata/optimize_edges.hpp \
     $(srcdir)/include/ironautomata/translate_nonadvancing.hpp
-    
+
 nodist_ironautomata_include_HEADERS = \
     $(builddir)/include/ironautomata/intermediate.pb.h
-    
+
 ironautomata_generator_include_HEADERS = \
     $(srcdir)/include/ironautomata/generator/aho_corasick.hpp
 
@@ -74,7 +74,7 @@ AM_LDFLAGS += \
     -lboost_system$(BOOST_SUFFIX) \
     -lboost_filesystem$(BOOST_SUFFIX) \
     -lboost_chrono$(BOOST_SUFFIX)
-    
+
 # Ignore protobuf warnings.
 CPPFLAGS += -Wno-shadow -Wno-extra
 

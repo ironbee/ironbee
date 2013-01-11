@@ -7,7 +7,7 @@ bin_PROGRAMS = \
     to_dot \
     optimize \
     trie_generator
-      
+
 LDADD = ../libironautomata.la ../libiaeudoxus.la
 
 AM_CPPFLAGS += \
