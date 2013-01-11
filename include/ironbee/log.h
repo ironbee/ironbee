@@ -36,7 +36,7 @@ extern "C" {
 
 /**
  * @defgroup IronBeeEngineLog Logging
- * @ingroup IronBee
+ * @ingroup IronBeeEngine
  * @{
  */
 
