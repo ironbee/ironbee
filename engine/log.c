@@ -175,7 +175,7 @@ void DLL_PUBLIC ib_log_ex(
     va_list ap;
     va_start(ap, fmt);
 
-    ib_vlog_ex(ib, level, file, line, fmt, ap);
+    ib_log_vex_ex(ib, level, file, line, fmt, ap);
 
     va_end(ap);
 
@@ -194,14 +194,14 @@ void DLL_PUBLIC ib_log_tx_ex(
     va_list ap;
     va_start(ap, fmt);
 
-    ib_vlog_tx_ex(tx, level, file, line, fmt, ap);
+    ib_log_tx_vex(tx, level, file, line, fmt, ap);
 
     va_end(ap);
 
     return;
 }
 
-void DLL_PUBLIC ib_vlog_tx_ex(
+void DLL_PUBLIC ib_log_tx_vex(
      const ib_tx_t  *tx,
      ib_log_level_t  level,
      const char     *file,
@@ -221,14 +221,14 @@ void DLL_PUBLIC ib_vlog_tx_ex(
         strcat(new_fmt, fmt);
     }
 
-    ib_vlog_ex(tx->ib, level, file, line, which_fmt, ap);
+    ib_log_vex_ex(tx->ib, level, file, line, which_fmt, ap);
 
     free(new_fmt);
 
     return;
 }
 
-void DLL_PUBLIC ib_vlog_ex(
+void DLL_PUBLIC ib_log_vex_ex(
     const ib_engine_t *ib,
     ib_log_level_t     level,
     const char        *file,

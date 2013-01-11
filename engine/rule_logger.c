@@ -193,7 +193,7 @@ static void rule_vlog_tx(
         freeptr = fmtbuf;
     }
 
-    ib_vlog_tx_ex(tx, log_level, file, line, fmt, ap);
+    ib_log_tx_vex(tx, log_level, file, line, fmt, ap);
 
     if (freeptr != NULL) {
         free(freeptr);

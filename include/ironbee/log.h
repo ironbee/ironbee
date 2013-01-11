@@ -227,7 +227,7 @@ PRINTF_ATTRIBUTE(5, 6);
  * @param fmt Printf-like format string.
  * @param ap Argument list.
  */
-void DLL_PUBLIC ib_vlog_ex(
+void DLL_PUBLIC ib_log_vex_ex(
     const ib_engine_t *ib,
     ib_log_level_t     level,
     const char        *file,
@@ -247,7 +247,7 @@ VPRINTF_ATTRIBUTE(5);
  * @param fmt Printf-like format string.
  * @param ap Argument list.
  */
-void DLL_PUBLIC ib_vlog_tx_ex(
+void DLL_PUBLIC ib_log_tx_vex(
     const ib_tx_t*     tx,
     ib_log_level_t     level,
     const char        *file,

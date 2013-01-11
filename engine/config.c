@@ -901,7 +901,7 @@ void ib_cfg_vlog_ex(const ib_engine_t *ib,
         which_fmt = fmt;
     }
 
-    ib_vlog_ex(ib, level, file, line, which_fmt, ap);
+    ib_log_vex_ex(ib, level, file, line, which_fmt, ap);
 
     if (new_fmt != NULL) {
         free(new_fmt);

@@ -5044,7 +5044,7 @@ static void core_util_logger(
     const char *fmt, va_list ap
 )
 {
-    ib_vlog_ex((ib_engine_t *)ib, level, file, line, fmt, ap);
+    ib_log_vex_ex((ib_engine_t *)ib, level, file, line, fmt, ap);
 
     return;
 }
