@@ -436,7 +436,7 @@ std::ostream& operator<<(std::ostream& o, const ConstSiteLocation& location);
 /**
  * Output operator for SiteService.
  *
- * Output IronBee::SiteService[@e value] where @e value is XXX.
+ * Output IronBee::SiteService[@e value] where @e value is hostname.
  *
  * @param[in] o Ostream to output to.
  * @param[in] site_service SiteService to output.
