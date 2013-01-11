@@ -24,7 +24,7 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/logger.h>
+#include <ironbee/log.h>
 
 #include "engine_private.h"
 

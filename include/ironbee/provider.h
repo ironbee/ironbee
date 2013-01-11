@@ -27,7 +27,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/engine.h>
-#include <ironbee/logger.h>
+#include <ironbee/log.h>
 #include <ironbee/types.h>
 
 #ifdef __cplusplus

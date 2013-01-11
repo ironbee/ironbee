@@ -30,7 +30,7 @@
 #include <ironbee/bytestr.h>
 #include <ironbee/engine.h>
 #include <ironbee/escape.h>
-#include <ironbee/logger.h>
+#include <ironbee/log.h>
 #include <ironbee/stream.h>
 #include <ironbee/util.h>
 

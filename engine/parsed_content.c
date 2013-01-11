@@ -28,7 +28,7 @@
 
 #include <ironbee/engine.h>
 #include <ironbee/engine_types.h>
-#include <ironbee/logger.h>
+#include <ironbee/log.h>
 #include <ironbee/mpool.h>
 
 #include <assert.h>

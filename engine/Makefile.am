@@ -23,7 +23,7 @@ libironbee_la_SOURCES = engine.c provider.c parser.c data.c \
                         core_operators.c \
                         core_actions.c \
                         core_audit.c \
-						logger.c \
+						log.c \
 						logevent.c \
                         rule_logger.c \
                         rule_engine.c \

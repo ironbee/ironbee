@@ -29,7 +29,7 @@
 
 #include <ironbee/array.h>
 #include <ironbee/context_selection.h>
-#include <ironbee/logger.h>
+#include <ironbee/log.h>
 #include <ironbee/lock.h>
 #include <ironbee/managed_collection.h>
 

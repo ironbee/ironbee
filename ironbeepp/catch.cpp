@@ -25,7 +25,7 @@
  */
 
 #include <ironbee/types.h>  // ib_status_t, ib_status_to_string()
-#include <ironbee/logger.h> // ib_log_*
+#include <ironbee/log.h> // ib_log_*
 #include <ironbee/util.h> // ib_util_log_*
 
 #include <ironbeepp/catch.hpp>

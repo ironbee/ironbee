@@ -110,7 +110,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/kvstore_filesystem.h>',
   '<ironbee/list.h>',
   '<ironbee/lock.h>',
-  '<ironbee/logger.h>',
+  '<ironbee/log.h>',
   '<ironbee/logformat.h>',
   '<ironbee/managed_collection.h>',
   '<ironbee/module.h>',
