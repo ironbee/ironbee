@@ -400,10 +400,6 @@ void logger_vlogmsg(
     ib_core_cfg_t *main_core_config = NULL;
     ib_context_t  *main_ctx = NULL;
     ib_status_t rc;
-    size_t new_fmt_length = 0;
-    char *new_fmt = NULL;
-    const char *which_fmt = NULL;
-    char time_info[30];
     ib_log_level_t logger_level = ib_log_get_level(ib);
 
     /* Get the core context core configuration. */
@@ -450,55 +446,61 @@ void logger_vlogmsg(
 
     /* Finally, use stderr as a fallback. */
     if (main_core_config->log_fp == NULL) {
+        /* @todo Why fdup? */
         main_core_config->log_fp = ib_util_fdup(stderr, "a");
         main_core_config->log_uri = "stderr";
     }
 
     /* Compose message */
-    new_fmt_length = strlen(fmt) + 10;
-    new_fmt = NULL;
-    which_fmt = NULL;
-
-    new_fmt = (char *)malloc(new_fmt_length);
-    if (new_fmt == NULL) {
-        which_fmt = fmt;
-    }
-    else {
-        which_fmt = new_fmt;
-        snprintf(new_fmt, new_fmt_length, "[%d] %s", getpid(), fmt);
-    }
-
-    ib_clock_timestamp(time_info, NULL);
-
-    /* 100 is more than sufficient. */
-    new_fmt = (char *)malloc(strlen(time_info) + strlen(fmt) + 100);
-    sprintf(new_fmt, "%s %-10s- ", time_info, ib_log_level_to_string(level));
-
-    if ( (file != NULL) && (line > 0) && (logger_level >= IB_LOG_DEBUG)) {
-        while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
-            file += 3;
-        }
-
+    {
         static const size_t c_line_info_length = 35;
         char line_info[c_line_info_length];
-        snprintf(
-            line_info,
-            c_line_info_length,
-            "(%23s:%-5d) ",
-            file,
-            line
-        );
-        strcat(new_fmt, line_info);
-    }
+        size_t new_fmt_length = 0;
+        char *new_fmt = NULL;
+        const char *which_fmt;
+        char time_info[30];
 
-    strcat(new_fmt, fmt);
-    strcat(new_fmt, "\n");
+        ib_clock_timestamp(time_info, NULL);
 
-    vfprintf(main_core_config->log_fp, new_fmt, ap);
-    fflush(main_core_config->log_fp);
+        line_info[0] = '\0';
+        if ( (file != NULL) && (line > 0) && (logger_level >= IB_LOG_DEBUG)) {
+            while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
+                file += 3;
+            }
 
-    if (new_fmt) {
-        free(new_fmt);
+            snprintf(
+                line_info,
+                c_line_info_length,
+                "(%23s:%-5d)",
+                file,
+                line
+            );
+        }
+
+        new_fmt_length = strlen(line_info) + strlen(time_info) + strlen(fmt)  + 110;
+        new_fmt = (char *)malloc(new_fmt_length);
+        if (new_fmt == NULL) {
+            which_fmt = fmt;
+        }
+        else {
+            snprintf(
+                new_fmt, new_fmt_length,
+                "%s %-10s- %s [%d] %s\n",
+                time_info,
+                ib_log_level_to_string(level),
+                line_info,
+                getpid(),
+                fmt
+            );
+            which_fmt = new_fmt;
+        }
+
+        vfprintf(main_core_config->log_fp, which_fmt, ap);
+        fflush(main_core_config->log_fp);
+
+        if (new_fmt != NULL) {
+            free(new_fmt);
+        }
     }
 }
 
