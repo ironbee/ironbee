@@ -61,9 +61,9 @@ typedef ib_status_t (*ib_tfn_fn_t)(ib_engine_t *ib,
                                    ib_field_t **data_out,
                                    ib_flags_t *pflags);
 
-/** @cond internal */
+/** @cond Internal */
 
-/** Transformation flags */
+/* Transformation flags */
 #define IB_TFN_FLAG_NONE        (0x0)      /**< No flags */
 #define IB_TFN_FLAG_HANDLE_LIST (1 << 0)   /**< Tfn can handle lists */
 
