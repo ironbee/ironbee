@@ -306,7 +306,7 @@ htp_status_t htp_tx_req_set_header_c(htp_tx_t *tx, const char *name, const char 
         return HTP_ERROR;
     }
 
-    if (htp_table_add(tx->response_headers, h->name, h) != HTP_OK) {
+    if (htp_table_add(tx->request_headers, h->name, h) != HTP_OK) {
         bstr_free(&h->name);
         bstr_free(&h->value);
         free(h);
