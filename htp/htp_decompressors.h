@@ -48,8 +48,7 @@ extern "C" {
 typedef struct htp_decompressor_gzip_t htp_decompressor_gzip_t;
 typedef struct htp_decompressor_t htp_decompressor_t;
 
-#define GZIP_BUF_SIZE           8192
-#define GZIP_WINDOW_SIZE        -15
+#define GZIP_BUF_SIZE               8192
 
 #define DEFLATE_MAGIC_1         0x1f
 #define DEFLATE_MAGIC_2         0x8b
@@ -68,7 +67,9 @@ struct htp_decompressor_t {
 
 struct htp_decompressor_gzip_t {
     htp_decompressor_t super;
+    #if 0
     int initialized;
+    #endif
     int zlib_initialized;
     uint8_t header[10];
     uint8_t header_len;

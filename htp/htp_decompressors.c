@@ -50,9 +50,10 @@
 static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *drec, htp_tx_data_t *d) {
     size_t consumed = 0;
 
+    #if 0
     // Return if we've previously had an error.
     if (drec->initialized < 0) return HTP_ERROR;
-
+    
     // Do we need to initialize?
     if (drec->initialized == 0) {
         // Check the header
@@ -113,6 +114,7 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             }
         }
     }
+    #endif
 
     // Decompress data.
     int rc = 0;
@@ -222,7 +224,18 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, int format)
         return NULL;
     }
 
-    int rc = inflateInit2(&drec->stream, GZIP_WINDOW_SIZE);
+    // Initialize zlib.
+    int rc;
+
+    if (format == COMPRESSION_DEFLATE) {
+        // Negative values activate raw processing,
+        // which is what we need for deflate.
+        rc = inflateInit2(&drec->stream, -15);
+    } else {
+        // Increased windows size activates gzip header processing.
+        rc = inflateInit2(&drec->stream, 15 + 32);
+    }
+
     if (rc != Z_OK) {
         htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "GZip decompressor: inflateInit2 failed with code %d", rc);
 
@@ -237,9 +250,11 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, int format)
     drec->stream.avail_out = GZIP_BUF_SIZE;
     drec->stream.next_out = drec->buffer;
 
+    #if 0
     if (format == COMPRESSION_DEFLATE) {
         drec->initialized = 1;
     }
+    #endif
 
     return (htp_decompressor_t *) drec;
 }
