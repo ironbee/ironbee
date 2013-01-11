@@ -37,6 +37,7 @@
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
+#include <ironbee/capture.h>
 
 #include <assert.h>
 #include <stdio.h>
