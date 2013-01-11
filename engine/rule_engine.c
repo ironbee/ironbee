@@ -1582,7 +1582,6 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
     IB_FTRACE_INIT();
     ib_status_t         rc = IB_OK;
     ib_status_t         trc;          /* Temporary status code */
-    ib_num_t            rule_result = 0;
 
     assert(rule_exec != NULL);
     assert(rule != NULL);
@@ -1628,7 +1627,7 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
      *
      * @note Chaining is currently done via recursion.
      */
-    if ( (rule_result != 0) && (rule->chained_rule != NULL) ) {
+    if ( (rule_exec->result != 0) && (rule->chained_rule != NULL) ) {
         ib_rule_log_debug(rule_exec,
                           "Chaining to rule \"%s\"",
                           ib_rule_id(rule->chained_rule));
