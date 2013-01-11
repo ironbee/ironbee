@@ -8,7 +8,8 @@ RPM_RELEASE ?= 1
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ironbee.pc
-pkginclude_HEADERS = $(top_srcdir)/include/ironbee/*.h $(top_builddir)/include/ironbee/release.h
+# Sort to eliminate duplicates if top_srcdir == top_builddir
+pkginclude_HEADERS = $(sort $(wildcard $(top_srcdir)/include/ironbee/*.h) $(top_builddir)/include/ironbee/release.h)
 doxygen doxygen-pdf:
 	@(cd docs && $(MAKE) $@)
 
