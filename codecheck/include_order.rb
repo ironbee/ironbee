@@ -111,6 +111,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/list.h>',
   '<ironbee/lock.h>',
   '<ironbee/log.h>',
+  '<ironbee/logevent.h>',
   '<ironbee/logformat.h>',
   '<ironbee/managed_collection.h>',
   '<ironbee/module.h>',
