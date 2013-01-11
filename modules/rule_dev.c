@@ -30,6 +30,7 @@
 
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
+#include <ironbee/capture.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
 #include <ironbee/module.h>
@@ -37,7 +38,6 @@
 #include <ironbee/operator.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
-#include <ironbee/capture.h>
 
 #include <assert.h>
 #include <stdio.h>
