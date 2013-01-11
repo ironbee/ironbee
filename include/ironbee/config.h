@@ -160,7 +160,7 @@ struct ib_dirmap_init_t {
 };
 
 
-/** @cond internal */
+/** @cond Internal */
 /**
  * Helper macro to use designated initializers to typecheck @a cb argument to
  * @c IB_DIRMAP_INIT_X macros.  If we are in C, uses designated initializers,
