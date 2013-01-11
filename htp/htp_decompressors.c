@@ -131,10 +131,11 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             d2.len = GZIP_BUF_SIZE;
 
             // Send decompressed data to callback
-            if (drec->super.callback(&d2) < 0) {
+            htp_status_t callback_rc = drec->super.callback(&d2);
+            if (callback_rc != HTP_OK) {
                 inflateEnd(&drec->stream);
                 drec->zlib_initialized = 0;
-                return HTP_ERROR;
+                return callback_rc;
             }
 
             drec->stream.next_out = drec->buffer;
@@ -157,10 +158,11 @@ static htp_status_t htp_gzip_decompressor_decompress(htp_decompressor_gzip_t *dr
             d2.len = len;
 
             // Send decompressed data to callback
-            if (drec->super.callback(&d2) < 0) {
+            htp_status_t callback_rc = drec->super.callback(&d2);
+            if (callback_rc != HTP_OK) {
                 inflateEnd(&drec->stream);
                 drec->zlib_initialized = 0;
-                return HTP_ERROR;
+                return callback_rc;
             }
 
             // TODO Handle trailer

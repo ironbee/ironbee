@@ -62,7 +62,7 @@ typedef struct htp_decompressor_t htp_decompressor_t;
 
 struct htp_decompressor_t {
     htp_status_t (*decompress)(htp_decompressor_t *, htp_tx_data_t *);
-    int (*callback)(htp_tx_data_t *);
+    htp_status_t (*callback)(htp_tx_data_t *);
     void (*destroy)(htp_decompressor_t *);
 };
 
