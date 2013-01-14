@@ -353,20 +353,10 @@ static ib_status_t find_meta(
     return IB_ENOENT;
 }
 
-/**
- * Create a rule execution object
- *
- * @param[in] tx Transaction.
- * @param[out] rule_exec Rule execution object
- *
- * @returns
- *   - IB_OK on success.
- */
-static ib_status_t rule_exec_create(ib_tx_t *tx,
-                                    ib_rule_exec_t **rule_exec)
+ib_status_t ib_rule_exec_create(ib_tx_t *tx,
+                                ib_rule_exec_t **rule_exec)
 {
     assert(tx != NULL);
-    assert(rule_exec != NULL);
 
     ib_status_t rc;
     ib_rule_exec_t *exec;
@@ -416,7 +406,10 @@ static ib_status_t rule_exec_create(ib_tx_t *tx,
 
     exec->exec_log = NULL;
 
-    *rule_exec = exec;
+    /* Pass the new object back to the caller if required */
+    if (rule_exec != NULL) {
+        *rule_exec = exec;
+    }
     return IB_OK;
 }
 
@@ -1736,7 +1729,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     assert(rules != NULL);
 
     /* Create the rule execution object */
-    rc = rule_exec_create(tx, &rule_exec);
+    rc = ib_rule_exec_create(tx, &rule_exec);
     if (rc != IB_OK) {
         ib_rule_log_tx_error(tx,
                              "Failed to create rule execution object: %s",
@@ -2104,7 +2097,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     ib_status_t               rc;
 
     /* Create the rule execution object */
-    rc = rule_exec_create(tx, &rule_exec);
+    rc = ib_rule_exec_create(tx, &rule_exec);
     if (rc != IB_OK) {
         ib_rule_log_tx_error(tx,
                              "Failed to create rule execution object: %s",

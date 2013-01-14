@@ -3036,6 +3036,15 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
         return rc;
     }
 
+    /* Create the rule engine execution environment object */
+    rc = ib_rule_exec_create(tx, NULL);
+    if (rc != IB_OK) {
+        ib_rule_log_tx_error(tx,
+                             "Failed to create rule execution object: %s",
+                             ib_status_to_string(rc));
+        return rc;
+    }
+
     return IB_OK;
 }
 

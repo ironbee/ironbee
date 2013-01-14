@@ -151,6 +151,18 @@ ib_status_t ib_rule_engine_init(ib_engine_t *ib,
                                 ib_module_t *mod);
 
 /**
+ * Create a rule execution object
+ *
+ * @param[in] tx Transaction.
+ * @param[out] rule_exec Rule execution object (or NULL)
+ *
+ * @returns
+ *   - IB_OK on success.
+ */
+ib_status_t ib_rule_exec_create(ib_tx_t *tx,
+                                ib_rule_exec_t **rule_exec);
+
+/**
  * Rule engine context open
  *
  * Called when a context is opened; performs rule engine context-specific
