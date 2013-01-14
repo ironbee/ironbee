@@ -5017,7 +5017,7 @@ static ib_status_t core_init(ib_engine_t *ib,
         return rc;
     }
 
-    /* Initialize the collection manager logic */
+    /* Initialize the core collection managers */
     rc = ib_core_collection_managers_register(ib, m);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to register core collection managers: %s",
