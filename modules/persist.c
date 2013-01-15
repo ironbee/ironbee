@@ -41,8 +41,8 @@
 typedef struct {
     const pcre   *key_pcre;          /**< Compiled PCRE to match key=[name] */
     const ib_collection_manager_t *manager; /**< Collection manager */
-} mod_pfs_param_data_t;
-static mod_pfs_param_data_t mod_pfs_param_data = { NULL, NULL };
+} mod_persist_param_data_t;
+static mod_persist_param_data_t mod_persist_param_data = { NULL, NULL };
 
 /** File system persistence kvstore data */
 typedef struct {
@@ -52,16 +52,16 @@ typedef struct {
     bool           key_expand;       /**< Key is expandable */
     ib_kvstore_t  *kvstore;          /**< kvstore object */
     uint32_t       expiration;       /**< Expiration time in seconds */
-} mod_pfs_kvstore_t;
+} mod_persist_kvstore_t;
 
 /** File system persistence configuration data */
 typedef struct {
     ib_list_t  *kvstore_list;        /**< List of persit_fs_kvstore_t */
-} mod_pfs_cfg_t;
-static mod_pfs_cfg_t mod_pfs_global_cfg;
+} mod_persist_cfg_t;
+static mod_persist_cfg_t mod_persist_global_cfg;
 
 /* Define the module name as well as a string version of it. */
-#define MODULE_NAME        persist_filesys
+#define MODULE_NAME        persist
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
 /* Declare the public module symbol. */
@@ -88,7 +88,7 @@ IB_MODULE_DECLARE();
  *   - IB_OK All OK, parameters recognized
  *   - IB_Exxx Other error
  */
-static ib_status_t mod_pfs_register_fn(
+static ib_status_t mod_persist_register_fn(
     const ib_engine_t              *ib,
     const ib_module_t              *module,
     const ib_collection_manager_t  *manager,
@@ -107,14 +107,14 @@ static ib_status_t mod_pfs_register_fn(
     assert(collection_name != NULL);
     assert(params != NULL);
     assert(pmanager_inst_data != NULL);
-    assert(mod_pfs_param_data.key_pcre != NULL);
+    assert(mod_persist_param_data.key_pcre != NULL);
 
     const ib_list_node_t *node;
     const char *nodestr;
     const char *path;
     const char *key = NULL;
     bool key_expand;
-    mod_pfs_kvstore_t *pfs;
+    mod_persist_kvstore_t *persist;
     ib_kvstore_t *kvstore;
     ib_status_t rc;
     struct stat sbuf;
@@ -132,8 +132,7 @@ static ib_status_t mod_pfs_register_fn(
     }
 
     if (stat(path, &sbuf) < 0) {
-        ib_log_warning(ib, "persist_filesys: Declining \"%s\"; "
-                           "stat(\"%s\") failed: %s",
+        ib_log_warning(ib, "persist: Declining \"%s\"; stat(\"%s\") failed: %s",
                            uri, path, strerror(errno));
         return IB_DECLINED;
     }
@@ -152,7 +151,7 @@ static ib_status_t mod_pfs_register_fn(
         const char *value;
         size_t      value_len;
 
-        pcre_rc = pcre_exec(mod_pfs_param_data.key_pcre, NULL,
+        pcre_rc = pcre_exec(mod_persist_param_data.key_pcre, NULL,
                             nodestr, strlen(nodestr),
                             0, 0, ovector, ovecsize);
         if (pcre_rc < 0) {
@@ -201,23 +200,23 @@ static ib_status_t mod_pfs_register_fn(
         return rc;
     }
 
-    /* Allocate and initialize a PFS kvstore object */
-    pfs = ib_mpool_alloc(mp, sizeof(*pfs));
-    if (pfs == NULL) {
+    /* Allocate and initialize a PERSIST kvstore object */
+    persist = ib_mpool_alloc(mp, sizeof(*persist));
+    if (persist == NULL) {
         return IB_EALLOC;
     }
-    pfs->collection_name = ib_mpool_strdup(mp, collection_name);
-    if (pfs->collection_name == NULL) {
+    persist->collection_name = ib_mpool_strdup(mp, collection_name);
+    if (persist->collection_name == NULL) {
         return IB_EALLOC;
     }
-    pfs->path = path;
-    pfs->key = key;
-    pfs->key_expand = key_expand;
-    pfs->kvstore = kvstore;
-    pfs->expiration = expiration;
+    persist->path = path;
+    persist->key = key;
+    persist->key_expand = key_expand;
+    persist->kvstore = kvstore;
+    persist->expiration = expiration;
 
     /* Finally, store the list as the manager specific collection data */
-    *pmanager_inst_data = pfs;
+    *pmanager_inst_data = persist;
 
     return IB_OK;
 }
@@ -236,7 +235,7 @@ static ib_status_t mod_pfs_register_fn(
  *   - IB_OK All OK
  *   - IB_Exxx Other error
  */
-ib_status_t mod_pfs_unregister_fn(
+ib_status_t mod_persist_unregister_fn(
     const ib_engine_t              *ib,
     const ib_module_t              *module,
     const ib_collection_manager_t  *manager,
@@ -250,10 +249,11 @@ ib_status_t mod_pfs_unregister_fn(
     assert(manager_inst_data != NULL);
 
     ib_status_t rc;
-    const mod_pfs_kvstore_t *pfs = (const mod_pfs_kvstore_t *)manager_inst_data;
+    const mod_persist_kvstore_t *persist =
+        (const mod_persist_kvstore_t *)manager_inst_data;
 
-    rc = ib_kvstore_disconnect(pfs->kvstore);
-    ib_kvstore_destroy(pfs->kvstore);
+    rc = ib_kvstore_disconnect(persist->kvstore);
+    ib_kvstore_destroy(persist->kvstore);
 
     return rc;
 }
@@ -272,7 +272,7 @@ ib_status_t mod_pfs_unregister_fn(
  *
  * @returns Status code
  */
-static ib_status_t mod_pfs_populate_fn(
+static ib_status_t mod_persist_populate_fn(
     const ib_engine_t              *ib,
     const ib_tx_t                  *tx,
     const ib_module_t              *module,
@@ -289,8 +289,9 @@ static ib_status_t mod_pfs_populate_fn(
     assert(collection != NULL);
     assert(manager_inst_data != NULL);
 
-    const mod_pfs_kvstore_t *pfs = (const mod_pfs_kvstore_t *)manager_inst_data;
-    ib_kvstore_t *kvstore = pfs->kvstore;
+    const mod_persist_kvstore_t *persist =
+        (const mod_persist_kvstore_t *)manager_inst_data;
+    ib_kvstore_t *kvstore = persist->kvstore;
     ib_status_t rc = IB_OK;
     const char *key;
     const char *error = NULL;
@@ -298,16 +299,16 @@ static ib_status_t mod_pfs_populate_fn(
     ib_kvstore_value_t *kvstore_val;
 
     /* Generate the key */
-    if (pfs->key_expand) {
+    if (persist->key_expand) {
         char *expanded;
-        rc = ib_data_expand_str(tx->data, pfs->key, false, &expanded);
+        rc = ib_data_expand_str(tx->data, persist->key, false, &expanded);
         if (rc != IB_OK) {
             return rc;
         }
         key = expanded;
     }
     else {
-        key = ib_mpool_strdup(tx->mp, pfs->key);
+        key = ib_mpool_strdup(tx->mp, persist->key);
     }
 
     /* Try to get data from the kvstore */
@@ -336,7 +337,7 @@ static ib_status_t mod_pfs_populate_fn(
     else {
         ib_log_debug(ib,
                      "Populated collection \"%s\" from kvstore \"%s\"",
-                     collection_name, pfs->path);
+                     collection_name, persist->path);
     }
     ib_kvstore_free_value(kvstore, kvstore_val);
 
@@ -361,7 +362,7 @@ static ib_status_t mod_pfs_populate_fn(
  *     The first error is returned, but more errors may occur as the
  *     collection population continues.
  */
-static ib_status_t mod_pfs_persist_fn(
+static ib_status_t mod_persist_persist_fn(
     const ib_engine_t             *ib,
     const ib_tx_t                 *tx,
     const ib_module_t             *module,
@@ -379,8 +380,9 @@ static ib_status_t mod_pfs_persist_fn(
     assert(collection != NULL);
     assert(manager_inst_data != NULL);
 
-    const mod_pfs_kvstore_t *pfs = (const mod_pfs_kvstore_t *)manager_inst_data;
-    ib_kvstore_t *kvstore = pfs->kvstore;
+    const mod_persist_kvstore_t *persist =
+        (const mod_persist_kvstore_t *)manager_inst_data;
+    ib_kvstore_t *kvstore = persist->kvstore;
     ib_status_t rc = IB_OK;
     const char *key;
     ib_kvstore_key_t kvstore_key;
@@ -389,16 +391,16 @@ static ib_status_t mod_pfs_persist_fn(
     size_t bufsize;
 
     /* Generate the key */
-    if (pfs->key_expand) {
+    if (persist->key_expand) {
         char *expanded;
-        rc = ib_data_expand_str(tx->data, pfs->key, false, &expanded);
+        rc = ib_data_expand_str(tx->data, persist->key, false, &expanded);
         if (rc != IB_OK) {
             return rc;
         }
         key = expanded;
     }
     else {
-        key = ib_mpool_strdup(tx->mp, pfs->key);
+        key = ib_mpool_strdup(tx->mp, persist->key);
     }
 
     /* Encode the buffer into JSON */
@@ -417,7 +419,7 @@ static ib_status_t mod_pfs_persist_fn(
     kvstore_val.value_length = bufsize;
     kvstore_val.type = ib_mpool_strdup(tx->mp, "json");
     kvstore_val.type_length = 4;
-    kvstore_val.expiration = pfs->expiration;
+    kvstore_val.expiration = persist->expiration;
 
     /* Save the JSON buffer into the kvstore */
     rc = ib_kvstore_set(kvstore, NULL, &kvstore_key, &kvstore_val);
@@ -442,7 +444,7 @@ static ib_status_t mod_pfs_persist_fn(
  *   - IB_OK All OK, parameters recognized
  *   - IB_Exxx Other error
  */
-static ib_status_t mod_pfs_init(
+static ib_status_t mod_persist_init(
     ib_engine_t  *ib,
     ib_module_t *module,
     void *cbdata)
@@ -460,11 +462,11 @@ static ib_status_t mod_pfs_init(
 
     /* Register the name/value pair InitCollection handler */
     rc = ib_managed_collection_register_manager(
-        ib, module, "Filesystem K/V-Store", "pfs://",
-        mod_pfs_register_fn, NULL,
-        mod_pfs_unregister_fn, NULL,
-        mod_pfs_populate_fn, NULL,
-        mod_pfs_persist_fn, NULL,
+        ib, module, "Filesystem K/V-Store", "persist-fs://",
+        mod_persist_register_fn, NULL,
+        mod_persist_unregister_fn, NULL,
+        mod_persist_populate_fn, NULL,
+        mod_persist_persist_fn, NULL,
         &manager);
     if (rc != IB_OK) {
         ib_log_alert(ib,
@@ -479,18 +481,18 @@ static ib_status_t mod_pfs_init(
         ib_log_error(ib, "Failed to compile pattern \"%s\"", key_pattern);
         return IB_EUNKNOWN;
     }
-    mod_pfs_param_data.key_pcre = compiled;
-    mod_pfs_param_data.manager = manager;
+    mod_persist_param_data.key_pcre = compiled;
+    mod_persist_param_data.manager = manager;
 
     return IB_OK;
 }
 
-static ib_status_t mod_pfs_fini(ib_engine_t *ib,
+static ib_status_t mod_persist_fini(ib_engine_t *ib,
                                 ib_module_t *m,
                                 void *cbdata)
 {
-    if (mod_pfs_param_data.key_pcre != NULL) {
-        pcre_free((pcre *)mod_pfs_param_data.key_pcre);
+    if (mod_persist_param_data.key_pcre != NULL) {
+        pcre_free((pcre *)mod_persist_param_data.key_pcre);
     }
 
     return IB_OK;
@@ -500,12 +502,12 @@ static ib_status_t mod_pfs_fini(ib_engine_t *ib,
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,             /* Default metadata */
     MODULE_NAME_STR,                       /* Module name */
-    IB_MODULE_CONFIG(&mod_pfs_global_cfg), /* Global config data */
+    IB_MODULE_CONFIG(&mod_persist_global_cfg), /* Global config data */
     NULL,                                  /* Configuration field map */
     NULL,                                  /* Config directive map */
-    mod_pfs_init,                          /* Initialize function */
+    mod_persist_init,                      /* Initialize function */
     NULL,                                  /* Callback data */
-    mod_pfs_fini,                          /* Finish function */
+    mod_persist_fini,                      /* Finish function */
     NULL,                                  /* Callback data */
     NULL,                                  /* Context open function */
     NULL,                                  /* Callback data */

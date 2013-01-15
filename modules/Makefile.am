@@ -89,8 +89,8 @@ ibmod_rules_la_LIBADD += -lluajit-ironbee \
 endif
 
 if ENABLE_JSON
-pkglib_LTLIBRARIES += ibmod_persist_filesys.la
-ibmod_persist_filesys_la_SOURCES = persist_filesystem.c
+pkglib_LTLIBRARIES += ibmod_persist.la
+ibmod_persist_la_SOURCES = persist.c
 endif
 
 if BUILD_DEV_MODULES
