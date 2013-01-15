@@ -515,7 +515,7 @@ static ib_status_t core_managed_collection_jsonfile_persist_fn(
     ib_status_t rc;
 
     if (! json_file->persist) {
-        return IB_OK;
+        return IB_DECLINED;
     }
 
     rc = ib_json_encode(tx->mp, collection, true, &buf, &bufsize);

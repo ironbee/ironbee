@@ -271,6 +271,8 @@ ib_status_t ib_managed_collection_populate(
 
     /* Walk through all of the associated managers.
      * The first to return IB_OK causes the loop to exit. */
+    ib_log_debug_tx(tx, "Attempting to populate managed collection \"%s\"",
+                    collection->collection_name);
     IB_LIST_LOOP_CONST(collection->manager_inst_list, node) {
         const ib_collection_manager_inst_t *manager_inst =
             (const ib_collection_manager_inst_t *)node->data;
@@ -288,12 +290,23 @@ ib_status_t ib_managed_collection_populate(
 
             /* If the populate function declined, try the next one */
             if (rc == IB_DECLINED) {
+                ib_log_trace_tx(tx, "Collection manager \"%s\" declined to "
+                                "populate \"%s\"",
+                                manager->name, collection->collection_name);
                 continue;
             }
             else if (rc != IB_OK) {
+                ib_log_warning_tx(tx,
+                                  "Collection manager \"%s\" "
+                                  "failed to populate \"%s\": %s",
+                                  manager->name, collection->collection_name,
+                                  ib_status_to_string(rc));
                 return rc;
             }
             else {
+                ib_log_trace_tx(tx,
+                                "Collection manager \"%s\" populated \"%s\"",
+                                manager->name, collection->collection_name);
                 break;
             }
         }
@@ -336,15 +349,21 @@ ib_status_t ib_managed_collection_persist_all(
 
     /* If there is no list created, nothing to do */
     if (tx->managed_collections == NULL) {
+        ib_log_trace_tx(tx, "Not managed collections to persist");
         return IB_OK;
     }
 
     /* Walk through the list of collections */
+    ib_log_debug_tx(tx, "Persisting %zd managed collections",
+                    ib_list_elements(tx->managed_collections));
     IB_LIST_LOOP_CONST(tx->managed_collections, node) {
         const ib_managed_collection_inst_t *collection_inst =
             (const ib_managed_collection_inst_t *)node->data;
         const ib_managed_collection_t *collection = collection_inst->collection;
         const ib_list_node_t *manager_inst_node;
+
+        ib_log_debug_tx(tx, "Attempting to persist managed collection \"%s\"",
+                        collection->collection_name);
 
         IB_LIST_LOOP_CONST(collection->manager_inst_list, manager_inst_node) {
             const ib_collection_manager_inst_t *manager_inst =
@@ -363,8 +382,24 @@ ib_status_t ib_managed_collection_persist_all(
                                         collection_inst->collection_list,
                                         manager_inst->manager_inst_data,
                                         manager->persist_data);
-            if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
+            if (tmprc == IB_DECLINED) {
+                ib_log_trace_tx(tx,
+                                "Collection manager \"%s\" "
+                                "declined to persist \"%s\"",
+                                manager->name, collection->collection_name);
+            }
+            else if ( (tmprc != IB_OK) && (rc == IB_OK) ) {
+                ib_log_warning_tx(tx,
+                                  "Collection manager \"%s\" "
+                                  "failed to persist \"%s\": %s",
+                                  manager->name, collection->collection_name,
+                                  ib_status_to_string(rc));
                 rc = tmprc;
+            }
+            else if (tmprc == IB_OK) {
+                ib_log_trace_tx(tx,
+                                "Collection manager \"%s\" persisted \"%s\"",
+                                manager->name, collection->collection_name);
             }
         }
     }
