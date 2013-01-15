@@ -80,17 +80,18 @@ ib_status_t ib_operator_register(ib_engine_t *ib,
     return rc;
 }
 
-ib_status_t ib_operator_inst_create(ib_engine_t *ib,
-                                    ib_context_t *ctx,
-                                    const ib_rule_t *rule,
-                                    ib_flags_t required_op_flags,
-                                    const char *name,
-                                    const char *parameters,
-                                    ib_flags_t flags,
-                                    ib_operator_inst_t **op_inst)
+ib_status_t ib_operator_inst_create_ex(
+    ib_engine_t *ib,
+    ib_mpool_t *mpool,
+    ib_context_t *ctx,
+    const ib_rule_t *rule,
+    ib_flags_t required_op_flags,
+    const char *name,
+    const char *parameters,
+    ib_flags_t flags,
+    ib_operator_inst_t **op_inst)
 {
     ib_hash_t *operator_hash = ib->operators;
-    ib_mpool_t *pool = ib_engine_pool_main_get(ib);
     ib_operator_t *op;
     ib_status_t rc;
 
@@ -106,17 +107,17 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
     }
 
     *op_inst = (ib_operator_inst_t *)
-        ib_mpool_alloc(pool, sizeof(ib_operator_inst_t));
+        ib_mpool_alloc(mpool, sizeof(ib_operator_inst_t));
     if (*op_inst == NULL) {
         return IB_EALLOC;
     }
     (*op_inst)->op = op;
     (*op_inst)->flags = flags;
-    (*op_inst)->params = ib_mpool_strdup(pool, parameters);
+    (*op_inst)->params = ib_mpool_strdup(mpool, parameters);
     (*op_inst)->fparam = NULL;
 
     if (op->fn_create != NULL) {
-        rc = op->fn_create(ib, ctx, rule, pool, parameters, *op_inst);
+        rc = op->fn_create(ib, ctx, rule, mpool, parameters, *op_inst);
         if (rc != IB_OK) {
             return rc;
         }
@@ -127,13 +128,35 @@ ib_status_t ib_operator_inst_create(ib_engine_t *ib,
 
     if ((*op_inst)->fparam == NULL) {
         rc = ib_field_create(&((*op_inst)->fparam),
-                             pool,
+                             mpool,
                              IB_FIELD_NAME("param"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(parameters));
     }
 
     return rc;
+}
+
+ib_status_t ib_operator_inst_create(
+    ib_engine_t *ib,
+    ib_context_t *ctx,
+    const ib_rule_t *rule,
+    ib_flags_t required_op_flags,
+    const char *name,
+    const char *parameters,
+    ib_flags_t flags,
+    ib_operator_inst_t **op_inst)
+{
+    return ib_operator_inst_create_ex(
+        ib,
+        ib_engine_pool_main_get(ib),
+        ctx,
+        rule,
+        required_op_flags,
+        name,
+        parameters,
+        flags,
+        op_inst);
 }
 
 ib_status_t ib_operator_inst_destroy(ib_operator_inst_t *op_inst)

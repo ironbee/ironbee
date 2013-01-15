@@ -26,6 +26,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/module.h>
+#include <ironbee/rule_engine.h>
 
 #include "engine_private.h"
 
@@ -46,6 +47,21 @@ ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
 
     ib_log_debug2(ib, "Initializing module %s (%zd): %s",
                   m->name, m->idx, m->filename);
+
+    rc = ib_rule_create(
+        ib,
+        ib_context_main(ib),
+        __FILE__,
+        __LINE__,
+        false,
+        &(m->rule));
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "Failed to create module rule %s: %s",
+            m->name,
+            ib_status_to_string(rc));
+    }
 
     /* Register directives */
     if (m->dm_init != NULL) {
@@ -303,5 +319,66 @@ ib_status_t ib_module_register_context(ib_module_t *m,
      * module index as the key so that the location is deterministic.
      */
     rc = ib_array_setn(ctx->cfgdata, m->idx, cfgdata);
+    return rc;
+}
+
+ib_status_t ib_module_action_inst_create(
+    ib_module_t *module,
+    ib_mpool_t *mpool,
+    const char *action_name,
+    const char *action_parameters,
+    ib_flags_t flags,
+    ib_action_inst_t **action_instance)
+{
+    assert(module);
+    assert(action_name);
+    assert(action_parameters);
+    assert(action_instance);
+
+    if (!mpool) {
+        mpool = ib_engine_pool_main_get(module->ib);
+    }
+
+    ib_status_t rc = ib_action_inst_create_ex(
+        module->ib,
+        mpool,
+        ib_context_main(module->ib),
+        action_name,
+        action_parameters,
+        flags,
+        action_instance);
+
+    return rc;
+}
+
+ib_status_t DLL_PUBLIC ib_module_operator_inst_create(
+    ib_module_t *module,
+    ib_mpool_t *mpool,
+    const char *operator_name,
+    const char *parameters,
+    ib_flags_t flags,
+    ib_operator_inst_t **operator_instance)
+{
+    assert(module);
+    assert(operator_name);
+    assert(parameters);
+    assert(operator_instance);
+
+    if (!mpool) {
+        mpool = ib_engine_pool_main_get(module->ib);
+    }
+
+    ib_status_t rc = ib_operator_inst_create_ex(
+        module->ib,
+        mpool,
+        ib_context_main(module->ib),
+        module->rule,
+        0,
+        operator_name,
+        parameters,
+        flags,
+        operator_instance);
+        
+
     return rc;
 }

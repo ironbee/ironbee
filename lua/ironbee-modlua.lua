@@ -167,6 +167,78 @@ moduleapi.new = function(self, ib, mod, name, index, cregister_directive)
     return setmetatable(t, self);
 end
 
+-- Return a function that executes an action instance.
+-- @param[in] name Name of the action.
+-- @param[in] param Parameter to pass to the action.
+-- @param[in] flags Flags passed to the action createion.
+--
+-- @returns A function that takes 1 parameter.
+--   If the parameter is a ib_rule_exec_t, then the
+--   action is evaluated. If ib_rule_exec_t is nil,
+--   then the action is destroyed cleanly.
+moduleapi.action = function(name, param, flags)
+    local inst = ffi.new('ib_action_inst_t*[1]')
+    local rc = ffi.C.ib_module_action_inst_create(
+        self.ib_module,
+        name,
+        param,
+        flags,
+        inst)
+    if rc ~= ffi.C.IB_OK then
+        self:logError("Failed to create action %s:%s.", name, param);
+        return nil
+    end
+
+    return function(rule_exec)
+        if rule_exec == nil then
+            ffi.C.ib_action_inst_destroy(inst[0])
+            return ffi.C.IB_OK
+        else
+            return ffi.C.ib_action_execute(rule_exec, inst[0])
+        end
+    end
+end
+
+-- Return a function that executes an operator instance.
+-- @param[in] name The name of the operator.
+-- @param[in] param The parameter to pass the operator.
+-- @param[in] flags The flags to pass the operator.
+-- @returns A function that takes an ib_rule_exec_t * and an ib_field_t *.
+--   If the ib_rule_exec_t is nil, then the ib_operator_t this 
+--   wraps is destroyed cleanly. Otherwise, that operator is executed.
+--   The returned function, when executed, returns 2 values.
+--   First, an ib_status_t value, normally IB_OK. The second
+--   value is the result of the operator execution or 0 when the 
+--   operator is destroyed (rule_exec was equal to nil).
+moduleapi.operator = function(name, param, flags)
+    local inst = ffi.new('ib_operator_inst_t*[1]')
+    ffi.C.ib_module_operator_inst_create(
+        self.ib_module,
+        name,
+        param,
+        flags,
+        inst)
+    if rc ~= ffi.C.IB_OK then
+        self:logError("Failed to create operator %s:%s.", name, param);
+        return nil
+    end
+
+    return function(rule_exec, field)
+        if rule_exec == nil then
+            ffi.C.ib_operator_inst_destroy(inst[0])
+            return ffi.C.IB_OK, 0
+        else
+            local res = ffi.new('ib_num_t[1]')
+            local rc = ffi.C.ib_operator_execute(
+                rule_exec,
+                inst[0],
+                field,
+                res)
+            return rc, res[0]
+        end
+    end
+end
+
 -- Schedule a directive to be registered after the module is done loading.
 -- @param[in] self The object.
 -- @param[in] name The name of the directive.

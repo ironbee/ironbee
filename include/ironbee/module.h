@@ -32,6 +32,9 @@
 #include <ironbee/build.h>
 #include <ironbee/config.h>
 #include <ironbee/types.h>
+#include <ironbee/action.h>
+#include <ironbee/operator.h>
+#include <ironbee/rule_defs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,6 +82,7 @@ extern "C" {
         (m)->filename           = xfilename; \
         (m)->data               = xdata; \
         (m)->ib                 = xib; \
+        (m)->rule               = NULL; \
         (m)->idx                = 0; \
         (m)->name               = xname; \
         (m)->gcdata             = xgcdata; \
@@ -104,6 +108,7 @@ extern "C" {
                                       IB_ABINUM, \
                                       IB_VERSION, \
                                       __FILE__, \
+                                      NULL, \
                                       NULL, \
                                       NULL, \
                                       0
@@ -256,13 +261,14 @@ typedef ib_status_t (*ib_module_fn_ctx_destroy_t)(
  */
 struct ib_module_t {
     /* Header */
-    uint32_t     vernum;           /**< Engine version number */
-    uint32_t     abinum;           /**< Engine ABI Number */
-    const char  *version;          /**< Engine version string */
-    const char  *filename;         /**< Module code filename */
-    void        *data;             /**< Module data */
-    ib_engine_t *ib;               /**< Engine */
-    size_t       idx;              /**< Module index */
+    uint32_t     vernum;      /**< Engine version number */
+    uint32_t     abinum;      /**< Engine ABI Number */
+    const char  *version;     /**< Engine version string */
+    const char  *filename;    /**< Module code filename */
+    void        *data;        /**< Module data */
+    ib_engine_t *ib;          /**< Engine */
+    ib_rule_t   *rule;        /**< Access to Rule Engine and env. Init=NULL*/
+    size_t       idx;         /**< Module index */
 
 
     /* Module Config */
@@ -360,6 +366,67 @@ ib_status_t DLL_PUBLIC ib_module_register_context(
      ib_module_t  *m,
      ib_context_t *ctx
 );
+
+/**
+ * Create an IronBee rule action for use by this module.
+ *
+ * Actions created by this method will still need an
+ * ib_rule_exec_t from the ib_tx_t object to execute.
+ *
+ * Actions created by this method use the main IronBee context by default.
+ *
+ * Actions created by this method should be destroyed 
+ * with ib_action_inst_destroy(ib_action_inst_t*).
+ *
+ * @param[in] module The module.
+ * @param[in] mpool The memory pool to use to create this object.
+ *            If NULL, then the main engine memory pool will be used.
+ * @param[in] action_name The name of the action.
+ * @param[in] action_parameters The parameter value for the action.
+ * @param[in] flags Flags to create the action with. Typically 0.
+ * @param[out] action_instance Where to put the newly created action.
+ * @returns Values returned by ib_action_inst_create.
+ *   - IB_OK success.
+ *   - IB_EINVAL if the named action does not exist.
+ *   - IB_EALLOC if memory could not be allocated.
+ */
+ib_status_t DLL_PUBLIC ib_module_action_inst_create(
+    ib_module_t *module,
+    ib_mpool_t *mpool,
+    const char *action_name,
+    const char *action_parameters,
+    ib_flags_t flags,
+    ib_action_inst_t **action_instance);
+
+/**
+ * Create anIronBee rule operator for use by this module.
+ *
+ * Operators created by this method will still need a ib_rule_exec_t
+ * which can be found in the ib_tx_t structure.
+ *
+ * Operators built by this method use the module rule for read-only access.
+ *
+ * Operators built by this method must be destroyed using
+ * ib_operator_inst_destroy(ib_operator_inst_t *).
+ *
+ * @param[in] module The module.
+ * @param[in] mpool The memory pool to use to create this object.
+ *            If NULL, then the main engine memory pool will be used.
+ * @param[in] operator_name The name of the operator, such as "rx".
+ * @param[in] parameters The parameters to pass to the operator.
+ * @param[in] flags Flags for the operator.
+ * @param[out] operator_instance The created operator instance.
+ * @returns Values returned by ib_operator_inst_create.
+ *  - IB_OK on success
+ *  - IB_ENOENT if the named operator does not exist
+ */
+ib_status_t DLL_PUBLIC ib_module_operator_inst_create(
+    ib_module_t *module,
+    ib_mpool_t *mpool,
+    const char *operator_name,
+    const char *parameters,
+    ib_flags_t flags,
+    ib_operator_inst_t **operator_instance);
 
 
 /**

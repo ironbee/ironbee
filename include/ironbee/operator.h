@@ -180,6 +180,38 @@ ib_status_t DLL_PUBLIC ib_operator_register(
  * Looks up the operator by name and executes the operator creation callback.
  *
  * @param[in] ib Ironbee engine
+ * @param[in] mpool The memory pool to create the instance from.
+ * @param[in] ctx Current IronBee context
+ * @param[in] rule The rule that owns the operator instance being executed.
+ * @param[in] required_op_flags Required operator flags
+ *            (IB_OP_FLAG_{PHASE,STREAM})
+ * @param[in] name The name of the operator to create.
+ * @param[in] parameters Parameters used to create the instance.
+ * @param[in] flags Operator instance flags (i.e. IB_OPINST_FLAG_INVERT)
+ * @param[out] op_inst The resulting instance.
+ *
+ * @returns IB_OK on success,
+ *          IB_EINVAL if the required operator flags do not match,
+ *          IB_ENOENT if the named operator does not exist
+ */
+ib_status_t DLL_PUBLIC ib_operator_inst_create_ex(
+    ib_engine_t         *ib,
+    ib_mpool_t          *mpool,
+    ib_context_t        *ctx,
+    const ib_rule_t     *rule,
+    ib_flags_t           required_op_flags,
+    const char          *name,
+    const char          *parameters,
+    ib_flags_t           flags,
+    ib_operator_inst_t **op_inst
+);
+
+/**
+ * Create an operator instance from the @a ib main memory pool.
+ *
+ * Looks up the operator by name and executes the operator creation callback.
+ *
+ * @param[in] ib Ironbee engine
  * @param[in] ctx Current IronBee context
  * @param[in] rule The rule that owns the operator instance being executed.
  * @param[in] required_op_flags Required operator flags

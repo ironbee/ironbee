@@ -170,6 +170,29 @@ ib_status_t ib_action_register(
  * Looks up the action by name and executes the action creation callback.
  *
  * @param[in] ib ironbee engine.
+ * @param[in] mpool Memory pool to create the action out of.
+ * @param[in] ctx Current context.
+ * @param[in] name The name of the action to create.
+ * @param[in] parameters Parameters used to create the instance.
+ * @param[in] flags Action instance flags.
+ * @param[out] act_inst The resulting instance.
+ *
+ * @returns IB_OK on success, IB_EINVAL if the named action does not exist.
+ */
+ib_status_t ib_action_inst_create_ex(
+    ib_engine_t *ib,
+    ib_mpool_t *mpool,
+    ib_context_t *ctx,
+    const char *name,
+    const char *parameters,
+    ib_flags_t flags,
+    ib_action_inst_t **act_inst);
+
+/**
+ * Create an action instance out of the @a ib main memory pool.
+ * Looks up the action by name and executes the action creation callback.
+ *
+ * @param[in] ib ironbee engine.
  * @param[in] ctx Current context.
  * @param[in] name The name of the action to create.
  * @param[in] parameters Parameters used to create the instance.

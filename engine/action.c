@@ -79,15 +79,16 @@ ib_status_t ib_action_register(
     return rc;
 }
 
-ib_status_t ib_action_inst_create(ib_engine_t *ib,
-                                  ib_context_t *ctx,
-                                  const char *name,
-                                  const char *parameters,
-                                  ib_flags_t flags,
-                                  ib_action_inst_t **act_inst)
+ib_status_t ib_action_inst_create_ex(
+    ib_engine_t *ib,
+    ib_mpool_t *mpool,
+    ib_context_t *ctx,
+    const char *name,
+    const char *parameters,
+    ib_flags_t flags,
+    ib_action_inst_t **act_inst)
 {
     ib_hash_t *action_hash = ib->actions;
-    ib_mpool_t *pool = ib_engine_pool_main_get(ib);
     ib_action_t *action;
     ib_status_t rc;
 
@@ -97,21 +98,21 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
         return rc;
     }
 
-    *act_inst = (ib_action_inst_t *)ib_mpool_alloc(pool,
+    *act_inst = (ib_action_inst_t *)ib_mpool_alloc(mpool,
                                                    sizeof(ib_action_inst_t));
     if (*act_inst == NULL) {
         return IB_EALLOC;
     }
     (*act_inst)->action = action;
     (*act_inst)->flags = flags;
-    (*act_inst)->params = ib_mpool_strdup(pool, parameters);
+    (*act_inst)->params = ib_mpool_strdup(mpool, parameters);
     (*act_inst)->fparam = NULL;
 
     if (action->fn_create != NULL) {
         rc = action->fn_create(
             ib,
             ctx,
-            pool,
+            mpool,
             parameters,
             *act_inst,
             action->cbdata_create
@@ -126,13 +127,30 @@ ib_status_t ib_action_inst_create(ib_engine_t *ib,
 
     if ((*act_inst)->fparam == NULL) {
         rc = ib_field_create(&((*act_inst)->fparam),
-                             pool,
+                             mpool,
                              IB_FIELD_NAME("param"),
                              IB_FTYPE_NULSTR,
                              ib_ftype_nulstr_in(parameters));
     }
 
     return rc;
+}
+
+ib_status_t ib_action_inst_create(ib_engine_t *ib,
+                                  ib_context_t *ctx,
+                                  const char *name,
+                                  const char *parameters,
+                                  ib_flags_t flags,
+                                  ib_action_inst_t **act_inst)
+{
+    return ib_action_inst_create_ex(
+        ib,
+        ib_engine_pool_main_get(ib),
+        ctx,
+        name,
+        parameters,
+        flags,
+        act_inst);
 }
 
 ib_status_t ib_action_inst_destroy(ib_action_inst_t *act_inst)
