@@ -2,6 +2,40 @@
 <?
 
 /*
+Copyright (c) 2009-2010 Open Information Security Foundation
+Copyright (c) 2010-2013 Qualys, Inc.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are
+met:
+
+- Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer.
+
+- Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution.
+
+- Neither the name of the Qualys, Inc. nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+"AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*/
+
+
+/*
 
 ZLIB Compressed Data Format Specification version 3.3
 http://www.ietf.org/rfc/rfc1950.txt
@@ -29,6 +63,8 @@ class GzipTest {
   private $textFlag = false;
   
   private $useHeaderCrc = false;
+  
+  private $headerCrc = false;
   
   private $crc32 = false;
   
@@ -72,6 +108,10 @@ class GzipTest {
   
   public function useHeaderCrc($b) {
     $this->useHeaderCrc = $b;
+  }
+  
+  public function setHeaderCrc($crc) {
+    $this->headerCrc = $crc;
   }
   
   public function setFlags($f) {
@@ -124,47 +164,54 @@ class GzipTest {
   }
 
   public function write($fp) {
+    $header = "";
+    
     // header (ID1 + ID2)
-    fwrite($fp, "\x1f\x8b");
+    $header .= "\x1f\x8b";
     
     // compression method (CM)
-    fwrite($fp, pack("C", $this->compressionMethod));
+    $header .= pack("C", $this->compressionMethod);
     
     // flags (FLG)
-    fwrite($fp, pack("C", $this->getFlags()));
+    $header .= pack("C", $this->getFlags());
     
     // mtime (MTIME)
-    fwrite($fp, "\x9c\x54\xf4\x50");
+    $header .= "\x9c\x54\xf4\x50";
     
     // extra flags (XFL)
-    fwrite($fp, pack("C", $this->xfl));
+    $header .= pack("C", $this->xfl);
     
     // operating system (OS)
-    fwrite($fp, "\xff");
+    $header .= "\xff";
     
     // FEXTRA
     if ($this->extra !== false) {
-      fwrite($fp, pack("v", strlen($this->extra)));
-      fwrite($fp, $this->extra);
+      $header .= pack("v", strlen($this->extra));
+      $header .= $this->extra;
     }
     
     // FNAME
     if ($this->filename !== false) {
-      fwrite($fp, $this->filename);
-      fwrite($fp, "\x00");
+      $header .= $this->filename;
+      $header .= "\x00";
     }
     
     // FCOMMENT
     if ($this->comment !== false) {
-      fwrite($fp, $this->comment);
-      fwrite($fp, "\x00");
+      $header .= $this->comment;
+      $header .= "\x00";
     }
+    
+    fwrite($fp, $header);
     
     // FHCRC
     if ($this->useHeaderCrc) {
-      // Clearly, this is not the real CRC16, use below if a real one is needed:
-      // http://stackoverflow.com/questions/14018508/how-to-calculate-crc16-in-php
-      fwrite($fp, "\x6e\x37");
+      if ($this->headerCrc !== false) {
+        // "The CRC16 consists of the two least significant bytes of the CRC32 [...]"
+        fwrite($fp, pack("v", crc32($header)));
+      } else {
+        fwrite($fp, pack("v", $this->headerCrc));
+      }
     }
     
     // compressed blocks
@@ -265,5 +312,11 @@ $gz->writeTo("gztest-13-invalid-isize.gz");
 $gz = new GzipTest();
 $gz->setXfl(0xff);
 $gz->writeTo("gztest-14-invalid-xfl.gz");
+
+// 15: Invalid header CRC (FHCRC)
+$gz = new GzipTest();
+$gz->useHeaderCrc(true);
+$gz->setHeaderCrc(0xffff);
+$gz->writeTo("gztest-15-invalid-fhcrc.gz");
 
 ?>
