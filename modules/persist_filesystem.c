@@ -134,13 +134,13 @@ static ib_status_t mod_pfs_register_fn(
     if (stat(path, &sbuf) < 0) {
         ib_log_warning(ib, "persist_filesys: Declining \"%s\"; "
                            "stat(\"%s\") failed: %s",
-                           nodestr, path, strerror(errno));
+                           uri, path, strerror(errno));
         return IB_DECLINED;
     }
     if (! S_ISDIR(sbuf.st_mode)) {
         ib_log_warning(ib,
                        "JSON file: Declining \"%s\"; \"%s\" is not a directory",
-                       nodestr, path);
+                       uri, path);
         return IB_DECLINED;
     }
 
@@ -163,13 +163,13 @@ static ib_status_t mod_pfs_register_fn(
         value     = nodestr + ovector[4];
         value_len = ovector[5] - ovector[4];
 
-        if (strncasecmp(param, "key", 3) == 0) {
+        if ( (param_len == 3) && (strncasecmp(param, "key", 3) == 0) ) {
             key = ib_mpool_memdup_to_str(mp, value, value_len);
             if (key == NULL) {
                 return IB_EALLOC;
             }
         }
-        else if (strncasecmp(param, "expire", 6) == 0) {
+        else if ( (param_len == 6) && (strncasecmp(param, "expire", 6) == 0) ) {
             rc = ib_string_to_num_ex(value, value_len, 0, &expiration);
             if (rc != IB_OK) {
                 ib_log_error(ib, "Invalid expiration value \"%.*s\"",
@@ -385,7 +385,6 @@ static ib_status_t mod_pfs_persist_fn(
     const char *key;
     ib_kvstore_key_t kvstore_key;
     ib_kvstore_value_t kvstore_val;
-    ssize_t remain;
     char *buf;
     size_t bufsize;
 
