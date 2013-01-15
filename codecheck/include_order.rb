@@ -61,6 +61,7 @@ CANONICAL_INCLUDE_ORDER = [
   '"engine_private.h"',
   '"ironbee_private.h"',
   '"rule_engine_private.h"',
+  '"managed_collection_private.h"',
   '"rules_lua_private.h"',
   '"state_notify_private.h"',
   '"user_agent_private.h"',

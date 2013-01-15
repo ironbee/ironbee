@@ -3,8 +3,12 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 include $(top_srcdir)/build/common.mk
 
 EXTRA_DIST =  config-parser.rl run-ragel.py \
-              engine_private.h state_notify_private.h rule_engine_private.h \
-              core_private.h core_audit_private.h
+              engine_private.h  \
+              state_notify_private.h \
+              rule_engine_private.h \
+              managed_collection_private.h \
+              core_private.h \
+              core_audit_private.h
 
 lib_LTLIBRARIES = libironbee.la
 libironbee_la_SOURCES = engine.c provider.c parser.c data.c \
@@ -15,7 +19,7 @@ libironbee_la_SOURCES = engine.c provider.c parser.c data.c \
                         operator.c action.c transformation.c \
                         module.c \
                         parsed_content.c \
-						capture.c \
+                        capture.c \
                         core.c \
                         core_context_selection.c \
                         core_collection_managers.c \
@@ -24,8 +28,8 @@ libironbee_la_SOURCES = engine.c provider.c parser.c data.c \
                         core_operators.c \
                         core_actions.c \
                         core_audit.c \
-						log.c \
-						logevent.c \
+                        log.c \
+                        logevent.c \
                         rule_logger.c \
                         rule_engine.c \
                         state_notify.c \
