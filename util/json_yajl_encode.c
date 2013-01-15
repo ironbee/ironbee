@@ -59,7 +59,7 @@ static ib_status_t encode_list(
     size_t           nlen,
     const ib_list_t *list)
 {
-    ib_status_t           rc;
+    ib_status_t           rc = IB_OK;
     const ib_list_node_t *node;
     yajl_gen_status       status;
     int                   errors = 0;
@@ -86,7 +86,7 @@ static ib_status_t encode_list(
                                  (const unsigned char *)field->name,
                                  field->nlen);
         if (status != yajl_gen_status_ok) {
-            rc = tmprc;
+            rc = IB_EUNKNOWN;
             ++errors;
             continue;
         }

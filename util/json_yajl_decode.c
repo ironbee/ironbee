@@ -213,6 +213,7 @@ static int decode_start_list(decode_ctx_t *decode,
 
     frame = ib_mpool_alloc(decode->alloc_ctx->mpool, sizeof(*frame));
     if (frame == NULL) {
+        rc = IB_EALLOC;
         goto cleanup;
     }
 
