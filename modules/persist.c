@@ -423,10 +423,7 @@ static ib_status_t mod_persist_persist_fn(
 
     /* Save the JSON buffer into the kvstore */
     rc = ib_kvstore_set(kvstore, NULL, &kvstore_key, &kvstore_val);
-    if (rc == IB_ENOENT) {
-        return IB_OK;
-    }
-    else if (rc != IB_OK) {
+    if (rc != IB_OK) {
         return rc;
     }
 
