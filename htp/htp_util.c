@@ -337,6 +337,8 @@ void htp_print_log(FILE *stream, htp_log_t *log) {
  * @param[in] fmt
  */
 void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_t level, int code, const char *fmt, ...) {
+    if (connp == NULL) return;
+    
     char buf[1024];
     va_list args;
 
