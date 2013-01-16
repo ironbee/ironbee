@@ -1,0 +1,151 @@
+/***************************************************************************
+ * Copyright (c) 2009-2010 Open Information Security Foundation
+ * Copyright (c) 2010-2013 Qualys, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are
+ * met:
+ *
+ * - Redistributions of source code must retain the above copyright
+ *   notice, this list of conditions and the following disclaimer.
+
+ * - Redistributions in binary form must reproduce the above copyright
+ *   notice, this list of conditions and the following disclaimer in the
+ *   documentation and/or other materials provided with the distribution.
+
+ * - Neither the name of the Qualys, Inc. nor the names of its
+ *   contributors may be used to endorse or promote products derived from
+ *   this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ***************************************************************************/
+
+/**
+ * @file
+ * @author Ivan Ristic <ivanr@webkreator.com>
+ */
+
+#include <iostream>
+#include <gtest/gtest.h>
+#include <htp/htp.h>
+#include <htp/htp_transaction.h>
+#include <htp/htp_base64.h>
+#include "test.h"
+
+class Multipart : public testing::Test {
+protected:
+
+    virtual void SetUp() {
+        cfg = htp_config_create();
+        htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2);
+    }
+
+    virtual void TearDown() {
+        htp_config_destroy(cfg);
+    }
+
+    htp_cfg_t *cfg;
+};
+
+TEST_F(Multipart, Test1) {
+    char boundary[] = "---------------------------41184676334";
+
+    htp_mpartp_t *mpartp = htp_mpartp_create(cfg, boundary);
+
+    char* parts[999];
+
+    size_t i = 0;
+    parts[i++] = (char *) "-----------------------------41184676334\r\n";
+    parts[i++] = (char *) "Content-Disposition: form-data;\n name=\"field1\"\r\n";
+    parts[i++] = (char *) "\r\n";
+    parts[i++] = (char *) "0123456789\r\n-";
+    parts[i++] = (char *) "-------------";
+    parts[i++] = (char *) "---------------41184676334\r\n";
+    parts[i++] = (char *) "Content-Disposition: form-data;\n name=\"field2\"\r\n";
+    parts[i++] = (char *) "\r\n";
+    parts[i++] = (char *) "0123456789\r\n-";
+    parts[i++] = (char *) "-------------";
+    parts[i++] = (char *) "--------------X\r\n";
+    parts[i++] = (char *) "-----------------------------41184676334\r\n";
+    parts[i++] = (char *) "Content-Disposition: form-data;\n";
+    parts[i++] = (char *) " ";
+    parts[i++] = (char *) "name=\"field3\"\r\n";
+    parts[i++] = (char *) "\r\n";
+    parts[i++] = (char *) "9876543210\r\n";
+    parts[i++] = (char *) "-----------------------------41184676334\r\n";
+    parts[i++] = (char *) "Content-Disposition: form-data; name=\"file1\"; filename=\"New Text Document.txt\"\r\nContent-Type: text/plain\r\n\r\n";
+    parts[i++] = (char *) "1FFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n";
+    parts[i++] = (char *) "2FFFFFFFFFFFFFFFFFFFFFFFFFFE\r";
+    parts[i++] = (char *) "3FFFFFFFFFFFFFFFFFFFFFFFFFFF\r\n4FFFFFFFFFFFFFFFFFFFFFFFFF123456789";
+    parts[i++] = (char *) "\r\n";
+    parts[i++] = (char *) "-----------------------------41184676334\r\n";
+    parts[i++] = (char *) "Content-Disposition: form-data; name=\"file2\"; filename=\"New Text Document.txt\"\r\n";
+    parts[i++] = (char *) "Content-Type: text/plain\r\n";
+    parts[i++] = (char *) "\r\n";
+    parts[i++] = (char *) "FFFFFFFFFFFFFFFFFFFFFFFFFFFZ";
+    // Final boundary should not go here
+    parts[i++] = NULL;
+
+    i = 0;
+    for (;;) {
+        if (parts[i] == NULL) break;
+        htp_mpartp_parse(mpartp, (const unsigned char *) parts[i], strlen(parts[i]));
+        i++;
+    }
+
+    // Send the final boundary
+    htp_mpartp_parse(mpartp, (const unsigned char *) &"\r\n", 2);
+    htp_mpartp_parse(mpartp, (const unsigned char *) boundary, strlen(boundary));
+    htp_mpartp_parse(mpartp, (const unsigned char *) &"--", 2);
+
+    htp_mpartp_finalize(mpartp);
+
+    // Examine the result
+    for (size_t i = 0, n = htp_list_size(mpartp->parts); i < n; i++) {
+        htp_mpart_part_t *part = (htp_mpart_part_t *) htp_list_get(mpartp->parts, i);
+
+        switch (i) {
+            case 0:
+                ASSERT_TRUE(bstr_cmp_c(part->name, "field1") == 0);
+                ASSERT_EQ(part->type, MULTIPART_PART_TEXT);
+                ASSERT_TRUE(part->value != NULL);
+                ASSERT_TRUE(bstr_cmp_c(part->value, "0123456789") == 0);
+                break;
+            case 1:
+                ASSERT_TRUE(bstr_cmp_c(part->name, "field2") == 0);
+                ASSERT_EQ(part->type, MULTIPART_PART_TEXT);
+                ASSERT_TRUE(bstr_cmp_c(part->value, "0123456789\r\n----------------------------X") == 0);
+                break;
+            case 2:
+                ASSERT_TRUE(bstr_cmp_c(part->name, "field3") == 0);
+                ASSERT_EQ(part->type, MULTIPART_PART_TEXT);
+                ASSERT_TRUE(part->value != NULL);
+                ASSERT_TRUE(bstr_cmp_c(part->value, "9876543210") == 0);
+                break;
+            case 3:
+                ASSERT_TRUE(bstr_cmp_c(part->name, "file1") == 0);
+                ASSERT_EQ(part->type, MULTIPART_PART_FILE);
+                break;
+            case 4:
+                ASSERT_TRUE(bstr_cmp_c(part->name, "file2") == 0);
+                ASSERT_EQ(part->type, MULTIPART_PART_FILE);
+                break;
+            default :
+                FAIL() << "More parts than expected";
+                break;
+        }       
+    }
+
+    htp_mpartp_destroy(&mpartp);
+}
