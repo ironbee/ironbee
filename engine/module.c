@@ -378,7 +378,7 @@ ib_status_t DLL_PUBLIC ib_module_operator_inst_create(
         parameters,
         flags,
         operator_instance);
-        
+
 
     return rc;
 }

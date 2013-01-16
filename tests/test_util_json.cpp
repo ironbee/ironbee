@@ -175,7 +175,7 @@ TEST_F(TestIBUtilJsonDecode, json_decode_basic)
     }
     ASSERT_EQ(IB_OK, rc);
     ASSERT_EQ(1U, ib_list_elements(list));
-    
+
     ib_list_clear(list);
     rc = ib_json_decode(MemPool(), buf2, list, &error);
     if (error != NULL) {
