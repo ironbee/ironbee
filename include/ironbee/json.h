@@ -94,7 +94,7 @@ ib_status_t DLL_PUBLIC ib_json_decode(
  * @param[in] list List of IB fields to encode
  * @param[in] pretty Enable "pretty" JSON (if supported by library)
  * @param[in] obuf Output buffer (as a nul-terminated string)
- * @param[in] olen Length of @a ostr
+ * @param[in] olen Length of @a obuf
  *
  * @returns IronBee status code
  */
