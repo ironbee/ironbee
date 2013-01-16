@@ -74,7 +74,7 @@ static int htp_mpartp_cd_param_type(unsigned char *data, size_t startpos, size_t
  * Content-Disposition header if it is present.
  *
  * @param[in] part
- * @return Success indication
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_mpart_part_process_headers(htp_mpart_part_t *part) {
     // Find C-D header
@@ -662,11 +662,11 @@ htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
     mpartp->boundary[1] = LF;
     mpartp->boundary[2] = '-';
     mpartp->boundary[3] = '-';
-    
+
     for (size_t i = 0, n = strlen(boundary); i < n; i++) {
-        mpartp->boundary[i + 4] = tolower((unsigned char)boundary[i]);
+        mpartp->boundary[i + 4] = tolower((unsigned char) boundary[i]);
     }
-    
+
     mpartp->boundary[mpartp->boundary_len] = '\0';
 
     mpartp->state = MULTIPART_STATE_BOUNDARY;
@@ -738,50 +738,47 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
         // we saw a new line. Now we have to find that line and
         // process it. It's either going to be in the current chunk,
         // or in the first stored chunk.
-        if (bstr_builder_size(mpartp->boundary_pieces) > 0) {
-            // We have stored chunks
-
+        if (bstr_builder_size(mpartp->boundary_pieces) > 0) {        
             int first = 1;
-
             for (int i = 0, n = htp_list_size(mpartp->boundary_pieces->pieces); i < n; i++) {
                 bstr *b = htp_list_get(mpartp->boundary_pieces->pieces, i);
 
                 if (first) {
-                    // Split the first chunk
+                    first = 0;
+
+                    // Split the first chunk.
 
                     if (!matched) {
-                        // In line mode, we are OK with line endings                        
-                        mpartp->handle_data(mpartp, bstr_ptr(b), mpartp->boundarypos, 1);
+                        // In line mode, we are OK with line endings.
+                        mpartp->handle_data(mpartp, bstr_ptr(b), mpartp->boundarypos, /* line */ 1);
                     } else {
-                        // But if there was a match, the line ending belongs to the boundary
+                        // But if there was a match, the line ending belongs to the boundary.
                         unsigned char *dx = bstr_ptr(b);
                         size_t lx = mpartp->boundarypos;
 
-                        // Remove LF or CRLF
+                        // Remove LF or CRLF.
                         if ((lx > 0) && (dx[lx - 1] == LF)) {
                             lx--;
-                            // Remove CR
+                            // Remove CR.
                             if ((lx > 0) && (dx[lx - 1] == CR)) {
                                 lx--;
                             }
                         }
 
-                        mpartp->handle_data(mpartp, dx, lx, 0);
+                        mpartp->handle_data(mpartp, dx, lx, /* not a line */ 0);
                     }
 
                     // The second part of the split chunks belongs to the boundary
                     // when matched, data otherwise.
                     if (!matched) {
                         mpartp->handle_data(mpartp, (unsigned char *) bstr_ptr(b) + mpartp->boundarypos,
-                                bstr_len(b) - mpartp->boundarypos, 0);
-                    }
-
-                    first = 0;
+                                bstr_len(b) - mpartp->boundarypos, /* not a line */ 0);
+                    }                   
                 } else {
                     // Do not send data if there was a boundary match. The stored
                     // data belongs to the boundary.
                     if (!matched) {
-                        mpartp->handle_data(mpartp, (unsigned char *) bstr_ptr(b), bstr_len(b), 0);
+                        mpartp->handle_data(mpartp, (unsigned char *) bstr_ptr(b), bstr_len(b), /* not a line */ 0);
                     }
                 }
             }
@@ -793,7 +790,7 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
 
         // In data mode, we process the lone CR byte as data.
         if (mpartp->cr_aside) {
-            mpartp->handle_data(mpartp, (unsigned char *) &"\r", 1, /* Not end of line */ 0);
+            mpartp->handle_data(mpartp, (unsigned char *) &"\r", 1, /* not a line */ 0);
             mpartp->cr_aside = 0;
         }
 
@@ -801,7 +798,7 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
         if (bstr_builder_size(mpartp->boundary_pieces) > 0) {
             for (int i = 0, n = htp_list_size(mpartp->boundary_pieces->pieces); i < n; i++) {
                 bstr *b = htp_list_get(mpartp->boundary_pieces->pieces, i);
-                mpartp->handle_data(mpartp, bstr_ptr(b), bstr_len(b), /* Not end of line */ 0);
+                mpartp->handle_data(mpartp, bstr_ptr(b), bstr_len(b), /* not a line */ 0);
             }
 
             bstr_builder_clear(mpartp->boundary_pieces);
@@ -860,19 +857,17 @@ htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, s
 
     while (pos < len) {
 
-    STATE_SWITCH:
+STATE_SWITCH:
         #if HTP_DEBUG        
         fprintf(stderr, "htp_mpartp_parse: state %d pos %d startpos %d\n", mpartp->state, pos, startpos);
         #endif
 
         switch (mpartp->state) {
 
-            // Handle part data.
-
-            case MULTIPART_STATE_DATA:
+            case MULTIPART_STATE_DATA: // Handle part data.
                 // If there was a saved CR, process it as data now.
                 if ((pos == 0) && (mpartp->cr_aside) && (pos < len)) {
-                    mpartp->handle_data(mpartp, (unsigned char *) &"\r", 1, 0);
+                    mpartp->handle_data(mpartp, (unsigned char *) &"\r", 1, /* not a line */ 0);
                     mpartp->cr_aside = 0;
                 }
 
@@ -912,9 +907,7 @@ htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, s
                                 mpartp->cr_aside = 0;
                             }
                         }
-                    } 
-                    // Check for a LF-terminated line.
-                    else if (data[pos] == LF) {
+                    } else if (data[pos] == LF) { // Check for a LF-terminated line.
                         pos++; // Advance over LF.
 
                         // Prepare to switch to boundary testing.
@@ -932,13 +925,11 @@ htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, s
                 } // while               
 
                 // No more data in the input buffer; process the data chunk.
-                mpartp->handle_data(mpartp, data + startpos, pos - startpos - mpartp->cr_aside, 0);
+                mpartp->handle_data(mpartp, data + startpos, pos - startpos - mpartp->cr_aside, /* not a line */ 0);
 
                 break;
 
-            // Handle a possible boundary.
-
-            case MULTIPART_STATE_BOUNDARY:                
+            case MULTIPART_STATE_BOUNDARY: // Handle a possible boundary.
                 while (pos < len) {
                     #ifdef HTP_DEBUG
                     fprintf(stderr, "boundary (len %d pos %d char %d) data char %d\n", mpartp->boundary_len,
@@ -960,15 +951,16 @@ htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, s
 
                         // Return back where data parsing left off.
                         if (mpartp->current_mode == MULTIPART_MODE_LINE) {
-                            // In line mode, we process the line                            
-                            mpartp->handle_data(mpartp, data + startpos, data_return_pos - startpos, 1);
+                            // In line mode, we process the line.
+                            mpartp->handle_data(mpartp, data + startpos, data_return_pos - startpos, /* line */ 1);
                             startpos = data_return_pos;
                         } else {
-                            // In data mode, we go back where we left off
+                            // In data mode, we go back where we left off.
                             pos = data_return_pos;
                         }
 
                         mpartp->state = MULTIPART_STATE_DATA;
+
                         goto STATE_SWITCH;
                     }
 
@@ -989,7 +981,7 @@ htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, s
                         size_t dlen = data_return_pos - startpos;
                         if ((dlen > 0) && (data[startpos + dlen - 1] == LF)) dlen--;
                         if ((dlen > 0) && (data[startpos + dlen - 1] == CR)) dlen--;
-                        mpartp->handle_data(mpartp, data + startpos, dlen, 1);
+                        mpartp->handle_data(mpartp, data + startpos, dlen, /* line */ 1);
 
                         // Keep track of how many boundaries we've seen.
                         mpartp->boundary_count++;
@@ -1009,13 +1001,12 @@ htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, s
                 bstr_builder_append_mem(mpartp->boundary_pieces, data + startpos, len - startpos);
 
                 break;
-
-            // Examine the first byte after the last boundary character. If it is
-            // a dash, then we maybe processing the last boundary in the payload. If
-            // it is not, move to eat all bytes until the end of the line.
-
+                
             case MULTIPART_STATE_BOUNDARY_IS_LAST2:
-                // We're looking for two dashes at this position.
+                // Examine the first byte after the last boundary character. If it is
+                // a dash, then we maybe processing the last boundary in the payload. If
+                // it is not, move to eat all bytes until the end of the line.
+
                 if (data[pos] == '-') {
                     // Found one dash, now go to check the next position.
                     pos++;
@@ -1026,13 +1017,12 @@ htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, s
                     // state to process the byte.
                     mpartp->state = MULTIPART_STATE_BOUNDARY_EAT_LF;
                 }
-                break;
-
-            // Examine the byte after the first dash; expected to be another dash.
-            // If not, eat all bytes until the end of the line.
+                break;               
 
             case MULTIPART_STATE_BOUNDARY_IS_LAST1:
-                // One more dash left to go.
+                // Examine the byte after the first dash; expected to be another dash.
+                // If not, eat all bytes until the end of the line.
+                
                 if (data[pos] == '-') {
                     // This is indeed the last boundary in the payload.
                     pos++;
