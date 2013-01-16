@@ -731,7 +731,7 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
     if (matched || (mpartp->current_mode == MULTIPART_MODE_LINE)) {
         // Line mode or boundary match
 
-        // In line mode, we ignore lone CR bytes
+        // In line mode, we don't care about the set-aside CR byte.
         mpartp->cr_aside = 0;
 
         // We know that we went to match a boundary because
@@ -751,10 +751,10 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
 
                     if (!matched) {
                         // In line mode, we are OK with line endings                        
-                        mpartp->handle_data(mpartp, (unsigned char *) bstr_ptr(b), mpartp->boundarypos, 1);
+                        mpartp->handle_data(mpartp, bstr_ptr(b), mpartp->boundarypos, 1);
                     } else {
                         // But if there was a match, the line ending belongs to the boundary
-                        unsigned char *dx = (unsigned char *) bstr_ptr(b);
+                        unsigned char *dx = bstr_ptr(b);
                         size_t lx = mpartp->boundarypos;
 
                         // Remove LF or CRLF
@@ -789,19 +789,19 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
             bstr_builder_clear(mpartp->boundary_pieces);
         }
     } else {
-        // Data mode and no match
+        // Data mode and no match.
 
-        // In data mode, we process the lone CR byte as data
+        // In data mode, we process the lone CR byte as data.
         if (mpartp->cr_aside) {
-            mpartp->handle_data(mpartp, (unsigned char *) &"\r", 1, 0 /* Not end of line */);
+            mpartp->handle_data(mpartp, (unsigned char *) &"\r", 1, /* Not end of line */ 0);
             mpartp->cr_aside = 0;
         }
 
-        // We then process any pieces that we might have stored, also as data
+        // We then process any pieces that we might have stored, also as data.
         if (bstr_builder_size(mpartp->boundary_pieces) > 0) {
             for (int i = 0, n = htp_list_size(mpartp->boundary_pieces->pieces); i < n; i++) {
                 bstr *b = htp_list_get(mpartp->boundary_pieces->pieces, i);
-                mpartp->handle_data(mpartp, (unsigned char *) bstr_ptr(b), bstr_len(b), 0);
+                mpartp->handle_data(mpartp, bstr_ptr(b), bstr_len(b), /* Not end of line */ 0);
             }
 
             bstr_builder_clear(mpartp->boundary_pieces);
@@ -838,70 +838,89 @@ htp_status_t htp_mpartp_finalize(htp_mpartp_t * mpartp) {
  * @return Status indicator
  */
 htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, size_t len) {
-    size_t pos = 0; // Current position in the input chunk.
-    size_t startpos = 0; // The starting position of data.
-    size_t data_return_pos = 0; // The position of the (possible) boundary.
+    // The current position in the entire input buffer.
+    size_t pos = 0;
+
+    // The position of the first unprocessed byte of data. We split the
+    // input buffer into smaller chunks, according to their purpose. Once
+    // an entire such smaller chunk is processed, we move to the next
+    // and update startpos.
+    size_t startpos = 0;
+
+    // The position of the (possible) boundary. We investigate for possible
+    // boundaries whenever we encounter CRLF or just LF. If we don't find a
+    // boundary we need to go back, and this is what data_return_pos helps with.
+    size_t data_return_pos = 0;
 
     #if HTP_DEBUG
     fprint_raw_data(stderr, "htp_mpartp_parse: data chunk", (unsigned char *) data, len);
     #endif
 
-    // Loop while there's data in the buffer
+    // While there's data in the input buffer.
+
     while (pos < len) {
-STATE_SWITCH:
+
+    STATE_SWITCH:
         #if HTP_DEBUG        
         fprintf(stderr, "htp_mpartp_parse: state %d pos %d startpos %d\n", mpartp->state, pos, startpos);
         #endif
 
         switch (mpartp->state) {
 
+            // Handle part data.
+
             case MULTIPART_STATE_DATA:
+                // If there was a saved CR, process it as data now.
                 if ((pos == 0) && (mpartp->cr_aside) && (pos < len)) {
                     mpartp->handle_data(mpartp, (unsigned char *) &"\r", 1, 0);
                     mpartp->cr_aside = 0;
                 }
 
-                // Loop through available data
-                while (pos < len) {
-                    if (data[pos] == CR) {
-                        // We have a CR byte
+                // While there's data in the input buffer.
 
-                        // Is this CR the last byte?
+                while (pos < len) {
+                    // Check for a CRLF-terminated line.
+                    if (data[pos] == CR) {
+                        // We have a CR byte.
+
+                        // Is this CR the last byte in the input buffer?
                         if (pos + 1 == len) {
                             // We have CR as the last byte in input. We are going to process
                             // what we have in the buffer as data, except for the CR byte,
                             // which we're going to leave for later. If it happens that a
                             // CR is followed by a LF and then a boundary, the CR is going
                             // to be discarded.
-                            pos++; // Take CR from input
-
+                            pos++; // Advance over CR.
                             mpartp->cr_aside = 1;
                         } else {
                             // We have CR and at least one more byte in the buffer, so we
                             // are able to test for the LF byte too.
                             if (data[pos + 1] == LF) {
-                                pos += 2; // Take CR and LF from input                                
+                                pos += 2; // Advance over CR and LF.
 
-                                // Prepare to switch to boundary testing
+                                // Prepare to switch to boundary testing.
                                 data_return_pos = pos;
                                 mpartp->boundarypos = pos - startpos;
-                                mpartp->bpos = 2; // After LF/first dash
+                                mpartp->bpos = 2; // After LF; position of the first dash.
                                 mpartp->state = MULTIPART_STATE_BOUNDARY;
 
                                 goto STATE_SWITCH;
                             } else {
+                                // This is not a new line; advance over the
+                                // byte and clear the CR set-aside flag.
                                 pos++;
                                 mpartp->cr_aside = 0;
                             }
                         }
-                    } else if (data[pos] == LF) {
-                        // Possible boundary start position (LF line)
-                        pos++; // Take LF from input
+                    } 
+                    // Check for a LF-terminated line.
+                    else if (data[pos] == LF) {
+                        pos++; // Advance over LF.
 
-                        // Prepare to switch to boundary testing
+                        // Prepare to switch to boundary testing.
                         data_return_pos = pos;
                         mpartp->boundarypos = pos - startpos;
-                        mpartp->bpos = 2; // After LF/first dash
+                        mpartp->bpos = 2; // After LF; position of the first dash.
                         mpartp->state = MULTIPART_STATE_BOUNDARY;
 
                         goto STATE_SWITCH;
@@ -912,13 +931,14 @@ STATE_SWITCH:
                     }
                 } // while               
 
-                // End of data; process data chunk                
+                // No more data in the input buffer; process the data chunk.
                 mpartp->handle_data(mpartp, data + startpos, pos - startpos - mpartp->cr_aside, 0);
 
                 break;
 
-            case MULTIPART_STATE_BOUNDARY:
-                // Possible boundary
+            // Handle a possible boundary.
+
+            case MULTIPART_STATE_BOUNDARY:                
                 while (pos < len) {
                     #ifdef HTP_DEBUG
                     fprintf(stderr, "boundary (len %d pos %d char %d) data char %d\n", mpartp->boundary_len,
@@ -931,14 +951,14 @@ STATE_SWITCH:
                         mpartp->first_boundary_byte = data[pos];
                     }
 
-                    // Check if the bytes match
+                    // Check if the bytes match.
                     if (!(tolower((int) data[pos]) == mpartp->boundary[mpartp->bpos])) {
-                        // Boundary mismatch
+                        // Boundary mismatch.
 
-                        // Process stored data
-                        htp_martp_process_aside(mpartp, 0);
+                        // Process stored (buffered) data.
+                        htp_martp_process_aside(mpartp, /* no match */ 0);
 
-                        // Return back where DATA parsing left off
+                        // Return back where data parsing left off.
                         if (mpartp->current_mode == MULTIPART_MODE_LINE) {
                             // In line mode, we process the line                            
                             mpartp->handle_data(mpartp, data + startpos, data_return_pos - startpos, 1);
@@ -960,12 +980,12 @@ STATE_SWITCH:
                     if (mpartp->bpos == mpartp->boundary_len) {
                         // Boundary match!
 
-                        // Process stored data
-                        htp_martp_process_aside(mpartp, 1);
+                        // Process stored (buffered) data.
+                        htp_martp_process_aside(mpartp, /* boundary match */ 1);
 
-                        // Process data prior to the boundary in the local chunk. Because
-                        // we know this is the last chunk before boundary, we can remove
-                        // the line endings
+                        // Process data prior to the boundary in the current input buffer.
+                        // Because we know this is the last chunk before boundary, we can
+                        // remove the line endings.
                         size_t dlen = data_return_pos - startpos;
                         if ((dlen > 0) && (data[startpos + dlen - 1] == LF)) dlen--;
                         if ((dlen > 0) && (data[startpos + dlen - 1] == CR)) dlen--;
@@ -979,31 +999,42 @@ STATE_SWITCH:
 
                         // We now need to check if this is the last boundary in the payload
                         mpartp->state = MULTIPART_STATE_BOUNDARY_IS_LAST2;
+
                         goto STATE_SWITCH;
                     }
                 } // while
 
-                // No more data in the local chunk; store the unprocessed part for later
+                // No more data in the input buffer; store (buffer) the unprocessed
+                // part for later, for after we find out if this is a boundary.
                 bstr_builder_append_mem(mpartp->boundary_pieces, data + startpos, len - startpos);
 
                 break;
 
+            // Examine the first byte after the last boundary character. If it is
+            // a dash, then we maybe processing the last boundary in the payload. If
+            // it is not, move to eat all bytes until the end of the line.
+
             case MULTIPART_STATE_BOUNDARY_IS_LAST2:
-                // We're expecting two dashes
+                // We're looking for two dashes at this position.
                 if (data[pos] == '-') {
-                    // Still hoping!
+                    // Found one dash, now go to check the next position.
                     pos++;
                     mpartp->state = MULTIPART_STATE_BOUNDARY_IS_LAST1;
                 } else {
-                    // Hmpf, it's not the last boundary.
+                    // This is not the last boundary. Change state but
+                    // do not advance the position, allowing the next
+                    // state to process the byte.
                     mpartp->state = MULTIPART_STATE_BOUNDARY_EAT_LF;
                 }
                 break;
 
+            // Examine the byte after the first dash; expected to be another dash.
+            // If not, eat all bytes until the end of the line.
+
             case MULTIPART_STATE_BOUNDARY_IS_LAST1:
-                // One more dash left to go
+                // One more dash left to go.
                 if (data[pos] == '-') {
-                    // This is indeed the last boundary in the payload
+                    // This is indeed the last boundary in the payload.
                     pos++;
                     mpartp->seen_last_boundary = 1;
                     mpartp->state = MULTIPART_STATE_BOUNDARY_EAT_LF;
@@ -1018,11 +1049,12 @@ STATE_SWITCH:
 
             case MULTIPART_STATE_BOUNDARY_EAT_LF:
                 if (data[pos] == LF) {
+                    // We're done with boundary processing; data bytes follow.
                     pos++;
                     startpos = pos;
                     mpartp->state = MULTIPART_STATE_DATA;
                 } else {
-                    // Error!
+                    // TIDI Error!
                     // Unexpected byte; remain in the same state
                     pos++;
                 }
