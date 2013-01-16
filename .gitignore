@@ -1,6 +1,9 @@
 .libs
 *~
 *.exe
+*.gcda
+*.gcno
+*.gcov
 *.la
 *.lo
 *.o
