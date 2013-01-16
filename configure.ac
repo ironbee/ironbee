@@ -62,12 +62,27 @@ if test "$enable_debug" = "yes"; then
     echo "Debug mode enabled"
 fi
 
+OLEVEL=2
+
 AC_ARG_ENABLE(devmode, [  --enable-devmode  Enable development mode], [ enable_devmode=yes ])
 if test "$enable_devmode" = "yes"; then
+    OLEVEL=0
     CFLAGS="${CFLAGS} -Werror -Wfatal-errors"
     CPPFLAGS="${CPPFLAGS} -Werror -Wfatal-errors"
     echo "Development mode enabled"
 fi
+
+AC_ARG_ENABLE(gcov, [  --enable-gcov  Enable gcov support], [ enable_gcov=yes ])
+if test "$enable_gcov" = "yes"; then
+    OLEVEL=0
+    CFLAGS="${CFLAGS} --coverage -fprofile-arcs -ftest-coverage"
+    CPPFLAGS="${CPPFLAGS} --coverage -fprofile-arcs -ftest-coverage"
+    LDFLAGS="${LDFLAGS} -lgcov --coverage -fprofile-arcs"
+    echo "gcov support enabled"
+fi
+
+CFLAGS="${CFLAGS} -O${OLEVEL}"
+CPPFLAGS="${CPPFLAGS} -O${OLEVEL}"
 
 dnl -----------------------------------------------
 dnl Checks for programs.
