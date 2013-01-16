@@ -24,8 +24,6 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/core.h>
-
 #ifndef _POSIX_SOURCE
 #define _POSIX_SOURCE
 #endif
@@ -33,19 +31,20 @@
 #include "core_private.h"
 #include "engine_private.h"
 
+#include <ironbee/core.h>
+#include <ironbee/json.h>
 #include <ironbee/managed_collection.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
-#include <ironbee/json.h>
 
 #include <pcre.h>
 
-#include <inttypes.h>
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <sys/stat.h>
 
 /** Name/value Pair static data */

@@ -17,25 +17,25 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/module.h>
 #include <ironbee/engine.h>
+#include <ironbee/json.h>
+#include <ironbee/kvstore.h>
+#include <ironbee/kvstore_filesystem.h>
 #include <ironbee/list.h>
+#include <ironbee/managed_collection.h>
+#include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
-#include <ironbee/kvstore.h>
-#include <ironbee/kvstore_filesystem.h>
-#include <ironbee/managed_collection.h>
-#include <ironbee/json.h>
 
 #include <pcre.h>
 
 #include <assert.h>
 #include <errno.h>
-#include <sys/types.h>
+#include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <fcntl.h>
+#include <sys/types.h>
 
 /** File system persistence parameter parsing data */
 typedef struct {

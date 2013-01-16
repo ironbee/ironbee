@@ -41,8 +41,8 @@
 #include <ironbee/clock.h>
 #include <ironbee/context_selection.h>
 #include <ironbee/escape.h>
-#include <ironbee/json.h>
 #include <ironbee/field.h>
+#include <ironbee/json.h>
 #include <ironbee/logevent.h>
 #include <ironbee/managed_collection.h>
 #include <ironbee/mpool.h>
@@ -60,14 +60,14 @@
  * for C++ implementations if this is defined: */
 #define __STDC_FORMAT_MACROS
 #endif
+#include <fcntl.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <fcntl.h>
+#include <sys/types.h>
 
 #define MODULE_NAME        core
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)

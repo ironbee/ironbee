@@ -26,12 +26,12 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/module.h>
-#include <ironbee/rule_engine.h>
 
 #include "engine_private.h"
 
 #include <ironbee/dso.h>
 #include <ironbee/mpool.h>
+#include <ironbee/rule_engine.h>
 
 #include <assert.h>
 #include <inttypes.h>

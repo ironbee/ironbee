@@ -25,8 +25,8 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
-#include "state_notify_private.h"
 #include "managed_collection_private.h"
+#include "state_notify_private.h"
 
 #include <ironbee/array.h>
 #include <ironbee/context_selection.h>

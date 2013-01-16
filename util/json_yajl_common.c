@@ -25,8 +25,8 @@
 
 #include "json_yajl_private.h"
 
-#include <ironbee/types.h>
 #include <ironbee/mpool.h>
+#include <ironbee/types.h>
 
 #include <yajl/yajl_tree.h>
 

@@ -29,12 +29,12 @@
  * @author Christopher Alfeld <calfeld@qualys.com>
  */
 
+#include <ironbee/action.h>
 #include <ironbee/build.h>
 #include <ironbee/config.h>
-#include <ironbee/types.h>
-#include <ironbee/action.h>
 #include <ironbee/operator.h>
 #include <ironbee/rule_defs.h>
+#include <ironbee/types.h>
 
 #ifdef __cplusplus
 extern "C" {

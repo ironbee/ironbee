@@ -60,6 +60,7 @@ CANONICAL_INCLUDE_ORDER = [
   '"core_private.h"',
   '"engine_private.h"',
   '"ironbee_private.h"',
+  '"json_yajl_private.h"',
   '"rule_engine_private.h"',
   '"managed_collection_private.h"',
   '"rules_lua_private.h"',
@@ -67,6 +68,7 @@ CANONICAL_INCLUDE_ORDER = [
   '"user_agent_private.h"',
   '"lua/ironbee.h"',
   '"lua_common_private.h"',
+  '"managed_collection_private.h"',
 
   # Automata
   '<ironautomata/bits.h>',
@@ -107,6 +109,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/hash.h>',
   '<ironbee/ip.h>',
   '<ironbee/ipset.h>',
+  '<ironbee/json.h>',
   '<ironbee/kvstore.h>',
   '<ironbee/kvstore_filesystem.h>',
   '<ironbee/list.h>',
@@ -192,6 +195,9 @@ CANONICAL_INCLUDE_ORDER = [
   '<pthread.h>',
   '<uuid.h>',
   '<valgrind/memcheck.h>',
+  '<yajl/yajl_gen.h>',
+  '<yajl/yajl_parse.h>',
+  '<yajl/yajl_tree.h>',
 
   '<algorithm>',
   '<fstream>',

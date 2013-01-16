@@ -23,15 +23,14 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/json.h>
-
 #include "json_yajl_private.h"
 
-#include <ironbee/types.h>
+#include <ironbee/field.h>
+#include <ironbee/json.h>
+#include <ironbee/list.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
-#include <ironbee/list.h>
-#include <ironbee/field.h>
+#include <ironbee/types.h>
 #include <ironbee/util.h>
 
 #include <yajl/yajl_parse.h>
