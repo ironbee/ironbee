@@ -1880,6 +1880,11 @@ void htp_normalize_uri_path_inplace(bstr *s) {
  *
  */
 void fprint_bstr(FILE *stream, const char *name, bstr *b) {
+    if (b == NULL) {
+        fprint_raw_data_ex(stream, name, (unsigned char *)"(null)", 0, 6);
+        return;
+    }
+
     fprint_raw_data_ex(stream, name, (unsigned char *) bstr_ptr(b), 0, bstr_len(b));
 }
 
