@@ -38,7 +38,7 @@ using namespace std;
 namespace IronAutomata {
 namespace EudoxusCompiler {
 
-#define CPP_EUDOXUS_VERSION 9
+#define CPP_EUDOXUS_VERSION 10
 #if CPP_EUDOXUS_VERSION != IA_EUDOXUS_VERSION
 #error "Mismatch between compiler version and automata version."
 #endif
@@ -642,6 +642,11 @@ private:
     //! Appends all output lists and outputs in @c m_outputs to the buffer.
     void append_outputs()
     {
+        // Set first_output.
+        m_assembler.ptr<ia_eudoxus_automata_t>(
+            m_e_automata_index
+        )->first_output = m_assembler.size();
+
         // Calculate all contents.
         typedef map<Intermediate::byte_vector_t, size_t> output_content_map_t;
         output_content_map_t output_contents;

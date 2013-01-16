@@ -267,6 +267,18 @@ string output_transform_nop(const char*, size_t, const uint8_t*)
     return string();
 }
 
+//! Write output to @a out without location.
+void output_record_raw(
+    const string& s,
+    const uint8_t*,
+    const uint8_t*,
+    size_t,
+    ostream& out
+)
+{
+    out << s << endl;
+}
+
 //! Write output to @a out.
 void output_record_list(
     const string& s,
@@ -345,6 +357,7 @@ int main(int argc, char **argv)
     size_t overlap_size = 128;
     bool no_output = false;
     bool final = false;
+    bool list_output = false;
     size_t n = 1;
 
     po::options_description desc("Options:");
@@ -372,9 +385,14 @@ int main(int argc, char **argv)
             "how much to overlap blocks; default = 128"
         )
         ("final,f", po::bool_switch(&final),
-            "only output for final node")
+            "only output for final node"
+        )
         ("num-runs,n", po::value<size_t>(&n),
-            "number of times to run input through; 0 = infinite, default = 1")
+            "number of times to run input through; 0 = infinite, default = 1"
+        )
+        ("list-output,L", po::bool_switch(&list_output),
+            "list all outputs of automata and exit"
+        )
         ;
 
     po::positional_options_description pd;
@@ -483,7 +501,17 @@ int main(int argc, char **argv)
     size_t pre_block = 0;
     output_record_map_t counts;
     output_callback_t output_callback;
-    if (record_s == "list") {
+    if (list_output) {
+        output_callback = boost::bind(
+            output_record_raw,
+            _1,
+            _2,
+            static_cast<const unsigned char*>(NULL),
+            0,
+            boost::ref(*output)
+        );
+    }
+    else if (record_s == "list") {
         output_callback = boost::bind(
             output_record_list,
             _1,
@@ -509,6 +537,20 @@ int main(int argc, char **argv)
         return 1;
     }
     OutputHandler output_handler(ti, output_transform, output_callback);
+
+    // Check for -L
+    if (list_output) {
+        rc = ia_eudoxus_all_outputs(
+            eudoxus,
+            c_output_callback,
+            reinterpret_cast<void*>(&output_handler)
+        );
+        if (rc != IA_EUDOXUS_OK) {
+            output_eudoxus_result(eudoxus, rc);
+            return 1;
+        }
+        return 0;
+    }
 
     // Run Engine
     for (size_t i = 0; i < n || n == 0; ++i) {

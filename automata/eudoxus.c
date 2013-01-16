@@ -580,3 +580,37 @@ ia_eudoxus_result_t ia_eudoxus_metadata_with_key(
     }
     return rc;
 }
+
+ia_eudoxus_result_t ia_eudoxus_all_outputs(
+    const ia_eudoxus_t    *eudoxus,
+    ia_eudoxus_callback_t  callback,
+    void                  *callback_data
+)
+{
+    if (eudoxus == NULL || callback == NULL) {
+        return IA_EUDOXUS_EINVAL;
+    }
+
+    uint64_t index = eudoxus->automata->first_output;
+    while (
+        index < eudoxus->automata->first_output_list &&
+        index < eudoxus->automata->data_length
+    ) {
+        const ia_eudoxus_output_t *output = (const ia_eudoxus_output_t *)(
+            (const char *)(eudoxus->automata) + index
+        );
+        ia_eudoxus_command_t command = callback(
+            eudoxus,
+            output->data,
+            output->length,
+            0,
+            callback_data
+        );
+        if (command != IA_EUDOXUS_CMD_CONTINUE) {
+            return (ia_eudoxus_result_t)command;
+        }
+        index += sizeof(ia_eudoxus_output_t) + output->length;
+    }
+
+    return IA_EUDOXUS_OK;
+}

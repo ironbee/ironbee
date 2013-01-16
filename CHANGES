@@ -92,6 +92,9 @@ IronBee v0.7.0
   
 * Eudoxus output callbacks are now passed the engine.
 
+* Added `ia_eudoxus_all_outputs()` to iterate through every output in an 
+  automata.  `ee -L` can be used to do this from the command line.
+
 **Clipp**
 
 * All generators except pb now produced parsed events.  Use @unparse to get

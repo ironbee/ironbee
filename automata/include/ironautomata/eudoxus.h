@@ -509,6 +509,31 @@ ia_eudoxus_result_t ia_eudoxus_metadata_with_key(
 );
 
 /**
+ * Call a callback for every output in the automata.
+ *
+ * The callback will be called with an input location of 0.
+ *
+ * If an error is reported, a message may be available via ia_eudoxus_error().
+ *
+ * @param[in] eudoxus       Engine to call outputs for.
+ * @param[in] callback      Callback to call with each output.
+ * @param[in] callback_data Callback data.
+ * @return
+ * - IA_EUDOXUS_OK if out of input.
+ * - IA_EUDOXUS_EINVAL if @a state is NULL or a corrupt engine or automata is
+ *   detected
+ * - IA_EUDOXUS_STOP if callback called and returned IA_EUDOXUS_CMD_STOP.
+ * - IA_EUDOXUS_ERROR if callback called and returned IA_EUDOXUS_CMD_ERROR.
+ * - IA_EUDOXUS_EINSANE on insanity error; please report as bug along with
+ *   message.
+ */
+ia_eudoxus_result_t ia_eudoxus_all_outputs(
+    const ia_eudoxus_t    *eudoxus,
+    ia_eudoxus_callback_t  callback,
+    void                  *callback_data
+);
+
+/**
  * @} IronAutomataEudoxus
  */
 
