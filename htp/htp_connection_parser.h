@@ -109,15 +109,14 @@ void *htp_connp_get_user_data(const htp_connp_t *connp);
  * Opens connection.
  *
  * @param[in] connp
- * @param[in] remote_addr Remote address
- * @param[in] remote_port Remote port
- * @param[in] local_addr Local address
- * @param[in] local_port Local port
- * @param[in] use_local_port Use local port for connection port
+ * @param[in] client_addr Client address
+ * @param[in] client_port Client port
+ * @param[in] server_addr Server address
+ * @param[in] server_port Server port
  * @param[in] timestamp Optional.
  */
-void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr,
-    int local_port, htp_time_t *timestamp);
+void htp_connp_open(htp_connp_t *connp, const char *client_addr, int client_port, const char *server_addr,
+    int server_port, htp_time_t *timestamp);
 
 /**
  *

@@ -274,7 +274,7 @@ static void print_tx(htp_connp_t *connp, htp_tx_t *tx) {
         referer = bstr_util_strdup_to_c(h_referer->value);
     }
 
-    printf("%s - - [%s] \"%s\" %i %zu \"%s\" \"%s\"\n", connp->conn->remote_addr, buf,
+    printf("%s - - [%s] \"%s\" %i %zu \"%s\" \"%s\"\n", connp->conn->client_addr, buf,
         request_line, tx->response_status_number, tx->response_message_len,
         referer, user_agent);
 

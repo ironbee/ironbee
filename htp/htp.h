@@ -62,17 +62,17 @@ extern "C" {
  * This data structure is used to represent a single TCP connection.
  */
 struct htp_conn_t {
-    /** Remote IP address. */
-    char *remote_addr;
+    /** Client IP address. */
+    char *client_addr;
 
-    /** Remote port. */
-    int remote_port;
+    /** Client port. */
+    int client_port;
 
-    /** Local IP address. */
-    char *local_addr;
+    /** Server IP address. */
+    char *server_addr;
 
-    /** Local port. */
-    int local_port;
+    /** Server port. */
+    int server_port;
 
     /**
      * Transactions carried out on this connection. The list may contain

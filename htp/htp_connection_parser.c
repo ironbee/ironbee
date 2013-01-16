@@ -170,8 +170,8 @@ void htp_connp_in_reset(htp_connp_t *connp) {
     connp->in_chunk_request_index = connp->in_chunk_count;
 }
 
-void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port, const char *local_addr,
-        int local_port, htp_time_t *timestamp)
+void htp_connp_open(htp_connp_t *connp, const char *client_addr, int client_port, const char *server_addr,
+        int server_port, htp_time_t *timestamp)
 {
     // Check connection parser state first.
     if ((connp->in_status != HTP_STREAM_NEW) || (connp->out_status != HTP_STREAM_NEW)) {
@@ -179,7 +179,7 @@ void htp_connp_open(htp_connp_t *connp, const char *remote_addr, int remote_port
         return;
     }
 
-    if (htp_conn_open(connp->conn, remote_addr, remote_port, local_addr, local_port, timestamp) != HTP_OK) {
+    if (htp_conn_open(connp->conn, client_addr, client_port, server_addr, server_port, timestamp) != HTP_OK) {
         return;
     }
     

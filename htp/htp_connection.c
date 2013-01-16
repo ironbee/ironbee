@@ -94,12 +94,12 @@ void htp_conn_destroy(htp_conn_t *conn) {
         htp_list_destroy(&conn->messages);
     }
 
-    if (conn->local_addr != NULL) {
-        free(conn->local_addr);
+    if (conn->server_addr != NULL) {
+        free(conn->server_addr);
     }
 
-    if (conn->remote_addr != NULL) {
-        free(conn->remote_addr);
+    if (conn->client_addr != NULL) {
+        free(conn->client_addr);
     }
 
     // Finally, destroy the connection
@@ -107,26 +107,28 @@ void htp_conn_destroy(htp_conn_t *conn) {
     free(conn);
 }
 
-htp_status_t htp_conn_open(htp_conn_t *conn, const char *remote_addr, int remote_port, const char *local_addr, int local_port, htp_time_t *timestamp) {
-    if (remote_addr != NULL) {
-        conn->remote_addr = strdup(remote_addr);
-        if (conn->remote_addr == NULL) return HTP_ERROR;
+htp_status_t htp_conn_open(htp_conn_t *conn, const char *client_addr, int client_port,
+        const char *server_addr, int server_port, htp_time_t *timestamp)
+{
+    if (client_addr != NULL) {
+        conn->client_addr = strdup(client_addr);
+        if (conn->client_addr == NULL) return HTP_ERROR;
     }
 
-    conn->remote_port = remote_port;
+    conn->client_port = client_port;
 
-    if (local_addr != NULL) {
-        conn->local_addr = strdup(local_addr);
-        if (conn->local_addr == NULL) {
-            if (conn->remote_addr != NULL) {
-                free(conn->remote_addr);
+    if (server_addr != NULL) {
+        conn->server_addr = strdup(server_addr);
+        if (conn->server_addr == NULL) {
+            if (conn->client_addr != NULL) {
+                free(conn->client_addr);
             }
 
             return HTP_ERROR;
         }
     }
 
-    conn->local_port = local_port;
+    conn->server_port = server_port;
 
     // Remember when the connection was opened.
     if (timestamp != NULL) {
