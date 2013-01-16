@@ -177,9 +177,7 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
             htp_mpart_part_t *part = htp_list_get(tx->request_mpartp->parts, i);
 
             // Use text parameters
-            if (part->type == MULTIPART_PART_TEXT) {
-                //htp_tx_req_add_body_param(d->tx, part->name, part->value);
-
+            if (part->type == MULTIPART_PART_TEXT) {                
                 htp_param_t *param = calloc(1, sizeof (htp_param_t));
                 if (param == NULL) return HTP_ERROR;
                 param->name = part->name;
