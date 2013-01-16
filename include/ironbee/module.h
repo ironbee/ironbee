@@ -399,7 +399,7 @@ ib_status_t DLL_PUBLIC ib_module_action_inst_create(
     ib_action_inst_t **action_instance);
 
 /**
- * Create anIronBee rule operator for use by this module.
+ * Create an IronBee rule operator for use by this module.
  *
  * Operators created by this method will still need a ib_rule_exec_t
  * which can be found in the ib_tx_t structure.

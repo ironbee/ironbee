@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee --- JSON YAJL wrapperfunctions
+ * @brief IronBee --- JSON YAJL wrapper functions
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 

@@ -56,7 +56,7 @@ typedef struct {
 
 /** File system persistence configuration data */
 typedef struct {
-    ib_list_t  *kvstore_list;        /**< List of persit_fs_kvstore_t */
+    ib_list_t  *kvstore_list;        /**< List of persist_fs_kvstore_t */
 } mod_persist_cfg_t;
 static mod_persist_cfg_t mod_persist_global_cfg;
 

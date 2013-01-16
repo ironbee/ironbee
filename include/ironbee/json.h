@@ -50,7 +50,7 @@ extern "C" {
 
 
 /**
- * Decode a JSON encoded buffer into a list of IronBee fields (ex verison)
+ * Decode a JSON encoded buffer into a list of IronBee fields (ex version)
  *
  * @param[in] mpool Memory pool to use for allocations
  * @param[in] data_in Input JSON buffer
