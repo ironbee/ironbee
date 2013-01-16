@@ -4454,7 +4454,7 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
         ib_cfg_log_debug(cp,
                          "InitVar: Created numeric field \"%s\" %"PRId64" "
                          "for context \"%s\"",
-                         name, (long int)fval.num,
+                         name, (long long)fval.num,
                          ib_context_full_get(cp->cur_ctx));
     }
     else if (field->type == IB_FTYPE_FLOAT) {
