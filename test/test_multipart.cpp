@@ -141,10 +141,62 @@ TEST_F(Multipart, Test1) {
                 ASSERT_TRUE(bstr_cmp_c(part->name, "file2") == 0);
                 ASSERT_EQ(part->type, MULTIPART_PART_FILE);
                 break;
-            default :
+            default:
                 FAIL() << "More parts than expected";
                 break;
-        }       
+        }
+    }
+
+    htp_mpartp_destroy(&mpartp);
+}
+
+TEST_F(Multipart, Test2) {
+    htp_mpartp_t *mpartp = mpartp = htp_mpartp_create(cfg, "BBB");
+
+    const char *i1 = "x0000x\n--BBB\n\nx1111x\n--\nx2222x\n--";
+    const char *i2 = "BBB\n\nx3333x\n--B";
+    const char *i3 = "B\n\nx4444x\n--B";
+    const char *i4 = "B\n--BBB\n\nx5555x\r";
+    const char *i5 = "\n--x6666x\r";
+    const char *i6 = "-";
+    const char *i7 = "-";
+
+    htp_mpartp_parse(mpartp, (const unsigned char *) i1, strlen(i1));
+    htp_mpartp_parse(mpartp, (const unsigned char *) i2, strlen(i2));
+    htp_mpartp_parse(mpartp, (const unsigned char *) i3, strlen(i3));
+    htp_mpartp_parse(mpartp, (const unsigned char *) i4, strlen(i4));
+    htp_mpartp_parse(mpartp, (const unsigned char *) i5, strlen(i5));
+    htp_mpartp_parse(mpartp, (const unsigned char *) i6, strlen(i6));
+    htp_mpartp_parse(mpartp, (const unsigned char *) i7, strlen(i7));
+    htp_mpartp_finalize(mpartp);
+
+    for (size_t i = 0, n = htp_list_size(mpartp->parts); i < n; i++) {
+        htp_mpart_part_t *part = (htp_mpart_part_t *) htp_list_get(mpartp->parts, i);       
+
+        switch (i) {
+            case 0:
+                ASSERT_EQ(part->type, 3);
+                ASSERT_TRUE(part->value == NULL); // Not keeping prologue data at the moment
+                break;            
+            case 1:
+                ASSERT_EQ(part->type, 1);
+                ASSERT_TRUE(part->value != NULL);
+                ASSERT_TRUE(bstr_cmp_c(part->value, "x1111x\n--\nx2222x") == 0);
+                break;
+            case 2:
+                ASSERT_EQ(part->type, 1);
+                ASSERT_TRUE(part->value != NULL);
+                ASSERT_TRUE(bstr_cmp_c(part->value, "x3333x\n--BB\n\nx4444x\n--BB") == 0);
+                break;
+            case 3:
+                ASSERT_EQ(part->type, 1);
+                ASSERT_TRUE(part->value != NULL);
+                ASSERT_TRUE(bstr_cmp_c(part->value, "x5555x\r\n--x6666x\r--") == 0);
+                break;
+            default:
+                FAIL();
+
+        }
     }
 
     htp_mpartp_destroy(&mpartp);
