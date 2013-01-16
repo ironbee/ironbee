@@ -46,9 +46,9 @@
 #define PARAM_NAME      1
 #define PARAM_FILENAME  2
 
-int htp_mpart_part_process_headers(htp_mpart_part_t *part);
-int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, size_t len);
-int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int is_line);
+htp_status_t htp_mpart_part_process_headers(htp_mpart_part_t *part);
+htp_status_t htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, size_t len);
+htp_status_t htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int is_line);
 int htp_mpartp_is_boundary_character(int c);
 
 /**
@@ -76,12 +76,12 @@ static int htp_mpartp_cd_param_type(unsigned char *data, size_t startpos, size_t
  * @param[in] part
  * @return Success indication
  */
-int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
+htp_status_t htp_mpart_part_process_headers(htp_mpart_part_t *part) {
     // Find C-D header
     htp_header_t *h = (htp_header_t *) htp_table_get_c(part->headers, "content-disposition");
     if (h == NULL) {
         // TODO Error message
-        return 0;
+        return HTP_DECLINED;
     }
 
     if (bstr_index_of_c(h->value, "form-data") != 0) {
@@ -188,7 +188,7 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
         // Continue to parse the next parameter, if any
     }
 
-    return 1;
+    return HTP_OK;
 }
 
 /**
@@ -198,7 +198,7 @@ int htp_mpart_part_process_headers(htp_mpart_part_t *part) {
  * @param[in] len
  * @param[in] Success indication
  */
-int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, size_t len) {
+htp_status_t htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, size_t len) {
     size_t name_start, name_end;
     size_t value_start, value_end;
 
@@ -212,7 +212,7 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, s
     if (colon_pos == len) {
         // Missing colon
         // TODO Error message
-        return -1;
+        return HTP_ERROR;
     }
 
     if (colon_pos == 0) {
@@ -273,7 +273,7 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, s
 
     // Now extract the name and the value
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
-    if (h == NULL) return -1;
+    if (h == NULL) return HTP_ERROR;
 
     h->name = bstr_dup_mem(data + name_start, name_end - name_start);
     h->value = bstr_dup_mem(data + value_start, value_end - value_start);
@@ -288,7 +288,7 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, s
             bstr_free(&h->name);
             bstr_free(&h->value);
             free(h);
-            return -1;
+            return HTP_ERROR;
         }
 
         h_existing->value = new_value;
@@ -307,7 +307,7 @@ int htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, s
         htp_table_add(part->headers, h->name, h);
     }
 
-    return 1;
+    return HTP_OK;
 }
 
 /**
@@ -379,9 +379,11 @@ void htp_mpart_part_destroy(htp_mpart_part_t *part, int gave_up_data) {
  *
  * @param[in] part
  */
-int htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
+htp_status_t htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
     // We currently do not process the preamble and epilogue parts
-    if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) return 1;
+    if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) {
+        return HTP_OK;
+    }
 
     if (part->type == MULTIPART_PART_TEXT) {
         if (bstr_builder_size(part->mpartp->part_pieces) > 0) {
@@ -396,10 +398,10 @@ int htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
         }
     }
 
-    return 1;
+    return HTP_OK;
 }
 
-int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, const unsigned char *data, size_t len) {
+htp_status_t htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, const unsigned char *data, size_t len) {
     if (part->mpartp->cfg == NULL) return HTP_OK;
 
     htp_file_data_t file_data;
@@ -426,7 +428,7 @@ int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, const unsigned
  * @param[in] len
  * @param[in] is_line
  */
-int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int is_line) {
+htp_status_t htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int is_line) {
     #if HTP_DEBUG
     fprint_raw_data(stderr, "htp_mpart_part_handle_data: data chunk", (unsigned char *)data, len);
     fprintf(stderr, "Part type: %d\n", part->type);
@@ -439,7 +441,9 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data
     part->len += len;
 
     // We currently do not process the preamble and epilogue parts
-    if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) return 1;
+    if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) {
+        return HTP_OK;
+    }
     
     if (part->mpartp->current_mode == MULTIPART_MODE_LINE) {
         // Line mode
@@ -472,9 +476,9 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data
                         strncpy(buf, part->mpartp->extract_dir, 254);
                         strncat(buf, "/libhtp-multipart-file-XXXXXX", 254 - strlen(buf));
                         part->file->tmpname = strdup(buf);
-                        if (part->file->tmpname == NULL) return -1;
+                        if (part->file->tmpname == NULL) return HTP_ERROR;
                         part->file->fd = mkstemp(part->file->tmpname);
-                        if (part->file->fd < 0) return -1;
+                        if (part->file->fd < 0) return HTP_ERROR;
 
                         part->mpartp->file_count++;
                     }
@@ -495,7 +499,7 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data
                         bstr_builder_append_mem(part->mpartp->part_pieces, data, len);
 
                         bstr *line = bstr_builder_to_str(part->mpartp->part_pieces);
-                        if (line == NULL) return -1;
+                        if (line == NULL) return HTP_ERROR;
                         htp_mpartp_parse_header(part, (unsigned char *) bstr_ptr(line), bstr_len(line));
                         // TODO RC
                         bstr_free(&line);
@@ -529,16 +533,18 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data
                 htp_mpartp_run_request_file_data_hook(part, data, len);
 
                 // Store data to disk
+                // TODO Make blocking I/O optional.
                 if (part->file->fd != -1) {
                     if (write(part->file->fd, data, len) < 0) {
-                        return -1;
+                        return HTP_ERROR;
                     }
                 }
+
                 break;
         }
     }
     
-    return 1;
+    return HTP_OK;
 }
 
 /**
@@ -549,18 +555,18 @@ int htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data
  * @param[in] len
  * @param[in] is_line
  */
-static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, const unsigned char *data, size_t len, int is_line) {
+static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *mpartp, const unsigned char *data, size_t len, int is_line) {
     #if HTP_DEBUG
     fprint_raw_data(stderr, "htp_mpartp_handle_data: data chunk", (unsigned char *)data, len);
     #endif
 
-    if (len == 0) return 1;
+    if (len == 0) return HTP_OK;
 
     // Do we have a part already?
     if (mpartp->current_part == NULL) {
         // Create new part
         mpartp->current_part = htp_mpart_part_create(mpartp);
-        if (mpartp->current_part == NULL) return -1; // TODO RC
+        if (mpartp->current_part == NULL) return HTP_ERROR; // TODO RC
 
         if (mpartp->boundary_count == 0) {
             // We haven't seen a boundary yet
@@ -582,7 +588,7 @@ static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, const unsigned char *dat
     htp_mpart_part_handle_data(mpartp->current_part, data, len, is_line);
     // TODO RC   
 
-    return 1;
+    return HTP_OK;
 }
 
 /**
@@ -591,7 +597,7 @@ static int htp_mpartp_handle_data(htp_mpartp_t *mpartp, const unsigned char *dat
  *
  * @param[in] mpartp
  */
-static int htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
+static htp_status_t htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
     #if HTP_DEBUG
     fprintf(stderr, "htp_mpartp_handle_boundary");
     #endif
@@ -600,7 +606,7 @@ static int htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
     //      a boundary after the "last boundary".
 
     if (mpartp->current_part != NULL) {
-        if (htp_mpart_part_finalize_data(mpartp->current_part) < 0) return -1; // TODO RC
+        if (htp_mpart_part_finalize_data(mpartp->current_part) < 0) return HTP_ERROR; // TODO RC
 
         // We're done with this part
         mpartp->current_part = NULL;
@@ -609,7 +615,7 @@ static int htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
         mpartp->current_mode = MULTIPART_MODE_LINE;
     }
 
-    return 1;
+    return HTP_OK;
 }
 
 /**
@@ -618,8 +624,9 @@ static int htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
  * @param[in] boundary
  * @return New parser, or NULL on memory allocation failure.
  */
-htp_mpartp_t * htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
+htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
     if ((cfg == NULL)||(boundary == NULL)) return NULL;
+
     htp_mpartp_t *mpartp = calloc(1, sizeof (htp_mpartp_t));
     if (mpartp == NULL) return NULL;
 
@@ -643,7 +650,8 @@ htp_mpartp_t * htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
         return NULL;
     }
 
-    // Copy the boundary and convert it to lowercase    
+    // Copy the boundary and convert it to lowercase
+
     mpartp->boundary_len = strlen(boundary) + 4 + 1;
     mpartp->boundary = malloc(mpartp->boundary_len + 1);
     if (mpartp->boundary == NULL) {
@@ -712,7 +720,7 @@ void htp_mpartp_destroy(htp_mpartp_t ** _mpartp) {
  * @param[in] return_pos
  * @param[in] matched
  */
-static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
+static htp_status_t htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
     // The stored data pieces can contain up to one line. If we're in data mode and there
     // was no boundary match, things are straightforward -- we process everything as data.
     // If there was a match, we need to take care to not send the line ending as data, nor
@@ -801,7 +809,7 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
         }
     }
 
-    return 1;
+    return HTP_OK;
 }
 
 /**
@@ -809,16 +817,16 @@ static int htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
  *
  * @param[in] mpartp
  */
-int htp_mpartp_finalize(htp_mpartp_t * mpartp) {        
+htp_status_t htp_mpartp_finalize(htp_mpartp_t * mpartp) {
     if (mpartp->current_part != NULL) {
         htp_martp_process_aside(mpartp, 0);
 
-        if (htp_mpart_part_finalize_data(mpartp->current_part) < 0) return -1; // TODO RC
+        if (htp_mpart_part_finalize_data(mpartp->current_part) != HTP_OK) return HTP_ERROR; // TODO RC
     }
 
     bstr_builder_clear(mpartp->boundary_pieces);
 
-    return 1;
+    return HTP_OK;
 }
 
 /**
@@ -830,7 +838,7 @@ int htp_mpartp_finalize(htp_mpartp_t * mpartp) {
  * @param[in] len
  * @return Status indicator
  */
-int htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, size_t len) {
+htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, size_t len) {
     size_t pos = 0; // Current position in the input chunk.
     size_t startpos = 0; // The starting position of data.
     size_t data_return_pos = 0; // The position of the (possible) boundary.
@@ -1015,7 +1023,7 @@ STATE_SWITCH:
         } // switch
     }
 
-    return 1;
+    return HTP_OK;
 }
 
 /**
@@ -1058,7 +1066,7 @@ int htp_mpartp_is_boundary_character(int c) {
  * @param[in] boundary
  * @return rc
  */
-int htp_mpartp_extract_boundary(bstr *content_type, char **boundary) {
+htp_status_t htp_mpartp_extract_boundary(bstr *content_type, char **boundary) {
     unsigned char *data = bstr_ptr(content_type);
     size_t len = bstr_len(content_type);
     size_t pos, start;

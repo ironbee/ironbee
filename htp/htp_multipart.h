@@ -141,17 +141,17 @@ struct htp_mpartp_t {
 htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary);
 void htp_mpartp_destroy(htp_mpartp_t **mpartp);
 
-int htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, size_t len);
-int htp_mpartp_finalize(htp_mpartp_t *mpartp);
+htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, size_t len);
+htp_status_t htp_mpartp_finalize(htp_mpartp_t *mpartp);
 
 htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp);
-int htp_mpart_part_receive_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int line);
-int htp_mpart_part_finalize_data(htp_mpart_part_t *part);
+htp_status_t htp_mpart_part_receive_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int line);
+htp_status_t htp_mpart_part_finalize_data(htp_mpart_part_t *part);
 void htp_mpart_part_destroy(htp_mpart_part_t *part, int gave_up_data);
 
-int htp_mpartp_extract_boundary(bstr *content_type, char **boundary);
+htp_status_t htp_mpartp_extract_boundary(bstr *content_type, char **boundary);
 
-int htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, const unsigned char *data, size_t len);
+htp_status_t htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, const unsigned char *data, size_t len);
 
 #ifdef __cplusplus
 }
