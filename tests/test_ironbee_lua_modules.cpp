@@ -110,6 +110,7 @@ const char * IronBeeLuaModules::c_ib_conf =
     "SensorName ExampleSensorName\n"
     "SensorHostname example.sensor.tld\n"
     "LoadModule \"ibmod_htp.so\"\n"
+    "LoadModule \"ibmod_pcre.so\"\n"
     "LoadModule \"ibmod_rules.so\"\n"
     "LoadModule \"ibmod_lua.so\"\n"
     "ModuleBasePath \".\"\n"

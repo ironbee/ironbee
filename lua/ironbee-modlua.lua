@@ -176,25 +176,27 @@ end
 --   If the parameter is a ib_rule_exec_t, then the
 --   action is evaluated. If ib_rule_exec_t is nil,
 --   then the action is destroyed cleanly.
-moduleapi.action = function(name, param, flags)
+moduleapi.action = function(self, name, param, flags)
     local inst = ffi.new('ib_action_inst_t*[1]')
     local rc = ffi.C.ib_module_action_inst_create(
         self.ib_module,
+        ffi.C.ib_engine_pool_main_get(self.ib_engine),
         name,
         param,
         flags,
         inst)
     if rc ~= ffi.C.IB_OK then
-        self:logError("Failed to create action %s:%s.", name, param);
+        rc = tonumber(rc)
+        self:logError("Failed to create action %s(%d):%s.", name, rc, param);
         return nil
     end
 
     return function(rule_exec)
         if rule_exec == nil then
             ffi.C.ib_action_inst_destroy(inst[0])
-            return ffi.C.IB_OK
+            return tonumber(ffi.C.IB_OK)
         else
-            return ffi.C.ib_action_execute(rule_exec, inst[0])
+            return tonumber(ffi.C.ib_action_execute(rule_exec, inst[0]))
         end
     end
 end
@@ -210,16 +212,18 @@ end
 --   First, an ib_status_t value, normally IB_OK. The second
 --   value is the result of the operator execution or 0 when the 
 --   operator is destroyed (rule_exec was equal to nil).
-moduleapi.operator = function(name, param, flags)
+moduleapi.operator = function(self, name, param, flags)
     local inst = ffi.new('ib_operator_inst_t*[1]')
-    ffi.C.ib_module_operator_inst_create(
+    local rc = ffi.C.ib_module_operator_inst_create(
         self.ib_module,
+        ffi.C.ib_engine_pool_main_get(self.ib_engine),
         name,
         param,
         flags,
         inst)
     if rc ~= ffi.C.IB_OK then
-        self:logError("Failed to create operator %s:%s.", name, param);
+        rc = tonumber(rc)
+        self:logError("Failed to create operator %s(%d):%s.", name, rc, param);
         return nil
     end
 
@@ -234,7 +238,7 @@ moduleapi.operator = function(name, param, flags)
                 inst[0],
                 field,
                 res)
-            return rc, res[0]
+            return tonumber(rc), tonumber(res[0])
         end
     end
 end

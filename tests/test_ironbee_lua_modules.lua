@@ -35,7 +35,7 @@ local eventsTable = {
 -- Register EVERY callback we can with a pretty simple function.
 for k,v in pairs(eventsTable) do
     t[v](t, function(ib)
-        ib:logInfo("Inside running callback %s.", k)
+        ib:logInfo("Inside running callback %s.", v)
         ib:logInfo("Effective configuration...")
 
         local fn
@@ -57,6 +57,33 @@ for k,v in pairs(eventsTable) do
         return 0
     end)
 end
+
+local IB_OP_FLAG_PHASE = 1
+local myAction = t:action("setvar", "A=1", 0)
+local myOperator = t:operator("rx", ".*", IB_OP_FLAG_PHASE)
+
+if myAction == nil then
+    return ffi.C.IB_EOTHER
+end
+if myOperator == nil then
+    return ffi.C.IB_EOTHER
+end
+
+t:response_header_data_event(function(ib)
+
+    local rc
+    local result
+
+    local rule_exec = ffi.cast("ib_tx_t*", ib.ib_tx).rule_exec
+
+    rc = myAction(rule_exec)
+    ib:logInfo("Action setvar returned %d", rc)
+    ib:logInfo("Value of A = %s", tostring(ib:get("A")))
+
+    -- Call operator to fetch A.
+    rc, result = myOperator(rule_exec, ib:getDataField("A"))
+    ib:logInfo("Operator rx returned rc=%d and result=%d", rc, result)
+end)
 
 -- Debug output
 t:logInfo("----- t Contents ------")
