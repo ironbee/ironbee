@@ -376,7 +376,7 @@ ib_status_t DLL_PUBLIC ib_module_register_context(
  * Actions created by this method use the main IronBee context by default.
  *
  * Actions created by this method should be destroyed
- * with ib_action_inst_destroy(ib_action_inst_t*).
+ * with ib_action_inst_destroy(ib_action_inst_t *).
  *
  * @param[in] module The module.
  * @param[in] mpool The memory pool to use to create this object.
