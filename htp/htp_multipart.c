@@ -380,7 +380,7 @@ void htp_mpart_part_destroy(htp_mpart_part_t *part, int gave_up_data) {
  * @param[in] part
  */
 htp_status_t htp_mpart_part_finalize_data(htp_mpart_part_t *part) {
-    // We currently do not process the preamble and epilogue parts
+    // We currently do not process or store the preamble and epilogue parts.
     if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) {
         return HTP_OK;
     }
@@ -440,7 +440,7 @@ htp_status_t htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned c
     // Keep track of part length
     part->len += len;
 
-    // We currently do not process the preamble and epilogue parts
+    // We currently do not process or store the preamble and epilogue parts.
     if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) {
         return HTP_OK;
     }
@@ -569,12 +569,12 @@ static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *mpartp, const unsigned 
         if (mpartp->current_part == NULL) return HTP_ERROR; // TODO RC
 
         if (mpartp->boundary_count == 0) {
-            // We haven't seen a boundary yet
+            // We haven't seen a boundary yet, so this must be the preamble part.
             mpartp->current_part->type = MULTIPART_PART_PREAMBLE;
             mpartp->current_mode = MULTIPART_MODE_DATA;
         } else {
             if (mpartp->seen_last_boundary) {
-                // We've seen the last boundary
+                // We've seen the last boundary, so this must be the epilogue part.
                 mpartp->current_part->type = MULTIPART_PART_EPILOGUE;
                 mpartp->current_mode = MULTIPART_MODE_DATA;
             }
