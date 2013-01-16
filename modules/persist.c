@@ -133,7 +133,7 @@ static ib_status_t mod_persist_register_fn(
 
     if (stat(path, &sbuf) < 0) {
         ib_log_warning(ib, "persist: Declining \"%s\"; stat(\"%s\") failed: %s",
-                           uri, path, strerror(errno));
+                       uri, path, strerror(errno));
         return IB_DECLINED;
     }
     if (! S_ISDIR(sbuf.st_mode)) {
@@ -485,8 +485,8 @@ static ib_status_t mod_persist_init(
 }
 
 static ib_status_t mod_persist_fini(ib_engine_t *ib,
-                                ib_module_t *m,
-                                void *cbdata)
+                                    ib_module_t *m,
+                                    void *cbdata)
 {
     if (mod_persist_param_data.key_pcre != NULL) {
         pcre_free((pcre *)mod_persist_param_data.key_pcre);
