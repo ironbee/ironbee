@@ -404,13 +404,22 @@ void process_failures(Intermediate::Automata& automata)
 
 // Support for extract_cs()
 
+//! True if c =~ /[A-Za-z]/
+inline
+bool is_alpha(char c)
+{
+    return
+        (c >= 'A' && c <= 'Z') ||
+        (c >= 'a' && c <= 'z')
+        ;
+}
+
 //! True if c =~ /[A-Za-z0-9]/
 inline
 bool is_hex(char c)
 {
     return
-        (c >= 'A' && c <= 'Z') ||
-        (c >= 'a' && c <= 'z') ||
+        is_alpha(c) ||
         (c >= '0' && c <= '9')
         ;
 }
@@ -441,7 +450,25 @@ int parse_hex(char c)
     }
 }
 
+//! Translate X to lower case.
+inline
+int lowercase(char c)
+{
+    assert(is_alpha(c));
+    return c >= 'a' ? c : ('a' + (c - 'A'));
+}
+
+//! Translate X to upper case.
+inline
+int uppercase(char c)
+{
+    assert(is_alpha(c));
+    return c < 'a' ? c : ('A' + (c - 'a'));
+}
+
 //! Convert single subpattern to set.
+// Single is a bit misleading.  This is subpatterns whose sets are not
+// precomputed.
 Intermediate::byte_vector_t single_subpat_to_set(char subpat[4])
 {
     if (subpat[0] != '\\') {
@@ -470,6 +497,9 @@ Intermediate::byte_vector_t single_subpat_to_set(char subpat[4])
     case 'f': return list_of('\f');
     case '0': return list_of('\0');
     case 'e': return list_of('\e');
+    case 'i':
+        assert(is_alpha(subpat[2]));
+        return list_of(lowercase(subpat[2]))(uppercase(subpat[2]));
 
     default:
     throw invalid_argument("Unknown pattern operator.");
@@ -557,7 +587,6 @@ const Intermediate::byte_vector_t& multiple_subpat_to_set(char subpat[4])
     }
 
     switch (subpat[1]) {
-
     case '.': return s_any;
     case 'd': return s_digit;
     case 'D': return s_nondigit;
@@ -592,7 +621,8 @@ const Intermediate::byte_vector_t subpat_to_set(char subpat[4])
         subpat[1] == '0' ||
         subpat[1] == 'e' ||
         subpat[1] == '^' ||
-        subpat[1] == 'x'
+        subpat[1] == 'x' ||
+        subpat[1] == 'i'
     )
     {
         temp = single_subpat_to_set(subpat);
@@ -622,13 +652,16 @@ Intermediate::byte_vector_t extract_cs(const string& pattern, size_t& j)
                 throw invalid_argument("\\x was not expressed in hex.");
             }
         }
-        else if (subpat[1] == '^') {
+        else if (subpat[1] == '^' || subpat[1] == 'i') {
             if (j == pattern.length()) {
                 throw invalid_argument("Pattern ends prematurely.");
             }
             subpat[2] = pattern[j++];
-            if (! is_control(subpat[2])) {
+            if (subpat[1] == '^' && ! is_control(subpat[2])) {
                 throw invalid_argument("\\^ did not specify valid control.");
+            }
+            else if (subpat[1] == 'i' && ! is_alpha(subpat[2])) {
+                throw invalid_argument("\\i did not specify valid alpha.");
             }
         }
     }

@@ -150,4 +150,23 @@ class TestPattern < Test::Unit::TestCase
       assert_equal([2, 3, 4, 5, 6].to_set, output_substrings[words[2]])
     end
   end
+
+  def test_case_insensitive
+    words = ['\iA\iB\iC']
+    text = "abcABCaBc"
+    # 1: a
+    # 2: b
+    # 3: c
+    # 4: A
+    # 5: B
+    # 6: C
+    # 7: a
+    # 8: B
+    # 9: c
+    automata_test(words, [ACGEN, '-p'], "test_case_insensitve") do |dir, eudoxus_path|
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
+      assert_equal(words.size, output_substrings.size)
+      assert_equal([3, 6, 9].to_set, output_substrings[words[0]])
+    end
+  end
 end
