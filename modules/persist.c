@@ -278,7 +278,7 @@ ib_status_t mod_persist_unregister_fn(
  *   - IB_DECLINED If the configured key was not found in the kvstore
  *   - Errors returned by ib_data_expand_str(), ib_kvstore_get(),
  *     ib_json_decode()
- *     
+ *
  */
 static ib_status_t mod_persist_populate_fn(
     const ib_engine_t              *ib,
