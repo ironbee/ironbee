@@ -4097,9 +4097,9 @@ static ib_status_t core_dir_rulelog_data(ib_cfgparser_t *cp,
 }
 
 /**
- * @brief Parse a InitCollection directive.
+ * Parse a InitCollection directive.
  *
- * @details Register a InitCollection directive to the engine.
+ * Register a InitCollection directive to the engine.
  *
  * @param[in] cp Configuration parser
  * @param[in] directive The directive name.
@@ -4169,10 +4169,6 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
         ib_cfg_log_error(cp, " %s: Error allocation parameter list", directive);
         return IB_EINVAL;
     }
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, " %s: Error allocation parameter list", directive);
-        return IB_EINVAL;
-    }
 
     /* Loop through the remaining parameters */
     while( (node = ib_list_node_next_const(node)) != NULL) {
@@ -4192,7 +4188,7 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
         }
     }
 
-    /* Create and populate a new collection if required */
+    /* Create a new collection if required */
     if (collection == NULL) {
         rc = ib_managed_collection_create(cp->ib, mp,
                                           collection_name,
@@ -4394,9 +4390,9 @@ static ib_status_t core_dir_param2(ib_cfgparser_t *cp,
 }
 
 /**
- * @brief Parse a InitVar directive.
+ * Parse a InitVar directive.
  *
- * @details Register a InitVar directive to the engine.
+ * Register a InitVar directive to the engine.
  *
  * @param[in] cp Configuration parser
  * @param[in] directive The directive name.
@@ -4462,9 +4458,9 @@ static ib_status_t core_dir_initvar(ib_cfgparser_t *cp,
     }
     else if (field->type == IB_FTYPE_FLOAT) {
         ib_cfg_log_debug(cp,
-                         "InitVar: Created float field \"%s\" %f "
+                         "InitVar: Created float field \"%s\" %Lf "
                          "for context \"%s\"",
-                         name, (double)fval.fnum,
+                         name, fval.fnum,
                          ib_context_full_get(cp->cur_ctx));
     }
     else {

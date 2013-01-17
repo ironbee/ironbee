@@ -39,8 +39,7 @@ typedef struct ib_collection_manager_inst_t ib_collection_manager_inst_t;
 struct ib_collection_manager_inst_t {
     const ib_collection_manager_t *manager;    /**< Collection Manager */
     ib_managed_collection_t *collection;       /**< The parent collection */
-    const char              *inst_uri;         /**< Associated URI */
-    int                      manager_inst_num; /**< Position in manager list */
+    const char              *uri;              /**< Associated URI */
     void                    *manager_inst_data;/**< Manager-specific instance */
 };
 
@@ -73,7 +72,7 @@ struct ib_collection_manager_t {
  * Managed collection instance (one per managed collection / tx)
  */
 struct ib_managed_collection_inst_t {
-    ib_list_t                     *collection_list; /**< DPI collection */
+    ib_list_t                     *collection_list; /**< TX data collection */
     const ib_managed_collection_t *collection;      /**< Collection object */
 };
 

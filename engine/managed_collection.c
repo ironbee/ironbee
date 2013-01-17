@@ -143,8 +143,9 @@ ib_status_t ib_managed_collection_select(
         return IB_ENOENT;
     }
 
-    /* Walk through the list of managers, take the first one whose
-     * selection function returns true */
+    /* Walk through the list of managers, register all of the ones that whose
+     * uri_scheme matches the URI.  Any of the register functions can return
+     * IB_DECLINED to indicate that it can't managed the collection. */
     IB_LIST_LOOP_CONST(ib->collection_managers, node) {
         const ib_collection_manager_t *manager =
             (const ib_collection_manager_t *)node->data;
@@ -191,7 +192,7 @@ ib_status_t ib_managed_collection_select(
         }
         inst->manager           = manager;
         inst->collection        = collection;
-        inst->inst_uri          = ib_mpool_strdup(mp, uri);
+        inst->uri               = ib_mpool_strdup(mp, uri);
         inst->manager_inst_data = inst_data;
 
         /* Push the instance on the managers list */
@@ -423,31 +424,25 @@ ib_status_t ib_managed_collection_populate_from_list(
     assert(collection != NULL);
 
     const ib_list_node_t *node;
-    ib_status_t rc = IB_OK;
 
     /* Copy all of the fields from the field list to the collection */
     IB_LIST_LOOP_CONST(field_list, node) {
-        ib_status_t trc;
+        ib_status_t rc;
         const ib_field_t *field = (const ib_field_t *)node->data;
         ib_field_t *newf;
 
-        trc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
-        if (trc != IB_OK) {
-            ib_log_debug_tx(tx, "Failed to copy field: %s",
-                            ib_status_to_string(trc));
-            if (rc == IB_OK) {
-                rc = trc;
-            }
-            continue;
+        rc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
+        if (rc != IB_OK) {
+            return rc;
         }
 
-        trc = ib_list_push(collection, newf);
-        if ( (trc != IB_OK) && (rc == IB_OK) ) {
-            rc = trc;
+        rc = ib_list_push(collection, newf);
+        if (rc != IB_OK) {
+            return rc;
         }
     }
 
-    return rc;
+    return IB_OK;
 }
 
 ib_status_t ib_managed_collection_init(

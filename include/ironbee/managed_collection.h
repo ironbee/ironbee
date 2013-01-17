@@ -44,16 +44,30 @@ extern "C" {
 #endif
 
 /**
- * Types used only for managed collections
+ * A collection manager is a collection of functions and related data that can
+ * be used to initialize and/or persist TX data.
+ */
+typedef struct ib_collection_manager_t ib_collection_manager_t;
+
+/**
+ * A managed collection is a collection in TX data that can be initialized
+ * and/or persisted by a collection manager.
  */
 typedef struct ib_managed_collection_t ib_managed_collection_t;
-typedef struct ib_collection_manager_t ib_collection_manager_t;
 
 /**
  * Register callback for managed collections
  *
- * This function is called when the collection manager has been matched
- * to the URI of a managed collection (at configuration time)
+ * This function is called when the collection manager has been matched to the
+ * URI of a managed collection (at configuration time) with the URI scheme
+ * (specified at registration time).  This function can return IB_DECLINED to
+ * decline to manager the given collection.
+ *
+ * If the collection manager needs collection specific data associated with
+ * each manager / collection instance, it should allocate storage for such
+ * data, and assign @a pmanger_inst_data to point at this storage.  This
+ * "manager instance data" will be passed to the unregister, populate and
+ * persist functions in the manager_inst_data parameter.
  *
  * @param[in] ib Engine
  * @param[in] module Collection manager's module object
@@ -69,6 +83,7 @@ typedef struct ib_collection_manager_t ib_collection_manager_t;
  *
  * @returns Status code:
  *   - IB_OK All OK
+ *   - IB_DECLINED Decline to manage the collection
  *   - IB_Exxx Other error
  */
 typedef ib_status_t (* ib_managed_collection_register_fn_t)(
@@ -87,13 +102,15 @@ typedef ib_status_t (* ib_managed_collection_register_fn_t)(
 /**
  * Unregister callback for managed collections
  *
- * This function is called when the collection manager is shutting down.
+ * This function is called when the collection manager is shutting down.  The
+ * collection manager can use this to close file handles, database
+ * connections, etc.
  *
  * @param[in] ib Engine
  * @param[in] module Collection manager's module object
  * @param[in] manager The collection manager object
  * @param[in] collection_name Name of the collection
- * @param[in] manager_inst_data Manager instance data
+ * @param[in] manager_inst_data Manager instance data from the register fn.
  * @param[in] unregister_data Register callback data
  *
  * @returns Status code:
@@ -111,8 +128,12 @@ typedef ib_status_t (* ib_managed_collection_unregister_fn_t)(
 /**
  * Populate callback for managed collections
  *
- * This function is called during the creation of the managed collection
- * for the transaction (at transaction creation time)
+ * This function is called during the creation of the managed collection for
+ * the transaction (at transaction creation time).  This function can return
+ * IB_DECLINE to indicate that it was unable to populate the collection
+ * (perhaps because the associated key was not found in the backing store).
+ *
+ * The @a tx memory pool should be used for allocations.
  *
  * @param[in] ib Engine
  * @param[in] tx Transaction to populate
@@ -120,7 +141,7 @@ typedef ib_status_t (* ib_managed_collection_unregister_fn_t)(
  * @param[in] manager The collection manager object
  * @param[in] collection_name Collection's name
  * @param[in,out] collection Collection to populate
- * @param[in] manager_inst_data Manager instance data
+ * @param[in] manager_inst_data Manager instance data from the register fn.
  * @param[in] populate_data Populate callback data
  *
  * @returns Status code
@@ -138,8 +159,11 @@ typedef ib_status_t (* ib_managed_collection_populate_fn_t)(
 /**
  * Persist callback for managed collections
  *
- * This function is called at the end of the transaction to allow the
- * manager to persist the collection (at transaction destruction time)
+ * This function is called at the end of the transaction to allow the manager
+ * to persist the collection (at transaction destruction time).  The persist
+ * function can return IB_DECLINE to indicate that it was unable to persist
+ * the collection (perhaps because the expected fields were not present in the
+ * collection, etc.).
  *
  * @param[in] ib Engine
  * @param[in] tx Transaction to select a context for (or NULL)
@@ -147,7 +171,7 @@ typedef ib_status_t (* ib_managed_collection_populate_fn_t)(
  * @param[in] manager The collection manager object
  * @param[in] collection_name Name of collection to persist
  * @param[in] collection Collection to populate
- * @param[in] manager_inst_data Manager instance data
+ * @param[in] manager_inst_data Manager instance data from the register fn.
  * @param[in] persist_data Persist callback data
  *
  * @returns Status code
@@ -165,18 +189,41 @@ typedef ib_status_t (* ib_managed_collection_persist_fn_t)(
 /**
  * Register a managed collection handler
  *
+ * The register function (@a register_fn) will be invoked during the
+ * configuration process, informing the collection manager that the manager's
+ * URI scheme matches the URI; this function can return IB_DECLINED to decline
+ * to manager the given collection.  The register function may not be NULL.
+ *
+ * The unregister function (@a unregister_fn) will be invoked during
+ * IronBee shutdown, and the collection manager can use this to close file
+ * handles, database connections, etc.  The unregister function may be NULL.
+ *
+ * The populate function (@a populate_fn) will be invoked after the creation
+ * of a transaction's data.  The populate function should populate the
+ * collection list with ib_field_t object pointers.  The populate function can
+ * return IB_DECLINE to indicate that it was unable to populate the collection
+ * (perhaps because the associated key was not found in the backing store).
+ * The populate may be NULL.
+ *
+ * The persist function (@a persist_fn) will be invoked upon close of the
+ * transaction.  This function should persist the collection (store it to a
+ * file, in a database, etc).  The persist function can return IB_DECLINE to
+ * indicate that it was unable to persist the collection (perhaps because the
+ * expected fields were not present in the collection, etc.).  The persist
+ * function may be NULL.
+ *
  * @param[in,out] ib Engine
  * @param[in] module Registering module
  * @param[in] name Name of collection manager being registered
  * @param[in] uri_scheme URI scheme for identification
  * @param[in] register_fn Function to use for manager registration
- * @param[in] register_data Data passed to @sa register_fn()
- * @param[in] unregister_fn Function to use for manager unregistration
- * @param[in] unregister_data Data passed to @sa unregister_fn()
+ * @param[in] register_data Data passed to @a register_fn()
+ * @param[in] unregister_fn Function to use for manager unregistration (or NULL)
+ * @param[in] unregister_data Data passed to @a unregister_fn()
  * @param[in] populate_fn Function to populate the collection (or NULL)
- * @param[in] populate_data Data passed to @sa populate_fn()
+ * @param[in] populate_data Data passed to @a populate_fn()
  * @param[in] persist_fn Function to persist the collection (or NULL)
- * @param[in] persist_data Data passed to @sa persist_fn()
+ * @param[in] persist_data Data passed to @a persist_fn()
  * @param[out] pmanager Pointer to new collection manager object (or NULL)
  *
  * @returns Status code
@@ -198,7 +245,12 @@ ib_status_t ib_managed_collection_register_manager(
 
 
 /**
- * Create a managed collection object
+ * Create a managed collection object.
+ *
+ * A managed collection is used to populate and / or persist fields in a
+ * collection (the name of which is specified in @a collection_name).  One or
+ * more collection managers will be associated with the managed collection by
+ * ib_managed_collection_select().
  *
  * @param[in] ib Engine.
  * @param[in] mp Memory pool to use for allocations
@@ -229,7 +281,14 @@ ib_status_t ib_managed_collection_unregister(
     const ib_managed_collection_t *collection);
 
 /**
- * Select an appropriate manager and create a managed collection
+ * Select one or more collection managers associated with @a collection
+ *
+ * The selection process will match the registered URI scheme with each
+ * registered collection manager against the URI in @a uri.  If the scheme
+ * matches @a uri, the manager's register function is invoked to inform the
+ * collection manager of the match.  Note that the register function can
+ * return IB_DECLINED to decline to manage the given collection.  All matching
+ * managers are then associated with collection.
  *
  * @param[in] ib Engine.
  * @param[in] mp Memory pool to use for allocations
@@ -253,6 +312,13 @@ ib_status_t DLL_PUBLIC ib_managed_collection_select(
 /**
  * Populate a managed collection
  *
+ * Walk through the list of collection managers associate with the given
+ * collection, and invoke each of their populate functions.  The first of the
+ * populate functions to return IB_OK will cause the population to complete.
+ * A populate function can return IB_DECLINED to indicate that it was unable
+ * to populate the collection (perhaps because the associated key was not
+ * found in the backing store).
+ *
  * @param[in] ib Engine.
  * @param[in,out] tx Transaction to populate
  * @param[in] collection Managed collection object
@@ -274,9 +340,13 @@ ib_status_t DLL_PUBLIC ib_managed_collection_populate(
 const char DLL_PUBLIC *ib_managed_collection_manager_name(
     const ib_collection_manager_t  *manager);
 
-
 /**
  * Persist all managed collections
+ *
+ * Walk through the list of collection managers associate with the given
+ * collection, and invoke each of their persist functions.  Unlinke
+ * population, all managers are given the opportunity to populate the given
+ * collection.
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
@@ -288,7 +358,12 @@ ib_status_t DLL_PUBLIC ib_managed_collection_persist_all(
     ib_tx_t                        *tx);
 
 /**
- * Populate a collection from a list (helper function)
+ * Populate a collection from a list (helper function).
+ *
+ * This function can be used by collection managers to populate a collection
+ * from a list of fields.  This is particularly useful for collection managers
+ * which build a list of fields, then need to populate the collection with the
+ * fields from the list.  The fields will be appropriately copied, etc.
  *
  * @param[in] tx Transaction to populate
  * @param[in] field_list List of fields to populate from
@@ -297,9 +372,7 @@ ib_status_t DLL_PUBLIC ib_managed_collection_persist_all(
  *
  * @returns
  *   - IB_OK on success
- *   - The first error returned by a call to ib_field_copy or ib_list_push.
- *     The first error is returned, but more errors may occur as the
- *     collection population continues.
+ *   - Error returned by ib_field_copy() or ib_list_push().
  */
 ib_status_t DLL_PUBLIC ib_managed_collection_populate_from_list(
     const ib_tx_t                  *tx,
