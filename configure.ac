@@ -209,6 +209,13 @@ DOXYGEN=$doxygen
 AC_SUBST(DOXYGEN)
 
 dnl -----------------------------------------------
+dnl Check for lcov
+dnl -----------------------------------------------
+AC_PATH_PROG(LCOV, lcov, [no])
+AC_SUBST(LCOV)
+
+
+dnl -----------------------------------------------
 dnl Generates Makefiles, configuration files and scripts
 dnl -----------------------------------------------
 

@@ -25,6 +25,7 @@
 /config.sub
 /configure
 /depcomp
+/docs/lcov
 /htp.pc
 /htp/.deps/
 /htp/.libs/
@@ -51,3 +52,4 @@ extras/ruby/*.gem
 /docs/Makefile
 /docs/Makefile.in
 /test/test_main
+/test/coverage.info
