@@ -11,6 +11,8 @@
 *.stackdump
 *.dSYM
 *.a
+.cproject
+.project
 /Makefile
 /Makefile.in
 /aclocal.m4
