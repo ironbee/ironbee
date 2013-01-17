@@ -12,6 +12,9 @@ pkgconfig_DATA = htp.pc
 test: all
 	@(cd test && $(MAKE) $@)
 
+test-compile-only: all
+	@(cd test && $(MAKE) $@)
+
 check-compile-only: all
 	@(cd test && $(MAKE) $@)
 
