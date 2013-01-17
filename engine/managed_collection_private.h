@@ -25,7 +25,7 @@
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
-#include <ironbee/managed_collection.h>
+#include <ironbee/collection_manager.h>
 
 
 /**

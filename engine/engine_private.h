@@ -32,7 +32,7 @@
 #include <ironbee/context_selection.h>
 #include <ironbee/lock.h>
 #include <ironbee/log.h>
-#include <ironbee/managed_collection.h>
+#include <ironbee/collection_manager.h>
 
 #include <stdio.h>
 

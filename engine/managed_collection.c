@@ -24,16 +24,16 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/managed_collection.h>
+#include "managed_collection_private.h"
 
 #ifndef _POSIX_SOURCE
 #define _POSIX_SOURCE
 #endif
 
-#include "managed_collection_private.h"
 #include "core_private.h"
 #include "engine_private.h"
 
+#include <ironbee/collection_manager.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
@@ -42,7 +42,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 
-ib_status_t ib_managed_collection_register_manager(
+ib_status_t ib_collection_manager_register(
     ib_engine_t                            *ib,
     const ib_module_t                      *module,
     const char                             *name,
@@ -414,7 +414,27 @@ const char *ib_collection_manager_name(
     return manager->name;
 }
 
-ib_status_t ib_managed_collection_populate_from_list(
+ib_status_t ib_managed_collection_init(
+    ib_engine_t *ib)
+{
+    ib_status_t rc;
+
+    /* Create the collection manager list */
+    rc = ib_list_create(&(ib->collection_managers), ib->mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_managed_collection_finish(
+    ib_engine_t *ib)
+{
+    return IB_OK;
+}
+
+ib_status_t ib_collection_manager_populate_from_list(
     const ib_tx_t                 *tx,
     const ib_list_t               *field_list,
     ib_list_t                     *collection)
@@ -441,25 +461,5 @@ ib_status_t ib_managed_collection_populate_from_list(
         }
     }
 
-    return IB_OK;
-}
-
-ib_status_t ib_managed_collection_init(
-    ib_engine_t *ib)
-{
-    ib_status_t rc;
-
-    /* Create the collection manager list */
-    rc = ib_list_create(&(ib->collection_managers), ib->mp);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    return IB_OK;
-}
-
-ib_status_t ib_managed_collection_finish(
-    ib_engine_t *ib)
-{
     return IB_OK;
 }

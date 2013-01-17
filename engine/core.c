@@ -44,7 +44,7 @@
 #include <ironbee/field.h>
 #include <ironbee/json.h>
 #include <ironbee/logevent.h>
-#include <ironbee/managed_collection.h>
+#include <ironbee/collection_manager.h>
 #include <ironbee/mpool.h>
 #include <ironbee/provider.h>
 #include <ironbee/rule_defs.h>

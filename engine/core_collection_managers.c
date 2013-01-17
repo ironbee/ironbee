@@ -33,7 +33,7 @@
 
 #include <ironbee/core.h>
 #include <ironbee/json.h>
-#include <ironbee/managed_collection.h>
+#include <ironbee/collection_manager.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
 #include <ironbee/util.h>
@@ -220,7 +220,7 @@ static ib_status_t core_managed_collection_vars_register_fn(
  *
  * @returns
  *   - IB_OK on success or when @a collection_data is length 0.
- *   - Errors returned by ib_managed_collection_populate_from_list()
+ *   - Errors returned by ib_collection_manager_populate_from_list()
  */
 static ib_status_t core_managed_collection_vars_populate_fn(
     const ib_engine_t             *ib,
@@ -242,7 +242,7 @@ static ib_status_t core_managed_collection_vars_populate_fn(
     const ib_list_t *field_list = (const ib_list_t *)manager_inst_data;
     ib_status_t rc;
 
-    rc = ib_managed_collection_populate_from_list(tx, field_list, collection);
+    rc = ib_collection_manager_populate_from_list(tx, field_list, collection);
     return rc;
 }
 
@@ -365,7 +365,9 @@ static ib_status_t core_managed_collection_jsonfile_register_fn(
  *
  * @returns
  *   - IB_OK on success or when @a collection_data is length 0.
- *   - Errors returned by ib_managed_collection_populate_from_list()
+ *   - IB_EUNKOWN for errors from file I/O
+ *   - IB_EALLOC for allocation errors
+ *   - Errors from ib_json_decode_ex()
  */
 static ib_status_t core_managed_collection_jsonfile_populate_fn(
     const ib_engine_t             *ib,
@@ -567,7 +569,7 @@ ib_status_t ib_core_collection_managers_register(
     const ib_collection_manager_t *manager;
 
     /* Register the name/value pair InitCollection manager */
-    rc = ib_managed_collection_register_manager(
+    rc = ib_collection_manager_register(
         ib, module, "core name/value pair", "vars:",
         core_managed_collection_vars_register_fn, NULL,
         NULL, NULL,
@@ -592,7 +594,7 @@ ib_status_t ib_core_collection_managers_register(
 
 #if ENABLE_JSON
     /* Register the JSON file InitCollection manager */
-    rc = ib_managed_collection_register_manager(
+    rc = ib_collection_manager_register(
         ib, module, "core JSON file", "json-file://",
         core_managed_collection_jsonfile_register_fn, NULL,
         NULL, NULL,

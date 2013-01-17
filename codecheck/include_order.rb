@@ -68,7 +68,6 @@ CANONICAL_INCLUDE_ORDER = [
   '"user_agent_private.h"',
   '"lua/ironbee.h"',
   '"lua_common_private.h"',
-  '"managed_collection_private.h"',
 
   # Automata
   '<ironautomata/bits.h>',
@@ -117,7 +116,7 @@ CANONICAL_INCLUDE_ORDER = [
   '<ironbee/log.h>',
   '<ironbee/logevent.h>',
   '<ironbee/logformat.h>',
-  '<ironbee/managed_collection.h>',
+  '<ironbee/collection_manager.h>',
   '<ironbee/module.h>',
   '<ironbee/module_sym.h>',
   '<ironbee/mpool.h>',

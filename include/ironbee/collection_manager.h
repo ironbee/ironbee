@@ -15,21 +15,21 @@
  * limitations under the License.
  ****************************************************************************/
 
-#ifndef _IB_MANAGED_COLLECTION_H_
-#define _IB_MANAGED_COLLECTION_H_
+#ifndef _IB_COLLECTION_MANAGER_H_
+#define _IB_COLLECTION_MANAGER_H_
 
 /**
  * @file
- * @brief IronBee --- Managed Collection
+ * @brief IronBee --- Collection Manager Definitions
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */
 
 /**
- * @defgroup IronBeeManagedCollection Managed Collection
+ * @defgroup IronBeeCollectionManager Collection Manager
  * @ingroup IronBee
  *
- * Definitions and functions related to managed collection
+ * Definitions and functions related to collections managers.
  *
  * @{
  */
@@ -45,7 +45,9 @@ extern "C" {
 
 /**
  * A collection manager is a collection of functions and related data that can
- * be used to initialize and/or persist a TX data collection.
+ * be used to initialize and/or persist a TX data collection.  For example
+ * collection manager implementations, see "engine/core_collection_managers.c"
+ * and "modules/persist.c".
  */
 typedef struct ib_collection_manager_t ib_collection_manager_t;
 
@@ -222,7 +224,7 @@ typedef ib_status_t (* ib_collection_manager_persist_fn_t)(
  *
  * @returns Status code
  */
-ib_status_t ib_managed_collection_register_manager(
+ib_status_t ib_collection_manager_register(
     ib_engine_t                            *ib,
     const ib_module_t                      *module,
     const char                             *name,
@@ -265,7 +267,7 @@ const char DLL_PUBLIC *ib_collection_manager_name(
  *   - IB_OK on success
  *   - Error returned by ib_field_copy() or ib_list_push().
  */
-ib_status_t DLL_PUBLIC ib_managed_collection_populate_from_list(
+ib_status_t DLL_PUBLIC ib_collection_manager_populate_from_list(
     const ib_tx_t                  *tx,
     const ib_list_t                *field_list,
     ib_list_t                      *collection);
@@ -277,4 +279,4 @@ ib_status_t DLL_PUBLIC ib_managed_collection_populate_from_list(
 }
 #endif
 
-#endif /* _IB_MANAGED_COLLECTION_H_ */
+#endif /* _IB_COLLECTION_MANAGER_H_ */

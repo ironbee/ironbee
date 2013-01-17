@@ -22,7 +22,7 @@
 #include <ironbee/kvstore.h>
 #include <ironbee/kvstore_filesystem.h>
 #include <ironbee/list.h>
-#include <ironbee/managed_collection.h>
+#include <ironbee/collection_manager.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/string.h>
@@ -465,7 +465,7 @@ static ib_status_t mod_persist_init(
     const ib_collection_manager_t *manager;
 
     /* Register the name/value pair InitCollection handler */
-    rc = ib_managed_collection_register_manager(
+    rc = ib_collection_manager_register(
         ib, module, "Filesystem K/V-Store", "persist-fs://",
         mod_persist_register_fn, NULL,
         mod_persist_unregister_fn, NULL,
