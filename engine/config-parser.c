@@ -135,9 +135,9 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     }
     else {
         if (strcmp(real, incfile) != 0) {
-            ib_cfg_log_notice(cp,
-                              "Real path of included file \"%s\" is \"%s\"",
-                              incfile, real);
+            ib_cfg_log_info(cp,
+                            "Real path of included file \"%s\" is \"%s\"",
+                            incfile, real);
         }
         freeme = real;
     }
@@ -566,7 +566,7 @@ _resume:
 			else if ( (*( fsm.p)) > *_mid )
 				_lower = _mid + 1;
 			else {
-				_trans += (_mid - _keys);
+				_trans += (unsigned int)(_mid - _keys);
 				goto _match;
 			}
 		}
@@ -589,7 +589,7 @@ _resume:
 			else if ( (*( fsm.p)) > _mid[1] )
 				_lower = _mid + 2;
 			else {
-				_trans += ((_mid - _keys)>>1);
+				_trans += (unsigned int)((_mid - _keys)>>1);
 				goto _match;
 			}
 		}
