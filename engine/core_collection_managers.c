@@ -67,16 +67,16 @@ typedef struct {
 } core_json_file_t;
 
 /**
- * Handle managed collection registration for name=value parameters
+ * Handle managed collection registration for vars "name=value" parameters
  *
  * @param[in] ib Engine
  * @param[in] module Collection manager's module object
  * @param[in] manager The collection manager object to register with
  * @param[in] mp Memory pool to use for allocations
  * @param[in] collection_name Name of the collection
- * @param[in] uri Full collection URI
- * @param[in] uri_scheme URI scheme
- * @param[in] uri_data Hierarchical/data part of the URI (typically a path)
+ * @param[in] uri Full collection URI (unused)
+ * @param[in] uri_scheme URI scheme (unused)
+ * @param[in] uri_data Hierarchical/data part of the URI
  * @param[in] params List of parameter strings
  * @param[in] register_data Register callback data
  * @param[out] pmanager_inst_data Pointer to manager specific collection data
@@ -111,10 +111,10 @@ static ib_status_t core_managed_collection_vars_register_fn(
     ib_mpool_t *tmp = ib_engine_pool_temp_get(ib);
     ib_status_t rc;
 
-    if (ib_list_elements(params) < 1) {
-        return IB_EINVAL;
-    }
     if (strlen(uri_data) != 0) {
+        return IB_DECLINED;
+    }
+    if (ib_list_elements(params) < 1) {
         return IB_EINVAL;
     }
 
@@ -220,9 +220,7 @@ static ib_status_t core_managed_collection_vars_register_fn(
  *
  * @returns
  *   - IB_OK on success or when @a collection_data is length 0.
- *   - The first error returned by a call to ib_field_copy or ib_list_push.
- *     The first error is returned, but more errors may occur as the
- *     collection population continues.
+ *   - Errors returned by ib_managed_collection_populate_from_list()
  */
 static ib_status_t core_managed_collection_vars_populate_fn(
     const ib_engine_t             *ib,
@@ -249,7 +247,6 @@ static ib_status_t core_managed_collection_vars_populate_fn(
 }
 
 #if ENABLE_JSON
-
 /**
  * Handle managed collection: register for JSON file
  *
@@ -261,7 +258,7 @@ static ib_status_t core_managed_collection_vars_populate_fn(
  * @param[in] mp Memory pool to use for allocations
  * @param[in] collection_name Name of the collection
  * @param[in] uri Full collection URI
- * @param[in] uri_scheme URI scheme
+ * @param[in] uri_scheme URI scheme (unused)
  * @param[in] uri_data Hierarchical/data part of the URI (typically a path)
  * @param[in] params List of parameter strings
  * @param[in] data Selection callback data
@@ -368,9 +365,7 @@ static ib_status_t core_managed_collection_jsonfile_register_fn(
  *
  * @returns
  *   - IB_OK on success or when @a collection_data is length 0.
- *   - The first error returned by a call to ib_field_copy or ib_list_push.
- *     The first error is returned, but more errors may occur as the
- *     collection population continues.
+ *   - Errors returned by ib_managed_collection_populate_from_list()
  */
 static ib_status_t core_managed_collection_jsonfile_populate_fn(
     const ib_engine_t             *ib,
@@ -482,9 +477,9 @@ static ib_status_t core_managed_collection_jsonfile_populate_fn(
  *
  * @returns
  *   - IB_OK on success or when @a collection_data is length 0.
- *   - The first error returned by a call to ib_field_copy or ib_list_push.
- *     The first error is returned, but more errors may occur as the
- *     collection population continues.
+ *   - IB_DECLINED if not configured to persist
+ *   - IB_EUNKNOWN for file open/write/close errors
+ *   - Errors returned by ib_json_encode()
  */
 static ib_status_t core_managed_collection_jsonfile_persist_fn(
     const ib_engine_t             *ib,
