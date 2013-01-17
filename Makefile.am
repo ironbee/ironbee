@@ -30,6 +30,7 @@ gcov: test
 	fi
 
 clean-local:
-	 @find . -type f \( -name '*.gcda' -o -name '*.gcno' -o -name '*.gcov' \) -exec rm '{}' ';'
-
-	    
+	rm -rf $(top_builddir)/docs/doxygen
+	rm -rf $(top_builddir)/docs/lcov
+	find $(top_builddir) -type f \( -name '*.gcda' -o -name '*.gcno' -o -name '*.gcov' \) -exec rm '{}' ';'
+	   
