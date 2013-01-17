@@ -47,13 +47,13 @@ ib_status_t ib_managed_collection_register_manager(
     const ib_module_t                      *module,
     const char                             *name,
     const char                             *uri_scheme,
-    ib_managed_collection_register_fn_t     register_fn,
+    ib_collection_manager_register_fn_t     register_fn,
     void                                   *register_data,
-    ib_managed_collection_unregister_fn_t   unregister_fn,
+    ib_collection_manager_unregister_fn_t   unregister_fn,
     void                                   *unregister_data,
-    ib_managed_collection_populate_fn_t     populate_fn,
+    ib_collection_manager_populate_fn_t     populate_fn,
     void                                   *populate_data,
-    ib_managed_collection_persist_fn_t      persist_fn,
+    ib_collection_manager_persist_fn_t      persist_fn,
     void                                   *persist_data,
     const ib_collection_manager_t         **pmanager)
 {
@@ -210,9 +210,8 @@ ib_status_t ib_managed_collection_select(
     return IB_ENOENT;
 }
 
-ib_status_t ib_managed_collection_unregister(
+ib_status_t ib_managed_collection_destroy(
     ib_engine_t                   *ib,
-    ib_module_t                   *module,
     const ib_managed_collection_t *collection)
 {
     ib_status_t rc;
@@ -338,7 +337,7 @@ ib_status_t ib_managed_collection_populate(
     return rc;
 }
 
-ib_status_t ib_managed_collection_persist_all(
+ib_status_t ib_managed_collection_persist_tx(
     const ib_engine_t *ib,
     ib_tx_t           *tx)
 {
@@ -408,7 +407,7 @@ ib_status_t ib_managed_collection_persist_all(
     return rc;
 }
 
-const char *ib_managed_collection_manager_name(
+const char *ib_collection_manager_name(
     const ib_collection_manager_t *manager)
 {
     assert(manager != NULL);

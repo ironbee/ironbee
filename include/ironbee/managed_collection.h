@@ -45,15 +45,9 @@ extern "C" {
 
 /**
  * A collection manager is a collection of functions and related data that can
- * be used to initialize and/or persist TX data.
+ * be used to initialize and/or persist a TX data collection.
  */
 typedef struct ib_collection_manager_t ib_collection_manager_t;
-
-/**
- * A managed collection is a collection in TX data that can be initialized
- * and/or persisted by a collection manager.
- */
-typedef struct ib_managed_collection_t ib_managed_collection_t;
 
 /**
  * Register callback for managed collections
@@ -86,7 +80,7 @@ typedef struct ib_managed_collection_t ib_managed_collection_t;
  *   - IB_DECLINED Decline to manage the collection
  *   - IB_Exxx Other error
  */
-typedef ib_status_t (* ib_managed_collection_register_fn_t)(
+typedef ib_status_t (* ib_collection_manager_register_fn_t)(
     const ib_engine_t              *ib,
     const ib_module_t              *module,
     const ib_collection_manager_t  *manager,
@@ -117,7 +111,7 @@ typedef ib_status_t (* ib_managed_collection_register_fn_t)(
  *   - IB_OK All OK
  *   - IB_Exxx Other error
  */
-typedef ib_status_t (* ib_managed_collection_unregister_fn_t)(
+typedef ib_status_t (* ib_collection_manager_unregister_fn_t)(
     const ib_engine_t              *ib,
     const ib_module_t              *module,
     const ib_collection_manager_t  *manager,
@@ -146,7 +140,7 @@ typedef ib_status_t (* ib_managed_collection_unregister_fn_t)(
  *
  * @returns Status code
  */
-typedef ib_status_t (* ib_managed_collection_populate_fn_t)(
+typedef ib_status_t (* ib_collection_manager_populate_fn_t)(
     const ib_engine_t             *ib,
     const ib_tx_t                 *tx,
     const ib_module_t             *module,
@@ -176,7 +170,7 @@ typedef ib_status_t (* ib_managed_collection_populate_fn_t)(
  *
  * @returns Status code
  */
-typedef ib_status_t (* ib_managed_collection_persist_fn_t)(
+typedef ib_status_t (* ib_collection_manager_persist_fn_t)(
     const ib_engine_t             *ib,
     const ib_tx_t                 *tx,
     const ib_module_t             *module,
@@ -233,102 +227,16 @@ ib_status_t ib_managed_collection_register_manager(
     const ib_module_t                      *module,
     const char                             *name,
     const char                             *uri_scheme,
-    ib_managed_collection_register_fn_t     register_fn,
+    ib_collection_manager_register_fn_t     register_fn,
     void                                   *register_data,
-    ib_managed_collection_unregister_fn_t   unregister_fn,
+    ib_collection_manager_unregister_fn_t   unregister_fn,
     void                                   *unregister_data,
-    ib_managed_collection_populate_fn_t     populate_fn,
+    ib_collection_manager_populate_fn_t     populate_fn,
     void                                   *populate_data,
-    ib_managed_collection_persist_fn_t      persist_fn,
+    ib_collection_manager_persist_fn_t      persist_fn,
     void                                   *persist_data,
     const ib_collection_manager_t         **pmanager);
 
-
-/**
- * Create a managed collection object.
- *
- * A managed collection is used to populate and / or persist fields in a
- * collection (the name of which is specified in @a collection_name).  One or
- * more collection managers will be associated with the managed collection by
- * ib_managed_collection_select().
- *
- * @param[in] ib Engine.
- * @param[in] mp Memory pool to use for allocations
- * @param[in] collection_name Name of the managed collection
- * @param[out] pcollection Pointer to new managed collection object
- *
- * @returns Status code
- */
-ib_status_t ib_managed_collection_create(
-    ib_engine_t              *ib,
-    ib_mpool_t               *mp,
-    const char               *collection_name,
-    ib_managed_collection_t **pcollection);
-
-
-/**
- * Unregister all collection managers associated with a managed collection
- *
- * @param[in] ib Engine.
- * @param[in] module Collection manager's module object
- * @param[in] collection Managed collection to unregister
- *
- * @returns Status code
- */
-ib_status_t ib_managed_collection_unregister(
-    ib_engine_t                   *ib,
-    ib_module_t                   *module,
-    const ib_managed_collection_t *collection);
-
-/**
- * Select one or more collection managers associated with @a collection
- *
- * The selection process will match the registered URI scheme with each
- * registered collection manager against the URI in @a uri.  If the scheme
- * matches @a uri, the manager's register function is invoked to inform the
- * collection manager of the match.  Note that the register function can
- * return IB_DECLINED to decline to manage the given collection.  All matching
- * managers are then associated with collection.
- *
- * @param[in] ib Engine.
- * @param[in] mp Memory pool to use for allocations
- * @param[in] collection_name Name of the managed collection
- * @param[in] uri The URI associated with the managed collection
- * @param[in] params Parameter list
- * @param[in,out] collection Managed collection object
- * @param[out] managers List of selected collection managers (or NULL)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_managed_collection_select(
-    ib_engine_t                    *ib,
-    ib_mpool_t                     *mp,
-    const char                     *collection_name,
-    const char                     *uri,
-    const ib_list_t                *params,
-    ib_managed_collection_t        *collection,
-    ib_list_t                      *managers);
-
-/**
- * Populate a managed collection
- *
- * Walk through the list of collection managers associate with the given
- * collection, and invoke each of their populate functions.  The first of the
- * populate functions to return IB_OK will cause the population to complete.
- * A populate function can return IB_DECLINED to indicate that it was unable
- * to populate the collection (perhaps because the associated key was not
- * found in the backing store).
- *
- * @param[in] ib Engine.
- * @param[in,out] tx Transaction to populate
- * @param[in] collection Managed collection object
- *
- * @returns Status code.
- */
-ib_status_t DLL_PUBLIC ib_managed_collection_populate(
-    const ib_engine_t              *ib,
-    ib_tx_t                        *tx,
-    const ib_managed_collection_t  *collection);
 
 /**
  * Get the name of the collection manager
@@ -337,25 +245,8 @@ ib_status_t DLL_PUBLIC ib_managed_collection_populate(
  *
  * @returns The name of the collection manager
  */
-const char DLL_PUBLIC *ib_managed_collection_manager_name(
+const char DLL_PUBLIC *ib_collection_manager_name(
     const ib_collection_manager_t  *manager);
-
-/**
- * Persist all managed collections
- *
- * Walk through the list of collection managers associate with the given
- * collection, and invoke each of their persist functions.  Unlinke
- * population, all managers are given the opportunity to populate the given
- * collection.
- *
- * @param[in] ib Engine.
- * @param[in] tx Transaction.
- *
- * @returns Status code.
- */
-ib_status_t DLL_PUBLIC ib_managed_collection_persist_all(
-    const ib_engine_t              *ib,
-    ib_tx_t                        *tx);
 
 /**
  * Populate a collection from a list (helper function).
@@ -378,29 +269,6 @@ ib_status_t DLL_PUBLIC ib_managed_collection_populate_from_list(
     const ib_tx_t                  *tx,
     const ib_list_t                *field_list,
     ib_list_t                      *collection);
-
-
-/**
- * Initialize managed collection logic
- *
- * @param[in,out] ib IronBee engine
- *
- * @returns
- *   - IB_OK on success
- */
-ib_status_t ib_managed_collection_init(
-    ib_engine_t *ib);
-
-/**
- * Shutdown managed collection logic
- *
- * @param[in,out] ib IronBee engine
- *
- * @returns
- *   - IB_OK on success
- */
-ib_status_t ib_managed_collection_finish(
-    ib_engine_t *ib);
 
 
 /** @} */

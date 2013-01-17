@@ -2554,8 +2554,8 @@ static ib_status_t core_initvar(ib_engine_t *ib,
 }
 
 /**
- * Execute the InitCollection directive to initialize a collection in a
- * transaction's DPI
+ * Populate @a tx's collections using the associated context's list of managed
+ * collections.
  *
  * @param[in] ib Engine.
  * @param[in] tx Transaction.
@@ -2563,7 +2563,7 @@ static ib_status_t core_initvar(ib_engine_t *ib,
  *
  * @returns Status code.
  */
-static ib_status_t core_managed_collection_populate_all(
+static ib_status_t core_managed_collection_populate_tx(
     ib_engine_t *ib,
     ib_tx_t *tx,
     const ib_list_t *mancoll_list)
@@ -2641,7 +2641,7 @@ static ib_status_t core_hook_context_tx(ib_engine_t *ib,
     }
 
     /* Handle InitCollection list */
-    rc = core_managed_collection_populate_all(ib, tx, corecfg->mancoll_list);
+    rc = core_managed_collection_populate_tx(ib, tx, corecfg->mancoll_list);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Failure executing InitCollection(s): %s",
                         ib_status_to_string(rc));
@@ -2730,7 +2730,7 @@ static ib_status_t core_hook_tx_finished(ib_engine_t *ib,
     assert(event == tx_finished_event);
     ib_status_t rc;
 
-    rc = ib_managed_collection_persist_all(ib, tx);
+    rc = ib_managed_collection_persist_tx(ib, tx);
     return rc;
 }
 
@@ -4240,7 +4240,7 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
                              "for context \"%s\"",
                              directive,
                              collection_name,
-                             ib_managed_collection_manager_name(manager),
+                             ib_collection_manager_name(manager),
                              ib_context_full_get(cp->cur_ctx));
         }
     }
@@ -5297,16 +5297,18 @@ static ib_status_t core_ctx_managed_collection_destroy(
     const ib_list_node_t *node;
     ib_status_t rc = IB_OK;
 
-    /* Walk through the list of collections & populate them. */
+    /* If there are no collections, do nothing */
     if (corecfg->mancoll_list == NULL) {
         return IB_OK;
     }
+
+    /* Walk through the list of collections & destroy. */
     IB_LIST_LOOP_CONST(corecfg->mancoll_list, node) {
         const ib_managed_collection_t *collection =
             (const ib_managed_collection_t *)node->data;
         ib_status_t tmprc;
 
-        tmprc = ib_managed_collection_unregister(ib, mod, collection);
+        tmprc = ib_managed_collection_destroy(ib, collection);
         if (tmprc != IB_OK) {
             ib_log_warning(ib,
                            "Error creating managed collection \"%s\": %s",
@@ -5321,6 +5323,8 @@ static ib_status_t core_ctx_managed_collection_destroy(
                          collection->collection_name);
         }
     }
+    ib_list_clear(corecfg->mancoll_list);
+
     return rc;
 }
 
