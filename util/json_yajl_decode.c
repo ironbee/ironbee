@@ -107,7 +107,7 @@ static ib_status_t gen_field_name(decode_ctx_t *decode,
     return IB_OK;
 }
 
-size_t namebuf_len = 16;
+static size_t namebuf_len = 16;
 static int decode_number(void *ctx,
                          const char *s,
                          size_t len)

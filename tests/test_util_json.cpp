@@ -150,7 +150,8 @@ TEST_F(TestIBUtilJsonDecode, json_decode_basic)
         "\"f1\":  1.2,\r\n"
         "\"f2\":  11.1,\r\n"
         "\"s1\":  \"abc\",\r\n"
-        "\"s2\":  \"def\"\r\n"
+        "\"s2\":  \"def\",\r\n"
+        "\"reallyreallreallyreallyreallylongname\": \"xyzzy\"\r\n"
         "}";
 
     ib_list_t            *list;
@@ -182,7 +183,7 @@ TEST_F(TestIBUtilJsonDecode, json_decode_basic)
         printf("Error @ \"%s\"", error);
     }
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_EQ(6U, ib_list_elements(list));
+    ASSERT_EQ(7U, ib_list_elements(list));
 
     node = ib_list_first_const(list);
     { SCOPED_TRACE("node 1"); CheckNode(node, NULL, 1); }
@@ -201,6 +202,9 @@ TEST_F(TestIBUtilJsonDecode, json_decode_basic)
 
     node = ib_list_node_next_const(node);
     { SCOPED_TRACE("node 6"); CheckNode(node, NULL, "def"); }
+
+    node = ib_list_node_next_const(node);
+    { SCOPED_TRACE("node 7"); CheckNode(node, NULL, "xyzzy"); }
 }
 
 /// @test Test util JSON functions - Complex decode
