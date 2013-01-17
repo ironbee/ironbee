@@ -48,7 +48,7 @@ static mod_persist_param_data_t mod_persist_param_data = { NULL, NULL };
 typedef struct {
     const char    *collection_name;  /**< Name of the collection */
     const char    *path;             /**< Path to the fs kvstore */
-    const char    *key;              /**< Key to DPI for population */
+    const char    *key;              /**< Key in TX data for population */
     bool           key_expand;       /**< Key is expandable */
     ib_kvstore_t  *kvstore;          /**< kvstore object */
     uint32_t       expiration;       /**< Expiration time in seconds */
@@ -59,6 +59,9 @@ typedef struct {
     ib_list_t  *kvstore_list;        /**< List of persist_fs_kvstore_t */
 } mod_persist_cfg_t;
 static mod_persist_cfg_t mod_persist_global_cfg;
+
+/** Default expiration time of persisted collections (seconds) */
+static const int default_expiration = 60;
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        persist
@@ -121,7 +124,7 @@ static ib_status_t mod_persist_register_fn(
     const int ovecsize = 9;
     int ovector[ovecsize];
     int pcre_rc;
-    ib_num_t expiration = 60;
+    ib_num_t expiration = default_expiration;
 
     if (ib_list_elements(params) < 1) {
         return IB_EINVAL;
@@ -271,6 +274,11 @@ ib_status_t mod_persist_unregister_fn(
  * @param[in] populate_data Populate function callback data
  *
  * @returns Status code
+ *   - IB_OK If no errors encountered
+ *   - IB_DECLINED If the configured key was not found in the kvstore
+ *   - Errors returned by ib_data_expand_str(), ib_kvstore_get(),
+ *     ib_json_decode()
+ *     
  */
 static ib_status_t mod_persist_populate_fn(
     const ib_engine_t              *ib,
@@ -358,9 +366,8 @@ static ib_status_t mod_persist_populate_fn(
  *
  * @returns
  *   - IB_OK on success or when @a collection_data is length 0.
- *   - The first error returned by a call to ib_field_copy or ib_list_push.
- *     The first error is returned, but more errors may occur as the
- *     collection population continues.
+ *   - Errors returned by ib_data_expand_str(), ib_json_encode(),
+ *     ib_kvstore_set()
  */
 static ib_status_t mod_persist_persist_fn(
     const ib_engine_t             *ib,
