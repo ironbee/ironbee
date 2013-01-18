@@ -74,7 +74,7 @@ static const char* c_patterns_help =
     "- \\u -- Uppercase letters -- A-Z\n"
     "- \\s -- White space -- space, \\t\\r\\n\\v\\f\n"
     "- \\S -- Non-white space -- All but space, \\t\\r\\n\\v\\f\n"
-    " - \\N -- End of line -- \\r\\f\n"
+    "- \\$ -- End of line -- \\r\\f\n"
     "- \\p -- Printable character, ASCII hex 20 through 7E.\n"
     "- \\. -- Any character.\n"
     "\n"

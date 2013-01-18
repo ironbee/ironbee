@@ -551,6 +551,7 @@ const Intermediate::byte_vector_t& multiple_subpat_to_set(char subpat[4])
     static Intermediate::byte_vector_t s_upper;
     static Intermediate::byte_vector_t s_space;
     static Intermediate::byte_vector_t s_nonspace;
+    static Intermediate::byte_vector_t s_eol;
     static Intermediate::byte_vector_t s_print;
 
     if (! s_generated) {
@@ -581,6 +582,7 @@ const Intermediate::byte_vector_t& multiple_subpat_to_set(char subpat[4])
             s_space.begin(), s_space.end(),
             back_inserter(s_nonspace)
         );
+        s_eol = list_of('\n')('\r');
         add_range(s_print, 32, 127);
 
         s_generated = true;
@@ -598,6 +600,7 @@ const Intermediate::byte_vector_t& multiple_subpat_to_set(char subpat[4])
     case 'u': return s_upper;
     case 's': return s_space;
     case 'S': return s_nonspace;
+    case '$': return s_eol;
     case 'p': return s_print;
 
     default:

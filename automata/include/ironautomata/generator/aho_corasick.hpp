@@ -124,6 +124,7 @@ void aho_corasick_add_data(
  * - \\s -- White space -- space, \\t\\r\\n\\v\\f
  * - \\S -- Non-white space -- All but space,
  *             \\t\\r\\n\\v\\f
+ * - \\$ -- End of line -- \\r\\f
  * - \\p -- Printable character, ASCII hex 20 through 7E.
  * - \\\. -- Any character.
  *

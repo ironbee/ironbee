@@ -169,4 +169,14 @@ class TestPattern < Test::Unit::TestCase
       assert_equal([3, 6, 9].to_set, output_substrings[words[0]])
     end
   end
+
+  def test_eol
+    words = ['foo\$bar']
+    text = "foo\nbarfoo\rbar"
+    automata_test(words, [ACGEN, '-p'], "test_eol") do |dir, eudoxus_path|
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
+      assert_equal(words.size, output_substrings.size)
+      assert_equal([7, 14].to_set, output_substrings[words[0]])
+    end
+  end
 end
