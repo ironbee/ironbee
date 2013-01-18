@@ -425,6 +425,20 @@ TEST(BstrTest, BeginsWith) {
     bstr_free(&haystack);
 }
 
+TEST(BstrTest, BeginsWith2) {
+    bstr *haystack = bstr_dup_c("ABC");
+    bstr *p1 = bstr_dup_c("ABCD");
+    bstr *p2 = bstr_dup_c("EDFG");
+
+    EXPECT_EQ(0, bstr_begins_with_mem(haystack, bstr_ptr(p1), bstr_len(p1)));
+    EXPECT_EQ(0, bstr_begins_with_mem_nocase(haystack, bstr_ptr(p1), bstr_len(p1)));
+    EXPECT_EQ(0, bstr_begins_with_mem_nocase(haystack, bstr_ptr(p2), bstr_len(p2)));
+
+    bstr_free(&p1);
+    bstr_free(&p2);
+    bstr_free(&haystack);
+}
+
 TEST(BstrTest, CharAt) {
     bstr *str = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
     EXPECT_EQ('\000', bstr_char_at(str, 12));
@@ -459,18 +473,20 @@ TEST(BstrTest, AdjustLen) {
 TEST(BstrTest, ToPint) {
     size_t lastlen;
 
-    EXPECT_EQ(-1, bstr_util_mem_to_pint("abc",3, 10, &lastlen));
-
-    EXPECT_EQ(-2, bstr_util_mem_to_pint("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",40, 16, &lastlen));
-    EXPECT_EQ(0xabc, bstr_util_mem_to_pint("abc",3, 16, &lastlen));
+    EXPECT_EQ(-1, bstr_util_mem_to_pint("abc", 3, 10, &lastlen));
+    EXPECT_EQ(-2, bstr_util_mem_to_pint("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff", 40, 16, &lastlen));
+    EXPECT_EQ(0x7fffffffffffffffL, bstr_util_mem_to_pint("7fffffffffffffff", 16, 16, &lastlen));
+    EXPECT_EQ(-2, bstr_util_mem_to_pint("9223372036854775808", 19, 10, &lastlen));
+    EXPECT_EQ(0xabc, bstr_util_mem_to_pint("abc", 3, 16, &lastlen));
     EXPECT_EQ(4, lastlen);
-    EXPECT_EQ(131, bstr_util_mem_to_pint("abc",3, 12, &lastlen));
+    EXPECT_EQ(0xabc, bstr_util_mem_to_pint("ABC", 3, 16, &lastlen));
+    EXPECT_EQ(131, bstr_util_mem_to_pint("abc", 3, 12, &lastlen));
     EXPECT_EQ(2, lastlen);
-    EXPECT_EQ(83474, bstr_util_mem_to_pint("83474abc",8, 10, &lastlen));
+    EXPECT_EQ(83474, bstr_util_mem_to_pint("83474abc", 8, 10, &lastlen));
     EXPECT_EQ(5, lastlen);
-    EXPECT_EQ(5, bstr_util_mem_to_pint("0101",4, 2, &lastlen));
+    EXPECT_EQ(5, bstr_util_mem_to_pint("0101", 4, 2, &lastlen));
     EXPECT_EQ(5, lastlen);
-    EXPECT_EQ(5, bstr_util_mem_to_pint("0101",4, 2, &lastlen));
+    EXPECT_EQ(5, bstr_util_mem_to_pint("0101", 4, 2, &lastlen));
     EXPECT_EQ(5, lastlen);
 }
 
@@ -489,9 +505,32 @@ TEST(BstrTest, DupToC) {
     bstr_free(&str);
 }
 
+TEST(BstrTest, RChr) {
+    bstr *b = bstr_dup_c("---I---I---");
+
+    EXPECT_EQ(bstr_rchr(b, 'I'), 7);
+    EXPECT_EQ(bstr_rchr(b, 'M'), -1);
+
+    bstr_free(&b);
+}
+
+TEST(BstrTest, AdjustRealPtr) {
+    bstr *b = bstr_dup_c("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    char c[] = "0123456789";
+
+    bstr_adjust_realptr(b, c);
+    bstr_adjust_len(b, strlen(c));
+
+    EXPECT_TRUE((char *)bstr_ptr(b) == c);
+
+    bstr_free(&b);
+}
+
 TEST(BstrBuilder, CreateDestroy) {
     bstr_builder_t *bb = bstr_builder_create();
     EXPECT_EQ(0, bstr_builder_size(bb));
+
+    bstr_builder_append_c(bb, "ABC");
 
     bstr_builder_destroy(bb);
 }

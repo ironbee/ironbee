@@ -410,11 +410,11 @@ static char HybridParsing_CompressedResponse[] =
 static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
     htp_tx_state_request_start(tx);
 
-    htp_tx_req_set_method_c(tx, "GET", HTP_ALLOC_COPY);
+    htp_tx_req_set_method_c(tx, "GET", HTP_ALLOC_REUSE);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
     htp_tx_req_set_uri_c(tx, "/", HTP_ALLOC_COPY);
-    htp_tx_req_set_query_string_c(tx, "p=1&q=2", HTP_ALLOC_COPY);
-    htp_tx_req_set_protocol_c(tx, "HTTP/1.1", HTP_ALLOC_COPY);
+    htp_tx_req_set_query_string_c(tx, "p=1&q=2", HTP_ALLOC_REUSE);
+    htp_tx_req_set_protocol_c(tx, "HTTP/1.1", HTP_ALLOC_REUSE);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
 
@@ -423,9 +423,9 @@ static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
 
     htp_tx_state_response_start(tx);
 
-    htp_tx_res_set_status_line_c(tx, "HTTP/1.1 200 OK", HTP_ALLOC_COPY);
-    htp_tx_res_set_header_c(tx, "Content-Encoding", "gzip", HTP_ALLOC_COPY);
-    htp_tx_res_set_header_c(tx, "Content-Length", "187", HTP_ALLOC_COPY);
+    htp_tx_res_set_status_line_c(tx, "HTTP/1.1 200 OK", HTP_ALLOC_REUSE);
+    htp_tx_res_set_header_c(tx, "Content-Encoding", "gzip", HTP_ALLOC_REUSE);
+    htp_tx_res_set_header_c(tx, "Content-Length", "187", HTP_ALLOC_REUSE);
 
     htp_tx_state_response_headers(tx);
 

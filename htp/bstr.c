@@ -129,7 +129,7 @@ int bstr_begins_with_nocase(const bstr *haystack, const bstr *needle) {
 
 int bstr_begins_with_mem(const bstr *haystack, const void *_data, size_t len) {
     const unsigned char *data = (unsigned char *) _data;
-    const unsigned char *hdata = (unsigned char *) bstr_ptr(haystack);
+    const unsigned char *hdata = bstr_ptr(haystack);
     size_t hlen = bstr_len(haystack);
     size_t pos = 0;
 
