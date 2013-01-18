@@ -27,7 +27,7 @@ htp-*.tar.gz
 /config.sub
 /configure
 /depcomp
-/docs/lcov
+lcov
 /docs/doxygen
 /htp.pc
 /htp/.deps/
