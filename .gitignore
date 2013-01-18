@@ -14,7 +14,6 @@
 *.pdf
 htp-*.tar.gz
 .cproject
-.project
 /Makefile
 /Makefile.in
 /aclocal.m4
