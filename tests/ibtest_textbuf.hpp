@@ -83,7 +83,11 @@ public:
         SetText(text, len);
     }
 
-    virtual ~TextBuf(){}
+    virtual ~TextBuf()
+    {
+        delete[] m_buf;
+        delete[] m_fmtbuf;
+    }
 
     size_t SetNull( bool is_bytestr )
     {
