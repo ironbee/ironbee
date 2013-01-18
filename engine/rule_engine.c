@@ -2688,15 +2688,15 @@ static ib_status_t create_rule_context(const ib_engine_t *ib,
 }
 
 /**
- * Copy a list of rules / rule enable from one list to another
+ * Copy a list of rules from one list to another
  *
  * @param[in] src_list List of items to copy
  * @param[in,out] dest_list List to copy items into
  *
  * @returns Status code
  */
-static ib_status_t copy_list(const ib_list_t *src_list,
-                             ib_list_t *dest_list)
+static ib_status_t copy_rule_list(const ib_list_t *src_list,
+                                  ib_list_t *dest_list)
 {
     IB_FTRACE_INIT();
     assert(src_list != NULL);
@@ -2715,6 +2715,49 @@ static ib_status_t copy_list(const ib_list_t *src_list,
 }
 
 /**
+ * Populate a hash of rules from a list
+ *
+ * @param[in] src_list list of items to copy
+ * @param[in,out] dest_hash Hash to copy items into
+ *
+ * @returns Status code
+ */
+static ib_status_t copy_rule_hash(const ib_context_t *ctx,
+                                  const ib_hash_t *src_hash,
+                                  ib_hash_t *dest_hash)
+{
+    IB_FTRACE_INIT();
+    assert(src_hash != NULL);
+    assert(dest_hash != NULL);
+    ib_status_t rc;
+    const ib_list_node_t *node;
+    ib_list_t *src_list;
+
+    if (ib_hash_size(src_hash) == 0) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    rc = ib_list_create(&src_list, ib_engine_pool_temp_get(ctx->ib));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_hash_get_all(src_hash, src_list);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_LIST_LOOP_CONST(src_list, node) {
+        assert(node->data != NULL);
+        const ib_rule_t *rule = (const ib_rule_t *)node->data;
+
+        rc = ib_hash_set(dest_hash, rule->meta.id, node->data);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Import a rule's context from it's parent
  *
  * @param[in] parent_rules Parent's rule context object
@@ -2722,7 +2765,8 @@ static ib_status_t copy_list(const ib_list_t *src_list,
  *
  * @returns Status code
  */
-static ib_status_t import_rule_context(const ib_rule_context_t *parent_rules,
+static ib_status_t import_rule_context(const ib_context_t *ctx,
+                                       const ib_rule_context_t *parent_rules,
                                        ib_rule_context_t *ctx_rules)
 {
     IB_FTRACE_INIT();
@@ -2731,19 +2775,25 @@ static ib_status_t import_rule_context(const ib_rule_context_t *parent_rules,
     ib_status_t rc;
 
     /* Copy rules list */
-    rc = copy_list(parent_rules->rule_list, ctx_rules->rule_list);
+    rc = copy_rule_list(parent_rules->rule_list, ctx_rules->rule_list);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Copy enable list */
-    rc = copy_list(parent_rules->enable_list, ctx_rules->enable_list);
+    rc = copy_rule_list(parent_rules->enable_list, ctx_rules->enable_list);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
 
     /* Copy disable list */
-    rc = copy_list(parent_rules->disable_list, ctx_rules->disable_list);
+    rc = copy_rule_list(parent_rules->disable_list, ctx_rules->disable_list);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    /* Copy rule hash */
+    rc = copy_rule_hash(ctx, parent_rules->rule_hash, ctx_rules->rule_hash);
     if (rc != IB_OK) {
         IB_FTRACE_RET_STATUS(rc);
     }
@@ -2810,7 +2860,7 @@ ib_status_t ib_rule_engine_ctx_open(ib_engine_t *ib,
 
     /* If this is a location context, import our parents context info */
     if (ctx->ctype == IB_CTYPE_LOCATION) {
-        rc = import_rule_context(ctx->parent->rules, ctx->rules);
+        rc = import_rule_context(ctx, ctx->parent->rules, ctx->rules);
         if (rc != IB_OK) {
             ib_log_error(ib,
                          "Rule engine failed to import from parent: %s",
@@ -3021,8 +3071,8 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
     skip_flags = IB_RULE_FLAG_CHCHILD;
     IB_LIST_LOOP(main_ctx->rules->rule_list, node) {
         ib_rule_t          *ref = (ib_rule_t *)ib_list_node_data(node);
-        ib_rule_t          *rule;
-        ib_rule_ctx_data_t *ctx_rule;
+        ib_rule_t          *rule = NULL;
+        ib_rule_ctx_data_t *ctx_rule = NULL;
 
         ib_log_debug3(ib, "Looking at rule \"%s\" from \"%s\"",
                       ref->meta.id, ib_context_full_get(ref->ctx));
@@ -3532,7 +3582,6 @@ ib_status_t ib_rule_lookup(ib_engine_t *ib,
     IB_FTRACE_INIT();
 
     assert(ib != NULL);
-    assert(ctx != NULL);
     assert(id != NULL);
     assert(rule != NULL);
 
