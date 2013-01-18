@@ -488,5 +488,9 @@ TEST_F(ConnectionParsing, PhpParamProcessing) {
     htp_param_t *p2 = htp_tx_req_get_param_c(tx, "q");
     ASSERT_TRUE(p2 != NULL);
     ASSERT_EQ(bstr_cmp_c(p2->value, "2"), 0);
+
+    htp_param_t *p3 = htp_tx_req_get_param_c(tx, "z_w");
+    ASSERT_TRUE(p3 != NULL);
+    ASSERT_EQ(bstr_cmp_c(p3->value, "3"), 0);
 }
 
