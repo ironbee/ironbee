@@ -139,7 +139,7 @@ ib_status_t ib_managed_collection_destroy(
  * Persist all managed collections
  *
  * Walk through the list of collection managers associate with the given
- * collection, and invoke each of their persist functions.  Unlinke
+ * collection, and invoke each of their persist functions.  Unlike
  * population, all managers are given the opportunity to populate the given
  * collection.
  *

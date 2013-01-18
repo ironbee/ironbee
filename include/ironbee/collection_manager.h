@@ -61,7 +61,7 @@ typedef struct ib_collection_manager_t ib_collection_manager_t;
  *
  * If the collection manager needs collection specific data associated with
  * each manager / collection instance, it should allocate storage for such
- * data, and assign @a pmanger_inst_data to point at this storage.  This
+ * data, and assign @a pmanager_inst_data to point at this storage.  This
  * "manager instance data" will be passed to the unregister, populate and
  * persist functions in the manager_inst_data parameter.
  *

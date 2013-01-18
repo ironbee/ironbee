@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1836 
+personal_ws-1.1 en 1841 
 malloced
 malloc'ed
 libnet
@@ -463,6 +463,7 @@ xff
 READFUNC
 incrementing
 usr
+tx's
 TX's
 txt
 bitfield
@@ -593,6 +594,7 @@ mb
 nused
 lh
 md
+iX
 SCLASS
 ju
 na
@@ -972,6 +974,7 @@ bingbot
 tuple
 vlist
 iostream
+reallyreallreallyreallyreallylongname
 chmod
 xxxxxxxxxxxx
 facebook
@@ -1198,6 +1201,7 @@ obigo
 IronBeeHash
 lwpi
 YYYYMMDDn
+IronBeeCollectionManager
 inflags
 pcre
 edata
@@ -1206,6 +1210,7 @@ netmasks
 RuleEngineLogLevel
 ACNodes
 ACNode's
+precomputed
 deduplicate
 Lconfig
 HandleResponse

@@ -365,7 +365,7 @@ static ib_status_t core_managed_collection_jsonfile_register_fn(
  *
  * @returns
  *   - IB_OK on success or when @a collection_data is length 0.
- *   - IB_EUNKOWN for errors from file I/O
+ *   - IB_EUNKNOWN for errors from file I/O
  *   - IB_EALLOC for allocation errors
  *   - Errors from ib_json_decode_ex()
  */
