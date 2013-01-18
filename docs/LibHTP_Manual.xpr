@@ -6,5 +6,6 @@
     </meta>
     <projectTree name="LibHTP_Manual.xpr">
         <file name="LibHTP_Manual.xml"/>
+        <file name="pdf.xsl"/>
     </projectTree>
 </project>
