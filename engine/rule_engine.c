@@ -2675,7 +2675,6 @@ static ib_status_t copy_rule_hash(const ib_context_t *ctx,
                                   const ib_hash_t *src_hash,
                                   ib_hash_t *dest_hash)
 {
-    IB_FTRACE_INIT();
     assert(src_hash != NULL);
     assert(dest_hash != NULL);
     ib_status_t rc;
@@ -2683,15 +2682,15 @@ static ib_status_t copy_rule_hash(const ib_context_t *ctx,
     ib_list_t *src_list;
 
     if (ib_hash_size(src_hash) == 0) {
-        IB_FTRACE_RET_STATUS(IB_OK);
+        return IB_OK;
     }
     rc = ib_list_create(&src_list, ib_engine_pool_temp_get(ctx->ib));
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
     rc = ib_hash_get_all(src_hash, src_list);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     IB_LIST_LOOP_CONST(src_list, node) {
@@ -2700,10 +2699,10 @@ static ib_status_t copy_rule_hash(const ib_context_t *ctx,
 
         rc = ib_hash_set(dest_hash, rule->meta.id, node->data);
         if (rc != IB_OK) {
-            IB_FTRACE_RET_STATUS(rc);
+            return rc;
         }
     }
-    IB_FTRACE_RET_STATUS(IB_OK);
+    return IB_OK;
 }
 
 /**
@@ -2737,7 +2736,7 @@ static ib_status_t import_rule_context(const ib_context_t *ctx,
     /* Copy disable list */
     rc = copy_rule_list(parent_rules->disable_list, ctx_rules->disable_list);
     if (rc != IB_OK) {
-        IB_FTRACE_RET_STATUS(rc);
+        return rc;
     }
 
     /* Copy rule hash */
