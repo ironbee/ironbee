@@ -288,7 +288,7 @@ ib_status_t DLL_PUBLIC ib_hash_create_nocase(
  * @returns Memory pool of @a hash.
  **/
 ib_mpool_t DLL_PUBLIC *ib_hash_pool(
-    ib_hash_t *hash
+    const ib_hash_t *hash
 );
 
  /**
@@ -299,7 +299,7 @@ ib_mpool_t DLL_PUBLIC *ib_hash_pool(
   * @returns Number of elements in @a hash.
   **/
 size_t DLL_PUBLIC ib_hash_size(
-    ib_hash_t* hash
+    const ib_hash_t* hash
 );
 
 /*@}*/

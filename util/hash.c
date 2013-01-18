@@ -571,7 +571,7 @@ ib_status_t ib_hash_create_nocase(
 }
 
 ib_mpool_t *ib_hash_pool(
-    ib_hash_t *hash
+    const ib_hash_t *hash
 ) {
     assert(hash != NULL);
 
@@ -579,7 +579,7 @@ ib_mpool_t *ib_hash_pool(
 }
 
 size_t ib_hash_size(
-    ib_hash_t* hash
+    const ib_hash_t* hash
 ) {
     assert(hash != NULL);
 
