@@ -522,7 +522,8 @@ static ib_status_t core_managed_collection_jsonfile_persist_fn(
         return IB_EUNKNOWN;
     }
 
-    fd = open(json_file->path, O_WRONLY | O_CREAT | O_TRUNC);
+    fd = open(json_file->path, O_WRONLY | O_CREAT | O_TRUNC,
+              S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
     if (fd < 0) {
         ib_log_warning(ib, "JSON file persist: open(\"%s\") failed: %s",
                        json_file->path, strerror(errno));
