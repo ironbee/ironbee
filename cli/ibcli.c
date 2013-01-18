@@ -1321,6 +1321,7 @@ static ib_status_t print_geoip(
         ++count;
         fullpath = build_path("GeoIP", field);
         print_field(fullpath, field, 0);
+        free((char *)fullpath);
     }
     if (count == 0) {
         printf("No GeoIP data found\n");
