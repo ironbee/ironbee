@@ -11,6 +11,7 @@
 *.stackdump
 *.dSYM
 *.a
+*.pdf
 htp-*.tar.gz
 .cproject
 .project
@@ -27,6 +28,7 @@ htp-*.tar.gz
 /configure
 /depcomp
 /docs/lcov
+/docs/doxygen
 /htp.pc
 /htp/.deps/
 /htp/.libs/
