@@ -183,6 +183,9 @@ ib_status_t ib_managed_collection_select(
 
         if (managers != NULL) {
             rc = ib_list_push(managers, (ib_collection_manager_t *)manager);
+            if (rc != IB_OK) {
+                return rc;
+            }
         }
 
         /* Create & populate the new collection instance object */
