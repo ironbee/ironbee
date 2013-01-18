@@ -48,6 +48,10 @@
 #include "htp/htp.h"
 #include "htp/htp_decompressors.h"
 
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
+
 static htp_status_t GUnzip_decompressor_callback(htp_tx_data_t *d) {
     // fprint_raw_data(stdout, "decompressed", d->data, d->len);
 
