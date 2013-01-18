@@ -1353,6 +1353,18 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                             IB_FTYPE_LIST,
                             NULL);
 
+            /* Determine transaction action (block/log) via flags. */
+            if (ib_tx_flags_isset(tx, IB_TX_BLOCK_PHASE|IB_TX_BLOCK_IMMEDIATE)) {
+                ib_field_setv(tx_action, ib_ftype_nulstr_in(
+                    ib_logevent_action_name(IB_LEVENT_ACTION_BLOCK))
+                );
+            }
+            else {
+                ib_field_setv(tx_action, ib_ftype_nulstr_in(
+                    ib_logevent_action_name(IB_LEVENT_ACTION_LOG))
+                );
+            }
+
             /* It is more important to write out what is possible
              * than to fail here. So, some error codes are ignored.
              *
@@ -1400,9 +1412,6 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                 }
 
                 ib_field_setv(tx_msg, ib_ftype_nulstr_in(e->msg));
-                ib_field_setv(tx_action, ib_ftype_nulstr_in(
-                    ib_logevent_action_name(e->rec_action))
-                );
 
                 IB_LIST_LOOP(e->tags, tnode) {
                     char *tag = (char *)ib_list_node_data(tnode);
