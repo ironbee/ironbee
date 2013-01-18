@@ -298,16 +298,6 @@ struct htp_cfg_t {
 
     char *tmpdir;
 
-    /** Whether the local port should be used as the outgoing connection port,
-     *  usually when the local machine is the target of a firewall redirect
-     *  (without dport alteration)
-     *  This will be false (0) in cases where the local machine is:
-     *  - explicitly set as the browser proxy
-     *  - operating as a transparent proxy (eg using linux TRPOXY)
-     *  - using a firewall redirect but with dport altered
-     *  In cases where this is false, the remote port is used */
-    int use_local_port;
-
     // Hooks
 
     /** Transaction start hook, invoked when the parser receives the first

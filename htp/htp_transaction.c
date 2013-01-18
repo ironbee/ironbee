@@ -847,41 +847,6 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
             }
         }
 
-        // Port
-        /*
-        if (connp->in_tx->parsed_uri->port != NULL) {
-            if (connp->in_tx->parsed_uri->port_number != -1) {
-                // Check that the port in the URI is the same
-                // as the port on which the client is talking
-                // to the server
-                if (connp->cfg->use_local_port) {
-                    if (connp->in_tx->parsed_uri->port_number != connp->conn->local_port) {
-                        // Incorrect port; use the real port instead
-                        connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
-                        // TODO Log
-                    }
-                } else {
-                    connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
-                }
-            } else {
-                // Invalid port; use the real port instead
-                if (connp->cfg->use_local_port) {
-                    connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
-                } else {
-                    connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
-                }
-
-                // TODO Log
-            }
-        } else {
-            if (connp->cfg->use_local_port) {
-                connp->in_tx->parsed_uri->port_number = connp->conn->local_port;
-            } else {
-                connp->in_tx->parsed_uri->port_number = connp->conn->remote_port;
-            }
-        }
-        */
-
         // Path
         if (connp->in_tx->parsed_uri->path == NULL) {
             connp->in_tx->parsed_uri->path = bstr_dup_c("/");

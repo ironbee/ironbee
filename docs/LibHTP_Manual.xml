@@ -117,6 +117,21 @@ $ sudo make install</programlisting>
                     <para>Continue to install as described above</para>
                 </listitem>
             </orderedlist>
+        </section>
+        <section>
+            <title>Usage</title>
+            <para/>
+            <section>
+                <title>Dealing with Proxies</title>
+                <para>Under normal circumstances, when you're monitoring HTTP traffic the TCP
+                    addresses and ports will be those of the clients and servers involved in direct
+                    communication. If there are proxies on the network, however, server address and
+                    port may be those used by proxies, and not of the target HTTP servers.</para>
+                <para>If you want LibHTP to "see" and propagate actual server address and port, the
+                    solution is to wait for LibHTP to parse the request line and and use a
+                        <literal>REQUEST_LINE</literal> callback to overwrite the TCP address and
+                    port with the information extracted from the request.</para>
+            </section>
         </section>        
     </chapter>
     
