@@ -314,10 +314,13 @@ void logger_vlogmsg(
         rc = ib_context_module_config(main_ctx,
                                       ib_core_module(),
                                       (void *)&main_core_config);
+        /* When a module fails to find its context, use the global one. */
+        if (rc != IB_OK) {
+            main_core_config = &core_global_cfg;
+        }
     }
-
-    /* If not available, fall back to the core global configuration. */
-    if (main_ctx == NULL || rc != IB_OK) {
+    else {
+        /* If there is no main context, use the global one. */
         main_core_config = &core_global_cfg;
     }
 
