@@ -33,9 +33,16 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
 #endif
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
 #include <boost/program_options.hpp>
 #ifdef __clang__
 #pragma clang diagnostic pop
+#endif
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
 #endif
 
 using namespace std;
