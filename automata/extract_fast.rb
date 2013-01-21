@@ -50,7 +50,7 @@ end
 # Format a FastString for output in a rule file.
 def format_faststring(fs)
   s = fs.string
-  s.gsub!(/"/, '\\\\\"')
+  s.gsub!(/"/, '\"')
   if fs.case_insensitive
     # This would be easier with look-behinds.
     last_char = nil
