@@ -114,6 +114,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow(
  * @param[in] mp Memory pool for allocations
  * @param[in] data_in Buffer to operate on
  * @param[in] dlen_in Length of @a data_in
+ * @param[in] nul_byte Reserve extra byte for NUL character?
  * @param[out] data_out Output data
  * @param[out] dlen_out Length of @a data_out
  * @param[out] result Result flags (IB_STRFLAG_xxx)
@@ -130,6 +131,7 @@ ib_status_t DLL_PUBLIC ib_util_decode_url_cow_ex(
     ib_mpool_t     *mp,
     const uint8_t  *data_in,
     size_t          dlen_in,
+    bool            nul_byte,
     uint8_t       **data_out,
     size_t         *dlen_out,
     ib_flags_t     *result);

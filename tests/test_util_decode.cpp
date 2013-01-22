@@ -73,7 +73,7 @@ public:
                           ib_flags_t &result)
     {
         return ib_util_decode_url_cow_ex(m_mpool,
-                                         data_in, dlen_in,
+                                         data_in, dlen_in, false,
                                          data_out, &dlen_out,
                                          &result);
     }

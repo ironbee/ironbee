@@ -54,7 +54,8 @@ ib_status_t ib_util_decode_url_cow(ib_mpool_t *mp,
     ib_status_t rc;
     size_t len;
     uint8_t *out;
-    rc = ib_util_decode_url_cow_ex(mp, (uint8_t *)data_in, strlen(data_in),
+    rc = ib_util_decode_url_cow_ex(mp,
+                                   (uint8_t *)data_in, strlen(data_in), true,
                                    &out, &len, result);
     if (rc == IB_OK) {
         *(out+len) = '\0';

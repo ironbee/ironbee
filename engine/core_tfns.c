@@ -750,7 +750,7 @@ static ib_status_t tfn_url_decode(ib_engine_t *ib,
         }
         dlen = ib_bytestr_length(bs);
         rc = ib_util_decode_url_cow_ex(mp,
-                                       din, dlen,
+                                       din, dlen, false,
                                        &dout, &dlen,
                                        &result);
         if (rc != IB_OK) {

@@ -158,6 +158,7 @@ ib_status_t ib_util_decode_url_ex(uint8_t *data_in,
 ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
                                       const uint8_t *data_in,
                                       size_t dlen_in,
+                                      bool nul_byte,
                                       uint8_t **data_out,
                                       size_t *dlen_out,
                                       ib_flags_t *result)
@@ -171,6 +172,8 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
     uint8_t *out = NULL;
     const uint8_t *in  = data_in;
     const uint8_t *end = data_in + dlen_in;
+    size_t size = dlen_in + (nul_byte ? 1 : 0);
+
     *data_out = NULL;
 
     while (in < end) {
@@ -184,7 +187,7 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
 
                 if (IS_HEX_CHAR(c1) && IS_HEX_CHAR(c2)) {
                     /* Valid encoding - decode it. */
-                    out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
+                    out = ib_util_copy_on_write(mp, data_in, in, size,
                                                 out, data_out, NULL);
                     if (out == NULL) {
                         return IB_EALLOC;
@@ -215,7 +218,7 @@ ib_status_t ib_util_decode_url_cow_ex(ib_mpool_t *mp,
         else {
             /* Character is not a percent sign. */
             if (*in == '+') {
-                out = ib_util_copy_on_write(mp, data_in, in, dlen_in,
+                out = ib_util_copy_on_write(mp, data_in, in, size,
                                             out, data_out, NULL);
                 if (out == NULL) {
                     return IB_EALLOC;
