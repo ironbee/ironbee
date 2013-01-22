@@ -454,6 +454,9 @@ ib_status_t ib_engine_module_get(ib_engine_t *ib,
 
     /* Return the first module matching the name. */
     IB_ARRAY_LOOP(ib->modules, n, i, m) {
+        if (m == NULL) {
+            continue;
+        }
         if (strcmp(name, m->name) == 0) {
             *pm = m;
             return IB_OK;
@@ -586,7 +589,7 @@ void ib_engine_destroy(ib_engine_t *ib)
 
         ib_log_debug3(ib, "Unloading modules...");
         IB_ARRAY_LOOP_REVERSE(ib->modules, ne, idx, m) {
-            if (m != cm) {
+            if ( (m != NULL) && (m != cm) ) {
                 ib_module_unload(m);
             }
         }
@@ -1585,6 +1588,10 @@ ib_status_t ib_context_create(ib_engine_t *ib,
         size_t n;
         size_t i;
         IB_ARRAY_LOOP(ib->modules, n, i, m) {
+            if (m == NULL) {
+                ib_log_debug(ib, "Not registering NULL module idx=%zd", i);
+                continue;
+            }
             ib_log_debug3(ib, "Registering module=\"%s\" idx=%zd",
                           m->name, m->idx);
             rc = ib_module_register_context(m, ctx);
