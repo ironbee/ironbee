@@ -4136,7 +4136,8 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
     const char              *collection_uri;
     ib_core_cfg_t           *cfg;
     ib_managed_collection_t *collection = NULL;
-    ib_list_t               *managers = NULL;
+    bool                     new_collection = false;
+    ib_list_t               *managers_debug = NULL;
 
     //mp = ib_engine_pool_main_get(cp->ib);
     mp = ib_engine_pool_config_get(cp->ib);
@@ -4208,11 +4209,12 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
         if (rc != IB_OK) {
             return rc;
         }
+        new_collection = true;
     }
 
     /* For logging, create a list of manager objects */
     if (ib_log_get_level(cp->ib) >= IB_LOG_DEBUG) {
-        ib_list_create(&managers, mp);
+        ib_list_create(&managers_debug, mp);
     }
 
     /* Select a collection manager */
@@ -4221,7 +4223,7 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
                                       collection_uri,
                                       params,
                                       collection,
-                                      managers);
+                                      managers_debug);
     if (rc == IB_ENOENT) {
         ib_cfg_log_error(cp,
                          "%s: No matching collection manager found for \"%s\"",
@@ -4235,22 +4237,26 @@ static ib_status_t core_dir_initcollection(ib_cfgparser_t *cp,
         return rc;
     }
 
-    /* Add the field to the list */
-    rc = ib_list_push(cfg->mancoll_list, collection);
-    if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "%s: Error adding managed collection to list: %s",
-                         directive, ib_status_to_string(rc));
-        return rc;
+    /* Add the collection (if it's new) to the managed collection list */
+    if (new_collection) {
+        rc = ib_list_push(cfg->mancoll_list, collection);
+        if (rc != IB_OK) {
+            ib_cfg_log_error(cp,
+                             "%s: Error adding managed collection to list: %s",
+                             directive, ib_status_to_string(rc));
+            return rc;
+        }
     }
 
-    if (managers != NULL) {
-        IB_LIST_LOOP_CONST(managers, node) {
+    if (managers_debug != NULL) {
+        IB_LIST_LOOP_CONST(managers_debug, node) {
             const ib_collection_manager_t *manager =
                 (const ib_collection_manager_t *)node->data;
             ib_cfg_log_debug(cp,
-                             "%s: Collection \"%s\" managed by \"%s\" "
+                             "%s: %s collection \"%s\" managed by \"%s\" "
                              "for context \"%s\"",
                              directive,
+                             new_collection ? "New" : "Existing",
                              collection_name,
                              ib_collection_manager_name(manager),
                              ib_context_full_get(cp->cur_ctx));
