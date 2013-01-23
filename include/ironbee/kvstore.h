@@ -20,8 +20,8 @@
 
 #include "ironbee_config_auto.h"
 
-#include <ironbee/types.h>
 #include <ironbee/clock.h>
+#include <ironbee/types.h>
 
 #include <stdlib.h>
 
