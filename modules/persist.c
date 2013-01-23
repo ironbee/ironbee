@@ -262,6 +262,55 @@ ib_status_t mod_persist_unregister_fn(
 }
 
 /**
+ * Merge policy function that returns the most recent in the list
+ * if the list is size 1 or greater.
+ *
+ * If the list size is 0, this does nothing.
+ *
+ * @param[in] kvstore Key-value store.
+ * @param[in] values Array of @ref ib_kvstore_value_t pointers.
+ * @param[in] value_size The length of values.
+ * @param[out] resultant_value Pointer to values[0] if value_size > 0.
+ * @param[in,out] cbdata Context callback data.
+ * @returns IB_OK
+ */
+static ib_status_t mod_persist_merge_fn(
+    ib_kvstore_t *kvstore,
+    ib_kvstore_value_t **values,
+    size_t value_size,
+    ib_kvstore_value_t **resultant_value,
+    ib_kvstore_cbdata_t *cbdata)
+{
+    assert(kvstore != NULL);
+    assert(values != NULL);
+    ib_kvstore_value_t *result = NULL;
+    size_t n;
+
+    if (value_size == 1) {
+        result = values[0];
+        goto done;
+    }
+    else if (value_size == 0) {
+        result = NULL;
+        goto done;
+    }
+
+    /* Loop through the list, select the most recent. */
+    for(n = 0;  n < value_size;  ++n) {
+        const ib_kvstore_value_t *v = values[n];
+        if ( (result == NULL) ||
+             (ib_clock_timeval_cmp(&v->creation, &result->creation) > 0) )
+        {
+            result = values[n];
+        }
+    }
+
+done:
+    *resultant_value = result;
+    return IB_OK;
+}
+
+/**
  * Handle managed collection kvstore / filesystem populate function
  *
  * @param[in] ib Engine
@@ -322,7 +371,8 @@ static ib_status_t mod_persist_populate_fn(
     /* Try to get data from the kvstore */
     kvstore_key.key = key;
     kvstore_key.length = strlen(key);
-    rc = ib_kvstore_get(kvstore, NULL, &kvstore_key, &kvstore_val);
+    rc = ib_kvstore_get(kvstore, mod_persist_merge_fn,
+                        &kvstore_key, &kvstore_val);
     if (rc == IB_ENOENT) {
         return IB_DECLINED;
     }
