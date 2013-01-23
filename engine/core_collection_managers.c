@@ -70,15 +70,15 @@ typedef struct {
  * Handle managed collection registration for vars "name=value" parameters
  *
  * @param[in] ib Engine
- * @param[in] module Collection manager's module object
- * @param[in] manager The collection manager object to register with
+ * @param[in] module Collection manager's module object (unused)
+ * @param[in] manager The collection manager object to register with (unused)
  * @param[in] mp Memory pool to use for allocations
  * @param[in] collection_name Name of the collection
  * @param[in] uri Full collection URI (unused)
  * @param[in] uri_scheme URI scheme (unused)
  * @param[in] uri_data Hierarchical/data part of the URI
  * @param[in] params List of parameter strings
- * @param[in] register_data Register callback data
+ * @param[in] register_data Register callback data (unused)
  * @param[out] pmanager_inst_data Pointer to manager specific collection data
  *
  * @returns Status code:
@@ -208,15 +208,15 @@ static ib_status_t core_managed_collection_vars_register_fn(
 /**
  * Handle managed collection vars populate function
  *
- * @param[in] ib Engine
+ * @param[in] ib Engine (unused)
  * @param[in] tx Transaction to populate
- * @param[in] module Collection manager's module object
- * @param[in] manager The collection manager object to register with
- * @param[in] collection_name The name of the collection.
+ * @param[in] module Collection manager's module object (unused)
+ * @param[in] manager The collection manager object to register with (unused)
+ * @param[in] collection_name The name of the collection. (unused)
  * @param[in,out] collection Collection to populate with fields in @a
  *                collection_data.
  * @param[in] manager_inst_data Manager instance data
- * @param[in] populate_data Populate callback data
+ * @param[in] populate_data Populate callback data (unused)
  *
  * @returns
  *   - IB_OK on success or when @a collection_data is length 0.
@@ -235,6 +235,7 @@ static ib_status_t core_managed_collection_vars_populate_fn(
     assert(ib != NULL);
     assert(tx != NULL);
     assert(module != NULL);
+    assert(manager != NULL);
     assert(collection_name != NULL);
     assert(collection != NULL);
     assert(manager_inst_data != NULL);
