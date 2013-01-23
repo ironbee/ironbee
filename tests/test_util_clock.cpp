@@ -250,3 +250,39 @@ TEST(TestClock, test_relative_timestamp)
         TestTimestamp(true, -60);
     }
 }
+
+TEST(TestClock, test_timeval_cmp)
+{
+    ib_timeval_t tv1;
+    ib_timeval_t tv2;
+
+    /* tv1 == tv1 */
+    tv1.tv_sec  = 10;
+    tv1.tv_usec = 0;
+    ASSERT_TRUE(ib_clock_timeval_cmp(&tv1, &tv1) == 0);
+
+    /* tv2 > tv1 */
+    tv2.tv_sec  = 10;
+    tv2.tv_usec = 1;
+    ASSERT_TRUE(ib_clock_timeval_cmp(&tv1, &tv2) < 0);
+    ASSERT_TRUE(ib_clock_timeval_cmp(&tv2, &tv1) > 0);
+
+    /* tv2 < tv1 */
+    tv2.tv_sec  = 9;
+    tv2.tv_usec = 999999;
+    ASSERT_TRUE(ib_clock_timeval_cmp(&tv1, &tv2) > 0);
+    ASSERT_TRUE(ib_clock_timeval_cmp(&tv2, &tv1) < 0);
+
+    /* tv2 < tv1 */
+    tv1.tv_sec  = 10;
+    tv1.tv_usec = 10;
+    tv2.tv_sec  = 10;
+    tv2.tv_usec = 9;
+    ASSERT_TRUE(ib_clock_timeval_cmp(&tv1, &tv2) > 0);
+    ASSERT_TRUE(ib_clock_timeval_cmp(&tv2, &tv1) < 0);
+
+    /* tv2 > tv1 */
+    tv2.tv_usec = 11;
+    ASSERT_TRUE(ib_clock_timeval_cmp(&tv1, &tv2) < 0);
+    ASSERT_TRUE(ib_clock_timeval_cmp(&tv2, &tv1) > 0);
+}

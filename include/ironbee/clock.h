@@ -113,6 +113,20 @@ typedef enum ib_clock_type_t {
     } while (0)
 
 /**
+ * Compare two ib_timeval_t values
+ *
+ * @param[in] t1 First time
+ * @param[in] t2 Second time
+ *
+ * @returns
+ *   - == 0 if t1 == t2
+ *   -  > 0 if t2 > t1
+ *   -  < 0 if t2 < t1
+ */
+int DLL_PUBLIC ib_clock_timeval_cmp(const ib_timeval_t *t1,
+                                    const ib_timeval_t *t2);
+
+/**
  * Assign values between two timeval structures.
  *
  * This is meant to convert between struct timeval and
