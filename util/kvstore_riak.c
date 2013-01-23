@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #define EXPIRATION "X-Riak-Meta-Expiration"
+#define CREATION "X-Riak-Meta-Creation"
 #define VCLOCK "X-Riak-Vclock"
 #define ETAG "ETag"
 #define CONTENT_TYPE "Content-Type"
@@ -93,6 +94,7 @@ struct riak_headers_t {
     char *content_type;    /**< Content-Type */
     char *etag;            /**< ETag. */
     uint32_t expiration;   /**< Expiration. */
+    ib_timeval_t creation; /**< Creation time */
 };
 typedef struct riak_headers_t riak_headers_t;
 
@@ -106,6 +108,8 @@ static void riak_headers_init(ib_kvstore_t *kvstore, riak_headers_t *headers)
     headers->kvstore = kvstore;
     headers->status = 0;
     headers->expiration = 0;
+    headers->creation.tv_sec = 0;
+    headers->creation.tv_usec = 0;
     headers->x_riak_vclock = NULL;
     headers->content_type = NULL;
     headers->etag = NULL;
@@ -122,6 +126,8 @@ static void cleanup_riak_headers(riak_headers_t *riak_headers)
 {
     riak_headers->status = 0;
     riak_headers->expiration = 0;
+    riak_headers->creation.tv_sec = 0;
+    riak_headers->creation.tv_usec = 0;
 
     if (riak_headers->content_type) {
         kvfree(riak_headers->kvstore, riak_headers->content_type);
@@ -180,7 +186,9 @@ static ib_status_t http_to_kvstore_value(
     }
     strcpy(value->type, headers->content_type);
 
-    value->expiration = headers->expiration;
+    value->expiration       = headers->expiration;
+    value->creation.tv_sec  = headers->creation.tv_sec;
+    value->creation.tv_usec = headers->creation.tv_usec;
 
     return IB_OK;
 }
@@ -288,6 +296,10 @@ static struct curl_slist* build_custom_headers(
         }
 
         snprintf(header, buffer_len, EXPIRATION ": %d", value->expiration);
+        slist = curl_slist_append(slist, header);
+
+        snprintf(header, buffer_len, CREATION ": %u.%u",
+                 value->creation.tv_sec, value->creation.tv_usec);
         slist = curl_slist_append(slist, header);
     }
 
