@@ -947,6 +947,9 @@ static int modlua_config_register_directive(lua_State *L)
     if (modlua_lua_cbdata == NULL) {
         rc = IB_EALLOC;
         rcmsg = "Failed to allocate callback data structure for directive.";
+        if (strvalmap != NULL) {
+            free(strvalmap);
+        }
         goto exit;
     }
     modlua_lua_cbdata->module = module;
