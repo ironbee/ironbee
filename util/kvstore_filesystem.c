@@ -35,17 +35,30 @@
 #include <sys/types.h>
 
 /**
- * Define the width for printing a @c time_t field.
- * This is related to TIME_T_STR_FMT.
+ * Define the width for printing an expiration time.
+ * This is related to EXPIRE_STR_FMT.
  * Both are 12 to accommodate the typical 10 digits and 2 buffer digits
  * for extreme future-time use.
  */
-#define TIME_T_STR_WIDTH 13
+#define EXPIRE_FMT_WIDTH 13
 
 /**
- * The sprintf format used for @c time_t types.
+ * The sprintf format used for expiration times.
  */
-#define TIME_T_STR_FMT "%012u"
+#define EXPIRE_FMT "%012u"
+
+/**
+ * Define the width for printing a creation time
+ * This is related to CREATE_STR_FMT.
+ * Both are 20 to accommodate the typical 10+6 digits + and 2 buffer digits
+ * for extreme future-time use.
+ */
+#define CREATE_FMT_WIDTH 20
+
+/**
+ * The sprintf format used for expiration times.
+ */
+#define CREATE_FMT "%012u-%06u"
 
 
 /**
@@ -104,7 +117,9 @@ static ib_status_t build_key_path(
         + 1                      /* path separator */
         + key->length            /* key length */
         + 1                      /* path separator */
-        + IB_CLOCK_FMT_WIDTH     /* width to format a clock timestamp. */
+        + EXPIRE_FMT_WIDTH       /* width to format the expiration time. */
+        + 1                      /* dash. */
+        + CREATE_FMT_WIDTH       /* width to format a creation time. */
         + 1                      /* dot. */
         + type_len               /* type. */
         + 1                      /* '\0' */;
@@ -161,9 +176,9 @@ static ib_status_t build_key_path(
         path_tmp = strncpy(path_tmp, "/", 1) + 1;
         path_tmp += snprintf(
             path_tmp,
-            TIME_T_STR_WIDTH,
-            TIME_T_STR_FMT,
-            seconds);
+            EXPIRE_FMT_WIDTH + 1 + CREATE_FMT_WIDTH,
+            EXPIRE_FMT "-" CREATE_FMT,
+            seconds, ib_timeval.tv_sec, ib_timeval.tv_usec);
         path_tmp = strncpy(path_tmp, ".", 1) + 1;
         path_tmp = strncpy(path_tmp, type, type_len) + type_len;
     }
@@ -282,15 +297,15 @@ static ib_status_t extract_type(
     assert(kvstore);
     assert(path);
 
-    const char *start;
+    const char *pos;
     size_t len;
 
-    start = rindex(path, '.')+1;
-    if (!start) {
+    pos = strrchr(path, '/');
+    if (pos == NULL) {
         return IB_ENOENT;
     }
-
-    len = strlen(start);
+    pos = strchr(pos, '.');
+    len = strlen(pos) - 8;  /* Ignore '.' and trailing .XXXXXX from mkstemp() */
     *type = kvstore->malloc(
         kvstore,
         len+1,
@@ -298,7 +313,7 @@ static ib_status_t extract_type(
     if (!*type) {
         return IB_EALLOC;
     }
-    strncpy(*type, start, len);
+    strncpy(*type, pos, len);
     *type_length = len;
 
     return IB_OK;
@@ -311,34 +326,26 @@ static ib_status_t extract_type(
  *   - IB_ENOENT if a / and . characters are not found to denote
  *               the location of the expiration decimals.
  */
-static ib_status_t extract_expiration(
+static ib_status_t extract_time_info(
     ib_kvstore_t *kvstore,
     const char *path,
-    uint32_t *expiration)
+    uint32_t *expiration,
+    ib_timeval_t *creation)
 {
     assert(kvstore);
     assert(path);
 
-    const char *start;
-    const char *stop;
-    char *substr;
+    char *pos;
 
-    start = rindex(path, '/')+1;
-    if (!start) {
+    pos = rindex(path, '/')+1;
+    if (!pos) {
         return IB_ENOENT;
     }
-    stop = index(start, '.');
-    if (!stop) {
-        return IB_ENOENT;
-    }
-    substr = strndup(start, stop-start);
-    if (!substr) {
-        return IB_EALLOC;
-    }
-
-    *expiration = atoll(substr);
-
-    free(substr);
+    *expiration = strtoll(pos, &pos, 10);
+    ++pos;                              /* Skip the '-' */
+    creation->tv_sec = strtoll(pos, &pos, 10);
+    ++pos;                              /* Skip the '.' */
+    creation->tv_usec = strtoll(pos, &pos, 10);
 
     return IB_OK;
 }
@@ -376,7 +383,9 @@ static ib_status_t load_kv_value(
     }
 
     /* Populate expiration. */
-    rc = extract_expiration(kvstore, file, &((*value)->expiration));
+    rc = extract_time_info(kvstore, file,
+                           &((*value)->expiration),
+                           &((*value)->creation));
     if (rc != IB_OK) {
         kvstore->free(kvstore, *value, kvstore->free_cbdata);
         *value = NULL;
@@ -568,7 +577,7 @@ static ib_status_t build_value(const char *path, const char *file, void *data)
         return IB_OK;
     }
 
-    if (strncmp(".", file, 1)) {
+    if (*file != '.') {
         /* Build full path. */
         full_path = malloc(bv->path_len + strlen(file) + 2);
         if (!full_path) {
@@ -700,9 +709,7 @@ static ib_status_t kvset(
 
     ib_status_t rc;
     char *path = NULL;
-    char *tmp_path = NULL;
-    int tmp_fd;
-    int sys_rc;
+    int fd = -1;
     ssize_t written;
 
     /* Build a path with no expiration value on it. */
@@ -714,51 +721,37 @@ static ib_status_t kvset(
         value->type_length,
         &path);
     if (rc != IB_OK) {
-        goto error_1;
+        goto cleanup;
     }
 
-    rc = build_key_path(
-        kvstore,
-        key,
-        -1,
-        NULL,
-        0,
-        &tmp_path);
-    if (rc != IB_OK) {
-        goto error_2;
-    }
-
-    tmp_path = realloc(tmp_path, strlen(tmp_path) + 12 + 1);
-    if (!tmp_path) {
+    path = realloc(path, strlen(path) + 7 + 1);
+    if (!path) {
         rc = IB_EALLOC;
-        goto error_2;
+        goto cleanup;
     }
-    strcat(tmp_path, "/.tmpXXXXXX");
-    tmp_fd = mkstemp(tmp_path);
-    if (tmp_fd < 0) {
+    strcat(path, ".XXXXXX");
+    fd = mkstemp(path);
+    if (fd < 0) {
         rc = IB_EOTHER;
-        goto error_2;
+        goto cleanup;
     }
 
     /* Write to the tmp file. */
-    written = write(tmp_fd, value->value, value->value_length);
+    written = write(fd, value->value, value->value_length);
     if (written < (ssize_t)value->value_length ){
         rc = IB_EOTHER;
-        goto error_2;
-    }
-
-    /* Atomically rename to the tmp file to the real file name. */
-    sys_rc = rename(tmp_path, path);
-    if (sys_rc) {
-        rc = IB_EOTHER;
-        goto error_2;
+        goto cleanup;
     }
 
     rc = IB_OK;
-error_2:
-    free(tmp_path);
-error_1:
-    free(path);
+
+cleanup:
+    if (fd >= 0) {
+        close(fd);
+    }
+    if (path != NULL) {
+        free(path);
+    }
     return rc;
 }
 
@@ -786,7 +779,7 @@ static ib_status_t remove_file(
     char *full_path;
     size_t path_len = *(size_t *)(data);
 
-    if (strncmp(".", file, 1)) {
+    if (*file != '.') {
         /* Build full path. */
         full_path = malloc(path_len + strlen(file) + 2);
 
