@@ -947,6 +947,7 @@ static int modlua_config_register_directive(lua_State *L)
     if (modlua_lua_cbdata == NULL) {
         rc = IB_EALLOC;
         rcmsg = "Failed to allocate callback data structure for directive.";
+        goto exit;
     }
     modlua_lua_cbdata->module = module;
 
@@ -1470,6 +1471,10 @@ static ib_status_t modlua_null(
     lua_pushinteger(L, module->idx);
     lua_pushinteger(L, event);
     rc = modlua_push_config_path(ib, ib_context_main(ib), L);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Cannot push modlua.config_path to stack.");
+        return rc;
+    }
     lua_pushnil(L); /* Connection (conn) is nil. */
     lua_pushnil(L); /* Transaction (tx) is nil. */
 
@@ -1978,6 +1983,12 @@ static ib_status_t modlua_module_load_wire_callbacks(
                         cbdata);
                     break;
             }
+        }
+        if (rc != IB_OK) {
+            ib_log_error(ib,
+                         "Failed to register hook: %s",
+                         ib_status_to_string(rc));
+            return rc;
         }
     }
 
