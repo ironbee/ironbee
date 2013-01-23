@@ -232,7 +232,7 @@ static ib_status_t mod_persist_register_fn(
  * @param[in] manager The collection manager object
  * @param[in] collection_name Name of the collection
  * @param[in] manager_inst_data Manager instance data
- * @param[in] unregister_data Register callback data
+ * @param[in] unregister_data Register callback data (unused)
  *
  * @returns Status code:
  *   - IB_OK All OK
@@ -320,7 +320,7 @@ done:
  * @param[in] collection_name Name of the collection
  * @param[in,out] collection Collection to populate
  * @param[in] manager_inst_data Manager instance data
- * @param[in] populate_data Populate function callback data
+ * @param[in] populate_data Populate function callback data (unused)
  *
  * @returns Status code
  *   - IB_OK If no errors encountered
@@ -412,7 +412,7 @@ static ib_status_t mod_persist_populate_fn(
  * @param[in] collection_name Name of the collection
  * @param[in] collection Collection to populate
  * @param[in] manager_inst_data Manager instance data
- * @param[in] persist_data Callback data
+ * @param[in] persist_data Callback data (unused)
  *
  * @returns
  *   - IB_OK on success or when @a collection_data is length 0.
@@ -488,7 +488,7 @@ static ib_status_t mod_persist_persist_fn(
 }
 
 /**
- * Initialize managed collection for simple name=value parameters
+ * Initialize persist managed collection module
  *
  * @param[in] ib Engine
  * @param[in] module Collection manager's module object
@@ -500,8 +500,8 @@ static ib_status_t mod_persist_persist_fn(
  */
 static ib_status_t mod_persist_init(
     ib_engine_t  *ib,
-    ib_module_t *module,
-    void *cbdata)
+    ib_module_t  *module,
+    void         *cbdata)
 {
     assert(ib != NULL);
     assert(module != NULL);
