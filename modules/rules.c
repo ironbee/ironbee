@@ -185,7 +185,7 @@ static ib_status_t parse_operator(ib_cfgparser_t *cp,
  * Rewrite the target string if required
  *
  * Parses the rule's target field list string @a target_str, looking for
- * the '#' and '&' tokens at the start of it.
+ * the '&' tokens at the start of it.
  *
  * @param[in] cp IronBee configuration parser
  * @param[in] target_str Target field name.
@@ -213,9 +213,6 @@ static ib_status_t rewrite_target_tokens(ib_cfgparser_t *cp,
     while ( (*cur != '\0') && (count < MAX_TFN_TOKENS) ) {
         if (*cur == '&') {
             ops[count] = ".count()";
-        }
-        else if (*cur == '#') {
-            ops[count] = ".length()";
         }
         else {
             break;
