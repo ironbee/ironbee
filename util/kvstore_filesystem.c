@@ -344,7 +344,7 @@ static ib_status_t extract_time_info(
     *expiration = strtoll(pos, &pos, 10);
     ++pos;                              /* Skip the '-' */
     creation->tv_sec = strtoll(pos, &pos, 10);
-    ++pos;                              /* Skip the '.' */
+    ++pos;                              /* Skip the '-' */
     creation->tv_usec = strtoll(pos, &pos, 10);
 
     return IB_OK;
