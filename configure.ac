@@ -69,11 +69,6 @@ AC_PROG_LIBTOOL
 AC_PROG_CXX
 AC_PROG_CXXCPP
 
-AC_CHECK_PROG(ruby, 'ruby', 'ruby', '')
-if test "$ruby" = ""; then
-    AC_MSG_WARN("Ruby required for codecheck.")
-fi
-
 if test "$GCC" = "yes"; then
 	AC_MSG_CHECKING([if compiler is c clang])
     AC_TRY_COMPILE(,
