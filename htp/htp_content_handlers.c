@@ -193,8 +193,8 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
             }
         }
 
-        // Tell the parser that it no longer owns names and values
-        // of MULTIPART_PART_TEXT parts.
+        // Tell the parser that it no longer owns names
+        // and values of MULTIPART_PART_TEXT parts.
         tx->request_mpartp->gave_up_data = 1;
     }
 
