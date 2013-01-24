@@ -68,6 +68,8 @@ static const size_t REV_BUFSIZE = 16;
     ( IB_RULE_LOG_FLAG_TARGET |                      \
       IB_RULE_LOG_FLAG_TFN |                         \
       IB_RULE_LOG_FLAG_OPERATOR |                    \
+      IB_RULE_LOG_FLAG_EVENT |                       \
+      IB_RULE_LOG_FLAG_AUDIT |                       \
       IB_RULE_LOG_FLAG_ACTION )
 
 /**
@@ -76,6 +78,7 @@ static const size_t REV_BUFSIZE = 16;
 #define RULE_LOG_FLAG_RESULT_ENABLE                  \
     ( IB_RULE_LOG_FLAG_TARGET |                      \
       IB_RULE_LOG_FLAG_OPERATOR |                    \
+      IB_RULE_LOG_FLAG_EVENT |                       \
       IB_RULE_LOG_FLAG_ACTION )
 
 /**
@@ -207,6 +210,7 @@ void ib_rule_log_tx(
     ib_rule_dlog_level_t rule_log_level,
     const ib_tx_t *tx,
     const char *file,
+
     int line,
     const char *fmt, ...
 )
@@ -1132,6 +1136,7 @@ void ib_rule_log_phase(
     if (phase_num != rule_exec->tx_log->cur_phase) {
         static const bool phase_flags =
             (RULE_LOG_FLAG_PHASE_ENABLE | IB_RULE_LOG_FLAG_PHASE);
+<<<<<<< HEAD
 
         if (ib_flags_all(flags, phase_flags)) {
             bool is_postprocess = (phase_num == PHASE_POSTPROCESS);
@@ -1143,12 +1148,24 @@ void ib_rule_log_phase(
             }
             rule_exec->tx_log->cur_phase = phase_num;
             rule_exec->tx_log->phase_name = phase_name;
+=======
+>>>>>>> 0.6.x
 
-            if ( (phase_num == PHASE_POSTPROCESS) &&
-                 (ib_flags_any(flags, IB_RULE_LOG_FLAG_AUDIT) == true) )
-            {
-                log_audit(rule_exec);
+        if (ib_flags_all(flags, phase_flags)) {
+            bool is_postprocess = (phase_num == PHASE_POSTPROCESS);
+            bool empty_tx = rule_exec->tx_log->empty_tx;
+
+            /* Inhibit logging of "PHASE: postprocess" for empty tx */
+            if ( (!is_postprocess) || (num_rules != 0) || (!empty_tx) ) {
+                rule_log_exec(rule_exec, "PHASE %s", phase_name);
             }
+            rule_exec->tx_log->cur_phase = phase_num;
+            rule_exec->tx_log->phase_name = phase_name;
+        }
+        if ( (phase_num == PHASE_POSTPROCESS) &&
+             (ib_flags_any(flags, IB_RULE_LOG_FLAG_AUDIT) == true) )
+        {
+            log_audit(rule_exec);
         }
     }
     return;

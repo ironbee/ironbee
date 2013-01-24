@@ -1545,7 +1545,6 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
 {
     ib_status_t         rc = IB_OK;
     ib_status_t         trc;          /* Temporary status code */
-    ib_num_t            rule_result = 0;
 
     assert(rule_exec != NULL);
     assert(rule != NULL);
@@ -1591,7 +1590,7 @@ static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
      *
      * @note Chaining is currently done via recursion.
      */
-    if ( (rule_result != 0) && (rule->chained_rule != NULL) ) {
+    if ( (rule_exec->result != 0) && (rule->chained_rule != NULL) ) {
         ib_rule_log_debug(rule_exec,
                           "Chaining to rule \"%s\"",
                           ib_rule_id(rule->chained_rule));
@@ -3789,18 +3788,18 @@ ib_status_t ib_rule_register(ib_engine_t *ib,
             }
         }
 
-        ib_cfg_log_info_ex(ib,
-                           rule->meta.config_file,
-                           rule->meta.config_line,
-                           "Replaced "
-                           "rule \"%s\" [context:\"%s\" rev:%d] with "
-                           "rule \"%s\" [context:\"%s\" rev:%d]",
-                           ib_rule_id(lookup),
-                           ib_context_full_get(lookup->ctx),
-                           lookup->meta.revision,
-                           ib_rule_id(rule),
-                           ib_context_full_get(ctx),
-                           rule->meta.revision);
+        ib_cfg_log_debug2_ex(ib,
+                             rule->meta.config_file,
+                             rule->meta.config_line,
+                             "Replaced "
+                             "rule \"%s\" [context:\"%s\" rev:%d] with "
+                             "rule \"%s\" [context:\"%s\" rev:%d]",
+                             ib_rule_id(lookup),
+                             ib_context_full_get(lookup->ctx),
+                             lookup->meta.revision,
+                             ib_rule_id(rule),
+                             ib_context_full_get(ctx),
+                             rule->meta.revision);
     }
 
     /* Mark the rule as valid */

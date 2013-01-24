@@ -517,7 +517,16 @@ static ib_status_t core_ctxsel_select(
      * If we get here, we've exhausted the list of selectors, with no matching
      * selector found
      */
-    ib_log_alert(ib, "No matching site found: Using \"main\" context");
+    if (tx == NULL) {
+        ib_log_debug(ib, "No matching site found for connection:"
+                     " IP=%s port=%u",
+                     conn->local_ipstr, conn->local_port);
+    }
+    else {
+        ib_log_notice(ib, "No matching site found for transaction:"
+                      " IP=%s port=%u host=\"%s\"",
+                      conn->local_ipstr, conn->local_port, tx->hostname);
+    }
 
 select_main_context:
     *pctx = ib_context_main(ib);

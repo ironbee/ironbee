@@ -635,7 +635,9 @@ static ib_status_t act_setvar_create(
 {
     size_t nlen;                 /* Name length */
     const char *eq;              /* '=' character in @a params */
+    const char *mod;             /* '+'/'-'/'*' character in params */
     const char *value;           /* Value in params */
+    bool compat_syntax = false;  /* Using old 0.5.x =+ compatibility? */
     size_t vlen;                 /* Length of value */
     setvar_data_t *data;         /* Data for the execute function */
     ib_status_t rc;              /* Status code */
@@ -652,9 +654,18 @@ static ib_status_t act_setvar_create(
 
     /* Calculate name length */
     if (*(eq-1) == '*' || *(eq-1) == '-' || *(eq-1) == '+') {
-        nlen = (eq - 1 - params);
+        mod = eq - 1;
+        nlen = (mod - params);
+    }
+    /* For backward compatibility, support the old =+ and =- (yuck) */
+    else if ( (*(eq+1) == '-') || (*(eq+1) == '+') ) {
+        mod = eq + 1; 
+        nlen = (eq - params);
+        ++eq;   /* Make the value / vlen log below work */
+        compat_syntax = true;
     }
     else {
+        mod = NULL;
         nlen = (eq - params);
     }
 
@@ -684,17 +695,17 @@ static ib_status_t act_setvar_create(
     rc = ib_string_to_num_ex(value, vlen, 0, &(data->value.num));
     if (rc == IB_OK) {
         data->type = IB_FTYPE_NUM;
-        if (eq - strchr(params, '+') == 1) {
+        if (mod == NULL) {
+            data->op = SETVAR_NUMSET;
+        }
+        else if (*mod == '+') {
             data->op = SETVAR_NUMADD;
         }
-        else if (eq - strchr(params, '-') == 1) {
+        else if (*mod == '-') {
             data->op = SETVAR_NUMSUB;
         }
-        else if (eq - strchr(params, '*') == 1) {
+        else if (*mod == '*') {
             data->op = SETVAR_NUMMULT;
-        }
-        else {
-            data->op = SETVAR_NUMSET;
         }
 
         goto success;
@@ -703,23 +714,33 @@ static ib_status_t act_setvar_create(
     rc = ib_string_to_float(value, &(data->value.flt));
     if (rc == IB_OK) {
         data->type = IB_FTYPE_FLOAT;
-        if (eq - strchr(params, '+') == 1) {
+        if (mod == NULL) {
+            data->op = SETVAR_FLOATSET;
+        }
+        else if (*mod == '+') {
             data->op = SETVAR_FLOATADD;
         }
-        else if (eq - strchr(params, '-') == 1) {
+        else if (*mod == '-') {
             data->op = SETVAR_FLOATSUB;
         }
-        else if (eq - strchr(params, '*') == 1) {
+        else if (*mod == '*') {
             data->op = SETVAR_FLOATMULT;
-        }
-        else {
-            data->op = SETVAR_FLOATSET;
         }
 
         goto success;
     }
     else {
         bool expand = false;
+
+        /* Special case for handling =+ compatibility */
+        if (compat_syntax) {
+            --value;
+            ++vlen;
+        }
+        else if (mod != NULL) {
+            ib_log_error(ib, "setvar: '%c' not supported for strings", *mod);
+            IB_FTRACE_RET_STATUS(IB_EINVAL);
+        }
 
         rc = ib_data_expand_test_str_ex(value, vlen, &expand);
         if (rc != IB_OK) {

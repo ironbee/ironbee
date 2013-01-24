@@ -679,7 +679,7 @@ static ib_status_t modua_remoteip(ib_engine_t *ib,
     memcpy(buf, stripped, len);
     buf[len] = '\0';
 
-    ib_log_info_tx(tx, "Remote address changed to \"%s\"", buf);
+    ib_log_debug_tx(tx, "Remote address changed to \"%s\"", buf);
 
     /* This will lose the pointer to the original address
      * buffer, but it should be cleaned up with the rest
