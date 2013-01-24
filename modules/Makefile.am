@@ -130,9 +130,10 @@ uninstall-local: $(pkglib_LTLIBRARIES)
 	  rm -f $(DESTDIR)$(pkglibdir)/$$base.*so; \
 	done
 
+if ENABLE_LUA
 all-local: $(abs_top_builddir)/lua/ironbee-ffi-h.lua $(abs_top_srcdir)/lua/ironbee-ffi.lua $(abs_top_srcdir)/lua/ironbee-api.lua $(abs_top_srcdir)/lua/ironbee-modlua.lua
 	mkdir -p $(abs_top_builddir)/modules/.libs
 	for f in $(+); do \
 		cp "$$f" $(abs_top_builddir)/modules/.libs/`basename "$$f"` ; \
 	done
-
+endif
