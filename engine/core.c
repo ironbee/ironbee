@@ -3538,15 +3538,6 @@ static ib_status_t core_dir_site_list(ib_cfgparser_t *cp,
     }
     param1 = (const char *)node->data;
 
-    /* Get the first parameter */
-    node = ib_list_first_const(vars);
-    if (node == NULL) {
-        ib_cfg_log_error(cp, "No %s specified for \"%s\" directive",
-                         directive, directive);
-        return IB_EINVAL;
-    }
-    param1 = (const char *)node->data;
-
     /* Verify that we are in a site */
     if (core_data->cur_site == NULL) {
         ib_cfg_log_error(cp, "No site for %s directive", directive);
