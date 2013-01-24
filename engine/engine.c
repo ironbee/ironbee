@@ -567,22 +567,6 @@ void ib_engine_destroy(ib_engine_t *ib)
 
         /// @todo Destroy filters
 
-        ib_log_debug3(ib, "Destroying configuration contexts...");
-        IB_LIST_LOOP_REVERSE(ib->contexts, node) {
-            ib_context_t *ctx = (ib_context_t *)node->data;
-            if ( (ctx != ib->ctx) && (ctx != ib->ectx) ) {
-                ib_context_destroy(ctx);
-            }
-        }
-        if (ib->ctx != ib->ectx) {
-            ib_log_debug3(ib, "Destroying main configuration context...");
-            ib_context_destroy(ib->ctx);
-            ib->ctx = NULL;
-        }
-        ib_log_debug3(ib, "Destroying engine configuration context...");
-        ib_context_destroy(ib->ectx);
-        ib->ectx = ib->ctx = NULL;
-
         ib_log_debug3(ib, "Unloading modules...");
         IB_ARRAY_LOOP_REVERSE(ib->modules, ne, idx, m) {
             if ( (m != NULL) && (m != cm) ) {
@@ -590,9 +574,22 @@ void ib_engine_destroy(ib_engine_t *ib)
             }
         }
 
-        ib_log_debug3(ib, "Destroy IB handle (%d, %d, %s, %s): %p",
-                      ib->server->vernum, ib->server->abinum,
-                      ib->server->filename, ib->server->name, ib);
+        /* Unload core module. */
+        ib_module_unload(cm);
+        /* No logging from here on out. */
+
+        IB_LIST_LOOP_REVERSE(ib->contexts, node) {
+            ib_context_t *ctx = (ib_context_t *)node->data;
+            if ( (ctx != ib->ctx) && (ctx != ib->ectx) ) {
+                ib_context_destroy(ctx);
+            }
+        }
+        if (ib->ctx != ib->ectx) {
+            ib_context_destroy(ib->ctx);
+            ib->ctx = NULL;
+        }
+        ib_context_destroy(ib->ectx);
+        ib->ectx = ib->ctx = NULL;
 
 #ifdef IB_DEBUG_MEMORY
         /* We can't use ib_engine_pool_destroy here as too little of the

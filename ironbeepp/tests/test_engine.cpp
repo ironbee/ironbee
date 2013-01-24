@@ -23,6 +23,7 @@
  **/
 
 #include <ironbeepp/engine.hpp>
+#include <ironbeepp/ironbee.hpp>
 #include <ironbeepp/server.hpp>
 #include <ironbeepp/memory_pool.hpp>
 
@@ -35,13 +36,18 @@ class TestEngine : public ::testing::Test, public IBPPTestFixture
 {
 };
 
-TEST_F(TestEngine, create)
+TEST(TestEngineNoFixture, create)
 {
-    Engine engine = Engine::create(m_server);
+    IronBee::initialize();
+    IronBee::ServerValue server_value("filename", "name");
+
+    Engine engine = Engine::create(server_value.get());
 
     ASSERT_TRUE(engine);
     engine.initialize();
     engine.destroy();
+
+    IronBee::shutdown();
 }
 
 TEST_F(TestEngine, memory_pools)
