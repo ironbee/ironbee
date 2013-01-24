@@ -31,4 +31,4 @@ TESTS = $(check_PROGRAMS)
 CLEANFILES = *.xml *.log
 
 check-local:
-	(cd $(srcdir); abs_builddir=$(abs_builddir) $(ruby) ./ts_all.rb --verbose $(test_args))
+	(cd $(srcdir); abs_builddir=$(abs_builddir) $(RUBY) ./ts_all.rb --verbose $(test_args))
