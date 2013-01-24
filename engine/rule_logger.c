@@ -1136,20 +1136,6 @@ void ib_rule_log_phase(
     if (phase_num != rule_exec->tx_log->cur_phase) {
         static const bool phase_flags =
             (RULE_LOG_FLAG_PHASE_ENABLE | IB_RULE_LOG_FLAG_PHASE);
-<<<<<<< HEAD
-
-        if (ib_flags_all(flags, phase_flags)) {
-            bool is_postprocess = (phase_num == PHASE_POSTPROCESS);
-            bool empty_tx = rule_exec->tx_log->empty_tx;
-
-            /* Inhibit logging of "PHASE: postprocess" for empty tx */
-            if ( (!is_postprocess) || (num_rules != 0) || (!empty_tx) ) {
-                rule_log_exec(rule_exec, "PHASE %s", phase_name);
-            }
-            rule_exec->tx_log->cur_phase = phase_num;
-            rule_exec->tx_log->phase_name = phase_name;
-=======
->>>>>>> 0.6.x
 
         if (ib_flags_all(flags, phase_flags)) {
             bool is_postprocess = (phase_num == PHASE_POSTPROCESS);

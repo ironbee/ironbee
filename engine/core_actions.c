@@ -739,7 +739,7 @@ static ib_status_t act_setvar_create(
         }
         else if (mod != NULL) {
             ib_log_error(ib, "setvar: '%c' not supported for strings", *mod);
-            IB_FTRACE_RET_STATUS(IB_EINVAL);
+            return IB_EINVAL;
         }
 
         rc = ib_data_expand_test_str_ex(value, vlen, &expand);
