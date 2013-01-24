@@ -612,3 +612,17 @@ ib_status_t ib_core_collection_managers_register(
 
     return IB_OK;
 }
+
+ib_status_t ib_core_collection_managers_finish(
+    ib_engine_t  *ib,
+    const ib_module_t *module)
+{
+    assert(ib != NULL);
+    assert(module != NULL);
+
+    if (core_vars_manager.pattern != NULL) {
+        pcre_free((void*)core_vars_manager.pattern);
+        core_vars_manager.pattern = NULL;
+    }
+    return IB_OK;
+}

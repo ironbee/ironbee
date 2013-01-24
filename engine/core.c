@@ -5073,6 +5073,13 @@ ib_status_t core_finish(
         corecfg->log_fp = stderr;
     }
 
+    /* Shut down the core collection managers */
+    rc = ib_core_collection_managers_finish(ib, m);
+    if (rc != IB_OK) {
+        ib_log_alert(ib, "Failed to shut down core collection managers: %s",
+                     ib_status_to_string(rc));
+    }
+
     /* Shut down the managed collection logic */
     rc = ib_managed_collection_finish(ib);
     if (rc != IB_OK) {

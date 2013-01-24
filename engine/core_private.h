@@ -156,7 +156,20 @@ ib_status_t ib_core_ctxsel_init(ib_engine_t *ib,
  *   - IB_Exxx Other error
  */
 ib_status_t ib_core_collection_managers_register(
-    ib_engine_t  *ib,
+    ib_engine_t       *ib,
+    const ib_module_t *module);
+
+/**
+ * Shut down core collections managers
+ *
+ * @param[in] ib Engine
+ * @param[in] module Collection manager's module object
+ *
+ * @returns Status code:
+ *   - IB_OK All OK
+ */
+ib_status_t ib_core_collection_managers_finish(
+    ib_engine_t       *ib,
     const ib_module_t *module);
 
 
