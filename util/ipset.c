@@ -86,8 +86,10 @@ ib_ip6_t ib_ipset6_canonical(
     for (size_t i = 0; i < initial_bytes; ++i) {
         ip.ip[i] = net.ip.ip[i];
     }
-    ip.ip[initial_bytes] =
-        net.ip.ip[initial_bytes] & ib_ipset4_mask(initial_bits);
+    if (initial_bytes < 4) {
+        ip.ip[initial_bytes] =
+            net.ip.ip[initial_bytes] & ib_ipset4_mask(initial_bits);
+    }
     return ip;
 }
 
