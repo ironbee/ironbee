@@ -2706,6 +2706,49 @@ static ib_status_t copy_rule_hash(const ib_context_t *ctx,
 }
 
 /**
+ * Populate a hash of rules from a list
+ *
+ * @param[in] src_list list of items to copy
+ * @param[in,out] dest_hash Hash to copy items into
+ *
+ * @returns Status code
+ */
+static ib_status_t copy_rule_hash(const ib_context_t *ctx,
+                                  const ib_hash_t *src_hash,
+                                  ib_hash_t *dest_hash)
+{
+    IB_FTRACE_INIT();
+    assert(src_hash != NULL);
+    assert(dest_hash != NULL);
+    ib_status_t rc;
+    const ib_list_node_t *node;
+    ib_list_t *src_list;
+
+    if (ib_hash_size(src_hash) == 0) {
+        IB_FTRACE_RET_STATUS(IB_OK);
+    }
+    rc = ib_list_create(&src_list, ib_engine_pool_temp_get(ctx->ib));
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+    rc = ib_hash_get_all(src_hash, src_list);
+    if (rc != IB_OK) {
+        IB_FTRACE_RET_STATUS(rc);
+    }
+
+    IB_LIST_LOOP_CONST(src_list, node) {
+        assert(node->data != NULL);
+        const ib_rule_t *rule = (const ib_rule_t *)node->data;
+
+        rc = ib_hash_set(dest_hash, rule->meta.id, node->data);
+        if (rc != IB_OK) {
+            IB_FTRACE_RET_STATUS(rc);
+        }
+    }
+    IB_FTRACE_RET_STATUS(IB_OK);
+}
+
+/**
  * Import a rule's context from it's parent
  *
  * @param[in] parent_rules Parent's rule context object
