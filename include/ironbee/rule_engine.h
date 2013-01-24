@@ -46,6 +46,7 @@ extern "C" {
 * @{
 */
 
+
 /**
  * Rule meta data
  */
@@ -72,8 +73,6 @@ typedef struct ib_rule_phase_meta_t ib_rule_phase_meta_t;
 
 /**
  * Basic rule object.
- *
- * The typedef of ib_rule_t is done in ironbee/rule_engine.h
  */
 struct ib_rule_t {
     ib_rule_meta_t         meta;            /**< Rule meta data */
@@ -102,6 +101,8 @@ typedef struct {
 struct ib_rule_exec_t {
     ib_engine_t            *ib;          /**< The IronBee engine */
     ib_tx_t                *tx;          /**< The executing transaction */
+    ib_rule_phase_num_t     phase;       /**< The phase being executed */
+    bool                    is_stream;   /**< Is this a stream rule phase? */
     ib_rule_t              *rule;        /**< The currently executing rule */
     ib_rule_target_t       *target;      /**< The current rule target */
     ib_num_t                result;      /**< Rule execution result */
@@ -110,8 +111,14 @@ struct ib_rule_exec_t {
     ib_rule_log_tx_t       *tx_log;      /**< Rule TX logging object */
     ib_rule_log_exec_t     *exec_log;    /**< Rule execution logging object */
 
+    /* The below members are for rule engine internal use only, and should
+     * never be accessed by actions, injection functions, etc. */
+
     /* Rule stack (for chains) */
     ib_list_t              *rule_stack;  /**< Stack of rules */
+
+    /* List of all rules to run during the current phase. */
+    ib_list_t              *phase_rules; /**< List of ib_rule_t */
 
     /* Stack of values for the FIELD* targets */
     ib_list_t              *value_stack; /**< Stack of values */
@@ -143,6 +150,59 @@ typedef struct {
     ib_rule_driver_fn_t     function;    /**< Driver function */
     void                   *cbdata;      /**< Driver callback data */
 } ib_rule_driver_t;
+
+/**
+ * External rule ownership function, invoked during close of context.
+ *
+ * This function will be called during the rule selection process.  This can,
+ * by returning IB_OK, inform the rule engine that the function is taking
+ * ownership of @a rule, and that the rule engine should not schedule @a rule
+ * to run.  Typically, a module will schedule @a rule, or one or more rules
+ * in its stead, via the injection function (ib_rule_injection_fn_t and
+ * ib_rule_register_injection_fn).
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] rule Rule being registered
+ * @param[in] cbdata Registration function callback data
+ *
+ * @returns Status code:
+ *   - IB_OK All OK, rule managed externally by module
+ *   - IB_DECLINE Decline to manage rule
+ *   - IB_Exx Other error
+ */
+typedef ib_status_t (* ib_rule_ownership_fn_t)(
+    const ib_engine_t          *ib,
+    const ib_rule_t            *rule,
+    void                       *cbdata
+);
+
+/**
+ * External rule injection function
+ *
+ * This function will be called at the start of each phase.  This gives a
+ * module the oportunity to inject one or more rules into the start of the
+ * phase.  It does this by appending rules, in the form of ib_rule_t pointers,
+ * to @a rule_list.  @a rule_list may contain rules upon entry to this
+ * function and should thus treat @a rule_list as append-only.
+ *
+ * @note Returning an error will cause the rule engine to abort the current
+ * phase processing.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] rule_exec Rule execution environment
+ * @param[in,out] rule_list List of rules to execute (append-only)
+ * @param[in] cbdata Injection function callback data
+ *
+ * @returns Status code:
+ *   - IB_OK All OK
+ *   - IB_Exx Other error
+ */
+typedef ib_status_t (* ib_rule_injection_fn_t)(
+    const ib_engine_t          *ib,
+    const ib_rule_exec_t       *rule_exec,
+    ib_list_t                  *rule_list,
+    void                       *cbdata
+);
 
 /**
  * Set a rule engine value (for configuration)
@@ -189,6 +249,40 @@ ib_status_t DLL_PUBLIC ib_rule_lookup_external_driver(
     const ib_engine_t          *ib,
     const char                 *tag,
     ib_rule_driver_t          **pdriver);
+
+/**
+ * Register a rule ownership function.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] name Logical name (for logging)
+ * @param[in] ownership_fn Ownership hook function
+ * @param[in] cbdata Registration hook callback data
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_register_ownership_fn(
+    ib_engine_t            *ib,
+    const char             *name,
+    ib_rule_ownership_fn_t  ownership_fn,
+    void                   *cbdata);
+
+/**
+ * Register a rule injection function.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] name Logical name (for logging)
+ * @param[in] phase Phase execution phase to hook into
+ * @param[in] injection_fn Injection function
+ * @param[in] cbdata Injection callback data
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_rule_register_injection_fn(
+    ib_engine_t            *ib,
+    const char             *name,
+    ib_rule_phase_num_t     phase,
+    ib_rule_injection_fn_t  injection_fn,
+    void                   *cbdata);
 
 /**
  * Create a rule.
@@ -592,7 +686,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_modifier(
     const char                 *str);
 
 /**
- * Add a modifier to a rule.
+ * Add an action modifier to a rule.
  *
  * @param[in] ib IronBee engine
  * @param[in,out] rule Rule to operate on
@@ -606,6 +700,28 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(
     ib_rule_t                  *rule,
     ib_action_inst_t           *action,
     ib_rule_action_t            which);
+
+/**
+ * Search for actions associated with a rule.
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] rule Rule to operate on
+ * @param[in] which Which action list to search
+ * @param[in] name Name of action to search for
+ * @param[out] matches List of matching ib_action_inst_t pointers (or NULL)
+ * @param[out] pcount Pointer to count of matches (or NULL)
+ *
+ * @returns Status code
+ *   - IB_OK All ok
+ *   - IB_EINVAL if both @a matchs and @a pcount are NULL, or any of the
+ *               other parameters are invalid
+ */
+ib_status_t DLL_PUBLIC ib_rule_search_action(const ib_engine_t *ib,
+                                             const ib_rule_t *rule,
+                                             ib_rule_action_t which,
+                                             const char *name,
+                                             ib_list_t *matches,
+                                             size_t *pcount);
 
 /**
  * Register a rule.

@@ -93,10 +93,32 @@ struct ib_rule_target_t {
  * Rule engine.
  */
 struct ib_rule_engine_t {
-    ib_list_t *rule_list;        /**< All rules owned by this context */
-    ib_hash_t *rule_hash;        /**< Hash of rules (by rule-id) */
-    ib_hash_t *external_drivers; /**< Drivers for external rules. */
+    ib_list_t            *rule_list;        /**< List of all registered rules */
+    ib_hash_t            *rule_hash;        /**< Hash of rules (by rule-id) */
+    ib_hash_t            *external_drivers; /**< Drivers for external rules. */
+    ib_list_t            *ownership_cbs;   /**< List of ownership callbacks */
+    ib_list_t *injection_cbs[IB_RULE_PHASE_COUNT]; /**< Rule inj. callbacks*/
 };
+
+/**
+ * Rule ownership callback object
+ */
+struct ib_rule_ownership_cb_t {
+    const char             *name;        /**< Ownership callback name */
+    ib_rule_ownership_fn_t  fn;          /**< Ownership function */
+    void                   *data;        /**< Hook data */
+};
+typedef struct ib_rule_ownership_cb_t ib_rule_ownership_cb_t;
+
+/**
+ * Rule injection callback object
+ */
+struct ib_rule_injection_cb_t {
+    const char             *name;        /**< Rule injector name */
+    ib_rule_injection_fn_t  fn;          /**< Rule injection function */
+    void                   *data;        /**< Rule injection data */
+};
+typedef struct ib_rule_injection_cb_t ib_rule_injection_cb_t;
 
 /**
  * Initialize the rule engine.

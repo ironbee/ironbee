@@ -364,10 +364,9 @@ ib_status_t ib_rule_exec_create(ib_tx_t *tx,
     ib_status_t rc;
     ib_rule_exec_t *exec;
 
-    /* Re-use the TX's rule execution object if it's there */
+    /* Don't allow the user to create a second rule exec object */
     if (tx->rule_exec != NULL) {
-        *rule_exec = tx->rule_exec;
-        return IB_OK;
+        return IB_EINVAL;
     }
 
     /* Create the execution object */
@@ -382,6 +381,14 @@ ib_status_t ib_rule_exec_create(ib_tx_t *tx,
     rc = ib_list_create(&(exec->rule_stack), tx->mp);
     if (rc != IB_OK) {
         ib_rule_log_tx_error(tx, "Failed to create rule stack: %s",
+                             ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Create the phase rule list */
+    rc = ib_list_create(&(exec->phase_rules), tx->mp);
+    if (rc != IB_OK) {
+        ib_rule_log_tx_error(tx, "Failed to create phase rule list: %s",
                              ib_status_to_string(rc));
         return rc;
     }
@@ -1543,7 +1550,7 @@ static ib_status_t execute_phase_rule_targets(ib_rule_exec_t *rule_exec)
  * @returns Status code
  */
 static ib_status_t execute_phase_rule(ib_rule_exec_t *rule_exec,
-                                      ib_rule_t *rule,
+                                      const ib_rule_t *rule,
                                       int recursion)
 {
     ib_status_t         rc = IB_OK;
@@ -1622,18 +1629,16 @@ cleanup:
  * Check if the current rule is runnable
  *
  * @param[in] ctx_rule Context rule data
- * @param[in] rule Rule to check
  *
  * @returns true if the rule is runnable, otherwise false
  */
-static bool rule_is_runnable(const ib_rule_ctx_data_t *ctx_rule,
-                             const ib_rule_t *rule)
+static bool rule_is_runnable(const ib_rule_ctx_data_t *ctx_rule)
 {
     /* Skip invalid / disabled rules */
     if (! ib_flags_all(ctx_rule->flags, IB_RULECTX_FLAG_ENABLED)) {
         return false;
     }
-    if (! ib_flags_all(rule->flags, IB_RULE_FLAG_VALID)) {
+    if (! ib_flags_all(ctx_rule->rule->flags, IB_RULE_FLAG_VALID)) {
         return false;
     }
 
@@ -1696,6 +1701,121 @@ static bool rule_allow(const ib_tx_t *tx,
 }
 
 /**
+ * Inject rules into the rule execution object's phase rule list
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] phase_meta Phase meta data
+ * @param[in,out] rule_exec Rule execution object
+ *
+ * @returns Status code
+ */
+static ib_status_t inject_rules(const ib_engine_t *ib,
+                                const ib_rule_phase_meta_t *phase_meta,
+                                ib_rule_exec_t *rule_exec)
+{
+    assert(ib != NULL);
+    assert(phase_meta != NULL);
+    assert(rule_exec != NULL);
+
+    const ib_list_node_t *node;
+    const ib_list_t      *injection_cbs;
+    size_t                rule_count = 0;   /* Used only for trace debugging */
+    ib_rule_phase_num_t   phase = phase_meta->phase_num;
+
+    injection_cbs = ib->rule_engine->injection_cbs[phase];
+    if (injection_cbs == NULL) {
+        return IB_OK;
+    }
+
+    IB_LIST_LOOP_CONST(injection_cbs, node) {
+        const ib_rule_injection_cb_t *cb =
+            (const ib_rule_injection_cb_t *)node->data;
+        const ib_list_node_t *rule_node;
+        ib_status_t rc;
+        int invalid_count = 0;
+
+        rc = cb->fn(ib, rule_exec, rule_exec->phase_rules, cb->data);
+        if (rc != IB_OK) {
+            ib_rule_log_tx_error(rule_exec->tx,
+                                 "Rule engine: Rule injector \"%s\" "
+                                 "for phase %d/\"%s\" returned %s",
+                                 cb->name,
+                                 phase, phase_name(phase_meta),
+                                 ib_status_to_string(rc));
+            return rc;
+        }
+
+        /* Verify that all of the injected rules have the correct phase.
+         * Because this check is O(n^2), only do this if rule logging is set
+         * to DEBUG or higher. */
+        if (ib_rule_dlog_level(rule_exec->tx->ctx) >= IB_RULE_DLOG_DEBUG) {
+            IB_LIST_LOOP_CONST(rule_exec->phase_rules, rule_node) {
+                const ib_rule_t *rule = (const ib_rule_t *)rule_node->data;
+                if (rule->meta.phase != phase) {
+                    ib_rule_log_tx_error(
+                        rule_exec->tx,
+                        "Rule injector \"%s\" for phase %d/\"%s\" "
+                        "injected rule \"%s\" for incorrect phase %d",
+                        cb->name, phase, phase_name(phase_meta),
+                        ib_rule_id(rule), rule->meta.phase);
+                    ++invalid_count;
+                }
+            }
+            if (invalid_count != 0) {
+                return IB_EINVAL;
+            }
+        }
+
+        /* Debug logging */
+        if (ib_rule_dlog_level(rule_exec->tx->ctx) >= IB_RULE_DLOG_TRACE) {
+            size_t new_count = ib_list_elements(rule_exec->phase_rules);
+            ib_rule_log_tx_trace(rule_exec->tx,
+                                 "Rule injector \"%s\" for phase %d/\"%s\" "
+                                 "injected %zd rules\n",
+                                 cb->name,
+                                 phase, phase_name(phase_meta),
+                                 new_count - rule_count);
+            rule_count = new_count;
+        }
+    }
+    return IB_OK;
+}
+
+/**
+ * Append context rules onto the rule execution object's phase rule list
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] phase_meta Phase meta data
+ * @param[in] rule_list List of context rules to append
+ * @param[in,out] rule_exec Rule execution object
+ *
+ * @returns Status code
+ */
+static ib_status_t append_context_rules(const ib_engine_t *ib,
+                                        const ib_rule_phase_meta_t *phase_meta,
+                                        const ib_list_t *rule_list,
+                                        ib_rule_exec_t *rule_exec)
+{
+    assert(ib != NULL);
+    assert(phase_meta != NULL);
+    assert(rule_exec != NULL);
+    assert(rule_list != NULL);
+
+    const ib_list_node_t *node;
+
+    IB_LIST_LOOP_CONST(rule_list, node) {
+        const ib_rule_ctx_data_t *ctx_rule =
+            (const ib_rule_ctx_data_t *)node->data;
+
+        if (rule_is_runnable(ctx_rule)) {
+            ib_list_push(rule_exec->phase_rules, ctx_rule->rule);
+        }
+    }
+
+    return IB_OK;
+}
+
+/**
  * Run a set of phase rules.
  *
  * @param[in] ib Engine.
@@ -1715,29 +1835,21 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->ctx != NULL);
+    assert(tx->rule_exec != NULL);
     assert(cbdata != NULL);
 
     const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
     ib_context_t               *ctx = tx->ctx;
     const ib_ruleset_phase_t   *ruleset_phase;
-    ib_rule_exec_t             *rule_exec;
-    ib_list_t                  *rules;
-    ib_list_node_t             *node = NULL;
-    ib_status_t                rc = IB_OK;
+    ib_rule_exec_t             *rule_exec = tx->rule_exec;
+    const ib_list_t            *rules;
+    const ib_list_node_t       *node = NULL;
+    ib_status_t                 rc = IB_OK;
 
     ruleset_phase = &(ctx->rules->ruleset.phases[meta->phase_num]);
     assert(ruleset_phase != NULL);
     rules = ruleset_phase->rule_list;
     assert(rules != NULL);
-
-    /* Create the rule execution object */
-    rc = ib_rule_exec_create(tx, &rule_exec);
-    if (rc != IB_OK) {
-        ib_rule_log_tx_error(tx,
-                             "Failed to create rule execution object: %s",
-                             ib_status_to_string(rc));
-        return rc;
-    }
 
     /* Log the transaction event start */
     ib_rule_log_tx_event_start(rule_exec, event);
@@ -1779,8 +1891,25 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
         goto finish;
     }
 
+    /* Setup for rule execution */
+    rule_exec->phase = meta->phase_num;
+    rule_exec->is_stream = false;
+    ib_list_clear(rule_exec->phase_rules);
+
+    /* Invoke all of the rule injectors */
+    rc = inject_rules(ib, meta, rule_exec);
+    if (rc != IB_OK) {
+        return IB_EINVAL;
+    }
+
+    /* Add all of the enabled "normal" rules to the list */
+    rc = append_context_rules(ib, meta, rules, rule_exec);
+    if (rc != IB_OK) {
+        return IB_EINVAL;
+    }
+
     /* Walk through the rules & execute them */
-    if (IB_LIST_ELEMENTS(rules) == 0) {
+    if (IB_LIST_ELEMENTS(rule_exec->phase_rules) == 0) {
         ib_rule_log_tx_debug(tx,
                              "No rules for phase %d/\"%s\" in context \"%s\"",
                              meta->phase_num, phase_name(meta),
@@ -1791,7 +1920,7 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     ib_rule_log_tx_debug(tx,
                          "Executing %zd rules for phase %d/\"%s\" "
                          "in context \"%s\"",
-                         IB_LIST_ELEMENTS(rules),
+                         IB_LIST_ELEMENTS(rule_exec->phase_rules),
                          meta->phase_num, phase_name(meta),
                          ib_context_full_get(ctx));
 
@@ -1802,18 +1931,11 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
      * returns an error.  This needs further discussion to determine what the
      * correct behavior should be.
      */
-    IB_LIST_LOOP(rules, node) {
-        ib_rule_ctx_data_t *ctx_rule = (ib_rule_ctx_data_t *)node->data;
-        ib_rule_t          *rule;
-        ib_status_t         rule_rc;
+    IB_LIST_LOOP_CONST(rule_exec->phase_rules, node) {
+        const ib_rule_t *rule = (const ib_rule_t *)node->data;
+        ib_status_t      rule_rc;
 
-        /* Skip invalid / disabled rules */
-        rule = ctx_rule->rule;
-        if (! rule_is_runnable(ctx_rule, rule)) {
-            ib_rule_log_tx_debug(tx,
-                                 "Not executing invalid/disabled phase rule");
-            continue;
-        }
+        assert(rule->meta.phase == meta->phase_num);
 
         /* Allow (skip) this phase? */
         if (rule_allow(tx, meta, rule, true)) {
@@ -2085,6 +2207,8 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
                                     const ib_rule_phase_meta_t *meta)
 {
     assert(ib != NULL);
+    assert(tx != NULL);
+    assert(tx->rule_exec != NULL);
     assert( (txdata != NULL) || (header != NULL) );
     assert(meta != NULL);
     assert( (meta->hook_type != IB_STATE_HOOK_TXDATA) || (txdata != NULL) );
@@ -2095,17 +2219,8 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         &(ctx->rules->ruleset.phases[meta->phase_num]);
     ib_list_t                *rules = ruleset_phase->rule_list;
     const ib_list_node_t     *node = NULL;
-    ib_rule_exec_t           *rule_exec;
+    ib_rule_exec_t           *rule_exec = tx->rule_exec;
     ib_status_t               rc;
-
-    /* Create the rule execution object */
-    rc = ib_rule_exec_create(tx, &rule_exec);
-    if (rc != IB_OK) {
-        ib_rule_log_tx_error(tx,
-                             "Failed to create rule execution object: %s",
-                             ib_status_to_string(rc));
-        return rc;
-    }
 
     /* Log the transaction event start */
     ib_rule_log_tx_event_start(rule_exec, event);
@@ -2135,8 +2250,25 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
         return IB_EINVAL;
     }
 
+    /* Setup for rule execution */
+    rule_exec->phase = meta->phase_num;
+    rule_exec->is_stream = true;
+    ib_list_clear(rule_exec->phase_rules);
+
+    /* Invoke all of the rule injectors */
+    rc = inject_rules(ib, meta, rule_exec);
+    if (rc != IB_OK) {
+        return IB_EINVAL;
+    }
+
+    /* Add all of the enabled "normal" rules to the list */
+    rc = append_context_rules(ib, meta, rules, rule_exec);
+    if (rc != IB_OK) {
+        return IB_EINVAL;
+    }
+
     /* Are there any rules?  If not, do a quick exit */
-    if (IB_LIST_ELEMENTS(rules) == 0) {
+    if (IB_LIST_ELEMENTS(rule_exec->phase_rules) == 0) {
         ib_rule_log_debug(rule_exec,
                           "No rules for stream %d/\"%s\" in context \"%s\"",
                           meta->phase_num, phase_name(meta),
@@ -2146,7 +2278,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
     ib_rule_log_debug(rule_exec,
                       "Executing %zd rules for stream %d/\"%s\" "
                       "in context \"%s\"",
-                      IB_LIST_ELEMENTS(rules),
+                      IB_LIST_ELEMENTS(rule_exec->phase_rules),
                       meta->phase_num, phase_name(meta),
                       ib_context_full_get(ctx));
 
@@ -2157,22 +2289,12 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
      * returns an error.  This needs further discussion to determine what the
      * correct behavior should be.
      */
-    IB_LIST_LOOP_CONST(rules, node) {
-        const ib_rule_ctx_data_t *ctx_rule =
-            (const ib_rule_ctx_data_t *)node->data;
-        const ib_rule_t    *rule;
+    IB_LIST_LOOP_CONST(rule_exec->phase_rules, node) {
+        const ib_rule_t    *rule = (const ib_rule_t *)node->data;
         ib_status_t         trc;
 
         /* Reset status */
         rc = IB_OK;
-
-        /* Skip invalid / disabled rules */
-        rule = ctx_rule->rule;
-        if (! rule_is_runnable(ctx_rule, rule)) {
-            ib_rule_log_debug(rule_exec,
-                              "Not executing invalid/disabled stream rule");
-            continue;
-        }
 
         /* Allow (skip) this phase? */
         if (rule_allow(tx, meta, rule, true)) {
@@ -2219,6 +2341,7 @@ static ib_status_t run_stream_rules(ib_engine_t *ib,
      * occurred, return IB_OK to the engine.  A bigger discussion of if / how
      * such errors should be propagated needs to occur.
      */
+    rule_exec->phase = PHASE_NONE;
     return IB_OK;
 }
 
@@ -2541,8 +2664,9 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
                                       ib_mpool_t *mp,
                                       ib_rule_engine_t **p_rule_engine)
 {
-    ib_rule_engine_t *rule_engine;
-    ib_status_t       rc;
+    ib_rule_engine_t    *rule_engine;
+    ib_status_t          rc;
+    ib_rule_phase_num_t  phase;
 
     /* Create the rule object */
     rule_engine =
@@ -2562,6 +2686,7 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
         return rc;
     }
 
+    /* Create the main rule hash, used to index rules by ID */
     rc = ib_hash_create_nocase(&(rule_engine->rule_hash), mp);
     if (rc != IB_OK) {
         ib_log_error(ib,
@@ -2570,12 +2695,34 @@ static ib_status_t create_rule_engine(const ib_engine_t *ib,
         return rc;
     }
 
+    /* Create the external drivers hash */
     rc = ib_hash_create(&(rule_engine->external_drivers), mp);
     if (rc != IB_OK) {
         ib_log_error(ib,
                      "Rule engine failed to create external rules hash: %s",
                      ib_status_to_string(rc));
         return rc;
+    }
+
+    /* Create the ownership cb list */
+    rc = ib_list_create(&(rule_engine->ownership_cbs), mp);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+                     "Rule engine failed to create ownership callback list: %s",
+                     ib_status_to_string(rc));
+        return rc;
+    }
+
+    /* Create the injection cb lists */
+    for (phase = PHASE_NONE; phase < IB_RULE_PHASE_COUNT; ++phase) {
+        rc = ib_list_create(&(rule_engine->injection_cbs[phase]), mp);
+        if (rc != IB_OK) {
+            ib_log_error(ib,
+                         "Rule engine failed to create "
+                         "injection callback list: %s",
+                         ib_status_to_string(rc));
+            return rc;
+        }
     }
 
     *p_rule_engine = rule_engine;
@@ -3157,11 +3304,13 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
                   ib_context_full_get(ctx));
     skip_flags = IB_RULECTX_FLAG_ENABLED;
     IB_LIST_LOOP(all_rules, node) {
-        ib_rule_ctx_data_t *ctx_rule;
-        ib_ruleset_phase_t *ruleset_phase;
-        ib_list_t          *phase_rule_list;
-        ib_rule_phase_num_t phase_num;
-        ib_rule_t          *rule;
+        ib_rule_ctx_data_t   *ctx_rule;
+        ib_ruleset_phase_t   *ruleset_phase;
+        ib_list_t            *phase_rule_list;
+        ib_rule_phase_num_t   phase_num;
+        ib_rule_t            *rule;
+        const ib_list_node_t *onode;
+        bool                  owned = false;
 
         ctx_rule = (ib_rule_ctx_data_t *)ib_list_node_data(node);
         assert(ctx_rule != NULL);
@@ -3174,8 +3323,44 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
             continue;
         }
 
-        /* Determine what phase list to add it into */
         phase_num = rule->meta.phase;
+
+        /* Give the ownership functions a shot at the rule */
+        IB_LIST_LOOP_CONST(ib->rule_engine->ownership_cbs, onode) {
+            const ib_rule_ownership_cb_t *cb =
+                (const ib_rule_ownership_cb_t *)onode->data;
+            ib_status_t orc;
+
+            orc = cb->fn(ib, rule, cb->data);
+            if (orc == IB_OK) {
+                ib_log_debug3(ib,
+                              "Ownership callback \"%s\" has taken ownership "
+                              "of rule \"%s\" phase=%d context=\"%s\"",
+                              cb->name,
+                              ib_rule_id(rule), phase_num,
+                              ib_context_full_get(ctx));
+                owned = true;
+                break;
+            }
+            else if (orc == IB_DECLINED) {
+                /* Callback declined to take ownership, proceed normally. */
+            }
+            else {
+                ib_log_error(ib,
+                             "Ownership callback \"%s\" returned an error "
+                             "for rule \"%s\" phase=%d context=\"%s\": %s",
+                             cb->name,
+                             ib_rule_id(rule), phase_num,
+                             ib_context_full_get(ctx),
+                             ib_status_to_string(orc));
+                return IB_EUNKNOWN;
+            }
+        }
+        if (owned) {
+            continue;
+        }
+
+        /* Determine what phase list to add it into */
         ruleset_phase = &(ctx->rules->ruleset.phases[phase_num]);
         assert(ruleset_phase != NULL);
         assert(ruleset_phase->phase_meta == rule->phase_meta);
@@ -3188,7 +3373,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
                          "Failed to add rule type=\"%s\" phase=%d "
                          "context=\"%s\": %s",
                          rule->phase_meta->is_stream ? "Stream" : "Normal",
-                         ruleset_phase->phase_num,
+                         phase_num,
                          ib_context_full_get(ctx),
                          ib_status_to_string(rc));
             return rc;
@@ -3199,8 +3384,7 @@ ib_status_t ib_rule_engine_ctx_close(ib_engine_t *ib,
                      "for context \"%s\"",
                      ib_rule_id(rule), rule->meta.revision,
                      rule->phase_meta->is_stream ? "Stream" : "Normal",
-                     ruleset_phase->phase_num,
-                     phase_name(rule->phase_meta),
+                     phase_num, phase_name(rule->phase_meta),
                      ib_context_full_get(ctx));
     }
 
@@ -4386,6 +4570,46 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     return IB_OK;
 }
 
+ib_status_t ib_rule_search_action(const ib_engine_t *ib,
+                                  const ib_rule_t *rule,
+                                  ib_rule_action_t which,
+                                  const char *name,
+                                  ib_list_t *matches,
+                                  size_t *pcount)
+{
+    if ((ib == NULL) || (rule == NULL) || (name == NULL) ) {
+        return IB_EINVAL;
+    }
+    if ( (matches == NULL) && (pcount == NULL) ) {
+        return IB_EINVAL;
+    }
+    const ib_list_node_t *node;
+    const ib_list_t *list;
+    size_t count = 0;
+
+    list = ( (which == RULE_ACTION_TRUE) ?
+             rule->true_actions : rule->false_actions);
+
+    IB_LIST_LOOP_CONST(list, node) {
+        ib_action_inst_t *inst = (ib_action_inst_t *)node->data;
+        assert(inst != NULL);
+        assert(inst->action != NULL);
+        assert(inst->action->name != NULL);
+        if (strcmp(inst->action->name, name) == 0) {
+            ++count;
+            if (matches != NULL) {
+                ib_list_push(matches, inst);
+            }
+        }
+    }
+
+    if (pcount != NULL) {
+        *pcount = count;
+    }
+
+    return IB_OK;
+}
+
 ib_status_t ib_rule_chain_invalidate(ib_engine_t *ib,
                                      ib_context_t *ctx,
                                      ib_rule_t *rule)
@@ -4518,5 +4742,78 @@ ib_status_t ib_rule_lookup_external_driver(
     ib_status_t rc;
 
     rc = ib_hash_get(ib->rule_engine->external_drivers, driver, tag);
+    return rc;
+};
+
+ib_status_t ib_rule_register_ownership_fn(
+    ib_engine_t            *ib,
+    const char             *name,
+    ib_rule_ownership_fn_t  ownership_fn,
+    void                   *cbdata)
+{
+    if ( (ib == NULL) || (name == NULL) || (ownership_fn == NULL) ) {
+        return IB_EINVAL;
+    }
+    assert(ib->rule_engine != NULL);
+    assert(ib->rule_engine->ownership_cbs != NULL);
+
+    ib_status_t rc;
+    ib_rule_ownership_cb_t *cb;
+    ib_mpool_t *mp = ib->rule_engine->ownership_cbs->mp;
+
+    cb = ib_mpool_alloc(mp, sizeof(*cb));
+    if (cb == NULL) {
+        return IB_EALLOC;
+    }
+    cb->name = ib_mpool_strdup(mp, name);
+    if (cb->name == NULL) {
+        return IB_EALLOC;
+    }
+    cb->fn = ownership_fn;
+    cb->data = cbdata;
+
+    rc = ib_list_push(ib->rule_engine->ownership_cbs, cb);
+
+    return rc;
+}
+
+ib_status_t ib_rule_register_injection_fn(
+    ib_engine_t            *ib,
+    const char             *name,
+    ib_rule_phase_num_t     phase,
+    ib_rule_injection_fn_t  injection_fn,
+    void                   *cbdata)
+{
+    if ( (ib == NULL) || (name == NULL) || (injection_fn == NULL) ) {
+        return IB_EINVAL;
+    }
+    assert(ib->rule_engine != NULL);
+    assert(ib->rule_engine->injection_cbs != NULL);
+
+    ib_status_t rc;
+    ib_rule_injection_cb_t *cb;
+    ib_list_t *cb_list;
+    ib_mpool_t *mp;
+
+    if (! is_phase_num_valid(phase)) {
+        return IB_EINVAL;
+    }
+    cb_list = ib->rule_engine->injection_cbs[phase];
+    assert(cb_list != NULL);
+    mp = cb_list->mp;
+
+    cb = ib_mpool_alloc(mp, sizeof(*cb));
+    if (cb == NULL) {
+        return IB_EALLOC;
+    }
+    cb->name = ib_mpool_strdup(mp, name);
+    if (cb->name == NULL) {
+        return IB_EALLOC;
+    }
+    cb->fn = injection_fn;
+    cb->data = cbdata;
+
+    rc = ib_list_push(ib->rule_engine->injection_cbs[phase], cb);
+
     return rc;
 }
