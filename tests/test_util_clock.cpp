@@ -286,3 +286,97 @@ TEST(TestClock, test_timeval_cmp)
     ASSERT_TRUE(ib_clock_timeval_cmp(&tv1, &tv2) < 0);
     ASSERT_TRUE(ib_clock_timeval_cmp(&tv2, &tv1) > 0);
 }
+
+TEST(TestClock, test_timeval_add)
+{
+    ib_timeval_t tv1;
+    ib_timeval_t tv2;
+    ib_timeval_t out;
+    ib_timeval_t exp;
+    const uint32_t sec_usec  = 1000000;
+    const uint32_t max_usec  = (sec_usec - 1);
+    const uint32_t half_usec = (sec_usec / 2);
+
+    tv1.tv_sec  = 10;
+    tv1.tv_usec = 0;
+    tv2.tv_sec  = 10;
+    tv2.tv_usec = 0;
+    exp.tv_sec  = 20;
+    exp.tv_usec = 0;
+    ib_clock_timeval_add(&tv1, &tv2, &out);
+    ASSERT_EQ(0, ib_clock_timeval_cmp(&out, &exp));
+
+    tv1.tv_sec  = 10;
+    tv1.tv_usec = max_usec;
+    tv2.tv_sec  = 10;
+    tv2.tv_usec = 1;
+    exp.tv_sec  = 21;
+    exp.tv_usec = 0;
+    ib_clock_timeval_add(&tv1, &tv2, &out);
+    ASSERT_EQ(0, ib_clock_timeval_cmp(&out, &exp));
+
+    tv1.tv_sec  = 10;
+    tv1.tv_usec = half_usec;
+    tv2.tv_sec  = 10;
+    tv2.tv_usec = half_usec;
+    exp.tv_sec  = 21;
+    exp.tv_usec = 0;
+    ib_clock_timeval_add(&tv1, &tv2, &out);
+    ASSERT_EQ(0, ib_clock_timeval_cmp(&out, &exp));
+
+    tv1.tv_sec  = 10;
+    tv1.tv_usec = half_usec - 1;
+    tv2.tv_sec  = 10;
+    tv2.tv_usec = half_usec;
+    exp.tv_sec  = 20;
+    exp.tv_usec = max_usec;
+    ib_clock_timeval_add(&tv1, &tv2, &out);
+    ASSERT_EQ(0, ib_clock_timeval_cmp(&out, &exp));
+
+    tv1.tv_sec  = 10;
+    tv1.tv_usec = half_usec - 1;
+    tv2.tv_sec  = 10;
+    tv2.tv_usec = half_usec - 1;
+    exp.tv_sec  = 20;
+    exp.tv_usec = sec_usec - 2;
+    ib_clock_timeval_add(&tv1, &tv2, &out);
+    ASSERT_EQ(0, ib_clock_timeval_cmp(&out, &exp));
+
+    tv1.tv_sec  = 10;
+    tv1.tv_usec = half_usec + 1;
+    tv2.tv_sec  = 10;
+    tv2.tv_usec = half_usec - 1;
+    exp.tv_sec  = 21;
+    exp.tv_usec = 0;
+    ib_clock_timeval_add(&tv1, &tv2, &out);
+    ASSERT_EQ(0, ib_clock_timeval_cmp(&out, &exp));
+
+    tv1.tv_sec  = 10;
+    tv1.tv_usec = half_usec + 1;
+    tv2.tv_sec  = 10;
+    tv2.tv_usec = half_usec;
+    exp.tv_sec  = 21;
+    exp.tv_usec = 1;
+    ib_clock_timeval_add(&tv1, &tv2, &out);
+    ASSERT_EQ(0, ib_clock_timeval_cmp(&out, &exp));
+
+    /* Add to tv1 */
+    tv1.tv_sec  = 10;
+    tv1.tv_usec = 1;
+    tv2.tv_sec  = 10;
+    tv2.tv_usec = 1;
+    exp.tv_sec  = 20;
+    exp.tv_usec = 2;
+    ib_clock_timeval_add(&tv1, &tv2, &tv1);
+    ASSERT_EQ(0, ib_clock_timeval_cmp(&tv1, &exp));
+
+    /* Add to tv2 */
+    tv1.tv_sec  = 10;
+    tv1.tv_usec = 1;
+    tv2.tv_sec  = 10;
+    tv2.tv_usec = 1;
+    exp.tv_sec  = 20;
+    exp.tv_usec = 2;
+    ib_clock_timeval_add(&tv1, &tv2, &tv2);
+    ASSERT_EQ(0, ib_clock_timeval_cmp(&tv2, &exp));
+}

@@ -99,9 +99,9 @@ typedef enum ib_clock_type_t {
     } while (0)
 
 /**
- * Convert an ib_time_t to ib_timediff_t structure.
+ * Convert an ib_time_t to ib_timeval_t structure.
  *
- * @param[out] td Time diff structure (ib_timediff_t)
+ * @param[out] td Time diff structure (ib_timeval_t)
  * @param[in]  time IronBee time structure (ib_time_t)
  *
  * @returns Status code
@@ -200,6 +200,18 @@ ib_time_t DLL_PUBLIC ib_clock_get_time(void);
  * @param[out] tp Address which ib_timeval_t is written
  */
 void ib_clock_gettimeofday(ib_timeval_t *tp);
+
+/**
+ * Add a time from two timeval structures.  This is written in such a way that
+ * @a result may be an alias for @a tv1 and/or @a tv2.
+ *
+ * @param[in] tv1 First time value structure
+ * @param[in] tv2 Second time value structure
+ * @param[out] result Result time value structure
+ */
+void ib_clock_timeval_add(const ib_timeval_t *tv1,
+                          const ib_timeval_t *tv2,
+                          ib_timeval_t *result);
 
 /**
  * Generate a string timestamp.

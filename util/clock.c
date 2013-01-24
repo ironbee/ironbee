@@ -54,7 +54,8 @@ ib_clock_type_t ib_clock_type(void)
 #endif /* IB_CLOCK */
 }
 
-ib_time_t ib_clock_get_time(void) {
+ib_time_t ib_clock_get_time(void)
+{
     uint64_t usec;
 
 #ifdef IB_CLOCK
@@ -84,7 +85,8 @@ ib_time_t ib_clock_get_time(void) {
     return usec;
 }
 
-void ib_clock_gettimeofday(ib_timeval_t *tp) {
+void ib_clock_gettimeofday(ib_timeval_t *tp)
+{
     assert(tp != NULL);
 
     struct timeval tv;
@@ -147,4 +149,23 @@ int ib_clock_timeval_cmp(
     else {
         return (int)((int64_t)t1->tv_sec - (int64_t)t2->tv_sec);
     }
+}
+
+void ib_clock_timeval_add(
+    const ib_timeval_t *t1,
+    const ib_timeval_t *t2,
+    ib_timeval_t       *result
+)
+{
+    assert(t1 != NULL);
+    assert(t2 != NULL);
+    assert(result != NULL);
+    uint64_t usec;
+
+    usec = (uint64_t)t1->tv_usec + (uint64_t)t2->tv_usec;
+    result->tv_sec = (t1->tv_sec + t2->tv_sec);
+    if (usec >= 1000000U) {
+        ++result->tv_sec;
+    }
+    result->tv_usec = (usec % 1000000U);
 }
