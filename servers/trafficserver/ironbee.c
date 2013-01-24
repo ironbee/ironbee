@@ -180,18 +180,6 @@ typedef struct {
     ib_status_t (*ib_notify_post)(ib_engine_t*, ib_tx_t*);
 } ib_direction_data_t;
 
-#if 0  /* Currently unused */
-static ib_direction_data_t ib_direction_server_req = {
-    IBD_REQ,
-    "server request",
-    TSHttpTxnServerReqGet,
-    ib_state_notify_request_header_data,
-    ib_state_notify_request_header_finished,
-    ib_state_notify_request_body_data,
-    ib_state_notify_request_finished,
-    NULL
-};
-#endif
 static ib_direction_data_t ib_direction_client_req = {
     IBD_REQ,
     "client request",

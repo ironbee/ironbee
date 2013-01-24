@@ -1620,23 +1620,6 @@ ib_status_t DLL_PUBLIC ib_filter_register(ib_filter_t **pf,
 ib_status_t DLL_PUBLIC ib_filter_add(ib_filter_t *f,
                                      ib_context_t *ctx);
 
-#if 0
-/**
- * Create a filter controller for a connection in the given context.
- *
- * @param pfc Address which filter controller handle is written
- * @param conn Connection
- * @param ctx Config context
- * @param pool Memory pool
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_fctl_conn_create(ib_fctl_t **pfc,
-                                           ib_conn_t *conn,
-                                           ib_context_t *ctx,
-                                           ib_mpool_t *pool);
-#endif
-
 /**
  * Create a filter controller for a transaction.
  *
