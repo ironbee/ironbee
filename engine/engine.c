@@ -70,10 +70,6 @@ const char *default_auditlog_index = "ironbee-index.log";
 
 /* -- Internal Structures -- */
 
-#if 0
-typedef struct ib_field_callback_data_t ib_field_callback_data_t;
-#endif
-
 /**
  * List of callback data types for event id to type lookups.
  */
