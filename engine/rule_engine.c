@@ -2706,12 +2706,16 @@ static ib_status_t copy_rule_hash(const ib_context_t *ctx,
 }
 
 /**
- * Populate a hash of rules from a list
+ * Copy all rules from @a src_hash to @a dest_hash.
  *
+ * @param[in] ctx Provides access to the IronBee engine temp 
+ *                mpool and logging.
  * @param[in] src_list list of items to copy
  * @param[in,out] dest_hash Hash to copy items into
  *
- * @returns Status code
+ * @returns 
+ *   - IB_OK on success, including if the @a src_hash is size 0.
+ *   - IB_EALLOC if a temporary list cannot be made.
  */
 static ib_status_t copy_rule_hash(const ib_context_t *ctx,
                                   const ib_hash_t *src_hash,
