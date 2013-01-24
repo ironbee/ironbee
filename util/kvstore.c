@@ -24,6 +24,9 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/kvstore.h>
+
+#include "kvstore_private.h"
+
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
@@ -172,6 +175,11 @@ static ib_status_t default_merge_policy(
     }
 
     return IB_OK;
+}
+
+size_t ib_kvstore_size(void)
+{
+    return sizeof(ib_kvstore_t);
 }
 
 ib_status_t ib_kvstore_init(ib_kvstore_t *kvstore)

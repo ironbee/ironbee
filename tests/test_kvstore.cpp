@@ -18,6 +18,7 @@
 extern "C" {
 #include "ironbee_config_auto.h"
 
+#include "util/kvstore_private.h"
 #include <ironbee/kvstore.h>
 #include <ironbee/kvstore_filesystem.h>
 #include <ironbee/mpool.h>
@@ -66,7 +67,7 @@ TEST_F(TestKVStore, test_writes) {
     val.value_length = 5;
     val.type = ib_mpool_strdup(mp, "txt");
     val.type_length = 3;
-    val.expiration = 10;
+    val.expiration = 10 * 1000000LU;
 
     ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, &val));
 
@@ -89,7 +90,7 @@ TEST_F(TestKVStore, test_reads) {
     val.value_length = 5;
     val.type = ib_mpool_strdup(mp, "txt");
     val.type_length = 3;
-    val.expiration = 10;
+    val.expiration = 10 * 1000000LU;
 
     ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, &val));
 
@@ -121,7 +122,7 @@ TEST_F(TestKVStore, test_removes) {
     val.value_length = 5;
     val.type = ib_mpool_strdup(mp, "txt");
     val.type_length = 3;
-    val.expiration = 10;
+    val.expiration = 10 * 1000000LU;
 
     ASSERT_EQ(IB_OK, ib_kvstore_set(&kvstore, NULL, &key, &val));
     ASSERT_EQ(IB_OK, ib_kvstore_remove(&kvstore, &key));

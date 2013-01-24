@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -51,7 +52,7 @@ typedef struct {
     const char    *key;              /**< Key in TX data for population */
     bool           key_expand;       /**< Key is expandable */
     ib_kvstore_t  *kvstore;          /**< kvstore object */
-    uint32_t       expiration;       /**< Expiration time in seconds */
+    ib_time_t      expiration;       /**< Expiration time in useconds */
 } mod_persist_kvstore_t;
 
 /** File system persistence configuration data */
@@ -60,8 +61,8 @@ typedef struct {
 } mod_persist_cfg_t;
 static mod_persist_cfg_t mod_persist_global_cfg;
 
-/** Default expiration time of persisted collections (seconds) */
-static const int default_expiration = 60;
+/** Default expiration time of persisted collections (useconds) */
+static const int default_expiration = 60LU * 1000000LU;
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        persist
@@ -124,7 +125,7 @@ static ib_status_t mod_persist_register_fn(
     const int ovecsize = 9;
     int ovector[ovecsize];
     int pcre_rc;
-    ib_num_t expiration = default_expiration;
+    ib_time_t expiration = default_expiration;
 
     if (ib_list_elements(params) < 1) {
         return IB_EINVAL;
@@ -172,12 +173,14 @@ static ib_status_t mod_persist_register_fn(
             }
         }
         else if ( (param_len == 6) && (strncasecmp(param, "expire", 6) == 0) ) {
-            rc = ib_string_to_num_ex(value, value_len, 0, &expiration);
+            ib_float_t seconds;
+            rc = ib_string_to_float_ex(value, value_len, &seconds);
             if (rc != IB_OK) {
                 ib_log_error(ib, "Invalid expiration value \"%.*s\"",
                              (int)value_len, value);
                 return rc;
             }
+            expiration = (ib_time_t)(seconds * 1000000.0);
         }
     }
     if (key == NULL) {
@@ -190,7 +193,7 @@ static ib_status_t mod_persist_register_fn(
     }
 
     /* Allocate and initialize a kvstore object */
-    kvstore = ib_mpool_alloc(mp, sizeof(*kvstore));
+    kvstore = ib_mpool_alloc(mp, ib_kvstore_size());
     if (kvstore == NULL) {
         return IB_EALLOC;
     }
@@ -262,15 +265,13 @@ ib_status_t mod_persist_unregister_fn(
 }
 
 /**
- * Merge policy function that returns the most recent in the list
- * if the list is size 1 or greater.
- *
- * If the list size is 0, this does nothing.
+ * Merge policy function that returns the most recent in the list.
  *
  * @param[in] kvstore Key-value store.
  * @param[in] values Array of @ref ib_kvstore_value_t pointers.
  * @param[in] value_size The length of values.
- * @param[out] resultant_value Pointer to values[0] if value_size > 0.
+ * @param[out] resultant_value Pointer to the the @a values element with the
+ *             latest creation time, or NULL if @a value_size is zero.
  * @param[in,out] cbdata Context callback data.
  * @returns IB_OK
  */
@@ -286,22 +287,16 @@ static ib_status_t mod_persist_merge_fn(
     ib_kvstore_value_t *result = NULL;
     size_t n;
 
-    if (value_size == 1) {
+    if (value_size == 0) {
         result = values[0];
         goto done;
     }
-    else if (value_size == 0) {
-        result = NULL;
-        goto done;
-    }
 
-    /* Loop through the list, select the most recent. */
+    /* Loop through the list, select the value with the most recent creation. */
     for(n = 0;  n < value_size;  ++n) {
-        const ib_kvstore_value_t *v = values[n];
-        if ( (result == NULL) ||
-             (ib_clock_timeval_cmp(&v->creation, &result->creation) > 0) )
-        {
-            result = values[n];
+        ib_kvstore_value_t *v = values[n];
+        if ( (result == NULL) || (v->creation > result->creation) ) {
+            result = v;
         }
     }
 
