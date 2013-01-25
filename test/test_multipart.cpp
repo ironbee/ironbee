@@ -61,7 +61,8 @@ protected:
 TEST_F(Multipart, Test1) {
     char boundary[] = "---------------------------41184676334";
 
-    htp_mpartp_t *mpartp = htp_mpartp_create(cfg, boundary);
+    htp_mpartp_t *mpartp = htp_mpartp_create(cfg);
+    htp_mpartp_init_boundary_ex(mpartp, boundary);
 
     char* parts[999];
 
@@ -154,7 +155,8 @@ TEST_F(Multipart, Test1) {
 }
 
 TEST_F(Multipart, Test2) {
-    htp_mpartp_t *mpartp = mpartp = htp_mpartp_create(cfg, "BBB");
+    htp_mpartp_t *mpartp = htp_mpartp_create(cfg);
+    htp_mpartp_init_boundary_ex(mpartp, "BBB");
 
     const char *i1 = "x0000x\n--BBB\n\nx1111x\n--\nx2222x\n--";
     const char *i2 = "BBB\n\nx3333x\n--B";

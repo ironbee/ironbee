@@ -60,6 +60,9 @@ enum htp_part_mode_t {
 };
 
 enum htp_multipart_state_t {
+    /** Initial state, after the parser has been created but before the boundary initialized. */
+    STATE_INIT = 0,
+
     /** Processing data, waiting for a new line (which might indicate a new boundary). */
     STATE_DATA = 1,
 
@@ -175,6 +178,8 @@ struct htp_mpartp_t {
      */
     int gave_up_data;
 };
+
+htp_status_t htp_mpartp_extract_boundary(bstr *content_type, bstr **boundary);
 
 htp_status_t htp_mpartp_run_request_file_data_hook(htp_multipart_part_t *part, const unsigned char *data, size_t len);
 

@@ -610,54 +610,35 @@ static htp_status_t htp_mpartp_handle_boundary(htp_mpartp_t *parser) {
     return HTP_OK;
 }
 
+htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg) {
+    if (cfg == NULL )
+        return NULL ;
 
-htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
-    if ((cfg == NULL) || (boundary == NULL)) return NULL;
-
-    htp_mpartp_t *parser = calloc(1, sizeof (htp_mpartp_t));
-    if (parser == NULL) return NULL;
+    htp_mpartp_t *parser = calloc(1, sizeof(htp_mpartp_t));
+    if (parser == NULL )
+        return NULL ;
 
     parser->cfg = cfg;
 
     parser->boundary_pieces = bstr_builder_create();
-    if (parser->boundary_pieces == NULL) {
+    if (parser->boundary_pieces == NULL ) {
         htp_mpartp_destroy(&parser);
-        return NULL;
+        return NULL ;
     }
 
     parser->part_data_pieces = bstr_builder_create();
-    if (parser->part_data_pieces == NULL) {
+    if (parser->part_data_pieces == NULL ) {
         htp_mpartp_destroy(&parser);
-        return NULL;
+        return NULL ;
     }
 
     parser->multipart.parts = htp_list_create(64);
-    if (parser->multipart.parts == NULL) {
+    if (parser->multipart.parts == NULL ) {
         htp_mpartp_destroy(&parser);
-        return NULL;
+        return NULL ;
     }
 
-    // Copy the boundary and convert it to lowercase
-
-    parser->multipart.boundary_len = strlen(boundary) + 4;
-    parser->multipart.boundary = malloc(parser->multipart.boundary_len + 1);
-    if (parser->multipart.boundary == NULL) {
-        htp_mpartp_destroy(&parser);
-        return NULL;
-    }
-
-    parser->multipart.boundary[0] = CR;
-    parser->multipart.boundary[1] = LF;
-    parser->multipart.boundary[2] = '-';
-    parser->multipart.boundary[3] = '-';
-
-    for (size_t i = 0, n = strlen(boundary); i < n; i++) {
-        parser->multipart.boundary[i + 4] = tolower((unsigned char) boundary[i]);
-    }
-
-    parser->multipart.boundary[parser->multipart.boundary_len] = '\0';
-
-    parser->parser_state = STATE_BOUNDARY;
+    parser->parser_state = STATE_INIT;
     parser->boundary_match_pos = 2;
     parser->extract_limit = DEFAULT_FILE_EXTRACT_LIMIT;
     parser->handle_data = htp_mpartp_handle_data;
@@ -666,6 +647,46 @@ htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
     return parser;
 }
 
+static htp_status_t _htp_mpartp_init_boundary(htp_mpartp_t *parser, unsigned char *data, size_t len) {
+    if ((parser == NULL )||(data == NULL))return HTP_ERROR;
+
+    // Copy the boundary and convert it to lowercase
+
+    parser->multipart.boundary_len = len + 4;
+    parser->multipart.boundary = malloc(parser->multipart.boundary_len + 1);
+    if (parser->multipart.boundary == NULL) return HTP_ERROR;
+
+    parser->multipart.boundary[0] = CR;
+    parser->multipart.boundary[1] = LF;
+    parser->multipart.boundary[2] = '-';
+    parser->multipart.boundary[3] = '-';
+
+    for (size_t i = 0; i < len; i++) {
+        parser->multipart.boundary[i + 4] = tolower(data[i]);
+    }
+
+    parser->multipart.boundary[parser->multipart.boundary_len] = '\0';
+
+    parser->parser_state = STATE_BOUNDARY;
+
+    return HTP_OK;
+}
+
+htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, bstr *c_t_header) {
+    bstr *boundary = NULL;
+    htp_status_t rc = htp_mpartp_extract_boundary(c_t_header, &boundary);
+    if (rc != HTP_OK) return rc;
+
+    rc = _htp_mpartp_init_boundary(parser, bstr_ptr(boundary), bstr_len(boundary));
+
+    bstr_free(&boundary);
+
+    return rc;
+}
+
+htp_status_t htp_mpartp_init_boundary_ex(htp_mpartp_t *parser, char *boundary) {
+    return _htp_mpartp_init_boundary(parser, (unsigned char *) boundary, strlen(boundary));
+}
 
 void htp_mpartp_destroy(htp_mpartp_t ** _parser) {
     if ((_parser == NULL) || (*_parser == NULL)) return;
@@ -834,6 +855,11 @@ STATE_SWITCH:
         #endif
 
         switch (parser->parser_state) {
+
+            case STATE_INIT:
+                // Incomplete initialization.
+                return HTP_ERROR;
+                break;
 
             case STATE_DATA: // Handle part data.
                 // If there was a saved CR, process it as data now.
@@ -1066,7 +1092,7 @@ int htp_mpartp_is_boundary_character(int c) {
  * @param[in] boundary
  * @return rc
  */
-htp_status_t htp_mpartp_extract_boundary(bstr *content_type, char **boundary) {
+htp_status_t htp_mpartp_extract_boundary(bstr *content_type, bstr **boundary) {
     unsigned char *data = bstr_ptr(content_type);
     size_t len = bstr_len(content_type);
     size_t pos, start;
@@ -1084,7 +1110,8 @@ htp_status_t htp_mpartp_extract_boundary(bstr *content_type, char **boundary) {
     pos++;
 
     // Skip over whitespace
-    while ((pos < len) && (data[pos] == ' ')) pos++;
+    while ((pos < len) && (data[pos] == ' '))
+        pos++;
     if (pos == len) {
         // Error: missing boundary parameter
         return -2;
@@ -1105,7 +1132,8 @@ htp_status_t htp_mpartp_extract_boundary(bstr *content_type, char **boundary) {
     pos += 8;
 
     // Skip over whitespace, if any
-    while ((pos < len) && (data[pos] == ' ')) pos++;
+    while ((pos < len) && (data[pos] == ' '))
+        pos++;
     if (pos == len) {
         // Error: invalid parameter
         return -5;
@@ -1128,13 +1156,11 @@ htp_status_t htp_mpartp_extract_boundary(bstr *content_type, char **boundary) {
         return -7;
     }
 
-    *boundary = malloc(pos - start + 1);
+    *boundary = bstr_dup_mem(data + start, pos - start);
     if (*boundary == NULL) return -8;
-    memcpy(*boundary, data + start, pos - start);
-    (*boundary)[pos - start] = '\0';
 
     #if HTP_DEBUG
-    fprint_raw_data(stderr, "htp_mpartp_extract_boundary", (unsigned char *) *boundary, strlen(*boundary));
+    fprint_raw_bstr(stderr, "htp_mpartp_extract_boundary", *boundary);
     #endif
 
     return HTP_OK;

@@ -111,10 +111,10 @@ typedef struct htp_multipart_part_t {
     /** Raw part length (i.e., headers and data). */
     size_t len;
    
-    /** Part name, from the Content-Disposition header. */
+    /** Part name, from the Content-Disposition header. Can be NULL. */
     bstr *name;
 
-    /** Part content type, from the Content-Type header. */
+    /** Part content type, from the Content-Type header. Can be NULL. */
     // TODO
 
     /** Part value; currently available only for MULTIPART_PART_TEXT parts. */
@@ -136,7 +136,11 @@ typedef struct htp_multipart_part_t {
  * @param[in] boundary
  * @return New parser, or NULL on memory allocation failure.
  */
-htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary);
+htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg);
+
+htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, bstr *c_t_header);
+
+htp_status_t htp_mpartp_init_boundary_ex(htp_mpartp_t *parser, char *boundary);
 
 /**
  * Returns the multipart structure created by the parser.
@@ -152,9 +156,6 @@ htp_multipart_t *htp_mpartp_get_multipart(htp_mpartp_t *parser);
  * @param[in] parser
  */
 void htp_mpartp_destroy(htp_mpartp_t **parser);
-
-// TODO Associate with the parser instance.
-htp_status_t htp_mpartp_extract_boundary(bstr *content_type, char **boundary);
 
 /**
  * Finalize parsing.
