@@ -47,27 +47,28 @@ extern "C" {
 #include "htp.h"
 #include "htp_table.h"
 
-#define HTP_FILE_MULTIPART                      1
-#define HTP_FILE_PUT                            2
 
-#define MULTIPART_PART_UNKNOWN                  0
-#define MULTIPART_PART_TEXT                     1
-#define MULTIPART_PART_FILE                     2
-#define MULTIPART_PART_PREAMBLE                 3
-#define MULTIPART_PART_EPILOGUE                 4
-
-#define MULTIPART_MODE_LINE                     0
-#define MULTIPART_MODE_DATA                     1
-
-#define MULTIPART_STATE_DATA                    1
-#define MULTIPART_STATE_BOUNDARY                2
-#define MULTIPART_STATE_BOUNDARY_IS_LAST1       3
-#define MULTIPART_STATE_BOUNDARY_IS_LAST2       4
-#define MULTIPART_STATE_BOUNDARY_EAT_LF         5
-
-#define MULTIPART_DEFAULT_FILE_EXTRACT_LIMIT    16
+// Constants and enums
 
 #define HTP_MULTIPART_MIME_TYPE                 "multipart/form-data"
+
+enum htp_multipart_type_t {
+
+    /** Unknown part. */
+    MULTIPART_PART_UNKNOWN = 0,
+
+    /** Text (parameter) part. */
+    MULTIPART_PART_TEXT = 1,
+
+    /** File part. */
+    MULTIPART_PART_FILE = 2,
+
+    /** Free-text part before the first boundary. */
+    MULTIPART_PART_PREAMBLE = 3,
+
+    /** Free-text part after the last boundary. */
+    MULTIPART_PART_EPILOGUE = 4
+};
 
 
 // Structures
@@ -105,7 +106,7 @@ typedef struct htp_multipart_part_t {
     htp_mpartp_t *parser;
 
     /** Part type; see the MULTIPART_PART_* constants. */
-    int type;   
+    enum htp_multipart_type_t type;
 
     /** Raw part length (i.e., headers and data). */
     size_t len;

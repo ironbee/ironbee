@@ -45,9 +45,36 @@ extern "C" {
 
 #include "htp_multipart.h"
 
-#define CD_PARAM_OTHER     0
-#define CD_PARAM_NAME      1
-#define CD_PARAM_FILENAME  2
+#define CD_PARAM_OTHER                  0
+#define CD_PARAM_NAME                   1
+#define CD_PARAM_FILENAME               2
+
+#define DEFAULT_FILE_EXTRACT_LIMIT      16
+
+enum htp_part_mode_t {
+    /** When in line mode, the parser is handling part headers. */
+    MODE_LINE = 0,
+
+    /** When in data mode, the parser is consuming part data. */
+    MODE_DATA = 1
+};
+
+enum htp_multipart_state_t {
+    /** Processing data, waiting for a new line (which might indicate a new boundary). */
+    STATE_DATA = 1,
+
+    /** Testing a potential boundary. */
+    STATE_BOUNDARY = 2,
+
+    /** Checking the first byte after a boundary. */
+    STATE_BOUNDARY_IS_LAST1 = 3,
+
+    /** Checking the second byte after a boundary. */
+    STATE_BOUNDARY_IS_LAST2 = 4,
+
+    /** Consuming linear whitespace after a boundary. */
+    STATE_BOUNDARY_EAT_LF = 5
+};
 
 struct htp_mpartp_t {
     htp_multipart_t multipart;
@@ -72,7 +99,7 @@ struct htp_mpartp_t {
     /**
      * Parser state; one of MULTIPART_STATE_* constants.
      */
-    int parser_state;
+    enum htp_multipart_state_t parser_state;
 
     /**
      * Keeps track of the current position in the boundary matching progress.
@@ -98,7 +125,7 @@ struct htp_mpartp_t {
      * us process input data more efficiently. The possible values are
      * MULTIPART_MODE_LINE and MULTIPART_MODE_DATA.
      */
-    int current_part_mode;
+    enum htp_part_mode_t current_part_mode;
 
     /**
      * Used for buffering when a potential boundary is fragmented

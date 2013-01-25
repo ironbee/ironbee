@@ -159,6 +159,13 @@ enum htp_coding_t {
     HTP_CODING_UNRECOGNIZED = 4
 };
 
+enum htp_file_source_t {
+
+    HTP_FILE_MULTIPART = 1,
+
+    HTP_FILE_PUT = 2
+};
+
 // Various flag bits. Even though we have a flag field in several places
 // (header, transaction, connection), these fields are all in the same namespace
 // because we may want to set the same flag in several locations. For example, we

@@ -439,7 +439,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
         return HTP_OK;
     }
 
-    if (part->parser->current_part_mode == MULTIPART_MODE_LINE) {
+    if (part->parser->current_part_mode == MODE_LINE) {
         // Line mode
 
         // TODO Remove the extra characters from folded lines
@@ -458,7 +458,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
             // Is it an empty line?
             if ((len == 0) && ((bstr_builder_size(part->parser->part_data_pieces) == 0))) {
                 // Empty line; switch to data mode
-                part->parser->current_part_mode = MULTIPART_MODE_DATA;
+                part->parser->current_part_mode = MODE_DATA;
                 htp_mpart_part_process_headers(part);
                 // TODO RC
 
@@ -529,7 +529,10 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                         return HTP_ERROR;
                     }
                 }
-
+                break;
+            default :
+                // Internal error.
+                return HTP_ERROR;
                 break;
         }
     }
@@ -557,12 +560,12 @@ static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *parser, const unsigned 
         if (parser->multipart.boundary_count == 0) {
             // We haven't seen a boundary yet, so this must be the preamble part.
             parser->current_part->type = MULTIPART_PART_PREAMBLE;
-            parser->current_part_mode = MULTIPART_MODE_DATA;
+            parser->current_part_mode = MODE_DATA;
         } else {
             if (parser->multipart.seen_last_boundary) {
                 // We've seen the last boundary, so this must be the epilogue part.
                 parser->current_part->type = MULTIPART_PART_EPILOGUE;
-                parser->current_part_mode = MULTIPART_MODE_DATA;
+                parser->current_part_mode = MODE_DATA;
             }
         }
 
@@ -601,7 +604,7 @@ static htp_status_t htp_mpartp_handle_boundary(htp_mpartp_t *parser) {
         parser->current_part = NULL;
 
         // Revert to line mode
-        parser->current_part_mode = MULTIPART_MODE_LINE;
+        parser->current_part_mode = MODE_LINE;
     }
 
     return HTP_OK;
@@ -654,9 +657,9 @@ htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
 
     parser->multipart.boundary[parser->multipart.boundary_len] = '\0';
 
-    parser->parser_state = MULTIPART_STATE_BOUNDARY;
+    parser->parser_state = STATE_BOUNDARY;
     parser->boundary_match_pos = 2;
-    parser->extract_limit = MULTIPART_DEFAULT_FILE_EXTRACT_LIMIT;
+    parser->extract_limit = DEFAULT_FILE_EXTRACT_LIMIT;
     parser->handle_data = htp_mpartp_handle_data;
     parser->handle_boundary = htp_mpartp_handle_boundary;
 
@@ -709,7 +712,7 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *parser, int matched) {
     // part as line and the second part as data.  
 
     // Do we need to do any chunk splitting?
-    if (matched || (parser->current_part_mode == MULTIPART_MODE_LINE)) {
+    if (matched || (parser->current_part_mode == MODE_LINE)) {
         // Line mode or boundary match
 
         // In line mode, we don't care about the set-aside CR byte.
@@ -832,7 +835,7 @@ STATE_SWITCH:
 
         switch (parser->parser_state) {
 
-            case MULTIPART_STATE_DATA: // Handle part data.
+            case STATE_DATA: // Handle part data.
                 // If there was a saved CR, process it as data now.
                 if ((pos == 0) && (parser->cr_aside) && (pos < len)) {
                     parser->handle_data(parser, (unsigned char *) &"\r", 1, /* not a line */ 0);
@@ -865,7 +868,7 @@ STATE_SWITCH:
                                 data_return_pos = pos;
                                 parser->boundary_candidate_pos = pos - startpos;
                                 parser->boundary_match_pos = 2; // After LF; position of the first dash.
-                                parser->parser_state = MULTIPART_STATE_BOUNDARY;
+                                parser->parser_state = STATE_BOUNDARY;
 
                                 goto STATE_SWITCH;
                             } else {
@@ -882,7 +885,7 @@ STATE_SWITCH:
                         data_return_pos = pos;
                         parser->boundary_candidate_pos = pos - startpos;
                         parser->boundary_match_pos = 2; // After LF; position of the first dash.
-                        parser->parser_state = MULTIPART_STATE_BOUNDARY;
+                        parser->parser_state = STATE_BOUNDARY;
 
                         goto STATE_SWITCH;
                     } else {
@@ -897,7 +900,7 @@ STATE_SWITCH:
 
                 break;
 
-            case MULTIPART_STATE_BOUNDARY: // Handle a possible boundary.
+            case STATE_BOUNDARY: // Handle a possible boundary.
                 while (pos < len) {
                     #ifdef HTP_DEBUG
                     fprintf(stderr, "boundary (len %d pos %d char %d) data char %d\n", parser->boundary_len,
@@ -918,7 +921,7 @@ STATE_SWITCH:
                         htp_martp_process_aside(parser, /* no match */ 0);
 
                         // Return back where data parsing left off.
-                        if (parser->current_part_mode == MULTIPART_MODE_LINE) {
+                        if (parser->current_part_mode == MODE_LINE) {
                             // In line mode, we process the line.
                             parser->handle_data(parser, data + startpos, data_return_pos - startpos, /* line */ 1);
                             startpos = data_return_pos;
@@ -927,7 +930,7 @@ STATE_SWITCH:
                             pos = data_return_pos;
                         }
 
-                        parser->parser_state = MULTIPART_STATE_DATA;
+                        parser->parser_state = STATE_DATA;
 
                         goto STATE_SWITCH;
                     }
@@ -958,7 +961,7 @@ STATE_SWITCH:
                         parser->handle_boundary(parser);
 
                         // We now need to check if this is the last boundary in the payload
-                        parser->parser_state = MULTIPART_STATE_BOUNDARY_IS_LAST2;
+                        parser->parser_state = STATE_BOUNDARY_IS_LAST2;
 
                         goto STATE_SWITCH;
                     }
@@ -970,7 +973,7 @@ STATE_SWITCH:
 
                 break;
                 
-            case MULTIPART_STATE_BOUNDARY_IS_LAST2:
+            case STATE_BOUNDARY_IS_LAST2:
                 // Examine the first byte after the last boundary character. If it is
                 // a dash, then we maybe processing the last boundary in the payload. If
                 // it is not, move to eat all bytes until the end of the line.
@@ -978,16 +981,16 @@ STATE_SWITCH:
                 if (data[pos] == '-') {
                     // Found one dash, now go to check the next position.
                     pos++;
-                    parser->parser_state = MULTIPART_STATE_BOUNDARY_IS_LAST1;
+                    parser->parser_state = STATE_BOUNDARY_IS_LAST1;
                 } else {
                     // This is not the last boundary. Change state but
                     // do not advance the position, allowing the next
                     // state to process the byte.
-                    parser->parser_state = MULTIPART_STATE_BOUNDARY_EAT_LF;
+                    parser->parser_state = STATE_BOUNDARY_EAT_LF;
                 }
                 break;               
 
-            case MULTIPART_STATE_BOUNDARY_IS_LAST1:
+            case STATE_BOUNDARY_IS_LAST1:
                 // Examine the byte after the first dash; expected to be another dash.
                 // If not, eat all bytes until the end of the line.
                 
@@ -995,22 +998,22 @@ STATE_SWITCH:
                     // This is indeed the last boundary in the payload.
                     pos++;
                     parser->multipart.seen_last_boundary = 1;
-                    parser->parser_state = MULTIPART_STATE_BOUNDARY_EAT_LF;
+                    parser->parser_state = STATE_BOUNDARY_EAT_LF;
                 } else {
                     // The second character is not a dash. This means that we have
                     // an error in the payload. We should report the error and
                     // continue to eat the rest of the line.
                     // TODO Error
-                    parser->parser_state = MULTIPART_STATE_BOUNDARY_EAT_LF;
+                    parser->parser_state = STATE_BOUNDARY_EAT_LF;
                 }
                 break;
 
-            case MULTIPART_STATE_BOUNDARY_EAT_LF:
+            case STATE_BOUNDARY_EAT_LF:
                 if (data[pos] == LF) {
                     // We're done with boundary processing; data bytes follow.
                     pos++;
                     startpos = pos;
-                    parser->parser_state = MULTIPART_STATE_DATA;
+                    parser->parser_state = STATE_DATA;
                 } else {
                     // TIDI Error!
                     // Unexpected byte; remain in the same state

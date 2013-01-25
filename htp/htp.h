@@ -107,7 +107,7 @@ struct htp_conn_t {
  */
 struct htp_file_t {
     /** Where did this file come from? Possible values: HTP_FILE_MULTIPART and HTP_FILE_PUT. */
-    int source;
+    enum htp_file_source_t source;
 
     /** File name, as provided (e.g., in the Content-Disposition multipart part header. */
     bstr *filename;   
