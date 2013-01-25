@@ -41,24 +41,11 @@
 
 #include "htp.h"
 #include "htp_multipart.h"
+#include "htp_multipart_private.h"
 
 #define PARAM_OTHER     0
 #define PARAM_NAME      1
 #define PARAM_FILENAME  2
-
-// Internal function declarations
-
-static htp_status_t htp_mpartp_run_request_file_data_hook(htp_mpart_part_t *part, const unsigned char *data, size_t len);
-htp_status_t htp_mpart_part_process_headers(htp_mpart_part_t *part);
-htp_status_t htp_mpartp_parse_header(htp_mpart_part_t *part, const unsigned char *data, size_t len);
-htp_status_t htp_mpart_part_handle_data(htp_mpart_part_t *part, const unsigned char *data, size_t len, int is_line);
-int htp_mpartp_is_boundary_character(int c);
-
-htp_mpart_part_t *htp_mpart_part_create(htp_mpartp_t *mpartp);
-htp_status_t htp_mpart_part_finalize_data(htp_mpart_part_t *part);
-void htp_mpart_part_destroy(htp_mpart_part_t *part, int gave_up_data);
-
-// Functions
 
 /**
  * Determines the type of a Content-Disposition parameter.
