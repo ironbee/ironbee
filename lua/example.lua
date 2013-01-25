@@ -122,26 +122,38 @@ mod_init:handle_request_header_event(function(ib)
 
     ib:logInfo("REQUEST_LINE: %s=%s", type(req_line), tostring(req_line))
 
-    local req_headers = ib:get("request_headers")
+    local req_headers = ib:getValues("request_headers")
 
     if type(req_headers) == 'table' then
         for k,f in pairs(req_headers) do
             if type(f) == 'table' then
                 -- Fields come as name/value pairs (tables)
                 name, val = unpack(f)
-                ib:logInfo("REQUEST_HEADERS.%s=%s", tostring(name), tostring(val))
+                ib:logInfo("REQUEST_HEADERS:%s=%s", tostring(name), tostring(val))
             else
-                ib:logInfo("REQUEST_HEADERS.%s=%s", k, f)
+                ib:logInfo("REQUEST_HEADERS:%s=%s", k, f)
             end
         end
     end
 
     -- You can access individual subfields within collections directly
-    -- via "name.subname" syntax:
-    local http_host_header = ib:get("request_headers.host")
+    -- via "name:subname" syntax:
+    local http_host_header = ib:getValues("request_headers:host")
+    ib:logInfo("First HTTP Host Header: %s", http_host_header[1])
 
     -- Request cookies are a collection (table of field objects)
     local req_cookies = ib:get("request_cookies")
+    if type(req_cookies) == 'table' then
+        for k,f in pairs(req_cookies) do
+            if type(f) == 'table' then
+                -- Fields come as name/value pairs (tables)
+                name, val = unpack(f)
+                ib:logInfo("REQUEST_COOKIES:%s=%s", tostring(name), tostring(val))
+            else
+                ib:logInfo("REQUEST_COOKIES:%s=%s", k, f)
+            end
+        end
+    end
 
     return 0
 end)
