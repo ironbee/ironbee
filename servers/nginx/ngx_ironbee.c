@@ -347,7 +347,7 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
     ctx->r = r;
     ngx_http_set_ctx(r, ctx, ngx_ironbee_module);
     pconf = ngx_http_get_module_main_conf(r, ngx_ironbee_module);
-    
+
     iconn = ngxib_conn_get(ctx, ironbee);
 
     ib_tx_create(&ctx->tx, iconn, ctx);

@@ -101,7 +101,7 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
         /* Reader has put request body in temp file */
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                       "Request body in temp file: not yet supported");
-        
+
     }
 
     for (link = rb->bufs; link != NULL; link = link->next) {
@@ -124,6 +124,6 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
                       "Ironbee set %d reading request body", rv);
     }
-    
+
     cleanup_return(prev_log) rv;
 }

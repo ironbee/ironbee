@@ -23,7 +23,7 @@
  */
 
 
-/* The connection data we're concerned with is Ironbee's iconn 
+/* The connection data we're concerned with is Ironbee's iconn
  * We need a function to retrieve it in processing a request
  *
  *  Update: this is much-simplified by the fact we have no threads
@@ -77,7 +77,7 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx, ib_engine_t *ib)
 
     rctx->conn = ngx_palloc(rctx->r->connection->pool, sizeof(ngxib_conn_t));
     rctx->conn->ironbee = ib;
-        
+
     rc = ib_conn_create(rctx->conn->ironbee, &rctx->conn->iconn, rctx->r->connection);
     ib_state_notify_conn_opened(rctx->conn->ironbee, rctx->conn->iconn);
 
