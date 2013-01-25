@@ -204,15 +204,41 @@ struct htp_mpartp_t {
     int gave_up_data;
 };
 
+/**
+ * Creates a new multipart/form-data parser.
+ *
+ * @param[in] boundary
+ * @return New parser, or NULL on memory allocation failure.
+ */
 htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary);
 
+/**
+ * Destroys the provided parser.
+ *
+ * @param[in] mpartp
+ */
 void htp_mpartp_destroy(htp_mpartp_t **mpartp);
 
 // TODO Associate with the parser instance.
 htp_status_t htp_mpartp_extract_boundary(bstr *content_type, char **boundary);
 
+/**
+ * Finalize parsing.
+ *
+ * @param[in] mpartp
+ * @returns HTP_OK on success, HTP_ERROR on failure.
+ */
 htp_status_t htp_mpartp_finalize(htp_mpartp_t *mpartp);
 
+/**
+ * Parses a chunk of multipart/form-data data. This function should be called
+ * as many times as necessary until all data has been consumed.
+ *
+ * @param[in] mpartp
+ * @param[in] data
+ * @param[in] len
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
 htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, size_t len);
 
 #ifdef __cplusplus

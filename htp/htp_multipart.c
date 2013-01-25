@@ -620,12 +620,7 @@ static htp_status_t htp_mpartp_handle_boundary(htp_mpartp_t * mpartp) {
     return HTP_OK;
 }
 
-/**
- * Creates a new multipart/form-data parser.
- *
- * @param[in] boundary
- * @return New parser, or NULL on memory allocation failure.
- */
+
 htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
     if ((cfg == NULL) || (boundary == NULL)) return NULL;
 
@@ -681,11 +676,7 @@ htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary) {
     return mpartp;
 }
 
-/**
- * Destroys a multipart/form-data parser.
- *
- * @param[in] mpartp
- */
+
 void htp_mpartp_destroy(htp_mpartp_t ** _mpartp) {
     if ((_mpartp == NULL) || (*_mpartp == NULL)) return;
     htp_mpartp_t * mpartp = *_mpartp;
@@ -811,11 +802,7 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *mpartp, int matched) {
     return HTP_OK;
 }
 
-/**
- * Finalize parsing.
- *
- * @param[in] mpartp
- */
+
 htp_status_t htp_mpartp_finalize(htp_mpartp_t * mpartp) {
     if (mpartp->current_part != NULL) {
         htp_martp_process_aside(mpartp, 0);
@@ -828,15 +815,6 @@ htp_status_t htp_mpartp_finalize(htp_mpartp_t * mpartp) {
     return HTP_OK;
 }
 
-/**
- * Parses a chunk of multipart/form-data data. This function should be called
- * as many times as necessary until all data has been consumed.
- *
- * @param[in] mpartp
- * @parma data
- * @param[in] len
- * @return Status indicator
- */
 htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, size_t len) {
     // The current position in the entire input buffer.
     size_t pos = 0;
