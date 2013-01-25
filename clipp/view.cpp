@@ -141,7 +141,7 @@ struct ViewDelegate :
     void request_started(const RequestEvent& event)
     {
         cout << "=== REQUEST_STARTED: "
-             << event.method << " " << event.uri << " " << event.uri
+             << event.method << " " << event.uri << " " << event.protocol
              << " ===" << endl;
         if (event.raw.data) {
             cout << "RAW: " << event.raw << endl;
