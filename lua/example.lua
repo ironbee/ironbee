@@ -30,7 +30,7 @@ mod_init:register_param1_directive(
     "LuaExampleDirective",
     function(ib_module, module_config, name, param1)
         -- Log that we're configuring the module.
-        ib_module:logInfo("Got directive %s=%s", name, param1)
+        mod_init:logInfo("Got directive %s=%s", name, param1)
 
         -- Configuration, in this case, is simply storing the string.
         module_config[name] = param1
@@ -41,20 +41,20 @@ mod_init:register_param1_directive(
 -- ===============================================
 mod_init:conn_started_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=conn_started_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when a connection is opened.
 -- ===============================================
 mod_init:conn_opened_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=conn_opened_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when a connection context was
@@ -62,10 +62,10 @@ end
 -- ===============================================
 mod_init:handle_context_conn_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=handle_context_conn_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the connection is ready to
@@ -73,30 +73,30 @@ end
 -- ===============================================
 mod_init:handle_connect_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=handle_connect_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the transaction starts.
 -- ===============================================
 mod_init:tx_started_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=tx_started_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when a request starts.
 -- ===============================================
 mod_init:request_started_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=request_started_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the transaction context
@@ -104,10 +104,10 @@ end
 -- ===============================================
 mod_init:handle_context_tx_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=handle_context_tx_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the request headers are
@@ -115,21 +115,23 @@ end
 -- ===============================================
 mod_init:handle_request_header_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=handle_request_header_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
 
     local req_line = ib:get("request_line")
 
-    ib:logDebug("Request line is a field type: %s", type(req_line))
+    ib:logInfo("REQUEST_LINE: %s=%s", type(req_line), tostring(req_line))
 
     local req_headers = ib:get("request_headers")
 
     if type(req_headers) == 'table' then
         for k,f in pairs(req_headers) do
             if type(f) == 'table' then
-                ironbee.ib_log_debug(ib, "REQUEST_HEADERS.%s=<list>", k)
+                -- Fields come as name/value pairs (tables)
+                name, val = unpack(f)
+                ib:logInfo("REQUEST_HEADERS.%s=%s", tostring(name), tostring(val))
             else
-                ironbee.ib_log_debug(ib, "REQUEST_HEADERS.%s=%s", k, f)
+                ib:logInfo("REQUEST_HEADERS.%s=%s", k, f)
             end
         end
     end
@@ -142,7 +144,7 @@ mod_init:handle_request_header_event(function(ib)
     local req_cookies = ib:get("request_cookies")
 
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the request body is
@@ -150,10 +152,10 @@ end
 -- ===============================================
 mod_init:request_body_data_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=request_body_data_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the complete request is
@@ -161,20 +163,20 @@ end
 -- ===============================================
 mod_init:handle_request_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=handle_request_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the request is finished.
 -- ===============================================
 mod_init:request_finished_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=request_finished_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the transaction is ready
@@ -182,20 +184,20 @@ end
 -- ===============================================
 mod_init:tx_process_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=tx_process_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the response is started.
 -- ===============================================
 mod_init:response_started_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=response_started_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the response headers are
@@ -203,10 +205,10 @@ end
 -- ===============================================
 mod_init:handle_response_header_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=handle_response_header_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the response headers are
@@ -214,10 +216,10 @@ end
 -- ===============================================
 mod_init:response_header_data_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=response_header_data_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the response body is
@@ -225,10 +227,10 @@ end
 -- ===============================================
 mod_init:response_body_data_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=response_body_data_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the complete response is
@@ -236,20 +238,20 @@ end
 -- ===============================================
 mod_init:handle_response_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=handle_response_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the response is finished.
 -- ===============================================
 mod_init:response_finished_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=response_finished_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called after the transaction is done
@@ -257,10 +259,10 @@ end
 -- ===============================================
 mod_init:handle_postprocess_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=handle_postprocess_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the transaction is
@@ -268,20 +270,20 @@ end
 -- ===============================================
 mod_init:tx_finished_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=tx_finished_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when a connection is closed.
 -- ===============================================
 mod_init:conn_closed_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=conn_closed_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when the connection disconnect
@@ -289,10 +291,10 @@ end
 -- ===============================================
 mod_init:handle_disconnect_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=handle_disconnect_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when there is incoming data for
@@ -300,10 +302,10 @@ end
 -- ===============================================
 mod_init:conn_data_in_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=conn_data_in_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- ===============================================
 -- This is called when there is outgoing data for
@@ -311,41 +313,41 @@ end
 -- ===============================================
 mod_init:conn_data_out_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=conn_data_out_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 mod_init:conn_finished_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=conn_finished_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 mod_init:request_header_data_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=request_header_data_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 mod_init:request_header_finished_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=request_header_finished_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 mod_init:response_header_finished_event(function(ib)
     ib:logInfo(
-        "Module configuration: LuaExampleDirective=%s",
+        "Handling event=response_header_finished_event: LuaExampleDirective=%s",
         ib.config["LuaExampleDirective"])
     return 0
-end
+end)
 
 -- Report success.
-t:logInfo("Module loaded!")
+mod_init:logInfo("Module loaded!")
 
 -- Return IB_OK.
 return 0
