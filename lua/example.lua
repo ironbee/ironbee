@@ -122,8 +122,8 @@ mod_init:handle_request_header_event(function(ib)
 
     ib:logInfo("REQUEST_LINE: %s=%s", type(req_line), tostring(req_line))
 
-    local req_headers = ib:getValues("request_headers")
-
+    -- You can fetch collections as a table of name/value pairs:
+    local req_headers = ib:get("request_headers")
     if type(req_headers) == 'table' then
         for k,f in pairs(req_headers) do
             if type(f) == 'table' then
