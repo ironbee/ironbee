@@ -930,11 +930,17 @@ static void log_tx_response_line(
     ib_tx_t *tx = rule_exec->tx;
 
     if (ib_flags_all(rule_exec->tx_log->flags, IB_RULE_LOG_FLAG_RSP_LINE)) {
-        rule_log_exec(rule_exec,
-                      "RES_LINE %.*s %.*s %.*s",
-                      IB_BYTESTR_FMT_PARAM(tx->response_line->protocol),
-                      IB_BYTESTR_FMT_PARAM(tx->response_line->status),
-                      IB_BYTESTR_FMT_PARAM(tx->response_line->msg));
+        /* No response line means 0.9 */
+        if (tx->response_line == NULL) {
+            rule_log_exec(rule_exec, "RES_LINE HTTP/0.9");
+        }
+        else {
+            rule_log_exec(rule_exec,
+                          "RES_LINE %.*s %.*s %.*s",
+                          IB_BYTESTR_FMT_PARAM(tx->response_line->protocol),
+                          IB_BYTESTR_FMT_PARAM(tx->response_line->status),
+                          IB_BYTESTR_FMT_PARAM(tx->response_line->msg));
+        }
     }
     return;
 }
