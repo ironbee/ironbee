@@ -659,7 +659,7 @@ static ib_status_t act_setvar_create(
     }
     /* For backward compatibility, support the old =+ and =- (yuck) */
     else if ( (*(eq+1) == '-') || (*(eq+1) == '+') ) {
-        mod = eq + 1; 
+        mod = eq + 1;
         nlen = (eq - params);
         ++eq;   /* Make the value / vlen log below work */
         compat_syntax = true;
