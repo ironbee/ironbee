@@ -112,8 +112,11 @@ TEST_F(Multipart, Test1) {
     htp_mpartp_finalize(mpartp);
 
     // Examine the result
-    for (size_t i = 0, n = htp_list_size(mpartp->parts); i < n; i++) {
-        htp_mpart_part_t *part = (htp_mpart_part_t *) htp_list_get(mpartp->parts, i);
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    for (size_t i = 0, n = htp_list_size(body->parts); i < n; i++) {
+        htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, i);
 
         switch (i) {
             case 0:
@@ -170,8 +173,11 @@ TEST_F(Multipart, Test2) {
     htp_mpartp_parse(mpartp, (const unsigned char *) i7, strlen(i7));
     htp_mpartp_finalize(mpartp);
 
-    for (size_t i = 0, n = htp_list_size(mpartp->parts); i < n; i++) {
-        htp_mpart_part_t *part = (htp_mpart_part_t *) htp_list_get(mpartp->parts, i);       
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    for (size_t i = 0, n = htp_list_size(body->parts); i < n; i++) {
+        htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, i);
 
         switch (i) {
             case 0:

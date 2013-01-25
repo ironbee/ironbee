@@ -43,9 +43,6 @@
 extern "C" {
 #endif
 
-typedef struct htp_mpartp_t htp_mpartp_t;
-typedef struct htp_mpart_part_t htp_mpart_part_t;
-
 #include "bstr.h"
 #include "htp.h"
 #include "htp_table.h"
@@ -72,137 +69,65 @@ typedef struct htp_mpart_part_t htp_mpart_part_t;
 
 #define HTP_MULTIPART_MIME_TYPE                 "multipart/form-data"
 
-struct htp_mpart_part_t {
-    /** Pointer to the parser that created this part. */
-    htp_mpartp_t *mpartp;
 
-    /** Part type; see the MULTIPART_PART_* constants. */
-    int type;   
+// Structures
 
-    /** Raw part length. */
-    size_t len;
-   
-    /** Part name, from the Content-Disposition header. */
-    bstr *name;   
+/**
+ * Holds multipart parser configuration and state. Private.
+ */
+typedef struct htp_mpartp_t htp_mpartp_t;
 
-    /** Part value; currently available only for MULTIPART_PART_TEXT parts. */
-    bstr *value;
-
-    /** Part headers (htp_header_t instances), indexed by name. */
-    htp_table_t *headers;
-
-    /** Further file data, available only for MULTIPART_PART_FILE parts. */
-    htp_file_t *file;
-};
-
-struct htp_mpartp_t {
-    htp_cfg_t *cfg;
-
+/**
+ * Holds information related to a multipart body.
+ */
+typedef struct htp_multipart_t {
     /** Multipart boundary. */
     char *boundary;
 
     /** Boundary length. */
     size_t boundary_len;
-    
-    /** How many boundaries were seen? */
+
+    /** How many boundaries were there? */
     int boundary_count;
 
     /** Did we see the last boundary? */
     int seen_last_boundary;
 
-    /** List of parts. */
+    /** List of parts, in the order in which they appeared in the body. */
     htp_list_t *parts;
+} htp_multipart_t;
 
-    int extract_files;
-    int extract_limit;
-    char *extract_dir;
-    int file_count;
+/**
+ * Holds information related to a part.
+ */
+typedef struct htp_multipart_part_t {
+    /** Pointer to the parser. */
+    htp_mpartp_t *parser;
 
-    // Parsing callbacks
-    int (*handle_data)(htp_mpartp_t *mpartp, const unsigned char *data, size_t len, int line_end);
-    int (*handle_boundary)(htp_mpartp_t *mpartp);
+    /** Part type; see the MULTIPART_PART_* constants. */
+    int type;   
 
-    // Internal parsing fields; move into a private structure
+    /** Raw part length (i.e., headers and data). */
+    size_t len;
+   
+    /** Part name, from the Content-Disposition header. */
+    bstr *name;
 
-    /**
-     * Parser state; one of MULTIPART_STATE_* constants.
-     */
-    int parser_state;
+    /** Part content type, from the Content-Type header. */
+    // TODO
 
-    /**
-     * Keeps track of the current position in the boundary matching progress.
-     * When this field reaches boundary_len, we have a boundary match.
-     */
-    size_t boundary_match_pos;
+    /** Part value; currently available only for MULTIPART_PART_TEXT parts. */
+    bstr *value;
 
-    /**
-     * Pointer to the part that is currently being processed.
-     */
-    htp_mpart_part_t *current_part;
+    /** Part headers (htp_header_t instances), using header name as the key. */
+    htp_table_t *headers;
 
-    /**
-     * This parser consists of two layers: the outer layer is charged with
-     * finding parts, and the internal layer handles part data. There is an
-     * interesting interaction between the two parsers. Because the
-     * outer layer is seeing every line (it has to, in order to test for
-     * boundaries), it also effectively also splits input into lines. The
-     * inner parser deals with two areas: first is the headers, which are
-     * line based, followed by binary data. When parsing headers, the inner
-     * parser can reuse the lines identified by the outer parser. In this
-     * variable we keep the current parsing mode of the part, which helps
-     * us process input data more efficiently. The possible values are
-     * MULTIPART_MODE_LINE and MULTIPART_MODE_DATA.
-     */
-    int current_part_mode;
+    /** File data, available only for MULTIPART_PART_FILE parts. */
+    htp_file_t *file;
+} htp_multipart_part_t;
 
-    /**
-     * Used for buffering when a potential boundary is fragmented
-     * across many input data buffers. On a match, the data stored here is
-     * discarded. When there is no match, the buffer is processed as data
-     * (belonging to the currently active part).
-     */
-    bstr_builder_t *boundary_pieces;
 
-    /**
-     * Stores text part pieces until the entire part is seen, at which
-     * point the pieces are assembled into a single buffer, and the
-     * builder cleared.
-     */
-    bstr_builder_t *part_data_pieces;
-
-    /**
-     * Whenever a new line is encountered, the parser needs to examine it
-     * in order to determine if it contains a boundary. While the examination
-     * is taking place, the parser will store the first byte of the new
-     * line in this structure, which comes handy during the processing of
-     * part headers, in order to efficiently determine if the header is folded.
-     */
-    unsigned char next_line_first_byte;
-
-    /**
-     * The offset of the current boundary candidate, relative to the most
-     * recent data chunk (first unprocessed chunk of data).
-     */
-    size_t boundary_candidate_pos;
-
-    /**
-     * When we encounter a CR as the last byte in a buffer, we don't know
-     * if the byte is part of a CRLF combination. If it is, then the CR
-     * might be a part of a boundary. But if it is not, it's current
-     * part's data. Because we know how to handle everything before the
-     * CR, we do, and we use this flag to indicate that a CR byte is
-     * effectively being buffered. This is probably a case of premature
-     * optimization, but I am going to leave it in for now.
-     */
-    int cr_aside;
-
-    /**
-     * When set, indicates that this parser no longer owns names and
-     * values of MULTIPART_PART_TEXT parts. It is used to avoid data
-     * duplication when the parser is used by LibHTP internally.
-     */
-    int gave_up_data;
-};
+// Functions
 
 /**
  * Creates a new multipart/form-data parser.
@@ -213,11 +138,19 @@ struct htp_mpartp_t {
 htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, char *boundary);
 
 /**
+ * Returns the multipart structure created by the parser.
+ *
+ * @param[in] parser
+ * @return The main multipart structure.
+ */
+htp_multipart_t *htp_mpartp_get_multipart(htp_mpartp_t *parser);
+
+/**
  * Destroys the provided parser.
  *
- * @param[in] mpartp
+ * @param[in] parser
  */
-void htp_mpartp_destroy(htp_mpartp_t **mpartp);
+void htp_mpartp_destroy(htp_mpartp_t **parser);
 
 // TODO Associate with the parser instance.
 htp_status_t htp_mpartp_extract_boundary(bstr *content_type, char **boundary);
@@ -225,21 +158,21 @@ htp_status_t htp_mpartp_extract_boundary(bstr *content_type, char **boundary);
 /**
  * Finalize parsing.
  *
- * @param[in] mpartp
+ * @param[in] parser
  * @returns HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_mpartp_finalize(htp_mpartp_t *mpartp);
+htp_status_t htp_mpartp_finalize(htp_mpartp_t *parser);
 
 /**
  * Parses a chunk of multipart/form-data data. This function should be called
  * as many times as necessary until all data has been consumed.
  *
- * @param[in] mpartp
+ * @param[in] parser
  * @param[in] data
  * @param[in] len
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_mpartp_parse(htp_mpartp_t *mpartp, const unsigned char *data, size_t len);
+htp_status_t htp_mpartp_parse(htp_mpartp_t *parser, const unsigned char *data, size_t len);
 
 #ifdef __cplusplus
 }

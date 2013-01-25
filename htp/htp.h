@@ -115,8 +115,6 @@ struct htp_file_t {
     /** File length. */
     int64_t len;
 
-    // TODO Content type is missing. This information is sometimes available in multipart payloads.
-
     /** The unique filename in which this file is stored on the filesystem, when applicable.*/
     char *tmpname;
 

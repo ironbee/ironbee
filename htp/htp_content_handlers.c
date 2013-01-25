@@ -37,6 +37,7 @@
  */
 
 #include "htp.h"
+#include "htp_multipart_private.h"
 #include "htp_private.h"
 
 /**
@@ -168,13 +169,15 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
 
     if (d->data != NULL) {
         // Process one chunk of data
-        htp_mpartp_parse(d->tx->request_mpartp, d->data, d->len);
+        htp_mpartp_parse(tx->request_mpartp, d->data, d->len);
     } else {
         // Finalize parsing
         htp_mpartp_finalize(tx->request_mpartp);
 
-        for (int i = 0, n = htp_list_size(tx->request_mpartp->parts); i < n; i++) {
-            htp_mpart_part_t *part = htp_list_get(tx->request_mpartp->parts, i);
+        htp_multipart_t *body = htp_mpartp_get_multipart(tx->request_mpartp);
+
+        for (int i = 0, n = htp_list_size(body->parts); i < n; i++) {
+            htp_multipart_part_t *part = htp_list_get(body->parts, i);
 
             // Use text parameters
             if (part->type == MULTIPART_PART_TEXT) {                
