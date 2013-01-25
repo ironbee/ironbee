@@ -106,6 +106,13 @@ clipp_LDFLAGS = \
     -lprotobuf \
     $(GLIB_LIBS)
 
+if DARWIN
+if ENABLE_LUA
+# On Darwin (OSX) this is necessary for LuaJIT to run properly.
+clipp_LDFLAGS += -pagezero_size 10000 -image_base 100000000
+endif
+endif
+
 if HAVE_MODP
 clipp_LDFLAGS += $(MODP_LDFLAGS) -lmodpbase64
 endif
