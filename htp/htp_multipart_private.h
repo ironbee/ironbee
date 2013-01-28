@@ -76,7 +76,10 @@ enum htp_multipart_state_t {
     STATE_BOUNDARY_IS_LAST2 = 4,
 
     /** Consuming linear whitespace after a boundary. */
-    STATE_BOUNDARY_EAT_LF = 5
+    STATE_BOUNDARY_EAT_LWS = 5,
+
+    /** Used after a CR byte is detected in STATE_BOUNDARY_EAT_LWS. */
+    STATE_BOUNDARY_EAT_LWS_CR = 6
 };
 
 struct htp_mpartp_t {

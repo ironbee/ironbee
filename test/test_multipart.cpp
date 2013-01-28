@@ -299,7 +299,7 @@ TEST_F(Multipart, Test4) {
     Multipart_Helper(mpartp, parts);
 }
 
-TEST_F(Multipart, Test5) {    
+TEST_F(Multipart, Test5) {
     char *parts[] = {
         "\n--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -318,6 +318,29 @@ TEST_F(Multipart, Test5) {
 
 TEST_F(Multipart, Test6) {
     char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_LF_LINE);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
+}
+
+TEST_F(Multipart, Test7) {
+    char *parts[] = {
         "--0123456789\n"
         "Content-Disposition: form-data; name=\"field1\"\n"
         "\n"
@@ -335,5 +358,99 @@ TEST_F(Multipart, Test6) {
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_ENDINGS);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_CRLF_LINE);
+}
+
+TEST_F(Multipart, Test8) {
+    char *parts[] = {
+        "--0123456789\n"
+        "Content-Disposition: form-data; name=\"field1\"\n"
+        "\n"
+        "ABCDEF"
+        "\r\n--0123456789\n"
+        "Content-Disposition: form-data; name=\"field2\"\n"
+        "\n"
+        "GHIJKL"
+        "\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
+}
+
+
+TEST_F(Multipart, Test9) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\n"
+        "\n"
+        "ABCDEF"
+        "\n--0123456789\n"
+        "Content-Disposition: form-data; name=\"field2\"\n"
+        "\n"
+        "GHIJKL"
+        "\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
+}
+
+TEST_F(Multipart, Test10) {
+    char *parts[] = {
+        "--0123456789\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
+}
+
+TEST_F(Multipart, Test11) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }

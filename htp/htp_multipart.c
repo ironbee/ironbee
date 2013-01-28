@@ -887,6 +887,8 @@ STATE_SWITCH:
                             if (data[pos + 1] == LF) {
                                 pos += 2; // Advance over CR and LF.
 
+                                parser->multipart.flags |= HTP_MULTIPART_CRLF_LINE;
+
                                 // Prepare to switch to boundary testing.
                                 data_return_pos = pos;
                                 parser->boundary_candidate_pos = pos - startpos;
@@ -902,13 +904,15 @@ STATE_SWITCH:
                             }
                         }
                     } else if (data[pos] == LF) { // Check for a LF-terminated line.
-                        // Did we have a CR in the previous input chunk?
-                        if (parser->cr_aside == 0) {
-                            parser->multipart.flags |= HTP_MULTIPART_LF_ENDINGS;
-                        }
-
                         pos++; // Advance over LF.
 
+                        // Did we have a CR in the previous input chunk?
+                        if (parser->cr_aside == 0) {
+                            parser->multipart.flags |= HTP_MULTIPART_LF_LINE;
+                        } else {
+                            parser->multipart.flags |= HTP_MULTIPART_CRLF_LINE;
+                        }
+                        
                         // Prepare to switch to boundary testing.
                         data_return_pos = pos;
                         parser->boundary_candidate_pos = pos - startpos;
@@ -1020,7 +1024,7 @@ STATE_SWITCH:
                     // This is not the last boundary. Change state but
                     // do not advance the position, allowing the next
                     // state to process the byte.
-                    parser->parser_state = STATE_BOUNDARY_EAT_LF;
+                    parser->parser_state = STATE_BOUNDARY_EAT_LWS;
                 }
                 break;               
 
@@ -1032,26 +1036,45 @@ STATE_SWITCH:
                     // This is indeed the last boundary in the payload.
                     pos++;
                     parser->multipart.seen_last_boundary = 1;
-                    parser->parser_state = STATE_BOUNDARY_EAT_LF;
+                    parser->parser_state = STATE_BOUNDARY_EAT_LWS;
                 } else {
                     // The second character is not a dash. This means that we have
                     // an error in the payload. We should report the error and
                     // continue to eat the rest of the line.
                     // TODO Error
-                    parser->parser_state = STATE_BOUNDARY_EAT_LF;
+                    parser->parser_state = STATE_BOUNDARY_EAT_LWS;
                 }
                 break;
 
-            case STATE_BOUNDARY_EAT_LF:
-                if (data[pos] == LF) {
-                    // We're done with boundary processing; data bytes follow.
+            case STATE_BOUNDARY_EAT_LWS:
+                if (data[pos] == CR) {
+                    // CR byte, which could indicate a CRLF line ending.
+                    pos++;
+                    parser->parser_state = STATE_BOUNDARY_EAT_LWS_CR;
+                }
+                else if (data[pos] == LF) {
+                    // LF line ending; we're done with boundary processing; data bytes follow.
                     pos++;
                     startpos = pos;
+                    parser->multipart.flags |= HTP_MULTIPART_LF_LINE;
                     parser->parser_state = STATE_DATA;
                 } else {
                     // TIDI Error!
                     // Unexpected byte; remain in the same state
                     pos++;
+                }
+                break;
+
+            case STATE_BOUNDARY_EAT_LWS_CR:
+                if (data[pos] == LF) {
+                    // CRLF line ending; we're done with boundary processing; data bytes follow.
+                    pos++;
+                    startpos = pos;
+                    parser->multipart.flags |= HTP_MULTIPART_CRLF_LINE;
+                    parser->parser_state = STATE_DATA;
+                } else {
+                    // Not a line ending; start again, but do not process this byte.
+                    parser->parser_state = STATE_BOUNDARY_EAT_LWS;
                 }
                 break;
         } // switch
