@@ -49,11 +49,20 @@ protected:
     virtual void SetUp() {
         cfg = htp_config_create();
         htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2);
+        mpartp = htp_mpartp_create(cfg);
     }
 
     virtual void TearDown() {
-        htp_config_destroy(cfg);
+        if (mpartp != NULL) {
+            htp_mpartp_destroy(&mpartp);
+        }
+
+        if (cfg != NULL) {
+            htp_config_destroy(cfg);
+        }
     }
+
+    htp_mpartp_t *mpartp;
 
     htp_cfg_t *cfg;
 };
@@ -214,10 +223,9 @@ TEST_F(Multipart, Test2) {
     htp_mpartp_destroy(&mpartp);
 }
 
-static void Multipart_Helper(htp_cfg_t *cfg, char *parts[]) {
+static void Multipart_Helper(htp_mpartp_t *mpartp, char *parts[]) {
     char boundary[] = "0123456789";
-
-    htp_mpartp_t *mpartp = htp_mpartp_create(cfg);
+   
     htp_mpartp_init_boundary_ex(mpartp, boundary);
 
     size_t i = 0;
@@ -255,74 +263,72 @@ static void Multipart_Helper(htp_cfg_t *cfg, char *parts[]) {
                 break;
         }
     }
-
-    htp_mpartp_destroy(&mpartp);
 }
 
 TEST_F(Multipart, Test3) {    
     char *parts[] = {
         "--0123456789\r\n"
-        "Content-Disposition: form-data;\n name=\"field1\"\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
         "\r\n"
         "ABCDEF"
         "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data;\n name=\"field2\"\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
         "\r\n"
         "GHIJKL"
         "\r\n--0123456789--",
         NULL
     };
 
-    Multipart_Helper(cfg, parts);
+    Multipart_Helper(mpartp, parts);
 }
 
 TEST_F(Multipart, Test4) {
     char *parts[] = {
         "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data;\n name=\"field1\"\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
         "\r\n"
         "ABCDEF"
         "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data;\n name=\"field2\"\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
         "\r\n"
         "GHIJKL"
         "\r\n--0123456789--",
         NULL
     };
 
-    Multipart_Helper(cfg, parts);
+    Multipart_Helper(mpartp, parts);
 }
 
 TEST_F(Multipart, Test5) {    
     char *parts[] = {
         "\n--0123456789\r\n"
-        "Content-Disposition: form-data;\n name=\"field1\"\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
         "\r\n"
         "ABCDEF"
         "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data;\n name=\"field2\"\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
         "\r\n"
         "GHIJKL"
         "\r\n--0123456789--",
         NULL
     };
 
-    Multipart_Helper(cfg, parts);
+    Multipart_Helper(mpartp, parts);
 }
 
 TEST_F(Multipart, Test6) {
     char *parts[] = {
         "--0123456789\n"
-        "Content-Disposition: form-data;\n name=\"field1\"\n"
+        "Content-Disposition: form-data; name=\"field1\"\n"
         "\n"
         "ABCDEF"
         "\n--0123456789\n"
-        "Content-Disposition: form-data;\n name=\"field2\"\n"
+        "Content-Disposition: form-data; name=\"field2\"\n"
         "\n"
         "GHIJKL"
         "\n--0123456789--",
         NULL
     };
 
-    Multipart_Helper(cfg, parts);
+    Multipart_Helper(mpartp, parts);
 }
