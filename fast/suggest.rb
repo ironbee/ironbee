@@ -220,11 +220,11 @@ STDIN.each do |line|
   if potential_rule(line)
     res = extract_regexps(line)
     res.each do |re|
-      patterns = extract_patterns(re)
+      patterns = extract_patterns(re).select {|x| valid_suggestion(x)}
       next if patterns.empty?
       if SUGGEST_ALL
         patterns.each do |pattern|
-          puts format_suggestion(pattern) if valid_suggestion(pattern)
+          puts format_suggestion(pattern)
         end
       else
         puts format_suggestion(select_best(patterns))
