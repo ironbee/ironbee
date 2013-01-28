@@ -50,15 +50,16 @@ extern "C" {
 
 // Constants and enums
 
-#define HTP_MULTIPART_LF_LINE               0x0001
-#define HTP_MULTIPART_CRLF_LINE             0x0002
-#define HTP_MULTIPART_BOUNDARY_LWS_AFTER    0x0004
-#define HTP_MULTIPART_BOUNDARY_NLWS_AFTER   0x0008
-#define HTP_MULTIPART_HAS_PREAMBLE          0x0010
-#define HTP_MULTIPART_HAS_EPILOGUE          0x0020
-#define HTP_MULTIPART_SEEN_LAST_BOUNDARY    0x0040
+#define HTP_MULTIPART_LF_LINE                   0x0001
+#define HTP_MULTIPART_CRLF_LINE                 0x0002
+#define HTP_MULTIPART_BOUNDARY_LWS_AFTER        0x0004
+#define HTP_MULTIPART_BOUNDARY_NLWS_AFTER       0x0008
+#define HTP_MULTIPART_HAS_PREAMBLE              0x0010
+#define HTP_MULTIPART_HAS_EPILOGUE              0x0020
+#define HTP_MULTIPART_SEEN_LAST_BOUNDARY        0x0040
+#define HTP_MULTIPART_PART_AFTER_LAST_BOUNDARY  0x0080
 
-#define HTP_MULTIPART_MIME_TYPE             "multipart/form-data"
+#define HTP_MULTIPART_MIME_TYPE                 "multipart/form-data"
 
 enum htp_multipart_type_t {
 

@@ -374,9 +374,21 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
  * @param[in] part
  */
 htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
-    // We currently do not process or store the preamble and epilogue parts.
-    if ((part->type == MULTIPART_PART_PREAMBLE) || (part->type == MULTIPART_PART_EPILOGUE)) {
-        return HTP_OK;
+    // We currently do not process or store the preamble part.
+    if (part->type == MULTIPART_PART_PREAMBLE) return HTP_OK;
+
+    // If we have seen the last boundary, and this part does not have
+    // a name, then it is probably a genuine epilogue part. Otherwise,
+    // it might be an evasion attempt.
+    if (part->parser->multipart.flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY) {
+        if (part->type == MULTIPART_PART_UNKNOWN) {
+            part->parser->current_part->type = MULTIPART_PART_EPILOGUE;
+            part->parser->multipart.flags |= HTP_MULTIPART_HAS_EPILOGUE;
+            return HTP_OK;
+        } else {
+            part->parser->multipart.flags |= HTP_MULTIPART_PART_AFTER_LAST_BOUNDARY;
+            // Continue to set part value.
+        }       
     }
 
     if (part->type == MULTIPART_PART_TEXT) {
@@ -426,10 +438,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
     #if HTP_DEBUG
     fprint_raw_data(stderr, "htp_mpart_part_handle_data: data chunk", (unsigned char *) data, len);
     fprintf(stderr, "Part type: %d\n", part->type);
-    #endif
-
-    // TODO We don't actually need the is_line parameter, because we can
-    //      discover that ourselves by looking at the last byte in the buffer.
+    #endif   
 
     // Keep track of part length
     part->len += len;
@@ -457,12 +466,14 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
 
             // Is it an empty line?
             if ((len == 0) && ((bstr_builder_size(part->parser->part_data_pieces) == 0))) {
-                // Empty line; switch to data mode
-                part->parser->current_part_mode = MODE_DATA;
+                // Empty line; process headers and switch to data mode.               
+                
                 htp_mpart_part_process_headers(part);
                 // TODO RC
+                
+                part->parser->current_part_mode = MODE_DATA;               
 
-                if (part->file != NULL) {
+                if (part->file != NULL) {                    
                     part->type = MULTIPART_PART_FILE;
 
                     if ((part->parser->extract_files) && (part->parser->file_count < part->parser->extract_limit)) {
@@ -476,9 +487,9 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
 
                         part->parser->file_count++;
                     }
-                } else {
+                } else {                    
                     part->type = MULTIPART_PART_TEXT;
-                }
+                }               
             } else {
                 // Not an empty line
 
@@ -563,12 +574,8 @@ static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *parser, const unsigned 
             parser->multipart.flags |= HTP_MULTIPART_HAS_PREAMBLE;
             parser->current_part_mode = MODE_DATA;
         } else {
-            if (parser->multipart.flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY) {
-                // We've seen the last boundary, so this must be the epilogue part.
-                parser->current_part->type = MULTIPART_PART_EPILOGUE;
-                parser->multipart.flags |= HTP_MULTIPART_HAS_EPILOGUE;
-                parser->current_part_mode = MODE_DATA;
-            }
+            // Part after preamble.
+            parser->current_part_mode = MODE_LINE;
         }
 
         // Add part to the list.        
@@ -592,10 +599,7 @@ static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *parser, const unsigned 
 static htp_status_t htp_mpartp_handle_boundary(htp_mpartp_t *parser) {
     #if HTP_DEBUG
     fprintf(stderr, "htp_mpartp_handle_boundary\n");
-    #endif
-
-    // TODO Having parser->seen_last_boundary set here means that there's
-    //      a boundary after the "last boundary".
+    #endif   
 
     if (parser->current_part != NULL) {
         if (htp_mpart_part_finalize_data(parser->current_part) != HTP_OK) {
@@ -996,6 +1000,10 @@ STATE_SWITCH:
 
                         // Keep track of how many boundaries we've seen.
                         parser->multipart.boundary_count++;
+
+                        if (parser->multipart.flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY) {
+                            parser->multipart.flags |= HTP_MULTIPART_PART_AFTER_LAST_BOUNDARY;
+                        }
 
                         // Run boundary match.
                         parser->handle_boundary(parser);

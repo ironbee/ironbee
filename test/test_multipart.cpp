@@ -532,7 +532,7 @@ TEST_F(Multipart, WithEpilogue) {
         "Content-Disposition: form-data; name=\"field1\"\r\n"
         "\r\n"
         "ABCDEF"
-        "\n--0123456789 X \r\n"
+        "\n--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field2\"\r\n"
         "\r\n"
         "GHIJKL"
@@ -591,4 +591,26 @@ TEST_F(Multipart, DoesNotHaveLastBoundary) {
     ASSERT_TRUE(body != NULL);
 
     ASSERT_FALSE(body->flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY);
+}
+
+TEST_F(Multipart, PartAfterLastBoundary) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789--\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789",
+        NULL
+    };
+
+    Multipart_Helper(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY);
 }
