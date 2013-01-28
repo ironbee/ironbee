@@ -1059,9 +1059,15 @@ STATE_SWITCH:
                     parser->multipart.flags |= HTP_MULTIPART_LF_LINE;
                     parser->parser_state = STATE_DATA;
                 } else {
-                    // TIDI Error!
-                    // Unexpected byte; remain in the same state
-                    pos++;
+                    if (htp_is_lws(data[pos])) {
+                        // Linear white space is allowed here.
+                        parser->multipart.flags |= HTP_MULTIPART_BOUNDARY_LWS_AFTER;
+                        pos++;
+                    } else {
+                        // Unexpected byte; consume, but remain in the same state.
+                        parser->multipart.flags |= HTP_MULTIPART_BOUNDARY_NLWS_AFTER;
+                        pos++;
+                    }
                 }
                 break;
 

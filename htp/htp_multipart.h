@@ -50,8 +50,10 @@ extern "C" {
 
 // Constants and enums
 
-#define HTP_MULTIPART_LF_LINE           0x0001
-#define HTP_MULTIPART_CRLF_LINE         0x0002
+#define HTP_MULTIPART_LF_LINE               0x0001
+#define HTP_MULTIPART_CRLF_LINE             0x0002
+#define HTP_MULTIPART_BOUNDARY_LWS_AFTER    0x0004
+#define HTP_MULTIPART_BOUNDARY_NLWS_AFTER    0x0008
 
 #define HTP_MULTIPART_MIME_TYPE         "multipart/form-data"
 
