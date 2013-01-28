@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8"/>
+	<title>IronBee Fast Pattern Manual</title>
+	<meta name="author" content="Christopher Alfeld &lt;calfeld@qualys.com&gt;"/>
+</head>
+<body>
+
+<h1 id="fastpatternusermanual">Fast Pattern User Manual</h1>
+
+<p>Christopher Alfeld <a href="&#x6d;&#x61;&#x69;&#108;&#116;&#111;&#58;&#99;&#x61;&#x6c;&#102;&#x65;&#108;&#100;&#x40;&#x71;&#x75;&#x61;&#108;&#121;&#x73;&#x2e;&#x63;&#x6f;&#109;">&#x63;&#x61;&#108;&#102;&#x65;&#x6c;&#100;&#64;&#x71;&#117;&#x61;&#x6c;&#x79;&#x73;&#x2e;&#x63;&#111;&#x6d;</a><br></p>
+
+<p><strong>Warning:</strong> This document describes a feature that is under ongoing development. Only portions of what is described are currently available and all of it is subject to change. This document is intended for IronBee developers, those wanting to play on the bleeding edge, and those interested in upcoming major features.</p>
+
+<h2 id="introduction">Introduction</h2>
+
+<p>The IronBee Fast Pattern system as an upcoming system for improved rule performance. It allows certain rules to be selected for evaluation in a manner that is significantly faster than the default process. In particular, properly setup, fast pattern rules that are not evaluated impose near-zero time cost. In contrast, in normal IronBee, every rule is evaluated and thus imposed some time cost on every transaction. The system does use more space (RAM) than default and should be viewed as a space/time trade-off.</p>
+
+<p>The system works by attaching one or more fast patterns to a rule. The rule will only be evaluated if the fast pattern appears in the input. It is important to note that a rule may still evaluate to false. Typically, a fast pattern represents a string (or set of strings) that must be present in the input. For example, a rule for request headers that depends on the regular expression <code>^Foo:</code> could have a fast pattern of <code>Foo:</code>, in which case it would only be evaluated if &#8216;Foo:&#8217; was present somewhere in the header data. If that occurrence was <code>Content-Type: Foo:</code>, then the rule would evaluate to false as the regexp would not match.</p>
+
+<p>An important constraint on fast pattern rules is that the order they execute in is not guaranteed. Thus, any rule that depends on another rule in the same phase or that is depended on by another rule in the same phase should not use fast patterns. The final constraint is that fast patterns do not work well with transformations.</p>
+
+<p>Internally, all fast patterns for a phase are compiled into an IronAutomata automata. At each phase, the automata is executed and searches for the patterns as substrings in the input. For any patterns found, the associated rules are then evaluated.</p>
+
+<h2 id="fastpatternsyntax">Fast Pattern Syntax</h2>
+
+<p>The fast pattern syntax is that of the IronAutomata Aho-Corasick patterns. The syntax, unlike regular expressions, only allows fixed width expressions. It provides operators for escaping, e.g., <code>\e</code> for escape, and for character sets, e.g., <code>\l</code> for any lower case character. For the latest syntax, run <code>ac_generator --help</code> from IronAutomata. The result as of this writing is:</p>
+
+<pre><code>Patterns provide a variety of fixed width operators that are shortcuts for
+a byte or span of bytes.  E.g., &quot;foo\dbar&quot; is a pattern for &quot;foo0bar&quot;,
+&quot;foo1bar&quot;, ..., &quot;foo9bar&quot;.
+
+Single Shortcuts:
+- \\ -- Backslash.
+- \t -- Horizontal tab.
+- \v -- Vertical tab.
+- \n -- New line
+- \r -- Carriage return.
+- \f -- Form feed.
+- \0 -- Null.
+- \e -- Escape.
+
+Parameterized Single Shortcuts:
+- \^X -- Control character, where X is A-Z, [, \, ], ^, _, or ?.
+- \xXX -- ASCII character XX in hex.
+- \iX -- Match lower case of X and upper case of X where X is A-Za-z.
+
+Multiple Shortcuts:
+- \d -- Digit -- 0-9
+- \D -- Non-Digit -- all but 0-9
+- \h -- Hexadecimal digit -- A-Fa-f0-9
+- \w -- Word Character -- A-Za-z0-9
+- \W -- Non-Word Character -- All but A-Za-z0-9
+- \a -- Alphabetic character -- A-Za-z
+- \l -- Lowercase letters -- a-z
+- \u -- Uppercase letters -- A-Z
+- \s -- White space -- space, \t\r\n\v\f
+- \S -- Non-white space -- All but space, \t\r\n\v\f
+- \$ -- End of line -- \r\f
+- \p -- Printable character, ASCII hex 20 through 7E.
+- \. -- Any character.
+</code></pre>
+
+<h2 id="usingfastpatterns">Using Fast Patterns</h2>
+
+<p><strong>Step 1</strong>: Add <code>fast:</code> modifiers to your rules.</p>
+
+<p>Look for rules that require a certain substring in order to be meaningful. Add <code>fast:substring</code> to those rules. For more advanced use, specify AC patterns (see previous section). For example, to require <code>foo</code> in a case insensitive manner, use <code>fast:\if\io\io</code>.</p>
+
+<p>If there is no single required substring but instead a small number of alternatives, you can use multiple fast modifiers. E.g., for a regular expression <code>foo|bar</code>, consider <code>fast:foo fast:bar</code>.</p>
+
+<p>There is a script, <code>fast/suggest.rb</code> which takes rules on standard in and outputs the rules to standout with additional comments suggesting fast patterns based on regular expressions in the rule. This script is currently very limited, but should eventually cover a wide range of regular expression based rules. It requires the <code>regexp_parser</code> gem which can be installed via <code>gem install regexp_parser</code>.</p>
+
+<p><strong>Step 2</strong>: Build the automata.</p>
+
+<p>In order for IronBee to take advantage of fast modifiers, it needs the corresponding automata. This automata is an IronAutomata Eudoxus file with specific metadata. The easiest way to build it is to run <code>fast/build.rb</code> (currently this must be run in the <em>object tree</em> <code>fast</code> directory) with a single argument specifying the rules file. It will generate a bunch of build artifacts, including a <code>.e</code> file suitable for loading into IronBee.</p>
+
+<p>Note that you must be run <code>build.rb</code> on a platform of the same endianness as where you intend to run IronBee.</p>
+
+<p>Here is an example run:</p>
+
+<pre><code>obj/fast&gt; ../../ironbee/fast/build.rb test.txt
+Extracting rules from test.txt to test.txt.manifest
+  .../fast/extract.rb
+Generating AC automata from test.txt.manifest to test.txt.automata
+  ./generate
+Optimizing automata from test.txt.automata to test.txt.optimized
+  ../automata/bin/optimize --translate-nonadvancing-structural
+Translate Nonadvancing [structural]: 6
+Compiling optimized from test.txt.optimized to test.txt.e
+  ../automata/bin/ec -i test.txt.automata -o test.txt.e -h 0.5
+bytes            = 1993
+id_width         = 2
+align_to         = 1
+high_node_weight = 0.5
+ids_used         = 489
+padding          = 0
+low_nodes        = 177
+low_nodes_bytes  = 1361
+high_nodes       = 1
+high_nodes_bytes = 77
+pc_nodes         = 2
+pc_nodes_bytes   = 16
+bytes @ 1        = 1504
+bytes @ 2        = 1993
+bytes @ 4        = 2971
+bytes @ 8        = 4927
+</code></pre>
+
+<p>During this run the following files were created:</p>
+
+<ul>
+<li><code>test.txt.manifest</code>: The patterns and rule ids. Human readable.</li>
+<li><code>test.txt.automata</code>: The initial automata. This automata can be viewed as a GraphViz dot file via <code>automata/bin/to_dot</code>.</li>
+<li><code>test.txt.optimized</code>: The automata after some optimizations. This automata can also be viewed via <code>to_dot</code> but may be more confusing.</li>
+<li><code>test.txt.e</code>: The result of compiling <code>test.txt.optimized</code> via the Eudoxus Compiler (<code>ec</code>). This file is what you will load into IronBee.</li>
+</ul>
+
+<p>Note that <code>bytes = 1993</code> line. This line shows the space (RAM) cost of using fast patterns over normal IronBee.</p>
+
+<p><strong>Step 3</strong>: Tell IronBee about the automata.</p>
+
+<p><strong>Note: This step is not yet supported in IronBee.</strong></p>
+
+<p>IronBee must be told to use the fast pattern system and about the automata you built in step 2. Make sure you load the <code>fast</code> module. Then use the <code>FastAutomata</code> directive to provide the path to the <code>.e</code> file you built in step 2. </p>
+
+<p>At present, you should use a single automata built from every fast pattern rule, regardless of phase or context. The fast pattern system will filter the results of the automata execution to only evaluate rules appropriate to the current context and phase. The current assumption is that a single automata plus filtering is better choice in terms of space and time than per-context/phase automata. This assumption may be incorrect or such usage may be too onerous to users. As such, this behavior may change in the future.</p>
+
+<h2 id="advancedusage">Advanced Usage</h2>
+
+<p>Advanced users may want to tune their automata further. Additional optimizations can be attempted and different space/time tradeoffs taken. Users should be familiar with IronAutomata and the options available, especially high node weight in <code>ec</code>. The initial automata can be generated from the manifest via the <code>fast/generate</code>. That automata can then be optimized and compiled in whatever manner desired so long as an equivalent Eudoxus automata is the end result.</p>
+
+<h2 id="performancenotes">Performance Notes</h2>
+
+<p>The underlying automata should execute in <code>O(n)</code> time where <code>n</code> is the size of the transaction data. Given an automata execution that results in <code>k</code> rules, an additional <code>O(k)</code> time is needed to filter the rules down to the <code>k' &lt;= k</code> rules appropriate to the phase and context. Finally, <code>O(k')</code> time is needed to evaluate and potentially execute the rules. In contrast, default IronBee uses <code>O(m)</code> time (where <code>m</code> is the number of rules in the current phase and context) to select, evaluate, and execute rules. Thus fast pattern rules provide an advantage where <code>m</code> is large and <code>k</code> is small. Such a situation occurs when there are many specific rules. If you have a small rule set, or most of your rules are very general, default IronBee is likely the better choice.</p>
+
+</body>
+</html>
