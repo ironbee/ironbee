@@ -33,6 +33,7 @@
 #include <ironbee/capture.h>
 #include <ironbee/engine.h>
 #include <ironbee/field.h>
+#include <ironbee/list.h>
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
@@ -42,6 +43,14 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+
+
+/** Configuration data */
+typedef struct {
+    ib_list_t  *injection_list;      /**< List of rules to inject */
+} ruledev_cfg_t;
+static ruledev_cfg_t mod_ruledev_global_cfg;
+
 
 /* Define the module name as well as a string version of it. */
 #define MODULE_NAME        rule_dev
@@ -455,6 +464,103 @@ static ib_status_t act_assert_execute(const ib_rule_exec_t *rule_exec,
     return IB_OK;
 }
 
+/** Injection action functions & related delcarions */
+static const char *act_inject_name = "inject";
+
+/**
+ * Create function for the inject action.
+ *
+ * @param[in] ib IronBee engine (unused)
+ * @param[in] ctx Current context.
+ * @param[in] mp Memory pool to use for allocation
+ * @param[in] parameters Constant parameters from the rule definition
+ * @param[in,out] inst Action instance
+ * @param[in] cbdata Callback data (unused)
+ *
+ * @returns Status code
+ */
+static ib_status_t act_inject_create_fn(ib_engine_t *ib,
+                                       ib_context_t *ctx,
+                                        ib_mpool_t *mp,
+                                        const char *parameters,
+                                        ib_action_inst_t *inst,
+                                        void *cbdata)
+{
+    inst->data = NULL;
+    return IB_OK;
+}
+
+/**
+ * Inject action rule ownership function
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] rule Rule being registered
+ * @param[in] cbdata Registration function callback data
+ *
+ * @returns Status code:
+ *   - IB_OK All OK, rule managed externally by module
+ *   - IB_DECLINE Decline to manage rule
+ *   - IB_Exx Other error
+ */
+static ib_status_t act_inject_ownership_fn(
+    const ib_engine_t    *ib,
+    const ib_rule_t      *rule,
+    void                 *cbdata)
+{
+    assert(ib != NULL);
+    assert(rule != NULL);
+
+    ib_status_t rc;
+    size_t count = 0;
+
+    rc = ib_rule_search_action(ib, rule, RULE_ACTION_TRUE,
+                               act_inject_name,
+                               NULL, &count);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    if (count == 0) {
+        return IB_DECLINED;
+    }
+    rc = ib_list_push(mod_ruledev_global_cfg.injection_list, (ib_rule_t *)rule);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    return IB_OK;
+}
+
+/**
+ * Inject action rule injection function
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] rule_exec Rule execution environment
+ * @param[in,out] rule_list List of rules to execute (append-only)
+ * @param[in] cbdata Injection function callback data
+ *
+ * @returns Status code:
+ *   - IB_OK All OK
+ *   - IB_Exx Other error
+ */
+static ib_status_t act_inject_injection_fn(
+    const ib_engine_t    *ib,
+    const ib_rule_exec_t *rule_exec,
+    ib_list_t            *rule_list,
+    void                 *cbdata)
+{
+    const ib_list_node_t *node;
+
+    IB_LIST_LOOP_CONST(mod_ruledev_global_cfg.injection_list, node) {
+        const ib_rule_t *rule = (const ib_rule_t *)node->data;
+        if (rule->meta.phase == rule_exec->phase) {
+            ib_status_t rc = ib_list_push(rule_list, (ib_rule_t *)rule);
+            if (rc != IB_OK) {
+                return rc;
+            }
+        }
+    }
+    return IB_OK;
+}
+
 /**
  * Called to initialize the rule development module
  *
@@ -469,6 +575,7 @@ static ib_status_t act_assert_execute(const ib_rule_exec_t *rule_exec,
 static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
 {
     ib_status_t rc;
+    ib_rule_phase_num_t phase;
 
     /**
      * Simple True / False operators.
@@ -644,13 +751,45 @@ static ib_status_t ruledev_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
         return rc;
     }
 
+    /* Register the inject action and related rule engine callbacks */
+    rc = ib_action_register(ib,
+                            act_inject_name,
+                            IB_ACT_FLAG_NONE,
+                            act_inject_create_fn, NULL,
+                            NULL, NULL, /* no destroy function */
+                            NULL, NULL); /* no execute function */
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_list_create(&mod_ruledev_global_cfg.injection_list,
+                        ib_engine_pool_main_get(ib));
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_rule_register_ownership_fn(ib, act_inject_name,
+                                       act_inject_ownership_fn, NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    for (phase = PHASE_NONE; phase < IB_RULE_PHASE_COUNT; ++phase) {
+        rc = ib_rule_register_injection_fn(ib, act_inject_name,
+                                           phase, act_inject_injection_fn,
+                                           NULL);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
     return IB_OK;
 }
 
 IB_MODULE_INIT(
     IB_MODULE_HEADER_DEFAULTS,      /* Default metadata */
     MODULE_NAME_STR,                /* Module name */
-    IB_MODULE_CONFIG_NULL,          /* Global config data */
+    IB_MODULE_CONFIG(&mod_ruledev_global_cfg), /* Global config data */
     NULL,                           /* Module config map */
     NULL,                           /* Module directive map */
     ruledev_init,                   /* Initialize function */
