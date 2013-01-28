@@ -269,7 +269,7 @@ static void Multipart_Helper(htp_mpartp_t *mpartp, char *parts[]) {
     }
 }
 
-TEST_F(Multipart, Test3) {    
+TEST_F(Multipart, BeginsWithoutLine) {
     char *parts[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -286,7 +286,7 @@ TEST_F(Multipart, Test3) {
     Multipart_Helper(mpartp, parts);
 }
 
-TEST_F(Multipart, Test4) {
+TEST_F(Multipart, BeginsWithCrLf) {
     char *parts[] = {
         "\r\n--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -303,7 +303,7 @@ TEST_F(Multipart, Test4) {
     Multipart_Helper(mpartp, parts);
 }
 
-TEST_F(Multipart, Test5) {
+TEST_F(Multipart, BeginsWithLf) {
     char *parts[] = {
         "\n--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -320,7 +320,7 @@ TEST_F(Multipart, Test5) {
     Multipart_Helper(mpartp, parts);
 }
 
-TEST_F(Multipart, Test6) {
+TEST_F(Multipart, CrLfLineEndings) {
     char *parts[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -343,7 +343,7 @@ TEST_F(Multipart, Test6) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
 
-TEST_F(Multipart, Test7) {
+TEST_F(Multipart, LfLineEndings) {
     char *parts[] = {
         "--0123456789\n"
         "Content-Disposition: form-data; name=\"field1\"\n"
@@ -366,7 +366,7 @@ TEST_F(Multipart, Test7) {
     ASSERT_FALSE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
 
-TEST_F(Multipart, Test8) {
+TEST_F(Multipart, CrAndLfLineEndings1) {
     char *parts[] = {
         "--0123456789\n"
         "Content-Disposition: form-data; name=\"field1\"\n"
@@ -390,7 +390,7 @@ TEST_F(Multipart, Test8) {
 }
 
 
-TEST_F(Multipart, Test9) {
+TEST_F(Multipart, CrAndLfLineEndings2) {
     char *parts[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\n"
@@ -413,7 +413,7 @@ TEST_F(Multipart, Test9) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
 
-TEST_F(Multipart, Test10) {
+TEST_F(Multipart, CrAndLfLineEndings3) {
     char *parts[] = {
         "--0123456789\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -436,7 +436,7 @@ TEST_F(Multipart, Test10) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
 
-TEST_F(Multipart, Test11) {
+TEST_F(Multipart, CrAndLfLineEndings4) {
     char *parts[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -459,7 +459,7 @@ TEST_F(Multipart, Test11) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
 
-TEST_F(Multipart, Test12) {
+TEST_F(Multipart, BoundaryInstanceWithLwsAfter) {
     char *parts[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -481,7 +481,7 @@ TEST_F(Multipart, Test12) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BOUNDARY_LWS_AFTER);
 }
 
-TEST_F(Multipart, Test13) {
+TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter) {
     char *parts[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -503,7 +503,7 @@ TEST_F(Multipart, Test13) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BOUNDARY_NLWS_AFTER);
 }
 
-TEST_F(Multipart, HasPrologue) {
+TEST_F(Multipart, WithPrologue) {
     char *parts[] = {
         "Prologue"
         "\r\n--0123456789\r\n"
@@ -526,7 +526,7 @@ TEST_F(Multipart, HasPrologue) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_PREAMBLE);
 }
 
-TEST_F(Multipart, HasEpilogue) {
+TEST_F(Multipart, WithEpilogue) {
     char *parts[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
