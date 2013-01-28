@@ -638,8 +638,7 @@ htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg) {
         return NULL ;
     }
 
-    parser->parser_state = STATE_INIT;
-    parser->boundary_match_pos = 2;
+    parser->parser_state = STATE_INIT;    
     parser->extract_limit = DEFAULT_FILE_EXTRACT_LIMIT;
     parser->handle_data = htp_mpartp_handle_data;
     parser->handle_boundary = htp_mpartp_handle_boundary;
@@ -667,7 +666,10 @@ static htp_status_t _htp_mpartp_init_boundary(htp_mpartp_t *parser, unsigned cha
 
     parser->multipart.boundary[parser->multipart.boundary_len] = '\0';
 
+    // We're starting in boundary-matching mode, where the
+    // initial CRLF is not needed.
     parser->parser_state = STATE_BOUNDARY;
+    parser->boundary_match_pos = 2;
 
     return HTP_OK;
 }
