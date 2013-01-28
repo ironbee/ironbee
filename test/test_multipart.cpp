@@ -64,7 +64,7 @@ TEST_F(Multipart, Test1) {
     htp_mpartp_t *mpartp = htp_mpartp_create(cfg);
     htp_mpartp_init_boundary_ex(mpartp, boundary);
 
-    char* parts[999];
+    char *parts[999];
 
     size_t i = 0;
     parts[i++] = (char *) "-----------------------------41184676334\r\n";
@@ -95,7 +95,7 @@ TEST_F(Multipart, Test1) {
     parts[i++] = (char *) "Content-Type: text/plain\r\n";
     parts[i++] = (char *) "\r\n";
     parts[i++] = (char *) "FFFFFFFFFFFFFFFFFFFFFFFFFFFZ";
-    // Final boundary should not go here
+    // The final boundary should not go here
     parts[i++] = NULL;
 
     i = 0;
@@ -212,4 +212,117 @@ TEST_F(Multipart, Test2) {
     }
 
     htp_mpartp_destroy(&mpartp);
+}
+
+static void Multipart_Helper(htp_cfg_t *cfg, char *parts[]) {
+    char boundary[] = "0123456789";
+
+    htp_mpartp_t *mpartp = htp_mpartp_create(cfg);
+    htp_mpartp_init_boundary_ex(mpartp, boundary);
+
+    size_t i = 0;
+    for (;;) {
+        if (parts[i] == NULL) break;
+        htp_mpartp_parse(mpartp, (const unsigned char *) parts[i], strlen(parts[i]));
+        i++;
+    }
+
+    htp_mpartp_finalize(mpartp);
+
+    // Examine the result
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(htp_list_size(body->parts) == 2);
+
+    for (size_t i = 0, n = htp_list_size(body->parts); i < n; i++) {
+        htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, i);
+
+        switch (i) {
+            case 0:
+                ASSERT_EQ(part->type, MULTIPART_PART_TEXT);
+                ASSERT_TRUE(part->name != NULL);
+                ASSERT_TRUE(bstr_cmp_c(part->name, "field1") == 0);                
+                ASSERT_TRUE(part->value != NULL);
+                ASSERT_TRUE(bstr_cmp_c(part->value, "ABCDEF") == 0);
+                break;
+            case 1:
+                ASSERT_EQ(part->type, MULTIPART_PART_TEXT);
+                ASSERT_TRUE(part->name != NULL);
+                ASSERT_TRUE(bstr_cmp_c(part->name, "field2") == 0);
+                ASSERT_TRUE(part->value != NULL);
+                ASSERT_TRUE(bstr_cmp_c(part->value, "GHIJKL") == 0);
+                break;
+        }
+    }
+
+    htp_mpartp_destroy(&mpartp);
+}
+
+TEST_F(Multipart, Test3) {    
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data;\n name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data;\n name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper(cfg, parts);
+}
+
+TEST_F(Multipart, Test4) {
+    char *parts[] = {
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data;\n name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data;\n name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper(cfg, parts);
+}
+
+TEST_F(Multipart, Test5) {    
+    char *parts[] = {
+        "\n--0123456789\r\n"
+        "Content-Disposition: form-data;\n name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data;\n name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper(cfg, parts);
+}
+
+TEST_F(Multipart, Test6) {
+    char *parts[] = {
+        "\n--0123456789\r\n"
+        "Content-Disposition: form-data;\n name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data;\n name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper(cfg, parts);
 }
