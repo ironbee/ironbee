@@ -106,6 +106,8 @@ void aho_corasick_add_data(
  * - \\f -- Form feed.
  * - \\0 -- Null.
  * - \\e -- Escape.
+ * - \[  -- Left bracket.
+ * - \]  -- Right bracket.
  *
  * Parameterized Single Shortcuts:
  * - \\^X -- Control character, where X is A-Z, [, \\, ], ^, _, or ?.
@@ -127,6 +129,14 @@ void aho_corasick_add_data(
  * - \\$ -- End of line -- \\r\\f
  * - \\p -- Printable character, ASCII hex 20 through 7E.
  * - \\\. -- Any character.
+ *
+ * Union Shortcuts:
+ * - [...] -- Union of all shortcuts inside brackets.  Hyphens are treated
+ *            differently in unions.  A hyphen must either appear at the
+ *            beginning of the union or as part of a range A-B where A < B.
+ *            A and B may be single shortcuts.  An initial hyphen indicates
+ *            that a hyphen should be part of the union.
+ * - [^...] -- As above, but negated.
  *
  * @param[in] automata Initialize automata to add to.
  * @param[in] pattern  Pattern to add.

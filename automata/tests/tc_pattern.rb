@@ -189,4 +189,74 @@ class TestPattern < Test::Unit::TestCase
       assert_equal([1].to_set, output_substrings[words[0]])
     end
   end    
+  
+  def test_union_basic
+    words = ['[abc]foo']
+    text = "afoobfoocfoodfoo"
+    automata_test(words, [ACGEN, '-p'], "test_union_basic") do |dir, eudoxus_path|
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
+      assert_equal(words.size, output_substrings.size)
+      assert_equal([4, 8, 12].to_set, output_substrings[words[0]])
+    end
+  end
+
+  def test_union_leading_dash
+    words = ['[-abc]foo']
+    text = "afoobfoocfoodfoo-foo"
+    automata_test(words, [ACGEN, '-p'], "test_union_leading_dash") do |dir, eudoxus_path|
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
+      assert_equal(words.size, output_substrings.size)
+      assert_equal([4, 8, 12, 20].to_set, output_substrings[words[0]])
+    end
+  end
+
+  def test_union_range
+    words = ['[a-g]foo']
+    text = "afoobfoocfoodfoohfoo"
+    automata_test(words, [ACGEN, '-p'], "test_union_range") do |dir, eudoxus_path|
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
+      assert_equal(words.size, output_substrings.size)
+      assert_equal([4, 8, 12, 16].to_set, output_substrings[words[0]])
+    end
+  end
+
+  def test_union_negate
+    words = ['[^a-c]foo']
+    text = "afoobfoocfoodfoo"
+    automata_test(words, [ACGEN, '-p'], "test_union_negate") do |dir, eudoxus_path|
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
+      assert_equal(words.size, output_substrings.size)
+      assert_equal([16].to_set, output_substrings[words[0]])
+    end
+  end
+
+  def test_union_bracket
+    words = ['[[a]foo']
+    text = "afoo[foocfoodfoo"
+    automata_test(words, [ACGEN, '-p'], "test_union_bracket") do |dir, eudoxus_path|
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
+      assert_equal(words.size, output_substrings.size)
+      assert_equal([4, 8].to_set, output_substrings[words[0]])
+    end
+  end
+
+  def test_union_mixed
+    words = ['[a-cDEFg-i]foo']
+    text = "afoobfoocfoodfooDfoohfoojfooGfoo"
+    automata_test(words, [ACGEN, '-p'], "test_union_mixed") do |dir, eudoxus_path|
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
+      assert_equal(words.size, output_substrings.size)
+      assert_equal([4, 8, 12, 20, 24].to_set, output_substrings[words[0]])
+    end
+  end
+
+  def test_brackets
+    words = ['\[\]\]\[']
+    text = "foo[]][bar"
+    automata_test(words, [ACGEN, '-p'], "test_brackets") do |dir, eudoxus_path|
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
+      assert_equal(words.size, output_substrings.size)
+      assert_equal([7].to_set, output_substrings[words[0]])
+    end
+  end
 end

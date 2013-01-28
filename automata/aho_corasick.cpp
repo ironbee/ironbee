@@ -168,12 +168,17 @@ const Intermediate::byte_vector_t subpat_to_set(char subpat[4]);
  *
  * When finished @a j will point to the next subpattern.
  *
- * @param[in]     pattern Pattern to parse.
- * @param[in,out] j       Current location in @a pattern.  Incremented to next
- *                        location.
+ * @param[in]     pattern  Pattern to parse.
+ * @param[in,out] j        Current location in @a pattern.  Incremented to next
+ *                         location.
+ * @param[in]     in_union Set to true if extracting from inside a union.
  * @return Set of values.
  */
-Intermediate::byte_vector_t extract_cs(const string& pattern, size_t& j);
+Intermediate::byte_vector_t extract_cs(
+    const string&   pattern,
+    size_t&         j,
+    bool in_union = false
+);
 
 // Definitions
 
@@ -490,6 +495,8 @@ Intermediate::byte_vector_t single_subpat_to_set(char subpat[4])
 
     // Single
     case '\\': return list_of('\\');
+    case '[': return list_of('[');
+    case ']': return list_of(']');
     case 't': return list_of('\t');
     case 'v': return list_of('\v');
     case 'n': return list_of('\n');
@@ -502,7 +509,7 @@ Intermediate::byte_vector_t single_subpat_to_set(char subpat[4])
         return list_of(uppercase(subpat[2]))(lowercase(subpat[2]));
 
     default:
-    throw invalid_argument("Unknown pattern operator.");
+        throw invalid_argument("Unknown pattern operator.");
     }
 }
 
@@ -625,6 +632,8 @@ const Intermediate::byte_vector_t subpat_to_set(char subpat[4])
         subpat[1] == 'e' ||
         subpat[1] == '^' ||
         subpat[1] == 'x' ||
+        subpat[1] == '[' ||
+        subpat[1] == ']' ||
         subpat[1] == 'i'
     )
     {
@@ -634,41 +643,131 @@ const Intermediate::byte_vector_t subpat_to_set(char subpat[4])
     return multiple_subpat_to_set(subpat);
 }
 
-Intermediate::byte_vector_t extract_cs(const string& pattern, size_t& j)
+Intermediate::byte_vector_t extract_cs(
+    const string& pattern,
+    size_t& j,
+    bool in_union
+)
 {
-    Intermediate::byte_vector_t result;
-    char subpat[4] = {0, 0, 0, 0};
+    static bool s_generated = false;
+    static Intermediate::byte_vector_t s_any;
+    if (! s_generated) {
+        add_range(s_any, 0, 255);
+        s_generated = true;
+    }
 
-    subpat[0] = pattern[j++];
-    if (subpat[0] == '\\') {
+    if (! in_union && pattern[j] == '[') {
+        ++j;
+        Intermediate::byte_vector_t result;
+        bool negate = false;
         if (j == pattern.length()) {
-            throw invalid_argument("Pattern ends prematurely.");
+            throw invalid_argument("Union ends prematurely.");
         }
-        subpat[1] = pattern[j++];
-        if (subpat[1] == 'x') {
-            if (j+1 == pattern.length()) {
-                throw invalid_argument("Pattern ends prematurely.");
-            }
-            subpat[2] = pattern[j++];
-            subpat[3] = pattern[j++];
-            if (! is_hex(subpat[2]) || ! is_hex(subpat[3])) {
-                throw invalid_argument("\\x was not expressed in hex.");
-            }
+        if (pattern[j] == '^') {
+            negate = true;
+            ++j;
         }
-        else if (subpat[1] == '^' || subpat[1] == 'i') {
+        if (j == pattern.length()) {
+            throw invalid_argument("Union ends prematurely.");
+        }
+        if (pattern[j] == '-') {
+            result.push_back('-');
+            ++j;
+        }
+        uint8_t range_begin;
+        bool in_range = false;
+        bool valid_begin = false;
+        for (;;) {
+            if (j == pattern.length()) {
+                throw invalid_argument("Union ends prematurely.");
+            }
+            if (pattern[j] == ']') {
+                if (in_range) {
+                    throw invalid_argument("Union ends before range does.");
+                }
+                ++j;
+                break;
+            }
+            if (pattern[j] == '-') {
+                if (! valid_begin) {
+                    throw invalid_argument("Invalid range beginning.");
+                }
+                in_range = true;
+                ++j;
+                continue;
+            }
+            Intermediate::byte_vector_t subresult = extract_cs(pattern, j, true);
+            if (in_range) {
+                if (subresult.size() != 1) {
+                    throw invalid_argument("Invalid range ending.");
+                }
+                uint8_t range_end = subresult.front();
+                if (range_end <= range_begin) {
+                    throw invalid_argument("Invalid range.");
+                }
+                subresult.clear();
+                add_range(subresult, range_begin, range_end);
+                in_range = false;
+            }
+            if (subresult.size() == 1) {
+                range_begin = subresult.front();
+                valid_begin = true;
+            }
+            else {
+                valid_begin = false;
+            }
+            Intermediate::byte_vector_t newresult;
+            set_union(
+                subresult.begin(), subresult.end(),
+                result.begin(), result.end(),
+                back_inserter(newresult)
+            );
+            result.swap(newresult);
+        }
+        if (negate) {
+            Intermediate::byte_vector_t newresult;
+            set_difference(
+                s_any.begin(), s_any.end(),
+                result.begin(), result.end(),
+                back_inserter(newresult)
+            );
+            result.swap(newresult);
+        }
+        return result;
+    }
+    else {
+        char subpat[4] = {0, 0, 0, 0};
+        subpat[0] = pattern[j++];
+        if (subpat[0] == '\\') {
             if (j == pattern.length()) {
                 throw invalid_argument("Pattern ends prematurely.");
             }
-            subpat[2] = pattern[j++];
-            if (subpat[1] == '^' && ! is_control(subpat[2])) {
-                throw invalid_argument("\\^ did not specify valid control.");
+            subpat[1] = pattern[j++];
+            if (subpat[1] == 'x') {
+                if (j+1 == pattern.length()) {
+                    throw invalid_argument("Pattern ends prematurely.");
+                }
+                subpat[2] = pattern[j++];
+                subpat[3] = pattern[j++];
+                if (! is_hex(subpat[2]) || ! is_hex(subpat[3])) {
+                    throw invalid_argument("\\x was not expressed in hex.");
+                }
             }
-            else if (subpat[1] == 'i' && ! is_alpha(subpat[2])) {
-                throw invalid_argument("\\i did not specify valid alpha.");
+            else if (subpat[1] == '^' || subpat[1] == 'i') {
+                if (j == pattern.length()) {
+                    throw invalid_argument("Pattern ends prematurely.");
+                }
+                subpat[2] = pattern[j++];
+                if (subpat[1] == '^' && ! is_control(subpat[2])) {
+                    throw invalid_argument("\\^ did not specify valid control.");
+                }
+                else if (subpat[1] == 'i' && ! is_alpha(subpat[2])) {
+                    throw invalid_argument("\\i did not specify valid alpha.");
+                }
             }
         }
+        return subpat_to_set(subpat);
     }
-    return subpat_to_set(subpat);
 }
 
 }

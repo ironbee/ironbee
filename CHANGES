@@ -123,6 +123,8 @@ IronBee v0.7.0
 
 * Added '\$' to Aho Corasick patterns which matches CR or NL.
 
+* Added union support to Aho Corasick patterns, e.g., [A-Q0-5].
+
 **Clipp**
 
 * All generators except pb now produced parsed events.  Use @unparse to get
