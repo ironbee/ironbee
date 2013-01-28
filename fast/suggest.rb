@@ -1,6 +1,6 @@
 #!/usr/bin/env ruby
 
-# Suggest @fast modifiers for rules.
+# Suggest fast modifiers for rules.
 #
 # Very beta.
 #
@@ -39,10 +39,10 @@ SUGGEST_ALL = true
 # A pattern is a set of FastStrings to be treated as an OR.  E.g.,
 # ["foo", "bar"] means execute if "foo" or if "bar" is present.
 
-# Evaluate if a rule is a candidate for an @fast modifier.
+# Evaluate if a rule is a candidate for an fast modifier.
 def potential_rule(line)
   line =~ /\s@(rx|dfa) "/ &&   # Has a regexp
-    line !~ /@fast/       &&   # Does not already have an @fast
+    line !~ /\bfast:/       &&   # Does not already have an fast
     line !~ /\st:/        &&   # Does not have a transformation
     true                       # Future expansion
 end
@@ -68,7 +68,7 @@ end
 
 # Format a suggestion (a set of FastStrings).
 def format_suggestion(pattern)
-  "# Suggest: " + pattern.collect {|x| "@fast \"#{format_faststring(x)}\""}.join(' ')
+  "# Suggest: " + pattern.collect {|x| "\"fast:#{format_faststring(x)}\""}.join(' ')
 end
 
 # Score a pattern.
