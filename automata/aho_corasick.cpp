@@ -499,7 +499,7 @@ Intermediate::byte_vector_t single_subpat_to_set(char subpat[4])
     case 'e': return list_of('\e');
     case 'i':
         assert(is_alpha(subpat[2]));
-        return list_of(lowercase(subpat[2]))(uppercase(subpat[2]));
+        return list_of(uppercase(subpat[2]))(lowercase(subpat[2]));
 
     default:
     throw invalid_argument("Unknown pattern operator.");

@@ -179,4 +179,14 @@ class TestPattern < Test::Unit::TestCase
       assert_equal([7, 14].to_set, output_substrings[words[0]])
     end
   end
+  
+  def test_case_clash
+    words = ['H', '\ih']
+    text = "Hi"
+    automata_test(words, [ACGEN, '-p'], "test_case_clash") do |dir, eudoxus_path|
+      output_substrings = ee(eudoxus_path, dir, text, "input", "output")
+      assert_equal(words.size, output_substrings.size)
+      assert_equal([1].to_set, output_substrings[words[0]])
+    end
+  end    
 end
