@@ -5068,8 +5068,9 @@ ib_status_t core_finish(
         return rc;
     }
 
-    if (corecfg->log_fp != NULL && strcmp(corecfg->log_uri, "stderr") != 0) {
+    if ( (corecfg->log_fp != NULL) && (corecfg->log_fp != stderr) ) {
         fclose(corecfg->log_fp);
+        corecfg->log_fp = stderr;
     }
 
     /* Shut down the managed collection logic */
