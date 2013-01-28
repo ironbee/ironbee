@@ -50,7 +50,9 @@ extern "C" {
 
 // Constants and enums
 
-#define HTP_MULTIPART_MIME_TYPE                 "multipart/form-data"
+#define HTP_MULTIPART_LF_ENDINGS        0x0001
+
+#define HTP_MULTIPART_MIME_TYPE         "multipart/form-data"
 
 enum htp_multipart_type_t {
 
@@ -96,6 +98,9 @@ typedef struct htp_multipart_t {
 
     /** List of parts, in the order in which they appeared in the body. */
     htp_list_t *parts;
+
+    /** Parsing flags. */
+    uint64_t flags;
 } htp_multipart_t;
 
 /**

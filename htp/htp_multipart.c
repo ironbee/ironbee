@@ -864,12 +864,7 @@ STATE_SWITCH:
                 break;
 
             case STATE_DATA: // Handle part data.
-                // If there was a saved CR, process it as data now.
-                //if ((pos == 0) && (parser->cr_aside) && (pos < len)) {
-                //    parser->handle_data(parser, (unsigned char *) &"\r", 1, /* not a line */ 0);
-                //    parser->cr_aside = 0;
-                //}
-
+                
                 // While there's data in the input buffer.
 
                 while (pos < len) {
@@ -907,6 +902,11 @@ STATE_SWITCH:
                             }
                         }
                     } else if (data[pos] == LF) { // Check for a LF-terminated line.
+                        // Did we have a CR in the previous input chunk?
+                        if (parser->cr_aside == 0) {
+                            parser->multipart.flags |= HTP_MULTIPART_LF_ENDINGS;
+                        }
+
                         pos++; // Advance over LF.
 
                         // Prepare to switch to boundary testing.

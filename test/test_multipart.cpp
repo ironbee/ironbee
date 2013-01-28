@@ -331,4 +331,9 @@ TEST_F(Multipart, Test6) {
     };
 
     Multipart_Helper(mpartp, parts);
+    
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_ENDINGS);
 }
