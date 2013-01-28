@@ -1,6 +1,3 @@
-
-include $(top_srcdir)/build/common.mk
-
 ACLOCAL_AMFLAGS = -I ../../acinclude
 
 if CPP
