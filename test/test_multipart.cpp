@@ -312,15 +312,15 @@ TEST_F(Multipart, Test5) {
 
 TEST_F(Multipart, Test6) {
     char *parts[] = {
-        "\n--0123456789\r\n"
-        "Content-Disposition: form-data;\n name=\"field1\"\r\n"
-        "\r\n"
+        "--0123456789\n"
+        "Content-Disposition: form-data;\n name=\"field1\"\n"
+        "\n"
         "ABCDEF"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data;\n name=\"field2\"\r\n"
-        "\r\n"
+        "\n--0123456789\n"
+        "Content-Disposition: form-data;\n name=\"field2\"\n"
+        "\n"
         "GHIJKL"
-        "\r\n--0123456789--",
+        "\n--0123456789--",
         NULL
     };
 
