@@ -2668,8 +2668,8 @@ static ib_status_t copy_rule_list(const ib_list_t *src_list,
  *
  * @param[in] ctx Provides access to the IronBee engine temp
  *                mpool and logging.
- * @param[in] src_list list of items to copy
- * @param[in,out] dest_hash Hash to copy items into
+ * @param[in] src_hash Hash of rules to copy
+ * @param[in,out] dest_hash Hash to copy rules into
  *
  * @returns
  *   - IB_OK on success, including if the @a src_hash is size 0.
@@ -2712,6 +2712,7 @@ static ib_status_t copy_rule_hash(const ib_context_t *ctx,
 /**
  * Import a rule's context from it's parent
  *
+ * @param[in] ctx Context being imported to
  * @param[in] parent_rules Parent's rule context object
  * @param[in,out] ctx_rules Rule context object
  *
