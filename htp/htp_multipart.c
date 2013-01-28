@@ -563,7 +563,7 @@ static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *parser, const unsigned 
             parser->multipart.flags |= HTP_MULTIPART_HAS_PREAMBLE;
             parser->current_part_mode = MODE_DATA;
         } else {
-            if (parser->multipart.seen_last_boundary) {
+            if (parser->multipart.flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY) {
                 // We've seen the last boundary, so this must be the epilogue part.
                 parser->current_part->type = MULTIPART_PART_EPILOGUE;
                 parser->multipart.flags |= HTP_MULTIPART_HAS_EPILOGUE;
@@ -1037,7 +1037,7 @@ STATE_SWITCH:
                 if (data[pos] == '-') {
                     // This is indeed the last boundary in the payload.
                     pos++;
-                    parser->multipart.seen_last_boundary = 1;
+                    parser->multipart.flags |= HTP_MULTIPART_SEEN_LAST_BOUNDARY;
                     parser->parser_state = STATE_BOUNDARY_EAT_LWS;
                 } else {
                     // The second character is not a dash. This means that we have

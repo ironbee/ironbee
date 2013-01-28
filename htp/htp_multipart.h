@@ -56,6 +56,7 @@ extern "C" {
 #define HTP_MULTIPART_BOUNDARY_NLWS_AFTER   0x0008
 #define HTP_MULTIPART_HAS_PREAMBLE          0x0010
 #define HTP_MULTIPART_HAS_EPILOGUE          0x0020
+#define HTP_MULTIPART_SEEN_LAST_BOUNDARY    0x0040
 
 #define HTP_MULTIPART_MIME_TYPE             "multipart/form-data"
 
@@ -96,10 +97,7 @@ typedef struct htp_multipart_t {
     size_t boundary_len;
 
     /** How many boundaries were there? */
-    int boundary_count;
-
-    /** Did we see the last boundary? */
-    int seen_last_boundary;
+    int boundary_count;   
 
     /** List of parts, in the order in which they appeared in the body. */
     htp_list_t *parts;
