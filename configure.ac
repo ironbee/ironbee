@@ -255,7 +255,7 @@ fi
 
 DOXYGEN=$doxygen
 
-DOXYGEN_DIRS="include util engine modules automata"
+DOXYGEN_DIRS="include util engine modules automata fast"
 EXTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp'`
 INTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' -o -name '*.cc'`
 DOXYGEN_INPUT=""
@@ -432,7 +432,7 @@ dnl Optional build modules
 dnl
 dnl TODO: Make these configure opts
 dnl
-TOPLEVEL_SUBDIRS="util engine servers automata modules etc docs tests packaging"
+TOPLEVEL_SUBDIRS="util engine servers automata fast modules etc docs tests packaging"
 LIBS_SUBDIRS="libhtp"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver"
 
@@ -563,6 +563,7 @@ AC_CONFIG_FILES([engine/Makefile])
 AC_CONFIG_FILES([automata/Makefile])
 AC_CONFIG_FILES([automata/bin/Makefile])
 AC_CONFIG_FILES([automata/tests/Makefile])
+AC_CONFIG_FILES([fast/Makefile])
 
 AC_CONFIG_FILES([servers/Makefile])
 AC_CONFIG_FILES([servers/apache_httpd2/Makefile])
