@@ -196,21 +196,21 @@ TEST_F(Multipart, Test2) {
 
         switch (i) {
             case 0:
-                ASSERT_EQ(part->type, 3);
+                ASSERT_EQ(part->type, MULTIPART_PART_PREAMBLE);
                 ASSERT_TRUE(part->value == NULL); // Not keeping prologue data at the moment
                 break;            
             case 1:
-                ASSERT_EQ(part->type, 1);
+                ASSERT_EQ(part->type, MULTIPART_PART_UNKNOWN);
                 ASSERT_TRUE(part->value != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x1111x\n--\nx2222x") == 0);
                 break;
             case 2:
-                ASSERT_EQ(part->type, 1);
+                ASSERT_EQ(part->type, MULTIPART_PART_UNKNOWN);
                 ASSERT_TRUE(part->value != NULL);                
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x3333x\n--BB\n\nx4444x\n--BB") == 0);
                 break;
             case 3:
-                ASSERT_EQ(part->type, 1);
+                ASSERT_EQ(part->type, MULTIPART_PART_UNKNOWN);
                 ASSERT_TRUE(part->value != NULL);                
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x5555x\r\n--x6666x\r--") == 0);
                 break;
@@ -613,4 +613,24 @@ TEST_F(Multipart, PartAfterLastBoundary) {
     ASSERT_TRUE(body != NULL);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY);
+}
+
+TEST_F(Multipart, UnknownPart) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper_parse_parts(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(htp_list_size(body->parts) == 1);
+
+    htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
+    ASSERT_EQ(part->type, MULTIPART_PART_UNKNOWN);
 }

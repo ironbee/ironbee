@@ -391,7 +391,7 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
         }       
     }
 
-    if (part->type == MULTIPART_PART_TEXT) {
+    if ((part->type == MULTIPART_PART_TEXT)||(part->type == MULTIPART_PART_UNKNOWN)) {
         if (bstr_builder_size(part->parser->part_data_pieces) > 0) {
             part->value = bstr_builder_to_str(part->parser->part_data_pieces);
             bstr_builder_clear(part->parser->part_data_pieces);
@@ -487,9 +487,12 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
 
                         part->parser->file_count++;
                     }
-                } else {                    
+                }
+                else if (part->name != NULL) {
                     part->type = MULTIPART_PART_TEXT;
-                }               
+                } else {
+                    // The type stays MULTIPART_PART_UNKNOWN.
+                }
             } else {
                 // Not an empty line
 
@@ -528,6 +531,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
         // Data mode; keep the data chunk for later (but not if it is a file)
         switch (part->type) {
             case MULTIPART_PART_TEXT:
+            case MULTIPART_PART_UNKNOWN:
                 bstr_builder_append_mem(part->parser->part_data_pieces, data, len);
                 break;
             case MULTIPART_PART_FILE:
