@@ -730,7 +730,7 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *parser, int matched) {
     // If there was a match, we need to take care to not send the line ending as data, nor
     // anything that follows (because it's going to be a part of the boundary). Similarly,
     // when we are in line mode, we need to split the first data chunk, processing the first
-    // part as line and the second part as data.  
+    // part as line and the second part as data.
 
     // Do we need to do any chunk splitting?
     if (matched || (parser->current_part_mode == MODE_LINE)) {
@@ -791,7 +791,7 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *parser, int matched) {
             bstr_builder_clear(parser->boundary_pieces);
         }
     } else {
-        // Data mode and no match.
+        // Data mode and no match.       
 
         // In data mode, we process the lone CR byte as data.
         if (parser->cr_aside) {
@@ -863,10 +863,10 @@ STATE_SWITCH:
 
             case STATE_DATA: // Handle part data.
                 // If there was a saved CR, process it as data now.
-                if ((pos == 0) && (parser->cr_aside) && (pos < len)) {
-                    parser->handle_data(parser, (unsigned char *) &"\r", 1, /* not a line */ 0);
-                    parser->cr_aside = 0;
-                }
+                //if ((pos == 0) && (parser->cr_aside) && (pos < len)) {
+                //    parser->handle_data(parser, (unsigned char *) &"\r", 1, /* not a line */ 0);
+                //    parser->cr_aside = 0;
+                //}
 
                 // While there's data in the input buffer.
 
@@ -917,7 +917,13 @@ STATE_SWITCH:
                     } else {
                         // Take one byte from input
                         pos++;
-                        parser->cr_aside = 0;
+
+                        // Earlier we might have set aside a CR byte not knowing if the next
+                        // byte is a LF. Now we know that it is not, and so we can release the CR.
+                        if (parser->cr_aside) {
+                            parser->handle_data(parser, (unsigned char *) &"\r", 1, /* not a line */ 0);
+                            parser->cr_aside = 0;
+                        }
                     }
                 } // while               
 
@@ -929,8 +935,8 @@ STATE_SWITCH:
             case STATE_BOUNDARY: // Handle a possible boundary.
                 while (pos < len) {
                     #ifdef HTP_DEBUG
-                    fprintf(stderr, "boundary (len %d pos %d char %d) data char %d\n", parser->boundary_len,
-                            parser->boundary_match_pos, parser->boundary[parser->boundary_match_pos], tolower(data[pos]));
+                    fprintf(stderr, "boundary (len %d pos %d char %d) data char %d\n", parser->multipart.boundary_len,
+                            parser->boundary_match_pos, parser->multipart.boundary[parser->boundary_match_pos], tolower(data[pos]));
                     #endif
 
                     // Remember the first byte in the new line; we'll need to
@@ -1160,7 +1166,7 @@ htp_status_t htp_mpartp_extract_boundary(bstr *content_type, bstr **boundary) {
     if (*boundary == NULL) return -8;
 
     #if HTP_DEBUG
-    fprint_raw_bstr(stderr, "htp_mpartp_extract_boundary", *boundary);
+    fprint_bstr(stderr, "htp_mpartp_extract_boundary", *boundary);
     #endif
 
     return HTP_OK;

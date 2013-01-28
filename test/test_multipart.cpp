@@ -160,11 +160,13 @@ TEST_F(Multipart, Test2) {
 
     const char *i1 = "x0000x\n--BBB\n\nx1111x\n--\nx2222x\n--";
     const char *i2 = "BBB\n\nx3333x\n--B";
-    const char *i3 = "B\n\nx4444x\n--B";
-    const char *i4 = "B\n--BBB\n\nx5555x\r";
-    const char *i5 = "\n--x6666x\r";
-    const char *i6 = "-";
-    const char *i7 = "-";
+    const char *i3 = "B\n\nx4444x\n--BB\r";
+    const char *i4 = "\n--B";
+    const char *i5 = "B";
+    const char *i6 = "B\n\nx5555x\r";
+    const char *i7 = "\n--x6666x\r";
+    const char *i8 = "-";
+    const char *i9 = "-";
 
     htp_mpartp_parse(mpartp, (const unsigned char *) i1, strlen(i1));
     htp_mpartp_parse(mpartp, (const unsigned char *) i2, strlen(i2));
@@ -173,6 +175,8 @@ TEST_F(Multipart, Test2) {
     htp_mpartp_parse(mpartp, (const unsigned char *) i5, strlen(i5));
     htp_mpartp_parse(mpartp, (const unsigned char *) i6, strlen(i6));
     htp_mpartp_parse(mpartp, (const unsigned char *) i7, strlen(i7));
+    htp_mpartp_parse(mpartp, (const unsigned char *) i8, strlen(i8));
+    htp_mpartp_parse(mpartp, (const unsigned char *) i9, strlen(i9));
     htp_mpartp_finalize(mpartp);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
@@ -193,12 +197,12 @@ TEST_F(Multipart, Test2) {
                 break;
             case 2:
                 ASSERT_EQ(part->type, 1);
-                ASSERT_TRUE(part->value != NULL);
+                ASSERT_TRUE(part->value != NULL);                
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x3333x\n--BB\n\nx4444x\n--BB") == 0);
                 break;
             case 3:
                 ASSERT_EQ(part->type, 1);
-                ASSERT_TRUE(part->value != NULL);
+                ASSERT_TRUE(part->value != NULL);                
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x5555x\r\n--x6666x\r--") == 0);
                 break;
             default:
