@@ -555,16 +555,18 @@ static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *parser, const unsigned 
     if (parser->current_part == NULL) {
         // Create a new part.
         parser->current_part = htp_mpart_part_create(parser);
-        if (parser->current_part == NULL) return HTP_ERROR; // TODO RC
+        if (parser->current_part == NULL) return HTP_ERROR;
 
         if (parser->multipart.boundary_count == 0) {
             // We haven't seen a boundary yet, so this must be the preamble part.
             parser->current_part->type = MULTIPART_PART_PREAMBLE;
+            parser->multipart.flags |= HTP_MULTIPART_HAS_PREAMBLE;
             parser->current_part_mode = MODE_DATA;
         } else {
             if (parser->multipart.seen_last_boundary) {
                 // We've seen the last boundary, so this must be the epilogue part.
                 parser->current_part->type = MULTIPART_PART_EPILOGUE;
+                parser->multipart.flags |= HTP_MULTIPART_HAS_EPILOGUE;
                 parser->current_part_mode = MODE_DATA;
             }
         }

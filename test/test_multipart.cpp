@@ -223,9 +223,9 @@ TEST_F(Multipart, Test2) {
     htp_mpartp_destroy(&mpartp);
 }
 
-static void Multipart_Helper(htp_mpartp_t *mpartp, char *parts[]) {
+static void Multipart_Helper_parse_parts(htp_mpartp_t *mpartp, char *parts[]) {
     char boundary[] = "0123456789";
-   
+
     htp_mpartp_init_boundary_ex(mpartp, boundary);
 
     size_t i = 0;
@@ -236,6 +236,10 @@ static void Multipart_Helper(htp_mpartp_t *mpartp, char *parts[]) {
     }
 
     htp_mpartp_finalize(mpartp);
+}
+
+static void Multipart_Helper(htp_mpartp_t *mpartp, char *parts[]) {
+    Multipart_Helper_parse_parts(mpartp, parts);
 
     // Examine the result
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
@@ -497,4 +501,50 @@ TEST_F(Multipart, Test13) {
     ASSERT_TRUE(body != NULL);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BOUNDARY_NLWS_AFTER);
+}
+
+TEST_F(Multipart, HasPrologue) {
+    char *parts[] = {
+        "Prologue"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\n--0123456789 X \r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper_parse_parts(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_PREAMBLE);
+}
+
+TEST_F(Multipart, HasEpilogue) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\n--0123456789 X \r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--\r\n"
+        "Epilogue",
+        NULL
+    };
+
+    Multipart_Helper_parse_parts(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 }
