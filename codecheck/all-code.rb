@@ -18,6 +18,7 @@ def all_ironbee_code
     'cpp',
     'cli',
     'engine',
+    'fast',
     'include',
     'modules',
     'plugins',
