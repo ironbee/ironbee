@@ -67,11 +67,9 @@ protected:
     htp_cfg_t *cfg;
 };
 
-TEST_F(Multipart, Test1) {
-    char boundary[] = "---------------------------41184676334";
-
+TEST_F(Multipart, Test1) {    
     htp_mpartp_t *mpartp = htp_mpartp_create(cfg);
-    htp_mpartp_init_boundary_ex(mpartp, boundary);
+    htp_mpartp_init_boundary_ex(mpartp, "---------------------------41184676334");
 
     char *parts[999];
 
@@ -104,7 +102,7 @@ TEST_F(Multipart, Test1) {
     parts[i++] = (char *) "Content-Type: text/plain\r\n";
     parts[i++] = (char *) "\r\n";
     parts[i++] = (char *) "FFFFFFFFFFFFFFFFFFFFFFFFFFFZ";
-    // The final boundary should not go here
+    parts[i++] = (char *) "\r\n-----------------------------41184676334--";
     parts[i++] = NULL;
 
     i = 0;
@@ -112,12 +110,7 @@ TEST_F(Multipart, Test1) {
         if (parts[i] == NULL) break;
         htp_mpartp_parse(mpartp, (const unsigned char *) parts[i], strlen(parts[i]));
         i++;
-    }
-
-    // Send the final boundary
-    htp_mpartp_parse(mpartp, (const unsigned char *) &"\r\n", 2);
-    htp_mpartp_parse(mpartp, (const unsigned char *) boundary, strlen(boundary));
-    htp_mpartp_parse(mpartp, (const unsigned char *) &"--", 2);
+    }   
 
     htp_mpartp_finalize(mpartp);
 
@@ -164,6 +157,8 @@ TEST_F(Multipart, Test1) {
                 break;
         }
     }
+
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
 
     htp_mpartp_destroy(&mpartp);
 }
@@ -224,6 +219,8 @@ TEST_F(Multipart, Test2) {
 
         }
     }
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
 
     htp_mpartp_destroy(&mpartp);
 }

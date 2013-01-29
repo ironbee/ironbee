@@ -421,7 +421,7 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
         }
     }
 
-    // Finalize part data.
+    // Finalize part value.
 
     if (part->type == MULTIPART_PART_FILE) {
         // Notify callbacks about the end of the file.
@@ -432,7 +432,7 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
             close(part->file->fd);
         }
     } else {        
-        // Combine multiple value pieces into a single buffer.
+        // Combine value pieces into a single buffer.
         if (bstr_builder_size(part->parser->part_data_pieces) > 0) {
             part->value = bstr_builder_to_str(part->parser->part_data_pieces);
             bstr_builder_clear(part->parser->part_data_pieces);
@@ -608,7 +608,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *parser, const unsigned char *data, size_t len, int is_line) {
-    if (len == 0) return HTP_OK;
+    if (len == 0) return HTP_OK;   
 
     // Do we have a part already?
     if (parser->current_part == NULL) {
@@ -648,7 +648,7 @@ static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *parser, const unsigned 
 static htp_status_t htp_mpartp_handle_boundary(htp_mpartp_t *parser) {
     #if HTP_DEBUG
     fprintf(stderr, "htp_mpartp_handle_boundary\n");
-    #endif   
+    #endif
 
     if (parser->current_part != NULL) {
         if (htp_mpart_part_finalize_data(parser->current_part) != HTP_OK) {
@@ -896,6 +896,8 @@ htp_status_t htp_mpartp_finalize(htp_mpartp_t *parser) {
         
         // Finalize the last part.
         if (htp_mpart_part_finalize_data(parser->current_part) != HTP_OK) return HTP_ERROR;
+
+        parser->multipart.flags |= HTP_MULTIPART_PART_INCOMPLETE;
     }
 
     bstr_builder_clear(parser->boundary_pieces);

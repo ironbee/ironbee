@@ -58,6 +58,7 @@ extern "C" {
 #define HTP_MULTIPART_HAS_EPILOGUE              0x0020
 #define HTP_MULTIPART_SEEN_LAST_BOUNDARY        0x0040
 #define HTP_MULTIPART_PART_AFTER_LAST_BOUNDARY  0x0080
+#define HTP_MULTIPART_PART_INCOMPLETE           0x0100
 
 #define HTP_MULTIPART_MIME_TYPE                 "multipart/form-data"
 
