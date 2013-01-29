@@ -131,28 +131,28 @@ TEST_F(Multipart, Test1) {
         switch (i) {
             case 0:
                 ASSERT_TRUE(bstr_cmp_c(part->name, "field1") == 0);
-                ASSERT_EQ(part->type, MULTIPART_PART_TEXT);
+                ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
                 ASSERT_TRUE(part->value != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "0123456789") == 0);
                 break;
             case 1:
                 ASSERT_TRUE(bstr_cmp_c(part->name, "field2") == 0);
-                ASSERT_EQ(part->type, MULTIPART_PART_TEXT);
+                ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "0123456789\r\n----------------------------X") == 0);
                 break;
             case 2:
                 ASSERT_TRUE(bstr_cmp_c(part->name, "field3") == 0);
-                ASSERT_EQ(part->type, MULTIPART_PART_TEXT);
+                ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
                 ASSERT_TRUE(part->value != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "9876543210") == 0);
                 break;
             case 3:
                 ASSERT_TRUE(bstr_cmp_c(part->name, "file1") == 0);
-                ASSERT_EQ(part->type, MULTIPART_PART_FILE);
+                ASSERT_EQ(MULTIPART_PART_FILE, part->type);
                 break;
             case 4:
                 ASSERT_TRUE(bstr_cmp_c(part->name, "file2") == 0);
-                ASSERT_EQ(part->type, MULTIPART_PART_FILE);
+                ASSERT_EQ(MULTIPART_PART_FILE, part->type);
                 break;
             default:
                 FAIL() << "More parts than expected";
@@ -196,21 +196,21 @@ TEST_F(Multipart, Test2) {
 
         switch (i) {
             case 0:
-                ASSERT_EQ(part->type, MULTIPART_PART_PREAMBLE);
+                ASSERT_EQ(MULTIPART_PART_PREAMBLE, part->type);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x0000x") == 0);
                 break;            
             case 1:
-                ASSERT_EQ(part->type, MULTIPART_PART_UNKNOWN);
+                ASSERT_EQ(MULTIPART_PART_UNKNOWN, part->type);
                 ASSERT_TRUE(part->value != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x1111x\n--\nx2222x") == 0);
                 break;
             case 2:
-                ASSERT_EQ(part->type, MULTIPART_PART_UNKNOWN);
+                ASSERT_EQ(MULTIPART_PART_UNKNOWN, part->type);
                 ASSERT_TRUE(part->value != NULL);                
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x3333x\n--BB\n\nx4444x\n--BB") == 0);
                 break;
             case 3:
-                ASSERT_EQ(part->type, MULTIPART_PART_UNKNOWN);
+                ASSERT_EQ(MULTIPART_PART_UNKNOWN, part->type);
                 ASSERT_TRUE(part->value != NULL);                
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x5555x\r\n--x6666x\r--") == 0);
                 break;
@@ -252,14 +252,14 @@ static void Multipart_Helper(htp_mpartp_t *mpartp, char *parts[]) {
 
         switch (i) {
             case 0:
-                ASSERT_EQ(part->type, MULTIPART_PART_TEXT);
+                ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
                 ASSERT_TRUE(part->name != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->name, "field1") == 0);                
                 ASSERT_TRUE(part->value != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "ABCDEF") == 0);
                 break;
             case 1:
-                ASSERT_EQ(part->type, MULTIPART_PART_TEXT);
+                ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
                 ASSERT_TRUE(part->name != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->name, "field2") == 0);
                 ASSERT_TRUE(part->value != NULL);
@@ -648,7 +648,7 @@ TEST_F(Multipart, UnknownPart) {
     ASSERT_TRUE(htp_list_size(body->parts) == 1);
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
-    ASSERT_EQ(part->type, MULTIPART_PART_UNKNOWN);
+    ASSERT_EQ(MULTIPART_PART_UNKNOWN, part->type);
 }
 
 TEST_F(Multipart, WithFile) {
@@ -674,7 +674,7 @@ TEST_F(Multipart, WithFile) {
     ASSERT_TRUE(htp_list_size(body->parts) == 2);
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 1);
-    ASSERT_EQ(part->type, MULTIPART_PART_FILE);
+    ASSERT_EQ(MULTIPART_PART_FILE, part->type);
     ASSERT_TRUE(part->content_type != NULL);
     ASSERT_TRUE(bstr_cmp_c(part->content_type, "application/octet-stream") == 0);
     ASSERT_TRUE(part->file != NULL);
