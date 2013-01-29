@@ -2,7 +2,7 @@ include $(top_srcdir)/build/tests.mk
 
 LIBUTIL_LDADD = $(top_builddir)/util/libibutil.la
 
-LDFLAGS += $(BOOST_LDFLAGS) -L$(top_builddir)/tests -L$(builddir)/.. \
+AM_LDFLAGS += $(BOOST_LDFLAGS) -L$(top_builddir)/tests -L$(builddir)/.. \
     -lironautomata -liaeudoxus
 CPPFLAGS += $(BOOST_CPPFLAGS) -I$(top_srcdir)/tests \
     -I$(srcdir)/../include -I$(builddir)/../include
