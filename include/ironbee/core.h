@@ -67,7 +67,6 @@ struct ib_core_cfg_t {
 
     /** Providers (instance is per-transaction) */
     struct {
-        ib_provider_t   *data;          /**< Core data provider */
         ib_provider_t   *audit;         /**< Audit log provider */
         ib_provider_t   *logevent;      /**< Logevent provider */
     } pr;
