@@ -121,13 +121,13 @@ typedef struct htp_multipart_part_t {
     size_t len;
    
     /** Part name, from the Content-Disposition header. Can be NULL. */
-    bstr *name;
-
-    /** Part content type, from the Content-Type header. Can be NULL. */
-    // TODO
+    bstr *name;   
 
     /** Part value; currently available only for MULTIPART_PART_TEXT parts. */
     bstr *value;
+
+    /** Part content type, from the Content-Type header. Can be NULL. */
+    bstr *content_type;
 
     /** Part headers (htp_header_t instances), using header name as the key. */
     htp_table_t *headers;

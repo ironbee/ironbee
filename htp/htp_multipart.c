@@ -43,10 +43,6 @@
 #include "htp_multipart.h"
 #include "htp_multipart_private.h"
 
-htp_multipart_t *htp_mpartp_get_multipart(htp_mpartp_t *parser) {
-	return &parser->multipart;
-}
-
 /**
  * Determines the type of a Content-Disposition parameter.
  *
@@ -66,19 +62,25 @@ static int htp_mpartp_cd_param_type(unsigned char *data, size_t startpos, size_t
 }
 
 /**
- * Process part headers. In the current implementation, we only parse the
- * Content-Disposition header if it is present.
+ * Returns the main multipart structure produced by the parser.
+ *
+ * @param[in] parser
+ * @return Multipart instance.
+ */
+htp_multipart_t *htp_mpartp_get_multipart(htp_mpartp_t *parser) {
+	return &parser->multipart;
+}
+
+/**
+ * Parses the Content-Disposition part header.
  *
  * @param[in] part
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_mpart_part_process_headers(htp_multipart_part_t *part) {
+static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
     // Find C-D header
     htp_header_t *h = (htp_header_t *) htp_table_get_c(part->headers, "content-disposition");
-    if (h == NULL) {
-        // TODO Error message
-        return HTP_DECLINED;
-    }
+    if (h == NULL) return HTP_DECLINED;
 
     if (bstr_index_of_c(h->value, "form-data") != 0) {
         return -1;
@@ -188,11 +190,39 @@ htp_status_t htp_mpart_part_process_headers(htp_multipart_part_t *part) {
 }
 
 /**
+ * Parses the Content-Type part header.
+ *
+ * @param[in] part
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+static htp_status_t htp_mpart_part_parse_c_t(htp_multipart_part_t *part) {
+    // Find C-D header
+    htp_header_t *h = (htp_header_t *) htp_table_get_c(part->headers, "content-type");
+    if (h == NULL) return HTP_DECLINED;
+
+    part->content_type = h->value;
+
+    return HTP_OK;
+}
+
+/**
+ * Processes part headers.
+ *
+ * @param[in] part
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_mpart_part_process_headers(htp_multipart_part_t *part) {
+    htp_mpart_part_parse_c_d(part);
+    htp_mpart_part_parse_c_t(part);
+    return HTP_OK;
+}
+
+/**
  * Parses one part header.
  *
  * @param[in] data
  * @param[in] len
- * @param[in] Success indication
+ * @param[in] HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned char *data, size_t len) {
     size_t name_start, name_end;
@@ -352,6 +382,9 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
         bstr_free(&part->value);
     }
 
+    // Content-Type is currently only an alias for the
+    // value stored in the headers structure.
+
     if (part->headers != NULL) {
         // Destroy request_headers
         htp_header_t *h = NULL;
@@ -372,6 +405,7 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
  * Finalizes part processing.
  *
  * @param[in] part
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
     // We currently do not process or store the preamble part.
@@ -433,6 +467,7 @@ htp_status_t htp_mpartp_run_request_file_data_hook(htp_multipart_part_t *part, c
  * @param[in] data
  * @param[in] len
  * @param[in] is_line
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsigned char *data, size_t len, int is_line) {
     #if HTP_DEBUG
@@ -562,6 +597,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
  * @param[in] data
  * @param[in] len
  * @param[in] is_line
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *parser, const unsigned char *data, size_t len, int is_line) {
     if (len == 0) return HTP_OK;
@@ -599,6 +635,7 @@ static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *parser, const unsigned 
  * if one exists.
  *
  * @param[in] mpartp
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 static htp_status_t htp_mpartp_handle_boundary(htp_mpartp_t *parser) {
     #if HTP_DEBUG
@@ -735,6 +772,7 @@ void htp_mpartp_destroy(htp_mpartp_t ** _parser) {
  * @param[in] startpos
  * @param[in] return_pos
  * @param[in] matched
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 static htp_status_t htp_martp_process_aside(htp_mpartp_t *parser, int matched) {
     // The stored data pieces can contain up to one line. If we're in data mode and there
@@ -1104,9 +1142,10 @@ STATE_SWITCH:
 }
 
 /**
- * Determine if the supplied character is allowed in boundary.
+ * Determines if the supplied character is allowed in boundary.
  *
  * @param[in] c
+ * @return 1 if the character is a valid boundary character, and 0 if it is not.
  */
 int htp_mpartp_is_boundary_character(int c) {
     if ((c < 32) || (c > 126)) {
@@ -1141,7 +1180,7 @@ int htp_mpartp_is_boundary_character(int c) {
  *
  * @param[in] content_type
  * @param[in] boundary
- * @return rc
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_mpartp_extract_boundary(bstr *content_type, bstr **boundary) {
     unsigned char *data = bstr_ptr(content_type);

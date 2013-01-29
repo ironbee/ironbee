@@ -634,3 +634,33 @@ TEST_F(Multipart, UnknownPart) {
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
     ASSERT_EQ(part->type, MULTIPART_PART_UNKNOWN);
 }
+
+TEST_F(Multipart, WithFile) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"; filename=\"test.bin\"\r\n"
+        "Content-Type: application/octet-stream\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper_parse_parts(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(htp_list_size(body->parts) == 2);
+
+    htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 1);
+    ASSERT_EQ(part->type, MULTIPART_PART_FILE);
+    ASSERT_TRUE(part->content_type != NULL);
+    ASSERT_TRUE(bstr_cmp_c(part->content_type, "application/octet-stream") == 0);
+    ASSERT_TRUE(part->file != NULL);
+    ASSERT_TRUE(bstr_cmp_c(part->file->filename, "test.bin") == 0);
+}
