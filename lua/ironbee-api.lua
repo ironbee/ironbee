@@ -528,7 +528,7 @@ end
 ibapi.txapi.forEachEvent = function(self, func)
     local tx = ffi.cast("ib_tx_t *", self.ib_tx)
     local list = ffi.new("ib_list_t*[1]")
-    ffi.C.ib_logevent_get_all(tx.epi, list)
+    ffi.C.ib_logevent_get_all(tx, list)
 
     ibapi.each_list_node(
         list[0],
@@ -546,7 +546,7 @@ ibapi.txapi.events = function(self)
         -- Iterate
         if idx == nil then
             local list = ffi.new("ib_list_t*[1]")
-            ffi.C.ib_logevent_get_all(tx.epi, list)
+            ffi.C.ib_logevent_get_all(tx, list)
 
             if (list[0] == nil) then
                 return nil, nil
@@ -707,7 +707,7 @@ ibapi.txapi.addEvent = function(self, msg, options)
         end
     end
 
-    ffi.C.ib_logevent_add(tx.epi, event[0])
+    ffi.C.ib_logevent_add(tx, event[0])
 end
 
 -- Return a ib_field_t* to the field named and stored in the DPI.
