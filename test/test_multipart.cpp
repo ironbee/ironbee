@@ -197,7 +197,7 @@ TEST_F(Multipart, Test2) {
         switch (i) {
             case 0:
                 ASSERT_EQ(part->type, MULTIPART_PART_PREAMBLE);
-                ASSERT_TRUE(part->value == NULL); // Not keeping prologue data at the moment
+                ASSERT_TRUE(bstr_cmp_c(part->value, "x0000x") == 0);
                 break;            
             case 1:
                 ASSERT_EQ(part->type, MULTIPART_PART_UNKNOWN);
@@ -503,9 +503,9 @@ TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BOUNDARY_NLWS_AFTER);
 }
 
-TEST_F(Multipart, WithPrologue) {
+TEST_F(Multipart, WithPreamble) {
     char *parts[] = {
-        "Prologue"
+        "Preamble"
         "\r\n--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
         "\r\n"
@@ -524,6 +524,14 @@ TEST_F(Multipart, WithPrologue) {
     ASSERT_TRUE(body != NULL);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_PREAMBLE);
+
+    ASSERT_TRUE(htp_list_size(body->parts) == 3);
+
+    htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
+    ASSERT_TRUE(part != NULL);
+    ASSERT_EQ(MULTIPART_PART_PREAMBLE, part->type);
+    ASSERT_TRUE(part->value != NULL);
+    ASSERT_TRUE(bstr_cmp_c(part->value, "Preamble") == 0);
 }
 
 TEST_F(Multipart, WithEpilogue) {
@@ -547,6 +555,14 @@ TEST_F(Multipart, WithEpilogue) {
     ASSERT_TRUE(body != NULL);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
+
+    ASSERT_TRUE(htp_list_size(body->parts) == 3);
+    
+    htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
+    ASSERT_TRUE(part != NULL);
+    ASSERT_EQ(MULTIPART_PART_EPILOGUE, part->type);
+    ASSERT_TRUE(part->value != NULL);
+    ASSERT_TRUE(bstr_cmp_c(part->value, "Epilogue") == 0);
 }
 
 TEST_F(Multipart, HasLastBoundary) {
