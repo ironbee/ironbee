@@ -6,9 +6,11 @@ EXTRA_DIST =  config-parser.rl run-ragel.py \
               engine_private.h  \
               state_notify_private.h \
               rule_engine_private.h \
+              rule_logger_private.h \
               managed_collection_private.h \
               core_private.h \
               core_audit_private.h
+
 
 lib_LTLIBRARIES = libironbee.la
 libironbee_la_SOURCES = engine.c provider.c parser.c data.c \
