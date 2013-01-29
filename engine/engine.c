@@ -878,6 +878,12 @@ ib_status_t ib_tx_create(ib_tx_t **ptx,
         return rc;
     }
 
+    /* Create logevents */
+    rc = ib_list_create(&tx->logevents, tx->mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     /* Create the per-module data data store. */
     rc = ib_array_create(&(tx->module_data), tx->mp, 16, 8);
     if (rc != IB_OK) {

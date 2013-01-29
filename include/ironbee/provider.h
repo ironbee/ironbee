@@ -512,66 +512,6 @@ IB_PROVIDER_DECLARE_API(matcher) {
     );
 };
 
-
-/* Log Event */
-#define IB_PROVIDER_TYPE_LOGEVENT     IB_XSTRINGIFY(logevent)
-#define IB_PROVIDER_VERSION_LOGEVENT  0
-
-/** Log Event Interface Definition. */
-IB_PROVIDER_DECLARE_IFACE(logevent) {
-    IB_PROVIDER_IFACE_HEADER;
-    IB_PROVIDER_FUNC(
-        ib_status_t,
-        write,
-        (ib_provider_inst_t *epi, ib_logevent_t *e)
-    );
-};
-
-/** Log Event API Definition. */
-IB_PROVIDER_DECLARE_API(logevent) {
-    IB_PROVIDER_FUNC(
-        ib_status_t,
-        add_event,
-        (ib_provider_inst_t *epi, ib_logevent_t *e)
-    );
-    IB_PROVIDER_FUNC(
-        ib_status_t,
-        remove_event,
-        /// @todo ID should be another type (structure?)
-        (ib_provider_inst_t *epi, uint32_t id)
-    );
-    IB_PROVIDER_FUNC(
-        ib_status_t,
-        fetch_events,
-        (ib_provider_inst_t *epi, ib_list_t **pevents)
-    );
-    IB_PROVIDER_FUNC(
-        ib_status_t,
-        write_events,
-        (ib_provider_inst_t *epi)
-    );
-};
-
-/**
- * Get the logevent provider instance within a configuration context.
- *
- * @param ctx Config context
- *
- * @returns The logevent provider within the given context
- */
-ib_provider_inst_t DLL_PUBLIC *ib_logevent_provider_get_instance(ib_context_t *ctx);
-
-/**
- * Set the logevent provider instance within a configuration context.
- *
- * @param ctx Config context
- * @param lpi Logevent provider instance
- */
-void DLL_PUBLIC ib_logevent_provider_set_instance(ib_context_t *ctx,
-                                                  ib_provider_inst_t *lpi);
-
-
-
 /**
  * @} IronBeeProvider
  */

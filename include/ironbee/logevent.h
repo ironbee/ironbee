@@ -42,46 +42,46 @@ extern "C" {
 /**
  * Add an event to be logged.
  *
- * @param pi Provider instance
+ * @param tx Transaction
  * @param e Event
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_logevent_add(ib_provider_inst_t *pi,
+ib_status_t DLL_PUBLIC ib_logevent_add(ib_tx_t       *tx,
                                        ib_logevent_t *e);
 
 /**
  * Remove an event from the queue before it is logged.
  *
- * @param pi Provider instance
+ * @param tx Transaction
  * @param id Event id
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_logevent_remove(ib_provider_inst_t *pi,
-                                          uint32_t id);
+ib_status_t DLL_PUBLIC ib_logevent_remove(ib_tx_t  *tx,
+                                          uint32_t  id);
 
 /**
  * Get a list of pending events to be logged.
  *
  * @note The list can be modified directly.
  *
- * @param pi Provider instance
+ * @param tx Transaction
  * @param pevents Address where list of events is written
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_logevent_get_all(ib_provider_inst_t *pi,
+ib_status_t DLL_PUBLIC ib_logevent_get_all(ib_tx_t    *tx,
                                            ib_list_t **pevents);
 
 /**
  * Write out any pending events to the log.
  *
- * @param pi Provider instance
+ * @param tx Transaction
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_logevent_write_all(ib_provider_inst_t *pi);
+ib_status_t DLL_PUBLIC ib_logevent_write_all(ib_tx_t *tx);
 
 /** Log Event Type */
 typedef enum {

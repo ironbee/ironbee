@@ -84,6 +84,8 @@ IronBee v0.7.0
   * For module writers, use `ib_log_vex` instead of `ib_log_vex_ex`.  Include
     `log.h` for logging routines.
   * For engine developers, logging code is now in `log.c` and `log.h`.
+  
+* LogEvents has been refactored to use a direct API rather than a provider.
 
 * Added utility functions that wrap YAJL, using it to decode JSON into an
   ib_list_t of ib_field_t pointers, and to encode an ib_list_t of ib_field_t

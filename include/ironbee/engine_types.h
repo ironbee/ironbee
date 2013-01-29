@@ -213,7 +213,7 @@ struct ib_tx_t {
     ib_context_t       *ctx;             /**< Config context */
     void               *sctx;            /**< Server context */
     ib_data_t          *data;            /**< Data fields*/
-    ib_provider_inst_t *epi;             /**< Log event provider instance */
+    ib_list_t          *logevents;       /**< Log events */
     ib_array_t         *module_data;     /**< Per-module data */
     ib_fctl_t          *fctl;            /**< Transaction filter controller */
     ib_timeval_t       tv_created;       /**< Tx created time value */

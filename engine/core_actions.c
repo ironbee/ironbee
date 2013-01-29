@@ -599,7 +599,7 @@ static ib_status_t act_event_execute(
     }
 
     /* Log the event. */
-    rc = ib_logevent_add(tx->epi, event);
+    rc = ib_logevent_add(tx, event);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1281,7 +1281,7 @@ static ib_status_t get_event(const ib_rule_exec_t *rule_exec,
     ib_list_node_t *event_node;
     ib_tx_t *tx = rule_exec->tx;
 
-    rc = ib_logevent_get_all(tx->epi, &event_list);
+    rc = ib_logevent_get_all(tx, &event_list);
     if (rc != IB_OK) {
         return rc;
     }

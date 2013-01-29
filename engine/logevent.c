@@ -27,6 +27,12 @@
 #include <ironbee/logevent.h>
 
 #include <assert.h>
+#if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
+/* C99 requires that inttypes.h only exposes PRI* macros
+ * for C++ implementations if this is defined: */
+#define __STDC_FORMAT_MACROS
+#endif
+#include <inttypes.h>
 #include <stdio.h>
 
 /** Log Event Types */
@@ -201,65 +207,67 @@ ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
 }
 
 
-ib_status_t ib_logevent_add(ib_provider_inst_t *pi,
+ib_status_t ib_logevent_add(ib_tx_t       *tx,
                             ib_logevent_t *e)
 {
-    IB_PROVIDER_API_TYPE(logevent) *api;
     ib_status_t rc;
 
-    if (pi == NULL) {
+    if (tx == NULL) {
         return IB_EINVAL;
     }
 
-    api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
-
-    rc = api->add_event(pi, e);
+    rc = ib_list_push(tx->logevents, e);
     return rc;
 }
 
-ib_status_t ib_logevent_remove(ib_provider_inst_t *pi,
+ib_status_t ib_logevent_remove(ib_tx_t *tx,
                                uint32_t id)
 {
-    IB_PROVIDER_API_TYPE(logevent) *api;
-    ib_status_t rc;
-
-    if (pi == NULL) {
+    if (tx == NULL) {
         return IB_EINVAL;
     }
 
-    api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
+    ib_list_node_t *node;
+    ib_list_node_t *node_next;
 
-    rc = api->remove_event(pi, id);
-    return rc;
+    IB_LIST_LOOP_SAFE(tx->logevents, node, node_next) {
+        ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(node);
+        if (e->event_id == id) {
+            ib_list_node_remove(tx->logevents, node);
+            return IB_OK;
+        }
+    }
+
+    return IB_ENOENT;
 }
 
-ib_status_t ib_logevent_get_all(ib_provider_inst_t *pi,
+ib_status_t ib_logevent_get_all(ib_tx_t    *tx,
                                 ib_list_t **pevents)
 {
-    IB_PROVIDER_API_TYPE(logevent) *api;
-    ib_status_t rc;
-
-    if (pi == NULL) {
+    if (tx == NULL) {
         return IB_EINVAL;
     }
 
-    api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
-
-    rc = api->fetch_events(pi, pevents);
-    return rc;
+    *pevents = tx->logevents;
+    return IB_OK;
 }
 
-ib_status_t ib_logevent_write_all(ib_provider_inst_t *pi)
+ib_status_t ib_logevent_write_all(ib_tx_t *tx)
 {
-    IB_PROVIDER_API_TYPE(logevent) *api;
-    ib_status_t rc;
-
-    if (pi == NULL) {
+    if (tx == NULL) {
         return IB_EINVAL;
     }
 
-    api = (IB_PROVIDER_API_TYPE(logevent) *)pi->pr->api;
+    ib_logevent_t *e;
 
-    rc = api->write_events(pi);
-    return rc;
+    if (tx->logevents == NULL) {
+        return IB_OK;
+    }
+
+    while (ib_list_pop(tx->logevents, (void *)&e) == IB_OK) {
+        ib_log_debug(tx->ib, "Wrote log event [id %016" PRIx32 "][type %d]: %s",
+                     e->event_id, e->type, e->msg);
+    }
+
+    return IB_OK;
 }

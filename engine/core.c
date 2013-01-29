@@ -224,21 +224,6 @@ static ib_status_t core_unescape(ib_engine_t *ib, char **dst, const char *src)
     return IB_OK;
 }
 
-/* -- Core Log Event Provider -- */
-
-static ib_status_t core_logevent_write(ib_provider_inst_t *epi, ib_logevent_t *e)
-{
-    ib_log_debug(epi->pr->ib, "Wrote log event [id %016" PRIx32 "][type %d]: %s",
-                 e->event_id, e->type, e->msg);
-    return IB_OK;
-}
-
-static IB_PROVIDER_IFACE_TYPE(logevent) core_logevent_iface = {
-    IB_PROVIDER_IFACE_HEADER_DEFAULTS,
-    core_logevent_write
-};
-
-
 /// @todo Make this public
 static ib_status_t ib_auditlog_part_add(ib_auditlog_t *log,
                                         const char *name,
@@ -574,96 +559,6 @@ static ib_status_t audit_register(ib_engine_t *ib,
 static IB_PROVIDER_API_TYPE(audit) audit_api = {
     audit_api_write_log
 };
-
-
-/* -- Logevent API Implementations -- */
-
-/**
- * Core logevent provider API implementation to add an event.
- *
- * @param epi Logevent provider instance
- * @param e Event to add
- *
- * @returns Status code
- */
-static ib_status_t logevent_api_add_event(ib_provider_inst_t *epi,
-                                          ib_logevent_t *e)
-{
-    ib_list_t *events = (ib_list_t *)epi->data;
-
-    ib_list_push(events, e);
-
-    return IB_OK;
-}
-
-/**
- * Core logevent provider API implementation to remove an event.
- *
- * @param epi Logevent provider instance
- * @param id Event ID to remove
- *
- * @returns Status code
- */
-static ib_status_t logevent_api_remove_event(ib_provider_inst_t *epi,
-                                             uint32_t id)
-{
-    ib_list_t *events;
-    ib_list_node_t *node;
-    ib_list_node_t *node_next;
-
-    events = (ib_list_t *)epi->data;
-    IB_LIST_LOOP_SAFE(events, node, node_next) {
-        ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(node);
-        if (e->event_id == id) {
-            ib_list_node_remove(events, node);
-            return IB_OK;
-        }
-    }
-
-    return IB_ENOENT;
-}
-
-/**
- * Core logevent provider API implementation to fetch events.
- *
- * @param epi Logevent provider instance
- * @param pevents Event ID to remove
- *
- * @returns Status code
- */
-static ib_status_t logevent_api_fetch_events(ib_provider_inst_t *epi,
-                                             ib_list_t **pevents)
-{
-    *pevents = (ib_list_t *)epi->data;
-    return IB_OK;
-}
-
-/**
- * Core logevent provider API implementation to write out (and remove)
- * all the pending events.
- *
- * @param epi Logevent provider instance
- *
- * @returns Status code
- */
-static ib_status_t logevent_api_write_events(ib_provider_inst_t *epi)
-{
-    IB_PROVIDER_IFACE_TYPE(logevent) *iface;
-    ib_list_t *events;
-    ib_logevent_t *e;
-
-    events = (ib_list_t *)epi->data;
-    if (events == NULL) {
-        return IB_OK;
-    }
-
-    iface = (IB_PROVIDER_IFACE_TYPE(logevent) *)epi->pr->iface;
-    while (ib_list_pop(events, (void *)&e) == IB_OK) {
-        iface->write(epi, e);
-    }
-
-    return IB_OK;
-}
 
 static size_t ib_auditlog_gen_raw_stream(ib_auditlog_part_t *part,
                                          const uint8_t **chunk)
@@ -1326,7 +1221,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
 
         /* Add all unsuppressed alert event tags as well
          * as the last alert message and action. */
-        rc = ib_logevent_get_all(tx->epi, &events);
+        rc = ib_logevent_get_all(tx, &events);
         if (rc == IB_OK) {
             ib_list_node_t *enode;
             ib_field_t *tx_action;
@@ -1521,7 +1416,7 @@ static ib_status_t ib_auditlog_add_part_events(ib_auditlog_t *log)
     ib_status_t rc;
 
     /* Get the list of events. */
-    rc = ib_logevent_get_all(log->tx->epi, &list);
+    rc = ib_logevent_get_all(log->tx, &list);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1938,8 +1833,8 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     char boundary[46];
     ib_status_t rc;
 
-    /* If there's not event provider, do nothing */
-    if (tx->epi == NULL) {
+    /* If there's not events, do nothing */
+    if (tx->logevents == NULL) {
         return IB_OK;
     }
 
@@ -1955,7 +1850,7 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
             break;
         /* Only if events are present */
         case 2:
-            rc = ib_logevent_get_all(tx->epi, &events);
+            rc = ib_logevent_get_all(tx, &events);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -2042,78 +1937,10 @@ static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
     ib_auditlog_write(audit);
 
     /* Events */
-    ib_logevent_write_all(tx->epi);
+    ib_logevent_write_all(tx);
 
     return IB_OK;
 }
-
-/**
- * Logevent provider registration function.
- *
- * This just does a version and sanity check on a registered provider.
- *
- * @param ib Engine
- * @param lpr Logevent provider
- *
- * @returns Status code
- */
-static ib_status_t logevent_register(ib_engine_t *ib,
-                                     ib_provider_t *lpr)
-{
-    IB_PROVIDER_IFACE_TYPE(logevent) *iface =
-        (IB_PROVIDER_IFACE_TYPE(logevent) *)lpr->iface;
-
-    /* Check that versions match. */
-    if (iface->version != IB_PROVIDER_VERSION_LOGEVENT) {
-        return IB_EINCOMPAT;
-    }
-
-    /* Verify that required interface functions are implemented. */
-    if (iface->write == NULL) {
-        ib_log_alert(ib, "The write function "
-                     "MUST be implemented by a logevent provider");
-        return IB_EINVAL;
-    }
-
-    return IB_OK;
-}
-
-/**
- * Logevent provider initialization function.
- *
- * @warning Not yet doing anything.
- *
- * @param epi Logevent provider instance
- * @param data User data
- *
- * @returns Status code
- */
-static ib_status_t logevent_init(ib_provider_inst_t *epi,
-                                 void *data)
-{
-    ib_list_t *events;
-    ib_status_t rc;
-
-    rc = ib_list_create(&events, epi->mp);
-    if (rc != IB_OK) {
-        return rc;
-    }
-    epi->data = events;
-
-    return IB_OK;
-}
-
-/**
- * Logevent provider API mapping for core module.
- */
-static IB_PROVIDER_API_TYPE(logevent) logevent_api = {
-    logevent_api_add_event,
-    logevent_api_remove_event,
-    logevent_api_fetch_events,
-    logevent_api_write_events
-};
-
-
 
 /**
  * Handle the connection starting.
@@ -2700,15 +2527,6 @@ static ib_status_t core_hook_tx_started(ib_engine_t *ib,
     rc = data_default_init(ib, tx);
     if (rc != IB_OK) {
         ib_log_alert_tx(tx, "Failed to initialize data provider instance.");
-        return rc;
-    }
-
-    /* Logevent Provider Instance */
-    rc = ib_provider_instance_create_ex(ib, corecfg->pr.logevent, &tx->epi,
-                                        tx->mp, NULL);
-    if (rc != IB_OK) {
-        ib_log_alert_tx(tx, "Failed to create logevent provider instance: %s",
-                        ib_status_to_string(rc));
         return rc;
     }
 
@@ -4326,18 +4144,6 @@ static ib_status_t core_set_value(ib_cfgparser_t *cp,
             return rc;
         }
     }
-    else if (strcasecmp("logevent", name) == 0) {
-        /* Lookup the logevent provider. */
-        rc = ib_provider_lookup(ib,
-                                IB_PROVIDER_TYPE_LOGEVENT,
-                                val,
-                                &corecfg->pr.logevent);
-        if (rc != IB_OK) {
-            ib_cfg_log_alert(cp, "Failed to lookup %s logevent provider: %s",
-                             val, ib_status_to_string(rc));
-            return rc;
-        }
-    }
     else if (strcasecmp("RuleEngineDebugLogLevel", name) == 0) {
         rc = ib_rule_engine_set(cp, name, val);
         if (rc != IB_OK) {
@@ -4816,7 +4622,6 @@ static ib_status_t core_init(ib_engine_t *ib,
     /* Set defaults */
     corecfg->log_level            = 4;
     corecfg->log_uri              = "";
-    corecfg->logevent             = MODULE_NAME_STR;
     corecfg->parser               = MODULE_NAME_STR;
     corecfg->buffer_req           = 0;
     corecfg->buffer_res           = 0;
@@ -4843,22 +4648,6 @@ static ib_status_t core_init(ib_engine_t *ib,
 
     /* Force any IBUtil calls to use the default logger */
     rc = ib_util_log_logger(core_util_logger, ib);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Define the logevent provider API. */
-    rc = ib_provider_define(ib, IB_PROVIDER_TYPE_LOGEVENT,
-                            logevent_register, &logevent_api);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Register the core logevent provider. */
-    rc = ib_provider_register(ib, IB_PROVIDER_TYPE_LOGEVENT,
-                              MODULE_NAME_STR, NULL,
-                              &core_logevent_iface,
-                              logevent_init);
     if (rc != IB_OK) {
         return rc;
     }
@@ -4959,17 +4748,6 @@ static ib_status_t core_init(ib_engine_t *ib,
                             &corecfg->pr.audit);
     if (rc != IB_OK) {
         ib_log_alert(ib, "Failed to lookup %s audit log provider: %s",
-                     IB_DSTR_CORE, ib_status_to_string(rc));
-        return rc;
-    }
-
-    /* Lookup the core logevent provider. */
-    rc = ib_provider_lookup(ib,
-                            IB_PROVIDER_TYPE_LOGEVENT,
-                            IB_DSTR_CORE,
-                            &corecfg->pr.logevent);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to lookup %s logevent provider: %s",
                      IB_DSTR_CORE, ib_status_to_string(rc));
         return rc;
     }
@@ -5106,14 +4884,6 @@ static IB_CFGMAP_INIT_STRUCTURE(core_config_map) = {
         IB_FTYPE_NULSTR,
         ib_core_cfg_t,
         log_uri
-    ),
-
-    /* Logevent */
-    IB_CFGMAP_INIT_ENTRY(
-        IB_PROVIDER_TYPE_LOGEVENT,
-        IB_FTYPE_NULSTR,
-        ib_core_cfg_t,
-        logevent
     ),
 
     /* Rule logging */
