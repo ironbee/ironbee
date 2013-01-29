@@ -50,7 +50,7 @@ endif
 
 EXTRA_DIST = \
         ahocorasick_private.h \
-	json_yajl_private.h
+        json_yajl_private.h
 
 libibutil_la_CFLAGS = @OSSP_UUID_CFLAGS@
 if FREEBSD
