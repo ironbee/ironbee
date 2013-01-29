@@ -26,7 +26,6 @@
 
 #include "core_private.h"
 #include "engine_private.h"
-#include "rule_engine_private.h"
 
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
@@ -35,6 +34,7 @@
 #include <ironbee/logevent.h>
 #include <ironbee/mpool.h>
 #include <ironbee/rule_engine.h>
+#include <ironbee/rule_logger.h>
 #include <ironbee/string.h>
 #include <ironbee/types.h>
 #include <ironbee/util.h>

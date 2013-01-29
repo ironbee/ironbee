@@ -47,54 +47,7 @@ extern "C" {
 */
 
 /**
- * Rule flag update operations.
- */
-typedef enum {
-    FLAG_OP_SET,                    /**< Set the flags */
-    FLAG_OP_OR,                     /**< Or in the specified flags */
-    FLAG_OP_CLEAR,                  /**< Clear the specified flags */
-} ib_rule_flagop_t;
-
-/**
- * Rule action add operator.
- */
-typedef enum {
-    RULE_ACTION_TRUE,               /**< Add a True action */
-    RULE_ACTION_FALSE,              /**< Add a False action */
-} ib_rule_action_t;
-
-/**
- * Rule enable type
- */
-typedef enum {
-    RULE_ENABLE_ID,
-    RULE_ENABLE_TAG,
-    RULE_ENABLE_ALL,
-} ib_rule_enable_type_t;
-
-/**
- * External rule driver function.
- *
- * Function is passed configuration parser, tag, location, and callback data.
- */
-typedef ib_status_t (*ib_rule_driver_function_t)(
-    ib_cfgparser_t *,
-    ib_rule_t *rule,
-    const char *,
-    const char *,
-    void *
-);
-
-/**
- * A driver is simply a function and its callback data.
- */
-typedef struct {
-    ib_rule_driver_function_t  function;
-    void                      *cbdata;
-} ib_rule_driver_t;
-
-/**
- * Rule engine: Rule meta data
+ * Rule meta data
  */
 typedef struct {
     const char            *id;              /**< Rule ID */
@@ -111,15 +64,6 @@ typedef struct {
     const char            *config_file;     /**< File rule defined in */
     unsigned int           config_line;     /**< Line number of rule def */
 } ib_rule_meta_t;
-
-/**
- * Rule engine: Target fields
- */
-struct ib_rule_target_t {
-    const char            *field_name;    /**< The field name */
-    const char            *target_str;    /**< The target string */
-    ib_list_t             *tfn_list;      /**< List of transformations */
-};
 
 /**
  * Rule phase meta data
@@ -146,69 +90,11 @@ struct ib_rule_t {
 };
 
 /**
- * Context-specific rule object.  This is the type of the objects
- * stored in the 'rule_list' field of ib_ruleset_phase_t.
- */
-typedef struct {
-    ib_rule_t             *rule;         /**< The rule itself */
-    ib_flags_t             flags;        /**< Rule flags (IB_RULECTX_FLAG_xx) */
-} ib_rule_ctx_data_t;
-
-/**
  * Rule engine parser data
  */
 typedef struct {
     ib_rule_t             *previous;     /**< Previous rule parsed */
 } ib_rule_parser_data_t;
-
-/**
- * Ruleset for a single phase.
- *  rule_list is a list of pointers to ib_rule_ctx_data_t objects.
- */
-typedef struct {
-    ib_rule_phase_num_t         phase_num;   /**< Phase number */
-    const ib_rule_phase_meta_t *phase_meta;  /**< Rule phase meta-data */
-    ib_list_t                  *rule_list;   /**< Rules to execute in phase */
-} ib_ruleset_phase_t;
-
-/**
- * Set of rules for all phases.
- * The elements of the phases list are ib_rule_ctx_data_t objects.
- */
-typedef struct {
-    ib_ruleset_phase_t     phases[IB_RULE_PHASE_COUNT];
-} ib_ruleset_t;
-
-/**
- * Data on enable directives.
- */
-typedef struct {
-    ib_rule_enable_type_t  enable_type;  /**< Enable All / by ID / by Tag */
-    const char            *enable_str;   /**< String of ID or Tag */
-    const char            *file;         /**< Configuration file of enable */
-    unsigned int           lineno;       /**< Line number in config file */
-} ib_rule_enable_t;
-
-/**
- * Rules data for each context.
- */
-struct ib_rule_context_t {
-    ib_ruleset_t           ruleset;      /**< Rules to exec */
-    ib_list_t             *rule_list;    /**< All rules owned by context */
-    ib_hash_t             *rule_hash;    /**< Hash of rules (by rule-id) */
-    ib_list_t             *enable_list;  /**< Enable All/IDs/tags */
-    ib_list_t             *disable_list; /**< All/IDs/tags disabled */
-    ib_rule_parser_data_t  parser_data;  /**< Rule parser specific data */
-};
-
-/**
- * Rule engine data.
- */
-struct ib_rule_engine_t {
-    ib_list_t *rule_list;        /**< All rules owned by this context */
-    ib_hash_t *rule_hash;        /**< Hash of rules (by rule-id) */
-    ib_hash_t *external_drivers; /**< Drivers for external rules. */
-};
 
 /**
  * Rule execution data
@@ -232,6 +118,33 @@ struct ib_rule_exec_t {
 };
 
 /**
+ * External rule driver function.
+ *
+ * Function is passed configuration parser, tag, location, and callback data.
+ *
+ * @param[in] cp Configuration parser
+ * @param[in] rule Rule being processed
+ * @param[in] tag Driver tag
+ * @param[in] location Location of rule file
+ * @param[in] cbdata Generic callback data
+ */
+typedef ib_status_t (*ib_rule_driver_fn_t)(
+    ib_cfgparser_t             *cp,
+    ib_rule_t                  *rule,
+    const char                 *tag,
+    const char                 *location,
+    void                       *cbdata
+);
+
+/**
+ * A driver is simply a function and its callback data.
+ */
+typedef struct {
+    ib_rule_driver_fn_t     function;    /**< Driver function */
+    void                   *cbdata;      /**< Driver callback data */
+} ib_rule_driver_t;
+
+/**
  * Set a rule engine value (for configuration)
  *
  * @param[in] cp Configuration parser
@@ -240,9 +153,10 @@ struct ib_rule_exec_t {
  *
  * @returns IB_OK / IB_EINVAL
  */
-ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
-                               const char *name,
-                               const char *value);
+ib_status_t DLL_PUBLIC ib_rule_engine_set(
+    ib_cfgparser_t             *cp,
+    const char                 *name,
+    const char                 *value);
 
 /**
  * Register external rule driver.
@@ -255,11 +169,26 @@ ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_rule_register_external_driver(
-    ib_engine_t               *ib,
-    const char                *tag,
-    ib_rule_driver_function_t  driver,
-    void                      *cbdata
-);
+    ib_engine_t                *ib,
+    const char                 *tag,
+    ib_rule_driver_fn_t         driver,
+    void                       *cbdata);
+
+/**
+ * Lookup an external rule driver
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] tag Driver tag
+ * @param[out] pdriver Pointer to driver
+ *
+ * @returns Status code
+ *    - IB_OK All ok
+ *    - Errors from @sa ib_hash_get()
+ */
+ib_status_t DLL_PUBLIC ib_rule_lookup_external_driver(
+    const ib_engine_t          *ib,
+    const char                 *tag,
+    ib_rule_driver_t          **pdriver);
 
 /**
  * Create a rule.
@@ -275,12 +204,13 @@ ib_status_t DLL_PUBLIC ib_rule_register_external_driver(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
-                                      ib_context_t *ctx,
-                                      const char *file,
-                                      unsigned int lineno,
-                                      bool is_stream,
-                                      ib_rule_t **prule);
+ib_status_t DLL_PUBLIC ib_rule_create(
+    ib_engine_t                *ib,
+    ib_context_t               *ctx,
+    const char                 *file,
+    unsigned int                lineno,
+    bool                        is_stream,
+    ib_rule_t                 **prule);
 
 /**
  * Lookup rule by ID
@@ -292,10 +222,11 @@ ib_status_t DLL_PUBLIC ib_rule_create(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t ib_rule_lookup(ib_engine_t *ib,
-                           ib_context_t *ctx,
-                           const char *id,
-                           ib_rule_t **rule);
+ib_status_t DLL_PUBLIC ib_rule_lookup(
+    ib_engine_t                *ib,
+    ib_context_t               *ctx,
+    const char                 *id,
+    ib_rule_t                 **rule);
 
 /**
  * Find rule matching a reference rule.
@@ -307,10 +238,11 @@ ib_status_t ib_rule_lookup(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t ib_rule_match(ib_engine_t *ib,
-                          ib_context_t *ctx,
-                          const ib_rule_t *ref,
-                          ib_rule_t **rule);
+ib_status_t DLL_PUBLIC ib_rule_match(
+    ib_engine_t                *ib,
+    ib_context_t               *ctx,
+    const ib_rule_t            *ref,
+    ib_rule_t                 **rule);
 
 /**
  * Add an enable All/ID/Tag to the enable list for the specified context
@@ -326,14 +258,15 @@ ib_status_t ib_rule_match(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t ib_rule_enable(const ib_engine_t *ib,
-                           ib_context_t *ctx,
-                           ib_rule_enable_type_t etype,
-                           const char *name,
-                           bool enable,
-                           const char *file,
-                           unsigned int lineno,
-                           const char *str);
+ib_status_t DLL_PUBLIC ib_rule_enable(
+    const ib_engine_t          *ib,
+    ib_context_t               *ctx,
+    ib_rule_enable_type_t       etype,
+    const char                 *name,
+    bool                        enable,
+    const char                 *file,
+    unsigned int                lineno,
+    const char                 *str);
 
 /**
  * Enable all rules for the specified context
@@ -345,10 +278,11 @@ ib_status_t ib_rule_enable(const ib_engine_t *ib,
  *
  * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
  */
-ib_status_t ib_rule_enable_all(const ib_engine_t *ib,
-                               ib_context_t *ctx,
-                               const char *file,
-                               unsigned int lineno);
+ib_status_t DLL_PUBLIC ib_rule_enable_all(
+    const ib_engine_t          *ib,
+    ib_context_t               *ctx,
+    const char                 *file,
+    unsigned int                lineno);
 
 /**
  * Add an enable ID to the enable list for the specified context
@@ -361,11 +295,12 @@ ib_status_t ib_rule_enable_all(const ib_engine_t *ib,
  *
  * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
  */
-ib_status_t ib_rule_enable_id(const ib_engine_t *ib,
-                              ib_context_t *ctx,
-                              const char *file,
-                              unsigned int lineno,
-                              const char *id);
+ib_status_t DLL_PUBLIC ib_rule_enable_id(
+    const ib_engine_t          *ib,
+    ib_context_t               *ctx,
+    const char                 *file,
+    unsigned int                lineno,
+    const char                 *id);
 
 /**
  * Add an enable tag to the enable list for the specified context
@@ -378,11 +313,12 @@ ib_status_t ib_rule_enable_id(const ib_engine_t *ib,
  *
  * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
  */
-ib_status_t ib_rule_enable_tag(const ib_engine_t *ib,
-                               ib_context_t *ctx,
-                               const char *file,
-                               unsigned int lineno,
-                               const char *tag);
+ib_status_t DLL_PUBLIC ib_rule_enable_tag(
+    const ib_engine_t          *ib,
+    ib_context_t               *ctx,
+    const char                 *file,
+    unsigned int                lineno,
+    const char                 *tag);
 
 /**
  * Disable all rules for the specified context
@@ -394,10 +330,11 @@ ib_status_t ib_rule_enable_tag(const ib_engine_t *ib,
  *
  * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
  */
-ib_status_t ib_rule_disable_all(const ib_engine_t *ib,
-                                ib_context_t *ctx,
-                                const char *file,
-                                unsigned int lineno);
+ib_status_t DLL_PUBLIC ib_rule_disable_all(
+    const ib_engine_t          *ib,
+    ib_context_t               *ctx,
+    const char                 *file,
+    unsigned int                lineno);
 
 /**
  * Add an ID to the disable list for the specified context
@@ -410,11 +347,12 @@ ib_status_t ib_rule_disable_all(const ib_engine_t *ib,
  *
  * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
  */
-ib_status_t ib_rule_disable_id(const ib_engine_t *ib,
-                               ib_context_t *ctx,
-                               const char *file,
-                               unsigned int lineno,
-                               const char *id);
+ib_status_t DLL_PUBLIC ib_rule_disable_id(
+    const ib_engine_t          *ib,
+    ib_context_t               *ctx,
+    const char                 *file,
+    unsigned int                lineno,
+    const char                 *id);
 
 /**
  * Add a tag to the disable list for the specified context
@@ -427,11 +365,12 @@ ib_status_t ib_rule_disable_id(const ib_engine_t *ib,
  *
  * @returns Status code (IB_EINVAL for invalid ID, errors from ib_list_push())
  */
-ib_status_t ib_rule_disable_tag(const ib_engine_t *ib,
-                                ib_context_t *ctx,
-                                const char *file,
-                                unsigned int lineno,
-                                const char *tag);
+ib_status_t DLL_PUBLIC ib_rule_disable_tag(
+    const ib_engine_t          *ib,
+    ib_context_t               *ctx,
+    const char                 *file,
+    unsigned int                lineno,
+    const char                 *tag);
 
 /**
  * Set the execution phase of a rule (for phase rules).
@@ -442,9 +381,10 @@ ib_status_t ib_rule_disable_tag(const ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t ib_rule_set_phase(ib_engine_t *ib,
-                              ib_rule_t *rule,
-                              ib_rule_phase_num_t phase);
+ib_status_t DLL_PUBLIC ib_rule_set_phase(
+    ib_engine_t                *ib,
+    ib_rule_t                  *rule,
+    ib_rule_phase_num_t         phase);
 
 /**
  * Query as to whether a rule allow transformations
@@ -453,7 +393,8 @@ ib_status_t ib_rule_set_phase(ib_engine_t *ib,
  *
  * @returns true or false
  */
-bool ib_rule_allow_tfns(const ib_rule_t *rule);
+bool DLL_PUBLIC ib_rule_allow_tfns(
+    const ib_rule_t            *rule);
 
 /**
  * Query as to whether a rule allow chains
@@ -462,7 +403,8 @@ bool ib_rule_allow_tfns(const ib_rule_t *rule);
  *
  * @returns true or false
  */
-bool ib_rule_allow_chain(const ib_rule_t *rule);
+bool DLL_PUBLIC ib_rule_allow_chain(
+    const ib_rule_t            *rule);
 
 /**
  * Query as to whether is a stream inspection rule
@@ -471,7 +413,8 @@ bool ib_rule_allow_chain(const ib_rule_t *rule);
  *
  * @returns true or false
  */
-bool ib_rule_is_stream(const ib_rule_t *rule);
+bool DLL_PUBLIC ib_rule_is_stream(
+    const ib_rule_t            *rule);
 
 /**
  * Get the operator flags required for this rule.
@@ -480,7 +423,8 @@ bool ib_rule_is_stream(const ib_rule_t *rule);
  *
  * @returns Required operator flags
  */
-ib_flags_t ib_rule_required_op_flags(const ib_rule_t *rule);
+ib_flags_t DLL_PUBLIC ib_rule_required_op_flags(
+    const ib_rule_t            *rule);
 
 /**
  * Set a rule's operator.
@@ -491,9 +435,10 @@ ib_flags_t ib_rule_required_op_flags(const ib_rule_t *rule);
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
-                                            ib_rule_t *rule,
-                                            ib_operator_inst_t *opinst);
+ib_status_t DLL_PUBLIC ib_rule_set_operator(
+    ib_engine_t                *ib,
+    ib_rule_t                  *rule,
+    ib_operator_inst_t         *opinst);
 
 /**
  * Set a rule's ID.
@@ -504,9 +449,10 @@ ib_status_t DLL_PUBLIC ib_rule_set_operator(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
-                                      ib_rule_t *rule,
-                                      const char *id);
+ib_status_t DLL_PUBLIC ib_rule_set_id(
+    ib_engine_t                *ib,
+    ib_rule_t                  *rule,
+    const char                 *id);
 
 /**
  * Set a rule's chain flag
@@ -516,8 +462,9 @@ ib_status_t DLL_PUBLIC ib_rule_set_id(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_set_chain(ib_engine_t *ib,
-                                         ib_rule_t *rule);
+ib_status_t DLL_PUBLIC ib_rule_set_chain(
+    ib_engine_t                *ib,
+    ib_rule_t                  *rule);
 
 /**
  * Get a rule's ID string.
@@ -533,7 +480,8 @@ ib_status_t DLL_PUBLIC ib_rule_set_chain(ib_engine_t *ib,
  * @returns The rule's @c id, @c chain_id if @c id is not set, or NULL
  *          if neither is set.
  */
-const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule);
+const char DLL_PUBLIC *ib_rule_id(
+    const ib_rule_t            *rule);
 
 /**
  * Check for a match against a rule's ID
@@ -545,10 +493,11 @@ const char DLL_PUBLIC *ib_rule_id(const ib_rule_t *rule);
  *
  * @returns true if match is found, false if not
  */
-bool DLL_PUBLIC ib_rule_id_match(const ib_rule_t *rule,
-                                 const char *id,
-                                 bool parents,
-                                 bool children);
+bool DLL_PUBLIC ib_rule_id_match(
+    const ib_rule_t            *rule,
+    const char                 *id,
+    bool                        parents,
+    bool                        children);
 
 /**
  * Check for a match against a rule's tags
@@ -560,10 +509,11 @@ bool DLL_PUBLIC ib_rule_id_match(const ib_rule_t *rule,
  *
  * @returns true if match is found, false if not
  */
-bool DLL_PUBLIC ib_rule_tag_match(const ib_rule_t *rule,
-                                  const char *tag,
-                                  bool parents,
-                                  bool children);
+bool DLL_PUBLIC ib_rule_tag_match(
+    const ib_rule_t            *rule,
+    const char                 *tag,
+    bool                        parents,
+    bool                        children);
 
 /**
  * Create a rule target.
@@ -577,12 +527,13 @@ bool DLL_PUBLIC ib_rule_tag_match(const ib_rule_t *rule,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
-                                             const char *str,
-                                             const char *name,
-                                             ib_list_t *tfn_names,
-                                             ib_rule_target_t **target,
-                                             int *tfns_not_found);
+ib_status_t DLL_PUBLIC ib_rule_create_target(
+    ib_engine_t                *ib,
+    const char                 *str,
+    const char                 *name,
+    ib_list_t                  *tfn_names,
+    ib_rule_target_t          **target,
+    int                        *tfns_not_found);
 
 /**
  * Add a target field to a rule.
@@ -593,9 +544,10 @@ ib_status_t DLL_PUBLIC ib_rule_create_target(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
-                                          ib_rule_t *rule,
-                                          ib_rule_target_t *target);
+ib_status_t DLL_PUBLIC ib_rule_add_target(
+    ib_engine_t                *ib,
+    ib_rule_t                  *rule,
+    ib_rule_target_t           *target);
 
 /**
  * Add a transformation to all target fields of a rule.
@@ -606,9 +558,10 @@ ib_status_t DLL_PUBLIC ib_rule_add_target(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_add_tfn(ib_engine_t *ib,
-                                       ib_rule_t *rule,
-                                       const char *name);
+ib_status_t DLL_PUBLIC ib_rule_add_tfn(
+    ib_engine_t                *ib,
+    ib_rule_t                  *rule,
+    const char                 *name);
 
 /**
  * Add an transformation to a target field.
@@ -619,9 +572,10 @@ ib_status_t DLL_PUBLIC ib_rule_add_tfn(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(ib_engine_t *ib,
-                                              ib_rule_target_t *target,
-                                              const char *name);
+ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(
+    ib_engine_t                *ib,
+    ib_rule_target_t           *target,
+    const char                 *name);
 
 /**
  * Add a modifier to a rule.
@@ -632,9 +586,10 @@ ib_status_t DLL_PUBLIC ib_rule_target_add_tfn(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_add_modifier(ib_engine_t *ib,
-                                            ib_rule_t *rule,
-                                            const char *str);
+ib_status_t DLL_PUBLIC ib_rule_add_modifier(
+    ib_engine_t                *ib,
+    ib_rule_t                  *rule,
+    const char                 *str);
 
 /**
  * Add a modifier to a rule.
@@ -646,10 +601,11 @@ ib_status_t DLL_PUBLIC ib_rule_add_modifier(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
-                                          ib_rule_t *rule,
-                                          ib_action_inst_t *action,
-                                          ib_rule_action_t which);
+ib_status_t DLL_PUBLIC ib_rule_add_action(
+    ib_engine_t                *ib,
+    ib_rule_t                  *rule,
+    ib_action_inst_t           *action,
+    ib_rule_action_t            which);
 
 /**
  * Register a rule.
@@ -662,9 +618,10 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_register(ib_engine_t *ib,
-                                        ib_context_t *ctx,
-                                        ib_rule_t *rule);
+ib_status_t DLL_PUBLIC ib_rule_register(
+    ib_engine_t                *ib,
+    ib_context_t               *ctx,
+    ib_rule_t                  *rule);
 
 /**
  * Invalidate an entire rule chain
@@ -675,10 +632,10 @@ ib_status_t DLL_PUBLIC ib_rule_register(ib_engine_t *ib,
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(ib_engine_t *ib,
-                                                ib_context_t *ctx,
-                                                ib_rule_t *rule);
-
+ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(
+    ib_engine_t                *ib,
+    ib_context_t               *ctx,
+    ib_rule_t                  *rule);
 
 /**
  * Get the memory pool to use for rule allocations.
@@ -687,7 +644,8 @@ ib_status_t DLL_PUBLIC ib_rule_chain_invalidate(ib_engine_t *ib,
  *
  * @returns Pointer to the memory pool to use.
  */
-ib_mpool_t DLL_PUBLIC *ib_rule_mpool(ib_engine_t *ib);
+ib_mpool_t DLL_PUBLIC *ib_rule_mpool(
+    ib_engine_t                *ib);
 
 /**
  * Determine of operator results should be captured
@@ -697,16 +655,17 @@ ib_mpool_t DLL_PUBLIC *ib_rule_mpool(ib_engine_t *ib);
  *
  * @returns true if the results should be captured, false otherwise
  */
-bool ib_rule_should_capture(const ib_rule_exec_t *rule_exec,
-                            ib_num_t result);
-
+bool DLL_PUBLIC ib_rule_should_capture(
+    const ib_rule_exec_t       *rule_exec,
+    ib_num_t                    result);
 
 /**
  * Perform logging of a rule's execution
  *
  * @param[in] rule_exec Rule execution object
  */
-void ib_rule_log_execution(const ib_rule_exec_t *rule_exec);
+void DLL_PUBLIC ib_rule_log_execution(
+    const ib_rule_exec_t       *rule_exec);
 
 /**
  * Generic Logger for rule execution.
@@ -722,11 +681,12 @@ void ib_rule_log_execution(const ib_rule_exec_t *rule_exec);
  * @param[in] line Line number (or 0)
  * @param[in] fmt Printf-like format string
  */
-void ib_rule_log_exec(ib_rule_dlog_level_t level,
-                      const ib_rule_exec_t *rule_exec,
-                      const char *file,
-                      int line,
-                      const char *fmt, ...)
+void DLL_PUBLIC ib_rule_log_exec(
+    ib_rule_dlog_level_t        level,
+    const ib_rule_exec_t       *rule_exec,
+    const char                 *file,
+    int                         line,
+    const char                 *fmt, ...)
     PRINTF_ATTRIBUTE(5, 6);
 
 /**
@@ -740,11 +700,11 @@ void ib_rule_log_exec(ib_rule_dlog_level_t level,
  * @param[in] line Line number (or 0)
  * @param[in] fmt Printf-like format string
  */
-void ib_rule_log_fatal_ex(const ib_rule_exec_t *rule_exec,
-                          const char *file,
-                          int line,
-                          const char *fmt, ...
-                          )
+void DLL_PUBLIC ib_rule_log_fatal_ex(
+    const ib_rule_exec_t       *rule_exec,
+    const char                 *file,
+    int                         line,
+    const char                 *fmt, ...)
     PRINTF_ATTRIBUTE(4, 5);
 
 /** Rule execution fatal error logging */

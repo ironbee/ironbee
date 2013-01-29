@@ -24,6 +24,8 @@
 
 #include "ironbee_config_auto.h"
 
+#include <ironbee/rule_logger.h>
+#include "rule_logger_private.h"
 #include "rule_engine_private.h"
 
 #include <ironbee/action.h>

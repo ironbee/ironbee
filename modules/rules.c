@@ -845,7 +845,7 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
         return IB_EALLOC;
     }
     location = colon + 1;
-    rc = ib_hash_get(cp->ib->rule_engine->external_drivers, &driver, tag);
+    rc = ib_rule_lookup_external_driver(cp->ib, tag, &driver);
     if (rc != IB_ENOENT) {
         rc = driver->function(cp, rule, tag, location, driver->cbdata);
         if (rc != IB_OK) {

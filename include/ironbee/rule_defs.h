@@ -53,6 +53,32 @@ typedef enum {
 } ib_rule_phase_num_t;
 
 /**
+ * Rule flag update operations.
+ */
+typedef enum {
+    FLAG_OP_SET,                    /**< Set the flags */
+    FLAG_OP_OR,                     /**< Or in the specified flags */
+    FLAG_OP_CLEAR,                  /**< Clear the specified flags */
+} ib_rule_flagop_t;
+
+/**
+ * Rule action add operator.
+ */
+typedef enum {
+    RULE_ACTION_TRUE,               /**< Add a True action */
+    RULE_ACTION_FALSE,              /**< Add a False action */
+} ib_rule_action_t;
+
+/**
+ * Rule enable type
+ */
+typedef enum {
+    RULE_ENABLE_ID,
+    RULE_ENABLE_TAG,
+    RULE_ENABLE_ALL,
+} ib_rule_enable_type_t;
+
+/**
  * Rule flags
  *
  * If the external flag is set, the rule engine will always execute the

@@ -26,7 +26,9 @@
 
 #include <ironbee/rule_engine.h>
 #include "rule_engine_private.h"
+
 #include "engine_private.h"
+#include "rule_logger_private.h"
 
 #include <ironbee/action.h>
 #include <ironbee/bytestr.h>
@@ -37,6 +39,7 @@
 #include <ironbee/field.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
+#include <ironbee/rule_logger.h>
 #include <ironbee/transformation.h>
 #include <ironbee/util.h>
 
@@ -4463,9 +4466,8 @@ ib_status_t ib_rule_engine_set(ib_cfgparser_t *cp,
 ib_status_t ib_rule_register_external_driver(
     ib_engine_t               *ib,
     const char                *tag,
-    ib_rule_driver_function_t  function,
-    void                      *cbdata
-)
+    ib_rule_driver_fn_t        function,
+    void                      *cbdata)
 {
     assert(ib != NULL);
     assert(ib->rule_engine != NULL);
@@ -4498,4 +4500,19 @@ ib_status_t ib_rule_register_external_driver(
     }
 
     return IB_OK;
+}
+
+ib_status_t ib_rule_lookup_external_driver(
+    const ib_engine_t         *ib,
+    const char                *tag,
+    ib_rule_driver_t         **driver)
+{
+    assert(ib != NULL);
+    assert(tag != NULL);
+    assert(driver != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_hash_get(ib->rule_engine->external_drivers, driver, tag);
+    return rc;
 }
