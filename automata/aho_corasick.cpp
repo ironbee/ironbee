@@ -674,7 +674,7 @@ Intermediate::byte_vector_t extract_cs(
             result.push_back('-');
             ++j;
         }
-        uint8_t range_begin;
+        uint8_t range_begin = 0;
         bool in_range = false;
         bool valid_begin = false;
         for (;;) {
