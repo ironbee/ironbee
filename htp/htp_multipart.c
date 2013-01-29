@@ -353,6 +353,7 @@ htp_multipart_part_t *htp_mpart_part_create(htp_mpartp_t *parser) {
 
     part->parser = parser;
     bstr_builder_clear(parser->part_data_pieces);
+    bstr_builder_clear(parser->part_header_pieces);
 
     return part;
 }
@@ -412,7 +413,7 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
 
     if (part->parser->multipart.flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY) {
         if (part->type == MULTIPART_PART_UNKNOWN) {
-            // Assume that an unknown part after the last boundary is the epilogue.
+            // Assume that the unknown part after the last boundary is the epilogue.
             part->parser->current_part->type = MULTIPART_PART_EPILOGUE;
             part->parser->multipart.flags |= HTP_MULTIPART_HAS_EPILOGUE;            
         } else {
@@ -430,7 +431,7 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
         if (part->file->fd != -1) {
             close(part->file->fd);
         }
-    } else {
+    } else {        
         // Combine multiple value pieces into a single buffer.
         if (bstr_builder_size(part->parser->part_data_pieces) > 0) {
             part->value = bstr_builder_to_str(part->parser->part_data_pieces);
@@ -471,22 +472,40 @@ htp_status_t htp_mpartp_run_request_file_data_hook(htp_multipart_part_t *part, c
  */
 htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsigned char *data, size_t len, int is_line) {
     #if HTP_DEBUG
-    fprint_raw_data(stderr, "htp_mpart_part_handle_data: data chunk", (unsigned char *) data, len);
-    fprintf(stderr, "Part type: %d\n", part->type);
-    #endif   
-
-    // Keep track of raw part length
+    fprintf(stderr, "Part type %d mode %d is_line %d\n", part->type, part->parser->current_part_mode, is_line);
+    fprint_raw_data(stderr, "htp_mpart_part_handle_data: data chunk", data, len);
+    #endif
+        
+    // Keep track of raw part length.
     part->len += len;
 
-    if (part->parser->current_part_mode == MODE_LINE) {
-        // Line mode
+    // If we're processing a part that came after the last boundary, then we're not sure if it
+    // is the epilogue part or some other part (in case of evasion attempt). For that reason we
+    // will keep all its data in the part_data_pieces structure. If it ends up not being the
+    // epilogue, this structure will be cleared.
+    if ((part->parser->multipart.flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY)&&(part->type == MULTIPART_PART_UNKNOWN)) {
+        bstr_builder_append_mem(part->parser->part_data_pieces, data, len);
+    }
 
-        // TODO Remove the extra characters from folded lines
+    if (part->parser->current_part_mode == MODE_LINE) {
+        // Line mode.
+
+        // TODO Remove the extra characters from folded lines.
 
         if (is_line) {
-            // End of line
+            // End of the line.
 
-            // Ignore the line ending
+            bstr *line = NULL;
+
+            if (bstr_builder_size(part->parser->part_header_pieces) > 0) {
+                bstr_builder_append_mem(part->parser->part_header_pieces, data, len);
+                line = bstr_builder_to_str(part->parser->part_header_pieces);
+
+                data = bstr_ptr(line);
+                len = bstr_len(line);
+            }
+            
+            // Ignore the line endings.
             if (len > 1) {
                 if (data[len - 1] == LF) len--;
                 if (data[len - 1] == CR) len--;
@@ -495,15 +514,17 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
             }
 
             // Is it an empty line?
-            if ((len == 0) && ((bstr_builder_size(part->parser->part_data_pieces) == 0))) {
-                // Empty line; process headers and switch to data mode.               
-
+            if (len == 0) {
+                // Empty line; process headers and switch to data mode.
+                               
                 htp_mpart_part_process_headers(part);
                 // TODO RC
 
                 part->parser->current_part_mode = MODE_DATA;
+                bstr_builder_clear(part->parser->part_header_pieces);
 
                 if (part->file != NULL) {
+                    // Changing part type because we have a filename.
                     part->type = MULTIPART_PART_FILE;
 
                     if ((part->parser->extract_files) && (part->parser->file_count < part->parser->extract_limit)) {
@@ -518,43 +539,33 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                         part->parser->file_count++;
                     }
                 } else if (part->name != NULL) {
+                    // Changing part type because we have a name.
                     part->type = MULTIPART_PART_TEXT;
+                    bstr_builder_clear(part->parser->part_data_pieces);
                 } else {
                     // The type stays MULTIPART_PART_UNKNOWN.
                 }
             } else {
-                // Not an empty line
+                // Not an empty line.
 
                 // Is there a folded line coming after this one?
                 if ((part->parser->next_line_first_byte != ' ') && (part->parser->next_line_first_byte != '\t')) {
-                    // No folded lines after this one, so process header
-
-                    // Do we have more than once piece?
-                    if (bstr_builder_size(part->parser->part_data_pieces) > 0) {
-                        // Line in pieces
-
-                        bstr_builder_append_mem(part->parser->part_data_pieces, data, len);
-
-                        bstr *line = bstr_builder_to_str(part->parser->part_data_pieces);
-                        if (line == NULL) return HTP_ERROR;
-                        htp_mpartp_parse_header(part, (unsigned char *) bstr_ptr(line), bstr_len(line));
-                        // TODO RC
-                        bstr_free(&line);
-
-                        bstr_builder_clear(part->parser->part_data_pieces);
-                    } else {
-                        // Just this line
-                        htp_mpartp_parse_header(part, data, len);
-                        // TODO RC
-                    }
+                    // No folded lines after this one, so process what we have as a complete header line.
+                                        
+                    bstr_builder_clear(part->parser->part_header_pieces);
+                    
+                    htp_mpartp_parse_header(part, data, len);
+                    // TODO RC                    
                 } else {
-                    // Folded line, just store this piece for later
-                    bstr_builder_append_mem(part->parser->part_data_pieces, data, len);
+                    // Folded line; store this piece for later.
+                    bstr_builder_append_mem(part->parser->part_header_pieces, data, len);
                 }
             }
+
+            bstr_free(&line);
         } else {
             // Not end of line; keep the data chunk for later
-            bstr_builder_append_mem(part->parser->part_data_pieces, data, len);
+            bstr_builder_append_mem(part->parser->part_header_pieces, data, len);
         }
     } else {
         // Data mode; keep the data chunk for later (but not if it is a file).
@@ -676,6 +687,12 @@ htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg) {
         return NULL;
     }
 
+    parser->part_header_pieces = bstr_builder_create();
+    if (parser->part_header_pieces == NULL) {
+        htp_mpartp_destroy(&parser);
+        return NULL;
+    }
+
     parser->multipart.parts = htp_list_create(64);
     if (parser->multipart.parts == NULL) {
         htp_mpartp_destroy(&parser);
@@ -742,8 +759,9 @@ void htp_mpartp_destroy(htp_mpartp_t ** _parser) {
         free(parser->multipart.boundary);
     }
 
-    bstr_builder_destroy(parser->part_data_pieces);
     bstr_builder_destroy(parser->boundary_pieces);
+    bstr_builder_destroy(parser->part_data_pieces);
+    bstr_builder_destroy(parser->part_header_pieces);
 
     // Free parts
     if (parser->multipart.parts != NULL) {
@@ -779,12 +797,23 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *parser, int matched) {
     // when we are in line mode, we need to split the first data chunk, processing the first
     // part as line and the second part as data.
 
+    #ifdef HTP_DEBUG
+    fprintf(stderr, "mpartp_process_aside matched %d current_part_mode %d\n", matched, parser->current_part_mode);
+    #endif
+
     // Do we need to do any chunk splitting?
     if (matched || (parser->current_part_mode == MODE_LINE)) {
         // Line mode or boundary match
 
-        // In line mode, we don't care about the set-aside CR byte.
-        parser->cr_aside = 0;
+        // Process the CR byte, if set aside.
+        if ((!matched)&&(parser->cr_aside)) {
+            // Treat as part data, when there is not a match.
+            parser->handle_data(parser, (unsigned char *) &"\r", 1, /* not a line */ 0);
+            parser->cr_aside = 0;
+        } else {
+            // Treat as boundary, when there is a match.
+            parser->cr_aside = 0;
+        }
 
         // We know that we went to match a boundary because
         // we saw a new line. Now we have to find that line and
@@ -860,11 +889,11 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *parser, int matched) {
     return HTP_OK;
 }
 
-htp_status_t htp_mpartp_finalize(htp_mpartp_t *parser) {
-    if (parser->current_part != NULL) {
+htp_status_t htp_mpartp_finalize(htp_mpartp_t *parser) {    
+    if (parser->current_part != NULL) {        
         // Process buffered data, if any.
         htp_martp_process_aside(parser, 0);
-
+        
         // Finalize the last part.
         if (htp_mpart_part_finalize_data(parser->current_part) != HTP_OK) return HTP_ERROR;
     }

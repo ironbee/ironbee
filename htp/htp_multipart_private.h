@@ -141,6 +141,8 @@ struct htp_mpartp_t {
      */
     bstr_builder_t *boundary_pieces;
 
+    bstr_builder_t *part_header_pieces;
+
     /**
      * Stores text part pieces until the entire part is seen, at which
      * point the pieces are assembled into a single buffer, and the

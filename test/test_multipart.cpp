@@ -130,27 +130,32 @@ TEST_F(Multipart, Test1) {
 
         switch (i) {
             case 0:
+                ASSERT_TRUE(part->name != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->name, "field1") == 0);
                 ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
                 ASSERT_TRUE(part->value != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "0123456789") == 0);
                 break;
             case 1:
+                ASSERT_TRUE(part->name != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->name, "field2") == 0);
                 ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "0123456789\r\n----------------------------X") == 0);
                 break;
             case 2:
+                ASSERT_TRUE(part->name != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->name, "field3") == 0);
                 ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
                 ASSERT_TRUE(part->value != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "9876543210") == 0);
                 break;
             case 3:
+                ASSERT_TRUE(part->name != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->name, "file1") == 0);
                 ASSERT_EQ(MULTIPART_PART_FILE, part->type);
                 break;
             case 4:
+                ASSERT_TRUE(part->name != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->name, "file2") == 0);
                 ASSERT_EQ(MULTIPART_PART_FILE, part->type);
                 break;
@@ -534,7 +539,7 @@ TEST_F(Multipart, WithPreamble) {
     ASSERT_TRUE(bstr_cmp_c(part->value, "Preamble") == 0);
 }
 
-TEST_F(Multipart, WithEpilogue) {
+TEST_F(Multipart, WithEpilogue1) {
     char *parts[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -563,6 +568,69 @@ TEST_F(Multipart, WithEpilogue) {
     ASSERT_EQ(MULTIPART_PART_EPILOGUE, part->type);
     ASSERT_TRUE(part->value != NULL);
     ASSERT_TRUE(bstr_cmp_c(part->value, "Epilogue") == 0);
+}
+
+TEST_F(Multipart, WithEpilogue2) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--\r\n"
+        "Epi\nlogue",
+        NULL
+    };
+
+    Multipart_Helper_parse_parts(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
+
+    ASSERT_TRUE(htp_list_size(body->parts) == 3);
+
+    htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
+    ASSERT_TRUE(part != NULL);
+    ASSERT_EQ(MULTIPART_PART_EPILOGUE, part->type);
+    ASSERT_TRUE(part->value != NULL);
+    ASSERT_TRUE(bstr_cmp_c(part->value, "Epi\nlogue") == 0);
+}
+
+TEST_F(Multipart, WithEpilogue3) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--\r\n"
+        "Epi\r",
+        "\n--logue",
+        NULL
+    };
+
+    Multipart_Helper_parse_parts(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
+
+    ASSERT_TRUE(htp_list_size(body->parts) == 3);
+
+    htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
+    ASSERT_TRUE(part != NULL);
+    ASSERT_EQ(MULTIPART_PART_EPILOGUE, part->type);
+    ASSERT_TRUE(part->value != NULL);
+    ASSERT_TRUE(bstr_cmp_c(part->value, "Epi\r\n--logue") == 0);
 }
 
 TEST_F(Multipart, HasLastBoundary) {
@@ -679,4 +747,25 @@ TEST_F(Multipart, WithFile) {
     ASSERT_TRUE(bstr_cmp_c(part->content_type, "application/octet-stream") == 0);
     ASSERT_TRUE(part->file != NULL);
     ASSERT_TRUE(bstr_cmp_c(part->file->filename, "test.bin") == 0);
+}
+
+TEST_F(Multipart, PartHeadersEmptyLineBug) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r",
+        "\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    Multipart_Helper(mpartp, parts);
+
+    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    ASSERT_TRUE(body != NULL);
 }
