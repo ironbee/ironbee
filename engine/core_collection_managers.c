@@ -621,7 +621,7 @@ ib_status_t ib_core_collection_managers_finish(
     assert(module != NULL);
 
     if (core_vars_manager.pattern != NULL) {
-        pcre_free((void*)core_vars_manager.pattern);
+        pcre_free((void *)core_vars_manager.pattern);
         core_vars_manager.pattern = NULL;
     }
     return IB_OK;
