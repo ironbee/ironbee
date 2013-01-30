@@ -9,8 +9,9 @@ FFI_FILES = $(top_srcdir)/include/ironbee/engine.h \
 	    $(top_srcdir)/include/ironbee/rule_defs.h \
 	    $(top_srcdir)/include/ironbee/rule_engine.h \
 	    $(top_srcdir)/include/ironbee/logevent.h
+
 BUILT_SOURCES = ironbee-ffi.h \
-		ironbee-ffi-h.lua
+                ironbee-ffi-h.lua
 
 if DARWIN
 if ENABLE_LUA
@@ -24,18 +25,20 @@ AM_LDFLAGS += -L/usr/local/lib -no-undefined -static-libtool-libs
 else
 AM_LDFLAGS += -no-undefined -static-libtool-libs
 endif
+
 EXTRA_DIST = ironbee-ffi-h.lua \
-	     ironbee-ffi.lua \
-	     ironbee-api.lua \
-	     ironbee-modlua.lua \
+             ironbee-ffi.lua \
+             ironbee-api.lua \
+             ironbee-modlua.lua \
              example.lua \
              qa.lua
-lua_DATA = ironbee-ffi-h.lua \
-	   ironbee-ffi.lua \
-	   ironbee-api.lua \
-	   ironbee-modlua.lua \
-           example.lua \
-           qa.lua
+
+lua_DATA   = ironbee-ffi-h.lua \
+             ironbee-ffi.lua \
+             ironbee-api.lua \
+             ironbee-modlua.lua \
+             example.lua \
+             qa.lua
 
 noinst_LTLIBRARIES = libironbee-lua.la
 libironbee_lua_la_SOURCES = ironbee.c ironbee.h
