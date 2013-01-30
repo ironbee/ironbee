@@ -46,7 +46,7 @@
 class Multipart : public testing::Test {
 protected:
 
-    void parseParts(htp_mpartp_t *mpartp, char *parts[]) {
+    void parseParts(char *parts[]) {
         char boundary[] = "0123456789";
 
         htp_mpartp_init_boundary_ex(mpartp, boundary);
@@ -64,8 +64,8 @@ protected:
         ASSERT_TRUE(body != NULL);
     }
 
-    void parsePartsThenVerify(htp_mpartp_t *mpartp, char *parts[]) {
-        parseParts(mpartp, parts);
+    void parsePartsThenVerify(char *parts[]) {
+        parseParts(parts);
 
         // Examine the result
         body = htp_mpartp_get_multipart(mpartp);
@@ -290,7 +290,7 @@ TEST_F(Multipart, BeginsWithoutLine) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
+    parsePartsThenVerify(parts);
 }
 
 TEST_F(Multipart, BeginsWithCrLf) {
@@ -307,7 +307,7 @@ TEST_F(Multipart, BeginsWithCrLf) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
+    parsePartsThenVerify(parts);
 }
 
 TEST_F(Multipart, BeginsWithLf) {
@@ -324,7 +324,7 @@ TEST_F(Multipart, BeginsWithLf) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
+    parsePartsThenVerify(parts);
 }
 
 TEST_F(Multipart, CrLfLineEndings) {
@@ -341,7 +341,7 @@ TEST_F(Multipart, CrLfLineEndings) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);   
+    parsePartsThenVerify(parts);
 
     ASSERT_FALSE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
@@ -361,7 +361,7 @@ TEST_F(Multipart, LfLineEndings) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
+    parsePartsThenVerify(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_FALSE(body->flags & HTP_MULTIPART_CRLF_LINE);
@@ -381,7 +381,7 @@ TEST_F(Multipart, CrAndLfLineEndings1) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);   
+    parsePartsThenVerify(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
@@ -401,7 +401,7 @@ TEST_F(Multipart, CrAndLfLineEndings2) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);   
+    parsePartsThenVerify(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
@@ -421,7 +421,7 @@ TEST_F(Multipart, CrAndLfLineEndings3) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);   
+    parsePartsThenVerify(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
@@ -441,7 +441,7 @@ TEST_F(Multipart, CrAndLfLineEndings4) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);   
+    parsePartsThenVerify(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
@@ -461,7 +461,7 @@ TEST_F(Multipart, BoundaryInstanceWithLwsAfter) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);   
+    parsePartsThenVerify(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BOUNDARY_LWS_AFTER);
 }
@@ -480,7 +480,7 @@ TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);   
+    parsePartsThenVerify(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BOUNDARY_NLWS_AFTER);
 }
@@ -500,7 +500,7 @@ TEST_F(Multipart, WithPreamble) {
         NULL
     };
 
-    parseParts(mpartp, parts);   
+    parseParts(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_PREAMBLE);
 
@@ -528,7 +528,7 @@ TEST_F(Multipart, WithEpilogue1) {
         NULL
     };
 
-    parseParts(mpartp, parts);   
+    parseParts(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 
@@ -556,7 +556,7 @@ TEST_F(Multipart, WithEpilogue2) {
         NULL
     };
 
-    parseParts(mpartp, parts);   
+    parseParts(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 
@@ -585,7 +585,7 @@ TEST_F(Multipart, WithEpilogue3) {
         NULL
     };
 
-    parseParts(mpartp, parts);   
+    parseParts(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 
@@ -612,7 +612,7 @@ TEST_F(Multipart, HasLastBoundary) {
         NULL
     };
 
-    parseParts(mpartp, parts);   
+    parseParts(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY);
 }
@@ -631,7 +631,7 @@ TEST_F(Multipart, DoesNotHaveLastBoundary) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);   
+    parsePartsThenVerify(parts);
 
     ASSERT_FALSE(body->flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY);
 }
@@ -650,7 +650,7 @@ TEST_F(Multipart, PartAfterLastBoundary) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
+    parsePartsThenVerify(parts);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY);
 }
@@ -664,7 +664,7 @@ TEST_F(Multipart, UnknownPart) {
         NULL
     };
 
-    parseParts(mpartp, parts);
+    parseParts(parts);
 
     ASSERT_TRUE(htp_list_size(body->parts) == 1);
 
@@ -687,7 +687,7 @@ TEST_F(Multipart, WithFile) {
         NULL
     };
 
-    parseParts(mpartp, parts);
+    parseParts(parts);
     
     ASSERT_TRUE(htp_list_size(body->parts) == 2);
 
@@ -714,7 +714,7 @@ TEST_F(Multipart, PartHeadersEmptyLineBug) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
+    parsePartsThenVerify(parts);
 }
 
 TEST_F(Multipart, CompleteRequest) {
