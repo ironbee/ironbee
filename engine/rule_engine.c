@@ -4469,18 +4469,20 @@ ib_status_t ib_rule_register_external_driver(
     ib_rule_driver_fn_t        function,
     void                      *cbdata)
 {
-    assert(ib != NULL);
+    /* Check for invalid parameters */
+    if ( (ib == NULL) || (tag == NULL) || (function == NULL) ) {
+        return IB_EINVAL;
+    }
+
+    /* Verify that the rule engine is valid */
     assert(ib->rule_engine != NULL);
-    assert(tag != NULL);
-    assert(function != NULL);
+    assert(ib->rule_engine->external_drivers != NULL);
 
     ib_status_t rc;
     ib_rule_driver_t *driver;
 
-    if (
-        ib_hash_get(ib->rule_engine->external_drivers, &driver, tag) !=
-        IB_ENOENT
-    ) {
+    rc = ib_hash_get(ib->rule_engine->external_drivers, &driver, tag);
+    if (rc != IB_ENOENT) {
         return IB_EINVAL;
     }
 
@@ -4507,9 +4509,11 @@ ib_status_t ib_rule_lookup_external_driver(
     const char                *tag,
     ib_rule_driver_t         **driver)
 {
-    assert(ib != NULL);
-    assert(tag != NULL);
-    assert(driver != NULL);
+    if ( (ib == NULL) || (tag == NULL) || (driver == NULL) ) {
+        return IB_EINVAL;
+    }
+    assert(ib->rule_engine != NULL);
+    assert(ib->rule_engine->external_drivers != NULL);
 
     ib_status_t rc;
 
