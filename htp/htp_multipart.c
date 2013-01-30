@@ -739,10 +739,9 @@ htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, bstr *c_t_header) {
     bstr *boundary = NULL;
     htp_status_t rc = htp_mpartp_extract_boundary(c_t_header, &boundary);
     if (rc != HTP_OK) return rc;
-
+    
     rc = _htp_mpartp_init_boundary(parser, bstr_ptr(boundary), bstr_len(boundary));
-
-    bstr_free(&boundary);
+    bstr_free(&boundary);    
 
     return rc;
 }
@@ -1202,14 +1201,7 @@ int htp_mpartp_is_boundary_character(int c) {
     return 1;
 }
 
-/**
- * Extract boundary from the supplied Content-Type request header. The extracted
- * boundary will be allocated on the heap.
- *
- * @param[in] content_type
- * @param[in] boundary
- * @return HTP_OK on success, HTP_ERROR on failure.
- */
+#if 0
 htp_status_t htp_mpartp_extract_boundary(bstr *content_type, bstr **boundary) {
     unsigned char *data = bstr_ptr(content_type);
     size_t len = bstr_len(content_type);
@@ -1279,6 +1271,43 @@ htp_status_t htp_mpartp_extract_boundary(bstr *content_type, bstr **boundary) {
 
     #if HTP_DEBUG
     fprint_bstr(stderr, "htp_mpartp_extract_boundary", *boundary);
+    #endif
+
+    return HTP_OK;
+}
+#endif
+
+/**
+ * Extract boundary from the supplied Content-Type request header. The extracted
+ * boundary will be allocated on the heap.
+ *
+ * @param[in] content_type
+ * @param[in] boundary
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_mpartp_extract_boundary(bstr *content_type, bstr **boundary) {        
+    int i = bstr_index_of_c(content_type, "boundary");
+    if (i == -1) return HTP_DECLINED;
+
+    unsigned char *data = bstr_ptr(content_type) + i;
+    size_t len = bstr_len(content_type) - i;
+
+    size_t pos = 0;
+    while ((pos < len)&&(data[pos] != '=')) pos++;  
+
+    if (pos >= len) return HTP_DECLINED;
+    
+    // Go over the '=' byte.
+    pos++;
+
+    // Ignore any whitespace.
+    while ((pos < len)&&(htp_is_space(data[pos]))) pos++;
+
+    *boundary = bstr_dup_mem(data + pos, len - pos);
+    if (*boundary == NULL) return HTP_ERROR;
+
+    #ifdef HTP_DEBUG
+    fprint_bstr(stderr, "Multipart boundary", *boundary);
     #endif
 
     return HTP_OK;

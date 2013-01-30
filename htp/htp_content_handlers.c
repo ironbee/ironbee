@@ -213,28 +213,30 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
 htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     htp_tx_t *tx = connp->in_tx;
 
-    // Check the request content type to see if it matches our MIME type.
-    if ((tx->request_content_type == NULL) || (bstr_cmp_c(tx->request_content_type, HTP_MULTIPART_MIME_TYPE) != 0)) {
+    #ifdef HTP_DEBUG
+    fprintf(stderr, "htp_ch_multipart_callback_request_headers: Will parse MULTIPART body\n");
+    #endif
+    
+    if (tx->request_content_type == NULL) {
         #ifdef HTP_DEBUG
-        fprintf(stderr, "htp_ch_multipart_callback_request_headers: Body not MULTIPART\n");
+        fprintf(stderr, "htp_ch_multipart_callback_request_headers: Body not MULTIPART (no C-T header)\n");
         #endif
 
         return HTP_OK;
     }
 
-    #ifdef HTP_DEBUG
-    fprintf(stderr, "htp_ch_multipart_callback_request_headers: Parsing MULTIPART body\n");
-    #endif
-
-    htp_header_t *ct = htp_table_get_c(tx->request_headers, "content-type");
-    if (ct == NULL) return HTP_OK;
-
     // Create parser instance
     tx->request_mpartp = htp_mpartp_create(connp->cfg);
     if (tx->request_mpartp == NULL) return HTP_ERROR;
 
-    if (htp_mpartp_init_boundary(tx->request_mpartp, ct->value) != HTP_OK) {
-        return HTP_ERROR;
+    htp_header_t *ct = htp_table_get_c(tx->request_headers, "content-type");
+    htp_status_t rc = htp_mpartp_init_boundary(tx->request_mpartp, ct->value);    
+    if (rc != HTP_OK) {
+        #ifdef HTP_DEBUG
+        fprintf(stderr, "htp_ch_multipart_callback_request_headers: Body not MULTIPART (boundary rc %d)\n", rc);
+        #endif
+
+        return rc; // No boundary or error.
     }
 
     if (tx->cfg->extract_request_files) {
