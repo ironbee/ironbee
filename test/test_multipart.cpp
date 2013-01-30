@@ -46,6 +46,52 @@
 class Multipart : public testing::Test {
 protected:
 
+    void parseParts(htp_mpartp_t *mpartp, char *parts[]) {
+        char boundary[] = "0123456789";
+
+        htp_mpartp_init_boundary_ex(mpartp, boundary);
+
+        size_t i = 0;
+        for (;;) {
+            if (parts[i] == NULL) break;
+            htp_mpartp_parse(mpartp, (const unsigned char *) parts[i], strlen(parts[i]));
+            i++;
+        }
+
+        htp_mpartp_finalize(mpartp);
+    }
+
+    void parsePartsThenVerify(htp_mpartp_t *mpartp, char *parts[]) {
+        parseParts(mpartp, parts);
+
+        // Examine the result
+        htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+        ASSERT_TRUE(body != NULL);
+
+        ASSERT_TRUE(htp_list_size(body->parts) == 2);
+
+        for (size_t i = 0, n = htp_list_size(body->parts); i < n; i++) {
+            htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, i);
+
+            switch (i) {
+                case 0:
+                    ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
+                    ASSERT_TRUE(part->name != NULL);
+                    ASSERT_TRUE(bstr_cmp_c(part->name, "field1") == 0);
+                    ASSERT_TRUE(part->value != NULL);
+                    ASSERT_TRUE(bstr_cmp_c(part->value, "ABCDEF") == 0);
+                    break;
+                case 1:
+                    ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
+                    ASSERT_TRUE(part->name != NULL);
+                    ASSERT_TRUE(bstr_cmp_c(part->name, "field2") == 0);
+                    ASSERT_TRUE(part->value != NULL);
+                    ASSERT_TRUE(bstr_cmp_c(part->value, "GHIJKL") == 0);
+                    break;
+            }
+        }
+    }
+
     virtual void SetUp() {
         cfg = htp_config_create();
         htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2);
@@ -67,7 +113,7 @@ protected:
     htp_cfg_t *cfg;
 };
 
-TEST_F(Multipart, Test1) {    
+TEST_F(Multipart, Test1) {
     htp_mpartp_t *mpartp = htp_mpartp_create(cfg);
     htp_mpartp_init_boundary_ex(mpartp, "---------------------------41184676334");
 
@@ -110,7 +156,7 @@ TEST_F(Multipart, Test1) {
         if (parts[i] == NULL) break;
         htp_mpartp_parse(mpartp, (const unsigned char *) parts[i], strlen(parts[i]));
         i++;
-    }   
+    }
 
     htp_mpartp_finalize(mpartp);
 
@@ -198,7 +244,7 @@ TEST_F(Multipart, Test2) {
             case 0:
                 ASSERT_EQ(MULTIPART_PART_PREAMBLE, part->type);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x0000x") == 0);
-                break;            
+                break;
             case 1:
                 ASSERT_EQ(MULTIPART_PART_UNKNOWN, part->type);
                 ASSERT_TRUE(part->value != NULL);
@@ -206,12 +252,12 @@ TEST_F(Multipart, Test2) {
                 break;
             case 2:
                 ASSERT_EQ(MULTIPART_PART_UNKNOWN, part->type);
-                ASSERT_TRUE(part->value != NULL);                
+                ASSERT_TRUE(part->value != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x3333x\n--BB\n\nx4444x\n--BB") == 0);
                 break;
             case 3:
                 ASSERT_EQ(MULTIPART_PART_UNKNOWN, part->type);
-                ASSERT_TRUE(part->value != NULL);                
+                ASSERT_TRUE(part->value != NULL);
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x5555x\r\n--x6666x\r--") == 0);
                 break;
             default:
@@ -223,52 +269,6 @@ TEST_F(Multipart, Test2) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
 
     htp_mpartp_destroy(&mpartp);
-}
-
-static void Multipart_Helper_parse_parts(htp_mpartp_t *mpartp, char *parts[]) {
-    char boundary[] = "0123456789";
-
-    htp_mpartp_init_boundary_ex(mpartp, boundary);
-
-    size_t i = 0;
-    for (;;) {
-        if (parts[i] == NULL) break;
-        htp_mpartp_parse(mpartp, (const unsigned char *) parts[i], strlen(parts[i]));
-        i++;
-    }
-
-    htp_mpartp_finalize(mpartp);
-}
-
-static void Multipart_Helper(htp_mpartp_t *mpartp, char *parts[]) {
-    Multipart_Helper_parse_parts(mpartp, parts);
-
-    // Examine the result
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
-
-    ASSERT_TRUE(htp_list_size(body->parts) == 2);
-
-    for (size_t i = 0, n = htp_list_size(body->parts); i < n; i++) {
-        htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, i);
-
-        switch (i) {
-            case 0:
-                ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
-                ASSERT_TRUE(part->name != NULL);
-                ASSERT_TRUE(bstr_cmp_c(part->name, "field1") == 0);                
-                ASSERT_TRUE(part->value != NULL);
-                ASSERT_TRUE(bstr_cmp_c(part->value, "ABCDEF") == 0);
-                break;
-            case 1:
-                ASSERT_EQ(MULTIPART_PART_TEXT, part->type);
-                ASSERT_TRUE(part->name != NULL);
-                ASSERT_TRUE(bstr_cmp_c(part->name, "field2") == 0);
-                ASSERT_TRUE(part->value != NULL);
-                ASSERT_TRUE(bstr_cmp_c(part->value, "GHIJKL") == 0);
-                break;
-        }
-    }
 }
 
 TEST_F(Multipart, BeginsWithoutLine) {
@@ -285,7 +285,7 @@ TEST_F(Multipart, BeginsWithoutLine) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 }
 
 TEST_F(Multipart, BeginsWithCrLf) {
@@ -302,7 +302,7 @@ TEST_F(Multipart, BeginsWithCrLf) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 }
 
 TEST_F(Multipart, BeginsWithLf) {
@@ -319,7 +319,7 @@ TEST_F(Multipart, BeginsWithLf) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 }
 
 TEST_F(Multipart, CrLfLineEndings) {
@@ -336,7 +336,7 @@ TEST_F(Multipart, CrLfLineEndings) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -359,8 +359,8 @@ TEST_F(Multipart, LfLineEndings) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
-    
+    parsePartsThenVerify(mpartp, parts);
+
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
 
@@ -382,7 +382,7 @@ TEST_F(Multipart, CrAndLfLineEndings1) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -390,7 +390,6 @@ TEST_F(Multipart, CrAndLfLineEndings1) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
-
 
 TEST_F(Multipart, CrAndLfLineEndings2) {
     char *parts[] = {
@@ -406,7 +405,7 @@ TEST_F(Multipart, CrAndLfLineEndings2) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -429,7 +428,7 @@ TEST_F(Multipart, CrAndLfLineEndings3) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -452,7 +451,7 @@ TEST_F(Multipart, CrAndLfLineEndings4) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -475,7 +474,7 @@ TEST_F(Multipart, BoundaryInstanceWithLwsAfter) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -497,7 +496,7 @@ TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -520,7 +519,7 @@ TEST_F(Multipart, WithPreamble) {
         NULL
     };
 
-    Multipart_Helper_parse_parts(mpartp, parts);
+    parseParts(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -551,7 +550,7 @@ TEST_F(Multipart, WithEpilogue1) {
         NULL
     };
 
-    Multipart_Helper_parse_parts(mpartp, parts);
+    parseParts(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -559,7 +558,7 @@ TEST_F(Multipart, WithEpilogue1) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 
     ASSERT_TRUE(htp_list_size(body->parts) == 3);
-    
+
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
     ASSERT_TRUE(part != NULL);
     ASSERT_EQ(MULTIPART_PART_EPILOGUE, part->type);
@@ -582,7 +581,7 @@ TEST_F(Multipart, WithEpilogue2) {
         NULL
     };
 
-    Multipart_Helper_parse_parts(mpartp, parts);
+    parseParts(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -614,7 +613,7 @@ TEST_F(Multipart, WithEpilogue3) {
         NULL
     };
 
-    Multipart_Helper_parse_parts(mpartp, parts);
+    parseParts(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -644,7 +643,7 @@ TEST_F(Multipart, HasLastBoundary) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parseParts(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -666,7 +665,7 @@ TEST_F(Multipart, DoesNotHaveLastBoundary) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -688,7 +687,7 @@ TEST_F(Multipart, PartAfterLastBoundary) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -705,7 +704,7 @@ TEST_F(Multipart, UnknownPart) {
         NULL
     };
 
-    Multipart_Helper_parse_parts(mpartp, parts);
+    parseParts(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -731,7 +730,7 @@ TEST_F(Multipart, WithFile) {
         NULL
     };
 
-    Multipart_Helper_parse_parts(mpartp, parts);
+    parseParts(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
@@ -761,8 +760,34 @@ TEST_F(Multipart, PartHeadersEmptyLineBug) {
         NULL
     };
 
-    Multipart_Helper(mpartp, parts);
+    parsePartsThenVerify(mpartp, parts);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
+}
+
+TEST_F(Multipart, CompleteRequest) {
+    char *headers[] = {
+        "POST / HTTP/1.0\r\n"
+        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
+        NULL
+    };
+
+    char *data[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    // parseParts(headers, data);
+
+    // htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+    // ASSERT_TRUE(body != NULL);
 }
