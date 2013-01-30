@@ -78,7 +78,7 @@ protected:
 
         ASSERT_EQ(htp_list_size(connp->conn->transactions), 1);
 
-        htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+        tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
         ASSERT_TRUE(tx != NULL);
 
         ASSERT_TRUE(tx->request_mpartp != NULL);
@@ -172,6 +172,7 @@ protected:
         connp = NULL;
         mpartp = NULL;
         body = NULL;
+        tx = NULL;
     }
 
     virtual void TearDown() {
@@ -185,6 +186,8 @@ protected:
             htp_config_destroy(cfg);
         }
     }
+
+    htp_tx_t *tx;
 
     htp_connp_t *connp;
 
@@ -847,4 +850,8 @@ TEST_F(Multipart, MultipleContentTypeHeadersEvasion) {
     };
 
     parseRequestThenVerify(headers, data);
+
+    fprint_bstr(stderr, "C-T", tx->request_content_type);
+
+    ASSERT_TRUE(bstr_cmp_c(tx->request_content_type, "multipart/form-data") == 0);
 }

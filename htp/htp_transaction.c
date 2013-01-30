@@ -486,19 +486,18 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         tx->request_content_type = bstr_dup_lower(ct->value);
         if (tx->request_content_type == NULL) return HTP_ERROR;
 
-        // Ignore parameters
+        // Isolate the media type only.
         unsigned char *data = bstr_ptr(tx->request_content_type);
         size_t len = bstr_len(ct->value);
-        size_t newlen = 0;
-        while (newlen < len) {
-            // TODO Some platforms may do things differently here
-            if (htp_is_space(data[newlen]) || (data[newlen] == ';')) {
-                bstr_adjust_len(tx->request_content_type, newlen);
-                break;
-            }
 
-            newlen++;
+        size_t newlen = 0;
+        while ((newlen < len)&&(htp_is_token(data[newlen]))) newlen++;
+        if ((newlen < len)&&(data[newlen] == '/')) {
+            newlen++; // Over the '/'
+            while ((newlen < len)&&(htp_is_token(data[newlen]))) newlen++;
         }
+        
+        bstr_adjust_len(tx->request_content_type, newlen);        
     }
 
     // Parse cookies
