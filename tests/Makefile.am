@@ -91,6 +91,7 @@ check_PROGRAMS = test_gtest \
                  test_operator \
                  test_action \
                  test_config \
+                 test_rule_inject \
                  test_util_ipset \
                  test_util_ip \
 		 test_kvstore
@@ -124,6 +125,7 @@ TEST_EXTRAS = \
        CoreActionTest.setVarAdd.config \
        CoreActionTest.setVarSub.config \
        CoreActionTest.integration.config \
+       RuleInjectTest.test_inject.config \
        test_ironbee_lua_modules.lua \
        test_module_rules_lua.lua
 
@@ -230,6 +232,9 @@ test_engine_SOURCES = test_engine.cpp test_main.cpp \
                       test_parsed_content.cpp \
                       ibtest_util.cpp
 test_engine_LDADD = $(MODULE_TEST_LDADD)
+
+test_rule_inject_SOURCES = test_rule_inject.cpp test_main.cpp ibtest_util.cpp
+test_rule_inject_LDADD = $(MODULE_TEST_LDADD)
 
 test_config_SOURCES = test_config.cpp test_main.cpp
 test_config_LDADD = $(MODULE_TEST_LDADD)
