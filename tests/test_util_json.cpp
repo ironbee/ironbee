@@ -39,6 +39,13 @@
 #include <errno.h>
 #include <stdexcept>
 
+/**
+ * Parameter structure for TestIBUtilJsonDecode tests.
+ */
+struct TestIBUtilJsonDecode_t {
+    ib_field_t *field;
+    char *name;
+};
 
 /* -- JSON decode tests */
 class TestIBUtilJsonDecode : public SimpleFixture
@@ -375,7 +382,8 @@ TEST_F(TestIBUtilJsonDecode, json_decode_nested)
 }
 
 /* -- JSON encode tests */
-class TestIBUtilJsonEncode : public TestIBUtilJsonDecode
+class TestIBUtilJsonEncode : public TestIBUtilJsonDecode,
+                             public ::testing::WithParamInterface<bool>
 {
 public:
     void AddNode(ib_list_t *list,
@@ -440,14 +448,7 @@ public:
     }
 };
 
-/// @test Test util JSON functions - Basic encode
-class TestIBUtilJsonEncodeBasic : public TestIBUtilJsonEncode
-{
-public:
-    void RunTest(bool pretty);
-};
-
-void TestIBUtilJsonEncodeBasic::RunTest(bool pretty)
+TEST_P(TestIBUtilJsonEncode, json_encode_basic)
 {
     ib_status_t           rc;
     ib_list_t            *list;
@@ -456,6 +457,7 @@ void TestIBUtilJsonEncodeBasic::RunTest(bool pretty)
     size_t                buflen = 0;
     const char           *error;
     const ib_list_node_t *node;
+    bool                  pretty = GetParam();
 
     rc = ib_list_create(&list, MemPool());
     ASSERT_EQ(IB_OK, rc);
@@ -505,26 +507,8 @@ void TestIBUtilJsonEncodeBasic::RunTest(bool pretty)
     node = ib_list_node_next_const(node);
     { SCOPED_TRACE("node 6"); CheckNode(node, "Six", "six"); }
 }
-TEST_F(TestIBUtilJsonEncodeBasic, json_encode_basic)
-{
-    {
-        SCOPED_TRACE("normal");
-        RunTest(false);
-    }
-    {
-        SCOPED_TRACE("pretty");
-        RunTest(true);
-    }
-}
 
-/// @test Test util JSON functions - Complex encode
-class TestIBUtilJsonEncodeComplex : public TestIBUtilJsonEncode
-{
-public:
-    void RunTest(bool pretty);
-};
-
-void TestIBUtilJsonEncodeComplex::RunTest(bool pretty)
+TEST_P(TestIBUtilJsonEncode, json_encode_complex)
 {
     ib_status_t           rc;
     ib_list_t            *list;
@@ -533,6 +517,7 @@ void TestIBUtilJsonEncodeComplex::RunTest(bool pretty)
     ib_list_t            *olist;
     char                 *buf = NULL;
     size_t                buflen = 0;
+    bool                  pretty = GetParam();
 
     /* Build the IronBee list */
     ASSERT_EQ(IB_OK, ib_list_create(&list, MemPool()));
@@ -591,26 +576,8 @@ void TestIBUtilJsonEncodeComplex::RunTest(bool pretty)
         { SCOPED_TRACE("three"); CheckNode(node2, "three", 3); }
     }
 }
-TEST_F(TestIBUtilJsonEncodeComplex, json_encode_complex)
-{
-    {
-        SCOPED_TRACE("normal");
-        RunTest(false);
-    }
-    {
-        SCOPED_TRACE("pretty");
-        RunTest(true);
-    }
-}
 
-/// @test Test util JSON functions - Nested encode
-class TestIBUtilJsonEncodeNested : public TestIBUtilJsonEncode
-{
-public:
-    void RunTest(bool pretty);
-};
-
-void TestIBUtilJsonEncodeNested::RunTest(bool pretty)
+TEST_P(TestIBUtilJsonEncode, json_encode_nested)
 {
     /* This is the effective JSON that should be built
        "{
@@ -630,6 +597,8 @@ void TestIBUtilJsonEncodeNested::RunTest(bool pretty)
     ib_list_t            *olist;
     char                 *buf = NULL;
     size_t                buflen = 0;
+    bool                  pretty = GetParam();
+
 
     /* Build the IronBee list */
     ASSERT_EQ(IB_OK, ib_list_create(&list, MemPool()));
@@ -769,14 +738,4 @@ void TestIBUtilJsonEncodeNested::RunTest(bool pretty)
     }
 }
 
-TEST_F(TestIBUtilJsonEncodeNested, json_encode_nested)
-{
-    {
-        SCOPED_TRACE("normal");
-        RunTest(false);
-    }
-    {
-        SCOPED_TRACE("pretty");
-        RunTest(true);
-    }
-}
+INSTANTIATE_TEST_CASE_P(TestPrettyTrueFalse, TestIBUtilJsonEncode, ::testing::Bool());
