@@ -46,9 +46,76 @@
 class Multipart : public testing::Test {
 protected:
 
+    void parseRequest(char *headers[], char *data[]) {
+        size_t i;
+
+        // Calculate body length.
+        size_t bodyLen = 0;
+        for (i = 0; data[i] != NULL; i++) {
+            bodyLen += strlen(data[i]);
+        }
+
+        // Open connection
+        connp = htp_connp_create(cfg);
+        htp_connp_open(connp, (const char *) "127.0.0.1", 32768, (const char *) "127.0.0.1", 80, NULL);
+
+        // Send headers.
+
+        for (i = 0; headers[i] != NULL; i++) {
+            htp_connp_req_data(connp, NULL, (unsigned char *) headers[i], strlen(headers[i]));
+        }
+
+        char buf[32];
+        snprintf(buf, sizeof (buf), "Content-Length: %d\r\n", bodyLen);
+        htp_connp_req_data(connp, NULL, (unsigned char *) buf, strlen(buf));
+
+        htp_connp_req_data(connp, NULL, (unsigned char *) "\r\n", 2);
+
+        // Send data.
+        for (i = 0; data[i] != NULL; i++) {
+            htp_connp_req_data(connp, NULL, (unsigned char *) data[i], strlen(data[i]));
+        }
+
+        ASSERT_EQ(htp_list_size(connp->conn->transactions), 1);
+
+        htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+        ASSERT_TRUE(tx != NULL);
+
+        ASSERT_TRUE(tx->request_mpartp != NULL);
+        mpartp = tx->request_mpartp;
+        body = htp_mpartp_get_multipart(mpartp);
+        ASSERT_TRUE(body != NULL);
+    }
+
+    void parseRequestThenVerify(char *headers[], char *data[]) {
+        parseRequest(headers, data);
+
+        ASSERT_TRUE(htp_list_size(body->parts) == 3);
+
+        // Field 1
+        htp_multipart_part_t *field1 = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
+        ASSERT_TRUE(field1 != NULL);
+        ASSERT_EQ(MULTIPART_PART_TEXT, field1->type);
+        ASSERT_TRUE(field1->value != NULL);
+        ASSERT_TRUE(bstr_cmp_c(field1->value, "ABCDEF") == 0);
+
+        // File 1
+        htp_multipart_part_t *file1 = (htp_multipart_part_t *) htp_list_get(body->parts, 1);
+        ASSERT_TRUE(file1 != NULL);
+        ASSERT_EQ(MULTIPART_PART_FILE, file1->type);
+
+        // Field 3
+        htp_multipart_part_t *field3 = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
+        ASSERT_TRUE(field3 != NULL);
+        ASSERT_EQ(MULTIPART_PART_TEXT, field3->type);
+        ASSERT_TRUE(field3->value != NULL);
+        ASSERT_TRUE(bstr_cmp_c(field3->value, "GHIJKL") == 0);
+    }
+
     void parseParts(char *parts[]) {
         char boundary[] = "0123456789";
 
+        mpartp = htp_mpartp_create(cfg);
         htp_mpartp_init_boundary_ex(mpartp, boundary);
 
         size_t i = 0;
@@ -98,11 +165,16 @@ protected:
     virtual void SetUp() {
         cfg = htp_config_create();
         htp_config_set_server_personality(cfg, HTP_SERVER_APACHE_2);
-        mpartp = htp_mpartp_create(cfg);
+        htp_config_register_multipart_parser(cfg);
+
+        connp = NULL;
+        mpartp = NULL;
     }
 
     virtual void TearDown() {
-        if (mpartp != NULL) {
+        if (connp != NULL) {
+            htp_connp_destroy_all(connp);
+        } else if (mpartp != NULL) {
             htp_mpartp_destroy(&mpartp);
         }
 
@@ -110,6 +182,8 @@ protected:
             htp_config_destroy(cfg);
         }
     }
+
+    htp_connp_t *connp;
 
     htp_multipart_t *body;
 
@@ -688,7 +762,7 @@ TEST_F(Multipart, WithFile) {
     };
 
     parseParts(parts);
-    
+
     ASSERT_TRUE(htp_list_size(body->parts) == 2);
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 1);
@@ -730,6 +804,10 @@ TEST_F(Multipart, CompleteRequest) {
         "\r\n"
         "ABCDEF"
         "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
+        "\r\n"
+        "FILEDATA"
+        "\r\n--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field2\"\r\n"
         "\r\n"
         "GHIJKL"
@@ -737,8 +815,5 @@ TEST_F(Multipart, CompleteRequest) {
         NULL
     };
 
-    // parseParts(headers, data);
-
-    // htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    // ASSERT_TRUE(body != NULL);
+    parseRequestThenVerify(headers, data);
 }
