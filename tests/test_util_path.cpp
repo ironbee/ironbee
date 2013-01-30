@@ -171,7 +171,20 @@ TEST_F(TestIBUtilPath, relative_path)
     }
 }
 
-class TestNormalizePath : public TestSimpleStringManipulation
+/**
+ * Input parameter for TestNormalizePath tests.
+ */
+struct TestNormalizePath_t {
+    const char *input;
+    const char *expected;
+    TestNormalizePath_t(const char *_input, const char *_expected):
+        input(_input),
+        expected(_expected)
+    {
+    }
+};
+class TestNormalizePath : public TestSimpleStringManipulation,
+                          public ::testing::WithParamInterface<TestNormalizePath_t>
 {
 public:
     const char *TestName(ib_strop_t op, test_type_t tt)
@@ -213,34 +226,46 @@ public:
     }
 };
 
-TEST_F(TestNormalizePath, Basic)
+TEST_P(TestNormalizePath, runtests)
 {
-    {
-        SCOPED_TRACE("Empty");
-        RunTest("", "");
-    }
-    RunTest("/");
-    RunTest(".", "");
-    RunTest("..");
-    RunTest("../", "../");
-    RunTest("x", "x");
-    RunTest("./..", "..");
-    RunTest("./../", "../");
-    RunTest("..", "..");
-    RunTest("../.", "..");
-    RunTest(".././", "../");
-    RunTest("../..", "../..");
-    RunTest("../../", "../../");
-    RunTest("/foo", "/foo");
-    RunTest("/foo/.", "/foo");
-    RunTest("/foo/..", "/");
-    RunTest("/foo/../", "/");
-    RunTest("/foo/../bar", "/bar");
-    RunTest("/foo/bar", "/foo/bar");
-    RunTest("/foo/bar/..", "/foo");
-    RunTest("/foo/bar/../", "/foo/");
-    RunTest("/foo/bar/baz", "/foo/bar/baz");
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestInplaceNul(input, expected);
+    RunTestInplaceEx(input, expected);
+    RunTestCowNul(input, expected);
+    RunTestCowEx(input, expected);
+    RunTestCopyNul(input, expected);
+    RunTestCopyEx(input, expected);
+    RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
 }
+
+
+INSTANTIATE_TEST_CASE_P(Basic, TestNormalizePath, ::testing::Values(
+        TestNormalizePath_t("", ""),
+        TestNormalizePath_t("/", "/"),
+        TestNormalizePath_t(".", ""),
+        TestNormalizePath_t("..", ".."),
+        TestNormalizePath_t("../", "../"),
+        TestNormalizePath_t("x", "x"),
+        TestNormalizePath_t("./..", ".."),
+        TestNormalizePath_t("./../", "../"),
+        TestNormalizePath_t("..", ".."),
+        TestNormalizePath_t("../.", ".."),
+        TestNormalizePath_t(".././", "../"),
+        TestNormalizePath_t("../..", "../.."),
+        TestNormalizePath_t("../../", "../../"),
+        TestNormalizePath_t("/foo", "/foo"),
+        TestNormalizePath_t("/foo/.", "/foo"),
+        TestNormalizePath_t("/foo/..", "/"),
+        TestNormalizePath_t("/foo/../", "/"),
+        TestNormalizePath_t("/foo/../bar", "/bar"),
+        TestNormalizePath_t("/foo/bar", "/foo/bar"),
+        TestNormalizePath_t("/foo/bar/..", "/foo"),
+        TestNormalizePath_t("/foo/bar/../", "/foo/"),
+        TestNormalizePath_t("/foo/bar/baz", "/foo/bar/baz")
+    ));
 
 TEST_F(TestNormalizePath, NulByte)
 {
@@ -249,33 +274,34 @@ TEST_F(TestNormalizePath, NulByte)
     RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
 }
 
-TEST_F(TestNormalizePath, Complex)
-{
-    RunTest("/dir/foo//bar", "/dir/foo/bar");
-    RunTest("dir/foo//bar/", "dir/foo/bar/");
-    RunTest("dir/../foo", "foo");
-    RunTest("dir/../../foo", "../foo");
-    RunTest("dir/./.././../../foo/bar", "../../foo/bar");
-    RunTest("dir/./.././../../foo/bar/.", "../../foo/bar");
-    RunTest("dir/./.././../../foo/bar/./", "../../foo/bar/");
-    RunTest("dir/./.././../../foo/bar/..", "../../foo");
-    RunTest("dir/./.././../../foo/bar/../", "../../foo/");
-    RunTest("dir/./.././../../foo/bar/", "../../foo/bar/");
-    RunTest("dir//.//..//.//..//..//foo//bar", "../../foo/bar");
-    RunTest("dir//.//..//.//..//..//foo//bar//", "../../foo/bar/");
-    RunTest("dir/subdir/subsubdir/subsubsubdir/../../..", "dir");
-    RunTest("dir/./subdir/./subsubdir/./subsubsubdir/../../..", "dir");
-    RunTest("dir/./subdir/../subsubdir/../subsubsubdir/..", "dir");
-    RunTest("/dir/./subdir/../subsubdir/../subsubsubdir/../", "/dir/");
-    RunTest("/./.././../../../../../../..//../etc/./passwd", "/etc/passwd");
+INSTANTIATE_TEST_CASE_P(Complex, TestNormalizePath, ::testing::Values(
+        TestNormalizePath_t("/dir/foo//bar", "/dir/foo/bar"),
+        TestNormalizePath_t("dir/foo//bar/", "dir/foo/bar/"),
+        TestNormalizePath_t("dir/../foo", "foo"),
+        TestNormalizePath_t("dir/../../foo", "../foo"),
+        TestNormalizePath_t("dir/./.././../../foo/bar", "../../foo/bar"),
+        TestNormalizePath_t("dir/./.././../../foo/bar/.", "../../foo/bar"),
+        TestNormalizePath_t("dir/./.././../../foo/bar/./", "../../foo/bar/"),
+        TestNormalizePath_t("dir/./.././../../foo/bar/..", "../../foo"),
+        TestNormalizePath_t("dir/./.././../../foo/bar/../", "../../foo/"),
+        TestNormalizePath_t("dir/./.././../../foo/bar/", "../../foo/bar/"),
+        TestNormalizePath_t("dir//.//..//.//..//..//foo//bar", "../../foo/bar"),
+        TestNormalizePath_t("dir//.//..//.//..//..//foo//bar//", "../../foo/bar/"),
+        TestNormalizePath_t("dir/subdir/subsubdir/subsubsubdir/../../..", "dir"),
+        TestNormalizePath_t("dir/./subdir/./subsubdir/./subsubsubdir/../../..", "dir"),
+        TestNormalizePath_t("dir/./subdir/../subsubdir/../subsubsubdir/..", "dir"),
+        TestNormalizePath_t("/dir/./subdir/../subsubdir/../subsubsubdir/../", "/dir/"),
+        TestNormalizePath_t("/./.././../../../../../../..//../etc/./passwd", "/etc/passwd")
+    ));
 
+TEST_F(TestNormalizePath, Complex) {
     uint8_t in[] = "/./.././../../../../../../../\0/../etc/./passwd";
     uint8_t out[] = "/etc/passwd";
     RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
-
 }
 
-class TestNormalizePathWin : public TestSimpleStringManipulation
+class TestNormalizePathWin : public TestSimpleStringManipulation,
+                             public ::testing::WithParamInterface<TestNormalizePath_t>
 {
 public:
     const char *TestName(ib_strop_t op, test_type_t tt)
@@ -317,61 +343,70 @@ public:
     }
 };
 
-TEST_F(TestNormalizePathWin, Empty)
+TEST_P(TestNormalizePathWin, runtests)
 {
-    RunTest("", "");
+    TestNormalizePath_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestInplaceNul(input, expected);
+    RunTestInplaceEx(input, expected);
+    RunTestCowNul(input, expected);
+    RunTestCowEx(input, expected);
+    RunTestCopyNul(input, expected);
+    RunTestCopyEx(input, expected);
+    RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
 }
+
+INSTANTIATE_TEST_CASE_P(Basic, TestNormalizePathWin, ::testing::Values(
+        TestNormalizePath_t("", ""),
+        TestNormalizePath_t("x", "x"),
+        TestNormalizePath_t(".", ""),
+        TestNormalizePath_t(".\\", ""),
+        TestNormalizePath_t(".\\..", ".."),
+        TestNormalizePath_t(".\\..\\", "../"),
+        TestNormalizePath_t("..", ".."),
+        TestNormalizePath_t("..\\", "../"),
+        TestNormalizePath_t("..\\.", ".."),
+        TestNormalizePath_t("..\\.\\", "../"),
+        TestNormalizePath_t("..\\..", "../.."),
+        TestNormalizePath_t("..\\..\\", "../../")
+    ));
+INSTANTIATE_TEST_CASE_P(Slashes, TestNormalizePathWin, ::testing::Values(
+        TestNormalizePath_t("\\foo\\bar\\baz", "/foo/bar/baz")
+    ));
+INSTANTIATE_TEST_CASE_P(Complex, TestNormalizePathWin, ::testing::Values(
+        TestNormalizePath_t("\\dir\\foo\\\\bar", "/dir/foo/bar"),
+        TestNormalizePath_t("dir\\foo\\\\bar\\", "dir/foo/bar/"),
+        TestNormalizePath_t("dir\\..\\foo", "foo"),
+        TestNormalizePath_t("dir\\..\\..\\foo", "../foo"),
+        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar", "../../foo/bar"),
+        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar\\.", "../../foo/bar"),
+        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar\\.\\", "../../foo/bar/"),
+        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar\\..", "../../foo"),
+        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar\\..\\", "../../foo/"),
+        TestNormalizePath_t("dir\\.\\..\\.\\..\\..\\foo\\bar\\", "../../foo/bar/"),
+        TestNormalizePath_t("dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar", "../../foo/bar"),
+        TestNormalizePath_t("dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar\\\\",
+                "../../foo/bar/"),
+        TestNormalizePath_t("dir\\subdir\\subsubdir\\subsubsubdir\\..\\..\\..", "dir"),
+        TestNormalizePath_t("dir\\.\\subdir\\.\\subsubdir\\.\\subsubsubdir\\..\\..\\..",
+                "dir"),
+        TestNormalizePath_t("dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..", "dir"),
+        TestNormalizePath_t("\\dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..\\",
+                "/dir/"),
+        TestNormalizePath_t("\\.\\..\\.\\..\\..\\..\\..\\..\\..\\..\\\\..\\etc\\.\\passwd",
+                "/etc/passwd")
+    ));
 
 TEST_F(TestNormalizePathWin, Slashes)
 {
-    RunTest("\\foo\\bar\\baz", "/foo/bar/baz");
-
     {
         const uint8_t in[]  = "\\foo\\bar\0\\baz";
         const uint8_t out[] =  "/foo/bar\0/baz";
         SCOPED_TRACE("\\foo\\bar\\0\\baz");
         RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
     }
-}
-
-TEST_F(TestNormalizePathWin, Basics)
-{
-    RunTest("x", "x");
-    RunTest(".", "");
-    RunTest(".\\", "");
-    RunTest(".\\..", "..");
-    RunTest(".\\..\\", "../");
-    RunTest("..", "..");
-    RunTest("..\\", "../");
-    RunTest("..\\.", "..");
-    RunTest("..\\.\\", "../");
-    RunTest("..\\..", "../..");
-    RunTest("..\\..\\", "../../");
-}
-
-TEST_F(TestNormalizePathWin, Complex)
-{
-    RunTest("\\dir\\foo\\\\bar", "/dir/foo/bar");
-    RunTest("dir\\foo\\\\bar\\", "dir/foo/bar/");
-    RunTest("dir\\..\\foo", "foo");
-    RunTest("dir\\..\\..\\foo", "../foo");
-    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar", "../../foo/bar");
-    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar\\.", "../../foo/bar");
-    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar\\.\\", "../../foo/bar/");
-    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar\\..", "../../foo");
-    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar\\..\\", "../../foo/");
-    RunTest("dir\\.\\..\\.\\..\\..\\foo\\bar\\", "../../foo/bar/");
-    RunTest("dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar", "../../foo/bar");
-    RunTest("dir\\\\.\\\\..\\\\.\\\\..\\\\..\\\\foo\\\\bar\\\\",
-            "../../foo/bar/");
-    RunTest("dir\\subdir\\subsubdir\\subsubsubdir\\..\\..\\..", "dir");
-    RunTest("dir\\.\\subdir\\.\\subsubdir\\.\\subsubsubdir\\..\\..\\..",
-            "dir");
-    RunTest("dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..", "dir");
-    RunTest("\\dir\\.\\subdir\\..\\subsubdir\\..\\subsubsubdir\\..\\",
-            "/dir/");
-    RunTest("\\.\\..\\.\\..\\..\\..\\..\\..\\..\\..\\\\..\\etc\\.\\passwd",
-            "/etc/passwd");
 }
 
 TEST_F(TestNormalizePathWin, Nul)

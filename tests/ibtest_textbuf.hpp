@@ -34,7 +34,9 @@
 #include <assert.h>
 #include <stdio.h>
 
-// Basic text buffer
+/**
+ * Utility class for handing blocks of text and formatting them in an escaped, printable, fashion.
+ */
 class TextBuf
 {
 public:

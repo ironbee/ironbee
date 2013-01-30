@@ -41,7 +41,24 @@
 const size_t BufSize = 512;
 const size_t CallBufSize = BufSize + 32;
 
-class TestDecodeUrl : public TestSimpleStringManipulation
+/**
+ * Type param for TestDecodeUrl class.
+ * This is also "borrowed by TestDecodeHtmlEntity.
+ */
+struct TestDecodeUrl_t
+{
+    const char *input;
+    const char *expected;
+
+    TestDecodeUrl_t(const char *_input, const char *_expected):
+        input(_input),
+        expected(_expected)
+    {
+    }
+};
+
+class TestDecodeUrl : public TestSimpleStringManipulation,
+                      public ::testing::WithParamInterface<TestDecodeUrl_t>
 {
 public:
     const char *TestName(ib_strop_t op, test_type_t tt)
@@ -79,24 +96,33 @@ public:
     }
 };
 
+TEST_P(TestDecodeUrl, StringPairs)
+{
+    TestDecodeUrl_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestInplaceNul(input, expected);
+    RunTestInplaceEx(input, expected);
+    RunTestCowNul(input, expected);
+    RunTestCowEx(input, expected);
+    RunTestCopyNul(input, expected);
+    RunTestCopyEx(input, expected);
+    RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
+}
+
+INSTANTIATE_TEST_CASE_P(Basic, TestDecodeUrl, ::testing::Values(
+        TestDecodeUrl_t("", ""),
+        TestDecodeUrl_t("TestCase", "TestCase"),
+        TestDecodeUrl_t("Test+Case", "Test Case")
+    ));
+
 TEST_F(TestDecodeUrl, Basic)
 {
-    {
-        SCOPED_TRACE("Empty");
-        RunTest("", "");
-    }
-    {
-        SCOPED_TRACE("Basic #1");
-        RunTest("TestCase");
-    }
     {
         SCOPED_TRACE("Basic #2");
         uint8_t in[] = "Test\0Case";
         RunTest(in, sizeof(in)-1);
-    }
-    {
-        SCOPED_TRACE("Basic #3");
-        RunTest("Test+Case", "Test Case");
     }
 }
 
@@ -107,74 +133,31 @@ TEST_F(TestDecodeUrl, Complex)
     RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
 }
 
-TEST_F(TestDecodeUrl, PartialValid)
-{
-    {
-        SCOPED_TRACE("PartialValid #1");
-        RunTest("%+","% ");
-    }
-    {
-        SCOPED_TRACE("PartialValid #2");
-        RunTest("%%20", "% ");
-    }
-    {
-        SCOPED_TRACE("PartialValid #3");
-        RunTest("%0g%20", "%0g ");
-    }
-    {
-        SCOPED_TRACE("PartialValid #4");
-        RunTest("%0%20", "%0 ");
-    }
-    {
-        SCOPED_TRACE("PartialValid #5");
-        RunTest("%g0%20", "%g0 ");
-    }
-    {
-        SCOPED_TRACE("PartialValid #6");
-        RunTest("%g%20", "%g ");
-    }
-}
+INSTANTIATE_TEST_CASE_P(PartialValid, TestDecodeUrl, ::testing::Values(
+        TestDecodeUrl_t("%+","% "),
+        TestDecodeUrl_t("%%20", "% "),
+        TestDecodeUrl_t("%0g%20", "%0g "),
+        TestDecodeUrl_t("%0%20", "%0 "),
+        TestDecodeUrl_t("%g0%20", "%g0 "),
+        TestDecodeUrl_t("%g%20", "%g ")
+    ));
 
-TEST_F(TestDecodeUrl, Invalid)
-{
-    {
-        SCOPED_TRACE("Invalid #1");
-        RunTest("%0%1%2%3%4%5%6%7%8%9%0%a%b%c%d%e%f",
-                "%0%1%2%3%4%5%6%7%8%9%0%a%b%c%d%e%f");
-    }
-    {
-        SCOPED_TRACE("Invalid #2");
-        RunTest("%g0%g1%g2%g3%g4%g5%g6%g7%g8%g9%g0%ga%gb%gc%gd%ge%gf",
-                "%g0%g1%g2%g3%g4%g5%g6%g7%g8%g9%g0%ga%gb%gc%gd%ge%gf");
-    }
-    {
-        SCOPED_TRACE("Invalid #3");
-        RunTest("%0g%1g%2g%3g%4g%5g%6g%7g%8g%9g%0g%ag%bg%cg%dg%eg%fg",
-                "%0g%1g%2g%3g%4g%5g%6g%7g%8g%9g%0g%ag%bg%cg%dg%eg%fg");
-    }
-    {
-        SCOPED_TRACE("Invalid #4");
-        RunTest("%", "%");
-    }
-    {
-        SCOPED_TRACE("Invalid #5");
-        RunTest("%0", "%0");
-    }
-    {
-        SCOPED_TRACE("Invalid #6");
-        RunTest("%%", "%%");
-    }
-    {
-        SCOPED_TRACE("Invalid #7");
-        RunTest("%0g", "%0g");
-    }
-    {
-        SCOPED_TRACE("Invalid #8");
-        RunTest("%gg", "%gg");
-    }
-}
+INSTANTIATE_TEST_CASE_P(Invalid, TestDecodeUrl, ::testing::Values(
+        TestDecodeUrl_t("%0%1%2%3%4%5%6%7%8%9%0%a%b%c%d%e%f",
+                        "%0%1%2%3%4%5%6%7%8%9%0%a%b%c%d%e%f"),
+        TestDecodeUrl_t("%g0%g1%g2%g3%g4%g5%g6%g7%g8%g9%g0%ga%gb%gc%gd%ge%gf",
+                        "%g0%g1%g2%g3%g4%g5%g6%g7%g8%g9%g0%ga%gb%gc%gd%ge%gf"),
+        TestDecodeUrl_t("%0g%1g%2g%3g%4g%5g%6g%7g%8g%9g%0g%ag%bg%cg%dg%eg%fg",
+                        "%0g%1g%2g%3g%4g%5g%6g%7g%8g%9g%0g%ag%bg%cg%dg%eg%fg"),
+        TestDecodeUrl_t("%", "%"),
+        TestDecodeUrl_t("%0", "%0"),
+        TestDecodeUrl_t("%%", "%%"),
+        TestDecodeUrl_t("%0g", "%0g"),
+        TestDecodeUrl_t("%gg", "%gg")
+    ));
 
-class TestDecodeHtmlEntity : public TestSimpleStringManipulation
+class TestDecodeHtmlEntity : public TestSimpleStringManipulation,
+                             public ::testing::WithParamInterface<TestDecodeUrl_t>
 {
 public:
     const char *TestName(ib_strop_t op, test_type_t tt)
@@ -214,16 +197,28 @@ public:
     }
 };
 
+TEST_P(TestDecodeHtmlEntity, StringPairs)
+{
+    TestDecodeUrl_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestInplaceNul(input, expected);
+    RunTestInplaceEx(input, expected);
+    RunTestCowNul(input, expected);
+    RunTestCowEx(input, expected);
+    RunTestCopyNul(input, expected);
+    RunTestCopyEx(input, expected);
+    RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
+}
+
+INSTANTIATE_TEST_CASE_P(Basic, TestDecodeHtmlEntity, ::testing::Values(
+        TestDecodeUrl_t("", ""),
+        TestDecodeUrl_t("TestCase", "TestCase")
+    ));
+
 TEST_F(TestDecodeHtmlEntity, Basic)
 {
-    {
-        SCOPED_TRACE("Empty");
-        RunTest("", "");
-    }
-    {
-        SCOPED_TRACE("#1");
-        RunTest("TestCase");
-    }
     {
         SCOPED_TRACE("#2");
         uint8_t in[] = "Test\0Case";

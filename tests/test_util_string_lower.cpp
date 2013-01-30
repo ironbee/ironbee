@@ -34,8 +34,21 @@
 
 #include <stdexcept>
 
+/**
+ * Value parameter type for TestStringLower.
+ */
+struct TestStringLower_t {
+    const char *input;
+    const char *expected;
+    TestStringLower_t(const char *_input, const char *_expected):
+        input(_input),
+        expected(_expected)
+    {
+    }
+};
 
-class TestStringLower : public TestSimpleStringManipulation
+class TestStringLower : public TestSimpleStringManipulation,
+                        public ::testing::WithParamInterface<TestStringLower_t>
 {
 public:
     const char *TestName(ib_strop_t op, test_type_t tt)
@@ -103,28 +116,34 @@ public:
     }
 };
 
-TEST_F(TestStringLower, Basic)
+TEST_P(TestStringLower, Basic)
 {
-    {
-        SCOPED_TRACE("Empty");
-        RunTest("");
-    }
-    {
-        SCOPED_TRACE("Basic #1");
-        RunTest("test case");
-    }
-    {
-        SCOPED_TRACE("Basic #2");
-        RunTest("Test Case", "test case");
-    }
+    TestStringLower_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestInplaceNul(input, expected);
+    RunTestInplaceEx(input, expected);
+    RunTestCowNul(input, expected);
+    RunTestCowEx(input, expected);
+    RunTestCopyNul(input, expected);
+    RunTestCopyEx(input, expected);
+    RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
+}
+
+INSTANTIATE_TEST_CASE_P(Basic, TestStringLower, ::testing::Values(
+        TestStringLower_t("", ""),
+        TestStringLower_t("test case", "test case"),
+        TestStringLower_t("Test Case", "test case"),
+        TestStringLower_t("ABC def GHI", "abc def ghi")
+    ));
+
+TEST_F(TestStringLower, unprintable)
+{
     {
         SCOPED_TRACE("Basic #3");
         uint8_t in[] = "Test\0Case";
         uint8_t out[] = "test\0case";
         RunTest(in, sizeof(in)-1, out, sizeof(out)-1);
-    }
-    {
-        SCOPED_TRACE("Basic #4");
-        RunTest("ABC def GHI", "abc def ghi");
     }
 }

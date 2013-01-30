@@ -119,115 +119,173 @@ protected:
     bool m_quote;
 };
 
-TEST_F(TestEscapeJSON, Basic)
+
+/**
+ * Input parameter type for TestEscapeJSONCStrings and descendants.
+ */
+struct TestEscapeJSONCStrings_t
 {
+    const char *input;
+    const char *expected;
+
+    /**
+     * Constructor for use in ::testing::Values(...).
+     */
+    TestEscapeJSONCStrings_t(const char *_input, const char *_expected):
+        input(_input),
+        expected(_expected)
     {
-        SCOPED_TRACE("Empty");
-        RunTest("", "");
     }
-    {
-        SCOPED_TRACE("Basic #1");
-        RunTest("TestCase", "TestCase");
-    }
-    {
-        SCOPED_TRACE("Basic #2");
-        RunTest("Test+Case", "Test+Case");
-    }
+};
+
+/**
+ * Test fixture that takes a string pair as input.
+ */
+class TestEscapeJSONCStrings:
+   public TestEscapeJSON,
+   public ::testing::WithParamInterface<TestEscapeJSONCStrings_t>
+{
+};
+
+TEST_P(TestEscapeJSONCStrings, simple_pairs) {
+    TestEscapeJSONCStrings_t p = GetParam();
+    TextBuf input(p.input);
+    TextBuf expected(p.expected);
+
+    RunTestInplaceNul(input, expected);
+    RunTestInplaceEx(input, expected);
+    RunTestCowNul(input, expected);
+    RunTestCowEx(input, expected);
+    RunTestCopyNul(input, expected);
+    RunTestCopyEx(input, expected);
+    RunTestBuf(p.input, p.expected, strlen(p.expected)+1, IB_OK);
 }
+
+INSTANTIATE_TEST_CASE_P(Basic, TestEscapeJSONCStrings, ::testing::Values(
+        TestEscapeJSONCStrings_t("", ""),
+        TestEscapeJSONCStrings_t("TestCase", "TestCase"),
+        TestEscapeJSONCStrings_t("Test+Case", "Test+Case")
+    ));
+
+INSTANTIATE_TEST_CASE_P(Simple, TestEscapeJSONCStrings, ::testing::Values(
+        TestEscapeJSONCStrings_t("/", "\\/"),
+        TestEscapeJSONCStrings_t("\"", "\\\""),
+        TestEscapeJSONCStrings_t("'", "'"),
+        TestEscapeJSONCStrings_t("\"", "\\\""),
+        TestEscapeJSONCStrings_t("\\", "\\\\"),
+        TestEscapeJSONCStrings_t("\b", "\\b"),
+        TestEscapeJSONCStrings_t("\f", "\\f"),
+        TestEscapeJSONCStrings_t("\n", "\\n"),
+        TestEscapeJSONCStrings_t("\r", "\\r"),
+        TestEscapeJSONCStrings_t("\t", "\\t")
+    ));
+
+INSTANTIATE_TEST_CASE_P(Complex, TestEscapeJSONCStrings, ::testing::Values(
+        TestEscapeJSONCStrings_t("x\ty", "x\\ty"),
+        TestEscapeJSONCStrings_t("x\t\ty", "x\\t\\ty"),
+        TestEscapeJSONCStrings_t("x\n\ry", "x\\n\\ry")
+    ));
 
 TEST_F(TestEscapeJSON, Simple)
 {
-    {
-        SCOPED_TRACE("Simple #1");
-        RunTest("/", "\\/");
-    }
-    {
-        SCOPED_TRACE("Simple #2");
-        RunTest("\"", "\\\"");
-    }
-    {
-        SCOPED_TRACE("Simple #3");
-        RunTest("'", "'");
-    }
-    {
-        SCOPED_TRACE("Simple #4");
-        RunTest("\"", "\\\"");
-    }
-    {
-        SCOPED_TRACE("Simple #5");
-        RunTest("\\", "\\\\");
-    }
-    {
-        SCOPED_TRACE("Simple #6");
-        RunTest("\b", "\\b");
-    }
-    {
-        SCOPED_TRACE("Simple #7");
-        RunTest("\f", "\\f");
-    }
-    {
-        SCOPED_TRACE("Simple #8");
-        RunTest("\n", "\\n");
-    }
-    {
-        SCOPED_TRACE("Simple #9");
-        RunTest("\r", "\\r");
-    }
-    {
-        SCOPED_TRACE("Simple #10");
-        RunTest("\t", "\\t");
-    }
-    {
         SCOPED_TRACE("Simple #11");
         const uint8_t in[]  = "\0";
         const char    out[] = "\\u0000";
         RunTest(in, sizeof(in)-1, out);
-    }
 }
 
+/**
+ * Turn on quoted using SetQuote(true).
+ */
+struct TestEscapeJSONCStringsQuoted : public TestEscapeJSONCStrings
+{
+    TestEscapeJSONCStringsQuoted()
+    {
+        SetQuote(true);
+    }
+};
+
+INSTANTIATE_TEST_CASE_P(Simple, TestEscapeJSONCStringsQuoted, ::testing::Values(
+        TestEscapeJSONCStrings_t("/", "\"\\/\""),
+        TestEscapeJSONCStrings_t("\"", "\"\\\"\""),
+        TestEscapeJSONCStrings_t("'", "\"'\""),
+        TestEscapeJSONCStrings_t("\"", "\"\\\"\""),
+        TestEscapeJSONCStrings_t("\\", "\"\\\\\""),
+        TestEscapeJSONCStrings_t("\b", "\"\\b\""),
+        TestEscapeJSONCStrings_t("\f", "\"\\f\""),
+        TestEscapeJSONCStrings_t("\n", "\"\\n\""),
+        TestEscapeJSONCStrings_t("\r", "\"\\r\""),
+        TestEscapeJSONCStrings_t("\t", "\"\\t\"")
+    ));
+
+/**
+ * NonPrintable character iterator for feeding to a NonPrint param test.
+ */
+class NonPrintableIterator:
+    public std::iterator<std::forward_iterator_tag, TestEscapeJSONCStrings_t>
+{
+    private:
+    int m_count;
+    char inbuf[16];
+    char outbuf[16];
+    TestEscapeJSONCStrings_t vals;
+
+    public:
+
+    NonPrintableIterator(int count):
+        m_count(m_count),
+        vals(inbuf, outbuf)
+    {
+    }
+    NonPrintableIterator(const NonPrintableIterator& that):
+        m_count(that.m_count),
+        vals(inbuf, outbuf)
+    {
+        memcpy(inbuf, that.inbuf, 16);
+        memcpy(outbuf, that.outbuf, 16);
+    }
+    NonPrintableIterator():
+        m_count(0x100),
+        vals(inbuf, outbuf)
+    {
+    }
+    const TestEscapeJSONCStrings_t& operator->() {
+        return vals;
+    }
+    const TestEscapeJSONCStrings_t& operator*() {
+        return vals;
+    }
+    NonPrintableIterator& operator++() {
+        // Skip characters that are escaped specially
+        do {
+            ++m_count;
+        } while (isprint(m_count) || isspace(m_count) || (m_count == 0x08));
+
+        strcpy(inbuf, "|x|");
+        inbuf[1] = m_count;
+        snprintf(outbuf, sizeof(outbuf), "|\\u%04x|", m_count);
+        return *this;
+    }
+    bool operator!=(const NonPrintableIterator &that) const {
+        return ! (*this == that);
+    }
+    bool operator==(const NonPrintableIterator &that) const {
+        return this->m_count == that.m_count;
+    }
+};
+
+INSTANTIATE_TEST_CASE_P(NonPrintRange, TestEscapeJSONCStringsQuoted, ::testing::ValuesIn(
+        NonPrintableIterator(0),
+        NonPrintableIterator(0x100)
+    ));
+
+INSTANTIATE_TEST_CASE_P(NonPrint, TestEscapeJSONCStringsQuoted, ::testing::Values(
+        TestEscapeJSONCStrings_t("x" "\x07f"   "\x080"   "\x0ff"   "y",
+                                 "x" "\\u007f" "\\u0080" "\\u00ff" "y")
+    ));
 TEST_F(TestEscapeJSON, Quoted)
 {
     SetQuote(true);
-    {
-        SCOPED_TRACE("Simple #1");
-        RunTest("/", "\"\\/\"");
-    }
-    {
-        SCOPED_TRACE("Simple #2");
-        RunTest("\"", "\"\\\"\"");
-    }
-    {
-        SCOPED_TRACE("Simple #3");
-        RunTest("'", "\"'\"");
-    }
-    {
-        SCOPED_TRACE("Simple #4");
-        RunTest("\"", "\"\\\"\"");
-    }
-    {
-        SCOPED_TRACE("Simple #5");
-        RunTest("\\", "\"\\\\\"");
-    }
-    {
-        SCOPED_TRACE("Simple #6");
-        RunTest("\b", "\"\\b\"");
-    }
-    {
-        SCOPED_TRACE("Simple #7");
-        RunTest("\f", "\"\\f\"");
-    }
-    {
-        SCOPED_TRACE("Simple #8");
-        RunTest("\n", "\"\\n\"");
-    }
-    {
-        SCOPED_TRACE("Simple #9");
-        RunTest("\r", "\"\\r\"");
-    }
-    {
-        SCOPED_TRACE("Simple #10");
-        RunTest("\t", "\"\\t\"");
-    }
     {
         SCOPED_TRACE("Simple #11");
         const uint8_t in[]  = "\0";
@@ -244,32 +302,6 @@ TEST_F(TestEscapeJSON, NonPrint)
         const char    out[] = "Test\\u0001Case";
         RunTest(in, sizeof(in)-1, out);
     }
-    {
-        SCOPED_TRACE("NonPrint #2");
-        RunTest("x" "\x07f"   "\x080"   "\x0ff"   "y",
-                "x" "\\u007f" "\\u0080" "\\u00ff" "y");
-    }
-    {
-        int c;
-        for (c = 1;  c <= 0xff;  ++c) {
-            char inbuf[16];
-            char outbuf[16];
-            char testname[32];
-
-            // Skip characters that are escaped specially
-            if (isprint(c) || isspace(c) || (c == 0x08) ) {
-                continue;
-            }
-
-            snprintf(testname, sizeof(testname), "NonPrint #3-%02x", c);
-            SCOPED_TRACE(testname);
-
-            strcpy(inbuf, "|x|");
-            inbuf[1] = c;
-            snprintf(outbuf, sizeof(outbuf), "|\\u%04x|", c);
-            RunTest(inbuf, outbuf);
-        }
-    }
 }
 
 TEST_F(TestEscapeJSON, Complex)
@@ -281,22 +313,10 @@ TEST_F(TestEscapeJSON, Complex)
         RunTest(in, sizeof(in)-1, out);
     }
     {
-        SCOPED_TRACE("Complex #2");
-        RunTest("x\ty", "x\\ty");
-    }
-    {
-        SCOPED_TRACE("Complex #3");
-        RunTest("x\t\ty", "x\\t\\ty");
-    }
-    {
         SCOPED_TRACE("Complex #4");
         const uint8_t in[]  = "x\t\tfoo\0y";
         const char    out[] = "x\\t\\tfoo\\u0000y";
         RunTest(in, sizeof(in)-1, out);
-    }
-    {
-        SCOPED_TRACE("Complex #5");
-        RunTest("x\n\ry", "x\\n\\ry");
     }
 }
 

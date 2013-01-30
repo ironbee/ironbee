@@ -208,22 +208,6 @@ public:
         return IB_ENOTIMPL;
     }
 
-    void RunTest(const char *in,
-                 const char *out = NULL)
-    {
-        TextBuf input(in);
-        if (out == NULL) {
-            out = in;
-        }
-        TextBuf expected(out);
-        RunTestInplaceNul(input, expected);
-        RunTestInplaceEx(input, expected);
-        RunTestCowNul(input, expected);
-        RunTestCowEx(input, expected);
-        RunTestCopyNul(input, expected);
-        RunTestCopyEx(input, expected);
-        RunTestBuf(in, out, strlen(out)+1, IB_OK);
-    }
 
     void RunTest(const uint8_t *in, size_t inlen,
                  const uint8_t *out = NULL, size_t outlen = 0)
