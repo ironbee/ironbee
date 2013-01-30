@@ -59,13 +59,16 @@ protected:
         }
 
         htp_mpartp_finalize(mpartp);
+
+        body = htp_mpartp_get_multipart(mpartp);
+        ASSERT_TRUE(body != NULL);
     }
 
     void parsePartsThenVerify(htp_mpartp_t *mpartp, char *parts[]) {
         parseParts(mpartp, parts);
 
         // Examine the result
-        htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
+        body = htp_mpartp_get_multipart(mpartp);
         ASSERT_TRUE(body != NULL);
 
         ASSERT_TRUE(htp_list_size(body->parts) == 2);
@@ -107,6 +110,8 @@ protected:
             htp_config_destroy(cfg);
         }
     }
+
+    htp_multipart_t *body;
 
     htp_mpartp_t *mpartp;
 
@@ -336,10 +341,7 @@ TEST_F(Multipart, CrLfLineEndings) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parsePartsThenVerify(mpartp, parts);   
 
     ASSERT_FALSE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
@@ -361,9 +363,6 @@ TEST_F(Multipart, LfLineEndings) {
 
     parsePartsThenVerify(mpartp, parts);
 
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
-
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_FALSE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
@@ -382,10 +381,7 @@ TEST_F(Multipart, CrAndLfLineEndings1) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parsePartsThenVerify(mpartp, parts);   
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
@@ -405,10 +401,7 @@ TEST_F(Multipart, CrAndLfLineEndings2) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parsePartsThenVerify(mpartp, parts);   
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
@@ -428,10 +421,7 @@ TEST_F(Multipart, CrAndLfLineEndings3) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parsePartsThenVerify(mpartp, parts);   
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
@@ -451,10 +441,7 @@ TEST_F(Multipart, CrAndLfLineEndings4) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parsePartsThenVerify(mpartp, parts);   
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
@@ -474,10 +461,7 @@ TEST_F(Multipart, BoundaryInstanceWithLwsAfter) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parsePartsThenVerify(mpartp, parts);   
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BOUNDARY_LWS_AFTER);
 }
@@ -496,10 +480,7 @@ TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parsePartsThenVerify(mpartp, parts);   
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BOUNDARY_NLWS_AFTER);
 }
@@ -519,10 +500,7 @@ TEST_F(Multipart, WithPreamble) {
         NULL
     };
 
-    parseParts(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parseParts(mpartp, parts);   
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_PREAMBLE);
 
@@ -550,10 +528,7 @@ TEST_F(Multipart, WithEpilogue1) {
         NULL
     };
 
-    parseParts(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parseParts(mpartp, parts);   
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 
@@ -581,10 +556,7 @@ TEST_F(Multipart, WithEpilogue2) {
         NULL
     };
 
-    parseParts(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parseParts(mpartp, parts);   
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 
@@ -613,10 +585,7 @@ TEST_F(Multipart, WithEpilogue3) {
         NULL
     };
 
-    parseParts(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parseParts(mpartp, parts);   
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 
@@ -643,10 +612,7 @@ TEST_F(Multipart, HasLastBoundary) {
         NULL
     };
 
-    parseParts(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parseParts(mpartp, parts);   
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY);
 }
@@ -665,10 +631,7 @@ TEST_F(Multipart, DoesNotHaveLastBoundary) {
         NULL
     };
 
-    parsePartsThenVerify(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
+    parsePartsThenVerify(mpartp, parts);   
 
     ASSERT_FALSE(body->flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY);
 }
@@ -689,9 +652,6 @@ TEST_F(Multipart, PartAfterLastBoundary) {
 
     parsePartsThenVerify(mpartp, parts);
 
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
-
     ASSERT_TRUE(body->flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY);
 }
 
@@ -705,9 +665,6 @@ TEST_F(Multipart, UnknownPart) {
     };
 
     parseParts(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
 
     ASSERT_TRUE(htp_list_size(body->parts) == 1);
 
@@ -731,10 +688,7 @@ TEST_F(Multipart, WithFile) {
     };
 
     parseParts(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
-
+    
     ASSERT_TRUE(htp_list_size(body->parts) == 2);
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 1);
@@ -761,9 +715,6 @@ TEST_F(Multipart, PartHeadersEmptyLineBug) {
     };
 
     parsePartsThenVerify(mpartp, parts);
-
-    htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
-    ASSERT_TRUE(body != NULL);
 }
 
 TEST_F(Multipart, CompleteRequest) {
