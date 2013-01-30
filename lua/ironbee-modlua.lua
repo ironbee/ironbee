@@ -439,15 +439,6 @@ M.get_callback = function(ib, module_index, event)
 
     local handler = t.events[event]
 
-    if handler == nil then
-        local engineapi = ibapi.engineapi:new(ib)
-        engineapi:logInfo(
-            "No handler registered for module %d event %d",
-            module_index,
-            event)
-        return nil
-    end
-
     return handler
 end
 

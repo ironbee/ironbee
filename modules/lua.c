@@ -1987,7 +1987,7 @@ static ib_status_t modlua_module_load_wire_callbacks(
                     break;
             }
         }
-        if (rc != IB_OK) {
+        if ((rc != IB_OK) && (rc != IB_ENOENT)) {
             ib_log_error(ib,
                          "Failed to register hook: %s",
                          ib_status_to_string(rc));
