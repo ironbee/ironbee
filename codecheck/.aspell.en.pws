@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1841 
+personal_ws-1.1 en 1852 
 malloced
 malloc'ed
 libnet
@@ -29,6 +29,7 @@ CLI
 CMD
 CCBA
 clk
+TestStringLower
 dev
 alen
 xxxxxxxx
@@ -60,6 +61,7 @@ pregistration
 cdef
 HandleResponseHeaders
 cfgfile
+TestNormalizePath
 gcc
 DoS
 cwd
@@ -87,13 +89,14 @@ ConnClosed
 incrementor
 IronBeeUtilAhoCorasick
 ghi
+SetQuote
 struct
 RuleEngineDebugLevel
 fpc
 fmt
 bing
-requestbody
 requestBody
+requestbody
 strval
 hdr
 dyn
@@ -231,6 +234,7 @@ atoi
 tmpmp
 DirectiveName
 bool
+NonPrintable
 lpr
 ssize
 maemo
@@ -261,6 +265,7 @@ attr
 pcm
 lwp
 pcp
+TestDecodeHtmlEntity
 MyInt
 printvar
 responsemetadata
@@ -355,6 +360,7 @@ sqlDecode
 RuleEngineLogData
 tgt
 cout
+TestEscapeJSONCStrings
 rsp
 prepend
 spi
@@ -381,8 +387,8 @@ STL
 IronBeeUtilStringEscape
 IronBeeLog
 txdata
-WAM
 str
+WAM
 ver
 pseudocode
 IronBeeUtilDebug
@@ -808,6 +814,7 @@ goto
 conndata
 Exxx
 backreferences
+TestDecodeUrl
 vartype
 Wdelete
 AhoCorasickModuleTest
@@ -984,6 +991,7 @@ TSHttpTxnHookAdd
 EUNKNOWN
 ruleset
 defau
+pdriver
 PycURL
 accessor
 AhoCorasick
@@ -1132,6 +1140,7 @@ preprocessing
 tparam
 obuf
 bufsize
+IronBeeRuleLogger
 xffff
 pipelined
 Unlink
@@ -1586,6 +1595,7 @@ xname
 elementtype
 hashequal
 infos
+mkstemp
 uTorrent
 simplePattern
 Ristic
@@ -1779,6 +1789,7 @@ bbbb
 RunTestCopyNul
 ResponseFinished
 namelen
+TestIBUtilJsonDecode
 strlen
 onEventResponseBody
 IsByteStr
