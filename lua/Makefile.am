@@ -31,6 +31,7 @@ EXTRA_DIST = ironbee-ffi-h.lua \
              ironbee-api.lua \
              ironbee-modlua.lua \
              example.lua \
+             threat_level.lua \
              qa.lua
 
 lua_DATA   = ironbee-ffi-h.lua \
@@ -38,6 +39,7 @@ lua_DATA   = ironbee-ffi-h.lua \
              ironbee-api.lua \
              ironbee-modlua.lua \
              example.lua \
+             threat_level.lua \
              qa.lua
 
 noinst_LTLIBRARIES = libironbee-lua.la
