@@ -233,7 +233,7 @@ class NonPrintableIterator:
     public:
 
     NonPrintableIterator(int count):
-        m_count(m_count),
+        m_count(count),
         vals(inbuf, outbuf)
     {
     }
