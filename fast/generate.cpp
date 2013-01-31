@@ -108,7 +108,12 @@ int main(int argc, char **)
             );
         }
         a.metadata()["Index"] = string(index.begin(), index.end());
-
+    }
+    {
+        ia::buffer_t index_size;
+        ia::BufferAssembler assembler(index_size);
+        assembler.append_object(uint32_t(id_vector.size()));
+        a.metadata()["IndexSize"] = string(index_size.begin(), index_size.end());
     }
 
     ia::Intermediate::write_automata(a, cout, 0);
