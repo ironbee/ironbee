@@ -179,7 +179,7 @@ class TestPattern < Test::Unit::TestCase
       assert_equal([7, 14].to_set, output_substrings[words[0]])
     end
   end
-  
+
   def test_case_clash
     words = ['H', '\ih']
     text = "Hi"
@@ -188,8 +188,8 @@ class TestPattern < Test::Unit::TestCase
       assert_equal(words.size, output_substrings.size)
       assert_equal([1].to_set, output_substrings[words[0]])
     end
-  end    
-  
+  end
+
   def test_union_basic
     words = ['[abc]foo']
     text = "afoobfoocfoodfoo"
