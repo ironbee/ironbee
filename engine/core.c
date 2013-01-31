@@ -1229,6 +1229,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
             ib_field_t *tx_tags;
             ib_field_t *tx_threat_level;
             ib_num_t threat_level = 0;
+            int do_threat_calc = 1;
             int num_events = 0;
 
             ib_field_create(&tx_action, pool,
@@ -1263,6 +1264,24 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                 );
             }
 
+            /* Check if THREAT_LEVEL is available, or if we need to calculate
+             * it here.
+             */
+            rc = ib_data_get_ex(tx->data, IB_S2SL("THREAT_LEVEL"), &f);
+            if ((rc == IB_OK) && (f->type == IB_FTYPE_NUM)) {
+                rc = ib_field_value(f, ib_ftype_num_out(&threat_level));
+                if (rc == IB_OK) {
+                    ib_log_debug_tx(tx, "Using THREAT_LEVEL as threat level value.");
+                    do_threat_calc = 0;
+                }
+                else {
+                    ib_log_debug_tx(tx, "No numeric THREAT_LEVEL to use as threat level value.");
+                }
+            }
+            else {
+                ib_log_debug_tx(tx, "No THREAT_LEVEL to use as threat level value.");
+            }
+
             /* It is more important to write out what is possible
              * than to fail here. So, some error codes are ignored.
              *
@@ -1279,29 +1298,12 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                     continue;
                 }
 
-                /* The threat_level is severity scaled by confidence where
-                 * severity ranges 0-100 and confidence ranges 0-100:
-                 *   - severity is just a number to scale
-                 *   - confidence is the scaling factor
-                 *     0: Not used
-                 *     <50: scale down
-                 *     50: balanced
-                 *     >50: scale up
-                 *   - threat_level is scaled severity fit to 0-100 range
-                 *
-                 *   threat_level =
-                 *     severity * (confidence * scale_factor) / 100
-                 *
-                 * TODO: Make this calculation a module.
-                 */
-#define IB_THREAT_LEVEL_SCALE_FACTOR 4
-                assert(IB_THREAT_LEVEL_SCALE_FACTOR > 0);
-                if (e->severity > 0) {
-                    threat_level += e->severity * (
-                                      (e->confidence == 0 ? 1 : e->confidence) *
-                                      IB_THREAT_LEVEL_SCALE_FACTOR
-                                    );
-                    ++num_events;
+                if (do_threat_calc != 0) {
+                    /* The threat_level is average severity. */
+                    if (e->severity > 0) {
+                        threat_level += e->severity;
+                        ++num_events;
+                    }
                 }
 
                 /* Only alerts. */
@@ -1324,10 +1326,9 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                 }
             }
 
-            /* Use the average threat level scaled to 1-100. */
-            if (num_events > 0) {
+            /* Use the average threat level. */
+            if ((do_threat_calc != 0) && (num_events > 0)) {
                 threat_level /= num_events;
-                threat_level /= 100 * IB_THREAT_LEVEL_SCALE_FACTOR;
             }
             ib_field_setv(tx_threat_level, ib_ftype_num_in(&threat_level));
 
