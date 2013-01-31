@@ -2,7 +2,7 @@ ACLOCAL_AMFLAGS = -I ../../acinclude
 
 if CPP
 
-bin_PROGRAMS = generate
+noinst_PROGRAMS = generate
 
 LDADD = ../automata/libironautomata.la ../automata/libiaeudoxus.la
 
