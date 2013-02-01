@@ -329,7 +329,7 @@ eother_failure:
  * Extract time information from a file name
  *
  * The file name is expected to have one of the two formats from kvset().
- * That is: "<expiration>-<creation>.<type>.XXXXXX", or 
+ * That is: "<expiration>-<creation>.<type>.XXXXXX", or
  * ".<expiration>-<creation>.<type>.XXXXXX".  The leading '.', if present,
  * indicates that the file is a temporary file.  The expiration time is then
  * extracted, followed by the creation time, which is stored as a 16-digit
@@ -488,7 +488,7 @@ static ib_status_t load_kv_value(
     else if (rc != IB_OK) {
         return rc;
     }
-    
+
     /* Build full path. */
     len = strlen(dpath) + strlen(fname) + 2;
     file_path = kvstore->malloc(kvstore, len, kvstore->malloc_cbdata);

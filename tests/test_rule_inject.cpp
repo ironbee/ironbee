@@ -214,7 +214,7 @@ TEST_F(RuleInjectTest, test_inject)
 
     // Now, create the connection, run through the rule engine. */
     conn = buildIronBeeConnection();
-    
+
     // Create the transaction.
     sendDataIn(conn,
                "GET / HTTP/1.1\r\n"
