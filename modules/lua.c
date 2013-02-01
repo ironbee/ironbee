@@ -2388,6 +2388,8 @@ ib_status_t modlua_rule_driver(
 
     ib_status_t rc;
     ib_operator_inst_t *op_inst;
+    const char *slash;
+    const char *name;
 
     if (strncmp(tag, "lua", 3) != 0) {
         ib_cfg_log_error(cp, "Lua rule driver called for non-lua tag.");
@@ -2406,14 +2408,21 @@ ib_status_t modlua_rule_driver(
                           ib_rule_id(rule));
 
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp, "Failed to load lua file %s", location);
+        ib_cfg_log_error(cp, "Failed to load lua file \"%s\"", location);
         return rc;
     }
 
-    ib_cfg_log_debug3(cp, "Loaded lua file %s", location);
+    ib_cfg_log_debug3(cp, "Loaded lua file \"%s\"", location);
+    slash = strrchr(location, '/');
+    if (slash == NULL) {
+        name = location;
+    }
+    else {
+        name = slash + 1;
+    }
 
     rc = ib_operator_register(cp->ib,
-                              location,
+                              name,
                               IB_OP_FLAG_PHASE,
                               &lua_operator_create,
                               NULL,
@@ -2422,9 +2431,8 @@ ib_status_t modlua_rule_driver(
                               &lua_operator_execute,
                               NULL);
     if (rc != IB_OK) {
-        ib_cfg_log_error(cp,
-                         "Failed to register lua operator: %s",
-                         location);
+        ib_cfg_log_error(cp, "Failed to register lua operator \"%s\": %s",
+                         name, ib_status_to_string(rc));
         return rc;
     }
 
@@ -2432,15 +2440,16 @@ ib_status_t modlua_rule_driver(
                                  cp->cur_ctx,
                                  rule,
                                  ib_rule_required_op_flags(rule),
-                                 location,
+                                 name,
                                  NULL,
                                  IB_OPINST_FLAG_NONE,
                                  &op_inst);
 
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-                         "Failed to instantiate lua operator for rule %s",
-                         location);
+                         "Failed to instantiate lua operator "
+                         "for rule \"%s\": %s",
+                         name, ib_status_to_string(rc));
         return rc;
     }
 
@@ -2451,14 +2460,14 @@ ib_status_t modlua_rule_driver(
 
     if (rc != IB_OK) {
         ib_cfg_log_error(cp,
-                         "Failed to associate lua operator "
-                         "with rule %s: %s",
-                         ib_rule_id(rule), location);
+                         "Failed to associate lua operator \"%s\" "
+                         "with rule \"%s\": %s",
+                         name, ib_rule_id(rule), ib_status_to_string(rc));
         return rc;
     }
 
-    ib_cfg_log_debug3(cp, "Set operator %s for rule %s",
-                      location,
+    ib_cfg_log_debug3(cp, "Set operator \"%s\" for rule \"%s\"",
+                      name,
                       ib_rule_id(rule));
 
     return IB_OK;

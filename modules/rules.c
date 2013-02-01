@@ -29,6 +29,7 @@
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/operator.h>
+#include <ironbee/path.h>
 #include <ironbee/provider.h>
 #include <ironbee/rule_engine.h>
 #include <ironbee/string.h>
@@ -862,23 +863,23 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     if (tag == NULL) {
         return IB_EALLOC;
     }
-    location = colon + 1;
+    location = ib_util_relative_file(cp->mp, cp->cur_file, colon + 1);
+    if (location == NULL) {
+        return IB_EALLOC;
+    }
     rc = ib_rule_lookup_external_driver(cp->ib, tag, &driver);
     if (rc != IB_ENOENT) {
         rc = driver->function(cp, rule, tag, location, driver->cbdata);
         if (rc != IB_OK) {
             ib_cfg_log_error(cp,
-                "Error in external rule driver for %s: %s",
-                tag,
-                ib_status_to_string(rc)
+                             "Error in external rule driver for \"%s\": %s",
+                             tag, ib_status_to_string(rc)
             );
             return rc;
         }
     }
     else {
-        ib_cfg_log_error(cp,
-            "No external rule driver for %s.\n", tag
-        );
+        ib_cfg_log_error(cp, "No external rule driver for \"%s\"", tag);
         return IB_EINVAL;
     }
 
@@ -905,8 +906,11 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
     }
 
     ib_cfg_log_debug(cp,
-                     "Registered external rule %s for phase %d context %p",
-                     ib_rule_id(rule), rule->meta.phase, cp->cur_ctx);
+                     "Registered external rule \"%s\" for "
+                     "phase \"%s\" context \"%s\"",
+                     ib_rule_id(rule),
+                     ib_rule_phase_name(rule->meta.phase),
+                     ib_context_full_get(cp->cur_ctx));
 
     /* Done */
     return IB_OK;
