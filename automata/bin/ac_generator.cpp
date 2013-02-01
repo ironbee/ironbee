@@ -62,7 +62,7 @@ static const char* c_patterns_help =
     "\n"
     "Parameterized Single Shortcuts:\n"
     "- \\^X -- Control character, where X is A-Z, [, \\, ], ^, _, or ?.\n"
-    "- \\xXX -- ASCII character XX in hex.\n"
+    "- \\xXX -- Byte XX in hex.\n"
     "- \\iX -- Match lower case of X and upper case of X where X is A-Za-z.\n"
     "\n"
     "Multiple Shortcuts:\n"

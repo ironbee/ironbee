@@ -40,7 +40,7 @@ The fast pattern syntax is that of the IronAutomata Aho-Corasick patterns.  The 
 
 	Parameterized Single Shortcuts:
 	- \^X -- Control character, where X is A-Z, [, \, ], ^, _, or ?.
-	- \xXX -- ASCII character XX in hex.
+	- \xXX -- Byte XX in hex.
 	- \iX -- Match lower case of X and upper case of X where X is A-Za-z.
 
 	Multiple Shortcuts:
@@ -57,6 +57,14 @@ The fast pattern syntax is that of the IronAutomata Aho-Corasick patterns.  The 
 	- \$ -- End of line -- \r\f
 	- \p -- Printable character, ASCII hex 20 through 7E.
 	- \. -- Any character.
+
+    Union Shortcuts:
+    - [...] -- Union of all shortcuts inside brackets.  Hyphens are treated
+               differently in unions.  A hyphen must either appear at the
+               beginning of the union or as part of a range A-B where A < B.
+               A and B may be single shortcuts.  An initial hyphen indicates
+               that a hyphen should be part of the union.
+    - [^...] -- As above, but negated.
 
 Using Fast Patterns
 -------------------

@@ -111,7 +111,7 @@ void aho_corasick_add_data(
  *
  * Parameterized Single Shortcuts:
  * - \\^X -- Control character, where X is A-Z, [, \\, ], ^, _, or ?.
- * - \\xXX -- ASCII character XX in hex.
+ * - \\xXX -- Byte XX in hex.
  * - \\iX -- Match lower case of X and upper case of X where X is A-Za-z.
  *
  * Multiple Shortcuts:
