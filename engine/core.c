@@ -469,12 +469,12 @@ static void core_vlogmsg(
  * Fetch the log level.
  *
  * @param[in] ib     IronBee engine.
- *
+ * @param[in] cbdata Callback data; ignored.
  * @returns Log level.
  */
-ib_log_level_t ib_core_loglevel(
-    const ib_engine_t *ib
-)
+static ib_log_level_t core_loglevel(
+    const ib_engine_t *ib,
+    void              *cbdata)
 {
     ib_core_cfg_t *config = NULL;
 
@@ -4694,8 +4694,9 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->rule_debug_level     = IB_RULE_DLOG_ERROR;
     corecfg->block_status         = 403;
 
-    /* Register core logger function. */
-    ib_log_set_logger(ib, core_vlogmsg, NULL);
+    /* Register logger functions. */
+    ib_log_set_logger_fn(ib, core_vlogmsg, NULL);
+    ib_log_set_loglevel_fn(ib, core_loglevel, NULL);
 
     /* Force any IBUtil calls to use the default logger */
     rc = ib_util_log_logger(core_util_logger, ib);

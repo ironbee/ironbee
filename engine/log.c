@@ -26,7 +26,6 @@
 
 #include <ironbee/log.h>
 
-#include "core_private.h"
 #include "engine_private.h"
 
 #include <assert.h>
@@ -113,7 +112,7 @@ static const char* c_log_levels[] = {
 };
 static size_t c_num_levels = sizeof(c_log_levels)/sizeof(*c_log_levels);
 
-void ib_log_set_logger(
+void ib_log_set_logger_fn(
     ib_engine_t        *ib,
     ib_log_logger_fn_t  logger,
     void               *cbdata
@@ -124,6 +123,19 @@ void ib_log_set_logger(
 
     ib->logger_fn = logger;
     ib->logger_cbdata = cbdata;
+}
+
+void ib_log_set_loglevel_fn(
+    ib_engine_t       *ib,
+    ib_log_level_fn_t  log_level,
+    void              *cbdata
+)
+{
+    assert(ib != NULL);
+    assert(log_level != NULL);
+
+    ib->loglevel_fn = log_level;
+    ib->loglevel_cbdata = cbdata;
 }
 
 ib_log_level_t ib_log_string_to_level(const char* s)
@@ -225,9 +237,8 @@ void DLL_PUBLIC ib_log_vex_ex(
     va_list            ap
 )
 {
-    ib_log_level_t logger_level = ib_log_get_level(ib);
-
     /* Check the log level, return if we're not interested. */
+    ib_log_level_t logger_level = ib_log_get_level(ib);
     if (level > logger_level) {
         return;
     }
@@ -242,5 +253,10 @@ void DLL_PUBLIC ib_log_vex_ex(
 
 ib_log_level_t DLL_PUBLIC ib_log_get_level(const ib_engine_t *ib)
 {
-    return ib_core_loglevel(ib);
+    if (ib->loglevel_fn != NULL) {
+        return ib->loglevel_fn(ib, ib->loglevel_cbdata);
+    }
+    else {
+        return IB_LOG_TRACE;
+    }
 }

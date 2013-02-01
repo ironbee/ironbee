@@ -110,10 +110,23 @@ typedef ib_log_level_t (*ib_log_level_fn_t)(
  * @param logger Logger function.
  * @param cbdata Data to pass to logger function.
  */
-void DLL_PUBLIC ib_log_set_logger(
+void DLL_PUBLIC ib_log_set_logger_fn(
     ib_engine_t        *ib,
     ib_log_logger_fn_t  logger,
     void               *cbdata
+);
+
+/**
+ * Set log level callback.
+ *
+ * @param ib        IronBee engine.
+ * @param log_level Log level function.
+ * @param cbdata    Data to pass to log level function.
+ */
+void DLL_PUBLIC ib_log_set_loglevel_fn(
+    ib_engine_t       *ib,
+    ib_log_level_fn_t  log_level,
+    void              *cbdata
 );
 
 /** Log Generic */

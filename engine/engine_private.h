@@ -143,6 +143,8 @@ struct ib_engine_t {
     ib_list_t             *collection_managers; /**< List of managers */
     ib_log_logger_fn_t     logger_fn;       /**< Logger function. */
     void                  *logger_cbdata;   /**< Logger callback data. */
+    ib_log_level_fn_t      loglevel_fn;     /**< Log level function. */
+    void                  *loglevel_cbdata; /**< Log level callback data. */
 
     /* Hooks */
     ib_hook_t *hook[IB_STATE_EVENT_NUM + 1]; /**< Registered hook callbacks */

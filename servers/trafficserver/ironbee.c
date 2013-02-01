@@ -1970,10 +1970,8 @@ static int ironbee_init(const char *configfile, const char *logfile)
         return rc;
     }
 
-    ib_log_set_logger(ironbee, ironbee_logger, NULL);
+    ib_log_set_logger_fn(ironbee, ironbee_logger, NULL);
     /* Using default log level function. */
-    ib_context_set_num(ib_context_engine(ironbee),
-                       "logger.log_level", 4);
 
     rc = ib_engine_init(ironbee);
     if (rc != IB_OK) {

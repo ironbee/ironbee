@@ -345,22 +345,21 @@ void ironbee_logger(
 
     /* Translate the log level. */
     switch (level) {
-        case 0:
+        case IB_LOG_EMERGENCY:
             ap_level = APLOG_EMERG;
             break;
-        case 1:
+        case IB_LOG_ALERT:
             ap_level = APLOG_ALERT;
             break;
-        case 2:
+        case IB_LOG_CRITICAL:
+        case IB_LOG_ERROR:
             ap_level = APLOG_ERR;
             break;
-        case 3:
-            ap_level = APLOG_WARNING;
-            break;
-        case 4:
+        case IB_LOG_WARNING:
+            //ap_level = APLOG_WARNING;
             ap_level = APLOG_DEBUG; /// @todo For now, so we get file/line
             break;
-        case 9:
+        case IB_LOG_DEBUG:
             ap_level = APLOG_DEBUG;
             break;
         default:
@@ -1153,7 +1152,8 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
         return IB2AP(rc);
     }
 
-    ib_log_set_logger(ironbee, ironbee_logger, NULL);
+    ib_log_set_logger_fn(ironbee, ironbee_logger, NULL);
+    /* Use the default log level function */
 
     rc = ib_engine_init(ironbee);
     if (rc != IB_OK)
