@@ -57,7 +57,7 @@ struct htp_connp_t {
     htp_conn_t *conn;
 
     /** Opaque user data associated with this parser. */
-    void *user_data;
+    const void *user_data;
 
     /**
      * On parser failure, this field will contain the error information. Do note, however,

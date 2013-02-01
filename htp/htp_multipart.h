@@ -189,7 +189,7 @@ htp_status_t htp_mpartp_finalize(htp_mpartp_t *parser);
  * @param[in] len
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_mpartp_parse(htp_mpartp_t *parser, const unsigned char *data, size_t len);
+htp_status_t htp_mpartp_parse(htp_mpartp_t *parser, const void *data, size_t len);
 
 #ifdef __cplusplus
 }

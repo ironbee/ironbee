@@ -216,7 +216,7 @@ int htp_urlenp_finalize(htp_urlenp_t *urlenp) {
  * @param[in] len
  * @return
  */
-int htp_urlenp_parse_complete(htp_urlenp_t *urlenp, const unsigned char *data, size_t len) {
+int htp_urlenp_parse_complete(htp_urlenp_t *urlenp, const void *data, size_t len) {
     htp_urlenp_parse_partial(urlenp, data, len);
     return htp_urlenp_finalize(urlenp);
 }
@@ -231,7 +231,8 @@ int htp_urlenp_parse_complete(htp_urlenp_t *urlenp, const unsigned char *data, s
  * @param[in] len
  * @return
  */
-int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, const unsigned char *data, size_t len) {
+int htp_urlenp_parse_partial(htp_urlenp_t *urlenp, const void *_data, size_t len) {
+    unsigned char *data = (unsigned char *)_data;
     size_t startpos = 0;
     size_t pos = 0;
     int c;

@@ -98,8 +98,8 @@ void htp_urlenp_destroy(htp_urlenp_t **urlenp);
 void htp_urlenp_set_argument_separator(htp_urlenp_t *urlenp, unsigned char argument_separator);         
 void htp_urlenp_set_decode_url_encoding(htp_urlenp_t *urlenp, int decode_url_encoding);
          
-int  htp_urlenp_parse_partial(htp_urlenp_t *urlenp, const unsigned char *data, size_t len);
-int  htp_urlenp_parse_complete(htp_urlenp_t *urlenp, const unsigned char *data, size_t len);
+int  htp_urlenp_parse_partial(htp_urlenp_t *urlenp, const void *data, size_t len);
+int  htp_urlenp_parse_complete(htp_urlenp_t *urlenp, const void *data, size_t len);
 int  htp_urlenp_finalize(htp_urlenp_t *urlenp);
 
  int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);

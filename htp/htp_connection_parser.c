@@ -43,7 +43,7 @@ void htp_connp_clear_error(htp_connp_t *connp) {
     connp->last_error = NULL;
 }
 
-void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp) {
+void htp_connp_close(htp_connp_t *connp, const htp_time_t *timestamp) {
     // Close the underlying connection.
     htp_conn_close(connp->conn, timestamp);
 
@@ -159,7 +159,7 @@ htp_log_t *htp_connp_get_last_error(const htp_connp_t *connp) {
 }
 
 void *htp_connp_get_user_data(const htp_connp_t *connp) {
-    return connp->user_data;
+    return (void *)connp->user_data;
 }
 
 void htp_connp_in_reset(htp_connp_t *connp) {
@@ -187,7 +187,7 @@ void htp_connp_open(htp_connp_t *connp, const char *client_addr, int client_port
     connp->out_status = HTP_STREAM_OPEN;
 }
 
-void htp_connp_set_user_data(htp_connp_t *connp, void *user_data) {
+void htp_connp_set_user_data(htp_connp_t *connp, const void *user_data) {
     connp->user_data = user_data;
 }
 

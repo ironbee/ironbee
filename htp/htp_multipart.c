@@ -904,7 +904,9 @@ htp_status_t htp_mpartp_finalize(htp_mpartp_t *parser) {
     return HTP_OK;
 }
 
-htp_status_t htp_mpartp_parse(htp_mpartp_t *parser, const unsigned char *data, size_t len) {
+htp_status_t htp_mpartp_parse(htp_mpartp_t *parser, const void *_data, size_t len) {
+    unsigned char *data = (unsigned char *)_data;
+    
     // The current position in the entire input buffer.
     size_t pos = 0;
 

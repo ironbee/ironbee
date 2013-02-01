@@ -57,23 +57,23 @@ protected:
 
         // Open connection
         connp = htp_connp_create(cfg);
-        htp_connp_open(connp, (const char *) "127.0.0.1", 32768, (const char *) "127.0.0.1", 80, NULL);
+        htp_connp_open(connp, "127.0.0.1", 32768, "127.0.0.1", 80, NULL);
 
         // Send headers.
 
         for (i = 0; headers[i] != NULL; i++) {
-            htp_connp_req_data(connp, NULL, (unsigned char *) headers[i], strlen(headers[i]));
+            htp_connp_req_data(connp, NULL, headers[i], strlen(headers[i]));
         }
 
         char buf[32];
         snprintf(buf, sizeof (buf), "Content-Length: %d\r\n", bodyLen);
-        htp_connp_req_data(connp, NULL, (unsigned char *) buf, strlen(buf));
+        htp_connp_req_data(connp, NULL, buf, strlen(buf));
 
-        htp_connp_req_data(connp, NULL, (unsigned char *) "\r\n", 2);
+        htp_connp_req_data(connp, NULL, (void *)"\r\n", 2);
 
         // Send data.
         for (i = 0; data[i] != NULL; i++) {
-            htp_connp_req_data(connp, NULL, (unsigned char *) data[i], strlen(data[i]));
+            htp_connp_req_data(connp, NULL, data[i], strlen(data[i]));
         }
 
         ASSERT_EQ(htp_list_size(connp->conn->transactions), 1);
@@ -123,7 +123,7 @@ protected:
         size_t i = 0;
         for (;;) {
             if (parts[i] == NULL) break;
-            htp_mpartp_parse(mpartp, (const unsigned char *) parts[i], strlen(parts[i]));
+            htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
             i++;
         }
 
@@ -239,7 +239,7 @@ TEST_F(Multipart, Test1) {
     i = 0;
     for (;;) {
         if (parts[i] == NULL) break;
-        htp_mpartp_parse(mpartp, (const unsigned char *) parts[i], strlen(parts[i]));
+        htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
         i++;
     }
 
@@ -308,15 +308,15 @@ TEST_F(Multipart, Test2) {
     const char *i8 = "-";
     const char *i9 = "-";
 
-    htp_mpartp_parse(mpartp, (const unsigned char *) i1, strlen(i1));
-    htp_mpartp_parse(mpartp, (const unsigned char *) i2, strlen(i2));
-    htp_mpartp_parse(mpartp, (const unsigned char *) i3, strlen(i3));
-    htp_mpartp_parse(mpartp, (const unsigned char *) i4, strlen(i4));
-    htp_mpartp_parse(mpartp, (const unsigned char *) i5, strlen(i5));
-    htp_mpartp_parse(mpartp, (const unsigned char *) i6, strlen(i6));
-    htp_mpartp_parse(mpartp, (const unsigned char *) i7, strlen(i7));
-    htp_mpartp_parse(mpartp, (const unsigned char *) i8, strlen(i8));
-    htp_mpartp_parse(mpartp, (const unsigned char *) i9, strlen(i9));
+    htp_mpartp_parse(mpartp, i1, strlen(i1));
+    htp_mpartp_parse(mpartp, i2, strlen(i2));
+    htp_mpartp_parse(mpartp, i3, strlen(i3));
+    htp_mpartp_parse(mpartp, i4, strlen(i4));
+    htp_mpartp_parse(mpartp, i5, strlen(i5));
+    htp_mpartp_parse(mpartp, i6, strlen(i6));
+    htp_mpartp_parse(mpartp, i7, strlen(i7));
+    htp_mpartp_parse(mpartp, i8, strlen(i8));
+    htp_mpartp_parse(mpartp, i9, strlen(i9));
     htp_mpartp_finalize(mpartp);
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);

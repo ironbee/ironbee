@@ -564,7 +564,7 @@ size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
     return connp->in_current_offset;
 }
 
-int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len) {
+int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const void *data, size_t len) {
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_connp_req_data(connp->in_status %x)\n", connp->in_status);
     fprint_raw_data(stderr, __FUNCTION__, data, len);
@@ -608,7 +608,7 @@ int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
     }
 
     // Store the current chunk information    
-    connp->in_current_data = data;
+    connp->in_current_data = (unsigned char *)data;
     connp->in_current_len = len;
     connp->in_current_offset = 0;
     connp->in_chunk_count++;

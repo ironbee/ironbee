@@ -86,7 +86,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
             // Ask for more data
             return HTP_DATA;
-        } else {            
+        } else {
             connp->out_chunked_length--;
             len++;
 
@@ -183,7 +183,7 @@ htp_status_t htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                 // Ask for more data
                 return HTP_DATA;
             }
-        } else {            
+        } else {
             if (connp->out_body_data_left > 0) {
                 // We know the length of response body
 
@@ -196,7 +196,7 @@ htp_status_t htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
                     // Send data to callbacks
                     if (len != 0) {
                         int rc = htp_tx_res_process_body_data(connp->out_tx, data, len);
-                        if (rc != HTP_OK) return rc;                        
+                        if (rc != HTP_OK) return rc;
                     }
 
                     // Done
@@ -272,7 +272,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         connp->out_tx->seen_100continue++;
 
         return HTP_OK;
-    }   
+    }
 
     // 1. Any response message which MUST NOT include a message-body
     //  (such as the 1xx, 204, and 304 responses and any response to a HEAD
@@ -327,9 +327,8 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
             connp->out_tx->progress = HTP_RESPONSE_BODY;
-        }
-        // 3. If a Content-Length header field (section 14.14) is present, its
-        //   value in bytes represents the length of the message-body.
+        }            // 3. If a Content-Length header field (section 14.14) is present, its
+            //   value in bytes represents the length of the message-body.
         else if (cl != NULL) {
             // We know the exact length
             connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
@@ -387,7 +386,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
     //      that is done earlier, before response line parsing begins
 
     int rc = htp_tx_state_response_headers(connp->out_tx);
-    if (rc != HTP_OK) return rc;    
+    if (rc != HTP_OK) return rc;
 
     return HTP_OK;
 }
@@ -702,7 +701,7 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t * connp) {
     return HTP_OK;
 }
 
-int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len) {
+int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const void *data, size_t len) {
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_connp_res_data(connp->out_status %x)\n", connp->out_status);
     fprint_raw_data(stderr, __FUNCTION__, data, len);
@@ -746,7 +745,7 @@ int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char 
     }
 
     // Store the current chunk information
-    connp->out_current_data = data;
+    connp->out_current_data = (unsigned char *) data;
     connp->out_current_len = len;
     connp->out_current_offset = 0;
 

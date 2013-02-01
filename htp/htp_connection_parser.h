@@ -56,7 +56,7 @@ void htp_connp_clear_error(htp_connp_t *connp);
  * @param[in] connp
  * @param[in] timestamp Optional.
  */
-void htp_connp_close(htp_connp_t *connp, htp_time_t *timestamp);
+void htp_connp_close(htp_connp_t *connp, const htp_time_t *timestamp);
 
 /**
  * Creates a new connection parser using the provided configuration. Because
@@ -130,7 +130,7 @@ void htp_connp_in_reset(htp_connp_t *connp);
  * @param[in] connp
  * @param[in] user_data
  */
-void htp_connp_set_user_data(htp_connp_t *connp, void *user_data);
+void htp_connp_set_user_data(htp_connp_t *connp, const void *user_data);
 
 /**
  *
@@ -141,7 +141,7 @@ void htp_connp_set_user_data(htp_connp_t *connp, void *user_data);
  * @return HTP_STREAM_DATA, HTP_STREAM_ERROR or STEAM_STATE_DATA_OTHER (see QUICK_START).
  *         HTP_STREAM_CLOSED and HTP_STREAM_TUNNEL are also possible.
  */
-int htp_connp_req_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len);
+int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const void *data, size_t len);
 
 /**
  * Returns the number of bytes consumed from the most recent inbound data chunk. Normally, an invocation
@@ -164,7 +164,7 @@ size_t htp_connp_req_data_consumed(htp_connp_t *connp);
  * @param[in] len
  * @return HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed
  */
-int htp_connp_res_data(htp_connp_t *connp, htp_time_t *timestamp, unsigned char *data, size_t len);
+int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const void *data, size_t len);
 
 /**
  * Returns the number of bytes consumed from the most recent outbound data chunk. Normally, an invocation
