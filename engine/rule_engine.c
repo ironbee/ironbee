@@ -4291,6 +4291,25 @@ const char *ib_rule_id(const ib_rule_t *rule)
     return rule->meta.id;
 }
 
+/**
+ * Return a phase's name string
+ *
+ * @param[in] phase_meta Rule phase meta-data
+ *
+ * @returns Name string
+ */
+const char *ib_rule_phase_name(ib_rule_phase_num_t phase)
+{
+    const ib_rule_phase_meta_t *meta;
+    ib_status_t rc;
+
+    rc = find_phase_meta(phase, &meta);
+    if (rc != IB_OK) {
+        return NULL;
+    }
+    return phase_name(meta);
+}
+
 bool ib_rule_id_match(const ib_rule_t *rule,
                       const char *id,
                       bool parents,

@@ -481,6 +481,16 @@ ib_status_t DLL_PUBLIC ib_rule_set_phase(
     ib_rule_phase_num_t         phase);
 
 /**
+ * Get the name associated with a phase number
+ *
+ * @param[in] phase Phase number
+ *
+ * @returns Phase name string (or NULL if @a phase is invalid)
+ */
+const char DLL_PUBLIC *ib_rule_phase_name(
+    ib_rule_phase_num_t         phase);
+
+/**
  * Query as to whether a rule allow transformations
  *
  * @param[in,out] rule Rule to query
