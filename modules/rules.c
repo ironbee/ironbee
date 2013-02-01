@@ -497,9 +497,16 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
         return rc;
     }
 
-    /* Set the "no field" flag if we can. */
-    if ( (params == NULL) || (strcasestr(params, "%{FIELD") == NULL) ) {
-        ib_flags_set(rule->flags, IB_RULE_FLAG_NO_FIELDS);
+    /* Look for a FIELD string in the parameter */
+    if (  (params != NULL) &&
+          ( (strcasestr(params, "%{FIELD") != NULL) ||
+            (strcasecmp(params, "FIELD") == 0) ||
+            (strcasecmp(params, "FIELD_TARGET") == 0) ||
+            (strcasecmp(params, "FIELD_TFN") == 0) ||
+            (strcasecmp(params, "FIELD_NAME") == 0) ||
+            (strcasecmp(params, "FIELD_NAME_FULL") == 0) )  )
+    {
+        ib_flags_clear(rule->flags, IB_RULE_FLAG_NO_FIELDS);
     }
 
     /* Add the action to the rule */
@@ -757,6 +764,9 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
         return IB_OK;
     }
 
+    /* Set the NO_FIELDS flags; it's cleared by parse_modifier if field found */
+    ib_flags_set(rule->flags, IB_RULE_FLAG_NO_FIELDS);
+
     /* Finally, try to match it to an action */
     rc = register_action_modifier(cp, rule, name, value);
     if (rc != IB_OK) {
@@ -813,6 +823,9 @@ static ib_status_t parse_ruleext_params(ib_cfgparser_t *cp,
         return rc;
     }
     ib_flags_set(rule->flags, (IB_RULE_FLAG_EXTERNAL | IB_RULE_FLAG_NO_TGT));
+
+    /* Set the NO_FIELDS flags; it's cleared by parse_modifier if field found */
+    ib_flags_set(rule->flags, IB_RULE_FLAG_NO_FIELDS);
 
     /* Parse all of the modifiers */
     mod = targets;
@@ -987,6 +1000,9 @@ static ib_status_t parse_rule_params(ib_cfgparser_t *cp,
         goto cleanup;
     }
 
+    /* Set the NO_FIELDS flags; it's cleared by parse_modifier if field found */
+    ib_flags_set(rule->flags, IB_RULE_FLAG_NO_FIELDS);
+
     /* Parse all of the modifiers */
     while( (node = ib_list_node_next_const(node)) != NULL) {
         if (node->data == NULL) {
@@ -1127,6 +1143,9 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
                          operator, ib_status_to_string(rc));
         return rc;
     }
+
+    /* Set the NO_FIELDS flags; it's cleared by parse_modifier if field found */
+    ib_flags_set(rule->flags, IB_RULE_FLAG_NO_FIELDS);
 
     /* Parse all of the modifiers */
     while( (node = ib_list_node_next_const(node)) != NULL) {
@@ -1394,6 +1413,9 @@ static ib_status_t parse_action_params(ib_cfgparser_t *cp,
                          ib_status_to_string(rc));
         goto cleanup;
     }
+
+    /* Set the NO_FIELDS flags; it's cleared by parse_modifier if field found */
+    ib_flags_set(rule->flags, IB_RULE_FLAG_NO_FIELDS);
 
     /* Parse all of the modifiers */
     IB_LIST_LOOP_CONST(vars, node) {
