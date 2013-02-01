@@ -49,6 +49,15 @@ typedef struct {
 } ib_core_module_data_t;
 
 /**
+ * Fetch the log level.
+ *
+ * @param[in] ib IronBee engine.
+ *
+ * @returns Log level.
+ */
+ib_log_level_t ib_core_loglevel(const ib_engine_t *ib);
+
+/**
  * Initialize the core fields.
  *
  * Called when the core is loaded, registers the core field generators.

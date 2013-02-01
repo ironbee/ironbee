@@ -309,17 +309,11 @@ void logger_vlogmsg(
         main_core_config = &core_global_cfg;
     }
 
-    /* Check the log level, return if we're not interested. */
-    if (level > logger_level) {
-        return;
-    }
-
     /* Do we need to open the file? */
-    if (
-        main_core_config->log_fp == NULL &&
-        main_core_config->log_uri != NULL &&
-        *main_core_config->log_uri != '\0'
-    ) {
+    if ( (main_core_config->log_fp == NULL) &&
+         (main_core_config->log_uri != NULL) &&
+         (*main_core_config->log_uri != '\0') )
+    {
         /* If the URI looks like a file, try to open it. */
         if (strncmp(main_core_config->log_uri, "file://", 7) == 0) {
             const char *path = main_core_config->log_uri + 7;
@@ -402,13 +396,11 @@ void logger_vlogmsg(
  * Fetch the log level.
  *
  * @param[in] ib     IronBee engine.
- * @param[in] cbdata Callback data; ignored.
+ *
  * @returns Log level.
  */
-static
-ib_log_level_t logger_loglevel(
-    const ib_engine_t *ib,
-    void              *cbdata
+ib_log_level_t ib_core_loglevel(
+    const ib_engine_t *ib
 )
 {
     ib_core_cfg_t *main_core_config = NULL;
@@ -4643,9 +4635,8 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->rule_debug_level     = IB_RULE_DLOG_ERROR;
     corecfg->block_status         = 403;
 
-    /* Register logger functions. */
+    /* Register core logger function. */
     ib_log_set_logger(ib, logger_vlogmsg, NULL);
-    ib_log_set_loglevel(ib, logger_loglevel, NULL);
 
     /* Force any IBUtil calls to use the default logger */
     rc = ib_util_log_logger(core_util_logger, ib);

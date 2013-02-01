@@ -116,19 +116,6 @@ void DLL_PUBLIC ib_log_set_logger(
     void               *cbdata
 );
 
-/**
- * Set log level callback.
- *
- * @param ib        IronBee engine.
- * @param log_level Log level function.
- * @param cbdata    Data to pass to log level function.
- */
-void DLL_PUBLIC ib_log_set_loglevel(
-    ib_engine_t       *ib,
-    ib_log_level_fn_t  log_level,
-    void              *cbdata
-);
-
 /** Log Generic */
 #define ib_log(ib, lvl, ...) ib_log_ex((ib), (lvl), __FILE__, __LINE__, __VA_ARGS__)
 /** Log Emergency */

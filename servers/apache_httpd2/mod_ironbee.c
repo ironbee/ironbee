@@ -382,19 +382,6 @@ void ironbee_logger(
     }
 }
 
-/**
- * Log level callback.  Currently fixed.  See @todo above.
- *
- * @param[in] ib     IronBee engine.
- * @param[in] cbdata Callback data.
- * @returns log level.
- */
-static
-ib_log_level_t ironbee_loglevel(const ib_engine_t *ib, void *cbdata)
-{
-    return IB_LOG_WARNING;
-}
-
 /***********   APACHE PER-REQUEST FILTERS AND HOOKS  ************/
 
 /**
@@ -1167,9 +1154,6 @@ static int ironbee_init(apr_pool_t *pool, apr_pool_t *ptmp, apr_pool_t *plog,
     }
 
     ib_log_set_logger(ironbee, ironbee_logger, NULL);
-    ib_log_set_loglevel(ironbee, ironbee_loglevel, NULL);
-    ib_context_set_num(ib_context_engine(ironbee),
-                       "logger.log_level", 4);
 
     rc = ib_engine_init(ironbee);
     if (rc != IB_OK)
