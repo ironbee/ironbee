@@ -456,7 +456,7 @@ static void core_vlogmsg(
     ib_log_level_t log_level;
     ib_core_cfg_t *config;
 
-    config = core_get_main_config(ib, true);
+    config = core_get_main_config(ib, false);
     if (config->log_fp == NULL) {
         core_log_file_open(ib, config);
     }
@@ -4888,7 +4888,6 @@ ib_status_t core_finish(
 )
 {
     ib_status_t rc;
-    ib_core_cfg_t *config;
 
     /* Shut down the core collection managers */
     rc = ib_core_collection_managers_finish(ib, m);
@@ -4903,10 +4902,6 @@ ib_status_t core_finish(
         ib_log_alert(ib, "Failed to initialize managed collections: %s",
                      ib_status_to_string(rc));
     }
-
-    /* Close the log file */
-    config = core_get_main_config(ib, true);
-    core_log_file_close(ib, config);
 
     return IB_OK;
 }
@@ -5178,11 +5173,12 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
                                     ib_context_t *ctx,
                                     void *cbdata)
 {
-    ib_core_cfg_t *corecfg;
+    ib_core_cfg_t *config;
+    ib_core_cfg_t *main_config;
     ib_status_t rc;
 
     /* Get the current context config. */
-    rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
+    rc = ib_context_module_config(ctx, mod, (void *)&config);
     if (rc != IB_OK) {
         ib_log_alert(ib,
                      "Failed to fetch core module context config: %s",
@@ -5191,11 +5187,17 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
     }
 
     /* Tell the collection manager about this context going away */
-    rc = core_ctx_managed_collection_destroy(ib, mod, ctx, corecfg);
+    rc = core_ctx_managed_collection_destroy(ib, mod, ctx, config);
     if (rc != IB_OK) {
         ib_log_alert(ib,
                      "Failed to shut down managed collections for \"%s\": %s",
                      ib_context_full_get(ctx), ib_status_to_string(rc));
+    }
+
+    /* Close the log file in the main configuration only */
+    main_config = core_get_main_config(ib, false);
+    if (config == main_config) {
+        core_log_file_close(ib, config);
     }
 
     return IB_OK;
