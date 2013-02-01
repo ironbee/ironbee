@@ -558,57 +558,63 @@ void ib_engine_pool_destroy(ib_engine_t *ib, ib_mpool_t *mp)
 
 void ib_engine_destroy(ib_engine_t *ib)
 {
-    if (ib) {
-        size_t ne;
-        size_t idx;
-        ib_list_node_t *node;
-        ib_module_t *cm = ib_core_module();
-        ib_module_t *m;
+    size_t ne;
+    size_t idx;
+    ib_list_node_t *node;
+    ib_module_t *cm = ib_core_module();
+    ib_module_t *m;
 
-        /// @todo Destroy filters
+    if (ib == NULL) {
+        return;
+    }
 
-        ib_log_debug3(ib, "Unloading modules...");
-        IB_ARRAY_LOOP_REVERSE(ib->modules, ne, idx, m) {
-            if ( (m != NULL) && (m != cm) ) {
-                ib_module_unload(m);
-            }
+    /// @todo Destroy filters
+
+    ib_log_debug3(ib, "Destroying configuration contexts...");
+    IB_LIST_LOOP_REVERSE(ib->contexts, node) {
+        ib_context_t *ctx = (ib_context_t *)node->data;
+        if ( (ctx != ib->ctx) && (ctx != ib->ectx) ) {
+            ib_context_destroy(ctx);
         }
+    }
 
-        /* Unload core module. */
-        ib_module_unload(cm);
-        /* No logging from here on out. */
+    ib_log_debug3(ib, "Destroying engine context...");
+    if (ib->ctx != ib->ectx) {
+        ib_context_destroy(ib->ctx);
+        ib->ctx = NULL;
+    }
+    ib_context_destroy(ib->ectx);
+    ib->ectx = NULL;
 
-        IB_LIST_LOOP_REVERSE(ib->contexts, node) {
-            ib_context_t *ctx = (ib_context_t *)node->data;
-            if ( (ctx != ib->ctx) && (ctx != ib->ectx) ) {
-                ib_context_destroy(ctx);
-            }
+    ib_log_debug3(ib, "Unloading modules...");
+    IB_ARRAY_LOOP_REVERSE(ib->modules, ne, idx, m) {
+        if ( (m != NULL) && (m != cm) ) {
+            ib_module_unload(m);
         }
-        if (ib->ctx != ib->ectx) {
-            ib_context_destroy(ib->ctx);
-            ib->ctx = NULL;
-        }
-        ib_context_destroy(ib->ectx);
-        ib->ectx = ib->ctx = NULL;
+    }
+
+    /* Unload core module. */
+    ib_module_unload(cm);
+    /* No logging from here on out. */
 
 #ifdef IB_DEBUG_MEMORY
-        /* We can't use ib_engine_pool_destroy here as too little of the
-         * the engine is left.
-         *
-         * But always output memory usage stats.
-         *
-         * Also can't use logging anymore.
-         */
-        {
-            char *report = ib_mpool_analyze(ib->mp);
-            if (report != NULL) {
-                printf("Engine Memory Use:\n%s\n", report);
-                free(report);
-            }
+    /* We can't use ib_engine_pool_destroy here as too little of the
+     * the engine is left.
+     *
+     * But always output memory usage stats.
+     *
+     * Also can't use logging anymore.
+     */
+    {
+        char *report = ib_mpool_analyze(ib->mp);
+        if (report != NULL) {
+            printf("Engine Memory Use:\n%s\n", report);
+            free(report);
         }
-#endif
-        ib_mpool_destroy(ib->mp);
     }
+#endif
+    ib_mpool_destroy(ib->mp);
+
     return;
 }
 

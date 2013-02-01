@@ -265,7 +265,174 @@ static IB_PROVIDER_IFACE_TYPE(audit) core_audit_iface = {
 /* -- Logger API Implementations -- */
 
 /**
- * Core data provider API implementation to log data via va_list args.
+ * Get the main core configuration
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] global Force global configuration
+ *
+ * @returns Main core configuration
+ */
+static ib_core_cfg_t *core_get_main_config(const ib_engine_t *ib,
+                                           bool global)
+{
+    assert(ib != NULL);
+
+    ib_core_cfg_t *config = NULL;
+    ib_context_t  *main_ctx = NULL;
+
+    if (global) {
+        return &core_global_cfg;
+    }
+
+    /* Get the core context core configuration. */
+    main_ctx = ib_context_main(ib);
+    if (main_ctx != NULL) {
+        ib_status_t rc;
+
+        rc = ib_context_module_config(main_ctx,
+                                      ib_core_module(),
+                                      (void *)&config);
+
+        /* When a module fails to find its context, use the global one. */
+        if (rc != IB_OK) {
+            config = &core_global_cfg;
+        }
+    }
+    else {
+        /* If there is no main context, use the global one. */
+        config = &core_global_cfg;
+    }
+    return config;
+}
+
+/**
+ * Open the configured log file
+ *
+ * @param[in] ib IronBee engine
+ * @param[in,out] config Core configuration
+ */
+static void core_log_file_open(const ib_engine_t *ib,
+                               ib_core_cfg_t *config)
+{
+    assert(ib != NULL);
+    assert(config != NULL);
+
+    /* Do we need to open the file? */
+    if ( (config->log_fp == NULL) &&
+         (config->log_uri != NULL) &&
+         (*config->log_uri != '\0') )
+    {
+        /* If the URI looks like a file, try to open it. */
+        if (strncmp(config->log_uri, "file://", 7) == 0) {
+            const char *path = config->log_uri + 7;
+            config->log_fp = fopen(path, "a");
+            if (config->log_fp == NULL) {
+                fprintf(stderr,
+                        "Failed to open log file '%s' for writing: %s\n",
+                        path, strerror(errno));
+            }
+        }
+        else {
+            fprintf(stderr, "Only file:// log URIs current supported.");
+        }
+    }
+
+    /* Finally, use stderr as a fallback. */
+    if (config->log_fp == NULL) {
+        config->log_fp = ib_util_fdup(stderr, "a");
+        if (config->log_fp == NULL) {
+            config->log_fp = stderr;       /* Last resort */
+        }
+        config->log_uri = "stderr";
+    }
+}
+
+/**
+ * Open the configurtion's log file
+ *
+ * @param[in] ib IronBee engine
+ * @param[in,out] config Core configuration
+ */
+static void core_log_file_close(const ib_engine_t *ib,
+                                ib_core_cfg_t *config)
+{
+    assert(ib != NULL);
+    assert(config != NULL);
+
+    if ( (config->log_fp != NULL) && (config->log_fp != stderr) ) {
+        fclose(config->log_fp);
+        config->log_fp = stderr;
+    }
+}
+
+/**
+ * Core to log data via va_list args to file pointer.
+ *
+ * @param ib IronBee engine
+ * @param log_fp File pointer to log to
+ * @param log_level Configured log level
+ * @param level Message log level
+ * @param file Source code filename (typically __FILE__)
+ * @param line Source code line number (typically __LINE__)
+ * @param fmt Printf like format string
+ * @param ap Variable length parameter list
+ *
+ * @returns Status code
+ */
+static void core_vlogmsg_fp(
+    const ib_engine_t   *ib,
+    FILE                *log_fp,
+    ib_log_level_t       log_level,
+    ib_log_level_t       level,
+    const char          *file,
+    int                  line,
+    const char          *fmt,
+    va_list              ap)
+{
+    static const size_t c_line_info_length = 35;
+    char line_info[c_line_info_length];
+    size_t new_fmt_length = 0;
+    char *new_fmt = NULL;
+    const char *which_fmt;
+    char time_info[30];
+
+    ib_clock_timestamp(time_info, NULL);
+
+    line_info[0] = '\0';
+    if ( (file != NULL) && (line > 0) && (log_level >= IB_LOG_DEBUG)) {
+        while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
+            file += 3;
+        }
+
+        snprintf(line_info, c_line_info_length, "(%23s:%-5d)", file, line);
+    }
+
+    new_fmt_length = (strlen(line_info) +
+                      strlen(time_info) +
+                      strlen(fmt) +
+                      110);
+    new_fmt = (char *)malloc(new_fmt_length);
+    if (new_fmt == NULL) {
+        which_fmt = fmt;
+    }
+    else {
+        snprintf(new_fmt, new_fmt_length,
+                 "%s %-10s- %s [%d] %s\n",
+                 time_info, ib_log_level_to_string(level),
+                 line_info, getpid(), fmt);
+        which_fmt = new_fmt;
+    }
+
+    vfprintf(log_fp, which_fmt, ap);
+    fflush(log_fp);
+
+    if (new_fmt != NULL) {
+        free(new_fmt);
+    }
+}
+
+/**
+ * Core implementation to log data via va_list args.
  *
  * @param ib IronBee engine
  * @param level Log level
@@ -277,119 +444,25 @@ static IB_PROVIDER_IFACE_TYPE(audit) core_audit_iface = {
  *
  * @returns Status code
  */
-static
-void logger_vlogmsg(
+static void core_vlogmsg(
     const ib_engine_t *ib,
     ib_log_level_t     level,
     const char        *file,
     int                line,
     const char        *fmt,
     va_list            ap,
-    void              *cbdata
-)
+    void              *cbdata)
 {
-    ib_core_cfg_t *main_core_config = NULL;
-    ib_context_t  *main_ctx = NULL;
-    ib_status_t rc;
-    ib_log_level_t logger_level = ib_log_get_level(ib);
+    ib_log_level_t log_level;
+    ib_core_cfg_t *config;
 
-    /* Get the core context core configuration. */
-    main_ctx = ib_context_main(ib);
-    if (main_ctx != NULL) {
-        rc = ib_context_module_config(main_ctx,
-                                      ib_core_module(),
-                                      (void *)&main_core_config);
-        /* When a module fails to find its context, use the global one. */
-        if (rc != IB_OK) {
-            main_core_config = &core_global_cfg;
-        }
+    config = core_get_main_config(ib, true);
+    if (config->log_fp == NULL) {
+        core_log_file_open(ib, config);
     }
-    else {
-        /* If there is no main context, use the global one. */
-        main_core_config = &core_global_cfg;
-    }
+    log_level = ib_log_get_level(ib);
 
-    /* Do we need to open the file? */
-    if ( (main_core_config->log_fp == NULL) &&
-         (main_core_config->log_uri != NULL) &&
-         (*main_core_config->log_uri != '\0') )
-    {
-        /* If the URI looks like a file, try to open it. */
-        if (strncmp(main_core_config->log_uri, "file://", 7) == 0) {
-            const char *path = main_core_config->log_uri + 7;
-            main_core_config->log_fp = fopen(path, "a");
-            if (main_core_config->log_fp == NULL) {
-                fprintf(stderr,
-                        "Failed to open log file '%s' for writing: %s\n",
-                        path, strerror(errno));
-            }
-        }
-        else {
-            fprintf(
-                stderr,
-                "Only file:// log URIs current supported."
-            );
-        }
-    }
-
-    /* Finally, use stderr as a fallback. */
-    if (main_core_config->log_fp == NULL) {
-        /* @todo Why fdup? */
-        main_core_config->log_fp = ib_util_fdup(stderr, "a");
-        main_core_config->log_uri = "stderr";
-    }
-
-    /* Compose message */
-    {
-        static const size_t c_line_info_length = 35;
-        char line_info[c_line_info_length];
-        size_t new_fmt_length = 0;
-        char *new_fmt = NULL;
-        const char *which_fmt;
-        char time_info[30];
-
-        ib_clock_timestamp(time_info, NULL);
-
-        line_info[0] = '\0';
-        if ( (file != NULL) && (line > 0) && (logger_level >= IB_LOG_DEBUG)) {
-            while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
-                file += 3;
-            }
-
-            snprintf(
-                line_info,
-                c_line_info_length,
-                "(%23s:%-5d)",
-                file,
-                line
-            );
-        }
-
-        new_fmt_length = strlen(line_info) + strlen(time_info) + strlen(fmt)  + 110;
-        new_fmt = (char *)malloc(new_fmt_length);
-        if (new_fmt == NULL) {
-            which_fmt = fmt;
-        }
-        else {
-            snprintf(
-                new_fmt, new_fmt_length,
-                "%s %-10s- %s [%d] %s\n",
-                time_info,
-                ib_log_level_to_string(level),
-                line_info,
-                getpid(),
-                fmt
-            );
-            which_fmt = new_fmt;
-        }
-
-        vfprintf(main_core_config->log_fp, which_fmt, ap);
-        fflush(main_core_config->log_fp);
-
-        if (new_fmt != NULL) {
-            free(new_fmt);
-        }
-    }
+    core_vlogmsg_fp(ib, config->log_fp, log_level, level, file, line, fmt, ap);
 }
 
 /**
@@ -403,25 +476,11 @@ ib_log_level_t ib_core_loglevel(
     const ib_engine_t *ib
 )
 {
-    ib_core_cfg_t *main_core_config = NULL;
-    ib_context_t  *main_ctx = NULL;
-    ib_status_t    rc = IB_OK;
+    ib_core_cfg_t *config = NULL;
 
-    main_ctx = ib_context_main(ib);
-    if (main_ctx != NULL) {
-        rc = ib_context_module_config(
-            main_ctx,
-            ib_core_module(),
-            (void *)&main_core_config
-        );
-    }
+    config = core_get_main_config(ib, false);
 
-    /* If not available, fall back to the core global configuration. */
-    if (main_ctx == NULL || rc != IB_OK) {
-        main_core_config = &core_global_cfg;
-    }
-
-    return main_core_config->log_level;
+    return config->log_level;
 }
 
 /* -- Audit API Implementations -- */
@@ -4636,7 +4695,7 @@ static ib_status_t core_init(ib_engine_t *ib,
     corecfg->block_status         = 403;
 
     /* Register core logger function. */
-    ib_log_set_logger(ib, logger_vlogmsg, NULL);
+    ib_log_set_logger(ib, core_vlogmsg, NULL);
 
     /* Force any IBUtil calls to use the default logger */
     rc = ib_util_log_logger(core_util_logger, ib);
@@ -4827,21 +4886,8 @@ ib_status_t core_finish(
     void        *cbdata
 )
 {
-    ib_core_cfg_t *corecfg;
     ib_status_t rc;
-
-    /* Get the core module config. */
-    rc = ib_context_module_config(ib->ctx, m, (void *)&corecfg);
-    if (rc != IB_OK) {
-        ib_log_alert(ib, "Failed to fetch core module config: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
-
-    if ( (corecfg->log_fp != NULL) && (corecfg->log_fp != stderr) ) {
-        fclose(corecfg->log_fp);
-        corecfg->log_fp = stderr;
-    }
+    ib_core_cfg_t *config;
 
     /* Shut down the core collection managers */
     rc = ib_core_collection_managers_finish(ib, m);
@@ -4856,6 +4902,10 @@ ib_status_t core_finish(
         ib_log_alert(ib, "Failed to initialize managed collections: %s",
                      ib_status_to_string(rc));
     }
+
+    /* Close the log file */
+    config = core_get_main_config(ib, true);
+    core_log_file_close(ib, config);
 
     return IB_OK;
 }
@@ -5129,26 +5179,6 @@ static ib_status_t core_ctx_destroy(ib_engine_t *ib,
 {
     ib_core_cfg_t *corecfg;
     ib_status_t rc;
-    ib_context_t *main_ctx;
-    ib_core_cfg_t *main_core_config;
-
-    /* Get the main context config, it's config, and it's logger. */
-    main_ctx = ib_context_main(ib);
-
-    /* If the main context has already been destroyed nothing must be done. */
-    if (main_ctx == NULL) {
-        return IB_OK;
-    }
-
-    rc = ib_context_module_config(main_ctx,
-                                  ib_core_module(),
-                                  (void *)&main_core_config);
-    if (rc != IB_OK) {
-        ib_log_alert(ib,
-                     "Failed to fetch main core module context config: %s",
-                     ib_status_to_string(rc));
-        return rc;
-    }
 
     /* Get the current context config. */
     rc = ib_context_module_config(ctx, mod, (void *)&corecfg);
