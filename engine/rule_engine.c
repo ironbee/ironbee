@@ -949,7 +949,13 @@ static void clear_target_fields(ib_rule_exec_t *rule_exec)
     assert(rule_exec->tx != NULL);
     assert(rule_exec->tx->data != NULL);
 
-    /* Create FIELD */
+    /* Destroy FIELD targets */
+    if (ib_flags_any(rule_exec->rule->flags, IB_RULE_FLAG_NO_FIELDS) ) {
+        return;
+    }
+
+    ib_rule_log_trace(rule_exec, "Destroying target fields");
+
     ib_data_remove(rule_exec->tx->data, "FIELD", NULL);
     ib_data_remove(rule_exec->tx->data, "FIELD_TARGET", NULL);
     ib_data_remove(rule_exec->tx->data, "FIELD_TFN", NULL);
@@ -989,6 +995,10 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     char                 *name;
     ib_rule_target_t     *target = rule_exec->target;
 
+    if (ib_flags_any(rule_exec->rule->flags, IB_RULE_FLAG_NO_FIELDS) ) {
+        return IB_OK;
+    }
+    ib_rule_log_trace(rule_exec, "Creating target fields");
 
     /* The current value is the top of the stack */
     node = ib_list_last_const(rule_exec->value_stack);
