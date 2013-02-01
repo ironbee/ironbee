@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee --- nginx 1.3 module
+ * @brief IronBee --- nginx 1.3 module - connection management
  *
  * @author Nick Kew <nkew@qualys.com>
  */
@@ -39,6 +39,12 @@ struct ngxib_conn_t {
     ib_engine_t *ironbee;
 };
 
+/**
+ * nginx connection pool cleanup function to notify Ironbee
+ * and destroy the ironbee connection object.
+ *
+ * @param[in] arg  the connection rec
+ */
 static void conn_end(void *arg)
 {
     ngxib_conn_t *conn = arg;
@@ -47,6 +53,20 @@ static void conn_end(void *arg)
     ib_conn_destroy(conn->iconn);
 }
 
+/**
+ * function to return the ironbee connection rec after ensuring it exists
+ *
+ * Since nginx has no connection API, we have to hook into each request.
+ * This function looks to see if the Ironbee connection rec has already
+ * been initialised, and if so returns it.  If it doesn't yet exist,
+ * it will be created and Ironbee notified of the new connection.
+ * A cleanup is added to nginx's connection pool, and is also used
+ * to search for the connection.
+ *
+ * @param[in] rctx  The module request ctx
+ * @param[in] ib    The ironbee engine
+ * @return          The ironbee connection
+ */
 ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx, ib_engine_t *ib)
 {
     ngx_pool_cleanup_t *cln;
@@ -90,6 +110,15 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx, ib_engine_t *ib)
     cleanup_return(prev_log) rctx->conn->iconn;
 }
 
+/**
+ * Ironbee callback to initialise connection parameters
+ *
+ * @param[in] ib     the ironbee engine
+ * @param[in] event  the ironbee event
+ * @param[in] iconn  the ironbee connection event
+ * @param[in] cbdata dummy
+ * @return    IB_OK or error
+ */
 ib_status_t ngxib_conn_init(ib_engine_t *ib,
                             ib_state_event_type_t event,
                             ib_conn_t *iconn,

@@ -19,12 +19,22 @@
  * @file
  * @brief IronBee --- nginx 1.3 module
  *
- * @author Nick Kew <nkew@qualys.com>
+ * @author Nick Kew <nkew@qualys.com> - ironbee plugin and callbacks
  */
 
 #include "ngx_ironbee.h"
 #include <assert.h>
 
+/**
+ * Function to add a new header to a list.  Any existing entry
+ * of the same name is ignored and remains intact.  Note that this
+ * only affects headers transmitted to a backend or client: where
+ * a 'real' header affects nginx internally, this will do nothing.
+ *
+ * @param[in] list   the list to add to
+ * @param[in] entry  the name of the entry to add
+ * @param[in] val    the value to set it to
+ */
 static void list_add(ngx_list_t *list, const char *entry, const char *val)
 {
     ngx_table_elt_t *elt = ngx_list_push(list);
@@ -36,6 +46,13 @@ static void list_add(ngx_list_t *list, const char *entry, const char *val)
     elt->value.data = ngx_palloc(list->pool, elt->value.len);
     memcpy(elt->value.data, val, elt->value.len);
 }
+/**
+ * Function to unset a header in a list.  This will not remove the
+ * entry altogether, but will instead set the value to empty.
+ *
+ * @param[in] list   the list to add to
+ * @param[in] entry  the name of the entry to empty
+ */
 static void list_unset(ngx_list_t *list, const char *entry)
 {
     ngx_list_part_t *part;
@@ -62,6 +79,15 @@ static void list_unset(ngx_list_t *list, const char *entry)
             break;
     }
 }
+/**
+ * Function to set a header in a list.  Any existing entry
+ * of the same name will be overwritten, causing the new value to
+ * be used if the header affects nginx internally.
+ *
+ * @param[in] list   the list to add to
+ * @param[in] entry  the name of the entry to add
+ * @param[in] val    the value to set it to
+ */
 static void list_set(ngx_list_t *list, const char *entry, const char *val)
 {
     ngx_list_part_t *part;
@@ -89,6 +115,15 @@ static void list_set(ngx_list_t *list, const char *entry, const char *val)
     if (!found)
         list_add(list, entry, val);
 }
+/**
+ * Function to append a header in a list.  Any existing entry
+ * of the same name will be overwritten by appending the new value
+ * to the old-value in a comma-separated list.
+ *
+ * @param[in] list   the list to add to
+ * @param[in] entry  the name of the entry to add
+ * @param[in] val    the value to set it to
+ */
 static void list_append(ngx_list_t *list, const char *entry, const char *val)
 {
     ngx_list_part_t *part;
@@ -118,6 +153,15 @@ static void list_append(ngx_list_t *list, const char *entry, const char *val)
     if (!found)
         list_add(list, entry, val);
 }
+/**
+ * Function to apply regexp-based edit to a header in a list.
+ *
+ * @param[in] list   the list to add to
+ * @param[in] entry  the name of the entry to edit
+ * @param[in] val    string value of the regexp, if rx is null
+ * @param[in] tx     The ironbee tx rec
+ * @param[in] rx     The compiled regex operation, or NULL to use val
+ */
 static ib_status_t list_edit(ngx_list_t *list, const char *entry,
                              const char *val, ib_tx_t *tx, ib_rx_t *rx)
 {
@@ -144,6 +188,7 @@ static ib_status_t list_edit(ngx_list_t *list, const char *entry,
         for (i = 0; i < part->nelts; ++i) {
             if (elt[i].key.len == strlen(entry)
                 && !strncasecmp((const char*)elt[i].key.data, entry, elt[i].key.len)) {
+                /* we need a null-terminated string for ib_rx_exec */
                 oldval = strndup((const char*)elt[i].value.data, elt[i].value.len);
                 ib_rx_exec(tx->mp, rx, oldval, &repl, NULL);
                 free(oldval);
@@ -251,7 +296,7 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
  * @param[in] tx - Ironbee transaction
  * @param[in] hdr - Header to set
  * @param[in] val - Value to set
- * @return OK, or Declined if called too late, or EINVAL.
+ * @return Not Implemented, or error.
  */
 static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *val, void *cbdata)
 {
@@ -291,6 +336,11 @@ static ib_status_t ib_errdata_callback(ib_tx_t *tx, const char *data, void *cbda
 }
 
 
+/**
+ * Ironbee callback function to return the ib_server instance for nginx
+ *
+ * @return pointer to the ib_server instance for nginx
+ */
 ib_server_t *ngxib_server(void)
 {
     static ib_server_t ibplugin = {

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee --- nginx 1.3 module
+ * @brief IronBee --- nginx 1.3 module - ironbee logging
  *
  * @author Nick Kew <nkew@qualys.com>
  */
@@ -26,26 +26,38 @@
 #include <assert.h>
 
 
+/**
+ * IronBee logging workaround.
+ *
+ * nginx requires an ngx_log_t argument, but the ironbee API doesn't
+ * support passing it.  So we set it before any call that might
+ * generate ironbee log messages.
+ * Note, there are no threads to worry about, but re-entrancy could
+ * be an issue.
+ *
+ * @param[in] log The ngx log pointer
+ * @return The previous value of the log pointer
+ */
 static ngx_log_t *ngx_log = NULL;
-ngx_log_t *ngxib_log(ngx_log_t *x)
+ngx_log_t *ngxib_log(ngx_log_t *log)
 {
     ngx_log_t *tmp = ngx_log;
-    ngx_log = x;
+    ngx_log = log;
     return tmp;
 }
-/* BOOTSTRAP: lift logger straight from the old mod_ironbee */
+
 /**
- * IronBee callback: logger function.
+ * IronBee logger function.
  *
- * Performs IronBee logging for the ATS plugin.
+ * Performs IronBee logging for the nginx module.
  *
- * @param[in] data Dummy pointer
- * @param[in] level Debug level
  * @param[in] ib IronBee engine
+ * @param[in] level Debug level
  * @param[in] file File name
  * @param[in] line Line number
  * @param[in] fmt Format string
  * @param[in] ap Var args list to match the format
+ * @param[in] dummy Dummy pointer
  */
 void ngxib_logger(const ib_engine_t *ib,
                   ib_log_level_t level,

@@ -17,7 +17,7 @@
 
 /**
  * @file
- * @brief IronBee --- nginx 1.3 module
+ * @brief IronBee --- nginx 1.3 module - intercepting incoming request payloads
  *
  * @author Nick Kew <nkew@qualys.com>
  */
@@ -27,17 +27,30 @@
 
 #include <ironbee/state_notify.h>
 
+/**
+ * Function to reset processing cycle if input data are not yet available.
+ *
+ * @param[in] r   the nginx request object
+ */
 static void ngxib_post_handler(ngx_http_request_t *r)
 {
     ngxib_req_ctx *ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
     if (ctx->body_wait) {
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                       "Waiting for more input body data");
         ctx->body_wait = 0;
         ngx_http_core_run_phases(r);
     }
 }
 
+/**
+ * Function to determine whether there is a request body
+ * Checks for either a Content-Length header or Chunked encoding
+ *
+ * @param[in] r   the nginx request object
+ * @param[in] ctx the ngx request ctx for the ironbee module
+ * @return    0 for no body, -1 for chunked body, or content-length
+ */
 static int has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx)
 {
     if (r->headers_in.content_length_n > 0)
@@ -48,6 +61,15 @@ static int has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx)
         return 0;
 }
 
+/**
+ * nginx handler to feed request body (if any) to Ironbee
+ *
+ * @param[in] r   the nginx request object
+ * @return    NGX_DECLINED for normal operation
+ * @return    NGX_DONE if body is not yet available (processing will restart
+ *            on new data)
+ * @return    Error status if set by Ironbee on sight of request data.
+ */
 ngx_int_t ngxib_handler(ngx_http_request_t *r)
 {
     ngx_log_t *prev_log;

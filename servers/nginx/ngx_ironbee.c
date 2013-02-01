@@ -59,9 +59,14 @@ static ngx_command_t  ngx_ironbee_commands[] = {
       ngx_null_command
 };
 
-/* This specifically releases a buffer created and populated by ironbee_body_out.
+/**
+ * Function to free a chain buffer.
+ * This specifically releases a buffer created and populated by ironbee_body_out.
  * It is not for general-purpose use with an arbitrary chain, where it would
  * likely crash and burn.
+ *
+ * @param[in]  pool  The pool used to allocate buffers being released.
+ * @param[in]  chain The chain buffer to free.
  */
 static void free_chain(ngx_pool_t *pool, ngx_chain_t *chain)
 {
@@ -75,7 +80,14 @@ static void free_chain(ngx_pool_t *pool, ngx_chain_t *chain)
     }
 }
 
-/* A body filter to intercept response body */
+/**
+ * A body filter to intercept response body and feed it to Ironbee,
+ * and to buffer the data if required by Ironbee configuration.
+ *
+ * @param[in]  r     The nginx request object.
+ * @param[in]  in    The data to filter.
+ * @return     status propagated from next filter, or OK/Error
+ */
 static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
 {
     ngx_log_t *prev_log;
@@ -228,7 +240,12 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
     }
     cleanup_return(prev_log) rv;
 }
-/* A header filter to capture response headers */
+/**
+ * A header filter to intercept response line and headers and feed to Ironbee.
+ *
+ * @param[in]  r     The nginx request object.
+ * @return     status propagated from next filter, or Error
+ */
 static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
 {
     ngx_log_t *prev_log;
@@ -247,7 +264,7 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
 
     /* FIXME: needs more logic here to catch error pages */
     if (r->internal)
-        return NGX_DECLINED;
+        return ngx_http_next_header_filter(r);
 
     prev_log = ngxib_log(r->connection->log);
     ngx_regex_malloc_init(r->pool);
@@ -321,7 +338,12 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
     cleanup_return(prev_log) ngx_http_next_header_filter(r);
 }
 
-/* post read request.  Notify Ironbee of request start and headers */
+/**
+ * nginx post-read-request handler to feed request line and headers to Ironbee.
+ *
+ * @param[in]  r     The nginx request object.
+ * @return     Declined (ignoreme) or error status.
+ */
 static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
 {
     ngx_log_t *prev_log;
@@ -398,7 +420,12 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
 
 static ngx_int_t ironbee_init(ngx_conf_t *cf);
 
-/* Post-config initialisation function inserts all our handlers */
+/**
+ * nginx post-config handler to insert our handlers.
+ *
+ * @param[in]  cf     Configuration rec
+ * @return     Return value from ironbee_init, or error
+ */
 static ngx_int_t ngxib_post_conf(ngx_conf_t *cf)
 {
     ngx_http_core_main_conf_t *main_cf;
@@ -446,6 +473,12 @@ static ngx_int_t ngxib_post_conf(ngx_conf_t *cf)
     return ironbee_init(cf);
 }
 
+/**
+ * function to create module configuration rec
+ *
+ * @param[in]  cf     Configuration rec
+ * @return     module configuration rec
+ */
 static void *create_main_conf(ngx_conf_t *cf)
 {
     ironbee_proc_t *conf = ngx_pcalloc(cf->pool, sizeof(ironbee_proc_t));
@@ -471,6 +504,13 @@ static ngx_http_module_t  ngx_ironbee_module_ctx = {
 };
 
 
+/**
+ * Ironbee initialisation function.  Sets up engine and logging,
+ * and reads Ironbee config.
+ *
+ * @param[in]  cf     Configuration rec
+ * @return     NGX_OK or error
+ */
 static ngx_int_t ironbee_init(ngx_conf_t *cf)
 {
     ngx_log_t *prev_log;
@@ -542,6 +582,11 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     cleanup_return(prev_log) rc == IB_OK ? rc1 == IB_OK ? NGX_OK : IB2NG(rc1) : IB2NG(rc);
 }
 
+/**
+ * Cleanup function to log nginx process exit and destroy ironbee engine
+ *
+ * @param[in]  cycle     nginx cycle rec
+ */
 static void ironbee_exit(ngx_cycle_t *cycle)
 {
     ngx_log_error(NGX_LOG_NOTICE, cycle->log, 0, "ironbee_exit %d", getpid());
