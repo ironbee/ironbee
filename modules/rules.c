@@ -497,6 +497,11 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
         return rc;
     }
 
+    /* Set the "no field" flag if we can. */
+    if ( (params == NULL) || (strcasestr(params, "%{FIELD") == NULL) ) {
+        ib_flags_set(rule->flags, IB_RULE_FLAG_NO_FIELDS);
+    }
+
     /* Add the action to the rule */
     rc = ib_rule_add_action(cp->ib, rule, action, atype);
     if (rc != IB_OK) {
