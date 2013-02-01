@@ -3786,7 +3786,10 @@ static ib_status_t gen_full_id(ib_engine_t *ib,
             if (rc != IB_OK) {
                 return rc;
             }
-            else if (site == NULL) {
+            else if ( (site == NULL) || (site->id_str == NULL) ) {
+                ib_log_error(ib,
+                             "Cannot create rule ID for context rule: "
+                             "no site ID");
                 return IB_EINVAL;
             }
             else {
