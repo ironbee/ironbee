@@ -1122,10 +1122,16 @@ ib_status_t ib_field_convert(
     switch (in_field->type) {
     case IB_FTYPE_NULSTR:
 
-        /* Extract string. */
-        rc = ib_field_value(in_field, ib_ftype_nulstr_out(&str));
-        if (rc != IB_OK){
-            return rc;
+        /* Extract string.  Note that a zero-length nulstr field can
+         * have a NULL value in the union. */
+        if (in_field->val->u.nulstr == NULL) {
+            str = "";
+        }
+        else {
+            rc = ib_field_value(in_field, ib_ftype_nulstr_out(&str));
+            if (rc != IB_OK){
+                return rc;
+            }
         }
 
         switch (desired_type) {
