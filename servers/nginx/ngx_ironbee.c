@@ -418,7 +418,83 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
     cleanup_return(prev_log) NGX_DECLINED;
 }
 
-static ngx_int_t ironbee_init(ngx_conf_t *cf);
+/**
+ * Ironbee initialisation function.  Sets up engine and logging,
+ * and reads Ironbee config.
+ *
+ * @param[in]  cf     Configuration rec
+ * @return     NGX_OK or error
+ */
+static ngx_int_t ironbee_init(ngx_conf_t *cf)
+{
+    ngx_log_t *prev_log;
+    ib_context_t *ctx;
+    ib_cfgparser_t *cp;
+    ironbee_proc_t *proc;
+    ib_status_t rc, rc1;
+
+    ngx_log_error(NGX_LOG_NOTICE, cf->log, 0, "ironbee_init %d", getpid());
+    proc = ngx_http_conf_get_module_main_conf(cf, ngx_ironbee_module);
+
+    prev_log = ngxib_log(cf->log);
+    ngx_regex_malloc_init(cf->pool);
+    rc = ib_initialize();
+    if (rc != IB_OK)
+        cleanup_return(prev_log) IB2NG(rc);
+
+    ib_util_log_level(4);
+
+    rc = ib_engine_create(&ironbee, ngxib_server());
+    if (rc != IB_OK)
+        cleanup_return(prev_log) IB2NG(rc);
+
+#if 0
+    rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER, LOGGER_NAME,
+                              NULL, ngxib_logger_iface(), NULL);
+    if (rc != IB_OK)
+        cleanup_return(prev_log) IB2NG(rc);
+
+    ib_context_set_string(ib_context_engine(ironbee),
+                          IB_PROVIDER_TYPE_LOGGER, LOGGER_NAME);
+    ib_context_set_num(ib_context_engine(ironbee),
+                       IB_PROVIDER_TYPE_LOGGER ".log_level", 4);
+#else
+    ib_log_set_logger(ironbee, ngxib_logger, NULL);
+    ib_log_set_loglevel(ironbee, ngxib_loglevel, NULL);
+#endif
+    ib_context_set_num(ib_context_engine(ironbee),
+                       "logger.log_level", 4);
+
+    rc = ib_engine_init(ironbee);
+    if (rc != IB_OK)
+        cleanup_return(prev_log) IB2NG(rc);
+
+    /* TODO: TS creates logfile at this point */
+
+    ib_hook_conn_register(ironbee, conn_opened_event, ngxib_conn_init, NULL);
+
+    ctx = ib_context_main(ironbee);
+
+    ib_context_set_num(ctx, "logger.log_level", 4);
+
+    rc = ib_cfgparser_create(&cp, ironbee);
+    assert((cp != NULL) || (rc != IB_OK));
+    if (rc != IB_OK)
+        cleanup_return(prev_log) IB2NG(rc);
+
+    rc = ib_engine_config_started(ironbee, cp);
+    if (rc != IB_OK)
+        cleanup_return(prev_log) IB2NG(rc);
+
+    /* FIXME - use the temp pool operation for this */
+    char *buf = strndup((char*)proc->config_file.data, proc->config_file.len);
+    rc = ib_cfgparser_parse(cp, buf);
+    free(buf);
+    rc1 = ib_engine_config_finished(ironbee);
+    ib_cfgparser_destroy(cp);
+
+    cleanup_return(prev_log) rc == IB_OK ? rc1 == IB_OK ? NGX_OK : IB2NG(rc1) : IB2NG(rc);
+}
 
 /**
  * nginx post-config handler to insert our handlers.
@@ -503,84 +579,6 @@ static ngx_http_module_t  ngx_ironbee_module_ctx = {
     merge_loc_conf                 /* merge location configuration */
 };
 
-
-/**
- * Ironbee initialisation function.  Sets up engine and logging,
- * and reads Ironbee config.
- *
- * @param[in]  cf     Configuration rec
- * @return     NGX_OK or error
- */
-static ngx_int_t ironbee_init(ngx_conf_t *cf)
-{
-    ngx_log_t *prev_log;
-    ib_context_t *ctx;
-    ib_cfgparser_t *cp;
-    ironbee_proc_t *proc;
-    ib_status_t rc, rc1;
-
-    ngx_log_error(NGX_LOG_NOTICE, cf->log, 0, "ironbee_init %d", getpid());
-    proc = ngx_http_conf_get_module_main_conf(cf, ngx_ironbee_module);
-
-    prev_log = ngxib_log(cf->log);
-    ngx_regex_malloc_init(cf->pool);
-    rc = ib_initialize();
-    if (rc != IB_OK)
-        cleanup_return(prev_log) IB2NG(rc);
-
-    ib_util_log_level(4);
-
-    rc = ib_engine_create(&ironbee, ngxib_server());
-    if (rc != IB_OK)
-        cleanup_return(prev_log) IB2NG(rc);
-
-#if 0
-    rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER, LOGGER_NAME,
-                              NULL, ngxib_logger_iface(), NULL);
-    if (rc != IB_OK)
-        cleanup_return(prev_log) IB2NG(rc);
-
-    ib_context_set_string(ib_context_engine(ironbee),
-                          IB_PROVIDER_TYPE_LOGGER, LOGGER_NAME);
-    ib_context_set_num(ib_context_engine(ironbee),
-                       IB_PROVIDER_TYPE_LOGGER ".log_level", 4);
-#else
-    ib_log_set_logger(ironbee, ngxib_logger, NULL);
-    ib_log_set_loglevel(ironbee, ngxib_loglevel, NULL);
-#endif
-    ib_context_set_num(ib_context_engine(ironbee),
-                       "logger.log_level", 4);
-
-    rc = ib_engine_init(ironbee);
-    if (rc != IB_OK)
-        cleanup_return(prev_log) IB2NG(rc);
-
-    /* TODO: TS creates logfile at this point */
-
-    ib_hook_conn_register(ironbee, conn_opened_event, ngxib_conn_init, NULL);
-
-    ctx = ib_context_main(ironbee);
-
-    ib_context_set_num(ctx, "logger.log_level", 4);
-
-    rc = ib_cfgparser_create(&cp, ironbee);
-    assert((cp != NULL) || (rc != IB_OK));
-    if (rc != IB_OK)
-        cleanup_return(prev_log) IB2NG(rc);
-
-    rc = ib_engine_config_started(ironbee, cp);
-    if (rc != IB_OK)
-        cleanup_return(prev_log) IB2NG(rc);
-
-    /* FIXME - use the temp pool operation for this */
-    char *buf = strndup((char*)proc->config_file.data, proc->config_file.len);
-    rc = ib_cfgparser_parse(cp, buf);
-    free(buf);
-    rc1 = ib_engine_config_finished(ironbee);
-    ib_cfgparser_destroy(cp);
-
-    cleanup_return(prev_log) rc == IB_OK ? rc1 == IB_OK ? NGX_OK : IB2NG(rc1) : IB2NG(rc);
-}
 
 /**
  * Cleanup function to log nginx process exit and destroy ironbee engine
