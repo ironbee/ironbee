@@ -192,8 +192,8 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     // Parsers
 
-    htp_urlenp_destroy(&tx->request_urlenp_query);
-    htp_urlenp_destroy(&tx->request_urlenp_body);
+    htp_urlenp_destroy(tx->request_urlenp_query);
+    htp_urlenp_destroy(tx->request_urlenp_body);
     htp_mpartp_destroy(tx->request_mpartp);
 
     // Request parameters
