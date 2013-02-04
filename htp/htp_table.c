@@ -208,19 +208,15 @@ void *htp_table_get_c(const htp_table_t *table, const char *ckey) {
     return NULL;
 }
 
-htp_status_t htp_table_get_index(const htp_table_t *table, size_t idx, bstr **key, void **value) {
-    if ((key == NULL)&&(value == NULL)) return HTP_ERROR;
-    if (idx >= htp_list_size(table->list)) return HTP_ERROR;
+void *htp_table_get_index(const htp_table_t *table, size_t idx, bstr **key) {
+    if (table == NULL) return NULL;
+    if (idx >= htp_list_size(table->list)) return NULL;
 
     if (key != NULL) {
         *key = htp_list_get(table->list, idx * 2);
     }
 
-    if (value != NULL) {
-        *value = htp_list_get(table->list, (idx * 2) + 1);
-    }
-
-    return HTP_OK;
+    return htp_list_get(table->list, (idx * 2) + 1);
 }
 
 size_t htp_table_size(const htp_table_t *table) {

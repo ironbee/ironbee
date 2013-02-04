@@ -124,7 +124,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     if (tx->request_headers != NULL) {
         htp_header_t *h = NULL;
         for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
-            htp_table_get_index(tx->request_headers, i, NULL, (void **) &h);
+            h = htp_table_get_index(tx->request_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
             free(h);
@@ -165,7 +165,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     if (tx->response_headers != NULL) {
         htp_header_t *h = NULL;
         for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
-            htp_table_get_index(tx->response_headers, i, NULL, (void **) &h);
+            h = htp_table_get_index(tx->response_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
             free(h);
@@ -200,7 +200,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     htp_param_t *param = NULL;
     for (int i = 0, n = htp_table_size(tx->request_params); i < n; i++) {
-        htp_table_get_index(tx->request_params, i, NULL, (void **) &param);
+        param = htp_table_get_index(tx->request_params, i, NULL);
         free(param->name);
         free(param->value);
         free(param);
@@ -213,7 +213,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     if (tx->request_cookies != NULL) {
         bstr *b = NULL;
         for (int i = 0, n = htp_table_size(tx->request_cookies); i < n; i++) {
-            htp_table_get_index(tx->request_cookies, i, NULL, (void **) &b);
+            b = htp_table_get_index(tx->request_cookies, i, NULL);
             bstr_free(b);
         }
 
@@ -270,7 +270,7 @@ htp_param_t *htp_tx_req_get_param_ex_c(htp_tx_t *tx, enum htp_data_source_t sour
     htp_param_t *p = NULL;
 
     for (int i = 0, n = htp_table_size(tx->request_params); i < n; i++) {
-        htp_table_get_index(tx->request_params, i, NULL, (void **)&p);
+        p = htp_table_get_index(tx->request_params, i, NULL);
         if (p->source != source) continue;
 
         if (bstr_cmp_c(p->name, name) == 0) return p;
@@ -544,7 +544,7 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx) {
 
     htp_header_t *h = NULL;
     for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
-        htp_table_get_index(tx->request_headers, i, NULL, (void **) &h);
+        h = htp_table_get_index(tx->request_headers, i, NULL);
         bstr_free(h->name);
         bstr_free(h->value);
         free(h);
@@ -657,7 +657,7 @@ htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx) {
 
     htp_header_t *h = NULL;
     for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
-        htp_table_get_index(tx->response_headers, i, NULL, (void **) &h);
+        h = htp_table_get_index(tx->response_headers, i, NULL);
         bstr_free(h->name);
         bstr_free(h->value);
         free(h);

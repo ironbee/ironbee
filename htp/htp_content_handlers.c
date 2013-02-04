@@ -59,7 +59,7 @@ htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
         bstr *name = NULL;
         bstr *value = NULL;
         for (int i = 0, n = htp_table_size(tx->request_urlenp_body->params); i < n; i++) {
-            htp_table_get_index(tx->request_urlenp_body->params, i, &name, (void **) &value);
+            value = htp_table_get_index(tx->request_urlenp_body->params, i, &name);
 
             htp_param_t *param = calloc(1, sizeof (htp_param_t));
             if (param == NULL) return HTP_ERROR;
@@ -135,7 +135,7 @@ htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
         bstr *name = NULL;
         bstr *value = NULL;
         for (int i = 0, n = htp_table_size(tx->request_urlenp_query->params); i < n; i++) {
-            htp_table_get_index(tx->request_urlenp_query->params, i, &name, (void **) &value);
+            value = htp_table_get_index(tx->request_urlenp_query->params, i, &name);
 
             htp_param_t *param = calloc(1, sizeof (htp_param_t));
             if (param == NULL) return HTP_ERROR;

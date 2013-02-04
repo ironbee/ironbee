@@ -113,7 +113,7 @@ TEST_F(ConnectionParsing, ApacheHeaderParsing) {
     htp_header_t *h = NULL;
         
     for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
-        htp_table_get_index(tx->request_headers, i, &key, (void **)&h);
+        h = (htp_header_t *)htp_table_get_index(tx->request_headers, i, &key);
 
         switch (count) {
             case 0:

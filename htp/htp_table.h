@@ -149,15 +149,13 @@ void *htp_table_get(const htp_table_t *table, const bstr *key);
 void *htp_table_get_c(const htp_table_t *table, const char *ckey);
 
 /**
- * Retrieve key and element at the given index. At least one of the key
- * and value must not be NULL, in case you do not wish to retrieve both.
+ * Retrieve key and element at the given index.
  *
  * @param[in] table
- * @param[in,out] key Pointer in which the key will be returned. Can be NULL if the other field is not NULL.
- * @param[in,out] value Pointer in which the value will be returned. Can be NULL if the other field is not NULL.
+ * @param[in,out] key Pointer in which the key will be returned. Can be NULL.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_table_get_index(const htp_table_t *table, size_t idx, bstr **key, void **value);
+void *htp_table_get_index(const htp_table_t *table, size_t idx, bstr **key);
 
 /**
  * Return the size of the table.

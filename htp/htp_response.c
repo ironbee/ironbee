@@ -258,7 +258,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         // Ignore any response headers seen so far.
         htp_header_t *h = NULL;
         for (int i = 0, n = htp_table_size(connp->out_tx->response_headers); i < n; i++) {
-            htp_table_get_index(connp->out_tx->response_headers, i, NULL, (void **) &h);
+            h = htp_table_get_index(connp->out_tx->response_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
             free(h);

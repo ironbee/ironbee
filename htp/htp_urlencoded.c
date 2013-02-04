@@ -176,9 +176,8 @@ void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
 
     if (urlenp->params != NULL) {        
         // Destroy parameters
-        bstr *b = NULL;
         for (int i = 0, n = htp_table_size(urlenp->params); i < n; i++) {
-            htp_table_get_index(urlenp->params, i, NULL, (void **)b);
+            bstr *b = htp_table_get_index(urlenp->params, i, NULL);
             // Parameter name will be freed by the table code
             bstr_free(b);
         }       
