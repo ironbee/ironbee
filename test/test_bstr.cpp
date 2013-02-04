@@ -50,8 +50,7 @@ TEST(BstrTest, Alloc) {
     p1 = bstr_alloc(10);
     EXPECT_EQ(10, bstr_size(p1));
     EXPECT_EQ(0, bstr_len(p1));
-    bstr_free(&p1);
-    EXPECT_EQ(NULL, p1);
+    bstr_free(p1);
 }
 
 TEST(BstrTest, ExpandLocal) {
@@ -64,7 +63,7 @@ TEST(BstrTest, ExpandLocal) {
     EXPECT_EQ(100, bstr_size(p2));
     EXPECT_EQ(0, bstr_len(p2));
 
-    bstr_free(&p2);
+    bstr_free(p2);
 }
 
 TEST(BstrTest, ExpandSmaller) {
@@ -75,7 +74,7 @@ TEST(BstrTest, ExpandSmaller) {
     p2 = bstr_expand(p1, 10);
     ASSERT_TRUE(p2 == NULL);
 
-    bstr_free(&p1);
+    bstr_free(p1);
 }
 
 TEST(BstrTest, ExpandPtr) {
@@ -91,7 +90,7 @@ TEST(BstrTest, ExpandPtr) {
     EXPECT_TRUE(p2 == NULL);
 
     free(b->realptr);
-    bstr_free(&b);
+    bstr_free(b);
 }
 
 /*
@@ -115,7 +114,7 @@ TEST(BstrTest, ExpandPtr) {
     EXPECT_EQ(0, bstr_len(p2));
 
     free(p2->ptr);
-    bstr_free(&p2);
+    bstr_free(p2);
 }
 */
 
@@ -127,7 +126,7 @@ TEST(BstrTest, DupC) {
     EXPECT_EQ(6, bstr_len(p1));
     EXPECT_EQ(0, memcmp("arfarf", bstr_ptr(p1), 6));
 
-    bstr_free(&p1);
+    bstr_free(p1);
 }
 
 TEST(BstrTest, DupStr) {
@@ -139,8 +138,8 @@ TEST(BstrTest, DupStr) {
     EXPECT_EQ(bstr_len(p1), bstr_len(p2));
     EXPECT_EQ(0, memcmp(bstr_ptr(p1), bstr_ptr(p2), bstr_len(p1)));
 
-    bstr_free(&p1);
-    bstr_free(&p2);
+    bstr_free(p1);
+    bstr_free(p2);
 }
 
 TEST(BstrTest, DupBin) {
@@ -151,8 +150,8 @@ TEST(BstrTest, DupBin) {
     EXPECT_EQ(bstr_len(src), bstr_len(dst));
     EXPECT_EQ(0, memcmp(bstr_ptr(src), bstr_ptr(dst), bstr_len(src)));
 
-    bstr_free(&src);
-    bstr_free(&dst);
+    bstr_free(src);
+    bstr_free(dst);
 }
 
 TEST(BstrTest, DupEx) {
@@ -165,8 +164,8 @@ TEST(BstrTest, DupEx) {
     EXPECT_EQ(10, bstr_len(p2));
     EXPECT_EQ(0, memcmp("456789abcd", bstr_ptr(p2),10));
 
-    bstr_free(&p1);
-    bstr_free(&p2);
+    bstr_free(p1);
+    bstr_free(p2);
 }
 
 TEST(BstrTest, DupMem) {
@@ -174,7 +173,7 @@ TEST(BstrTest, DupMem) {
     dst = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 18);
     EXPECT_EQ(0, memcmp("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", bstr_ptr(dst), 18));
 
-    bstr_free(&dst);
+    bstr_free(dst);
 }
 
 TEST(BstrTest, DupLower) {
@@ -185,8 +184,8 @@ TEST(BstrTest, DupLower) {
 
     EXPECT_EQ(0, memcmp("0123456789abcdefghijkl", bstr_ptr(p2), 22));
 
-    bstr_free(&p1);
-    bstr_free(&p2);
+    bstr_free(p1);
+    bstr_free(p2);
 }
 
 TEST(BstrTest, ChrRchr) {
@@ -196,7 +195,7 @@ TEST(BstrTest, ChrRchr) {
     EXPECT_EQ(13, bstr_chr(p1, 'd'));
     EXPECT_EQ(-1, bstr_chr(p1, '?'));
 
-    bstr_free(&p1);
+    bstr_free(p1);
 }
 
 TEST(BstrTest, Cmp) {
@@ -217,10 +216,10 @@ TEST(BstrTest, Cmp) {
     EXPECT_EQ(-1, bstr_cmp(p1,p4));
     EXPECT_EQ(1, bstr_cmp(p4,p1));
 
-    bstr_free(&p1);
-    bstr_free(&p2);
-    bstr_free(&p3);
-    bstr_free(&p4);
+    bstr_free(p1);
+    bstr_free(p2);
+    bstr_free(p3);
+    bstr_free(p4);
 }
 
 TEST(BstrTest, CmpNocase) {
@@ -237,9 +236,9 @@ TEST(BstrTest, CmpNocase) {
     EXPECT_EQ(0, bstr_cmp_nocase(p1,p3));
     EXPECT_EQ(0, bstr_cmp_nocase(p3,p1));
 
-    bstr_free(&p1);
-    bstr_free(&p2);
-    bstr_free(&p3);
+    bstr_free(p1);
+    bstr_free(p2);
+    bstr_free(p3);
 }
 
 TEST(BstrTest, CmpC) {
@@ -250,7 +249,7 @@ TEST(BstrTest, CmpC) {
     EXPECT_EQ(1, bstr_cmp_c(p1, "arf"));
     EXPECT_EQ(-1, bstr_cmp_c(p1, "not equal"));
 
-    bstr_free(&p1);
+    bstr_free(p1);
 }
 
 TEST(BstrTest, CmpCNocase) {
@@ -261,7 +260,7 @@ TEST(BstrTest, CmpCNocase) {
     EXPECT_EQ(1, bstr_cmp_c_nocase(p1, "ArF"));
     EXPECT_EQ(-1, bstr_cmp_c_nocase(p1, "Not equal"));
 
-    bstr_free(&p1);
+    bstr_free(p1);
 }
 
 TEST(BstrTest, CmpEx) {
@@ -293,7 +292,7 @@ TEST(BstrTest, ToLowercase) {
     EXPECT_EQ(1, bstr_cmp_c(p1, "aRf3ArF"));
     EXPECT_EQ(0, bstr_cmp_c(p1, "arf3arf"));
 
-    bstr_free(&p1);
+    bstr_free(p1);
 }
 
 TEST(BstrTest, Add) {
@@ -308,8 +307,8 @@ TEST(BstrTest, Add) {
     EXPECT_EQ(0, bstr_cmp_c(dest, "testtest0123456789abcdefghijklmnopqrstuvwxyz"));
 
     // src1 is either invalid or the same as dest after bstr_add
-    bstr_free(&src2);
-    bstr_free(&dest);
+    bstr_free(src2);
+    bstr_free(dest);
 }
 
 TEST(BstrTest, AddC) {
@@ -320,7 +319,7 @@ TEST(BstrTest, AddC) {
 
     EXPECT_EQ(0, bstr_cmp_c(p2, "testtest1234"));
 
-    bstr_free(&p2);
+    bstr_free(p2);
 }
 
 TEST(BstrTest, AddMem) {
@@ -331,7 +330,7 @@ TEST(BstrTest, AddMem) {
 
     EXPECT_EQ(0, bstr_cmp_c(p2, "testtest1234"));
 
-    bstr_free(&p2);
+    bstr_free(p2);
 }
 
 TEST(BstrTest, AddNoex) {
@@ -345,8 +344,8 @@ TEST(BstrTest, AddNoex) {
 
     EXPECT_EQ(p1,p3);
     EXPECT_EQ(0,bstr_cmp_c(p3,"12345abcde"));
-    bstr_free(&p1);
-    bstr_free(&p2);
+    bstr_free(p1);
+    bstr_free(p2);
 }
 
 TEST(BstrTest, AddCNoex) {
@@ -359,7 +358,7 @@ TEST(BstrTest, AddCNoex) {
     EXPECT_EQ(p1,p2);
     EXPECT_EQ(0,bstr_cmp_c(p2,"12345abcde"));
 
-    bstr_free(&p1);
+    bstr_free(p1);
 }
 
 TEST(BstrTest, AddMemNoex) {
@@ -372,7 +371,7 @@ TEST(BstrTest, AddMemNoex) {
     EXPECT_EQ(p1,p2);
     EXPECT_EQ(0,bstr_cmp_c(p2,"12345abcde"));
 
-    bstr_free(&p1);
+    bstr_free(p1);
 }
 
 TEST(BstrTest, IndexOf) {
@@ -396,11 +395,11 @@ TEST(BstrTest, IndexOf) {
     EXPECT_EQ(-1, bstr_index_of_mem(haystack, "qrssdf",3));
     EXPECT_EQ(16, bstr_index_of_mem_nocase(haystack, "qrssdf",3));
 
-    bstr_free(&p1);
-    bstr_free(&p2);
-    bstr_free(&p3);
-    bstr_free(&p4);
-    bstr_free(&haystack);
+    bstr_free(p1);
+    bstr_free(p2);
+    bstr_free(p3);
+    bstr_free(p4);
+    bstr_free(haystack);
 }
 
 TEST(BstrTest, BeginsWith) {
@@ -420,9 +419,9 @@ TEST(BstrTest, BeginsWith) {
     EXPECT_NE(1, bstr_begins_with_mem(haystack, "abq",2));
     EXPECT_EQ(1, bstr_begins_with_mem_nocase(haystack, "abq",2));
 
-    bstr_free(&p1);
-    bstr_free(&p2);
-    bstr_free(&haystack);
+    bstr_free(p1);
+    bstr_free(p2);
+    bstr_free(haystack);
 }
 
 TEST(BstrTest, BeginsWith2) {
@@ -434,9 +433,9 @@ TEST(BstrTest, BeginsWith2) {
     EXPECT_EQ(0, bstr_begins_with_mem_nocase(haystack, bstr_ptr(p1), bstr_len(p1)));
     EXPECT_EQ(0, bstr_begins_with_mem_nocase(haystack, bstr_ptr(p2), bstr_len(p2)));
 
-    bstr_free(&p1);
-    bstr_free(&p2);
-    bstr_free(&haystack);
+    bstr_free(p1);
+    bstr_free(p2);
+    bstr_free(haystack);
 }
 
 TEST(BstrTest, CharAt) {
@@ -444,7 +443,7 @@ TEST(BstrTest, CharAt) {
     EXPECT_EQ('\000', bstr_char_at(str, 12));
     EXPECT_EQ(-1, bstr_char_at(str, 45));
 
-    bstr_free(&str);
+    bstr_free(str);
 }
 
 TEST(BstrTest, Chop) {
@@ -456,8 +455,8 @@ TEST(BstrTest, Chop) {
     bstr_chop(p2);
     EXPECT_EQ(0, bstr_len(p2));
 
-    bstr_free(&p1);
-    bstr_free(&p2);
+    bstr_free(p1);
+    bstr_free(p2);
 }
 
 TEST(BstrTest, AdjustLen) {
@@ -467,7 +466,7 @@ TEST(BstrTest, AdjustLen) {
     EXPECT_EQ(3, bstr_len(p1));
     EXPECT_EQ(0, bstr_cmp_c(p1,"abc"));
 
-    bstr_free(&p1);
+    bstr_free(p1);
 }
 
 TEST(BstrTest, ToPint) {
@@ -502,7 +501,7 @@ TEST(BstrTest, DupToC) {
     EXPECT_STREQ("ABCDEFGHIJKL\\0NOPQRST", c);
 
     free(c);
-    bstr_free(&str);
+    bstr_free(str);
 }
 
 TEST(BstrTest, RChr) {
@@ -511,7 +510,7 @@ TEST(BstrTest, RChr) {
     EXPECT_EQ(bstr_rchr(b, 'I'), 7);
     EXPECT_EQ(bstr_rchr(b, 'M'), -1);
 
-    bstr_free(&b);
+    bstr_free(b);
 }
 
 TEST(BstrTest, AdjustRealPtr) {
@@ -523,7 +522,7 @@ TEST(BstrTest, AdjustRealPtr) {
 
     EXPECT_TRUE((char *)bstr_ptr(b) == c);
 
-    bstr_free(&b);
+    bstr_free(b);
 }
 
 TEST(BstrBuilder, CreateDestroy) {
@@ -555,7 +554,7 @@ TEST(BstrBuilder, Append) {
 
     EXPECT_EQ(0, memcmp("0123456789#abcdefghijklmnopqrstuvwxyz#!@#$",
                         bstr_ptr(result),42));
-    bstr_free(&result);
+    bstr_free(result);
 
     bstr_builder_clear(bb);
     EXPECT_EQ(0, bstr_builder_size(bb));

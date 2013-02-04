@@ -259,8 +259,8 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
         htp_header_t *h = NULL;
         for (int i = 0, n = htp_table_size(connp->out_tx->response_headers); i < n; i++) {
             htp_table_get_index(connp->out_tx->response_headers, i, NULL, (void **) &h);
-            bstr_free(&h->name);
-            bstr_free(&h->value);
+            bstr_free(h->name);
+            bstr_free(h->value);
             free(h);
         }
 
@@ -552,23 +552,28 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t * connp) {
 
             // Deallocate previous response line allocations, which we would have on a 100 response            
             if (connp->out_tx->response_line != NULL) {
-                bstr_free(&connp->out_tx->response_line);
+                bstr_free(connp->out_tx->response_line);
+                connp->out_tx->response_line = NULL;
             }
 
             if (connp->out_tx->response_line_raw != NULL) {
-                bstr_free(&connp->out_tx->response_line_raw);
+                bstr_free(connp->out_tx->response_line_raw);
+                connp->out_tx->response_line_raw = NULL;
             }
 
             if (connp->out_tx->response_protocol != NULL) {
-                bstr_free(&connp->out_tx->response_protocol);
+                bstr_free(connp->out_tx->response_protocol);
+                connp->out_tx->response_protocol = NULL;
             }
 
             if (connp->out_tx->response_status != NULL) {
-                bstr_free(&connp->out_tx->response_status);
+                bstr_free(connp->out_tx->response_status);
+                connp->out_tx->response_status = NULL;
             }
 
             if (connp->out_tx->response_message != NULL) {
-                bstr_free(&connp->out_tx->response_message);
+                bstr_free(connp->out_tx->response_message);
+                connp->out_tx->response_message = NULL;
             }
 
             connp->out_tx->response_line_raw = bstr_dup_mem(connp->out_line, connp->out_line_len);

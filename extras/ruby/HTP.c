@@ -226,13 +226,13 @@ VALUE rbhtp_parse_uri( VALUE self, VALUE input )
 	
 	int result = htp_parse_uri( input_b, &uri );
 	if ( result != HTP_OK ) {
-		bstr_free( &input_b );
+		bstr_free( input_b );
 		free( uri );
 		rb_raise( rb_eRuntimeError, "HTP error in htp_parse_uri: %d", result );
 		return Qnil; // Ignored?
 	}
 
-	bstr_free( &input_b ); // Okay, as htp_parse_uri dups the data it needs.
+	bstr_free( input_b ); // Okay, as htp_parse_uri dups the data it needs.
 
 	return rb_funcall( cURI, rb_intern( "new" ), 1,
 		Data_Wrap_Struct( rb_cObject, 0, rbhtp_free_uri, uri )

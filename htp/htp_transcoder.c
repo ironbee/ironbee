@@ -91,7 +91,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
             bstr *b = NULL;
             for (int j = 0, k = htp_table_size(output_params); j < k; j++) {
                 htp_table_get_index(output_params, j, NULL, (void **)&b);
-                bstr_free(&b);
+                bstr_free(b);
             }
             
             htp_table_destroy(output_params);
@@ -101,13 +101,13 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
         // Convert value        
         htp_transcode_bstr(cd, value, &new_value);
         if (new_value == NULL) {
-            bstr_free(&new_name);
+            bstr_free(new_name);
             iconv_close(cd);
 
             bstr *b = NULL;
             for (int j = 0, k = htp_table_size(output_params); j < k; j++) {
                 htp_table_get_index(output_params, j, NULL, (void **)&b);
-                bstr_free(&b);
+                bstr_free(b);
             }
             
             htp_table_destroy(output_params);
@@ -126,7 +126,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
         bstr *b = NULL;
         for (int i = 0, n = htp_table_size(input_params); i < n; i++) {
             htp_table_get_index(input_params, i, NULL, (void **)&b);
-            bstr_free(&b);
+            bstr_free(b);
         }      
     
         htp_table_destroy(input_params);

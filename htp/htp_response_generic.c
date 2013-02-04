@@ -224,8 +224,8 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
     h->name = bstr_dup_mem(data + name_start, name_end - name_start);
     h->value = bstr_dup_mem(data + value_start, value_end - value_start);
     if ((h->name == NULL)||(h->value == NULL)) {
-        bstr_free(&h->name);
-        bstr_free(&h->value);
+        bstr_free(h->name);
+        bstr_free(h->value);
         return HTP_ERROR;
     }
 
@@ -302,7 +302,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
 
     if (htp_parse_response_header_generic(connp, h, data, len) != HTP_OK) {
         // Note: downstream responsible for error logging
-        bstr_free(&tempstr);
+        bstr_free(tempstr);
         free(h);        
         return HTP_ERROR;
     }
@@ -320,10 +320,10 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
         bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
             + 2 + bstr_len(h->value));
         if (new_value == NULL) {
-            bstr_free(&h->name);
-            bstr_free(&h->value);
+            bstr_free(h->name);
+            bstr_free(h->value);
             free(h);            
-            bstr_free(&tempstr);
+            bstr_free(tempstr);
             return HTP_ERROR;
         }
 
@@ -338,8 +338,8 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
         }
 
         // The header is no longer needed
-        bstr_free(&h->name);
-        bstr_free(&h->value);
+        bstr_free(h->name);
+        bstr_free(h->value);
         free(h);
 
         // Keep track of same-name headers
@@ -349,7 +349,7 @@ int htp_process_response_header_generic(htp_connp_t *connp) {
         htp_table_add(connp->out_tx->response_headers, h->name, h);
     }
 
-    bstr_free(&tempstr);
+    bstr_free(tempstr);
 
     return HTP_OK;
 }

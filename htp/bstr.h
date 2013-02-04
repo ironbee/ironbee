@@ -401,7 +401,7 @@ bstr *bstr_expand(bstr *b, size_t newsize);
  *
  * @param[in] b
  */
-void bstr_free(bstr **b);
+void bstr_free(bstr *b);
 
 /**
  * Find the needle in the haystack.

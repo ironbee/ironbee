@@ -257,7 +257,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     str = bstr_util_strdup_to_c(path);
     printf("After: %s\n\n", str);
     free(str);
-    bstr_free(&path);
+    bstr_free(path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
@@ -271,7 +271,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     str = bstr_util_strdup_to_c(path);
     printf("After: %s\n\n", str);
     free(str);
-    bstr_free(&path);
+    bstr_free(path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
@@ -286,7 +286,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     str = bstr_util_strdup_to_c(path);
     printf("After: %s\n\n", str);
     free(str);
-    bstr_free(&path);
+    bstr_free(path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
@@ -302,7 +302,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     str = bstr_util_strdup_to_c(path);
     printf("After: %s\n\n", str);
     free(str);
-    bstr_free(&path);
+    bstr_free(path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven");
@@ -319,7 +319,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     str = bstr_util_strdup_to_c(path);
     printf("After: %s\n\n", str);
     free(str);
-    bstr_free(&path);
+    bstr_free(path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven/%u0074");
@@ -336,7 +336,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     str = bstr_util_strdup_to_c(path);
     printf("After: %s\n\n", str);
     free(str);
-    bstr_free(&path);
+    bstr_free(path);
 
     //
     path = bstr_dup_c("/One\\two///ThRee%2ffive%5csix/se%xxven/%u0074%u0100");
@@ -354,7 +354,7 @@ int main_path_decoding_tests(int argc, char** argv) {
     str = bstr_util_strdup_to_c(path);
     printf("After: %s\n\n", str);
     free(str);
-    bstr_free(&path);
+    bstr_free(path);
 }
 
 void encode_utf8_2(uint8_t *data, uint32_t i) {

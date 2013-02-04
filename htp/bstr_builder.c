@@ -62,7 +62,7 @@ void bstr_builder_clear(bstr_builder_t *bb) {
 
     for (size_t i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
         bstr *b = htp_list_get(bb->pieces, i);
-        bstr_free(&b);
+        bstr_free(b);
     }
 
     htp_list_clear(bb->pieces);
@@ -87,7 +87,7 @@ void bstr_builder_destroy(bstr_builder_t *bb) {
     // Destroy any pieces we might have
     for (size_t i = 0, n = htp_list_size(bb->pieces); i < n; i++) {
         bstr *b = htp_list_get(bb->pieces, i);
-        bstr_free(&b);
+        bstr_free(b);
     }
 
     htp_list_destroy(bb->pieces);

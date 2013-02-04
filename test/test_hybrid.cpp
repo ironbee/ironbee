@@ -433,7 +433,7 @@ static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
     ASSERT_TRUE(body != NULL);
 
     htp_tx_res_process_body_data(tx, bstr_ptr(body), bstr_len(body));
-    bstr_free(&body);
+    bstr_free(body);
 
     htp_tx_state_response_complete(tx);
 }

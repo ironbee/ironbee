@@ -311,8 +311,8 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
                 + 2 + bstr_len(h->value));
         if (new_value == NULL) {
-            bstr_free(&h->name);
-            bstr_free(&h->value);
+            bstr_free(h->name);
+            bstr_free(h->value);
             free(h);
             return HTP_ERROR;
         }
@@ -322,8 +322,8 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         bstr_add_noex(h_existing->value, h->value);
 
         // The header is no longer needed
-        bstr_free(&h->name);
-        bstr_free(&h->value);
+        bstr_free(h->name);
+        bstr_free(h->value);
         free(h);
 
         // Keep track of same-name headers
@@ -367,7 +367,7 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
     if (part == NULL) return;
 
     if (part->file != NULL) {
-        bstr_free(&part->file->filename);
+        bstr_free(part->file->filename);
 
         if (part->file->tmpname != NULL) {
             unlink(part->file->tmpname);
@@ -379,8 +379,8 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
     }
 
     if ((!gave_up_data) || (part->type != MULTIPART_PART_TEXT)) {
-        bstr_free(&part->name);
-        bstr_free(&part->value);
+        bstr_free(part->name);
+        bstr_free(part->value);
     }
 
     // Content-Type is currently only an alias for the
@@ -391,8 +391,8 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
         htp_header_t *h = NULL;
         for (int i = 0, n = htp_table_size(part->headers); i < n; i++) {
             htp_table_get_index(part->headers, i, NULL, (void **) &h);
-            bstr_free(&h->name);
-            bstr_free(&h->value);
+            bstr_free(h->name);
+            bstr_free(h->value);
             free(h);
         }
 
@@ -562,7 +562,8 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                 }
             }
 
-            bstr_free(&line);
+            bstr_free(line);
+            line = NULL;
         } else {
             // Not end of line; keep the data chunk for later
             bstr_builder_append_mem(part->parser->part_header_pieces, data, len);
@@ -739,7 +740,7 @@ htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, bstr *c_t_header) {
     if (rc != HTP_OK) return rc;
 
     rc = _htp_mpartp_init_boundary(parser, bstr_ptr(boundary), bstr_len(boundary));
-    bstr_free(&boundary);
+    bstr_free(boundary);
 
     return rc;
 }

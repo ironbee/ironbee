@@ -312,10 +312,9 @@ bstr *bstr_expand(bstr *b, size_t newsize) {
     return bnew;
 }
 
-void bstr_free(bstr **b) {
-    if ((b == NULL) || (*b == NULL)) return;
-    free(*b);
-    *b = NULL;
+void bstr_free(bstr *b) {
+    if (b == NULL) return;
+    free(b);
 }
 
 int bstr_index_of(const bstr *haystack, const bstr *needle) {

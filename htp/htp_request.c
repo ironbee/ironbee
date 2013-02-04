@@ -336,7 +336,8 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             // Should we terminate headers?
             if (htp_connp_is_line_terminator(connp, connp->in_line, connp->in_line_len)) {
                 if (connp->in_tx->request_headers_sep != NULL) {
-                    bstr_free(&connp->in_tx->request_headers_sep);
+                    bstr_free(connp->in_tx->request_headers_sep);
+                    connp->in_tx->request_headers_sep = NULL;
                 }
 
                 // Terminator line

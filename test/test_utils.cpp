@@ -72,7 +72,7 @@ TEST(Base64, Decode) {
     const char *input ="dGhpcyBpcyBhIHRlc3QuLg==";
     bstr *out = htp_base64_decode_mem(input, strlen(input));
     EXPECT_EQ(0, bstr_cmp_c(out, "this is a test.."));
-    bstr_free(&out);
+    bstr_free(out);
 }
 
 TEST(UtilTest, Separator) {
@@ -146,7 +146,7 @@ TEST(UtilTest, Method) {
 
     EXPECT_EQ(HTP_M_GET, htp_convert_method_to_number(method));
 
-    bstr_free(&method);
+    bstr_free(method);
 }
 
 TEST(UtilTest, IsLineEmpty) {
@@ -202,7 +202,7 @@ TEST(UtilTest, ParseContentLength) {
 
     EXPECT_EQ(134, htp_parse_content_length(str));
 
-    bstr_free(&str);
+    bstr_free(str);
 }
 
 TEST(UtilTest, ParseChunkedLength) {
@@ -222,14 +222,14 @@ static void free_htp_uri_t(htp_uri_t **urip) {
     if (uri == NULL) {
         return;
     }
-    bstr_free(&(uri->scheme));
-    bstr_free(&(uri->username));
-    bstr_free(&(uri->password));
-    bstr_free(&(uri->hostname));
-    bstr_free(&(uri->port));
-    bstr_free(&(uri->path));
-    bstr_free(&(uri->query));
-    bstr_free(&(uri->fragment));
+    bstr_free(uri->scheme);
+    bstr_free(uri->username);
+    bstr_free(uri->password);
+    bstr_free(uri->hostname);
+    bstr_free(uri->port);
+    bstr_free(uri->path);
+    bstr_free(uri->query);
+    bstr_free(uri->fragment);
 
     free(uri);
     *urip = NULL;
@@ -357,7 +357,7 @@ TEST(UtilTest, HtpParseUri) {
 
     input = bstr_dup_c("");
     EXPECT_EQ(HTP_OK, htp_parse_uri(input, &uri));
-    bstr_free(&input);
+    bstr_free(input);
     free_htp_uri_t(&uri);
 
     test = uri_tests;
@@ -367,7 +367,7 @@ TEST(UtilTest, HtpParseUri) {
         EXPECT_PRED_FORMAT2(UriIsExpected, test->expected, uri)
             << "Failed URI = " << test->uri << std::endl;
 
-        bstr_free(&input);
+        bstr_free(input);
         free_htp_uri_t(&uri);
         ++test;
     }

@@ -1667,7 +1667,7 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
         if (new_hostname == NULL) return;
         htp_normalize_hostname_inplace(new_hostname);
 
-        if (parsed_uri->hostname != NULL) bstr_free(&parsed_uri->hostname);
+        if (parsed_uri->hostname != NULL) bstr_free(parsed_uri->hostname);
         parsed_uri->hostname = new_hostname;
     } else {
         // Hostname and port
@@ -1676,7 +1676,7 @@ void htp_replace_hostname(htp_connp_t *connp, htp_uri_t *parsed_uri, bstr *hostn
         // TODO Handle whitespace around hostname
         htp_normalize_hostname_inplace(new_hostname);
 
-        if (parsed_uri->hostname != NULL) bstr_free(&parsed_uri->hostname);
+        if (parsed_uri->hostname != NULL) bstr_free(parsed_uri->hostname);
         parsed_uri->hostname = new_hostname;
         parsed_uri->port_number = 0;
 
@@ -2132,7 +2132,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
         htp_uriencoding_normalize_inplace(query);
         bstr_add_c_noex(r, "?");
         bstr_add_noex(r, query);
-        bstr_free(&query);
+        bstr_free(query);
     }
 
     if (uri->fragment != NULL) {
@@ -2234,7 +2234,7 @@ bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
         // Check that the buffer we have is not obsolete
         if (tx->request_headers_raw_lines < htp_list_size(tx->request_header_lines)) {
             // Rebuild raw buffer
-            bstr_free(&tx->request_headers_raw);
+            bstr_free(tx->request_headers_raw);
             tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
             tx->request_headers_raw_lines = htp_list_size(tx->request_header_lines);
         }
@@ -2300,7 +2300,7 @@ bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx) {
         // Check that the buffer we have is not obsolete
         if (tx->response_headers_raw_lines < htp_list_size(tx->response_header_lines)) {
             // Rebuild raw buffer
-            bstr_free(&tx->response_headers_raw);
+            bstr_free(tx->response_headers_raw);
             tx->response_headers_raw = htp_tx_generate_response_headers_raw(tx);
             tx->response_headers_raw_lines = htp_list_size(tx->response_header_lines);
         }

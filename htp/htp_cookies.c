@@ -70,7 +70,7 @@ int htp_parse_single_cookie_v0(htp_connp_t *connp, unsigned char *data, size_t l
     }
 
     if (value == NULL) {
-        bstr_free(&name);
+        bstr_free(name);
         return HTP_ERROR;
     }
 

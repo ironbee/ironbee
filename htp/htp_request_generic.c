@@ -112,7 +112,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
 
     // Now try to parse the header
     if (htp_parse_request_header_generic(connp, h, data, len) != HTP_OK) {
-        bstr_free(&tempstr);
+        bstr_free(tempstr);
         free(h);
         return HTP_ERROR;
     }
@@ -130,10 +130,10 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
             + 2 + bstr_len(h->value));        
         if (new_value == NULL) {
-            bstr_free(&h->name);
-            bstr_free(&h->value);
+            bstr_free(h->name);
+            bstr_free(h->value);
             free(h);
-            bstr_free(&tempstr);
+            bstr_free(tempstr);
             return HTP_ERROR;
         }
 
@@ -148,8 +148,8 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         }
 
         // The header fields are no longer needed
-        bstr_free(&h->name);
-        bstr_free(&h->value);
+        bstr_free(h->name);
+        bstr_free(h->value);
         free(h);
 
         // Keep track of same-name headers        
@@ -159,7 +159,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         htp_table_add(connp->in_tx->request_headers, h->name, h);
     }
 
-    bstr_free(&tempstr);
+    bstr_free(tempstr);
 
     return HTP_OK;
 }

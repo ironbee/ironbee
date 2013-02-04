@@ -131,8 +131,8 @@ protected:
     }
 
     virtual void TearDown() {
-        bstr_free(&output);
-        bstr_free(&o_boxing_wizards);
+        bstr_free(output);
+        bstr_free(o_boxing_wizards);
         decompressor->destroy(decompressor);
         htp_connp_destroy_all(connp);
         htp_config_destroy(cfg);

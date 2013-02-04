@@ -124,7 +124,7 @@ void htp_table_clear(htp_table_t *table) {
         bstr *key = NULL;
         for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
             key = htp_list_get(table->list, i);
-            bstr_free(&key);
+            bstr_free(key);
         }
     }
 

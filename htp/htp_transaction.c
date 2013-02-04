@@ -73,36 +73,36 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 }
 
 void htp_tx_destroy(htp_tx_t *tx) {
-    bstr_free(&tx->request_line);
-    bstr_free(&tx->request_line_raw);
-    bstr_free(&tx->request_method);
-    bstr_free(&tx->request_uri);
-    bstr_free(&tx->request_uri_normalized);
-    bstr_free(&tx->request_protocol);
-    bstr_free(&tx->request_headers_sep);
+    bstr_free(tx->request_line);
+    bstr_free(tx->request_line_raw);
+    bstr_free(tx->request_method);
+    bstr_free(tx->request_uri);
+    bstr_free(tx->request_uri_normalized);
+    bstr_free(tx->request_protocol);
+    bstr_free(tx->request_headers_sep);
 
     if (tx->parsed_uri != NULL) {
-        bstr_free(&tx->parsed_uri->scheme);
-        bstr_free(&tx->parsed_uri->username);
-        bstr_free(&tx->parsed_uri->password);
-        bstr_free(&tx->parsed_uri->hostname);
-        bstr_free(&tx->parsed_uri->port);
-        bstr_free(&tx->parsed_uri->path);
-        bstr_free(&tx->parsed_uri->query);
-        bstr_free(&tx->parsed_uri->fragment);
+        bstr_free(tx->parsed_uri->scheme);
+        bstr_free(tx->parsed_uri->username);
+        bstr_free(tx->parsed_uri->password);
+        bstr_free(tx->parsed_uri->hostname);
+        bstr_free(tx->parsed_uri->port);
+        bstr_free(tx->parsed_uri->path);
+        bstr_free(tx->parsed_uri->query);
+        bstr_free(tx->parsed_uri->fragment);
 
         free(tx->parsed_uri);
     }
 
     if (tx->parsed_uri_incomplete != NULL) {
-        bstr_free(&tx->parsed_uri_incomplete->scheme);
-        bstr_free(&tx->parsed_uri_incomplete->username);
-        bstr_free(&tx->parsed_uri_incomplete->password);
-        bstr_free(&tx->parsed_uri_incomplete->hostname);
-        bstr_free(&tx->parsed_uri_incomplete->port);
-        bstr_free(&tx->parsed_uri_incomplete->path);
-        bstr_free(&tx->parsed_uri_incomplete->query);
-        bstr_free(&tx->parsed_uri_incomplete->fragment);
+        bstr_free(tx->parsed_uri_incomplete->scheme);
+        bstr_free(tx->parsed_uri_incomplete->username);
+        bstr_free(tx->parsed_uri_incomplete->password);
+        bstr_free(tx->parsed_uri_incomplete->hostname);
+        bstr_free(tx->parsed_uri_incomplete->port);
+        bstr_free(tx->parsed_uri_incomplete->path);
+        bstr_free(tx->parsed_uri_incomplete->query);
+        bstr_free(tx->parsed_uri_incomplete->fragment);
         free(tx->parsed_uri_incomplete);
     }
 
@@ -110,7 +110,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     if (tx->request_header_lines != NULL) {
         for (int i = 0, n = htp_list_size(tx->request_header_lines); i < n; i++) {
             htp_header_line_t *hl = htp_list_get(tx->request_header_lines, i);
-            bstr_free(&hl->line);
+            bstr_free(hl->line);
             // No need to destroy hl->header because
             // htp_header_line_t does not own it.
             free(hl);
@@ -125,8 +125,8 @@ void htp_tx_destroy(htp_tx_t *tx) {
         htp_header_t *h = NULL;
         for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
             htp_table_get_index(tx->request_headers, i, NULL, (void **) &h);
-            bstr_free(&h->name);
-            bstr_free(&h->value);
+            bstr_free(h->name);
+            bstr_free(h->value);
             free(h);
         }
 
@@ -134,24 +134,24 @@ void htp_tx_destroy(htp_tx_t *tx) {
     }
 
     if (tx->request_headers_raw != NULL) {
-        bstr_free(&tx->request_headers_raw);
+        bstr_free(tx->request_headers_raw);
     }
     if (tx->response_headers_raw != NULL) {
-        bstr_free(&tx->response_headers_raw);
+        bstr_free(tx->response_headers_raw);
     }
 
-    bstr_free(&tx->response_line);
-    bstr_free(&tx->response_line_raw);
-    bstr_free(&tx->response_protocol);
-    bstr_free(&tx->response_status);
-    bstr_free(&tx->response_message);
-    bstr_free(&tx->response_headers_sep);
+    bstr_free(tx->response_line);
+    bstr_free(tx->response_line_raw);
+    bstr_free(tx->response_protocol);
+    bstr_free(tx->response_status);
+    bstr_free(tx->response_message);
+    bstr_free(tx->response_headers_sep);
 
     // Destroy response_header_lines
     if (tx->response_header_lines != NULL) {
         for (int i = 0, n = htp_list_size(tx->response_header_lines); i < n; i++) {
             htp_header_line_t *hl = htp_list_get(tx->response_header_lines, i);
-            bstr_free(&hl->line);
+            bstr_free(hl->line);
             // No need to destroy hl->header because
             // htp_header_line_t does not own it.
             free(hl);
@@ -166,8 +166,8 @@ void htp_tx_destroy(htp_tx_t *tx) {
         htp_header_t *h = NULL;
         for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
             htp_table_get_index(tx->response_headers, i, NULL, (void **) &h);
-            bstr_free(&h->name);
-            bstr_free(&h->value);
+            bstr_free(h->name);
+            bstr_free(h->value);
             free(h);
         }
 
@@ -187,8 +187,8 @@ void htp_tx_destroy(htp_tx_t *tx) {
         }
     }
 
-    bstr_free(&tx->request_content_type);
-    bstr_free(&tx->response_content_type);
+    bstr_free(tx->request_content_type);
+    bstr_free(tx->response_content_type);
 
     // Parsers
 
@@ -214,7 +214,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         bstr *b = NULL;
         for (int i = 0, n = htp_table_size(tx->request_cookies); i < n; i++) {
             htp_table_get_index(tx->request_cookies, i, NULL, (void **) &b);
-            bstr_free(&b);
+            bstr_free(b);
         }
 
         htp_table_destroy(tx->request_cookies);
@@ -303,14 +303,14 @@ htp_status_t htp_tx_req_set_header_c(htp_tx_t *tx, const char *name, const char 
 
     h->value = copy_or_wrap_c(value, alloc);
     if (h->value == NULL) {
-        bstr_free(&h->name);
+        bstr_free(h->name);
         free(h);
         return HTP_ERROR;
     }
 
     if (htp_table_add(tx->request_headers, h->name, h) != HTP_OK) {
-        bstr_free(&h->name);
-        bstr_free(&h->value);
+        bstr_free(h->name);
+        bstr_free(h->value);
         free(h);
         return HTP_ERROR;
     }
@@ -478,7 +478,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
                 htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information ambiguous");
             }
             
-            bstr_free(&hostname);
+            bstr_free(hostname);
         }
     }
 
@@ -545,8 +545,8 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx) {
     htp_header_t *h = NULL;
     for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
         htp_table_get_index(tx->request_headers, i, NULL, (void **) &h);
-        bstr_free(&h->name);
-        bstr_free(&h->value);
+        bstr_free(h->name);
+        bstr_free(h->value);
         free(h);
     }
 
@@ -581,7 +581,7 @@ htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *message, en
     if (message == NULL) return HTP_ERROR;
 
     if (tx->response_message != NULL) {
-        bstr_free(&tx->response_message);
+        bstr_free(tx->response_message);
     }
 
     tx->response_message = copy_or_wrap_c(message, alloc);
@@ -637,14 +637,14 @@ htp_status_t htp_tx_res_set_header_c(htp_tx_t *tx, const char *name, const char 
 
     h->value = copy_or_wrap_c(value, alloc);
     if (h->value == NULL) {
-        bstr_free(&h->name);
+        bstr_free(h->name);
         free(h);
         return HTP_ERROR;
     }
 
     if (htp_table_add(tx->response_headers, h->name, h) != HTP_OK) {
-        bstr_free(&h->name);
-        bstr_free(&h->value);
+        bstr_free(h->name);
+        bstr_free(h->value);
         free(h);
         return HTP_ERROR;
     }
@@ -658,8 +658,8 @@ htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx) {
     htp_header_t *h = NULL;
     for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
         htp_table_get_index(tx->response_headers, i, NULL, (void **) &h);
-        bstr_free(&h->name);
-        bstr_free(&h->value);
+        bstr_free(h->name);
+        bstr_free(h->value);
         free(h);
     }
 
@@ -730,7 +730,7 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
 
     // Clean-up
     if (tx->connp->put_file != NULL) {
-        bstr_free(&tx->connp->put_file->filename);
+        bstr_free(tx->connp->put_file->filename);
         free(tx->connp->put_file);
         tx->connp->put_file = NULL;
     }

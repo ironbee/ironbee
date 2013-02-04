@@ -169,7 +169,7 @@ void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
     if (urlenp == NULL) return;    
 
     if (urlenp->_name != NULL) {
-        bstr_free(&urlenp->_name);
+        bstr_free(urlenp->_name);
     }
 
     bstr_builder_destroy(urlenp->_bb);   
@@ -180,7 +180,7 @@ void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
         for (int i = 0, n = htp_table_size(urlenp->params); i < n; i++) {
             htp_table_get_index(urlenp->params, i, NULL, (void **)b);
             // Parameter name will be freed by the table code
-            bstr_free(&b);
+            bstr_free(b);
         }       
         
         htp_table_destroy(urlenp->params);
