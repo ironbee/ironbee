@@ -27,6 +27,9 @@
 
 #include <ironbee/state_notify.h>
 
+/* Buf size for reading from tempfile and feeding to Ironbee */
+#define BUFSIZE 65536
+
 /**
  * Function to reset processing cycle if input data are not yet available.
  *
@@ -119,11 +122,25 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
                       "Probable error reading request body");
     }
 
-    if (rb->temp_file) {
+    if (rb->temp_file && (rb->temp_file->file.fd != NGX_INVALID_FILE)) {
         /* Reader has put request body in temp file */
-        ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                      "Request body in temp file: not yet supported");
-
+        off_t count = 0;
+        u_char buf[BUFSIZE];
+        ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
+                      "Reading request body in temp file");
+        while (itxdata.dlen = ngx_read_file(&rb->temp_file->file,
+                                            buf, BUFSIZE, count),
+               (int)itxdata.dlen > 0) {
+            itxdata.data = buf;
+            ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
+                          "Feeding %d bytes request data to ironbee", itxdata.dlen);
+            ib_state_notify_request_body_data(ngxib_engine(), ctx->tx, &itxdata);
+            count += itxdata.dlen;
+        }
+        if ((int)itxdata.dlen == NGX_ERROR) {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                          "Error reading request body in temp file");
+        }
     }
 
     for (link = rb->bufs; link != NULL; link = link->next) {
@@ -132,9 +149,7 @@ ngx_int_t ngxib_handler(ngx_http_request_t *r)
         ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                       "Feeding %d bytes request data to ironbee", itxdata.dlen);
         if (itxdata.dlen > 0) {
-            ngx_regex_malloc_init(r->pool);
             ib_state_notify_request_body_data(ngxib_engine(), ctx->tx, &itxdata);
-            ngx_regex_malloc_done();
         }
     }
     ctx->body_done = 1;
