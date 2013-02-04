@@ -170,7 +170,7 @@ htp_multipart_t *htp_mpartp_get_multipart(htp_mpartp_t *parser);
  *
  * @param[in] parser
  */
-void htp_mpartp_destroy(htp_mpartp_t **parser);
+void htp_mpartp_destroy(htp_mpartp_t *parser);
 
 /**
  * Finalize parsing.

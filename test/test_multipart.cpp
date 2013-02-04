@@ -179,7 +179,7 @@ protected:
         if (connp != NULL) {
             htp_connp_destroy_all(connp);
         } else if (mpartp != NULL) {
-            htp_mpartp_destroy(&mpartp);
+            htp_mpartp_destroy(mpartp);
         }
 
         if (cfg != NULL) {
@@ -291,7 +291,7 @@ TEST_F(Multipart, Test1) {
 
     ASSERT_FALSE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
 
-    htp_mpartp_destroy(&mpartp);
+    htp_mpartp_destroy(mpartp);
 }
 
 TEST_F(Multipart, Test2) {
@@ -353,7 +353,7 @@ TEST_F(Multipart, Test2) {
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
 
-    htp_mpartp_destroy(&mpartp);
+    htp_mpartp_destroy(mpartp);
 }
 
 TEST_F(Multipart, BeginsWithoutLine) {
