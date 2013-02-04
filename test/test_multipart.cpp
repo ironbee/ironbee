@@ -851,7 +851,5 @@ TEST_F(Multipart, MultipleContentTypeHeadersEvasion) {
 
     parseRequestThenVerify(headers, data);
 
-    fprint_bstr(stderr, "C-T", tx->request_content_type);
-
     ASSERT_TRUE(bstr_cmp_c(tx->request_content_type, "multipart/form-data") == 0);
 }
