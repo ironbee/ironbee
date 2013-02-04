@@ -78,7 +78,8 @@ htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
         // All the parameter data is now owned by the transaction, and
         // the parser table used to store it is no longer needed. The
         // line below will destroy just the table, leaving keys intact.
-        htp_table_destroy_ex(&tx->request_urlenp_body->params);
+        htp_table_destroy_ex(tx->request_urlenp_body->params);
+        tx->request_urlenp_body->params = NULL;
     }
 
     return HTP_OK;
@@ -153,7 +154,8 @@ htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
         // All the parameter data is now owned by the transaction, and
         // the parser table used to store it is no longer needed. The
         // line below will destroy just the table, leaving keys intact.
-        htp_table_destroy_ex(&tx->request_urlenp_query->params);
+        htp_table_destroy_ex(tx->request_urlenp_query->params);
+        tx->request_urlenp_query->params = NULL;
     }
 
     return HTP_OK;

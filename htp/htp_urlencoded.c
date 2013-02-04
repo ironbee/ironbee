@@ -148,7 +148,7 @@ htp_urlenp_t *htp_urlenp_create(htp_tx_t *tx) {
 
     urlenp->_bb = bstr_builder_create();
     if (urlenp->_bb == NULL) {
-        htp_table_destroy(&urlenp->params);
+        htp_table_destroy(urlenp->params);
         free(urlenp);
         return NULL;
     }
@@ -183,7 +183,7 @@ void htp_urlenp_destroy(htp_urlenp_t *urlenp) {
             bstr_free(&b);
         }       
         
-        htp_table_destroy(&urlenp->params);
+        htp_table_destroy(urlenp->params);
     }
 
     free(urlenp);

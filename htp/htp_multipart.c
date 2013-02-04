@@ -396,7 +396,7 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
             free(h);
         }
 
-        htp_table_destroy(&part->headers);
+        htp_table_destroy(part->headers);
     }
 
     free(part);

@@ -155,9 +155,8 @@ htp_table_t *htp_table_create(size_t size) {
     return table;
 }
 
-void htp_table_destroy(htp_table_t **_table) {
-    if ((_table == NULL)||(*_table == NULL)) return;
-    htp_table_t *table = *_table;
+void htp_table_destroy(htp_table_t *table) {
+    if (table == NULL) return;
 
     htp_table_clear(table);
 
@@ -165,17 +164,16 @@ void htp_table_destroy(htp_table_t **_table) {
     table->list = NULL;
 
     free(table);
-    *_table = NULL;
 }
 
-void htp_table_destroy_ex(htp_table_t **_table) {
-    if ((_table == NULL)||(*_table == NULL)) return;
+void htp_table_destroy_ex(htp_table_t *table) {
+    if (table == NULL) return;
 
     // Change allocation strategy in order to
     // prevent the keys from being freed.
-    (*_table)->alloc_type = HTP_TABLE_KEYS_REFERENCED;
+    table->alloc_type = HTP_TABLE_KEYS_REFERENCED;
 
-    htp_table_destroy(_table);
+    htp_table_destroy(table);
 }
 
 void *htp_table_get(const htp_table_t *table, const bstr *key) {

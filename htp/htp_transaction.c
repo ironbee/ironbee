@@ -130,7 +130,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
             free(h);
         }
 
-        htp_table_destroy(&tx->request_headers);
+        htp_table_destroy(tx->request_headers);
     }
 
     if (tx->request_headers_raw != NULL) {
@@ -171,7 +171,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
             free(h);
         }
 
-        htp_table_destroy(&tx->response_headers);
+        htp_table_destroy(tx->response_headers);
     }
 
     // Tell the connection to remove this transaction
@@ -206,7 +206,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         free(param);
     }
 
-    htp_table_destroy(&tx->request_params);
+    htp_table_destroy(tx->request_params);
 
     // Request cookies
 
@@ -217,7 +217,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
             bstr_free(&b);
         }
 
-        htp_table_destroy(&tx->request_cookies);
+        htp_table_destroy(tx->request_cookies);
     }
 
     htp_hook_destroy(tx->hook_request_body_data);
@@ -550,7 +550,7 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx) {
         free(h);
     }
 
-    htp_table_destroy(&tx->request_headers);
+    htp_table_destroy(tx->request_headers);
 
     tx->request_headers = htp_table_create(32);
     if (tx->request_headers == NULL) return HTP_ERROR;
@@ -663,7 +663,7 @@ htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx) {
         free(h);
     }
 
-    htp_table_destroy(&tx->response_headers);
+    htp_table_destroy(tx->response_headers);
 
     tx->response_headers = htp_table_create(32);
     if (tx->response_headers == NULL) return HTP_ERROR;

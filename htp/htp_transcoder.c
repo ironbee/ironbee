@@ -58,15 +58,13 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
 
     // Create a new table that will hold transcoded parameters
     htp_table_t *output_params = htp_table_create(htp_table_size(input_params));
-    if (output_params == NULL) {
-        return HTP_ERROR;
-    }
+    if (output_params == NULL) return HTP_ERROR;
     
     // Initialize iconv
     iconv_t cd = iconv_open(connp->cfg->internal_encoding, connp->cfg->request_encoding);
     if (cd == (iconv_t) -1) {
         // TODO Report iconv initialization error
-        htp_table_destroy(&output_params);
+        htp_table_destroy(output_params);
         return HTP_ERROR;
     }
 
@@ -96,7 +94,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
                 bstr_free(&b);
             }
             
-            htp_table_destroy(&output_params);
+            htp_table_destroy(output_params);
             return HTP_ERROR;
         }
         
@@ -112,7 +110,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
                 bstr_free(&b);
             }
             
-            htp_table_destroy(&output_params);
+            htp_table_destroy(output_params);
             return HTP_ERROR;
         }
         
@@ -131,7 +129,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
             bstr_free(&b);
         }      
     
-        htp_table_destroy(&input_params);
+        htp_table_destroy(input_params);
     }
     
     iconv_close(cd);

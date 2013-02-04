@@ -119,7 +119,7 @@ htp_table_t *htp_table_create(size_t size);
  *
  * @param[in,out]   table
  */
-void htp_table_destroy(htp_table_t **table);
+void htp_table_destroy(htp_table_t *table);
 
 /**
  * Destroy the given table, but don't free the keys. even if they are managed by
@@ -128,7 +128,7 @@ void htp_table_destroy(htp_table_t **table);
  *
  * @param[in,out] _table
  */
-void htp_table_destroy_ex(htp_table_t **_table);
+void htp_table_destroy_ex(htp_table_t *table);
 
 /**
  * Retrieve the first element that matches the given bstr key.
