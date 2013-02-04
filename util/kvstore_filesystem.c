@@ -333,7 +333,7 @@ eother_failure:
  * ".<expiration>-<creation>.<type>.XXXXXX".  The leading '.', if present,
  * indicates that the file is a temporary file.  The expiration time is then
  * extracted, followed by the creation time, which is stored as a 16-digit
- * hexidecimal string.
+ * hexadecimal string.
  *
  * @param[in] kvstore Key-value store (unused)
  * @param[in] fname File name to extract from

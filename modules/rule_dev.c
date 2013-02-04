@@ -464,7 +464,7 @@ static ib_status_t act_assert_execute(const ib_rule_exec_t *rule_exec,
     return IB_OK;
 }
 
-/** Injection action functions & related delcarions */
+/** Injection action functions & related declarations */
 static const char *act_inject_name = "inject";
 
 /**

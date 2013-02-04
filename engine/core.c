@@ -348,7 +348,7 @@ static void core_log_file_open(const ib_engine_t *ib,
 }
 
 /**
- * Open the configurtion's log file
+ * Open the configuration's log file
  *
  * @param[in] ib IronBee engine
  * @param[in,out] config Core configuration

@@ -180,7 +180,7 @@ typedef ib_status_t (* ib_rule_ownership_fn_t)(
  * External rule injection function
  *
  * This function will be called at the start of each phase.  This gives a
- * module the oportunity to inject one or more rules into the start of the
+ * module the opportunity to inject one or more rules into the start of the
  * phase.  It does this by appending rules, in the form of ib_rule_t pointers,
  * to @a rule_list.  @a rule_list may contain rules upon entry to this
  * function and should thus treat @a rule_list as append-only.
@@ -723,7 +723,7 @@ ib_status_t DLL_PUBLIC ib_rule_add_action(
  *
  * @returns Status code
  *   - IB_OK All ok
- *   - IB_EINVAL if both @a matchs and @a pcount are NULL, or any of the
+ *   - IB_EINVAL if both @a matches and @a pcount are NULL, or any of the
  *               other parameters are invalid
  */
 ib_status_t DLL_PUBLIC ib_rule_search_action(const ib_engine_t *ib,
