@@ -116,7 +116,8 @@ void htp_tx_destroy(htp_tx_t *tx) {
             free(hl);
         }
 
-        htp_list_destroy(&tx->request_header_lines);
+        htp_list_destroy(tx->request_header_lines);
+        tx->request_header_lines = NULL;
     }
 
     // Destroy request_headers
@@ -156,7 +157,8 @@ void htp_tx_destroy(htp_tx_t *tx) {
             free(hl);
         }
 
-        htp_list_destroy(&tx->response_header_lines);
+        htp_list_destroy(tx->response_header_lines);
+        tx->response_header_lines = NULL;
     }
 
     // Destroy response headers

@@ -121,7 +121,8 @@ void free_stream_data(stream_data *sd) {
             free(chunk);
         }
         
-        htp_list_destroy(&sd->chunks);
+        htp_list_destroy(sd->chunks);
+        sd->chunked = NULL;
     }
     
     // Free inbound chunks, if any
@@ -132,7 +133,8 @@ void free_stream_data(stream_data *sd) {
             free(chunk);
         }
         
-        htp_list_destroy(&sd->inbound_chunks);
+        htp_list_destroy(sd->inbound_chunks);
+        sd->inbound_chunks = NULL;
     }
     
     // Free outbound chunks, if any
@@ -143,7 +145,8 @@ void free_stream_data(stream_data *sd) {
             free(chunk);
         }
         
-        htp_list_destroy(&sd->outbound_chunks);
+        htp_list_destroy(sd->outbound_chunks);
+        sd->outbound_chunks = NULL;
     }
 
     // Close the stream file, if we have it open    

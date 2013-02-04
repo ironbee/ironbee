@@ -161,7 +161,8 @@ void htp_table_destroy(htp_table_t **_table) {
 
     htp_table_clear(table);
 
-    htp_list_destroy(&table->list);
+    htp_list_destroy(table->list);
+    table->list = NULL;
 
     free(table);
     *_table = NULL;

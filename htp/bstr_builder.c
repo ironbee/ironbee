@@ -90,7 +90,7 @@ void bstr_builder_destroy(bstr_builder_t *bb) {
         bstr_free(&b);
     }
 
-    htp_list_destroy(&bb->pieces);
+    htp_list_destroy(bb->pieces);
 
     free(bb);
 }

@@ -71,13 +71,10 @@ void htp_list_array_clear(htp_list_array_t *l) {
     l->current_size = 0;
 }
 
-void htp_list_array_destroy(htp_list_array_t **_l) {
-    if ((_l == NULL) || (*_l == NULL)) return;
-
-    htp_list_array_t *l = *_l;
+void htp_list_array_destroy(htp_list_array_t *l) {
+    if (l == NULL) return;
     free(l->elements);
     free(l);
-    *_l = NULL;
 }
 
 void *htp_list_array_get(const htp_list_array_t *l, size_t idx) {
@@ -210,10 +207,9 @@ htp_list_linked_t *htp_list_linked_create(void) {
     return l;
 }
 
-void htp_list_linked_destroy(htp_list_linked_t **_l) {
-    if ((_l == NULL) || (*_l == NULL)) return;
+void htp_list_linked_destroy(htp_list_linked_t *l) {
+    if (l == NULL) return;
 
-    htp_list_linked_t *l = *_l;
     // Free the list structures
     htp_list_linked_element_t *temp = l->first;
     htp_list_linked_element_t *prev = NULL;
@@ -226,7 +222,6 @@ void htp_list_linked_destroy(htp_list_linked_t **_l) {
 
     // Free the list itself
     free(l);
-    *_l = NULL;
 }
 
 int htp_list_linked_empty(const htp_list_linked_t *l) {

@@ -769,7 +769,8 @@ void htp_mpartp_destroy(htp_mpartp_t ** _parser) {
             htp_mpart_part_destroy(part, parser->gave_up_data);
         }
 
-        htp_list_destroy(&parser->multipart.parts);
+        htp_list_destroy(parser->multipart.parts);
+        parser->multipart.parts = NULL;
     }
 
     free(parser);

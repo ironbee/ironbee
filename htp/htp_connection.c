@@ -50,7 +50,8 @@ htp_conn_t *htp_conn_create(void) {
 
     conn->messages = htp_list_create(8);
     if (conn->messages == NULL) {
-        htp_list_destroy(&conn->transactions);
+        htp_list_destroy(conn->transactions);
+        conn->transactions = NULL;
         free(conn);
         return NULL;
     }
@@ -80,7 +81,8 @@ void htp_conn_destroy(htp_conn_t *conn) {
             }
         }
 
-        htp_list_destroy(&conn->transactions);
+        htp_list_destroy(conn->transactions);
+        conn->transactions = NULL;
     }
 
     if (conn->messages != NULL) {
@@ -91,7 +93,8 @@ void htp_conn_destroy(htp_conn_t *conn) {
             free(l);
         }
 
-        htp_list_destroy(&conn->messages);
+        htp_list_destroy(conn->messages);
+        conn->messages = NULL;
     }
 
     if (conn->server_addr != NULL) {

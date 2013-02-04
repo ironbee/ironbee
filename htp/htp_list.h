@@ -90,7 +90,7 @@ void htp_list_array_clear(htp_list_array_t *l);
  *
  * @param[in] l
  */
-void htp_list_array_destroy(htp_list_array_t **l);
+void htp_list_array_destroy(htp_list_array_t *l);
 
 /**
  * Find the element at the given index.
@@ -164,7 +164,7 @@ htp_list_linked_t *htp_list_linked_create(void);
  *
  * @param[in] l
  */
-void htp_list_linked_destroy(htp_list_linked_t **l);
+void htp_list_linked_destroy(htp_list_linked_t *l);
 
 /**
  * Is the list empty?
