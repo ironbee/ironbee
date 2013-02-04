@@ -112,13 +112,13 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
         return ngx_http_next_body_filter(r, in);
     }
     ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
-    if (ctx->state & OUTPUT_FILTER_DONE) {
+    if (ctx->output_filter_done) {
         ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                           "ironbee_body_out: already done");
         return ngx_http_next_body_filter(r, in);
     }
-    if (!(ctx->state & OUTPUT_FILTER_INIT)) {
-        ctx->state  |= OUTPUT_FILTER_INIT;
+    if (!ctx->output_filter_init) {
+        ctx->output_filter_init = 1;
 
         /* Determine whether we're configured to buffer */
         rc = ib_context_get(ctx->tx->ctx, "buffer_res",
@@ -195,7 +195,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
         if (link->buf->last_buf) {
             ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                           "ironbee_body_out: last_buf");
-            ctx->state |= OUTPUT_FILTER_DONE;
+            ctx->output_filter_done = 1;
         }
     }
 
@@ -203,22 +203,24 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
         /* Normal operation - pass it down the chain */
         ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                       "ironbee_body_out: passing on");
+        ctx->start_response = 1;
         rv = ngx_http_next_body_filter(r, in);
     }
     else if (ctx->output_buffering == IOBUF_BUFFER) {
         ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                       "ironbee_body_out: buffering");
-        if (ctx->state & OUTPUT_FILTER_DONE) {
+        if (ctx->output_filter_done) {
             /* We can pass on the buffered data all at once */
             ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                           "ironbee_body_out: passing buffer");
+            ctx->start_response = 1;
             rv = ngx_http_next_body_filter(r, ctx->response_buf);
         }
     }
     else if (ctx->output_buffering == IOBUF_DISCARD) {
         ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                       "ironbee_body_out: discarding");
-        if (ctx->state & OUTPUT_FILTER_DONE) {
+        if (ctx->output_filter_done) {
             /* Pass a last bucket with no data */
             //ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
             //              "ironbee_body_out: passing NULL last-buffer");
@@ -230,7 +232,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
             rv = ctx->status;
         }
     }
-    if (ctx->state & OUTPUT_FILTER_DONE) {
+    if (ctx->output_filter_done) {
         ngx_log_error(NGX_LOG_DEBUG, r->connection->log, 0,
                           "ironbee_body_out: notify_postprocess");
         rc = ib_state_notify_postprocess(ironbee, ctx->tx);
@@ -333,7 +335,7 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
     if (rc != IB_OK)
         cleanup_return(prev_log) NGX_ERROR;
 
-    ctx->state |= HDRS_OUT|START_RESPONSE;
+    ctx->hdrs_out = 1;
 
     cleanup_return(prev_log) ngx_http_next_header_filter(r);
 }
@@ -413,7 +415,7 @@ static ngx_int_t ironbee_post_read_request(ngx_http_request_t *r)
     if (rc != IB_OK)
         cleanup_return(prev_log) NGX_ERROR;
 
-    ctx->state |= HDRS_IN;
+    ctx->hdrs_in = 1;
 
     cleanup_return(prev_log) NGX_DECLINED;
 }

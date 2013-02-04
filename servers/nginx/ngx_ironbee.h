@@ -40,7 +40,6 @@ typedef struct ngxib_req_ctx {
     ngx_http_request_t *r;
     ngxib_conn_t *conn;
     ib_tx_t *tx;
-    int state;
     int status;
     iobuf_t output_buffering;
     ngx_chain_t *response_buf;
@@ -49,6 +48,11 @@ typedef struct ngxib_req_ctx {
     int body_wait:1;
     int has_request_body:1;
     int tested_request_body:1;
+    int output_filter_init:1;
+    int output_filter_done:1;
+    int hdrs_in:1;
+    int hdrs_out:1;
+    int start_response:1;
 } ngxib_req_ctx;
 
 ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx, ib_engine_t *ib);
@@ -79,11 +83,5 @@ ib_engine_t *ngxib_engine(void);
 
 #define cleanup_return(log) return ngxib_log(log),ngx_regex_malloc_done(),
 
-#define HDRS_IN IB_SERVER_REQUEST
-#define HDRS_OUT IB_SERVER_RESPONSE
-#define START_RESPONSE 0x04
-
-#define OUTPUT_FILTER_INIT 0x100
-#define OUTPUT_FILTER_DONE 0x200
 
 #endif

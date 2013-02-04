@@ -240,8 +240,7 @@ static ib_status_t ib_header_callback(ib_tx_t *tx, ib_server_direction_t dir,
                           ? &ctx->r->headers_in.headers
                           : &ctx->r->headers_out.headers;
 
-    if (ctx->state & HDRS_OUT ||
-        (ctx->state & HDRS_IN && dir == IB_SERVER_REQUEST))
+    if (ctx->hdrs_out || (ctx->hdrs_in && (dir == IB_SERVER_REQUEST)))
         return IB_DECLINED;  /* too late for requested op */
 
     switch (action) {
@@ -280,7 +279,7 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
                           "Ignoring: status already set to %d", ctx->status);
             return IB_OK;
         }
-        if (ctx->state & START_RESPONSE) {
+        if (ctx->start_response) {
             ngx_log_error(NGX_LOG_ERR, ctx->r->connection->log, 0,
                           "Too late to change status=%d", status);
             return IB_DECLINED;
@@ -301,7 +300,7 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
 static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *val, void *cbdata)
 {
     ngxib_req_ctx *ctx = tx->sctx;
-    if (ctx->state & START_RESPONSE)
+    if (ctx->start_response)
         return IB_DECLINED;
     if (!hdr || !val)
         return IB_EINVAL;
@@ -323,7 +322,7 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *
 static ib_status_t ib_errdata_callback(ib_tx_t *tx, const char *data, void *cbdata)
 {
     ngxib_req_ctx *ctx = tx->sctx;
-    if (ctx->state & START_RESPONSE)
+    if (ctx->start_response)
         return IB_DECLINED;
     if (!data)
         return IB_EINVAL;
