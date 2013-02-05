@@ -184,8 +184,6 @@ struct htp_mpartp_t {
     int gave_up_data;
 };
 
-htp_status_t htp_mpartp_extract_boundary(bstr *content_type, bstr **boundary);
-
 htp_status_t htp_mpartp_run_request_file_data_hook(htp_multipart_part_t *part, const unsigned char *data, size_t len);
 
 htp_status_t htp_mpart_part_process_headers(htp_multipart_part_t *part);

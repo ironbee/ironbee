@@ -666,8 +666,36 @@ static htp_status_t htp_mpartp_handle_boundary(htp_mpartp_t *parser) {
     return HTP_OK;
 }
 
-htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg) {
-    if (cfg == NULL) return NULL;
+static htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, unsigned char *data, size_t len) {
+    if ((parser == NULL) || (data == NULL)) return HTP_ERROR;
+
+    // Copy the boundary and convert it to lowercase
+
+    parser->multipart.boundary_len = len + 4;
+    parser->multipart.boundary = malloc(parser->multipart.boundary_len + 1);
+    if (parser->multipart.boundary == NULL) return HTP_ERROR;
+
+    parser->multipart.boundary[0] = CR;
+    parser->multipart.boundary[1] = LF;
+    parser->multipart.boundary[2] = '-';
+    parser->multipart.boundary[3] = '-';
+
+    for (size_t i = 0; i < len; i++) {
+        parser->multipart.boundary[i + 4] = tolower(data[i]);
+    }
+
+    parser->multipart.boundary[parser->multipart.boundary_len] = '\0';
+
+    // We're starting in boundary-matching mode, where the
+    // initial CRLF is not needed.
+    parser->parser_state = STATE_BOUNDARY;
+    parser->boundary_match_pos = 2;
+
+    return HTP_OK;
+}
+
+htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, bstr *boundary, uint64_t flags) {
+    if ((cfg == NULL) || (boundary == NULL)) return NULL;
 
     htp_mpartp_t *parser = calloc(1, sizeof (htp_mpartp_t));
     if (parser == NULL) return NULL;
@@ -698,55 +726,25 @@ htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg) {
         return NULL;
     }
 
+    parser->multipart.flags = flags;
     parser->parser_state = STATE_INIT;
     parser->extract_limit = DEFAULT_FILE_EXTRACT_LIMIT;
     parser->handle_data = htp_mpartp_handle_data;
     parser->handle_boundary = htp_mpartp_handle_boundary;
 
-    return parser;
-}
-
-static htp_status_t _htp_mpartp_init_boundary(htp_mpartp_t *parser, unsigned char *data, size_t len) {
-    if ((parser == NULL) || (data == NULL))return HTP_ERROR;
-
-    // Copy the boundary and convert it to lowercase
-
-    parser->multipart.boundary_len = len + 4;
-    parser->multipart.boundary = malloc(parser->multipart.boundary_len + 1);
-    if (parser->multipart.boundary == NULL) return HTP_ERROR;
-
-    parser->multipart.boundary[0] = CR;
-    parser->multipart.boundary[1] = LF;
-    parser->multipart.boundary[2] = '-';
-    parser->multipart.boundary[3] = '-';
-
-    for (size_t i = 0; i < len; i++) {
-        parser->multipart.boundary[i + 4] = tolower(data[i]);
+    // Initialize the boundary.
+    htp_status_t rc = htp_mpartp_init_boundary(parser, bstr_ptr(boundary), bstr_len(boundary));
+    if (rc != HTP_OK) {
+        htp_mpartp_destroy(parser);
+        return NULL;
     }
 
-    parser->multipart.boundary[parser->multipart.boundary_len] = '\0';
-
-    // We're starting in boundary-matching mode, where the
-    // initial CRLF is not needed.
-    parser->parser_state = STATE_BOUNDARY;
-    parser->boundary_match_pos = 2;
-
-    return HTP_OK;
-}
-
-htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, bstr *c_t_header) {
-    bstr *boundary = NULL;
-    htp_status_t rc = htp_mpartp_extract_boundary(c_t_header, &boundary);
-    if (rc != HTP_OK) return rc;
-
-    rc = _htp_mpartp_init_boundary(parser, bstr_ptr(boundary), bstr_len(boundary));
+    // On success, the ownership of the boundary parameter
+    // is transferred to us. We made a copy, and so we
+    // don't need it any more.
     bstr_free(boundary);
 
-    return rc;
-}
-
-htp_status_t htp_mpartp_init_boundary_ex(htp_mpartp_t *parser, char *boundary) {
-    return _htp_mpartp_init_boundary(parser, (unsigned char *) boundary, strlen(boundary));
+    return parser;
 }
 
 void htp_mpartp_destroy(htp_mpartp_t *parser) {
@@ -760,7 +758,7 @@ void htp_mpartp_destroy(htp_mpartp_t *parser) {
     bstr_builder_destroy(parser->part_data_pieces);
     bstr_builder_destroy(parser->part_header_pieces);
 
-    // Free parts
+    // Free the parts.
     if (parser->multipart.parts != NULL) {
         for (int i = 0, n = htp_list_size(parser->multipart.parts); i < n; i++) {
             htp_multipart_part_t * part = htp_list_get(parser->multipart.parts, i);
@@ -768,7 +766,6 @@ void htp_mpartp_destroy(htp_mpartp_t *parser) {
         }
 
         htp_list_destroy(parser->multipart.parts);
-        parser->multipart.parts = NULL;
     }
 
     free(parser);
@@ -1139,11 +1136,11 @@ STATE_SWITCH:
                 } else {
                     if (htp_is_lws(data[pos])) {
                         // Linear white space is allowed here.
-                        parser->multipart.flags |= HTP_MULTIPART_BOUNDARY_LWS_AFTER;
+                        parser->multipart.flags |= HTP_MULTIPART_BBOUNDARY_LWS_AFTER;
                         pos++;
                     } else {
                         // Unexpected byte; consume, but remain in the same state.
-                        parser->multipart.flags |= HTP_MULTIPART_BOUNDARY_NLWS_AFTER;
+                        parser->multipart.flags |= HTP_MULTIPART_BBOUNDARY_NLWS_AFTER;
                         pos++;
                     }
                 }
@@ -1200,115 +1197,192 @@ int htp_mpartp_is_boundary_character(int c) {
     return 1;
 }
 
-#if 0
+static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) { 
+    /*
+     Chrome: Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryT4AfwQCOgIxNVwlD
+    Firefox: Content-Type: multipart/form-data; boundary=---------------------------21071316483088
+       MSIE: Content-Type: multipart/form-data; boundary=---------------------------7dd13e11c0452
+      Opera: Content-Type: multipart/form-data; boundary=----------2JL5oh7QWEDwyBllIRc7fh
+     Safari: Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryre6zL3b0BelnTY5S
+     */    
 
-htp_status_t htp_mpartp_extract_boundary(bstr *content_type, bstr **boundary) {
-    unsigned char *data = bstr_ptr(content_type);
-    size_t len = bstr_len(content_type);
-    size_t pos, start;
+    unsigned char *data = bstr_ptr(boundary);
+    size_t len = bstr_len(boundary);
 
-    pos = 0;
-
-    // Look for the semicolon
-    while ((pos < len) && (data[pos] != ';')) pos++;
-    if (pos == len) {
-        // Error: missing semicolon
-        return -1;
+    // The RFC allows up to 70 characters. In real life,
+    // boundaries tend to be shorter.
+    if ((len == 0) || (len > 70)) {
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
     }
 
-    // Skip over semicolon
-    pos++;
+    // Check boundary characters. This check is stricter than the
+    // RFC, which seems to allow many separator characters.
+    size_t pos = 0;
+    while (pos < len) {
+        if (!(((data[pos] >= '0') && (data[pos] <= '9'))
+                || ((data[pos] >= 'a') && (data[pos] <= 'z'))
+                || ((data[pos] >= 'A') && (data[pos] <= 'A'))
+                || (data[pos] == '-'))) {
+            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+        }
 
-    // Skip over whitespace
-    while ((pos < len) && (data[pos] == ' '))
         pos++;
-    if (pos == len) {
-        // Error: missing boundary parameter
-        return -2;
     }
 
-    if (pos + 8 >= len) {
-        // Error: invalid parameter
-        return -3;
-    }
-
-    if ((data[pos] != 'b') || (data[pos + 1] != 'o') || (data[pos + 2] != 'u') || (data[pos + 3] != 'n')
-            || (data[pos + 4] != 'd') || (data[pos + 5] != 'a') || (data[pos + 6] != 'r') || (data[pos + 7] != 'y')) {
-        // Error invalid parameter
-        return -4;
-    }
-
-    // Skip over "boundary"
-    pos += 8;
-
-    // Skip over whitespace, if any
-    while ((pos < len) && (data[pos] == ' '))
-        pos++;
-    if (pos == len) {
-        // Error: invalid parameter
-        return -5;
-    }
-
-    // Expecting "=" next
-    if (data[pos] != '=') {
-        // Error: invalid parameter
-        return -6;
-    }
-
-    // Skip over "="
-    pos++;
-
-    start = pos;
-
-    while ((pos < len) && (htp_mpartp_is_boundary_character(data[pos]))) pos++;
-    if (pos != len) {
-        // Error: invalid character in boundary
-        return -7;
-    }
-
-    *boundary = bstr_dup_mem(data + start, pos - start);
-    if (*boundary == NULL) return -8;
-
-    #if HTP_DEBUG
-    fprint_bstr(stderr, "htp_mpartp_extract_boundary", *boundary);
-    #endif
-
-    return HTP_OK;
 }
-#endif
 
-/**
- * Extract boundary from the supplied Content-Type request header. The extracted
- * boundary will be allocated on the heap.
- *
- * @param[in] content_type
- * @param[in] boundary
- * @return HTP_OK on success, HTP_ERROR on failure.
- */
-htp_status_t htp_mpartp_extract_boundary(bstr *content_type, bstr **boundary) {
-    int i = bstr_index_of_c(content_type, "boundary");
+static int htp_martp_is_boundary_char_rfc_nospace(unsigned char c) {
+    /*
+
+    RFC 1341:
+
+    The only mandatory parameter for the multipart  Content-Type
+    is  the  boundary  parameter,  which  consists  of  1  to 70
+    characters from a set of characters known to be very  robust
+    through  email  gateways,  and  NOT ending with white space.
+    (If a boundary appears to end with white  space,  the  white
+    space  must be presumed to have been added by a gateway, and
+    should  be  deleted.)   It  is  formally  specified  by  the
+    following BNF:
+
+    boundary := 0*69<bchars> bcharsnospace
+
+    bchars := bcharsnospace / " "
+
+    bcharsnospace :=    DIGIT / ALPHA / "'" / "(" / ")" / "+" / "_"
+                          / "," / "-" / "." / "/" / ":" / "=" / "?"
+     */
+
+    // DIGIT or ALNUM.
+    if (((c >= '0') && (c <= '9'))
+                || ((c >= 'a') && (c <= 'z'))
+                || ((c >= 'A') && (c <= 'A'))) {
+        return 1;
+    }
+
+    // Allowed separators.
+    switch(c) {
+        case '\'' :
+        case '(':
+        case ')':
+        case '+':
+        case '_':
+        case ',':
+        case '-':
+        case '.':
+        case '/':
+        case ':':
+        case '=':
+        case '?':
+            return 1;
+            break;
+    }
+
+    return 0;
+}
+
+htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint64_t *flags) {
+    if ((content_type == NULL) || (boundary == NULL) || (flags == NULL)) return HTP_ERROR;
+
+    // Reset flags.
+    *flags = 0;
+
+    // Look for the boundary, case insensitive.
+    int i = bstr_index_of_c_nocase(content_type, "boundary");
     if (i == -1) return HTP_DECLINED;
-
+    
     unsigned char *data = bstr_ptr(content_type) + i;
     size_t len = bstr_len(content_type) - i;
 
+    // Look for the boundary value.
     size_t pos = 0;
-    while ((pos < len) && (data[pos] != '=')) pos++;
+    while ((pos < len) && (data[pos] != '=')) {
+        if (htp_is_space(data[pos])) {
+            // It is unusual to see whitespace before
+            // the equals sign.
+            *flags |= HTP_MULTIPART_HBOUNDARY_UNUSUAL;
+        } else {
+            // But seeing a non-whitespace character
+            // may indicate evasion.
+            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+        }
 
-    if (pos >= len) return HTP_DECLINED;
+        pos++;
+    }
 
-    // Go over the '=' byte.
+    if (pos >= len) {
+        // No equals sign in the header.
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+        return HTP_DECLINED;
+    }
+    
+    // Go over the '=' character.
     pos++;
 
-    // Ignore any whitespace.
-    while ((pos < len) && (htp_is_space(data[pos]))) pos++;
+    // Ignore any whitespace after the equals sign.
+    while ((pos < len) && (htp_is_space(data[pos]))) {
+        if (htp_is_space(data[pos])) {
+            // It is unusual to see whitespace after
+            // the equals sign.
+            *flags |= HTP_MULTIPART_HBOUNDARY_UNUSUAL;
+        }
 
-    *boundary = bstr_dup_mem(data + pos, len - pos);
-    if (*boundary == NULL) return HTP_ERROR;
+        pos++;
+    }
+
+    if (data[pos] == '"') {
+        // Quoted boundary.
+
+        pos++; // Over the double quote.
+        size_t startpos = pos + 1; // Starting position of the boundary.
+
+        // Look for the terminating double quote.
+        while ((pos < len)&&(data[pos] != '"')) pos++;
+
+        if (pos >= len) {
+            // Ran out of space without seeing
+            // the terminating double quote.
+            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+
+            // Include the starting double quote in the boundary.
+            startpos--;
+        }
+
+        *boundary = bstr_dup_mem(data + startpos, pos - startpos);
+        if (*boundary == NULL) return HTP_ERROR;
+    } else {
+        // Boundary not quoted.
+
+        size_t startpos = pos;
+
+        // Find the end of the boundary.
+        while ((pos < len)&&(htp_martp_is_boundary_char_rfc_nospace(data[pos]))) pos++;
+
+        *boundary = bstr_dup_mem(data + startpos, pos - startpos);
+        if (*boundary == NULL) return HTP_ERROR;
+    }   
+
+    // Check for a zero-length boundary.
+    if (bstr_len(*boundary) == 0) {
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+        return HTP_DECLINED;
+    }
+
+    // Allow only whitespace characters after the boundary.
+    while (pos < len) {
+        if (!htp_is_space(data[pos])) {
+            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+        }
+        
+        pos++;
+    }
 
     #ifdef HTP_DEBUG
     fprint_bstr(stderr, "Multipart boundary", *boundary);
-    #endif
+    #endif   
+   
+    // Validate boundary characters.
+    htp_mpartp_validate_boundary(*boundary, flags);
 
     return HTP_OK;
 }

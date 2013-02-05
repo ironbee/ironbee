@@ -52,13 +52,16 @@ extern "C" {
 
 #define HTP_MULTIPART_LF_LINE                   0x0001
 #define HTP_MULTIPART_CRLF_LINE                 0x0002
-#define HTP_MULTIPART_BOUNDARY_LWS_AFTER        0x0004
-#define HTP_MULTIPART_BOUNDARY_NLWS_AFTER       0x0008
+#define HTP_MULTIPART_BBOUNDARY_LWS_AFTER       0x0004
+#define HTP_MULTIPART_BBOUNDARY_NLWS_AFTER      0x0008
 #define HTP_MULTIPART_HAS_PREAMBLE              0x0010
 #define HTP_MULTIPART_HAS_EPILOGUE              0x0020
 #define HTP_MULTIPART_SEEN_LAST_BOUNDARY        0x0040
 #define HTP_MULTIPART_PART_AFTER_LAST_BOUNDARY  0x0080
 #define HTP_MULTIPART_PART_INCOMPLETE           0x0100
+#define HTP_MULTIPART_HBOUNDARY_INVALID         0x0200
+#define HTP_MULTIPART_HBOUNDARY_UNUSUAL         0x0400
+#define HTP_MULTIPART_HBOUNDARY_QUOTED          0x0800
 
 #define HTP_MULTIPART_MIME_TYPE                 "multipart/form-data"
 
@@ -146,16 +149,28 @@ typedef struct htp_multipart_part_t {
 // Functions
 
 /**
- * Creates a new multipart/form-data parser.
+ * Creates a new multipart/form-data parser. On a successful invocation,
+ * the ownership of the boundary parameter is transferred to the parser.
  *
+ * @param[in] cfg
  * @param[in] boundary
- * @return New parser, or NULL on memory allocation failure.
+ * @return New parser instance, or NULL on memory allocation failure.
  */
-htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg);
+htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, bstr *boundary, uint64_t flags);
 
-htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, bstr *c_t_header);
-
-htp_status_t htp_mpartp_init_boundary_ex(htp_mpartp_t *parser, char *boundary);
+/**
+ * Looks for boundary in the supplied Content-Type request header. The extracted
+ * boundary will be allocated on the heap.
+ *
+ * @param[in] content_type
+ * @param[out] boundary
+ * @param[out] flags
+ * @return HTP_OK on success (boundary found), HTP_DECLINED if boundary was not found,
+ *         and HTP_ERROR on failure. Flags may be set on HTP_OK and HTP_DECLINED. For
+ *         example, if a boundary could not be extracted but there is indication that
+ *         one is supposed to be present, HTP_MULTIPART_HBOUNDARY_INVALID will be set.
+ */
+htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint64_t *flags);
 
 /**
  * Returns the multipart structure created by the parser.

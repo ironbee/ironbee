@@ -216,31 +216,50 @@ htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     htp_tx_t *tx = connp->in_tx;
 
     #ifdef HTP_DEBUG
-    fprintf(stderr, "htp_ch_multipart_callback_request_headers: Will parse MULTIPART body\n");
+    fprintf(stderr, "htp_ch_multipart_callback_request_headers: Need to determine if multipart body is present\n");
     #endif
-    
+
+    // The field tx->request_content_type does not contain the entire C-T
+    // value and so we cannot use it to look for a boundary, but we can
+    // use it for a quick check to determine if the C-T header exists.
     if (tx->request_content_type == NULL) {
         #ifdef HTP_DEBUG
-        fprintf(stderr, "htp_ch_multipart_callback_request_headers: Body not MULTIPART (no C-T header)\n");
+        fprintf(stderr, "htp_ch_multipart_callback_request_headers: Not multipart body (no C-T header)\n");
         #endif
 
         return HTP_OK;
     }
 
-    // Create parser instance
-    tx->request_mpartp = htp_mpartp_create(connp->cfg);
-    if (tx->request_mpartp == NULL) return HTP_ERROR;
+    // Look for a boundary.
 
     htp_header_t *ct = htp_table_get_c(tx->request_headers, "content-type");
-    htp_status_t rc = htp_mpartp_init_boundary(tx->request_mpartp, ct->value);    
+    if (ct == NULL) return HTP_ERROR;
+
+    bstr *boundary = NULL;
+    uint64_t flags = 0;
+
+    htp_status_t rc = htp_mpartp_find_boundary(ct->value, &boundary, &flags);
     if (rc != HTP_OK) {
         #ifdef HTP_DEBUG
-        fprintf(stderr, "htp_ch_multipart_callback_request_headers: Body not MULTIPART (boundary rc %d)\n", rc);
+        if (rc == HTP_DECLINED) {
+            fprintf(stderr, "htp_ch_multipart_callback_request_headers: Not multipart body\n");
+        }
         #endif
 
-        return rc; // No boundary or error.
+        // No boundary (HTP_DECLINED) or error (HTP_ERROR).
+        return rc; 
     }
+   
+    if (boundary == NULL) return HTP_ERROR;
 
+    // Create parser instance
+    tx->request_mpartp = htp_mpartp_create(connp->cfg, boundary, flags);
+    if (tx->request_mpartp == NULL) {
+        bstr_free(boundary);
+        return HTP_ERROR;
+    }   
+
+    // Configure file extraction.
     if (tx->cfg->extract_request_files) {
         tx->request_mpartp->extract_files = 1;
         tx->request_mpartp->extract_dir = connp->cfg->tmpdir;

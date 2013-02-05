@@ -114,11 +114,8 @@ protected:
         ASSERT_TRUE(bstr_cmp_c(field3->value, "GHIJKL") == 0);
     }
 
-    void parseParts(char *parts[]) {
-        char boundary[] = "0123456789";
-
-        mpartp = htp_mpartp_create(cfg);
-        htp_mpartp_init_boundary_ex(mpartp, boundary);
+    void parseParts(char *parts[]) {        
+        mpartp = htp_mpartp_create(cfg, bstr_dup_c("0123456789"), 0 /* flags */);
 
         size_t i = 0;
         for (;;) {
@@ -175,13 +172,13 @@ protected:
         tx = NULL;
     }
 
-    virtual void TearDown() {
-        if (connp != NULL) {
+    virtual void TearDown() {       
+        if (connp != NULL) {            
             htp_connp_destroy_all(connp);
         } else if (mpartp != NULL) {
             htp_mpartp_destroy(mpartp);
         }
-
+        
         if (cfg != NULL) {
             htp_config_destroy(cfg);
         }
@@ -199,9 +196,8 @@ protected:
 };
 
 TEST_F(Multipart, Test1) {
-    htp_mpartp_t *mpartp = htp_mpartp_create(cfg);
-    htp_mpartp_init_boundary_ex(mpartp, "---------------------------41184676334");
-
+    mpartp = htp_mpartp_create(cfg, bstr_dup_c("---------------------------41184676334"), 0 /* flags */);
+  
     char *parts[999];
 
     size_t i = 0;
@@ -242,13 +238,13 @@ TEST_F(Multipart, Test1) {
         htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
         i++;
     }
-
+   
     htp_mpartp_finalize(mpartp);
 
     // Examine the result
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
-
+    
     for (size_t i = 0, n = htp_list_size(body->parts); i < n; i++) {
         htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, i);
 
@@ -292,12 +288,12 @@ TEST_F(Multipart, Test1) {
     ASSERT_FALSE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
 
     htp_mpartp_destroy(mpartp);
+    mpartp = NULL;
 }
 
 TEST_F(Multipart, Test2) {
-    htp_mpartp_t *mpartp = htp_mpartp_create(cfg);
-    htp_mpartp_init_boundary_ex(mpartp, "BBB");
-
+    mpartp = htp_mpartp_create(cfg, bstr_dup_c("BBB"), 0 /* flags */);
+    
     const char *i1 = "x0000x\n--BBB\n\nx1111x\n--\nx2222x\n--";
     const char *i2 = "BBB\n\nx3333x\n--B";
     const char *i3 = "B\n\nx4444x\n--BB\r";
@@ -354,6 +350,7 @@ TEST_F(Multipart, Test2) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
 
     htp_mpartp_destroy(mpartp);
+    mpartp = NULL;
 }
 
 TEST_F(Multipart, BeginsWithoutLine) {
@@ -543,7 +540,7 @@ TEST_F(Multipart, BoundaryInstanceWithLwsAfter) {
 
     parsePartsThenVerify(parts);
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_BOUNDARY_LWS_AFTER);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_BBOUNDARY_LWS_AFTER);
 }
 
 TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter) {
@@ -562,7 +559,7 @@ TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter) {
 
     parsePartsThenVerify(parts);
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_BOUNDARY_NLWS_AFTER);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_BBOUNDARY_NLWS_AFTER);
 }
 
 TEST_F(Multipart, WithPreamble) {
