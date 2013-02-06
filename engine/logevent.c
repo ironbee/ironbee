@@ -273,3 +273,14 @@ ib_status_t ib_logevent_write_all(
 
     return IB_OK;
 }
+
+ib_status_t DLL_PUBLIC ib_logevent_suppress_set(
+    ib_logevent_t          *le,
+    ib_logevent_suppress_t  suppress)
+{
+    if (le == NULL) {
+        return IB_EINVAL;
+    }
+    le->suppress = suppress;
+    return IB_OK;
+}

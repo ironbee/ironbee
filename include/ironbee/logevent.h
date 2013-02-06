@@ -232,6 +232,18 @@ ib_status_t DLL_PUBLIC ib_logevent_data_set(
     size_t                  dlen);
 
 /**
+ * Set the suppression for the event.
+ *
+ * @param[in,out] le Log event
+ * @param[in] suppress Suppressionn setting for the event
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_suppress_set(
+    ib_logevent_t          *le,
+    ib_logevent_suppress_t  suppress);
+
+/**
  * @} IronBeeEngineLogEvent
  */
 
