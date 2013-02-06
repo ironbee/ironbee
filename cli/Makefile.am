@@ -14,6 +14,7 @@ else
 endif
 
 ibcli_LDADD = $(top_builddir)/engine/libironbee.la \
+  			  $(top_builddir)/util/libibutil.la \
               $(top_builddir)/libs/libhtp/htp/libhtp.la \
               $(ibcli_LDADD_extra) $(PCRE_LDADD)
 ibcli_LDFLAGS = $(AM_LDFLAGS) $(PCRE_LDFLAGS)
