@@ -850,3 +850,39 @@ TEST_F(Multipart, MultipleContentTypeHeadersEvasion) {
 
     ASSERT_TRUE(bstr_cmp_c(tx->request_content_type, "multipart/form-data") == 0);
 }
+
+TEST_F(Multipart, BoundaryNormal) {
+    char *inputs[] = {
+        "multipart/form-data; boundary=----WebKitFormBoundaryT4AfwQCOgIxNVwlD",
+        "multipart/form-data; boundary=---------------------------21071316483088",
+        "multipart/form-data; boundary=---------------------------7dd13e11c0452",
+        "multipart/form-data; boundary=----------2JL5oh7QWEDwyBllIRc7fh",
+        "multipart/form-data; boundary=----WebKitFormBoundaryre6zL3b0BelnTY5S",
+        NULL
+    };
+
+    char *outputs[] = {
+        "----WebKitFormBoundaryT4AfwQCOgIxNVwlD",
+        "---------------------------21071316483088",
+        "---------------------------7dd13e11c0452",
+        "----------2JL5oh7QWEDwyBllIRc7fh",
+        "----WebKitFormBoundaryre6zL3b0BelnTY5S",
+        NULL
+    };
+
+    for (size_t i = 0; inputs[i] != NULL; i++) {
+        bstr *input = bstr_dup_c(inputs[i]);
+        bstr *boundary = NULL;
+        uint64_t flags = 0;
+        
+        htp_status_t rc = htp_mpartp_find_boundary(input, &boundary, &flags);
+        ASSERT_EQ(HTP_OK, rc);
+
+        ASSERT_TRUE(boundary != NULL);        
+        ASSERT_TRUE(bstr_cmp_c(boundary, outputs[i]) == 0);
+        ASSERT_EQ(0, flags);
+
+        bstr_free(boundary);
+        bstr_free(input);
+    }
+}

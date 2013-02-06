@@ -252,7 +252,7 @@ htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
    
     if (boundary == NULL) return HTP_ERROR;
 
-    // Create parser instance
+    // Create a multipart parser instance.
     tx->request_mpartp = htp_mpartp_create(connp->cfg, boundary, flags);
     if (tx->request_mpartp == NULL) {
         bstr_free(boundary);

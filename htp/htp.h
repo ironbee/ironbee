@@ -407,8 +407,8 @@ struct htp_tx_t {
     int request_content_encoding;
 
     /**
-     * This field will contain the request content type when that information
-     * is available in request headers. The contents of the field will be converted
+     * This field contain the request content type when that information is
+     * available in request headers. The contents of the field will be converted
      * to lowercase and any parameters (e.g., character set information) removed.
      */
     bstr *request_content_type;

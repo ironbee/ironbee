@@ -143,7 +143,7 @@ int bstr_begins_with_mem(const bstr *haystack, const void *_data, size_t len) {
 
     if (pos == len) {
         return 1;
-    } else {
+    } else {        
         return 0;
     }
 }

@@ -1221,7 +1221,7 @@ static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) {
     while (pos < len) {
         if (!(((data[pos] >= '0') && (data[pos] <= '9'))
                 || ((data[pos] >= 'a') && (data[pos] <= 'z'))
-                || ((data[pos] >= 'A') && (data[pos] <= 'A'))
+                || ((data[pos] >= 'A') && (data[pos] <= 'Z'))
                 || (data[pos] == '-'))) {
             *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
         }
@@ -1256,7 +1256,7 @@ static int htp_martp_is_boundary_char_rfc_nospace(unsigned char c) {
     // DIGIT or ALNUM.
     if (((c >= '0') && (c <= '9'))
                 || ((c >= 'a') && (c <= 'z'))
-                || ((c >= 'A') && (c <= 'A'))) {
+                || ((c >= 'A') && (c <= 'Z'))) {
         return 1;
     }
 
@@ -1291,8 +1291,8 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
     int i = bstr_index_of_c_nocase(content_type, "boundary");
     if (i == -1) return HTP_DECLINED;
     
-    unsigned char *data = bstr_ptr(content_type) + i;
-    size_t len = bstr_len(content_type) - i;
+    unsigned char *data = bstr_ptr(content_type) + i + 8;
+    size_t len = bstr_len(content_type) - i - 8;
 
     // Look for the boundary value.
     size_t pos = 0;
@@ -1304,7 +1304,7 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
         } else {
             // But seeing a non-whitespace character
             // may indicate evasion.
-            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;            
         }
 
         pos++;
@@ -1312,7 +1312,7 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
 
     if (pos >= len) {
         // No equals sign in the header.
-        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;        
         return HTP_DECLINED;
     }
     
@@ -1342,7 +1342,7 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
         if (pos >= len) {
             // Ran out of space without seeing
             // the terminating double quote.
-            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;            
 
             // Include the starting double quote in the boundary.
             startpos--;
@@ -1364,14 +1364,14 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
 
     // Check for a zero-length boundary.
     if (bstr_len(*boundary) == 0) {
-        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;        
         return HTP_DECLINED;
     }
 
     // Allow only whitespace characters after the boundary.
     while (pos < len) {
         if (!htp_is_space(data[pos])) {
-            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;            
         }
         
         pos++;
@@ -1383,6 +1383,13 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
    
     // Validate boundary characters.
     htp_mpartp_validate_boundary(*boundary, flags);
+
+    // Correlate with the MIME type. This might be a tad too
+    // sensitive because it may catch non-browser access with sloppy
+    // implementations, but let's go with it for now.    
+    if (bstr_begins_with_c(content_type, "multipart/form-data;") == 0) {
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;        
+    }
 
     return HTP_OK;
 }
