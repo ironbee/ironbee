@@ -1172,3 +1172,20 @@ ib_status_t ib_state_notify_postprocess(ib_engine_t *ib,
 
     return IB_OK;
 }
+
+ib_status_t ib_state_notify_logevent(ib_engine_t *ib,
+                                     ib_tx_t *tx)
+{
+    assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
+    assert(tx != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_state_notify_tx(ib, handle_logevent_event, tx);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}

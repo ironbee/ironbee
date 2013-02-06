@@ -247,6 +247,18 @@ ib_status_t DLL_PUBLIC ib_state_notify_postprocess(ib_engine_t *ib,
 
 
 /**
+ * Notify the state machine that a logevent event has occurred
+ *
+ * @param ib Engine handle
+ * @param tx Transaction data
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_state_notify_logevent(ib_engine_t *ib,
+                                                ib_tx_t *tx);
+
+
+/**
  * @} IronBeeEngineState
  */
 #ifdef __cplusplus

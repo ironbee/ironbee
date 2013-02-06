@@ -221,6 +221,9 @@ static void ib_event_table_init(void)
     IB_EVENT_TABLE_INIT_ENT(response_body_data_event, IB_STATE_HOOK_TXDATA);
     IB_EVENT_TABLE_INIT_ENT(response_finished_event, IB_STATE_HOOK_TX);
 
+    /* Logevent updated */
+    IB_EVENT_TABLE_INIT_ENT(handle_logevent_event, IB_STATE_HOOK_TX);
+
     /* Sanity check the table, make sure all events are initiailzed */
     for(event = conn_started_event;  event < IB_STATE_EVENT_NUM;  ++event) {
         assert(ib_event_table[event].event_type == event);

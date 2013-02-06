@@ -683,6 +683,8 @@ function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
         l_arg = newTx(arg)
     elseif c_event == c.response_finished_event then
         l_arg = newTx(arg)
+    elseif c_event == c.handle_logevent_event then
+        l_arg = newTx(arg)
     else
         ib_log_error(l_ib,  "Unhandled event for module \"%s\": %d",
                      modname, ffi.cast("int", event))

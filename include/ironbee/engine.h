@@ -1018,6 +1018,9 @@ typedef enum {
     response_finished_event,       /**< Parser notified response finished
                                     * (Hook type:@ref ib_state_tx_hook_fn_t( */
 
+    /* Logevent updated */
+    handle_logevent_event,         /**< Logevent updated
+                                    * (Hook type:@ref ib_state_tx_hook_fn_t) */
 
     /* Not an event, but keeps track of the number of events. */
     IB_STATE_EVENT_NUM,

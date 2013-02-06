@@ -115,7 +115,9 @@ local stateToInt = {
     ["response_body_data_event"] =
         tonumber(ffi.C.response_body_data_event),
     ["response_finished_event"] =
-        tonumber(ffi.C.response_finished_event)
+        tonumber(ffi.C.response_finished_event),
+    ["handle_logevent_event"] =
+        tonumber(ffi.C.handle_logevent_event)
 }
 
 -- Build reverse map of stateToInt.
@@ -383,6 +385,7 @@ end
 --            - response_header_finished_event
 --            - response_body_data_event
 --            - response_finished_event
+--            - handle_logevent_event
 M.load_module = function(
     ib,
     ib_module,
