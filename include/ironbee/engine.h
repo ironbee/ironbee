@@ -950,8 +950,8 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
 /**
  * State Event Types
  *
- * @warning Remember to update ib_state_event_name_list[] when names change.
- * @warning Remember to update ib_state_event_hook_types[] when types change.
+ * @warning Remember to update ib_event_table_init() in engine.c when names
+ * change, states are added or removed, etc..
  */
 typedef enum {
     /* Engine States */

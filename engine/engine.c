@@ -21,6 +21,7 @@
  *
  * @author Brian Rectanus <brectanus@qualys.com>
  * @author Christopher Alfeld <calfeld@qualys.com>
+ * @author Nick LeRoy <nleroy@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -69,47 +70,23 @@ const ib_default_string_t ib_default_string = {
 const char *default_auditlog_index = "ironbee-index.log";
 
 /* -- Internal Structures -- */
+typedef struct {
+    ib_state_event_type_t  event_type; /**< Event type */
+    ib_state_hook_type_t   hook_type;  /**< Hook's type */
+    const char            *event_name; /**< Event name */
+} ib_event_type_data_t;
 
 /**
  * List of callback data types for event id to type lookups.
  */
-static const ib_state_hook_type_t ib_state_event_hook_types[IB_STATE_EVENT_NUM] = {
-    /* Engine States */
-    IB_STATE_HOOK_CONN,     /**< conn_started_event */
-    IB_STATE_HOOK_CONN,     /**< conn_finished_event */
-    IB_STATE_HOOK_TX,       /**< tx_started_event */
-    IB_STATE_HOOK_TX,       /**< tx_process_event */
-    IB_STATE_HOOK_TX,       /**< tx_finished_event */
+static ib_event_type_data_t ib_event_table[IB_STATE_EVENT_NUM];
+static bool ib_event_table_initialized = false;
 
-    /* Handler States */
-    IB_STATE_HOOK_CONN,     /**< handle_context_conn_event */
-    IB_STATE_HOOK_CONN,     /**< handle_connect_event */
-    IB_STATE_HOOK_TX,       /**< handle_context_tx_event */
-    IB_STATE_HOOK_TX,       /**< handle_request_header_event */
-    IB_STATE_HOOK_TX,       /**< handle_request_event */
-    IB_STATE_HOOK_TX,       /**< handle_response_header_event */
-    IB_STATE_HOOK_TX,       /**< handle_response_event */
-    IB_STATE_HOOK_CONN,     /**< handle_disconnect_event */
-    IB_STATE_HOOK_TX,       /**< handle_postprocess_event */
+#define IB_EVENT_TABLE_INIT_ENT(event,type)                     \
+    ib_event_table[event].event_type = event;                   \
+    ib_event_table[event].event_name = IB_STRINGIFY(event);     \
+    ib_event_table[event].hook_type = type
 
-    /* Server States */
-    IB_STATE_HOOK_CONN,     /**< conn_opened_event */
-    IB_STATE_HOOK_CONNDATA, /**< conn_data_in_event */
-    IB_STATE_HOOK_CONNDATA, /**< conn_data_out_event */
-    IB_STATE_HOOK_CONN,     /**< conn_closed_event */
-
-    /* Parser States */
-    IB_STATE_HOOK_REQLINE,  /**< request_started_event */
-    IB_STATE_HOOK_HEADER,   /**< request_header_data_event */
-    IB_STATE_HOOK_TX,       /**< request_header_finished_event */
-    IB_STATE_HOOK_TXDATA,   /**< request_body_data_event */
-    IB_STATE_HOOK_TX,       /**< request_finished_event */
-    IB_STATE_HOOK_RESPLINE, /**< response_started_event */
-    IB_STATE_HOOK_HEADER,   /**< response_header_data_event */
-    IB_STATE_HOOK_TX,       /**< response_header_finished_event */
-    IB_STATE_HOOK_TXDATA,   /**< response_body_data_event */
-    IB_STATE_HOOK_TX        /**< response_finished_event */
-};
 
 /* -- Internal Routines -- */
 
@@ -119,7 +96,7 @@ ib_status_t ib_hook_check(
     ib_state_hook_type_t hook_type
 ) {
     static const size_t num_events =
-        sizeof(ib_state_event_hook_types) / sizeof(ib_state_hook_type_t);
+        sizeof(ib_event_table) / sizeof(ib_event_type_data_t);
     ib_state_hook_type_t expected_hook_type;
 
     if (event > num_events) {
@@ -129,8 +106,8 @@ ib_status_t ib_hook_check(
         return IB_EINVAL;
     }
 
-    expected_hook_type = ib_state_event_hook_types[event];
-    if ( expected_hook_type != hook_type ) {
+    expected_hook_type = ib_event_table[event].hook_type;
+    if (expected_hook_type != hook_type) {
         ib_log_debug(ib,
                      "Event/hook mismatch: "
                      "Event type %s expected %d but received %d",
@@ -142,7 +119,7 @@ ib_status_t ib_hook_check(
     return IB_OK;
 }
 
-static ib_status_t ib_register_hook(
+static ib_status_t ib_hook_register(
     ib_engine_t* ib,
     ib_state_event_type_t event,
     ib_hook_t* hook
@@ -198,12 +175,70 @@ static ib_status_t ib_hook_unregister(
     return IB_ENOENT;
 }
 
+static void ib_event_table_init(void)
+{
+    ib_state_event_type_t       event;
+
+    if (ib_event_table_initialized) {
+        return;
+    };
+
+    memset(ib_event_table, 0, sizeof(ib_event_table));
+
+    /* Engine States */
+    IB_EVENT_TABLE_INIT_ENT(conn_started_event, IB_STATE_HOOK_CONN);
+    IB_EVENT_TABLE_INIT_ENT(conn_finished_event, IB_STATE_HOOK_CONN);
+    IB_EVENT_TABLE_INIT_ENT(tx_started_event, IB_STATE_HOOK_TX);
+    IB_EVENT_TABLE_INIT_ENT(tx_process_event, IB_STATE_HOOK_TX);
+    IB_EVENT_TABLE_INIT_ENT(tx_finished_event, IB_STATE_HOOK_TX);
+
+    /* Handler States */
+    IB_EVENT_TABLE_INIT_ENT(handle_context_conn_event, IB_STATE_HOOK_CONN);
+    IB_EVENT_TABLE_INIT_ENT(handle_connect_event, IB_STATE_HOOK_CONN);
+    IB_EVENT_TABLE_INIT_ENT(handle_context_tx_event, IB_STATE_HOOK_TX);
+    IB_EVENT_TABLE_INIT_ENT(handle_request_header_event, IB_STATE_HOOK_TX);
+    IB_EVENT_TABLE_INIT_ENT(handle_request_event, IB_STATE_HOOK_TX);
+    IB_EVENT_TABLE_INIT_ENT(handle_response_header_event, IB_STATE_HOOK_TX);
+    IB_EVENT_TABLE_INIT_ENT(handle_response_event, IB_STATE_HOOK_TX);
+    IB_EVENT_TABLE_INIT_ENT(handle_disconnect_event, IB_STATE_HOOK_CONN);
+    IB_EVENT_TABLE_INIT_ENT(handle_postprocess_event, IB_STATE_HOOK_TX);
+
+    /* Server States */
+    IB_EVENT_TABLE_INIT_ENT(conn_opened_event, IB_STATE_HOOK_CONN);
+    IB_EVENT_TABLE_INIT_ENT(conn_data_in_event, IB_STATE_HOOK_CONNDATA);
+    IB_EVENT_TABLE_INIT_ENT(conn_data_out_event, IB_STATE_HOOK_CONNDATA);
+    IB_EVENT_TABLE_INIT_ENT(conn_closed_event, IB_STATE_HOOK_CONN);
+
+    /* Parser States */
+    IB_EVENT_TABLE_INIT_ENT(request_started_event, IB_STATE_HOOK_REQLINE);
+    IB_EVENT_TABLE_INIT_ENT(request_header_data_event, IB_STATE_HOOK_HEADER);
+    IB_EVENT_TABLE_INIT_ENT(request_header_finished_event, IB_STATE_HOOK_TX);
+    IB_EVENT_TABLE_INIT_ENT(request_body_data_event, IB_STATE_HOOK_TXDATA);
+    IB_EVENT_TABLE_INIT_ENT(request_finished_event, IB_STATE_HOOK_TX);
+    IB_EVENT_TABLE_INIT_ENT(response_started_event, IB_STATE_HOOK_RESPLINE);
+    IB_EVENT_TABLE_INIT_ENT(response_header_data_event, IB_STATE_HOOK_HEADER);
+    IB_EVENT_TABLE_INIT_ENT(response_header_finished_event, IB_STATE_HOOK_TX);
+    IB_EVENT_TABLE_INIT_ENT(response_body_data_event, IB_STATE_HOOK_TXDATA);
+    IB_EVENT_TABLE_INIT_ENT(response_finished_event, IB_STATE_HOOK_TX);
+
+    /* Sanity check the table, make sure all events are initiailzed */
+    for(event = conn_started_event;  event < IB_STATE_EVENT_NUM;  ++event) {
+        assert(ib_event_table[event].event_type == event);
+        assert(ib_event_table[event].hook_type != IB_STATE_HOOK_INVALID);
+        assert(ib_event_table[event].event_name != NULL);
+    }
+
+    ib_event_table_initialized = true;
+};
+
 /* -- Main Engine Routines -- */
 
 ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
 {
     ib_mpool_t *pool;
     ib_status_t rc;
+
+    ib_event_table_init();
 
     /* Create primary memory pool */
     rc = ib_mpool_create(&pool, "engine", NULL);
@@ -1024,68 +1059,22 @@ void ib_tx_destroy(ib_tx_t *tx)
 
 /* -- State Routines -- */
 
-/**
- * List of state names for id to name lookups.
- *
- * @warning Remember to update ib_state_event_type_t.
- *
- */
-static const char *ib_state_event_name_list[] = {
-    /* Engine States */
-    IB_STRINGIFY(conn_started_event),
-    IB_STRINGIFY(conn_finished_event),
-    IB_STRINGIFY(tx_started_event),
-    IB_STRINGIFY(tx_process_event),
-    IB_STRINGIFY(tx_finished_event),
-
-    /* Handler States */
-    IB_STRINGIFY(handle_context_conn_event),
-    IB_STRINGIFY(handle_connect_event),
-    IB_STRINGIFY(handle_context_tx_event),
-    IB_STRINGIFY(handle_request_header_event),
-    IB_STRINGIFY(handle_request_event),
-    IB_STRINGIFY(handle_response_header_event),
-    IB_STRINGIFY(handle_response_event),
-    IB_STRINGIFY(handle_disconnect_event),
-    IB_STRINGIFY(handle_postprocess_event),
-
-    /* Server States */
-    IB_STRINGIFY(conn_opened_event),
-    IB_STRINGIFY(conn_data_in_event),
-    IB_STRINGIFY(conn_data_out_event),
-    IB_STRINGIFY(conn_closed_event),
-
-    /* Parser States */
-    IB_STRINGIFY(request_started_event),
-    IB_STRINGIFY(request_header_data_event),
-    IB_STRINGIFY(request_header_finished_event),
-    IB_STRINGIFY(request_body_data_event),
-    IB_STRINGIFY(request_finished_event),
-    IB_STRINGIFY(response_started_event),
-    IB_STRINGIFY(response_header_data_event),
-    IB_STRINGIFY(response_header_finished_event),
-    IB_STRINGIFY(response_body_data_event),
-    IB_STRINGIFY(response_finished_event),
-
-    NULL
-};
-
 const char *ib_state_event_name(ib_state_event_type_t event)
 {
-    return ib_state_event_name_list[event];
+    return ib_event_table[event].event_name;
 }
 /* -- Hook Routines -- */
 
 ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event)
 {
     static const size_t num_events =
-        sizeof(ib_state_event_hook_types) / sizeof(ib_state_hook_type_t);
+        sizeof(ib_event_table) / sizeof(ib_event_type_data_t);
 
     if (event > num_events) {
         return IB_STATE_HOOK_INVALID;
     }
 
-    return ib_state_event_hook_types[event];
+    return ib_event_table[event].hook_type;
 }
 
 ib_status_t DLL_PUBLIC ib_hook_null_register(
@@ -1111,7 +1100,7 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
     hook->cdata = cdata;
     hook->next = NULL;
 
-    rc = ib_register_hook(ib, event, hook);
+    rc = ib_hook_register(ib, event, hook);
 
     return rc;
 }
@@ -1156,7 +1145,7 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
     hook->cdata = cdata;
     hook->next = NULL;
 
-    rc = ib_register_hook(ib, event, hook);
+    rc = ib_hook_register(ib, event, hook);
 
     return rc;
 }
@@ -1201,7 +1190,7 @@ ib_status_t DLL_PUBLIC ib_hook_conndata_register(
     hook->cdata = cdata;
     hook->next = NULL;
 
-    rc = ib_register_hook(ib, event, hook);
+    rc = ib_hook_register(ib, event, hook);
 
     return rc;
 }
@@ -1246,7 +1235,7 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
     hook->cdata = cdata;
     hook->next = NULL;
 
-    rc = ib_register_hook(ib, event, hook);
+    rc = ib_hook_register(ib, event, hook);
 
     return rc;
 }
@@ -1291,7 +1280,7 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
     hook->cdata = cdata;
     hook->next = NULL;
 
-    rc = ib_register_hook(ib, event, hook);
+    rc = ib_hook_register(ib, event, hook);
 
     return rc;
 }
@@ -1336,7 +1325,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
     hook->cdata = cdata;
     hook->next = NULL;
 
-    rc = ib_register_hook(ib, event, hook);
+    rc = ib_hook_register(ib, event, hook);
 
     return rc;
 }
@@ -1381,7 +1370,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
     hook->cdata = cdata;
     hook->next = NULL;
 
-    rc = ib_register_hook(ib, event, hook);
+    rc = ib_hook_register(ib, event, hook);
 
     return rc;
 }
@@ -1426,7 +1415,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
     hook->cdata = cdata;
     hook->next = NULL;
 
-    rc = ib_register_hook(ib, event, hook);
+    rc = ib_hook_register(ib, event, hook);
 
     return rc;
 }
