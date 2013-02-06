@@ -39,50 +39,6 @@ extern "C" {
  * @{
  */
 
-/**
- * Add an event to be logged.
- *
- * @param tx Transaction
- * @param e Event
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_logevent_add(ib_tx_t       *tx,
-                                       ib_logevent_t *e);
-
-/**
- * Remove an event from the queue before it is logged.
- *
- * @param tx Transaction
- * @param id Event id
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_logevent_remove(ib_tx_t  *tx,
-                                          uint32_t  id);
-
-/**
- * Get a list of pending events to be logged.
- *
- * @note The list can be modified directly.
- *
- * @param tx Transaction
- * @param pevents Address where list of events is written
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_logevent_get_all(ib_tx_t    *tx,
-                                           ib_list_t **pevents);
-
-/**
- * Write out any pending events to the log.
- *
- * @param tx Transaction
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_logevent_write_all(ib_tx_t *tx);
-
 /** Log Event Type */
 typedef enum {
     IB_LEVENT_TYPE_UNKNOWN,          /**< Unknown type */
@@ -112,24 +68,6 @@ typedef enum {
     IB_LEVENT_SUPPRESS_OTHER         /**< Other reason. */
 } ib_logevent_suppress_t;
 
-/**
- * Lookup log event type name.
- *
- * @param num Numeric ID
- *
- * @returns String name
- */
-const DLL_PUBLIC char *ib_logevent_type_name(ib_logevent_type_t num);
-
-/**
- * Lookup log event action name.
- *
- * @param num Numeric ID
- *
- * @returns String name
- */
-const DLL_PUBLIC char *ib_logevent_action_name(ib_logevent_action_t num);
-
 /** Log Event Structure */
 struct ib_logevent_t {
     ib_mpool_t              *mp;         /**< Memory pool */
@@ -148,6 +86,75 @@ struct ib_logevent_t {
 };
 
 /**
+ * Add an event to be logged.
+ *
+ * @param[in,out] tx Transaction
+ * @param[in] le Event
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_add(
+    ib_tx_t                *tx,
+    ib_logevent_t          *le);
+
+/**
+ * Remove an event from the queue before it is logged.
+ *
+ * @param[in,out] tx Transaction
+ * @param[in] id Event id
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_remove(
+    ib_tx_t                *tx,
+    uint32_t                id);
+
+/**
+ * Get a list of pending events to be logged.
+ *
+ * @note The list can be modified directly.
+ *
+ * @param[in] tx Transaction
+ * @param[out] pevents Address where list of events is written
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_get_all(
+    ib_tx_t                *tx,
+    ib_list_t             **pevents);
+
+/**
+ * Write out any pending events to the log.
+ *
+ * @param[in] tx Transaction
+ *
+ * @returns Status code
+ */
+ib_status_t DLL_PUBLIC ib_logevent_write_all(
+    ib_tx_t                *tx);
+
+/**
+ * Lookup log event type name.
+ *
+ * @param[in] num Numeric ID
+ *
+ * @returns String name
+ */
+const DLL_PUBLIC char *ib_logevent_type_name(
+    ib_logevent_type_t      num);
+
+/**
+ * Lookup log event action name.
+ *
+ * @param[in] num Numeric ID
+ *
+ * @returns String name
+ */
+const DLL_PUBLIC char *ib_logevent_action_name(
+    ib_logevent_action_t    num);
+
+
+/**
  * Create a logevent.
  *
  * @param[out] ple Address which new logevent is written
@@ -161,63 +168,68 @@ struct ib_logevent_t {
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
-                                          ib_mpool_t *pool,
-                                          const char *rule_id,
-                                          ib_logevent_type_t type,
-                                          ib_logevent_action_t rec_action,
-                                          uint8_t confidence,
-                                          uint8_t severity,
-                                          const char *fmt,
-                                          ...);
+ib_status_t DLL_PUBLIC ib_logevent_create(
+    ib_logevent_t         **ple,
+    ib_mpool_t             *pool,
+    const char             *rule_id,
+    ib_logevent_type_t      type,
+    ib_logevent_action_t    rec_action,
+    uint8_t                 confidence,
+    uint8_t                 severity,
+    const char             *fmt,
+    ...);
 
 /**
  * Add a tag to the event.
  *
- * @param[in] le Log event
+ * @param[in,out] le Log event
  * @param[in] tag Tag to add (string will be copied)
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_logevent_tag_add(ib_logevent_t *le,
-                                           const char *tag);
+ib_status_t DLL_PUBLIC ib_logevent_tag_add(
+    ib_logevent_t          *le,
+    const char             *tag);
 
 /**
  * Add a field name to the event.
  *
- * @param[in] le Log event
+ * @param[in,out] le Log event
  * @param[in] name Field name to add (string will be copied)
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
-                                             const char *name);
+ib_status_t DLL_PUBLIC ib_logevent_field_add(
+    ib_logevent_t          *le,
+    const char             *name);
 
 /**
  * Add a field name to the event (ex version).
  *
- * @param[in] le Log event
+ * @param[in,out] le Log event
  * @param[in] name Field name to add (string will be copied)
  * @param[in] nlen Length of @a name
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_logevent_field_add_ex(ib_logevent_t *le,
-                                                const char *name,
-                                                size_t nlen);
+ib_status_t DLL_PUBLIC ib_logevent_field_add_ex(
+    ib_logevent_t          *le,
+    const char             *name,
+    size_t                  nlen);
 
 /**
  * Set data for the event.
  *
- * @param[in] le Log event
+ * @param[in,out] le Log event
  * @param[in] data Arbitrary binary data
  * @param[in] dlen Data length
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
-                                            const void *data,
-                                            size_t dlen);
+ib_status_t DLL_PUBLIC ib_logevent_data_set(
+    ib_logevent_t          *le,
+    const void             *data,
+    size_t                  dlen);
 
 /**
  * @} IronBeeEngineLogEvent

@@ -75,15 +75,15 @@ const char *ib_logevent_action_name(ib_logevent_action_t num)
     return ib_logevent_action_str[num];
 }
 
-ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
-                                          ib_mpool_t *pool,
-                                          const char *rule_id,
-                                          ib_logevent_type_t type,
-                                          ib_logevent_action_t rec_action,
-                                          uint8_t confidence,
-                                          uint8_t severity,
-                                          const char *fmt,
-                                          ...)
+ib_status_t ib_logevent_create(ib_logevent_t **ple,
+                               ib_mpool_t *pool,
+                               const char *rule_id,
+                               ib_logevent_type_t type,
+                               ib_logevent_action_t rec_action,
+                               uint8_t confidence,
+                               uint8_t severity,
+                               const char *fmt,
+                               ...)
 {
     /*
      * Defined so that size_t to int cast is avoided
@@ -129,8 +129,8 @@ ib_status_t DLL_PUBLIC ib_logevent_create(ib_logevent_t **ple,
     return IB_OK;
 }
 
-ib_status_t DLL_PUBLIC ib_logevent_tag_add(ib_logevent_t *le,
-                                           const char *tag)
+ib_status_t ib_logevent_tag_add(ib_logevent_t *le,
+                                const char *tag)
 {
     char *tag_copy;
     ib_status_t rc;
@@ -150,8 +150,8 @@ ib_status_t DLL_PUBLIC ib_logevent_tag_add(ib_logevent_t *le,
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
-                                             const char *name)
+ib_status_t ib_logevent_field_add(ib_logevent_t *le,
+                                  const char *name)
 {
     char *name_copy;
     ib_status_t rc;
@@ -171,9 +171,9 @@ ib_status_t DLL_PUBLIC ib_logevent_field_add(ib_logevent_t *le,
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_logevent_field_add_ex(ib_logevent_t *le,
-                                                const char *name,
-                                                size_t nlen)
+ib_status_t ib_logevent_field_add_ex(ib_logevent_t *le,
+                                     const char *name,
+                                     size_t nlen)
 {
     char *name_copy;
     ib_status_t rc;
@@ -193,9 +193,9 @@ ib_status_t DLL_PUBLIC ib_logevent_field_add_ex(ib_logevent_t *le,
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_logevent_data_set(ib_logevent_t *le,
-                                            const void *data,
-                                            size_t dlen)
+ib_status_t ib_logevent_data_set(ib_logevent_t *le,
+                                 const void *data,
+                                 size_t dlen)
 {
     assert(le != NULL);
 
@@ -241,8 +241,9 @@ ib_status_t ib_logevent_remove(ib_tx_t *tx,
     return IB_ENOENT;
 }
 
-ib_status_t ib_logevent_get_all(ib_tx_t    *tx,
-                                ib_list_t **pevents)
+ib_status_t ib_logevent_get_all(
+    ib_tx_t    *tx,
+    ib_list_t **pevents)
 {
     if (tx == NULL) {
         return IB_EINVAL;
@@ -252,7 +253,8 @@ ib_status_t ib_logevent_get_all(ib_tx_t    *tx,
     return IB_OK;
 }
 
-ib_status_t ib_logevent_write_all(ib_tx_t *tx)
+ib_status_t ib_logevent_write_all(
+    ib_tx_t   *tx)
 {
     if (tx == NULL) {
         return IB_EINVAL;
