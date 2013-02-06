@@ -1285,7 +1285,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
             ib_field_t *tx_tags;
             ib_field_t *tx_threat_level;
             ib_num_t threat_level = 0;
-            int do_threat_calc = 1;
+            bool do_threat_calc = true;
             int num_events = 0;
 
             ib_field_create(&tx_action, pool,
@@ -1328,7 +1328,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                 rc = ib_field_value(f, ib_ftype_num_out(&threat_level));
                 if (rc == IB_OK) {
                     ib_log_debug_tx(tx, "Using THREAT_LEVEL as threat level value.");
-                    do_threat_calc = 0;
+                    do_threat_calc = false;
                 }
                 else {
                     ib_log_debug_tx(tx, "No numeric THREAT_LEVEL to use as threat level value.");
@@ -1354,7 +1354,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
                     continue;
                 }
 
-                if (do_threat_calc != 0) {
+                if (do_threat_calc) {
                     /* The threat_level is average severity. */
                     if (e->severity > 0) {
                         threat_level += e->severity;
@@ -1383,7 +1383,7 @@ static ib_status_t ib_auditlog_add_part_header(ib_auditlog_t *log)
             }
 
             /* Use the average threat level. */
-            if ((do_threat_calc != 0) && (num_events > 0)) {
+            if ((do_threat_calc) && (num_events > 0)) {
                 threat_level /= num_events;
             }
             ib_field_setv(tx_threat_level, ib_ftype_num_in(&threat_level));
