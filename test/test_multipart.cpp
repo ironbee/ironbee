@@ -857,7 +857,7 @@ TEST_F(Multipart, BoundaryNormal) {
         "multipart/form-data; boundary=---------------------------21071316483088",
         "multipart/form-data; boundary=---------------------------7dd13e11c0452",
         "multipart/form-data; boundary=----------2JL5oh7QWEDwyBllIRc7fh",
-        "multipart/form-data; boundary=----WebKitFormBoundaryre6zL3b0BelnTY5S",
+        "multipart/form-data; boundary=----WebKitFormBoundaryre6zL3b0BelnTY5S",        
         NULL
     };
 
@@ -866,7 +866,7 @@ TEST_F(Multipart, BoundaryNormal) {
         "---------------------------21071316483088",
         "---------------------------7dd13e11c0452",
         "----------2JL5oh7QWEDwyBllIRc7fh",
-        "----WebKitFormBoundaryre6zL3b0BelnTY5S",
+        "----WebKitFormBoundaryre6zL3b0BelnTY5S",        
         NULL
     };
 
@@ -874,6 +874,8 @@ TEST_F(Multipart, BoundaryNormal) {
         bstr *input = bstr_dup_c(inputs[i]);
         bstr *boundary = NULL;
         uint64_t flags = 0;
+
+        SCOPED_TRACE(inputs[i]);
         
         htp_status_t rc = htp_mpartp_find_boundary(input, &boundary, &flags);
         ASSERT_EQ(HTP_OK, rc);
@@ -881,6 +883,107 @@ TEST_F(Multipart, BoundaryNormal) {
         ASSERT_TRUE(boundary != NULL);        
         ASSERT_TRUE(bstr_cmp_c(boundary, outputs[i]) == 0);
         ASSERT_EQ(0, flags);
+
+        bstr_free(boundary);
+        bstr_free(input);
+    }
+}
+
+TEST_F(Multipart, BoundaryParsing) {
+    char *inputs[] = {
+        "multipart/form-data; boundary=1 ",
+        "multipart/form-data; boundary=1, boundary=2",
+        "multipart/form-data; boundary=\"1\"",
+        "multipart/form-data; boundary=\"1\" ",
+        "multipart/form-data; boundary=\"1",
+        NULL
+    };
+
+    char *outputs[] = {
+        "1",
+        "1",
+        "1",
+        "1",
+        "\"1",
+        NULL
+    };
+
+    for (size_t i = 0; inputs[i] != NULL; i++) {
+        bstr *input = bstr_dup_c(inputs[i]);
+        bstr *boundary = NULL;
+        uint64_t flags = 0;
+
+        SCOPED_TRACE(inputs[i]);
+
+        htp_status_t rc = htp_mpartp_find_boundary(input, &boundary, &flags);
+        ASSERT_EQ(HTP_OK, rc);
+
+        ASSERT_TRUE(boundary != NULL);        
+        ASSERT_TRUE(bstr_cmp_c(boundary, outputs[i]) == 0);
+
+        bstr_free(boundary);
+        bstr_free(input);
+    }
+}
+
+TEST_F(Multipart, BoundaryInvalid) {
+    char *inputs[] = {
+        "multipart/form-data boundary=1",        
+        "multipart/form-data ; boundary=1",
+        "multipart/form-data, boundary=1",
+        "multipart/form-data , boundary=1",
+        "multipart/form-datax; boundary=1",
+        "multipart/; boundary=1",
+        "multipart; boundary=1",
+        "application/octet-stream; boundary=1",
+        "boundary=1",
+        "multipart/form-data; boundary=",
+        "multipart/form-data; boundary=\"\"",
+        "multipart/form-data; bounDary=1",
+        "multipart/form-data; boundary=1; boundary=2",
+        "multipart/form-data boundary=1 2",
+        "multipart/form-data boundary=1-2",
+        NULL
+    };   
+
+    for (size_t i = 0; inputs[i] != NULL; i++) {
+        bstr *input = bstr_dup_c(inputs[i]);
+        bstr *boundary = NULL;
+        uint64_t flags = 0;
+
+        SCOPED_TRACE(inputs[i]);
+
+        htp_status_t rc = htp_mpartp_find_boundary(input, &boundary, &flags);
+        ASSERT_TRUE(rc != HTP_ERROR);
+               
+        ASSERT_TRUE(flags & HTP_MULTIPART_HBOUNDARY_INVALID);
+
+        bstr_free(boundary);
+        bstr_free(input);
+    }
+}
+
+TEST_F(Multipart, BoundaryUnusual) {
+    char *inputs[] = {
+        "multipart/form-data; boundary=1 ",
+        "multipart/form-data; boundary =1",
+        "multipart/form-data; boundary= 1",
+        "multipart/form-data; boundary=\"1\"",
+        NULL
+    };
+
+    for (size_t i = 0; inputs[i] != NULL; i++) {
+        bstr *input = bstr_dup_c(inputs[i]);
+        bstr *boundary = NULL;
+        uint64_t flags = 0;
+
+        SCOPED_TRACE(inputs[i]);
+
+        htp_status_t rc = htp_mpartp_find_boundary(input, &boundary, &flags);
+        ASSERT_EQ(HTP_OK, rc);
+
+        ASSERT_TRUE(boundary != NULL);
+        ASSERT_TRUE(flags & HTP_MULTIPART_HBOUNDARY_UNUSUAL);
 
         bstr_free(boundary);
         bstr_free(input);

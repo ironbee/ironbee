@@ -1164,14 +1164,14 @@ STATE_SWITCH:
     return HTP_OK;
 }
 
-static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) { 
+static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) {
     /*
      Chrome: Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryT4AfwQCOgIxNVwlD
     Firefox: Content-Type: multipart/form-data; boundary=---------------------------21071316483088
        MSIE: Content-Type: multipart/form-data; boundary=---------------------------7dd13e11c0452
       Opera: Content-Type: multipart/form-data; boundary=----------2JL5oh7QWEDwyBllIRc7fh
      Safari: Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryre6zL3b0BelnTY5S
-     */    
+     */
 
     unsigned char *data = bstr_ptr(boundary);
     size_t len = bstr_len(boundary);
@@ -1198,6 +1198,7 @@ static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) {
 
 }
 
+#if 0
 static int htp_martp_is_boundary_char_rfc_nospace(unsigned char c) {
     /*
 
@@ -1222,14 +1223,14 @@ static int htp_martp_is_boundary_char_rfc_nospace(unsigned char c) {
 
     // DIGIT or ALNUM.
     if (((c >= '0') && (c <= '9'))
-                || ((c >= 'a') && (c <= 'z'))
-                || ((c >= 'A') && (c <= 'Z'))) {
+            || ((c >= 'a') && (c <= 'z'))
+            || ((c >= 'A') && (c <= 'Z'))) {
         return 1;
     }
 
     // Allowed separators.
-    switch(c) {
-        case '\'' :
+    switch (c) {
+        case '\'':
         case '(':
         case ')':
         case '+':
@@ -1247,17 +1248,55 @@ static int htp_martp_is_boundary_char_rfc_nospace(unsigned char c) {
 
     return 0;
 }
+#endif
+
+static void htp_mpartp_validate_content_type(bstr *content_type, uint64_t *flags) {    
+    unsigned char *data = bstr_ptr(content_type);
+    size_t len = bstr_len(content_type);
+    size_t counter = 0;   
+
+    while (len > 0) {
+        int i = bstr_util_mem_index_of_c_nocase(data, len, "boundary");
+        if (i == -1) break;
+
+        data = data + i;
+        len = len - i;
+
+        // In order to work around the fact that WebKit actually uses
+        // the word "boundary" in their boundary, we also require one
+        // equals character the follow the words.
+        // "multipart/form-data; boundary=----WebKitFormBoundaryT4AfwQCOgIxNVwlD"
+        if (memchr(data, '=', len) == NULL) break;
+
+        counter++;
+
+        // Check for case variations.        
+        for (size_t j = 0; j < 8; j++) {        
+            if (!((*data >= 'a') && (*data <= 'z'))) {                
+                *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;                
+            }
+
+            data++;
+            len--;
+        }
+    }
+
+    // How many boundaries have we seen?
+    if (counter > 1) {
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;        
+    }
+}
 
 htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint64_t *flags) {
     if ((content_type == NULL) || (boundary == NULL) || (flags == NULL)) return HTP_ERROR;
-
+    
     // Reset flags.
     *flags = 0;
 
     // Look for the boundary, case insensitive.
     int i = bstr_index_of_c_nocase(content_type, "boundary");
     if (i == -1) return HTP_DECLINED;
-    
+
     unsigned char *data = bstr_ptr(content_type) + i + 8;
     size_t len = bstr_len(content_type) - i - 8;
 
@@ -1271,7 +1310,7 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
         } else {
             // But seeing a non-whitespace character
             // may indicate evasion.
-            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;            
+            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
         }
 
         pos++;
@@ -1279,10 +1318,10 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
 
     if (pos >= len) {
         // No equals sign in the header.
-        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;        
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
         return HTP_DECLINED;
     }
-    
+
     // Go over the '=' character.
     pos++;
 
@@ -1296,20 +1335,23 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
 
         pos++;
     }
-
+    
     if (data[pos] == '"') {
         // Quoted boundary.
 
+        // Possibly not very unusual, but let's see.
+        *flags |= HTP_MULTIPART_HBOUNDARY_UNUSUAL;
+
         pos++; // Over the double quote.
-        size_t startpos = pos + 1; // Starting position of the boundary.
+        size_t startpos = pos; // Starting position of the boundary.
 
         // Look for the terminating double quote.
-        while ((pos < len)&&(data[pos] != '"')) pos++;
-
+        while ((pos < len) && (data[pos] != '"')) pos++;
+        
         if (pos >= len) {
             // Ran out of space without seeing
             // the terminating double quote.
-            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;            
+            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
 
             // Include the starting double quote in the boundary.
             startpos--;
@@ -1317,46 +1359,65 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
 
         *boundary = bstr_dup_mem(data + startpos, pos - startpos);
         if (*boundary == NULL) return HTP_ERROR;
+
+        pos++; // Over the double quote.
     } else {
         // Boundary not quoted.
 
         size_t startpos = pos;
 
-        // Find the end of the boundary.
-        while ((pos < len)&&(htp_martp_is_boundary_char_rfc_nospace(data[pos]))) pos++;
+        // Find the end of the boundary. For the time being, we replicate
+        // the behavior of PHP 5.4.x. This may result with a boundary that's
+        // closer to what would be accepted in real life. Our subsequent
+        // checks of boundary characters will catch irregularities.
+        while ((pos < len) && (data[pos] != ',') && (data[pos] != ';') && (!htp_is_space(data[pos]))) pos++;
 
         *boundary = bstr_dup_mem(data + startpos, pos - startpos);
         if (*boundary == NULL) return HTP_ERROR;
-    }   
+    }
 
     // Check for a zero-length boundary.
     if (bstr_len(*boundary) == 0) {
-        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;        
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
         return HTP_DECLINED;
     }
-
+        
     // Allow only whitespace characters after the boundary.
+    int seen_space = 0, seen_non_space = 0;
+    
     while (pos < len) {
         if (!htp_is_space(data[pos])) {
-            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;            
+            seen_non_space = 1;
+        } else {
+            seen_space = 1;
         }
-        
+
         pos++;
     }
-
+    
+    // Raise INVALID if we see any non-space characters,
+    // but raise UNUSUAL if we see _only_ space characters.
+    if (seen_non_space) {
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+    } else if (seen_space) {
+        *flags |= HTP_MULTIPART_HBOUNDARY_UNUSUAL;
+    }    
+  
     #ifdef HTP_DEBUG
     fprint_bstr(stderr, "Multipart boundary", *boundary);
     #endif   
-   
+
     // Validate boundary characters.
     htp_mpartp_validate_boundary(*boundary, flags);
-
+   
     // Correlate with the MIME type. This might be a tad too
     // sensitive because it may catch non-browser access with sloppy
     // implementations, but let's go with it for now.    
     if (bstr_begins_with_c(content_type, "multipart/form-data;") == 0) {
-        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;        
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
     }
+    
+    htp_mpartp_validate_content_type(content_type, flags);   
 
     return HTP_OK;
 }
