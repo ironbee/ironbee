@@ -229,7 +229,7 @@ TEST_F(TestIBUtilList, test_list_loop_safe)
     int *val;
     int i;
 
-    rc = ib_initialize();
+    rc = ib_util_initialize();
     ASSERT_EQ(IB_OK, rc);
 
     rc = ib_list_create(&list, MemPool());

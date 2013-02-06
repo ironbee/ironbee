@@ -93,6 +93,24 @@ struct ib_auditlog_part_t {
 /// @todo Maybe a ib_create_ex() that takes a config?
 
 /**
+ * Initialize IronBee (before engine creation)
+ *
+ * @returns Status code
+ *    - IB_OK
+ *    - Errors returned by ib_util_initialize()
+ */
+ib_status_t DLL_PUBLIC ib_initialize(void);
+
+/**
+ * Shutdown IronBee (After engine destruction)
+ *
+ * @returns Status code
+ *    - IB_OK
+ *    - Errors returned by ib_util_shutdown()
+ */
+ib_status_t DLL_PUBLIC ib_shutdown(void);
+
+/**
  * Create an engine handle.
  *
  * After creating the engine, the caller must configure defaults, such as

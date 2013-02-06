@@ -233,7 +233,7 @@ FILE *ib_util_fdup(FILE *fh, const char *mode)
 
 /* -- Library Setup -- */
 
-ib_status_t ib_initialize(void)
+ib_status_t ib_util_initialize(void)
 {
     ib_status_t rc;
 
@@ -260,7 +260,7 @@ ib_status_t ib_initialize(void)
     return IB_OK;
 }
 
-void ib_shutdown(void)
+void ib_util_shutdown(void)
 {
     ib_uuid_shutdown();
 

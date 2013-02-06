@@ -40,7 +40,7 @@ public:
     {
         ib_status_t rc;
 
-        ib_initialize();
+        ib_util_initialize();
 
         rc = ib_mpool_create(&m_pool, NULL, NULL);
         if (rc != IB_OK) {
@@ -51,7 +51,7 @@ public:
     ~TestIBUtilAhoCorasick()
     {
         ib_mpool_destroy(m_pool);
-        ib_shutdown();
+        ib_util_shutdown();
     }
 
 protected:

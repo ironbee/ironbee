@@ -41,12 +41,12 @@ class TestIBUtilField : public SimpleFixture
 public:
     TestIBUtilField()
     {
-        ib_initialize();
+        ib_util_initialize();
     }
 
     ~TestIBUtilField()
     {
-        ib_shutdown();
+        ib_util_shutdown();
     }
 };
 

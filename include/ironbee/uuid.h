@@ -58,14 +58,14 @@ typedef union {
 /**
  * Initialize UUID library.
  *
- * ib_initialize() will call this.
+ * ib_util_initialize() will call this.
  */
 ib_status_t DLL_PUBLIC ib_uuid_initialize(void);
 
 /**
  * Shutdown UUID library.
  *
- * ib_shutdown() will call this.
+ * ib_util_shutdown() will call this.
  */
 ib_status_t DLL_PUBLIC ib_uuid_shutdown(void);
 

@@ -240,7 +240,7 @@ void DLL_PUBLIC *ib_util_memdup(ib_mpool_t *mp,
 FILE DLL_PUBLIC *ib_util_fdup(FILE *fh, const char *mode);
 
 /**
- * Initialize the IB lib.
+ * Initialize the IB utilities lib.
  *
  * @returns Status code
  *
@@ -248,16 +248,16 @@ FILE DLL_PUBLIC *ib_util_fdup(FILE *fh, const char *mode);
  * Implemented in: util/util.c
  * Tested in:
  */
-ib_status_t DLL_PUBLIC ib_initialize(void);
+ib_status_t DLL_PUBLIC ib_util_initialize(void);
 
 /**
- * Shutdown the IB lib.
+ * Shutdown the IB utilities lib.
  *
  * @internal
  * Implemented in: util/util.c
  * Tested in:
  */
-void DLL_PUBLIC ib_shutdown(void);
+void DLL_PUBLIC ib_util_shutdown(void);
 
 /**
  * Test if any of a set of flags is set

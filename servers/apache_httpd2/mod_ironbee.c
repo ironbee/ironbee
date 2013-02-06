@@ -39,8 +39,8 @@
 #include <ironbee/server.h>
 #include <ironbee/core.h>
 #include <ironbee/state_notify.h>
-#include <ironbee/util.h>
 #include <ironbee/regex.h>
+#include <ironbee/util.h>
 
 /* Hack to detect 2.2 vs 2.4 server versions.
  * This is a 2.3.x version shortly after the module declaration syntax changed

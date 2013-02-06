@@ -43,7 +43,7 @@ class RiakFixture : public ::testing::Test {
         const TestInfo* const info =
             UnitTest::GetInstance()->current_test_info();
 
-        ib_initialize();
+        ib_util_initialize();
         base_url = "http://localhost:8098";
         bucket = "UnitTestBucket";
 
@@ -77,7 +77,7 @@ class RiakFixture : public ::testing::Test {
     virtual void TearDown(){
         ib_kvstore_disconnect(&kvstore);
         ib_kvstore_destroy(&kvstore);
-        ib_shutdown();
+        ib_util_shutdown();
         free(const_cast<char *>(bucket));
     }
 };

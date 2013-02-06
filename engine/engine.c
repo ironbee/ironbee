@@ -43,6 +43,7 @@
 #include <ironbee/server.h>
 #include <ironbee/state_notify.h>
 #include <ironbee/string.h>
+#include <ironbee/util.h>
 
 #include <assert.h>
 #include <inttypes.h>
@@ -71,24 +72,49 @@ const char *default_auditlog_index = "ironbee-index.log";
 
 /* -- Internal Structures -- */
 typedef struct {
-    ib_state_event_type_t  event_type; /**< Event type */
-    ib_state_hook_type_t   hook_type;  /**< Hook's type */
+    ib_state_event_type_t  event;      /**< Event type */
     const char            *event_name; /**< Event name */
+    ib_state_hook_type_t   hook_type;  /**< Hook's type */
 } ib_event_type_data_t;
 
 /**
  * List of callback data types for event id to type lookups.
  */
 static ib_event_type_data_t ib_event_table[IB_STATE_EVENT_NUM];
-static bool ib_event_table_initialized = false;
 
-#define IB_EVENT_TABLE_INIT_ENT(event,type)                     \
-    ib_event_table[event].event_type = event;                   \
-    ib_event_table[event].event_name = IB_STRINGIFY(event);     \
-    ib_event_table[event].hook_type = type
-
+/**
+ * Initialize the event table entry for @a event
+ *
+ * @note This is done as a macro take advantage of IB_STRINGIFY(),
+ * and invokes init_event_table_entry().
+ *
+ * @param[in] event Event (ib_state_event_type_t) to initialize
+ * @param[in] hook_type The associated hook type
+ */
+#define INIT_EVENT_TABLE_ENT(event,hook_type)              \
+    init_event_table_entry(event, IB_STRINGIFY(event), hook_type)
 
 /* -- Internal Routines -- */
+/**
+ * Initialize the event table entry for @a event.
+ *
+ * @param[in] event Event to initialize
+ * @param[in] event_name Name of @a event
+ * @param[in] hook_type The associated hook type
+ */
+static void init_event_table_entry(
+    ib_state_event_type_t  event,
+    const char            *event_name,
+    ib_state_hook_type_t   hook_type)
+{
+    assert(event < IB_STATE_EVENT_NUM);
+    assert(event_name != NULL);
+
+    ib_event_type_data_t *ent = &ib_event_table[event];
+    ent->event = event;
+    ent->event_name = event_name;
+    ent->hook_type = hook_type;
+}
 
 ib_status_t ib_hook_check(
     ib_engine_t* ib,
@@ -175,73 +201,109 @@ static ib_status_t ib_hook_unregister(
     return IB_ENOENT;
 }
 
-static void ib_event_table_init(void)
+/**
+ * Initialize the IronBee event table.
+ *
+ * @note Asserts if error detected.
+ *
+ * @returns Status code:
+ *    - IB_OK All OK
+ */
+static ib_status_t ib_event_table_init(void)
 {
-    ib_state_event_type_t       event;
+    ib_state_event_type_t event;
+    static bool           table_initialized = false;
 
-    if (ib_event_table_initialized) {
-        return;
+    if (table_initialized) {
+        goto validate;
     };
 
     memset(ib_event_table, 0, sizeof(ib_event_table));
 
     /* Engine States */
-    IB_EVENT_TABLE_INIT_ENT(conn_started_event, IB_STATE_HOOK_CONN);
-    IB_EVENT_TABLE_INIT_ENT(conn_finished_event, IB_STATE_HOOK_CONN);
-    IB_EVENT_TABLE_INIT_ENT(tx_started_event, IB_STATE_HOOK_TX);
-    IB_EVENT_TABLE_INIT_ENT(tx_process_event, IB_STATE_HOOK_TX);
-    IB_EVENT_TABLE_INIT_ENT(tx_finished_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(conn_started_event, IB_STATE_HOOK_CONN);
+    INIT_EVENT_TABLE_ENT(conn_finished_event, IB_STATE_HOOK_CONN);
+    INIT_EVENT_TABLE_ENT(tx_started_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(tx_process_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(tx_finished_event, IB_STATE_HOOK_TX);
 
     /* Handler States */
-    IB_EVENT_TABLE_INIT_ENT(handle_context_conn_event, IB_STATE_HOOK_CONN);
-    IB_EVENT_TABLE_INIT_ENT(handle_connect_event, IB_STATE_HOOK_CONN);
-    IB_EVENT_TABLE_INIT_ENT(handle_context_tx_event, IB_STATE_HOOK_TX);
-    IB_EVENT_TABLE_INIT_ENT(handle_request_header_event, IB_STATE_HOOK_TX);
-    IB_EVENT_TABLE_INIT_ENT(handle_request_event, IB_STATE_HOOK_TX);
-    IB_EVENT_TABLE_INIT_ENT(handle_response_header_event, IB_STATE_HOOK_TX);
-    IB_EVENT_TABLE_INIT_ENT(handle_response_event, IB_STATE_HOOK_TX);
-    IB_EVENT_TABLE_INIT_ENT(handle_disconnect_event, IB_STATE_HOOK_CONN);
-    IB_EVENT_TABLE_INIT_ENT(handle_postprocess_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(handle_context_conn_event, IB_STATE_HOOK_CONN);
+    INIT_EVENT_TABLE_ENT(handle_connect_event, IB_STATE_HOOK_CONN);
+    INIT_EVENT_TABLE_ENT(handle_context_tx_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(handle_request_header_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(handle_request_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(handle_response_header_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(handle_response_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(handle_disconnect_event, IB_STATE_HOOK_CONN);
+    INIT_EVENT_TABLE_ENT(handle_postprocess_event, IB_STATE_HOOK_TX);
 
     /* Server States */
-    IB_EVENT_TABLE_INIT_ENT(conn_opened_event, IB_STATE_HOOK_CONN);
-    IB_EVENT_TABLE_INIT_ENT(conn_data_in_event, IB_STATE_HOOK_CONNDATA);
-    IB_EVENT_TABLE_INIT_ENT(conn_data_out_event, IB_STATE_HOOK_CONNDATA);
-    IB_EVENT_TABLE_INIT_ENT(conn_closed_event, IB_STATE_HOOK_CONN);
+    INIT_EVENT_TABLE_ENT(conn_opened_event, IB_STATE_HOOK_CONN);
+    INIT_EVENT_TABLE_ENT(conn_data_in_event, IB_STATE_HOOK_CONNDATA);
+    INIT_EVENT_TABLE_ENT(conn_data_out_event, IB_STATE_HOOK_CONNDATA);
+    INIT_EVENT_TABLE_ENT(conn_closed_event, IB_STATE_HOOK_CONN);
 
     /* Parser States */
-    IB_EVENT_TABLE_INIT_ENT(request_started_event, IB_STATE_HOOK_REQLINE);
-    IB_EVENT_TABLE_INIT_ENT(request_header_data_event, IB_STATE_HOOK_HEADER);
-    IB_EVENT_TABLE_INIT_ENT(request_header_finished_event, IB_STATE_HOOK_TX);
-    IB_EVENT_TABLE_INIT_ENT(request_body_data_event, IB_STATE_HOOK_TXDATA);
-    IB_EVENT_TABLE_INIT_ENT(request_finished_event, IB_STATE_HOOK_TX);
-    IB_EVENT_TABLE_INIT_ENT(response_started_event, IB_STATE_HOOK_RESPLINE);
-    IB_EVENT_TABLE_INIT_ENT(response_header_data_event, IB_STATE_HOOK_HEADER);
-    IB_EVENT_TABLE_INIT_ENT(response_header_finished_event, IB_STATE_HOOK_TX);
-    IB_EVENT_TABLE_INIT_ENT(response_body_data_event, IB_STATE_HOOK_TXDATA);
-    IB_EVENT_TABLE_INIT_ENT(response_finished_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(request_started_event, IB_STATE_HOOK_REQLINE);
+    INIT_EVENT_TABLE_ENT(request_header_data_event, IB_STATE_HOOK_HEADER);
+    INIT_EVENT_TABLE_ENT(request_header_finished_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(request_body_data_event, IB_STATE_HOOK_TXDATA);
+    INIT_EVENT_TABLE_ENT(request_finished_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(response_started_event, IB_STATE_HOOK_RESPLINE);
+    INIT_EVENT_TABLE_ENT(response_header_data_event, IB_STATE_HOOK_HEADER);
+    INIT_EVENT_TABLE_ENT(response_header_finished_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(response_body_data_event, IB_STATE_HOOK_TXDATA);
+    INIT_EVENT_TABLE_ENT(response_finished_event, IB_STATE_HOOK_TX);
 
     /* Logevent updated */
-    IB_EVENT_TABLE_INIT_ENT(handle_logevent_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(handle_logevent_event, IB_STATE_HOOK_TX);
 
     /* Sanity check the table, make sure all events are initiailzed */
+validate:
     for(event = conn_started_event;  event < IB_STATE_EVENT_NUM;  ++event) {
-        assert(ib_event_table[event].event_type == event);
+        assert(ib_event_table[event].event == event);
         assert(ib_event_table[event].hook_type != IB_STATE_HOOK_INVALID);
         assert(ib_event_table[event].event_name != NULL);
     }
 
-    ib_event_table_initialized = true;
+    table_initialized = true;
+    return IB_OK;
 };
 
 /* -- Main Engine Routines -- */
+ib_status_t ib_initialize(void)
+{
+    ib_status_t rc;
+
+    /* Initialize the utility library */
+    rc = ib_util_initialize();
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Initialize the event table */
+    rc = ib_event_table_init();
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+
+}
+
+ib_status_t ib_shutdown(void)
+{
+    /* Shut down the utility library */
+    ib_util_shutdown();
+
+    return IB_OK;
+}
 
 ib_status_t ib_engine_create(ib_engine_t **pib, ib_server_t *server)
 {
     ib_mpool_t *pool;
     ib_status_t rc;
-
-    ib_event_table_init();
 
     /* Create primary memory pool */
     rc = ib_mpool_create(&pool, "engine", NULL);

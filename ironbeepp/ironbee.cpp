@@ -27,7 +27,7 @@
 #include <ironbeepp/ironbee.hpp>
 #include <ironbeepp/throw.hpp>
 
-#include <ironbee/util.h>
+#include <ironbee/engine.h>
 
 namespace IronBee {
 
