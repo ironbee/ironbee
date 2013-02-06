@@ -25,6 +25,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/logevent.h>
+#include <ironbee/state_notify.h>
 
 #include <assert.h>
 #if defined(__cplusplus) && !defined(__STDC_FORMAT_MACROS)
@@ -217,6 +218,12 @@ ib_status_t ib_logevent_add(ib_tx_t       *tx,
     }
 
     rc = ib_list_push(tx->logevents, e);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_state_notify_logevent(tx->ib, tx);
+
     return rc;
 }
 
@@ -233,8 +240,10 @@ ib_status_t ib_logevent_remove(ib_tx_t *tx,
     IB_LIST_LOOP_SAFE(tx->logevents, node, node_next) {
         ib_logevent_t *e = (ib_logevent_t *)ib_list_node_data(node);
         if (e->event_id == id) {
+            ib_status_t rc;
             ib_list_node_remove(tx->logevents, node);
-            return IB_OK;
+            rc = ib_state_notify_logevent(tx->ib, tx);
+            return rc;
         }
     }
 

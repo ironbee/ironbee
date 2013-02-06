@@ -88,6 +88,8 @@ struct ib_logevent_t {
 /**
  * Add an event to be logged.
  *
+ * @note This function generates a @ref handle_logevent_event event.
+ *
  * @param[in,out] tx Transaction
  * @param[in] le Event
  *
@@ -99,6 +101,8 @@ ib_status_t DLL_PUBLIC ib_logevent_add(
 
 /**
  * Remove an event from the queue before it is logged.
+ *
+ * @note This function generates a @ref handle_logevent_event event.
  *
  * @param[in,out] tx Transaction
  * @param[in] id Event id
@@ -113,6 +117,7 @@ ib_status_t DLL_PUBLIC ib_logevent_remove(
  * Get a list of pending events to be logged.
  *
  * @note The list can be modified directly.
+ * @note This function does not generate a @ref handle_logevent_event event.
  *
  * @param[in] tx Transaction
  * @param[out] pevents Address where list of events is written
@@ -182,6 +187,8 @@ ib_status_t DLL_PUBLIC ib_logevent_create(
 /**
  * Add a tag to the event.
  *
+ * @note This function does not generate a @ref handle_logevent_event event.
+ *
  * @param[in,out] le Log event
  * @param[in] tag Tag to add (string will be copied)
  *
@@ -194,6 +201,8 @@ ib_status_t DLL_PUBLIC ib_logevent_tag_add(
 /**
  * Add a field name to the event.
  *
+ * @note This function does not generate a @ref handle_logevent_event event.
+ *
  * @param[in,out] le Log event
  * @param[in] name Field name to add (string will be copied)
  *
@@ -205,6 +214,8 @@ ib_status_t DLL_PUBLIC ib_logevent_field_add(
 
 /**
  * Add a field name to the event (ex version).
+ *
+ * @note This function does not generate a @ref handle_logevent_event event.
  *
  * @param[in,out] le Log event
  * @param[in] name Field name to add (string will be copied)
@@ -220,6 +231,8 @@ ib_status_t DLL_PUBLIC ib_logevent_field_add_ex(
 /**
  * Set data for the event.
  *
+ * @note This function does not generate a @ref handle_logevent_event event.
+ *
  * @param[in,out] le Log event
  * @param[in] data Arbitrary binary data
  * @param[in] dlen Data length
@@ -233,6 +246,8 @@ ib_status_t DLL_PUBLIC ib_logevent_data_set(
 
 /**
  * Set the suppression for the event.
+ *
+ * @note This function does not generate a @ref handle_logevent_event event.
  *
  * @param[in,out] le Log event
  * @param[in] suppress Suppressionn setting for the event
