@@ -1164,39 +1164,6 @@ STATE_SWITCH:
     return HTP_OK;
 }
 
-/**
- * Determines if the supplied character is allowed in boundary.
- *
- * @param[in] c
- * @return 1 if the character is a valid boundary character, and 0 if it is not.
- */
-int htp_mpartp_is_boundary_character(int c) {
-    if ((c < 32) || (c > 126)) {
-        return 0;
-    }
-
-    switch (c) {
-        case '(':
-        case ')':
-        case '<':
-        case '>':
-        case '@':
-        case ',':
-        case ';':
-        case ':':
-        case '\\':
-        case '"':
-        case '/':
-        case '[':
-        case ']':
-        case '?':
-        case '=':
-            return 0;
-    }
-
-    return 1;
-}
-
 static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) { 
     /*
      Chrome: Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryT4AfwQCOgIxNVwlD
