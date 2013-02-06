@@ -495,6 +495,48 @@ bstr *bstr_to_lowercase(bstr *b);
 int64_t bstr_util_mem_to_pint(const void *data, size_t len, int base, size_t *lastlen);
 
 /**
+ * Searches a memory block for the given NUL-terminated string. Case sensitive.
+ *
+ * @param[in] data
+ * @param[in] len
+ * @param[in] cstr
+ * @return Index of the first location of the needle on success, or -1 if the needle was not found.
+ */
+int bstr_util_mem_index_of_c(const void *data, size_t len, const char *cstr);
+
+/**
+ * Searches a memory block for the given NUL-terminated string. Case insensitive.
+ *
+ * @param[in] data
+ * @param[in] len
+ * @param[in] cstr
+ * @return Index of the first location of the needle on success, or -1 if the needle was not found.
+ */
+int bstr_util_mem_index_of_c_nocase(const void *data, size_t len, const char *cstr);
+
+/**
+ * Searches the haystack memory block for the needle memory block. Case sensitive.
+ *
+ * @param data1
+ * @param len1
+ * @param data2
+ * @param len2
+ * @return Index of the first location of the needle on success, or -1 if the needle was not found.
+ */
+int bstr_util_mem_index_of_mem(const void *data1, size_t len1, const void *data2, size_t len2);
+
+/**
+ * Searches the haystack memory block for the needle memory block. Case sensitive.
+ *
+ * @param data1
+ * @param len1
+ * @param data2
+ * @param len2
+ * @return Index of the first location of the needle on success, or -1 if the needle was not found.
+ */
+int bstr_util_mem_index_of_mem_nocase(const void *data1, size_t len1, const void *data2, size_t len2);
+
+/**
  * Take the provided memory region, allocate a new memory buffer, and construct
  * a NUL-terminated string, replacing each NUL byte with "\0" (two bytes). The
  * caller is responsible to keep track of the allocated memory area and free

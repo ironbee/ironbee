@@ -330,48 +330,11 @@ int bstr_index_of_c_nocase(const bstr *haystack, const char *needle) {
 }
 
 int bstr_index_of_mem(const bstr *haystack, const void *_data2, size_t len2) {
-    const unsigned char *data2 = (unsigned char *) _data2;
-    unsigned char *data = bstr_ptr(haystack);
-    size_t len = bstr_len(haystack);
-    size_t i, j;
-
-    // If we ever want to optimize this function, the following link
-    // might be useful: http://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm
-
-    for (i = 0; i < len; i++) {
-        size_t k = i;
-
-        for (j = 0; ((j < len2) && (k < len)); j++) {
-            if (data[k++] != data2[j]) break;
-        }
-
-        if (j == len2) {
-            return i;
-        }
-    }
-
-    return -1;
+    return bstr_util_mem_index_of_mem(bstr_ptr(haystack), bstr_len(haystack), _data2, len2);
 }
 
 int bstr_index_of_mem_nocase(const bstr *haystack, const void *_data2, size_t len2) {
-    const unsigned char *data2 = (unsigned char *) _data2;
-    unsigned char *data = bstr_ptr(haystack);
-    size_t len = bstr_len(haystack);
-    size_t i, j;
-    
-    for (i = 0; i < len; i++) {
-        size_t k = i;
-
-        for (j = 0; ((j < len2) && (k < len)); j++) {
-            if (toupper(data[k++]) != toupper(data2[j])) break;
-        }
-
-        if ((k - i) == len2) {
-            return i;
-        }
-    }
-
-    return -1;
+    return bstr_util_mem_index_of_mem_nocase(bstr_ptr(haystack), bstr_len(haystack), _data2, len2);
 }
 
 int bstr_index_of_nocase(const bstr *haystack, const bstr *needle) {
@@ -470,6 +433,60 @@ int64_t bstr_util_mem_to_pint(const void *_data, size_t len, int base, size_t *l
     *lastlen = i + 1;
 
     return rval;
+}
+
+int bstr_util_mem_index_of_c(const void *_data1, size_t len1, const char *cstr) {
+    return bstr_util_mem_index_of_mem(_data1, len1, cstr, strlen(cstr));
+}
+
+int bstr_util_mem_index_of_c_nocase(const void *_data1, size_t len1, const char *cstr) {
+    return bstr_util_mem_index_of_mem(_data1, len1, cstr, strlen(cstr));
+}
+
+int bstr_util_mem_index_of_mem(const void *_data1, size_t len1, const void *_data2, size_t len2) {
+    const unsigned char *data1 = (unsigned char *) _data1;
+    const unsigned char *data2 = (unsigned char *) _data2;
+    size_t i, j;
+
+    // If we ever want to optimize this function, the following link
+    // might be useful: http://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm
+
+    for (i = 0; i < len1; i++) {
+        size_t k = i;
+
+        for (j = 0; ((j < len2) && (k < len1)); j++, k++) {
+            if (data1[k] != data2[j]) break;
+        }
+
+        if (j == len2) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+int bstr_util_mem_index_of_mem_nocase(const void *_data1, size_t len1, const void *_data2, size_t len2) {
+    const unsigned char *data1 = (unsigned char *) _data1;
+    const unsigned char *data2 = (unsigned char *) _data2;
+    size_t i, j;
+
+    // If we ever want to optimize this function, the following link
+    // might be useful: http://en.wikipedia.org/wiki/Knuth-Morris-Pratt_algorithm
+
+    for (i = 0; i < len1; i++) {
+        size_t k = i;
+
+        for (j = 0; ((j < len2) && (k < len1)); j++, k++) {
+            if (toupper(data1[k]) != toupper(data2[j])) break;
+        }
+
+        if (j == len2) {
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 char *bstr_util_memdup_to_c(const void *_data, size_t len) {
