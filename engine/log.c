@@ -70,8 +70,13 @@ static void default_logger(FILE *fp, int level,
     sprintf(new_fmt, "%s %-10s- ", time_info, ib_log_level_to_string(level));
 
     if ( (file != NULL) && (line > 0) ) {
-        while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
+        size_t flen;
+        while (strncmp(file, "../", 3) == 0) {
             file += 3;
+        }
+        flen = strlen(file);
+        if (flen > 23) {
+            file += (flen - 23);
         }
 
         static const size_t c_line_info_length = 35;

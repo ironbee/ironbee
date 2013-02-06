@@ -400,8 +400,13 @@ static void core_vlogmsg_fp(
 
     line_info[0] = '\0';
     if ( (file != NULL) && (line > 0) && (log_level >= IB_LOG_DEBUG)) {
-        while ( (file != NULL) && (strncmp(file, "../", 3) == 0) ) {
+        size_t flen;
+        while (strncmp(file, "../", 3) == 0) {
             file += 3;
+        }
+        flen = strlen(file);
+        if (flen > 23) {
+            file += (flen - 23);
         }
 
         snprintf(line_info, c_line_info_length, "(%23s:%-5d)", file, line);
