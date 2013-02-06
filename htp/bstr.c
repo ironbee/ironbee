@@ -440,7 +440,7 @@ int bstr_util_mem_index_of_c(const void *_data1, size_t len1, const char *cstr) 
 }
 
 int bstr_util_mem_index_of_c_nocase(const void *_data1, size_t len1, const char *cstr) {
-    return bstr_util_mem_index_of_mem(_data1, len1, cstr, strlen(cstr));
+    return bstr_util_mem_index_of_mem_nocase(_data1, len1, cstr, strlen(cstr));
 }
 
 int bstr_util_mem_index_of_mem(const void *_data1, size_t len1, const void *_data2, size_t len2) {
