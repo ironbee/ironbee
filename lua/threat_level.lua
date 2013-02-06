@@ -108,16 +108,10 @@ local adjust_threat_level = function(ib)
 end
 
 -- ---------------------------------------------------------
--- Adjust the threat level at various places in the
--- transaction cycle.
---
--- TODO: Need to be able to be notified when an event
---       is added/updated/deleted
+-- Adjust the threat level any time that a logevent
+-- event is triggered.
 -- ---------------------------------------------------------
-ibmod:handle_request_header_event(adjust_threat_level)
-ibmod:handle_request_event(adjust_threat_level)
-ibmod:handle_response_header_event(adjust_threat_level)
-ibmod:handle_response_event(adjust_threat_level)
+ibmod:handle_logevent_event(adjust_threat_level)
 
 -- Return IB_OK.
 return 0
