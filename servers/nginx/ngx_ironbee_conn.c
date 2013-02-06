@@ -37,6 +37,7 @@
 struct ngxib_conn_t {
     ib_conn_t *iconn;
     ib_engine_t *ironbee;
+    ngx_log_t *log;
 };
 
 /**
@@ -48,9 +49,10 @@ struct ngxib_conn_t {
 static void conn_end(void *arg)
 {
     ngxib_conn_t *conn = arg;
-
+    ngx_log_t *prev_log = ngxib_log(conn->log);
     ib_state_notify_conn_closed(conn->ironbee, conn->iconn);
     ib_conn_destroy(conn->iconn);
+    ngxib_log(prev_log);
 }
 
 /**
@@ -97,6 +99,7 @@ ib_conn_t *ngxib_conn_get(ngxib_req_ctx *rctx, ib_engine_t *ib)
 
     rctx->conn = ngx_palloc(rctx->r->connection->pool, sizeof(ngxib_conn_t));
     rctx->conn->ironbee = ib;
+    rctx->conn->log = rctx->r->connection->log;
 
     rc = ib_conn_create(rctx->conn->ironbee, &rctx->conn->iconn, rctx->r->connection);
     ib_state_notify_conn_opened(rctx->conn->ironbee, rctx->conn->iconn);
