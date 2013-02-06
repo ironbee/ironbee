@@ -955,40 +955,69 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  */
 typedef enum {
     /* Engine States */
-    conn_started_event,            /**< Connection started */
-    conn_finished_event,           /**< Connection finished */
-    tx_started_event,              /**< Transaction started */
-    tx_process_event,              /**< Transaction is about to be processed */
-    tx_finished_event,             /**< Transaction finished */
+    conn_started_event,           /**< Connection started
+                                   * (Hook type:@ref ib_state_conn_hook_fn_t) */
+    conn_finished_event,          /**< Connection finished
+                                   * (Hook type:@ref ib_state_conn_hook_fn_t) */
+    tx_started_event,             /**< Transaction started
+                                   * (Hook type:@ref ib_state_tx_hook_fn_t) */
+    tx_process_event,             /**< Transaction is about to be processed
+                                   * (Hook type:@ref ib_state_tx_hook_fn_t) */
+    tx_finished_event,            /**< Transaction finished
+                                   * (Hook type:@ref ib_state_tx_hook_fn_t) */
 
     /* Handler States */
-    handle_context_conn_event,     /**< Handle connection context chosen */
-    handle_connect_event,          /**< Handle a connect */
-    handle_context_tx_event,       /**< Handle transaction context chosen */
-    handle_request_header_event,   /**< Handle the request header */
-    handle_request_event,          /**< Handle the full request */
-    handle_response_header_event, /**< Handle the response header */
-    handle_response_event,         /**< Handle the full response */
-    handle_disconnect_event,       /**< Handle a disconnect */
-    handle_postprocess_event,      /**< Handle transaction post processing */
+    handle_context_conn_event,    /**< Handle connection context chosen
+                                   * (Hook type:@ref ib_state_conn_hook_fn_t) */
+    handle_connect_event,         /**< Handle a connect
+                                   * (Hook type:@ref ib_state_conn_hook_fn_t) */
+    handle_context_tx_event,      /**< Handle transaction context chosen
+                                   * (Hook type:@ref ib_state_tx_hook_fn_t) */
+    handle_request_header_event,  /**< Handle the request header
+                                   * (Hook type:@ref ib_state_tx_hook_fn_t) */
+    handle_request_event,         /**< Handle the full request
+                                   * (Hook type:@ref ib_state_tx_hook_fn_t) */
+    handle_response_header_event, /**< Handle the response header
+                                   * (Hook type:@ref ib_state_tx_hook_fn_t) */
+    handle_response_event,        /**< Handle the full response
+                                   * (Hook type:@ref ib_state_tx_hook_fn_t) */
+    handle_disconnect_event,      /**< Handle a disconnect
+                                   * (Hook type:@ref ib_state_conn_hook_fn_t) */
+    handle_postprocess_event,     /**< Handle transaction post processing
+                                   * (Hook type:@ref ib_state_tx_hook_fn_t) */
 
     /* Server States */
-    conn_opened_event,             /**< Server notified connection opened */
-    conn_data_in_event,            /**< Server notified of incoming data */
-    conn_data_out_event,           /**< Server notified of outgoing data */
-    conn_closed_event,             /**< Server notified connection closed */
+    conn_opened_event,            /**< Server notified connection opened
+                                   * (Hook type:@ref ib_state_conn_hook_fn_t) */
+    conn_data_in_event,           /**< Server notified of incoming data
+                                   * (Hook type:@ref ib_state_conndata_hook_fn_t) */
+    conn_data_out_event,          /**< Server notified of outgoing data
+                                   * (Hook type:@ref ib_state_conndata_hook_fn_t)*/
+    conn_closed_event,            /**< Server notified connection closed
+                                   * (Hook type:@ref ib_state_conn_hook_fn_t) */
 
     /* Parser States */
-    request_started_event,         /**< Parser notified request has started */
-    request_header_data_event,     /**< Parser notified of request header data */
-    request_header_finished_event, /**< Parser notified of request header */
-    request_body_data_event,       /**< Parser notified of request body */
-    request_finished_event,        /**< Parser notified request finished */
-    response_started_event,        /**< Parser notified response started */
-    response_header_data_event,    /**< Parser notified of response header data*/
-    response_header_finished_event,/**< Parser notified of response header */
-    response_body_data_event,      /**< Parser notified of response body */
-    response_finished_event,       /**< Parser notified response finished */
+    request_started_event,        /**< Parser notified request has started
+                                   * (Hook type:@ref ib_state_request_line_fn_t) */
+    request_header_data_event,    /**< Parser notified of request header data
+                                   * (Hook type:@ref ib_state_header_data_fn_t) */
+    request_header_finished_event, /**< Parser notified of request header
+                                    * (Hook type:@ref ib_state_tx_hook_fn_t) */
+    request_body_data_event,       /**< Parser notified of request body
+                                    * (Hook type:@ref ib_state_txdata_hook_fn_t) */
+    request_finished_event,        /**< Parser notified request finished
+                                    * (Hook type:@ref ib_state_tx_hook_fn_t) */
+    response_started_event,        /**< Parser notified response started
+                                    * (Hook type:@ref ib_state_response_line_fn_t) */
+    response_header_data_event,    /**< Parser notified of response header data
+                                    * (Hook type:@ref ib_state_header_data_fn_t) */
+    response_header_finished_event,/**< Parser notified of response header
+                                    * (Hook type:@ref ib_state_tx_hook_fn_t) */
+    response_body_data_event,      /**< Parser notified of response body
+                                    * (Hook type:@ref ib_state_txdata_hook_fn_t) */
+    response_finished_event,       /**< Parser notified response finished
+                                    * (Hook type:@ref ib_state_tx_hook_fn_t( */
+
 
     /* Not an event, but keeps track of the number of events. */
     IB_STATE_EVENT_NUM,
@@ -998,32 +1027,45 @@ typedef enum {
  * State Event Hook Types
  **/
 typedef enum {
-    IB_STATE_HOOK_NULL,     /**< Hook has no parameter */
-    IB_STATE_HOOK_INVALID,  /**< Something went wrong. */
-    IB_STATE_HOOK_CONN,     /**< Hook received ib_conn_t */
-    IB_STATE_HOOK_CONNDATA, /**< Hook received ib_conndata_t */
-    IB_STATE_HOOK_TX,       /**< Hook received ib_tx_t */
-    IB_STATE_HOOK_TXDATA,   /**< Hook received ib_txdata_t */
-    IB_STATE_HOOK_REQLINE,  /**< Hook received ib_parsed_req_t. */
-    IB_STATE_HOOK_RESPLINE, /**< Hook received ib_parsed_resp_t. */
-    IB_STATE_HOOK_HEADER    /**< Hook received ib_parsed_header_t. */
+    IB_STATE_HOOK_NULL,     /**< Hook has no parameter
+                             * (Hook type: @ref ib_state_null_hook_fn_t) */
+    IB_STATE_HOOK_INVALID,  /**< Something went wrong
+                             * (Hook type: None) */
+    IB_STATE_HOOK_CONN,     /**< Hook receives connection data
+                             * (Hook type: @ref ib_state_conn_hook_fn_t) */
+    IB_STATE_HOOK_CONNDATA, /**< Hook receives ib_conndata_t
+                             * (Hook type: @ref ib_state_conndata_hook_fn_t) */
+    IB_STATE_HOOK_TX,       /**< Hook receives ib_tx_t
+                             * (Hook type: @ref ib_state_tx_hook_fn_t) */
+    IB_STATE_HOOK_TXDATA,   /**< Hook receives ib_txdata_t
+                             * (Hook type: @ref ib_state_txdata_hook_fn_t) */
+    IB_STATE_HOOK_REQLINE,  /**< Hook receives ib_parsed_req_t
+                             * (Hook type: @ref ib_state_request_line_fn_t) */
+    IB_STATE_HOOK_RESPLINE, /**< Hook receives ib_parsed_resp_t
+                             * (Hook type: @ref ib_state_response_line_fn_t) */
+    IB_STATE_HOOK_HEADER    /**< Hook receives ib_parsed_header_t
+                             * (Hook type: @ref ib_state_header_data_fn_t) */
 } ib_state_hook_type_t;
 
 /**
  * Hook type for an event.
  *
- * \param[in] event Event type.
- * \return Hook type or IB_STATE_HOOK_INVALID if bad event.
+ * @param[in] event Event type.
+ * @return Hook type or IB_STATE_HOOK_INVALID if bad event.
  **/
 ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event);
 
 /**
  * Dataless Event Hook Callback Function.
  *
+ * Registration function: ib_null_hook_register()
+ *
+ * Unregistration function: ib_null_hook_unregister()
+ *
  * @param ib Engine handle
  * @param event Which event trigger the callback.
  * @param cbdata Callback data
- */
+  */
 typedef ib_status_t (*ib_state_null_hook_fn_t)(
     ib_engine_t *ib,
     ib_state_event_type_t event,
@@ -1033,6 +1075,10 @@ typedef ib_status_t (*ib_state_null_hook_fn_t)(
 
 /**
  * Data event for parsed header.
+ *
+ * Registration function: ib_hook_parsed_header_data_register()
+ *
+ * Unregistration function: ib_hook_parsed_header_data_unregister()
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
@@ -1052,6 +1098,10 @@ typedef ib_status_t (*ib_state_header_data_fn_t)(
  *
  * This provides a request line parsed from the start of the request.
  *
+ * Registration function: ib_hook_parsed_req_line_register()
+ *
+ * Unregistration function: ib_hook_parsed_req_line_unregister()
+ *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
  * @param[in] event Which event trigger the callback.
@@ -1070,6 +1120,10 @@ typedef ib_status_t (*ib_state_request_line_fn_t)(
  *
  * This provides a response line parsed from the start of the response.
  *
+ * Registration function: ib_hook_parsed_resp_line_register()
+ *
+ * Unregistration function: ib_hook_parsed_resp_line_unregister()
+ *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
  * @param[in] event Which event trigger the callback.
@@ -1085,6 +1139,10 @@ typedef ib_status_t (*ib_state_response_line_fn_t)(
 
 /**
  * Connection Event Hook Callback Function.
+ *
+ * Registration function: ib_conn_hook_register()
+ *
+ * Unregistration function: ib_conn_hook_unregister()
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
@@ -1102,6 +1160,10 @@ typedef ib_status_t (*ib_state_conn_hook_fn_t)(
 
 /**
  * Connection Data Event Hook Callback Function.
+ *
+ * Registration function: ib_conndata_hook_register()
+ *
+ * Unregistration function: ib_conndata_hook_unregister()
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
@@ -1122,6 +1184,10 @@ typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
  *
  * This matches the NULL callback type as tx is already passed.
  *
+ * Registration function: ib_tx_hook_register()
+ *
+ * Unregistration function: ib_tx_hook_unregister()
+ *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
  * @param[in] event Which event trigger the callback.
@@ -1136,6 +1202,10 @@ typedef ib_status_t (*ib_state_tx_hook_fn_t)(
 
 /**
  * Transaction Data Event Hook Callback Function.
+ *
+ * Registration function: ib_txdata_hook_register()
+ *
+ * Unregistration function: ib_txdata_hook_unregister()
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
@@ -1199,7 +1269,7 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_null_hook_unregister(
+ib_status_t DLL_PUBLIC ib_hook_null_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_null_hook_fn_t cb
@@ -1233,7 +1303,7 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
+ib_status_t DLL_PUBLIC ib_hook_conn_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb
@@ -1267,7 +1337,7 @@ ib_status_t DLL_PUBLIC ib_hook_conndata_register(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
+ib_status_t DLL_PUBLIC ib_hook_conndata_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conndata_hook_fn_t cb
@@ -1301,7 +1371,7 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
+ib_status_t DLL_PUBLIC ib_hook_tx_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_tx_hook_fn_t cb
@@ -1335,7 +1405,7 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
  *
  * @returns Status code
  */
-ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
+ib_status_t DLL_PUBLIC ib_hook_txdata_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb

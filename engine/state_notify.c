@@ -93,7 +93,7 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
     assert(ib->cfg_state == CFG_FINISHED);
     assert(conn != NULL);
 
-    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
+    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
         return rc;
     }
@@ -119,7 +119,7 @@ static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
 
     ib_conn_t *conn = conndata->conn;
 
-    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
+    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONNDATA);
     if (rc != IB_OK) {
         return rc;
     }
@@ -159,9 +159,9 @@ static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
         return IB_EUNKNOWN;
     }
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "ib_check_hook() failed: %s",
+        ib_log_error_tx(tx, "ib_hook_check() failed: %s",
                         ib_status_to_string(rc));
         return rc;
     }
@@ -213,9 +213,9 @@ static ib_status_t ib_state_notify_resp_line(ib_engine_t *ib,
         return IB_EUNKNOWN;
     }
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "ib_check_hook() failed: %s",
+        ib_log_error_tx(tx, "ib_hook_check() failed: %s",
                         ib_status_to_string(rc));
         return rc;
     }
@@ -257,7 +257,7 @@ static ib_status_t ib_state_notify_tx(ib_engine_t *ib,
     assert(ib->cfg_state == CFG_FINISHED);
     assert(tx != NULL);
 
-    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
+    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
         return rc;
     }
@@ -558,9 +558,9 @@ static ib_status_t ib_state_notify_header_data(ib_engine_t *ib,
     assert(tx != NULL);
     assert(header != NULL);
 
-    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
+    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
-        ib_log_error_tx(tx, "ib_check_hook() failed: %s",
+        ib_log_error_tx(tx, "ib_hook_check() failed: %s",
                         ib_status_to_string(rc));
         return rc;
     }
@@ -592,7 +592,7 @@ static ib_status_t ib_state_notify_txdata(ib_engine_t *ib,
     assert(tx != NULL);
     assert(txdata != NULL);
 
-    ib_status_t rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
         return rc;
     }

@@ -73,7 +73,7 @@ const char *default_auditlog_index = "ironbee-index.log";
 /**
  * List of callback data types for event id to type lookups.
  */
-static const ib_state_hook_type_t ib_state_event_hook_types[] = {
+static const ib_state_hook_type_t ib_state_event_hook_types[IB_STATE_EVENT_NUM] = {
     /* Engine States */
     IB_STATE_HOOK_CONN,     /**< conn_started_event */
     IB_STATE_HOOK_CONN,     /**< conn_finished_event */
@@ -113,7 +113,7 @@ static const ib_state_hook_type_t ib_state_event_hook_types[] = {
 
 /* -- Internal Routines -- */
 
-ib_status_t ib_check_hook(
+ib_status_t ib_hook_check(
     ib_engine_t* ib,
     ib_state_event_type_t event,
     ib_state_hook_type_t hook_type
@@ -172,7 +172,7 @@ static ib_status_t ib_register_hook(
     return IB_OK;
 }
 
-static ib_status_t ib_unregister_hook(
+static ib_status_t ib_hook_unregister(
     ib_engine_t* ib,
     ib_state_event_type_t event,
     ib_void_fn_t cb
@@ -1096,7 +1096,7 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
 ) {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_NULL);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1116,19 +1116,19 @@ ib_status_t DLL_PUBLIC ib_hook_null_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_null_hook_unregister(
+ib_status_t DLL_PUBLIC ib_hook_null_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_null_hook_fn_t cb
 ) {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_NULL);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_NULL);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }
@@ -1141,7 +1141,7 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
 ) {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1161,19 +1161,19 @@ ib_status_t DLL_PUBLIC ib_hook_conn_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_conn_hook_unregister(
+ib_status_t DLL_PUBLIC ib_hook_conn_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb
 ) {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONN);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONN);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }
@@ -1186,7 +1186,7 @@ ib_status_t DLL_PUBLIC ib_hook_conndata_register(
 ) {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONNDATA);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1206,19 +1206,19 @@ ib_status_t DLL_PUBLIC ib_hook_conndata_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_conndata_hook_unregister(
+ib_status_t DLL_PUBLIC ib_hook_conndata_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conndata_hook_fn_t cb
 ) {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_CONNDATA);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONNDATA);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }
@@ -1231,7 +1231,7 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
 ) {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1251,19 +1251,19 @@ ib_status_t DLL_PUBLIC ib_hook_tx_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_tx_hook_unregister(
+ib_status_t DLL_PUBLIC ib_hook_tx_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_tx_hook_fn_t cb
 ) {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_TX);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_TX);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }
@@ -1276,7 +1276,7 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
 ) {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1296,19 +1296,19 @@ ib_status_t DLL_PUBLIC ib_hook_txdata_register(
     return rc;
 }
 
-ib_status_t DLL_PUBLIC ib_txdata_hook_unregister(
+ib_status_t DLL_PUBLIC ib_hook_txdata_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_txdata_hook_fn_t cb
 ) {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_TXDATA);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_TXDATA);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }
@@ -1321,7 +1321,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_register(
 {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1348,12 +1348,12 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_header_data_unregister(
 {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_HEADER);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_HEADER);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }
@@ -1366,7 +1366,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_register(
 {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1393,12 +1393,12 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_req_line_unregister(
 {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_REQLINE);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_REQLINE);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }
@@ -1411,7 +1411,7 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_register(
 {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
         return rc;
     }
@@ -1438,12 +1438,12 @@ ib_status_t DLL_PUBLIC ib_hook_parsed_resp_line_unregister(
 {
     ib_status_t rc;
 
-    rc = ib_check_hook(ib, event, IB_STATE_HOOK_RESPLINE);
+    rc = ib_hook_check(ib, event, IB_STATE_HOOK_RESPLINE);
     if (rc != IB_OK) {
         return rc;
     }
 
-    rc = ib_unregister_hook(ib, event, (ib_void_fn_t)cb);
+    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
 
     return rc;
 }

@@ -59,7 +59,7 @@ struct ib_hook_t {
  * @param[in] hook_type The hook that is proposed to match the @a event.
  * @returns IB_OK or IB_EINVAL if @a event is not suitable for @a hook_type.
  */
-ib_status_t ib_check_hook(ib_engine_t *ib,
+ib_status_t ib_hook_check(ib_engine_t *ib,
                           ib_state_event_type_t event,
                           ib_state_hook_type_t hook_type);
 
