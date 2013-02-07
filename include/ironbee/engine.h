@@ -1079,9 +1079,11 @@ ib_state_hook_type_t ib_state_hook_type(ib_state_event_type_t event);
 /**
  * Dataless Event Hook Callback Function.
  *
- * Registration function: ib_null_hook_register()
+ * Related registration functions:
+ * - ib_hook_null_register()
+ * - ib_hook_null_unregister()
  *
- * Unregistration function: ib_null_hook_unregister()
+ * Handles events: (None)
  *
  * @param ib Engine handle
  * @param event Which event trigger the callback.
@@ -1093,13 +1095,16 @@ typedef ib_status_t (*ib_state_null_hook_fn_t)(
     void *cbdata
 );
 
-
 /**
  * Data event for parsed header.
  *
- * Registration function: ib_hook_parsed_header_data_register()
+ * Related registration functions:
+ * - ib_hook_parsed_header_data_register()
+ * - ib_hook_parsed_header_data_unregister()
  *
- * Unregistration function: ib_hook_parsed_header_data_unregister()
+ * Handles events:
+ * - @ref request_header_data_event
+ * - @ref response_header_data_event
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
@@ -1119,9 +1124,12 @@ typedef ib_status_t (*ib_state_header_data_fn_t)(
  *
  * This provides a request line parsed from the start of the request.
  *
- * Registration function: ib_hook_parsed_req_line_register()
+ * Related registration functions:
+ * - ib_hook_parsed_req_line_register()
+ * - ib_hook_parsed_req_line_unregister()
  *
- * Unregistration function: ib_hook_parsed_req_line_unregister()
+ * Handles events:
+ * - @ref request_started_event
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
@@ -1141,9 +1149,12 @@ typedef ib_status_t (*ib_state_request_line_fn_t)(
  *
  * This provides a response line parsed from the start of the response.
  *
- * Registration function: ib_hook_parsed_resp_line_register()
+ * Related registration functions:
+ * - ib_hook_parsed_resp_line_register()
+ * - ib_hook_parsed_resp_line_unregister()
  *
- * Unregistration function: ib_hook_parsed_resp_line_unregister()
+ * Handles events:
+ * - @ref response_started_event
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
@@ -1161,9 +1172,18 @@ typedef ib_status_t (*ib_state_response_line_fn_t)(
 /**
  * Connection Event Hook Callback Function.
  *
- * Registration function: ib_conn_hook_register()
+ * Related registration functions:
+ * - ib_hook_conn_register()
+ * - ib_hook_conn_unregister()
  *
- * Unregistration function: ib_conn_hook_unregister()
+ * Handles events:
+ * - @ref conn_started_event
+ * - @ref conn_finished_event
+ * - @ref handle_context_conn_event
+ * - @ref handle_connect_event
+ * - @ref handle_disconnect_event
+ * - @ref conn_opened_event
+ * - @ref conn_closed_event
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
@@ -1182,9 +1202,13 @@ typedef ib_status_t (*ib_state_conn_hook_fn_t)(
 /**
  * Connection Data Event Hook Callback Function.
  *
- * Registration function: ib_conndata_hook_register()
+ * Related registration functions:
+ * - ib_hook_conndata_register()
+ * - ib_hook_conndata_unregister()
  *
- * Unregistration function: ib_conndata_hook_unregister()
+ * Handles events:
+ * - @ref conn_data_in_event
+ * - @ref conn_data_out_event
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
@@ -1205,9 +1229,25 @@ typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
  *
  * This matches the NULL callback type as tx is already passed.
  *
- * Registration function: ib_tx_hook_register()
+ * Related registration functions:
+ * - ib_hook_tx_register()
+ * - ib_hook_tx_unregister()
  *
- * Unregistration function: ib_tx_hook_unregister()
+ * Handles events:
+ * - @ref tx_started_event
+ * - @ref tx_process_event
+ * - @ref tx_finished_event
+ * - @ref handle_context_tx_event
+ * - @ref handle_request_header_event
+ * - @ref handle_request_event
+ * - @ref handle_response_header_event
+ * - @ref handle_response_event
+ * - @ref handle_postprocess_event
+ * - @ref request_header_finished_event
+ * - @ref request_finished_event
+ * - @ref response_header_finished_event
+ * - @ref response_finished_event
+ * - @ref handle_logevent_event
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
@@ -1224,9 +1264,13 @@ typedef ib_status_t (*ib_state_tx_hook_fn_t)(
 /**
  * Transaction Data Event Hook Callback Function.
  *
- * Registration function: ib_txdata_hook_register()
+ * Related registration functions:
+ * - ib_hook_txdata_register()
+ * - ib_hook_txdata_unregister()
  *
- * Unregistration function: ib_txdata_hook_unregister()
+ * Handles events:
+ * - @ref request_body_data_event
+ * - @ref response_body_data_event
  *
  * @param[in] ib Engine handle
  * @param[in] tx Transaction.
