@@ -75,7 +75,7 @@ Look for rules that require a certain substring in order to be meaningful.  Add 
 
 If there is no single required substring but instead a small number of alternatives, you can use multiple fast modifiers.  E.g., for a regular expression `foo|bar`, consider `fast:foo fast:bar`.
 
-There is a script, `fast/suggest.rb` which takes rules on standard in and outputs the rules to standout with additional comments suggesting fast patterns based on regular expressions in the rule.  This script is currently very limited, but should eventually cover a wide range of regular expression based rules.  It requires the `regexp_parser` gem which can be installed via `gem install regexp_parser`.
+See the next section for a way to largely automate this task.
 
 **Step 2**: Build the automata.
 
@@ -128,6 +128,109 @@ Note that `bytes = 1993` line.  This line shows the space (RAM) cost of using fa
 IronBee must be told to use the fast pattern system and about the automata you built in step 2.  Make sure you load the `fast` module.  Then use the `FastAutomata` directive to provide the path to the `.e` file you built in step 2.  
 
 At present, you should use a single automata built from every fast pattern rule, regardless of phase or context.  The fast pattern system will filter the results of the automata execution to only evaluate rules appropriate to the current context and phase.  The current assumption is that a single automata plus filtering is better choice in terms of space and time than per-context/phase automata.  This assumption may be incorrect or such usage may be too onerous to users.  As such, this behavior may change in the future.
+
+suggest.rb
+----------
+
+*Overview*
+
+There is a script, `fast/suggest.rb` which takes rules on standard in and outputs the rules to standout with additional comments suggesting fast patterns based on regular expressions in the rule.  It requires the `regexp_parser` gem which can be installed via `gem install regexp_parser`.
+
+Comments will generally be of the form:
+
+    # FAST RE: ...
+    # FAST Suggest: ...
+    # FAST Result Table:
+    # FAST ...
+    
+Followed by the rule the comments apply to.
+    
+Result tables will only be displayed for certain regular expressions (see below).  
+
+The RE comment will display the regular expression of the rule that the suggestion and result table apply to.  Rules containing multiple regular expressions will have multiple comment sets.
+
+The Suggest comment display what it believes is the best fast pattern settings for that regular expression.  In most cases, you should check the suggestion for sanity and then copy the modifiers to the rule.
+
+The Result table displays the complete set of suggestions that the suggestion code found.  It is formatted as a boolean expression.  Each line is a ANDed clause of patterns and all the lines are joined together with OR.  The fast system evaluates a rule if any of the fast patterns for that rule are found.  As such, there is no way to specify the AND relationship.  As such, to generate fast patterns for the rule, a single pattern from each line needs to be chosen and added as a fast modifier.  The Suggest line is simply one such choice that the suggestion code believes is the best.
+
+*Suggestions*
+
+It is important to check the suggestions for sanity for two reasons.  First, this code is in an early state and may get things wrong.  Second, if your regular expression is incorrect, this may be obvious in the patterns.  For example, consider the regular expression:
+
+    HeaderName:\s*Value1|Value2
+    
+The comments are:
+
+    # FAST RE: HeaderName:\s*Value1|Value2
+    # FAST Suggest: "fast:HeaderName:" "fast:Value2"
+    # FAST Result Table: 
+    # FAST ( Value1 AND HeaderName: ) OR
+    # FAST ( Value2 )
+
+The lack of Value1 in the suggestion suggests something is awry.  Further investigation reveals the problem: the regular expression is equivalent to 
+
+    (?:HeaderName:\s*Value1)|(?:Value2)
+    
+instead of the intended
+
+    HeaderName:\s*(?:Value1|Value2)
+    
+Correcting it changes the comment to:
+
+    # FAST RE: HeaderName:\s*(?:Value1|Value2)
+    # FAST Suggest: "fast:HeaderName:"
+    # FAST Result Table: 
+    # FAST ( Value1 AND HeaderName: ) OR
+    # FAST ( Value2 AND HeaderName: )
+
+A much more reasonable suggestion and table.
+
+*RX Mode*
+
+The suggest.rb script can be run as `suggest.rb --rx` in which case each line is treated as a single regular expression (in normal mode, the input is treated as a rules file).  This mode can be useful for development and debugging.
+
+*Exceptions*
+
+In addition to the comments described above, you may see
+
+    # FAST Exception: ...
+    
+comments.  These either indicate a bug in the suggestion code or a known limitation.  Please report them to the author.
+
+*Why no comments?*
+
+Some rules that contain regular expressions will not receive comments.  There are three major reasons for this:
+
+1. The rule already has a fast modifier.
+2. The rule has a transformation modifier, `t:`.  At present, the fast system has no support for transformations.
+3. The suggestion code could not find a reasonable fast pattern for the regexp.  Very short patterns may not be worthwhile and are not suggested.  If any row of the result table contains only such short patterns, then there is no suggestion.
+
+*Hard Limitations*
+
+The suggestion code understands a large portion of regular expressions.  However, there are a few notable limitations.  Some of these are due to limitations in the third party regular expression parser.  Others may be solved in the future.  See `re_to_ac.rb` for details.
+
+- \cX is not supported for X non-alpha.
+- Only the i option is supported.  
+- No unicode support.
+- Many pcre specific features are not supported.
+- Back references are not supported.
+- Stacked quantifiers, e.g., `x{2}{3}`, will result in suboptimal patterns.  Add non-capturing groups to fix, e.g., `(?:x{2}){3}`.
+
+*Soft Limitations*
+
+The suggestion code can handle quantifiers and alternations, but can have poor results in certain combinations.  This behavior is due to a fundamental mismatch between the fixed width nature of AC patterns and the variable width nature of quantifiers and alternations.
+
+Expressions with many alternations will be ignored, e.g., `a|b|c|d|e|f|g`.
+
+Expressions with many repetitions will be treated as having fewer, e.g., `a{1000}` will be treated as shorter, e.g., `a{10}`.
+
+Expressions quantifying alterations may result in ridiculous result tables, e.g., `(a|b){100}` is highly inadvisable.
+
+Try to avoid combining quantifiers with high minimums and alternations.  When using alternations, try to pull common parts out.  For example, use `foo(?:bar|baz)` instead of `foobar|foobaz`.
+
+*To Learn More*
+
+To learn more, including an overview of how the suggestion code works, look at the comments and code in `re_to_ac.rb`.
 
 Advanced Usage
 --------------

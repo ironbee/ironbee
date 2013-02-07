@@ -78,7 +78,7 @@ Union Shortcuts:
 
 <p>If there is no single required substring but instead a small number of alternatives, you can use multiple fast modifiers. E.g., for a regular expression <code>foo|bar</code>, consider <code>fast:foo fast:bar</code>.</p>
 
-<p>There is a script, <code>fast/suggest.rb</code> which takes rules on standard in and outputs the rules to standout with additional comments suggesting fast patterns based on regular expressions in the rule. This script is currently very limited, but should eventually cover a wide range of regular expression based rules. It requires the <code>regexp_parser</code> gem which can be installed via <code>gem install regexp_parser</code>.</p>
+<p>See the next section for a way to largely automate this task.</p>
 
 <p><strong>Step 2</strong>: Build the automata.</p>
 
@@ -134,6 +134,119 @@ bytes @ 8        = 4927
 <p>IronBee must be told to use the fast pattern system and about the automata you built in step 2. Make sure you load the <code>fast</code> module. Then use the <code>FastAutomata</code> directive to provide the path to the <code>.e</code> file you built in step 2. </p>
 
 <p>At present, you should use a single automata built from every fast pattern rule, regardless of phase or context. The fast pattern system will filter the results of the automata execution to only evaluate rules appropriate to the current context and phase. The current assumption is that a single automata plus filtering is better choice in terms of space and time than per-context/phase automata. This assumption may be incorrect or such usage may be too onerous to users. As such, this behavior may change in the future.</p>
+
+<h2 id="suggest.rb">suggest.rb</h2>
+
+<p><em>Overview</em></p>
+
+<p>There is a script, <code>fast/suggest.rb</code> which takes rules on standard in and outputs the rules to standout with additional comments suggesting fast patterns based on regular expressions in the rule. It requires the <code>regexp_parser</code> gem which can be installed via <code>gem install regexp_parser</code>.</p>
+
+<p>Comments will generally be of the form:</p>
+
+<pre><code># FAST RE: ...
+# FAST Suggest: ...
+# FAST Result Table:
+# FAST ...
+</code></pre>
+
+<p>Followed by the rule the comments apply to.</p>
+
+<p>Result tables will only be displayed for certain regular expressions (see below). </p>
+
+<p>The RE comment will display the regular expression of the rule that the suggestion and result table apply to. Rules containing multiple regular expressions will have multiple comment sets.</p>
+
+<p>The Suggest comment display what it believes is the best fast pattern settings for that regular expression. In most cases, you should check the suggestion for sanity and then copy the modifiers to the rule.</p>
+
+<p>The Result table displays the complete set of suggestions that the suggestion code found. It is formatted as a boolean expression. Each line is a ANDed clause of patterns and all the lines are joined together with OR. The fast system evaluates a rule if any of the fast patterns for that rule are found. As such, there is no way to specify the AND relationship. As such, to generate fast patterns for the rule, a single pattern from each line needs to be chosen and added as a fast modifier. The Suggest line is simply one such choice that the suggestion code believes is the best.</p>
+
+<p><em>Suggestions</em></p>
+
+<p>It is important to check the suggestions for sanity for two reasons. First, this code is in an early state and may get things wrong. Second, if your regular expression is incorrect, this may be obvious in the patterns. For example, consider the regular expression:</p>
+
+<pre><code>HeaderName:\s*Value1|Value2
+</code></pre>
+
+<p>The comments are:</p>
+
+<pre><code># FAST RE: HeaderName:\s*Value1|Value2
+# FAST Suggest: &quot;fast:HeaderName:&quot; &quot;fast:Value2&quot;
+# FAST Result Table: 
+# FAST ( Value1 AND HeaderName: ) OR
+# FAST ( Value2 )
+</code></pre>
+
+<p>The lack of Value1 in the suggestion suggests something is awry. Further investigation reveals the problem: the regular expression is equivalent to </p>
+
+<pre><code>(?:HeaderName:\s*Value1)|(?:Value2)
+</code></pre>
+
+<p>instead of the intended</p>
+
+<pre><code>HeaderName:\s*(?:Value1|Value2)
+</code></pre>
+
+<p>Correcting it changes the comment to:</p>
+
+<pre><code># FAST RE: HeaderName:\s*(?:Value1|Value2)
+# FAST Suggest: &quot;fast:HeaderName:&quot;
+# FAST Result Table: 
+# FAST ( Value1 AND HeaderName: ) OR
+# FAST ( Value2 AND HeaderName: )
+</code></pre>
+
+<p>A much more reasonable suggestion and table.</p>
+
+<p><em>RX Mode</em></p>
+
+<p>The suggest.rb script can be run as <code>suggest.rb --rx</code> in which case each line is treated as a single regular expression (in normal mode, the input is treated as a rules file). This mode can be useful for development and debugging.</p>
+
+<p><em>Exceptions</em></p>
+
+<p>In addition to the comments described above, you may see</p>
+
+<pre><code># FAST Exception: ...
+</code></pre>
+
+<p>comments. These either indicate a bug in the suggestion code or a known limitation. Please report them to the author.</p>
+
+<p><em>Why no comments?</em></p>
+
+<p>Some rules that contain regular expressions will not receive comments. There are three major reasons for this:</p>
+
+<ol>
+<li>The rule already has a fast modifier.</li>
+<li>The rule has a transformation modifier, <code>t:</code>. At present, the fast system has no support for transformations.</li>
+<li>The suggestion code could not find a reasonable fast pattern for the regexp. Very short patterns may not be worthwhile and are not suggested. If any row of the result table contains only such short patterns, then there is no suggestion.</li>
+</ol>
+
+<p><em>Hard Limitations</em></p>
+
+<p>The suggestion code understands a large portion of regular expressions. However, there are a few notable limitations. Some of these are due to limitations in the third party regular expression parser. Others may be solved in the future. See <code>re_to_ac.rb</code> for details.</p>
+
+<ul>
+<li>\cX is not supported for X non-alpha.</li>
+<li>Only the i option is supported.</li>
+<li>No unicode support.</li>
+<li>Many pcre specific features are not supported.</li>
+<li>Back references are not supported.</li>
+<li>Stacked quantifiers, e.g., <code>x{2}{3}</code>, will result in suboptimal patterns. Add non-capturing groups to fix, e.g., <code>(?:x{2}){3}</code>.</li>
+</ul>
+
+<p><em>Soft Limitations</em></p>
+
+<p>The suggestion code can handle quantifiers and alternations, but can have poor results in certain combinations. This behavior is due to a fundamental mismatch between the fixed width nature of AC patterns and the variable width nature of quantifiers and alternations.</p>
+
+<p>Expressions with many alternations will be ignored, e.g., <code>a|b|c|d|e|f|g</code>.</p>
+
+<p>Expressions with many repetitions will be treated as having fewer, e.g., <code>a{1000}</code> will be treated as shorter, e.g., <code>a{10}</code>.</p>
+
+<p>Expressions quantifying alterations may result in ridiculous result tables, e.g., <code>(a|b){100}</code> is highly inadvisable.</p>
+
+<p>Try to avoid combining quantifiers with high minimums and alternations. When using alternations, try to pull common parts out. For example, use <code>foo(?:bar|baz)</code> instead of <code>foobar|foobaz</code>.</p>
+
+<p><em>To Learn More</em></p>
+
+<p>To learn more, including an overview of how the suggestion code works, look at the comments and code in <code>re_to_ac.rb</code>.</p>
 
 <h2 id="advancedusage">Advanced Usage</h2>
 
