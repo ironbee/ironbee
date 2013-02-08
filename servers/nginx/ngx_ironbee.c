@@ -461,8 +461,8 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     ib_context_set_num(ib_context_engine(ironbee),
                        IB_PROVIDER_TYPE_LOGGER ".log_level", 4);
 #else
-    ib_log_set_logger(ironbee, ngxib_logger, NULL);
-    ib_log_set_loglevel(ironbee, ngxib_loglevel, NULL);
+    ib_log_set_logger_fn(ironbee, ngxib_logger, NULL);
+    ib_log_set_loglevel_fn(ironbee, ngxib_loglevel, NULL);
 #endif
     ib_context_set_num(ib_context_engine(ironbee),
                        "logger.log_level", 4);
