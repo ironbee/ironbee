@@ -674,8 +674,8 @@ static htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, unsigned char
     parser->multipart.boundary[2] = '-';
     parser->multipart.boundary[3] = '-';
 
-    for (size_t i = 0; i < len; i++) {
-        parser->multipart.boundary[i + 4] = tolower(data[i]);
+    for (size_t i = 0; i < len; i++) {        
+        parser->multipart.boundary[i + 4] = data[i];
     }
 
     parser->multipart.boundary[parser->multipart.boundary_len] = '\0';
@@ -1021,7 +1021,7 @@ STATE_SWITCH:
                     }
 
                     // Check if the bytes match.
-                    if (!(tolower(data[pos]) == parser->multipart.boundary[parser->boundary_match_pos])) {
+                    if (!(data[pos] == parser->multipart.boundary[parser->boundary_match_pos])) {
                         // Boundary mismatch.
 
                         // Process stored (buffered) data.

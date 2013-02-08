@@ -324,6 +324,7 @@ TEST_F(Multipart, Test2) {
         switch (i) {
             case 0:
                 ASSERT_EQ(MULTIPART_PART_PREAMBLE, part->type);
+
                 ASSERT_TRUE(bstr_cmp_c(part->value, "x0000x") == 0);
                 break;
             case 1:
@@ -989,4 +990,34 @@ TEST_F(Multipart, BoundaryUnusual) {
         bstr_free(boundary);
         bstr_free(input);
     }
+}
+
+TEST_F(Multipart, CaseInsitiveBoundaryMatching) {
+    char *headers[] = {
+        "POST / HTTP/1.0\r\n"
+        "Content-Type: multipart/form-data; boundary=grumpyWizards\r\n",
+        NULL
+    };
+
+    // The second boundary is all-lowercase and shouldn't be matched on.
+    char *data[] = {
+        "--grumpyWizards\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n-grumpywizards\r\n"
+        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
+        "\r\n"
+        "FILEDATA"
+        "\r\n--grumpyWizards\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--grumpyWizards--",
+        NULL
+    };
+
+    parseRequest(headers, data);
+
+    ASSERT_EQ(2, htp_list_size(body->parts));
 }
