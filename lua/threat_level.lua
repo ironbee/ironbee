@@ -65,10 +65,9 @@ local rc = ibmod:register_param1_directive(
 --       as the threat level if it exists.
 -- ---------------------------------------------------------
 local adjust_threat_level = function(ib)
-    ib:logInfo("Handling event=%s", ib.event_name)
-
-    local num_events = 0
+    local previous_threat_level
     local threat_level = 0
+    local num_events = 0
     local min_confidence = ib.config["min_confidence"]
 
     -- TODO: Where can we set the default?
@@ -76,33 +75,43 @@ local adjust_threat_level = function(ib)
         min_confidence = 0
     end
 
+    -- Fetch the previous threat level
+    previous_threat_level = ib:get("THREAT_LEVEL")
+    if previous_threat_level == nil then
+        previous_threat_level = 0
+    end
+
     --[[ Run through events, calculating the average
          severity as the "threat level".  Only include
-         events that are not suppressed and have a
-         confidence that is above the minimum. ]]
+         events that have a severity, are not suppressed
+         and have a confidence that is above the minimum. ]]
     for i,evt in ib:events() do
-        ib:logInfo("EVENT: suppress=%s, confidence=%d, severity=%d",
-                   evt:getSuppress(), evt:getConfidence(), evt:getSeverity())
+        local s = evt:getSeverity()
 
-        if evt:getSuppress() == "none" then
+        if s > 0 and evt:getSuppress() == "none" then
             local c = evt:getConfidence()
 
             if c >= min_confidence then
                 num_events = num_events + 1
-                threat_level = threat_level + evt:getSeverity()
+                threat_level = threat_level + s
             else
-                ib:logInfo("Ignoring low confidence event: %s", evt:getMsg())
+                ib:logDebug("Ignoring low confidence event: %s", evt:getMsg())
             end
         else
-            ib:logInfo("Ignoring suppressed event: %s", evt:getMsg())
+            ib:logDebug("Ignoring suppressed event: %s", evt:getMsg())
         end
     end
     if num_events > 0 then
         threat_level = math.floor(threat_level / num_events)
     end
 
-    ib:logInfo("Adjusted THREAT_LEVEL: %d", threat_level)
-    ib:set("THREAT_LEVEL", threat_level)
+    -- Only set the threat level if it changed
+    if previous_threat_level ~= threat_level then
+        ib:set("THREAT_LEVEL", threat_level)
+
+        ib:logInfo("Adjusted THREAT_LEVEL based on %d events: %d -> %d",
+                   num_events, previous_threat_level, threat_level)
+    end
 
     return 0
 end
