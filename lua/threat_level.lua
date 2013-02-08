@@ -32,6 +32,38 @@ local ibmod = ...
 --
 --    Defines the minimum acceptable event confidence included in the
 --    threat level calculation.
+--
+-- Usage:
+--
+--  # Load the lua support module
+--  LoadModule "ibmod_lua.so"
+--
+--  # Load this lua module
+--  LuaLoadModule "threat_level.lua"
+--
+--  # Set the minimum allowed event confidence
+--  # to be considered in the threat score calculation
+--  ThreatLevelMinConfidence 50
+--
+--  # Define a site with rules to utilize threat level
+--  <Site default>
+--      SiteId 138E7FB0-1129-4FA5-8A63-432CE0BBD37A
+--      Service *:*
+--      Hostname *
+--
+--      # Generate some events
+--      Rule ARGS @rx foo id:test/1 rev:1 msg:TEST1 \
+--                        event confidence:50 severity:70
+--      Rule ARGS @rx bar id:test/2 rev:1 msg:TEST2 \
+--                        event confidence:50 severity:80
+--      Rule ARGS @rx boo id:test/3 rev:1 msg:TEST3 \
+--                        event confidence:10 severity:100
+--
+--      # Check the threat level, blocking >=75
+--      Rule THREAT_LEVEL @ge 75 id:test/100 rev:1 phase:REQUEST \
+--                               "msg:Testing THREAT_LEVEL" \
+--                               event block:phase
+--  </Site>
 -- ========================================================================
 
 
