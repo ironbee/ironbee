@@ -969,6 +969,7 @@ TEST_F(Multipart, BoundaryUnusual) {
         "multipart/form-data; boundary =1",
         "multipart/form-data; boundary= 1",
         "multipart/form-data; boundary=\"1\"",
+        "multipart/form-data; boundary=\" 1 \"",
         NULL
     };
 

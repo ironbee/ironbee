@@ -1166,6 +1166,27 @@ STATE_SWITCH:
 
 static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) {
     /*
+
+    RFC 1341:
+
+    The only mandatory parameter for the multipart  Content-Type
+    is  the  boundary  parameter,  which  consists  of  1  to 70
+    characters from a set of characters known to be very  robust
+    through  email  gateways,  and  NOT ending with white space.
+    (If a boundary appears to end with white  space,  the  white
+    space  must be presumed to have been added by a gateway, and
+    should  be  deleted.)   It  is  formally  specified  by  the
+    following BNF:
+
+    boundary := 0*69<bchars> bcharsnospace
+
+    bchars := bcharsnospace / " "
+
+    bcharsnospace :=    DIGIT / ALPHA / "'" / "(" / ")" / "+" / "_"
+                          / "," / "-" / "." / "/" / ":" / "=" / "?"
+     */
+
+    /*
      Chrome: Content-Type: multipart/form-data; boundary=----WebKitFormBoundaryT4AfwQCOgIxNVwlD
     Firefox: Content-Type: multipart/form-data; boundary=---------------------------21071316483088
        MSIE: Content-Type: multipart/form-data; boundary=---------------------------7dd13e11c0452
@@ -1189,71 +1210,38 @@ static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) {
         if (!(((data[pos] >= '0') && (data[pos] <= '9'))
                 || ((data[pos] >= 'a') && (data[pos] <= 'z'))
                 || ((data[pos] >= 'A') && (data[pos] <= 'Z'))
-                || (data[pos] == '-'))) {
-            *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+                || (data[pos] == '-'))) {            
+
+            switch (data[pos]) {
+                case '\'':
+                case '(':
+                case ')':
+                case '+':
+                case '_':
+                case ',':
+                // case '-':
+                case '.':
+                case '/':
+                case ':':
+                case '=':
+                case '?':
+                    // These characters are allowed by the RFC, but not common.
+                    *flags |= HTP_MULTIPART_HBOUNDARY_UNUSUAL;
+                default:
+                    // Invalid character.
+                    *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
+                    break;
+            }
         }
 
         pos++;
     }
-
 }
 
-#if 0
-static int htp_martp_is_boundary_char_rfc_nospace(unsigned char c) {
-    /*
-
-    RFC 1341:
-
-    The only mandatory parameter for the multipart  Content-Type
-    is  the  boundary  parameter,  which  consists  of  1  to 70
-    characters from a set of characters known to be very  robust
-    through  email  gateways,  and  NOT ending with white space.
-    (If a boundary appears to end with white  space,  the  white
-    space  must be presumed to have been added by a gateway, and
-    should  be  deleted.)   It  is  formally  specified  by  the
-    following BNF:
-
-    boundary := 0*69<bchars> bcharsnospace
-
-    bchars := bcharsnospace / " "
-
-    bcharsnospace :=    DIGIT / ALPHA / "'" / "(" / ")" / "+" / "_"
-                          / "," / "-" / "." / "/" / ":" / "=" / "?"
-     */
-
-    // DIGIT or ALNUM.
-    if (((c >= '0') && (c <= '9'))
-            || ((c >= 'a') && (c <= 'z'))
-            || ((c >= 'A') && (c <= 'Z'))) {
-        return 1;
-    }
-
-    // Allowed separators.
-    switch (c) {
-        case '\'':
-        case '(':
-        case ')':
-        case '+':
-        case '_':
-        case ',':
-        case '-':
-        case '.':
-        case '/':
-        case ':':
-        case '=':
-        case '?':
-            return 1;
-            break;
-    }
-
-    return 0;
-}
-#endif
-
-static void htp_mpartp_validate_content_type(bstr *content_type, uint64_t *flags) {    
+static void htp_mpartp_validate_content_type(bstr *content_type, uint64_t *flags) {
     unsigned char *data = bstr_ptr(content_type);
     size_t len = bstr_len(content_type);
-    size_t counter = 0;   
+    size_t counter = 0;
 
     while (len > 0) {
         int i = bstr_util_mem_index_of_c_nocase(data, len, "boundary");
@@ -1271,9 +1259,9 @@ static void htp_mpartp_validate_content_type(bstr *content_type, uint64_t *flags
         counter++;
 
         // Check for case variations.        
-        for (size_t j = 0; j < 8; j++) {        
-            if (!((*data >= 'a') && (*data <= 'z'))) {                
-                *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;                
+        for (size_t j = 0; j < 8; j++) {
+            if (!((*data >= 'a') && (*data <= 'z'))) {
+                *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
             }
 
             data++;
@@ -1283,13 +1271,13 @@ static void htp_mpartp_validate_content_type(bstr *content_type, uint64_t *flags
 
     // How many boundaries have we seen?
     if (counter > 1) {
-        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;        
+        *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
     }
 }
 
 htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint64_t *flags) {
     if ((content_type == NULL) || (boundary == NULL) || (flags == NULL)) return HTP_ERROR;
-    
+
     // Reset flags.
     *flags = 0;
 
@@ -1335,7 +1323,7 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
 
         pos++;
     }
-    
+
     if (data[pos] == '"') {
         // Quoted boundary.
 
@@ -1347,7 +1335,7 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
 
         // Look for the terminating double quote.
         while ((pos < len) && (data[pos] != '"')) pos++;
-        
+
         if (pos >= len) {
             // Ran out of space without seeing
             // the terminating double quote.
@@ -1381,10 +1369,10 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
         *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
         return HTP_DECLINED;
     }
-        
+
     // Allow only whitespace characters after the boundary.
     int seen_space = 0, seen_non_space = 0;
-    
+
     while (pos < len) {
         if (!htp_is_space(data[pos])) {
             seen_non_space = 1;
@@ -1394,30 +1382,30 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
 
         pos++;
     }
-    
+
     // Raise INVALID if we see any non-space characters,
     // but raise UNUSUAL if we see _only_ space characters.
     if (seen_non_space) {
         *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
     } else if (seen_space) {
         *flags |= HTP_MULTIPART_HBOUNDARY_UNUSUAL;
-    }    
-  
+    }
+
     #ifdef HTP_DEBUG
     fprint_bstr(stderr, "Multipart boundary", *boundary);
     #endif   
 
     // Validate boundary characters.
     htp_mpartp_validate_boundary(*boundary, flags);
-   
+
     // Correlate with the MIME type. This might be a tad too
     // sensitive because it may catch non-browser access with sloppy
     // implementations, but let's go with it for now.    
     if (bstr_begins_with_c(content_type, "multipart/form-data;") == 0) {
         *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
     }
-    
-    htp_mpartp_validate_content_type(content_type, flags);   
+
+    htp_mpartp_validate_content_type(content_type, flags);
 
     return HTP_OK;
 }
