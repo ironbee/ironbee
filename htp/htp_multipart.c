@@ -51,22 +51,16 @@
  * @param[in] pos
  * @return CD_PARAM_OTHER, CD_PARAM_NAME or CD_PARAM_FILENAME.
  */
-static int htp_mpartp_cd_param_type(unsigned char *data, size_t startpos, size_t pos) {
-    if ((pos - startpos) == 4) {
+static int htp_mpartp_cd_param_type(unsigned char *data, size_t startpos, size_t endpos) {
+    if ((endpos - startpos) == 4) {
         if (memcmp(data + startpos, "name", 4) == 0) return CD_PARAM_NAME;
-    } else if ((pos - startpos) == 8) {
+    } else if ((endpos - startpos) == 8) {
         if (memcmp(data + startpos, "filename", 8) == 0) return CD_PARAM_FILENAME;
     }
 
     return CD_PARAM_OTHER;
 }
 
-/**
- * Returns the main multipart structure produced by the parser.
- *
- * @param[in] parser
- * @return Multipart instance.
- */
 htp_multipart_t *htp_mpartp_get_multipart(htp_mpartp_t *parser) {
     return &parser->multipart;
 }
@@ -75,11 +69,11 @@ htp_multipart_t *htp_mpartp_get_multipart(htp_mpartp_t *parser) {
  * Parses the Content-Disposition part header.
  *
  * @param[in] part
- * @return HTP_OK on success, HTP_ERROR on failure.
+ * @return HTP_OK on success (header found and parsed), HTP_DECLINED if there is no C-D header, and HTP_ERROR on failure.
  */
 static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
-    // Find C-D header
-    htp_header_t *h = (htp_header_t *) htp_table_get_c(part->headers, "content-disposition");
+    // Find the C-D header.
+    htp_header_t *h = htp_table_get_c(part->headers, "content-disposition");
     if (h == NULL) return HTP_DECLINED;
 
     if (bstr_index_of_c(h->value, "form-data") != 0) {
@@ -87,7 +81,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
     }
 
     // The parsing starts here
-    unsigned char *data = (unsigned char *) bstr_ptr(h->value);
+    unsigned char *data = bstr_ptr(h->value);
     size_t len = bstr_len(h->value);
     size_t pos = 9; // Start after "form-data"
 
@@ -200,6 +194,7 @@ static htp_status_t htp_mpart_part_parse_c_t(htp_multipart_part_t *part) {
     htp_header_t *h = (htp_header_t *) htp_table_get_c(part->headers, "content-type");
     if (h == NULL) return HTP_DECLINED;
 
+    // TODO Remove charset information, if present.
     part->content_type = h->value;
 
     return HTP_OK;
@@ -212,8 +207,8 @@ static htp_status_t htp_mpart_part_parse_c_t(htp_multipart_part_t *part) {
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_mpart_part_process_headers(htp_multipart_part_t *part) {
-    htp_mpart_part_parse_c_d(part);
-    htp_mpart_part_parse_c_t(part);
+    if (htp_mpart_part_parse_c_d(part) == HTP_ERROR) return HTP_ERROR;
+    if (htp_mpart_part_parse_c_t(part) == HTP_ERROR) return HTP_ERROR;
     return HTP_OK;
 }
 
@@ -389,7 +384,7 @@ void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
     if (part->headers != NULL) {
         // Destroy request_headers
         htp_header_t *h = NULL;
-        for (int i = 0, n = htp_table_size(part->headers); i < n; i++) {
+        for (size_t i = 0, n = htp_table_size(part->headers); i < n; i++) {
             h = htp_table_get_index(part->headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
@@ -582,7 +577,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                 // Invoke file data callbacks.
                 htp_mpartp_run_request_file_data_hook(part, data, len);
 
-                // Optionally, store the data to disk.
+                // Optionally, store the data in a file.
                 if (part->file->fd != -1) {
                     if (write(part->file->fd, data, len) < 0) {
                         return HTP_ERROR;
@@ -640,8 +635,7 @@ static htp_status_t htp_mpartp_handle_data(htp_mpartp_t *parser, const unsigned 
 }
 
 /**
- * Handles a boundary event, which means that it will finalize a part
- * if one exists.
+ * Handles a boundary event, which means that it will finalize a part if one exists.
  *
  * @param[in] mpartp
  * @return HTP_OK on success, HTP_ERROR on failure.
@@ -669,7 +663,7 @@ static htp_status_t htp_mpartp_handle_boundary(htp_mpartp_t *parser) {
 static htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, unsigned char *data, size_t len) {
     if ((parser == NULL) || (data == NULL)) return HTP_ERROR;
 
-    // Copy the boundary and convert it to lowercase
+    // Copy the boundary and convert it to lowercase.
 
     parser->multipart.boundary_len = len + 4;
     parser->multipart.boundary = malloc(parser->multipart.boundary_len + 1);
@@ -686,8 +680,11 @@ static htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, unsigned char
 
     parser->multipart.boundary[parser->multipart.boundary_len] = '\0';
 
-    // We're starting in boundary-matching mode, where the
-    // initial CRLF is not needed.
+    // We're starting in boundary-matching mode. The first boundary can appear without the
+    // CRLF, and our starting state expects that. If we encounter non-boundary data, the
+    // state will switch to data mode. Then, if the data is CRLF or LF, we will go back
+    // to boundary matching. Thus, we handle all the possibilities.
+
     parser->parser_state = STATE_BOUNDARY;
     parser->boundary_match_pos = 2;
 
@@ -852,7 +849,7 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *parser, int matched) {
                     // Do not send data if there was a boundary match. The stored
                     // data belongs to the boundary.
                     if (!matched) {
-                        parser->handle_data(parser, (unsigned char *) bstr_ptr(b), bstr_len(b), /* not a line */ 0);
+                        parser->handle_data(parser, bstr_ptr(b), bstr_len(b), /* not a line */ 0);
                     }
                 }
             }
@@ -1024,7 +1021,7 @@ STATE_SWITCH:
                     }
 
                     // Check if the bytes match.
-                    if (!(tolower((int) data[pos]) == parser->multipart.boundary[parser->boundary_match_pos])) {
+                    if (!(tolower(data[pos]) == parser->multipart.boundary[parser->boundary_match_pos])) {
                         // Boundary mismatch.
 
                         // Process stored (buffered) data.
@@ -1210,7 +1207,7 @@ static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) {
         if (!(((data[pos] >= '0') && (data[pos] <= '9'))
                 || ((data[pos] >= 'a') && (data[pos] <= 'z'))
                 || ((data[pos] >= 'A') && (data[pos] <= 'Z'))
-                || (data[pos] == '-'))) {            
+                || (data[pos] == '-'))) {
 
             switch (data[pos]) {
                 case '\'':
@@ -1219,7 +1216,7 @@ static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) {
                 case '+':
                 case '_':
                 case ',':
-                // case '-':
+                    // case '-':
                 case '.':
                 case '/':
                 case ':':
