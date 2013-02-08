@@ -90,7 +90,7 @@ for k,v in pairs(ib_logevent.suppressMap) do
     ib_logevent.suppressRmap[v] = k
 end
 ib_logevent.getSeverity = function(self)
-    return self.raw.confidence
+    return self.raw.severity
 end
 ib_logevent.getConfidence = function(self)
     return self.raw.confidence
