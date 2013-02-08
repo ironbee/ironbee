@@ -538,13 +538,13 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                     part->type = MULTIPART_PART_TEXT;
                     bstr_builder_clear(part->parser->part_data_pieces);
                 } else {
-                    // The type stays MULTIPART_PART_UNKNOWN.
+                    // Do nothing; the type stays MULTIPART_PART_UNKNOWN.
                 }
             } else {
                 // Not an empty line.
 
                 // Is there a folded line coming after this one?
-                if ((part->parser->next_line_first_byte != ' ') && (part->parser->next_line_first_byte != '\t')) {
+                if (!htp_is_lws(part->parser->next_line_first_byte)) {
                     // No folded lines after this one, so process what we have as a complete header line.
 
                     bstr_builder_clear(part->parser->part_header_pieces);
@@ -554,13 +554,14 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                 } else {
                     // Folded line; store this piece for later.
                     bstr_builder_append_mem(part->parser->part_header_pieces, data, len);
+                    part->parser->multipart.flags |= HTP_MULTIPART_HEADER_FOLDING;
                 }
             }
 
             bstr_free(line);
             line = NULL;
         } else {
-            // Not end of line; keep the data chunk for later
+            // Not end of line; keep the data chunk for later.
             bstr_builder_append_mem(part->parser->part_header_pieces, data, len);
         }
     } else {

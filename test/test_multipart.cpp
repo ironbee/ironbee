@@ -98,6 +98,8 @@ protected:
         htp_multipart_part_t *field1 = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
         ASSERT_TRUE(field1 != NULL);
         ASSERT_EQ(MULTIPART_PART_TEXT, field1->type);
+        ASSERT_TRUE(field1->name != NULL);
+        ASSERT_TRUE(bstr_cmp_c(field1->name, "field1") == 0);
         ASSERT_TRUE(field1->value != NULL);
         ASSERT_TRUE(bstr_cmp_c(field1->value, "ABCDEF") == 0);
 
@@ -105,13 +107,19 @@ protected:
         htp_multipart_part_t *file1 = (htp_multipart_part_t *) htp_list_get(body->parts, 1);
         ASSERT_TRUE(file1 != NULL);
         ASSERT_EQ(MULTIPART_PART_FILE, file1->type);
+        ASSERT_TRUE(file1->name != NULL);
+        ASSERT_TRUE(bstr_cmp_c(file1->name, "file1") == 0);
+        ASSERT_TRUE(file1->file->filename != NULL);
+        ASSERT_TRUE(bstr_cmp_c(file1->file->filename, "file.bin") == 0);
 
-        // Field 3
-        htp_multipart_part_t *field3 = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
-        ASSERT_TRUE(field3 != NULL);
-        ASSERT_EQ(MULTIPART_PART_TEXT, field3->type);
-        ASSERT_TRUE(field3->value != NULL);
-        ASSERT_TRUE(bstr_cmp_c(field3->value, "GHIJKL") == 0);
+        // Field 2
+        htp_multipart_part_t *field2 = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
+        ASSERT_TRUE(field2 != NULL);
+        ASSERT_EQ(MULTIPART_PART_TEXT, field2->type);
+        ASSERT_TRUE(field2->name != NULL);
+        ASSERT_TRUE(bstr_cmp_c(field2->name, "field2") == 0);
+        ASSERT_TRUE(field2->value != NULL);
+        ASSERT_TRUE(bstr_cmp_c(field2->value, "GHIJKL") == 0);
     }
 
     void parseParts(char *parts[]) {        
@@ -820,6 +828,8 @@ TEST_F(Multipart, CompleteRequest) {
     };
 
     parseRequestThenVerify(headers, data);
+
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_HEADER_FOLDING);
 }
 
 TEST_F(Multipart, MultipleContentTypeHeadersEvasion) {
@@ -1020,4 +1030,34 @@ TEST_F(Multipart, CaseInsitiveBoundaryMatching) {
     parseRequest(headers, data);
 
     ASSERT_EQ(2, htp_list_size(body->parts));
+}
+
+TEST_F(Multipart, FoldedContentDisposition) {
+    char *headers[] = {
+        "POST / HTTP/1.0\r\n"
+        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
+        NULL
+    };
+
+    char *data[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"file1\";\r\n"
+        " filename=\"file.bin\"\r\n"
+        "\r\n"
+        "FILEDATA"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    parseRequestThenVerify(headers, data);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HEADER_FOLDING);
 }
