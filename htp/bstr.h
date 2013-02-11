@@ -571,6 +571,15 @@ char *bstr_util_strdup_to_c(const bstr *b);
  */
 bstr *bstr_wrap_c(const char *cstr);
 
+/**
+ * Create a new bstring from the provided memory buffer without
+ * copying the data. The caller must ensure that the buffer remains
+ * valid for as long as the bstring is used.
+ *
+ * @param[in] data
+ * @param[in] len
+ * @return New bstring, or NULL on memory allocation failure.
+ */
 bstr *bstr_wrap_mem(const void *data, size_t len);
 
 #ifdef __cplusplus
