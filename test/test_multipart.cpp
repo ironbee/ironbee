@@ -1061,3 +1061,34 @@ TEST_F(Multipart, FoldedContentDisposition) {
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HEADER_FOLDING);
 }
+
+TEST_F(Multipart, FoldedContentDisposition2) {
+    char *headers[] = {
+        "POST / HTTP/1.0\r\n"
+        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
+        NULL
+    };
+
+    char *data[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"file1\";\r\n"
+        "\rfilename=\"file.bin\"\r\n"
+        "\r\n"
+        "FILEDATA"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    parseRequestThenVerify(headers, data);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HEADER_FOLDING);
+}
+
