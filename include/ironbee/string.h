@@ -125,16 +125,6 @@ typedef ib_status_t (* ib_strmod_fn_t) (ib_strop_t op,
 #define IB_S2USL(s)  ((uint8_t *)(s)), strlen(s)
 
 /**
- * strchr() equivalent that operates on a string buffer with a length
- * which can have embedded NUL characters in it.
- *
- * @param[in] s String
- * @param[in] l Length
- * @param[in] c Character to search for
- */
-char DLL_PUBLIC *ib_strchr(const char *s, size_t l, int c);
-
-/**
  * Look for a character in a string that can have embedded NUL characters
  * in it.  This version will ignore NUL characters.
  *
