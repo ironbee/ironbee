@@ -529,12 +529,15 @@ char *bstr_util_strdup_to_c(const bstr *b) {
 }
 
 bstr *bstr_wrap_c(const char *cstr) {
+    return bstr_wrap_mem((unsigned char *)cstr, strlen(cstr));
+}
+
+bstr *bstr_wrap_mem(const void *data, size_t len) {
     bstr *b = (bstr *) malloc(sizeof (bstr));
     if (b == NULL) return NULL;
 
-    b->len = strlen(cstr);
-    b->size = b->len;
-    b->realptr = (unsigned char *) cstr;
+    b->size = b->len = len;
+    b->realptr = (unsigned char *) data;
 
     return b;
 }

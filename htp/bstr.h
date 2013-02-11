@@ -571,6 +571,8 @@ char *bstr_util_strdup_to_c(const bstr *b);
  */
 bstr *bstr_wrap_c(const char *cstr);
 
+bstr *bstr_wrap_mem(const void *data, size_t len);
+
 #ifdef __cplusplus
 }
 #endif

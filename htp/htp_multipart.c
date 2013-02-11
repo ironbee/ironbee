@@ -88,7 +88,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
     // Main parameter parsing loop (once per parameter)
     while (pos < len) {
         // Find semicolon and go over it
-        while ((pos < len) && ((data[pos] == '\t') || (data[pos] == ' '))) pos++;
+        while ((pos < len) && isspace(data[pos])) pos++;
         if (pos == len) return -2;
 
         // Semicolon
@@ -96,14 +96,14 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         pos++;
 
         // Go over the whitespace before parameter name
-        while ((pos < len) && ((data[pos] == '\t') || (data[pos] == ' '))) pos++;
+        while ((pos < len) && isspace(data[pos])) pos++;
         if (pos == len) return -4;
 
         // Found starting position (name)
         size_t start = pos;
 
-        // Look for ending position
-        while ((pos < len) && (data[pos] != '\t') && (data[pos] != ' ') && (data[pos] != '=')) pos++;
+        // Look for ending position        
+        while ((pos < len) && (!isspace(data[pos]) && (data[pos] != '='))) pos++;
         if (pos == len) return -5;
 
         // Ending position is in "pos" now
@@ -112,7 +112,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         int param_type = htp_mpartp_cd_param_type(data, start, pos);
 
         // Ignore whitespace
-        while ((pos < len) && ((data[pos] == '\t') || (data[pos] == ' '))) pos++;
+        while ((pos < len) && isspace(data[pos])) pos++;
         if (pos == len) return -6;
 
         // Equals
@@ -120,7 +120,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         pos++;
 
         // Go over the whitespace before value
-        while ((pos < len) && ((data[pos] == '\t') || (data[pos] == ' '))) pos++;
+        while ((pos < len) && isspace(data[pos])) pos++;
         if (pos == len) return -8;
 
         // Found starting point (value)
@@ -483,18 +483,18 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
     }
 
     if (part->parser->current_part_mode == MODE_LINE) {
-        // Line mode.
-
-        // TODO Remove the extra characters from folded lines.
+        // Line mode.       
 
         if (is_line) {
             // End of the line.
 
             bstr *line = NULL;
 
+            // If this line came to us in pieces, combine them now into a single buffer.
             if (bstr_builder_size(part->parser->part_header_pieces) > 0) {
                 bstr_builder_append_mem(part->parser->part_header_pieces, data, len);
                 line = bstr_builder_to_str(part->parser->part_header_pieces);
+                bstr_builder_clear(part->parser->part_header_pieces);
 
                 data = bstr_ptr(line);
                 len = bstr_len(line);
@@ -511,6 +511,15 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
             // Is it an empty line?
             if (len == 0) {
                 // Empty line; process headers and switch to data mode.
+
+                // Process the pending header, if any.
+                if (part->parser->pending_header_line != NULL) {                    
+                    htp_mpartp_parse_header(part, bstr_ptr(part->parser->pending_header_line),
+                            bstr_len(part->parser->pending_header_line));
+                    // TODO RC
+                    bstr_free(part->parser->pending_header_line);
+                    part->parser->pending_header_line = NULL;
+                }
 
                 htp_mpart_part_process_headers(part);
                 // TODO RC
@@ -543,18 +552,40 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
             } else {
                 // Not an empty line.
 
-                // Is there a folded line coming after this one?
-                if (!htp_is_lws(part->parser->next_line_first_byte)) {
-                    // No folded lines after this one, so process what we have as a complete header line.
-
-                    bstr_builder_clear(part->parser->part_header_pieces);
-
-                    htp_mpartp_parse_header(part, data, len);
-                    // TODO RC                    
+                // Is there a pending header?
+                if (part->parser->pending_header_line == NULL) {
+                    if (line != NULL) {
+                        part->parser->pending_header_line = line;
+                        line = NULL;
+                    } else {
+                        part->parser->pending_header_line = bstr_dup_mem(data, len);
+                        if (part->parser->pending_header_line == NULL) return HTP_ERROR;
+                    }
                 } else {
-                    // Folded line; store this piece for later.
-                    bstr_builder_append_mem(part->parser->part_header_pieces, data, len);
-                    part->parser->multipart.flags |= HTP_MULTIPART_HEADER_FOLDING;
+                    // Is this a folded line?
+                    if (isspace(data[0])) {
+                        // Folding; add to the existing line.
+                        part->parser->multipart.flags |= HTP_MULTIPART_HEADER_FOLDING;
+                        part->parser->pending_header_line = bstr_add_mem(part->parser->pending_header_line, data, len);
+                        if (part->parser->pending_header_line == NULL) {
+                            bstr_free(line);
+                            return HTP_ERROR;
+                        }
+                    } else {
+                        // Process the pending header line.                        
+                        htp_mpartp_parse_header(part, bstr_ptr(part->parser->pending_header_line),
+                                bstr_len(part->parser->pending_header_line));
+                        // TODO RC
+                        bstr_free(part->parser->pending_header_line);
+
+                        if (line != NULL) {
+                            part->parser->pending_header_line = line;
+                            line = NULL;
+                        } else {
+                            part->parser->pending_header_line = bstr_dup_mem(data, len);
+                            if (part->parser->pending_header_line == NULL) return HTP_ERROR;
+                        }
+                    }
                 }
             }
 
@@ -675,7 +706,7 @@ static htp_status_t htp_mpartp_init_boundary(htp_mpartp_t *parser, unsigned char
     parser->multipart.boundary[2] = '-';
     parser->multipart.boundary[3] = '-';
 
-    for (size_t i = 0; i < len; i++) {        
+    for (size_t i = 0; i < len; i++) {
         parser->multipart.boundary[i + 4] = data[i];
     }
 
