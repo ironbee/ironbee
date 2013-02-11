@@ -153,15 +153,6 @@ struct htp_mpartp_t {
     bstr_builder_t *part_data_pieces;
 
     /**
-     * Whenever a new line is encountered, the parser needs to examine it
-     * in order to determine if it contains a boundary. While the examination
-     * is taking place, the parser will store the first byte of the new
-     * line in this structure, which comes handy during the processing of
-     * part headers, in order to efficiently determine if the header is folded.
-     */
-    unsigned char next_line_first_byte;
-
-    /**
      * The offset of the current boundary candidate, relative to the most
      * recent data chunk (first unprocessed chunk of data).
      */

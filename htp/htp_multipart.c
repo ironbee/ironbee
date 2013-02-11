@@ -1044,13 +1044,7 @@ STATE_SWITCH:
                     #ifdef HTP_DEBUG
                     fprintf(stderr, "boundary (len %d pos %d char %d) data char %d\n", parser->multipart.boundary_len,
                             parser->boundary_match_pos, parser->multipart.boundary[parser->boundary_match_pos], tolower(data[pos]));
-                    #endif
-
-                    // Remember the first byte in the new line; we'll need to
-                    // determine if the line is a part of a folded header.
-                    if (parser->boundary_match_pos == 2) {
-                        parser->next_line_first_byte = data[pos];
-                    }
+                    #endif                   
 
                     // Check if the bytes match.
                     if (!(data[pos] == parser->multipart.boundary[parser->boundary_match_pos])) {
