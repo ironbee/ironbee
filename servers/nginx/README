@@ -7,9 +7,9 @@ management for pcre causing pcre operations from ironbee to fail:
 the patch exposes an API to work around this.
 
 It can't reasonably be integrated with Ironbee's build, because
-nginx doesn't support loading modules, so it has to be built in
-as a configuration option to nginx.  To do that, go to the nginx
-directory and configure using:
+nginx doesn't support loading modules.  Instead it has to be
+built in to nginx as a configuration option.  To do that,
+go to the nginx directory and configure using:
 
 $ patch -p0 < /path/to/this/directory/nginx.patch
 $ ./configure \
