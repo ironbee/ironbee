@@ -459,9 +459,7 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
  */
 htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {
     if ((hostport == NULL) || (hostname == NULL) || (port == NULL) || (flags == NULL)) return HTP_ERROR;
-
-    *flags = 0;
-
+    
     unsigned char *data = bstr_ptr(hostport);
     size_t len = bstr_len(hostport);
 
