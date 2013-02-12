@@ -534,6 +534,16 @@ TEST(BstrTest, AdjustRealPtr) {
     bstr_free(b);
 }
 
+TEST(BstrTest, UtilMemTrim) {
+    char d[] = " \r\t0123456789\f\v  ";
+    char *data = &d[0];
+    size_t len = strlen(data);
+
+    bstr_util_mem_trim((unsigned char **)&data, &len);
+
+    EXPECT_EQ(0, bstr_cmp_ex(data, len, "0123456789", 10));
+}
+
 TEST(BstrBuilder, CreateDestroy) {
     bstr_builder_t *bb = bstr_builder_create();
     EXPECT_EQ(0, bstr_builder_size(bb));
