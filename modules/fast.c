@@ -826,6 +826,15 @@ ib_status_t fast_rule_injection(
     }
 
     rc = ib_hash_create(&rule_set, tmp_mp);
+    if (rc != IB_OK) {
+        ib_log_error(
+            ib,
+            "fast: Error creating rule set hash: %s",
+            ib_status_to_string(rc)
+        );
+        rc = IB_EOTHER;
+        goto done;
+    }
 
     fast_search_t search = {
         .runtime   = runtime,
