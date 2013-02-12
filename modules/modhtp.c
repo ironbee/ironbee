@@ -1044,10 +1044,12 @@ static int modhtp_htp_response(htp_connp_t *connp)
 
     ib_state_notify_response_finished(ib, itx);
 
+    /* NOTE: response_finished() triggers tx_destroy.  As a result, tx
+     * is no longer valid */
+
     /* Destroy the transaction. */
     ib_log_debug3_tx(itx, "Destroying transaction structure");
     ib_tx_destroy(itx);
-    htp_tx_set_user_data(tx, NULL);
 
     /* NOTE: The htp transaction is destroyed in modhtp_tx_cleanup() */
 
