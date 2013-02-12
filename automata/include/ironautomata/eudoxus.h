@@ -248,11 +248,11 @@ typedef enum ia_eudoxus_command_t ia_eudoxus_command_t;
  * @return ia_eudoxus_command_t
  */
 typedef ia_eudoxus_command_t (*ia_eudoxus_callback_t)(
-    const ia_eudoxus_t *engine,
-    const char         *output,
-    size_t              output_length,
-    const uint8_t      *input_location,
-    void               *callback_data
+    ia_eudoxus_t  *engine,
+    const char    *output,
+    size_t         output_length,
+    const uint8_t *input_location,
+    void          *callback_data
 );
 
 /**
@@ -477,7 +477,7 @@ typedef bool (*ia_eudoxus_metadata_callback_t)(
  *   @a eudoxus is found to be corrupt.
  */
 ia_eudoxus_result_t ia_eudoxus_metadata(
-    const ia_eudoxus_t             *eudoxus,
+    ia_eudoxus_t                   *eudoxus,
     ia_eudoxus_metadata_callback_t  callback,
     void                           *callback_data
 );
@@ -501,11 +501,11 @@ ia_eudoxus_result_t ia_eudoxus_metadata(
  *   to be corrupt.
  */
 ia_eudoxus_result_t ia_eudoxus_metadata_with_key(
-    const ia_eudoxus_t  *eudoxus,
-    const uint8_t       *key,
-    size_t               key_length,
-    const uint8_t      **value,
-    size_t              *value_length
+    ia_eudoxus_t   *eudoxus,
+    const uint8_t  *key,
+    size_t          key_length,
+    const uint8_t **value,
+    size_t         *value_length
 );
 
 /**
@@ -528,7 +528,7 @@ ia_eudoxus_result_t ia_eudoxus_metadata_with_key(
  *   message.
  */
 ia_eudoxus_result_t ia_eudoxus_all_outputs(
-    const ia_eudoxus_t    *eudoxus,
+    ia_eudoxus_t          *eudoxus,
     ia_eudoxus_callback_t  callback,
     void                  *callback_data
 );

@@ -146,7 +146,7 @@ static IB_DIRMAP_INIT_STRUCTURE(eudoxus_directive_map) = {
  *                       handling. This is needed for handling capture
  *                       of the match.
  */
-static ia_eudoxus_command_t ee_first_match_callback(const ia_eudoxus_t* engine,
+static ia_eudoxus_command_t ee_first_match_callback(ia_eudoxus_t* engine,
                                                     const char *output,
                                                     size_t output_length,
                                                     const uint8_t *input,

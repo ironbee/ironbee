@@ -468,7 +468,7 @@ ia_eudoxus_result_t ia_eudoxus_execute_without_output(
 }
 
 ia_eudoxus_result_t ia_eudoxus_metadata(
-    const ia_eudoxus_t             *eudoxus,
+    ia_eudoxus_t                   *eudoxus,
     ia_eudoxus_metadata_callback_t  callback,
     void                           *callback_data
 )
@@ -554,11 +554,11 @@ static bool ia_eudoxus_metadata_with_key_function(
 }
 
 ia_eudoxus_result_t ia_eudoxus_metadata_with_key(
-    const ia_eudoxus_t  *eudoxus,
-    const uint8_t       *key,
-    size_t               key_length,
-    const uint8_t      **value,
-    size_t              *value_length
+    ia_eudoxus_t   *eudoxus,
+    const uint8_t  *key,
+    size_t          key_length,
+    const uint8_t **value,
+    size_t         *value_length
 )
 {
     if (eudoxus == NULL || key == NULL) {
@@ -582,7 +582,7 @@ ia_eudoxus_result_t ia_eudoxus_metadata_with_key(
 }
 
 ia_eudoxus_result_t ia_eudoxus_all_outputs(
-    const ia_eudoxus_t    *eudoxus,
+    ia_eudoxus_t          *eudoxus,
     ia_eudoxus_callback_t  callback,
     void                  *callback_data
 )
