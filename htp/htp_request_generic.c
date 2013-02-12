@@ -55,8 +55,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
 
     // Create new header structure
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
-    if (h == NULL) {
-        // TODO
+    if (h == NULL) {        
         return HTP_ERROR;
     }
 
@@ -66,8 +65,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         htp_header_line_t *hl = htp_list_get(connp->in_tx->request_header_lines,
             connp->in_header_line_index);
         if (hl == NULL) {
-            // Internal error
-            // TODO
+            // Internal error            
             free(h);
             return HTP_ERROR;
         }
@@ -85,8 +83,7 @@ int htp_process_request_header_generic(htp_connp_t *connp) {
         }
 
         tempstr = bstr_alloc(len);
-        if (tempstr == NULL) {
-            // TODO
+        if (tempstr == NULL) {            
             free(h);
             return HTP_ERROR;
         }

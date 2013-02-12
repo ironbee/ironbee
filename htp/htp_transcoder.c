@@ -62,8 +62,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
     
     // Initialize iconv
     iconv_t cd = iconv_open(connp->cfg->internal_encoding, connp->cfg->request_encoding);
-    if (cd == (iconv_t) -1) {
-        // TODO Report iconv initialization error
+    if (cd == (iconv_t) -1) {        
         htp_table_destroy(output_params);
         return HTP_ERROR;
     }

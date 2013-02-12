@@ -387,8 +387,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         // TODO IIS 7.0, for example, would ignore the T-E header when it
         //      it is used with a protocol below HTTP 1.1.
         if (tx->request_protocol_number < HTP_PROTOCOL_1_1) {
-            tx->flags |= HTP_INVALID_CHUNKING;
-            // TODO Log
+            tx->flags |= HTP_INVALID_CHUNKING;            
         }
 
         // If the T-E header is present we are going to use it.
@@ -397,8 +396,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         // We are still going to check for the presence of C-L
         if (cl != NULL) {
             // This is a violation of the RFC
-            tx->flags |= HTP_REQUEST_SMUGGLING;
-            // TODO Log
+            tx->flags |= HTP_REQUEST_SMUGGLING;            
         }
     } else if (cl != NULL) {
         // We have a request body of known length
@@ -406,14 +404,12 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
         // Check for a folded C-L header
         if (cl->flags & HTP_FIELD_FOLDED) {
-            tx->flags |= HTP_REQUEST_SMUGGLING;
-            // TODO Log
+            tx->flags |= HTP_REQUEST_SMUGGLING;            
         }
 
         // Check for multiple C-L headers
         if (cl->flags & HTP_FIELD_REPEATED) {
-            tx->flags |= HTP_REQUEST_SMUGGLING;
-            // TODO Log
+            tx->flags |= HTP_REQUEST_SMUGGLING;            
         }
 
         // Get body length
@@ -437,7 +433,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
             if (tx->connp->put_file == NULL) return HTP_ERROR;
             tx->connp->put_file->source = HTP_FILE_PUT;
         } else {
-            // TODO Warn about PUT request without a body
+            // TODO Warn about PUT request without a body.
         }
 
         return HTP_OK;
@@ -608,7 +604,8 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
             || (tx->response_status_number < 0)
             || (tx->response_status_number < HTP_VALID_STATUS_MIN)
             || (tx->response_status_number > HTP_VALID_STATUS_MAX)) {
-        // TODO This should be STATUS_CODE_INVALID
+        // TODO This should be STATUS_CODE_INVALID.
+
         // Response line is invalid
         htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line");
 
@@ -839,7 +836,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
         // Scheme
         if (connp->in_tx->parsed_uri->scheme != NULL) {
             if (bstr_cmp_c(connp->in_tx->parsed_uri->scheme, "http") != 0) {
-                // TODO Invalid scheme
+                // TODO Invalid scheme.
             }
         } else {
             connp->in_tx->parsed_uri->scheme = bstr_dup_c("http");
@@ -873,7 +870,7 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
 
         // Run the last RESPONSE_BODY_DATA HOOK, but
         // only if there was a response body present.
-        // TODO Use constant instead of -1
+        // TODO Use constant instead of -1.
         if (tx->response_transfer_coding != HTP_CODING_NO_BODY) {
             htp_tx_res_process_body_data(tx, NULL, 0);
         }
@@ -923,8 +920,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
                 tx->response_content_encoding);
         if (tx->connp->out_decompressor == NULL) return HTP_ERROR;
         tx->connp->out_decompressor->callback = htp_tx_res_process_body_data_decompressor_callback;
-    } else if (tx->response_content_encoding != COMPRESSION_NONE) {
-        // TODO Error message
+    } else if (tx->response_content_encoding != COMPRESSION_NONE) {        
         return HTP_ERROR;
     }
 

@@ -185,8 +185,7 @@ int htp_parse_authorization(htp_connp_t *connp) {
         return htp_parse_authorization_digest(connp, auth_header);
     } else {
         // Unrecognized authentication method
-        connp->in_tx->request_auth_type = HTP_AUTH_UNRECOGNIZED;
-        // TODO Report unknown Authorization header
+        connp->in_tx->request_auth_type = HTP_AUTH_UNRECOGNIZED;        
     }
 
     return HTP_OK;

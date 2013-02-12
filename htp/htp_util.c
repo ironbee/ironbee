@@ -185,7 +185,8 @@ int htp_is_space(int c) {
 int htp_convert_method_to_number(bstr *method) {
     if (method == NULL) return HTP_M_UNKNOWN;
 
-    // TODO Optimize using parallel matching, or something similar
+    // TODO Optimize using parallel matching, or something similar.
+    
     if (bstr_cmp_c(method, "GET") == 0) return HTP_M_GET;
     if (bstr_cmp_c(method, "PUT") == 0) return HTP_M_PUT;
     if (bstr_cmp_c(method, "POST") == 0) return HTP_M_POST;
@@ -353,8 +354,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
 
     va_end(args);
 
-    if (r < 0) {
-        // TODO Will vsnprintf ever return an error?
+    if (r < 0) {        
         snprintf(buf, 1024, "[vnsprintf returned error %d]", r);
     }
 
@@ -456,7 +456,9 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_parse_authority(bstr *authority, bstr **hostname, int *port, int *flags) {
-    if ((authority == NULL)||(hostname == NULL)||(port == NULL)||(flags == NULL)) return HTP_ERROR;   
+    if ((authority == NULL)||(hostname == NULL)||(port == NULL)||(flags == NULL)) return HTP_ERROR;
+
+    // XXX Incomplete.
     
     *flags = 0; // No errors
 
@@ -509,7 +511,9 @@ htp_status_t htp_parse_authority(bstr *authority, bstr **hostname, int *port, in
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
 int htp_parse_uri_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
-    // TODO Rewrite to use htp_uri_authority (above)
+    // TODO Rewrite to use htp_uri_authority (above).
+
+    // XXX Incomplete.
     
     int colon = bstr_chr(authority, ':');
     if (colon == -1) {
@@ -734,7 +738,7 @@ static uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
 
     uint8_t *p = cfg->bestfit_map;
 
-    // TODO Optimize lookup
+    // TODO Optimize lookup.
 
     for (;;) {
         uint32_t x = (p[0] << 8) + p[1];
@@ -987,7 +991,7 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
         // Use best-fit mapping
         unsigned char *p = cfg->bestfit_map;
 
-        // TODO Optimize lookup
+        // TODO Optimize lookup.
 
         for (;;) {
             // Have we reached the end of the map?
@@ -1041,7 +1045,7 @@ static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char 
         // Use best-fit mapping
         unsigned char *p = cfg->bestfit_map;
 
-        // TODO Optimize lookup
+        // TODO Optimize lookup.
 
         for (;;) {
             // Have we reached the end of the map?
@@ -1575,6 +1579,8 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
                 bstr_ptr(incomplete->port), bstr_len(incomplete->port), 10);
         if (normalized->port_number < 0) {
             // TODO Flag and report
+
+            // XXX Incomplete.
 
             // Not available
             normalized->port_number = -1;
@@ -2153,9 +2159,7 @@ bstr *htp_unparse_uri_noencode(htp_uri_t *uri) {
  * @return 1 for good enough or 0 for not good enough
  */
 int htp_treat_response_line_as_body(htp_tx_t *tx) {
-    // TODO This function should be replaced with several implementations,
-    //      one for every different browser handling. For example:
-    //
+    // Browser behavior:
     //      Firefox 3.5.x: (?i)^\s*http
     //      IE: (?i)^\s*http\s*/
     //      Safari: ^HTTP/\d+\.\d+\s+\d{3}

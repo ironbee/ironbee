@@ -50,7 +50,7 @@
  */
 htp_status_t htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     // TODO We shouldn't really see anything apart from CR and LF,
-    // so we should warn about anything else.
+    //      so we should warn about anything else.
 
     for (;;) {
         OUT_NEXT_BYTE_OR_RETURN(connp);
@@ -130,7 +130,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             // Handle chunk length
             if (connp->out_chunked_length > 0) {
                 // More data available
-                // TODO Add a check for chunk length
+                // TODO Add a check for chunk length.
                 connp->out_state = htp_connp_RES_BODY_CHUNKED_DATA;
             } else if (connp->out_chunked_length == 0) {
                 // End of data
@@ -301,7 +301,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             size_t len = bstr_len(ct->value);
             size_t newlen = 0;
             while (newlen < len) {
-                // TODO Some platforms may do things differently here
+                // TODO Some platforms may do things differently here.
                 if (htp_is_space(data[newlen]) || (data[newlen] == ';')) {
                     bstr_adjust_len(connp->out_tx->response_content_type, newlen);
                     break;
@@ -322,12 +322,11 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             if (cl != NULL) {
                 // This is a violation of the RFC
                 connp->out_tx->flags |= HTP_REQUEST_SMUGGLING;
-                // TODO
             }
 
             connp->out_state = htp_connp_RES_BODY_CHUNKED_LENGTH;
             connp->out_tx->progress = HTP_RESPONSE_BODY;
-        }            // 3. If a Content-Length header field (section 14.14) is present, its
+        }// 3. If a Content-Length header field (section 14.14) is present, its
             //   value in bytes represents the length of the message-body.
         else if (cl != NULL) {
             // We know the exact length
@@ -335,8 +334,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
             // Check for multiple C-L headers
             if (cl->flags & HTP_FIELD_REPEATED) {
-                connp->out_tx->flags |= HTP_REQUEST_SMUGGLING;
-                // TODO Log
+                connp->out_tx->flags |= HTP_REQUEST_SMUGGLING;                
             }
 
             // Get body length
@@ -369,8 +367,6 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
                             "C-T multipart/byteranges in responses not supported");
                     return HTP_ERROR;
                 }
-
-                // TODO Set connp->out_tx->response_transfer_coding
             }
 
             // 5. By the server closing the connection. (Closing the connection

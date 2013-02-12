@@ -506,7 +506,7 @@ char *bstr_util_memdup_to_c(const void *_data, size_t len) {
     if (t == NULL) return NULL;
 
     while (len--) {
-        // TODO We have to at least escape the \ characters too
+        // XXX We have to at least escape the \ characters too
         // Escape NUL bytes, but just copy everything else.
         if (*data == '\0') {
             data++;

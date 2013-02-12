@@ -90,8 +90,7 @@ htp_status_t htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
     // A 2xx response means a tunnel was established. Anything
     // else means we continue to follow the HTTP stream.
     if ((connp->in_tx->response_status_number >= 200) && (connp->in_tx->response_status_number <= 299)) {
-        // TODO Check that the server did not accept a connection
-        //      to itself.
+        // TODO Check that the server did not accept a connection to itself.
 
         // The requested tunnel was established: we are going
         // to ignore the remaining data on this stream
@@ -113,7 +112,7 @@ htp_status_t htp_connp_REQ_CONNECT_WAIT_RESPONSE(htp_connp_t *connp) {
  */
 htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
     // TODO We shouldn't really see anything apart from CR and LF,
-    // so we should warn about anything else.
+    //      so we should warn about anything else.
 
     for (;;) {
         IN_NEXT_BYTE_OR_RETURN(connp);
@@ -184,23 +183,23 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
         if (connp->in_next_byte == LF) {
             htp_chomp(connp->in_line, &connp->in_line_len);
 
-            // Extract chunk length
+            // Extract chunk length.
             connp->in_chunked_length = htp_parse_chunked_length(connp->in_line, connp->in_line_len);
 
-            // Cleanup for the next line
+            // Cleanup for the next line.
             connp->in_line_len = 0;
 
             // Handle chunk length
             if (connp->in_chunked_length > 0) {
-                // More data available
-                // TODO Add a check for chunk length
+                // More data available.
+                // TODO Add a check for chunk length.
                 connp->in_state = htp_connp_REQ_BODY_CHUNKED_DATA;
             } else if (connp->in_chunked_length == 0) {
                 // End of data
                 connp->in_state = htp_connp_REQ_HEADERS;
                 connp->in_tx->progress = HTP_REQUEST_TRAILER;
             } else {
-                // Invalid chunk length
+                // Invalid chunk length.
                 htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                         "Request chunk encoding: Invalid chunk length");
                 return HTP_ERROR;
@@ -291,7 +290,7 @@ htp_status_t htp_connp_REQ_BODY_DETERMINE(htp_connp_t *connp) {
 
         default:
             // Should not be here
-            // TODO
+            return HTP_ERROR;
             break;
     }
 
