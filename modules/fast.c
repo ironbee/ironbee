@@ -624,7 +624,13 @@ ia_eudoxus_command_t fast_eudoxus_callback(
     memcpy(&index, output, sizeof(index));
     rule = search->runtime->index[index];
 
+    /* Check phase. */
     if (rule->meta.phase != search->rule_exec->phase) {
+        return IA_EUDOXUS_CMD_CONTINUE;
+    }
+
+    /* Check context. */
+    if (rule->ctx != search->rule_exec->tx->ctx) {
         return IA_EUDOXUS_CMD_CONTINUE;
     }
 
