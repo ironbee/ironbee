@@ -317,9 +317,9 @@ ib_status_t DLL_PUBLIC ib_data_add_stream(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_data_get(
-    ib_data_t   *data,
-    const char  *name,
-    ib_field_t **pf
+    const ib_data_t  *data,
+    const char       *name,
+    ib_field_t      **pf
 );
 
 /**

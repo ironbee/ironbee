@@ -800,9 +800,9 @@ ib_status_t ib_data_add_stream(
 }
 
 ib_status_t ib_data_get(
-    ib_data_t   *data,
-    const char  *name,
-    ib_field_t **pf
+    const ib_data_t  *data,
+    const char       *name,
+    ib_field_t      **pf
 )
 {
     return ib_data_get_ex(data, name, strlen(name), pf);
