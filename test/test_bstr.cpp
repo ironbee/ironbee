@@ -446,6 +446,15 @@ TEST(BstrTest, CharAt) {
     bstr_free(str);
 }
 
+TEST(BstrTest, CharAtEnd) {
+    bstr *str = bstr_dup_mem("ABCDEFGHIJKL\000NOPQRSTUVWXYZ", 20);
+    EXPECT_EQ('T', bstr_char_at_end(str, 0));
+    EXPECT_EQ('\000', bstr_char_at_end(str, 7));
+    EXPECT_EQ(-1, bstr_char_at_end(str, bstr_len(str)));
+
+    bstr_free(str);
+}
+
 TEST(BstrTest, Chop) {
     bstr *p1 = bstr_dup_c("abcdef");
     bstr *p2 = bstr_alloc(10);

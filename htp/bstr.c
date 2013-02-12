@@ -169,12 +169,20 @@ int bstr_begins_with_mem_nocase(const bstr *haystack, const void *_data, size_t 
     }
 }
 
-int bstr_char_at(const bstr *s, size_t pos) {
-    unsigned char *data = bstr_ptr(s);
-    size_t len = bstr_len(s);
+int bstr_char_at(const bstr *b, size_t pos) {
+    unsigned char *data = bstr_ptr(b);
+    size_t len = bstr_len(b);
 
     if (pos >= len) return -1;
     return data[pos];
+}
+
+int bstr_char_at_end(const bstr *b, size_t pos) {
+    unsigned char *data = bstr_ptr(b);
+    size_t len = bstr_len(b);
+
+    if (pos >= len) return -1;
+    return data[len - 1 - pos];
 }
 
 void bstr_chop(bstr *b) {

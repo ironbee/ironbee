@@ -252,15 +252,24 @@ int bstr_begins_with_nocase(const bstr *bhaystack, const bstr *cneedle);
  *
  * @param[in] b
  * @param[in] pos
- * @return The character at the given location, or -1 if the position is out
- *         of range.
+ * @return The byte at the given location, or -1 if the position is out of range.
  */
 int bstr_char_at(const bstr *b, size_t pos);
 
 /**
+ * Return the byte at the given position, counting from the end of the string (e.g.,
+ * byte at position 0 is the last byte in the string.)
+ *
+ * @param[in] b
+ * @param[in] pos
+ * @return The byte at the given location, or -1 if the position is out of range.
+ */
+int bstr_char_at_end(const bstr *b, size_t pos);
+
+/**
  * Remove the last byte from bstring, assuming it contains at least one byte. This
  * function will not reduce the storage that backs the string, only the amount
- * of data consumed.
+ * of data used.
  *
  * @param[in] b
  */
