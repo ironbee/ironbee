@@ -501,24 +501,22 @@ char *bstr_util_memdup_to_c(const void *_data, size_t len) {
     }
 
     // Now copy the string into a NUL-terminated buffer.
-    char *r, *t;
-    r = t = malloc(len + nulls + 1);
-    if (t == NULL) return NULL;
+    
+    char *r, *d;
+    r = d = malloc(len + nulls + 1);
+    if (d == NULL) return NULL;
 
-    while (len--) {
-        // XXX We have to at least escape the \ characters too
-        // Escape NUL bytes, but just copy everything else.
+    while (len--) {        
         if (*data == '\0') {
             data++;
-            *t++ = '\\';
-            *t++ = '0';
+            *d++ = '\\';
+            *d++ = '0';
         } else {
-            *t++ = *data++;
+            *d++ = *data++;
         }
     }
-
-    // Terminate string.
-    *t = '\0';
+    
+    *d = '\0';
 
     return r;
 }
