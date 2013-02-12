@@ -16,7 +16,8 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_pcre.la \
                      ibmod_ac.la \
                      ibmod_rules.la \
-                     ibmod_user_agent.la
+                     ibmod_user_agent.la \
+                     ibmod_fast.la
 
 if ENABLE_LUA
 pkglib_LTLIBRARIES += ibmod_lua.la
@@ -115,6 +116,9 @@ ibmod_user_agent_la_LDFLAGS = $(AM_LDFLAGS)
 if FREEBSD
 ibmod_user_agent_la_LIBADD = $(AM_LIBADD) -liconv
 endif
+
+ibmod_fast_la_SOURCES = fast.c
+ibmod_fast_la_CPPFLAGS = ${AM_CPPFLAGS} -I$(srcdir)/../automata/include
 
 install-exec-hook: $(pkglib_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
