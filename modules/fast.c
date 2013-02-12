@@ -588,11 +588,11 @@ ib_status_t fast_feed_phase(
  */
 static
 ia_eudoxus_command_t fast_eudoxus_callback(
-      ia_eudoxus_t  *engine,
-     const char    *output,
-     size_t         output_length,
-     const uint8_t *input_location,
-     void          *callback_data
+    ia_eudoxus_t  *engine,
+    const char    *output,
+    size_t         output_length,
+    const uint8_t *input_location,
+    void          *callback_data
 )
 {
     assert(engine        != NULL);
