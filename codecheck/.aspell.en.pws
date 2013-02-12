@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1858 
+personal_ws-1.1 en 1863 
 malloced
 malloc'ed
 libnet
@@ -40,6 +40,7 @@ cccc
 CLR
 HandleRequestHeaders
 subpattern
+sizeof
 uHHHH
 buf
 dir
@@ -746,6 +747,7 @@ ResponseStarted
 PersonalityParam
 urlDecode
 dynf
+FastAutomata
 unesc
 backreference
 SecRuleScript
@@ -755,6 +757,7 @@ IronBeeClock
 foos
 ConstMemoryPools
 unhandled
+IndexSize
 textbuf
 onEvent
 edeclined
@@ -1177,6 +1180,7 @@ nlen
 pcreposix
 semop
 funcs
+Stringified
 transactions's
 IronBeeTransformations
 lexicographically
@@ -1477,6 +1481,7 @@ IronBeeUtilField
 IronBeeUtilIPSet
 substring
 HandleContextTx
+STRINGIFY
 oflags
 moduleName
 modulename

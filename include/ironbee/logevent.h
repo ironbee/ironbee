@@ -250,7 +250,7 @@ ib_status_t DLL_PUBLIC ib_logevent_data_set(
  * @note This function does not generate a @ref handle_logevent_event event.
  *
  * @param[in,out] le Log event
- * @param[in] suppress Suppressionn setting for the event
+ * @param[in] suppress Suppression setting for the event
  *
  * @returns Status code
  */

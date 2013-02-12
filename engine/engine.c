@@ -259,7 +259,7 @@ static ib_status_t ib_event_table_init(void)
     /* Logevent updated */
     INIT_EVENT_TABLE_ENT(handle_logevent_event, IB_STATE_HOOK_TX);
 
-    /* Sanity check the table, make sure all events are initiailzed */
+    /* Sanity check the table, make sure all events are initialized */
 validate:
     for(event = conn_started_event;  event < IB_STATE_EVENT_NUM;  ++event) {
         assert(ib_event_table[event].event == event);
