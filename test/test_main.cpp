@@ -494,3 +494,14 @@ TEST_F(ConnectionParsing, PhpParamProcessing) {
     ASSERT_EQ(bstr_cmp_c(p3->value, "3"), 0);
 }
 
+TEST_F(ConnectionParsing, Http11HostMissing) {
+    int rc = test_run(home, "22-http_1_1-host_missing", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(htp_list_size(connp->conn->transactions), 1);
+
+    htp_tx_t *tx = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_HOST_MISSING);
+}
