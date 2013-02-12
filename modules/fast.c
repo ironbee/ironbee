@@ -57,7 +57,7 @@
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
 IB_MODULE_DECLARE();
- 
+
 /* Documented in definitions below. */
 typedef struct fast_runtime_t         fast_runtime_t;
 typedef struct fast_config_t          fast_config_t;
@@ -179,7 +179,7 @@ static inline
 const char *fast_eudoxus_error(const ia_eudoxus_t *eudoxus)
 {
     return ia_eudoxus_error(eudoxus) == NULL ?
-        "no error" : 
+        "no error" :
          ia_eudoxus_error(eudoxus);
 }
 
@@ -246,7 +246,7 @@ ib_status_t fast_feed(
     assert(eudoxus != NULL);
     assert(state   != NULL);
     assert(data    != NULL);
-    
+
     ia_eudoxus_result_t irc;
 
     irc = ia_eudoxus_execute(state, data, data_length);
@@ -290,7 +290,7 @@ ib_status_t fast_feed_data_bytestring(
     assert(state                 != NULL);
     assert(data                  != NULL);
     assert(bytestring_field_name != NULL);
-    
+
     ib_field_t         *field;
     const ib_bytestr_t *bs;
     ib_status_t         rc;
@@ -364,7 +364,7 @@ ib_status_t fast_feed_data_collection(
     assert(state      != NULL);
     assert(data       != NULL);
     assert(collection != NULL);
-    
+
     ib_field_t           *field;
     const ib_list_t      *subfields;
     const ib_list_node_t *node;
@@ -479,7 +479,7 @@ ib_status_t fast_feed_data_collection(
  *
  * Pull and feed the specified bytestrings and collections to an automata.
  * This function is similar to fast_rule_injection() but requires an already
- * functioning automata execution.  It can be combined with other feed 
+ * functioning automata execution.  It can be combined with other feed
  * functions.
  *
  * @param[in] ib          IronBee engine.
@@ -509,7 +509,7 @@ ib_status_t fast_feed_phase(
     assert(data        != NULL);
     assert(bytestrings != NULL);
     assert(collections != NULL);
-    
+
     ib_status_t rc;
 
     /* Lower level feed_* routines log errors, so we simply abort on
@@ -767,12 +767,12 @@ done:
 /**
  * Evaluate automata for a single phase.
  *
- * This function handles injection for a single phase.  It is called by 
+ * This function handles injection for a single phase.  It is called by
  * phase specific functions that simply forward their parameters along with
  * the bytestrings and collections specific to the phase.
  *
  * @sa fast_feed_phase()
- * 
+ *
  * @param[in] ib          IronBee engine.
  * @param[in] rule_exec   Current rule execution context.
  * @param[in] rule_list   List to add injected rules to; updated.
@@ -867,7 +867,7 @@ ib_status_t fast_rule_injection(
         runtime->eudoxus,
         state,
         data,
-        bytestrings, 
+        bytestrings,
         collections
     );
 
