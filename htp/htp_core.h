@@ -182,7 +182,7 @@ enum htp_file_source_t {
 #define HTP_INVALID_CHUNKING                0x000100
 #define HTP_MULTI_PACKET_HEAD               0x000200
 #define HTP_HOST_MISSING                    0x000400
-#define HTP_AMBIGUOUS_HOST                  0x000800
+#define HTP_HOST_AMBIGUOUS                  0x000800
 #define HTP_PATH_ENCODED_NUL                0x001000
 #define HTP_PATH_INVALID_ENCODING           0x002000
 #define HTP_PATH_INVALID                    0x004000
@@ -194,6 +194,7 @@ enum htp_file_source_t {
 #define HTP_PATH_FULLWIDTH_EVASION          0x100000 /* Range U+FF00 - U+FFFF detected */
 #define HTP_STATUS_LINE_INVALID             0x200000
 #define HTP_CONN_PIPELINED                  0x400000
+#define HTP_HOST_INVALID                    0x800000
 
 // Logging-related constants
 #define HTP_LOG_MARK                 __FILE__,__LINE__

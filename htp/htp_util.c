@@ -186,7 +186,7 @@ int htp_convert_method_to_number(bstr *method) {
     if (method == NULL) return HTP_M_UNKNOWN;
 
     // TODO Optimize using parallel matching, or something similar.
-    
+
     if (bstr_cmp_c(method, "GET") == 0) return HTP_M_GET;
     if (bstr_cmp_c(method, "PUT") == 0) return HTP_M_PUT;
     if (bstr_cmp_c(method, "POST") == 0) return HTP_M_POST;
@@ -287,6 +287,8 @@ int htp_parse_chunked_length(unsigned char *data, size_t len) {
  * @return The parsed number on success; a negative number on error.
  */
 int64_t htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, int base) {
+    if (len == 0) return -1003;
+
     size_t last_pos;
     size_t pos = 0;
 
@@ -339,7 +341,7 @@ void htp_print_log(FILE *stream, htp_log_t *log) {
  */
 void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_t level, int code, const char *fmt, ...) {
     if (connp == NULL) return;
-    
+
     char buf[1024];
     va_list args;
 
@@ -354,7 +356,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
 
     va_end(args);
 
-    if (r < 0) {        
+    if (r < 0) {
         snprintf(buf, 1024, "[vnsprintf returned error %d]", r);
     }
 
@@ -455,47 +457,64 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
  * @param[in,out] flags
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_parse_authority(bstr *authority, bstr **hostname, int *port, int *flags) {
-    if ((authority == NULL)||(hostname == NULL)||(port == NULL)||(flags == NULL)) return HTP_ERROR;
+htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {
+    if ((hostport == NULL) || (hostname == NULL) || (port == NULL) || (flags == NULL)) return HTP_ERROR;
 
-    // XXX Incomplete.
-    
-    *flags = 0; // No errors
+    *flags = 0;
 
-    int colon_pos = bstr_chr(authority, ':');
-    if (colon_pos == -1) {        
-        // Hostname alone, no port
-        *hostname = bstr_dup(authority);
+    unsigned char *data = bstr_ptr(hostport);
+    size_t len = bstr_len(hostport);
+
+    // Ignore whitespace at the beginning and the end.
+    bstr_util_mem_trim(&data, &len);
+
+    // Is there a colon?
+    unsigned char *colon = memchr(data, ':', len);
+    if (colon == NULL) {
+        // Hostname alone, no port.
+
+        *port = -1;
+
+        // Ignore one dot at the end.
+        if ((len > 0) && (data[len - 1] == '.')) len--;
+
+        *hostname = bstr_dup_mem(data, len);
         if (*hostname == NULL) return HTP_ERROR;
 
-        htp_normalize_hostname_inplace(*hostname);
-        // TODO Validate hostname
-        *port = -1; // No port information
-    } else {        
-        // Hostname and port        
+        bstr_to_lowercase(*hostname);
+    } else {
+        // Hostname and port.
 
-        // Hostname
-        *hostname = bstr_dup_ex(authority, 0, colon_pos);
-        if (*hostname == NULL) return HTP_ERROR;       
+        // Ignore whitespace at the end of hostname.
+        unsigned char *hostend = colon;
+        while ((hostend > data) && (isspace(*(hostend - 1)))) hostend--;
 
-        htp_normalize_hostname_inplace(*hostname);
-        // TODO Validate hostname       
+        // Ignore one dot at the end.
+        if ((hostend > data) && (*(hostend - 1) == '.')) hostend--;
 
-        // Port
-        int64_t port_parsed = htp_parse_positive_integer_whitespace(
-                bstr_ptr(authority) + colon_pos + 1, bstr_len(authority) - colon_pos - 1, 10);       
+        *hostname = bstr_dup_mem(data, hostend - data);
+        if (*hostname == NULL) return HTP_ERROR;
+
+        bstr_to_lowercase(*hostname);
+
+        // Parse the port.
+
+        unsigned char *portstart = colon + 1;
+        size_t portlen = len - (portstart - data);
+
+        int64_t port_parsed = htp_parse_positive_integer_whitespace(portstart, portlen, 10);
 
         if (port_parsed < 0) {
-            // Failed to parse port
+            // Failed to parse the port number.
             *port = -1;
-            // TODO Flag
+            *flags |= HTP_HOST_INVALID;
         } else if ((port_parsed > 0) && (port_parsed < 65536)) {
-            // Valid port
+            // Valid port number.
             *port = port_parsed;
         } else {
-            // Port number out of range
+            // Port number out of range.
             *port = -1;
-            // TODO Flag
+            *flags |= HTP_HOST_INVALID;
         }
     }
 
@@ -510,41 +529,8 @@ htp_status_t htp_parse_authority(bstr *authority, bstr **hostname, int *port, in
  * @param[in] uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
-int htp_parse_uri_authority(htp_connp_t *connp, bstr *authority, htp_uri_t **uri) {
-    // TODO Rewrite to use htp_uri_authority (above).
-
-    // XXX Incomplete.
-    
-    int colon = bstr_chr(authority, ':');
-    if (colon == -1) {
-        // Hostname alone; no port
-        (*uri)->hostname = bstr_dup(authority);
-        if (((*uri)->hostname) == NULL) return HTP_ERROR;
-        htp_normalize_hostname_inplace((*uri)->hostname);
-    } else {
-        // Hostname and port
-
-        // Hostname
-        (*uri)->hostname = bstr_dup_ex(authority, 0, colon);
-        if (((*uri)->hostname) == NULL) return HTP_ERROR;
-        // TODO Handle whitespace around hostname
-        htp_normalize_hostname_inplace((*uri)->hostname);
-
-        // Port
-        int port = htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(authority)
-                + colon + 1, bstr_len(authority) - colon - 1, 10);
-        if (port < 0) {
-            // Failed to parse port
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid server port information in request");
-        } else if ((port > 0) && (port < 65536)) {
-            // Valid port            
-            (*uri)->port_number = port;
-        } else {
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid authority port");
-        }
-    }
-
-    return HTP_OK;
+int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t **uri) {        
+    return htp_parse_hostport(hostport, &((*uri)->hostname), &((*uri)->port_number), &(connp->in_tx->flags));
 }
 
 /**
@@ -748,7 +734,7 @@ static uint8_t bestfit_codepoint(htp_cfg_t *cfg, uint32_t codepoint) {
         }
 
         if (x == codepoint) {
-            return p[2];            
+            return p[2];
         }
 
         // Move to the next triplet
@@ -1567,7 +1553,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     // Hostname
     if (incomplete->hostname != NULL) {
         // We know that incomplete->hostname does not contain
-        // port information, so no need to check for it here
+        // port information, so no need to check for it here.
         normalized->hostname = bstr_dup(incomplete->hostname);
         if (normalized->hostname == NULL) return HTP_ERROR;
         htp_uriencoding_normalize_inplace(normalized->hostname);
@@ -1585,7 +1571,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
             // Not available
             normalized->port_number = -1;
         }
-    }   
+    }
 
     // Path
     if (incomplete->path != NULL) {
@@ -1633,22 +1619,15 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
  * remove trailing dots from the end, if present.
  *
  * @param[in] hostname
- * @return normalized hostnanme
+ * @return Normalized hostname.
  */
 bstr *htp_normalize_hostname_inplace(bstr *hostname) {
     if (hostname == NULL) return NULL;
 
     bstr_to_lowercase(hostname);
 
-    unsigned char *data = bstr_ptr(hostname);
-    size_t len = bstr_len(hostname);
-
-    while (len > 0) {
-        if (data[len - 1] != '.') return hostname;
-
-        bstr_chop(hostname);
-        len--;
-    }
+    // Remove dots from the end of the string.    
+    while (bstr_char_at_end(hostname, 0) == '.') bstr_chop(hostname);
 
     return hostname;
 }
@@ -1887,7 +1866,7 @@ void htp_normalize_uri_path_inplace(bstr *s) {
  */
 void fprint_bstr(FILE *stream, const char *name, bstr *b) {
     if (b == NULL) {
-        fprint_raw_data_ex(stream, name, (unsigned char *)"(null)", 0, 6);
+        fprint_raw_data_ex(stream, name, (unsigned char *) "(null)", 0, 6);
         return;
     }
 

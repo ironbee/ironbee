@@ -582,7 +582,7 @@ struct htp_tx_t {
      * Parsing flags; a combination of: HTP_INVALID_CHUNKING, HTP_INVALID_FOLDING,
      * HTP_REQUEST_SMUGGLING, HTP_MULTI_PACKET_HEAD, and HTP_FIELD_UNPARSEABLE.
      */
-    unsigned int flags;
+    uint64_t flags;
 
     /** Transaction progress. */
     enum htp_tx_progress_t progress;

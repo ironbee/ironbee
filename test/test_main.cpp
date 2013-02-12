@@ -273,7 +273,7 @@ TEST_F(ConnectionParsing, HeaderHostParsing) {
     
     htp_tx_t *tx4 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 3);
     ASSERT_TRUE(tx4 != NULL);
-    ASSERT_TRUE(tx4->parsed_uri->hostname != NULL);
+    ASSERT_TRUE(tx4->parsed_uri->hostname != NULL);    
     ASSERT_EQ(bstr_cmp_c(tx4->parsed_uri->hostname, "www.example.com"), 0);
 }
 
@@ -442,22 +442,22 @@ TEST_F(ConnectionParsing, AmbiguousHost) {
     htp_tx_t *tx1 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx1 != NULL);
     ASSERT_TRUE(tx1->progress == HTP_RESPONSE_COMPLETE);
-    ASSERT_FALSE(tx1->flags & HTP_AMBIGUOUS_HOST);
+    ASSERT_FALSE(tx1->flags & HTP_HOST_AMBIGUOUS);
     
     htp_tx_t *tx2 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 1);
     ASSERT_TRUE(tx2 != NULL);
     ASSERT_TRUE(tx2->progress == HTP_RESPONSE_COMPLETE);
-    ASSERT_TRUE(tx2->flags & HTP_AMBIGUOUS_HOST);
+    ASSERT_TRUE(tx2->flags & HTP_HOST_AMBIGUOUS);
 
     htp_tx_t *tx3 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 2);
     ASSERT_TRUE(tx3 != NULL);
     ASSERT_TRUE(tx3->progress == HTP_RESPONSE_COMPLETE);
-    ASSERT_FALSE(tx3->flags & HTP_AMBIGUOUS_HOST);
+    ASSERT_FALSE(tx3->flags & HTP_HOST_AMBIGUOUS);
 
     htp_tx_t *tx4 = (htp_tx_t *)htp_list_get(connp->conn->transactions, 3);
     ASSERT_TRUE(tx4 != NULL);
     ASSERT_TRUE(tx4->progress == HTP_RESPONSE_COMPLETE);
-    ASSERT_TRUE(tx4->flags & HTP_AMBIGUOUS_HOST);
+    ASSERT_TRUE(tx4->flags & HTP_HOST_AMBIGUOUS);
 }
 
 TEST_F(ConnectionParsing, Http_0_9) {

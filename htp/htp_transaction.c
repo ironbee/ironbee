@@ -454,10 +454,9 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         // Host information available in the headers
 
         bstr *hostname;
-        int port;
-        int flags;              
+        int port;        
 
-        if (htp_parse_authority(h->value, &hostname, &port, &flags) != HTP_OK) return HTP_ERROR;
+        if (htp_parse_hostport(h->value, &hostname, &port, &(tx->flags)) != HTP_OK) return HTP_ERROR;
 
         // Is there host information in the URI?
         if (tx->parsed_uri->hostname == NULL) {
@@ -470,7 +469,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
                 // The host information is different in the
                 // headers and the URI. The HTTP RFC states that
                 // we should ignore the header copy.
-                tx->flags |= HTP_AMBIGUOUS_HOST;
+                tx->flags |= HTP_HOST_AMBIGUOUS;
                 htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information ambiguous");
             }
             
@@ -791,7 +790,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
 
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
         // Parse authority
-        if (htp_parse_uri_authority(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
+        if (htp_parse_uri_hostport(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
             // Note: downstream responsible for error logging
             return HTP_ERROR;
         }
