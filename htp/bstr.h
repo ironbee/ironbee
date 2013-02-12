@@ -546,6 +546,15 @@ int bstr_util_mem_index_of_mem(const void *data1, size_t len1, const void *data2
 int bstr_util_mem_index_of_mem_nocase(const void *data1, size_t len1, const void *data2, size_t len2);
 
 /**
+ * Removes whitespace from the beginning and the end of a memory region. The data
+ * itself is not modified; this function only adjusts the provided pointers.
+ *
+ * @param[in,out] data
+ * @param[in,out] len
+ */
+void bstr_util_mem_trim(unsigned char **data, size_t *len);
+
+/**
  * Take the provided memory region, allocate a new memory buffer, and construct
  * a NUL-terminated string, replacing each NUL byte with "\0" (two bytes). The
  * caller is responsible to keep track of the allocated memory area and free

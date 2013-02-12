@@ -40,7 +40,7 @@
 
 #include "bstr.h"
 
-bstr *bstr_alloc(size_t len) {    
+bstr *bstr_alloc(size_t len) {
     bstr *b = malloc(sizeof (bstr) + len);
     if (b == NULL) return NULL;
 
@@ -143,7 +143,7 @@ int bstr_begins_with_mem(const bstr *haystack, const void *_data, size_t len) {
 
     if (pos == len) {
         return 1;
-    } else {        
+    } else {
         return 0;
     }
 }
@@ -497,6 +497,25 @@ int bstr_util_mem_index_of_mem_nocase(const void *_data1, size_t len1, const voi
     return -1;
 }
 
+void bstr_util_mem_trim(unsigned char **data, size_t *len) {
+    if ((data == NULL)||(len == NULL)) return;
+
+    unsigned char *d = *data;
+    size_t l = *len;
+
+    // Ignore whitespace at the beginning.
+    size_t pos = 0;
+    while ((pos < l) && isspace(d[pos])) pos++;
+    d += pos;
+    l -= pos;
+
+    // Ignore whitespace at the end.
+    while ((l > 0)&&(isspace(d[l - 1]))) l--;
+
+    *data = d;
+    *len = l;
+}
+
 char *bstr_util_memdup_to_c(const void *_data, size_t len) {
     const unsigned char *data = (unsigned char *) _data;
 
@@ -509,12 +528,12 @@ char *bstr_util_memdup_to_c(const void *_data, size_t len) {
     }
 
     // Now copy the string into a NUL-terminated buffer.
-    
+
     char *r, *d;
     r = d = malloc(len + nulls + 1);
     if (d == NULL) return NULL;
 
-    while (len--) {        
+    while (len--) {
         if (*data == '\0') {
             data++;
             *d++ = '\\';
@@ -523,7 +542,7 @@ char *bstr_util_memdup_to_c(const void *_data, size_t len) {
             *d++ = *data++;
         }
     }
-    
+
     *d = '\0';
 
     return r;
@@ -535,7 +554,7 @@ char *bstr_util_strdup_to_c(const bstr *b) {
 }
 
 bstr *bstr_wrap_c(const char *cstr) {
-    return bstr_wrap_mem((unsigned char *)cstr, strlen(cstr));
+    return bstr_wrap_mem((unsigned char *) cstr, strlen(cstr));
 }
 
 bstr *bstr_wrap_mem(const void *data, size_t len) {
