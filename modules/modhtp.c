@@ -62,6 +62,12 @@
 /* Define the public module symbol. */
 IB_MODULE_DECLARE();
 
+/* Macros to safely access a libhtp bstr */
+#define BSTR_PTR_SAFE(type,bs)                  \
+    ( ((bs) == NULL) ? NULL : (const type *)bstr_ptr(bs))
+#define BSTR_LEN_SAFE(bs)                       \
+    ( ((bs) == NULL) ? 0 : bstr_len(bs))
+
 typedef struct modhtp_context_t modhtp_context_t;
 typedef struct modhtp_cfg_t modhtp_cfg_t;
 typedef struct modhtp_nameval_t modhtp_nameval_t;
@@ -493,21 +499,16 @@ static int modhtp_htp_request_line(htp_connp_t *connp)
     }
 
     /* Allocate and fill the parsed request line object */
-    // FIXME: libhtp bstr_{ptr,len} should work for NULL bstr
     rc = ib_parsed_req_line_create(itx,
                                    &req_line,
-                                   (char *)bstr_ptr(tx->request_line),
-                                   bstr_len(tx->request_line),
-                                   (char *)bstr_ptr(tx->request_method),
-                                   bstr_len(tx->request_method),
-                                   (char *)bstr_ptr(tx->request_uri),
-                                   bstr_len(tx->request_uri),
-                                   (tx->request_protocol == NULL
-                                    ? NULL
-                                    : (char *)bstr_ptr(tx->request_protocol)),
-                                   (tx->request_protocol == NULL
-                                    ? 0
-                                    : bstr_len(tx->request_protocol)));
+                                   BSTR_PTR_SAFE(char, tx->request_line),
+                                   BSTR_LEN_SAFE(tx->request_line),
+                                   BSTR_PTR_SAFE(char, tx->request_method),
+                                   BSTR_LEN_SAFE(tx->request_method),
+                                   BSTR_PTR_SAFE(char, tx->request_uri),
+                                   BSTR_LEN_SAFE(tx->request_uri),
+                                   BSTR_PTR_SAFE(char, tx->request_protocol),
+                                   BSTR_LEN_SAFE(tx->request_protocol));
     if (rc != IB_OK) {
         ib_log_error_tx(itx,
                         "Error creating parsed request line: %s",
@@ -812,21 +813,16 @@ static int modhtp_htp_response_line(htp_connp_t *connp)
     }
 
     /* Allocate and fill the parsed response line object */
-    // FIXME: libhtp bstr_{ptr,len} should work for NULL bstr
     rc = ib_parsed_resp_line_create(itx,
                                     &resp_line,
-                                    (char *)bstr_ptr(tx->response_line),
-                                    bstr_len(tx->response_line),
-                                    (char *)bstr_ptr(tx->response_protocol),
-                                    bstr_len(tx->response_protocol),
-                                    (char *)bstr_ptr(tx->response_status),
-                                    bstr_len(tx->response_status),
-                                    (tx->response_message == NULL
-                                     ? NULL
-                                     : (char *)bstr_ptr(tx->response_message)),
-                                    (tx->response_message == NULL
-                                     ? 0
-                                     : bstr_len(tx->response_message)));
+                                    BSTR_PTR_SAFE(char, tx->response_line),
+                                    BSTR_LEN_SAFE(tx->response_line),
+                                    BSTR_PTR_SAFE(char, tx->response_protocol),
+                                    BSTR_LEN_SAFE(tx->response_protocol),
+                                    BSTR_PTR_SAFE(char, tx->response_status),
+                                    BSTR_LEN_SAFE(tx->response_status),
+                                    BSTR_PTR_SAFE(char, tx->response_message),
+                                    BSTR_LEN_SAFE(tx->response_message));
     if (rc != IB_OK) {
         ib_log_error_tx(itx, "Error creating parsed response line: %s",
                         ib_status_to_string(rc));
