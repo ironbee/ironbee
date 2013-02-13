@@ -490,10 +490,7 @@ ia_eudoxus_result_t ia_eudoxus_metadata(
     const ia_eudoxus_output_t *key = (const ia_eudoxus_output_t *)(
         (const char *)(eudoxus->automata) + eudoxus->automata->metadata_index
     );
-    while (key != NULL) {
-        if ((const char *)key > automata_limit) {
-            return IA_EUDOXUS_EINVAL;
-        }
+    while ((const char *)key < automata_limit) {
         const ia_eudoxus_output_t *value = (const ia_eudoxus_output_t *)(
             (const char *)(key) + sizeof(*key) + key->length
         );
