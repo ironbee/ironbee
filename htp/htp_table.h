@@ -158,6 +158,16 @@ void *htp_table_get_c(const htp_table_t *table, const char *ckey);
 void *htp_table_get_index(const htp_table_t *table, size_t idx, bstr **key);
 
 /**
+ * Retrieve table key defined by the provided pointer and length.
+ *
+ * @param[in] table
+ * @param[in] key
+ * @param[in] key_len
+ * @return Matched element, or NULL if no elements match the key.
+ */
+void *htp_table_get_mem(const htp_table_t *table, const void *key, size_t key_len);
+
+/**
  * Return the size of the table.
  *
  * @param[in] table

@@ -219,6 +219,22 @@ void *htp_table_get_index(const htp_table_t *table, size_t idx, bstr **key) {
     return htp_list_get(table->list, (idx * 2) + 1);
 }
 
+void *htp_table_get_mem(const htp_table_t *table, const void *key, size_t key_len) {
+    if ((table == NULL)||(key == NULL)) return NULL;
+
+    // Iterate through the list, comparing
+    // keys with the parameter, return data if found.
+    for (int i = 0, n = htp_list_size(table->list); i < n; i += 2) {
+        bstr *key_candidate = htp_list_get(table->list, i);
+        void *element = htp_list_get(table->list, i + 1);
+        if (bstr_cmp_mem_nocase(key_candidate, key, key_len) == 0) {
+            return element;
+        }
+    }
+
+    return NULL;
+}
+
 size_t htp_table_size(const htp_table_t *table) {
     return htp_list_size(table->list) / 2;
 }
