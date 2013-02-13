@@ -446,12 +446,13 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
 }
 
 /**
- * Parses an authority string, which consists of a hostname with an optional port number. On success,
- * this function will allocate a new bstring, which the caller will need to manage. If the port
- * information is not available or if it is invalid, the port variable will contain -1. The flags
- * variable is not currently used; it's always set to 0.
+ * Parses an authority string, which consists of a hostname with an optional port number; username
+ * and password are not allowed and will not be handled. On success, this function will allocate a
+ * new bstring, which the caller will need to manage. If the port information is not available or
+ * if it is invalid, the port variable will contain -1. The HTP_HOST_INVALID flag will be set if
+ * the authority is in the incorrect format.
  *
- * @param[in] authority
+ * @param[in] hostport
  * @param[in,out] hostname
  * @param[in,out] port
  * @param[in,out] flags
