@@ -121,8 +121,12 @@ struct fast_search_t
 
 /*! IndexSize key for automata metadata. */
 static const char *c_index_size_key = "IndexSize";
+
 /*! Index key for automata metadata. */
 static const char *c_index_key = "Index";
+
+/*! Name of action to mark rules as fast. */
+static const char *c_fast_action = "fast";
 
 /**
  * Collection specification.
@@ -727,7 +731,7 @@ ib_status_t fast_ownership(
         ib,
         rule,
         RULE_ACTION_TRUE,
-        "fast",
+        c_fast_action,
         actions,
         NULL
     );
@@ -1158,7 +1162,7 @@ ib_status_t fast_dir_fast_automata(
     /* Register the fast "action" */
     rc = ib_action_register(
         ib,
-        "fast",
+        c_fast_action,
         IB_ACT_FLAG_NONE,
         NULL, NULL,
         NULL, NULL,
