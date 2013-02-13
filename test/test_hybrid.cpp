@@ -213,11 +213,11 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(user_data.callback_TRANSACTION_START_invoked, 1);
 
     // Request line data
-    htp_tx_req_set_method_c(tx, "GET", HTP_ALLOC_COPY);
+    htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_COPY);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri_c(tx, "/", HTP_ALLOC_COPY);
-    htp_tx_req_set_query_string_c(tx, "p=1&q=2", HTP_ALLOC_COPY);
-    htp_tx_req_set_protocol_c(tx, "HTTP/1.1", HTP_ALLOC_COPY);
+    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
+    htp_tx_req_set_query_string(tx, "p=1&q=2", 7, HTP_ALLOC_COPY);
+    htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
 
@@ -234,18 +234,18 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(bstr_cmp_c(tx->parsed_uri->query, "p=1&q=2"), 0);
 
     // Check parameters
-    htp_param_t *param_p = htp_tx_req_get_param_c(tx, "p");
+    htp_param_t *param_p = htp_tx_req_get_param(tx, "p", 1);
     ASSERT_TRUE(param_p != NULL);
     ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
 
-    htp_param_t *param_q = htp_tx_req_get_param_c(tx, "q");
+    htp_param_t *param_q = htp_tx_req_get_param(tx, "q", 1);
     ASSERT_TRUE(param_q != NULL);
     ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
 
     // Request headers
-    htp_tx_req_set_header_c(tx, "Host", "www.example.com", HTP_ALLOC_COPY);
-    htp_tx_req_set_header_c(tx, "Connection", "keep-alive", HTP_ALLOC_COPY);
-    htp_tx_req_set_header_c(tx, "User-Agent", "Mozilla/5.0", HTP_ALLOC_COPY);
+    htp_tx_req_set_header(tx, "Host", 4, "www.example.com", 15, HTP_ALLOC_COPY);
+    htp_tx_req_set_header(tx, "Connection", 10, "keep-alive", 10, HTP_ALLOC_COPY);
+    htp_tx_req_set_header(tx, "User-Agent", 10, "Mozilla/5.0", 11, HTP_ALLOC_COPY);
 
     // Request headers complete
     htp_tx_state_request_headers(tx);
@@ -274,7 +274,7 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(user_data.callback_RESPONSE_START_invoked, 1);
 
     // Response line data
-    htp_tx_res_set_status_line_c(tx, "HTTP/1.1 200 OK", HTP_ALLOC_COPY);
+    htp_tx_res_set_status_line(tx, "HTTP/1.1 200 OK", 15, HTP_ALLOC_COPY);
     ASSERT_EQ(bstr_cmp_c(tx->response_protocol, "HTTP/1.1"), 0);
     ASSERT_EQ(tx->response_protocol_number, HTP_PROTOCOL_1_1);
     ASSERT_EQ(tx->response_status_number, 200);
@@ -286,7 +286,7 @@ TEST_F(HybridParsing, GetTest) {
     htp_tx_res_set_status_code(tx, 500);
     ASSERT_EQ(tx->response_status_number, 500);
 
-    htp_tx_res_set_status_message(tx, "Internal Server Error", HTP_ALLOC_COPY);
+    htp_tx_res_set_status_message(tx, "Internal Server Error", 21, HTP_ALLOC_COPY);
     ASSERT_EQ(bstr_cmp_c(tx->response_message, "Internal Server Error"), 0);
 
     // Response line complete
@@ -294,8 +294,8 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(user_data.callback_HTP_RESPONSE_LINE_invoked, 1);
 
     // Response header data
-    htp_tx_res_set_header_c(tx, "Content-Type", "text/html", HTP_ALLOC_COPY);
-    htp_tx_res_set_header_c(tx, "Server", "Apache", HTP_ALLOC_COPY);
+    htp_tx_res_set_header(tx, "Content-Type", 12, "text/html", 9, HTP_ALLOC_COPY);
+    htp_tx_res_set_header(tx, "Server", 6, "Apache", 6, HTP_ALLOC_COPY);
 
     // Response headers complete
     htp_tx_state_response_headers(tx);
@@ -311,17 +311,17 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(bstr_cmp_c(h_server->value, "Apache"), 0);
 
     // Request body data   
-    htp_tx_res_process_body_data(tx, (const unsigned char *)"<h1>Hello", 9);
-    htp_tx_res_process_body_data(tx, (const unsigned char *)" ", 1);
-    htp_tx_res_process_body_data(tx, (const unsigned char *)"World!</h1>", 11);
+    htp_tx_res_process_body_data(tx, "<h1>Hello", 9);
+    htp_tx_res_process_body_data(tx, " ", 1);
+    htp_tx_res_process_body_data(tx, "World!</h1>", 11);
     ASSERT_EQ(user_data.response_body_correctly_received, 1);
 
     // Trailing response headers
     htp_tx_res_set_headers_clear(tx);
     ASSERT_EQ(htp_table_size(tx->response_headers), 0);
 
-    htp_tx_res_set_header_c(tx, "Content-Type", "text/html", HTP_ALLOC_COPY);
-    htp_tx_res_set_header_c(tx, "Server", "Apache", HTP_ALLOC_COPY);
+    htp_tx_res_set_header(tx, "Content-Type", 12, "text/html", 9, HTP_ALLOC_COPY);
+    htp_tx_res_set_header(tx, "Server", 6, "Apache", 6, HTP_ALLOC_COPY);
 
     // Check trailing response headers
     h_content_type = (htp_header_t *) htp_table_get_c(tx->response_headers, "content-type");
@@ -348,32 +348,32 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     htp_tx_state_request_start(tx);
 
     // Request line data
-    htp_tx_req_set_method_c(tx, "POST", HTP_ALLOC_COPY);
+    htp_tx_req_set_method(tx, "POST", 4, HTP_ALLOC_COPY);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri_c(tx, "/", HTP_ALLOC_COPY);
-    htp_tx_req_set_protocol_c(tx, "HTTP/1.1", HTP_ALLOC_COPY);
+    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
+    htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
 
     // Configure headers to trigger the URLENCODED parser
-    htp_tx_req_set_header_c(tx, "Content-Type", HTP_URLENCODED_MIME_TYPE, HTP_ALLOC_COPY);
-    htp_tx_req_set_header_c(tx, "Content-Length", "7", HTP_ALLOC_COPY);
+    htp_tx_req_set_header(tx, "Content-Type", 12, HTP_URLENCODED_MIME_TYPE, strlen(HTP_URLENCODED_MIME_TYPE), HTP_ALLOC_COPY);
+    htp_tx_req_set_header(tx, "Content-Length", 14, "7", 1, HTP_ALLOC_COPY);
 
     // Request headers complete
     htp_tx_state_request_headers(tx);
 
     // Send request body
-    htp_tx_req_process_body_data(tx, (const unsigned char *) "p=1", 3);
-    htp_tx_req_process_body_data(tx, (const unsigned char *) "&", 1);
-    htp_tx_req_process_body_data(tx, (const unsigned char *) "q=2", 3);
+    htp_tx_req_process_body_data(tx, "p=1", 3);
+    htp_tx_req_process_body_data(tx, "&", 1);
+    htp_tx_req_process_body_data(tx, "q=2", 3);
 
     // Trailing request headers
     htp_tx_req_set_headers_clear(tx);
     ASSERT_EQ(htp_table_size(tx->request_headers), 0);
 
-    htp_tx_req_set_header_c(tx, "Host", "www.example.com", HTP_ALLOC_COPY);
-    htp_tx_req_set_header_c(tx, "Connection", "keep-alive", HTP_ALLOC_COPY);
-    htp_tx_req_set_header_c(tx, "User-Agent", "Mozilla/5.0", HTP_ALLOC_COPY);
+    htp_tx_req_set_header(tx, "Host", 4, "www.example.com", 15, HTP_ALLOC_COPY);
+    htp_tx_req_set_header(tx, "Connection", 10, "keep-alive", 10, HTP_ALLOC_COPY);
+    htp_tx_req_set_header(tx, "User-Agent", 10, "Mozilla/5.0", 11, HTP_ALLOC_COPY);
 
     htp_header_t *h_host = (htp_header_t *) htp_table_get_c(tx->request_headers, "host");
     ASSERT_TRUE(h_host != NULL);
@@ -392,11 +392,11 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
 
     // Check parameters
 
-    htp_param_t *param_p = htp_tx_req_get_param_c(tx, "p");
+    htp_param_t *param_p = htp_tx_req_get_param(tx, "p", 1);
     ASSERT_TRUE(param_p != NULL);
     ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
 
-    htp_param_t *param_q = htp_tx_req_get_param_c(tx, "q");
+    htp_param_t *param_q = htp_tx_req_get_param(tx, "q", 1);
     ASSERT_TRUE(param_q != NULL);
     ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
 }
@@ -410,11 +410,11 @@ static char HybridParsing_CompressedResponse[] =
 static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
     htp_tx_state_request_start(tx);
 
-    htp_tx_req_set_method_c(tx, "GET", HTP_ALLOC_REUSE);
+    htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_REUSE);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri_c(tx, "/", HTP_ALLOC_COPY);
-    htp_tx_req_set_query_string_c(tx, "p=1&q=2", HTP_ALLOC_REUSE);
-    htp_tx_req_set_protocol_c(tx, "HTTP/1.1", HTP_ALLOC_REUSE);
+    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
+    htp_tx_req_set_query_string(tx, "p=1&q=2", 7, HTP_ALLOC_REUSE);
+    htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_REUSE);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
 
@@ -423,9 +423,9 @@ static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
 
     htp_tx_state_response_start(tx);
 
-    htp_tx_res_set_status_line_c(tx, "HTTP/1.1 200 OK", HTP_ALLOC_REUSE);
-    htp_tx_res_set_header_c(tx, "Content-Encoding", "gzip", HTP_ALLOC_REUSE);
-    htp_tx_res_set_header_c(tx, "Content-Length", "187", HTP_ALLOC_REUSE);
+    htp_tx_res_set_status_line(tx, "HTTP/1.1 200 OK", 15, HTP_ALLOC_REUSE);
+    htp_tx_res_set_header(tx, "Content-Encoding", 16, "gzip", 4, HTP_ALLOC_REUSE);
+    htp_tx_res_set_header(tx, "Content-Length", 14, "187", 3, HTP_ALLOC_REUSE);
 
     htp_tx_state_response_headers(tx);
 

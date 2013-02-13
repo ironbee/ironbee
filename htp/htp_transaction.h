@@ -164,18 +164,17 @@ htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param);
  * @param[in] name
  * @return htp_param_t instance, or NULL if parameter not found.
  */
-htp_param_t *htp_tx_req_get_param_c(htp_tx_t *tx, const char *name);
+htp_param_t *htp_tx_req_get_param(htp_tx_t *tx, const char *name, size_t name_len);
 
 /**
- * Returns the first request parameter from the given source
- * that matches the given name.
+ * Returns the first request parameter from the given source that matches the given name.
  * 
  * @param[in] tx
  * @param[in] source
  * @param[in] name
  * @return htp_param_t instance, or NULL if parameter not found.
  */
-htp_param_t *htp_tx_req_get_param_ex_c(htp_tx_t *tx, enum htp_data_source_t source, const char *name);
+htp_param_t *htp_tx_req_get_param_ex(htp_tx_t *tx, enum htp_data_source_t source, const char *name, size_t name_len);
 
 /**
  * Determine if the request has a body.
@@ -199,7 +198,7 @@ int htp_tx_req_has_body(const htp_tx_t *tx);
  * @param[in] len
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len);
+htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const void *data, size_t len);
 
 /**
  * Set one request header. This function should be invoked once for
@@ -212,7 +211,8 @@ htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const unsigned char *dat
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_tx_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum htp_alloc_strategy_t alloc);
+htp_status_t htp_tx_req_set_header(htp_tx_t *tx, const char *name, size_t name_len,
+        const char *value, size_t value_len, enum htp_alloc_strategy_t alloc);
 
 /**
  * Removes all request headers associated with this transaction. This
@@ -237,7 +237,7 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx);
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_tx_req_set_method_c(htp_tx_t *tx, const char *method, enum htp_alloc_strategy_t alloc);
+htp_status_t htp_tx_req_set_method(htp_tx_t *tx, const char *method, size_t method_len, enum htp_alloc_strategy_t alloc);
 
 /**
  * Set transaction request method number. This function enables you to
@@ -262,7 +262,7 @@ void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9);
 
 /**
  * Set request protocol version number. Must be invoked after
- * htp_txh_set_req_protocol_c(), because it will overwrite the previously
+ * htp_txh_set_req_protocol(), because it will overwrite the previously
  * extracted version number. Convert the protocol version number to an integer
  * by multiplying it with 100. For example, 1.1 becomes 110. Alternatively,
  * use the HTP_PROTOCOL_0_9, HTP_PROTOCOL_1_0, and HTP_PROTOCOL_1_1 constants.
@@ -283,7 +283,7 @@ void htp_tx_req_set_protocol_number(htp_tx_t *tx, int protocol);
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_tx_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum htp_alloc_strategy_t alloc);
+htp_status_t htp_tx_req_set_protocol(htp_tx_t *tx, const char *protocol, size_t protocol_len, enum htp_alloc_strategy_t alloc);
 
 /**
  * Sets transaction query string. If there are any query string processors
@@ -295,18 +295,18 @@ htp_status_t htp_tx_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum 
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_tx_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum htp_alloc_strategy_t alloc);
+htp_status_t htp_tx_req_set_query_string(htp_tx_t *tx, const char *qs, size_t qs_len, enum htp_alloc_strategy_t alloc);
 
 /**
  * Set transaction request URI. The value provided here must not include any
- * query string data. Use a separate call to htp_txh_req_set_query_string_c() for that.
+ * query string data. Use a separate call to htp_txh_req_set_query_string() for that.
  *
  * @param[in] tx
  * @param[in] uri
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_tx_req_set_uri_c(htp_tx_t *tx, const char *uri, enum htp_alloc_strategy_t alloc);
+htp_status_t htp_tx_req_set_uri(htp_tx_t *tx, const char *uri, size_t uri_len, enum htp_alloc_strategy_t alloc);
 
 /**
  * Process a chunk of response body data. This function assumes that
@@ -326,7 +326,7 @@ htp_status_t htp_tx_req_set_uri_c(htp_tx_t *tx, const char *uri, enum htp_alloc_
  * @param[in] len
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len);
+htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t len);
 
 /**
  * Set one response header. This function should be invoked once for
@@ -339,7 +339,8 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const unsigned char *dat
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_tx_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum htp_alloc_strategy_t alloc);
+htp_status_t htp_tx_res_set_header(htp_tx_t *tx, const char *name, size_t name_len,
+        const char *value, size_t value_len, enum htp_alloc_strategy_t alloc);
 
 /**
  * Removes all response headers associated with this transaction. This
@@ -374,7 +375,7 @@ void htp_tx_res_set_protocol_number(htp_tx_t *tx, int protocol_number);
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_tx_res_set_status_line_c(htp_tx_t *tx, const char *line, enum htp_alloc_strategy_t alloc);
+htp_status_t htp_tx_res_set_status_line(htp_tx_t *tx, const char *line, size_t line_len, enum htp_alloc_strategy_t alloc);
 
 /**
  * Set response status code.
@@ -393,7 +394,7 @@ void htp_tx_res_set_status_code(htp_tx_t *tx, int status_code);
  * @param[in] message
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *message, enum htp_alloc_strategy_t alloc);
+htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *msg, size_t msg_len, enum htp_alloc_strategy_t alloc);
 
 /**
  * Sets the configuration that is to be used for this transaction. If the

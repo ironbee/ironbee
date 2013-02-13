@@ -267,19 +267,19 @@ TEST(BstrTest, CmpEx) {
     const char *s1 = "arfarf12345";
     const char *s2 = "arfarF2345";
 
-    EXPECT_EQ(0, bstr_cmp_ex(s1, 5, s2, 5));
-    EXPECT_EQ(1, bstr_cmp_ex(s1, 6, s2, 6));
-    EXPECT_EQ(1, bstr_cmp_ex(s1, 5, s2, 4));
-    EXPECT_EQ(-1, bstr_cmp_ex(s2, 4, s1, 5));
+    EXPECT_EQ(0, bstr_util_cmp_mem(s1, 5, s2, 5));
+    EXPECT_EQ(1, bstr_util_cmp_mem(s1, 6, s2, 6));
+    EXPECT_EQ(1, bstr_util_cmp_mem(s1, 5, s2, 4));
+    EXPECT_EQ(-1, bstr_util_cmp_mem(s2, 4, s1, 5));
 }
 
 TEST(BstrTest, CmpNocaseEx) {
     const char *s1 = "arfarf12345";
     const char *s2 = "arfarF2345";
 
-    EXPECT_EQ(0, bstr_cmp_nocase_ex(s1, 6, s2, 6));
-    EXPECT_EQ(1, bstr_cmp_nocase_ex(s1, 6, s2, 5));
-    EXPECT_EQ(-1, bstr_cmp_nocase_ex(s2, 5, s1, 6));
+    EXPECT_EQ(0, bstr_util_cmp_mem_nocase(s1, 6, s2, 6));
+    EXPECT_EQ(1, bstr_util_cmp_mem_nocase(s1, 6, s2, 5));
+    EXPECT_EQ(-1, bstr_util_cmp_mem_nocase(s2, 5, s1, 6));
 }
 
 TEST(BstrTest, ToLowercase) {
@@ -541,7 +541,7 @@ TEST(BstrTest, UtilMemTrim) {
 
     bstr_util_mem_trim((unsigned char **)&data, &len);
 
-    EXPECT_EQ(0, bstr_cmp_ex(data, len, "0123456789", 10));
+    EXPECT_EQ(0, bstr_util_cmp_mem(data, len, "0123456789", 10));
 }
 
 TEST(BstrBuilder, CreateDestroy) {

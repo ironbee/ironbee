@@ -39,11 +39,11 @@
 #include "htp_private.h"
 #include "htp_transaction.h"
 
-static bstr *copy_or_wrap_c(const char *input, enum htp_alloc_strategy_t alloc) {
+static bstr *copy_or_wrap_mem(const void *data, size_t len, enum htp_alloc_strategy_t alloc) {
     if (alloc == HTP_ALLOC_REUSE) {
-        return bstr_wrap_c(input);
+        return bstr_wrap_mem(data, len);
     } else {
-        return bstr_dup_c(input);
+        return bstr_dup_mem(data, len);
     }
 }
 
@@ -68,7 +68,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 
     tx->response_header_lines = htp_list_create(32);
     tx->response_headers = htp_table_create(32);
-    
+
     return tx;
 }
 
@@ -262,18 +262,18 @@ htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param) {
     return htp_table_addk(tx->request_params, param->name, param);
 }
 
-htp_param_t *htp_tx_req_get_param_c(htp_tx_t *tx, const char *name) {
-    return (htp_param_t *)htp_table_get_c(tx->request_params, name);
+htp_param_t *htp_tx_req_get_param(htp_tx_t *tx, const char *name, size_t name_len) {
+    return (htp_param_t *) htp_table_get_mem(tx->request_params, name, name_len);
 }
 
-htp_param_t *htp_tx_req_get_param_ex_c(htp_tx_t *tx, enum htp_data_source_t source, const char *name) {
+htp_param_t *htp_tx_req_get_param_ex(htp_tx_t *tx, enum htp_data_source_t source, const char *name, size_t name_len) {
     htp_param_t *p = NULL;
 
     for (int i = 0, n = htp_table_size(tx->request_params); i < n; i++) {
         p = htp_table_get_index(tx->request_params, i, NULL);
         if (p->source != source) continue;
 
-        if (bstr_cmp_c(p->name, name) == 0) return p;
+        if (bstr_cmp_mem(p->name, name, name_len) == 0) return p;
     }
 
     return NULL;
@@ -287,7 +287,8 @@ int htp_tx_req_has_body(const htp_tx_t *tx) {
     return 0;
 }
 
-htp_status_t htp_tx_req_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum htp_alloc_strategy_t alloc) {
+htp_status_t htp_tx_req_set_header(htp_tx_t *tx, const char *name, size_t name_len,
+        const char *value, size_t value_len, enum htp_alloc_strategy_t alloc) {
     if ((name == NULL) || (value == NULL)) return HTP_ERROR;
 
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
@@ -295,13 +296,13 @@ htp_status_t htp_tx_req_set_header_c(htp_tx_t *tx, const char *name, const char 
         return HTP_ERROR;
     }
 
-    h->name = copy_or_wrap_c(name, alloc);
+    h->name = copy_or_wrap_mem(name, name_len, alloc);
     if (h->name == NULL) {
         free(h);
         return HTP_ERROR;
     }
 
-    h->value = copy_or_wrap_c(value, alloc);
+    h->value = copy_or_wrap_mem(value, value_len, alloc);
     if (h->value == NULL) {
         bstr_free(h->name);
         free(h);
@@ -318,10 +319,12 @@ htp_status_t htp_tx_req_set_header_c(htp_tx_t *tx, const char *name, const char 
     return HTP_OK;
 }
 
-htp_status_t htp_tx_req_set_method_c(htp_tx_t *tx, const char *method, enum htp_alloc_strategy_t alloc) {
+htp_status_t htp_tx_req_set_method(htp_tx_t *tx, const char *method, size_t method_len, enum htp_alloc_strategy_t alloc) {
     if (method == NULL) return HTP_ERROR;
-    tx->request_method = copy_or_wrap_c(method, alloc);
+
+    tx->request_method = copy_or_wrap_mem(method, method_len, alloc);
     if (tx->request_method == NULL) return HTP_ERROR;
+    
     return HTP_OK;
 }
 
@@ -329,24 +332,30 @@ void htp_tx_req_set_method_number(htp_tx_t *tx, enum htp_method_t method_number)
     tx->request_method_number = method_number;
 }
 
-htp_status_t htp_tx_req_set_uri_c(htp_tx_t *tx, const char *uri, enum htp_alloc_strategy_t alloc) {
+htp_status_t htp_tx_req_set_uri(htp_tx_t *tx, const char *uri, size_t uri_len, enum htp_alloc_strategy_t alloc) {
     if (uri == NULL) return HTP_ERROR;
-    tx->request_uri = copy_or_wrap_c(uri, alloc);
+
+    tx->request_uri = copy_or_wrap_mem(uri, uri_len, alloc);
     if (tx->request_uri == NULL) return HTP_ERROR;
+
     return HTP_OK;
 }
 
-htp_status_t htp_tx_req_set_query_string_c(htp_tx_t *tx, const char *query_string, enum htp_alloc_strategy_t alloc) {
-    if (tx->parsed_uri == NULL) return HTP_ERROR;
-    tx->parsed_uri->query = copy_or_wrap_c(query_string, alloc);
+htp_status_t htp_tx_req_set_query_string(htp_tx_t *tx, const char *qs, size_t qs_len, enum htp_alloc_strategy_t alloc) {
+    if ((tx->parsed_uri == NULL)||(qs == NULL)) return HTP_ERROR;
+
+    tx->parsed_uri->query = copy_or_wrap_mem(qs, qs_len, alloc);
     if (tx->parsed_uri->query == NULL) return HTP_ERROR;
+
     return HTP_OK;
 }
 
-htp_status_t htp_tx_req_set_protocol_c(htp_tx_t *tx, const char *protocol, enum htp_alloc_strategy_t alloc) {
+htp_status_t htp_tx_req_set_protocol(htp_tx_t *tx, const char *protocol, size_t protocol_len, enum htp_alloc_strategy_t alloc) {
     if (protocol == NULL) return HTP_ERROR;
-    tx->request_protocol = copy_or_wrap_c(protocol, alloc);
+
+    tx->request_protocol = copy_or_wrap_mem(protocol, protocol_len, alloc);
     if (tx->request_protocol == NULL) return HTP_ERROR;
+
     return HTP_OK;
 }
 
@@ -362,7 +371,7 @@ void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9) {
     }
 }
 
-static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {   
+static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     // Remember how many header lines there were before trailers
     tx->request_header_lines_no_trailers = htp_list_size(tx->request_header_lines);
 
@@ -387,7 +396,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         // TODO IIS 7.0, for example, would ignore the T-E header when it
         //      it is used with a protocol below HTTP 1.1.
         if (tx->request_protocol_number < HTP_PROTOCOL_1_1) {
-            tx->flags |= HTP_INVALID_CHUNKING;            
+            tx->flags |= HTP_INVALID_CHUNKING;
         }
 
         // If the T-E header is present we are going to use it.
@@ -396,7 +405,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         // We are still going to check for the presence of C-L
         if (cl != NULL) {
             // This is a violation of the RFC
-            tx->flags |= HTP_REQUEST_SMUGGLING;            
+            tx->flags |= HTP_REQUEST_SMUGGLING;
         }
     } else if (cl != NULL) {
         // We have a request body of known length
@@ -404,12 +413,12 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
         // Check for a folded C-L header
         if (cl->flags & HTP_FIELD_FOLDED) {
-            tx->flags |= HTP_REQUEST_SMUGGLING;            
+            tx->flags |= HTP_REQUEST_SMUGGLING;
         }
 
         // Check for multiple C-L headers
         if (cl->flags & HTP_FIELD_REPEATED) {
-            tx->flags |= HTP_REQUEST_SMUGGLING;            
+            tx->flags |= HTP_REQUEST_SMUGGLING;
         }
 
         // Get body length
@@ -454,7 +463,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         // Host information available in the headers
 
         bstr *hostname;
-        int port;        
+        int port;
 
         if (htp_parse_hostport(h->value, &hostname, &port, &(tx->flags)) != HTP_OK) return HTP_ERROR;
 
@@ -464,7 +473,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
             // hostname from the headers into the parsed_uri structure.
             tx->parsed_uri->hostname = hostname;
             tx->parsed_uri->port_number = port;
-        } else {            
+        } else {
             if ((bstr_cmp_nocase(hostname, tx->parsed_uri->hostname) != 0) || (port != tx->parsed_uri->port_number)) {
                 // The host information is different in the
                 // headers and the URI. The HTTP RFC states that
@@ -472,12 +481,12 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
                 tx->flags |= HTP_HOST_AMBIGUOUS;
                 htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information ambiguous");
             }
-            
+
             bstr_free(hostname);
         }
     }
 
-    // Parse Content-Type
+    // Parse the Content-Type header.
     htp_header_t *ct = htp_table_get_c(tx->request_headers, "content-type");
     if (ct != NULL) {
         tx->request_content_type = bstr_dup_lower(ct->value);
@@ -488,13 +497,13 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         size_t len = bstr_len(ct->value);
 
         size_t newlen = 0;
-        while ((newlen < len)&&(htp_is_token(data[newlen]))) newlen++;
-        if ((newlen < len)&&(data[newlen] == '/')) {
+        while ((newlen < len) && (htp_is_token(data[newlen]))) newlen++;
+        if ((newlen < len) && (data[newlen] == '/')) {
             newlen++; // Over the '/'
-            while ((newlen < len)&&(htp_is_token(data[newlen]))) newlen++;
+            while ((newlen < len) && (htp_is_token(data[newlen]))) newlen++;
         }
-        
-        bstr_adjust_len(tx->request_content_type, newlen);        
+
+        bstr_adjust_len(tx->request_content_type, newlen);
     }
 
     // Parse cookies
@@ -514,11 +523,12 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len) {
-    // Keep track of actual data length
+htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const void *data, size_t len) {
+    // Keep track of the body length.
     tx->request_entity_len += len;
 
-    // Send data to callbacks
+    // Send data to the callbacks.
+    
     htp_tx_data_t d;
     d.tx = tx;
     d.data = (unsigned char *) data;
@@ -553,12 +563,12 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_res_set_status_line_c(htp_tx_t *tx, const char *line, enum htp_alloc_strategy_t alloc) {
+htp_status_t htp_tx_res_set_status_line(htp_tx_t *tx, const char *line, size_t line_len, enum htp_alloc_strategy_t alloc) {
     if (line == NULL) return HTP_ERROR;
-    tx->response_line = copy_or_wrap_c(line, alloc);
-    if (tx->response_line == NULL) return HTP_ERROR;
 
-    // Parse response line
+    tx->response_line = copy_or_wrap_mem(line, line_len, alloc);
+    if (tx->response_line == NULL) return HTP_ERROR;
+    
     if (tx->connp->cfg->parse_response_line(tx->connp) != HTP_OK) return HTP_ERROR;
 
     return HTP_OK;
@@ -572,15 +582,16 @@ void htp_tx_res_set_status_code(htp_tx_t *tx, int status_code) {
     tx->response_status_number = status_code;
 }
 
-htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *message, enum htp_alloc_strategy_t alloc) {
-    if (message == NULL) return HTP_ERROR;
+htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *msg, size_t msg_len, enum htp_alloc_strategy_t alloc) {
+    if (msg == NULL) return HTP_ERROR;
 
     if (tx->response_message != NULL) {
         bstr_free(tx->response_message);
     }
 
-    tx->response_message = copy_or_wrap_c(message, alloc);
+    tx->response_message = copy_or_wrap_mem(msg, msg_len, alloc);
     if (tx->response_message == NULL) return HTP_ERROR;
+    
     return HTP_OK;
 }
 
@@ -618,20 +629,21 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_res_set_header_c(htp_tx_t *tx, const char *name, const char *value, enum htp_alloc_strategy_t alloc) {
+htp_status_t htp_tx_res_set_header(htp_tx_t *tx, const char *name, size_t name_len,
+        const char *value, size_t value_len, enum htp_alloc_strategy_t alloc) {
     if ((name == NULL) || (value == NULL)) return HTP_ERROR;
-    ;
+    
 
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) return HTP_ERROR;
 
-    h->name = copy_or_wrap_c(name, alloc);
+    h->name = copy_or_wrap_mem(name, name_len, alloc);
     if (h->name == NULL) {
         free(h);
         return HTP_ERROR;
     }
 
-    h->value = copy_or_wrap_c(value, alloc);
+    h->value = copy_or_wrap_mem(value, value_len, alloc);
     if (h->value == NULL) {
         bstr_free(h->name);
         free(h);
@@ -682,18 +694,18 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
     return HTP_OK;
 }
 
-htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const unsigned char *data, size_t len) {
+htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t len) {
     htp_tx_data_t d;
 
     d.tx = tx;
-    d.data = data;
+    d.data = (unsigned char *) data;
     d.len = len;
 
     // Keep track of body size before decompression
     tx->response_message_len += d.len;
 
     if (tx->response_content_encoding != COMPRESSION_NONE) {
-        // Send data buffer to the decompressor
+        // Send data buffer to the decompressor.
         tx->connp->out_decompressor->decompress(tx->connp->out_decompressor, &d);
 
         if (data == NULL) {
@@ -754,7 +766,7 @@ htp_status_t htp_tx_state_request_start(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {        
+htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
     // Did this request arrive in multiple chunks?
     if (tx->connp->in_chunk_count != tx->connp->in_chunk_request_index) {
         tx->flags |= HTP_MULTI_PACKET_HEAD;
@@ -785,7 +797,7 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
     return HTP_OK;
 }
 
-htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {        
+htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
     htp_connp_t *connp = tx->connp;
 
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
@@ -807,7 +819,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
             // Note: downstream responsible for error logging
             return HTP_ERROR;
         }
-        
+
         // Run hook REQUEST_URI_NORMALIZE
         int rc = htp_hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
         if (rc != HTP_OK) return rc;
@@ -919,7 +931,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
                 tx->response_content_encoding);
         if (tx->connp->out_decompressor == NULL) return HTP_ERROR;
         tx->connp->out_decompressor->callback = htp_tx_res_process_body_data_decompressor_callback;
-    } else if (tx->response_content_encoding != COMPRESSION_NONE) {        
+    } else if (tx->response_content_encoding != COMPRESSION_NONE) {
         return HTP_ERROR;
     }
 
