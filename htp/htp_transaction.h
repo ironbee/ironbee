@@ -99,9 +99,7 @@ bstr *htp_tx_get_response_headers_raw(htp_tx_t *tx);
 /**
  * Creates a new transaction structure.
  *
- * @param[in] cfg
- * @param[in] is_cfg_shared
- * @param[in] conn
+ * @param[in] connp
  * @return The newly created transaction, or NULL on memory allocation failure.
  */
 htp_tx_t *htp_tx_create(htp_connp_t *connp);
@@ -158,20 +156,23 @@ void htp_tx_register_response_body_data(htp_tx_t *tx, int (*callback_fn)(htp_tx_
 htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param);
 
 /**
- * Returns the first request parameter that matches the given name.
+ * Returns the first request parameter that matches the given name, using case-insensitive matching.
  *
  * @param[in] tx
  * @param[in] name
+ * @param[in] name_len
  * @return htp_param_t instance, or NULL if parameter not found.
  */
 htp_param_t *htp_tx_req_get_param(htp_tx_t *tx, const char *name, size_t name_len);
 
 /**
- * Returns the first request parameter from the given source that matches the given name.
+ * Returns the first request parameter from the given source that matches the given name,
+ * using case-insensitive matching.
  * 
  * @param[in] tx
  * @param[in] source
  * @param[in] name
+ * @param[in] name_len
  * @return htp_param_t instance, or NULL if parameter not found.
  */
 htp_param_t *htp_tx_req_get_param_ex(htp_tx_t *tx, enum htp_data_source_t source, const char *name, size_t name_len);
@@ -207,7 +208,9 @@ htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const void *data, size_t
  * 
  * @param[in] tx
  * @param[in] name
+ * @param[in] name_len
  * @param[in] value
+ * @param[in] value_len
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
@@ -234,6 +237,7 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx);
  *
  * @param[in] tx
  * @param[in] method
+ * @param[in] method_len
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
@@ -261,18 +265,6 @@ void htp_tx_req_set_method_number(htp_tx_t *tx, enum htp_method_t method_number)
 void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9);
 
 /**
- * Set request protocol version number. Must be invoked after
- * htp_txh_set_req_protocol(), because it will overwrite the previously
- * extracted version number. Convert the protocol version number to an integer
- * by multiplying it with 100. For example, 1.1 becomes 110. Alternatively,
- * use the HTP_PROTOCOL_0_9, HTP_PROTOCOL_1_0, and HTP_PROTOCOL_1_1 constants.
- *
- * @param[in] tx
- * @param[in] protocol
- */
-void htp_tx_req_set_protocol_number(htp_tx_t *tx, int protocol);
-
-/**
  * Set request protocol string (e.g., "HTTP/1.0"), which will then be parsed
  * to extract protocol name and version. Do not invoke when HTTP/0.9 is used
  * (because this protocol version does not actually use the protocol string).
@@ -280,10 +272,23 @@ void htp_tx_req_set_protocol_number(htp_tx_t *tx, int protocol);
  *
  * @param[in] tx
  * @param[in] protocol
+ * @param[in] protocol_len
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_req_set_protocol(htp_tx_t *tx, const char *protocol, size_t protocol_len, enum htp_alloc_strategy_t alloc);
+
+/**
+ * Set request protocol version number. Must be invoked after
+ * htp_txh_set_req_protocol(), because it will overwrite the previously
+ * extracted version number. Convert the protocol version number to an integer
+ * by multiplying it with 100. For example, 1.1 becomes 110. Alternatively,
+ * use the HTP_PROTOCOL_0_9, HTP_PROTOCOL_1_0, and HTP_PROTOCOL_1_1 constants.
+ *
+ * @param[in] tx
+ * @param[in] protocol_number
+ */
+void htp_tx_req_set_protocol_number(htp_tx_t *tx, int protocol_number);
 
 /**
  * Sets transaction query string. If there are any query string processors
@@ -291,7 +296,8 @@ htp_status_t htp_tx_req_set_protocol(htp_tx_t *tx, const char *protocol, size_t 
  * may not happen until the transaction state is changed to REQUEST_LINE).
  *
  * @param[in] tx
- * @param[in] query_string
+ * @param[in] qs
+ * @param[in] qs_len
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
@@ -303,6 +309,7 @@ htp_status_t htp_tx_req_set_query_string(htp_tx_t *tx, const char *qs, size_t qs
  *
  * @param[in] tx
  * @param[in] uri
+ * @param[in] uri_len
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
@@ -335,7 +342,9 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
  *
  * @param[in] tx
  * @param[in] name
+ * @param[in] name_len
  * @param[in] value
+ * @param[in] value_len
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
@@ -360,7 +369,7 @@ htp_status_t htp_tx_res_set_headers_clear(htp_tx_t *tx);
  * Set response protocol number.
  *
  * @param[in] tx
- * @param[in] protocol
+ * @param[in] protocol_number
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 void htp_tx_res_set_protocol_number(htp_tx_t *tx, int protocol_number);
@@ -372,6 +381,7 @@ void htp_tx_res_set_protocol_number(htp_tx_t *tx, int protocol_number);
  *
  * @param[in] tx
  * @param[in] line
+ * @param[in] line_len
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
@@ -381,7 +391,7 @@ htp_status_t htp_tx_res_set_status_line(htp_tx_t *tx, const char *line, size_t l
  * Set response status code.
  *
  * @param[in] tx
- * @param[in] status
+ * @param[in] status_code
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 void htp_tx_res_set_status_code(htp_tx_t *tx, int status_code);
@@ -391,7 +401,9 @@ void htp_tx_res_set_status_code(htp_tx_t *tx, int status_code);
  * line that comes after the status code.
  *
  * @param[in] tx
- * @param[in] message
+ * @param[in] msg
+ * @param[in] msg_len
+ * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *msg, size_t msg_len, enum htp_alloc_strategy_t alloc);
