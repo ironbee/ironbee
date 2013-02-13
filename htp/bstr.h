@@ -293,16 +293,6 @@ int bstr_chr(const bstr *b, int c);
  *         greater than b1.
  */
 int bstr_cmp(const bstr *b1, const bstr *b2);
-
-/**
- * Case-insensitive comparison two bstrings.
- *
- * @param[in] b1
- * @param[in] b2
- * @return Zero on string match, 1 if b1 is greater than b2, and -1 if b2 is
- *         greater than b1.
- */
-int bstr_cmp_nocase(const bstr *b1, const bstr *b2);
   
 /**
  * Case-sensitive comparison of a bstring and a NUL-terminated string.
@@ -319,34 +309,39 @@ int bstr_cmp_c(const bstr *b, const char *cstr);
  *
  * @param[in] b
  * @param[in] cstr
- * @return Zero on string match, 1 if b is greater than cstr, and -1 if cstr is
- *         greater than b.
+ * @return Zero on string match, 1 if b is greater than cstr, and -1 if cstr is greater than b.
  */
 int bstr_cmp_c_nocase(const bstr *b, const char *cstr);
- 
+
 /**
- * Case-sensitive comparison of two memory regions.
+ * Performs a case-sensitive comparison of a bstring with a memory region.
  *
- * @param[in] data1
- * @param[in] len1
- * @param[in] data2
- * @param[in] len2
- * @return Zero if the memory regions are identical, 1 if data1 is greater than
- *         data2, and -1 if data2 is greater than data1.
+ * @param[in] b
+ * @param[in] data
+ * @param[in] len
+ * @return Zero ona match, 1 if b is greater than data, and -1 if data is greater than b.
  */
-int bstr_cmp_ex(const void *data1, size_t len1, const void *data2, size_t len2);
- 
+int bstr_cmp_mem(const bstr *b, const void *data, size_t len);
+
 /**
- * Case-insensitive comparison of two memory regions.
+ * Performs a case-insensitive comparison of a bstring with a memory region.
  *
- * @param[in] data1
- * @param[in] len1
- * @param[in] data2
- * @param[in] len2
- * @return Zero if the memory regions are identical, 1 if data1 is greater than
- *         data2, and -1 if data2 is greater than data1.
+ * @param[in] b
+ * @param[in] data
+ * @param[in] len
+ * @return Zero ona match, 1 if b is greater than data, and -1 if data is greater than b.
  */
- int bstr_cmp_nocase_ex(const void *data1, size_t len1, const void *data2, size_t len2);
+int bstr_cmp_mem_nocase(const bstr *b, const void *data, size_t len);
+
+/**
+ * Case-insensitive comparison two bstrings.
+ *
+ * @param[in] b1
+ * @param[in] b2
+ * @return Zero on string match, 1 if b1 is greater than b2, and -1 if b2 is
+ *         greater than b1.
+ */
+int bstr_cmp_nocase(const bstr *b1, const bstr *b2);
 
 /**
  * Create a new bstring by copying the provided bstring.
@@ -488,6 +483,30 @@ int bstr_rchr(const bstr *b, int c);
  * @return The same bstring received on input
  */
 bstr *bstr_to_lowercase(bstr *b);
+
+/**
+ * Case-sensitive comparison of two memory regions.
+ *
+ * @param[in] data1
+ * @param[in] len1
+ * @param[in] data2
+ * @param[in] len2
+ * @return Zero if the memory regions are identical, 1 if data1 is greater than
+ *         data2, and -1 if data2 is greater than data1.
+ */
+int bstr_util_cmp_mem(const void *data1, size_t len1, const void *data2, size_t len2);
+
+/**
+ * Case-insensitive comparison of two memory regions.
+ *
+ * @param[in] data1
+ * @param[in] len1
+ * @param[in] data2
+ * @param[in] len2
+ * @return Zero if the memory regions are identical, 1 if data1 is greater than
+ *         data2, and -1 if data2 is greater than data1.
+ */
+ int bstr_util_cmp_mem_nocase(const void *data1, size_t len1, const void *data2, size_t len2);
 
 /**
  * Convert contents of a memory region to a positive integer.

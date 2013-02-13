@@ -208,69 +208,27 @@ int bstr_chr(const bstr *b, int c) {
 }
 
 int bstr_cmp(const bstr *b1, const bstr *b2) {
-    return bstr_cmp_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
+    return bstr_util_cmp_mem(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
 }
 
 int bstr_cmp_c(const bstr *b, const char *c) {
-    return bstr_cmp_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
+    return bstr_util_cmp_mem(bstr_ptr(b), bstr_len(b), c, strlen(c));
 }
 
 int bstr_cmp_c_nocase(const bstr *b, const char *c) {
-    return bstr_cmp_nocase_ex(bstr_ptr(b), bstr_len(b), c, strlen(c));
+    return bstr_util_cmp_mem_nocase(bstr_ptr(b), bstr_len(b), c, strlen(c));
 }
 
-int bstr_cmp_ex(const void *_data1, size_t len1, const void *_data2, size_t len2) {
-    const unsigned char *data1 = (const unsigned char *) _data1;
-    const unsigned char *data2 = (const unsigned char *) _data2;
-    size_t p1 = 0, p2 = 0;
+int bstr_cmp_mem(const bstr *b, const void *data, size_t len) {
+    return bstr_util_cmp_mem(bstr_ptr(b), bstr_len(b), data, len);
+}
 
-    while ((p1 < len1) && (p2 < len2)) {
-        if (data1[p1] != data2[p2]) {
-            // Difference
-            return (data1[p1] < data2[p2]) ? -1 : 1;
-        }
-
-        p1++;
-        p2++;
-    }
-
-    if ((p1 == len2) && (p2 == len1)) {
-        // They're identical
-        return 0;
-    } else {
-        // One string is shorter
-        if (p1 == len1) return -1;
-        else return 1;
-    }
+int bstr_cmp_mem_nocase(const bstr *b, const void *data, size_t len) {
+    return bstr_util_cmp_mem_nocase(bstr_ptr(b), bstr_len(b), data, len);
 }
 
 int bstr_cmp_nocase(const bstr *b1, const bstr *b2) {
-    return bstr_cmp_nocase_ex(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
-}
-
-int bstr_cmp_nocase_ex(const void *_data1, size_t len1, const void *_data2, size_t len2) {
-    const unsigned char *data1 = (const unsigned char *) _data1;
-    const unsigned char *data2 = (const unsigned char *) _data2;
-    size_t p1 = 0, p2 = 0;
-
-    while ((p1 < len1) && (p2 < len2)) {
-        if (tolower(data1[p1]) != tolower(data2[p2])) {
-            // Difference
-            return (tolower(data1[p1]) < tolower(data2[p2])) ? -1 : 1;
-        }
-
-        p1++;
-        p2++;
-    }
-
-    if ((p1 == len2) && (p2 == len1)) {
-        // They're identical
-        return 0;
-    } else {
-        // One string is shorter
-        if (p1 == len1) return -1;
-        else return 1;
-    }
+    return bstr_util_cmp_mem_nocase(bstr_ptr(b1), bstr_len(b1), bstr_ptr(b2), bstr_len(b2));
 }
 
 bstr *bstr_dup(const bstr *b) {
@@ -378,6 +336,56 @@ bstr *bstr_to_lowercase(bstr *b) {
     }
 
     return b;
+}
+
+int bstr_util_cmp_mem(const void *_data1, size_t len1, const void *_data2, size_t len2) {
+    const unsigned char *data1 = (const unsigned char *) _data1;
+    const unsigned char *data2 = (const unsigned char *) _data2;
+    size_t p1 = 0, p2 = 0;
+
+    while ((p1 < len1) && (p2 < len2)) {
+        if (data1[p1] != data2[p2]) {
+            // Difference.
+            return (data1[p1] < data2[p2]) ? -1 : 1;
+        }
+
+        p1++;
+        p2++;
+    }
+
+    if ((p1 == len2) && (p2 == len1)) {
+        // They're identical.
+        return 0;
+    } else {
+        // One string is shorter.
+        if (p1 == len1) return -1;
+        else return 1;
+    }
+}
+
+int bstr_util_cmp_mem_nocase(const void *_data1, size_t len1, const void *_data2, size_t len2) {
+    const unsigned char *data1 = (const unsigned char *) _data1;
+    const unsigned char *data2 = (const unsigned char *) _data2;
+    size_t p1 = 0, p2 = 0;
+
+    while ((p1 < len1) && (p2 < len2)) {
+        if (tolower(data1[p1]) != tolower(data2[p2])) {
+            // Difference.
+            return (tolower(data1[p1]) < tolower(data2[p2])) ? -1 : 1;
+        }
+
+        p1++;
+        p2++;
+    }
+
+    if ((p1 == len2) && (p2 == len1)) {
+        // They're identical.
+        return 0;
+    } else {
+        // One string is shorter.
+        if (p1 == len1) return -1;
+        else return 1;
+    }
 }
 
 int64_t bstr_util_mem_to_pint(const void *_data, size_t len, int base, size_t *lastlen) {
