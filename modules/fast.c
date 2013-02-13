@@ -1071,6 +1071,10 @@ ib_status_t fast_dir_fast_automata(
         return IB_EINVAL;
     }
     memcpy(&index_size, data, sizeof(index_size));
+    if (index_size == 0) {
+        ib_cfg_log_error(cp, "Automata has index size of 0.");
+        return IB_EINVAL;
+    }
 
     /* Create index */
     runtime->index =
