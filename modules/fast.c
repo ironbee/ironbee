@@ -662,19 +662,27 @@ ia_eudoxus_command_t fast_eudoxus_callback(
     }
 
     /* Check/mark if already added. */
-    rc = ib_hash_get_ex(search->rule_set, NULL, output, output_length);
-    if (rc == IB_OK) {
-        /* Rule already added. */
-        return IA_EUDOXUS_CMD_CONTINUE;
-    }
-    if (rc != IB_ENOENT) {
-        /* Error. */
-        ia_eudoxus_set_error_printf(
-            engine,
-            "Unexpected error reading from rule set hash: %s",
-            ib_status_to_string(rc)
+    {
+        void *dummy_value;
+        rc = ib_hash_get_ex(
+            search->rule_set,
+            &dummy_value,
+            output,
+            output_length
         );
-        return IA_EUDOXUS_CMD_ERROR;
+        if (rc == IB_OK) {
+            /* Rule already added. */
+            return IA_EUDOXUS_CMD_CONTINUE;
+        }
+        if (rc != IB_ENOENT) {
+            /* Error. */
+            ia_eudoxus_set_error_printf(
+                engine,
+                "Unexpected error reading from rule set hash: %s",
+                ib_status_to_string(rc)
+            );
+            return IA_EUDOXUS_CMD_ERROR;
+        }
     }
 
     rc = ib_hash_set_ex(search->rule_set, output, output_length, (void *)1);
