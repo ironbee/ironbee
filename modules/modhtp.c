@@ -1127,6 +1127,11 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
         htp_tx_set_user_data(tx, itx);
 
         modhtp_field_gen_bytestr(itx->data,
+                                 "request_uri",
+                                 tx->request_uri_normalized,
+                                 NULL);
+
+        modhtp_field_gen_bytestr(itx->data,
                                  "request_uri_scheme",
                                  tx->parsed_uri->scheme,
                                  NULL);
