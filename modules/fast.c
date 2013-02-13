@@ -633,6 +633,18 @@ ia_eudoxus_command_t fast_eudoxus_callback(
     memcpy(&index, output, sizeof(index));
     rule = search->runtime->index[index];
 
+    if (rule == NULL) {
+        /* Rule is in automata but not claimed. In that case, the rule will
+         * be evaluated by the rule engine is usual, so this is not a fatal
+         * error. */
+        ib_log_warning(
+            search->rule_exec->ib,
+            "Found rule in automata that is not in index.  "
+            "Index likely out of date."
+        );
+        return IA_EUDOXUS_CMD_CONTINUE;
+    }
+
     /* Check phase. */
     if (rule->meta.phase != search->rule_exec->phase) {
         return IA_EUDOXUS_CMD_CONTINUE;
