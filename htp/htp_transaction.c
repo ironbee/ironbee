@@ -263,7 +263,7 @@ htp_status_t htp_tx_req_add_param(htp_tx_t *tx, htp_param_t *param) {
 }
 
 htp_param_t *htp_tx_req_get_param(htp_tx_t *tx, const char *name, size_t name_len) {
-    return (htp_param_t *) htp_table_get_mem(tx->request_params, name, name_len);
+    return htp_table_get_mem(tx->request_params, name, name_len);
 }
 
 htp_param_t *htp_tx_req_get_param_ex(htp_tx_t *tx, enum htp_data_source_t source, const char *name, size_t name_len) {
@@ -273,7 +273,7 @@ htp_param_t *htp_tx_req_get_param_ex(htp_tx_t *tx, enum htp_data_source_t source
         p = htp_table_get_index(tx->request_params, i, NULL);
         if (p->source != source) continue;
 
-        if (bstr_cmp_mem(p->name, name, name_len) == 0) return p;
+        if (bstr_cmp_mem_nocase(p->name, name, name_len) == 0) return p;
     }
 
     return NULL;
