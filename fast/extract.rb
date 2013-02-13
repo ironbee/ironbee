@@ -7,9 +7,9 @@
 # an actual rule language parser.
 
 STDIN.each do |line|
-  if line =~ /("|\s)id:(.+?)\1/
+  if line =~ /("|\s)id:(.+?)(\1|$)/
     id = $2
-    line.gsub(/("|\s)fast:(.+?)\1/).each do
+    line.gsub(/("|\s)fast:(.+?)(\1|$)/).each do
       pattern = $2
       pattern.gsub!(/\s/, '\s')
       puts [pattern, id].join(' ')
