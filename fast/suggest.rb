@@ -26,14 +26,14 @@ rx_mode = (ARGV[0] == '--rx')
 
 # Evaluate if a rule is a candidate for an fast modifier.
 def potential_rule(line)
-  line =~ /\s@(rx|dfa) "/ &&   # Has a regexp
+  line =~ /\s@(rx|dfa) / &&   # Has a regexp
     line !~ /\bfast:/     &&   # Does not already have an fast
     line !~ /\st:/             # Does not have a transformation
 end
 
 # Extract regular expressions from a Rule.
 def extract_regexps(line)
-  line.grep(/\s@(rx|dfa) "(.+?)"(\s|$)/) {$2}
+  line.grep(/\s@(rx|dfa) "?([^\s"]+?)"?(\s|$)/) {$2}
 end
 
 # Format pattern for inclusion in rule.
