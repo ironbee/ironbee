@@ -120,9 +120,9 @@ struct fast_search_t
 /* Configuration */
 
 /*! IndexSize key for automata metadata. */
-static const char *c_index_size_key          = "IndexSize";
+static const char *c_index_size_key = "IndexSize";
 /*! Index key for automata metadata. */
-static const char *c_index_key               = "Index";
+static const char *c_index_key = "Index";
 
 /**
  * Collection specification.
@@ -163,7 +163,7 @@ static const fast_collection_spec_t c_request_body_collections[] = {
 /*! String to separate bytestrings. */
 static const char *c_bytestring_separator = " ";
 /*! String to separate different keys, bytestring or collection entries. */
-static const char *c_data_separator       = "\n";
+static const char *c_data_separator = "\n";
 
 /* Helper functions */
 
@@ -442,7 +442,7 @@ ib_status_t fast_feed_data_collection(
             eudoxus,
             state,
             (const uint8_t *)collection->separator,
-            sizeof(collection->separator)
+            strlen(collection->separator)
         );
         if (rc != IB_OK) {
             return rc;
@@ -464,7 +464,7 @@ ib_status_t fast_feed_data_collection(
             eudoxus,
             state,
             (const uint8_t *)c_data_separator,
-            sizeof(c_data_separator)
+            strlen(c_data_separator)
         );
         if (rc != IB_OK) {
             return rc;
@@ -534,7 +534,7 @@ ib_status_t fast_feed_phase(
             eudoxus,
             state,
             (const uint8_t *)c_bytestring_separator,
-            sizeof(c_bytestring_separator)
+            strlen(c_bytestring_separator)
         );
         if (rc != IB_OK) {
             return rc;
@@ -546,7 +546,7 @@ ib_status_t fast_feed_phase(
         eudoxus,
         state,
         (uint8_t *)c_data_separator,
-        sizeof(c_data_separator)
+        strlen(c_data_separator)
     );
     if (rc != IB_OK) {
         return rc;
@@ -1038,7 +1038,7 @@ ib_status_t fast_dir_fast_automata(
     irc = ia_eudoxus_metadata_with_key(
         runtime->eudoxus,
         (const uint8_t *)c_index_size_key,
-        sizeof(c_index_size_key),
+        strlen(c_index_size_key),
         &data,
         &data_size
     );
@@ -1078,7 +1078,7 @@ ib_status_t fast_dir_fast_automata(
     irc = ia_eudoxus_metadata_with_key(
         runtime->eudoxus,
         (const uint8_t *)c_index_key,
-        sizeof(c_index_key),
+        strlen(c_index_key),
         &data,
         &data_size
     );
