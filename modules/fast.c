@@ -333,6 +333,9 @@ ib_status_t fast_feed_data_bytestring(
         return IB_EOTHER;
     }
 
+    if (ib_bytestr_const_ptr(bs) == NULL || ib_bytestr_size(bs) == 0) {
+        return IB_OK;
+    }
     return fast_feed(
         ib,
         eudoxus,
@@ -452,15 +455,17 @@ ib_status_t fast_feed_data_collection(
             return rc;
         }
 
-        rc = fast_feed(
-            ib,
-            eudoxus,
-            state,
-            ib_bytestr_const_ptr(bs),
-            ib_bytestr_size(bs)
-        );
-        if (rc != IB_OK) {
-            return rc;
+        if (ib_bytestr_const_ptr(bs) != NULL && ib_bytestr_size(bs) > 0) {
+            rc = fast_feed(
+                ib,
+                eudoxus,
+                state,
+                ib_bytestr_const_ptr(bs),
+                ib_bytestr_size(bs)
+            );
+            if (rc != IB_OK) {
+                return rc;
+            }
         }
 
         rc = fast_feed(
