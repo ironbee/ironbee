@@ -971,7 +971,7 @@ ib_status_t fast_dir_fast_automata(
 /* These macros are local to this function. */
 #define FAST_METADATA_ERROR(msg, param) \
     { \
-        ib_cfg_log_error(cp, "fast: %s: " # msg, p1, (param)); \
+        ib_cfg_log_error(cp, "fast: %s: " msg " (%d %s)", p1, (param), irc, fast_eudoxus_error(runtime->eudoxus)); \
         return IB_EINVAL; \
     }
 #define FAST_CHECK_RC(msg) \
@@ -1149,6 +1149,17 @@ ib_status_t fast_dir_fast_automata(
         fast_ownership, runtime
     );
     FAST_CHECK_RC("Error registering ownership");
+
+    /* Register the fast "action" */
+    rc = ib_action_register(
+        ib,
+        "fast",
+        IB_ACT_FLAG_NONE,
+        NULL, NULL,
+        NULL, NULL,
+        NULL, NULL
+    );
+    FAST_CHECK_RC("Error registering action");
 
     return IB_OK;
 #undef FAST_METADATA_ERROR
