@@ -1,0 +1,1 @@
+Rule REQUEST_URI_RAW @rx foobar id:1 phase:REQUEST_HEADER clipp_announce:foobar fast:foobar
