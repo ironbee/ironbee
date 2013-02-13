@@ -651,8 +651,14 @@ ia_eudoxus_command_t fast_eudoxus_callback(
     }
 
     /* Check context. */
-    if (rule->ctx != search->rule_exec->tx->ctx) {
-        return IA_EUDOXUS_CMD_CONTINUE;
+    {
+        const ib_context_t *ctx = search->rule_exec->tx->ctx;
+        while (ctx != NULL && rule->ctx != ctx) {
+            ctx = ib_context_parent_get(ctx);
+        }
+        if (ctx == NULL) {
+            return IA_EUDOXUS_CMD_CONTINUE;
+        }
     }
 
     /* Check/mark if already added. */
