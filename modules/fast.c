@@ -1139,14 +1139,14 @@ ib_status_t fast_dir_fast_automata(
     /* Register hooks */
     rc = ib_rule_register_injection_fn(
         ib,
-        "fast",
+        MODULE_NAME_STR,
         PHASE_REQUEST_HEADER,
         fast_rule_injection_request_header, runtime
     );
     FAST_CHECK_RC("Error registering injection for request header phase.");
     rc = ib_rule_register_injection_fn(
         ib,
-        "fast",
+        MODULE_NAME_STR,
         PHASE_REQUEST_BODY,
         fast_rule_injection_request_body, runtime
     );
@@ -1154,7 +1154,7 @@ ib_status_t fast_dir_fast_automata(
 
     rc = ib_rule_register_ownership_fn(
         ib,
-        "fast",
+        MODULE_NAME_STR,
         fast_ownership, runtime
     );
     FAST_CHECK_RC("Error registering ownership");
