@@ -713,14 +713,14 @@ ib_status_t fast_ownership(
 
     ib_status_t  rc;
     ib_list_t   *actions;
-    ib_mpool_t  *mp;
+    ib_mpool_t  *tmp_mp = NULL;
     uint32_t    *index;
 
     /* This memory pool will exist only as long as this stack frame. */
-    rc = ib_mpool_create(&mp, "fast_ownership_tmp", NULL);
+    rc = ib_mpool_create(&tmp_mp, "fast temporary pool", NULL);
     FAST_CHECK_RC("Could not create temporary memory pool");
 
-    rc = ib_list_create(&actions, mp);
+    rc = ib_list_create(&actions, tmp_mp);
     FAST_CHECK_RC("Could not create list to hold results");
 
     rc = ib_rule_search_action(
@@ -766,7 +766,9 @@ ib_status_t fast_ownership(
 #undef FAST_RETURN
     assert(! "Should never reach this line.");
 done:
-    ib_mpool_destroy(mp);
+    if (tmp_mp != NULL) {
+        ib_mpool_destroy(tmp_mp);
+    }
     return rc;
 }
 
@@ -816,7 +818,7 @@ ib_status_t fast_rule_injection(
     ia_eudoxus_state_t  *state;
     ib_status_t          rc;
     const ib_data_t     *data;
-    ib_mpool_t          *tmp_mp;
+    ib_mpool_t          *tmp_mp = NULL;
     ib_hash_t           *rule_set;
 
     rc = ib_mpool_create(&tmp_mp, "fast temporary pool", NULL);
