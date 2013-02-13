@@ -125,14 +125,16 @@ typedef ib_status_t (* modhtp_table_iterator_callback_fn_t)(
  * from htp_transaction.h
  *
  * @param[in] tx IronBee transaction
- * @param[in] cstr C string to set
+ * @param[in] data Data to set
+ * @param[in] dlen Length of @a data
  * @param[in] alloc Allocation strategy
  *
  * @returns Status code
  */
 typedef htp_status_t (* modhtp_set_fn_t)(
     htp_tx_t                  *tx,
-    const char                *cstr,
+    const char                *data,
+    size_t                     dlen,
     enum htp_alloc_strategy_t  alloc);
 
 /**
@@ -143,7 +145,9 @@ typedef htp_status_t (* modhtp_set_fn_t)(
  *
  * @param[in] htx HTP transaction
  * @param[in] name Header name
+ * @param[in] name_len Length of @a name
  * @param[in] value Header value
+ * @param[in] value_len Length of @a value
  * @param[in] alloc Allocation strategy
  *
  * @returns HTP status code
@@ -151,7 +155,9 @@ typedef htp_status_t (* modhtp_set_fn_t)(
 typedef htp_status_t (* modhtp_set_header_fn_t)(
     htp_tx_t                  *htx,
     const char                *name,
+    size_t                     name_len,
     const char                *value,
+    size_t                     value_len,
     enum htp_alloc_strategy_t  alloc);
 
 
@@ -446,7 +452,7 @@ static ib_status_t modhtp_table_iterator(
  *
  * @param[in] itx IronBee transaction
  * @param[in] htx HTP transaction
- * @param[in] data Data to send
+ * @param[in] data Data to set
  * @param[in] dlen Length of @a data
  * @param[in] fn libhtp function to call
  *
@@ -455,21 +461,14 @@ static ib_status_t modhtp_table_iterator(
 static inline ib_status_t modhtp_set_data(
     const ib_tx_t      *itx,
     htp_tx_t           *htx,
-    const uint8_t      *data,
+    const char         *data,
     size_t              dlen,
     modhtp_set_fn_t     fn)
 {
-    const char   *cstr;
     htp_status_t  hrc;
 
-    /* Copy the string */
-    cstr = ib_mpool_memdup_to_str(itx->mp, data, dlen);
-    if (cstr == NULL) {
-        return IB_EALLOC;
-    }
-
     /* Hand it off to libhtp */
-    hrc = fn(htx, cstr, HTP_ALLOC_REUSE);
+    hrc = fn(htx, data, dlen, HTP_ALLOC_COPY);
     if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
     }
@@ -496,7 +495,8 @@ static inline ib_status_t modhtp_set_bstr(
     modhtp_set_fn_t     fn)
 {
     return modhtp_set_data(itx, htx, 
-                           ib_bytestr_const_ptr(bstr), ib_bytestr_length(bstr),
+                           (const char *)ib_bytestr_const_ptr(bstr),
+                           ib_bytestr_length(bstr),
                            fn);
 }
 
@@ -528,19 +528,12 @@ static ib_status_t modhtp_set_header(
 
     for (node = header->head;  node != NULL;  node = node->next) {
         htp_status_t hrc;
-        const char *name =
-            ib_mpool_memdup_to_str(itx->mp,
-                                   ib_bytestr_ptr(node->name),
-                                   ib_bytestr_length(node->name));
-        const char *value =
-            ib_mpool_memdup_to_str(itx->mp,
-                                   ib_bytestr_ptr(node->value),
-                                   ib_bytestr_length(node->value));
-
-        if ( (name == NULL) || (value == NULL) ) {
-            return IB_EALLOC;
-        }
-        hrc = fn(htx, name, value, HTP_ALLOC_REUSE);
+        hrc = fn(htx,
+                 (const char *)ib_bytestr_const_ptr(node->name),
+                 ib_bytestr_length(node->name),
+                 (const char *)ib_bytestr_const_ptr(node->value),
+                 ib_bytestr_length(node->value),
+                 HTP_ALLOC_COPY);
         if (hrc != HTP_OK) {
             return IB_EUNKNOWN;
         }
@@ -666,10 +659,10 @@ static ib_status_t modhtp_set_parser_flag(
 {
     ib_status_t rc = IB_OK;
 
-    if (flags & HTP_AMBIGUOUS_HOST) {
-        flags ^= HTP_AMBIGUOUS_HOST;
+    if (flags & HTP_HOST_AMBIGUOUS) {
+        flags ^= HTP_HOST_AMBIGUOUS;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
-                                           "AMBIGUOUS_HOST");
+                                           "HOST_AMBIGUOUS");
     }
     if (flags & HTP_FIELD_INVALID) {
         flags ^= HTP_FIELD_INVALID;
@@ -763,6 +756,11 @@ static ib_status_t modhtp_set_parser_flag(
         flags ^= HTP_STATUS_LINE_INVALID;
         rc = modhtp_add_flag_to_collection(itx, collection_name,
                                            "STATUS_LINE_INVALID");
+    }
+    if (flags & HTP_HOST_INVALID) {
+        flags ^= HTP_HOST_INVALID;
+        rc = modhtp_add_flag_to_collection(itx, collection_name,
+                                           "HOST_INVALID");
     }
 
     /* If flags is not 0 we did not handle one of the bits. */
@@ -1436,8 +1434,9 @@ static int modhtp_htp_response_complete(
 
     ib_state_notify_response_finished(ib, itx);
 
-    /* NOTE: response_finished() triggers tx_destroy.  As a result, tx
+    /* NOTE: ib_state_response_finished() triggers tx_destroy.  As a result, tx
      * is no longer valid */
+    /* ib_state_notify_response_finished(ib, itx); */
 
     /* Destroy the transaction. */
     ib_log_debug3_tx(itx, "Destroying transaction structure");
@@ -1986,7 +1985,6 @@ static ib_status_t modhtp_iface_tx_cleanup(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
 {
-    ib_conn_t *iconn = itx->conn;
     modhtp_context_t *modctx;
     htp_tx_t *in_tx;
     htp_tx_t *out_tx;
@@ -2056,10 +2054,9 @@ static ib_status_t modhtp_set_request_uri(
     const ib_bytestr_t *uri_bstr)
 {
     const char  *uri;
-    size_t       uri_len;
-    const char  *query;
-    ssize_t      qoff;
+    size_t       uri_len; 
     ib_status_t  irc;
+    ssize_t      qoff;
 
     uri = (const char *)ib_bytestr_const_ptr(uri_bstr);
     uri_len = ib_bytestr_length(uri_bstr);
@@ -2078,7 +2075,8 @@ static ib_status_t modhtp_set_request_uri(
 
         len = qoff;
         irc = modhtp_set_data(itx, htx,
-                              uri, len, htp_tx_req_set_uri_c);
+                              uri, len,
+                              htp_tx_req_set_uri);
         if (irc != IB_OK) {
             return irc;
         }
@@ -2087,7 +2085,7 @@ static ib_status_t modhtp_set_request_uri(
         if (len > 0) {
             irc = modhtp_set_data(itx, htx,
                                   qmark + 1, len,
-                                  htp_tx_req_set_query_string_c);
+                                  htp_tx_req_set_query_string);
             if (irc != IB_OK) {
                 return irc;
             }
@@ -2095,7 +2093,7 @@ static ib_status_t modhtp_set_request_uri(
     }
     else {
         irc = modhtp_set_bstr(itx, htx,
-                              uri_bstr, htp_tx_req_set_uri_c);
+                              uri_bstr, htp_tx_req_set_uri);
         if (irc != IB_OK) {
             return irc;
         }
@@ -2147,8 +2145,7 @@ static ib_status_t modhtp_iface_request_line(
     }
 
     /* Hand the method to libhtp */
-    irc = modhtp_set_bstr(itx, htp->in_tx,
-                          line->method, htp_tx_req_set_method_c);
+    irc = modhtp_set_bstr(itx, htp->in_tx, line->method, htp_tx_req_set_method);
     if (irc != IB_OK) {
         return irc;
     }
@@ -2165,7 +2162,7 @@ static ib_status_t modhtp_iface_request_line(
     }
     else {
         irc = modhtp_set_bstr(itx, htp->in_tx,
-                              line->method, htp_tx_req_set_protocol_c);
+                              line->method, htp_tx_req_set_protocol);
         if (irc != IB_OK) {
             return irc;
         }
@@ -2199,7 +2196,7 @@ static ib_status_t modhtp_iface_request_header_data(
     modctx = modhtp_get_itx_context(itx);
     modctx->parsed_data = true;
     irc = modhtp_set_header(itx, modctx->htp->in_tx,
-                           header, htp_tx_req_set_header_c);
+                            header, htp_tx_req_set_header);
 
     return irc;
 }
@@ -2414,7 +2411,7 @@ static ib_status_t modhtp_iface_response_header_data(
     modctx = modhtp_get_itx_context(itx);
     modctx->parsed_data = true;
     irc = modhtp_set_header(itx, modctx->htp->out_tx,
-                           header, htp_tx_res_set_header_c);
+                           header, htp_tx_res_set_header);
 
     return irc;
 }
@@ -2455,7 +2452,6 @@ static ib_status_t modhtp_iface_response_body_data(ib_provider_inst_t *pi,
     assert(txdata != NULL);
 
     modhtp_context_t *modctx;
-    ib_status_t irc;
     htp_status_t hrc;
 
     /* This is required for parsed data only. */
