@@ -563,7 +563,7 @@ ib_status_t fast_feed_phase(
 
     for (
         const fast_collection_spec_t *collection = collections;
-        collection != NULL;
+        collection->name != NULL;
         ++collection
     ) {
         rc = fast_feed_data_collection(
