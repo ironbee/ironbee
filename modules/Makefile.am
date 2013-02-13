@@ -119,6 +119,7 @@ endif
 
 ibmod_fast_la_SOURCES = fast.c
 ibmod_fast_la_CPPFLAGS = ${AM_CPPFLAGS} -I$(srcdir)/../automata/include
+ibmod_fast_la_LIBADD = $(AMLIB_ADD) ../automata/libiaeudoxus.la
 
 install-exec-hook: $(pkglib_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
