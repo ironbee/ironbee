@@ -815,7 +815,7 @@ ib_status_t fast_rule_injection(
     assert(runtime->index   != NULL);
 
     ia_eudoxus_result_t  irc;
-    ia_eudoxus_state_t  *state;
+    ia_eudoxus_state_t  *state = NULL;
     ib_status_t          rc;
     const ib_data_t     *data;
     ib_mpool_t          *tmp_mp = NULL;
@@ -880,6 +880,9 @@ ib_status_t fast_rule_injection(
     );
 
 done:
+    if (state != NULL) {
+        ia_eudoxus_destroy_state(state);
+    }
     if (tmp_mp != NULL) {
         ib_mpool_destroy(tmp_mp);
     }
