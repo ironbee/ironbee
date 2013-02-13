@@ -1023,12 +1023,13 @@ ib_status_t fast_dir_fast_automata(
     /* Load Automata */
     irc = ia_eudoxus_create_from_path(&runtime->eudoxus, p1);
     if (irc != IA_EUDOXUS_OK) {
+        /* Note: ia_eudoxus_error() will not work as runtime->eudoxus
+         * did not finish construction. */
         ib_cfg_log_error(
             cp,
-            "fast: %s: Error loading automata: %d %s",
+            "fast: %s: Error loading automata: %d",
             p1,
-            irc,
-            fast_eudoxus_error(runtime->eudoxus)
+            irc
         );
         return IB_EINVAL;
     }
