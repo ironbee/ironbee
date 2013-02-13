@@ -518,3 +518,46 @@ TEST_F(HybridParsing, DisableDecompressionTest) {
     ASSERT_EQ(tx->response_message_len, 187);
     ASSERT_EQ(tx->response_entity_len, 187);
 }
+
+TEST_F(HybridParsing, ParamCaseSensitivity) {
+    // Create a new LibHTP transaction
+    htp_tx_t *tx = htp_connp_tx_create(connp);
+    ASSERT_TRUE(tx != NULL);   
+
+    // Request begins
+    htp_tx_state_request_start(tx);    
+
+    // Request line data
+    htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_COPY);
+    htp_tx_req_set_method_number(tx, HTP_M_GET);
+    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
+    htp_tx_req_set_query_string(tx, "p=1&Q=2", 7, HTP_ALLOC_COPY);
+    htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
+    htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
+    htp_tx_req_set_protocol_0_9(tx, 0);
+
+    // Request line complete
+    htp_tx_state_request_line(tx);    
+    
+    // Check the parameters.
+
+    htp_param_t *param_p = htp_tx_req_get_param(tx, "p", 1);
+    ASSERT_TRUE(param_p != NULL);
+    ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
+
+    param_p = htp_tx_req_get_param(tx, "P", 1);
+    ASSERT_TRUE(param_p != NULL);
+    ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
+
+    htp_param_t *param_q = htp_tx_req_get_param(tx, "q", 1);
+    ASSERT_TRUE(param_q != NULL);
+    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
+
+    param_q = htp_tx_req_get_param_ex(tx, HTP_SOURCE_QUERY_STRING, "q", 1);
+    ASSERT_TRUE(param_q != NULL);
+    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
+
+    param_q = htp_tx_req_get_param_ex(tx, HTP_SOURCE_QUERY_STRING, "Q", 1);
+    ASSERT_TRUE(param_q != NULL);
+    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
+}
