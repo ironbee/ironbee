@@ -1,4 +1,4 @@
-$:.unshift(File.dirname(File.dirname(__FILE__)))
+$:.unshift(File.dirname(File.dirname(File.expand_path(__FILE__))))
 require 'clipp_test'
 
 class TestRegression < Test::Unit::TestCase
@@ -179,5 +179,28 @@ Content-Length: 1234
     )
     assert_no_issues
     assert_log_no_match /CLIPP ANNOUNCE: ipmatch6_11c/
+  end
+  
+  # rns-190
+  def test_request_uri11
+    clipp(
+      :input_hashes => [simple_hash("GET /foobar/a HTTP/1.1\nHost: foo.bar\n\n")],
+      :default_site_config => <<-EOS
+        Rule REQUEST_URI @rx foo id:1 phase:REQUEST_HEADER clipp_announce:request_uri
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: request_uri/
+  end
+
+  def test_request_uri09
+    clipp(
+      :input_hashes => [simple_hash("GET /foobar/a\n")],
+      :default_site_config => <<-EOS
+        Rule REQUEST_URI @rx foo id:1 phase:REQUEST_HEADER clipp_announce:request_uri
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: request_uri/
   end
 end
