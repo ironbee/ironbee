@@ -183,11 +183,13 @@ static const char *c_data_separator = "\n";
  * @sa ia_eudoxus_error()
  */
 static inline
-const char *fast_eudoxus_error(const ia_eudoxus_t *eudoxus)
+const char *fast_eudoxus_error(
+    const ia_eudoxus_t *eudoxus
+)
 {
     return ia_eudoxus_error(eudoxus) == NULL ?
         "no error" :
-         ia_eudoxus_error(eudoxus);
+        ia_eudoxus_error(eudoxus);
 }
 
 /**
@@ -200,7 +202,7 @@ const char *fast_eudoxus_error(const ia_eudoxus_t *eudoxus)
  */
 static
 fast_config_t *fast_get_config(
-     ib_engine_t *ib
+    ib_engine_t *ib
 )
 {
     assert(ib != NULL);
@@ -285,11 +287,11 @@ ib_status_t fast_feed(
  */
 static
 ib_status_t fast_feed_data_bytestring(
-    const ib_engine_t *ib,
+    const ib_engine_t  *ib,
     const ia_eudoxus_t *eudoxus,
     ia_eudoxus_state_t *state,
-    const ib_data_t *data,
-    const char *bytestring_field_name
+    const ib_data_t    *data,
+    const char         *bytestring_field_name
 )
 {
     assert(ib                    != NULL);
