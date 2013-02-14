@@ -773,7 +773,7 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
     }
 
     // If we're in TX_PROGRESS_REQ_HEADERS that means that this is the
-    // first time we're processing headers in/ a request. Otherwise,
+    // first time we're processing headers in a request. Otherwise,
     // we're dealing with trailing headers.
     if (tx->progress > HTP_REQUEST_HEADERS) {
         // Run hook HTP_REQUEST_TRAILER
