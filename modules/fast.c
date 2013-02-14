@@ -144,7 +144,6 @@ struct fast_collection_spec_t
 /** Bytestrings to feed during REQUEST_HEADER phase. */
 static const char *c_request_header_bytestrings[] = {
     "REQUEST_METHOD",
-    // @todo: Change this to REQUESTURI when RNS-190 is fixed.
     "REQUEST_URI",
     "REQUEST_PROTOCOL",
     NULL
