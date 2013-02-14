@@ -93,7 +93,7 @@ htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
     htp_tx_t *tx = connp->in_tx;
     
     // Check the request content type to see if it matches our MIME type
-    if ((tx->request_content_type == NULL) || (bstr_cmp_c(tx->request_content_type, HTP_URLENCODED_MIME_TYPE) != 0)) {
+    if ((tx->request_content_type == NULL) || (!bstr_begins_with_c(tx->request_content_type, HTP_URLENCODED_MIME_TYPE))) {
         #ifdef HTP_DEBUG
         fprintf(stderr, "htp_ch_urlencoded_callback_request_headers: Body not URLENCODED\n");
         #endif

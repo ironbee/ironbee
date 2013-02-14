@@ -51,6 +51,7 @@ typedef struct htp_urlen_param_t htp_urlen_param_t;
 #define HTP_URLENP_STATE_KEY            1
 #define HTP_URLENP_STATE_VALUE          2
 
+// The MIME type that triggers the parser. Must be lowercase.
 #define HTP_URLENCODED_MIME_TYPE        "application/x-www-form-urlencoded"
 
 #include "htp_private.h"
