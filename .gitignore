@@ -50,6 +50,7 @@ m4
 /test/test_bstr
 /test/test_hybrid
 /test/test_utils
+/test/test_all
 extras/ruby/*.gem
 /docs/Makefile
 /docs/Makefile.in
