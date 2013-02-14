@@ -184,20 +184,15 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
 }
 
 /**
- * Parses the Content-Type part header.
+ * Parses the Content-Type part header, if present.
  *
  * @param[in] part
- * @return HTP_OK on success, HTP_ERROR on failure.
+ * @return HTP_OK on success, HTP_DECLINED if the C-T header is not present, and HTP_ERROR on failure.
  */
 static htp_status_t htp_mpart_part_parse_c_t(htp_multipart_part_t *part) {
-    // Find C-D header
     htp_header_t *h = (htp_header_t *) htp_table_get_c(part->headers, "content-type");
     if (h == NULL) return HTP_DECLINED;
-
-    // TODO Remove charset information, if present.
-    part->content_type = h->value;
-
-    return HTP_OK;
+    return htp_parse_ct_header(h->value, &part->content_type);
 }
 
 /**

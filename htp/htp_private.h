@@ -459,7 +459,6 @@ int htp_parse_status(bstr *status);
 int htp_parse_authorization_digest(htp_connp_t *connp, htp_header_t *auth_header);
 int htp_parse_authorization_basic(htp_connp_t *connp, htp_header_t *auth_header);
 
-
 void htp_print_log(FILE *stream, htp_log_t *log);
 
 void fprint_bstr(FILE *stream, const char *name, bstr *b);
@@ -497,6 +496,8 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input);
 bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t *endoffset);
 
 htp_header_t *htp_connp_header_parse(htp_connp_t *, unsigned char *, size_t);
+
+htp_status_t htp_parse_ct_header(bstr *header, bstr **ct);
 
 #ifdef	__cplusplus
 }

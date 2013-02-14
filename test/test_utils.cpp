@@ -559,3 +559,93 @@ TEST(UtilTest, ParseHostPort10) {
     bstr_free(e);
     bstr_free(i);
 }
+
+TEST(UtilTest, ParseContentType1) {
+    bstr *i = bstr_dup_c("multipart/form-data");
+    bstr *e = bstr_dup_c("multipart/form-data");
+    bstr *ct = NULL;
+
+    ASSERT_EQ(HTP_OK, htp_parse_ct_header(i, &ct));
+
+    ASSERT_TRUE(ct != NULL);
+    ASSERT_TRUE(bstr_cmp(e, ct) == 0);
+
+    bstr_free(ct);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST(UtilTest, ParseContentType2) {
+    bstr *i = bstr_dup_c("multipart/form-data;boundary=X");
+    bstr *e = bstr_dup_c("multipart/form-data");
+    bstr *ct = NULL;
+
+    ASSERT_EQ(HTP_OK, htp_parse_ct_header(i, &ct));
+
+    ASSERT_TRUE(ct != NULL);
+    ASSERT_TRUE(bstr_cmp(e, ct) == 0);
+
+    bstr_free(ct);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST(UtilTest, ParseContentType3) {
+    bstr *i = bstr_dup_c("multipart/form-data boundary=X");
+    bstr *e = bstr_dup_c("multipart/form-data");
+    bstr *ct = NULL;
+
+    ASSERT_EQ(HTP_OK, htp_parse_ct_header(i, &ct));
+
+    ASSERT_TRUE(ct != NULL);
+    ASSERT_TRUE(bstr_cmp(e, ct) == 0);
+
+    bstr_free(ct);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST(UtilTest, ParseContentType4) {
+    bstr *i = bstr_dup_c("multipart/form-data,boundary=X");
+    bstr *e = bstr_dup_c("multipart/form-data");
+    bstr *ct = NULL;
+
+    ASSERT_EQ(HTP_OK, htp_parse_ct_header(i, &ct));
+
+    ASSERT_TRUE(ct != NULL);
+    ASSERT_TRUE(bstr_cmp(e, ct) == 0);
+
+    bstr_free(ct);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST(UtilTest, ParseContentType5) {
+    bstr *i = bstr_dup_c("multipart/FoRm-data");
+    bstr *e = bstr_dup_c("multipart/form-data");
+    bstr *ct = NULL;
+
+    ASSERT_EQ(HTP_OK, htp_parse_ct_header(i, &ct));
+
+    ASSERT_TRUE(ct != NULL);
+    ASSERT_TRUE(bstr_cmp(e, ct) == 0);
+
+    bstr_free(ct);
+    bstr_free(e);
+    bstr_free(i);
+}
+
+TEST(UtilTest, ParseContentType6) {
+    bstr *i = bstr_dup_c("multipart/form-data\t boundary=X");
+    bstr *e = bstr_dup_c("multipart/form-data\t");
+    bstr *ct = NULL;
+
+    ASSERT_EQ(HTP_OK, htp_parse_ct_header(i, &ct));
+
+    ASSERT_TRUE(ct != NULL);
+    ASSERT_TRUE(bstr_cmp(e, ct) == 0);
+
+    bstr_free(ct);
+    bstr_free(e);
+    bstr_free(i);
+}

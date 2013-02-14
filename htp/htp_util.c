@@ -2411,3 +2411,25 @@ bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t 
     return result;
 }
 
+htp_status_t htp_parse_ct_header(bstr *header, bstr **ct) {
+    if ((header == NULL)||(ct == NULL)) return HTP_ERROR;
+
+    unsigned char *data = bstr_ptr(header);
+    size_t len = bstr_len(header);
+
+    // The assumption here is that the header value we receive
+    // here has been left-trimmed, which means the starting position
+    // is on the mediate type. On some platform that may not be the
+    // case, and we may need to do the left-trim ourselves.
+
+    // Find the end of the MIME type, using the same approach PHP 5.4.3 uses.
+    size_t pos = 0;
+    while ((pos < len)&&(data[pos] != ';')&&(data[pos] != ',')&&(data[pos] != ' ')) pos++;
+
+    *ct = bstr_dup_ex(header, 0, pos);
+    if (*ct == NULL) return HTP_ERROR;
+    
+    bstr_to_lowercase(*ct);
+
+    return HTP_OK;
+}
