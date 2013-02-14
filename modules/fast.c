@@ -51,12 +51,14 @@
 
 #include <assert.h>
 
-/*! Module name. */
+/** Module name. */
 #define MODULE_NAME        fast
-/*! Stringified version of MODULE_NAME */
+/** Stringified version of MODULE_NAME */
 #define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
 
+#ifndef DOXYGEN_SKIP
 IB_MODULE_DECLARE();
+#endif
 
 /* Documented in definitions below. */
 typedef struct fast_runtime_t         fast_runtime_t;
@@ -67,18 +69,18 @@ typedef struct fast_collection_spec_t fast_collection_spec_t;
 /**
  * Module runtime data.
  *
- * A copy of this struct is contained in fast_config_t.  It is used to
+ * A copy of this struct is contained in @ref fast_config_t.  It is used to
  * distinguish runtime data from configuration parameters.
  */
 struct fast_runtime_t
 {
-    /*! AC automata; outputs are indices into rule index. */
+    /** AC automata; outputs are indices into rule index. */
     ia_eudoxus_t *eudoxus;
 
-    /*! Rule index: pointers to rules based on automata outputs. */
+    /** Rule index: pointers to rules based on automata outputs. */
     const ib_rule_t **index;
 
-    /*! Hash of id (@c const @c char *) to index (@c uint32_t *) */
+    /** Hash of id (@c const @c char *) to index (@c uint32_t *) */
     ib_hash_t *by_id;
 };
 
@@ -91,7 +93,7 @@ struct fast_runtime_t
  */
 struct fast_config_t
 {
-    /*! Runtime data */
+    /** Runtime data */
     fast_runtime_t *runtime;
 };
 
@@ -104,28 +106,28 @@ struct fast_config_t
  */
 struct fast_search_t
 {
-    /*! Runtime data. */
+    /** Runtime data. */
     const fast_runtime_t *runtime;
 
-    /*! Rule execution context. */
+    /** Rule execution context. */
     const ib_rule_exec_t *rule_exec;
 
-    /*! List to add eligible rules to. */
+    /** List to add eligible rules to. */
     ib_list_t *rule_list;
 
-    /*! Rules already added by pointer.  No data. */
+    /** Rules already added by pointer.  No data. */
     ib_hash_t *rule_set;
 };
 
 /* Configuration */
 
-/*! IndexSize key for automata metadata. */
+/** IndexSize key for automata metadata. */
 static const char *c_index_size_key = "IndexSize";
 
-/*! Index key for automata metadata. */
+/** Index key for automata metadata. */
 static const char *c_index_key = "Index";
 
-/*! Name of action to mark rules as fast. */
+/** Name of action to mark rules as fast. */
 static const char *c_fast_action = "fast";
 
 /**
@@ -133,13 +135,13 @@ static const char *c_fast_action = "fast";
  */
 struct fast_collection_spec_t
 {
-    /*! Name of collection to feed to automata. */
+    /** Name of collection to feed to automata. */
     const char *name;
-    /*! String to separate key and value with. */
+    /** String to separate key and value with. */
     const char *separator;
 };
 
-/*! Bytestrings to feed during REQUEST_HEADER phase. */
+/** Bytestrings to feed during REQUEST_HEADER phase. */
 static const char *c_request_header_bytestrings[] = {
     "REQUEST_METHOD",
     // @todo: Change this to REQUESTURI when RNS-190 is fixed.
@@ -147,27 +149,27 @@ static const char *c_request_header_bytestrings[] = {
     "REQUEST_PROTOCOL",
     NULL
 };
-/*! Collections to feed during REQUEST_HEADER phase. */
+/** Collections to feed during REQUEST_HEADER phase. */
 static const fast_collection_spec_t c_request_header_collections[] = {
     { "REQUEST_HEADERS",    ":" },
     { "REQUEST_URI_PARAMS", "=" },
     { NULL, NULL }
 };
 
-/*! Bytestrings to feed during REQUEST_BODY phase. */
+/** Bytestrings to feed during REQUEST_BODY phase. */
 static const char *c_request_body_bytestrings[] = {
     NULL
 };
 
-/*! Collections to feed during REQUEST_BODY phase. */
+/** Collections to feed during REQUEST_BODY phase. */
 static const fast_collection_spec_t c_request_body_collections[] = {
     { "REQUEST_BODY_PARAMS", "=" },
     { NULL, NULL }
 };
 
-/*! String to separate bytestrings. */
+/** String to separate bytestrings. */
 static const char *c_bytestring_separator = " ";
-/*! String to separate different keys, bytestring or collection entries. */
+/** String to separate different keys, bytestring or collection entries. */
 static const char *c_data_separator = "\n";
 
 /* Helper functions */
@@ -352,7 +354,7 @@ ib_status_t fast_feed_data_bytestring(
  * @param[in] eudoxus     Eudoxus engine; used for ia_eudoxus_error().
  * @param[in] state       Current Eudoxus execution state; updated.
  * @param[in] data        Data source.
- * @param[in] collections Collection to feed.
+ * @param[in] collection  Collection to feed.
  * @return
  * - IB_OK on success.
  * - IB_EINVAL on IronAutomata failure; will emit log message.
@@ -598,14 +600,14 @@ ib_status_t fast_feed_phase(
  */
 static
 ia_eudoxus_command_t fast_eudoxus_callback(
-    ia_eudoxus_t  *engine,
+    ia_eudoxus_t  *eudoxus,
     const char    *output,
     size_t         output_length,
     const uint8_t *input_location,
     void          *callback_data
 )
 {
-    assert(engine        != NULL);
+    assert(eudoxus        != NULL);
     assert(output        != NULL);
     assert(callback_data != NULL);
 
@@ -623,7 +625,7 @@ ia_eudoxus_command_t fast_eudoxus_callback(
     /* Error instead of assert as automata may be invalid. */
     if (output_length != sizeof(uint32_t)) {
         ia_eudoxus_set_error_printf(
-            engine,
+            eudoxus,
             "Invalid automata; output length; expected = %zd actual = %zd.",
             sizeof(uint32_t),
             output_length
@@ -636,7 +638,7 @@ ia_eudoxus_command_t fast_eudoxus_callback(
 
     if (rule == NULL) {
         /* Rule is in automata but not claimed. In that case, the rule will
-         * be evaluated by the rule engine is usual, so this is not a fatal
+         * be evaluated by the rule eudoxus is usual, so this is not a fatal
          * error. */
         ib_log_warning(
             search->rule_exec->ib,
@@ -678,7 +680,7 @@ ia_eudoxus_command_t fast_eudoxus_callback(
         if (rc != IB_ENOENT) {
             /* Error. */
             ia_eudoxus_set_error_printf(
-                engine,
+                eudoxus,
                 "Unexpected error reading from rule set hash: %s",
                 ib_status_to_string(rc)
             );
@@ -689,7 +691,7 @@ ia_eudoxus_command_t fast_eudoxus_callback(
     rc = ib_hash_set_ex(search->rule_set, output, output_length, (void *)1);
     if (rc != IB_OK) {
         ia_eudoxus_set_error_printf(
-            engine,
+            eudoxus,
             "Unexpected error writing to rule set hash: %s",
             ib_status_to_string(rc)
         );
@@ -699,7 +701,7 @@ ia_eudoxus_command_t fast_eudoxus_callback(
     rc = ib_list_push(search->rule_list, (void *)rule);
     if (rc != IB_OK) {
          ia_eudoxus_set_error_printf(
-             engine,
+             eudoxus,
              "Error pushing rule onto rule list: %s",
             ib_status_to_string(rc)
         );
@@ -731,12 +733,14 @@ ib_status_t fast_ownership(
 )
 {
 /* These macros are local to this function. */
+#ifndef DOXYGEN_SKIP
 #define FAST_RETURN(return_rc) { rc = return_rc; goto done; }
 #define FAST_CHECK_RC(msg) \
     if (rc != IB_OK) { \
         ib_log_error(ib, "fast: %s: %s", (msg), ib_status_to_string((rc))); \
         FAST_RETURN(IB_EOTHER); \
     }
+#endif
 
     assert(ib   != NULL);
     assert(rule != NULL);
@@ -990,7 +994,7 @@ ib_status_t fast_rule_injection_request_body(
  * Called when @c FastAutomata directive appears in configuration.
  *
  * @param[in] cp     Configuration parsed; used for logging.
- * @param[in] name   Name; must be @ref c_fast_automata_directive.
+ * @param[in] name   Name; ignored.
  * @param[in] p1     Path to automata.
  * @param[in] cbdata Ignored.
  *
@@ -1010,6 +1014,7 @@ ib_status_t fast_dir_fast_automata(
 )
 {
 /* These macros are local to this function. */
+#ifndef DOXYGEN_SKIP
 #define FAST_METADATA_ERROR(msg, param) \
     { \
         ib_cfg_log_error(cp, "fast: %s: " msg " (%d %s)", p1, (param), irc, fast_eudoxus_error(runtime->eudoxus)); \
@@ -1020,6 +1025,7 @@ ib_status_t fast_dir_fast_automata(
         ib_cfg_log_error(cp, "fast: %s: %s: %s", p1, msg, ib_status_to_string(rc)); \
         return IB_EOTHER; \
     }
+#endif
 
     assert(cp     != NULL);
     assert(cp->ib != NULL);
@@ -1248,7 +1254,7 @@ ib_status_t fast_fini(
  */
 static fast_config_t g_fast_config = {NULL};
 
-/*! Module directive map. */
+#ifndef DOXYGEN_SKIP
 static IB_DIRMAP_INIT_STRUCTURE(fast_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "FastAutomata",
@@ -1277,3 +1283,4 @@ IB_MODULE_INIT(
     NULL,                                /**< Context destroy function */
     NULL                                 /**< Callback data */
 );
+#endif
