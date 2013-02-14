@@ -41,28 +41,32 @@
 #include "htp_private.h"
 
 /**
- * Invoked to process a part of request body data.
+ * This callback function feeds request body data to a Urlencoded parser
+ * and, later, feeds the parsed parameters to the correct structures.
  *
  * @param[in] d
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
     htp_tx_t *tx = d->tx;
 
     if (d->data != NULL) {
-        // Process one chunk of data
+        // Process one chunk of data.
         htp_urlenp_parse_partial(tx->request_urlenp_body, d->data, d->len);
     } else {
-        // Finalize parsing
+        // Finalize parsing.
         htp_urlenp_finalize(tx->request_urlenp_body);
 
-        // Add all parameters to the transaction
+        // Add all parameters to the transaction.
         bstr *name = NULL;
         bstr *value = NULL;
+
         for (int i = 0, n = htp_table_size(tx->request_urlenp_body->params); i < n; i++) {
             value = htp_table_get_index(tx->request_urlenp_body->params, i, &name);
 
             htp_param_t *param = calloc(1, sizeof (htp_param_t));
             if (param == NULL) return HTP_ERROR;
+
             param->name = name;
             param->value = value;
             param->source = HTP_SOURCE_BODY;
@@ -86,94 +90,112 @@ htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d) {
 }
 
 /**
- * Determine if the request has a URLENCODED body, then
- * create and attach the URLENCODED parser if it does.
+ * Determine if the request has a Urlencoded body, and, if it does, create and
+ * attach an instance of the Urlencoded parser to the transaction.
+ *
+ * @param[in] connp
+ * @return HTP_OK if a new parser has been setup, HTP_DECLINED if the MIME type
+ *         is not appropriate for this parser, and HTP_ERROR on failure.
  */
 htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
     htp_tx_t *tx = connp->in_tx;
-    
-    // Check the request content type to see if it matches our MIME type
+
+    // Check the request content type to see if it matches our MIME type.
     if ((tx->request_content_type == NULL) || (!bstr_begins_with_c(tx->request_content_type, HTP_URLENCODED_MIME_TYPE))) {
         #ifdef HTP_DEBUG
         fprintf(stderr, "htp_ch_urlencoded_callback_request_headers: Body not URLENCODED\n");
         #endif
 
-        return HTP_OK;
+        return HTP_DECLINED;
     }
 
     #ifdef HTP_DEBUG
     fprintf(stderr, "htp_ch_urlencoded_callback_request_headers: Parsing URLENCODED body\n");
     #endif
 
-    // Create parser instance
+    // Create parser instance.
     tx->request_urlenp_body = htp_urlenp_create(tx);
     if (tx->request_urlenp_body == NULL) return HTP_ERROR;
 
-    // Register a request body data callback
+    // Register a request body data callback.
     htp_tx_register_request_body_data(tx, htp_ch_urlencoded_callback_request_body_data);
 
     return HTP_OK;
 }
 
 /**
- * Parse query string, if available. This method is invoked after the
- * request line has been processed.
+ * Parses request query string, if present.
  *
  * @param[in] connp
+ * @return HTP_OK if query string was parsed, HTP_DECLINED if there was no query
+ *         string, and HTP_ERROR on failure.
  */
 htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp) {
     htp_tx_t *tx = connp->in_tx;
 
-    // Parse query string, when available
-    if ((tx->parsed_uri->query != NULL) && (bstr_len(tx->parsed_uri->query) > 0)) {
-        tx->request_urlenp_query = htp_urlenp_create(tx);
-        if (tx->request_urlenp_query == NULL) return HTP_ERROR;
-
-        htp_urlenp_parse_complete(tx->request_urlenp_query, bstr_ptr(tx->parsed_uri->query), bstr_len(tx->parsed_uri->query));
-
-        // Add all parameters to the transaction
-        bstr *name = NULL;
-        bstr *value = NULL;
-        for (int i = 0, n = htp_table_size(tx->request_urlenp_query->params); i < n; i++) {
-            value = htp_table_get_index(tx->request_urlenp_query->params, i, &name);
-
-            htp_param_t *param = calloc(1, sizeof (htp_param_t));
-            if (param == NULL) return HTP_ERROR;
-            param->name = name;
-            param->value = value;
-            param->source = HTP_SOURCE_QUERY_STRING;
-            param->parser_id = HTP_PARSER_URLENCODED;
-            param->parser_data = NULL;
-
-            if (htp_tx_req_add_param(tx, param) != HTP_OK) {
-                free(param);
-                return HTP_ERROR;
-            }
-        }
-
-        // All the parameter data is now owned by the transaction, and
-        // the parser table used to store it is no longer needed. The
-        // line below will destroy just the table, leaving keys intact.
-        htp_table_destroy_ex(tx->request_urlenp_query->params);
-        tx->request_urlenp_query->params = NULL;
+    if ((tx->parsed_uri->query == NULL) || (bstr_len(tx->parsed_uri->query) == 0)) {
+        return HTP_DECLINED;
     }
+
+    // We have a non-zero length query string.
+
+    tx->request_urlenp_query = htp_urlenp_create(tx);
+    if (tx->request_urlenp_query == NULL) return HTP_ERROR;
+
+    if (htp_urlenp_parse_complete(tx->request_urlenp_query, bstr_ptr(tx->parsed_uri->query),
+            bstr_len(tx->parsed_uri->query)) != HTP_OK) {
+        htp_urlenp_destroy(tx->request_urlenp_query);
+        return HTP_ERROR;
+    }
+
+    // Add all parameters to the transaction.
+
+    bstr *name = NULL;
+    bstr *value = NULL;
+    for (int i = 0, n = htp_table_size(tx->request_urlenp_query->params); i < n; i++) {
+        value = htp_table_get_index(tx->request_urlenp_query->params, i, &name);
+
+        htp_param_t *param = calloc(1, sizeof (htp_param_t));
+        if (param == NULL) return HTP_ERROR;
+        
+        param->name = name;
+        param->value = value;
+        param->source = HTP_SOURCE_QUERY_STRING;
+        param->parser_id = HTP_PARSER_URLENCODED;
+        param->parser_data = NULL;
+
+        if (htp_tx_req_add_param(tx, param) != HTP_OK) {
+            free(param);
+            return HTP_ERROR;
+        }
+    }
+
+    // All the parameter data is now owned by the transaction, and
+    // the parser table used to store it is no longer needed. The
+    // line below will destroy just the table, leaving keys intact.
+    htp_table_destroy_ex(tx->request_urlenp_query->params);
+    tx->request_urlenp_query->params = NULL;
+
+    htp_urlenp_destroy(tx->request_urlenp_query);
+    tx->request_urlenp_query = NULL;
 
     return HTP_OK;
 }
 
 /**
- * Finalize MULTIPART processing.
+ * Finalize Multipart processing.
  * 
  * @param[in] d
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
     htp_tx_t *tx = d->tx;
 
     if (d->data != NULL) {
-        // Process one chunk of data
+        // Process one chunk of data.
         htp_mpartp_parse(tx->request_mpartp, d->data, d->len);
     } else {
-        // Finalize parsing
+        // Finalize parsing.
         htp_mpartp_finalize(tx->request_mpartp);
 
         htp_multipart_t *body = htp_mpartp_get_multipart(tx->request_mpartp);
@@ -181,8 +203,8 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
         for (int i = 0, n = htp_list_size(body->parts); i < n; i++) {
             htp_multipart_part_t *part = htp_list_get(body->parts, i);
 
-            // Use text parameters
-            if (part->type == MULTIPART_PART_TEXT) {                
+            // Use text parameters.
+            if (part->type == MULTIPART_PART_TEXT) {
                 htp_param_t *param = calloc(1, sizeof (htp_param_t));
                 if (param == NULL) return HTP_ERROR;
                 param->name = part->name;
@@ -207,10 +229,12 @@ htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d) {
 }
 
 /**
- * Inspect request headers and register the MULTIPART request data hook
+ * Inspect request headers and register the Multipart request data hook
  * if it contains a multipart/form-data body.
  *
  * @param[in] connp
+ * @return HTP_OK if a new parser has been setup, HTP_DECLINED if the MIME type
+ *         is not appropriate for this parser, and HTP_ERROR on failure.
  */
 htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
     htp_tx_t *tx = connp->in_tx;
@@ -227,7 +251,7 @@ htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
         fprintf(stderr, "htp_ch_multipart_callback_request_headers: Not multipart body (no C-T header)\n");
         #endif
 
-        return HTP_OK;
+        return HTP_DECLINED;
     }
 
     // Look for a boundary.
@@ -247,17 +271,17 @@ htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
         #endif
 
         // No boundary (HTP_DECLINED) or error (HTP_ERROR).
-        return rc; 
+        return rc;
     }
-   
+
     if (boundary == NULL) return HTP_ERROR;
 
-    // Create a multipart parser instance.
+    // Create a Multipart parser instance.
     tx->request_mpartp = htp_mpartp_create(connp->cfg, boundary, flags);
     if (tx->request_mpartp == NULL) {
         bstr_free(boundary);
         return HTP_ERROR;
-    }   
+    }
 
     // Configure file extraction.
     if (tx->cfg->extract_request_files) {
