@@ -356,7 +356,8 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     htp_tx_req_set_protocol_0_9(tx, 0);
 
     // Configure headers to trigger the URLENCODED parser
-    htp_tx_req_set_header(tx, "Content-Type", 12, HTP_URLENCODED_MIME_TYPE, strlen(HTP_URLENCODED_MIME_TYPE), HTP_ALLOC_COPY);
+    htp_tx_req_set_header(tx, "Content-Type", 12, HTP_URLENCODED_MIME_TYPE,
+        strlen(HTP_URLENCODED_MIME_TYPE), HTP_ALLOC_COPY);
     htp_tx_req_set_header(tx, "Content-Length", 14, "7", 1, HTP_ALLOC_COPY);
 
     // Request headers complete
@@ -558,6 +559,53 @@ TEST_F(HybridParsing, ParamCaseSensitivity) {
     ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
 
     param_q = htp_tx_req_get_param_ex(tx, HTP_SOURCE_QUERY_STRING, "Q", 1);
+    ASSERT_TRUE(param_q != NULL);
+    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
+}
+
+/**
+ * Use a POST request in order to test request body processing and parameter
+ * parsing. In hybrid mode, we expect that the body arrives to us dechunked.
+ */
+TEST_F(HybridParsing, PostUrlecodedChunked) {
+    // Create a new LibHTP transaction.
+    htp_tx_t *tx = htp_connp_tx_create(connp);
+    ASSERT_TRUE(tx != NULL);
+
+    // Request begins.
+    htp_tx_state_request_start(tx);
+
+    // Request line data.
+    htp_tx_req_set_method(tx, "POST", 4, HTP_ALLOC_COPY);
+    htp_tx_req_set_method_number(tx, HTP_M_GET);
+    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
+    htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
+    htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
+    htp_tx_req_set_protocol_0_9(tx, 0);
+
+    // Configure headers to trigger the URLENCODED parser.
+    htp_tx_req_set_header(tx, "Content-Type", 12, HTP_URLENCODED_MIME_TYPE,
+        strlen(HTP_URLENCODED_MIME_TYPE), HTP_ALLOC_COPY);
+    htp_tx_req_set_header(tx, "Transfer-Encoding", 17, "chunked", 7, HTP_ALLOC_COPY);
+
+    // Request headers complete.
+    htp_tx_state_request_headers(tx);
+
+    // Send request body.
+    htp_tx_req_process_body_data(tx, "p=1", 3);
+    htp_tx_req_process_body_data(tx, "&", 1);
+    htp_tx_req_process_body_data(tx, "q=2", 3);
+
+    // Request complete.
+    htp_tx_state_request_complete(tx);
+
+    // Check the parameters.
+
+    htp_param_t *param_p = htp_tx_req_get_param(tx, "p", 1);
+    ASSERT_TRUE(param_p != NULL);
+    ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
+
+    htp_param_t *param_q = htp_tx_req_get_param(tx, "q", 1);
     ASSERT_TRUE(param_q != NULL);
     ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
 }
