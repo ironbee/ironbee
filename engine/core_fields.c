@@ -431,18 +431,13 @@ static ib_status_t core_gen_flags_collection(ib_engine_t *ib,
     const ib_tx_flag_map_t *flag;
 
     for (flag = ib_core_fields_tx_flags();  flag->name != NULL;  ++flag) {
-        rc = ib_data_add_num(tx->data, flag->tx_name, flag->default_value, NULL);
+        rc = ib_data_add_num(tx->data, flag->tx_name, (tx->flags & flag->tx_flag ? 1 : 0), NULL);
         if (rc != IB_OK) {
             return rc;
         }
-        if (flag->default_value) {
-            ib_tx_flags_set(tx, flag->tx_flag);
-        }
-        else {
-            ib_tx_flags_unset(tx, flag->tx_flag);
-        }
     }
 
+    ib_log_debug(ib, "FLAGS CREATED");
     return IB_OK;
 }
 
