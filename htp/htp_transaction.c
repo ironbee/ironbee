@@ -106,7 +106,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         free(tx->parsed_uri_incomplete);
     }
 
-    // Destroy request_header_lines
+    // Destroy request_header_lines.
     if (tx->request_header_lines != NULL) {
         for (int i = 0, n = htp_list_size(tx->request_header_lines); i < n; i++) {
             htp_header_line_t *hl = htp_list_get(tx->request_header_lines, i);
@@ -120,7 +120,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         tx->request_header_lines = NULL;
     }
 
-    // Destroy request_headers
+    // Destroy request_headers.
     if (tx->request_headers != NULL) {
         htp_header_t *h = NULL;
         for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
@@ -147,7 +147,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(tx->response_message);
     bstr_free(tx->response_headers_sep);
 
-    // Destroy response_header_lines
+    // Destroy response_header_lines.
     if (tx->response_header_lines != NULL) {
         for (int i = 0, n = htp_list_size(tx->response_header_lines); i < n; i++) {
             htp_header_line_t *hl = htp_list_get(tx->response_header_lines, i);
@@ -161,7 +161,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         tx->response_header_lines = NULL;
     }
 
-    // Destroy response headers
+    // Destroy response headers.
     if (tx->response_headers != NULL) {
         htp_header_t *h = NULL;
         for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
@@ -174,8 +174,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         htp_table_destroy(tx->response_headers);
     }
 
-    // Tell the connection to remove this transaction
-    // from the list
+    // Tell the connection to remove this transaction from the list.
     htp_conn_remove_tx(tx->conn, tx);
 
     // Invalidate the pointer to this transactions held
@@ -292,9 +291,7 @@ htp_status_t htp_tx_req_set_header(htp_tx_t *tx, const char *name, size_t name_l
     if ((name == NULL) || (value == NULL)) return HTP_ERROR;
 
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
-    if (h == NULL) {
-        return HTP_ERROR;
-    }
+    if (h == NULL) return HTP_ERROR;
 
     h->name = copy_or_wrap_mem(name, name_len, alloc);
     if (h->name == NULL) {
@@ -324,7 +321,7 @@ htp_status_t htp_tx_req_set_method(htp_tx_t *tx, const char *method, size_t meth
 
     tx->request_method = copy_or_wrap_mem(method, method_len, alloc);
     if (tx->request_method == NULL) return HTP_ERROR;
-    
+
     return HTP_OK;
 }
 
@@ -342,7 +339,7 @@ htp_status_t htp_tx_req_set_uri(htp_tx_t *tx, const char *uri, size_t uri_len, e
 }
 
 htp_status_t htp_tx_req_set_query_string(htp_tx_t *tx, const char *qs, size_t qs_len, enum htp_alloc_strategy_t alloc) {
-    if ((tx->parsed_uri == NULL)||(qs == NULL)) return HTP_ERROR;
+    if ((tx->parsed_uri == NULL) || (qs == NULL)) return HTP_ERROR;
 
     tx->parsed_uri->query = copy_or_wrap_mem(qs, qs_len, alloc);
     if (tx->parsed_uri->query == NULL) return HTP_ERROR;
@@ -404,11 +401,11 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
         // We are still going to check for the presence of C-L.
         if (cl != NULL) {
-            // This is a violation of the RFC
+            // This is a violation of the RFC.
             tx->flags |= HTP_REQUEST_SMUGGLING;
         }
     } else if (cl != NULL) {
-        // We have a request body of known length
+        // We have a request body of known length.
         tx->request_transfer_coding = HTP_CODING_IDENTITY;
 
         // Check for a folded C-L header.
@@ -430,14 +427,14 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
         tx->request_content_length = i;
     } else {
-        // No body
+        // No body.
         tx->request_transfer_coding = HTP_CODING_NO_BODY;
     }
 
-    // Check for PUT requests, which we need to treat as file uploads
+    // Check for PUT requests, which we need to treat as file uploads.
     if (tx->request_method_number == HTP_M_PUT) {
         if (htp_tx_req_has_body(tx)) {
-            // Prepare to treat PUT request body as a file
+            // Prepare to treat PUT request body as a file.
             tx->connp->put_file = calloc(1, sizeof (htp_file_t));
             if (tx->connp->put_file == NULL) return HTP_ERROR;
             tx->connp->put_file->source = HTP_FILE_PUT;
@@ -451,16 +448,16 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     // Host resolution
     htp_header_t *h = htp_table_get_c(tx->request_headers, "host");
     if (h == NULL) {
-        // No host information in the headers
+        // No host information in the headers.
 
-        // HTTP/1.1 requires host information in the headers
+        // HTTP/1.1 requires host information in the headers.
         if (tx->request_protocol_number >= HTP_PROTOCOL_1_1) {
             tx->flags |= HTP_HOST_MISSING;
             htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
                     "Host information in request headers required by HTTP/1.1");
         }
     } else {
-        // Host information available in the headers
+        // Host information available in the headers.
 
         bstr *hostname;
         int port;
@@ -506,17 +503,17 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         bstr_adjust_len(tx->request_content_type, newlen);
     }
 
-    // Parse cookies
+    // Parse cookies.
     if (tx->connp->cfg->parse_request_cookies) {
         htp_parse_cookies_v0(tx->connp);
     }
 
-    // Parse authentication information
+    // Parse authentication information.
     if (tx->connp->cfg->parse_request_http_authentication) {
         htp_parse_authorization(tx->connp);
     }
 
-    // Run hook REQUEST_HEADERS
+    // Run hook REQUEST_HEADERS.
     int rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp);
     if (rc != HTP_OK) return rc;
 
@@ -528,7 +525,7 @@ htp_status_t htp_tx_req_process_body_data(htp_tx_t *tx, const void *data, size_t
     tx->request_entity_len += len;
 
     // Send data to the callbacks.
-    
+
     htp_tx_data_t d;
     d.tx = tx;
     d.data = (unsigned char *) data;
@@ -568,7 +565,7 @@ htp_status_t htp_tx_res_set_status_line(htp_tx_t *tx, const char *line, size_t l
 
     tx->response_line = copy_or_wrap_mem(line, line_len, alloc);
     if (tx->response_line == NULL) return HTP_ERROR;
-    
+
     if (tx->connp->cfg->parse_response_line(tx->connp) != HTP_OK) return HTP_ERROR;
 
     return HTP_OK;
@@ -591,7 +588,7 @@ htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *msg, size_t
 
     tx->response_message = copy_or_wrap_mem(msg, msg_len, alloc);
     if (tx->response_message == NULL) return HTP_ERROR;
-    
+
     return HTP_OK;
 }
 
@@ -632,7 +629,7 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
 htp_status_t htp_tx_res_set_header(htp_tx_t *tx, const char *name, size_t name_len,
         const char *value, size_t value_len, enum htp_alloc_strategy_t alloc) {
     if ((name == NULL) || (value == NULL)) return HTP_ERROR;
-    
+
 
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) return HTP_ERROR;
@@ -684,10 +681,10 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
     fprint_raw_data(stderr, __FUNCTION__, d->data, d->len);
     #endif
 
-    // Keep track of actual response body length
+    // Keep track of actual response body length.
     d->tx->response_entity_len += d->len;
 
-    // Invoke all callbacks
+    // Invoke all callbacks.
     int rc = htp_res_run_hook_body_data(d->tx->connp, d);
     if (rc != HTP_OK) return HTP_ERROR;
 
@@ -701,7 +698,7 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
     d.data = (unsigned char *) data;
     d.len = len;
 
-    // Keep track of body size before decompression
+    // Keep track of body size before decompression.
     tx->response_message_len += d.len;
 
     if (tx->response_content_encoding != COMPRESSION_NONE) {
@@ -709,12 +706,12 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
         tx->connp->out_decompressor->decompress(tx->connp->out_decompressor, &d);
 
         if (data == NULL) {
-            // Shut down the decompressor, if we used one
+            // Shut down the decompressor, if we used one.
             tx->connp->out_decompressor->destroy(tx->connp->out_decompressor);
             tx->connp->out_decompressor = NULL;
         }
     } else {
-        // When there's no decompression, response_entity_len
+        // When there's no decompression, response_entity_len.
         // is identical to response_message_len.
         tx->response_entity_len += d.len;
 
@@ -726,17 +723,17 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
 }
 
 htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
-    // Finalize request body
+    // Finalize request body.
     if (htp_tx_req_has_body(tx)) {
         int rc = htp_tx_req_process_body_data(tx, NULL, 0);
         if (rc != HTP_OK) return rc;
     }
 
-    // Run hook REQUEST
+    // Run hook REQUEST_COMPLETE.
     int rc = htp_hook_run_all(tx->connp->cfg->hook_request_complete, tx->connp);
     if (rc != HTP_OK) return rc;
 
-    // Clean-up
+    // Clean-up.
     if (tx->connp->put_file != NULL) {
         bstr_free(tx->connp->put_file->filename);
         free(tx->connp->put_file);
@@ -755,11 +752,11 @@ htp_status_t htp_tx_state_request_complete(htp_tx_t *tx) {
 }
 
 htp_status_t htp_tx_state_request_start(htp_tx_t *tx) {
-    // Run hook TRANSACTION_START
+    // Run hook REQUEST_START.
     int rc = htp_hook_run_all(tx->connp->cfg->hook_request_start, tx->connp);
     if (rc != HTP_OK) return rc;
 
-    // Change state into request line parsing
+    // Change state into request line parsing.
     tx->connp->in_state = htp_connp_REQ_LINE;
     tx->connp->in_tx->progress = HTP_REQUEST_LINE;
 
@@ -780,7 +777,7 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
         int rc = htp_hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
         if (rc != HTP_OK) return rc;
 
-        // Completed parsing this request; finalize it now
+        // Completed parsing this request; finalize it now.
         tx->connp->in_state = htp_connp_REQ_FINALIZE;
     } else if (tx->progress >= HTP_REQUEST_LINE) {
         // Process request headers
@@ -803,24 +800,24 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
         // Parse authority
         if (htp_parse_uri_hostport(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
-            // Note: downstream responsible for error logging
+            // Note: downstream responsible for error logging.
             return HTP_ERROR;
         }
     } else {
         // Parse the request URI
         if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
-            // Note: downstream responsible for error logging
+            // Note: downstream responsible for error logging.
             return HTP_ERROR;
         }
 
         // Keep the original URI components, but
-        // create a copy which we can normalize and use internally
+        // create a copy which we can normalize and use internally.
         if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri) != HTP_OK) {
-            // Note: downstream responsible for error logging
+            // Note: downstream responsible for error logging.
             return HTP_ERROR;
         }
 
-        // Run hook REQUEST_URI_NORMALIZE
+        // Run hook REQUEST_URI_NORMALIZE.
         int rc = htp_hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
         if (rc != HTP_OK) return rc;
 
@@ -829,11 +826,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
         // which parts we added).
         if (connp->cfg->generate_request_uri_normalized) {
             connp->in_tx->request_uri_normalized = htp_unparse_uri_noencode(connp->in_tx->parsed_uri);
-
-            if (connp->in_tx->request_uri_normalized == NULL) {
-                // There's no sense in logging anything on a memory allocation failure
-                return HTP_ERROR;
-            }
+            if (connp->in_tx->request_uri_normalized == NULL) return HTP_ERROR;
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, "request_uri_normalized",
@@ -842,9 +835,9 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
             #endif
         }
 
-        // Finalize parsed_uri
+        // Finalize parsed_uri.
 
-        // Scheme
+        // Scheme.
         if (connp->in_tx->parsed_uri->scheme != NULL) {
             if (bstr_cmp_c(connp->in_tx->parsed_uri->scheme, "http") != 0) {
                 // TODO Invalid scheme.
@@ -856,7 +849,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
             }
         }
 
-        // Path
+        // Path.
         if (connp->in_tx->parsed_uri->path == NULL) {
             connp->in_tx->parsed_uri->path = bstr_dup_c("/");
             if (connp->in_tx->parsed_uri->path == NULL) {
@@ -865,7 +858,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
         }
     }
 
-    // Run hook REQUEST_LINE
+    // Run hook REQUEST_LINE.
     int rc = htp_hook_run_all(connp->cfg->hook_request_line, connp);
     if (rc != HTP_OK) return rc;
 
@@ -879,14 +872,12 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
     if (tx->connp->out_tx->progress != HTP_RESPONSE_COMPLETE) {
         tx->progress = HTP_RESPONSE_COMPLETE;
 
-        // Run the last RESPONSE_BODY_DATA HOOK, but
-        // only if there was a response body present.
-        // TODO Use constant instead of -1.
+        // Run the last RESPONSE_BODY_DATA HOOK, but only if there was a response body present.
         if (tx->response_transfer_coding != HTP_CODING_NO_BODY) {
             htp_tx_res_process_body_data(tx, NULL, 0);
         }
 
-        // Run hook RESPONSE
+        // Run hook RESPONSE_COMPLETE.
         return htp_hook_run_all(tx->connp->cfg->hook_response_complete, tx->connp);
     }
 
@@ -894,7 +885,7 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
 }
 
 htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
-    // Check for compression
+    // Check for compression.
     if (tx->connp->cfg->response_decompression_enabled) {
         htp_header_t *ce = htp_table_get_c(tx->response_headers, "content-encoding");
         if (ce != NULL) {
@@ -906,7 +897,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
         }
     }
 
-    // Run hook RESPONSE_HEADERS_COMPLETE
+    // Run hook RESPONSE_HEADERS.
     int rc = htp_hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
     if (rc != HTP_OK) return rc;
 
@@ -941,7 +932,7 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
 htp_status_t htp_tx_state_response_start(htp_tx_t *tx) {
     tx->connp->out_tx = tx;
 
-    // Run hook RESPONSE_START
+    // Run hook RESPONSE_START.
     int rc = htp_hook_run_all(tx->connp->cfg->hook_response_start, tx->connp);
     if (rc != HTP_OK) return rc;
 
