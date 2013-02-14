@@ -442,7 +442,7 @@ static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
 /**
  * Test with a compressed response body and decompression enabled.
  */
-TEST_F(HybridParsing, CompressedResponseTest) {
+TEST_F(HybridParsing, CompressedResponse) {
     // Create a new LibHTP transaction
     htp_tx_t *tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
@@ -456,7 +456,7 @@ TEST_F(HybridParsing, CompressedResponseTest) {
 /**
  * Test with a compressed response body and decompression disabled.
  */
-TEST_F(HybridParsing, CompressedResponseNoDecompressionTest) {
+TEST_F(HybridParsing, CompressedResponseNoDecompression) {
     // Disable decompression
     htp_config_set_response_decompression(cfg, 0);
 
@@ -478,7 +478,7 @@ static int HybridParsing_ForcedDecompressionTest_Callback_RESPONSE_HEADERS(htp_c
 /**
  * Test forced decompression.
  */
-TEST_F(HybridParsing, ForcedDecompressionTest) {
+TEST_F(HybridParsing, ForcedDecompression) {
     // Disable decompression
     htp_config_set_response_decompression(cfg, 0);
 
@@ -503,7 +503,7 @@ static int HybridParsing_DisableDecompressionTest_Callback_RESPONSE_HEADERS(htp_
 /**
  * Test disabling decompression from a callback.
  */
-TEST_F(HybridParsing, DisableDecompressionTest) {
+TEST_F(HybridParsing, DisableDecompression) {
     // Disable decompression
     htp_config_set_response_decompression(cfg, 0);
 
