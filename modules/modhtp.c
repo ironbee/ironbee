@@ -2133,12 +2133,14 @@ static ib_status_t modhtp_iface_request_line(
     modctx->parsed_data = true;
     htp = modctx->htp;
 
+    /* Create the request transaction */
     htp->in_tx = htp_tx_create(htp);
     if (htp->in_tx == NULL) {
         return IB_EUNKNOWN;
     }
+    htp_tx_set_user_data(htp->in_tx, itx);
 
-    /* Start the transaction */
+    /* Start the request transaction */
     hrc = htp_tx_state_request_start(htp->in_tx);
     if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
@@ -2356,11 +2358,14 @@ static ib_status_t modhtp_iface_response_line(
     modctx->parsed_data = true;
     htp = modctx->htp;
 
-    /* Create and start the transaction */
+    /* Create the response transaction */
     htp->out_tx = htp_tx_create(htp);
     if (htp->out_tx == NULL) {
         return IB_EUNKNOWN;
     }
+    htp_tx_set_user_data(htp->out_tx, itx);
+
+    /* Start the response transaction */
     hrc = htp_tx_state_response_start(htp->out_tx);
     if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
