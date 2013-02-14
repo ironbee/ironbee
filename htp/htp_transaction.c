@@ -372,22 +372,22 @@ void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9) {
 }
 
 static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
-    // Remember how many header lines there were before trailers
+    // Remember how many header lines there were before trailers.
     tx->request_header_lines_no_trailers = htp_list_size(tx->request_header_lines);
 
-    // Determine if we have a request body, and how it is packaged
+    // Determine if we have a request body, and how it is packaged.
     htp_header_t *cl = htp_table_get_c(tx->request_headers, "content-length");
     htp_header_t *te = htp_table_get_c(tx->request_headers, "transfer-encoding");
 
-    // Check for the Transfer-Encoding header, which would indicate a chunked request body
+    // Check for the Transfer-Encoding header, which would indicate a chunked request body.
     if (te != NULL) {
-        // Make sure it contains "chunked" only
+        // Make sure it contains "chunked" only.
         if (bstr_cmp_c(te->value, "chunked") != 0) {
-            // Invalid T-E header value
+            // Invalid T-E header value.
+            tx->flags |= HTP_INVALID_CHUNKING;
+
             htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
                     "Invalid T-E value in request");
-
-            // TODO Should this be a fatal error?
         }
 
         // Chunked encoding is a HTTP/1.1 feature. Check that some other protocol is not
@@ -402,7 +402,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         // If the T-E header is present we are going to use it.
         tx->request_transfer_coding = HTP_CODING_CHUNKED;
 
-        // We are still going to check for the presence of C-L
+        // We are still going to check for the presence of C-L.
         if (cl != NULL) {
             // This is a violation of the RFC
             tx->flags |= HTP_REQUEST_SMUGGLING;
@@ -411,17 +411,17 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         // We have a request body of known length
         tx->request_transfer_coding = HTP_CODING_IDENTITY;
 
-        // Check for a folded C-L header
+        // Check for a folded C-L header.
         if (cl->flags & HTP_FIELD_FOLDED) {
             tx->flags |= HTP_REQUEST_SMUGGLING;
         }
 
-        // Check for multiple C-L headers
+        // Check for multiple C-L headers.
         if (cl->flags & HTP_FIELD_REPEATED) {
             tx->flags |= HTP_REQUEST_SMUGGLING;
         }
 
-        // Get body length
+        // Get body length.
         int i = htp_parse_content_length(cl->value);
         if (i < 0) {
             htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in request");
