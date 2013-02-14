@@ -165,13 +165,13 @@ htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, bstr *boundary, uint64_t flags);
  *
  * @param[in] content_type
  * @param[out] boundary
- * @param[out] flags
+ * @param[out] multipart_flags Multipart flags, which are not compatible from general LibHTP flags.
  * @return HTP_OK on success (boundary found), HTP_DECLINED if boundary was not found,
  *         and HTP_ERROR on failure. Flags may be set on HTP_OK and HTP_DECLINED. For
  *         example, if a boundary could not be extracted but there is indication that
- *         one is supposed to be present, HTP_MULTIPART_HBOUNDARY_INVALID will be set.
+ *         one is present, HTP_MULTIPART_HBOUNDARY_INVALID will be set.
  */
-htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint64_t *flags);
+htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint64_t *multipart_flags);
 
 /**
  * Returns the multipart structure created by the parser.

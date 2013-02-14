@@ -1301,6 +1301,10 @@ static void htp_mpartp_validate_content_type(bstr *content_type, uint64_t *flags
 htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint64_t *flags) {
     if ((content_type == NULL) || (boundary == NULL) || (flags == NULL)) return HTP_ERROR;
 
+    // Our approach is to ignore the MIME type and instead just look for
+    // the boundary. This approach is more reliable in the face of various
+    // evasion techniques that focus on submitting invalid MIME types.
+
     // Reset flags.
     *flags = 0;
 

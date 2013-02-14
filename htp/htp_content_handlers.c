@@ -254,7 +254,7 @@ htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp) {
         return HTP_DECLINED;
     }
 
-    // Look for a boundary.
+    // Look for a boundary. 
 
     htp_header_t *ct = htp_table_get_c(tx->request_headers, "content-type");
     if (ct == NULL) return HTP_ERROR;
