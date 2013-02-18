@@ -103,6 +103,11 @@ struct ia_eudoxus_state_t
     const ia_eudoxus_node_t *node;
 
     /**
+     * Current location in path compression nodes.
+     */
+    int byte_index;
+
+    /**
      * Current location in current input chunk.
      */
     const uint8_t *input_location;
@@ -308,6 +313,7 @@ ia_eudoxus_result_t ia_eudoxus_create_state(
     state->node           = (ia_eudoxus_node_t *)(
         (char *)eudoxus->automata + eudoxus->automata->start_index
     );
+    state->byte_index     = 0;
 
     *out_state = state;
 

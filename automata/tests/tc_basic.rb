@@ -131,4 +131,14 @@ class TestBasic < Test::Unit::TestCase
     text = "te"
     ac_test( words, text, "end_in_pc")
   end
+  
+  def test_pc_across_input
+    words = ["foobar"]
+    text = "foobar"
+    # Note: output will be scrambled by -l 0
+    automata_test(words, ACGEN, "foobar", false) do |dir, eudoxus_path|
+      output = ee(eudoxus_path, dir, text, 'input', 'output', 'auto', ['-s', '1', '-l', '0'])
+      assert(! output.empty?)
+    end
+  end
 end

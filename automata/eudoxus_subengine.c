@@ -137,6 +137,7 @@ ia_eudoxus_result_t IA_EUDOXUS(next_low)(
     state->node = (const ia_eudoxus_node_t *)(
         (const char *)(state->eudoxus->automata) + next_node
     );
+    state->byte_index = 0;
 
     return IA_EUDOXUS_OK;
 }
@@ -246,6 +247,7 @@ ia_eudoxus_result_t IA_EUDOXUS(next_high)(
     state->node = (const ia_eudoxus_node_t *)(
         (const char *)(state->eudoxus->automata) + next_node
     );
+    state->byte_index = 0;
 
     return IA_EUDOXUS_OK;
 }
@@ -302,15 +304,14 @@ ia_eudoxus_result_t IA_EUDOXUS(next_pc)(
     );
     const uint8_t *bytes = IA_VLS_FINAL(vls, const uint8_t);
 
-    int byte_index = 0;
-    for (;byte_index < length; ++byte_index) {
+    for (;state->byte_index < length; ++state->byte_index) {
         const uint8_t c = *(state->input_location);
-        if (c == bytes[byte_index]) {
-            state->node = NULL;
-            if (byte_index < length - 1) {
+        if (c == bytes[state->byte_index]) {
+            if (state->byte_index < length - 1) {
                 state->input_location += 1;
                 state->remaining_bytes -= 1;
                 if (state->remaining_bytes == 0) {
+                    ++state->byte_index;
                     return IA_EUDOXUS_OK;
                 }
             }
@@ -322,7 +323,7 @@ ia_eudoxus_result_t IA_EUDOXUS(next_pc)(
 
     IA_EUDOXUS_ID_T next_node = 0;
     bool advance_on_next_node = true;
-    if (byte_index == length) {
+    if (state->byte_index == length) {
         assert(node->final_target != 0);
         next_node = node->final_target;
         advance_on_next_node = advance_on_final;
@@ -343,6 +344,7 @@ ia_eudoxus_result_t IA_EUDOXUS(next_pc)(
     state->node = (const ia_eudoxus_node_t *)(
         (const char *)(state->eudoxus->automata) + next_node
     );
+    state->byte_index = 0;
 
     return IA_EUDOXUS_OK;
 }
@@ -444,7 +446,7 @@ ia_eudoxus_result_t IA_EUDOXUS(output)(
     }
 
     /* Input may have run out inside a PC chain, in which case, no output. */
-    if (state->node == NULL) {
+    if (state->byte_index != 0) {
       return IA_EUDOXUS_OK;
     }
 
