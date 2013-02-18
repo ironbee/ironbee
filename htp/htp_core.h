@@ -171,30 +171,34 @@ enum htp_file_source_t {
 // because we may want to set the same flag in several locations. For example, we
 // may set HTP_FIELD_FOLDED on the actual folded header, but also on the transaction
 // that contains the header. Both uses are useful.
-#define HTP_FIELD_UNPARSEABLE               0x000001
-#define HTP_FIELD_INVALID                   0x000002
-#define HTP_FIELD_FOLDED                    0x000004
-#define HTP_FIELD_REPEATED                  0x000008
-#define HTP_FIELD_LONG                      0x000010
-#define HTP_FIELD_RAW_NUL                   0x000020
-#define HTP_REQUEST_SMUGGLING               0x000040
-#define HTP_INVALID_FOLDING                 0x000080
-#define HTP_INVALID_CHUNKING                0x000100
-#define HTP_MULTI_PACKET_HEAD               0x000200
-#define HTP_HOST_MISSING                    0x000400
-#define HTP_HOST_AMBIGUOUS                  0x000800
-#define HTP_PATH_ENCODED_NUL                0x001000
-#define HTP_PATH_INVALID_ENCODING           0x002000
-#define HTP_PATH_INVALID                    0x004000
-#define HTP_PATH_OVERLONG_U                 0x008000
-#define HTP_PATH_ENCODED_SEPARATOR          0x010000
-#define HTP_PATH_UTF8_VALID                 0x020000 /* At least one valid UTF-8 character and no invalid ones. */
-#define HTP_PATH_UTF8_INVALID               0x040000
-#define HTP_PATH_UTF8_OVERLONG              0x080000
-#define HTP_PATH_FULLWIDTH_EVASION          0x100000 /* Range U+FF00 - U+FFFF detected. */
-#define HTP_STATUS_LINE_INVALID             0x200000
-#define HTP_CONN_PIPELINED                  0x400000
-#define HTP_HOST_INVALID                    0x800000
+#define HTP_FIELD_UNPARSEABLE               0x0000001
+#define HTP_FIELD_INVALID                   0x0000002
+#define HTP_FIELD_FOLDED                    0x0000004
+#define HTP_FIELD_REPEATED                  0x0000008
+#define HTP_FIELD_LONG                      0x0000010
+#define HTP_FIELD_RAW_NUL                   0x0000020
+#define HTP_REQUEST_SMUGGLING               0x0000040
+#define HTP_INVALID_FOLDING                 0x0000080
+#define HTP_INVALID_CHUNKING                0x0000100
+#define HTP_MULTI_PACKET_HEAD               0x0000200
+#define HTP_HOST_MISSING                    0x0000400
+#define HTP_HOST_AMBIGUOUS                  0x0000800
+#define HTP_PATH_ENCODED_NUL                0x0001000
+#define HTP_PATH_INVALID_ENCODING           0x0002000
+#define HTP_PATH_INVALID                    0x0004000
+#define HTP_PATH_OVERLONG_U                 0x0008000
+#define HTP_PATH_ENCODED_SEPARATOR          0x0010000
+#define HTP_PATH_UTF8_VALID                 0x0020000 /* At least one valid UTF-8 character and no invalid ones. */
+#define HTP_PATH_UTF8_INVALID               0x0040000
+#define HTP_PATH_UTF8_OVERLONG              0x0080000
+#define HTP_PATH_HALF_FULL_RANGE            0x0100000 /* Range U+FF00 - U+FFEF detected. */
+#define HTP_STATUS_LINE_INVALID             0x0200000
+#define HTP_CONN_PIPELINED                  0x0400000
+#define HTP_HOST_INVALID                    0x0800000
+#define HTP_URLEN_ENCODED_NUL               0x1000000
+#define HTP_URLEN_INVALID_ENCODING          0x2000000
+#define HTP_URLEN_OVERLONG_U                0x4000000
+#define HTP_URLEN_HALF_FULL_RANGE           0x8000000 /* Range U+FF00 - U+FFEF detected. */
 
 // Logging-related constants
 #define HTP_LOG_MARK                 __FILE__,__LINE__

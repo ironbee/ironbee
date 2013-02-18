@@ -796,8 +796,8 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
                     }
 
                     // Special flag for fullwidth form evasion
-                    if ((codepoint > 0xfeff) && (codepoint < 0x010000)) {
-                        tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+                    if ((codepoint >= 0xff00) && (codepoint <= 0xffef)) {
+                        tx->flags |= HTP_PATH_HALF_FULL_RANGE;
                     }
 
                     // Use best-fit mapping to convert to a single byte
@@ -907,7 +907,7 @@ void htp_utf8_validate_path(htp_tx_t *tx, bstr *path) {
 
                 // Special flag for fullwidth form evasion
                 if ((codepoint > 0xfeff) && (codepoint < 0x010000)) {
-                    tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+                    tx->flags |= HTP_PATH_HALF_FULL_RANGE;
                 }
 
                 // Advance over the consumed byte
@@ -966,7 +966,7 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
     } else {
         // Check for fullwidth form evasion
         if (c1 == 0xff) {
-            tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+            tx->flags |= HTP_PATH_HALF_FULL_RANGE;
         }
 
         if (cfg->path_unicode_unwanted != HTP_UNWANTED_IGNORE) {
@@ -1013,40 +1013,42 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
  */
 static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
     unsigned int c1 = x2c(data);
-    unsigned int c2 = x2c(data + 2);
+    unsigned int c2 = x2c(data + 2);    
+
+    // Check for overlong usage first.
+    if (c1 == 0) {
+        tx->flags |= HTP_URLEN_OVERLONG_U;
+        
+        return c2;
+    }
+
+    // Both bytes were used.
+
+    // Detect half-width and full-width range.
+    if ((c1 == 0xff) && (c2 <= 0xef)) {
+        tx->flags |= HTP_URLEN_HALF_FULL_RANGE;
+    }
+
+    // Use best-fit mapping.
+    unsigned char *p = cfg->bestfit_map;
     int r = cfg->bestfit_replacement_char;
 
-    if (c1 == 0x00) {
-        r = c2;
-        // XXX
-        // tx->flags |= HTP_PATH_OVERLONG_U;
-    } else {
-        // Check for fullwidth form evasion
-        if (c1 == 0xff) {
-            // XXX
-            // tx->flags |= HTP_PATH_FULLWIDTH_EVASION;
+    // TODO Optimize lookup.
+
+    for (;;) {
+        // Have we reached the end of the map?
+        if ((p[0] == 0) && (p[1] == 0)) {
+            break;
         }
 
-        // Use best-fit mapping
-        unsigned char *p = cfg->bestfit_map;
-
-        // TODO Optimize lookup.
-
-        for (;;) {
-            // Have we reached the end of the map?
-            if ((p[0] == 0) && (p[1] == 0)) {
-                break;
-            }
-
-            // Have we found the mapping we're looking for?
-            if ((p[0] == c1) && (p[1] == c2)) {
-                r = p[2];
-                break;
-            }
-
-            // Move to the next triplet
-            p += 3;
+        // Have we found the mapping we're looking for?
+        if ((p[0] == c1) && (p[1] == c2)) {
+            r = p[2];
+            break;
         }
+
+        // Move to the next triplet
+        p += 3;
     }
 
     return r;
@@ -1352,17 +1354,15 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                 rpos += 6;
 
                                 if (c == 0) {
-                                    // XXX
-                                    // tx->flags |= HTP_PATH_ENCODED_NUL;
+                                    tx->flags |= HTP_URLEN_ENCODED_NUL;
 
                                     if (cfg->params_nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
                                         tx->response_status_expected_number = cfg->params_nul_encoded_unwanted;
                                     }
                                 }
                             } else {
-                                // XXX
-                                // Invalid %u encoding                                
-                                //tx->flags |= HTP_PATH_INVALID_ENCODING;
+                                // Invalid %u encoding.
+                                tx->flags |= HTP_URLEN_INVALID_ENCODING;
 
                                 if (cfg->params_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
                                     tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
@@ -1386,9 +1386,8 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                 }
                             }
                         } else {
-                            // XXX
-                            // Invalid %u encoding (not enough data)
-                            // tx->flags |= HTP_PATH_INVALID_ENCODING;
+                            // Invalid %u encoding; not enough data.
+                            tx->flags |= HTP_URLEN_INVALID_ENCODING;
 
                             if (cfg->params_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
                                 tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
@@ -1420,8 +1419,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                         rpos += 3;
 
                         if (c == 0) {
-                            // XXX
-                            // tx->flags |= HTP_PATH_ENCODED_NUL;
+                            tx->flags |= HTP_URLEN_ENCODED_NUL;
 
                             if (cfg->params_nul_encoded_unwanted != HTP_UNWANTED_IGNORE) {
                                 tx->response_status_expected_number = cfg->params_nul_encoded_unwanted;
@@ -1431,11 +1429,10 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                 bstr_adjust_len(input, wpos);
                                 return 1;
                             }
-                        }                       
+                        }
                     } else {
-                        // XXX
-                        // Invalid encoding
-                        // tx->flags |= HTP_PATH_INVALID_ENCODING;
+                        // Invalid encoding.
+                        tx->flags |= HTP_URLEN_INVALID_ENCODING;
 
                         if (cfg->params_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
                             tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;
@@ -1460,9 +1457,8 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                     }
                 }
             } else {
-                // XXX
-                // Invalid encoding (not enough data)
-                // tx->flags |= HTP_PATH_INVALID_ENCODING;
+                // Invalid %u encoding; not enough data.
+                tx->flags |= HTP_URLEN_INVALID_ENCODING;
 
                 if (cfg->params_invalid_encoding_unwanted != HTP_UNWANTED_IGNORE) {
                     tx->response_status_expected_number = cfg->path_invalid_encoding_unwanted;

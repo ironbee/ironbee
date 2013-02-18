@@ -416,7 +416,7 @@ int main_utf8_decoder_tests(int argc, char** argv) {
         encode_utf8_4(data, i);
         htp_utf8_validate_path(tx, path);
         if ((i >= 0xff00) && (i <= 0xffff)) {
-            if (tx->flags != (HTP_PATH_UTF8_OVERLONG | HTP_PATH_FULLWIDTH_EVASION)) {
+            if (tx->flags != (HTP_PATH_UTF8_OVERLONG | HTP_PATH_HALF_FULL_RANGE)) {
                 printf("#4 i %x data %x %x %x %x flags %x\n", i, (uint8_t) data[0], (uint8_t) data[1], (uint8_t) data[2], (uint8_t) data[3], tx->flags);
             }
         } else {

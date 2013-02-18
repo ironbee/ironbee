@@ -48,3 +48,5 @@
   functions are taking pointers to the structures that need to be destroyed.
 
 - Rename HTP_FIELD_NUL_BYTE flag to HTP_FIELD_RAW_NUL.
+
+- Rename HTP_PATH_FULLWIDTH_EVASION to HTP_PATH_HALF_FULL_RANGE.
