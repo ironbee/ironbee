@@ -11,7 +11,7 @@ AM_CPPFLAGS += \
     -I$(builddir)/../automata/include \
 	$(PROTOBUF_CPPFLAGS) \
 	$(BOOST_CPPFLAGS)
-AM_LDFLAGS = \
+AM_LDFLAGS += \
     $(PROTOBUF_LDFLAGS) \
 	$(BOOST_LDFLAGS) \
     -lprotobuf \
