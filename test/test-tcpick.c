@@ -349,12 +349,3 @@ static int run_directory(char *dirname, htp_cfg_t *cfg) {
 
     return 1;
 }
-
-int main_xxx(int argc, char** argv) {
-    htp_cfg_t *cfg = htp_config_create();
-
-    //run_file("c:/http_traces/run1//tcpick_000015_192.168.1.67_66.249.80.118_www.both.dat", cfg);
-    run_directory("c:/http_traces/run1/", cfg);
-
-    return 0;
-}
