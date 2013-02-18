@@ -268,10 +268,10 @@ static ngx_int_t ironbee_headers_out(ngx_http_request_t *r)
     if (r->internal)
         return ngx_http_next_header_filter(r);
 
+    ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
+
     prev_log = ngxib_log(r->connection->log);
     ngx_regex_malloc_init(r->pool);
-
-    ctx = ngx_http_get_module_ctx(r, ngx_ironbee_module);
 
     /* Notify Ironbee of request line and headers */
     sprintf(proto, "HTTP/%d.%d", r->http_major, r->http_minor);

@@ -69,7 +69,7 @@ static int has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx)
  *
  * @param[in] r   the nginx request object
  * @return    NGX_DECLINED for normal operation
- * @return    NGX_DONE if body is not yet available (processing will restart
+ * @return    NGX_DONE if body is not yet available (processing will resume
  *            on new data)
  * @return    Error status if set by Ironbee on sight of request data.
  */
