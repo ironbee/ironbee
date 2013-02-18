@@ -411,7 +411,7 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t * connp) {
             }
 
             // Remember how many NULs there were
-            connp->out_header_line->flags |= HTP_FIELD_NUL_BYTE;
+            connp->out_header_line->flags |= HTP_FIELD_RAW_NUL;
             connp->out_header_line->has_nulls++;
         }
 

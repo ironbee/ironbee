@@ -47,3 +47,4 @@
 - A number of *_destroy functions and bstr_free() used to take a pointer to a pointer. Now all such
   functions are taking pointers to the structures that need to be destroyed.
 
+- Rename HTP_FIELD_NUL_BYTE flag to HTP_FIELD_RAW_NUL.

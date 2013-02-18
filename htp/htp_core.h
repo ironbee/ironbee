@@ -176,7 +176,7 @@ enum htp_file_source_t {
 #define HTP_FIELD_FOLDED                    0x000004
 #define HTP_FIELD_REPEATED                  0x000008
 #define HTP_FIELD_LONG                      0x000010
-#define HTP_FIELD_NUL_BYTE                  0x000020
+#define HTP_FIELD_RAW_NUL                   0x000020
 #define HTP_REQUEST_SMUGGLING               0x000040
 #define HTP_INVALID_FOLDING                 0x000080
 #define HTP_INVALID_CHUNKING                0x000100
@@ -188,10 +188,10 @@ enum htp_file_source_t {
 #define HTP_PATH_INVALID                    0x004000
 #define HTP_PATH_OVERLONG_U                 0x008000
 #define HTP_PATH_ENCODED_SEPARATOR          0x010000
-#define HTP_PATH_UTF8_VALID                 0x020000 /* At least one valid UTF-8 character and no invalid ones */
+#define HTP_PATH_UTF8_VALID                 0x020000 /* At least one valid UTF-8 character and no invalid ones. */
 #define HTP_PATH_UTF8_INVALID               0x040000
 #define HTP_PATH_UTF8_OVERLONG              0x080000
-#define HTP_PATH_FULLWIDTH_EVASION          0x100000 /* Range U+FF00 - U+FFFF detected */
+#define HTP_PATH_FULLWIDTH_EVASION          0x100000 /* Range U+FF00 - U+FFFF detected. */
 #define HTP_STATUS_LINE_INVALID             0x200000
 #define HTP_CONN_PIPELINED                  0x400000
 #define HTP_HOST_INVALID                    0x800000

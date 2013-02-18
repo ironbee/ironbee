@@ -782,7 +782,7 @@ void Init_htp( void )
   rb_define_const( mHTP, "HTP_FIELD_FOLDED", INT2FIX( HTP_FIELD_FOLDED ) );
   rb_define_const( mHTP, "HTP_FIELD_REPEATED", INT2FIX( HTP_FIELD_REPEATED ) );
   rb_define_const( mHTP, "HTP_FIELD_LONG", INT2FIX( HTP_FIELD_LONG ) );
-  rb_define_const( mHTP, "HTP_FIELD_NUL_BYTE", INT2FIX( HTP_FIELD_NUL_BYTE ) );
+  rb_define_const( mHTP, "HTP_FIELD_NUL_BYTE", INT2FIX( HTP_FIELD_RAW_NUL ) );
   rb_define_const( mHTP, "HTP_REQUEST_SMUGGLING", INT2FIX( HTP_REQUEST_SMUGGLING ) );
   rb_define_const( mHTP, "HTP_INVALID_FOLDING", INT2FIX( HTP_INVALID_FOLDING ) );
   rb_define_const( mHTP, "HTP_INVALID_CHUNKING", INT2FIX( HTP_INVALID_CHUNKING ) );

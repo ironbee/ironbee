@@ -1319,7 +1319,7 @@ int htp_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 }
 
 int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
-    unsigned char *data = (unsigned char *) bstr_ptr(input);
+    unsigned char *data = bstr_ptr(input);
     size_t len = bstr_len(input);
 
     // TODO I don't like this function, either.
@@ -1330,13 +1330,13 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
     while (rpos < len) {
         int c = data[rpos];
 
-        // Decode encoded characters
+        // Decode encoded characters.
         if (c == '%') {
             if (rpos + 2 < len) {
                 int handled = 0;
 
                 if (cfg->params_u_encoding_decode) {
-                    // Check for the %u encoding
+                    // Check for the %u encoding.
                     if ((data[rpos + 1] == 'u') || (data[rpos + 1] == 'U')) {
                         handled = 1;
 
@@ -1347,7 +1347,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                         if (rpos + 5 < len) {
                             if (isxdigit(data[rpos + 2]) && (isxdigit(data[rpos + 3]))
                                     && isxdigit(data[rpos + 4]) && (isxdigit(data[rpos + 5]))) {
-                                // Decode a valid %u encoding
+                                // Decode a valid %u encoding.
                                 c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
                                 rpos += 6;
 
@@ -1370,17 +1370,16 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
                                 switch (cfg->params_invalid_encoding_handling) {
                                     case HTP_URL_DECODE_REMOVE_PERCENT:
-                                        // Do not place anything in output; eat
-                                        // the percent character
+                                        // Do not place anything in output; consume the %.
                                         rpos++;
                                         continue;
                                         break;
                                     case HTP_URL_DECODE_PRESERVE_PERCENT:
-                                        // Leave the percent character in output
+                                        // Leave the % in output.
                                         rpos++;
                                         break;
                                     case HTP_URL_DECODE_PROCESS_INVALID:
-                                        // Decode invalid %u encoding
+                                        // Decode invalid %u encoding.
                                         c = decode_u_encoding_params(cfg, tx, &data[rpos + 2]);
                                         rpos += 6;
                                         break;
@@ -1397,27 +1396,28 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
                             switch (cfg->params_invalid_encoding_handling) {
                                 case HTP_URL_DECODE_REMOVE_PERCENT:
-                                    // Do not place anything in output; eat
-                                    // the percent character
+                                    // Do not place anything in output; consume the %.
                                     rpos++;
                                     continue;
                                     break;
                                 case HTP_URL_DECODE_PRESERVE_PERCENT:
-                                    // Leave the percent character in output
+                                    // Leave the % in output.
                                     rpos++;
                                     break;
                                 case HTP_URL_DECODE_PROCESS_INVALID:
-                                    // Cannot decode; not enough data
+                                    // Cannot decode; not enough data.
                                     break;
                             }
                         }
                     }
                 }
 
-                // Handle standard URL encoding
+                // Handle standard URL encoding.
                 if (!handled) {
                     if ((isxdigit(data[rpos + 1])) && (isxdigit(data[rpos + 2]))) {
+                        // Decode a %HH encoding.
                         c = x2c(&data[rpos + 1]);
+                        rpos += 3;
 
                         if (c == 0) {
                             // XXX
@@ -1431,10 +1431,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                                 bstr_adjust_len(input, wpos);
                                 return 1;
                             }
-                        }
-
-                        // Decode
-                        rpos += 3;
+                        }                       
                     } else {
                         // XXX
                         // Invalid encoding
@@ -1446,17 +1443,16 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
                         switch (cfg->params_invalid_encoding_handling) {
                             case HTP_URL_DECODE_REMOVE_PERCENT:
-                                // Do not place anything in output; eat
-                                // the percent character
+                                // Do not place anything in output; consume the %.
                                 rpos++;
                                 continue;
                                 break;
                             case HTP_URL_DECODE_PRESERVE_PERCENT:
-                                // Leave the percent character in output
+                                // Leave the % in output.
                                 rpos++;
                                 break;
                             case HTP_URL_DECODE_PROCESS_INVALID:
-                                // Decode
+                                // Decode.
                                 c = x2c(&data[rpos + 1]);
                                 rpos += 3;
                                 break;
@@ -1474,22 +1470,21 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
 
                 switch (cfg->params_invalid_encoding_handling) {
                     case HTP_URL_DECODE_REMOVE_PERCENT:
-                        // Do not place anything in output; eat
-                        // the percent character
+                        // Do not place anything in output; consume the %.
                         rpos++;
                         continue;
                         break;
                     case HTP_URL_DECODE_PRESERVE_PERCENT:
-                        // Leave the percent character in output
+                        // Leave the % in output.
                         rpos++;
                         break;
                     case HTP_URL_DECODE_PROCESS_INVALID:
-                        // Cannot decode; not enough data
+                        // Cannot decode; not enough data.
                         break;
                 }
             }
         } else {
-            // One non-encoded character
+            // One non-encoded character.
 
             // Is it a NUL byte?
             if (c == 0) {
@@ -1498,7 +1493,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
                 }
 
                 if (cfg->params_nul_raw_terminates) {
-                    // Terminate path with a raw NUL byte
+                    // Terminate path with a raw NUL byte.
                     bstr_adjust_len(input, wpos);
                     return 1;
                     break;
@@ -1510,7 +1505,7 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
             rpos++;
         }
 
-        // Place the character into output               
+        // Place the character into output.
         data[wpos++] = c;
     }
 
