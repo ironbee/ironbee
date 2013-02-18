@@ -197,7 +197,7 @@ void *htp_list_array_shift(htp_list_array_t *l) {
     return r;
 }
 
-
+#if 0
 // Linked list
 
 htp_list_linked_t *htp_list_linked_create(void) {
@@ -301,6 +301,7 @@ void *htp_list_linked_shift(htp_list_linked_t *l) {
 
     return r;
 }
+#endif
 
 #if 0
 
