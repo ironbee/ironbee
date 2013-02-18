@@ -250,7 +250,7 @@ enum htp_method_t {
     HTP_M_INVALID = 28
 };
 
-// XXX
+// A collection of unique parser IDs.
 enum htp_parser_id_t {
     /** application/x-www-form-urlencoded parser. */
     HTP_PARSER_URLENCODED = 0,
@@ -267,7 +267,7 @@ enum htp_parser_id_t {
 #define HTP_PROTOCOL_1_0             100
 #define HTP_PROTOCOL_1_1             101
 
-// XXX
+// A collection of possible data sources.
 enum htp_data_source_t {
     /** Embedded in the URL. */
     HTP_SOURCE_URL = 0,
