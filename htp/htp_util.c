@@ -460,7 +460,7 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
  */
 htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {
     if ((hostport == NULL) || (hostname == NULL) || (port == NULL) || (flags == NULL)) return HTP_ERROR;
-    
+
     unsigned char *data = bstr_ptr(hostport);
     size_t len = bstr_len(hostport);
 
@@ -528,7 +528,7 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, uint
  * @param[in] uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
-int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t **uri) {        
+int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t **uri) {
     return htp_parse_hostport(hostport, &((*uri)->hostname), &((*uri)->port_number), &(connp->in_tx->flags));
 }
 
@@ -1528,28 +1528,28 @@ int htp_decode_urlencoded_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *input) {
  * @return HTP_OK or HTP_ERROR
  */
 int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_t *normalized) {
-    // Scheme
+    // Scheme.
     if (incomplete->scheme != NULL) {
-        // Duplicate and convert to lowercase
+        // Duplicate and convert to lowercase.
         normalized->scheme = bstr_dup_lower(incomplete->scheme);
         if (normalized->scheme == NULL) return HTP_ERROR;
     }
 
-    // Username
+    // Username.
     if (incomplete->username != NULL) {
         normalized->username = bstr_dup(incomplete->username);
         if (normalized->username == NULL) return HTP_ERROR;
         htp_uriencoding_normalize_inplace(normalized->username);
     }
 
-    // Password
+    // Password.
     if (incomplete->password != NULL) {
         normalized->password = bstr_dup(incomplete->password);
         if (normalized->password == NULL) return HTP_ERROR;
         htp_uriencoding_normalize_inplace(normalized->password);
     }
 
-    // Hostname
+    // Hostname.
     if (incomplete->hostname != NULL) {
         // We know that incomplete->hostname does not contain
         // port information, so no need to check for it here.
@@ -1560,21 +1560,26 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     }
 
     if (incomplete->port != NULL) {
-        normalized->port_number = htp_parse_positive_integer_whitespace(
+        int64_t port_parsed = htp_parse_positive_integer_whitespace(
                 bstr_ptr(incomplete->port), bstr_len(incomplete->port), 10);
-        if (normalized->port_number < 0) {
-            // TODO Flag and report
 
-            // XXX Incomplete.
-
-            // Not available
+        if (port_parsed < 0) {
+            // Failed to parse the port number.
             normalized->port_number = -1;
+            connp->in_tx->flags |= HTP_HOST_INVALID;
+        } else if ((port_parsed > 0) && (port_parsed < 65536)) {
+            // Valid port number.
+            normalized->port_number = (int) port_parsed;
+        } else {
+            // Port number out of range.
+            normalized->port_number = -1;
+            connp->in_tx->flags |= HTP_HOST_INVALID;
         }
     }
 
-    // Path
+    // Path.
     if (incomplete->path != NULL) {
-        // Make a copy of the path, on which we can work on
+        // Make a copy of the path, on which we can work on.
         normalized->path = bstr_dup(incomplete->path);
         if (normalized->path == NULL) return HTP_ERROR;
 
@@ -1582,20 +1587,20 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         // compress separators and convert backslashes.
         htp_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
 
-        // Handle UTF-8 in path
+        // Handle UTF-8 in path.
         if (connp->cfg->path_utf8_convert) {
-            // Decode Unicode characters into a single-byte stream, using best-fit mapping
+            // Decode Unicode characters into a single-byte stream, using best-fit mapping.
             htp_utf8_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
         } else {
-            // Only validate path as a UTF-8 stream
+            // Only validate path as a UTF-8 stream.
             htp_utf8_validate_path(connp->in_tx, normalized->path);
         }
 
-        // RFC normalization
+        // RFC normalization.
         htp_normalize_uri_path_inplace(normalized->path);
     }
 
-    // Query
+    // Query string.
     if (incomplete->query != NULL) {
         // We cannot URL-decode the query string here; it needs to be
         // parsed into individual key-value pairs first.
@@ -1603,7 +1608,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         if (normalized->query == NULL) return HTP_ERROR;
     }
 
-    // Fragment
+    // Fragment.
     if (incomplete->fragment != NULL) {
         normalized->fragment = bstr_dup(incomplete->fragment);
         if (normalized->fragment == NULL) return HTP_ERROR;
@@ -2386,7 +2391,7 @@ bstr *htp_extract_quoted_string_as_bstr(unsigned char *data, size_t len, size_t 
 }
 
 htp_status_t htp_parse_ct_header(bstr *header, bstr **ct) {
-    if ((header == NULL)||(ct == NULL)) return HTP_ERROR;
+    if ((header == NULL) || (ct == NULL)) return HTP_ERROR;
 
     unsigned char *data = bstr_ptr(header);
     size_t len = bstr_len(header);
@@ -2398,11 +2403,11 @@ htp_status_t htp_parse_ct_header(bstr *header, bstr **ct) {
 
     // Find the end of the MIME type, using the same approach PHP 5.4.3 uses.
     size_t pos = 0;
-    while ((pos < len)&&(data[pos] != ';')&&(data[pos] != ',')&&(data[pos] != ' ')) pos++;
+    while ((pos < len) && (data[pos] != ';') && (data[pos] != ',') && (data[pos] != ' ')) pos++;
 
     *ct = bstr_dup_ex(header, 0, pos);
     if (*ct == NULL) return HTP_ERROR;
-    
+
     bstr_to_lowercase(*ct);
 
     return HTP_OK;
