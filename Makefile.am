@@ -19,6 +19,14 @@ manual:
 luajit:
 	@(cd libs && $(MAKE) )
 
+nginx:  servers/nginx/nginx-1.3.10/objs/nginx
+
+servers/nginx/nginx-1.3.10/objs/nginx:	engine/libironbee.la
+	@(cd servers/nginx && $(MAKE) nginx)
+
+nginx-install: nginx
+	@(cd servers/nginx && $(MAKE) nginx-install)
+
 .PHONY: doxygen doxygen-pdf manual luajit
 
 rpm_topdir=`cd $(top_builddir) && pwd`/packaging/rpm

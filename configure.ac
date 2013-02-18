@@ -434,7 +434,7 @@ dnl TODO: Make these configure opts
 dnl
 TOPLEVEL_SUBDIRS="util engine servers automata fast modules etc docs tests packaging"
 LIBS_SUBDIRS="libhtp"
-SERVERS_SUBDIRS="apache_httpd2 trafficserver"
+SERVERS_SUBDIRS="apache_httpd2 trafficserver nginx"
 
 dnl Enable lua subdir if enabled
 if test "$enable_lua" != "no"; then
@@ -568,6 +568,7 @@ AC_CONFIG_FILES([fast/Makefile])
 AC_CONFIG_FILES([servers/Makefile])
 AC_CONFIG_FILES([servers/apache_httpd2/Makefile])
 AC_CONFIG_FILES([servers/trafficserver/Makefile])
+AC_CONFIG_FILES([servers/nginx/Makefile])
 
 if test "$util_cli" != 0; then
 AC_CONFIG_FILES([cli/Makefile])
