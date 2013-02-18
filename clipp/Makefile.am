@@ -133,3 +133,8 @@ CLEANFILES=clipp.pb.cc clipp.pb.h
 
 $(builddir)/clipp.pb.cc $(builddir)/clipp.pb.h: $(srcdir)/clipp.proto
 	protoc --cpp_out=$(builddir) --proto_path=$(srcdir) $<
+
+.PHONY: build_fast_automata
+
+build_fast_automata:
+	(cd $(top_builddir)/fast; $(top_srcdir)/fast/build.rb $(top_srcdir)/clipp/tests/fast_rules.txt)
