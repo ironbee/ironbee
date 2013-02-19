@@ -84,8 +84,8 @@ struct htp_conn_t {
     /** Log messages associated with this connection. */
     htp_list_t *messages;
 
-    /** Parsing flags: PIPELINED_CONNECTION. */
-    unsigned int flags;
+    /** Parsing flags: HTP_CONN_PIPELINED. */
+    uint8_t flags;
 
     /** When was this connection opened? Can be NULL. */
     htp_time_t open_timestamp;
@@ -195,7 +195,7 @@ struct htp_header_line_t {
      * Parsing flags; a combination of HTP_FIELD_INVALID, HTP_FIELD_LONG,
      * HTP_FIELD_NUL_BYTE, HTP_FIELD_REPEATED, and HTP_FIELD_FOLDED.
      */
-    unsigned int flags;
+    uint64_t flags;
     
     /** Header that uses this line. */
     htp_header_t *header;
@@ -212,7 +212,7 @@ struct htp_header_t {
     bstr *value;   
 
     /** Parsing flags; a combination of: HTP_FIELD_INVALID, HTP_FIELD_FOLDED, HTP_FIELD_REPEATED. */
-    unsigned int flags;
+    uint64_t flags;
 };
 
 /**
