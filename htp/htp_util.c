@@ -274,12 +274,15 @@ int64_t htp_parse_content_length(bstr *b) {
  * @return Chunk length, or -1 on error.
  */
 int64_t htp_parse_chunked_length(unsigned char *data, size_t len) {
-    return htp_parse_positive_integer_whitespace(data, len, 16);
+    int64_t chunk_len = htp_parse_positive_integer_whitespace(data, len, 16);
+    if (chunk_len < 0) return chunk_len;
+    if (chunk_len > SIZE_MAX) return -1;
+    return chunk_len;
 }
 
 /**
  * A somewhat forgiving parser for a positive integer in a given base.
- * White space is allowed before and after the number.
+ * Only LWS is allowed before and after the number.
  * 
  * @param[in] data
  * @param[in] len
