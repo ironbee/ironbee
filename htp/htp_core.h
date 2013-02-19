@@ -171,7 +171,11 @@ enum htp_file_source_t {
 // because we may want to set the same flag in several locations. For example, we
 // may set HTP_FIELD_FOLDED on the actual folded header, but also on the transaction
 // that contains the header. Both uses are useful.
+
+// Connection flags are 8 bits wide.
 #define HTP_CONN_PIPELINED                  0x0000001
+
+// All other flags are 64 bits wide.
 #define HTP_FIELD_UNPARSEABLE               0x0000002
 #define HTP_FIELD_INVALID                   0x0000004
 #define HTP_FIELD_FOLDED                    0x0000008
@@ -200,7 +204,7 @@ enum htp_file_source_t {
 #define HTP_URLEN_OVERLONG_U                0x4000000
 #define HTP_URLEN_HALF_FULL_RANGE           0x8000000 /* Range U+FF00 - U+FFEF detected. */
 
-// Logging-related constants
+// Logging-related constants.
 #define HTP_LOG_MARK                 __FILE__,__LINE__
 
 /**
