@@ -393,7 +393,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
  * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-htp_status_t htp_connp_RES_HEADERS(htp_connp_t * connp) {
+htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
     for (;;) {
         OUT_COPY_BYTE_OR_RETURN(connp);
 
@@ -520,7 +520,7 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t * connp) {
  * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-htp_status_t htp_connp_RES_LINE(htp_connp_t * connp) {
+htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
     for (;;) {
         // Get one byte
         OUT_COPY_BYTE_OR_RETURN(connp);
@@ -621,11 +621,11 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t * connp) {
     return HTP_ERROR;
 }
 
-size_t htp_connp_res_data_consumed(htp_connp_t * connp) {
+size_t htp_connp_res_data_consumed(htp_connp_t *connp) {
     return connp->out_current_offset;
 }
 
-htp_status_t htp_connp_RES_FINALIZE(htp_connp_t * connp) {
+htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
     int rc = htp_tx_state_response_complete(connp->out_tx);
     if (rc != HTP_OK) return rc;   
 
@@ -671,7 +671,7 @@ htp_status_t htp_connp_RES_FINALIZE(htp_connp_t * connp) {
  * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-htp_status_t htp_connp_RES_IDLE(htp_connp_t * connp) {
+htp_status_t htp_connp_RES_IDLE(htp_connp_t *connp) {
     // We want to start parsing the next response (and change
     // the state from IDLE) only if there's at least one
     // byte of data available. Otherwise we could be creating
@@ -684,8 +684,7 @@ htp_status_t htp_connp_RES_IDLE(htp_connp_t * connp) {
     // Find the next outgoing transaction
     connp->out_tx = htp_list_get(connp->conn->transactions, connp->out_next_tx_index);
     if (connp->out_tx == NULL) {
-        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                "Unable to match response to request");
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Unable to match response to request");
         return HTP_ERROR;
     }
 
