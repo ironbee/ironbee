@@ -43,6 +43,20 @@ class TestOperators < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: B/
   end
 
+  def test_istreq
+    clipp(
+      :input_hashes => [simple_hash("GET /foobar/a\n")],
+      :default_site_config => <<-EOS
+        Rule REQUEST_METHOD @istreq get id:1 phase:REQUEST_HEADER clipp_announce:A
+        Rule REQUEST_METHOD @istreq GET id:2 phase:REQUEST_HEADER clipp_announce:B
+        Rule REQUEST_METHOD @istreq HEAD id:3 phase:REQUEST_HEADER clipp_announce:C
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: A/
+    assert_log_match /CLIPP ANNOUNCE: B/
+    assert_log_no_match /CLIPP ANNOUNCE: C/
+  end
 
   def test_ipmatch_09
     clipp(

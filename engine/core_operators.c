@@ -367,6 +367,9 @@ static ib_status_t op_streq_execute(const ib_rule_exec_t *rule_exec,
     const char  *cstr = (const char *)data;
     char        *expanded;
     ib_tx_t     *tx = rule_exec->tx;
+    bool         case_insensitive;
+
+    case_insensitive = (rule_exec->rule->opinst->op->cd_execute != NULL);
 
     /* Expand the string */
     if ( (tx != NULL) && ( (flags & IB_OPINST_FLAG_EXPAND) != 0) ) {
@@ -387,7 +390,12 @@ static ib_status_t op_streq_execute(const ib_rule_exec_t *rule_exec,
             return rc;
         }
 
-        *result = (strcmp(fval, expanded) == 0);
+        if (case_insensitive) {
+            *result = (strcasecmp(fval, expanded) == 0);
+        }
+        else {
+            *result = (strcmp(fval, expanded) == 0);
+        }
     }
     else if (field->type == IB_FTYPE_BYTESTR) {
         const ib_bytestr_t *value;
@@ -401,9 +409,21 @@ static ib_status_t op_streq_execute(const ib_rule_exec_t *rule_exec,
         len = ib_bytestr_length(value);
 
         if (len == strlen(expanded)) {
-            *result = (
-                memcmp(ib_bytestr_const_ptr(value), expanded, len) == 0
-            );
+            if (case_insensitive) {
+                *result = 1;
+                const char *v = (const char *)ib_bytestr_const_ptr(value);
+                for (size_t i = 0; i < len; ++i) {
+                    if (tolower(expanded[i]) != tolower(v[i])) {
+                        *result = 0;
+                        break;
+                    }
+                }
+            }
+            else {
+                *result = (
+                    memcmp(ib_bytestr_const_ptr(value), expanded, len) == 0
+                );
+            }
         }
         else {
             *result = 0;
@@ -1872,6 +1892,20 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               NULL,
                               op_streq_execute,
                               NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Register the string equal, case-insensitive, operator */
+    rc = ib_operator_register(ib,
+                              "istreq",
+                              IB_OP_FLAG_PHASE | IB_OP_FLAG_CAPTURE,
+                              strop_create,
+                              NULL,
+                              NULL, /* no destroy function */
+                              NULL,
+                              op_streq_execute,
+                              (void *)1);
     if (rc != IB_OK) {
         return rc;
     }

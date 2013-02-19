@@ -1007,6 +1007,14 @@
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
             <para></para>
         </section>
+        <section>
+            <title>istreq</title>
+            <para><emphasis role="bold">Description:</emphasis> As streq, but case insensitive.</para>
+            <para><emphasis role="bold">Types:</emphasis> String</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
+            <para></para>
+        </section>
     </section>
     <section>
         <title>Modifiers</title>
