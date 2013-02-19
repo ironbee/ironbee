@@ -33,7 +33,7 @@ end
 
 # Extract regular expressions from a Rule.
 def extract_regexps(line)
-  line.grep(/\s@(rx|dfa) "?([^\s"]+?)"?(\s|$)/) {$2}
+  line.grep(/\s@(rx|dfa) ("[^"]+?"|[^ ]+?)(\s|$)/) {$2}
 end
 
 # Format pattern for inclusion in rule.
