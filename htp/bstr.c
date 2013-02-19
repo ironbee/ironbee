@@ -411,8 +411,7 @@ int64_t bstr_util_mem_to_pint(const void *_data, size_t len, int base, size_t *l
             d = -1;
         }
 
-        // Check that the digit makes sense with the base
-        // we are using.
+        // Check that the digit makes sense with the base we are using.
         if ((d == -1) || (d >= base)) {
             if (tflag) {
                 // Return what we have so far; lastlen points
