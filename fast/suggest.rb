@@ -59,7 +59,7 @@ STDIN.each do |line|
   res.each do |re|
     begin
       result = ReToAC::extract(re, MAX_ALTERNATIONS, MAX_REPETITIONS)
-    rescue RuntimeError => err
+    rescue Exception => err
       puts "# FAST Exception: #{err}"
       result = []
     end
