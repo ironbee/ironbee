@@ -118,7 +118,7 @@ struct htp_file_t {
     /** The unique filename in which this file is stored on the filesystem, when applicable.*/
     char *tmpname;
 
-    /** The file descriptor that is used for the external storage, when applicable. */
+    /** The file descriptor used for external storage, or -1 if unused. */
     int fd;
 };
 
