@@ -357,23 +357,6 @@ struct htp_tx_t {
      */
     int64_t request_entity_len;
 
-    /**
-     * TODO The length of the data transmitted in a request body, minus the length
-     * of the files (if any). At worst, this field will be equal to the entity
-     * length if the entity encoding is not recognized. If we recognise the encoding
-     * (e.g., if it is application/x-www-form-urlencoded or multipart/form-data), the
-     * decoder may be able to separate the data from everything else, in which case
-     * the value in this field will be lower.
-     */
-    int64_t request_nonfiledata_len;
-
-    /**
-     * TODO The length of the files uploaded using multipart/form-data, or in a
-     * request that uses PUT (in which case this field will be equal to the
-     * entity length field). This field will be zero in all other cases.
-     */
-    int64_t request_filedata_len;
-
     /** Original request header lines. This list stores instances of htp_header_line_t. */
     htp_list_t *request_header_lines;
 
