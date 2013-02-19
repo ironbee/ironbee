@@ -113,7 +113,7 @@ struct htp_file_t {
     bstr *filename;   
 
     /** File length. */
-    int64_t len;
+    uint64_t len;
 
     /** The unique filename in which this file is stored on the filesystem, when applicable.*/
     char *tmpname;
