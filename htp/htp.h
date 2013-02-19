@@ -384,10 +384,10 @@ struct htp_tx_t {
      * determined yet), HTP_CODING_IDENTITY, HTP_CODING_CHUNKED, HTP_CODING_NO_BODY,
      * and HTP_CODING_UNRECOGNIZED.
      */
-    enum htp_coding_t request_transfer_coding;
+    enum htp_transfer_coding_t request_transfer_coding;
 
-    /** Compression: COMPRESSION_NONE, COMPRESSION_GZIP or COMPRESSION_DEFLATE. */
-    int request_content_encoding;
+    /** Request body compression. */
+    enum htp_content_encoding_t request_content_encoding;
 
     /**
      * This field contain the request content type when that information is
@@ -556,10 +556,10 @@ struct htp_tx_t {
      * determined yet), HTP_CODING_IDENTITY, HTP_CODING_CHUNKED, HTP_CODING_NO_BODY,
      * and HTP_CODING_UNRECOGNIZED.
      */
-    enum htp_coding_t response_transfer_coding;
+    enum htp_transfer_coding_t response_transfer_coding;
 
-    /** Compression; currently COMPRESSION_NONE or COMPRESSION_GZIP. */
-    int response_content_encoding;   
+    /** Response body compression. */
+    enum htp_content_encoding_t response_content_encoding;
     
     /**
      * This field will contain the response content type when that information

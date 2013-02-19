@@ -123,7 +123,7 @@ protected:
         tx = htp_connp_tx_create(connp);
         htp_tx_set_user_data(tx, &output);
 
-        decompressor = htp_gzip_decompressor_create(connp, COMPRESSION_GZIP);
+        decompressor = htp_gzip_decompressor_create(connp, HTP_COMPRESSION_GZIP);
         decompressor->callback = GUnzip_decompressor_callback;
 
         o_boxing_wizards = bstr_dup_c("The five boxing wizards jump quickly.");

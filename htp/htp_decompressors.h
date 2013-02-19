@@ -48,16 +48,10 @@ extern "C" {
 typedef struct htp_decompressor_gzip_t htp_decompressor_gzip_t;
 typedef struct htp_decompressor_t htp_decompressor_t;
 
-#define GZIP_BUF_SIZE               8192
+#define GZIP_BUF_SIZE           8192
 
 #define DEFLATE_MAGIC_1         0x1f
 #define DEFLATE_MAGIC_2         0x8b
-
-#define COMPRESSION_NONE        0
-#define COMPRESSION_GZIP        1
-#define COMPRESSION_DEFLATE     2
-#define COMPRESSION_AUTO        98
-#define COMPRESSION_DISABLED    99
 
 struct htp_decompressor_t {
     htp_status_t (*decompress)(htp_decompressor_t *, htp_tx_data_t *);
@@ -78,7 +72,7 @@ struct htp_decompressor_gzip_t {
     unsigned long crc;    
 };
 
-htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, int format);
+htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_content_encoding_t format);
 
 #ifdef __cplusplus
 }

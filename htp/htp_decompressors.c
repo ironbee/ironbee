@@ -211,7 +211,7 @@ static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t *drec) {
  * @param[in] connp
  * @return New htp_decompressor_t instance on success, or NULL on failure.
  */
-htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, int format) {
+htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_content_encoding_t format) {
     htp_decompressor_gzip_t *drec = calloc(1, sizeof (htp_decompressor_gzip_t));
     if (drec == NULL) return NULL;
 
@@ -227,7 +227,7 @@ htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, int format)
     // Initialize zlib.
     int rc;
 
-    if (format == COMPRESSION_DEFLATE) {
+    if (format == HTP_COMPRESSION_DEFLATE) {
         // Negative values activate raw processing,
         // which is what we need for deflate.
         rc = inflateInit2(&drec->stream, -15);

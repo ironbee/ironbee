@@ -139,10 +139,20 @@ enum htp_auth_type_t {
     HTP_AUTH_UNRECOGNIZED = 9
 };
 
+enum htp_content_encoding_t {
+    HTP_COMPRESSION_UNKNOWN = 0,
+
+    HTP_COMPRESSION_NONE = 1,
+
+    HTP_COMPRESSION_GZIP = 2,
+
+    HTP_COMPRESSION_DEFLATE = 3
+};
+
 /**
  * Enumerates the possible request and response body codings.
  */
-enum htp_coding_t {
+enum htp_transfer_coding_t {
     /** Body coding not determined yet. */
     HTP_CODING_UNKNOWN = 0,
 
