@@ -827,6 +827,11 @@ static ib_status_t modac_init(ib_engine_t *ib,
 {
     ib_status_t rc;
 
+    ib_log_warning(ib,
+        MODULE_NAME_STR ": Module deprecated. "
+        "Consider: @streq, @istreq, @match, @imatch, @ee_match_any"
+    );
+
     /* Register as a matcher provider. */
     rc = ib_provider_register(ib,
                               IB_PROVIDER_TYPE_MATCHER,
