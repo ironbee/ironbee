@@ -147,7 +147,7 @@ struct htp_connp_t {
      * Holds the amount of data that needs to be read from the
      * current data chunk. Only used with chunked request bodies.
      */
-    int in_chunked_length;
+    int64_t in_chunked_length;
 
     /** Current request parser state. */
     int (*in_state)(htp_connp_t *);
@@ -217,7 +217,7 @@ struct htp_connp_t {
      * Holds the amount of data that needs to be read from the
      * current response data chunk. Only used with chunked response bodies.
      */
-    int out_chunked_length;
+    int64_t out_chunked_length;
 
     /** Current response parser state. */
     int (*out_state)(htp_connp_t *);

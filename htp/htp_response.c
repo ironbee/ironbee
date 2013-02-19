@@ -130,7 +130,7 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             // Handle chunk length
             if (connp->out_chunked_length > 0) {
                 // More data available
-                // TODO Add a check for chunk length.
+                // TODO Add a check (flag) for excessive chunk length.
                 connp->out_state = htp_connp_RES_BODY_CHUNKED_DATA;
             } else if (connp->out_chunked_length == 0) {
                 // End of data
