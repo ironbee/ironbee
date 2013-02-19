@@ -338,12 +338,12 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             }
 
             // Get body length
-            int i = htp_parse_content_length(cl->value);
-            if (i < 0) {
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in response: %d", i);
+            connp->out_tx->response_content_length = htp_parse_content_length(cl->value);
+            if (connp->out_tx->response_content_length < 0) {
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in response: %d", connp->out_tx->response_content_length);
                 return HTP_ERROR;
             } else {
-                connp->out_content_length = i;
+                connp->out_content_length = connp->out_tx->response_content_length;
                 connp->out_body_data_left = connp->out_content_length;
 
                 if (connp->out_content_length != 0) {

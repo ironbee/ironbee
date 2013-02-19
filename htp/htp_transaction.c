@@ -69,7 +69,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 
     tx->response_header_lines = htp_list_create(32);
     tx->response_headers = htp_table_create(32);
-    //tx->response_content_length = -1;
+    tx->response_content_length = -1;
 
     return tx;
 }

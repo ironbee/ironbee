@@ -542,6 +542,14 @@ struct htp_tx_t {
      * de-chunking and decompression.
      */
     int64_t response_entity_len;
+
+    /**
+     * Contains the value specified in the Content-Length header. The value of this
+     * field will be -1 from the beginning of the transaction and until response
+     * headers are processed. It will stay -1 if the C-L header was not provided,
+     * or if the value in it cannot be parsed.
+     */
+    int64_t response_content_length;
     
     /**
      * Response transfer coding. Can be one of HTP_CODING_UNKNOWN (body presence not
