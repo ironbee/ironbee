@@ -513,6 +513,184 @@ static ib_status_t op_contains_execute(const ib_rule_exec_t *rule_exec,
     return rc;
 }
 
+
+/**
+ * Create function for the "match" and "imatch" operators.
+ *
+ * @param[in] ib         The IronBee engine.
+ * @param[in] ctx        The current IronBee context (unused).
+ * @param[in] rule       Parent rule to the operator.
+ * @param[in] mp         Memory pool to use for allocation.
+ * @param[in] parameters Parameters (IPv4 address or networks)
+ * @param[in] op_inst    Instance operator.
+ *
+ * @returns
+ * - IB_OK if no failure.
+ * - IB_EALLOC on allocation failure.
+ * - IB_EINVAL on unable to parse @a parameters as space separated list.
+ */
+static
+ib_status_t op_match_create(
+    ib_engine_t        *ib,
+    ib_context_t       *ctx,
+    const ib_rule_t    *rule,
+    ib_mpool_t         *mp,
+    const char         *parameters,
+    ib_operator_inst_t *op_inst
+)
+{
+    assert(ib      != NULL);
+    assert(ctx     != NULL);
+    assert(rule    != NULL);
+    assert(mp      != NULL);
+    assert(op_inst != NULL);
+
+    ib_status_t  rc;
+    ib_hash_t   *set;
+    bool         case_insensitive;
+    char        *copy;
+    size_t       copy_len;
+
+    if (parameters == NULL) {
+        return IB_EINVAL;
+    }
+
+    case_insensitive = (op_inst->op->cd_create != NULL);
+
+    /* Make a copy of the parameters to operate on. */
+    rc = unescape_op_args(ib, mp, &copy, &copy_len, parameters);
+    if (rc != IB_OK) {
+        ib_log_error(ib,
+            "Error unescaping rule parameters '%s'", parameters
+        );
+        return IB_EALLOC;
+    }
+
+    if (case_insensitive) {
+        rc = ib_hash_create_nocase(&set, mp);
+    }
+    else {
+        rc = ib_hash_create(&set, mp);
+    }
+    if (rc != IB_OK) {
+        assert(rc == IB_EALLOC); /* Guaranteed by hash. */
+        return IB_EALLOC;
+    }
+
+    /* Fill set. */
+    {
+        const char *p;   /* Current parameter. */
+        const char *end; /* End of all copy. */
+        const char *n;   /* Next space. */
+
+        end = copy + strlen(copy);
+        p = copy;
+        n = p;
+        while (n < end) {
+            n = memchr(p, ' ', end - p);
+            if (n == NULL) {
+                n = end;
+            }
+
+            /* XXX */
+            printf("MATCH SET: %*s\n", (int)(n - p), p);
+            rc = ib_hash_set_ex(set, p, n - p, (void *)1);
+            if (rc != IB_OK) {
+                assert(rc == IB_EALLOC); /* Guaranteed by hash. */
+                return IB_EALLOC;
+            }
+
+            p = n + 1; /* Skip space. */
+        }
+    }
+
+    /* Done */
+    op_inst->data = set;
+
+    return IB_OK;
+}
+
+/**
+ * Execute function for the "match" and "imatch" operators.
+ *
+ * @param[in] rule_exec Rule execution object
+ * @param[in] data      Set data.
+ * @param[in] flags     Operator instance flags.
+ * @param[in] field     Field value.
+ * @param[out] result   Pointer to number in which to store the result.
+ *
+ * @returns
+ * - IB_OK if no failure, regardless of match status.
+ * - IB_EUNKNOWN on unexpected field error.
+ * - IB_EINVAL on incompatible field, i.e., other than string or bytestring.
+ * - IB_EALLOC on allocation failure.
+ */
+static
+ib_status_t op_match_execute(
+    const ib_rule_exec_t *rule_exec,
+    void                 *data,
+    ib_flags_t            flags,
+    ib_field_t           *field,
+    ib_num_t             *result
+)
+{
+    assert(rule_exec != NULL);
+    assert(data      != NULL);
+    assert(field     != NULL);
+    assert(result    != NULL);
+
+    ib_status_t        rc;
+    const ib_hash_t   *set;
+    const char        *s;
+    size_t             length;
+    void              *v;
+    ib_tx_t           *tx;
+
+    set = (const ib_hash_t *)data;
+    tx = rule_exec->tx;
+
+    if (field->type == IB_FTYPE_NULSTR) {
+        rc = ib_field_value(field, ib_ftype_nulstr_out(&s));
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        if (s == NULL) {
+            ib_log_error_tx(tx, "Failed to get NULSTR from field");
+            return IB_EUNKNOWN;
+        }
+        length = strlen(s);
+    }
+    else if (field->type == IB_FTYPE_BYTESTR) {
+        const ib_bytestr_t *bs;
+        rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        assert(bs != NULL);
+
+        s = (const char *)ib_bytestr_const_ptr(bs);
+        length = ib_bytestr_length(bs);
+    }
+    else {
+        return IB_EINVAL;
+    }
+
+    rc = ib_hash_get_ex(set, &v, s, length);
+    if (rc != IB_ENOENT && rc != IB_OK) {
+        ib_log_error_tx(
+            tx,
+            "Unexpected hash get error: %s",
+            ib_status_to_string(rc)
+        );
+        return IB_EUNKNOWN;
+    }
+    *result = (rc == IB_OK);
+
+    return IB_OK;
+}
+
 /**
  * Create function for the "ipmatch" operator
  *
@@ -1707,6 +1885,34 @@ ib_status_t ib_core_operators_init(ib_engine_t *ib, ib_module_t *mod)
                               NULL, /* no destroy function */
                               NULL,
                               op_contains_execute,
+                              NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Register the string match operator */
+    rc = ib_operator_register(ib,
+                              "match",
+                              IB_OP_FLAG_PHASE,
+                              op_match_create,
+                              NULL,
+                              NULL, /* no destroy function */
+                              NULL,
+                              op_match_execute,
+                              NULL);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    /* Register the case insensitive string match operator */
+    rc = ib_operator_register(ib,
+                              "imatch",
+                              IB_OP_FLAG_PHASE,
+                              op_match_create,
+                              (void *)1,
+                              NULL, /* no destroy function */
+                              NULL,
+                              op_match_execute, /* Note: same as above. */
                               NULL);
     if (rc != IB_OK) {
         return rc;
