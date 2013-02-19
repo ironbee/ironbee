@@ -94,10 +94,10 @@ struct htp_conn_t {
     htp_time_t close_timestamp;
 
     /** Inbound data counter. */
-    uint64_t in_data_counter;
+    int64_t in_data_counter;
 
     /** Outbound data counter. */
-    uint64_t out_data_counter;
+    int64_t out_data_counter;
 };
 
 /**
@@ -113,7 +113,7 @@ struct htp_file_t {
     bstr *filename;   
 
     /** File length. */
-    uint64_t len;
+    int64_t len;
 
     /** The unique filename in which this file is stored on the filesystem, when applicable.*/
     char *tmpname;
@@ -233,13 +233,13 @@ struct htp_param_t {
 
     /**
      * Pointer to the parser data structure that contains
-     * complete information about the parameter.
+     * complete information about the parameter. Can be NULL.
      */
     void *parser_data;
 };
 
 /**
- * Represents a single transaction, which is a combination of a request and a response.
+ * Represents a single HTTP transaction, which is a combination of a request and a response.
  */
 struct htp_tx_t {
     /** The connection parser associated with this transaction. */
@@ -345,7 +345,7 @@ struct htp_tx_t {
      * has been seen over TCP; request_entity_len contains length after
      * de-chunking and decompression.
      */
-    size_t request_message_len;
+    int64_t request_message_len;
 
     /**
      * The length of the request entity-body. In most cases, this value
@@ -355,7 +355,7 @@ struct htp_tx_t {
      * has been seen over TCP; request_entity_len contains length after
      * de-chunking and decompression.
      */
-    size_t request_entity_len;
+    int64_t request_entity_len;
 
     /**
      * TODO The length of the data transmitted in a request body, minus the length
@@ -365,14 +365,14 @@ struct htp_tx_t {
      * decoder may be able to separate the data from everything else, in which case
      * the value in this field will be lower.
      */
-    size_t request_nonfiledata_len;
+    int64_t request_nonfiledata_len;
 
     /**
      * TODO The length of the files uploaded using multipart/form-data, or in a
      * request that uses PUT (in which case this field will be equal to the
      * entity length field). This field will be zero in all other cases.
      */
-    size_t request_filedata_len;        
+    int64_t request_filedata_len;
 
     /** Original request header lines. This list stores instances of htp_header_line_t. */
     htp_list_t *request_header_lines;
@@ -414,10 +414,12 @@ struct htp_tx_t {
     bstr *request_content_type;
 
     /**
-     * Contains the value specified in the Content-Length header. Will be NULL
-     * if the header was not supplied.
+     * Contains the value specified in the Content-Length header. The value of this
+     * field will be -1 from the beginning of the transaction and until request
+     * headers are processed. It will stay -1 if the C-L header was not provided,
+     * or if the value in it cannot be parsed.
      */
-    size_t request_content_length;
+    int64_t request_content_length;
 
     /**
      * Transaction-specific REQUEST_BODY_DATA hook. Behaves as
@@ -546,7 +548,7 @@ struct htp_tx_t {
      * has been seen over TCP; response_entity_len contains the length after
      * de-chunking and decompression.
      */
-    size_t response_message_len;
+    int64_t response_message_len;
 
     /**
      * The length of the response entity-body. In most cases, this value
@@ -556,7 +558,7 @@ struct htp_tx_t {
      * has been seen over TCP; response_entity_len contains length after
      * de-chunking and decompression.
      */
-    size_t response_entity_len;
+    int64_t response_entity_len;
     
     /**
      * Response transfer coding. Can be one of HTP_CODING_UNKNOWN (body presence not

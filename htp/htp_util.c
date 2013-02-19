@@ -261,7 +261,7 @@ int htp_is_line_whitespace(unsigned char *data, size_t len) {
  * @param[in] b
  * @return Content-Length as a number, or -1 on error.
  */
-int htp_parse_content_length(bstr *b) {
+int64_t htp_parse_content_length(bstr *b) {
     return htp_parse_positive_integer_whitespace((unsigned char *) bstr_ptr(b), bstr_len(b), 10);
 }
 
@@ -273,7 +273,7 @@ int htp_parse_content_length(bstr *b) {
  * @param[in] len
  * @return Chunk length, or -1 on error.
  */
-int htp_parse_chunked_length(unsigned char *data, size_t len) {
+int64_t htp_parse_chunked_length(unsigned char *data, size_t len) {
     return htp_parse_positive_integer_whitespace(data, len, 16);
 }
 

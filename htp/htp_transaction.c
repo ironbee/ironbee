@@ -61,6 +61,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->request_headers = htp_table_create(32);
     tx->request_params = htp_table_create(32);
     tx->request_line_nul_offset = -1;
+    tx->request_content_length = -1;
 
     tx->parsed_uri = calloc(1, sizeof (htp_uri_t));
     tx->parsed_uri->port_number = -1;
@@ -68,6 +69,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 
     tx->response_header_lines = htp_list_create(32);
     tx->response_headers = htp_table_create(32);
+    //tx->response_content_length = -1;
 
     return tx;
 }
@@ -419,13 +421,11 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         }
 
         // Get body length.
-        int i = htp_parse_content_length(cl->value);
-        if (i < 0) {
+        tx->request_content_length = htp_parse_content_length(cl->value);
+        if (tx->request_content_length < 0) {
             htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in request");
             return HTP_ERROR;
         }
-
-        tx->request_content_length = i;
     } else {
         // No body.
         tx->request_transfer_coding = HTP_CODING_NO_BODY;
