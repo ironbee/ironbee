@@ -22,13 +22,25 @@ MAX_ALTERNATIONS = 5
 # many times.  E.g., x{20} will be treated as x{10}.
 MAX_REPETITIONS  = 10
 
+# Fields that are covered by fast.
+FIELDS = [
+  'REQUEST_METHOD',
+  'REQUEST_URI',
+  'REQUEST_PROTOCOL',
+  'REQUEST_HEADERS',
+  'REQUEST_URI_PARAMS',
+  'ARGS'
+]
+FIELD_RE = Regexp.new('\b(' + FIELDS.join('|') + ')[^A-Za-z]')
+
 rx_mode = (ARGV[0] == '--rx')
 
 # Evaluate if a rule is a candidate for an fast modifier.
 def potential_rule(line)
   line =~ /\s@(rx|dfa) / &&   # Has a regexp
-    line !~ /\bfast:/     &&   # Does not already have an fast
-    line !~ /\st:/             # Does not have a transformation
+    line !~ /\bfast:/    &&   # Does not already have an fast
+    line !~ /\st:/       &&   # Does not have a transformation
+    line =~ FIELD_RE          # Involves a field fast knows about.
 end
 
 # Extract regular expressions from a Rule.
