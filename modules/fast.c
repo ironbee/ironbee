@@ -26,7 +26,7 @@
  * FastAutomata <path>
  * @endcode
  *
- * @c FastAutomata is context independent and must occur at most once in
+ * @c FastAutomata must occur in the main context and at most once in
  * configuration.  It loads the specified automata and enables the fast rule
  * subsystem.  The loaded automata must be consistent with the fast rules in
  * the configuration.  This consistency is usually achieved by feeding the
@@ -1001,8 +1001,9 @@ ib_status_t fast_rule_injection_request_body(
  *
  * @returns
  * - IB_OK on success.
- * - IB_EINVAL on failures probably due to missing or malformed automata;
- *   will emit log message.
+ * - IB_EINVAL on failures related to invalid use such as not main context,
+ *   duplicate directive, or missing/malformed automata; will emit log
+ *   message.
  * - IB_EOTHER on failures due to IronBee API failures; will emit log message.
  * - IB_EALLOC on failures due to memory allocation; no log message.
  **/
@@ -1046,6 +1047,15 @@ ib_status_t fast_dir_fast_automata(
     uint32_t             index_size;
 
     ib     = cp->ib;
+    if (cp->cur_ctx != ib_context_main(ib)) {
+        ib_cfg_log_error(
+            cp,
+            "fast: %s: FastAutomata directive must occur in main context.",
+            p1
+        );
+        return IB_EINVAL;
+    }
+
     mp     = ib_engine_pool_main_get(ib);
     cfg_mp = cp->mp;
     config = fast_get_config(ib);
