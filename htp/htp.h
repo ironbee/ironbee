@@ -94,10 +94,10 @@ struct htp_conn_t {
     htp_time_t close_timestamp;
 
     /** Inbound data counter. */
-    size_t in_data_counter;
+    uint64_t in_data_counter;
 
     /** Outbound data counter. */
-    size_t out_data_counter;   
+    uint64_t out_data_counter;
 };
 
 /**
