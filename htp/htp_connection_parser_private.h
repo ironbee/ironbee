@@ -45,7 +45,9 @@ extern "C" {
 
 #include "htp_core.h"
 
-// TODO
+/**
+ * Connection parser structure.
+ */
 struct htp_connp_t {
 
     // General fields
@@ -75,7 +77,11 @@ struct htp_connp_t {
     /** Parser output status. Starts as HTP_OK, but may turn into HTP_ERROR. */
     enum htp_stream_state_t out_status;
 
-    // TODO
+    /**
+     * When true, this field indicates that there is unprocessed inbound data, and
+     * that the response parsing code should stop at the end of the current request
+     * in order to allow more requests to be produced.
+     */
     unsigned int out_data_other_at_tx_end;
 
     /**
@@ -225,7 +231,7 @@ struct htp_connp_t {
     /** Response decompressor used to decompress response body data. */
     htp_decompressor_t *out_decompressor;
 
-    // TODO
+    /** On a PUT request, this field contains additional file data. */
     htp_file_t *put_file;
 };
 

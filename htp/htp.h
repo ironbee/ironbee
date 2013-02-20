@@ -59,7 +59,7 @@ extern "C" {
 #include "htp_urlencoded.h"
 
 /**
- * This data structure is used to represent a single TCP connection.
+ * Represents a single TCP connection.
  */
 struct htp_conn_t {
     /** Client IP address. */
