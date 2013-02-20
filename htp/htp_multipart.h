@@ -155,6 +155,7 @@ typedef struct htp_multipart_part_t {
  *
  * @param[in] cfg
  * @param[in] boundary
+ * @param[in] flags
  * @return New parser instance, or NULL on memory allocation failure.
  */
 htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, bstr *boundary, uint64_t flags);

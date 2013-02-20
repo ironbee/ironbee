@@ -80,7 +80,7 @@ htp_hook_t *htp_hook_create(void);
  * Destroys an existing hook. It is all right to send a NULL
  * to this method because it will simply return straight away.
  *
- * @param[in] hook[in]
+ * @param[in] hook
  */
 void htp_hook_destroy(htp_hook_t *hook);
 

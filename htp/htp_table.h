@@ -117,7 +117,7 @@ htp_table_t *htp_table_create(size_t size);
  * before invoking this function. After the table has been destroyed,
  * the pointer is set to NULL.
  *
- * @param[in,out]   table
+ * @param[in]   table
  */
 void htp_table_destroy(htp_table_t *table);
 
@@ -126,7 +126,7 @@ void htp_table_destroy(htp_table_t *table);
  * the table. Use this method when the responsibility for the keys has been transferred
  * elsewhere. After the table has been destroyed, the pointer is set to NULL.
  *
- * @param[in,out] _table
+ * @param[in] table
  */
 void htp_table_destroy_ex(htp_table_t *table);
 
@@ -152,6 +152,7 @@ void *htp_table_get_c(const htp_table_t *table, const char *ckey);
  * Retrieve key and element at the given index.
  *
  * @param[in] table
+ * @param[in] idx
  * @param[in,out] key Pointer in which the key will be returned. Can be NULL.
  * @return HTP_OK on success, HTP_ERROR on failure.
  */

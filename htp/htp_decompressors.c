@@ -206,9 +206,10 @@ static void htp_gzip_decompressor_destroy(htp_decompressor_gzip_t *drec) {
 }
 
 /**
- * Initialize gzip decompressor.
+ * Create a new decompressor instance.
  *
  * @param[in] connp
+ * @param[in] format
  * @return New htp_decompressor_t instance on success, or NULL on failure.
  */
 htp_decompressor_t *htp_gzip_decompressor_create(htp_connp_t *connp, enum htp_content_encoding_t format) {

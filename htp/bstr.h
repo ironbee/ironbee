@@ -511,7 +511,7 @@ int bstr_util_cmp_mem(const void *data1, size_t len1, const void *data2, size_t 
 /**
  * Convert contents of a memory region to a positive integer.
  *
- * @param[in] data.
+ * @param[in] data
  * @param[in] len
  * @param[in] base The desired number base.
  * @param[in] lastlen Points to the first unused byte in the region

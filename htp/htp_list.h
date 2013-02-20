@@ -177,7 +177,7 @@ int htp_list_linked_empty(const htp_list_linked_t *l);
 /**
  * Remove one element from the end of the list.
  *
- * @param[in] list
+ * @param[in] l
  * @return Pointer to the removed element, or NULL if the list is empty.
  */
 void *htp_list_linked_pop(htp_list_linked_t *l);

@@ -45,8 +45,7 @@ extern "C" {
 
 /**
  * Creates a new connection structure.
- *
- * @param[in] connp
+ * 
  * @return A new connection structure on success, NULL on memory allocation failure.
  */
 htp_conn_t *htp_conn_create(void);
@@ -55,7 +54,7 @@ htp_conn_t *htp_conn_create(void);
  * Closes the connection.
  *
  * @param[in] conn
- * @param[in] timesamp
+ * @param[in] timestamp
  */
 void htp_conn_close(htp_conn_t *conn, const htp_time_t *timestamp);
 

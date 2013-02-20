@@ -319,7 +319,8 @@ int64_t htp_parse_positive_integer_whitespace(unsigned char *data, size_t len, i
 
 /**
  * Prints one log message to stderr.
- * 
+ *
+ * @param[in] stream
  * @param[in] log
  */
 void htp_print_log(FILE *stream, htp_log_t *log) {
@@ -391,15 +392,14 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
 
 /**
  * Determines if the given line is a continuation (of some previous line).
- *
- * @param[in] connp
+ * 
  * @param[in] data
  * @param[in] len
- * @return 0 or 1
+ * @return 0 or 1 for false and true, respectively. Returns -1 on error (NULL pointer or length zero).
  */
 int htp_connp_is_line_folded(unsigned char *data, size_t len) {
     // Is there a line?
-    if (len == 0) {
+    if ((data == NULL)||(len == 0)) {
         return -1;
     }
 
@@ -527,7 +527,7 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, uint
  * Parses request URI, making no attempt to validate the contents.
  *
  * @param[in] connp
- * @param[in] authority
+ * @param[in] hostport
  * @param[in] uri
  * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
  */
@@ -862,8 +862,7 @@ void htp_utf8_decode_path_inplace(htp_cfg_t *cfg, htp_tx_t *tx, bstr *path) {
 
 /**
  * Validate a path that is quite possibly UTF-8 encoded.
- *
- * @param[in] cfg
+ * 
  * @param[in] tx
  * @param[in] path
  */

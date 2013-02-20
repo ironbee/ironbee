@@ -298,7 +298,7 @@ void htp_config_set_path_backslash_separators(htp_cfg_t *cfg, int backslash_sepa
  * on a case-insensitive systems path will be converted to lowercase.
  *
  * @param[in] cfg
- * @param[in] case_insensitive
+ * @param[in] path_case_insensitive
  */
 void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
 
@@ -344,7 +344,7 @@ void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8);
  * characters will be converted too (and subsequently normalized to forward slashes).
  *
  * @param[in] cfg
- * @param[in] decode_separators
+ * @param[in] backslash_separators
  */
 void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int backslash_separators);
 
@@ -372,8 +372,8 @@ void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_e
  * not affect path normalization; it only controls what response status we expect for
  * a request that contains invalid UTF-8 characters.
  *
- * @para[in]m cfg
- * @param[in] invalid_utf8_handling Possible values: NONE or STATUS_400.
+ * @param[in] cfg
+ * @param[in] invalid_utf8_unwanted
  */
 void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, enum htp_unwanted_t invalid_utf8_unwanted);
 
@@ -383,7 +383,7 @@ void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, enum htp_unwanted
  * is not used, the NUL byte will remain in the path.
  *
  * @param[in] cfg
- * @para[in]m nul_encoded_handling Possible values: TERMINATE, STATUS_400, STATUS_404
+ * @param[in] nul_encoded_terminates Possible values: TERMINATE, STATUS_400, STATUS_404
  */
 void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_terminates);
 
@@ -393,9 +393,9 @@ void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_te
  * is not used, the NUL byte will remain in the path.
  *
  * @param[in] cfg
- * @param[in] nul_raw_handling Possible values: TERMINATE, STATUS_400, STATUS_404
+ * @param[in] nul_encoded_terminates Possible values: TERMINATE, STATUS_400, STATUS_404
  */
-void htp_config_set_path_nul_raw_terminates(htp_cfg_t *cfg, int nul_raw_terminates);
+void htp_config_set_path_nul_raw_terminates(htp_cfg_t *cfg, int nul_encoded_terminates);
 
 /**
  * Sets the replacement character that will be used to in the lossy best-fit

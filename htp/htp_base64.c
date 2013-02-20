@@ -75,9 +75,9 @@ void htp_base64_decoder_init(htp_base64_decoder *decoder) {
  * Feed the supplied memory range to the decoder.
  *
  * @param[in] decoder
- * @param[in] code_in
+ * @param[in] _code_in
  * @param[in] length_in
- * @param[in] plaintext_out
+ * @param[in] _plaintext_out
  * @param[in] length_out
  * @return how many bytes were placed into plaintext output
  */

@@ -210,9 +210,10 @@ htp_status_t htp_mpart_part_process_headers(htp_multipart_part_t *part) {
 /**
  * Parses one part header.
  *
+ * @param[in] part
  * @param[in] data
  * @param[in] len
- * @param[in] HTP_OK on success, HTP_ERROR on failure.
+ * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned char *data, size_t len) {
     size_t name_start, name_end;
@@ -329,7 +330,7 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
 /**
  * Creates a new multipart part.
  *
- * @param[in] mpartp
+ * @param[in] parser
  */
 htp_multipart_part_t *htp_mpart_part_create(htp_mpartp_t *parser) {
     htp_multipart_part_t * part = calloc(1, sizeof (htp_multipart_part_t));
@@ -352,6 +353,7 @@ htp_multipart_part_t *htp_mpart_part_create(htp_mpartp_t *parser) {
  * Destroys multipart part.
  *
  * @param[in] part
+ * @param[in] gave_up_data
  */
 void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data) {
     if (part == NULL) return;
