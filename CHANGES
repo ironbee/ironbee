@@ -6,6 +6,10 @@ IronBee Changes
 IronBee v0.7.0
 --------------
 
+**Deprecations**
+
+* The ac module is deprecated.  It will emit a warning if loaded.
+
 **Build**
 
 * libhtp is now configured as part of configure stage rather than build
