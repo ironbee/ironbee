@@ -687,7 +687,7 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
     // Keep track of body size before decompression.
     tx->response_message_len += d.len;
 
-    switch (tx->response_content_encoding) {
+    switch (tx->response_content_encoding_processing) {
         case HTP_COMPRESSION_GZIP:
         case HTP_COMPRESSION_DEFLATE:
             // Send data buffer to the decompressor.
@@ -883,17 +883,23 @@ htp_status_t htp_tx_state_response_complete(htp_tx_t *tx) {
 
 htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
     // Check for compression.
-    tx->response_content_encoding = HTP_COMPRESSION_NONE;
 
-    if (tx->connp->cfg->response_decompression_enabled) {
-        htp_header_t *ce = htp_table_get_c(tx->response_headers, "content-encoding");
-        if (ce != NULL) {
-            if ((bstr_cmp_c(ce->value, "gzip") == 0) || (bstr_cmp_c(ce->value, "x-gzip") == 0)) {
-                tx->response_content_encoding = HTP_COMPRESSION_GZIP;
-            } else if ((bstr_cmp_c(ce->value, "deflate") == 0) || (bstr_cmp_c(ce->value, "x-deflate") == 0)) {
-                tx->response_content_encoding = HTP_COMPRESSION_DEFLATE;
-            }
+    // Determine content encoding.
+    tx->response_content_encoding = HTP_COMPRESSION_NONE;
+    htp_header_t *ce = htp_table_get_c(tx->response_headers, "content-encoding");
+    if (ce != NULL) {
+        if ((bstr_cmp_c(ce->value, "gzip") == 0) || (bstr_cmp_c(ce->value, "x-gzip") == 0)) {
+            tx->response_content_encoding = HTP_COMPRESSION_GZIP;
+        } else if ((bstr_cmp_c(ce->value, "deflate") == 0) || (bstr_cmp_c(ce->value, "x-deflate") == 0)) {
+            tx->response_content_encoding = HTP_COMPRESSION_DEFLATE;
         }
+    }
+
+    // Configure decompression, if enabled in the configuration.
+    if (tx->connp->cfg->response_decompression_enabled) {
+        tx->response_content_encoding_processing = tx->response_content_encoding;
+    } else {
+        tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
     }
 
     // Run hook RESPONSE_HEADERS.
@@ -911,17 +917,17 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
     // 3. Decompression is disabled and we do not attempt to enable it, but the user
     //    forces decompression by setting response_content_encoding to one of the
     //    supported algorithms.
-    if ((tx->response_content_encoding == HTP_COMPRESSION_GZIP) || (tx->response_content_encoding == HTP_COMPRESSION_DEFLATE)) {
+    if ((tx->response_content_encoding_processing == HTP_COMPRESSION_GZIP) || (tx->response_content_encoding_processing == HTP_COMPRESSION_DEFLATE)) {
         if (tx->connp->out_decompressor != NULL) {
             tx->connp->out_decompressor->destroy(tx->connp->out_decompressor);
             tx->connp->out_decompressor = NULL;
         }
 
         tx->connp->out_decompressor = (htp_decompressor_t *) htp_gzip_decompressor_create(tx->connp,
-                tx->response_content_encoding);
+                tx->response_content_encoding_processing);
         if (tx->connp->out_decompressor == NULL) return HTP_ERROR;
         tx->connp->out_decompressor->callback = htp_tx_res_process_body_data_decompressor_callback;
-    } else if (tx->response_content_encoding != HTP_COMPRESSION_NONE) {
+    } else if (tx->response_content_encoding_processing != HTP_COMPRESSION_NONE) {
         return HTP_ERROR;
     }
 
@@ -939,7 +945,7 @@ htp_status_t htp_tx_state_response_start(htp_tx_t *tx) {
     // a HTTP/0.9 request (no status line or response headers).
     if (tx->is_protocol_0_9) {
         tx->response_transfer_coding = HTP_CODING_IDENTITY;
-        tx->response_content_encoding = HTP_COMPRESSION_NONE;
+        tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
         tx->progress = HTP_RESPONSE_BODY;
         tx->connp->out_state = htp_connp_RES_BODY_IDENTITY;
     } else {

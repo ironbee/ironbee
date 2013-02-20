@@ -552,14 +552,26 @@ struct htp_tx_t {
     int64_t response_content_length;
     
     /**
-     * Response transfer coding. Can be one of HTP_CODING_UNKNOWN (body presence not
-     * determined yet), HTP_CODING_IDENTITY, HTP_CODING_CHUNKED, HTP_CODING_NO_BODY,
-     * and HTP_CODING_UNRECOGNIZED.
+     * Response transfer coding, which indicates if there is a response body,
+     * and how it is transported (e.g., as-is, or chunked).
      */
     enum htp_transfer_coding_t response_transfer_coding;
 
-    /** Response body compression. */
+    /**
+     * Response body compression, which indicates if compression is used
+     * for the response body. This field is an interpretation of the information
+     * available in response headers.
+     */
     enum htp_content_encoding_t response_content_encoding;
+
+    /**
+     * Response body compression processing information, which is related to how
+     * the library is going to process (or has processed) a response body. Changing
+     * this field mid-processing can influence library actions. For example, setting
+     * this field to HTP_COMPRESSION_NONE in a RESPONSE_HEADERS callback will prevent
+     * decompression.
+     */
+    enum htp_content_encoding_t response_content_encoding_processing;
     
     /**
      * This field will contain the response content type when that information

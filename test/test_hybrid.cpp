@@ -471,7 +471,7 @@ TEST_F(HybridParsing, CompressedResponseNoDecompression) {
 }
 
 static int HybridParsing_ForcedDecompressionTest_Callback_RESPONSE_HEADERS(htp_connp_t *connp) {
-    connp->out_tx->response_content_encoding = HTP_COMPRESSION_GZIP;
+    connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_GZIP;
     return HTP_OK;
 }
 
@@ -496,7 +496,7 @@ TEST_F(HybridParsing, ForcedDecompression) {
 }
 
 static int HybridParsing_DisableDecompressionTest_Callback_RESPONSE_HEADERS(htp_connp_t *connp) {
-    connp->out_tx->response_content_encoding = HTP_COMPRESSION_NONE;
+    connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
     return HTP_OK;
 }
 
