@@ -1,4 +1,4 @@
-personal_ws-1.1 en 1863 
+personal_ws-1.1 en 1865 
 malloced
 malloc'ed
 libnet
@@ -1497,6 +1497,7 @@ lookup
 IsFloat
 IronBeeManagedCollection
 inspectRequestBody
+istreq
 Javascript
 ResponseBodyBufferLimit
 istream
@@ -1517,6 +1518,7 @@ SiteId
 onModuleLoad
 stringification
 ruleLocation
+imatch
 IronBeeFilter
 lookups
 EeOperModuleTest
