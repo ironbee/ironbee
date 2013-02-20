@@ -32,7 +32,7 @@ FIELDS = [
   'RESPONSE_PROTOCOL',
   'RESPONSE_STATUS',
   'RESPONSE_MESSAGE',
-  'RESPONSE_HEADERS'
+  'RESPONSE_HEADERS',
   'ARGS'
 ]
 FIELD_RE = Regexp.new('\b(' + FIELDS.join('|') + ')[^A-Za-z]')
