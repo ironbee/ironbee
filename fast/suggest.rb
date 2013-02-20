@@ -78,6 +78,13 @@ STDIN.each do |line|
       next
     end
 
+    # Validate with ruby.
+    begin
+      Regexp.new(re)
+    rescue Exception => err
+      puts "# FAST Ruby Says: #{err}"
+    end
+
     begin
       result = ReToAC::extract(re, MAX_ALTERNATIONS, MAX_REPETITIONS)
     rescue Exception => err
