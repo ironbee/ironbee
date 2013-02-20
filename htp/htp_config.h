@@ -56,14 +56,10 @@ enum htp_server_personality_t {
      */
     HTP_SERVER_MINIMAL = 0,
 
-    /**
-     * A generic personality that aims to work reasonably well for all server types.
-     */
+    /** A generic personality that aims to work reasonably well for all server types. */
     HTP_SERVER_GENERIC = 1,
 
-    /**
-     * The IDS personality tries to perform as much decoding as possible.
-     */
+    /** The IDS personality tries to perform as much decoding as possible. */
     HTP_SERVER_IDS = 2,
 
     /** Mimics the behavior of IIS 4.0, as shipped with Windows NT 4.0. */
