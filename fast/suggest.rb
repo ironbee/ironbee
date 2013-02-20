@@ -73,6 +73,11 @@ STDIN.each do |line|
   end
 
   res.each do |re|
+    if re.nil?
+      puts "# FAST Failed to extract regexp.  Malformed rule?"
+      next
+    end
+
     begin
       result = ReToAC::extract(re, MAX_ALTERNATIONS, MAX_REPETITIONS)
     rescue Exception => err
