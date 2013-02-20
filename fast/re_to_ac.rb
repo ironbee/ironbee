@@ -442,8 +442,8 @@ module ReToAC
     # performance.
     def self.count_alternatives(node, cache = {})
       cache[node] ||= if node.type == :expression || node.type == :group
-        if node.token == :options
-          raise "Options not supported."
+        if node.token == :options && (node.options[:m] || node.options[:x])
+          raise "m and x options not supported."
         end
 
         node.expressions.inject(1) {|m,x| m*(count_alternatives(x)**Impl::repetitions(x)[0])}
