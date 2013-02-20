@@ -276,7 +276,7 @@ int64_t htp_parse_content_length(bstr *b) {
 int64_t htp_parse_chunked_length(unsigned char *data, size_t len) {
     int64_t chunk_len = htp_parse_positive_integer_whitespace(data, len, 16);
     if (chunk_len < 0) return chunk_len;
-    if (chunk_len > SIZE_MAX) return -1;
+    if (chunk_len > INT32_MAX) return -1;
     return chunk_len;
 }
 
