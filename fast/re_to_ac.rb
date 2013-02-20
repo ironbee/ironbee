@@ -274,7 +274,7 @@ module ReToAC
       amap.collect do
         result = walk[top, nil]
         candidates = ([result.complete] + [result.prefix] + [result.suffix] + result.internals).compact.to_set.to_a
-        candidates.select do |a|
+        candidates.uniq.select do |a|
           candidates.find {|b| a != b && b.include?(a)}.nil?
         end
       end
