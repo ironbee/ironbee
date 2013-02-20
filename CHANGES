@@ -98,6 +98,16 @@ IronBee v0.7.0
 * Added a 'persist' module, which implements a collection manager that can
   populate and persist a collection using a file-system kvstore.
 
+* Added a 'fast' module which supports rapid selection of rules to evaluate
+  based on Aho-Corasick patterns.  See below and fast/fast.html.
+
+**Fast**
+
+* Added a variety of support for the fast rule system (the fast module
+  described above is the runtime component).  Support includes utilities to
+  suggest fast patterns for rules and for easy generation of the fast automata
+  needed by the fast module.  See above and fast/fast.html.
+
 **IronBee++**
 
 * Moved catch, throw, and data support from internals to public.  These 
