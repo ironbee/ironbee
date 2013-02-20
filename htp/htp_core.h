@@ -140,12 +140,20 @@ enum htp_auth_type_t {
 };
 
 enum htp_content_encoding_t {
+    /**
+     * This is the default value, which is used until the presence
+     * of content encoding is determined (e.g., before request headers
+     * are seen.
+     */
     HTP_COMPRESSION_UNKNOWN = 0,
 
+    /** No compression. */
     HTP_COMPRESSION_NONE = 1,
 
+    /** Gzip compression. */
     HTP_COMPRESSION_GZIP = 2,
 
+    /** Deflate compression. */
     HTP_COMPRESSION_DEFLATE = 3
 };
 

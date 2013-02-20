@@ -263,7 +263,7 @@ struct htp_tx_t {
     
     // Request fields
 
-    /** TODO */
+    /** Contains a count of how many empty lines were skipped before the request line. */
     unsigned int request_ignored_lines;
 
     /** The first line of this request. */
@@ -440,13 +440,13 @@ struct htp_tx_t {
     /** Request cookies */
     htp_table_t *request_cookies;
 
-    /** TODO */
+    /** Authentication type used in the request. */
     enum htp_auth_type_t request_auth_type;
 
-    /** TODO */
+    /** Authentication username. */
     bstr *request_auth_username;
 
-    /** TODO */
+    /** Authentication password. Available only when htp_tx_t::request_auth_type is HTP_AUTH_BASIC. */
     bstr *request_auth_password;
 
 
