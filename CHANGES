@@ -91,6 +91,10 @@ IronBee v0.7.0
   ib_list_t of ib_field_t pointers, and to encode an ib_list_t of ib_field_t
   pointers into JSON.
 
+* Added `@match` and `@imatch` operators to do string-in-set calculations.
+
+* Added `@istreq`, a string insensitive version of `@streq`.
+
 **Modules**
 
 * ac and pcre have been updated to use the new tx data API.
