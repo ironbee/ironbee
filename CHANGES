@@ -8,18 +8,18 @@ IronBee v0.7.0
 
 **Build**
 
-* libhtp is now configured as part of configure stage rather than build 
+* libhtp is now configured as part of configure stage rather than build
   stage.  In addition, libhtp will make use of any configure options.  Use
   ./configure --help=recursive to see libhtp specific configure options.
-  
+
 * Extensive cleanup regarding use of CFLAGS, CXXFLAGS, etc.  Those variables
   are now respected and may be specified at configure or make time.  Several
   configure options used to control those variables have been removed in favor
   of directly setting them.
-  
-* Warning settings changed to -Wall -Wextra.  -Werror will be enabled on 
+
+* Warning settings changed to -Wall -Wextra.  -Werror will be enabled on
   newer compilers (any clang or gcc 4.6 or later).
-  
+
 * Build system now compatible with automake 1.13.  In addition, IronBee will
   take advantage of the new parallel test harness if automake 1.13 is used.
 
@@ -28,25 +28,25 @@ IronBee v0.7.0
 
 * Configure now checks for libcurl and yajl and only enabled RIAK support if
   present.
-  
+
 * Several uneeded checks removed.
 
 **Engine**
 
-* `ib_tx_t::data` has changed from a generic hash to an array indexed by   
-  module index.  This change puts it in line with per-module engine data and 
+* `ib_tx_t::data` has changed from a generic hash to an array indexed by
+  module index.  This change puts it in line with per-module engine data and
   per-module context data.  `ib_tx_data_set()` and `ib_tx_data_get()` can be
-  used by modules to read/write this data.  
+  used by modules to read/write this data.
 
 * Added RIAK kvstore.
 
 * Several fixes to dynamic collections in the DPI.
 
 * Lua rule support moved from the rule component to the Lua module.  The rules
-  component gained support for modules to register arbitrary external rule 
-  drivers (see `ib_rule_register_external_driver()`), which the Lua module 
+  component gained support for modules to register arbitrary external rule
+  drivers (see `ib_rule_register_external_driver()`), which the Lua module
   now uses.
-  
+
 * Data fields were cleaned up and refactored.  Notable changes to the public
   API include:
 
@@ -79,12 +79,12 @@ IronBee v0.7.0
 
   * For servers, use `ib_log_set_logger` and `ib_log_set_loglevel` to setup
     custom loggers.  Provider interface is gone.
-  * For configuration writers, use `Log` and `LogLevel`; `DebugLog` and 
+  * For configuration writers, use `Log` and `LogLevel`; `DebugLog` and
     `DebugLogLevel` are gone`.  `LogHandler` is also gone.
   * For module writers, use `ib_log_vex` instead of `ib_log_vex_ex`.  Include
     `log.h` for logging routines.
   * For engine developers, logging code is now in `log.c` and `log.h`.
-  
+
 * LogEvents has been refactored to use a direct API rather than a provider.
 
 * Added utility functions that wrap YAJL, using it to decode JSON into an
@@ -110,27 +110,27 @@ IronBee v0.7.0
 
 **IronBee++**
 
-* Moved catch, throw, and data support from internals to public.  These 
+* Moved catch, throw, and data support from internals to public.  These
   routines are not needed if you only use IronBee++ APIs but are very useful
   when accessing the IronBee C API from C++.
-  
+
 * Fixed bug with adding to List<T> where T was a ConstX IronBee++ class.
 
 **Automata**
 
-* Intermediate format and Eudoxus now support arbitrary automata metadata in 
+* Intermediate format and Eudoxus now support arbitrary automata metadata in
   the form of key-value pairs.  All command line generators include an
   `Output-Type` metadata key with value set to the output type as defined by
   `ee`.  `ee` now defaults to using this metadata to determine output type.
   This changes increments the Eudoxus format version and, as such, is not
   compatible with compiled automata from earlier versions.
-  
+
 * Eudoxus output callbacks are now passed the engine.
 
-* Added `ia_eudoxus_all_outputs()` to iterate through every output in an 
+* Added `ia_eudoxus_all_outputs()` to iterate through every output in an
   automata.  `ee -L` can be used to do this from the command line.
-  
-* Added '\iX' to Aho Corasick patterns which matches upper case of X and 
+
+* Added '\iX' to Aho Corasick patterns which matches upper case of X and
   lower case of X for any X in A-Za-z.
 
 * Added '\$' to Aho Corasick patterns which matches CR or NL.
@@ -156,7 +156,7 @@ IronBee v0.6.0
 * IronBee++ and CLIPP are now built by default.  Use `--disable-cpp` to
   prevent.
 
-* Build system now handles boost and libnids libraries better.  New 
+* Build system now handles boost and libnids libraries better.  New
   `--with-boost-suffix` configuration option.
 
 * Removed a number of unnecessary checks in configure.
@@ -167,12 +167,12 @@ IronBee v0.6.0
 
 * Enhanced support for buffering request/response data, including
   runtime support via the setflag action.
-  
-* Added initial support for persistent data. (see: 
+
+* Added initial support for persistent data. (see:
   `include/ironbee/kvstore.h`)
 
-* Partial progress towards rework of configuration state transitions.  
-  Currently implicit.  Next version should be gone completely.  
+* Partial progress towards rework of configuration state transitions.
+  Currently implicit.  Next version should be gone completely.
 
 * Events can now be suppressed by setting the `suppress` field.
 
@@ -190,7 +190,7 @@ IronBee v0.6.0
 * Enhanced configuration context selection, which now takes Site,
   Service, Hostname and Location into account.
 
-* Added an `InitVar` directive to set custom fields at config time.  
+* Added an `InitVar` directive to set custom fields at config time.
 
 * `SetVar` `=+` operator changed to `+=`.  Also added `-=` and `*=`.  For
   0.6.x only, support `=+` for backward compatibility with 0.5.x.
@@ -204,9 +204,9 @@ IronBee v0.6.0
 
 * Fixed `pmf` operator so that relative filenames are based on
   config file location vs CWD.
-  
+
 * Enhanced PCRE matching to support setting limits.
-  
+
 * `AuditLogFileMode` now works.
 
 * Default of `AuditEngine` is now `RelevantOnly`.
@@ -234,7 +234,7 @@ IronBee v0.6.0
 **Automata**
 
 * Added IronAutomata framework for building, modifying, and executing automata
-  (see: `automata/doc/example.md`).  Currently works as stand alone library 
+  (see: `automata/doc/example.md`).  Currently works as stand alone library
   but is not integrated into IronBee.
 
 **CLIPP**
@@ -257,12 +257,12 @@ IronBee v0.6.0
 
 * Doxygen dependency calculation fixed.  `make doxygen` in `docs` should now
   run only if files have changed.
-  
-* Removed long deprecated `fulldocs` doxygen.  Use `external` or `internal` 
+
+* Removed long deprecated `fulldocs` doxygen.  Use `external` or `internal`
   instead.
-  
+
 * Updated to doxygen 1.8.1.
-  
+
 **Other**
 
 * Various bug fixes and code cleanup.
