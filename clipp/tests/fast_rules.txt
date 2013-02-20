@@ -7,3 +7,5 @@ Rule REQUEST_URI @rx contradiction id:6 phase:REQUEST_HEADER clipp_announce:cont
 Rule ARGS @rx headervalue id:7 phase:REQUEST_HEADER clipp_announce:headervalue fast:header
 # Disabled until RNS-192 is fixed.
 #Rule ARGS @rx hello id:8 phase:REQUEST clipp_announce:body fast:hello
+Rule RESPONSE_MESSAGE @rx HelloWorld id:9 phase:RESPONSE_HEADER clipp_announce:rmessage fast:HelloWorld
+Rule RESPONSE_HEADERS @rx DEF id:10 phase:RESPONSE_HEADER clipp_announce:rheader fast:DEF

@@ -166,6 +166,29 @@ static const fast_collection_spec_t c_request_body_collections[] = {
     { NULL, NULL }
 };
 
+/** Bytestrings to feed during RESPONSE_HEADER phase. */
+static const char *c_response_header_bytestrings[] = {
+    "RESPONSE_PROTOCOL",
+    "RESPONSE_STATUS",
+    "RESPONSE_MESSAGE",
+    NULL
+};
+/** Collections to feed during RESPONSE_HEADER phase. */
+static const fast_collection_spec_t c_response_header_collections[] = {
+    { "RESPONSE_HEADERS",    ":" },
+    { NULL, NULL }
+};
+
+/** Bytestrings to feed during RESPONSE_BODY phase. */
+static const char *c_response_body_bytestrings[] = {
+    NULL
+};
+
+/** Collections to feed during RESPONSE_BODY phase. */
+static const fast_collection_spec_t c_response_body_collections[] = {
+    { NULL, NULL }
+};
+
 /** String to separate bytestrings. */
 static const char *c_bytestring_separator = " ";
 /** String to separate different keys, bytestring or collection entries. */
@@ -992,6 +1015,66 @@ ib_status_t fast_rule_injection_request_body(
 }
 
 /**
+ * Called at RESPONSE_HEADER phase to determine additional rules to inject.
+ *
+ * @param[in] ib        IronBee engine.
+ * @param[in] rule_exec Current rule execution context.
+ * @param[in] rule_list List to add injected rules to; updated.
+ * @param[in] cbdata    Runtime.
+ * @return
+ * - IB_OK on success.
+ * - IB_EINVAL on IronAutomata failure; will emit log message.
+ * - IB_EOTHER on IronBee failure; will emit log message.
+ */
+static
+ib_status_t fast_rule_injection_response_header(
+    const ib_engine_t    *ib,
+    const ib_rule_exec_t *rule_exec,
+    ib_list_t            *rule_list,
+    void                 *cbdata
+)
+{
+    return fast_rule_injection(
+        ib,
+        rule_exec,
+        rule_list,
+        cbdata,
+        c_response_header_bytestrings,
+        c_response_header_collections
+    );
+}
+
+/**
+ * Called at RESPONSE_BODY phase to determine additional rules to inject.
+ *
+ * @param[in] ib        IronBee engine.
+ * @param[in] rule_exec Current rule execution context.
+ * @param[in] rule_list List to add injected rules to; updated.
+ * @param[in] cbdata    Runtime.
+ * @return
+ * - IB_OK on success.
+ * - IB_EINVAL on IronAutomata failure; will emit log message.
+ * - IB_EOTHER on IronBee failure; will emit log message.
+ */
+static
+ib_status_t fast_rule_injection_response_body(
+    const ib_engine_t    *ib,
+    const ib_rule_exec_t *rule_exec,
+    ib_list_t            *rule_list,
+    void                 *cbdata
+)
+{
+    return fast_rule_injection(
+        ib,
+        rule_exec,
+        rule_list,
+        cbdata,
+        c_response_body_bytestrings,
+        c_response_body_collections
+    );
+}
+
+/**
  * Called when @c FastAutomata directive appears in configuration.
  *
  * @param[in] cp     Configuration parsed; used for logging.
@@ -1204,6 +1287,20 @@ ib_status_t fast_dir_fast_automata(
         fast_rule_injection_request_body, runtime
     );
     FAST_CHECK_RC("Error registering injection for request header phase.");
+    rc = ib_rule_register_injection_fn(
+        ib,
+        MODULE_NAME_STR,
+        PHASE_RESPONSE_HEADER,
+        fast_rule_injection_response_header, runtime
+    );
+    FAST_CHECK_RC("Error registering injection for response header phase.");
+    rc = ib_rule_register_injection_fn(
+        ib,
+        MODULE_NAME_STR,
+        PHASE_RESPONSE_BODY,
+        fast_rule_injection_response_body, runtime
+    );
+    FAST_CHECK_RC("Error registering injection for response header phase.");
 
     rc = ib_rule_register_ownership_fn(
         ib,

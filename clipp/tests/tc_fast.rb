@@ -3,7 +3,7 @@ require 'clipp_test'
 
 class TestFast < Test::Unit::TestCase
   include CLIPPTest
-  
+
   CONFIG = [
     'LoadModule "ibmod_fast.so"',
     "FastAutomata \"#{TESTDIR}/fast_rules.txt.e\""
@@ -56,7 +56,7 @@ class TestFast < Test::Unit::TestCase
     assert_log_match /CLIPP ANNOUNCE: abc/
     assert_log_match /CLIPP ANNOUNCE: def/
   end
-  
+
   def test_falseinject
     clipp(
       :input_hashes => [make_request('abcdef')],
@@ -76,7 +76,7 @@ class TestFast < Test::Unit::TestCase
     assert_no_issues
     assert_log_match /CLIPP ANNOUNCE: nonfast/
   end
-  
+
   def test_contradiction
     clipp(
       :input_hashes => [make_request('contradiction')],
@@ -95,6 +95,20 @@ class TestFast < Test::Unit::TestCase
     )
     assert_no_issues
     assert_log_no_match /CLIPP ANNOUNCE: headervalue/
+  end
+
+  def test_response
+    clipp(
+      :input_hashes => [simple_hash(
+        "GET /a HTTP/1.1\nHost: headervalue\n\n",
+        "HTTP/1.1 200 HelloWorld\nABC: DEF\n\n"
+      )],
+      :config => CONFIG,
+      :default_site_config => "Include \"#{TESTDIR}/fast_rules.txt\""
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: rmessage/
+    assert_log_match /CLIPP ANNOUNCE: rheader/
   end
 
   # Disabled until RNS-192 is fixed.
