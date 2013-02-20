@@ -971,8 +971,8 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
             tx->flags |= HTP_PATH_HALF_FULL_RANGE;
         }
 
-        if (cfg->path_unicode_unwanted != HTP_UNWANTED_IGNORE) {
-            tx->response_status_expected_number = cfg->path_unicode_unwanted;
+        if (cfg->path_u_encoding_unwanted != HTP_UNWANTED_IGNORE) {
+            tx->response_status_expected_number = cfg->path_u_encoding_unwanted;
         }
 
         // Use best-fit mapping

@@ -154,25 +154,29 @@ if ((X)->out_line_len < (X)->out_line_size) { \
 // Data structures
 
 struct htp_cfg_t {
-    /** Hard field limit length. If the parser encounters a line that's longer
-     *  than this value it will give up parsing. Do note that the line limit
-     *  is not the same thing as header length limit. Because of header folding,
-     *  a header can end up being longer than the line limit.
+    /**
+     * Hard field limit length. If the parser encounters a line that's longer
+     * than this value it will give up parsing. Do note that the line limit
+     * is not the same thing as header length limit. Because of header folding,
+     * a header can end up being longer than the line limit.
      */
     size_t field_limit_hard;
 
-    /** Soft field limit length. If this limit is reached the parser will issue
-     *  a warning but continue to run.
+    /**
+     * Soft field limit length. If this limit is reached the parser will issue
+     * a warning but continue to run.
      */
     size_t field_limit_soft;
 
-    /** Log level, which will be used when deciding whether to store or
-     *  ignore the messages issued by the parser.
+    /**
+     * Log level, which will be used when deciding whether to store or
+     * ignore the messages issued by the parser.
      */
     enum htp_log_level_t log_level;
 
-    /** Whether to delete each transaction after the last hook is invoked. This
-     *  feature should be used when parsing traffic streams in real time.
+    /**
+     * Whether to delete each transaction after the last hook is invoked. This
+     * feature should be used when parsing traffic streams in real time.
      */
     int tx_auto_destroy;
 
@@ -244,37 +248,34 @@ struct htp_cfg_t {
     /** Controls how raw NUL bytes are handled. */
     int path_nul_raw_terminates;
 
-    /** TODO */
-    enum htp_unwanted_t path_nul_raw_unwanted;
-    
-    /** TODO */
-    enum htp_unwanted_t path_unicode_unwanted;
+    /** Determines server response to a raw NUL byte in the path. */
+    enum htp_unwanted_t path_nul_raw_unwanted;        
 
     /** The replacement character used when there is no best-fit mapping. */
     unsigned char bestfit_replacement_char;
 
-    /** TODO */
+    /** Should %u encoding characters be decoded. */
     int params_u_encoding_decode;
 
-    /** TODO */
+    /** Determines server response to %u encoding in the parameters. */
     enum htp_unwanted_t params_u_encoding_unwanted;
 
-    /** TODO */
+    /** Determines server handling of invalid URL encoding. */
     enum htp_url_encoding_handling_t params_invalid_encoding_handling;
 
-    /** TODO */
+    /** Determines server response to invalid URL encoding in the parameters.  */
     enum htp_unwanted_t params_invalid_encoding_unwanted;
 
-    /** TODO */
+    /** Determines if an encoded NUL byte terminates URL-encoded parameters. */
     int params_nul_encoded_terminates;
 
-    /** TODO */
+    /** Determines server response to an encoded NUL byte in the parameters. */
     enum htp_unwanted_t params_nul_encoded_unwanted;
 
-    /** TODO */
+    /** Determines if a raw NUL byte terminates the parameters. */
     int params_nul_raw_terminates;
 
-    /** TODO */
+    /** Determines server response to a raw NUL byte in the parameters. */
     enum htp_unwanted_t params_nul_raw_unwanted;
 
     /** The best-fit map to use to decode %u-encoded characters. */
@@ -300,8 +301,9 @@ struct htp_cfg_t {
 
     // Hooks
 
-    /** Transaction start hook, invoked when the parser receives the first
-     *  byte of a new transaction.
+    /**
+     * Transaction start hook, invoked when the parser receives the first
+     * byte of a new transaction.
      */
     htp_hook_t *hook_request_start;
 
@@ -314,27 +316,33 @@ struct htp_cfg_t {
     /** Request headers hook, invoked after all request headers are seen. */
     htp_hook_t *hook_request_headers;
 
-    /** Request body data hook, invoked every time body data is available. Each
-     *  invocation will provide a htp_tx_data_t instance. Chunked data
-     *  will be dechunked before the data is passed to this hook. Decompression
-     *  is not currently implemented. At the end of the request body
-     *  there will be a call with the data pointer set to NULL.
+    /**
+     * Request body data hook, invoked every time body data is available. Each
+     * invocation will provide a htp_tx_data_t instance. Chunked data
+     * will be dechunked before the data is passed to this hook. Decompression
+     * is not currently implemented. At the end of the request body
+     * there will be a call with the data pointer set to NULL.
      */
     htp_hook_t *hook_request_body_data;
 
-    /** TODO */
+    /**
+     * Request file data hook, which is invoked whenever request file data is
+     * available. Currently used only by the Multipart parser.
+     */
     htp_hook_t *hook_request_file_data;
 
-    /** Request trailer hook, invoked after all trailer headers are seen,
-     *  and if they are seen (not invoked otherwise).
+    /**
+     * Request trailer hook, invoked after all trailer headers are seen,
+     * and if they are seen (not invoked otherwise).
      */
     htp_hook_t *hook_request_trailer;
 
     /** Request hook, invoked after a complete request is seen. */
     htp_hook_t *hook_request_complete;
 
-    /** Response startup hook, invoked when a response transaction is found and
-     *  processing started.
+    /**
+     * Response startup hook, invoked when a response transaction is found and
+     * processing started.
      */
     htp_hook_t *hook_response_start;
 
@@ -344,23 +352,26 @@ struct htp_cfg_t {
     /** Response headers book, invoked after all response headers have been seen. */
     htp_hook_t *hook_response_headers;
 
-    /** Response body data hook, invoked every time body data is available. Each
-     *  invocation will provide a htp_tx_data_t instance. Chunked data
-     *  will be dechunked before the data is passed to this hook. By default,
-     *  compressed data will be decompressed, but decompression can be disabled
-     *  in configuration. At the end of the response body there will be a call
-     *  with the data pointer set to NULL.
+    /**
+     * Response body data hook, invoked every time body data is available. Each
+     * invocation will provide a htp_tx_data_t instance. Chunked data
+     * will be dechunked before the data is passed to this hook. By default,
+     * compressed data will be decompressed, but decompression can be disabled
+     * in configuration. At the end of the response body there will be a call
+     * with the data pointer set to NULL.
      */
     htp_hook_t *hook_response_body_data;
 
-    /** Response trailer hook, invoked after all trailer headers have been processed,
-     *  and only if the trailer exists.
+    /**
+     * Response trailer hook, invoked after all trailer headers have been processed,
+     * and only if the trailer exists.
      */
     htp_hook_t *hook_response_trailer;
 
-    /** Response hook, invoked after a response has been seen. There isn't a separate
-     *  transaction hook, use this hook to do something whenever a transaction is
-     *  complete.
+    /**
+     * Response hook, invoked after a response has been seen. There isn't a separate
+     * transaction hook, use this hook to do something whenever a transaction is
+     * complete.
      */
     htp_hook_t *hook_response_complete;
 

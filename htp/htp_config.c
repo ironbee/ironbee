@@ -575,7 +575,7 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
             cfg->path_invalid_encoding_unwanted = HTP_UNWANTED_400;
             cfg->path_u_encoding_decode = 1;
-            cfg->path_unicode_unwanted = HTP_UNWANTED_400;
+            cfg->path_u_encoding_unwanted = HTP_UNWANTED_400;
             cfg->path_control_chars_unwanted = HTP_UNWANTED_400;
             break;
 
