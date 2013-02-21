@@ -216,7 +216,7 @@ struct htp_connp_t {
      */
     int64_t out_content_length;
 
-    /** The remaining length of the current response body, if known. */
+    /** The remaining length of the current response body, if known. Set to -1 otherwise. */
     int64_t out_body_data_left;
 
     /**

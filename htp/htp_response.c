@@ -157,63 +157,54 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
-    unsigned char *data = connp->out_current_data + connp->out_current_offset;
-    size_t len = 0;
-
-    for (;;) {
-        OUT_NEXT_BYTE(connp);
-
-        if (connp->out_next_byte == -1) {
-            // End of chunk
-
-            // Send data to callbacks
-            if (len != 0) {
-                int rc = htp_tx_res_process_body_data(connp->out_tx, data, len);
-                if (rc != HTP_OK) return rc;
-            }
-
-            // If we don't know the length, then we must check
-            // to see if the stream closed; that would signal the
-            // end of the response body (and the end of the transaction).
-            if ((connp->out_content_length == -1) && (connp->out_status == HTP_STREAM_CLOSED)) {
-                connp->out_state = htp_connp_RES_FINALIZE;
-
-                return HTP_OK;
-            } else {
-                // Ask for more data
-                return HTP_DATA;
-            }
+    size_t bytes_to_consume;   
+    
+    if (connp->out_body_data_left > 0) {
+        // The size of the response body is known; we consume only as much as we need.
+        if (connp->out_current_len - connp->out_current_offset >= connp->out_body_data_left) {
+            bytes_to_consume = connp->out_body_data_left;
         } else {
-            if (connp->out_body_data_left > 0) {
-                // We know the length of response body
+            bytes_to_consume = connp->out_current_len - connp->out_current_offset;
+        }
+    } else {
+        // The size of the response body is not known; we consume all data until the connection is closed.
+        bytes_to_consume = connp->out_current_len - connp->out_current_offset;
+    }   
 
-                connp->out_body_data_left--;
-                len++;
+    // If the input buffer is empty, we will either ask for more data, or, if
+    // the stream was closed and the size of response body data is not know,
+    // finalize the response.
+    if (bytes_to_consume == 0) {        
+        if (((connp->out_body_data_left == -1) && (connp->out_status == HTP_STREAM_CLOSED))) {            
+            connp->out_state = htp_connp_RES_FINALIZE;
+            return HTP_OK;
+        }
 
-                if (connp->out_body_data_left == 0) {
-                    // End of body
+        return HTP_DATA;
+    }   
 
-                    // Send data to callbacks
-                    if (len != 0) {
-                        int rc = htp_tx_res_process_body_data(connp->out_tx, data, len);
-                        if (rc != HTP_OK) return rc;
-                    }
+    int rc = htp_tx_res_process_body_data(connp->out_tx, connp->out_current_data + connp->out_current_offset, bytes_to_consume);
+    if (rc != HTP_OK) return rc;
 
-                    // Done
-                    connp->out_state = htp_connp_RES_FINALIZE;
+    // Adjust counters.
+    connp->out_current_offset += bytes_to_consume;
+    connp->out_stream_offset += bytes_to_consume;
+    // connp->out_tx->response_message_len += bytes_to_consume;
 
-                    return HTP_OK;
-                }
-            } else {
-                // We don't know the length of the response body, which means
-                // that the body will consume all data until the connection
-                // is closed.
-                len++;
-            }
+    if (connp->out_body_data_left > 0) {
+        connp->out_body_data_left -= bytes_to_consume;
+        if (connp->out_body_data_left == 0) {
+            connp->out_state = htp_connp_RES_FINALIZE;
+            return HTP_OK;
+        }
+    } else {
+        if (connp->out_status == HTP_STREAM_CLOSED) {
+            connp->out_state = htp_connp_RES_FINALIZE;
+            return HTP_OK;
         }
     }
 
-    return HTP_ERROR;
+    return HTP_DATA;
 }
 
 /**
@@ -334,7 +325,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
 
             // Check for multiple C-L headers
             if (cl->flags & HTP_FIELD_REPEATED) {
-                connp->out_tx->flags |= HTP_REQUEST_SMUGGLING;                
+                connp->out_tx->flags |= HTP_REQUEST_SMUGGLING;
             }
 
             // Get body length
@@ -627,7 +618,7 @@ size_t htp_connp_res_data_consumed(htp_connp_t *connp) {
 
 htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp) {
     int rc = htp_tx_state_response_complete(connp->out_tx);
-    if (rc != HTP_OK) return rc;   
+    if (rc != HTP_OK) return rc;
 
     // Check if the inbound parser is waiting on us. If it is, that means that
     // there might be request data that the inbound parser hasn't consumed yet.
