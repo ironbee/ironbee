@@ -288,10 +288,9 @@ void htp_tx_req_set_method_number(htp_tx_t *tx, enum htp_method_t method_number)
 void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9);
 
 /**
- * Set request protocol string (e.g., "HTTP/1.0"), which will then be parsed
- * to extract protocol name and version. Do not invoke when HTTP/0.9 is used
- * (because this protocol version does not actually use the protocol string).
- * Must be invoked before htp_txh_set_req_protocol_number().
+ * Sets the request protocol string (e.g., "HTTP/1.0"). The information provided
+ * is only stored, not parsed. Use htp_tx_req_set_protocol_number() to set the
+ * actual protocol number, as interpreted by the container.
  *
  * @param[in] tx
  * @param[in] protocol
@@ -307,6 +306,11 @@ htp_status_t htp_tx_req_set_protocol(htp_tx_t *tx, const char *protocol, size_t 
  * extracted version number. Convert the protocol version number to an integer
  * by multiplying it with 100. For example, 1.1 becomes 110. Alternatively,
  * use the HTP_PROTOCOL_0_9, HTP_PROTOCOL_1_0, and HTP_PROTOCOL_1_1 constants.
+ * Note: setting protocol to HTP_PROTOCOL_0_9 alone will _not_ get the library to
+ * treat the transaction as HTTP/0.9. You need to also invoke htp_tx_req_set_protocol_0_9().
+ * This is because HTTP 0.9 is used only when protocol information is absent from the
+ * request line, and not when it is explicitly stated (as "HTTP/0.9"). This behavior is
+ * consistent with that of Apache httpd.
  *
  * @param[in] tx
  * @param[in] protocol_number
