@@ -461,8 +461,10 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
  * @param[in,out] flags
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
-htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {
-    if ((hostport == NULL) || (hostname == NULL) || (port == NULL) || (flags == NULL)) return HTP_ERROR;
+htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int *invalid) {
+    if ((hostport == NULL) || (hostname == NULL) || (port == NULL) || (invalid == NULL)) return HTP_ERROR;
+
+    *invalid = 0;
 
     unsigned char *data = bstr_ptr(hostport);
     size_t len = bstr_len(hostport);
@@ -509,14 +511,14 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, uint
         if (port_parsed < 0) {
             // Failed to parse the port number.
             *port = -1;
-            *flags |= HTP_HOST_INVALID;
+            *invalid = 1;
         } else if ((port_parsed > 0) && (port_parsed < 65536)) {
             // Valid port number.
             *port = port_parsed;
         } else {
             // Port number out of range.
             *port = -1;
-            *flags |= HTP_HOST_INVALID;
+            *invalid = 1;
         }
     }
 
@@ -524,15 +526,46 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, uint
 }
 
 /**
- * Parses request URI, making no attempt to validate the contents.
+ * XXX
  *
  * @param[in] connp
  * @param[in] hostport
  * @param[in] uri
- * @return HTP_ERROR on memory allocation failure, HTP_OK otherwise
+ * @return HTP_OK on success or HTP_ERROR error.
  */
 int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t **uri) {
-    return htp_parse_hostport(hostport, &((*uri)->hostname), &((*uri)->port_number), &(connp->in_tx->flags));
+    int invalid;
+
+    htp_status_t rc = htp_parse_hostport(hostport, &((*uri)->hostname), &((*uri)->port_number), &invalid);
+    if (rc != HTP_OK) return rc;
+
+    if (invalid) {
+        connp->in_tx->flags |= HTP_HOSTU_INVALID;
+    }
+
+    return HTP_OK;
+}
+
+/**
+ * XXX
+ * 
+ * @param[in] hostport
+ * @param[in] hostname
+ * @param[in] port
+ * @param[in] flags
+ * @return HTP_OK on success or HTP_ERROR error.
+ */
+int htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {
+    int invalid;
+
+    htp_status_t rc = htp_parse_hostport(hostport, hostname, port, &invalid);
+    if (rc != HTP_OK) return rc;
+
+    if (invalid) {
+        *flags |= HTP_HOSTH_INVALID;
+    }
+
+    return HTP_OK;
 }
 
 /**
@@ -1559,14 +1592,14 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         if (port_parsed < 0) {
             // Failed to parse the port number.
             normalized->port_number = -1;
-            connp->in_tx->flags |= HTP_HOST_INVALID;
+            connp->in_tx->flags |= HTP_HOSTU_INVALID;
         } else if ((port_parsed > 0) && (port_parsed < 65536)) {
             // Valid port number.
             normalized->port_number = (int) port_parsed;
         } else {
             // Port number out of range.
             normalized->port_number = -1;
-            connp->in_tx->flags |= HTP_HOST_INVALID;
+            connp->in_tx->flags |= HTP_HOSTU_INVALID;
         }
     }
 

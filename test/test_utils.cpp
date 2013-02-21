@@ -378,13 +378,13 @@ TEST(UtilTest, ParseHostPort1) {
     bstr *i = bstr_dup_c("www.example.com");
     bstr *host;
     int port;
-    uint64_t flags = 0;
+    int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
 
     ASSERT_TRUE(bstr_cmp(i, host) == 0);
     ASSERT_EQ(-1, port);
-    ASSERT_EQ(0, flags);
+    ASSERT_EQ(0, flag);
 
     bstr_free(host);
     bstr_free(i);
@@ -395,14 +395,14 @@ TEST(UtilTest, ParseHostPort2) {
     bstr *e = bstr_dup_c("www.example.com");
     bstr *host = NULL;
     int port;
-    uint64_t flags = 0;
+    int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
     ASSERT_EQ(-1, port);
-    ASSERT_EQ(0, flags);
+    ASSERT_EQ(0, flag);
 
     bstr_free(host);
     bstr_free(e);
@@ -414,14 +414,14 @@ TEST(UtilTest, ParseHostPort3) {
     bstr *e = bstr_dup_c("www.example.com");
     bstr *host = NULL;
     int port;
-    uint64_t flags = 0;
+    int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
     ASSERT_EQ(8001, port);
-    ASSERT_EQ(0, flags);
+    ASSERT_EQ(0, flag);
 
     bstr_free(host);
     bstr_free(e);
@@ -433,14 +433,14 @@ TEST(UtilTest, ParseHostPort4) {
     bstr *e = bstr_dup_c("www.example.com");
     bstr *host = NULL;
     int port;
-    uint64_t flags = 0;
+    int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
     ASSERT_EQ(8001, port);
-    ASSERT_EQ(0, flags);
+    ASSERT_EQ(0, flag);
 
     bstr_free(host);
     bstr_free(e);
@@ -452,14 +452,14 @@ TEST(UtilTest, ParseHostPort5) {
     bstr *e = bstr_dup_c("www.example.com.");
     bstr *host = NULL;
     int port;
-    uint64_t flags = 0;
+    int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
     ASSERT_EQ(-1, port);
-    ASSERT_EQ(0, flags);
+    ASSERT_EQ(0, flag);
 
     bstr_free(host);
     bstr_free(e);
@@ -471,14 +471,14 @@ TEST(UtilTest, ParseHostPort6) {
     bstr *e = bstr_dup_c("www.example.com.");
     bstr *host = NULL;
     int port;
-    uint64_t flags = 0;
+    int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
     ASSERT_EQ(8001, port);
-    ASSERT_EQ(0, flags);
+    ASSERT_EQ(0, flag);
 
     bstr_free(host);
     bstr_free(e);
@@ -490,14 +490,14 @@ TEST(UtilTest, ParseHostPort7) {
     bstr *e = bstr_dup_c("www.example.com");
     bstr *host = NULL;
     int port;
-    uint64_t flags = 0;
+    int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
     ASSERT_EQ(-1, port);
-    ASSERT_TRUE(flags & HTP_HOST_INVALID);
+    ASSERT_EQ(1, flag);
 
     bstr_free(host);
     bstr_free(e);
@@ -509,14 +509,14 @@ TEST(UtilTest, ParseHostPort8) {
     bstr *e = bstr_dup_c("www.example.com");
     bstr *host = NULL;
     int port;
-    uint64_t flags = 0;
+    int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
     ASSERT_EQ(-1, port);
-    ASSERT_TRUE(flags & HTP_HOST_INVALID);
+    ASSERT_EQ(1, flag);
 
     bstr_free(host);
     bstr_free(e);
@@ -528,14 +528,14 @@ TEST(UtilTest, ParseHostPort9) {
     bstr *e = bstr_dup_c("www.example.com");
     bstr *host = NULL;
     int port;
-    uint64_t flags = 0;
+    int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
     ASSERT_EQ(-1, port);
-    ASSERT_TRUE(flags & HTP_HOST_INVALID);
+    ASSERT_EQ(1, flag);
 
     bstr_free(host);
     bstr_free(e);
@@ -547,14 +547,14 @@ TEST(UtilTest, ParseHostPort10) {
     bstr *e = bstr_dup_c("www.example.com");
     bstr *host = NULL;
     int port;
-    uint64_t flags = 0;
+    int flag = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flag));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
     ASSERT_EQ(-1, port);
-    ASSERT_TRUE(flags & HTP_HOST_INVALID);
+    ASSERT_EQ(1, flag);
 
     bstr_free(host);
     bstr_free(e);

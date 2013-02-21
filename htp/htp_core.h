@@ -217,11 +217,12 @@ enum htp_file_source_t {
 #define HTP_PATH_UTF8_OVERLONG             0x00200000
 #define HTP_PATH_HALF_FULL_RANGE           0x00400000 /* Range U+FF00 - U+FFEF detected. */
 #define HTP_STATUS_LINE_INVALID            0x00800000
-#define HTP_HOST_INVALID                   0x01000000
-#define HTP_URLEN_ENCODED_NUL              0x02000000
-#define HTP_URLEN_INVALID_ENCODING         0x04000000
-#define HTP_URLEN_OVERLONG_U               0x08000000
-#define HTP_URLEN_HALF_FULL_RANGE          0x10000000 /* Range U+FF00 - U+FFEF detected. */
+#define HTP_HOSTU_INVALID                  0x01000000 /* Host in the URI. */
+#define HTP_HOSTH_INVALID                  0x02000000 /* Host in the Host header. */
+#define HTP_URLEN_ENCODED_NUL              0x04000000
+#define HTP_URLEN_INVALID_ENCODING         0x08000000
+#define HTP_URLEN_OVERLONG_U               0x10000000
+#define HTP_URLEN_HALF_FULL_RANGE          0x20000000 /* Range U+FF00 - U+FFEF detected. */
 
 // Logging-related constants.
 #define HTP_LOG_MARK                 __FILE__,__LINE__

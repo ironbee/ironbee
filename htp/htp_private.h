@@ -448,7 +448,8 @@ int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t
 int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t len);
 
 int htp_parse_uri(bstr *input, htp_uri_t **uri);
-htp_status_t htp_parse_hostport(bstr *authority, bstr **hostname, int *port, uint64_t *flags);
+htp_status_t htp_parse_hostport(bstr *authority, bstr **hostname, int *port, int *invalid);
+htp_status_t htp_parse_header_hostport(bstr *authority, bstr **hostname, int *port, uint64_t *flags);
 int htp_parse_uri_hostport(htp_connp_t *connp, bstr *input, htp_uri_t **uri);
 int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *parsed_uri_incomplete, htp_uri_t *parsed_uri);
 bstr *htp_normalize_hostname_inplace(bstr *input);

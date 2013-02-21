@@ -461,8 +461,8 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
         bstr *hostname;
         int port;
-
-        if (htp_parse_hostport(h->value, &hostname, &port, &(tx->flags)) != HTP_OK) return HTP_ERROR;
+       
+        if (htp_parse_header_hostport(h->value, &hostname, &port, &(tx->flags)) != HTP_OK) return HTP_ERROR;
 
         // Is there host information in the URI?
         if (tx->parsed_uri->hostname == NULL) {
