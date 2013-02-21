@@ -64,6 +64,17 @@
  */
 #define MAX_PHASE_DATA_TYPES 4
 
+static const char *default_block_document = 
+    "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n"
+    "<html><head>\n"
+    "<title>Access Denied</title>\n"
+    "</head><body>\n"
+    "<h1>Access to this webpage was denied.</h1>\n"
+    "<hr>\n"
+    "You are not authorized to access this webpage.\n"
+    "<hr>\n"
+    "</body></html>\n";
+
 /**
  * Data on each rule phase, one per phase.
  */
@@ -931,6 +942,22 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
     else if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,
                           "Server failed to set HTTP error response: %s",
+                          ib_status_to_string(rc));
+    }
+
+    /*
+     * TODO: This needs to be configurable to deliver the error
+     *       document from a file/template.
+     */
+    ib_rule_log_debug(rule_exec, "Setting HTTP error response data.");
+    rc = ib_server_error_body(ib->server, tx, default_block_document);
+    if (rc == IB_DECLINED) {
+        ib_rule_log_notice(rule_exec,
+                           "Server not willing to set HTTP error response data.");
+    }
+    else if (rc != IB_OK) {
+        ib_rule_log_error(rule_exec,
+                          "Server failed to set HTTP error response data: %s",
                           ib_status_to_string(rc));
     }
 
