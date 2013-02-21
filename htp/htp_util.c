@@ -1951,17 +1951,18 @@ char *htp_connp_in_state_as_string(htp_connp_t *connp) {
     if (connp == NULL) return "NULL";
 
     if (connp->in_state == htp_connp_REQ_IDLE) return "REQ_IDLE";
-    if (connp->in_state == htp_connp_REQ_LINE) return "REQ_FIRST_LINE";
+    if (connp->in_state == htp_connp_REQ_LINE) return "REQ_LINE";
     if (connp->in_state == htp_connp_REQ_PROTOCOL) return "REQ_PROTOCOL";
     if (connp->in_state == htp_connp_REQ_HEADERS) return "REQ_HEADERS";
+    if (connp->in_state == htp_connp_REQ_CONNECT_CHECK) return "REQ_CONNECT_CHECK";
+    if (connp->in_state == htp_connp_REQ_CONNECT_WAIT_RESPONSE) return "REQ_CONNECT_WAIT_RESPONSE";
     if (connp->in_state == htp_connp_REQ_BODY_DETERMINE) return "REQ_BODY_DETERMINE";
     if (connp->in_state == htp_connp_REQ_BODY_IDENTITY) return "REQ_BODY_IDENTITY";
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_LENGTH) return "REQ_BODY_CHUNKED_LENGTH";
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA) return "REQ_BODY_CHUNKED_DATA";
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA_END) return "REQ_BODY_CHUNKED_DATA_END";
-
-    if (connp->in_state == htp_connp_REQ_CONNECT_CHECK) return "htp_connp_REQ_CONNECT_CHECK";
-    if (connp->in_state == htp_connp_REQ_CONNECT_WAIT_RESPONSE) return "htp_connp_REQ_CONNECT_WAIT_RESPONSE";
+    if (connp->in_state == htp_connp_REQ_FINALIZE) return "REQ_FINALIZE";
+    if (connp->in_state == htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9) return "REQ_IGNORE_DATA_AFTER_HTTP_0_9";   
 
     return "UNKNOWN";
 }
@@ -1980,7 +1981,8 @@ char *htp_connp_out_state_as_string(htp_connp_t *connp) {
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_LENGTH) return "RES_BODY_CHUNKED_LENGTH";
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA) return "RES_BODY_CHUNKED_DATA";
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA_END) return "RES_BODY_CHUNKED_DATA_END";
-
+    if (connp->out_state == htp_connp_RES_FINALIZE) return "RES_BODY_FINALIZE";
+    
     return "UNKNOWN";
 }
 
