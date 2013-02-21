@@ -49,6 +49,9 @@ end
 
 # Extract regular expressions from a Rule.
 def extract_regexps(line)
+  if RUBY_VERSION =~ /1.9/
+    line = line.lines
+  end
   line.grep(/\s@(rx|dfa) (?:"((?:\\"|[^"])+)"|([^ ]+?))(\s|$)/) {$2}
 end
 
