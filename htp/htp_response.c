@@ -174,8 +174,7 @@ htp_status_t htp_connp_RES_BODY_IDENTITY_CL_KNOWN(htp_connp_t *connp) {
 
     // Adjust the counters.
     connp->out_current_offset += bytes_to_consume;
-    connp->out_stream_offset += bytes_to_consume;
-    // connp->out_tx->response_message_len += bytes_to_consume;
+    connp->out_stream_offset += bytes_to_consume;    
 
     // Have we seen the entire response body?
     connp->out_body_data_left -= bytes_to_consume;
@@ -204,8 +203,7 @@ htp_status_t htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE(htp_connp_t *connp) {
 
         // Adjust the counters.
         connp->out_current_offset += bytes_to_consume;
-        connp->out_stream_offset += bytes_to_consume;
-        // connp->out_tx->response_message_len += bytes_to_consume;
+        connp->out_stream_offset += bytes_to_consume;        
     }
 
     // Have we seen the entire response body?
