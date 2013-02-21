@@ -135,36 +135,35 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
-    unsigned char *data = connp->in_current_data + connp->in_current_offset;
-    size_t len = 0;
-
-    for (;;) {
-        IN_NEXT_BYTE(connp);
-
-        if (connp->in_next_byte == -1) {
-            int rc = htp_tx_req_process_body_data(connp->in_tx, data, len);
-            if (rc != HTP_OK) return rc;
-
-            // Ask for more data
-            return HTP_DATA;
-        } else {
-            connp->in_tx->request_message_len++;
-            connp->in_chunked_length--;
-            len++;
-
-            if (connp->in_chunked_length == 0) {
-                // End of data chunk
-                int rc = htp_tx_req_process_body_data(connp->in_tx, data, len);
-                if (rc != HTP_OK) return rc;
-
-                connp->in_state = htp_connp_REQ_BODY_CHUNKED_DATA_END;
-
-                return HTP_OK;
-            }
-        }
+    // Determine how many bytes we can consume.
+    size_t bytes_to_consume;
+    if (connp->in_current_len - connp->in_current_offset >= connp->in_chunked_length) {
+        bytes_to_consume = connp->in_chunked_length;
+    } else {
+        bytes_to_consume = connp->in_current_len - connp->in_current_offset;
     }
 
-    return HTP_ERROR;
+    // If the input buffer is empty, ask for more data.
+    if (bytes_to_consume == 0) return HTP_DATA;
+
+    // Consume data.
+    int rc = htp_tx_req_process_body_data(connp->in_tx, connp->in_current_data + connp->in_current_offset, bytes_to_consume);
+    if (rc != HTP_OK) return rc;
+
+    // Adjust counters.
+    connp->in_current_offset += bytes_to_consume;
+    connp->in_stream_offset += bytes_to_consume;
+    connp->in_tx->request_message_len += bytes_to_consume;
+    connp->in_chunked_length -= bytes_to_consume;
+
+    if (connp->in_chunked_length == 0) {
+        // End of request body.
+        connp->in_state = htp_connp_REQ_BODY_CHUNKED_DATA_END;
+        return HTP_OK;
+    }
+
+    // Ask for more data.
+    return HTP_DATA;
 }
 
 /**
