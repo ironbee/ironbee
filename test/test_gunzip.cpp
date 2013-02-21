@@ -53,21 +53,18 @@
 #endif
 
 static htp_status_t GUnzip_decompressor_callback(htp_tx_data_t *d) {
-    // fprint_raw_data(stdout, "decompressed", d->data, d->len);
-
-    bstr **output = (bstr **)htp_tx_get_user_data(d->tx);
+    bstr **output = (bstr **) htp_tx_get_user_data(d->tx);
     *output = bstr_dup_mem(d->data, d->len);
 
     return HTP_OK;
 }
 
 class GUnzip : public testing::Test {
-    
 protected:
 
     virtual htp_status_t decompressFile(const char *f) {
         // Construct complete file name
-        
+
         char filename[1025];
         strncpy(filename, home, 1024);
         strncat(filename, "/", 1024 - strlen(filename));
@@ -90,13 +87,13 @@ protected:
         htp_tx_data_t d;
         d.tx = tx;
         d.len = statbuf.st_size;
-        d.data = (const unsigned char *)malloc(d.len);
+        d.data = (const unsigned char *) malloc(d.len);
         if (d.data == NULL) {
             //FAIL() << "Memory allocation failed";
             return HTP_ERROR;
         }
 
-        if (read(fd, (void *)d.data, d.len) != d.len) {
+        if (read(fd, (void *) d.data, d.len) != d.len) {
             //FAIL() << "Reading from test file failed";
             close(fd);
             return HTP_ERROR;
@@ -168,6 +165,7 @@ TEST_F(GUnzip, FNAME) {
 }
 
 #if 0
+
 TEST_F(GUnzip, FCOMMENT) {
     htp_status_t rc = decompressFile("gztest-03-fcomment.gz");
     ASSERT_EQ(rc, HTP_OK);
@@ -198,6 +196,7 @@ TEST_F(GUnzip, FTEXT) {
 }
 
 #if 0
+
 TEST_F(GUnzip, FRESERVED1) {
     htp_status_t rc = decompressFile("gztest-07-freserved1.gz");
     ASSERT_EQ(rc, HTP_OK);
@@ -228,6 +227,7 @@ TEST_F(GUnzip, Multipart) {
 }
 
 #if 0
+
 TEST_F(GUnzip, InvalidMethod) {
     htp_status_t rc = decompressFile("gztest-11-invalid-method.gz.gz");
     ASSERT_EQ(rc, HTP_OK);

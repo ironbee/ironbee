@@ -126,14 +126,14 @@ static int HybridParsing_Get_Callback_RESPONSE_HEADERS(htp_connp_t *connp) {
 }
 
 static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
-    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(d->tx);   
+    struct HybridParsing_Get_User_Data *user_data = (struct HybridParsing_Get_User_Data *) htp_tx_get_user_data(d->tx);
 
-    // Don't do anything if in errored state
+    // Don't do anything if in errored state.
     if (user_data->response_body_correctly_received == -1) return HTP_ERROR;
 
     switch (user_data->response_body_chunks_seen) {
         case 0:
-            if ((d->len == 9)&&(memcmp(d->data, "<h1>Hello", 9) == 0)) {
+            if ((d->len == 9) && (memcmp(d->data, "<h1>Hello", 9) == 0)) {
                 user_data->response_body_chunks_seen++;
             } else {
                 SCOPED_TRACE("Mismatch in 1st chunk");
@@ -141,7 +141,7 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
             }
             break;
         case 1:
-            if ((d->len == 1)&&(memcmp(d->data, " ", 1) == 0)) {
+            if ((d->len == 1) && (memcmp(d->data, " ", 1) == 0)) {
                 user_data->response_body_chunks_seen++;
             } else {
                 SCOPED_TRACE("Mismatch in 2nd chunk");
@@ -149,7 +149,7 @@ static int HybridParsing_Get_Callback_RESPONSE_BODY_DATA(htp_tx_data_t *d) {
             }
             break;
         case 2:
-            if ((d->len == 11)&&(memcmp(d->data, "World!</h1>", 11) == 0)) {
+            if ((d->len == 11) && (memcmp(d->data, "World!</h1>", 11) == 0)) {
                 user_data->response_body_chunks_seen++;
                 user_data->response_body_correctly_received = 1;
             } else {
@@ -210,7 +210,7 @@ TEST_F(HybridParsing, GetTest) {
 
     // Request begins
     htp_tx_state_request_start(tx);
-    ASSERT_EQ(user_data.callback_TRANSACTION_START_invoked, 1);
+    ASSERT_EQ(1, user_data.callback_TRANSACTION_START_invoked);
 
     // Request line data
     htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_COPY);
@@ -223,24 +223,24 @@ TEST_F(HybridParsing, GetTest) {
 
     // Request line complete
     htp_tx_state_request_line(tx);
-    ASSERT_EQ(user_data.callback_REQUEST_LINE_invoked, 1);
+    ASSERT_EQ(1, user_data.callback_REQUEST_LINE_invoked);
 
     // Check request line data
-    ASSERT_EQ(bstr_cmp_c(tx->request_method, "GET"), 0);
-    ASSERT_EQ(bstr_cmp_c(tx->request_uri, "/"), 0);
-    ASSERT_EQ(bstr_cmp_c(tx->request_protocol, "HTTP/1.1"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/"));
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_protocol, "HTTP/1.1"));
 
     ASSERT_TRUE(tx->parsed_uri != NULL);
-    ASSERT_EQ(bstr_cmp_c(tx->parsed_uri->query, "p=1&q=2"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->query, "p=1&q=2"));
 
     // Check parameters
     htp_param_t *param_p = htp_tx_req_get_param(tx, "p", 1);
     ASSERT_TRUE(param_p != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(param_p->value, "1"));
 
     htp_param_t *param_q = htp_tx_req_get_param(tx, "q", 1);
     ASSERT_TRUE(param_q != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(param_q->value, "2"));
 
     // Request headers
     htp_tx_req_set_header(tx, "Host", 4, "www.example.com", 15, HTP_ALLOC_COPY);
@@ -251,47 +251,47 @@ TEST_F(HybridParsing, GetTest) {
     htp_tx_state_request_headers(tx);
 
     // Check headers
-    ASSERT_EQ(user_data.callback_REQUEST_HEADERS_invoked, 1);
+    ASSERT_EQ(1, user_data.callback_REQUEST_HEADERS_invoked);
 
     htp_header_t *h_host = (htp_header_t *) htp_table_get_c(tx->request_headers, "host");
     ASSERT_TRUE(h_host != NULL);
-    ASSERT_EQ(bstr_cmp_c(h_host->value, "www.example.com"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(h_host->value, "www.example.com"));
 
     htp_header_t *h_connection = (htp_header_t *) htp_table_get_c(tx->request_headers, "connection");
     ASSERT_TRUE(h_connection != NULL);
-    ASSERT_EQ(bstr_cmp_c(h_connection->value, "keep-alive"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(h_connection->value, "keep-alive"));
 
     htp_header_t *h_ua = (htp_header_t *) htp_table_get_c(tx->request_headers, "user-agent");
     ASSERT_TRUE(h_ua != NULL);
-    ASSERT_EQ(bstr_cmp_c(h_ua->value, "Mozilla/5.0"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(h_ua->value, "Mozilla/5.0"));
 
     // Request complete
     htp_tx_state_request_complete(tx);
-    ASSERT_EQ(user_data.callback_REQUEST_COMPLETE_invoked, 1);
+    ASSERT_EQ(1, user_data.callback_REQUEST_COMPLETE_invoked);
 
     // Response begins
     htp_tx_state_response_start(tx);
-    ASSERT_EQ(user_data.callback_RESPONSE_START_invoked, 1);
+    ASSERT_EQ(1, user_data.callback_RESPONSE_START_invoked);
 
     // Response line data
     htp_tx_res_set_status_line(tx, "HTTP/1.1 200 OK", 15, HTP_ALLOC_COPY);
-    ASSERT_EQ(bstr_cmp_c(tx->response_protocol, "HTTP/1.1"), 0);
-    ASSERT_EQ(tx->response_protocol_number, HTP_PROTOCOL_1_1);
-    ASSERT_EQ(tx->response_status_number, 200);
-    ASSERT_EQ(bstr_cmp_c(tx->response_message, "OK"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(tx->response_protocol, "HTTP/1.1"));
+    ASSERT_EQ(HTP_PROTOCOL_1_1, tx->response_protocol_number);
+    ASSERT_EQ(200, tx->response_status_number);
+    ASSERT_EQ(0, bstr_cmp_c(tx->response_message, "OK"));
 
     htp_tx_res_set_protocol_number(tx, HTP_PROTOCOL_1_0);
-    ASSERT_EQ(tx->response_protocol_number, HTP_PROTOCOL_1_0);
+    ASSERT_EQ(HTP_PROTOCOL_1_0, tx->response_protocol_number);
 
     htp_tx_res_set_status_code(tx, 500);
-    ASSERT_EQ(tx->response_status_number, 500);
+    ASSERT_EQ(500, tx->response_status_number);
 
     htp_tx_res_set_status_message(tx, "Internal Server Error", 21, HTP_ALLOC_COPY);
-    ASSERT_EQ(bstr_cmp_c(tx->response_message, "Internal Server Error"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(tx->response_message, "Internal Server Error"));
 
     // Response line complete
     htp_tx_state_response_line(tx);
-    ASSERT_EQ(user_data.callback_HTP_RESPONSE_LINE_invoked, 1);
+    ASSERT_EQ(1, user_data.callback_HTP_RESPONSE_LINE_invoked);
 
     // Response header data
     htp_tx_res_set_header(tx, "Content-Type", 12, "text/html", 9, HTP_ALLOC_COPY);
@@ -299,26 +299,26 @@ TEST_F(HybridParsing, GetTest) {
 
     // Response headers complete
     htp_tx_state_response_headers(tx);
-    ASSERT_EQ(user_data.callback_RESPONSE_HEADERS_invoked, 1);
+    ASSERT_EQ(1, user_data.callback_RESPONSE_HEADERS_invoked);
 
     // Check response headers
     htp_header_t *h_content_type = (htp_header_t *) htp_table_get_c(tx->response_headers, "content-type");
     ASSERT_TRUE(h_content_type != NULL);
-    ASSERT_EQ(bstr_cmp_c(h_content_type->value, "text/html"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(h_content_type->value, "text/html"));
 
     htp_header_t *h_server = (htp_header_t *) htp_table_get_c(tx->response_headers, "server");
     ASSERT_TRUE(h_server != NULL);
-    ASSERT_EQ(bstr_cmp_c(h_server->value, "Apache"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(h_server->value, "Apache"));
 
     // Request body data   
     htp_tx_res_process_body_data(tx, "<h1>Hello", 9);
     htp_tx_res_process_body_data(tx, " ", 1);
     htp_tx_res_process_body_data(tx, "World!</h1>", 11);
-    ASSERT_EQ(user_data.response_body_correctly_received, 1);
+    ASSERT_EQ(1, user_data.response_body_correctly_received);
 
     // Trailing response headers
     htp_tx_res_set_headers_clear(tx);
-    ASSERT_EQ(htp_table_size(tx->response_headers), 0);
+    ASSERT_EQ(0, htp_table_size(tx->response_headers));
 
     htp_tx_res_set_header(tx, "Content-Type", 12, "text/html", 9, HTP_ALLOC_COPY);
     htp_tx_res_set_header(tx, "Server", 6, "Apache", 6, HTP_ALLOC_COPY);
@@ -326,14 +326,14 @@ TEST_F(HybridParsing, GetTest) {
     // Check trailing response headers
     h_content_type = (htp_header_t *) htp_table_get_c(tx->response_headers, "content-type");
     ASSERT_TRUE(h_content_type != NULL);
-    ASSERT_EQ(bstr_cmp_c(h_content_type->value, "text/html"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(h_content_type->value, "text/html"));
 
     h_server = (htp_header_t *) htp_table_get_c(tx->response_headers, "server");
     ASSERT_TRUE(h_server != NULL);
-    ASSERT_EQ(bstr_cmp_c(h_server->value, "Apache"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(h_server->value, "Apache"));
 
     htp_tx_state_response_complete(tx);
-    ASSERT_EQ(user_data.callback_HTP_RESPONSE_COMPLETE_invoked, 1);
+    ASSERT_EQ(1, user_data.callback_HTP_RESPONSE_COMPLETE_invoked);
 }
 
 /**
@@ -357,7 +357,7 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
 
     // Configure headers to trigger the URLENCODED parser
     htp_tx_req_set_header(tx, "Content-Type", 12, HTP_URLENCODED_MIME_TYPE,
-        strlen(HTP_URLENCODED_MIME_TYPE), HTP_ALLOC_COPY);
+            strlen(HTP_URLENCODED_MIME_TYPE), HTP_ALLOC_COPY);
     htp_tx_req_set_header(tx, "Content-Length", 14, "7", 1, HTP_ALLOC_COPY);
 
     // Request headers complete
@@ -370,7 +370,7 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
 
     // Trailing request headers
     htp_tx_req_set_headers_clear(tx);
-    ASSERT_EQ(htp_table_size(tx->request_headers), 0);
+    ASSERT_EQ(0, htp_table_size(tx->request_headers));
 
     htp_tx_req_set_header(tx, "Host", 4, "www.example.com", 15, HTP_ALLOC_COPY);
     htp_tx_req_set_header(tx, "Connection", 10, "keep-alive", 10, HTP_ALLOC_COPY);
@@ -378,15 +378,15 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
 
     htp_header_t *h_host = (htp_header_t *) htp_table_get_c(tx->request_headers, "host");
     ASSERT_TRUE(h_host != NULL);
-    ASSERT_EQ(bstr_cmp_c(h_host->value, "www.example.com"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(h_host->value, "www.example.com"));
 
     htp_header_t *h_connection = (htp_header_t *) htp_table_get_c(tx->request_headers, "connection");
     ASSERT_TRUE(h_connection != NULL);
-    ASSERT_EQ(bstr_cmp_c(h_connection->value, "keep-alive"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(h_connection->value, "keep-alive"));
 
     htp_header_t *h_ua = (htp_header_t *) htp_table_get_c(tx->request_headers, "user-agent");
     ASSERT_TRUE(h_ua != NULL);
-    ASSERT_EQ(bstr_cmp_c(h_ua->value, "Mozilla/5.0"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(h_ua->value, "Mozilla/5.0"));
 
     // Request complete
     htp_tx_state_request_complete(tx);
@@ -395,18 +395,18 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
 
     htp_param_t *param_p = htp_tx_req_get_param(tx, "p", 1);
     ASSERT_TRUE(param_p != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(param_p->value, "1"));
 
     htp_param_t *param_q = htp_tx_req_get_param(tx, "q", 1);
     ASSERT_TRUE(param_q != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(param_q->value, "2"));
 }
 
 static char HybridParsing_CompressedResponse[] =
-"H4sIAAAAAAAAAG2PwQ6CMBBE73xFU++tXk2pASliAiEhPegRYUOJYEktEP5eqB6dy2ZnJ5O3LJFZ"
-"yj2WiCBah7zKVPBMT1AjCf2gTWnabmH0e/AY/QXDPLqj8HLO07zw8S52wkiKm1zXvRPeeg//2lbX"
-"kwpQrauxh5dFqnyj3uVYgJJCxD5W1g5HSud5Jo3WTQek0mR8UgNlDYZOLcz0ZMuH3y+YKzDAaMDJ"
-"SrihOVL32QceVXUy4QAAAA==";
+        "H4sIAAAAAAAAAG2PwQ6CMBBE73xFU++tXk2pASliAiEhPegRYUOJYEktEP5eqB6dy2ZnJ5O3LJFZ"
+        "yj2WiCBah7zKVPBMT1AjCf2gTWnabmH0e/AY/QXDPLqj8HLO07zw8S52wkiKm1zXvRPeeg//2lbX"
+        "kwpQrauxh5dFqnyj3uVYgJJCxD5W1g5HSud5Jo3WTQek0mR8UgNlDYZOLcz0ZMuH3y+YKzDAaMDJ"
+        "SrihOVL32QceVXUy4QAAAA==";
 
 static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
     htp_tx_state_request_start(tx);
@@ -449,8 +449,8 @@ TEST_F(HybridParsing, CompressedResponse) {
 
     HybridParsing_CompressedResponse_Setup(tx);
 
-    ASSERT_EQ(tx->response_message_len, 187);    
-    ASSERT_EQ(tx->response_entity_len, 225);
+    ASSERT_EQ(187, tx->response_message_len);
+    ASSERT_EQ(225, tx->response_entity_len);
 }
 
 /**
@@ -466,8 +466,8 @@ TEST_F(HybridParsing, CompressedResponseNoDecompression) {
 
     HybridParsing_CompressedResponse_Setup(tx);
 
-    ASSERT_EQ(tx->response_message_len, 187);
-    ASSERT_EQ(tx->response_entity_len, 187);
+    ASSERT_EQ(187, tx->response_message_len);
+    ASSERT_EQ(187, tx->response_entity_len);
 }
 
 static int HybridParsing_ForcedDecompressionTest_Callback_RESPONSE_HEADERS(htp_connp_t *connp) {
@@ -491,8 +491,8 @@ TEST_F(HybridParsing, ForcedDecompression) {
 
     HybridParsing_CompressedResponse_Setup(tx);
 
-    ASSERT_EQ(tx->response_message_len, 187);
-    ASSERT_EQ(tx->response_entity_len, 225);
+    ASSERT_EQ(187, tx->response_message_len);
+    ASSERT_EQ(225, tx->response_entity_len);
 }
 
 static int HybridParsing_DisableDecompressionTest_Callback_RESPONSE_HEADERS(htp_connp_t *connp) {
@@ -516,17 +516,17 @@ TEST_F(HybridParsing, DisableDecompression) {
 
     HybridParsing_CompressedResponse_Setup(tx);
 
-    ASSERT_EQ(tx->response_message_len, 187);
-    ASSERT_EQ(tx->response_entity_len, 187);
+    ASSERT_EQ(187, tx->response_message_len);
+    ASSERT_EQ(187, tx->response_entity_len);
 }
 
 TEST_F(HybridParsing, ParamCaseSensitivity) {
     // Create a new LibHTP transaction
     htp_tx_t *tx = htp_connp_tx_create(connp);
-    ASSERT_TRUE(tx != NULL);   
+    ASSERT_TRUE(tx != NULL);
 
     // Request begins
-    htp_tx_state_request_start(tx);    
+    htp_tx_state_request_start(tx);
 
     // Request line data
     htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_COPY);
@@ -538,29 +538,29 @@ TEST_F(HybridParsing, ParamCaseSensitivity) {
     htp_tx_req_set_protocol_0_9(tx, 0);
 
     // Request line complete
-    htp_tx_state_request_line(tx);    
-    
+    htp_tx_state_request_line(tx);
+
     // Check the parameters.
 
     htp_param_t *param_p = htp_tx_req_get_param(tx, "p", 1);
     ASSERT_TRUE(param_p != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(param_p->value, "1"));
 
     param_p = htp_tx_req_get_param(tx, "P", 1);
     ASSERT_TRUE(param_p != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(param_p->value, "1"));
 
     htp_param_t *param_q = htp_tx_req_get_param(tx, "q", 1);
     ASSERT_TRUE(param_q != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(param_q->value, "2"));
 
     param_q = htp_tx_req_get_param_ex(tx, HTP_SOURCE_QUERY_STRING, "q", 1);
     ASSERT_TRUE(param_q != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(param_q->value, "2"));
 
     param_q = htp_tx_req_get_param_ex(tx, HTP_SOURCE_QUERY_STRING, "Q", 1);
     ASSERT_TRUE(param_q != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(param_q->value, "2"));
 }
 
 /**
@@ -585,7 +585,7 @@ TEST_F(HybridParsing, PostUrlecodedChunked) {
 
     // Configure headers to trigger the URLENCODED parser.
     htp_tx_req_set_header(tx, "Content-Type", 12, HTP_URLENCODED_MIME_TYPE,
-        strlen(HTP_URLENCODED_MIME_TYPE), HTP_ALLOC_COPY);
+            strlen(HTP_URLENCODED_MIME_TYPE), HTP_ALLOC_COPY);
     htp_tx_req_set_header(tx, "Transfer-Encoding", 17, "chunked", 7, HTP_ALLOC_COPY);
 
     // Request headers complete.
@@ -603,9 +603,9 @@ TEST_F(HybridParsing, PostUrlecodedChunked) {
 
     htp_param_t *param_p = htp_tx_req_get_param(tx, "p", 1);
     ASSERT_TRUE(param_p != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_p->value, "1"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(param_p->value, "1"));
 
     htp_param_t *param_q = htp_tx_req_get_param(tx, "q", 1);
     ASSERT_TRUE(param_q != NULL);
-    ASSERT_EQ(bstr_cmp_c(param_q->value, "2"), 0);
+    ASSERT_EQ(0, bstr_cmp_c(param_q->value, "2"));
 }

@@ -38,14 +38,14 @@
  * @author Craig Forbes <cforbes@qualys.com>
  */
 
-#include<iostream>
+#include <iostream>
 
-#include<gtest/gtest.h>
+#include <gtest/gtest.h>
 
-#include<htp/htp.h>
-#include<htp/htp_list.h>
-#include<htp/htp_utf8_decoder.h>
-#include<htp/htp_base64.h>
+#include <htp/htp.h>
+#include <htp/htp_list.h>
+#include <htp/htp_utf8_decoder.h>
+#include <htp/htp_base64.h>
 
 TEST(Utf8, SingleByte) {
     uint32_t state = HTP_UTF8_ACCEPT;
@@ -69,7 +69,7 @@ TEST(Base64, Single) {
 }
 
 TEST(Base64, Decode) {
-    const char *input ="dGhpcyBpcyBhIHRlc3QuLg==";
+    const char *input = "dGhpcyBpcyBhIHRlc3QuLg==";
     bstr *out = htp_base64_decode_mem(input, strlen(input));
     EXPECT_EQ(0, bstr_cmp_c(out, "this is a test.."));
     bstr_free(out);
@@ -114,19 +114,19 @@ TEST(UtilTest, Chomp) {
 
     strcpy(data, "test\r\n");
     len = strlen(data);
-    result = htp_chomp((unsigned char*)data, &len);
+    result = htp_chomp((unsigned char*) data, &len);
     EXPECT_EQ(2, result);
     EXPECT_EQ(4, len);
 
     strcpy(data, "foo\n");
     len = strlen(data);
-    result = htp_chomp((unsigned char*)data, &len);
+    result = htp_chomp((unsigned char*) data, &len);
     EXPECT_EQ(1, result);
     EXPECT_EQ(3, len);
 
     strcpy(data, "arfarf");
     len = strlen(data);
-    result = htp_chomp((unsigned char*)data, &len);
+    result = htp_chomp((unsigned char*) data, &len);
     EXPECT_EQ(0, result);
     EXPECT_EQ(6, len);
 }
@@ -176,25 +176,25 @@ TEST(UtilTest, IsLineWhitespace) {
 
 TEST(UtilTest, ParsePositiveIntegerWhitespace) {
     EXPECT_EQ(123, htp_parse_positive_integer_whitespace(
-        (unsigned char*)"123   ", 6, 10));
+            (unsigned char*) "123   ", 6, 10));
     EXPECT_EQ(123, htp_parse_positive_integer_whitespace(
-        (unsigned char*)"   123", 6, 10));
+            (unsigned char*) "   123", 6, 10));
     EXPECT_EQ(123, htp_parse_positive_integer_whitespace(
-        (unsigned char*)"   123   ", 9, 10));
+            (unsigned char*) "   123   ", 9, 10));
     EXPECT_EQ(-1, htp_parse_positive_integer_whitespace(
-        (unsigned char*)"a123", 4, 10));
+            (unsigned char*) "a123", 4, 10));
     EXPECT_EQ(-1001, htp_parse_positive_integer_whitespace(
-        (unsigned char*)"   \t", 4, 10));
+            (unsigned char*) "   \t", 4, 10));
     EXPECT_EQ(-1002, htp_parse_positive_integer_whitespace(
-        (unsigned char*)"123b ", 5, 10));
+            (unsigned char*) "123b ", 5, 10));
 
     EXPECT_EQ(-1, htp_parse_positive_integer_whitespace(
-        (unsigned char*)"   a123   ", 9, 10));
+            (unsigned char*) "   a123   ", 9, 10));
     EXPECT_EQ(-1002, htp_parse_positive_integer_whitespace(
-        (unsigned char*)"   123b   ", 9, 10));
+            (unsigned char*) "   123b   ", 9, 10));
 
     EXPECT_EQ(0x123, htp_parse_positive_integer_whitespace(
-        (unsigned char*)"   123   ", 9, 16));
+            (unsigned char*) "   123   ", 9, 16));
 }
 
 TEST(UtilTest, ParseContentLength) {
@@ -206,14 +206,14 @@ TEST(UtilTest, ParseContentLength) {
 }
 
 TEST(UtilTest, ParseChunkedLength) {
-    EXPECT_EQ(0x12a5, htp_parse_chunked_length((unsigned char*)"12a5",4));
+    EXPECT_EQ(0x12a5, htp_parse_chunked_length((unsigned char*) "12a5", 4));
 }
 
 TEST(UtilTest, IsLineFolded) {
-    EXPECT_EQ(-1, htp_connp_is_line_folded((unsigned char*)"", 0));
-    EXPECT_EQ(1, htp_connp_is_line_folded((unsigned char*)"\tline", 5));
-    EXPECT_EQ(1, htp_connp_is_line_folded((unsigned char*)" line", 5));
-    EXPECT_EQ(0, htp_connp_is_line_folded((unsigned char*)"line ", 5));
+    EXPECT_EQ(-1, htp_connp_is_line_folded((unsigned char*) "", 0));
+    EXPECT_EQ(1, htp_connp_is_line_folded((unsigned char*) "\tline", 5));
+    EXPECT_EQ(1, htp_connp_is_line_folded((unsigned char*) " line", 5));
+    EXPECT_EQ(0, htp_connp_is_line_folded((unsigned char*) "line ", 5));
 }
 
 static void free_htp_uri_t(htp_uri_t **urip) {
@@ -245,6 +245,7 @@ struct uri_expected {
     const char *query;
     const char *fragment;
 };
+
 struct uri_test {
     const char *uri;
     uri_expected expected;
@@ -259,7 +260,7 @@ bool bstr_equal_c(const bstr *b, const char *c) {
 }
 
 void append_message(std::ostream & o,
-                    const char *label, const char *expected, bstr *actual) {
+        const char *label, const char *expected, bstr *actual) {
     o << label << " missmatch: ";
     if (expected != NULL) {
         o << "'" << expected << "'";
@@ -269,58 +270,57 @@ void append_message(std::ostream & o,
     o << " != ";
     if (actual != NULL) {
         o << "'";
-        o.write((const char *)bstr_ptr(actual), bstr_len(actual));
+        o.write((const char *) bstr_ptr(actual), bstr_len(actual));
         o << "'";
     } else {
         o << "<NULL>";
     }
-    o << std:: endl;
+    o << std::endl;
 }
 
-
 static ::testing::AssertionResult UriIsExpected(const char *expected_var,
-                                                const char *actual_var,
-                                                const uri_expected &expected,
-                                                const htp_uri_t *actual) {
+        const char *actual_var,
+        const uri_expected &expected,
+        const htp_uri_t *actual) {
     std::stringstream msg;
-    bool equal=true;
+    bool equal = true;
 
-    if (! bstr_equal_c(actual->scheme, expected.scheme)) {
+    if (!bstr_equal_c(actual->scheme, expected.scheme)) {
         equal = false;
         append_message(msg, "scheme", expected.scheme, actual->scheme);
     }
 
-    if (! bstr_equal_c(actual->username, expected.username)) {
+    if (!bstr_equal_c(actual->username, expected.username)) {
         equal = false;
         append_message(msg, "username", expected.username, actual->username);
     }
 
-    if (! bstr_equal_c(actual->password, expected.password)) {
+    if (!bstr_equal_c(actual->password, expected.password)) {
         equal = false;
         append_message(msg, "password", expected.password, actual->password);
     }
 
-    if (! bstr_equal_c(actual->hostname, expected.hostname)) {
+    if (!bstr_equal_c(actual->hostname, expected.hostname)) {
         equal = false;
         append_message(msg, "hostname", expected.hostname, actual->hostname);
     }
 
-    if (! bstr_equal_c(actual->port, expected.port)) {
+    if (!bstr_equal_c(actual->port, expected.port)) {
         equal = false;
         append_message(msg, "port", expected.port, actual->port);
     }
 
-    if (! bstr_equal_c(actual->path, expected.path)) {
+    if (!bstr_equal_c(actual->path, expected.path)) {
         equal = false;
         append_message(msg, "path", expected.path, actual->path);
     }
 
-    if (! bstr_equal_c(actual->query, expected.query)) {
+    if (!bstr_equal_c(actual->query, expected.query)) {
         equal = false;
         append_message(msg, "query", expected.query, actual->query);
     }
 
-    if (! bstr_equal_c(actual->fragment, expected.fragment)) {
+    if (!bstr_equal_c(actual->fragment, expected.fragment)) {
         equal = false;
         append_message(msg, "fragment", expected.fragment, actual->fragment);
     }
@@ -334,20 +334,21 @@ static ::testing::AssertionResult UriIsExpected(const char *expected_var,
 
 struct uri_test uri_tests[] = {
     {"http://user:pass@www.example.com:1234/path1/path2?a=b&c=d#frag",
-     {"http", "user", "pass", "www.example.com", "1234", "/path1/path2", "a=b&c=d","frag"}},
+        {"http", "user", "pass", "www.example.com", "1234", "/path1/path2", "a=b&c=d", "frag"}},
     {"http://host.com/path",
-     {"http", NULL, NULL, "host.com", NULL, "/path", NULL, NULL}},
+        {"http", NULL, NULL, "host.com", NULL, "/path", NULL, NULL}},
     {"http://",
-     {"http", NULL, NULL, NULL, NULL, "//", NULL,NULL}},
+        {"http", NULL, NULL, NULL, NULL, "//", NULL, NULL}},
     {"/path",
-     {NULL, NULL, NULL, NULL, NULL, "/path", NULL, NULL}},
+        {NULL, NULL, NULL, NULL, NULL, "/path", NULL, NULL}},
     {"://",
-     {"", NULL, NULL, NULL, NULL, "//", NULL,NULL}},
+        {"", NULL, NULL, NULL, NULL, "//", NULL, NULL}},
     {"",
-     {NULL, NULL, NULL, NULL, NULL, NULL, NULL,NULL}},
+        {NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}},
     {"http://user@host.com",
-     {"http", "user", NULL, "host.com", NULL, "", NULL, NULL}},
-    {NULL,{}}
+        {"http", "user", NULL, "host.com", NULL, "", NULL, NULL}},
+    {NULL,
+        {}}
 };
 
 TEST(UtilTest, HtpParseUri) {
@@ -365,7 +366,7 @@ TEST(UtilTest, HtpParseUri) {
         input = bstr_dup_c(test->uri);
         EXPECT_EQ(HTP_OK, htp_parse_uri(input, &uri));
         EXPECT_PRED_FORMAT2(UriIsExpected, test->expected, uri)
-            << "Failed URI = " << test->uri << std::endl;
+                << "Failed URI = " << test->uri << std::endl;
 
         bstr_free(input);
         free_htp_uri_t(&uri);
@@ -378,9 +379,9 @@ TEST(UtilTest, ParseHostPort1) {
     bstr *host;
     int port;
     uint64_t flags = 0;
-    
+
     ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
-    
+
     ASSERT_TRUE(bstr_cmp(i, host) == 0);
     ASSERT_EQ(-1, port);
     ASSERT_EQ(0, flags);
@@ -453,7 +454,7 @@ TEST(UtilTest, ParseHostPort5) {
     int port;
     uint64_t flags = 0;
 
-    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));   
+    ASSERT_EQ(HTP_OK, htp_parse_hostport(i, &host, &port, &flags));
 
     ASSERT_TRUE(host != NULL);
     ASSERT_TRUE(bstr_cmp(e, host) == 0);
