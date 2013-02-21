@@ -935,9 +935,10 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
     ib_rule_log_debug(rule_exec, "Setting HTTP error response: status=%d",
                       rule_exec->tx->block_status);
     rc = ib_server_error_response(ib->server, tx, tx->block_status);
-    if (rc == IB_DECLINED) {
+    if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_rule_log_notice(rule_exec,
                            "Server not willing to set HTTP error response.");
+        rc = IB_OK;
     }
     else if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,
@@ -951,9 +952,10 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
      */
     ib_rule_log_debug(rule_exec, "Setting HTTP error response data.");
     rc = ib_server_error_body(ib->server, tx, default_block_document);
-    if (rc == IB_DECLINED) {
+    if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_rule_log_notice(rule_exec,
                            "Server not willing to set HTTP error response data.");
+        rc = IB_OK;
     }
     else if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,

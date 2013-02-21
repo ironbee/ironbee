@@ -444,11 +444,15 @@ static ib_status_t ib_errhdr_callback(ib_tx_t *tx, const char *hdr, const char *
 static ib_status_t ib_errdata_callback(ib_tx_t *tx, const char *data, void *cbdata)
 {
     ib_txn_ctx *ctx = (ib_txn_ctx *)tx->sctx;
+    /* Handle No Data as zero length data. */
+    if (data == NULL) {
+        return IB_OK;
+    }
+
     /* We can't return an error after the response has started */
     if (ctx->state & START_RESPONSE)
         return IB_DECLINED;
-    if (!data)
-        return IB_EINVAL;
+
     ctx->err_body = TSstrdup(data);
     return IB_OK;
 }
