@@ -151,59 +151,69 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
 }
 
 /**
- * Processes identity response body.
+ * Processes an identity response body of known length.
  *
  * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-htp_status_t htp_connp_RES_BODY_IDENTITY(htp_connp_t *connp) {
+htp_status_t htp_connp_RES_BODY_IDENTITY_CL_KNOWN(htp_connp_t *connp) {
     size_t bytes_to_consume;   
-    
-    if (connp->out_body_data_left > 0) {
-        // The size of the response body is known; we consume only as much as we need.
-        if (connp->out_current_len - connp->out_current_offset >= connp->out_body_data_left) {
-            bytes_to_consume = connp->out_body_data_left;
-        } else {
-            bytes_to_consume = connp->out_current_len - connp->out_current_offset;
-        }
+        
+    // Determine how many bytes we can consume.
+    if (connp->out_current_len - connp->out_current_offset >= connp->out_body_data_left) {
+        bytes_to_consume = connp->out_body_data_left;
     } else {
-        // The size of the response body is not known; we consume all data until the connection is closed.
         bytes_to_consume = connp->out_current_len - connp->out_current_offset;
-    }   
+    }       
+    
+    if (bytes_to_consume == 0) return HTP_DATA;    
 
-    // If the input buffer is empty, we will either ask for more data, or, if
-    // the stream was closed and the size of response body data is not know,
-    // finalize the response.
-    if (bytes_to_consume == 0) {        
-        if (((connp->out_body_data_left == -1) && (connp->out_status == HTP_STREAM_CLOSED))) {            
-            connp->out_state = htp_connp_RES_FINALIZE;
-            return HTP_OK;
-        }
-
-        return HTP_DATA;
-    }   
-
+    // Consume the data.
     int rc = htp_tx_res_process_body_data(connp->out_tx, connp->out_current_data + connp->out_current_offset, bytes_to_consume);
     if (rc != HTP_OK) return rc;
 
-    // Adjust counters.
+    // Adjust the counters.
     connp->out_current_offset += bytes_to_consume;
     connp->out_stream_offset += bytes_to_consume;
     // connp->out_tx->response_message_len += bytes_to_consume;
 
-    if (connp->out_body_data_left > 0) {
-        connp->out_body_data_left -= bytes_to_consume;
-        if (connp->out_body_data_left == 0) {
-            connp->out_state = htp_connp_RES_FINALIZE;
-            return HTP_OK;
-        }
-    } else {
-        if (connp->out_status == HTP_STREAM_CLOSED) {
-            connp->out_state = htp_connp_RES_FINALIZE;
-            return HTP_OK;
-        }
+    // Have we seen the entire response body?
+    connp->out_body_data_left -= bytes_to_consume;
+    if (connp->out_body_data_left == 0) {
+        connp->out_state = htp_connp_RES_FINALIZE;
+        return HTP_OK;
     }
 
+    return HTP_DATA;
+}
+
+/**
+ * Processes identity response body of unknown length. In this case, we assume the
+ * response body consumes all data until the end of the stream.
+ *
+ * @param[in] connp
+ * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
+ */
+htp_status_t htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE(htp_connp_t *connp) {        
+    // Consume all data from the input buffer.
+    size_t bytes_to_consume = connp->out_current_len - connp->out_current_offset;   
+
+    if (bytes_to_consume != 0) {
+        int rc = htp_tx_res_process_body_data(connp->out_tx, connp->out_current_data + connp->out_current_offset, bytes_to_consume);
+        if (rc != HTP_OK) return rc;
+
+        // Adjust the counters.
+        connp->out_current_offset += bytes_to_consume;
+        connp->out_stream_offset += bytes_to_consume;
+        // connp->out_tx->response_message_len += bytes_to_consume;
+    }
+
+    // Have we seen the entire response body?
+    if (connp->out_status == HTP_STREAM_CLOSED) {
+        connp->out_state = htp_connp_RES_FINALIZE;
+        return HTP_OK;
+    }
+   
     return HTP_DATA;
 }
 
@@ -338,7 +348,7 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
                 connp->out_body_data_left = connp->out_content_length;
 
                 if (connp->out_content_length != 0) {
-                    connp->out_state = htp_connp_RES_BODY_IDENTITY;
+                    connp->out_state = htp_connp_RES_BODY_IDENTITY_CL_KNOWN;
                     connp->out_tx->progress = HTP_RESPONSE_BODY;
                 } else {
                     connp->out_state = htp_connp_RES_FINALIZE;
@@ -363,9 +373,10 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             // 5. By the server closing the connection. (Closing the connection
             //   cannot be used to indicate the end of a request body, since that
             //   would leave no possibility for the server to send back a response.)
-            connp->out_state = htp_connp_RES_BODY_IDENTITY;
+            connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
             connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
             connp->out_tx->progress = HTP_RESPONSE_BODY;
+            connp->out_body_data_left = -1;
         }
     }
 
@@ -587,10 +598,13 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 int rc = htp_tx_res_process_body_data(connp->out_tx, connp->out_line, connp->out_line_len + chomp_result);
                 if (rc != HTP_OK) return rc;
 
-                // Continue to process response body
+                // Continue to process response body. Because we don't have
+                // any headers to parse, we assume the body continues until
+                // the end of the stream.
                 connp->out_tx->response_transfer_coding = HTP_CODING_IDENTITY;
-                connp->out_state = htp_connp_RES_BODY_IDENTITY;
                 connp->out_tx->progress = HTP_RESPONSE_BODY;
+                connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
+                connp->out_body_data_left = -1;
 
                 return HTP_OK;
             }

@@ -947,7 +947,8 @@ htp_status_t htp_tx_state_response_start(htp_tx_t *tx) {
         tx->response_transfer_coding = HTP_CODING_IDENTITY;
         tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
         tx->progress = HTP_RESPONSE_BODY;
-        tx->connp->out_state = htp_connp_RES_BODY_IDENTITY;
+        tx->connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
+        tx->connp->out_body_data_left = -1;
     } else {
         tx->connp->out_state = htp_connp_RES_LINE;
         tx->progress = HTP_RESPONSE_LINE;

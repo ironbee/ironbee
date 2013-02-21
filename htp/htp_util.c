@@ -1977,7 +1977,8 @@ char *htp_connp_out_state_as_string(htp_connp_t *connp) {
     if (connp->out_state == htp_connp_RES_LINE) return "RES_LINE";
     if (connp->out_state == htp_connp_RES_HEADERS) return "RES_HEADERS";
     if (connp->out_state == htp_connp_RES_BODY_DETERMINE) return "RES_BODY_DETERMINE";
-    if (connp->out_state == htp_connp_RES_BODY_IDENTITY) return "RES_BODY_IDENTITY";
+    if (connp->out_state == htp_connp_RES_BODY_IDENTITY_CL_KNOWN) return "RES_BODY_IDENTITY_CL_KNOWN";
+    if (connp->out_state == htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE) return "RES_BODY_IDENTITY_STREAM_CLOSE";
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_LENGTH) return "RES_BODY_CHUNKED_LENGTH";
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA) return "RES_BODY_CHUNKED_DATA";
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA_END) return "RES_BODY_CHUNKED_DATA_END";
