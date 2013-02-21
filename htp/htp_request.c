@@ -521,17 +521,35 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
     int rc = htp_tx_state_request_complete(connp->in_tx);
     if (rc != HTP_OK) return rc;
 
-    // We're done with this request
-    connp->in_state = htp_connp_REQ_IDLE;
+    if (connp->in_tx->is_protocol_0_9) {
+        connp->in_state = htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9;        
+    } else {
+        connp->in_state = htp_connp_REQ_IDLE;
+    }
+    
     connp->in_tx = NULL;
 
     return HTP_OK;
 }
 
+htp_status_t htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9(htp_connp_t *connp) {
+    // Consume whatever is left in the buffer.
+
+    size_t bytes_left = connp->in_current_len - connp->in_current_offset;
+
+    if (bytes_left > 0) {
+        connp->conn->flags |= HTP_CONN_HTTP_0_9_EXTRA;
+    }
+    
+    connp->in_current_offset += bytes_left;
+    connp->in_stream_offset += bytes_left;
+    
+    return HTP_DATA;
+}
+
 /**
- * The idle state is invoked before and after every transaction. Consequently,
- * it will start a new transaction when data is available and finalise a transaction
- * which has been processed.
+ * The idle state is where the parser will end up after a transaction is processed.
+ * If there is more data available, a new request will be started.
  *
  * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.

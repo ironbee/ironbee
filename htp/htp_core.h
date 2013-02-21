@@ -191,36 +191,37 @@ enum htp_file_source_t {
 // that contains the header. Both uses are useful.
 
 // Connection flags are 8 bits wide.
-#define HTP_CONN_PIPELINED                  0x0000001
+#define HTP_CONN_PIPELINED                 0x00000001
+#define HTP_CONN_HTTP_0_9_EXTRA            0x00000002
 
 // All other flags are 64 bits wide.
-#define HTP_FIELD_UNPARSEABLE               0x0000002
-#define HTP_FIELD_INVALID                   0x0000004
-#define HTP_FIELD_FOLDED                    0x0000008
-#define HTP_FIELD_REPEATED                  0x0000010
-#define HTP_FIELD_LONG                      0x0000020
-#define HTP_FIELD_RAW_NUL                   0x0000040
-#define HTP_REQUEST_SMUGGLING               0x0000080
-#define HTP_INVALID_FOLDING                 0x0000100
-#define HTP_INVALID_CHUNKING                0x0000200
-#define HTP_MULTI_PACKET_HEAD               0x0000400
-#define HTP_HOST_MISSING                    0x0000800
-#define HTP_HOST_AMBIGUOUS                  0x0001000
-#define HTP_PATH_ENCODED_NUL                0x0002000
-#define HTP_PATH_INVALID_ENCODING           0x0004000
-#define HTP_PATH_INVALID                    0x0008000
-#define HTP_PATH_OVERLONG_U                 0x0010000
-#define HTP_PATH_ENCODED_SEPARATOR          0x0020000
-#define HTP_PATH_UTF8_VALID                 0x0040000 /* At least one valid UTF-8 character and no invalid ones. */
-#define HTP_PATH_UTF8_INVALID               0x0080000
-#define HTP_PATH_UTF8_OVERLONG              0x0100000
-#define HTP_PATH_HALF_FULL_RANGE            0x0200000 /* Range U+FF00 - U+FFEF detected. */
-#define HTP_STATUS_LINE_INVALID             0x0400000
-#define HTP_HOST_INVALID                    0x0800000
-#define HTP_URLEN_ENCODED_NUL               0x1000000
-#define HTP_URLEN_INVALID_ENCODING          0x2000000
-#define HTP_URLEN_OVERLONG_U                0x4000000
-#define HTP_URLEN_HALF_FULL_RANGE           0x8000000 /* Range U+FF00 - U+FFEF detected. */
+#define HTP_FIELD_UNPARSEABLE              0x00000004
+#define HTP_FIELD_INVALID                  0x00000008
+#define HTP_FIELD_FOLDED                   0x00000010
+#define HTP_FIELD_REPEATED                 0x00000020
+#define HTP_FIELD_LONG                     0x00000040
+#define HTP_FIELD_RAW_NUL                  0x00000080
+#define HTP_REQUEST_SMUGGLING              0x00000100
+#define HTP_INVALID_FOLDING                0x00000200
+#define HTP_INVALID_CHUNKING               0x00000400
+#define HTP_MULTI_PACKET_HEAD              0x00000800
+#define HTP_HOST_MISSING                   0x00001000
+#define HTP_HOST_AMBIGUOUS                 0x00002000
+#define HTP_PATH_ENCODED_NUL               0x00004000
+#define HTP_PATH_INVALID_ENCODING          0x00008000
+#define HTP_PATH_INVALID                   0x00010000
+#define HTP_PATH_OVERLONG_U                0x00020000
+#define HTP_PATH_ENCODED_SEPARATOR         0x00040000
+#define HTP_PATH_UTF8_VALID                0x00080000 /* At least one valid UTF-8 character and no invalid ones. */
+#define HTP_PATH_UTF8_INVALID              0x00100000
+#define HTP_PATH_UTF8_OVERLONG             0x00200000
+#define HTP_PATH_HALF_FULL_RANGE           0x00400000 /* Range U+FF00 - U+FFEF detected. */
+#define HTP_STATUS_LINE_INVALID            0x00800000
+#define HTP_HOST_INVALID                   0x01000000
+#define HTP_URLEN_ENCODED_NUL              0x02000000
+#define HTP_URLEN_INVALID_ENCODING         0x04000000
+#define HTP_URLEN_OVERLONG_U               0x08000000
+#define HTP_URLEN_HALF_FULL_RANGE          0x10000000 /* Range U+FF00 - U+FFEF detected. */
 
 // Logging-related constants.
 #define HTP_LOG_MARK                 __FILE__,__LINE__
