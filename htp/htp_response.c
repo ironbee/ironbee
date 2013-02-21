@@ -74,35 +74,33 @@ htp_status_t htp_connp_RES_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_RES_BODY_CHUNKED_DATA(htp_connp_t *connp) {
-    const unsigned char *data = connp->out_current_data + connp->out_current_offset;
-    size_t len = 0;
+    size_t bytes_to_consume;
 
-    for (;;) {
-        OUT_NEXT_BYTE(connp);
-
-        if (connp->out_next_byte == -1) {
-            int rc = htp_tx_res_process_body_data(connp->out_tx, data, len);
-            if (rc != HTP_OK) return rc;
-
-            // Ask for more data
-            return HTP_DATA;
-        } else {
-            connp->out_chunked_length--;
-            len++;
-
-            if (connp->out_chunked_length == 0) {
-                // End of data chunk
-                int rc = htp_tx_res_process_body_data(connp->out_tx, data, len);
-                if (rc != HTP_OK) return rc;
-
-                connp->out_state = htp_connp_RES_BODY_CHUNKED_DATA_END;
-
-                return HTP_OK;
-            }
-        }
+    // Determine how many bytes we can consume.
+    if (connp->out_current_len - connp->out_current_offset >= connp->out_chunked_length) {
+        bytes_to_consume = connp->out_chunked_length;
+    } else {
+        bytes_to_consume = connp->out_current_len - connp->out_current_offset;
     }
 
-    return HTP_ERROR;
+    if (bytes_to_consume == 0) return HTP_DATA;
+
+    // Consume the data.
+    int rc = htp_tx_res_process_body_data(connp->out_tx, connp->out_current_data + connp->out_current_offset, bytes_to_consume);
+    if (rc != HTP_OK) return rc;
+
+    // Adjust the counters.
+    connp->out_current_offset += bytes_to_consume;
+    connp->out_stream_offset += bytes_to_consume;
+    connp->out_chunked_length -= bytes_to_consume;
+
+    // Have we seen the entire chunk?
+    if (connp->out_chunked_length == 0) {
+        connp->out_state = htp_connp_RES_BODY_CHUNKED_DATA_END;
+        return HTP_OK;
+    }
+
+    return HTP_DATA;
 }
 
 /**
@@ -174,10 +172,10 @@ htp_status_t htp_connp_RES_BODY_IDENTITY_CL_KNOWN(htp_connp_t *connp) {
 
     // Adjust the counters.
     connp->out_current_offset += bytes_to_consume;
-    connp->out_stream_offset += bytes_to_consume;    
-
-    // Have we seen the entire response body?
+    connp->out_stream_offset += bytes_to_consume;
     connp->out_body_data_left -= bytes_to_consume;
+
+    // Have we seen the entire response body?    
     if (connp->out_body_data_left == 0) {
         connp->out_state = htp_connp_RES_FINALIZE;
         return HTP_OK;
