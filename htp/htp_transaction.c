@@ -795,22 +795,18 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
     htp_connp_t *connp = tx->connp;
 
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
-        // Parse authority
-        if (htp_parse_uri_hostport(connp, connp->in_tx->request_uri, connp->in_tx->parsed_uri_incomplete) != HTP_OK) {
-            // Note: downstream responsible for error logging.
+        // When CONNECT is used, the request URI contains an authority string.
+        if (htp_parse_uri_hostport(connp, connp->in_tx->request_uri, connp->in_tx->parsed_uri_incomplete) != HTP_OK) {            
             return HTP_ERROR;
         }
     } else {
-        // Parse the request URI
-        if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
-            // Note: downstream responsible for error logging.
+        // Parse the request URI.
+        if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {            
             return HTP_ERROR;
         }
 
-        // Keep the original URI components, but
-        // create a copy which we can normalize and use internally.
-        if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri) != HTP_OK) {
-            // Note: downstream responsible for error logging.
+        // Keep the original URI components, but create a copy which we can normalize and use internally.
+        if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri) != HTP_OK) {            
             return HTP_ERROR;
         }
 

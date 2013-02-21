@@ -318,8 +318,8 @@ struct htp_tx_t {
      * This structure holds the individual components parsed out of the request URI. No
      * attempt is made to normalize the contents or replace the missing pieces with
      * defaults. The purpose of this field is to allow you to look at the data as it
-     * was supplied. Use parsed_uri when you need to act on data. Note that this field
-     * will never have the port as a number.
+     * was supplied. Use parsed_uri when you need to act on data. Note that the port_number
+     * number will always be -1.
      */
     htp_uri_t *parsed_uri_incomplete;
     
