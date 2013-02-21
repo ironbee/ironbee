@@ -1593,6 +1593,7 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         htp_normalize_hostname_inplace(normalized->hostname);
     }
 
+    // Port.
     if (incomplete->port != NULL) {
         int64_t port_parsed = htp_parse_positive_integer_whitespace(
                 bstr_ptr(incomplete->port), bstr_len(incomplete->port), 10);
