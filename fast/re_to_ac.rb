@@ -276,8 +276,8 @@ module ReToAC
         candidates = ([result.complete] + [result.prefix] + [result.suffix] + result.internals).compact.to_set.to_a
         candidates.uniq.select do |a|
           candidates.find {|b| a != b && b.include?(a)}.nil?
-        end
-      end
+        end.sort
+      end.sort {|a, b| a.join <=> b.join}
     end
 
     # Deep dup of a parse node.
@@ -601,7 +601,7 @@ module ReToAC
       result = result.select {|r| ! r.member?(highest_string)}
     end
 
-    suggestion
+    suggestion.sort
   end
 end
 
