@@ -362,7 +362,7 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
         return HTP_OK;
     }
 
-    // The protocol information spreads until the end of the line.
+    // The protocol information continues until the end of the line.
     tx->request_protocol = bstr_dup_mem(data + pos, len - pos);
     if (tx->request_protocol == NULL) return HTP_ERROR;
     tx->request_protocol_number = htp_parse_protocol(tx->request_protocol);

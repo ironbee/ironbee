@@ -516,3 +516,14 @@ TEST_F(ConnectionParsing, Http_0_9_Multiple) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 }
+
+TEST_F(ConnectionParsing, Http_0_9_Explicit) {
+    int rc = test_run(home, "24-http09-explicit.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));    
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+    ASSERT_EQ(0, tx->is_protocol_0_9);
+}
