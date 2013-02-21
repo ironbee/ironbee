@@ -64,11 +64,17 @@ end
 
 # Main loop.
 STDIN.each do |line|
-  if rx_mode
-    res = [line.chomp]
-  elsif potential_rule(line)
-    res = extract_regexps(line)
-  else
+  begin
+    if rx_mode
+      res = [line.chomp]
+    elsif potential_rule(line)
+      res = extract_regexps(line)
+    else
+      res = []
+    end
+  rescue Exception => err
+    puts "# FAST Error looking at line: #{err}"
+    puts line
     res = []
   end
 
