@@ -76,7 +76,7 @@ protected:
             htp_connp_req_data(connp, NULL, data[i], strlen(data[i]));
         }
 
-        ASSERT_EQ(htp_list_size(connp->conn->transactions), 1);
+        ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
 
         tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
         ASSERT_TRUE(tx != NULL);
