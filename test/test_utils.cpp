@@ -650,3 +650,52 @@ TEST(UtilTest, ParseContentType6) {
     bstr_free(e);
     bstr_free(i);
 }
+
+TEST(UtilTest, ValidateHostname1) {
+    bstr *i = bstr_dup_c("www.example.com");
+    ASSERT_EQ(1, htp_validate_hostname(i));
+    bstr_free(i);
+}
+
+TEST(UtilTest, ValidateHostname2) {
+    bstr *i = bstr_dup_c(".www.example.com");
+    ASSERT_EQ(0, htp_validate_hostname(i));
+    bstr_free(i);
+}
+
+TEST(UtilTest, ValidateHostname3) {
+    bstr *i = bstr_dup_c("www..example.com");
+    ASSERT_EQ(0, htp_validate_hostname(i));
+    bstr_free(i);
+}
+
+TEST(UtilTest, ValidateHostname4) {
+    bstr *i = bstr_dup_c("www.example.com..");
+    ASSERT_EQ(0, htp_validate_hostname(i));
+    bstr_free(i);
+}
+
+TEST(UtilTest, ValidateHostname5) {
+    bstr *i = bstr_dup_c("www example com");
+    ASSERT_EQ(0, htp_validate_hostname(i));
+    bstr_free(i);
+}
+
+TEST(UtilTest, ValidateHostname6) {
+    bstr *i = bstr_dup_c("");
+    ASSERT_EQ(0, htp_validate_hostname(i));
+    bstr_free(i);
+}
+
+TEST(UtilTest, ValidateHostname7) {
+    // Label over 63 characters.
+    bstr *i = bstr_dup_c("www.exampleexampleexampleexampleexampleexampleexampleexampleexampleexample.com");
+    ASSERT_EQ(0, htp_validate_hostname(i));
+    bstr_free(i);
+}
+
+TEST(UtilTest, ValidateHostname8) {
+    bstr *i = bstr_dup_c("www.ExAmplE-1984.com");
+    ASSERT_EQ(1, htp_validate_hostname(i));
+    bstr_free(i);
+}

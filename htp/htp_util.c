@@ -399,7 +399,7 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
  */
 int htp_connp_is_line_folded(unsigned char *data, size_t len) {
     // Is there a line?
-    if ((data == NULL)||(len == 0)) {
+    if ((data == NULL) || (len == 0)) {
         return -1;
     }
 
@@ -543,6 +543,10 @@ int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t **uri) 
         connp->in_tx->flags |= HTP_HOSTU_INVALID;
     }
 
+    if (htp_validate_hostname((*uri)->hostname) == 0) {
+        connp->in_tx->flags |= HTP_HOSTU_INVALID;
+    }
+
     return HTP_OK;
 }
 
@@ -562,6 +566,10 @@ int htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *port, uint64
     if (rc != HTP_OK) return rc;
 
     if (invalid) {
+        *flags |= HTP_HOSTH_INVALID;
+    }
+
+    if (htp_validate_hostname(*hostname) == 0) {
         *flags |= HTP_HOSTH_INVALID;
     }
 
@@ -1048,12 +1056,12 @@ static int decode_u_encoding_path(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *d
  */
 static int decode_u_encoding_params(htp_cfg_t *cfg, htp_tx_t *tx, unsigned char *data) {
     unsigned int c1 = x2c(data);
-    unsigned int c2 = x2c(data + 2);    
+    unsigned int c2 = x2c(data + 2);
 
     // Check for overlong usage first.
     if (c1 == 0) {
         tx->flags |= HTP_URLEN_OVERLONG_U;
-        
+
         return c2;
     }
 
@@ -1995,7 +2003,7 @@ char *htp_connp_in_state_as_string(htp_connp_t *connp) {
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA) return "REQ_BODY_CHUNKED_DATA";
     if (connp->in_state == htp_connp_REQ_BODY_CHUNKED_DATA_END) return "REQ_BODY_CHUNKED_DATA_END";
     if (connp->in_state == htp_connp_REQ_FINALIZE) return "REQ_FINALIZE";
-    if (connp->in_state == htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9) return "REQ_IGNORE_DATA_AFTER_HTTP_0_9";   
+    if (connp->in_state == htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9) return "REQ_IGNORE_DATA_AFTER_HTTP_0_9";
 
     return "UNKNOWN";
 }
@@ -2016,7 +2024,7 @@ char *htp_connp_out_state_as_string(htp_connp_t *connp) {
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA) return "RES_BODY_CHUNKED_DATA";
     if (connp->out_state == htp_connp_RES_BODY_CHUNKED_DATA_END) return "RES_BODY_CHUNKED_DATA_END";
     if (connp->out_state == htp_connp_RES_FINALIZE) return "RES_BODY_FINALIZE";
-    
+
     return "UNKNOWN";
 }
 
@@ -2440,4 +2448,47 @@ htp_status_t htp_parse_ct_header(bstr *header, bstr **ct) {
     bstr_to_lowercase(*ct);
 
     return HTP_OK;
+}
+
+/**
+ * Implements relaxed (not strictly RFC) hostname validation.
+ * 
+ * @param[in] hostname
+ * @return 1 if the supplied hostname is valid; 0 if it is not.
+ */
+int htp_validate_hostname(bstr *hostname) {
+    unsigned char *data = bstr_ptr(hostname);
+    size_t len = bstr_len(hostname);
+    size_t startpos = 0;
+    size_t pos = 0;
+
+    if ((len == 0)||(len > 255)) return 0;
+
+    while(pos < len) {
+        // Validate label characters.
+        startpos = pos;
+        while ((pos < len) && (data[pos] != '.')) {
+            unsigned char c = data[pos];
+            // According to the RFC, the underscore is not allowed in a label, but
+            // we allow it here because we think it's often seen in practice.
+            if (!(((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z')) || ((c >= '0') && (c <= '9')) || (c == '-') )) {
+                return 0;
+            }
+            
+            pos++;
+        }
+
+        // Validate label length.
+        if ((pos - startpos == 0) || (pos - startpos > 63)) return 0;
+
+        if (pos >= len) return 1; // No more data after label.
+
+        // How many dots are there?
+        startpos = pos;
+        while ((pos < len)&&(data[pos] == '.')) pos++;
+
+        if (pos - startpos != 1) return 0; // Exactly one dot expected.
+    }
+
+    return 1;
 }
