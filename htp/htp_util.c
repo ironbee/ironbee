@@ -526,24 +526,24 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int 
 }
 
 /**
- * XXX
+ * Parses hostport provided in the URI.
  *
  * @param[in] connp
  * @param[in] hostport
  * @param[in] uri
  * @return HTP_OK on success or HTP_ERROR error.
  */
-int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t **uri) {
+int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t *uri) {
     int invalid;
 
-    htp_status_t rc = htp_parse_hostport(hostport, &((*uri)->hostname), &((*uri)->port_number), &invalid);
+    htp_status_t rc = htp_parse_hostport(hostport, &(uri->hostname), &(uri->port_number), &invalid);
     if (rc != HTP_OK) return rc;
 
     if (invalid) {
         connp->in_tx->flags |= HTP_HOSTU_INVALID;
     }
 
-    if (htp_validate_hostname((*uri)->hostname) == 0) {
+    if (htp_validate_hostname(uri->hostname) == 0) {
         connp->in_tx->flags |= HTP_HOSTU_INVALID;
     }
 
@@ -551,12 +551,12 @@ int htp_parse_uri_hostport(htp_connp_t *connp, bstr *hostport, htp_uri_t **uri) 
 }
 
 /**
- * XXX
+ * Parses hostport provided in the Host header.
  * 
  * @param[in] hostport
- * @param[in] hostname
- * @param[in] port
- * @param[in] flags
+ * @param[out] hostname
+ * @param[out] port
+ * @param[out] flags
  * @return HTP_OK on success or HTP_ERROR error.
  */
 int htp_parse_header_hostport(bstr *hostport, bstr **hostname, int *port, uint64_t *flags) {

@@ -796,7 +796,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
 
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
         // Parse authority
-        if (htp_parse_uri_hostport(connp, connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {
+        if (htp_parse_uri_hostport(connp, connp->in_tx->request_uri, connp->in_tx->parsed_uri_incomplete) != HTP_OK) {
             // Note: downstream responsible for error logging.
             return HTP_ERROR;
         }
