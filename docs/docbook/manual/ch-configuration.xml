@@ -405,8 +405,25 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
                 following line will include the contents of the file <filename>sites.conf</filename>
                 into configuration:</para>
             <programlisting>Include conf/sites.conf</programlisting>
-            <para>If you specify a relative path, the location of the current configuration file
-                will be used to resolve it.</para>
+            <para>The file must exist and be accessible or an error is generated (use
+                    <literal>IncludeIfExists</literal> if this is not the case). If you specify a
+                relative path, the location of the configuration file containing this directive will
+                be used to resolve it.</para>
+        </section>
+        <section>
+            <title>IncludeIfExists</title>
+            <para><emphasis role="bold">Description:</emphasis> Includes external file into
+                configuration if it exists and is accessible.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>IncludeIfExists <replaceable>filename</replaceable></literal></para>
+            <para><emphasis role="bold">Default:</emphasis> None</para>
+            <para><emphasis role="bold">Context:</emphasis> Any</para>
+            <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
+            <para>As <literal>Include</literal>, but allows for optional inclusion without causing a
+                configuration error if the file does not exist (as would the
+                    <literal>Include</literal> directive).</para>
         </section>
         <section>
             <title>InitVar</title>

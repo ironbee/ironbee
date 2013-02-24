@@ -45,6 +45,9 @@ IronBee v0.7.0
 
 * Added InspectionEngineOptions to set the defaults for the inspection engine.
 
+* Added IncludeIfExists directive to include a file only if it exists and is
+  accessible.  This allows for inclusion of optional files.
+
 **Engine**
 
 * `ib_tx_t::data` has changed from a generic hash to an array indexed by

@@ -101,6 +101,7 @@ static char* alloc_cpy_marked_string(ib_cfgparser_t *cp,
 
 static ib_status_t include_config_fn(ib_cfgparser_t *cp,
                                      ib_mpool_t* mp,
+                                     const char *directive,
                                      const char *mark,
                                      const char *fpc,
                                      const char *file,
@@ -114,6 +115,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     char *real;
     char *lookup;
     void *freeme = NULL;
+    bool if_exists = strcasecmp("IncludeIfExists", directive) ? false : true;
 
     pval = alloc_cpy_marked_string(cp, mark, fpc, mp);
     incfile = ib_util_relative_file(mp, file, pval);
@@ -125,10 +127,13 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 
     real = realpath(incfile, NULL);
     if (real == NULL) {
-        ib_cfg_log_error(cp,
-                         "Failed to find real path of included file "
-                         "(using original \"%s\"): %s",
-                         incfile, strerror(errno));
+        if (!if_exists) {
+            ib_cfg_log_error(cp,
+                             "Failed to find real path of included file "
+                             "(using original \"%s\"): %s",
+                             incfile, strerror(errno));
+        }
+
         real = incfile;
     }
     else {
@@ -169,6 +174,13 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     }
 
     if (access(incfile, R_OK) != 0) {
+        if (if_exists) {
+            ib_cfg_log_info(cp,
+                            "Ignoring include file \"%s\": %s",
+                            incfile, strerror(errno));
+            return IB_OK;
+        }
+
         ib_cfg_log_error(cp, "Cannot access included file \"%s\": %s",
                          incfile, strerror(errno));
         return IB_ENOENT;
@@ -176,6 +188,13 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 
     statval = stat(incfile, &statbuf);
     if (statval != 0) {
+        if (if_exists) {
+            ib_cfg_log_info(cp,
+                            "Ignoring include file \"%s\": %s",
+                            incfile, strerror(errno));
+            return IB_OK;
+        }
+
         ib_cfg_log_error(cp,
                          "Failed to stat include file \"%s\": %s",
                          incfile, strerror(errno));
@@ -183,8 +202,15 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     }
 
     if (S_ISREG(statbuf.st_mode) == 0) {
+        if (if_exists) {
+            ib_cfg_log_info(cp,
+                            "Ignoring include file \"%s\": Not a regular file",
+                            incfile);
+            return IB_OK;
+        }
+
         ib_cfg_log_error(cp,
-	                 "Included file \"%s\" isn't a file", incfile);
+	                 "Included file \"%s\" is not a regular file", incfile);
         return IB_ENOENT;
     }
 
@@ -274,11 +300,8 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
 
     # include file logic
     action include_config {
-        if (directive != NULL) {
-            free(directive);
-            directive = NULL;
-        }
-        rc = include_config_fn(cp, mpcfg, mark, fpc, file, lineno);
+        rc = include_config_fn(cp, mpcfg, directive, mark, fpc, file, lineno);
+
         if (rc == IB_OK) {
             ib_cfg_log_debug(cp, "Done processing include directive");
         }
@@ -286,6 +309,11 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
             ib_cfg_log_error(cp,
                              "Failed to process include directive: %s",
                              ib_status_to_string(rc));
+        }
+
+        if (directive != NULL) {
+            free(directive);
+            directive = NULL;
         }
     }
 
@@ -340,7 +368,7 @@ static ib_status_t include_config_fn(ib_cfgparser_t *cp,
     main := |*
         WS* comment;
         WS* CONT %handle_continuation;
-	WS* [Ii] [Nn] [Cc] [Ll] [Uu] [Dd] [Ee] { fcall finclude; };
+        WS* [Ii] [Nn] [Cc] [Ll] [Uu] [Dd] [Ee] ([Ii] [Ff] [Ee] [Xx] [Ii] [Ss] [Tt] [Ss])? { fcall finclude; };
         WS* token >mark %start_dir { fcall parameters; };
         "<" { fcall newblock; };
         "</" { fcall endblock; };
