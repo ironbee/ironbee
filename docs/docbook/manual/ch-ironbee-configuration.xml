@@ -782,22 +782,22 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
             <para>When <literal>Reject</literal> is configured, the transaction with a body larger
-                than the buffer will be blocked. With <literal>RollOver</literal> selected, the
-                buffer will be used to keep as much data as possible, but any overflowing data will
-                be allowed to the backend. Response headers will be sent before the first overflow
-                batch. In detection-only mode, <literal>Reject</literal> is converted to
-                    <literal>RollOver</literal>.</para>
+            than the buffer will be blocked. With <literal>RollOver</literal> selected, the buffer
+            will be used to keep as much data as possible, but any overflowing data will be allowed
+            to the client. Response headers will be sent before the first overflow batch. In
+            detection-only mode, <literal>Reject</literal> is converted to
+                <literal>RollOver</literal>.</para>
         </section>
         <section>
             <title>Rule</title>
             <para><emphasis role="bold">Description:</emphasis> Loads a rule and, in most contexts,
                 enable the rule for execution in that context.</para>
             <para><emphasis role="bold">Syntax:</emphasis>
-                <literal>Rule <replaceable>input</replaceable> [<replaceable>input2</replaceable>
-                    ... <replaceable>inputN</replaceable>] @<replaceable>operator</replaceable>
-                    <replaceable>op_param</replaceable>
-                    [<replaceable>modifiers</replaceable>]</literal>
-            </para>
+            <literal>Rule <replaceable>input</replaceable>
+                <replaceable>[input2 ... inputN]</replaceable> @<replaceable>operator</replaceable>
+                <replaceable>op_param</replaceable>
+                <replaceable>[modifiers]</replaceable></literal>
+        </para>
             <para><emphasis role="bold">Default:</emphasis> None</para>
             <para><emphasis role="bold">Context:</emphasis> Any</para>
             <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
@@ -829,9 +829,9 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
             <para><emphasis role="bold">Description:</emphasis> Disables a rule from executing in
                 the current configuration context.</para>
             <para><emphasis role="bold">Syntax:</emphasis>
-                <literal>RuleDisable ["all" | "id:"<replaceable>id</replaceable> |
-                        "tag":<replaceable>name</replaceable>] ...</literal>
-            </para>
+            <literal>RuleDisable "all" | "id:"<replaceable>id</replaceable> |
+                    "tag":<replaceable>name</replaceable> ...</literal>
+        </para>
             <para><emphasis role="bold">Default:</emphasis> None</para>
             <para><emphasis role="bold">Context:</emphasis> Any</para>
             <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
@@ -846,9 +846,9 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
             <para><emphasis role="bold">Description:</emphasis> Enables a rule for execution in the
                 current configuration context.</para>
             <para><emphasis role="bold">Syntax:</emphasis>
-                <literal>RuleEnable ["all" | "id:"<replaceable>id</replaceable> |
-                        "tag":<replaceable>name</replaceable>] ...</literal>
-            </para>
+            <literal>RuleEnable "all" | "id:"<replaceable>id</replaceable> |
+                    "tag":<replaceable>name</replaceable> ...</literal>
+        </para>
             <para><emphasis role="bold">Default:</emphasis> None</para>
             <para><emphasis role="bold">Context:</emphasis> Any</para>
             <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
@@ -882,9 +882,9 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
             <itemizedlist>
                 <listitem>
                     <para><literal>tx</literal> - Log the
-                        transaction:<programlisting>TX_START clientip:port site-hostname
+                    transaction:<programlisting>TX_START clientip:port site-hostname
     ...
-    TX_END</programlisting></para>
+TX_END</programlisting></para>
                 </listitem>
                 <listitem>
                     <para><literal>requestLine</literal> - Log the HTTP request
@@ -916,9 +916,9 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
                 </listitem>
                 <listitem>
                     <para><literal>rule</literal> - Log the rule
-                        executing:<programlisting>RULE_START rule-type
+                    executing:<programlisting>RULE_START rule-type
     ...
-    RULE_END</programlisting></para>
+RULE_END</programlisting></para>
                 </listitem>
                 <listitem>
                     <para><literal>target</literal> - Log the target being
