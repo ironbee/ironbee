@@ -4,8 +4,8 @@
     xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
     xmlns:html="http://www.w3.org/1999/xhtml" xml:id="introduction">
     <title>Introduction</title>
-    <para>IronBee is a framework and library for building a Web Application Firewall (WAF). The
-        following components make up the IronBee framework:<itemizedlist>
+    <para>IronBee is a framework and library for web application security inspection - for building
+        a Web Application Firewall (WAF). The following components make up the IronBee framework:<itemizedlist>
             <listitem>
                 <para>IronBee Library: The primary component containing the inspection
                     engine.</para>
@@ -17,7 +17,8 @@
             <listitem>
                 <para>Server Components: The server is the executable driving the inspection engine.
                     This can be a standard executable, such as the command line tool, or in the form
-                    of a plugin such as the Apache trafficserver plugin and httpd module.</para>
+                    of a plugin such as the Apache trafficserver plugin and Apache httpd
+                    module.</para>
             </listitem>
             <listitem>
                 <para>Configuration: There are two sets of configuration. The IronBee library must
@@ -44,9 +45,9 @@ sudo make install</programlisting>Various
         <title>Configuration</title>
         <para>First, the server component must be configured to load the IronBee library and its
             configuration. This is done through the server's native configuration and differs for
-            each server. See the Configuration Examples section for examples of the server
-            configuration. Once loaded, IronBee configuration consists of one or more configuration
-            files which IronBee will load.</para>
+            each server. See the Server Configuration for more specific details in configuring the
+            server component. Once the server component is loaded, IronBee configuration consists of
+            one or more configuration files which IronBee will read.</para>
         <para>IronBee configuration file examples are listed in the Configuration Examples
             section.</para>
     </section>
