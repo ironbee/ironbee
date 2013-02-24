@@ -204,9 +204,6 @@ ib_status_t ib_capture_add_item(
 
     ib_status_t rc;
     ib_list_t *list;
-    const char *name;
-
-    name = ib_capture_name(0);
 
     rc = get_capture_list(tx, &list);
     if (rc != IB_OK) {
