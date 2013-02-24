@@ -461,12 +461,13 @@
         <file name="ap-configuration-examples.xml"/>
         <file name="ap-differences-from-modsecurity.xml"/>
         <file name="ap-todo.xml"/>
-        <file name="ch-configuration.xml"/>
         <file name="ch-extending-ironbee.xml"/>
         <file name="ch-installation-guide.xml"/>
         <file name="ch-introduction.xml"/>
+        <file name="ch-ironbee-configuration.xml"/>
         <file name="ch-preface.xml"/>
         <file name="ch-rule-reference.xml"/>
+        <file name="ch-server-configuration.xml"/>
         <file name="html.xsl"/>
         <file name="html-chunked.xsl"/>
         <file name="ironbee-reference-manual.xml"/>

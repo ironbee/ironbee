@@ -1,39 +1,6 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<chapter version="5.0" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:html="http://www.w3.org/1999/xhtml" xml:id="configuration">
-    <title>Configuration</title>
-    <para>...</para>
-    <section>
-        <title>Apache Trafficserver Plugin Configuration</title>
-        <para>In order to load IronBee into Apache Trafficserver (ATS) you must edit plugins.config
-            to first load the IronBee library using the ATS loader plugin, then load the IronBee
-            plugin with an IronBee
-            configuration.<programlisting>### plugins.config
-
-# Load the IronBee library
-/usr/local/ironbee/lib/libloader.so /usr/local/ironbee/lib/libironbee.so
-
-# Load the IronBee plugin
-/usr/local/ironbee/lib/ts_ironbee.so /usr/local/ironbee/etc/ironbee-ts.conf</programlisting></para>
-    </section>
-    <section>
-        <title>Apache Httpd Module Configuration</title>
-        <para>In order to load IronBee into Apache httpd you must edit the httpd.conf to first load
-            the IronBee module, then configure the module to bootstrap the IronBee
-            library.<programlisting>### httpd.conf
-
-# Load the IronBee module
-LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
-
-# Bootstrap the IronBee library
-&lt;IfModule ironbee_module>
-    IronbeeConfigFile /usr/local/ironbee/etc/ironbee-httpd.conf
-    IronbeeRawHeaders On
-&lt;/IfModule></programlisting></para>
-        <para>From here, you can configure Apache httpd as either a webserver or a proxy
-            server.</para>
-    </section>
-    <section>
-        <title>IronBee Configuration</title>
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:html="http://www.w3.org/1999/xhtml" xml:id="ironbee-configuration">
+    <title>IronBee Configuration</title>
         <para>The IronBee configuration is loaded from the server container. The syntax is similar
             to the Apache httpd server configuration. The following rules apply:</para>
         <para>
@@ -1216,5 +1183,4 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
                 </listitem>
             </itemizedlist>
         </section>
-    </section>
 </chapter>
