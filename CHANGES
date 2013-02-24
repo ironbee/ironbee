@@ -10,6 +10,12 @@ IronBee v0.7.0
 
 * The ac module is deprecated.  It will emit a warning if loaded.
 
+**Documentation**
+
+* Syntax added to all operators.
+
+* Preface added.
+
 **Build**
 
 * libhtp is now configured as part of configure stage rather than build
@@ -34,6 +40,10 @@ IronBee v0.7.0
   present.
 
 * Several uneeded checks removed.
+
+**Configuration**
+
+* Added InspectionEngineOptions to set the defaults for the inspection engine.
 
 **Engine**
 
@@ -101,7 +111,9 @@ IronBee v0.7.0
 
 **Modules**
 
-* ac and pcre have been updated to use the new tx data API.
+* The pcre module has been updated to use the new tx data API.
+
+* The pcre module dfa operator now supports captures.
 
 * Added a 'persist' module, which implements a collection manager that can
   populate and persist a collection using a file-system kvstore.
