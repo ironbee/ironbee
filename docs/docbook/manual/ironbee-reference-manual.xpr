@@ -458,18 +458,18 @@
         </options>
     </meta>
     <projectTree name="ironbee-reference-manual.xpr">
-        <file name="ch00-preface.xml"/>
-        <file name="ch01-introduction.xml"/>
-        <file name="ch02-configuration.xml"/>
-        <file name="ch03-rule-reference.xml"/>
-        <file name="chXX-extending-ironbee.xml"/>
-        <file name="chXX-installation-guide.xml"/>
+        <file name="ap-configuration-examples.xml"/>
+        <file name="ap-differences-from-modsecurity.xml"/>
+        <file name="ap-todo.xml"/>
+        <file name="ch-configuration.xml"/>
+        <file name="ch-extending-ironbee.xml"/>
+        <file name="ch-installation-guide.xml"/>
+        <file name="ch-introduction.xml"/>
+        <file name="ch-preface.xml"/>
+        <file name="ch-rule-reference.xml"/>
         <file name="html.xsl"/>
         <file name="html-chunked.xsl"/>
         <file name="ironbee-reference-manual.xml"/>
         <file name="pdf.xsl"/>
-        <file name="xx01-configuration-examples.xml"/>
-        <file name="xx02-todo.xml"/>
-        <file name="xx03-changes-from-modsecurity.xml"/>
     </projectTree>
 </project>

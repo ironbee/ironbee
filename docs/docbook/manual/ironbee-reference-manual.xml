@@ -19,13 +19,13 @@
         </copyright>
     </info>
 
-    <xi:include href="ch00-preface.xml"/>
-    <xi:include href="ch01-introduction.xml"/>
-    <xi:include href="ch02-configuration.xml"/>
-    <xi:include href="ch03-rule-reference.xml"/>
-    <xi:include href="chXX-installation-guide.xml"/>
-    <xi:include href="xx01-configuration-examples.xml"/>
-    <xi:include href="xx02-todo.xml"/>
-    <xi:include href="chXX-extending-ironbee.xml"/>
-    <xi:include href="xx03-changes-from-modsecurity.xml"/>
+    <xi:include href="ch-preface.xml"/>
+    <xi:include href="ch-introduction.xml"/>
+    <xi:include href="ch-configuration.xml"/>
+    <xi:include href="ch-rule-reference.xml"/>
+    <xi:include href="ch-installation-guide.xml"/>
+    <xi:include href="ap-configuration-examples.xml"/>
+    <xi:include href="ap-todo.xml"/>
+    <xi:include href="ch-extending-ironbee.xml"/>
+    <xi:include href="ap-differences-from-modsecurity.xml"/>
 </book>
