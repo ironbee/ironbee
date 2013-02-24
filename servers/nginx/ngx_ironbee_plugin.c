@@ -275,15 +275,14 @@ static ib_status_t ib_error_callback(ib_tx_t *tx, int status, void *cbdata)
     ngxib_req_ctx *ctx = tx->sctx;
     if (status >= 200 && status < 600) {
         if (ctx->status >= 200 && ctx->status < 600) {
-            ngx_log_error(NGX_LOG_WARN, ctx->r->connection->log, 0,
-                          "Ignoring: status already set to %d", ctx->status);
+            ib_log_notice_tx(tx, "Ignoring: status already set to %d", ctx->status);
             return IB_OK;
         }
         if (ctx->start_response) {
-            ngx_log_error(NGX_LOG_ERR, ctx->r->connection->log, 0,
-                          "Too late to change status=%d", status);
+            ib_log_notice_tx(tx, "Too late to change status=%d", status);
             return IB_DECLINED;
         }
+        ib_log_info_tx(tx, "Setting status: %d -> %d", ctx->status, status);
         ctx->status = status;
         return IB_OK;
     }

@@ -242,6 +242,7 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
     }
     cleanup_return(prev_log) rv;
 }
+
 /**
  * A header filter to intercept response line and headers and feed to Ironbee.
  *
@@ -450,22 +451,8 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     if (rc != IB_OK)
         cleanup_return(prev_log) IB2NG(rc);
 
-#if 0
-    rc = ib_provider_register(ironbee, IB_PROVIDER_TYPE_LOGGER, LOGGER_NAME,
-                              NULL, ngxib_logger_iface(), NULL);
-    if (rc != IB_OK)
-        cleanup_return(prev_log) IB2NG(rc);
-
-    ib_context_set_string(ib_context_engine(ironbee),
-                          IB_PROVIDER_TYPE_LOGGER, LOGGER_NAME);
-    ib_context_set_num(ib_context_engine(ironbee),
-                       IB_PROVIDER_TYPE_LOGGER ".log_level", 4);
-#else
     ib_log_set_logger_fn(ironbee, ngxib_logger, NULL);
-    ib_log_set_loglevel_fn(ironbee, ngxib_loglevel, NULL);
-#endif
-    ib_context_set_num(ib_context_engine(ironbee),
-                       "logger.log_level", 4);
+    /* Using default log level function. */
 
     rc = ib_engine_init(ironbee);
     if (rc != IB_OK)
@@ -475,10 +462,6 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
 
     ib_hook_conn_register(ironbee, conn_opened_event, ngxib_conn_init, NULL);
 
-    ctx = ib_context_main(ironbee);
-
-    ib_context_set_num(ctx, "logger.log_level", 4);
-
     rc = ib_cfgparser_create(&cp, ironbee);
     assert((cp != NULL) || (rc != IB_OK));
     if (rc != IB_OK)
@@ -487,6 +470,10 @@ static ngx_int_t ironbee_init(ngx_conf_t *cf)
     rc = ib_engine_config_started(ironbee, cp);
     if (rc != IB_OK)
         cleanup_return(prev_log) IB2NG(rc);
+
+    /* Get the main context, set some defaults */
+    ctx = ib_context_main(ironbee);
+    ib_context_set_num(ctx, "logger.log_level", 4);
 
     /* FIXME - use the temp pool operation for this */
     char *buf = strndup((char*)proc->config_file.data, proc->config_file.len);

@@ -119,25 +119,3 @@ void ngxib_logger(const ib_engine_t *ib,
     /* Write it to the error log. */
     ngx_log_error(ngx_level, ngx_log, 0, "ironbee: %s", buf);
 }
-/**
- * Log level callback.  Currently fixed.
- *
- * @param[in] ib     IronBee engine.
- * @param[in] cbdata Callback data.
- * @returns log level.
- */
-ib_log_level_t ngxib_loglevel(const ib_engine_t *ib, void *cbdata)
-{
-    return IB_LOG_WARNING;
-}
-
-#if 0
-IB_PROVIDER_IFACE_TYPE(logger) *ngxib_logger_iface(void)
-{
-    static IB_PROVIDER_IFACE_TYPE(logger) ironbee_logger_iface = {
-        IB_PROVIDER_IFACE_HEADER_DEFAULTS,
-        ironbee_logger
-    };
-    return &ironbee_logger_iface;
-}
-#endif
