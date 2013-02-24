@@ -806,6 +806,8 @@
             <title>contains</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if the target contains the
                 given sub-string.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@contains
+                "sub-string"</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
@@ -815,6 +817,8 @@
             <title>dfa</title>
             <para><emphasis role="bold">Description:</emphasis> Deterministic finite atomation matching
                 algorithm (PCRE's alternative matching algorithm).</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@dfa
+                "pcre-dfa-regex"</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> pcre</para>
             <para><emphasis role="bold">Version:</emphasis> 0.4</para>
@@ -838,15 +842,19 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
         <section>
             <title>ee_match_any</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if the target matches any value in the named eudoxus automata.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@ee_match_any
+                    "automata-name"</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> ee</para>
             <para><emphasis role="bold">Version:</emphasis> 0.7</para>
-            <para>The named eudoxus automata must first be laoded with the <literal>LoadEudoxus</literal> directive</para>
+            <para>The named eudoxus automata must first be loaded with the
+                    <literal>LoadEudoxus</literal> directive</para>
         </section>
         <section>
             <title>eq</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
                 numerically equal to the given value.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@eq number</literal></para>
             <para><emphasis role="bold">Types:</emphasis> Numeric</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
@@ -856,6 +864,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <title>ge</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
                 numerically greater than or equal to the given value.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@ge number</literal></para>
             <para><emphasis role="bold">Types:</emphasis> Numeric</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
@@ -865,6 +874,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <title>gt</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
                 numerically greater than the given value.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@gt number</literal></para>
             <para><emphasis role="bold">Types:</emphasis> Numeric</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
@@ -873,6 +883,8 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
         <section>
             <title>match</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if the target is any of the given whitespace separated words.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@match "word1 word2 ...
+                    wordN"</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.7</para>
@@ -880,7 +892,10 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
         </section>
         <section>
             <title>imatch</title>
-            <para><emphasis role="bold">Description:</emphasis> As match, but case insensitive.</para>
+            <para><emphasis role="bold">Description:</emphasis> As <literal>match</literal>, but
+                case insensitive.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@imatch "word1 word2 ...
+                    wordN"</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.7</para>
@@ -890,6 +905,8 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <title>ipmatch</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if a target IPv4 address
                 matches any given whitespace separated address in CIDR format.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@ipmatch "1.2.3.4 192.168.0.0/24
+                    10.0.0.0/8</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
@@ -899,6 +916,8 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <title>ipmatch6</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if a target IPv6 address
                 matches any given whitespace separated address in CIDR format.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@ipmatch6 "1::12:13 6::6:0/112
+                    1::2:3</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
@@ -908,6 +927,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <title>le</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
                 numerically less than or equal to the given value.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@le number</literal></para>
             <para><emphasis role="bold">Types:</emphasis> Numeric</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
@@ -917,6 +937,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <title>lt</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if the target is
                 numerically less than the given value.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@lt number</literal></para>
             <para><emphasis role="bold">Types:</emphasis> Numeric</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
@@ -926,6 +947,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <title>ne</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if the target is not
                 numerically equal to the given value.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@ne number</literal></para>
             <para><emphasis role="bold">Types:</emphasis> Numeric</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
@@ -935,6 +957,8 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <title>pm</title>
             <para><emphasis role="bold">Description:</emphasis> Parallel matching using the
                     <literal>Aho-Corasick</literal> algorithm.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@pm "word1 word2 ...
+                    wordN"</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> ac</para>
             <para><emphasis role="bold">Version:</emphasis> 0.2</para>
@@ -944,17 +968,27 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
                 the same time, making it efficient for cases when the number of patterns is very large
                 (in hundreds and thousands).</para>
             <programlisting>Rule REQUEST_HEADERS:User-Agent @pm "one two three"</programlisting>
-            <para>If the <literal>capture</literal> modifier is specified on a <literal>@pm</literal>
-                rule, the <literal>TX.0</literal> variable will contain the matched data fragment. Do
-                note that, because the <literal>pm</literal> operator can easily match many times per
-                rule, the <literal>TX.0</literal> value is valid only when used in the same rule. In the
-                following rules, <literal>TX.0</literal> will contain the data fragment of the last
+            <para>If the <literal>capture</literal> modifier is specified on a
+                    <literal>@pm</literal> rule, the <literal>CAPTURE:0</literal> variable will
+                contain the matched data fragment. Do note that, because the <literal>pm</literal>
+                operator can easily match many times per rule, the <literal>CAPTURE:0</literal>
+                value is valid only when used in the same rule. In the following rules,
+                    <literal>CAPTURE:0</literal> will contain the data fragment of the last
                     <literal>@pm</literal> match.</para>
+            <para>
+                <note>
+                    <para>DEPRECATED: The "ac" module is deprecated.  Use <literal>rx</literal>,
+                            <literal>dfa</literal>, <literal>match</literal>,
+                            <literal>imatch</literal> or <literal>ee_match_any</literal>
+                        instead.</para>
+                </note>
+            </para>
         </section>
         <section>
             <title>pmf</title>
             <para><emphasis role="bold">Description:</emphasis> Parallel matching with patterns from
                 file.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@pmf "filename"</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> ac</para>
             <para><emphasis role="bold">Version:</emphasis> 0.2</para>
@@ -965,11 +999,20 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
                 with <literal>#</literal>. Relative filenames are resolved from same directory as the
                 configuration file.</para>
             <programlisting>Rule REQUEST_HEADERS:User-Agent @pmf bad_user_agents.dat</programlisting>
+            <para>
+                <note>
+                    <para>DEPRECATED: The "ac" module is deprecated.  Use <literal>rx</literal>,
+                            <literal>dfa</literal>, <literal>match</literal>,
+                            <literal>imatch</literal> or <literal>ee_match_any</literal>
+                        instead.</para>
+                </note>
+            </para>
         </section>
         <section>
             <title>rx</title>
             <para><emphasis role="bold">Description:</emphasis> Regular expression (perl compatible
                 regular expression) matching.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@rx "pcre-regex"</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> pcre</para>
             <para><emphasis role="bold">Version:</emphasis> 0.2</para>
@@ -1010,6 +1053,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <title>streq</title>
             <para><emphasis role="bold">Description:</emphasis> Returns true if target exactly matches
                 the given string.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@streq "string"</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
@@ -1017,7 +1061,9 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
         </section>
         <section>
             <title>istreq</title>
-            <para><emphasis role="bold">Description:</emphasis> As streq, but case insensitive.</para>
+            <para><emphasis role="bold">Description:</emphasis> As <literal>streq</literal>, but
+                case insensitive.</para>
+            <para><emphasis role="bold">Syntax:</emphasis><literal>@istreq "string"</literal></para>
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.7</para>
