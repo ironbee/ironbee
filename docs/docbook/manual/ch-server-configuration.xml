@@ -76,18 +76,23 @@ LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
         <para>In configure IronBee in nginx you must edit the nginx.conf to bootstrap the IronBee
             library.<programlisting>### nginx.conf
 
-# Bootstrap the IronBee library
-IronbeeConfigFile /usr/local/ironbee/etc/ironbee-httpd.conf;
+...
 
-...</programlisting></para>
+http {
+    # Bootstrap the IronBee library
+    ironbee_config_file /usr/local/ironbee/etc/ironbee-httpd.conf;
+
+    ...
+}</programlisting></para>
         <para>From here, you can configure nginx.</para>
         <section>
-            <title>IronbeeConfigFile</title>
+            <title>ironbee_config_file</title>
             <para><emphasis role="bold">Description:</emphasis> Location of the main IronBee configuration file.</para>
             <para><emphasis role="bold">Syntax:</emphasis>
-                <literal>IronbeeConfigFile <replaceable>/path/to/ironbee.conf</replaceable></literal></para>
+                <literal>ironbee_config_file <replaceable>/path/to/ironbee.conf</replaceable>;</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
                 <literal>none</literal></para>
+            <para>This needs to go in the nginx "http" block.</para>
         </section>
     </section>
 </chapter>
