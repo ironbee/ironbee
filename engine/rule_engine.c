@@ -938,12 +938,13 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_rule_log_notice(rule_exec,
                            "Server not willing to set HTTP error response.");
-        rc = IB_OK;
+        return IB_OK;
     }
     else if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,
                           "Server failed to set HTTP error response: %s",
                           ib_status_to_string(rc));
+        return rc;
     }
 
     /*
@@ -955,15 +956,16 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
     if ((rc == IB_DECLINED) || (rc == IB_ENOTIMPL)) {
         ib_rule_log_notice(rule_exec,
                            "Server not willing to set HTTP error response data.");
-        rc = IB_OK;
+        return IB_OK;
     }
     else if (rc != IB_OK) {
         ib_rule_log_error(rule_exec,
                           "Server failed to set HTTP error response data: %s",
                           ib_status_to_string(rc));
+        return rc;
     }
 
-    return rc;
+    return IB_OK;
 }
 
 /**
