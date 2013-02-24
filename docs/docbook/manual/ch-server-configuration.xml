@@ -71,4 +71,23 @@ LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
             <para>Setting this to <literal>On</literal> will cause IronBee to be sent the raw headers from the client. Setting this to <literal>Off</literal> will cause IronBee to be sent the proxied headers (those seen by the server).</para>
         </section>
     </section>
+    <section>
+        <title>Nginx Configuration</title>
+        <para>In configure IronBee in nginx you must edit the nginx.conf to bootstrap the IronBee
+            library.<programlisting>### nginx.conf
+
+# Bootstrap the IronBee library
+IronbeeConfigFile /usr/local/ironbee/etc/ironbee-httpd.conf;
+
+...</programlisting></para>
+        <para>From here, you can configure nginx.</para>
+        <section>
+            <title>IronbeeConfigFile</title>
+            <para><emphasis role="bold">Description:</emphasis> Location of the main IronBee configuration file.</para>
+            <para><emphasis role="bold">Syntax:</emphasis>
+                <literal>IronbeeConfigFile <replaceable>/path/to/ironbee.conf</replaceable></literal></para>
+            <para><emphasis role="bold">Default:</emphasis>
+                <literal>none</literal></para>
+        </section>
+    </section>
 </chapter>

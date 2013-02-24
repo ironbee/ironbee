@@ -21,3 +21,9 @@ along with whatever other nginx configure options you require.
 
 The file "config" in this directory declares this module to
 nginx's build process.
+
+Once built, you configure ironbee in nginx.conf via the
+IronbeeConfigFile directive.  For example:
+
+  IronbeeConfigFile /usr/local/ironbee/etc/ironbee.conf;
+
