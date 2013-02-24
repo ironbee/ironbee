@@ -49,7 +49,7 @@ typedef struct ironbee_proc_t {
 } ironbee_proc_t;
 
 static ngx_command_t  ngx_ironbee_commands[] = {
-    { ngx_string("IronbeeConfigFile"),
+    { ngx_string("ironbee_config_file"),
       NGX_HTTP_MAIN_CONF|NGX_CONF_TAKE1,
       ngx_conf_set_str_slot,
       NGX_HTTP_MAIN_CONF_OFFSET,
