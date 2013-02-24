@@ -439,17 +439,84 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
             <para><emphasis role="bold">Version:</emphasis> 0.6</para>
         </section>
         <section>
-            <title>InspectionEngine</title>
-            <para><emphasis role="bold">Description:</emphasis> Configures the inspection
-                engine.</para>
+            <title>InspectionEngineOptions</title>
+            <para><emphasis role="bold">Description:</emphasis> Configures options for the
+                inspection engine.</para>
             <para><emphasis role="bold">Syntax:</emphasis>
-                <literal>InspectionEngine On|DetectionOnly|Off</literal></para>
+                <literal>InspectionEngineOptions <replaceable>[+|-]option</replaceable>
+                    ...</literal></para>
             <para><emphasis role="bold">Default:</emphasis>
-                <literal>Off</literal></para>
+                <literal>default</literal></para>
             <para><emphasis role="bold">Context:</emphasis> Any</para>
-            <para><emphasis role="bold">Cardinality:</emphasis> 0..1</para>
+            <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not Implemented Yet</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.4</para>
+            <para>The inspection engine allows setting options;
+                    <literal>InspectionEngineOptions</literal> controls these options. The options
+                are inherited into child contexts (Site, Location, etc). Specifying an option with
+                +/- operator will add or remove the given option from the current set. Specifying
+                the first option without +/- operators will cause all options to be overridden and
+                the list of options will be the only options set. Here is what your configuration
+                might look like:</para>
+            <programlisting>InspectionEngineOptions all -response</programlisting>
+            <para>The above first resets the inspection to <emphasis role="bold">all</emphasis>,
+                then removes the <emphasis role="bold">response</emphasis> from being
+                inspected.</para>
+            <para>Later, in a sub-context, you may wish to enable response response inspection and
+                thus can just specify this part with the + operator:</para>
+            <programlisting>&lt;Location /some/path>
+    InspectionEngineOptions <emphasis role="bold">+response</emphasis>
+&lt;/Location></programlisting>
+            <para>If you already had response enabled, but didn't want it any more, you would
+                write:</para>
+            <programlisting>&lt;Location /some/other/path>
+    InspectionEngineOptions <emphasis role="bold">-response</emphasis>
+&lt;/Location></programlisting>
+            <para>Inspection Engine Options:</para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para><emphasis role="bold">requestHeader:</emphasis> Inspect the HTTP
+                            request header (default)</para>
+                    </listitem>
+                    <listitem>
+                        <para><emphasis role="bold">requestBody:</emphasis> Inspect the HTTP request
+                            body</para>
+                    </listitem>
+                    <listitem>
+                        <para><emphasis role="bold">responseHeader:</emphasis> Inspect the HTTP
+                            response header</para>
+                    </listitem>
+                    <listitem>
+                        <para><emphasis role="bold">responseBody:</emphasis> Inspect the HTTP
+                            response body</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
+            <para>Inspection Engine Option Group Names:</para>
+            <para>These are just aliases for multiple options.</para>
+            <para>
+                <itemizedlist>
+                    <listitem>
+                        <para><emphasis role="bold">none:</emphasis> Removes all options</para>
+                    </listitem>
+                    <listitem>
+                        <para><emphasis role="bold">default:</emphasis> Default options (currently
+                            request header only)</para>
+                    </listitem>
+                    <listitem>
+                        <para><emphasis role="bold">request:</emphasis> All request related
+                            options</para>
+                    </listitem>
+                    <listitem>
+                        <para><emphasis role="bold">response:</emphasis> All response related
+                            options</para>
+                    </listitem>
+                    <listitem>
+                        <para><emphasis role="bold">all:</emphasis> All options</para>
+                    </listitem>
+                </itemizedlist>
+            </para>
         </section>
         <section>
             <title>LoadEudoxus</title>
