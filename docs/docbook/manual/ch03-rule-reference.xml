@@ -818,14 +818,22 @@
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> pcre</para>
             <para><emphasis role="bold">Version:</emphasis> 0.4</para>
-            <para>The <literal>dfa</literal> operator implements the alternative matching algorithm in
-                the <link xlink:href="http://www.pcre.org/">PCRE</link> regular expressions library. The
-                parameter of the operator is a regular expression pattern that is passed to the PCRE
-                library without modification. This alternative matching algorithm uses a similar syntax
-                to PCRE regular expressions, except that backtracking is not available. The primary use
-                of <literal>dfa</literal> is to allow a subset of regular expression matching in a
-                streaming manner (see <literal>StreamInspect</literal>). TODO: Describe limits on regex
-                syntax.</para>
+            <para>The <literal>dfa</literal> operator implements the alternative matching algorithm
+                in the <link xlink:href="http://www.pcre.org/">PCRE</link> regular expressions
+                library. The parameter of the operator is a regular expression pattern that is
+                passed to the PCRE library without modification. This alternative matching algorithm
+                uses a similar syntax to PCRE regular expressions, except that backtracking is not
+                available. The primary use of <literal>dfa</literal> is to allow a subset of regular
+                expression matching in a streaming manner (see <literal>StreamInspect</literal>). In
+                addition to streaming support, dfa will also find all matches to the pattern when
+                the capture modifier is used. TODO: Describe limits on regex syntax.</para>
+            <para>Example of capturing multiple matches:</para>
+            <para>
+                <programlisting># Capture each item in a '&amp;' separated list
+Rule REQUEST_URI_QUERY @dfa "[^&amp;]*" id:1 rev:1 phase:REQUEST_HEADER capture
+# Inspect each element in the CAPTURE, blocking if the format does not match
+Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value required" event block</programlisting>
+            </para>
         </section>
         <section>
             <title>ee_match_any</title>
@@ -1075,13 +1083,15 @@
             <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.4</para>
-            <para>Enabling capturing will poopulate the <literal>CAPTURE</literal> collection with data
-                from the most recent matching operator. For most operators the
-                    <literal>CAPTURE:0</literal> field will be set to the last matching value. Operators
-                that support capturing multiple values may set other items in the
+            <para>Enabling capturing will poopulate the <literal>CAPTURE</literal> collection with
+                data from the most recent matching operator. For most operators the
+                    <literal>CAPTURE:0</literal> field will be set to the last matching value.
+                Operators that support capturing multiple values may set other items in the
                     <literal>CAPTURE</literal> collection. For example, the <literal>rx</literal>
-                operator supports setting <literal>CAPTURE:1</literal> - <literal>CAPTURE:9</literal>
-                via capturing parens in the regular expression.</para>
+                operator supports setting the additional <literal>CAPTURE:1</literal> -
+                    <literal>CAPTURE:9</literal> via capturing parens in the regular expression and
+                the <literal>dfa</literal> operator supports capturing <emphasis>all
+                    matches</emphasis>, each being available as <literal>CAPTURE:0</literal>.</para>
         </section>
         <section>
             <title>chain</title>

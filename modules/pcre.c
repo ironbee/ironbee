@@ -714,12 +714,6 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
         match_start = subject+ovector[i*2];
         match_len = ovector[i*2+1] - ovector[i*2];
 
-        /* If debugging this, copy the string value out and print it to the
-         * log. This could be dangerous as there could be non-character
-         * values in the match. */
-        ib_log_debug2_tx(tx, "REGEX Setting #%d=\"%.*s\" (len=%zd)",
-                         i, (int)match_len, match_start, match_len);
-
         /* Create a byte-string representation */
         rc = ib_bytestr_dup_mem(&bs,
                                 tx->mp,
@@ -739,6 +733,81 @@ static ib_status_t pcre_set_matches(const ib_rule_exec_t *rule_exec,
 
         /* Add it to the capture collection */
         rc = ib_capture_set_item(tx, i, field);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Set the matches from a multi-match dfa as a list in the CAPTURE
+ * collection (all with "0" key).
+ *
+ * @param[in] rule_exec Rule execution object
+ * @param[in] ovector The vector of integer pairs of matches from PCRE.
+ * @param[in] matches The number of matches.
+ * @param[in] subject The matched-against string data.
+ *
+ * @returns IB_OK or IB_EALLOC.
+ */
+static ib_status_t pcre_dfa_set_match(const ib_rule_exec_t *rule_exec,
+                                      int *ovector,
+                                      int matches,
+                                      const char *subject)
+{
+    assert(rule_exec != NULL);
+    assert(rule_exec->ib != NULL);
+    assert(rule_exec->tx != NULL);
+    assert(ovector != NULL);
+
+    ib_status_t rc;
+    ib_tx_t *tx = rule_exec->tx;
+    int i;
+
+    /* We have a match! Now populate TX:0-9 in tx->data. */
+    ib_log_debug2_tx(tx, "DFA populating %d matches", matches);
+    for (i = 0; i < matches; ++i)
+    {
+        /* The length of the match. */
+        size_t match_len;
+
+        /* The first character in the match. */
+        const char *match_start;
+
+        /* Field name */
+        const char *name;
+
+        /* Holder for a copy of the field value when creating a new field. */
+        ib_bytestr_t *bs;
+
+        /* Field holder. */
+        ib_field_t *field;
+
+        /* Readability. Mark the start and length of the string. */
+        match_start = subject+ovector[i*2];
+        match_len = ovector[i*2+1] - ovector[i*2];
+
+        /* Create a byte-string representation */
+        rc = ib_bytestr_dup_mem(&bs,
+                                tx->mp,
+                                (const uint8_t*)match_start,
+                                match_len);
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        /* Create a field to hold the byte-string */
+        name = ib_capture_name(0);
+        rc = ib_field_create(&field, tx->mp, name, strlen(name),
+                             IB_FTYPE_BYTESTR, ib_ftype_bytestr_in(bs));
+        if (rc != IB_OK) {
+            return rc;
+        }
+
+        /* Add it to the capture collection */
+        rc = ib_capture_add_item(tx, field);
         if (rc != IB_OK) {
             return rc;
         }
@@ -1230,6 +1299,9 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
     dfa_workspace_t *dfa_workspace;
     const char *id = ib_rule_id(rule_exec->rule);
     int options; /* dfa exec options. */
+    int capture;
+    int start_offset;
+    int match_count;
 
     assert(rule_data->cpdata->is_dfa == true);
 
@@ -1281,6 +1353,13 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
     /* Get the per-tx workspace data for this rule data id. */
     ib_rc = get_dfa_tx_data(tx, id, &dfa_workspace);
     if (ib_rc == IB_ENOENT) {
+        /* First time we are called, clear the captures. */
+        ib_rc = ib_capture_clear(tx);
+        if (ib_rc != IB_OK) {
+            ib_log_error_tx(tx, "Error clearing captures: %s",
+                            ib_status_to_string(ib_rc));
+        }
+
         options = PCRE_PARTIAL_SOFT;
 
         ib_rc = alloc_dfa_tx_data(tx, rule_data->cpdata, id, &dfa_workspace);
@@ -1308,30 +1387,45 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
         return ib_rc;
     }
 
-    /* Actually do the DFA match. */
-    matches = pcre_dfa_exec(rule_data->cpdata->cpatt,
-                            rule_data->cpdata->edata,
-                            subject,
-                            subject_len,
-                            0, /* Starting offset. */
-                            options,
-                            ovector,
-                            ovecsize,
-                            dfa_workspace->workspace,
-                            dfa_workspace->wscount);
+    /* Perform the match.
+     * If capturing is specified, then find all matches.
+     */
+    capture = ib_flags_all(rule_exec->rule->flags, IB_RULE_FLAG_CAPTURE);
+    start_offset = 0;
+    match_count = 0;
+    do {
+        matches = pcre_dfa_exec(rule_data->cpdata->cpatt,
+                                rule_data->cpdata->edata,
+                                subject,
+                                subject_len,
+                                start_offset, /* Starting offset. */
+                                options,
+                                ovector,
+                                ovecsize,
+                                dfa_workspace->workspace,
+                                dfa_workspace->wscount);
 
-    if (matches >= 0) {
-        ib_rc = IB_OK;
-        *result = 1;
-    }
-    else if (matches == PCRE_ERROR_PARTIAL) {
-        ib_rule_log_debug(rule_exec,
-                          "Partial match found, but not a full match.");
-        ib_rc = IB_OK;
-        *result = 0;
-    }
-    else if (matches == PCRE_ERROR_NOMATCH) {
+        if (matches > 0) {
+            ib_log_debug3_tx(tx, "DFA matched: %d", matches);
 
+            ++match_count;
+
+            /* Use the longest match - the first in ovector -
+             * to set the offset in the subject for the next
+             * match.
+             */
+            start_offset = ovector[1] + 1;
+            if (capture) {
+                pcre_dfa_set_match(rule_exec, ovector, 1, subject);
+            }
+        }
+    } while ((capture != 0) && (matches > 0));
+
+    if (match_count > 0) {
+            ib_rc = IB_OK;
+            *result = 1;
+    }
+    else if ((matches == 0) || (matches == PCRE_ERROR_NOMATCH)) {
         if (ib_log_get_level(rule_exec->ib) >= 7) {
             char* tmp_c = malloc(subject_len+1);
             memcpy(tmp_c, subject, subject_len);
@@ -1343,6 +1437,13 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
             free(tmp_c);
         }
 
+        ib_rc = IB_OK;
+        *result = 0;
+    }
+    else if (matches == PCRE_ERROR_PARTIAL) {
+        ib_log_debug3_tx(tx, "DFA matched partial: %d", matches);
+        ib_rule_log_debug(rule_exec,
+                          "Partial match found, but not a full match.");
         ib_rc = IB_OK;
         *result = 0;
     }
@@ -1654,7 +1755,7 @@ static ib_status_t modpcre_init(ib_engine_t *ib,
     /* Register a pcre operator that uses pcre_dfa_exec to match streams. */
     ib_operator_register(ib,
                          "dfa",
-                         (IB_OP_FLAG_PHASE | IB_OP_FLAG_STREAM),
+                         (IB_OP_FLAG_PHASE | IB_OP_FLAG_STREAM | IB_OP_FLAG_CAPTURE),
                          dfa_operator_create,
                          NULL,
                          dfa_operator_destroy,

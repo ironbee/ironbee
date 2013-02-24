@@ -80,4 +80,24 @@ ib_status_t ib_capture_set_item(
     ib_field_t *in_field
 );
 
+/**
+ * Add a single capture field item.
+ *
+ * This will add a, possibly additional, item.
+ *
+ * @param[in] tx Transaction
+ * @param[in] in_field Field to add.
+ *
+ * @returns IB_OK: All OK
+ *          IB_EINVAL: @a num is too large
+ *          Error status from: ib_capture_set_list()
+ *                             ib_capture_init_item()
+ *                             ib_data_list_push()
+ *                             ib_field_mutable_value()
+ */
+ib_status_t ib_capture_add_item(
+    ib_tx_t    *tx,
+    ib_field_t *in_field
+);
+
 #endif
