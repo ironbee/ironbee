@@ -24,6 +24,7 @@
 
 
 #include "ngx_ironbee.h"
+#include "nginx.h"
 
 #include <ironbee/state_notify.h>
 
@@ -58,8 +59,19 @@ static int has_request_body(ngx_http_request_t *r, ngxib_req_ctx *ctx)
 {
     if (r->headers_in.content_length_n > 0)
         return r->headers_in.content_length_n;
+#if (nginx_version >= 1003000)
     else if (r->headers_in.chunked)
         return -1;
+#else
+    /* copied from ngx_http_request.c, though I strictly we should
+     * parse the header into tokens and accept look for "chunked"
+     * among the tokens, rather than assume an exact match
+     */
+    else if (r->headers_in.transfer_encoding->value.len == 7
+             && ngx_strncasecmp(r->headers_in.transfer_encoding->value.data,
+                                (u_char *) "chunked", 7) == 0)
+        return -1;
+#endif
     else
         return 0;
 }
