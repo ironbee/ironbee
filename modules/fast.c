@@ -631,7 +631,7 @@ ia_eudoxus_command_t fast_eudoxus_callback(
     void          *callback_data
 )
 {
-    assert(eudoxus        != NULL);
+    assert(eudoxus       != NULL);
     assert(output        != NULL);
     assert(callback_data != NULL);
 
