@@ -10,14 +10,13 @@
 # For MSVC, please follow the instructions given in src/msvcbuild.bat.
 # For MinGW and Cygwin, cd to src and run make with the Makefile there.
 #
-# Copyright (C) 2005-2012 Mike Pall. See Copyright Notice in luajit.h
+# Copyright (C) 2005-2013 Mike Pall. See Copyright Notice in luajit.h
 ##############################################################################
 
 MAJVER=  2
 MINVER=  0
-RELVER=  0
-EXNAME=  -ironbee
-VERSION= $(MAJVER).$(MINVER).$(RELVER)$(EXNAME)
+RELVER=  1
+VERSION= $(MAJVER).$(MINVER).$(RELVER)
 ABIVER=  5.1
 
 ##############################################################################
@@ -32,9 +31,9 @@ DPREFIX= $(DESTDIR)$(PREFIX)
 INSTALL_BIN=   $(DPREFIX)/bin
 INSTALL_LIB=   $(DPREFIX)/lib
 INSTALL_SHARE= $(DPREFIX)/share
-INSTALL_INC=   $(DPREFIX)/include/luajit$(EXNAME)-$(MAJVER).$(MINVER)
+INSTALL_INC=   $(DPREFIX)/include/luajit-$(MAJVER).$(MINVER)
 
-INSTALL_LJLIBD= $(INSTALL_SHARE)/luajit$(EXNAME)-$(VERSION)
+INSTALL_LJLIBD= $(INSTALL_SHARE)/luajit-$(VERSION)
 INSTALL_JITLIB= $(INSTALL_LJLIBD)/jit
 INSTALL_LMODD= $(INSTALL_SHARE)/lua
 INSTALL_LMOD= $(INSTALL_LMODD)/$(ABIVER)
@@ -43,15 +42,15 @@ INSTALL_CMOD= $(INSTALL_CMODD)/$(ABIVER)
 INSTALL_MAN= $(INSTALL_SHARE)/man/man1
 INSTALL_PKGCONFIG= $(INSTALL_LIB)/pkgconfig
 
-INSTALL_TNAME= luajit$(EXNAME)-$(VERSION)
-INSTALL_TSYMNAME= luajit$(EXNAME)
-INSTALL_ANAME= libluajit$(EXNAME)-$(ABIVER).a
-INSTALL_SONAME= libluajit$(EXNAME)-$(ABIVER).so.$(MAJVER).$(MINVER).$(RELVER)
-INSTALL_SOSHORT= libluajit$(EXNAME)-$(ABIVER).so
-INSTALL_DYLIBNAME= libluajit$(EXNAME)-$(NODOTABIVER).$(MAJVER).$(MINVER).$(RELVER).dylib
-INSTALL_DYLIBSHORT1= libluajit$(EXNAME)-$(ABIVER).dylib
-INSTALL_DYLIBSHORT2= libluajit$(EXNAME)-$(ABIVER).$(MAJVER).dylib
-INSTALL_PCNAME= luajit$(EXNAME).pc
+INSTALL_TNAME= luajit-$(VERSION)
+INSTALL_TSYMNAME= luajit
+INSTALL_ANAME= libluajit-$(ABIVER).a
+INSTALL_SONAME= libluajit-$(ABIVER).so.$(MAJVER).$(MINVER).$(RELVER)
+INSTALL_SOSHORT= libluajit-$(ABIVER).so
+INSTALL_DYLIBNAME= libluajit-$(ABIVER).$(MAJVER).$(MINVER).$(RELVER).dylib
+INSTALL_DYLIBSHORT1= libluajit-$(ABIVER).dylib
+INSTALL_DYLIBSHORT2= libluajit-$(ABIVER).$(MAJVER).dylib
+INSTALL_PCNAME= luajit.pc
 
 INSTALL_STATIC= $(INSTALL_LIB)/$(INSTALL_ANAME)
 INSTALL_DYN= $(INSTALL_LIB)/$(INSTALL_SONAME)
@@ -76,11 +75,11 @@ UNINSTALL= $(RM)
 LDCONFIG= ldconfig -n
 SED_PC= sed -e "s|^prefix=.*|prefix=$(PREFIX)|"
 
-FILE_T= luajit$(EXNAME)
-FILE_A= libluajit$(EXNAME).a
-FILE_SO= libluajit$(EXNAME).so
-FILE_MAN= luajit$(EXNAME).1
-FILE_PC= luajit$(EXNAME).pc
+FILE_T= luajit
+FILE_A= libluajit.a
+FILE_SO= libluajit.so
+FILE_MAN= luajit.1
+FILE_PC= luajit.pc
 FILES_INC= lua.h lualib.h lauxlib.h luaconf.h lua.hpp luajit.h
 FILES_JITLIB= bc.lua v.lua dump.lua dis_x86.lua dis_x64.lua dis_arm.lua \
 	      dis_ppc.lua dis_mips.lua dis_mipsel.lua bcsave.lua vmdef.lua
@@ -96,15 +95,15 @@ endif
 
 ##############################################################################
 
-INSTALL_DEP= src/luajit$(EXNAME)
+INSTALL_DEP= src/luajit
 
 default all $(INSTALL_DEP):
-	@echo "==== Building luajit$(EXNAME) $(VERSION) ===="
+	@echo "==== Building LuaJIT $(VERSION) ===="
 	$(MAKE) -C src
-	@echo "==== Successfully built luajit$(EXNAME) $(VERSION) ===="
+	@echo "==== Successfully built LuaJIT $(VERSION) ===="
 
 install: $(INSTALL_DEP)
-	@echo "==== Installing luajit$(EXNAME) $(VERSION) to $(PREFIX) ===="
+	@echo "==== Installing LuaJIT $(VERSION) to $(PREFIX) ===="
 	$(MKDIR) $(INSTALL_DIRS)
 	cd src && $(INSTALL_X) $(FILE_T) $(INSTALL_T)
 	cd src && test -f $(FILE_A) && $(INSTALL_F) $(FILE_A) $(INSTALL_STATIC) || :
@@ -121,7 +120,7 @@ install: $(INSTALL_DEP)
 	cd src && $(INSTALL_F) $(FILES_INC) $(INSTALL_INC)
 	cd src/jit && $(INSTALL_F) $(FILES_JITLIB) $(INSTALL_JITLIB)
 	$(SYMLINK) $(INSTALL_TNAME) $(INSTALL_TSYM)
-	@echo "==== Successfully installed LuaJIT$(EXNAME) $(VERSION) to $(PREFIX) ===="
+	@echo "==== Successfully installed LuaJIT $(VERSION) to $(PREFIX) ===="
 
 uninstall:
 	@echo "==== Uninstalling LuaJIT $(VERSION) from $(PREFIX) ===="
@@ -139,7 +138,7 @@ uninstall:
 ##############################################################################
 
 amalg:
-	@echo "Building luajit$(EXNAME) $(VERSION)"
+	@echo "Building LuaJIT $(VERSION)"
 	$(MAKE) -C src amalg
 
 clean:
