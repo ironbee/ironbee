@@ -13,7 +13,6 @@
 MAJVER=  2
 MINVER=  0
 RELVER=  0
-EXNAME=  -ironbee
 ABIVER=  5.1
 NODOTABIVER= 51
 
@@ -73,10 +72,10 @@ CCWARN= -Wall
 # as dynamic mode.
 #
 # Mixed mode creates a static + dynamic library and a statically linked luajit.
-#BUILDMODE= mixed
+BUILDMODE= mixed
 #
 # Static mode creates a static library and a statically linked luajit.
-BUILDMODE= static
+#BUILDMODE= static
 #
 # Dynamic mode creates a dynamic library and a dynamically linked luajit.
 # Note: this executable will only run when the library is installed!
@@ -171,8 +170,6 @@ HOST_CC= $(CC)
 HOST_RM= rm -f
 # If left blank, minilua is built and used. You can supply an installed
 # copy of (plain) Lua 5.1 or 5.2, plus Lua BitOp. E.g. with: HOST_LUA=lua
-#
-# IronBee: Just make this innocuous, so it is not performed
 HOST_LUA=
 
 HOST_XCFLAGS= -I.
@@ -182,7 +179,7 @@ HOST_ACFLAGS= $(CCOPTIONS) $(HOST_XCFLAGS) $(TARGET_ARCH) $(HOST_CFLAGS)
 HOST_ALDFLAGS= $(LDOPTIONS) $(HOST_XLDFLAGS) $(HOST_LDFLAGS)
 HOST_ALIBS= $(HOST_XLIBS) $(LIBS) $(HOST_LIBS)
 
-STATIC_CC = $(CROSS)$(CC) -fPIC
+STATIC_CC = $(CROSS)$(CC)
 DYNAMIC_CC = $(CROSS)$(CC) -fPIC
 TARGET_CC= $(STATIC_CC)
 TARGET_STCC= $(STATIC_CC)
@@ -191,8 +188,8 @@ TARGET_LD= $(CROSS)$(CC)
 TARGET_AR= $(CROSS)ar rcus
 TARGET_STRIP= $(CROSS)strip
 
-TARGET_SONAME= libluajit$(EXNAME)-$(ABIVER).so.$(MAJVER)
-TARGET_DYLIBNAME= libluajit$(EXNAME)-$(ABIVER).$(MAJVER).dylib
+TARGET_SONAME= libluajit-$(ABIVER).so.$(MAJVER)
+TARGET_DYLIBNAME= libluajit-$(ABIVER).$(MAJVER).dylib
 TARGET_DYLIBPATH= $(or $(PREFIX),/usr/local)/lib/$(TARGET_DYLIBNAME)
 TARGET_DLLNAME= lua$(NODOTABIVER).dll
 TARGET_XSHLDFLAGS= -shared -fPIC -Wl,-soname,$(TARGET_SONAME)
@@ -468,9 +465,9 @@ LIB_VMDEF= jit/vmdef.lua
 LIB_VMDEFP= $(LIB_VMDEF)
 
 LUAJIT_O= luajit.o
-LUAJIT_A= libluajit$(EXNAME).a
-LUAJIT_SO= libluajit$(EXNAME).so
-LUAJIT_T= luajit$(EXNAME)
+LUAJIT_A= libluajit.a
+LUAJIT_SO= libluajit.so
+LUAJIT_T= luajit
 
 ALL_T= $(LUAJIT_T) $(LUAJIT_A) $(LUAJIT_SO) $(HOST_T)
 ALL_HDRGEN= lj_bcdef.h lj_ffdef.h lj_libdef.h lj_recdef.h lj_folddef.h \
@@ -491,7 +488,7 @@ TARGET_DEP= $(LIB_VMDEF) $(LUAJIT_SO)
 ifeq (Windows,$(TARGET_SYS))
   TARGET_DYNCC= $(STATIC_CC)
   LJVM_MODE= coffasm
-  LUAJIT_T= luajit$(EXNAME).exe
+  LUAJIT_T= luajit.exe
   ifeq (cygwin,$(HOST_MSYS))
     LUAJIT_SO= cyg$(TARGET_DLLNAME)
   else
