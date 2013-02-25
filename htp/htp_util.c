@@ -1749,7 +1749,7 @@ int htp_is_uri_unreserved(unsigned char c) {
 void htp_uriencoding_normalize_inplace(bstr *s) {
     if (s == NULL) return;
 
-    unsigned char *data = (unsigned char *) bstr_ptr(s);
+    unsigned char *data = bstr_ptr(s);
     size_t len = bstr_len(s);
 
     size_t rpos = 0;
