@@ -823,7 +823,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, "request_uri_normalized",
-                    (unsigned char *) bstr_ptr(connp->in_tx->request_uri_normalized),
+                    bstr_ptr(connp->in_tx->request_uri_normalized),
                     bstr_len(connp->in_tx->request_uri_normalized));
             #endif
         }
