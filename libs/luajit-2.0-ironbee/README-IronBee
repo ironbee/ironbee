@@ -1,0 +1,4 @@
+This repository is a fork of the upstream git repository.
+
+There are only small modifications (currently just to build system) so that
+luajit-2.0 will build cleanly for use embedded in IronBee.
