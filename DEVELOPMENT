@@ -4,47 +4,47 @@ Source Code Repository
 IronBee code is availalbe via a git source code repository from git-hub. The
 latest source is always available from here as are all releases.
 
-https://github.com/ironbee/ironbee
+    https://github.com/ironbee/ironbee
 
 To get started with github, please see help.github.com.  However, below are
 basic instructions to get you started...
 
 Get the code:
 
-  git clone git://github.com/ironbee/ironbee.git
+    git clone git://github.com/ironbee/ironbee.git
 
 Change to the repo directory:
 
-  cd ironbee
+    cd ironbee
 
 Set your name/email:
 
-  git config user.name "Your Name"
-  git config user.email "email@your.dom.ain"
+    git config user.name "Your Name"
+    git config user.email "email@your.dom.ain"
   
 Keep the code up-to-date:
 
-  git checkout master
-  git pull --rebase
+    git checkout master
+    git pull --rebase
 
 Make a local branch for your work:
 
-  git checkout -b mywork
+    git checkout -b mywork
 
-  NOTE: You can now commit your changes to your local branch.
+    NOTE: You can now commit your changes to your local branch.
 
 Keep your local branch up-to-date with changes upstream:
 
-  git checkout master
-  git pull --rebase
-  git checkout mywork
-  git rebase master
+    git checkout master
+    git pull --rebase
+    git checkout mywork
+    git rebase master
 
-  NOTE: Do NOT rebase a branch that is remotly tracked - use merge instead.
+    NOTE: Do NOT rebase a branch that is remotly tracked - use merge instead.
 
 Generate a patch:
 
-  git format-patch origin/master
+    git format-patch origin/master
 
 
 LuaJIT Code
@@ -82,32 +82,32 @@ patches which you can email to the team.
 
 1) Make a local topic branch
 
-  git checkout -b fix-bug-1234
+    git checkout -b fix-bug-1234
 
 2) Make changes to code and commit locally as many times as needed.
 
-   # Make some changes
-   vi libs/qi/engine.c
-
-   # Add the changes to the index
-   git add libs/qi/engine.c
-
-   # Add some new files to the index
-   git add modules/mymodule.c
-
-   # Check the status of your local repo
-   git status
-
-   # Show a diff of your changes
-   git diff
-
-   # Commit your changes locally. If fixing a bug, then add the issue
-   # number to the commit message like this:
-   #  [#1234] Fixed foo by doing bar.
-   git commit
-
-   # Check the log to make sure it is correct
-   git log
+    # Make some changes
+    vi libs/qi/engine.c
+    
+    # Add the changes to the index
+    git add libs/qi/engine.c
+    
+    # Add some new files to the index
+    git add modules/mymodule.c
+    
+    # Check the status of your local repo
+    git status
+    
+    # Show a diff of your changes
+    git diff
+    
+    # Commit your changes locally. If fixing a bug, then add the issue
+    # number to the commit message like this:
+    #  [#1234] Fixed foo by doing bar.
+    git commit
+    
+    # Check the log to make sure it is correct
+    git log
 
 3) Use git-format-patch to generate a set of patches and send upstream to be
    approved/applied.  See also "git-send-email" and "git-imap-send" to make
@@ -145,15 +145,15 @@ basic instructions for doing this.
 
    * Clone (using your private URI):
 
-     git clone git@github.com:YOURACCOUNT/ironbee.git
+         git clone git@github.com:YOURACCOUNT/ironbee.git
 
    * You now have the "origin" pointing at your own repo's "master" branch.
 
    * Add the originating repository URI (the public one) as the "upstream"
      repo:
 
-     git remote add upstream git://github.com/ironbee/ironbee.git
-     git fetch upstream
+         git remote add upstream git://github.com/ironbee/ironbee.git
+         git fetch upstream
 
    * This "upstream" remote is then used to sync upstream changes or see
      what has changed.
@@ -163,7 +163,7 @@ basic instructions for doing this.
   * Make some changes locally, commit locally, make more changes, etc.
   * Push your local changes to github:
   
-    git push origin master
+        git push origin master
 
 4) And fetch changes from upstream when you want.
 
@@ -172,21 +172,21 @@ basic instructions for doing this.
 
   * Manually see what has changed upstream:
 
-    git diff HEAD..upstream/master
+        git diff HEAD..upstream/master
 
   * Manually fetch/merge when an upstream change occurs which you need.
 
-    git fetch upstream
-    git diff HEAD..FETCH_HEAD
-    git merge upstream/master
+        git fetch upstream
+        git diff HEAD..FETCH_HEAD
+        git merge upstream/master
 
     Or just do it all at once with:
 
-    git pull upstream/master
+        git pull upstream/master
 
 5) When you have your changes working and tested, send a pull request to
    the upstream repository so that we can merge in your changes to the
    official repository.
 
-   * http://help.github.com/pull-requests/
+    http://help.github.com/pull-requests/
 
