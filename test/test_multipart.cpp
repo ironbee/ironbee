@@ -1099,6 +1099,10 @@ TEST_F(Multipart, InvalidPartNoData) {
         NULL
     };
 
+    // The first part terminates abruptly by the next boundary. This
+    // actually works in PHP because its part header parser will
+    // consume everything (even boundaries) until the next empty line.
+
     char *data[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -1132,6 +1136,8 @@ TEST_F(Multipart, InvalidPartNoContentDisposition) {
         "Content-Type: multipart/form-data; boundary=0123456789\r\n",
         NULL
     };
+
+    // A part without a Content-Disposition header.
 
     char *data[] = {
         "--0123456789\r\n"
