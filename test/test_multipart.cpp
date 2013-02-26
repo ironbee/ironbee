@@ -356,7 +356,7 @@ TEST_F(Multipart, Test2) {
         }
     }
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_INCOMPLETE);
 
     htp_mpartp_destroy(mpartp);
     mpartp = NULL;
@@ -625,6 +625,9 @@ TEST_F(Multipart, WithEpilogue1) {
     ASSERT_EQ(MULTIPART_PART_EPILOGUE, part->type);
     ASSERT_TRUE(part->value != NULL);
     ASSERT_TRUE(bstr_cmp_c(part->value, "Epilogue") == 0);
+
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_INCOMPLETE);
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
 }
 
 TEST_F(Multipart, WithEpilogue2) {
@@ -653,6 +656,9 @@ TEST_F(Multipart, WithEpilogue2) {
     ASSERT_EQ(MULTIPART_PART_EPILOGUE, part->type);
     ASSERT_TRUE(part->value != NULL);
     ASSERT_TRUE(bstr_cmp_c(part->value, "Epi\nlogue") == 0);
+
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_INCOMPLETE);
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
 }
 
 TEST_F(Multipart, WithEpilogue3) {
@@ -682,6 +688,48 @@ TEST_F(Multipart, WithEpilogue3) {
     ASSERT_EQ(MULTIPART_PART_EPILOGUE, part->type);
     ASSERT_TRUE(part->value != NULL);
     ASSERT_TRUE(bstr_cmp_c(part->value, "Epi\r\n--logue") == 0);
+
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_INCOMPLETE);
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
+}
+
+TEST_F(Multipart, WithEpilogue4) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--\r\n"
+        "Epilogue1"
+        "\r\n--0123456789--\r\n"
+        "Epilogue2",
+        NULL
+    };
+
+    parseParts(parts);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
+
+    ASSERT_TRUE(htp_list_size(body->parts) == 4);
+
+    htp_multipart_part_t *ep1 = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
+    ASSERT_TRUE(ep1 != NULL);
+    ASSERT_EQ(MULTIPART_PART_EPILOGUE, ep1->type);
+    ASSERT_TRUE(ep1->value != NULL);
+    ASSERT_TRUE(bstr_cmp_c(ep1->value, "Epilogue1") == 0);
+
+    htp_multipart_part_t *ep2 = (htp_multipart_part_t *) htp_list_get(body->parts, 3);
+    ASSERT_TRUE(ep2 != NULL);
+    ASSERT_EQ(MULTIPART_PART_EPILOGUE, ep2->type);
+    ASSERT_TRUE(ep2->value != NULL);
+    ASSERT_TRUE(bstr_cmp_c(ep2->value, "Epilogue2") == 0);
+
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_INCOMPLETE);
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
 }
 
 TEST_F(Multipart, HasLastBoundary) {
@@ -829,7 +877,7 @@ TEST_F(Multipart, CompleteRequest) {
 
     parseRequestThenVerify(headers, data);
 
-    ASSERT_FALSE(body->flags & HTP_MULTIPART_HEADER_FOLDING);
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_PART_HEADER_FOLDING);
 }
 
 TEST_F(Multipart, MultipleContentTypeHeadersEvasion) {
@@ -1059,7 +1107,7 @@ TEST_F(Multipart, FoldedContentDisposition) {
 
     parseRequestThenVerify(headers, data);
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_HEADER_FOLDING);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_HEADER_FOLDING);
 }
 
 TEST_F(Multipart, FoldedContentDisposition2) {
@@ -1089,7 +1137,7 @@ TEST_F(Multipart, FoldedContentDisposition2) {
 
     parseRequestThenVerify(headers, data);
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_HEADER_FOLDING);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_HEADER_FOLDING);
 }
 
 TEST_F(Multipart, InvalidPartNoData) {
@@ -1127,7 +1175,9 @@ TEST_F(Multipart, InvalidPartNoData) {
     ASSERT_TRUE(field1 != NULL);
     ASSERT_EQ(MULTIPART_PART_UNKNOWN, field1->type);
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
+
+    //ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
 }
 
 TEST_F(Multipart, InvalidPartNoContentDisposition) {
@@ -1161,7 +1211,8 @@ TEST_F(Multipart, InvalidPartNoContentDisposition) {
     ASSERT_TRUE(body != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));   
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_UNKNOWN);
+    // ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
 }
 
 TEST_F(Multipart, InvalidPartMultipleCD) {
@@ -1195,5 +1246,6 @@ TEST_F(Multipart, InvalidPartMultipleCD) {
 
     parseRequestThenVerify(headers, data);
 
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_HEADER_REPEATED);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
 }

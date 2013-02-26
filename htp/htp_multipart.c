@@ -110,6 +110,9 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
 
         // Is it a parameter we are interested in?
         int param_type = htp_mpartp_cd_param_type(data, start, pos);
+        if (param_type == CD_PARAM_OTHER) {
+
+        }
 
         // Ignore whitespace
         while ((pos < len) && isspace(data[pos])) pos++;
@@ -318,11 +321,8 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         free(h);
 
         // Keep track of same-name headers.
-        h_existing->flags |= HTP_MULTIPART_HEADER_REPEATED;
-        part->parser->multipart.flags |= HTP_MULTIPART_HEADER_REPEATED;
-
-        // Repeated part headers are actually not allowed.
-        part->parser->multipart.flags |= HTP_MULTIPART_PART_INVALID;
+        h_existing->flags |= HTP_MULTIPART_PART_HEADER_REPEATED;
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_HEADER_REPEATED;
     } else {
         // Add as a new header.
         htp_table_add(part->headers, h->name, h);
@@ -409,9 +409,15 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
 
     if (part->parser->multipart.flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY) {
         if (part->type == MULTIPART_PART_UNKNOWN) {
-            // Assume that the unknown part after the last boundary is the epilogue.
-            // XXX There can be only one epilogue, though.
+            // Assume that the unknown part after the last boundary is the epilogue.            
             part->parser->current_part->type = MULTIPART_PART_EPILOGUE;
+
+            // But if we've already seen a part we thought was the epilogue,
+            // raise HTP_MULTIPART_PART_UNKNOWN. Multiple epilogues are not allowed.
+            if (part->parser->multipart.flags & HTP_MULTIPART_HAS_EPILOGUE) {
+                part->parser->multipart.flags |= HTP_MULTIPART_PART_UNKNOWN;                
+            }
+
             part->parser->multipart.flags |= HTP_MULTIPART_HAS_EPILOGUE;
         } else {
             part->parser->multipart.flags |= HTP_MULTIPART_PART_AFTER_LAST_BOUNDARY;
@@ -420,16 +426,15 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
 
     // Sanity checks.
 
-    // Have we seen complete part headers? If we have not, that means
-    // that the part ended prematurely.
-    if (part->parser->current_part_mode != MODE_DATA) {
-        part->parser->multipart.flags |= HTP_MULTIPART_PART_INVALID;
+    // Have we seen complete part headers? If we have not, that means that the part ended prematurely.
+    if ((part->parser->current_part->type != MULTIPART_PART_EPILOGUE) && (part->parser->current_part_mode != MODE_DATA)) {
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_INCOMPLETE;
     }
 
     // Have we been able to determine the part type? If not, this means
     // that the part did not contain the C-D header.
     if (part->type == MULTIPART_PART_UNKNOWN) {
-        part->parser->multipart.flags |= HTP_MULTIPART_PART_INVALID;
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_UNKNOWN;
     }
 
     // Finalize part value.   
@@ -529,7 +534,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                 // Empty line; process headers and switch to data mode.
 
                 // Process the pending header, if any.
-                if (part->parser->pending_header_line != NULL) {                    
+                if (part->parser->pending_header_line != NULL) {
                     htp_mpartp_parse_header(part, bstr_ptr(part->parser->pending_header_line),
                             bstr_len(part->parser->pending_header_line));
                     // TODO RC
@@ -581,7 +586,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                     // Is this a folded line?
                     if (isspace(data[0])) {
                         // Folding; add to the existing line.
-                        part->parser->multipart.flags |= HTP_MULTIPART_HEADER_FOLDING;
+                        part->parser->multipart.flags |= HTP_MULTIPART_PART_HEADER_FOLDING;
                         part->parser->pending_header_line = bstr_add_mem(part->parser->pending_header_line, data, len);
                         if (part->parser->pending_header_line == NULL) {
                             bstr_free(line);
@@ -935,7 +940,10 @@ htp_status_t htp_mpartp_finalize(htp_mpartp_t *parser) {
         // Finalize the last part.
         if (htp_mpart_part_finalize_data(parser->current_part) != HTP_OK) return HTP_ERROR;
 
-        parser->multipart.flags |= HTP_MULTIPART_PART_INCOMPLETE;
+        // It is OK to end abruptly in the epilogue part, but not in any other.
+        if (parser->current_part->type != MULTIPART_PART_EPILOGUE) {
+            parser->multipart.flags |= HTP_MULTIPART_INCOMPLETE;
+        }
     }
 
     bstr_builder_clear(parser->boundary_pieces);
