@@ -122,6 +122,73 @@ $ sudo make install</programlisting>
             <title>Usage</title>
             <para/>
             <section>
+                <title>Normalization Features</title>
+                <para/>
+                <section>
+                    <title>Raw NUL terminates request line</title>
+                    <para/>
+                </section>
+                <section>
+                    <title>Lowercase</title>
+                    <para>Convert characters to lowercase. Typically used on paths, with servers
+                        with case-insensitive filesystems.</para>
+                </section>
+                <section>
+                    <title>Convert backslashes to forwardslashes</title>
+                    <para>Convert all backlash characters to forwardslash characters. Typically used
+                        on paths, with servers that support both as path separators.</para>
+                </section>
+                <section>
+                    <title>Compress path separator characters</title>
+                    <para>Convert multiple path separator characters into one (e.g.,
+                            <literal>///</literal> is converted to <literal>/</literal>).</para>
+                </section>
+                <section>
+                    <title>RFC URI normalization</title>
+                    <para>Normalize URI according to the RFC. Handles self-references
+                            (<literal>./</literal>) and back-references
+                        (<literal>../</literal>).</para>
+                </section>
+                <section>
+                    <title>URL decoding</title>
+                    <para>Decode URL-encoded characters (<literal>%HH</literal>). Configurable
+                        handling of invalid encoding: decode anyway, remove the <literal>%</literal>
+                        character, and ignore (continues decoding after the <literal>%</literal>
+                        character).</para>
+                    <para>Request query string and request body in
+                            <literal>application/x-www-form-urlencoded</literal> are always
+                        decoded.</para>
+                </section>
+                <section>
+                    <title>%u decoding</title>
+                    <para>Decode <literal>%u</literal>-encoded characters
+                        (<literal>%uHHHH</literal>). Configurable handling of invalid
+                        encoding.</para>
+                </section>
+                <section>
+                    <title>Convert UTF-8 characters</title>
+                    <para>Convert UTF-8 characters into single bytes. Useful to counter evasion with
+                        overlong UTF-8 characters (ASCII characters needlessly encoded as UTF-8).
+                        Best-fit mapping is used when a characters cannot be cleanly converted to a
+                        single byte.</para>
+                </section>
+                <section>
+                    <title>URL-decode request line before parsing</title>
+                    <para/>
+                </section>
+                <section>
+                    <title>Best-fit mapping</title>
+                    <para>Used whenever a Unicode character needs to be converted to a single byte.
+                        There's a default map, but a custom map can be provided. Also supports the
+                        setting of a default replacement character, which is used when a better fit
+                        is not available.</para>
+                </section>
+                <section>
+                    <title>Transcoding</title>
+                    <para>Convert from one character encoding to another.</para>
+                </section>
+            </section>
+            <section>
                 <title>Dealing with Proxies</title>
                 <para>Under normal circumstances, when you're monitoring HTTP traffic the TCP
                     addresses and ports will be those of the clients and servers involved in direct
