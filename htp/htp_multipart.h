@@ -63,6 +63,7 @@ extern "C" {
 #define HTP_MULTIPART_HBOUNDARY_UNUSUAL         0x0400
 #define HTP_MULTIPART_HBOUNDARY_QUOTED          0x0800
 #define HTP_MULTIPART_HEADER_FOLDING            0x1000
+#define HTP_MULTIPART_PART_INVALID              0x2000
 
 #define HTP_MULTIPART_MIME_TYPE                 "multipart/form-data"
 

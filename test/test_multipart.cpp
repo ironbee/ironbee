@@ -1092,3 +1092,68 @@ TEST_F(Multipart, FoldedContentDisposition2) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_HEADER_FOLDING);
 }
 
+TEST_F(Multipart, InvalidPartNoData) {
+    char *headers[] = {
+        "POST / HTTP/1.0\r\n"
+        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
+        NULL
+    };
+
+    char *data[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
+        "\r\n"
+        "FILEDATA"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    parseRequest(headers, data);
+
+    ASSERT_TRUE(body != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
+    
+    htp_multipart_part_t *field1 = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
+    ASSERT_TRUE(field1 != NULL);
+    ASSERT_EQ(MULTIPART_PART_UNKNOWN, field1->type);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
+}
+
+TEST_F(Multipart, InvalidPartNoContentDisposition) {
+    char *headers[] = {
+        "POST / HTTP/1.0\r\n"
+        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
+        NULL
+    };
+
+    char *data[] = {
+        "--0123456789\r\n"
+        "Content-Type: text/html\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
+        "\r\n"
+        "FILEDATA"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    parseRequest(headers, data);
+
+    ASSERT_TRUE(body != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));   
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
+}

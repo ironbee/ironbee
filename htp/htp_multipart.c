@@ -406,6 +406,7 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
     if (part->parser->multipart.flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY) {
         if (part->type == MULTIPART_PART_UNKNOWN) {
             // Assume that the unknown part after the last boundary is the epilogue.
+            // XXX There can be only one epilogue, though.
             part->parser->current_part->type = MULTIPART_PART_EPILOGUE;
             part->parser->multipart.flags |= HTP_MULTIPART_HAS_EPILOGUE;
         } else {
@@ -413,7 +414,21 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part) {
         }
     }
 
-    // Finalize part value.
+    // Sanity checks.
+
+    // Have we seen complete part headers? If we have not, that means
+    // that the part ended prematurely.
+    if (part->parser->current_part_mode != MODE_DATA) {
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_INVALID;
+    }
+
+    // Have we been able to determine the part type? If not, this means
+    // that the part did not contain the C-D header.
+    if (part->type == MULTIPART_PART_UNKNOWN) {
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_INVALID;
+    }
+
+    // Finalize part value.   
 
     if (part->type == MULTIPART_PART_FILE) {
         // Notify callbacks about the end of the file.
