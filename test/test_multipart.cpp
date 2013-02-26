@@ -1163,3 +1163,37 @@ TEST_F(Multipart, InvalidPartNoContentDisposition) {
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
 }
+
+TEST_F(Multipart, InvalidPartMultipleCD) {
+    char *headers[] = {
+        "POST / HTTP/1.0\r\n"
+        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
+        NULL
+    };
+
+    // When we encounter a part with more than one C-D header, we
+    // don't know which one the backend will use. Thus, we raise
+    // HTP_MULTIPART_PART_INVALID.
+
+    char *data[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "Content-Disposition: form-data; name=\"field3\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
+        "\r\n"
+        "FILEDATA"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    parseRequestThenVerify(headers, data);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
+}

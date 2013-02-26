@@ -295,10 +295,10 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
     h->name = bstr_dup_mem(data + name_start, name_end - name_start);
     h->value = bstr_dup_mem(data + value_start, value_end - value_start);
 
-    // Check if the header already exists
+    // Check if the header already exists.
     htp_header_t * h_existing = htp_table_get(part->headers, h->name);
     if (h_existing != NULL) {
-        // Add to existing header
+        // Add to the existing header.
         bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
                 + 2 + bstr_len(h->value));
         if (new_value == NULL) {
@@ -309,18 +309,22 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         }
 
         h_existing->value = new_value;
-        bstr_add_mem_noex(h_existing->value, (unsigned char *) ", ", 2);
+        bstr_add_mem_noex(h_existing->value, ", ", 2);
         bstr_add_noex(h_existing->value, h->value);
 
-        // The header is no longer needed
+        // The header is no longer needed.
         bstr_free(h->name);
         bstr_free(h->value);
         free(h);
 
-        // Keep track of same-name headers
-        h_existing->flags |= HTP_FIELD_REPEATED;
+        // Keep track of same-name headers.
+        h_existing->flags |= HTP_MULTIPART_HEADER_REPEATED;
+        part->parser->multipart.flags |= HTP_MULTIPART_HEADER_REPEATED;
+
+        // Repeated part headers are actually not allowed.
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_INVALID;
     } else {
-        // Add as a new header
+        // Add as a new header.
         htp_table_add(part->headers, h->name, h);
     }
 
