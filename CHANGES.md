@@ -187,6 +187,8 @@ IronBee v0.7.0
 
 **Other**
 
+* The old CLI (ibcli) has been removed.
+
 * Removed FTRACE code.
 
 * Various bug fixes and cleanup.

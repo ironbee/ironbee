@@ -16,7 +16,6 @@ def all_ironbee_code
   [
     'automata',
     'cpp',
-    'cli',
     'engine',
     'fast',
     'include',

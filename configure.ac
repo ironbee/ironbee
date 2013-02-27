@@ -191,12 +191,6 @@ if test "$mpool_valgrind" != "no"; then
     AC_DEFINE([IB_MPOOL_VALGRIND], [1], [Valgrind support in mpool.])
 fi
 
-### CLI
-AC_ARG_ENABLE(cli,
-              AS_HELP_STRING([--disable-cli],
-                             [Disable the cli utility (enabled by default).]),[enable_cli_utility="$enableval"],[enable_cli_utility=yes])
-AS_IF([test "$enable_cli_utility" = "yes"], [util_cli=1], [util_cli=0])
-
 ### CPP
 AC_ARG_ENABLE(cpp,
               AS_HELP_STRING([--disable-cpp],
@@ -444,11 +438,6 @@ dnl Enable lua subdir if enabled
 if test "$enable_lua" != "no"; then
     TOPLEVEL_SUBDIRS="lua ${TOPLEVEL_SUBDIRS}"
 fi
- 
-dnl Enable cli subdir if enabled
-if test "$util_cli" != 0; then
-    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} cli"
-fi
 
 dnl Enable C++ subdirs if enabled
 if test "$cpp_code" != 0; then
@@ -573,10 +562,6 @@ AC_CONFIG_FILES([servers/Makefile])
 AC_CONFIG_FILES([servers/apache_httpd2/Makefile])
 AC_CONFIG_FILES([servers/trafficserver/Makefile])
 AC_CONFIG_FILES([servers/nginx/Makefile])
-
-if test "$util_cli" != 0; then
-AC_CONFIG_FILES([cli/Makefile])
-fi
 
 if test "$cpp_code" != 0; then
 AC_CONFIG_FILES([clipp/Makefile])
