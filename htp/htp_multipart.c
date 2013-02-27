@@ -1266,10 +1266,10 @@ STATE_SWITCH:
                     parser->multipart.flags |= HTP_MULTIPART_SEEN_LAST_BOUNDARY;
                     parser->parser_state = STATE_BOUNDARY_EAT_LWS;
                 } else {
-                    // The second character is not a dash. This means that we have
-                    // an error in the payload. We should report the error and
-                    // continue to eat the rest of the line.
-                    // TODO Error
+                    // The second character is not a dash, and so this is not
+                    // the final boundary. Raise the flag for the first dash,
+                    // and change state to consume the rest of the boundary line.
+                    parser->multipart.flags |= HTP_MULTIPART_BBOUNDARY_NLWS_AFTER;
                     parser->parser_state = STATE_BOUNDARY_EAT_LWS;
                 }
                 break;

@@ -558,13 +558,32 @@ TEST_F(Multipart, BoundaryInstanceWithLwsAfter) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BBOUNDARY_LWS_AFTER);
 }
 
-TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter) {
+TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter1) {
     char *parts[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
         "\r\n"
         "ABCDEF"
         "\n--0123456789 X \r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    parsePartsThenVerify(parts);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_BBOUNDARY_NLWS_AFTER);
+}
+
+TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter2) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\n--0123456789-\r\n"
         "Content-Disposition: form-data; name=\"field2\"\r\n"
         "\r\n"
         "GHIJKL"
