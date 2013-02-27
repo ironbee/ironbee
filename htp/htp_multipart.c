@@ -69,15 +69,20 @@ htp_multipart_t *htp_mpartp_get_multipart(htp_mpartp_t *parser) {
  * Parses the Content-Disposition part header.
  *
  * @param[in] part
- * @return HTP_OK on success (header found and parsed), HTP_DECLINED if there is no C-D header, and HTP_ERROR on failure.
+ * @return HTP_OK on success (header found and parsed), HTP_DECLINED if there is no C-D header or if
+ *         it could not be processed, and HTP_ERROR on fatal error.
  */
 static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
     // Find the C-D header.
     htp_header_t *h = htp_table_get_c(part->headers, "content-disposition");
-    if (h == NULL) return HTP_DECLINED;
+    if (h == NULL) {
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_UNKNOWN;
+        return HTP_DECLINED;
+    }
 
     if (bstr_index_of_c(h->value, "form-data") != 0) {
-        return -1;
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+        return HTP_DECLINED;
     }
 
     // The parsing starts here
@@ -87,62 +92,77 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
 
     // Main parameter parsing loop (once per parameter)
     while (pos < len) {
-        // Find semicolon and go over it
+        // Ignore whitespace.
         while ((pos < len) && isspace(data[pos])) pos++;
-        if (pos == len) return -2;
+        if (pos == len) return HTP_DECLINED;        
 
-        // Semicolon
-        if (data[pos] != ';') return -3;
+        // Expecting a semicolon.
+        if (data[pos] != ';') {
+            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            return HTP_DECLINED;
+        }
         pos++;
 
-        // Go over the whitespace before parameter name
+        // Go over the whitespace before parameter name.
         while ((pos < len) && isspace(data[pos])) pos++;
-        if (pos == len) return -4;
-
-        // Found starting position (name)
-        size_t start = pos;
-
-        // Look for ending position        
-        while ((pos < len) && (!isspace(data[pos]) && (data[pos] != '='))) pos++;
-        if (pos == len) return -5;
-
-        // Ending position is in "pos" now
-
-        // Is it a parameter we are interested in?
-        int param_type = htp_mpartp_cd_param_type(data, start, pos);
-        if (param_type == CD_PARAM_OTHER) {
-
+        if (pos == len) {
+            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            return HTP_DECLINED;
         }
 
-        // Ignore whitespace
-        while ((pos < len) && isspace(data[pos])) pos++;
-        if (pos == len) return -6;
+        // Found the starting position of the parameter name.
+        size_t start = pos;
 
-        // Equals
-        if (data[pos] != '=') return -7;
+        // Look for the ending position.
+        while ((pos < len) && (!isspace(data[pos]) && (data[pos] != '='))) pos++;
+        if (pos == len) {
+            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;        
+            return HTP_DECLINED;
+        }
+
+        // Ending position is in "pos" now.
+
+        // Determine parameter type ("name", "filename", or other).
+        int param_type = htp_mpartp_cd_param_type(data, start, pos);        
+
+        // Ignore whitespace after parameter name, if any.
+        while ((pos < len) && isspace(data[pos])) pos++;
+        if (pos == len) {
+            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;        
+            return HTP_DECLINED;
+        }
+
+        // Equals.
+        if (data[pos] != '=') {
+            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            return HTP_DECLINED;
+        }
         pos++;
 
-        // Go over the whitespace before value
+        // Go over the whitespace before the parameter value.
         while ((pos < len) && isspace(data[pos])) pos++;
-        if (pos == len) return -8;
+        if (pos == len) {
+            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            return HTP_DECLINED;
+        }
 
-        // Found starting point (value)
+        // Found the starting point of the value.
         start = pos;
-
-        // Quoting char indicator
+        
+        // Different handling for quoted and bare strings.
         int qchar = -1;
-
-        // Different handling for quoted and bare strings
         if (data[start] == '"') {
-            // Quoted string
+            // Quoted string.
             qchar = data[start];
             start = ++pos;
+
+            // XXX
 
             // Find the end of the value
             while ((pos < len) && (data[pos] != qchar)) {
                 if (data[pos] == '\\') {
                     // Ignore invalid quoting pairs
-                    if (pos + 1 < len) return -9;
+                    if (pos + 1 < len) return HTP_DECLINED;
                     // Go over the quoted character
                     pos++;
                 }
@@ -150,28 +170,45 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
                 pos++;
             }
         } else {
-            // Bare string
-            while ((pos < len) && (!htp_is_token(data[pos]))) pos++;
+            // Bare string or non-standard quoting, which we don't like.
+            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            return HTP_DECLINED;            
         }
 
+        // Finally, process the parameter value.
+        
         switch (param_type) {
             case CD_PARAM_NAME:
-                // TODO Unquote quoted characters
+                // Check that we have not seen the name parameter already.
+                if (part->name != NULL) {
+                    part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_REPEATED_PARAMS;
+                    return HTP_DECLINED;
+                }
+
+                // XXX Unquote quoted characters.
                 part->name = bstr_dup_mem(data + start, pos - start);
-                if (part->name == NULL) return -1;
+                if (part->name == NULL) return HTP_ERROR;
                 break;
+
             case CD_PARAM_FILENAME:
-                // TODO Unquote quoted characters
+                // Check that we have not seen the filename parameter already.
+                if (part->file != NULL) {
+                    part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_REPEATED_PARAMS;
+                    return HTP_DECLINED;
+                }
+
+                // XXX Unquote quoted characters
                 part->file = calloc(1, sizeof (htp_file_t));
-                if (part->file == NULL) return -1;
+                if (part->file == NULL) return HTP_ERROR;
                 part->file->fd = -1;
                 part->file->filename = bstr_dup_mem(data + start, pos - start);
-                if (part->file->filename == NULL) return -1;
+                if (part->file->filename == NULL) return HTP_ERROR;
                 part->file->source = HTP_FILE_MULTIPART;
                 break;
             default:
-                // Ignore unknown parameter
-                // TODO Warn/log?
+                // Unknown parameter.
+                part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_UNKNOWN_PARAM;
+                return HTP_DECLINED;
                 break;
         }
 
@@ -180,7 +217,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
             pos++;
         }
 
-        // Continue to parse the next parameter, if any
+        // Continue to parse the next parameter, if any.
     }
 
     return HTP_OK;
@@ -207,6 +244,7 @@ static htp_status_t htp_mpart_part_parse_c_t(htp_multipart_part_t *part) {
 htp_status_t htp_mpart_part_process_headers(htp_multipart_part_t *part) {
     if (htp_mpart_part_parse_c_d(part) == HTP_ERROR) return HTP_ERROR;
     if (htp_mpart_part_parse_c_t(part) == HTP_ERROR) return HTP_ERROR;
+
     return HTP_OK;
 }
 

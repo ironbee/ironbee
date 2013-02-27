@@ -1257,9 +1257,7 @@ TEST_F(Multipart, InvalidPartUnknownHeader) {
         NULL
     };
 
-    // When we encounter a part with more than one C-D header, we
-    // don't know which one the backend will use. Thus, we raise
-    // HTP_MULTIPART_PART_INVALID.
+    // Unknown C-D header "Unknown".
 
     char *data[] = {
         "--0123456789\r\n"
@@ -1292,6 +1290,8 @@ TEST_F(Multipart, InvalidContentDispositionMultipleParams1) {
         NULL
     };
 
+    // Two "name" parameters in a C-D header.
+
     char *data[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"; name=\"field3\"\r\n"
@@ -1322,6 +1322,8 @@ TEST_F(Multipart, InvalidContentDispositionMultipleParams2) {
         "Content-Type: multipart/form-data; boundary=0123456789\r\n",
         NULL
     };
+
+    // Two "filename" parameters in a C-D header.
 
     char *data[] = {
         "--0123456789\r\n"
@@ -1354,6 +1356,8 @@ TEST_F(Multipart, InvalidContentDispositionUnknownParam) {
         NULL
     };
 
+    // Unknown C-D parameter "test".
+
     char *data[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"; test=\"param\"\r\n"
@@ -1384,6 +1388,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax1) {
         "Content-Type: multipart/form-data; boundary=0123456789\r\n",
         NULL
     };
+
+    // Parameter value not quoted.
 
     char *data[] = {
         "--0123456789\r\n"
@@ -1416,6 +1422,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax2) {
         NULL
     };
 
+    // Using single quotes around parameter value.
+
     char *data[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name='field1'\r\n"
@@ -1446,6 +1454,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax3) {
         "Content-Type: multipart/form-data; boundary=0123456789\r\n",
         NULL
     };
+
+    // No semicolon after form-data in the C-D header.
 
     char *data[] = {
         "--0123456789\r\n"
@@ -1478,6 +1488,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax4) {
         NULL
     };
 
+    // No semicolon after C-D parameter.
+
     char *data[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\"\r\n"
@@ -1509,13 +1521,81 @@ TEST_F(Multipart, InvalidContentDispositionSyntax5) {
         NULL
     };
 
+    // Missing terminating quote in C-D parameter value.
+
     char *data[] = {
         "--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field1\r\n"
         "\r\n"
         "ABCDEF"
         "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"file1\" filename=\"file.bin\"\r\n"
+        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
+        "\r\n"
+        "FILEDATA"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    parseRequest(headers, data);
+
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+}
+
+TEST_F(Multipart, InvalidContentDispositionSyntax6) {
+    char *headers[] = {
+        "POST / HTTP/1.0\r\n"
+        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
+        NULL
+    };
+
+    // C-D header does not begin with "form-data".
+
+    char *data[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: invalid-syntax; name=\"field1\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
+        "\r\n"
+        "FILEDATA"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    parseRequest(headers, data);
+
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+}
+
+TEST_F(Multipart, InvalidContentDispositionSyntax7) {
+    char *headers[] = {
+        "POST / HTTP/1.0\r\n"
+        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
+        NULL
+    };
+
+    // Empty C-D header..
+
+    char *data[] = {
+        "--0123456789\r\n"
+        "Content-Disposition:\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
         "\r\n"
         "FILEDATA"
         "\r\n--0123456789\r\n"
