@@ -1,4 +1,4 @@
-$:.unshift(File.dirname(File.dirname(File.expand_path(__FILE__))))
+$:.unshift(File.dirname(File.dirname(__FILE__)))
 require 'clipp_test'
 
 class TestRegression < Test::Unit::TestCase
@@ -94,37 +94,90 @@ class TestRegression < Test::Unit::TestCase
     assert_log_no_match /_HEADER/
   end
 
-  # rns-190
-  def test_request_uri11
+  def test_ipmatch_09
     clipp(
-      :input_hashes => [simple_hash("GET /foobar/a HTTP/1.1\nHost: foo.bar\n\n")],
+      :input => "echo:\"GET /foo\" @set_remote_ip:6.6.6.6",
       :default_site_config => <<-EOS
-        Rule REQUEST_URI @rx foo id:1 phase:REQUEST_HEADER clipp_announce:request_uri
+        Rule REMOTE_ADDR @ipmatch "6.6.6.6" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_09
       EOS
     )
     assert_no_issues
-    assert_log_match /CLIPP ANNOUNCE: request_uri/
+    assert_log_match /CLIPP ANNOUNCE: ipmatch_09/
   end
 
-  def test_request_uri09
+  def test_ipmatch_11
+    request = <<-EOS
+GET / HTTP/1.1
+Content-Length: 1234
+
+    EOS
+    input = [simple_hash(request)]
     clipp(
-      :input_hashes => [simple_hash("GET /foobar/a\n")],
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6.6.6.6",
       :default_site_config => <<-EOS
-        Rule REQUEST_URI @rx foo id:1 phase:REQUEST_HEADER clipp_announce:request_uri
+        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.6.6 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_11a
       EOS
     )
     assert_no_issues
-    assert_log_match /CLIPP ANNOUNCE: request_uri/
+    assert_log_match /CLIPP ANNOUNCE: ipmatch_11a/
+
+    clipp(
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6.6.6.6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.6.0/24 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_11b
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: ipmatch_11b/
+
+    clipp(
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6.6.6.6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.5.0/24 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_11c
+      EOS
+    )
+    assert_no_issues
+    assert_log_no_match /CLIPP ANNOUNCE: ipmatch_11c/
   end
 
-  # rns-192.  Disabled until fixed.
-  #def test_request_body_rule
-  #  s = "POST /a HTTP/1.1\nContent-Type: application/x-www-form-urlencoded\nContent-Length: 19\n\nfoo=bar&hello=world\n"
-  #  clipp(
-  #    :input_hashes => [simple_hash(s)],
-  #    :default_site_config => "Rule ARGS @rx hello id:8 phase:REQUEST clipp_announce:body"
-  #  )
-  #  assert_no_issues
-  #  assert_log_no_match /CLIPP ANNOUNCE: body/
-  #end
+  def test_ipmatch6_11
+    request = <<-EOS
+GET / HTTP/1.1
+Content-Length: 1234
+
+    EOS
+    input = [simple_hash(request)]
+    clipp(
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6::6:6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::6:6 1::2:3" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch6_11a
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: ipmatch6_11a/
+
+    clipp(
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6::6:6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::6:0/112 1::2:3" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch6_11b
+      EOS
+    )
+    assert_no_issues
+    assert_log_match /CLIPP ANNOUNCE: ipmatch6_11b/
+
+    clipp(
+      :input_hashes => input,
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6::6:6",
+      :default_site_config => <<-EOS
+        Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::5:0/112 1::2:3" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch6_11c
+      EOS
+    )
+    assert_no_issues
+    assert_log_no_match /CLIPP ANNOUNCE: ipmatch6_11c/
+  end
 end

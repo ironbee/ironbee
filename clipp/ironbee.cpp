@@ -136,40 +136,16 @@ public:
 
     void connection_data_in(const Input::DataEvent& event)
     {
-        if (! m_connection) {
-            throw runtime_error(
-                "CONNECTION_DATA_IN event fired outside "
-                "of connection lifetime."
-            );
-        }
-
-        // Copy because IronBee needs mutable input.
-        IronBee::ConnectionData data = IronBee::ConnectionData::create(
-            m_connection,
-            event.data.data,
-            event.data.length
+        throw runtime_error(
+            "IronBee no longer supports connection data.  Use @parse."
         );
-
-        m_engine.notify().connection_data_in(data);
     }
 
     void connection_data_out(const Input::DataEvent& event)
     {
-        if (! m_connection) {
-            throw runtime_error(
-                "CONNECTION_DATA_IN event fired outside "
-                "of connection lifetime."
-            );
-        }
-
-        // Copy because IronBee needs mutable input.
-        IronBee::ConnectionData data = IronBee::ConnectionData::create(
-            m_connection,
-            event.data.data,
-            event.data.length
+        throw runtime_error(
+            "IronBee no longer supports connection data.  Use @parse."
         );
-
-        m_engine.notify().connection_data_out(data);
     }
 
     void request_started(const Input::RequestEvent& event)

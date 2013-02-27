@@ -80,6 +80,12 @@ public:
     virtual
     void connection_closed(const NullEvent& event) {}
 
+    /* IronBee no longer supports a connection data interface.  CLIPP retains
+     * it, however, to allow easy generator writing.  Any use of it should
+     * pass through the @parse modifier to convert to an IronBee compatible
+     * interface.
+     */
+
     //! CONNECTION_DATA_IN
     virtual
     void connection_data_in(const DataEvent& event) {}
