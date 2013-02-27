@@ -43,7 +43,6 @@
 namespace IronBee {
 
 class Connection;
-class ConnectionData;
 class TransactionData;
 class ParsedRequestLine;
 class ParsedResponseLine;
@@ -83,10 +82,6 @@ public:
 
     //! Notify connection_opened event.
     Notifier connection_opened(Connection connection);
-    //! Notify connection_data_in event.
-    Notifier connection_data_in(ConnectionData connection_data);
-    //! Notify connection_data_out event.
-    Notifier connection_data_out(ConnectionData connection_data);
     //! Notify connection_closed event.
     Notifier connection_closed(Connection connection);
 

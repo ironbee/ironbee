@@ -71,8 +71,6 @@ public:
         connection_started         = conn_started_event,
         connection_finished        = conn_finished_event,
         connection_opened          = conn_opened_event,
-        connection_data_in         = conn_data_in_event,
-        connection_data_out        = conn_data_out_event,
         connection_closed          = conn_closed_event,
         transaction_started        = tx_started_event,
         transaction_process        = tx_process_event,

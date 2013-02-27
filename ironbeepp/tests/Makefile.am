@@ -32,7 +32,6 @@ check_PROGRAMS = \
     test_configuration_directives \
     test_clock \
     test_connection \
-    test_connection_data \
     test_transaction \
     test_transaction_data \
     test_parsed_request_line \
@@ -66,7 +65,6 @@ test_configuration_directives_SOURCES = \
     test_configuration_directives.cpp fixture.cpp
 test_clock_SOURCES                = test_clock.cpp
 test_connection_SOURCES           = test_connection.cpp fixture.cpp
-test_connection_data_SOURCES      = test_connection_data.cpp fixture.cpp
 test_transaction_SOURCES          = test_transaction.cpp fixture.cpp
 test_transaction_data_SOURCES     = test_transaction_data.cpp
 test_parsed_request_line_SOURCES  = test_parsed_request_line.cpp fixture.cpp
