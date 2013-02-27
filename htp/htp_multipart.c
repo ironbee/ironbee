@@ -298,6 +298,10 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
     h->name = bstr_dup_mem(data + name_start, name_end - name_start);
     h->value = bstr_dup_mem(data + value_start, value_end - value_start);
 
+    if ((bstr_cmp_c_nocase(h->name, "content-disposition") != 0)&&(bstr_cmp_c_nocase(h->name, "content-type") != 0)) {
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_HEADER_UNKNOWN;
+    }
+
     // Check if the header already exists.
     htp_header_t * h_existing = htp_table_get(part->headers, h->name);
     if (h_existing != NULL) {
