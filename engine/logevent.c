@@ -54,6 +54,16 @@ static const char *ib_logevent_action_str[] = {
     NULL
 };
 
+/** Log Event Action Names */
+static const char *ib_logevent_suppress_str[] = {
+    "None",
+    "FalsePositive",
+    "Replaced",
+    "Incomplete",
+    "Other",
+    NULL
+};
+
 const char *ib_logevent_type_name(ib_logevent_type_t num)
 {
     if (
@@ -74,6 +84,17 @@ const char *ib_logevent_action_name(ib_logevent_action_t num)
         return ib_logevent_action_str[0];
     }
     return ib_logevent_action_str[num];
+}
+
+const char *ib_logevent_suppress_name(ib_logevent_suppress_t num)
+{
+    if (
+        (unsigned long)num >=
+        (sizeof(ib_logevent_suppress_str) / sizeof(const char *))
+    ) {
+        return ib_logevent_suppress_str[0];
+    }
+    return ib_logevent_suppress_str[num];
 }
 
 ib_status_t ib_logevent_create(ib_logevent_t **ple,

@@ -158,6 +158,15 @@ const DLL_PUBLIC char *ib_logevent_type_name(
 const DLL_PUBLIC char *ib_logevent_action_name(
     ib_logevent_action_t    num);
 
+/**
+ * Lookup log suppression name.
+ *
+ * @param[in] num Numeric ID
+ *
+ * @returns String name
+ */
+const char *ib_logevent_suppress_name(
+    ib_logevent_suppress_t num);
 
 /**
  * Create a logevent.

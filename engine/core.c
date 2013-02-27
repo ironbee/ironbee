@@ -1126,6 +1126,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         "      \"event-id\": %" PRIu32 ",\r\n"
                         "      \"rule-id\": %s,\r\n"
                         "      \"type\": \"%s\",\r\n"
+                        "      \"suppress\": \"%s\",\r\n"
                         "      \"rec-action\": \"%s\",\r\n"
                         "      \"confidence\": %u,\r\n"
                         "      \"severity\": %u,\r\n"
@@ -1138,6 +1139,7 @@ static size_t ib_auditlog_gen_json_events(ib_auditlog_part_t *part,
                         e->event_id,
                         ruleid,
                         ib_logevent_type_name(e->type),
+                        ib_logevent_suppress_name(e->suppress),
                         ib_logevent_action_name(e->rec_action),
                         e->confidence,
                         e->severity,
