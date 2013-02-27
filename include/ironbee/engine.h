@@ -906,6 +906,7 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   handle_response_event [label="handle_response",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_response_event"]
  *   handle_disconnect_event [label="handle_disconnect",style=bold,shape=parallelogram,URL="\ref handle_disconnect_event"]
  *   handle_postprocess_event [label="handle_postprocess",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_postprocess_event"]
+ *   handle_logging_event [label="handle_logging",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_logging_event"]
  *
  *   // These are just for organizational purposes
  *   conn_started_event -> incoming [style=invis,weight=5.0]
@@ -950,7 +951,8 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   handle_response_event -> response_started_event [label="HTTP\nPipeline\nResponse",style=dashed,weight=10.0]
  *
  *   handle_response_event -> handle_postprocess_event [weight=5.0]
- *   handle_postprocess_event -> tx_finished_event [weight=5.0]
+ *   handle_postprocess_event -> handle_logging_event [weight=5.0]
+ *   handle_logging_event -> tx_finished_event [weight=5.0]
  *
  *   tx_finished_event -> tx_started_event [weight=5.0,constraint=false]
  *   tx_finished_event -> conn_closed_event [weight=5.0]
@@ -1002,6 +1004,8 @@ typedef enum {
     handle_disconnect_event,      /**< Handle a disconnect
                                    * (Hook type:@ref ib_state_conn_hook_fn_t) */
     handle_postprocess_event,     /**< Handle transaction post processing
+                                   * (Hook type:@ref ib_state_tx_hook_fn_t) */
+    handle_logging_event,         /**< Handle transaction logging
                                    * (Hook type:@ref ib_state_tx_hook_fn_t) */
 
     /* Server States */
@@ -1243,6 +1247,7 @@ typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
  * - @ref handle_response_header_event
  * - @ref handle_response_event
  * - @ref handle_postprocess_event
+ * - @ref handle_logging_event
  * - @ref request_header_finished_event
  * - @ref request_finished_event
  * - @ref response_header_finished_event

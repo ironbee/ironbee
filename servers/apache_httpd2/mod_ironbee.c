@@ -417,6 +417,12 @@ static apr_status_t ib_req_cleanup(void *data)
             return IB2AP(rc);
         }
     }
+    if (!ib_tx_flags_isset(ctx->tx, IB_TX_FLOGGING)) {
+        rc = ib_state_notify_logging(ironbee, ctx->tx);
+        if (rc != IB_OK) {
+            return IB2AP(rc);
+        }
+    }
     ib_tx_destroy(ctx->tx);
     return APR_SUCCESS;
 }

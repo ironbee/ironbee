@@ -237,6 +237,7 @@ static ib_status_t ib_event_table_init(void)
     INIT_EVENT_TABLE_ENT(handle_response_event, IB_STATE_HOOK_TX);
     INIT_EVENT_TABLE_ENT(handle_disconnect_event, IB_STATE_HOOK_CONN);
     INIT_EVENT_TABLE_ENT(handle_postprocess_event, IB_STATE_HOOK_TX);
+    INIT_EVENT_TABLE_ENT(handle_logging_event, IB_STATE_HOOK_TX);
 
     /* Server States */
     INIT_EVENT_TABLE_ENT(conn_opened_event, IB_STATE_HOOK_CONN);
@@ -1097,9 +1098,17 @@ void ib_tx_destroy(ib_tx_t *tx)
     ib_log_debug3_tx(tx, "TX DESTROY p=%p id=%s", tx, tx->id);
 
     /* Make sure that the post processing state was notified. */
+    // TODO: Remove the need for this
     if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
         ib_log_warning_tx(tx,
                           "Post processing not run on transaction!");
+    }
+
+    /* Make sure that the post processing state was notified. */
+    // TODO: Remove the need for this
+    if (! ib_tx_flags_isset(tx, IB_TX_FLOGGING)) {
+        ib_log_warning_tx(tx,
+                          "Logging not run on transaction!");
     }
 
     /* Keep track of the first/current tx. */

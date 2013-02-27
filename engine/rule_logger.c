@@ -1096,7 +1096,7 @@ void ib_rule_log_tx_event_end(
     }
 
     switch(event) {
-    case handle_postprocess_event :
+    case handle_logging_event :
         log_tx_end(rule_exec);
         break;
 
@@ -1147,16 +1147,19 @@ void ib_rule_log_phase(
 
         if (ib_flags_all(flags, phase_flags)) {
             bool is_postprocess = (phase_num == PHASE_POSTPROCESS);
+            bool is_logging = (phase_num == PHASE_LOGGING);
             bool empty_tx = rule_exec->tx_log->empty_tx;
 
-            /* Inhibit logging of "PHASE: postprocess" for empty tx */
-            if ( (!is_postprocess) || (num_rules != 0) || (!empty_tx) ) {
+            /* Inhibit logging of "PHASE: postprocess/logging" for empty tx */
+            if ( (!is_postprocess) || (!is_logging) ||
+                 (num_rules != 0) || (!empty_tx) )
+            {
                 rule_log_exec(rule_exec, "PHASE %s", phase_name);
             }
             rule_exec->tx_log->cur_phase = phase_num;
             rule_exec->tx_log->phase_name = phase_name;
         }
-        if ( (phase_num == PHASE_POSTPROCESS) &&
+        if ( (phase_num == PHASE_LOGGING) &&
              (ib_flags_any(flags, IB_RULE_LOG_FLAG_AUDIT) == true) )
         {
             log_audit(rule_exec);

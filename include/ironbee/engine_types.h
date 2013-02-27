@@ -141,10 +141,11 @@ typedef enum {
 #define IB_TX_ALLOW_REQUEST     (1 << 22) /**< Allow all request phases */
 #define IB_TX_ALLOW_ALL         (1 << 23) /**< Allow transaction */
 #define IB_TX_FPOSTPROCESS      (1 << 24) /**< Post-processing occurred */
-#define IB_TX_FINSPECT_REQHDR   (1 << 25) /**< Inspect request header */
-#define IB_TX_FINSPECT_REQBODY  (1 << 26) /**< Inspect request body */
-#define IB_TX_FINSPECT_RSPHDR   (1 << 27) /**< Inspect response header */
-#define IB_TX_FINSPECT_RSPBODY  (1 << 28) /**< Inspect response body */
+#define IB_TX_FLOGGING          (1 << 25) /**< Logging occurred */
+#define IB_TX_FINSPECT_REQHDR   (1 << 26) /**< Inspect request header */
+#define IB_TX_FINSPECT_REQBODY  (1 << 27) /**< Inspect request body */
+#define IB_TX_FINSPECT_RSPHDR   (1 << 28) /**< Inspect response header */
+#define IB_TX_FINSPECT_RSPBODY  (1 << 29) /**< Inspect response body */
 
 /** Capture collection name */
 #define IB_TX_CAPTURE           "CAPTURE" /**< Name of the capture collection */
@@ -228,7 +229,7 @@ struct ib_tx_t {
         ib_time_t       response_body;   /**< Response body time */
         ib_time_t       response_finished;/**< Response finished time */
         ib_time_t       postprocess;     /**< Postprocess time */
-        ib_time_t       logtime;         /**< Auditlog time */
+        ib_time_t       logtime;         /**< Logging time */
         ib_time_t       finished;        /**< Tx (response) finished time */
     } t;                                 /**< Monotonic clock times */
     ib_tx_t            *next;            /**< Next transaction */

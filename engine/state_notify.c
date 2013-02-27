@@ -515,6 +515,12 @@ ib_status_t ib_state_notify_conn_closed(ib_engine_t *ib,
                             ib_state_event_name(handle_postprocess_event));
             ib_state_notify_postprocess(ib, tx);
         }
+
+        if (!ib_tx_flags_isset(tx, IB_TX_FLOGGING)) {
+            ib_log_debug_tx(tx, "Automatically triggering %s",
+                            ib_state_event_name(handle_logging_event));
+            ib_state_notify_logging(ib, tx);
+        }
     }
 
     /* Mark the time. */
@@ -1125,6 +1131,13 @@ ib_status_t ib_state_notify_response_finished(ib_engine_t *ib,
         }
     }
 
+    if (! ib_tx_flags_isset(tx, IB_TX_FLOGGING)) {
+        rc = ib_state_notify_logging(ib, tx);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
     /* Mark the time. */
     tx->t.finished = ib_clock_get_time();
 
@@ -1166,6 +1179,32 @@ ib_status_t ib_state_notify_postprocess(ib_engine_t *ib,
     ib_tx_flags_set(tx, IB_TX_FPOSTPROCESS);
 
     rc = ib_state_notify_tx(ib, handle_postprocess_event, tx);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+ib_status_t ib_state_notify_logging(ib_engine_t *ib,
+                                    ib_tx_t *tx)
+{
+    assert(ib != NULL);
+    assert(ib->cfg_state == CFG_FINISHED);
+    assert(tx != NULL);
+
+    ib_status_t rc;
+
+    if (ib_tx_flags_isset(tx, IB_TX_FLOGGING)) {
+        ib_log_error_tx(tx,
+                        "Attempted to notify previously notified event: %s",
+                        ib_state_event_name(handle_logging_event));
+        return IB_EINVAL;
+    }
+
+    ib_tx_flags_set(tx, IB_TX_FLOGGING);
+
+    rc = ib_state_notify_tx(ib, handle_logging_event, tx);
     if (rc != IB_OK) {
         return rc;
     }

@@ -659,6 +659,8 @@ function _IRONBEE_CALL_EVENT_HANDLER(ib, modname, funcname, event, arg, ...)
         l_arg = newConn(arg)
     elseif c_event == c.handle_postprocess_event then
         l_arg = newTx(arg)
+    elseif c_event == c.handle_logging_event then
+        l_arg = newTx(arg)
     elseif c_event == c.conn_opened_event then
         l_arg = newConn(arg)
     elseif c_event == c.conn_data_in_event then

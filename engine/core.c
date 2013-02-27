@@ -1874,12 +1874,12 @@ static ib_status_t ib_auditlog_add_part_http_response_body(ib_auditlog_t *log)
  *
  * @returns Status code.
  */
-static ib_status_t logevent_hook_postprocess(ib_engine_t *ib,
-                                             ib_tx_t *tx,
-                                             ib_state_event_type_t event,
-                                             void *cbdata)
+static ib_status_t logevent_hook_logging(ib_engine_t *ib,
+                                         ib_tx_t *tx,
+                                         ib_state_event_type_t event,
+                                         void *cbdata)
 {
-    assert(event == handle_postprocess_event);
+    assert(event == handle_logging_event);
 
     ib_auditlog_t *log;
     ib_core_cfg_t *corecfg;
@@ -4773,8 +4773,8 @@ static ib_status_t core_init(ib_engine_t *ib,
                             core_hook_response_body_data, NULL);
 
     /* Register logevent hooks. */
-    ib_hook_tx_register(ib, handle_postprocess_event,
-                        logevent_hook_postprocess, NULL);
+    ib_hook_tx_register(ib, handle_logging_event,
+                        logevent_hook_logging, NULL);
 
     /* Create core data structure */
     core_data = ib_mpool_calloc(ib->mp, sizeof(*core_data), 1);

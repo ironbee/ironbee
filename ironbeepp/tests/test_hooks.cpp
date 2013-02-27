@@ -448,6 +448,8 @@ TEST_F(TestHooks, Basic)
     test_transaction(Engine::handle_response, info);
     H.handle_postprocess(handler);
     test_transaction(Engine::handle_postprocess, info);
+    H.handle_logging(handler);
+    test_transaction(Engine::handle_logging, info);
     H.request_header_finished(handler);
     test_transaction(Engine::request_header_finished, info);
     H.request_finished(handler);

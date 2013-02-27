@@ -239,6 +239,10 @@ static ngx_int_t ironbee_body_out(ngx_http_request_t *r, ngx_chain_t *in)
         if ((rv == NGX_OK) && (rc != IB_OK)) {
             rv = NGX_HTTP_INTERNAL_SERVER_ERROR;
         }
+        rc = ib_state_notify_logging(ironbee, ctx->tx);
+        if ((rv == NGX_OK) && (rc != IB_OK)) {
+            rv = NGX_HTTP_INTERNAL_SERVER_ERROR;
+        }
     }
     cleanup_return(prev_log) rv;
 }

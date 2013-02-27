@@ -58,6 +58,7 @@
 #define PHASE_FLAG_REQUEST       (1 <<  5) /**< One of the request phases */
 #define PHASE_FLAG_RESPONSE      (1 <<  6) /**< One of the response phases */
 #define PHASE_FLAG_POSTPROCESS   (1 <<  7) /**< Post process phase */
+#define PHASE_FLAG_LOGGING       (1 <<  8) /**< Logging phase */
 
 /**
  * Max # of data types (IB_DTYPE_*) per rule phase
@@ -168,6 +169,20 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
         "Post Process",
         IB_OP_FLAG_PHASE,
         handle_postprocess_event
+    },
+    {
+        false,
+        PHASE_LOGGING,
+        IB_STATE_HOOK_TX,
+        ( PHASE_FLAG_IS_VALID |
+          PHASE_FLAG_ALLOW_CHAIN |
+          PHASE_FLAG_ALLOW_TFNS |
+          PHASE_FLAG_FORCE |
+          PHASE_FLAG_LOGGING ),
+        "LOGGING",
+        "Logging",
+        IB_OP_FLAG_PHASE,
+        handle_logging_event
     },
 
     /* Stream rule phases */
@@ -1703,6 +1718,7 @@ static bool rule_allow(const ib_tx_t *tx,
 {
     /* Check the ALLOW_ALL flag */
     if ( (meta->phase_num != PHASE_POSTPROCESS) &&
+         (meta->phase_num != PHASE_LOGGING) &&
          (ib_tx_flags_isset(tx, IB_TX_ALLOW_ALL) == 1) )
     {
         ib_rule_log_tx_debug(tx,

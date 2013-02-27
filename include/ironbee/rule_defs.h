@@ -45,6 +45,7 @@ typedef enum {
     PHASE_RESPONSE_HEADER,     /**< Response header available. */
     PHASE_RESPONSE_BODY,       /**< Response body available. */
     PHASE_POSTPROCESS,         /**< Post-processing phase. */
+    PHASE_LOGGING,             /**< Logging phase. */
     PHASE_STR_REQUEST_HEADER,  /**< Stream: Req. header available. */
     PHASE_STR_REQUEST_BODY,    /**< Stream: Req. body available. */
     PHASE_STR_RESPONSE_HEADER, /**< Stream: Resp. header available. */
