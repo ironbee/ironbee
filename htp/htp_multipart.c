@@ -307,76 +307,87 @@ htp_status_t htp_mpart_part_process_headers(htp_multipart_part_t *part) {
  * @param[in] part
  * @param[in] data
  * @param[in] len
- * @return HTP_OK on success, HTP_ERROR on failure.
+ * @return HTP_OK on success, HTP_DECLINED on parsing error, HTP_ERROR on fatal error.
  */
 htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned char *data, size_t len) {
     size_t name_start, name_end;
     size_t value_start, value_end;
+   
+    // We do not allow NUL bytes here.
+    if (memchr(data, '\0', len) != NULL) {        
+        part->parser->multipart.flags |= HTP_MULTIPART_NUL_BYTE;
+        return HTP_DECLINED;
+    }
 
     name_start = 0;
 
-    // Look for the colon
+    // Look for the starting position of the name first.
     size_t colon_pos = 0;
 
+    while ((colon_pos < len)&&(htp_is_space(data[colon_pos]))) colon_pos++;
+    if (colon_pos != 0) {
+        // Whitespace before header name.
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_HEADER_INVALID;
+        return HTP_DECLINED;
+    }
+
+    // Now look for the colon.
     while ((colon_pos < len) && (data[colon_pos] != ':')) colon_pos++;
 
     if (colon_pos == len) {
-        // Missing colon
-        // TODO Error message
-        return HTP_ERROR;
+        // Missing colon.
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_HEADER_INVALID;
+        return HTP_DECLINED;
     }
 
     if (colon_pos == 0) {
-        // Empty header name
-        // TODO Error message
+        // Empty header name.
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_HEADER_INVALID;
+        return HTP_DECLINED;
     }
 
     name_end = colon_pos;
 
-    // Ignore LWS after field-name
+    // Ignore LWS after header name.
     size_t prev = name_end;
     while ((prev > name_start) && (htp_is_lws(data[prev - 1]))) {
         prev--;
         name_end--;
 
-        // LWS after field name
-        // TODO Error message
+        // LWS after field name. Not allowing for now.
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_HEADER_INVALID;
+        return HTP_DECLINED;
     }
 
-    // Value
+    // Header value.
 
-    value_start = colon_pos;
+    value_start = colon_pos + 1;
 
-    // Go over the colon
-    if (value_start < len) {
-        value_start++;
-    }
+    // Ignore LWS before value.
+    while ((value_start < len) && (htp_is_lws(data[value_start]))) value_start++;
 
-    // Ignore LWS before field-content
-    while ((value_start < len) && (htp_is_lws(data[value_start]))) {
-        value_start++;
-    }
+    if (value_start == len) {
+        // No header value.
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_HEADER_INVALID;
+        return HTP_DECLINED;
+    }   
 
-    // Look for the end of field-content
-    value_end = value_start;
+    // Assume the value is at the end.
+    value_end = len;
 
-    while (value_end < len) value_end++;
-
-    // Ignore LWS after field-content
+    // But remove any trailing LWS.
     prev = value_end - 1;
     while ((prev > value_start) && (htp_is_lws(data[prev]))) {
         prev--;
         value_end--;
     }
 
-    // Check that the header name is a token
+    // Check that the header name is a token.
     size_t i = name_start;
     while (i < name_end) {
         if (!htp_is_token(data[i])) {
-            // Request field is not a token
-            // TODO Error message
-
-            break;
+            part->parser->multipart.flags |= HTP_MULTIPART_PART_HEADER_INVALID;
+            return HTP_DECLINED;
         }
 
         i++;
@@ -1064,7 +1075,7 @@ htp_status_t htp_mpartp_parse(htp_mpartp_t *parser, const void *_data, size_t le
     size_t data_return_pos = 0;
 
     #if HTP_DEBUG
-    fprint_raw_data(stderr, "htp_mpartp_parse: data chunk", (unsigned char *) data, len);
+    fprint_raw_data(stderr, "htp_mpartp_parse: data chunk", data, len);
     #endif
 
     // While there's data in the input buffer.

@@ -127,24 +127,29 @@ extern "C" {
 /** Unknown part header encountered. */
 #define HTP_MULTIPART_PART_HEADER_UNKNOWN       0x8000
 
+/** Invalid part header encountered. */
+#define HTP_MULTIPART_PART_HEADER_INVALID       0x10000
+
 /** Part type specified in the C-D header is neither MULTIPART_PART_TEXT nor MULTIPART_PART_FILE. */
-#define HTP_MULTIPART_PART_CD_TYPE_INVALID      0x10000
+#define HTP_MULTIPART_PART_CD_TYPE_INVALID      0x20000
 
 /** Content-Disposition part header with multiple parameters with the same name. */
-#define HTP_MULTIPART_PART_CD_REPEATED_PARAMS   0x20000
+#define HTP_MULTIPART_PART_CD_REPEATED_PARAMS   0x40000
 
 /** Unknown Content-Disposition parameter. */
-#define HTP_MULTIPART_PART_CD_UNKNOWN_PARAM     0x40000
+#define HTP_MULTIPART_PART_CD_UNKNOWN_PARAM     0x80000
 
 /** Invalid Content-Disposition syntax. */
-#define HTP_MULTIPART_PART_CD_SYNTAX            0x80000
+#define HTP_MULTIPART_PART_CD_SYNTAX            0x100000
 
 /**
  * There is an abruptly terminated part. This can happen when the payload itself is abruptly
  * terminated (in which case HTP_MULTIPART_INCOMPLETE) will be raised. However, it can also
  * happen when a boundary is seen before any part data.
  */
-#define HTP_MULTIPART_PART_INCOMPLETE           0x100000
+#define HTP_MULTIPART_PART_INCOMPLETE           0x200000
+
+#define HTP_MULTIPART_NUL_BYTE                  0x400000
 
 /** A collection of flags that all indicate an invalid C-D header. */
 #define HTP_MULTIPART_PART_CD_INVALID ( HTP_MULTIPART_PART_CD_TYPE_INVALID | HTP_MULTIPART_PART_CD_REPEATED_PARAMS | \
@@ -153,9 +158,9 @@ extern "C" {
 /** A collection of flags that all indicate an invalid part. */
 #define HTP_MULTIPART_PART_INVALID              ( HTP_MULTIPART_PART_HEADER_FOLDING | HTP_MULTIPART_PART_UNKNOWN | \
     HTP_MULTIPART_PART_HEADER_REPEATED | HTP_MULTIPART_PART_CD_INVALID | HTP_MULTIPART_PART_INCOMPLETE | \
-    HTP_MULTIPART_PART_HEADER_UNKNOWN )
+    HTP_MULTIPART_PART_HEADER_UNKNOWN | HTP_MULTIPART_PART_HEADER_INVALID | HTP_MULTIPART_NUL_BYTE )
 
-
+#define HTP_MULTIPART_INVALID  HTP_MULTIPART_PART_INVALID
 
 #define HTP_MULTIPART_MIME_TYPE                 "multipart/form-data"
 
