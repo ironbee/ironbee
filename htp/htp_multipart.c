@@ -643,15 +643,13 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
 
                 // Process the pending header, if any.
                 if (part->parser->pending_header_line != NULL) {
-                    htp_mpartp_parse_header(part, bstr_ptr(part->parser->pending_header_line),
-                            bstr_len(part->parser->pending_header_line));
-                    // TODO RC
+                    if (htp_mpartp_parse_header(part, bstr_ptr(part->parser->pending_header_line),
+                            bstr_len(part->parser->pending_header_line)) == HTP_ERROR) return HTP_ERROR;
                     bstr_free(part->parser->pending_header_line);
                     part->parser->pending_header_line = NULL;
                 }
 
-                htp_mpart_part_process_headers(part);
-                // TODO RC
+                if (htp_mpart_part_process_headers(part) == HTP_ERROR) return HTP_ERROR;
 
                 part->parser->current_part_mode = MODE_DATA;
                 bstr_builder_clear(part->parser->part_header_pieces);
@@ -702,9 +700,8 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                         }
                     } else {
                         // Process the pending header line.                        
-                        htp_mpartp_parse_header(part, bstr_ptr(part->parser->pending_header_line),
-                                bstr_len(part->parser->pending_header_line));
-                        // TODO RC
+                        if (htp_mpartp_parse_header(part, bstr_ptr(part->parser->pending_header_line),
+                                bstr_len(part->parser->pending_header_line)) == HTP_ERROR) return HTP_ERROR;
                         bstr_free(part->parser->pending_header_line);
 
                         if (line != NULL) {
