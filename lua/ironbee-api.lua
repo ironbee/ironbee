@@ -48,6 +48,14 @@
 -- event:getConfidence() - Return the number representing the confidence.
 -- event:getRuleId() - Return the string representing the rule id.
 -- event:getMsg() - Return the string representing the message.
+-- event:getType() - Return the string showing the suppression value.
+--                       The returned values will be unknown,
+--                       observation, or alert
+--                       replaced, incomplete, partial, or other.
+-- event:setType(value) - Set the type value. This is one of the
+--                        very few values that may be changed in an event.
+--                        Events are mostly immutable things.
+--                        Allowed values are unknown, observation, or alert.
 -- event:getSuppress() - Return the string showing the suppression value.
 --                       The returned values will be none, false_positive,
 --                       replaced, incomplete, partial, or other.
@@ -84,11 +92,23 @@ ib_logevent.suppressMap = {
     partial        = tonumber(ffi.C.IB_LEVENT_SUPPRESS_INC),
     other          = tonumber(ffi.C.IB_LEVENT_SUPPRESS_OTHER)
 }
-ib_logevent.suppressRmap = {}
 -- Build reverse map.
+ib_logevent.suppressRmap = {}
 for k,v in pairs(ib_logevent.suppressMap) do
     ib_logevent.suppressRmap[v] = k
 end
+
+ib_logevent.typeMap = {
+    unknown        = tonumber(ffi.C.IB_LEVENT_TYPE_UNKNOWN),
+    observation    = tonumber(ffi.C.IB_LEVENT_TYPE_OBSERVATION),
+    alert          = tonumber(ffi.C.IB_LEVENT_TYPE_ALERT),
+}
+-- Build reverse map.
+ib_logevent.typeRmap = {}
+for k,v in pairs(ib_logevent.typeMap) do
+    ib_logevent.typeRmap[v] = k
+end
+
 ib_logevent.getSeverity = function(self)
     return self.raw.severity
 end
@@ -116,6 +136,17 @@ ib_logevent.setSuppress = function(self, value)
         self.raw.suppress = value
     else
         self.raw.suppress = ib_logevent.suppressMap[string.lower(value)] or 0
+    end
+end
+ib_logevent.getType = function(self)
+    return ib_logevent.typeRmap[tonumber(self.raw.type)]
+end
+ib_logevent.setType = function(self, value)
+    if type(value) == "number" then
+            print("Setting number")
+        self.raw.type = value
+    else
+        self.raw.type = ib_logevent.typeMap[string.lower(value)] or 0
     end
 end
 ib_logevent.forEachField = function(self, func)
@@ -249,6 +280,7 @@ setmetatable(ibapi.actionMap, { __index = ibutil.returnUnknown })
 -- Default values is 'unknown'
 ibapi.eventTypeMap = {
     observation = ffi.C.IB_LEVENT_TYPE_OBSERVATION,
+    alert       = ffi.C.IB_LEVENT_TYPE_ALERT,
     unknown     = ffi.C.IB_LEVENT_TYPE_UNKNOWN
 }
 setmetatable(ibapi.eventTypeMap, { __index = ibutil.returnUnknown })
