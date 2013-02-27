@@ -66,6 +66,34 @@ htp_multipart_t *htp_mpartp_get_multipart(htp_mpartp_t *parser) {
 }
 
 /**
+ * Decodes a C-D header value. This is impossible to do correctly without a
+ * parsing personality because most browsers are broken:
+ *  - Firefox encodes " as \", and \ is not encoded.
+ *  - Chrome encodes " as %22.
+ *  - IE encodes " as \", and \ is not encoded.
+ *  - Opera encodes " as \" and \ as \\.
+ * @param[in] b
+ */
+static void htp_mpart_decode_quoted_cd_value_inplace(bstr *b) {
+    unsigned char *s = bstr_ptr(b);
+    unsigned char *d = bstr_ptr(b);
+    size_t len = bstr_len(b);
+    size_t pos = 0;
+
+    while (pos < len) {
+        // Ignore \ when before \ or ".
+        if ((*s == '\\')&&(pos + 1 < len)&&((*(s+1) == '"')||(*(s+1) == '\\'))) {
+            s++;
+        }
+
+        *d++ = *s++;
+        pos++;
+    }
+
+    bstr_adjust_len(b, len - (s - d));
+}
+
+/**
  * Parses the Content-Disposition part header.
  *
  * @param[in] part
@@ -79,7 +107,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         part->parser->multipart.flags |= HTP_MULTIPART_PART_UNKNOWN;        
         return HTP_DECLINED;
     }
-
+    
     if (bstr_index_of_c(h->value, "form-data") != 0) {
         part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;        
         return HTP_DECLINED;
@@ -164,16 +192,14 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         while ((pos < len) && (data[pos] != '"')) {
             // Check for escaping.
             if (data[pos] == '\\') {
-                if (pos + 1 < len) {                    
+                if (pos + 1 >= len) {
                     // A backslash as the last character in the C-D header.
                     part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
                     return HTP_DECLINED;
                 }
 
-                // Here we want to handle only the \" sequence, which Firefox
-                // will use to encode a double quote. Backslash is not escaped.
-                // Chrome will encode a double quote it with %22. The % is not escaped.
-                if (data[pos + 1] == '"') {
+                // Allow " and \ to be escaped.
+                if ((data[pos + 1] == '"')||(data[pos + 1] == '\\')) {
                     // Go over the quoted character.
                     pos++;
                 }
@@ -195,7 +221,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
             return HTP_DECLINED;
         }
 
-        pos++; // Over the terminating double quote.s
+        pos++; // Over the terminating double quote.
 
         // Finally, process the parameter value.
 
@@ -206,10 +232,12 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
                     part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_REPEATED_PARAMS;
                     return HTP_DECLINED;
                 }
-
-                // XXX Unquote quoted characters.
+                
                 part->name = bstr_dup_mem(data + start, pos - start - 1);
                 if (part->name == NULL) return HTP_ERROR;
+
+                htp_mpart_decode_quoted_cd_value_inplace(part->name);
+
                 break;
 
             case CD_PARAM_FILENAME:                
@@ -218,15 +246,23 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
                     part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_REPEATED_PARAMS;
                     return HTP_DECLINED;
                 }
-
-                // XXX Unquote quoted characters
+ 
                 part->file = calloc(1, sizeof (htp_file_t));
                 if (part->file == NULL) return HTP_ERROR;
+
                 part->file->fd = -1;
-                part->file->filename = bstr_dup_mem(data + start, pos - start - 1);
-                if (part->file->filename == NULL) return HTP_ERROR;
                 part->file->source = HTP_FILE_MULTIPART;
+
+                part->file->filename = bstr_dup_mem(data + start, pos - start - 1);
+                if (part->file->filename == NULL) {
+                    free(part->file);
+                    return HTP_ERROR;
+                }
+
+                htp_mpart_decode_quoted_cd_value_inplace(part->file->filename);
+                
                 break;
+                
             default:
                 // Unknown parameter.                
                 part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_UNKNOWN_PARAM;
