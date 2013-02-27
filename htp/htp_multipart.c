@@ -375,12 +375,14 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
     // Assume the value is at the end.
     value_end = len;
 
+    #if 0
     // But remove any trailing LWS.
     prev = value_end - 1;
     while ((prev > value_start) && (htp_is_lws(data[prev]))) {
         prev--;
         value_end--;
     }
+    #endif
 
     // Check that the header name is a token.
     size_t i = name_start;
@@ -393,7 +395,7 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
         i++;
     }
 
-    // Now extract the name and the value
+    // Now extract the name and the value.
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) return HTP_ERROR;
 

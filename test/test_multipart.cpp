@@ -69,7 +69,7 @@ protected:
         snprintf(buf, sizeof (buf), "Content-Length: %ld\r\n", bodyLen);
         htp_connp_req_data(connp, NULL, buf, strlen(buf));
 
-        htp_connp_req_data(connp, NULL, (void *)"\r\n", 2);
+        htp_connp_req_data(connp, NULL, (void *) "\r\n", 2);
 
         // Send data.
         for (i = 0; data[i] != NULL; i++) {
@@ -122,7 +122,7 @@ protected:
         ASSERT_TRUE(bstr_cmp_c(field2->value, "GHIJKL") == 0);
     }
 
-    void parseParts(char *parts[]) {        
+    void parseParts(char *parts[]) {
         mpartp = htp_mpartp_create(cfg, bstr_dup_c("0123456789"), 0 /* flags */);
 
         size_t i = 0;
@@ -180,13 +180,13 @@ protected:
         tx = NULL;
     }
 
-    virtual void TearDown() {       
-        if (connp != NULL) {            
+    virtual void TearDown() {
+        if (connp != NULL) {
             htp_connp_destroy_all(connp);
         } else if (mpartp != NULL) {
             htp_mpartp_destroy(mpartp);
         }
-        
+
         if (cfg != NULL) {
             htp_config_destroy(cfg);
         }
@@ -205,7 +205,7 @@ protected:
 
 TEST_F(Multipart, Test1) {
     mpartp = htp_mpartp_create(cfg, bstr_dup_c("---------------------------41184676334"), 0 /* flags */);
-  
+
     char *parts[999];
 
     size_t i = 0;
@@ -246,13 +246,13 @@ TEST_F(Multipart, Test1) {
         htp_mpartp_parse(mpartp, parts[i], strlen(parts[i]));
         i++;
     }
-   
+
     htp_mpartp_finalize(mpartp);
 
     // Examine the result
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
-    
+
     for (size_t i = 0, n = htp_list_size(body->parts); i < n; i++) {
         htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, i);
 
@@ -301,7 +301,7 @@ TEST_F(Multipart, Test1) {
 
 TEST_F(Multipart, Test2) {
     mpartp = htp_mpartp_create(cfg, bstr_dup_c("BBB"), 0 /* flags */);
-    
+
     const char *i1 = "x0000x\n--BBB\n\nx1111x\n--\nx2222x\n--";
     const char *i2 = "BBB\n\nx3333x\n--B";
     const char *i3 = "B\n\nx4444x\n--BB\r";
@@ -1030,30 +1030,30 @@ TEST_F(Multipart, NulByte) {
     // NUL byte in the part header.
 
     char i1[] = "--0123456789\r\n"
-        "Content-Disposition: form-data; ";
+            "Content-Disposition: form-data; ";
     char i2[] = "";
     char i3[] =
-        "name=\"field1\"\r\n"
-        "\r\n"
-        "ABCDEF"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
-        "\r\n"
-        "FILEDATA"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field2\"\r\n"
-        "\r\n"
-        "GHIJKL"
-        "\r\n--0123456789--";
+            "name=\"field1\"\r\n"
+            "\r\n"
+            "ABCDEF"
+            "\r\n--0123456789\r\n"
+            "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
+            "\r\n"
+            "FILEDATA"
+            "\r\n--0123456789\r\n"
+            "Content-Disposition: form-data; name=\"field2\"\r\n"
+            "\r\n"
+            "GHIJKL"
+            "\r\n--0123456789--";
 
     htp_mpartp_parse(mpartp, i1, strlen(i1));
     htp_mpartp_parse(mpartp, i2, 1);
     htp_mpartp_parse(mpartp, i3, strlen(i3));
     htp_mpartp_finalize(mpartp);
-    
+
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
-    
+
     ASSERT_TRUE(body->flags & HTP_MULTIPART_NUL_BYTE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_INVALID);
 }
@@ -1094,7 +1094,7 @@ TEST_F(Multipart, BoundaryNormal) {
         "multipart/form-data; boundary=---------------------------21071316483088",
         "multipart/form-data; boundary=---------------------------7dd13e11c0452",
         "multipart/form-data; boundary=----------2JL5oh7QWEDwyBllIRc7fh",
-        "multipart/form-data; boundary=----WebKitFormBoundaryre6zL3b0BelnTY5S",        
+        "multipart/form-data; boundary=----WebKitFormBoundaryre6zL3b0BelnTY5S",
         NULL
     };
 
@@ -1103,7 +1103,7 @@ TEST_F(Multipart, BoundaryNormal) {
         "---------------------------21071316483088",
         "---------------------------7dd13e11c0452",
         "----------2JL5oh7QWEDwyBllIRc7fh",
-        "----WebKitFormBoundaryre6zL3b0BelnTY5S",        
+        "----WebKitFormBoundaryre6zL3b0BelnTY5S",
         NULL
     };
 
@@ -1113,11 +1113,11 @@ TEST_F(Multipart, BoundaryNormal) {
         uint64_t flags = 0;
 
         SCOPED_TRACE(inputs[i]);
-        
+
         htp_status_t rc = htp_mpartp_find_boundary(input, &boundary, &flags);
         ASSERT_EQ(HTP_OK, rc);
 
-        ASSERT_TRUE(boundary != NULL);        
+        ASSERT_TRUE(boundary != NULL);
         ASSERT_TRUE(bstr_cmp_c(boundary, outputs[i]) == 0);
         ASSERT_EQ(0, flags);
 
@@ -1155,7 +1155,7 @@ TEST_F(Multipart, BoundaryParsing) {
         htp_status_t rc = htp_mpartp_find_boundary(input, &boundary, &flags);
         ASSERT_EQ(HTP_OK, rc);
 
-        ASSERT_TRUE(boundary != NULL);        
+        ASSERT_TRUE(boundary != NULL);
         ASSERT_TRUE(bstr_cmp_c(boundary, outputs[i]) == 0);
 
         bstr_free(boundary);
@@ -1165,7 +1165,7 @@ TEST_F(Multipart, BoundaryParsing) {
 
 TEST_F(Multipart, BoundaryInvalid) {
     char *inputs[] = {
-        "multipart/form-data boundary=1",        
+        "multipart/form-data boundary=1",
         "multipart/form-data ; boundary=1",
         "multipart/form-data, boundary=1",
         "multipart/form-data , boundary=1",
@@ -1181,7 +1181,7 @@ TEST_F(Multipart, BoundaryInvalid) {
         "multipart/form-data boundary=1 2",
         "multipart/form-data boundary=1-2",
         NULL
-    };   
+    };
 
     for (size_t i = 0; inputs[i] != NULL; i++) {
         bstr *input = bstr_dup_c(inputs[i]);
@@ -1192,7 +1192,7 @@ TEST_F(Multipart, BoundaryInvalid) {
 
         htp_status_t rc = htp_mpartp_find_boundary(input, &boundary, &flags);
         ASSERT_TRUE(rc != HTP_ERROR);
-               
+
         ASSERT_TRUE(flags & HTP_MULTIPART_HBOUNDARY_INVALID);
 
         bstr_free(boundary);
@@ -1348,7 +1348,7 @@ TEST_F(Multipart, InvalidPartNoData) {
 
     ASSERT_TRUE(body != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
-    
+
     htp_multipart_part_t *field1 = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
     ASSERT_TRUE(field1 != NULL);
     ASSERT_EQ(MULTIPART_PART_UNKNOWN, field1->type);
@@ -1387,7 +1387,7 @@ TEST_F(Multipart, InvalidPartNoContentDisposition) {
     parseRequest(headers, data);
 
     ASSERT_TRUE(body != NULL);
-    ASSERT_EQ(3, htp_list_size(body->parts));   
+    ASSERT_EQ(3, htp_list_size(body->parts));
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_UNKNOWN);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
@@ -1826,8 +1826,41 @@ TEST_F(Multipart, ParamValueEscaping) {
     htp_multipart_part_t *field1 = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
     ASSERT_TRUE(field1 != NULL);
     ASSERT_EQ(MULTIPART_PART_TEXT, field1->type);
-    ASSERT_TRUE(field1->name != NULL);    
+    ASSERT_TRUE(field1->name != NULL);
     ASSERT_TRUE(bstr_cmp_c(field1->name, "---\"---\\---") == 0);
     ASSERT_TRUE(field1->value != NULL);
     ASSERT_TRUE(bstr_cmp_c(field1->value, "ABCDEF") == 0);
+}
+
+TEST_F(Multipart, HeaderValueTrim) {
+    char *headers[] = {
+        "POST / HTTP/1.0\r\n"
+        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
+        NULL
+    };
+
+    char *data[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\" \r\n"
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
+        "\r\n"
+        "FILEDATA"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    parseRequestThenVerify(headers, data);
+
+    htp_multipart_part_t *field1 = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
+    ASSERT_TRUE(field1 != NULL);
+    htp_header_t *h = (htp_header_t *) htp_table_get_c(field1->headers, "content-disposition");
+    ASSERT_TRUE(h != NULL);
+    ASSERT_TRUE(bstr_cmp_c(h->value, "form-data; name=\"field1\" ") == 0);
 }
