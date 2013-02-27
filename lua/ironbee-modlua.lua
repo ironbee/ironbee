@@ -624,7 +624,7 @@ M.modlua_config_cb_param1 = function(ib, modidx, ctxlst, name, p1)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_param2 = function(ib, modidx, name, p1, p2)
+M.modlua_config_cb_param2 = function(ib, modidx, ctxlst, name, p1, p2)
     local cfg = M.create_configuration(ib, modidx, ctxlst)
 
     local directive_table = lua_module_directives[name]
@@ -633,7 +633,7 @@ M.modlua_config_cb_param2 = function(ib, modidx, name, p1, p2)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_list = function(ib, modidx, name, list)
+M.modlua_config_cb_list = function(ib, modidx, ctxlst, name, list)
     local cfg = M.create_configuration(ib, modidx, ctxlst)
 
     local directive_table = lua_module_directives[name]
@@ -652,7 +652,7 @@ M.modlua_config_cb_list = function(ib, modidx, name, list)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_opflags = function(ib, modidx, name, flags)
+M.modlua_config_cb_opflags = function(ib, modidx, ctxlst, name, flags)
     local cfg = M.create_configuration(ib, modidx, ctxlst)
 
     local directive_table = lua_module_directives[name]
@@ -661,7 +661,7 @@ M.modlua_config_cb_opflags = function(ib, modidx, name, flags)
 
     return ffi.C.IB_OK
 end
-M.modlua_config_cb_sblk1 = function(ib, modidx, name, p1)
+M.modlua_config_cb_sblk1 = function(ib, modidx, ctxlst, name, p1)
     local cfg = M.create_configuration(ib, modidx, ctxlst)
 
     local directive_table = lua_module_directives[name]
