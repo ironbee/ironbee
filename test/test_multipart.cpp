@@ -94,6 +94,8 @@ protected:
         ASSERT_TRUE(body->parts != NULL);
         ASSERT_TRUE(htp_list_size(body->parts) == 3);
 
+        ASSERT_FALSE(body->flags & HTP_MULTIPART_INCOMPLETE);
+
         // Field 1
         htp_multipart_part_t *field1 = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
         ASSERT_TRUE(field1 != NULL);
@@ -252,6 +254,8 @@ TEST_F(Multipart, Test1) {
     // Examine the result
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(5, htp_list_size(body->parts));
 
     for (size_t i = 0, n = htp_list_size(body->parts); i < n; i++) {
         htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, i);
@@ -325,6 +329,8 @@ TEST_F(Multipart, Test2) {
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(4, htp_list_size(body->parts));
 
     for (size_t i = 0, n = htp_list_size(body->parts); i < n; i++) {
         htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, i);
@@ -588,9 +594,11 @@ TEST_F(Multipart, WithPreamble) {
 
     parseParts(parts);
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_PREAMBLE);
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(htp_list_size(body->parts) == 3);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_PREAMBLE);
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
     ASSERT_TRUE(part != NULL);
@@ -616,9 +624,11 @@ TEST_F(Multipart, WithEpilogue1) {
 
     parseParts(parts);
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(htp_list_size(body->parts) == 3);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);   
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
     ASSERT_TRUE(part != NULL);
@@ -647,9 +657,11 @@ TEST_F(Multipart, WithEpilogue2) {
 
     parseParts(parts);
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(htp_list_size(body->parts) == 3);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);   
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
     ASSERT_TRUE(part != NULL);
@@ -679,9 +691,11 @@ TEST_F(Multipart, WithEpilogue3) {
 
     parseParts(parts);
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(htp_list_size(body->parts) == 3);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);   
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
     ASSERT_TRUE(part != NULL);
@@ -712,9 +726,11 @@ TEST_F(Multipart, WithEpilogue4) {
 
     parseParts(parts);
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(4, htp_list_size(body->parts));
 
-    ASSERT_TRUE(htp_list_size(body->parts) == 4);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);   
 
     htp_multipart_part_t *ep1 = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
     ASSERT_TRUE(ep1 != NULL);
@@ -747,6 +763,10 @@ TEST_F(Multipart, HasLastBoundary) {
     };
 
     parseParts(parts);
+
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(2, htp_list_size(body->parts));
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_SEEN_LAST_BOUNDARY);
 }
@@ -800,7 +820,9 @@ TEST_F(Multipart, UnknownPart) {
 
     parseParts(parts);
 
-    ASSERT_TRUE(htp_list_size(body->parts) == 1);
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(1, htp_list_size(body->parts));
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
     ASSERT_EQ(MULTIPART_PART_UNKNOWN, part->type);
@@ -814,7 +836,7 @@ TEST_F(Multipart, WithFile) {
         "ABCDEF"
         "\r\n--0123456789\r\n"
         "Content-Disposition: form-data; name=\"field2\"; filename=\"test.bin\"\r\n"
-        "Content-Type: application/octet-stream\r\n"
+        "Content-Type: application/octet-stream \r\n"
         "\r\n"
         "GHIJKL"
         "\r\n--0123456789--",
@@ -823,7 +845,9 @@ TEST_F(Multipart, WithFile) {
 
     parseParts(parts);
 
-    ASSERT_TRUE(htp_list_size(body->parts) == 2);
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(2, htp_list_size(body->parts));
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 1);
     ASSERT_EQ(MULTIPART_PART_FILE, part->type);
@@ -1053,6 +1077,8 @@ TEST_F(Multipart, NulByte) {
 
     htp_multipart_t *body = htp_mpartp_get_multipart(mpartp);
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_NUL_BYTE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_INVALID);
@@ -1255,6 +1281,8 @@ TEST_F(Multipart, CaseInsitiveBoundaryMatching) {
 
     parseRequest(headers, data);
 
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(2, htp_list_size(body->parts));
 }
 
@@ -1347,6 +1375,7 @@ TEST_F(Multipart, InvalidPartNoData) {
     parseRequest(headers, data);
 
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
     htp_multipart_part_t *field1 = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
@@ -1354,8 +1383,7 @@ TEST_F(Multipart, InvalidPartNoData) {
     ASSERT_EQ(MULTIPART_PART_UNKNOWN, field1->type);
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INCOMPLETE);
-
-    //ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
 }
 
 TEST_F(Multipart, InvalidPartNoContentDisposition) {
@@ -1387,6 +1415,7 @@ TEST_F(Multipart, InvalidPartNoContentDisposition) {
     parseRequest(headers, data);
 
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_UNKNOWN);
@@ -1488,8 +1517,11 @@ TEST_F(Multipart, InvalidContentDispositionMultipleParams1) {
     };
 
     parseRequest(headers, data);
-
+    
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
+    
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_REPEATED_PARAMS);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
 }
@@ -1521,8 +1553,11 @@ TEST_F(Multipart, InvalidContentDispositionMultipleParams2) {
     };
 
     parseRequest(headers, data);
-
+    
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
+    
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_REPEATED_PARAMS);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
 }
@@ -1556,6 +1591,9 @@ TEST_F(Multipart, InvalidContentDispositionUnknownParam) {
     parseRequest(headers, data);
 
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
+
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_UNKNOWN_PARAM);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
 }
@@ -1587,6 +1625,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax1) {
     };
 
     parseRequest(headers, data);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
 
     ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
@@ -1622,6 +1662,9 @@ TEST_F(Multipart, InvalidContentDispositionSyntax2) {
     parseRequest(headers, data);
 
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
+
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
 }
@@ -1655,6 +1698,9 @@ TEST_F(Multipart, InvalidContentDispositionSyntax3) {
     parseRequest(headers, data);
 
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
+
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
 }
@@ -1688,6 +1734,9 @@ TEST_F(Multipart, InvalidContentDispositionSyntax4) {
     parseRequest(headers, data);
 
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
+
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
 }
@@ -1721,6 +1770,9 @@ TEST_F(Multipart, InvalidContentDispositionSyntax5) {
     parseRequest(headers, data);
 
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
+
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
 }
@@ -1754,6 +1806,9 @@ TEST_F(Multipart, InvalidContentDispositionSyntax6) {
     parseRequest(headers, data);
 
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
+
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
 }
@@ -1787,6 +1842,9 @@ TEST_F(Multipart, InvalidContentDispositionSyntax8) {
     parseRequest(headers, data);
 
     ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
+    ASSERT_EQ(3, htp_list_size(body->parts));
+
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
 }
