@@ -109,7 +109,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
     }
     
     if (bstr_index_of_c(h->value, "form-data") != 0) {
-        part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;        
+        part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
         return HTP_DECLINED;
     }
 
@@ -128,7 +128,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
 
         // Expecting a semicolon.
         if (data[pos] != ';') {            
-            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
             return HTP_DECLINED;
         }
         pos++;
@@ -136,7 +136,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         // Go over the whitespace before parameter name.
         while ((pos < len) && isspace(data[pos])) pos++;
         if (pos == len) {            
-            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
             return HTP_DECLINED;
         }
 
@@ -146,7 +146,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         // Look for the ending position.
         while ((pos < len) && (!isspace(data[pos]) && (data[pos] != '='))) pos++;
         if (pos == len) {            
-            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
             return HTP_DECLINED;
         }
 
@@ -158,13 +158,13 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         // Ignore whitespace after parameter name, if any.
         while ((pos < len) && isspace(data[pos])) pos++;
         if (pos == len) {            
-            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
             return HTP_DECLINED;
         }
 
         // Equals.
         if (data[pos] != '=') {
-            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
             return HTP_DECLINED;
         }
         pos++;
@@ -172,14 +172,14 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         // Go over the whitespace before the parameter value.
         while ((pos < len) && isspace(data[pos])) pos++;
         if (pos == len) {            
-            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
             return HTP_DECLINED;
         }
         
         // Expecting a double quote.
         if (data[pos] != '"') {            
             // Bare string or non-standard quoting, which we don't like.
-            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;            
+            part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
             return HTP_DECLINED;
         }        
 
@@ -194,7 +194,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
             if (data[pos] == '\\') {
                 if (pos + 1 >= len) {
                     // A backslash as the last character in the C-D header.
-                    part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+                    part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
                     return HTP_DECLINED;
                 }
 
@@ -211,13 +211,13 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         // If we've reached the end of the string that means the
         // value was not terminated properly (the second double quote is missing).
         if (pos == len) {            
-            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;            
+            part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
             return HTP_DECLINED;
         }
 
         // Expecting the terminating double quote.
         if (data[pos] != '"') {            
-            part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_SYNTAX;
+            part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
             return HTP_DECLINED;
         }
 
@@ -229,7 +229,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
             case CD_PARAM_NAME:
                 // Check that we have not seen the name parameter already.
                 if (part->name != NULL) {                    
-                    part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_REPEATED_PARAMS;
+                    part->parser->multipart.flags |= HTP_MULTIPART_CD_PARAM_REPEATED;
                     return HTP_DECLINED;
                 }
                 
@@ -243,7 +243,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
             case CD_PARAM_FILENAME:                
                 // Check that we have not seen the filename parameter already.
                 if (part->file != NULL) {                    
-                    part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_REPEATED_PARAMS;
+                    part->parser->multipart.flags |= HTP_MULTIPART_CD_PARAM_REPEATED;
                     return HTP_DECLINED;
                 }
  
@@ -265,7 +265,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
                 
             default:
                 // Unknown parameter.                
-                part->parser->multipart.flags |= HTP_MULTIPART_PART_CD_UNKNOWN_PARAM;
+                part->parser->multipart.flags |= HTP_MULTIPART_CD_PARAM_UNKNOWN;
                 return HTP_DECLINED;
                 break;
         }       

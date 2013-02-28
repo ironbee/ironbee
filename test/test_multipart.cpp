@@ -1541,8 +1541,8 @@ TEST_F(Multipart, InvalidContentDispositionMultipleParams1) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
     
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_REPEATED_PARAMS);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_PARAM_REPEATED);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
 
 TEST_F(Multipart, InvalidContentDispositionMultipleParams2) {
@@ -1577,8 +1577,8 @@ TEST_F(Multipart, InvalidContentDispositionMultipleParams2) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
     
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_REPEATED_PARAMS);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_PARAM_REPEATED);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
 
 TEST_F(Multipart, InvalidContentDispositionUnknownParam) {
@@ -1613,8 +1613,8 @@ TEST_F(Multipart, InvalidContentDispositionUnknownParam) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_UNKNOWN_PARAM);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_PARAM_UNKNOWN);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
 
 TEST_F(Multipart, InvalidContentDispositionSyntax1) {
@@ -1648,8 +1648,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax1) {
     ASSERT_EQ(3, htp_list_size(body->parts));
 
     ASSERT_TRUE(body != NULL);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
 
 TEST_F(Multipart, InvalidContentDispositionSyntax2) {
@@ -1684,8 +1684,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax2) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
 
 TEST_F(Multipart, InvalidContentDispositionSyntax3) {
@@ -1720,8 +1720,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax3) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
 
 TEST_F(Multipart, InvalidContentDispositionSyntax4) {
@@ -1756,8 +1756,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax4) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
 
 TEST_F(Multipart, InvalidContentDispositionSyntax5) {
@@ -1792,8 +1792,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax5) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
 
 TEST_F(Multipart, InvalidContentDispositionSyntax6) {
@@ -1828,8 +1828,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax6) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
 
 TEST_F(Multipart, InvalidContentDispositionSyntax8) {
@@ -1864,8 +1864,8 @@ TEST_F(Multipart, InvalidContentDispositionSyntax8) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_SYNTAX);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
 
 TEST_F(Multipart, ParamValueEscaping) {
@@ -1898,7 +1898,7 @@ TEST_F(Multipart, ParamValueEscaping) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_FALSE(body->flags & HTP_MULTIPART_PART_CD_INVALID);
+    ASSERT_FALSE(body->flags & HTP_MULTIPART_CD_INVALID);
 
     htp_multipart_part_t *field1 = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
     ASSERT_TRUE(field1 != NULL);

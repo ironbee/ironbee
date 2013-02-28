@@ -52,11 +52,12 @@ extern "C" {
 
 /**
  * Seen a LF line in the payload. LF lines are not allowed, but
- * some clients do use them and some backends do accept them.
+ * some clients do use them and some backends do accept them. Mixing
+ * LF and CRLF lines within some payload might be unusual.
  */
 #define HTP_MULTIPART_LF_LINE                   0x0001
 
-/** Seen a CRLF line in the payload. */
+/** Seen a CRLF line in the payload. This is normal and expected. */
 #define HTP_MULTIPART_CRLF_LINE                 0x0002
 
 /** Seen LWS after a boundary instance in the body. Unusual. */
@@ -66,25 +67,25 @@ extern "C" {
 #define HTP_MULTIPART_BBOUNDARY_NLWS_AFTER      0x0008
 
 /**
- * Payload has a preamble part.
+ * Payload has a preamble part. Might not be that unusual.
  */
 #define HTP_MULTIPART_HAS_PREAMBLE              0x0010
 
 /**
- * Payload has an epilogue part.
+ * Payload has an epilogue part. Unusual.
  */
 #define HTP_MULTIPART_HAS_EPILOGUE              0x0020
 
 /**
- * The last boundary was encountered during parsing. Absence of the last boundary
+ * The last boundary was seen in the payload. Absence of the last boundary
  * may not break parsing with some (most?) backends, but it means that the payload
  * is not well formed. Can occur if the client gives up, or if the connection is
- * interrupted.
+ * interrupted. Incomplete payloads should be blocked whenever possible.
  */
 #define HTP_MULTIPART_SEEN_LAST_BOUNDARY        0x0040
 
 /**
- * There was a part after the last boundary. This is highly unusual
+ * There was a part after the last boundary. This is highly irregular
  * and indicative of evasion.
  */
 #define HTP_MULTIPART_PART_AFTER_LAST_BOUNDARY  0x0080
@@ -92,7 +93,8 @@ extern "C" {
 /**
  * The payloads ends abruptly, without proper termination. Can occur if the client gives up,
  * or if the connection is interrupted. When this flag is raised, HTP_MULTIPART_PART_INCOMPLETE
- * will be raised too. (But the opposite may not always be the case.)
+ * will also be raised for the part that was only partially processed. (But the opposite may not
+ * always be the case -- there are other ways in which a part can be left incomplete.)
  */
 #define HTP_MULTIPART_INCOMPLETE                0x0100
 
@@ -108,7 +110,7 @@ extern "C" {
 
 /**
  * The boundary in the Content-Type header is quoted. This is very unusual,
- * and may be an evasion attempt.
+ * and may be indicative of an evasion attempt.
  */
 #define HTP_MULTIPART_HBOUNDARY_QUOTED          0x0800
 
@@ -131,16 +133,16 @@ extern "C" {
 #define HTP_MULTIPART_PART_HEADER_INVALID       0x10000
 
 /** Part type specified in the C-D header is neither MULTIPART_PART_TEXT nor MULTIPART_PART_FILE. */
-#define HTP_MULTIPART_PART_CD_TYPE_INVALID      0x20000
+#define HTP_MULTIPART_CD_TYPE_INVALID           0x20000
 
 /** Content-Disposition part header with multiple parameters with the same name. */
-#define HTP_MULTIPART_PART_CD_REPEATED_PARAMS   0x40000
+#define HTP_MULTIPART_CD_PARAM_REPEATED         0x40000
 
 /** Unknown Content-Disposition parameter. */
-#define HTP_MULTIPART_PART_CD_UNKNOWN_PARAM     0x80000
+#define HTP_MULTIPART_CD_PARAM_UNKNOWN          0x80000
 
 /** Invalid Content-Disposition syntax. */
-#define HTP_MULTIPART_PART_CD_SYNTAX            0x100000
+#define HTP_MULTIPART_CD_SYNTAX_INVALID         0x100000
 
 /**
  * There is an abruptly terminated part. This can happen when the payload itself is abruptly
@@ -149,18 +151,48 @@ extern "C" {
  */
 #define HTP_MULTIPART_PART_INCOMPLETE           0x200000
 
+/** A NUL byte was seen in a part header area. */
 #define HTP_MULTIPART_NUL_BYTE                  0x400000
 
 /** A collection of flags that all indicate an invalid C-D header. */
-#define HTP_MULTIPART_PART_CD_INVALID ( HTP_MULTIPART_PART_CD_TYPE_INVALID | HTP_MULTIPART_PART_CD_REPEATED_PARAMS | \
-    HTP_MULTIPART_PART_CD_UNKNOWN_PARAM | HTP_MULTIPART_PART_CD_SYNTAX )
+#define HTP_MULTIPART_CD_INVALID ( \
+    HTP_MULTIPART_CD_TYPE_INVALID | \
+    HTP_MULTIPART_CD_PARAM_REPEATED | \
+    HTP_MULTIPART_CD_PARAM_UNKNOWN | \
+    HTP_MULTIPART_CD_SYNTAX_INVALID )
 
 /** A collection of flags that all indicate an invalid part. */
-#define HTP_MULTIPART_PART_INVALID              ( HTP_MULTIPART_PART_HEADER_FOLDING | HTP_MULTIPART_PART_UNKNOWN | \
-    HTP_MULTIPART_PART_HEADER_REPEATED | HTP_MULTIPART_PART_CD_INVALID | HTP_MULTIPART_PART_INCOMPLETE | \
-    HTP_MULTIPART_PART_HEADER_UNKNOWN | HTP_MULTIPART_PART_HEADER_INVALID | HTP_MULTIPART_NUL_BYTE )
+#define HTP_MULTIPART_PART_INVALID ( \
+    HTP_MULTIPART_CD_INVALID | \
+    HTP_MULTIPART_NUL_BYTE | \
+    HTP_MULTIPART_PART_UNKNOWN | \
+    HTP_MULTIPART_PART_HEADER_REPEATED | \
+    HTP_MULTIPART_PART_INCOMPLETE | \
+    HTP_MULTIPART_PART_HEADER_UNKNOWN | \
+    HTP_MULTIPART_PART_HEADER_INVALID )
 
-#define HTP_MULTIPART_INVALID  HTP_MULTIPART_PART_INVALID
+/** A collection of flags that all indicate an invalid Multipart payload. */
+#define HTP_MULTIPART_INVALID ( \
+    HTP_MULTIPART_PART_INVALID | \
+    HTP_MULTIPART_PART_AFTER_LAST_BOUNDARY | \
+    HTP_MULTIPART_INCOMPLETE | \
+    HTP_MULTIPART_HBOUNDARY_INVALID )
+
+/** A collection of flags that all indicate an unusual Multipart payload. */
+#define HTP_MULTIPART_UNUSUAL ( \
+    HTP_MULTIPART_INVALID | \
+    HTP_MULTIPART_PART_HEADER_FOLDING | \
+    HTP_MULTIPART_BBOUNDARY_NLWS_AFTER | \
+    HTP_MULTIPART_HAS_EPILOGUE | \
+    HTP_MULTIPART_HBOUNDARY_UNUSUAL \
+    HTP_MULTIPART_HBOUNDARY_QUOTED )
+
+/** A collection of flags that all indicate an unusual Multipart payload, with a low sensitivity to irregularities. */
+#define HTP_MULTIPART_UNUSUAL_PARANOID ( \
+    HTP_MULTIPART_UNUSUAL | \
+    HTP_MULTIPART_LF_LINE | \
+    HTP_MULTIPART_BBOUNDARY_LWS_AFTER | \
+    HTP_MULTIPART_HAS_PREAMBLE )
 
 #define HTP_MULTIPART_MIME_TYPE                 "multipart/form-data"
 
