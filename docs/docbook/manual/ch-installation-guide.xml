@@ -99,7 +99,7 @@
             </tr>
         </table>
         <table border="1" width="100%">
-            <caption>Libraries for IronBee</caption>
+            <caption>Libraries for IronBee Engine</caption>
             <tr>
                 <th>Dependency</th>
                 <th>Version</th>
@@ -215,36 +215,37 @@ cd ironbee
         </section>
         <section>
             <title>Build and Install IronBee</title>
+            <para>IronBee is built using standard autotool conventions. First the source must be
+                configured for the platform, then built and finally installed. Typically this is as
+                simple as below, but there are many options to configure, which you can see by
+                running the <literal>./configure --help</literal> script.</para>
             <programlisting># Configure the build for the current platform
 ./configure 
 
-# Build and Install
+# Build
 make
-sudo make install</programlisting>
-        </section>
-        <section>
-            <title>Build C++ Wrapper and Utilities (Optional)</title>
-            <para>...</para>
-            <programlisting># Configure the build for the current platform, enabling C++
-./configure --enable-cpp
 
-# Build and Install
-make
+# Install (default is /usr/local/ironbee, but can be set with --prefix= option to configure above)
 sudo make install</programlisting>
         </section>
         <section>
             <title>Build and Run Unit Tests(Optional)</title>
-            <para>...</para>
+            <para>IronBee comes with extensive unit tests. These are built and executed via the
+                standard "check" make target:</para>
             <programlisting>make check</programlisting>
         </section>
         <section>
             <title>Build Doxygen Documents(Optional)</title>
-            <para>...</para>
+            <para>Developer (API) documentation is built into the IronBee source code. This can be
+                rendered into HTML or PDF using the "doxygen" utility via the "doxygen" make
+                target:</para>
             <programlisting>make doxygen</programlisting>
         </section>
         <section>
             <title>Build Docbook Manual(Optional)</title>
-            <para>...</para>
+            <para>The user manual is also part of IronBee. This is written in docbook 5 and
+                currently requires a java runtime to build. This is built via the "manual" make
+                target:</para>
             <programlisting>make manual</programlisting>
         </section>
     </section>
