@@ -140,10 +140,7 @@ rm -rf $RPM_BUILD_ROOT
 %attr(0755,root,root) %{_libdir}/ibmod_*
 %attr(0755,root,root) %{_libdir}/pkgconfig/*.*
 %attr(0755,root,root) %{_bindir}/ibcli
-%attr(0644,root,root) %{_sysconfdir}/ironbee-cli.conf.example
-%attr(0644,root,root) %{_sysconfdir}/site-1.conf
-%attr(0644,root,root) %{_sysconfdir}/site-2.conf
-%attr(0644,root,root) %{_sysconfdir}/site-default.conf
+%attr(0644,root,root) %{_sysconfdir}/ironbee.conf.example
 
 %files devel
 %attr(0755,root,root) %{_bindir}/ac_generator
@@ -166,14 +163,12 @@ rm -rf $RPM_BUILD_ROOT
 
 %if %{with trafficserver}
 %files trafficserver
-%attr(0644,root,root) %{_sysconfdir}/ironbee-trafficserver.conf.example
 %attr(0755,root,root) %{_libdir}/ts_ironbee.so
 %attr(0755,root,root) %{_libdir}/libloader.so
 %endif
 
 %if %{with httpd}
 %files httpd
-%attr(0644,root,root) %{_sysconfdir}/ironbee-httpd.conf.example
 %attr(0755,root,root) %{_libdir}/mod_ironbee.so
 %endif
 
