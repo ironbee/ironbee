@@ -43,6 +43,8 @@
 #include <htp/htp_base64.h>
 #include "test.h"
 
+#include <htp/htp_multipart_private.h>
+
 class Multipart : public testing::Test {
 protected:
 
@@ -647,7 +649,7 @@ TEST_F(Multipart, WithEpilogue1) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);   
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
     ASSERT_TRUE(part != NULL);
@@ -680,7 +682,7 @@ TEST_F(Multipart, WithEpilogue2) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);   
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
     ASSERT_TRUE(part != NULL);
@@ -714,7 +716,7 @@ TEST_F(Multipart, WithEpilogue3) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);   
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 
     htp_multipart_part_t *part = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
     ASSERT_TRUE(part != NULL);
@@ -749,7 +751,7 @@ TEST_F(Multipart, WithEpilogue4) {
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(4, htp_list_size(body->parts));
 
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);   
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_HAS_EPILOGUE);
 
     htp_multipart_part_t *ep1 = (htp_multipart_part_t *) htp_list_get(body->parts, 2);
     ASSERT_TRUE(ep1 != NULL);
@@ -1536,11 +1538,11 @@ TEST_F(Multipart, InvalidContentDispositionMultipleParams1) {
     };
 
     parseRequest(headers, data);
-    
+
     ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
-    
+
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_PARAM_REPEATED);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
@@ -1572,11 +1574,11 @@ TEST_F(Multipart, InvalidContentDispositionMultipleParams2) {
     };
 
     parseRequest(headers, data);
-    
+
     ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->parts != NULL);
     ASSERT_EQ(3, htp_list_size(body->parts));
-    
+
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_PARAM_REPEATED);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
@@ -1617,255 +1619,67 @@ TEST_F(Multipart, InvalidContentDispositionUnknownParam) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 }
 
-TEST_F(Multipart, InvalidContentDispositionSyntax1) {
-    char *headers[] = {
-        "POST / HTTP/1.0\r\n"
-        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
+TEST_F(Multipart, InvalidContentDispositionSyntax) {
+    char *inputs[] = {
+        // Parameter value not quoted.
+        "form-data; name=field1",
+        // Using single quotes around parameter value.
+        "form-data; name='field1'",
+        // No semicolon after form-data in the C-D header.
+        "form-data name=\"field1\"",
+        // No semicolon after C-D parameter.
+        "form-data; name=\"file1\" filename=\"file.bin\"",
+        // Missing terminating quote in C-D parameter value.
+        "form-data; name=\"field1",
+        // Backslash as the last character in parameter value
+        "form-data; name=\"field1\\",
+        // C-D header does not begin with "form-data".
+        "invalid-syntax; name=\"field1",
+        // Escape the terminating double quote.
+        "name=\"field1\\\"",
+        // Incomplete header.
+        "form-data; ",
+        // Incomplete header.
+        "form-data; name",
+        // Incomplete header.
+        "form-data; name ",
+        // Incomplete header.
+        "form-data; name ?",
+        // Incomplete header.
+        "form-data; name=",
+        // Incomplete header.
+        "form-data; name= ",
         NULL
     };
 
-    // Parameter value not quoted.
+    for (size_t i = 0; inputs[i] != NULL; i++) {
+        SCOPED_TRACE(inputs[i]);
 
-    char *data[] = {
-        "--0123456789\r\n"
-        "Content-Disposition: form-data; name=field1\r\n"
-        "\r\n"
-        "ABCDEF"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
-        "\r\n"
-        "FILEDATA"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field2\"\r\n"
-        "\r\n"
-        "GHIJKL"
-        "\r\n--0123456789--",
-        NULL
-    };
+        mpartp = htp_mpartp_create(cfg, bstr_dup_c("123"), 0 /* flags */);
+        
+        htp_multipart_part_t *part = (htp_multipart_part_t *) calloc(1, sizeof (htp_multipart_part_t));
+        part->headers = htp_table_create(4);
+        part->parser = mpartp;
 
-    parseRequest(headers, data);
-    ASSERT_TRUE(body->parts != NULL);
-    ASSERT_EQ(3, htp_list_size(body->parts));
+        htp_header_t *h = (htp_header_t *) calloc(1, sizeof (htp_header_t));
+        h->name = bstr_dup_c("Content-Disposition");
+        h->value = bstr_dup_c(inputs[i]);
 
-    ASSERT_TRUE(body != NULL);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
-}
+        htp_table_add(part->headers, h->name, h);
 
-TEST_F(Multipart, InvalidContentDispositionSyntax2) {
-    char *headers[] = {
-        "POST / HTTP/1.0\r\n"
-        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
-        NULL
-    };
+        htp_status_t rc = htp_mpart_part_parse_c_d(part);
+        ASSERT_EQ(HTP_DECLINED, rc);
 
-    // Using single quotes around parameter value.
+        body = htp_mpartp_get_multipart(mpartp);
+        ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
+        ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
 
-    char *data[] = {
-        "--0123456789\r\n"
-        "Content-Disposition: form-data; name='field1'\r\n"
-        "\r\n"
-        "ABCDEF"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
-        "\r\n"
-        "FILEDATA"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field2\"\r\n"
-        "\r\n"
-        "GHIJKL"
-        "\r\n--0123456789--",
-        NULL
-    };
-
-    parseRequest(headers, data);
-
-    ASSERT_TRUE(body != NULL);
-    ASSERT_TRUE(body->parts != NULL);
-    ASSERT_EQ(3, htp_list_size(body->parts));
-
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
-}
-
-TEST_F(Multipart, InvalidContentDispositionSyntax3) {
-    char *headers[] = {
-        "POST / HTTP/1.0\r\n"
-        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
-        NULL
-    };
-
-    // No semicolon after form-data in the C-D header.
-
-    char *data[] = {
-        "--0123456789\r\n"
-        "Content-Disposition: form-data name=\"field1\"\r\n"
-        "\r\n"
-        "ABCDEF"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
-        "\r\n"
-        "FILEDATA"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field2\"\r\n"
-        "\r\n"
-        "GHIJKL"
-        "\r\n--0123456789--",
-        NULL
-    };
-
-    parseRequest(headers, data);
-
-    ASSERT_TRUE(body != NULL);
-    ASSERT_TRUE(body->parts != NULL);
-    ASSERT_EQ(3, htp_list_size(body->parts));
-
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
-}
-
-TEST_F(Multipart, InvalidContentDispositionSyntax4) {
-    char *headers[] = {
-        "POST / HTTP/1.0\r\n"
-        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
-        NULL
-    };
-
-    // No semicolon after C-D parameter.
-
-    char *data[] = {
-        "--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field1\"\r\n"
-        "\r\n"
-        "ABCDEF"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"file1\" filename=\"file.bin\"\r\n"
-        "\r\n"
-        "FILEDATA"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field2\"\r\n"
-        "\r\n"
-        "GHIJKL"
-        "\r\n--0123456789--",
-        NULL
-    };
-
-    parseRequest(headers, data);
-
-    ASSERT_TRUE(body != NULL);
-    ASSERT_TRUE(body->parts != NULL);
-    ASSERT_EQ(3, htp_list_size(body->parts));
-
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
-}
-
-TEST_F(Multipart, InvalidContentDispositionSyntax5) {
-    char *headers[] = {
-        "POST / HTTP/1.0\r\n"
-        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
-        NULL
-    };
-
-    // Missing terminating quote in C-D parameter value.
-
-    char *data[] = {
-        "--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field1\r\n"
-        "\r\n"
-        "ABCDEF"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
-        "\r\n"
-        "FILEDATA"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field2\"\r\n"
-        "\r\n"
-        "GHIJKL"
-        "\r\n--0123456789--",
-        NULL
-    };
-
-    parseRequest(headers, data);
-
-    ASSERT_TRUE(body != NULL);
-    ASSERT_TRUE(body->parts != NULL);
-    ASSERT_EQ(3, htp_list_size(body->parts));
-
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
-}
-
-TEST_F(Multipart, InvalidContentDispositionSyntax6) {
-    char *headers[] = {
-        "POST / HTTP/1.0\r\n"
-        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
-        NULL
-    };
-
-    // C-D header does not begin with "form-data".
-
-    char *data[] = {
-        "--0123456789\r\n"
-        "Content-Disposition: invalid-syntax; name=\"field1\r\n"
-        "\r\n"
-        "ABCDEF"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
-        "\r\n"
-        "FILEDATA"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field2\"\r\n"
-        "\r\n"
-        "GHIJKL"
-        "\r\n--0123456789--",
-        NULL
-    };
-
-    parseRequest(headers, data);
-
-    ASSERT_TRUE(body != NULL);
-    ASSERT_TRUE(body->parts != NULL);
-    ASSERT_EQ(3, htp_list_size(body->parts));
-
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
-}
-
-TEST_F(Multipart, InvalidContentDispositionSyntax8) {
-    char *headers[] = {
-        "POST / HTTP/1.0\r\n"
-        "Content-Type: multipart/form-data; boundary=0123456789\r\n",
-        NULL
-    };
-
-    // Escape the terminating double quote.
-
-    char *data[] = {
-        "--0123456789\r\n"
-        "Content-Disposition: name=\"field1\\\"\r\n"
-        "\r\n"
-        "ABCDEF"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"file1\"; filename=\"file.bin\"\r\n"
-        "\r\n"
-        "FILEDATA"
-        "\r\n--0123456789\r\n"
-        "Content-Disposition: form-data; name=\"field2\"\r\n"
-        "\r\n"
-        "GHIJKL"
-        "\r\n--0123456789--",
-        NULL
-    };
-
-    parseRequest(headers, data);
-
-    ASSERT_TRUE(body != NULL);
-    ASSERT_TRUE(body->parts != NULL);
-    ASSERT_EQ(3, htp_list_size(body->parts));
-
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_SYNTAX_INVALID);
-    ASSERT_TRUE(body->flags & HTP_MULTIPART_CD_INVALID);
+        bstr_free(h->value);
+        bstr_free(h->name);
+        free(h);       
+        htp_mpartp_destroy(mpartp);
+        mpartp = NULL;
+    }
 }
 
 TEST_F(Multipart, ParamValueEscaping) {

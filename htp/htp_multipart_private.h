@@ -193,6 +193,8 @@ htp_status_t htp_mpart_part_finalize_data(htp_multipart_part_t *part);
 
 void htp_mpart_part_destroy(htp_multipart_part_t *part, int gave_up_data);
 
+htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part);
+
 #ifdef __cplusplus
 }
 #endif

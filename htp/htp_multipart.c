@@ -100,15 +100,16 @@ static void htp_mpart_decode_quoted_cd_value_inplace(bstr *b) {
  * @return HTP_OK on success (header found and parsed), HTP_DECLINED if there is no C-D header or if
  *         it could not be processed, and HTP_ERROR on fatal error.
  */
-static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
+htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
     // Find the C-D header.
     htp_header_t *h = htp_table_get_c(part->headers, "content-disposition");
-    if (h == NULL) {
-        part->parser->multipart.flags |= HTP_MULTIPART_PART_UNKNOWN;        
+    if (h == NULL) {        
+        part->parser->multipart.flags |= HTP_MULTIPART_PART_UNKNOWN;
         return HTP_DECLINED;
     }
-    
-    if (bstr_index_of_c(h->value, "form-data") != 0) {
+
+    // Require "form-data" at the beginning of the header.
+    if (bstr_index_of_c(h->value, "form-data") != 0) {        
         part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
         return HTP_DECLINED;
     }
@@ -119,10 +120,11 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
     size_t pos = 9; // Start after "form-data"
 
     // Main parameter parsing loop (once per parameter)
-    while (pos < len) {
+    while (pos < len) {              
         // Ignore whitespace.
         while ((pos < len) && isspace(data[pos])) pos++;
-        if (pos == len) {
+        if (pos == len) {            
+            part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
             return HTP_DECLINED;
         }
 
@@ -163,7 +165,7 @@ static htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         }
 
         // Equals.
-        if (data[pos] != '=') {
+        if (data[pos] != '=') {            
             part->parser->multipart.flags |= HTP_MULTIPART_CD_SYNTAX_INVALID;
             return HTP_DECLINED;
         }
