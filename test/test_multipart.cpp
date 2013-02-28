@@ -895,6 +895,7 @@ TEST_F(Multipart, WithFile) {
     ASSERT_TRUE(bstr_cmp_c(part->content_type, "application/octet-stream") == 0);
     ASSERT_TRUE(part->file != NULL);
     ASSERT_TRUE(bstr_cmp_c(part->file->filename, "test.bin") == 0);
+    ASSERT_EQ(6, part->file->len);
 }
 
 TEST_F(Multipart, PartHeadersEmptyLineBug) {
