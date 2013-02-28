@@ -9,6 +9,3 @@
 *.dmp
 *.swp
 .tags
-
-# Generated files
-src/luajit-ironbee
