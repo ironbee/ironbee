@@ -20,6 +20,7 @@
  * @brief simple command line tool for driving ironbee
  *
  * @author Craig Forbes <cforbes@qualys.com>
+ * @author Nick LeRoy <nleroy@qualys.com>
  */
 
 #include "ironbee_config_auto.h"
@@ -64,12 +65,11 @@
 
 /* Data transfer direction */
 typedef enum {
-    DATA_IN,
-    DATA_OUT
-} data_direction_t;
+    REQUEST,
+    RESPONSE
+} direction_t;
 
 /* Max number of request headers that can be specified on the command line */
-#define MAX_REQUEST_HEADERS     8
 #define MAX_FILES            1024
 
 /* Trace context */
@@ -78,14 +78,56 @@ typedef struct {
     int         response;
 } trace_context_t;
 
-/* Header / value pairs */
+/**
+ * Header / value pairs
+ */
 typedef struct {
-    const char *name;           /* Field name buffer */
-    size_t      name_len;       /* Name length */
-    const char *buf;            /* Field string buffer; NULL means remove */
-    int         buf_len;        /* Total buffer length */
-    int         used;           /* Has this field been used */
-} request_header_t;
+    const char   *name;        /**< Field name buffer */
+    size_t        name_len;    /**< Length of name */
+    const char   *value;       /**< Field string buffer; NULL means remove */
+} header_line_t;
+
+/**
+ * Function to handle a request/response line
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] tx IronBee transaction
+ * @param[in] line Line buffer
+ *
+ * @returns Status code
+ */
+typedef ib_status_t (*line_handler_fn_t) (
+    const ib_engine_t *ib,
+    ib_tx_t           *tx,
+    const char        *line);
+
+/**
+ * Function to handle a request/response header
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] tx IronBee transaction
+ * @param[in] parsed Name/value pair mapping
+ *
+ * @returns Status code
+ */
+typedef ib_status_t (*header_handler_fn_t) (
+    const ib_engine_t          *ib,
+    ib_tx_t                    *tx,
+    ib_parsed_header_wrapper_t *parsed);
+
+/**
+ * Function to handle a request/response body block
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] tx IronBee transaction
+ * @param[in] txdata Transaction data block
+ *
+ * @returns Status code
+ */
+typedef ib_status_t (*body_handler_fn_t) (
+    ib_engine_t                *ib,
+    ib_tx_t                    *tx,
+    ib_txdata_t                *txdata);
 
 /* Print operator params */
 typedef struct {
@@ -106,9 +148,9 @@ typedef struct {
 #define DUMP_ALL                                        \
     ( DUMP_TX_ALL | DUMP_USER_AGENT | DUMP_GEOIP | DUMP_CONTEXT )
 
-
 /* Runtime settings */
-typedef struct {
+typedef struct
+{
     char *config_file;
     glob_t req_files;
     glob_t rsp_files;
@@ -128,10 +170,7 @@ typedef struct {
     ib_flags_t dump_flags;
 
     /* Request header fields */
-    struct {
-        int              num_headers;
-        request_header_t headers[MAX_REQUEST_HEADERS];
-    } request_headers;
+    ib_list_t *request_header;
 
     /* Max # of transactions */
     int max_transactions;
@@ -159,6 +198,8 @@ static runtime_settings_t settings =
     .trace_response_cnt = 0,
     /* Dump settings */
     .dump_flags = 0,
+    /* Request header */
+    .request_header = NULL,
     /* Max # of transactions */
     .max_transactions = -1,
     /* Verbose */
@@ -170,17 +211,15 @@ static runtime_settings_t settings =
 #endif
 };
 
-typedef struct {
-    char     *buf;         /* Actual buffer */
-    size_t    len;         /* Length of data in the buffer */
-    size_t    size;        /* Current size of buffer */
-} reqhdr_buf_t;
+/* Command line parsing memory pool */
+static ib_mpool_t *cli_mp = NULL;
 
 #define MAX_BUF      (64*1024)
 #define MAX_LINE_BUF (16*1024)
 
 /* Plugin Structure */
-ib_server_t ibplugin = {
+ib_server_t ibplugin =
+{
     IB_SERVER_HEADER_DEFAULTS,
     "ibcli",
     NULL,
@@ -294,68 +333,6 @@ static void help(void)
 }
 
 /**
- * Add a request header field / value.
- *
- * Attempts to add the specified request header name and value to the list
- * of header fields.
- *
- * @param[in] str Header string from the command line
- * @param[in] len Length of the string
- * @param[in] name_len Length of the name portion of the string
- * @param[in] delete 1:Delete the header field; 0:Don't delete
- *
- * @returns status
- */
-static ib_status_t add_request_header(const char *str,
-                                      size_t str_len,
-                                      size_t name_len,
-                                      int delete)
-{
-    int     num;
-    char   *buf;
-    size_t  buf_len;
-
-    if (settings.request_headers.num_headers >= MAX_REQUEST_HEADERS) {
-        fprintf(stderr,
-                "Unable to add request header field: max # is %i: ",
-                 MAX_REQUEST_HEADERS);
-        return IB_EALLOC;
-    }
-
-    /* Allocate space and copy to the buffer */
-    buf_len = (delete != 0) ? str_len : str_len + 2;  /* '\r' and '\n' */
-    buf = (char *) malloc(buf_len+1);  /* Extra byte for '\0' */
-    if (buf == NULL) {
-        fprintf(stderr,
-                "Failed to allocate buffer for request header field %-*s",
-                (int)name_len, buf);
-        return IB_EALLOC;
-    }
-
-    /* Account for it */
-    num = settings.request_headers.num_headers;
-    ++settings.request_headers.num_headers;
-
-    /* Add it in */
-    strcpy(buf, str);
-    if (delete == 0) {
-        strcat(buf, "\r\n");
-        settings.request_headers.headers[num].buf = buf;
-        settings.request_headers.headers[num].buf_len = buf_len;
-    }
-    else {
-        settings.request_headers.headers[num].buf = NULL;
-        settings.request_headers.headers[num].buf_len = 0;
-    }
-
-    settings.request_headers.headers[num].name = buf;
-    settings.request_headers.headers[num].name_len = name_len;
-    settings.request_headers.headers[num].used = 0;
-
-    return IB_OK;
-}
-
-/**
  * Handle a fatal error.
  *
  * Print a meaningful message and exit.
@@ -371,6 +348,114 @@ static void fatal_error(const char *fmt, ...)
     vfprintf(stderr, fmt, ap);
     va_end(ap);
     exit(1);
+}
+
+/**
+ * Parse a header line
+ *
+ * Attempts to parse header line @a str to create a parsed header line object
+ * pointed at by @a pline.
+ *
+ * @param[in] str header string
+ * @param[in] mp Memory pool to use for allocations
+ * @param[in] pline Pointer to new header line object
+ *
+ * @returns status
+ */
+static ib_status_t header_line_parse(const char *str,
+                                     ib_mpool_t *mp,
+                                     header_line_t **pline)
+{
+    assert(str != NULL);
+    assert(mp != NULL);
+    assert(pline != NULL);
+
+    size_t            nlen;
+    ib_status_t       rc;
+    bool              delete = false;
+    char             *colon;
+    header_line_t    *line;
+
+    /* Delete? */
+    if (*str == '-') {
+        delete = true;
+        ++str;
+    }
+
+    /* Get a pointer to the first colon, count the number of
+     * characters following it */
+    colon = strchr(str, ':');
+    if (colon != NULL) {
+        nlen = colon - str;
+    }
+    else {
+        nlen = 0;
+    }
+
+    /* Simple checks */
+    if (nlen == 0) {
+        fatal_error("Malformed request-header parameter \"%s\"\n", str);
+    }
+
+    /* Allocate a header object */
+    line = ib_mpool_calloc(cli_mp, sizeof(*line), 1);
+    if (line == NULL) {
+        fatal_error("Failed to allocate header object\n");
+    }
+
+    /* Allocate space and copy to the buffer */
+    line->name = ib_mpool_memdup_to_str(cli_mp, str, nlen);
+    if (line->name == NULL) {
+        fatal_error("Failed to allocate header name\n");
+    }
+    line->name_len = nlen;
+
+    /* Finally, fill in the value */
+    if (delete) {
+        line->value = NULL;
+    }
+    else if (colon != NULL) {
+        char       *value;
+        ib_flags_t  result;
+        rc = ib_strtrim_left(IB_STROP_COPY, cli_mp, colon+1, &value, &result);
+        if (rc != IB_OK) {
+            fatal_error("Failed to allocate header value\n");
+        }
+        line->value = value;
+    }
+    else {
+        line->value = "";
+    }
+
+    *pline = line;
+    return IB_OK;
+}
+
+/**
+ * Add a parsed header line to the name value pair list
+ *
+ * @param[in] line Header line object
+ * @param[in,out] nvpair_list Name value pair list
+ *
+ * @returns status
+ */
+static ib_status_t header_line_append(ib_parsed_header_wrapper_t *header,
+                                      const header_line_t *line)
+
+{
+    assert(line != NULL);
+    assert(header != NULL);
+
+    ib_status_t rc;
+    const char *value;
+
+    value = (line->value == NULL) ? "" : line->value;
+    rc = ib_parsed_name_value_pair_list_add(header,
+                                            line->name,
+                                            line->name_len,
+                                            value,
+                                            strlen(value));
+    return rc;
 }
 
 /**
@@ -513,37 +598,24 @@ static ib_status_t command_line(int argc, char *argv[])
             }
         }
         else if (! strcmp("request-header", longopts[option_index].name)) {
-            size_t nlen = 0;       /* Name length */
-            size_t vlen = 0;       /* Value length */
-            int    delete = 0;     /* Delete the field? */
-            char *colon;
+            header_line_t *line;
 
-            /* Delete? */
-            if (*optarg == '-') {
-                delete = 1;
-                ++optarg;
+            /* Create the list if this is the first time. */
+            if (settings.request_header == NULL) {
+                rc = ib_list_create(&settings.request_header, cli_mp);
+                if (rc != IB_OK) {
+                    fatal_error("Error creating request header list: %d\n", rc);
+                }
             }
 
-            /* Get a pointer to the first colon, count the number of
-             * characters following it */
-            colon = strchr(optarg, ':');
-            if (colon != NULL) {
-                vlen = strlen(colon+1);
-                nlen = colon - optarg;
-            }
-
-            /* Simple checks */
-            if (nlen == 0) {
-                fprintf(stderr,
-                        "Malformed request-header parameter '%s'",
-                        optarg);
-                usage();
-            }
-
-            /* Add it to the header */
-            rc = add_request_header(optarg, nlen+1+vlen, nlen, delete);
+            /* Parse it, store it. */
+            rc = header_line_parse(optarg, cli_mp, &line);
             if (rc != IB_OK) {
                 usage( );
+            }
+            rc = ib_list_push(settings.request_header, line);
+            if (rc != IB_OK) {
+                fatal_error("Error creating adding request header: %d\n", rc);
             }
         }
 
@@ -918,7 +990,10 @@ static const char *build_path(const char *path, ib_field_t *field)
     /* Allocate a path buffer */
     pathlen = strlen(path);
     fullpath_len = pathlen + (pathlen > 0 ? 2 : 1) + nlen + (truncated ? 3 : 0);
-    fullpath = (char *)malloc(fullpath_len);
+    fullpath = (char *)ib_mpool_alloc(cli_mp, fullpath_len);
+    if (fullpath == NULL) {
+        fatal_error("Error allocating path\n");
+    }
 
     /* Copy in the base path */
     strcpy(fullpath, path);
@@ -959,34 +1034,35 @@ static ib_status_t print_list(const char *path, ib_list_t *lst)
         void *data = ib_list_node_data(node);
         ib_field_t *field = (ib_field_t *)data;
         const char *fullpath = NULL;
-        switch (field->type) {
-            case IB_FTYPE_GENERIC:
-            case IB_FTYPE_NUM:
-            case IB_FTYPE_FLOAT:
-            case IB_FTYPE_NULSTR:
-            case IB_FTYPE_BYTESTR:
-                fullpath = build_path(path, field);
-                print_field(fullpath, field, 0);
-                break;
-            case IB_FTYPE_LIST:
-            {
-                ib_list_t *v;
-                // @todo Remove mutable once list is const correct.
-                rc = ib_field_mutable_value(field,
-                                            ib_ftype_list_mutable_out(&v));
-                if (rc != IB_OK) {
-                    return rc;
-                }
 
-                fullpath = build_path(path, field);
-                print_field(fullpath, field, 0);
-                print_list(fullpath, v);
-                break;
+        switch (field->type) {
+        case IB_FTYPE_GENERIC:
+        case IB_FTYPE_NUM:
+        case IB_FTYPE_FLOAT:
+        case IB_FTYPE_NULSTR:
+        case IB_FTYPE_BYTESTR:
+            fullpath = build_path(path, field);
+            print_field(fullpath, field, 0);
+            break;
+
+        case IB_FTYPE_LIST:
+        {
+            ib_list_t *v;
+            // @todo Remove mutable once list is const correct.
+            rc = ib_field_mutable_value(field, ib_ftype_list_mutable_out(&v));
+            if (rc != IB_OK) {
+                return rc;
             }
-            default :
-                break;
+
+            fullpath = build_path(path, field);
+            print_field(fullpath, field, 0);
+            print_list(fullpath, v);
+            break;
         }
-        free( (char *)fullpath );
+
+        default :
+            break;
+        }
     }
 
     /* Done */
@@ -1001,7 +1077,6 @@ static IB_STRVAL_MAP(tx_flags_map) = {
     IB_STRVAL_PAIR("Error", IB_TX_FERROR),
     IB_STRVAL_PAIR("HTTP/0.9", IB_TX_FHTTP09),
     IB_STRVAL_PAIR("Pipelined", IB_TX_FPIPELINED),
-    IB_STRVAL_PAIR("Parsed Data", IB_TX_FPARSED_DATA),
     IB_STRVAL_PAIR("Request Started", IB_TX_FREQ_STARTED),
     IB_STRVAL_PAIR("Seen Request Header", IB_TX_FREQ_SEENHEADER),
     IB_STRVAL_PAIR("No Request Body", IB_TX_FREQ_NOBODY),
@@ -1256,7 +1331,6 @@ static ib_status_t print_user_agent(
         ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
         const char *path = build_path("User-Agent", field);
         print_field(path, field, 0);
-        free((char *)path);
     }
 
     /* Done */
@@ -1321,7 +1395,6 @@ static ib_status_t print_geoip(
         ++count;
         fullpath = build_path("GeoIP", field);
         print_field(fullpath, field, 0);
-        free((char *)fullpath);
     }
     if (count == 0) {
         printf("No GeoIP data found\n");
@@ -1944,45 +2017,206 @@ static ib_status_t register_late_handlers(ib_engine_t* ib)
 }
 
 /**
- * Add a line to the request header buffer.
+ * Handle the request line
  *
- * This function adds a line to header.  This function uses malloc() &
- * realloc() instead of the IronBee memory pool because the memory pool
- * currently doesn't provide a realloc() equivalent.
+ * @param[in] ib IronBee engine
+ * @param[in] tx IronBee transaction
+ * @param[in] line Line to handle
  *
- * @param[in] buf Request header buffer
- * @param[in] linebuf Line to copy in
- * @param[in] linelen Length of line
- *
- * @returns status
+ * @returns Status code
  */
-static ib_status_t append_req_hdr_buf(reqhdr_buf_t *buf,
-                                      const char *linebuf,
-                                      size_t linelen)
+ib_status_t handle_request_line(
+    const ib_engine_t *ib,
+    ib_tx_t           *tx,
+    const char        *line)
 {
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(line != NULL);
 
-    /* Allocate a buffer or increase our allocation as required */
-    if (buf->buf == NULL) {
-        buf->buf  = malloc(MAX_LINE_BUF);
-        buf->size = MAX_LINE_BUF;
-        buf->len  = 0;
+    ib_status_t           rc;
+    const char           *space;
+    const char           *method;
+    size_t                method_len;
+    const char           *uri;
+    size_t                uri_len;
+    const char           *proto;
+    size_t                proto_len;
+    ib_parsed_req_line_t *parsed;
+
+    /* Method is always the start of the line */
+    method = line;
+
+    /* Find the uri */
+    space = strchr(method, ' ');
+    if ( (space == NULL) || (space == method) ) {
+        return IB_EINVAL;
     }
-    else if ((buf->len + linelen) > buf->size) {
-        buf->size *= 2;
-        buf->buf   = realloc(buf, buf->size);
+    method_len = (space - method - 1);
+    uri = space + 1;
+
+    /* Find the protocol */
+    space = strchr(uri, ' ');
+    if (space == NULL) {
+        uri_len = strlen(uri);
+        while ( (uri_len > 0) && isspace(*(uri+uri_len-1)) ) {
+            --uri_len;
+        }
+        proto = "";
+        proto_len = 0;
+    }
+    else {
+        uri_len = (space - uri - 1);
+        proto = space + 1;
+        proto_len = strlen(proto);
+        while ( (proto_len > 0) && isspace(*(proto+proto_len-1)) ) {
+            --proto_len;
+        }
     }
 
-    /* Allocation failed? */
-    if (buf->buf == NULL) {
-        fprintf(stderr,
-                "Failed to allocate request buffer of size %zd", buf->size);
-        return IB_EALLOC;
+    rc = ib_parsed_req_line_create(tx, &parsed,
+                                   line, strlen(line),
+                                   method, method_len,
+                                   uri, uri_len,
+                                   proto, proto_len);
+    if (rc != IB_OK) {
+        return rc;
     }
 
-    /* Copy the line into the buffer */
-    memcpy(buf->buf+buf->len, linebuf, linelen);
-    buf->len += linelen;
+    rc = ib_state_notify_request_started((ib_engine_t *)ib, tx, parsed);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    return rc;
+}
 
+/**
+ * Handle the response line
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] tx IronBee transaction
+ * @param[in] line Line to handle
+ *
+ * @returns Status code
+ */
+ib_status_t handle_response_line(
+    const ib_engine_t *ib,
+    ib_tx_t           *tx,
+    const char        *line)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(line != NULL);
+
+    ib_status_t            rc;
+    const char            *space;
+    const char            *proto;
+    size_t                 proto_len;
+    const char            *status;
+    size_t                 status_len;
+    const char            *message;
+    size_t                 message_len;
+    ib_parsed_resp_line_t *parsed;
+
+    /* Protocol is always the start of the line */
+    proto = line;
+
+    /* Find the status code */
+    space = strchr(proto, ' ');
+    if ( (space == NULL) || (space == proto) ) {
+        return IB_EINVAL;
+    }
+    proto_len = (space - proto - 1);
+    status = space + 1;
+
+    /* Find the message */
+    space = strchr(status, ' ');
+    if ( (space == NULL) || (space == status) ) {
+        return IB_EINVAL;
+    }
+    status_len = (space - status - 1);
+    message = space + 1;
+    message_len = strlen(message);
+    while ( (message_len > 0) && isspace(*(message+message_len-1)) ) {
+        --message_len;
+    }
+
+    rc = ib_parsed_resp_line_create(tx, &parsed,
+                                    line, strlen(line),
+                                    proto, proto_len,
+                                    status, status_len,
+                                    message, message_len);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    rc = ib_state_notify_response_started((ib_engine_t *)ib, tx, parsed);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    return IB_OK;
+}
+
+/**
+ * Handle the request header
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] tx IronBee transaction
+ * @param[in] parsed Name/value pair mapping
+ *
+ * @returns Status code
+ */
+ib_status_t handle_request_header(
+    const ib_engine_t          *ib,
+    ib_tx_t                    *tx,
+    ib_parsed_header_wrapper_t *parsed)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(parsed != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_state_notify_request_header_data((ib_engine_t *)ib, tx, parsed);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_state_notify_request_header_finished((ib_engine_t *)ib, tx);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    return IB_OK;
+}
+
+/**
+ * Handle the response header
+ *
+ * @param[in] ib IronBee engine
+ * @param[in] tx IronBee transaction
+ * @param[in] parsed Name/value pair mapping
+ *
+ * @returns Status code
+ */
+ib_status_t handle_response_header(
+    const ib_engine_t          *ib,
+    ib_tx_t                    *tx,
+    ib_parsed_header_wrapper_t *parsed)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(parsed != NULL);
+
+    ib_status_t rc;
+
+    rc = ib_state_notify_response_header_data((ib_engine_t *)ib, tx, parsed);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    rc = ib_state_notify_response_header_finished((ib_engine_t *)ib, tx);
+    if (rc != IB_OK) {
+        return rc;
+    }
     return IB_OK;
 }
 
@@ -1995,84 +2229,109 @@ static ib_status_t append_req_hdr_buf(reqhdr_buf_t *buf,
  * realloc() equivalent.
  *
  * @param[in] ib IronBee engine to send header to
- * @param[in] icdata IronBee connection data
+ * @param[in] tx IronBee transaction
  * @param[in] fp File pointer to read from
+ * @param[in] line_fn Line handler function
+ * @param[in] header_fn Header handler function
+ * @param[in] append_list List of header line objects to append (or NULL)
  *
  * @returns status
  */
-static ib_status_t send_header(ib_engine_t* ib,
-                               ib_conndata_t *icdata,
-                               FILE *fp)
+static ib_status_t send_header(
+    const ib_engine_t   *ib,
+    ib_tx_t             *tx,
+    FILE                *fp,
+    line_handler_fn_t    line_fn,
+    header_handler_fn_t  header_fn,
+    const ib_list_t     *append_list)
 {
-    ib_status_t  rc;
-    reqhdr_buf_t rbuf;              /* Request header buffer for I/O */
-    int          fnum;              /* Request header field number */
-    ib_num_t     http_version = 0;  /* HTTP version: 0.9=9, 1.0=10, 1.1=11 */
-    static char  linebuf[MAX_LINE_BUF];
-    const char  *lineptr;
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(fp != NULL);
+    assert(line_fn != NULL);
+    assert(header_fn != NULL);
 
-    /* Initialize our buffer to zero */
-    rbuf.buf = NULL;
+    ib_status_t                 rc;
+    static char                 linebuf[MAX_LINE_BUF+1];
+    int                         lineno = 0;
+    ib_flags_t                  result;
+    const ib_list_node_t       *node;
+    ib_list_t                  *append = NULL;
+    ib_parsed_header_wrapper_t *parsed;
 
-    /* Reset the request header used flags */
-    for (fnum = 0; fnum < settings.request_headers.num_headers; ++fnum) {
-        settings.request_headers.headers[fnum].used = 0;
+    /* Create a copy of the append list */
+    rc = ib_list_create(&append, tx->mp);
+    if (rc != IB_OK) {
+        return rc;
+    }
+    if (append_list != NULL) {
+        IB_LIST_LOOP_CONST(append_list, node) {
+            rc = ib_list_push(append, node->data);
+        }
+    }
+
+    /* Create the parsed header list */
+    rc = ib_parsed_name_value_pair_list_wrapper_create(&parsed, tx);
+    if (rc != IB_OK) {
+        return rc;
     }
 
     /* Read the request header from the file, assembled the header, pass
      * it to IronBee */
     while (fgets(linebuf, sizeof(linebuf), fp) != NULL) {
-        size_t linelen = strlen(linebuf);
+        char           *stripped;
+        bool            replaced = false;
+        ib_list_node_t *cur;
+        ib_list_node_t *next;
 
-        /* GET: Parse out the http version */
-        if (http_version == 0) {
-            int major;
-            int minor;
-            const char *http = strstr(linebuf, "HTTP/");
-            if (  (http != NULL) &&
-                  ( (sscanf(http, "HTTP/%d.%d", &major, &minor) == 2) ||
-                    (sscanf(http, "http/%d.%d", &major, &minor) == 2) )   )
-            {
-                http_version = (major * 10) + minor;
-            }
-            else {
-                http_version = 9;
-            }
+        rc = ib_strtrim_right(IB_STROP_COPY, cli_mp,
+                              linebuf, &stripped, &result);
+        if (rc != IB_OK) {
+            return rc;
         }
 
-        /* By default, lineptr points at the line buffer */
-        lineptr = linebuf;
-
         /* Is this a header that we need to replace? */
-        if ( (*linebuf == '\0') || (isspace(*linebuf) != 0) ) {
+        if ( (*stripped == '\0') || (isspace(*stripped) != 0) ) {
             break;
         }
 
-        /* Walk through the header fields, see if we have a replacement */
-        for (fnum = 0; fnum < settings.request_headers.num_headers; ++fnum) {
-            request_header_t *rhf = &settings.request_headers.headers[fnum];
-
-            /* Already used? */
-            if (rhf->used != 0) {
-                continue;
+        /* Request / response line? */
+        if (lineno++ == 0) {
+            rc = line_fn(ib, tx, stripped);
+            if (rc != IB_OK) {
+                return rc;
             }
+            continue;
+        }
+
+        /* Walk through the header fields, see if we have a replacement */
+        IB_LIST_LOOP_SAFE(append, cur, next) {
+            const header_line_t *line = (const header_line_t *)cur->data;
 
             /* Matching header field? */
-            if (strncmp(linebuf, rhf->name, rhf->name_len) != 0) {
+            if (strncmp(stripped, line->name, line->name_len) != 0) {
                 continue;
             }
 
-            /* Consume the request header field */
-            ++(rhf->used);
-
             /* Point at the request header field buffer */
-            lineptr = rhf->buf;
-            linelen = rhf->buf_len;
+            rc = header_line_append(parsed, line);
+            if (rc != IB_OK) {
+                return rc;
+            }
+
+            /* Prevent this header from being used later */
+            IB_LIST_NODE_REMOVE(append, cur);
+            replaced = true;
         }
 
         /* Add the line to the request header */
-        if (lineptr != NULL) {
-            rc = append_req_hdr_buf(&rbuf, lineptr, linelen);
+        if (! replaced) {
+            header_line_t *line;
+            rc = header_line_parse(stripped, tx->mp, &line);
+            if (rc != IB_OK) {
+                return rc;
+            }
+            rc = header_line_append(parsed, line);
             if (rc != IB_OK) {
                 return rc;
             }
@@ -2080,95 +2339,59 @@ static ib_status_t send_header(ib_engine_t* ib,
     }
 
     /* Walk through the unused header fields, add them to the buffer */
-    for (fnum = 0; fnum < settings.request_headers.num_headers; ++fnum) {
-        request_header_t *rhf = &settings.request_headers.headers[fnum];
-
-        /* Already used? */
-        if (rhf->used != 0) {
-            continue;
-        }
-
-        /* Consume the request header field */
-        ++(rhf->used);
+    IB_LIST_LOOP_CONST(append, node) {
+        const header_line_t *line = (const header_line_t *)node->data;
 
         /* Add it */
-        if (rhf->buf != NULL) {
-            rc = append_req_hdr_buf(&rbuf, rhf->buf, rhf->buf_len);
-            if (rc != IB_OK) {
-                return rc;
-            }
-        }
-    }
-
-    /* No buffer means no header => bad */
-    if (rbuf.buf == NULL) {
-        fprintf(stderr, "WARNING: No request header found in file\n");
-        return IB_EINVAL;
-    }
-
-    /* Add a empty line */
-    if (http_version >= 10) {
-        rc = append_req_hdr_buf(&rbuf, "\r\n", 2);
+        rc = header_line_append(parsed, line);
         if (rc != IB_OK) {
             return rc;
         }
     }
 
-    /* Send it */
-    icdata->dlen   = rbuf.len;
-    icdata->data   = (uint8_t *)rbuf.buf;
-    rc = ib_state_notify_conn_data_in(ib, icdata);
+    /* Hand the header off */
+    rc = header_fn(ib, tx, parsed);
     if (rc != IB_OK) {
-        fprintf(stderr, "Failed to send header: %d\n", rc);
+        return rc;
     }
-
-    /* Free the buffer */
-    free(rbuf.buf);
 
     /* Done */
     return rc;
 }
 
 /**
- * Send a file to IB as either connection input data or connection output data
+ * Send a a file as request / response body
  *
- * Reads from the file pointer into the buffer, calls the appropriate
- * ib_state_notify_conn_data_* function.
+ * Reads from the file pointer into the buffer, calls @a body_fn
  *
  * @param[in] ib IronBee object
- * @param[in] icdata IronBee connection data
+ * @param[in] tx IronBee transaction
  * @param[in] buf Buffer to use for I/O
  * @param[in] bufsize Size of buf
  * @param[in] fp File pointer to read from
- * @param[in] direction Data direction: Input (DATA_IN) or output (DATA_OUT)
+ * @param[in] body_fn Body data function (ib_state_notify_xxx_body_data)
  *
  * @returns status
  */
-static ib_status_t send_file(ib_engine_t* ib,
-                             ib_conndata_t *icdata,
+static ib_status_t send_body(const ib_engine_t *ib,
+                             ib_tx_t *tx,
+                             FILE *fp,
                              void *buf,
                              size_t bufsize,
-                             FILE *fp,
-                             data_direction_t direction)
+                             body_handler_fn_t body_fn)
 {
     size_t      nbytes = 0;     /* # bytes currently in the buffer */
     ib_status_t rc;
-    const char *ioname = (direction == DATA_IN) ? "input" : "output";
 
     /* Read a chunk & send it */
     if ( (nbytes = fread(buf, 1, bufsize, fp)) > 0) {
-        icdata->dlen = nbytes;
-        icdata->data = (uint8_t *)buf;
+        ib_txdata_t txdata;
 
-        if (direction == DATA_IN) {
-            rc = ib_state_notify_conn_data_in(ib, icdata);
-        }
-        else {
-            rc = ib_state_notify_conn_data_out(ib, icdata);
-        }
+        txdata.data = buf;
+        txdata.dlen = nbytes;
+        rc = body_fn((ib_engine_t *)ib, tx, &txdata);
         if (rc != IB_OK) {
-            fprintf(stderr,
-                    "Failed to send %s data to IronBee: %d\n", ioname, rc);
+            fprintf(stderr, "Failed to hand body data to IronBee: %d\n", rc);
             return rc;
         }
     }
@@ -2195,7 +2418,7 @@ static ib_status_t run_transaction(ib_engine_t* ib,
 {
     FILE          *reqfp  = NULL;
     FILE          *rspfp = NULL;
-    ib_conndata_t  conn_data;
+    ib_tx_t       *tx;
     ib_status_t    rc;
 
     /* Open the request and response files that we'll use for this
@@ -2230,28 +2453,57 @@ static ib_status_t run_transaction(ib_engine_t* ib,
         goto end;
     }
 
-    // Fill in the connection data object
-    conn_data.conn = conn;
+    /* Create the transaction */
+    rc = ib_tx_create(&tx, conn, NULL);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Error creating transaction\n");
+        goto end;
+    }
 
     /* Read the request header from the file, assembled the header, pass
      * it to IronBee */
-    rc = send_header(ib, &conn_data, reqfp);
+    rc = send_header(ib, tx, reqfp,
+                     handle_request_line,
+                     handle_request_header,
+                     settings.request_header);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to read/send header data: %d\n", rc);
         goto end;
     }
 
     /* Read and send the rest of the file (if any) */
-    rc = send_file(ib, &conn_data, buf, MAX_BUF, reqfp, DATA_IN);
+    rc = send_body(ib, tx, reqfp, buf, MAX_BUF,
+                   ib_state_notify_request_body_data);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to read/send input data: %d\n", rc);
         goto end;
     }
 
+    /* Finish the request */
+    rc = ib_state_notify_request_finished(ib, tx);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Failed to finish request: %d\n", rc);
+        goto end;
+    }
+
+    /* Read and send the response header */
+    rc = send_header(ib, tx, reqfp,
+                     handle_response_line,
+                     handle_response_header,
+                     NULL);
+
     /* Read and send the rest of the file (if any) */
-    rc = send_file(ib, &conn_data, buf, MAX_BUF, rspfp, DATA_OUT);
+    rc = send_body(ib, tx, rspfp, buf, MAX_BUF,
+                   ib_state_notify_response_body_data);
     if (rc != IB_OK) {
         fprintf(stderr, "Failed to read/send output data: %d\n", rc);
+        goto end;
+    }
+
+    /* Finish the response */
+    rc = ib_state_notify_response_finished(ib, tx);
+    if (rc != IB_OK) {
+        fprintf(stderr, "Failed to finish response: %d\n", rc);
         goto end;
     }
 
@@ -2349,23 +2601,15 @@ end:
 
 
 /**
- * Perform clean up operations.
- *
- * Clean up, free memory, etc.
- *
- * @returns void
+ * atexit() function
  */
-static void clean_up( void )
+static void shutdown(void)
 {
-    int num;
-
     globfree(&settings.req_files);
     globfree(&settings.rsp_files);
 
-    /* Free request header buffers */
-    for (num = 0; num < settings.request_headers.num_headers; ++num) {
-        free((void *)settings.request_headers.headers[num].buf);
-        settings.request_headers.headers[num].buf = NULL;
+    if (cli_mp != NULL) {
+        ib_mpool_destroy(cli_mp);
     }
 }
 
@@ -2386,6 +2630,13 @@ int main(int argc, char* argv[])
     ib_engine_t *ironbee = NULL;
     ib_context_t *ctx;
     ib_cfgparser_t *cp;
+
+    /* Create command line parsing memory pool */
+    rc = ib_mpool_create(&cli_mp, "Command Line", NULL);
+    if (rc != IB_OK) {
+        fatal_error("Error creating memory pool");
+    }
+    atexit(shutdown);
 
     /* Process the command line */
     rc = command_line(argc, argv);
@@ -2483,9 +2734,6 @@ int main(int argc, char* argv[])
     /* Done */
     ib_engine_destroy(ironbee);
     ib_shutdown();
-
-    /* Free up memory, etc. */
-    clean_up( );
 
     return 0;
 }
