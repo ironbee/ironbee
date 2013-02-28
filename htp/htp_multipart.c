@@ -1309,6 +1309,7 @@ STATE_SWITCH:
                     parser->parser_state = STATE_DATA;
                 } else {
                     // Not a line ending; start again, but do not process this byte.
+                    parser->multipart.flags |= HTP_MULTIPART_BBOUNDARY_NLWS_AFTER;
                     parser->parser_state = STATE_BOUNDARY_EAT_LWS;
                 }
                 break;

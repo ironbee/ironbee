@@ -598,6 +598,25 @@ TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter2) {
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BBOUNDARY_NLWS_AFTER);
 }
 
+TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter3) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n"
+        "\r\n"
+        "ABCDEF"
+        "\n--0123456789\r\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    parsePartsThenVerify(parts);
+
+    ASSERT_TRUE(body->flags & HTP_MULTIPART_BBOUNDARY_NLWS_AFTER);
+}
+
 TEST_F(Multipart, WithPreamble) {
     char *parts[] = {
         "Preamble"
@@ -1229,6 +1248,8 @@ TEST_F(Multipart, BoundaryInvalid) {
         "multipart/form-data; boundary=1; boundary=2",
         "multipart/form-data boundary=1 2",
         "multipart/form-data boundary=1-2",
+        "multipart/form-data boundary=\"1?2\"",
+        "multipart/form-data boundary=01234567890123456789012345678901234567890123456789012345678901234567890123456789",
         NULL
     };
 
