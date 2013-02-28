@@ -40,16 +40,19 @@ sudo make install</programlisting>Various
             options are available for customization through the configure script.  A full list of
             these options are available
             with:<programlisting>./configure --help</programlisting></para>
+        <para>See <xref linkend="installation-guide"/> for more detailed instructions on building
+            and installing IronBee.</para>
     </section>
     <section>
         <title>Configuration</title>
         <para>First, the server component must be configured to load the IronBee library and its
             configuration. This is done through the server's native configuration and differs for
-            each server. See the Server Configuration for more specific details in configuring the
-            server component. Once the server component is loaded, IronBee configuration consists of
-            one or more configuration files which IronBee will read.</para>
-        <para>IronBee configuration file examples are listed in the Configuration Examples
-            section.</para>
+            each server. See the <xref linkend="server-configuration"/> for more specific details in
+            configuring the server component. Once the server component is loaded, IronBee
+            configuration consists of one or more configuration files which IronBee will
+            read.</para>
+        <para>IronBee configuration file examples are listed in the <xref
+                linkend="configuration-examples"/> section.</para>
     </section>
     <section>
         <title>Inspection</title>
