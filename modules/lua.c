@@ -1531,37 +1531,6 @@ static ib_status_t modlua_conn(
 }
 
 /**
- * Connection data callback hook.
- */
-static ib_status_t modlua_conndata(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_conndata_t *conndata,
-    void *cbdata)
-{
-    assert(ib);
-    assert(conndata);
-    assert(conndata->conn);
-    assert(cbdata);
-
-    ib_status_t rc;
-
-    rc = modlua_callback_setup(ib, event, NULL, conndata->conn, cbdata);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Custom table setup */
-
-    rc = modlua_callback_dispatch(ib, event, NULL, conndata->conn, cbdata);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    return rc;
-}
-
-/**
  * Transaction callback hook.
  */
 static ib_status_t modlua_tx(
@@ -1946,13 +1915,6 @@ static ib_status_t modlua_module_load_wire_callbacks(
                     break;
                 case IB_STATE_HOOK_CONN:
                     rc = ib_hook_conn_register(ib, event, modlua_conn, cbdata);
-                    break;
-                case IB_STATE_HOOK_CONNDATA:
-                    rc = ib_hook_conndata_register(
-                        ib,
-                        event,
-                        modlua_conndata,
-                        cbdata);
                     break;
                 case IB_STATE_HOOK_TX:
                     rc = ib_hook_tx_register(ib, event, modlua_tx, cbdata);

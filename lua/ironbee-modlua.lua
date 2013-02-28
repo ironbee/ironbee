@@ -92,10 +92,6 @@ local stateToInt = {
         tonumber(ffi.C.handle_logging_event),
     ["conn_opened_event"] =
         tonumber(ffi.C.conn_opened_event),
-    ["conn_data_in_event"] =
-        tonumber(ffi.C.conn_data_in_event),
-    ["conn_data_out_event"] =
-        tonumber(ffi.C.conn_data_out_event),
     ["conn_closed_event"] =
         tonumber(ffi.C.conn_closed_event),
     ["request_started_event"] =
@@ -375,8 +371,6 @@ end
 --            - handle_postprocess_event
 --            - handle_logging_event
 --            - conn_opened_event
---            - conn_data_in_event
---            - conn_data_out_event
 --            - conn_closed_event
 --            - request_started_event
 --            - request_header_data_event
