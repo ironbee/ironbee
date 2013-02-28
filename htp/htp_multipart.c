@@ -1450,12 +1450,10 @@ htp_status_t htp_mpartp_find_boundary(bstr *content_type, bstr **boundary, uint6
     size_t pos = 0;
     while ((pos < len) && (data[pos] != '=')) {
         if (htp_is_space(data[pos])) {
-            // It is unusual to see whitespace before
-            // the equals sign.
+            // It is unusual to see whitespace before the equals sign.
             *flags |= HTP_MULTIPART_HBOUNDARY_UNUSUAL;
         } else {
-            // But seeing a non-whitespace character
-            // may indicate evasion.
+            // But seeing a non-whitespace character may indicate evasion.
             *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
         }
 
