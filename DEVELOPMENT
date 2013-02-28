@@ -60,9 +60,26 @@ need to add the remote:
 
     git remote add luajit-2.0 http://luajit.org/git/luajit-2.0.git
 
-Then you can merge in the source with:
+Then you can merge in the upstream source with:
 
     git subtree pull --squash --prefix=libs/luajit-2.0-ironbee luajit-2.0
+
+
+LibInjection Code
+=================
+
+The libinjection code is currently distributed with IronBee as it is not widely
+available.  The source is in libs/libinjection and is included using git-subtree
+with full history to allow the tree to later be removed.
+
+To update the libinjection source, you will need a git with subtree support.  You
+will need to add the remote:
+
+    git remote add libinjection git://github.com/client9/libinjection.git
+
+Then you can merge in the upstream source with:
+
+    git subtree pull --squash --prefix=libs/libinjection libinjection
 
 
 Coding Style
