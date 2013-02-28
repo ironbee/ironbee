@@ -43,13 +43,12 @@ using namespace std;
  *
  * For Lua Rule testing see @c test_module_rules_lua.cc.
  */
-class IronBeeLuaApi : public BaseFixture {
+class IronBeeLuaApi : public BaseTransactionFixture
+{
 public:
 
     lua_State* L;
 
-    ib_conn_t *ib_conn;
-    ib_tx_t *ib_tx;
     ib_module_t *mod_htp;
     ib_rule_exec_t ib_rule_exec;
     ib_rule_t *ib_rule;
@@ -63,7 +62,8 @@ public:
      */
     virtual void SetUp()
     {
-        BaseFixture::SetUp();
+        BaseTransactionFixture::SetUp();
+        configureIronBee();
 
         ASSERT_IB_OK(ib_rule_create(ib_engine,
                                     ib_engine->ectx,
@@ -74,16 +74,8 @@ public:
         ib_rule->meta.id = "const_rule_id";
         ib_rule->meta.full_id = "full_const_rule_id";
 
-        /* We need the ibmod_htp to initialize the ib_tx. */
-        configureIronBeeByString(ib_conf);
-        ib_conn = buildIronBeeConnection();
-
-        sendDataIn("GET / HTTP/1.1\r\nHost: UnitTest\r\n\r\n");
-        sendDataOut("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
-
-        /* Lib htp.c does this, so we do this here. */
-        assert(ib_conn->tx != NULL);
-        ib_tx = ib_conn->tx;
+        // Now, run the transaction
+        performTx( );
 
         memset(&ib_rule_exec, 0, sizeof(ib_rule_exec));
         ib_rule_exec.ib = ib_engine;
@@ -114,12 +106,18 @@ public:
         eval("ib = ibapi.ruleapi:new(ib_rule_exec, ib_engine, ib_tx)");
     }
 
-    void sendDataIn(const string& req) {
-        BaseFixture::sendDataIn(ib_conn, req);
+    // Overload the configuration and header generation methods
+    void configureIronBee(void)
+    {
+        configureIronBeeByString(ib_conf);
     }
-
-    void sendDataOut(const string& req) {
-        BaseFixture::sendDataOut(ib_conn, req);
+    void generateRequestHeader( )
+    {
+        addRequestHeader("Host", "UnitTest");
+    }
+    void generateResponseHeader( )
+    {
+        addResponseHeader("Content-Type", "text/html");
     }
 
     void require(const string& name, const string& module)

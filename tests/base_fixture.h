@@ -43,9 +43,11 @@
 #define ASSERT_IB_OK(x) ASSERT_EQ(IB_OK, (x))
 static const size_t EXCEPTION_BUF_SIZE = 128;
 
-class BaseFixture : public ::testing::Test {
+class BaseFixture : public ::testing::Test
+{
 public:
-    virtual void SetUp() {
+    virtual void SetUp()
+    {
         ib_status_t rc;
         char buf[EXCEPTION_BUF_SIZE+1];
 
@@ -89,7 +91,8 @@ public:
     }
 
     /**
-     * Reset the rule base path configuration in this IronBee engine to a default for testing.
+     * Reset the rule base path configuration in this IronBee engine to a
+     * default for testing.
      */
     void resetRuleBasePath()
     {
@@ -110,7 +113,8 @@ public:
     }
 
     /**
-     * Reset the module base path configuration in this IronBee engine to a default for testing.
+     * Reset the module base path configuration in this IronBee engine to a
+     * default for testing.
      */
     void resetModuleBasePath()
     {
@@ -161,7 +165,8 @@ public:
     /**
      * Create a temporary configuration file and have IronBee read it in.
      */
-    void configureIronBeeByString(const std::string& configurationText) {
+    void configureIronBeeByString(const std::string& configurationText)
+    {
         static const std::string fileNameTemplate = "ironbee_gtest.conf_XXXXXX";
         std::vector<char> configFile;
         int fileFd;
@@ -201,8 +206,8 @@ public:
      * Realize, though, that nothing prevents the tester from using the
      * LoadModule directive in their configuration.
      */
-    void configureIronBee(const std::string& configFile) {
-
+    void configureIronBee(const std::string& configFile)
+    {
         ib_status_t rc;
         ib_cfgparser_t *cp;
 
@@ -274,74 +279,324 @@ public:
         else
         {
             std::cout << "Could not open config "
-                      << configFile
+                      << "\"" << configFile << "\""
                       << ". Using default BasicIronBee.config."
                       << std::endl;
             configureIronBeeByString(getBasicIronBeeConfig());
         }
     }
 
-    void sendDataIn(ib_conn_t *ib_conn, const std::string& req)
-    {
-        ib_conndata_t *ib_conndata;
-        ib_status_t rc;
-
-        rc = ib_conn_data_create(ib_conn, &ib_conndata, req.size());
-        if (rc != IB_OK) {
-            throw std::runtime_error(
-                std::string("ib_conn_data_create failed"));
-        }
-        ib_conndata->dlen = req.size();
-        memcpy(ib_conndata->data, req.data(), req.size());
-        rc = ib_state_notify_conn_data_in(ib_engine, ib_conndata);
-        if (rc != IB_OK) {
-            throw std::runtime_error(
-                std::string("ib_notify_conn_data_in failed"));
-        }
-    }
-
-    void sendDataOut(ib_conn_t *ib_conn, const std::string& req)
-    {
-        ib_conndata_t *ib_conndata;
-        ib_status_t rc;
-
-        rc = ib_conn_data_create(ib_conn, &ib_conndata, req.size());
-        if (rc != IB_OK) {
-            throw std::runtime_error(
-                std::string("ib_conn_data_create failed"));
-        }
-        ib_conndata->dlen = req.size();
-        memcpy(ib_conndata->data, req.data(), req.size());
-        rc = ib_state_notify_conn_data_out(ib_engine, ib_conndata);
-        if (rc != IB_OK) {
-            throw std::runtime_error(
-                std::string("ib_notify_conn_data_in failed"));
-        }
-    }
-
-
     /**
-     * Build an IronBee connection and call ib_state_notify_conn_opened on it.
+     * Build an IronBee connection and call ib_state_notify_conn_opened() on it.
      *
-     * You should call ib_state_notify_conn_closed(ib_engine, ib_conn)
-     * when done.
+     * You should call ib_state_notify_conn_closed() when done.
      *
      * The connection will be initialized with a local address of
      * 1.0.0.1:80 and a remote address of 1.0.0.2:65534.
      *
      * @returns The Initialized IronbeeConnection.
      */
-    ib_conn_t* buildIronBeeConnection()
+    ib_conn_t *buildIronBeeConnection()
     {
-        ib_conn_t* ib_conn;
-        ib_conn_create(ib_engine, &ib_conn, NULL);
+        ib_status_t rc;
+        ib_conn_t *ib_conn;
+
+        rc = ib_conn_create(ib_engine, &ib_conn, NULL);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to create IronBee connection.");
+        }
         ib_conn->local_ipstr = "1.0.0.1";
         ib_conn->remote_ipstr = "1.0.0.2";
         ib_conn->remote_port = 65534;
         ib_conn->local_port = 80;
-        ib_state_notify_conn_opened(ib_engine, ib_conn);
+        rc = ib_state_notify_conn_opened(ib_engine, ib_conn);
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to open IronBee connection.");
+        }
 
         return ib_conn;
+    }
+
+    /**
+     * Build an IronBee transaction for a connection
+     *
+     * @param[in] conn IronBee connection
+     *
+     * @returns The initialized Ironbee transaction.
+     */
+    ib_tx_t *buildIronBeeTransaction(ib_conn_t *conn)
+    {
+        ib_status_t rc;
+        ib_tx_t *tx;
+
+        rc = ib_tx_create( &tx, conn, NULL );
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to create IronBee transaction.");
+        }
+        return tx;
+    }
+
+    /**
+     * Throw generic notify error
+     *
+     * @param[in] msg Notify error message
+     */
+    void notifyError(const char *msg)
+    {
+        std::string err;
+        err += "failed to notify ";
+        err += msg;
+        throw std::runtime_error(err);
+    }
+
+    /**
+     * Add a name/value to request/response header
+     *
+     * @param[in] parsed Parsed name/value pair list
+     * @param[in] name Header name
+     * @param[in] value Header value
+     */
+    void addHeader(ib_parsed_header_wrapper_t *parsed,
+                   const char *name,
+                   const char *value)
+    {
+        ib_status_t            rc;
+
+        rc = ib_parsed_name_value_pair_list_add(parsed,
+                                                name,
+                                                strlen(name),
+                                                value,
+                                                strlen(value));
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to add name/value to header.");
+        }
+    }
+
+    /**
+     * Send a request line
+     *
+     * @param[in] tx IronBee transaction
+     * @param[in] method Method portion of request line
+     * @param[in] uri URI portion of request line
+     * @param[in] proto Protocol portion of request line
+     */
+    void sendRequestLine(ib_tx_t *tx,
+                         const char *method,
+                         const char *uri,
+                         const char *proto)
+    {
+        ib_status_t            rc;
+        std::string            line;
+        ib_parsed_req_line_t  *parsed;
+
+        line += method;
+        line += " ";
+        line += uri;
+        line += " ";
+        line += proto;
+        line += "\r\n";
+
+        rc = ib_parsed_req_line_create(tx, &parsed,
+                                       line.data(), line.length(),
+                                       method, strlen(method),
+                                       uri, strlen(uri),
+                                       proto, strlen(proto));
+        if (rc != IB_OK) {
+            throw std::runtime_error("Failed to create parsed request line");
+        }
+
+        rc = ib_state_notify_request_started(ib_engine, tx, parsed);
+        if (rc != IB_OK) {
+            notifyError("request start");
+        }
+    }
+
+    /**
+     * Start request header for an IronBee transaction
+     *
+     * @param[in] tx IronBee transaction
+     * @param[out] pparsed Pointer to new parsed name / value pair
+     *
+     * @returns Status code
+     */
+    void startRequestHeader(ib_tx_t *tx,
+                            ib_parsed_header_wrapper_t **pparsed)
+    {
+        ib_status_t rc;
+        rc = ib_parsed_name_value_pair_list_wrapper_create(pparsed, tx);
+        if (rc != IB_OK) {
+            notifyError("request header");
+        }
+    }
+
+    /**
+     * Send a request header
+     *
+     * @param[in] tx IronBee transaction
+     * @param[in] parsed Parsed header
+     */
+    void sendRequestHeader(ib_tx_t *tx,
+                           ib_parsed_header_wrapper_t *parsed)
+    {
+        ib_status_t rc;
+
+        rc = ib_state_notify_request_header_data(ib_engine, tx, parsed);
+        
+        if (rc != IB_OK) {
+            notifyError("request header data.");
+        }
+
+        rc = ib_state_notify_request_header_finished(ib_engine, tx);
+        if (rc != IB_OK) {
+            notifyError("request header finished");
+        }
+    }
+
+    /**
+     * Send a request body block
+     *
+     * @param[in] tx IronBee transaction
+     * @param[in] data Data to send
+     * @param[in] dlen Data length
+     */
+    void sendReponseBodyBlock(ib_tx_t *tx,
+                              void *data,
+                              size_t dlen)
+    {
+        ib_status_t rc;
+        ib_txdata_t txdata;
+
+        txdata.data = (uint8_t *)data;
+        txdata.dlen = dlen;
+        rc = ib_state_notify_request_body_data(ib_engine, tx, &txdata);
+        if (rc != IB_OK) {
+            notifyError("request body data");
+        }
+    }
+
+    /**
+     * Finish request
+     *
+     * @param[in] tx IronBee transaction
+     */
+    void finishRequest(ib_tx_t *tx)
+    {
+        ib_status_t rc;
+
+        rc = ib_state_notify_request_finished(ib_engine, tx);
+        if (rc != IB_OK) {
+            notifyError("request finished");
+        }
+    }
+
+    /**
+     * Send a response line
+     *
+     * @param[in] tx IronBee transaction
+     * @param[in] proto Protocol portion of request line
+     * @param[in] status Status code (as a string)
+     * @param[in] message Status message
+     */
+    void sendResponseLine(ib_tx_t *tx,
+                          const char *proto,
+                          const char *status,
+                          const char *message)
+    {
+        ib_status_t            rc;
+        std::string            line;
+        ib_parsed_resp_line_t *parsed;
+
+        line += proto;
+        line += " ";
+        line += status;
+        if ( (message != NULL) && (*message != '\0') ) {
+            line += " ";
+            line += message;
+        }
+        line += "\r\n";
+
+        rc = ib_parsed_resp_line_create(tx, &parsed,
+                                        line.data(), line.length(),
+                                        proto, strlen(proto),
+                                        status, strlen(status),
+                                        message, strlen(message));
+        if (rc != IB_OK) {
+            notifyError("response header");
+        }
+
+        rc = ib_state_notify_response_started(ib_engine, tx, parsed);
+        if (rc != IB_OK) {
+            notifyError("response started");
+        }
+    }
+
+    /**
+     * Start response header for an IronBee transaction
+     *
+     * @param[in] tx IronBee transaction
+     * @param[out] pparsed Pointer to new parsed name / value pair
+     */
+    void startResponseHeader(ib_tx_t *tx,
+                             ib_parsed_header_wrapper_t **pparsed)
+    {
+        ib_status_t rc;
+        rc = ib_parsed_name_value_pair_list_wrapper_create(pparsed, tx);
+        if (rc != IB_OK) {
+            notifyError("response header");
+        }
+    }
+
+    /**
+     * Send a response header
+     *
+     * @param[in] tx IronBee transaction
+     * @param[in] parsed Parsed header
+     */
+    void sendResponseHeader(ib_tx_t *tx,
+                            ib_parsed_header_wrapper_t *parsed)
+    {
+        ib_status_t rc;
+        rc = ib_state_notify_response_header_data(ib_engine, tx, parsed);
+        if (rc != IB_OK) {
+            notifyError("response header data");
+        }
+
+        rc = ib_state_notify_response_header_finished(ib_engine, tx);
+        if (rc != IB_OK) {
+            notifyError("response header finished");
+        }
+    }
+
+    /**
+     * Finish response
+     *
+     * @param[in] tx IronBee transaction
+     */
+    void finishResponse(ib_tx_t *tx)
+    {
+        ib_status_t rc;
+
+        rc = ib_state_notify_response_finished(ib_engine, tx);
+        if (rc != IB_OK) {
+            notifyError("response finished.");
+        }
+    }
+
+    /**
+     * Perform post-processing
+     *
+     * @param[in] tx IronBee transaction
+     */
+    void postProcess(ib_tx_t *tx)
+    {
+        ib_status_t rc;
+
+        if (! ib_tx_flags_isset(tx, IB_TX_FPOSTPROCESS)) {
+            rc = ib_state_notify_postprocess(ib_engine, tx);
+            if (rc != IB_OK) {
+                notifyError("post process.");
+            }
+        }
     }
 
     void loadModule(ib_module_t **ib_module,
@@ -367,7 +622,8 @@ public:
         }
     }
 
-    virtual void TearDown() {
+    virtual void TearDown()
+    {
         ib_engine_destroy(ib_engine);
         ib_shutdown();
     }
@@ -376,6 +632,123 @@ public:
 
     ib_engine_t *ib_engine;
     ib_server_t ibt_ibserver;
+};
+
+/**
+ * Testing fixture which runs a simple transaction
+ *
+ * Users of this class can extend it if required.
+ */
+class BaseTransactionFixture : public BaseFixture
+{
+public:
+    virtual ~BaseTransactionFixture(){}
+
+    virtual void SetUp(void)
+    {
+        BaseFixture::SetUp();
+    }
+    virtual void configureIronBee(void)
+    {
+        BaseFixture::configureIronBee();
+    }
+    void configureIronBee(const char *filename)
+    {
+        BaseFixture::configureIronBee(filename);
+    }
+    void performTx(void)
+    {
+        ib_conn = buildIronBeeConnection();
+        ib_tx = buildIronBeeTransaction(ib_conn);
+
+        sendRequest();
+        sendResponse();
+        postProcess(ib_tx);
+    }
+
+    /* Request related function */
+    void sendRequest(void)
+    {
+        sendRequestLine();
+        BaseFixture::startRequestHeader(ib_tx, &ib_reqhdr);
+        generateRequestHeader();
+        BaseFixture::sendRequestHeader(ib_tx, ib_reqhdr);
+        sendRequestBody();
+        BaseFixture::finishRequest(ib_tx);
+    }
+    void sendRequestLine(const char *method,
+                         const char *uri,
+                         const char *proto)
+    {
+        BaseFixture::sendRequestLine(ib_tx, method, uri, proto);
+    }
+    void addRequestHeader(const char *name,
+                          const char *value)
+    {
+        BaseFixture::addHeader(ib_reqhdr, name, value);
+    }
+
+    /* Response releated functions */
+    void sendResponse(void)
+    {
+        sendResponseLine();
+        BaseFixture::startResponseHeader(ib_tx, &ib_rsphdr);
+        generateResponseHeader();
+        BaseFixture::sendResponseHeader(ib_tx, ib_rsphdr);
+        sendResponseBody();
+        BaseFixture::finishResponse(ib_tx);
+    }
+    void sendResponseLine(const char *proto,
+                          const char *status,
+                          const char *message)
+    {
+        BaseFixture::sendResponseLine(ib_tx, proto, status, message);
+    }
+    void addResponseHeader(const char *name,
+                           const char *value)
+    {
+        BaseFixture::addHeader(ib_rsphdr, name, value);
+    }
+
+    /* Request functions to overload */
+    virtual void sendRequestLine()
+    {
+        sendRequestLine("GET", "/", "HTTP/1.1");
+    }
+
+    virtual void generateRequestHeader()
+    {
+        addRequestHeader("Host", "UnitTest");
+        addRequestHeader("X-MyHeader", "header1");
+        addRequestHeader("X-MyHeader", "header2");
+    }
+
+    virtual void sendRequestBody()
+    {
+    };
+
+    /* Request functions to overload */
+    virtual void sendResponseLine()
+    {
+        sendResponseLine("HTTP/1.1", "200", "OK");
+    }
+
+    virtual void generateResponseHeader()
+    {
+        addResponseHeader("Content-Type", "text/html");
+        addResponseHeader("X-MyHeader", "header3");
+        addResponseHeader("X-MyHeader", "header4");
+    }
+
+    virtual void sendResponseBody()
+    {
+    };
+
+protected:
+    ib_conn_t                  *ib_conn;
+    ib_tx_t                    *ib_tx;
+    ib_parsed_header_wrapper_t *ib_reqhdr;
+    ib_parsed_header_wrapper_t *ib_rsphdr;
 };
 
 /**
@@ -395,7 +768,8 @@ public:
  * }
  * @endcode
  */
-class BaseModuleFixture : public BaseFixture {
+class BaseModuleFixture : public BaseTransactionFixture
+{
 protected:
     //! The file name of the module.
     std::string m_module_file;
@@ -412,12 +786,13 @@ public:
 
     virtual void SetUp()
     {
-        BaseFixture::SetUp();
-
+        BaseTransactionFixture::SetUp();
+        configureIronBee();
         loadModule(&ib_module, m_module_file);
     }
 
-    virtual void TearDown() {
+    virtual void TearDown()
+    {
         ib_status_t rc;
         rc = ib_module_unload(ib_module);
 
@@ -429,7 +804,7 @@ public:
                      <<std::endl;
         }
 
-        BaseFixture::TearDown();
+        BaseTransactionFixture::TearDown();
     }
 
     virtual ~BaseModuleFixture(){}

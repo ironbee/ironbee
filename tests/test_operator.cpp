@@ -88,7 +88,12 @@ ib_status_t test_execute_fn(const ib_rule_exec_t *rule_exec,
     return IB_OK;
 }
 
-class OperatorTest : public BaseFixture {
+class OperatorTest : public BaseFixture
+{
+    void SetUp()
+    {
+        BaseFixture::SetUp();
+    }
 };
 
 TEST_F(OperatorTest, OperatorCallTest)
@@ -160,31 +165,13 @@ TEST_F(OperatorTest, OperatorCallTest)
 }
 
 
-class CoreOperatorsTest : public BaseFixture {
-    protected:
-    ib_conn_t *ib_conn;
-    ib_tx_t *ib_tx;
-
-    virtual void SetUp()
+class CoreOperatorsTest : public BaseTransactionFixture
+{
+    void SetUp()
     {
         BaseFixture::SetUp();
         configureIronBee();
-        ib_conn = buildIronBeeConnection();
-        // Create the transaction.
-        sendDataIn(ib_conn,
-                   "GET / HTTP/1.1\r\n"
-                   "Host: UnitTest\r\n"
-                   "X-MyHeader: header1\r\n"
-                   "X-MyHeader: header2\r\n"
-                   "\r\n");
-
-        sendDataOut(ib_conn,
-                    "HTTP/1.1 200 OK\r\n"
-                    "Content-Type: text/html\r\n"
-                    "X-MyHeader: header3\r\n"
-                    "X-MyHeader: header4\r\n"
-                    "\r\n");
-        ib_tx = ib_conn->tx;
+        performTx();
     }
 };
 

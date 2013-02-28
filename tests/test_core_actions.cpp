@@ -31,42 +31,21 @@
 
 #include "base_fixture.h"
 
-class CoreActionTest : public BaseFixture {
-    public:
-    ib_conn_t *ib_conn;
-    virtual void SetUp()
+class CoreActionTest : public BaseTransactionFixture
+{
+    void SetUp()
     {
-        BaseFixture::SetUp();
+        BaseTransactionFixture::SetUp();
         configureIronBee();
-
-        ib_conn = buildIronBeeConnection();
-
-        // Create the transaction.
-        sendDataIn(ib_conn,
-                   "GET / HTTP/1.1\r\n"
-                   "Host: UnitTest\r\n"
-                   "X-MyHeader: header1\r\n"
-                   "X-MyHeader: header2\r\n"
-                   "\r\n");
-
-        sendDataOut(ib_conn,
-                    "HTTP/1.1 200 OK\r\n"
-                    "Content-Type: text/html\r\n"
-                    "X-MyHeader: header3\r\n"
-                    "X-MyHeader: header4\r\n"
-                    "\r\n");
-
-        assert(ib_conn->tx!=NULL);
+        performTx( );
     }
-
-    virtual ~CoreActionTest(){}
 };
 
 TEST_F(CoreActionTest, setVarAdd) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->data, "a", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "a", &f));
 
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
 
@@ -79,7 +58,7 @@ TEST_F(CoreActionTest, setVarSub) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->data, "b", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "b", &f));
 
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
 
@@ -92,7 +71,7 @@ TEST_F(CoreActionTest, setVarMult) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->data, "c", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "c", &f));
 
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
 
@@ -108,22 +87,22 @@ TEST_F(CoreActionTest, integration) {
     ib_field_t *f;
     ib_num_t n;
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->data, "r1", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r1", &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->data, "r2", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r2", &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->data, "r3", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r3", &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);
 
-    ASSERT_EQ(IB_OK, ib_data_get(ib_conn->tx->data, "r4", &f));
+    ASSERT_EQ(IB_OK, ib_data_get(ib_tx->data, "r4", &f));
     ASSERT_EQ(IB_FTYPE_NUM, f->type);
     ib_field_value(f, ib_ftype_num_out(&n));
     ASSERT_EQ(1, n);

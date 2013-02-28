@@ -17,8 +17,6 @@ local eventsTable = {
     "handle_disconnect_event",
     "handle_postprocess_event",
     "conn_opened_event",
-    "conn_data_in_event",
-    "conn_data_out_event",
     "conn_closed_event",
     "request_started_event",
     "request_header_data_event",

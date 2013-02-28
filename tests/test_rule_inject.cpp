@@ -68,7 +68,7 @@
 /**
  * Test rules.
  */
-class RuleInjectTest : public BaseFixture
+class RuleInjectTest : public BaseTransactionFixture
 {
 public:
     ib_list_t *m_injections;
@@ -76,13 +76,13 @@ public:
 
 public:
 
-    RuleInjectTest() : BaseFixture()
+    RuleInjectTest() : BaseTransactionFixture()
     {
     }
 
     virtual void SetUp()
     {
-        BaseFixture::SetUp();
+        BaseTransactionFixture::SetUp();
 
         ASSERT_IB_OK(ib_list_create(&m_injections, ib_engine->mp));
         ASSERT_IB_OK(ib_list_create(&m_actions, ib_engine->mp));
@@ -167,7 +167,6 @@ static ib_status_t injection_fn(
 TEST_F(RuleInjectTest, test_inject)
 {
     ib_status_t rc;
-    ib_conn_t *conn;
     const ib_list_node_t *node;
     const ib_rule_t *rule;
 
@@ -186,14 +185,16 @@ TEST_F(RuleInjectTest, test_inject)
                             store_fn, this);
     ASSERT_EQ(IB_OK, rc);
 
+    // Register the ownership function
     rc = ib_rule_register_ownership_fn(ib_engine, name, ownership_fn, this);
     ASSERT_EQ(IB_OK, rc);
 
+    // Register the injection function
     rc = ib_rule_register_injection_fn(ib_engine, name, PHASE_REQUEST_HEADER,
                                        injection_fn, this);
     ASSERT_EQ(IB_OK, rc);
 
-    // Configure the engine.
+    // Setup IronBee after the ownership function is registered
     configureIronBee();
 
     // Verify that the correct rules were added to the injection list
@@ -211,23 +212,8 @@ TEST_F(RuleInjectTest, test_inject)
     rule = (const ib_rule_t *)node->data;
     ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-4"));
 
-    // Now, create the connection, run through the rule engine. */
-    conn = buildIronBeeConnection();
-
-    // Create the transaction.
-    sendDataIn(conn,
-               "GET / HTTP/1.1\r\n"
-               "Host: UnitTest\r\n"
-               "X-MyHeader: header1\r\n"
-               "X-MyHeader: header2\r\n"
-               "\r\n");
-
-    sendDataOut(conn,
-                "HTTP/1.1 200 OK\r\n"
-                "Content-Type: text/html\r\n"
-                "X-MyHeader: header3\r\n"
-                "X-MyHeader: header4\r\n"
-                "\r\n");
+    // Now, run the transaction
+    performTx();
 
     // Verify that the correct number of rules were executed
     ASSERT_EQ(4U, ib_list_elements(m_actions));
