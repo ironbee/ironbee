@@ -892,7 +892,7 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
         char *debug_str = ib_util_hex_escape(subject, subject_len);
 
         if (debug_str != NULL) {
-            ib_rule_log_trace(rule_exec, "Matching against: %s", debug_str);
+            ib_rule_log_trace(rule_exec, "Matching against: \"%s\"", debug_str);
             free(debug_str);
         }
     }
@@ -1336,7 +1336,7 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
         char *debug_str = ib_util_hex_escape(subject, subject_len);
 
         if (debug_str != NULL) {
-            ib_log_debug3_tx(tx, "Matching against: %s", debug_str);
+            ib_log_debug3_tx(tx, "Matching against: \"%s\"", debug_str);
             free(debug_str);
         }
     }
