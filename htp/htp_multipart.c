@@ -62,7 +62,7 @@ static int htp_mpartp_cd_param_type(unsigned char *data, size_t startpos, size_t
 }
 
 htp_multipart_t *htp_mpartp_get_multipart(htp_mpartp_t *parser) {
-    return &parser->multipart;
+    return &(parser->multipart);
 }
 
 /**
@@ -114,12 +114,12 @@ htp_status_t htp_mpart_part_parse_c_d(htp_multipart_part_t *part) {
         return HTP_DECLINED;
     }
 
-    // The parsing starts here
+    // The parsing starts here.
     unsigned char *data = bstr_ptr(h->value);
     size_t len = bstr_len(h->value);
     size_t pos = 9; // Start after "form-data"
 
-    // Main parameter parsing loop (once per parameter)
+    // Main parameter parsing loop (once per parameter).
     while (pos < len) {              
         // Ignore whitespace.
         while ((pos < len) && isspace(data[pos])) pos++;
@@ -377,15 +377,6 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
     // Assume the value is at the end.
     value_end = len;
 
-    #if 0
-    // But remove any trailing LWS.
-    prev = value_end - 1;
-    while ((prev > value_start) && (htp_is_lws(data[prev]))) {
-        prev--;
-        value_end--;
-    }
-    #endif
-
     // Check that the header name is a token.
     size_t i = name_start;
     while (i < name_end) {
@@ -442,9 +433,10 @@ htp_status_t htp_mpartp_parse_header(htp_multipart_part_t *part, const unsigned 
 }
 
 /**
- * Creates a new multipart part.
+ * Creates a new Multipart part.
  *
  * @param[in] parser
+ * @return New part instance, or NULL on memory allocation failure.
  */
 htp_multipart_part_t *htp_mpart_part_create(htp_mpartp_t *parser) {
     htp_multipart_part_t * part = calloc(1, sizeof (htp_multipart_part_t));
@@ -464,7 +456,7 @@ htp_multipart_part_t *htp_mpart_part_create(htp_mpartp_t *parser) {
 }
 
 /**
- * Destroys multipart part.
+ * Destroys a part.
  *
  * @param[in] part
  * @param[in] gave_up_data
@@ -733,6 +725,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                 // Make a copy of the data in RAM.
                 bstr_builder_append_mem(part->parser->part_data_pieces, data, len);
                 break;
+
             case MULTIPART_PART_FILE:
                 // Invoke file data callbacks.
                 htp_mpartp_run_request_file_data_hook(part, data, len);
@@ -744,6 +737,7 @@ htp_status_t htp_mpart_part_handle_data(htp_multipart_part_t *part, const unsign
                     }
                 }
                 break;
+                
             default:
                 // Internal error.
                 return HTP_ERROR;
@@ -919,7 +913,7 @@ void htp_mpartp_destroy(htp_mpartp_t *parser) {
 
     // Free the parts.
     if (parser->multipart.parts != NULL) {
-        for (int i = 0, n = htp_list_size(parser->multipart.parts); i < n; i++) {
+        for (size_t i = 0, n = htp_list_size(parser->multipart.parts); i < n; i++) {
             htp_multipart_part_t * part = htp_list_get(parser->multipart.parts, i);
             htp_mpart_part_destroy(part, parser->gave_up_data);
         }
@@ -973,7 +967,7 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *parser, int matched) {
         // or in the first stored chunk.
         if (bstr_builder_size(parser->boundary_pieces) > 0) {
             int first = 1;
-            for (int i = 0, n = htp_list_size(parser->boundary_pieces->pieces); i < n; i++) {
+            for (size_t i = 0, n = htp_list_size(parser->boundary_pieces->pieces); i < n; i++) {
                 bstr *b = htp_list_get(parser->boundary_pieces->pieces, i);
 
                 if (first) {
@@ -1023,13 +1017,13 @@ static htp_status_t htp_martp_process_aside(htp_mpartp_t *parser, int matched) {
 
         // In data mode, we process the lone CR byte as data.
         if (parser->cr_aside) {
-            parser->handle_data(parser, (unsigned char *) &"\r", 1, /* not a line */ 0);
+            parser->handle_data(parser, (const unsigned char *)&"\r", 1, /* not a line */ 0);
             parser->cr_aside = 0;
         }
 
         // We then process any pieces that we might have stored, also as data.
         if (bstr_builder_size(parser->boundary_pieces) > 0) {
-            for (int i = 0, n = htp_list_size(parser->boundary_pieces->pieces); i < n; i++) {
+            for (size_t i = 0, n = htp_list_size(parser->boundary_pieces->pieces); i < n; i++) {
                 bstr *b = htp_list_get(parser->boundary_pieces->pieces, i);
                 parser->handle_data(parser, bstr_ptr(b), bstr_len(b), /* not a line */ 0);
             }
@@ -1376,14 +1370,13 @@ static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) {
                 case '+':
                 case '_':
                 case ',':
-                    // case '-':
                 case '.':
                 case '/':
                 case ':':
                 case '=':
                 case '?':
                     // These characters are allowed by the RFC, but not common.
-                    *flags |= HTP_MULTIPART_HBOUNDARY_UNUSUAL;
+                    *flags |= HTP_MULTIPART_HBOUNDARY_UNUSUAL;                    
                 default:
                     // Invalid character.
                     *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;
