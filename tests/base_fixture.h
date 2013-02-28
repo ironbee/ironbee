@@ -441,7 +441,7 @@ public:
         ib_status_t rc;
 
         rc = ib_state_notify_request_header_data(ib_engine, tx, parsed);
-        
+
         if (rc != IB_OK) {
             notifyError("request header data.");
         }

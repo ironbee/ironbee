@@ -65,7 +65,7 @@
  */
 #define MAX_PHASE_DATA_TYPES 4
 
-static const char *default_block_document = 
+static const char *default_block_document =
     "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\n"
     "<html><head>\n"
     "<title>Access Denied</title>\n"
