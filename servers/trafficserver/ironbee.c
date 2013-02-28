@@ -163,9 +163,6 @@ typedef struct {
     char *err_body;    /* this one can't be const */
 } ib_txn_ctx;
 
-/* mod_ironbee uses ib_state_notify_conn_data_[in|out]
- * for both headers and data
- */
 typedef struct {
     ib_server_direction_t dir;
 
