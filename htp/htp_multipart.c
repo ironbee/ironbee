@@ -1376,7 +1376,9 @@ static void htp_mpartp_validate_boundary(bstr *boundary, uint64_t *flags) {
                 case '=':
                 case '?':
                     // These characters are allowed by the RFC, but not common.
-                    *flags |= HTP_MULTIPART_HBOUNDARY_UNUSUAL;                    
+                    *flags |= HTP_MULTIPART_HBOUNDARY_UNUSUAL;
+                    break;
+                    
                 default:
                     // Invalid character.
                     *flags |= HTP_MULTIPART_HBOUNDARY_INVALID;

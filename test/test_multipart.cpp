@@ -1390,9 +1390,7 @@ TEST_F(Multipart, BoundaryInvalid) {
         "multipart/form-data; boundary=\"\"",
         "multipart/form-data; bounDary=1",
         "multipart/form-data; boundary=1; boundary=2",
-        "multipart/form-data boundary=1 2",
-        "multipart/form-data boundary=1-2",
-        "multipart/form-data boundary=\"1?2\"",
+        "multipart/form-data; boundary=1 2",
         "multipart/form-data boundary=01234567890123456789012345678901234567890123456789012345678901234567890123456789",
         NULL
     };
@@ -1421,6 +1419,8 @@ TEST_F(Multipart, BoundaryUnusual) {
         "multipart/form-data; boundary= 1",
         "multipart/form-data; boundary=\"1\"",
         "multipart/form-data; boundary=\" 1 \"",
+        //"multipart/form-data; boundary=1-2",
+        "multipart/form-data; boundary=\"1?2\"",
         NULL
     };
 
