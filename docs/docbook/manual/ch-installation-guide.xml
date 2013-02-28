@@ -214,7 +214,7 @@ cd ironbee
 ./autogen.sh</programlisting>
         </section>
         <section>
-            <title>Build and Install IronBee</title>
+            <title>Build and Install IronBee Manually</title>
             <para>IronBee is built using standard autotool conventions. First the source must be
                 configured for the platform, then built and finally installed. Typically this is as
                 simple as below, but there are many options to configure, which you can see by
@@ -227,6 +227,18 @@ make
 
 # Install (default is /usr/local/ironbee, but can be set with --prefix= option to configure above)
 sudo make install</programlisting>
+        </section>
+        <section>
+            <title>Build and Install IronBee as an RPM</title>
+            <para>Alternatively, you can build ironbee as an RPM.</para>
+            <programlisting># Configure the build enough to bootstrap the rpm-package build target
+./configure 
+
+# Build the RPM
+make rpm-package
+
+# Install the RPMs (your architecture may differ)
+sudo rpm -iv packaging/rpm/RPMS/x86_64/ironbee*.rpm</programlisting>
         </section>
         <section>
             <title>Build and Run Unit Tests(Optional)</title>
