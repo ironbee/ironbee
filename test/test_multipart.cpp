@@ -370,6 +370,27 @@ TEST_F(Multipart, Test2) {
     mpartp = NULL;
 }
 
+TEST_F(Multipart, Test3) {
+    char *parts[] = {
+        "--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field1\"\r\n",
+        "--0",
+        "1",
+        "2",
+        "4: Value\r\n",
+        "\r\n"
+        "ABCDEF"
+        "\r\n--0123456789\r\n"
+        "Content-Disposition: form-data; name=\"field2\"\r\n"
+        "\r\n"
+        "GHIJKL"
+        "\r\n--0123456789--",
+        NULL
+    };
+
+    parsePartsThenVerify(parts);
+}
+
 TEST_F(Multipart, BeginsWithoutLine) {
     char *parts[] = {
         "--0123456789\r\n"
