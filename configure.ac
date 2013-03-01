@@ -433,7 +433,7 @@ dnl
 dnl TODO: Make these configure opts
 dnl
 TOPLEVEL_SUBDIRS="util engine servers automata fast modules etc docs tests packaging"
-LIBS_SUBDIRS="libhtp"
+LIBS_SUBDIRS="libhtp sqltfn"
 SERVERS_SUBDIRS="apache_httpd2 trafficserver nginx"
 
 dnl Enable lua subdir if enabled
@@ -615,5 +615,8 @@ AC_CONFIG_FILES([packaging/rpm/ironbee.spec])
 
 # HTP
 AC_CONFIG_SUBDIRS([libs/libhtp])
+
+# SQLTFN
+AC_CONFIG_SUBDIRS([libs/sqltfn])
 
 AC_OUTPUT

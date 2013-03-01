@@ -32,4 +32,4 @@ else
 endif
 endif
 
-EXTRA_DIST = luajit-2.0-ironbee libhtp libinjection
+EXTRA_DIST = luajit-2.0-ironbee libhtp libinjection sqltfn
