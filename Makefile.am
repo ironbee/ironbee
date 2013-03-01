@@ -25,7 +25,7 @@ gcov: test
 	@ if [[ -x $(LCOV) ]]; then \
 		lcov --capture --directory $(top_builddir)/htp/ --output-file $(top_builddir)/test/coverage.info --no-external ; \
 		genhtml $(top_builddir)/test/coverage.info --output-directory $(top_builddir)/docs/lcov ; \
-		echo "" ; \		
+		echo "" ; \
 		echo "Open docs/lcov/index.html to review lcov output" ; \
 	fi
 
