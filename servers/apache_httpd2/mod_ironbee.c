@@ -61,6 +61,7 @@ module AP_MODULE_DECLARE_DATA ironbee_module;
 #define HDRS_IN IB_SERVER_REQUEST
 #define HDRS_OUT IB_SERVER_RESPONSE
 #define START_RESPONSE 0x04
+#define NO_REQUEST_BODY 0x10
 
 /* Flags to keep track of what's been notified, for functions that
  * could be called more than once in the event of a subrequest or
@@ -437,6 +438,7 @@ static apr_status_t ib_req_cleanup(void *data)
  */
 static int ironbee_headers_in(request_rec *r)
 {
+    const char *hdr;
     int early;
     ib_status_t rc = IB_OK;
     const char *rc_what = "no message set";
@@ -520,6 +522,22 @@ static int ironbee_headers_in(request_rec *r)
         if (rc != IB_OK) {
             rc_what = "ib_state_notify_request_header_finished";
             goto finished;
+        }
+
+        /* Determine whether we have a request body.
+         * If not, notify ironbee end-of-request now and keep a record
+         */
+        hdr = apr_table_get(r->headers_in, "Content-Length");
+        if (!hdr) {
+            hdr = apr_table_get(r->headers_in, "Transfer-Encoding");
+            if (!hdr || strcasecmp(hdr, "chunked")) {
+                ctx->state |= NO_REQUEST_BODY | NOTIFY_REQ_END;
+                rc = ib_state_notify_request_finished(ironbee, ctx->tx);
+                if (rc != IB_OK) {
+                    rc_what = "ib_state_notify_request_finished";
+                    goto finished;
+                }
+            }
         }
 
 finished:
@@ -990,7 +1008,7 @@ static void ironbee_filter_insert(request_rec *r)
     if (rr != r) {
         ap_set_module_config(r->request_config, &ironbee_module, rctx);
     }
-    if (cfg->filter_input)
+    if (cfg->filter_input && !(rctx->state & NO_REQUEST_BODY))
         ap_add_input_filter("ironbee", NULL, r, r->connection);
     else {
         /* We already fed Ironbee the headers.  If we're not

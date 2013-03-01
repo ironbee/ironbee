@@ -616,14 +616,19 @@ static void process_data(TSCont contp, ibd_ctx* ibd)
 
         /* Is buffering configured? */
         if (!IB_HTTP_CODE(data->status)) {
-            ib_num_t num;
-            const char *word = ibd->ibd->dir == IBD_REQ ? "buffer_req" : "buffer_res";
-            ib_status_t rc = ib_context_get(data->tx->ctx, word,
-                                            ib_ftype_num_out(&num), NULL);
+            ib_core_cfg_t *corecfg = NULL;
+            ib_status_t rc = ib_context_module_config(ib_context_main(ironbee),
+                                                      ib_core_module(),
+                                                      &corecfg);
             if (rc != IB_OK) {
                 TSError ("Error determining buffering configuration");
             }
-            ibd->data->buffering = (num == 0) ? IOBUF_NOBUF : IOBUF_BUFFER;
+            else {
+                ibd->data->buffering = (((ibd->ibd->dir == IBD_REQ)
+                                         ? corecfg->buffer_req
+                                         : corecfg->buffer_res) == 0)
+                                           ? IOBUF_NOBUF : IOBUF_BUFFER;
+            }
 
             /* Override buffering based on flags */
             if (ibd->data->buffering == IOBUF_BUFFER) {
@@ -1176,6 +1181,7 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
     const ib_site_t *site;
     ib_status_t ib_rc;
     int nhdrs = 0;
+    int has_body = 0;
 
     char *head_buf;
     unsigned char *dptr;
@@ -1385,6 +1391,15 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         rv = ib_parsed_name_value_pair_list_add(ibhdrs,
                                                 line, n_len,
                                                 lptr, v_len);
+        if (!has_body && (ibd->dir == IBD_REQ)) {
+            /* Check for expectation of a request body */
+            if (((n_len == 14) && !strncasecmp(line, "Content-Length", n_len))
+               || ((n_len == 17) && (v_len == 7)
+                   && !strncasecmp(line, "Transfer-Encoding", n_len)
+                   && !strncasecmp(lptr, "chunked", v_len))) {
+                has_body = 1;
+            }
+        }
         if (rv != IB_OK)
             TSError("Error adding header '%.*s: %.*s' to Ironbee list",
                     (int)n_len, line, (int)v_len, lptr);
@@ -1408,6 +1423,13 @@ static ib_hdr_outcome process_hdr(ib_txn_ctx *data,
         TSDebug("ironbee", "Response has no headers!  Treating as transitional!");
         ret = HDR_HTTP_100;
         goto process_hdr_cleanup;
+    }
+
+    /* If there's no body in a Request, notify end-of-request */
+    if ((ibd->dir == IBD_REQ) && !has_body) {
+        rv = (*ibd->ib_notify_end)(ironbee, data->tx);
+        if (rv != IB_OK)
+            TSError("Error notifying Ironbee end of request");
     }
 
     /* Initialize the header action */
