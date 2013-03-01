@@ -23,7 +23,6 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 #include "base_fixture.h"
 #include <ironbee/rule_engine.h>

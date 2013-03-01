@@ -29,7 +29,6 @@
 #include "util/ahocorasick_private.h"
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 #include <stdexcept>
 

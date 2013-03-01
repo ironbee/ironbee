@@ -26,7 +26,6 @@
  */
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 #include <ironbee/types.h>
 #include <ironbee/engine.h>

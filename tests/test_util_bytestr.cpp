@@ -29,7 +29,6 @@
 #include <ironbee/bytestr.h>
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 #include "simple_fixture.hpp"
 
 #include <stdexcept>

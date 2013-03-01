@@ -27,7 +27,6 @@
 #include <ironbee/uuid.h>
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 #include <string.h>
 

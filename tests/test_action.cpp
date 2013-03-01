@@ -28,7 +28,6 @@
 #include <ironbee/mpool.h>
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 #include "base_fixture.h"
 

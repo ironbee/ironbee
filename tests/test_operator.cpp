@@ -30,7 +30,6 @@
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 
 ib_status_t test_create_fn(ib_engine_t *ib,

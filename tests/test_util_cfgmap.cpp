@@ -28,7 +28,6 @@
 #include "simple_fixture.hpp"
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 #include <ironbee/mpool.h>
 #include <ironbee/field.h>

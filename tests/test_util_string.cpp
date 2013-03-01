@@ -28,7 +28,6 @@
 #include <ironbee/string.h>
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 #include <stdexcept>
 #include <math.h>

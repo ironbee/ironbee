@@ -27,7 +27,6 @@
 #include <ironbee/path.h>
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 #include "ibtest_textbuf.hpp"
 #include "ibtest_strbase.hpp"

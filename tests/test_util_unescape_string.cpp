@@ -26,7 +26,6 @@
 #include "ironbee/escape.h"
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 TEST(TestIBUtilUnescapeString, singleCharacter) {
   char str[7] = "\\r\\n\\t";

@@ -30,7 +30,6 @@
 #include "ibtest_strbase.hpp"
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 #include <stdexcept>
 

@@ -28,7 +28,6 @@
 #include "simple_fixture.hpp"
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 
 #include <ironbee/types.h>
 #include <ironbee/dso.h>

@@ -25,7 +25,6 @@
 #include "ironbee_config_auto.h"
 
 #include "gtest/gtest.h"
-#include "gtest/gtest-spi.h"
 #include "ibtest_log_fixture.hpp"
 
 #include <ironbee/types.h>
