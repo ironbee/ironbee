@@ -1081,7 +1081,7 @@ htp_status_t htp_mpartp_parse(htp_mpartp_t *parser, const void *_data, size_t le
 
 STATE_SWITCH:
         #if HTP_DEBUG        
-        fprintf(stderr, "htp_mpartp_parse: state %d pos %d startpos %d\n", parser->parser_state, pos, startpos);
+        fprintf(stderr, "htp_mpartp_parse: state %d pos %zd startpos %zd\n", parser->parser_state, pos, startpos);
         #endif
 
         switch (parser->parser_state) {
@@ -1169,7 +1169,7 @@ STATE_SWITCH:
             case STATE_BOUNDARY: // Handle a possible boundary.
                 while (pos < len) {
                     #ifdef HTP_DEBUG
-                    fprintf(stderr, "boundary (len %d pos %d char %d) data char %d\n", parser->multipart.boundary_len,
+                    fprintf(stderr, "boundary (len %zd pos %zd char %d) data char %d\n", parser->multipart.boundary_len,
                             parser->boundary_match_pos, parser->multipart.boundary[parser->boundary_match_pos], tolower(data[pos]));
                     #endif                   
 
