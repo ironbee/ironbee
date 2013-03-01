@@ -17,9 +17,12 @@
 
 /**
  * @file
- * @brief IronBee --- SQLi Module
+ * @brief IronBee --- SQLi Module based on libinjection.
  *
- * This module utilizes libinjection to implement SQLi detection:
+ * This module utilizes libinjection to implement SQLi detection. The
+ * libinjection library is the work of Nick Galbreath.
+ *
+ * http://www.client9.com/projects/libinjection/
  *
  * Transformations:
  *   - normalizeSqli: Normalize SQL routine from libinjection.
