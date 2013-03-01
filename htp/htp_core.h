@@ -63,7 +63,7 @@ typedef struct timeval htp_time_t;
 #define HTP_VERSION_STRING          "master"
 
 // In the form of x.y.z, with two positions for each component; for example, 400 means 0.4.0
-#define HTP_VERSION_NUMBER          400
+#define HTP_VERSION_NUMBER          500
 
 // Below are all htp_status_t return codes used by LibHTP. Enum is not
 // used here to allow applications to define their own codes.
