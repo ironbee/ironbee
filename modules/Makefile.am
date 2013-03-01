@@ -17,7 +17,8 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_ac.la \
                      ibmod_rules.la \
                      ibmod_user_agent.la \
-                     ibmod_fast.la
+                     ibmod_fast.la \
+                     ibmod_sqli.la
 
 if ENABLE_LUA
 pkglib_LTLIBRARIES += ibmod_lua.la
@@ -120,6 +121,16 @@ endif
 ibmod_fast_la_SOURCES = fast.c
 ibmod_fast_la_CPPFLAGS = ${AM_CPPFLAGS} -I$(srcdir)/../automata/include
 ibmod_fast_la_LIBADD = $(AMLIB_ADD) ../automata/libiaeudoxus.la
+
+ibmod_sqli_la_SOURCES = sqli.c \
+                        $(abs_top_srcdir)/libs/libinjection/c/sqlparse.c \
+                        $(abs_top_srcdir)/libs/libinjection/c/sqli_normalize.c \
+                        $(abs_top_srcdir)/libs/libinjection/c/modp_qsiter.c \
+                        $(abs_top_srcdir)/libs/libinjection/c/modp_burl.c \
+                        $(abs_top_srcdir)/libs/libinjection/c/modp_ascii.c \
+                        $(abs_top_srcdir)/libs/libinjection/c/modp_xml.c
+ibmod_sqli_la_CFLAGS = ${AM_CFLAGS} -I$(abs_top_srcdir)/libs/libinjection/c
+ibmod_sqli_la_LDFLAGS = $(AM_LDFLAGS)
 
 install-exec-hook: $(pkglib_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
