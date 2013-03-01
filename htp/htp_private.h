@@ -50,32 +50,32 @@ extern "C" {
 #include "htp_connection_parser_private.h"
 
 #define IN_TEST_NEXT_BYTE_OR_RETURN(X) \
-if ((X)->in_current_offset >= (X)->in_current_len) { \
+if ((X)->in_current_read_offset >= (X)->in_current_len) { \
     return HTP_DATA; \
 }
 
 #define IN_NEXT_BYTE(X) \
-if ((X)->in_current_offset < (X)->in_current_len) { \
-    (X)->in_next_byte = (X)->in_current_data[(X)->in_current_offset]; \
-    (X)->in_current_offset++; \
+if ((X)->in_current_read_offset < (X)->in_current_len) { \
+    (X)->in_next_byte = (X)->in_current_data[(X)->in_current_read_offset]; \
+    (X)->in_current_read_offset++; \
     (X)->in_stream_offset++; \
 } else { \
     (X)->in_next_byte = -1; \
 }
 
 #define IN_NEXT_BYTE_OR_RETURN(X) \
-if ((X)->in_current_offset < (X)->in_current_len) { \
-    (X)->in_next_byte = (X)->in_current_data[(X)->in_current_offset]; \
-    (X)->in_current_offset++; \
+if ((X)->in_current_read_offset < (X)->in_current_len) { \
+    (X)->in_next_byte = (X)->in_current_data[(X)->in_current_read_offset]; \
+    (X)->in_current_read_offset++; \
     (X)->in_stream_offset++; \
 } else { \
     return HTP_DATA; \
 }
 
 #define IN_COPY_BYTE_OR_RETURN(X) \
-if ((X)->in_current_offset < (X)->in_current_len) { \
-    (X)->in_next_byte = (X)->in_current_data[(X)->in_current_offset]; \
-    (X)->in_current_offset++; \
+if ((X)->in_current_read_offset < (X)->in_current_len) { \
+    (X)->in_next_byte = (X)->in_current_data[(X)->in_current_read_offset]; \
+    (X)->in_current_read_offset++; \
     (X)->in_stream_offset++; \
 } else { \
     return HTP_DATA; \

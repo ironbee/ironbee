@@ -527,3 +527,8 @@ TEST_F(ConnectionParsing, Http_0_9_Explicit) {
     ASSERT_TRUE(tx != NULL);
     ASSERT_EQ(0, tx->is_protocol_0_9);
 }
+
+TEST_F(ConnectionParsing, SmallChunks) {
+    int rc = test_run(home, "25-small-chunks.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+}

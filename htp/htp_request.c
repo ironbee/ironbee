@@ -42,6 +42,61 @@
 #include "htp_private.h"
 #include "htp_transaction.h"
 
+static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
+    if (!connp->in_buffering_enabled) return HTP_OK;
+
+    unsigned char *data = connp->in_current_data + connp->in_current_consume_offset;
+    size_t len = connp->in_current_read_offset - connp->in_current_consume_offset;
+
+    if (connp->in_buf == NULL) {
+        connp->in_buf = malloc(len);
+        if (connp->in_buf == NULL) return HTP_ERROR;
+        memcpy(connp->in_buf, data, len);
+        connp->in_buf_size = len;
+    } else {
+        size_t newsize = connp->in_buf_size + len;
+        unsigned char *newbuf = realloc(connp->in_buf, newsize);
+        if (newbuf == NULL) return HTP_ERROR;
+        connp->in_buf = newbuf;
+        memcpy(connp->in_buf + connp->in_buf_size, data, len);
+        connp->in_buf_size = newsize;
+    }
+
+    connp->in_current_consume_offset = connp->in_current_read_offset;
+
+    return HTP_OK;
+}
+
+static htp_status_t htp_connp_req_consolidate_data(htp_connp_t *connp, unsigned char **data, size_t *len) {
+    if (connp->in_buf == NULL) {
+        // We do not have any data buffered; point to the current data chunk.
+        *data = connp->in_current_data + connp->in_current_consume_offset;
+        *len = connp->in_current_read_offset - connp->in_current_consume_offset;
+    } else {
+        // We do have data in the buffer. Add data from the current
+        // chunk, and point to the consolidated buffer.
+        htp_connp_req_buffer(connp);
+        *data = connp->in_buf;
+        *len = connp->in_buf_size;
+    }
+
+    return HTP_OK;
+}
+
+static size_t htp_connp_req_data_len(htp_connp_t *connp) {
+    return connp->in_buf_size + (connp->in_current_read_offset - connp->in_current_consume_offset);
+}
+
+static void htp_connp_req_clear_buffer(htp_connp_t *connp) {
+    connp->in_current_consume_offset = connp->in_current_read_offset;
+    
+    if (connp->in_buf != NULL) {
+        free(connp->in_buf);
+        connp->in_buf = NULL;
+        connp->in_buf_size = 0;
+    }
+}
+
 /**
  * Performs check for a CONNECT transaction to decide whether inbound
  * parsing needs to be suspended.
@@ -137,21 +192,21 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA_END(htp_connp_t *connp) {
 htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
     // Determine how many bytes we can consume.
     size_t bytes_to_consume;
-    if (connp->in_current_len - connp->in_current_offset >= connp->in_chunked_length) {
+    if (connp->in_current_len - connp->in_current_read_offset >= connp->in_chunked_length) {
         bytes_to_consume = connp->in_chunked_length;
     } else {
-        bytes_to_consume = connp->in_current_len - connp->in_current_offset;
+        bytes_to_consume = connp->in_current_len - connp->in_current_read_offset;
     }
 
     // If the input buffer is empty, ask for more data.
     if (bytes_to_consume == 0) return HTP_DATA;
 
     // Consume data.
-    int rc = htp_tx_req_process_body_data(connp->in_tx, connp->in_current_data + connp->in_current_offset, bytes_to_consume);
+    int rc = htp_tx_req_process_body_data(connp->in_tx, connp->in_current_data + connp->in_current_read_offset, bytes_to_consume);
     if (rc != HTP_OK) return rc;
 
     // Adjust counters.
-    connp->in_current_offset += bytes_to_consume;
+    connp->in_current_read_offset += bytes_to_consume;
     connp->in_stream_offset += bytes_to_consume;
     connp->in_tx->request_message_len += bytes_to_consume;
     connp->in_chunked_length -= bytes_to_consume;
@@ -185,8 +240,7 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             // Extract chunk length.
             connp->in_chunked_length = htp_parse_chunked_length(connp->in_line, connp->in_line_len);
 
-            // Cleanup for the next line.
-            connp->in_line_len = 0;
+            htp_connp_req_clear_buffer(connp);
 
             // Handle chunk length
             if (connp->in_chunked_length > 0) {
@@ -220,21 +274,21 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
 htp_status_t htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {    
     // Determine how many bytes we can consume.
     size_t bytes_to_consume;
-    if (connp->in_current_len - connp->in_current_offset >= connp->in_body_data_left) {
+    if (connp->in_current_len - connp->in_current_read_offset >= connp->in_body_data_left) {
         bytes_to_consume = connp->in_body_data_left;
     } else {
-        bytes_to_consume = connp->in_current_len - connp->in_current_offset;
+        bytes_to_consume = connp->in_current_len - connp->in_current_read_offset;
     }
 
     // If the input buffer is empty, ask for more data.
     if (bytes_to_consume == 0) return HTP_DATA;
 
     // Consume data.
-    int rc = htp_tx_req_process_body_data(connp->in_tx, connp->in_current_data + connp->in_current_offset, bytes_to_consume);
+    int rc = htp_tx_req_process_body_data(connp->in_tx, connp->in_current_data + connp->in_current_read_offset, bytes_to_consume);
     if (rc != HTP_OK) return rc;
 
     // Adjust counters.
-    connp->in_current_offset += bytes_to_consume;
+    connp->in_current_read_offset += bytes_to_consume;
     connp->in_stream_offset += bytes_to_consume;
     connp->in_tx->request_message_len += bytes_to_consume;
     connp->in_body_data_left -= bytes_to_consume;
@@ -351,8 +405,9 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 }
 
                 // Cleanup
+                htp_connp_req_clear_buffer(connp);
+
                 free(connp->in_header_line);
-                connp->in_line_len = 0;
                 connp->in_header_line = NULL;
 
                 // We've seen all request headers
@@ -400,7 +455,7 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             connp->in_header_line = NULL;
 
             // Cleanup for the next line
-            connp->in_line_len = 0;
+            htp_connp_req_clear_buffer(connp);
             if (connp->in_header_line_index == -1) {
                 connp->in_header_line_index = connp->in_header_line_counter;
             }
@@ -440,6 +495,8 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
+    connp->in_buffering_enabled = 1;
+
     for (;;) {
         // Get one byte
         IN_COPY_BYTE_OR_RETURN(connp);
@@ -451,58 +508,50 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
 
             // Store the offset of the first NUL byte
             if (connp->in_tx->request_line_nul_offset == -1) {
-                connp->in_tx->request_line_nul_offset = connp->in_line_len;
+                connp->in_tx->request_line_nul_offset = htp_connp_req_data_len(connp);
             }
         }
 
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {
+            unsigned char *data;
+            size_t len;
+
+            htp_connp_req_consolidate_data(connp, &data, &len);
+            
             #ifdef HTP_DEBUG
-            fprint_raw_data(stderr, __FUNCTION__, connp->in_line, connp->in_line_len);
+            fprint_raw_data(stderr, __FUNCTION__, data, len);
             #endif
 
             // Is this a line that should be ignored?
-            if (htp_connp_is_line_ignorable(connp, connp->in_line, connp->in_line_len)) {
+            if (htp_connp_is_line_ignorable(connp, data, len)) {
                 // We have an empty/whitespace line, which we'll note, ignore and move on
                 connp->in_tx->request_ignored_lines++;
 
                 // TODO How many empty lines are we willing to accept?
 
-                // Start again
-                connp->in_line_len = 0;
+                htp_connp_req_clear_buffer(connp);
 
                 return HTP_OK;
             }
 
             // Process request line
 
-            connp->in_tx->request_line_raw = bstr_dup_mem(connp->in_line, connp->in_line_len);
-            if (connp->in_tx->request_line_raw == NULL) {
-                return HTP_ERROR;
-            }
+            connp->in_tx->request_line_raw = bstr_dup_mem(data, len);
+            if (connp->in_tx->request_line_raw == NULL) return HTP_ERROR;
 
-            htp_chomp(connp->in_line, &connp->in_line_len);
-            connp->in_tx->request_line = bstr_dup_ex(connp->in_tx->request_line_raw, 0, connp->in_line_len);
-            if (connp->in_tx->request_line == NULL) {
-                return HTP_ERROR;
-            }
+            htp_chomp(data, &len);
+            connp->in_tx->request_line = bstr_dup_mem(data, len);
+            if (connp->in_tx->request_line == NULL) return HTP_ERROR;
 
             // Parse request line
-            if (connp->cfg->parse_request_line(connp) != HTP_OK) {
-                // Note: downstream responsible for error logging
-                return HTP_ERROR;
-            }
+            if (connp->cfg->parse_request_line(connp) != HTP_OK) return HTP_ERROR;
 
             // Finalize request line parsing
 
-            if (htp_tx_state_request_line(connp->in_tx) != HTP_OK) {
-                return HTP_ERROR;
-            }
+            if (htp_tx_state_request_line(connp->in_tx) != HTP_OK) return HTP_ERROR;
 
-            // Clean up.
-            connp->in_line_len = 0;
-
-
+            htp_connp_req_clear_buffer(connp);
 
             return HTP_OK;
         }
@@ -529,13 +578,13 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
 htp_status_t htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9(htp_connp_t *connp) {
     // Consume whatever is left in the buffer.
 
-    size_t bytes_left = connp->in_current_len - connp->in_current_offset;
+    size_t bytes_left = connp->in_current_len - connp->in_current_read_offset;
 
     if (bytes_left > 0) {
         connp->conn->flags |= HTP_CONN_HTTP_0_9_EXTRA;
     }
     
-    connp->in_current_offset += bytes_left;
+    connp->in_current_read_offset += bytes_left;
     connp->in_stream_offset += bytes_left;
     
     return HTP_DATA;
@@ -572,7 +621,7 @@ htp_status_t htp_connp_REQ_IDLE(htp_connp_t * connp) {
  * @return The number of bytes consumed.
  */
 size_t htp_connp_req_data_consumed(htp_connp_t *connp) {
-    return connp->in_current_offset;
+    return connp->in_current_read_offset;
 }
 
 int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const void *data, size_t len) {
@@ -621,7 +670,8 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     // Store the current chunk information    
     connp->in_current_data = (unsigned char *)data;
     connp->in_current_len = len;
-    connp->in_current_offset = 0;
+    connp->in_current_read_offset = 0;
+    connp->in_current_consume_offset = 0;
     connp->in_chunk_count++;
 
     htp_conn_track_inbound_data(connp->conn, len, timestamp);
@@ -668,6 +718,8 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
         } else {
             // Do we need more data?
             if (rc == HTP_DATA) {
+                htp_connp_req_buffer(connp);
+                
                 #ifdef HTP_DEBUG
                 fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_DATA\n");
                 #endif
@@ -680,7 +732,7 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
             // Check for suspended parsing
             if (rc == HTP_DATA_OTHER) {
                 // We might have actually consumed the entire data chunk?
-                if (connp->in_current_offset >= connp->in_current_len) {
+                if (connp->in_current_read_offset >= connp->in_current_len) {
                     // Do not send STREAM_DATE_DATA_OTHER if we've
                     // consumed the entire chunk
                     #ifdef HTP_DEBUG

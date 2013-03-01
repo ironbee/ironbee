@@ -96,8 +96,10 @@ struct htp_connp_t {
     /** The length of the current request data chunk. */
     int64_t in_current_len;
 
-    /** The offset of the next byte in the request data chunk to consume. */
-    int64_t in_current_offset;
+    /** The offset of the next byte in the request data chunk to read. */
+    int64_t in_current_read_offset;
+
+    int64_t in_current_consume_offset;
 
     /** How many data chunks does the inbound connection stream consist of? */
     size_t in_chunk_count;
@@ -110,6 +112,12 @@ struct htp_connp_t {
 
     /** The value of the request byte currently being processed. */
     int in_next_byte;
+
+    unsigned int in_buffering_enabled;
+
+    unsigned char *in_buf;
+
+    size_t in_buf_size;
 
     /** Pointer to the request line buffer. */
     unsigned char *in_line;
