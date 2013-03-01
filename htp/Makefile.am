@@ -11,6 +11,8 @@ c_sources = bstr.c bstr_builder.c htp_base64.c htp_config.c htp_connection.c htp
 
 library_includedir = $(includedir)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
+noinst_HEADERS = htp_connection_private.h htp_connection_parser_private.h htp_list_private.h \
+    htp_multipart_private.h htp_private.h htp_table_private.h
 
 INCLUDES = -I$(top_srcdir)
 AM_CFLAGS = -D_GNU_SOURCE -g -Wall -Wextra -std=gnu99 -pedantic \
