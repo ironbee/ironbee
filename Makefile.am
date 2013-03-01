@@ -29,7 +29,7 @@ nginx-install: nginx
 
 .PHONY: doxygen doxygen-pdf manual luajit
 
-rpm_topdir=`cd $(top_builddir) && pwd`/packaging/rpm
+rpm_topdir=$(abs_top_builddir)/packaging/rpm
 rpm-package: dist
 	if test x$(HAVE_RPM) = xyes ; then \
 		cd $(rpm_topdir) ; \
@@ -37,7 +37,7 @@ rpm-package: dist
 		cd SOURCES ; \
 		ln -s ../../../$(distdir).tar.gz ; \
 		cd .. ; \
-		rpmbuild --define "_topdir `cd . && pwd`" --define "_release $(RPM_RELEASE)" -ba ironbee.spec && \
+		rpmbuild --define "_topdir $(rpm_topdir)" --define "_release $(RPM_RELEASE)" -ba ironbee.spec && \
 		echo "Package successfully built in `pwd`/RPMS." ; \
 	else \
 		echo "Error: RPM executable and/or source directory not found." ; \
