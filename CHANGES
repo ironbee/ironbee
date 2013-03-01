@@ -124,6 +124,10 @@ IronBee v0.7.0
 * Added a 'fast' module which supports rapid selection of rules to evaluate
   based on Aho-Corasick patterns.  See below and fast/fast.html.
 
+* Added a module implementing libinjection functionality to aid in detecting
+  SQL injection. This module exposes the "normalizeSqli" and the
+  "normalizeSqliFold" transformations as well as the "is_sqli" operator.
+
 **Fast**
 
 * Added a variety of support for the fast rule system (the fast module
