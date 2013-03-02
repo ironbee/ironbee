@@ -46,6 +46,8 @@ static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
     unsigned char *data = connp->in_current_data + connp->in_current_consume_offset;
     size_t len = connp->in_current_read_offset - connp->in_current_consume_offset;
 
+    // XXX Check the size of the buffer; soft and hard.
+
     if (connp->in_buf == NULL) {
         connp->in_buf = malloc(len);
         if (connp->in_buf == NULL) return HTP_ERROR;
