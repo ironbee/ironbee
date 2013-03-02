@@ -78,7 +78,7 @@ if ((X)->in_current_read_offset < (X)->in_current_len) { \
     (X)->in_current_read_offset++; \
     (X)->in_stream_offset++; \
 } else { \
-    return HTP_DATA; \
+    return HTP_DATA_BUFFER; \
 } \
 \
 if ((X)->in_line_len < (X)->in_line_size) { \

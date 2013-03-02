@@ -43,8 +43,6 @@
 #include "htp_transaction.h"
 
 static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
-    if (!connp->in_buffering_enabled) return HTP_OK;
-
     unsigned char *data = connp->in_current_data + connp->in_current_consume_offset;
     size_t len = connp->in_current_read_offset - connp->in_current_consume_offset;
 
@@ -495,8 +493,6 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
 htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
-    connp->in_buffering_enabled = 1;
-
     for (;;) {
         // Get one byte
         IN_COPY_BYTE_OR_RETURN(connp);
@@ -717,8 +713,10 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
             }
         } else {
             // Do we need more data?
-            if (rc == HTP_DATA) {
-                htp_connp_req_buffer(connp);
+            if ((rc == HTP_DATA)||(rc == HTP_DATA_BUFFER)) {
+                if (rc == HTP_DATA_BUFFER) {
+                    htp_connp_req_buffer(connp);
+                }
                 
                 #ifdef HTP_DEBUG
                 fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_DATA\n");

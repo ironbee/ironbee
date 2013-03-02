@@ -113,8 +113,6 @@ struct htp_connp_t {
     /** The value of the request byte currently being processed. */
     int in_next_byte;
 
-    unsigned int in_buffering_enabled;
-
     unsigned char *in_buf;
 
     size_t in_buf_size;
