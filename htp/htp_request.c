@@ -369,15 +369,6 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
     for (;;) {
         IN_COPY_BYTE_OR_RETURN(connp);
 
-        /*
-        // Allocate structure to hold one header line
-        if (connp->in_header_line == NULL) {
-            connp->in_header_line = calloc(1, sizeof (htp_header_line_t));
-            if (connp->in_header_line == NULL) return HTP_ERROR;
-            connp->in_header_line->first_nul_offset = -1;
-        }
-        */
-
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {
             unsigned char *data;
@@ -407,10 +398,6 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
 
                 // Cleanup
                 htp_connp_req_clear_buffer(connp);
-
-                // Remember how many header lines there were. This will be
-                // useful on requests that use trailing headers.
-                connp->in_tx->request_header_lines_no_trailers = htp_list_size(connp->in_tx->request_header_lines);
 
                 // We've seen all the request headers.
                 return htp_tx_state_request_headers(connp->in_tx);
