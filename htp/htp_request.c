@@ -198,6 +198,10 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
         bytes_to_consume = connp->in_current_len - connp->in_current_read_offset;
     }
 
+    #ifdef HTP_DEBUG
+    fprintf(stderr, "htp_connp_REQ_BODY_CHUNKED_DATA Consuming %zd bytes\n", bytes_to_consume);
+    #endif
+
     // If the input buffer is empty, ask for more data.
     if (bytes_to_consume == 0) return HTP_DATA;
 
@@ -207,12 +211,13 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_DATA(htp_connp_t *connp) {
 
     // Adjust counters.
     connp->in_current_read_offset += bytes_to_consume;
+    connp->in_current_consume_offset += bytes_to_consume;
     connp->in_stream_offset += bytes_to_consume;
     connp->in_tx->request_message_len += bytes_to_consume;
     connp->in_chunked_length -= bytes_to_consume;
 
     if (connp->in_chunked_length == 0) {
-        // End of request body.
+        // End of the chunk.
         connp->in_state = htp_connp_REQ_BODY_CHUNKED_DATA_END;
         return HTP_OK;
     }
@@ -239,6 +244,10 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             htp_connp_req_consolidate_data(connp, &data, &len);
 
             connp->in_tx->request_message_len += len;
+
+            #ifdef HTP_DEBUG
+            fprint_raw_data(stderr, "Chunk length line", data, len);
+            #endif
             
             htp_chomp(data, &len);
 
@@ -293,6 +302,7 @@ htp_status_t htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
 
     // Adjust counters.
     connp->in_current_read_offset += bytes_to_consume;
+    connp->in_current_consume_offset += bytes_to_consume;
     connp->in_stream_offset += bytes_to_consume;
     connp->in_tx->request_message_len += bytes_to_consume;
     connp->in_body_data_left -= bytes_to_consume;
@@ -368,20 +378,6 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
         }
         */
 
-        /*
-        // Keep track of NUL bytes
-        if (connp->in_next_byte == 0) {
-            // Store the offset of the first NUL
-            if (connp->in_header_line->has_nulls == 0) {
-                connp->in_header_line->first_nul_offset = htp_connp_req_data_len(connp);
-            }
-
-            // Remember how many NULs there were
-            connp->in_header_line->flags |= HTP_FIELD_RAW_NUL;
-            connp->in_header_line->has_nulls++;
-        }
-        */
-
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {
             unsigned char *data;
@@ -401,60 +397,64 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
 
             // Should we terminate headers?
             if (htp_connp_is_line_terminator(connp, data, len)) {
-                // Parse previous header, if any
-                //if (connp->in_header_line_index != -1) {
-                //    if (connp->cfg->process_request_header(connp) != HTP_OK) {
-                //        // Note: downstream responsible for error logging
-                //        return HTP_ERROR;
-                //    }
-                //
-                //    // Reset index
-                //    connp->in_header_line_index = -1;
-                //}
+                // Parse previous header, if any.
+                if (connp->in_header != NULL) {
+                    if (connp->cfg->process_request_header(connp) != HTP_OK) return HTP_ERROR;
+
+                    bstr_free(connp->in_header);
+                    connp->in_header = NULL;
+                }
 
                 // Cleanup
                 htp_connp_req_clear_buffer(connp);
 
-                //free(connp->in_header_line);
-                //connp->in_header_line = NULL;
+                // Remember how many header lines there were. This will be
+                // useful on requests that use trailing headers.
+                connp->in_tx->request_header_lines_no_trailers = htp_list_size(connp->in_tx->request_header_lines);
 
-                // We've seen all request headers
+                // We've seen all the request headers.
                 return htp_tx_state_request_headers(connp->in_tx);
             }
 
-            // Prepare line for consumption
             htp_chomp(data, &len);
 
-            // Check for header folding
+            // Check for header folding.
             if (htp_connp_is_line_folded(data, len) == 0) {
-                // New header line
-
-                /*
-                // Parse previous header, if any
-                if (connp->in_header_line_index != -1) {
-                    if (connp->cfg->process_request_header(connp) != HTP_OK) {
-                        // Note: downstream responsible for error logging
-                        return HTP_ERROR;
-                    }
-
-                    // Reset index
-                    connp->in_header_line_index = -1;
+                // New header line.
+               
+                // Parse previous header, if any.
+                if (connp->in_header != NULL) {
+                    if (connp->cfg->process_request_header(connp) != HTP_OK) return HTP_ERROR;
+                    
+                    bstr_free(connp->in_header);
+                    connp->in_header = NULL;
                 }
 
-                // Remember the index of the fist header line
-                connp->in_header_line_index = connp->in_header_line_counter;
-                */
+                // Keep the header data for parsing later.
+                connp->in_header = bstr_dup_mem(data, len);
+                if (connp->in_header == NULL) return HTP_ERROR;
             } else {
-                // Folding; check that there's a previous header line to add to
-                /*
-                if (connp->in_header_line_index == -1) {
+                // Folding; check that there's a previous header line to add to.
+                if (connp->in_header == NULL) {
+                    // Invalid folding.
+
+                    // Warn only once per transaction.
                     if (!(connp->in_tx->flags & HTP_INVALID_FOLDING)) {
                         connp->in_tx->flags |= HTP_INVALID_FOLDING;
-                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0,
-                                "Invalid request field folding");
+                        htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid request field folding");
                     }
+
+                    // Keep the header data for parsing later.
+                    connp->in_header = bstr_dup_mem(data, len);
+                    if (connp->in_header == NULL) return HTP_ERROR;
+                } else {
+                    // Add to the existing header.
+                    bstr *bstr_add(bstr *bdestination, const bstr *bsource);
+
+                    bstr *new_in_header = bstr_add_mem(connp->in_header, data, len);
+                    if (new_in_header == NULL) return HTP_ERROR;
+                    connp->in_header = new_in_header;
                 }
-                */
             }
 
             htp_connp_req_clear_buffer(connp);
@@ -580,6 +580,7 @@ htp_status_t htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9(htp_connp_t *connp) {
     }
     
     connp->in_current_read_offset += bytes_left;
+    connp->in_current_consume_offset += bytes_left;
     connp->in_stream_offset += bytes_left;
     
     return HTP_DATA;

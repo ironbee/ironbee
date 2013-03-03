@@ -58,6 +58,7 @@ if ((X)->in_current_read_offset >= (X)->in_current_len) { \
 if ((X)->in_current_read_offset < (X)->in_current_len) { \
     (X)->in_next_byte = (X)->in_current_data[(X)->in_current_read_offset]; \
     (X)->in_current_read_offset++; \
+    (X)->in_current_consume_offset++; \
     (X)->in_stream_offset++; \
 } else { \
     (X)->in_next_byte = -1; \
@@ -67,6 +68,7 @@ if ((X)->in_current_read_offset < (X)->in_current_len) { \
 if ((X)->in_current_read_offset < (X)->in_current_len) { \
     (X)->in_next_byte = (X)->in_current_data[(X)->in_current_read_offset]; \
     (X)->in_current_read_offset++; \
+    (X)->in_current_consume_offset++; \
     (X)->in_stream_offset++; \
 } else { \
     return HTP_DATA; \
@@ -80,21 +82,6 @@ if ((X)->in_current_read_offset < (X)->in_current_len) { \
 } else { \
     return HTP_DATA_BUFFER; \
 }
-
-/*
-\
-if ((X)->in_line_len < (X)->in_line_size) { \
-    (X)->in_line[(X)->in_line_len] = (X)->in_next_byte; \
-    (X)->in_line_len++; \
-    if (((X)->in_line_len == HTP_HEADER_LIMIT_SOFT)&&(!((X)->in_tx->flags & HTP_FIELD_LONG))) { \
-        (X)->in_tx->flags |= HTP_FIELD_LONG; \
-        htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request field over soft limit"); \
-    } \
-} else { \
-    htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request field over hard limit"); \
-    return HTP_ERROR; \
-}
-*/
 
 #define OUT_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->out_current_offset >= (X)->out_current_len) { \

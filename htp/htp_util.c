@@ -387,6 +387,10 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
         connp->last_error = log;
     }
 
+    #ifdef HTP_DEBUG
+    fprintf(stderr, "[LOG] %s\n", log->msg);
+    #endif
+
     htp_hook_run_all(connp->cfg->hook_log, log);
 }
 

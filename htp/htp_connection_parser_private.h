@@ -119,29 +119,11 @@ struct htp_connp_t {
     // XXX
     size_t in_buf_size;
 
-    /** Pointer to the request line buffer. */
-    //unsigned char *in_line;
-
-    /** Size of the request line buffer. */
-    //size_t in_line_size;
-
-    /** Length of the current request line. */
-    //size_t in_line_len;
+    // XXX
+    bstr *in_header;
 
     /** Ongoing inbound transaction. */
     htp_tx_t *in_tx;
-
-    /** The request header line currently being processed. */
-    //htp_header_line_t *in_header_line;
-
-    /** The index, in the structure holding all request header lines, of the
-     *  line with which the current header begins. The header lines are
-     *  kept in the transaction structure.
-     */
-    //int in_header_line_index;
-
-    /** How many lines are there in the current request header? */
-    //int in_header_line_counter;
 
     /**
      * The request body length declared in a valid request header. The key here

@@ -357,7 +357,7 @@ struct htp_tx_t {
      */
     int64_t request_entity_len;
 
-    /** Original request header lines. This list stores instances of htp_header_line_t. */
+    /** Original request header lines. This list stores instances of bstr. */
     htp_list_t *request_header_lines;
 
     /** How many request headers were there before trailers? */
