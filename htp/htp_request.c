@@ -89,7 +89,7 @@ static size_t htp_connp_req_data_len(htp_connp_t *connp) {
 
 static void htp_connp_req_clear_buffer(htp_connp_t *connp) {
     connp->in_current_consume_offset = connp->in_current_read_offset;
-    
+
     if (connp->in_buf != NULL) {
         free(connp->in_buf);
         connp->in_buf = NULL;
@@ -248,7 +248,7 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, "Chunk length line", data, len);
             #endif
-            
+
             htp_chomp(data, &len);
 
             // Extract chunk length.
@@ -284,7 +284,7 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
  * @param[in] connp
  * @returns HTP_OK on state change, HTP_ERROR on error, or HTP_DATA when more data is needed.
  */
-htp_status_t htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {    
+htp_status_t htp_connp_REQ_BODY_IDENTITY(htp_connp_t *connp) {
     // Determine how many bytes we can consume.
     size_t bytes_to_consume;
     if (connp->in_current_len - connp->in_current_read_offset >= connp->in_body_data_left) {
@@ -375,7 +375,7 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             size_t len;
 
             htp_connp_req_consolidate_data(connp, &data, &len);
-            
+
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, __FUNCTION__, data, len);
             #endif
@@ -390,7 +390,8 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             if (htp_connp_is_line_terminator(connp, data, len)) {
                 // Parse previous header, if any.
                 if (connp->in_header != NULL) {
-                    if (connp->cfg->process_request_header(connp) != HTP_OK) return HTP_ERROR;
+                    if (connp->cfg->process_request_header(connp, bstr_ptr(connp->in_header),
+                            bstr_len(connp->in_header)) != HTP_OK) return HTP_ERROR;
 
                     bstr_free(connp->in_header);
                     connp->in_header = NULL;
@@ -408,18 +409,27 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
             // Check for header folding.
             if (htp_connp_is_line_folded(data, len) == 0) {
                 // New header line.
-               
+
                 // Parse previous header, if any.
                 if (connp->in_header != NULL) {
-                    if (connp->cfg->process_request_header(connp) != HTP_OK) return HTP_ERROR;
-                    
+                    if (connp->cfg->process_request_header(connp, bstr_ptr(connp->in_header),
+                            bstr_len(connp->in_header)) != HTP_OK) return HTP_ERROR;
+
                     bstr_free(connp->in_header);
                     connp->in_header = NULL;
                 }
 
-                // Keep the header data for parsing later.
-                connp->in_header = bstr_dup_mem(data, len);
-                if (connp->in_header == NULL) return HTP_ERROR;
+                IN_PEEK_NEXT(connp);
+
+                if (htp_is_folding_char(connp->in_next_byte) == 0) {
+                    // Because we know this header is not folded, we
+                    // can process the buffer straight away.
+                    if (connp->cfg->process_request_header(connp, data, len) != HTP_OK) return HTP_ERROR;
+                } else {
+                    // Keep the partial header data for parsing later.
+                    connp->in_header = bstr_dup_mem(data, len);
+                    if (connp->in_header == NULL) return HTP_ERROR;
+                }
             } else {
                 // Folding; check that there's a previous header line to add to.
                 if (connp->in_header == NULL) {
@@ -436,7 +446,7 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     if (connp->in_header == NULL) return HTP_ERROR;
                 } else {
                     // Add to the existing header.
-                    bstr *bstr_add(bstr *bdestination, const bstr *bsource);
+                    bstr * bstr_add(bstr *bdestination, const bstr * bsource);
 
                     bstr *new_in_header = bstr_add_mem(connp->in_header, data, len);
                     if (new_in_header == NULL) return HTP_ERROR;
@@ -500,7 +510,7 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
             size_t len;
 
             htp_connp_req_consolidate_data(connp, &data, &len);
-            
+
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, __FUNCTION__, data, len);
             #endif
@@ -547,11 +557,11 @@ htp_status_t htp_connp_REQ_FINALIZE(htp_connp_t *connp) {
     if (rc != HTP_OK) return rc;
 
     if (connp->in_tx->is_protocol_0_9) {
-        connp->in_state = htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9;        
+        connp->in_state = htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9;
     } else {
         connp->in_state = htp_connp_REQ_IDLE;
     }
-    
+
     connp->in_tx = NULL;
 
     return HTP_OK;
@@ -565,11 +575,11 @@ htp_status_t htp_connp_REQ_IGNORE_DATA_AFTER_HTTP_0_9(htp_connp_t *connp) {
     if (bytes_left > 0) {
         connp->conn->flags |= HTP_CONN_HTTP_0_9_EXTRA;
     }
-    
+
     connp->in_current_read_offset += bytes_left;
     connp->in_current_consume_offset += bytes_left;
     connp->in_stream_offset += bytes_left;
-    
+
     return HTP_DATA;
 }
 
@@ -651,7 +661,7 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     }
 
     // Store the current chunk information    
-    connp->in_current_data = (unsigned char *)data;
+    connp->in_current_data = (unsigned char *) data;
     connp->in_current_len = len;
     connp->in_current_read_offset = 0;
     connp->in_current_consume_offset = 0;
@@ -700,11 +710,11 @@ int htp_connp_req_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
             }
         } else {
             // Do we need more data?
-            if ((rc == HTP_DATA)||(rc == HTP_DATA_BUFFER)) {
+            if ((rc == HTP_DATA) || (rc == HTP_DATA_BUFFER)) {
                 if (rc == HTP_DATA_BUFFER) {
                     htp_connp_req_buffer(connp);
                 }
-                
+
                 #ifdef HTP_DEBUG
                 fprintf(stderr, "htp_connp_req_data: returning HTP_STREAM_DATA\n");
                 #endif

@@ -402,12 +402,12 @@ void htp_log(htp_connp_t *connp, const char *file, int line, enum htp_log_level_
  * @return 0 or 1 for false and true, respectively. Returns -1 on error (NULL pointer or length zero).
  */
 int htp_connp_is_line_folded(unsigned char *data, size_t len) {
-    // Is there a line?
-    if ((data == NULL) || (len == 0)) {
-        return -1;
-    }
+    if ((data == NULL) || (len == 0)) return -1;
+    return htp_is_folding_char(data[0]);
+}
 
-    if (htp_is_lws(data[0])) return 1;
+int htp_is_folding_char(int c) {
+    if (htp_is_lws(c)) return 1;
     else return 0;
 }
 

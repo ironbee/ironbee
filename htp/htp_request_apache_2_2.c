@@ -48,14 +48,13 @@
  * @param[in] connp
  * @return HTP_OK or HTP_ERROR
  */
-htp_status_t htp_process_request_header_apache_2_2(htp_connp_t *connp) {
+htp_status_t htp_process_request_header_apache_2_2(htp_connp_t *connp, unsigned char *data, size_t len) {
     // Create a new header structure.
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) return HTP_ERROR;
 
     // Now try to parse the header.
-    if (htp_parse_request_header_apache_2_2(connp, h, bstr_ptr(connp->in_header),
-            bstr_len(connp->in_header)) != HTP_OK) {
+    if (htp_parse_request_header_apache_2_2(connp, h, data, len) != HTP_OK) {
         free(h);
         return HTP_ERROR;
     }

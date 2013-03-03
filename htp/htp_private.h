@@ -54,6 +54,13 @@ if ((X)->in_current_read_offset >= (X)->in_current_len) { \
     return HTP_DATA; \
 }
 
+#define IN_PEEK_NEXT(X) \
+if ((X)->in_current_read_offset >= (X)->in_current_len) { \
+    (X)->in_next_byte = -1; \
+} else { \
+    (X)->in_next_byte = (X)->in_current_data[(X)->in_current_read_offset]; \
+}
+
 #define IN_NEXT_BYTE(X) \
 if ((X)->in_current_read_offset < (X)->in_current_len) { \
     (X)->in_next_byte = (X)->in_current_data[(X)->in_current_read_offset]; \
@@ -182,7 +189,7 @@ struct htp_cfg_t {
     int (*parse_response_line)(htp_connp_t *connp);
 
     /** The function used for request header parsing. Depends on the personality. */
-    int (*process_request_header)(htp_connp_t *connp);
+    int (*process_request_header)(htp_connp_t *connp, unsigned char *data, size_t len);
 
     /** The function used for response header parsing. Depends on the personality. */
     int (*process_response_header)(htp_connp_t *connp);
@@ -407,11 +414,11 @@ htp_status_t htp_connp_RES_FINALIZE(htp_connp_t *connp);
 
 int htp_parse_request_line_generic(htp_connp_t *connp);
 int htp_parse_request_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
-int htp_process_request_header_generic(htp_connp_t *);
+int htp_process_request_header_generic(htp_connp_t *, unsigned char *data, size_t len);
 
 int htp_parse_request_header_apache_2_2(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
 int htp_parse_request_line_apache_2_2(htp_connp_t *connp);
-int htp_process_request_header_apache_2_2(htp_connp_t *);
+int htp_process_request_header_apache_2_2(htp_connp_t *, unsigned char *data, size_t len);
 
 int htp_parse_response_line_generic(htp_connp_t *connp);
 int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
@@ -434,6 +441,7 @@ int htp_is_line_empty(unsigned char *data, size_t len);
 int htp_is_line_whitespace(unsigned char *data, size_t len);
 
 int htp_connp_is_line_folded(unsigned char *data, size_t len);
+int htp_is_folding_char(int c);
 int htp_connp_is_line_terminator(htp_connp_t *connp, unsigned char *data, size_t len);
 int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t len);
 
