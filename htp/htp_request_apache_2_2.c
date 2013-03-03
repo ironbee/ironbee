@@ -49,6 +49,7 @@
  * @return HTP_OK or HTP_ERROR
  */
 int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
+/*
     bstr *tempstr = NULL;
     unsigned char *data = NULL;
     size_t len = 0;
@@ -173,7 +174,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *connp) {
     }
 
     bstr_free(tempstr);
-
+*/
     return HTP_OK;
 }
 

@@ -355,72 +355,77 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
     for (;;) {
         IN_COPY_BYTE_OR_RETURN(connp);
 
+        /*
         // Allocate structure to hold one header line
         if (connp->in_header_line == NULL) {
             connp->in_header_line = calloc(1, sizeof (htp_header_line_t));
             if (connp->in_header_line == NULL) return HTP_ERROR;
             connp->in_header_line->first_nul_offset = -1;
         }
+        */
 
+        /*
         // Keep track of NUL bytes
         if (connp->in_next_byte == 0) {
             // Store the offset of the first NUL
             if (connp->in_header_line->has_nulls == 0) {
-                connp->in_header_line->first_nul_offset = connp->in_line_len;
+                connp->in_header_line->first_nul_offset = htp_connp_req_data_len(connp);
             }
 
             // Remember how many NULs there were
             connp->in_header_line->flags |= HTP_FIELD_RAW_NUL;
             connp->in_header_line->has_nulls++;
         }
+        */
 
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {
+            unsigned char *data;
+            size_t len;
+
+            htp_connp_req_consolidate_data(connp, &data, &len);
+            
             #ifdef HTP_DEBUG
-            fprint_raw_data(stderr, __FUNCTION__, connp->in_line, connp->in_line_len);
+            fprint_raw_data(stderr, __FUNCTION__, data, len);
             #endif
 
+            // Keep the raw header line, if asked to.
+            // XXX
+            bstr *header_line = bstr_dup_mem(data, len);
+            if (header_line == NULL) return HTP_ERROR;
+            htp_list_add(connp->in_tx->request_header_lines, header_line);
+
             // Should we terminate headers?
-            if (htp_connp_is_line_terminator(connp, connp->in_line, connp->in_line_len)) {
-                if (connp->in_tx->request_headers_sep != NULL) {
-                    bstr_free(connp->in_tx->request_headers_sep);
-                    connp->in_tx->request_headers_sep = NULL;
-                }
-
-                // Terminator line
-                connp->in_tx->request_headers_sep = bstr_dup_mem(connp->in_line, connp->in_line_len);
-                if (connp->in_tx->request_headers_sep == NULL) {
-                    return HTP_ERROR;
-                }
-
+            if (htp_connp_is_line_terminator(connp, data, len)) {
                 // Parse previous header, if any
-                if (connp->in_header_line_index != -1) {
-                    if (connp->cfg->process_request_header(connp) != HTP_OK) {
-                        // Note: downstream responsible for error logging
-                        return HTP_ERROR;
-                    }
-
-                    // Reset index
-                    connp->in_header_line_index = -1;
-                }
+                //if (connp->in_header_line_index != -1) {
+                //    if (connp->cfg->process_request_header(connp) != HTP_OK) {
+                //        // Note: downstream responsible for error logging
+                //        return HTP_ERROR;
+                //    }
+                //
+                //    // Reset index
+                //    connp->in_header_line_index = -1;
+                //}
 
                 // Cleanup
                 htp_connp_req_clear_buffer(connp);
 
-                free(connp->in_header_line);
-                connp->in_header_line = NULL;
+                //free(connp->in_header_line);
+                //connp->in_header_line = NULL;
 
                 // We've seen all request headers
                 return htp_tx_state_request_headers(connp->in_tx);
             }
 
             // Prepare line for consumption
-            int chomp_result = htp_chomp(connp->in_line, &connp->in_line_len);
+            htp_chomp(data, &len);
 
             // Check for header folding
-            if (htp_connp_is_line_folded(connp->in_line, connp->in_line_len) == 0) {
+            if (htp_connp_is_line_folded(data, len) == 0) {
                 // New header line
 
+                /*
                 // Parse previous header, if any
                 if (connp->in_header_line_index != -1) {
                     if (connp->cfg->process_request_header(connp) != HTP_OK) {
@@ -434,8 +439,10 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
 
                 // Remember the index of the fist header line
                 connp->in_header_line_index = connp->in_header_line_counter;
+                */
             } else {
                 // Folding; check that there's a previous header line to add to
+                /*
                 if (connp->in_header_line_index == -1) {
                     if (!(connp->in_tx->flags & HTP_INVALID_FOLDING)) {
                         connp->in_tx->flags |= HTP_INVALID_FOLDING;
@@ -443,24 +450,10 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                                 "Invalid request field folding");
                     }
                 }
+                */
             }
 
-            // Add the raw header line to the list
-            connp->in_header_line->line = bstr_dup_mem(connp->in_line, connp->in_line_len + chomp_result);
-            if (connp->in_header_line->line == NULL) {
-                return HTP_ERROR;
-            }
-
-            htp_list_add(connp->in_tx->request_header_lines, connp->in_header_line);
-            connp->in_header_line = NULL;
-
-            // Cleanup for the next line
             htp_connp_req_clear_buffer(connp);
-            if (connp->in_header_line_index == -1) {
-                connp->in_header_line_index = connp->in_header_line_counter;
-            }
-
-            connp->in_header_line_counter++;
         }
     }
 

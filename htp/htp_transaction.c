@@ -81,7 +81,6 @@ void htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(tx->request_uri);
     bstr_free(tx->request_uri_normalized);
     bstr_free(tx->request_protocol);
-    bstr_free(tx->request_headers_sep);
 
     if (tx->parsed_uri != NULL) {
         bstr_free(tx->parsed_uri->scheme);
@@ -110,12 +109,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     // Destroy request_header_lines.
     if (tx->request_header_lines != NULL) {
-        for (int i = 0, n = htp_list_size(tx->request_header_lines); i < n; i++) {
-            htp_header_line_t *hl = htp_list_get(tx->request_header_lines, i);
-            bstr_free(hl->line);
-            // No need to destroy hl->header because
-            // htp_header_line_t does not own it.
-            free(hl);
+        for (size_t i = 0, n = htp_list_size(tx->request_header_lines); i < n; i++) {
+            bstr *h = htp_list_get(tx->request_header_lines, i);
+            bstr_free(h);
         }
 
         htp_list_destroy(tx->request_header_lines);
@@ -125,7 +121,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     // Destroy request_headers.
     if (tx->request_headers != NULL) {
         htp_header_t *h = NULL;
-        for (int i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
+        for (size_t i = 0, n = htp_table_size(tx->request_headers); i < n; i++) {
             h = htp_table_get_index(tx->request_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
@@ -151,7 +147,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     // Destroy response_header_lines.
     if (tx->response_header_lines != NULL) {
-        for (int i = 0, n = htp_list_size(tx->response_header_lines); i < n; i++) {
+        for (size_t i = 0, n = htp_list_size(tx->response_header_lines); i < n; i++) {
             htp_header_line_t *hl = htp_list_get(tx->response_header_lines, i);
             bstr_free(hl->line);
             // No need to destroy hl->header because
@@ -166,7 +162,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     // Destroy response headers.
     if (tx->response_headers != NULL) {
         htp_header_t *h = NULL;
-        for (int i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
+        for (size_t i = 0, n = htp_table_size(tx->response_headers); i < n; i++) {
             h = htp_table_get_index(tx->response_headers, i, NULL);
             bstr_free(h->name);
             bstr_free(h->value);
@@ -200,7 +196,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     // Request parameters
 
     htp_param_t *param = NULL;
-    for (int i = 0, n = htp_table_size(tx->request_params); i < n; i++) {
+    for (size_t i = 0, n = htp_table_size(tx->request_params); i < n; i++) {
         param = htp_table_get_index(tx->request_params, i, NULL);
         free(param->name);
         free(param->value);
@@ -213,7 +209,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
 
     if (tx->request_cookies != NULL) {
         bstr *b = NULL;
-        for (int i = 0, n = htp_table_size(tx->request_cookies); i < n; i++) {
+        for (size_t i = 0, n = htp_table_size(tx->request_cookies); i < n; i++) {
             b = htp_table_get_index(tx->request_cookies, i, NULL);
             bstr_free(b);
         }
