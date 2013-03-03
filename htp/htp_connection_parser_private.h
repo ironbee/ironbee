@@ -120,13 +120,13 @@ struct htp_connp_t {
     size_t in_buf_size;
 
     /** Pointer to the request line buffer. */
-    unsigned char *in_line;
+    //unsigned char *in_line;
 
     /** Size of the request line buffer. */
-    size_t in_line_size;
+    //size_t in_line_size;
 
     /** Length of the current request line. */
-    size_t in_line_len;
+    //size_t in_line_len;
 
     /** Ongoing inbound transaction. */
     htp_tx_t *in_tx;

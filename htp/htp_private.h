@@ -79,7 +79,9 @@ if ((X)->in_current_read_offset < (X)->in_current_len) { \
     (X)->in_stream_offset++; \
 } else { \
     return HTP_DATA_BUFFER; \
-} \
+}
+
+/*
 \
 if ((X)->in_line_len < (X)->in_line_size) { \
     (X)->in_line[(X)->in_line_len] = (X)->in_next_byte; \
@@ -92,6 +94,7 @@ if ((X)->in_line_len < (X)->in_line_size) { \
     htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request field over hard limit"); \
     return HTP_ERROR; \
 }
+*/
 
 #define OUT_TEST_NEXT_BYTE_OR_RETURN(X) \
 if ((X)->out_current_offset >= (X)->out_current_len) { \

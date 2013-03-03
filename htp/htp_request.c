@@ -231,14 +231,19 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
     for (;;) {
         IN_COPY_BYTE_OR_RETURN(connp);
 
-        connp->in_tx->request_message_len++;
-
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {
-            htp_chomp(connp->in_line, &connp->in_line_len);
+            unsigned char *data;
+            size_t len;
+
+            htp_connp_req_consolidate_data(connp, &data, &len);
+
+            connp->in_tx->request_message_len += len;
+            
+            htp_chomp(data, &len);
 
             // Extract chunk length.
-            connp->in_chunked_length = htp_parse_chunked_length(connp->in_line, connp->in_line_len);
+            connp->in_chunked_length = htp_parse_chunked_length(data, len);
 
             htp_connp_req_clear_buffer(connp);
 
@@ -253,8 +258,7 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
                 connp->in_tx->progress = HTP_REQUEST_TRAILER;
             } else {
                 // Invalid chunk length.
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                        "Request chunk encoding: Invalid chunk length");
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request chunk encoding: Invalid chunk length");
                 return HTP_ERROR;
             }
 

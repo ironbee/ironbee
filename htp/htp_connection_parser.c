@@ -75,15 +75,6 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
 
     // Request parsing
 
-    connp->in_line_size = cfg->field_limit_hard;
-    connp->in_line_len = 0;
-    connp->in_line = malloc(connp->in_line_size);
-    if (connp->in_line == NULL) {
-        htp_conn_destroy(connp->conn);
-        free(connp);
-        return NULL;
-    }
-
     //connp->in_header_line_index = -1;
     connp->in_state = htp_connp_REQ_IDLE;
 
@@ -93,7 +84,6 @@ htp_connp_t *htp_connp_create(htp_cfg_t *cfg) {
     connp->out_line_len = 0;
     connp->out_line = malloc(connp->out_line_size);
     if (connp->out_line == NULL) {
-        free(connp->in_line);
         htp_conn_destroy(connp->conn);
         free(connp);
         return NULL;
@@ -114,20 +104,6 @@ void htp_connp_destroy(htp_connp_t *connp) {
     if (connp->out_decompressor != NULL) {
         connp->out_decompressor->destroy(connp->out_decompressor);
         connp->out_decompressor = NULL;
-    }
-
-    /*
-    if (connp->in_header_line != NULL) {
-        if (connp->in_header_line->line != NULL) {
-            free(connp->in_header_line->line);
-        }
-
-        free(connp->in_header_line);
-    }
-    */
-
-    if (connp->in_line != NULL) {
-        free(connp->in_line);
     }
 
     if (connp->out_header_line != NULL) {
