@@ -264,6 +264,14 @@ void htp_config_register_urlencoded_parser(htp_cfg_t *cfg);
 void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
 
 /**
+ * Configures the desired log level.
+ * 
+ * @param cfg
+ * @param log_level
+ */
+void htp_config_set_log_level(htp_cfg_t *cfg, enum htp_log_level_t log_level);
+
+/**
  * Whether to generate the request_uri_normalized field.
  *
  * @param[in] cfg
