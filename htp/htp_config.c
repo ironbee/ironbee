@@ -149,8 +149,8 @@ htp_cfg_t *htp_config_create(void) {
     if (cfg == NULL) return NULL;
 
     // Default settings
-    cfg->field_limit_hard = HTP_HEADER_LIMIT_HARD;
-    cfg->field_limit_soft = HTP_HEADER_LIMIT_SOFT;
+    cfg->field_limit_hard = HTP_FIELD_LIMIT_HARD;
+    cfg->field_limit_soft = HTP_FIELD_LIMIT_SOFT;
     cfg->log_level = HTP_LOG_NOTICE;
     cfg->bestfit_map = bestfit_1252;
     cfg->bestfit_replacement_char = '?';
