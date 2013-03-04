@@ -293,7 +293,7 @@ void htp_config_set_log_level(htp_cfg_t *cfg, enum htp_log_level_t log_level);
 void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate);
 
 /**
- * Enable or disable the parsing of request cookies.
+ * Enable or disable the parsing of request cookies. Cookies are parsed by default.
  *
  * @param[in] cfg
  * @param[in] parse_request_cookies

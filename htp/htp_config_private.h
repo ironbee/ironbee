@@ -181,6 +181,7 @@ struct htp_cfg_t {
     /** Not fully implemented at the moment. */
     char *internal_encoding;
 
+    /** Whether to parse request cookies. */
     int parse_request_cookies;
 
     int parse_request_http_authentication;
