@@ -65,8 +65,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->parsed_uri = calloc(1, sizeof (htp_uri_t));
     tx->parsed_uri->port_number = -1;
     tx->parsed_uri_incomplete = calloc(1, sizeof (htp_uri_t));
-
-    tx->response_header_lines = htp_list_create(32);
+    
     tx->response_headers = htp_table_create(32);
     tx->response_content_length = -1;
 
@@ -124,21 +123,6 @@ void htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(tx->response_protocol);
     bstr_free(tx->response_status);
     bstr_free(tx->response_message);
-    bstr_free(tx->response_headers_sep);
-
-    // Destroy response_header_lines.
-    if (tx->response_header_lines != NULL) {
-        for (size_t i = 0, n = htp_list_size(tx->response_header_lines); i < n; i++) {
-            htp_header_line_t *hl = htp_list_get(tx->response_header_lines, i);
-            bstr_free(hl->line);
-            // No need to destroy hl->header because
-            // htp_header_line_t does not own it.
-            free(hl);
-        }
-
-        htp_list_destroy(tx->response_header_lines);
-        tx->response_header_lines = NULL;
-    }
 
     // Destroy response headers.
     if (tx->response_headers != NULL) {

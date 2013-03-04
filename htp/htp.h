@@ -163,45 +163,6 @@ struct htp_log_t {
 };
 
 /**
- * Represents a single request or response header line. One header can span
- * many lines. Although applications care only about headers, at the moment
- * we also keep track of individual header lines. This will likely go away in
- * the near future, because no one really cares about it, yet storage takes
- * valuable resources.
- */
-struct htp_header_line_t {
-    /** Line contents. */
-    bstr *line;
-
-    /** Offset at which header name begins, if the line contains a header name. */
-    size_t name_offset;
-
-    /** Header name length, valid only if the line contains a header name. */
-    size_t name_len;
-
-    /** Offset at which header value begins, if the value begins on this line. */
-    size_t value_offset;
-
-    /** Header value length. */
-    size_t value_len;
-
-    /** How many NUL bytes are there in this header line? */
-    unsigned int has_nulls;
-
-    /** The offset of the first NUL byte, or -1. */
-    int first_nul_offset;
-
-    /**
-     * Parsing flags; a combination of HTP_FIELD_INVALID, HTP_FIELD_LONG,
-     * HTP_FIELD_NUL_BYTE, HTP_FIELD_REPEATED, and HTP_FIELD_FOLDED.
-     */
-    uint64_t flags;
-    
-    /** Header that uses this line. */
-    htp_header_t *header;
-};
-
-/**
  * Represents a single request or response header.
  */
 struct htp_header_t {
@@ -467,28 +428,10 @@ struct htp_tx_t {
     bstr *response_message;
 
     /** Have we seen the server respond with a 100 response? */
-    int seen_100continue;   
-
-    /** Original response header lines. */
-    htp_list_t *response_header_lines;
+    int seen_100continue;      
 
     /** Parsed response headers. */
-    htp_table_t *response_headers;
-
-    /**
-     * Contains raw response headers. This field is generated on demand, use
-     * htp_tx_get_response_headers_raw() to get it.
-     */
-    bstr *response_headers_raw;
-
-    /**
-     * How many response header lines have been included in the raw
-     * buffer (above).
-     */
-    size_t response_headers_raw_lines;
-
-    /** Contains response header separator. */
-    bstr *response_headers_sep;
+    htp_table_t *response_headers;   
 
     /* HTTP 1.1 RFC
      * 

@@ -91,47 +91,44 @@ if ((X)->in_current_read_offset < (X)->in_current_len) { \
 }
 
 #define OUT_TEST_NEXT_BYTE_OR_RETURN(X) \
-if ((X)->out_current_offset >= (X)->out_current_len) { \
+if ((X)->out_current_read_offset >= (X)->out_current_len) { \
     return HTP_DATA; \
 }
 
+#define OUT_PEEK_NEXT(X) \
+if ((X)->out_current_read_offset >= (X)->out_current_len) { \
+    (X)->out_next_byte = -1; \
+} else { \
+    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_read_offset]; \
+}
+
 #define OUT_NEXT_BYTE(X) \
-if ((X)->out_current_offset < (X)->out_current_len) { \
-    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_offset]; \
-    (X)->out_current_offset++; \
+if ((X)->out_current_read_offset < (X)->out_current_len) { \
+    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_read_offset]; \
+    (X)->out_current_read_offset++; \
+    (X)->out_current_consume_offset++; \
     (X)->out_stream_offset++; \
 } else { \
     (X)->out_next_byte = -1; \
 }
 
 #define OUT_NEXT_BYTE_OR_RETURN(X) \
-if ((X)->out_current_offset < (X)->out_current_len) { \
-    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_offset]; \
-    (X)->out_current_offset++; \
+if ((X)->out_current_read_offset < (X)->out_current_len) { \
+    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_read_offset]; \
+    (X)->out_current_read_offset++; \
+    (X)->out_current_consume_offset++; \
     (X)->out_stream_offset++; \
 } else { \
     return HTP_DATA; \
 }
 
 #define OUT_COPY_BYTE_OR_RETURN(X) \
-if ((X)->out_current_offset < (X)->out_current_len) { \
-    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_offset]; \
-    (X)->out_current_offset++; \
+if ((X)->out_current_read_offset < (X)->out_current_len) { \
+    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_read_offset]; \
+    (X)->out_current_read_offset++; \
     (X)->out_stream_offset++; \
 } else { \
-    return HTP_DATA; \
-} \
-\
-if ((X)->out_line_len < (X)->out_line_size) { \
-    (X)->out_line[(X)->out_line_len] = (X)->out_next_byte; \
-    (X)->out_line_len++; \
-    if (((X)->out_line_len == HTP_HEADER_LIMIT_SOFT)&&(!((X)->out_tx->flags & HTP_FIELD_LONG))) { \
-        (X)->out_tx->flags |= HTP_FIELD_LONG; \
-        htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Response field over soft limit"); \
-    } \
-} else { \
-    htp_log((X), HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Response field over hard limit"); \
-    return HTP_ERROR; \
+    return HTP_DATA_BUFFER; \
 }
 
 #ifndef CR
@@ -192,7 +189,7 @@ struct htp_cfg_t {
     int (*process_request_header)(htp_connp_t *connp, unsigned char *data, size_t len);
 
     /** The function used for response header parsing. Depends on the personality. */
-    int (*process_response_header)(htp_connp_t *connp);
+    int (*process_response_header)(htp_connp_t *connp, unsigned char *data, size_t len);
 
     /** The function to use to transform parameters after parsing. */
     int (*parameter_processor)(htp_param_t *param);
@@ -422,7 +419,7 @@ int htp_process_request_header_apache_2_2(htp_connp_t *, unsigned char *data, si
 
 int htp_parse_response_line_generic(htp_connp_t *connp);
 int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsigned char *data, size_t len);
-int htp_process_response_header_generic(htp_connp_t *connp);
+int htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len);
 
 
 // Utility functions

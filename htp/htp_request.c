@@ -295,12 +295,11 @@ htp_status_t htp_connp_REQ_BODY_CHUNKED_LENGTH(htp_connp_t *connp) {
 
             htp_chomp(data, &len);
 
-            // Extract chunk length.
             connp->in_chunked_length = htp_parse_chunked_length(data, len);
 
             htp_connp_req_clear_buffer(connp);
 
-            // Handle chunk length
+            // Handle chunk length.
             if (connp->in_chunked_length > 0) {
                 // More data available.
                 // TODO Add a check (flag) for excessive chunk length.
@@ -434,8 +433,7 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     bstr_free(connp->in_header);
                     connp->in_header = NULL;
                 }
-
-                // Cleanup
+                
                 htp_connp_req_clear_buffer(connp);
 
                 // We've seen all the request headers.
@@ -460,8 +458,7 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                 IN_PEEK_NEXT(connp);
 
                 if (htp_is_folding_char(connp->in_next_byte) == 0) {
-                    // Because we know this header is not folded, we
-                    // can process the buffer straight away.
+                    // Because we know this header is not folded, we can process the buffer straight away.
                     if (connp->cfg->process_request_header(connp, data, len) != HTP_OK) return HTP_ERROR;
                 } else {
                     // Keep the partial header data for parsing later.
@@ -483,9 +480,7 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
                     connp->in_header = bstr_dup_mem(data, len);
                     if (connp->in_header == NULL) return HTP_ERROR;
                 } else {
-                    // Add to the existing header.
-                    bstr * bstr_add(bstr *bdestination, const bstr * bsource);
-
+                    // Add to the existing header.                    
                     bstr *new_in_header = bstr_add_mem(connp->in_header, data, len);
                     if (new_in_header == NULL) return HTP_ERROR;
                     connp->in_header = new_in_header;
@@ -565,19 +560,19 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
                 return HTP_OK;
             }
 
-            // Process request line
+            // Process request line.
 
             connp->in_tx->request_line_raw = bstr_dup_mem(data, len);
             if (connp->in_tx->request_line_raw == NULL) return HTP_ERROR;
 
             htp_chomp(data, &len);
+            
             connp->in_tx->request_line = bstr_dup_mem(data, len);
             if (connp->in_tx->request_line == NULL) return HTP_ERROR;
-
-            // Parse request line
+            
             if (connp->cfg->parse_request_line(connp) != HTP_OK) return HTP_ERROR;
 
-            // Finalize request line parsing
+            // Finalize request line parsing.
 
             if (htp_tx_state_request_line(connp->in_tx) != HTP_OK) return HTP_ERROR;
 

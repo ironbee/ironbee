@@ -99,6 +99,7 @@ struct htp_connp_t {
     /** The offset of the next byte in the request data chunk to read. */
     int64_t in_current_read_offset;
 
+    // XXX
     int64_t in_current_consume_offset;
 
     /** How many data chunks does the inbound connection stream consist of? */
@@ -173,7 +174,10 @@ struct htp_connp_t {
     int64_t out_current_len;
 
     /** The offset of the next byte in the response data chunk to consume. */
-    int64_t out_current_offset;
+    int64_t out_current_read_offset;
+
+    // XXX
+    int64_t out_current_consume_offset;
 
     /** The offset, in the entire connection stream, of the next response byte. */
     int64_t out_stream_offset;
@@ -181,31 +185,21 @@ struct htp_connp_t {
     /** The value of the response byte currently being processed. */
     int out_next_byte;
 
-    /** Pointer to the response line buffer. */
-    unsigned char *out_line;
+    /** Used to buffer a line of outbound data when buffering cannot be avoided. */
+    unsigned char *out_buf;
 
-    /** Size of the response line buffer. */
-    size_t out_line_size;
+    /** Stores the size of the buffer. Valid only when htp_tx_t::out_buf is not NULL. */
+    size_t out_buf_size;
 
-    /** Length of the current response line. */
-    size_t out_line_len;
+    /**
+     * Stores the current value of a folded response header. Such headers span
+     * multiple lines, and are processed only when all data is available.
+     */
+    bstr *out_header;
 
     /** Ongoing outbound transaction */
     htp_tx_t *out_tx;
-
-    /** The response header line currently being processed. */
-    htp_header_line_t *out_header_line;
-
-    /**
-     * The index, in the structure holding all response header lines, of the
-     * line with which the current header begins. The header lines are
-     * kept in the transaction structure.
-     */
-    int out_header_line_index;
-
-    /** How many lines are there in the current response header? */
-    int out_header_line_counter;
-
+   
     /**
      * The length of the current response body as presented in the
      * Content-Length response header.

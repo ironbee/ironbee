@@ -52,7 +52,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
     unsigned char *data = (unsigned char *) bstr_ptr(tx->response_line);
     size_t len = bstr_len(tx->response_line);
     size_t pos = 0;
-    
+
     // Ignore whitespace at the beginning of the line
     while ((pos < len) && (htp_is_space(data[pos]))) {
         pos++;
@@ -70,7 +70,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
         return HTP_ERROR;
     }
 
-    tx->response_protocol_number = htp_parse_protocol(tx->response_protocol);        
+    tx->response_protocol_number = htp_parse_protocol(tx->response_protocol);
 
     #ifdef HTP_DEBUG
     fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->response_protocol), bstr_len(tx->response_protocol));
@@ -94,7 +94,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
         return HTP_ERROR;
     }
 
-    tx->response_status_number = htp_parse_status(tx->response_status);    
+    tx->response_status_number = htp_parse_status(tx->response_status);
 
     #ifdef HTP_DEBUG
     fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->response_status), bstr_len(tx->response_status));
@@ -130,7 +130,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
     size_t name_start, name_end;
     size_t value_start, value_end;
 
-    htp_chomp((unsigned char *)data, &len);
+    htp_chomp((unsigned char *) data, &len);
 
     name_start = 0;
 
@@ -145,7 +145,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
         if (!(connp->out_tx->flags & HTP_FIELD_UNPARSEABLE)) {
             connp->out_tx->flags |= HTP_FIELD_UNPARSEABLE;
             // Only log once per transaction
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request field invalid: colon missing");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response field invalid: colon missing.");
         }
 
         return HTP_ERROR;
@@ -158,7 +158,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
         if (!(connp->out_tx->flags & HTP_FIELD_INVALID)) {
             connp->out_tx->flags |= HTP_FIELD_INVALID;
             // Only log once per transaction
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request field invalid: empty name");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response field invalid: empty name.");
         }
     }
 
@@ -174,7 +174,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
 
         if (!(connp->out_tx->flags & HTP_FIELD_INVALID)) {
             connp->out_tx->flags |= HTP_FIELD_INVALID;
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request field invalid: LWS after name");
+            htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response field invalid: LWS after name.");
         }
     }
 
@@ -211,7 +211,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
 
             if (!(connp->out_tx->flags & HTP_FIELD_INVALID)) {
                 connp->out_tx->flags |= HTP_FIELD_INVALID;
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Request header name is not a token");
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Response header name is not a token.");
             }
 
             break;
@@ -223,7 +223,7 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
     // Now extract the name and the value
     h->name = bstr_dup_mem(data + name_start, name_end - name_start);
     h->value = bstr_dup_mem(data + value_start, value_end - value_start);
-    if ((h->name == NULL)||(h->value == NULL)) {
+    if ((h->name == NULL) || (h->value == NULL)) {
         bstr_free(h->name);
         bstr_free(h->value);
         return HTP_ERROR;
@@ -239,117 +239,51 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
  * @param[in] connp
  * @return HTP status
  */
-int htp_process_response_header_generic(htp_connp_t *connp) {
-    bstr *tempstr = NULL;
-    unsigned char *data = NULL;
-    size_t len = 0;
-
-    // Parse header
+int htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len) {
+    // Create a new header structure.
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
     if (h == NULL) return HTP_ERROR;
 
-    // Ensure we have the necessary header data in a single buffer
-    if (connp->out_header_line_index + 1 == connp->out_header_line_counter) {
-        // Single line
-        htp_header_line_t *hl = htp_list_get(connp->out_tx->response_header_lines,
-            connp->out_header_line_index);
-        if (hl == NULL) {
-            // Internal error
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                "Process response header (generic): Internal error");
-            free(h);
-            return HTP_ERROR;
-        }
-
-        data = bstr_ptr(hl->line);
-        len = bstr_len(hl->line);
-        hl->header = h;
-    } else {
-        // Multiple lines (folded)
-        int i = 0;
-
-        for (i = connp->out_header_line_index; i < connp->out_header_line_counter; i++) {
-            htp_header_line_t *hl = htp_list_get(connp->out_tx->response_header_lines, i);
-            len += bstr_len(hl->line);
-        }
-
-        tempstr = bstr_alloc(len);
-        if (tempstr == NULL) {
-            htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
-                "Process reqsponse header (generic): Failed to allocate bstring of %d bytes", len);
-            free(h);
-            return HTP_ERROR;
-        }
-
-        for (i = connp->out_header_line_index; i < connp->out_header_line_counter; i++) {
-            htp_header_line_t *hl = htp_list_get(connp->out_tx->response_header_lines, i);
-            unsigned char *line = bstr_ptr(hl->line);
-            size_t llen = bstr_len(hl->line);
-            htp_chomp((unsigned char *)line, &llen);
-            bstr_add_mem_noex(tempstr, line, llen);
-            hl->header = h;
-
-            if (i != connp->out_header_line_index) {
-                hl->flags |= HTP_FIELD_FOLDED;
-            }
-        }
-
-        h->flags |= HTP_FIELD_FOLDED;
-
-        data = bstr_ptr(tempstr);
-        len = bstr_len(tempstr);
-    }
-
     if (htp_parse_response_header_generic(connp, h, data, len) != HTP_OK) {
-        // Note: downstream responsible for error logging
-        bstr_free(tempstr);
-        free(h);        
+        free(h);
         return HTP_ERROR;
     }
+
+    #ifdef HTP_DEBUG
+    fprint_bstr(stderr, "Header name", h->name);
+    fprint_bstr(stderr, "Header value", h->value);
+    #endif
 
     // Do we already have a header with the same name?
     htp_header_t *h_existing = htp_table_get(connp->out_tx->response_headers, h->name);
     if (h_existing != NULL) {
-        // repeated header
-        int i = 0;
-
-        // TODO Do we want to keep a list of the headers that are
+        // TODO Do we want to have a list of the headers that are
         //      allowed to be combined in this way?
 
-        // Add to existing header
-        bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
-            + 2 + bstr_len(h->value));
+        // Add to the existing header.
+        bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value) + 2 + bstr_len(h->value));
         if (new_value == NULL) {
             bstr_free(h->name);
             bstr_free(h->value);
-            free(h);            
-            bstr_free(tempstr);
+            free(h);
             return HTP_ERROR;
         }
 
         h_existing->value = new_value;
-        bstr_add_mem_noex(h_existing->value, (unsigned char *)", ", 2);
+        bstr_add_mem_noex(h_existing->value, (unsigned char *) ", ", 2);
         bstr_add_noex(h_existing->value, h->value);
 
-        // replace the header references in all lines
-        for (i = connp->out_header_line_index; i < connp->out_header_line_counter; i++) {
-          htp_header_line_t *hl = htp_list_get(connp->out_tx->response_header_lines, i);
-          hl->header = h_existing;
-        }
-
-        // The header is no longer needed
+        // The new header structure is no longer needed.
         bstr_free(h->name);
         bstr_free(h->value);
         free(h);
 
-        // Keep track of same-name headers
+        // Keep track of repeated same-name headers.
         h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
-        // Add as a new header
+        // Add as a new header.
         htp_table_add(connp->out_tx->response_headers, h->name, h);
     }
-
-    bstr_free(tempstr);
-
+   
     return HTP_OK;
 }
