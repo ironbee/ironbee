@@ -75,7 +75,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
 
     #ifdef HTP_DEBUG
     fprint_raw_data(stderr, "Response protocol", bstr_ptr(tx->response_protocol), bstr_len(tx->response_protocol));
-    fprintf(stderr, "Response protocol number: %d", tx->response_protocol_number);
+    fprintf(stderr, "Response protocol number: %d\n", tx->response_protocol_number);
     #endif
 
     // Ignore whitespace after the response protocol.
@@ -95,7 +95,7 @@ int htp_parse_response_line_generic(htp_connp_t *connp) {
 
     #ifdef HTP_DEBUG
     fprint_raw_data(stderr, "Response status (as text)", bstr_ptr(tx->response_status), bstr_len(tx->response_status));
-    fprintf(stderr, "Response status number: %d", tx->response_status_number);
+    fprintf(stderr, "Response status number: %d\n", tx->response_status_number);
     #endif
 
     // Ignore whitespace that follows the status code.
