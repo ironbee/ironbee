@@ -364,20 +364,7 @@ struct htp_tx_t {
     size_t request_header_lines_no_trailers;
 
     /** Parsed request headers. */
-    htp_table_t *request_headers;
-
-    /** Contains raw request headers. This field is generated on demand, use
-     *  htp_tx_get_request_headers_raw() to get it.
-     */
-    bstr *request_headers_raw;
-
-    /** How many request header lines have been included in the raw
-     *  buffer (above).
-     */
-    size_t request_headers_raw_lines;
-
-    /** Contains request header separator. */
-    bstr *request_headers_sep;
+    htp_table_t *request_headers;   
 
     /**
      * Request transfer coding. Can be one of HTP_CODING_UNKNOWN (body presence not

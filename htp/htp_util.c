@@ -2203,53 +2203,6 @@ int htp_treat_response_line_as_body(htp_tx_t *tx) {
 }
 
 /**
- * Construct a bstr that contains the raw request headers.
- *
- * @param[in] tx
- * @return
- */
-bstr *htp_tx_generate_request_headers_raw(htp_tx_t *tx) {
-    bstr *request_headers_raw = NULL;
-    size_t len = 0;
-
-    for (size_t i = 0; i < htp_list_size(tx->request_header_lines); i++) {
-        bstr *h = htp_list_get(tx->request_header_lines, i);
-        len += bstr_len(h);
-    }
-
-    request_headers_raw = bstr_alloc(len);
-    if (request_headers_raw == NULL) return NULL;
-
-    for (size_t i = 0; i < htp_list_size(tx->request_header_lines); i++) {
-        bstr *h = htp_list_get(tx->request_header_lines, i);
-        bstr_add_noex(request_headers_raw, h);
-    }
-
-    return request_headers_raw;
-}
-
-bstr *htp_tx_get_request_headers_raw(htp_tx_t *tx) {
-    // Check that we are not called before we have any headers.
-    if (tx->progress < HTP_REQUEST_HEADERS) return NULL;
-
-    if (tx->request_headers_raw == NULL) {
-        tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
-        tx->request_headers_raw_lines = htp_list_size(tx->request_header_lines);
-    } else {
-        // Check that the buffer we have is not obsolete, which could
-        // happen if we're called while we're processing the headers.
-        if (tx->request_headers_raw_lines < htp_list_size(tx->request_header_lines)) {
-            // Rebuild the buffer.
-            bstr_free(tx->request_headers_raw);
-            tx->request_headers_raw = htp_tx_generate_request_headers_raw(tx);
-            tx->request_headers_raw_lines = htp_list_size(tx->request_header_lines);
-        }
-    }
-
-    return tx->request_headers_raw;
-}
-
-/**
  * Construct a bstr that contains the raw response headers.
  *
  * @param[in] tx
