@@ -70,6 +70,7 @@ ib_status_t sqltfn_normalize_pg_tfn(ib_engine_t *ib,
     char *buf_out;
     char *buf_out_end;
     size_t buf_out_len;
+    size_t lead_len = 0;
     ib_status_t rc;
     int ret;
 
@@ -118,9 +119,16 @@ ib_status_t sqltfn_normalize_pg_tfn(ib_engine_t *ib,
         buf_in_len = ib_bytestr_length(bs_in) - (buf_in_start - buf_in);
     }
 
+    /* Copy the leading string if one exists. */
+    if (buf_in_start != buf_in) {
+        lead_len = buf_in_start - buf_in;
+        memcpy(buf_out, buf_in, lead_len);
+        buf_out_end += lead_len;
+    }
+
     /* Normalize. */
     ret = sqltfn_normalize_pg_ex(buf_in_start, buf_in_len,
-                                 &buf_out, &buf_out_len);
+                                 &buf_out_end, &buf_out_len);
     if (ret < 0) {
         return IB_EALLOC;
     }
@@ -131,6 +139,7 @@ ib_status_t sqltfn_normalize_pg_tfn(ib_engine_t *ib,
 
 
     /* Create the output field wrapping bs_out. */
+    buf_out_len += lead_len;
     rc = ib_bytestr_alias_mem(&bs_out, mp, (uint8_t *)buf_out, buf_out_len);
     if (rc != IB_OK) {
         return rc;

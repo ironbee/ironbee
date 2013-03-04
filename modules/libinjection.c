@@ -92,6 +92,7 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
     char *buf_out;
     char *buf_out_end;
     size_t buf_out_len;
+    size_t lead_len = 0;
     char prev_token_type;
     ib_status_t rc;
 
@@ -146,6 +147,13 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
         buf_in_len = ib_bytestr_length(bs_in) - (buf_in_start - buf_in);
     }
 
+    /* Copy the leading string if one exists. */
+    if (buf_in_start != buf_in) {
+        lead_len = buf_in_start - buf_in;
+        memcpy(buf_out, buf_in, lead_len);
+        buf_out_end += lead_len;
+    }
+
     /* Copy the normalized tokens as a space separated list. Since
      * the tokenizer does not backtrack, and the normalized values
      * are always equal to or less than the original length, the
@@ -184,6 +192,7 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
     *pflags = IB_TFN_FMODIFIED;
 
     /* Create the output field wrapping bs_out. */
+    buf_out_len += lead_len;
     rc = ib_bytestr_alias_mem(&bs_out, mp, (uint8_t *)buf_out, buf_out_len);
     if (rc != IB_OK) {
         return rc;
