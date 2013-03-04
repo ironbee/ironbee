@@ -83,12 +83,13 @@ typedef struct timeval htp_time_t;
  */
 #define HTP_DECLINED                0
 
-/** Returned by a function when its work was successfully completed.  */
+/** Returned by a function when its work was successfully completed. */
 #define HTP_OK                      1
 
 /**
  * Returned when processing a connection stream, after consuming all
- * provided data. The caller should call again with more data. */
+ * provided data. The caller should call again with more data.
+ */
 #define HTP_DATA                    2
 
 /**
@@ -110,7 +111,10 @@ typedef struct timeval htp_time_t;
  */
 #define HTP_STOP                    4
 
-// XXX
+/**
+ * Same as HTP_DATA, but indicates that any non-consumed part of the
+ * data chunk should be preserved (buffered) for later.
+ */
 #define HTP_DATA_BUFFER             5
 
 /**
