@@ -121,8 +121,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         htp_table_destroy(tx->request_headers);
     }   
 
-    bstr_free(tx->response_line);
-    bstr_free(tx->response_line_raw);
+    bstr_free(tx->response_line);    
     bstr_free(tx->response_protocol);
     bstr_free(tx->response_status);
     bstr_free(tx->response_message);

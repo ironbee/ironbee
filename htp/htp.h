@@ -398,10 +398,7 @@ struct htp_tx_t {
     unsigned int response_ignored_lines;
 
     /** Response line. */
-    bstr *response_line;
-
-    /** Response line, including the line terminator(s). */
-    bstr *response_line_raw;
+    bstr *response_line;   
 
     /** Response protocol, as text. Can be NULL. */
     bstr *response_protocol;

@@ -632,12 +632,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             if (connp->out_tx->response_line != NULL) {
                 bstr_free(connp->out_tx->response_line);
                 connp->out_tx->response_line = NULL;
-            }
-
-            if (connp->out_tx->response_line_raw != NULL) {
-                bstr_free(connp->out_tx->response_line_raw);
-                connp->out_tx->response_line_raw = NULL;
-            }
+            }           
 
             if (connp->out_tx->response_protocol != NULL) {
                 bstr_free(connp->out_tx->response_protocol);
@@ -654,10 +649,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 connp->out_tx->response_message = NULL;
             }
 
-            // Process response line.
-
-            connp->out_tx->response_line_raw = bstr_dup_mem(data, len);
-            if (connp->out_tx->response_line_raw == NULL) return HTP_ERROR;
+            // Process response line.           
 
             int chomp_result = htp_chomp(data, &len);
 
