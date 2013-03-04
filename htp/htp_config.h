@@ -264,10 +264,23 @@ void htp_config_register_urlencoded_parser(htp_cfg_t *cfg);
 void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
 
 /**
+ * Configures field parsing limits, which are used when processing request and response
+ * lines, and request and response headers. A warning is created when a field is longer
+ * than the soft limit. A fatal error will be raised if a field is longer than the hard
+ * limit. The hard limit controls the amount of per-field buffering that takes place when
+ * requests and responses are fragmented.
+ * 
+ * @param[in] cfg
+ * @param[in] soft_limit
+ * @param[in] hard_limit
+ */
+void htp_config_set_field_limits(htp_cfg_t *cfg, size_t soft_limit, size_t hard_limit);
+
+/**
  * Configures the desired log level.
  * 
- * @param cfg
- * @param log_level
+ * @param[in] cfg
+ * @param[in] log_level
  */
 void htp_config_set_log_level(htp_cfg_t *cfg, enum htp_log_level_t log_level);
 
