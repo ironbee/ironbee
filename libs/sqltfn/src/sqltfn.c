@@ -39,6 +39,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 /* http://www.postgresql.org/docs/9.2/static/sql-syntax-lexical.html */
 
