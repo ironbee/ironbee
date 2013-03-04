@@ -40,6 +40,7 @@
 
 #include "../config.h"
 #include "htp.h"
+#include "htp_private.h"
 
 /**
  * Transcode all parameters supplied in the table.
