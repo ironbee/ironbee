@@ -455,7 +455,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     }
 
     // Parse authentication information.
-    if (tx->connp->cfg->parse_request_http_authentication) {
+    if (tx->connp->cfg->parse_request_auth) {
         htp_parse_authorization(tx->connp);
     }
 

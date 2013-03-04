@@ -184,7 +184,8 @@ struct htp_cfg_t {
     /** Whether to parse request cookies. */
     int parse_request_cookies;
 
-    int parse_request_http_authentication;
+    /** Whether to parse HTTP Authentication headers. */
+    int parse_request_auth;
 
     int extract_request_files;
 

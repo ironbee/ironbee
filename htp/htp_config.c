@@ -439,6 +439,11 @@ void htp_config_set_log_level(htp_cfg_t *cfg, enum htp_log_level_t log_level) {
     cfg->log_level = log_level;
 }
 
+void htp_config_set_parse_request_auth(htp_cfg_t *cfg, int parse_request_auth) {
+    if (cfg == NULL) return;
+    cfg->parse_request_auth = parse_request_auth;
+}
+
 void htp_config_set_parse_request_cookies(htp_cfg_t *cfg, int parse_request_cookies) {
     if (cfg == NULL) return;
     cfg->parse_request_cookies = parse_request_cookies;
