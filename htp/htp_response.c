@@ -42,6 +42,47 @@
 #include "htp_private.h"
 #include "htp_transaction.h"
 
+#define OUT_TEST_NEXT_BYTE_OR_RETURN(X) \
+if ((X)->out_current_read_offset >= (X)->out_current_len) { \
+    return HTP_DATA; \
+}
+
+#define OUT_PEEK_NEXT(X) \
+if ((X)->out_current_read_offset >= (X)->out_current_len) { \
+    (X)->out_next_byte = -1; \
+} else { \
+    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_read_offset]; \
+}
+
+#define OUT_NEXT_BYTE(X) \
+if ((X)->out_current_read_offset < (X)->out_current_len) { \
+    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_read_offset]; \
+    (X)->out_current_read_offset++; \
+    (X)->out_current_consume_offset++; \
+    (X)->out_stream_offset++; \
+} else { \
+    (X)->out_next_byte = -1; \
+}
+
+#define OUT_NEXT_BYTE_OR_RETURN(X) \
+if ((X)->out_current_read_offset < (X)->out_current_len) { \
+    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_read_offset]; \
+    (X)->out_current_read_offset++; \
+    (X)->out_current_consume_offset++; \
+    (X)->out_stream_offset++; \
+} else { \
+    return HTP_DATA; \
+}
+
+#define OUT_COPY_BYTE_OR_RETURN(X) \
+if ((X)->out_current_read_offset < (X)->out_current_len) { \
+    (X)->out_next_byte = (X)->out_current_data[(X)->out_current_read_offset]; \
+    (X)->out_current_read_offset++; \
+    (X)->out_stream_offset++; \
+} else { \
+    return HTP_DATA_BUFFER; \
+}
+
 /**
  * If there is any data left in the outbound data chunk, this function will preserve
  * it for consumption later. The maximum amount accepted for buffering is controlled
