@@ -148,7 +148,6 @@ htp_cfg_t *htp_config_create(void) {
     htp_cfg_t *cfg = calloc(1, sizeof (htp_cfg_t));
     if (cfg == NULL) return NULL;
 
-    // Default settings
     cfg->field_limit_hard = HTP_FIELD_LIMIT_HARD;
     cfg->field_limit_soft = HTP_FIELD_LIMIT_SOFT;
     cfg->log_level = HTP_LOG_NOTICE;
@@ -160,15 +159,8 @@ htp_cfg_t *htp_config_create(void) {
     cfg->params_nul_encoded_terminates = 0;
     cfg->params_nul_raw_terminates = 0;
     cfg->parse_request_cookies = 1;
+    cfg->parse_request_auth = 1;
 
-    // TODO Try to determine the correct location for the storage
-    //      of temporary files, based on the operating system.
-    cfg->tmpdir = "/tmp";
-
-    // The hooks do not need to be initialized here -- that will
-    // be done on-demand, as callbacks are registered.
-
-    // Set the default personality before we return
     htp_config_set_server_personality(cfg, HTP_SERVER_MINIMAL);
 
     return cfg;
@@ -618,6 +610,11 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
     cfg->server_personality = personality;
 
     return HTP_OK;
+}
+
+void htp_config_set_tmpdir(htp_cfg_t *cfg, char *tmpdir) {
+    if (cfg == NULL) return;
+    cfg->tmpdir = tmpdir;
 }
 
 void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy) {

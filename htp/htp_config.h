@@ -451,6 +451,15 @@ void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled);
 htp_status_t htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personality_t personality);
 
 /**
+ * Configures the path where temporary files should be stored. Must be set
+ * in order to use the Multipart file extraction functionality.
+ * 
+ * @param[in] cfg
+ * @param[in] tmpdir
+ */
+void htp_config_set_tmpdir(htp_cfg_t *cfg, char *tmpdir);
+
+/**
  * Configures whether transactions will be automatically destroyed once they
  * are processed and all callbacks invoked. This option is appropriate for
  * programs that process transactions as they are processed.
