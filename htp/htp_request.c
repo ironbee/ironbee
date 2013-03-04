@@ -561,10 +561,7 @@ htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
             }
 
             // Process request line.
-
-            connp->in_tx->request_line_raw = bstr_dup_mem(data, len);
-            if (connp->in_tx->request_line_raw == NULL) return HTP_ERROR;
-
+            
             htp_chomp(data, &len);
             
             connp->in_tx->request_line = bstr_dup_mem(data, len);
