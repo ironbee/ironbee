@@ -18,7 +18,8 @@ pkglib_LTLIBRARIES = ibmod_htp.la \
                      ibmod_rules.la \
                      ibmod_user_agent.la \
                      ibmod_fast.la \
-                     ibmod_libinjection.la
+                     ibmod_libinjection.la \
+					 ibmod_sqltfn.la
 
 if ENABLE_LUA
 pkglib_LTLIBRARIES += ibmod_lua.la
@@ -132,6 +133,11 @@ nodist_ibmod_libinjection_la_SOURCES = \
     $(abs_top_srcdir)/libs/libinjection/c/modp_xml.c
 ibmod_libinjection_la_CFLAGS = ${AM_CFLAGS} -I$(abs_top_srcdir)/libs/libinjection/c
 ibmod_libinjection_la_LDFLAGS = $(AM_LDFLAGS)
+
+ibmod_sqltfn_la_SOURCES = sqltfn.c
+ibmod_sqltfn_la_CFLAGS = ${AM_CFLAGS} -I$(abs_top_srcdir)/libs/sqltfn/src
+ibmod_sqltfn_la_LDFLAGS = $(AM_LDFLAGS)
+ibmod_sqltfn_la_LIBADD = ../libs/sqltfn/src/libsqltfn.la
 
 install-exec-hook: $(pkglib_LTLIBRARIES)
 	@echo "Removing unused static libraries..."; \
