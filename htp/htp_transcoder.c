@@ -53,9 +53,7 @@ int htp_transcode_params(htp_connp_t *connp, htp_table_t **params, int destroy_o
     htp_table_t *input_params = *params;
 
     // No transcoding unless necessary
-    if (connp->cfg->internal_encoding == NULL) {
-        return HTP_OK;
-    }
+    if ((connp->cfg->internal_encoding == NULL)||(connp->cfg->request_encoding == NULL)) return HTP_OK;
 
     // Create a new table that will hold transcoded parameters
     htp_table_t *output_params = htp_table_create(htp_table_size(input_params));

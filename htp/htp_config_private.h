@@ -172,11 +172,13 @@ struct htp_cfg_t {
     /** Whether to generate the request_uri_normalized field. */
     int generate_request_uri_normalized;
 
-    /** Whether to automatically decompress compressed response bodies. */
+    /** Whether to decompress compressed response bodies. */
     int response_decompression_enabled;
 
+    /** Not fully implemented at the moment. */
     char *request_encoding;
 
+    /** Not fully implemented at the moment. */
     char *internal_encoding;
 
     int parse_request_cookies;
