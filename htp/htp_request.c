@@ -42,11 +42,33 @@
 #include "htp_private.h"
 #include "htp_transaction.h"
 
+/**
+ * If there is any data left in the inbound data chunk, this function will preserve
+ * it for consumption later. The maximum amount accepted for buffering is controlled
+ * by htp_config_t::field_limit_hard.
+ *
+ * @param[in] connp
+ * @return HTP_OK, or HTP_ERROR on fatal failure.
+ */
 static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
     unsigned char *data = connp->in_current_data + connp->in_current_consume_offset;
     size_t len = connp->in_current_read_offset - connp->in_current_consume_offset;
 
-    // XXX Check the size of the buffer; soft and hard.
+    // Check the hard (buffering) limit.
+
+    size_t newlen = connp->in_buf_size + len;
+
+    if (connp->in_header != NULL) {
+        newlen += bstr_len(connp->in_header);
+    }
+
+    if (newlen > connp->in_tx->cfg->field_limit_hard) {
+        htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Request field size over the buffer limit: size %zd limit %zd.",
+                newlen, connp->in_tx->cfg->field_limit_hard);
+        return HTP_ERROR;
+    }
+
+    // Copy the data remaining in the buffer.
 
     if (connp->in_buf == NULL) {
         connp->in_buf = malloc(len);
@@ -62,11 +84,22 @@ static htp_status_t htp_connp_req_buffer(htp_connp_t *connp) {
         connp->in_buf_size = newsize;
     }
 
+    // Reset the consumer position.
     connp->in_current_consume_offset = connp->in_current_read_offset;
 
     return HTP_OK;
 }
 
+/**
+ * Returns to the caller the memory region that should be processed next. This function
+ * hides away the buffering process from the rest of the code, allowing it to work with
+ * non-buffered data that's in the inbound chunk, or buffered data that's in our structures.
+ *
+ * @param[in] connp
+ * @param[out] data
+ * @param[out] len
+ * @return HTP_OK
+ */
 static htp_status_t htp_connp_req_consolidate_data(htp_connp_t *connp, unsigned char **data, size_t *len) {
     if (connp->in_buf == NULL) {
         // We do not have any data buffered; point to the current data chunk.
@@ -79,14 +112,25 @@ static htp_status_t htp_connp_req_consolidate_data(htp_connp_t *connp, unsigned 
         *data = connp->in_buf;
         *len = connp->in_buf_size;
     }
-
+    
     return HTP_OK;
 }
 
+/**
+ * Returns the offset of the current consumption memory region.
+ *
+ * @param[in] connp
+ * @return
+ */
 static size_t htp_connp_req_data_len(htp_connp_t *connp) {
     return connp->in_buf_size + (connp->in_current_read_offset - connp->in_current_consume_offset);
 }
 
+/**
+ * Clears buffered inbound data and resets the consumer position to the reader position.
+ *
+ * @param[in] connp
+ */
 static void htp_connp_req_clear_buffer(htp_connp_t *connp) {
     connp->in_current_consume_offset = connp->in_current_read_offset;
 
