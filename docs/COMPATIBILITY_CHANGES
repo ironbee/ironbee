@@ -47,9 +47,15 @@
 - A number of *_destroy functions and bstr_free() used to take a pointer to a pointer. Now all such
   functions are taking pointers to the structures that need to be destroyed.
 
-- Rename HTP_FIELD_NUL_BYTE flag to HTP_FIELD_RAW_NUL.
+- Renamed HTP_FIELD_NUL_BYTE flag to HTP_FIELD_RAW_NUL.
 
-- Rename HTP_PATH_FULLWIDTH_EVASION to HTP_PATH_HALF_FULL_RANGE.
+- Renamed HTP_PATH_FULLWIDTH_EVASION to HTP_PATH_HALF_FULL_RANGE.
+
+- Removed htp_tx_t::request_line_raw, htp_tx_t::response_line_raw.
+
+- Removed htp_tx_t::request_header_lines, htp_tx_t::response_header_lines.
+
+- Removed htp_tx_get_request_headers_raw() and htp_tx_get_response_headers_raw().
 
 - Changed REQUEST_LINE callback signature from int (*callback_fn)(htp_connp_t *)
   to int (*callback_fn)(htp_connp_t *, unsigned char *, size_t). The additional parameters are
