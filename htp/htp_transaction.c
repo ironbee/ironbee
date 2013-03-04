@@ -543,7 +543,7 @@ htp_status_t htp_tx_res_set_status_message(htp_tx_t *tx, const char *msg, size_t
 htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
     #if 0
     // Commented-out until we determine which fields can be
-    // unavailable in real-life
+    // unavailable in real-life.
 
     // Unless we're dealing with HTTP/0.9, check that
     // the minimum amount of data has been provided.
@@ -555,15 +555,12 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
     #endif
 
     // Is the response line valid?
-    if ((tx->response_protocol_number < 0)
-            || (tx->response_status_number < 0)
+    if ((tx->response_protocol_number == HTP_PROTOCOL_INVALID)
+            || (tx->response_status_number == HTP_STATUS_INVALID)
             || (tx->response_status_number < HTP_VALID_STATUS_MIN)
-            || (tx->response_status_number > HTP_VALID_STATUS_MAX)) {
-        // TODO This should be STATUS_CODE_INVALID.
-
-        // Response line is invalid
-        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line");
-
+            || (tx->response_status_number > HTP_VALID_STATUS_MAX))
+    {
+        htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line.");
         tx->flags |= HTP_STATUS_LINE_INVALID;
     }
 
