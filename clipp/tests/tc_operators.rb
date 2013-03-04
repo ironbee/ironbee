@@ -60,7 +60,7 @@ class TestOperators < Test::Unit::TestCase
 
   def test_ipmatch_09
     clipp(
-      :input => "echo:\"GET /foo\" @set_remote_ip:6.6.6.6",
+      :input => "echo:\"GET /foo\" @parse @set_remote_ip:6.6.6.6",
       :default_site_config => <<-EOS
         Rule REMOTE_ADDR @ipmatch "6.6.6.6" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_09
       EOS
@@ -78,7 +78,7 @@ Content-Length: 1234
     input = [simple_hash(request)]
     clipp(
       :input_hashes => input,
-      :input => "pb:INPUT_PATH @set_remote_ip:6.6.6.6",
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6.6.6.6",
       :default_site_config => <<-EOS
         Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.6.6 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_11a
       EOS
@@ -88,7 +88,7 @@ Content-Length: 1234
 
     clipp(
       :input_hashes => input,
-      :input => "pb:INPUT_PATH @set_remote_ip:6.6.6.6",
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6.6.6.6",
       :default_site_config => <<-EOS
         Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.6.0/24 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_11b
       EOS
@@ -98,7 +98,7 @@ Content-Length: 1234
 
     clipp(
       :input_hashes => input,
-      :input => "pb:INPUT_PATH @set_remote_ip:6.6.6.6",
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6.6.6.6",
       :default_site_config => <<-EOS
         Rule REMOTE_ADDR @ipmatch "10.11.12.13 6.6.5.0/24 1.2.3.4" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch_11c
       EOS
@@ -116,7 +116,7 @@ Content-Length: 1234
     input = [simple_hash(request)]
     clipp(
       :input_hashes => input,
-      :input => "pb:INPUT_PATH @set_remote_ip:6::6:6",
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6::6:6",
       :default_site_config => <<-EOS
         Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::6:6 1::2:3" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch6_11a
       EOS
@@ -126,7 +126,7 @@ Content-Length: 1234
 
     clipp(
       :input_hashes => input,
-      :input => "pb:INPUT_PATH @set_remote_ip:6::6:6",
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6::6:6",
       :default_site_config => <<-EOS
         Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::6:0/112 1::2:3" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch6_11b
       EOS
@@ -136,7 +136,7 @@ Content-Length: 1234
 
     clipp(
       :input_hashes => input,
-      :input => "pb:INPUT_PATH @set_remote_ip:6::6:6",
+      :input => "pb:INPUT_PATH @parse @set_remote_ip:6::6:6",
       :default_site_config => <<-EOS
         Rule REMOTE_ADDR @ipmatch6 "1::12:13 6::5:0/112 1::2:3" id:1 rev:1 phase:REQUEST_HEADER clipp_announce:ipmatch6_11c
       EOS

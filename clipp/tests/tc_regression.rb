@@ -49,7 +49,7 @@ class TestRegression < Test::Unit::TestCase
     request.gsub!(/^\s+/, "")
     clipp(
       :input_hashes => [simple_hash(request)],
-      :input        => "pb:INPUT_PATH"
+      :input        => "pb:INPUT_PATH @parse"
     )
     assert_no_issues
   end
