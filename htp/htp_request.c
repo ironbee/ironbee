@@ -422,13 +422,7 @@ htp_status_t htp_connp_REQ_HEADERS(htp_connp_t *connp) {
 
             #ifdef HTP_DEBUG
             fprint_raw_data(stderr, __FUNCTION__, data, len);
-            #endif
-
-            // Keep the raw header line, if asked to.
-            // XXX
-            bstr *header_line = bstr_dup_mem(data, len);
-            if (header_line == NULL) return HTP_ERROR;
-            htp_list_add(connp->in_tx->request_header_lines, header_line);
+            #endif           
 
             // Should we terminate headers?
             if (htp_connp_is_line_terminator(connp, data, len)) {

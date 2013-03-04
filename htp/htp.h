@@ -355,13 +355,7 @@ struct htp_tx_t {
      * has been seen over TCP; request_entity_len contains length after
      * de-chunking and decompression.
      */
-    int64_t request_entity_len;
-
-    /** Original request header lines. This list stores instances of bstr. */
-    htp_list_t *request_header_lines;
-
-    /** How many request headers were there before trailers? */
-    size_t request_header_lines_no_trailers;
+    int64_t request_entity_len;   
 
     /** Parsed request headers. */
     htp_table_t *request_headers;   

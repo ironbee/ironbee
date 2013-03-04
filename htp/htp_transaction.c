@@ -56,8 +56,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->cfg = connp->cfg;
     tx->is_config_shared = HTP_CONFIG_SHARED;
 
-    tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;
-    tx->request_header_lines = htp_list_create(32);
+    tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;    
     tx->request_headers = htp_table_create(32);
     tx->request_params = htp_table_create(32);
     tx->request_line_nul_offset = -1;
@@ -105,18 +104,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         bstr_free(tx->parsed_uri_incomplete->query);
         bstr_free(tx->parsed_uri_incomplete->fragment);
         free(tx->parsed_uri_incomplete);
-    }
-
-    // Destroy request_header_lines.
-    if (tx->request_header_lines != NULL) {
-        for (size_t i = 0, n = htp_list_size(tx->request_header_lines); i < n; i++) {
-            bstr *h = htp_list_get(tx->request_header_lines, i);
-            bstr_free(h);
-        }
-
-        htp_list_destroy(tx->request_header_lines);
-        tx->request_header_lines = NULL;
-    }
+    }   
 
     // Destroy request_headers.
     if (tx->request_headers != NULL) {
@@ -359,10 +347,7 @@ void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9) {
     }
 }
 
-static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
-    // Remember how many header lines there were before trailers.
-    tx->request_header_lines_no_trailers = htp_list_size(tx->request_header_lines);
-
+static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {    
     // Determine if we have a request body, and how it is packaged.
     htp_header_t *cl = htp_table_get_c(tx->request_headers, "content-length");
     htp_header_t *te = htp_table_get_c(tx->request_headers, "transfer-encoding");
