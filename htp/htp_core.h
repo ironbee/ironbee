@@ -295,8 +295,9 @@ enum htp_parser_id_t {
 };
 
 // Protocol version constants; an enum cannot be
-// used here because we allow any properly-formatter protocol
+// used here because we allow any properly-formatted protocol
 // version (e.g., 1.3), even those that do not actually exist.
+#define HTP_PROTOCOL_INVALID        -2
 #define HTP_PROTOCOL_UNKNOWN        -1
 #define HTP_PROTOCOL_0_9             9
 #define HTP_PROTOCOL_1_0             100
@@ -316,6 +317,9 @@ enum htp_data_source_t {
     /** Transported in the request body. */
     HTP_SOURCE_BODY = 3
 };
+
+#define HTP_STATUS_INVALID           -1
+#define HTP_STATUS_UNKNOWN            0
 
 /**
  * Enumerates all stream states. Each connection has two streams, one

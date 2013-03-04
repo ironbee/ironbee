@@ -49,69 +49,66 @@
  */
 int htp_parse_response_line_generic(htp_connp_t *connp) {
     htp_tx_t *tx = connp->out_tx;
-    unsigned char *data = (unsigned char *) bstr_ptr(tx->response_line);
+    unsigned char *data = bstr_ptr(tx->response_line);
     size_t len = bstr_len(tx->response_line);
     size_t pos = 0;
 
-    // Ignore whitespace at the beginning of the line
-    while ((pos < len) && (htp_is_space(data[pos]))) {
-        pos++;
-    }
+    tx->response_protocol = NULL;
+    tx->response_protocol_number = HTP_PROTOCOL_INVALID;
+    tx->response_status = NULL;
+    tx->response_status_number = HTP_STATUS_INVALID;
+    tx->response_message = NULL;
+
+    // Ignore whitespace at the beginning of the line.
+    while ((pos < len) && (htp_is_space(data[pos]))) pos++;
 
     size_t start = pos;
 
-    // Find the end of the protocol string
-    while ((pos < len) && (!htp_is_space(data[pos]))) {
-        pos++;
-    }
-
+    // Find the end of the protocol string.
+    while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
+    
+    if (pos - start == 0) return HTP_OK;
     tx->response_protocol = bstr_dup_mem(data + start, pos - start);
-    if (tx->response_protocol == NULL) {
-        return HTP_ERROR;
-    }
+    if (tx->response_protocol == NULL) return HTP_ERROR;    
 
     tx->response_protocol_number = htp_parse_protocol(tx->response_protocol);
 
     #ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->response_protocol), bstr_len(tx->response_protocol));
+    fprint_raw_data(stderr, "Response protocol", bstr_ptr(tx->response_protocol), bstr_len(tx->response_protocol));
+    fprintf(stderr, "Response protocol number: %d", tx->response_protocol_number);
     #endif
 
-    // Ignore whitespace after response protocol
-    // TODO Why use both isspace (below) and htp_is_space (above)?
-    while ((pos < len) && (isspace(data[pos]))) {
-        pos++;
-    }
+    // Ignore whitespace after the response protocol.
+    while ((pos < len) && (htp_is_space(data[pos]))) pos++;
+    if (pos == len) return HTP_OK;
 
     start = pos;
 
-    // Find the next whitespace character
-    while ((pos < len) && (!htp_is_space(data[pos]))) {
-        pos++;
-    }
+    // Find the next whitespace character.
+    while ((pos < len) && (!htp_is_space(data[pos]))) pos++;    
 
+    if (pos - start == 0) return HTP_OK;
     tx->response_status = bstr_dup_mem(data + start, pos - start);
-    if (tx->response_status == NULL) {
-        return HTP_ERROR;
-    }
+    if (tx->response_status == NULL) return HTP_ERROR;
 
     tx->response_status_number = htp_parse_status(tx->response_status);
 
     #ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->response_status), bstr_len(tx->response_status));
+    fprint_raw_data(stderr, "Response status (as text)", bstr_ptr(tx->response_status), bstr_len(tx->response_status));
+    fprintf(stderr, "Response status number: %d", tx->response_status_number);
     #endif
 
-    // Ignore whitespace that follows
-    while ((pos < len) && (isspace(data[pos]))) {
-        pos++;
-    }
+    // Ignore whitespace that follows the status code.
+    while ((pos < len) && (isspace(data[pos]))) pos++;
+    if (pos == len) return HTP_OK;
 
+    // Assume the message stretches until the end of the line.
+    if (len - pos == 0) return HTP_OK;
     tx->response_message = bstr_dup_mem(data + pos, len - pos);
-    if (tx->response_message == NULL) {
-        return HTP_ERROR;
-    }
+    if (tx->response_message == NULL) return HTP_ERROR;    
 
     #ifdef HTP_DEBUG
-    fprint_raw_data(stderr, __FUNCTION__, (unsigned char *) bstr_ptr(tx->response_message), bstr_len(tx->response_message));
+    fprint_raw_data(stderr, "Response status message", bstr_ptr(tx->response_message), bstr_len(tx->response_message));
     #endif
 
     return HTP_OK;

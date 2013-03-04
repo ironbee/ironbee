@@ -400,22 +400,28 @@ struct htp_tx_t {
     /** Response line. */
     bstr *response_line;
 
-    /** Response line including ws+line terminator(s). */
+    /** Response line, including the line terminator(s). */
     bstr *response_line_raw;
 
-    /** Response protocol, as text. */
+    /** Response protocol, as text. Can be NULL. */
     bstr *response_protocol;
 
     /**
-     * Response protocol as number. Only available if we were
-     * able to parse the protocol version.
+     * Response protocol as number. Available only if we were able to parse the protocol version,
+     * HTP_PROTOCOL_INVALID otherwise. HTP_PROTOCOL_UNKNOWN until parsing is attempted.
      */
     int response_protocol_number;
 
-    /** Response status code, as text. */
+    /**
+     * Response status code, as text. Starts as NULL and can remain NULL on
+     * an invalid response that does not specify status code.
+     */
     bstr *response_status;
 
-    /** Response status code, available only if we were able to parse it. */
+    /**
+     * Response status code, available only if we were able to parse it, HTP_STATUS_INVALID
+     * otherwise. HTP_STATUS_UNKNOWN until parsing is attempted.
+     */
     int response_status_number;
 
     /**
@@ -424,7 +430,7 @@ struct htp_tx_t {
      */
     int response_status_expected_number;
 
-    /** The message associated with the response status code. */
+    /** The message associated with the response status code. Can be NULL. */
     bstr *response_message;
 
     /** Have we seen the server respond with a 100 response? */

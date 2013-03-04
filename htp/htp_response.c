@@ -435,7 +435,8 @@ htp_status_t htp_connp_RES_BODY_DETERMINE(htp_connp_t *connp) {
             // Get body length
             connp->out_tx->response_content_length = htp_parse_content_length(cl->value);
             if (connp->out_tx->response_content_length < 0) {
-                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in response: %d", connp->out_tx->response_content_length);
+                htp_log(connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0, "Invalid C-L field in response: %d",
+                        connp->out_tx->response_content_length);
                 return HTP_ERROR;
             } else {
                 connp->out_content_length = connp->out_tx->response_content_length;
@@ -662,7 +663,7 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
 
             connp->out_tx->response_line = bstr_dup_mem(data, len);
             if (connp->out_tx->response_line == NULL) return HTP_ERROR;            
-            
+
             if (connp->cfg->parse_response_line(connp) != HTP_OK) return HTP_ERROR;
 
             // If the response line is invalid, determine if it _looks_ like
@@ -670,9 +671,11 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
             // data as a response body because that is what browsers do.
 
             if (htp_treat_response_line_as_body(connp->out_tx)) {
+                connp->out_tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
+                
                 int rc = htp_tx_res_process_body_data(connp->out_tx, data, len + chomp_result);
                 if (rc != HTP_OK) return rc;
-
+               
                 // Continue to process response body. Because we don't have
                 // any headers to parse, we assume the body continues until
                 // the end of the stream.
@@ -680,10 +683,10 @@ htp_status_t htp_connp_RES_LINE(htp_connp_t *connp) {
                 connp->out_tx->progress = HTP_RESPONSE_BODY;
                 connp->out_state = htp_connp_RES_BODY_IDENTITY_STREAM_CLOSE;
                 connp->out_body_data_left = -1;
-
+                
                 return HTP_OK;
             }
-
+           
             int rc = htp_tx_state_response_line(connp->out_tx);
             if (rc != HTP_OK) return rc;
             

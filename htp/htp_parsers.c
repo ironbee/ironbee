@@ -51,9 +51,7 @@
  * @return Protocol version or PROTOCOL_UNKNOWN.
  */
 int htp_parse_protocol(bstr *protocol) {
-    if (protocol == NULL) {
-        return HTP_PROTOCOL_UNKNOWN;
-    }
+    if (protocol == NULL) return HTP_PROTOCOL_INVALID;
     
     // TODO This function uses a very strict approach to parsing, whereas
     //      browsers will typically be more flexible, allowing whitespace
@@ -79,7 +77,7 @@ int htp_parse_protocol(bstr *protocol) {
         }
     }
 
-    return HTP_PROTOCOL_UNKNOWN;
+    return HTP_PROTOCOL_INVALID;
 }
 
 /**

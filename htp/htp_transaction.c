@@ -65,6 +65,10 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->parsed_uri = calloc(1, sizeof (htp_uri_t));
     tx->parsed_uri->port_number = -1;
     tx->parsed_uri_incomplete = calloc(1, sizeof (htp_uri_t));
+
+    tx->response_status = NULL;
+    tx->response_status_number = HTP_STATUS_UNKNOWN;
+    tx->response_protocol_number = HTP_PROTOCOL_UNKNOWN;
     
     tx->response_headers = htp_table_create(32);
     tx->response_content_length = -1;
@@ -669,7 +673,9 @@ htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t
 
         default:
             // Internal error.
-            // TODO Log.
+            htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_ERROR, 0,
+                    "[Internal Error] Invalid tx->response_content_encoding_processing value: %d",
+                    tx->response_content_encoding_processing);
             return HTP_ERROR;
             break;
     }
