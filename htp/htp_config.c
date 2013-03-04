@@ -415,6 +415,13 @@ void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map) {
     cfg->bestfit_map = map;
 }
 
+htp_status_t htp_config_set_extract_request_files(htp_cfg_t *cfg, int extract_request_files) {
+    if (cfg == NULL) return HTP_ERROR;
+    if (cfg->tmpdir == NULL) return HTP_ERROR;
+    cfg->extract_request_files = extract_request_files;
+    return HTP_OK;
+}
+
 void htp_config_set_field_limits(htp_cfg_t *cfg, size_t soft_limit, size_t hard_limit) {
     if (cfg == NULL) return;
     cfg->field_limit_soft = soft_limit;

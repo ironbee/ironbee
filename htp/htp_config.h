@@ -264,6 +264,18 @@ void htp_config_register_urlencoded_parser(htp_cfg_t *cfg);
 void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
 
 /**
+ * Enables or disables Multipart file extraction. This function can be invoked only
+ * after a previous htp_config_set_tmpdir() invocation. Otherwise, the configuration
+ * change will fail, and extraction will not be enabled. Disabled by default. Please
+ * note that the built-in file extraction implementation uses synchronous I/O, which
+ * means that it is not suitable for use in an event-driven container.
+ *
+ * @param[in] cfg
+ * @param[in] extract_files
+ */
+htp_status_t htp_config_set_extract_request_files(htp_cfg_t *cfg, int extract_files);
+
+/**
  * Configures field parsing limits, which are used when processing request and response
  * lines, and request and response headers. A warning is created when a field is longer
  * than the soft limit. A fatal error will be raised if a field is longer than the hard
