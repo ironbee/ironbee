@@ -114,7 +114,8 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
 void htp_config_destroy(htp_cfg_t *cfg);
 
 /**
- * Registers a callback that is invoked every time there is a log message.
+ * Registers a callback that is invoked every time there is a log message with
+ * severity equal and higher than the configured log level.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -122,15 +123,16 @@ void htp_config_destroy(htp_cfg_t *cfg);
 void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *));
 
 /**
- * Registers the MULTIPART parser. This parser will extract information stored in request
- * bodies, when they are in multipart/form-data format.
+ * Adds the built-in Multipart parser to the configuration. This parser will extract information
+ * stored in request bodies, when they are in multipart/form-data format.
  *
  * @param[in] cfg
  */
 void htp_config_register_multipart_parser(htp_cfg_t *cfg);
 
 /**
- * Registers a REQUEST_START callback.
+ * Registers a REQUEST_START callback, which is invoked every time a new
+ * request begins and before any parsing is done.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -154,7 +156,7 @@ void htp_config_register_request_body_data(htp_cfg_t *cfg, int (*callback_fn)(ht
 void htp_config_register_request_complete(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a request_file_data callback.
+ * Registers a REQUEST_FILE_DATA callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -202,7 +204,7 @@ void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_
 void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
 
 /**
- * Registers a RESPONSE_DATA callback.
+ * Registers a RESPONSE_COMPLETE callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -218,7 +220,7 @@ void htp_config_register_response_complete(htp_cfg_t *cfg, int (*callback_fn)(ht
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a HTP_RESPONSE_LINE callback.
+ * Registers a RESPONSE_LINE callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -234,7 +236,7 @@ void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_co
 void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers a HTP_RESPONSE_TRAILER callback.
+ * Registers a RESPONSE_TRAILER callback.
  *
  * @param[in] cfg
  * @param[in] callback_fn
@@ -242,20 +244,19 @@ void htp_config_register_response_start(htp_cfg_t *cfg, int (*callback_fn)(htp_c
 void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
 
 /**
- * Registers the URLENCODED parser with the configuration. The parser will
- * parse the query string when available, as well as the request body when
- * in correct format.
+ * Adds the built-in Urlencoded parser to the configuration. The parser will
+ * parse query strings and request bodies with the appropriate MIME type.
  *
  * @param[in] cfg
  */
 void htp_config_register_urlencoded_parser(htp_cfg_t *cfg);
 
 /**
- * Update the best-fit map, which is used to convert UCS-2 characters into
+ * Configures the best-fit map, which is used to convert UCS-2 characters into
  * single-byte characters. By default a Windows 1252 best-fit map is used. The map
  * is an list of triplets, the first 2 bytes being an UCS-2 character to map from,
  * and the third byte being the single byte to map to. Make sure that your map contains
- * the mappings to cover the fullwidth form characters (U+FF00-FFEF).
+ * the mappings to cover the full-width and half-width form characters (U+FF00-FFEF).
  *
  * @param[in] cfg
  * @param[in] map
@@ -422,7 +423,8 @@ htp_status_t htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_p
 
 /**
  * Configures whether transactions will be automatically destroyed once they
- * are no longer needed.
+ * are processed and all callbacks invoked. This option is appropriate for
+ * programs that process transactions as they are processed.
  *
  * @param[in] cfg
  * @param[in] tx_auto_destroy
