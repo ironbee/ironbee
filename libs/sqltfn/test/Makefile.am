@@ -1,6 +1,6 @@
 
 AM_CFLAGS = -g -O2
-CPPFLAGS = -I../src
+CPPFLAGS = -I$(top_srcdir)/src
 
 check_PROGRAMS = test
 
