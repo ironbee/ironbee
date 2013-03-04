@@ -114,6 +114,14 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg);
 void htp_config_destroy(htp_cfg_t *cfg);
 
 /**
+ * Retrieves user data associated with this configuration.
+ *
+ * @param[in] cfg
+ * @return User data pointer, or NULL if not set.
+ */
+void *htp_config_get_user_data(htp_cfg_t *cfg);
+
+/**
  * Registers a callback that is invoked every time there is a log message with
  * severity equal and higher than the configured log level.
  *
@@ -480,6 +488,14 @@ void htp_config_set_tmpdir(htp_cfg_t *cfg, char *tmpdir);
  * @param[in] tx_auto_destroy
  */
 void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy);
+
+/**
+ * Associates provided opaque user data with the configuration.
+ * 
+ * @param[in] cfg
+ * @param[in] user_data
+ */
+void htp_config_set_user_data(htp_cfg_t *cfg, void *user_data);
 
 #ifdef	__cplusplus
 }

@@ -303,7 +303,6 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
 void htp_config_destroy(htp_cfg_t *cfg) {
     if (cfg == NULL) return;
 
-    // Destroy hooks
     htp_hook_destroy(cfg->hook_request_start);
     htp_hook_destroy(cfg->hook_request_line);
     htp_hook_destroy(cfg->hook_request_uri_normalize);
@@ -320,8 +319,12 @@ void htp_config_destroy(htp_cfg_t *cfg) {
     htp_hook_destroy(cfg->hook_response_complete);
     htp_hook_destroy(cfg->hook_log);
 
-    // Free the structure itself
     free(cfg);
+}
+
+void *htp_config_get_user_data(htp_cfg_t *cfg) {
+    if (cfg == NULL) return NULL;
+    return cfg->user_data;
 }
 
 void htp_config_register_log(htp_cfg_t *cfg, int (*callback_fn)(htp_log_t *)) {
@@ -627,4 +630,9 @@ void htp_config_set_tmpdir(htp_cfg_t *cfg, char *tmpdir) {
 void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy) {
     if (cfg == NULL) return;
     cfg->tx_auto_destroy = tx_auto_destroy;
+}
+
+void htp_config_set_user_data(htp_cfg_t *cfg, void *user_data) {
+    if (cfg == NULL) return;
+    cfg->user_data = user_data;
 }
