@@ -637,6 +637,10 @@ static htp_status_t htp_tx_res_process_body_data_decompressor_callback(htp_tx_da
 }
 
 htp_status_t htp_tx_res_process_body_data(htp_tx_t *tx, const void *data, size_t len) {
+    #ifdef HTP_DEBUG
+    fprint_raw_data(stderr, __FUNCTION__, data, len);
+    #endif
+
     htp_tx_data_t d;
 
     d.tx = tx;
