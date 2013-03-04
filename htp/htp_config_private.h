@@ -187,8 +187,10 @@ struct htp_cfg_t {
     /** Whether to parse HTTP Authentication headers. */
     int parse_request_auth;
 
+    /** Whether to extract files from requests using Multipat encoding. */
     int extract_request_files;
 
+    /** The location on disk where temporary files will be created. */
     char *tmpdir;
 
     // Hooks
