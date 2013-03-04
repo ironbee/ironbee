@@ -150,9 +150,7 @@ if ((X)->out_current_read_offset < (X)->out_current_len) { \
 struct htp_cfg_t {
     /**
      * Hard field limit length. If the parser encounters a line that's longer
-     * than this value it will give up parsing. Do note that the line limit
-     * is not the same thing as header length limit. Because of header folding,
-     * a header can end up being longer than the line limit.
+     * than this value it will give up parsing.
      */
     size_t field_limit_hard;
 
@@ -488,7 +486,7 @@ int htp_res_run_hook_body_data(htp_connp_t *connp, htp_tx_data_t *d);
 
 htp_status_t htp_ch_urlencoded_callback_request_body_data(htp_tx_data_t *d);
 htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
-htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
+htp_status_t htp_ch_urlencoded_callback_request_line(htp_connp_t *connp, unsigned char *raw_data, size_t raw_len);
 htp_status_t htp_ch_multipart_callback_request_body_data(htp_tx_data_t *d);
 htp_status_t htp_ch_multipart_callback_request_headers(htp_connp_t *connp);
 

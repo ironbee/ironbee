@@ -103,9 +103,6 @@ int  htp_urlenp_parse_partial(htp_urlenp_t *urlenp, const void *data, size_t len
 int  htp_urlenp_parse_complete(htp_urlenp_t *urlenp, const void *data, size_t len);
 int  htp_urlenp_finalize(htp_urlenp_t *urlenp);
 
- int htp_ch_urlencoded_callback_request_line(htp_connp_t *connp);
- int htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp);
-
 #ifdef __cplusplus
 }
 #endif

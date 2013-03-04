@@ -50,3 +50,7 @@
 - Rename HTP_FIELD_NUL_BYTE flag to HTP_FIELD_RAW_NUL.
 
 - Rename HTP_PATH_FULLWIDTH_EVASION to HTP_PATH_HALF_FULL_RANGE.
+
+- Changed REQUEST_LINE callback signature from int (*callback_fn)(htp_connp_t *)
+  to int (*callback_fn)(htp_connp_t *, unsigned char *, size_t). The additional parameters are
+  used to expose the entire request line (incl. line terminators) to the callback.
