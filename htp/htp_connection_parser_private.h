@@ -110,16 +110,22 @@ struct htp_connp_t {
     /** The offset, in the entire connection stream, of the next request byte. */
     int64_t in_stream_offset;
 
-    /** The value of the request byte currently being processed. */
+    /**
+     * The value of the request byte currently being processed. This field is
+     * populated when the IN_NEXT_* or IN_PEEK_* macros are invoked.
+     */
     int in_next_byte;
 
-    // XXX
+    /** Used to buffer a line of inbound data when buffering cannot be avoided. */
     unsigned char *in_buf;
 
-    // XXX
+    /** Stores the size of the buffer. Valid only when htp_tx_t::in_buf is not NULL. */
     size_t in_buf_size;
 
-    // XXX
+    /**
+     * Stores the current value of a folded request header. Such headers span
+     * multiple lines, and are processed only when all data is available.
+     */
     bstr *in_header;
 
     /** Ongoing inbound transaction. */
