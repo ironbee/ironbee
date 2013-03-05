@@ -980,6 +980,10 @@ static ib_status_t report_block_to_server(const ib_rule_exec_t *rule_exec)
         return rc;
     }
 
+    /* Disable further inspection on the response. */
+    ib_log_debug_tx(tx, "Disabling further inspection of response due to blocking.");
+    ib_tx_flags_unset(tx, IB_TX_FINSPECT_RSPHDR|IB_TX_FINSPECT_RSPBODY);
+
     return IB_OK;
 }
 
