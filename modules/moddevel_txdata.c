@@ -17,35 +17,37 @@
 
 /**
  * @file
- * @brief IronBee --- Fields Module
+ * @brief IronBee --- TxData Module
  *
- * This module can be used to create fields in the TX DPI.  These fields are
- * defined through the use of the FieldTx configuration directive.
+ * This module can be used to create fields in the TX Data.  These fields are
+ * defined through the use of the TxData configuration directive.
  *
  * Below is an example configuration snippet that uses the FieldTx directive
  * to create number, unsigned number, NUL-terminated string, Byte-string and
  * List.  The named fields "Num1", "Num2", ... will be created for every
  * transaction processed by the engine.
  *
- *   FieldTx Num1      NUM      1
- *   FieldTx Num2      NUM      5
- *   FieldTx Float1    FLOAT    1
- *   FieldTx Float2    FLOAT    5.5
- *   FieldTx Str1      NULSTR   "abc"
- *   FieldTx Str2      NULSTR   "ABC"
- *   FieldTx BStr1     BYTESTR  "ABC"
- *   FieldTx BStr2     BYTESTR  "DEF"
- *   FieldTx List0     LIST
- *   FieldTx List1     LIST:NUM 1 2 3 4 5
- *   FieldTx List2     LIST:NULSTR a bc def foo
- *   FieldTx List3     LIST
- *   FieldTx List3:Lst LIST:NULSTR a bc def foo
+ *   TxData Num1      NUM      1
+ *   TxData Num2      NUM      5
+ *   TxData Float1    FLOAT    1
+ *   TxData Float2    FLOAT    5.5
+ *   TxData Str1      NULSTR   "abc"
+ *   TxData Str2      NULSTR   "ABC"
+ *   TxData BStr1     BYTESTR  "ABC"
+ *   TxData BStr2     BYTESTR  "DEF"
+ *   TxData List0     LIST
+ *   TxData List1     LIST:NUM 1 2 3 4 5
+ *   TxData List2     LIST:NULSTR a bc def foo
+ *   TxData List3     LIST
+ *   TxData List3:Lst LIST:NULSTR a bc def foo
  *
  * @note This module is enabled only for builds configured with
  * "--enable-devel".
  *
  * @author Nick LeRoy <nleroy@qualys.com>
  */
+
+#include "moddevel_private.h"
 
 #include <ironbee/bytestr.h>
 #include <ironbee/cfgmap.h>
@@ -64,17 +66,17 @@
 #include <string.h>
 #include <strings.h>
 
-/* Define the module name as well as a string version of it. */
-#define MODULE_NAME        fields
-#define MODULE_NAME_STR    IB_XSTRINGIFY(MODULE_NAME)
-
-/* Declare the public module symbol. */
-IB_MODULE_DECLARE();
+/**
+ * TxData configuration
+ */
+struct ib_moddevel_txdata_config_t {
+    ib_list_t              *field_list;  /**< List of field pointers */
+    ib_mpool_t             *mp;          /**< Memory pool for allocations */
+};
 
 /**
  * static data
  */
-ib_list_t *g_field_list = NULL;  /**< Global list of all our fields */
 const char *g_type_names [ ] =
 {
     "GENERIC",
@@ -83,7 +85,6 @@ const char *g_type_names [ ] =
     "BYTESTR",
     "LIST",
 };
-
 
 /**
  * @param[in] cp Configuration parser
@@ -95,11 +96,12 @@ const char *g_type_names [ ] =
  *
  * @return Status code
  */
-static ib_status_t parse_type(ib_cfgparser_t *cp,
-                              ib_mpool_t *mp,
-                              const char *str,
-                              ib_ftype_t *type,
-                              ib_ftype_t *element_type)
+static ib_status_t parse_type(
+    ib_cfgparser_t *cp,
+    ib_mpool_t     *mp,
+    const char     *str,
+    ib_ftype_t     *type,
+    ib_ftype_t     *element_type)
 {
     /* Parse the type name */
     if (strcasecmp(str, "NUM") == 0) {
@@ -151,12 +153,13 @@ static ib_status_t parse_type(ib_cfgparser_t *cp,
  *
  * @return Status code
  */
-static ib_status_t parse_value(ib_cfgparser_t *cp,
-                               ib_mpool_t *mp,
-                               const char *str,
-                               ib_ftype_t type,
-                               const char *name,
-                               ib_field_t **pfield)
+static ib_status_t parse_value(
+    ib_cfgparser_t  *cp,
+    ib_mpool_t      *mp,
+    const char      *str,
+    ib_ftype_t       type,
+    const char      *name,
+    ib_field_t     **pfield)
 {
     ib_status_t rc;
 
@@ -228,19 +231,90 @@ static ib_status_t parse_value(ib_cfgparser_t *cp,
 }
 
 /**
- * @brief Parse a FieldTx directive.
+ * Handle request_header events to add fields.
  *
- * @details Register a FieldTx directive to the engine.
+ * Adds fields to the transaction DPI.
+ *
+ * @param[in] ib IronBee object
+ * @param[in] event Event type
+ * @param[in,out] tx Transaction object
+ * @param[in] cbdata Callback data (module configuration)
+ *
+ * @returns Status code
+ */
+static ib_status_t tx_header_finished(
+    ib_engine_t           *ib,
+    ib_tx_t               *tx,
+    ib_state_event_type_t  event,
+    void                  *cbdata)
+{
+    assert(ib != NULL);
+    assert(tx != NULL);
+    assert(event == request_header_finished_event);
+    assert(cbdata != NULL);
+
+    const ib_moddevel_txdata_config_t *config =
+        (const ib_moddevel_txdata_config_t *)cbdata;
+    const ib_list_node_t *node;
+    ib_status_t rc = IB_OK;
+
+    /* Loop through the list */
+    IB_LIST_LOOP_CONST(config->field_list, node) {
+        const ib_field_t *field = (const ib_field_t *)node->data;
+        ib_field_t *newf;
+
+        if (field->type == IB_FTYPE_BYTESTR) {
+            const ib_bytestr_t *bs;
+            rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
+            if (rc != IB_OK) {
+                ib_log_error_tx(tx, "Failed to retrieve field value: %d", rc);
+                continue;
+            }
+            ib_log_debug_tx(tx, "Adding bytestr %p (f=%p) = '%.*s'",
+                            (void *)bs, (void *)field,
+                            (int)ib_bytestr_size(bs),
+                            (const char *)ib_bytestr_const_ptr(bs));
+        }
+
+        rc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
+        if (rc != IB_OK) {
+            ib_log_debug_tx(tx, "Failed to copy field: %d", rc);
+            continue;
+        }
+        rc = ib_data_add(tx->data, newf);
+        if (rc != IB_OK) {
+            ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI",
+                            (int)field->nlen, field->name);
+        }
+        ib_log_debug_tx(tx, "Added field \"%.*s\" (type %s)",
+                        (int)field->nlen, field->name,
+                        g_type_names[field->type]);
+    }
+
+    return rc;
+}
+
+
+/**
+ * Parse a TxData directive.
+ *
+ * @details Register a TxData directive to the engine.
  * @param[in] cp Configuration parser
  * @param[in] directive The directive name.
- * @param[in] vars The list of variables passed to @c name.
+ * @param[in] vars The list of variables passed to @a directive.
  * @param[in] cbdata User data. Unused.
  */
-static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
-                                    const char *directive,
-                                    const ib_list_t *vars,
-                                    void *cbdata)
+static ib_status_t moddevel_fieldtx_handler(
+    ib_cfgparser_t  *cp,
+    const char      *directive,
+    const ib_list_t *vars,
+    void            *cbdata)
 {
+    assert(cp != NULL);
+    assert(directive != NULL);
+    assert(vars != NULL);
+    assert(cbdata != NULL);
+
     ib_status_t rc;
     ib_mpool_t *mp = ib_engine_pool_main_get(cp->ib);
     const ib_list_node_t *name_node;
@@ -252,10 +326,8 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
     ib_ftype_t type_num;
     ib_ftype_t element_type = IB_FTYPE_GENERIC;
     ib_num_t element_num;
-
-    if (cbdata != NULL) {
-            }
-
+    const ib_moddevel_txdata_config_t *config =
+        (const ib_moddevel_txdata_config_t *)cbdata;
 
     /* Get the field name string */
     name_node = ib_list_first_const(vars);
@@ -371,7 +443,7 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
     }
 
     /* Add the field to the list */
-    rc = ib_list_push(g_field_list, field);
+    rc = ib_list_push(config->field_list, field);
     if (rc != IB_OK) {
         ib_cfg_log_error(cp, "Error pushing value on list: %d", rc);
         return rc;
@@ -384,71 +456,10 @@ static ib_status_t fields_tx_params(ib_cfgparser_t *cp,
     return IB_OK;
 }
 
-/**
- * Handle request_header events to add fields.
- *
- * Adds fields to the transaction DPI.
- *
- * @param[in] ib IronBee object
- * @param[in] event Event type
- * @param[in,out] tx Transaction object
- * @param[in] data Callback data (not used)
- *
- * @returns Status code
- */
-static ib_status_t fields_tx_header_finished(ib_engine_t *ib,
-                                             ib_tx_t *tx,
-                                             ib_state_event_type_t event,
-                                             void *data)
-{
-    assert(event == request_header_finished_event);
-
-    ib_list_node_t *node;
-    ib_status_t rc = IB_OK;
-
-    /* Loop through the list */
-    IB_LIST_LOOP(g_field_list, node) {
-        const ib_field_t *field = (ib_field_t *)ib_list_node_data(node);
-        ib_field_t *newf;
-
-        if (field->type == IB_FTYPE_BYTESTR) {
-            const ib_bytestr_t *bs;
-            rc = ib_field_value(field, ib_ftype_bytestr_out(&bs));
-            if (rc != IB_OK) {
-                ib_log_error_tx(tx, "Failed to retrieve field value: %d", rc);
-                continue;
-            }
-            ib_log_debug_tx(tx, "Adding bytestr %p (f=%p) = '%.*s'",
-                            (void *)bs, (void *)field,
-                            (int)ib_bytestr_size(bs),
-                            (const char *)ib_bytestr_const_ptr(bs));
-        }
-
-        rc = ib_field_copy(&newf, tx->mp, field->name, field->nlen, field);
-        if (rc != IB_OK) {
-            ib_log_debug_tx(tx, "Failed to copy field: %d", rc);
-            continue;
-        }
-        rc = ib_data_add(tx->data, newf);
-        if (rc != IB_OK) {
-            ib_log_error_tx(tx, "Failed to add field \"%.*s\" to TX DPI",
-                            (int)field->nlen, field->name);
-        }
-        ib_log_debug_tx(tx, "Added field \"%.*s\" (type %s)",
-                        (int)field->nlen, field->name,
-                        g_type_names[field->type]);
-    }
-
-    return rc;
-}
-
-
-static IB_DIRMAP_INIT_STRUCTURE(fields_directive_map) = {
-
-    /* Give the config parser a callback for the TxField directive */
+static ib_dirmap_init_t moddevel_txdata_directive_map[] = {
     IB_DIRMAP_INIT_LIST(
-        "FieldTx",
-        fields_tx_params,
+        "TxData",
+        moddevel_fieldtx_handler,
         NULL
     ),
 
@@ -456,61 +467,64 @@ static IB_DIRMAP_INIT_STRUCTURE(fields_directive_map) = {
     IB_DIRMAP_INIT_LAST
 };
 
-static ib_status_t fields_init(ib_engine_t *ib, ib_module_t *m, void *cbdata)
+ib_status_t ib_moddevel_txdata_init(
+    ib_engine_t                  *ib,
+    ib_module_t                  *mod,
+    ib_mpool_t                   *mp,
+    ib_moddevel_txdata_config_t **pconfig)
 {
+    assert(ib != NULL);
+    assert(mod != NULL);
+    assert(mp != NULL);
+    assert(pconfig != NULL);
+
     ib_status_t rc;
-    ib_mpool_t *mp;
+    ib_moddevel_txdata_config_t *config;
 
-    ib_log_debug(ib, "Initializing fields module.");
+    ib_log_debug(ib, "Initializing txdata module.");
 
-    /* Get a pointer to the config memory pool */
-    mp = ib_engine_pool_config_get(ib);
-    if (mp == NULL) {
-        ib_log_error(ib, "Error getting memory pool");
-        return IB_EUNKNOWN;
+    /* Create our configuration structure */
+    config = ib_mpool_calloc(mp, sizeof(*config), 1);
+    if (config == NULL) {
+        return IB_EALLOC;
     }
+    config->mp = mp;
 
     /* Create the list */
-    rc = ib_list_create(&g_field_list, mp);
+    rc = ib_list_create(&(config->field_list), mp);
     if (rc != IB_OK) {
         ib_log_error(ib, "Error creating global field list: %d", rc);
+        return rc;
+    }
+
+    /* Set the directive callback data to be our configuration object */
+    moddevel_txdata_directive_map[0].cbdata_cb = config;
+    rc = ib_config_register_directives(ib, moddevel_txdata_directive_map);
+    if (rc != IB_OK) {
         return rc;
     }
 
     /* Register the TX header_finished callback */
     rc = ib_hook_tx_register(ib,
                              request_header_finished_event,
-                             fields_tx_header_finished,
-                             NULL);
+                             tx_header_finished,
+                             config);
     if (rc != IB_OK) {
         ib_log_error(ib, "Hook register returned %d", rc);
     }
 
+    *pconfig = config;
     return IB_OK;
 }
 
-static ib_status_t fields_fini(ib_engine_t *ib, ib_module_t *m, void *cbdata)
+ib_status_t ib_moddevel_txdata_fini(
+    ib_engine_t                 *ib,
+    ib_module_t                 *mod,
+    ib_moddevel_txdata_config_t *config)
 {
-    ib_log_debug(ib, "Fields module unloading.");
+    ib_hook_tx_unregister(ib,
+                          request_header_finished_event,
+                          tx_header_finished);
 
     return IB_OK;
 }
-
-/* Initialize the module structure. */
-IB_MODULE_INIT(
-    IB_MODULE_HEADER_DEFAULTS,           /* Default metadata */
-    MODULE_NAME_STR,                     /* Module name */
-    IB_MODULE_CONFIG_NULL,               /* Global config data */
-    NULL,                                /* Configuration field map */
-    fields_directive_map,                /* Config directive map */
-    fields_init,                         /* Initialize function */
-    NULL,                                /* Callback data */
-    fields_fini,                         /* Finish function */
-    NULL,                                /* Callback data */
-    NULL,                                /* Context open function */
-    NULL,                                /* Callback data */
-    NULL,                                /* Context close function */
-    NULL,                                /* Callback data */
-    NULL,                                /* Context destroy function */
-    NULL                                 /* Callback data */
-);
