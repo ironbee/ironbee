@@ -234,6 +234,8 @@ int htp_parse_response_header_generic(htp_connp_t *connp, htp_header_t *h, unsig
  * into a single buffer before invoking the parsing function.
  * 
  * @param[in] connp
+ * @param[in] data
+ * @param[in] len
  * @return HTP status
  */
 int htp_process_response_header_generic(htp_connp_t *connp, unsigned char *data, size_t len) {

@@ -46,6 +46,8 @@
  * which case they will be folded into one before parsing is attempted.
  *
  * @param[in] connp
+ * @param[in] data
+ * @param[in] len
  * @return HTP_OK or HTP_ERROR
  */
 htp_status_t htp_process_request_header_apache_2_2(htp_connp_t *connp, unsigned char *data, size_t len) {

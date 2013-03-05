@@ -46,6 +46,8 @@
  * which case they will be folded into one before parsing is attempted.
  *
  * @param[in] connp
+ * @param[in] data
+ * @param[in] len
  * @return HTP_OK or HTP_ERROR
  */
 int htp_process_request_header_generic(htp_connp_t *connp, unsigned char *data, size_t len) {

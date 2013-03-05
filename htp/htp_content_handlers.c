@@ -127,6 +127,8 @@ htp_status_t htp_ch_urlencoded_callback_request_headers(htp_connp_t *connp) {
  * Parses request query string, if present.
  *
  * @param[in] connp
+ * @param[in] raw_data
+ * @param[in] raw_len
  * @return HTP_OK if query string was parsed, HTP_DECLINED if there was no query
  *         string, and HTP_ERROR on failure.
  */

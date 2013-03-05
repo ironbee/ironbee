@@ -460,9 +460,9 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
  * the authority is in the incorrect format.
  *
  * @param[in] hostport
- * @param[in,out] hostname
- * @param[in,out] port
- * @param[in,out] flags
+ * @param[out] hostname
+ * @param[out] port
+ * @param[out] invalid
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
 htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int *invalid) {
