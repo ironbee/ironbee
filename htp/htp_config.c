@@ -151,17 +151,25 @@ htp_cfg_t *htp_config_create(void) {
     cfg->field_limit_hard = HTP_FIELD_LIMIT_HARD;
     cfg->field_limit_soft = HTP_FIELD_LIMIT_SOFT;
     cfg->log_level = HTP_LOG_NOTICE;
-    cfg->bestfit_map = bestfit_1252;
-    cfg->bestfit_replacement_char = '?';
     cfg->response_decompression_enabled = 1;
-    cfg->params_u_encoding_decode = 0;
-    cfg->params_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
-    cfg->params_nul_encoded_terminates = 0;
-    cfg->params_nul_raw_terminates = 0;
     cfg->parse_request_cookies = 1;
     cfg->parse_request_auth = 1;
     cfg->extract_request_files = 0;
-    cfg->extract_request_files_limit = -1; // Use the parser default.
+    cfg->extract_request_files_limit = -1; // Use the parser default.   
+        
+    // Default settings for URL-encoded data.
+
+    htp_config_set_bestfit_map(cfg, HTP_DECODER_DEFAULTS, bestfit_1252);
+    htp_config_set_bestfit_replacement_byte(cfg, HTP_DECODER_DEFAULTS, '?');
+
+    htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_DEFAULTS, HTP_URL_DECODE_PRESERVE_PERCENT);
+    htp_config_set_nul_raw_terminates(cfg, HTP_DECODER_DEFAULTS, 0);
+    htp_config_set_nul_encoded_terminates(cfg, HTP_DECODER_DEFAULTS, 0);
+    htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 0);
+
+
+    // Default settings for the path decoder.
+    // XXX
 
     htp_config_set_server_personality(cfg, HTP_SERVER_MINIMAL);
 
@@ -415,11 +423,6 @@ void htp_config_register_request_start(htp_cfg_t *cfg, int (*callback_fn)(htp_co
     htp_hook_register(&cfg->hook_request_start, (htp_callback_fn_t) callback_fn);
 }
 
-void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map) {
-    if (cfg == NULL) return;
-    cfg->bestfit_map = map;
-}
-
 htp_status_t htp_config_set_extract_request_files(htp_cfg_t *cfg, int extract_request_files, int limit) {
     if (cfg == NULL) return HTP_ERROR;
     if (cfg->tmpdir == NULL) return HTP_ERROR;
@@ -454,66 +457,6 @@ void htp_config_set_parse_request_cookies(htp_cfg_t *cfg, int parse_request_cook
     cfg->parse_request_cookies = parse_request_cookies;
 }
 
-void htp_config_set_path_backslash_separators(htp_cfg_t *cfg, int backslash_separators) {
-    if (cfg == NULL) return;
-    cfg->path_backslash_separators = backslash_separators;
-}
-
-void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int case_insensitive) {
-    if (cfg == NULL) return;
-    cfg->path_case_insensitive = case_insensitive;
-}
-
-void htp_config_set_path_compress_separators(htp_cfg_t *cfg, int compress_separators) {
-    if (cfg == NULL) return;
-    cfg->path_compress_separators = compress_separators;
-}
-
-void htp_config_set_path_control_char_handling(htp_cfg_t *cfg, int control_char_handling) {
-    if (cfg == NULL) return;
-    cfg->path_control_chars_unwanted = control_char_handling;
-}
-
-void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8) {
-    if (cfg == NULL) return;
-    cfg->path_utf8_convert = convert_utf8;
-}
-
-void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int decode_separators) {
-    if (cfg == NULL) return;
-    cfg->path_encoded_separators_decode = decode_separators;
-}
-
-void htp_config_set_path_decode_u_encoding(htp_cfg_t *cfg, int decode_u_encoding) {
-    if (cfg == NULL) return;
-    cfg->path_u_encoding_decode = decode_u_encoding;
-}
-
-void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_encoding_handling) {
-    if (cfg == NULL) return;
-    cfg->path_invalid_encoding_handling = invalid_encoding_handling;
-}
-
-void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, enum htp_unwanted_t invalid_utf8_unwanted) {
-    if (cfg == NULL) return;
-    cfg->path_utf8_invalid_unwanted = invalid_utf8_unwanted;
-}
-
-void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_terminates) {
-    if (cfg == NULL) return;
-    cfg->path_nul_encoded_terminates = nul_encoded_terminates;
-}
-
-void htp_config_set_path_nul_raw_terminates(htp_cfg_t *cfg, int nul_raw_terminates) {
-    if (cfg == NULL) return;
-    cfg->path_nul_raw_terminates = nul_raw_terminates;
-}
-
-void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char) {
-    if (cfg == NULL) return;
-    cfg->bestfit_replacement_char = replacement_char;
-}
-
 void htp_config_set_response_decompression(htp_cfg_t *cfg, int enabled) {
     if (cfg == NULL) return;
     cfg->response_decompression_enabled = enabled;
@@ -537,9 +480,9 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->parse_response_line = htp_parse_response_line_generic;
             cfg->process_response_header = htp_process_response_header_generic;
 
-            cfg->path_backslash_separators = 1;
-            cfg->path_encoded_separators_decode = 1;
-            cfg->path_compress_separators = 1;
+            htp_config_set_backslash_convert_slashes(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_path_separators_decode(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_path_separators_compress(cfg, HTP_DECODER_URL_PATH, 1);
             break;
 
         case HTP_SERVER_IDS:
@@ -548,12 +491,12 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->parse_response_line = htp_parse_response_line_generic;
             cfg->process_response_header = htp_process_response_header_generic;
 
-            cfg->path_backslash_separators = 1;
-            cfg->path_case_insensitive = 1;
-            cfg->path_encoded_separators_decode = 1;
-            cfg->path_compress_separators = 1;
-            cfg->path_u_encoding_decode = 1;            
-            cfg->path_utf8_convert = 1;
+            htp_config_set_backslash_convert_slashes(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_path_separators_decode(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_path_separators_compress(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_convert_lowercase(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_utf8_convert_bestfit(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_u_encoding_decode(cfg, HTP_DECODER_URL_PATH, 1);
             break;
 
         case HTP_SERVER_APACHE_2:
@@ -562,12 +505,14 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->parse_response_line = htp_parse_response_line_generic;
             cfg->process_response_header = htp_process_response_header_generic;
 
-            cfg->path_backslash_separators = 0;
-            cfg->path_encoded_separators_decode = 0;
-            cfg->path_compress_separators = 1;
-            cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
-            cfg->path_invalid_encoding_unwanted = HTP_UNWANTED_400;
-            cfg->path_control_chars_unwanted = HTP_UNWANTED_IGNORE;
+            htp_config_set_backslash_convert_slashes(cfg, HTP_DECODER_URL_PATH, 0);
+            htp_config_set_path_separators_decode(cfg, HTP_DECODER_URL_PATH, 0);
+            htp_config_set_path_separators_compress(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_u_encoding_decode(cfg, HTP_DECODER_URL_PATH, 0);
+
+            htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URL_PATH, HTP_URL_DECODE_PRESERVE_PERCENT);
+            htp_config_set_url_encoding_invalid_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_400);
+            htp_config_set_control_chars_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_IGNORE);
             break;
 
         case HTP_SERVER_IIS_5_1:
@@ -576,12 +521,13 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->parse_response_line = htp_parse_response_line_generic;
             cfg->process_response_header = htp_process_response_header_generic;
 
-            cfg->path_backslash_separators = 1;
-            cfg->path_encoded_separators_decode = 0;
-            cfg->path_compress_separators = 1;
-            cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
-            cfg->path_u_encoding_decode = 0;            
-            cfg->path_control_chars_unwanted = HTP_UNWANTED_IGNORE;
+            htp_config_set_backslash_convert_slashes(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_path_separators_decode(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_path_separators_compress(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_u_encoding_decode(cfg, HTP_DECODER_URL_PATH, 0);
+
+            htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URL_PATH, HTP_URL_DECODE_PRESERVE_PERCENT);
+            htp_config_set_control_chars_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_IGNORE);
             break;
 
         case HTP_SERVER_IIS_6_0:
@@ -590,14 +536,14 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->parse_response_line = htp_parse_response_line_generic;
             cfg->process_response_header = htp_process_response_header_generic;
 
-            cfg->path_backslash_separators = 1;
-            cfg->path_encoded_separators_decode = 1;
-            cfg->path_compress_separators = 1;
-            cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
-            cfg->path_invalid_encoding_unwanted = HTP_UNWANTED_400;
-            cfg->path_u_encoding_decode = 1;
-            cfg->path_u_encoding_unwanted = HTP_UNWANTED_400;
-            cfg->path_control_chars_unwanted = HTP_UNWANTED_400;
+            htp_config_set_backslash_convert_slashes(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_path_separators_decode(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_path_separators_compress(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_u_encoding_decode(cfg, HTP_DECODER_URL_PATH, 1);
+
+            htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URL_PATH, HTP_URL_DECODE_PRESERVE_PERCENT);
+            htp_config_set_u_encoding_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_400);
+            htp_config_set_control_chars_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_400);
             break;
 
         case HTP_SERVER_IIS_7_0:
@@ -607,12 +553,14 @@ int htp_config_set_server_personality(htp_cfg_t *cfg, enum htp_server_personalit
             cfg->parse_response_line = htp_parse_response_line_generic;
             cfg->process_response_header = htp_process_response_header_generic;
 
-            cfg->path_backslash_separators = 1;
-            cfg->path_encoded_separators_decode = 1;
-            cfg->path_compress_separators = 1;
-            cfg->path_invalid_encoding_handling = HTP_URL_DECODE_PRESERVE_PERCENT;
-            cfg->path_invalid_encoding_unwanted = HTP_UNWANTED_400;
-            cfg->path_control_chars_unwanted = HTP_UNWANTED_400;
+            htp_config_set_backslash_convert_slashes(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_path_separators_decode(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_path_separators_compress(cfg, HTP_DECODER_URL_PATH, 1);
+            htp_config_set_u_encoding_decode(cfg, HTP_DECODER_URL_PATH, 1);
+
+            htp_config_set_url_encoding_invalid_handling(cfg, HTP_DECODER_URL_PATH, HTP_URL_DECODE_PRESERVE_PERCENT);
+            htp_config_set_url_encoding_invalid_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_400);
+            htp_config_set_control_chars_unwanted(cfg, HTP_DECODER_URL_PATH, HTP_UNWANTED_400);
             break;
 
         default:
@@ -638,4 +586,226 @@ void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy) {
 void htp_config_set_user_data(htp_cfg_t *cfg, void *user_data) {
     if (cfg == NULL) return;
     cfg->user_data = user_data;
+}
+
+
+static int convert_to_0_or_1(int b) {
+    if (b) return 1;
+    return 0;
+}
+
+void htp_config_set_bestfit_map(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, void *map) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].bestfit_map = map;
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].bestfit_map = map;
+        }
+    }
+}
+
+void htp_config_set_bestfit_replacement_byte(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int b) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].bestfit_replacement_byte = b;
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].bestfit_replacement_byte = b;
+        }
+    }
+}
+
+void htp_config_set_url_encoding_invalid_handling(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int handling) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].url_encoding_invalid_handling = handling;
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].url_encoding_invalid_handling = handling;
+        }
+    }
+}
+
+void htp_config_set_nul_raw_terminates(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].nul_raw_terminates = convert_to_0_or_1(enabled);
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].nul_raw_terminates = convert_to_0_or_1(enabled);
+        }
+    }
+}
+
+void htp_config_set_nul_encoded_terminates(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].nul_encoded_terminates = convert_to_0_or_1(enabled);
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].nul_encoded_terminates = convert_to_0_or_1(enabled);
+        }
+    }
+}
+
+void htp_config_set_u_encoding_decode(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].u_encoding_decode = convert_to_0_or_1(enabled);
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].u_encoding_decode = convert_to_0_or_1(enabled);
+        }
+    }
+}
+
+void htp_config_set_backslash_convert_slashes(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].backslash_convert_slashes = convert_to_0_or_1(enabled);
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].backslash_convert_slashes = convert_to_0_or_1(enabled);
+        }
+    }
+}
+
+void htp_config_set_path_separators_decode(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].path_separators_decode = convert_to_0_or_1(enabled);
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].path_separators_decode = convert_to_0_or_1(enabled);
+        }
+    }
+}
+
+void htp_config_set_path_separators_compress(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].path_separators_compress = convert_to_0_or_1(enabled);
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].path_separators_compress = convert_to_0_or_1(enabled);
+        }
+    }
+}
+
+void htp_config_set_convert_lowercase(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].convert_lowercase = convert_to_0_or_1(enabled);
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].convert_lowercase = convert_to_0_or_1(enabled);
+        }
+    }
+}
+
+void htp_config_set_utf8_convert_bestfit(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].utf8_convert_bestfit = convert_to_0_or_1(enabled);
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].utf8_convert_bestfit = convert_to_0_or_1(enabled);
+        }
+    }
+}
+
+void htp_config_set_u_encoding_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].u_encoding_unwanted = unwanted;
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].u_encoding_unwanted = unwanted;
+        }
+    }
+}
+
+void htp_config_set_control_chars_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].u_encoding_unwanted = unwanted;
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].u_encoding_unwanted = unwanted;
+        }
+    }
+}
+
+void htp_config_set_url_encoding_invalid_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+    
+    cfg->decoder_cfgs[ctx].url_encoding_invalid_unwanted = unwanted;
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].url_encoding_invalid_unwanted = unwanted;
+        }
+    }
+}
+
+void htp_config_set_nul_encoded_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].nul_encoded_unwanted = unwanted;
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].nul_encoded_unwanted = unwanted;
+        }
+    }
+}
+
+void htp_config_set_nul_raw_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].nul_raw_unwanted = unwanted;
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].nul_raw_unwanted = unwanted;
+        }
+    }
+}
+
+void htp_config_set_path_separators_encoded_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].path_separators_encoded_unwanted = unwanted;
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].path_separators_encoded_unwanted = unwanted;
+        }
+    }
+}
+
+void htp_config_set_utf8_invalid_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted) {
+    if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
+
+    cfg->decoder_cfgs[ctx].utf8_invalid_unwanted = unwanted;
+
+    if (ctx == HTP_DECODER_DEFAULTS) {
+        for (size_t i = 0; i < HTP_DECODER_CONTEXTS_MAX; i++) {
+            cfg->decoder_cfgs[i].utf8_invalid_unwanted = unwanted;
+        }
+    }
 }

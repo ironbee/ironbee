@@ -46,10 +46,23 @@ extern "C" {
 #include "htp.h"
 
 /**
+ * Decoder contexts.
+ */
+enum htp_decoder_ctx_t {
+    /** Default settings. Settings applied to this context are propagated to all other contexts. */
+    HTP_DECODER_DEFAULTS = 0,
+
+    /** Urlencoded decoder settings. */
+    HTP_DECODER_URLENCODED = 1,
+
+    /** URL path decoder settings. */
+    HTP_DECODER_URL_PATH = 2    
+};
+
+/**
  * Enumerates the possible server personalities.
  */
 enum htp_server_personality_t {
-
     /**
      * Minimal personality that performs at little work as possible. All optional
      * features are disabled. This personality is a good starting point for customization.
@@ -260,16 +273,60 @@ void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp
 void htp_config_register_urlencoded_parser(htp_cfg_t *cfg);
 
 /**
- * Configures the best-fit map, which is used to convert UCS-2 characters into
- * single-byte characters. By default a Windows 1252 best-fit map is used. The map
- * is an list of triplets, the first 2 bytes being an UCS-2 character to map from,
- * and the third byte being the single byte to map to. Make sure that your map contains
- * the mappings to cover the full-width and half-width form characters (U+FF00-FFEF).
+ * Configures whether backslash characters are treated as path segment separators. They
+ * are not on Unix systems, but are on Windows systems. If this setting is enabled, a path
+ * such as "/one\two/three" will be converted to "/one/two/three". Implemented only for HTP_DECODER_URL_PATH.
  *
  * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] enabled
+ */
+void htp_config_set_backslash_convert_slashes(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled);
+
+/**
+ * Configures a best-fit map, which is used whenever characters longer than one byte
+ * need to be converted to a single-byte. By default a Windows 1252 best-fit map is used.
+ * The map is an list of triplets, the first 2 bytes being an UCS-2 character to map from,
+ * and the third byte being the single byte to map to. Make sure that your map contains
+ * the mappings to cover the full-width and half-width form characters (U+FF00-FFEF). The
+ * last triplet in the map must be all zeros (3 NUL bytes).
+ *
+ * @param[in] cfg
+ * @param[in] ctx
  * @param[in] map
  */
-void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
+void htp_config_set_bestfit_map(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, void *map);
+
+/**
+ * Sets the replacement character that will be used to in the lossy best-fit
+ * mapping from multi-byte to single-byte streams. The question mark character
+ * is used as the default replacement byte.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] replacement_byte
+ */
+void htp_config_set_bestfit_replacement_byte(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int replacement_byte);
+
+/**
+ * Controls reaction to raw control characters in the data.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] unwanted
+ */
+void htp_config_set_control_chars_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
+
+/**
+ * Configures whether input data will be converted to lowercase. Useful when set on the
+ * HTP_DECODER_URL_PATH context, in order to handle servers with case-insensitive filesystems.
+ * Implemented only for HTP_DECODER_URL_PATH.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] enabled
+ */
+void htp_config_set_convert_lowercase(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled);
 
 /**
  * Enables or disables Multipart file extraction. This function can be invoked only
@@ -319,6 +376,46 @@ void htp_config_set_log_level(htp_cfg_t *cfg, enum htp_log_level_t log_level);
 void htp_config_set_generate_request_uri_normalized(htp_cfg_t *cfg, int generate);
 
 /**
+ * Configures how the server reacts to encoded NUL bytes. Some servers will stop at
+ * at NUL, while some will respond with 400 or 404. When the termination option is not
+ * used, the NUL byte will remain in the path.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] enabled
+ */
+void htp_config_set_nul_encoded_terminates(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled);
+
+/**
+ * Configures reaction to encoded NUL bytes in input data.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] unwanted
+ */
+void htp_config_set_nul_encoded_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
+
+/**
+ * Configures the handling of raw NUL bytes. If enabled, raw NUL terminates strings.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] enabled
+ */
+void htp_config_set_nul_raw_terminates(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled);
+
+/**
+ * Configures how the server reacts to raw NUL bytes. Some servers will terminate
+ * path at NUL, while some will respond with 400 or 404. When the termination option
+ * is not used, the NUL byte will remain in the data.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] unwanted
+ */
+void htp_config_set_nul_raw_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
+
+/**
  * Enable or disable request HTTP Authentication parsing. Enabled by default.
  *
  * @param[in] cfg
@@ -335,129 +432,39 @@ void htp_config_set_parse_request_auth(htp_cfg_t *cfg, int parse_request_auth);
 void htp_config_set_parse_request_cookies(htp_cfg_t *cfg, int parse_request_cookies);
 
 /**
- * Configures whether backslash characters are treated as path segment separators. They
- * are not on Unix systems, but are on Windows systems. If this setting is enabled, a path
- * such as "/one\two/three" will be converted to "/one/two/three".
+ * Configures whether consecutive path segment separators will be compressed. When enabled, a path
+ * such as "/one//two" will be normalized to "/one/two". Backslash conversion and path segment separator
+ * decoding are carried out before compression. For example, the path "/one\\/two\/%5cthree/%2f//four"
+ * will be converted to "/one/two/three/four" (assuming all 3 options are enabled). Implemented only for
+ * HTP_DECODER_URL_PATH.
  *
  * @param[in] cfg
- * @param[in] backslash_separators
+ * @param[in] ctx
+ * @param[in] enabled
  */
-void htp_config_set_path_backslash_separators(htp_cfg_t *cfg, int backslash_separators);
+void htp_config_set_path_separators_compress(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled);
 
 /**
- * Configures filesystem sensitivity. This setting affects
- * how URL paths are normalized. There are no path modifications by default, but
- * on a case-insensitive systems path will be converted to lowercase.
- *
- * @param[in] cfg
- * @param[in] path_case_insensitive
- */
-void htp_config_set_path_case_insensitive(htp_cfg_t *cfg, int path_case_insensitive);
-
-/**
- * Configures whether consecutive path segment separators will be compressed. When
- * enabled, a path such as "/one//two" will be normalized to "/one/two". The backslash_separators
- * and decode_separators parameters are used before compression takes place. For example, if
- * backslash_separators and decode_separators are both enabled, the path "/one\\/two\/%5cthree/%2f//four"
- * will be converted to "/one/two/three/four".
- *
- * @param[in] cfg
- * @param[in] compress_separators
- */
-void htp_config_set_path_compress_separators(htp_cfg_t *cfg, int compress_separators);
-
-/**
- * This parameter is used to predict how a server will react when control
- * characters are present in a request path, but does not affect path
- * normalization.
- *
- * @param[in] cfg
- * @param[in] control_char_handling Use NONE with servers that ignore control characters in
- *                              request path, and STATUS_400 with servers that respond
- *                              with 400.
- */
-void htp_config_set_path_control_char_handling(htp_cfg_t *cfg, int control_char_handling);
-
-/**
- * Controls the UTF-8 treatment of request paths. One option is to only validate
- * path as UTF-8. In this case, the UTF-8 flags will be raised as appropriate, and
- * the path will remain in UTF-8 (if it was UTF-8in the first place). The other option
- * is to convert a UTF-8 path into a single byte stream using best-fit mapping.
- *
- * @param[in] cfg
- * @param[in] convert_utf8
- */
-void htp_config_set_path_convert_utf8(htp_cfg_t *cfg, int convert_utf8);
-
-/**
- * Configures whether encoded path segment separators will be decoded. Apache does
- * not do this, but IIS does. If enabled, a path such as "/one%2ftwo" will be normalized
+ * Configures whether encoded path segment separators will be decoded. Apache does not do
+ * this by default, but IIS does. If enabled, a path such as "/one%2ftwo" will be normalized
  * to "/one/two". If the backslash_separators option is also enabled, encoded backslash
- * characters will be converted too (and subsequently normalized to forward slashes).
+ * characters will be converted too (and subsequently normalized to forward slashes). Implemented
+ * only for HTP_DECODER_URL_PATH.
  *
  * @param[in] cfg
- * @param[in] backslash_separators
+ * @param[in] ctx
+ * @param[in] enabled
  */
-void htp_config_set_path_decode_separators(htp_cfg_t *cfg, int backslash_separators);
+void htp_config_set_path_separators_decode(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled);
 
 /**
- * Configures whether %u-encoded sequences in path will be decoded. Such sequences
- * will be treated as invalid URL encoding if decoding is not desirable.
+ * Configures reaction to encoded path separator characters (e.g., %2f). Implemented only for HTP_DECODER_URL_PATH.
  *
  * @param[in] cfg
- * @param[in] decode_u_encoding
+ * @param[in] ctx
+ * @param[in] unwanted
  */
-void htp_config_set_path_decode_u_encoding(htp_cfg_t *cfg, int decode_u_encoding);
-
-/**
- * Configures how server reacts to invalid encoding in path.
- *
- * @param[in] cfg
- * @param[in] invalid_encoding_handling The available options are: URL_DECODER_PRESERVE_PERCENT,
- *                                  URL_DECODER_REMOVE_PERCENT, URL_DECODER_DECODE_INVALID
- *                                  and URL_DECODER_STATUS_400.
- */
-void htp_config_set_path_invalid_encoding_handling(htp_cfg_t *cfg, int invalid_encoding_handling);
-
-/**
- * Configures how server reacts to invalid UTF-8 characters in path. This setting will
- * not affect path normalization; it only controls what response status we expect for
- * a request that contains invalid UTF-8 characters.
- *
- * @param[in] cfg
- * @param[in] invalid_utf8_unwanted
- */
-void htp_config_set_path_invalid_utf8_handling(htp_cfg_t *cfg, enum htp_unwanted_t invalid_utf8_unwanted);
-
-/**
- * Configures how server reacts to encoded NUL bytes. Some servers will terminate
- * path at NUL, while some will respond with 400 or 404. When the termination option
- * is not used, the NUL byte will remain in the path.
- *
- * @param[in] cfg
- * @param[in] nul_encoded_terminates Possible values: TERMINATE, STATUS_400, STATUS_404
- */
-void htp_config_set_path_nul_encoded_handling(htp_cfg_t *cfg, int nul_encoded_terminates);
-
-/**
- * Configures how server reacts to raw NUL bytes. Some servers will terminate
- * path at NUL, while some will respond with 400 or 404. When the termination option
- * is not used, the NUL byte will remain in the path.
- *
- * @param[in] cfg
- * @param[in] nul_encoded_terminates Possible values: TERMINATE, STATUS_400, STATUS_404
- */
-void htp_config_set_path_nul_raw_terminates(htp_cfg_t *cfg, int nul_encoded_terminates);
-
-/**
- * Sets the replacement character that will be used to in the lossy best-fit
- * mapping from Unicode characters into single-byte streams. The question mark
- * is the default replacement character.
- *
- * @param[in] cfg
- * @param[in] replacement_char
- */
-void htp_config_set_path_replacement_char(htp_cfg_t *cfg, int replacement_char);
+void htp_config_set_path_separators_encoded_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
 
 /**
  * Controls whether compressed response bodies will be automatically decompressed.
@@ -502,6 +509,67 @@ void htp_config_set_tx_auto_destroy(htp_cfg_t *cfg, int tx_auto_destroy);
  * @param[in] user_data
  */
 void htp_config_set_user_data(htp_cfg_t *cfg, void *user_data);
+
+/**
+ * Configures whether %u-encoded sequences are decoded. Such sequences
+ * will be treated as invalid URL encoding if decoding is not desirable.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] enabled
+ */
+void htp_config_set_u_encoding_decode(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled);
+
+/**
+ * Configures reaction to %u-encoded sequences in input data.
+ * 
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] unwanted
+ */
+void htp_config_set_u_encoding_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
+
+/**
+ * Configures how the server handles to invalid URL encoding.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] handling The available options are: URL_DECODER_PRESERVE_PERCENT,
+ *                     URL_DECODER_REMOVE_PERCENT, and URL_DECODER_DECODE_INVALID.
+ */
+// XXX Use enum for handling below.
+void htp_config_set_url_encoding_invalid_handling(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int handling);
+
+/**
+ * Configures how the server reacts to invalid URL encoding.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] unwanted
+ */
+void htp_config_set_url_encoding_invalid_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
+
+/**
+ * Controls whether the data should be treated as UTF-8 and converted to a single-byte
+ * stream using best-fit mapping. Implemented only for HTP_DECODER_URL_PATH.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] enabled
+ */
+void htp_config_set_utf8_convert_bestfit(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int enabled);
+
+/**
+ * Configures how the server reacts to invalid UTF-8 characters. This setting does
+ * not affect path normalization; it only controls what response status will be expect for
+ * a request that contains invalid UTF-8 characters. Implemented only for HTP_DECODER_URL_PATH.
+ *
+ * @param[in] cfg
+ * @param[in] ctx
+ * @param[in] unwanted
+ */
+void htp_config_set_utf8_invalid_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_unwanted_t unwanted);
+
 
 #ifdef	__cplusplus
 }

@@ -43,6 +43,79 @@
 extern "C" {
 #endif
 
+#define HTP_DECODER_CONTEXTS_MAX    3
+
+typedef struct htp_decoder_cfg_t {
+
+    // Path-specific decoding options.
+
+    /** Convert backslash characters to slashes. */
+    int backslash_convert_slashes;
+    
+    /** Convert to lowercase. */
+    int convert_lowercase;
+    
+    /** Compress slash characters. */
+    int path_separators_compress;
+
+    /** Should we URL-decode encoded path segment separators? */
+    int path_separators_decode;
+    
+    /** Reaction to encoded path separators. */
+    enum htp_unwanted_t path_separators_encoded_unwanted;
+
+
+    // Special characters options.
+
+    /** Controls how raw NUL bytes are handled. */
+    int nul_raw_terminates;
+
+    /** Determines server response to a raw NUL byte in the path. */
+    enum htp_unwanted_t nul_raw_unwanted;
+
+    /** Reaction to control characters. */
+    enum htp_unwanted_t control_chars_unwanted;
+
+
+    // URL encoding options.
+
+    /** Should we decode %u-encoded characters? */
+    int u_encoding_decode;
+
+    /** Reaction to %u encoding. */
+    enum htp_unwanted_t u_encoding_unwanted;
+
+    /** Handling of invalid URL encodings. */
+    enum htp_url_encoding_handling_t url_encoding_invalid_handling;
+
+    /** Reaction to invalid URL encoding. */
+    enum htp_unwanted_t url_encoding_invalid_unwanted;
+    
+    /** Controls how encoded NUL bytes are handled. */
+    int nul_encoded_terminates;
+
+    /** How are we expected to react to an encoded NUL byte? */
+    enum htp_unwanted_t nul_encoded_unwanted;
+
+
+    // UTF-8 options.
+
+    /** Controls how invalid UTF-8 characters are handled. */
+    enum htp_unwanted_t utf8_invalid_unwanted;
+
+    /** Convert UTF-8 characters into bytes using best-fit mapping. */
+    int utf8_convert_bestfit;
+
+    
+    // Best-fit mapping options.
+
+    /** The best-fit map to use to decode %u-encoded characters. */
+    unsigned char *bestfit_map;
+
+    /** The replacement byte used when there is no best-fit mapping. */
+    unsigned char bestfit_replacement_byte;
+} htp_decoder_cfg_t;
+
 struct htp_cfg_t {
     /**
      * Hard field limit length. If the parser encounters a line that's longer
@@ -88,86 +161,8 @@ struct htp_cfg_t {
     /** The function to use to transform parameters after parsing. */
     int (*parameter_processor)(htp_param_t *param);
 
-
-    // Path handling
-
-    /** Should we treat backslash characters as path segment separators? */
-    int path_backslash_separators;
-
-    /** Should we treat paths as case insensitive? */
-    int path_case_insensitive;
-
-    /** Should we compress multiple path segment separators into one? */
-    int path_compress_separators;
-
-    /** How are we expected to react to control chars in the path? */
-    enum htp_unwanted_t path_control_chars_unwanted;
-
-    /** Should the parser convert UTF-8 into a single-byte stream, using best-fit? */
-    int path_utf8_convert;
-
-    /** Should we URL-decode encoded path segment separators? */
-    int path_encoded_separators_decode;
-
-    /** How are we expected to react to encoded path separators? */
-    enum htp_unwanted_t path_encoded_separators_unwanted;
-
-    /** Should we decode %u-encoded characters? */
-    int path_u_encoding_decode;
-
-    /** How are we expected to react to %u encoding in the path? */
-    enum htp_unwanted_t path_u_encoding_unwanted;
-
-    /** Handling of invalid URL encodings. */
-    enum htp_url_encoding_handling_t path_invalid_encoding_handling;
-
-    /** How are we expected to react to invalid URL encoding in the path? */
-    enum htp_unwanted_t path_invalid_encoding_unwanted;
-
-    /** Controls how invalid UTF-8 characters are handled. */
-    enum htp_unwanted_t path_utf8_invalid_unwanted;
-
-    /** Controls how encoded NUL bytes are handled. */
-    int path_nul_encoded_terminates;
-
-    /** How are we expected to react to an encoded NUL byte? */
-    enum htp_unwanted_t path_nul_encoded_unwanted;
-
-    /** Controls how raw NUL bytes are handled. */
-    int path_nul_raw_terminates;
-
-    /** Determines server response to a raw NUL byte in the path. */
-    enum htp_unwanted_t path_nul_raw_unwanted;
-
-    /** The replacement character used when there is no best-fit mapping. */
-    unsigned char bestfit_replacement_char;
-
-    /** Should %u encoding characters be decoded. */
-    int params_u_encoding_decode;
-
-    /** Determines server response to %u encoding in the parameters. */
-    enum htp_unwanted_t params_u_encoding_unwanted;
-
-    /** Determines server handling of invalid URL encoding. */
-    enum htp_url_encoding_handling_t params_invalid_encoding_handling;
-
-    /** Determines server response to invalid URL encoding in the parameters.  */
-    enum htp_unwanted_t params_invalid_encoding_unwanted;
-
-    /** Determines if an encoded NUL byte terminates URL-encoded parameters. */
-    int params_nul_encoded_terminates;
-
-    /** Determines server response to an encoded NUL byte in the parameters. */
-    enum htp_unwanted_t params_nul_encoded_unwanted;
-
-    /** Determines if a raw NUL byte terminates the parameters. */
-    int params_nul_raw_terminates;
-
-    /** Determines server response to a raw NUL byte in the parameters. */
-    enum htp_unwanted_t params_nul_raw_unwanted;
-
-    /** The best-fit map to use to decode %u-encoded characters. */
-    unsigned char *bestfit_map;
+    /** Decoder configuration array, one per context. */
+    htp_decoder_cfg_t decoder_cfgs[HTP_DECODER_CONTEXTS_MAX];
 
     /** Whether to generate the request_uri_normalized field. */
     int generate_request_uri_normalized;
