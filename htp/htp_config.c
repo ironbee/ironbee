@@ -167,10 +167,6 @@ htp_cfg_t *htp_config_create(void) {
     htp_config_set_nul_encoded_terminates(cfg, HTP_DECODER_DEFAULTS, 0);
     htp_config_set_u_encoding_decode(cfg, HTP_DECODER_DEFAULTS, 0);
 
-
-    // Default settings for the path decoder.
-    // XXX
-
     htp_config_set_server_personality(cfg, HTP_SERVER_MINIMAL);
 
     return cfg;

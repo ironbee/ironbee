@@ -99,7 +99,10 @@ struct htp_connp_t {
     /** The offset of the next byte in the request data chunk to read. */
     int64_t in_current_read_offset;
 
-    // XXX
+    /**
+     * The starting point of the data waiting to be consumed. This field is used
+     * in the states where reading data is not the same as consumption.
+     */
     int64_t in_current_consume_offset;
 
     /** How many data chunks does the inbound connection stream consist of? */
@@ -176,7 +179,10 @@ struct htp_connp_t {
     /** The offset of the next byte in the response data chunk to consume. */
     int64_t out_current_read_offset;
 
-    // XXX
+    /**
+     * The starting point of the data waiting to be consumed. This field is used
+     * in the states where reading data is not the same as consumption.
+     */
     int64_t out_current_consume_offset;
 
     /** The offset, in the entire connection stream, of the next response byte. */
