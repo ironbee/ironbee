@@ -278,12 +278,6 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
     TSMLoc field_loc;
     hdr_list *hdrs;
     TSReturnCode rv;
-    /* to notify ironbee */
-    ib_parsed_resp_line_t *rline;
-    ib_parsed_header_wrapper_t *ibhdrs;
-    int nhdrs = 0;
-    char cstatus[4];
-    ib_status_t rc;
 
     if (TSHttpTxnClientRespGet(txnp, &bufp, &hdr_loc) != TS_SUCCESS) {
         TSError("Errordoc: couldn't retrieve client response header");
@@ -301,32 +295,6 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
     if (rv != TS_SUCCESS) {
         TSError("ErrorDoc - TSHttpHdrReasonSet");
     }
-
-    /* notify response line to Ironbee */
-    sprintf(cstatus, "%d", txndata->status);
-    rc = ib_parsed_resp_line_create(txndata->tx, &rline, NULL, 0,
-                                    "HTTP/1.1", 8, cstatus, strlen(cstatus),
-                                    reason, strlen(reason));
-    if (rc != IB_OK) {
-        TSError("ErrorDoc - ib_parsed_resp_line_create");
-    }
-    else {
-        rc = ib_state_notify_response_started(ironbee, txndata->tx, rline);
-        if (rc != IB_OK) {
-            TSError("ErrorDoc - ib_state_notify_response_started");
-        }
-    }
-
-
-    /* since this is an internally-generated error response, the only
-     * headers are the ones we set.
-     */
-    rc = ib_parsed_name_value_pair_list_wrapper_create(&ibhdrs, txndata->tx);
-    if (rc != IB_OK) {
-        TSError("ErrorDoc - ib_parsed_name_value_pair_list_wrapper_create");
-        ibhdrs = NULL;
-    }
-
 
     while (hdrs = txndata->err_hdrs, hdrs != 0) {
         txndata->err_hdrs = hdrs->next;
@@ -352,18 +320,7 @@ static void error_response(TSHttpTxn txnp, ib_txn_ctx *txndata)
             TSError("ErrorDoc - TSMimeHdrFieldAppend");
             goto errordoc_free1;
         }
-        if (ibhdrs) {
-            rc = ib_parsed_name_value_pair_list_add(ibhdrs, hdrs->hdr,
-                                                    strlen(hdrs->hdr),
-                                                    hdrs->value,
-                                                    strlen(hdrs->value));
-            if (rc != IB_OK) {
-                TSError("ErrorDoc - ib_parsed_name_value_pair_list_add");
-            }
-            else {
-                ++nhdrs;
-            }
-        }
+
 errordoc_free1:
         rv = TSHandleMLocRelease(bufp, hdr_loc, field_loc);
         if (rv != TS_SUCCESS) {
@@ -384,19 +341,6 @@ errordoc_free:
     rv = TSHandleMLocRelease(bufp, TS_NULL_MLOC, hdr_loc);
     if (rv != TS_SUCCESS) {
         TSError("ErrorDoc - TSHandleMLocRelease 2");
-    }
-
-    if (nhdrs > 0) {
-        TSDebug("ironbee", "process_hdr: notifying header data");
-        rc = ib_state_notify_response_header_data(ironbee, txndata->tx, ibhdrs);
-        if (rc != IB_OK) {
-            TSError("ErrorDoc - ib_state_notify_response_header_data");
-        }
-        TSDebug("ironbee", "process_hdr: notifying header finished");
-        rc = ib_state_notify_response_header_finished(ironbee, txndata->tx);
-        if (rc != IB_OK) {
-            TSError("ErrorDoc - ib_state_notify_response_header_finished");
-        }
     }
 
     TSDebug("ironbee", "Sent error %d \"%s\"", txndata->status, reason);
@@ -1654,12 +1598,22 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             /* Feed ironbee the headers if not done already. */
             if (!ib_tx_flags_isset(txndata->tx, IB_TX_FRES_STARTED)) {
                 status = process_hdr(txndata, txnp, &ib_direction_client_resp);
-                /* The API function(s) that caused the error to be set
-                 * already returned an error, so a log message here is
-                 * probably superfluous.
-                 */
-                if (status != HDR_OK)
-                    TSDebug("ironbee", "Requested error in response headers, but too late to act on it.");
+            }
+
+            /* If there is an error with a body, then notify ironbee.
+             *
+             * NOTE: I do not see anywhere else to put this as the error body is
+             *       just a buffer and not delivered via normal IO channels, so
+             *       the error body will never get caught by an event.
+             */
+            if ((txndata->status != 0) && (txndata->err_body != NULL)) {
+                ib_txdata_t itxdata;
+                itxdata.data = (uint8_t *)txndata->err_body;
+                itxdata.dlen = strlen(txndata->err_body);
+                TSDebug("ironbee",
+                        "error_response: calling ib_state_notify_response_body_data() %s:%d",
+                        __FILE__, __LINE__);
+                ib_state_notify_response_body_data(ironbee, txndata->tx, &itxdata);
             }
 
             TSHttpTxnReenable(txnp, TS_EVENT_HTTP_CONTINUE);
