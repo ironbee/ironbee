@@ -336,35 +336,6 @@ enum htp_stream_state_t {
     HTP_STREAM_DATA = 9
 };
 
-/**
- * Enumerates the ways in which servers respond to malformed data.
- */
-enum htp_unwanted_t {
-
-    /** Ignores problem. */
-    HTP_UNWANTED_IGNORE = 0,
-
-    /** Responds with HTTP 400 status code. */
-    HTP_UNWANTED_400 = 400,
-
-    /** Responds with HTTP 404 status code. */
-    HTP_UNWANTED_404 = 404
-};
-
-/**
- * Enumerates the possible approaches to handling invalid URL-encodings.
- */
-enum htp_url_encoding_handling_t {
-    /** Ignore invalid URL encodings and leave the % in the data. */
-    HTP_URL_DECODE_PRESERVE_PERCENT = 0,
-
-    /** Ignore invalid URL encodings, but remove the % from the data. */
-    HTP_URL_DECODE_REMOVE_PERCENT = 1,
-
-    /** Decode invalid URL encodings. */
-    HTP_URL_DECODE_PROCESS_INVALID = 2
-};
-
 #ifdef	__cplusplus
 }
 #endif

@@ -614,7 +614,7 @@ void htp_config_set_bestfit_replacement_byte(htp_cfg_t *cfg, enum htp_decoder_ct
     }
 }
 
-void htp_config_set_url_encoding_invalid_handling(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int handling) {
+void htp_config_set_url_encoding_invalid_handling(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_url_encoding_handling_t handling) {
     if (ctx >= HTP_DECODER_CONTEXTS_MAX) return;
 
     cfg->decoder_cfgs[ctx].url_encoding_invalid_handling = handling;

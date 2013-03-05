@@ -98,6 +98,35 @@ enum htp_server_personality_t {
 };
 
 /**
+ * Enumerates the ways in which servers respond to malformed data.
+ */
+enum htp_unwanted_t {
+
+    /** Ignores problem. */
+    HTP_UNWANTED_IGNORE = 0,
+
+    /** Responds with HTTP 400 status code. */
+    HTP_UNWANTED_400 = 400,
+
+    /** Responds with HTTP 404 status code. */
+    HTP_UNWANTED_404 = 404
+};
+
+/**
+ * Enumerates the possible approaches to handling invalid URL-encodings.
+ */
+enum htp_url_encoding_handling_t {
+    /** Ignore invalid URL encodings and leave the % in the data. */
+    HTP_URL_DECODE_PRESERVE_PERCENT = 0,
+
+    /** Ignore invalid URL encodings, but remove the % from the data. */
+    HTP_URL_DECODE_REMOVE_PERCENT = 1,
+
+    /** Decode invalid URL encodings. */
+    HTP_URL_DECODE_PROCESS_INVALID = 2
+};
+
+/**
  * Creates a new configuration structure. Configuration structures created at
  * configuration time must not be changed afterwards in order to support lock-less
  * copying.
@@ -534,11 +563,9 @@ void htp_config_set_u_encoding_unwanted(htp_cfg_t *cfg, enum htp_decoder_ctx_t c
  *
  * @param[in] cfg
  * @param[in] ctx
- * @param[in] handling The available options are: URL_DECODER_PRESERVE_PERCENT,
- *                     URL_DECODER_REMOVE_PERCENT, and URL_DECODER_DECODE_INVALID.
+ * @param[in] handling
  */
-// XXX Use enum for handling below.
-void htp_config_set_url_encoding_invalid_handling(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, int handling);
+void htp_config_set_url_encoding_invalid_handling(htp_cfg_t *cfg, enum htp_decoder_ctx_t ctx, enum htp_url_encoding_handling_t handling);
 
 /**
  * Configures how the server reacts to invalid URL encoding.
