@@ -15,7 +15,7 @@ NGINX_URL = http://nginx.org/download/$(NGINX_TARBALL)
 
 NGXIB_SRC = $(abs_top_srcdir)/servers/nginx
 NGXIB_PREFIX = $(prefix)/nginx
-NGXIB_COPTS = $(CFLAGS) $(PCRE_CFLAGS) -I$(prefix)/include
+NGXIB_COPTS = $(CFLAGS) $(PCRE_CFLAGS) -D_GNU_SOURCE -I$(prefix)/include
 NGXIB_LDOPTS = $(PCRE_LDFLAGS) $(PCRE_LDADD) -L$(prefix)/lib -lhtp -libutil -lironbee
 
 nginx: $(NGINX_DIR)/objs/nginx
