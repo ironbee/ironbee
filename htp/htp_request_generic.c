@@ -51,116 +51,52 @@
  * @return HTP_OK or HTP_ERROR
  */
 int htp_process_request_header_generic(htp_connp_t *connp, unsigned char *data, size_t len) {
-/*
-    bstr *tempstr = NULL;
-    unsigned char *data = NULL;
-    size_t len = 0;
-
-    // Create new header structure
+    // Create a new header structure.
     htp_header_t *h = calloc(1, sizeof (htp_header_t));
-    if (h == NULL) {        
-        return HTP_ERROR;
-    }
+    if (h == NULL) return HTP_ERROR;
 
-    // Ensure we have the necessary header data in a single buffer
-    if (connp->in_header_line_index + 1 == connp->in_header_line_counter) {
-        // Single line
-        htp_header_line_t *hl = htp_list_get(connp->in_tx->request_header_lines,
-            connp->in_header_line_index);
-        if (hl == NULL) {
-            // Internal error            
-            free(h);
-            return HTP_ERROR;
-        }
-
-        data = (unsigned char *)bstr_ptr(hl->line);
-        len = bstr_len(hl->line);
-        hl->header = h;
-    } else {
-        // Multiple lines (folded)
-        int i = 0;
-
-        for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
-            htp_header_line_t *hl = htp_list_get(connp->in_tx->request_header_lines, i);
-            len += bstr_len(hl->line);
-        }
-
-        tempstr = bstr_alloc(len);
-        if (tempstr == NULL) {            
-            free(h);
-            return HTP_ERROR;
-        }
-
-        for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
-            htp_header_line_t *hl = htp_list_get(connp->in_tx->request_header_lines, i);
-            unsigned char *line = bstr_ptr(hl->line);
-            size_t llen = bstr_len(hl->line);
-            htp_chomp((unsigned char *)line, &llen);
-            bstr_add_mem_noex(tempstr, line, llen);
-            hl->header = h;
-
-            if (i != connp->in_header_line_index) {
-                hl->flags |= HTP_FIELD_FOLDED;
-            }
-        }
-
-        h->flags |= HTP_FIELD_FOLDED;
-
-        data = (unsigned char *)bstr_ptr(tempstr);
-        len = bstr_len(tempstr);
-    }
-
-    // Now try to parse the header
-    if (htp_parse_request_header_generic(connp, h, data, len) != HTP_OK) {
-        bstr_free(tempstr);
+    // Now try to parse the header.
+    if (htp_parse_request_header_apache_2_2(connp, h, data, len) != HTP_OK) {
         free(h);
         return HTP_ERROR;
     }
+
+    #ifdef HTP_DEBUG
+    fprint_bstr(stderr, "Header name", h->name);
+    fprint_bstr(stderr, "Header value", h->value);
+    #endif
 
     // Do we already have a header with the same name?
     htp_header_t *h_existing = htp_table_get(connp->in_tx->request_headers, h->name);
     if (h_existing != NULL) {
-        // repeated header
-        int i = 0;
-
-        // TODO Do we want to keep a list of the headers that are
+        // TODO Do we want to have a list of the headers that are
         //      allowed to be combined in this way?
 
-        // Add to existing header
-        bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value)
-            + 2 + bstr_len(h->value));        
+        // Add to the existing header.
+        bstr *new_value = bstr_expand(h_existing->value, bstr_len(h_existing->value) + 2 + bstr_len(h->value));
         if (new_value == NULL) {
             bstr_free(h->name);
             bstr_free(h->value);
             free(h);
-            bstr_free(tempstr);
             return HTP_ERROR;
         }
 
         h_existing->value = new_value;
-        bstr_add_mem_noex(h_existing->value, (unsigned char *)", ", 2);
+        bstr_add_mem_noex(h_existing->value, (unsigned char *) ", ", 2);
         bstr_add_noex(h_existing->value, h->value);
 
-        // replace the header references in all lines
-        for (i = connp->in_header_line_index; i < connp->in_header_line_counter; i++) {
-          htp_header_line_t *hl = htp_list_get(connp->in_tx->request_header_lines, i);
-          hl->header = h_existing;
-        }
-
-        // The header fields are no longer needed
+        // The new header structure is no longer needed.
         bstr_free(h->name);
         bstr_free(h->value);
         free(h);
 
-        // Keep track of same-name headers        
+        // Keep track of repeated same-name headers.
         h_existing->flags |= HTP_FIELD_REPEATED;
     } else {
-        // Add as a new header
+        // Add as a new header.
         htp_table_add(connp->in_tx->request_headers, h->name, h);
     }
 
-    bstr_free(tempstr);
-*/
     return HTP_OK;
 }
 
