@@ -160,6 +160,8 @@ htp_cfg_t *htp_config_create(void) {
     cfg->params_nul_raw_terminates = 0;
     cfg->parse_request_cookies = 1;
     cfg->parse_request_auth = 1;
+    cfg->extract_request_files = 0;
+    cfg->extract_request_files_limit = -1; // Use the parser default.
 
     htp_config_set_server_personality(cfg, HTP_SERVER_MINIMAL);
 
@@ -418,10 +420,11 @@ void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map) {
     cfg->bestfit_map = map;
 }
 
-htp_status_t htp_config_set_extract_request_files(htp_cfg_t *cfg, int extract_request_files) {
+htp_status_t htp_config_set_extract_request_files(htp_cfg_t *cfg, int extract_request_files, int limit) {
     if (cfg == NULL) return HTP_ERROR;
     if (cfg->tmpdir == NULL) return HTP_ERROR;
     cfg->extract_request_files = extract_request_files;
+    cfg->extract_request_files_limit = limit;
     return HTP_OK;
 }
 

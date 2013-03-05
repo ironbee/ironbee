@@ -882,7 +882,11 @@ htp_mpartp_t *htp_mpartp_create(htp_cfg_t *cfg, bstr *boundary, uint64_t flags) 
     parser->parser_state = STATE_INIT;
     parser->extract_files = cfg->extract_request_files;
     parser->extract_dir = cfg->tmpdir;
-    parser->extract_limit = DEFAULT_FILE_EXTRACT_LIMIT;
+    if (cfg->extract_request_files_limit >= 0) {
+        parser->extract_limit = cfg->extract_request_files_limit;
+    } else {
+        parser->extract_limit = DEFAULT_FILE_EXTRACT_LIMIT;
+    }
     parser->handle_data = htp_mpartp_handle_data;
     parser->handle_boundary = htp_mpartp_handle_boundary;
 

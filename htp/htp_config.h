@@ -276,12 +276,18 @@ void htp_config_set_bestfit_map(htp_cfg_t *cfg, unsigned char *map);
  * after a previous htp_config_set_tmpdir() invocation. Otherwise, the configuration
  * change will fail, and extraction will not be enabled. Disabled by default. Please
  * note that the built-in file extraction implementation uses synchronous I/O, which
- * means that it is not suitable for use in an event-driven container.
+ * means that it is not suitable for use in an event-driven container. There's an
+ * upper limit to how many files can be created on the filesystem during a single
+ * request. The limit exists in order to mitigate against a DoS attack with a
+ * Multipart payload that contains hundreds and thousands of files (it's cheap for the
+ * attacker to do this, but costly for the server to support it). The default limit
+ * may be pretty conservative.
  *
  * @param[in] cfg
- * @param[in] extract_files
+ * @param[in] extract_files 1 if you wish extraction to be enabled, 0 otherwise
+ * @param[in] limit the maximum number of files allowed; use -1 to use the parser default.
  */
-htp_status_t htp_config_set_extract_request_files(htp_cfg_t *cfg, int extract_files);
+htp_status_t htp_config_set_extract_request_files(htp_cfg_t *cfg, int extract_files, int limit);
 
 /**
  * Configures field parsing limits, which are used when processing request and response

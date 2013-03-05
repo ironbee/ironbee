@@ -96,6 +96,7 @@ struct htp_mpartp_t {
     int file_count;
 
     // Parsing callbacks
+
     int (*handle_data)(htp_mpartp_t *mpartp, const unsigned char *data,
             size_t len, int line_end);
     int (*handle_boundary)(htp_mpartp_t *mpartp);
