@@ -134,7 +134,7 @@ struct make_c_trampoline_helper
  *
  * @code
  * std::pair<int(*)(int, int), void*> trampoline =
- *   IronBee::make_c_trampoline<int(int, int)(
+ *   IronBee::make_c_trampoline<int(int, int)>(
  *     std::plus<int>()
  *   );
  * int x = trampoline.first(1, 2, trampoline.second);
