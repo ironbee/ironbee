@@ -157,8 +157,6 @@ TEST_F(TestIBUtilHash, test_hashfunc_djb2)
     hash2 = ib_hashfunc_djb2_nocase("kEY", 3, 17);
     EXPECT_EQ(hash2, hash1);
     // Test with case sensitive
-    hash1 = 0;
-    hash2 = 0;
     hash1 = ib_hashfunc_djb2("Key", 3, 17);
     hash2 = ib_hashfunc_djb2("kEY", 3, 17);
     EXPECT_NE(hash2, hash1);

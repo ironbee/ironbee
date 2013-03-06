@@ -76,8 +76,8 @@ public:
         const ib_field_t *field;
         ib_num_t          num;
 
-        ASSERT_TRUE(node != NULL);
-        ASSERT_TRUE(node->data != NULL);
+        ASSERT_TRUE(node);
+        ASSERT_TRUE(node->data);
 
         field = (const ib_field_t *)node->data;
         ASSERT_EQ(IB_FTYPE_NUM, field->type);
@@ -93,8 +93,8 @@ public:
         const ib_field_t *field;
         ib_float_t        fnum;
 
-        ASSERT_TRUE(node != NULL);
-        ASSERT_TRUE(node->data != NULL);
+        ASSERT_TRUE(node);
+        ASSERT_TRUE(node->data);
 
         field = (const ib_field_t *)node->data;
         ASSERT_EQ(IB_FTYPE_FLOAT, field->type);
@@ -112,15 +112,15 @@ public:
         const uint8_t        *bsval;
         size_t                len = strlen(expected);
 
-        ASSERT_TRUE(node != NULL);
-        ASSERT_TRUE(node->data != NULL);
+        ASSERT_TRUE(node);
+        ASSERT_TRUE(node->data);
 
         field = (const ib_field_t *)node->data;
         ASSERT_EQ(IB_FTYPE_BYTESTR, field->type);
         ASSERT_EQ(IB_OK, ib_field_value(field, ib_ftype_bytestr_out(&bs)) );
         ASSERT_EQ(len, ib_bytestr_size(bs));
         bsval = ib_bytestr_const_ptr(bs);
-        ASSERT_TRUE(bsval != NULL);
+        ASSERT_TRUE(bsval);
         ASSERT_EQ(0, memcmp(bsval, expected, len));
 
         CheckFieldName(field, name);
@@ -133,8 +133,8 @@ public:
     {
         const ib_field_t     *field;
 
-        ASSERT_TRUE(node != NULL);
-        ASSERT_TRUE(node->data != NULL);
+        ASSERT_TRUE(node);
+        ASSERT_TRUE(node->data);
 
         field = (ib_field_t *)node->data;
         ASSERT_EQ(IB_FTYPE_LIST, field->type);
@@ -471,7 +471,7 @@ TEST_P(TestIBUtilJsonEncode, json_encode_basic)
 
     rc = ib_json_encode(MemPool(), list, pretty, &buf, &buflen);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_TRUE(buf != NULL);
+    ASSERT_TRUE(buf);
     ASSERT_NE(0U, buflen);
     //puts(buf);
 
@@ -536,7 +536,7 @@ TEST_P(TestIBUtilJsonEncode, json_encode_complex)
     /* Encode the IronBee list into JSON */
     rc = ib_json_encode(MemPool(), list, pretty, &buf, &buflen);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_TRUE(buf != NULL);
+    ASSERT_TRUE(buf);
     ASSERT_NE(0U, buflen);
     //puts(buf);
 
@@ -648,7 +648,7 @@ TEST_P(TestIBUtilJsonEncode, json_encode_nested)
     /* Encode the IronBee list into JSON */
     rc = ib_json_encode(MemPool(), list, pretty, &buf, &buflen);
     ASSERT_EQ(IB_OK, rc);
-    ASSERT_TRUE(buf != NULL);
+    ASSERT_TRUE(buf);
     ASSERT_NE(0U, buflen);
     //puts(buf);
 

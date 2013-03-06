@@ -200,16 +200,16 @@ TEST_F(RuleInjectTest, test_inject)
     ASSERT_EQ(2U, ib_list_elements(m_injections));
 
     node = ib_list_first_const(m_injections);
-    ASSERT_TRUE(node != NULL);
-    ASSERT_TRUE(node->data != NULL);
+    ASSERT_TRUE(node);
+    ASSERT_TRUE(node->data);
     rule = (const ib_rule_t *)node->data;
-    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-3") != NULL);
+    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-3"));
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
-    ASSERT_TRUE(node->data != NULL);
+    ASSERT_TRUE(node);
+    ASSERT_TRUE(node->data);
     rule = (const ib_rule_t *)node->data;
-    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-4") != NULL);
+    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-4"));
 
     // Now, create the connection, run through the rule engine. */
     conn = buildIronBeeConnection();
@@ -234,26 +234,26 @@ TEST_F(RuleInjectTest, test_inject)
 
     // Verify that the rules were executed in the expected order
     node = ib_list_first_const(m_actions);
-    ASSERT_TRUE(node != NULL);
-    ASSERT_TRUE(node->data != NULL);
+    ASSERT_TRUE(node);
+    ASSERT_TRUE(node->data);
     rule = (const ib_rule_t *)node->data;
-    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-3") != NULL);
+    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-3"));
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
-    ASSERT_TRUE(node->data != NULL);
+    ASSERT_TRUE(node);
+    ASSERT_TRUE(node->data);
     rule = (const ib_rule_t *)node->data;
-    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-4") != NULL);
+    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-4"));
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
-    ASSERT_TRUE(node->data != NULL);
+    ASSERT_TRUE(node);
+    ASSERT_TRUE(node->data);
     rule = (const ib_rule_t *)node->data;
-    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-1") != NULL);
+    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-1"));
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
-    ASSERT_TRUE(node->data != NULL);
+    ASSERT_TRUE(node);
+    ASSERT_TRUE(node->data);
     rule = (const ib_rule_t *)node->data;
-    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-2") != NULL);
+    ASSERT_TRUE(strstr(ib_rule_id(rule), "inject-2"));
 }

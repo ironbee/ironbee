@@ -299,6 +299,7 @@ TEST(TestMpool, ChildrenWide)
         &top, "children", NULL, 0,
         &test_malloc, &test_free
     );
+    ASSERT_EQ(IB_OK, rc);
     EXPECT_VALID(top);
 
     for (int i = 0; i < 1000; ++i) {

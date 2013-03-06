@@ -50,7 +50,7 @@ TEST_F(TestIBUtilLogformat, test_create)
     rc = ib_logformat_create(MemPool(), &lf);
     ASSERT_EQ(IB_OK, rc);
     ASSERT_TRUE(MemPool() == lf->mp);
-    ASSERT_TRUE(lf->items != NULL);
+    ASSERT_TRUE(lf->items);
 }
 
 #define REMOTE_IP  "10.10.10.10"
@@ -129,79 +129,79 @@ TEST_F(TestIBUtilLogformat, test_parse_default)
     ASSERT_EQ(13U, ib_list_elements(lf->items));
 
     node = ib_list_first_const(lf->items);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_format, item->itype);
     ASSERT_EQ('T', item->item.field.fchar);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_literal, item->itype);
     ASSERT_STREQ(" ", item->item.literal.buf.short_str);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_format, item->itype);
     ASSERT_EQ('h', item->item.field.fchar);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_literal, item->itype);
     ASSERT_STREQ(" ", item->item.literal.buf.short_str);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_format, item->itype);
     ASSERT_EQ('a', item->item.field.fchar);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_literal, item->itype);
     ASSERT_STREQ(" ", item->item.literal.buf.short_str);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_format, item->itype);
     ASSERT_EQ('S', item->item.field.fchar);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_literal, item->itype);
     ASSERT_STREQ(" ", item->item.literal.buf.short_str);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_format, item->itype);
     ASSERT_EQ('s', item->item.field.fchar);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_literal, item->itype);
     ASSERT_STREQ(" ", item->item.literal.buf.short_str);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_format, item->itype);
     ASSERT_EQ('t', item->item.field.fchar);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_literal, item->itype);
     ASSERT_STREQ(" ", item->item.literal.buf.short_str);
 
     node = ib_list_node_next_const(node);
-    ASSERT_TRUE(node != NULL);
+    ASSERT_TRUE(node);
     item = (const ib_logformat_item_t *)node->data;
     ASSERT_EQ(item_type_format, item->itype);
     ASSERT_EQ('f', item->item.field.fchar);

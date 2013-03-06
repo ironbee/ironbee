@@ -101,9 +101,11 @@ TEST_F(TestIBUtilAhoCorasick, generic_ac_test)
 
     /* Create links and init the matching context */
     rc = ib_ac_build_links(ac_tree);
+    ASSERT_EQ(IB_OK, rc);
     ib_ac_init_ctx(&ac_mctx, ac_tree);
 
     /* Check direct links */
+    ASSERT_TRUE(ac_tree);
     ASSERT_TRUE(ac_tree->root);
     ASSERT_TRUE(ac_tree->root->child);
     ASSERT_EQ('h', ac_tree->root->child->letter);
@@ -262,6 +264,7 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_case_sensitive)
 
     /* Create links and init the matching context */
     rc = ib_ac_build_links(ac_tree);
+    ASSERT_EQ(IB_OK, rc);
     ib_ac_init_ctx(&ac_mctx, ac_tree);
 
     /* At this point we reached 'she' */
@@ -311,8 +314,8 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_nocase)
 
     ib_ac_init_ctx(&ac_mctx, ac_tree);
 
-
     /* Check direct links */
+    ASSERT_TRUE(ac_tree);
     ASSERT_TRUE(ac_tree->root);
     ASSERT_TRUE(ac_tree->root->child);
     ASSERT_EQ('h', ac_tree->root->child->letter);
@@ -439,6 +442,7 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_check_list)
 
     /* Create links and init the matching context */
     rc = ib_ac_build_links(ac_tree);
+    ASSERT_EQ(IB_OK, rc);
     ib_ac_init_ctx(&ac_mctx, ac_tree);
 
     /* Let's test the search. Content is consumed in just one call */
@@ -529,6 +533,7 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_contained_patterns)
 
     /* Create links and init the matching context */
     rc = ib_ac_build_links(ac_tree);
+    ASSERT_EQ(IB_OK, rc);
     ib_ac_init_ctx(&ac_mctx, ac_tree);
 
     /* Let's test the search. Content is consumed in just one call */
@@ -543,6 +548,6 @@ TEST_F(TestIBUtilAhoCorasick, ib_ac_consume_contained_patterns)
     );
     ASSERT_EQ(IB_OK, rc);
 
-    ASSERT_TRUE(ac_mctx.match_list != NULL);
+    ASSERT_TRUE(ac_mctx.match_list);
     ASSERT_EQ(9UL, ib_list_elements(ac_mctx.match_list));
 }

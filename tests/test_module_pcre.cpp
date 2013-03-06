@@ -35,6 +35,8 @@
 // @todo Remove once ib_engine_operator_get() is available.
 #include "engine_private.h"
 
+#include <string>
+
 class PcreModuleTest : public BaseModuleFixture {
 public:
 
@@ -301,8 +303,6 @@ TEST_F(PcreModuleTest, test_match_capture)
     const ib_list_t *ib_list;
 
     const ib_bytestr_t *ib_bytestr;
-    char* s;
-    size_t s_sz;
     ib_status_t rc;
 
     /* Check :0 */
@@ -339,11 +339,10 @@ TEST_F(PcreModuleTest, test_match_capture)
     ASSERT_EQ(IB_OK, rc);
 
     /* Check that a value is over written correctly. */
-    s_sz = ib_bytestr_length(ib_bytestr);
-    s = (char *) malloc(s_sz+1);
-    memcpy(s, ib_bytestr_const_ptr(ib_bytestr), s_sz);
-    s[s_sz] = '\0';
-    ASSERT_STREQ("header4", s);
+    ASSERT_EQ("header4", std::string(
+        reinterpret_cast<const char*>(ib_bytestr_const_ptr(ib_bytestr)),
+        ib_bytestr_length(ib_bytestr)
+    ));
 
     ASSERT_EQ(IB_OK,
               ib_data_get(ib_tx->data, IB_TX_CAPTURE":3", &ib_field));

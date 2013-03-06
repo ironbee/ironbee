@@ -241,6 +241,9 @@ static ib_status_t dyn_get(
     }
 
     rc = ib_list_push(l, newf);
+    if (rc != IB_OK) {
+        return rc;
+    }
 
     *(void**)out_value = l;
 
