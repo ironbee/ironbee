@@ -521,7 +521,7 @@ TEST_F(ConnectionParsing, Http_0_9_Explicit) {
     int rc = test_run(home, "24-http09-explicit.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
-    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));    
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
@@ -533,44 +533,43 @@ TEST_F(ConnectionParsing, SmallChunks) {
     ASSERT_GE(rc, 0);
 }
 
-static int ConnectionParsing_RequestHeaderData_REQUEST_HEADER_DATA(htp_tx_data_t *d)
-{
+static int ConnectionParsing_RequestHeaderData_REQUEST_HEADER_DATA(htp_tx_data_t *d) {
     static int counter = 0;
-           
-    switch(counter) {
-        case 0 :
-            if (!((d->len == 11)&&(memcmp(d->data, "User-Agent:", d->len) == 0))) {
+
+    switch (counter) {
+        case 0:
+            if (!((d->len == 11) && (memcmp(d->data, "User-Agent:", d->len) == 0))) {
                 SCOPED_TRACE("Mismatch in chunk 0");
                 counter = -1;
             }
             break;
 
-        case 1 :
-            if (!((d->len == 5)&&(memcmp(d->data, " Test", d->len) == 0))) {
+        case 1:
+            if (!((d->len == 5) && (memcmp(d->data, " Test", d->len) == 0))) {
                 SCOPED_TRACE("Mismatch in chunk 1");
                 counter = -1;
             }
             break;
 
-        case 2 :
-            if (!((d->len == 5)&&(memcmp(d->data, " User", d->len) == 0))) {
+        case 2:
+            if (!((d->len == 5) && (memcmp(d->data, " User", d->len) == 0))) {
                 SCOPED_TRACE("Mismatch in chunk 2");
                 counter = -1;
             }
             break;
 
-        case 3 :
-            if (!((d->len == 30)&&(memcmp(d->data, " Agent\nHost: www.example.com\n\n", d->len) == 0))) {
+        case 3:
+            if (!((d->len == 30) && (memcmp(d->data, " Agent\nHost: www.example.com\n\n", d->len) == 0))) {
                 SCOPED_TRACE("Mismatch in chunk 3");
                 counter = -1;
             }
             break;
 
-        case -1 :
+        case -1:
             // Ignore.
             break;
 
-        default :
+        default:
             SCOPED_TRACE("Seen more than 4 chunks");
             counter = -1;
             break;
@@ -579,54 +578,53 @@ static int ConnectionParsing_RequestHeaderData_REQUEST_HEADER_DATA(htp_tx_data_t
     if (counter >= 0) {
         counter++;
     }
-    
+
     htp_tx_set_user_data(d->tx, &counter);
 
     return HTP_OK;
 }
 
-TEST_F(ConnectionParsing, RequestHeaderData) {    
+TEST_F(ConnectionParsing, RequestHeaderData) {
     htp_config_register_request_header_data(cfg, ConnectionParsing_RequestHeaderData_REQUEST_HEADER_DATA);
-    
-    int rc = test_run(home, "25-small-chunks.t", cfg, &connp);   
+
+    int rc = test_run(home, "25-small-chunks.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    int *counter = (int *)htp_tx_get_user_data(tx);
+    int *counter = (int *) htp_tx_get_user_data(tx);
     ASSERT_TRUE(counter != NULL);
     ASSERT_EQ(4, *counter);
 }
 
-static int ConnectionParsing_RequestTrailerData_REQUEST_TRAILER_DATA(htp_tx_data_t *d)
-{
-    static int counter = 0;   
-       
-    switch(counter) {
-        case 0 :
-            if (!((d->len == 7)&&(memcmp(d->data, "Cookie:", d->len) == 0))) {
+static int ConnectionParsing_RequestTrailerData_REQUEST_TRAILER_DATA(htp_tx_data_t *d) {
+    static int counter = 0;
+
+    switch (counter) {
+        case 0:
+            if (!((d->len == 7) && (memcmp(d->data, "Cookie:", d->len) == 0))) {
                 SCOPED_TRACE("Mismatch in chunk 0");
                 counter = -1;
             }
             break;
 
-        case 1 :
-            if (!((d->len == 6)&&(memcmp(d->data, " 2\r\n\r\n", d->len) == 0))) {
+        case 1:
+            if (!((d->len == 6) && (memcmp(d->data, " 2\r\n\r\n", d->len) == 0))) {
                 SCOPED_TRACE("Mismatch in chunk 1");
                 counter = -2;
             }
             break;
 
-        case -1 :
+        case -1:
             // Ignore.
             break;
 
-        default :
+        default:
             SCOPED_TRACE("Seen more than 4 chunks");
             counter = -3;
             break;
-    }    
+    }
 
     if (counter >= 0) {
         counter++;
@@ -646,49 +644,48 @@ TEST_F(ConnectionParsing, RequestTrailerData) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    int *counter = (int *)htp_tx_get_user_data(tx);
+    int *counter = (int *) htp_tx_get_user_data(tx);
     ASSERT_TRUE(counter != NULL);
     ASSERT_EQ(2, *counter);
 }
 
-static int ConnectionParsing_ResponseHeaderData_RESPONSE_HEADER_DATA(htp_tx_data_t *d)
-{
-    static int counter = 0;   
+static int ConnectionParsing_ResponseHeaderData_RESPONSE_HEADER_DATA(htp_tx_data_t *d) {
+    static int counter = 0;
 
-    switch(counter) {
-        case 0 :
-            if (!((d->len == 5)&&(memcmp(d->data, "Date:", d->len) == 0))) {
-                SCOPED_TRACE("Mismatch in chunk 0");                
+    switch (counter) {
+        case 0:
+            if (!((d->len == 5) && (memcmp(d->data, "Date:", d->len) == 0))) {
+                SCOPED_TRACE("Mismatch in chunk 0");
                 counter = -1;
             }
             break;
 
-        case 1 :
-            if (!((d->len == 5)&&(memcmp(d->data, " Mon,", d->len) == 0))) {
+        case 1:
+            if (!((d->len == 5) && (memcmp(d->data, " Mon,", d->len) == 0))) {
                 SCOPED_TRACE("Mismatch in chunk 1");
                 counter = -2;
             }
             break;
 
-        case 2 :
-            if (!((d->len == 34)&&(memcmp(d->data, " 31 Aug 2009 20:25:50 GMT\r\nServer:", d->len) == 0))) {
+        case 2:
+            if (!((d->len == 34) && (memcmp(d->data, " 31 Aug 2009 20:25:50 GMT\r\nServer:", d->len) == 0))) {
                 SCOPED_TRACE("Mismatch in chunk 2");
                 counter = -3;
             }
             break;
 
-        case 3 :
-            if (!((d->len == 83)&&(memcmp(d->data, " Apache\r\nConnection: close\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\n", d->len) == 0))) {
+        case 3:
+            if (!((d->len == 83) && (memcmp(d->data, " Apache\r\nConnection: close\r\nContent-Type: text/html\r\nTransfer-Encoding: chunked\r\n\r\n", d->len) == 0))) {
                 SCOPED_TRACE("Mismatch in chunk 3");
                 counter = -4;
             }
             break;
 
-        case -1 :
+        case -1:
             // Ignore.
             break;
 
-        default :
+        default:
             SCOPED_TRACE("Seen more than 4 chunks");
             counter = -5;
             break;
@@ -712,7 +709,70 @@ TEST_F(ConnectionParsing, ResponseHeaderData) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
 
-    int *counter = (int *)htp_tx_get_user_data(tx);
+    int *counter = (int *) htp_tx_get_user_data(tx);
+    ASSERT_TRUE(counter != NULL);
+    ASSERT_EQ(4, *counter);
+}
+
+static int ConnectionParsing_ResponseTrailerData_RESPONSE_TRAILER_DATA(htp_tx_data_t *d) {
+    static int counter = 0;
+
+    switch (counter) {
+        case 0:
+            if (!((d->len == 11) && (memcmp(d->data, "Set-Cookie:", d->len) == 0))) {
+                SCOPED_TRACE("Mismatch in chunk 0");
+                counter = -1;
+            }
+            break;
+
+        case 1:
+            if (!((d->len == 6) && (memcmp(d->data, " name=", d->len) == 0))) {
+                SCOPED_TRACE("Mismatch in chunk 1");
+                counter = -2;
+            }
+            break;
+
+        case 2:
+            if (!((d->len == 22) && (memcmp(d->data, "value\r\nAnother-Header:", d->len) == 0))) {
+                SCOPED_TRACE("Mismatch in chunk 1");
+                counter = -3;
+            }
+            break;
+
+        case 3:
+            if (!((d->len == 17) && (memcmp(d->data, " Header-Value\r\n\r\n", d->len) == 0))) {
+                SCOPED_TRACE("Mismatch in chunk 1");
+                counter = -4;
+            }
+            break;
+
+        default:
+            if (counter >= 0) {
+                SCOPED_TRACE("Seen more than 4 chunks");
+                counter = -5;
+            }
+            break;
+    }
+
+    if (counter >= 0) {
+        counter++;
+    }
+
+    htp_tx_set_user_data(d->tx, &counter);
+
+    return HTP_OK;
+}
+
+TEST_F(ConnectionParsing, ResponseTrailerData) {
+    htp_config_register_response_trailer_data(cfg, ConnectionParsing_ResponseTrailerData_RESPONSE_TRAILER_DATA);
+
+    int rc = test_run(home, "29-response-trailer-raw.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    int *counter = (int *) htp_tx_get_user_data(tx);
     ASSERT_TRUE(counter != NULL);
     ASSERT_EQ(4, *counter);
 }
