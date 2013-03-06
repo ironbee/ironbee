@@ -64,3 +64,5 @@
 - Refactor how normalization options are configured. LibHTP now supports multiple normalization
   contexts, with 2 used at this time: HTP_DECODER_URL_PATH and HTP_DECODER_URLENCODED.
 
+- New hooks to receive raw request header and trailer data: REQUEST_HEADER_DATA and REQUEST_TRAILER_DATA.
+

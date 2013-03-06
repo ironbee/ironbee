@@ -105,7 +105,11 @@ struct htp_connp_t {
      */
     int64_t in_current_consume_offset;
 
-    // XXX
+    /**
+     * Marks the starting point of raw data within the inbound data chunk. Raw
+     * data (e.g., complete headers) is sent to appropriate callbacks (e.g.,
+     * REQUEST_HEADER_DATA).
+     */
     int64_t in_current_receiver_offset;
 
     /** How many data chunks does the inbound connection stream consist of? */
@@ -161,12 +165,11 @@ struct htp_connp_t {
     /** Current request parser state. */
     int (*in_state)(htp_connp_t *);
 
-    // XXX
+    /** Previous request parser state. Used to detect state changes. */
     int (*in_state_previous)(htp_connp_t *);
 
-    // XXX
-    htp_hook_t *in_data_receiver_hook;
-    //htp_status_t (*in_data_receiver)(htp_connp_t *, unsigned char *, size_t, int);
+    /** The hook that should be receiving raw connection data. */
+    htp_hook_t *in_data_receiver_hook;    
 
     // Response parser fields
 

@@ -83,6 +83,13 @@ if ((X)->in_current_read_offset < (X)->in_current_len) { \
     return HTP_DATA_BUFFER; \
 }
 
+/**
+ * Sends outstanding connection data to the currently active data receiver hook.
+ *
+ * @param[in] connp
+ * @param[in] is_last
+ * @return HTP_OK, or a value returned from a callback.
+ */
 static htp_status_t htp_connp_req_receiver_send_data(htp_connp_t *connp, int is_last) {
     if (connp->in_data_receiver_hook == NULL) return HTP_OK;
 
@@ -100,11 +107,15 @@ static htp_status_t htp_connp_req_receiver_send_data(htp_connp_t *connp, int is_
     return HTP_OK;
 }
 
+/**
+ * Configures the data receiver hook. If there is a previous hook, it will be finalized and cleared.
+ *
+ * @param[in] connp
+ * @param[in] data_receiver_hook
+ * @return HTP_OK, or a value returned from a callback.
+ */
 static htp_status_t htp_connp_req_receiver_set(htp_connp_t *connp, htp_hook_t *data_receiver_hook) {    
-    if (connp->in_data_receiver_hook != NULL) {
-        htp_status_t rc = htp_connp_req_receiver_send_data(connp, 1 /* last */);
-        if (rc != HTP_OK) return rc;
-    }
+    htp_connp_req_receiver_finalize_clear(connp);
 
     connp->in_data_receiver_hook = data_receiver_hook;
     connp->in_current_receiver_offset = connp->in_current_read_offset;
@@ -112,7 +123,16 @@ static htp_status_t htp_connp_req_receiver_set(htp_connp_t *connp, htp_hook_t *d
     return HTP_OK;
 }
 
-htp_status_t htp_connp_req_receiver_finalize_clear(htp_connp_t *connp) {    
+/**
+ * Finalizes an existing data receiver hook by sending any outstanding data to it. The
+ * hook is then removed so that it receives no more data.
+ *
+ * @param[in] connp
+ * @return HTP_OK, or a value returned from a callback.
+ */
+htp_status_t htp_connp_req_receiver_finalize_clear(htp_connp_t *connp) {
+    if (connp->in_data_receiver_hook == NULL) return HTP_OK;
+
     htp_status_t rc = htp_connp_req_receiver_send_data(connp, 1 /* last */);
 
     connp->in_data_receiver_hook = NULL;
@@ -120,6 +140,13 @@ htp_status_t htp_connp_req_receiver_finalize_clear(htp_connp_t *connp) {
     return rc;
 }
 
+/**
+ * Handles request parser state changes. At the moment, this function is used only
+ * to configure data receivers, which are sent raw connection data.
+ *
+ * @param[in] connp
+ * @return HTP_OK, or a value returned from a callback.
+ */
 static htp_status_t htp_req_handle_state_change(htp_connp_t *connp) {
     if (connp->in_state_previous == connp->in_state) return HTP_OK;
 
