@@ -602,6 +602,8 @@ TEST_F(ConnectionParsing, RequestHeaderData) {
 static int ConnectionParsing_RequestTrailerData_REQUEST_TRAILER_DATA(htp_tx_data_t *d)
 {
     static int counter = 0;
+
+    fprint_raw_data(stderr, "CALLABACK", d->data, d->len);
        
     switch(counter) {
         case 0 :
@@ -612,9 +614,9 @@ static int ConnectionParsing_RequestTrailerData_REQUEST_TRAILER_DATA(htp_tx_data
             break;
 
         case 1 :
-            if (!((d->len == 5)&&(memcmp(d->data, " 2\r\n\r\n", d->len) == 0))) {
+            if (!((d->len == 6)&&(memcmp(d->data, " 2\r\n\r\n", d->len) == 0))) {
                 SCOPED_TRACE("Mismatch in chunk 1");
-                counter = -1;
+                counter = -2;
             }
             break;
 
@@ -624,7 +626,7 @@ static int ConnectionParsing_RequestTrailerData_REQUEST_TRAILER_DATA(htp_tx_data
 
         default :
             SCOPED_TRACE("Seen more than 4 chunks");
-            counter = -1;
+            counter = -3;
             break;
     }    
 
