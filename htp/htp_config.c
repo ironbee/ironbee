@@ -344,16 +344,20 @@ void htp_config_destroy(htp_cfg_t *cfg) {
     htp_hook_destroy(cfg->hook_request_start);
     htp_hook_destroy(cfg->hook_request_line);
     htp_hook_destroy(cfg->hook_request_uri_normalize);
+    htp_hook_destroy(cfg->hook_request_header_data);
     htp_hook_destroy(cfg->hook_request_headers);
     htp_hook_destroy(cfg->hook_request_body_data);
     htp_hook_destroy(cfg->hook_request_file_data);
     htp_hook_destroy(cfg->hook_request_trailer);
+    htp_hook_destroy(cfg->hook_request_trailer_data);
     htp_hook_destroy(cfg->hook_request_complete);
     htp_hook_destroy(cfg->hook_response_start);
     htp_hook_destroy(cfg->hook_response_line);
+    htp_hook_destroy(cfg->hook_response_header_data);
     htp_hook_destroy(cfg->hook_response_headers);
     htp_hook_destroy(cfg->hook_response_body_data);
     htp_hook_destroy(cfg->hook_response_trailer);
+    htp_hook_destroy(cfg->hook_response_trailer_data);
     htp_hook_destroy(cfg->hook_response_complete);
     htp_hook_destroy(cfg->hook_log);
 
