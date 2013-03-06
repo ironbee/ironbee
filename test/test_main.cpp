@@ -601,9 +601,7 @@ TEST_F(ConnectionParsing, RequestHeaderData) {
 
 static int ConnectionParsing_RequestTrailerData_REQUEST_TRAILER_DATA(htp_tx_data_t *d)
 {
-    static int counter = 0;
-
-    fprint_raw_data(stderr, "CALLABACK", d->data, d->len);
+    static int counter = 0;   
        
     switch(counter) {
         case 0 :
