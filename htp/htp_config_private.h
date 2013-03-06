@@ -206,9 +206,10 @@ struct htp_cfg_t {
     htp_hook_t *hook_request_uri_normalize;
 
     /**
-     * Raw request header data, starting immediately after the request line,
-     * including all headers as they are provided on the line, and including the
-     * terminating empty line. Not available on genuine HTTP/0.9 requests.
+     * Receives raw request header data, starting immediately after the request line,
+     * including all headers as they are seen on the TCP connection, and including the
+     * terminating empty line. Not available on genuine HTTP/0.9 requests (because
+     * they don't use headers).
      */
     htp_hook_t *hook_request_header_data;
 
@@ -231,7 +232,7 @@ struct htp_cfg_t {
     htp_hook_t *hook_request_file_data;
 
     /**
-     * Raw request trailer data, which can be available on requests that have
+     * Receives raw request trailer data, which can be available on requests that have
      * chunked bodies. The data starts immediately after the zero-length chunk
      * and includes the terminating empty line.
      */
@@ -255,6 +256,14 @@ struct htp_cfg_t {
     /** Response line hook, invoked after a response line has been parsed. */
     htp_hook_t *hook_response_line;
 
+    /**
+     * Receives raw response header data, starting immediately after the status line
+     * and including all headers as they are seen on the TCP connection, and including the
+     * terminating empty line. Not available on genuine HTTP/0.9 responses (because
+     * they don't have response headers).
+     */
+    htp_hook_t *hook_response_header_data;
+
     /** Response headers book, invoked after all response headers have been seen. */
     htp_hook_t *hook_response_headers;
 
@@ -267,6 +276,13 @@ struct htp_cfg_t {
      * with the data pointer set to NULL.
      */
     htp_hook_t *hook_response_body_data;
+
+    /**
+     * Receives raw response trailer data, which can be available on responses that have
+     * chunked bodies. The data starts immediately after the zero-length chunk
+     * and includes the terminating empty line.
+     */
+    htp_hook_t *hook_response_trailer_data;
 
     /**
      * Response trailer hook, invoked after all trailer headers have been processed,

@@ -66,3 +66,6 @@
 
 - New hooks to receive raw request header and trailer data: REQUEST_HEADER_DATA and REQUEST_TRAILER_DATA.
 
+- New hooks to receive raw response header and trailer data: RESPONSE_HEADER_DATA and RESPONSE_TRAILER_DATA.
+
+

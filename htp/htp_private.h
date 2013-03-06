@@ -195,7 +195,7 @@ htp_header_t *htp_connp_header_parse(htp_connp_t *, unsigned char *, size_t);
 htp_status_t htp_parse_ct_header(bstr *header, bstr **ct);
 
 htp_status_t htp_connp_req_receiver_finalize_clear(htp_connp_t *connp);
-
+htp_status_t htp_connp_res_receiver_finalize_clear(htp_connp_t *connp);
 
 #ifdef	__cplusplus
 }

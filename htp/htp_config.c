@@ -279,6 +279,14 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
         }
     }
 
+    if (cfg->hook_response_header_data != NULL) {
+        copy->hook_response_header_data = htp_hook_copy(cfg->hook_response_header_data);
+        if (copy->hook_response_header_data == NULL) {
+            htp_config_destroy(copy);
+            return NULL;
+        }
+    }
+
     if (cfg->hook_response_headers != NULL) {
         copy->hook_response_headers = htp_hook_copy(cfg->hook_response_headers);
         if (copy->hook_response_headers == NULL) {
@@ -298,6 +306,14 @@ htp_cfg_t *htp_config_copy(htp_cfg_t *cfg) {
     if (cfg->hook_response_trailer != NULL) {
         copy->hook_response_trailer = htp_hook_copy(cfg->hook_response_trailer);
         if (copy->hook_response_trailer == NULL) {
+            htp_config_destroy(copy);
+            return NULL;
+        }
+    }
+
+    if (cfg->hook_response_trailer_data != NULL) {
+        copy->hook_response_trailer_data = htp_hook_copy(cfg->hook_response_trailer_data);
+        if (copy->hook_response_trailer_data == NULL) {
             htp_config_destroy(copy);
             return NULL;
         }
@@ -414,6 +430,11 @@ void htp_config_register_response_body_data(htp_cfg_t *cfg, int (*callback_fn)(h
     htp_hook_register(&cfg->hook_response_body_data, (htp_callback_fn_t) callback_fn);
 }
 
+void htp_config_register_response_header_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *)) {
+    if (cfg == NULL) return;
+    htp_hook_register(&cfg->hook_response_header_data, (htp_callback_fn_t) callback_fn);
+}
+
 void htp_config_register_response_headers(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_response_headers, (htp_callback_fn_t) callback_fn);
@@ -432,6 +453,11 @@ void htp_config_register_response_line(htp_cfg_t *cfg, int (*callback_fn)(htp_co
 void htp_config_register_response_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *)) {
     if (cfg == NULL) return;
     htp_hook_register(&cfg->hook_response_trailer, (htp_callback_fn_t) callback_fn);
+}
+
+void htp_config_register_response_trailer_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *d)) {
+    if (cfg == NULL) return;
+    htp_hook_register(&cfg->hook_response_trailer_data, (htp_callback_fn_t) callback_fn);
 }
 
 void htp_config_register_urlencoded_parser(htp_cfg_t *cfg) {

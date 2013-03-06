@@ -84,6 +84,99 @@ if ((X)->out_current_read_offset < (X)->out_current_len) { \
 }
 
 /**
+ * Sends outstanding connection data to the currently active data receiver hook.
+ *
+ * @param[in] connp
+ * @param[in] is_last
+ * @return HTP_OK, or a value returned from a callback.
+ */
+static htp_status_t htp_connp_res_receiver_send_data(htp_connp_t *connp, int is_last) {
+    if (connp->out_data_receiver_hook == NULL) return HTP_OK;
+
+    htp_tx_data_t d;
+    d.tx = connp->out_tx;
+    d.data = connp->out_current_data + connp->out_current_receiver_offset;
+    d.len = connp->out_current_read_offset - connp->out_current_receiver_offset;
+    d.is_last = is_last;
+
+    htp_status_t rc = htp_hook_run_all(connp->out_data_receiver_hook, &d);
+    if (rc != HTP_OK) return rc;
+
+    connp->out_current_receiver_offset = connp->out_current_read_offset;
+
+    return HTP_OK;
+}
+
+/**
+ * Finalizes an existing data receiver hook by sending any outstanding data to it. The
+ * hook is then removed so that it receives no more data.
+ *
+ * @param[in] connp
+ * @return HTP_OK, or a value returned from a callback.
+ */
+htp_status_t htp_connp_res_receiver_finalize_clear(htp_connp_t *connp) {
+    if (connp->out_data_receiver_hook == NULL) return HTP_OK;
+
+    htp_status_t rc = htp_connp_res_receiver_send_data(connp, 1 /* last */);
+
+    connp->out_data_receiver_hook = NULL;
+
+    return rc;
+}
+
+/**
+ * Configures the data receiver hook. If there is a previous hook, it will be finalized and cleared.
+ *
+ * @param[in] connp
+ * @param[in] data_receiver_hook
+ * @return HTP_OK, or a value returned from a callback.
+ */
+static htp_status_t htp_connp_res_receiver_set(htp_connp_t *connp, htp_hook_t *data_receiver_hook) {
+    htp_connp_res_receiver_finalize_clear(connp);
+
+    connp->out_data_receiver_hook = data_receiver_hook;
+    connp->out_current_receiver_offset = connp->out_current_read_offset;
+
+    return HTP_OK;
+}
+
+/**
+ * Handles request parser state changes. At the moment, this function is used only
+ * to configure data receivers, which are sent raw connection data.
+ *
+ * @param[in] connp
+ * @return HTP_OK, or a value returned from a callback.
+ */
+static htp_status_t htp_res_handle_state_change(htp_connp_t *connp) {
+    if (connp->out_state_previous == connp->out_state) return HTP_OK;
+
+    if (connp->out_state == htp_connp_RES_HEADERS) {
+        htp_status_t rc;
+
+        switch (connp->out_tx->progress) {
+            case HTP_RESPONSE_HEADERS:
+                rc = htp_connp_res_receiver_set(connp, connp->out_tx->cfg->hook_response_header_data);
+                break;
+
+            case HTP_RESPONSE_TRAILER:
+                rc = htp_connp_res_receiver_set(connp, connp->out_tx->cfg->hook_response_trailer_data);
+                break;
+
+            default:
+                break;
+        }
+
+        if (rc != HTP_OK) return rc;
+    }
+
+    // Same comment as in htp_req_handle_state_change().
+
+    connp->out_state_previous = connp->out_state;
+
+    return HTP_OK;
+}
+
+/**
  * If there is any data left in the outbound data chunk, this function will preserve
  * it for consumption later. The maximum amount accepted for buffering is controlled
  * by htp_config_t::field_limit_hard.
@@ -568,8 +661,12 @@ htp_status_t htp_connp_RES_HEADERS(htp_connp_t *connp) {
                 } else {
                     // Response trailer.
 
+                    // Finalize sending raw trailer data.
+                    htp_status_t rc = htp_connp_res_receiver_finalize_clear(connp);
+                    if (rc != HTP_OK) return rc;
+
                     // Run hook response_TRAILER.
-                    int rc = htp_hook_run_all(connp->cfg->hook_response_trailer, connp);
+                    rc = htp_hook_run_all(connp->cfg->hook_response_trailer, connp);
                     if (rc != HTP_OK) return rc;
 
                     // The next step is to finalize this response.
@@ -865,6 +962,7 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
     connp->out_current_len = len;
     connp->out_current_read_offset = 0;
     connp->out_current_consume_offset = 0;
+    connp->out_current_receiver_offset = 0;
 
     htp_conn_track_outbound_data(connp->conn, len, timestamp);
 
@@ -902,9 +1000,15 @@ int htp_connp_res_data(htp_connp_t *connp, const htp_time_t *timestamp, const vo
 
                 return HTP_STREAM_TUNNEL;
             }
-        } else {
+
+            rc = htp_res_handle_state_change(connp);
+        }
+
+        if (rc != HTP_OK) {
             // Do we need more data?
             if ((rc == HTP_DATA) || (rc == HTP_DATA_BUFFER)) {
+                htp_connp_res_receiver_send_data(connp, 0 /* not last */);
+
                 if (rc == HTP_DATA_BUFFER) {
                     htp_connp_res_buffer(connp);
                 }

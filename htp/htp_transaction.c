@@ -873,8 +873,12 @@ htp_status_t htp_tx_state_response_headers(htp_tx_t *tx) {
         tx->response_content_encoding_processing = HTP_COMPRESSION_NONE;
     }
 
+    // Finalize sending raw header data.
+    htp_status_t rc = htp_connp_res_receiver_finalize_clear(tx->connp);
+    if (rc != HTP_OK) return rc;
+
     // Run hook RESPONSE_HEADERS.
-    int rc = htp_hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
+    rc = htp_hook_run_all(tx->connp->cfg->hook_response_headers, tx->connp);
     if (rc != HTP_OK) return rc;
 
     // Initialize the decompression engine as necessary. We can deal with three

@@ -198,6 +198,13 @@ struct htp_connp_t {
      */
     int64_t out_current_consume_offset;
 
+    /**
+     * Marks the starting point of raw data within the outbound data chunk. Raw
+     * data (e.g., complete headers) is sent to appropriate callbacks (e.g.,
+     * RESPONSE_HEADER_DATA).
+     */
+    int64_t out_current_receiver_offset;
+
     /** The offset, in the entire connection stream, of the next response byte. */
     int64_t out_stream_offset;
 
@@ -236,6 +243,12 @@ struct htp_connp_t {
 
     /** Current response parser state. */
     int (*out_state)(htp_connp_t *);
+
+    /** Previous response parser state. */
+    int (*out_state_previous)(htp_connp_t *);
+
+    /** The hook that should be receiving raw connection data. */
+    htp_hook_t *out_data_receiver_hook;
 
     /** Response decompressor used to decompress response body data. */
     htp_decompressor_t *out_decompressor;
