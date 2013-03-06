@@ -565,13 +565,11 @@ static int ConnectionParsing_RequestHeaderData_REQUEST_HEADER_DATA(htp_tx_data_t
             }
             break;
 
-        case -1:
-            // Ignore.
-            break;
-
         default:
-            SCOPED_TRACE("Seen more than 4 chunks");
-            counter = -1;
+            if (counter >= 0) {
+                SCOPED_TRACE("Seen more than 4 chunks");
+                counter = -1;
+            }
             break;
     }
 
@@ -616,13 +614,11 @@ static int ConnectionParsing_RequestTrailerData_REQUEST_TRAILER_DATA(htp_tx_data
             }
             break;
 
-        case -1:
-            // Ignore.
-            break;
-
         default:
-            SCOPED_TRACE("Seen more than 4 chunks");
-            counter = -3;
+            if (counter >= 0) {
+                SCOPED_TRACE("Seen more than 4 chunks");
+                counter = -3;
+            }
             break;
     }
 
@@ -681,13 +677,11 @@ static int ConnectionParsing_ResponseHeaderData_RESPONSE_HEADER_DATA(htp_tx_data
             }
             break;
 
-        case -1:
-            // Ignore.
-            break;
-
         default:
-            SCOPED_TRACE("Seen more than 4 chunks");
-            counter = -5;
+            if (counter >= 0) {
+                SCOPED_TRACE("Seen more than 4 chunks");
+                counter = -5;
+            }
             break;
     }
 
