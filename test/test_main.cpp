@@ -585,7 +585,7 @@ static int ConnectionParsing_RequestHeaderData_REQUEST_HEADER_DATA(htp_tx_data_t
 TEST_F(ConnectionParsing, RequestHeaderData) {
     htp_config_register_request_header_data(cfg, ConnectionParsing_RequestHeaderData_REQUEST_HEADER_DATA);
 
-    int rc = test_run(home, "25-small-chunks.t", cfg, &connp);
+    int rc = test_run(home, "26-request-headers-raw.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
