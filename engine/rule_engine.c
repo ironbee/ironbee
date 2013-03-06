@@ -996,7 +996,7 @@ static void clear_target_fields(ib_rule_exec_t *rule_exec)
     assert(rule_exec->tx->data != NULL);
 
     /* Destroy FIELD targets */
-    if (ib_flags_any(rule_exec->rule->flags, IB_RULE_FLAG_NO_FIELDS) ) {
+    if (! ib_flags_any(rule_exec->rule->flags, IB_RULE_FLAG_FIELDS)) {
         return;
     }
 
@@ -1041,7 +1041,8 @@ static ib_status_t set_target_fields(ib_rule_exec_t *rule_exec,
     char                 *name;
     ib_rule_target_t     *target = rule_exec->target;
 
-    if (ib_flags_any(rule_exec->rule->flags, IB_RULE_FLAG_NO_FIELDS) ) {
+    if (! ib_flags_any(rule_exec->rule->flags, IB_RULE_FLAG_FIELDS)) {
+        ib_rule_log_trace(rule_exec, "Not creating target fields");
         return IB_OK;
     }
     ib_rule_log_trace(rule_exec, "Creating target fields");
@@ -4613,6 +4614,7 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
                                ib_rule_action_t which)
 {
     ib_status_t rc;
+    const char *params;
     assert(ib != NULL);
 
     if ( (rule == NULL) || (action == NULL) ) {
@@ -4620,6 +4622,7 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
                      "Cannot add rule action: Invalid rule or action");
         return IB_EINVAL;
     }
+    params = action->params;
 
     /* Add the rule to the appropriate action list */
     if (which == RULE_ACTION_TRUE) {
@@ -4630,6 +4633,18 @@ ib_status_t ib_rule_add_action(ib_engine_t *ib,
     }
     else {
         rc = IB_EINVAL;
+    }
+
+    /* Look for a FIELD string in the action's parameters string */
+    if (  (params != NULL) &&
+          ( (strcasestr(params, "%{FIELD") != NULL) ||
+            (strcasecmp(params, "FIELD") == 0) ||
+            (strcasecmp(params, "FIELD_TARGET") == 0) ||
+            (strcasecmp(params, "FIELD_TFN") == 0) ||
+            (strcasecmp(params, "FIELD_NAME") == 0) ||
+            (strcasecmp(params, "FIELD_NAME_FULL") == 0) )  )
+    {
+        ib_flags_set(rule->flags, IB_RULE_FLAG_FIELDS);
     }
 
     /* Problems? */
