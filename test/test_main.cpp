@@ -634,7 +634,7 @@ static int ConnectionParsing_RequestTrailerData_REQUEST_TRAILER_DATA(htp_tx_data
 TEST_F(ConnectionParsing, RequestTrailerData) {
     htp_config_register_request_trailer_data(cfg, ConnectionParsing_RequestTrailerData_REQUEST_TRAILER_DATA);
 
-    int rc = test_run(home, "04-post-urlencoded-chunked.t", cfg, &connp);
+    int rc = test_run(home, "27-request-trailer-raw.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
