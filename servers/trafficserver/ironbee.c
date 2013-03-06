@@ -1794,6 +1794,7 @@ void ironbee_logger(
     /* 100 is more than sufficient. */
     new_fmt = (char *)malloc(strlen(fmt) + 100);
     if (new_fmt == NULL) {
+        free(buf);
         return;
     }
     sprintf(new_fmt, "%-10s- ", ib_log_level_to_string(level));
