@@ -166,7 +166,7 @@ ib_status_t sqli_normalize_tfn(ib_engine_t *ib,
     prev_token_type = 0;
     while (tokenize_fn(&sf, &current)) {
         size_t token_len = strlen(current.val);
-        ib_log_debug2(ib, "SQLi TOKEN: %c \"%s\"\n", current.type, current.val);
+        ib_log_debug2(ib, "SQLi TOKEN: %c \"%s\"", current.type, current.val);
 
         /* Add in the space if required. */
         if ((buf_out_end != buf_out) &&
