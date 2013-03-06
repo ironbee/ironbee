@@ -205,6 +205,13 @@ struct htp_cfg_t {
     /** Request URI normalization hook, for overriding default normalization of URI. */
     htp_hook_t *hook_request_uri_normalize;
 
+    /**
+     * Raw request header data, starting immediately after the request line,
+     * including all headers as they are provided on the line, and including the
+     * terminating empty line. Not available on genuine HTTP/0.9 requests.
+     */
+    htp_hook_t *hook_request_header_data;
+
     /** Request headers hook, invoked after all request headers are seen. */
     htp_hook_t *hook_request_headers;
 
@@ -222,6 +229,13 @@ struct htp_cfg_t {
      * available. Currently used only by the Multipart parser.
      */
     htp_hook_t *hook_request_file_data;
+
+    /**
+     * Raw request trailer data, which can be available on requests that have
+     * chunked bodies. The data starts immediately after the zero-length chunk
+     * and includes the terminating empty line.
+     */
+    htp_hook_t *hook_request_trailer_data;
 
     /**
      * Request trailer hook, invoked after all trailer headers are seen,

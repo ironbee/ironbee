@@ -105,6 +105,9 @@ struct htp_connp_t {
      */
     int64_t in_current_consume_offset;
 
+    // XXX
+    int64_t in_current_receiver_offset;
+
     /** How many data chunks does the inbound connection stream consist of? */
     size_t in_chunk_count;
 
@@ -157,6 +160,13 @@ struct htp_connp_t {
 
     /** Current request parser state. */
     int (*in_state)(htp_connp_t *);
+
+    // XXX
+    int (*in_state_previous)(htp_connp_t *);
+
+    // XXX
+    htp_hook_t *in_data_receiver_hook;
+    //htp_status_t (*in_data_receiver)(htp_connp_t *, unsigned char *, size_t, int);
 
     // Response parser fields
 

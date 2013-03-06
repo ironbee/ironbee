@@ -459,8 +459,12 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         htp_parse_authorization(tx->connp);
     }
 
+    // Finalize sending raw header data.
+    htp_status_t rc = htp_connp_req_receiver_finalize_clear(tx->connp);
+    if (rc != HTP_OK) return rc;
+
     // Run hook REQUEST_HEADERS.
-    int rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp);
+    rc = htp_hook_run_all(tx->connp->cfg->hook_request_headers, tx->connp);
     if (rc != HTP_OK) return rc;
 
     return HTP_OK;
@@ -737,7 +741,11 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
         // Request trailers.
 
         // Run hook HTP_REQUEST_TRAILER.
-        int rc = htp_hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
+        htp_status_t rc = htp_hook_run_all(tx->connp->cfg->hook_request_trailer, tx->connp);
+        if (rc != HTP_OK) return rc;
+
+        // Finalize sending raw header data.
+        rc = htp_connp_req_receiver_finalize_clear(tx->connp);
         if (rc != HTP_OK) return rc;
 
         // Completed parsing this request; finalize it now.
@@ -745,7 +753,7 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
     } else if (tx->progress >= HTP_REQUEST_LINE) {
         // Request headers.
 
-        int rc = htp_tx_process_request_headers(tx);
+        htp_status_t rc = htp_tx_process_request_headers(tx);
         if (rc != HTP_OK) return rc;
 
         tx->connp->in_state = htp_connp_REQ_CONNECT_CHECK;

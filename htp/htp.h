@@ -533,6 +533,13 @@ struct htp_tx_data_t {
 
     /** Buffer length. */
     size_t len;
+
+    /**
+     * Indicator if this chunk of data is the last in the series. Currently
+     * used only by REQUEST_HEADER_DATA, REQUEST_TRAILER_DATA, RESPONSE_HEADER_DATA,
+     * and RESPONSE_TRAILER_DATA callbacks.
+     */
+    int is_last;
 };
 
 /**

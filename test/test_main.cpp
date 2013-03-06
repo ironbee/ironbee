@@ -532,3 +532,101 @@ TEST_F(ConnectionParsing, SmallChunks) {
     int rc = test_run(home, "25-small-chunks.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 }
+
+static int ConnectionParsing_RequestHeaderData_REQUEST_HEADER_DATA(htp_tx_data_t *d)
+{
+    static int counter = 0;   
+       
+    switch(counter) {
+        case 0 :
+            if (!((d->len == 11)&&(memcmp(d->data, "User-Agent:", d->len)))) {
+                SCOPED_TRACE("Mismatch in chunk 0");
+            }
+            break;
+
+        case 1 :
+            if (!((d->len == 5)&&(memcmp(d->data, " Test", d->len)))) {
+                SCOPED_TRACE("Mismatch in chunk 1");
+            }
+            break;
+
+        case 2 :
+            if (!((d->len == 5)&&(memcmp(d->data, " User", d->len)))) {
+                SCOPED_TRACE("Mismatch in chunk 2");
+            }
+            break;
+
+        case 3 :
+            if (!((d->len == 30)&&(memcmp(d->data, " Agent\nHost: www.example.com\n\n", d->len)))) {
+                SCOPED_TRACE("Mismatch in chunk 3");
+            }
+            break;
+
+        default :
+            SCOPED_TRACE("Seen more than 4 chunks");
+            break;
+    }
+
+    counter++;
+    
+    htp_tx_set_user_data(d->tx, &counter);
+
+    return HTP_OK;
+}
+
+TEST_F(ConnectionParsing, RequestHeaderData) {    
+    htp_config_register_request_header_data(cfg, ConnectionParsing_RequestHeaderData_REQUEST_HEADER_DATA);
+    
+    int rc = test_run(home, "25-small-chunks.t", cfg, &connp);   
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    int *counter = (int *)htp_tx_get_user_data(tx);
+    ASSERT_TRUE(counter != NULL);
+    ASSERT_EQ(4, *counter);
+}
+
+static int ConnectionParsing_RequestTrailerData_REQUEST_TRAILER_DATA(htp_tx_data_t *d)
+{
+    static int counter = 0;
+       
+    switch(counter) {
+        case 0 :
+            if (!((d->len == 7)&&(memcmp(d->data, "Cookie:", d->len)))) {
+                SCOPED_TRACE("Mismatch in chunk 0");
+            }
+            break;
+
+        case 1 :
+            if (!((d->len == 5)&&(memcmp(d->data, " 2\r\n\r\n", d->len)))) {
+                SCOPED_TRACE("Mismatch in chunk 1");
+            }
+            break;
+
+        default :
+            SCOPED_TRACE("Seen more than 4 chunks");
+            break;
+    }    
+
+    counter++;
+
+    htp_tx_set_user_data(d->tx, &counter);
+
+    return HTP_OK;
+}
+
+TEST_F(ConnectionParsing, RequestTrailerData) {
+    htp_config_register_request_trailer_data(cfg, ConnectionParsing_RequestTrailerData_REQUEST_TRAILER_DATA);
+
+    int rc = test_run(home, "04-post-urlencoded-chunked.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    int *counter = (int *)htp_tx_get_user_data(tx);
+    ASSERT_TRUE(counter != NULL);
+    ASSERT_EQ(2, *counter);
+}

@@ -214,6 +214,14 @@ void htp_config_register_request_complete(htp_cfg_t *cfg, int (*callback_fn)(htp
 void htp_config_register_request_file_data(htp_cfg_t *cfg, int (*callback_fn)(htp_file_data_t *));
 
 /**
+ * Registers a REQUEST_HEADER_DATA callback.
+ *
+ * @param[in] cfg
+ * @param[in] callback_fn
+ */
+void htp_config_register_request_header_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *));
+
+/**
  * Registers a REQUEST_HEADERS callback.
  *
  * @param[in] cfg
@@ -244,6 +252,14 @@ void htp_config_register_request_uri_normalize(htp_cfg_t *cfg, int (*callback_fn
  * @param[in] callback_fn
  */
 void htp_config_register_request_trailer(htp_cfg_t *cfg, int (*callback_fn)(htp_connp_t *));
+
+/**
+ * Registers a REQUEST_TRAILER_DATA callback.
+ *
+ * @param[in] cfg
+ * @param[in] callback_fn
+ */
+void htp_config_register_request_trailer_data(htp_cfg_t *cfg, int (*callback_fn)(htp_tx_data_t *d));
 
 /**
  * Registers a RESPONSE_BODY_DATA callback.
