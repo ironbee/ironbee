@@ -609,3 +609,55 @@ TEST_F(HybridParsing, PostUrlecodedChunked) {
     ASSERT_TRUE(param_q != NULL);
     ASSERT_EQ(0, bstr_cmp_c(param_q->value, "2"));
 }
+
+TEST_F(HybridParsing, RequestLineParsing1) {
+    // Create a new LibHTP transaction
+    htp_tx_t *tx = htp_connp_tx_create(connp);
+    ASSERT_TRUE(tx != NULL);
+
+    // Request begins
+    htp_tx_state_request_start(tx);
+
+    // Request line data
+    htp_tx_req_set_line(tx, "GET /?p=1&q=2 HTTP/1.0", 22, HTP_ALLOC_COPY);
+
+    // Request line complete
+    htp_tx_state_request_line(tx);
+
+    fprint_bstr(stderr, "uri", tx->request_uri);
+
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));    
+    //ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/"));
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_protocol, "HTTP/1.0"));
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->query, "p=1&q=2"));
+
+    // Check parameters
+    htp_param_t *param_p = htp_tx_req_get_param(tx, "p", 1);
+    ASSERT_TRUE(param_p != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(param_p->value, "1"));
+
+    htp_param_t *param_q = htp_tx_req_get_param(tx, "q", 1);
+    ASSERT_TRUE(param_q != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(param_q->value, "2"));
+}
+
+TEST_F(HybridParsing, RequestLineParsing2) {    
+    htp_tx_t *tx = htp_connp_tx_create(connp);
+    ASSERT_TRUE(tx != NULL);
+    
+    // Feed data to the parser.
+
+    htp_tx_state_request_start(tx);
+    htp_tx_req_set_line(tx, "GET /", 5, HTP_ALLOC_COPY);
+    htp_tx_state_request_line(tx);
+
+    // Check the results now.
+
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
+    ASSERT_EQ(1, tx->is_protocol_0_9);
+    ASSERT_EQ(HTP_PROTOCOL_0_9, tx->request_protocol_number);
+    ASSERT_TRUE(tx->request_protocol == NULL);        
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/"));
+}

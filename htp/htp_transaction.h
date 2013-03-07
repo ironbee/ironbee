@@ -240,6 +240,18 @@ htp_status_t htp_tx_req_set_header(htp_tx_t *tx, const char *name, size_t name_l
 htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx);
 
 /**
+ * Set request line. When used, this function should always be called first,
+ *  with more specific functions following.
+ *
+ * @param[in] tx
+ * @param[in] line
+ * @param[in] line_len
+ * @param[in] alloc
+ * @return HTP_OK on success, HTP_ERROR on failure.
+ */
+htp_status_t htp_tx_req_set_line(htp_tx_t *tx, const char *line, size_t line_len, enum htp_alloc_strategy_t alloc);
+
+/**
  * Set transaction request method. This function will enable you to keep
  * track of the text representation of the method.
  *

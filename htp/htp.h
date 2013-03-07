@@ -255,7 +255,7 @@ struct htp_tx_t {
      */
     bstr *request_uri_normalized;
 
-    /** Request protocol, as text. */
+    /** Request protocol, as text. Can be NUL if no protocol was specified. */
     bstr *request_protocol;
 
     /**
