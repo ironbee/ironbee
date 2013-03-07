@@ -622,12 +622,10 @@ TEST_F(HybridParsing, RequestLineParsing1) {
     htp_tx_req_set_line(tx, "GET /?p=1&q=2 HTTP/1.0", 22, HTP_ALLOC_COPY);
 
     // Request line complete
-    htp_tx_state_request_line(tx);
-
-    fprint_bstr(stderr, "uri", tx->request_uri);
+    htp_tx_state_request_line(tx);   
 
     ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));    
-    //ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/"));
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=1&q=2"));
     ASSERT_EQ(0, bstr_cmp_c(tx->request_protocol, "HTTP/1.0"));
 
     ASSERT_TRUE(tx->parsed_uri != NULL);
