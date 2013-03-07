@@ -498,26 +498,6 @@ static ib_status_t register_action_modifier(ib_cfgparser_t *cp,
         return rc;
     }
 
-    /* Look for a FIELD string in the parameter */
-    if (  (params != NULL) &&
-          ( (strcasestr(params, "%{FIELD") != NULL) ||
-            (strcasecmp(params, "FIELD") == 0) ||
-            (strcasecmp(params, "FIELD_TARGET") == 0) ||
-            (strcasecmp(params, "FIELD_TFN") == 0) ||
-            (strcasecmp(params, "FIELD_NAME") == 0) ||
-            (strcasecmp(params, "FIELD_NAME_FULL") == 0) )  )
-    {
-        ib_flags_set(rule->flags, IB_RULE_FLAG_FIELDS);
-        ib_cfg_log_debug(cp,
-                         "FIELD string found in \"%s\" flags=0x%08lx",
-                         params, (unsigned long)rule->flags);
-    }
-    else {
-        ib_cfg_log_debug(cp,
-                         "No FIELD strings found in \"%s\" flags=0x%08lx",
-                         params, (unsigned long)rule->flags);
-    }
-
     /* Add the action to the rule */
     rc = ib_rule_add_action(cp->ib, rule, action, atype);
     if (rc != IB_OK) {
