@@ -29,8 +29,8 @@
 
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
-#include <ironbee/util.h>
 #include <ironbee/transformation.h>
+#include <ironbee/util.h>
 
 #include <sqltfn.h>
 

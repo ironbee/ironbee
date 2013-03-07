@@ -36,14 +36,14 @@
 #include <ironbee/module.h>
 #include <ironbee/mpool.h>
 #include <ironbee/rule_engine.h>
-#include <ironbee/util.h>
 #include <ironbee/transformation.h>
+#include <ironbee/util.h>
 
-#include "modp_ascii.h"
-#include "sqlparse.h"
-#include "sqlparse_private.h"
-#include "sqli_normalize.h"
-#include "sqli_fingerprints.h"
+#include <modp_ascii.h>
+#include <sqli_normalize.h>
+#include <sqli_fingerprints.h>
+#include <sqlparse.h>
+#include <sqlparse_private.h>
 
 #include <assert.h>
 
