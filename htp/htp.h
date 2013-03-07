@@ -228,10 +228,7 @@ struct htp_tx_t {
     unsigned int request_ignored_lines;
 
     /** The first line of this request. */
-    bstr *request_line;
-
-    /** The first line of this request including ws+line terminator(s). */
-    bstr *request_line_raw;
+    bstr *request_line;   
 
     /** How many NUL bytes are there in the request line? */
     int request_line_nul;
