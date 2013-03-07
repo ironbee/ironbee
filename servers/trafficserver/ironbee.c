@@ -1683,6 +1683,9 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
             if (!ib_tx_flags_isset(ctx->tx, IB_TX_FPOSTPROCESS)) {
                 ib_state_notify_postprocess(ironbee, ctx->tx);
             }
+            if (!ib_tx_flags_isset(ctx->tx, IB_TX_FLOGGING)) {
+                ib_state_notify_logging(ironbee, ctx->tx);
+            }
             ib_txn_ctx_destroy(ctx);
             TSContDataSet(contp, NULL);
             TSContDestroy(contp);
