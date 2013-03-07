@@ -1235,29 +1235,29 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
                               target->field_name,
                               num);
         }
-        else if ( value->type == IB_FTYPE_NULSTR ) {
+        else if (value->type == IB_FTYPE_NULSTR) {
             const char* nulstr;
             rc = ib_field_value(value, ib_ftype_nulstr_out(&nulstr));
 
-            if ( rc != IB_OK ) {
+            if (rc != IB_OK) {
                 return rc;
             }
 
-            const char* escaped_value =
-                ib_util_hex_escape(nulstr, strlen(nulstr));
-            if (escaped_value == NULL) {
-                return rc;
+            const char *escaped =
+                ib_util_hex_escape(rule_exec->tx->mp,
+                                   (const uint8_t *)nulstr, strlen(nulstr));
+            if (escaped == NULL) {
+                return IB_EALLOC;
             }
 
             ib_rule_log_trace(rule_exec,
                               "Exec of op %s on field %s = %s",
                               opinst->op->name,
                               target->field_name,
-                              escaped_value);
-            free((void *)escaped_value);
+                              escaped);
         }
-        else if ( value->type == IB_FTYPE_BYTESTR ) {
-            const char* escaped_value;
+        else if (value->type == IB_FTYPE_BYTESTR) {
+            const char         *escaped;
             const ib_bytestr_t *bytestr;
 
             rc = ib_field_value(value, ib_ftype_bytestr_out(&bytestr));
@@ -1265,18 +1265,17 @@ static ib_status_t execute_operator(ib_rule_exec_t *rule_exec,
                 return rc;
             }
 
-            escaped_value = ib_util_hex_escape(
-                (const char *)ib_bytestr_const_ptr(bytestr),
-                ib_bytestr_size(bytestr));
-            if (escaped_value == NULL) {
-                return rc;
+            escaped = ib_util_hex_escape(rule_exec->tx->mp,
+                                         ib_bytestr_const_ptr(bytestr),
+                                         ib_bytestr_size(bytestr));
+            if (escaped == NULL) {
+                return IB_EALLOC;
             }
             ib_rule_log_trace(rule_exec,
                               "Exec of op %s on field %s = %s",
                               opinst->op->name,
                               target->field_name,
-                              escaped_value);
-            free((void *)escaped_value);
+                              escaped);
         }
         else {
             ib_rule_log_trace(rule_exec,

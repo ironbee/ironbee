@@ -889,11 +889,12 @@ static ib_status_t pcre_operator_execute(const ib_rule_exec_t *rule_exec,
          * Consider if a string of 0xF7 is passed.  That single character
          * will expand to a string of 4 printed characters +1 for the \0
          * character. */
-        char *debug_str = ib_util_hex_escape(subject, subject_len);
+        char *debug_str = ib_util_hex_escape(rule_exec->tx->mp,
+                                             (const uint8_t *)subject,
+                                             subject_len);
 
         if (debug_str != NULL) {
             ib_rule_log_trace(rule_exec, "Matching against: \"%s\"", debug_str);
-            free(debug_str);
         }
     }
 
@@ -1333,11 +1334,12 @@ static ib_status_t dfa_operator_execute(const ib_rule_exec_t *rule_exec,
          * Consider if a string of 0xF7 is passed.  That single character
          * will expand to a string of 4 printed characters +1 for the \0
          * character. */
-        char *debug_str = ib_util_hex_escape(subject, subject_len);
+        char *debug_str = ib_util_hex_escape(rule_exec->tx->mp,
+                                             (const uint8_t *)subject,
+                                             subject_len);
 
         if (debug_str != NULL) {
             ib_log_debug3_tx(tx, "Matching against: \"%s\"", debug_str);
-            free(debug_str);
         }
     }
 

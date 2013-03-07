@@ -529,22 +529,74 @@ ib_status_t DLL_PUBLIC ib_util_unescape_string(char* dst,
     return IB_OK;
 }
 
-char *ib_util_hex_escape(const char *src, size_t src_len)
+/**
+ * Determine the buffer size required to escape a string of length @a src_len
+ * with optional padding of @a pad characters
+ *
+ * @param[in] src_len Source string length
+ * @param[in] pad Padding size (can be zero)
+ *
+ * @returns Size of string buffer required
+ */
+static size_t ib_util_hex_escape_size(
+    size_t         src_len,
+    size_t         pad)
 {
+    return (src_len * 4) + 1 + pad;
+}
+
+ib_status_t ib_util_hex_escape_alloc(
+    ib_mpool_t    *mp,
+    size_t         src_len,
+    size_t         pad,
+    char         **pbuf,
+    size_t        *psize)
+{
+    size_t  size = ib_util_hex_escape_size(src_len, pad);
+    char   *buf;
+
+    /* Allocate the buffer */
+    if (mp == NULL) {
+        buf = malloc(size);
+    }
+    else {
+        buf = ib_mpool_alloc(mp, size);
+    }
+    if (buf == NULL) {
+        return IB_EALLOC;
+    }
+
+    /* Terminate it */
+    *buf = '\0';
+
+    /* Return the buffer and size to the caller */
+    *pbuf = buf;
+    if (psize != NULL) {
+        *psize = size;
+    }
+
+    return IB_OK;
+}
+
+size_t ib_util_hex_escape_buf(
+    const uint8_t *src,
+    size_t         src_len,
+    char          *buf,
+    size_t         buf_size)
+{
+    assert(buf != NULL);
+
+    if (src == NULL) {
+        src = (const uint8_t *)"";
+    }
+
     const uint8_t *src_ptr;
     const uint8_t *src_end = (uint8_t *)src + src_len;
-    size_t dst_len = src_len * 4 + 1;
-    char *dst = malloc(dst_len);
-    char *dst_ptr;
-    const char *dst_end;
+    char          *dst_ptr;
+    const char    *dst_end = buf + buf_size;
 
-    if (dst == NULL) {
-        return dst;
-    }
-    dst_end = dst + dst_len;
-
-    for (src_ptr = (uint8_t *)src, dst_ptr = dst;
-         (src_ptr < src_end) && (dst_ptr < dst_end);
+    for (src_ptr = src, dst_ptr = buf;
+         (src_ptr < src_end) && (dst_ptr < (dst_end-3));
          ++src_ptr)
     {
         if (isprint(*src_ptr))
@@ -565,8 +617,26 @@ char *ib_util_hex_escape(const char *src, size_t src_len)
             dst_ptr += written;
         }
     }
-
     *dst_ptr = '\0';
 
-    return dst;
+    return (dst_ptr - buf);
+}
+
+char *ib_util_hex_escape(
+    ib_mpool_t    *mp,
+    const uint8_t *src,
+    size_t         src_len)
+{
+    ib_status_t  rc;
+    char        *buf;
+    size_t       size;
+    size_t       len;
+
+    rc = ib_util_hex_escape_alloc(mp, src_len, 0, &buf, &size);
+    if (rc != IB_OK) {
+        return NULL;
+    }
+
+    len = ib_util_hex_escape_buf(src, src_len, buf, size);
+    return buf;
 }
