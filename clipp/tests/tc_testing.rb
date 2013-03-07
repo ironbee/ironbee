@@ -62,7 +62,7 @@ class TestTesting < Test::Unit::TestCase
       :input_hashes => [simple_hash("GET /foo HTTP/1.1", "HTTP/1.1 200 OK")],
       :consumer     => 'view'
     )
-    assert log_count(%r{GET /foo HTTP/1.1}) == 1
+    assert log_count(%r{GET /foo HTTP/1.1}) > 0
   end
 
   def test_erb
@@ -79,7 +79,6 @@ class TestTesting < Test::Unit::TestCase
 
   def test_clipp_header
     clipp(
-      :log_level => "alert",
       :input => "echo:\"GET /foo\"",
       :default_site_config => <<-EOS
         Action id:1 phase:REQUEST_HEADER setRequestHeader:X-Foo=bar
