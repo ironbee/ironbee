@@ -241,7 +241,7 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx);
 
 /**
  * Set request line. When used, this function should always be called first,
- *  with more specific functions following.
+ * with more specific functions following. Must not contain line terminators.
  *
  * @param[in] tx
  * @param[in] line
