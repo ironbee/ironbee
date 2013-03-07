@@ -242,7 +242,12 @@ struct htp_tx_t {
     /** Request method, as number. Available only if we were able to recognize the request method. */
     enum htp_method_t request_method_number;
 
-    /** Request URI, raw, as given to us on the request line. */
+    /**
+     * Request URI, raw, as given to us on the request line. This field can take different forms,
+     * for example authority for CONNECT methods, absolute URIs for proxy requests, and the query
+     * string when one is provided. Use htp_tx_t::parsed_uri if you need to access to specific
+     * URI elements.
+     */
     bstr *request_uri;
 
     /**
