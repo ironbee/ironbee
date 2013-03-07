@@ -1,6 +1,4 @@
-Title:  IronBee Changes
-
-IronBee Changes
+IronBee Changes                                                   {#CHANGES}
 ===============
 
 IronBee v0.7.0

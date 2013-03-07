@@ -8,7 +8,7 @@ AC_INIT([ironbee],
 	m4_esyscmd([./get-version.sh VERSION]),
 	[ironbee-team@ironbee.com])
 
-AC_CONFIG_MACRO_DIR([acinclude]) AC_CONFIG_SRCDIR([README])
+AC_CONFIG_MACRO_DIR([acinclude]) AC_CONFIG_SRCDIR([README.md])
 AC_CONFIG_HEADERS([ironbee_config_auto_gen.h])
 AC_CONFIG_AUX_DIR([build])
 AC_PREFIX_DEFAULT([/usr/local/ironbee])
@@ -255,12 +255,16 @@ fi
 
 DOXYGEN=$doxygen
 
+DOXYGEN_TOP=`cd $srcdir;pwd`
 DOXYGEN_DIRS="include util engine modules automata fast"
+MARKDOWN_DOXYGEN_FILES=`cd $srcdir;find . lua -type f -depth 1 -name '*.md'`
 EXTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp'`
 INTERNAL_DOXYGEN_FILES=`cd $srcdir;find $DOXYGEN_DIRS -type f -name '*.h' -o -name '*.hpp' -o -name '*.c' -o -name '*.cpp' -o -name '*.cc'`
 DOXYGEN_INPUT=""
-DOXYGEN_TOP=`cd $srcdir;pwd`
 for dir in $DOXYGEN_DIRS; do
+    DOXYGEN_INPUT="$DOXYGEN_INPUT $DOXYGEN_TOP/$dir"
+done
+for dir in $MARKDOWN_DOXYGEN_FILES; do
     DOXYGEN_INPUT="$DOXYGEN_INPUT $DOXYGEN_TOP/$dir"
 done
 DOXYGEN_EXTERNAL_DEPS=""

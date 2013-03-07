@@ -1,3 +1,6 @@
+IronBee                                                            {#README}
+=======
+
 IronBee is a new open source project to build a universal web application
 security sensor. This repository contains the core IronBee engine and
 development framework for extending IronBee.

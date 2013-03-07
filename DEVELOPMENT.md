@@ -1,5 +1,8 @@
+IronBee Development                                           {#DEVELOPMENT}
+===================
+
 Source Code Repository
-======================
+----------------------
 
 IronBee code is availalbe via a git source code repository from git-hub. The
 latest source is always available from here as are all releases.
@@ -48,7 +51,7 @@ Generate a patch:
 
 
 LuaJIT Code
-===========
+-----------
 
 LuaJIT is currently distributed with IronBee as it is not widely available.  The
 source is in libs/luajit-2.0-ironbee and is included using git-subtree with full
@@ -66,7 +69,7 @@ Then you can merge in the upstream source with:
 
 
 LibInjection Code
-=================
+-----------------
 
 The libinjection code is currently distributed with IronBee as it is not widely
 available.  The source is in libs/libinjection and is included using git-subtree
@@ -83,7 +86,7 @@ Then you can merge in the upstream source with:
 
 
 Coding Style
-============
+------------
 
 Please read and understand the coding style from the guide, "CODESTYLE".
 
@@ -92,7 +95,7 @@ rejected.
 
 
 Contributing
-============
+------------
 
 To contribute code to the project, you will need to be using git to format
 patches which you can email to the team.
@@ -141,7 +144,7 @@ patches which you can email to the team.
 
 
 Ongoing Contributions
-=====================
+---------------------
 
 If you or your group will have ongoing contributions, then you should consider
 using Github's "fork" feature instead of sending in patches. This forks a 
