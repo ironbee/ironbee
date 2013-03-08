@@ -1,0 +1,58 @@
+= Introduction =
+
+Here are ruby bindings for libHTP. This project was intended for rapid
+prototyping (and as an exercise for learning libHTP) and is not intended for
+production use.
+
+The library provides a partial interface to libHTP which, where it exists,
+closely matches the C interface. The main classes are HTP::Cfg and
+HTP::Connp which correspond to htp_config_t and htp_connp, respectively.
+Functions that begin htp_config_ and htp_connp_ are methods of HTP::Cfg and
+HTP::Connp respectively.
+
+All callbacks are taken as blocks.  E.g.,
+
+  config.register_request do |connp|
+    ...
+  end
+  
+See example.rb.
+
+libHTP constants (#defines) exist as constants in HTP.
+
+In addition, classes exist for the other HTP structures: HTP::Tx, HTP::URI,
+HTP::Header, HTP::HeaderLine, etc. These classes provide read accessors for
+the various fields. In addition, some additional methods are provided for more
+Rubyish style, e.g., Header#invalid?. See htp_ruby.rb for a complete list of
+API additions.
+
+HTP::Cfg and HTP::Connp lifetimes are managed by the usual Ruby cycle,
+i.e., garbage collected when no longer references. All other classes are bound
+to the lifetimes of either of those classes. So, make sure you keep your
+config and connection parser around as long as you need any of the data from
+them or copy your data out into non-HTP classes.
+
+If performance is a concern, you should not be using Ruby or these bindings.
+That being said, some small effort has been made to avoid binding performance
+penalties for data you don't use. For example, if you never look at
+Tx#request_headers, that data will not be converted into Rubyspace. A side 
+effect of this behavior, is that return values should be cached.  E.g., 
+Tx#request_cookies generates an array of cookies every time it is called, so
+consider caching the return value if you need to access it multiple times.
+
+
+= Missing =
+
+* Cfg and Connp are only minimally implemented.
+* Conn#messages is missing.
+* Logging is completely missing.
+* Connp, and Cfg lack meaningful to_s or inspect.
+* Bool support.  As per C-interface, 0 and 1 are used instead of false and 
+  true.  Should add ...? accessors which latter values.
+* Automated unit tests.
+* API doc.
+* libHTP version detection.
+* Iterator parsing interface: Takes iterator of chunks and handles the various 
+  parsing return codes.  This allows the user to provide chunks as possible 
+  via an iterator and have the parser just-work.
+

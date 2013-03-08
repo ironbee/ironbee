@@ -1,0 +1,139 @@
+{
+   gtest_1
+   Memcheck:Leak
+   fun:malloc
+   fun:__smakebuf
+   fun:__swsetup
+   fun:__sfvwrite
+   fun:fwrite
+   fun:_ZSt15__ostream_writeIcSt11char_traitsIcEEvRSt13basic_ostreamIT_T0_EPKS3_l
+   fun:_ZSt16__ostream_insertIcSt11char_traitsIcEERSt13basic_ostreamIT_T0_ES6_PKS3_l
+   fun:main
+}
+{
+   gtest_2
+   Memcheck:Leak
+   fun:malloc
+   fun:_Znwm
+   fun:_Znam
+   fun:_ZN7testing4TestC2Ev
+   fun:_ZN7testing8internal15TestFactoryImplI26ConnectionParsing_Get_TestE10CreateTestEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_15TestFactoryBaseEPNS_4TestEEET0_PT_MS6_FS5_vEPKc
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+}
+{
+   gtest_3
+   Memcheck:Leak
+   fun:malloc
+   fun:_Znwm
+   fun:_Znam
+   fun:_ZN7testing4TestC2Ev
+   fun:_ZN7testing8internal15TestFactoryImplI26ConnectionParsing_Get_TestE10CreateTestEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_15TestFactoryBaseEPNS_4TestEEET0_PT_MS6_FS5_vEPKc
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+}
+{
+   gtest_4
+   Memcheck:Leak
+   fun:malloc
+   fun:_Znwm
+   fun:_Znam
+   fun:_ZN7testing4TestC2Ev
+   fun:_ZN7testing8internal15TestFactoryImplI26ConnectionParsing_Get_TestE10CreateTestEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_15TestFactoryBaseEPNS_4TestEEET0_PT_MS6_FS5_vEPKc
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+}
+{
+   gtest_5
+   Memcheck:Leak
+   fun:malloc
+   fun:_Znwm
+   fun:_Znam
+   fun:_ZN7testing4TestC2Ev
+   fun:_ZN7testing8internal15TestFactoryImplI26ConnectionParsing_Get_TestE10CreateTestEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_15TestFactoryBaseEPNS_4TestEEET0_PT_MS6_FS5_vEPKc
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+}
+{
+   gtest_6
+   Memcheck:Leak
+   fun:malloc
+   fun:_Znwm
+   fun:_Znam
+   fun:_ZN7testing4TestC2Ev
+   fun:_ZN7testing8internal15TestFactoryImplI26ConnectionParsing_Get_TestE10CreateTestEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_15TestFactoryBaseEPNS_4TestEEET0_PT_MS6_FS5_vEPKc
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+}
+{
+   gtest_7
+   Memcheck:Leak
+   fun:malloc
+   fun:_Znwm
+   fun:_Znam
+   fun:_ZN7testing4TestC2Ev
+   fun:_ZN7testing8internal15TestFactoryImplI26ConnectionParsing_Get_TestE10CreateTestEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_15TestFactoryBaseEPNS_4TestEEET0_PT_MS6_FS5_vEPKc
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+}
+{
+   gtest_8
+   Memcheck:Leak
+   fun:malloc
+   fun:_Znwm
+   fun:_ZN7testing8internal15TestFactoryImplI26ConnectionParsing_Get_TestE10CreateTestEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_15TestFactoryBaseEPNS_4TestEEET0_PT_MS6_FS5_vEPKc
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:main
+}
+{
+   gtest_9
+   Memcheck:Leak
+   fun:malloc
+   fun:_Znwm
+   fun:_ZN7testing4TestC2Ev
+   fun:_ZN7testing8internal15TestFactoryImplI26ConnectionParsing_Get_TestE10CreateTestEv
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_15TestFactoryBaseEPNS_4TestEEET0_PT_MS6_FS5_vEPKc
+   fun:_ZN7testing8TestInfo3RunEv
+   fun:_ZN7testing8TestCase3RunEv
+   fun:_ZN7testing8internal12UnitTestImpl11RunAllTestsEv
+   fun:_ZN7testing8internal38HandleSehExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8internal35HandleExceptionsInMethodIfSupportedINS0_12UnitTestImplEbEET0_PT_MS4_FS3_vEPKc
+   fun:_ZN7testing8UnitTest3RunEv
+   fun:main
+}
