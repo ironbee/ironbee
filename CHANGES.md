@@ -110,6 +110,18 @@ IronBee v0.7.0
 
 * Added `@istreq`, a string insensitive version of `@streq`.
 
+* Support for unparsed data has been removed from IronBee.
+
+  * The ib_conndata_t type has been removed.
+  * ib_conn_data_create() has been removed.
+  * The ib_state_conndata_hook_fn_t function typedef has been removed.
+  * The ib_hook_conndata_register() and ib_hook_conndata_unregister()
+    functions have been removed.
+  * The ib_state_notify_conn_data_in() and ib_state_notify_conn_data_out()
+    functions have been removed.
+
+* The libhtp library has been updated to 0.5.
+
 **Modules**
 
 * The pcre module has been updated to use the new tx data API.
@@ -129,6 +141,8 @@ IronBee v0.7.0
 * Added a module implementing Ivan Ristic's sqltfn library for normalizing
   SQL to aid in detecting SQL injection. This module exposes the
   "normalizeSqlPg" transformation.
+
+* The htp module has been vastly reworked to work properly with libhtp 0.5.
 
 **Fast**
 
