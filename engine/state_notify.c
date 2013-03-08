@@ -109,32 +109,6 @@ static ib_status_t ib_state_notify_conn(ib_engine_t *ib,
     return rc;
 }
 
-static ib_status_t ib_state_notify_conn_data(ib_engine_t *ib,
-                                             ib_state_event_type_t event,
-                                             ib_conndata_t *conndata)
-{
-    assert(ib != NULL);
-    assert(ib->cfg_state == CFG_FINISHED);
-    assert(conndata != NULL);
-
-    ib_conn_t *conn = conndata->conn;
-
-    ib_status_t rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONNDATA);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    ib_log_debug3(ib, "CONN DATA EVENT: %s", ib_state_event_name(event));
-
-    CALL_NOTX_HOOKS(&rc, ib->hook[event], event, conndata, ib, conndata);
-
-    if ((rc != IB_OK) || (conn->ctx == NULL)) {
-        return rc;
-    }
-
-    return rc;
-}
-
 static ib_status_t ib_state_notify_req_line(ib_engine_t *ib,
                                             ib_tx_t *tx,
                                             ib_state_event_type_t event,
@@ -315,14 +289,7 @@ ib_status_t ib_state_notify_request_started(
         }
     }
 
-    /* Mark as a transaction that is receiving parsed data if
-     * the request was started without seeing data from the
-     * connection (conndata_in) event.
-     */
-    if (!ib_conn_flags_isset(tx->conn, IB_CONN_FSEENDATAIN)) {
-        ib_tx_flags_set(tx, IB_TX_FPARSED_DATA);
-    }
-
+    /* Notify everybody */
     rc = ib_state_notify_tx(ib, tx_started_event, tx);
     if (rc != IB_OK) {
         return rc;
@@ -396,73 +363,6 @@ ib_status_t ib_state_notify_conn_opened(ib_engine_t *ib,
     }
 
     rc = ib_state_notify_conn(ib, handle_connect_event, conn);
-    return rc;
-}
-
-ib_status_t ib_state_notify_conn_data_in(ib_engine_t *ib,
-                                         ib_conndata_t *conndata)
-{
-    assert(ib != NULL);
-    assert(ib->cfg_state == CFG_FINISHED);
-    assert(conndata != NULL);
-
-    ib_conn_t *conn = conndata->conn;
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
-
-    if (!ib_conn_flags_isset(conndata->conn, IB_CONN_FSEENDATAIN)) {
-        ib_conn_flags_set(conndata->conn, IB_CONN_FSEENDATAIN);
-    }
-
-    /* Notify data handlers before the parser. */
-    rc = ib_state_notify_conn_data(ib, conn_data_in_event, conndata);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Notify the parser there is incoming data. */
-    rc = iface->conn_data_in(pi, conndata);
-
-    return rc;
-}
-
-ib_status_t ib_state_notify_conn_data_out(ib_engine_t *ib,
-                                          ib_conndata_t *conndata)
-{
-    assert(ib != NULL);
-    assert(conndata != NULL);
-
-    ib_conn_t *conn = conndata->conn;
-    ib_provider_inst_t *pi = ib_parser_provider_get_instance(conn->ctx);
-    IB_PROVIDER_IFACE_TYPE(parser) *iface =
-        pi ? (IB_PROVIDER_IFACE_TYPE(parser) *)pi->pr->iface : NULL;
-    ib_status_t rc;
-
-    if (iface == NULL) {
-        ib_log_alert(ib, "Failed to fetch parser interface.");
-        return IB_EUNKNOWN;
-    }
-
-    if (!ib_conn_flags_isset(conndata->conn, IB_CONN_FSEENDATAOUT)) {
-        ib_conn_flags_set(conndata->conn, IB_CONN_FSEENDATAOUT);
-    }
-
-    /* Notify data handlers before the parser. */
-    rc = ib_state_notify_conn_data(ib, conn_data_out_event, conndata);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    /* Notify the parser there is outgoing data. */
-    rc = iface->conn_data_out(pi, conndata);
-
     return rc;
 }
 
@@ -702,6 +602,7 @@ ib_status_t ib_state_notify_request_header_finished(ib_engine_t *ib,
         }
         ib_log_debug_tx(tx, "Automatically triggering %s",
                         ib_state_event_name(request_started_event));
+
         ib_state_notify_request_started(ib, tx, tx->request_line);
     }
 

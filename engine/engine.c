@@ -241,8 +241,6 @@ static ib_status_t ib_event_table_init(void)
 
     /* Server States */
     INIT_EVENT_TABLE_ENT(conn_opened_event, IB_STATE_HOOK_CONN);
-    INIT_EVENT_TABLE_ENT(conn_data_in_event, IB_STATE_HOOK_CONNDATA);
-    INIT_EVENT_TABLE_ENT(conn_data_out_event, IB_STATE_HOOK_CONNDATA);
     INIT_EVENT_TABLE_ENT(conn_closed_event, IB_STATE_HOOK_CONN);
 
     /* Parser States */
@@ -828,54 +826,6 @@ void *ib_conn_parser_context_get(ib_conn_t *conn)
     return conn->parser_ctx;
 }
 
-
-ib_status_t ib_conn_data_create(ib_conn_t *conn,
-                                ib_conndata_t **pconndata,
-                                size_t dalloc)
-{
-    ib_engine_t *ib = conn->ib;
-    ib_mpool_t *pool;
-    ib_status_t rc;
-
-    /* Create a sub-pool for data buffers */
-    rc = ib_mpool_create(&pool, "conn_data", conn->mp);
-    if (rc != IB_OK) {
-        ib_log_alert(ib,
-            "Failed to create connection data memory pool: %s",
-            ib_status_to_string(rc)
-        );
-        rc = IB_EALLOC;
-        goto failed;
-    }
-    *pconndata =
-        (ib_conndata_t *)ib_mpool_calloc(pool, 1, sizeof(**pconndata));
-    if (*pconndata == NULL) {
-        ib_log_alert(ib, "Failed to allocate memory for connection data");
-        rc = IB_EALLOC;
-        goto failed;
-    }
-
-    (*pconndata)->conn = conn;
-
-    (*pconndata)->dlen = 0;
-    (*pconndata)->data = (uint8_t *)ib_mpool_calloc(pool, 1, dalloc);
-    if ((*pconndata)->data == NULL) {
-        ib_log_alert(ib,
-            "Failed to allocate memory for connection data buffer"
-        );
-        rc = IB_EALLOC;
-        goto failed;
-    }
-
-    return IB_OK;
-
-failed:
-    /* Make sure everything is cleaned up on failure */
-    *pconndata = NULL;
-
-    return rc;
-}
-
 void ib_conn_destroy(ib_conn_t *conn)
 {
     /// @todo Probably need to update state???
@@ -1232,51 +1182,6 @@ ib_status_t DLL_PUBLIC ib_hook_conn_unregister(
     ib_status_t rc;
 
     rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONN);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    rc = ib_hook_unregister(ib, event, (ib_void_fn_t)cb);
-
-    return rc;
-}
-
-ib_status_t DLL_PUBLIC ib_hook_conndata_register(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_conndata_hook_fn_t cb,
-    void *cdata
-) {
-    ib_status_t rc;
-
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONNDATA);
-    if (rc != IB_OK) {
-        return rc;
-    }
-
-    ib_hook_t *hook = (ib_hook_t *)ib_mpool_alloc(ib->mp, sizeof(*hook));
-    if (hook == NULL) {
-        ib_log_emergency(ib, "Error in ib_mpool_calloc");
-        return IB_EALLOC;
-    }
-
-    hook->callback.conndata = cb;
-    hook->cdata = cdata;
-    hook->next = NULL;
-
-    rc = ib_hook_register(ib, event, hook);
-
-    return rc;
-}
-
-ib_status_t DLL_PUBLIC ib_hook_conndata_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_conndata_hook_fn_t cb
-) {
-    ib_status_t rc;
-
-    rc = ib_hook_check(ib, event, IB_STATE_HOOK_CONNDATA);
     if (rc != IB_OK) {
         return rc;
     }

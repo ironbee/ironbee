@@ -326,18 +326,6 @@ IB_PROVIDER_DECLARE_IFACE(parser) {
         (ib_provider_inst_t *pi, ib_conn_t *conn)
     );
 
-    /* Raw Connection Data Functions */
-    IB_PROVIDER_FUNC(
-        ib_status_t,
-        conn_data_in,
-        (ib_provider_inst_t *pi, ib_conndata_t *cdata)
-    );
-    IB_PROVIDER_FUNC(
-        ib_status_t,
-        conn_data_out,
-        (ib_provider_inst_t *pi, ib_conndata_t *cdata)
-    );
-
     /* Transaction Initialization/Cleanup Function */
     IB_PROVIDER_FUNC(
         ib_status_t,

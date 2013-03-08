@@ -670,19 +670,6 @@ void DLL_PUBLIC *ib_conn_parser_context_get(ib_conn_t *conn);
 #define ib_conn_flags_isset(conn, flag) ((conn)->flags & (flag) ? 1 : 0)
 
 /**
- * Create a connection data structure.
- *
- * @param conn Connection structure
- * @param pconndata Address which new connection data is written
- * @param dalloc Size of data to allocate
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_conn_data_create(ib_conn_t *conn,
-                                           ib_conndata_t **pconndata,
-                                           size_t dalloc);
-
-/**
  * Destroy a connection structure.
  *
  * @param conn Connection structure
@@ -851,8 +838,6 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  * states.
  *
  * - Connection event hook callbacks receive a @ref ib_conn_t parameter.
- * - Connection Data event hook callbacks receive a @ref ib_conndata_t
- *   parameter.
  * - Transaction event hook callbacks receive a @ref ib_tx_t parameter.
  * - Transaction Data event hook callbacks receive a @ref ib_txdata_t
  *   parameter.
@@ -869,8 +854,6 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   start [label="start",style=bold,shape=plaintext]
  *   finish [label="finish",style=bold,shape=plaintext]
  *
- *   incoming [label="Raw (unparsed)\nIncoming\nData",style=solid,shape=box]
- *   outgoing [label="Raw (unparsed)\nOutgoing\nData",style=solid,shape=box]
  *   request [label="HTTP (parsed)\nRequest\nData",style=solid,shape=box]
  *   response [label="HTTP (parsed)\nResponse\nData",style=solid,shape=box]
  *
@@ -879,8 +862,6 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *
  *   conn_started_event [label="conn_started",style=bold,shape=diamond,URL="\ref conn_started_event"]
  *   conn_opened_event [label="conn_opened",style=bold,shape=octagon,URL="\ref conn_opened_event"]
- *   conn_data_in_event [label="conn_data_in",style=solid,shape=octagon,peripheries=2,URL="\ref conn_data_in_event"]
- *   conn_data_out_event [label="conn_data_out",style=solid,shape=octagon,peripheries=2,URL="\ref conn_data_out_event"]
  *   conn_closed_event [label="conn_closed",style=bold,shape=octagon,URL="\ref conn_closed_event"]
  *   conn_finished_event [label="conn_finished",style=bold,shape=diamond,URL="\ref conn_finished_event"]
  *
@@ -909,17 +890,9 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   handle_logging_event [label="handle_logging",style=filled,fillcolor="#e6e6e6",shape=parallelogram,URL="\ref handle_logging_event"]
  *
  *   // These are just for organizational purposes
- *   conn_started_event -> incoming [style=invis,weight=5.0]
- *   conn_data_in_event -> request [style=invis,weight=100.0]
- *   conn_data_out_event -> response [style=invis,weight=100.0]
  *   tx_started_event -> request [style=invis,weight=5.0]
  *   tx_started_event -> tx_finished_event [style=invis,weight=5.0]
- *   tx_process_event -> outgoing [style=invis]
  *   response_started_event -> response [style=invis,weight=5.0]
- *
- *   start -> conn_started_event [weight=500.0]
- *   incoming -> conn_data_in_event [dir=none,weight=100.0]
- *   conn_data_in_event -> conn_data_in_event [weight=0.1]
  *
  *   conn_started_event -> conn_opened_event [weight=100.0]
  *   conn_opened_event -> context_conn_selected [weight=100.0]
@@ -939,9 +912,6 @@ void DLL_PUBLIC ib_tx_destroy(ib_tx_t *tx);
  *   handle_request_event -> tx_process_event [weight=1.0]
  *
  *   tx_process_event -> response_started_event [weight=1.0]
- *
- *   outgoing -> conn_data_out_event [dir=none,weight=100.0]
- *   conn_data_out_event -> conn_data_out_event [weight=0.1]
  *
  *   response_started_event -> response_header_finished_event [weight=1.0]
  *   response_header_finished_event -> handle_response_header_event [weight=1.0]
@@ -1011,10 +981,6 @@ typedef enum {
     /* Server States */
     conn_opened_event,            /**< Server notified connection opened
                                    * (Hook type:@ref ib_state_conn_hook_fn_t) */
-    conn_data_in_event,           /**< Server notified of incoming data
-                                   * (Hook type:@ref ib_state_conndata_hook_fn_t) */
-    conn_data_out_event,          /**< Server notified of outgoing data
-                                   * (Hook type:@ref ib_state_conndata_hook_fn_t)*/
     conn_closed_event,            /**< Server notified connection closed
                                    * (Hook type:@ref ib_state_conn_hook_fn_t) */
 
@@ -1058,8 +1024,6 @@ typedef enum {
                              * (Hook type: None) */
     IB_STATE_HOOK_CONN,     /**< Hook receives connection data
                              * (Hook type: @ref ib_state_conn_hook_fn_t) */
-    IB_STATE_HOOK_CONNDATA, /**< Hook receives ib_conndata_t
-                             * (Hook type: @ref ib_state_conndata_hook_fn_t) */
     IB_STATE_HOOK_TX,       /**< Hook receives ib_tx_t
                              * (Hook type: @ref ib_state_tx_hook_fn_t) */
     IB_STATE_HOOK_TXDATA,   /**< Hook receives ib_txdata_t
@@ -1200,31 +1164,6 @@ typedef ib_status_t (*ib_state_conn_hook_fn_t)(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_conn_t *conn,
-    void *cbdata
-);
-
-/**
- * Connection Data Event Hook Callback Function.
- *
- * Related registration functions:
- * - ib_hook_conndata_register()
- * - ib_hook_conndata_unregister()
- *
- * Handles events:
- * - @ref conn_data_in_event
- * - @ref conn_data_out_event
- *
- * @param[in] ib Engine handle
- * @param[in] tx Transaction.
- * @param[in] event Which event trigger the callback.
- * @param[in] conndata Connection data.
- * @param[in] cbdata Callback data
- */
-// FIXME: Should take: ib,conn,event,buf,len,cbdata?
-typedef ib_status_t (*ib_state_conndata_hook_fn_t)(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_conndata_t *conndata,
     void *cbdata
 );
 
@@ -1377,40 +1316,6 @@ ib_status_t DLL_PUBLIC ib_hook_conn_unregister(
     ib_engine_t *ib,
     ib_state_event_type_t event,
     ib_state_conn_hook_fn_t cb
-);
-
-/* ib_conndata_t data */
-
-/**
- * Register a callback for a connection data event.
- *
- * @param ib Engine handle
- * @param event Event
- * @param cb The callback to register
- * @param cdata Data passed to the callback (or NULL)
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_conndata_register(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_conndata_hook_fn_t cb,
-    void *cdata
-);
-
-/**
- * Unregister a callback for a connection data event.
- *
- * @param ib Engine handle
- * @param event Event
- * @param cb The callback to unregister
- *
- * @returns Status code
- */
-ib_status_t DLL_PUBLIC ib_hook_conndata_unregister(
-    ib_engine_t *ib,
-    ib_state_event_type_t event,
-    ib_state_conndata_hook_fn_t cb
 );
 
 /* ib_tx_t data */

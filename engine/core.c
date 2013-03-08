@@ -2084,13 +2084,6 @@ static ib_status_t parser_register(ib_engine_t *ib,
         return IB_EINCOMPAT;
     }
 
-    /* Verify that required interface functions are implemented. */
-    if ((iface->conn_data_in == NULL) || (iface->conn_data_out == NULL)) {
-        ib_log_alert(ib, "The data in/out and generate interface functions "
-                     "MUST be implemented by a parser provider");
-        return IB_EINVAL;
-    }
-
     return IB_OK;
 }
 
