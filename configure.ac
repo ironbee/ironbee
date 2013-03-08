@@ -462,7 +462,7 @@ fi
 
 dnl Enable C++ subdirs if enabled
 if test "$cpp_code" != 0; then
-    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} ironbeepp"
+    TOPLEVEL_SUBDIRS="${TOPLEVEL_SUBDIRS} ironbeepp predicate"
 fi
 
 dnl Enable clipp subdir if enabled
@@ -589,6 +589,8 @@ if test "$cpp_code" != 0; then
 AC_CONFIG_FILES([clipp/Makefile])
 AC_CONFIG_FILES([ironbeepp/Makefile])
 AC_CONFIG_FILES([ironbeepp/tests/Makefile])
+AC_CONFIG_FILES([predicate/Makefile])
+AC_CONFIG_FILES([predicate/tests/Makefile])
 fi
 
 AC_CONFIG_FILES([lua/Makefile])

@@ -1,0 +1,23 @@
+ACLOCAL_AMFLAGS = -I../acinclude
+
+AM_CPPFLAGS = $(BOOST_CPPFLAGS) -I$(top_builddir)/include
+LDADD = \
+    $(top_builddir)/tests/libgtest.a \
+    $(top_builddir)/tests/test_main.o \
+    $(builddir)/../libpredicate.la \
+    $(builddir)/../../ironbeepp/libibpp.la \
+    $(top_builddir)/util/libibutil.la \
+    $(top_builddir)/engine/libironbee.la
+AM_LDFLAGS = \
+    $(BOOST_LDFLAGS) \
+    -lstdc++
+
+include $(top_srcdir)/build/tests.mk
+
+check_PROGRAMS = \
+    test_dag
+
+TESTS=$(check_PROGRAMS)
+CLEANFILES=*.xml *.log
+
+test_dag_SOURCES = test_dag.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
