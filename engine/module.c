@@ -35,6 +35,7 @@
 
 #include <assert.h>
 #include <inttypes.h>
+#include <stdlib.h>
 
 /// @todo Probably need to load into a given context???
 ib_status_t ib_module_init(ib_module_t *m, ib_engine_t *ib)
@@ -201,20 +202,19 @@ ib_status_t ib_module_unload(ib_module_t *m)
 
     ib = m->ib;
 
-    ib_log_debug3(ib,
-                  "Unloading module %s: "
-                  "vernum=%d abinum=%d version=%s index=%zd"
-                  " filename=%s",
-                  m->name,
-                  m->vernum, m->abinum, m->version,
-                  m->idx, m->filename);
-
     /* Finish the module */
     if (m->fn_fini != NULL) {
         rc = m->fn_fini(ib, m, m->cbdata_fini);
+        /* If something goes wrong here, we are in trouble.  We can't log it
+         * as logging is not supported during module unloading.  We settle
+         * for panic. */
         if (rc != IB_OK) {
-            ib_log_error(ib, "Failed to finish module %s: %s",
-                         m->name, ib_status_to_string(rc));
+            fprintf(
+                stderr,
+                "PANIC! Module %s failed to unload: %s",
+                m->name, ib_status_to_string(rc)
+            );
+            abort();
         }
     }
 
