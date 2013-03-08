@@ -56,7 +56,7 @@ const char *ib_capture_name(int num);
  * @param[in] tx Transaction
  *
  * @returns IB_OK: All OK
- *          Error status from: ib_capture_init_item()
+ * @returns Error status from: ib_capture_init_item()
  */
 ib_status_t DLL_PUBLIC ib_capture_clear(ib_tx_t *tx);
 
@@ -68,8 +68,8 @@ ib_status_t DLL_PUBLIC ib_capture_clear(ib_tx_t *tx);
  * @param[in] in_field Field to add.
  *
  * @returns IB_OK: All OK
- *          IB_EINVAL: @a num is too large
- *          Error status from: ib_capture_set_list()
+ * @returns IB_EINVAL: @a num is too large
+ * @returns Error status from: ib_capture_set_list()
  *                             ib_capture_init_item()
  *                             ib_data_list_push()
  *                             ib_field_mutable_value()
@@ -89,8 +89,7 @@ ib_status_t ib_capture_set_item(
  * @param[in] in_field Field to add.
  *
  * @returns IB_OK: All OK
- *          IB_EINVAL: @a num is too large
- *          Error status from: ib_capture_set_list()
+ * @returns Error status from: ib_capture_set_list()
  *                             ib_capture_init_item()
  *                             ib_data_list_push()
  *                             ib_field_mutable_value()
