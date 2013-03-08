@@ -141,25 +141,34 @@ ibmod:register_param1_directive(
 )
 
 -- ---------------------------------------------------------
+-- Get the category from an event
+-- ---------------------------------------------------------
+local get_category = function(evt)
+    local cat
+
+    --[[ Run through all tags in the event and pick
+         the last "cat/<cat-name>" tag, extracting
+         the <cat-name> as the category. ]]
+    evt:forEachTag(
+        function(tag)
+            local cat_str = string.match(tag, [[^cat/(.*)]])
+            if cat_str ~= nil then
+                cat = cat_str
+            end
+        end
+    )
+
+    return cat
+end
+
+-- ---------------------------------------------------------
 -- Process the events.
 -- ---------------------------------------------------------
 local process_events = function(ib)
     --[[ Run through events, supressing events if needed. ]]
     for i,evt in ib:events() do
         if evt:getSuppress() == "none" then
-
-            --[[ Run through all tags in the event and pick
-                 the last "cat/<cat-name>" tag, extracting
-                 the <cat-name> as the category. ]]
-            local cat
-            evt:forEachTag(
-                function(tag)
-                    local cat_str = string.match(tag, [[^cat/(.*)]])
-                    if cat_str ~= nil then
-                        cat = cat_str
-                    end
-                end
-            )
+            local cat = get_category(evt)
 
             if cat ~= nil then
                 --[[ Fetch the minimum confidence based on the
@@ -194,19 +203,7 @@ local generate_alerts = function(ib)
     --[[ Run through events, generating scores for categorization. ]]
     for i,evt in ib:events() do
         if evt:getSuppress() == "none" then
-
-            --[[ Run through all tags in the event and pick
-                 the last "cat/<cat-name>" tag, extracting
-                 the <cat-name> as the category. ]]
-            local cat
-            evt:forEachTag(
-                function(tag)
-                    local cat_str = string.match(tag, [[^cat/(.*)]])
-                    if cat_str ~= nil then
-                        cat = cat_str
-                    end
-                end
-            )
+            local cat = get_category(evt)
 
             if cat ~= nil then
                 local s = evt:getSeverity()
