@@ -469,7 +469,9 @@ Rule ... block
 # will immediatly block the transaction.
 Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block=1
 
-# After the transaction completes, the modified values are persisted</programlisting>
+# After the transaction completes, the modified values are persisted and the
+# persisted IP:block=1 will be used to block all transactions from the same IP
+# address for the next 300 seconds.</programlisting>
             </para>
         </section>
     </section>
