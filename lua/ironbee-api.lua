@@ -132,7 +132,6 @@ end
 --         The value of none indicates that there is no suppression of the event.
 ib_logevent.setSuppress = function(self, value)
     if type(value) == "number" then
-            print("Setting number")
         self.raw.suppress = value
     else
         self.raw.suppress = ib_logevent.suppressMap[string.lower(value)] or 0
@@ -143,7 +142,6 @@ ib_logevent.getType = function(self)
 end
 ib_logevent.setType = function(self, value)
     if type(value) == "number" then
-            print("Setting number")
         self.raw.type = value
     else
         self.raw.type = ib_logevent.typeMap[string.lower(value)] or 0
@@ -291,8 +289,6 @@ ibapi.log = function(self, level, prefix, msg, ...)
     if ... ~= nil then
         msg = string.format(msg, ...)
     end
-
-    print(msg)
 end
 
 -- Log an error.
