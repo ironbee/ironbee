@@ -687,7 +687,7 @@ void ib_engine_destroy(ib_engine_t *ib)
     ib_context_destroy(ib->ectx);
     ib->ectx = NULL;
 
-    ib_log_debug3(ib, "Unloading modules...");
+    /* Important: Logging does not work after this point! */
     IB_ARRAY_LOOP_REVERSE(ib->modules, ne, idx, m) {
         if ( (m != NULL) && (m != cm) ) {
             ib_module_unload(m);
