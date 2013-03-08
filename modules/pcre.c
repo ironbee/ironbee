@@ -762,7 +762,6 @@ static ib_status_t pcre_dfa_set_match(const ib_rule_exec_t *rule_exec,
     assert(rule_exec->tx != NULL);
     assert(ovector != NULL);
 
-    ib_status_t rc;
     ib_tx_t *tx = rule_exec->tx;
     int i;
 
@@ -770,24 +769,16 @@ static ib_status_t pcre_dfa_set_match(const ib_rule_exec_t *rule_exec,
     ib_log_debug2_tx(tx, "DFA populating %d matches", matches);
     for (i = 0; i < matches; ++i)
     {
-        /* The length of the match. */
         size_t match_len;
-
-        /* The first character in the match. */
         const char *match_start;
-
-        /* Field name */
         const char *name;
-
-        /* Holder for a copy of the field value when creating a new field. */
         ib_bytestr_t *bs;
-
-        /* Field holder. */
         ib_field_t *field;
+        ib_status_t rc;
 
         /* Readability. Mark the start and length of the string. */
-        match_start = subject+ovector[i*2];
-        match_len = ovector[i*2+1] - ovector[i*2];
+        match_start = subject+ovector[i * 2];
+        match_len = ovector[i * 2 + 1] - ovector[i * 2];
 
         /* Create a byte-string representation */
         rc = ib_bytestr_dup_mem(&bs,
