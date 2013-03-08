@@ -351,9 +351,9 @@ SensorId 13AABA8F-2575-4F93-83BF-C87C1E8EECCE
             <para>More often than not, however, several names will be used:</para>
             <programlisting>Hostname www.ironbee.com
 Hostname ironbee.com</programlisting>
-            <para>Wildcards are permitted when there there are multiple names under a common domain.
-                Only one wildcard character per hostname is allowed and it must currently be on the
-                left-hand side:</para>
+            <para>Wildcards are permitted when there are multiple names under a common domain. Only
+            one wildcard character per hostname is allowed and it must currently be on the left-hand
+            side:</para>
             <programlisting>Hostname ironbee.com
 Hostname *.ironbee.com</programlisting>
             <para>Finally, to match any hostname (which you will need to do in default sites), use a
@@ -410,17 +410,18 @@ Hostname *.ironbee.com</programlisting>
         <para><emphasis role="bold">Module:</emphasis> core, persist</para>
         <para><emphasis role="bold">Version:</emphasis> 0.7</para>
         <para>Initializes a collection from the initializer. The initializer format depends on the
-            implementation. There are multiple uri formats supported, which are described
+            implementation. There are multiple URI formats supported, which are described
             below.</para>
         <section>
             <title>Core Functionality</title>
             <para><literal>vars: key1=val1 key2=val2 ... keyN=valN</literal></para>
-            <para>The vars uri allows initializing a collection of simple key/value pairs.</para>
+            <para>The <literal>vars</literal> URI allows initializing a collection of simple
+                key/value pairs.</para>
             <para>
                 <programlisting>InitCollection MY_VARS vars: key1=value1 key2=value2</programlisting>
             </para>
             <para><literal>json-file:///path/file.json [persist]</literal></para>
-            <para>The json-file uri allows loading a more complex collection from a JSON formated
+            <para>The json-file URI allows loading a more complex collection from a JSON formatted
                 file. If the optional persist parameter is specified, then anything changed is
                 persisted back to the file at the end of the transaction. Next time the collection
                 is initialized, it will be from the persisted data.</para>
@@ -433,10 +434,10 @@ InitCollection MY_PERSISTED_JSON_COLLECTION json-file:///tmp/ironbee/persist/tes
             <title>Persist Module</title>
             <para>The persist module allows for some more advanced persistence, such as providing
                 multiple instances of persisted collection as well as expiration. To load this
-                functionality you must load the persist module separatly.</para>
+                functionality you must load the persist module separately.</para>
             <para><literal>persist-fs:///path/to/persisted/data key=VALUE
                 [expire=SECONDS]</literal></para>
-            <para>The <literal>persist-fs</literal> uri allows specifying a path to store persisted
+            <para>The <literal>persist-fs</literal> URI allows specifying a path to store persisted
                 data. The <literal>key</literal> parameter specifies a value to identify an instance
                 of the collection. The <literal>key</literal> value can be any text or a field
                 expansion (e.g., <literal>%{MY_VAR_NAME}</literal>). The <literal>expire</literal>
@@ -513,7 +514,7 @@ Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block
                 then removes the <emphasis role="bold">response</emphasis> from being
                 inspected.</para>
             <para>Later, in a sub-context, you may wish to enable response response inspection and
-                thus can just specify this part with the + operator:</para>
+            thus can just specify this part with the + operator:</para>
             <programlisting>&lt;Location /some/path>
     InspectionEngineOptions <emphasis role="bold">+response</emphasis>
 &lt;/Location></programlisting>
@@ -615,12 +616,11 @@ Rule FLAGS:block.count() @gt 0 id:persist/setblock phase:REQUEST setvar:IP:block
             <para><emphasis role="bold">Cardinality:</emphasis> 0..n</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.4</para>
-            <para>A subcontext created by this directive initially has identical configuration to
-                that of the site it belongs to. Further directives are required to introduce
-                changes. Locations are evaluated in the order in which they appear in the
-                configuration file. The first location that matches request path will be used. This
-                means that you should put the most-specific location first, followed by the less
-                specific ones.</para>
+            <para>A sub-context created by this directive initially has identical configuration to
+            that of the site it belongs to. Further directives are required to introduce changes.
+            Locations are evaluated in the order in which they appear in the configuration file. The
+            first location that matches request path will be used. This means that you should put
+            the most-specific location first, followed by the less specific ones.</para>
             <para>
                 <programlisting>Include rules.conf
 

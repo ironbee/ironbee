@@ -23,7 +23,7 @@
             <listitem>
                 <para>Configuration: There are two sets of configuration. The IronBee library must
                     be loaded and bootstrapped via the native server configuration (for example, a
-                    commandline option, Trafficserver plugin configuration or httpd module
+                    commandline option, trafficserver plugin configuration or httpd module
                     configuration). In addition, the IronBee Library must be configured via its own
                     configuration file(s).</para>
             </listitem>
@@ -171,7 +171,7 @@ setvar:MY_COLLECTION:%{NAME}=1</programlisting>
                 <title>Stream Matching Rules</title>
                 <para>While the basic matching rules are quite flexible, they are limited to
                     executing only once in the given phase. With this limitation, you can only
-                    inspect data that is available at the time of execution. To do this effectivly,
+                    inspect data that is available at the time of execution. To do this effectively,
                     the data must be buffered so that it can all be inspected in a single pass.
                     Streaming inspection allows you to avoid buffering potentially large amounts of
                     data by inspecting the data in smaller chunks. With this, however, comes
@@ -183,7 +183,7 @@ setvar:MY_COLLECTION:%{NAME}=1</programlisting>
                     of this, stream based rules do not have a phase associated with them. In
                     addition to this difference from the basic matching rules, stream based rules
                     cannot (currently) be transformed and allow only a limited set of operators
-                    (currenly <literal>dfa</literal>, <literal>pm</literal> and
+                    (currently <literal>dfa</literal>, <literal>pm</literal> and
                         <literal>pmf</literal> as of version
                     0.7).<programlisting>StreamInspect REQUEST_BODY_STREAM @dfa "(?i)Content-Disposition(?:[^\r\n]*)attachment|form-data|filename" \
     id:1 rev:1 "msg:Possible file upload" event</programlisting></para>
@@ -347,10 +347,10 @@ return 0</programlisting></para>
                         </listitem>
                     </varlistentry>
                     <varlistentry>
-                        <term>Confidance</term>
+                        <term>Confidence</term>
                         <listitem>
                             <para>A positive integer value ranging from 0-100 denoting the percent
-                                of confidance that the event is accurate.</para>
+                                of confidence that the event is accurate.</para>
                         </listitem>
                     </varlistentry>
                     <varlistentry>
@@ -403,7 +403,7 @@ return 0</programlisting></para>
                                     <varlistentry>
                                         <term>None</term>
                                         <listitem>
-                                            <para>The event is not to be supressed.</para>
+                                            <para>The event is not to be suppressed.</para>
                                         </listitem>
                                     </varlistentry>
                                     <varlistentry>

@@ -44,7 +44,7 @@ LoadModule ironbee_module /usr/local/ironbee/lib/mod_ironbee.so
 
 # Bootstrap the IronBee library
 &lt;IfModule ironbee_module>
-    # Sepecify the IronBee configuration file.
+    # Specify the IronBee configuration file.
     IronbeeConfigFile /usr/local/ironbee/etc/ironbee-httpd.conf
 
     # Send raw headers (from client) to Ironbee for inspection

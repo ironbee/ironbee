@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<chapter version="5.0" xmlns="http://docbook.org/ns/docbook"
-    xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude"
-    xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML"
-    xmlns:html="http://www.w3.org/1999/xhtml" xml:id="rule-reference">
+<chapter version="5.0" xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xi="http://www.w3.org/2001/XInclude" xmlns:svg="http://www.w3.org/2000/svg" xmlns:m="http://www.w3.org/1998/Math/MathML" xmlns:html="http://www.w3.org/1999/xhtml" xml:id="rule-reference">
     <title>Rule Reference</title>
     <para>...</para>
     <section>
@@ -119,9 +116,9 @@
             <para><emphasis role="bold">Scope:</emphasis> Rule</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.5</para>
-            <para>This field is useful only in field expansions within actions when you
-                must have the full name of the field being inspected. See <literal>FIELD_NAME</literal>
-                .</para>
+            <para>This field is useful only in field expansions within actions when you must have
+                the full name of the field being inspected. See
+                <literal>FIELD_NAME</literal>.</para>
         </section>
         <section>
             <title>GEOIP</title>
@@ -261,7 +258,7 @@
                         was used in the path.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">PATH_OVERLONG_U:</emphasis> An overlong unicode
+                    <para><emphasis role="bold">PATH_OVERLONG_U:</emphasis> An overlong Unicode
                         encoding was used in the path.</para>
                 </listitem>
                 <listitem>
@@ -370,11 +367,11 @@
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
             <note>
-                <para>This field may not be supported by all operators (noteably <literal>@rx</literal>)
-                    as it may not be a contiguous buffer, but rather spread across multiple buffers. In
-                    most cases, you will want to use the <literal>StreamInspect</literal> directive with
-                    the <literal>@pm</literal>, <literal>@pmf</literal> or <literal>@dfa</literal>
-                    operator.</para>
+                <para>This field may not be supported by all operators (notably
+                        <literal>@rx</literal>) as it may not be a contiguous buffer, but rather
+                    spread across multiple buffers. In most cases, you will want to use the
+                        <literal>StreamInspect</literal> directive with the <literal>@pm</literal>,
+                        <literal>@pmf</literal> or <literal>@dfa</literal> operator.</para>
             </note>
         </section>
         <section>
@@ -645,11 +642,11 @@
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
             <note>
-                <para>This field may not be supported by all operators (noteably <literal>@rx</literal>)
-                    as it may not be a contiguous buffer, but rather spread across multiple buffers. In
-                    most cases, you will want to use the <literal>StreamInspect</literal> directive with
-                    the <literal>@pm</literal>, <literal>@pmf</literal> or <literal>@dfa</literal>
-                    operator.</para>
+                <para>This field may not be supported by all operators (notably
+                        <literal>@rx</literal>) as it may not be a contiguous buffer, but rather
+                    spread across multiple buffers. In most cases, you will want to use the
+                        <literal>StreamInspect</literal> directive with the <literal>@pm</literal>,
+                        <literal>@pmf</literal> or <literal>@dfa</literal> operator.</para>
             </note>
         </section>
         <section>
@@ -1024,8 +1021,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> pcre</para>
             <para><emphasis role="bold">Version:</emphasis> 0.2</para>
-            <para>The <literal>rx</literal> operator implements <link xlink:href="http://www.pcre.org/"
-                    >PCRE</link> regular expressions. The parameter of the operator is a regular
+            <para>The <literal>rx</literal> operator implements <link xlink:href="http://www.pcre.org/">PCRE</link> regular expressions. The parameter of the operator is a regular
                 expression pattern that is passed to the PCRE library without modification.</para>
             <programlisting>Rule ARGS:userId !@rx "^[0-9]+$"</programlisting>
             <para>Patterns are compiled with the following settings:</para>
@@ -1066,7 +1062,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
-            <para></para>
+            <para/>
         </section>
         <section>
             <title>istreq</title>
@@ -1077,7 +1073,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <para><emphasis role="bold">Types:</emphasis> String</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.7</para>
-            <para></para>
+            <para/>
         </section>
     </section>
     <section>
@@ -1093,7 +1089,8 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.4</para>
-            <para>By default this allows the transaction to proceed without inspection until the postprocessing phase. This can be changed depending on the modifier used:</para>
+            <para>By default this allows the transaction to proceed without inspection until the
+                post-processing phase. This can be changed depending on the modifier used:</para>
             <itemizedlist>
                 <listitem><para><emphasis role="bold">phase</emphasis> - Proceed to the end of the current phase without further rule execution.</para></listitem>
                 <listitem><para><emphasis role="bold">request</emphasis> - Proceed to the end of the request processing phases without further rule execution.</para></listitem>
@@ -1126,7 +1123,8 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <itemizedlist>
                 <listitem><para><emphasis role="bold">advisory</emphasis> - Mark the transaction with an advisory blocking flag which further rules may take into account.</para></listitem>
                 <listitem><para><emphasis role="bold">phase</emphasis> - Block the transaction at the end of the current phase.</para></listitem>
-                <listitem><para><emphasis role="bold">immediate</emphasis> - Block the transaction immediatly after rule execution.</para></listitem>
+                <listitem><para><emphasis role="bold">immediate</emphasis> - Block the transaction immediately after rule
+                        execution.</para></listitem>
             </itemizedlist>
         </section>
         <section>
@@ -1139,7 +1137,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.4</para>
-            <para>Enabling capturing will poopulate the <literal>CAPTURE</literal> collection with
+            <para>Enabling capturing will populate the <literal>CAPTURE</literal> collection with
                 data from the most recent matching operator. For most operators the
                     <literal>CAPTURE:0</literal> field will be set to the last matching value.
                 Operators that support capturing multiple values may set other items in the
@@ -1187,21 +1185,23 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
                     </listitem>
                 </itemizedlist></para>
             <para>Example:<programlisting># Start a rule chain, which matches only POST requests. The implicit ID here
-    # will be set to "id:1-1".
-    Rule REQUEST_METHOD "@rx ^(?i:post)$" id:1 phase:REQUEST chain
-    # Only if the above rule's operator evaluates true, will the next rule in the
-    # chain execute. This rule checks to see if there are any URI based parameters
-    # which typically should not be there for POST requests. If the operator evaluates
-    # true, then the setvar action will execute, marking the transaction and an
-    # event will be generated with the given msg text. This rule will have the
-    # implicit ID set to "id:1-2".
-    Rule &amp;REQUEST_URI_PARAMS @gt 0 "msg:POST with URI parameters." setvar:TX:uri_params_in_post=1 event chain
-    # Only if the above two rules' operators return true will the next rule in the
-    # chain execute.  This rule checks that certain parameters are not used in
-    # on the URI and if so, generates an event and blocks the transaction with the
-    # default status code at the end of the phase. This rule will have the implicit
-    # ID set to "id:1-3".
-    Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." event block:phase</programlisting></para>
+# will be set to "id:1-1".
+Rule REQUEST_METHOD "@rx ^(?i:post)$" id:1 phase:REQUEST chain
+
+# Only if the above rule's operator evaluates true, will the next rule in the
+# chain execute. This rule checks to see if there are any URI based parameters
+# which typically should not be there for POST requests. If the operator evaluates
+# true, then the setvar action will execute, marking the transaction and an
+# event will be generated with the given msg text. This rule will have the
+# implicit ID set to "id:1-2".
+Rule &amp;REQUEST_URI_PARAMS @gt 0 "msg:POST with URI parameters." setvar:TX:uri_params_in_post=1 event chain
+
+# Only if the above two rules' operators return true will the next rule in the
+# chain execute.  This rule checks that certain parameters are not used in
+# on the URI and if so, generates an event and blocks the transaction with the
+# default status code at the end of the phase. This rule will have the implicit
+# ID set to "id:1-3".
+Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in URI." event block:phase</programlisting></para>
         </section>
         <section>
             <title>confidence</title>
@@ -1419,8 +1419,8 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
         </section>
         <section>
             <title>t</title>
-            <para><emphasis role="bold">Description:</emphasis> Apply one or more named transformations
-                to each of the targerts in a rule.</para>
+            <para><emphasis role="bold">Description:</emphasis> Apply one or more named
+                transformations to each of the targets in a rule.</para>
             <para><emphasis role="bold">Type:</emphasis> Modifier</para>
             <para><emphasis role="bold">Syntax:</emphasis>
                 <literal>t:<replaceable>transformation-name</replaceable></literal></para>
@@ -1437,7 +1437,8 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.4</para>
-            <para>TODO: Describe where this is used, noteably RuleEnable/RuleDisable and logged with
+            <para>TODO: Describe where this is used, notably
+                    <literal>RuleEnable</literal>/<literal>RuleDisable</literal> and logged with
                 events.</para>
         </section>
     </section>
@@ -1458,10 +1459,10 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
             <para>Replaces various whitespace characters with spaces. In addition, consecutive
-                whitespace characters will be reduced down to a single space. Whitespace characters are:
-                    <literal>0x20</literal>, <literal>\f</literal>, <literal>\t</literal>,
+                whitespace characters will be reduced down to a single space. Whitespace characters
+                are: <literal>0x20</literal>, <literal>\f</literal>, <literal>\t</literal>,
                     <literal>\n</literal>, <literal>\r</literal>, <literal>\v</literal>,
-                    <literal>0xa0</literal> (non-breaking white space).</para>
+                    <literal>0xa0</literal> (non-breaking whitespace).</para>
         </section>
         <section>
             <title>count</title>
@@ -1485,8 +1486,8 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
                 </listitem>
                 <listitem>
                     <para><emphasis role="bold">&amp;#x<replaceable>HHHH</replaceable>;</emphasis> -
-                        Numeric code point, where HHHH represents a hexidecimal number with any number
-                        of digits.</para>
+                        Numeric code point, where HHHH represents a hexadecimal number with any
+                        number of digits.</para>
                 </listitem>
                 <listitem>
                     <para><emphasis role="bold">&amp;<replaceable>name</replaceable>;</emphasis> -
@@ -1581,7 +1582,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
             <itemizedlist>
                 <listitem>
                     <para><emphasis role="bold">%<replaceable>HH</replaceable>;</emphasis> - Numeric
-                        code point, where HH represents a two digit hexidecimal number.</para>
+                        code point, where HH represents a two digit hexadecimal number.</para>
                 </listitem>
                 <listitem>
                     <para><emphasis role="bold">+</emphasis> - Represents an ASCII space character
@@ -1596,7 +1597,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
         </section>
         <section>
             <title>min</title>
-            <para><emphasis role="bold">Description:</emphasis> Given a collecion of numeric data,
+            <para><emphasis role="bold">Description:</emphasis> Given a collection of numeric data,
                 returns the minimum value.</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
@@ -1610,9 +1611,17 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
         </section>
         <section>
             <title>normalizePath</title>
-            <para><emphasis role="bold">Description:</emphasis> </para>
+            <para><emphasis role="bold">Description:</emphasis> Normalize a filesystem path,
+                removing back and self references.</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet.</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.6</para>
+        </section>
+        <section>
+            <title>normalizePathWin</title>
+            <para><emphasis role="bold">Description:</emphasis> Normalize a Windows filesystem path,
+                removing back and self references.</para>
+            <para><emphasis role="bold">Module:</emphasis> core</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.6</para>
         </section>
     </section>
 </chapter>
