@@ -37,7 +37,6 @@
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
-#include <uuid.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -48,6 +47,11 @@
  * for extreme future-time use.
  */
 static const size_t EXPIRE_FMT_WIDTH = 13;
+
+/**
+ * The length of a string representation of a UUID.
+ */
+static const size_t UUID_LEN_STR = 36;
 
 /**
  * The sprintf format used for expiration times.
