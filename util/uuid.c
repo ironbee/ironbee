@@ -166,6 +166,47 @@ finish:
     return rc;
 }
 
+static inline ib_status_t ib_uuid_create(ib_uuid_t *uuid, int uuid_version)
+{
+    uuid_rc_t uuid_rc;
+    size_t uuid_len = UUID_LEN_BIN;
+    ib_status_t rc = IB_OK;
+
+    rc = ib_lock_lock(&g_uuid_lock);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
+    uuid_rc = uuid_make(g_ossp_uuid, uuid_version);
+    if (uuid_rc == UUID_RC_MEM) {
+        rc = IB_EALLOC;
+        goto finish;
+    }
+    else if (uuid_rc != UUID_RC_OK) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+    uuid_rc = uuid_export(g_ossp_uuid,
+        UUID_FMT_BIN, (void *)&uuid, &uuid_len
+    );
+    if (uuid_rc == UUID_RC_MEM) {
+        rc = IB_EALLOC;
+        goto finish;
+    }
+    else if (uuid_rc != UUID_RC_OK || uuid_len != UUID_LEN_BIN) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+finish:
+    if (ib_lock_unlock(&g_uuid_lock) != IB_OK) {
+        return IB_EOTHER;
+    }
+
+    return rc;
+}
+
 ib_status_t ib_uuid_create_v4(ib_uuid_t *uuid)
 {
     uuid_rc_t uuid_rc;
@@ -203,6 +244,58 @@ finish:
     if (ib_lock_unlock(&g_uuid_lock) != IB_OK) {
         return IB_EOTHER;
     }
+
+    return rc;
+}
+
+ib_status_t ib_uuid_create_v5_str(
+    char **uuid_str,
+    size_t *uuid_str_len,
+    const char *key)
+{
+    uuid_rc_t uuid_rc;
+    ib_status_t rc = IB_OK;
+    uuid_t *uuid;
+    uuid_t *uuid_ns;
+
+    /* Build the UUID we will populate and export. */
+    uuid_rc = uuid_create(&uuid);
+    if (uuid_rc != UUID_RC_OK) {
+        return IB_EALLOC;
+    }
+
+    /* Build the namespace UUID used as our hash starting point. */
+    uuid_rc = uuid_create(&uuid_ns);
+    if (uuid_rc != UUID_RC_OK) {
+        return IB_EALLOC;
+    }
+
+    /* Load the nil UUID. */
+    uuid_rc = uuid_load(uuid_ns, "nil");
+    if (uuid_rc != UUID_RC_OK) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+    uuid_rc = uuid_make(uuid, UUID_MAKE_V5, uuid_ns, key);
+    if (uuid_rc == UUID_RC_MEM) {
+        rc = IB_EALLOC;
+        goto finish;
+    }
+    else if (uuid_rc != UUID_RC_OK) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+    uuid_rc = uuid_export(uuid, UUID_FMT_STR, uuid_str, uuid_str_len);
+    if (uuid_rc != UUID_RC_OK) {
+        rc = IB_EOTHER;
+        goto finish;
+    }
+
+finish:
+    uuid_destroy(uuid);
+    uuid_destroy(uuid_ns);
 
     return rc;
 }

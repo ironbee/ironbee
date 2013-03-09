@@ -28,6 +28,7 @@
 
 #include <ironbee/build.h>
 #include <ironbee/types.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,6 +105,30 @@ ib_status_t DLL_PUBLIC ib_uuid_bin_to_ascii(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_uuid_create_v4(ib_uuid_t *uuid);
+
+/**
+ * Creates a new, sha1, v5 uuid.
+ *
+ * @param[out] uuid_str The 37 byte UUID is written to this buffer.
+ *             If this is NULL then it will be malloced by ossp-uuid.
+ * @param[in,out] uuid_str_len This should be 37. If, for some reason,
+ *                that is not long enough (36 bytes and one \0 character)
+ *                then an out-of-memory error is reported by ossp-uuid 
+ *                and IB_EOTHER is returned.
+ *                If @a uuid_str is NULL, then this is ignored
+ *                and is used as an output variable for the
+ *                length of @a uuid_str allocated by malloc.
+ * @param[in] key The null-terminated string of the key we want to hash.
+ *
+ * @returns 
+ *   - IB_OK
+ *   - IB_EOTHER if exporting the UUID or some other unexpected error occures.
+ *   - IB_EALLOC if a uuid object cannot be made.
+ */
+ib_status_t DLL_PUBLIC ib_uuid_create_v5_str(
+    char **uuid_str,
+    size_t *uuid_str_len,
+    const char *key);
 
 /** @} IronBeeUtilUUID */
 

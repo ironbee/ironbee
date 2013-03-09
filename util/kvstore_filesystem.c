@@ -18,6 +18,7 @@
 #include "ironbee_config_auto.h"
 
 #include <ironbee/kvstore_filesystem.h>
+#include <ironbee/uuid.h>
 
 #include "kvstore_private.h"
 
@@ -33,10 +34,10 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
+#include <uuid.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -106,8 +107,6 @@ static ib_status_t build_key_path(
     assert(key != NULL);
     assert(path != NULL);
 
-    *path = NULL;
-
     /* System return code. */
     int sys_rc;
 
@@ -117,23 +116,60 @@ static ib_status_t build_key_path(
     /* A stat struct. sb is the name used in the man page example code. */
     struct stat sb;
 
+    /* Constant size specified by ib_uuid_bin_to_ascii (minus the \0).*/
+    size_t key_uuid_sz = UUID_LEN_STR+1;
+    char *key_uuid_str = NULL;
+    char *key_str = NULL; /* Null-terminated copy of the key. */
+    char *path_base = NULL; /* Used to free path_tmp on failure. */
+    size_t prefix_len = 0;
+    size_t suffix_len = 0;
+    size_t path_size;
+    char *path_tmp; /* Used to manipulate the path we are building. */
+
     ib_kvstore_filesystem_server_t *server =
         (ib_kvstore_filesystem_server_t *)(kvstore->server);
 
-    size_t prefix_len = 0;
+    /* Clear output variable. */
+    *path = NULL;
+
     if (prefix != NULL) {
         prefix_len = strlen(prefix);
     }
 
-    size_t suffix_len = 0;
     if (suffix != NULL) {
         suffix_len = strlen(suffix);
     }
 
-    size_t path_size =
+    key_str = kvstore->malloc(
+        kvstore,
+        key->length+1,
+        kvstore->malloc_cbdata);
+    if (key_str == NULL) {
+        rc = IB_EALLOC;
+        goto cleanup;
+    }
+    strncpy(key_str, key->key, key->length);
+    key_str[key->length] = '\0';
+
+    /* Allocate 37 byte block for the key to be written. */
+    key_uuid_str = kvstore->malloc(
+        kvstore,
+        key_uuid_sz,
+        kvstore->malloc_cbdata);
+    if (key_uuid_str == NULL) {
+        rc = IB_EALLOC;
+        goto cleanup;
+    }
+
+    rc = ib_uuid_create_v5_str(&key_uuid_str, &key_uuid_sz, key_str);
+    if (rc != IB_OK) {
+        goto cleanup;
+    }
+
+    path_size =
         server->directory_length /* length of path */
         + 1                      /* path separator */
-        + key->length            /* key length */
+        + UUID_LEN_STR           /* key length */
         + 1                      /* path separator */
         + prefix_len             /* Prefix length */
         + EXPIRE_FMT_WIDTH       /* width to format the expiration time. */
@@ -144,15 +180,15 @@ static ib_status_t build_key_path(
         + suffix_len             /* Suffix length. */
         + 1                      /* '\0' */;
 
-    char *path_tmp = kvstore->malloc(
+    path_tmp = kvstore->malloc(
         kvstore,
         path_size+1,
         kvstore->malloc_cbdata);
-
-    if (! path_tmp) {
-        return IB_EALLOC;
+    if (path_tmp == NULL) {
+        rc = IB_EALLOC;
+        goto cleanup;
     }
-    char *path_base = path_tmp;
+    path_base = path_tmp;
 
     /* Push allocated path back to user. We now populate it. */
     *path = path_tmp;
@@ -163,7 +199,7 @@ static ib_status_t build_key_path(
 
     /* Append the key. */
     path_tmp = strncpy(path_tmp, "/", 1) + 1;
-    path_tmp = strncpy(path_tmp, key->key, key->length) + key->length;
+    path_tmp = strncpy(path_tmp, key_uuid_str, UUID_LEN_STR) + UUID_LEN_STR;
 
     /* Momentarily tag the end of the path for the stat check. */
     *path_tmp = '\0';
@@ -223,8 +259,18 @@ cleanup:
     if (rc == IB_OK) {
         *path = path_base;
     }
-    else if (path_tmp != NULL) {
-        kvstore->free(kvstore, path_base, kvstore->free_cbdata);
+    else {
+        if (path_base) {
+            kvstore->free(kvstore, path_base, kvstore->free_cbdata);
+        }
+    }
+
+    if (key_uuid_str) {
+        kvstore->free(kvstore, key_uuid_str, kvstore->free_cbdata);
+    }
+
+    if (key_str) {
+        kvstore->free(kvstore, key_str, kvstore->free_cbdata);
     }
 
     return rc;
