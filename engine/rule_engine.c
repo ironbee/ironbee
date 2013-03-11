@@ -1896,8 +1896,19 @@ static ib_status_t run_phase_rules(ib_engine_t *ib,
     assert(ib != NULL);
     assert(tx != NULL);
     assert(tx->ctx != NULL);
-    assert(tx->rule_exec != NULL);
     assert(cbdata != NULL);
+
+    /* Special handling of postprocess events if tx_started never notified */
+    if (tx->rule_exec == NULL) {
+        if ( (event == handle_postprocess_event) ||
+             (event == handle_logging_event) )
+        {
+            ib_log_warning_tx(tx, "Rule execution object not created @ %s",
+                              ib_state_event_name(event));
+            return IB_OK;
+        }
+        assert(0);
+    }
 
     const ib_rule_phase_meta_t *meta = (const ib_rule_phase_meta_t *) cbdata;
     ib_context_t               *ctx = tx->ctx;
