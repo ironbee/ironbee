@@ -762,10 +762,24 @@ static ib_status_t moddevel_txdump_tx(
  * @param params List of directive parameters
  * @param cbdata Callback data (from directive registration)
  *
- * usage: TxDump &lt;event&gt; &lt;dest&gt; [&lt;enable/disable&gt; ...]
+ * usage: TxDump &lt;event&gt; &lt;dest&gt; [&lt;enable&gt] 
  * &lt;event&gt; is one of:
  *   "PostProcess", "RequestHeader", "Request", "ResponseHeader", "Response"
  * &lt;dest&gt; is of the form (stderr|stdout|ib|file://[+]&lt;path&gt;)
+ * &lt;Enable is of the form &lt;flagname [[+-]&lt;flagname&gt;]&gt;
+ * Valid flag names:
+ *   Basic: Dump basic TX info
+ *   Connection: Dump connection info
+ *   ReqLine: Dump request line
+ *   ReqHdr: Dump request header
+ *   RspLine: Dump response line
+ *   RspHdr: Dump response header
+ *   Flags: Dump TX flags
+ *   Args: Dump request args
+ *   Data: Dump TX Data
+ *   Default: Default flags (Basic, ReqLine, RspLine)
+ *   Headers: Header information (Basic, ReqLine, ReqHdr, RspLine, RspHdr)
+ *   All: Dump all TX information
  *
  * @returns Status code
  */
