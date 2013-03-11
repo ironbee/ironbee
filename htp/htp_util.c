@@ -517,9 +517,7 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int 
         }
 
         *hostname = bstr_dup_mem(data, pos + 1);
-        if (*hostname == NULL) return HTP_ERROR;
-
-        bstr_to_lowercase(*hostname);
+        if (*hostname == NULL) return HTP_ERROR;       
 
         // Over the ']'.
         pos++;
@@ -552,9 +550,7 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int 
             while ((hostend > data) && (isspace(*(hostend - 1)))) hostend--;
 
             *hostname = bstr_dup_mem(data, hostend - data);
-            if (*hostname == NULL) return HTP_ERROR;
-
-            bstr_to_lowercase(*hostname);
+            if (*hostname == NULL) return HTP_ERROR;           
 
             return htp_parse_port(colon + 1, len - (colon + 1 - data), port, invalid);
         }
