@@ -210,72 +210,112 @@
                 flags for request parsing. The following flags may be set:</para>
             <itemizedlist>
                 <listitem>
-                    <para><emphasis role="bold">AMBIGUOUS_HOST:</emphasis> The host was specified in
-                        both the URI and in the Host header, but they do not match.</para>
-                </listitem>
-                <listitem>
-                    <para><emphasis role="bold">FIELD_INVALID:</emphasis> An invalid field was
-                        sent.</para>
-                </listitem>
-                <listitem>
-                    <para><emphasis role="bold">FIELD_LONG:</emphasis> A field length was longer
-                        than allowed.</para>
-                </listitem>
-                <listitem>
-                    <para><emphasis role="bold">FIELD_UNPARSEABLE:</emphasis> An unparseable field
+                    <para><emphasis role="bold">FIELD_UNPARSEABLE</emphasis> An unparseable field
                         was given.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">HOST_MISSING:</emphasis> The host was missing from a
+                    <para><emphasis role="bold">FIELD_INVALID</emphasis> An invalid field was
+                        sent.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">FIELD_FOLDED</emphasis> Folding detected in a
+                        field.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">FIELD_REPEATED</emphasis> A field was
+                        repeated.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">FIELD_LONG</emphasis> A field length was longer than
+                        allowed.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">FIELD_RAW_NUL</emphasis> A field contained an
+                        unencoded NUL (zero) byte.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">HOST_AMBIGUOUS</emphasis> The host was specified in
+                        both the URI and in the Host header, but they do not match.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">HOST_MISSING</emphasis> The host was missing from a
                         request in which it is normally sent.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">INVALID_CHUNKING:</emphasis> Invalid chunking was
-                        used.</para>
+                    <para><emphasis role="bold">HOSTH_INVALID</emphasis> Invalid host detected in
+                        header.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">INVALID_FOLDING:</emphasis> Invalid header folding
-                        was used.</para>
+                    <para><emphasis role="bold">HOSTU_INVALID</emphasis> Invalid host detected in
+                        URL.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">MULTI_PACKET_HEAD:</emphasis> The header was sent in
+                    <para><emphasis role="bold">INVALID_FOLDING</emphasis> Invalid header folding
+                        detected.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">INVALID_CHUNKING</emphasis> Invalid chunking
+                        detected.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">MULTI_PACKET_HEAD</emphasis> The header was sent in
                         more than one packet (buffer).</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">PATH_ENCODED_NUL:</emphasis> A NUL (zero) byte was
+                    <para><emphasis role="bold">PATH_ENCODED_NUL</emphasis> A NUL (zero) byte was
                         sent, encoded, in the path.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">PATH_ENCODED_SEPARATOR:</emphasis> An encoded path
+                    <para><emphasis role="bold">PATH_ENCODED_SEPARATOR</emphasis> An encoded path
                         separator was sent in the path.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">PATH_FULLWIDTH_EVASION:</emphasis> A full width
-                        character was used in the path.</para>
+                    <para><emphasis role="bold">PATH_HALF_FULL_RANGE</emphasis> An invalid full
+                        width character was used in the path.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">PATH_INVALID_ENCODING:</emphasis> Invalid encoding
+                    <para><emphasis role="bold">PATH_INVALID</emphasis> An invalid path
+                        detected.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">PATH_INVALID_ENCODING</emphasis> Invalid encoding
                         was used in the path.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">PATH_OVERLONG_U:</emphasis> An overlong Unicode
+                    <para><emphasis role="bold">PATH_OVERLONG_U</emphasis> An overlong Unicode
                         encoding was used in the path.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">PATH_UTF8_INVALID:</emphasis> An invalid UTF-8
-                        encoding was used in the path.</para>
-                </listitem>
-                <listitem>
-                    <para><emphasis role="bold">PATH_UTF8_OVERLONG:</emphasis> An overlong UTF-8
-                        encoding was used in the path.</para>
-                </listitem>
-                <listitem>
-                    <para><emphasis role="bold">PATH_UTF8_VALID:</emphasis> A UTF-8 character was
+                    <para><emphasis role="bold">PATH_UTF8_VALID</emphasis> A UTF-8 character was
                         used in the path.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">REQUEST_SMUGGLING:</emphasis> A HTTP smuggling
-                        attack was detected.</para>
+                    <para><emphasis role="bold">PATH_UTF8_INVALID</emphasis> An invalid UTF-8
+                        encoding was used in the path.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">PATH_UTF8_OVERLONG</emphasis> An overlong UTF-8
+                        encoding was used in the path.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">REQUEST_SMUGGLING</emphasis> A HTTP smuggling attack
+                        was detected.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">URLEN_ENCODED_NUL</emphasis> An encoded NUL (zero)
+                        byte detected in URL.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">URLEN_HALF_FULL_RANGE</emphasis> An invalid full
+                        width character detected in URL.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">URLEN_INVALID_ENCODING</emphasis> An invalid
+                        encoding detected in URL.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">URLEN_OVERLONG_U</emphasis> An overlong unicode
+                        character detected in URL.</para>
                 </listitem>
             </itemizedlist>
         </section>
@@ -292,16 +332,28 @@
 
             <itemizedlist>
                 <listitem>
-                    <para><emphasis role="bold">FIELD_INVALID:</emphasis> An invalid field was
+                    <para><emphasis role="bold">FIELD_UNPARSEABLE</emphasis> An unparseable field
+                        was given.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">FIELD_INVALID</emphasis> An invalid field was
                         sent.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">FIELD_LONG:</emphasis> A field length was longer
-                        than allowed.</para>
+                    <para><emphasis role="bold">FIELD_FOLDED</emphasis> Folding detected in a
+                        field.</para>
                 </listitem>
                 <listitem>
-                    <para><emphasis role="bold">FIELD_UNPARSEABLE:</emphasis> An unparseable field
-                        was given.</para>
+                    <para><emphasis role="bold">FIELD_REPEATED</emphasis> A field was
+                        repeated.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">FIELD_LONG</emphasis> A field length was longer than
+                        allowed.</para>
+                </listitem>
+                <listitem>
+                    <para><emphasis role="bold">FIELD_RAW_NUL</emphasis> A field contained an
+                        unencoded NUL (zero) byte.</para>
                 </listitem>
                 <listitem>
                     <para><emphasis role="bold">INVALID_CHUNKING:</emphasis> Invalid chunking was
