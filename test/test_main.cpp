@@ -263,7 +263,7 @@ TEST_F(ConnectionParsing, HeaderHostParsing) {
     htp_tx_t *tx2 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 1);
     ASSERT_TRUE(tx2 != NULL);
     ASSERT_TRUE(tx2->parsed_uri->hostname != NULL);
-    ASSERT_EQ(0, bstr_cmp_c(tx2->parsed_uri->hostname, "www.example.com"));
+    ASSERT_EQ(0, bstr_cmp_c(tx2->parsed_uri->hostname, "www.example.com."));
 
     htp_tx_t *tx3 = (htp_tx_t *) htp_list_get(connp->conn->transactions, 2);
     ASSERT_TRUE(tx3 != NULL);
@@ -769,4 +769,34 @@ TEST_F(ConnectionParsing, ResponseTrailerData) {
     int *counter = (int *) htp_tx_get_user_data(tx);
     ASSERT_TRUE(counter != NULL);
     ASSERT_EQ(4, *counter);
+}
+
+TEST_F(ConnectionParsing, GetIPv6) {
+    int rc = test_run(home, "30-get-ipv6.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->request_method != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));   
+
+    ASSERT_TRUE(tx->request_uri != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "http://[::1]:8080/?p=%20"));
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    ASSERT_TRUE(tx->parsed_uri->hostname != NULL);   
+
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->hostname, "[::1]"));
+    ASSERT_EQ(8080, tx->parsed_uri->port_number);
+
+    ASSERT_TRUE(tx->parsed_uri->query != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->query, "p=%20"));
+
+    htp_param_t *p = htp_tx_req_get_param(tx, "p", 1);
+    ASSERT_TRUE(p != NULL);
+
+    ASSERT_EQ(0, bstr_cmp_c(p->value, " "));
 }

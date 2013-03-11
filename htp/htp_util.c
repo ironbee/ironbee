@@ -452,6 +452,31 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
     return htp_connp_is_line_terminator(connp, data, len);
 }
 
+static htp_status_t htp_parse_port(unsigned char *data, size_t len, int *port, int *invalid) {
+    if (len == 0) {
+        *port = -1;
+        *invalid = 1;
+        return HTP_OK;
+    }
+
+    int64_t port_parsed = htp_parse_positive_integer_whitespace(data, len, 10);
+
+    if (port_parsed < 0) {
+        // Failed to parse the port number.
+        *port = -1;
+        *invalid = 1;
+    } else if ((port_parsed > 0) && (port_parsed < 65536)) {
+        // Valid port number.
+        *port = port_parsed;
+    } else {
+        // Port number out of range.
+        *port = -1;
+        *invalid = 1;
+    }
+
+    return HTP_OK;
+}
+
 /**
  * Parses an authority string, which consists of a hostname with an optional port number; username
  * and password are not allowed and will not be handled. On success, this function will allocate a
@@ -468,61 +493,70 @@ int htp_connp_is_line_ignorable(htp_connp_t *connp, unsigned char *data, size_t 
 htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int *invalid) {
     if ((hostport == NULL) || (hostname == NULL) || (port == NULL) || (invalid == NULL)) return HTP_ERROR;
 
+    *hostname = NULL;
+    *port = -1;
     *invalid = 0;
 
     unsigned char *data = bstr_ptr(hostport);
     size_t len = bstr_len(hostport);
 
-    // Ignore whitespace at the beginning and the end.
     bstr_util_mem_trim(&data, &len);
 
-    // Is there a colon?
-    unsigned char *colon = memchr(data, ':', len);
-    if (colon == NULL) {
-        // Hostname alone, no port.
+    if (len == 0) return HTP_ERROR; // XXX
 
-        *port = -1;
+    // Check for an IPv6 address.
+    if (data[0] == '[') {
+        // IPv6 host.
 
-        // Ignore one dot at the end.
-        if ((len > 0) && (data[len - 1] == '.')) len--;
-
-        *hostname = bstr_dup_mem(data, len);
-        if (*hostname == NULL) return HTP_ERROR;
-
-        bstr_to_lowercase(*hostname);
-    } else {
-        // Hostname and port.
-
-        // Ignore whitespace at the end of hostname.
-        unsigned char *hostend = colon;
-        while ((hostend > data) && (isspace(*(hostend - 1)))) hostend--;
-
-        // Ignore one dot at the end.
-        if ((hostend > data) && (*(hostend - 1) == '.')) hostend--;
-
-        *hostname = bstr_dup_mem(data, hostend - data);
-        if (*hostname == NULL) return HTP_ERROR;
-
-        bstr_to_lowercase(*hostname);
-
-        // Parse the port.
-
-        unsigned char *portstart = colon + 1;
-        size_t portlen = len - (portstart - data);
-
-        int64_t port_parsed = htp_parse_positive_integer_whitespace(portstart, portlen, 10);
-
-        if (port_parsed < 0) {
-            // Failed to parse the port number.
-            *port = -1;
+        // Find the end of the IPv6 address.
+        size_t pos = 0;
+        while ((pos < len) && (data[pos] != ']')) pos++;
+        if (pos == len) {
             *invalid = 1;
-        } else if ((port_parsed > 0) && (port_parsed < 65536)) {
-            // Valid port number.
-            *port = port_parsed;
+            return HTP_OK;
+        }
+
+        *hostname = bstr_dup_mem(data, pos + 1);
+        if (*hostname == NULL) return HTP_ERROR;
+
+        bstr_to_lowercase(*hostname);
+
+        // Over the ']'.
+        pos++;
+        if (pos == len) return HTP_OK;
+
+        // Handle port.
+        if (data[pos] == ':') {
+            return htp_parse_port(data + pos + 1, len - pos - 1, port, invalid);
         } else {
-            // Port number out of range.
-            *port = -1;
             *invalid = 1;
+            return HTP_OK;
+        }
+    } else {
+        // Not IPv6 host.
+
+        // Is there a colon?
+        unsigned char *colon = memchr(data, ':', len);
+        if (colon == NULL) {
+            // Hostname alone, no port.
+
+            *hostname = bstr_dup_mem(data, len);
+            if (*hostname == NULL) return HTP_ERROR;
+
+            bstr_to_lowercase(*hostname);
+        } else {
+            // Hostname and port.
+
+            // Ignore whitespace at the end of hostname.
+            unsigned char *hostend = colon;
+            while ((hostend > data) && (isspace(*(hostend - 1)))) hostend--;
+
+            *hostname = bstr_dup_mem(data, hostend - data);
+            if (*hostname == NULL) return HTP_ERROR;
+
+            bstr_to_lowercase(*hostname);
+
+            return htp_parse_port(colon + 1, len - (colon + 1 - data), port, invalid);
         }
     }
 
@@ -626,6 +660,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
         } else {
             // Make a copy of the scheme
             (*uri)->scheme = bstr_dup_mem(data + start, pos - start);
+            if ((*uri)->scheme == NULL) return HTP_ERROR;
 
             // Go over the colon
             pos++;
@@ -664,10 +699,13 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
                 if (m != NULL) {
                     // Username and password
                     (*uri)->username = bstr_dup_mem(credentials_start, m - credentials_start);
+                    if ((*uri)->username == NULL) return HTP_ERROR;
                     (*uri)->password = bstr_dup_mem(m + 1, credentials_len - (m - credentials_start) - 1);
+                    if ((*uri)->password == NULL) return HTP_ERROR;
                 } else {
                     // Username alone
                     (*uri)->username = bstr_dup_mem(credentials_start, credentials_len);
+                    if ((*uri)->username == NULL) return HTP_ERROR;
                 }
             } else {
                 // No credentials
@@ -675,22 +713,50 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
                 hostname_len = pos - start;
             }
 
-            // Still parsing authority; is there a port provided?
-            m = memchr(hostname_start, ':', hostname_len);
-            if (m != NULL) {
-                size_t port_len = hostname_len - (m - hostname_start) - 1;
-                hostname_len = hostname_len - port_len - 1;
+            // Parsing authority without credentials.
+            if ((hostname_len > 0) && (hostname_start[0] == '[')) {
+                // IPv6 address.
 
-                // Port string
-                (*uri)->port = bstr_dup_mem(m + 1, port_len);
+                m = memchr(hostname_start, ']', hostname_len);
+                if (m == NULL) {
+                    // Invalid IPv6 address; use the entire string as hostname.
+                    (*uri)->hostname = bstr_dup_mem(hostname_start, hostname_len);
+                    if ((*uri)->hostname == NULL) return HTP_ERROR;
+                } else {
+                    (*uri)->hostname = bstr_dup_mem(hostname_start, m - hostname_start + 1);
+                    if ((*uri)->hostname == NULL) return HTP_ERROR;                   
 
-                // We deliberately don't want to try to convert the port
-                // string as a number. That will be done later, during
-                // the normalization and validation process.
+                    // Is there a port?
+                    hostname_len = hostname_len - (m - hostname_start + 1);
+                    hostname_start = m + 1;                   
+
+                    m = memchr(hostname_start, ':', hostname_len);
+                    if (m != NULL) {
+                        size_t port_len = hostname_len - (m - hostname_start) - 1;
+                        hostname_len = hostname_len - port_len - 1;
+
+                        // Port string
+                        (*uri)->port = bstr_dup_mem(m + 1, port_len);
+                        if ((*uri)->port == NULL) return HTP_ERROR;
+                    }
+                }
+            } else {
+                // Not IPv6 address.
+
+                m = memchr(hostname_start, ':', hostname_len);
+                if (m != NULL) {
+                    size_t port_len = hostname_len - (m - hostname_start) - 1;
+                    hostname_len = hostname_len - port_len - 1;
+
+                    // Port string
+                    (*uri)->port = bstr_dup_mem(m + 1, port_len);
+                    if ((*uri)->port == NULL) return HTP_ERROR;
+                }
+
+                // Hostname
+                (*uri)->hostname = bstr_dup_mem(hostname_start, hostname_len);
+                if ((*uri)->hostname == NULL) return HTP_ERROR;
             }
-
-            // Hostname
-            (*uri)->hostname = bstr_dup_mem(hostname_start, hostname_len);
         }
 
     // Path
@@ -702,6 +768,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
 
     // Path
     (*uri)->path = bstr_dup_mem(data + start, pos - start);
+    if ((*uri)->path == NULL) return HTP_ERROR;
 
     if (pos == len) return HTP_OK;
 
@@ -716,6 +783,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
 
         // Query string
         (*uri)->query = bstr_dup_mem(data + start, pos - start);
+        if ((*uri)->query == NULL) return HTP_ERROR;
 
         if (pos == len) return HTP_OK;
     }
@@ -727,6 +795,7 @@ int htp_parse_uri(bstr *input, htp_uri_t **uri) {
 
         // Fragment; ends with the end of the input
         (*uri)->fragment = bstr_dup_mem(data + start, len - start);
+        if ((*uri)->fragment == NULL) return HTP_ERROR;
     }
 
     return HTP_OK;
