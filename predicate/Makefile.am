@@ -9,4 +9,5 @@ libpredicate_la_LDFLAGS = $(LDFLAGS) $(BOOST_LDFLAGS) \
                      -release @MAJOR_VERSION@.@MINOR_VERSION@
 libpredicate_la_SOURCES = \
     dag.cpp \
-    call_factory.cpp
+    call_factory.cpp \
+    parse.cpp
