@@ -479,16 +479,14 @@ static htp_status_t htp_parse_port(unsigned char *data, size_t len, int *port, i
 
 /**
  * Parses an authority string, which consists of a hostname with an optional port number; username
- * and password are not allowed and will not be handled. On success, this function will allocate a
- * new bstring, which the caller will need to manage. If the port information is not available or
- * if it is invalid, the port variable will contain -1. The HTP_HOST_INVALID flag will be set if
- * the authority is in the incorrect format.
+ * and password are not allowed and will not be handled.
  *
  * @param[in] hostport
- * @param[out] hostname
- * @param[out] port
- * @param[out] invalid
- * @return HTP_OK on success, HTP_ERROR on failure.
+ * @param[out] hostname A bstring containing the hostname, or NULL if the hostname is invalid. If this value
+ *                      is not NULL, the caller assumes responsibility for memory management.
+ * @param[out] port Port number, or -1 if the port is not present or invalid.
+ * @param[out] invalid Set to 1 if any part of the authority is invalid.
+ * @return HTP_OK on success, HTP_ERROR on memory allocation failure.
  */
 htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int *invalid) {
     if ((hostport == NULL) || (hostname == NULL) || (port == NULL) || (invalid == NULL)) return HTP_ERROR;
@@ -502,7 +500,10 @@ htp_status_t htp_parse_hostport(bstr *hostport, bstr **hostname, int *port, int 
 
     bstr_util_mem_trim(&data, &len);
 
-    if (len == 0) return HTP_ERROR; // XXX
+    if (len == 0) {
+        *invalid = 1;
+        return HTP_OK;
+    }
 
     // Check for an IPv6 address.
     if (data[0] == '[') {
