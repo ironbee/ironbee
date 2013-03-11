@@ -156,4 +156,5 @@ all-local: $(abs_top_builddir)/lua/ironbee-ffi-h.lua $(abs_top_srcdir)/lua/ironb
 	for f in $(+); do \
 		cp "$$f" $(abs_top_builddir)/modules/.libs/`basename "$$f"` ; \
 	done
+	cp -R $(abs_top_srcdir)/lua/ironbee $(abs_top_builddir)/modules/.libs
 endif

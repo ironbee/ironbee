@@ -2012,6 +2012,89 @@ static ib_status_t modlua_module_load(ib_engine_t *ib, const char *file) {
 }
 
 /**
+ * Given a search prefix this will build a search path and add it to Lua.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in,out] L Lua State that the search path will be set in.
+ * @param[in] prefix The prefix. ?.lua will be appended.
+ * @returns
+ *   - IB_OK on success
+ *   - IB_EALLOC on malloc failure.
+ */
+static ib_status_t modlua_append_searchprefix(
+    ib_engine_t *ib,
+    lua_State *L,
+    const char *prefix)
+{
+    /* This is the search pattern that is appended to each element of
+     * lua_search_paths and then added to the Lua runtime package.path
+     * global variable. */
+    const char *lua_file_pattern = "?.lua";
+
+    char *path = NULL; /* Tmp string to build a search path. */
+    ib_log_debug(ib, "Adding \"%s\" to lua search path.", prefix);
+
+    /* Strlen + 2. One for \0 and 1 for the path separator. */
+    path = malloc(strlen(prefix) + strlen(lua_file_pattern) + 2);
+    if (path == NULL) {
+        ib_log_error(ib, "Could allocate buffer for string append.");
+        free(path);
+        return IB_EALLOC;
+    }
+
+    strcpy(path, prefix);
+    strcpy(path + strlen(path), "/");
+    strcpy(path + strlen(path), lua_file_pattern);
+
+    ib_lua_add_require_path(ib, L, path);
+
+    ib_log_debug(ib, "Added \"%s\" to lua search path.", path);
+
+    /* We are done with path. To be safe, we NULL it as there is more work
+     * to be done in this function, and we do not want to touch path again. */
+    free(path);
+
+    return IB_OK;
+}
+
+/**
+ * Set the search path in the lua state from the core config.
+ */
+static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
+{
+    ib_status_t rc;
+
+    ib_core_cfg_t *corecfg = NULL;
+    /* Null terminated list of search paths. */
+    const char *lua_search_paths[3];
+
+
+    rc = ib_context_module_config(
+        ib_context_main(ib),
+        ib_core_module(),
+        &corecfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Could not retrieve core module configuration.");
+        return rc;
+    }
+
+    /* Initialize the search paths list. */
+    lua_search_paths[0] = corecfg->module_base_path;
+    lua_search_paths[1] = corecfg->rule_base_path;
+    lua_search_paths[2] = NULL;
+
+    for (int i = 0; lua_search_paths[i] != NULL; ++i)
+    {
+        rc = modlua_append_searchprefix(ib, L, lua_search_paths[i]);
+        if (rc != IB_OK) {
+            return rc;
+        }
+    }
+
+    return IB_OK;
+}
+
+/**
  * Pre-load files into the given lua stack.
  *
  * This will attempt to run...
@@ -2030,21 +2113,12 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
 
     ib_core_cfg_t *corecfg = NULL;
 
-    /* This is the search pattern that is appended to each element of
-     * lua_search_paths and then added to the Lua runtime package.path
-     * global variable. */
-    const char *lua_file_pattern = "?.lua";
-
-    /* Null terminated list of search paths. */
-    const char *lua_search_paths[3];
-
-    const char *lua_preloads[][2] = { { "ffi", "ffi" },
+    const char *lua_preloads[][2] = { { "waggle", "ironbee/waggle" },
+                                      { "ffi", "ffi" },
                                       { "ironbee", "ironbee-ffi" },
                                       { "ibapi", "ironbee-api" },
                                       { "modlua", "ironbee-modlua" },
                                       { NULL, NULL } };
-    char *path = NULL; /* Tmp string to build a search path. */
-    int i = 0; /* An iterator. */
 
     rc = ib_context_module_config(ib_context_main(ib),
                                   ib_core_module(),
@@ -2055,44 +2129,7 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
         return rc;
     }
 
-    /* Initialize the search paths list. */
-    lua_search_paths[0] = corecfg->module_base_path;
-    lua_search_paths[1] = corecfg->rule_base_path;
-    lua_search_paths[2] = NULL;
-
-    for (i = 0; lua_search_paths[i] != NULL; ++i)
-    {
-        char *tmp;
-        ib_log_debug(ib,
-            "Adding \"%s\" to lua search path.", lua_search_paths[i]);
-
-        /* Strlen + 2. One for \0 and 1 for the path separator. */
-        tmp = realloc(path,
-                      strlen(lua_search_paths[i]) +
-                      strlen(lua_file_pattern) + 2);
-
-        if (tmp == NULL) {
-            ib_log_error(ib, "Could allocate buffer for string append.");
-            free(path);
-            return IB_EALLOC;
-        }
-        path = tmp;
-
-        strcpy(path, lua_search_paths[i]);
-        strcpy(path + strlen(path), "/");
-        strcpy(path + strlen(path), lua_file_pattern);
-
-        ib_lua_add_require_path(ib, L, path);
-
-        ib_log_debug(ib, "Added \"%s\" to lua search path.", path);
-    }
-
-    /* We are done with path. To be safe, we NULL it as there is more work
-     * to be done in this function, and we do not want to touch path again. */
-    free(path);
-    path = NULL;
-
-    for (i = 0; lua_preloads[i][0] != NULL; ++i)
+    for (int i = 0; lua_preloads[i][0] != NULL; ++i)
     {
         rc = ib_lua_require(ib,
                             L,
@@ -2458,6 +2495,12 @@ static ib_status_t modlua_init(ib_engine_t *ib,
 
     luaL_openlibs(modlua_global_cfg.L);
 
+    /* Setup search paths before ffi, api, etc loading. */
+    rc = modlua_setup_searchpath(ib, modlua_global_cfg.L);
+    if (rc != IB_OK) {
+        return rc;
+    }
+
     /* Load ffi, api, etc. */
     rc = modlua_preload(ib, modlua_global_cfg.L);
     if (rc != IB_OK) {
@@ -2504,11 +2547,6 @@ static ib_status_t modlua_init(ib_engine_t *ib,
     }
 
     /* Initialize lock to protect making new lua threads. */
-    /* NOTE: To avoid any confusion as to whether the lock
-     *       is thread-safe or all copies of the lock structure
-     *       are thread safe we use a pointer to a lock structure
-     *       so that all copies of the module configuration use
-     *       the same lock structure in memory. */
     modlua_global_cfg.L_lck = malloc(sizeof(*modlua_global_cfg.L_lck));
     if (modlua_global_cfg.L_lck == NULL) {
         ib_log_error(ib, "Failed to initialize lua global lock.");
@@ -2582,6 +2620,45 @@ static IB_CFGMAP_INIT_STRUCTURE(modlua_config_map) = {
 
 
 /* -- Configuration Directives -- */
+
+/**
+ * Use the common Lua Configuration stack to configure IronBee
+ * using Lua.
+ *
+ * This environment is discarded after configuration time.
+ *
+ * @param[in] cp Configuration parser and state.
+ * @param[in] name The directive.
+ * @param[in] p1 The file to include.
+ * @param[in] cbdata The callback data. NULL. None is needed.
+ *
+ * @returns
+ *   - IB_OK on success.
+ *   - IB_EALLOC if an allocation cannot be performed, such as a Lua Stack.
+ *   - IB_EOTHER if any other error is encountered.
+ *   - IB_EINVAL if there is a Lua interpretation problem. This 
+ *               will almost always indicate a problem with the user's code
+ *               and the user should examine their script.
+ */
+static ib_status_t modlua_dir_include_lua(ib_cfgparser_t *cp,
+                                          const char *name,
+                                          const char *p1,
+                                          void *cbdata)
+{
+    ib_engine_t *ib = cp->ib;
+    ib_status_t rc;
+    ib_core_cfg_t *corecfg = NULL;
+
+    rc = ib_context_module_config(ib_context_main(ib),
+                                  ib_core_module(),
+                                  (void *)&corecfg);
+    if (rc != IB_OK) {
+        ib_log_error(ib, "Failed to retrieve core configuration.");
+        return rc;
+    }
+
+    return IB_OK;
+}
 
 /**
  * @param[in] cp Configuration parser.
@@ -2715,7 +2792,6 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
         modlua_dir_param1,
         NULL
     ),
-
     IB_DIRMAP_INIT_PARAM1(
         "LuaPackagePath",
         modlua_dir_param1,
@@ -2724,6 +2800,11 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
     IB_DIRMAP_INIT_PARAM1(
         "LuaPackageCPath",
         modlua_dir_param1,
+        NULL
+    ),
+    IB_DIRMAP_INIT_PARAM1(
+        "IncludeLua",
+        modlua_dir_include_lua,
         NULL
     ),
 
