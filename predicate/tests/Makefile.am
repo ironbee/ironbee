@@ -15,9 +15,11 @@ AM_LDFLAGS = \
 include $(top_srcdir)/build/tests.mk
 
 check_PROGRAMS = \
-    test_dag
+    test_dag \
+    test_call_factory
 
 TESTS=$(check_PROGRAMS)
 CLEANFILES=*.xml *.log
 
 test_dag_SOURCES = test_dag.cpp $(top_srcdir)/ironbeepp/tests/fixture.cpp
+test_call_factory_SOURCES = test_call_factory.cpp
