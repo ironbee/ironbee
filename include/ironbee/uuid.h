@@ -50,10 +50,10 @@ extern "C" {
  * This is a UUID.  UUIDs are generated via version 4 (random).
  */
 typedef union {
-    uint8_t       byte[16];
-    uint16_t      uint16[8];
-    uint32_t      uint32[4];
-    uint64_t      uint64[2];
+    uint8_t  byte[16];
+    uint16_t uint16[8];
+    uint32_t uint32[4];
+    uint64_t uint64[2];
 } ib_uuid_t;
 
 /**
@@ -80,8 +80,8 @@ ib_status_t DLL_PUBLIC ib_uuid_shutdown(void);
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_uuid_ascii_to_bin(
-     ib_uuid_t *ibuuid,
-     const char *uuid
+    ib_uuid_t  *ibuuid,
+    const char *uuid
 );
 
 /**
@@ -93,7 +93,7 @@ ib_status_t DLL_PUBLIC ib_uuid_ascii_to_bin(
  * @returns Status code
  */
 ib_status_t DLL_PUBLIC ib_uuid_bin_to_ascii(
-    char *str,
+    char            *str,
     const ib_uuid_t *uuid
 );
 
@@ -109,26 +109,33 @@ ib_status_t DLL_PUBLIC ib_uuid_create_v4(ib_uuid_t *uuid);
 /**
  * Creates a new, sha1, v5 uuid.
  *
+ * @warning This routine does not use the caching that the other routines
+ * do.  As such, it has a significant runtime cost and is not suitable for
+ * frequent calling.  Use ib_uuid_create_v4() for cheap UUID creation.
+ *
+ * @sa ib_uuid_create_v4()
+ *
  * @param[out] uuid_str The 37 byte UUID is written to this buffer.
  *             If this is NULL then it will be malloced by ossp-uuid.
  * @param[in,out] uuid_str_len This should be 37. If, for some reason,
  *                that is not long enough (36 bytes and one \0 character)
- *                then an out-of-memory error is reported by ossp-uuid 
+ *                then an out-of-memory error is reported by ossp-uuid
  *                and IB_EOTHER is returned.
  *                If @a uuid_str is NULL, then this is ignored
  *                and is used as an output variable for the
  *                length of @a uuid_str allocated by malloc.
  * @param[in] key The null-terminated string of the key we want to hash.
  *
- * @returns 
+ * @returns
  *   - IB_OK
  *   - IB_EOTHER if exporting the UUID or some other unexpected error occures.
  *   - IB_EALLOC if a uuid object cannot be made.
  */
 ib_status_t DLL_PUBLIC ib_uuid_create_v5_str(
-    char **uuid_str,
-    size_t *uuid_str_len,
-    const char *key);
+    char       **uuid_str,
+    size_t      *uuid_str_len,
+    const char  *key
+);
 
 /** @} IronBeeUtilUUID */
 

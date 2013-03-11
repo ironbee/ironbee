@@ -66,8 +66,8 @@ ib_status_t ib_uuid_shutdown(void)
 }
 
 ib_status_t ib_uuid_ascii_to_bin(
-     ib_uuid_t *uuid,
-     const char *str
+    ib_uuid_t  *uuid,
+    const char *str
 )
 {
     uuid_rc_t uuid_rc;
@@ -121,7 +121,7 @@ finish:
 }
 
 ib_status_t ib_uuid_bin_to_ascii(
-    char *str,
+    char            *str,
     const ib_uuid_t *uuid
 )
 {
@@ -208,9 +208,10 @@ finish:
 }
 
 ib_status_t ib_uuid_create_v5_str(
-    char **uuid_str,
-    size_t *uuid_str_len,
-    const char *key)
+    char       **uuid_str,
+    size_t      *uuid_str_len,
+    const char  *key
+)
 {
     uuid_rc_t uuid_rc;
     ib_status_t rc = IB_OK;
