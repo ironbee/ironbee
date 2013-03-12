@@ -305,6 +305,7 @@ if test "$valgrind" != "no"; then
 fi
 
 dnl Checks for various external dependencies
+sinclude(acinclude/dso_tool.m4)
 sinclude(acinclude/pcre.m4)
 sinclude(acinclude/apxs.m4)
 sinclude(acinclude/apr.m4)
@@ -354,6 +355,7 @@ if test "${APR_REQUIRES_APU}" = "yes" ; then
     CHECK_APU()
 fi
 CHECK_HTTPD()
+CHECK_NGX_DSO_TOOL()
 CHECK_TS()
 CHECK_GEOIP()
 CHECK_OSSP_UUID()

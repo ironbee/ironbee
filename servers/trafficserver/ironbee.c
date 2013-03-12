@@ -1831,7 +1831,7 @@ static int ironbee_plugin(TSCont contp, TSEvent event, void *edata)
 
             /* Feed ironbee the headers if not done already. */
             if (!ib_tx_flags_isset(txndata->tx, IB_TX_FRES_STARTED)) {
-                status = process_hdr(txndata, txnp, &ib_direction_client_resp);
+                process_hdr(txndata, txnp, &ib_direction_client_resp);
             }
 
             /* If there is an error with a body, then notify ironbee.

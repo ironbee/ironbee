@@ -20,6 +20,10 @@ NGXIB_LDOPTS = $(PCRE_LDFLAGS) $(PCRE_LDADD) -L$(prefix)/lib -lhtp -libutil -lir
 
 nginx: $(NGINX_DIR)/objs/nginx
 
+config: config.in Makefile
+	sed 's#IB_COPTS#$(prefix)/include#' < config.in \
+	| sed 's#IB_LDOPTS#-L$(prefix)/lib -lhtp -libutil -lironbee#' > config
+
 # FIXME: maybe hack up an m4 to detect a downloader?
 $(NGINX_TARBALL):
 	wget -O $(NGINX_TARBALL) $(NGINX_URL) \
@@ -48,3 +52,6 @@ $(prefix)/lib/libironbee.la: ../../engine/libironbee.la
 
 nginx-install: nginx
 	cd $(NGINX_DIR) && make install
+
+tengine-install:	config
+	$(NGX_DSO_TOOL) --add-module=$(NGXIB_SRC) --dst=$(prefix)/lib
