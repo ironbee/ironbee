@@ -29,8 +29,7 @@
 using namespace IronBee::Predicate;
 using namespace std;
 
-template <typename SubClass>
-class CallBase : public DAG::Call<SubClass>
+class CallBase : public DAG::Call
 {
 public:
     virtual size_t hash() const
@@ -45,21 +44,23 @@ protected:
     }
 };
 
-class CallA : public CallBase<CallA>
+class CallA : public CallBase
 {
 public:
-    static const std::string class_name;
+    virtual std::string name() const
+    {
+        return "CallA";
+    }
 };
 
-const std::string CallA::class_name("CallA");
-
-class CallB : public CallBase<CallB>
+class CallB : public CallBase
 {
 public:
-    static const std::string class_name;
+    virtual std::string name() const
+    {
+        return "CallB";
+    }
 };
-
-const std::string CallB::class_name("CallB");
 
 TEST(TestParse, ValidLiteral)
 {

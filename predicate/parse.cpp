@@ -43,7 +43,7 @@ void error(size_t i, const string& msg)
 {
     BOOST_THROW_EXCEPTION(
         einval() << errinfo_what(
-        msg + " at position " + boost::lexical_cast<string>(i)
+            msg + " at position " + boost::lexical_cast<string>(i)
         )
     );
 }

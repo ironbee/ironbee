@@ -46,6 +46,8 @@ typedef IronBee::ConstField Value;
 typedef IronBee::ConstTransaction Context;
 
 class Node;
+class Call;
+class Literal;
 
 /**
  * Shared pointer to Node.
@@ -55,6 +57,16 @@ class Node;
  * will allow for shared pointer loops and memory leaks.
  **/
 typedef boost::shared_ptr<Node> node_p;
+
+/**
+ * Shared pointer to Call.
+ **/
+typedef boost::shared_ptr<Call> call_p;
+
+/**
+ * Shared pointer to Literal.
+ **/
+typedef boost::shared_ptr<Literal> literal_p;
 
 /**
  * A node in the predicate DAG.
@@ -164,23 +176,15 @@ std::ostream& operator<<(std::ostream& out, const Node& node);
 /**
  * Node representing a function Call.
  *
- * All Call nodes must have a name that is the same across all nodes of the
- * same subclass.  To enforce this, the CRTP is used.  A subclass C must
- * publically inherit @c Call<C> and define:
- *
- * @code
- * static const std::string class_name;
- * @endcode
+ * All Call nodes must have a name.  Calls with the same name are considered
+ * to implement the same function.
  *
  * Generally, specific call classes inherit from OrderedCall or UnorderedCall
  * instead of Call.
  *
  * @sa OrderedCall
  * @sa UnorderedCall
- *
- * @tparam Subclass Subclass; see CRTP.
  **/
-template <class Subclass>
 class Call :
     public Node
 {
@@ -190,33 +194,19 @@ public:
 
     /**
      * Name accessor.
-     *
-     * Returns @c Subclass::class_name.
      */
-    std::string name() const
-    {
-        return Subclass::class_name;
-    }
+    virtual std::string name() const = 0;
 };
 
 /**
  * Node representing a function call where argument order matters.
  *
- * Call nodes where argument order matters should inherit from this class,
- * passing themselves as the template argument (see Call and CRTP).  They
- * must define a static @c class_name (see Call) and implement the
- * protected calculate() method (see Node).  The name() and hash() methods
- * will be implemented for them.
- *
  * @sa Call
  * @sa UnorderedCall
  * @sa Node
- *
- * @tparam Subclass Subclass; see CRTP.
  **/
-template <class Subclass>
 class OrderedCall :
-     public Call<Subclass>
+     public Call
 {
 public:
     //! Constructor.
@@ -238,21 +228,12 @@ private:
 /**
  * Node representing a function call where argument order does not matter.
  *
- * Call nodes where argument order does not matters should inherit from this
- * class, passing themselves as the template argument (see Call and CRTP).
- * They must define a static @c class_name (see Call) and implement the
- * protected calculate() method (see Node).  The name() and hash() methods
- * will be implemented for them.
- *
  * @sa Call
  * @sa OrderedCall
  * @sa Node
- *
- * @tparam Subclass Subclass; see CRTP.
  **/
-template <class Subclass>
 class UnorderedCall :
-    public Call<Subclass>
+    public Call
 {
 public:
     //! Constructor.
@@ -352,59 +333,6 @@ protected:
     //! See Node::calculate()
     virtual void calculate(Context context);
 };
-
-template <class Subclass>
-std::string Call<Subclass>::to_s() const
-{
-    std::string r;
-    r = "(" + name();
-    BOOST_FOREACH(const node_p& child, this->children()) {
-        r += " " + child->to_s();
-    }
-    r += ")";
-    return r;
-}
-
-template <class Subclass>
-OrderedCall<Subclass>::OrderedCall() :
-    m_hash(0)
-{
-    // nop
-}
-
-template <class Subclass>
-size_t OrderedCall<Subclass>::hash() const
-{
-    if (m_hash == 0) {
-        BOOST_FOREACH(const node_p& child, this->children()) {
-            // From boost::hash_combine.
-            m_hash ^= child->hash() + 0x9e3779b9 + (m_hash << 6) +
-                      (m_hash >> 2);
-        }
-        boost::hash_combine(m_hash, this->name());
-    }
-    return m_hash;
-}
-
-template <class Subclass>
-UnorderedCall<Subclass>::UnorderedCall() :
-    m_hash(0)
-{
-    // nop
-}
-
-template <class Subclass>
-size_t UnorderedCall<Subclass>::hash() const
-{
-    if (m_hash == 0) {
-        BOOST_FOREACH(const node_p& child, this->children()) {
-            // Note: Commutative
-            m_hash += child->hash();
-        }
-        boost::hash_combine(m_hash, this->name());
-    }
-    return m_hash;
-}
 
 } // DAG
 } // Predicate

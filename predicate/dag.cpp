@@ -55,9 +55,9 @@ Value Node::value() const
 {
     if (! has_value()) {
         BOOST_THROW_EXCEPTION(
-          einval() << errinfo_what(
-            "Value asked of valueless node."
-          )
+            einval() << errinfo_what(
+                "Value asked of valueless node."
+            )
         );
     }
     return m_value;
@@ -129,6 +129,54 @@ string Null::to_s() const
 void Null::calculate(Context)
 {
     set_value(Value());
+}
+
+std::string Call::to_s() const
+{
+    std::string r;
+    r = "(" + name();
+    BOOST_FOREACH(const node_p& child, this->children()) {
+        r += " " + child->to_s();
+    }
+    r += ")";
+    return r;
+}
+
+OrderedCall::OrderedCall() :
+    m_hash(0)
+{
+    // nop
+}
+
+size_t OrderedCall::hash() const
+{
+    if (m_hash == 0) {
+        BOOST_FOREACH(const node_p& child, this->children()) {
+            // From boost::hash_combine.
+            m_hash ^= child->hash() + 0x9e3779b9 + (m_hash << 6) +
+                      (m_hash >> 2);
+        }
+        boost::hash_combine(m_hash, this->name());
+    }
+    return m_hash;
+}
+
+UnorderedCall::UnorderedCall() :
+    m_hash(0)
+{
+    // nop
+}
+
+size_t UnorderedCall::hash() const
+{
+    if (m_hash == 0) {
+        BOOST_FOREACH(const node_p& child, this->children()) {
+            // Note: Commutative
+            m_hash += child->hash();
+        }
+        boost::hash_combine(m_hash, this->name());
+    }
+    return m_hash;
 }
 
 } // DAG

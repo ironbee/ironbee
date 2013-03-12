@@ -55,16 +55,19 @@ protected:
     }
 };
 
-class DummyCall : public DAG::Call<DummyCall>
+class DummyCall : public DAG::Call
 {
 public:
-    static const std::string class_name;
-
     virtual size_t hash() const
     {
         return 1234;
     }
 
+    virtual std::string name() const
+    {
+        return "dummy_call";
+    }
+
 protected:
     virtual void calculate(DAG::Context)
     {
@@ -72,12 +75,13 @@ protected:
     }
 };
 
-const std::string DummyCall::class_name("dummy_call");
-
-class DummyOrderedCall : public DAG::OrderedCall<DummyOrderedCall>
+class DummyOrderedCall : public DAG::OrderedCall
 {
 public:
-    static const std::string class_name;
+    virtual std::string name() const
+    {
+        return "dummy_ordered_call";
+    }
 
 protected:
     virtual void calculate(DAG::Context)
@@ -86,12 +90,13 @@ protected:
     }
 };
 
-const std::string DummyOrderedCall::class_name("dummy ordered call");
-
-class DummyUnorderedCall : public DAG::UnorderedCall<DummyUnorderedCall>
+class DummyUnorderedCall : public DAG::UnorderedCall
 {
 public:
-    static const std::string class_name;
+    virtual std::string name() const
+    {
+        return "dummy_unordered_call";
+    }
 
 protected:
     virtual void calculate(DAG::Context)
@@ -99,8 +104,6 @@ protected:
         set_value(IronBee::ConstField(&c_field));
     }
 };
-
-const std::string DummyUnorderedCall::class_name("dummy unordered call");
 
 TEST_F(TestDAG, Node)
 {
