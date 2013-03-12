@@ -10,4 +10,6 @@ libpredicate_la_LDFLAGS = $(LDFLAGS) $(BOOST_LDFLAGS) \
 libpredicate_la_SOURCES = \
     dag.cpp \
     call_factory.cpp \
-    parse.cpp
+    parse.cpp \
+    standard.cpp
+
