@@ -256,16 +256,6 @@ static htp_status_t htp_connp_req_consolidate_data(htp_connp_t *connp, unsigned 
 }
 
 /**
- * Returns the offset of the current consumption memory region.
- *
- * @param[in] connp
- * @return
- */
-static size_t htp_connp_req_data_len(htp_connp_t *connp) {
-    return connp->in_buf_size + (connp->in_current_read_offset - connp->in_current_consume_offset);
-}
-
-/**
  * Clears buffered inbound data and resets the consumer position to the reader position.
  *
  * @param[in] connp
@@ -663,18 +653,7 @@ htp_status_t htp_connp_REQ_PROTOCOL(htp_connp_t *connp) {
 htp_status_t htp_connp_REQ_LINE(htp_connp_t *connp) {
     for (;;) {
         // Get one byte
-        IN_COPY_BYTE_OR_RETURN(connp);
-
-        // Keep track of NUL bytes
-        if (connp->in_next_byte == 0) {
-            // Remember how many NULs there were
-            connp->in_tx->request_line_nul++;
-
-            // Store the offset of the first NUL byte
-            if (connp->in_tx->request_line_nul_offset == -1) {
-                connp->in_tx->request_line_nul_offset = htp_connp_req_data_len(connp);
-            }
-        }
+        IN_COPY_BYTE_OR_RETURN(connp);       
 
         // Have we reached the end of the line?
         if (connp->in_next_byte == LF) {

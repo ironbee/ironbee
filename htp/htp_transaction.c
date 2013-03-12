@@ -59,7 +59,6 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;    
     tx->request_headers = htp_table_create(32);
     tx->request_params = htp_table_create(32);
-    tx->request_line_nul_offset = -1;
     tx->request_content_length = -1;
 
     tx->parsed_uri = calloc(1, sizeof (htp_uri_t));

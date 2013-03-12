@@ -228,15 +228,19 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     size_t len = bstr_len(tx->request_line);
     size_t pos = 0;
 
-    // In this implementation we assume the
-    // line ends with the first NUL byte.
-    if (tx->request_line_nul_offset != -1) {
-        len = tx->request_line_nul_offset - 1;
+    // In this implementation we assume the line ends with the first NUL byte.
+    size_t newlen = 0;
+    while ((pos < len) && (data[pos] != '\0')) {
+        pos++;
+        newlen++;
     }
+
+    len = newlen;
+    pos = 0;
 
     // The request method starts at the beginning of the
     // line and ends with the first whitespace character.
-    while ((pos < len) && (!htp_is_space(data[pos]))) pos++;    
+    while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
 
     // No, we don't care if the method is empty.
 
@@ -253,13 +257,13 @@ int htp_parse_request_line_apache_2_2(htp_connp_t *connp) {
     // for only one SP, but then suggests any number of SP and HT
     // should be permitted. Apache uses isspace(), which is even
     // more permitting, so that's what we use here.
-    while ((pos < len) && (isspace(data[pos]))) pos++;    
+    while ((pos < len) && (isspace(data[pos]))) pos++;
 
     size_t start = pos;
 
     // The URI ends with the first whitespace.
     while ((pos < len) && (!htp_is_space(data[pos]))) pos++;
-    
+
     tx->request_uri = bstr_dup_mem(data + start, pos - start);
     if (tx->request_uri == NULL) return HTP_ERROR;
 
