@@ -458,6 +458,7 @@ TEST_F(Multipart, CrLfLineEndings) {
 
     parsePartsThenVerify(parts);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_FALSE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
@@ -478,6 +479,7 @@ TEST_F(Multipart, LfLineEndings) {
 
     parsePartsThenVerify(parts);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_FALSE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
@@ -498,6 +500,7 @@ TEST_F(Multipart, CrAndLfLineEndings1) {
 
     parsePartsThenVerify(parts);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
@@ -518,6 +521,7 @@ TEST_F(Multipart, CrAndLfLineEndings2) {
 
     parsePartsThenVerify(parts);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
@@ -538,6 +542,7 @@ TEST_F(Multipart, CrAndLfLineEndings3) {
 
     parsePartsThenVerify(parts);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
@@ -558,6 +563,7 @@ TEST_F(Multipart, CrAndLfLineEndings4) {
 
     parsePartsThenVerify(parts);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_LF_LINE);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_CRLF_LINE);
 }
@@ -578,6 +584,7 @@ TEST_F(Multipart, BoundaryInstanceWithLwsAfter) {
 
     parsePartsThenVerify(parts);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BBOUNDARY_LWS_AFTER);
 }
 
@@ -597,6 +604,7 @@ TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter1) {
 
     parsePartsThenVerify(parts);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BBOUNDARY_NLWS_AFTER);
 }
 
@@ -616,6 +624,7 @@ TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter2) {
 
     parsePartsThenVerify(parts);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BBOUNDARY_NLWS_AFTER);
 }
 
@@ -635,6 +644,7 @@ TEST_F(Multipart, BoundaryInstanceWithNonLwsAfter3) {
 
     parsePartsThenVerify(parts);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_BBOUNDARY_NLWS_AFTER);
 }
 
@@ -1013,6 +1023,7 @@ TEST_F(Multipart, CompleteRequest) {
 
     parseRequestThenVerify(headers, data);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_FALSE(body->flags & HTP_MULTIPART_PART_HEADER_FOLDING);
 }
 
@@ -1295,6 +1306,7 @@ TEST_F(Multipart, MultipleContentTypeHeadersEvasion) {
 
     parseRequestThenVerify(headers, data);
 
+    ASSERT_TRUE(tx->request_content_type != NULL);
     ASSERT_TRUE(bstr_cmp_c(tx->request_content_type, "multipart/form-data") == 0);
 }
 
@@ -1501,6 +1513,7 @@ TEST_F(Multipart, FoldedContentDisposition) {
 
     parseRequestThenVerify(headers, data);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_HEADER_FOLDING);
 }
 
@@ -1531,6 +1544,7 @@ TEST_F(Multipart, FoldedContentDisposition2) {
 
     parseRequestThenVerify(headers, data);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_HEADER_FOLDING);
 }
 
@@ -1641,6 +1655,7 @@ TEST_F(Multipart, InvalidPartMultipleCD) {
 
     parseRequestThenVerify(headers, data);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_HEADER_REPEATED);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
 }
@@ -1674,6 +1689,7 @@ TEST_F(Multipart, InvalidPartUnknownHeader) {
 
     parseRequestThenVerify(headers, data);
 
+    ASSERT_TRUE(body != NULL);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_HEADER_UNKNOWN);
     ASSERT_TRUE(body->flags & HTP_MULTIPART_PART_INVALID);
 }
@@ -1915,6 +1931,9 @@ TEST_F(Multipart, HeaderValueTrim) {
     };
 
     parseRequestThenVerify(headers, data);
+
+    ASSERT_TRUE(body != NULL);
+    ASSERT_TRUE(body->parts != NULL);
 
     htp_multipart_part_t *field1 = (htp_multipart_part_t *) htp_list_get(body->parts, 0);
     ASSERT_TRUE(field1 != NULL);
