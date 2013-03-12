@@ -138,6 +138,33 @@ static int modhtp_personality(const char *name)
     return -1;
 }
 
+/* Text versions of auth types */
+static const modhtp_nameval_t modhtp_authtypes[] = {
+    { "None",         HTP_AUTH_NONE },
+    { "Basic",        HTP_AUTH_BASIC },
+    { "Digest",       HTP_AUTH_DIGEST },
+#ifdef HTP_AUTH_HTP_AUTH_UNRECOGNIZED
+    { "Unrecognized", HTP_AUTH_UNRECOGNIZED },
+#endif
+    { "Unknown",      HTP_AUTH_UNKNOWN },
+};
+
+/* Lookup a numeric authtype from a name. */
+static const char * modhtp_authtype_name(int authtype)
+{
+    const modhtp_nameval_t *rec = modhtp_authtypes;
+
+    while (rec->val != HTP_AUTH_UNKNOWN) {
+        if (rec->val == authtype) {
+            return rec->name;
+        }
+
+        ++rec;
+    }
+
+    return rec->name;
+}
+
 /* Log htp data via ironbee logging. */
 static int modhtp_callback_log(htp_log_t *log)
 {
@@ -180,16 +207,17 @@ static int modhtp_callback_log(htp_log_t *log)
 /* -- Field Generation Routines -- */
 
 
-static ib_status_t modhtp_field_gen_bytestr(ib_data_t *data,
-                                            const char *name,
-                                            bstr *bs,
-                                            ib_field_t **pf)
+static ib_status_t modhtp_field_gen_bytestr_ex(ib_data_t *data,
+                                               const char *name,
+                                               uint8_t *val,
+                                               size_t val_len,
+                                               ib_field_t **pf)
 {
     ib_field_t *f;
     ib_bytestr_t *ibs;
     ib_status_t rc;
 
-    if (bs == NULL) {
+    if (val == NULL) {
         if (pf != NULL) {
             *pf = NULL;
         }
@@ -206,18 +234,34 @@ static ib_status_t modhtp_field_gen_bytestr(ib_data_t *data,
             return rc;
         }
 
-        rc = ib_bytestr_setv_const(ibs,
-                                   (const uint8_t *)bstr_ptr(bs),
-                                   bstr_len(bs));
+        rc = ib_bytestr_setv_const(ibs, val, val_len);
 
         return rc;
     }
 
     /* If no field exists, then create one. */
     rc = ib_data_add_bytestr_ex(data, name, strlen(name),
-                                (uint8_t *)bstr_ptr(bs),
-                                bstr_len(bs), pf);
+                                val, val_len, pf);
     return rc;
+}
+
+static ib_status_t modhtp_field_gen_bytestr(ib_data_t *data,
+                                            const char *name,
+                                            bstr *bs,
+                                            ib_field_t **pf)
+{
+    if (bs == NULL) {
+        if (pf != NULL) {
+            *pf = NULL;
+        }
+        return IB_EINVAL;
+    }
+
+    return modhtp_field_gen_bytestr_ex(data,
+                                       name,
+                                       (uint8_t *)bstr_ptr(bs),
+                                       bstr_len(bs),
+                                       pf);
 }
 
 #define modhtp_field_gen_list(data, name, pf) \
@@ -1120,7 +1164,25 @@ static ib_status_t modhtp_gen_request_header_fields(ib_provider_inst_t *pi,
     /// @todo Check htp state, etc.
     tx = modctx->htp->in_tx;
     if (tx != NULL) {
+        const char *auth_type = modhtp_authtype_name(tx->request_auth_type);
+
         htp_tx_set_user_data(tx, itx);
+
+        modhtp_field_gen_bytestr_ex(itx->data,
+                                    "auth_type",
+                                    (uint8_t *)auth_type,
+                                    strlen(auth_type),
+                                    NULL);
+
+        modhtp_field_gen_bytestr(itx->data,
+                                 "auth_username",
+                                 tx->request_auth_username,
+                                 NULL);
+
+        modhtp_field_gen_bytestr(itx->data,
+                                 "auth_password",
+                                 tx->request_auth_password,
+                                 NULL);
 
         modhtp_field_gen_bytestr(itx->data,
                                  "request_uri",
@@ -1432,6 +1494,12 @@ static ib_status_t modhtp_iface_init(ib_provider_inst_t *pi,
     modctx->htp_cfg->log_level = HTP_LOG_DEBUG2;
     htp_config_set_tx_auto_destroy(modctx->htp_cfg, 0);
     htp_config_set_generate_request_uri_normalized(modctx->htp_cfg, 1);
+
+#ifdef htp_config_set_parse_request_auth
+    htp_config_set_parse_request_auth(modctx->htp_cfg, 1);
+#else
+    modctx->htp_cfg->parse_request_http_authentication = 1;
+#endif
 
     htp_config_register_urlencoded_parser(modctx->htp_cfg);
     htp_config_register_multipart_parser(modctx->htp_cfg);

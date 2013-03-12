@@ -30,7 +30,7 @@
             <para><emphasis role="bold">Type:</emphasis> String</para>
             <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
         </section>
         <section>
             <title>AUTH_TYPE</title>
@@ -39,7 +39,7 @@
             <para><emphasis role="bold">Type:</emphasis> Collection</para>
             <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
             <para>This field contains the first token extracted from the
                     <literal>Authorization</literal> request header. Typical values are:
                     <literal>Basic</literal>, <literal>Digest</literal>, and <literal>NTLM</literal>.
@@ -52,7 +52,7 @@
             <para><emphasis role="bold">Type:</emphasis> String</para>
             <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
+            <para><emphasis role="bold">Version:</emphasis> 0.7</para>
         </section>
         <section>
             <title>CAPTURE</title>
