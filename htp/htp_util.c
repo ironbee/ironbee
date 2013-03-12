@@ -2455,3 +2455,27 @@ int htp_validate_hostname(bstr *hostname) {
 
     return 1;
 }
+
+void htp_uri_free(htp_uri_t *uri) {
+    if (uri == NULL) return;
+
+    bstr_free(uri->scheme);
+    bstr_free(uri->username);
+    bstr_free(uri->password);
+    bstr_free(uri->hostname);
+    bstr_free(uri->port);
+    bstr_free(uri->path);
+    bstr_free(uri->query);
+    bstr_free(uri->fragment);
+
+    free(uri);
+}
+
+htp_uri_t *htp_uri_alloc() {
+    htp_uri_t *u = calloc(1, sizeof(htp_uri_t));
+    if (u == NULL) return NULL;
+    
+    u->port_number = -1;
+
+    return u;
+}

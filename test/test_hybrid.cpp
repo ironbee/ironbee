@@ -646,10 +646,10 @@ TEST_F(HybridParsing, RequestLineParsing1) {
     ASSERT_EQ(0, bstr_cmp_c(param_q->value, "2"));
 }
 
-TEST_F(HybridParsing, RequestLineParsing2) {    
+TEST_F(HybridParsing, RequestLineParsing2) {
     htp_tx_t *tx = htp_connp_tx_create(connp);
     ASSERT_TRUE(tx != NULL);
-    
+
     // Feed data to the parser.
 
     htp_tx_state_request_start(tx);
@@ -661,6 +661,35 @@ TEST_F(HybridParsing, RequestLineParsing2) {
     ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
     ASSERT_EQ(1, tx->is_protocol_0_9);
     ASSERT_EQ(HTP_PROTOCOL_0_9, tx->request_protocol_number);
-    ASSERT_TRUE(tx->request_protocol == NULL);        
+    ASSERT_TRUE(tx->request_protocol == NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/"));
 }
+
+TEST_F(HybridParsing, ParsedUriSupplied) {
+    htp_tx_t *tx = htp_connp_tx_create(connp);
+    ASSERT_TRUE(tx != NULL);
+
+    // Feed data to the parser.
+
+    htp_tx_state_request_start(tx);
+    htp_tx_req_set_line(tx, "GET /?p=1&q=2 HTTP/1.0", 22, HTP_ALLOC_COPY);
+
+    htp_uri_t *u = htp_uri_alloc();
+    u->path = bstr_dup_c("/123");
+    htp_tx_req_set_parsed_uri(tx, u);
+
+    htp_tx_state_request_line(tx);
+
+    // Check the results now.
+
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
+    ASSERT_TRUE(tx->request_protocol != NULL);
+    ASSERT_EQ(HTP_PROTOCOL_1_0, tx->request_protocol_number);
+    ASSERT_TRUE(tx->request_uri != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=1&q=2"));
+
+    ASSERT_TRUE(tx->parsed_uri != NULL);
+    ASSERT_TRUE(tx->parsed_uri->path != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/123"));
+}
+

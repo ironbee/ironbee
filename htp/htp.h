@@ -576,6 +576,20 @@ struct htp_uri_t {
 };
 
 /**
+ * Frees all data contained in the uri, and then the uri itself.
+ * 
+ * @param[in] uri
+ */
+void htp_uri_free(htp_uri_t *uri);
+
+/**
+ * Allocates and initializes a new htp_uri_t structure.
+ *
+ * @return New structure, or NULL on memory allocation failure.
+ */
+htp_uri_t *htp_uri_alloc(void);
+
+/**
  * Creates a new log entry and stores it with the connection. The file and line
  * parameters are typically auto-generated using the HTP_LOG_MARK macro.
 *

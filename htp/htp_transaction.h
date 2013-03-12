@@ -275,6 +275,18 @@ htp_status_t htp_tx_req_set_method(htp_tx_t *tx, const char *method, size_t meth
 void htp_tx_req_set_method_number(htp_tx_t *tx, enum htp_method_t method_number);
 
 /**
+ * Set parsed request URI. You don't need to use this function if you are already providing
+ * the request line or request URI. But if your container already has this data available,
+ * feeding it to LibHTP will minimize any potential data differences. This function assumes
+ * management of the data provided in parsed_uri. This function will not change htp_tx_t::parsed_uri_raw
+ * (which may have data in it from the parsing of the request URI).
+ *
+ * @param[in] tx
+ * @param[in] parsed_uri
+ */
+void htp_tx_req_set_parsed_uri(htp_tx_t *tx, htp_uri_t *parsed_uri);
+
+/**
  * Forces HTTP/0.9 as the transaction protocol. This method exists to ensure
  * that both LibHTP and the container treat the transaction as HTTP/0.9, despite
  * potential differences in how the protocol version is determined.
