@@ -215,8 +215,7 @@ TEST_F(HybridParsing, GetTest) {
     // Request line data
     htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_COPY);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
-    htp_tx_req_set_query_string(tx, "p=1&q=2", 7, HTP_ALLOC_COPY);
+    htp_tx_req_set_uri(tx, "/?p=1&q=2", 9, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
@@ -226,11 +225,19 @@ TEST_F(HybridParsing, GetTest) {
     ASSERT_EQ(1, user_data.callback_REQUEST_LINE_invoked);
 
     // Check request line data
+    ASSERT_TRUE(tx->request_method != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->request_method, "GET"));
-    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/"));
+    ASSERT_TRUE(tx->request_uri != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=1&q=2"));
+    ASSERT_TRUE(tx->request_protocol != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->request_protocol, "HTTP/1.1"));
 
     ASSERT_TRUE(tx->parsed_uri != NULL);
+    
+    ASSERT_TRUE(tx->parsed_uri->path != NULL);
+    ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->path, "/"));
+
+    ASSERT_TRUE(tx->parsed_uri->query != NULL);
     ASSERT_EQ(0, bstr_cmp_c(tx->parsed_uri->query, "p=1&q=2"));
 
     // Check parameters
@@ -413,8 +420,7 @@ static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
 
     htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_REUSE);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
-    htp_tx_req_set_query_string(tx, "p=1&q=2", 7, HTP_ALLOC_REUSE);
+    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);    
     htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_REUSE);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
@@ -531,8 +537,7 @@ TEST_F(HybridParsing, ParamCaseSensitivity) {
     // Request line data
     htp_tx_req_set_method(tx, "GET", 3, HTP_ALLOC_COPY);
     htp_tx_req_set_method_number(tx, HTP_M_GET);
-    htp_tx_req_set_uri(tx, "/", 1, HTP_ALLOC_COPY);
-    htp_tx_req_set_query_string(tx, "p=1&Q=2", 7, HTP_ALLOC_COPY);
+    htp_tx_req_set_uri(tx, "/?p=1&Q=2", 9, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);

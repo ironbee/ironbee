@@ -56,7 +56,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->cfg = connp->cfg;
     tx->is_config_shared = HTP_CONFIG_SHARED;
 
-    tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;    
+    tx->request_protocol_number = HTP_PROTOCOL_UNKNOWN;
     tx->request_headers = htp_table_create(32);
     tx->request_params = htp_table_create(32);
     tx->request_content_length = -1;
@@ -68,7 +68,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
     tx->response_status = NULL;
     tx->response_status_number = HTP_STATUS_UNKNOWN;
     tx->response_protocol_number = HTP_PROTOCOL_UNKNOWN;
-    
+
     tx->response_headers = htp_table_create(32);
     tx->response_content_length = -1;
 
@@ -76,9 +76,9 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 }
 
 void htp_tx_destroy(htp_tx_t *tx) {
-    bstr_free(tx->request_line);    
+    bstr_free(tx->request_line);
     bstr_free(tx->request_method);
-    bstr_free(tx->request_uri);    
+    bstr_free(tx->request_uri);
     bstr_free(tx->request_protocol);
 
     if (tx->parsed_uri != NULL) {
@@ -104,7 +104,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         bstr_free(tx->parsed_uri_raw->query);
         bstr_free(tx->parsed_uri_raw->fragment);
         free(tx->parsed_uri_raw);
-    }   
+    }
 
     // Destroy request_headers.
     if (tx->request_headers != NULL) {
@@ -117,9 +117,9 @@ void htp_tx_destroy(htp_tx_t *tx) {
         }
 
         htp_table_destroy(tx->request_headers);
-    }   
+    }
 
-    bstr_free(tx->response_line);    
+    bstr_free(tx->response_line);
     bstr_free(tx->response_protocol);
     bstr_free(tx->response_status);
     bstr_free(tx->response_message);
@@ -296,16 +296,7 @@ htp_status_t htp_tx_req_set_uri(htp_tx_t *tx, const char *uri, size_t uri_len, e
     if (uri == NULL) return HTP_ERROR;
 
     tx->request_uri = copy_or_wrap_mem(uri, uri_len, alloc);
-    if (tx->request_uri == NULL) return HTP_ERROR;
-
-    return HTP_OK;
-}
-
-htp_status_t htp_tx_req_set_query_string(htp_tx_t *tx, const char *qs, size_t qs_len, enum htp_alloc_strategy_t alloc) {
-    if ((tx->parsed_uri == NULL) || (qs == NULL)) return HTP_ERROR;
-
-    tx->parsed_uri->query = copy_or_wrap_mem(qs, qs_len, alloc);
-    if (tx->parsed_uri->query == NULL) return HTP_ERROR;
+    if (tx->request_uri == NULL) return HTP_ERROR;      
 
     return HTP_OK;
 }
@@ -331,7 +322,7 @@ void htp_tx_req_set_protocol_0_9(htp_tx_t *tx, int is_protocol_0_9) {
     }
 }
 
-static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {    
+static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     // Determine if we have a request body, and how it is packaged.
     htp_header_t *cl = htp_table_get_c(tx->request_headers, "content-length");
     htp_header_t *te = htp_table_get_c(tx->request_headers, "transfer-encoding");
@@ -419,7 +410,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
 
         bstr *hostname;
         int port;
-       
+
         if (htp_parse_header_hostport(h->value, &hostname, &port, &(tx->flags)) != HTP_OK) return HTP_ERROR;
 
         // Is there host information in the URI?
@@ -509,18 +500,18 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx) {
 }
 
 htp_status_t htp_tx_req_set_line(htp_tx_t *tx, const char *line, size_t line_len, enum htp_alloc_strategy_t alloc) {
-    if ((line == NULL)||(line_len == 0)) return HTP_ERROR;
+    if ((line == NULL) || (line_len == 0)) return HTP_ERROR;
 
     tx->request_line = copy_or_wrap_mem(line, line_len, alloc);
     if (tx->request_line == NULL) return HTP_ERROR;
-
-    if (tx->connp->cfg->parse_request_line(tx->connp) != HTP_OK) return HTP_ERROR;
     
+    if (tx->connp->cfg->parse_request_line(tx->connp) != HTP_OK) return HTP_ERROR;
+
     return HTP_OK;
 }
 
 htp_status_t htp_tx_res_set_status_line(htp_tx_t *tx, const char *line, size_t line_len, enum htp_alloc_strategy_t alloc) {
-    if ((line == NULL)||(line_len == 0)) return HTP_ERROR;
+    if ((line == NULL) || (line_len == 0)) return HTP_ERROR;
 
     tx->response_line = copy_or_wrap_mem(line, line_len, alloc);
     if (tx->response_line == NULL) return HTP_ERROR;
@@ -569,8 +560,7 @@ htp_status_t htp_tx_state_response_line(htp_tx_t *tx) {
     if ((tx->response_protocol_number == HTP_PROTOCOL_INVALID)
             || (tx->response_status_number == HTP_STATUS_INVALID)
             || (tx->response_status_number < HTP_VALID_STATUS_MIN)
-            || (tx->response_status_number > HTP_VALID_STATUS_MAX))
-    {
+            || (tx->response_status_number > HTP_VALID_STATUS_MAX)) {
         htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Invalid response line.");
         tx->flags |= HTP_STATUS_LINE_INVALID;
     }
@@ -777,7 +767,7 @@ htp_status_t htp_tx_state_request_headers(htp_tx_t *tx) {
 
 htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
     htp_connp_t *connp = tx->connp;
-
+   
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
         // When CONNECT is used, the request URI contains an authority string.
         if (htp_parse_uri_hostport(connp, connp->in_tx->request_uri, connp->in_tx->parsed_uri_raw) != HTP_OK) {
@@ -796,7 +786,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
 
         // Run hook REQUEST_URI_NORMALIZE.
         int rc = htp_hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
-        if (rc != HTP_OK) return rc;       
+        if (rc != HTP_OK) return rc;
     }
 
     // Run hook REQUEST_LINE.

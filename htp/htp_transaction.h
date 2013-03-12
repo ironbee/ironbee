@@ -245,7 +245,7 @@ htp_status_t htp_tx_req_set_headers_clear(htp_tx_t *tx);
  *
  * @param[in] tx
  * @param[in] line
- * @param[in] line_len
+ * @param[in] line_len 
  * @param[in] alloc
  * @return HTP_OK on success, HTP_ERROR on failure.
  */
@@ -315,21 +315,8 @@ htp_status_t htp_tx_req_set_protocol(htp_tx_t *tx, const char *protocol, size_t 
 void htp_tx_req_set_protocol_number(htp_tx_t *tx, int protocol_number);
 
 /**
- * Sets transaction query string. If there are any query string processors
- * configured, they will be called to parse the provided data (although that
- * may not happen until the transaction state is changed to REQUEST_LINE).
- *
- * @param[in] tx
- * @param[in] qs
- * @param[in] qs_len
- * @param[in] alloc
- * @return HTP_OK on success, HTP_ERROR on failure.
- */
-htp_status_t htp_tx_req_set_query_string(htp_tx_t *tx, const char *qs, size_t qs_len, enum htp_alloc_strategy_t alloc);
-
-/**
- * Set transaction request URI. The value provided here must not include any
- * query string data. Use a separate call to htp_txh_req_set_query_string() for that.
+ * Set transaction request URI. The value provided here will be stored
+ * in htp_tx_t::request_uri and subsequently parsed.
  *
  * @param[in] tx
  * @param[in] uri

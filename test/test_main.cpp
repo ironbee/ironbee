@@ -810,9 +810,7 @@ TEST_F(ConnectionParsing, GetRequestLineNul) {
     htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
     ASSERT_TRUE(tx != NULL);
     
-    ASSERT_TRUE(tx->request_uri != NULL);
-
-    fprint_bstr(stderr, "request_uri", tx->request_uri);
+    ASSERT_TRUE(tx->request_uri != NULL);   
 
     ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=%20"));   
 }
