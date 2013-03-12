@@ -68,4 +68,6 @@
 
 - New hooks to receive raw response header and trailer data: RESPONSE_HEADER_DATA and RESPONSE_TRAILER_DATA.
 
+- Removed field htp_tx_t::request_line_normalized.
 
+- Removed fields htp_tx_t::request_line_nul and htp_tx_t::request_line_nul_offset.
