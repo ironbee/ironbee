@@ -2098,6 +2098,7 @@ static ib_status_t modlua_setup_searchpath(ib_engine_t *ib, lua_State *L)
  * Pre-load files into the given lua stack.
  *
  * This will attempt to run...
+ *   - waggle  = require("ironbee/waggle")
  *   - ffi     = require("ffi")
  *   - ironbee = require("ironbee-ffi")
  *   - ibapi   = require("ironbee-api")
@@ -2111,30 +2112,18 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
 
     ib_status_t rc;
 
-    ib_core_cfg_t *corecfg = NULL;
-
     const char *lua_preloads[][2] = { { "waggle", "ironbee/waggle" },
+                                      { "ibconfig", "ironbee/config" },
+                                      { "ffi", "ffi" },
                                       { "ffi", "ffi" },
                                       { "ironbee", "ironbee-ffi" },
                                       { "ibapi", "ironbee-api" },
                                       { "modlua", "ironbee-modlua" },
                                       { NULL, NULL } };
 
-    rc = ib_context_module_config(ib_context_main(ib),
-                                  ib_core_module(),
-                                  &corecfg);
-
-    if (rc != IB_OK) {
-        ib_log_error(ib, "Could not retrieve core module configuration.");
-        return rc;
-    }
-
     for (int i = 0; lua_preloads[i][0] != NULL; ++i)
     {
-        rc = ib_lua_require(ib,
-                            L,
-                            lua_preloads[i][0],
-                            lua_preloads[i][1]);
+        rc = ib_lua_require(ib, L, lua_preloads[i][0], lua_preloads[i][1]);
         if (rc != IB_OK)
         {
             ib_log_error(ib,
@@ -2622,10 +2611,9 @@ static IB_CFGMAP_INIT_STRUCTURE(modlua_config_map) = {
 /* -- Configuration Directives -- */
 
 /**
- * Use the common Lua Configuration stack to configure IronBee
- * using Lua.
+ * Implements the LuaInclude directive.
  *
- * This environment is discarded after configuration time.
+ * Use the common Lua Configuration stack to configure IronBee using Lua.
  *
  * @param[in] cp Configuration parser and state.
  * @param[in] name The directive.
@@ -2640,13 +2628,14 @@ static IB_CFGMAP_INIT_STRUCTURE(modlua_config_map) = {
  *               will almost always indicate a problem with the user's code
  *               and the user should examine their script.
  */
-static ib_status_t modlua_dir_include_lua(ib_cfgparser_t *cp,
+static ib_status_t modlua_dir_lua_include(ib_cfgparser_t *cp,
                                           const char *name,
                                           const char *p1,
                                           void *cbdata)
 {
     ib_engine_t *ib = cp->ib;
     ib_status_t rc;
+    int lua_rc;
     ib_core_cfg_t *corecfg = NULL;
 
     rc = ib_context_module_config(ib_context_main(ib),
@@ -2655,6 +2644,13 @@ static ib_status_t modlua_dir_include_lua(ib_cfgparser_t *cp,
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to retrieve core configuration.");
         return rc;
+    }
+
+    /* Run ibconfig.include(cp, p1) */
+    lua_rc = luaL_loadfile(modlua_global_cfg.L, p1);
+    if (lua_rc == LUA_ERRFILE) {
+        ib_log_error(ib, "Could not access file %s.", p1);
+        return IB_EOTHER;
     }
 
     return IB_OK;
@@ -2803,8 +2799,8 @@ static IB_DIRMAP_INIT_STRUCTURE(modlua_directive_map) = {
         NULL
     ),
     IB_DIRMAP_INIT_PARAM1(
-        "IncludeLua",
-        modlua_dir_include_lua,
+        "LuaInclude",
+        modlua_dir_lua_include,
         NULL
     ),
 

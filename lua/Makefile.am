@@ -26,11 +26,13 @@ else
 AM_LDFLAGS += -no-undefined -static-libtool-libs
 endif
 
-WAGGLE_FILES=$(shell find ironbee/waggle -name \*lua)
+WAGGLE_FILES=ironbee/waggle.lua \
+	     $(shell find ironbee/waggle -name \*lua)
 
 EXTRA_DIST = ironbee-ffi-h.lua \
              ironbee-ffi.lua \
              ironbee-api.lua \
+             ironbee/config.lua \
              ironbee-modlua.lua \
              example.lua \
              threat_level.lua \
@@ -41,6 +43,7 @@ EXTRA_DIST = ironbee-ffi-h.lua \
 lua_DATA   = ironbee-ffi-h.lua \
              ironbee-ffi.lua \
              ironbee-api.lua \
+             ironbee/config.lua \
              ironbee-modlua.lua \
              example.lua \
              threat_level.lua \
