@@ -46,7 +46,8 @@ Node::~Node()
 Value Node::eval(Context context)
 {
     if (! has_value()) {
-        calculate(context);
+        m_value = calculate(context);
+        m_has_value = true;
     }
     return value();
 }
@@ -67,12 +68,6 @@ void Node::reset()
 {
     m_value = IronBee::ConstField();
     m_has_value = 0;
-}
-
-void Node::set_value(Value v)
-{
-    m_value     = v;
-    m_has_value = true;
 }
 
 ostream& operator<<(ostream& out, const Node& node)
@@ -106,7 +101,7 @@ string StringLiteral::to_s() const
     return "'" + escaped + "'";
 }
 
-void StringLiteral::calculate(Context)
+Value StringLiteral::calculate(Context)
 {
     if (! m_pre_value) {
         m_pre_value = IronBee::Field::create_byte_string(
@@ -118,7 +113,7 @@ void StringLiteral::calculate(Context)
             )
         );
     }
-    set_value(m_pre_value);
+    return m_pre_value;
 }
 
 string Null::to_s() const
@@ -126,9 +121,9 @@ string Null::to_s() const
     return "null";
 }
 
-void Null::calculate(Context)
+Value Null::calculate(Context)
 {
-    set_value(Value());
+    return Value();
 }
 
 std::string Call::to_s() const

@@ -38,9 +38,9 @@ public:
     }
 
 protected:
-    virtual void calculate(DAG::Context)
+    virtual DAG::Value calculate(DAG::Context)
     {
-        this->set_value(IronBee::ConstField());
+        return DAG::Value();
     }
 };
 

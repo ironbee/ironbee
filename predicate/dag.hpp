@@ -147,21 +147,13 @@ protected:
     /**
      * Calculate value.
      *
-     * Subclass classes should implement this to calculate the value and then
-     * call set_value() with it.
+     * Subclass classes should implement this to calculate and return the
+     * value.
      *
      * @param [in] context Contex of calculation.
+     * @return Value of node.
      */
-    virtual void calculate(Context context) = 0;
-
-    /**
-     * Set value of node.
-     *
-     * Usually called from calculate().
-     *
-     * @param [in] v Value to set.
-     */
-    void set_value(Value v);
+    virtual Value calculate(Context context) = 0;
 
 private:
     bool        m_has_value;
@@ -298,7 +290,7 @@ public:
 
 protected:
     //! See Node::calculate()
-    virtual void calculate(Context context);
+    virtual Value calculate(Context context);
 
 private:
     const size_t m_hash;
@@ -331,7 +323,7 @@ public:
 
 protected:
     //! See Node::calculate()
-    virtual void calculate(Context context);
+    virtual Value calculate(Context context);
 };
 
 } // DAG

@@ -49,9 +49,9 @@ public:
     }
 
 protected:
-    virtual void calculate(DAG::Context)
+    virtual DAG::Value calculate(DAG::Context)
     {
-        set_value(IronBee::ConstField(&c_field));
+        return IronBee::ConstField(&c_field);
     }
 };
 
@@ -69,9 +69,9 @@ public:
     }
 
 protected:
-    virtual void calculate(DAG::Context)
+    virtual DAG::Value calculate(DAG::Context)
     {
-        set_value(IronBee::ConstField(&c_field));
+        return IronBee::ConstField(&c_field);
     }
 };
 
@@ -84,9 +84,9 @@ public:
     }
 
 protected:
-    virtual void calculate(DAG::Context)
+    virtual DAG::Value calculate(DAG::Context)
     {
-        set_value(IronBee::ConstField(&c_field));
+        return IronBee::ConstField(&c_field);
     }
 };
 
@@ -99,9 +99,9 @@ public:
     }
 
 protected:
-    virtual void calculate(DAG::Context)
+    virtual DAG::Value calculate(DAG::Context)
     {
-        set_value(IronBee::ConstField(&c_field));
+        return IronBee::ConstField(&c_field);
     }
 };
 
