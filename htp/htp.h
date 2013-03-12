@@ -253,7 +253,12 @@ struct htp_tx_t {
      */
     int request_protocol_number;
 
-    /** Is this request using HTTP/0.9? */
+    /**
+     * Is this request using HTTP/0.9? We need a separate field for this purpose because
+     * the protocol version alone is not sufficient to determine if HTTP/0.9 is used. For
+     * example, if you submit "GET / HTTP/0.9" to Apache, it will not treat the request
+     * as HTTP/0.9.
+     */
     int is_protocol_0_9;
 
     /**
