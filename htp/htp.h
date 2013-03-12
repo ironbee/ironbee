@@ -248,16 +248,9 @@ struct htp_tx_t {
      * string when one is provided. Use htp_tx_t::parsed_uri if you need to access to specific
      * URI elements.
      */
-    bstr *request_uri;
+    bstr *request_uri;   
 
-    /**
-     * Normalized request URI as a single string. The availability of this
-     * field depends on configuration. Use htp_config_set_generate_request_uri_normalized()
-     * to ask for the field to be generated.
-     */
-    bstr *request_uri_normalized;
-
-    /** Request protocol, as text. Can be NUL if no protocol was specified. */
+    /** Request protocol, as text. Can be NULL if no protocol was specified. */
     bstr *request_protocol;
 
     /**

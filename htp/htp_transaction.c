@@ -79,8 +79,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 void htp_tx_destroy(htp_tx_t *tx) {
     bstr_free(tx->request_line);    
     bstr_free(tx->request_method);
-    bstr_free(tx->request_uri);
-    bstr_free(tx->request_uri_normalized);
+    bstr_free(tx->request_uri);    
     bstr_free(tx->request_protocol);
 
     if (tx->parsed_uri != NULL) {
@@ -798,21 +797,7 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
 
         // Run hook REQUEST_URI_NORMALIZE.
         int rc = htp_hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
-        if (rc != HTP_OK) return rc;
-
-        // Now is a good time to generate request_uri_normalized, before we finalize
-        // parsed_uri (and lose the information which parts were provided in the request and
-        // which parts we added).
-        if (connp->cfg->generate_request_uri_normalized) {
-            connp->in_tx->request_uri_normalized = htp_unparse_uri_noencode(connp->in_tx->parsed_uri);
-            if (connp->in_tx->request_uri_normalized == NULL) return HTP_ERROR;
-
-            #ifdef HTP_DEBUG
-            fprint_raw_data(stderr, "request_uri_normalized",
-                    bstr_ptr(connp->in_tx->request_uri_normalized),
-                    bstr_len(connp->in_tx->request_uri_normalized));
-            #endif
-        }
+        if (rc != HTP_OK) return rc;       
 
         // Finalize parsed_uri.
 
