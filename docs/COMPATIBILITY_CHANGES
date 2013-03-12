@@ -71,3 +71,5 @@
 - Removed field htp_tx_t::request_line_normalized.
 
 - Removed fields htp_tx_t::request_line_nul and htp_tx_t::request_line_nul_offset.
+
+- Renamed htp_tx_t::parsed_uri_incomplete to htp_tx_t::parsed_uri_raw.

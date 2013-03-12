@@ -63,7 +63,7 @@ htp_tx_t *htp_tx_create(htp_connp_t *connp) {
 
     tx->parsed_uri = calloc(1, sizeof (htp_uri_t));
     tx->parsed_uri->port_number = -1;
-    tx->parsed_uri_incomplete = calloc(1, sizeof (htp_uri_t));
+    tx->parsed_uri_raw = calloc(1, sizeof (htp_uri_t));
 
     tx->response_status = NULL;
     tx->response_status_number = HTP_STATUS_UNKNOWN;
@@ -94,16 +94,16 @@ void htp_tx_destroy(htp_tx_t *tx) {
         free(tx->parsed_uri);
     }
 
-    if (tx->parsed_uri_incomplete != NULL) {
-        bstr_free(tx->parsed_uri_incomplete->scheme);
-        bstr_free(tx->parsed_uri_incomplete->username);
-        bstr_free(tx->parsed_uri_incomplete->password);
-        bstr_free(tx->parsed_uri_incomplete->hostname);
-        bstr_free(tx->parsed_uri_incomplete->port);
-        bstr_free(tx->parsed_uri_incomplete->path);
-        bstr_free(tx->parsed_uri_incomplete->query);
-        bstr_free(tx->parsed_uri_incomplete->fragment);
-        free(tx->parsed_uri_incomplete);
+    if (tx->parsed_uri_raw != NULL) {
+        bstr_free(tx->parsed_uri_raw->scheme);
+        bstr_free(tx->parsed_uri_raw->username);
+        bstr_free(tx->parsed_uri_raw->password);
+        bstr_free(tx->parsed_uri_raw->hostname);
+        bstr_free(tx->parsed_uri_raw->port);
+        bstr_free(tx->parsed_uri_raw->path);
+        bstr_free(tx->parsed_uri_raw->query);
+        bstr_free(tx->parsed_uri_raw->fragment);
+        free(tx->parsed_uri_raw);
     }   
 
     // Destroy request_headers.
@@ -780,45 +780,23 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
 
     if (connp->in_tx->request_method_number == HTP_M_CONNECT) {
         // When CONNECT is used, the request URI contains an authority string.
-        if (htp_parse_uri_hostport(connp, connp->in_tx->request_uri, connp->in_tx->parsed_uri_incomplete) != HTP_OK) {            
+        if (htp_parse_uri_hostport(connp, connp->in_tx->request_uri, connp->in_tx->parsed_uri_raw) != HTP_OK) {
             return HTP_ERROR;
         }
     } else {
         // Parse the request URI.
-        if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_incomplete)) != HTP_OK) {            
+        if (htp_parse_uri(connp->in_tx->request_uri, &(connp->in_tx->parsed_uri_raw)) != HTP_OK) {
             return HTP_ERROR;
         }
 
         // Keep the original URI components, but create a copy which we can normalize and use internally.
-        if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_incomplete, connp->in_tx->parsed_uri) != HTP_OK) {            
+        if (htp_normalize_parsed_uri(connp, connp->in_tx->parsed_uri_raw, connp->in_tx->parsed_uri) != HTP_OK) {
             return HTP_ERROR;
         }
 
         // Run hook REQUEST_URI_NORMALIZE.
         int rc = htp_hook_run_all(connp->cfg->hook_request_uri_normalize, connp);
         if (rc != HTP_OK) return rc;       
-
-        // Finalize parsed_uri.
-
-        // Scheme.
-        if (connp->in_tx->parsed_uri->scheme != NULL) {
-            if (bstr_cmp_c(connp->in_tx->parsed_uri->scheme, "http") != 0) {
-                // TODO Invalid scheme.
-            }
-        } else {
-            connp->in_tx->parsed_uri->scheme = bstr_dup_c("http");
-            if (connp->in_tx->parsed_uri->scheme == NULL) {
-                return HTP_ERROR;
-            }
-        }
-
-        // Path.
-        if (connp->in_tx->parsed_uri->path == NULL) {
-            connp->in_tx->parsed_uri->path = bstr_dup_c("/");
-            if (connp->in_tx->parsed_uri->path == NULL) {
-                return HTP_ERROR;
-            }
-        }
     }
 
     // Run hook REQUEST_LINE.

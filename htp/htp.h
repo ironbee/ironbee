@@ -257,21 +257,19 @@ struct htp_tx_t {
     int is_protocol_0_9;
 
     /**
-     * This structure holds a parsed request_uri, with the missing information
-     * added (e.g., adding port number from the TCP information) and the fields
-     * normalized. This structure should be used to make decisions about a request.
-     * To inspect raw data, either use request_uri, or parsed_uri_incomplete.
+     * This structure holds the individual components parsed out of the request URI, with
+     * appropriate normalization and transformation applied, per configuration. No information
+     * is added. To inspect raw data, use htp_tx_t::request_uri or htp_tx_t::parsed_uri_raw.
      */
     htp_uri_t *parsed_uri;
 
     /**
-     * This structure holds the individual components parsed out of the request URI. No
-     * attempt is made to normalize or decode the contents or replace the missing pieces with
-     * defaults. The purpose of this field is to allow you to look at the data as it
-     * was supplied. Use parsed_uri when you need to act on data. Note that the port_number
-     * number is always -1 (parsing not attempted).
+     * This structure holds the individual components parsed out of the request URI, but
+     * without any modification. The purpose of this field is to allow you to look at the data as it
+     * was supplied on the request line. Fields can be NULL, depending on what data was supplied.
+     * The port_number field is always -1.
      */
-    htp_uri_t *parsed_uri_incomplete;
+    htp_uri_t *parsed_uri_raw;
     
     /* HTTP 1.1 RFC
      * 

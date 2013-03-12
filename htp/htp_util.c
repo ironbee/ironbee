@@ -1681,11 +1681,13 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
             normalized->port_number = -1;
             connp->in_tx->flags |= HTP_HOSTU_INVALID;
         }
+    } else {
+        normalized->port_number = -1;
     }
 
     // Path.
     if (incomplete->path != NULL) {
-        // Make a copy of the path, on which we can work on.
+        // Make a copy of the path, so that we can work on it.
         normalized->path = bstr_dup(incomplete->path);
         if (normalized->path == NULL) return HTP_ERROR;
 
@@ -1693,12 +1695,12 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
         // compress separators and convert backslashes.
         htp_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
 
-        // Handle UTF-8 in path.
+        // Handle UTF-8 in the path.
         if (connp->cfg->decoder_cfgs[HTP_DECODER_URL_PATH].utf8_convert_bestfit) {
             // Decode Unicode characters into a single-byte stream, using best-fit mapping.
             htp_utf8_decode_path_inplace(connp->cfg, connp->in_tx, normalized->path);
         } else {
-            // Only validate path as a UTF-8 stream.
+            // No decoding, but try to validate the path as a UTF-8 stream.
             htp_utf8_validate_path(connp->in_tx, normalized->path);
         }
 
@@ -1707,11 +1709,10 @@ int htp_normalize_parsed_uri(htp_connp_t *connp, htp_uri_t *incomplete, htp_uri_
     }
 
     // Query string.
-    if (incomplete->query != NULL) {
-        // We cannot URL-decode the query string here; it needs to be
-        // parsed into individual key-value pairs first.
+    if (incomplete->query != NULL) {        
         normalized->query = bstr_dup(incomplete->query);
         if (normalized->query == NULL) return HTP_ERROR;
+        // No URL-decoding can be done without loss of information.
     }
 
     // Fragment.
