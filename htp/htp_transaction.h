@@ -315,8 +315,9 @@ htp_status_t htp_tx_req_set_protocol(htp_tx_t *tx, const char *protocol, size_t 
 void htp_tx_req_set_protocol_number(htp_tx_t *tx, int protocol_number);
 
 /**
- * Set transaction request URI. The value provided here will be stored
- * in htp_tx_t::request_uri and subsequently parsed.
+ * Set transaction request URI. The value provided here will be stored in htp_tx_t::request_uri
+ * and subsequently parsed. If htp_tx_req_set_line() was previously used, the uri provided
+ * when calling this function will overwrite any previously parsed value.
  *
  * @param[in] tx
  * @param[in] uri
