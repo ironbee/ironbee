@@ -46,16 +46,17 @@ extern "C" {
 using namespace std;
 
 /**
- * @class IronBeeLuaModules test_ironbee_lua_modules.cpp
- * test_ironbee_lua_modules.cpp
+ * @class IronBeeLuaModules test_ironbee_lua_modules.cpp test_ironbee_lua_modules.cpp
  *
  * Test the IronBee Lua Api.
  *
  * For Lua Rule testing see test_module_rules_lua.cc.
  */
-struct IronBeeLuaModules : public BaseTransactionFixture
-{
+class IronBeeLuaConfigs : public BaseFixture {
 
+    protected:
+    ib_conn_t *ib_conn;
+    ib_tx_t *ib_tx;
     ib_module_t *mod_htp;
 
     static const char *c_ib_conf;
@@ -65,35 +66,47 @@ struct IronBeeLuaModules : public BaseTransactionFixture
      * loads ffi, ironbee-ffi, and ironbee-api, and then sets ib_engine
      * to a copy of the ironbee engine.
      */
-    virtual void SetUp()
+    void SetUp()
     {
-        BaseTransactionFixture::SetUp();
+        BaseFixture::SetUp();
+
+        /* We need the ibmod_htp to initialize the ib_tx. */
         configureIronBeeByString(c_ib_conf);
-        performTx();
-    }
-    void generateRequestHeader( )
-    {
-        addRequestHeader("Host", "UnitTest");
-    }
-    void generateResponseHeader( )
-    {
-        addResponseHeader("Content-Type", "text/html");
+
+        ib_conn = buildIronBeeConnection();
+
+        sendDataIn("GET / HTTP/1.1\r\nHost: UnitTest\r\n\r\n");
+        sendDataOut("HTTP/1.1 200 OK\r\nContent-Type: text/html\r\n\r\n");
+
+        /* Lib htp.c does this, so we do this here. */
+        assert(ib_conn->tx != NULL);
+        ib_tx = ib_conn->tx;
     }
 
     /**
      * Close the lua stack and call BaseFixture::TearDown().
      */
-    virtual void TearDown() {
+    void TearDown()
+    {
         ib_state_notify_conn_closed(ib_engine, ib_conn);
 
         BaseFixture::TearDown();
     }
 
-    virtual ~IronBeeLuaModules() {
+    void sendDataIn(const string& req) {
+        BaseFixture::sendDataIn(ib_conn, req);
+    }
+
+    void sendDataOut(const string& req) {
+        BaseFixture::sendDataOut(ib_conn, req);
+    }
+
+
+    virtual ~IronBeeLuaConfigs() {
     }
 };
 
-const char * IronBeeLuaModules::c_ib_conf =
+const char * IronBeeLuaConfigs::c_ib_conf =
     "LogLevel 9\n"
     "SensorId AAAABBBB-1111-2222-3333-FFFF00000023\n"
     "SensorName ExampleSensorName\n"
@@ -110,6 +123,6 @@ const char * IronBeeLuaModules::c_ib_conf =
         "Hostname *\n"
     "</Site>\n" ;
 
-TEST_F(IronBeeLuaModules, load){
+TEST_F(IronBeeLuaConfigs, include){
 }
 

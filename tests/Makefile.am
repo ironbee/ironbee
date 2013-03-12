@@ -127,6 +127,7 @@ TEST_EXTRAS = \
        CoreActionTest.integration.config \
        RuleInjectTest.test_inject.config \
        test_ironbee_lua_modules.lua \
+       test_ironbee_lua_configs.lua \
        test_module_rules_lua.lua
 
 EXTRA_DIST = \
@@ -276,6 +277,7 @@ test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
 test_luajit_SOURCES = test_main.cpp \
                       test_luajit.cpp \
                       test_ironbee_lua_api.cpp \
+                      test_ironbee_lua_configs.cpp \
                       test_ironbee_lua_modules.cpp
 
 test_module_ee_oper_SOURCES = test_module_ee_oper.cpp \

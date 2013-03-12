@@ -2637,22 +2637,56 @@ static ib_status_t modlua_dir_lua_include(ib_cfgparser_t *cp,
     ib_status_t rc;
     int lua_rc;
     ib_core_cfg_t *corecfg = NULL;
+    lua_State *L = modlua_global_cfg.L;
 
     rc = ib_context_module_config(ib_context_main(ib),
                                   ib_core_module(),
                                   (void *)&corecfg);
     if (rc != IB_OK) {
         ib_log_error(ib, "Failed to retrieve core configuration.");
+        lua_pop(L, lua_gettop(L));
         return rc;
     }
 
-    /* Run ibconfig.include(cp, p1) */
-    lua_rc = luaL_loadfile(modlua_global_cfg.L, p1);
-    if (lua_rc == LUA_ERRFILE) {
-        ib_log_error(ib, "Could not access file %s.", p1);
+    lua_getglobal(L, "ibconfig");
+    if ( ! lua_istable(L, -1) ) {
+        ib_log_error(ib, "ibconfig is not a module table.");
+        lua_pop(L, lua_gettop(L));
         return IB_EOTHER;
     }
 
+    lua_getfield(L, -1, "include");
+    if ( ! lua_isfunction(L, -1) ) {
+        ib_log_error(ib, "ibconfig.include is not a function.");
+        lua_pop(L, lua_gettop(L));
+        return IB_EOTHER;
+    }
+
+    lua_pushlightuserdata(L, cp);
+    lua_pushstring(L, p1);
+    lua_rc = lua_pcall(L, 2, 1, 0);
+    if (lua_rc == LUA_ERRFILE) {
+        ib_log_error(ib, "Could not access file %s.", p1);
+        ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
+        lua_pop(L, lua_gettop(L));
+        return IB_EOTHER;
+    }
+    else if (lua_rc) {
+        ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
+        lua_pop(L, lua_gettop(L));
+        return IB_EOTHER;
+    } else if (lua_tonumber(L, -1) != IB_OK) {
+        rc = lua_tonumber(L, -1);
+        lua_pop(L, lua_gettop(L));
+        ib_log_error(
+            ib,
+            "Configuration error reported: %d:%s",
+            rc,
+            ib_status_to_string(rc));
+        return IB_EOTHER;
+    }
+
+    lua_pop(L, lua_gettop(L));
     return IB_OK;
 }
 
