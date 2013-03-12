@@ -148,6 +148,7 @@ STRIP_FROM_PATH        = @DOXYGEN_TOP@
 # are normally passed to the compiler using the -I flag.
 
 STRIP_FROM_INC_PATH    = @srcdir@/../include/ \
+                         @srcdir@/../lua/ \
                          @srcdir@/../util/ \
                          @srcdir@/../engine/ \
                          @srcdir@/../modules/ \

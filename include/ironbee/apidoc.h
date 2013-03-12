@@ -34,13 +34,14 @@
  * the public API.  See the Modules list and the files in include/ironbee.
  *
  * Some general documentation on IronBee and development from the codebase:
- * - @ref README
- * - @ref CHANGES
- * - @ref DEVELOPMENT
+ * - @ref README.md
+ * - @ref CHANGES.md
+ * - @ref DEVELOPMENT.md
  *
  * Of particular interest:
  * - Module writers: module.h, module_sym.h
  * - Server writers: server.h, state_notify.h
+ * - Lua Rule and Module writers: @ref LuaAPI
  * - Everyone: types.h, mpool.h
  *
  * If you are interested in developing the above in C++, see @ref
