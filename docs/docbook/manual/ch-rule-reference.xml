@@ -61,11 +61,8 @@
             <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.4</para>
-            <para>This collection contains information for the transaction. Currently captured data from
-                operators is stored here in keys "0"-"9".<note>
-                    <para>The captures were previously stored in the generic <literal>TX</literal>
-                        collection, but moved to its own collection in version 0.4.</para>
-                </note></para>
+            <para>This collection contains information for the transaction. Currently captured data
+                from operators is stored here in keys "0"-"9".</para>
         </section>
         <section>
             <title>FIELD</title>
@@ -79,15 +76,15 @@
             <para>This field is useful only in field expansions within actions when you
                 must have the original value of the field being inspected. For example:</para>
             <programlisting># Log the field value with an event
-    Rule ARGS @contains attack_string id:123 phase:REQUEST logdata:%{FIELD} event
+Rule ARGS @contains attack_string id:123 phase:REQUEST logdata:%{FIELD} event
 
-    # Create a collection matching a pattern for later use
-    Rule REQUEST_HEADERS @rx pattern1 id:124 phase:REQUEST_HEADER setvar:NEW_COL:%{FIELD_NAME}=%{FIELD}
-    Rule ARGS @rx pattern2 id:125 phase:REQUEST setvar:NEW_COL:%{FIELD_NAME}=%{FIELD}
-    ...
-    # Then perform further matches on the new collection in another phase, which
-    # is not possible via chaining.
-    Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block</programlisting>
+# Create a collection matching a pattern for later use
+Rule REQUEST_HEADERS @rx pattern1 id:124 phase:REQUEST_HEADER setvar:NEW_COL:%{FIELD_NAME}=%{FIELD}
+Rule ARGS @rx pattern2 id:125 phase:REQUEST setvar:NEW_COL:%{FIELD_NAME}=%{FIELD}
+...
+# Then perform further matches on the new collection in another phase, which
+# is not possible via chaining.
+Rule NEW_COL @rx some_other_patt id:126 phase:REQUEST "msg:Some msg" event block</programlisting>
         </section>
         <section>
             <title>FIELD_NAME</title>
@@ -374,25 +371,6 @@
             </itemizedlist>
         </section>
         <section>
-            <title>LAST_MATCHED</title>
-            <para><emphasis role="bold">Description:</emphasis> An alias to the last matching
-                field.</para>
-            <para><emphasis role="bold">Type:</emphasis> Variable (same type as the aliased
-                field)</para>
-            <para><emphasis role="bold">Scope:</emphasis> Rule</para>
-            <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
-            <para>This field is useful in a rule that is inspecting several fields, and you need to
-                which of the fields matched. For example:</para>
-            <programlisting># Further inspect a matching field
-    Rule ARGS @contains attack_string chain
-        Rule LAST_MATCHED "@rx some.*complex.*patt.*that.*may.*be.*expensive" block
-
-    # Log the value of the field that matched
-    Rule ARGS @rx pattern \
-        "msg:'Test matched',logdata:%{LAST_MATCHED}"</programlisting>
-        </section>
-        <section>
             <title>REMOTE_ADDR</title>
             <para><emphasis role="bold">Description:</emphasis> Remote (client) IP address, extracted from the TCP connection. Can be in IPv4 or IPv6 format.</para>
             <para><emphasis role="bold">Type:</emphasis> String</para>
@@ -410,21 +388,6 @@
             <para><emphasis role="bold">Scope:</emphasis> Connection</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.2</para>
-        </section>
-        <section>
-            <title>REQUEST_BODY</title>
-            <para><emphasis role="bold">Description:</emphasis> Request body data.</para>
-            <para><emphasis role="bold">Type:</emphasis> Byte string</para>
-            <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
-            <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
-            <note>
-                <para>This field may not be supported by all operators (notably
-                        <literal>@rx</literal>) as it may not be a contiguous buffer, but rather
-                    spread across multiple buffers. In most cases, you will want to use the
-                        <literal>StreamInspect</literal> directive with the <literal>@pm</literal>,
-                        <literal>@pmf</literal> or <literal>@dfa</literal> operator.</para>
-            </note>
         </section>
         <section>
             <title>REQUEST_BODY_PARAMS</title>
@@ -686,22 +649,6 @@
             <para><emphasis role="bold">Version:</emphasis> 0.3</para>
         </section>
         <section>
-            <title>RESPONSE_BODY</title>
-            <para><emphasis role="bold">Description:</emphasis> Response body data up to any imposed
-                limits.</para>
-            <para><emphasis role="bold">Type:</emphasis> Scalar</para>
-            <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
-            <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> 0.3</para>
-            <note>
-                <para>This field may not be supported by all operators (notably
-                        <literal>@rx</literal>) as it may not be a contiguous buffer, but rather
-                    spread across multiple buffers. In most cases, you will want to use the
-                        <literal>StreamInspect</literal> directive with the <literal>@pm</literal>,
-                        <literal>@pmf</literal> or <literal>@dfa</literal> operator.</para>
-            </note>
-        </section>
-        <section>
             <title>RESPONSE_CONTENT_TYPE</title>
             <para><emphasis role="bold">Description:</emphasis> Contains the normalized response content
                 type.</para>
@@ -793,14 +740,6 @@
             <para><emphasis role="bold">Scope:</emphasis> Connection</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.2</para>
-        </section>
-        <section>
-            <title>SITE_NAME</title>
-            <para><emphasis role="bold">Description:</emphasis> The name of the site to which the current transaction was assigned.</para>
-            <para><emphasis role="bold">Type:</emphasis> String</para>
-            <para><emphasis role="bold">Scope:</emphasis> Transaction</para>
-            <para><emphasis role="bold">Module:</emphasis> core</para>
-            <para><emphasis role="bold">Version:</emphasis> Not implemented yet</para>
         </section>
         <section>
             <title>TX</title>
@@ -1137,7 +1076,7 @@ Rule CAPTURE !@rx ".=." id:2 rev:1 phase:REQUEST_HEADER "msg:Name and value requ
                 to a given inspection point.</para>
             <para><emphasis role="bold">Type:</emphasis> Action</para>
             <para><emphasis role="bold">Syntax:</emphasis>
-                <literal>allow[:phase | :request]</literal></para>
+                <literal>allow[":phase"|":request"]</literal></para>
             <para><emphasis role="bold">Cardinality</emphasis>: 0..1</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.4</para>
@@ -1426,7 +1365,7 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
             <para><emphasis role="bold">Description:</emphasis> Set a variable data field.</para>
             <para><emphasis role="bold">Type:</emphasis> Action</para>
             <para><emphasis role="bold">Syntax:</emphasis>
-                <literal>setvar:[!]<replaceable>variable-field-name</replaceable>=[+|-]<replaceable>value</replaceable></literal></para>
+                <literal>setvar:[!]<replaceable>variable-field-name</replaceable>[+|-]=<replaceable>value</replaceable></literal></para>
             <para><emphasis role="bold">Cardinality</emphasis>: 0..n</para>
             <para><emphasis role="bold">Module:</emphasis> core</para>
             <para><emphasis role="bold">Version:</emphasis> 0.2</para>
@@ -1436,8 +1375,8 @@ Rule &amp;REQUEST_URI_PARAMS:/^(id|sess)$/ @gt 0 "msg:Sensitive parameters in UR
             <para>To remove all instances of a named variable data field:</para>
             <programlisting>setvar:!tx:score</programlisting>
             <para>To increment or decrement a variable data field value:</para>
-            <programlisting>setvar:tx:score=+5
-    setvar:tx:score=-5</programlisting>
+            <programlisting>setvar:tx:score+=5
+    setvar:tx:score-=5</programlisting>
             <para>An attempt to modify a value of a non-numerical variable will assume the old value was
                 zero (NOTE: Probably should just fail, logging an attempt was made to modify a
                 non-numerical value).</para>
