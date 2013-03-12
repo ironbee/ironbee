@@ -83,6 +83,11 @@ DAG::node_p parse_literal(
     size_t length = text.length();
     bool escape = false;
     string value;
+
+    if (text.substr(i, 4) == "null") {
+        i += 3;
+        return DAG::node_p(new DAG::Null());
+    }
     if (text[i] != '\'') {
         error(i, "Expected '");
     }
@@ -97,7 +102,7 @@ DAG::node_p parse_literal(
         }
         advance(i, length, "Unterminated literal");
     }
-    return DAG::node_p(new DAG::Literal(value));
+    return DAG::node_p(new DAG::StringLiteral(value));
 }
 
 // The following could be more cleanly implemented recursively, but would
@@ -152,12 +157,14 @@ DAG::node_p parse_call(
                 advance(i, length, "Expected )");
             }
             break;
-        case '\'': {
+        case '\'':
+        case 'n':
+        {
             if (! current) {
                 error(i, "Naked literal");
             }
             current->children().push_back(parse_literal(text, i));
-            assert(text[i] == '\'');
+            assert(text[i] == '\'' || text[i] == 'l');
             advance(i, length, "Unterminated call");
             break;
         }

@@ -37,7 +37,7 @@ namespace Predicate {
  *
  * Text has the following grammer:
  * @code
- * literal    := "'" ( [^\'] | \\ | \' )* "'"
+ * literal    := "'" ( [^\'] | \\ | \' )* "'" | null
  * @endcode
  *
  * @param [in]      text Text to parse.
@@ -59,7 +59,7 @@ DAG::node_p parse_literal(
  * @code
  * call       := " "* "(" name ( " "* + expression )* ")"
  * expression := call | literal
- * literal    := "'" ( [^\'] | \\ | \' )* "'"
+ * literal    := "'" ( [^\'] | \\ | \' )* "'" | null
  * name       := [_A-Za-z0-9]+
  * @endcode
  *

@@ -120,24 +120,25 @@ TEST_F(TestDAG, Node)
     EXPECT_FALSE(n.has_value());
 }
 
-TEST_F(TestDAG, Literal)
+TEST_F(TestDAG, StringLiteral)
 {
-    EXPECT_EQ("'node'", DAG::Literal("node").to_s());
-    EXPECT_NE(DAG::Literal("node").hash(), DAG::Literal("node2").hash());
-    EXPECT_EQ(DAG::Literal("node").hash(), DAG::Literal("node").hash());
-
+    DAG::StringLiteral n("node");
+    EXPECT_EQ("'node'", n.to_s());
+    EXPECT_NE(n.hash(), DAG::StringLiteral("node2").hash());
+    EXPECT_EQ(n.hash(), n.hash());
+    EXPECT_TRUE(n.is_static());
     EXPECT_EQ(
         "node",
-        DAG::Literal("node").eval(m_transaction).value_as_byte_string().to_s()
+        n.eval(DAG::Context()).value_as_byte_string().to_s()
     );
 }
 
-TEST_F(TestDAG, LiteralEscaping)
+TEST_F(TestDAG, StringLiteralEscaping)
 {
-    EXPECT_EQ("'\\''", DAG::Literal("'").to_s());
-    EXPECT_EQ("'foo\\'bar'", DAG::Literal("foo'bar").to_s());
-    EXPECT_EQ("'foo\\\\bar'", DAG::Literal("foo\\bar").to_s());
-    EXPECT_EQ("'foo\\\\'", DAG::Literal("foo\\").to_s());
+    EXPECT_EQ("'\\''", DAG::StringLiteral("'").to_s());
+    EXPECT_EQ("'foo\\'bar'", DAG::StringLiteral("foo'bar").to_s());
+    EXPECT_EQ("'foo\\\\bar'", DAG::StringLiteral("foo\\bar").to_s());
+    EXPECT_EQ("'foo\\\\'", DAG::StringLiteral("foo\\").to_s());
 }
 
 TEST_F(TestDAG, Call)
@@ -151,7 +152,7 @@ TEST_F(TestDAG, Call)
 
     DAG::node_p a1(new DummyCall());
     n.children().push_back(a1);
-    DAG::node_p a2(new DAG::Literal("foo"));
+    DAG::node_p a2(new DAG::StringLiteral("foo"));
     n.children().push_back(a2);
 
     EXPECT_EQ("(dummy_call (dummy_call) 'foo')", n.to_s());
@@ -162,7 +163,7 @@ TEST_F(TestDAG, OrderedCall)
     DAG::node_p n1(new DummyOrderedCall());
     DAG::node_p n2(new DummyOrderedCall());
     DAG::node_p a1(new DummyCall());
-    DAG::node_p a2(new DAG::Literal("foo"));
+    DAG::node_p a2(new DAG::StringLiteral("foo"));
 
     n1->children().push_back(a1);
     n1->children().push_back(a2);
@@ -177,7 +178,7 @@ TEST_F(TestDAG, UnorderedCall)
     DAG::node_p n1(new DummyUnorderedCall());
     DAG::node_p n2(new DummyUnorderedCall());
     DAG::node_p a1(new DummyCall());
-    DAG::node_p a2(new DAG::Literal("foo"));
+    DAG::node_p a2(new DAG::StringLiteral("foo"));
 
     n1->children().push_back(a1);
     n1->children().push_back(a2);
@@ -195,4 +196,12 @@ TEST_F(TestDAG, OutputOperator)
     s << DummyNode();
 
     EXPECT_EQ("dummy", s.str());
+}
+
+TEST_F(TestDAG, Null)
+{
+    DAG::Null n;
+    EXPECT_EQ("null", n.to_s());
+    EXPECT_TRUE(n.is_static());
+    EXPECT_FALSE(n.eval(DAG::Context()));
 }

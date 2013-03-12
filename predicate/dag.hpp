@@ -87,6 +87,12 @@ public:
     //! Hash of node.
     virtual size_t hash() const = 0;
 
+    //! True iff node can calculate value without context.
+    virtual bool is_static() const
+    {
+        return false;
+    }
+
     // Accessors are intentionally inline.
 
     //! Subclassren accessor -- const.
@@ -266,15 +272,30 @@ private:
 };
 
 /**
+ * Literal node: no children and value independent of Context.
+ **/
+class Literal :
+    public Node
+{
+public:
+    //! Is static!
+    virtual bool is_static() const
+    {
+        return true;
+    }
+};
+
+/**
  * DAG Node representing a string literal.
  *
  * This class is a fully defined Node class and can be instantiated directly
  * to represent a Literal node.
  *
+ * @warn Literal nodes should not be subclassed.
  * @warn Literal nodes are expected to have no children.
  **/
-class Literal :
-    public Node
+class StringLiteral :
+    public Literal
 {
 public:
     /**
@@ -283,7 +304,7 @@ public:
      * @param[in] s Value of node.
      **/
     explicit
-    Literal(const std::string& s);
+    StringLiteral(const std::string& s);
 
     //! Convert to string.
     virtual std::string to_s() const;
@@ -301,7 +322,35 @@ protected:
 private:
     const size_t m_hash;
     const std::string m_s;
+    IronBee::ScopedMemoryPool m_pool;
     IronBee::ConstField m_pre_value;
+};
+
+/**
+ * DAG Node representing a NULL value.
+ *
+ * This class is a fully defined Node class and can be instantiated directly
+ * to represent a Null node.
+ *
+ * @warn Null nodes should not be subclassed.
+ * @warn Null nodes are expected to have no children.
+ **/
+class Null :
+    public Literal
+{
+public:
+    //! Convert to string.
+    virtual std::string to_s() const;
+
+    //! Hash value.  Intentionally inline.
+    virtual size_t hash() const
+    {
+        return 0;
+    }
+
+protected:
+    //! See Node::calculate()
+    virtual void calculate(Context context);
 };
 
 template <class Subclass>

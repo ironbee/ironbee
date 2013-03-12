@@ -96,6 +96,18 @@ TEST(TestParse, ValidLiteral)
     ASSERT_NO_THROW(r = parse_literal(expr, i));
     EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
     EXPECT_GT(expr.length() - 1, i);
+
+    expr = "null";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr, r->to_s());
+    EXPECT_EQ(expr.length() - 1, i);
+
+    expr = "nullextra";
+    i = 0;
+    ASSERT_NO_THROW(r = parse_literal(expr, i));
+    EXPECT_EQ(expr.substr(0, i + 1), r->to_s());
+    EXPECT_GT(expr.length() - 1, i);
 }
 
 TEST(TestParse, InvalidLiteral)

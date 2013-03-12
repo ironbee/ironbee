@@ -81,13 +81,14 @@ ostream& operator<<(ostream& out, const Node& node)
     return out;
 }
 
-Literal::Literal(const string& s) :
-    m_hash(boost::hash_value(s)), m_s(s)
+StringLiteral::StringLiteral(const string& s) :
+    m_hash(boost::hash_value(s)), m_s(s),
+    m_pool("IronBee::Predicate::DAG::StringLiteral")
 {
     // nop
 }
 
-string Literal::to_s() const
+string StringLiteral::to_s() const
 {
     string escaped;
     size_t pos = 0;
@@ -105,19 +106,29 @@ string Literal::to_s() const
     return "'" + escaped + "'";
 }
 
-void Literal::calculate(Context context)
+void StringLiteral::calculate(Context)
 {
     if (! m_pre_value) {
         m_pre_value = IronBee::Field::create_byte_string(
-            context.engine().main_memory_pool(),
+            m_pool,
             "", 0,
             IronBee::ByteString::create_alias(
-                context.engine().main_memory_pool(),
+                m_pool,
                 m_s
             )
         );
     }
     set_value(m_pre_value);
+}
+
+string Null::to_s() const
+{
+    return "null";
+}
+
+void Null::calculate(Context)
+{
+    set_value(Value());
 }
 
 } // DAG
