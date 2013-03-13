@@ -51,12 +51,13 @@ class Literal;
 
 /**
  * Shared pointer to Node.
- *
- * Nodes are intended to be used in DAG, which, by definition is acyclic.
- * Guaranteeing acyclicness is the responsibility of the user and violating it
- * will allow for shared pointer loops and memory leaks.
  **/
 typedef boost::shared_ptr<Node> node_p;
+
+/**
+ * Shared const pointer to Node.
+ **/
+typedef boost::shared_ptr<const Node> node_cp;
 
 /**
  * Shared pointer to Call.
@@ -64,9 +65,19 @@ typedef boost::shared_ptr<Node> node_p;
 typedef boost::shared_ptr<Call> call_p;
 
 /**
+ * Shared const pointer to Call.
+ **/
+typedef boost::shared_ptr<const Call> call_cp;
+
+/**
  * Shared pointer to Literal.
  **/
 typedef boost::shared_ptr<Literal> literal_p;
+
+/**
+ * Shared const pointer to Literal.
+ **/
+typedef boost::shared_ptr<const Literal> literal_cp;
 
 /**
  * A node in the predicate DAG.
@@ -90,7 +101,7 @@ public:
     //! Destructor.
     virtual ~Node();
 
-    //! List of nodes.  See children() and parents()
+    //! List of nodes.  See children() and parents().
     typedef std::list<node_p> node_list_t;
 
     //! String representation.
@@ -107,7 +118,7 @@ public:
 
     // Accessors are intentionally inline.
 
-    //! Subclassren accessor -- const.
+    //! Children accessor -- const.
     const node_list_t& children() const
     {
         return m_children;
@@ -117,7 +128,7 @@ public:
     {
         return m_parents;
     }
-    //! Subclassren accessor -- non-const.
+    //! Children accessor -- non-const.
     node_list_t& children()
     {
         return m_children;
