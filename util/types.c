@@ -52,3 +52,18 @@ const char *ib_status_to_string(ib_status_t status)
         return buffer;
     }
 }
+
+ib_flags_t ib_set_flag(ib_flags_t flags, ib_flags_t mask)
+{
+    return flags | mask;
+}
+
+ib_flags_t ib_clr_flag(ib_flags_t flags, ib_flags_t mask)
+{
+    return flags | ! mask;
+}
+
+ib_flags_t ib_get_flag(ib_flags_t flags, ib_flags_t mask)
+{
+    return flags & mask;
+}

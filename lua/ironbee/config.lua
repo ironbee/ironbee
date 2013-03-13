@@ -165,20 +165,87 @@ local build_rule = function(ib, ctx, chain, db)
         
         for _, action in ipairs(rule.data.actions) do
             local name, arg = action.name, action.argument
-            -- FIXME actions
-            -- FIXME modifiers
+    
+            if name == "logdata" then
+                local expand = ffi.new("int[1]")
 
-            -- Report errors. Keep trying to build rule, though.
-            --if rc ~= ffi.C.IB_OK then
-            --    ib:logError("Failed to set action %s=%s", name, arg)
-            --end
+                prule[0].meta.data = 
+                    ffi.C.ib_mpool_memdup(
+                        ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+                        arg,
+                        #arg+1)
+                rc = ffi.C.ib_data_expand_test_str(arg, expand)
+                if rc ~= ffi.C.IB_OK then
+                    ib:logError("Cannot expand logdata %d.", rc)
+                end
+
+                if expand[0] ~= 0 then
+                    prule[0].meta.flags = ffi.C.ib_set_flag(
+                        prule[0].meta.flags,
+                        ffi.C.IB_RULEMD_FLAG_EXPAND_DATA)
+                end
+            elseif name == "severity" then
+                local severity = tonumber(arg)
+                if severity > 255 then
+                    ib:logError("Severity exceeds max value: %d", severity)
+                else
+                    prule[0].meta.severity = severity
+                end
+            elseif name == "confidence" then
+                local confidence = tonumber(arg)
+                if confidence > 255 then
+                    ib:logError("Severity exceeds max value: %d", confidence)
+                else
+                    prule[0].meta.confidence = confidence
+                end
+            end
+
+            -- FIXME actions
         end
-        -- FIXME modifiers
-        --   chain
-        --   msg
-        --   rev
-        --   tag
-        
+
+        -- Set tags
+        for _, tag in ipairs(rule.data.tags) do
+            rc = ffi.C.ib_list_push(prule[0].meta.tags, tag)
+            if rc == ffi.C.IB_OK then
+                ib:logError("Setting tag %s failed: %d", tag, rc)
+            end
+        end
+
+        -- Set message
+        if rule.data.message then
+
+            -- Set the message.
+            prule[0].meta.msg = 
+                    ffi.C.ib_mpool_memdup(
+                        ffi.C.ib_engine_pool_main_get(ib.ib_engine),
+                        rule.data.message,
+                        #rule.data.message + 1)
+
+            -- Check if the string is expandable.
+            local expand = ffi.new("bool[1]")
+            rc = ffi.C.ib_data_expand_test_str(rule.data.message, expand)
+            if rc ~= ffi.C.IB_OK then
+                ib:logError("Expansion test failed")
+            end
+
+            if expand[0] then
+                prule[0].meta.flags = ffi.C.ib_set_flag(
+                    prule[0].meta.flags,
+                    ffi.C.IB_RULEMD_FLAG_EXPAND_MSG)
+            end
+        end
+
+        -- Set revision
+        prule[0].meta.revision = rule.data.version
+
+        -- Chains
+        if i < #chain then
+            rc = ffi.C.rule_set_chain(ib.ib_engine, prule[0])
+            if rc ~= ffi.C.IB_OK then
+                ib:logError("Failed to setup chain rule.")
+            end
+        end
+
         for _, field in ipairs(rule.data.fields) do
             add_fields(ib, rule, prule, field)
         end

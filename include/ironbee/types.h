@@ -27,6 +27,8 @@
  * @author Brian Rectanus <brectanus@qualys.com>
  */
 
+#include <ironbee/build.h>
+
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -74,6 +76,42 @@ typedef enum ib_status_t {
  * @return String describing status code, e.g., EINVAL.
  **/
 const char *ib_status_to_string(ib_status_t status);
+
+/**
+ * Set a bit. Perform @a flags @c | @a flag.
+ *
+ * This is to support FFIs into IronBee.
+ *
+ * @param[in] flags The flags we are going to modify and return.
+ * @param[in] mask The flag mask we are going to OR with @a flags.
+ *
+ * @returns The result of @a flags @c | @a flag.
+ */
+ib_flags_t DLL_PUBLIC ib_set_flag(ib_flags_t flags, ib_flags_t mask);
+
+/**
+ * Get a bit. Perform @a flags @c & @a mask.
+ *
+ * This is to support FFIs into IronBee.
+ *
+ * @param[in] flags The flags we are going to modify and return.
+ * @param[in] mask The flag mask we are going to AND with @a flags.
+ *
+ * @returns The result of ANDing @a flags with @mask.
+ */
+ib_flags_t DLL_PUBLIC ib_get_flag(ib_flags_t flags, ib_flags_t mask);
+
+/**
+ * Clear a bit. Perform @a flags @c | @c ! @a flag.
+ *
+ * This is to support FFIs into IronBee.
+ *
+ * @param[in] flags The flags we are going to modify and return.
+ * @param[in] flag The flag mask we are going to NOT and then OR with @a flags.
+ *
+ * @returns The result of @a flags @c | @c ! @a flag.
+ */
+ib_flags_t DLL_PUBLIC ib_clr_flag(ib_flags_t flags, ib_flags_t mask);
 
 /**
  * @} IronBeeUtil
