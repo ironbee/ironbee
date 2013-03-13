@@ -76,11 +76,11 @@ void htp_tx_destroy(htp_tx_t *tx) {
     // Request.
 
     bstr_free(tx->request_line);
-    
+
     bstr_free(tx->request_method);
     bstr_free(tx->request_uri);
     bstr_free(tx->request_protocol);
-    
+
     htp_uri_free(tx->parsed_uri_raw);
     htp_uri_free(tx->parsed_uri);
 
@@ -102,7 +102,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
     // Response.
 
     bstr_free(tx->response_line);
-    
+
     bstr_free(tx->response_protocol);
     bstr_free(tx->response_status);
     bstr_free(tx->response_message);
@@ -132,7 +132,7 @@ void htp_tx_destroy(htp_tx_t *tx) {
         }
     }
 
-    
+
     bstr_free(tx->response_content_type);
 
     // Parsers
@@ -386,7 +386,7 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
     tx->request_port_number = tx->parsed_uri->port_number;
 
     // Examine the Host header.
-    
+
     htp_header_t *h = htp_table_get_c(tx->request_headers, "host");
     if (h == NULL) {
         // No host information in the headers.
@@ -782,11 +782,18 @@ htp_status_t htp_tx_state_request_line(htp_tx_t *tx) {
     // Build htp_tx_t::parsed_uri, but only if it was not explicitly set already.
     if (tx->parsed_uri == NULL) {
         tx->parsed_uri = htp_uri_alloc();
-        if (tx->parsed_uri == NULL) return HTP_ERROR;        
+        if (tx->parsed_uri == NULL) return HTP_ERROR;
 
         // Keep the original URI components, but create a copy which we can normalize and use internally.
         if (htp_normalize_parsed_uri(tx->connp, tx->parsed_uri_raw, tx->parsed_uri) != HTP_OK) {
             return HTP_ERROR;
+        }
+    }
+
+    // Check parsed_uri hostname.
+    if (tx->parsed_uri->hostname != NULL) {
+        if (htp_validate_hostname(tx->parsed_uri->hostname) == 0) {
+            tx->flags |= HTP_HOSTU_INVALID;
         }
     }
 
