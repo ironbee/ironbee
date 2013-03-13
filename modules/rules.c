@@ -56,55 +56,6 @@
 IB_MODULE_DECLARE();
 
 /**
- * Phase lookup table.
- */
-typedef struct {
-    const char          *str;
-    bool                 is_stream;
-    ib_rule_phase_num_t  phase;
-} phase_lookup_t;
-static phase_lookup_t phase_lookup_table[] =
-{
-    /* Standard phases */
-    { "REQUEST_HEADER",          false, PHASE_REQUEST_HEADER },
-    { "REQUEST",                 false, PHASE_REQUEST_BODY },
-    { "RESPONSE_HEADER",         false, PHASE_RESPONSE_HEADER },
-    { "RESPONSE",                false, PHASE_RESPONSE_BODY },
-    { "POSTPROCESS",             false, PHASE_POSTPROCESS },
-    /* Stream inspection phases */
-    { "REQUEST_HEADER_STREAM",   true,  PHASE_STR_REQUEST_HEADER },
-    { "REQUEST_BODY_STREAM",     true,  PHASE_STR_REQUEST_BODY },
-    { "RESPONSE_HEADER_STREAM",  true,  PHASE_STR_RESPONSE_HEADER },
-    { "RESPONSE_BODY_STREAM",    true,  PHASE_STR_RESPONSE_BODY },
-    /* List terminator */
-    { NULL,                      false, PHASE_INVALID },
-};
-
-/**
- * Lookup a phase name in the phase name table.
- *
- * @param[in] str Phase name string to lookup
- * @param[in] is_stream true if this is a stream phase
- * @param[out] phase Phase number
- *
- * @returns Status code
- */
-static ib_status_t lookup_phase(const char *str,
-                                bool is_stream,
-                                ib_rule_phase_num_t *phase)
-{
-    const phase_lookup_t *item;
-
-    for (item = phase_lookup_table;  item->str != NULL;  ++item) {
-         if (strcasecmp(str, item->str) == 0) {
-             *phase = item->phase;
-             return IB_OK;
-         }
-    }
-    return IB_EINVAL;
-}
-
-/**
  * Parse rule's operator.
  *
  * Parses the rule's operator and operand strings (@a operator and @a
@@ -678,22 +629,22 @@ static ib_status_t parse_modifier(ib_cfgparser_t *cp,
                 ib_cfg_log_error(cp, "Modifier PHASE with no value");
                 return IB_EINVAL;
             }
-            rc = lookup_phase(value, false, &phase);
-            if (rc != IB_OK) {
+            phase = ib_rule_lookup_phase(value, false);
+            if (phase == PHASE_INVALID) {
                 ib_cfg_log_error(cp, "Invalid phase: %s", value);
                 return IB_EINVAL;
             }
         }
         else {
             ib_rule_phase_num_t tphase;
-            rc = lookup_phase(name, false, &tphase);
-            if (rc == IB_OK) {
+            tphase = ib_rule_lookup_phase(name, false);
+            if (tphase != PHASE_INVALID) {
                 phase = tphase;
             }
         }
 
         /* If we encountered a phase modifier, set it */
-        if (phase != PHASE_NONE) {
+        if (phase != PHASE_NONE && phase != PHASE_INVALID) {
             rc = ib_rule_set_phase(cp->ib, rule, phase);
             if (rc != IB_OK) {
                 ib_cfg_log_error(cp, "Error setting rule phase: %s",
@@ -1077,8 +1028,8 @@ static ib_status_t parse_streaminspect_params(ib_cfgparser_t *cp,
     str = node->data;
 
     /* Lookup the phase name */
-    rc = lookup_phase(str, true, &phase);
-    if (rc != IB_OK) {
+    phase = ib_rule_lookup_phase(str, true);
+    if (phase == PHASE_INVALID) {
         ib_cfg_log_error(cp, "Invalid phase: %s", str);
         return IB_EINVAL;
     }

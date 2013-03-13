@@ -481,6 +481,23 @@ ib_status_t DLL_PUBLIC ib_rule_set_phase(
     ib_rule_phase_num_t         phase);
 
 /**
+ * A utility function that converts a string to the appropriate phase number.
+ *
+ * This is used when developers are trying to create and register a new rule
+ * during configuration time.
+ *
+ * @param[in] phase 
+ * @param[in] is_stream 1 if the phase is a stream phase, 0 if not.
+ * @return
+ *   - PHASE_INVALID when an error occures.
+ *   - The appropriate phase number for the named phase if the given
+ *     stream value is approprikate.
+ */
+ib_rule_phase_num_t DLL_PUBLIC ib_rule_lookup_phase(
+    const char *phase,
+    int is_stream);
+
+/**
  * Get the name associated with a phase number
  *
  * @param[in] phase Phase number

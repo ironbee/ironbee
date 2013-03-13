@@ -3,6 +3,7 @@
 --]]-------------------------------------------------------------------------
 
 local ffi = require('ffi')
+
 local _M = {}
 _M.__index = _M
 _M._COPYRIGHT = "Copyright (C) 2010-2013 Qualys, Inc."
@@ -61,6 +62,85 @@ _M.include = function(cp, file)
     return ffi.C.IB_OK
 end
 
+--
+-- param[in] ib IronBee engine.
+-- param[in] rule Lua rule table.
+-- param[in] prule An ib_rule_t*[1].
+-- param[in] field Lua field table in rule.data.fields.
+--
+local add_fields = function(ib, rule, prule, field)
+    local str = field.collection
+    local name = field.collection
+    local not_found = ffi.new("int[1]")
+    local target = ffi.new("ib_rule_target_t*[1]")
+    local tfn_names = ffi.new("ib_list_t*[1]")
+    if field.selector then
+        str = str .. ":" .. field.selector
+        name = name .. ":" .. field.selector
+    end
+    if field.transformation then
+        str = str .. "." .. field.transformation
+    end
+
+    rc = ffi.C.ib_list_create(
+        tfn_names,
+        ffi.C.ib_engine_pool_main_get(ib.ib_engine))
+    if rc ~= ffi.C.IB_OK then
+        ib:logError("Failed to create new ib_list_t.")
+        return rc
+    end
+
+    if field.transformation then
+
+        -- Split and walk the transformation list.
+        for tfn_name in string.gmatch(field.transformation, "([^.()]+)") do
+            -- Make a new pointer
+            local tfn = ffi.new("ib_tfn_t*[1]")
+    
+            -- Get the transformation
+            rc = ffi.C.ib_tfn_lookup(ib.ib_engine, tfn_name, tfn)
+            if rc ~= ffi.C.IB_OK then
+                ib:logError("Failed to lookup transformation %s.", tfn_name)
+                return rc
+            end
+
+            -- Add it to the list.
+            rc = ffi.C.ib_list_push(tfn_names[0], tfn[0])
+            if rc ~= ffi.C.IB_OK then
+                ib:logError(
+                    "Failed to add transformation %s to list.",
+                    tfn_name)
+                return rc
+            end
+        end
+    end
+
+    -- Create target
+    rc = ffi.C.ib_rule_create_target(
+        ib.ib_engine,
+        str,
+        name,
+        tfn_names[0],
+        target,
+        not_found)
+    if rc ~= ffi.C.IB_OK then
+        ib:logError("Failed to create field %s", str)
+        return rc
+    end
+
+    -- Add target.
+    rc = ffi.C.ib_rule_add_target(
+        ib.ib_engine,
+        prule[0],
+        target[0])
+    if rc ~= ffi.C.IB_OK then
+        ib:logError("Failed to add field %s to rule.", str)
+        return rc
+    end
+
+    return ffi.C.IB_OK
+end
+
 -- Create, setup, and register a rule in the given ironbee engine.
 -- @param[in] ib IronBee Engine.
 -- @param[in] ctx The context the rules should be added to.
@@ -82,9 +162,9 @@ local build_rule = function(ib, ctx, chain, db)
         rc = ffi.C.ib_rule_create(
             ib.ib_engine,
             ctx,
-            "[file]",
-            -1, 
-            ( rule.type == 'StreamRule' ),
+            rule.meta.source,
+            rule.meta.line,
+            rule.is_streaming(),
             prule)
         if rc ~= ffi.C.IB_OK then
             ib:logError("Failed to create rule.")
@@ -93,11 +173,85 @@ local build_rule = function(ib, ctx, chain, db)
 
         ffi.C.ib_rule_set_id(ib.ib_engine, prule[0], rule_id)
         
-        -- FIXME actions
+        for _, action in ipairs(rule.data.actions) do
+            local name, arg = action.name, action.argument
+            -- FIXME actions
+
+            -- Report errors. Keep trying to build rule, though.
+            --if rc ~= ffi.C.IB_OK then
+            --    ib:logError("Failed to set action %s=%s", name, arg)
+            --end
+        end
         -- FIXME modifiers
-        -- FIXME   rev? tag? phase? etc...
-        -- FIXME fields?
-        -- FIXME operator
+        --   chain
+        --   msg
+        --   rev
+        --   tag
+        
+        for _, field in ipairs(rule.data.fields) do
+            add_fields(ib, rule, prule, field)
+        end
+
+        -- Create operator instance.
+        local opinst = ffi.new("ib_operator_inst_t*[1]")
+        local op_inst_create_stream_flags
+        local op_inst_create_inv_flag
+        local op
+
+        -- Set the flag values.
+        if rule.is_streaming() then
+            op_inst_create_stream_flags = 4
+        else
+            op_inst_create_stream_flags = 2
+        end
+
+        -- Handle inverted operator.
+        if string.sub(rule.data.op, 1, 1) == '!' then
+            op = string.sub(rule.data.op, 2)
+            op_inst_create_inv_flag = 1
+        else
+            op = rule.data.op
+            op_inst_create_inv_flag = 0
+        end
+
+        -- Create the argument.
+        rc = ffi.C.ib_operator_inst_create(
+            ib.ib_engine,
+            ctx,
+            prule[0],
+            op_inst_create_stream_flags,
+            rule.data.op,
+            rule.data.op_arg,
+            op_inst_create_inv_flag,
+            opinst)
+        if rc ~= ffi.C.IB_OK then
+            ib:logError("Failed to create operator instance.")
+            return rc
+        end
+
+        -- Set operator
+        rc = ffi.C.ib_rule_set_operator(ib.ib_engine, prule[0], opinst[0])
+        if rc ~= ffi.C.IB_OK then
+            ib:logError("Failed to set rule operator.")
+            return rc
+        end
+
+        -- Find out of this is streaming or not, and treat that as an int.
+        local is_streaming
+        if rule.is_streaming() then
+            is_streaming = 1
+        else
+            is_streaming = 0
+        end
+
+        -- Find the phase and set the rule's phase.
+        rc = ffi.C.ib_rule_set_phase(
+            ib.ib_engine,
+            prule[0],
+            ffi.C.ib_rule_lookup_phase(rule.data.phase, is_streaming))
+        if rc ~= ffi.C.IB_OK then
+            ib:logError("Cannot set phase %s", rule.data.phase)
+        end
 
         rc = ffi.C.ib_rule_register(ib.ib_engine, ctx, prule[0])
         if rc ~= ffi.C.IB_OK then

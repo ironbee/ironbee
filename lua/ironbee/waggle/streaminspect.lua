@@ -17,4 +17,9 @@ StreamInspect.new = function(self, id, rev, db)
     return setmetatable(si, self)
 end
 
+-- Report if this rule type is a stream rule or not.
+StreamInspect.is_streaming = function(self)
+    return true
+end
+
 return StreamInspect

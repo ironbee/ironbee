@@ -257,6 +257,58 @@ static const ib_rule_phase_meta_t rule_phase_meta[] =
 };
 
 /**
+ * An entry in the phase_lookup_table array.
+ */
+typedef struct {
+    const char          *str;
+    bool                 is_stream;
+    ib_rule_phase_num_t  phase;
+} phase_lookup_t;
+
+/**
+ * Used to lookup phases by a name and if they are streaming or not.
+ */
+static phase_lookup_t phase_lookup_table[] =
+{
+    /* Standard phases */
+    { "REQUEST_HEADER",          false, PHASE_REQUEST_HEADER },
+    { "REQUEST",                 false, PHASE_REQUEST_BODY },
+    { "RESPONSE_HEADER",         false, PHASE_RESPONSE_HEADER },
+    { "RESPONSE",                false, PHASE_RESPONSE_BODY },
+    { "POSTPROCESS",             false, PHASE_POSTPROCESS },
+    /* Stream inspection phases */
+    { "REQUEST_HEADER_STREAM",   true,  PHASE_STR_REQUEST_HEADER },
+    { "REQUEST_BODY_STREAM",     true,  PHASE_STR_REQUEST_BODY },
+    { "RESPONSE_HEADER_STREAM",  true,  PHASE_STR_RESPONSE_HEADER },
+    { "RESPONSE_BODY_STREAM",    true,  PHASE_STR_RESPONSE_BODY },
+    /* List terminator */
+    { NULL,                      false, PHASE_INVALID },
+};
+
+/**
+ * Lookup a phase name in the phase name table.
+ *
+ * @param[in] str phase name string to lookup
+ * @param[in] is_stream true if this is a stream phase
+ *
+ * @returns 
+ *   - phase_invalid if a phase cannot be found.
+ *   - the appropriate phase numbe
+ */
+ib_rule_phase_num_t ib_rule_lookup_phase(const char *str, int is_stream)
+{
+    const phase_lookup_t *item;
+
+    for (item = phase_lookup_table;  item->str != NULL;  ++item) {
+         if (strcasecmp(str, item->str) == 0) {
+             return item->phase;
+         }
+    }
+    return PHASE_INVALID;
+}
+
+
+/**
  * Items on the rule execution object stack
  */
 typedef struct {

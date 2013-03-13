@@ -2642,7 +2642,10 @@ static ib_status_t modlua_context_close(ib_engine_t  *ib,
         }
 
         /* Commit any pending configuration items. */
-        modlua_commit_configuration(ib, m);
+        rc = modlua_commit_configuration(ib, m);
+        if (rc != IB_OK) {
+            return rc;
+        }
     }
 
     return IB_OK;

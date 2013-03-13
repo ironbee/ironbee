@@ -1,3 +1,5 @@
 Sig("mySig", 1):
     fields("ARGS"):
-    op("eq", "hi")
+    phase("REQUEST"):
+    tags("t1", "t2"):
+    op("streq", "hi")

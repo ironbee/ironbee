@@ -94,7 +94,7 @@ check_PROGRAMS = test_gtest \
                  test_rule_inject \
                  test_util_ipset \
                  test_util_ip \
-		 test_kvstore
+                 test_kvstore
 if ENABLE_LUA
 check_PROGRAMS += test_module_rules_lua \
                   test_luajit
@@ -131,9 +131,9 @@ TEST_EXTRAS = \
        test_module_rules_lua.lua
 
 EXTRA_DIST = \
-	gtest \
-	base_fixture.h \
-	$(TEST_EXTRAS)
+             gtest \
+             base_fixture.h \
+             $(TEST_EXTRAS)
 
 if OUT_OF_TREE
 BUILT_SOURCES = $(addprefix $(abs_builddir)/, $(TEST_EXTRAS))
@@ -150,7 +150,7 @@ $(abs_builddir)/%: $(srcdir)/%
 
 test_util_hex_escape_SOURCES = test_util_hex_escape.cpp \
                                test_gtest.cpp \
-			                   test_main.cpp
+                               test_main.cpp
 
 # TODO: Get libhtp working w/C++
 # test_util_bytestr
@@ -271,7 +271,7 @@ test_action_LDADD = $(MODULE_TEST_LDADD)
 
 test_module_pcre_SOURCES = test_module_pcre.cpp \
                            test_module_dfa.cpp \
-			   test_main.cpp
+                           test_main.cpp
 test_module_pcre_LDADD = $(MODULE_TEST_LDADD)
 
 test_luajit_SOURCES = test_main.cpp \
@@ -279,12 +279,6 @@ test_luajit_SOURCES = test_main.cpp \
                       test_ironbee_lua_api.cpp \
                       test_ironbee_lua_configs.cpp \
                       test_ironbee_lua_modules.cpp
-
-test_module_ee_oper_SOURCES = test_module_ee_oper.cpp \
-                              test_main.cpp
-test_module_ee_oper_LDADD = $(MODULE_TEST_LDADD) \
-    $(top_builddir)/automata/libiaeudoxus.la
-
 test_luajit_CPPFLAGS = $(AM_CPPFLAGS) \
                        -I$(top_srcdir)/libs/luajit-2.0-ironbee/src \
                        -I$(top_srcdir)
@@ -294,15 +288,21 @@ test_luajit_LDADD = $(LDADD) \
                     $(top_builddir)/lua/libironbee-lua.la \
                     $(top_builddir)/modules/ibmod_lua_la-lua.o \
                     $(top_builddir)/modules/ibmod_lua_la-lua_common.o \
-		    -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
+                    -L$(abs_top_builddir)/libs/luajit-2.0-ironbee/src \
                     -lluajit-ironbee \
                     -lm
 
+test_module_ee_oper_SOURCES = test_module_ee_oper.cpp \
+                              test_main.cpp
+test_module_ee_oper_LDADD = $(MODULE_TEST_LDADD) \
+    $(top_builddir)/automata/libiaeudoxus.la
+
+
 test_kvstore_SOURCES = test_main.cpp \
-		       test_kvstore.cpp
+                       test_kvstore.cpp
 test_kvstore_CPPFLAGS = $(AM_CPPFLAGS)
 test_kvstore_LDADD = $(LDADD) \
-		     $(MODULE_TEST_LDADD) \
-		     -lm
+                     $(MODULE_TEST_LDADD) \
+                     -lm
 
 CLEANFILES = *_details.xml *_stderr.log *_valgrind_memcheck.xml

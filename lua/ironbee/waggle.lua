@@ -22,8 +22,28 @@ local Validator = require('ironbee/waggle/validator')
 -- Put a default rule database in place.
 _M.DEFAULT_RULE_DB = SignatureDatabase:new()
 
+-- Given a signature (Signature, Action, ExternalSignature, StreamSignature...)
+-- and add a table named "meta" (not a Lua Meta Table) populated with
+-- the source code name and line number.
+local set_sig_meta = function(sig)
+    local info = debug.getinfo(3, 'lSn')
+
+    if sig.meta == nil then
+        sig.meta = {}
+    end
+
+    sig.meta.source = info.short_src
+    sig.meta.line = info.currentline
+end
+
+-- List of signature types so that these constructor functions
+-- can be replaced.
+_M.SIGNATURE_TYPES = { "Sig", "Action", "ExtSig", "StrSig" }
+
 -- Create a new, incomplete, signature (aka rule) representation
 -- and register it with a global database of rules.
+--
+-- This also captures the line number and file that Sig is called on.
 --
 -- @param[in] self The module table use to construct a new sig.
 -- @param[in] rule_id Rule ID.
@@ -37,34 +57,53 @@ _M.Sig = function(self, rule_id, rule_version)
         rule_id = self
     end
 
-    return _M.DEFAULT_RULE_DB:Sig(rule_id, rule_version)
+    local sig = _M.DEFAULT_RULE_DB:Sig(rule_id, rule_version)
+
+    set_sig_meta(sig)
+
+    return sig
 end
 
+-- See Sig.
 _M.Action = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
         rule_id = self
     end
 
-    return _M.DEFAULT_RULE_DB:Action(rule_id, rule_version)
+    local sig = _M.DEFAULT_RULE_DB:Action(rule_id, rule_version)
+
+    set_sig_meta(sig)
+
+    return sig
 end
 
+-- See Sig.
 _M.ExtSig = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
         rule_id = self
     end
 
-    return _M.DEFAULT_RULE_DB:ExtSig(rule_id, rule_version)
+    local sig = _M.DEFAULT_RULE_DB:ExtSig(rule_id, rule_version)
+
+    set_sig_meta(sig)
+
+    return sig
 end
 
+-- See Sig.
 _M.StrSig = function(self, rule_id, rule_version)
     if type(self) == 'string' then
         rule_version = rule_id
         rule_id = self
     end
 
-    return _M.DEFAULT_RULE_DB:StrSig(rule_id, rule_version)
+    local sig = _M.DEFAULT_RULE_DB:StrSig(rule_id, rule_version)
+
+    set_sig_meta(sig)
+
+    return sig
 end
 
 -- Return a valid plan against the default database.

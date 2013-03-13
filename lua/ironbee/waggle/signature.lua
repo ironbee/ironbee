@@ -276,4 +276,9 @@ Signature.follows = function(self, ruleId, result)
     return self
 end
 
+-- Report if this rule type is a stream rule or not.
+Signature.is_streaming = function(self)
+    return false
+end
+
 return Signature
