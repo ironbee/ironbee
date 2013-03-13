@@ -834,5 +834,6 @@ TEST_F(ConnectionParsing, InvalidHostname) {
 
     ASSERT_TRUE(tx->flags & HTP_HOSTH_INVALID);
     ASSERT_TRUE(tx->flags & HTP_HOSTU_INVALID);
+    ASSERT_TRUE(tx->flags & HTP_HOST_INVALID);
 }
 
