@@ -28,7 +28,6 @@
 #define __PREDICATE__DAG__
 
 #include <boost/foreach.hpp>
-#include <boost/functional/hash.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include <iostream>
@@ -84,10 +83,9 @@ typedef boost::shared_ptr<const Literal> literal_cp;
  *
  * Nodes make up the predicate DAG.  They also appear in the expressions trees
  * that are merged together to construct the DAG.  The base classes provides
- * for value and evaluation, edges (as child and parent lists), and hashing
- * (used to detect equivalent nodes).  Subclasses are responsible for
- * defining how to calculate value and hash, as well as a string
- * representation.
+ * for value and evaluation, edges (as child and parent lists).
+ * Subclasses are responsible for defining how to calculate value as
+ * well as a string representation.
  *
  * @sa Call
  * @sa Literal
@@ -106,9 +104,6 @@ public:
 
     //! String representation.
     virtual std::string to_s() const = 0;
-
-    //! Hash of node.
-    virtual size_t hash() const = 0;
 
     //! True iff node can calculate value without context.
     virtual bool is_static() const
@@ -192,67 +187,13 @@ class Call :
     public Node
 {
 public:
-    //! Convert to string: (@a name children...)
+    //! Convert to string: (@c name children...)
     virtual std::string to_s() const;
 
     /**
      * Name accessor.
      */
     virtual std::string name() const = 0;
-};
-
-/**
- * Node representing a function call where argument order matters.
- *
- * @sa Call
- * @sa UnorderedCall
- * @sa Node
- **/
-class OrderedCall :
-     public Call
-{
-public:
-    //! Constructor.
-    OrderedCall();
-
-    /**
-     * Hash of node.
-     *
-     * In contrast to UnorderedCall::hash(), reordering the arguments will
-     * change the hash.
-     */
-    virtual size_t hash() const;
-
-private:
-    //! Cache of hash.  Mutable as does not reflect state.
-    mutable size_t m_hash;
-};
-
-/**
- * Node representing a function call where argument order does not matter.
- *
- * @sa Call
- * @sa OrderedCall
- * @sa Node
- **/
-class UnorderedCall :
-    public Call
-{
-public:
-    //! Constructor.
-    UnorderedCall();
-
-    /**
-     * Hash of node.
-     *
-     * In contrast to OrderedCall::hash(), reordering the arguments will
-     * *not* change the hash.
-     */
-    virtual size_t hash() const;
-
-private:
-    //! Cache of hash.  Mutable as does not reflect state.
-    mutable size_t m_hash;
 };
 
 /**
@@ -293,18 +234,11 @@ public:
     //! Convert to string.
     virtual std::string to_s() const;
 
-    //! Hash value.  Intentionally inline.
-    virtual size_t hash() const
-    {
-        return m_hash;
-    }
-
 protected:
     //! See Node::calculate()
     virtual Value calculate(Context context);
 
 private:
-    const size_t m_hash;
     const std::string m_s;
     IronBee::ScopedMemoryPool m_pool;
     IronBee::ConstField m_pre_value;
@@ -325,12 +259,6 @@ class Null :
 public:
     //! Convert to string.
     virtual std::string to_s() const;
-
-    //! Hash value.  Intentionally inline.
-    virtual size_t hash() const
-    {
-        return 0;
-    }
 
 protected:
     //! See Node::calculate()

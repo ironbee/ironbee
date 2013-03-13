@@ -43,11 +43,6 @@ public:
         return "dummy";
     }
 
-    virtual size_t hash() const
-    {
-        return 1234;
-    }
-
 protected:
     virtual DAG::Value calculate(DAG::Context)
     {
@@ -58,44 +53,9 @@ protected:
 class DummyCall : public DAG::Call
 {
 public:
-    virtual size_t hash() const
-    {
-        return 1234;
-    }
-
     virtual std::string name() const
     {
         return "dummy_call";
-    }
-
-protected:
-    virtual DAG::Value calculate(DAG::Context)
-    {
-        return IronBee::ConstField(&c_field);
-    }
-};
-
-class DummyOrderedCall : public DAG::OrderedCall
-{
-public:
-    virtual std::string name() const
-    {
-        return "dummy_ordered_call";
-    }
-
-protected:
-    virtual DAG::Value calculate(DAG::Context)
-    {
-        return IronBee::ConstField(&c_field);
-    }
-};
-
-class DummyUnorderedCall : public DAG::UnorderedCall
-{
-public:
-    virtual std::string name() const
-    {
-        return "dummy_unordered_call";
     }
 
 protected:
@@ -110,7 +70,6 @@ TEST_F(TestDAG, Node)
     DummyNode n;
 
     EXPECT_EQ("dummy", n.to_s());
-    EXPECT_EQ(1234, n.hash());
     EXPECT_TRUE(n.children().empty());
     EXPECT_TRUE(n.parents().empty());
     EXPECT_FALSE(n.has_value());
@@ -127,8 +86,6 @@ TEST_F(TestDAG, StringLiteral)
 {
     DAG::StringLiteral n("node");
     EXPECT_EQ("'node'", n.to_s());
-    EXPECT_NE(n.hash(), DAG::StringLiteral("node2").hash());
-    EXPECT_EQ(n.hash(), n.hash());
     EXPECT_TRUE(n.is_static());
     EXPECT_EQ(
         "node",
@@ -149,7 +106,6 @@ TEST_F(TestDAG, Call)
     DummyCall n;
 
     EXPECT_EQ("(dummy_call)", n.to_s());
-    EXPECT_EQ(1234, n.hash());
     EXPECT_EQ(&c_field, n.eval(m_transaction).ib());
     EXPECT_TRUE(n.has_value());
 
@@ -159,37 +115,6 @@ TEST_F(TestDAG, Call)
     n.children().push_back(a2);
 
     EXPECT_EQ("(dummy_call (dummy_call) 'foo')", n.to_s());
-}
-
-TEST_F(TestDAG, OrderedCall)
-{
-    DAG::node_p n1(new DummyOrderedCall());
-    DAG::node_p n2(new DummyOrderedCall());
-    DAG::node_p a1(new DummyCall());
-    DAG::node_p a2(new DAG::StringLiteral("foo"));
-
-    n1->children().push_back(a1);
-    n1->children().push_back(a2);
-    n2->children().push_back(a2);
-    n2->children().push_back(a1);
-
-    EXPECT_NE(n1->hash(), n2->hash());
-}
-
-TEST_F(TestDAG, UnorderedCall)
-{
-    DAG::node_p n1(new DummyUnorderedCall());
-    DAG::node_p n2(new DummyUnorderedCall());
-    DAG::node_p a1(new DummyCall());
-    DAG::node_p a2(new DAG::StringLiteral("foo"));
-
-    n1->children().push_back(a1);
-    n1->children().push_back(a2);
-    n2->children().push_back(a2);
-    n2->children().push_back(a1);
-
-    // Note EQ vs. NE for OrderedCall.
-    EXPECT_EQ(n1->hash(), n2->hash());
 }
 
 TEST_F(TestDAG, OutputOperator)

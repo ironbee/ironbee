@@ -77,7 +77,7 @@ ostream& operator<<(ostream& out, const Node& node)
 }
 
 StringLiteral::StringLiteral(const string& s) :
-    m_hash(boost::hash_value(s)), m_s(s),
+    m_s(s),
     m_pool("IronBee::Predicate::DAG::StringLiteral")
 {
     // nop
@@ -135,43 +135,6 @@ std::string Call::to_s() const
     }
     r += ")";
     return r;
-}
-
-OrderedCall::OrderedCall() :
-    m_hash(0)
-{
-    // nop
-}
-
-size_t OrderedCall::hash() const
-{
-    if (m_hash == 0) {
-        BOOST_FOREACH(const node_p& child, this->children()) {
-            // From boost::hash_combine.
-            m_hash ^= child->hash() + 0x9e3779b9 + (m_hash << 6) +
-                      (m_hash >> 2);
-        }
-        boost::hash_combine(m_hash, this->name());
-    }
-    return m_hash;
-}
-
-UnorderedCall::UnorderedCall() :
-    m_hash(0)
-{
-    // nop
-}
-
-size_t UnorderedCall::hash() const
-{
-    if (m_hash == 0) {
-        BOOST_FOREACH(const node_p& child, this->children()) {
-            // Note: Commutative
-            m_hash += child->hash();
-        }
-        boost::hash_combine(m_hash, this->name());
-    }
-    return m_hash;
 }
 
 } // DAG

@@ -34,7 +34,7 @@ namespace Standard {
  * Falsy value, null.
  **/
 class False :
-    public DAG::OrderedCall
+    public DAG::Call
 {
 public:
     //! See DAG::Call::name()
@@ -49,7 +49,7 @@ protected:
  * Truthy value, ''.
  **/
 class True :
-    public DAG::OrderedCall
+    public DAG::Call
 {
 public:
     //! See DAG::Call::name()
@@ -64,7 +64,7 @@ protected:
  * True iff any children are truthy.
  **/
 class Or :
-    public DAG::UnorderedCall
+    public DAG::Call
 {
 public:
     //! See DAG::Call::name()
@@ -78,7 +78,7 @@ protected:
  * True iff all children are truthy.
  **/
 class And :
-    public DAG::UnorderedCall
+    public DAG::Call
 {
 public:
     //! See DAG::Call::name()
@@ -92,7 +92,7 @@ protected:
  * True iff child is falsy.
  **/
 class Not :
-    public DAG::UnorderedCall
+    public DAG::Call
 {
 public:
     //! See DAG::Call::name()
