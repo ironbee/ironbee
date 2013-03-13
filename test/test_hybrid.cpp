@@ -360,6 +360,9 @@ TEST_F(HybridParsing, PostUrlecodedTest) {
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
 
+    // Request line complete
+    htp_tx_state_request_line(tx);
+
     // Configure headers to trigger the URLENCODED parser
     htp_tx_req_set_header(tx, "Content-Type", 12, HTP_URLENCODED_MIME_TYPE,
             strlen(HTP_URLENCODED_MIME_TYPE), HTP_ALLOC_COPY);
@@ -423,6 +426,7 @@ static void HybridParsing_CompressedResponse_Setup(htp_tx_t *tx) {
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
 
+    htp_tx_state_request_line(tx);
     htp_tx_state_request_headers(tx);
     htp_tx_state_request_complete(tx);
 
@@ -585,6 +589,7 @@ TEST_F(HybridParsing, PostUrlecodedChunked) {
     htp_tx_req_set_protocol(tx, "HTTP/1.1", 8, HTP_ALLOC_COPY);
     htp_tx_req_set_protocol_number(tx, HTP_PROTOCOL_1_1);
     htp_tx_req_set_protocol_0_9(tx, 0);
+    htp_tx_state_request_line(tx);
 
     // Configure headers to trigger the URLENCODED parser.
     htp_tx_req_set_header(tx, "Content-Type", 12, HTP_URLENCODED_MIME_TYPE,

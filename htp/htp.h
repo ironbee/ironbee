@@ -385,6 +385,20 @@ struct htp_tx_t {
     /** Authentication password. Available only when htp_tx_t::request_auth_type is HTP_AUTH_BASIC. */
     bstr *request_auth_password;
 
+    /**
+     * Request hostname. Per the RFC, the hostname will be taken from the Host header
+     * when available. If the host information is also available in the URI, it is used
+     * instead of whatever might be in the Host header. Can be NULL. This field does
+     * not contain port information.
+     */
+    bstr *request_hostname;
+
+    /**
+     * Request port number, if presented. The rules for htp_tx_t::request_host apply. Set to
+     * -1 by default.
+     */
+    int request_port_number;
+
 
     // Response fields
 

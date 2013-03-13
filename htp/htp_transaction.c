@@ -377,7 +377,16 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         return HTP_OK;
     }
 
-    // Host resolution
+    // Use the hostname from the URI, when available.   
+
+    if (tx->parsed_uri->hostname != NULL) {
+        tx->request_hostname = bstr_dup(tx->parsed_uri->hostname);
+    }
+
+    tx->request_port_number = tx->parsed_uri->port_number;
+
+    // Examine the Host header.
+    
     htp_header_t *h = htp_table_get_c(tx->request_headers, "host");
     if (h == NULL) {
         // No host information in the headers.
@@ -397,16 +406,15 @@ static htp_status_t htp_tx_process_request_headers(htp_tx_t *tx) {
         if (htp_parse_header_hostport(h->value, &hostname, &port, &(tx->flags)) != HTP_OK) return HTP_ERROR;
 
         // Is there host information in the URI?
-        if (tx->parsed_uri->hostname == NULL) {
+        if (tx->request_hostname == NULL) {
             // There is no host information in the URI. Place the
             // hostname from the headers into the parsed_uri structure.
-            tx->parsed_uri->hostname = hostname;
-            tx->parsed_uri->port_number = port;
+            tx->request_hostname = hostname;
+            tx->request_port_number = port;
         } else {
-            if ((bstr_cmp_nocase(hostname, tx->parsed_uri->hostname) != 0) || (port != tx->parsed_uri->port_number)) {
-                // The host information is different in the
-                // headers and the URI. The HTTP RFC states that
-                // we should ignore the header copy.
+            if ((bstr_cmp_nocase(hostname, tx->request_hostname) != 0) || (port != tx->request_port_number)) {
+                // The host information is different in the headers and the URI. The
+                // HTTP RFC states that we should ignore the header copy.
                 tx->flags |= HTP_HOST_AMBIGUOUS;
                 htp_log(tx->connp, HTP_LOG_MARK, HTP_LOG_WARNING, 0, "Host information ambiguous");
             }
