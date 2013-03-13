@@ -39,7 +39,7 @@
 
 #include <iostream>
 #include <gtest/gtest.h>
-#include <htp/htp.h>
+#include <htp/htp_private.h>
 #include "test.h"
 
 class ConnectionParsing : public testing::Test {

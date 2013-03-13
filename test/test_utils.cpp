@@ -39,13 +39,8 @@
  */
 
 #include <iostream>
-
 #include <gtest/gtest.h>
-
-#include <htp/htp.h>
-#include <htp/htp_list.h>
-#include <htp/htp_utf8_decoder.h>
-#include <htp/htp_base64.h>
+#include <htp/htp_private.h>
 
 TEST(Utf8, SingleByte) {
     uint32_t state = HTP_UTF8_ACCEPT;

@@ -38,9 +38,7 @@
 
 #include <iostream>
 #include <gtest/gtest.h>
-#include <htp/htp.h>
-#include <htp/htp_transaction.h>
-#include <htp/htp_base64.h>
+#include <htp/htp_private.h>
 #include "test.h"
 
 #include <htp/htp_multipart_private.h>
