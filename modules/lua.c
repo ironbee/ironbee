@@ -2136,6 +2136,66 @@ static ib_status_t modlua_preload(ib_engine_t *ib, lua_State *L) {
     return IB_OK;
 }
 
+/**
+ * Commit any pending configuration items, such as rules.
+ *
+ * @param[in] ib IronBee engine.
+ * @param[in] m The module object.
+ *
+ * @returns
+ *   - IB_OK
+ *   - IB_EOTHER on Rule adding errors. See log file.
+ */
+static ib_status_t modlua_commit_configuration(ib_engine_t *ib, ib_module_t *m)
+{
+    ib_status_t rc;
+    int lua_rc;
+    lua_State *L = modlua_global_cfg.L;
+
+    lua_getglobal(L, "ibconfig");
+    if ( ! lua_istable(L, -1) ) {
+        ib_log_error(ib, "ibconfig is not a module table.");
+        lua_pop(L, lua_gettop(L));
+        return IB_EOTHER;
+    }
+
+    lua_getfield(L, -1, "build_rules");
+    if ( ! lua_isfunction(L, -1) ) {
+        ib_log_error(ib, "ibconfig.include is not a function.");
+        lua_pop(L, lua_gettop(L));
+        return IB_EOTHER;
+    }
+
+    lua_pushlightuserdata(L, ib);
+    lua_pushlightuserdata(L, m);
+    lua_rc = lua_pcall(L, 2, 1, 0);
+    if (lua_rc == LUA_ERRFILE) {
+        ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
+        lua_pop(L, lua_gettop(L));
+        return IB_EOTHER;
+    }
+    else if (lua_rc) {
+        ib_log_error(ib, "Configuration Error: %s", lua_tostring(L, -1));
+        lua_pop(L, lua_gettop(L));
+        return IB_EOTHER;
+    } else if (lua_tonumber(L, -1) != IB_OK) {
+        rc = lua_tonumber(L, -1);
+        lua_pop(L, lua_gettop(L));
+        ib_log_error(
+            ib,
+            "Configuration error reported: %d:%s",
+            rc,
+            ib_status_to_string(rc));
+        return IB_EOTHER;
+    }
+
+    /* Clear stack. */
+    lua_pop(L, lua_gettop(L));
+
+    return IB_OK;
+}
+
+
 /* -- Event Handlers -- */
 
 /**
@@ -2580,6 +2640,9 @@ static ib_status_t modlua_context_close(ib_engine_t  *ib,
                 "Failed to register conn_finished_event hook: %s",
                 ib_status_to_string(rc));
         }
+
+        /* Commit any pending configuration items. */
+        modlua_commit_configuration(ib, m);
     }
 
     return IB_OK;

@@ -27,7 +27,9 @@
 
 /**
  * \page LuaAPI Lua API
+ *
  * \tableofcontents
+ *
  * \section Rules
  *
  * A section about rules.
