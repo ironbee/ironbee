@@ -90,22 +90,12 @@ local add_fields = function(ib, rule, prule, field)
         return rc
     end
 
+    -- Build up transformation list.
     if field.transformation then
-
         -- Split and walk the transformation list.
         for tfn_name in string.gmatch(field.transformation, "([^.()]+)") do
-            -- Make a new pointer
-            local tfn = ffi.new("ib_tfn_t*[1]")
-    
-            -- Get the transformation
-            rc = ffi.C.ib_tfn_lookup(ib.ib_engine, tfn_name, tfn)
-            if rc ~= ffi.C.IB_OK then
-                ib:logError("Failed to lookup transformation %s.", tfn_name)
-                return rc
-            end
-
             -- Add it to the list.
-            rc = ffi.C.ib_list_push(tfn_names[0], tfn[0])
+            rc = ffi.C.ib_list_push(tfn_names[0], ffi.cast("char*", tfn_name))
             if rc ~= ffi.C.IB_OK then
                 ib:logError(
                     "Failed to add transformation %s to list.",
@@ -176,6 +166,7 @@ local build_rule = function(ib, ctx, chain, db)
         for _, action in ipairs(rule.data.actions) do
             local name, arg = action.name, action.argument
             -- FIXME actions
+            -- FIXME modifiers
 
             -- Report errors. Keep trying to build rule, though.
             --if rc ~= ffi.C.IB_OK then
