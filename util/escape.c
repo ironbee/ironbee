@@ -630,13 +630,12 @@ char *ib_util_hex_escape(
     ib_status_t  rc;
     char        *buf;
     size_t       size;
-    size_t       len;
 
     rc = ib_util_hex_escape_alloc(mp, src_len, 0, &buf, &size);
     if (rc != IB_OK) {
         return NULL;
     }
 
-    len = ib_util_hex_escape_buf(src, src_len, buf, size);
+    ib_util_hex_escape_buf(src, src_len, buf, size);
     return buf;
 }
