@@ -823,7 +823,7 @@ TEST_F(ConnectionParsing, GetRequestLineNul) {
     ASSERT_EQ(0, bstr_cmp_c(tx->request_uri, "/?p=%20"));   
 }
 
-TEST_F(ConnectionParsing, InvalidHostname) {
+TEST_F(ConnectionParsing, InvalidHostname1) {
     int rc = test_run(home, "32-invalid-hostname.t", cfg, &connp);
     ASSERT_GE(rc, 0);
 
@@ -837,3 +837,30 @@ TEST_F(ConnectionParsing, InvalidHostname) {
     ASSERT_TRUE(tx->flags & HTP_HOST_INVALID);
 }
 
+TEST_F(ConnectionParsing, InvalidHostname2) {
+    int rc = test_run(home, "33-invalid-hostname.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_FALSE(tx->flags & HTP_HOSTH_INVALID);
+    ASSERT_TRUE(tx->flags & HTP_HOSTU_INVALID);
+    ASSERT_TRUE(tx->flags & HTP_HOST_INVALID);
+}
+
+TEST_F(ConnectionParsing, InvalidHostname3) {
+    int rc = test_run(home, "34-invalid-hostname.t", cfg, &connp);
+    ASSERT_GE(rc, 0);
+
+    ASSERT_EQ(1, htp_list_size(connp->conn->transactions));
+
+    htp_tx_t *tx = (htp_tx_t *) htp_list_get(connp->conn->transactions, 0);
+    ASSERT_TRUE(tx != NULL);
+
+    ASSERT_TRUE(tx->flags & HTP_HOSTH_INVALID);
+    ASSERT_FALSE(tx->flags & HTP_HOSTU_INVALID);
+    ASSERT_TRUE(tx->flags & HTP_HOST_INVALID);
+}
