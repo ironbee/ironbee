@@ -544,7 +544,6 @@ static inline ib_status_t modhtp_set_bytestr(
 {
     assert(itx != NULL);
     assert(label != NULL);
-    assert(htp_bstr != NULL);
     assert(ib_bstr != NULL);
 
     ib_status_t    rc;
@@ -561,10 +560,10 @@ static inline ib_status_t modhtp_set_bytestr(
     /* If it's not set in the htp bytestring, try the fallback. */
     if ( (htp_bstr == NULL) || (bstr_len(htp_bstr) == 0) ) {
         if (fallback == NULL) {
-            ib_log_error_tx(itx, "%s unknown: no fallback", label);
+            ib_log_debug_tx(itx, "%s unknown: no fallback", label);
             return IB_OK;
         }
-        ib_log_error_tx(itx,
+        ib_log_debug_tx(itx,
                         "%s unknown: using fallback \"%s\"", label, fallback);
         ptr = (const uint8_t *)fallback;
         len = strlen(fallback);
@@ -623,10 +622,8 @@ static inline ib_status_t modhtp_set_nulstr(
 {
     assert(itx != NULL);
     assert(label != NULL);
-    assert(htp_bstr != NULL);
     assert(nulstr != NULL);
 
-    ib_status_t  rc;
     const char  *ptr = NULL;
     size_t       len = 0;
 
@@ -640,10 +637,10 @@ static inline ib_status_t modhtp_set_nulstr(
     /* If it's not set in the htp bytestring, try the fallback. */
     if ( (htp_bstr == NULL) || (bstr_len(htp_bstr) == 0) ) {
         if (fallback == NULL) {
-            ib_log_error_tx(itx, "%s unknown: no fallback", label);
+            ib_log_debug_tx(itx, "%s unknown: no fallback", label);
             return IB_OK;
         }
-        ib_log_error_tx(itx,
+        ib_log_debug_tx(itx,
                         "%s unknown: using fallback \"%s\"", label, fallback);
         ptr = fallback;
         len = strlen(fallback);
@@ -1709,7 +1706,7 @@ static ib_status_t modhtp_iface_request_line(
 
     /* Hand the whole request line to libhtp */
     hrc = htp_tx_req_set_line(htp->in_tx,
-                              ib_bytestr_const_ptr(line->raw),
+                              (const char *)ib_bytestr_const_ptr(line->raw),
                               ib_bytestr_length(line->raw),
                               HTP_ALLOC_COPY);
     if (hrc != HTP_OK) {
@@ -1898,10 +1895,11 @@ static ib_status_t modhtp_iface_response_line(
     }
 
     /* Hand off the status line */
-    hrc = htp_tx_res_set_status_line(htx,
-                                     ib_bytestr_const_ptr(line->raw),
-                                     ib_bytestr_length(line->raw),
-                                     HTP_ALLOC_COPY);
+    hrc = htp_tx_res_set_status_line(
+        htx,
+        (const char *)ib_bytestr_const_ptr(line->raw),
+        ib_bytestr_length(line->raw),
+        HTP_ALLOC_COPY);
     if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
     }
