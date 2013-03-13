@@ -67,25 +67,33 @@ protected:
 
 TEST_F(TestDAG, Node)
 {
-    DummyNode n;
+    DAG::node_p n(new DummyNode);
 
-    EXPECT_EQ("dummy", n.to_s());
-    EXPECT_TRUE(n.children().empty());
-    EXPECT_TRUE(n.parents().empty());
-    EXPECT_FALSE(n.has_value());
-    EXPECT_THROW(n.value(), IronBee::einval);
+    EXPECT_EQ("dummy", n->to_s());
+    EXPECT_TRUE(n->children().empty());
+    EXPECT_TRUE(n->parents().empty());
+    EXPECT_FALSE(n->has_value());
+    EXPECT_THROW(n->value(), IronBee::einval);
 
-    EXPECT_EQ(&c_field, n.eval(m_transaction).ib());
-    EXPECT_TRUE(n.has_value());
+    EXPECT_EQ(&c_field, n->eval(m_transaction).ib());
+    EXPECT_TRUE(n->has_value());
 
-    n.reset();
-    EXPECT_FALSE(n.has_value());
+    n->reset();
+    EXPECT_FALSE(n->has_value());
+
+    DAG::node_p n2(new DummyNode);
+    n->add_child(n2);
+    EXPECT_EQ(1, n->children().size());
+    EXPECT_EQ(n2, n->children().front());
+    EXPECT_EQ(1, n2->parents().size());
+    EXPECT_EQ(n, n2->parents().front().lock());
 }
 
 TEST_F(TestDAG, StringLiteral)
 {
     DAG::StringLiteral n("node");
     EXPECT_EQ("'node'", n.to_s());
+    EXPECT_EQ("node", n.value_as_s());
     EXPECT_TRUE(n.is_static());
     EXPECT_EQ(
         "node",
@@ -103,18 +111,18 @@ TEST_F(TestDAG, StringLiteralEscaping)
 
 TEST_F(TestDAG, Call)
 {
-    DummyCall n;
+    DAG::node_p n(new DummyCall());
 
-    EXPECT_EQ("(dummy_call)", n.to_s());
-    EXPECT_EQ(&c_field, n.eval(m_transaction).ib());
-    EXPECT_TRUE(n.has_value());
+    EXPECT_EQ("(dummy_call)", n->to_s());
+    EXPECT_EQ(&c_field, n->eval(m_transaction).ib());
+    EXPECT_TRUE(n->has_value());
 
     DAG::node_p a1(new DummyCall());
-    n.children().push_back(a1);
+    n->add_child(a1);
     DAG::node_p a2(new DAG::StringLiteral("foo"));
-    n.children().push_back(a2);
+    n->add_child(a2);
 
-    EXPECT_EQ("(dummy_call (dummy_call) 'foo')", n.to_s());
+    EXPECT_EQ("(dummy_call (dummy_call) 'foo')", n->to_s());
 }
 
 TEST_F(TestDAG, OutputOperator)
@@ -132,4 +140,18 @@ TEST_F(TestDAG, Null)
     EXPECT_EQ("null", n.to_s());
     EXPECT_TRUE(n.is_static());
     EXPECT_FALSE(n.eval(DAG::Context()));
+}
+
+TEST_F(TestDAG, DeepCall)
+{
+    DAG::node_p n(new DummyCall());
+    DAG::node_p n2(new DummyCall());
+    DAG::node_p n3(new DummyCall());
+    DAG::node_p n4(new DummyCall());
+    n->add_child(n2);
+    n2->add_child(n3);
+    EXPECT_EQ("(dummy_call (dummy_call (dummy_call)))", n->to_s());
+    n3->add_child(n4);
+    // Note distance between n and n4.
+    EXPECT_EQ("(dummy_call (dummy_call (dummy_call (dummy_call))))", n->to_s());
 }

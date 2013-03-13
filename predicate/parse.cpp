@@ -116,12 +116,13 @@ DAG::node_p parse_call(
     DAG::node_p current;
     DAG::node_p top;
     size_t length = text.length();
+    bool done = false;
 
     if (length == 0) {
         return DAG::node_p();
     }
 
-    while (i < length && ! top) {
+    while (i < length && ! done) {
         switch (text[i]) {
         case ' ':
             advance(i, length, "Unterminated call");
@@ -137,8 +138,12 @@ DAG::node_p parse_call(
                 error(i, "Missing operation");
             }
             DAG::node_p n = factory(op);
+            if (! top) {
+                // Very importat to keep all our nodes in memory.
+                top = n;
+            }
             if (current) {
-                n->parents().push_back(current);
+                current->add_child(n);
             }
             current = n;
             break;
@@ -147,13 +152,11 @@ DAG::node_p parse_call(
             if (! current) {
                 error(i, "Too many )");
             }
-            if (current->parents().empty()) {
-                top = current;
+            else if (current->parents().empty()) {
+                done = true;
             }
             else {
-                DAG::node_p parent = current->parents().front();
-                parent->children().push_back(current);
-                current = parent;
+                current = current->parents().front().lock();
                 advance(i, length, "Expected )");
             }
             break;
@@ -163,7 +166,7 @@ DAG::node_p parse_call(
             if (! current) {
                 error(i, "Naked literal");
             }
-            current->children().push_back(parse_literal(text, i));
+            current->add_child(parse_literal(text, i));
             assert(text[i] == '\'' || text[i] == 'l');
             advance(i, length, "Unterminated call");
             break;
@@ -175,6 +178,7 @@ DAG::node_p parse_call(
     if (! top) {
         error(i, "Unterminated call");
     }
+    assert(current == top);
     return top;
 }
 

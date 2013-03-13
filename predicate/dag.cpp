@@ -70,50 +70,118 @@ void Node::reset()
     m_has_value = 0;
 }
 
+namespace {
+
+class points_to
+{
+public:
+    points_to(const Node* which) :
+        m_which(which)
+    {
+        // nop
+    }
+
+    bool operator()(const weak_node_p& node) const
+    {
+        return ! node.expired() && node.lock().get() == m_which;
+    }
+
+private:
+    const Node* m_which;
+};
+
+}
+
+void Node::add_child(const node_p& child)
+{
+    if (! child) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't add a singular child."
+            )
+        );
+    }
+
+    m_children.push_back(child);
+    child->m_parents.push_back(shared_from_this());
+}
+
+void Node::remove_child(const node_p& child)
+{
+    if (! child) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Can't remove a singular child."
+            )
+        );
+    }
+
+    size_t children_size = m_children.size();
+    m_children.remove(child);
+    if (m_children.size() == children_size) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::enoent() << errinfo_what(
+                "No such child."
+            )
+        );
+    }
+
+    size_t parent_size = child->m_parents.size();
+    child->m_parents.remove_if(points_to(this));
+    if (child->m_parents.size() == parent_size) {
+        BOOST_THROW_EXCEPTION(
+            IronBee::einval() << errinfo_what(
+                "Not a parent of child."
+            )
+        );
+    }
+}
+
 ostream& operator<<(ostream& out, const Node& node)
 {
     out << node.to_s();
     return out;
 }
 
-StringLiteral::StringLiteral(const string& s) :
-    m_s(s),
-    m_pool("IronBee::Predicate::DAG::StringLiteral")
+StringLiteral::StringLiteral(const string& value) :
+    m_value_as_s(value),
+    m_s("'" + StringLiteral::escape(value) + "'"),
+    m_pool("IronBee::Predicate::DAG::StringLiteral"),
+    m_value_as_field(
+        IronBee::Field::create_byte_string(
+            m_pool,
+            "", 0,
+            IronBee::ByteString::create_alias(
+                m_pool,
+                m_value_as_s
+            )
+        )
+    )
 {
     // nop
 }
 
-string StringLiteral::to_s() const
+string StringLiteral::escape(const std::string& s)
 {
     string escaped;
     size_t pos = 0;
     size_t last_pos = 0;
 
-    pos = m_s.find_first_of("'\\", pos);
+    pos = s.find_first_of("'\\", pos);
     while (pos != string::npos) {
-        escaped += m_s.substr(last_pos, pos);
+        escaped += s.substr(last_pos, pos);
         escaped += '\\';
-        escaped += m_s[pos];
+        escaped += s[pos];
         last_pos = pos + 1;
-        pos = m_s.find_first_of("'\\", last_pos);
+        pos = s.find_first_of("'\\", last_pos);
     }
-    escaped += m_s.substr(last_pos, pos);
-    return "'" + escaped + "'";
+    escaped += s.substr(last_pos, pos);
+    return escaped;
 }
 
 Value StringLiteral::calculate(Context)
 {
-    if (! m_pre_value) {
-        m_pre_value = IronBee::Field::create_byte_string(
-            m_pool,
-            "", 0,
-            IronBee::ByteString::create_alias(
-                m_pool,
-                m_s
-            )
-        );
-    }
-    return m_pre_value;
+    return m_value_as_field;
 }
 
 string Null::to_s() const
@@ -126,15 +194,77 @@ Value Null::calculate(Context)
     return Value();
 }
 
+// Don't use recalculate_s() as we don't want to update parents.
+Call::Call() :
+    m_calculated_s(false)
+{
+    // nop
+}
+
 std::string Call::to_s() const
 {
-    std::string r;
-    r = "(" + name();
-    BOOST_FOREACH(const node_p& child, this->children()) {
-        r += " " + child->to_s();
+    if (! m_calculated_s) {
+        // Only way we can get here is if no children were ever added/removed.
+        assert(children().empty());
+        m_s = '(' + name() + ')';
+        m_calculated_s = true;
     }
-    r += ")";
-    return r;
+    return m_s;
+}
+
+void Call::add_child(const node_p& child)
+{
+    Node::add_child(child);
+    recalculate_s();
+}
+
+void Call::remove_child(const node_p& child)
+{
+    Node::remove_child(child);
+    recalculate_s();
+}
+
+void Call::recalculate_s()
+{
+    m_s.clear();
+    m_s = "(" + name();
+    BOOST_FOREACH(const node_p& child, this->children()) {
+        m_s += " " + child->to_s();
+    }
+    m_s += ")";
+
+    BOOST_FOREACH(const weak_node_p& weak_parent, parents()) {
+        call_p parent = boost::dynamic_pointer_cast<Call>(
+            weak_parent.lock()
+        );
+        if (! parent) {
+            BOOST_THROW_EXCEPTION(
+                IronBee::einval() << errinfo_what(
+                    "Have non-Call parent."
+                )
+            );
+        }
+        parent->recalculate_s();
+    }
+    m_calculated_s = true;
+}
+
+void Literal::add_child(const node_p&)
+{
+    BOOST_THROW_EXCEPTION(
+        IronBee::einval() << errinfo_what(
+            "Literals can not have children."
+        )
+    );
+}
+
+void Literal::remove_child(const node_p&)
+{
+    BOOST_THROW_EXCEPTION(
+        IronBee::einval() << errinfo_what(
+            "Literals can not have children."
+        )
+    );
 }
 
 } // DAG

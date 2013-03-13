@@ -29,6 +29,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 
 #include <iostream>
 #include <list>
@@ -52,6 +53,11 @@ class Literal;
  * Shared pointer to Node.
  **/
 typedef boost::shared_ptr<Node> node_p;
+
+/**
+ * Weak pointer to Node.
+ **/
+typedef boost::weak_ptr<Node> weak_node_p;
 
 /**
  * Shared const pointer to Node.
@@ -90,7 +96,8 @@ typedef boost::shared_ptr<const Literal> literal_cp;
  * @sa Call
  * @sa Literal
  */
-class Node
+class Node :
+    public boost::enable_shared_from_this<Node>
 {
 public:
     //! Constructor.
@@ -99,10 +106,13 @@ public:
     //! Destructor.
     virtual ~Node();
 
-    //! List of nodes.  See children() and parents().
+    //! List of nodes.  See children().
     typedef std::list<node_p> node_list_t;
 
-    //! String representation.
+    //! Weak list of nodes.  See parents().
+    typedef std::list<weak_node_p> weak_node_list_t;
+
+    //! S-expression.
     virtual std::string to_s() const = 0;
 
     //! True iff node can calculate value without context.
@@ -111,7 +121,33 @@ public:
         return false;
     }
 
-    // Accessors are intentionally inline.
+    /**
+     * Add a child.
+     *
+     * Adds to end of children() and adds @c this to end of parents() of
+     * child.  Subclasses can add additional behavior.
+     *
+     * O(1)
+     *
+     * @param[in] child Child to add.
+     * @throw IronBee::einval if ! @a child.
+     **/
+    virtual void add_child(const node_p& child);
+
+    /**
+     * Remove a child.
+     *
+     * Removes from children() and removes @c this from parents() of child.
+     * Subclasses can add additional behavior.
+     *
+     * O(n) where n is size of children() of @c this or parents() of child.
+     *
+     * @param[in] child Child to remove.
+     * @throw IronBee::enoent if no such child.
+     * @throw IronBee::einval if not a parent of child.
+     * @throw IronBee::einval if ! @a child.
+     **/
+    virtual void remove_child(const node_p& child);
 
     //! Children accessor -- const.
     const node_list_t& children() const
@@ -119,17 +155,7 @@ public:
         return m_children;
     }
     //! Parents accessor -- const.
-    const node_list_t& parents() const
-    {
-        return m_parents;
-    }
-    //! Children accessor -- non-const.
-    node_list_t& children()
-    {
-        return m_children;
-    }
-    //! Parents accessor -- non-const.
-    node_list_t& parents()
+    const weak_node_list_t& parents() const
     {
         return m_parents;
     }
@@ -162,10 +188,10 @@ protected:
     virtual Value calculate(Context context) = 0;
 
 private:
-    bool        m_has_value;
-    Value       m_value;
-    node_list_t m_parents;
-    node_list_t m_children;
+    bool             m_has_value;
+    Value            m_value;
+    weak_node_list_t m_parents;
+    node_list_t      m_children;
 };
 
 //! Ostream output operator.
@@ -187,13 +213,37 @@ class Call :
     public Node
 {
 public:
-    //! Convert to string: (@c name children...)
+    //! Constructor.
+    Call();
+
+    //! See Node::add_child().
+    virtual void add_child(const node_p& child);
+
+    //! See Node::remove_child().
+    virtual void remove_child(const node_p& child);
+
+    //! S-expression: (@c name children...)
     virtual std::string to_s() const;
 
     /**
      * Name accessor.
      */
     virtual std::string name() const = 0;
+
+private:
+    //! Recalculate m_s.
+    void recalculate_s();
+
+    // Because name() is pure, Call::Call() can not calculate m_s.  I.e., we
+    // need to fully construct the class before setting m_s.  So we have
+    // to_s() calculate it on the fly the first time.  The following two
+    // members maintain that cache.
+
+    //! Have we calculate m_s at all?
+    mutable bool m_calculated_s;
+
+    //! String form.
+    mutable std::string m_s;
 };
 
 /**
@@ -203,6 +253,11 @@ class Literal :
     public Node
 {
 public:
+    //! @throw IronBee::einval always.
+    virtual void add_child(const node_p&);
+    //! @throw IronBee::einval always.
+    virtual void remove_child(const node_p&);
+
     //! Is static!
     virtual bool is_static() const
     {
@@ -229,19 +284,43 @@ public:
      * @param[in] s Value of node.
      **/
     explicit
-    StringLiteral(const std::string& s);
+    StringLiteral(const std::string& value);
 
-    //! Convert to string.
-    virtual std::string to_s() const;
+    //! Value as string.
+    std::string value_as_s() const
+    {
+        return m_value_as_s;
+    }
+
+    //! S-expression: 'value'
+    virtual std::string to_s() const
+    {
+        return m_s;
+    }
+
+    /**
+     * Escape a string.
+     *
+     * Adds backslashes before all single quotes and backslashes.
+     *
+     * @param[in] s String to escape.
+     * @return Escaped string.
+     **/
+    static std::string escape(const std::string& s);
 
 protected:
     //! See Node::calculate()
     virtual Value calculate(Context context);
 
 private:
-    const std::string m_s;
+    //! Value as a C++ string.
+    const std::string         m_value_as_s;
+    //! S-expression.
+    const std::string         m_s;
+    //! Memory pool to create field value from.  Alias of m_value_as_s.
     IronBee::ScopedMemoryPool m_pool;
-    IronBee::ConstField m_pre_value;
+    //! Value returned by calculate().
+    IronBee::ConstField       m_value_as_field;
 };
 
 /**
@@ -257,7 +336,7 @@ class Null :
     public Literal
 {
 public:
-    //! Convert to string.
+    //! S-expression: null
     virtual std::string to_s() const;
 
 protected:
