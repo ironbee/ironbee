@@ -523,77 +523,138 @@ static ib_status_t modhtp_set_header(
 }
 
 /**
- * Set the IronBee transaction's hostname
+ * Set a IronBee bytestring if it's NULL or empty from a libhtp bstr.
  *
- * @param[in] htx libhtp transaction
- * @param[in] iconn IronBee connection
- * @param[in,out] itx IronBee transaction
+ * @param[in] itx IronBee transaction
+ * @param[in] label Label for logging
+ * @param[in] force Set even if value already set
+ * @param[in] htp_bstr HTP bstr to copy from
+ * @param[in] fallback Fallback string (or NULL)
+ * @param[in,out] ib_bstr Pointer to IronBee bytestring to fill
  *
- * @returns IronBee status code
+ * @returns IronBee Status code
  */
-static ib_status_t modhtp_set_itx_hostname(
-    const htp_tx_t  *htx,
-    const ib_conn_t *iconn,
-    ib_tx_t         *itx)
+static inline ib_status_t modhtp_set_bytestr(
+    const ib_tx_t          *itx,
+    const char             *label,
+    bool                    force,
+    const bstr             *htp_bstr,
+    const char             *fallback,
+    ib_bytestr_t          **ib_bstr)
 {
+    assert(itx != NULL);
+    assert(label != NULL);
+    assert(htp_bstr != NULL);
+    assert(ib_bstr != NULL);
 
-    /* Store the hostname if it was parsed with the URI. */
-    if ( (htx->parsed_uri != NULL) && (htx->parsed_uri->hostname != NULL) &&
-         (itx->hostname == NULL) ) {
-        itx->hostname = ib_mpool_memdup_to_str(
-            itx->mp,
-            bstr_ptr(htx->parsed_uri->hostname),
-            bstr_len(htx->parsed_uri->hostname));
+    ib_status_t    rc;
+    const uint8_t *ptr = NULL;
+    size_t         len = 0;
+
+    /* If it's already set, do nothing */
+    if ( (*ib_bstr != NULL) && (ib_bytestr_length(*ib_bstr) != 0) ) {
+        if (! force) {
+            return IB_OK;
+        }
+    }
+
+    /* If it's not set in the htp bytestring, try the fallback. */
+    if ( (htp_bstr == NULL) || (bstr_len(htp_bstr) == 0) ) {
+        if (fallback == NULL) {
+            ib_log_error_tx(itx, "%s unknown: no fallback", label);
+            return IB_OK;
+        }
+        ib_log_error_tx(itx,
+                        "%s unknown: using fallback \"%s\"", label, fallback);
+        ptr = (const uint8_t *)fallback;
+        len = strlen(fallback);
     }
     else {
-        ib_log_debug_tx(itx, "No hostname in the request line.");
+        ptr = bstr_ptr(htp_bstr);
+        len = bstr_len(htp_bstr);
     }
 
-    if (itx->hostname == NULL) {
-        ib_log_debug_tx(itx,
-                        "Unknown hostname - using ip: %s",
-                        iconn->local_ipstr);
-        /// @todo Probably should set a flag here
-        itx->hostname = ib_mpool_strdup(itx->mp, iconn->local_ipstr);
+    /*
+     * If the target bytestring is NULL, create it, otherwise
+     * append to the zero-length bytestring.
+     */
+    if (*ib_bstr == NULL) {
+        rc = ib_bytestr_dup_mem(ib_bstr, itx->mp, ptr, len);
     }
-    return IB_OK;
+    else if (force) {
+        void *new = ib_mpool_memdup(itx->mp, ptr, len);
+        if (new == NULL) {
+            rc = IB_EALLOC;
+            goto done;
+        }
+        rc = ib_bytestr_setv(*ib_bstr, new, len);
+    }
+    else {
+        rc = ib_bytestr_append_mem(*ib_bstr, ptr, len);
+    }
+
+done:
+    if (rc != IB_OK) {
+        ib_log_error_tx(itx, "Failed to set %s: %s",
+                        label, ib_status_to_string(rc));
+    }
+    return rc;
 }
 
 /**
- * Set the IronBee transaction's URI path
+ * Set a NUL-terminated string if it's NULL or empty from a libhtp bstr.
  *
- * @param[in] htx libhtp transaction
- * @param[in] iconn IronBee connection
- * @param[in,out] itx IronBee transaction
+ * @param[in] itx IronBee transaction
+ * @param[in] label Label for logging
+ * @param[in] force Set even if value already set
+ * @param[in] htp_bstr HTP bstr to copy from
+ * @param[in] fallback Fallback string (or NULL)
+ * @param[in,out] ib_str Pointer to NUL-terminated string to fill
  *
- * @returns IronBee status code
+ * @returns Status code
  */
-static ib_status_t modhtp_set_itx_uri_path(
-    const htp_tx_t  *htx,
-    const ib_conn_t *iconn,
-    ib_tx_t         *itx)
+static inline ib_status_t modhtp_set_nulstr(
+    const ib_tx_t          *itx,
+    const char             *label,
+    bool                    force,
+    const bstr             *htp_bstr,
+    const char             *fallback,
+    const char            **nulstr)
 {
+    assert(itx != NULL);
+    assert(label != NULL);
+    assert(htp_bstr != NULL);
+    assert(nulstr != NULL);
 
-    /* Store the hostname if it was parsed with the URI. */
-    if ( (htx->parsed_uri != NULL) && (htx->parsed_uri->hostname != NULL) &&
-         (itx->hostname == NULL) ) {
-        itx->hostname = ib_mpool_memdup_to_str(
-            itx->mp,
-            bstr_ptr(htx->parsed_uri->hostname),
-            bstr_len(htx->parsed_uri->hostname));
+    ib_status_t  rc;
+    const char  *ptr = NULL;
+    size_t       len = 0;
+
+    /* If it's already set, do nothing */
+    if ( (*nulstr != NULL) && (**nulstr != '\0') ) {
+        if (! force) {
+            return IB_OK;
+        }
+    }
+
+    /* If it's not set in the htp bytestring, try the fallback. */
+    if ( (htp_bstr == NULL) || (bstr_len(htp_bstr) == 0) ) {
+        if (fallback == NULL) {
+            ib_log_error_tx(itx, "%s unknown: no fallback", label);
+            return IB_OK;
+        }
+        ib_log_error_tx(itx,
+                        "%s unknown: using fallback \"%s\"", label, fallback);
+        ptr = fallback;
+        len = strlen(fallback);
     }
     else {
-        ib_log_debug_tx(itx, "No hostname in the request line.");
+        ptr = (const char *)bstr_ptr(htp_bstr);
+        len = bstr_len(htp_bstr);
     }
 
-    if (itx->hostname == NULL) {
-        ib_log_debug_tx(itx,
-                        "Unknown hostname - using ip: %s",
-                        iconn->local_ipstr);
-        /// @todo Probably should set a flag here
-        itx->hostname = ib_mpool_strdup(itx->mp, iconn->local_ipstr);
-    }
-    return IB_OK;
+    *nulstr = ib_mpool_memdup_to_str(itx->mp, ptr, len);
+    return (*nulstr == NULL) ? IB_EALLOC : IB_OK;
 }
 
 /**
@@ -951,28 +1012,34 @@ static int modhtp_htp_request_line(
         }
     }
 
-    /* Store the transaction URI */
-    if ( (itx->request_line->uri == NULL) ||
-         (ib_bytestr_length(itx->request_line->uri) == 0) )
-    {
-        irc = ib_bytestr_dup_mem(
-            &itx->request_line->uri,
-            itx->mp,
-            bstr_ptr(tx->request_uri),
-            bstr_len(tx->request_uri));
-        if (irc != IB_OK) {
-            return HTP_ERROR;
-        }
-    }
-
-    /* Store the transaction URI path. */
-    irc = modhtp_set_itx_uri_path(tx, iconn, itx);
+    /* Store the request method */
+    irc = modhtp_set_bytestr(itx, "Request method", false,
+                             tx->request_method, NULL,
+                             &(itx->request_line->method));
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
 
-    /* Set the host name */
-    irc = modhtp_set_itx_hostname(tx, iconn, itx);
+    /* Store the request URI */
+    irc = modhtp_set_bytestr(itx, "Request URI", false,
+                             tx->request_uri, NULL,
+                             &(itx->request_line->uri));
+    if (irc != IB_OK) {
+        return HTP_ERROR;
+    }
+
+    /* Store the request protocol */
+    irc = modhtp_set_bytestr(itx, "Request protocol", false,
+                             tx->request_protocol, NULL,
+                             &(itx->request_line->protocol));
+    if (irc != IB_OK) {
+        return HTP_ERROR;
+    }
+
+    /* Store the transaction URI path. */
+    irc = modhtp_set_nulstr(itx, "URI Path", false,
+                            tx->parsed_uri->path, "/",
+                            &(itx->path));
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
@@ -996,7 +1063,10 @@ static int modhtp_htp_request_headers(
     }
 
     /* Update the hostname that may have changed with headers. */
-    irc = modhtp_set_itx_hostname(tx, iconn, itx);
+    irc = modhtp_set_nulstr(itx, "Hostname", true,
+                            tx->parsed_uri->hostname,
+                            iconn->local_ipstr,
+                            &(itx->hostname));
     if (irc != IB_OK) {
         return irc;
     }
@@ -1080,6 +1150,31 @@ static int modhtp_htp_response_line(
     if (irc != IB_OK) {
         return HTP_ERROR;
     }
+
+    /* Store the response protocol */
+    irc = modhtp_set_bytestr(itx, "Response protocol", false,
+                             tx->response_protocol, NULL,
+                             &itx->response_line->protocol);
+    if (irc != IB_OK) {
+        return HTP_ERROR;
+    }
+
+    /* Store the response status */
+    irc = modhtp_set_bytestr(itx, "Response status", false,
+                             tx->response_status, NULL,
+                             &itx->response_line->status);
+    if (irc != IB_OK) {
+        return HTP_ERROR;
+    }
+
+    /* Store the request URI */
+    irc = modhtp_set_bytestr(itx, "Response message", false,
+                             tx->response_message, NULL,
+                             &itx->response_line->msg);
+    if (irc != IB_OK) {
+        return HTP_ERROR;
+    }
+
 
     if (tx->flags) {
         modhtp_set_parser_flags(itx, "HTP_RESPONSE_FLAGS", tx->flags);
@@ -1503,153 +1598,6 @@ static ib_status_t modhtp_iface_disconnect(
     return IB_OK;
 }
 
-#if 0
-static ib_status_t modhtp_iface_data_in(
-    ib_provider_inst_t *pi,
-    ib_conndata_t      *qcdata)
-{
-    ib_engine_t *ib = pi->pr->ib;
-    ib_conn_t *iconn = qcdata->conn;
-    modhtp_context_t *modctx;
-    htp_connp_t *htp;
-    htp_tx_t *tx;
-    ib_tx_t *itx = NULL;
-    struct timeval tv;
-    int ec;
-
-    /* Ignore any zero length data. */
-    if (qcdata->dlen == 0) {
-        ib_log_debug3(ib, "Ignoring zero length incoming data.");
-        return IB_OK;
-    }
-
-    /* Fetch context from the connection. */
-    modctx = ib_conn_parser_context_get(iconn);
-    htp = modctx->htp;
-
-    gettimeofday(&tv, NULL);
-
-    ib_log_debug3(ib, "LibHTP incoming data status=%d", htp->in_status);
-    ib_log_debug3(ib,
-                  "DATA: %s:%d -> %s:%d len=%d %" IB_BYTESTR_FMT,
-                  iconn->remote_ipstr, iconn->remote_port,
-                  iconn->local_ipstr, iconn->local_port,
-                  (int)qcdata->dlen,
-                  IB_BYTESTRSL_FMT_PARAM(qcdata->data, qcdata->dlen));
-
-    /* Lookup the current htp and ironbee transactions */
-    tx = htp->in_tx;
-    if (tx != NULL) {
-        itx = htp_tx_get_user_data(tx);
-    }
-
-    if (itx == NULL) {
-        ib_log_debug3(ib, "Data In: No IronBee transaction available.");
-    }
-
-    switch(htp->in_status) {
-    case HTP_STREAM_NEW:
-    case HTP_STREAM_OPEN:
-    case HTP_STREAM_DATA:
-        /* Let the parser see the data. */
-        ec = htp_connp_req_data(htp, &tv, qcdata->data, qcdata->dlen);
-        if (ec == HTP_STREAM_DATA_OTHER) {
-            ib_log_notice(ib, "LibHTP parser blocked: %d", ec);
-            /// @todo Buffer it for next time?
-        }
-        else if (ec != HTP_STREAM_DATA) {
-            ib_log_info(ib, "LibHTP request parsing error: %d", ec);
-        }
-        break;
-
-    case HTP_STREAM_ERROR:
-        ib_log_info(ib, "LibHTP parser in \"error\" state");
-        break;
-
-    case HTP_STREAM_DATA_OTHER:
-        ib_log_notice(ib, "LibHTP parser in \"other\" state");
-        break;
-
-    default:
-        ib_log_error(ib, "LibHTP parser in unhandled state %d",
-                     htp->in_status);
-    }
-
-    return IB_OK;
-}
-
-static ib_status_t modhtp_iface_data_out(
-    ib_provider_inst_t *pi,
-    ib_conndata_t      *qcdata)
-{
-    ib_engine_t *ib = pi->pr->ib;
-    ib_conn_t *iconn = qcdata->conn;
-    modhtp_context_t *modctx;
-    htp_connp_t *htp;
-    htp_tx_t *tx;
-    ib_tx_t *itx = NULL;
-    struct timeval tv;
-    int ec;
-
-    /* Ignore any zero length data. */
-    if (qcdata->dlen == 0) {
-        ib_log_debug3(ib, "Ignoring zero length outgoing data.");
-        return IB_OK;
-    }
-
-    gettimeofday(&tv, NULL);
-
-    /* Fetch context from the connection. */
-    modctx = (modhtp_context_t *)ib_conn_parser_context_get(iconn);
-    htp = modctx->htp;
-
-    ib_log_debug3(ib, "LibHTP outgoing data status=%d", htp->out_status);
-    ib_log_debug3(ib,
-                  "DATA: %s:%d -> %s:%d len=%d %" IB_BYTESTR_FMT,
-                  iconn->local_ipstr, iconn->local_port,
-                  iconn->remote_ipstr, iconn->remote_port,
-                  (int)qcdata->dlen,
-                  IB_BYTESTRSL_FMT_PARAM(qcdata->data, qcdata->dlen));
-
-    /* Lookup the current htp and ironbee transactions */
-    tx = htp->out_tx;
-    if (tx != NULL) {
-        itx = htp_tx_get_user_data(tx);
-    }
-
-    if (itx == NULL) {
-        ib_log_debug3(ib, "Data Out: No IronBee transaction available.");
-    }
-
-    switch(htp->out_status) {
-        case HTP_STREAM_NEW:
-        case HTP_STREAM_OPEN:
-        case HTP_STREAM_DATA:
-            /* Let the parser see the data. */
-            ec = htp_connp_res_data(htp, &tv, qcdata->data, qcdata->dlen);
-            if (ec == HTP_STREAM_DATA_OTHER) {
-                ib_log_notice(ib, "LibHTP parser blocked: %d", ec);
-                /// @todo Buffer it for next time?
-            }
-            else if (ec != HTP_STREAM_DATA) {
-                ib_log_info(ib, "LibHTP response parsing error: %d", ec);
-            }
-            break;
-        case HTP_STREAM_ERROR:
-            ib_log_info(ib, "LibHTP parser in \"error\" state");
-            break;
-        case HTP_STREAM_DATA_OTHER:
-            ib_log_notice(ib, "LibHTP parser in \"other\" state");
-            break;
-        default:
-            ib_log_error(ib, "LibHTP parser in unhandled state %d",
-                         htp->out_status);
-    }
-
-    return IB_OK;
-}
-#endif
-
 static ib_status_t modhtp_iface_tx_init(
     ib_provider_inst_t *pi,
     ib_tx_t            *itx)
@@ -1712,76 +1660,6 @@ static ib_status_t modhtp_iface_tx_cleanup(
     return IB_OK;
 }
 
-/**
- * Set the request URI for libhtp
- *
- * This may involve splitting the URI up into the URI portion and the query
- * portion.
- *
- * @param[in] itx IronBee transaction
- * @param[in] htx libhtp transaction
- * @param[in] uri_bstr URI as an IronBee byte string
- *
- * @returns Status code
- */
-static ib_status_t modhtp_set_request_uri(
-    const ib_tx_t      *itx,
-    htp_tx_t           *htx,
-    const ib_bytestr_t *uri_bstr)
-{
-    const char  *uri;
-    size_t       uri_len;
-    ib_status_t  irc;
-    ssize_t      qoff;
-
-    uri = (const char *)ib_bytestr_const_ptr(uri_bstr);
-    uri_len = ib_bytestr_length(uri_bstr);
-
-    if (uri == NULL) {
-        irc = modhtp_set_bstr(itx, htx, uri_bstr, htp_tx_req_set_uri);
-        return irc;
-    }
-
-    /* Do we have a query portion? */
-    irc = ib_strchr_nul_ignore(uri, uri_len, '?', &qoff);
-    if (irc != IB_OK) {
-        return irc;
-    }
-    else if (qoff == 0) {
-        return IB_EINVAL;
-    }
-    else if (qoff != -1) {
-        size_t len;
-        const char *qmark = uri + qoff;
-
-        len = qoff;
-        irc = modhtp_set_data(itx, htx,
-                              uri, len,
-                              htp_tx_req_set_uri);
-        if (irc != IB_OK) {
-            return irc;
-        }
-
-        len = uri_len - qoff;
-        if (len > 0) {
-            irc = modhtp_set_data(itx, htx,
-                                  qmark + 1, len,
-                                  htp_tx_req_set_query_string);
-            if (irc != IB_OK) {
-                return irc;
-            }
-        }
-    }
-    else {
-        irc = modhtp_set_bstr(itx, htx, uri_bstr, htp_tx_req_set_uri);
-        if (irc != IB_OK) {
-            return irc;
-        }
-    }
-
-    return IB_OK;
-}
-
 static ib_status_t modhtp_iface_request_line(
     ib_provider_inst_t   *pi,
     ib_tx_t              *itx,
@@ -1830,39 +1708,15 @@ static ib_status_t modhtp_iface_request_line(
     }
 
     /* Hand the whole request line to libhtp */
-#if 0
-    irc = htx_tx_req_set_request_line(htp->in_tx,
-                                      ib_bytestr_const_ptr(line->raw),
-                                      ib_bytestr_length(line->raw),
-                                      HTP_ALLOC_COPY);
-#else
-
-    /* Hand the method to libhtp */
-    irc = modhtp_set_bstr(itx, htp->in_tx, line->method, htp_tx_req_set_method);
-    if (irc != IB_OK) {
-        return irc;
+    hrc = htp_tx_req_set_line(htp->in_tx,
+                              ib_bytestr_const_ptr(line->raw),
+                              ib_bytestr_length(line->raw),
+                              HTP_ALLOC_COPY);
+    if (hrc != HTP_OK) {
+        return IB_EUNKNOWN;
     }
 
-    /* Set the URI (maybe split up URI into URI and query) */
-    irc = modhtp_set_request_uri(itx, htp->in_tx, line->uri);
-    if (irc != IB_OK) {
-        return irc;
-    }
-
-    /* Tell libhtp the protocol */
-    if ( (line->protocol != NULL) || (ib_bytestr_length(line->protocol) == 0)) {
-        htp_tx_req_set_protocol_0_9(htp->in_tx, 1);
-    }
-    else {
-        irc = modhtp_set_bstr(itx, htp->in_tx,
-                              line->method, htp_tx_req_set_protocol);
-        if (irc != IB_OK) {
-            return irc;
-        }
-        htp_tx_req_set_protocol_0_9(htp->in_tx, 0);
-    }
-#endif
-
+    /* Update the state */
     hrc = htp_tx_state_request_line(htx);
     if (hrc != HTP_OK) {
         return IB_EUNKNOWN;
@@ -1880,8 +1734,9 @@ static ib_status_t modhtp_iface_request_header_data(
     assert(itx != NULL);
     assert(header != NULL);
 
-    ib_status_t irc;
-    htp_tx_t *htx;
+    htp_status_t  hrc;
+    ib_status_t   irc;
+    htp_tx_t     *htx;
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
@@ -1898,8 +1753,19 @@ static ib_status_t modhtp_iface_request_header_data(
         return IB_EUNKNOWN;
     }
 
+    /* Hand the headers off to libhtp */
     irc = modhtp_set_header(itx, htx, header, htp_tx_req_set_header);
-    return irc;
+    if (irc != IB_OK) {
+        return irc;
+    }
+
+    /* Update the state */
+    hrc = htp_tx_state_request_headers(htx);
+    if (hrc != HTP_OK) {
+        return IB_EUNKNOWN;
+    }
+
+    return IB_OK;
 }
 
 static ib_status_t modhtp_iface_request_header_finished(
@@ -1993,56 +1859,6 @@ static ib_status_t modhtp_iface_request_finished(
     return irc;
 }
 
-#if 0
-/**
- * @todo This function will be replaced
- */
-static ib_status_t modhtp_set_response_protocol(
-    const ib_tx_t      *itx,
-    htp_tx_t           *htx,
-    const ib_bytestr_t *proto_buf)
-{
-    int proto;
-
-    bstr *buf;
-    buf = bstr_dup_mem(ib_bytestr_const_ptr(proto_buf),
-                       ib_bytestr_length(proto_buf));
-    if (buf == NULL) {
-        return IB_EALLOC;
-    }
-    proto = htp_parse_protocol(buf);
-    bstr_free(buf);
-    if (proto == HTP_PROTOCOL_UNKNOWN) {
-        /*return IB_EINVAL;*/
-    }
-
-    htp_tx_res_set_protocol_number(htx, proto);
-    return IB_OK;
-}
-
-/**
- * @todo This function will be replaced
- */
-static ib_status_t modhtp_set_response_status(
-    const ib_tx_t      *itx,
-    htp_tx_t           *htx,
-    const ib_bytestr_t *status_buf)
-{
-    ib_num_t status_code;
-    ib_status_t irc;
-
-    irc = ib_string_to_num_ex((const char *)ib_bytestr_const_ptr(status_buf),
-                              ib_bytestr_length(status_buf),
-                              10,
-                              &status_code);
-    if ( (irc != IB_OK) && (irc != IB_EINVAL) ) {
-        return irc;
-    }
-    htp_tx_res_set_status_code(htx, (int)status_code);
-    return IB_OK;
-}
-#endif
-
 static ib_status_t modhtp_iface_response_line(
     ib_provider_inst_t    *pi,
     ib_tx_t               *itx,
@@ -2081,31 +1897,20 @@ static ib_status_t modhtp_iface_response_line(
         return IB_EUNKNOWN;
     }
 
-#if 0
-    /* No funcion to set the protocol string for response; we need to parse
-     * it here ourselves. <sigh> */
-    irc = modhtp_set_response_protocol(itx, htx, line->protocol);
-    if (irc != IB_OK) {
-        return irc;
+    /* Hand off the status line */
+    hrc = htp_tx_res_set_status_line(htx,
+                                     ib_bytestr_const_ptr(line->raw),
+                                     ib_bytestr_length(line->raw),
+                                     HTP_ALLOC_COPY);
+    if (hrc != HTP_OK) {
+        return IB_EUNKNOWN;
     }
 
-    irc = modhtp_set_response_status(itx, htx, line->status);
-    if (irc != IB_OK) {
-        return irc;
+    /* Set the state */
+    hrc = htp_tx_state_response_line(htx);
+    if (hrc != HTP_OK) {
+        return IB_EUNKNOWN;
     }
-
-    irc = modhtp_set_bstr(itx, htx, line->msg,
-                          htp_tx_res_set_status_message);
-    if (irc != IB_OK) {
-        return irc;
-    }
-#else
-    hrc = htp_tx_res_set_status_line(
-        htx,
-        (const char *)ib_bytestr_const_ptr(line->raw),
-        ib_bytestr_length(line->raw),
-        HTP_ALLOC_COPY);
-#endif
 
     return IB_OK;
 }
@@ -2119,8 +1924,9 @@ static ib_status_t modhtp_iface_response_header_data(
     assert(itx != NULL);
     assert(header != NULL);
 
-    ib_status_t irc;
-    htp_tx_t *htx;
+    htp_status_t hrc;
+    ib_status_t  irc;
+    htp_tx_t    *htx;
 
     /* This is required for parsed data only. */
     if (ib_conn_flags_isset(itx->conn, IB_CONN_FSEENDATAIN)) {
@@ -2136,9 +1942,20 @@ static ib_status_t modhtp_iface_response_header_data(
     if (htx == NULL) {
         return IB_EUNKNOWN;
     }
-    irc = modhtp_set_header(itx, htx, header, htp_tx_res_set_header);
 
-    return irc;
+    /* Hand the response headers off to libhtp */
+    irc = modhtp_set_header(itx, htx, header, htp_tx_res_set_header);
+    if (irc != IB_OK) {
+        return irc;
+    }
+
+    /* Update the state */
+    hrc = htp_tx_state_response_headers(htx);
+    if (hrc != HTP_OK) {
+        return IB_EUNKNOWN;
+    }
+
+    return IB_OK;
 }
 
 static ib_status_t modhtp_iface_response_header_finished(
