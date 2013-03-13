@@ -608,7 +608,7 @@ done:
  * @param[in] force Set even if value already set
  * @param[in] htp_bstr HTP bstr to copy from
  * @param[in] fallback Fallback string (or NULL)
- * @param[in,out] ib_str Pointer to NUL-terminated string to fill
+ * @param[in,out] nulstr Pointer to NUL-terminated string to fill
  *
  * @returns Status code
  */
